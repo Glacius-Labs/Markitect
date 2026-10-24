@@ -1,39 +1,39 @@
-# Sprachgeschichte vor der normativen v1
+# Language history before the normative v1
 
-**Historisch und nicht normativ.** Diese Ablage bewahrt die frühere Gesprächsherleitung, Varianten, Beispiele und damaligen Prüfstände (16. Oktober 2026). Aussagen wie „offen“, „gewählt“ oder „als Nächstes“ beziehen sich auf den jeweiligen Gesprächsstand. Sie sind keine zusätzlichen v1-Regeln.
+**Historical and not normative.** This record preserves the earlier derivation from the conversation, variants, examples and the verification states of the time (16 October 2026). Statements such as “open”, “chosen” or “next” refer to the respective state of the conversation. They are not additional v1 rules.
 
-Die alleinige normative Quelle ist die [Sprachspezifikation v1](language-contract.md). Die noch nicht gewählten [Verfahrensvorschläge](procedure-proposals.md) sind getrennt abgelegt. Aktuelle ausführbare Evidenz steht beim [Exchange-Beispiel](exchange-example/README.md).
+The sole normative source is the [language specification v1](language-contract.md). The [procedure proposals](procedure-proposals.md) that have not yet been chosen are kept separately. Current executable evidence is held with the [Exchange example](exchange-example/README.md).
 
-Die nachfolgenden Abschnitte 1–10 und 12 stammen aus dem Sprachvertrag unmittelbar vor der redaktionellen Konsolidierung; Abschnitt 11 wurde separat als Verfahrensvorschlag erhalten. Die inhaltlichen Gesprächsabschnitte bleiben erhalten, Navigationsverweise werden auf ihre heutigen Eigentümer gerichtet. SHA-256 der früheren vollständigen UTF-8-Textfassung: `2f62267a7d359e5f4e395c13e614447f7b960effd2cf822aa4e2c864bc6c2370`.
+Sections 1–10 and 12 below come from the language contract immediately before the editorial consolidation; section 11 was preserved separately as a procedure proposal. The substantive conversation sections are preserved; navigation references are pointed at their current owners. SHA-256 of the earlier complete UTF-8 text version: `2f62267a7d359e5f4e395c13e614447f7b960effd2cf822aa4e2c864bc6c2370`.
 
 ---
 
-## 1. Zweck und Umfang
+## 1. Purpose and scope
 
-Das kanonische Modell beschreibt die beabsichtigte Projektwelt: was gelten und entstehen soll. Verbindliche Prosa und typisierte Angaben tragen diese Beschreibung gemeinsam. Die tatsächlich entstandenen Dateien, laufenden Vorgänge und ausgeführten Nachweise sind davon zu unterscheiden.
+The canonical model describes the intended project world: what should hold and come into being. Binding prose and typed entries carry this description together. The files that have actually come into being, running processes and executed evidence are to be distinguished from it.
 
-Der Core stellt die allgemeinen Sprachmittel vollständig bereit. Projekte können ihr Vokabular selbst definieren. Bibliotheken liefern wiederverwendbare Definitionen; sie verleihen importierten Kinds keine zusätzlichen Sprachfähigkeiten oder Ausführungsrechte.
+The Core provides the general language features completely. Projects can define their vocabulary themselves. Libraries supply reusable definitions; they grant imported Kinds no additional language capabilities or execution rights.
 
-System, Container, Component, Command, Exchange, Rule oder andere Fachbegriffe sind mögliche Inhalte eines Vokabulars. Sie sind keine privilegierten Core-Kinds. Das Modell benötigt weder ein eingebautes Project noch eine vorgegebene Softwarearchitektur-Taxonomie.
+System, Container, Component, Command, Exchange, Rule or other domain terms are possible contents of a vocabulary. They are not privileged Core Kinds. The model requires neither a built-in Project nor a predefined software architecture taxonomy.
 
-## 2. Eine Grundform: Definition
+## 2. One basic form: definition
 
-Typverträge, Propertyverträge und konkrete Projektgegenstände sind Definitionen mit derselben Grundform:
+Type contracts, property contracts and concrete project items are definitions with the same basic form:
 
-| Feld | Inhalt |
+| Field | Content |
 | --- | --- |
-| imports, optional | In dieser Definitionsdatei sichtbare fremde Pakete; ohne Angabe keine fremden Namen. |
-| id | Stabile lokale Identität innerhalb des Pakets. |
-| kind | Referenz auf die Typdefinition, deren Vertrag diese Definition erfüllt. |
-| body | Verbindliche Beschreibung ihrer Bedeutung und Festlegungen. |
-| spec | Objekt mit den laut Kind erlaubten strukturierten Werten und Beziehungen. |
-| title, optional | Lesbare Bezeichnung; kein Referenzziel und kein Ersatz für body. |
+| imports, optional | Foreign packages visible in this definition file; if omitted, no foreign names. |
+| id | Stable local identity within the package. |
+| kind | Reference to the type definition whose contract this definition fulfils. |
+| body | Binding description of its meaning and stipulations. |
+| spec | Object with the structured values and relationships permitted according to the Kind. |
+| title, optional | Readable label; not a reference target and not a substitute for body. |
 
-id, kind und body sind nichtleere Angaben. spec kann leer sein, muss aber dem Typvertrag entsprechen. Unbekannte Felder sind Fehler; für zusätzliche Projektangaben werden Properties am jeweiligen Kind deklariert. Die Beispiele verwenden YAML als Autorenform.
+id, kind and body are non-empty entries. spec can be empty but must conform to the type contract. Unknown fields are errors; for additional project entries, Properties are declared on the respective Kind. The examples use YAML as the authoring form.
 
-Jede Definition steht vollständig in genau einer eigenen YAML-Datei. Das gilt gleichermaßen für Kinds, Properties und konkrete Gegenstände sowie für die Definitionen des festen Core-Pakets. Jede Definitionsdatei enthält dieselbe Hülle mit id, kind, body, spec und optional imports sowie title. Mehrere Definitionen in einer Datei, eingebettete Definitionen und kompakte Propertydeklarationen sind nicht zulässig. Die Felder innerhalb von spec richten sich nach dem jeweiligen Kind; strukturierte object-Werte bleiben gewöhnliche Werte und sind keine eingebetteten Definitionen.
+Each definition is contained completely in exactly one YAML file of its own. This applies equally to Kinds, Properties and concrete items and to the definitions of the fixed Core package. Every definition file contains the same envelope with id, kind, body, spec and optionally imports and title. Multiple definitions in one file, embedded definitions and compact property declarations are not permitted. The fields within spec are determined by the respective Kind; structured object values remain ordinary values and are not embedded definitions.
 
-Der Dateiname ist keine Identität. Der enthaltende Ordner bestimmt dagegen das Package und damit einen Teil der Identität. Eine ausdrücklich bestimmte Modellwurzel begrenzt die Ordnerstruktur. Die Bindung externer Modelle und ihrer genauen Inhalte wird getrennt von den Packages festgelegt; Modell ist die gemeinsame Versionierungs- und Verteilungseinheit. Jede Definitionsdatei wählt daraus mit imports selbst ihre sichtbaren fremden Pakete; eigene Paketdefinitionen sind ohne Import sichtbar. Versionen und Digests werden nicht in jeder Definitionsdatei wiederholt. Abschnitt 8 trennt diese beiden Aufgaben.
+The file name is not an identity. The containing folder, by contrast, determines the Package and thus part of the identity. An explicitly determined model root bounds the folder structure. The binding of external models and their exact contents is stipulated separately from the Packages; model is the shared versioning and distribution unit. From these, each definition file itself selects its visible foreign packages with imports; definitions of its own package are visible without import. Versions and digests are not repeated in every definition file. Section 8 separates these two tasks.
 
 ```yaml
 imports:
@@ -42,7 +42,7 @@ imports:
 
 id: list-documents
 kind: Exchange
-body: Die API fordert Dokumentmetadaten beim Connector an.
+body: The API requests document metadata from the Connector.
 spec:
   requester: api
   receiver: onprem
@@ -53,36 +53,36 @@ spec:
   maxAttempts: 2
 ```
 
-Dieses Beispiel verwendet das unten erklärte importierte Vokabular. Laufzeit-Requests erzeugen keine neuen kanonischen Exchange-Definitionen. list-documents beschreibt den gewünschten Vertrag dieser Operation.
+This example uses the imported vocabulary explained below. Runtime requests do not create new canonical Exchange definitions. list-documents describes the desired contract of this operation.
 
-## 3. Der feste Anfang: Kind und Property
+## 3. The fixed starting point: Kind and Property
 
-**Nutzerentscheidung vom 15. Oktober 2026:** Kind.properties und Property.properties werden zu einer gemeinsamen Property properties zusammengefasst. Der gewählte Core besteht aus **neun Definitionen: zwei Kinds und sieben Properties**. Für die vollständige vereinfachte Darstellung verwenden die Meta-Properties kurze IDs; dadurch benötigen sie kein ausdrücklich gesetztes spec.name. Das sind die aktuellen Designidentitäten, keine automatische Umdeutung alter Paketfassungen.
+**User decision of 15 October 2026:** Kind.properties and Property.properties are merged into one common Property properties. The chosen Core consists of **nine definitions: two Kinds and seven Properties**. For the complete simplified presentation, the meta-Properties use short IDs; as a result they need no explicitly set spec.name. These are the current design identities, not an automatic reinterpretation of old package versions.
 
-Der Core versteht zwei feste Meta-Kinds:
+The Core understands two fixed meta-Kinds:
 
-| Kind | Bedeutung seiner Definitionen |
+| Kind | Meaning of its definitions |
 | --- | --- |
-| Kind | Deklarieren Typverträge für weitere Definitionen. |
-| Property | Deklarieren benannte Eigenschaften oder Beziehungen eines solchen Vertrags. |
+| Kind | Declare type contracts for further definitions. |
+| Property | Declare named attributes or relationships of such a contract. |
 
-Im festen Core-Paket ist Kind selbst eine Definition von Kind; Property ist eine Definition von Kind. Eine Projektdefinition wie Exchange hat den Kind Kind. Eine konkrete Exchange-Definition hat den Kind Exchange. Ein kind-Ziel muss selbst eine gültige Definition des festen Meta-Kinds Kind sein.
+In the fixed Core package, Kind itself is a definition of Kind; Property is a definition of Kind. A project definition such as Exchange has the Kind Kind. A concrete Exchange definition has the Kind Exchange. A kind target must itself be a valid definition of the fixed meta-Kind Kind.
 
-| Meta-Property-ID | Vertrag |
+| Meta-Property ID | Contract |
 | --- | --- |
-| name | Optionaler ausdrücklich abweichender Feldname; ohne Angabe gilt die vollständige lokale Property-ID. |
-| type | Erforderliche Auswahl eines bekannten Werttyps. |
-| minCount | Erforderliche nichtnegative Mindestanzahl. |
-| maxCount | Erforderliche Höchstanzahl beziehungsweise -1. |
-| values | Bei enum erforderliche nichtleere Liste eindeutiger erlaubter Stringwerte; sonst nicht zulässig. |
-| target | Bei reference erforderliche Referenz auf den Ziel-Kind; sonst nicht zulässig. |
-| properties | Optionale Liste von Referenzen auf Propertydefinitionen: Feldvertrag einer Kind-spec oder eines object-Werts gemäß Abschnitt 3.2. |
+| name | Optional explicitly deviating field name; if omitted, the complete local Property ID applies. |
+| type | Required selection of a known value type. |
+| minCount | Required non-negative minimum count. |
+| maxCount | Required maximum count, or -1. |
+| values | For enum, required non-empty list of distinct permitted string values; otherwise not permitted. |
+| target | For reference, required reference to the target Kind; otherwise not permitted. |
+| properties | Optional list of references to property definitions: field contract of a Kind spec or of an object value according to Section 3.2. |
 
-Der Compiler kennt die Bedeutung dieser Felder und kontrolliert die bereitgestellte Selbstbeschreibung gegen den festen Anfang. Die Selbstbeschreibung erzeugt ihre eigene Gültigkeit nicht aus Prosa. Die Core-Identitäten und der gebundene Core-Inhalt können durch Projektdefinitionen nicht ersetzt werden. Ein lokaler Kind namens Kind oder ein beliebiger Importalias erzeugen keine Sonderrechte. Beliebige benutzerdefinierte Metaklassen sind für diesen Vertrag nicht vorgesehen.
+The compiler knows the meaning of these fields and checks the supplied self-description against the fixed beginning. The self-description does not create its own validity from prose. The Core identities and the bound Core content cannot be replaced by project definitions. A local Kind named Kind or an arbitrary import alias create no special rights. Arbitrary user-defined metaclasses are not provided for in this contract.
 
-### 3.1 Vollständiger Core in neun Definitionsdateien
+### 3.1 Complete Core in nine definition files
 
-Alle neun Dateien gehören zum Paket markitect/core. Sie benötigen keine Imports, weil ihre Referenzziele im eigenen Paket liegen. Jede Datei hat dieselbe vollständige Hülle. Der effektive Feldname jeder Meta-Property entspricht ihrer kurzen lokalen ID; spec.name entfällt deshalb durchgängig.
+All nine files belong to the package markitect/core. They need no imports because their reference targets lie in their own package. Each file has the same complete envelope. The effective field name of each meta-Property corresponds to its short local ID; spec.name is therefore omitted throughout.
 
 **kind.yaml**
 
@@ -228,13 +228,13 @@ spec:
   maxCount: -1
 ```
 
-### 3.2 Gemeinsame Property am Kind und am Objekt
+### 3.2 Common Property on the Kind and on the object
 
-Die beiden früheren Properties stimmen strukturell überein: effektiver Name properties, type reference, target Property, minCount 0, maxCount -1. Die gewählte gemeinsame Definition benennt die erlaubten Feldverträge eines beschriebenen Objekts. Der Unterschied ist, welches Objekt beschrieben wird: die spec der Definitionen eines Kinds oder der Objektwert einer object-Property. Diese Zuordnung folgt aus dem jeweiligen festen Meta-Vertrag und nicht aus Namensähnlichkeit.
+The two former Properties match structurally: effective name properties, type reference, target Property, minCount 0, maxCount -1. The chosen common definition names the permitted field contracts of a described object. The difference is which object is described: the spec of the definitions of a Kind or the object value of an object Property. This mapping follows from the respective fixed meta contract and not from name similarity.
 
-kind.yaml und property.yaml aus Abschnitt 3.1 referenzieren dieselbe Property properties. Insbesondere ist property.yaml selbst eine Definition mit kind Kind. Ihre Liste properties ist deshalb die erlaubte Feldmenge aller Propertydefinitionen; sie benötigt selbst kein spec.type. Referenzzyklen dieses endlichen Anfangs werden nicht unendlich textuell entfaltet.
+kind.yaml and property.yaml from section 3.1 reference the same Property properties. In particular, property.yaml is itself a definition with kind Kind. Its list properties is therefore the permitted field set of all property definitions; it itself needs no spec.type. Reference cycles of this finite starting point are not unfolded textually without end.
 
-**Anwendung am Kind und an einem geschachtelten Objekt.** Die vier folgenden Dateien liegen gedanklich in einem Beispielpaket mit ausdrücklich bereitgestelltem Core. Als Core-Vertrag gilt der nun gewählte Anfang aus Abschnitt 3.1 mit neun Definitionen; der Durchgang behauptet keine vorhandene Paketveröffentlichung oder echte Digestbindung. Ein Kind Envelope erlaubt ein erforderliches Objektfeld payload; darin ist ausschließlich messageId erlaubt.
+**Application on the Kind and on a nested object.** The four following files lie, conceptually, in an example package with an explicitly provided Core. The Core contract is the now chosen starting point from section 3.1 with nine definitions; the walkthrough claims no existing package publication or real digest binding. A Kind Envelope permits a required object field payload; within it, only messageId is permitted.
 
 **envelope.yaml**
 
@@ -245,7 +245,7 @@ imports:
 
 id: Envelope
 kind: Kind
-body: Beschreibt eine Nachrichtenhülle mit einem strukturierten Inhalt.
+body: Describes a message envelope with structured content.
 spec:
   properties:
     - payload
@@ -260,7 +260,7 @@ imports:
 
 id: payload
 kind: Property
-body: Strukturierter Inhalt der Nachrichtenhülle.
+body: Structured content of the message envelope.
 spec:
   type: object
   minCount: 1
@@ -278,7 +278,7 @@ imports:
 
 id: messageId
 kind: Property
-body: Identifikator der Nachricht.
+body: Identifier of the message.
 spec:
   type: string
   minCount: 1
@@ -290,75 +290,75 @@ spec:
 ```yaml
 id: request
 kind: Envelope
-body: Eine beabsichtigte Nachrichtenform für das Beispiel.
+body: An intended message form for the example.
 spec:
   payload:
     messageId: document-request
 ```
 
-envelope.yaml verwendet properties aus dem Kind-Vertrag und bestimmt damit die erlaubten Felder von request.spec. payload.yaml verwendet dieselbe Meta-Property aus dem Property-Vertrag und bestimmt die Felder von request.spec.payload. messageId ist in beiden Fällen eine normale vollständige Propertydefinition. request.yaml benötigt keinen fremden Import, weil Envelope im eigenen Paket liegt; payload und messageId im konkreten Wert sind Feldschlüssel, keine Definitionsreferenzen.
+envelope.yaml uses properties from the Kind contract and thereby determines the permitted fields of request.spec. payload.yaml uses the same meta-Property from the Property contract and determines the fields of request.spec.payload. In both cases, messageId is a normal complete property definition. request.yaml needs no foreign import because Envelope lies in its own package; payload and messageId in the concrete value are field keys, not definition references.
 
-**Die genaue Compilergrenze bleibt fest:**
+**The exact compiler boundary remains fixed:**
 
-| Betrachtete Definition | Bedeutung der gemeinsamen Property |
+| Definition considered | Meaning of the shared Property |
 | --- | --- |
-| kind ist der feste Meta-Kind Kind | properties deklariert die erlaubten Felder der spec der Definitionen dieses Kinds. Das gilt auch für kind.yaml und property.yaml selbst. |
-| kind ist der feste Meta-Kind Property und spec.type ist object | properties deklariert die erlaubten Felder des jeweiligen Objektwerts. |
-| kind ist der feste Meta-Kind Property mit anderem spec.type | properties ist als Vertragsangabe nicht zulässig, auch nicht als leere Liste. Die bereits bestehende Werttypbedingung bleibt erhalten. |
-| kind ist ein gewöhnlicher Projekt-Kind | Dessen eigener Feldvertrag gilt. Ein dort erlaubtes Feld namens properties, auch bei Wiederverwendung der gemeinsamen Property, ist gewöhnlicher Dateninhalt und erzeugt keinen zusätzlichen Typ- oder Objektvertragsoperator. |
+| kind is the fixed meta-Kind Kind | properties declares the permitted fields of the spec of the definitions of this Kind. This also applies to kind.yaml and property.yaml themselves. |
+| kind is the fixed meta-Kind Property and spec.type is object | properties declares the permitted fields of the respective object value. |
+| kind is the fixed meta-Kind Property with another spec.type | properties is not permitted as a contract entry, not even as an empty list. The already existing value type condition remains in force. |
+| kind is an ordinary project Kind | Its own field contract applies. A field named properties permitted there, even when the shared Property is reused, is ordinary data content and creates no additional type or object contract operator. |
 
-Die letzte Zeile verhindert eine unzulässige globale Reservierung des Feldnamens. Ein Projekt-Kind SchemaCatalog könnte properties als Liste von Propertyreferenzen deklarieren und konkrete Katalogeinträge damit beschreiben. Ein solcher Katalogeintrag wird dadurch nicht zum Kind; nur eine Definition des festen Meta-Kinds Kind deklariert einen neuen Typvertrag. Die feste Sprachbedeutung hängt an genau gebundenen Meta-Identitäten, nicht an geschriebenen Namen oder einem beliebigen Importalias.
+The last row prevents an impermissible global reservation of the field name. A project Kind SchemaCatalog could declare properties as a list of property references and use it to describe concrete catalog entries. Such a catalog entry does not thereby become a Kind; only a definition of the fixed meta-Kind Kind declares a new type contract. The fixed language meaning depends on exactly bound meta-identities, not on written names or an arbitrary import alias.
 
-**Gegenproben des Durchgangs:**
+**Counter-probes of the walkthrough:**
 
-| Fall | Erwarteter Befund und Grund |
+| Case | Expected finding and reason |
 | --- | --- |
-| request.spec.payload.messageId ist gesetzt | Strukturell passend zum zweistufigen geschlossenen Feldvertrag; das beweist keine fachlich geeignete MessageId. |
-| request.spec.messageId steht statt payload.messageId | Nicht erlaubt: messageId gehört zum Objektvertrag von payload, nicht zur äußeren Envelope-spec. |
-| payload enthält ein zusätzliches unbekanntes Feld | Strukturfehler im geschlossenen Objektvertrag. |
-| messageId mit type string setzt zusätzlich properties | Strukturfehler: properties ist an einer Propertydefinition nur für type object erlaubt. |
-| Ein properties-Eintrag referenziert einen konkreten Gegenstand statt einer Propertydefinition | Strukturfehler am Ziel-Kind der Referenz. |
-| Zwei verschiedene Property-IDs ergeben im selben Vertrag denselben effektiven Feldnamen | Strukturfehler unabhängig davon, ob der Name ausdrücklich gesetzt oder aus der ID übernommen ist. |
-| Derselbe Feldname tritt in verschiedenen unabhängigen Kind-/Objektverträgen auf | Kein Namenskonflikt zwischen diesen Verträgen; Eindeutigkeit wird pro Vertrag geprüft. Die gemeinsame Meta-Property darf in Kind und Property wiederverwendet werden. |
-| Eine gewöhnliche Projektdefinition führt ein laut ihrem Kind erlaubtes Datenfeld properties | Normale Wert-/Referenzprüfung; keine automatische Schemaausführung. |
-| Der Core-Anfang referenziert Kind, Property und properties zyklisch | Endlicher Definitionsgraph; die Referenzen werden nicht unendlich textuell entfaltet. |
-| Eine object-Property verwendet sich selbst als eigenes Objektfeld | Bei minCount=0 sind endliche Werte möglich und die Rekursion ist erlaubt; bei minCount>0 ist der verpflichtende Selbstzyklus unzulässig. Abschnitt 5.3 bestimmt die genaue Grenze. |
+| request.spec.payload.messageId is set | Structurally consistent with the two-level closed field contract; this does not prove a MessageId that is suitable for the domain. |
+| request.spec.messageId stands instead of payload.messageId | Not permitted: messageId belongs to the object contract of payload, not to the outer Envelope spec. |
+| payload contains an additional unknown field | Structural error in the closed object contract. |
+| messageId with type string additionally sets properties | Structural error: on a property definition, properties is permitted only for type object. |
+| A properties entry references a concrete item instead of a property definition | Structural error at the target Kind of the reference. |
+| Two different Property IDs yield the same effective field name in the same contract | Structural error regardless of whether the name is set explicitly or taken over from the ID. |
+| The same field name occurs in different independent Kind/object contracts | No name conflict between these contracts; uniqueness is checked per contract. The common meta-Property may be reused in Kind and Property. |
+| An ordinary project definition carries a data field properties that its Kind permits | Normal value/reference check; no automatic schema execution. |
+| The Core starting point references Kind, Property and properties cyclically | Finite definition graph; the references are not unfolded textually without end. |
+| An object Property uses itself as its own object field | With minCount=0, finite values are possible and the recursion is permitted; with minCount>0, the mandatory self-cycle is impermissible. Section 5.3 determines the exact boundary. |
 
-**Gewähltes Ergebnis und Migration:** Die gemeinsame Property properties ersetzt im angestrebten Core die bisherigen getrennten Definitionen Kind.properties und Property.properties. Die übrigen Meta-Properties erhalten die kurzen IDs name, type, minCount, maxCount, values und target. Damit sind alle Core-Feldnamen ohne spec.name unmittelbar durch die jeweilige lokale ID bestimmt. Bestehende Referenzen, Körperlinks, Seedkontrolle und betroffene Modellbindungen müssen auf diese ausdrücklich geänderten Identitäten migriert werden. Es gibt keine stille Weiterleitung und keinen rückwirkend geänderten historischen Core-Inhalt. Die Bedingung für object-Properties bleibt eine feste Compilerregel.
+**Chosen result and migration:** In the intended Core, the common Property properties replaces the previous separate definitions Kind.properties and Property.properties. The remaining meta-Properties receive the short IDs name, type, minCount, maxCount, values and target. All Core field names are thus determined directly by the respective local ID without spec.name. Existing references, body links, seed control and affected model bindings must be migrated to these explicitly changed identities. There is no silent forwarding and no retroactively changed historical Core content. The condition for object Properties remains a fixed compiler rule.
 
-Die Zusammenfassung ist eine Nutzerentscheidung; die Beispiele und Gegenproben erläutern das erwartete Verhalten des gewählten Vertrags. Damit wurde kein neuer produktiver Core-Anfang implementiert oder unabhängig ausgeführter Compiler-/Laufzeitnachweis erzeugt. Die historischen Berichte über zehn Core-Definitionen und deren Modellbindungen bleiben Evidenz ihres damaligen Stands.
+The merge is a user decision; the examples and counter-probes explain the expected behavior of the chosen contract. This did not implement a new production Core starting point or produce independently executed compiler/runtime evidence. The historical reports on ten Core definitions and their model bindings remain evidence of their state at the time.
 
-## 4. Verbindliche Prosa und Geltungsbereich
+## 4. Binding prose and scope of validity
 
-body ist Teil des geltenden Modellvertrags und wird im gebundenen Inhalt erhalten.
+body is part of the applicable model contract and is preserved in the bound content.
 
-- Der body eines Kinds beschreibt die gemeinsame Bedeutung und geltenden Festlegungen seiner Definitionen.
-- Der body einer Property beschreibt die Bedeutung ihrer Werte und Beziehungen im verwendenden Vertrag.
-- Der individuelle body ergänzt die Festlegungen des konkreten Gegenstands.
-- Individuelle Angaben heben allgemeine Pflichten nicht still auf. Widersprüche werden als zu klärende Befunde behandelt.
+- The body of a Kind describes the shared meaning and applicable stipulations of its definitions.
+- The body of a Property describes the meaning of its values and relationships in the contract that uses it.
+- The individual body supplements the stipulations of the concrete item.
+- Individual entries do not silently cancel general obligations. Contradictions are treated as findings to be clarified.
 
-Der Text kann Modellbedingungen, gewünschtes Laufzeitverhalten, Grenzen und Bedingungen seiner Anwendbarkeit beschreiben. Eine nicht formal prüfbare Aussage bleibt verbindlich. Der Core besitzt vorerst keine besonderen requirements-, roles- oder subject-Abschnitte und keine allgemeine formale Regelsprache. Ein Projekt kann solche Wörter als eigene Begriffe verwenden, ohne dadurch besondere Compilersemantik zu erhalten.
+The text can describe model conditions, desired runtime behavior, limits and conditions of its applicability. A statement that cannot be checked formally remains binding. For the time being, the Core has no special requirements, roles or subject sections and no general formal rule language. A project can use such words as its own terms without thereby receiving special compiler semantics.
 
-Beziehungen erhalten ihre fachliche Bedeutung aus dem Typ- und Propertyvertrag. Eine Aussage über requester betrifft die dort referenzierte Anwendung im beschriebenen Austausch. Aus einem Relationsnamen folgen weder globale Regelgeltung noch transitive Zusammensetzung, Agentenaufteilung oder Schreibrechte.
+Relationships obtain their domain meaning from the type and property contract. A statement about requester concerns the application referenced there in the described exchange. Neither global rule applicability nor transitive composition, agent partitioning or write rights follow from a relation name.
 
-Ein bloßes Wort im body erzeugt keine Referenzkante. Explizite Körperlinks verwenden denselben Zieladressmechanismus. Der folgende Abschnitt konkretisiert die bereits im [früheren Prosaentwurf](../../product-model-refinement/canonical-model-proposal.md#25-definitionskörper-explizite-links-und-linkvorschläge) vereinbarte Richtung. Der Nutzer hat diesen Körperlinkvertrag im anschließenden Designgespräch gewählt. Die gewählten lexikalischen Regeln stehen in Abschnitt 4.5; eine Produktimplementierung wird nicht behauptet.
+A mere word in the body creates no reference edge. Explicit body links use the same target address mechanism. The following section makes concrete the direction already agreed in the [earlier prose draft](../../product-model-refinement/canonical-model-proposal.md#25-definitionskörper-explizite-links-und-linkvorschläge). The user chose this body link contract in the subsequent design conversation. The chosen lexical rules are in section 4.5; no product implementation is claimed.
 
-### 4.1 Ein Linkformat für alle Definitionen
+### 4.1 One link format for all definitions
 
-Die Autorenform lautet `[[Ziel]]` oder `[[Ziel|Anzeigetext]]`. Das Ziel ist eine im eigenen Package oder durch direkte Imports verfügbare id, eine vollständige Referenz package/id oder eine ausdrücklich aliasqualifizierte Referenz Alias.id. Die Auflösung erfolgt im eigenen Paket und den dateilokalen Imports der Definition, deren body den Link enthält. Sie benutzt dieselben festen Paketbindungen wie kind und die Referenzwerte in spec. Der Anzeigetext beeinflusst die Auflösung nicht. Ohne ausdrücklichen Anzeigetext wird die geschriebene Zieladresse angezeigt.
+The authored form is `[[target]]` or `[[target|display text]]`. The target is an id available in the definition's own Package or through direct imports, a complete reference package/id or an explicitly alias-qualified reference Alias.id. Resolution takes place in the package of the definition whose body contains the link and in that definition's file-local imports. It uses the same fixed package bindings as kind and the reference values in spec. The display text does not influence resolution. Without explicit display text, the written target address is displayed.
 
-| Körperlink im Projektpaket | Ziel im Beispiel |
+| Body link in the project package | Target in the example |
 | --- | --- |
-| `[[Exchange|Austausch]]` | Die Kind-Definition Exchange im importierten Vokabular. |
-| `[[list-documents|Dokumentabfrage]]` | Der konkrete beschriebene Austausch im eigenen Paket. |
-| `[[api|Cloud-API]]` | Die konkrete API-Definition im eigenen Paket. |
-| `[[requester]]` | Die Propertydefinition mit stabiler id requester und aktuellem Feldnamen requester. |
+| `[[Exchange|exchange]]` | The Kind definition Exchange in the imported vocabulary. |
+| `[[list-documents|document query]]` | The concrete described exchange in the project's own package. |
+| `[[api|Cloud API]]` | The concrete API definition in the project's own package. |
+| `[[requester]]` | The property definition with the stable id requester and the current field name requester. |
 
-Jede Property ist über ihre ausdrücklich deklarierte lokale id adressierbar. Es gibt weder eine eigene Propertylink-Syntax noch automatische Suche nach einem Feldnamen. Eine Feldbezeichnung wird nicht automatisch zu einer zusätzlichen Property-ID.
+Every Property is addressable via its explicitly declared local id. There is neither a separate property link syntax nor automatic search for a field name. A field label does not automatically become an additional Property ID.
 
-### 4.2 Exchange: Vertrag, Feld und konkreter Wert
+### 4.2 Exchange: contract, field and concrete value
 
-Im Vokabularpaket kann der Kind-Körper seine eigene Property adressieren:
+In the vocabulary package, the Kind body can address its own Property:
 
 ```yaml
 imports:
@@ -368,9 +368,9 @@ imports:
 id: Exchange
 kind: Kind
 body: >-
-  Beschreibt einen Request-/Reply-Vertrag.
-  Die durch [[requester]] bestimmte Anwendung muss
-  Antworten anhand der MessageId dem ursprünglichen Request zuordnen.
+  Describes a Request/Reply contract.
+  The application determined by [[requester]] must
+  match replies to the original Request by means of the MessageId.
 spec:
   properties:
     - requester
@@ -382,9 +382,9 @@ spec:
     - maxAttempts
 ```
 
-Diese Ansicht zeigt dieselbe Exchange-Definition mit dem für die Körperlinks betrachteten body; sie ist keine zweite Autorenquelle neben Abschnitt 6. Die referenzierten Properties stehen jeweils in eigenen Dateien. Der Link bezeichnet die Propertydeklaration. Der Satz beschreibt die Pflicht der Anwendung, die in jeder Exchange-Definition als requester eingetragen ist. Diese Aussage kommt aus der Prosa, nicht aus einem vom Core ausgeführten Zugriffsausdruck.
+This view shows the same Exchange definition with the body considered for the body links; it is not a second authoring source alongside section 6. The referenced Properties each stand in their own files. The link denotes the property declaration. The sentence describes the obligation of the application that is entered as requester in every Exchange definition. This statement comes from the prose, not from an access expression executed by the Core.
 
-Im Projektpaket sieht der konkrete Ausschnitt so aus:
+In the project package, the concrete excerpt looks like this:
 
 ```yaml
 imports:
@@ -394,10 +394,10 @@ imports:
 id: list-documents
 kind: Exchange
 body: >-
-  Dieser [[Exchange|Austausch]] dient der Dokumentabfrage.
-  [[api|Die Cloud-API]] fordert die Daten bei [[onprem|dem Connector]] an.
-  Die durch [[requester]] bestimmte Anwendung
-  muss verspätete Antworten nach Ablauf der Wartefrist verwerfen.
+  This [[Exchange|exchange]] serves the document query.
+  [[api|The Cloud API]] requests the data from [[onprem|the Connector]].
+  The application determined by [[requester]]
+  must discard late replies after the waiting period has expired.
 spec:
   requester: api
   receiver: onprem
@@ -408,176 +408,176 @@ spec:
   maxAttempts: 2
 ```
 
-Hier entstehen Körperbezüge auf den Kind, zwei konkrete Definitionen und eine Propertydefinition. spec.requester setzt dagegen ausdrücklich die typisierte Auftraggeberbeziehung zu api. Der Körperlink setzt diesen Wert nicht. Stimmen Satz und spec nicht überein, ist das ein semantischer Widerspruch; eine erfolgreiche Zielauflösung beweist ihre Übereinstimmung nicht.
+Here, body references arise to the Kind, two concrete definitions and one property definition. spec.requester, by contrast, explicitly sets the typed requester relationship to api. The body link does not set this value. If the sentence and spec do not agree, that is a semantic contradiction; a successful target resolution does not prove their agreement.
 
-Ein Link auf requester bezeichnet keinen einzelnen Propertywert von list-documents. Der erste Umfang benötigt keine zusätzliche Ausdruckssprache für Dereferenzierung, Filter, Feldpfade oder berechnete Links. Ein Satz kann den Zusammenhang über den benannten Propertyvertrag ausdrücken; muss ein konkretes Ziel explizit im Graph erscheinen, wird auch dieses Ziel ausdrücklich referenziert.
+A link to requester does not denote a single property value of list-documents. The first scope needs no additional expression language for dereferencing, filters, field paths or computed links. A sentence can express the connection via the named property contract; if a concrete target must appear explicitly in the graph, this target is also referenced explicitly.
 
-### 4.3 Die feste Bedeutung des Links
+### 4.3 The fixed meaning of the link
 
-Der Core kennt genau eine zusätzliche Beziehung aus diesem Markup: **Die Quelldefinition nimmt an dieser Körperstelle ausdrücklich auf die Zieldefinition Bezug.** Er hält je Vorkommen Quelle, kanonisches Paket-/ID-Ziel, optionalen Anzeigetext und Fundstelle fest. Wiederholte Links bleiben nachvollziehbare Vorkommen; eine zusammengefasste Graphsicht darf sie als einen Bezug mit mehreren Fundstellen darstellen. Dafür gibt es keine zweite manuelle uses-/references-Liste und keinen neuen eingebauten fachlichen Kind.
+The Core knows exactly one additional relationship from this markup: **At this body location, the source definition explicitly refers to the target definition.** For each occurrence, it records the source, canonical package/ID target, optional display text and location. Repeated links remain traceable occurrences; a summarized graph view may present them as one reference with several locations. For this there is no second manual uses/references list and no new built-in domain Kind.
 
-Die fachliche Aussage entsteht aus Satz, Kind- und Propertyvertrag. Daraus folgen diese Grenzen:
+The domain statement arises from the sentence, the Kind contract and the property contract. The following limits follow from this:
 
-- Ein Kind-Link typisiert die Quelle nicht. Dafür gilt das Feld kind.
-- Ein Property-Link erklärt oder verwendet den Feldvertrag; er trägt keinen Wert in spec ein und zählt nicht als Erfüllung einer Property-Kardinalität.
-- Ein Definitionslink erklärt allein weder Enthaltenheit, Laufzeitaufruf, positive Abhängigkeit noch globale Regelgeltung. Auch „verwendet [[dms]] nicht“ enthält einen ausdrücklichen Bezug auf dms.
-- Das Referenzieren einer Regel aktiviert sie nicht automatisch für den ganzen verlinkten Gegenstand. Der geltende Umfang muss aus ihrem Vertrag und der Aussage hervorgehen.
-- Verbindliche unmarkierte Prosa bleibt Teil des Modells. Links helfen beim eindeutigen Bezeichnen, ersetzen aber weder die Aussage noch eine Vollständigkeitsbeurteilung.
+- A Kind link does not type the source. The field kind serves that purpose.
+- A Property link explains or uses the field contract; it does not enter a value into spec and does not count as fulfilling a Property cardinality.
+- A definition link alone declares neither containment, runtime invocation, positive dependency nor global rule applicability. Even “does not use [[dms]]” contains an explicit reference to dms.
+- Referencing a rule does not automatically activate it for the whole linked item. The applicable scope must emerge from its contract and the statement.
+- Binding unmarked prose remains part of the model. Links help with unambiguous designation but replace neither the statement nor a completeness assessment.
 
-Der Bezug ist damit für Navigation, Kontext und Änderungsprüfung maschinell nutzbar. Eine Änderung am Ziel macht die Quellen zu Kandidaten für eine erneute Beurteilung. Sie beweist keine nötige Codeänderung und erzeugt keinen Ausführungsauftrag. Beim semantischen Lesen gehört die gebundene Bedeutung des Ziels zum Verständnis des Satzes; bloße Erreichbarkeit im Graph importiert nicht transitiv sämtliche Pflichten aller erreichbaren Definitionen.
+The reference is thus machine-usable for navigation, context and change checks. A change to the target makes the sources candidates for a renewed assessment. It does not prove a necessary code change and creates no execution assignment. In semantic reading, the bound meaning of the target belongs to the understanding of the sentence; mere reachability in the graph does not transitively import all obligations of all reachable definitions.
 
-### 4.4 Prüfung, Umbenennung und Modellstand
+### 4.4 Checking, renaming and model state
 
-Der Compiler kann aktive Links erkennen, ihre Ziele nach vollständigem Laden der Definitionen eindeutig auflösen und Herkunft erhalten. Fehlendes Ziel oder unbekannter Import ist ein Fehler; Titel, Anzeigetext und erwartete Bedeutung dienen nicht als Ausweichsuche. Anders als bei einer typisierten reference-Property ist im Körperlink zunächst jede Definition als Ziel zulässig. Ob der Satz den richtigen Kind, die richtige Property oder die richtige konkrete Definition meint, bleibt Gegenstand des semantischen Reviews.
+The compiler can recognize active links, resolve their targets unambiguously after the definitions have been loaded completely, and preserve provenance. A missing target or unknown import is an error; title, display text and expected meaning do not serve as a fallback search. Unlike with a typed reference Property, any definition is initially permitted as a target in a body link. Whether the sentence means the right Kind, the right Property or the right concrete definition remains the subject of semantic review.
 
-Beim Wechsel eines Importaliases Connector zu Wire müssen nur ausdrücklich damit qualifizierte Autorenreferenzen angepasst werden, etwa Connector.Exchange zu Wire.Exchange. Eine eindeutige direkt verfügbare Referenz Exchange bleibt unverändert; das kanonische Ziel bleibt gleich. Im historischen Umbenennungsfall kann eine ausdrücklich erhaltene ID wie exchange.sender mit dem Feldnamen requester weiterhin verlinkt werden. Im aktuellen vereinfachten Beispiel heißt bereits die ID requester und der Link [[requester]] bleibt eindeutig. Ein veralteter Anzeigetext sender kann weiterhin strukturell gültig sein und dennoch sprachlich irreführen. Eine echte Änderung der Property-ID erfordert die Migration ihrer Links; ohne Migration sind alte Ziele nicht mehr auflösbar. Ein Versionsupdate bindet dieselbe Zielidentität an deren ausdrücklich gewählte neue Fassung.
+When an import alias changes from Connector to Wire, only the authored references explicitly qualified with it must be adjusted, for example Connector.Exchange to Wire.Exchange. An unambiguous directly available reference Exchange remains unchanged; the canonical target stays the same. In the historical renaming case, an explicitly preserved ID such as exchange.sender with the field name requester can still be linked. In the current simplified example, the ID itself is already called requester and the link [[requester]] remains unambiguous. An outdated display text sender can still be structurally valid and yet linguistically misleading. A real change of the Property ID requires migration of its links; without migration, old targets can no longer be resolved. A version update binds the same target identity to its explicitly chosen new version.
 
-Der feste Modellstand enthält den vollständigen Körper und die aufgelösten Zielidentitäten. Änderungen an Prosa oder Anzeigetext werden erhalten, auch wenn die Zielmenge gleich bleibt. Quellpositionen gehören zur Diagnoseherkunft, nicht zur logischen Zielidentität. Aliaswechsel ändern das kanonische Linkziel nicht; eine Änderung des gespeicherten Körpers kann trotzdem im Inhaltsvergleich sichtbar sein. Die genaue Digestkodierung steht inzwischen in Abschnitt 8.3.
+The fixed model snapshot contains the complete body and the resolved target identities. Changes to prose or display text are preserved even if the target set stays the same. Source positions belong to the diagnostic provenance, not to the logical target identity. Alias changes do not change the canonical link target; a change of the stored body can nevertheless be visible in the content comparison. The exact digest encoding is now in section 8.3.
 
-Der Compiler prüft die Existenz der Bezüge, nicht die Wahrheit, Vollständigkeit oder korrekte Auslegung der Aussagen. Agenten können fehlende oder falsche Links vorschlagen; erst eine in der Quelle übernommene Änderung verändert den kanonischen Bezug. Linkvorschläge aus Wortähnlichkeit sind keine Modellkanten.
+The compiler checks the existence of the references, not the truth, completeness or correct interpretation of the statements. Agents can propose missing or wrong links; only a change adopted in the source changes the canonical reference. Link proposals from word similarity are not model edges.
 
-### 4.5 Verbindliches Körperlink- und Markdownprofil
+### 4.5 Binding body link and Markdown profile
 
-**Nutzerentscheidung vom 15. Oktober 2026:** body verwendet [CommonMark 0.31.2](https://spec.commonmark.org/0.31.2/) mit der ausdrücklichen Erweiterung um Körperlinks. Diese Regeln gelten ausschließlich für body. title und andere Stringwerte werden nicht auf Modelllinks untersucht.
+**User decision of 15 October 2026:** body uses [CommonMark 0.31.2](https://spec.commonmark.org/0.31.2/) with the explicit extension by body links. These rules apply exclusively to body. title and other string values are not examined for model links.
 
-Die Verarbeitung beginnt mit der YAML-Dekodierung gemäß Abschnitt 5.1. Danach wird der dekodierte body als Markdown mit Körperlink-Erweiterung gelesen. YAML-Escapes können daher bereits vor der Markdown-Verarbeitung Zeichen der Linknotation ergeben. Aus späteren Markdown-Zeichenreferenzen wie &#91; oder gerendertem Text werden dagegen keine neuen Modelllinks erzeugt. Der ursprüngliche body bleibt erhalten; Normalisierung für die Markdown-Verarbeitung ist keine automatische Änderung der Quelle.
+Processing begins with YAML decoding according to Section 5.1. Then the decoded body is read as Markdown with the body link extension. YAML escapes can therefore already produce characters of the link notation before Markdown processing. By contrast, no new model links are produced from later Markdown character references such as &#91; or from rendered text. The original body is preserved; normalization for Markdown processing is not an automatic change of the source.
 
-| Kontext | Verhalten |
+| Context | Behavior |
 | --- | --- |
-| Gewöhnlicher Text, Überschrift, Liste, Zitat oder Formatierung außerhalb eines Links | Die ungeschützte Doppelklammernotation ist aktiv. |
-| Inline-Code und eingerückter oder eingezäunter Codeblock | Wörtlicher Inhalt, keine Modelllinks oder Linksyntaxfehler daraus. |
-| Gewöhnlicher Markdownlink oder Bild, einschließlich Text, Ziel und Referenzdefinition | Keine Körperlink-Auswertung innerhalb dieses Konstrukts. |
-| Autolink, HTML-Tag, HTML-Kommentar oder HTML-Rohblock | Keine Körperlink-Auswertung darin. Normaler Markdowntext zwischen Inline-HTML-Tags folgt weiter seinen normalen Regeln; Linkelemente bilden keinen verschachtelten Modelllink. |
+| Ordinary text, heading, list, quotation or formatting outside a link | The unprotected double-bracket notation is active. |
+| Inline code and indented or fenced code block | Literal content, no model links or link syntax errors from it. |
+| Ordinary Markdown link or image, including text, destination and reference definition | No body link evaluation within this construct. |
+| Autolink, HTML tag, HTML comment or raw HTML block | No body link evaluation in it. Normal Markdown text between inline HTML tags continues to follow its normal rules; link elements do not form a nested model link. |
 
-Die aktive Doppelklammernotation hat im gewöhnlichen Text Vorrang vor der gewöhnlichen Markdown-Linkerkennung: `[[api]](Text)` enthält den Modelllink api mit folgendem normalem Text. Ein bereits mit gewöhnlicher Markdownsyntax begonnener Link oder ein Bild schützt dagegen seinen Inhalt. Es gibt keine zusätzliche Bild-/Einbettungsform für Modelldefinitionen.
+In ordinary text, the active double-bracket notation takes precedence over ordinary Markdown link recognition: `[[api]](Text)` contains the model link api followed by normal text. A link or image already begun with ordinary Markdown syntax, by contrast, protects its content. There is no additional image/embedding form for model definitions.
 
-**Grammatik:** Ein aktiver Link hat genau die Form `[[Ziel]]` oder `[[Ziel|Anzeigetext]]`. Das Ziel ist eine vollständige Autorenreferenz nach Abschnitt 7 und 8. Es darf nicht leer sein und enthält keine umgebenden Leerzeichen; es wird weder getrimmt noch umgeschrieben. NFC, deklarierte Schreibweise, Importgrenzen, Kollisions- und Mehrdeutigkeitsregeln gelten unverändert. Der Link kann jede Definitionskategorie adressieren. Feldpfade, URL-Ziele, Titel- oder Ähnlichkeitssuche werden nicht ergänzt.
+**Grammar:** An active link has exactly the form `[[target]]` or `[[target|display text]]`. The target is a complete authored reference according to Sections 7 and 8. It must not be empty and contains no surrounding spaces; it is neither trimmed nor rewritten. NFC, declared spelling, import boundaries, collision and ambiguity rules apply unchanged. The link can address any definition category. Field paths, URL targets, title or similarity search are not added.
 
-Der optionale Anzeigetext ist reiner Unicode-Text. Er wird nach den nachstehenden Escapes erhalten und nicht nochmals als Markdown, Zeichenreferenz, Modelllink oder Ausdruck ausgewertet. Er darf nicht leer sein oder ausschließlich aus Unicode-White_Space-Zeichen der gebundenen Unicode-Version bestehen. Formatierung steht außerhalb, beispielsweise `**[[api|Cloud-API]]**`. Innerhalb eines aktiven Links sind LF, CR, NEL, LINE SEPARATOR und PARAGRAPH SEPARATOR sowie verschachtelte ungeschützte Klammern ausgeschlossen.
+The optional display text is plain Unicode text. It is preserved after the escapes below and is not evaluated again as Markdown, character reference, model link or expression. It must not be empty or consist exclusively of Unicode White_Space characters of the bound Unicode version. Formatting stands outside, for example `**[[api|Cloud-API]]**`. Within an active link, LF, CR, NEL, LINE SEPARATOR and PARAGRAPH SEPARATOR as well as nested unprotected brackets are excluded.
 
-**Escapes:** Außerhalb des Links gelten die CommonMark-Regeln. `\[[api]]` macht die Notation wörtlich; ein durch einen weiteren Backslash geschützter Backslash verhindert einen danach normal beginnenden Link nicht. Im Anzeigetext sind genau `\|`, `\[`, `\]` und `\\` für die entsprechenden literalen Zeichen erlaubt. Andere Backslashsequenzen im Linkinneren sind Fehler. Im Ziel sind keine Escapes nötig oder zulässig; seine Zeichen folgen der Namensgrammatik. Ein zusätzliches ungeschütztes |, eine ungeschützte einzelne Klammer oder ein aktives [[ ohne passenden Abschluss ist ein Markupfehler. Ein isoliertes ]] außerhalb eines aktiven Links bleibt gewöhnlicher Text.
+**Escapes:** Outside the link, the CommonMark rules apply. `\[[api]]` makes the notation literal; a backslash protected by a further backslash does not prevent a link that then begins normally. In the display text, exactly `\|`, `\[`, `\]` and `\\` are permitted for the corresponding literal characters. Other backslash sequences inside the link are errors. In the target, no escapes are needed or permitted; its characters follow the name grammar. An additional unprotected |, an unprotected single bracket or an active [[ without matching closure is a markup error. An isolated ]] outside an active link remains ordinary text.
 
-Ein Link muss im dekodierten body einzeilig sein. YAML kann den Autorenquelltext über mehrere Dateizeilen falten, solange dabei im dekodierten Link kein verbotenes Zeilenumbruchzeichen entsteht. Ungültige aktive Notation ist ein Strukturfehler und wird nicht still zu Text zurückgestuft. Gleichartige Zeichenfolgen in den geschützten Kontexten bleiben dagegen wörtlich.
+A link must be single-line in the decoded body. The authored source text may be folded by YAML over several file lines as long as no forbidden line break character arises in the decoded link. Invalid active notation is a structural error and is not silently downgraded to text. Character sequences of the same kind in the protected contexts, by contrast, remain literal.
 
-**Fundstellen:** Jedes Vorkommen erhält einen nullbasierten, am Ende exklusiven UTF-8-Bytebereich [startByte, endByte) im dekodierten ursprünglichen body. Er umfasst die vollständige Linknotation. Die Zuordnung zur ursprünglichen YAML-Datei hält zusätzlich Start und exklusives Ende als einbasierte Zeile und Spalte fest; Spalten zählen Unicode-Codepoints und keine UTF-8-Bytes oder Bildschirmbreiten. Dabei müssen Zitat-Escapes und YAML-Faltung berücksichtigt werden. Wiederholte Links bleiben einzelne Vorkommen. Fundstellen sind Herkunft und keine zusätzliche Zielidentität.
+**Locations:** Each occurrence receives a zero-based, end-exclusive UTF-8 byte range [startByte, endByte) in the decoded original body. It covers the complete link notation. The mapping to the original YAML file additionally records start and exclusive end as one-based line and column; columns count Unicode code points, not UTF-8 bytes or screen widths. Quote escapes and YAML folding must be taken into account in doing so. Repeated links remain individual occurrences. Locations are provenance and not an additional target identity.
 
-Der begrenzte Beispielprüfer verwendet eine isolierte, über requirements.txt gebundene CommonMark-Parserabhängigkeit und prüft Körperlink-Syntax, geschützte Kontexte, Referenzauflösung und Quellenzuordnung mit Gegenbeispielen. Die Go-Produktabhängigkeiten werden dadurch nicht verändert. Seine technische Grenze beträgt 2000000 UTF-8-Bytes je body und 64 Verschachtelungsebenen; eine nicht belegbare Quellenzuordnung oder ein Ressourcenabbruch meldet die Prüfung als nicht abgeschlossen. Wegen einer bekannten Leerraumabweichung der gebundenen Parserfassung meldet die Probe dies auch für ansonsten gelesene bodies mit U+001C bis U+001F oder U+0085. Das ist eine ausdrücklich ausgewiesene Werkzeuggrenze und kein Verbot dieser Zeichen im Sprachvertrag. Ein separat bestandener Körperlink-Teil beweist weder die Gültigkeit des gesamten Modells noch die Wahrheit der verknüpften Prosa. Die vollständige kanonische Bytekodierung steht inzwischen in Abschnitt 8.3; generische semantische Verfahren bleiben eine gesonderte Aufgabe.
+The bounded example verifier uses an isolated CommonMark parser dependency bound via requirements.txt and checks body link syntax, protected contexts, reference resolution and source mapping with counterexamples. The Go product dependencies are not changed by this. Its technical limit is 2000000 UTF-8 bytes per body and 64 nesting levels; a source mapping that cannot be evidenced or a resource abort reports the check as not completed. Because of a known whitespace deviation of the bound parser version, the probe also reports this for otherwise read bodies with U+001C to U+001F or U+0085. This is an explicitly declared tool limit and not a prohibition of these characters in the language contract. A separately passed body link part proves neither the validity of the whole model nor the truth of the linked prose. The complete canonical byte encoding is now in section 8.3; generic semantic procedures remain a separate task.
 
-## 5. Werte und Propertyverträge
+## 5. Values and property contracts
 
-| Werttyp | Bedeutung |
+| Value type | Meaning |
 | --- | --- |
-| string | Textwert. |
-| boolean | Wahrheitswert. |
-| integer | Beliebig genaue Ganzzahl. |
-| number | Endlicher, exakt dargestellter Dezimalzahlenwert; Ganzzahlen sind ebenfalls zulässig. |
-| enum | Einer der ausdrücklich deklarierten Stringwerte. |
-| object | Objekt mit deklarierten, geschlossenen Feldverträgen. |
-| reference | Referenz auf eine vorhandene Definition des ausdrücklich verlangten Kinds. |
+| string | Text value. |
+| boolean | Truth value. |
+| integer | Arbitrary-precision integer. |
+| number | Finite, exactly represented decimal number value; integers are also permitted. |
+| enum | One of the explicitly declared string values. |
+| object | Object with declared, closed field contracts. |
+| reference | Reference to an existing definition of the explicitly required Kind. |
 
-Für Properties gelten folgende feste Sprachregeln:
+The following fixed language rules apply to Properties:
 
-- spec.name ist optional. Ohne Angabe ist der effektive Feldname exakt die vollständige lokale id der Propertydefinition. Paketname, Importalias und Referenzschreibweise gehören nicht zu diesem Feldnamen; Punkte oder Präfixe der lokalen ID werden nicht abgeschnitten.
-- Ein ausdrücklich gesetztes spec.name muss ein nichtleerer String sein; null oder eine leere Angabe lösen keinen Fallback aus. Die effektiven Feldnamen müssen innerhalb jedes Kind- oder object-Vertrags eindeutig sein.
-- minCount ist mindestens 0. maxCount ist -1 oder mindestens minCount.
-- maxCount=1 bezeichnet einen Einzelwert; andere Höchstwerte bezeichnen eine Liste. -1 erlaubt beliebig viele Werte innerhalb endlicher Werkzeuggrenzen.
-- Eine ausgelassene Angabe zählt als null vorhandene Werte. Der Datenwert null ist nicht zulässig.
-- reference benötigt target. Das Ziel von target ist eine gültige Typdefinition.
-- enum benötigt eine nichtleere Liste eindeutiger erlaubter Werte.
-- object verwendet die unter properties referenzierten eigenständigen Propertydefinitionen. Nicht deklarierte Objektfelder sind Fehler. Ein konkreter Objektwert enthält Werte dieser Felder, keine neuen Propertydefinitionen.
-- values, target und properties sind nur bei den dafür vorgesehenen Werttypen zulässig. Ein neuer Typname installiert keinen Parser oder Operator.
+- spec.name is optional. If omitted, the effective field name is exactly the complete local id of the property definition. Package name, import alias and reference spelling do not belong to this field name; dots or prefixes of the local ID are not cut off.
+- An explicitly set spec.name must be a non-empty string; null or an empty entry does not trigger a fallback. The effective field names must be unique within every Kind or object contract.
+- minCount is at least 0. maxCount is -1 or at least minCount.
+- maxCount=1 denotes a single value; other maximum values denote a list. -1 permits any number of values within finite tool limits.
+- An omitted entry counts as zero present values. The data value null is not permitted.
+- reference requires target. The target of target is a valid type definition.
+- enum requires a non-empty list of unique permitted values.
+- object uses the independent property definitions referenced under properties. Undeclared object fields are errors. A concrete object value contains values of these fields, not new property definitions.
+- values, target and properties are permitted only for the value types intended for them. A new type name installs no parser or operator.
 
-Ein separater Werttyp kindReference ist im neuen Vertrag nicht nötig. Ein Typbezug kann durch reference mit Ziel-Kind Kind beschrieben werden. Die Typbezüge im gemeinsamen Feld kind bleiben ausdrücklich als solche prüfbar.
+A separate value type kindReference is not needed in the new contract. A type reference can be described by reference with the target Kind Kind. The type references in the common field kind remain explicitly checkable as such.
 
-Die Kardinalität begrenzt die Zahl der Werte, nicht deren numerischen Wertebereich. Eine fachliche Aussage wie „maxAttempts muss positiv sein“ benötigt weiterhin semantische Beurteilung, solange keine zusätzliche formale Wertebedingung eingeführt ist.
+Cardinality bounds the number of values, not their numeric value range. A domain statement such as “maxAttempts must be positive” still requires semantic assessment as long as no additional formal value condition has been introduced.
 
-### 5.1 YAML- und Werteprofil
+### 5.1 YAML and value profile
 
-**Nutzerentscheidung vom 15. Oktober 2026:** Die Autorenform verwendet ein begrenztes Profil von [YAML 1.2.2](https://yaml.org/spec/1.2.2/). Der folgende Vertrag bestimmt die Leseform unabhängig von Bibliothek und Implementierungssprache. Er ist keine Wahl von PyYAML für das Produkt. Markitect wird in Go gebaut; der Python-Prüfer ist eine getrennte Entwurfsprobe. Seine Parser-Voreinstellungen sind nicht normativ.
+**User decision of 15 October 2026:** The authoring form uses a bounded profile of [YAML 1.2.2](https://yaml.org/spec/1.2.2/). The following contract determines the reading form independently of library and implementation language. It is not a choice of PyYAML for the product. Markitect is built in Go; the Python verifier is a separate design probe. Its parser defaults are not normative.
 
-| Bereich | Verbindliche Regel |
+| Area | Binding rule |
 | --- | --- |
-| Datei und Dokument | UTF-8, genau ein YAML-Dokument und ein Mapping als Wurzel. Ein einzelner Dokumentmarker und eine ausdrückliche YAML-1.2-Direktive sind zulässig. Andere Versionsdirektiven und Dokumentfolgen sind Fehler. |
-| Schlüssel | Ausschließlich Strings, exakt und in NFC geschrieben. Doppelte sowie nach Abschnitt 7.2 kollidierende Schlüssel sind Fehler. Nichttextuelle Schlüssel werden nicht in Strings umgewandelt. |
-| Explizite Inhalte | Anchors, YAML-Aliase, Merge-Keys und eigene Tags sind ausgeschlossen. Zur einheitlichen Autorenform sind auch explizite Standardtags wie !!str ausgeschlossen; gewöhnliche und zitierte Werte reichen aus. |
-| Darstellung | Kommentare, Einrückung, Block-/Flowdarstellung und die Reihenfolge von Mapping-Schlüsseln erzeugen für sich keinen anderen Modellinhalt. Die YAML-Dekodierung muss dabei denselben Wert ergeben. |
-| Strings | Einfache, zitierte und mehrzeilige Strings sind erlaubt. Zitierte und Blockskalare bleiben Strings, einschließlich leerer Strings. Escapezeichen, Zeilenfaltung und Abschlusszeilen werden nach YAML dekodiert; dieser dekodierte Text bleibt erhalten. Pflichtfelder können zusätzlich nichtleeren Inhalt verlangen. Ungepaarte Unicode-Surrogate sind keine zulässigen Textwerte. |
-| Booleans | Ausschließlich die unzitierten Tokens true und false werden als Wahrheitswerte gelesen. yes, no, on, off, True oder FALSE bleiben Strings. |
-| Datum und sonstiger Text | Datumsähnliche Tokens wie 2026-10-15 bleiben Strings. Es gibt keinen automatisch erzeugten Datumstyp. Andere unzitierte Tokens, die keine der unten definierten Formen treffen, bleiben Text. |
-| Fehlende Angaben und null | Optionale Felder können fehlen. Der Datenwert null ist ausgeschlossen; auch eine leere YAML-Wertangabe sowie die unzitierten Nullformen Null, NULL und ~ sind Fehler. Ein literaler Text wie "null" muss zitiert sein. |
-| Typprüfung | Keine nachträgliche Typumwandlung anhand der Property: "42" erfüllt keine integer-Property, 42 erfüllt keine string-Property und "true" erfüllt keine boolean-Property. |
+| File and document | UTF-8, exactly one YAML document and a mapping as root. A single document marker and an explicit YAML 1.2 directive are permitted. Other version directives and document sequences are errors. |
+| Keys | Exclusively strings, written exactly and in NFC. Duplicate keys and keys colliding according to Section 7.2 are errors. Non-textual keys are not converted into strings. |
+| Explicit contents | Anchors, YAML aliases, merge keys and custom tags are excluded. For a uniform authored form, explicit standard tags such as !!str are also excluded; ordinary and quoted values suffice. |
+| Representation | Comments, indentation, block/flow representation and the order of mapping keys do not by themselves produce different model content. YAML decoding must yield the same value in doing so. |
+| Strings | Plain, quoted and multi-line strings are permitted. Quoted and block scalars remain strings, including empty strings. Escape characters, line folding and trailing lines are decoded according to YAML; this decoded text is preserved. Required fields can additionally require non-empty content. Unpaired Unicode surrogates are not permitted text values. |
+| Booleans | Only the unquoted tokens true and false are read as truth values. yes, no, on, off, True or FALSE remain strings. |
+| Date and other text | Date-like tokens such as 2026-10-15 remain strings. There is no automatically created date type. Other unquoted tokens that do not match any of the forms defined below remain text. |
+| Missing entries and null | Optional fields may be absent. The data value null is excluded; an empty YAML value entry as well as the unquoted null forms Null, NULL and ~ are also errors. A literal text such as "null" must be quoted. |
+| Type checking | No subsequent type conversion based on the Property: "42" does not satisfy an integer Property, 42 does not satisfy a string Property and "true" does not satisfy a boolean Property. |
 
-Die dateilokalen Importaliase mit as bleiben zulässig. Das Verbot betrifft YAML-Anker und deren Aliasverweise, nicht unsere Importnamen.
+The file-local import aliases with as remain permitted. The prohibition concerns YAML anchors and their alias references, not our import names.
 
-**Zahlenlexik und Genauigkeit:** Zahlen verwenden ASCII-Dezimalziffern, optional ein vorangestelltes Minus und bei Dezimalzahlen einen ASCII-Punkt beziehungsweise einen Exponenten. Unicode in Namen und Texten führt keine weiteren Zahlenschreibweisen ein.
+**Number lexical form and precision:** Numbers use ASCII decimal digits, optionally a leading minus and, for decimal numbers, an ASCII point or an exponent. Unicode in names and texts introduces no further number notations.
 
-- Ein Integerliteral hat die Form `-?(0|[1-9][0-9]*)`, etwa 0, -42 oder eine beliebig lange Ziffernfolge ohne führende Nullen.
-- Ein Dezimalliteral besitzt denselben Ganzzahlteil und entweder einen Dezimalpunkt mit mindestens einer folgenden Ziffer, einen Exponenten oder beides. Ein Exponent beginnt mit e oder E, erlaubt optional + oder - und enthält mindestens eine ASCII-Ziffer. Beispiele: 0.1, -42.0, 1e300, 1.25e-3. Ein führendes +, .5 und 1. sind keine Zahlenliterale dieses Profils.
-- Integerwerte sind beliebig genau, Dezimalwerte werden ohne binäre Gleitkommarundung erhalten. Eine number-Property akzeptiert beide Literalarten. Eine integer-Property akzeptiert ausschließlich Integerwerte; ein Dezimalliteral wie 42.0 wird nicht nachträglich in einen Integer verwandelt.
-- Hexadezimale, oktale und sonstige zusätzliche Zahlenschreibweisen werden nicht numerisch gelesen. Beispielsweise bleiben 0x10 und 012 Text und erfüllen keine number-Property. Zitierte Zahlen bleiben ebenfalls Text.
-- Nichtendliche numerische Tokens sind ausgeschlossen. Dazu zählen .nan, .inf, +.inf, -.inf, NaN, Inf und Infinity mit optionalem Vorzeichen bei Inf/Infinity und unabhängig von Groß-/Kleinschreibung. Als ausdrücklich zitierter Text bleiben diese Zeichenfolgen zulässig.
+- An integer literal has the form `-?(0|[1-9][0-9]*)`, for example 0, -42 or an arbitrarily long digit sequence without leading zeros.
+- A decimal literal has the same integer part and either a decimal point with at least one following digit, an exponent, or both. An exponent begins with e or E, optionally allows + or - and contains at least one ASCII digit. Examples: 0.1, -42.0, 1e300, 1.25e-3. A leading +, .5 and 1. are not number literals of this profile.
+- Integer values are arbitrarily precise; decimal values are preserved without binary floating-point rounding. A number Property accepts both kinds of literal. An integer Property accepts exclusively integer values; a decimal literal such as 42.0 is not subsequently converted into an integer.
+- Hexadecimal, octal and other additional number notations are not read numerically. For example, 0x10 and 012 remain text and do not satisfy a number Property. Quoted numbers likewise remain text.
+- Non-finite numeric tokens are excluded. These include .nan, .inf, +.inf, -.inf, NaN, Inf and Infinity, with an optional sign for Inf/Infinity and regardless of upper/lower case. As explicitly quoted text, these character sequences remain permitted.
 
-Es gibt keinen sprachlichen 64-Bit-Bereich oder festgelegten Rundungskontext. Endliche Werkzeuglimits sind ausdrücklich zu melden; eine Limitüberschreitung ist keine still gerundete Zahl und kein Beleg für die fachliche Ungültigkeit des Modells. Die aktuelle Probe begrenzt Zahlen auf 100000 Koeffizientenziffern und einen absoluten Exponenten von 1000000000. Der Bericht nennt diese Grenzen; ein abgebrochener Quelllauf meldet die Prüfung als nicht abgeschlossen.
+There is no language-level 64-bit range or fixed rounding context. Finite tool limits are to be reported explicitly; exceeding a limit is not a silently rounded number and no evidence of the domain invalidity of the model. The current probe limits numbers to 100000 coefficient digits and an absolute exponent of 1000000000. The report names these limits; an aborted source run reports the check as not completed.
 
-Mapping-Reihenfolge ist damit ohne semantische Bedeutung. Die gewählten Listenregeln stehen in Abschnitt 5.2. Die kanonische Serialisierung äquivalenter Zahlenschreibweisen bleibt Teil der gesonderten Kodierungsentscheidung.
+Mapping order thus has no semantic meaning. The chosen list rules are in section 5.2. The canonical serialization of equivalent number spellings remains part of the separate encoding decision.
 
-Die begrenzte Probe benutzt PyYAML ausschließlich für die Syntaxzerlegung, liest Skalare selbst nach diesem Profil und prüft die Definitionen anschließend. Sie erweitert weder die Produktabhängigkeiten noch implementiert sie den neuen Go-Compiler. Die spätere Go-Verarbeitung muss denselben Sprachvertrag erfüllen; die Bibliothek darf ihn nicht durch andere implizite Lese- oder Konvertierungsregeln verändern.
+The bounded probe uses PyYAML exclusively for syntax decomposition, reads scalars itself according to this profile and then checks the definitions. It neither extends the product dependencies nor implements the new Go compiler. The later Go processing must fulfill the same language contract; the library must not change it through other implicit reading or conversion rules.
 
-### 5.2 Listenreihenfolge und fehlende gegenüber leeren Listen
+### 5.2 List order and missing versus empty lists
 
-**Nutzerentscheidung vom 15. Oktober 2026:** Gewöhnliche Wertlisten sind geordnet. Deklarative Aufzählungen des festen Cores und die Importliste sind ungeordnet. Eine fehlende optionale Liste und eine ausdrücklich leere Liste haben denselben kanonischen Wert. Die originale Autorenform bleibt als Quelleninformation erhalten.
+**User decision of 15 October 2026:** Ordinary value lists are ordered. Declarative enumerations of the fixed Core and the import list are unordered. A missing optional list and an explicitly empty list have the same canonical value. The original authoring form is retained as source information.
 
-| Verwendung | Bedeutung der Reihenfolge |
+| Use | Meaning of the order |
 | --- | --- |
-| Gewöhnliche mehrwertige Property, einschließlich reference- und object-Werten | Die Reihenfolge zählt: [a, b] ist verschieden von [b, a]. Wiederholungen bleiben erhalten, soweit kein zusätzlicher Vertrag sie ausschließt. |
-| properties einer Definition des festen Meta-Kinds Kind | Ungeordnete Deklaration der erlaubten Felder. Referenzen werden anhand der kanonischen Zielidentität verglichen. |
-| properties einer object-Property des festen Meta-Kinds Property | Ungeordnete Deklaration des Objektfeldvertrags; dieselbe Zielauflösung gilt. |
-| values einer enum-Property des festen Meta-Kinds Property | Ungeordnete Menge erlaubter Stringwerte. Die Werte bleiben exakt und werden nicht normalisiert oder ohne Beachtung der Groß-/Kleinschreibung verglichen. |
-| Dateilokale imports | Ungeordnete Auswahl sichtbarer Pakete und deklarierter Aliase. Die Reihenfolge erzeugt keinen Vorrang bei der Auflösung. |
+| Ordinary multi-valued Property, including reference and object values | The order counts: [a, b] is different from [b, a]. Repetitions are preserved unless an additional contract excludes them. |
+| properties of a definition of the fixed meta-Kind Kind | Unordered declaration of the permitted fields. References are compared by canonical target identity. |
+| properties of an object Property of the fixed meta-Kind Property | Unordered declaration of the object field contract; the same target resolution applies. |
+| values of an enum Property of the fixed meta-Kind Property | Unordered set of permitted string values. The values remain exact and are not normalized or compared case-insensitively. |
+| File-local imports | Unordered selection of visible packages and declared aliases. The order creates no precedence in resolution. |
 
-Die besondere Bedeutung folgt ausschließlich aus dem festen Meta-Vertrag, nicht aus einem geschriebenen Feldnamen. Ein gewöhnlicher Kind mit einem Datenfeld properties oder values besitzt dort eine geordnete Wertliste. Das gilt auch bei Wiederverwendung der gemeinsamen Core-Property properties als gewöhnlichem Datenfeld. Es werden keine zusätzlichen Collection-Typen, Sortierfelder oder kompakten Autorenformen eingeführt.
+The special meaning follows exclusively from the fixed meta-contract, not from a written field name. An ordinary Kind with a data field properties or values has an ordered value list there. This also applies when the shared Core Property properties is reused as an ordinary data field. No additional collection types, sort fields or compact authored forms are introduced.
 
-Ungeordnet bedeutet nicht, dass Fehler entfernt werden: Doppelte Felddeklarationen, doppelte Enumwerte und doppelte Paketimports bleiben gemäß ihren bestehenden Verträgen unzulässig. Der Prüfer validiert diese Regeln vor dem Vergleich und darf ungültige Eingaben nicht durch Sortieren oder Deduplizieren gültig machen. Zugefügte oder entfernte Mitglieder bleiben inhaltliche Änderungen. Nur das Umordnen einer zulässigen deklarativen Aufzählung ändert ihren Vertrag nicht. Dies gilt auch für die deklarativen Listen der festen Core-Selbstbeschreibung.
+Unordered does not mean that errors are removed: duplicate field declarations, duplicate enum values and duplicate package imports remain impermissible according to their existing contracts. The verifier validates these rules before the comparison and must not make invalid inputs valid by sorting or deduplicating. Added or removed members remain content changes. Only reordering a permissible declarative enumeration does not change its contract. This also applies to the declarative lists of the fixed Core self-description.
 
-**Fehlend und leer:** Bei einer zulässigen optionalen Listen-Property, also minCount 0 und maxCount ungleich 1, bedeuten ein fehlendes Feld und [] jeweils dieselbe leere Folge. Das gilt rekursiv in object-Werten, bei einem leeren Kind-/Objektfeldvertrag und für fehlende gegenüber leeren imports. Bei minCount größer 0 sind beide Formen ungültig. Zusätzliche Meta-Regeln bleiben wirksam: Die values einer enum-Property müssen beispielsweise weiterhin nichtleer sein. An einem Werttyp verbotene Felder werden nicht durch eine angenommene leere Liste ergänzt.
+**Missing and empty:** For a permissible optional list Property, that is minCount 0 and maxCount not equal to 1, a missing field and [] each mean the same empty sequence. This applies recursively in object values, for an empty Kind/object field contract and for missing versus empty imports. With minCount greater than 0, both forms are invalid. Additional meta-rules remain in force: the values of an enum Property, for example, must still be non-empty. Fields forbidden for a value type are not supplemented by an assumed empty list.
 
-Die Regel betrifft weder optionale Einzelwerte noch leere Strings oder leere Objekte. Ein fehlender object-Einzelwert bleibt von einem ausdrücklich vorhandenen {} verschieden; optionale Listen innerhalb des vorhandenen Objekts werden trotzdem auf dieselbe leere Folge verglichen. null bleibt ausgeschlossen. Eine fehlende Liste bedeutet damit keine zusätzliche Information wie unbekannt, automatisch bestimmen oder übernehmen; ein benötigter Unterschied muss ausdrücklich im Projektvokabular ausgedrückt werden.
+The rule concerns neither optional single values nor empty strings or empty objects. A missing object single value remains distinct from an explicitly present {}; optional lists within the present object are nevertheless compared as the same empty sequence. null remains excluded. A missing list thus does not mean additional information such as unknown, determine automatically or adopt; a needed distinction must be expressed explicitly in the project vocabulary.
 
-Für den Vergleich gewöhnlicher Listen bleiben Reihenfolge und Wiederholungen erhalten. Deklarative Referenzen werden nach eindeutiger Auflösung ohne Reihenfolge verglichen, Enumwerte als exakte Strings und Imports anhand ihrer aufgelösten Bindungen. Quelltext, Prosa, ursprüngliche Reihenfolge und Feldanwesenheit bleiben für Darstellung und Herkunft verfügbar; die Quelldateien werden nicht automatisch ergänzt oder sortiert.
+For the comparison of ordinary lists, order and repetitions are preserved. Declarative references are compared without order after unambiguous resolution, enum values as exact strings and imports by their resolved bindings. Source text, prose, original order and field presence remain available for presentation and provenance; the source files are not automatically supplemented or sorted.
 
-Der Beispielprüfer besitzt dafür eine begrenzte Vergleichsprobe nach erfolgreicher Strukturprüfung. Sie prüft auch geschachtelte Listen, abweichende gewöhnliche Datenfelder und die feste Core-Selbstbeschreibung. Diese frühere Listenprobe ist keine vollständige kanonische Bytekodierung und erzeugt selbst keinen kanonischen Inhaltsdigest. Die vollständige Serialisierung, Defaults und Referenzprojektion sind inzwischen in Abschnitt 8.3 definiert und besitzen eigene Gegenproben.
+The example verifier has a bounded comparison probe for this after a successful structural check. It also checks nested lists, deviating ordinary data fields and the fixed Core self-description. This earlier list probe is not a complete canonical byte encoding and does not itself produce a canonical content digest. The complete serialization, defaults and reference projection are now defined in section 8.3 and have their own counter-probes.
 
-### 5.3 Objektvertragszyklen und Ressourcengrenzen
+### 5.3 Object contract cycles and resource limits
 
-**Nutzerentscheidung vom 16. Oktober 2026:** Gewöhnliche Definitionsreferenzen dürfen Zyklen bilden, einschließlich des festen Core-Anfangs. Referenzziele werden als Identitäten aufgelöst und nicht durch textuelle oder wertseitige Entfaltung ersetzt. Für Objektverträge gilt die folgende eigene Bedingung.
+**User decision of 16 October 2026:** Ordinary definition references may form cycles, including the fixed Core starting point. Reference targets are resolved as identities and not replaced by textual or value-side unfolding. For object contracts, the following separate condition applies.
 
-Ein Objektvertragsgraph hat die object-Propertydefinitionen als Knoten. Eine Kante führt vom Objektvertrag zu jeder darin als Feld deklarierten object-Property. Eine Kante ist verpflichtend, wenn die Ziel-Property minCount>0 hat; das gilt für Einzelwerte und nichtleere Listen gleichermaßen. Der Teilgraph ausschließlich verpflichtender Kanten muss azyklisch sein. Damit enthält jeder erlaubte Objektzyklus mindestens eine optionale Kante mit minCount=0. Auch nicht verwendete Objektverträge werden auf verpflichtende Zyklen geprüft; ein unmöglich zu erfüllender Vertrag wird nicht durch fehlende konkrete Instanzen gültig.
+An object contract graph has the object property definitions as nodes. An edge leads from the object contract to every object Property declared in it as a field. An edge is mandatory if the target Property has minCount>0; this applies equally to single values and non-empty lists. The subgraph of exclusively mandatory edges must be acyclic. Thus every permitted object cycle contains at least one optional edge with minCount=0. Unused object contracts are also checked for mandatory cycles; a contract that is impossible to satisfy does not become valid through the absence of concrete instances.
 
-| Fall | Sprachregel |
+| Case | Language rule |
 | --- | --- |
-| Optionale object-Property verwendet sich selbst | Erlaubt; der Wert kann ohne dieses Feld beziehungsweise mit leerer optionaler Liste enden. |
-| Wechselseitige Objektverträge mit mindestens einer optionalen Kante je Zyklus | Erlaubt; endliche konkrete Werte sind möglich. |
-| Objektzyklus ausschließlich über verpflichtende Felder | Fehler; ein endlicher Wert kann diese Pflicht nicht erfüllen. |
-| Gewöhnliche reference-Property führt auf einen bereits referenzierten Gegenstand | Erlaubter Definitionsbezug; keine Objektentfaltung. |
-| Leere Liste bei minCount=0 und maxCount=0 | Zulässig; keine Objektwerte werden erzeugt oder besucht. |
+| Optional object Property uses itself | Permitted; the value can end without this field or with an empty optional list. |
+| Mutual object contracts with at least one optional edge per cycle | Permitted; finite concrete values are possible. |
+| Object cycle exclusively via mandatory fields | Error; a finite value cannot fulfil this obligation. |
+| Ordinary reference Property leads to an already referenced item | Permitted definition reference; no object expansion. |
+| Empty list with minCount=0 and maxCount=0 | Permitted; no object values are produced or visited. |
 
-Objektwerte bleiben endliche, geschlossene YAML-Werte gemäß Abschnitt 5.1. Die Werteprüfung und kanonische Projektion folgen ausschließlich tatsächlich vorhandenen Werten; sie entfalten den Vertragsgraphen nicht vorab und erzeugen keine fehlenden optionalen Objekte. Die bisherigen Regeln für fehlende optionale Listen gelten innerhalb vorhandener Objekte unverändert. Das Verbot von YAML-Anchors und -Aliasen bleibt bestehen.
+Object values remain finite, closed YAML values according to Section 5.1. Value checking and canonical projection follow exclusively values actually present; they do not expand the contract graph in advance and do not produce missing optional objects. The preceding rules for missing optional lists apply unchanged within present objects. The prohibition of YAML anchors and aliases remains in place.
 
-**Ressourcenpolitik:** Die Sprache setzt keine zusätzlichen festen Größen-, Mengen- oder Tiefenmaxima. Werkzeuge dürfen endliche Verarbeitungsbudgets verwenden, müssen deren Umfang und Werte aber ausdrücklich ausweisen und im Prüfbericht nennen. Eine reine Limitüberschreitung ist kein Nachweis einer Modellverletzung: Die betroffene Prüfung meldet not_completed und erzeugt für diesen Modellumfang weder kanonische Bytes noch Digest oder Vollständigkeitsnachweis. Ein bereits nachgewiesener Sprachfehler bleibt ein Fehler, auch wenn eine weitere Prüfung abbricht; der Abbruch wird zusätzlich ausgewiesen. Ein unabhängiger vollständig geprüfter Modellumfang kann weiterhin ein Ergebnis erhalten.
+**Resource policy:** The language sets no additional fixed maximums of size, quantity or depth. Tools may use finite processing budgets but must declare their scope and values explicitly and name them in the check report. A mere limit overrun is no evidence of a model violation: the affected check reports not_completed and produces, for this model scope, neither canonical bytes nor a digest nor evidence of completeness. A language error that has already been proven remains an error even if a further check aborts; the abort is additionally declared. An independent, completely checked model scope can still receive a result.
 
-Vollständig abgeschlossene Läufe über dieselben gebundenen Eingaben müssen bei ausreichend großen Budgets dieselben kanonischen Bytes und Digests liefern. Budgets und Laufzeitkapazitäten gehören zu Werkzeugkonfiguration und Prüfprovenienz, nicht zur kanonischen Modellprojektion. Es gibt kein stilles Abschneiden, Überspringen oder Runden als erfolgreiche Auswertung. Laufzeitbedingte Rekursions- oder Speicherabbrüche werden ebenfalls als unvollständige Auswertung ausgewiesen.
+Completely finished runs over the same bound inputs must deliver the same canonical bytes and digests given sufficiently large budgets. Budgets and runtime capacities belong to the tool configuration and check provenance, not to the canonical model projection. There is no silent truncation, skipping or rounding as a successful evaluation. Runtime-caused recursion or memory aborts are likewise declared as incomplete evaluation.
 
-Der begrenzte Python-Prüfer verwendet zusätzlich zu den bereits benannten Körperlink-/Zahlenbudgets ein ausdrücklich konfigurierbares Budget für tatsächlich verschachtelte Objektwerte: --max-object-depth, Standard 128. Seine Python-Rekursionsgrenze wird im Bericht genannt; es ist kein eigener fester Speicherbytebetrag konfiguriert. Ein Speicherabbruch wird als solcher gemeldet. Die Objektvertragsprüfung verwendet für ihren verpflichtenden Graphen einen iterativen Durchlauf; reine Vertragstiefe verbraucht kein Objektwert-Tiefenbudget. Diese Probegrenzen sind keine Sprachmaxima. Die Gegenproben kontrollieren abbrechbare Selbst-/Mehrknotenzyklen, verpflichtende Zyklen, geschlossene Werte, unveränderte Quellen und Bytes bei unterschiedlichen erfolgreichen Budgets sowie ausbleibende Digests bei Abbruch.
+In addition to the body link/number budgets already named, the bounded Python verifier uses an explicitly configurable budget for actually nested object values: --max-object-depth, default 128. Its Python recursion limit is named in the report; no separate fixed memory byte amount is configured. A memory abort is reported as such. The object contract check uses an iterative traversal for its mandatory graph; mere contract depth consumes no object value depth budget. These probe limits are not language maximums. The counter-probes check terminable self-cycles and multi-node cycles, mandatory cycles, closed values, unchanged sources and bytes with different successful budgets, and absent digests on abort.
 
-Die Regeln dieses Abschnitts betreffen Definitionsreferenzen und Objektverträge. Für den gesonderten model.yaml-Abhängigkeitsgraphen gilt die Azyklizitätsregel aus Abschnitt 8.1; eine zyklische Definitionsreferenz ist keine Selbstabhängigkeit des Modells.
+The rules of this section concern definition references and object contracts. For the separate model.yaml dependency graph, the acyclicity rule from Section 8.1 applies; a cyclic definition reference is not a self-dependency of the model.
 
-## 6. Eigenständige Properties und eine Datei pro Definition
+## 6. Standalone Properties and one file per definition
 
-**Nutzerentscheidung vom 15. Oktober 2026:** Jede Definition erhält eine eigene Datei und dieselbe Grundform. Eine Property wird ausschließlich als vollständige Definition mit kind Property geschrieben. Unter Kind.spec.properties steht eine Liste von Referenzen auf solche Definitionen. Eingebettete Propertyverträge und kompakte Referenz-Sonderformen sind nicht zulässig.
+**User decision of 15 October 2026:** Each definition receives its own file and the same basic form. A Property is written exclusively as a complete definition with kind Property. Under Kind.spec.properties stands a list of references to such definitions. Embedded property contracts and compact special reference forms are not permitted.
 
-Das [vollständige vereinfachte Exchange-Beispiel](exchange-example/README.md) enthält die tatsächlichen Definitionsdateien samt Core, Vokabular, konkreten Projektgegenständen und begrenzter Strukturprobe. Diese YAML-Dateien besitzen den ausführbaren Beispielinhalt; die folgenden Ansichten erläutern ihn. Der Sprachvertrag besitzt die allgemeinen Regeln. Historische Probedateien werden dadurch nicht umgeschrieben.
+The [complete simplified Exchange example](exchange-example/README.md) contains the actual definition files including Core, vocabulary, concrete project items and a bounded structural probe. These YAML files own the executable example content; the following views explain it. The language contract owns the general rules. Historical probe files are not rewritten by this.
 
-Exchange und seine sieben Properties liegen im Vokabularpaket. Container, Command, Channel und MqttService sind dort vollständig definiert, ebenso die von ihnen benötigten Properties. Kurze IDs bilden den jeweiligen Feldnamen; spec.name ist deshalb nicht nötig. Die Dateinamen dienen nur der Ablage. Insbesondere unterscheiden command-kind.yaml und command-property.yaml den Kind Command von der Property command auch auf Windows eindeutig.
+Exchange and its seven Properties lie in the vocabulary package. Container, Command, Channel and MqttService are completely defined there, as are the Properties they need. Short IDs form the respective field name; spec.name is therefore not needed. The file names serve only for storage. In particular, command-kind.yaml and command-property.yaml distinguish the Kind Command from the Property command unambiguously, also on Windows.
 
 **exchange.yaml**
 
@@ -588,9 +588,9 @@ imports:
 id: Exchange
 kind: Kind
 body: >-
-  Beschreibt einen Request-/Reply-Vertrag zwischen requester und receiver. Antworten behalten
-  die MessageId des Requests. timeoutSeconds gilt pro Versuch; maxAttempts zählt den ersten
-  Versuch mit.
+  Describes a Request/Reply contract between requester and receiver. Replies keep
+  the MessageId of the Request. timeoutSeconds applies per attempt; maxAttempts includes the first
+  attempt.
 spec:
   properties:
   - requester
@@ -611,7 +611,7 @@ imports:
 id: requester
 kind: Property
 body: >-
-  Anwendung in der Auftraggeberrolle dieses Austauschs.
+  Application in the requester role of this exchange.
 spec:
   type: reference
   target: Container
@@ -628,7 +628,7 @@ imports:
 id: receiver
 kind: Property
 body: >-
-  Anwendung in der Bearbeiterrolle dieses Austauschs.
+  Application in the handler role of this exchange.
 spec:
   type: reference
   target: Container
@@ -645,7 +645,7 @@ imports:
 
 id: command
 kind: Property
-body: Vertrag der angeforderten Operation.
+body: Contract of the requested operation.
 spec:
   type: reference
   target: Command
@@ -662,7 +662,7 @@ imports:
 id: requestChannel
 kind: Property
 body: >-
-  Kommunikationsweg für Aufträge.
+  Communication path for requests.
 spec:
   type: reference
   target: Channel
@@ -679,7 +679,7 @@ imports:
 id: replyChannel
 kind: Property
 body: >-
-  Kommunikationsweg für Antworten an die ausstellende Instanz.
+  Communication path for replies to the issuing instance.
 spec:
   type: reference
   target: Channel
@@ -696,7 +696,7 @@ imports:
 id: timeoutSeconds
 kind: Property
 body: >-
-  Positive maximale Wartefrist pro Versuch in Sekunden.
+  Positive maximum waiting period per attempt in seconds.
 spec:
   type: integer
   minCount: 1
@@ -712,22 +712,22 @@ imports:
 id: maxAttempts
 kind: Property
 body: >-
-  Positives Versuchsbudget einschließlich des ersten Versuchs.
+  Positive attempt budget including the first attempt.
 spec:
   type: integer
   minCount: 1
   maxCount: 1
 ```
 
-Der konkrete Gegenstand steht in [list-documents.yaml](exchange-example/model/example/connector/project/list-documents.yaml), seine Teilnehmer, der Command, die Channels und messaging jeweils ebenfalls in eigenen Dateien. Alle Referenzziele sind im Beispiel vorhanden.
+The concrete item is in [list-documents.yaml](exchange-example/model/example/connector/project/list-documents.yaml); its participants, the Command, the Channels and messaging are each also in their own files. All reference targets are present in the example.
 
-**Weitere Nutzerentscheidung vom 15. Oktober 2026:** Property-IDs benötigen keine vorgeschriebenen Präfixe. spec.name ist optional und verwendet bei Abwesenheit die vollständige lokale Property-ID als Feldnamen. Ein Punkt in einer ausdrücklich gegliederten ID erzeugt weder einen Besitzer noch einen weiteren Namespace oder Dateipfad. Ein explizites name kann weiterhin einen abweichenden Feldnamen festlegen; es ändert die Identität nicht.
+**Further user decision of 15 October 2026:** Property IDs need no prescribed prefixes. spec.name is optional and, when absent, uses the complete local Property ID as the field name. A dot in an explicitly structured ID creates neither an owner nor a further namespace or file path. An explicit name can still stipulate a deviating field name; it does not change the identity.
 
-Properties können ohne Kopie von mehreren Kinds oder object-Verträgen referenziert werden. Auch jedes Feld eines geschachtelten object besitzt eine eigene Propertydefinition; die object-Property verweist unter spec.properties auf deren IDs. Die effektiven Feldnamen müssen innerhalb jedes verwendenden Vertrags eindeutig sein. Doppelte Definitionen, doppelte Autoren-Schlüssel und kollidierende Feldnamen sind Fehler. Die Diagnoseherkunft verweist auf die jeweilige Definitionsdatei.
+Properties can be referenced by several Kinds or object contracts without a copy. Each field of a nested object also has its own property definition; the object Property refers to their IDs under spec.properties. The effective field names must be unique within every using contract. Duplicate definitions, duplicate authored keys and colliding field names are errors. The diagnostic provenance refers to the respective definition file.
 
-### 6.1 Kurze Property-ID mit Standardfeldname
+### 6.1 Short Property ID with default field name
 
-Eine kurze ID benötigt kein zusätzliches name-Feld. Die folgende Ansicht entspricht der Property requester aus dem vollständigen Beispiel. Sie ersetzt nicht automatisch eine alte Identität wie exchange.sender; eine solche Umstellung verlangt ausdrücklich angepasste Referenzen.
+A short ID needs no additional name field. The following view corresponds to the Property requester from the complete example. It does not automatically replace an old identity such as exchange.sender; such a switch requires explicitly adjusted references.
 
 **requester.yaml**
 
@@ -738,7 +738,7 @@ imports:
 id: requester
 kind: Property
 body: >-
-  Anwendung in der Auftraggeberrolle dieses Austauschs.
+  Application in the requester role of this exchange.
 spec:
   type: reference
   target: Container
@@ -746,103 +746,103 @@ spec:
   maxCount: 1
 ```
 
-Ein Kind, der diese Property verwendet, referenziert requester statt exchange.sender. Sein konkretes spec-Feld heißt ohne weitere Angabe requester. Eine ausdrückliche Angabe name: requester ergäbe denselben effektiven Feldvertrag, ohne dass damit bereits gleiche Quell- oder Modelldigests behauptet werden. Die Autorenquelle und Herkunft bleiben erhalten; die genaue Digestkodierung ist weiterhin offen.
+A Kind that uses this Property references requester instead of exchange.sender. Without a further entry, its concrete spec field is called requester. An explicit entry name: requester would yield the same effective field contract, without thereby already claiming identical source or model digests. The authoring source and provenance are retained; the exact digest encoding is still open.
 
-Der Standard wird aus der lokalen ID der Zieldefinition gebildet, nicht aus dem geschriebenen Bezug: Auch ein Importalias oder eine Referenz wie example/connector/vocabulary/requester ergibt den Feldnamen requester. Bei einer lokalen ID exchange.sender und fehlendem name wäre der Feldname dagegen vollständig exchange.sender; es wird weder sender noch requester geraten. Ein ausdrücklich gesetztes name: requester hält die bisherige Feldbenennung aufrecht.
+The default is formed from the local ID of the target definition, not from the written reference: an import alias or a reference such as example/connector/vocabulary/requester also yields the field name requester. With a local ID exchange.sender and a missing name, by contrast, the field name would be exchange.sender in full; neither sender nor requester is guessed. An explicitly set name: requester maintains the previous field naming.
 
-Ändert sich eine ID bei fehlendem name, ändert sich auch ihr Standardfeldname. Sollen bestehende Feldschlüssel erhalten bleiben, muss bei der ID-Migration der bisherige Name ausdrücklich gesetzt werden. Umgekehrt kann bei stabiler ID ein ausdrücklich gesetztes name den Feldschlüssel ändern; betroffene konkrete specs müssen migriert werden. Das Löschen eines ausdrücklich abweichenden name aktiviert den ID-Standard und kann daher ebenfalls eine Feldmigration verlangen. IDs werden durch diese Regeln nicht automatisch umbenannt.
+If an ID changes while name is missing, its default field name changes as well. If existing field keys are to be kept, the previous name must be set explicitly during the ID migration. Conversely, with a stable ID, an explicitly set name can change the field key; affected concrete specs must be migrated. Deleting an explicitly deviating name activates the ID default and can therefore also require a field migration. IDs are not automatically renamed by these rules.
 
-## 7. Identitäten und Referenzen
+## 7. Identities and references
 
-**Nutzerentscheidung vom 16. Oktober 2026:** Package ist ausschließlich Namensraum. Jeder Ordner unter einer ausdrücklich bestimmten Modellwurzel bildet genau ein Package; sein relativer Ordnerpfad bestimmt den Package-Namen. Zusätzliche Namespaces und ein namespace-Feld gibt es nicht. Die frühere Kopplung von Package und Versionierungs-/Verteilungseinheit ist aufgehoben. Imports machen weiterhin die vollständigen IDs der Definitionen eines ausdrücklich importierten Packages direkt verfügbar; kind kann beispielsweise Kind oder Exchange statt Core.Kind oder Connector.Exchange verwenden. Package-Namen verwenden / entsprechend dem relativen Ordnerpfad. Vollständige Package-Qualifizierung lautet package/id, kurze Aliasqualifizierung weiterhin Alias.id. Gegliederte lokale IDs behalten Punkte. Die frühere Punktschreibweise für Package-Namen ist abgelöst und keine gültige alternative Schreibweise. Modell ist die gemeinsame Versionierungs- und Verteilungseinheit; Abschnitt 8.1 bestimmt Manifest, Identität, Wurzel und Abhängigkeitsform. Modellabhängigkeiten müssen gemäß Abschnitt 8.1 azyklisch sein; Selbstabhängigkeiten sind damit ebenfalls verboten.
+**User decision of 16 October 2026:** Package is exclusively a namespace. Every folder under an explicitly determined model root forms exactly one Package; its relative folder path determines the Package name. Additional namespaces and a namespace field do not exist. The earlier coupling of Package and versioning/distribution unit is lifted. Imports continue to make the complete IDs of the definitions of an explicitly imported Package directly available; kind can, for example, use Kind or Exchange instead of Core.Kind or Connector.Exchange. Package names use / according to the relative folder path. Full Package qualification is package/id; short alias qualification is still Alias.id. Structured local IDs keep dots. The earlier dot notation for Package names is superseded and is not a valid alternative spelling. The model is the common versioning and distribution unit; section 8.1 determines manifest, identity, root and dependency form. Model dependencies must be acyclic according to section 8.1; self-dependencies are thus also forbidden.
 
-Die logische Identität bleibt **Paket-ID plus stabile lokale id**. Sie enthält weder Kind noch Anzeigename, Dateiname oder Versionsnummer. Der Ordnerpfad bestimmt jedoch die Paket-ID; ein anderer Packageordner ändert deshalb die Identität. Eine bestimmte Fassung wird zusätzlich durch ihren Modellstand und dessen Inhaltsbindungen bestimmt. Die Autorenreferenz package/id beziehungsweise Alias.id wird auf dieses kanonische Paar aufgelöst.
+The logical identity remains **package ID plus stable local id**. It contains neither Kind nor display name, file name or version number. The folder path does, however, determine the package ID; a different Package folder therefore changes the identity. A specific revision is additionally determined by its model state and that model state's content bindings. The authored reference package/id or Alias.id is resolved to this canonical pair.
 
-| Gegenstand | Paket | Lokale id |
+| Item | Package | Local id |
 | --- | --- | --- |
-| Exchange-Kind | example/connector/vocabulary | Exchange |
-| Auftraggeber-Property | example/connector/vocabulary | requester |
-| Konkreter Austausch | example/connector/project | list-documents |
-| Konkrete API | example/connector/project | api |
+| Exchange Kind | example/connector/vocabulary | Exchange |
+| Requester Property | example/connector/vocabulary | requester |
+| Concrete exchange | example/connector/project | list-documents |
+| Concrete API | example/connector/project | api |
 
-Die Package-Namen sind synthetische Beispiele mit / zwischen den Ordnerkomponenten. Eine ID wie exchange.sender ist ein vollständiger lokaler Name innerhalb eines Pakets; der Punkt definiert keine zusätzliche Namensraumhierarchie, Enthaltenheit oder Property-Dereferenzierung. Ein Import macht genau diese vollständige ID verfügbar, nicht automatisch den letzten Abschnitt sender. Ein / ist in einer lokalen id nicht erlaubt: Er trennt Package-Komponenten und bei vollständiger Qualifizierung das Package von der vollständigen lokalen ID. Die gewählte Umstellung wird ausdrücklich in Imports und Referenzen vorgenommen; alte Punktschreibweisen für Packages werden weder akzeptiert noch automatisch weitergeleitet.
+The Package names are synthetic examples with / between the folder components. An ID such as exchange.sender is a complete local name within a package; the dot defines no additional namespace hierarchy, containment or property dereferencing. An import makes exactly this complete ID available, not automatically the last segment sender. A / is not permitted in a local id: it separates Package components and, in full qualification, the Package from the complete local ID. The chosen switch is made explicitly in imports and references; old dot spellings for Packages are neither accepted nor automatically forwarded.
 
-Für Identität und Kollisionsprüfung macht Groß-/Kleinschreibung keinen Unterschied. Innerhalb eines Pakets dürfen daher auch IDs unterschiedlicher Kinds nicht allein durch Groß-/Kleinschreibung unterscheidbar sein. Die erlaubte Autorenform ist trotzdem streng und muss exakt eingehalten werden: Eine abweichende Schreibweise ist ein Fehler, keine akzeptierte alternative Referenz. Der Prüfer korrigiert oder normalisiert keine Quelldatei automatisch. Lesbare IDs werden nicht bei jedem Wechsel der bevorzugten Bezeichnung geändert oder absichtlich für andere Gegenstände wiederverwendet. Ein optionales title ist keine alternative Adresse.
+For identity and collision checking, case makes no difference. Within a package, therefore, IDs of different Kinds also must not be distinguishable solely by case. The permitted authored form is nevertheless strict and must be adhered to exactly: a deviating spelling is an error, not an accepted alternative reference. The verifier does not automatically correct or normalize any source file. Readable IDs are not changed at every change of the preferred designation, nor deliberately reused for other items. An optional title is not an alternative address.
 
-Die Autorenauflösung verwendet direkt verfügbare Namen und bei Bedarf ausdrücklich qualifizierte Namen. Sichtbar sind ausschließlich das eigene Paket und die in der jeweiligen Definitionsdatei deklarierten Imports; die Bereitstellung eines Modells allein öffnet keine fremden Namen:
+Resolution of authored references uses directly available names and, where needed, explicitly qualified names. Only the definition's own package and the imports declared in the respective definition file are visible; supplying a model alone opens no foreign names:
 
-- Eine vollständige id wird gegen die Definitionen des eigenen Pakets und aller in dieser Definitionsdatei direkt importierten Pakete aufgelöst. Genau ein kanonisches Ziel muss passen. Beispiel: Kind stammt aus dem importierten Core-Paket, Exchange aus dem importierten Vokabular, api aus dem eigenen Projektpaket.
-- Mehrere unterschiedliche Ziele mit derselben sichtbaren id sind auch bei bloßem Unterschied der Groß-/Kleinschreibung mehrdeutig. Es gibt weder einen stillen Vorrang lokaler Definitionen noch eine Auswahl nach dem erwarteten Kind oder der Reihenfolge der Imports. Die Referenz muss ausdrücklich qualifiziert oder die Namenskollision aufgelöst werden.
-- Vollständige Qualifizierung verwendet importierterPackagepfad/id, etwa markitect/core/Kind oder example/connector/vocabulary/exchange.sender. Das letzte / trennt Package und vollständige lokale ID. Ein ausdrücklich deklarierter Kurzalias wird dagegen mit Punkt verwendet: Core.Kind oder Connector.exchange.sender. Beide Formen bezeichnen genau ein in dieser Definitionsdatei importiertes Package. Punkte in einer lokalen ID bleiben Teil dieser ID. Aliasqualifizierung kann weiterhin mit einer direkt verfügbaren gegliederten ID kollidieren; unterschiedliche Ziele sind ein Fehler. Es gibt keine schrittweise Namespace- oder Dateipfadsuche.
-- Importaliases dürfen direkt verfügbare vollständige IDs nicht mit einer anderen Bedeutung überdecken. Wäre dieselbe Schreibweise sowohl eine ID als auch eine Aliasqualifizierung mit anderem Ziel, ist das ein Fehler; Alias oder ID müssen geändert werden.
-- Nur direkte Imports machen Namen verfügbar. Weitere bereitgestellte Packages und die Inhalte transitiver Modellabhängigkeiten werden nicht automatisch in den sichtbaren Namensraum einer Datei aufgenommen. Ein Zugriff darauf verlangt einen eigenen ausdrücklichen Import in der verwendenden Definitionsdatei.
+- A complete id is resolved against the definitions of the definition's own package and of all packages directly imported in this definition file. Exactly one canonical target must match. Example: Kind comes from the imported Core package, Exchange from the imported vocabulary, api from the project's own package.
+- Several different targets with the same visible id are ambiguous even if they differ only in letter case. There is neither a silent precedence of local definitions nor a selection by the expected Kind or the order of the imports. The reference must be explicitly qualified or the name collision resolved.
+- Full qualification uses importedPackagePath/id, for example markitect/core/Kind or example/connector/vocabulary/exchange.sender. The last / separates the Package and the complete local ID. An explicitly declared short alias, by contrast, is used with a dot: Core.Kind or Connector.exchange.sender. Both forms denote exactly one Package imported in this definition file. Dots in a local ID remain part of this ID. Alias qualification can still collide with a directly available structured ID; different targets are an error. There is no step-by-step namespace or file path search.
+- Import aliases must not shadow directly available complete IDs with a different meaning. If the same spelling were both an ID and an alias qualification with a different target, that is an error; the alias or the ID must be changed.
+- Only direct imports make names available. Further provided Packages and the contents of transitive model dependencies are not automatically included in the visible namespace of a file. Access to them requires a separate explicit import in the using definition file.
 
-Alle Referenzstellen verwenden diese Zielauflösung: kind, Property.target, Referenzwerte in spec und Körperlinks. kind und Property.target müssen Typdefinitionen bezeichnen; ein konkreter requester-Wert muss beispielsweise eine Container-Definition bezeichnen. Der erwartete Zieltyp wird erst nach der eindeutigen Auflösung geprüft und nicht als Suchheuristik verwendet.
+All reference positions use this target resolution: kind, Property.target, reference values in spec and body links. kind and Property.target must denote type definitions; a concrete requester value must, for example, denote a Container definition. The expected target type is checked only after unambiguous resolution and is not used as a search heuristic.
 
-Fehlende oder mehrdeutige Namen, unbekannte Importaliases und widersprüchliche Importangaben sind Fehler. Es gibt keine Suche außerhalb des eigenen Pakets und der direkten Imports dieser Datei, automatische Versionswahl, Dateipfadinterpretation oder Auflösung über ähnliche Namen. Nach der Auflösung werden kanonische Paket-/ID-Ziele verwendet. Kurze und qualifizierte Referenzen dürfen dasselbe Ziel bezeichnen, erzeugen aber keine verschiedenen Identitäten.
+Missing or ambiguous names, unknown import aliases and contradictory import entries are errors. There is no search outside the definition's own package and the direct imports of this file, no automatic version selection, no file path interpretation and no resolution via similar names. After resolution, canonical package/ID targets are used. Short and qualified references may denote the same target but do not create different identities.
 
-### 7.1 Verbindliche Schreibkonventionen und Kollisionsprüfung
+### 7.1 Binding spelling conventions and collision checking
 
-**Nutzerentscheidung vom 15. Oktober 2026:** Groß-/Kleinschreibung erzeugt keine verschiedene Identität. Die Schreibkonventionen werden als Sprachregeln erzwungen. Verstöße werden abgewiesen; ein Hinweis auf die erwartete Form ist erlaubt, eine stille Korrektur oder Weiterverarbeitung der abweichenden Form nicht.
+**User decision of 15 October 2026:** Letter case does not create a different identity. The spelling conventions are enforced as language rules. Violations are rejected; a hint at the expected form is permitted, silent correction or further processing of the deviating form is not.
 
-| Sprachbezeichner | Vorgeschriebene Form | Beispiele |
+| Language identifier | Prescribed form | Examples |
 | --- | --- | --- |
-| Paketname | Aus Ordnerpfad abgeleitete kleingeschriebene Komponenten, mit / als Trenner | markitect/core, example/connector/vocabulary |
-| ID einer Kind-Definition | PascalCase | Kind, Property, Exchange, MqttService |
-| ID einer Propertydefinition | camelCase | requester, maxAttempts, messageId |
-| Effektiver Feldname, einschließlich ausdrücklichem spec.name | camelCase; gegliederte Namen komponentenweise | requester, timeoutSeconds, exchange.sender |
-| ID eines konkreten Gegenstands | kleingeschriebenes kebab-case | api, list-documents |
-| Importalias | PascalCase | Core, Connector |
-| YAML-Dateiname | kleingeschriebenes kebab-case mit .yaml | exchange.yaml, max-attempts.yaml |
-| Modell-ID | Kleingeschriebene Unicode-Abschnitte, durch . oder - getrennt; Ziffernstart erlaubt, siehe Abschnitt 8.1 | markitect-core, markitect.core, 2026-modell |
-| Versionslabel | Dieselbe Zeichengrammatik wie Modell-ID; zusätzlich keine Bereichsschreibweisen oder latest | 1.0, 1.0.0-rc.1, 2026.10 |
+| Package name | Lowercase components derived from the folder path, with / as separator | markitect/core, example/connector/vocabulary |
+| ID of a Kind definition | PascalCase | Kind, Property, Exchange, MqttService |
+| ID of a property definition | camelCase | requester, maxAttempts, messageId |
+| Effective field name, including explicit spec.name | camelCase; structured names component by component | requester, timeoutSeconds, exchange.sender |
+| ID of a concrete item | lowercase kebab-case | api, list-documents |
+| Import alias | PascalCase | Core, Connector |
+| YAML file name | lowercase kebab-case with .yaml | exchange.yaml, max-attempts.yaml |
+| Model ID | Lowercase Unicode segments, separated by . or -; digit start allowed, see Section 8.1 | markitect-core, markitect.core, 2026-modell |
+| Version label | The same character grammar as model ID; additionally no range notations or latest | 1.0, 1.0.0-rc.1, 2026.10 |
 
-Die Kategorie einer Definition folgt aus ihrer aufgelösten Typisierung, nicht aus der Groß-/Kleinschreibung eines geschriebenen kind-Werts. Eine Kind-Definition ist eine Definition des festen Meta-Kinds Kind; eine Propertydefinition ist eine Definition des festen Meta-Kinds Property. Akronyme folgen derselben Wortschreibweise: MqttService und messageId, nicht MQTTService oder messageID. Eine Referenz muss exakt die deklarierte Schreibweise des eindeutigen Ziels verwenden. kind: exchange statt kind: Exchange ist somit ein Fehler, auch wenn die Diagnose das gemeinte Ziel finden kann. Ebenso sind unpassend geschriebene Paketnamen, Aliase, Feldschlüssel und Dateinamen Fehler. Sprachschlüssel wie id, imports, package, as und minCount müssen exakt geschrieben werden.
+The category of a definition follows from its resolved typing, not from the case of a written kind value. A Kind definition is a definition of the fixed meta-Kind Kind; a property definition is a definition of the fixed meta-Kind Property. Acronyms follow the same word spelling: MqttService and messageId, not MQTTService or messageID. A reference must use exactly the declared spelling of the unambiguous target. kind: exchange instead of kind: Exchange is thus an error, even if the diagnostics can find the intended target. Likewise, inappropriately spelled package names, aliases, field keys and file names are errors. Language keys such as id, imports, package, as and minCount must be written exactly.
 
-Gegliederte lokale IDs bleiben einzelne Namen: Für jede durch einen Punkt getrennte Komponente gilt die Konvention der jeweiligen Definitionskategorie. Eine Property-ID exchange.sender bleibt damit möglich; ohne spec.name ist exchange.sender dann auch der vollständige literale Feldschlüssel, kein Zugriffsausdruck. Auch für solche gegliederten Feldnamen gilt camelCase je Komponente. Ein Kind darf zum Beispiel Messaging.Exchange heißen. Dadurch entsteht kein zusätzlicher Namespace.
+Structured local IDs remain single names: for each component separated by a dot, the convention of the respective definition category applies. A Property ID exchange.sender thus remains possible; without spec.name, exchange.sender is then also the complete literal field key, not an access expression. camelCase per component also applies to such structured field names. A Kind may, for example, be called Messaging.Exchange. This creates no additional namespace.
 
-Paket-/Aliasqualifier und lokale ID werden anhand der deklarierten Imports und tatsächlichen Ziele aufgelöst, nicht anhand ihrer Groß-/Kleinschreibung oder des erwarteten Zieltyps. Es gibt keine Auswahl durch längsten Prefix oder zufällige Reihenfolge.
+Package/alias qualifiers and local ID are resolved by the declared imports and actual targets, not by their case or the expected target type. There is no selection by longest prefix or random order.
 
-Kollisionen werden unabhängig von Groß-/Kleinschreibung geprüft: Paket-IDs, Definitions-IDs innerhalb eines Pakets, Aliase innerhalb einer Definitionsdatei, effektive Feldnamen innerhalb eines Kind-/Objektvertrags sowie Dateinamen im jeweiligen Paket. Kind und Property bekommen dabei keine getrennten ID-Namensräume. Insbesondere sind Command und command im selben Paket ein Konflikt, selbst wenn beide einzeln die Konvention ihrer Kategorie erfüllen. Unterschiedliche Dateinamen lösen diesen Definitionskonflikt nicht.
+Collisions are checked independently of case: package IDs, definition IDs within a package, aliases within a definition file, effective field names within a Kind/object contract and file names in the respective package. Kind and Property do not get separate ID namespaces in this. In particular, Command and command in the same package are a conflict, even if each individually satisfies the convention of its category. Different file names do not resolve this definition conflict.
 
-Der Vergleich dient ausschließlich Identität, Konflikterkennung und Diagnose. Quelltext, gespeicherte kanonische Schreibweise und Referenzen werden nicht automatisch umgeschrieben. Eine falsche Referenz ist bei eindeutigem Ziel ein Schreibfehler; mehrere normalisiert passende Zielidentitäten bleiben mehrdeutig und werden nicht durch die erwartete Kategorie oder eine exakt geschriebene Teilmenge ausgewählt. Datenwerte, Enumwerte, body, title, Topicmuster und Operationskennungen werden nicht allgemein ohne Beachtung der Groß-/Kleinschreibung verglichen; dafür gilt der jeweilige Datenvertrag.
+The comparison serves exclusively identity, conflict detection and diagnostics. Source text, stored canonical spelling and references are not automatically rewritten. A wrong reference with an unambiguous target is a spelling error; several target identities that match after normalization remain ambiguous and are not selected by the expected category or an exactly written subset. Data values, enum values, body, title, topic patterns and operation identifiers are not generally compared case-insensitively; the respective data contract applies to them.
 
-Die Unicode-Grundlage und der genaue Namensvergleich stehen in Abschnitt 7.2. Das zuvor begrenzte ASCII-Profil ist abgelöst. Die zulässigen Zeichen folgen dem dort gebundenen Unicode-Profil; Körperlink-Escapes und Quellenpositionen sind in Abschnitt 4.5 festgelegt. Das YAML-/Werteprofil steht in Abschnitt 5.1.
+The Unicode basis and the exact name comparison are in section 7.2. The earlier, restricted ASCII profile is superseded. The permitted characters follow the Unicode profile bound there; body link escapes and source positions are stipulated in section 4.5. The YAML/value profile is in section 5.1.
 
-Die bisherige Exchange-Dateisammlung enthält noch den Definitionskonflikt Command/command. Der Nutzer hat eine Modellierungsdiskussion vor einer Umbenennung oder Zusammenfassung verlangt. Deshalb bleibt dieser Konflikt ausdrücklich sichtbar und muss vom aktuellen Prüfer abgewiesen werden. Die früheren bestandenen Berichte beziehen sich auf die vorherige, noch groß-/kleinschreibungssensitive Regel; sie sind keine Bestätigung des aktuellen Stands.
+The existing Exchange file collection still contains the definition conflict Command/command. The user requested a modeling discussion before any renaming or merging. This conflict therefore remains explicitly visible and must be rejected by the current verifier. The earlier passed reports refer to the previous, still case-sensitive rule; they are not a confirmation of the current state.
 
-### 7.2 Unicode, Normalform und Namensvergleich
+### 7.2 Unicode, normal form and name comparison
 
-**Nutzerentscheidung vom 15. Oktober 2026:** Unicode ist die durchgängige Textgrundlage. Alle Dateien verwenden UTF-8. Unicode ist in body, title und String-/Enumwerten ebenso zulässig wie in Paketnamen, lokalen IDs, Aliasen, effektiven Feldnamen und YAML-Dateinamen. Die festen Sprachschlüssel und Strukturzeichen wie /, Punkt, Bindestrich, .yaml und Körperlinkbegrenzer behalten ihre genaue Schreibweise und Bedeutung.
+**User decision of 15 October 2026:** Unicode is the consistent text basis. All files use UTF-8. Unicode is permitted in body, title and string/enum values just as in package names, local IDs, aliases, effective field names and YAML file names. The fixed language keys and structural characters such as /, dot, hyphen, .yaml and body link delimiters keep their exact spelling and meaning.
 
-**Versionsbindung des aktuellen Entwurfsprofils:** Die Zeichentabellen sind auf Unicode 15.1.0 festgelegt, entsprechend [UAX #31, Revision 39](https://www.unicode.org/reports/tr31/tr31-39.html). Diese Bindung verwendet die Tabellen des vorhandenen Python-3.13-Prüfers und ist keine Behauptung der neuesten Unicode-Version. Ein Wechsel der Tabellen ist eine ausdrückliche Änderung des Sprachprofils. Eine Implementierung darf nicht still die jeweilige Betriebssystem-, Laufzeit- oder Ländereinstellung verwenden. Der Beispielprüfer kontrolliert die Tabellenversion und weist eine Abweichung ab.
+**Version binding of the current draft profile:** The character tables are fixed to Unicode 15.1.0, corresponding to [UAX #31, Revision 39](https://www.unicode.org/reports/tr31/tr31-39.html). This binding uses the tables of the existing Python 3.13 verifier and is not a claim about the newest Unicode version. A change of the tables is an explicit change of the language profile. An implementation must not silently use the respective operating system, runtime or locale setting. The example verifier checks the table version and rejects a deviation.
 
-Für Bezeichner gilt folgendes Profil:
+The following profile applies to identifiers:
 
-- Ein Namenswort beginnt mit XID_Start und wird mit XID_Continue fortgesetzt. Connector_Punctuation, einschließlich Unterstrich, ist ausgeschlossen; dies erhält die bereits gewählten Schreibkonventionen. Leerzeichen, Emoji und beliebige Symbole werden dadurch nicht zu Namenszeichen. In normalen Textwerten bleiben sie gemäß dem YAML-Profil aus Abschnitt 5.1 verwendbar.
-- / gliedert Package-Namen; Punkte gliedern lokale IDs. Jede Komponente muss nichtleer sein. Ein einzelner Ordnername enthält keine Punkte. Package-Namen sind relative logische Pfade ohne führendes oder abschließendes /, leere Komponenten, . oder .., Backslash, Laufwerkspräfix oder URL-Dekodierung. Es findet keine Dateisystem-Pfadnormalisierung statt. Aliase sind einzelne PascalCase-Namen ohne Punkte. Bei konkreten IDs und Dateinamen trennt der ASCII-Bindestrich nichtleere kleingeschriebene Wörter; nach einem Bindestrich darf ein Teil auch mit einer Unicode-Dezimalziffer beginnen, etwa größe-2. Die erste Komponente beginnt weiterhin mit XID_Start.
-- PascalCase und camelCase werden anhand des ersten Buchstabens mit Groß-/Kleinschreibung einer Komponente geprüft. Titlecase-Zeichen gelten dabei als große Initiale. Ohne solche Buchstaben entfällt diese Initialenvorgabe, etwa bei 文档. Für kleingeschriebene Namen müssen alle Buchstaben mit Groß-/Kleinschreibung klein sein. In PascalCase-/camelCase-Wörtern sind aufeinanderfolgende Großbuchstaben weiterhin ausgeschlossen; kombinierende Marken werden bei dieser Prüfung übersprungen. Somit bleiben Überweisung, gültigBis und MqttService passende Beispiele. Diese Kategorien folgen weiter aus der Typisierung.
+- A name word begins with XID_Start and continues with XID_Continue. Connector_Punctuation, including underscore, is excluded; this preserves the spelling conventions already chosen. Spaces, emoji and arbitrary symbols thus do not become name characters. In normal text values they remain usable according to the YAML profile from section 5.1.
+- / structures Package names; dots structure local IDs. Each component must be non-empty. A single folder name contains no dots. Package names are relative logical paths without leading or trailing /, empty components, . or .., backslash, drive prefix or URL decoding. No file system path normalization takes place. Aliases are single PascalCase names without dots. In concrete IDs and file names, the ASCII hyphen separates non-empty lowercase words; after a hyphen, a part may also begin with a Unicode decimal digit, for example größe-2. The first component still begins with XID_Start.
+- PascalCase and camelCase are checked by the first cased letter of a component. Titlecase characters count as an uppercase initial. Without such letters, this initial requirement does not apply, for example for 文档. For lowercase names, all cased letters must be lowercase. In PascalCase/camelCase words, consecutive uppercase letters remain excluded; combining marks are skipped in this check. Thus Überweisung, gültigBis and MqttService remain matching examples. These categories still follow from the typing.
 
-**Strenge Autorenform:** Namen, Dateinamen und geschriebene Referenzen müssen bereits in [Unicode-Normalform NFC](https://www.unicode.org/reports/tr15/) vorliegen. Eine zerlegte Schreibweise, etwa U+0075 U+0308 anstelle von U+00FC für ü, wird mit Diagnose abgewiesen. Weder eine Quelldatei noch ihr dekodierter Name wird still korrigiert. Eine Referenz muss außerdem exakt die deklarierte Schreibweise des eindeutigen Ziels verwenden. Gleichwertigkeit im Kollisionsvergleich macht eine abweichende Autorenreferenz nicht gültig.
+**Strict authored form:** Names, file names and written references must already be in [Unicode Normalization Form NFC](https://www.unicode.org/reports/tr15/). A decomposed spelling, for example U+0075 U+0308 instead of U+00FC for ü, is rejected with a diagnostic. Neither a source file nor its decoded name is silently corrected. A reference must furthermore use exactly the declared spelling of the unambiguous target. Equivalence in the collision comparison does not make a deviating authored reference valid.
 
-**Kollisionsschlüssel:** Für Namen verwenden wir Unicode Canonical Caseless Matching mit vollständigem Default Case Folding, kulturunabhängig und ohne türkische Sonderbehandlung. Präzise gilt K(s) = NFD(toCasefold(NFD(s))) gemäß Definition D145 des Unicode-Standards. Zwei Namen kollidieren genau dann, wenn ihre Schlüssel gleich sind, jeweils im bereits festgelegten Geltungsbereich: Paket, Definition, dateilokaler Alias, Feldvertrag oder Dateiauswahl. Der Vergleichsschlüssel ist ein internes Prüfmittel, keine neue gespeicherte Autorenform. Insbesondere kollidieren straße und strasse sowie Straße und Strasse. Auch eine entsprechende Referenzabweichung wird abgewiesen; der Prüfer wählt nicht eine exakt geschriebene Teilmenge aus mehreren kollidierenden Zielen.
+**Collision key:** For names we use Unicode Canonical Caseless Matching with full Default Case Folding, culture-independent and without Turkish special handling. Precisely, K(s) = NFD(toCasefold(NFD(s))) applies according to definition D145 of the Unicode Standard. Two names collide exactly when their keys are equal, each within the already stipulated scope: package, definition, file-local alias, field contract or file selection. The comparison key is an internal means of checking, not a new stored authored form. In particular, straße and strasse as well as Straße and Strasse collide. A corresponding reference deviation is also rejected; the verifier does not select an exactly written subset from several colliding targets.
 
-NFC und dieser Vergleich bewirken keine allgemeine Umschrift: ä und ae bleiben verschieden. Eine zusätzliche NFKC-Kompatibilitätsfaltung ist nicht gewählt. body, title, String- und Enumwerte werden weder normalisiert noch ohne Beachtung der Groß-/Kleinschreibung verglichen; dort bleibt der dekodierte Text erhalten und es gilt der jeweilige Datenvertrag. Die NFC-Anforderung betrifft auch Feldschlüssel, aber nicht deren gewöhnliche Textwerte. Herkunft und ursprüngliche Dateibytes bleiben für Diagnosen verfügbar.
+NFC and this comparison do not cause general transliteration: ä and ae remain different. An additional NFKC compatibility folding is not chosen. body, title, string and enum values are neither normalized nor compared case-insensitively; there the decoded text is preserved and the respective data contract applies. The NFC requirement also concerns field keys, but not their ordinary text values. Provenance and original file bytes remain available for diagnostics.
 
-Der begrenzte Beispielprüfer wendet diese Regeln auf seine geladenen Pakete, Namen, Importe, Feldverträge und strukturierten Referenzen an. Seine Gegenproben umfassen Unicode-Namen, Schriften ohne Groß-/Kleinschreibung, kombinierende Marken, unveränderte Textdaten, NFC-Verstöße, die straße/strasse-Kollision in allen Namensbereichen und strenge Referenzschreibweise. Die Körperlink-Regeln aus Abschnitt 4.5 und die Leseform aus Abschnitt 5.1 besitzen eigene Gegenproben; ein allgemeiner Parser-Konformitätsnachweis wird dadurch nicht behauptet. Die Frage nach einer getrennten Command-Definition ist eine Vokabularfrage und erweitert diesen Sprachvertrag nicht.
+The bounded example verifier applies these rules to its loaded packages, names, imports, field contracts and structured references. Its counter-probes cover Unicode names, scripts without letter case, combining marks, unchanged text data, NFC violations, the straße/strasse collision in all name scopes and strict reference spelling. The body link rules from section 4.5 and the reading form from section 5.1 have their own counter-probes; a general parser conformance proof is not claimed by this. The question of a separate Command definition is a vocabulary question and does not extend this language contract.
 
-Die gemeinsame Grammatik für Modell-IDs und Versionslabels steht in Abschnitt 8.1. Sie verwendet dieselben Unicode-Tabellen, NFC-Autorenform und Kollisionsschlüssel, erlaubt jedoch am Beginn jedes Abschnitts zusätzlich Unicode-Dezimalziffern. Diese Erweiterung gilt nicht automatisch für Packageordner, Definitions-IDs, Importaliase oder Dateinamen.
+The shared grammar for model IDs and version labels is in Section 8.1. It uses the same Unicode tables, NFC authored form and collision key, but additionally allows Unicode decimal digits at the beginning of each segment. This extension does not automatically apply to Package folders, definition IDs, import aliases or file names.
 
-### 7.3 Ordner und Packages
+### 7.3 Folders and Packages
 
-**Nutzerentscheidung vom 16. Oktober 2026:** Das kanonische Modell wird wie Dokumentation in Ordnern strukturiert. Die ausdrücklich bestimmte Modellwurzel ist selbst kein Package und darf keine Definitionsdateien unmittelbar enthalten. Unterhalb dieser Wurzel ist jeder Ordner ein Package, auch ein Zwischenordner ohne eigene Definitionen. Jede Definition liegt somit in einem benannten Unterordner und gehört genau zum Package ihres unmittelbar enthaltenden Ordners. Unterordner gehören zu eigenen Packages; eine rekursive Erfassung macht deren Definitionen nicht zu Mitgliedern des Elternpackages. Das Package des Elternordners wird nicht geerbt.
+**User decision of 16 October 2026:** The canonical model is structured in folders like documentation. The explicitly determined model root is itself not a Package and must not directly contain any definition files. Below this root, every folder is a Package, including an intermediate folder without definitions of its own. Every definition thus lies in a named subfolder and belongs to exactly the Package of its immediately containing folder. Subfolders belong to their own Packages; recursive collection does not make their definitions members of the parent Package. The Package of the parent folder is not inherited.
 
-**Gewählte Autorenkonvention:** Packages werden nach fachlichem Zusammenhang beziehungsweise Feature geschnitten (package by feature / vertical slices). Zusammengehörige Kinds, Properties und konkrete Gegenstände stehen gemeinsam beim jeweiligen Feature. Ihre Definitionsart ist kein Grund für getrennte Ordner wie kinds/, properties/ oder instances/. Ein weiterer Unterordner entspricht einem fachlichen Teilbereich; jede Definition behält ihre eigene Datei. Diese Konvention ist eine Entscheidung zur Modellorganisation, kein zusätzliches Core-Konzept und kein syntaktisches Verbot bestimmter Ordnernamen. Der Strukturprüfer leitet aus einem Ordnernamen keine fachliche Angemessenheit ab.
+**Chosen authoring convention:** Packages are cut by domain context or feature (package by feature / vertical slices). Kinds, Properties and concrete items that belong together stand together with the respective feature. Their definition type is no reason for separate folders such as kinds/, properties/ or instances/. A further subfolder corresponds to a domain subarea; each definition keeps its own file. This convention is a decision on model organization, not an additional Core concept and not a syntactic prohibition of particular folder names. The structural verifier derives no domain appropriateness from a folder name.
 
-Der Package-Name entspricht dem nicht leeren Pfad des unmittelbar enthaltenden Ordners relativ zur Modellwurzel und wird nicht zusätzlich in einer package.yaml oder in jeder Definition gepflegt. Es gibt weder einen leeren Package-Namen noch ein Package namens . oder einen Ersatznamen aus der Modell-ID. Die gewählte Schreibweise verbindet die Ordnerkomponenten mit / und entspricht damit unmittelbar dem relativen Ordnerpfad:
+The Package name equals the non-empty path of the immediately containing folder relative to the model root and is not maintained additionally in a package.yaml or in every definition. There is neither an empty Package name nor a Package named . nor a substitute name from the model ID. The chosen spelling joins the folder components with / and thus corresponds directly to the relative folder path:
 
 ```text
-model/                                  # Modellwurzel; kein Package, keine Definitionen hier
+model/                                  # model root; no Package, no definitions here
   markitect/                            # markitect
     core/                               # markitect/core
       kind.yaml                         # (markitect/core, Kind)
@@ -851,24 +851,24 @@ model/                                  # Modellwurzel; kein Package, keine Defi
     connector/                          # example/connector
       exchange.yaml                     # (example/connector, Exchange): Kind
       requester.yaml                    # (example/connector, requester): Property
-      list-documents.yaml               # (example/connector, list-documents): konkreter Gegenstand
+      list-documents.yaml               # (example/connector, list-documents): concrete item
 ```
 
-Dieser Ausschnitt veranschaulicht die fachliche Gruppierung. Der ältere ausführbare Exchange-Durchstich trennt noch vocabulary/ und project/, um Imports und Referenzformen durchzuspielen; diese Aufteilung ist keine Empfehlung für die Autorenorganisation und kein Bestandteil der Sprachsyntax.
+This excerpt illustrates the domain grouping. The older executable Exchange vertical slice still separates vocabulary/ and project/ in order to play through imports and reference forms; this division is not a recommendation for authoring organization and not part of the language syntax.
 
-Ein Ordnername entspricht genau einer bisherigen kleingeschriebenen Package-Komponente aus Abschnitt 7.2; ein Punkt im einzelnen Ordnernamen erzeugt keine zusätzlichen Komponenten und ist in dieser Form unzulässig. Groß-/Kleinschreibung und Unicode-Kollisionen werden unabhängig vom Verhalten des Dateisystems geprüft, einschließlich straße/strasse. Namen müssen bereits in NFC und in der vorgeschriebenen Form vorliegen; keine automatische Korrektur.
+A folder name corresponds to exactly one lowercase Package component as previously defined in Section 7.2; a dot in a single folder name does not create additional components and is impermissible in this form. Case and Unicode collisions are checked independently of the behavior of the file system, including straße/strasse. Names must already be in NFC and in the prescribed form; no automatic correction.
 
-Die Definitionen werden aus ihren jeweiligen Ordnern erfasst. Es gibt keine gesonderte definitionFiles-Liste pro Package und keinen zusätzlichen definitions/-Pflichtordner. Die lokale id steht weiterhin ausdrücklich in jeder Definitionsdatei; sie wird nicht aus dem Dateinamen abgeleitet. Umbenennen einer Datei im selben Ordner erhält ihre Identität. Verschieben einer Datei in einen anderen Packageordner oder Umbenennen/Verschieben eines Packageordners ändert die betroffenen qualifizierten Identitäten und verlangt angepasste Referenzen. Ein anderer physischer Speicherort der gesamten Modellwurzel erhält die relativen Package-Namen.
+The definitions are discovered from their respective folders. There is no separate definitionFiles list per Package and no additional mandatory definitions/ folder. The local id is still stated explicitly in every definition file; it is not derived from the file name. Renaming a file in the same folder preserves its identity. Moving a file into another Package folder or renaming/moving a Package folder changes the affected qualified identities and requires adjusted references. A different physical storage location of the entire model root preserves the relative Package names.
 
-Die Ordnerhierarchie erzeugt keine impliziten Imports, Vererbung, Enthaltenheitsbeziehungen zwischen Definitionen oder fachlichen Beziehungen. Eltern-, Kind- und Geschwisterpackages müssen in jeder verwendenden Datei ausdrücklich importiert werden. Ein Package hat keine eigene Version, Abhängigkeitsliste oder Veröffentlichungsdatei. Modell bezeichnet die gemeinsame Versionierungs- und Verteilungseinheit und kann mehrere Packages enthalten. Abschnitt 8.1 bestimmt Modellidentität, Wurzel und Manifestform. Die Modellidentität erzeugt keinen automatischen Package-Präfix und keinen zusätzlichen Teil der Definitionsidentität. Abschnitt 8.2 bestimmt das Lockformat; Abschnitt 8.3 bestimmt die kanonischen Digestbytes.
+The folder hierarchy creates no implicit imports, inheritance, containment relationships between definitions or domain relationships. Parent, child and sibling Packages must be explicitly imported in every using file. A Package has no version, dependency list or publication file of its own. Model denotes the shared versioning and distribution unit and can contain several Packages. Section 8.1 determines model identity, root and manifest form. The model identity creates no automatic Package prefix and no additional part of the definition identity. Section 8.2 determines the lock format; Section 8.3 determines the canonical digest bytes.
 
-Die Modellwurzel ist ausdrücklich in model.yaml bestimmt. Der aktuelle Durchstich verwendet für beide Modelle jeweils root: model und legt alle Definitionen in benannte Unterordner. Definitionen unmittelbar in dieser Wurzel sind Sprachfehler; der Prüfer meldet sie als fehlgeschlagen und verschiebt oder korrigiert die Dateien nicht automatisch. Das ausdrücklich gebundene model.yaml und die danebenliegende model-lock.yaml sind Modellmetadaten und keine Definitionsdateien; auch bei root: . erzeugen sie kein Wurzel-Package. Abschnitt 8.1 bestimmt die physische Pfadschreibweise, das Verbot von Umleitungen und überlappenden Modellwurzeln.
+The model root is explicitly determined in model.yaml. The current vertical slice uses root: model for each of the two models and places all definitions in named subfolders. Definitions directly in this root are language errors; the verifier reports them as failed and does not automatically move or correct the files. The explicitly bound model.yaml and the model-lock.yaml next to it are model metadata and not definition files; even with root: . they create no root Package. Section 8.1 determines the physical path spelling and the prohibition of redirections and overlapping model roots.
 
-## 8. Dateilokale Imports und gebundene Modelle
+## 8. File-local imports and bound models
 
-**Gewählt:** Imports stehen in der jeweiligen Definitionsdatei und gelten ausschließlich dort. Package bezeichnet das aus dem Ordnerpfad abgeleitete Namensgebiet aus Abschnitt 7.3. Es ist keine Versionierungs- oder Verteilungseinheit. Die frühere package.yaml mit eigener Package-Version und dependencies ist abgelöst. Die gemeinsame Manifestform model.yaml steht in Abschnitt 8.1.
+**Chosen:** Imports stand in the respective definition file and apply exclusively there. Package denotes the name area derived from the folder path from section 7.3. It is not a versioning or distribution unit. The earlier package.yaml with its own Package version and dependencies is superseded. The common manifest form model.yaml is in section 8.1.
 
-**list-documents.yaml im Ordner model/example/connector/project/:**
+**list-documents.yaml in the folder model/example/connector/project/:**
 
 ```yaml
 imports:
@@ -877,7 +877,7 @@ imports:
 
 id: list-documents
 kind: Exchange
-body: Die API fordert Dokumentmetadaten beim Connector an.
+body: The API requests document metadata from the Connector.
 spec:
   requester: api
   receiver: onprem
@@ -888,11 +888,11 @@ spec:
   maxAttempts: 2
 ```
 
-Die Datei importiert das bereitgestellte Package example/connector/vocabulary und kann deshalb Exchange unmittelbar verwenden. api, onprem, list-documents-command und die konkreten Channels sind eigene Projektdefinitionen. Ein zusätzlicher Core-Import ist für diese Datei nicht erforderlich, weil sie keinen Core-Namen unmittelbar referenziert. exchange.yaml und jede seiner Propertydateien importieren markitect/core dagegen selbst, um Kind beziehungsweise Property verwenden zu können.
+The file imports the provided Package example/connector/vocabulary and can therefore use Exchange directly. api, onprem, list-documents-command and the concrete Channels are the project's own definitions. An additional Core import is not required for this file because it references no Core name directly. exchange.yaml and each of its property files, by contrast, import markitect/core themselves in order to be able to use Kind or Property respectively.
 
-Das optionale Hüllenfeld imports enthält die ausdrücklich in dieser Datei sichtbaren fremden Packages. Ohne imports oder bei imports: [] sind ausschließlich Definitionen des eigenen Packages sichtbar. Ein unbekanntes oder im gebundenen Eingabesatz nicht bereitgestelltes Package ist ein Fehler. Ein fremdes Package muss aus dem eigenen Modell oder einer ausdrücklich deklarierten direkten Modellabhängigkeit stammen. Transitive Modelle werden zur Vertragsprüfung geladen; ein direkter Zugriff auf deren Packages verlangt eine eigene direkte Abhängigkeit im verwendenden Modellmanifest. Imports wählen weder eine neue Version noch einen physischen Dateisystempfad. Die Bereitstellung eines externen Modells und seine Version öffnen allein keine Namen; umgekehrt ist ein Import keine Installationsanweisung.
+The optional envelope field imports contains the foreign Packages explicitly visible in this file. Without imports or with imports: [], exclusively definitions of its own Package are visible. An unknown Package, or one not supplied in the bound input set, is an error. A foreign Package must come from the own model or from an explicitly declared direct model dependency. Transitive models are loaded for contract checking; direct access to their Packages requires a direct dependency of its own in the using model manifest. Imports select neither a new version nor a physical file system path. The provisioning of an external model and its version alone open no names; conversely, an import is not an installation instruction.
 
-**Gewählte Aliasform:** Jeder Import ist ein Objekt mit erforderlichem package und optionalem as. Eine String-Kurzform wird nicht parallel geführt. as deklariert einen dateilokalen Namen in PascalCase und verändert weder Package-Identität noch verfügbare Definitionenmenge.
+**Chosen alias form:** Each import is an object with a required package and an optional as. A string short form is not kept in parallel. as declares a file-local name in PascalCase and changes neither Package identity nor the set of available definitions.
 
 ```yaml
 imports:
@@ -902,50 +902,50 @@ imports:
     as: Connector
 ```
 
-Ohne as ist ein Package nur unter seinem vollständigen Package-Namen qualifizierbar. Mit as sind sowohl vollständiger Name als auch kurzer Alias zulässig. Die vollständigen lokalen IDs des importierten Packages werden in beiden Fällen unmittelbar verfügbar: Kind, Core.Kind und markitect/core/Kind können dasselbe Ziel bezeichnen. Ein Alias macht den Import nicht zu einem nur qualifiziert sichtbaren Import.
+Without as, a Package can be qualified only under its complete Package name. With as, both the complete name and the short alias are permitted. The complete local IDs of the imported Package become directly available in both cases: Kind, Core.Kind and markitect/core/Kind can denote the same target. An alias does not make the import an import that is visible only when qualified.
 
-Aliase gelten nur in der deklarierenden Definitionsdatei. Imports anderer Dateien, die Imports einer referenzierten Kind-/Propertydefinition, Elternpackages und transitive Modellabhängigkeiten erweitern diese Sicht nicht. Referenzwerte und Körperlinks werden immer im Dateikontext aufgelöst, in dem sie geschrieben sind. Auch mehrere Packages derselben Verteilungseinheit brauchen ihre eigenen dateilokalen Imports.
+Aliases apply only in the declaring definition file. Imports of other files, the imports of a referenced Kind/property definition, parent Packages and transitive model dependencies do not extend this view. Reference values and body links are always resolved in the file context in which they are written. Even several Packages of the same distribution unit need their own file-local imports.
 
-Doppelte Aliase, doppelte Imports desselben Packages und verdeckte verschiedene Ziele werden unabhängig von Groß-/Kleinschreibung abgewiesen. Core.Kind und core.Kind sind keine verschiedenen Adressen; bei deklariertem Core ist core.Kind ein Fehler. Importauswahl, volle Package-Qualifizierung und Kurzalias dürfen zusammen keine unterschiedlichen Zielidentitäten für dieselbe normalisierte Referenzschreibweise erzeugen. Es gibt keinen Vorrang nach exakter Schreibweise, Ziel-Kind oder Prefixlänge. Abschnitt 7.2 besitzt das Unicode-Profil.
+Duplicate aliases, duplicate imports of the same Package and shadowed different targets are rejected case-insensitively. Core.Kind and core.Kind are not different addresses; with Core declared, core.Kind is an error. Import selection, full Package qualification and short alias must not together create different target identities for the same normalized reference spelling. There is no precedence by exact spelling, target Kind or prefix length. Section 7.2 owns the Unicode profile.
 
-**Inhaltsbindung bleibt erforderlich:** Externe wiederverwendbare Modelle werden mit genauer Version und konkretem Inhaltsdigest gebunden. Versionsbereiche, latest und stiller Inhaltsaustausch unter einer gebundenen Version sind nicht vorgesehen. Der gebundene Eingabesatz muss jede kanonische Package-/ID-Identität eindeutig bereitstellen; mehrere Imports oder Aliase umgehen keinen Konflikt. Das lokale Modell wird durch seinen festen Quell-/Modellstand gebunden; jede lokale Änderung verlangt keine neue Veröffentlichungsnummer.
+**Content binding remains required:** External reusable models are bound with an exact version and a concrete content digest. Version ranges, latest and silent content exchange under a bound version are not provided for. The bound input set must supply every canonical Package/ID identity unambiguously; multiple imports or aliases do not circumvent a conflict. The local model is bound by its fixed source/model state; no local change requires a new publication number.
 
-Das [vollständige Exchange-Beispiel](exchange-example/README.md) verwendet jetzt zwei model.yaml-Manifeste, explizite lokale Bereitstellung und aus den jeweiligen Modellwurzeln abgeleitete Packages. Die synthetischen Versionen behaupten keine veröffentlichten Bibliotheken. Sein Prüfer kontrolliert Manifeste, genaue lokale Versionsbindungen und Package-Zugehörigkeit; er prüft auch die Lockstruktur und deren Manifestbindungen, und die echten kanonischen Inhaltsdigests gültiger externer Modelle. Die [historische Beispieldatei](identities/project-c.yaml) und frühere Prüfberichte bleiben Belege ihres damaligen Formats und werden nicht umgeschrieben.
+The [complete Exchange example](exchange-example/README.md) now uses two model.yaml manifests, explicit local provision and Packages derived from the respective model roots. The synthetic versions claim no published libraries. Its verifier checks manifests, exact local version bindings and Package membership; it also checks the lock structure and its manifest bindings, and the real canonical content digests of valid external models. The [historical example file](identities/project-c.yaml) and earlier check reports remain evidence of their format at the time and are not rewritten.
 
-### 8.1 model.yaml: Identität, Wurzel und Abhängigkeiten
+### 8.1 model.yaml: identity, root and dependencies
 
-**Nutzerentscheidung vom 16. Oktober 2026:** Jedes zusammengehörige Modell besitzt ein Manifest mit dem festen Dateinamen model.yaml. Manifest bezeichnet die Aufgabe dieser Datei; Modell ist die gemeinsame Versionierungs- und Verteilungseinheit für mehrere Packages. model.yaml ist Bereitstellungsmetadatum, keine zusätzliche Definition und kein neuer privilegierter Core-Kind. Jede eigentliche Definition behält ihre einheitliche Hülle.
+**User decision of 16 October 2026:** Every model, as one unit of Packages that belong together, has a manifest with the fixed file name model.yaml. Manifest denotes the role of this file; model is the common versioning and distribution unit for several Packages. model.yaml is provisioning metadata, not an additional definition and not a new privileged Core Kind. Every actual definition keeps its uniform envelope.
 
-| Feld | Gewählter Vertrag |
+| Field | Chosen contract |
 | --- | --- |
-| formatVersion | Erforderliche Ganzzahl; bindet Manifestformat und Sprachvertrag. Der aktuelle Entwurf verwendet 1. Unbekannte Fassungen werden nicht still als 1 interpretiert. |
-| id | Erforderliche stabile, nichtleere Modellidentität; unabhängig von Checkout-/Installationsordner, Speicherort, Modellwurzel, Package-Namen und Version. |
-| version | Genaue textuelle Veröffentlichungsfassung aller enthaltenen Packages. Bei lokaler unveröffentlichter Arbeit optional; für Veröffentlichung und als bereitgestellte Abhängigkeit erforderlich. |
-| root | Erforderlicher nichtleerer relativer Verzeichnispfad, bezogen auf den Ordner der jeweiligen model.yaml. Es gibt keinen geratenen Standardordner. |
-| dependencies | Erforderliches Mapping von direkt benötigter Modell-ID auf genaue textuelle Version; ohne Abhängigkeiten {}. Keine Packages, Importaliase, Versionsbereiche oder latest. |
+| formatVersion | Required integer; binds manifest format and language contract. The current draft uses 1. Unknown versions are not silently interpreted as 1. |
+| id | Required stable, non-empty model identity; independent of checkout/installation folder, storage location, model root, Package names and version. |
+| version | Exact textual publication version of all contained Packages. Optional for local unpublished work; required for publication and as a supplied dependency. |
+| root | Required non-empty relative directory path, relative to the folder of the respective model.yaml. There is no guessed default folder. |
+| dependencies | Required mapping from directly needed model ID to exact textual version; {} without dependencies. No Packages, import aliases, version ranges or latest. |
 
-Die Hülle ist geschlossen: unbekannte oder falsch geschriebene Felder sind Fehler. Eine Abhängigkeit muss exakt die deklarierte Modell-ID verwenden. Modell-IDs und Versionslabels sind YAML-Strings; numerische Werte werden nicht konvertiert. Die gewählte physische root-Pfadschreibweise steht weiter unten in diesem Abschnitt.
+The envelope is closed: unknown or misspelled fields are errors. A dependency must use exactly the declared model ID. Model IDs and version labels are YAML strings; numeric values are not converted. The chosen physical root path spelling is further below in this section.
 
-**Gewählte gemeinsame Zeichengrammatik für Modell-IDs und Versionslabels:**
+**Chosen common character grammar for model IDs and version labels:**
 
 ```text
-Label               = Abschnitt (("." | "-") Abschnitt)*
-Abschnitt           = Startzeichen Fortsetzungszeichen*
-Startzeichen        = XID_Start | Unicode-Dezimalziffer (General_Category=Nd)
-Fortsetzungszeichen = XID_Continue
+Label             = Segment (("." | "-") Segment)*
+Segment           = StartCharacter ContinueCharacter*
+StartCharacter    = XID_Start | Unicode decimal digit (General_Category=Nd)
+ContinueCharacter = XID_Continue
 ```
 
-Das Unicode-Profil aus Abschnitt 7.2 gilt mit folgenden Präzisierungen:
+The Unicode profile from Section 7.2 applies with the following refinements:
 
-- Connector_Punctuation, einschließlich _, ist überall ausgeschlossen. Zeichen mit Groß-/Kleinschreibung müssen klein sein; Schriften ohne Groß-/Kleinschreibung bleiben zulässig. Alle Labels müssen bereits NFC sein. Verstöße werden abgewiesen, nicht korrigiert.
-- ASCII-Punkt und ASCII-Bindestrich trennen nichtleere Abschnitte. Es gibt keine führenden, abschließenden oder unmittelbar aufeinanderfolgenden Trennzeichen, auch nicht gemischt wie in 1.-0. Leerraum, /, Backslash, Emoji und sonstige nicht zum Profil gehörende Zeichen sind unzulässig.
-- Dieselbe Grammatik gilt für Modellidentität, Abhängigkeitsschlüssel, veröffentlichte Version, Versionsanforderung und Lockbindung. Auch Modell-IDs dürfen mit Ziffern beginnen oder Punkte enthalten. Punkte erzeugen in diesen Labels weder Packages noch Namespaces; Bindestriche tragen ebenfalls keine zusätzliche Semantik.
-- Gültig sind beispielsweise markitect-core, überweisungen, 文档, markitect.core, 2026-modell, 1.0, 1.0.0-rc.1 und ٢٠٢٦.١. Ungültig sind beispielsweise Markitect-Core, über_weisungen, modell/name, 1..0 und 1.0.0-.
-- Für Versionslabels bleiben latest und Bereichsschreibweisen ausgeschlossen. Die bisher abgewiesenen punktgetrennten Bereichsmarker x, etwa x oder 1.x, bleiben reserviert; *, ^, ~, Vergleichs- und Bereichsoperatoren sind ohnehin keine Labelzeichen. Diese Reservierung betrifft nicht Modell-IDs.
+- Connector_Punctuation, including _, is excluded everywhere. Cased characters must be lowercase; scripts without letter case remain permitted. All labels must already be NFC. Violations are rejected, not corrected.
+- ASCII dot and ASCII hyphen separate non-empty segments. There are no leading, trailing or immediately consecutive separators, not even mixed as in 1.-0. Whitespace, /, backslash, emoji and other characters not belonging to the profile are impermissible.
+- The same grammar applies to model identity, dependency keys, published version, version requirement and lock binding. Model IDs may also begin with digits or contain dots. In these labels, dots create neither Packages nor namespaces; hyphens likewise carry no additional semantics.
+- Valid are, for example, markitect-core, überweisungen, 文档, markitect.core, 2026-modell, 1.0, 1.0.0-rc.1 and ٢٠٢٦.١. Invalid are, for example, Markitect-Core, über_weisungen, modell/name, 1..0 and 1.0.0-.
+- For version labels, latest and range notations remain excluded. The previously rejected dot-separated range markers x, for example x or 1.x, remain reserved; *, ^, ~, comparison and range operators are not label characters anyway. This reservation does not concern model IDs.
 
-Der vollständige Unicode-Kollisionsvergleich aus Abschnitt 7.2 gilt für Modell-IDs innerhalb der bereitgestellten Modellmenge und für Versionslabels innerhalb desselben Modells. straße und strasse dürfen dort keine verschiedenen Identitäten bezeichnen. Unterschiedliche Modelle dürfen dasselbe Versionslabel verwenden. Anforderungen und Lockeinträge müssen trotzdem exakt die deklarierte Autorenform verwenden; eine kollidierende Schreibweise ist keine gültige alternative Referenz. Der erste Sprachumfang bindet weiterhin nur eine Fassung je Modell-ID; die Kollisionsprüfung eröffnet keine Mehrversionsauswahl.
+The complete Unicode collision comparison from Section 7.2 applies to model IDs within the supplied set of models and to version labels within the same model. straße and strasse must not denote different identities there. Different models may use the same version label. Requirements and lock entries must nevertheless use exactly the declared authored form; a colliding spelling is not a valid alternative reference. The first language scope still binds only one version per model ID; the collision check opens no multi-version selection.
 
-**Gewählte Versionssemantik:** Eine Version ist ein exaktes Textlabel. Manifest, direkte Abhängigkeitsanforderung und Lock müssen denselben dekodierten Text verwenden. Die Sprache interpretiert seine Bestandteile nicht als Zahlen, ergänzt keine fehlenden Komponenten und leitet weder Versionsreihenfolge noch Kompatibilität daraus ab. "1.0" und "1.0.0" bezeichnen unterschiedliche Fassungen; auch "1.0.1" erfüllt eine Anforderung auf "1.0.0" nicht. Versionsbereiche und latest bleiben verboten. Der konkrete Inhaltsstand wird zusätzlich durch den kanonischen Digest gebunden. Die gemeinsame Zeichengrammatik oben ist gewählt; sie definiert keine SemVer-Grammatik oder Kompatibilitätsauswertung.
+**Chosen version semantics:** A version is an exact text label. Manifest, direct dependency requirement and lock must use the same decoded text. The language does not interpret its parts as numbers, adds no missing components and derives neither version order nor compatibility from it. "1.0" and "1.0.0" denote different versions; "1.0.1" also does not satisfy a requirement for "1.0.0". Version ranges and latest remain forbidden. The concrete content state is additionally bound by the canonical digest. The common character grammar above is chosen; it defines no SemVer grammar or compatibility evaluation.
 
 **model.yaml**
 
@@ -957,7 +957,7 @@ dependencies:
   markitect-core: "1.0.0"
 ```
 
-Dieses lokale Modell enthält die Packages example/connector/vocabulary und example/connector/project samt ihren Zwischenordnern. Seine eigene version ist absichtlich ausgelassen: Lokale Änderungen werden durch den festen Quell-/Modellstand gebunden und verlangen keine neue Veröffentlichungsnummer. Eine version: "1.0.0" könnte für eine veröffentlichte Fassung zusätzlich gesetzt werden.
+This local model contains the Packages example/connector/vocabulary and example/connector/project together with their intermediate folders. Its own version is deliberately omitted: local changes are bound by the fixed source/model state and require no new publication number. A version: "1.0.0" could additionally be set for a published version.
 
 **dependencies/core/model.yaml**
 
@@ -969,42 +969,42 @@ root: model
 dependencies: {}
 ```
 
-Das zweite Manifest gehört zum separat bereitgestellten Core-Modell. Sein Ordner model/markitect/core/ stellt das Package markitect/core mit neun Definitionen bereit. dependencies/core/ ist ausschließlich der gewählte lokale Ablageort dieses Durchstichs, kein zusätzliches Autorenfeld, Registryname oder bereits gewähltes Lockformat. Die Bereitstellung beider Manifestdateien ist expliziter Prüfeingang. Paketnamen werden jeweils unter der eigenen root bestimmt und weder mit dem Installationspfad noch automatisch mit der Modell-ID präfigiert.
+The second manifest belongs to the separately provided Core model. Its folder model/markitect/core/ provides the Package markitect/core with nine definitions. dependencies/core/ is exclusively the chosen local storage location of this vertical slice, not an additional authoring field, registry name or already chosen lock format. The provision of both manifest files is an explicit check input. Package names are each determined under their own root and are prefixed neither with the installation path nor automatically with the model ID.
 
-Die Abhängigkeit connector-example → markitect-core verlangt die exakte Identität und Version der bereitgestellten Fassung. Ein fehlendes Modell, abweichende Schreibweise, widersprüchliche Versionen direkter/transitiver Anforderungen oder ein Katalog mit mehreren Kandidaten derselben Modell-ID dürfen nicht still aufgelöst werden. Der erste Sprachumfang bindet pro Modell-ID eine Fassung; Mehrversionsimporte sind nicht vorgesehen. Wiederverwendbare externe Inhalte brauchen zusätzlich eine eindeutige Inhaltsbindung; das gewählte Lockformat steht in Abschnitt 8.2; die kanonischen Digestbytes stehen in Abschnitt 8.3. Der Manifestprüfer belegt nur die vorhandene lokale Zuordnung und Versionsgleichheit, keine Veröffentlichung oder bereits verifizierten Inhaltsdigest.
+The dependency connector-example → markitect-core requires the exact identity and version of the provided model version. A missing model, deviating spelling, contradictory versions of direct/transitive requirements or a catalog with several candidates of the same model ID must not be resolved silently. The first language scope binds one version per model ID; multi-version imports are not provided for. Reusable external contents additionally need an unambiguous content binding; the chosen lock format is in section 8.2; the canonical digest bytes are in section 8.3. The manifest verifier evidences only the existing local mapping and version equality, not a publication or an already verified content digest.
 
-Ein mit Definitionen belegtes Package gehört im gebundenen Eingabesatz genau einem Modell. Zwei Modelle dürfen dasselbe Package auch bei unterschiedlichen lokalen IDs nicht aufteilen. Gemeinsame Zwischenordner bleiben möglich: getrennte Modelle mit markitect/core und markitect/http können beide den definitionslosen Zwischenordner markitect enthalten. Sobald ein Package Definitionen enthält, stammen diese aus genau einem Modell; ein anderswo lediglich als leerer Zwischenordner vorkommender gleicher Name liefert keine weiteren Definitionen. Unterschiedlich geschriebene, im Unicode-Vergleich kollidierende Package-Namen bleiben Fehler. Keine Lade- oder Importreihenfolge entscheidet über die Zugehörigkeit.
+A Package occupied by definitions belongs to exactly one model in the bound input set. Two models must not split the same Package, even with different local IDs. Common intermediate folders remain possible: separate models with markitect/core and markitect/http can both contain the definition-free intermediate folder markitect. As soon as a Package contains definitions, they come from exactly one model; an identical name that occurs elsewhere merely as an empty intermediate folder supplies no further definitions. Differently written Package names that collide in the Unicode comparison remain errors. No loading or import order decides membership.
 
-Imports bleiben dateilokal. Sie machen ausschließlich die tatsächlich importierten Packages sichtbar. Ein Package aus demselben Modell benötigt einen Import, sobald es nicht das eigene Package der Datei ist. Die Verfügbarkeit eines transitiven Modells eröffnet keinen direkten Import ohne eigene direkte Modellabhängigkeit. model.yaml wird weder aus Imports noch aus Prosa ergänzt; es ist keine Installations- oder Ausführungsanweisung.
+Imports remain file-local. They make exclusively the actually imported Packages visible. A Package from the same model requires an import as soon as it is not the file's own Package. The availability of a transitive model opens no direct import without a direct model dependency of its own. model.yaml is supplemented neither from imports nor from prose; it is not an installation or execution instruction.
 
-Ein anderer physischer Speicherort des gesamten Modells, ein anderer Installationsordner oder eine identitätserhaltende Verlagerung seiner Wurzel ändern seine Modell-ID und die relativen Package-Namen nicht. Eine ausdrückliche Änderung der Modell-ID ändert die Adresse der Modellabhängigkeit, aber erzeugt nicht automatisch neue Package-/Definitionsidentitäten. root bestimmt, welche Dateien unter welchen relativen Package-Namen geladen werden; eine Änderung ist anhand dieses neuen Bestands zu prüfen.
+A different physical storage location of the entire model, a different installation folder or an identity-preserving relocation of its root do not change its model ID and the relative Package names. An explicit change of the model ID changes the address of the model dependency but does not automatically create new Package/definition identities. root determines which files are loaded under which relative Package names; a change is to be checked against this new inventory.
 
-**Gewählte Azyklizitätsregel für Modellabhängigkeiten:** Der gerichtete Graph der model.yaml-dependencies muss azyklisch sein. Knoten sind die eindeutig gebundenen Modell-IDs, Kanten die ausdrücklich deklarierten direkten Anforderungen. Im vollständigen erreichbaren Modellumfang darf kein Abhängigkeitsweg zum Ausgangsmodell zurückführen. Das verbietet Selbstabhängigkeiten als Zyklen der Länge eins ebenso wie wechselseitige oder längere Zyklen. Auch exakt passende Versionen oder Digests machen einen solchen Zyklus nicht gültig. Mehrere Modelle dürfen dieselbe Abhängigkeit verwenden, sofern die gemeinsame genaue Versions- und Inhaltsbindung passt.
+**Chosen acyclicity rule for model dependencies:** The directed graph of the model.yaml dependencies must be acyclic. Nodes are the unambiguously bound model IDs, edges the explicitly declared direct requirements. In the complete reachable model scope, no dependency path may lead back to the starting model. This forbids self-dependencies as cycles of length one just as it forbids mutual or longer cycles. Even exactly matching versions or digests do not make such a cycle valid. Several models may use the same dependency, provided the common exact version and content binding matches.
 
-Ein Modellzyklus ist ein Sprachfehler und liefert failed, keine bloß unvollständige Prüfung. Für den betroffenen ungültigen Modellumfang gibt es weder kanonische Bytes noch Digest. Die Regel benötigt keine Sonderbehandlung für Selbstabhängigkeiten. Fachlich untrennbar wechselseitig abhängige Teile können zu einem gemeinsamen Modell mit mehreren fachlichen Packages gehören. Gewöhnliche Definitionsreferenzen und Package-Imports innerhalb desselben Modells dürfen weiterhin Zyklen bilden; die Objektvertragsregeln aus Abschnitt 5.3 gelten zusätzlich. Aus Prosa oder bloßen Dateilinks werden keine dependencies ergänzt.
+A model cycle is a language error and yields failed, not a merely incomplete check. For the affected invalid model scope there are neither canonical bytes nor digest. The rule needs no special handling for self-dependencies. Parts that are inseparably mutually dependent in domain terms can belong to a shared model with several domain Packages. Ordinary definition references and Package imports within the same model may continue to form cycles; the object contract rules from Section 5.3 apply additionally. No dependencies are supplemented from prose or mere file links.
 
-Die Azyklizitätsregel ist eine bewusst gewählte Grenze zwischen gemeinsam versionierten Verteilungseinheiten. Sie folgt nicht zwingend aus der Digestform, die fremde Inhalte gerade nicht rekursiv einbettet. Die Prüfung kontrolliert den erreichbaren Modellgraphen deterministisch; gemeinsame transitive Bibliotheken sind keine Zyklen.
+The acyclicity rule is a deliberately chosen boundary between jointly versioned distribution units. It does not follow necessarily from the digest form, which precisely does not embed foreign contents recursively. The check verifies the reachable model graph deterministically; common transitive libraries are not cycles.
 
-**Gewählte physische Wurzelpfadregeln:**
+**Chosen physical root path rules:**
 
-- root ist entweder . oder ein nichtleerer relativer Ordnerpfad, bezogen auf den Ordner der jeweiligen model.yaml. Das Ziel muss bereits als Verzeichnis existieren; fehlende Ziele und Dateien statt Verzeichnissen sind Fehler. . bezeichnet ausschließlich den Manifestordner selbst.
-- ASCII-/ ist auch unter Windows der einzige Trenner. Jede relative Komponente folgt der bestehenden kleingeschriebenen Unicode-Packageordnergrammatik aus Abschnitt 7.2: XID_Start am Beginn, danach XID_Continue, keine Connector_Punctuation. Die neue Modell-ID-/Versionslabelgrammatik erweitert diese Ordnergrammatik nicht. Insbesondere sind Punkte, Bindestriche und Ziffernstarts in einzelnen root-Ordnerkomponenten nicht zusätzlich erlaubt.
-- Es gibt keine führenden oder abschließenden /, leeren Komponenten, eingebetteten . oder .., Backslashes, Laufwerkspräfixe oder absoluten Pfade. Die Autorenform wird vor einer Pfadinterpretation geprüft; ./model, docs//model und model/ werden nicht still normalisiert. Es gibt keine Variablen-, Home-, URL- oder sonstige Ersetzung.
-- Die geschriebenen Komponenten müssen bereits NFC sein und exakt den tatsächlichen Verzeichnisnamen entsprechen, einschließlich Groß-/Kleinschreibung und Unicode-Schreibweise. Ein auf einem toleranten Dateisystem auffindbares Model ersetzt ein geschriebenes model nicht. Mehrere im Unicode-Kollisionsvergleich passende Verzeichnisse bleiben ein Fehler; die exakt geschriebene Teilmenge erhält keinen Vorrang.
-- Symlinks, Junctions und vergleichbare Reparse-Umleitungen im relativen Wurzelpfad oder im erfassten Modellbaum sind verboten und werden nicht verfolgt. Auch die ausdrücklich geladenen Manifest- und Lockdateien werden nicht über solche Umleitungen gelesen. Der physische Manifestordner bildet den Bezugspunkt; der absolute Ablagepfad darüber erhält keine Package-Namenskonvention.
-- Geladene Modellwurzeln dürfen weder dasselbe physische Verzeichnis bezeichnen noch ineinander liegen. Die Prüfung erfolgt für die gebundene Modellmenge vor der Definitionserfassung. Bei root: . müssen weitere gebundene Modelle deshalb außerhalb dieses Modellbaums liegen. Gemeinsame logische, leere Packagepräfixe aus getrennten physischen Wurzeln bleiben möglich.
+- root is either . or a non-empty relative folder path, relative to the folder of the respective model.yaml. The target must already exist as a directory; missing targets and files instead of directories are errors. . denotes exclusively the manifest folder itself.
+- ASCII / is the only separator, also under Windows. Every relative component follows the existing lowercase Unicode Package folder grammar from Section 7.2: XID_Start at the beginning, then XID_Continue, no Connector_Punctuation. The new model ID/version label grammar does not extend this folder grammar. In particular, dots, hyphens and digit starts are not additionally permitted in individual root folder components.
+- There are no leading or trailing /, empty components, embedded . or .., backslashes, drive prefixes or absolute paths. The authored form is checked before any path interpretation; ./model, docs//model and model/ are not silently normalized. There is no variable, home, URL or other substitution.
+- The written components must already be NFC and correspond exactly to the actual directory names, including case and Unicode spelling. A Model findable on a tolerant file system does not replace a written model. Several directories matching in the Unicode collision comparison remain an error; the exactly written subset obtains no precedence.
+- Symlinks, junctions and comparable reparse redirections in the relative root path or in the discovered model tree are forbidden and are not followed. The explicitly loaded manifest and lock files are not read via such redirections either. The physical manifest folder forms the reference point; the absolute storage path above it obtains no Package naming convention.
+- Loaded model roots must neither denote the same physical directory nor lie within one another. The check takes place for the bound set of models before definition discovery. With root: ., further bound models must therefore lie outside this model tree. Shared logical, empty Package prefixes from separate physical roots remain possible.
 
-Gültige Formen sind ., model, docs/model und überweisung/文档, sofern die exakt geschriebenen Verzeichnisse vorhanden sind. Ungültig sind beispielsweise ./model, model/, docs//model, ../shared/model, Model und C:\\models\\connector. Die absoluten Speicherorte der Modelle bleiben frei; eine identitätserhaltende physische Verlagerung verändert weder Package-Namen noch kanonische Digestbytes. Die Wurzel selbst bildet weiterhin kein Package und darf keine Definitionsdateien unmittelbar enthalten (Abschnitt 7.3).
+Valid forms are ., model, docs/model and überweisung/文档, provided the exactly written directories exist. Invalid are, for example, ./model, model/, docs//model, ../shared/model, Model and C:\\models\\connector. The absolute storage locations of the models remain free; an identity-preserving physical relocation changes neither Package names nor canonical digest bytes. The root itself still forms no Package and must not directly contain any definition files (Section 7.3).
 
-Der begrenzte Prüfer kontrolliert diese Regeln einschließlich tatsächlicher Verzeichnisnamen, Unicode-Kollisionen, Überlappungen und einer echten Junction unter Windows beziehungsweise eines Symlinks auf anderen unterstützten Hosts. Unzulässige Wurzelpfade und Umleitungen sind fehlgeschlagene Sprachprüfungen, keine als nicht abgeschlossen behandelten Bereiche. Ein vollständiger Modellkonformitäts- oder Veröffentlichungsnachweis wird damit nicht behauptet.
+The bounded verifier checks these rules, including actual directory names, Unicode collisions, overlaps and a real junction under Windows or a symlink on other supported hosts. Impermissible root paths and redirections are failed language checks, not areas treated as not completed. A complete model conformance or publication proof is not claimed by this.
 
-### 8.2 model-lock.yaml: vollständige externe Inhaltsbindung
+### 8.2 model-lock.yaml: complete external content binding
 
-**Nutzerentscheidung vom 16. Oktober 2026:** Das generierte Lock wird als model-lock.yaml neben dem Einstiegsmanifest gespeichert und zusammen mit dem Modell versioniert. Es bindet sämtliche direkten und transitiven externen Modellabhängigkeiten genau einmal. Die eigene lokale Modellfassung wird durch den aktuellen Quell-/Modellstand gebunden und nicht als eigener externer Eintrag im Lock wiederholt.
+**User decision of 16 October 2026:** The generated lock is stored as model-lock.yaml next to the entry manifest and versioned together with the model. It binds all direct and transitive external model dependencies exactly once. The own local model version is bound by the current source/model state and is not repeated as a separate external entry in the lock.
 
-Die geschlossene Form besteht aus genau formatVersion und models. Die aktuelle formatVersion ist die Ganzzahl 1. models ist ein Mapping von Modell-ID auf ein Objekt mit genau version und digest. Ohne externe Abhängigkeiten ist models: {} die vollständige Tabelle. Jeder Schlüssel ist die exakt geschriebene NFC-Modell-ID; der Unicode-Kollisionsvergleich aus Abschnitt 7.2 gilt auch hier. version ist die genaue textuelle Fassung. digest hat die Form sha256: mit genau 64 nachfolgenden kleingeschriebenen Hexadezimalziffern. Unbekannte Felder, Schreibabweichungen, fehlende Angaben und Kollisionen sind Fehler.
+The closed form consists of exactly formatVersion and models. The current formatVersion is the integer 1. models is a mapping from model ID to an object with exactly version and digest. Without external dependencies, models: {} is the complete table. Every key is the exactly written NFC model ID; the Unicode collision comparison from Section 7.2 also applies here. version is the exact textual version. digest has the form sha256: with exactly 64 following lowercase hexadecimal digits. Unknown fields, spelling deviations, missing values and collisions are errors.
 
-Das gespeicherte Beispiel enthält jetzt den echten, gegen Abschnitt 8.3 berechneten Core-Digest:
+The stored example now contains the real Core digest computed against section 8.3:
 
 **model-lock.yaml**
 
@@ -1016,175 +1016,175 @@ models:
     digest: "sha256:562a20613c64fb9cd3425ff39b5f9fb826b75deb153cdfac48b00fce6f5c19f1"
 ```
 
-Die [kanonische Core-Datei](exchange-example/canonical/core.json) enthält genau 3769 Bytes ohne BOM und ohne abschließenden Zeilenumbruch. Der eigene Core-Inhalt ist einschließlich seiner festen Selbstbeschreibung und Abhängigkeiten gültig und wurde vor der Kodierung geprüft. Der offene Command/command-Konflikt des anderen Modells macht diese unabhängige Core-Bindung nicht ungültig; für das fehlerhafte Connector-Modell wird dagegen kein Digest ausgegeben. Frühere Berichte mit einem Platzhalter bleiben historische Befunde ihres damaligen Stands.
+The [canonical Core file](exchange-example/canonical/core.json) contains exactly 3769 bytes without BOM and without a trailing line break. The own Core content, including its fixed self-description and dependencies, is valid and was checked before encoding. The open Command/command conflict of the other model does not make this independent Core binding invalid; for the faulty Connector model, by contrast, no digest is output. Earlier reports with a placeholder remain historical findings of their state at the time.
 
-**Vollständigkeit:** Aus den direkten Anforderungen des Einstiegsmanifests und den gebundenen model.yaml-Manifesten der Abhängigkeiten muss genau die externe Locktabelle entstehen. Fehlende, überzählige oder widersprüchliche Einträge sind Fehler. Es gibt keine zusätzliche manuelle Liste der direkten Abhängigkeiten und keine zweite Beschreibung der Graphkanten im Lock. Pro Modell-ID gilt eine Fassung; weder Importaliase noch Lade- oder Tabellenreihenfolge lösen Versions- oder Inhaltskonflikte auf.
+**Completeness:** Exactly the external lock table must arise from the direct requirements of the entry manifest and the bound model.yaml manifests of the dependencies. Missing, surplus or contradictory entries are errors. There is no additional manual list of the direct dependencies and no second description of the graph edges in the lock. One version applies per model ID; neither import aliases nor loading or table order resolve version or content conflicts.
 
-**Prüfung:** Modell-ID, genaue Version und berechneter Inhaltsdigest müssen gleichzeitig passen. Der Prüfer kontrolliert alle erreichbaren Manifestanforderungen und anschließend jede Inhaltsbindung. Andere Inhalte unter derselben gebundenen Version werden abgewiesen. Ein Prüflauf schreibt, ergänzt oder aktualisiert das Lock nicht automatisch. Ein fehlendes Lock wird nicht durch eine still erzeugte neue Bindung ersetzt. Änderungen der Abhängigkeiten verlangen eine erneute Prüfung der vollständigen Bindung; lokale Definitionsänderungen allein verlangen kein neues Lock. Die Root-Locktabelle bestimmt die gemeinsame externe Bindung des ausgewerteten Modellstands; eine etwa mitgelieferte weitere Lockdatei eines Abhängigkeitsmodells ersetzt oder erweitert diese Tabelle nicht still.
+**Checking:** Model ID, exact version and computed content digest must match simultaneously. The verifier checks all reachable manifest requirements and then every content binding. Other contents under the same bound version are rejected. A check run does not automatically write, supplement or update the lock. A missing lock is not replaced by a silently created new binding. Changes of the dependencies require a renewed check of the complete binding; local definition changes alone do not require a new lock. The root lock table determines the shared external binding of the evaluated model state; any further lock file of a dependency model that is shipped along does not silently replace or extend this table.
 
-**Digestumfang:** Ein Modelldigest bindet ausschließlich den eigenen Modellinhalt einschließlich eigener Modellmetadaten, deklarierter direkter Abhängigkeitsanforderungen, Packages und Definitionen. Er enthält keine rekursiv eingebetteten Digests fremder Modellinhalte. Die vollständige konkrete Bindung der transitiven Inhalte trägt die Locktabelle. Das vermeidet rekursive Digestdefinitionen; gewöhnliche Definitionsreferenzen bleiben Referenzen auf kanonische Identitäten und werden nicht unendlich textuell entfaltet. Die genaue Projektion, Defaults, Reihenfolgen und Bytekodierung stehen in Abschnitt 8.3.
+**Digest scope:** A model digest binds exclusively the own model content, including the own model metadata, declared direct dependency requirements, Packages and definitions. It contains no recursively embedded digests of foreign model contents. The lock table carries the complete concrete binding of the transitive contents. This avoids recursive digest definitions; ordinary definition references remain references to canonical identities and are not textually expanded infinitely. The exact projection, defaults, orderings and byte encoding are in Section 8.3.
 
-**Bereitstellung:** Installationspfade, Ablageorte und Downloadadressen sind Bereitstellungs-/Provenienzeingaben und keine Lockfelder. Die bereits gewählte Modell-ID wird nicht um einen Speicherort ergänzt. Die Bereitstellung liefert Inhalte, deren Identität, Version und Digest geprüft werden müssen; der Lockeintrag allein ist keine Installationsanweisung.
+**Provisioning:** Installation paths, storage locations and download addresses are provisioning/provenance inputs and not lock fields. The already chosen model ID is not supplemented by a storage location. Provisioning supplies contents whose identity, version and digest must be checked; the lock entry alone is not an installation instruction.
 
-Der Prüfer kontrolliert Hülle, Versionen, genaue Modellmenge und tatsächlich berechnete externe Modelldigests. Künstliche Vergleichsdigests bleiben auf isolierte Gegenproben beschränkt. Der Bericht trennt Manifestprüfung, Definitionsprüfung, kanonische Modellprojektion und Lockprüfung: Der Core und seine Inhaltsbindung bestehen, während der gesamte Definitionsgraph wegen Command/command weiterhin abgewiesen wird. Dateihashes bleiben zusätzlich Byteprovenienz ihrer jeweiligen Eingaben und sind nicht mit kanonischen Modelldigests gleichzusetzen.
+The verifier checks envelope, versions, exact model set and actually computed external model digests. Artificial comparison digests remain restricted to isolated counter-probes. The report separates manifest check, definition check, canonical model projection and lock check: the Core and its content binding pass, while the whole definition graph is still rejected because of Command/command. File hashes additionally remain byte provenance of their respective inputs and are not to be equated with canonical model digests.
 
-### 8.3 Kanonische Bytes und SHA-256: model-digest/1
+### 8.3 Canonical bytes and SHA-256: model-digest/1
 
-**Nutzerentscheidung vom 16. Oktober 2026:** Jeder Modelldigest ist SHA-256 über die nachfolgenden kanonischen Bytes. Die Kodierung beschreibt den ausgewerteten eigenen Modellinhalt. Vor jeder Projektion werden das ausgewählte Modell und seine vollständige Abhängigkeitshülle validiert: Manifeste, Schreibweisen/Kollisionen, feste Core-Selbstbeschreibung, Typverträge, Werte, Kardinalitäten und Körperlinks. Auch beim Laden festgestellte Fehler dürfen nicht durch eine spätere Map-Darstellung verloren gehen. Eine ungültige Fassung erhält keinen Digest; eine nicht abgeschlossene Prüfung ist kein gültiger Digestnachweis. Ein gültiges Abhängigkeitsmodell kann unabhängig von einem fehlerhaften, es verwendenden lokalen Modell geprüft und gehasht werden.
+**User decision of 16 October 2026:** Every model digest is SHA-256 over the canonical bytes below. The encoding describes the evaluated own model content. Before any projection, the selected model and its complete dependency closure are validated: manifests, spellings/collisions, fixed Core self-description, type contracts, values, cardinalities and body links. Errors detected during loading must not be lost through a later map representation either. An invalid version receives no digest; an uncompleted check is no valid digest evidence. A valid dependency model can be checked and hashed independently of a faulty local model that uses it.
 
-**Projektion.** Der kodierte Baum hat genau drei Felder:
+**Projection.** The encoded tree has exactly three fields:
 
-| Feld | Inhalt |
+| Field | Content |
 | --- | --- |
-| format | Der feste String markitect-model-digest/1 als Kennung dieser Projektion/Kodierung. |
-| model | Eigenes formatVersion, id, optional version und die vollständigen direkten dependencies aus dem eigenen Manifest; root ist ausgeschlossen. |
-| packages | Mapping eigener belegter Package-Namen auf ein Mapping ihrer lokalen Definitions-IDs auf die nachfolgenden Definitionsdatensätze. |
+| format | The fixed string markitect-model-digest/1 as identifier of this projection/encoding. |
+| model | Own formatVersion, id, optional version and the complete direct dependencies from the own manifest; root is excluded. |
+| packages | Mapping of own occupied Package names to a mapping of their local definition IDs to the following definition records. |
 
-Ein Definitionsdatensatz enthält genau kind, body, bodyLinks, spec und bei gesetzter Autorenangabe title. Package und id werden durch die beiden Mappingschlüssel getragen und nicht nochmals im Datensatz wiederholt. kind ist die aufgelöste Referenzform aus der nachfolgenden Tabelle. body und title sind die dekodierten unveränderten Unicode-Strings. bodyLinks ist immer eine Liste kanonischer Zielreferenzen in der Reihenfolge der aktiven Vorkommen im body; Wiederholungen bleiben erhalten. Ein Ziel wird als ["reference", package, id] kodiert. Anzeigetexte und die geschriebene Linknotation bleiben bereits im unveränderten body enthalten. Byte-/Zeilenfundstellen werden nicht aufgenommen. spec ist ein Mapping effektiver Feldnamen auf die typisierten kanonischen Werte.
+A definition record contains exactly kind, body, bodyLinks, spec and, if set by the author, title. Package and id are carried by the two mapping keys and are not repeated again in the record. kind is the resolved reference form from the following table. body and title are the decoded unchanged Unicode strings. bodyLinks is always a list of canonical target references in the order of the active occurrences in the body; repetitions are preserved. A target is encoded as ["reference", package, id]. Display texts and the written link notation are already contained in the unchanged body. Byte/line locations are not included. spec is a mapping of effective field names to the typed canonical values.
 
-| Werttyp | Exakte Baumform |
+| Value type | Exact tree form |
 | --- | --- |
-| string | ["string", unveränderterString] |
-| enum | ["enum", unveränderterErlaubterString] |
-| boolean | ["boolean", true] beziehungsweise ["boolean", false] |
-| integer | ["integer", dezimaleGanzzahlAlsString] |
-| number | ["number", dezimalerKoeffizientAlsString, dezimalerExponentAlsString] |
-| reference | ["reference", exaktGeschriebenesPackage, vollständigeLokaleID] |
-| object | ["object", MappingDerEffektivenFelderAufTypisierteWerte] |
-| Mehrfachwert | ["list", ListeDerEinzelwertformen] |
+| string | ["string", unchangedString] |
+| enum | ["enum", unchangedPermittedString] |
+| boolean | ["boolean", true] or ["boolean", false] |
+| integer | ["integer", decimalIntegerAsString] |
+| number | ["number", decimalCoefficientAsString, decimalExponentAsString] |
+| reference | ["reference", exactlyWrittenPackage, completeLocalID] |
+| object | ["object", MappingOfEffectiveFieldsToTypedValues] |
+| Multiple value | ["list", ListOfSingleValueForms] |
 
-Die Typform folgt aus dem aufgelösten Feldvertrag, nicht aus YAML-Schreibweise oder Feldnamensähnlichkeit. Ganzzahlstrings verwenden 0 oder eine optionale negative Vorzeichenangabe gefolgt von Ziffern ohne führende Nullen; -0 wird zu 0. number bedeutet Koeffizient × 10 hoch Exponent. Der Koeffizient hat weder führende noch abschließende Nullen; entfernte abschließende Nullen werden dem Exponenten zugeschlagen. Das Vorzeichen steht nur bei einem negativen, von null verschiedenen Koeffizienten. Null ist stets ["number", "0", "0"]. Der Exponent ist ein Ganzzahlstring derselben Form. Dadurch ergeben 42, 42.0 und 4.2e1 bei einer number-Property dieselbe Form ["number", "42", "0"]. Bei integer bleibt ein Dezimalwert unzulässig. Es gibt keine binäre Gleitkommazahl oder kontextabhängige Dezimalrundung; große Exponenten werden nicht textuell als riesige Ziffernfolgen entfaltet.
+The type form follows from the resolved field contract, not from YAML notation or field name similarity. Integer strings use 0 or an optional negative sign followed by digits without leading zeros; -0 becomes 0. number means coefficient × 10 to the power of exponent. The coefficient has neither leading nor trailing zeros; removed trailing zeros are added to the exponent. The sign appears only with a negative, non-zero coefficient. Zero is always ["number", "0", "0"]. The exponent is an integer string of the same form. Thus 42, 42.0 and 4.2e1 yield the same form ["number", "42", "0"] for a number Property. For integer, a decimal value remains impermissible. There is no binary floating-point number or context-dependent decimal rounding; large exponents are not textually expanded as huge digit sequences.
 
-**Defaults und Listen.** Fehlende optionale Listen werden gemäß Abschnitt 5.2 als leere Listen dargestellt, auch innerhalb von object-Werten. Die für einen konkreten Meta-Typ verbotenen Felder werden nicht durch Defaults eingefügt. Fehlendes spec.name einer Propertydefinition wird als vollständige lokale Property-ID eingesetzt; ein ausdrücklich gleicher Wert erzeugt dieselben Bytes. Andere fehlende optionale Einzelwerte werden nicht erfunden. Fehlendes title oder version bleibt von einem vorhandenen Wert unterscheidbar. Gewöhnliche Wertlisten behalten ihre Reihenfolge und Wiederholungen. Die festen Core-Deklarationslisten aus Abschnitt 5.2 werden nach den kanonischen JSON-Bytes ihrer einzelnen Elemente sortiert. Ein gewöhnliches Datenfeld mit gleichem Namen erhält diese Sortierung nicht. Die feste Core-Selbstbeschreibung vergleicht ausdrücklich gesetzte ID-Standardnamen ebenfalls anhand ihres wirksamen Werts.
+**Defaults and lists.** Missing optional lists are represented as empty lists according to Section 5.2, also within object values. The fields forbidden for a concrete meta-type are not inserted through defaults. A missing spec.name of a property definition is filled in as the complete local Property ID; an explicitly set equal value produces the same bytes. Other missing optional single values are not invented. A missing title or version remains distinguishable from a present value. Ordinary value lists keep their order and repetitions. The fixed Core declaration lists from Section 5.2 are sorted by the canonical JSON bytes of their individual elements. An ordinary data field with the same name does not receive this sorting. The fixed Core self-description likewise compares explicitly set ID default names by their effective value.
 
-**Referenzen und Text.** Strukturelle Referenzen werden auf das kanonische Package-/ID-Paar aufgelöst. Ihre kurze, voll qualifizierte oder aliasqualifizierte Autorenform verändert die Bytes nicht. imports und Aliase werden nach erfolgreicher Auflösung nicht als eigene Inhaltsfelder gespeichert; ein unbenutzter, weiterhin gültiger Import beeinflusst den Digest nicht. Entfernte Imports, Mehrdeutigkeiten oder Schreibfehler werden trotzdem vor der Projektion abgewiesen. Im body bleibt die geschriebene Linknotation dagegen Teil des Texts: Eine Aliasänderung im body ändert die Bytes, auch bei gleichem Ziel. Umgekehrt binden die zusätzlichen bodyLinks-Ziele eine durch andere Imports veränderte Auflösung bei unverändertem body. Körpertexte werden nicht gerendert, neu formatiert, getrimmt, casegefaltet oder nachträglich Unicode-normalisiert. Dasselbe gilt für title und gewöhnliche String-/Enumwerte. YAML-Kommentare, Einrückung, Quote-Auswahl und die Quellreihenfolge von Mappings beeinflussen nur die Autorenbytes, nicht den dekodierten Baum.
+**References and text.** Structural references are resolved to the canonical Package/ID pair. Their short, fully qualified or alias-qualified authored form does not change the bytes. imports and aliases are not stored as separate content fields after successful resolution; an unused, still valid import does not influence the digest. Removed imports, ambiguities or spelling errors are nevertheless rejected before the projection. In the body, by contrast, the written link notation remains part of the text: an alias change in the body changes the bytes, even with the same target. Conversely, the additional bodyLinks targets bind a resolution changed by other imports when the body is unchanged. Body texts are not rendered, reformatted, trimmed, case-folded or subsequently Unicode-normalized. The same applies to title and ordinary string/enum values. YAML comments, indentation, quote choice and the source order of mappings influence only the authored bytes, not the decoded tree.
 
-**JSON-/UTF-8-Kodierung.** Die folgenden Regeln gelten rekursiv für den gesamten Baum:
+**JSON/UTF-8 encoding.** The following rules apply recursively to the entire tree:
 
-- JSON-Objektschlüssel werden aufsteigend lexikographisch nach ihren UTF-8-Bytes als vorzeichenlosen Bytes sortiert, unabhängig von Spracheinstellung oder Dateisystem. Schreibweisen bleiben exakt erhalten; der Kollisionsschlüssel ist kein gespeicherter Name.
-- Zwischen Tokens steht kein Formatierungsleerraum. Objekt-/Arraytrenner sind exakt die ASCII-Zeichen {}, [], : und Komma. true und false sind kleingeschrieben. Die Manifestzahl formatVersion wird als normale JSON-Ganzzahl kodiert; typisierte Nutzwerte folgen ausschließlich der obigen Tabelle.
-- Strings stehen in doppelten ASCII-Anführungszeichen. Anführungszeichen und Backslash werden mit Backslash geschützt. Backspace, Tab, LF, Form Feed und CR verwenden die kurzen JSON-Escapes b, t, n, f und r jeweils nach einem Backslash. Alle übrigen Zeichen U+0000 bis U+001F werden als Backslash-u und genau vier kleingeschriebene Hexadezimalziffern kodiert. Alle übrigen zulässigen Unicode-Skalarwerte werden direkt als UTF-8 kodiert, einschließlich /, <, >, &, U+2028 und U+2029. Es gibt keine zusätzliche HTML-Escapierung, ASCII-Umschrift oder Escape-Auswahl nach Laufzeitbibliothek.
-- Die Ausgabe enthält weder BOM noch abschließenden Zeilenumbruch. Ungepaarte Surrogate und nicht endliche Zahlen sind keine gültigen Eingaben. Die Projektion verwendet kein null und keine untypisierten Nutzwerte oder binären Gleitkommazahlen.
+- JSON object keys are sorted in ascending lexicographic order by their UTF-8 bytes as unsigned bytes, independent of locale settings or file system. Spellings are preserved exactly; the collision key is not a stored name.
+- There is no formatting whitespace between tokens. Object/array delimiters are exactly the ASCII characters {}, [], : and comma. true and false are lowercase. The manifest number formatVersion is encoded as a normal JSON integer; typed payload values follow exclusively the table above.
+- Strings are in double ASCII quotation marks. Quotation marks and backslash are escaped with a backslash. Backspace, tab, LF, form feed and CR use the short JSON escapes b, t, n, f and r, each after a backslash. All other characters U+0000 to U+001F are encoded as backslash-u and exactly four lowercase hexadecimal digits. All other permitted Unicode scalar values are encoded directly as UTF-8, including /, <, >, &, U+2028 and U+2029. There is no additional HTML escaping, ASCII transliteration or escape selection by runtime library.
+- The output contains neither BOM nor trailing line break. Unpaired surrogates and non-finite numbers are not valid inputs. The projection uses no null and no untyped payload values or binary floating-point numbers.
 
-**Ausgeschlossene Daten.** Dateinamen, root, Installations-/Downloadpfade, Quellbytes, Kommentare, Fundstellen, Prüfberichte, Lockdateien und fremde Modellinhalte sind keine Felder dieser Projektion. Ein eigener Digest enthält insbesondere keine rekursiven fremden Inhaltsdigests; die konkrete externe Bindung bleibt im Lock. Leere Packages werden nicht aufgenommen; Zwischenpackages ergeben sich aus den vollständigen Packagepfaden der enthaltenen Definitionen. Das verändert nicht die Autorenregel, dass jeder Ordner ein Package ist, und es erlaubt keine Umgehung von Schreib- oder Importfehlern bei der vorherigen Validierung. Git muss keine leeren Verzeichnisse erhalten, um dieselben kanonischen Inhaltsbytes zu erzeugen.
+**Excluded data.** File names, root, installation/download paths, source bytes, comments, locations, check reports, lock files and foreign model contents are not fields of this projection. An own digest in particular contains no recursive foreign content digests; the concrete external binding remains in the lock. Empty Packages are not included; intermediate Packages result from the complete Package paths of the contained definitions. This does not change the authoring rule that every folder is a Package, and it permits no circumvention of spelling or import errors in the preceding validation. Git need not preserve empty directories in order to produce the same canonical content bytes.
 
-**Gegenproben und Grenze.** [canonical/core.json](exchange-example/canonical/core.json) ist ein festes Byteartefakt mit 3769 Bytes und Digest sha256:562a20613c64fb9cd3425ff39b5f9fb826b75deb153cdfac48b00fce6f5c19f1. Die Probe kontrolliert genaue Escape-/Sortiervektoren, exakte große Zahlen, wirksame Defaults, Listenregeln, Referenzformen, Textänderungen und vorangestellte Validierung. Ein unabhängiger Standard-JSON-Encoder wird zusätzlich gegen den projizierten Baum verglichen. Das ist ein ausführbarer Entwurfsnachweis des definierten Profils, keine allgemeine Parser-Konformität oder bereits produktive Go-Implementierung. Ressourcenlimits der Probe bleiben offengelegt und begründen keine heimliche alternative Kodierung.
+**Counter-probes and limit.** [canonical/core.json](exchange-example/canonical/core.json) is a fixed byte artifact with 3769 bytes and digest sha256:562a20613c64fb9cd3425ff39b5f9fb826b75deb153cdfac48b00fce6f5c19f1. The probe checks exact escape/sorting vectors, exact large numbers, effective defaults, list rules, reference forms, text changes and preceding validation. An independent standard JSON encoder is additionally compared against the projected tree. This is executable design evidence of the defined profile, not general parser conformance or an already production-ready Go implementation. Resource limits of the probe remain disclosed and justify no secret alternative encoding.
 
-## 9. Umbenennungen und Migrationen
+## 9. Renamings and migrations
 
-| Änderung | Vertrag |
+| Change | Contract |
 | --- | --- |
-| title ändern | Identität bleibt; geänderte Darstellung kann im neuen Stand erfasst werden. |
-| Datei innerhalb desselben Packageordners umbenennen | Identität bleibt, wenn id bestehen bleibt und die Datei weiter geladen wird. |
-| Datei in einen anderen Ordner verschieben oder Packageordner umbenennen/verschieben | Package-Name und damit Identität ändern sich; Referenzen ausdrücklich migrieren. |
-| Importalias einer Datei ändern | Nur damit qualifizierte Autorenreferenzen dieser Datei anpassen; andere Dateien, eindeutige direkt verfügbare Namen und kanonische Zielidentitäten bleiben. |
-| Propertyfeld sender zu requester ändern | Neuer Feldschlüssel gilt im Typvertrag; konkrete specs müssen migriert werden. |
-| Dabei Propertyidentität erhalten | id in der Propertydatei beibehalten und spec.name auf den gewünschten neuen Feldnamen setzen; etwa requester bei stabiler ID exchange.sender. |
-| spec.name auslassen | Die vollständige lokale Property-ID ist der effektive Feldname. |
-| Abweichendes spec.name entfernen | Der Feldname fällt auf die vollständige lokale ID zurück; betroffene konkrete specs müssen gegebenenfalls migriert werden. |
-| ID bei fehlendem spec.name ändern | Identitätsmigration und Änderung des Standardfeldnamens; ein ausdrücklich gesetzter bisheriger Name kann den Feldschlüssel erhalten. |
-| Property unter anderem Kind verwenden | Dieselbe eigenständige Propertydefinition ausdrücklich referenzieren, wenn derselbe Feldvertrag gewünscht ist. |
-| Lokale id oder Paketzugehörigkeit ändern | Ausdrückliche Identitätsmigration und Anpassung bekannter Referenzen. |
+| Change title | Identity remains; the changed presentation can be captured in the new state. |
+| Rename file within the same Package folder | Identity remains if id persists and the file continues to be loaded. |
+| Move file into another folder or rename/move Package folder | Package name and thus identity change; migrate references explicitly. |
+| Change the import alias of a file | Adjust only the authored references of this file qualified with it; other files, unambiguous directly available names and canonical target identities remain. |
+| Change property field sender to requester | The new field key applies in the type contract; concrete specs must be migrated. |
+| Preserve the property identity in doing so | Keep id in the property file and set spec.name to the desired new field name; for example requester with the stable ID exchange.sender. |
+| Omit spec.name | The complete local Property ID is the effective field name. |
+| Remove deviating spec.name | The field name falls back to the complete local ID; affected concrete specs must be migrated where necessary. |
+| Change ID while spec.name is missing | Identity migration and change of the default field name; an explicitly set previous name can preserve the field key. |
+| Use Property under another Kind | Explicitly reference the same standalone property definition if the same field contract is desired. |
+| Change local id or package membership | Explicit identity migration and adjustment of known references. |
 
-Eine stabile Property-ID bewahrt Verweise auf den Feldvertrag, macht den alten Feldnamen aber nicht weiter gültig. id ist immer ausdrücklich erforderlich. Ein ausdrücklich gesetztes spec.name trennt den Feldnamen von dieser ID; ohne name gilt die ID als Standardfeldname. Ändert ein Autor zusätzlich die ID, ist das eine eigene Identitätsmigration; der Compiler errät keine Umbenennungsabsicht und erzeugt bei einer Feldumbenennung keine neue Property-ID.
+A stable Property ID preserves references to the field contract but does not keep the old field name valid. id is always explicitly required. An explicitly set spec.name separates the field name from this ID; without name, the ID applies as default field name. If an author additionally changes the ID, that is a separate identity migration; the compiler does not guess a renaming intention and creates no new Property ID on a field rename.
 
-Eine neue gemeinsam versionierte Modellfassung kann dieselben logischen Identitäten mit geänderten Verträgen enthalten. Die neue Bindung wird ausdrücklich gewählt und betroffene Modelle beziehungsweise Realisierungen werden gegen sie betrachtet. Weder eine stabile ID noch eine Versionsnummer beweist semantische Kompatibilität.
+A new jointly versioned model version can contain the same logical identities with changed contracts. The new binding is chosen explicitly, and affected models or realizations are considered against it. Neither a stable ID nor a version number proves semantic compatibility.
 
-Veröffentlichte alte Fassungen und darauf bezogene Nachweise werden nicht rückwirkend geändert. Automatische Weiterleitungen, versteckte Namenshistorien und Zuordnung über ähnliche Namen sind nicht Bestandteil des minimalen Cores. Bei echter Identitätsänderung müssen bekannte kind-, target-, Wertreferenzen und explizite Körperlinks migriert werden. Freie Prosa benötigt zusätzlich Review.
+Published old versions and evidence referring to them are not changed retroactively. Automatic redirects, hidden name histories and mapping via similar names are not part of the minimal Core. On a genuine identity change, known kind, target and value references and explicit body links must be migrated. Free prose additionally requires review.
 
-## 10. Verarbeitung und feste Core-Regeln
+## 10. Processing and fixed Core rules
 
-Die Verarbeitung erfolgt unabhängig von der Dokumentreihenfolge:
+Processing takes place independently of document order:
 
-1. Den bekannten Core-Vertrag und die ausdrücklich gebundenen Pakete bereitstellen.
-2. Aus jeder Definitionsdatei genau eine vollständige Definition erfassen; die einheitliche Hülle prüfen, Herkunft erhalten und Identitätskollisionen abweisen. Eingebettete Propertydeklarationen und Definitionssammlungen sind Fehler.
-3. Referenzen im eigenen Paket und den Imports der jeweiligen Definitionsdatei eindeutig auflösen.
-4. Meta-Kinds und Propertyverträge gegen den festen Anfang und seine Sprachinvarianten prüfen.
-5. Aus den gültigen Kind-/Propertydefinitionen geschlossene Typverträge bilden; den effektiven Feldnamen aus spec.name oder der vollständigen lokalen Property-ID bestimmen und Namenskollisionen abweisen.
-6. Alle Definitionen gegen ihren Kind, Werttypen, Kardinalitäten und Referenzziele prüfen.
-7. Einen festen Modellstand mit vollständigen bodies, Typverträgen, Paketbindungen und aufgelösten Bezügen bilden.
+1. Provide the known Core contract and the explicitly bound packages.
+2. Capture exactly one complete definition from each definition file; check the uniform envelope, preserve provenance and reject identity collisions. Embedded property declarations and definition collections are errors.
+3. Resolve references unambiguously in the definition's own package and the imports of the respective definition file.
+4. Check meta-Kinds and property contracts against the fixed beginning and its language invariants.
+5. Form closed type contracts from the valid Kind/property definitions; determine the effective field name from spec.name or the complete local Property ID and reject name collisions.
+6. Check all definitions against their Kind, value types, cardinalities and reference targets.
+7. Form a fixed model state with complete bodies, type contracts, package bindings and resolved references.
 
-Der Compiler muss dafür die Dokumenthülle, die Ein-Datei-Regel, die beiden Meta-Kinds, deren Feldinterpretation, Werttypen, Kardinalitäten und Referenzregeln fest verstehen. Diese Bedeutung entsteht nicht dadurch, dass sie im body des festen Anfangs nochmals beschrieben ist.
+For this, the compiler must have a fixed, built-in understanding of the document envelope, the one-file rule, the two meta-Kinds, their field interpretation, value types, cardinalities and reference rules. This meaning does not arise from its being described again in the body of the fixed beginning.
 
-Der selbsttypisierte Kind und gewöhnliche Referenzzyklen sind endliche Graphbeziehungen. Sie verlangen keine unendliche Typentfaltung. Objektvertragszyklen und Werkzeugbudgets folgen Abschnitt 5.3: Nur verpflichtende Objektzyklen sind unzulässig; tatsächlich vorhandene endliche Werte werden ohne Vorabentfaltung geprüft. Ressourcenabbrüche sind keine Sprachmaxima und dürfen keine erfolgreiche Prüfung ergeben.
+The self-typed Kind and ordinary reference cycles are finite graph relationships. They require no infinite type expansion. Object contract cycles and tool budgets follow Section 5.3: only mandatory object cycles are impermissible; actually present finite values are checked without advance expansion. Resource aborts are not language maxima and must not yield a successful check.
 
-Das Ergebnis macht Kind-, Property- und konkrete Definitionen gemeinsam adressierbar. Ein Inhaltsdigest bindet den Modellinhalt und die gewählten Verträge; Quellherkunft bleibt nachvollziehbar. Die genaue kanonische Datenkodierung ist in Abschnitt 8.3 gewählt. Produktive Fehlercodes und Berichtsformate bleiben getrennte Werkzeugausarbeitung.
+The result makes Kind, Property and concrete definitions addressable together. A content digest binds the model content and the chosen contracts; source provenance remains traceable. The exact canonical data encoding is chosen in section 8.3. Production error codes and report formats remain separate tool elaboration.
 
-## 12. Evidenz und noch offene Ausarbeitungen
+## 12. Evidence and elaborations still open
 
-Die [Probenübersicht in der Herleitung](README.md) und die verlinkten Berichte dokumentieren getrennte Umfänge:
+The [probe overview in the derivation](README.md) and the linked reports document separate scopes:
 
-- Das [vollständige vereinfachte Exchange-Beispiel](exchange-example/README.md) speichert den gewählten Core mit neun, das Vokabular mit siebzehn und das Projekt mit sieben Definitionen. Sein lokaler Prüfer und Bericht binden die gelesenen Dateien und prüfen den expliziten Beispielgraphen. Dies ist weder der neue Produktcompiler noch ein vollständiger Alias-/Markup-/Kanonisierungsnachweis.
-- Der bestehende Go-Core wurde mit ausdrücklich von definition auf purpose adaptierten älteren Beispielen geprüft. Das belegt keine neue Autorenform.
-- Die [Bootstrap-Probe](bootstrap/probe.json) prüft den endlichen Anfang und das gemeinsame Definitionenmodell in einem separaten Entwurfsprototyp.
-- Die [Kompaktprobe](bootstrap/compact-probe.json) bestätigt für den früheren Stand die Gleichheit von ausgeschriebenen und eingebetteten Properties. Die kompakte Autorenform ist durch die spätere Nutzerentscheidung abgelöst; der historische Bericht bleibt unverändert.
-- Der [Identitätsdurchgang](identities/probe.json) prüft separat importierte Versionen, Paketkontexte und die damals ergänzte stabile inline id. Seine drei gültigen Stände besitzen dieselben 51 logischen Identitäten mit unterschiedlichen Modellbindungen. Er prüft nicht die nun gewählte Ablage jeder Definition in einer eigenen Datei; der Identitätsvertrag bleibt mit ausdrücklich gesetzten Property-IDs bestehen.
+- The [complete simplified Exchange example](exchange-example/README.md) stores the chosen Core with nine, the vocabulary with seventeen and the project with seven definitions. Its local verifier and report bind the files read and check the explicit example graph. This is neither the new product compiler nor a complete alias/markup/canonicalization proof.
+- The existing Go Core was checked with older examples explicitly adapted from definition to purpose. This does not evidence a new authoring form.
+- The [bootstrap probe](bootstrap/probe.json) checks the finite starting point and the common definition model in a separate design prototype.
+- The [compact probe](bootstrap/compact-probe.json) confirms, for the earlier state, the equality of written-out and embedded Properties. The compact authoring form is superseded by the later user decision; the historical report remains unchanged.
+- The [identity walkthrough](identities/probe.json) separately checks imported versions, package contexts and the stable inline id added at the time. Its three valid states have the same 51 logical identities with different model bindings. It does not check the now chosen storage of each definition in its own file; the identity contract remains in place with explicitly set Property IDs.
 
-Der nun gewählte Core hat neun Definitionen mit kurzen Meta-Property-IDs und einer gemeinsamen Property properties. Die historischen Bootstrap-/Identitätsproben betreffen ihren damaligen Anfang aus zehn Core-Definitionen; ihre Knoten-, Kanten- und Digestangaben werden nicht auf diesen neuen Stand übertragen.
+The now chosen Core has nine definitions with short meta-Property IDs and one common Property properties. The historical bootstrap/identity probes concern their starting point of the time, made of ten Core definitions; their node, edge and digest statements are not transferred to this new state.
 
-Keiner dieser Berichte ist ein Nachweis bereits produktiver Unterstützung des gesamten neuen Vertrags. Insbesondere wurde die neue Laufzeitpflicht des Versionsbeispiels nicht durch einen ausgeführten Connector bestätigt.
+None of these reports is evidence of already production-ready support of the whole new contract. In particular, the new runtime obligation of the version example has not been confirmed by an executed Connector.
 
-Der abgeschlossene Sprachentscheidungsstand und die getrennten Implementierungs-/Verfahrensarbeiten stehen im nachfolgenden Abschlussabgleich. Bereits gewählte Regeln werden nicht wegen ihrer fehlenden Go-Implementierung wieder als offene Sprachentscheidungen geführt.
+The completed state of language decisions and the separate implementation/procedure work are in the final reconciliation below. Rules already chosen are not carried again as open language decisions because their Go implementation is missing.
 
-### 12.1 Stand der Definition des kanonischen Modells
+### 12.1 State of the definition of the canonical model
 
-**Abschlussabgleich vom 16. Oktober 2026:** Die kanonische Form des bislang gewählten minimalen Sprachumfangs ist definiert. Mit der gewählten Azyklizitätsregel für Modellabhängigkeiten ist auch die zuletzt offene Manifestfrage entschieden. Der erneute Abgleich hat keine weitere offene Grundsatzentscheidung in diesem Umfang identifiziert. Die folgende Zuordnung unterscheidet Sprachentscheidungen von ausführbarer Evidenz und Produktimplementierung.
+**Final reconciliation of 16 October 2026:** The canonical form of the minimal language scope chosen so far is defined. With the chosen acyclicity rule for model dependencies, the last open manifest question is also decided. The renewed reconciliation has identified no further open fundamental decision in this scope. The following mapping distinguishes language decisions from executable evidence and product implementation.
 
-| Bereich | Eigentümer und Stand |
+| Area | Owner and state |
 | --- | --- |
-| Einheitliche Definitionen, eine Datei je Kind/Property/Gegenstand, geschlossene Hülle | Abschnitt 2; gewählt. Keine kompakte oder eingebettete Definitionsform. |
-| Fester Core und Feldverträge | Abschnitt 3; neun Definitionen, gemeinsame properties, kurze Property-IDs und optionaler ID-Standard für spec.name gewählt. |
-| Verbindlicher body und explizite Körperlinks | Abschnitt 4, insbesondere 4.5; gewähltes CommonMark-/Linkprofil einschließlich Quellenpositionen. |
-| YAML, Werttypen, Kardinalitäten und Defaults | Abschnitt 5.1 und 5.2; gewählt. |
-| Objektvertragszyklen und Ressourcengrenzen | Abschnitt 5.3; optionale Abbruchkanten, Verbot verpflichtender Zyklen und reine Werkzeugbudgets gewählt. |
-| Unicode, Schreibweise, Identitäten und Ordnerpackages | Abschnitt 7; gewählt, einschließlich Wurzel ohne Definitionen und fachlicher Package-Organisation. |
-| Dateilokale Imports und Aliase | Abschnitt 8; gewählt, eindeutige Auflösung ohne Suchprioritäten. |
-| Modelle, Versionstextlabels, gemeinsame Zeichengrammatik, physische Wurzelpfade und Modellabhängigkeiten | Abschnitt 8.1; gewählt. Modellabhängigkeiten sind azyklisch, einschließlich des Verbots von Selbstabhängigkeiten. |
-| Lock und kanonische Bytes | Abschnitt 8.2 und 8.3; gewählt. Der tatsächliche Core-Digest und seine Bindung sind erprobt. |
-| Änderungen und Verarbeitung | Abschnitt 9 und 10; Identitätsmigrationen sind ausdrücklich, Referenzen werden nicht unendlich entfaltet. |
+| Uniform definitions, one file per Kind/Property/item, closed envelope | Section 2; chosen. No compact or embedded definition form. |
+| Fixed Core and field contracts | Section 3; nine definitions, common properties, short Property IDs and optional ID default for spec.name chosen. |
+| Binding body and explicit body links | Section 4, in particular 4.5; chosen CommonMark/link profile including source positions. |
+| YAML, value types, cardinalities and defaults | Sections 5.1 and 5.2; chosen. |
+| Object contract cycles and resource limits | Section 5.3; optional terminating edges, prohibition of mandatory cycles and pure tool budgets chosen. |
+| Unicode, spelling, identities and folder Packages | Section 7; chosen, including a root without definitions and domain Package organization. |
+| File-local imports and aliases | Section 8; chosen, unambiguous resolution without search priorities. |
+| Models, version text labels, common character grammar, physical root paths and model dependencies | Section 8.1; chosen. Model dependencies are acyclic, including the prohibition of self-dependencies. |
+| Lock and canonical bytes | Sections 8.2 and 8.3; chosen. The actual Core digest and its binding are tested. |
+| Changes and processing | Sections 9 and 10; identity migrations are explicit, references are not unfolded without end. |
 
-Die ausführbare Probe ist ein gebundener Entwurfsnachweis, kein allgemeiner YAML-/CommonMark-Konformitätsnachweis und keine produktive Go-Implementierung. Der aktuelle Exchange-Eingabesatz bleibt wegen Command/command ungültig; sein Vokabularproblem ist keine fehlende Sprachfähigkeit. Seine ältere Aufteilung vocabulary/project ist keine empfohlene fachliche Package-Grenze.
+The executable probe is bound design evidence, not a general YAML/CommonMark conformance proof and not a production Go implementation. The current Exchange input set remains invalid because of Command/command; its vocabulary problem is not a missing language capability. Its older vocabulary/project division is not a recommended domain Package boundary.
 
-Für die Produktion bleiben ein Go-Compiler, ein implementationsunabhängiger gültiger/ungültiger Referenztestkorpus, Diagnostik-/Berichtsformate und vollständige Quellenabbildung sowie Bereitstellung und Migration auszuarbeiten. Sie dürfen die gewählten Regeln nicht durch Parser-Voreinstellungen, Laufzeitgrenzen oder automatische Korrekturen verändern. Fehlercodes und genaue Ausgabeformate sind Werkzeugverträge, keine neuen Pflicht-Kinds.
+For production, a Go compiler, an implementation-independent valid/invalid reference test corpus, diagnostic/report formats and complete source mapping as well as provisioning and migration remain to be worked out. They must not change the chosen rules through parser defaults, runtime limits or automatic corrections. Error codes and exact output formats are tool contracts, not new mandatory Kinds.
 
-### 12.2 Ergebnis des Vollständigkeitsabgleichs
+### 12.2 Result of the completeness reconciliation
 
-**Keine weitere offene Sprachentscheidung im gewählten Umfang identifiziert.** Abschnitt 8.1 legt nun ausdrücklich fest, dass model.yaml-Abhängigkeiten einen azyklischen Graphen bilden müssen. A → A, A → B → A und längere Zyklen sind Fehler. Gemeinsame transitive Abhängigkeiten und gewöhnliche Referenzzyklen innerhalb eines Modells bleiben erlaubt; Objektverträge folgen ihrer eigenen Regel aus Abschnitt 5.3.
+**No further open language decision identified in the chosen scope.** Section 8.1 now stipulates explicitly that model.yaml dependencies must form an acyclic graph. A → A, A → B → A and longer cycles are errors. Common transitive dependencies and ordinary reference cycles within a model remain permitted; object contracts follow their own rule from section 5.3.
 
-Der begrenzte Manifestprüfer weist Modellzyklen jetzt als failed ab und liefert dafür keinen Digest; die frühere vorläufige Einstufung als not_completed ist abgelöst. Gegenproben unterscheiden Selbst-, wechselseitige, längere und transitive Zyklen von gültigen Ketten und gemeinsam verwendeten Bibliotheken. Die Prüfung greift sowohl bei der physischen Manifestbindung als auch vor der kanonischen Projektion. Die Ressourcengrenzen des Werkzeugs bleiben davon getrennt.
+The bounded manifest verifier now rejects model cycles as failed and delivers no digest for them; the earlier provisional classification as not_completed is superseded. Counter-probes distinguish self, mutual, longer and transitive cycles from valid chains and jointly used libraries. The check applies both in the physical manifest binding and before the canonical projection. The resource limits of the tool remain separate from this.
 
-Im übrigen bislang gewählten Sprachumfang hat dieser Abgleich keine weitere offene Grundsatzentscheidung identifiziert. Das ist kein Beweis der Eignung für jedes denkbare Projekt oder vollständiger Parserkonformität. Weitere formale Wertebedingungen, Mehrversionsimporte und zusätzliche Sprachmittel bleiben ausdrücklich optionale Erweiterungen.
+In the rest of the language scope chosen so far, this reconciliation has identified no further open fundamental decision. This is no proof of suitability for every conceivable project or of complete parser conformance. Further formal value conditions, multi-version imports and additional language features remain explicitly optional extensions.
 
-**Getrennte weitere Arbeit:** Prosa und spec sind gemeinsam verbindlich. Ein Widerspruch bleibt ein semantischer Befund, auch wenn die Strukturprüfung besteht; es gibt keine automatische Vorrangregel. Kontext, semantischer Index, Aktualisierung, Realisierungszuordnung, Prüfplanung und Apply aus Abschnitt 11 sind ausgearbeitete Verfahrensvorschläge und nicht als Ganzes gewählte Teile der kanonischen Form. Ihre Ausführungsdaten verlangen keine zusätzlichen Core-Kinds. Produktimplementierung, Prüfevidenz und fachliche Akzeptanz bleiben getrennt.
+**Separate further work:** Prose and spec are binding together. A contradiction remains a semantic finding even if the structural check passes; there is no automatic precedence rule. Context, semantic index, updating, realization mapping, check planning and Apply from section 11 are elaborated procedure proposals and have not, as a whole, been chosen as parts of the canonical form. Their execution data require no additional Core Kinds. Product implementation, check evidence and domain acceptance remain separate.
 
-Eine redaktionell gestraffte normative v1-Fassung mit Referenzfällen ist als Aufbereitung sinnvoll; sie soll die gewählten Sprachregeln und bewusst ausgeschlossenen Erweiterungen klar vom historischen Gespräch und den Vorschlägen aus Abschnitt 11 trennen. Das ist keine weitere offene Sprachentscheidung und keine Voraussetzung, den hier festgelegten Umfang zu implementieren.
+An editorially streamlined normative v1 version with reference cases is sensible as a preparation; it should clearly separate the chosen language rules and deliberately excluded extensions from the historical conversation and the proposals from section 11. This is no further open language decision and no precondition for implementing the scope stipulated here.
 
-Zurück zum [gemeinsamen Designstand](../consolidation.md) oder zur [Begriffsübersicht](../README.md).
+Back to the [common design state](../consolidation.md) or to the [overview of terms](../README.md).
 
-## Frühere Navigationszusammenfassung der Core-Herleitung
+## Earlier navigation summary of the Core derivation
 
-Die nachfolgenden Statusangaben stammen aus der Navigation vor der v1-Konsolidierung.
+The status statements below come from the navigation before the v1 consolidation.
 
-Stand: 15. Oktober 2026. **Status: Gesprächsherleitung, frühere Varianten und begrenzte Prüfberichte.** Der aktuelle, zusammenhängende Stand steht im [konsolidierten Sprachvertrag](language-contract.md). Der Nutzer hat inzwischen auch den Identitätsvertrag gewählt und die Konsolidierung beauftragt. Frühere Vorschlags- und Statusangaben auf dieser Seite dokumentieren ihren jeweiligen Gesprächszeitpunkt; sie setzen die späteren Entscheidungen nicht außer Kraft. Produktunterstützung des neuen Gesamtvertrags wird nicht behauptet.
+As of: 15 October 2026. **Status: conversation derivation, earlier variants and bounded check reports.** The current coherent state is in the [consolidated language contract](language-contract.md). The user has meanwhile also chosen the identity contract and commissioned the consolidation. Earlier proposal and status statements on this page document their respective point in the conversation; they do not override the later decisions. Product support of the new overall contract is not claimed.
 
-**Aktuell gewählte Richtung:** Der Nutzer entscheidet sich für **eine einheitliche Definitionenform mit den fest verstandenen Kinds Kind und Property**. In der Gesprächsfortsetzung legt er **eine Datei pro Definition** fest, einschließlich jeder Property und jedes konkreten Gegenstands, und schließt kompakte oder eingebettete Property-Sonderformen aus. Maßgeblich ist [Abschnitt 6 des Sprachvertrags](language-contract.md#property-names). body bleibt der verbindliche Körper; requirements und roles entfallen vorerst als besondere Sprachmittel. [Abschnitt 14](README.md#14-gewaehlte-grundform-und-kompakte-properties) dokumentiert die inzwischen abgelöste kompakte Autorenform und ihre damaligen Proben; eine neue Produktimplementierung ist damit nicht behauptet.
+**Currently chosen direction:** The user decides on **one uniform definition form with the Kinds Kind and Property understood as fixed**. In the continuation of the conversation, the user stipulates **one file per definition**, including every Property and every concrete item, and excludes compact or embedded special Property forms. [Section 6 of the language contract](language-contract.md#property-names) is authoritative. body remains the binding body; requirements and roles are dropped as special language features for the time being. [Section 14](README.md#14-chosen-basic-form-and-compact-properties) documents the compact authoring form, since superseded, and its probes of the time; a new product implementation is not claimed by this.
 
-**Weitere gewählte Richtung:** Package ist der einzige Namensraum; jeder Ordner unter der Modellwurzel bildet ein Package, dessen Name aus dem relativen Pfad folgt. Ein zusätzliches namespace-Feld entfällt. Seit der Nutzerentscheidung vom 16. Oktober ist Package keine Versionierungs-/Verteilungseinheit mehr; diese Einheit heißt Modell. Direkte Imports in der jeweiligen Definitionsdatei machen vollständige Definitions-IDs ohne Präfix verfügbar. Die Bereitstellung und Versionsbindung zusammengehöriger Modelle wird getrennt festgelegt und öffnet keine Namen. Package-Namen und vollständige Package-Qualifizierung verwenden /; gegliederte lokale IDs und nötige Aliasqualifizierung weiterhin Punkte. Mehrdeutigkeiten werden abgewiesen. [Abschnitt 7 und 8 des Sprachvertrags](language-contract.md#names) besitzen diese spätere Entscheidung; die folgenden historischen Beispiele und Proben behalten ihre frühere Notation.
+**Further chosen direction:** Package is the only namespace; every folder under the model root forms a Package whose name follows from the relative path. An additional namespace field is dropped. Since the user decision of 16 October, Package is no longer a versioning/distribution unit; this unit is called model. Direct imports in the respective definition file make complete definition IDs available without a prefix. The provision and version binding of models that belong together is stipulated separately and opens no names. Package names and full Package qualification use /; structured local IDs and necessary alias qualification still use dots. Ambiguities are rejected. [Sections 7 and 8 of the language contract](language-contract.md#names) own this later decision; the following historical examples and probes keep their earlier notation.
 
-**Weitere Auswahl zu Properties:** Keine verpflichtenden ID-Präfixe; spec.name ist optional und verwendet bei Abwesenheit die vollständige lokale ID als Feldnamen. [Abschnitt 6.1 des Sprachvertrags](language-contract.md#property-names) besitzt diese Regel. Der Nutzer hat anschließend die gemeinsame Meta-Property properties übernommen. Der [vollständige Core mit neun Definitionsdateien](language-contract.md#core-definitions) verwendet kurze Meta-Property-IDs ohne ausdrückliches spec.name; [Abschnitt 3.2](language-contract.md#property-contracts) hält die Verwendung und Gegenproben fest. Historische Proben des früheren zehnteiligen Anfangs bleiben unverändert.
+**Further selection on Properties:** No mandatory ID prefixes; spec.name is optional and, when absent, uses the complete local ID as the field name. [Section 6.1 of the language contract](language-contract.md#property-names) owns this rule. The user subsequently adopted the common meta-Property properties. The [complete Core with nine definition files](language-contract.md#core-definitions) uses short meta-Property IDs without explicit spec.name; [section 3.2](language-contract.md#property-contracts) records the use and counter-probes. Historical probes of the earlier ten-part starting point remain unchanged.
 
-**Gewähltes YAML-/Werteprofil:** [Abschnitt 5.1](language-contract.md#yaml-values) besitzt die begrenzte YAML-1.2.2-Autorenform, eindeutige Skalarregeln ohne implizite Datums-/yes/on-Konvertierung, exakte endliche Zahlen und strenge Strukturprüfung. Python/PyYAML bleiben Hilfsmittel der Entwurfsprobe; das Go-Produkt wird dadurch nicht umgestellt. [Abschnitt 5.2](language-contract.md#lists) hält inzwischen geordnete Wertlisten, ungeordnete Core-Deklarationen/Imports und die kanonische Gleichheit fehlender/leerer optionaler Listen fest. Quellen bleiben unverändert; Abschnitt 8.3 bestimmt inzwischen die vollständige kanonische Bytekodierung.
+**Chosen YAML/value profile:** [Section 5.1](language-contract.md#yaml-values) owns the bounded YAML 1.2.2 authoring form, unambiguous scalar rules without implicit date/yes/on conversion, exact finite numbers and strict structural checking. Python/PyYAML remain aids of the design probe; the Go product is not switched over by this. [Section 5.2](language-contract.md#lists) now records ordered value lists, unordered Core declarations/imports and the canonical equality of missing/empty optional lists. Sources remain unchanged; section 8.3 now determines the complete canonical byte encoding.
 
-**Gewählte Körperlink-Regeln:** [Abschnitt 4.5](language-contract.md#body-links) bindet CommonMark 0.31.2, geschützte Kontexte, exakte Ziele, einfache Anzeigetexte, Escapes und UTF-8-/YAML-Fundstellen. Der begrenzte Prüfer besitzt dazu einen Parser und Gegenproben; zwei aktive Links des Beispiels werden separat vom weiterhin ungültigen gesamten Definitionsgraphen geprüft. Ordnerpackages stehen inzwischen in Abschnitt 7.3. Abschnitt 8.1 wählt inzwischen model.yaml für stabile Modellidentität, relative Wurzel, optionale lokale Version und genaue direkte Modellabhängigkeiten. Belegte Packages gehören genau einem Modell; leere Zwischenordner können gemeinsam auftreten. Das Beispiel lädt zwei Manifeste. Abschnitt 8.2 wählt inzwischen model-lock.yaml für die vollständige externe Modellmenge mit Version und eigenem Inhaltsdigest, ohne zweite Graphbeschreibung oder Speicherorte. Abschnitt 8.3 bestimmt inzwischen model-digest/1 als genaue UTF-8-JSON-Projektion mit Defaults, aufgelösten Referenzen und unveränderten Texten. Der Platzhalter ist durch den echten Core-Digest ersetzt und gegen 3769 gespeicherte kanonische Bytes geprüft. Für das ungültige Connector-Modell wird kein Digest ausgegeben. Die Modellwurzel ist selbst kein Package und darf keine Definitionen unmittelbar enthalten; jede Definition gehört zu einem benannten Unterordner-Package. Modell-IDs und Versionslabels verwenden inzwischen dieselbe Grammatik: kleingeschriebene NFC-Unicode-Abschnitte, mit Ziffernstart und . oder - als Trennern. Physische Wurzelpfade sind ebenfalls gewählt: . oder exakt geschriebene relative /-Pfade mit vorhandenen Ordnern nach Packageordnergrammatik, ohne Normalisierung oder Umleitungen und ohne überlappende Modellwurzeln. Objektzyklus- und Ressourcenregeln stehen inzwischen in Abschnitt 5.3: nur verpflichtende Objektzyklen sind Fehler; Budgets begrenzen das Werkzeug und liefern bei Abbruch keinen Digest. Modellabhängigkeiten sind inzwischen als azyklisch festgelegt, einschließlich des Verbots von Selbstabhängigkeiten. Gemeinsame transitive Bibliotheken bleiben erlaubt. Der Abschlussabgleich identifiziert keine weitere offene Sprachentscheidung im gewählten minimalen Umfang; Produktimplementierung und Belege bleiben getrennt.
+**Chosen body link rules:** [Section 4.5](language-contract.md#body-links) binds CommonMark 0.31.2, protected contexts, exact targets, simple display texts, escapes and UTF-8/YAML locations. The bounded verifier has a parser and counter-probes for this; two active links of the example are checked separately from the still invalid whole definition graph. Folder Packages are now in section 7.3. Section 8.1 now chooses model.yaml for stable model identity, relative root, optional local version and exact direct model dependencies. Occupied Packages belong to exactly one model; empty intermediate folders can be shared. The example loads two manifests. Section 8.2 now chooses model-lock.yaml for the complete external model set with version and its own content digest, without a second graph description or storage locations. Section 8.3 now determines model-digest/1 as an exact UTF-8 JSON projection with defaults, resolved references and unchanged texts. The placeholder has been replaced by the real Core digest and checked against 3769 stored canonical bytes. No digest is output for the invalid Connector model. The model root is itself not a Package and must not directly contain any definitions; every definition belongs to a named subfolder Package. Model IDs and version labels now use the same grammar: lowercase NFC Unicode segments, with digit start and . or - as separators. Physical root paths are also chosen: . or exactly written relative /-paths with existing folders according to the Package folder grammar, without normalization or redirections and without overlapping model roots. Object cycle and resource rules are now in section 5.3: only mandatory object cycles are errors; budgets limit the tool and deliver no digest on abort. Model dependencies are now stipulated as acyclic, including the prohibition of self-dependencies. Common transitive libraries remain permitted. The final reconciliation identifies no further open language decision in the chosen minimal scope; product implementation and evidence remain separate.
 
-Das [vollständige vereinfachte Exchange-Beispiel](exchange-example/README.md) enthält die aktuellen Dateien für Core, Vokabular und Projekt sowie eine begrenzte reproduzierbare Strukturprobe. Inzwischen sind strenge Schreibkonventionen ohne automatische Korrektur, Identitäts-/Kollisionsprüfung unabhängig von Groß-/Kleinschreibung und dateilokale Importaliase gewählt. Jeder Import ist ein Objekt mit package und optionalem as. Anschließend sind Unicode als durchgängige Textgrundlage, NFC für Namen und Referenzen sowie vollständiger kulturunabhängiger Namensvergleich einschließlich straße/strasse gewählt; Abschnitt 7.2 besitzt das auf Unicode 15.1.0 gebundene Namensprofil. Der ungelöste Konflikt Command/command wird unter diesen Regeln abgewiesen; seine Modellierung bleibt eine Vokabularfrage. Die früheren Berichte und Beispiele weiter unten bleiben historische Herleitung. [Abschnitt 12.2 des Sprachvertrags](language-contract.md#conformance) trennt diesen Beispielstand von den verbleibenden Sprachentscheidungen.
+The [complete simplified Exchange example](exchange-example/README.md) contains the current files for Core, vocabulary and project as well as a bounded reproducible structural probe. Since then, strict spelling conventions without automatic correction, case-insensitive identity/collision checking and file-local import aliases have been chosen. Each import is an object with package and optional as. Subsequently, Unicode as the consistent text basis, NFC for names and references and complete culture-independent name comparison including straße/strasse are chosen; section 7.2 owns the name profile bound to Unicode 15.1.0. The unresolved conflict Command/command is rejected under these rules; its modeling remains a vocabulary question. The earlier reports and examples further below remain historical derivation. [Section 12.2 of the language contract](language-contract.md#conformance) separates this example state from the remaining language decisions.
 
-Der [Identitaets- und Referenzvertrag](README.md#15-identitaeten-imports-versionen-und-umbenennungen) unterscheidet stabile Identitaet, optionale Anzeigenamen und die Bindung importierter Versionen. Nach dem Durchgang in Abschnitt 16 hat der Nutzer diesen Vertrag gewaehlt; die verbindlichen Designregeln und die noch offenen Formatdetails sind im konsolidierten Sprachvertrag getrennt festgehalten.
+The [identity and reference contract](README.md#15-identities-imports-versions-and-renamings) distinguishes stable identity, optional display names and the binding of imported versions. After the walkthrough in section 16, the user chose this contract; the binding design rules and the format details still open are recorded separately in the consolidated language contract.
 
-Der [vollstaendige Identitaetsdurchgang](README.md#16-identitaetsdurchgang-mit-import-update-und-feldumbenennung) prueft diesen Vorschlag inzwischen begrenzt mit importiertem Vokabular, drei gebundenen Staenden und sender/requester. Er implementiert keinen Produktloader.
+The [complete identity walkthrough](README.md#16-identity-walkthrough-with-import-update-and-field-renaming) now checks this proposal in a bounded way with an imported vocabulary, three bound states and sender/requester. It implements no product loader.
 
-Die [Untersuchung einer gemeinsamen Grundform](README.md#11-gemeinsame-grundform-und-body) ist die Grundlage der inzwischen gewaehlten Richtung. Die bisherigen YAML-Dateien und ihre hashgebundenen Berichte bleiben unveraenderte Nachweise des vorherigen Durchstichs mit definition. Der aktuelle Implementierungsname purpose bleibt davon unberuehrt.
+The [investigation of a common basic form](README.md#11-shared-basic-form-and-body) is the basis of the direction chosen since. The previous YAML files and their hash-bound reports remain unchanged evidence of the previous vertical slice with definition. The current implementation name purpose remains unaffected by this.
 
-Der anschliessend beauftragte [feste Anfang und die vollstaendige Typaufloesung](README.md#12-fester-anfang-und-typaufloesung-am-exchange) sind als eigene, begrenzte Entwurfsprobe mit body ausgearbeitet. Die Probe verwendet eine gemeinsame Definitionenform und ersetzt den Produktcompiler nicht.
+The subsequently commissioned [fixed starting point and complete type resolution](README.md#12-fixed-beginning-and-type-resolution-at-the-exchange) are worked out as a separate, bounded design probe with body. The probe uses a common definition form and does not replace the product compiler.
 
-Der [Vergleich beider Core-Varianten](README.md#13-vergleich-und-empfehlung-fuer-markitect) dokumentiert auch die damalige Empfehlung des Assistenten fuer die explizite Variante. Diese Empfehlung ist durch die anschliessende Nutzerwahl zugunsten der einheitlichen Form abgeloest. Fruehere Abschnitte bleiben als Herleitung und Vergleich erhalten.
+The [comparison of both Core variants](README.md#13-comparison-and-recommendation-for-markitect) also documents the assistant's recommendation of the time for the explicit variant. This recommendation is superseded by the subsequent user choice in favor of the uniform form. Earlier sections remain preserved as derivation and comparison.

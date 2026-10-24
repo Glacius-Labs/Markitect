@@ -63,7 +63,7 @@ Status: the owner selected fourteen Kinds across five Packages in four distribut
 
 ## Earlier vocabulary and examples
 
-The following term pages originated in the earlier product discussion. The eight selected foundation Kind pages now own their consolidated standard-library wording. Other terms and the older [provisional-term record](consolidation.md#arbeitsziel-und-wackelkandidaten) remain historical or deferred vocabulary exploration, not additional first-scope Kinds or open language decisions.
+The following term pages originated in the earlier product discussion. The eight selected foundation Kind pages now own their consolidated standard-library wording. Other terms and the older [provisional-term record](consolidation.md#working-goal-and-shaky-candidates) remain historical or deferred vocabulary exploration, not additional first-scope Kinds or open language decisions.
 
 - [Project](project.md) — the project's name, purpose and associated definitions.
 - [Actor](actor.md) — a role through which a person or another system interacts with the system or participates in project work.

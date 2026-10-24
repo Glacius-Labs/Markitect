@@ -4,7 +4,7 @@ imports:
 id: topicPattern
 kind: Property
 body: >-
-  Adressschablone mit den im Channel-Vertrag erklärten Platzhaltern.
+  Address template with the placeholders explained in the Channel contract.
 spec:
   type: string
   minCount: 1

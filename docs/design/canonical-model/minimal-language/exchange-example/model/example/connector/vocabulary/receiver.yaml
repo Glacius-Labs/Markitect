@@ -4,7 +4,7 @@ imports:
 id: receiver
 kind: Property
 body: >-
-  Anwendung in der Bearbeiterrolle dieses Austauschs.
+  Application in the handler role of this exchange.
 spec:
   type: reference
   target: Container

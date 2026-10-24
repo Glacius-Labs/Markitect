@@ -4,8 +4,8 @@ imports:
 id: messaging
 kind: MqttService
 body: >-
-  Der MQTT-Dienst ist aus Cloud und Kundenumgebung erreichbar. Seine Laufzeit ist von API
-  und On-Premise-Connector getrennt. Zugriffsvorgaben begrenzen Publikation und Abonnements
-  auf die jeweils autorisierten Adressen. Brokerimplementierung und konkrete Bereitstellung
-  bleiben offen.
+  The MQTT service is reachable from the cloud and from the customer environment. Its runtime is separate
+  from the API and the on-premises Connector. Access rules limit publication and subscriptions
+  to the addresses authorized in each case. Broker implementation and concrete provisioning
+  remain open.
 spec: {}

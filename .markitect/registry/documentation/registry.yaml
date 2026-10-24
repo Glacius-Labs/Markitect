@@ -1,5 +1,17 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/repository-structure-decisions-20261024.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the owner acceptance of the six R1 repository structure recommendations.
+  - path: "docs/development/repository-structure.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Classifies every repository file with its evidence and proposes the target layout, archive mechanism and R2 work list.
+  - path: "docs/concepts/sources/parallel-writers-20261024.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the owner decision that more than two writers may run in parallel where useful.
   - path: "docs/concepts/sources/english-documentation-20261024.md"
     form: doc
     realizes: [documentation/current-guidance]
@@ -12,6 +24,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the owner-supplied V1 concept v0.18 verbatim as the source of concept 1.0.
+  - path: "docs/concepts/sources/v1-concept-v018-20261024-en.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Provides the labeled English translation of the owner-supplied V1 concept v0.18 under DEC-069 without changing the verbatim source.
   - path: "docs/concepts/sources/v1-concept-decisions-20261024.md"
     form: doc
     realizes: [documentation/current-guidance]

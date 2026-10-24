@@ -181,17 +181,17 @@ func (p *preparation) parseMetadata(data []byte, config metadataConfig) {
 }
 
 func runtimeMetadata(data []byte) (map[string]string, error) {
-	// This is the four-key LF format emitted by packaging/runtime/Dockerfile,
+	// This is the three-key LF format emitted by packaging/runtime/Dockerfile,
 	// not a shell environment to source or a generated schema inventory.
 	values := make(map[string]string)
 	for _, line := range strings.Split(strings.TrimSuffix(string(data), "\n"), "\n") {
 		key, value, ok := strings.Cut(line, "=")
-		if !ok || values[key] != "" || (key != "codex" && key != "claude" && key != "codexSchema" && key != "agentd") || !literal(value) {
-			return nil, errors.New("runtime.env requires exactly four unique codex, claude, codexSchema and agentd literal records")
+		if !ok || values[key] != "" || (key != "codex" && key != "codexSchema" && key != "agentd") || !literal(value) {
+			return nil, errors.New("runtime.env requires exactly three unique codex, codexSchema and agentd literal records")
 		}
 		values[key] = value
 	}
-	if len(values) != 4 {
+	if len(values) != 3 {
 		return nil, errors.New("runtime.env is missing a required metadata record")
 	}
 	return values, nil

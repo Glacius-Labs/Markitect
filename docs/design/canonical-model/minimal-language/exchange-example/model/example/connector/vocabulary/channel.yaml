@@ -4,10 +4,10 @@ imports:
 id: Channel
 kind: Kind
 body: >-
-  Beschreibt eine Familie logischer MQTT-Adressen. topicPattern enthält Platzhalter für die
-  im body erklärten Laufzeitwerte. Platzhalterwerte dürfen keine Topicseparatoren oder Wildcards
-  enthalten. delivery beschreibt die Transportzustellung und garantiert keine einmalige fachliche
-  Ausführung. broker bezeichnet den verwendeten MQTT-Dienst.
+  Describes a family of logical MQTT addresses. topicPattern contains placeholders for the
+  runtime values explained in the body. Placeholder values must not contain topic separators or wildcards.
+  delivery describes the transport delivery and does not guarantee exactly-once domain
+  execution. broker denotes the MQTT service used.
 spec:
   properties:
   - topicPattern

@@ -1,81 +1,83 @@
-Ich würde das bestehende Konzept an fünf Stellen präzisieren. **Dafür braucht es weder zusätzliche Agentenrollen noch eine neue Modellierungsschicht.** Vieles ist bereits angelegt; entscheidend sind klarere Arbeitsaufträge und verständliche Ergebnisse.
+English translation of the German original at commit a1a308fc287b687f9f73219bcf70dc051ee33cc8.
 
-1. **Fehlende Verbindungen: eine gezielte Prüfung an Bereichsgrenzen**
+I would refine the existing concept in five places. **This needs neither additional Agent roles nor a new modeling layer.** Much of it is already provided for; what matters are clearer work assignments and understandable results.
 
-   Jeder Manager und sein Reviewer sollten ausdrücklich prüfen:
+1. **Missing connections: a targeted check at area boundaries**
 
-   > Welche Aussagen meines Bereichs verlangen Verhalten von einem anderen Bereich – und ist diese Verbindung im Modell sichtbar?
+   Every Manager and its Reviewer should explicitly check:
 
-   Beim Mitglieder-Manager wäre das beispielsweise: „Gesperrte Mitglieder dürfen nicht ausleihen.“ Er muss dafür nicht die gesamte Ausleihimplementierung kennen. Er muss erkennen, dass seine Aussage eine fremde Verantwortung berührt.
+   > Which statements of my area require behavior from another area – and is this connection visible in the model?
 
-   Eine vermutete fehlende Verbindung wird als bestehende Frage beziehungsweise Konflikt an den gemeinsamen Eltern-Manager gemeldet: Aussage, betroffener Bereich, vermutete Wirkung. **Apply ergänzt dabei keine Modelllinks.** Lässt sich die Realisierung ohne die fehlende Festlegung nicht belastbar beurteilen, bleibt diese Frage offen.
+   For the members Manager this would be, for example: “Blocked members must not borrow.” It does not need to know the entire loan implementation for this. It needs to recognize that its statement touches a foreign responsibility.
 
-   Das ergänzt die gewählte strenge Linkstrategie um eine konkrete Prüfung ihrer Voraussetzungen. Es braucht dafür weder semantischen Index noch einen obligatorischen Optimizer. Unentdeckte Zusammenhänge bleiben möglich; vollständige semantische Abdeckung wird dadurch nicht garantiert.
+   A suspected missing connection is reported as an existing question or conflict to the shared parent Manager: statement, affected area, suspected effect. **Apply does not add model links in the process.** If the realization cannot be reliably assessed without the missing stipulation, this question remains open.
 
-2. **Package und Organisation: die einfache Zuordnung behalten, schlechte Zuschnitte sichtbar machen**
+   This supplements the chosen strict link strategy with a concrete check of its preconditions. It needs neither a semantic index nor a mandatory Optimizer. Undiscovered relationships remain possible; complete semantic coverage is not guaranteed by this.
 
-   Einen Manager pro lokalem Package würde ich zunächst beibehalten. Ausnahmen, zusammengelegte Manager oder eine zweite Organisationsstruktur wären verfrüht.
+2. **Package and organization: keep the simple mapping, make bad cuts visible**
 
-   Stattdessen sollte der vorhandene Abschlussbericht drei ohnehin beobachtbare Größen pro Manager zeigen:
+   I would initially keep one Manager per local Package. Exceptions, merged Managers or a second organizational structure would be premature.
 
-   - Wie viel lokale Arbeit fiel an?
-   - Wie viele Abstimmungen mit anderen Bereichen waren nötig?
-   - Welcher Zeit- und Agentenaufwand entstand?
+   Instead, the existing final report should show three quantities per Manager that can be observed anyway:
 
-   Daraus lassen sich später konkrete Probleme erkennen: Ein Manager reicht fast nur Nachrichten weiter; ein anderer benötigt ständig fast das gesamte Modell; mehrere Bereiche müssen dieselbe Datei ändern.
+   - How much local work was there?
+   - How many coordinations with other areas were necessary?
+   - What time and Agent effort was incurred?
 
-   **Keine automatischen Umbauten und zunächst keine Schwellenwerte.** Die Daten dienen als begründeter Hinweis an den Autor, den Zuschnitt zu prüfen. Der Vorteil ist, dass wir organisatorische Flexibilität erst dort hinzufügen, wo die einfache Regel nachweislich schlecht funktioniert.
+   From this, concrete problems can be recognized later: A Manager almost only forwards messages; another constantly needs almost the entire model; several areas have to change the same file.
 
-3. **Registry und Vollständigkeit: jede Definition mit einer konkreten Begründung abschließen**
+   **No automatic restructuring and, initially, no thresholds.** The data serve as a reasoned hint to the author to review the cut. The advantage is that we add organizational flexibility only where the simple rule demonstrably works badly.
 
-   Die vorgesehene Definitionsbewertung würde ich verbindlicher formulieren. Eine positive Bewertung muss beantworten:
+3. **Registry and completeness: close every Definition with a concrete justification**
 
-   > Woran lässt sich erkennen, dass diese Definition angemessen berücksichtigt wurde?
+   I would word the planned Definition assessment more bindingly. A positive assessment must answer:
 
-   Für die Ausleihregel könnte das so aussehen:
+   > How can it be recognized that this Definition was adequately taken into account?
 
-   | Definition | Bewertung | Begründung und Beleg |
+   For the loan rule this could look as follows:
+
+   | Definition | Assessment | Justification and evidence |
    |---|---|---|
-   | Höchstens fünf Ausleihen | Realisiert | Ausleihfunktion begrenzt die Anzahl; Grenzfalltest prüft die sechste Ausleihe |
-   | Begriff „Mitglied“ | Vokabular | Beschreibt die gemeinsame Bedeutung; konkrete Anforderungen werden bei den verwendenden Definitionen geprüft |
-   | Gesperrte Mitglieder | Ungeklärt | Zuständigkeit für die Durchsetzung noch nicht ausreichend verbunden |
+   | At most five loans | Realized | Loan function limits the number; boundary-case test checks the sixth loan |
+   | Term “member” | Vocabulary | Describes the shared meaning; concrete requirements are checked at the using Definitions |
+   | Blocked members | Unclear | Responsibility for enforcement not yet sufficiently connected |
 
-   Der Host prüft, dass jede Definition eine Bewertung und erforderliche Belegverweise hat. Der Reviewer prüft deren inhaltliche Tragfähigkeit.
+   The host checks that every Definition has an assessment and the required evidence references. The Reviewer checks their substantive soundness.
 
-   **„Vokabular“ darf enthaltene Verpflichtungen nicht verschwinden lassen.** Ein Kind kann beispielsweise gemeinsame Anforderungen an seine Instanzen formulieren. Dann muss die Begründung zeigen, wo diese berücksichtigt werden.
+   **“Vocabulary” must not make contained obligations disappear.** A Kind can, for example, formulate shared requirements for its instances. Then the justification must show where these are taken into account.
 
-   Dafür reicht die bereits vorgesehene Tabelle. Ich würde keine zusätzliche Datenbank atomarer Anforderungen einführen.
+   The table already planned is enough for this. I would not introduce an additional database of atomic requirements.
 
-4. **Mehrere Reviews: jedem Review eine andere Leitfrage geben**
+4. **Several reviews: give each review a different guiding question**
 
-   Die vorhandenen Prüfungen sollten sich klar unterscheiden:
+   The existing checks should clearly differ:
 
-   | Prüfung | Leitfrage |
+   | Check | Guiding question |
    |---|---|
-   | Lokales Review | Erfüllt dieser Bereich seine Definitionen, einschließlich Tests und Dokumentation? |
-   | Integrationsreview | Passen die verbundenen Bereiche zusammen, und bleiben ihre gemeinsamen Zusagen erhalten? |
-   | Abschlussverifikation | Liegen die erforderlichen Ergebnisse und Belege für genau diesen Gesamtkandidaten vor, und bestehen die übergreifenden Prüfungen? |
+   | Local review | Does this area fulfill its Definitions, including tests and documentation? |
+   | Integration review | Do the connected areas fit together, and are their shared commitments preserved? |
+   | Final verification | Are the required results and evidence available for exactly this overall candidate, and do the cross-cutting checks pass? |
 
-   Im Bibliotheksbeispiel prüft das lokale Review die Fünf-Bücher-Grenze. Das Integrationsreview betrachtet unter anderem, ob eine Mitgliedersperre tatsächlich die Ausleihe verhindert. Die Abschlussverifikation führt die erforderlichen Prüfungen am zusammengesetzten Kandidaten aus und kontrolliert offene Punkte sowie die Gültigkeit der Belege.
+   In the library example, the local review checks the five-book limit. The integration review considers, among other things, whether a member block actually prevents the loan. The final verification runs the required checks on the assembled candidate and checks open items as well as the validity of the evidence.
 
-   Ein bereits geklärter Befund wird referenziert. Er wird neu geprüft, wenn sich sein Gegenstand oder seine Voraussetzungen ändern. Die Pflicht zum unabhängigen Review bleibt bestehen.
+   A finding that has already been clarified is referenced. It is checked again when its subject or its preconditions change. The obligation to independent review remains.
 
-   Den geschützten Erwartungssatz des Bibliotheksplans würde ich unbedingt behalten. **Er ist zunächst eine unabhängige Bewertungsgrundlage für diesen Nachweis**, keine zusätzliche, von jedem Nutzer dauerhaft parallel zu pflegende Produktspezifikation.
+   I would definitely keep the protected expectation set of the library plan. **It is initially an independent basis of assessment for this proof**, not an additional product specification that every user would have to maintain permanently in parallel.
 
-5. **Aufwand für Autoren: ein gutes Startvokabular und eine lesbare Vorschau**
+5. **Effort for authors: a good starter vocabulary and a readable preview**
 
-   Die fertige Sprache würde ich unverändert lassen. Darüber würde ich zunächst genau ein kleines, gewöhnliches Software-Vokabular samt vollständigem Bibliotheksbeispiel anbieten.
+   I would leave the finished language unchanged. On top of it, I would initially offer exactly one small, ordinary software vocabulary together with the complete library example.
 
-   Nutzer können damit beginnen und eigene Begriffe ergänzen, wenn ein konkreter Bedarf entsteht. Sie müssen nicht zuerst selbst eine vollständige Taxonomie entwerfen.
+   Users can start with it and add their own terms when a concrete need arises. They do not have to design a complete taxonomy themselves first.
 
-   Zusätzlich sollte die ohnehin vorgesehene Kontextinspektion drei Fragen gut lesbar beantworten:
+   In addition, the context inspection that is planned anyway should answer three questions in a clearly readable way:
 
-   - Welche Aussagen bekommt dieser Manager?
-   - Warum bekommt er sie?
-   - Welche Zuständigkeiten und Verbindungen ergeben sich daraus?
+   - Which statements does this Manager receive?
+   - Why does it receive them?
+   - Which responsibilities and connections result from this?
 
-   Damit werden Modellierungsfehler vor einem Agentenlauf greifbar. Auch Vorlagen sollten reguläre Definitionsdateien erzeugen und deren Inhalte sichtbar lassen. Es braucht keine zweite Autorensprache.
+   This makes modeling errors tangible before an Agent run. Templates, too, should produce regular definition files and keep their contents visible. No second authoring language is needed.
 
-**Als gemeinsame Leitlinie würde ich ergänzen: Jede zusätzliche Struktur muss entweder eine konkrete Fehlermöglichkeit sichtbar machen oder eine wiederkehrende menschliche Tätigkeit ersparen.**
+**As a shared guideline I would add: Every additional structure must either make a concrete failure possibility visible or spare a recurring human activity.**
 
-Diese fünf Änderungen erfüllen das überwiegend durch bessere Prüfaufträge, vorhandene Berichte und verständlichere Ansichten. Neue Managerstrategien, automatische Package-Umbauten und feinere Anforderungsverwaltung würde ich erst aus den Erfahrungen mit dem Bibliotheksablauf ableiten.
+These five changes meet this mostly through better review assignments, existing reports and more understandable views. New Manager strategies, automatic Package restructuring and finer-grained requirement management I would derive only from the experience with the library flow.
