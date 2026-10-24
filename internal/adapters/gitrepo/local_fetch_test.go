@@ -19,7 +19,7 @@ import (
 )
 
 func TestLocalFetchPackedNoChange(t *testing.T) {
-	// Generic acquisition drops GIT_* overrides, then reads HOME's config.
+	// Host configuration must not disable physical long paths in acquisition.
 	// Override only this test-owned home; the shared testkit config is immutable.
 	isolatedHome := t.TempDir()
 	globalPath := filepath.Join(isolatedHome, ".gitconfig")
@@ -84,8 +84,8 @@ func TestLocalFetchPackedNoChange(t *testing.T) {
 	if bytes.Contains(beforeConfig, []byte("longpaths")) {
 		t.Fatal("fixture unexpectedly persisted a user-repository longpaths setting")
 	}
-	probe := &gitRepository{ctx: ctx, path: source}
-	if value, err := probe.run("config", "--global", "--get", "core.longpaths"); err != nil || strings.TrimSpace(string(value)) != "false" {
+	// Read the fixture explicitly; acquisition intentionally ignores globals.
+	if value, err := localCommand(ctx, source, nil, "config", "--file", globalPath, "--get", "core.longpaths"); err != nil || value != "false" {
 		t.Fatal("test-owned global longpaths=false control was not observed", string(value), err)
 	}
 	if packs, err := filepath.Glob(filepath.Join(source, ".git/objects/pack/*.pack")); err != nil || len(packs) == 0 {
@@ -116,6 +116,13 @@ func TestLocalFetchPackedNoChange(t *testing.T) {
 	}
 	if ref.Commit != head || ref.Tree != input.Tree || ref.Commit != prepared.Attempt().Model().Inputs().Head {
 		t.Fatal("no-change capture rewrote the committed input", ref, input)
+	}
+	retainedPath, err := git.candidatePath(ref)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if heads, err := localCommand(ctx, source, nil, "bundle", "list-heads", filepath.Join(retainedPath, "candidate.bundle")); err != nil || heads != head+" refs/markitect/retain/"+ref.Key {
+		t.Fatal("retained bundle did not advertise exactly its original ref and commit", heads, err)
 	}
 	store, err := runstore.New(git.StateRoot)
 	if err != nil {

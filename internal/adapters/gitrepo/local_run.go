@@ -206,14 +206,24 @@ func (g *LocalGit) retain(ctx context.Context, id string, p project.Prepared, re
 			return err
 		}
 		defer os.RemoveAll(export)
-		if _, err = localCommand(ctx, export, nil, "init", "--quiet", "--object-format="+format); err != nil {
+		// This private export starts with no template refs and receives one ref.
+		if _, err = localCommand(ctx, export, nil, "init", "--quiet", "--template=", "--object-format="+format); err != nil {
 			return err
 		}
 		name := "refs/markitect/retain/" + key
 		if _, err = localCommand(ctx, export, nil, "fetch", "--quiet", "--no-tags", repo, c.ID+":"+name); err != nil {
 			return err
 		}
-		_, err = localCommand(ctx, export, nil, "bundle", "create", bundle, name)
+		selection := name
+		if runtime.GOOS == "windows" {
+			// Git 2.56 cannot bundle long loose refs even with longpaths enabled.
+			// Pack and enumerate this export's sole ref, preserving its full name.
+			if _, err = localCommand(ctx, export, nil, "pack-refs", "--all"); err != nil {
+				return err
+			}
+			selection = "--all"
+		}
+		_, err = localCommand(ctx, export, nil, "bundle", "create", bundle, selection)
 		return err
 	})
 }
