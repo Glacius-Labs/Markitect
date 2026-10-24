@@ -261,7 +261,7 @@ If a Kind contract is changed, its definitions and the affected realizations tha
 
 ### 3.6 Do requirements and roles need their own Core semantics?
 
-A further user question: Can meaning, requirements and their scope of validity already be expressed through binding prose and Properties? This counter-probe checks the benefit of the proposed new language feature. It is a recommendation, not a removal already decided by the user.
+A further user question: Can meaning, requirements and their scope of validity already be expressed through binding prose and Properties? This counter-probe checks the benefit of the proposed new language features. It is a recommendation, not a removal already decided by the user.
 
 **Subsequent user decision:** requirements and roles are left out for now. The lean direction justified here is chosen for the next vertical slice; this does not yet imply acceptance of a particular file syntax or implementation.
 
