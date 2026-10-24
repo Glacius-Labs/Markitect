@@ -30,6 +30,29 @@ class RubricCheckTests(unittest.TestCase):
                                         ("R2", True), ("R2", False), ("R5", False)])
             self.assertEqual(result["valid_criticals"], 4)
 
+    def test_removals_are_cited_in_the_start_tree_or_the_diff(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            token = Path(tmp) / "tok456"
+            (token / "candidate" / "realization").mkdir(parents=True)
+            old = token / "start" / "realization" / "loan_test.go"
+            old.parent.mkdir(parents=True)
+            old.write_text("package lending\n\nfunc TestReturnedLoanExcluded(t *testing.T) {}\n", encoding="utf-8")
+            (token / "diff.patch").write_text(
+                "--- a/realization/loan_test.go\n+++ /dev/null\n@@ -1,3 +0,0 @@\n-package lending\n-\n-func TestReturnedLoanExcluded(t *testing.T) {}\n"
+                "--- a/realization/README.md\n+++ b/realization/README.md\n@@ -1 +1 @@\n-Old wording.\n+New wording.\n", encoding="utf-8")
+            requirements = Path(tmp) / "requirements.md"
+            requirements.write_text("Returned loans are excluded.\n", encoding="utf-8")
+            review = {"token": "tok456", "R5": [
+                {"path": "realization/loan_test.go", "class": "unjustified", "cite": "realization/loan_test.go:3", "quote": "func TestReturnedLoanExcluded"},
+                {"path": "realization/loan_test.go", "class": "unjustified", "cite": "realization/gone.go:1", "quote": "func TestReturnedLoanExcluded"},
+                {"path": "realization/loan_test.go", "class": "unjustified", "cite": "realization/loan_test.go:3", "quote": "never written anywhere"},
+                {"path": "realization/README.md", "class": "optional", "why": "rewording"},
+                {"path": "realization/other.go", "class": "optional", "why": "not in the diff"}]}
+            plain = rubric_check.check(token, requirements, review)
+            self.assertEqual([r["valid"] for r in plain["criticals"]], [True, True, False])  # start tree, diff, nowhere
+            s3 = rubric_check.check(token, requirements, review, s3=True)
+            self.assertEqual([r["valid"] for r in s3["criticals"]], [True, True, False, True, False])
+
 
 if __name__ == "__main__":
     unittest.main()
