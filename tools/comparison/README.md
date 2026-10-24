@@ -13,6 +13,7 @@ Tools for the controlled comparison of Markitect V1 with the owner's primary bas
 | [phase-b/](phase-b), [phase_b_cases.py](phase_b_cases.py), [packet/requirements-m3.md](packet/requirements-m3.md) to [m5](packet/requirements-m5.md) | Phase B: model overlays M3 (short-loan copies), M4 (renewals) and M5 (no member suspension) on top of M2, their rendered documents, and the hidden cases that judge them, built on the unchanged oracle's helpers and transport. `requirements.py materialize` writes a complete snapshot for arm M. |
 | [rubric.md](rubric.md), [review-prompt.md](review-prompt.md) | The artifact review rubric and the frozen prompts for the per-candidate reviewer and the confirming reviewer. Neither mentions arms or a comparison. |
 | [rubric_check.py](rubric_check.py) | Checks every critical review finding mechanically before a second reviewer is asked to confirm it. |
+| [analyze.py](analyze.py) | Applies the predeclared reading to the run ledger: conforming runs, independent units, exact intervals, the one-sided Fisher test and the reading of section 8 or B5. |
 
 The probes, the rubric, the review prompts and the oracle are assessor material. Writers receive only their fixture: arm B a Git repository with `requirements.md` and its prior work, arm M the Markitect fixture.
 

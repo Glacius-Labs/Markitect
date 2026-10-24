@@ -168,6 +168,10 @@ artifacts:
     form: doc
     realizes: [examples/independent-oracles]
     why: Documents the tools of the predeclared single-agent comparison and their limits.
+  - path: "tools/comparison/analyze.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Applies the protocol's predeclared reading to the run ledger: units, exact intervals and the Fisher test.
   - path: "tools/comparison/assess_candidate.py"
     form: code
     realizes: [examples/independent-oracles]
@@ -344,6 +348,10 @@ artifacts:
     form: code
     realizes: [examples/independent-oracles]
     why: Runs the single-agent arm in one bounded Codex session with a Manager session's image, limits and switches.
+  - path: "tools/comparison/test_analyze.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Tests the exact intervals, the Fisher thresholds and every predeclared reading.
   - path: "tools/comparison/test_assess_candidate.py"
     form: test
     realizes: [examples/independent-oracles]
