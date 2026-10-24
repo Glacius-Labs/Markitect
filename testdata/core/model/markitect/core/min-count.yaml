@@ -1,6 +1,6 @@
 id: minCount
 kind: Property
-body: Nichtnegative Mindestanzahl vorhandener Werte.
+body: Non-negative minimum number of present values.
 spec:
   type: integer
   minCount: 1

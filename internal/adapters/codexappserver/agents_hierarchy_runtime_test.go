@@ -433,8 +433,8 @@ func hierarchyFixture(t *testing.T, ctx context.Context, nonce string) (*testkit
 	}); e != nil {
 		t.Fatal(e)
 	}
-	r.Write(".markitect/model.yaml", "formatVersion: 1\nid: native-hierarchy\nroot: model\ndependencies: {markitect-core: '1.0.0'}\n")
-	r.Write(".markitect/model-lock.yaml", "formatVersion: 1\nmodels:\n  markitect-core: {version: '1.0.0', digest: 'sha256:562a20613c64fb9cd3425ff39b5f9fb826b75deb153cdfac48b00fce6f5c19f1'}\n")
+	r.Write(".markitect/model.yaml", "formatVersion: 1\nid: native-hierarchy\nroot: model\ndependencies: {markitect-core: '1.1.0'}\n")
+	r.Write(".markitect/model-lock.yaml", "formatVersion: 1\nmodels:\n  markitect-core: {version: '1.1.0', digest: 'sha256:9552a7cdd560d8822854c286cd74d7dbb5d4277ee1fd16b25ef275213868e043'}\n")
 	definition := func(path, id, body string) {
 		r.Write(path, "imports: [{package: markitect/core, as: Core}]\nid: "+id+"\nkind: Core.Kind\nbody: |\n  "+body+"\nspec: {}\n")
 	}

@@ -2,5 +2,5 @@ formatVersion: 1
 id: small-library
 root: model
 dependencies:
-  markitect-core: "1.0.0"
-  software-basics: "0.1.0"
+  markitect-core: "1.1.0"
+  software-basics: "0.2.0"

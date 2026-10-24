@@ -78,7 +78,7 @@ These designs are accepted as later directions but have no V1 consumer. They sta
 
 ## Moved, not archived
 
-These files are still on Main under new paths; their content is unchanged apart from path and link updates (the packaging, Library and oracle READMEs and the oracle container scripts also carry the edits their new places need).
+These files are still on Main under new paths; their content is unchanged apart from path and link updates (the packaging, Library and oracle READMEs and the oracle container scripts also carry the edits their new places need). After R2, slice C1 translated the Core in `testdata/core` into English as `markitect-core` 1.1.0 and moved the Library manifests and lock to it.
 
 | Former path | Current path |
 |---|---|
