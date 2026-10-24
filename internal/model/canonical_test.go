@@ -24,9 +24,9 @@ func privateCanonical(t *testing.T, input Input) canonicalCandidate {
 
 func TestCanonicalCoreMatchesNormativeBytesAndSHA(t *testing.T) {
 	core := completeCoreSource()
-	core.Entries[0].Bytes = bytes.Replace(core.Entries[0].Bytes, []byte("version: '1.0'"), []byte("version: '1.0.0'"), 1)
+	core.Entries[0].Bytes = bytes.Replace(core.Entries[0].Bytes, []byte("version: '1.0'"), []byte("version: '1.1.0'"), 1)
 	candidate := privateCanonical(t, Input{Root: core})
-	if len(candidate.bytes) != 3769 || string(candidate.bytes) != canonicalCoreVector || candidate.digest != "sha256:562a20613c64fb9cd3425ff39b5f9fb826b75deb153cdfac48b00fce6f5c19f1" {
+	if len(candidate.bytes) != 3705 || string(candidate.bytes) != canonicalCoreVector || candidate.digest != "sha256:9552a7cdd560d8822854c286cd74d7dbb5d4277ee1fd16b25ef275213868e043" {
 		t.Fatalf("normative Core vector differs (%d bytes, %s): %s", len(candidate.bytes), candidate.digest, candidate.bytes)
 	}
 }

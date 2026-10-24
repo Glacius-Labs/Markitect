@@ -1,9 +1,9 @@
 id: Kind
 kind: Kind
 body: >-
-  Deklariert einen Typ. properties benennt die erlaubten Felder
-  der spec seiner Definitionen. Der body einer Typdefinition beschreibt
-  deren gemeinsame Bedeutung und geltende Festlegungen.
+  Declares a type. properties names the permitted fields of the spec
+  of its definitions. The body of a type definition describes their
+  shared meaning and applicable stipulations.
 spec:
   properties:
     - properties

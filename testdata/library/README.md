@@ -6,7 +6,7 @@ M1 describes one library's members, physical book copies, loans, returns and cal
 
 ## Small vocabulary
 
-The ordinary imported [software-basics model](vocabulary/model.yaml), version 0.1.0, contains three Kinds:
+The ordinary imported [software-basics model](vocabulary/model.yaml), version 0.2.0, contains three Kinds:
 
 | Kind | Meaning |
 | --- | --- |
@@ -74,7 +74,7 @@ The original [worked cases](business-rules.md#worked-cases) remain concrete inpu
 
 ## Binding and bounded validation
 
-[model-lock.yaml](m1/model-lock.yaml) binds the exact external vocabulary and Core contents. The Core is the unchanged [version 1.0.0 snapshot](../core/model.yaml) already used by the language design probes. Only that dependency is supplied; the intentionally invalid Connector model is not loaded. Physical source paths are explicit probe inputs, not extra manifest or lock fields.
+[model-lock.yaml](m1/model-lock.yaml) binds the exact external vocabulary and Core contents. The Core is [markitect-core 1.1.0](../core/model.yaml), the English wording of the 1.0.0 snapshot used by the archived language design probes. Only that dependency is supplied; the intentionally invalid Connector model is not loaded. Physical source paths are explicit probe inputs, not extra manifest or lock fields.
 
 Go tests read this fixture byte for byte: `internal/bootstrap` checks that the M1 lock still binds the `testdata/core` digest, and `internal/project`, `internal/adapters/gitrepo`, the source smoke and the operator script `scripts/run-library-apply.ps1` copy M1, the vocabulary and the Core into fresh repositories. Keep the bytes stable: locks pin them, and `.gitattributes` keeps the Core files free of line-ending conversion.
 

@@ -1,8 +1,8 @@
 id: properties
 kind: Property
 body: >-
-  Referenziert die erlaubten Feldverträge des hier beschriebenen Objekts.
-  Die effektiven Feldnamen müssen innerhalb dieses Vertrags eindeutig sein.
+  References the permitted field contracts of the object described here.
+  The effective field names must be unique within this contract.
 spec:
   type: reference
   target: Property

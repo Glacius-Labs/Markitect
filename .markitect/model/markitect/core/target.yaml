@@ -1,9 +1,9 @@
 id: target
 kind: Property
 body: >-
-  Der verlangte Kind der referenzierten Definitionen.
-  Bei type reference ist diese Angabe erforderlich.
-  Bei anderen Werttypen ist sie nicht zulässig.
+  The Kind required of the referenced definitions.
+  For type reference, this entry is required.
+  For other value types, it is not permitted.
 spec:
   type: reference
   target: Kind
