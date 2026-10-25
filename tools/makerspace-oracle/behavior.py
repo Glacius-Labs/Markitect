@@ -25,7 +25,7 @@ def case(step: str, cid: str, family: str, cites: list[dict[str, str]]) -> Case:
 
 def b_members(step: str) -> list[dict[str, Any]]:
     c = case(step, "B-MEMBERS-registry", "B-MEMBERS", [
-        W("6.1", "Registers a staff member or an admin."), W("6.1", "creates a user with role `member`, the given tier, standing `good`, `registeredAt` equal to the request time and a credit balance of 0."),
+        W("6.1", "Registers a staff member or an admin."), C(4, "What changes", "`registerUser` registers a staff member, an admin or a steward"), W("6.1", "creates a user with role `member`, the given tier, standing `good`, `registeredAt` equal to the request time and a credit balance of 0."),
         W("6.1", "`already_exists` when any user, including a member, has the identifier `userId`."), W("6.2", "Setting the current tier succeeds without a change."),
         W("6.2", "Setting the current standing succeeds without a change.")])
     w.people(c)

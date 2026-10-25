@@ -44,7 +44,7 @@ def cases(step: str) -> list[dict]:
     return _CASES[step]
 
 
-def materialize(value):
+def materialize(value, memory, counter):
     """A response that satisfies an expectation exactly (tokens filled deterministically)."""
     if isinstance(value, dict):
         token = harness._token(value)
@@ -54,22 +54,61 @@ def materialize(value):
             return "any value"
         if token in ("$record", "$same"):
             return ["state", value[token]]
+        if token in ("$ref", "$calc"):
+            return harness.resolve(value, memory)
+        if token == "$capture":
+            counter[0] += 1
+            memory[("ref", value["$capture"])] = 1000 + counter[0]
+            return 1000 + counter[0]
+        if token == "$filter":
+            where = harness.resolve(value["$filter"], memory)
+            fixed = {k: v[0] if isinstance(v, list) else v for k, v in where.items()}
+            return [{**fixed, **item} if isinstance(item, dict) else item
+                    for item in (materialize(i, memory, counter) for i in value["items"])]
         if token == "$extends":
-            tail = [materialize(item) for item in value["tail"]]
+            tail = [materialize(item, memory, counter) for item in value["tail"]]
             for offset, item in enumerate(tail):
                 if isinstance(item, dict) and item.get("seq") == {"$next": True}:
                     item["seq"] = 2 + offset + 1
             return ["state", value["$extends"]] + tail
         if token == "$has":
-            return {k: materialize(v) for k, v in value["$has"].items()}
-        return {k: materialize(v) for k, v in value.items()}
+            return {k: materialize(v, memory, counter) for k, v in value["$has"].items()}
+        return {k: materialize(v, memory, counter) for k, v in value.items()}
     if isinstance(value, list):
-        return [materialize(v) for v in value]
+        return [materialize(v, memory, counter) for v in value]
     return value
 
 
+def put(node, path, value):
+    """Place a captured value at a capture path, creating what is missing."""
+    if not path:
+        return value
+    head, rest = path[0], path[1:]
+    if isinstance(head, str):
+        node = node if isinstance(node, dict) else {}
+        node[head] = put(node.get(head), rest, value)
+        return node
+    node = node if isinstance(node, list) else []
+    for index, item in enumerate(node):
+        if isinstance(item, dict) and all(item.get(k) == v for k, v in head.items()):
+            node[index] = put(item, rest, value)
+            return node
+    node.append(put(dict(head), rest, value))
+    return node
+
+
 def transcript(case: dict) -> list:
-    return [materialize(step["expect"]) for step in case["steps"]]
+    memory: dict = {}
+    counter = [0]
+    rows = []
+    for step in case["steps"]:
+        for name in step.get("capture", {}):
+            memory[("ref", name)] = f"captured-{name}"
+        response = materialize(step["expect"], memory, counter)
+        for name, path in step.get("capture", {}).items():
+            response = put(response, path, memory[("ref", name)])
+        rows.append(response)
+    return rows
 
 
 def headings(text: str) -> list[tuple[int, int, str]]:

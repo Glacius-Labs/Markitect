@@ -55,6 +55,30 @@ class MatcherTests(unittest.TestCase):
         self.assertTrue(check({"x": {"$extends": "k", "tail": tail}}, {"x": [{"seq": 9}, {"seq": 2, "op": "a"}]}, memory))
         self.assertTrue(check({"x": {"$extends": "k", "tail": []}}, {"x": [{"seq": 1}, {"seq": 2}]}, memory))
 
+    def test_captures_references_and_calculations(self):
+        memory: dict = {}
+        step = {"capture": {"r": ["result", "reservation", "reservationId"], "i": ["result", "invoices", {"memberId": "bob"}, "invoiceId"],
+                            "gone": ["result", "missing"]},
+                "expect": {"result": {"reservation": {"reservationId": {"$ref": "r"}}, "invoices": harness.ANY,
+                                      "total": {"$capture": "t"}}}}
+        response = {"result": {"reservation": {"reservationId": "X-7"}, "invoices": [{"memberId": "ada", "invoiceId": "a"},
+                                                                                    {"memberId": "bob", "invoiceId": "b"}], "total": 500}}
+        self.assertEqual(harness.evaluate_step(step, response, memory)["errors"], [])
+        self.assertEqual(harness.resolve({"id": {"$ref": "i"}, "n": {"$calc": ["-", {"$ref": "t"}, 100]}}, memory), {"id": "b", "n": 400})
+        self.assertEqual(harness.resolve({"$calc": ["min", {"$ref": "t"}, 7]}, memory), 7)
+        self.assertEqual(check({"x": {"$calc": ["+", {"$ref": "t"}, 1]}}, {"x": 501}, memory), [])
+        self.assertTrue(check({"x": {"$calc": ["+", {"$ref": "t"}, 1]}}, {"x": 500}, memory))
+        self.assertTrue(check({"x": {"$ref": "gone"}}, {"x": 1}, memory))  # never captured: an error where it is used
+        with self.assertRaises(ValueError):
+            harness.resolve({"$ref": "gone"}, memory)
+
+    def test_filter_compares_only_matching_items(self):
+        lines = [{"kind": "membership", "a": 1}, {"kind": "usage", "a": 2}, {"kind": "usage", "a": 3}]
+        self.assertEqual(check({"l": {"$filter": {"kind": "usage"}, "items": [{"$has": {"a": 2}}, {"$has": {"a": 3}}]}}, {"l": lines}), [])
+        self.assertTrue(check({"l": {"$filter": {"kind": "usage"}, "items": [{"$has": {"a": 3}}, {"$has": {"a": 2}}]}}, {"l": lines}))
+        self.assertTrue(check({"l": {"$filter": {"kind": "usage"}, "items": [{"$has": {"a": 2}}]}}, {"l": lines}))
+        self.assertEqual(check({"l": {"$filter": {"kind": "course"}, "items": []}}, {"l": lines}), [])
+
     def test_non_object_response(self):
         self.assertTrue(harness.evaluate_step({"expect": {}}, [1], {})["errors"])
 

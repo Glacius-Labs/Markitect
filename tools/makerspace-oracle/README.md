@@ -25,7 +25,7 @@ Only [driver.py](../library-oracle/driver.py) is reused, loaded unchanged from i
 
 ## Case form
 
-A case is the Library form `{id, families, steps}` plus `cite`; a step is `{request | raw, expect, cite?, snapshot?}`. Responses must have exactly the stated members (requirements README, "Transport"), JSON types are strict and lists are ordered (w0 4.5). Expectation tokens:
+A case is the Library form `{id, families, steps}` plus `cite`; a step is `{request | raw, expect, capture?, cite?, snapshot?}`. Strict cases state generated identifiers literally; probe cases capture them (`capture` names a path in the response) and refer to them, so a probe family depends only on its own rule: numbering is P-IDENTIFIERS' subject, and money families compare their own lines (`$filter`) and fields, reading invoice balances first where a payment depends on them. Responses must have exactly the stated members (requirements README, "Transport"), JSON types are strict and lists are ordered (w0 4.5). Expectation tokens:
 
 | Token | Meaning |
 | --- | --- |
@@ -34,6 +34,9 @@ A case is the Library form `{id, families, steps}` plus `cite`; a step is `{requ
 | `{"$has": {...}}` | an object with at least these members, compared exactly |
 | `{"$record": k}` / `{"$same": k}` | remember a value / require it unchanged (the no-change snapshots) |
 | `{"$extends": k, "tail": [...]}` | the recorded list plus these items; `"seq": {"$next": true}` numbers them after it |
+| `{"$capture": k}` | remember this value for later steps |
+| `{"$ref": k}` / `{"$calc": [op, ...]}` | a captured value, or `+`, `-` or `min` over captured values and integers; also usable in request arguments |
+| `{"$filter": {field: value}, "items": [...]}` | only the list items with these field values, in their order |
 
 ## Families and counts
 
@@ -41,16 +44,16 @@ Probe families (calibration: one mutant each), behavior families, the scenario s
 
 | Step | Behavior cases | Probe families | Probe cases | Invariant checks | Distinct requests |
 | --- | --- | --- | --- | --- | --- |
-| W0 | 7 | 29 | 31 | 10 | 3451 |
-| C1 | 8 | 29 | 31 | 10 | 3464 |
-| C2 | 9 | 30 | 32 | 10 | 3667 |
-| C3 | 10 | 30 | 32 | 10 | 3693 |
-| C4 | 11 | 30 | 32 | 10 | 3782 |
-| C5 | 12 | 30 | 33 | 10 | 3849 |
-| C6 | 13 | 30 | 33 | 10 | 3874 |
-| C7 | 13 | 30 | 33 | 10 | 3874 |
-| C8 | 14 | 30 | 33 | 10 | 3906 |
-| C9 | 14 | 30 | 33 | 10 | 3906 |
+| W0 | 7 | 29 | 31 | 10 | 3673 |
+| C1 | 8 | 29 | 31 | 10 | 3686 |
+| C2 | 9 | 30 | 32 | 10 | 3899 |
+| C3 | 10 | 30 | 32 | 10 | 3925 |
+| C4 | 11 | 30 | 32 | 10 | 4013 |
+| C5 | 12 | 30 | 33 | 10 | 4080 |
+| C6 | 13 | 30 | 33 | 10 | 4105 |
+| C7 | 13 | 30 | 33 | 10 | 4105 |
+| C8 | 14 | 30 | 33 | 10 | 4137 |
+| C9 | 14 | 30 | 33 | 10 | 4137 |
 
 P-MONEY-LOCKOUT starts at C2. Every case of a step also runs at every later step, rendered for that step (for example, certification records lose `expiresOn` from C6 and opening hours change from C8).
 
@@ -87,8 +90,8 @@ python -I /harness/harness.py --step C3 --source S --commit C --limits JSON --pr
 Tested only where the requirements are unambiguous. Points for session V and the coordinator:
 
 1. **`actor` with a string that is not a valid identifier** (for example `"bad id!"`): `invalid_argument` if `actor` counts as an identifier argument (w0 2.2, 2.5, 3.1 check 1), or `unknown_actor` (3.1 check 2). No argument list types `actor`. Not tested; missing, `null` and wrong JSON types (2.5, closing paragraph) and unknown actors are.
-2. **`at` read as a timestamp argument**: a malformed or out-of-range `at` is tested as `invalid_argument` (w0 2.5 timestamp row, 4.4 first bullet). V should confirm this reading.
-3. **Reads advance the request-time order**: w0 4.4 says "the most recent request answered `ok`", and c1 repeats it, so an accepted read moves the point too. Tested; easy to miss, not ambiguous.
+2. **`at` read as a timestamp argument**: a malformed or out-of-range `at` is tested as `invalid_argument` (w0 2.5 timestamp row, 4.4 first bullet). Session V confirmed this reading.
+3. **Reads advance the request-time order**: w0 4.4 says "the most recent request answered `ok`", and c1 repeats it, so an accepted read moves the point too. Tested; easy to miss, not ambiguous; session V confirmed it.
 4. **Census at C3 and C7 ignores `reason`**: its wording is free (w0 2.3), and neither change fixes it. At C9 it is compared, because the requirements want no code change.
 5. Not testable or not tested: a last line without a line feed (the reused transport always sends one), duplicate member names and invalid UTF-8 (w0 2.4 excludes them), the exact 64 KiB boundary (a 60,000-byte line is tested), and characters whose Unicode `White_Space` property changed between versions (only stable whitespace is tested).
 

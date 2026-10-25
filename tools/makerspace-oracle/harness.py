@@ -74,10 +74,88 @@ def _same(expected: Any, actual: Any) -> bool:
     return expected == actual
 
 
+def _ref(memory: dict[Any, Any], name: str) -> Any:
+    key = ("ref", name)
+    if key not in memory:
+        raise ValueError(f"uncaptured reference {name!r}")
+    return memory[key]
+
+
+def resolve(value: Any, memory: dict[Any, Any]) -> Any:
+    """Fill references to captured values: {"$ref": name} and {"$calc": [op, operand, ...]} with op +, - or min."""
+    token = _token(value)
+    if token == "$ref":
+        return copy.deepcopy(_ref(memory, value["$ref"]))
+    if token == "$calc":
+        op, *operands = value["$calc"]
+        numbers = [resolve(v, memory) for v in operands]
+        if any(type(n) is not int for n in numbers):
+            raise ValueError(f"$calc needs integers, got {numbers!r}")
+        if op == "+":
+            return sum(numbers)
+        if op == "-":
+            return numbers[0] - sum(numbers[1:])
+        if op == "min":
+            return min(numbers)
+        raise ValueError(f"unknown $calc operation {op!r}")
+    if isinstance(value, dict):
+        return {k: resolve(v, memory) for k, v in value.items()}
+    if isinstance(value, list):
+        return [resolve(v, memory) for v in value]
+    return value
+
+
+def capture(step: dict[str, Any], response: Any, memory: dict[Any, Any]) -> None:
+    """Remember generated values named by the step's capture paths (key, index or {member: value} selector).
+
+    A missing value is not an error here; a later reference to it is.
+    """
+    for name, path in step.get("capture", {}).items():
+        value = response
+        for part in path:
+            if isinstance(part, dict) and isinstance(value, list):
+                value = next((x for x in value if isinstance(x, dict) and all(x.get(k) == v for k, v in part.items())), None)
+            elif isinstance(part, str) and isinstance(value, dict):
+                value = value.get(part)
+            elif isinstance(part, int) and isinstance(value, list) and part < len(value):
+                value = value[part]
+            else:
+                value = None
+            if value is None:
+                break
+        if value is not None:
+            memory[("ref", name)] = copy.deepcopy(value)
+
+
 def _match(expected: Any, actual: Any, path: str, errors: list[str], memory: dict[str, Any], count: list[int]) -> None:
     count[0] += 1
     token = _token(expected)
     if token == "$any":
+        return
+    if token in ("$ref", "$calc"):
+        try:
+            value = resolve(expected, memory)
+        except ValueError as exc:
+            errors.append(f"{path}: {exc}")
+            return
+        if not _same(value, actual):
+            errors.append(f"{path}: expected {value!r}, got {actual!r}")
+        return
+    if token == "$capture":
+        memory[("ref", expected["$capture"])] = copy.deepcopy(actual)
+        return
+    if token == "$filter":
+        if not isinstance(actual, list):
+            errors.append(f"{path}: expected list, got {type(actual).__name__}")
+            return
+        try:
+            where = resolve(expected["$filter"], memory)
+        except ValueError as exc:
+            errors.append(f"{path}: {exc}")
+            return
+        picked = [x for x in actual if isinstance(x, dict) and all(
+            k in x and (x[k] in v if isinstance(v, list) else _same(v, x[k])) for k, v in where.items())]
+        _match(expected["items"], picked, f"{path}[{where}]", errors, memory, count)
         return
     if token == "$nonempty":
         if not isinstance(actual, str) or not any(not ch.isspace() for ch in actual):
@@ -149,6 +227,7 @@ def evaluate_step(step: dict[str, Any], response: Any, memory: dict[str, Any]) -
     count = [0]
     if not isinstance(response, dict):
         return {"errors": ["response: expected a JSON object"], "assertions": 1}
+    capture(step, response, memory)
     _match(step["expect"], response, "response", errors, memory, count)
     return {"errors": errors, "assertions": count[0]}
 
@@ -177,8 +256,9 @@ def run_case(case: dict[str, Any], command: list[str], cwd: str, limits, keep_go
     try:
         process = driver.Process(command, cwd, limits)
         for index, step in enumerate(case["steps"]):
-            response = process.request(step.get("request"), step.get("raw"))
-            transcript.append((step, response))
+            request = resolve(step["request"], memory) if "request" in step else None
+            response = process.request(request, step.get("raw"))
+            transcript.append(({**step, "request": request} if request else step, response))
             checked = evaluate_step(step, response, memory)
             result["executed_steps"] += 1
             result["assertions"] += checked["assertions"]

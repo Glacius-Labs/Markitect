@@ -37,15 +37,15 @@ def catalog(c: Case, at: str = T0, machines=("L1", "L2", "W1")) -> None:
              {"machine": f.machine(mid, name, fam, rate)})
 
 
-def certify(c: Case, members, at: str = T0) -> None:
-    """Enroll and complete laser-101 one member at a time (charge 3000 each, w0 7.1)."""
+def certify(c: Case, members, at: str = T0, fee: int = LASER_FEE) -> None:
+    """Enroll and complete laser-101 one member at a time (a course charge of `fee` each, w0 7.1)."""
     c.ok("addCourse", STAFF, at, {"courseId": "laser-101", "familyId": "laser", "title": "Laser basics",
-                                  "feeCents": LASER_FEE, "capacity": 10},
-         {"course": f.course("laser-101", "laser", "Laser basics", LASER_FEE, 10, 0)})
+                                  "feeCents": fee, "capacity": 10},
+         {"course": f.course("laser-101", "laser", "Laser basics", fee, 10, 0)})
     for mid in members:
         c.ok("enrollInCourse", STAFF, at, {"courseId": "laser-101", "memberId": mid},
              {"enrollment": f.enrollment("laser-101", mid, "enrolled", at),
-              "course": f.course("laser-101", "laser", "Laser basics", LASER_FEE, 10, 1)})
+              "course": f.course("laser-101", "laser", "Laser basics", fee, 10, 1)})
         c.ok("completeCourse", STAFF, at, {"courseId": "laser-101", "memberId": mid},
              {"enrollment": f.enrollment("laser-101", mid, "completed", at, at),
               "certification": f.certification(c.step, mid, "laser", at[:10], EXPIRES if at[:10] == ISSUED else None,
@@ -61,10 +61,12 @@ def shop(c: Case, at: str = T0) -> None:
     c.ok("restockMaterial", STAFF, at, {"materialId": "plywood", "quantity": 100}, {"material": f.material("plywood", "Plywood panel", 37, 100)})
 
 
-def world(c: Case, at: str = T0, members=("ada", "bob", "cy"), certified=("ada", "bob", "cy"), materials: bool = True) -> None:
+def world(c: Case, at: str = T0, members=("ada", "bob", "cy"), certified=("ada", "bob", "cy"), materials: bool = True,
+          fee: int = LASER_FEE) -> None:
+    """The starting world; money probes pass fee=0 so the course charges add nothing to their sums."""
     people(c, at, members)
     catalog(c, at)
-    certify(c, certified, at)
+    certify(c, certified, at, fee)
     if materials:
         shop(c, at)
 

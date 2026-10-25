@@ -1,8 +1,10 @@
 """Case builder: explicit request sequences with explicit expected responses.
 
 A case is the Library oracle's case form, {id, families, steps}, plus `cite`.
-A step is {request | raw, expect, cite?, snapshot?}. Generated identifiers are
-deterministic (w0 2.6), so expectations are literal. The builder keeps only
+A step is {request | raw, expect, capture?, cite?, snapshot?}. Generated
+identifiers are deterministic (w0 2.6): strict cases state them literally;
+loose (probe) cases capture them and refer to them with {"$ref": name}, so a
+probe never depends on the numbering rule it does not test. The builder keeps only
 what the requirements make computable without realizing an operation: the
 expected audit log, identifier counters, user roles, the request-time order
 and which records exist (to choose the reads of a no-change snapshot).
@@ -27,12 +29,19 @@ def _next_month_start(month: str) -> str:
     return f"{year:04d}-{mon:02d}-01T00:00Z"
 
 
+CAPTURE_PATHS = {"createReservation": ["result", "reservation", "reservationId"], "scheduleMaintenance": ["result", "window", "windowId"],
+                 "purchaseMaterial": ["result", "purchase", "purchaseId"], "recordPayment": ["result", "payment", "paymentId"],
+                 "reportIncident": ["result", "incident", "incidentId"], "lockMachine": ["result", "lockout", "lockoutId"]}
+
+
 class Case:
-    def __init__(self, step: str, cid: str, families: list[str], cites: list[dict[str, str]], strict: bool = True):
+    def __init__(self, step: str, cid: str, families: list[str], cites: list[dict[str, str]], strict: bool = True,
+                 capture: bool | None = None):
         cites = facts.scope_refs(cites, step)
         if not cites:
             raise ValueError(f"{cid}: every case cites the requirement it checks")
         self.step, self.id, self.families, self.cites, self.strict = step, cid, list(families), cites, strict
+        self.capture = (not strict) if capture is None else capture
         self.ops = facts.ops(step)
         self.steps: list[dict[str, Any]] = []
         self.invariants: list[str] = []
@@ -106,10 +115,21 @@ class Case:
         info = self.ops[op]
         self._check_time(at, None)
         prefix = facts.CREATES.get(op)
+        captures: dict[str, list] = {}
         if op == "generateInvoices":
             members = self.eligible(args["month"])
-            ids = [self._take("inv") for _ in members]
+            if self.capture:
+                symbols = {m: self._take("cap-inv") for m in members}
+                captures = {s: ["result", "invoices", {"memberId": m}, "invoiceId"] for m, s in symbols.items()}
+                ids = [{"$ref": s} for s in symbols.values()]
+            else:
+                ids = [self._take("inv") for _ in members]
             new: Any = dict(zip(members, ids))
+        elif prefix and self.capture:
+            symbol = self._take("cap-" + prefix)
+            captures = {symbol: CAPTURE_PATHS[op]}
+            ids = [{"$ref": symbol}]
+            new = ids[0]
         elif prefix:
             ids = [self._take(prefix)]
             new = ids[0]
@@ -121,7 +141,10 @@ class Case:
         rid = rid or self._rid()
         request = {"id": rid, "op": op, "args": {"actor": actor, "at": at, **args}}
         expected = result if compare and result is not None else ANY
-        self._append({"request": request, "expect": {"id": rid, "status": "ok", "result": expected}}, cite)
+        step = {"request": request, "expect": {"id": rid, "status": "ok", "result": expected}}
+        if captures:
+            step["capture"] = captures
+        self._append(step, cite)
         if info["kind"] == "mutation":
             self._audit(at, actor, op, facts.audit_target(info, args, ids[0] if ids else None), "accepted")
         self._track(op, args, ids, at)
@@ -159,6 +182,10 @@ class Case:
 
     def invalid(self, raw: str, echo: str | None, *, cite=None) -> None:
         self._append({"raw": raw, "expect": {"id": echo, "status": "invalidRequest", "reason": NONEMPTY}}, cite)
+
+    def raw(self, line: str, expect: Any, *, cite=None) -> None:
+        """A literal line whose response is compared only as far as `expect` says (for example its id)."""
+        self._append({"raw": line, "expect": expect}, cite)
 
     def ok_raw(self, raw: str, rid: str, result: Any = None, *, cite=None) -> None:
         """A literal line answered ok that does not change state (a read)."""

@@ -338,7 +338,7 @@ def scenario(step: str) -> list[dict[str, Any]]:
     c.ok("changeTier", S, T1, {"memberId": "bob", "tier": "plus"})
     r1 = c.ok("createReservation", "ada", T1, {"memberId": "ada", "machineId": "L1", "start": ts(TUE, "10:00"), "end": ts(TUE, "11:00")})
     r2 = w.reserve(c, "bob", "L2", ts(TUE, "10:00"), ts(TUE, "10:30"), T1)
-    w.reserve(c, "cy", "L1", ts(TUE, "11:00"), ts(TUE, "11:30"), T1)
+    w.reserve(c, "cy", "L1", ts(TUE, "11:30"), ts(TUE, "12:00"), T1)
     c.ok("purchaseMaterial", "ada", T1, {"memberId": "ada", "materialId": "acrylic", "quantity": 12})
     c.ok("purchaseMaterial", S, T1, {"memberId": "bob", "materialId": "plywood", "quantity": 30})
     c.ok("purchaseMaterial", S, T1, {"memberId": "cy", "materialId": "acrylic", "quantity": 3})
@@ -372,12 +372,12 @@ def scenario(step: str) -> list[dict[str, Any]]:
     c.ok("checkOut", S, ts(WED, "11:20"), {"reservationId": r5})
     c.ok("issueCredit", "admin", ts(WED, "12:00"), {"memberId": "cy", "amountCents": 700, "reason": "Sorry"})
     apr1, apr2, apr20 = "2026-04-01T09:00Z", "2026-04-02T09:00Z", "2026-04-20T09:00Z"
-    c.ok("generateInvoices", S, apr1, {"month": "2026-03"})
+    march = c.ok("generateInvoices", S, apr1, {"month": "2026-03"})
     for member in ("ada", "bob", "cy"):
         c.ok("listInvoices", S, apr1, {"memberId": member})
         c.ok("getAccount", S, apr1, {"memberId": member})
-    c.ok("recordPayment", "ada", apr2, {"invoiceId": "inv-1", "amountCents": 100000})
-    c.ok("recordPayment", S, apr2, {"invoiceId": "inv-2", "amountCents": 1000})
+    c.ok("recordPayment", "ada", apr2, {"invoiceId": march["ada"], "amountCents": 100000})
+    c.ok("recordPayment", S, apr2, {"invoiceId": march["bob"], "amountCents": 1000})
     c.ok("revenueReport", S, apr2, {"month": "2026-03"})
     c.ok("utilizationReport", S, apr2, {"from": MON, "to": "2026-03-09"})
     for member in ("ada", "bob", "cy"):

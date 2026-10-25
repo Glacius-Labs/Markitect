@@ -14,6 +14,7 @@ from typing import Any, Callable
 import facts as f
 from facts import C, W, since
 from builder import Case, ts
+from harness import ANY
 import world as w
 from world import STAFF as S, T0
 
@@ -26,9 +27,17 @@ def has(**members: Any) -> dict[str, Any]:
     return {"$has": members}
 
 
-def probe(step: str, family: str, suffix: str) -> Case:
-    """A loose case citing the family's references in force at `step` (facts.scope_refs)."""
-    return Case(step, f"{family}-{suffix}", [family], FAMILY_REFS[family], strict=False)
+def probe(step: str, family: str, suffix: str, capture: bool = True) -> Case:
+    """A loose case citing the family's references in force at `step` (facts.scope_refs).
+
+    Generated identifiers are captured, not predicted, except where numbering is the subject.
+    """
+    return Case(step, f"{family}-{suffix}", [family], FAMILY_REFS[family], strict=False, capture=capture)
+
+
+def lines(kind: str, items: list[Any]) -> dict[str, Any]:
+    """Only the invoice lines of one kind, in their order: a family compares its own lines."""
+    return {"$filter": {"kind": kind}, "items": items}
 
 
 def stamp(at: str, minutes: int) -> str:
@@ -63,15 +72,16 @@ def money(member: str, month: str, lines: list[dict[str, Any]], credit: int = 0,
 
 # --- Valid arguments of every operation in the authorization world ---------------------
 
-def authz_world(c: Case) -> None:
-    """world() plus a reservation, a window, an incident and the March invoices (inv-1 ada, inv-2 bob, inv-3 cy)."""
+def authz_world(c: Case) -> dict[str, Any]:
+    """world() plus a reservation, a window, an incident and the March invoices; returns their captured identifiers."""
     w.world(c)
     if since(c.step, "C4"):
         c.ok("registerUser", "admin", T0, {"userId": "stu", "name": "Stu", "role": "steward"})
-    w.reserve(c, "bob", "L1", "2026-04-02T10:00Z", "2026-04-02T10:30Z", T1)
-    c.ok("scheduleMaintenance", S, T1, {"machineId": "W1", "start": "2026-04-03T10:00Z", "end": "2026-04-03T11:00Z", "reason": "Service"})
-    c.ok("reportIncident", S, T1, {"machineId": "L2", "severity": "medium", "description": "Noisy fan"})
-    generate(c, "2026-03", APR1)
+    res = w.reserve(c, "bob", "L1", "2026-04-02T10:00Z", "2026-04-02T10:30Z", T1)
+    win = c.ok("scheduleMaintenance", S, T1, {"machineId": "W1", "start": "2026-04-03T10:00Z", "end": "2026-04-03T11:00Z", "reason": "Service"})
+    inc = c.ok("reportIncident", S, T1, {"machineId": "L2", "severity": "medium", "description": "Noisy fan"})
+    inv = generate(c, "2026-03", APR1)
+    return {"res": res, "mnt": win, "inc": inc, "inv": inv["bob"]}
 
 
 VALID: dict[str, dict[str, Any]] = {
@@ -90,11 +100,11 @@ VALID: dict[str, dict[str, Any]] = {
     "setMachineRate": {"machineId": "L1", "rateCentsPerMinute": 50},
     "listMachines": {},
     "scheduleMaintenance": {"machineId": "W1", "start": "2026-04-06T10:00Z", "end": "2026-04-06T11:00Z", "reason": "Service"},
-    "cancelMaintenance": {"windowId": "mnt-1"},
+    "cancelMaintenance": {"windowId": "<mnt>"},
     "createReservation": {"memberId": "bob", "machineId": "L2", "start": "2026-04-02T12:00Z", "end": "2026-04-02T12:30Z"},
-    "cancelReservation": {"reservationId": "res-1"},
-    "checkIn": {"reservationId": "res-1"},
-    "checkOut": {"reservationId": "res-1"},
+    "cancelReservation": {"reservationId": "<res>"},
+    "checkIn": {"reservationId": "<res>"},
+    "checkOut": {"reservationId": "<res>"},
     "listMemberReservations": {"memberId": "bob"},
     "getMachineSchedule": {"machineId": "L1", "date": "2026-04-02"},
     "addMaterial": {"materialId": "new-material", "name": "New material", "unitPriceCents": 10},
@@ -103,17 +113,23 @@ VALID: dict[str, dict[str, Any]] = {
     "listMaterials": {},
     "generateInvoices": {"month": "2026-02"},
     "listInvoices": {"memberId": "bob"},
-    "recordPayment": {"invoiceId": "inv-2", "amountCents": 100},
+    "recordPayment": {"invoiceId": "<inv>", "amountCents": 100},
     "issueCredit": {"memberId": "bob", "amountCents": 100, "reason": "Goodwill"},
     "getAccount": {"memberId": "bob"},
     "reportIncident": {"machineId": "L1", "severity": "low", "description": "Smoke"},
-    "resolveIncident": {"incidentId": "inc-1", "resolution": "Fixed"},
+    "resolveIncident": {"incidentId": "<inc>", "resolution": "Fixed"},
     "listIncidents": {},
     "utilizationReport": {"from": "2026-03-02", "to": "2026-03-09"},
     "revenueReport": {"month": "2026-03"},
     "listAuditEntries": {},
-    "lockMachine": {"incidentId": "inc-1", "start": "2026-04-07T10:00Z", "end": "2026-04-07T11:00Z"},
+    "lockMachine": {"incidentId": "<inc>", "start": "2026-04-07T10:00Z", "end": "2026-04-07T11:00Z"},
 }
+
+
+def valid(op: str, refs: dict[str, Any]) -> dict[str, Any]:
+    """Valid arguments of `op` in the authorization world, with its captured identifiers."""
+    return {k: refs[v[1:-1]] if isinstance(v, str) and v.startswith("<") else v for k, v in VALID[op].items()}
+
 
 ACTOR_OF_ROLE = {"member": "ada", "staff": S, "admin": "admin", "steward": "stu"}
 
@@ -141,13 +157,12 @@ def p_envelope(step: str) -> list[dict[str, Any]]:
                       ("e11", '{"id":"e11","op":"getMember","args":{"actor":"admin","at":"%s","memberid":"ada"}}' % T1),
                       ("e12", '{"id":"e12","op":"registerMember","args":{"actor":"admin","at":"%s","memberId":"zed","name":"Zed","tier":"basic","Tier":"basic"}}' % T1),
                       ("e13", '{"id":"e13","op":"createReservation","args":{"actor":"sam","at":"%s","memberId":"ada","machineId":"L1","start":"2026-03-03T10:00Z","end":"2026-03-03T11:00Z","note":"x"}}' % T1),
-                      ("e14", '{"id":"e14","op":"listMachines","args":{"actor":"admin","at":"2026-03-02T12:00Z","bogus":1}}')):
+                      ("e14", '{"id":"e14","op":"listMachines","args":{"actor":"admin","at":"2026-03-02T09:00Z","bogus":1}}')):
         c.invalid(line, rid)
-    # Nothing of the invalid requests happened: no member, no reservation number, no time.
+    # Nothing of the invalid requests happened: no member, no time (the counter is P-IDENTIFIERS').
     c.refuse("getMember", "admin", T1, {"memberId": "zed"}, "not_found")
     c.ok("createReservation", S, "2026-03-02T09:30Z", {"memberId": "ada", "machineId": "L1", "start": ts(TUE, "10:00"),
-                                                         "end": ts(TUE, "11:00")},
-         {"reservation": has(reservationId="res-1")}, check=True)
+                                                         "end": ts(TUE, "11:00")})
     # The same id twice is two requests, never a replay.
     later = "2026-03-02T09:40Z"
     c.ok("registerMember", S, later, {"memberId": "dup-a", "name": "Dup A", "tier": "basic"}, rid="dup")
@@ -247,7 +262,7 @@ def p_check_order(step: str) -> list[dict[str, Any]]:
     c = probe(step, "P-CHECK-ORDER", "checks")
     w.world(c)
     bobs = w.reserve(c, "bob", "L1", ts(TUE, "10:00"), ts(TUE, "11:00"), T0)
-    c.ok("listMachines", "admin", T1)
+    c.ok("changeTier", S, T1, {"memberId": "bob", "tier": "basic"})
     c.refuse("getMember", "ghost", T1, {"memberId": 17}, "invalid_argument")
     c.refuse("listMachines", "ghost", T0, {}, "unknown_actor")
     c.refuse("listAuditEntries", "ghost", T1, {}, "unknown_actor")
@@ -299,12 +314,12 @@ def p_rule_order(step: str) -> list[dict[str, Any]]:
     if since(step, "C2"):
         inc = c.ok("reportIncident", S, t, {"machineId": "L2", "severity": "high", "description": "Sparks"})
         c.ok("lockMachine", S, t, {"incidentId": inc, "start": ts(WED, "10:00"), "end": ts(WED, "11:00")})
-        w.reserve(c, "bob", "L2", ts(WED, "11:00"), ts(WED, "11:30"), t)
-        c.refuse("createReservation", S, t, {"memberId": "ada", "machineId": "L2", "start": ts(WED, "10:30"), "end": ts(WED, "11:30")}, "machine_locked",
+        w.reserve(c, "bob", "L2", ts(WED, "11:30"), ts(WED, "12:00"), t)
+        c.refuse("createReservation", S, t, {"memberId": "ada", "machineId": "L2", "start": ts(WED, "10:30"), "end": ts(WED, "12:00")}, "machine_locked",
                  cite=C(2, "Changes to existing operations and rules", "It is checked after `machine_in_maintenance` and before `machine_booked`."))
-        c.ok("scheduleMaintenance", S, t, {"machineId": "L2", "start": ts(WED, "12:00"), "end": ts(WED, "13:00"), "reason": "R"})
-        c.ok("lockMachine", S, t, {"incidentId": inc, "start": ts(WED, "12:30"), "end": ts(WED, "13:30")})
-        c.refuse("createReservation", S, t, {"memberId": "ada", "machineId": "L2", "start": ts(WED, "12:30"), "end": ts(WED, "13:00")}, "machine_in_maintenance")
+        c.ok("scheduleMaintenance", S, t, {"machineId": "L2", "start": ts(WED, "12:30"), "end": ts(WED, "13:30"), "reason": "R"})
+        c.ok("lockMachine", S, t, {"incidentId": inc, "start": ts(WED, "13:00"), "end": ts(WED, "14:00")})
+        c.refuse("createReservation", S, t, {"memberId": "ada", "machineId": "L2", "start": ts(WED, "13:00"), "end": ts(WED, "13:30")}, "machine_in_maintenance")
         done = c.ok("reportIncident", S, t, {"machineId": "L1", "severity": "low", "description": "Dust"})
         c.ok("resolveIncident", S, t, {"incidentId": done, "resolution": "Cleaned"})
         c.refuse("lockMachine", S, t, {"incidentId": done, "start": "2026-03-02T08:00Z", "end": "2026-03-02T07:00Z"}, "invalid_state")
@@ -337,7 +352,7 @@ def p_rule_order(step: str) -> list[dict[str, Any]]:
 
 
 def p_identifiers(step: str) -> list[dict[str, Any]]:
-    c = probe(step, "P-IDENTIFIERS", "counters")
+    c = probe(step, "P-IDENTIFIERS", "counters", capture=False)
     w.people(c, members=())
     for mid, name in (("bob", "Bob"), ("Zed", "Zed"), ("ada", "Ada")):
         c.ok("registerMember", S, T0, {"memberId": mid, "name": name, "tier": "basic"})
@@ -351,9 +366,8 @@ def p_identifiers(step: str) -> list[dict[str, Any]]:
     one = c.ok("createReservation", S, T1, {"memberId": "ada", "machineId": "L1", "start": ts(TUE, "10:00"), "end": ts(TUE, "10:30")},
                lambda rid: {"reservation": has(reservationId=rid)}, check=True)
     c.refuse("createReservation", S, T1, {"memberId": "bob", "machineId": "L1", "start": ts(TUE, "10:00"), "end": ts(TUE, "10:30")}, "machine_booked")
-    c.refuse("createReservation", "ada", T1, {"memberId": "bob", "machineId": "L2", "start": ts(TUE, "10:00"), "end": ts(TUE, "10:30")}, "forbidden")
     c.refuse("createReservation", S, T1, {"memberId": "nobody", "machineId": "L2", "start": ts(TUE, "10:00"), "end": ts(TUE, "10:30")}, "not_found")
-    c.invalid('{"id":"bad","op":"createReservation","args":{"actor":"sam","at":"%s","memberId":"bob","machineId":"L2","start":"%s","end":"%s","x":1}}'
+    c.invalid('{"id":"bad","op":"createReservations","args":{"actor":"sam","at":"%s","memberId":"bob","machineId":"L2","start":"%s","end":"%s"}}'
               % (T1, ts(TUE, "10:00"), ts(TUE, "10:30")), "bad")
     c.ok("createReservation", S, T1, {"memberId": "bob", "machineId": "L2", "start": ts(TUE, "10:00"), "end": ts(TUE, "10:30")},
          lambda rid: {"reservation": has(reservationId=rid)}, check=True)
@@ -386,9 +400,11 @@ def p_no_mutation(step: str) -> list[dict[str, Any]]:
     c.ok("enrollInCourse", S, t, {"courseId": "tiny", "memberId": "bob"})
     inc = c.ok("reportIncident", S, t, {"machineId": "L1", "severity": "low", "description": "D"})
     c.ok("resolveIncident", S, t, {"incidentId": inc, "resolution": "R"})
-    c.ok("scheduleMaintenance", S, t, {"machineId": "W1", "start": t, "end": "2026-03-02T10:00Z", "reason": "Now"})
+    spare = c.ok("scheduleMaintenance", S, t, {"machineId": "W1", "start": ts(THU, "10:00"), "end": ts(THU, "11:00"), "reason": "Spare"})
+    c.ok("cancelMaintenance", S, t, {"windowId": spare})
     refusals = [
         ("registerMember", S, {"memberId": S, "name": "Sam", "tier": "basic"}, "already_exists"),
+        ("registerMember", S, {"memberId": "ada", "name": "Other Ada", "tier": "pro"}, "already_exists"),
         ("registerUser", "admin", {"userId": "ada", "name": "Ada", "role": "staff"}, "already_exists"),
         ("changeTier", "ada", {"memberId": "ada", "tier": "pro"}, "forbidden"),
         ("setMemberStanding", S, {"memberId": "ada", "standing": "inactive"}, "invalid_argument"),
@@ -398,7 +414,7 @@ def p_no_mutation(step: str) -> list[dict[str, Any]]:
         ("addMachine", "admin", {"machineId": "L1", "name": "Other", "familyId": "wood", "rateCentsPerMinute": 99}, "already_exists"),
         ("setMachineRate", S, {"machineId": "L1", "rateCentsPerMinute": 99}, "forbidden"),
         ("scheduleMaintenance", S, {"machineId": "L1", "start": ts(TUE, "10:30"), "end": ts(TUE, "12:00"), "reason": "R"}, "reservation_conflict"),
-        ("cancelMaintenance", S, {"windowId": "mnt-1"}, "invalid_state"),
+        ("cancelMaintenance", S, {"windowId": spare}, "invalid_state"),
         ("createReservation", S, {"memberId": "bob", "machineId": "L1", "start": ts(TUE, "10:30"), "end": ts(TUE, "11:30")}, "machine_booked"),
         ("checkIn", S, {"reservationId": ada}, "check_in_too_early"),
         ("checkOut", S, {"reservationId": ada}, "invalid_state"),
@@ -411,17 +427,18 @@ def p_no_mutation(step: str) -> list[dict[str, Any]]:
         ("issueCredit", S, {"memberId": "ada", "amountCents": 100, "reason": "R"}, "forbidden"),
     ]
     if since(step, "C2"):
-        refusals.append(("lockMachine", S, {"incidentId": inc, "start": ts(TUE, "10:00"), "end": ts(TUE, "12:00")}, "invalid_state"))
+        live = c.ok("reportIncident", S, t, {"machineId": "L1", "severity": "high", "description": "Live"})
+        refusals.append(("lockMachine", S, {"incidentId": live, "start": ts(TUE, "10:00"), "end": ts(TUE, "10:00")}, "invalid_interval"))
     for op, actor, args, code in refusals:
         c.refuse(op, actor, t, args, code, snapshot=True)
     check_in(c, done, ts(MON, "09:30"))
     check_out(c, done, ts(MON, "09:45"))
     c.refuse("cancelReservation", S, ts(MON, "09:45"), {"reservationId": done}, "invalid_state", snapshot=True)
-    generate(c, "2026-03", APR1)
+    march = generate(c, "2026-03", APR1)
     c.refuse("generateInvoices", S, APR1, {"month": "2026-03"}, "already_invoiced", snapshot=True)
     c.ok("issueCredit", "admin", APR1, {"memberId": "cy", "amountCents": 999999, "reason": "Cover"})
-    c.ok("recordPayment", S, APR1, {"invoiceId": "inv-2", "amountCents": 999999})
-    c.refuse("recordPayment", S, APR1, {"invoiceId": "inv-2", "amountCents": 5}, "invoice_paid", snapshot=True)
+    c.ok("recordPayment", S, APR1, {"invoiceId": march["bob"], "amountCents": 999999})
+    c.refuse("recordPayment", S, APR1, {"invoiceId": march["bob"], "amountCents": 5}, "invoice_paid", snapshot=True)
     c.refuse("registerUser", "admin", APR1, {"userId": "admin", "name": "X", "role": "staff"}, "already_exists")
     c.ok("registerUser", "admin", APR1, {"userId": "still-admin", "name": "S", "role": "staff"},
          {"user": f.user("still-admin", "S", "staff")}, check=True)
@@ -437,18 +454,19 @@ def _authz_case(step: str, family: str) -> Case:
 
 
 def p_authz_role(step: str) -> list[dict[str, Any]]:
-    c = _authz_case(step, "P-AUTHZ-ROLE")
+    c = probe(step, "P-AUTHZ-ROLE", "matrix")
+    refs = authz_world(c)
     for op, info in f.ops(step).items():
         for role, perm in info["perms"].items():
             if perm == "none":
-                c.refuse(op, ACTOR_OF_ROLE[role], APR1, VALID[op], "forbidden")
+                c.refuse(op, ACTOR_OF_ROLE[role], APR1, valid(op, refs), "forbidden")
     return [c.build()]
 
 
 def p_authz_own(step: str) -> list[dict[str, Any]]:
     c = probe(step, "P-AUTHZ-OWN", "ownership")
     w.world(c)
-    generate(c, "2026-03", APR1)
+    march = generate(c, "2026-03", APR1)
     day = "2026-04-01"
     own1 = w.reserve(c, "ada", "L1", ts(day, "10:00"), ts(day, "10:30"), APR1)
     bob1 = w.reserve(c, "bob", "L2", ts(day, "10:00"), ts(day, "10:30"), APR1)
@@ -466,8 +484,8 @@ def p_authz_own(step: str) -> list[dict[str, Any]]:
     c.ok("createReservation", "ada", APR1, {"memberId": "ada", **slot})
     c.refuse("cancelReservation", "ada", APR1, {"reservationId": bob2}, "forbidden")
     c.ok("cancelReservation", "ada", APR1, {"reservationId": own2})
-    c.refuse("recordPayment", "ada", APR1, {"invoiceId": "inv-2", "amountCents": 100}, "forbidden")
-    c.ok("recordPayment", "ada", APR1, {"invoiceId": "inv-1", "amountCents": 100})
+    c.refuse("recordPayment", "ada", APR1, {"invoiceId": march["bob"], "amountCents": 100}, "forbidden")
+    c.ok("recordPayment", "ada", APR1, {"invoiceId": march["ada"], "amountCents": 100})
     c.refuse("checkIn", "ada", ts(day, "10:00"), {"reservationId": bob1}, "forbidden")
     check_in(c, own1, ts(day, "10:00"), "ada")
     c.refuse("checkOut", "ada", ts(day, "10:10"), {"reservationId": bob1}, "forbidden")
@@ -529,11 +547,11 @@ def p_authz_all(step: str) -> list[dict[str, Any]]:
     check_out(c, s_res, ts(TUE, "11:10"), S)
     check_in(c, a_res, ts(TUE, "12:00"), "admin")
     check_out(c, a_res, ts(TUE, "12:10"), "admin")
-    generate(c, "2026-03", APR1, S)
+    march = generate(c, "2026-03", APR1, S)
     generate(c, "2026-02", APR1, "admin")
     for actor in (S, "admin"):
         c.ok("listInvoices", actor, APR1, {"memberId": "bob"})
-        c.ok("recordPayment", actor, APR1, {"invoiceId": "inv-2", "amountCents": 100})
+        c.ok("recordPayment", actor, APR1, {"invoiceId": march["bob"], "amountCents": 100})
         c.ok("getAccount", actor, APR1, {"memberId": "bob"})
     return [c.build()]
 
@@ -566,13 +584,12 @@ def p_audit_accepted(step: str) -> list[dict[str, Any]]:
         wid = c.ok("scheduleMaintenance", "stu", t, {"machineId": "W1", "start": ts(WED, "10:00"), "end": ts(WED, "11:00"), "reason": "R"})
         c.ok("cancelMaintenance", "stu", t, {"windowId": wid})
         inc3 = c.ok("reportIncident", "stu", t, {"machineId": "W1", "severity": "low", "description": "D"})
-        c.ok("lockMachine", "stu", t, {"incidentId": inc3, "start": ts(THU, "10:00"), "end": ts(THU, "11:00")})
         c.ok("resolveIncident", "stu", t, {"incidentId": inc3, "resolution": "R"})
     check_in(c, own, ts(MON, "10:00"), "ada")
     check_out(c, own, ts(MON, "10:10"), "ada")
-    generate(c, "2026-03", APR1)
+    march = generate(c, "2026-03", APR1)
     generate(c, "2026-02", APR1)
-    c.ok("recordPayment", "ada", APR1, {"invoiceId": "inv-1", "amountCents": 100})
+    c.ok("recordPayment", "ada", APR1, {"invoiceId": march["ada"], "amountCents": 100})
     c.audit_log()
     return [c.build()]
 
@@ -605,7 +622,7 @@ def p_audit_silent(step: str) -> list[dict[str, Any]]:
     c.refuse("resolveIncident", S, T1, {"incidentId": inc, "resolution": "Again"}, "invalid_state")
     c.refuse("checkOut", S, T1, {"reservationId": res}, "invalid_state")
     c.invalid("not json", None)
-    c.invalid('{"id":"x1","op":"registerMember","args":{"actor":"sam","at":"%s","memberId":"q","name":"Q","tier":"basic","x":1}}' % T1, "x1")
+    c.invalid('{"id":"x1","op":"registerMembers","args":{"actor":"sam","at":"%s","memberId":"q","name":"Q","tier":"basic"}}' % T1, "x1")
     c.audit_since("before", mark)
     return [c.build()]
 
@@ -622,65 +639,56 @@ def p_audit_forbidden(step: str) -> list[dict[str, Any]]:
     c.refuse("cancelReservation", "ada", T1, {"reservationId": res}, "forbidden")
     c.refuse("getMember", "ada", T1, {"memberId": "bob"}, "forbidden")
     if since(step, "C4"):
-        c.refuse("getAccount", "stu", T1, {"memberId": "bob"}, "forbidden",
+        c.refuse("addMachine", "stu", T1, {"machineId": "X1", "name": "X", "familyId": "laser", "rateCentsPerMinute": 5}, "forbidden",
                  cite=C(4, "What changes", "A steward's `forbidden` refusals are recorded as C1 states, also with `actorRole` `steward`."))
-    c.refuse("registerUser", "ada", "2026-03-02T10:00Z", {"userId": "u", "name": "U", "role": "staff"}, "forbidden")
-    c.ok("changeTier", S, "2026-03-02T09:30Z", {"memberId": "bob", "tier": "basic"},
-         cite=C(1, "What changes", "A refusal entry can therefore carry a later `at` than the accepted entry that follows it") if since(step, "C1") else None)
+    c.refuse("registerUser", "ada", T1, {"userId": "u", "name": "U", "role": "staff"}, "forbidden")
+    c.ok("changeTier", S, T1, {"memberId": "bob", "tier": "basic"})
     c.audit_since("before", mark)
     return [c.build()]
 
 
 # --- Money ---------------------------------------------------------------------------------------
 
-def _session(c: Case, member: str, machine: str, day: str, start: str, minutes: int, at: str, *,
-             rate: int, discount: int, check: bool = True) -> str:
-    """Reserve [start, start+30), check in at start, check out after `minutes`; compare the charge."""
-    rid = w.reserve(c, member, machine, ts(day, start), stamp(ts(day, start), 30), ts(day, start))
+def _session(c: Case, rid: Any, day: str, start: str, minutes: int, *, rate: int, discount: int) -> None:
+    """Check in at the reservation start, check out after `minutes`; compare only the amounts."""
     check_in(c, rid, ts(day, start))
-    out = stamp(ts(day, start), minutes)
-    check_out(c, rid, out, result={"reservation": has(meteredMinutes=minutes, rateCentsPerMinute=rate,
-                                                       amountCents=f.line_amount(minutes, rate, discount)),
-                                    "charge": f.charge("usage", rid, minutes, rate, discount, out)}, check=check)
-    return rid
+    amount = f.line_amount(minutes, rate, discount)
+    check_out(c, rid, stamp(ts(day, start), minutes), result={"reservation": has(amountCents=amount), "charge": has(amountCents=amount)},
+              check=True)
 
 
 def p_money_rounding(step: str) -> list[dict[str, Any]]:
     c = probe(step, "P-MONEY-ROUNDING", "half-up")
-    w.world(c)
+    w.world(c, fee=0)
     c.ok("addMachine", "admin", T1, {"machineId": "R5", "name": "Rate five", "familyId": "laser", "rateCentsPerMinute": 5})
     c.ok("addMachine", "admin", T1, {"machineId": "R6", "name": "Rate six", "familyId": "laser", "rateCentsPerMinute": 6})
     # 1 x 6 x 75 = 4.5 -> 5; 1 x 5 x 90 = 4.5 -> 5; 3 x 5 x 90 = 13.5 -> 14 (never 3 x 5); 37 x 45 x 90 -> 1499 (w0 4.3).
-    r1 = _session(c, "cy", "R6", TUE, "10:00", 1, T1, rate=6, discount=25)
-    r2 = _session(c, "ada", "R5", TUE, "10:30", 1, T1, rate=5, discount=10)
-    r3 = _session(c, "ada", "R5", TUE, "11:00", 3, T1, rate=5, discount=10)
-    r4 = _session(c, "ada", "L1", TUE, "12:00", 37, T1, rate=45, discount=10)
-    r5 = _session(c, "cy", "R6", TUE, "13:00", 3, T1, rate=6, discount=25)
-    buy_at = ts(TUE, "14:00")
+    plan = [("cy", "R6", "10:00", 1, 6, 25), ("ada", "R5", "10:30", 1, 5, 10), ("ada", "R5", "11:30", 3, 5, 10),
+            ("ada", "L1", "12:30", 37, 45, 10), ("cy", "R6", "13:30", 3, 6, 25)]
+    ids = [w.reserve(c, member, machine, ts(TUE, start), stamp(ts(TUE, start), 30), T1) for member, machine, start, *_ in plan]
+    for rid, (_, _, start, minutes, rate, discount) in zip(ids, plan):
+        _session(c, rid, TUE, start, minutes, rate=rate, discount=discount)
+    buy_at = ts(TUE, "14:30")
     d10 = f.bulk_discount(step, 10)
-    pur = c.ok("purchaseMaterial", S, buy_at, {"memberId": "ada", "materialId": "acrylic", "quantity": 10},
-               lambda pid: {"purchase": f.purchase(pid, "ada", "acrylic", 10, 199, d10, buy_at), "material": has(stock=90)},
-               check=True, cite=C(3, "What changes", "rounded half up once per line, as before"))
-    course = f.charge("course", "laser-101", 1, 3000, 0, T0)
-    usage = lambda rid, q, rate, d, start: f.charge("usage", rid, q, rate, d, stamp(ts(TUE, start), q))
-    ada_lines = [membership_line("plus", APR1), course, usage(r2, 1, 5, 10, "10:30"), usage(r3, 3, 5, 10, "11:00"),
-                 usage(r4, 37, 45, 10, "12:00"), f.charge("material", pur, 10, 199, d10, buy_at)]
-    cy_lines = [membership_line("pro", APR1), course, usage(r1, 1, 6, 25, "10:00"), usage(r5, 3, 6, 25, "13:00")]
-    generate(c, "2026-03", APR1, result=lambda m: {"month": "2026-03", "invoices": [
-        money("ada", "2026-03", ada_lines), has(memberId="bob"), money("cy", "2026-03", cy_lines)]}, check=True)
+    c.ok("purchaseMaterial", S, buy_at, {"memberId": "bob", "materialId": "acrylic", "quantity": 10},
+         {"purchase": has(amountCents=f.line_amount(10, 199, d10)), "material": ANY},
+         check=True, cite=C(3, "What changes", "rounded half up once per line, as before"))
+    totals = W("4.3", "Totals are sums of rounded line amounts and are never rounded again.")
+    c.ok("getAccount", S, buy_at, {"memberId": "ada"}, {"account": has(unbilledCents=5 + 14 + 1499)}, check=True, cite=totals)
+    c.ok("getAccount", S, buy_at, {"memberId": "cy"}, {"account": has(unbilledCents=5 + 14)}, check=True, cite=totals)
     return [c.build()]
 
 
 def p_money_usage(step: str) -> list[dict[str, Any]]:
     c = probe(step, "P-MONEY-USAGE", "charges")
-    w.world(c)
+    w.world(c, fee=0)
     t = T1
     r1 = w.reserve(c, "bob", "L1", ts(TUE, "10:00"), ts(TUE, "10:30"), t)
     r2 = w.reserve(c, "ada", "L2", ts(TUE, "10:00"), ts(TUE, "10:30"), t)
     r3 = w.reserve(c, "cy", "L2", ts(TUE, "11:00"), ts(TUE, "11:30"), t)
     r4 = w.reserve(c, "bob", "L1", ts(TUE, "12:00"), ts(TUE, "12:30"), t)
-    r5 = w.reserve(c, "ada", "L1", ts(TUE, "20:30"), ts(TUE, "21:00"), t)
-    missed = w.reserve(c, "cy", "L1", ts(TUE, "14:00"), ts(TUE, "14:30"), t)
+    r5 = w.reserve(c, "ada", "L1", ts(TUE, "20:00"), ts(TUE, "20:30"), t)
+    w.reserve(c, "cy", "L1", ts(TUE, "14:00"), ts(TUE, "14:30"), t)  # never checked in: missed
     gone = w.reserve(c, "bob", "L2", ts(TUE, "15:00"), ts(TUE, "15:30"), t)
     c.ok("cancelReservation", S, t, {"reservationId": gone})
     c.ok("setMachineRate", "admin", ts(TUE, "09:00"), {"machineId": "L1", "rateCentsPerMinute": 50})
@@ -688,13 +696,14 @@ def p_money_usage(step: str) -> list[dict[str, Any]]:
     check_in(c, r2, ts(TUE, "10:00"))
     c.ok("setMachineRate", "admin", ts(TUE, "10:05"), {"machineId": "L1", "rateCentsPerMinute": 60})
     c.ok("changeTier", S, ts(TUE, "10:05"), {"memberId": "ada", "tier": "pro"})
-    lines: dict[str, list] = {"ada": [], "bob": [], "cy": []}
+
+    usage: dict[str, list] = {"ada": [], "bob": [], "cy": []}
 
     def out(rid, member, at, minutes, rate, discount):
         charge = f.charge("usage", rid, minutes, rate, discount, at)
         check_out(c, rid, at, result={"reservation": has(meteredMinutes=minutes, amountCents=charge["amountCents"]),
                                        "charge": charge}, check=True)
-        lines[member].append(charge)
+        usage[member].append(charge)
 
     out(r1, "bob", ts(TUE, "10:10"), 10, 50, 0)
     out(r2, "ada", ts(TUE, "10:20"), 20, 30, 25)
@@ -703,17 +712,17 @@ def p_money_usage(step: str) -> list[dict[str, Any]]:
     out(r3, "cy", ts(TUE, "11:00"), 0, 30, 25)
     check_in(c, r4, ts(TUE, "12:00"))
     out(r4, "bob", ts(TUE, "13:15"), 75, 60, 0)
-    c.ok("getAccount", S, ts(TUE, "14:30"), {"memberId": "cy"}, {"account": has(unbilledCents=3000)}, check=True,
+    c.ok("getAccount", S, ts(TUE, "14:30"), {"memberId": "cy"}, {"account": has(unbilledCents=0)}, check=True,
          cite=W("9.1", "A missed reservation can no longer be checked in or cancelled and causes no charge."))
-    check_in(c, r5, ts(TUE, "20:30"))
-    out(r5, "ada", ts(TUE, "21:40"), 70, 60, 10)
+    check_in(c, r5, ts(TUE, "20:00"))
+    out(r5, "ada", ts(TUE, "21:10"), 70, 60, 10)
     c.ok("setMachineRate", "admin", ts(TUE, "21:45"), {"machineId": "L1", "rateCentsPerMinute": 99})
-    c.ok("getAccount", S, ts(TUE, "21:45"), {"memberId": "bob"}, {"account": has(unbilledCents=3000 + 500 + 4500)}, check=True)
-    course = f.charge("course", "laser-101", 1, 3000, 0, T0)
-    expected = {m: [membership_line(w.MEMBERS[m][1], APR1), course] + lines[m] for m in ("ada", "bob", "cy")}
-    generate(c, "2026-03", APR1, result=lambda m: {"month": "2026-03", "invoices": [
-        money(x, "2026-03", expected[x]) for x in ("ada", "bob", "cy")]}, check=True)
-    del missed
+    c.ok("getAccount", S, ts(TUE, "21:45"), {"memberId": "bob"}, {"account": has(unbilledCents=500 + 4500)}, check=True)
+    c.ok("getAccount", S, ts(TUE, "21:45"), {"memberId": "ada"}, {"account": has(unbilledCents=450 + 3780)}, check=True)
+    generate(c, "2026-03", APR1)
+    for member in ("ada", "bob", "cy"):
+        c.ok("listInvoices", S, APR1, {"memberId": member}, {"memberId": member, "invoices": [has(lines=lines("usage", usage[member]))]}, check=True,
+             cite=W("9.2", "A charge of 0 cents is still created."))
     return [c.build()]
 
 
@@ -732,12 +741,13 @@ def p_money_course(step: str) -> list[dict[str, Any]]:
     c.ok("enrollInCourse", S, times[4], {"courseId": "laser-pro", "memberId": "ada"})
     c.ok("getAccount", S, times[4], {"memberId": "cy"}, {"account": has(unbilledCents=4550)}, check=True)
     c.ok("getAccount", S, times[4], {"memberId": "ada"}, {"account": has(unbilledCents=4550)}, check=True)
-    lines = {"cy": [membership_line("pro", APR1), f.charge("course", "laser-pro", 1, 4550, 0, times[0])],
-             "ada": [membership_line("plus", APR1), f.charge("course", "wood-101", 1, 0, 0, times[1]),
-                     f.charge("course", "wood-101", 1, 0, 0, times[3]), f.charge("course", "laser-pro", 1, 4550, 0, times[4])],
-             "bob": [membership_line("basic", APR1)]}
-    generate(c, "2026-03", APR1, result=lambda m: {"month": "2026-03", "invoices": [
-        money(x, "2026-03", lines[x]) for x in ("ada", "bob", "cy")]}, check=True)
+    course = {"cy": [f.charge("course", "laser-pro", 1, 4550, 0, times[0])],
+              "ada": [f.charge("course", "wood-101", 1, 0, 0, times[1]), f.charge("course", "wood-101", 1, 0, 0, times[3]),
+                      f.charge("course", "laser-pro", 1, 4550, 0, times[4])],
+              "bob": []}
+    generate(c, "2026-03", APR1)
+    for member in ("ada", "bob", "cy"):
+        c.ok("listInvoices", S, APR1, {"memberId": member}, {"memberId": member, "invoices": [has(lines=lines("course", course[member]))]}, check=True)
     return [c.build()]
 
 
@@ -749,64 +759,77 @@ def p_money_materials(step: str) -> list[dict[str, Any]]:
     c.ok("restockMaterial", S, T1, {"materialId": "bead", "quantity": 100000})
     stock = {"acrylic": 100, "plywood": 100, "bead": 100000}
     price = {"acrylic": 199, "plywood": 37, "bead": 3}
-    lines: dict[str, list] = {"ada": [], "bob": [], "cy": []}
+    names = {"acrylic": "Acrylic sheet", "plywood": "Plywood panel", "bead": "Bead"}
+    bought: dict[str, list] = {"ada": [], "bob": [], "cy": []}
     for member, mat, qty in (("ada", "acrylic", 9), ("ada", "acrylic", 10), ("bob", "plywood", 24), ("bob", "plywood", 25),
                              ("cy", "acrylic", 5), ("cy", "acrylic", 5), ("bob", "bead", 10000), ("ada", "plywood", 51)):
         stock[mat] -= qty
         d = f.bulk_discount(step, qty)
-        at = c.read_at(None)
-        pid = c.ok("purchaseMaterial", S, at, {"memberId": member, "materialId": mat, "quantity": qty},
-                   lambda pid: {"purchase": f.purchase(pid, member, mat, qty, price[mat], d, at),
-                                "material": f.material(mat, {"acrylic": "Acrylic sheet", "plywood": "Plywood panel", "bead": "Bead"}[mat],
-                                                       price[mat], stock[mat])}, check=True)
-        lines[member].append(f.charge("material", pid, qty, price[mat], d, at))
+        pid = c.ok("purchaseMaterial", S, T1, {"memberId": member, "materialId": mat, "quantity": qty},
+                   lambda pid, member=member, mat=mat, qty=qty, d=d: {
+                       "purchase": f.purchase(pid, member, mat, qty, price[mat], d, T1),
+                       "material": f.material(mat, names[mat], price[mat], stock[mat])}, check=True)
+        bought[member].append(f.charge("material", pid, qty, price[mat], d, T1))
     c.refuse("purchaseMaterial", S, T1, {"memberId": "ada", "materialId": "plywood", "quantity": 1}, "insufficient_stock")
-    expected = {m: [membership_line(w.MEMBERS[m][1], APR1)] + lines[m] for m in lines}
-    generate(c, "2026-03", APR1, result=lambda m: {"month": "2026-03", "invoices": [
-        money(x, "2026-03", expected[x]) for x in ("ada", "bob", "cy")]}, check=True)
+    generate(c, "2026-03", APR1)
+    for member in ("ada", "bob", "cy"):
+        c.ok("listInvoices", S, APR1, {"memberId": member}, {"memberId": member, "invoices": [has(lines=lines("material", bought[member]))]}, check=True,
+             cite=C(3, "What changes", "The material charge carries the same `discountPercent` and `amountCents` as the purchase."))
     return [c.build()]
 
 
 def p_money_invoice(step: str) -> list[dict[str, Any]]:
+    """Invoice construction; the material lines are taken from the purchases, so the materials rules do not matter."""
     c = probe(step, "P-MONEY-INVOICE", "construction")
     feb_reg, feb_buy = "2026-02-10T09:00Z", "2026-02-15T09:00Z"
     c.ok("registerMember", "admin", feb_reg, {"memberId": "fay", "name": "Fay", "tier": "basic"})
     c.ok("addMaterial", "admin", feb_reg, {"materialId": "felt", "name": "Felt", "unitPriceCents": 50})
     c.ok("restockMaterial", "admin", feb_reg, {"materialId": "felt", "quantity": 10})
-    c.ok("purchaseMaterial", "admin", feb_buy, {"memberId": "fay", "materialId": "felt", "quantity": 2})
+
+    def buy(member, material, quantity, at, name, actor=S):
+        return c.ok("purchaseMaterial", actor, at, {"memberId": member, "materialId": material, "quantity": quantity},
+                    {"purchase": has(amountCents={"$capture": name}), "material": ANY}, check=True)
+
+    felt = buy("fay", "felt", 2, feb_buy, "felt", actor="admin")
     w.people(c)
     w.shop(c)
-    c.ok("purchaseMaterial", S, "2026-03-10T10:00Z", {"memberId": "ada", "materialId": "acrylic", "quantity": 2})
+    sheet = buy("ada", "acrylic", 2, "2026-03-10T10:00Z", "sheet")
     c.ok("changeTier", S, "2026-03-15T10:00Z", {"memberId": "bob", "tier": "pro"})
     c.ok("setMemberStanding", S, "2026-03-15T10:00Z", {"memberId": "cy", "standing": "suspended"})
     c.ok("issueCredit", "admin", "2026-03-20T10:00Z", {"memberId": "ada", "amountCents": 1000, "reason": "R"})
     c.ok("issueCredit", "admin", "2026-03-20T10:00Z", {"memberId": "cy", "amountCents": 20000, "reason": "R"})
     c.ok("registerMember", S, "2026-03-31T23:59Z", {"memberId": "dee", "name": "Dee", "tier": "basic"})
     apr = "2026-04-01T00:00Z"
+    gen = "2026-04-01T09:00Z"
     c.ok("registerMember", S, apr, {"memberId": "eve", "name": "Eve", "tier": "plus"})
-    c.ok("purchaseMaterial", S, apr, {"memberId": "ada", "materialId": "plywood", "quantity": 1})
-    march = {"ada": money("ada", "2026-03", [membership_line("plus", apr), f.charge("material", "pur-2", 2, 199, 0, "2026-03-10T10:00Z")], credit=1000),
-             "bob": money("bob", "2026-03", [membership_line("pro", apr)]),
-             "cy": money("cy", "2026-03", [membership_line("pro", apr)], credit=9900),
-             "dee": money("dee", "2026-03", [membership_line("basic", apr)]),
-             "fay": money("fay", "2026-03", [membership_line("basic", apr)])}
-    generate(c, "2026-03", apr, result=lambda m: {"month": "2026-03", "invoices": [march[x] for x in ("ada", "bob", "cy", "dee", "fay")]}, check=True,
-             cite=W("11.1", "All of the member's unbilled charges whose `at` lies in month M follow"))
-    c.ok("getAccount", S, apr, {"memberId": "ada"}, {"account": has(creditBalanceCents=0, unbilledCents=37)}, check=True)
-    c.ok("getAccount", S, apr, {"memberId": "cy"}, {"account": has(creditBalanceCents=10100, openBalanceCents=0)}, check=True)
-    generate(c, "2026-01", apr, result={"month": "2026-01", "invoices": []}, check=True,
+    panel = buy("ada", "plywood", 1, apr, "panel")
+
+    def with_material(member, tier, month, at, ref, name, bought, credit=0):
+        total = {"$calc": ["+", f.FEES[tier], {"$ref": name}]}
+        return has(memberId=member, month=month, lines=[membership_line(tier, at), has(kind="material", ref=ref, at=bought)],
+                   totalCents=total, creditAppliedCents=credit, paidCents=0, balanceCents={"$calc": ["-", total, credit]}, status="open")
+
+    march = {"ada": with_material("ada", "plus", "2026-03", gen, sheet, "sheet", "2026-03-10T10:00Z", credit=1000),
+             "bob": money("bob", "2026-03", [membership_line("pro", gen)]),
+             "cy": money("cy", "2026-03", [membership_line("pro", gen)], credit=9900),
+             "dee": money("dee", "2026-03", [membership_line("basic", gen)]),
+             "fay": money("fay", "2026-03", [membership_line("basic", gen)])}
+    mar = generate(c, "2026-03", gen, result=lambda m: {"month": "2026-03", "invoices": [march[x] for x in ("ada", "bob", "cy", "dee", "fay")]}, check=True,
+                   cite=W("11.1", "All of the member's unbilled charges whose `at` lies in month M follow"))
+    c.ok("getAccount", S, gen, {"memberId": "ada"}, {"account": has(creditBalanceCents=0)}, check=True)
+    c.ok("getAccount", S, gen, {"memberId": "cy"}, {"account": has(creditBalanceCents=10100, openBalanceCents=0)}, check=True)
+    generate(c, "2026-01", gen, result={"month": "2026-01", "invoices": []}, check=True,
              cite=W("11.1", "Effect: creates the invoices as described above and marks the month as invoiced, even when there is no member to invoice."))
-    c.refuse("generateInvoices", S, apr, {"month": "2026-01"}, "already_invoiced")
+    c.refuse("generateInvoices", S, gen, {"month": "2026-01"}, "already_invoiced")
     zero = {k: 0 for k in ("invoiceCount", "membershipCents", "usageCents", "materialCents", "courseCents", "invoicedCents",
                            "creditAppliedCents", "outstandingCents", "paymentsCents", "creditsIssuedCents")}
-    c.ok("revenueReport", S, apr, {"month": "2026-01"}, {"month": "2026-01", "invoicesGenerated": True, **zero}, check=True,
+    c.ok("revenueReport", S, gen, {"month": "2026-01"}, {"month": "2026-01", "invoicesGenerated": True, **zero}, check=True,
          cite=W("13", "`invoicesGenerated`: whether invoices for the month have been generated;"))
-    feb = money("fay", "2026-02", [membership_line("basic", apr), f.charge("material", "pur-1", 2, 50, 0, feb_buy)])
-    generate(c, "2026-02", apr, result=lambda m: {"month": "2026-02", "invoices": [feb]}, check=True)
-    c.ok("listInvoices", S, apr, {"memberId": "fay"}, {"memberId": "fay", "invoices": [has(invoiceId="inv-6", month="2026-02"), has(invoiceId="inv-5", month="2026-03")]},
+    fe = generate(c, "2026-02", gen, result=lambda m: {"month": "2026-02", "invoices": [with_material("fay", "basic", "2026-02", gen, felt, "felt", feb_buy)]}, check=True)
+    c.ok("listInvoices", S, gen, {"memberId": "fay"}, {"memberId": "fay", "invoices": [has(invoiceId=fe["fay"], month="2026-02"), has(invoiceId=mar["fay"], month="2026-03")]},
          check=True, cite=W("4.5", "| `listInvoices` → `invoices` | `month` ascending |"))
-    may = "2026-05-01T00:00Z"
-    april = {"ada": money("ada", "2026-04", [membership_line("plus", may), f.charge("material", "pur-3", 1, 37, 0, apr)]),
+    may = "2026-05-01T09:00Z"
+    april = {"ada": with_material("ada", "plus", "2026-04", may, panel, "panel", apr),
              "bob": money("bob", "2026-04", [membership_line("pro", may)]),
              "cy": money("cy", "2026-04", [membership_line("pro", may)], credit=9900),
              "dee": money("dee", "2026-04", [membership_line("basic", may)]),
@@ -818,41 +841,58 @@ def p_money_invoice(step: str) -> list[dict[str, Any]]:
 
 
 def p_money_credit(step: str) -> list[dict[str, Any]]:
+    """Payment and credit fields only; invoice balances are read first, so fees and charges do not matter."""
     c = probe(step, "P-MONEY-CREDIT", "payments")
     w.people(c, members=("ada", "bob"))
     w.shop(c)
     c.ok("purchaseMaterial", S, "2026-03-10T10:00Z", {"memberId": "ada", "materialId": "acrylic", "quantity": 1})
-    generate(c, "2026-03", APR1)
+    march = generate(c, "2026-03", APR1)
+    a1, b1 = march["ada"], march["bob"]
+    for member, inv, name in (("ada", a1, "A"), ("bob", b1, "B")):
+        c.ok("listInvoices", S, APR1, {"memberId": member}, {"memberId": member, "invoices": [has(invoiceId=inv, balanceCents={"$capture": name})]}, check=True)
+    A, B = {"$ref": "A"}, {"$ref": "B"}
+    left = {"$calc": ["-", A, 1000]}
     pay_at = "2026-04-02T10:00Z"
-    paid_inv = lambda paid, status: has(invoiceId="inv-1", paidCents=paid, balanceCents=5099 - paid, status=status)
-    c.ok("recordPayment", S, pay_at, {"invoiceId": "inv-1", "amountCents": 1000},
-         lambda pid: {"payment": f.payment(pid, "inv-1", "ada", 1000, 1000, pay_at), "invoice": paid_inv(1000, "open"), "creditBalanceCents": 0}, check=True)
+    c.ok("recordPayment", S, pay_at, {"invoiceId": a1, "amountCents": 1000},
+         lambda pid: {"payment": f.payment(pid, a1, "ada", 1000, 1000, pay_at),
+                      "invoice": has(invoiceId=a1, paidCents=1000, balanceCents=left, status="open"), "creditBalanceCents": 0}, check=True)
     c.ok("issueCredit", "admin", pay_at, {"memberId": "ada", "amountCents": 500, "reason": "Goodwill"},
          {"memberId": "ada", "amountCents": 500, "creditBalanceCents": 500}, check=True)
-    c.ok("listInvoices", S, pay_at, {"memberId": "ada"}, {"memberId": "ada", "invoices": [paid_inv(1000, "open")]}, check=True)
-    c.ok("getAccount", S, pay_at, {"memberId": "ada"}, {"account": has(creditBalanceCents=500, openBalanceCents=4099, unbilledCents=0)}, check=True)
-    c.ok("recordPayment", "ada", pay_at, {"invoiceId": "inv-1", "amountCents": 5000},
-         lambda pid: {"payment": f.payment(pid, "inv-1", "ada", 5000, 4099, pay_at), "invoice": paid_inv(5099, "paid"), "creditBalanceCents": 1401}, check=True)
-    c.refuse("recordPayment", S, pay_at, {"invoiceId": "inv-1", "amountCents": 1}, "invoice_paid")
-    c.ok("recordPayment", S, pay_at, {"invoiceId": "inv-2", "amountCents": 2500},
-         lambda pid: {"payment": f.payment(pid, "inv-2", "bob", 2500, 2500, pay_at), "invoice": has(status="paid", balanceCents=0), "creditBalanceCents": 0}, check=True)
-    c.ok("purchaseMaterial", S, pay_at, {"memberId": "ada", "materialId": "acrylic", "quantity": 1})
-    c.ok("getAccount", S, pay_at, {"memberId": "ada"}, {"account": has(creditBalanceCents=1401, openBalanceCents=0, unbilledCents=199)}, check=True)
+    c.ok("listInvoices", S, pay_at, {"memberId": "ada"}, {"memberId": "ada", "invoices": [has(invoiceId=a1, balanceCents=left)]}, check=True)
+    c.ok("getAccount", S, pay_at, {"memberId": "ada"}, {"account": has(creditBalanceCents=500, openBalanceCents=left, unbilledCents=0)}, check=True)
+    big = 100000000
+    credited = {"$calc": ["-", big, left]}
+    credit = {"$calc": ["+", 500, credited]}
+    c.ok("recordPayment", "ada", pay_at, {"invoiceId": a1, "amountCents": big},
+         lambda pid: {"payment": {"paymentId": pid, "invoiceId": a1, "memberId": "ada", "amountCents": big, "appliedCents": left,
+                                  "creditedCents": credited, "at": pay_at},
+                      "invoice": has(invoiceId=a1, paidCents=A, balanceCents=0, status="paid"), "creditBalanceCents": credit}, check=True)
+    c.refuse("recordPayment", S, pay_at, {"invoiceId": a1, "amountCents": 1}, "invoice_paid")
+    c.ok("recordPayment", S, pay_at, {"invoiceId": b1, "amountCents": B},
+         lambda pid: {"payment": {"paymentId": pid, "invoiceId": b1, "memberId": "bob", "amountCents": B, "appliedCents": B,
+                                  "creditedCents": 0, "at": pay_at},
+                      "invoice": has(status="paid", balanceCents=0), "creditBalanceCents": 0}, check=True)
+    c.ok("purchaseMaterial", S, pay_at, {"memberId": "ada", "materialId": "acrylic", "quantity": 1},
+         {"purchase": has(amountCents={"$capture": "P"}), "material": ANY}, check=True)
+    c.ok("getAccount", S, pay_at, {"memberId": "ada"}, {"account": has(creditBalanceCents=credit, openBalanceCents=0, unbilledCents={"$ref": "P"})}, check=True)
     may = "2026-05-01T09:00Z"
-    generate(c, "2026-04", may, result=lambda m: {"month": "2026-04", "invoices": [
-        money("ada", "2026-04", [membership_line("plus", may), f.charge("material", "pur-2", 1, 199, 0, pay_at)], credit=1401),
-        money("bob", "2026-04", [membership_line("basic", may)])]}, check=True)
-    c.ok("getAccount", S, may, {"memberId": "ada"}, {"account": has(creditBalanceCents=0, openBalanceCents=3698, unbilledCents=0)}, check=True)
-    c.ok("issueCredit", "admin", may, {"memberId": "bob", "amountCents": 10000, "reason": "R"})
+    generate(c, "2026-04", may)
+    c.ok("listInvoices", S, may, {"memberId": "ada"}, {"memberId": "ada", "invoices": {"$filter": {"month": "2026-04"}, "items": [has(totalCents={"$capture": "T"})]}}, check=True)
+    c.ok("listInvoices", S, may, {"memberId": "ada"}, {"memberId": "ada", "invoices": {"$filter": {"month": "2026-04"}, "items": [
+        has(creditAppliedCents={"$ref": "T"}, balanceCents=0, status="paid")]}}, check=True,
+         cite=W("11.1", "`creditAppliedCents` is the smaller of the member's credit balance and `totalCents`."))
+    c.ok("getAccount", S, may, {"memberId": "ada"}, {"account": has(creditBalanceCents={"$calc": ["-", credit, {"$ref": "T"}]}, openBalanceCents=0, unbilledCents=0)}, check=True)
+    c.ok("issueCredit", "admin", may, {"memberId": "bob", "amountCents": big, "reason": "R"})
     jun = "2026-06-01T09:00Z"
-    generate(c, "2026-05", jun)
-    c.refuse("recordPayment", S, jun, {"invoiceId": "inv-6", "amountCents": 100}, "invoice_paid")
+    june = generate(c, "2026-05", jun)
+    c.refuse("recordPayment", S, jun, {"invoiceId": june["bob"], "amountCents": 100}, "invoice_paid")
     return [c.build()]
 
 
 def p_money_revenue(step: str) -> list[dict[str, Any]]:
+    """Report sums against the invoices' own captured lines, so the fee and charge rules do not matter."""
     c = probe(step, "P-MONEY-REVENUE", "report")
-    w.world(c)
+    w.world(c, fee=0)
     r = w.reserve(c, "ada", "L1", ts(TUE, "10:00"), ts(TUE, "10:30"), T1)
     lock_credit = 0
     if since(step, "C2"):
@@ -864,18 +904,29 @@ def p_money_revenue(step: str) -> list[dict[str, Any]]:
     check_out(c, r, ts(TUE, "10:10"))
     c.ok("purchaseMaterial", S, ts(TUE, "11:00"), {"memberId": "bob", "materialId": "acrylic", "quantity": 3})
     c.ok("issueCredit", "admin", ts(THU, "10:00"), {"memberId": "cy", "amountCents": 1000, "reason": "R"})
-    generate(c, "2026-03", APR1)
-    c.ok("recordPayment", S, "2026-04-02T10:00Z", {"invoiceId": "inv-1", "amountCents": 8405})
-    c.ok("recordPayment", S, "2026-04-02T10:00Z", {"invoiceId": "inv-2", "amountCents": 1000})
-    c.ok("issueCredit", "admin", "2026-04-03T10:00Z", {"memberId": "bob", "amountCents": 250, "reason": "R"})
-    cy_credit = 1000 + lock_credit
-    report = {"month": "2026-03", "invoicesGenerated": True, "invoiceCount": 3, "membershipCents": 17300, "usageCents": 405,
-              "materialCents": 597, "courseCents": 9000, "invoicedCents": 27302, "creditAppliedCents": cy_credit,
-              "outstandingCents": 0 + 5097 + (12900 - cy_credit), "paymentsCents": 0, "creditsIssuedCents": cy_credit}
+    march = generate(c, "2026-03", APR1)
+
+    def read(member, **members):
+        c.ok("listInvoices", S, APR1, {"memberId": member}, {"memberId": member, "invoices": [has(**members)]}, check=True)
+
+    for member in ("ada", "bob", "cy"):
+        read(member, lines=lines("membership", [has(amountCents={"$capture": "M-" + member})]), balanceCents={"$capture": "BAL-" + member})
+    read("ada", lines=lines("usage", [has(amountCents={"$capture": "U"})]))
+    read("bob", lines=lines("material", [has(amountCents={"$capture": "MAT"})]))
+    read("cy", creditAppliedCents={"$capture": "CR"})
+    ref = lambda name: {"$ref": name}
+    c.ok("recordPayment", S, "2026-04-02T10:00Z", {"invoiceId": march["ada"], "amountCents": {"$calc": ["+", ref("BAL-ada"), 100]}})
+    c.ok("recordPayment", S, "2026-04-02T10:00Z", {"invoiceId": march["bob"], "amountCents": 1000})
+    c.ok("issueCredit", "admin", "2026-04-03T10:00Z", {"memberId": "ada", "amountCents": 250, "reason": "R"})
+    membership = {"$calc": ["+", ref("M-ada"), ref("M-bob"), ref("M-cy")]}
+    report = {"month": "2026-03", "invoicesGenerated": True, "invoiceCount": 3, "membershipCents": membership, "usageCents": ref("U"),
+              "materialCents": ref("MAT"), "courseCents": 0, "invoicedCents": {"$calc": ["+", membership, ref("U"), ref("MAT")]},
+              "creditAppliedCents": ref("CR"), "outstandingCents": {"$calc": ["+", {"$calc": ["-", ref("BAL-bob"), 1000]}, ref("BAL-cy")]},
+              "paymentsCents": 0, "creditsIssuedCents": 1000 + lock_credit}
     c.ok("revenueReport", S, "2026-04-03T10:00Z", {"month": "2026-03"}, report, check=True)
     april = {"month": "2026-04", "invoicesGenerated": False, "invoiceCount": 0, "membershipCents": 0, "usageCents": 0,
              "materialCents": 0, "courseCents": 0, "invoicedCents": 0, "creditAppliedCents": 0, "outstandingCents": 0,
-             "paymentsCents": 9405, "creditsIssuedCents": 250}
+             "paymentsCents": {"$calc": ["+", ref("BAL-ada"), 100, 1000]}, "creditsIssuedCents": 250}
     c.ok("revenueReport", S, "2026-04-03T10:00Z", {"month": "2026-04"}, april, check=True,
          cite=W("13", "For a month without generated invoices, the invoice figures are 0 and `invoicesGenerated` is `false`; payments and issued credits are still reported."))
     return [c.build()]
@@ -896,10 +947,9 @@ def p_money_lockout(step: str) -> list[dict[str, Any]]:
                       "cancelledReservations": [has(reservationId=x, status="cancelled") for x in (r1, r2, r3)]}, check=True)
     for member, credit in (("ada", 2000), ("bob", 1000), ("cy", 0)):
         c.ok("getAccount", S, T1, {"memberId": member}, {"account": has(creditBalanceCents=credit)}, check=True)
-    generate(c, "2026-03", APR1, result=lambda m: {"month": "2026-03", "invoices": [
-        has(memberId="ada", creditAppliedCents=2000, balanceCents=7900 - 2000),
-        has(memberId="bob", creditAppliedCents=1000, balanceCents=5500 - 1000),
-        has(memberId="cy", creditAppliedCents=0)]}, check=True)
+    generate(c, "2026-03", APR1)
+    for member, credit in (("ada", 2000), ("bob", 1000), ("cy", 0)):
+        c.ok("listInvoices", S, APR1, {"memberId": member}, {"memberId": member, "invoices": [has(creditAppliedCents=credit)]}, check=True)
     return [c.build()]
 
 
@@ -910,20 +960,22 @@ def p_time_order(step: str) -> list[dict[str, Any]]:
     c.refuse("listMachines", "ghost", "2050-01-01T00:00Z", {}, "unknown_actor")
     c.ok("listMachines", "admin", "2026-03-02T07:00Z", {}, {"machines": []}, check=True,
          cite=W("4.4", "Before the first `ok` response, any valid `at` is accepted."))
-    authz_world(c)
+    refs = authz_world(c)
     early = "2026-04-01T08:59Z"
     for op in f.ops(step):
-        c.refuse(op, "admin", early, VALID[op], "time_regression")
+        c.refuse(op, "admin", early, valid(op, refs), "time_regression")
     c.ok("changeTier", S, APR1, {"memberId": "bob", "tier": "basic"})
     c.refuse("getMember", "admin", "2026-04-01T10:00Z", {"memberId": "nobody"}, "not_found")
     c.ok("listMachines", "admin", "2026-04-01T09:30Z")
-    c.invalid('{"id":"late","op":"listMachines","args":{"actor":"admin","at":"2026-04-01T11:00Z","bogus":1}}', "late")
+    # An invalid request with a later time; how it is answered is P-ENVELOPE's, here only the time point matters.
+    c.raw('{"id":"late","op":"listMachines","args":{"actor":"admin","at":"2026-04-01T11:00Z","bogus":1}}', {"$has": {"id": "late"}},
+          cite=W("2.4", "An invalid request changes nothing: no state, no audit entry, no identifier counter and no request-time order (section 4.4)."))
     c.ok("listMachines", "admin", "2026-04-01T09:45Z")
     c.refuse("listAuditEntries", "ada", "2026-04-01T12:00Z", {}, "forbidden")
     c.ok("listMachines", "admin", "2026-04-01T09:50Z")
     c.ok("registerMember", S, "2026-04-01T10:00Z", {"memberId": "late", "name": "Late", "tier": "basic"})
     c.refuse("listMachines", "admin", "2026-04-01T09:59Z", {}, "time_regression")
-    c.ok("listMaterials", "ada", "2026-04-01T10:30Z")
+    c.ok("listMaterials", "admin", "2026-04-01T10:30Z")
     c.refuse("registerMember", S, "2026-04-01T10:29Z", {"memberId": "later", "name": "L", "tier": "basic"}, "time_regression")
     c.ok("registerMember", S, "2026-04-01T10:30Z", {"memberId": "later", "name": "L", "tier": "basic"})
     c.refuse("generateInvoices", S, "2026-04-01T13:00Z", {"month": "2026-05"}, "month_not_ended")
@@ -972,11 +1024,11 @@ def p_time_hours(step: str) -> list[dict[str, Any]]:
     c = probe(step, "P-TIME-HOURS", "boundaries")
     w.world(c)
     if since(step, "C8"):
-        slots = [(TUE, "08:00", "08:15", True), (TUE, "07:45", "08:00", False), (TUE, "21:45", "22:00", True), (TUE, "21:45", "22:15", False),
-                 (THU, "21:30", "22:00", True), (FRI, "19:45", "20:00", True), (FRI, "19:45", "20:15", False), (FRI, "08:00", "08:30", True),
-                 (SAT, "09:00", "09:15", True), (SAT, "08:45", "09:00", False), (SAT, "16:45", "17:00", True), (SAT, "16:45", "17:15", False),
-                 (SAT, "17:30", "18:00", False), (SUN, "12:00", "12:15", True), (SUN, "11:45", "12:15", False), (SUN, "15:45", "16:00", True),
-                 (SUN, "15:45", "16:15", False), (TUE, "23:00", "23:30", False)]
+        slots = [(TUE, "08:00", "08:30", True), (TUE, "07:30", "08:00", False), (TUE, "21:30", "22:00", True), (TUE, "21:30", "22:30", False),
+                 (THU, "21:30", "22:00", True), (FRI, "19:30", "20:00", True), (FRI, "19:30", "20:30", False), (FRI, "08:00", "08:30", True),
+                 (SAT, "09:00", "09:30", True), (SAT, "08:30", "09:00", False), (SAT, "16:30", "17:00", True), (SAT, "16:30", "17:30", False),
+                 (SAT, "17:30", "18:00", False), (SUN, "12:00", "12:30", True), (SUN, "11:30", "12:30", False), (SUN, "15:30", "16:00", True),
+                 (SUN, "15:30", "16:30", False), (TUE, "23:00", "23:30", False)]
     else:
         slots = [(TUE, "09:00", "09:30", True), (TUE, "08:30", "09:00", False), (TUE, "08:30", "09:30", False), (TUE, "20:30", "21:00", True),
                  (TUE, "20:30", "21:30", False), (TUE, "21:00", "21:30", False), (FRI, "20:30", "21:00", True),
@@ -1029,7 +1081,7 @@ def p_time_intervals(step: str) -> list[dict[str, Any]]:
     ok("ada", "L1", "10:00", "11:00")
     ok("bob", "L1", "11:00", "12:00")
     ok("cy", "L1", "09:00", "10:00")
-    no("bob", "L1", "10:30", "11:30", "machine_booked")
+    no("cy", "L1", "10:30", "11:30", "machine_booked")
     no("cy", "L1", "11:30", "12:30", "machine_booked")
     ok("ada", "L2", "11:00", "11:30")
     no("ada", "L2", "10:30", "11:00", "member_double_booked")
@@ -1081,7 +1133,7 @@ def p_time_booking_states(step: str) -> list[dict[str, Any]]:
     c.ok("listMemberReservations", S, ts(TUE, "10:30"), {"memberId": "bob"}, has(reservations=[has(reservationId=r2, status="missed")]), check=True)
     c.refuse("checkIn", S, ts(TUE, "10:30"), {"reservationId": r2}, "invalid_state")
     c.refuse("cancelReservation", S, ts(TUE, "10:30"), {"reservationId": r2}, "invalid_state")
-    c.ok("createReservation", S, ts(TUE, "10:30"), {"memberId": "cy", "machineId": "L2", "start": ts(TUE, "10:30"), "end": ts(TUE, "11:00")},
+    c.ok("createReservation", S, ts(TUE, "10:30"), {"memberId": "bob", "machineId": "L2", "start": ts(TUE, "10:30"), "end": ts(TUE, "11:00")},
          lambda rid: {"reservation": has(reservationId=rid)}, check=True)
     c.refuse("createReservation", S, ts(TUE, "10:31"), {"memberId": "bob", "machineId": "L1", "start": ts(TUE, "10:30"), "end": ts(TUE, "11:00")}, "starts_in_past")
     check_out(c, r1, ts(TUE, "10:40"))
@@ -1113,15 +1165,15 @@ def p_time_certification(step: str) -> list[dict[str, Any]]:
     c = probe(step, "P-TIME-CERTIFICATION", "validity")
     w.world(c)
     expiry = not since(step, "C6")
-    w.reserve(c, "ada", "L1", "2027-03-01T10:00Z", "2027-03-01T10:30Z", T1, check=True)
+    first = w.reserve(c, "ada", "L1", "2027-03-01T10:00Z", "2027-03-01T10:30Z", T1, check=True)
     for member, start in (("bob", "2027-03-02T10:00Z"), ("cy", "2028-03-02T10:00Z")):
         args = {"memberId": member, "machineId": "L1", "start": start, "end": stamp(start, 30)}
         if expiry:
             c.refuse("createReservation", S, T1, args, "not_certified")
         else:
             c.ok("createReservation", S, T1, args, lambda rid: {"reservation": has(reservationId=rid)}, check=True)
-    check_in(c, "res-1", "2027-03-01T10:00Z", result={"reservation": has(status="checkedIn")}, check=True)
-    check_out(c, "res-1", "2027-03-01T10:05Z")
+    check_in(c, first, "2027-03-01T10:00Z", result={"reservation": has(status="checkedIn")}, check=True)
+    check_out(c, first, "2027-03-01T10:05Z")
     noon = "2027-03-01T12:00Z"
     c.ok("enrollInCourse", S, noon, {"courseId": "laser-101", "memberId": "ada"})
     c.ok("completeCourse", S, noon, {"courseId": "laser-101", "memberId": "ada"},
@@ -1151,19 +1203,21 @@ def p_time_billing(step: str) -> list[dict[str, Any]]:
     w.world(c)
     eve = "2026-03-31T23:59Z"
     apr = "2026-04-01T00:00Z"
-    c.ok("purchaseMaterial", S, eve, {"memberId": "ada", "materialId": "acrylic", "quantity": 1})
+    p1 = c.ok("purchaseMaterial", S, eve, {"memberId": "ada", "materialId": "acrylic", "quantity": 1})
     c.refuse("generateInvoices", S, eve, {"month": "2026-03"}, "month_not_ended")
     c.ok("purchaseMaterial", S, apr, {"memberId": "ada", "materialId": "plywood", "quantity": 1})
-    ada_inv = f.invoice("inv-1", "ada", "2026-03", apr, "2026-04-15T00:00Z",
-                        [membership_line("plus", apr), f.charge("course", "laser-101", 1, 3000, 0, T0), f.charge("material", "pur-1", 1, 199, 0, eve)])
-    generate(c, "2026-03", apr, result=lambda m: {"month": "2026-03", "invoices": [ada_inv, has(memberId="bob"), has(memberId="cy")]}, check=True)
-    c.ok("getAccount", S, apr, {"memberId": "ada"}, {"account": has(unbilledCents=37)}, check=True,
+    march = generate(c, "2026-03", apr)
+    c.ok("listInvoices", S, apr, {"memberId": "ada"}, {"memberId": "ada", "invoices": [
+        has(invoiceId=march["ada"], issuedAt=apr, dueAt="2026-04-15T00:00Z", overdue=False, balanceCents={"$capture": "A"},
+            lines=lines("material", [has(ref=p1, at=eve)]))]}, check=True,
          cite=W("11.1", "A charge belongs to the month of its `at`."))
+    A = {"$ref": "A"}
     for at, overdue in (("2026-04-14T23:59Z", False), ("2026-04-15T00:00Z", True)):
-        c.ok("listInvoices", S, at, {"memberId": "ada"}, {"memberId": "ada", "invoices": [has(invoiceId="inv-1", overdue=overdue)]}, check=True)
-        c.ok("getAccount", S, at, {"memberId": "ada"}, {"account": has(overdueBalanceCents=8099 if overdue else 0, openBalanceCents=8099)}, check=True)
+        c.ok("listInvoices", S, at, {"memberId": "ada"}, {"memberId": "ada", "invoices": [has(invoiceId=march["ada"], overdue=overdue)]}, check=True)
+        c.ok("getAccount", S, at, {"memberId": "ada"}, {"account": has(overdueBalanceCents=A if overdue else 0, openBalanceCents=A)}, check=True)
     due = "2026-04-15T00:00Z"
-    c.ok("recordPayment", S, due, {"invoiceId": "inv-2", "amountCents": 5500})
+    c.ok("listInvoices", S, due, {"memberId": "bob"}, {"memberId": "bob", "invoices": [has(balanceCents={"$capture": "B"})]}, check=True)
+    c.ok("recordPayment", S, due, {"invoiceId": march["bob"], "amountCents": {"$ref": "B"}})
     c.ok("listInvoices", S, due, {"memberId": "bob"}, {"memberId": "bob", "invoices": [has(status="paid", overdue=False)]}, check=True)
     block = since(step, "C5")
     edge, after = "2026-05-15T00:00Z", "2026-05-15T00:01Z"
@@ -1186,22 +1240,23 @@ def p_time_billing(step: str) -> list[dict[str, Any]]:
         c.refuse("purchaseMaterial", "admin", after, {"memberId": "ada", "materialId": "acrylic", "quantity": 1}, "account_overdue",
                  cite=C(5, "What changes", "The block applies whoever acts: a member for themselves, staff or an admin."))
         c.ok("getAccount", S, after, {"memberId": "ada"}, {"account": has(blocked=True)}, check=True)
-        c.ok("recordPayment", S, after, {"invoiceId": "inv-1", "amountCents": 100})
+        c.ok("recordPayment", S, after, {"invoiceId": march["ada"], "amountCents": 100})
         c.ok("issueCredit", "admin", after, {"memberId": "ada", "amountCents": 100000, "reason": "R"})
         c.refuse("createReservation", S, after, attempts[0][1], "account_overdue",
                  cite=C(5, "What changes", "A partial payment that leaves a balance does not end the block."))
-        c.ok("recordPayment", S, after, {"invoiceId": "inv-1", "amountCents": 7999})
+        c.ok("recordPayment", S, after, {"invoiceId": march["ada"], "amountCents": {"$calc": ["-", A, 100]}})
         c.ok("createReservation", S, after, attempts[0][1], lambda rid: {"reservation": has(reservationId=rid)}, check=True)
         c.ok("getAccount", S, after, {"memberId": "ada"}, {"account": has(blocked=False)}, check=True)
     else:
         c.ok("purchaseMaterial", "admin", after, {"memberId": "ada", "materialId": "acrylic", "quantity": 1})
-        c.ok("recordPayment", S, after, {"invoiceId": "inv-1", "amountCents": 100},
-             lambda pid: {"payment": has(appliedCents=100, creditedCents=0), "invoice": has(paidCents=100, balanceCents=7999, overdue=True),
+        c.ok("recordPayment", S, after, {"invoiceId": march["ada"], "amountCents": 100},
+             lambda pid: {"payment": has(appliedCents=100, creditedCents=0),
+                          "invoice": has(paidCents=100, balanceCents={"$calc": ["-", A, 100]}, overdue=True),
                           "creditBalanceCents": 0}, check=True, cite=W("11.2", "Paying after the due date is allowed."))
     gen = "2026-05-25T10:00Z"
-    generate(c, "2026-04", gen, result=lambda m: {"month": "2026-04", "invoices": [
-        has(memberId="ada", issuedAt=gen, dueAt="2026-06-08T10:00Z"), has(memberId="bob"), has(memberId="cy")]}, check=True,
-             cite=W("4.4", '"N days after timestamp t" is `t + N × 1440` minutes.'))
+    generate(c, "2026-04", gen)
+    c.ok("listInvoices", S, gen, {"memberId": "ada"}, {"memberId": "ada", "invoices": {"$filter": {"month": "2026-04"}, "items": [
+        has(issuedAt=gen, dueAt="2026-06-08T10:00Z")]}}, check=True, cite=W("4.4", '"N days after timestamp t" is `t + N × 1440` minutes.'))
     return [c.build()]
 
 
@@ -1214,14 +1269,14 @@ def p_eligibility(step: str) -> list[dict[str, Any]]:
     a3 = w.reserve(c, "ada", "L1", ts(day, "12:00"), ts(day, "12:30"), T1)
     c.ok("addCourse", S, T1, {"courseId": "wood-101", "familyId": "wood", "title": "Lathe basics", "feeCents": 0, "capacity": 5})
     c.ok("enrollInCourse", S, T1, {"courseId": "wood-101", "memberId": "bob"})
-    generate(c, "2026-03", APR1)
+    march = generate(c, "2026-03", APR1)
     c.ok("setMemberStanding", S, APR1, {"memberId": "bob", "standing": "suspended"})
     c.refuse("createReservation", S, APR1, {"memberId": "bob", "machineId": "L2", "start": ts(day, "13:00"), "end": ts(day, "13:30")}, "member_suspended")
     c.refuse("enrollInCourse", S, APR1, {"courseId": "laser-101", "memberId": "bob"}, "member_suspended")
     c.refuse("purchaseMaterial", S, APR1, {"memberId": "bob", "materialId": "acrylic", "quantity": 1}, "member_suspended")
     c.ok("listMemberReservations", "bob", APR1, {"memberId": "bob"},
          has(reservations=[has(reservationId=b1, status="reserved"), has(reservationId=b2, status="reserved")]), check=True)
-    c.ok("recordPayment", "bob", APR1, {"invoiceId": "inv-2", "amountCents": 100})
+    c.ok("recordPayment", "bob", APR1, {"invoiceId": march["bob"], "amountCents": 100})
     c.ok("getMember", "bob", APR1, {"memberId": "bob"}, {"member": has(standing="suspended")}, check=True)
     c.ok("cancelReservation", "bob", APR1, {"reservationId": b2})
     c.ok("completeCourse", S, APR1, {"courseId": "wood-101", "memberId": "bob"}, cite=W("7.1", "Standing is not checked."))
@@ -1265,49 +1320,49 @@ def p_report_utilization(step: str) -> list[dict[str, Any]]:
     gone = c.ok("scheduleMaintenance", S, T0, {"machineId": "L1", "start": ts(TUE, "12:00"), "end": ts(TUE, "13:00"), "reason": "R"})
     c.ok("cancelMaintenance", S, T0, {"windowId": gone})
     c.ok("scheduleMaintenance", S, T0, {"machineId": "L1", "start": ts(TUE, "22:00"), "end": ts(TUE, "23:00"), "reason": "Night"})
-    c.ok("scheduleMaintenance", S, T0, {"machineId": "L2", "start": ts(THU, "00:00"), "end": ts(THU, "20:30"), "reason": "Rebuild"})
+    c.ok("scheduleMaintenance", S, T0, {"machineId": "L2", "start": ts(THU, "00:00"), "end": ts(THU, "19:30"), "reason": "Rebuild"})
     a = w.reserve(c, "ada", "L1", ts(TUE, "11:00"), ts(TUE, "11:30"), T0)
-    b = w.reserve(c, "bob", "L1", ts(TUE, "20:30"), ts(TUE, "21:00"), T0)
+    b = w.reserve(c, "bob", "L1", ts(TUE, "20:00"), ts(TUE, "20:30"), T0)
     cy = w.reserve(c, "cy", "L1", ts(TUE, "15:00"), ts(TUE, "15:30"), T0)
     l2 = w.reserve(c, "bob", "L2", ts(TUE, "10:00"), ts(TUE, "10:30"), T0)
-    sat = w.reserve(c, "ada", "L2", ts(SAT, "16:30"), ts(SAT, "17:00"), T0)
-    thu = w.reserve(c, "ada", "L2", ts(THU, "20:30"), ts(THU, "21:00"), T0)
+    sat = w.reserve(c, "ada", "L2", ts(SAT, "16:00"), ts(SAT, "16:30"), T0)
+    thu = w.reserve(c, "ada", "L2", ts(THU, "20:00"), ts(THU, "20:30"), T0)
     l2_used = 21 if c8 else 18  # 18 x 100 / 720 = 2.5 -> 3; 21 x 100 / 840 = 2.5 -> 3 (half up)
     check_in(c, l2, ts(TUE, "10:00"))
     check_out(c, l2, stamp(ts(TUE, "10:00"), l2_used))
     check_in(c, a, ts(TUE, "11:04"))  # metered from check-in, not from the reservation start
     check_out(c, a, ts(TUE, "11:22"))
     check_in(c, cy, ts(TUE, "15:00"))
-    check_in(c, b, ts(TUE, "20:30"))
+    check_in(c, b, ts(TUE, "20:00"))
     c.ok("addMachine", "admin", ts(TUE, "22:00"), {"machineId": "L9", "name": "Laser nine", "familyId": "laser", "rateCentsPerMinute": 9})
     check_out(c, b, ts(WED, "00:10"))
     day_open = 840 if c8 else 720
     l1_maint = 150 if c8 else 90
-    rows = [u(step, "L1", day_open, l1_maint, 18 + 210), u(step, "L2", day_open, 0, l2_used), u(step, "L9", day_open, 0, 0), u(step, "W1", day_open, 0, 0)]
-    tot = u(step, None, 4 * day_open, l1_maint, 228 + l2_used)
+    rows = [u(step, "L1", day_open, l1_maint, 18 + 240), u(step, "L2", day_open, 0, l2_used), u(step, "L9", day_open, 0, 0), u(step, "W1", day_open, 0, 0)]
+    tot = u(step, None, 4 * day_open, l1_maint, 258 + l2_used)
     c.ok("utilizationReport", S, ts(WED, "00:10"), {"from": TUE, "to": WED}, {"from": TUE, "to": WED, "machines": rows, "totals": tot}, check=True)
     rows = [u(step, "L1", day_open, 0, 10), u(step, "L2", day_open, 0, 0), u(step, "L9", day_open, 0, 0), u(step, "W1", day_open, 0, 0)]
     c.ok("utilizationReport", S, ts(WED, "00:10"), {"from": WED, "to": THU},
          {"from": WED, "to": THU, "machines": rows, "totals": u(step, None, 4 * day_open, 0, 10)}, check=True)
-    check_in(c, thu, ts(THU, "20:30"))
+    check_in(c, thu, ts(THU, "20:00"))
     check_out(c, thu, ts(FRI, "02:00"))
-    l2_thu = 750 if c8 else 690  # Thursday opening minutes before 20:30
-    rows = [u(step, "L1", day_open, 0, 0), u(step, "L2", day_open, l2_thu, 210), u(step, "L9", day_open, 0, 0), u(step, "W1", day_open, 0, 0)]
+    l2_thu = 690 if c8 else 630  # Thursday opening minutes before 19:30
+    rows = [u(step, "L1", day_open, 0, 0), u(step, "L2", day_open, l2_thu, 240), u(step, "L9", day_open, 0, 0), u(step, "W1", day_open, 0, 0)]
     c.ok("utilizationReport", S, ts(FRI, "02:00"), {"from": THU, "to": FRI},
-         {"from": THU, "to": FRI, "machines": rows, "totals": u(step, None, 4 * day_open, l2_thu, 210)}, check=True,
+         {"from": THU, "to": FRI, "machines": rows, "totals": u(step, None, 4 * day_open, l2_thu, 240)}, check=True,
          cite=W("13", "It can exceed 100."))
-    check_in(c, sat, ts(SAT, "16:30"))
+    check_in(c, sat, ts(SAT, "16:00"))
     check_out(c, sat, ts(SUN, "00:30"))
     sun_open = 240 if c8 else 0
     rows = [u(step, "L1", sun_open, 0, 0), u(step, "L2", sun_open, 0, 30), u(step, "L9", sun_open, 0, 0), u(step, "W1", sun_open, 0, 0)]
     c.ok("utilizationReport", S, ts(SUN, "00:30"), {"from": SUN, "to": "2026-03-09"},
          {"from": SUN, "to": "2026-03-09", "machines": rows, "totals": u(step, None, 4 * sun_open, 0, 30)}, check=True)
     week = 4800 if c8 else 4080
-    sat_used = 480
-    l2_week = l2_used + 330 + sat_used
-    rows = [u(step, "L1", week, l1_maint, 238), u(step, "L2", week, l2_thu, l2_week), u(step, "L9", week, 0, 0), u(step, "W1", week, 0, 0)]
+    sat_used = 510
+    l2_week = l2_used + 360 + sat_used
+    rows = [u(step, "L1", week, l1_maint, 268), u(step, "L2", week, l2_thu, l2_week), u(step, "L9", week, 0, 0), u(step, "W1", week, 0, 0)]
     c.ok("utilizationReport", S, ts(SUN, "00:30"), {"from": MON, "to": "2026-03-09"},
-         {"from": MON, "to": "2026-03-09", "machines": rows, "totals": u(step, None, 4 * week, l1_maint + l2_thu, 238 + l2_week)}, check=True)
+         {"from": MON, "to": "2026-03-09", "machines": rows, "totals": u(step, None, 4 * week, l1_maint + l2_thu, 268 + l2_week)}, check=True)
     return [empty.build(), c.build()]
 
 
@@ -1399,11 +1454,12 @@ FAMILIES: list[tuple[str, str, list[dict[str, str]], Callable[[str], list[dict[s
                              W("2.5", "`2026-02-29` is not valid; `2028-02-29` is."),
                              W("2.5", "A JSON string `YYYY-MM` from `2000-01` to `2099-12`."),
                              W("2.5", "there are no seconds")], p_time_format),
-    ("P-TIME-HOURS", "W0", [W("4.4", "A reservation ending exactly at closing time is inside. Sunday has no opening period."),
+    ("P-TIME-HOURS", "W0", [W("4.4", "A reservation ending exactly at closing time is inside."), W("4.4", "Sunday has no opening period."),
                             W("9.1", "the slot `17:30`–`18:00` is inside opening hours and `17:30`–`18:30` is not"),
                             W("9.1", "or `null` on Sunday"),
                             C(8, "What changes", "so `getMachineSchedule` always returns an `openingHours` object and never `null`."),
-                            C(8, "What changes", "on Sunday `2026-03-08`, `12:00`–`12:15` is accepted and `11:45`–`12:15` is refused with `outside_opening_hours`.")], p_time_hours),
+                            C(8, "What changes", "| Monday to Thursday | 08:00 | 22:00 | 840 |"), C(8, "What changes", "| Friday | 08:00 | 20:00 | 720 |"),
+                            C(8, "What changes", "| Saturday | 09:00 | 17:00 | 480 |"), C(8, "What changes", "| Sunday | 12:00 | 16:00 | 240 |")], p_time_hours),
     ("P-TIME-GRANULARITY", "W0", [W("4.4", "A reservation lasts at least one granularity step (30 minutes) and at most 240 minutes."),
                                   W("9.1", "`invalid_slot` when `start` or `end` is not on a 30-minute boundary or the length is outside 30 to 240 minutes;"),
                                   W("9.1", "on Tuesday `2026-03-03`, `10:15`–`11:00` is refused with `invalid_slot`."),
