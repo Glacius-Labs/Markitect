@@ -22,6 +22,7 @@ R is the source. Every other material is judged against R's text, never against 
 - **Severity.** *Blocking* when it can change an assessed behavior, lets one representation say more than the other, or makes a hidden expectation untraceable. *Note* when it changes no obligation, such as a faithful clarification or wording without behavioral effect (proportionate grading, owner 22 October 2026).
 - **Direction that matters most.** An oracle-tested neutral sentence that is missing or distorted in the model punishes both arms for an obligation neither saw; it is always blocking. A model addition reaches both arms through the rendering and is blocking only when it adds or narrows behavior.
 - **Ambiguity.** A sentence that admits two readings with different observable behavior is either decided from the text (one reading is clearly meant), left untested (no case may depend on it; recorded as a known limit, like Phase B's `loanClass: null`), or sent to the coordinator when the study needs the obligation. A text change goes to R; M, O and I then adapt, and the review repeats for the changed sentences.
+- **Writer's decision (added after the end-of-calendar gap).** "Untested" settles an ambiguity only for the oracle. Before choosing it, ask whether a writer can build the product without deciding the point. If not (a computed value outside the declared ranges, a feature that can never be used, a limit no sentence states), the text has a gap: send it to the coordinator for R, even when no case tests it. Such a gap is not neutral between the arms: Markitect's Managers escalate a model gap and Apply stops without publication, while one agent decides silently.
 - **Isolation in messages.** A finding sent to an author carries only the neutral sentence and the expected behavior. O and I never receive model, spec, mapping, reference, mutant or each other's material; M never receives oracle or reference material. Every message is logged in the record.
 - **Frozen heads.** Each material is reviewed at a recorded head SHA. A later push is reviewed as a delta against that head, and the verdict names the final head.
 
@@ -32,6 +33,15 @@ R is the source. Every other material is judged against R's text, never against 
 - [ ] Hidden material is unreachable for writers: the spec, model and prompt mention no oracle, probe, case id, mutant or reference; hidden folders are outside anything a writer fixture would contain.
 - [ ] Run each material's own checks: R's structure check if any; M: `markitect check` on every materialized snapshot and the renderer's `check` for every step; O: its unit tests and transcript self-tests; I: build and test of every step tree.
 - [ ] Atomize R: give every normative sentence a stable id `<step>-<area>-<n>`, kept in the record, so that every later check refers to it.
+
+## 0b. Completeness of R itself
+
+R is the source, but it is reviewed for gaps before anything is judged against it.
+
+- [ ] Every computed value (dates and times from arithmetic, sums, counters, generated identifiers, report minutes) has a stated format and range, or a stated rule for values outside the argument ranges.
+- [ ] Every feature can be used within the stated ranges; an operation that can never succeed for a valid argument is either intended and stated, or a gap.
+- [ ] Every limit a writer must choose (sizes, nesting, integer width, lengths) is stated or explicitly unspecified.
+- [ ] Each "untested" ambiguity has passed the writer's-decision rule above.
 
 ## 1. Requirements and model, both ways, per step
 
@@ -90,6 +100,15 @@ Recorded in the record before the first engine call: source (O and I heads, orac
 - [ ] **Abort:** any container or volume residue after a run; any credential-shaped text in an output (no login is mounted; outputs are scanned for token and auth-file patterns); a census query that fails.
 - [ ] **Cleanup:** labeled containers and volumes removed; census of containers and volumes with the runner's label before and after, both empty, recorded.
 - [ ] **Each disagreement:** decide against R's text whether the case or the reference is wrong; send the author only the sentence and the expected behavior; record both sides and the decision. A failed attempt stays in the record.
+
+## 3b. Re-review after a requirement change
+
+- [ ] R's change: confirm its scope from the diff (insertions only, or every replaced sentence named), and that every new unit decides product behavior. Owner rule: no requirement may change only to make the oracle or a reference pass; a unit that matches an O or I reading is acceptable only as the product decision a writer needed.
+- [ ] Atomize the new units and trace each, both ways, into the model and the rendered spec at every step that inherits it (W0 changes reach C1–C9; change-document notes reach their step and later). Re-run the renderer check and the sentence diff at all ten steps, and diff the model and spec against the reviewed heads, so that nothing else moved.
+- [ ] O: trace every new or changed case and probe to the new units; reopen earlier "untested" decisions that the new text now settles (for example I#4, O#5); check that no case expects behavior the text calls unspecified.
+- [ ] I: the reference follows the new units; any new family has its mutant.
+- [ ] Calibration: a new pass under a newly recorded dispatch with the earlier limits; earlier passes stay recorded as historical.
+- [ ] Record the new input version: R, M, spec, O and I heads and tree SHAs, per-step model digests and spec hashes, O's case digests and protected hashes, and the new materials freeze on Main.
 
 ## 4. Record and verdict
 

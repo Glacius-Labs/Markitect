@@ -2,7 +2,7 @@
 
 Session V, 25 October 2026. Independent review of the four Phase C materials before any Phase C run: the neutral requirements (R), the Markitect model with its rendered spec and mapping (M), the hidden oracle (O) and the hidden reference implementations with mutants (I). V is the only session that saw all four. The procedure was fixed in advance in [checklists.md](checklists.md).
 
-**Status: final, 25 October 2026.** All four materials are ready at the heads named in section 4.
+**Status: final for input version 2 (section 5), 25 October 2026.** Sections 1–4 record the first review of input version 1, which stays historical. After R closed a gap in the requirements (PRs #713 and #717), section 5 re-reviews and recalibrates the adapted materials; all four are ready at the heads named there.
 
 ## Reviewed heads
 
@@ -202,3 +202,84 @@ Findings and their resolution:
 No finding required a change of the neutral text, so nothing went back to R.
 
 Calibration evidence, outside the repository: `C:\Users\Consiliari\Documents\Codex\Markitect-Phase-C-Review\` (`calibrate-pass-1.py`, `calibrate-pass-2.py`, `calibration-pass-1\`, `calibration-pass-2\`, each with one report and log per run and `summary.json`).
+
+## 5. Re-review after the computed-values change (PR #713)
+
+### Cause
+
+The uncounted feasibility smoke's arm M W0 Apply stopped on a genuine gap in R: arguments are typed 2000–2099, but computed values such as `dueAt` and `expiresOn` can reach 2100, and the month `2099-12` can never be invoiced. R closed the gap and its whole class in [PR #713](https://github.com/Glacius-Labs/Markitect/pull/713) (Main `8a2231f1`): a new w0 §2.8 "Computed values and limits", one paragraph in §2.5, and matching notes in C1, C2, C5 and C6. The change only inserts text.
+
+V checked the new text's arithmetic: 52,596,000 minutes from 2000 to the end of 2099; latest `dueAt` `2100-01-14T23:59Z`, latest `expiresOn` `2100-12-31` and latest block point `2100-02-13T23:59Z`; no invoice due at `2099-12-01T23:59Z` or later can block; generated identifiers of at most 20 characters (21 with `lock-`); audit targets of at most 129 characters. After the change, V found no further gap of the same kind: every computed value has a stated range or end-of-calendar rule, every operation can succeed for some valid argument except the stated `2099-12` case, and every limit a writer must choose is stated or declared unspecified.
+
+### Why the first review missed it
+
+The first review saw this class and decided it wrongly. I#4 (computed dates after 2099) was marked "open, untested", and I#3 (`2099-12` can never be invoiced) was marked "text clear". Both decisions asked only whether the oracle could test the point. Neither asked whether a writer could build the product without deciding it. "Untested" protected the oracle and left both writers with an unstated product decision.
+
+Such a gap is not neutral between the arms. Markitect's Managers escalate a model gap, and Apply stops without publication ([DEC-063](../../../../docs/concepts/register.md#dec-063-the-model-is-authoritative-defects-escalate)); one agent decides silently. The arms' first results would then differ because of the requirements, not the method.
+
+Could the checklist have caught it? Not as written: it treated R as the source and never reviewed R's own completeness, and its ambiguity rule accepted "untested" as a resolution. With two additions it would have: a completeness pass over R (computed values, features that can never be used, unstated limits) and the writer's-decision question for every "untested" ambiguity. Both are now in [checklists.md](checklists.md) (section 0b and the grading rules). Calibration could not catch it either, because the reference and the oracle agreed on an untested reading.
+
+### Calibration pass 3 dispatch (recorded before its first engine call)
+
+The same dispatch as pass 2, with the earlier limits, abort conditions and cleanup, except: oracle at O's head `19006e527a35dad73414c0ce286dc0f55d85d3d3` (tree `663f6eea8089f0e2261569fac164b54521f390c5`; the Library transport unchanged, tree `9ec64094…`); references and 31 mutants at I's head `d19c8653ce4efbbf19b9eab32494ff03b32107b0` (tree `c76aa3bfc185b5ce89d830e411d55e3fe6288b5b`), including P-LIMITS; runner `calibrate-pass-3.py` (SHA-256 `8f1d62e989360628c0a0da31d96e25199714e46865c658c7dc71d18c59ecb0d1`), which differs from pass 2 only in I's head; label `mk-vcal=pass-3`; evidence in `calibration-pass-3\`. 48 runs: 10 positive with the C3, C7 and C9 census, 31 mutants, 7 delta. Expected: every positive passes with empty censuses; every delta discriminates; every mutant fails exactly its own probe family, and the six of section 3 fail exactly their own family and their declared dependent. Calibration passes 1 and 2 (section 3) stay recorded as historical; they certify the earlier input version only.
+
+### Input version 2
+
+| Material | Pull request | Reviewed head | Tree |
+| --- | --- | --- | --- |
+| R, requirements | [#713](https://github.com/Glacius-Labs/Markitect/pull/713) and [#717](https://github.com/Glacius-Labs/Markitect/pull/717), merged | Main `a94c46f1` (unchanged at `3f065d43`) | `tools/comparison/phase-c/requirements` `6a01bb512e727440cf7469c478a373a55d48ec0d` |
+| M, model revision 2 and spec | [#719](https://github.com/Glacius-Labs/Markitect/pull/719) | `32fc4d9645ffd23ac0a1715ddb02f3edaa2bf8c6` | model `7dee554d00644beebb86fc3ee129c979fb6d7c2c`, spec `446628a5a91488d91e30be968e8c3d13c7e3e9dc` |
+| O, oracle | [#716](https://github.com/Glacius-Labs/Markitect/pull/716) | `19006e527a35dad73414c0ce286dc0f55d85d3d3` | `tools/makerspace-oracle` `663f6eea8089f0e2261569fac164b54521f390c5` |
+| I, references and mutants | [#714](https://github.com/Glacius-Labs/Markitect/pull/714) | `d19c8653ce4efbbf19b9eab32494ff03b32107b0` | `tools/makerspace-reference` `c76aa3bfc185b5ce89d830e411d55e3fe6288b5b` |
+
+Per step, model revision 2 (canonical model digest from M's README; manifest = SHA-256 of the step's `files.sha256`; spec = SHA-256 of `spec/requirements-<step>.md`):
+
+| Step | Definitions | Model digest | Manifest | Spec |
+| --- | --- | --- | --- | --- |
+| W0 | 76 | `sha256:cfb7a9fea665827567aa26d63050b52d943d091689ce077d38c3b7138aa1dd13` | `1f6522589460cbe77a64413912f073c0e79aceaa03517d82046d073e61d9ee54` | `c60710c3cc9d9d4179a6098f11b914b2a452bd2d7db4b114553379cc791a760c` |
+| C1 | 76 | `sha256:f7a8bd292010908c64b972bd92965fb669fe57a02b88f5fa85a2863d87dab23e` | `82a06c012c7ea1382aa6575dc54a9faaa254835e8c4f9d96d3d762e02f4dfcef` | `b0f096eec0fff89af0eed438581a83292fd51b17685ebac7ed5995039720cb19` |
+| C2 | 78 | `sha256:daf68db95376cbcab4625fee945604691275c8d87ee9759deeb4d70d706bbd6e` | `76b8c0ad745236dba4ad60a1417619d9ce0c0e8dec5195aba2735d32ddd0b5d8` | `fc078b75a98cec51e17bb3d3c4bc98988fd43fcc7c834caa866615e29d8f6149` |
+| C3 | 79 | `sha256:d9d631c784233e488fe7fb77952e87d0bfbf1496e49b44acf875f7170ca2fb1b` | `ac3d125d6990b14f5c1a1ffa4c1508ad91760090577f6d915efb0cf8cf402232` | `0b9b63a261c9a4039e3fdf1ed62795e88382c7c39c0f81f805fef39d1d1858e1` |
+| C4 | 79 | `sha256:e1f3acb6aef5ec24124c3c9aeb04fc2d28de7d8552b07faa31bb58c51ce07365` | `7efb664e91b16866c6421b7492e94ea7954238ea6ac491fce748c00445bafe8c` | `2019957be215f27957d1f9d491ae510acd0c19956715ac2b6b0d49b4686d7194` |
+| C5 | 80 | `sha256:5e61dc5212efa813f9263aec352c5ec1034d410aac9fc9f65276598fae3dcaab` | `4c4d5544fca64b709d750b905f65cc0d6b349c9b4a5bb937d363ff6dcf0221e1` | `0efaf22cf9ac79f5a4ed25e1744a6bb0e60949f63b009beb355efa8f2c4d1556` |
+| C6 | 80 | `sha256:3a081c995f9ef5ab84522796b40d1016f72cd8653e801a270b6b78a024a926b1` | `027611c9d29ac05b502e44b71e835937197e9f3c7b145ee2aaa8acfcdaf07995` | `69bca003451cb60c8fdc012f60e268919b310d39d8aba203735f06deff2752c9` |
+| C7 | 80 | `sha256:4fb0c37a7ed795286130c78d417cd39a264cc94585c332c694b18f09d7da08de` | `f2a09010d45f3be05a1c94770774bd7a518dfb9346a77ff5f54b94b575658aec` | `735d5e4f600dd91a7f6b3687926c60856d06d2f91df2602221ab4f28da303b42` |
+| C8 | 80 | `sha256:2505dc4bc3be83a25072569cabf235b64a6dced6497514368a31ef032ff0d6eb` | `cd1df82af94fd2de2ba4ede79311464f52c228a0bae03fa18e1e3b467ae58792` | `0ea5bae35262ab4cdcef654d71b74b957587edc591cc50e6ef23bce773f1e089` |
+| C9 | 80 | same as C8 | same as C8 | same as C8 |
+
+V recomputed every manifest and spec hash from the reviewed head; the manifests match M's README.
+
+### Re-review results
+
+**R.** #713 inserts §2.8 and one paragraph in §2.5, and adds notes to C1, C2, C5 and C6; #717 adds the `actor`/`at` typing paragraph to §2.5 and the depth-counting rule to §2.8. Every new unit is a product decision a writer needs: computed values after 2099, the end of the calendar, integer limits, request size and depth, and the refusal for a malformed `actor`. Three of them coincide with readings I had already implemented (I#1, I#3, I#4). They are the natural readings, and R wrote them because the smoke's arm M stopped on the gap, not to fit a reference; the owner rule is kept.
+
+**M (equivalence, both ways, all ten steps).** Only two files per step change: `workshop/argument-values` and the new `workshop/computed-values`; the renderer gains one section. `render.py check-all` is byte-identical with every body verbatim at all ten steps (76 to 80 bodies); the `tools/comparison` unit tests pass; the Library documents m1–m5 still render byte-identically. Sentence by sentence: every new W0 unit, including #717's, is in the W0 spec, verbatim apart from the usual section-reference link texts, and the spec has no new sentence without a source. Per step, the spec differs from the reviewed revision 1 by exactly W0's new units plus the step's notes: C1 the `null` refusal target; C2 the lockout end, minutes, credits and 21-character identifiers; C5 the block point and the never-blocking invoice; from C6 on `expiresOn` dropped from the latest values and the "never reported `expired`" consequence removed, the calendar example kept. No other sentence moved; C9 still equals C8. M's own review covered #713; V checked #717's part in full with the same method.
+
+**O.** The new family P-LIMITS and the new or changed cases in P-ARGUMENTS, P-CHECK-ORDER, P-TIME-FORMAT, P-TIME-BILLING, P-TIME-CERTIFICATION and P-REPORT-UTILIZATION cite the new units; all 3,352 citations are in R, and in the spec apart from cross-reference wording. Arithmetic checked: invoices due `2099-12-01T23:58Z` block at `2099-12-31T23:59Z` and those due a minute later never block; `2099-12` is refused; the November 2099 invoice is due `2100-01-14T23:59Z` and not overdue; certificates expire `2100-03-01` and `2100-12-31` before C6; 30 December 2099 is a Wednesday; the 65,536-byte line; depth to level 100 and invalid JSON at any depth; 129-character audit targets; the 52,592,519-minute usage line. O tests nothing that R declares unspecified (level 101 and deeper) or unreachable (20- and 21-character identifiers, 2^53). The earlier decisions I#4 and O#5 are now settled by the text and tested. Self-tests: 30 pass.
+
+**I.** No production code changed; tests, the P-LIMITS mutant (audit targets truncated to 100 characters) and documentation only. `ambiguities.md` still lists I#3 and I#4, which R now states (note V3-N1, no behavior).
+
+### Calibration pass 3 (25 October 2026, 18:11:10–18:13:47 UTC)
+
+The lock was free; the runner took it at 18:11:10 UTC and released it itself after a clean census. All 41 programs built (39 s), 48 runs, no abort, no credential-shaped text, no residue; labeled containers and volumes none before and none after. Engine time 156.6 s.
+
+| Runs | Result |
+| --- | --- |
+| 10 positive | **10 of 10**: every case passes at every step (54 to 63 cases); censuses at C3, C7 and C9 empty. |
+| 7 delta | **7 of 7** discriminate (C1 12 families, C2 19, C3 6, C4 18, C5 7, C6 10, C8 7). |
+| 31 mutants | **31 of 31**: 25 fail exactly their own probe family, the six with declared dependences fail exactly their own family and the declared dependent, and the new P-LIMITS mutant fails only P-LIMITS. |
+
+Disagreements between the oracle and the references: none.
+
+O's case digests per step (`cases_sha256` of the pass 3 reports): W0 `a398fe76a10a8218f9bc2d96800bf156d1ac031f0e84e74b75a130cc62ae6b86`, C1 `3fe355b70f4cf6e0ed0766fb1e02873e331f7caaf7aa1dbde662535e68c4ce37`, C2 `92ae261cff677a24cc9b303ccdc64168e8bffb4846c70c088f34475ee8602f20`, C3 `c4d8aacb5c2e02cd3ae011a2c83aabfcb7aca0f532f00ec954c3da05f1a03d06`, C4 `0032d811086fa9d39af16457d7802b3710e39d0cd00a1ccb8c36e10aaf89b402`, C5 `a81a1473f63d96ad1b4f343072edc9b03c675d21f1a556825d3123e9c18b8cd5`, C6 `c47b5241968879f336ac16e260f4614dc20e92365c60e0ca8d9211180edaff3d`, C7 `1b028a532badb9345175c46021ed8b907e1819fbea47ed09d00dbd0190c86c29`, C8 `22ef503f799afc9999610bc346ac133aa76be29e9d47af809fdb3ab4d38e5171`, C9 `beb0fb2b98010ffbea6fd6cb467066471c0cb4589cbfd8e24cafa0b2141ae278`. The protected hashes (the reused `driver.py` and every non-test oracle file) are in `calibration-pass-3\summary.json`; for example `tools/makerspace-oracle/probes.py` (key `harness/probes.py` in that list) is `55883c5dcebe47b3518ab75327d2b948944b07ada4d024e0c8b2cdf3132a4405`.
+
+### Verdicts, input version 2
+
+| Material | Head | Verdict | Open limits |
+| --- | --- | --- | --- |
+| R | Main `a94c46f1` | **Ready** | None new. |
+| M, model revision 2 and spec | `32fc4d9645ffd23ac0a1715ddb02f3edaa2bf8c6` (#719) | **Ready** | As in section 4: mapping not reviewed; `markitect check` of the snapshots taken from M's README (revision 2 validation), not repeated. |
+| O | `19006e527a35dad73414c0ce286dc0f55d85d3d3` (#716) | **Ready** | V2-N2 and the C9 census item stay as in section 4. Untested by R's own text: level 101 and deeper; unreachable: 20- and 21-character identifiers, 2^53. |
+| I | `d19c8653ce4efbbf19b9eab32494ff03b32107b0` (#714) | **Ready** | V3-N1 (two decided points still listed as readings). |
+
+The materials freeze is the Main commit that merges these three heads; the coordinator records it. Calibration passes 1 and 2 stay historical: they certify input version 1 only.
