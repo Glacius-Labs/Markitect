@@ -171,7 +171,11 @@ artifacts:
   - path: "tools/comparison/analyze.py"
     form: code
     realizes: [examples/independent-oracles]
-    why: Applies the protocol's predeclared reading to the run ledger with units, exact intervals and the Fisher test.
+    why: Applies the protocol's predeclared reading to the run ledger with units, exact intervals and the Fisher or rank-sum test.
+  - path: "tools/comparison/cost_breakdown.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Breaks an Apply's cost down by Run type, Manager level, Package and tool call from its session transcripts.
   - path: "tools/comparison/assess_candidate.py"
     form: code
     realizes: [examples/independent-oracles]
@@ -355,7 +359,11 @@ artifacts:
   - path: "tools/comparison/test_analyze.py"
     form: test
     realizes: [examples/independent-oracles]
-    why: Tests the exact intervals, the Fisher thresholds and every predeclared reading.
+    why: Tests the exact intervals, the Fisher and rank-sum thresholds and every predeclared reading.
+  - path: "tools/comparison/test_cost_breakdown.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Tests the attribution of tokens, tool calls and time to each Manager session and the grouped totals.
   - path: "tools/comparison/test_assess_candidate.py"
     form: test
     realizes: [examples/independent-oracles]
