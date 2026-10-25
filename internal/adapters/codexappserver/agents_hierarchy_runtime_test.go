@@ -289,6 +289,19 @@ type hierarchyWriter struct {
 }
 
 func deadline(ctx context.Context) time.Time { d, _ := ctx.Deadline(); return d }
+
+// testDeadline bounds fixture, capture and admission work whose subject is not
+// time. Real Git is many times slower on Windows and varies with load, so the
+// test's own deadline (go test -timeout) bounds a hang; like Go's testenv, it
+// keeps a tenth of the remaining time to report.
+func testDeadline(t *testing.T) time.Time {
+	t.Helper()
+	d, ok := t.Deadline()
+	if !ok {
+		return time.Now().Add(time.Hour)
+	}
+	return d.Add(-time.Until(d) / 10)
+}
 func hierarchyWriteNew(path string, value any) error {
 	b, e := json.MarshalIndent(value, "", "  ")
 	if e != nil {
@@ -345,7 +358,7 @@ func hierarchyProfile(ctx context.Context, c hierarchyConfig) (runtimeconfig.Pre
 }
 
 func TestNativeHierarchyFixturePreparation(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithDeadline(context.Background(), testDeadline(t))
 	defer cancel()
 	r, p := hierarchyFixture(t, ctx, strings.Repeat("a", 32))
 	var got []string
@@ -378,7 +391,7 @@ func (w *hierarchyAdmissionWorkspaces) Open(context.Context, run.Request) (run.W
 }
 
 func TestNativeHierarchyRequestAdmission(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithDeadline(context.Background(), testDeadline(t))
 	defer cancel()
 	cfg := hierarchyConfig{Nonce: strings.Repeat("a", 32), Messages: 48}
 	_, p := hierarchyFixture(t, ctx, cfg.Nonce)

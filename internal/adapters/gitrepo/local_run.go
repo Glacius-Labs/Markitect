@@ -81,6 +81,11 @@ func localCommand(ctx context.Context, dir string, input []byte, args ...string)
 	cmd.Stdout = out
 	cmd.Stderr = stderr
 	if err := boundedCommandError(cmd.Run(), out, stderr); err != nil {
+		if ctx.Err() != nil {
+			// Git killed for its context exits like a failed command, on Windows
+			// with status 1 and no output. Name the actual cause, as acquisition does.
+			return "", fmt.Errorf("local Git %s: %w (%v)", args[0], ctx.Err(), err)
+		}
 		return "", fmt.Errorf("local Git %s: %w: %s", args[0], err, stderr.String())
 	}
 	if args[0] == "ls-tree" || args[0] == "diff" || args[0] == "ls-files" || args[0] == "cat-file" {
