@@ -7,6 +7,7 @@ import (
 	"go/parser"
 	"go/token"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -81,6 +82,14 @@ func Inspect(root string) ([]Edge, error) {
 			if name != root && (entry.Name() == ".git" || entry.Name() == ".cache" || entry.Name() == ".artifacts" || entry.Name() == "vendor" || entry.Name() == "testdata" || entry.Name() == "node_modules") {
 				return filepath.SkipDir
 			}
+			// A nested module outside the product is not part of the root
+			// module, as in Packages. Product nested modules stay inspected;
+			// Packages refuses them.
+			if name != root && !isProductDir(root, name) {
+				if _, err := os.Stat(filepath.Join(name, "go.mod")); err == nil {
+					return filepath.SkipDir
+				}
+			}
 			return nil
 		}
 		if !strings.HasSuffix(name, ".go") {
@@ -128,4 +137,14 @@ func Inspect(root string) ([]Edge, error) {
 		return a.To < b.To
 	})
 	return edges, err
+}
+
+// isProductDir reports whether dir lies in cmd/ or internal/ below root.
+func isProductDir(root, dir string) bool {
+	rel, err := filepath.Rel(root, dir)
+	if err != nil {
+		return false
+	}
+	rel = filepath.ToSlash(rel)
+	return rel == "cmd" || rel == "internal" || strings.HasPrefix(rel, "cmd/") || strings.HasPrefix(rel, "internal/")
 }
