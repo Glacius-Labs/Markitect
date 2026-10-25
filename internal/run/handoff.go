@@ -275,6 +275,10 @@ func (x *execution) completeRoot() (Handoff, bool, error) {
 	x.mu.Unlock()
 	s.git.Lock()
 	state, err := s.copy.Snapshot(x.ctx)
+	var outputs []string
+	if err == nil && x.request.Mandate == Implement {
+		outputs, err = s.copy.Outputs(x.ctx)
+	}
 	s.git.Unlock()
 	if errors.Is(err, ErrMergeConflict) || err == nil && x.request.Mandate == Implement && state != j.state {
 		reason := changedState(j.state, state)
@@ -297,12 +301,19 @@ func (x *execution) completeRoot() (Handoff, bool, error) {
 			}
 			c.git.Lock()
 			latest, err := c.copy.Snapshot(x.ctx)
+			var built []string
+			if err == nil {
+				built, err = c.copy.Outputs(x.ctx)
+			}
 			c.git.Unlock()
 			if err != nil {
 				return Handoff{}, false, err
 			}
 			x.mu.Lock()
 			handed := c.a.handoff.Result
+			if latest == handed {
+				c.a.handoff.Check = withOutputs(c.a.handoff.Check, built)
+			}
 			x.mu.Unlock()
 			if latest != handed {
 				return Handoff{}, false, fmt.Errorf("%w: Manager %s changed after its fixed handoff", ErrObservationIncomplete, m.Package)
@@ -314,7 +325,11 @@ func (x *execution) completeRoot() (Handoff, bool, error) {
 	if s.a.judgment != j {
 		return Handoff{}, false, nil
 	}
-	h := Handoff{Manager: s.manager.Package, Base: s.a.task.Base, Result: state, Children: slices.Clone(s.integrations), Findings: slices.Clone(j.findings), Decision: requiredDecision(j.decision, x.childOutcomeLocked(s)), Check: j.check}
+	check := j.check
+	if x.request.Mandate == Implement {
+		check = withOutputs(check, outputs)
+	}
+	h := Handoff{Manager: s.manager.Package, Base: s.a.task.Base, Result: state, Children: slices.Clone(s.integrations), Findings: slices.Clone(j.findings), Decision: requiredDecision(j.decision, x.childOutcomeLocked(s)), Check: check}
 	s.a.fix(h)
 	return h, true, nil
 }
@@ -511,8 +526,21 @@ func copyCheck(c *Check) *Check {
 	return &check
 }
 
+// withOutputs is c with the build outputs its copy holds when the Run
+// completes: a Manager can build after its check, and nothing it leaves out
+// goes unreported. No check stays no check.
+func withOutputs(c *Check, outputs []string) *Check {
+	if c == nil {
+		return nil
+	}
+	check := copyCheck(c)
+	check.BuildOutputs = slices.Clone(outputs)
+	return check
+}
+
 // BuildOutputs lists once each, sorted, the build outputs that the checks of
-// r's handoffs report: what an Implement Run left out of its candidate.
+// r's final handoffs report: those in the copies of an Implement Run, which
+// its candidate never holds there.
 func (r Result) BuildOutputs() []string {
 	var outputs []string
 	for _, h := range r.Handoffs {

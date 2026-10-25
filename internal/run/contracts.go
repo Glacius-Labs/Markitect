@@ -219,9 +219,9 @@ type Request struct {
 	Input       project.CandidateRef
 	Mandate     Mandate
 	Findings    []Finding
-	// BuildOutputs names, for Verify, the build outputs that the Implement Run
-	// producing Input left out of it. Root's assignment and every check of the
-	// fixed input carry them.
+	// BuildOutputs names, for Verify, the build outputs of the Implement Run
+	// that produced Input. Root's assignment and every check of the fixed input
+	// carry them.
 	BuildOutputs       []string
 	Allowance          *Allowance
 	CleanupTimeout     time.Duration

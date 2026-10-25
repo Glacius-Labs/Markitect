@@ -507,7 +507,7 @@ func unregistered(ctx context.Context, dir string, command gitCommand, paths []s
 		for _, shard := range shards {
 			header, rest, _ := strings.Cut(out, "\n")
 			fields := strings.Fields(header)
-			if len(fields) == 2 && fields[1] == "missing" {
+			if strings.HasSuffix(header, " missing") {
 				out = rest
 				continue
 			}

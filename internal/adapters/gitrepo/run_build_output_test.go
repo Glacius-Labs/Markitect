@@ -282,8 +282,9 @@ func (e *collaborationRuns) Execute(ctx context.Context, request run.Request) (r
 // each is listed wherever the candidate is judged. a/deep's check and its
 // handoff to its parent list them, the stored Implement record keeps them, and
 // Verify's Root receives them with its assignment and its check of the fixed
-// input, so the independent review can find a missing required binary. The
-// owner's checkout receives none of them.
+// input, so the independent review can find a missing required binary. Root
+// builds out/root-tool after its own judgment: the Run record and Verify list
+// it too. The owner's checkout receives none of them.
 func TestLeftOutBuildOutputsAreVisibleUpToVerify(t *testing.T) {
 	owner, prepared, git, _ := runFixture(t)
 	records, err := runstore.New(git.StateRoot)
@@ -291,11 +292,24 @@ func TestLeftOutBuildOutputsAreVisibleUpToVerify(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := []string{"firmware/image", "out/required", "out/tool"}
+	wantRun := []string{"firmware/image", "out/required", "out/root-tool", "out/tool"}
 	var implementCheck, verifyCheck run.Check
 	var verifyTask run.Assignment
 	runs := &collaborationRuns{git: git, records: records, runs: map[run.Mandate]*collaboration{}, scripts: map[run.Mandate]func(context.Context, *collaborator, run.Message) (bool, error){
 		run.Implement: func(ctx context.Context, m *collaborator, message run.Message) (bool, error) {
-			if m.spec.Manager.Package != "a/deep" || len(message.Events) == 0 || message.Events[0].Assignment == nil {
+			if len(message.Events) == 0 || message.Events[0].Assignment == nil {
+				return false, nil
+			}
+			if m.spec.Manager.Package == "." {
+				if err := m.handle(ctx, message.Events[0]); err != nil {
+					return true, err
+				}
+				if err := m.complete(ctx); err != nil {
+					return true, err
+				}
+				return true, m.write("out/root-tool", elfHeader+"built after judging")
+			}
+			if m.spec.Manager.Package != "a/deep" {
 				return false, nil
 			}
 			if err := m.handle(ctx, message.Events[0]); err != nil {
@@ -346,10 +360,10 @@ func TestLeftOutBuildOutputsAreVisibleUpToVerify(t *testing.T) {
 		t.Fatal("the parent's handoff did not list what its child left out", a.handoffs)
 	}
 	stored, err := records.Read(ctx, "fixture", implement.ID)
-	if err != nil || handoffOf(stored, "a/deep").Check == nil || !reflect.DeepEqual(handoffOf(stored, "a/deep").Check.BuildOutputs, want) || !reflect.DeepEqual(implement.BuildOutputs(), want) {
-		t.Fatal("the stored Implement record lost what the Run left out", err)
+	if err != nil || handoffOf(stored, "a/deep").Check == nil || !reflect.DeepEqual(handoffOf(stored, "a/deep").Check.BuildOutputs, want) || handoffOf(stored, ".").Check == nil || !reflect.DeepEqual(handoffOf(stored, ".").Check.BuildOutputs, []string{"out/root-tool"}) || !reflect.DeepEqual(implement.BuildOutputs(), wantRun) {
+		t.Fatal("the stored Implement record lost what the Run left out", err, implement.BuildOutputs())
 	}
-	if !reflect.DeepEqual(verifyTask.BuildOutputs, want) || !verifyCheck.Valid || !reflect.DeepEqual(verifyCheck.BuildOutputs, want) {
+	if !reflect.DeepEqual(verifyTask.BuildOutputs, wantRun) || !verifyCheck.Valid || !reflect.DeepEqual(verifyCheck.BuildOutputs, wantRun) {
 		t.Fatal("Verify did not see what Implement left out of its fixed input", verifyTask, verifyCheck)
 	}
 	candidate := t.TempDir()
@@ -357,7 +371,7 @@ func TestLeftOutBuildOutputsAreVisibleUpToVerify(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, root := range []string{candidate, owner.Dir} {
-		for _, name := range want {
+		for _, name := range wantRun {
 			if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(name))); !os.IsNotExist(err) {
 				t.Fatal("a left-out binary reached the candidate or the owner's checkout", name, err)
 			}
