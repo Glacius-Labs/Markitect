@@ -364,3 +364,26 @@ func TestProductNestedModulesCannotHidePackages(t *testing.T) {
 		t.Fatalf("fixture boundary: %v %v", p, err)
 	}
 }
+
+func TestInspectSkipsNestedModulesOutsideTheProduct(t *testing.T) {
+	root := t.TempDir()
+	writeFixture(t, root, map[string]string{
+		"tools/reference/go.mod":          "module reference\n",
+		"tools/reference/cmd/x/main.go":   "package main\nimport _ \"reference/internal/y\"\n",
+		"tools/reference/internal/y/y.go": "package y\n",
+		"tools/harness/h.go":              "package harness\n",
+		"internal/model/nested/go.mod":    "module hidden\n",
+		"internal/model/nested/hidden.go": "package hidden\n",
+	})
+	edges, err := Inspect(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	seen := map[string]bool{}
+	for _, e := range edges {
+		seen[e.From] = true
+	}
+	if seen["tools/reference/cmd/x"] || seen["tools/reference/internal/y"] || !seen["tools/harness"] || !seen["internal/model/nested"] {
+		t.Fatalf("inspected packages: %v", seen)
+	}
+}
