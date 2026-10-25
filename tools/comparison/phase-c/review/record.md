@@ -2,7 +2,7 @@
 
 Session V, 25 October 2026. Independent review of the four Phase C materials before any Phase C run: the neutral requirements (R), the Markitect model with its rendered spec and mapping (M), the hidden oracle (O) and the hidden reference implementations with mutants (I). V is the only session that saw all four. The procedure was fixed in advance in [checklists.md](checklists.md).
 
-**Status: in progress.** Step 1 is done; steps 2 and 3 wait for O's pull request.
+**Status: final, 25 October 2026.** All four materials are ready at the heads named in section 4.
 
 ## Reviewed heads
 
@@ -11,7 +11,7 @@ Session V, 25 October 2026. Independent review of the four Phase C materials bef
 | R | [#702](https://github.com/Glacius-Labs/Markitect/pull/702), merged | Main `795b8a2af0b51a700ca7a7936852813a7b82770f` | – |
 | M | [#707](https://github.com/Glacius-Labs/Markitect/pull/707) | `599972d82e11ad0afa6a3d17ec81f6885942da4f`, then `180bf94cd367a6841330e9032e74ceb9ad604711` (adds the execution configuration; no snapshot or spec byte changes) | contains R |
 | I | [#703](https://github.com/Glacius-Labs/Markitect/pull/703) | `12fb6b4ce43df9550c41785a64d4b6a0991e2721` | contains R |
-| O | follows | – | – |
+| O | [#708](https://github.com/Glacius-Labs/Markitect/pull/708) | `9685ba4d4da07d203a79c8db0e5540033c4d7752`, then `feda573ba79f62a92287c86f6054ec4940163a28` (V's findings applied) | R's merge |
 
 **Isolation by history.** M's commits change only `tools/comparison/phase-c/{model,spec,mapping}` and the shared renderer (`tools/comparison/requirements.py`, its test and the README row). I's commits change only `tools/makerspace-reference/`. I's tree names no model, spec, mapping or oracle path; it carries O's family names only, as its mutant folders.
 
@@ -70,6 +70,8 @@ O's pull request [#708](https://github.com/Glacius-Labs/Markitect/pull/708) at `
 
 **Coverage.** Every operation family has authorization (all, own, none and the steward column), audit (accepted, silent, forbidden), money and time cases where R gives the operation such a rule; argument validation runs over every argument of every operation. The calibration exposed one gap, V2-F1 below.
 
+**Re-review at `feda573b`.** O's one fix commit changes only `tools/makerspace-oracle/`; its 30 self-tests pass. The matcher's new tokens keep checks exact: `$ref` and `$calc` compare the resolved value exactly, a missing reference is an error, never a pass, and `$filter` matches the selected items completely and in order. `$capture` records a value without checking it, so that a family can state relations without depending on another family's rule; those values stay checked absolutely in their own family. The new P-NO-MUTATION case re-registers member `ada` with another name and tier inside a no-change snapshot. Probes now capture generated identifiers (only P-IDENTIFIERS predicts them), and money probes compare only their own lines and fields; their relations, such as applied, credited and paid amounts and credit applied up to the total, follow from w0 §11. Citations re-checked: 2,713, of which 44 distinct fragments are not verbatim in the spec, all change-document phrasing or cross-reference wording; the stale ones are gone.
+
 ### O's ambiguity list
 
 | O# | Point | Decision |
@@ -80,9 +82,9 @@ O's pull request [#708](https://github.com/Glacius-Labs/Markitect/pull/708) at `
 | 4 | Census compares `reason` only at C9 | Fine: the census is reported outside the families. Protocol addendum C must say how it is used at C9, where a repair of a non-conforming C8 start remains allowed. |
 | 5 | Unterminated last line, exact 64 KiB, `White_Space` version changes, duplicate names, invalid UTF-8 | Untested, agreed; R states the first two and excludes the last two. Known limits. |
 
-### Ambiguity decisions
+### I's ambiguity list
 
-I's list (`tools/makerspace-reference/ambiguities.md`), judged against R:
+`tools/makerspace-reference/ambiguities.md`, judged against R:
 
 | I# | Reading | Decision |
 | --- | --- | --- |
@@ -100,8 +102,6 @@ I's list (`tools/makerspace-reference/ambiguities.md`), judged against R:
 | 12 | Member's `getMember` for an unknown member → `not_found`, not audited | Text clear (check 5 precedes check 6; only `forbidden` is recorded). |
 | 13 | Lone-surrogate escapes and duplicate member names | Open and declared untested by R (§2.4). **Untested.** |
 | 14 | Invoice settled by credit at generation is `paid` and never blocks | Text clear (§11.1 step 7, C5 condition `open`). |
-
-O's list: pending.
 
 ## 3. Calibration
 
@@ -159,12 +159,46 @@ Disagreements between the oracle and the references: none. Every expectation tha
 
 ### Pass 2 dispatch (recorded before its first engine call)
 
-After O's fixes, the whole pass is repeated once as pass 2; pass 1 stays recorded unchanged. Same dispatch as pass 1 except: oracle at O's head `feda573ba79f62a92287c86f6054ec4940163a28` (the Library transport unchanged, tree `9ec64094…`); references and mutants unchanged (I's head `12fb6b4c`, the same patched trees); runner `calibrate-pass-2.py` (SHA-256 `55ebd0ce5bb051e4e172f4c783f617db77bffabb16edde566645a9fadbd8c2a4`), which differs from pass 1 only by the declared dependences below and the corrected census comparison; label `mk-vcal=pass-2`; evidence in `calibration-pass-2\`. Expected: as pass 1, with the six mutants of the declared dependences passing when they fail exactly their own family and their declared dependent.
+After O's fixes, the whole pass is repeated once as pass 2; pass 1 stays recorded unchanged. Same dispatch as pass 1 except: oracle at O's head `feda573ba79f62a92287c86f6054ec4940163a28` (the Library transport unchanged, tree `9ec64094…`); references and mutants unchanged (I's head `12fb6b4c`, the same patched trees); runner `calibrate-pass-2.py` (SHA-256 `55ebd0ce5bb051e4e172f4c783f617db77bffabb16edde566645a9fadbd8c2a4`), which differs from pass 1 only by the declared dependences above and the corrected census comparison; label `mk-vcal=pass-2`; evidence in `calibration-pass-2\`. Expected: as pass 1, with the six mutants of the declared dependences passing when they fail exactly their own family and their declared dependent.
+
+### Pass 2 (25 October 2026, 11:02:40–11:03:54 UTC)
+
+The waiter started the runner only after step 4 had released `NATIVE-RUN.lock`; the runner took it at 11:02:40 UTC and released it itself after a clean census. All 40 programs built (18 s), 47 runs, no abort, no credential-shaped text, no residue; labeled containers and volumes none before and none after. Engine time 73.5 s.
+
+| Runs | Result |
+| --- | --- |
+| 10 positive | **10 of 10**: every case passes at every step (49 to 58 cases); censuses at C3, C7 and C9 empty. |
+| 7 delta | **7 of 7** discriminate (C1 11 families, C2 17, C3 5, C4 18, C5 7, C6 10, C8 7). |
+| 30 mutants | **30 of 30**: 24 fail exactly their own probe family; the six with declared dependences fail exactly their own family and the declared dependent. P-NO-MUTATION is now caught. |
+
+Behavior and invariant families still fail alongside some mutants (for example B-BILLING with the money faults); they are the secondary measure.
+
+**Limit found in pass 2 (note V2-N2, invariant families).** Probe and scenario requests now refer to captured identifiers. When a scenario step that creates a record is refused, a later request cannot resolve its reference; the scenario then stops, and all ten invariant families fail together with INV-SCENARIO (seen in delta-C4, where a C3 program cannot register the steward). Pass 1 judged the invariants even after status mismatches. This touches only the secondary measure and treats both arms alike. Optional fix for O: in the scenario, skip or neutralize a request whose reference is missing instead of stopping, so each invariant judges the transcript it has. Until then, read failing invariant families together with INV-SCENARIO as one signal.
 
 The primary "missed obligations" measure of protocol addendum C is the number of failed probe families, per step and summed per chain; behavior and invariant families are secondary (coordinator's decision, passed to the comparison session).
 
-Seventeen of the 30 mutants also fail a strict behavior family (B-*, D-*) or an invariant family. That follows from the design: behavior cases compare complete results and the whole audit log of their area. It matters for the metric, not for validity: if failed families are counted together, one fault can count two to ten times, depending on the rule.
+In both passes, 17 of the 30 mutants also fail a strict behavior family (B-*, D-*) or an invariant family. That follows from the design: behavior cases compare complete results and the whole audit log of their area. It matters for the metric, not for validity. Counted together with the probe families, one fault would weigh several times as much as another, which is why the primary measure counts probe families only.
 
 ## 4. Verdicts
 
-Pending.
+| Material | Head | Verdict | Open limits |
+| --- | --- | --- | --- |
+| R, neutral requirements | Main `795b8a2a` (#702) | **Ready** | The W0 date-arithmetic example stays after C6 removes its use (V1-N5, no behavior). |
+| M, model, snapshots, spec, mapping, execution configuration | `180bf94cd367a6841330e9032e74ceb9ad604711` (#707) | **Ready** | Protocol items V1-N6 to V1-N8 belong to addendum C. The mapping was not used as evidence. |
+| I, reference implementations and mutants | `12fb6b4ce43df9550c41785a64d4b6a0991e2721` (#703) | **Ready** | Every step passes every case of its step at O's final head; every mutant meets its calibration criterion. |
+| O, hidden oracle | `feda573ba79f62a92287c86f6054ec4940163a28` (#708) | **Ready** | V2-N2 (invariant families fail together when the scenario cannot resolve an identifier; secondary measure only). Untested by design: O#1, O#5, I#4, I#13. |
+
+Findings and their resolution:
+
+| Id | Material | Class | Resolution |
+| --- | --- | --- | --- |
+| V2-F1 | O | coverage gap: P-NO-MUTATION did not observe a refused re-registration | Fixed at `feda573b`; caught in pass 2. |
+| V2-F2 | O | family independence: avoidable cross-family dependences (identifiers, whole invoices, setups) | Fixed at `feda573b`; six inherent dependences declared with the coordinator's approval; pass 2 meets the criterion. |
+| V2-N1 | O | stale or over-voided citations | Fixed at `feda573b`. |
+| V2-N2 | O | invariant families stop together on an unresolved reference | Recorded limit; optional fix. |
+| V1-N1 to V1-N5 | M, R | notes without behavioral effect | No change. |
+| V1-N6 to V1-N8 | protocol | arm M's extra checks and timeout, C7 owner effort, C7 churn rule | Passed to the coordinator for addendum C. |
+
+No finding required a change of the neutral text, so nothing went back to R.
+
+Calibration evidence, outside the repository: `C:\Users\Consiliari\Documents\Codex\Markitect-Phase-C-Review\` (`calibrate-pass-1.py`, `calibrate-pass-2.py`, `calibration-pass-1\`, `calibration-pass-2\`, each with one report and log per run and `summary.json`).

@@ -97,4 +97,4 @@ Recorded in the record before the first engine call: source (O and I heads, orac
 - [ ] Obligation table, as Phase B's: each hidden family, its R sentences, its Definitions and its spec sections.
 - [ ] Calibration table: run, input, expected, actual, duration, cleanup census.
 - [ ] Verdict per material at a named head: ready or not ready, with open limits stated.
-- [ ] The PR adds only this folder (plus its registry entry); it is reviewed independently before merge. When all four materials are ready, tell the coordinator.
+- [ ] The PR adds only this folder, which the registry already covers as part of `tools/comparison/phase-c/`; it is reviewed independently before merge. When all four materials are ready, tell the coordinator.
