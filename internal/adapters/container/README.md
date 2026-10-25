@@ -40,7 +40,7 @@ These rules come from real runs, recorded in the [handshake record](https://gith
 
 - **Codex runs with sandbox `danger-full-access`.** Its own sandbox cannot start in an unprivileged container. With `read-only` or `workspace-write`, every shell command fails, and the Agent may still report success. Read-only roles get read-only mounts instead.
 - **Run tools go through MCP.**
-  - Codex: `-c mcp_servers.markitect.command="/usr/local/bin/markitect-agentd"` and `-c mcp_servers.markitect.args=["mcp"]`, with the features `apps`, `memories`, `multi_agent`, `image_generation`, `browser_use` and `computer_use` disabled.
+  - Codex: `-c mcp_servers={markitect={command="/usr/local/bin/markitect-agentd",args=["mcp"]}}`, with the features `apps`, `memories`, `multi_agent`, `multi_agent_v2`, `image_generation`, `browser_use` and `computer_use` switched off by `--disable` and `agents.enabled=false`. `providerArgv` in the [Codex adapter](../codexappserver/profile.go) holds the exact arguments.
   - [cli_smoke_test.go](cli_smoke_test.go) and [cli_continuity_test.go](cli_continuity_test.go) show complete invocations.
 - **A conversation that may continue must be persistent.**
   - Codex threads are not ephemeral, and `CODEX_HOME` stays in the provider home (`/home/agent/.codex`).

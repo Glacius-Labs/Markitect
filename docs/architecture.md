@@ -23,11 +23,11 @@ All maintained Go packages use one root module. [Modules](development/modules.md
 | Manager topology, context selection and settings | `internal/organization` | Model, snapshot |
 | Registry, ownership, accounting and candidates | `internal/realization` | Model, snapshot |
 | Checked capture and preparation | `internal/project` | The four packages above and its own source port |
-| Static native and check profile metadata | `internal/runtimeconfig` | Project values; no Run or provider session |
+| Static native and check profile metadata | `internal/runtimeconfig` | Model, organization, Project, snapshot; no Run or provider session |
 | Model-derived instructions for native Sessions, rendered by the native adapter | `internal/harness` | Project values; no I/O, no Run |
 | Closed hierarchical Run | `internal/run` | Project, organization, snapshot; Session, workspace, check and record ports |
 | Sequence of Runs | `internal/workflow` | Run values and its own Executor interface |
-| Preflight, publication after closure | `internal/apply` | Project, Workflow, Run result values |
+| Preflight, publication after closure | `internal/apply` | Model, Project, Workflow, Run result values |
 | Generated model view | `internal/modeldocs` | Project, model, snapshot |
 | Concrete adapters | `internal/adapters/*`, `internal/agentd` | Their inward consumers; no general sibling privilege |
 | Composition | `internal/bootstrap` | Actual services and adapters |
@@ -60,7 +60,7 @@ After every Run has closed, Apply reopens the stored final Verify approval, and 
 
 | Adapter | Responsibility |
 | --- | --- |
-| `gitrepo` | Complete repository capture, private Run Git copies (`LocalGit` for controlled tests, `LinuxGit` on private Linux volumes for native execution), self-contained stored candidates and guarded publication ([workspaces](../internal/adapters/gitrepo/WORKSPACES.md)) |
+| `gitrepo` | Complete repository capture, private Run Git copies (`LinuxGit` on private Linux volumes for native Run copies, `LocalGit` for controlled tests and as the host-side candidate store and publication Git), self-contained stored candidates and guarded publication ([workspaces](../internal/adapters/gitrepo/WORKSPACES.md)) |
 | `runstore` | Immutable terminal Run results and concurrent project Notes |
 | `codexappserver` | Codex App Server Sessions with the model-derived harness and the nine Run tools ([README](../internal/adapters/codexappserver/README.md)) |
 | `container`, `internal/agentd` | Container engine client, the frame protocol and the session helper that runs the provider CLI and bridges its tools ([container runtime](../internal/adapters/container/README.md)) |
@@ -78,7 +78,7 @@ Every regular file in the actual census is a protected canonical or control inpu
 
 ## State and evidence storage
 
-Preparation creates no Run, candidate or evidence. `apply` keeps its state outside the repository in the operator's state directory: one `apply.lock` per state directory and, per repository identity, `applies/` (the Apply report), `runs/` (closed Run results), `candidates/` (stored Git bundles), `notes/` and `transcripts/`. Document writes retain the observed completed paths if a later validation fails.
+Preparation creates no Run, candidate or evidence. `apply` keeps its state outside the repository in the operator's state directory: one `apply.lock` per state directory and, per repository identity, `applies/` (the Apply report), `runs/` (closed Run results), `candidates/` (stored Git bundles), `notes/`, `transcripts/` and `temporary/` (scratch for host Git). Document writes retain the observed completed paths if a later validation fails.
 
 The generated view distinguishes the canonical model digest, the rendered content digest and the source- and target-bound preview digest. Writes recheck sources and target, reject protected inputs and historical writes, and read back the actual bytes. Multi-file or interrupted effects are not assumed transactional.
 
