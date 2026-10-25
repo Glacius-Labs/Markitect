@@ -9,7 +9,7 @@ Session V, 25 October 2026. Independent review of the four Phase C materials bef
 | Material | Pull request | Reviewed head | Base |
 | --- | --- | --- | --- |
 | R | [#702](https://github.com/Glacius-Labs/Markitect/pull/702), merged | Main `795b8a2af0b51a700ca7a7936852813a7b82770f` | – |
-| M | [#707](https://github.com/Glacius-Labs/Markitect/pull/707) | `599972d82e11ad0afa6a3d17ec81f6885942da4f`, then `180bf94cd367a6841330e9032e74ceb9ad604711` (adds the execution configuration; no snapshot or spec byte changes) | contains R |
+| M | [#707](https://github.com/Glacius-Labs/Markitect/pull/707) | `599972d82e11ad0afa6a3d17ec81f6885942da4f`, then `180bf94cd367a6841330e9032e74ceb9ad604711` (adds the execution configuration, its unit test and README text; no snapshot or spec byte changes) | contains R |
 | I | [#703](https://github.com/Glacius-Labs/Markitect/pull/703) | `12fb6b4ce43df9550c41785a64d4b6a0991e2721` | contains R |
 | O | [#708](https://github.com/Glacius-Labs/Markitect/pull/708) | `9685ba4d4da07d203a79c8db0e5540033c4d7752`, then `feda573ba79f62a92287c86f6054ec4940163a28` (V's findings applied) | R's merge |
 
@@ -34,7 +34,7 @@ Method. The renderer re-renders each committed spec byte-identically and finds e
 | C8 | Granularity 15 minutes, `invalid_slot` bounds, the new opening hours (minute counts checked), no `null` opening hours, overview, the scope sentence for all dates and the replaced examples (weekdays checked). | equivalent |
 | C9 | Snapshot, digest and rendered spec byte-identical to C8. | equal |
 
-Further mechanical checks: each snapshot's `files.sha256` and the C9 = C8 identity are covered by the 40 passing unit tests of `tools/comparison`; the shared renderer still reproduces the Library documents m1–m5 byte-identically (Phase A and B hashes unchanged). M's README records `markitect check` passing for all ten snapshots at Main `528ef346`; V did not repeat it.
+Further mechanical checks: each snapshot's `files.sha256` and the C9 = C8 identity are covered by the unit tests of `tools/comparison` (`python -B -m unittest discover -s tools/comparison`), which pass at both M heads; the shared renderer still reproduces the Library documents m1–m5 byte-identically (Phase A and B hashes unchanged). M's README records `markitect check` passing for all ten snapshots at Main `528ef346`; V did not repeat it.
 
 Notes (no change needed):
 
@@ -66,7 +66,7 @@ O's pull request [#708](https://github.com/Glacius-Labs/Markitect/pull/708) at `
 
 **Citations.** 2,724 citations over all steps. Each fragment is verbatim in R (O's self-test). V checked the same fragments against the rendered spec of each step: 46 distinct fragments are not verbatim there. They are the change documents' own phrasing ("as before", "Section 3.1 … now reads"), cross-reference wording ("(section 4.2)" against a link), and the split operation index. Each of these sentences was matched by meaning in section 1, so every cited obligation is in both representations. Three w0 fragments stay cited after a change replaced them (§6.1 "Registers a staff member or an admin." from C4, §10's refusal order from C5, a shorter §4.2 fragment from C1), and the §4.4 fragment about closing time is dropped whole at C8 although its first sentence still holds. These are citation bookkeeping only (note V2-N1, sent to O).
 
-**Expectations against the text.** V read the case builders of all 30 probe families, the behavior cases D-C1 to D-C8 and the ten invariants, and recomputed the arithmetic of the utilization, lockout, billing, block, certification and rounding cases at both granularities. Results are compared exactly only where R fixes them (the exact member sets of the requirements' "Transport" rule, the list orders of §4.5); `reason` is checked only as nonempty; refusals are single-fault or follow R's stated order. No expectation goes beyond the text. The census (`census.py`) stays outside the families and does not change pass or fail.
+**Expectations against the text.** V read the case builders of all 30 probe families, the behavior cases D-C1 to D-C8 and the ten invariants, and recomputed the arithmetic of the utilization, lockout, billing, block, certification and rounding cases at both granularities. Results are compared exactly only where R fixes them (the exact members of w0 §2.3 and §2.7, the list orders of §4.5); `reason` is checked only as nonempty; refusals are single-fault or follow R's stated order. No expectation goes beyond the text. The census (`census.py`) stays outside the families and does not change pass or fail.
 
 **Coverage.** Every operation family has authorization (all, own, none and the steward column), audit (accepted, silent, forbidden), money and time cases where R gives the operation such a rule; argument validation runs over every argument of every operation. The calibration exposed one gap, V2-F1 below.
 
@@ -163,12 +163,12 @@ After O's fixes, the whole pass is repeated once as pass 2; pass 1 stays recorde
 
 ### Pass 2 (25 October 2026, 11:02:40–11:03:54 UTC)
 
-The waiter started the runner only after step 4 had released `NATIVE-RUN.lock`; the runner took it at 11:02:40 UTC and released it itself after a clean census. All 40 programs built (18 s), 47 runs, no abort, no credential-shaped text, no residue; labeled containers and volumes none before and none after. Engine time 73.5 s.
+The waiter started the runner only after the step-4 requalification session's arm M run had released the shared engine lock `NATIVE-RUN.lock`; the runner took it at 11:02:40 UTC and released it itself after a clean census. All 40 programs built (18 s), 47 runs, no abort, no credential-shaped text, no residue; labeled containers and volumes none before and none after. Engine time 73.5 s.
 
 | Runs | Result |
 | --- | --- |
 | 10 positive | **10 of 10**: every case passes at every step (49 to 58 cases); censuses at C3, C7 and C9 empty. |
-| 7 delta | **7 of 7** discriminate (C1 11 families, C2 17, C3 5, C4 18, C5 7, C6 10, C8 7). |
+| 7 delta | **7 of 7** discriminate (C1 11 families, C2 17, C3 5, C4 18, raised from 8 by V2-N2 below, C5 7, C6 10, C8 7). |
 | 30 mutants | **30 of 30**: 24 fail exactly their own probe family; the six with declared dependences fail exactly their own family and the declared dependent. P-NO-MUTATION is now caught. |
 
 Behavior and invariant families still fail alongside some mutants (for example B-BILLING with the money faults); they are the secondary measure.
@@ -177,16 +177,16 @@ Behavior and invariant families still fail alongside some mutants (for example B
 
 The primary "missed obligations" measure of protocol addendum C is the number of failed probe families, per step and summed per chain; behavior and invariant families are secondary (coordinator's decision, passed to the comparison session).
 
-In both passes, 17 of the 30 mutants also fail a strict behavior family (B-*, D-*) or an invariant family. That follows from the design: behavior cases compare complete results and the whole audit log of their area. It matters for the metric, not for validity. Counted together with the probe families, one fault would weigh several times as much as another, which is why the primary measure counts probe families only.
+In pass 1 and in pass 2 alike, 17 of the 30 mutants also fail a strict behavior family (B-*, D-*) or an invariant family (counted from the per-run reports in the evidence folders). That follows from the design: behavior cases compare complete results and the whole audit log of their area. It matters for the metric, not for validity. Counted together with the probe families, one fault would weigh several times as much as another, which is why the primary measure counts probe families only.
 
 ## 4. Verdicts
 
 | Material | Head | Verdict | Open limits |
 | --- | --- | --- | --- |
 | R, neutral requirements | Main `795b8a2a` (#702) | **Ready** | The W0 date-arithmetic example stays after C6 removes its use (V1-N5, no behavior). |
-| M, model, snapshots, spec, mapping, execution configuration | `180bf94cd367a6841330e9032e74ceb9ad604711` (#707) | **Ready** | Protocol items V1-N6 to V1-N8 belong to addendum C. The mapping was not used as evidence. |
+| M, model, snapshots, spec, mapping, execution configuration | `180bf94cd367a6841330e9032e74ceb9ad604711` (#707) | **Ready** | The mapping was not reviewed (it is not an arm input; equivalence was established without it). `markitect check` of the ten snapshots is taken from M's README (Main `528ef346`), not repeated. Protocol items V1-N6 to V1-N8 belong to addendum C. |
 | I, reference implementations and mutants | `12fb6b4ce43df9550c41785a64d4b6a0991e2721` (#703) | **Ready** | Every step passes every case of its step at O's final head; every mutant meets its calibration criterion. |
-| O, hidden oracle | `feda573ba79f62a92287c86f6054ec4940163a28` (#708) | **Ready** | V2-N2 (invariant families fail together when the scenario cannot resolve an identifier; secondary measure only). Untested by design: O#1, O#5, I#4, I#13. |
+| O, hidden oracle | `feda573ba79f62a92287c86f6054ec4940163a28` (#708) | **Ready** | V2-N2 (invariant families fail together when the scenario cannot resolve an identifier; secondary measure only). Addendum C must state how the C9 census, which compares `reason`, is used (O#4). Untested by design: O#1, O#5, I#4, I#13. |
 
 Findings and their resolution:
 
