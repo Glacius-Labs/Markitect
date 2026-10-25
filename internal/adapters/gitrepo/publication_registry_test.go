@@ -14,6 +14,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
+	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
 func TestPublicationAllowsValidAddedAndDeletedRegistryShards(t *testing.T) {
@@ -101,28 +102,50 @@ func TestPublicationAllowsValidAddedAndDeletedRegistryShards(t *testing.T) {
 	}
 }
 
-// Nothing stale is published: even a bound closed approval of a candidate that
-// still links a deleted Definition is refused before any target write.
+// Nothing stale or orphaned is published: even a bound closed approval of a
+// candidate that still links a deleted Definition, or keeps a merged Package's
+// shard, is refused before any target write.
 func TestPublicationRefusesACandidateWithAStaleRegistryLink(t *testing.T) {
-	r, prepared, git, input := runFixture(t, deletedDefinition)
-	head := r.Git("rev-parse", "HEAD")
-	// This Publisher seam fixture supplies a bound closed approval; a real
-	// Verify cannot approve this candidate, because Root's check refuses it.
-	approval := run.Result{ID: "approved", Project: "fixture", Binding: prepared.Binding(), Mandate: run.Verify, Technical: run.Completed, Decision: run.Approve, Input: input, Candidate: &input}
-	for _, m := range prepared.Topology().Managers() {
-		approval.Handoffs = append(approval.Handoffs, run.Handoff{Manager: m.Package})
-		approval.Cleanup = append(approval.Cleanup, run.Closure{Resource: "session:" + m.Package, Closed: true}, run.Closure{Resource: "copy:" + m.Package, Closed: true})
-	}
-	approval.Cleanup = append(approval.Cleanup, run.Closure{Resource: "manager-workers", Closed: true}, run.Closure{Resource: "git-service", Closed: true})
-	published, err := (&Publisher{Repository: adapter(t), Store: git}).Publish(context.Background(), apply.PublicationRequest{Prepared: prepared, Approval: approval})
-	if !errors.Is(err, project.ErrCandidateInvalid) || !strings.Contains(err.Error(), "registry.stale_link") || !strings.Contains(err.Error(), "out/gone.txt") || published.Readback || len(published.CompletedPaths) != 0 {
-		t.Fatal("publication accepted a stale link", published, err)
-	}
-	if r.Git("rev-parse", "HEAD") != head {
-		t.Fatal("refused publication changed the target")
-	}
-	if data, err := os.ReadFile(filepath.Join(r.Dir, "out/gone.txt")); err != nil || string(data) != "realizes a deleted Definition\n" {
-		t.Fatal("refused publication touched the target", err)
+	for _, tc := range []struct {
+		name      string
+		configure func(*testkit.Repo)
+		codes     []string
+		artifact  string
+	}{
+		{"deleted Definition", deletedDefinition, []string{"registry.stale_link"}, "out/gone.txt"},
+		{"merged Package", mergedPackage, []string{"registry.orphaned", "registry.orphaned_shard"}, "out/merged/pay.txt"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			r, prepared, git, input := runFixture(t, tc.configure)
+			head := r.Git("rev-parse", "HEAD")
+			before, err := os.ReadFile(filepath.Join(r.Dir, filepath.FromSlash(tc.artifact)))
+			if err != nil {
+				t.Fatal(err)
+			}
+			// This Publisher seam fixture supplies a bound closed approval; a real
+			// Verify cannot approve this candidate, because Root's check refuses it.
+			approval := run.Result{ID: "approved", Project: "fixture", Binding: prepared.Binding(), Mandate: run.Verify, Technical: run.Completed, Decision: run.Approve, Input: input, Candidate: &input}
+			for _, m := range prepared.Topology().Managers() {
+				approval.Handoffs = append(approval.Handoffs, run.Handoff{Manager: m.Package})
+				approval.Cleanup = append(approval.Cleanup, run.Closure{Resource: "session:" + m.Package, Closed: true}, run.Closure{Resource: "copy:" + m.Package, Closed: true})
+			}
+			approval.Cleanup = append(approval.Cleanup, run.Closure{Resource: "manager-workers", Closed: true}, run.Closure{Resource: "git-service", Closed: true})
+			published, err := (&Publisher{Repository: adapter(t), Store: git}).Publish(context.Background(), apply.PublicationRequest{Prepared: prepared, Approval: approval})
+			if !errors.Is(err, project.ErrCandidateInvalid) || !strings.Contains(err.Error(), tc.artifact) || published.Readback || len(published.CompletedPaths) != 0 {
+				t.Fatal("publication accepted stale registry realization", published, err)
+			}
+			for _, code := range tc.codes {
+				if !strings.Contains(err.Error(), code) {
+					t.Fatal("refusal does not name", code, err)
+				}
+			}
+			if r.Git("rev-parse", "HEAD") != head {
+				t.Fatal("refused publication changed the target")
+			}
+			if data, err := os.ReadFile(filepath.Join(r.Dir, filepath.FromSlash(tc.artifact))); err != nil || string(data) != string(before) {
+				t.Fatal("refused publication touched the target", err)
+			}
+		})
 	}
 }
 

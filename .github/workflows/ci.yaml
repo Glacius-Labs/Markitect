@@ -79,8 +79,8 @@ jobs:
           # The full report goes to a file; a failure prints only its findings.
           report="$RUNNER_TEMP/project-check.json"
           go run ./cmd/markitect check --repo . --revision ${{ github.sha }} > "$report" || { grep -A3 '"code":' "$report" | head -n 200; exit 1; }
-          # check passes stale registry links as work for Apply; Main is maintained directly and keeps none.
-          if grep -q '"stale": \[' "$report"; then grep -A8 '"stale": \[' "$report" | head -n 200; exit 1; fi
+          # check passes stale and orphaned registry realization as work for Apply; Main is maintained directly and keeps none.
+          if grep -Eq '"(stale|orphaned)": \[' "$report"; then grep -EA8 '"(stale|orphaned)": \[' "$report" | head -n 200; exit 1; fi
 
       - name: Check that the project model view is current
         if: runner.os == 'Linux'

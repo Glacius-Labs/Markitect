@@ -21,14 +21,10 @@ func singleRegistry(t *testing.T, name, content string) (project.InputSelection,
 }
 
 func TestRegistryKnownFailuresRetainFactsAndNeverExposePartialRegistry(t *testing.T) {
-	for _, kind := range []string{"stale owner", "imported owner", "duplicate basis", "duplicate ownership", "unknown key", "payload owner", "unknown form", "short basis", "artifact missing", "artifact path", "empty basis", "blank why", "layout", "duplicate source", "wrong source area"} {
+	for _, kind := range []string{"duplicate basis", "duplicate ownership", "unknown key", "payload owner", "unknown form", "short basis", "artifact missing", "artifact path", "empty basis", "blank why", "layout", "duplicate source", "wrong source area"} {
 		t.Run(kind, func(t *testing.T) {
 			name, content, code := ".markitect/registry/lending/registry.yaml", childRegistry, "registry.artifact"
 			switch kind {
-			case "stale owner":
-				name, code = ".markitect/registry/removed/registry.yaml", "registry.unknown_owner"
-			case "imported owner":
-				name, code = ".markitect/registry/software/registry.yaml", "registry.unknown_owner"
 			case "duplicate basis":
 				content = strings.Replace(content, "[lending/borrow]", "[lending/borrow, lending/borrow]", 1)
 			case "duplicate ownership":
@@ -154,7 +150,7 @@ func TestFailedAndIncompleteModelStagesDoNotPrepareARegistry(t *testing.T) {
 	}
 }
 
-func TestUncapturedCensusShardAndKnownInvalidOwnerRemainDistinct(t *testing.T) {
+func TestUncapturedCensusShardAndOrphanedShardRemainDistinct(t *testing.T) {
 	selection, raw := registryInputs(t, false)
 	// This controlled Census represents files even when Gitignore would exclude
 	// them from cleanliness. It is not proof of actual Git repository acquisition.
@@ -165,7 +161,33 @@ func TestUncapturedCensusShardAndKnownInvalidOwnerRemainDistinct(t *testing.T) {
 	}
 	registrySource(t, &selection, &raw, ".markitect/registry/removed/registry.yaml", "apiVersion: markitect.registry/v1\nartifacts: []\n", false)
 	result = registryModel(t, selection, raw).PrepareRegistry()
-	if result.Status() != model.Failed || !registryDiagnostic(result.Diagnostics(), "registry.unknown_owner") || !registryDiagnostic(result.Diagnostics(), "registry.source_uncaptured") {
-		t.Fatalf("failure/incompleteness observations collapsed: %+v", result.Diagnostics())
+	if result.Status() != model.NotCompleted || !registryDiagnostic(result.Diagnostics(), "registry.source_uncaptured") || !reflect.DeepEqual(result.Orphaned(), []snapshot.Path{path(t, ".markitect/registry/removed/registry.yaml")}) {
+		t.Fatalf("incompleteness and orphaned shard collapsed: %+v %v", result.Diagnostics(), result.Orphaned())
+	}
+}
+
+// A shard of a Package the model does not have, removed or merged away or
+// never local, is realization still to do, not a registry failure.
+func TestOrphanedShardsAreRealizationNotRegistryFailures(t *testing.T) {
+	for _, name := range []string{".markitect/registry/removed/registry.yaml", ".markitect/registry/software/registry.yaml"} {
+		selection, raw := singleRegistry(t, name, childRegistry)
+		result := registryModel(t, selection, raw).PrepareRegistry()
+		registry, ok := result.Registry()
+		if result.Status() != model.Passed || !ok || len(registry.Entries()) != 1 || !reflect.DeepEqual(result.Orphaned(), []snapshot.Path{path(t, name)}) {
+			t.Fatalf("%s: %s %+v %v", name, result.Status(), result.Diagnostics(), result.Orphaned())
+		}
+	}
+	// The Manager taking the artifact over registers it in its own shard; its
+	// live entry supersedes the orphaned one instead of duplicating it.
+	selection, raw := singleRegistry(t, ".markitect/registry/removed/registry.yaml", childRegistry)
+	registrySource(t, &selection, &raw, ".markitect/registry/lending/registry.yaml", childRegistry, true)
+	result := registryModel(t, selection, raw).PrepareRegistry()
+	registry, ok := result.Registry()
+	entries := registry.Entries()
+	if result.Status() != model.Passed || !ok || len(entries) != 1 {
+		t.Fatalf("a live registration did not supersede the orphaned one: %s %+v", result.Status(), result.Diagnostics())
+	}
+	if name, _ := entries[0].Owner().Package(); name != "lending" {
+		t.Fatal("the orphaned registration superseded the live one", name)
 	}
 }

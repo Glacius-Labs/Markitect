@@ -119,10 +119,13 @@ func TestEmptyLocalPackagesAndExplicitRootAreOwnersButImportsAreNot(t *testing.T
 			t.Fatalf("supplied owner rejected: %+v", report.Findings())
 		}
 	}
+	// A registrant that is no local Package, such as a removed one, orphans its
+	// registrations: stale realization for Root without a declared layout.
 	for _, name := range []string{"foreign", "foreign/empty", "missing"} {
 		report := realization.AccountFiles(checkedFacts(), fileTree(t, "a"), registry(t, registration(t, owner(t, name), artifact(t, "a", borrow))), nil, realization.Layout{})
-		if report.Status() != realization.AccountingInvalid || !reflect.DeepEqual(findingCodes(report), []string{"registry.unknown_owner"}) || len(report.Artifacts(borrow)) != 0 {
-			t.Fatalf("owner %q: %+v", name, report.Findings())
+		stale := report.Stale()
+		if report.Status() != realization.Accounted || len(report.Findings()) != 0 || len(stale) != 1 || stale[0].Code != "registry.orphaned" || !stale[0].Owner.IsRoot() || len(report.Artifacts(borrow)) != 0 {
+			t.Fatalf("owner %q: %+v %+v", name, report.Findings(), stale)
 		}
 	}
 	// An imported Definition can be cited; it does not make its Package an owner.

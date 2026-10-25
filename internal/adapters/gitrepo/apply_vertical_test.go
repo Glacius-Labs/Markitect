@@ -180,6 +180,99 @@ func (s *staleLinkSession) Exchange(ctx context.Context, message run.Message) er
 	return s.controlledManager.Exchange(ctx, message)
 }
 
+const (
+	paymentsShard = ".markitect/registry/payments/registry.yaml"
+	bShard        = "apiVersion: markitect.registry/v1\nartifacts:\n  - path: out/merged/pay.txt\n    form: code\n    realizes: [b/Pay]\n    why: Payment realization taken over after the merge.\n"
+)
+
+// mergedPackage is Phase C's C7 in miniature: the owner merged a Package
+// payments into b, moving its Definition to b/Pay and its area out/merged/ to
+// b, while payments' shard still registers the artifact.
+func mergedPackage(r *testkit.Repo) {
+	r.Write(".markitect/model/b/pay.yaml", "imports: [{package: markitect/core, as: Core}]\nid: Pay\nkind: Core.Kind\nbody: A payment obligation merged into b.\nspec: {}\n")
+	r.Write(".markitect/execution.yaml", "apiVersion: markitect.execution/v2\nownership:\n  - {path: './', owner: .}\n  - {path: out/a.txt, owner: a}\n  - {path: out/accounted.ignored, owner: a}\n  - {path: out/deep.txt, owner: a/deep}\n  - {path: out/merged/, owner: b}\nchecks: []\n")
+	r.Write("out/merged/pay.txt", "payment realization\n")
+	r.Write(paymentsShard, "apiVersion: markitect.registry/v1\nartifacts:\n  - path: out/merged/pay.txt\n    form: code\n    realizes: [payments/pay]\n    why: Realized payments before the merge.\n")
+}
+
+// §6.1, §6.3: a merged Package leaves an orphaned shard. The input starts
+// Apply; the Manager that now owns the artifact's area takes the registration
+// over in its own shard in Implement, Root deletes the orphaned shard, and
+// publication passes.
+func TestApplyRealizesAPackageMergeThroughTheAreaOwnerAndRoot(t *testing.T) {
+	r, prepared, git, _ := runFixture(t, mergedPackage)
+	store, err := runstore.New(git.StateRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var runs []*staleLinkSessions
+	executor := &applyExecutor{t: t, git: git, store: store, noChange: true, wrap: func(mandate run.Mandate, managers *controlledManagers) run.Sessions {
+		managers.realization = func(ctx context.Context, m *controlledManager) error {
+			root := m.spec.Workspace.Location().Directory
+			check, err := m.spec.Tools.Check(ctx)
+			if err != nil {
+				return err
+			}
+			switch m.spec.Manager.Package {
+			case "b":
+				if check.Valid || len(check.Stale) != 1 || !strings.Contains(check.Stale[0], "out/merged/pay.txt") {
+					return fmt.Errorf("b was not handed the orphaned registration: %+v", check)
+				}
+				// b writes only its own shard; its entry supersedes the orphaned one.
+				if err := os.MkdirAll(filepath.Join(root, ".markitect/registry/b"), 0700); err != nil {
+					return err
+				}
+				return os.WriteFile(filepath.Join(root, ".markitect/registry/b/registry.yaml"), []byte(bShard), 0600)
+			case ".":
+				if check.Valid || len(check.Stale) != 1 || !strings.Contains(check.Stale[0], paymentsShard) {
+					return fmt.Errorf("Root was not handed only the orphaned shard: %+v", check)
+				}
+				return os.Remove(filepath.Join(root, filepath.FromSlash(paymentsShard)))
+			}
+			return nil
+		}
+		s := &staleLinkSessions{controlled: managers, mandate: mandate, checks: map[string]run.Check{}}
+		runs = append(runs, s)
+		return s
+	}}
+	command := apply.Command{Executor: executor, Candidates: git, Records: store, Publisher: &Publisher{Repository: adapter(t), Store: git}}
+	request := run.Request{ID: "merged-package", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(4*time.Minute), 200), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
+	report, err := command.Execute(context.Background(), request)
+	if err != nil || report.Status != model.Passed || len(runs) != 3 {
+		t.Fatalf("status=%s error=%v final=%s/%s runs=%d", report.Status, err, report.Workflow.Final.Technical, report.Workflow.Final.Decision, len(runs))
+	}
+	// Each Manager's first check: b owes the registration, Root it and the shard.
+	owes := map[string]int{".": 2, "a": 0, "a/deep": 0, "b": 1, "b/empty": 0}
+	for i, mandate := range []run.Mandate{run.Assessment, run.Implement, run.Verify} {
+		for manager, n := range owes {
+			check := runs[i].checks[manager]
+			switch {
+			case mandate == run.Assessment && (!check.Valid || len(check.Stale) != n):
+				t.Fatalf("Assessment check of %s does not report the merge as work: %+v", manager, check)
+			case mandate == run.Implement && (check.Valid != (n == 0) || len(check.Stale) != n):
+				t.Fatalf("Implement check of %s is not held to its own responsibility: %+v", manager, check)
+			case mandate == run.Verify && (!check.Valid || len(check.Stale) != 0):
+				t.Fatalf("Verify check of %s still sees orphaned registry state: %+v", manager, check)
+			}
+		}
+	}
+	if report.Publication == nil || !report.Publication.Readback {
+		t.Fatalf("publication=%+v", report.Publication)
+	}
+	if paths := slices.Sorted(slices.Values(report.Publication.CompletedPaths)); !reflect.DeepEqual(paths, []string{".markitect/registry/b/registry.yaml", paymentsShard}) {
+		t.Fatal("publication did not move exactly the registration", paths)
+	}
+	if _, err := os.Stat(filepath.Join(r.Dir, filepath.FromSlash(paymentsShard))); !os.IsNotExist(err) {
+		t.Fatal("orphaned shard survived publication", err)
+	}
+	if data, err := os.ReadFile(filepath.Join(r.Dir, ".markitect/registry/b/registry.yaml")); err != nil || string(data) != bShard {
+		t.Fatal("the area owner's registration was not published", string(data), err)
+	}
+	if data, err := os.ReadFile(filepath.Join(r.Dir, "out/merged/pay.txt")); err != nil || string(data) != "payment realization\n" {
+		t.Fatal("the merged artifact changed", string(data), err)
+	}
+}
+
 // §6.3: deleting a Definition leaves a stale registry link, which is
 // realization, not a model error. The input starts Apply; Assessment sees the
 // link and approves; in Implement only the shard owner's subtree and Root are
@@ -198,7 +291,7 @@ func TestApplyRealizesADeletedDefinitionThroughTheShardOwner(t *testing.T) {
 		return s
 	}}
 	command := apply.Command{Executor: executor, Candidates: git, Records: store, Publisher: &Publisher{Repository: adapter(t), Store: git}}
-	request := run.Request{ID: "deleted-definition", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(2*time.Minute), 200), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
+	request := run.Request{ID: "deleted-definition", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(4*time.Minute), 200), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
 	report, err := command.Execute(context.Background(), request)
 	if err != nil || report.Status != model.Passed || len(runs) != 3 {
 		t.Fatalf("status=%s error=%v final=%s/%s runs=%d", report.Status, err, report.Workflow.Final.Technical, report.Workflow.Final.Decision, len(runs))
