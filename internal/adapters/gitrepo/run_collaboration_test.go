@@ -720,6 +720,63 @@ func TestCommunicationOnlyResponseIsContinuedNotEnded(t *testing.T) {
 	}
 }
 
+// A child builds in its copy and submits with the build output still there,
+// and its parent builds in its own copy before integrating. Neither output
+// enters a handoff, an integration or the candidate, so the child's first
+// submission passes its check and is accepted. An unaccounted product file
+// still fails it (TestInvalidChildCandidateReachesParentAndIsCorrected).
+func TestBuildOutputsNeverReachHandoffsOrTheCandidate(t *testing.T) {
+	elf := "\x7fELF\x02\x01\x01\x00go build output"
+	c := &collaboration{}
+	c.script = func(ctx context.Context, m *collaborator, message run.Message) (bool, error) {
+		if len(message.Events) == 0 || message.Events[0].Assignment == nil {
+			return false, nil
+		}
+		switch m.spec.Manager.Package {
+		case "a":
+			return false, m.write("out/a-tool", elf)
+		case "a/deep":
+			if err := m.handle(ctx, message.Events[0]); err != nil {
+				return true, err
+			}
+			for _, file := range [][2]string{{"out/deep.txt", "built\n"}, {"out/deep-tool", elf}} {
+				if err := m.write(file[0], file[1]); err != nil {
+					return true, err
+				}
+			}
+			if err := m.judge(ctx, run.Submitted, nil); err != nil {
+				return true, err
+			}
+			status, err := localCommand(ctx, m.spec.Workspace.Location().Directory, nil, "status", "--porcelain", "--untracked-files=all")
+			if err == nil && status != "?? out/deep-tool" {
+				err = fmt.Errorf("build output left the child's copy or became tracked: %q", status)
+			}
+			return true, err
+		}
+		return false, nil
+	}
+	result := c.execute(t, "build-outputs", run.Implement)
+	deep, a := c.manager("a/deep"), c.manager("a")
+	if result.Decision != run.Submitted || len(deep.tasks) != 1 || deep.judgments != 1 || len(a.handoffs) != 1 || len(a.refusals) != 0 {
+		t.Fatal("build output caused a correction", result.Decision, len(deep.tasks), deep.judgments, len(a.handoffs), a.refusals)
+	}
+	if h := a.handoffs[0]; h.Check == nil || !h.Check.Valid || strings.Contains(h.Diff, "deep-tool") || !strings.Contains(h.Diff, "+built") {
+		t.Fatal("child handoff carried its build output or lost its change", h.Check, h.Diff)
+	}
+	if c.read(t, "out/deep.txt") != "built\n" {
+		t.Fatal("accepted child change lost")
+	}
+	for _, name := range []string{"out/deep-tool", "out/a-tool"} {
+		if _, err := os.Stat(filepath.Join(c.candidate, filepath.FromSlash(name))); !os.IsNotExist(err) {
+			t.Fatal("build output reached the candidate", name, err)
+		}
+	}
+	history, err := localCommand(context.Background(), c.candidate, nil, "rev-list", "--objects", "--all")
+	if err != nil || strings.Contains(history, "-tool") {
+		t.Fatal("build output reached the candidate's history", err)
+	}
+}
+
 // Continued responses that do nothing at all do not loop: no tool call, no
 // native execution and no working-state change. The Run ends technically
 // incomplete with a diagnostic naming the Manager.

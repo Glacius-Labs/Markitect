@@ -576,7 +576,7 @@ func TestRefusalNextStepsFollowTheState(t *testing.T) {
 	x.request.Input.Commit, x.request.Input.Tree = "input", "input-tree"
 	accepted(a, "a")
 	root.a.phase, root.a.version = active, 1
-	x.rootCheck = &Check{Commit: Commit{ID: "input", Tree: "input-tree"}, Diagnostic: "file.unexplained"}
+	root.checked = &Check{Commit: Commit{ID: "input", Tree: "input-tree"}, Diagnostic: "file.unexplained"}
 	if err := x.tools(root).Judge(context.Background(), Approve, nil); err == nil || err.Error() != "the fixed input candidate input fails its check: file.unexplained; judge reject or model_blocker with Findings" {
 		t.Fatal(err)
 	}
