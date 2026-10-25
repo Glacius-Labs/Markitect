@@ -282,4 +282,4 @@ O's case digests per step (`cases_sha256` of the pass 3 reports): W0 `a398fe76a1
 | O | `19006e527a35dad73414c0ce286dc0f55d85d3d3` (#716) | **Ready** | V2-N2 and the C9 census item stay as in section 4. Untested by R's own text: level 101 and deeper; unreachable: 20- and 21-character identifiers, 2^53. |
 | I | `d19c8653ce4efbbf19b9eab32494ff03b32107b0` (#714) | **Ready** | V3-N1 (two decided points still listed as readings). |
 
-The materials freeze is the Main commit that merges these three heads; the coordinator records it. Calibration passes 1 and 2 stay historical: they certify input version 1 only.
+The coordinator merged the three heads unchanged, one at a time: #719 as `25758807`, #716 as `aeeea8a6` and #714 as `4840fb20`; each merge's second parent is the reviewed head. **Materials freeze v2 = `4840fb20f52c1e0e0367e909d833919ca8a215c6`** (tree `b53319d17c5c8592ad74bf941d3cd78663000ae7`). This record was merged on top of it by #720 (`ccc01288`). Calibration passes 1 and 2 stay historical: they certify input version 1 only.
