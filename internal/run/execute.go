@@ -20,6 +20,7 @@ type managerState struct {
 	copy    Copy
 	session Session
 	git     sync.Mutex // serializes Git operations that write this Manager's copy
+	checks  sync.Mutex // serializes this Manager's checks, so a state is checked once
 	// Guarded by execution.mu.
 	a            assignment
 	running      bool // a driver owns this Session's messages
@@ -388,6 +389,8 @@ func (x *execution) tools(s *managerState) Tools {
 // state keeps its check result, whichever of the check tool, a judgment or a
 // handoff asks for it; only a new state is checked again.
 func (x *execution) check(ctx context.Context, s *managerState, fixed Commit) (*Check, error) {
+	s.checks.Lock()
+	defer s.checks.Unlock()
 	x.mu.Lock()
 	last := s.checked
 	x.mu.Unlock()

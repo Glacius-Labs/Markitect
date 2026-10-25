@@ -82,7 +82,7 @@ func localCommand(ctx context.Context, dir string, input []byte, args ...string)
 	if err := boundedCommandError(cmd.Run(), out, stderr); err != nil {
 		return "", fmt.Errorf("local Git %s: %w: %s", args[0], err, stderr.String())
 	}
-	if args[0] == "ls-tree" || args[0] == "diff" {
+	if args[0] == "ls-tree" || args[0] == "diff" || args[0] == "ls-files" {
 		return out.String(), nil
 	}
 	return strings.TrimSpace(out.String()), nil
@@ -452,6 +452,47 @@ var elfMagic = []byte{0x7f, 'E', 'L', 'F'}
 // only their first bytes and follows no symlink; a vanished path is skipped.
 type elfProbe func(context.Context, []string) ([]string, error)
 
+// untrackedOutputs lists every untracked ELF file of a copy. Such build
+// outputs are operational state: they never enter a fixed commit.
+func untrackedOutputs(ctx context.Context, dir string, command gitCommand, executables elfProbe) ([]string, error) {
+	untracked, err := command(ctx, dir, nil, "ls-files", "--others", "-z")
+	if err != nil {
+		return nil, err
+	}
+	return executables(ctx, strings.FieldsFunc(untracked, func(r rune) bool { return r == 0 }))
+}
+
+// clearOutputs removes the untracked build outputs that a merge of incoming
+// would overwrite: at a path the commit holds, where it holds a directory, or
+// below a file it holds. Git refuses such a merge outright instead of
+// reporting a repairable conflict; the outputs are disposable.
+func clearOutputs(ctx context.Context, dir, incoming string, command gitCommand, executables elfProbe) error {
+	outputs, err := untrackedOutputs(ctx, dir, command, executables)
+	if err != nil || len(outputs) == 0 {
+		return err
+	}
+	listing, err := command(ctx, dir, nil, "ls-tree", "-r", "-t", "-z", incoming)
+	if err != nil {
+		return err
+	}
+	entries := strings.Split(listing, "\x00")
+	var needed []string
+	for _, p := range outputs {
+		for _, entry := range entries {
+			meta, name, _ := strings.Cut(entry, "\t")
+			if name == p || strings.HasPrefix(name, p+"/") || strings.HasPrefix(p, name+"/") && !strings.Contains(meta, " tree ") {
+				needed = append(needed, p)
+				break
+			}
+		}
+	}
+	if len(needed) == 0 {
+		return nil
+	}
+	_, err = command(ctx, dir, nil, append([]string{"clean", "--force", "-x", "--quiet", "--"}, needed...)...)
+	return err
+}
+
 func localExecutables(location string) elfProbe {
 	return func(_ context.Context, paths []string) ([]string, error) {
 		var found []string
@@ -554,14 +595,9 @@ func snapshotGit(ctx context.Context, dir string, command gitCommand, dirs []str
 			return run.Commit{}, err
 		}
 	}
-	// ELF files that a Manager's own build leaves untracked in its copy are
-	// operational state, not product: they stay untracked in the copy and never
-	// enter a fixed candidate. Everything else, Gitignored or not, is captured.
-	untracked, err := command(ctx, dir, nil, "ls-files", "--others", "-z")
-	if err != nil {
-		return run.Commit{}, err
-	}
-	outputs, err := executables(ctx, strings.FieldsFunc(untracked, func(r rune) bool { return r == 0 }))
+	// Untracked ELF files, such as a Manager's own build outputs, stay untracked
+	// in the copy. Everything else, Gitignored or not, is captured.
+	outputs, err := untrackedOutputs(ctx, dir, command, executables)
 	if err != nil {
 		return run.Commit{}, err
 	}
@@ -771,6 +807,9 @@ func integrateGit(ctx context.Context, directory, source string, fixed run.Commi
 	if err != nil {
 		return run.Commit{}, err
 	}
+	if err = clearOutputs(ctx, directory, fixed.ID, command, executables); err != nil {
+		return run.Commit{}, err
+	}
 	// The snapshot leaves only the parent's own build outputs untracked.
 	untracked, err := command(ctx, directory, nil, "ls-files", "--others", "-z")
 	if err != nil {
@@ -886,6 +925,9 @@ func (c *localCopy) Update(ctx context.Context, source run.Copy, base run.Commit
 		return fmt.Errorf("parent base unavailable")
 	}
 	if _, err = localCommand(ctx, c.location, nil, "fetch", "--quiet", "--no-tags", parent.location, base.ID); err != nil {
+		return err
+	}
+	if err = clearOutputs(ctx, c.location, base.ID, localCommand, localExecutables(c.location)); err != nil {
 		return err
 	}
 	if _, err = localCommand(ctx, c.location, nil, "merge", "--no-edit", base.ID); err != nil {

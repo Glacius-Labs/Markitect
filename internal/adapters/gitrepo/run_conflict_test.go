@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -232,7 +233,7 @@ func TestResolvedMergeKeepsBothParentsWhenTreeMatchesChildHead(t *testing.T) {
 }
 
 func TestIntegrationTechnicalFailureNeverBecomesRepairableConflict(t *testing.T) {
-	for _, stage := range []string{"fetch", "abort", "readback"} {
+	for _, stage := range []string{"fetch", "abort", "readback", "residue"} {
 		t.Run(stage, func(t *testing.T) {
 			r := testkit.NewRepo(t)
 			r.Write("same.txt", "base\n")
@@ -253,10 +254,19 @@ func TestIntegrationTechnicalFailureNeverBecomesRepairableConflict(t *testing.T)
 				if stage == "fetch" && args[0] == "fetch" || stage == "abort" && args[0] == "merge" && len(args) > 1 && args[1] == "--abort" || stage == "readback" && args[0] == "diff" && len(args) > 1 && args[1] == "--quiet" {
 					return "", injected
 				}
-				return localCommand(ctx, dir, input, args...)
+				out, err := localCommand(ctx, dir, input, args...)
+				if stage == "residue" && err == nil && args[0] == "merge" && len(args) > 1 && args[1] == "--abort" {
+					// Untracked files the parent did not have before the merge
+					// are residue, even next to its own build outputs.
+					err = os.WriteFile(filepath.Join(dir, "residue.txt"), []byte("left by the failed merge\n"), 0600)
+				}
+				return out, err
+			}
+			if stage == "residue" {
+				r.Write("parent-tool", "\x7fELF\x02\x01\x01\x00parent build output")
 			}
 			_, err = integrateGit(ctx, r.Dir, r.Dir, child, command, func(context.Context) ([]string, error) { return nil, nil }, localExecutables(r.Dir))
-			if !errors.Is(err, injected) || errors.Is(err, run.ErrMergeConflict) {
+			if errors.Is(err, run.ErrMergeConflict) || stage != "residue" && !errors.Is(err, injected) || stage == "residue" && (err == nil || !strings.Contains(err.Error(), "parent restoration changed untracked files")) {
 				t.Fatal("technical failure became repairable", err)
 			}
 		})
@@ -288,6 +298,73 @@ func TestIntegrationConflictKeepsParentBuildOutput(t *testing.T) {
 	if status := r.Git("status", "--porcelain", "--untracked-files=all"); status != "?? parent-tool" {
 		t.Fatalf("restored parent lost or captured its build output: %q", status)
 	}
+}
+
+// A merge into a copy first removes exactly the untracked build outputs it
+// would overwrite, so a clash with an incoming directory or tracked file stays
+// an ordinary merge instead of a refused one. Other build outputs stay.
+func TestMergesClearOnlyCollidingBuildOutputs(t *testing.T) {
+	elf := "\x7fELF\x02\x01\x01\x00build output"
+	ctx := context.Background()
+	noDirectories := func(context.Context) ([]string, error) { return nil, nil }
+	for _, incoming := range []string{"directory", "file"} {
+		t.Run("integrate "+incoming, func(t *testing.T) {
+			r := testkit.NewRepo(t)
+			r.Write("base.txt", "base\n")
+			r.Commit("base")
+			r.Git("checkout", "-b", "child")
+			if incoming == "directory" {
+				r.Write("tool/main.go", "package main\n")
+			} else {
+				r.Write("tool", elf+" committed")
+			}
+			r.Commit("child")
+			child, err := object(ctx, r.Dir, "HEAD")
+			if err != nil {
+				t.Fatal(err)
+			}
+			r.Git("checkout", "-b", "parent", "HEAD~1")
+			r.Write("tool", elf)
+			r.Write("keep", elf)
+			if _, err = integrateGit(ctx, r.Dir, r.Dir, child, localCommand, noDirectories, localExecutables(r.Dir)); err != nil {
+				t.Fatal("colliding build output refused the integration", err)
+			}
+			want := "package main\n"
+			if incoming == "file" {
+				want = elf + " committed"
+			}
+			name := map[string]string{"directory": "tool/main.go", "file": "tool"}[incoming]
+			if data, err := os.ReadFile(filepath.Join(r.Dir, name)); err != nil || string(data) != want {
+				t.Fatal("integrated child content lost", err)
+			}
+			if status := r.Git("status", "--porcelain", "--untracked-files=all"); status != "?? keep" {
+				t.Fatalf("other build output was not kept untracked: %q", status)
+			}
+		})
+	}
+	t.Run("update", func(t *testing.T) {
+		if _, err := exec.LookPath("node"); err != nil {
+			t.Skip("the Linux probe runs Node, which this host lacks")
+		}
+		parent := testkit.NewRepo(t)
+		parent.Write("base.txt", "base\n")
+		base := parent.Commit("base")
+		child := testkit.NewRepo(t)
+		child.Git("fetch", "--quiet", parent.Dir, base)
+		child.Git("checkout", "--quiet", "--detach", base)
+		child.Write("tool", elf)
+		child.Write("keep", elf)
+		parent.Write("tool/main.go", "package main\n")
+		baseline := run.Commit{ID: parent.Commit("parent baseline")}
+		baseline.Tree = parent.Git("rev-parse", "HEAD^{tree}")
+		s := &linuxService{exec: hostLinuxTools{}}
+		if err := (&linuxCopy{service: s, directory: child.Dir}).Update(ctx, &linuxCopy{service: s, directory: parent.Dir}, baseline); err != nil {
+			t.Fatal("colliding build output refused the baseline update", err)
+		}
+		if child.Git("rev-parse", "HEAD") != baseline.ID || child.Git("status", "--porcelain", "--untracked-files=all") != "?? keep" {
+			t.Fatal("update lost the baseline or the other build output")
+		}
+	})
 }
 
 type technicalWorkspaces struct {

@@ -146,7 +146,7 @@ func (s *linuxService) command(ctx context.Context, dir string, input []byte, ar
 	if out.limitExceeded {
 		return "", fmt.Errorf("Git output exceeds finite bound")
 	}
-	if args[0] == "ls-tree" || args[0] == "diff" {
+	if args[0] == "ls-tree" || args[0] == "diff" || args[0] == "ls-files" {
 		return out.String(), nil
 	}
 	return strings.TrimSpace(out.String()), nil
@@ -302,6 +302,9 @@ func (c *linuxCopy) Update(ctx context.Context, source run.Copy, base run.Commit
 		return fmt.Errorf("fixed parent identity unavailable")
 	}
 	if _, err = c.service.command(ctx, c.directory, nil, "fetch", "--quiet", "--no-tags", parent.directory, base.ID); err != nil {
+		return err
+	}
+	if err = clearOutputs(ctx, c.directory, base.ID, c.service.command, c.executables); err != nil {
 		return err
 	}
 	if _, err = c.service.command(ctx, c.directory, nil, "merge", "--no-edit", base.ID); err != nil {
