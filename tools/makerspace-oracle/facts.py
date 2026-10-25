@@ -45,6 +45,8 @@ VOIDED = {
     "otherwise `expired` when the date of the request time is on or after `expiresOn`, otherwise `valid`": "C5",
     "If the member already has a certification for that family, whether valid, expired or revoked, it is replaced by the newly issued one.": "C5",
     "An expired certification can be revoked.": "C5",
+    "A certification whose `expiresOn` lies after 2099 is never reported `expired`.": "C5",
+    "an `expiresOn` of `2100-12-31` (365 days after `2099-12-31`)": "C5",
     "Sunday has no opening period.": "C7",
     "the slot `17:30`–`18:00` is inside opening hours and `17:30`–`18:30` is not": "C7",
     "or `null` on Sunday": "C7",
