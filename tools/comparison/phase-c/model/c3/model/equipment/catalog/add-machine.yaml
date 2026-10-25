@@ -6,7 +6,7 @@ imports:
 id: add-machine
 kind: Software.UseCase
 body: |-
-  Operation `addMachine`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+  Operation `addMachine`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
 
   Mutation.
 

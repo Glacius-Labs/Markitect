@@ -6,7 +6,7 @@ imports:
 id: cancel-reservation
 kind: Software.UseCase
 body: |-
-  Operation `cancelReservation`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+  Operation `cancelReservation`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
 
   Mutation.
 

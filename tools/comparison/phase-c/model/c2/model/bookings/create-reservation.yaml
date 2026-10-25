@@ -8,7 +8,7 @@ imports:
 id: create-reservation
 kind: Software.UseCase
 body: |-
-  Operation `createReservation`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+  Operation `createReservation`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
 
   Mutation.
 

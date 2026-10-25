@@ -12,7 +12,7 @@ imports:
 id: get-machine-schedule
 kind: Software.UseCase
 body: |-
-  Operation `getMachineSchedule`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+  Operation `getMachineSchedule`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
 
   Read. Shows one machine's day.
 

@@ -312,7 +312,7 @@ In the target column, a name is the value of that argument or new identifier; `a
 
 #### `listAuditEntries`
 
-Operation `listAuditEntries`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `listAuditEntries`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Read. Arguments: none besides `actor` and `at`. Result: `entries`, all [audit entries](#audit) in `seq` order.
 
@@ -412,7 +412,7 @@ The registry holds every user: the [initial admin](#initial-state-and-generated-
 
 #### `registerUser`
 
-Operation `registerUser`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `registerUser`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Mutation. Registers a staff member, an admin or a steward.
 
@@ -423,7 +423,7 @@ Mutation. Registers a staff member, an admin or a steward.
 
 #### `registerMember`
 
-Operation `registerMember`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `registerMember`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Mutation. Registers a member with a [membership](#memberships).
 
@@ -434,7 +434,7 @@ Mutation. Registers a member with a [membership](#memberships).
 
 #### `getMember`
 
-Operation `getMember`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `getMember`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Read. Arguments: `memberId` (identifier, an existing [member](#memberships)). Result: `member`.
 
@@ -456,7 +456,7 @@ A member is **in good standing** when the standing is `good`. A suspended member
 
 #### `changeTier`
 
-Operation `changeTier`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `changeTier`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Mutation. Changes a member's tier.
 
@@ -466,7 +466,7 @@ Mutation. Changes a member's tier.
 
 #### `setMemberStanding`
 
-Operation `setMemberStanding`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `setMemberStanding`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Mutation. Suspends or reinstates a member.
 
@@ -484,7 +484,7 @@ The course's `enrolledCount` is the number of its enrollments with status `enrol
 
 #### `addCourse`
 
-Operation `addCourse`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `addCourse`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Mutation.
 
@@ -495,7 +495,7 @@ Mutation.
 
 #### `enrollInCourse`
 
-Operation `enrollInCourse`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `enrollInCourse`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Mutation. Enrolls a member in a [course](#courses-and-enrollments).
 
@@ -506,7 +506,7 @@ Mutation. Enrolls a member in a [course](#courses-and-enrollments).
 
 #### `completeCourse`
 
-Operation `completeCourse`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `completeCourse`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Mutation. Records that a member completed a [course](#courses-and-enrollments) and certifies the member.
 
@@ -523,7 +523,7 @@ A certification is **valid on date D** when it is not revoked and `issuedOn ≤ 
 
 #### `revokeCertification`
 
-Operation `revokeCertification`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `revokeCertification`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Mutation. Withdraws a member's [certification](#certifications), for example after a safety incident.
 
@@ -534,7 +534,7 @@ Mutation. Withdraws a member's [certification](#certifications), for example aft
 
 #### `listCertifications`
 
-Operation `listCertifications`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `listCertifications`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Read. Arguments: `memberId` (identifier, an existing member). Result: `memberId` and `certifications`, all of the member's [certifications](#certifications), including revoked ones.
 
@@ -546,7 +546,7 @@ The catalog holds tool families and machines. Each machine belongs to one family
 
 #### `addFamily`
 
-Operation `addFamily`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `addFamily`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Mutation.
 
@@ -556,7 +556,7 @@ Mutation.
 
 #### `addMachine`
 
-Operation `addMachine`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `addMachine`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Mutation.
 
@@ -566,7 +566,7 @@ Mutation.
 
 #### `setMachineRate`
 
-Operation `setMachineRate`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `setMachineRate`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Mutation.
 
@@ -576,7 +576,7 @@ Mutation.
 
 #### `listMachines`
 
-Operation `listMachines`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `listMachines`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Read. Arguments: none besides `actor` and `at`. Result: `machines`, all [machines](#catalog).
 
@@ -586,18 +586,18 @@ A maintenance window takes a [machine](#catalog) out of service for an interval 
 
 #### `scheduleMaintenance`
 
-Operation `scheduleMaintenance`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `scheduleMaintenance`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Mutation.
 
 - Arguments: `machineId` (identifier, an existing machine), `start` (timestamp), `end` (timestamp), `reason` (text).
-- Refusals, in this order: `invalid_interval` when `end` is not after `start`; `starts_in_past` when `start` is before the request time; `reservation_conflict` when the window overlaps an active reservation of the machine (status `reserved` or `checkedIn`, [reservations](#reservations)).
+- Refusals, in this order: `invalid_interval` when `end` is not after `start`; `starts_in_past` when `start` is before the request time; `reservation_conflict` when the window [overlaps](#time) an active reservation of the machine (status `reserved` or `checkedIn`, [reservations](#reservations)).
 - Effect: creates the [window](#maintenance) with status `scheduled`.
 - Result: `window`.
 
 #### `cancelMaintenance`
 
-Operation `cancelMaintenance`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `cancelMaintenance`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Mutation.
 
@@ -630,7 +630,7 @@ A reservation is **active** when its reported status is `reserved` or `checkedIn
 
 #### `createReservation`
 
-Operation `createReservation`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `createReservation`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Mutation.
 
@@ -654,7 +654,7 @@ Examples: on Sunday `2026-03-08`, `12:00`–`12:15` is accepted and `11:45`–`1
 
 #### `cancelReservation`
 
-Operation `cancelReservation`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `cancelReservation`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Mutation.
 
@@ -665,13 +665,13 @@ Mutation.
 
 #### `listMemberReservations`
 
-Operation `listMemberReservations`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `listMemberReservations`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Read. Arguments: `memberId` (identifier, an existing member). Result: `memberId` and `reservations`, all of the member's [reservations](#reservations) in every status.
 
 #### `getMachineSchedule`
 
-Operation `getMachineSchedule`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `getMachineSchedule`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Read. Shows one machine's day.
 
@@ -684,7 +684,7 @@ The member [checks in](#checkin) when starting to use the machine and [checks ou
 
 #### `checkIn`
 
-Operation `checkIn`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `checkIn`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Mutation.
 
@@ -695,7 +695,7 @@ Mutation.
 
 #### `checkOut`
 
-Operation `checkOut`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `checkOut`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Mutation.
 
@@ -734,7 +734,7 @@ Examples, with the formula `(quantity × unitPriceCents × (100 − discountPerc
 
 ### `addMaterial`
 
-Operation `addMaterial`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `addMaterial`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Mutation.
 
@@ -745,7 +745,7 @@ Mutation.
 
 ### `restockMaterial`
 
-Operation `restockMaterial`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `restockMaterial`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Mutation.
 
@@ -755,7 +755,7 @@ Mutation.
 
 ### `purchaseMaterial`
 
-Operation `purchaseMaterial`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `purchaseMaterial`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Mutation. Sells material to a member.
 
@@ -766,7 +766,7 @@ Mutation. Sells material to a member.
 
 ### `listMaterials`
 
-Operation `listMaterials`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `listMaterials`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Read. Arguments: none besides `actor` and `at`. Result: `materials`, all [materials](#materials).
 
@@ -816,7 +816,7 @@ Each member has a [credit balance](#credit-balance), initially 0. It increases b
 
 #### `generateInvoices`
 
-Operation `generateInvoices`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `generateInvoices`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Mutation.
 
@@ -827,13 +827,13 @@ Mutation.
 
 #### `listInvoices`
 
-Operation `listInvoices`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `listInvoices`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Read. Arguments: `memberId` (identifier, an existing member). Result: `memberId` and `invoices`, all of the member's [invoices](#invoices).
 
 #### `recordPayment`
 
-Operation `recordPayment`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `recordPayment`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Mutation.
 
@@ -844,7 +844,7 @@ Mutation.
 
 #### `issueCredit`
 
-Operation `issueCredit`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `issueCredit`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Mutation.
 
@@ -854,7 +854,7 @@ Mutation.
 
 #### `getAccount`
 
-Operation `getAccount`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `getAccount`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Read. Arguments: `memberId` (identifier, an existing member). Result: `account`, where:
 
@@ -866,11 +866,11 @@ Read. Arguments: `memberId` (identifier, an existing member). Result: `account`,
 
 ## Safety
 
-Staff record safety incidents against [machines](#catalog). An incident itself still blocks nothing; only its [lockouts](#lockouts) do.
+Staff record safety incidents against [machines](#catalog). An incident itself blocks nothing; only its [lockouts](#lockouts) do.
 
 ### `reportIncident`
 
-Operation `reportIncident`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `reportIncident`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Mutation.
 
@@ -880,7 +880,7 @@ Mutation.
 
 ### `resolveIncident`
 
-Operation `resolveIncident`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `resolveIncident`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Mutation.
 
@@ -891,7 +891,7 @@ Mutation.
 
 ### `listIncidents`
 
-Operation `listIncidents`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `listIncidents`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Read. Arguments: none besides `actor` and `at`. Result: `incidents`, all [incidents](#safety).
 
@@ -905,7 +905,7 @@ A lockout never interrupts a checked-in session: a session already checked in wh
 
 #### `lockMachine`
 
-Operation `lockMachine`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `lockMachine`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Mutation. Locks the machine of an open incident.
 
@@ -913,7 +913,7 @@ Mutation. Locks the machine of an open incident.
 - Refusals, in this order: `invalid_state` when the [incident](#safety) is resolved; `invalid_interval` when `end` is not after `start`; `starts_in_past` when `start` is before the request time.
 - Effect:
   1. A [lockout](#lockouts) is created for the incident's machine.
-  2. Every [reservation](#reservations) of that machine whose reported status is `reserved` and whose interval overlaps the lockout becomes `cancelled`. These are the reservations of the window that are not yet used: not checked in and not missed. This includes a reservation whose start has already passed but which is not yet checked in and not yet missed. Reservations that are checked in, completed, missed or already cancelled are not changed.
+  2. Every [reservation](#reservations) of that machine whose reported status is `reserved` and whose interval [overlaps](#time) the lockout becomes `cancelled`. These are the reservations of the window that are not yet used: not checked in and not missed. This includes a reservation whose start has already passed but which is not yet checked in and not yet missed. Reservations that are checked in, completed, missed or already cancelled are not changed.
   3. For each reservation cancelled this way, the reservation's member receives a lockout credit of 1000 cents: the member's [credit balance](#credit-balance) increases by 1000. This happens whatever the member's standing.
 - Result: `lockout` and `cancelledReservations`, the reservations cancelled by this request (after the change), in creation order.
 
@@ -927,7 +927,7 @@ Reports are read-only and are calculated from the current state at the [request 
 
 ### `utilizationReport`
 
-Operation `utilizationReport`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `utilizationReport`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Read. Shows how much each [machine](#catalog) was used compared with the time it was available.
 
@@ -944,7 +944,7 @@ Read. Shows how much each [machine](#catalog) was used compared with the time it
 
 ### `revenueReport`
 
-Operation `revenueReport`. [Request processing](#order-of-checks) and [delivery](#delivery) apply.
+Operation `revenueReport`. [Request processing](#order-of-checks), [results](#records-in-responses) and [delivery](#delivery) apply.
 
 Read. Summarizes billing for one month.
 

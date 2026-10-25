@@ -6,5 +6,5 @@ imports:
 id: incident
 kind: Software.Concept
 body: |-
-  Staff record safety incidents against [[Catalog.catalog|machines]]. An incident itself still blocks nothing; only its [[lockout|lockouts]] do.
+  Staff record safety incidents against [[Catalog.catalog|machines]]. An incident itself blocks nothing; only its [[lockout|lockouts]] do.
 spec: {}

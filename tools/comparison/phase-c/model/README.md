@@ -25,25 +25,25 @@ Every local Package has a Manager, including the empty intermediate ones, and Ro
 
 | Step | Definitions | Operations | Packages | Managers | Canonical model digest |
 | --- | --- | --- | --- | --- | --- |
-| w0 | 75 | 37 | 20 | 21 | `sha256:ae65df902f01047c7fd2edb5fa23e2e750034de9a67746527a65346a8a1e0173` |
-| c1 | 75 | 37 | 20 | 21 | `sha256:502965d0df7af55c8fe3fa228427d2d8186607aa03ae6bf061641ccee5fa29d6` |
-| c2 | 77 | 38 | 20 | 21 | `sha256:05e964fd962e2a3d4446f6f7541a2be8a0250a4ef62b54d6758b5ce11d2e3b4e` |
-| c3 | 78 | 38 | 20 | 21 | `sha256:0a387d122c123a849e3deb6368a50e65117c4ba8fc1839116edae9c87d6479ee` |
-| c4 | 78 | 38 | 20 | 21 | `sha256:cda3bfabcbdad71e7578c541bdc66b646e8ae0cf9ea08158bf765d4cb6c9e725` |
-| c5 | 79 | 38 | 20 | 21 | `sha256:4ee96737ad4e3388186c0dc129488ea6aaf70201e887fa83ed1eae7f11ca95c6` |
-| c6 | 79 | 38 | 20 | 21 | `sha256:e85d05c9f65e1040176090ae7a8a90316a89f9b8614af934067c7391a12abe90` |
-| c7 | 79 | 38 | 19 | 20 | `sha256:738584fbe33a3a158ae05558263b3e14dd822cfe1680bcfc6688a31f39c89828` |
-| c8 | 79 | 38 | 19 | 20 | `sha256:833beece8949ced69a9fcaf45464e4f7a82c690b2cf6960ad2604871b4c6a99a` |
-| c9 | 79 | 38 | 19 | 20 | `sha256:833beece8949ced69a9fcaf45464e4f7a82c690b2cf6960ad2604871b4c6a99a` |
+| w0 | 75 | 37 | 20 | 21 | `sha256:08187407dd8a775355fc6986d7f3403037b6fbeb4ed2cf52c506ce0056b3a1e1` |
+| c1 | 75 | 37 | 20 | 21 | `sha256:e78a32ad243098ec80eb679b0b343fd6be08ae3b73a9cad54b3216a6d71a3f88` |
+| c2 | 77 | 38 | 20 | 21 | `sha256:e614543d665b27b08de262288f15c52316a5740afeb4dd512ecd4ae0f961d7e5` |
+| c3 | 78 | 38 | 20 | 21 | `sha256:5b18ab4736e8dde0fde31d88361d152de367bc8e8067675f575eaff55d117f09` |
+| c4 | 78 | 38 | 20 | 21 | `sha256:e051ade25c07a7e88adb0ae60949ff11326c2e255c52a538f4cb9e7a8c719590` |
+| c5 | 79 | 38 | 20 | 21 | `sha256:2ef85cdac6b6cf2df6e16745f1b4c76ef36e7883e9769308836389b1b68fbe1a` |
+| c6 | 79 | 38 | 20 | 21 | `sha256:92679189d5ab9146636e75905f38315677202b80ce13f71c03b550c7654b2275` |
+| c7 | 79 | 38 | 19 | 20 | `sha256:21ea3d12b4fa3ae6988a292e1c42ebd80135c92492500c71ff3878601361a0cd` |
+| c8 | 79 | 38 | 19 | 20 | `sha256:33cd40acaf29ae2f4dec099d9d4bfc2642549b4d0e41befc792ce440fab9de34` |
+| c9 | 79 | 38 | 19 | 20 | `sha256:33cd40acaf29ae2f4dec099d9d4bfc2642549b4d0e41befc792ce440fab9de34` |
 
-C7 removes `billing/payments`: its four Definitions move to `billing/invoices` with unchanged local IDs, so their identities and every link to them change. C9 is byte-identical to C8.
+C7 removes `billing/payments`: its four Definitions move to `billing/invoices` with unchanged local IDs, so their identities and every link to them change. The empty `billing` Package stays as the parent of `billing/invoices`; flattening billing into one `billing` Package would also change the identities of the five invoice Definitions, so the fold keeps the restructure to the four moved ones. C9 is byte-identical to C8.
 
 ## How the text became Definitions
 
 - **Bodies keep the neutral wording.** One Definition per neutral subsection, record table, rule or operation. Section references became body links. The five phrases that name the document ("of this document", "in this document", "agree with this document") read "the model" here; the renderer substitutes them back. Numbers stay in prose: there are no typed policy Kinds or Properties.
-- **Every operation is a UseCase** that opens with "Operation `x`. Request processing and delivery apply." The two links name the rules that W0 states for every operation: the order of checks (§3.1) and the delivery and test obligations (§15). The Library model did the same with its shared input rule.
-- **Cross-cutting policies reach every operation's Manager.** A Manager's context is its own Definitions, their direct link targets and the local Definitions that link to them ([select_context.go](../../../../internal/organization/select_context.go)). The operation index (§14) is therefore split into the permission matrix in `policies/authorization` and the audit target list in `policies/audit`. Both list and link every operation, so each operation's Manager sees both through incoming links. The money and time rules, the record table, the order of listed results and the cross-area rules (good standing, certification, maintenance, lockout, overdue block, charges, credit balance, opening hours and granularity) are linked where the text uses them.
-- **Not modeled:** the W0 paragraph that frames the document, change-relative wording such as "Until now …", and "What stays as it is" statements, which are change control. The few clarifications in those sections that state a rule are carried; [mapping/](../mapping) lists each case.
+- **Every operation is a UseCase** that opens with "Operation `x`. Request processing, results and delivery apply." The three links name the rules that W0 states for every operation: the order of checks (§3.1), the shape of results (§2.7) and the delivery and test obligations (§15). The Library model did the same with its shared input rule.
+- **Policy reach.** A Manager's context is its own Definitions, their direct link targets and the local Definitions that link to them ([select_context.go](../../../../internal/organization/select_context.go)). The operation index (§14) is split into the permission matrix in `policies/authorization` and the audit target list in `policies/audit`. Both list and link every operation, so each operation's Manager sees its permissions and audit target through incoming links. The authorization and audit rule bodies (the meaning of "own", the entry fields, the recording of refusals) reach the order of checks in `workshop` and their own Managers, but not every area Manager directly: the model does not say whether checks and auditing are realized centrally or per operation, which stays a realization choice. The money and time rules, the record table, the order of listed results and the cross-area rules (good standing, certification, maintenance, lockout, overdue block, charges, credit balance, opening hours, granularity and interval overlap) are linked where the text uses them.
+- **Not modeled:** the W0 paragraph that frames the document, change-relative wording such as "Until now …" or "still", and "What stays as it is" statements, which are change control. Clarifications in those sections that state a rule are carried, and so is C8's "including dates before the change", which carries a rule; [mapping/](../mapping) lists each case.
 
 ## Validation
 

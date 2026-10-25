@@ -10,7 +10,7 @@ imports:
 id: issue-credit
 kind: Software.UseCase
 body: |-
-  Operation `issueCredit`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+  Operation `issueCredit`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
 
   Mutation.
 

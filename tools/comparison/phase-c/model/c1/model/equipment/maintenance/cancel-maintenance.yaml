@@ -10,7 +10,7 @@ imports:
 id: cancel-maintenance
 kind: Software.UseCase
 body: |-
-  Operation `cancelMaintenance`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+  Operation `cancelMaintenance`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
 
   Mutation.
 

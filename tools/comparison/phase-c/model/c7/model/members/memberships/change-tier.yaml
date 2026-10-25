@@ -10,7 +10,7 @@ imports:
 id: change-tier
 kind: Software.UseCase
 body: |-
-  Operation `changeTier`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+  Operation `changeTier`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
 
   Mutation. Changes a member's tier.
 

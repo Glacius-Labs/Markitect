@@ -12,7 +12,7 @@ imports:
 id: purchase-material
 kind: Software.UseCase
 body: |-
-  Operation `purchaseMaterial`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+  Operation `purchaseMaterial`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
 
   Mutation. Sells material to a member.
 

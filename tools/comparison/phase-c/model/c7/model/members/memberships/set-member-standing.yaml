@@ -6,7 +6,7 @@ imports:
 id: set-member-standing
 kind: Software.UseCase
 body: |-
-  Operation `setMemberStanding`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+  Operation `setMemberStanding`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
 
   Mutation. Suspends or reinstates a member.
 

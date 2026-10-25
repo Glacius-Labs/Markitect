@@ -6,7 +6,7 @@ imports:
 id: complete-course
 kind: Software.UseCase
 body: |-
-  Operation `completeCourse`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+  Operation `completeCourse`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
 
   Mutation. Records that a member completed a [[course|course]] and certifies the member.
 

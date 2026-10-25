@@ -10,7 +10,7 @@ imports:
 id: enroll-in-course
 kind: Software.UseCase
 body: |-
-  Operation `enrollInCourse`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+  Operation `enrollInCourse`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
 
   Mutation. Enrolls a member in a [[course|course]].
 

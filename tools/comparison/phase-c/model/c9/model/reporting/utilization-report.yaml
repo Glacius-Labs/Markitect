@@ -16,7 +16,7 @@ imports:
 id: utilization-report
 kind: Software.UseCase
 body: |-
-  Operation `utilizationReport`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+  Operation `utilizationReport`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
 
   Read. Shows how much each [[Catalog.catalog|machine]] was used compared with the time it was available.
 

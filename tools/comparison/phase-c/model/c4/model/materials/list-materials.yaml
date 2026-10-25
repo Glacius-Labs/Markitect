@@ -6,7 +6,7 @@ imports:
 id: list-materials
 kind: Software.UseCase
 body: |-
-  Operation `listMaterials`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+  Operation `listMaterials`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
 
   Read. Arguments: none besides `actor` and `at`. Result: `materials`, all [[shop|materials]].
 spec: {}

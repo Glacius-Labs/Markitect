@@ -10,7 +10,7 @@ imports:
 id: revenue-report
 kind: Software.UseCase
 body: |-
-  Operation `revenueReport`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+  Operation `revenueReport`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
 
   Read. Summarizes billing for one month.
 

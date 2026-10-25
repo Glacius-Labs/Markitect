@@ -6,7 +6,7 @@ imports:
 id: register-user
 kind: Software.UseCase
 body: |-
-  Operation `registerUser`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+  Operation `registerUser`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
 
   Mutation. Registers a staff member, an admin or a steward.
 

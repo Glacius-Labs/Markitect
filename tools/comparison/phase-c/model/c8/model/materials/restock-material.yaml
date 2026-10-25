@@ -6,7 +6,7 @@ imports:
 id: restock-material
 kind: Software.UseCase
 body: |-
-  Operation `restockMaterial`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+  Operation `restockMaterial`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
 
   Mutation.
 

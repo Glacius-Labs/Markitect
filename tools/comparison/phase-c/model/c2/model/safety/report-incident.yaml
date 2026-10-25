@@ -6,7 +6,7 @@ imports:
 id: report-incident
 kind: Software.UseCase
 body: |-
-  Operation `reportIncident`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+  Operation `reportIncident`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
 
   Mutation.
 

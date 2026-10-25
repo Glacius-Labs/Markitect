@@ -6,7 +6,7 @@ imports:
 id: list-incidents
 kind: Software.UseCase
 body: |-
-  Operation `listIncidents`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+  Operation `listIncidents`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
 
   Read. Arguments: none besides `actor` and `at`. Result: `incidents`, all [[incident|incidents]].
 spec: {}
