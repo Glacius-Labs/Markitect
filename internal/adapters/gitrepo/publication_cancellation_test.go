@@ -45,7 +45,9 @@ func publicationGitProcess() {
 		fmt.Println("ambiguous metadata")
 		os.Exit(0)
 	}
-	block := selected && (string(mode) == "identity" && combined || string(mode) == "fallback" && strings.HasSuffix(query, "rev-parse --show-toplevel") || string(mode) == "branch" && strings.HasSuffix(query, "branch --show-current") || string(mode) == "head" && strings.HasSuffix(query, "rev-parse --verify HEAD^{commit}"))
+	// Run's local Git always passes --literal-pathspecs; "write-tree" blocks its snapshot.
+	local := string(mode) == "write-tree" && strings.HasSuffix(query, " write-tree")
+	block := local || selected && (string(mode) == "identity" && combined || string(mode) == "fallback" && strings.HasSuffix(query, "rev-parse --show-toplevel") || string(mode) == "branch" && strings.HasSuffix(query, "branch --show-current") || string(mode) == "head" && strings.HasSuffix(query, "rev-parse --verify HEAD^{commit}"))
 	if block {
 		listener, err := net.Listen("tcp", "127.0.0.1:0")
 		if err != nil {
@@ -272,4 +274,22 @@ func TestPublicationGitQueriesCancelBeforeMutationAndAfterPartialTransfer(t *tes
 		go func() { _, err := guardedwrite.CaptureV1Files(window, r.Dir, []string{"out/a.txt"}); done <- err }()
 		observeBlockedGit(t, control, nil, done, context.DeadlineExceeded)
 	})
+}
+
+// A Run's Git process ended by its context exits like a failed command, on
+// Windows with status 1 and no output. The error names the context's cause.
+func TestLocalGitEndedByItsContextNamesTheCause(t *testing.T) {
+	dir := t.TempDir()
+	if _, err := localCommand(context.Background(), dir, nil, "init", "--quiet"); err != nil {
+		t.Fatal(err)
+	}
+	control := publicationGitShim(t)
+	if err := os.WriteFile(filepath.Join(control, "armed"), []byte("write-tree"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	done := make(chan error, 1)
+	go func() { _, err := localCommand(ctx, dir, nil, "write-tree"); done <- err }()
+	observeBlockedGit(t, control, cancel, done, context.Canceled)
 }
