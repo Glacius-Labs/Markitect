@@ -63,6 +63,24 @@ class CensusTests(unittest.TestCase):
                 residue = assess_candidate.census(repo, end, later)["build_residue"]
                 self.assertEqual([(e["path"], e["status"]) for e in residue], [("realization/library", status)])
 
+    def test_phase_c_profiles_and_makerspace_protected_bytes(self):
+        self.assertEqual(list(assess_candidate.PHASE_C.values()), ["W0", *[f"C{i}" for i in range(1, 10)]])
+        self.assertEqual(assess_candidate.CENSUS_STEPS, ("C3", "C7", "C9"))
+        with tempfile.TemporaryDirectory() as tmp:
+            evaluator, harness = Path(tmp) / "evaluator", Path(tmp) / "harness"
+            evaluator.mkdir(), harness.mkdir()
+            for path in (evaluator / "driver.py", evaluator / "oracle.py", harness / "harness.py", harness / "probes.py",
+                         harness / "test_harness.py", harness / "README.md"):
+                path.write_text(path.name, encoding="utf-8")
+            hashes = assess_candidate.makerspace_protected(evaluator, harness)
+            self.assertEqual(sorted(hashes), ["evaluator/driver.py", "harness/harness.py", "harness/probes.py"])
+        # The oracle checks exactly these hashes; any drift would fail every Phase C assessment.
+        tools = Path(assess_candidate.__file__).resolve().parents[1]
+        oracle = assess_candidate._load("makerspace_harness", tools / "makerspace-oracle" / "harness.py")
+        library, here = tools / "library-oracle", tools / "makerspace-oracle"
+        expected = oracle.file_hashes(oracle.protected_paths(library, here))
+        self.assertEqual(assess_candidate.makerspace_protected(library, here), expected)
+
     def test_scope_patterns_and_seed_lines(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

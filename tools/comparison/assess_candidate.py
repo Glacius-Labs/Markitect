@@ -7,15 +7,19 @@ started from. The assessment runs, in containers without network:
   2. the hidden supplementary probes (probes.py) through the oracle's transport,
      or, for Phase B's profiles m3-m5, instead of 1 and 2, every carried and
      new hidden case of phase_b_cases.py through the same transport,
-  3. the candidate's own `go build ./cmd/library` and `go test ./...` with the
-     limits of the Markitect `project-tests` check profile,
+     or, for Phase C's profiles w0 and c1-c9, instead of 1 and 2, the hidden
+     Makerspace oracle (tools/makerspace-oracle) with its change census at
+     C3, C7 and C9 against the start program,
+  3. the candidate's own `go build ./cmd/library` (Phase C: ./cmd/makerspace)
+     and `go test ./...` with the limits of the Markitect `project-tests`
+     check profile,
 
 then classifies every changed path against the start commit and can write a
 blinded copy for the rubric review. Evaluator and probe bytes come from the
 frozen Markitect revision, never from the working tree.
 
   python -I -B assess_candidate.py --candidate BUNDLE --commit SHA --start BUNDLE --start-commit SHA \
-      --profile m1|m2|m3|m4|m5 --run-id ID --out NEW_DIR --rev FROZEN_SHA --go-image sha256:... \
+      --profile m1|m2|m3|m4|m5|w0|c1..c9 --run-id ID --out NEW_DIR --rev FROZEN_SHA --go-image sha256:... \
       [--seed-lines SEED.json] [--blind DIR --token TOKEN]
 """
 import argparse
@@ -58,6 +62,13 @@ OWN_CHECK_PROFILES = {
     "primary": (["--cpus", runner.ARM_LIMITS["cpus"], "--memory", runner.ARM_LIMITS["memory"], "--pids-limit", runner.ARM_LIMITS["pids"]], 600),
     "project_tests": (["--cpus", "1", "--memory", "2147483648", "--pids-limit", "64"], 120),
 }
+# Phase C (Makerspace): profile -> oracle step, the steps with a change census,
+# the own-check limit addendum C sets for both arms, and the outer limits of
+# the step's cases and of its census (two programs).
+PHASE_C = {"w0": "W0", **{f"c{i}": f"C{i}" for i in range(1, 10)}}
+CENSUS_STEPS = ("C3", "C7", "C9")
+PHASE_C_OWN_CHECK_SECONDS = 300
+MAKERSPACE_LIMITS = {"cases": 1500, "census": 1500}
 PROTECTED = (".markitect/model.yaml", ".markitect/model-lock.yaml", ".markitect/model/", ".markitect/dependencies/",
              ".markitect/execution.yaml", "requirements.md")
 SCOPE_PATTERNS = {"machine_clock": r"\btime\.Now\(", "network": r'"net(/http)?"', "file_writes": r"\bos\.(WriteFile|Create|OpenFile)\("}
@@ -136,10 +147,11 @@ def docker(engine, args, timeout):
         return None, exc.stdout or b"", exc.stderr or b"", True
 
 
-def own_checks(engine, image, module, out):
+def own_checks(engine, image, module, out, program="library", seconds=None):
     results = {}
     for profile, (limits, timeout) in OWN_CHECK_PROFILES.items():
-        for name, command in (("build", "go build -o /tmp/library ./cmd/library"), ("test", "go test ./...")):
+        timeout = seconds or timeout
+        for name, command in (("build", f"go build -o /tmp/{program} ./cmd/{program}"), ("test", "go test ./...")):
             code, stdout, stderr, timed_out = docker(engine, ["run", "--rm", *OWN_CHECK_BASE, *limits,
                                                               "--mount", f"type=bind,src={module},dst=/src,readonly",
                                                               "--entrypoint", "/bin/sh", image, "-c", "cp -R /src /tmp/m && cd /tmp/m && " + command],
@@ -205,6 +217,75 @@ def probes(engine, image, module, out, repo, oracle_rev, rev, script="probes.py"
         docker(engine, ["volume", "rm", "-f", volume], LIMITS["cleanup"])
 
 
+def makerspace_protected(evaluator, harness):
+    """The bytes a Makerspace assessment depends on, as the oracle's harness binds them."""
+    paths = {"evaluator/driver.py": evaluator / "driver.py"}
+    paths.update({"harness/" + p.name: p for p in sorted(harness.glob("*.py")) if not p.name.startswith("test_")})
+    return {name: hashlib.sha256(path.read_bytes()).hexdigest() for name, path in paths.items()}
+
+
+def makerspace(engine, image, module, start_module, out, repo, oracle_rev, rev, step):
+    """Build ./cmd/makerspace (and the start program for a census step) and run the hidden Makerspace oracle at rev."""
+    exports = out / "frozen"
+    commit, evaluator = oracle_container.export_evaluator(str(repo), oracle_rev, exports)
+    with tarfile.open(fileobj=io.BytesIO(git(repo, "archive", "--format=tar", rev, "tools/makerspace-oracle", binary=True))) as tar:
+        tar.extractall(exports, filter="data")
+    harness = exports / "tools" / "makerspace-oracle"
+    protected = makerspace_protected(evaluator, harness)
+    volume = "mk-cmp-makerspace-" + uuid.uuid4().hex[:12]
+    container = volume + "-run"
+    report = {"commit": git(repo, "rev-parse", rev).strip(), "step": step, "protected_sha256": protected}
+    docker(engine, ["volume", "create", volume], LIMITS["cleanup"])
+    try:
+        docker(engine, ["run", "--rm", "--user", "0:0", "--network", "none", "--entrypoint", "/bin/chown",
+                        "--mount", f"type=volume,src={volume},dst=/out", image, "1000:1000", "/out"], LIMITS["cleanup"])
+        builds = [("makerspace", module, "makerspace")]
+        if start_module is not None:
+            builds.append(("start", start_module, "start"))
+        for label, source, target in builds:
+            code, stdout, stderr, timed_out = docker(engine, ["run", "--rm", *oracle_container.HARDENING, "--entrypoint", "/usr/local/go/bin/go",
+                                                              "--mount", f"type=bind,src={source},dst=/src,readonly",
+                                                              "--mount", f"type=volume,src={volume},dst=/out", "-w", "/src",
+                                                              "-e", "GOCACHE=/tmp/gocache", "-e", "GOPATH=/tmp/gopath", "-e", "GOFLAGS=-buildvcs=false",
+                                                              image, "build", "-o", "/out/" + target, "./cmd/makerspace"], LIMITS["build"])
+            (out / f"makerspace-build-{label}.log").write_bytes(stdout + stderr)
+            report[label + "_built"] = code == 0
+            if label == "makerspace" and code != 0:
+                report.update(passed=False, timed_out=timed_out)
+                return report
+        census_args = ["--census-start", "/out/start"] if report.get("start_built") else []
+        if start_module is not None and not census_args:
+            report["census_skipped"] = "start build failed"
+        timeout = MAKERSPACE_LIMITS["cases"] + (MAKERSPACE_LIMITS["census"] if census_args else 0)
+        code, stdout, stderr, timed_out = docker(engine, ["run", "--rm", "--name", container, *oracle_container.HARDENING,
+                                                          "--mount", f"type=volume,src={volume},dst=/out,readonly",
+                                                          "--mount", f"type=bind,src={module},dst=/assess/realization,readonly",
+                                                          "--mount", f"type=bind,src={evaluator},dst=/evaluator,readonly",
+                                                          "--mount", f"type=bind,src={harness},dst=/harness,readonly",
+                                                          oracle_container.PYTHON_IMAGE, "python", "-I", "/harness/harness.py", "--step", step,
+                                                          "--source", str(module), "--commit", report["commit"],
+                                                          "--protected", json.dumps(protected), *census_args],
+                                                 timeout)
+        (out / "makerspace-report.json").write_bytes(stdout)
+        (out / "makerspace.log").write_bytes(stderr)
+        try:
+            data = json.loads(stdout or b"{}")
+        except ValueError:
+            data = None
+        if not isinstance(data, dict):
+            data = {"passed": False, "errors": ["oracle output is not a JSON object"]}
+        report.update(timed_out=timed_out, passed=bool(data.get("passed")) and not timed_out, errors=data.get("errors"),
+                      program_sha256=data.get("program_sha256"), planned_cases=data.get("planned_cases"),
+                      passed_cases=data.get("passed_cases"), families=data.get("families"), failed_families=data.get("failed_families"))
+        if "census" in data:
+            report["change_census"] = data["census"]
+        return report
+    finally:
+        # A timeout stops only the engine client; remove the oracle container too.
+        docker(engine, ["rm", "-f", container], LIMITS["cleanup"])
+        docker(engine, ["volume", "rm", "-f", volume], LIMITS["cleanup"])
+
+
 def seed_check(candidate, seed_file):
     """Which deliberately seeded lines are still present verbatim."""
     remaining = []
@@ -219,7 +300,7 @@ def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     for name in ("--candidate", "--commit", "--start", "--start-commit", "--run-id", "--out", "--rev", "--go-image"):
         p.add_argument(name, required=True)
-    p.add_argument("--profile", choices=["m1", "m2", "m3", "m4", "m5"], required=True)
+    p.add_argument("--profile", choices=["m1", "m2", "m3", "m4", "m5", *PHASE_C], required=True)
     p.add_argument("--engine", default=os.environ.get("MARKITECT_ENGINE") or shutil.which("docker") or "docker")
     p.add_argument("--repo", default=str(REPO))
     p.add_argument("--oracle-rev", help="revision of tools/library-oracle, the frozen source F; default --rev")
@@ -252,6 +333,8 @@ def assess(a):
         candidate = out / "candidate"
         export(repo, a.commit, candidate)
         report["census"] = census(repo, a.start_commit, a.commit)
+        if PHASE_C.get(a.profile) in CENSUS_STEPS:
+            export(repo, a.start_commit, out / "start")
         if a.blind:
             if not re.fullmatch(r"[a-z0-9]{6,32}", a.token or ""):
                 raise SystemExit("--blind needs --token of 6-32 lowercase letters or digits")
@@ -267,6 +350,20 @@ def assess(a):
         report.update(deliverable=False, mechanical_pass=False)
     else:
         report["deliverable"] = True
+        if a.profile in PHASE_C:
+            step = PHASE_C[a.profile]
+            start_module = out / "start" / "realization"
+            has_start = step in CENSUS_STEPS and (start_module / "go.mod").is_file()
+            report["makerspace"] = makerspace(a.engine, a.go_image, module, start_module if has_start else None, out,
+                                              a.repo, a.oracle_rev, a.rev, step)
+            if step in CENSUS_STEPS and not has_start:
+                report["makerspace"]["census_skipped"] = "start has no realization/go.mod"
+            report["own_checks"] = own_checks(a.engine, a.go_image, module, out, "makerspace", PHASE_C_OWN_CHECK_SECONDS)
+            report["scope"] = scope_findings(module)
+            report["mechanical_pass"] = (report["makerspace"].get("passed") is True
+                                         and all(r["passed"] for r in report["own_checks"]["primary"].values())
+                                         and not report["census"]["protected"])
+            return finish(a, out, report, candidate)
         if a.profile not in ("m1", "m2"):
             report["phase_b"] = probes(a.engine, a.go_image, module, out, a.repo, a.oracle_rev, a.rev,
                                        "phase_b_cases.py", ("--profile", a.profile), LIMITS["oracle"] + LIMITS["probes"])
