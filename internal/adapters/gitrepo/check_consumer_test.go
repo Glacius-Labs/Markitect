@@ -213,7 +213,7 @@ func TestDeclaredCheckUsesFixedCopiesDirectoriesAndDurableObservations(t *testin
 			store, _ := runstore.New(g.StateRoot)
 			executor := run.Executor{Workspaces: workspaces, Sessions: sessions, Records: store, Checks: checker}
 			runID := strings.ReplaceAll(kind, " ", "-")
-			result, executeErr := executor.Execute(ctx, run.Request{MaxManagers: 5, ID: runID, Project: "checked", Prepared: p, Input: ref, Mandate: mandate, Allowance: run.NewAllowance(time.Now().Add(45*time.Second), 80), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
+			result, executeErr := executor.Execute(ctx, run.Request{MaxManagers: 5, ID: runID, Project: "checked", Prepared: p, Input: ref, Mandate: mandate, Allowance: run.NewAllowance(runDeadline(t), 80), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
 			if kind == "lost observation" || kind == "invalid observation" {
 				if executeErr == nil || result.Technical == run.Completed {
 					t.Fatal(result, executeErr)

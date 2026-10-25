@@ -621,6 +621,31 @@ func TestReleasedDriverWakesBlockedAwait(t *testing.T) {
 	}
 }
 
+// A refused await names the next step from its children's state. A child's
+// late finding changes that state at the same time, so the refusal reads it
+// under the Run lock; the race detector reports a read after unlocking.
+func TestAwaitRefusalReadsChildStateUnderTheRunLock(t *testing.T) {
+	x, _, a, deep := inboxExecution()
+	defer x.cancel()
+	a.a.phase, a.a.version = active, 1
+	deep.a.fix(Handoff{Manager: "a/deep", Result: Commit{ID: "c", Tree: "t"}, Decision: Submitted})
+	changed := make(chan struct{})
+	go func() {
+		defer close(changed)
+		for range 200 {
+			x.mu.Lock()
+			deep.a.lateFinding(Reject, []Finding{{Manager: "a/deep", Text: "late required correction"}})
+			x.mu.Unlock()
+		}
+	}()
+	for range 200 {
+		if _, err := x.await(context.Background(), a); err == nil || !strings.Contains(err.Error(), "the review of child a/deep's fixed handoff c is missing") {
+			t.Fatal("await did not refuse with the child's fixed handoff", err)
+		}
+	}
+	<-changed
+}
+
 // §3.7: a refused call names the concrete reason and the possible next step.
 func TestRefusalsNameReasonAndNextStep(t *testing.T) {
 	x, root, a, deep := inboxExecution()

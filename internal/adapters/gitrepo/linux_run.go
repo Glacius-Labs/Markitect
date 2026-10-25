@@ -146,7 +146,7 @@ func (s *linuxService) command(ctx context.Context, dir string, input []byte, ar
 	if out.limitExceeded {
 		return "", fmt.Errorf("Git output exceeds finite bound")
 	}
-	if args[0] == "ls-tree" || args[0] == "diff" || args[0] == "ls-files" {
+	if args[0] == "ls-tree" || args[0] == "diff" || args[0] == "ls-files" || args[0] == "cat-file" {
 		return out.String(), nil
 	}
 	return strings.TrimSpace(out.String()), nil
@@ -246,6 +246,11 @@ func (c *linuxCopy) Snapshot(ctx context.Context) (run.Commit, error) {
 		return run.Commit{}, err
 	}
 	return snapshotGit(ctx, c.directory, c.service.command, dirs, c.executables)
+}
+
+// Outputs lists the copy's build outputs, which no fixed state holds.
+func (c *linuxCopy) Outputs(ctx context.Context) ([]string, error) {
+	return untrackedOutputs(ctx, c.directory, c.service.command, c.executables)
 }
 func (c *linuxCopy) executables(ctx context.Context, paths []string) ([]string, error) {
 	if len(paths) == 0 {

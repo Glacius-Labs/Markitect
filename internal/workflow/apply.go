@@ -51,12 +51,13 @@ func Apply(ctx context.Context, executor Executor, base run.Request) (out Result
 		if e != nil || result.Decision != run.Submitted {
 			return out, e
 		}
-		base.Input = *result.Candidate
+		// Verify sees what Implement left out of the candidate as build outputs.
+		base.Input, base.BuildOutputs = *result.Candidate, result.BuildOutputs()
 		verified, e := execute(run.Verify)
 		if e != nil || verified.Decision != run.Reject {
 			return out, e
 		}
 		base.Findings = append([]run.Finding(nil), verified.Findings...)
-		base.Input = *verified.Candidate
+		base.Input, base.BuildOutputs = *verified.Candidate, nil
 	}
 }

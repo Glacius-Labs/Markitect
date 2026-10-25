@@ -41,7 +41,7 @@ func (reviewHostGit) Exec(ctx context.Context, argv []string, input io.Reader, o
 }
 
 func TestLinuxChildReviewPreservesCompleteContextWithoutBinaryPatch(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	ctx, cancel := context.WithDeadline(context.Background(), runDeadline(t))
 	defer cancel()
 	parent := testkit.NewRepo(t)
 	parent.Write("text.txt", "before\n")
@@ -221,7 +221,7 @@ func TestInvalidChildCandidateReachesParentAndIsCorrected(t *testing.T) {
 		t.Fatal(err)
 	}
 	sessions := &accountingRepairSessions{controlled: &controlledManagers{crossed: make(chan struct{}), noChange: true, acceptedRepair: true}}
-	request := run.Request{ID: "accounting-repair", Project: "fixture", Prepared: prepared, Input: input, Mandate: run.Implement, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(time.Minute), 100), MessageTimeout: 30 * time.Second, CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
+	request := run.Request{ID: "accounting-repair", Project: "fixture", Prepared: prepared, Input: input, Mandate: run.Implement, MaxManagers: 5, Allowance: run.NewAllowance(runDeadline(t), 100), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
 	result, err := (&run.Executor{Sessions: sessions, Workspaces: git, Records: records}).Execute(context.Background(), request)
 	if err != nil || result.Technical != run.Completed || result.Decision != run.Submitted || result.Candidate == nil {
 		t.Fatalf("child repair did not complete: %s %s %v", result.Technical, result.Decision, err)
@@ -310,7 +310,7 @@ func TestFreshRunManagersReadEarlierClosedRunNotesThroughActualTool(t *testing.T
 		t.Fatal(err)
 	}
 	firstSessions := &controlledManagers{crossed: make(chan struct{})}
-	request := run.Request{ID: "notes-first", Project: "fixture", Prepared: prepared, Input: input, Mandate: run.Assessment, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(time.Minute), 100), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
+	request := run.Request{ID: "notes-first", Project: "fixture", Prepared: prepared, Input: input, Mandate: run.Assessment, MaxManagers: 5, Allowance: run.NewAllowance(runDeadline(t), 100), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
 	first, err := (&run.Executor{Sessions: firstSessions, Workspaces: git, Records: firstStore}).Execute(ctx, request)
 	if err != nil || first.Technical != run.Completed || first.Decision != run.Approve || first.Candidate == nil {
 		t.Fatal(first.Technical, first.Decision, err)
@@ -346,7 +346,7 @@ func TestFreshRunManagersReadEarlierClosedRunNotesThroughActualTool(t *testing.T
 	}
 	secondSessions := &notesReadingSessions{controlled: &controlledManagers{crossed: make(chan struct{})}, expected: expected, read: map[string][]run.Note{}}
 	request.ID, request.Mandate, request.Input = "notes-second", run.Verify, *first.Candidate
-	request.Allowance = run.NewAllowance(time.Now().Add(time.Minute), 100)
+	request.Allowance = run.NewAllowance(runDeadline(t), 100)
 	secondGit := &LocalGit{StateRoot: git.StateRoot, TempRoot: git.TempRoot}
 	second, err := (&run.Executor{Sessions: secondSessions, Workspaces: secondGit, Records: secondStore}).Execute(ctx, request)
 	if err != nil || second.Technical != run.Completed || second.Decision != run.Approve {
@@ -636,10 +636,13 @@ func (m *controlledManager) handle(ctx context.Context, e run.Event) error {
 	switch {
 	case e.Question != nil:
 		if e.Question.Text == "Reassess the already accepted handoff." {
-			if err := tools.Reply(ctx, e.Question.ID, "late required correction"); err != nil {
+			// Record the finding before answering. The parent awaits the changed
+			// handoff once it has the answer; answering first lets that await run
+			// before the finding exists, and it is then refused.
+			if err := tools.Judge(ctx, run.Reject, []run.Finding{{Text: "Late required correction discovered after accepted integration."}}); err != nil {
 				return err
 			}
-			return tools.Judge(ctx, run.Reject, []run.Finding{{Text: "Late required correction discovered after accepted integration."}})
+			return tools.Reply(ctx, e.Question.ID, "late required correction")
 		}
 		return tools.Reply(ctx, e.Question.ID, "controlled answer from "+m.spec.Manager.Package)
 	case e.Answer != nil:
@@ -894,7 +897,7 @@ func TestCompleteHierarchyUsesRealGitAndClosedDurableStateForEveryMandate(t *tes
 			}
 			managers := &controlledManagers{crossed: make(chan struct{})}
 			executor := run.Executor{Sessions: managers, Workspaces: g, Records: store}
-			request := run.Request{MaxManagers: 5, ID: string(mandate), Project: "fixture", Prepared: p, Input: ref, Mandate: mandate, Allowance: run.NewAllowance(time.Now().Add(45*time.Second), 80), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
+			request := run.Request{MaxManagers: 5, ID: string(mandate), Project: "fixture", Prepared: p, Input: ref, Mandate: mandate, Allowance: run.NewAllowance(runDeadline(t), 80), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
 			result, err := executor.Execute(ctx, request)
 			if err != nil || result.Technical != run.Completed {
 				t.Fatalf("%+v error=%v", result, err)
@@ -958,7 +961,7 @@ func TestCompleteHierarchyUsesRealGitAndClosedDurableStateForEveryMandate(t *tes
 
 func TestDurableCandidateRetentionAndReopenUnderLongPaths(t *testing.T) {
 	r, prepared, original, input := runFixture(t)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	ctx, cancel := context.WithDeadline(context.Background(), runDeadline(t))
 	defer cancel()
 	source := t.TempDir()
 	if err := original.Reopen(ctx, input, source); err != nil {
@@ -1113,15 +1116,28 @@ func (s *partialLibrarySessions) realize(ctx context.Context, m *controlledManag
 		content = append(content, []byte("  - path: "+name+"\n    form: "+form+"\n    realizes: [a/Thing]\n    why: Controlled aggregate Go regression.\n")...)
 		return write(shard, string(content))
 	}
+	peer := "package peer\nfunc Value()int{return 1}\n"
+	if s.fail {
+		peer = "package peer\nfunc Value()int{return 2}\n"
+	}
 	switch m.spec.Manager.Package {
 	case "a":
 		s.libraryAttempts++
 		// Root scaffolding and peer code were authored after initial delegation.
 		// They must not appear through live propagation into this private copy.
-		for _, path := range []string{"realization/go.mod", "realization/peer/peer.go"} {
+		// A correction merges Root's baseline at delegation, which holds b's code
+		// once Root has integrated b first; Root writes its scaffolding last.
+		unexpected := []string{"realization/go.mod"}
+		if s.libraryAttempts == 1 {
+			unexpected = append(unexpected, "realization/peer/peer.go")
+		}
+		for _, path := range unexpected {
 			if _, err := os.Stat(filepath.Join(root, path)); !errors.Is(err, os.ErrNotExist) {
 				return fmt.Errorf("partial library unexpectedly has %s: %v", path, err)
 			}
+		}
+		if data, err := os.ReadFile(filepath.Join(root, "realization/peer/peer.go")); err == nil && string(data) != peer {
+			return fmt.Errorf("correction baseline does not hold b's integrated code: %q", data)
 		}
 		if s.libraryAttempts == 1 {
 			// First submission is deliberately unregistered: its parent receives it
@@ -1134,11 +1150,7 @@ func (s *partialLibrarySessions) realize(ctx context.Context, m *controlledManag
 		}
 		return register("a", "realization/library/library_test.go")
 	case "b":
-		value := "1"
-		if s.fail {
-			value = "2"
-		}
-		if err := write("realization/peer/peer.go", "package peer\nfunc Value()int{return "+value+"}\n"); err != nil {
+		if err := write("realization/peer/peer.go", peer); err != nil {
 			return err
 		}
 		return register("b", "realization/peer/peer.go")
@@ -1186,7 +1198,7 @@ func TestPartialLibraryHandoffDefersProjectSuiteToExactAggregateRoot(t *testing.
 				t.Fatal(err)
 			}
 			sessions := newPartialLibrarySessions(fail)
-			request := run.Request{ID: "partial-library", Project: "fixture", Prepared: prepared, Input: input, Mandate: run.Implement, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(2*time.Minute), 100), MessageTimeout: time.Minute, CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
+			request := run.Request{ID: "partial-library", Project: "fixture", Prepared: prepared, Input: input, Mandate: run.Implement, MaxManagers: 5, Allowance: run.NewAllowance(runDeadline(t), 100), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
 			executor := partialLibraryExecutor{sessions: sessions, git: git, records: records}
 			var result run.Result
 			if fail {

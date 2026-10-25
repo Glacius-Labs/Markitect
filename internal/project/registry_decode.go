@@ -106,3 +106,33 @@ func (r *registryPreparation) decodeRegistry(source SourceFile, owner realizatio
 	}
 	return registrations
 }
+
+// RegisteredFiles names the exact files that the registry shard at path
+// registers. Registration, not a file's format, makes a file a realization
+// artifact, so a Run copy fixes these files whatever they contain. A
+// directory entry names no file, and neither does a path that is no shard or
+// data that is no decodable shard; preparation reports those.
+func RegisteredFiles(path string, data []byte) []string {
+	shardPath, err := snapshot.NewPath(path)
+	if err != nil {
+		return nil
+	}
+	if _, err = registryOwner(shardPath); err != nil {
+		return nil
+	}
+	var shard struct {
+		Artifacts []struct {
+			Path string `yaml:"path"`
+		} `yaml:"artifacts"`
+	}
+	if yaml.Unmarshal(data, &shard) != nil {
+		return nil
+	}
+	var files []string
+	for _, artifact := range shard.Artifacts {
+		if artifact.Path != "" && !strings.HasSuffix(artifact.Path, "/") {
+			files = append(files, artifact.Path)
+		}
+	}
+	return files
+}

@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
@@ -14,6 +15,22 @@ import (
 func TestMain(m *testing.M) {
 	publicationGitProcess()
 	testkit.Main(m)
+}
+
+// runDeadline bounds a controlled Run, Apply or Git sequence whose subject is
+// not time. Real Git makes this work 15 to 20 times slower on Windows than on
+// Linux, and parallel load varies it again, so a fixed allowance is a
+// performance expectation that fails without a defect. The test's own
+// deadline (go test -timeout) bounds a hang instead. Like Go's testenv, it
+// keeps a tenth of the remaining time to report and clean up.
+func runDeadline(t *testing.T) time.Time {
+	t.Helper()
+	deadline, ok := t.Deadline()
+	if !ok {
+		// -timeout=0 removed the bound on purpose; keep a finite allowance.
+		return time.Now().Add(time.Hour)
+	}
+	return deadline.Add(-time.Until(deadline) / 10)
 }
 
 func fixturePath(t *testing.T, p string) snapshot.Path {

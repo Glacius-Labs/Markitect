@@ -7,6 +7,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/organization"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"reflect"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -121,7 +122,7 @@ func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
 	if workErr == nil {
 		x.mu.Lock()
 		s := x.states[organization.Root]
-		task := Assignment{Task: rootTask, Findings: append([]Finding(nil), r.Findings...), Base: input}
+		task := Assignment{Task: rootTask, Findings: append([]Finding(nil), r.Findings...), Base: input, BuildOutputs: slices.Clone(r.BuildOutputs)}
 		s.a.assign(task)
 		x.queueLocked(s, entry{event: Event{Assignment: &task}})
 		x.mu.Unlock()
@@ -393,29 +394,42 @@ func (x *execution) tools(s *managerState) Tools {
 // structural validity and accounting, then the declared checks placed there.
 // Assessment judges model readiness and runs only the structural part. A fixed
 // state keeps its check result, whichever of the check tool, a judgment or a
-// handoff asks for it; only a new state is checked again.
+// handoff asks for it; only a new state is checked again. Build outputs are
+// no part of the state: each check reports those the copy holds at that time.
 func (x *execution) check(ctx context.Context, s *managerState, fixed Commit) (*Check, error) {
 	s.checks.Lock()
 	defer s.checks.Unlock()
 	x.mu.Lock()
 	last := s.checked
 	x.mu.Unlock()
-	if last != nil && last.Commit == fixed {
-		return copyCheck(last), nil
+	if last == nil || last.Commit != fixed {
+		result := &Check{Commit: fixed, Checks: []string{}}
+		err := x.checkErr(ctx, s, fixed, result)
+		if errors.Is(err, project.ErrCandidateInvalid) {
+			result.Diagnostic = err.Error()
+		} else if err != nil {
+			return nil, err
+		} else {
+			result.Valid = true
+		}
+		x.mu.Lock()
+		s.checked = result
+		x.mu.Unlock()
+		last = result
 	}
-	result := &Check{Commit: fixed, Checks: []string{}}
-	err := x.checkErr(ctx, s, fixed, result)
-	if errors.Is(err, project.ErrCandidateInvalid) {
-		result.Diagnostic = err.Error()
-	} else if err != nil {
-		return nil, err
-	} else {
-		result.Valid = true
+	check := copyCheck(last)
+	outputs := x.request.BuildOutputs
+	if x.request.Mandate == Implement {
+		var err error
+		s.git.Lock()
+		outputs, err = s.copy.Outputs(ctx)
+		s.git.Unlock()
+		if err != nil {
+			return nil, err
+		}
 	}
-	x.mu.Lock()
-	s.checked = result
-	x.mu.Unlock()
-	return copyCheck(result), nil
+	check.BuildOutputs = slices.Clone(outputs)
+	return check, nil
 }
 
 func (x *execution) checkErr(ctx context.Context, s *managerState, commit Commit, result *Check) error {

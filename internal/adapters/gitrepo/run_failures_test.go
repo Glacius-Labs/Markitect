@@ -72,7 +72,7 @@ func TestRunFailuresPersistHonestTerminalStateAndCloseRealGit(t *testing.T) {
 			releaseBlocked := func() { releaseOnce.Do(func() { close(release) }) }
 			defer releaseBlocked()
 			entered, drained := make(chan struct{}), make(chan struct{})
-			deadline := time.Now().Add(45 * time.Second)
+			deadline := runDeadline(t)
 			switch kind {
 			case "partial startup":
 				managers.failOpen = true
@@ -280,11 +280,14 @@ func (r heldSaveRecords) Save(ctx context.Context, value run.Result) error {
 	}
 	return r.Records.Save(ctx, value)
 }
+
+// waitRunSignal waits for a point a Run reaches after real Git work; the
+// test's own deadline bounds a Run that never reaches it.
 func waitRunSignal(t *testing.T, ch <-chan struct{}, what string) {
 	t.Helper()
 	select {
 	case <-ch:
-	case <-time.After(20 * time.Second):
+	case <-time.After(time.Until(runDeadline(t))):
 		t.Fatal("timed out waiting for " + what)
 	}
 }
@@ -310,7 +313,7 @@ func TestLateChildCheckCannotChangeTerminalResultDuringSaveOrAfterReturn(t *test
 			}
 			done := make(chan completion, 1)
 			go func() {
-				r, err := executor.Execute(ctx, run.Request{MaxManagers: 5, ID: phase, Project: "fixture", Prepared: p, Input: ref, Mandate: run.Implement, Allowance: run.NewAllowance(time.Now().Add(time.Minute), 100), CleanupTimeout: 800 * time.Millisecond, PersistenceTimeout: 5 * time.Second})
+				r, err := executor.Execute(ctx, run.Request{MaxManagers: 5, ID: phase, Project: "fixture", Prepared: p, Input: ref, Mandate: run.Implement, Allowance: run.NewAllowance(runDeadline(t), 100), CleanupTimeout: 800 * time.Millisecond, PersistenceTimeout: 5 * time.Second})
 				done <- completion{r, err}
 			}()
 			waitRunSignal(t, check.entered, "child check")
@@ -456,7 +459,7 @@ func TestParentCannotIgnoreInitialChildWorkerExchangeOrInspectionFailure(t *test
 				t.Fatal(err)
 			}
 			executor := run.Executor{Workspaces: workspaces, Sessions: sessions, Records: store}
-			result, err := executor.Execute(context.Background(), run.Request{MaxManagers: 5, ID: "worker-" + stage, Project: "fixture", Prepared: p, Input: ref, Mandate: run.Implement, Allowance: run.NewAllowance(time.Now().Add(time.Minute), 50), CleanupTimeout: 2 * time.Second, PersistenceTimeout: 2 * time.Second})
+			result, err := executor.Execute(context.Background(), run.Request{MaxManagers: 5, ID: "worker-" + stage, Project: "fixture", Prepared: p, Input: ref, Mandate: run.Implement, Allowance: run.NewAllowance(runDeadline(t), 50), CleanupTimeout: 2 * time.Second, PersistenceTimeout: 2 * time.Second})
 			waitRunSignal(t, sessions.ignored, "parent ignoring Await failure")
 			if !errors.Is(err, injected) || result.Technical == run.Completed || result.Messages >= 50 || !strings.Contains(strings.Join(result.Errors, " "), injected.Error()) {
 				t.Fatal("child failure lost or exhausted budget", result, err)

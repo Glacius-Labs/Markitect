@@ -17,7 +17,7 @@ func TestLateRejectRepairsAcceptedChildAndRenewsExactIntegration(t *testing.T) {
 	store, _ := runstore.New(g.StateRoot)
 	sessions := &controlledManagers{crossed: make(chan struct{}), lateReject: true}
 	executor := run.Executor{Workspaces: g, Sessions: sessions, Records: store}
-	r, err := executor.Execute(context.Background(), run.Request{MaxManagers: 5, ID: "late-repair", Project: "fixture", Prepared: p, Input: ref, Mandate: run.Implement, Allowance: run.NewAllowance(time.Now().Add(60*time.Second), 100), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
+	r, err := executor.Execute(context.Background(), run.Request{MaxManagers: 5, ID: "late-repair", Project: "fixture", Prepared: p, Input: ref, Mandate: run.Implement, Allowance: run.NewAllowance(runDeadline(t), 100), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
 	if err != nil || r.Technical != run.Completed || r.Decision != run.Submitted || !sessions.didLateReject || sessions.corrections != 2 {
 		t.Fatal(r, err)
 	}
@@ -46,7 +46,7 @@ func TestKnownInvalidManifestCandidateReturnsToItsManagerForRepair(t *testing.T)
 	store, _ := runstore.New(g.StateRoot)
 	sessions := &controlledManagers{crossed: make(chan struct{}), badManifest: true}
 	executor := run.Executor{Workspaces: g, Sessions: sessions, Records: store}
-	r, err := executor.Execute(context.Background(), run.Request{MaxManagers: 5, ID: "manifest-repair", Project: "fixture", Prepared: p, Input: ref, Mandate: run.Implement, Allowance: run.NewAllowance(time.Now().Add(time.Minute), 100), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
+	r, err := executor.Execute(context.Background(), run.Request{MaxManagers: 5, ID: "manifest-repair", Project: "fixture", Prepared: p, Input: ref, Mandate: run.Implement, Allowance: run.NewAllowance(runDeadline(t), 100), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
 	if err != nil || r.Technical != run.Completed || r.Decision != run.Submitted {
 		t.Fatal(r, err)
 	}

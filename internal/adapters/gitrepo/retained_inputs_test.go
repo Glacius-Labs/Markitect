@@ -85,7 +85,7 @@ func TestExternalModelInputsSurviveMutationRemovalAndFreshClosedRuns(t *testing.
 		freshGit := &LocalGit{StateRoot: g.StateRoot, TempRoot: g.TempRoot}
 		store, _ := runstore.New(g.StateRoot)
 		executor := run.Executor{Workspaces: freshGit, Sessions: &controlledManagers{crossed: make(chan struct{})}, Records: store}
-		result, err := executor.Execute(ctx, run.Request{MaxManagers: 5, ID: string(mandate), Project: "external-fixture", Prepared: p, Input: ref, Mandate: mandate, Allowance: run.NewAllowance(time.Now().Add(45*time.Second), 80), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
+		result, err := executor.Execute(ctx, run.Request{MaxManagers: 5, ID: string(mandate), Project: "external-fixture", Prepared: p, Input: ref, Mandate: mandate, Allowance: run.NewAllowance(runDeadline(t), 80), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
 		if err != nil || result.Technical != run.Completed || result.Candidate == nil {
 			t.Fatal(result, err)
 		}

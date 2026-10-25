@@ -236,7 +236,7 @@ func TestApplyRealizesAPackageMergeThroughTheAreaOwnerAndRoot(t *testing.T) {
 		return s
 	}}
 	command := apply.Command{Executor: executor, Candidates: git, Records: store, Publisher: &Publisher{Repository: adapter(t), Store: git}}
-	request := run.Request{ID: "merged-package", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(4*time.Minute), 200), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
+	request := run.Request{ID: "merged-package", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(runDeadline(t), 200), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
 	report, err := command.Execute(context.Background(), request)
 	if err != nil || report.Status != model.Passed || len(runs) != 3 {
 		t.Fatalf("status=%s error=%v final=%s/%s runs=%d", report.Status, err, report.Workflow.Final.Technical, report.Workflow.Final.Decision, len(runs))
@@ -291,7 +291,7 @@ func TestApplyRealizesADeletedDefinitionThroughTheShardOwner(t *testing.T) {
 		return s
 	}}
 	command := apply.Command{Executor: executor, Candidates: git, Records: store, Publisher: &Publisher{Repository: adapter(t), Store: git}}
-	request := run.Request{ID: "deleted-definition", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(4*time.Minute), 200), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
+	request := run.Request{ID: "deleted-definition", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(runDeadline(t), 200), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
 	report, err := command.Execute(context.Background(), request)
 	if err != nil || report.Status != model.Passed || len(runs) != 3 {
 		t.Fatalf("status=%s error=%v final=%s/%s runs=%d", report.Status, err, report.Workflow.Final.Technical, report.Workflow.Final.Decision, len(runs))
@@ -352,7 +352,7 @@ func TestApplyStopsForModelBlockerCleanupUncertaintyAndMandatoryStorageFailure(t
 			}
 			publisher := &unexpectedPublisher{}
 			command := apply.Command{Executor: executor, Candidates: git, Records: store, Publisher: publisher}
-			report, err := command.Execute(context.Background(), run.Request{ID: kind, Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(time.Minute), 100), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
+			report, err := command.Execute(context.Background(), run.Request{ID: kind, Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(runDeadline(t), 100), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
 			if publisher.calls != 0 || report.Publication != nil || len(executor.requests) != 1 {
 				t.Fatal("failed Run reached publication/another Run", kind, publisher.calls)
 			}
@@ -369,7 +369,7 @@ func TestApplyReopensStoredFinalVerifyAndRefusesSubstitutedAcceptance(t *testing
 	executor := &applyExecutor{t: t, git: git, store: store, noChange: true}
 	publisher := &unexpectedPublisher{}
 	command := apply.Command{Executor: executor, Candidates: git, Records: failingRecords{Records: store, mismatch: true}, Publisher: publisher}
-	report, err := command.Execute(context.Background(), run.Request{ID: "stored", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(2*time.Minute), 150), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
+	report, err := command.Execute(context.Background(), run.Request{ID: "stored", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(runDeadline(t), 150), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
 	if err == nil || report.Status != model.NotCompleted || publisher.calls != 0 || len(executor.requests) != 3 {
 		t.Fatal(report.Status, publisher.calls, len(executor.requests), err)
 	}
@@ -384,7 +384,7 @@ func TestApplyCompleteControlledHierarchyPublishesOnlyStoredClosedVerify(t *test
 	}
 	executor := &applyExecutor{t: t, git: git, store: store}
 	command := apply.Command{Executor: executor, Candidates: git, Records: store, Publisher: &Publisher{Repository: adapter(t), Store: git}}
-	request := run.Request{ID: "apply", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(2*time.Minute), 200), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
+	request := run.Request{ID: "apply", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(runDeadline(t), 200), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
 	report, err := command.Execute(context.Background(), request)
 	if err != nil || report.Status != model.Passed {
 		t.Fatalf("status=%s error=%v final=%s/%s", report.Status, err, report.Workflow.Final.Technical, report.Workflow.Final.Decision)
@@ -484,7 +484,7 @@ func TestApplyNoChangeStillRunsEveryMandateAndPreservesCapturedIgnoredInput(t *t
 	store, _ := runstore.New(git.StateRoot)
 	executor := &applyExecutor{t: t, git: git, store: store, noChange: true}
 	command := apply.Command{Executor: executor, Candidates: git, Records: store, Publisher: &Publisher{Repository: adapter(t), Store: git}}
-	report, err := command.Execute(context.Background(), run.Request{ID: "nochange", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(2*time.Minute), 150), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
+	report, err := command.Execute(context.Background(), run.Request{ID: "nochange", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(runDeadline(t), 150), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
 	if err != nil || report.Status != model.Passed || report.Publication == nil || !report.Publication.NoChange || !report.Publication.Readback || len(report.Publication.CompletedPaths) != 0 || len(executor.requests) != 3 {
 		t.Fatal(report.Status, report.Publication, err)
 	}
@@ -502,11 +502,11 @@ func TestApplyVerifyRejectionStartsFreshCorrectionWithOriginalAllowanceAndFindin
 	_, prepared, git, _ := runFixture(t)
 	store, _ := runstore.New(git.StateRoot)
 	executor := &applyExecutor{t: t, git: git, store: store, rejectVerify: true}
-	allowance := run.NewAllowance(time.Now().Add(3*time.Minute), 150)
+	allowance := run.NewAllowance(runDeadline(t), 150)
 	command := apply.Command{Executor: executor, Candidates: git, Records: store, Publisher: &Publisher{Repository: adapter(t), Store: git}}
 	report, err := command.Execute(context.Background(), run.Request{ID: "correction", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: allowance, CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
 	if err != nil || report.Status != model.Passed || len(executor.requests) != 5 {
-		t.Fatal(report.Status, len(executor.requests), err)
+		t.Fatal(report.Status, len(executor.requests), err, report.Workflow.Final.Errors)
 	}
 	if got := executor.requests[3]; got.Mandate != run.Implement || got.Input != *report.Workflow.Runs[2].Candidate || !reflect.DeepEqual(got.Findings, report.Workflow.Runs[2].Findings) || len(got.Findings) == 0 {
 		t.Fatal("fresh correction lost exact candidate or mandatory Findings", got)
