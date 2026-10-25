@@ -65,14 +65,18 @@ def session(path):
     first = last = None
     with path.open(encoding="utf-8") as stream:
         for line in stream:
+            if not line.strip():
+                continue
             try:
-                record = json.loads(line) if line.strip() else None
-                message = json.loads(record["data"]) if record and isinstance(record.get("data"), str) else None
-            except ValueError:
+                record = json.loads(line)
+                if not isinstance(record, dict):
+                    raise ValueError("not an object")
+                message = json.loads(record["data"]) if isinstance(record.get("data"), str) else None
+                stamp = _time(record["at"]) if record.get("at") else None
+            except (ValueError, TypeError):
                 row["unreadable_lines"] += 1
                 continue
-            if record and record.get("at"):
-                stamp = _time(record["at"])
+            if stamp:
                 first, last = first or stamp, stamp
             if not isinstance(message, dict):
                 continue
