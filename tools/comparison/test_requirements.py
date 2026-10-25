@@ -93,6 +93,10 @@ class RequirementsTests(unittest.TestCase):
         definitions = requirements.load_definitions(files, doc)
         self.assertEqual(requirements.present_sections(definitions, doc), [(2, "Area", []), (3, "Sub", ["area/sub/x"])])
         self.assertIn("## Area\n\n### Sub\n\nText of x.\n", requirements.render_document(definitions, doc))
+        nested = requirements.Document("T", "Intro.", [(2, "Top", []), (3, "Middle", []), (4, "Leaf", ["area/sub/x"]),
+                                                       (2, "Hollow", []), (3, "Empty middle", []), (4, "Gone", ["area/sub/y"])])
+        self.assertEqual(requirements.present_sections(definitions, nested),
+                         [(2, "Top", []), (3, "Middle", []), (4, "Leaf", ["area/sub/x"])])
         twice = requirements.Document("T", "Intro.", [(2, "Sub", []), (3, "Sub", ["area/sub/x"])])
         with self.assertRaises(requirements.ModelError):
             requirements.render_document(definitions, twice)

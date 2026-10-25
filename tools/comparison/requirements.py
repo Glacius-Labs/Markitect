@@ -357,7 +357,7 @@ LIBRARY = Document("Small library requirements", INTRO, SECTIONS, links=LINKS, s
 
 
 def render_document(definitions, doc):
-    """Headings, the verbatim rendered bodies and the document's extra lines; heading anchors must be unique."""
+    """Headings, the verbatim rendered bodies and the document's extra lines; section heading anchors must be unique."""
     links = doc.link_map(definitions)
     sections = present_sections(definitions, doc)
     anchors = [slug(title) for _, title, _ in sections]
