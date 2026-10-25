@@ -133,16 +133,43 @@ def rank_sum_one_sided(m, b):
     return sum(1 for s in splits if sum(ranks[k] for k in s) <= observed + 1e-9) / len(splits)
 
 
+def complete_chains(rows):
+    """Counted Phase C rows by arm and chain; refuse anything the rule cannot read.
+
+    Every counted chain needs exactly one row per step with an integer
+    missed_probe_families, and both arms need the same number of chains: a gap
+    or a duplicate would otherwise count as zero or twice.
+    """
+    steps = CHAIN_STEPS["C"]
+    chains = {"M": {}, "B": {}}
+    for r in rows:
+        if not r.get("counts", True) or r["scenario"] not in steps:
+            continue
+        where = f'{r["arm"]} chain {r["chain"]} {r["scenario"]}'
+        if not isinstance(r.get("missed_probe_families"), int) or isinstance(r["missed_probe_families"], bool):
+            raise ValueError(where + ": missed_probe_families must be an integer")
+        chain = chains[r["arm"]].setdefault(r["chain"], {})
+        if r["scenario"] in chain:
+            raise ValueError(where + ": duplicate row")
+        chain[r["scenario"]] = r
+    for arm, by_chain in chains.items():
+        for number, chain in by_chain.items():
+            missing = [s for s in steps if s not in chain]
+            if missing:
+                raise ValueError(f"{arm} chain {number} is incomplete: missing {', '.join(missing)}")
+    if not chains["M"] or len(chains["M"]) != len(chains["B"]):
+        raise ValueError(f'not evaluable: {len(chains["M"])} M chains, {len(chains["B"])} B chains')
+    return chains
+
+
 def read_c(rows):
     """Addendum C6: missed obligations per chain, the per-step check and the error-type downgrade."""
-    steps = CHAIN_STEPS["C"]
-    rows = [r for r in rows if r.get("counts", True) and r["scenario"] in steps]
-    totals = {arm: {} for arm in ("M", "B")}
-    for r in rows:
-        totals[r["arm"]][r["chain"]] = totals[r["arm"]].get(r["chain"], 0) + r["missed_probe_families"]
-    m, b = [totals["M"][c] for c in sorted(totals["M"])], [totals["B"][c] for c in sorted(totals["B"])]
+    chains = complete_chains(rows)
+    rows = [r for arm in chains.values() for chain in arm.values() for r in chain.values()]
+    m = [sum(r["missed_probe_families"] for r in chains["M"][c].values()) for c in sorted(chains["M"])]
+    b = [sum(r["missed_probe_families"] for r in chains["B"][c].values()) for c in sorted(chains["B"])]
     p = rank_sum_one_sided(m, b) if m and b else None
-    present = [s for s in steps if any(r["scenario"] == s for r in rows)]
+    present = CHAIN_STEPS["C"]
     per_step = {s: {arm: {"missed": sum(r["missed_probe_families"] for r in rows if r["arm"] == arm and r["scenario"] == s),
                           "conforming": [sum(conforming(r) for r in rows if r["arm"] == arm and r["scenario"] == s),
                                          sum(1 for r in rows if r["arm"] == arm and r["scenario"] == s)]}

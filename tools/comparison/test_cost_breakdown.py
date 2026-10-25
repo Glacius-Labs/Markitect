@@ -44,6 +44,20 @@ class CostBreakdownTests(unittest.TestCase):
         self.assertEqual(result["by_depth"]["2"]["outputTokens"], 5)
         self.assertEqual(rows["a.jsonl"]["seconds"], 90.4)
 
+    def test_damaged_transcripts_do_not_stop_the_breakdown(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "c.jsonl"
+            transcript(path, "lending", "verify", {"totalTokens": 70, "inputTokens": 60, "outputTokens": 10}, [])
+            with path.open("a", encoding="utf-8") as stream:
+                stream.write("\n{not json\n")
+                partial = {"method": "thread/tokenUsage/updated", "params": {"tokenUsage": {"total": {"totalTokens": 75}}}}
+                stream.write(json.dumps({"at": "2026-10-25T09:02:00Z", "data": json.dumps(partial)}) + "\n")
+            row = cost_breakdown.breakdown([tmp])["sessions"][0]
+        # The partial usage event updates the total only; input and output stay as last reported.
+        self.assertEqual((row["totalTokens"], row["inputTokens"], row["outputTokens"], row["unreadable_lines"]), (75, 60, 10, 1))
+        self.assertIsNone(cost_breakdown._section("Manager:\nnot json", "Manager"))
+        self.assertEqual(cost_breakdown._time("2026-10-25T09:00:00.5+00:00").second, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

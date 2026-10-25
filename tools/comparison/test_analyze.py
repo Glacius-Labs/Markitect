@@ -93,6 +93,25 @@ class AnalyzeTests(unittest.TestCase):
         result = analyze.read_c(rows)
         self.assertEqual((result["blockers"]["M"], result["reading"]), ({"justified": 1, "false": 0}, "counts against Markitect"))
 
+    def test_phase_c_refuses_what_it_cannot_read(self):
+        def chain(arm, number, steps=analyze.CHAIN_STEPS["C"], missed=0):
+            return [{"arm": arm, "chain": number, "scenario": s, **ALL, "missed_probe_families": missed} for s in steps]
+        full = chain("M", 1) + chain("B", 1)
+        with self.assertRaisesRegex(ValueError, "incomplete"):
+            analyze.read_c(chain("M", 1, analyze.CHAIN_STEPS["C"][:-1]) + chain("B", 1))
+        with self.assertRaisesRegex(ValueError, "duplicate"):
+            analyze.read_c(full + chain("B", 1, ("C4",)))
+        with self.assertRaisesRegex(ValueError, "not evaluable"):
+            analyze.read_c(full + chain("B", 2))
+        with self.assertRaisesRegex(ValueError, "not evaluable"):
+            analyze.read_c(chain("B", 1))
+        bad = chain("M", 1) + chain("B", 1)
+        del bad[3]["missed_probe_families"]
+        with self.assertRaisesRegex(ValueError, "integer"):
+            analyze.read_c(bad)
+        # A row that does not count is not part of a chain.
+        self.assertEqual(analyze.read_c(full + [{**full[0], "counts": False}])["reading"], "no quality advantage shown")
+
 
 if __name__ == "__main__":
     unittest.main()
