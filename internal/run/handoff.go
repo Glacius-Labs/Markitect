@@ -143,18 +143,9 @@ func (x *execution) judge(ctx context.Context, s *managerState, decision Decisio
 		}
 	}
 	if s.manager.Package == organization.Root && (x.request.Mandate != Implement || decision == Submitted) {
-		// A fixed state keeps its check result; only a new state is checked again.
-		x.mu.Lock()
-		j.check = x.rootCheck
-		x.mu.Unlock()
-		if j.check == nil || j.check.Commit != j.state {
-			if j.check, err = x.check(ctx, s, j.state); err != nil {
-				x.stopPort(err)
-				return err
-			}
-			x.mu.Lock()
-			x.rootCheck = j.check
-			x.mu.Unlock()
+		if j.check, err = x.check(ctx, s, j.state); err != nil {
+			x.stopPort(err)
+			return err
 		}
 		if !j.check.Valid && (decision == Submitted || decision == Approve) {
 			if x.request.Mandate != Implement {
@@ -512,6 +503,12 @@ func copyChecks(observed []CheckObservation) []CheckObservation {
 	return copied
 }
 
+func copyCheck(c *Check) *Check {
+	check := *c
+	check.Checks = slices.Clone(c.Checks)
+	return &check
+}
+
 func copyHandoff(h Handoff) Handoff {
 	h.Children = slices.Clone(h.Children)
 	h.Findings = slices.Clone(h.Findings)
@@ -521,9 +518,7 @@ func copyHandoff(h Handoff) Handoff {
 		h.Review = &review
 	}
 	if h.Check != nil {
-		check := *h.Check
-		check.Checks = slices.Clone(check.Checks)
-		h.Check = &check
+		h.Check = copyCheck(h.Check)
 	}
 	return h
 }

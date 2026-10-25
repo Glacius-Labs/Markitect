@@ -245,7 +245,34 @@ func (c *linuxCopy) Snapshot(ctx context.Context) (run.Commit, error) {
 	if err != nil {
 		return run.Commit{}, err
 	}
-	return snapshotGit(ctx, c.directory, c.service.command, dirs)
+	return snapshotGit(ctx, c.directory, c.service.command, dirs, c.executables)
+}
+func (c *linuxCopy) executables(ctx context.Context, paths []string) ([]string, error) {
+	if len(paths) == 0 {
+		return nil, nil
+	}
+	out := &boundedOutput{limit: 4 << 20}
+	err := c.service.node(ctx, `const fs=require('fs'),p=require('path');const base=process.argv[1],found=[],head=Buffer.alloc(4);for(const rel of fs.readFileSync(0,'utf8').split('\0')){if(rel==='')continue;const file=p.join(base,rel);let s;try{s=fs.lstatSync(file)}catch(e){if(e.code==='ENOENT')continue;throw e}if(!s.isFile())continue;const fd=fs.openSync(file,fs.constants.O_RDONLY|fs.constants.O_NOFOLLOW|fs.constants.O_NONBLOCK);try{if(fs.readSync(fd,head,0,4,0)===4&&head.equals(Buffer.from([0x7f,0x45,0x4c,0x46])))found.push(rel)}finally{fs.closeSync(fd)}}process.stdout.write(JSON.stringify(found))`, []string{c.directory}, strings.NewReader(strings.Join(paths, "\x00")), out)
+	if err != nil {
+		return nil, err
+	}
+	if out.limitExceeded {
+		return nil, fmt.Errorf("executable observation exceeds bound")
+	}
+	var found []string
+	if err = json.Unmarshal([]byte(out.String()), &found); err != nil {
+		return nil, err
+	}
+	listed := map[string]bool{}
+	for _, p := range paths {
+		listed[p] = true
+	}
+	for _, p := range found {
+		if !listed[p] {
+			return nil, fmt.Errorf("executable observation names an unlisted path")
+		}
+	}
+	return found, nil
 }
 func (c *linuxCopy) directories(ctx context.Context) ([]string, error) {
 	roots := modelDirectoryRoots(c.service.request.Prepared.Attempt().Model().Inputs().Raw)
@@ -310,7 +337,7 @@ func (c *linuxCopy) Integrate(ctx context.Context, source run.Copy, fixed run.Co
 	if !ok || child.service != c.service {
 		return run.Commit{}, fmt.Errorf("foreign child copy")
 	}
-	return integrateGit(ctx, c.directory, child.directory, fixed, c.service.command, c.directories)
+	return integrateGit(ctx, c.directory, child.directory, fixed, c.service.command, c.directories, c.executables)
 }
 
 func (s *linuxService) export(ctx context.Context, source string, fixed run.Commit, key, destination string) error {

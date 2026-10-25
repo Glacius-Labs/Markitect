@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path"
@@ -440,7 +441,47 @@ func (c *localCopy) Snapshot(ctx context.Context) (run.Commit, error) {
 	if err != nil {
 		return run.Commit{}, err
 	}
-	return snapshotGit(ctx, c.location, localCommand, dirs)
+	return snapshotGit(ctx, c.location, localCommand, dirs, localExecutables(c.location))
+}
+
+// elfMagic opens every ELF file: the executables, objects and libraries that
+// builds in the Linux runtime produce.
+var elfMagic = []byte{0x7f, 'E', 'L', 'F'}
+
+// elfProbe selects the ELF files among untracked paths of a copy. It reads
+// only their first bytes and follows no symlink; a vanished path is skipped.
+type elfProbe func(context.Context, []string) ([]string, error)
+
+func localExecutables(location string) elfProbe {
+	return func(_ context.Context, paths []string) ([]string, error) {
+		var found []string
+		head := make([]byte, len(elfMagic))
+		for _, p := range paths {
+			name := filepath.Join(location, filepath.FromSlash(p))
+			info, err := os.Lstat(name)
+			if errors.Is(err, os.ErrNotExist) {
+				continue
+			}
+			if err != nil {
+				return nil, err
+			}
+			if !info.Mode().IsRegular() {
+				continue
+			}
+			f, err := os.Open(name)
+			if err != nil {
+				return nil, err
+			}
+			_, err = io.ReadFull(f, head)
+			f.Close()
+			if err == nil && bytes.Equal(head, elfMagic) {
+				found = append(found, p)
+			} else if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
+				return nil, err
+			}
+		}
+		return found, nil
+	}
 }
 func modelDirectoryRoots(raw project.RawInputs) []string {
 	var roots []string
@@ -494,7 +535,7 @@ func localModelDirectories(ctx context.Context, location string, roots []string)
 	return dirs, nil
 }
 
-func snapshotGit(ctx context.Context, dir string, command gitCommand, dirs []string) (run.Commit, error) {
+func snapshotGit(ctx context.Context, dir string, command gitCommand, dirs []string, executables elfProbe) (run.Commit, error) {
 	// A Manager must resolve and stage its conflict before submission. Never let
 	// the ordinary snapshot's add-all turn unresolved index entries into success.
 	conflicts, err := command(ctx, dir, nil, "ls-files", "--unmerged", "-z")
@@ -513,8 +554,24 @@ func snapshotGit(ctx context.Context, dir string, command gitCommand, dirs []str
 			return run.Commit{}, err
 		}
 	}
+	// ELF files that a Manager's own build leaves untracked in its copy are
+	// operational state, not product: they stay untracked in the copy and never
+	// enter a fixed candidate. Everything else, Gitignored or not, is captured.
+	untracked, err := command(ctx, dir, nil, "ls-files", "--others", "-z")
+	if err != nil {
+		return run.Commit{}, err
+	}
+	outputs, err := executables(ctx, strings.FieldsFunc(untracked, func(r rune) bool { return r == 0 }))
+	if err != nil {
+		return run.Commit{}, err
+	}
 	if _, err = command(ctx, dir, nil, "add", "--force", "--all", "--", "."); err != nil {
 		return run.Commit{}, err
+	}
+	if len(outputs) != 0 {
+		if _, err = command(ctx, dir, []byte(strings.Join(outputs, "\x00")+"\x00"), "update-index", "--force-remove", "-z", "--stdin"); err != nil {
+			return run.Commit{}, err
+		}
 	}
 	tree, err := command(ctx, dir, nil, "write-tree")
 	if err != nil {
@@ -690,12 +747,12 @@ func (c *localCopy) Integrate(ctx context.Context, source run.Copy, commit run.C
 	if !ok || child.service != c.service {
 		return run.Commit{}, fmt.Errorf("foreign Run copy")
 	}
-	return integrateGit(ctx, c.location, child.location, commit, localCommand, c.directories)
+	return integrateGit(ctx, c.location, child.location, commit, localCommand, c.directories, localExecutables(c.location))
 }
 
 // Only a verified merge conflict with successful abort and exact restored parent
 // state is repairable. Transport, object, abort and readback failures stay technical.
-func integrateGit(ctx context.Context, directory, source string, fixed run.Commit, command gitCommand, directories func(context.Context) ([]string, error)) (run.Commit, error) {
+func integrateGit(ctx context.Context, directory, source string, fixed run.Commit, command gitCommand, directories func(context.Context) ([]string, error), executables elfProbe) (run.Commit, error) {
 	actual, err := objectUsing(ctx, source, fixed.ID, command)
 	if err != nil {
 		return run.Commit{}, err
@@ -710,7 +767,12 @@ func integrateGit(ctx context.Context, directory, source string, fixed run.Commi
 	if err != nil {
 		return run.Commit{}, err
 	}
-	before, err := snapshotGit(ctx, directory, command, beforeDirs)
+	before, err := snapshotGit(ctx, directory, command, beforeDirs, executables)
+	if err != nil {
+		return run.Commit{}, err
+	}
+	// The snapshot leaves only the parent's own build outputs untracked.
+	untracked, err := command(ctx, directory, nil, "ls-files", "--others", "-z")
 	if err != nil {
 		return run.Commit{}, err
 	}
@@ -718,7 +780,7 @@ func integrateGit(ctx context.Context, directory, source string, fixed run.Commi
 		conflicts, indexErr := command(ctx, directory, nil, "ls-files", "--unmerged", "-z")
 		mergeHead, headErr := objectUsing(ctx, directory, "MERGE_HEAD", command)
 		_, abort := command(ctx, directory, nil, "merge", "--abort")
-		readback := verifyRestoredGit(ctx, directory, before, beforeDirs, command, directories)
+		readback := verifyRestoredGit(ctx, directory, before, beforeDirs, untracked, command, directories)
 		if indexErr == nil && conflicts != "" && headErr == nil && mergeHead == fixed && abort == nil && readback == nil {
 			return run.Commit{}, fmt.Errorf("%w: child %s conflicts with parent %s; parent was restored", run.ErrMergeConflict, fixed.ID, before.ID)
 		}
@@ -728,11 +790,12 @@ func integrateGit(ctx context.Context, directory, source string, fixed run.Commi
 	if err != nil {
 		return run.Commit{}, err
 	}
-	return snapshotGit(ctx, directory, command, dirs)
+	return snapshotGit(ctx, directory, command, dirs, executables)
 }
 
 // Observe restoration without staging, committing, resetting or hiding residue.
-func verifyRestoredGit(ctx context.Context, directory string, before run.Commit, beforeDirs []string, command gitCommand, directories func(context.Context) ([]string, error)) error {
+// Untracked files must be exactly those present before the merge.
+func verifyRestoredGit(ctx context.Context, directory string, before run.Commit, beforeDirs []string, beforeUntracked string, command gitCommand, directories func(context.Context) ([]string, error)) error {
 	restored, err := objectUsing(ctx, directory, "HEAD", command)
 	if err != nil {
 		return err
@@ -749,8 +812,8 @@ func verifyRestoredGit(ctx context.Context, directory string, before run.Commit,
 	if err != nil {
 		return err
 	}
-	if untracked != "" {
-		return fmt.Errorf("parent restoration left untracked files")
+	if untracked != beforeUntracked {
+		return fmt.Errorf("parent restoration changed untracked files")
 	}
 	pending, err := command(ctx, directory, nil, "rev-parse", "--revs-only", "--end-of-options", "MERGE_HEAD")
 	if err != nil {

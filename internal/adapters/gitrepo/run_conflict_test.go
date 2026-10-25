@@ -208,12 +208,12 @@ func TestResolvedMergeKeepsBothParentsWhenTreeMatchesChildHead(t *testing.T) {
 	if _, err := localCommand(ctx, r.Dir, nil, "merge", "--no-edit", parent); err == nil {
 		t.Fatal("expected actual conflict")
 	}
-	if _, err := snapshotGit(ctx, r.Dir, localCommand, nil); err == nil {
+	if _, err := snapshotGit(ctx, r.Dir, localCommand, nil, localExecutables(r.Dir)); err == nil {
 		t.Fatal("unresolved index accepted")
 	}
 	r.Write("same.txt", "child\n")
 	r.Git("add", "--", "same.txt")
-	fixed, err := snapshotGit(ctx, r.Dir, localCommand, nil)
+	fixed, err := snapshotGit(ctx, r.Dir, localCommand, nil, localExecutables(r.Dir))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -255,11 +255,38 @@ func TestIntegrationTechnicalFailureNeverBecomesRepairableConflict(t *testing.T)
 				}
 				return localCommand(ctx, dir, input, args...)
 			}
-			_, err = integrateGit(ctx, r.Dir, r.Dir, child, command, func(context.Context) ([]string, error) { return nil, nil })
+			_, err = integrateGit(ctx, r.Dir, r.Dir, child, command, func(context.Context) ([]string, error) { return nil, nil }, localExecutables(r.Dir))
 			if !errors.Is(err, injected) || errors.Is(err, run.ErrMergeConflict) {
 				t.Fatal("technical failure became repairable", err)
 			}
 		})
+	}
+}
+
+// A parent's own build output stays untracked across a refused integration:
+// the conflict remains repairable and restoration keeps exactly that output.
+func TestIntegrationConflictKeepsParentBuildOutput(t *testing.T) {
+	r := testkit.NewRepo(t)
+	r.Write("same.txt", "base\n")
+	r.Commit("base")
+	r.Git("checkout", "-b", "child")
+	r.Write("same.txt", "child\n")
+	r.Commit("child")
+	ctx := context.Background()
+	child, err := object(ctx, r.Dir, "HEAD")
+	if err != nil {
+		t.Fatal(err)
+	}
+	r.Git("checkout", "-b", "parent", "HEAD~1")
+	r.Write("same.txt", "parent\n")
+	r.Commit("parent")
+	r.Write("parent-tool", "\x7fELF\x02\x01\x01\x00parent build output")
+	_, err = integrateGit(ctx, r.Dir, r.Dir, child, localCommand, func(context.Context) ([]string, error) { return nil, nil }, localExecutables(r.Dir))
+	if !errors.Is(err, run.ErrMergeConflict) {
+		t.Fatal("parent build output turned a repairable conflict into a technical failure", err)
+	}
+	if status := r.Git("status", "--porcelain", "--untracked-files=all"); status != "?? parent-tool" {
+		t.Fatalf("restored parent lost or captured its build output: %q", status)
 	}
 }
 

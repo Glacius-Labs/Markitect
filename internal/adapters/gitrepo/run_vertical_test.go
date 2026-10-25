@@ -85,6 +85,74 @@ func TestLinuxChildReviewPreservesCompleteContextWithoutBinaryPatch(t *testing.T
 	}
 }
 
+// hostLinuxTools runs the Linux service's Git and Node commands with the host's
+// own binaries. It starts no Engine and claims no container isolation.
+type hostLinuxTools struct{ container.ExecSession }
+
+func (hostLinuxTools) Exec(ctx context.Context, argv []string, input io.Reader, output io.Writer) error {
+	name := map[string]string{"/usr/bin/git": "git", "/usr/local/bin/node": "node"}[argv[0]]
+	if name == "" {
+		return fmt.Errorf("unexpected Linux service command %q", argv[0])
+	}
+	command := exec.CommandContext(ctx, name, argv[1:]...)
+	command.Env = testkit.GitEnv()
+	command.Stdin, command.Stdout = input, output
+	command.WaitDelay = time.Second
+	return command.Run()
+}
+
+// Both workspace backends leave exactly the untracked ELF files, the build
+// outputs, out of a snapshot. Text, other binary content, short files and
+// tracked ELF content are captured as before; directories and vanished paths
+// are no build outputs.
+func TestSnapshotLeavesUntrackedELFOutputsInTheCopy(t *testing.T) {
+	ctx := context.Background()
+	elf := "\x7fELF\x02\x01\x01\x00build output"
+	for _, backend := range []string{"local", "linux"} {
+		t.Run(backend, func(t *testing.T) {
+			r := testkit.NewRepo(t)
+			r.Write("tracked.elf", elf)
+			r.Write("source.go", "package main\n")
+			r.Commit("base")
+			r.Write("tracked.elf", elf+" changed")
+			r.Write("source.go", "package main\n\nfunc main() {}\n")
+			r.Write("library", elf)
+			r.Write("nested/library.test", elf+"\x00")
+			r.Write("short", "\x7fEL")
+			r.Write("data.bin", "\x00\x01binary data")
+			r.Write("empty", "")
+			executables, command := localExecutables(r.Dir), gitCommand(localCommand)
+			if backend == "linux" {
+				if _, err := exec.LookPath("node"); err != nil {
+					t.Skip("the Linux probe runs Node, which this host lacks")
+				}
+				c := &linuxCopy{service: &linuxService{exec: hostLinuxTools{}}, directory: r.Dir}
+				executables, command = c.executables, c.service.command
+			}
+			found, err := executables(ctx, []string{"library", "nested/library.test", "short", "data.bin", "empty", "nested", "vanished"})
+			if err != nil || !reflect.DeepEqual(found, []string{"library", "nested/library.test"}) {
+				t.Fatal("probe selected the wrong files", found, err)
+			}
+			fixed, err := snapshotGit(ctx, r.Dir, command, nil, executables)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if files := strings.Fields(r.Git("ls-tree", "-r", "--name-only", fixed.ID)); !reflect.DeepEqual(files, []string{"data.bin", "empty", "short", "source.go", "tracked.elf"}) {
+				t.Fatal("snapshot captured a build output or lost a file", files)
+			}
+			if r.Git("cat-file", "-s", fixed.ID+":tracked.elf") != fmt.Sprint(len(elf+" changed")) {
+				t.Fatal("tracked ELF content change was not captured")
+			}
+			if status := r.Git("status", "--porcelain", "--untracked-files=all"); status != "?? library\n?? nested/library.test" {
+				t.Fatalf("build outputs did not stay untracked in the copy: %q", status)
+			}
+			if again, err := snapshotGit(ctx, r.Dir, command, nil, executables); err != nil || again != fixed {
+				t.Fatal("an unchanged copy with build outputs gave a new state", again, err)
+			}
+		})
+	}
+}
+
 type notesReadingSessions struct {
 	controlled *controlledManagers
 	expected   []run.Note
@@ -409,6 +477,7 @@ type controlledManagers struct {
 	exchangeDrained     chan struct{}
 	closeBlock          <-chan struct{}
 	noChange            bool
+	checkFirst          bool // Root runs the check tool on its state before judging it
 	refusals            []string
 	messages            []run.Message
 	// realization replaces the default Implement writes; it may judge itself.
@@ -733,6 +802,15 @@ func (m *controlledManager) work(ctx context.Context) error {
 		decision = run.Approve
 		if m.owner.forceDecision != "" {
 			decision, findings = m.owner.forceDecision, []run.Finding{{Text: "controlled semantic rejection"}}
+		}
+	}
+	if m.owner.checkFirst && m.spec.Manager.Package == "." {
+		check, err := tools.Check(ctx)
+		if err != nil {
+			return err
+		}
+		if !check.Valid {
+			return fmt.Errorf("Root's state fails its own check: %s", check.Diagnostic)
 		}
 	}
 	if err := m.judge(ctx, decision, findings); err != nil {

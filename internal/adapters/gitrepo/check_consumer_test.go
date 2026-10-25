@@ -52,21 +52,35 @@ type controlledCheckService struct {
 
 func (s controlledCheckService) Copy(ctx context.Context, name string, base run.Commit) (run.Copy, error) {
 	c, err := s.WorkspaceService.Copy(ctx, name, base)
-	if name == "." && c != nil {
+	if c != nil {
 		return controlledCheckCopy{Copy: c, owner: s.owner}, err
 	}
 	return c, err
 }
 func (s controlledCheckService) Retain(ctx context.Context, c run.Copy, fixed run.Commit) (project.CandidateRef, error) {
-	if wrapped, ok := c.(controlledCheckCopy); ok {
-		c = wrapped.Copy
-	}
-	return s.WorkspaceService.Retain(ctx, c, fixed)
+	return s.WorkspaceService.Retain(ctx, actualCopy(c), fixed)
 }
 
 type controlledCheckCopy struct {
 	run.Copy
 	owner *controlledCheckWorkspaces
+}
+
+// Git operations between Run copies use the actual local copies.
+func actualCopy(c run.Copy) run.Copy {
+	if wrapped, ok := c.(controlledCheckCopy); ok {
+		return wrapped.Copy
+	}
+	return c
+}
+func (c controlledCheckCopy) Update(ctx context.Context, source run.Copy, base run.Commit) error {
+	return c.Copy.Update(ctx, actualCopy(source), base)
+}
+func (c controlledCheckCopy) Integrate(ctx context.Context, source run.Copy, fixed run.Commit) (run.Commit, error) {
+	return c.Copy.Integrate(ctx, actualCopy(source), fixed)
+}
+func (c controlledCheckCopy) Review(ctx context.Context, source run.Copy, base, result run.Commit) (string, error) {
+	return c.Copy.Review(ctx, actualCopy(source), base, result)
 }
 
 func (c controlledCheckCopy) Materialize(ctx context.Context, tree snapshot.Tree, dirs []snapshot.Path) (run.DisposableCopy, error) {
@@ -102,10 +116,11 @@ func (c *controlledCheckCommand) RunCommand(_ context.Context, spec container.Co
 	c.owner.mu.Lock()
 	copies := append([]run.DisposableCopy(nil), c.owner.copies...)
 	c.owner.mu.Unlock()
-	if len(copies) != 2 {
-		c.t.Fatal("check did not receive independent input/home")
+	if len(copies) != 2*c.calls {
+		c.t.Error("check did not receive independent input/home")
+		return container.CommandResult{}, errors.New("missing check copies")
 	}
-	input, home := copies[0].Location().Directory, copies[1].Location().Directory
+	input, home := copies[len(copies)-2].Location().Directory, copies[len(copies)-1].Location().Directory
 	if _, err := os.Stat(filepath.Join(input, ".markitect/model/b/empty")); err != nil {
 		c.t.Fatal("empty canonical Package lost before declared check", err)
 	}
@@ -167,7 +182,9 @@ func TestDeclaredCheckUsesFixedCopiesDirectoriesAndDurableObservations(t *testin
 	if err != nil || metadata.Status != model.Passed {
 		t.Fatal(metadata, err)
 	}
-	for _, kind := range []string{"pass", "nonzero", "lost observation", "invalid observation", "assessment readiness"} {
+	// "checked before ..." also has Root run the check tool on its state before
+	// judging the same state: the declared check runs and is recorded once.
+	for _, kind := range []string{"pass", "nonzero", "lost observation", "invalid observation", "assessment readiness", "checked before verify", "checked before implement"} {
 		t.Run(kind, func(t *testing.T) {
 			workspaces := &controlledCheckWorkspaces{Workspaces: g}
 			command := &controlledCheckCommand{owner: workspaces, kind: kind, t: t}
@@ -178,6 +195,9 @@ func TestDeclaredCheckUsesFixedCopiesDirectoriesAndDurableObservations(t *testin
 				mandate = run.Assessment
 				command.kind = "nonzero"
 			}
+			if kind == "checked before implement" {
+				mandate = run.Implement
+			}
 			checker, err := checks.NewCandidateRunner(metadata.Profiles, command, nil)
 			if err != nil {
 				t.Fatal(err)
@@ -186,7 +206,7 @@ func TestDeclaredCheckUsesFixedCopiesDirectoriesAndDurableObservations(t *testin
 			if kind == "invalid observation" {
 				observation.HarnessDigest = ""
 			}
-			sessions := &controlledManagers{crossed: make(chan struct{}), observation: &observation}
+			sessions := &controlledManagers{crossed: make(chan struct{}), observation: &observation, checkFirst: strings.HasPrefix(kind, "checked before")}
 			if kind == "nonzero" {
 				sessions.forceDecision = run.Reject
 			}
@@ -218,6 +238,11 @@ func TestDeclaredCheckUsesFixedCopiesDirectoriesAndDurableObservations(t *testin
 				}
 				if kind == "nonzero" && (result.Decision != run.Reject || result.Checks[0].Receipt.ExitCode != 23) {
 					t.Fatal("known check failure became success", result)
+				}
+				for _, h := range result.Handoffs {
+					if h.Manager == "." && strings.HasPrefix(kind, "checked before") && (h.Check == nil || !h.Check.Valid || !reflect.DeepEqual(h.Check.Checks, []string{"declared"}) || h.Check.Commit.ID != result.Checks[0].Commit) {
+						t.Fatal("Root's judgment did not rest on its one recorded check", h.Check, result.Checks)
+					}
 				}
 			}
 			for _, copy := range workspaces.copies {

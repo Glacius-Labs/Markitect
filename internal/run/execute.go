@@ -28,6 +28,7 @@ type managerState struct {
 	queue        []entry
 	signal       chan struct{}
 	integrations []Integration
+	checked      *Check // the check of this Manager's last checked state
 }
 
 // entry is one queued event. A child handoff is materialized on delivery, so
@@ -62,7 +63,6 @@ type execution struct {
 	checks         []CheckObservation
 	receiptsClosed bool
 	settled        chan struct{}
-	rootCheck      *Check // Root's check of its last judged state
 }
 
 func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
@@ -384,19 +384,29 @@ func (x *execution) tools(s *managerState) Tools {
 
 // check runs the shared deterministic check on one fixed state of s's copy:
 // structural validity and accounting, then the declared checks placed there.
-// Assessment judges model readiness and runs only the structural part.
+// Assessment judges model readiness and runs only the structural part. A fixed
+// state keeps its check result, whichever of the check tool, a judgment or a
+// handoff asks for it; only a new state is checked again.
 func (x *execution) check(ctx context.Context, s *managerState, fixed Commit) (*Check, error) {
+	x.mu.Lock()
+	last := s.checked
+	x.mu.Unlock()
+	if last != nil && last.Commit == fixed {
+		return copyCheck(last), nil
+	}
 	result := &Check{Commit: fixed, Checks: []string{}}
 	err := x.checkErr(ctx, s, fixed, result)
 	if errors.Is(err, project.ErrCandidateInvalid) {
 		result.Diagnostic = err.Error()
-		return result, nil
-	}
-	if err != nil {
+	} else if err != nil {
 		return nil, err
+	} else {
+		result.Valid = true
 	}
-	result.Valid = true
-	return result, nil
+	x.mu.Lock()
+	s.checked = result
+	x.mu.Unlock()
+	return copyCheck(result), nil
 }
 
 func (x *execution) checkErr(ctx context.Context, s *managerState, commit Commit, result *Check) error {
