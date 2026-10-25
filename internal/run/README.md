@@ -35,7 +35,7 @@ A registry link to a Definition the model no longer has is stale realization (`p
 
 ## Limits and evidence
 
-The shared allowance bounds all messages and questions; the request bounds Manager count, cleanup and terminal persistence separately. Partial startup, blocked adapters, cancellation, observation failures and storage/read-back failures cannot produce successful technical completion. Cleanup records actual outcomes and uncertainty; a timeout never claims a process was killed.
+The shared allowance bounds all messages and questions; the request bounds Manager count, cleanup and terminal persistence separately. `MessageTimeout` bounds the provider work of one response: serving its tool calls pauses that clock, so a parent may await working children longer, while the Run deadline bounds everything. Partial startup, blocked adapters, cancellation, observation failures and storage/read-back failures cannot produce successful technical completion. Cleanup records actual outcomes and uncertainty; a timeout never claims a process was killed.
 
 `gitrepo.LocalGit` supplies real isolated repositories and self-contained stored bundles, including ancestry, modes and explicit empty model directories. `runstore.Store` supplies immutable terminal records and concurrent project Notes read in bounded pages. Candidates and Notes reopen through fresh adapter instances after temporary copies close.
 

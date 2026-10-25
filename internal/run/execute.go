@@ -304,10 +304,16 @@ func (x *execution) complete() (Handoff, error) {
 	}
 }
 
+// toolContext serves one tool call within the Run's bounds. Serving it is host
+// time: it pauses the message clock of the response that called it.
 func (x *execution) toolContext(caller context.Context) (context.Context, func()) {
 	ctx, cancel := context.WithCancel(x.ctx)
 	stop := context.AfterFunc(caller, cancel)
-	return ctx, func() { stop(); cancel() }
+	resume := func() {}
+	if clock, ok := caller.Value(clockKey{}).(*messageClock); ok {
+		resume = clock.serve()
+	}
+	return ctx, func() { resume(); stop(); cancel() }
 }
 
 // A Session may handle ordinary tool errors, but cannot erase a mandatory

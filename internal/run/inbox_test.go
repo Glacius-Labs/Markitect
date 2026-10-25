@@ -350,6 +350,110 @@ func TestExchangeEnforcesPerMessageLimitWithinOriginalRunDeadline(t *testing.T) 
 	x.calls.Wait()
 }
 
+type scriptedSession func(context.Context) error
+
+func (f scriptedSession) Exchange(ctx context.Context, _ Message) error { return f(ctx) }
+func (scriptedSession) Close(context.Context) error                     { return nil }
+
+// MessageTimeout bounds provider work, not the host serving tool calls: a
+// parent may await its working children beyond it, provider work around such
+// a call stays bounded, and the Run deadline bounds the waiting.
+func TestMessageTimeoutCountsProviderWorkNotServedToolCalls(t *testing.T) {
+	const limit = 80 * time.Millisecond
+	setup := func(run time.Duration) (*execution, *managerState) {
+		x, _, a, deep := inboxExecution()
+		x.cancel()
+		x.ctx, x.cancel = context.WithTimeout(context.Background(), run)
+		x.request.MessageTimeout = limit
+		// a awaits its working child inside its own response.
+		deep.a.phase, a.running, deep.running = active, true, true
+		return x, a
+	}
+	question := func(x *execution, a *managerState, after time.Duration) {
+		time.Sleep(after)
+		x.mu.Lock()
+		defer x.mu.Unlock()
+		x.questions["q"] = &question{Question: Question{ID: "q", From: "a/deep", To: "a", Text: "child question"}}
+		x.queueLocked(a, entry{event: Event{Question: &x.questions["q"].Question}})
+	}
+	t.Run("await outlasts the limit", func(t *testing.T) {
+		x, a := setup(time.Minute)
+		defer x.cancel()
+		tools := x.tools(a)
+		a.session = scriptedSession(func(ctx context.Context) error {
+			e, err := tools.Await(ctx)
+			if err == nil && e.Question == nil {
+				err = fmt.Errorf("await returned %+v", e)
+			}
+			return err
+		})
+		start := time.Now()
+		go question(x, a, 4*limit)
+		if err := x.exchange(a, Message{Feedback: []Finding{{Text: "work"}}}); err != nil || time.Since(start) < 4*limit {
+			t.Fatal("a served await counted as provider work", err, time.Since(start))
+		}
+		x.calls.Wait()
+	})
+	t.Run("provider stall after a served call", func(t *testing.T) {
+		x, a := setup(time.Minute)
+		defer x.cancel()
+		tools := x.tools(a)
+		a.session = scriptedSession(func(ctx context.Context) error {
+			if _, err := tools.Await(ctx); err != nil {
+				return err
+			}
+			<-ctx.Done()
+			return nil
+		})
+		start := time.Now()
+		go question(x, a, 3*limit)
+		err := x.exchange(a, Message{Feedback: []Finding{{Text: "work"}}})
+		// The answer arrives after 3*limit, so only an uncounted await gets there.
+		if elapsed := time.Since(start); !errors.Is(err, context.DeadlineExceeded) || elapsed < 3*limit || elapsed > 4*limit+time.Second || x.ctx.Err() != nil {
+			t.Fatal("a stall after a served call escaped or misused the limit", err, elapsed)
+		}
+		x.calls.Wait()
+	})
+	t.Run("the Run deadline bounds waiting", func(t *testing.T) {
+		x, a := setup(4 * limit)
+		defer x.cancel()
+		tools := x.tools(a)
+		a.session = scriptedSession(func(ctx context.Context) error {
+			_, err := tools.Await(ctx)
+			return err
+		})
+		start := time.Now()
+		err := x.exchange(a, Message{Feedback: []Finding{{Text: "work"}}})
+		if elapsed := time.Since(start); !errors.Is(err, context.DeadlineExceeded) || elapsed < 3*limit || x.ctx.Err() == nil {
+			t.Fatal("host waiting outlived the Run deadline or ended at the message limit", err, elapsed)
+		}
+		x.calls.Wait()
+	})
+}
+
+// Provider work before and after served calls accumulates: serving pauses the
+// clock and never restarts it at its full limit.
+func TestMessageClockKeepsProviderWorkAcrossServedCalls(t *testing.T) {
+	clock := startClock(time.Hour, func() { t.Error("clock expired") })
+	defer clock.stop()
+	left := func() time.Duration {
+		clock.mu.Lock()
+		defer clock.mu.Unlock()
+		return clock.left
+	}
+	for want := 30 * time.Millisecond; want <= 60*time.Millisecond; want += 30 * time.Millisecond {
+		time.Sleep(30 * time.Millisecond) // provider work
+		resume := clock.serve()
+		nested := clock.serve()
+		time.Sleep(30 * time.Millisecond) // served: not counted
+		nested()
+		if spent := time.Hour - left(); spent < want || spent > want+time.Second {
+			t.Fatalf("provider work %v counted as %v", want, spent)
+		}
+		resume()
+	}
+}
+
 func (s *admissionSession) Exchange(context.Context, Message) error {
 	s.calls.Add(1)
 	return errors.New("unexpected admitted Session")
