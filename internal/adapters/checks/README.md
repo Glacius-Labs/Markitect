@@ -1,6 +1,6 @@
 # Check adapter
 
-`runtimeconfig.Prepare` supplies an acquired `container` check profile to `MetadataPreparer`. The adapter validates its closed versioned fields and observes the exact pinned image and whole executable file without starting them. `ContainerProfileFromPrepared` projects only complete matching evidence. Host `process` profiles are retired.
+`runtimeconfig.Prepare` supplies an acquired `container` check profile to `MetadataPreparer`. The adapter validates its closed versioned fields and observes the exact pinned image and whole executable file without starting them. `ContainerProfileFromPrepared` projects only complete matching evidence. Only `container` check profiles exist.
 
 ```yaml
 checkProfiles:

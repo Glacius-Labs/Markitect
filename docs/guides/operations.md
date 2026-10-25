@@ -1,6 +1,6 @@
 # Operations
 
-Current source provides canonical v1 read-only preparation and a guarded generated model view. [Project operations](project-operations.md) is the command reference; [distribution](../../packaging/README.md) owns separate maintenance packaging and publication. Dated evidence retains its original source/environment scope in the [production assessment](../validation/production-assessment.md).
+Current source provides canonical v1 read-only preparation, a guarded generated model view and `apply`. [Project operations](project-operations.md) is the command reference; [distribution](../../packaging/README.md) owns separate maintenance packaging and publication. Dated evidence retains its original source/environment scope in the [production assessment](../validation/production-assessment.md).
 
 ## Authoring and checking
 
@@ -14,7 +14,7 @@ The complete census includes Git-ignored files. Separate architecture and module
 
 Apply (Agent sessions, container checks, candidate workspaces and guarded artifact publication) is implemented and pending owner acceptance; run it only with explicit authority, as [project operations](project-operations.md#apply) describes. The guarded document write is not Apply. Multi-file/interrupted effects must not be assumed transactional or safe to replay blindly.
 
-Documentation previews may include explicitly selected external sources. For this increment, `docs --write` requires every acquired model, control and instruction source to have an actual repository binding. Otherwise it returns `not_completed` before effects because target disjointness has not been established. Repository-bound dependencies remain writable; an external source is not silently reclassified or followed through an alternate native spelling.
+[Project operations](project-operations.md#generated-view-and-recovery) states which sources `docs --write` accepts.
 
 ## Troubleshooting
 
