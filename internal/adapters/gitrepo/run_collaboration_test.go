@@ -40,6 +40,7 @@ type collaborator struct {
 	approved  map[string]bool
 	answers   map[string]string
 	refusals  []string
+	executed  bool // the current response ran a native command, as an adapter observes it
 }
 
 func (c *collaboration) Open(_ context.Context, spec run.SessionSpec) (run.Session, error) {
@@ -61,10 +62,13 @@ func (c *collaboration) manager(name string) *collaborator {
 
 func (*collaborator) Close(context.Context) error { return nil }
 
+func (m *collaborator) Acted() bool { return m.executed }
+
 func (m *collaborator) Exchange(ctx context.Context, message run.Message) error {
 	m.owner.mu.Lock()
 	m.messages = append(m.messages, message)
 	m.owner.mu.Unlock()
+	m.executed = false
 	if m.owner.script != nil {
 		if handled, err := m.owner.script(ctx, m, message); handled || err != nil {
 			return err
@@ -716,8 +720,9 @@ func TestCommunicationOnlyResponseIsContinuedNotEnded(t *testing.T) {
 	}
 }
 
-// Continued responses without any action or working-state change do not loop:
-// the Run ends technically incomplete with a diagnostic naming the Manager.
+// Continued responses that do nothing at all do not loop: no tool call, no
+// native execution and no working-state change. The Run ends technically
+// incomplete with a diagnostic naming the Manager.
 func TestRepeatedNoProgressEndsTheRunIncomplete(t *testing.T) {
 	c := &collaboration{stops: true}
 	c.script = func(_ context.Context, m *collaborator, _ run.Message) (bool, error) {
@@ -728,11 +733,61 @@ func TestRepeatedNoProgressEndsTheRunIncomplete(t *testing.T) {
 	if !errors.Is(c.err, run.ErrNoProgress) || result.Technical != run.Incomplete || result.Candidate != nil || result.Messages > 20 {
 		t.Fatal("idle Manager looped or ended as success", result.Technical, result.Messages, c.err)
 	}
-	if !strings.Contains(strings.Join(result.Errors, " "), "Manager a/deep made no progress in 2 continued responses") {
+	if !strings.Contains(strings.Join(result.Errors, " "), "Manager a/deep took no action in 2 continued responses") {
 		t.Fatal("stop lacks its concrete diagnostic", result.Errors)
 	}
-	if len(deep.messages) != 3 || feedbackText(deep.messages[1]) != "Continue your assignment: Realize your modeled responsibility." || feedbackText(deep.messages[2]) != "Your last response made no progress; act on your assignment or judge it: Realize your modeled responsibility." {
+	if len(deep.messages) != 3 || feedbackText(deep.messages[1]) != "Continue your assignment: Realize your modeled responsibility." || feedbackText(deep.messages[2]) != "Your last response took no action; work on your assignment or judge it: Realize your modeled responsibility." {
 		t.Fatal("continuations were not bounded and concrete", deep.messages)
+	}
+}
+
+// Read-only review is activity, not standstill: a reviewer spends continued
+// responses only on check, read_notes, native commands and a refused await,
+// none of which changes its copy, and then judges without being stopped.
+func TestReadOnlyReviewIsNotStopped(t *testing.T) {
+	for _, mandate := range []run.Mandate{run.Assessment, run.Verify} {
+		t.Run(string(mandate), func(t *testing.T) {
+			c := &collaboration{}
+			c.script = func(ctx context.Context, m *collaborator, message run.Message) (bool, error) {
+				if m.spec.Manager.Package != "a/deep" {
+					return false, nil
+				}
+				step := len(m.messages)
+				if step == 1 {
+					return true, m.handle(ctx, message.Events[0])
+				}
+				if feedbackText(message) != "Continue your assignment: Realize your modeled responsibility." {
+					return true, fmt.Errorf("read-only review was treated as standstill: %+v", message)
+				}
+				switch step {
+				case 2:
+					check, err := m.spec.Tools.Check(ctx)
+					if err == nil && !check.Valid {
+						err = fmt.Errorf("fixed input fails its check: %s", check.Diagnostic)
+					}
+					return true, err
+				case 3:
+					_, err := m.spec.Tools.ReadNotes(ctx, "")
+					return true, err
+				case 4:
+					// Reading files and running tests in the shell, as the
+					// adapter observes it; nothing changes in the copy.
+					m.executed = true
+					return true, nil
+				case 5:
+					if _, err := m.spec.Tools.Await(ctx); err == nil || !strings.Contains(err.Error(), "nothing can arrive") {
+						return true, fmt.Errorf("await was not refused: %v", err)
+					}
+					return true, nil
+				}
+				return true, m.judge(ctx, run.Approve, nil)
+			}
+			result := c.execute(t, "read-only-"+string(mandate), mandate)
+			deep := c.manager("a/deep")
+			if result.Decision != run.Approve || deep.judgments != 1 || len(deep.messages) != 6 {
+				t.Fatal("read-only reviewer was stopped or judged early", result.Decision, deep.judgments, len(deep.messages))
+			}
+		})
 	}
 }
 

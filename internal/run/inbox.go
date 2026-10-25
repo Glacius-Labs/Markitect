@@ -92,9 +92,8 @@ func (x *execution) settleLocked() bool {
 func (x *execution) drive(s *managerState) {
 	defer x.active.Done()
 	for {
-		// A message without new events continues an open assignment. Its
-		// response must act or change the working state; repeated idleness ends
-		// the Run.
+		// A message without new events continues an open assignment. Only
+		// repeated responses that do nothing at all end the Run.
 		message, continued, ok, err := x.next(s)
 		var before Commit
 		if err == nil && continued {
@@ -107,7 +106,7 @@ func (x *execution) drive(s *managerState) {
 			err = x.exchange(s, message)
 		}
 		if err == nil && ok {
-			err = x.progressed(s, continued, before)
+			err = x.acted(s, continued, before)
 		}
 		if err == nil && ok {
 			err = x.responded(s)
@@ -150,8 +149,8 @@ func (x *execution) next(s *managerState) (m Message, continued, ok bool, err er
 					return m, false, false, nil
 				}
 				text := "Continue your assignment: "
-				if s.stalled > 0 {
-					text = "Your last response made no progress; act on your assignment or judge it: "
+				if s.idle > 0 {
+					text = "Your last response took no action; work on your assignment or judge it: "
 				}
 				m.Feedback = []Finding{{Text: text + s.a.task.Task}}
 			}
@@ -172,8 +171,8 @@ func (x *execution) next(s *managerState) (m Message, continued, ok bool, err er
 	}
 }
 
-// maxStalled bounds continued responses in a row that make no progress.
-const maxStalled = 2
+// maxIdle bounds continued responses in a row that do nothing at all.
+const maxIdle = 2
 
 // state observes s's working copy; an unresolved merge has no comparable state.
 func (x *execution) state(s *managerState) (Commit, error) {
@@ -186,9 +185,11 @@ func (x *execution) state(s *managerState) (Commit, error) {
 	return state, err
 }
 
-// progressed records whether a continued response acted or changed the
-// working state. An event message resets the count.
-func (x *execution) progressed(s *managerState, continued bool, before Commit) error {
+// acted records whether a continued response did anything: a Manager tool
+// call, a native execution its Session observed or a change of the working
+// state. What the action achieved is not judged. An event message resets the
+// count.
+func (x *execution) acted(s *managerState, continued bool, before Commit) error {
 	changed := false
 	if continued {
 		after, err := x.state(s)
@@ -197,22 +198,26 @@ func (x *execution) progressed(s *managerState, continued bool, before Commit) e
 		}
 		changed = after != before
 	}
+	executed := false
+	if native, ok := s.session.(ActingSession); ok {
+		executed = native.Acted()
+	}
 	x.mu.Lock()
 	defer x.mu.Unlock()
-	acted := s.progress
-	s.progress = false
-	if !continued || acted || changed {
-		s.stalled = 0
+	called := s.called
+	s.called = false
+	if !continued || called || executed || changed {
+		s.idle = 0
 		return nil
 	}
-	s.stalled++
-	if s.stalled < maxStalled {
+	s.idle++
+	if s.idle < maxIdle {
 		return nil
 	}
 	if s.a.phase != active {
-		return fmt.Errorf("%w: Manager %s made no progress in %d continued responses in a row%s", ErrNoProgress, s.manager.Package, s.stalled, x.openQuestionsLocked(s))
+		return fmt.Errorf("%w: Manager %s took no action in %d continued responses in a row%s", ErrNoProgress, s.manager.Package, s.idle, x.openQuestionsLocked(s))
 	}
-	return fmt.Errorf("%w: Manager %s made no progress in %d continued responses in a row on its assignment %q", ErrNoProgress, s.manager.Package, s.stalled, s.a.task.Task)
+	return fmt.Errorf("%w: Manager %s took no action in %d continued responses in a row on its assignment %q", ErrNoProgress, s.manager.Package, s.idle, s.a.task.Task)
 }
 
 // responded follows the end of one native response: unanswered questions stay

@@ -23,8 +23,8 @@ type managerState struct {
 	// Guarded by execution.mu.
 	a            assignment
 	running      bool // a driver owns this Session's messages
-	progress     bool // an action succeeded during the current response
-	stalled      int  // continued responses in a row without progress
+	called       bool // the current response called a Manager tool
+	idle         int  // continued responses in a row that did nothing
 	queue        []entry
 	signal       chan struct{}
 	integrations []Integration
@@ -324,56 +324,53 @@ func (x *execution) stopPort(err error) {
 }
 
 func (x *execution) tools(s *managerState) Tools {
-	// An action that succeeds is progress on the assignment; reading Notes or
-	// running the check is not.
-	call := func(caller context.Context, action bool, f func(context.Context) error) error {
+	// Every call, also a refused one, is an action of the current response;
+	// Run does not judge whether it was useful.
+	call := func(caller context.Context, f func(context.Context) error) error {
+		x.mu.Lock()
+		s.called = true
+		x.mu.Unlock()
 		ctx, stop := x.toolContext(caller)
 		defer stop()
-		err := f(ctx)
-		if err == nil && action {
-			x.mu.Lock()
-			s.progress = true
-			x.mu.Unlock()
-		}
-		return err
+		return f(ctx)
 	}
 	return Tools{
 		Delegate: func(caller context.Context, child, task string, findings []Finding) error {
-			return call(caller, true, func(ctx context.Context) error { return x.delegate(ctx, s, child, task, findings) })
+			return call(caller, func(ctx context.Context) error { return x.delegate(ctx, s, child, task, findings) })
 		},
 		Await: func(caller context.Context) (event Event, err error) {
-			err = call(caller, true, func(ctx context.Context) error { event, err = x.await(ctx, s); return err })
+			err = call(caller, func(ctx context.Context) error { event, err = x.await(ctx, s); return err })
 			return event, err
 		},
 		Review: func(caller context.Context, child, commit string, decision Decision, findings []Finding) error {
-			return call(caller, true, func(ctx context.Context) error { return x.review(ctx, s, child, commit, decision, findings) })
+			return call(caller, func(ctx context.Context) error { return x.review(ctx, s, child, commit, decision, findings) })
 		},
 		Ask: func(caller context.Context, to, text string) (id string, err error) {
-			err = call(caller, true, func(ctx context.Context) error { id, err = x.ask(ctx, s, to, text); return err })
+			err = call(caller, func(ctx context.Context) error { id, err = x.ask(ctx, s, to, text); return err })
 			return id, err
 		},
 		Reply: func(caller context.Context, id, text string) error {
-			return call(caller, true, func(ctx context.Context) error { return x.reply(ctx, s, id, text) })
+			return call(caller, func(ctx context.Context) error { return x.reply(ctx, s, id, text) })
 		},
 		Judge: func(caller context.Context, decision Decision, findings []Finding) error {
-			return call(caller, true, func(ctx context.Context) error { return x.judge(ctx, s, decision, findings) })
+			return call(caller, func(ctx context.Context) error { return x.judge(ctx, s, decision, findings) })
 		},
 		Check: func(caller context.Context) (result Check, err error) {
-			err = call(caller, false, func(ctx context.Context) error { result, err = x.checkTool(ctx, s); return err })
+			err = call(caller, func(ctx context.Context) error { result, err = x.checkTool(ctx, s); return err })
 			return result, err
 		},
 		// Notes are optional information: a storage failure is reported to the
 		// Manager, which sees that nothing was read or kept, and does not stop
 		// the Run. Mandatory results are stored separately and still stop it.
 		ReadNotes: func(caller context.Context, after string) (page NotePage, err error) {
-			err = call(caller, false, func(ctx context.Context) error {
+			err = call(caller, func(ctx context.Context) error {
 				page, err = x.executor.Records.Notes(ctx, x.request.Project, after)
 				return err
 			})
 			return page, err
 		},
 		AppendNote: func(caller context.Context, scope, text string) (note Note, err error) {
-			err = call(caller, true, func(ctx context.Context) error {
+			err = call(caller, func(ctx context.Context) error {
 				if text == "" {
 					return fmt.Errorf("empty Note; append it again with a text")
 				}

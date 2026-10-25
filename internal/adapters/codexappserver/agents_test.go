@@ -1140,6 +1140,42 @@ func TestNativeMessagesCarryEventsWithoutDemandingAJudgment(t *testing.T) {
 	}
 }
 
+// A native command, file change or tool call is activity of the Exchange that
+// observed it, whatever its outcome and also on a native subagent thread.
+// Messages and reasoning are text; every Exchange starts without activity.
+func TestExchangeReportsObservedNativeExecutions(t *testing.T) {
+	rt := newRuntime()
+	rt.autoJudge = false
+	var session run.Session = openSession(t, rt, testSessionSpec(t))
+	acting, ok := session.(run.ActingSession)
+	if !ok {
+		t.Fatal("native Session does not report native executions")
+	}
+	item := func(thread ThreadID, turn TurnID, value map[string]any) string {
+		data, _ := json.Marshal(map[string]any{"method": "item/completed", "params": map[string]any{"threadId": thread, "turnId": turn, "item": value}})
+		return string(data)
+	}
+	subagent := `{"method":"item/started","params":{"threadId":"` + string(codecThreadID) + `","turnId":"` + string(codecTurnID) + `","item":{"id":"spawn","type":"subAgentActivity","kind":"started","agentThreadId":"child-thread"}}}`
+	for _, tc := range []struct {
+		name          string
+		notifications []string
+		items         []map[string]any
+		acted         bool
+	}{
+		{"text only", nil, []map[string]any{{"id": "r", "type": "reasoning"}}, false},
+		{"failed command", nil, []map[string]any{{"id": "c", "type": "commandExecution", "command": "go test ./...", "status": "failed", "exitCode": 1}}, true},
+		{"file change", nil, []map[string]any{{"id": "f", "type": "fileChange", "status": "completed"}}, true},
+		{"tool call", nil, []map[string]any{{"id": "m", "type": "mcpToolCall", "server": "markitect", "tool": "check", "status": "completed"}}, true},
+		{"subagent command", []string{subagent, item("child-thread", "child-turn", map[string]any{"id": "s", "type": "commandExecution", "status": "completed"})}, nil, true},
+		{"next Exchange", nil, nil, false},
+	} {
+		rt.notifications, rt.commandItems = tc.notifications, tc.items
+		if err := session.Exchange(context.Background(), task("Review the fixed input.")); err != nil || acting.Acted() != tc.acted {
+			t.Fatal(tc.name, acting.Acted(), err)
+		}
+	}
+}
+
 // Invalid judge input is an ordinary tool refusal: the provider receives the
 // reason, Run receives no judgment and the Session stays usable.
 func TestInvalidJudgeArgumentsAreRefusedWithoutJudgment(t *testing.T) {
