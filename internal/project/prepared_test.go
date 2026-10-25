@@ -11,6 +11,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
+	"github.com/Glacius-Labs/Markitect/internal/realization"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
@@ -116,6 +117,72 @@ func TestCandidateAccountingFeedbackIsBoundedDeterministicAndExcludesFileContent
 			t.Fatal("same fixed candidate returned unstable feedback")
 		}
 		previous = text
+	}
+}
+
+// A registry link to a Definition the model no longer has is realization still
+// to do: the input passes preparation, and the link invalidates a candidate
+// only for the shard owner's subtree and Root, never for other Managers.
+func TestStaleRegistryLinksBindOnlyTheResponsibleManagers(t *testing.T) {
+	lending := map[string]bool{project.CommandInput: false, "library": false, "lending/reminders": false, "lending": true, ".": true}
+	root := map[string]bool{project.CommandInput: false, "library": false, "lending": false, ".": true}
+	for _, tc := range []struct {
+		name, root, child, path string
+		binds                   map[string]bool
+	}{
+		{"deleted", rootRegistry, strings.Replace(childRegistry, "[lending/borrow]", "[lending/absent]", 1), "realization/lending.go", lending},
+		{"one of two deleted", rootRegistry, strings.Replace(childRegistry, "[lending/borrow]", "[lending/borrow, lending/absent]", 1), "realization/lending.go", lending},
+		{"case changed", rootRegistry, strings.Replace(childRegistry, "[lending/borrow]", "[Lending/borrow]", 1), "realization/lending.go", lending},
+		{"Root's own shard", strings.Replace(rootRegistry, "[library/library]", "[library/absent]", 1), childRegistry, "realization/library.md", root},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			selection, raw := executionInputs(t, documentedExecution(t))
+			censusFile(t, &raw, "realization/library.md", snapshot.Regular, []byte("Library usage.\r\n"))
+			censusFile(t, &raw, "realization/lending.go", snapshot.Executable, []byte("Lending implementation."))
+			registrySource(t, &selection, &raw, ".markitect/registry/registry.yaml", tc.root, true)
+			registrySource(t, &selection, &raw, ".markitect/registry/lending/registry.yaml", tc.child, true)
+			source := controlledSource{
+				capture: func(context.Context, project.CaptureRequest) (project.CapturedInputs, error) {
+					return captured(raw), nil
+				},
+				preview: func(_ context.Context, r project.PreviewRequest) (project.PreviewedInputs, error) {
+					return project.PreviewedInputs{Raw: raw, Head: fixtureHead, Revision: r.Revision}, nil
+				},
+			}
+			service := project.NewPreparationService(project.NewModelService(source, source))
+			capture, err := service.Capture(context.Background(), project.CaptureRequest{Selection: selection}, model.Limits{})
+			a, ok := capture.Prepared()
+			if err != nil || !ok || capture.Status() != model.Passed {
+				t.Fatal("a stale link refused the input", capture.Status(), err)
+			}
+			p, err := project.Prepare(a)
+			if err != nil {
+				t.Fatal(err)
+			}
+			preview, err := service.Preview(context.Background(), project.PreviewRequest{Selection: selection, Revision: fixtureHead}, model.Limits{})
+			if err != nil {
+				t.Fatal(err)
+			}
+			attempts := preview.Attempts()
+			candidate := attempts[len(attempts)-1]
+			accounting, _ := candidate.Files().Accounting()
+			stale := accounting.Stale()
+			if accounting.Status() != realization.Accounted || len(stale) != 1 || stale[0].Code != "registry.stale_link" || stale[0].Path.String() != tc.path {
+				t.Fatalf("stale link is not reported as realization still to do: %+v %+v", accounting.Findings(), stale)
+			}
+			if err := p.ValidateCandidate(candidate); !errors.Is(err, project.ErrCandidateInvalid) || !strings.Contains(err.Error(), "registry.stale_link") {
+				t.Fatal("the complete candidate check kept a stale link", err)
+			}
+			for manager, binds := range tc.binds {
+				err := p.ValidateCandidateFor(candidate, manager)
+				if binds != errors.Is(err, project.ErrCandidateInvalid) || binds && (!strings.Contains(err.Error(), "registry.stale_link") || !strings.Contains(err.Error(), tc.path)) {
+					t.Fatalf("Manager %q: stale link binding %v, error %v", manager, binds, err)
+				}
+				if got := len(project.StaleLinks(candidate, manager)); got != 1 && binds || got != 0 && !binds {
+					t.Fatalf("Manager %q sees %d stale links", manager, got)
+				}
+			}
+		})
 	}
 }
 

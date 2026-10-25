@@ -4,6 +4,7 @@ import (
 	"errors"
 	"reflect"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
@@ -132,10 +133,9 @@ func TestEmptyLocalPackagesAndExplicitRootAreOwnersButImportsAreNot(t *testing.T
 	}
 }
 
-func TestMissingDanglingConflictingAndUnexplainedFilesBlockAccounting(t *testing.T) {
+func TestMissingConflictingAndUnexplainedFilesBlockAccounting(t *testing.T) {
 	registrations := []realization.Registration{
 		registration(t, owner(t, "lending"), artifact(t, "missing.go", borrow)),
-		registration(t, realization.RootOwner(), artifact(t, "present.go", model.Identity{Package: "gone", ID: "removed"})),
 		registration(t, owner(t, "lending"), artifact(t, "protected.yaml", borrow)),
 		registration(t, owner(t, "lending"), artifact(t, "ignored.go", borrow)),
 	}
@@ -146,12 +146,12 @@ func TestMissingDanglingConflictingAndUnexplainedFilesBlockAccounting(t *testing
 		classified(t, "duplicate", realization.MarkitectInput),
 		classified(t, "duplicate", realization.IgnoredFile),
 	}
-	files := fileTree(t, "present.go", "protected.yaml", "ignored.go", "duplicate", "unexplained.txt")
+	files := fileTree(t, "protected.yaml", "ignored.go", "duplicate", "unexplained.txt")
 	first := realization.AccountFiles(checkedFacts(), files, registry(t, registrations...), classes, realization.Layout{})
 	slices.Reverse(registrations)
 	slices.Reverse(classes)
 	second := realization.AccountFiles(checkedFacts(), files, registry(t, registrations...), classes, realization.Layout{})
-	want := []string{"classification.duplicate", "classification.missing_file", "file.conflicting_classification", "file.conflicting_classification", "file.unexplained", "registry.dangling_basis", "registry.missing_file"}
+	want := []string{"classification.duplicate", "classification.missing_file", "file.conflicting_classification", "file.conflicting_classification", "file.unexplained", "registry.missing_file"}
 	if first.Status() != realization.AccountingInvalid || !reflect.DeepEqual(findingCodes(first), want) || !reflect.DeepEqual(first.Findings(), second.Findings()) {
 		t.Fatalf("findings: %+v / %+v", first.Findings(), second.Findings())
 	}
@@ -162,6 +162,44 @@ func TestMissingDanglingConflictingAndUnexplainedFilesBlockAccounting(t *testing
 	copy[0] = realization.Finding{}
 	if first.Findings()[0].Code == "" {
 		t.Fatal("findings exposed an alias")
+	}
+}
+
+// A link to a Definition the model no longer has is realization still to do:
+// the artifact stays registered to its owner, its other links still count and
+// accounting stays valid, while Stale names every such link.
+func TestStaleLinksAreRealizationStillToDoNotInvalidAccounting(t *testing.T) {
+	removed := model.Identity{Package: "gone", ID: "removed"}
+	registrations := []realization.Registration{
+		registration(t, owner(t, "lending"), artifact(t, "mixed.go", borrow, removed)),
+		registration(t, realization.RootOwner(), artifact(t, "only.go", removed)),
+	}
+	first := realization.AccountFiles(checkedFacts(), fileTree(t, "mixed.go", "only.go"), registry(t, registrations...), nil, realization.Layout{})
+	slices.Reverse(registrations)
+	second := realization.AccountFiles(checkedFacts(), fileTree(t, "mixed.go", "only.go"), registry(t, registrations...), nil, realization.Layout{})
+	if first.Status() != realization.Accounted || len(first.Findings()) != 0 || !reflect.DeepEqual(first.Stale(), second.Stale()) {
+		t.Fatalf("stale links invalidated accounting: %+v %+v", first.Findings(), first.Stale())
+	}
+	stale := first.Stale()
+	if len(stale) != 2 || stale[0].Path.String() != "mixed.go" || stale[0].Owner != owner(t, "lending") || stale[1].Path.String() != "only.go" || !stale[1].Owner.IsRoot() {
+		t.Fatalf("stale links lost their artifact or owner: %+v", stale)
+	}
+	for _, f := range stale {
+		if f.Code != "registry.stale_link" || f.Definition != removed || !strings.Contains(f.Message, "gone/removed") {
+			t.Fatalf("stale link does not name its absent Definition: %+v", f)
+		}
+	}
+	if !reflect.DeepEqual(first.Artifacts(borrow), []snapshot.Path{path(t, "mixed.go")}) || len(first.Artifacts(removed)) != 0 {
+		t.Fatal("stale link counted as realization, or valid link lost", first.Artifacts(borrow))
+	}
+	for _, f := range first.Files() {
+		if f.Class() != realization.RegisteredArtifact {
+			t.Fatal("artifact with a stale link lost its registration", f.Entry().Path())
+		}
+	}
+	stale[0] = realization.Finding{}
+	if first.Stale()[0].Code == "" {
+		t.Fatal("stale links exposed an alias")
 	}
 }
 
