@@ -20,7 +20,7 @@ Independent complete-diff and architecture review of the frozen final source for
 
 | Gate | Result |
 | --- | --- |
-| Hosted CI on exactly `4d23f7ae` ([run 40240295977](https://github.com/Glacius-Labs/Markitect/actions/runs/40240295977)) | Quality (ubuntu-24.04) and Race detector (ubuntu-24.04) pass; Quality (windows-latest) still running when this record was written |
+| Hosted CI on exactly `4d23f7ae` ([run 40240295977](https://github.com/Glacius-Labs/Markitect/actions/runs/40240295977)) | Pass: Quality (ubuntu-24.04), Race detector (ubuntu-24.04), Quality (windows-latest) and Publish main source artifact all succeeded |
 | `go build ./...`, `go vet ./...` (local, Windows) | Pass |
 | `markitect check --repo . --revision 4d23f7ae` (local) | Pass; no stale link, no orphaned shard. A draft check of the reviewer's worktree flags only the reviewer's own untracked `.claude/settings.local.json`, as designed |
 | `go test ./... -count=1` (local, Windows) | 31 packages pass, 11 have no tests. `internal/adapters/gitrepo` did not complete. It needs more than Go's default 10-minute timeout on Windows, and CONTRIBUTING prescribes `-timeout=60m`; with the default, its last running test hit the deadline it derives from the test binary, and the binary timed out. A rerun with `-timeout=60m` was stopped at the coordinator's request to free the machine for a native run, so the hosted CI is the evidence for this package |
@@ -63,6 +63,8 @@ Changes since the step 4 source `e11e6cff` were reviewed with particular care:
 
 Ranked blocking, should-fix, note. Line numbers are on F_final. A separate, independent agent re-checked should-fix 1–3 against the code (all confirmed) and searched Run, Workflow, Apply, publication and the snapshot code for a blocking defect. It found none and raised the boundary recorded as note 6.
 
+Disposition by the coordinator: should-fix 1 is fixed by [PR #728](https://github.com/Glacius-Labs/Markitect/pull/728) (`3627c55f`), should-fix 2 by the coordinator's plan update after this record, should-fix 3 goes to the step 5 cleanup, and should-fix 4 to the technical acceptance report.
+
 ### Blocking
 
 None.
@@ -93,5 +95,4 @@ None.
 
 - Static review and local source tests only. The concept §25.1 kinds "native component test", "public native Apply" and "independent oracle" are not covered by this record.
 - No native evidence exists yet on F_final. Step 4 qualified `e11e6cff`; the refined idle stop (#696), stale links and orphaned shards (#701, #705), the ELF rule (#706, #724) and the per-message clock (#725) changed the contract afterwards. P2, the public Verify Reject → fresh Implement → fresh Verify → publication branch on F_final, is still to run.
-- Hosted CI on F_final (run 40240295977) is the coordinator's evidence; this record cites its state at writing time only.
-- Static review cannot establish freedom from races; the race detector runs only in Linux CI.
+- Static review cannot establish freedom from races; the race detector ran in Linux CI only.
