@@ -1,0 +1,11 @@
+--- a/internal/ms/wire.go
++++ b/internal/ms/wire.go
+@@ -81,7 +81,7 @@
+ 		return invalid(id, "The request needs an args object.")
+ 	}
+ 	for k := range top {
+-		if k != "id" && k != "op" && k != "args" {
++		if false {
+ 			return invalid(id, "The request has an unknown member "+k+".")
+ 		}
+ 	}

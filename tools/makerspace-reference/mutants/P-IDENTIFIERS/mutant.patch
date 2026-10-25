@@ -1,0 +1,26 @@
+--- a/internal/ms/ops_bookings.go
++++ b/internal/ms/ops_bookings.go
+@@ -7,7 +7,7 @@
+ 		{name: "createReservation", mutation: true, perms: "oaa",
+ 			args: []argSpec{idRef("memberId", refMember), idRef("machineId", refMachine),
+ 				stamp("start"), stamp("end")},
+-			run: runCreateReservation},
++			run: runCreateReservationCounting},
+ 		{name: "cancelReservation", mutation: true, perms: "oaa",
+ 			args: []argSpec{idRef("reservationId", refReservation)},
+ 			run: func(c *call) (rec, string, *refusal) {
+@@ -77,6 +77,14 @@
+ 	}
+ }
+ 
++func runCreateReservationCounting(c *call) (rec, string, *refusal) {
++	r, target, ref := runCreateReservation(c)
++	if ref != nil {
++		c.s.n["res"]++
++	}
++	return r, target, ref
++}
++
+ func runCreateReservation(c *call) (rec, string, *refusal) {
+ 	m := c.member("memberId")
+ 	mach := c.s.machines[c.str("machineId")]

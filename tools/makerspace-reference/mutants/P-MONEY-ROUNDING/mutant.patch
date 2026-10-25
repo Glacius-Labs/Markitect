@@ -1,0 +1,11 @@
+--- a/internal/ms/model.go
++++ b/internal/ms/model.go
+@@ -247,7 +247,7 @@
+ }
+ 
+ func chargeAmount(quantity, unit, discount int) int {
+-	return (quantity*unit*(100-discount) + 50) / 100
++	return (quantity * unit * (100 - discount)) / 100
+ }
+ 
+ func tierFee(tier string) int {

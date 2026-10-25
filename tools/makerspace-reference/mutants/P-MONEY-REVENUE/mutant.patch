@@ -1,0 +1,11 @@
+--- a/internal/ms/ops_reports.go
++++ b/internal/ms/ops_reports.go
+@@ -113,7 +113,7 @@
+ 	}
+ 	for _, p := range c.s.payments {
+ 		if monthOf(p.at) == idx {
+-			payments += p.amount
++			payments += p.applied
+ 		}
+ 	}
+ 	for _, e := range c.s.creditEvents {

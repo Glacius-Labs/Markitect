@@ -1,0 +1,18 @@
+--- a/internal/ms/ops_members.go
++++ b/internal/ms/ops_members.go
+@@ -75,12 +75,12 @@
+ 				}
+ 				key := enrollmentKey(co.id, m.user.id)
+ 				e := c.s.enrollments[key]
+-				if e != nil && e.status == "enrolled" {
+-					return nil, "", refuse("already_enrolled", "The member is already enrolled.")
+-				}
+ 				if c.s.courseView(co)["enrolledCount"].(int) >= co.capacity {
+ 					return nil, "", refuse("course_full", "The course has no free place.")
+ 				}
++				if e != nil && e.status == "enrolled" {
++					return nil, "", refuse("already_enrolled", "The member is already enrolled.")
++				}
+ 				if e == nil {
+ 					e = &enrollment{courseID: co.id, memberID: m.user.id}
+ 					c.s.enrollments[key] = e

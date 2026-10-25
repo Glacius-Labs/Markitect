@@ -1,0 +1,12 @@
+--- a/internal/ms/ops_members.go
++++ b/internal/ms/ops_members.go
+@@ -70,9 +70,6 @@
+ 			run: func(c *call) (rec, string, *refusal) {
+ 				co := c.s.courses[c.str("courseId")]
+ 				m := c.member("memberId")
+-				if m.standing != "good" {
+-					return nil, "", refuse("member_suspended", "The member is suspended.")
+-				}
+ 				key := enrollmentKey(co.id, m.user.id)
+ 				e := c.s.enrollments[key]
+ 				if e != nil && e.status == "enrolled" {

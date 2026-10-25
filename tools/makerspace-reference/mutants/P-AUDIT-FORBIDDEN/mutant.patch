@@ -1,0 +1,10 @@
+--- a/internal/ms/ops.go
++++ b/internal/ms/ops.go
+@@ -164,6 +164,7 @@
+ 	// 4 role permission
+ 	perm := op.perms[roleIndex[c.actor.role]]
+ 	if perm == 'n' {
++		s.audit = append(s.audit, &auditEntry{seq: len(s.audit) + 1, at: c.at, actor: c.actor.id, op: op.name})
+ 		return refused(refuse("forbidden", "The role %s may not use %s.", c.actor.role, op.name))
+ 	}
+ 	// 5 referenced records

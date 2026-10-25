@@ -1,0 +1,11 @@
+--- a/internal/ms/ops_safety.go
++++ b/internal/ms/ops_safety.go
+@@ -51,7 +51,7 @@
+ 
+ // lockoutCreditCents is the credit a member receives for each reservation a
+ // lockout cancels.
+-const lockoutCreditCents = 1000
++const lockoutCreditCents = 500
+ 
+ func runLockMachine(c *call) (rec, string, *refusal) {
+ 	inc := c.s.incidents[c.str("incidentId")]

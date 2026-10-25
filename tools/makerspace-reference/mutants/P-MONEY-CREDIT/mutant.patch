@@ -1,0 +1,10 @@
+--- a/internal/ms/ops_billing.go
++++ b/internal/ms/ops_billing.go
+@@ -38,7 +38,6 @@
+ 				inv.paid += applied
+ 				inv.balance -= applied
+ 				m := c.s.members[inv.memberID]
+-				m.credit += p.credit
+ 				c.s.payments = append(c.s.payments, p)
+ 				return rec{"payment": paymentView(p), "invoice": invoiceView(inv, c.at),
+ 					"creditBalanceCents": m.credit}, p.id, nil

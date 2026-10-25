@@ -1,0 +1,11 @@
+--- a/internal/ms/values.go
++++ b/internal/ms/values.go
+@@ -128,7 +128,7 @@
+ 	}
+ 	y, ok1 := digits(s[0:4])
+ 	m, ok2 := digits(s[5:7])
+-	if !ok1 || !ok2 || y < 2000 || y > 2099 || m < 1 || m > 12 {
++	if !ok1 || !ok2 || y < 2000 || y > 2100 || m < 1 || m > 12 {
+ 		return 0, false
+ 	}
+ 	return (y-2000)*12 + m - 1, true

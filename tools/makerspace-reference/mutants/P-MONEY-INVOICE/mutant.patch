@@ -1,0 +1,11 @@
+--- a/internal/ms/ops_billing.go
++++ b/internal/ms/ops_billing.go
+@@ -95,7 +95,7 @@
+ 			continue
+ 		}
+ 		inv := &invoice{id: c.s.nextID("inv"), memberID: mid, month: idx, issuedAt: c.at, dueAt: c.at + 14*minPerDay}
+-		fee := tierFee(m.tier)
++		fee := tierFee("basic")
+ 		inv.lines = append(inv.lines, charge{memberID: mid, kind: "membership", ref: m.tier, quantity: 1,
+ 			unit: fee, amount: chargeAmount(1, fee, 0), at: c.at})
+ 		var due []*charge

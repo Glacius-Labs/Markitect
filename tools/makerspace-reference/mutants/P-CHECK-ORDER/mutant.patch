@@ -1,0 +1,11 @@
+--- a/internal/ms/ops.go
++++ b/internal/ms/ops.go
+@@ -158,7 +158,7 @@
+ 		return refused(refuse("unknown_actor", "The actor %s is not a user.", c.vals["actor"].s))
+ 	}
+ 	// 3 request time
+-	if c.at < s.lastOK {
++	if c.at < s.lastOK && op.perms[roleIndex[c.actor.role]] != 'n' {
+ 		return refused(refuse("time_regression", "The request time is earlier than the latest accepted request."))
+ 	}
+ 	// 4 role permission

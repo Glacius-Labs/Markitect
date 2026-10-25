@@ -1,0 +1,11 @@
+--- a/internal/ms/hours.go
++++ b/internal/ms/hours.go
+@@ -14,7 +14,7 @@
+ 	case time.Sunday:
+ 		return 0, 0, false
+ 	case time.Saturday:
+-		return 10 * 60, 18 * 60, true
++		return 10 * 60, 19 * 60, true
+ 	}
+ 	return 9 * 60, 21 * 60, true
+ }

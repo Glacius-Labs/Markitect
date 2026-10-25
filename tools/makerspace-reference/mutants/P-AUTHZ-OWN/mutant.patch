@@ -1,0 +1,11 @@
+--- a/internal/ms/ops.go
++++ b/internal/ms/ops.go
+@@ -124,7 +124,7 @@
+ // owns reports whether the records named in the call belong to the actor
+ // (section 4.1).
+ func (c *call) owns() bool {
+-	if v, ok := c.vals["memberId"]; ok && v.s != c.actor.id {
++	if v, ok := c.vals["memberId"]; ok && false && v.s != c.actor.id {
+ 		return false
+ 	}
+ 	if v, ok := c.vals["reservationId"]; ok && c.s.reservations[v.s].memberID != c.actor.id {

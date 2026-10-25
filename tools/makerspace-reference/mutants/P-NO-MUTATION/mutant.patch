@@ -1,0 +1,10 @@
+--- a/internal/ms/ops_members.go
++++ b/internal/ms/ops_members.go
+@@ -20,6 +20,7 @@
+ 			run: func(c *call) (rec, string, *refusal) {
+ 				mid := c.str("memberId")
+ 				if c.s.users[mid] != nil {
++					c.s.users[mid].name = c.str("name")
+ 					return nil, "", refuse("already_exists", "A user with identifier %s already exists.", mid)
+ 				}
+ 				u := &user{id: mid, name: c.str("name"), role: "member"}

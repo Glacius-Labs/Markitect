@@ -1,0 +1,9 @@
+--- a/internal/ms/ops_members.go
++++ b/internal/ms/ops_members.go
+@@ -141,5 +141,5 @@
+ // that is valid on the given day (section 7.2).
+ func (s *state) certified(memberID, familyID string, day int) bool {
+ 	cert := s.certs[certKey(memberID, familyID)]
+-	return cert != nil && !cert.revoked && cert.issuedOn <= day && day < cert.issuedOn+365
++	return cert != nil && !cert.revoked && cert.issuedOn <= day && day <= cert.issuedOn+365
+ }
