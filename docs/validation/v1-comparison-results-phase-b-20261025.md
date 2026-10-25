@@ -4,7 +4,7 @@ Date: 25 October 2026. This record reports Phase B of the [V1 comparison protoco
 
 ## Result
 
-**No quality advantage shown** (B5, read as section 8). Each arm conformed in all 5 of its units, the chains' T1–T4 segments (95 % CI 48–100 %). Both arms conformed in all 20 counted runs (83–100 %), and the one-sided Fisher exact p is 1.0. Per step T1, T2, T3 and T4, both arms were 5 of 5. Neither arm showed an error type, an unsupported success or a false blocker.
+**No quality advantage shown** (B5, read as section 8). Each arm conformed in all 5 of its units, the chains' T1–T4 segments (95 % CI 48–100 %). Both arms conformed in all 20 counted runs (83–100 %), and the one-sided Fisher exact p is 1.0. Per step T1, T2, T3 and T4, both arms were 5 of 5. For the three continued chains alone, both arms conformed in 12 of 12 runs (74–100 %). Neither arm showed an error type, an unsupported success or a false blocker. Every M Assessment approved, and every B final message reported no unresolved requirement.
 
 | Per counted run (T1–T4) | M (Markitect Apply on F′) | B (one Codex agent) |
 | --- | --- | --- |
@@ -16,7 +16,7 @@ Date: 25 October 2026. This record reports Phase B of the [V1 comparison protoco
 
 - **Behavior was identical.** Every candidate of both arms passed every carried and new hidden case of its step: 21 at T1, 27 at T2, 26 at T3 and T4. That includes the composition check, overdue assessment after a renewal. Every candidate also passed its own build and tests under both limit profiles. Both arms' T3 runs removed member suspension from code, tests and documentation, and no review found stale suspension behavior or documentation. Every T4 met strict no-change; M's registry census was empty too.
 - **Cost.** M took about 10.5 times the time and 9.2 times the tokens of B per counted run, and 6.7 times the output tokens. B's per-run tokens grow along a chain because a resumed thread carries its history. Section 8 counts equal quality at higher cost against the claim.
-- **Change size.** M changed more: 2,979 comparable lines in the counted runs against B's 1,466, about twice as many at every step. M's reviewers classed 10 changes as *optional* (added tests or a comment edit), B's none. M also changed 25 registry files across the counted runs, which its accounting requires.
+- **Change size.** M changed more: 2,979 comparable lines in the counted runs against B's 1,466, 1.9 to 2.5 times as many per step (T1 971 against 491, T2 1,310 against 699, T3 698 against 276). M's reviewers classed 10 changes as *optional* (added tests or a comment edit), B's none. M also changed 25 registry files across the counted runs, which its accounting requires.
 
 **Conclusion.** Phase B was designed to find where one agent loses track over successive cross-area changes: short-loan copies, renewals and the removal of suspension, followed by an unchanged re-application. It found nothing of the kind. One Codex agent continuing its own thread met every hidden obligation in every step of five chains, as did Markitect on F′, at about one tenth of the time and tokens. On this suite and with this model the measured result is a tie at a large cost difference. That counts against the claim that Markitect V1 is better than one agent; it does not test larger projects, which Phase C addresses.
 
@@ -26,12 +26,12 @@ Date: 25 October 2026. This record reports Phase B of the [V1 comparison protoco
 - **Order.** Arm B ran all 26 runs on 25 October from 06:57 to 07:52 UTC. Arm M ran all 26 from 09:08 to 14:15 UTC. B8 records why the counterbalanced pairs were given up. Each arm kept the chain order: chains 1–3 T1–T4, then chains 4 and 5 with S1–S3 first.
 - **One attempt per run.** No run was replaced, and no writer run failed.
 - **Fixtures.** B's fixture for each step was its own previous capture plus one commit replacing `requirements.md` with that step's rendering (m3 `e6454eaa…`, m4 `fd5fa5e1…`, m5 `058372a0…`). M's was its own previous candidate plus one neutral commit replacing `.markitect/model/` wholesale with the materialized snapshot (manifests m3 `5f23c592…`, m4 `ba1b6ac0…`, m5 `7b93c978…`). T4 is the T3 result unchanged in both arms.
-- **Assessment.** T steps were assessed with the Phase B assessor at `43d0365e` (`phase_b_cases.py` through the oracle's transport, with the Library oracle at F). The extra chains' S steps used the Phase A assessor at R. Each candidate also got its own build and tests, the census, the scope greps and one blinded review with a citation check. No reviewer reported a critical finding in any of the 52 runs, so no confirmation review was needed.
-- **Hygiene.** No residue, no protected input changed, no build residue in any final candidate, no scope-grep hit, and no human intervention during a run. Step 4's own review noted a go-build binary in intermediate commits of chain 2; it is not in any final candidate.
+- **Assessment.** T steps were assessed with the Phase B assessor at `43d0365e` (`phase_b_cases.py` through the oracle's transport, with the Library oracle at F). The extra chains' S steps used the Phase A assessor at R. Each candidate also got its own build and tests, the census, the scope greps and one blinded review with a citation check. No reviewer reported a critical finding in any of the 52 runs, so no confirmation review was needed. The contamination audit covered all 52 writer transcripts, with 2,318 commands. It found no web item and no hit for web access, Git remotes, GitHub, `library-oracle`, `probes` or the contract identifier, so the reading needs no recomputation.
+- **Hygiene.** No residue, no protected input changed, no build residue in any final candidate, no scope-grep hit, and no human intervention during a run. Step 4's record notes a go-build binary in intermediate handoff commits of c2-T3, c2-T4, c4-S3 and c4-T3; no published tree contains it.
 
 ## Every run
 
-Time: M Apply seconds, B session seconds. Tokens: M provider usage summed over the Apply's threads; B per-run input plus output tokens (the resumed thread's total minus the previous step's). Files: comparable files changed against the start (M registry files in brackets). S rows are the extra chains' S1–S3, additional observations that are not counted (condition 1).
+Time: M Apply seconds, B session seconds. Tokens: M provider usage summed over the Apply's threads; B per-run input plus output tokens (the resumed thread's total minus the previous step's). Files: comparable files changed against the start (M registry files in brackets). S rows are the extra chains' S1–S3, additional observations that are not counted (condition 1). Every T4 and S3 result has exactly its input tree. M published a new commit with the identical tree in chains 1, 2 and 5 and returned the input commit itself in chains 3 and 4; B's are new capture commits.
 
 | Run | M candidate | M s | M tokens | M msgs | M files | M conf. | B candidate | B s | B tokens | B files | B conf. |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -65,23 +65,30 @@ Time: M Apply seconds, B session seconds. Tokens: M provider usage summed over t
 ## Secondary outcomes
 
 - **Hidden families:** every family passed in every run, so neither arm missed an obligation. That covers T1 loan classes, T2 renewals (including the suspended-member refusal at M4 and the composition check) and T3 no member status, plus the carried E01–E12, the witness and the Phase A probes.
-- **Stale obligations at T3:** none in either arm; the blind reviews found no documentation or test that still describes suspension as existing behavior.
+- **Stale obligations at T3:** none in either arm; the blind reviews found no documentation or test that still describes suspension as existing behavior. One cosmetic remnant: in M's chain 3, `reminders_test.go` still names a test member `suspended-member` at T3 and T4. Both reviewers called it harmless.
 - **Regressions of earlier families:** none in either arm.
 - **Unnecessary changes (counted runs):** R5 classes M 105 required, 10 optional, 0 unjustified; B 45 required, 0 optional, 0 unjustified. Comparable lines changed: M 2,979, B 1,466. In the extra S steps, B-c4-S2 made two optional changes (a byte-wise reader and its test) and M-c4-S2 one.
-- **R3b test topics:** 6 of 6 except M-c2-T3, M-c3-T3, B-c1-T1, B-c5-T3 and B-c5-T4 (5 of 6). At T3 and T4 the reviewers disagreed whether suspension tests apply once suspension is removed.
+- **R3b test topics:** 6 of 6 except M-c2-T3, M-c3-T3, B-c1-T1, B-c5-T3 and B-c5-T4 (5 of 6). In B-c1-T1, a T1 run where suspension still exists, the only suspended-borrow test runs while the member is already at the loan limit, so it does not isolate the suspension check. In the four T3 and T4 runs, the reviewers disagreed whether a suspension test applies once suspension is removed.
+- **Invented requirements (R7):** none in any of the 52 runs.
+- **Time including setup and cleanup (counted runs):** M packets 593–821 s, B runs 29–114 s. B ran 6–15 commands with 0–4 file changes per run. The cached share of input tokens was 91 % for M and 97 % for B.
 - **Extra chains, S1–S3 (not counted):** all 12 runs conform in both arms, in line with Phase A.
-- **M-specific:** no Verify Reject branch and no correction branch in any Apply. Findings per Apply (Assessment / Implement / Verify) ranged 2–15 / 11–18 / 6–18. Notes written (`append_note`) per Apply: 1–11, across all 26. Questions between Managers (`ask`): 0–4.
+- **M-specific:** no Apply took the Verify Reject branch (the correction branch across Runs). Findings per Apply (Assessment / Implement / Verify) ranged 3–15 / 11–18 / 6–18 in the counted runs (2–15 for Assessment across all 26). In c3-T1, Root ran one correction round inside Implement. Notes written (`append_note`) per Apply: 1–11, across all 26. Questions between Managers (`ask`): 0–4.
 
 ## Deviations and incidents, in sequence
 
 1. **B8 pre-data amendment (before any Phase B run).** On F the Apply preflight refused M's T3 input, because the registry links to the deleted Definition were invalid; this is recorded as a finding of F. Arm M therefore ran Phase B on F′, which also contains #696, and arm B ran first, so the counterbalanced pairs were given up. F′ was recorded in B8 only after M-c1-T1 had started, so the predeclared timing of that record was missed.
 2. **Arm-B driver path error (B-c1-T1, 06:57 UTC).** The first driver version stopped after the run, because Windows Python could not open `/c/...` paths. The session itself completed normally and remains the run's only attempt. The corrected driver never re-runs an existing attempt.
-3. **Assessor infrastructure failures (arm M, 14:19 and 14:22 UTC).** The rule, per the coordinator: a repeat is allowed only for a failure shown to be assessor infrastructure. The same rule holds for arm B. Both attempts stay in the record with their causes. If a failure cannot be clearly separated from the candidate, the first result counts.
-   - At 14:19 all 26 first M assessments failed inside the assessor's scratch repository before any candidate was exported, built or run. The cause was a carriage return on the start commit read by the operator script.
-   - At 14:22 the repeat for M-c1-T1 failed when the hidden-case build could not write to the assessor's own fresh volume ("permission denied"). The candidate binary never ran, and its own build and tests passed in the same assessment.
-   - All 26 repeats then ran cleanly.
+3. **Arm-M input preparation failure (before M-c1-T1, offline).** Step 4's first `t1-c1` input failed before any engine call: its script passed the commit with a trailing carriage return. Step 4 kept the failure and fixed the script ([step 4's record](v1-phase-b-arm-m-20261025.md)).
+4. **Lock refusals.**
+   - At 09:47:09 UTC an assessment of M-c1-T1 to T3 started one second after step 4 took the lock for M-c1-T4. The lock refused it before any output.
+   - The launches of M-c2-T3 and M-c3-T2 first found the lock held by a Phase C calibration job. Step 4's script stopped before launching, so no attempt existed, and both were launched once the lock was free.
+   - None of these is an attempt or affects an outcome.
+5. **Assessor infrastructure failures (arm M, 14:19 and 14:22 UTC).** The rule, per the coordinator: a repeat is allowed only for a failure shown to be assessor infrastructure. The same rule holds for arm B. Both attempts stay in the record with their causes. If a failure cannot be clearly separated from the candidate, the first result counts. Both failures meet section 5's definition of an assessor infrastructure failure, "the harness ending before any case ran".
+   - At 14:19 all 26 first M assessments failed inside the assessor's scratch repository before any candidate was exported, built or run. The cause was a carriage return on the start commit read by the operator script. Each left only an empty output folder, which was removed.
+   - At 14:22 the second assessment of M-c1-T1 failed when the hidden-case build could not write to the assessor's own fresh volume ("permission denied"). The candidate binary never ran, and the candidate's own build and tests passed in the same assessment. The cause of the permission error was not found; a direct test of the same volume setup passed right afterwards.
+   - M-c1-T1's third assessment, at 14:23, and the other 25 repeats ran cleanly.
    - Arm B had no failed or repeated assessment in Phase A or Phase B.
-   - The evidence is retained under `phase-b\infra-failures\`.
+   - Evidence in `phase-b\infra-failures\`: 24 of the 26 first-batch logs, the batch output covering all 26, and the 14:22 build log and output. The first-batch logs of M-c1-T1 and M-c1-T2 were overwritten by their repeats before they were preserved.
 
 ## Limits
 
@@ -99,7 +106,7 @@ Root `C:\Users\Consiliari\Documents\Codex\Markitect-V1-Comparison\e11e6cff883b\p
 - `runs\B-*` and `..\runs\B-c4-S*`, `..\runs\B-c5-S*` for arm B's runs.
 - `assess\`, `..\assess\M-c4-S*`, `..\assess\M-c5-S*` and `..\assess\B-c*-S*` for the assessments.
 - `reviews\` for the reviews and their citation checks.
-- `snapshots\` for M's model snapshots with their manifests, and `infra-failures\` for the failure evidence.
+- `snapshots\` for M's model snapshots with their manifests, `infra-failures\` for the failure evidence, and `contamination-audit-pb.json` with its script `contamination-audit-pb.py`.
 - The operator scripts: `drive-b-chain.frozen.sh`, `drive-b-s-chain.frozen.sh`, `assess-m-chain.sh` and `save-review.sh`.
 
 M evidence stays under step 4's `Markitect-V1-Requalification\528ef346\packets\m-*\attempt-01\`.
