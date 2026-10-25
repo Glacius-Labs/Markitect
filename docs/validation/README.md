@@ -9,6 +9,7 @@ These reports preserve the exact scope, inputs, source references and outcomes s
 - [V1 comparison protocol: Markitect against one agent with ordinary documentation — 24 October 2026](v1-comparison-protocol-20261024.md), predeclared for DEC-072
 - [V1 native requalification on frozen source e11e6cff — 24 and 25 October 2026](v1-requalification-20261025.md): step 4 of the delivery plan and arm M of the comparison's Phase A
 - [V1 comparison results, Phase A — 25 October 2026](v1-comparison-results-20261025.md): no quality advantage shown under the protocol as approved, a tendency for Markitect only under a post-hoc seed list; behavior identical at about nine times the time and 24 times the tokens
+- [V1 comparison results, Phase B — 25 October 2026](v1-comparison-results-phase-b-20261025.md): no quality advantage shown; both arms conformed in all 20 longitudinal runs, Markitect at about ten times the time and nine times the tokens
 - [V1 comparison Phase B, arm M, on F′ 528ef346 — 25 October 2026](v1-phase-b-arm-m-20261025.md): F's refusal of a Definition deletion, and the 26 arm-M runs on F′ with their raw outcomes
 
 ## Release evidence
