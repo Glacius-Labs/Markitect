@@ -87,7 +87,7 @@ The [Run](../../internal/run/README.md) gives every Manager its own fresh enviro
 
 The closed UTF-8 JSON uses `formatVersion: 3`. Required fields are `repositoryIdentity`, `productBuild`, `stateDirectory`, `engineExecutable`, `deadline`, `maxManagers`, `maxMessages`, `messageTimeoutSeconds`, `cleanupTimeoutSeconds`, `persistenceTimeoutSeconds` and `credentials`. Optional `workDeadline` reserves part of the whole deadline and must precede it. Unknown, duplicate, null, relative-path and invalid values are refused. Old strategy/role, ownerRequest, helper, harvest and ownerDecisions fields are not accepted. There are no ambient defaults. See the exact [example](../../examples/run.example.json).
 
-The example allows 600 seconds per message Exchange, including awaited child work and terminal drain. One observed successful native Library message exchange alone exceeded the previous 120-second example limit; 600 seconds was the finite bound used in that native evidence. Configure this limit for the project within the original overall deadline and message allowance; the example does not guarantee that every Exchange will fit.
+The example allows 600 seconds of provider work per message Exchange. Time the host spends serving the Manager's tool calls, such as awaiting children, does not count against it ([PR #725](https://github.com/Glacius-Labs/Markitect/pull/725)). One observed successful native Library message exchange alone exceeded the previous 120-second example limit; 600 seconds was the finite bound used in that native evidence. Configure this limit for the project within the original overall deadline and message allowance; the example does not guarantee that every Exchange will fit.
 
 ### Dedicated credential references
 
