@@ -409,7 +409,7 @@ func (x *execution) checkErr(ctx context.Context, s *managerState, commit Commit
 		}
 		responsible := s.manager.Package
 		if x.request.Mandate == Assessment {
-			responsible = ""
+			responsible = project.CommandInput
 		}
 		err = x.request.Prepared.ValidateCandidateFor(a, responsible)
 	}

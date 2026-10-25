@@ -109,10 +109,14 @@ func (p Prepared) ValidateCandidate(a PreviewPreparationAttempt) error {
 	return p.ValidateCandidateFor(a, organization.Root)
 }
 
+// CommandInput is the responsibility of a command's fixed input, which
+// Assessment also judges: it holds the state to no stale registry link, so
+// they stay work for Implement.
+const CommandInput = ""
+
 // ValidateCandidateFor is ValidateCandidate for one Manager's responsibility:
 // it holds the state only to the stale registry links of that Manager's
-// Package subtree, every shard for Root. An empty manager holds it to none, so
-// the input of a command and Assessment keep them as work for Implement.
+// Package subtree, every shard for Root, none for CommandInput.
 func (p Prepared) ValidateCandidateFor(a PreviewPreparationAttempt, manager string) error {
 	if !p.Valid() {
 		return fmt.Errorf("missing prepared project")
@@ -181,7 +185,7 @@ func (p Prepared) ValidateCandidateFor(a PreviewPreparationAttempt, manager stri
 		return fmt.Errorf("%w: candidate structural observation incomplete", ErrIncompleteInputs)
 	}
 	if stale := StaleLinks(a, manager); len(stale) != 0 {
-		return candidateError("registry links to Definitions the checked model no longer has", func(add func(code, path, message string)) {
+		return candidateError("registry links to Definitions the checked model does not have", func(add func(code, path, message string)) {
 			for _, f := range stale {
 				add(f.Code, f.Path.String(), f.Message)
 			}
@@ -191,12 +195,12 @@ func (p Prepared) ValidateCandidateFor(a PreviewPreparationAttempt, manager stri
 }
 
 // StaleLinks returns the registry links of a checked state to Definitions the
-// model no longer has, limited to the shards within manager's responsibility:
+// model does not have, limited to the shards within manager's responsibility:
 // Root covers every shard, another Manager the shards of its Package subtree,
-// and an empty manager none.
+// and CommandInput none.
 func StaleLinks(a PreviewPreparationAttempt, manager string) []realization.Finding {
 	accounting, ok := a.Files().Accounting()
-	if !ok || manager == "" {
+	if !ok || manager == CommandInput {
 		return nil
 	}
 	var stale []realization.Finding

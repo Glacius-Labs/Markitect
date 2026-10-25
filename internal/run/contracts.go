@@ -101,7 +101,7 @@ type Handoff struct {
 // accounting and the declared checks placed in that Manager's copy. Checks
 // lists the declared checks that ran; a check not listed did not run. Stale
 // lists the registry links in the Manager's responsibility to Definitions the
-// model no longer has: they make an Implement or Verify check invalid, while
+// model does not have: they make an Implement or Verify check invalid, while
 // Assessment only reports them as realization still to do.
 type Check struct {
 	Commit     Commit   `json:"commit"`

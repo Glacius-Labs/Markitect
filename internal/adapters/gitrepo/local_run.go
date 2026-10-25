@@ -188,7 +188,7 @@ func (g *LocalGit) Capture(ctx context.Context, id string, p project.Prepared) (
 	}
 	// The command's input may still owe realization: its stale registry links
 	// are work for Implement, not a reason to refuse the input.
-	if err = p.ValidateCandidateFor(attempt, ""); err != nil {
+	if err = p.ValidateCandidateFor(attempt, project.CommandInput); err != nil {
 		return project.CandidateRef{}, err
 	}
 	if attempt.Model().Inputs().Raw.Census.Digest() != raw.Census.Digest() {

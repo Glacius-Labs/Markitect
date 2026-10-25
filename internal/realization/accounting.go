@@ -182,7 +182,7 @@ func accountFiles(inventory modelInventory, tree snapshot.Tree, registry Registr
 			}
 			for _, basis := range artifact.basis {
 				if !definitions[basis] {
-					result.stale = append(result.stale, Finding{"registry.stale_link", path, entry.owner, basis, fmt.Sprintf("The registered artifact links %s/%s, which the checked model no longer has: remove the artifact and its registration, or link it to an existing Definition.", basis.Package, basis.ID)})
+					result.stale = append(result.stale, Finding{"registry.stale_link", path, entry.owner, basis, fmt.Sprintf("The registered artifact links %s/%s, which the checked model does not have: remove the artifact and its registration, or link it to an existing Definition.", basis.Package, basis.ID)})
 				}
 			}
 		}
