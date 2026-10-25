@@ -1116,6 +1116,10 @@ func (s *partialLibrarySessions) realize(ctx context.Context, m *controlledManag
 		content = append(content, []byte("  - path: "+name+"\n    form: "+form+"\n    realizes: [a/Thing]\n    why: Controlled aggregate Go regression.\n")...)
 		return write(shard, string(content))
 	}
+	peer := "package peer\nfunc Value()int{return 1}\n"
+	if s.fail {
+		peer = "package peer\nfunc Value()int{return 2}\n"
+	}
 	switch m.spec.Manager.Package {
 	case "a":
 		s.libraryAttempts++
@@ -1132,6 +1136,9 @@ func (s *partialLibrarySessions) realize(ctx context.Context, m *controlledManag
 				return fmt.Errorf("partial library unexpectedly has %s: %v", path, err)
 			}
 		}
+		if data, err := os.ReadFile(filepath.Join(root, "realization/peer/peer.go")); err == nil && string(data) != peer {
+			return fmt.Errorf("correction baseline does not hold b's integrated code: %q", data)
+		}
 		if s.libraryAttempts == 1 {
 			// First submission is deliberately unregistered: its parent receives it
 			// with the failing structural check and cannot accept it.
@@ -1143,11 +1150,7 @@ func (s *partialLibrarySessions) realize(ctx context.Context, m *controlledManag
 		}
 		return register("a", "realization/library/library_test.go")
 	case "b":
-		value := "1"
-		if s.fail {
-			value = "2"
-		}
-		if err := write("realization/peer/peer.go", "package peer\nfunc Value()int{return "+value+"}\n"); err != nil {
+		if err := write("realization/peer/peer.go", peer); err != nil {
 			return err
 		}
 		return register("b", "realization/peer/peer.go")

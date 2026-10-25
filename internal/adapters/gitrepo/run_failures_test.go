@@ -280,11 +280,14 @@ func (r heldSaveRecords) Save(ctx context.Context, value run.Result) error {
 	}
 	return r.Records.Save(ctx, value)
 }
+
+// waitRunSignal waits for a point a Run reaches after real Git work; the
+// test's own deadline bounds a Run that never reaches it.
 func waitRunSignal(t *testing.T, ch <-chan struct{}, what string) {
 	t.Helper()
 	select {
 	case <-ch:
-	case <-time.After(20 * time.Second):
+	case <-time.After(time.Until(runDeadline(t))):
 		t.Fatal("timed out waiting for " + what)
 	}
 }
