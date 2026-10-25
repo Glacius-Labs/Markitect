@@ -53,7 +53,7 @@ func prepareRegistry(checked model.Result, raw RawInputs) registryPreparation {
 			packagePath = name
 		}
 		if _, found := topology.Manager(packagePath); !found {
-			r.add(model.Failed, "registry.unknown_owner", entry.Path(), nil, "Registry shard belongs to a Package outside the current local inventory.")
+			r.add(model.Failed, "registry.unknown_owner", entry.Path(), nil, "Registry shard belongs to a Package outside the current local inventory. No Manager can realize a removed Package's artifacts: delete its shard and artifacts together with the Package.")
 		}
 	}
 	sources := slices.Clone(raw.Registry)
@@ -83,7 +83,7 @@ func prepareRegistry(checked model.Result, raw RawInputs) registryPreparation {
 			r.add(model.Failed, "registry.source_mismatch", path, nil, "Registry source bytes/mode differ from Census.")
 			continue
 		}
-		registrations = append(registrations, r.decodeRegistry(source, owner, checked, raw.Census)...)
+		registrations = append(registrations, r.decodeRegistry(source, owner, raw.Census)...)
 	}
 	for _, path := range r.discovered {
 		if !seen[path] {

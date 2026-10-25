@@ -44,7 +44,7 @@ Run keeps durable candidates, terminal records and project Notes outside the rep
 
 ### Ownership and boundaries
 
-The canonical model owns intended behavior. Registry shards assign exact artifact paths to one responsibility and existing Definitions. Execution v2 declarations own Package instructions and scoped checks. Outer runtime configuration owns native/check profiles; invocation configuration owns finite limits and normal account-login references. Static metadata owns literal image/protocol observations. Captured canonical and control inputs are protected separately; an exact ignore cannot override input protection or satisfy missing realization.
+The canonical model owns intended behavior. Registry shards assign exact artifact paths to one responsibility and the Definitions they realize. When the owner deletes a Definition, its links become stale: `check` still passes and lists them under `stages.structural.files.accounting.stale`, Apply's Implement has the shard owner remove or realign them, and no candidate or publication keeps one. Execution v2 declarations own Package instructions and scoped checks. Outer runtime configuration owns native/check profiles; invocation configuration owns finite limits and normal account-login references. Static metadata owns literal image/protocol observations. Captured canonical and control inputs are protected separately; an exact ignore cannot override input protection or satisfy missing realization.
 
 ## Generated documentation
 

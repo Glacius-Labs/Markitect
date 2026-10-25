@@ -74,7 +74,7 @@ Codex with normal account login is the only provider path in V1 ([D18](concepts/
 
 The canonical model states intended behavior; exact registry entries state artifact ownership and Definition basis. Execution declarations, runtime profiles, invocation limits and run evidence have separate owners. A committed model binds a specification revision, not an authenticated human decision. Source checks, hosted CI, provider execution, releases and owner acceptance are separate evidence.
 
-Every regular file in the actual census is a protected canonical or control input, an exact registered artifact or an exact explained ignore. Registry shards derive their owner from their Package coordinate; each artifact links existing Definitions and has one owner. Gitignore is not accounting.
+Every regular file in the actual census is a protected canonical or control input, an exact registered artifact or an exact explained ignore. Registry shards derive their owner from their Package coordinate; each artifact links Definitions and has one owner. A link to a Definition the model no longer has is stale: the input of a command keeps it as work for Implement, while a candidate check refuses it within the responsible Manager's subtree and publication refuses any. Gitignore is not accounting.
 
 ## State and evidence storage
 

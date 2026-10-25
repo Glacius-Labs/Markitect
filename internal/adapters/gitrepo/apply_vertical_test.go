@@ -3,9 +3,13 @@ package gitrepo
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -14,6 +18,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
+	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
 type applyExecutor struct {
@@ -26,6 +31,8 @@ type applyExecutor struct {
 	assessmentDecision     run.Decision
 	failClose              bool
 	records                run.Records
+	// wrap, when set, supplies the Sessions of each Run around its managers.
+	wrap func(run.Mandate, *controlledManagers) run.Sessions
 }
 
 type deadlineCapture struct {
@@ -101,7 +108,131 @@ func (e *applyExecutor) Execute(ctx context.Context, request run.Request) (run.R
 	if e.records != nil {
 		records = e.records
 	}
-	return (&run.Executor{Sessions: managers, Workspaces: e.git, Records: records}).Execute(ctx, request)
+	var sessions run.Sessions = managers
+	if e.wrap != nil {
+		sessions = e.wrap(request.Mandate, managers)
+	}
+	return (&run.Executor{Sessions: sessions, Workspaces: e.git, Records: records}).Execute(ctx, request)
+}
+
+// deepRegistry is a/deep's registry shard in the run fixture.
+const deepRegistry = "apiVersion: markitect.registry/v1\nartifacts:\n  - path: out/deep.txt\n    form: code\n    realizes: [a/deep/item]\n    why: Tiny controlled realization.\n"
+
+// deletedDefinition leaves a/deep an artifact of a Definition the owner has
+// deleted from the model: its registry link is stale.
+func deletedDefinition(r *testkit.Repo) {
+	r.Write("out/gone.txt", "realizes a deleted Definition\n")
+	r.Write(".markitect/registry/a/deep/registry.yaml", deepRegistry+"  - path: out/gone.txt\n    form: code\n    realizes: [a/deep/gone]\n    why: Realized a Definition the owner deleted.\n")
+}
+
+// staleLinkSessions records every Manager's check of the state it starts
+// from. In Implement, a/deep removes the artifact of its deleted Definition
+// and the link once its parent's correction names the stale link.
+type staleLinkSessions struct {
+	controlled *controlledManagers
+	mandate    run.Mandate
+	mu         sync.Mutex
+	checks     map[string]run.Check
+}
+
+type staleLinkSession struct {
+	*controlledManager
+	owner   *staleLinkSessions
+	checked bool
+}
+
+func (s *staleLinkSessions) Open(ctx context.Context, spec run.SessionSpec) (run.Session, error) {
+	session, err := s.controlled.Open(ctx, spec)
+	if session == nil {
+		return nil, err
+	}
+	return &staleLinkSession{controlledManager: session.(*controlledManager), owner: s}, err
+}
+
+func (s *staleLinkSession) Exchange(ctx context.Context, message run.Message) error {
+	if !s.checked {
+		s.checked = true
+		check, err := s.spec.Tools.Check(ctx)
+		if err != nil {
+			return err
+		}
+		s.owner.mu.Lock()
+		s.owner.checks[s.spec.Manager.Package] = check
+		s.owner.mu.Unlock()
+	}
+	if s.owner.mandate == run.Implement && s.spec.Manager.Package == "a/deep" {
+		for _, e := range message.Events {
+			if e.Assignment == nil || len(e.Assignment.Findings) == 0 {
+				continue
+			}
+			if text := fmt.Sprint(e.Assignment.Findings); !strings.Contains(text, "registry.stale_link") || !strings.Contains(text, "out/gone.txt") {
+				return fmt.Errorf("correction lost the stale link diagnostic: %s", text)
+			}
+			root := s.spec.Workspace.Location().Directory
+			if err := os.Remove(filepath.Join(root, "out/gone.txt")); err != nil {
+				return err
+			}
+			if err := os.WriteFile(filepath.Join(root, ".markitect/registry/a/deep/registry.yaml"), []byte(deepRegistry), 0600); err != nil {
+				return err
+			}
+		}
+	}
+	return s.controlledManager.Exchange(ctx, message)
+}
+
+// §6.3: deleting a Definition leaves a stale registry link, which is
+// realization, not a model error. The input starts Apply; Assessment sees the
+// link and approves; in Implement only the shard owner's subtree and Root are
+// held to it, the owner removes the artifact and the link after its parent's
+// correction, and publication passes.
+func TestApplyRealizesADeletedDefinitionThroughTheShardOwner(t *testing.T) {
+	r, prepared, git, _ := runFixture(t, deletedDefinition)
+	store, err := runstore.New(git.StateRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var runs []*staleLinkSessions
+	executor := &applyExecutor{t: t, git: git, store: store, noChange: true, wrap: func(mandate run.Mandate, managers *controlledManagers) run.Sessions {
+		s := &staleLinkSessions{controlled: managers, mandate: mandate, checks: map[string]run.Check{}}
+		runs = append(runs, s)
+		return s
+	}}
+	command := apply.Command{Executor: executor, Candidates: git, Records: store, Publisher: &Publisher{Repository: adapter(t), Store: git}}
+	request := run.Request{ID: "deleted-definition", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(2*time.Minute), 200), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
+	report, err := command.Execute(context.Background(), request)
+	if err != nil || report.Status != model.Passed || len(runs) != 3 {
+		t.Fatalf("status=%s error=%v final=%s/%s runs=%d", report.Status, err, report.Workflow.Final.Technical, report.Workflow.Final.Decision, len(runs))
+	}
+	responsible := map[string]bool{".": true, "a": true, "a/deep": true, "b": false, "b/empty": false}
+	for i, mandate := range []run.Mandate{run.Assessment, run.Implement, run.Verify} {
+		for manager, owes := range responsible {
+			check := runs[i].checks[manager]
+			stale := len(check.Stale) == 1 && strings.Contains(check.Stale[0], "out/gone.txt") && strings.Contains(check.Stale[0], "a/deep/gone")
+			switch {
+			case mandate == run.Assessment && (!check.Valid || stale != owes || !owes && len(check.Stale) != 0):
+				t.Fatalf("Assessment check of %s does not report the stale link as work: %+v", manager, check)
+			case mandate == run.Implement && (check.Valid == owes || stale != owes || owes && !strings.Contains(check.Diagnostic, "registry.stale_link")):
+				t.Fatalf("Implement check of %s is not held to its own responsibility: %+v", manager, check)
+			case mandate == run.Verify && (!check.Valid || len(check.Stale) != 0):
+				t.Fatalf("Verify check of %s still sees a stale link: %+v", manager, check)
+			}
+		}
+	}
+	if executor.managers[1].corrections != 1 || len(executor.managers[1].refusals) != 1 || !strings.Contains(executor.managers[1].refusals[0], "registry.stale_link") {
+		t.Fatal("the stale link did not reach the shard owner through its parent's correction", executor.managers[1].corrections, executor.managers[1].refusals)
+	}
+	if report.Publication == nil || !report.Publication.Readback {
+		t.Fatalf("publication=%+v", report.Publication)
+	}
+	if paths := slices.Sorted(slices.Values(report.Publication.CompletedPaths)); !reflect.DeepEqual(paths, []string{".markitect/registry/a/deep/registry.yaml", "out/gone.txt"}) {
+		t.Fatal("publication did not remove exactly the artifact and its link", paths)
+	}
+	if _, err := os.Stat(filepath.Join(r.Dir, "out/gone.txt")); !os.IsNotExist(err) {
+		t.Fatal("artifact of the deleted Definition survived", err)
+	}
+	if data, err := os.ReadFile(filepath.Join(r.Dir, ".markitect/registry/a/deep/registry.yaml")); err != nil || string(data) != deepRegistry {
+		t.Fatal("stale link survived publication", string(data), err)
+	}
 }
 
 type unexpectedPublisher struct{ calls int }

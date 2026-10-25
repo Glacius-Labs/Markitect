@@ -506,6 +506,7 @@ func copyChecks(observed []CheckObservation) []CheckObservation {
 func copyCheck(c *Check) *Check {
 	check := *c
 	check.Checks = slices.Clone(c.Checks)
+	check.Stale = slices.Clone(c.Stale)
 	return &check
 }
 

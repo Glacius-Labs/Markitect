@@ -415,7 +415,16 @@ func (x *execution) check(ctx context.Context, s *managerState, fixed Commit) (*
 func (x *execution) checkErr(ctx context.Context, s *managerState, commit Commit, result *Check) error {
 	a, err := s.copy.Inspect(ctx, commit)
 	if err == nil {
-		err = x.request.Prepared.ValidateCandidate(a)
+		// Stale registry links are work for Implement: Implement and Verify hold
+		// each Manager to its own responsibility, Assessment only reports them.
+		for _, f := range project.StaleLinks(a, s.manager.Package) {
+			result.Stale = append(result.Stale, f.Path.String()+": "+f.Message)
+		}
+		responsible := s.manager.Package
+		if x.request.Mandate == Assessment {
+			responsible = project.CommandInput
+		}
+		err = x.request.Prepared.ValidateCandidateFor(a, responsible)
 	}
 	if err != nil || x.request.Mandate == Assessment {
 		return err

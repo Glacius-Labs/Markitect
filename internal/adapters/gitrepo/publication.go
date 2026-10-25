@@ -91,6 +91,7 @@ func (p *Publisher) Publish(ctx context.Context, request apply.PublicationReques
 	if err != nil {
 		return out, err
 	}
+	// The complete candidate check keeps no stale registry link.
 	if err = prepared.ValidateCandidate(attempt); err != nil {
 		return out, err
 	}
