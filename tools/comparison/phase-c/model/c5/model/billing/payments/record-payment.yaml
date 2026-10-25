@@ -1,0 +1,21 @@
+imports:
+  - package: software
+    as: Software
+  - package: billing/invoices
+    as: Invoices
+  - package: policies/money
+    as: Money
+  - package: workshop
+    as: Workshop
+id: record-payment
+kind: Software.UseCase
+body: |-
+  Operation `recordPayment`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
+
+  Mutation.
+
+  - Arguments: `invoiceId` (identifier, an existing [[Invoices.invoice|invoice]]), `amountCents` (integer 1 to 100000000).
+  - Refusals: `invoice_paid` when the invoice's status is `paid`.
+  - Effect: `appliedCents` is the smaller of `amountCents` and the invoice's `balanceCents`; `creditedCents` is `amountCents − appliedCents`. The invoice's `paidCents` increases and its `balanceCents` decreases by `appliedCents`; when `balanceCents` reaches 0 its status becomes `paid`. The member's [[Money.credit-balance|credit balance]] increases by `creditedCents`. A [[payment|payment record]] is created with `memberId` the invoice's member (whoever acts) and `at` the request time. Paying after the due date is allowed.
+  - Result: `payment`, `invoice` (after the change) and `creditBalanceCents`, the member's credit balance after the change.
+spec: {}

@@ -1,0 +1,36 @@
+imports:
+  - package: software
+    as: Software
+id: refusal-codes
+kind: Software.Rule
+body: |-
+  | Code | Meaning |
+  | --- | --- |
+  | `invalid_argument` | An argument is missing, `null`, of the wrong type, or outside its format or range. |
+  | `unknown_actor` | `actor` does not identify a user. |
+  | `time_regression` | `at` is earlier than the request time of the latest request answered `ok`. |
+  | `forbidden` | The actor's role may not use the operation, or may use it only for the actor's own records and the record concerned belongs to another member. |
+  | `not_found` | A referenced record does not exist. |
+  | `already_exists` | A record with the supplied identifier already exists. |
+  | `invalid_state` | The record is not in a state that allows the operation. |
+  | `invalid_interval` | An interval's end is not after its start, or a report range is longer than allowed. |
+  | `starts_in_past` | An interval starts before the request time. |
+  | `invalid_slot` | A reservation does not follow the booking granularity or its duration limits. |
+  | `outside_opening_hours` | A reservation is not inside the opening hours of its day. |
+  | `member_suspended` | The member is not in good standing. |
+  | `account_overdue` | The member has an invoice that is more than 30 days overdue. |
+  | `not_certified` | The member has no certification valid on the relevant date for the machine's family, or there is no certification to revoke. |
+  | `already_enrolled` | The member is already enrolled in the course. |
+  | `course_full` | The course has no free place. |
+  | `not_enrolled` | The member is not enrolled in the course. |
+  | `machine_in_maintenance` | A maintenance window of the machine overlaps the reservation. |
+  | `machine_locked` | A lockout of the machine overlaps the reservation. |
+  | `machine_booked` | Another active reservation of the machine overlaps the reservation. |
+  | `member_double_booked` | Another active reservation of the member overlaps the reservation. |
+  | `reservation_conflict` | An active reservation overlaps the maintenance window. |
+  | `check_in_too_early` | The reservation has not started yet. |
+  | `insufficient_stock` | The material's stock is lower than the requested quantity. |
+  | `month_not_ended` | The month to invoice has not ended at the request time. |
+  | `already_invoiced` | Invoices for the month have already been generated. |
+  | `invoice_paid` | The invoice is already paid. |
+spec: {}

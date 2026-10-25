@@ -1,0 +1,10 @@
+imports:
+  - package: software
+    as: Software
+  - package: members/memberships
+    as: Memberships
+id: metering
+kind: Software.Concept
+body: |-
+  The member [[check-in|checks in]] when starting to use the machine and [[check-out|checks out]] when done. The program meters the minutes in between and charges them at the rate captured at check-in, with the member's [[Memberships.membership|tier discount]].
+spec: {}

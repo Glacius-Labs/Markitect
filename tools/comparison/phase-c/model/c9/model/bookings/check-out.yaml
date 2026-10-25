@@ -1,0 +1,23 @@
+imports:
+  - package: software
+    as: Software
+  - package: billing/invoices
+    as: Invoices
+  - package: members/memberships
+    as: Memberships
+  - package: policies/money
+    as: Money
+  - package: workshop
+    as: Workshop
+id: check-out
+kind: Software.UseCase
+body: |-
+  Operation `checkOut`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
+
+  Mutation.
+
+  - Arguments: `reservationId` (identifier, an existing reservation).
+  - Refusals: `invalid_state` when the status is not `checkedIn`.
+  - Effect: status `completed`; `checkedOutAt` is the request time; `meteredMinutes` is `checkedOutAt − checkedInAt` in minutes, which may be 0 and may extend past the reservation's end or closing time. A [[Invoices.charge|usage charge]] is created for the member: `kind` `usage`, `ref` the reservation identifier, `quantity` the metered minutes, `unitPriceCents` the captured rate, `discountPercent` the [[Memberships.membership|discount of the member's tier]] at check-out, `at` the request time. A charge of 0 cents is still created. The reservation's `amountCents` is the [[Money.money|charge's amount]]. Standing is not checked.
+  - Result: `reservation` and `charge`.
+spec: {}

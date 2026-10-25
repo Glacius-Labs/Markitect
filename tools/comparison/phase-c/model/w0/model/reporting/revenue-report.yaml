@@ -1,0 +1,29 @@
+imports:
+  - package: software
+    as: Software
+  - package: billing/invoices
+    as: Invoices
+  - package: billing/payments
+    as: Payments
+  - package: workshop
+    as: Workshop
+id: revenue-report
+kind: Software.UseCase
+body: |-
+  Operation `revenueReport`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
+
+  Read. Summarizes billing for one month.
+
+  - Arguments: `month` (month).
+  - Result fields:
+    - `month`;
+    - `invoicesGenerated`: whether [[Invoices.invoice|invoices]] for the month have been generated;
+    - `invoiceCount`: the number of invoices of the month;
+    - `membershipCents`, `usageCents`, `materialCents`, `courseCents`: the sums of the [[Invoices.charge|line amounts]] of each kind on the invoices of the month;
+    - `invoicedCents`: the sum of those four;
+    - `creditAppliedCents`: the sum of `creditAppliedCents` over the invoices of the month;
+    - `outstandingCents`: the sum of `balanceCents` over the invoices of the month at the request time;
+    - `paymentsCents`: the sum of `amountCents` of all [[Payments.payment|payments]] whose `at` lies in the month, for any invoice, including the parts that became credit;
+    - `creditsIssuedCents`: the sum of [[Payments.issue-credit|credits issued]] with `issueCredit` whose request time lies in the month. Credit from overpayments is not included.
+  - For a month without generated invoices, the invoice figures are 0 and `invoicesGenerated` is `false`; payments and issued credits are still reported.
+spec: {}

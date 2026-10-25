@@ -1,0 +1,26 @@
+imports:
+  - package: software
+    as: Software
+  - package: members/registry
+    as: Registry
+  - package: workshop
+    as: Workshop
+id: authorization
+kind: Software.Rule
+body: |-
+  Every [[Registry.registry|user]] has exactly one role, fixed when the user is registered: `member`, `staff`, `admin` or `steward`. Members are the workshop's customers. Staff run the front desk and the workshop floor. Admins also manage the catalog, credits and users. Stewards look after the machines and safety on the workshop floor: a steward handles maintenance and incidents and has no access to billing.
+
+  For each operation and role, the [[permission-matrix|permission matrix]] states one permission:
+
+  - **all:** the role may use the operation for any record.
+  - **own:** the role may use the operation only for records that belong to the actor.
+  - **none:** the role may not use the operation.
+
+  A record concerned belongs to the actor when:
+
+  - the operation has a `memberId` argument and it equals the actor's identifier;
+  - the operation has a `reservationId` argument and the reservation's member is the actor;
+  - the operation has an `invoiceId` argument and the invoice's member is the actor.
+
+  A "none" permission is refused at check 4, an ownership violation at check 6 ([[Workshop.request-processing|order of checks]]). Both use the code `forbidden`.
+spec: {}

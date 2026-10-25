@@ -1,0 +1,34 @@
+imports:
+  - package: software
+    as: Software
+  - package: policies/time
+    as: Time
+  - package: workshop
+    as: Workshop
+id: audit
+kind: Software.Rule
+body: |-
+  Operations are either mutations or reads, as the [[audit-targets|audit target list]] states. Every request to a mutation answered `ok` appends exactly one entry with outcome `accepted`, even when the operation changes no data, such as setting a member's standing to its current value, and every request refused with `forbidden` appends exactly one entry with outcome `refused`. Reads answered `ok`, other refusals and invalid requests append nothing. Entries are never changed or removed.
+
+  Every request refused with `forbidden` is recorded. This holds for every operation, mutations and reads alike, and for both kinds of `forbidden`: a role without permission (check 4 of [[Workshop.request-processing|the order of checks]]) and an ownership violation (check 6).
+
+  An audit entry has these fields:
+
+  - `seq`: the entry's position in the log, starting at 1 and increasing by 1 for each entry;
+  - `at`: the request time;
+  - `actor`: the acting user's identifier;
+  - `actorRole`: the role of the acting user, `member`, `staff` or `admin`;
+  - `op`: the operation name;
+  - `target`: a string that identifies the record the operation acted on, as stated per operation in the [[audit-targets|audit target list]]; `null` in refusal entries;
+  - `outcome`: `accepted` for an entry of a mutation answered `ok`, `refused` for an entry of a `forbidden` refusal.
+
+  **Content of a refusal entry:** `seq` is the next number of the one shared sequence; `at` is the request time; `actor` is the acting user; `actorRole` is that user's role; `op` is the requested operation; `target` is `null`; `outcome` is `refused`. **Content of an accepted entry:** as stated for each field above, with `outcome` `accepted`.
+
+  The response to such a request is still the `forbidden` refusal. Apart from the audit entry, a `forbidden` refusal changes nothing: no other record, no identifier counter, and the request-time order is still set only by requests answered `ok` ([[Time.time|time]]). A refusal entry can therefore carry a later `at` than the accepted entry that follows it; `listAuditEntries` still returns entries in `seq` order.
+
+  Not recorded are refusals with any other code, including `invalid_argument`, `unknown_actor`, `time_regression`, `not_found` and every operation rule code; invalid requests; and a request that fails an earlier check than the permission checks. The order of checks does not change, so, for example, a request from a member with an earlier `at` than the last accepted request is refused with `time_regression` and is not recorded, even though the member also lacks permission.
+
+  Example: member `ada` sends `listAuditEntries` at `2026-03-05T10:00Z`. The response is a `forbidden` refusal, and the log gains `{"seq": 7, "at": "2026-03-05T10:00Z", "actor": "ada", "actorRole": "member", "op": "listAuditEntries", "target": null, "outcome": "refused"}` (with `seq` the next number).
+
+  Admins [[list-audit-entries|read the log]] with `listAuditEntries`.
+spec: {}

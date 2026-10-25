@@ -1,0 +1,14 @@
+imports:
+  - package: software
+    as: Software
+  - package: policies/money
+    as: Money
+  - package: safety
+    as: Safety
+id: payment
+kind: Software.Concept
+body: |-
+  A payment pays one [[invoice|invoice]]. The part of it that exceeds the invoice's balance becomes credit on the member's account. Paying after the due date is allowed; an invoice that is `paid` takes no further payment.
+
+  Each member has a [[Money.credit-balance|credit balance]], initially 0. It increases by overpayments, by credits an admin [[issue-credit|issues]] as a goodwill gesture and by [[Safety.lock-machine|lockout credits]]. Credit is applied automatically to invoices generated later, as step 5 of [[invoice|issuing invoices]] describes; it is never applied to an invoice that already exists and is never paid out.
+spec: {}

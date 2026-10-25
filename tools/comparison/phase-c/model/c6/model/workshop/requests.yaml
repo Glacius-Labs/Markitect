@@ -1,0 +1,20 @@
+imports:
+  - package: software
+    as: Software
+  - package: members/registry
+    as: Registry
+  - package: policies/time
+    as: Time
+id: requests
+kind: Software.Rule
+body: |-
+  A request is a UTF-8 JSON object with exactly three members:
+
+  ```json
+  {"id":"q1","op":"registerMember","args":{"actor":"admin","at":"2026-03-02T09:00Z","memberId":"ada","name":"Ada Byron","tier":"plus"}}
+  ```
+
+  - `id`: a nonempty string chosen by the caller. It is echoed in the response. It is only a correlation value, not a domain identifier and not an idempotency key; two requests with the same `id` are two separate requests.
+  - `op`: the name of one operation of the model. Names are case-sensitive.
+  - `args`: a JSON object with the operation's arguments. Every operation takes `actor` (the identifier of the acting [[Registry.registry|user]]) and `at` (the [[Time.time|request time]]) in addition to its own arguments. All arguments are required; no operation has optional arguments.
+spec: {}

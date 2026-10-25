@@ -1,0 +1,20 @@
+imports:
+  - package: software
+    as: Software
+  - package: policies/money
+    as: Money
+  - package: reporting
+    as: Reporting
+  - package: workshop
+    as: Workshop
+id: issue-credit
+kind: Software.UseCase
+body: |-
+  Operation `issueCredit`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
+
+  Mutation.
+
+  - Arguments: `memberId` (identifier, an existing member), `amountCents` (integer 1 to 100000000), `reason` (text).
+  - Effect: the member's [[Money.credit-balance|credit balance]] increases by `amountCents`. The credit counts as issued at the request time ([[Reporting.revenue-report|reporting]]).
+  - Result: `memberId`, `amountCents` and `creditBalanceCents`, the member's credit balance after the change.
+spec: {}

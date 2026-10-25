@@ -1,0 +1,22 @@
+imports:
+  - package: software
+    as: Software
+  - package: billing/invoices
+    as: Invoices
+  - package: policies/money
+    as: Money
+  - package: workshop
+    as: Workshop
+id: get-account
+kind: Software.UseCase
+body: |-
+  Operation `getAccount`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
+
+  Read. Arguments: `memberId` (identifier, an existing member). Result: `account`, where:
+
+  - `creditBalanceCents` is the member's [[Money.credit-balance|credit balance]];
+  - `openBalanceCents` is the sum of `balanceCents` over the member's [[Invoices.invoice|invoices]] with status `open`;
+  - `overdueBalanceCents` is the same sum over the member's overdue invoices;
+  - `unbilledCents` is the sum of the amounts of the member's [[Invoices.charge|unbilled charges]];
+  - `blocked` states whether the member is [[Invoices.blocked-member|blocked]] at the request time.
+spec: {}

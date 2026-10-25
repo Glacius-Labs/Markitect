@@ -1,0 +1,12 @@
+imports:
+  - package: software
+    as: Software
+  - package: workshop
+    as: Workshop
+id: list-materials
+kind: Software.UseCase
+body: |-
+  Operation `listMaterials`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
+
+  Read. Arguments: none besides `actor` and `at`. Result: `materials`, all [[shop|materials]].
+spec: {}

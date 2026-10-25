@@ -1,0 +1,17 @@
+imports:
+  - package: software
+    as: Software
+  - package: workshop
+    as: Workshop
+id: generate-invoices
+kind: Software.UseCase
+body: |-
+  Operation `generateInvoices`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
+
+  Mutation.
+
+  - Arguments: `month` (month).
+  - Refusals, in this order: `month_not_ended` when the request time is before the first minute of the following month (for `2026-03`, before `2026-04-01T00:00Z`); `already_invoiced` when invoices for this month were generated before.
+  - Effect: creates the invoices as described in [[invoice|charges and invoices]] and marks the month as invoiced, even when there is no member to invoice.
+  - Result: `month` and `invoices`, the invoices created by this request.
+spec: {}

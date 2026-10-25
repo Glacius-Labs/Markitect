@@ -1,0 +1,14 @@
+imports:
+  - package: software
+    as: Software
+  - package: members/memberships
+    as: Memberships
+  - package: workshop
+    as: Workshop
+id: get-member
+kind: Software.UseCase
+body: |-
+  Operation `getMember`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
+
+  Read. Arguments: `memberId` (identifier, an existing [[Memberships.membership|member]]). Result: `member`.
+spec: {}

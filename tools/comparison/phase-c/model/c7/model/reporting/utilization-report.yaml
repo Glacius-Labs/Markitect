@@ -1,0 +1,33 @@
+imports:
+  - package: software
+    as: Software
+  - package: bookings
+    as: Bookings
+  - package: equipment/catalog
+    as: Catalog
+  - package: equipment/maintenance
+    as: Maintenance
+  - package: policies/time
+    as: Time
+  - package: safety
+    as: Safety
+  - package: workshop
+    as: Workshop
+id: utilization-report
+kind: Software.UseCase
+body: |-
+  Operation `utilizationReport`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
+
+  Read. Shows how much each [[Catalog.catalog|machine]] was used compared with the time it was available.
+
+  - Arguments: `from` (date), `to` (date). The report range is the interval from `00:00` of `from` to `00:00` of `to`; `to` itself is excluded.
+  - Refusals: `invalid_interval` when `to` is not after `from` or the range is longer than 366 days.
+  - Result: `from`, `to`, `machines` (one row per machine that exists at the request time) and `totals`. A row has the fields `machineId`, `openMinutes`, `maintenanceMinutes`, `lockoutMinutes`, `availableMinutes`, `usedMinutes` and `utilizationPercent`; `totals` has the same fields without `machineId`.
+    - `openMinutes`: minutes of the range that lie inside [[Time.opening-hours|opening hours]]. Every machine gets the full count, regardless of when it was added.
+    - `maintenanceMinutes`: minutes of the range that lie inside opening hours and inside at least one scheduled [[Maintenance.maintenance-window|maintenance window]] of the machine. Overlapping windows count once.
+    - `lockoutMinutes`: minutes of the range that lie inside opening hours and inside at least one [[Safety.lockout|lockout]] of the machine, overlapping lockouts counting once.
+    - `availableMinutes`: `openMinutes` minus the minutes of the range that lie inside opening hours and inside at least one scheduled maintenance window or lockout of the machine, each minute counted once. A minute covered by both maintenance and a lockout appears in both `maintenanceMinutes` and `lockoutMinutes` but is subtracted from `availableMinutes` once.
+    - `usedMinutes`: for every completed [[Bookings.reservation|reservation]] of the machine, the minutes of `[checkedInAt, checkedOutAt)` that lie in the range, summed. Opening hours do not limit this count. Reservations that are checked in but not checked out are not counted. The lockout excludes time from the available minutes, not from the used minutes: a session already checked in when the lockout is created, and a session that overruns its reservation's end into a lockout, both keep metering until check-out, and their metered minutes count in full, also those inside the lockout.
+    - `utilizationPercent`: `(usedMinutes × 100 × 2 + availableMinutes) div (availableMinutes × 2)`, which is `usedMinutes × 100 / availableMinutes` rounded half up to an integer, or 0 when `availableMinutes` is 0. It can exceed 100.
+    - `totals`: the sums of `openMinutes`, `maintenanceMinutes`, `lockoutMinutes`, `availableMinutes` and `usedMinutes` over all rows, and `utilizationPercent` computed from these sums with the same formula. With no machines, all totals are 0.
+spec: {}

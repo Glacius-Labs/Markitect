@@ -1,0 +1,16 @@
+imports:
+  - package: software
+    as: Software
+  - package: workshop
+    as: Workshop
+id: set-member-standing
+kind: Software.UseCase
+body: |-
+  Operation `setMemberStanding`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
+
+  Mutation. Suspends or reinstates a member.
+
+  - Arguments: `memberId` (identifier, an existing member), `standing` (enumeration `good` or `suspended`).
+  - Effect: sets the [[good-standing|standing]]. Setting the current standing succeeds without a change.
+  - Result: `member`.
+spec: {}

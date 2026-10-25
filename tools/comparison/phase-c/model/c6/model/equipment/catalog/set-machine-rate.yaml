@@ -1,0 +1,18 @@
+imports:
+  - package: software
+    as: Software
+  - package: bookings
+    as: Bookings
+  - package: workshop
+    as: Workshop
+id: set-machine-rate
+kind: Software.UseCase
+body: |-
+  Operation `setMachineRate`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
+
+  Mutation.
+
+  - Arguments: `machineId` (identifier, an existing machine), `rateCentsPerMinute` (integer 1 to 10000).
+  - Effect: sets the [[catalog|rate]]. The rate is captured at [[Bookings.check-in|check-in]], so the new rate applies to check-ins after the change. Reservations already checked in keep their captured rate, and existing charges do not change.
+  - Result: `machine`.
+spec: {}

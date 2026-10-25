@@ -1,0 +1,21 @@
+imports:
+  - package: software
+    as: Software
+  - package: billing/invoices
+    as: Invoices
+  - package: members/memberships
+    as: Memberships
+  - package: workshop
+    as: Workshop
+id: enroll-in-course
+kind: Software.UseCase
+body: |-
+  Operation `enrollInCourse`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
+
+  Mutation. Enrolls a member in a [[course|course]].
+
+  - Arguments: `courseId` (identifier, an existing course), `memberId` (identifier, an existing member).
+  - Refusals, in this order: `member_suspended` when the member is not in [[Memberships.good-standing|good standing]]; `already_enrolled` when the member's enrollment in this course has status `enrolled`; `course_full` when `enrolledCount` equals `capacity`.
+  - Effect: the enrollment gets status `enrolled`, `enrolledAt` equal to the request time and `completedAt` `null`. A course charge is created for the member ([[Invoices.charge|charges and invoices]]): `kind` `course`, `ref` the course identifier, `quantity` 1, `unitPriceCents` the course fee, `discountPercent` 0, `at` the request time. A course with fee 0 creates a charge of 0 cents.
+  - Result: `enrollment` and `course` (after the change).
+spec: {}

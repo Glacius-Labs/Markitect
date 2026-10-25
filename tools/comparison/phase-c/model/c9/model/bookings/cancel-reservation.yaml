@@ -1,0 +1,17 @@
+imports:
+  - package: software
+    as: Software
+  - package: workshop
+    as: Workshop
+id: cancel-reservation
+kind: Software.UseCase
+body: |-
+  Operation `cancelReservation`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
+
+  Mutation.
+
+  - Arguments: `reservationId` (identifier, an existing reservation).
+  - Refusals: `invalid_state` when the [[reservation|reported status]] is not `reserved`.
+  - Effect: the reservation gets status `cancelled`. There is no fee and no credit.
+  - Result: `reservation`.
+spec: {}

@@ -1,0 +1,26 @@
+imports:
+  - package: software
+    as: Software
+  - package: billing/invoices
+    as: Invoices
+  - package: bookings
+    as: Bookings
+  - package: policies/audit
+    as: Audit
+  - package: policies/authorization
+    as: Authorization
+  - package: policies/money
+    as: Money
+  - package: policies/time
+    as: Time
+  - package: training
+    as: Training
+id: delivery
+kind: Software.Rule
+body: |-
+  Deliver the [[program|program]], automated tests and concise usage documentation.
+
+  - The tests run with `go test ./...` from `realization/`. They cover, for every operation, a successful request and each refusal code the operation lists; the four policies ([[Authorization.authorization|authorization]], [[Audit.audit|audit]], [[Money.money|money]] and [[Time.time|time]]), including the [[Authorization.permission-matrix|permission matrix]] and audit entries; the boundary rules of time (half-open intervals, [[Time.opening-hours|opening hours]], [[Time.booking-granularity|granularity and duration limits]], rounding per line); and the cross-area rules of [[Bookings.reservation-rules|reservations]] and [[Invoices.invoice|charges and invoices]]. Tests and documentation do not expect or describe [[Training.certification|certification]] expiry; tests check that a certification issued long before a reservation date is still accepted.
+  - `realization/README.md` explains how to build, run and test the program, shows a short example session and states the scope.
+  - Code, tests and documentation agree with the model.
+spec: {}

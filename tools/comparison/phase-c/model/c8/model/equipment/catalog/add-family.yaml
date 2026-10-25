@@ -1,0 +1,16 @@
+imports:
+  - package: software
+    as: Software
+  - package: workshop
+    as: Workshop
+id: add-family
+kind: Software.UseCase
+body: |-
+  Operation `addFamily`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
+
+  Mutation.
+
+  - Arguments: `familyId` (identifier), `name` (text).
+  - Refusals: `already_exists` when a [[catalog|family]] with `familyId` exists.
+  - Result: `family`.
+spec: {}

@@ -1,0 +1,53 @@
+imports:
+  - package: software
+    as: Software
+  - package: billing/invoices
+    as: Invoices
+  - package: billing/payments
+    as: Payments
+  - package: bookings
+    as: Bookings
+  - package: equipment/catalog
+    as: Catalog
+  - package: equipment/maintenance
+    as: Maintenance
+  - package: materials
+    as: Materials
+  - package: members/memberships
+    as: Memberships
+  - package: members/registry
+    as: Registry
+  - package: policies/audit
+    as: Audit
+  - package: safety
+    as: Safety
+  - package: training
+    as: Training
+id: records
+kind: Software.Rule
+body: |-
+  Every record in a result has exactly these fields.
+
+  | Record | Fields |
+  | --- | --- |
+  | [[Registry.registry|user]] | `userId`, `name`, `role` |
+  | [[Memberships.membership|member]] | `memberId`, `name`, `tier`, `standing` (`good` or `suspended`), `registeredAt` (timestamp) |
+  | [[Catalog.catalog|family]] | `familyId`, `name` |
+  | [[Training.course|course]] | `courseId`, `familyId`, `title`, `feeCents`, `capacity`, `enrolledCount` |
+  | [[Training.course|enrollment]] | `courseId`, `memberId`, `status` (`enrolled` or `completed`), `enrolledAt`, `completedAt` (`null` while enrolled) |
+  | [[Training.certification|certification]] | `memberId`, `familyId`, `issuedOn` (date), `expiresOn` (date), `status` (`valid`, `expired` or `revoked`) |
+  | [[Catalog.catalog|machine]] | `machineId`, `name`, `familyId`, `rateCentsPerMinute` |
+  | [[Maintenance.maintenance-window|maintenance window]] | `windowId`, `machineId`, `start`, `end`, `reason`, `status` (`scheduled` or `cancelled`) |
+  | [[Bookings.reservation|reservation]] | `reservationId`, `memberId`, `machineId`, `start`, `end`, `status` (`reserved`, `missed`, `checkedIn`, `completed` or `cancelled`), `checkedInAt`, `checkedOutAt`, `rateCentsPerMinute`, `meteredMinutes`, `amountCents` |
+  | [[Invoices.charge|charge]] (invoice line) | `kind` (`membership`, `usage`, `material` or `course`), `ref`, `quantity`, `unitPriceCents`, `discountPercent`, `amountCents`, `at` |
+  | [[Materials.shop|material]] | `materialId`, `name`, `unitPriceCents`, `stock` |
+  | [[Materials.purchase-material|purchase]] | `purchaseId`, `memberId`, `materialId`, `quantity`, `unitPriceCents`, `discountPercent`, `amountCents`, `at` |
+  | [[Invoices.invoice|invoice]] | `invoiceId`, `memberId`, `month`, `issuedAt`, `dueAt`, `lines` (charges), `totalCents`, `creditAppliedCents`, `paidCents`, `balanceCents`, `status` (`open` or `paid`), `overdue` (boolean) |
+  | [[Payments.payment|payment]] | `paymentId`, `invoiceId`, `memberId`, `amountCents`, `appliedCents`, `creditedCents`, `at` |
+  | [[Payments.get-account|account]] | `memberId`, `creditBalanceCents`, `openBalanceCents`, `overdueBalanceCents`, `unbilledCents` |
+  | [[Safety.incident|incident]] | `incidentId`, `machineId`, `severity` (`low`, `medium` or `high`), `description`, `reportedBy`, `reportedAt`, `status` (`open` or `resolved`), `resolution` (`null` while open), `resolvedAt` (`null` while open) |
+  | [[Safety.lockout|lockout]] | `lockoutId`, `incidentId`, `machineId`, `start`, `end`, `cancelledReservationIds` (the reservations this lockout cancelled, in creation order) |
+  | [[Audit.audit|audit entry]] | `seq`, `at`, `actor`, `actorRole`, `op`, `target` (`null` in refusal entries), `outcome` (`accepted` or `refused`) |
+
+  In a reservation, `checkedInAt` and `rateCentsPerMinute` are `null` until check-in; `checkedOutAt`, `meteredMinutes` and `amountCents` are `null` until check-out. The meaning of each field is given with the operations that set it.
+spec: {}

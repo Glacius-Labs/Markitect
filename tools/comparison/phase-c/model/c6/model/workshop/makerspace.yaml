@@ -1,0 +1,56 @@
+imports:
+  - package: software
+    as: Software
+  - package: billing/invoices
+    as: Invoices
+  - package: billing/payments
+    as: Payments
+  - package: bookings
+    as: Bookings
+  - package: equipment/catalog
+    as: Catalog
+  - package: equipment/maintenance
+    as: Maintenance
+  - package: materials
+    as: Materials
+  - package: members/memberships
+    as: Memberships
+  - package: members/registry
+    as: Registry
+  - package: policies/audit
+    as: Audit
+  - package: policies/authorization
+    as: Authorization
+  - package: policies/money
+    as: Money
+  - package: policies/time
+    as: Time
+  - package: reporting
+    as: Reporting
+  - package: safety
+    as: Safety
+  - package: training
+    as: Training
+id: makerspace
+kind: Software.Concept
+body: |-
+  Makerspace runs the day-to-day operations of a fictional community workshop. It is one local [[program|program]]. Front-desk tools send it [[requests|requests]] on behalf of the person who acts; the program decides, records and answers.
+
+  - **[[Registry.registry|Members]]** join on a [[Memberships.membership|membership tier]] and pay a monthly fee that depends on the tier. Staff can suspend a member; a suspended member is not in [[Memberships.good-standing|good standing]].
+  - **Training:** [[Training.course|courses]] certify members for a tool family, such as laser cutters.
+  - **Equipment:** [[Catalog.catalog|machines]] belong to a tool family and have a rate per minute. Staff schedule [[Maintenance.maintenance-window|maintenance windows]] during which a machine cannot be reserved.
+  - **Bookings:** members [[Bookings.reservation|reserve machines]] in 30-minute steps inside opening hours, check in when they start and check out when they finish. They are charged for every [[Bookings.metering|metered minute]] at the machine's rate, minus a tier discount.
+  - **Materials:** a small [[Materials.shop|shop]] sells materials from stock.
+  - **Billing:** once a month staff generate [[Invoices.invoice|invoices]]: one per member, with the monthly fee and all charges of that month. An invoice is due 14 days after it is issued; an invoice more than 30 days overdue blocks reservations and purchases until it is paid. Members [[Payments.payment|pay their invoices]]; an overpayment becomes credit, and credit reduces the next invoice.
+  - **Safety:** staff record safety [[Safety.incident|incidents]] per machine and can [[Safety.lockout|lock a machine]] after an incident.
+  - **Reporting:** staff and admins read utilization and revenue [[Reporting.reports|reports]].
+
+  Four policies apply to every operation: [[Authorization.authorization|authorization]], [[Audit.audit|audit]], [[Money.money|money]] and [[Time.time|time]].
+
+  Cross-area rules at a glance:
+
+  - A [[Bookings.reservation-rules|reservation]] needs a member in good standing who is not blocked, a certification for the machine's family that is valid on the reservation date, a machine without maintenance in the reserved slot, no lockout of the machine overlapping the slot, a free machine, and a slot inside opening hours that follows the booking granularity.
+  - Machine use produces a usage charge in billing, an audit entry and report data. Course enrollments and material purchases also produce charges.
+
+  Out of scope: persistence across runs, network access, user interfaces, concurrency, real payments or refunds, notifications, scheduled jobs, deletion of records and integration with other systems.
+spec: {}

@@ -1,0 +1,19 @@
+imports:
+  - package: software
+    as: Software
+  - package: equipment/catalog
+    as: Catalog
+  - package: workshop
+    as: Workshop
+id: add-course
+kind: Software.UseCase
+body: |-
+  Operation `addCourse`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
+
+  Mutation.
+
+  - Arguments: `courseId` (identifier), `familyId` (identifier, an existing [[Catalog.catalog|family]]), `title` (text), `feeCents` (integer 0 to 1000000), `capacity` (integer 1 to 1000).
+  - Refusals: `already_exists` when a course with `courseId` exists.
+  - Effect: creates the [[course|course]] with `enrolledCount` 0.
+  - Result: `course`.
+spec: {}

@@ -1,0 +1,10 @@
+imports:
+  - package: software
+    as: Software
+  - package: equipment/catalog
+    as: Catalog
+id: incident
+kind: Software.Concept
+body: |-
+  Staff record safety incidents against [[Catalog.catalog|machines]]. In this delivery an incident is a record only: it does not block reservations or use.
+spec: {}

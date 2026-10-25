@@ -10,6 +10,10 @@ Profiles m1 and m2 are Phase A's Library M1 and M2. Phase B's m3, m4 and m5
 apply the overlays under phase-b/ cumulatively on top of m2: each overlay
 replaces or adds Definition files and may list deleted ones in deleted.txt.
 
+The headings, link texts, substitutions and extra tables of one document form
+a Document; LIBRARY is the Library's. Phase C renders the Makerspace snapshots
+with its own Document in phase-c/spec/render.py and the same functions.
+
 Usage, from the repository root:
   python -I -B tools/comparison/requirements.py render --profile m1 [--model DIR] [--out FILE]
   python -I -B tools/comparison/requirements.py check --profile m1 --doc FILE [--model DIR]
@@ -106,6 +110,29 @@ M2_EDIT = ("  maxOpenLoans: 5\n", "  maxOpenLoans: 3\n")
 
 class ModelError(ValueError):
     pass
+
+
+class Document:
+    """One rendered document: its headings and wording rules around the verbatim bodies.
+
+    sections is a list of (level, title, keys) or a function of the Definitions
+    returning one. links maps a target to (link text, section title); when it is
+    None, every rendered key links to its own section with the title as text.
+    skip lists keys that are not rendered as bodies; after(key, definitions, links)
+    returns extra lines to put after a body.
+    """
+
+    def __init__(self, title, intro, sections, links=None, substitutions=(), shift_headings=(), skip=(), after=None):
+        self.title, self.intro, self.sections, self.links = title, intro, sections, links
+        self.substitutions, self.shift_headings, self.skip, self.after = list(substitutions), set(shift_headings), set(skip), after
+
+    def section_list(self, definitions):
+        return self.sections(definitions) if callable(self.sections) else self.sections
+
+    def link_map(self, definitions):
+        if self.links is not None:
+            return self.links
+        return {key: (title, title) for _, title, keys in present_sections(definitions, self) for key in keys}
 
 
 def slug(title):
@@ -211,20 +238,38 @@ def model_files(model_dir, profile):
     return dict(sorted(files.items()))
 
 
-def present_sections(definitions):
-    """SECTIONS restricted to the profile's Definitions; headings without any left are dropped."""
+def present_sections(definitions, doc=None):
+    """The document's sections restricted to the present Definitions.
+
+    A heading whose keys are all absent is dropped, and so is a heading without
+    keys when no heading with present keys follows below it.
+    """
+    kept = []
+    for level, title, keys in (doc or LIBRARY).section_list(definitions):
+        present = [key for key in keys if key in definitions]
+        if present or not keys:
+            kept.append((level, title, present))
     out = []
-    for level, title, keys in SECTIONS:
-        kept = [key for key in keys if key in definitions]
-        if kept or not keys:
-            out.append((level, title, kept))
+    for i, (level, title, keys) in enumerate(kept):
+        below = []
+        for next_level, _, next_keys in kept[i + 1:]:
+            if next_level <= level:
+                break
+            below.append(next_keys)
+        if keys or any(below):
+            out.append((level, title, keys))
     return out
 
 
 def load_model(model_dir, profile):
     """Load every local Definition of the Library model, keyed "package/id"."""
+    return load_definitions(model_files(model_dir, profile), LIBRARY)
+
+
+def load_definitions(files, doc):
+    """Parse {"model/...": bytes} and check that the document's sections cover exactly these Definitions."""
     definitions = {}
-    for name, raw in model_files(model_dir, profile).items():
+    for name, raw in files.items():
         definition = parse_definition(raw.decode("utf-8"))
         package = pathlib.PurePosixPath(name).parent.relative_to("model").as_posix()
         definition.update(package=package, file=name, sha256=hashlib.sha256(raw).hexdigest())
@@ -232,7 +277,7 @@ def load_model(model_dir, profile):
         if key in definitions:
             raise ModelError("duplicate Definition " + key)
         definitions[key] = definition
-    covered = [key for _, _, keys in present_sections(definitions) for key in keys]
+    covered = [key for _, _, keys in present_sections(definitions, doc) for key in keys]
     if sorted(covered) != sorted(definitions) or len(set(covered)) != len(covered):
         raise ModelError("sections do not cover exactly the model's Definitions")
     return definitions
@@ -247,9 +292,13 @@ def resolve(definition, target):
     return definition["imports"][alias] + "/" + ident
 
 
-def render_body(definition, key):
+def render_body(definition, key, doc=None, links=None):
+    doc = doc or LIBRARY
+    links = links if links is not None else doc.links
+    if links is None:
+        raise ModelError("rendering " + key + " needs the document's link map")
     body = definition["body"]
-    for owner, old, new, count in SUBSTITUTIONS:
+    for owner, old, new, count in doc.substitutions:
         if owner == key:
             if body.count(old) != count:
                 raise ModelError(f"substitution {old!r} expected {count} times in {key}")
@@ -257,9 +306,9 @@ def render_body(definition, key):
 
     def link(match):
         target = resolve(definition, match.group(1))
-        if target not in LINKS:
+        if target not in links:
             raise ModelError("unlinkable target " + target)
-        text, section = LINKS[target]
+        text, section = links[target]
         if match.group(2):
             text = match.group(2)
         before = body[:match.start()]
@@ -271,7 +320,7 @@ def render_body(definition, key):
         return f"[{text}](#{slug(section)})"
 
     body = re.sub(r"\[\[([^\]|]+)(?:\|([^\]]+))?\]\]", link, body)
-    if key == "library/callable-interface":
+    if key in doc.shift_headings:
         body = re.sub(r"(?m)^## ", "### ", body)
     for word in FORBIDDEN:
         if re.search(r"\b" + re.escape(word) + r"\b" if word.isalpha() else re.escape(word), body):
@@ -286,27 +335,49 @@ def property_meaning(definition):
     return "Exactly one integer value is required."
 
 
-def render(model_dir, profile):
-    definitions = load_model(model_dir, profile)
+def library_policy_table(key, definitions, links):
+    """The Library's policy table, after the LendingPolicy body."""
+    if key != "lending/LendingPolicy":
+        return []
     policy = definitions["lending/loan-policy"]["spec"]
-    out = ["# Small library requirements", "", INTRO, ""]
-    rows = [key for key, _ in POLICY_ROWS]
-    for level, title, keys in present_sections(definitions):
+    out = ["| Policy value | Value | Meaning |", "| --- | --- | --- |"]
+    for row_key, label in POLICY_ROWS:
+        if row_key not in definitions:
+            continue
+        prop = definitions[row_key]
+        meaning = render_body(prop, row_key, LIBRARY, links) + " " + property_meaning(prop)
+        out.append(f"| {label} (`{prop['id']}`) | {policy[prop['id']]} | {meaning} |")
+    out.append("")
+    return out
+
+
+LIBRARY = Document("Small library requirements", INTRO, SECTIONS, links=LINKS, substitutions=SUBSTITUTIONS,
+                   shift_headings=["library/callable-interface"], skip=[key for key, _ in POLICY_ROWS],
+                   after=library_policy_table)
+
+
+def render_document(definitions, doc):
+    """Headings, the verbatim rendered bodies and the document's extra lines; section heading anchors must be unique."""
+    links = doc.link_map(definitions)
+    sections = present_sections(definitions, doc)
+    anchors = [slug(title) for _, title, _ in sections]
+    if len(set(anchors)) != len(anchors):
+        raise ModelError("duplicate heading anchors")
+    out = ["# " + doc.title, "", doc.intro, ""]
+    for level, title, keys in sections:
         out += ["#" * level + " " + title, ""]
         for key in keys:
-            if key in rows:
+            if key in doc.skip:
                 continue
-            out += [render_body(definitions[key], key), ""]
-            if key == "lending/LendingPolicy":
-                out += ["| Policy value | Value | Meaning |", "| --- | --- | --- |"]
-                for row_key, label in POLICY_ROWS:
-                    if row_key not in definitions:
-                        continue
-                    prop = definitions[row_key]
-                    meaning = render_body(prop, row_key) + " " + property_meaning(prop)
-                    out.append(f"| {label} (`{prop['id']}`) | {policy[prop['id']]} | {meaning} |")
-                out.append("")
-    return "\n".join(out).rstrip("\n") + "\n", definitions
+            out += [render_body(definitions[key], key, doc, links), ""]
+            if doc.after:
+                out += doc.after(key, definitions, links)
+    return "\n".join(out).rstrip("\n") + "\n"
+
+
+def render(model_dir, profile):
+    definitions = load_model(model_dir, profile)
+    return render_document(definitions, LIBRARY), definitions
 
 
 def normalize(text):
@@ -314,21 +385,27 @@ def normalize(text):
 
 
 def check(model_dir, profile, doc_path):
-    rendered, definitions = render(model_dir, profile)
+    result = check_document(load_model(model_dir, profile), LIBRARY, doc_path)
+    return {"profile": profile, **result}
+
+
+def check_document(definitions, doc, doc_path):
+    """Re-render, compare the bytes and confirm that every rendered body occurs in the document."""
+    rendered = render_document(definitions, doc)
+    links = doc.link_map(definitions)
     actual = pathlib.Path(doc_path).read_bytes()
-    doc = normalize(actual.decode("utf-8"))
+    text = normalize(actual.decode("utf-8"))
     bindings = []
-    for _, title, keys in present_sections(definitions):
+    for _, title, keys in present_sections(definitions, doc):
         for key in keys:
-            body = render_body(definitions[key], key)
+            body = render_body(definitions[key], key, doc, links)
             bindings.append({"definition": key, "file": definitions[key]["file"],
                              "sha256": definitions[key]["sha256"], "section": title,
-                             "substitutions": [old for owner, old, _, _ in SUBSTITUTIONS if owner == key],
-                             "found": normalize(body) in doc})
-    result = {"profile": profile, "doc_sha256": hashlib.sha256(actual).hexdigest(),
-              "identical_to_render": actual == rendered.encode("utf-8"),
-              "all_found": all(b["found"] for b in bindings), "bindings": bindings}
-    return result
+                             "substitutions": [old for owner, old, _, _ in doc.substitutions if owner == key],
+                             "found": normalize(body) in text})
+    return {"doc_sha256": hashlib.sha256(actual).hexdigest(),
+            "identical_to_render": actual == rendered.encode("utf-8"),
+            "all_found": all(b["found"] for b in bindings), "bindings": bindings}
 
 
 def materialize(model_dir, profile, out):

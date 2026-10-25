@@ -1,0 +1,28 @@
+imports:
+  - package: software
+    as: Software
+  - package: bookings
+    as: Bookings
+  - package: policies/money
+    as: Money
+  - package: policies/time
+    as: Time
+  - package: workshop
+    as: Workshop
+id: lock-machine
+kind: Software.UseCase
+body: |-
+  Operation `lockMachine`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
+
+  Mutation. Locks the machine of an open incident.
+
+  - Arguments: `incidentId` (identifier, an existing incident), `start` (timestamp), `end` (timestamp).
+  - Refusals, in this order: `invalid_state` when the [[incident|incident]] is resolved; `invalid_interval` when `end` is not after `start`; `starts_in_past` when `start` is before the request time.
+  - Effect:
+    1. A [[lockout|lockout]] is created for the incident's machine.
+    2. Every [[Bookings.reservation|reservation]] of that machine whose reported status is `reserved` and whose interval [[Time.time|overlaps]] the lockout becomes `cancelled`. These are the reservations of the window that are not yet used: not checked in and not missed. This includes a reservation whose start has already passed but which is not yet checked in and not yet missed. Reservations that are checked in, completed, missed or already cancelled are not changed.
+    3. For each reservation cancelled this way, the reservation's member receives a lockout credit of 1000 cents: the member's [[Money.credit-balance|credit balance]] increases by 1000. This happens whatever the member's standing.
+  - Result: `lockout` and `cancelledReservations`, the reservations cancelled by this request (after the change), in creation order.
+
+  The request writes exactly one audit entry, for `lockMachine`. The cancellations and credits are part of that request and have no entries of their own.
+spec: {}

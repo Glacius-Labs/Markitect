@@ -1,0 +1,10 @@
+imports:
+  - package: software
+    as: Software
+  - package: policies/time
+    as: Time
+id: reports
+kind: Software.Rule
+body: |-
+  Reports are read-only and are calculated from the current state at the [[Time.time|request time]].
+spec: {}

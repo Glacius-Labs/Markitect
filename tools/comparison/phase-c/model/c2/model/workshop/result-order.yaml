@@ -1,0 +1,41 @@
+imports:
+  - package: software
+    as: Software
+  - package: billing/invoices
+    as: Invoices
+  - package: bookings
+    as: Bookings
+  - package: equipment/catalog
+    as: Catalog
+  - package: materials
+    as: Materials
+  - package: policies/audit
+    as: Audit
+  - package: reporting
+    as: Reporting
+  - package: safety
+    as: Safety
+  - package: training
+    as: Training
+id: result-order
+kind: Software.Rule
+body: |-
+  Identifiers are ordered by ASCII byte value (so `-` < `.` < digits < uppercase letters < `_` < lowercase letters, and `M10` < `M9`).
+
+  | List | Order |
+  | --- | --- |
+  | [[Training.list-certifications|listCertifications]] → `certifications` | `familyId` ascending |
+  | [[Catalog.list-machines|listMachines]] → `machines` | `machineId` ascending |
+  | [[Bookings.get-machine-schedule|getMachineSchedule]] → `reservations` | `start` ascending, then creation order |
+  | [[Bookings.get-machine-schedule|getMachineSchedule]] → `maintenance` | `start` ascending, then creation order |
+  | [[Bookings.get-machine-schedule|getMachineSchedule]] → `lockouts` | `start` ascending, then creation order |
+  | [[Bookings.list-member-reservations|listMemberReservations]] → `reservations` | `start` ascending, then creation order |
+  | [[Materials.list-materials|listMaterials]] → `materials` | `materialId` ascending |
+  | [[Invoices.generate-invoices|generateInvoices]] → `invoices` | `memberId` ascending |
+  | [[Invoices.list-invoices|listInvoices]] → `invoices` | `month` ascending |
+  | [[Invoices.invoice|invoice]] → `lines` | the membership line first, then the other lines by their `at` ascending, then in the order the charges were created |
+  | [[Safety.list-incidents|listIncidents]] → `incidents` | creation order |
+  | [[Safety.lock-machine|lockMachine]] → `cancelledReservations` and a lockout's `cancelledReservationIds` | creation order |
+  | [[Reporting.utilization-report|utilizationReport]] → `machines` | `machineId` ascending |
+  | [[Audit.list-audit-entries|listAuditEntries]] → `entries` | `seq` ascending |
+spec: {}

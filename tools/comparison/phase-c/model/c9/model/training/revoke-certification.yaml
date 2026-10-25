@@ -1,0 +1,19 @@
+imports:
+  - package: software
+    as: Software
+  - package: bookings
+    as: Bookings
+  - package: workshop
+    as: Workshop
+id: revoke-certification
+kind: Software.UseCase
+body: |-
+  Operation `revokeCertification`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
+
+  Mutation. Withdraws a member's [[certification|certification]], for example after a safety incident.
+
+  - Arguments: `memberId` (identifier, an existing member), `familyId` (identifier, an existing family).
+  - Refusals: `not_certified` when the member has no certification for the family or it is already revoked.
+  - Effect: the certification becomes revoked; its dates do not change. Existing reservations stay, but check-in requires a valid certification ([[Bookings.check-in|check-in]]).
+  - Result: `certification`.
+spec: {}

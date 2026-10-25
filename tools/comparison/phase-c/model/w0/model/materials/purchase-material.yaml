@@ -1,0 +1,23 @@
+imports:
+  - package: software
+    as: Software
+  - package: billing/invoices
+    as: Invoices
+  - package: members/memberships
+    as: Memberships
+  - package: policies/money
+    as: Money
+  - package: workshop
+    as: Workshop
+id: purchase-material
+kind: Software.UseCase
+body: |-
+  Operation `purchaseMaterial`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
+
+  Mutation. Sells material to a member.
+
+  - Arguments: `memberId` (identifier, an existing member), `materialId` (identifier, an existing material), `quantity` (integer 1 to 10000).
+  - Refusals, in this order: `member_suspended` when the member is not in [[Memberships.good-standing|good standing]]; `insufficient_stock` when the [[shop|stock]] is lower than `quantity`.
+  - Effect: the stock decreases by `quantity`. A purchase is created with the material's current unit price, `discountPercent` 0, the amount by [[Money.money|the money policy]] and `at` the request time. A [[Invoices.charge|material charge]] is created for the member: `kind` `material`, `ref` the purchase identifier, and the purchase's `quantity`, `unitPriceCents`, `discountPercent`, `amountCents` and `at`.
+  - Result: `purchase` and `material` (after the change).
+spec: {}

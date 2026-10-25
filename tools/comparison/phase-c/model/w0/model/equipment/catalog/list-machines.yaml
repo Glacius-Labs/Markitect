@@ -1,0 +1,12 @@
+imports:
+  - package: software
+    as: Software
+  - package: workshop
+    as: Workshop
+id: list-machines
+kind: Software.UseCase
+body: |-
+  Operation `listMachines`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
+
+  Read. Arguments: none besides `actor` and `at`. Result: `machines`, all [[catalog|machines]].
+spec: {}

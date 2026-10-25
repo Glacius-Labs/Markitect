@@ -1,0 +1,23 @@
+imports:
+  - package: software
+    as: Software
+  - package: equipment/catalog
+    as: Catalog
+  - package: members/memberships
+    as: Memberships
+  - package: training
+    as: Training
+  - package: workshop
+    as: Workshop
+id: check-in
+kind: Software.UseCase
+body: |-
+  Operation `checkIn`. [[Workshop.request-processing|Request processing]], [[Workshop.results|results]] and [[Workshop.delivery|delivery]] apply.
+
+  Mutation.
+
+  - Arguments: `reservationId` (identifier, an existing reservation).
+  - Refusals, in this order: `invalid_state` when the [[reservation|reported status]] is not `reserved` (so a missed, cancelled, checked-in or completed reservation is refused); `check_in_too_early` when the request time is before `start`; `member_suspended` when the member is not in [[Memberships.good-standing|good standing]]; `not_certified` when the member has no [[Training.certification|certification]] for the machine's family valid on the date of the request time.
+  - Effect: status `checkedIn`; `checkedInAt` is the request time; `rateCentsPerMinute` is the [[Catalog.catalog|machine's current rate]].
+  - Result: `reservation`.
+spec: {}

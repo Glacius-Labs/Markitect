@@ -1,0 +1,73 @@
+imports:
+  - package: software
+    as: Software
+  - package: billing/invoices
+    as: Invoices
+  - package: billing/payments
+    as: Payments
+  - package: bookings
+    as: Bookings
+  - package: equipment/catalog
+    as: Catalog
+  - package: equipment/maintenance
+    as: Maintenance
+  - package: materials
+    as: Materials
+  - package: members/memberships
+    as: Memberships
+  - package: members/registry
+    as: Registry
+  - package: reporting
+    as: Reporting
+  - package: safety
+    as: Safety
+  - package: training
+    as: Training
+id: audit-targets
+kind: Software.Rule
+body: |-
+  This table is the audit target list ([[audit|audit]]). "Mutation" operations write an audit entry when answered `ok`; "read" operations never do.
+
+  | Operation | Kind | Audit `target` |
+  | --- | --- | --- |
+  | [[Registry.register-user|registerUser]] | mutation | `userId` |
+  | [[Registry.register-member|registerMember]] | mutation | `memberId` |
+  | [[Registry.get-member|getMember]] | read | — |
+  | [[Memberships.change-tier|changeTier]] | mutation | `memberId` |
+  | [[Memberships.set-member-standing|setMemberStanding]] | mutation | `memberId` |
+  | [[Training.add-course|addCourse]] | mutation | `courseId` |
+  | [[Training.enroll-in-course|enrollInCourse]] | mutation | `courseId/memberId` |
+  | [[Training.complete-course|completeCourse]] | mutation | `courseId/memberId` |
+  | [[Training.revoke-certification|revokeCertification]] | mutation | `memberId/familyId` |
+  | [[Training.list-certifications|listCertifications]] | read | — |
+  | [[Catalog.add-family|addFamily]] | mutation | `familyId` |
+  | [[Catalog.add-machine|addMachine]] | mutation | `machineId` |
+  | [[Catalog.set-machine-rate|setMachineRate]] | mutation | `machineId` |
+  | [[Catalog.list-machines|listMachines]] | read | — |
+  | [[Maintenance.schedule-maintenance|scheduleMaintenance]] | mutation | new `windowId` |
+  | [[Maintenance.cancel-maintenance|cancelMaintenance]] | mutation | `windowId` |
+  | [[Bookings.create-reservation|createReservation]] | mutation | new `reservationId` |
+  | [[Bookings.cancel-reservation|cancelReservation]] | mutation | `reservationId` |
+  | [[Bookings.check-in|checkIn]] | mutation | `reservationId` |
+  | [[Bookings.check-out|checkOut]] | mutation | `reservationId` |
+  | [[Bookings.list-member-reservations|listMemberReservations]] | read | — |
+  | [[Bookings.get-machine-schedule|getMachineSchedule]] | read | — |
+  | [[Materials.add-material|addMaterial]] | mutation | `materialId` |
+  | [[Materials.restock-material|restockMaterial]] | mutation | `materialId` |
+  | [[Materials.purchase-material|purchaseMaterial]] | mutation | new `purchaseId` |
+  | [[Materials.list-materials|listMaterials]] | read | — |
+  | [[Invoices.generate-invoices|generateInvoices]] | mutation | `month` |
+  | [[Invoices.list-invoices|listInvoices]] | read | — |
+  | [[Payments.record-payment|recordPayment]] | mutation | new `paymentId` |
+  | [[Payments.issue-credit|issueCredit]] | mutation | `memberId` |
+  | [[Payments.get-account|getAccount]] | read | — |
+  | [[Safety.report-incident|reportIncident]] | mutation | new `incidentId` |
+  | [[Safety.resolve-incident|resolveIncident]] | mutation | `incidentId` |
+  | [[Safety.list-incidents|listIncidents]] | read | — |
+  | [[Safety.lock-machine|lockMachine]] | mutation | new `lockoutId` |
+  | [[Reporting.utilization-report|utilizationReport]] | read | — |
+  | [[Reporting.revenue-report|revenueReport]] | read | — |
+  | [[list-audit-entries|listAuditEntries]] | read | — |
+
+  In the target column, a name is the value of that argument or new identifier; `a/b` joins two values with a slash, for example `laser-101/ada` for `enrollInCourse` with course `laser-101` and member `ada`; `month` is the month string, for example `2026-03`.
+spec: {}

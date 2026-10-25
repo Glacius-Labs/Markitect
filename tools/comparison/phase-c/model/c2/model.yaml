@@ -1,0 +1,6 @@
+formatVersion: 1
+id: makerspace
+root: model
+dependencies:
+  markitect-core: "1.1.0"
+  software-basics: "0.2.0"
