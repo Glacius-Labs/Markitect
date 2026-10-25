@@ -89,12 +89,12 @@ python -I /harness/harness.py --step C3 --source S --commit C --limits JSON --pr
 
 Tested only where the requirements are unambiguous. Points for session V and the coordinator:
 
-1. **`actor` with a string that is not a valid identifier** (for example `"bad id!"`): `invalid_argument` if `actor` counts as an identifier argument (w0 2.2, 2.5, 3.1 check 1), or `unknown_actor` (3.1 check 2). No argument list types `actor`. Not tested; missing, `null` and wrong JSON types (2.5, closing paragraph) and unknown actors are.
+1. **`actor` with a string that is not a valid identifier**: settled by w0 2.5 (requirements PR #717): `invalid_argument` at check 1; only a valid identifier that names no user is `unknown_actor`. Tested in P-ARGUMENTS and P-CHECK-ORDER.
 2. **`at` read as a timestamp argument**: a malformed or out-of-range `at` is tested as `invalid_argument` (w0 2.5 timestamp row, 4.4 first bullet). Session V confirmed this reading.
 3. **Reads advance the request-time order**: w0 4.4 says "the most recent request answered `ok`", and c1 repeats it, so an accepted read moves the point too. Tested; easy to miss, not ambiguous; session V confirmed it.
 4. **Census at C3 and C7 ignores `reason`**: its wording is free (w0 2.3), and neither change fixes it. At C9 it is compared, because the requirements want no code change.
 5. Not testable or not tested: a last line without a line feed (the reused transport always sends one), duplicate member names and invalid UTF-8 (w0 2.4 excludes them), and characters whose Unicode `White_Space` property changed between versions (only stable whitespace is tested). The 65,536-byte line of w0 2.8 is tested exactly.
-6. **Nesting depth at exactly 100**: w0 2.8 leaves values nested "more than 100 levels deep" unspecified but does not say whether the request object itself counts as a level. Only 90 levels are tested, which is inside the limit under either reading.
+6. **Nesting depth**: settled by w0 2.8 "Counting depth" (requirements PR #717): the request object is level 1. Level 100 is tested (an argument value nested to level 100, a 100-level array line) and an invalid JSON line of any depth; level 101 and deeper stay untested.
 7. Reachable only with impractically many requests, so not tested: generated identifiers of 20 or 21 characters and integers near 2^53 − 1 (w0 2.8). The largest values tested are a 52,592,519-minute usage line of 525,925,190,000 cents and a material line of 10^10 cents.
 
 ## Limits

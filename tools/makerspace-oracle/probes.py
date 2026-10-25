@@ -19,6 +19,8 @@ import world as w
 from world import STAFF as S, T0
 
 MON, TUE, WED, THU, FRI, SAT, SUN = (f"2026-03-0{d}" for d in range(2, 9))
+ACTOR = ('An `actor` that is missing, `null`, not a string or not a valid identifier, such as `"bad id!"` or a string of 65 characters, '
+         'is refused with `invalid_argument` at check 1 of section 3.1, like any other argument.')
 T1 = "2026-03-02T09:00Z"
 APR1 = "2026-04-01T09:00Z"
 
@@ -203,6 +205,8 @@ def p_arguments(step: str) -> list[dict[str, Any]]:
 
     d = probe(step, "P-ARGUMENTS", "formats")
     d.ok("addFamily", "admin", T1, {"familyId": "fam", "name": "Family"})
+    for actor in ("", "x" * 65, "-ada", "a d", "adé"):
+        d.refuse("listMachines", actor, T1, {}, "invalid_argument", cite=W("2.5", ACTOR))
     for mid in ("", "x" * 65, "-ada", ".ada", "_ada", "ada!", "a d", "adé", "ada\n", "ad/a"):
         d.refuse("registerMember", "admin", T1, {"memberId": mid, "name": "Name", "tier": "basic"}, "invalid_argument")
     for mid in ("x" * 64, "9lives", "a.b_c-D", "ada", "Ada"):
@@ -261,6 +265,8 @@ def p_check_order(step: str) -> list[dict[str, Any]]:
     bobs = w.reserve(c, "bob", "L1", ts(TUE, "10:00"), ts(TUE, "11:00"), T0)
     c.ok("changeTier", S, T1, {"memberId": "bob", "tier": "basic"})
     c.refuse("getMember", "ghost", T1, {"memberId": 17}, "invalid_argument")
+    c.refuse("listMachines", "bad id!", T1, {}, "invalid_argument",
+             cite=W("2.5", "Only a valid identifier that names no user is refused with `unknown_actor`, at check 2."))
     c.refuse("listMachines", "ghost", T0, {}, "unknown_actor")
     c.refuse("listAuditEntries", "ghost", T1, {}, "unknown_actor")
     c.refuse("registerUser", "ada", T0, {"userId": "u1", "name": "U", "role": "staff"}, "time_regression")
@@ -1487,9 +1493,13 @@ def p_limits(step: str) -> list[dict[str, Any]]:
     assert len(line.encode("utf-8")) == 65536
     c.ok_raw(line, "big", {"incident": has(description=text)},
              cite=W("2.8", "The 64 KiB of section 2.1 are 65,536 bytes, not counting the line feed."))
-    deep = "[" * 88 + "]" * 88  # the request object, args and 88 arrays: 90 levels
-    c.refuse_raw("registerMember", "admin", t, '"memberId":"deep","name":%s,"tier":"basic"' % deep, "invalid_argument",
-                 cite=W("2.8", "lines with any JSON value nested more than 100 levels deep in arrays or objects, are not specified and are not tested."))
+    depth = [W("2.8", "The outermost array or object of the line, normally the request object, is level 1"),
+             W("2.8", "So `args` is level 2, and an array or object given as an argument value is level 3."),
+             W("2.8", "Up to level 100, all other rules apply in full.")]
+    deep = "[" * 98 + "]" * 98  # arrays at levels 3 to 100 as the value of `name`
+    c.refuse_raw("registerMember", "admin", t, '"memberId":"deep","name":%s,"tier":"basic"' % deep, "invalid_argument", cite=depth)
+    c.invalid("[" * 100 + "]" * 100, None, cite=depth)  # a 100-level array is still not a request object
+    c.invalid("[" * 200, None, cite=W("2.8", "A line that is not valid JSON is answered by section 2.4 whatever its depth."))
     fam, course, member = "f" * 64, "c" * 64, "m" * 64
     c.ok("addFamily", "admin", t, {"familyId": fam, "name": "Long family"})
     c.ok("addCourse", "admin", t, {"courseId": course, "familyId": fam, "title": "Long course", "feeCents": 0, "capacity": 5})
@@ -1551,8 +1561,10 @@ FAMILIES: list[tuple[str, str, list[dict[str, str]], Callable[[str], list[dict[s
                            W("2.5", "A JSON string equal to one of the listed values, compared exactly."),
                            W("2.5", "An argument that is missing, `null`, of the wrong JSON type or outside its format or range is refused with `invalid_argument`."),
                            W("3.1", "every argument is present and valid by section 2.5"),
-                           W("2.5", "An integer argument outside its range is out of range however many digits it has.")], p_arguments),
+                           W("2.5", "An integer argument outside its range is out of range however many digits it has."),
+                           W("2.5", "`actor` is an identifier argument and `at` is a timestamp argument of every operation."), W("2.5", ACTOR)], p_arguments),
     ("P-CHECK-ORDER", "W0", [W("3.1", "The first check that fails decides the refusal and its code."),
+                             W("2.5", "Only a valid identifier that names no user is refused with `unknown_actor`, at check 2."),
                              W("3.1", "An argument that names a member must name a user whose role is `member`; the identifier of a staff or admin user does not name a member.")], p_check_order),
     ("P-RULE-ORDER", "W0", [W("7.1", "Refusals, in this order: `member_suspended` when the member is not in good standing; `already_enrolled`"),
                             W("8.2", "Refusals, in this order: `invalid_interval` when `end` is not after `start`; `starts_in_past`"),
@@ -1668,6 +1680,7 @@ FAMILIES: list[tuple[str, str, list[dict[str, str]], Callable[[str], list[dict[s
                                     C(8, "What changes", "the `openMinutes` of the utilization report, for every date, including dates before the change.")], p_report_utilization),
     ("P-LIMITS", "W0", [W("2.1", "Request lines up to 64 KiB must be accepted."),
                         W("2.8", "The 64 KiB of section 2.1 are 65,536 bytes, not counting the line feed."),
+                        W("2.8", "Levels count arrays and objects only."), W("2.8", "Up to level 100, all other rules apply in full."),
                         W("2.8", "The argument ranges keep every line amount and the product inside its formula (section 4.3) below 2^53."),
                         W("2.8", "The program keeps every integer exact up to 9007199254740991 (2^53 − 1); signed 64-bit integer arithmetic satisfies this."),
                         W("2.8", "A target that joins two values with `/` can be up to 129 characters long and need not meet the identifier format."),
