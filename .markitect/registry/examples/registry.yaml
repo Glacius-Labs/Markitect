@@ -320,6 +320,10 @@ artifacts:
     form: config
     realizes: [examples/independent-oracles]
     why: Supplies a Definition of the Phase B snapshot M5 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-c/"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Holds the Phase C product brief and the neutral Makerspace requirements that every comparison input derives from.
   - path: "tools/comparison/phase_b_cases.py"
     form: code
     realizes: [examples/independent-oracles]
@@ -424,3 +428,11 @@ artifacts:
     form: test
     realizes: [examples/independent-oracles]
     why: Tests the stated responsibility and retains negative boundaries.
+  - path: "tools/makerspace-oracle/"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Holds the hidden Phase C oracle, written from the neutral Makerspace requirements alone.
+  - path: "tools/makerspace-reference/"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Holds the hidden Phase C reference implementations that calibrate the Makerspace oracle.
