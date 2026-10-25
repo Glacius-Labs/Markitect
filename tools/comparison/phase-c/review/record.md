@@ -144,7 +144,20 @@ Disagreements between the oracle and the references: none. Every expectation tha
 | Predicted generated identifiers | P-TIME-HOURS, -GRANULARITY, -INTERVALS, -CERTIFICATION, P-ELIGIBILITY, P-RULE-ORDER fail under an identifier fault | Avoidable: capture identifiers outside P-IDENTIFIERS. Sent to O. |
 | Whole-invoice and total comparisons | P-MONEY-ROUNDING, -USAGE, -COURSE, -MATERIALS, -CREDIT, -REVENUE, P-TIME-BILLING fail under membership-line or course-charge faults | Avoidable: compare the family's own lines and fields. Sent to O. |
 | Unneeded assertions or setups | P-MONEY-ROUNDING asserts stock; P-TIME-ORDER uses a member read; P-IDENTIFIERS uses an ownership refusal; P-CHECK-ORDER advances time with a read; touching slots in P-TIME-BOOKING-STATES and P-REPORT-UTILIZATION setups | Avoidable. Sent to O. |
-| Rule observed through another rule | rounding via discounted usage before C3; revenue's lockout-credit amount; P-AUDIT-FORBIDDEN needs ownership violations; P-AUDIT-SILENT's C1 example combines time regression and missing permission; P-RULE-ORDER needs suspension; utilization's open minutes depend on opening hours | Inherent. Kept; needs the coordinator's agreement because it relaxes "exactly its own family". |
+| Rule observed through another rule | six pairs, listed below | Inherent. Accepted by the coordinator as exceptions (25 October 2026). |
+
+**Declared dependences (coordinator's decision).** For these six mutants, calibration passes when the mutant fails its own probe family plus exactly the declared dependent and no other probe family. Every other mutant must fail exactly its own family.
+
+| Mutant family (rule broken) | Declared dependent | Reason |
+| --- | --- | --- |
+| P-MONEY-USAGE (tier usage discount) | P-MONEY-ROUNDING | Before C3 the only discounts are tier usage discounts (w0 §6.2), and half-up rounding (w0 §4.3) needs a discount that leaves a fraction of a cent. Rounding can only be observed through a discounted usage line. |
+| P-MONEY-LOCKOUT (1000-cent lockout credit) | P-MONEY-REVENUE | C2 makes lockout credits part of `creditsIssuedCents`; checking that inclusion needs the credit's amount. |
+| P-AUTHZ-OWN (ownership by `memberId`) | P-AUDIT-FORBIDDEN | C1 records both kinds of `forbidden`, including the ownership violation (check 6); recording one needs ownership to be enforced. |
+| P-CHECK-ORDER (check 3 before check 4) | P-AUDIT-SILENT | C1's own example: a member request with an earlier `at` is refused `time_regression` and not recorded, although the member also lacks permission. It only holds with checks 3 and 4 in their order. |
+| P-ELIGIBILITY (suspension blocks enrollment) | P-RULE-ORDER | `enrollInCourse` refuses `member_suspended` before `already_enrolled` (w0 §7.1); the order can only be observed when suspension refuses. |
+| P-TIME-HOURS (opening hours) | P-REPORT-UTILIZATION | `openMinutes` are the minutes inside opening hours (w0 §13). |
+
+The primary "missed obligations" measure of protocol addendum C is the number of failed probe families, per step and summed per chain; behavior and invariant families are secondary (coordinator's decision, passed to the comparison session).
 
 Seventeen of the 30 mutants also fail a strict behavior family (B-*, D-*) or an invariant family. That follows from the design: behavior cases compare complete results and the whole audit log of their area. It matters for the metric, not for validity: if failed families are counted together, one fault can count two to ten times, depending on the rule.
 
