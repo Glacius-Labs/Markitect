@@ -10,8 +10,8 @@ body: >-
   Missing paths, unexplained artifacts, duplicate accounting, wrong-owner registrations and changed authority inputs block, with machine-readable diagnostics addressed to the Manager that must act.
   A link to a Definition the checked model no longer has is stale realization, not invalid input: it is work for Implement, and neither a Manager's handoff nor a publication may keep one within its responsibility.
   So is the shard of a Package the model no longer has: the Manager owning the area of each file it still explains, or Root where no area owns it, registers that file in its own registry, which supersedes the orphaned entry, or removes it, and Root deletes the shard.
-  Only the Orchestrator assembles the read-only derived registry view, from checked local versions, and records which versions it includes.
-  Enforce writing ownership in every Agent's container: its own areas and its own registry writable, protected inputs and other owners' areas, deeper directories and exact files read-only; refuse an ownership shape that mounts cannot enforce instead of trusting prompts.
-  Accept a basis or result only after the File check of the submitter's stable area composed with the accepted stand, so disjoint Managers work and finish concurrently without a mixed live view.
+  The global registry is a read-only view derived deterministically from the checked local registries, not a second truth.
+  Check registry and ownership accounting on the fixed state at every handoff, at Root completion and before publication; accounting says who is responsible for a file, not who changed it, so the authorship record is the task base, the fixed result and the integrated child commits, with no per-write enforcement or provenance ledger.
+  Untracked ELF build outputs that no registry shard names stay out of every fixed state and are reported without failing a check; a shard that names the exact path accounts for the file as an ordinary artifact.
   Candidates preserve source identity and observed findings; pure accounting values do not schedule or publish work.
 spec: {}
