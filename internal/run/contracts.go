@@ -123,6 +123,12 @@ type ManagerSessionObservation struct {
 }
 type ObservedSession interface{ Observation() SessionObservation }
 
+// ActingSession is a Session whose adapter observes native executions outside
+// Run's tools, such as shell commands, file changes and web searches.
+// Acted reports whether its last Exchange executed one. Controlled sessions
+// act only through Run's tools and their copy, which Run observes itself.
+type ActingSession interface{ Acted() bool }
+
 type Result struct {
 	ID        string                      `json:"id"`
 	Project   string                      `json:"project"`
@@ -359,9 +365,10 @@ var ErrObservationIncomplete = errors.New("Run physical observation incomplete")
 
 var ErrBudget = errors.New("Run allowance exhausted")
 
-// ErrNoProgress ends a Run whose Manager repeatedly leaves its open assignment
-// without any action or working-state change; the result is incomplete.
-var ErrNoProgress = errors.New("Manager made no progress on its open assignment")
+// ErrNoProgress ends a Run whose Manager repeatedly answers the continuation of
+// its open assignment without doing anything: no Manager tool call, no native
+// execution and no working-state change. The result is incomplete.
+var ErrNoProgress = errors.New("Manager took no action on its open assignment")
 var ErrUnavailable = errors.New("native sessions unavailable: adapter capability is not ready")
 
 type UnavailableSessions struct{}

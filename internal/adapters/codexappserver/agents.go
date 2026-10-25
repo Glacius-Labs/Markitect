@@ -39,6 +39,7 @@ type Agents struct {
 }
 
 var _ run.Sessions = (*Agents)(nil)
+var _ run.ActingSession = (*nativeSession)(nil)
 
 func NewAgents(engine *container.Engine, prepared runtimeconfig.PreparedProfile, credentials CredentialResolver) (*Agents, error) {
 	if engine == nil {
@@ -142,6 +143,7 @@ type nativeSession struct {
 	thread                            ThreadID
 	turnID                            TurnID
 	model, final, prompt              string
+	acted                             bool // the current Exchange observed a native execution
 	nextRequest                       int64
 	children                          map[ThreadID]bool
 	childIDBytes                      int
@@ -259,11 +261,19 @@ func (t *nativeSession) Exchange(ctx context.Context, message run.Message) (err 
 	if err != nil {
 		return err
 	}
-	t.prompt, t.final, t.turnID = string(payload), "", ""
+	t.prompt, t.final, t.turnID, t.acted = string(payload), "", "", false
 	if err = t.runTurn(active); err != nil {
 		return err
 	}
 	return t.drainTerminals(active)
+}
+
+// Acted reports whether the last Exchange observed a native execution, any
+// completed item but text, also on a native subagent thread.
+func (t *nativeSession) Acted() bool {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.acted
 }
 func (t *nativeSession) Close(ctx context.Context) error {
 	t.abortMu.Lock()
@@ -555,7 +565,17 @@ func (t *nativeSession) notification(m Message) error {
 				t.childIDBytes += len(n.Item.Child)
 			}
 		}
-		if !main || m.method != "item/completed" {
+		if m.method != "item/completed" {
+			return nil
+		}
+		// Every item but text ran something: a command, a file change, a tool
+		// call, a web search or a subagent. Its outcome does not matter.
+		switch n.Item.Type {
+		case "userMessage", "agentMessage", "reasoning":
+		default:
+			t.acted = true
+		}
+		if !main {
 			return nil
 		}
 		if n.Item.Type == "agentMessage" && n.Item.Phase == "final_answer" {

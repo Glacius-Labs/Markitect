@@ -656,6 +656,7 @@ func (h *hierarchySessions) Open(ctx context.Context, s run.SessionSpec) (run.Se
 	return w, e
 }
 func (s *hierarchySession) Observation() run.SessionObservation { return s.actual.Observation() }
+func (s *hierarchySession) Acted() bool                         { return s.actual.Acted() }
 func (s *hierarchySession) Close(c context.Context) error {
 	e := s.actual.Close(c)
 	s.closed = e == nil
