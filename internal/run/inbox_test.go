@@ -387,8 +387,8 @@ func TestMessageTimeoutCountsProviderWorkNotServedToolCalls(t *testing.T) {
 			}
 			return err
 		})
-		go question(x, a, 4*limit)
 		start := time.Now()
+		go question(x, a, 4*limit)
 		if err := x.exchange(a, Message{Feedback: []Finding{{Text: "work"}}}); err != nil || time.Since(start) < 4*limit {
 			t.Fatal("a served await counted as provider work", err, time.Since(start))
 		}
@@ -405,8 +405,8 @@ func TestMessageTimeoutCountsProviderWorkNotServedToolCalls(t *testing.T) {
 			<-ctx.Done()
 			return nil
 		})
-		go question(x, a, 3*limit)
 		start := time.Now()
+		go question(x, a, 3*limit)
 		err := x.exchange(a, Message{Feedback: []Finding{{Text: "work"}}})
 		// The answer arrives after 3*limit, so only an uncounted await gets there.
 		if elapsed := time.Since(start); !errors.Is(err, context.DeadlineExceeded) || elapsed < 3*limit || elapsed > 4*limit+time.Second || x.ctx.Err() != nil {
@@ -429,6 +429,29 @@ func TestMessageTimeoutCountsProviderWorkNotServedToolCalls(t *testing.T) {
 		}
 		x.calls.Wait()
 	})
+}
+
+// Provider work before and after served calls accumulates: serving pauses the
+// clock and never restarts it at its full limit.
+func TestMessageClockKeepsProviderWorkAcrossServedCalls(t *testing.T) {
+	clock := startClock(time.Hour, func() { t.Error("clock expired") })
+	defer clock.stop()
+	left := func() time.Duration {
+		clock.mu.Lock()
+		defer clock.mu.Unlock()
+		return clock.left
+	}
+	for want := 30 * time.Millisecond; want <= 60*time.Millisecond; want += 30 * time.Millisecond {
+		time.Sleep(30 * time.Millisecond) // provider work
+		resume := clock.serve()
+		nested := clock.serve()
+		time.Sleep(30 * time.Millisecond) // served: not counted
+		nested()
+		if spent := time.Hour - left(); spent < want || spent > want+time.Second {
+			t.Fatalf("provider work %v counted as %v", want, spent)
+		}
+		resume()
+	}
 }
 
 func (s *admissionSession) Exchange(context.Context, Message) error {
