@@ -11,6 +11,7 @@ These reports preserve the exact scope, inputs, source references and outcomes s
 - [V1 comparison results, Phase A — 25 October 2026](v1-comparison-results-20261025.md): no quality advantage shown under the protocol as approved, a tendency for Markitect only under a post-hoc seed list; behavior identical at about nine times the time and 24 times the tokens
 - [V1 comparison results, Phase B — 25 October 2026](v1-comparison-results-phase-b-20261025.md): no quality advantage shown; both arms conformed in all 20 longitudinal runs, Markitect at about ten times the time and nine times the tokens
 - [V1 comparison Phase B, arm M, on F′ 528ef346 — 25 October 2026](v1-phase-b-arm-m-20261025.md): F's refusal of a Definition deletion, and the 26 arm-M runs on F′ with their raw outcomes
+- [V1 final review on F_final 4d23f7ae — 25 October 2026](v1-final-review-20261025.md): independent complete-diff and architecture review for technical V1 acceptance; no blocking finding, four should-fix
 
 ## Release evidence
 

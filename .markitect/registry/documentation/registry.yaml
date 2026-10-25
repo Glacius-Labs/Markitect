@@ -72,6 +72,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Records arm M's Phase B runs of the DEC-072 comparison on F′ and F's deletion refusal, with bindings, raw outcomes, reviews, deviations and limits.
+  - path: "docs/validation/v1-final-review-20261025.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the independent complete-diff and architecture review of F_final 4d23f7ae for technical V1 acceptance, with source gates, guarantee holders, ranked findings, verdict and limits.
   - path: "docs/concepts/sources/v1-source-implementation-approval-20261023.md"
     form: doc
     realizes: [documentation/current-guidance]
