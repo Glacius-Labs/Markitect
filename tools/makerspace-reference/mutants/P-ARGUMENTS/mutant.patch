@@ -1,0 +1,11 @@
+--- a/internal/ms/values.go
++++ b/internal/ms/values.go
+@@ -189,7 +189,7 @@
+ 	case kindIdentifier:
+ 		return value{s: s}, isIdentifier(s)
+ 	case kindText:
+-		return value{s: s}, isText(s)
++		return value{s: s}, true
+ 	case kindTimestamp:
+ 		n, ok := parseTime(s)
+ 		return value{s: s, n: n}, ok

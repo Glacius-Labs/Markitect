@@ -1,0 +1,11 @@
+--- a/internal/ms/ops_reports.go
++++ b/internal/ms/ops_reports.go
+@@ -41,7 +41,7 @@
+ 	if available == 0 {
+ 		return 0
+ 	}
+-	return (used*100*2 + available) / (available * 2)
++	return used * 100 / available
+ }
+ 
+ func runUtilization(c *call) (rec, string, *refusal) {

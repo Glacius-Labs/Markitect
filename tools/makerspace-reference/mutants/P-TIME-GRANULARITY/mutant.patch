@@ -1,0 +1,11 @@
+--- a/internal/ms/hours.go
++++ b/internal/ms/hours.go
+@@ -5,7 +5,7 @@
+ // Booking rules of section 4.4.
+ const (
+ 	granularity    = 30  // minutes
+-	maxReservation = 240 // minutes
++	maxReservation = 300 // minutes
+ )
+ 
+ // openingHours returns the opening period of a day as minutes of the day.

@@ -1,0 +1,11 @@
+--- a/internal/ms/ops.go
++++ b/internal/ms/ops.go
+@@ -186,7 +186,7 @@
+ 		return refused(ref)
+ 	}
+ 	s.lastOK = c.at
+-	if op.mutation {
++	if op.mutation || op.name == "getMember" {
+ 		s.audit = append(s.audit, &auditEntry{seq: len(s.audit) + 1, at: c.at, actor: c.actor.id,
+ 			op: op.name, target: target})
+ 	}

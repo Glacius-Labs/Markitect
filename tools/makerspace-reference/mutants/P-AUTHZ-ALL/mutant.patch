@@ -1,0 +1,11 @@
+--- a/internal/ms/ops_materials.go
++++ b/internal/ms/ops_materials.go
+@@ -41,7 +41,7 @@
+ 				c.s.addCharge(mem.user.id, "material", p.id, p.quantity, p.unit, p.discount, c.at)
+ 				return rec{"purchase": purchaseView(p), "material": materialView(mat)}, p.id, nil
+ 			}},
+-		{name: "listMaterials", perms: "aaa",
++		{name: "listMaterials", perms: "naa",
+ 			run: func(c *call) (rec, string, *refusal) {
+ 				out := []rec{}
+ 				for _, k := range sortedKeys(c.s.materials) {

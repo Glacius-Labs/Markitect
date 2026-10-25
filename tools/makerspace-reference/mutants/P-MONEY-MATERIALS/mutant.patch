@@ -1,0 +1,10 @@
+--- a/internal/ms/ops_materials.go
++++ b/internal/ms/ops_materials.go
+@@ -33,7 +33,6 @@
+ 				if mat.stock < qty {
+ 					return nil, "", refuse("insufficient_stock", "The stock is lower than the quantity.")
+ 				}
+-				mat.stock -= qty
+ 				p := &purchase{id: c.s.nextID("pur"), memberID: mem.user.id, materialID: mat.id,
+ 					quantity: qty, unit: mat.unit, discount: 0, at: c.at}
+ 				p.amount = chargeAmount(p.quantity, p.unit, p.discount)

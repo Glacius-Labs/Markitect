@@ -1,0 +1,11 @@
+--- a/internal/ms/values.go
++++ b/internal/ms/values.go
+@@ -160,7 +160,7 @@
+ func dayOf(m int) int { return m / minPerDay }
+ 
+ // overlaps reports whether the half-open intervals [a,b) and [c,d) overlap.
+-func overlaps(a, b, c, d int) bool { return a < d && c < b }
++func overlaps(a, b, c, d int) bool { return a <= d && c <= b }
+ 
+ // validate checks one raw argument against its spec.
+ func validate(spec argSpec, raw json.RawMessage, present bool) (value, bool) {

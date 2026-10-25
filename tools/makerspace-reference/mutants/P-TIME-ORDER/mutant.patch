@@ -1,0 +1,13 @@
+--- a/internal/ms/ops.go
++++ b/internal/ms/ops.go
+@@ -185,7 +185,9 @@
+ 	if ref != nil {
+ 		return refused(ref)
+ 	}
+-	s.lastOK = c.at
++	if op.mutation {
++		s.lastOK = c.at
++	}
+ 	if op.mutation {
+ 		s.audit = append(s.audit, &auditEntry{seq: len(s.audit) + 1, at: c.at, actor: c.actor.id,
+ 			op: op.name, target: target})

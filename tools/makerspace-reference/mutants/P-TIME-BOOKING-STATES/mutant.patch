@@ -1,0 +1,11 @@
+--- a/internal/ms/model.go
++++ b/internal/ms/model.go
+@@ -204,7 +204,7 @@
+ 
+ // reportedStatus applies the time-dependent missed state.
+ func (r *reservation) reportedStatus(at int) string {
+-	if r.status == "reserved" && r.end <= at {
++	if r.status == "reserved" && r.end < at {
+ 		return "missed"
+ 	}
+ 	return r.status

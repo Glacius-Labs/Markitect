@@ -1,0 +1,11 @@
+--- a/internal/ms/ops_bookings.go
++++ b/internal/ms/ops_bookings.go
+@@ -49,7 +49,7 @@
+ 				}
+ 				m := c.s.members[r.memberID]
+ 				metered := c.at - *r.checkedInAt
+-				ch := c.s.addCharge(m.user.id, "usage", r.id, metered, *r.rate, tierDiscount(m.tier), c.at)
++				ch := c.s.addCharge(m.user.id, "usage", r.id, metered, *r.rate, 0, c.at)
+ 				at, amount := c.at, ch.amount
+ 				r.status, r.checkedOutAt, r.metered, r.amount = "completed", &at, &metered, &amount
+ 				return rec{"reservation": reservationView(r, c.at), "charge": chargeView(ch)}, r.id, nil

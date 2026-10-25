@@ -1,0 +1,11 @@
+--- a/internal/ms/ops_members.go
++++ b/internal/ms/ops_members.go
+@@ -86,7 +86,7 @@
+ 					c.s.enrollments[key] = e
+ 				}
+ 				e.status, e.enrolledAt, e.completedAt = "enrolled", c.at, nil
+-				c.s.addCharge(m.user.id, "course", co.id, 1, co.fee, 0, c.at)
++				c.s.addCharge(m.user.id, "course", co.id, 1, co.fee, tierDiscount(m.tier), c.at)
+ 				return rec{"enrollment": enrollmentView(e), "course": c.s.courseView(co)},
+ 					co.id + "/" + m.user.id, nil
+ 			}},

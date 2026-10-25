@@ -1,0 +1,11 @@
+--- a/internal/ms/ops_equipment.go
++++ b/internal/ms/ops_equipment.go
+@@ -2,7 +2,7 @@
+ 
+ func equipmentOps() []*opDef {
+ 	return []*opDef{
+-		{name: "addFamily", mutation: true, perms: "nna",
++		{name: "addFamily", mutation: true, perms: "naa",
+ 			args: []argSpec{id("familyId"), text("name")},
+ 			run: func(c *call) (rec, string, *refusal) {
+ 				fid := c.str("familyId")
