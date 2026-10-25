@@ -23,7 +23,7 @@ Independent complete-diff and architecture review of the frozen final source for
 | Hosted CI on exactly `4d23f7ae` ([run 40240295977](https://github.com/Glacius-Labs/Markitect/actions/runs/40240295977)) | Quality (ubuntu-24.04) and Race detector (ubuntu-24.04) pass; Quality (windows-latest) still running when this record was written |
 | `go build ./...`, `go vet ./...` (local, Windows) | Pass |
 | `markitect check --repo . --revision 4d23f7ae` (local) | Pass; no stale link, no orphaned shard. A draft check of the reviewer's worktree flags only the reviewer's own untracked `.claude/settings.local.json`, as designed |
-| `go test ./... -count=1` (local, Windows) | 31 packages pass, 11 have no tests. `internal/adapters/gitrepo` did not complete: run with Go's default 10-minute timeout, it outlived that bound, which CONTRIBUTING says the package needs 60 minutes for on Windows; its last test then hit the deadline it takes from the test binary. A rerun with `-timeout=60m` was stopped at the coordinator's request to free the machine for a native run, so the hosted CI is the evidence for this package |
+| `go test ./... -count=1` (local, Windows) | 31 packages pass, 11 have no tests. `internal/adapters/gitrepo` did not complete. It needs more than Go's default 10-minute timeout on Windows, and CONTRIBUTING prescribes `-timeout=60m`; with the default, its last running test hit the deadline it derives from the test binary, and the binary timed out. A rerun with `-timeout=60m` was stopped at the coordinator's request to free the machine for a native run, so the hosted CI is the evidence for this package |
 
 ## Guarantees and their holders
 
