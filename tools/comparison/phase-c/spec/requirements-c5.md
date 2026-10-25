@@ -102,6 +102,8 @@ An argument that is missing, `null`, of the wrong JSON type or outside its forma
 
 These formats and ranges apply to arguments, including `at`. An integer argument outside its range is out of range however many digits it has. Values the program computes can lie outside these ranges; [computed values and limits](#computed-values-and-limits) states the rules for those values.
 
+`actor` is an identifier argument and `at` is a timestamp argument of every operation. An `actor` that is missing, `null`, not a string or not a valid identifier, such as `"bad id!"` or a string of 65 characters, is refused with `invalid_argument` at check 1 of the [order of checks](#order-of-checks), like any other argument. Only a valid identifier that names no [user](#registry) is refused with `unknown_actor`, at check 2.
+
 ### Initial state and generated identifiers
 
 A new process contains exactly one [user](#registry): identifier `admin`, name `Administrator`, role `admin`. There are no members, families, machines, courses, materials, reservations, invoices, incidents or audit entries.
@@ -142,6 +144,7 @@ Request times and time arguments lie between 2000 and 2099 ([argument values](#a
 - **Audit targets are not identifiers.** An [audit](#audit-target-list) `target` is a plain string, or `null` in a refusal entry. A target that joins two values with `/` can be up to 129 characters long and need not meet the identifier format.
 - **Durations.** A reservation lasts at most 240 minutes. Maintenance windows and metered sessions have no maximum length apart from the timestamp range.
 - **Request size and depth.** The 64 KiB of the [program rules](#program-build-and-process) are 65,536 bytes, not counting the line feed. Longer lines, and lines with any JSON value nested more than 100 levels deep in arrays or objects, are not specified and are not tested.
+- **Counting depth.** Levels count arrays and objects only. The outermost array or object of the line, normally the request object, is level 1, and an array or object directly inside a level-n array or object is level n + 1. So `args` is level 2, and an array or object given as an argument value is level 3. Strings, numbers, booleans and `null` add no level. A JSON value is nested more than 100 levels deep when it is an array or object at level 101 or deeper, or lies inside one. Up to level 100, all other rules apply in full. A line that is not valid JSON is answered by the [invalid-request rules](#invalid-requests) whatever its depth.
 
 ## Processing a request
 
