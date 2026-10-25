@@ -53,6 +53,22 @@ Decisions taken within concept 1.0 while implementing; they do not change produc
 
 Steps 2 and 3 do not reopen concept decisions. A newly observed contradiction becomes an open question for the owner with its evidence. Step 4 starts only after steps 2 and 3 are integrated and reviewed together.
 
+## Acceptance and evaluation (owner directive 25 October)
+
+The [owner directive](concepts/sources/v1-acceptance-directive-20261025.md) separates technical V1 acceptance from product value and sets the order below. Comparison Phase A (tendency for Markitect, p 0.227) and Phase B (tie, p 1.0) are complete; their records are under `docs/validation/` and `tools/comparison/`.
+
+| Item | Work | Owner | Depends on | Bounds | Done when |
+|---|---|---|---|---|---|
+| P0 | Phase C inputs consistent after [PR #713](https://github.com/Glacius-Labs/Markitect/pull/713): models and snapshots W0–C9, re-rendered single-agent specs and mapping, oracle impact and boundary cases, reference and mutants, two-way equivalence, recalibration, new input version and freeze | Phase C sessions M, O and I; review V | #713 | No requirement changes only to make the oracle or the reference pass; earlier calibrations stay historical | V certifies the new input version; then one uncounted smoke per arm on it |
+| P1 | Independent review of the ELF snapshot rule of [PR #706](https://github.com/Glacius-Labs/Markitect/pull/706) with real-Git scenarios; the smallest fix only if a legitimate artifact can be hidden | P1 session | — | No engine runs; no classification platform | Guarantees documented, or fix merged |
+| P3 | Time-dependent `gitrepo` test failures classified by cause and fixed | P3 session | — | No engine runs; no blanket timeout increase | Cause table and fixes merged |
+| Freeze | F_final = Main after P1 and P3: build, vet, all Go tests, architecture and model checks, Linux, Windows and race CI, candidate persistence and publication guards | Coordinator | P1, P3 | — | Every gate green on F_final |
+| Review | Independent complete diff (`c9f7cb45`..F_final) and architecture review | Final-review session | Freeze | Read-only | Record with verdict; blocking findings fixed and re-checked on a new freeze |
+| P2 | Public Verify Reject → fresh Implement → fresh Verify → publication on F_final, in a legitimate scenario | Step 4 session | Freeze; coordinator approves the design | At most 3 attempts at standard per-Apply limits; every attempt kept; an Assessment catch counts as not exercised | Path observed end to end with freshness, deadline, candidate binding, closure and readback recorded, or honestly not established |
+| P4 | Phase C counted runs and analysis per protocol addendum C | Comparison session | P0 gate and smoke; F_final; coordinator approves addendum C | Study infrastructure frozen during counted runs; N from measured cost | Results with the predeclared reading, the owner's measures and, on a tie, the cost analysis |
+
+Two separate final reports follow: technical V1 acceptance on F_final, and the comparison with the product thesis. Release and deployment stay separate owner decisions.
+
 ## Repository structure
 
 The owner wants a repository that is state of the art, tidy and well organized. Two slices in step 3 deliver it, before the native requalification, so that step 4 qualifies the final layout. R1 is done ([PR #680](https://github.com/Glacius-Labs/Markitect/pull/680), [repository structure](development/repository-structure.md)), and the owner accepted its six recommendations ([DEC-071](concepts/register.md#dec-071-repository-structure-and-archive)). The ruleset protecting `archive/**` refs is active. R2 is done: the restructured layout is described in the [repository layout](development/repository-layout.md), and everything it removed from Main stays at the archive point `archive/main-pre-r2-20261024` (bundle included) that the [archive index](archive.md) lists, together with the six pinned pre-reset commits.
