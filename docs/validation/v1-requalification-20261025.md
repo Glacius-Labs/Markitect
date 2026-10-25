@@ -82,7 +82,7 @@ The negative gate, `oracle\p4-negative\result.json` with SHA-256 `1be019afccf759
 | --- | --- | --- |
 | Failing cases | E10-overdue, and E04-admission only if it assesses due-today loans | 8 of 12: E02-copies, E03-successful-loan, E04-admission, E05-suspension, E10-overdue, E11-invalid-input, E12-callable, paired-fourth-loan |
 | Failing assertion | — | One in each case, always `response.result.notices: expected IDs [], got […]`. The request is `assessOverdue` at 2026-10-15, and every returned notice has due date 2026-10-15 |
-| Other assertions | — | None failed. E01, E06, E08 and E09 passed; discrimination was confirmed; no residue remained |
+| Other assertions | — | None failed before each failing case stopped at its first failure; later steps of those cases did not run. E01, E06, E08 and E09 passed; discrimination was confirmed; no residue remained |
 | Gate as written | Pass | **Failed**: the allowed set was predicted too narrowly |
 
 The cause: in many cases the oracle's state snapshots assess overdue on the loans' due date. The boundary seed therefore surfaces in every case that takes such a snapshot, and each case stops at its first failure.
@@ -117,9 +117,9 @@ The independent retained-result review found P4 clear, with notes:
 
 - **C6 criterion for S4:**
   - The first list of seeded lines (16 lines, SHA-256 `9a8c9e54…`) included five neutral helper lines that a correct repair keeps.
-  - After M-S4 r1 was observed, the coordinator changed the criterion post hoc to the blind reviewer's 10 defect-bearing lines (`37d14c6a…`) for every S4 run of both arms. My own 11-line list (`29f230a3…`) is kept beside it.
+  - After M-S4 r1 was observed, the coordinator changed the criterion post hoc to the blind reviewer's 10 defect-bearing lines (`37d14c6a…`) for every S4 run of both arms. The step-4 operator's own 11-line list (`29f230a3…`) is kept beside it.
   - All three M runs score 0/10 and 0/11 under the new lists. They would fail only under the original 16-line list, at 5/16, 3/16 and 3/16.
-- **Misstatement corrected:** I first reported M-S3 c1's final commit as the start commit. It is a new commit with the identical tree. The study was told the correction.
+- **Misstatement corrected:** the step-4 operator first reported M-S3 c1's final commit as the start commit. It is a new commit with the identical tree. The study was told the correction.
 - **Session interruption:** the operating session ended at about 22:58Z while launching M-S3 c2. The launch had not taken effect: no launch record, no attempt and the lock free. The run was relaunched at 05:06Z as its only attempt. UTC clocks were cross-checked, and the access token was still valid.
 - **Unavailable safety classifier:** one independent review ran while the safety classifier was unavailable. Its read-only claim was verified afterwards: both retained attempts it read still match their manifests exactly.
 
