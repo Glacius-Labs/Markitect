@@ -190,6 +190,48 @@ func TestActualStructuralPreparationAndFixedContext(t *testing.T) {
 	invoke(t, repo.Dir, 0, "check", "--revision", "HEAD")
 }
 
+// staleRegistryLink leaves the product fixture an artifact of a Definition the
+// owner deleted from the model: its registry link is stale.
+func staleRegistryLink(repo *testkit.Repo) {
+	repo.Write("docs/markitect/removed.md", "realizes a deleted Definition\n")
+	repo.Write(".markitect/registry/documentation/registry.yaml", "apiVersion: markitect.registry/v1\nartifacts:\n  - path: docs/markitect/project.md\n    form: doc\n    realizes: [documentation/current-guidance]\n    why: The exact generated view target.\n  - path: docs/markitect/removed.md\n    form: doc\n    realizes: [documentation/removed]\n    why: Realized a Definition the owner deleted.\n")
+	repo.Commit("Delete a realized Definition")
+}
+
+// check passes a stale registry link, because removing it is realization for
+// Apply, and lists it apart from failures, so a model error stays distinct.
+func TestCheckReportsAStaleRegistryLinkAsRealizationStillToDo(t *testing.T) {
+	repo := productFixture(t)
+	staleRegistryLink(repo)
+	out := invoke(t, repo.Dir, 0, "check")
+	var r struct {
+		Status string
+		Stages struct {
+			Structural struct {
+				Registry struct{ Status string }
+				Files    struct {
+					Status     string
+					Accounting struct {
+						Findings []any
+						Stale    []struct{ Code, Path, Owner, Message string }
+					}
+				}
+			}
+		}
+	}
+	if err := json.Unmarshal([]byte(out), &r); err != nil {
+		t.Fatal(err)
+	}
+	files := r.Stages.Structural.Files
+	if r.Status != "passed" || r.Stages.Structural.Registry.Status != "passed" || files.Status != "passed" || len(files.Accounting.Findings) != 0 {
+		t.Fatal("a stale registry link failed the input", out)
+	}
+	stale := files.Accounting.Stale
+	if len(stale) != 1 || stale[0].Code != "registry.stale_link" || stale[0].Path != "docs/markitect/removed.md" || stale[0].Owner != "documentation" || !strings.Contains(stale[0].Message, "documentation/removed") {
+		t.Fatal("check does not list the stale link as realization still to do", stale)
+	}
+}
+
 func TestDocumentationBindsTargetAndModelAndReadsBackActualWrite(t *testing.T) {
 	repo := productFixture(t)
 	first := docsPreview(t, repo.Dir)

@@ -104,7 +104,8 @@ func attemptReport(a project.PreviewPreparationAttempt) map[string]any {
 			}
 			entries = append(entries, entry)
 		}
-		accounting = map[string]any{"available": true, "status": report.Status(), "treeDigest": report.TreeID().String(), "files": entries, "findings": report.Findings()}
+		// Stale links are realization still to do, not failures of this state.
+		accounting = map[string]any{"available": true, "status": report.Status(), "treeDigest": report.TreeID().String(), "files": entries, "findings": report.Findings(), "stale": report.Stale()}
 	}
 	r := map[string]any{"model": map[string]any{"status": checked.Status, "coordinates": checked.Coordinates, "models": models, "diagnostics": checked.Diagnostics}, "execution": map[string]any{"status": a.Execution().Status(), "declarations": a.Execution().Partial(), "diagnostics": a.Execution().Diagnostics()}, "registry": map[string]any{"status": a.Registry().Status(), "discovered": a.Registry().Discovered(), "records": a.Registry().Records(), "diagnostics": a.Registry().Diagnostics()}, "files": map[string]any{"status": files.Status(), "accounting": accounting, "diagnostics": files.Diagnostics()}, "selection": map[string]any{"status": a.Contexts().Status(), "diagnostics": a.Contexts().Diagnostics()}}
 	if a.Error() != nil {

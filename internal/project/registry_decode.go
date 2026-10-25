@@ -71,7 +71,7 @@ func (r *registryPreparation) text(source snapshot.Path, fields map[string]*yaml
 	return node.Value
 }
 
-func (r *registryPreparation) decodeRegistry(source SourceFile, owner realization.Owner, checked model.Result, census snapshot.Tree) []realization.Registration {
+func (r *registryPreparation) decodeRegistry(source SourceFile, owner realization.Owner, census snapshot.Tree) []realization.Registration {
 	path := source.RepositoryPath
 	decoder := yaml.NewDecoder(bytes.NewReader(source.File.Bytes()))
 	var document yaml.Node
@@ -98,15 +98,9 @@ func (r *registryPreparation) decodeRegistry(source SourceFile, owner realizatio
 		r.invalid(path, artifacts, "registry.artifacts", "Registry artifacts must be an explicit list, including [] when empty.")
 		return nil
 	}
-	identities := make(map[model.Identity]bool)
-	for _, modelResult := range checked.Models {
-		for _, definition := range modelResult.Definitions {
-			identities[definition.Identity] = true
-		}
-	}
 	var registrations []realization.Registration
 	for _, node := range artifacts.Content {
-		if registration, ok := r.decodeRecord(path, node, owner, identities, census); ok {
+		if registration, ok := r.decodeRecord(path, node, owner, census); ok {
 			registrations = append(registrations, registration)
 		}
 	}

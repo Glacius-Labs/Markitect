@@ -2,6 +2,7 @@ package gitrepo
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -70,7 +71,7 @@ func TestPublicationAllowsValidAddedAndDeletedRegistryShards(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = prepared.ValidateCandidate(checked); err != nil {
+	if err = prepared.ValidateCandidate(checked, "."); err != nil {
 		t.Fatal(err)
 	}
 	ref, err := service.Retain(ctx, copy, fixed)
@@ -97,6 +98,31 @@ func TestPublicationAllowsValidAddedAndDeletedRegistryShards(t *testing.T) {
 	}
 	if data, err := os.ReadFile(filepath.Join(r.Dir, ".markitect/registry/b/empty/registry.yaml")); err != nil || string(data) != empty {
 		t.Fatal("new shard not published", err)
+	}
+}
+
+// Nothing stale is published: even a bound closed approval of a candidate that
+// still links a deleted Definition is refused before any target write.
+func TestPublicationRefusesACandidateWithAStaleRegistryLink(t *testing.T) {
+	r, prepared, git, input := runFixture(t, deletedDefinition)
+	head := r.Git("rev-parse", "HEAD")
+	// This Publisher seam fixture supplies a bound closed approval; a real
+	// Verify cannot approve this candidate, because Root's check refuses it.
+	approval := run.Result{ID: "approved", Project: "fixture", Binding: prepared.Binding(), Mandate: run.Verify, Technical: run.Completed, Decision: run.Approve, Input: input, Candidate: &input}
+	for _, m := range prepared.Topology().Managers() {
+		approval.Handoffs = append(approval.Handoffs, run.Handoff{Manager: m.Package})
+		approval.Cleanup = append(approval.Cleanup, run.Closure{Resource: "session:" + m.Package, Closed: true}, run.Closure{Resource: "copy:" + m.Package, Closed: true})
+	}
+	approval.Cleanup = append(approval.Cleanup, run.Closure{Resource: "manager-workers", Closed: true}, run.Closure{Resource: "git-service", Closed: true})
+	published, err := (&Publisher{Repository: adapter(t), Store: git}).Publish(context.Background(), apply.PublicationRequest{Prepared: prepared, Approval: approval})
+	if !errors.Is(err, project.ErrCandidateInvalid) || !strings.Contains(err.Error(), "registry.stale_link") || !strings.Contains(err.Error(), "out/gone.txt") || published.Readback || len(published.CompletedPaths) != 0 {
+		t.Fatal("publication accepted a stale link", published, err)
+	}
+	if r.Git("rev-parse", "HEAD") != head {
+		t.Fatal("refused publication changed the target")
+	}
+	if data, err := os.ReadFile(filepath.Join(r.Dir, "out/gone.txt")); err != nil || string(data) != "realizes a deleted Definition\n" {
+		t.Fatal("refused publication touched the target", err)
 	}
 }
 

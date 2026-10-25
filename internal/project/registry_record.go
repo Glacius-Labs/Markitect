@@ -10,7 +10,9 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-func (r *registryPreparation) decodeRecord(source snapshot.Path, node *yaml.Node, owner realization.Owner, identities map[model.Identity]bool, census snapshot.Tree) (realization.Registration, bool) {
+// decodeRecord keeps a link to a Definition the checked model lacks: that is
+// stale realization, which accounting reports, not an invalid record.
+func (r *registryPreparation) decodeRecord(source snapshot.Path, node *yaml.Node, owner realization.Owner, census snapshot.Tree) (realization.Registration, bool) {
 	before := len(r.diagnostics)
 	fields := r.fields(source, node, "path", "form", "realizes", "why")
 	record := RegistryRecord{
@@ -32,11 +34,7 @@ func (r *registryPreparation) decodeRecord(source snapshot.Path, node *yaml.Node
 				r.invalid(source, link, "registry.definition_address", "Registry realizes requires an exact full Package/ID address.")
 				continue
 			}
-			identity := model.Identity{Package: link.Value[:i], ID: link.Value[i+1:]}
-			if !identities[identity] {
-				r.invalid(source, link, "registry.definition_missing", fmt.Sprintf("Definition %q is absent from the complete checked model set.", link.Value))
-			}
-			basis = append(basis, identity)
+			basis = append(basis, model.Identity{Package: link.Value[:i], ID: link.Value[i+1:]})
 		}
 	}
 	r.records = append(r.records, record)

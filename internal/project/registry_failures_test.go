@@ -21,7 +21,7 @@ func singleRegistry(t *testing.T, name, content string) (project.InputSelection,
 }
 
 func TestRegistryKnownFailuresRetainFactsAndNeverExposePartialRegistry(t *testing.T) {
-	for _, kind := range []string{"stale owner", "imported owner", "duplicate basis", "duplicate ownership", "unknown key", "payload owner", "unknown form", "dangling basis", "short basis", "case changed basis", "artifact missing", "artifact path", "empty basis", "blank why", "layout", "duplicate source", "wrong source area"} {
+	for _, kind := range []string{"stale owner", "imported owner", "duplicate basis", "duplicate ownership", "unknown key", "payload owner", "unknown form", "short basis", "artifact missing", "artifact path", "empty basis", "blank why", "layout", "duplicate source", "wrong source area"} {
 		t.Run(kind, func(t *testing.T) {
 			name, content, code := ".markitect/registry/lending/registry.yaml", childRegistry, "registry.artifact"
 			switch kind {
@@ -42,15 +42,9 @@ func TestRegistryKnownFailuresRetainFactsAndNeverExposePartialRegistry(t *testin
 				code = "registry.unknown_key"
 			case "unknown form":
 				content = strings.Replace(content, "form: code", "form: invented", 1)
-			case "dangling basis":
-				content = strings.Replace(content, "lending/borrow", "lending/absent", 1)
-				code = "registry.definition_missing"
 			case "short basis":
 				content = strings.Replace(content, "lending/borrow", "borrow", 1)
 				code = "registry.definition_address"
-			case "case changed basis":
-				content = strings.Replace(content, "lending/borrow", "Lending/borrow", 1)
-				code = "registry.definition_missing"
 			case "artifact missing":
 				content = strings.Replace(content, "realization/lending.go", "absent.go", 1)
 				code = "registry.artifact_missing"

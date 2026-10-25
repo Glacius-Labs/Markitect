@@ -523,6 +523,7 @@ func copyHandoff(h Handoff) Handoff {
 	if h.Check != nil {
 		check := *h.Check
 		check.Checks = slices.Clone(check.Checks)
+		check.Stale = slices.Clone(check.Stale)
 		h.Check = &check
 	}
 	return h

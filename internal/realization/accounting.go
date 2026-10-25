@@ -82,13 +82,15 @@ func (f File) Registration() (Registration, bool) { return f.registration, f.reg
 
 // Accounting is a fixed report over explicit values. Accounted means all files
 // and registry records passed these structural checks. Definition assessments
-// and required realization remain separate: Artifacts(id) may still be empty.
+// and required realization remain separate: Artifacts(id) may still be empty,
+// and Stale may still list links to Definitions the model no longer has.
 // Ignored/input/state files never count as artifact links.
 type Accounting struct {
 	status   AccountingStatus
 	tree     snapshot.TreeID
 	files    []File
 	findings []Finding
+	stale    []Finding
 	links    map[model.Identity][]snapshot.Path
 }
 
@@ -97,8 +99,14 @@ func (a Accounting) TreeID() snapshot.TreeID  { return a.tree }
 func (a Accounting) Files() []File            { return slices.Clone(a.files) }
 func (a Accounting) Findings() []Finding      { return slices.Clone(a.findings) }
 
-// Artifacts returns only present, unconflicted registrations whose owner and
-// entire model basis were valid. An empty result does not waive any requirement
+// Stale returns the registry links to Definitions absent from the checked model
+// set, such as one the owner deleted. They are realization still to do, not
+// invalid accounting: the artifact stays registered to its owner, who removes
+// it or realigns the link. Whether a state may keep them is the caller's rule.
+func (a Accounting) Stale() []Finding { return slices.Clone(a.stale) }
+
+// Artifacts returns only present, unconflicted registrations whose owner was
+// valid; a stale link realizes nothing. An empty result does not waive any requirement
 // for realization; in particular, ignoring files cannot supply that realization.
 func (a Accounting) Artifacts(id model.Identity) []snapshot.Path { return slices.Clone(a.links[id]) }
 
@@ -174,8 +182,7 @@ func accountFiles(inventory modelInventory, tree snapshot.Tree, registry Registr
 			}
 			for _, basis := range artifact.basis {
 				if !definitions[basis] {
-					add("registry.dangling_basis", path, entry.owner, basis, "The Definition basis does not resolve in the supplied checked model set.")
-					ok = false
+					result.stale = append(result.stale, Finding{"registry.stale_link", path, entry.owner, basis, fmt.Sprintf("The registered artifact links %s/%s, which the checked model no longer has: remove the artifact and its registration, or link it to an existing Definition.", basis.Package, basis.ID)})
 				}
 			}
 		}
@@ -227,7 +234,9 @@ func accountFiles(inventory modelInventory, tree snapshot.Tree, registry Registr
 			registered[artifact.Selector()]++
 			if valid[artifact.Selector()] {
 				for _, id := range artifact.basis {
-					result.links[id] = append(result.links[id], path)
+					if definitions[id] {
+						result.links[id] = append(result.links[id], path)
+					}
 				}
 			}
 		case len(classified) == 1:
@@ -249,6 +258,7 @@ func accountFiles(inventory modelInventory, tree snapshot.Tree, registry Registr
 		}
 	}
 	slices.SortFunc(result.findings, compareFinding)
+	slices.SortFunc(result.stale, compareFinding)
 	return result
 }
 

@@ -11,6 +11,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
+	"github.com/Glacius-Labs/Markitect/internal/realization"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
@@ -49,20 +50,20 @@ func TestFixedProjectRejectsExternalInstructionMutationAndDistinguishesManifestF
 		attempts := r.Attempts()
 		return attempts[len(attempts)-1]
 	}
-	if err = p.ValidateCandidate(preview()); err != nil {
+	if err = p.ValidateCandidate(preview(), "."); err != nil {
 		t.Fatal("unchanged fixed input refused", err)
 	}
 	changed, _ := snapshot.NewEntry(location.Path, snapshot.Regular, []byte("mutated external guidance"))
 	actual.Instructions = append([]project.SourceFile(nil), raw.Instructions...)
 	actual.Instructions[len(actual.Instructions)-1].File = changed
-	if err = p.ValidateCandidate(preview()); !errors.Is(err, project.ErrCandidateInvalid) {
+	if err = p.ValidateCandidate(preview(), "."); !errors.Is(err, project.ErrCandidateInvalid) {
 		t.Fatal("external input drift was not rejected", err)
 	}
 	actual = raw
 	for _, incomplete := range []bool{false, true} {
 		_, _, inspection := partialManifest(t, incomplete)
 		observationErr = project.NewManifestPreflightError(selection.Local, inspection)
-		err = p.ValidateCandidate(preview())
+		err = p.ValidateCandidate(preview(), ".")
 		if err == nil || errors.Is(err, project.ErrCandidateInvalid) == incomplete {
 			t.Fatalf("known invalid vs incomplete manifest classification: incomplete=%v error=%v", incomplete, err)
 		}
@@ -104,7 +105,7 @@ func TestCandidateAccountingFeedbackIsBoundedDeterministicAndExcludesFileContent
 			t.Fatal(err)
 		}
 		attempts := preview.Attempts()
-		err = p.ValidateCandidate(attempts[len(attempts)-1])
+		err = p.ValidateCandidate(attempts[len(attempts)-1], ".")
 		if !errors.Is(err, project.ErrCandidateInvalid) {
 			t.Fatal("accounting refusal lost its semantic classification", err)
 		}
@@ -116,6 +117,59 @@ func TestCandidateAccountingFeedbackIsBoundedDeterministicAndExcludesFileContent
 			t.Fatal("same fixed candidate returned unstable feedback")
 		}
 		previous = text
+	}
+}
+
+// A registry link to a Definition the model no longer has is realization still
+// to do: the input passes preparation, and the link invalidates a candidate
+// only for the shard owner's subtree and Root, never for other Managers.
+func TestStaleRegistryLinksBindOnlyTheResponsibleManagers(t *testing.T) {
+	for _, links := range []string{"[lending/absent]", "[lending/borrow, lending/absent]", "[Lending/borrow]"} {
+		t.Run(links, func(t *testing.T) {
+			selection, raw := executionInputs(t, documentedExecution(t))
+			censusFile(t, &raw, "realization/library.md", snapshot.Regular, []byte("Library usage.\r\n"))
+			censusFile(t, &raw, "realization/lending.go", snapshot.Executable, []byte("Lending implementation."))
+			registrySource(t, &selection, &raw, ".markitect/registry/registry.yaml", rootRegistry, true)
+			registrySource(t, &selection, &raw, ".markitect/registry/lending/registry.yaml", strings.Replace(childRegistry, "[lending/borrow]", links, 1), true)
+			source := controlledSource{
+				capture: func(context.Context, project.CaptureRequest) (project.CapturedInputs, error) {
+					return captured(raw), nil
+				},
+				preview: func(_ context.Context, r project.PreviewRequest) (project.PreviewedInputs, error) {
+					return project.PreviewedInputs{Raw: raw, Head: fixtureHead, Revision: r.Revision}, nil
+				},
+			}
+			service := project.NewPreparationService(project.NewModelService(source, source))
+			capture, err := service.Capture(context.Background(), project.CaptureRequest{Selection: selection}, model.Limits{})
+			a, ok := capture.Prepared()
+			if err != nil || !ok || capture.Status() != model.Passed {
+				t.Fatal("a stale link refused the input", capture.Status(), err)
+			}
+			p, err := project.Prepare(a)
+			if err != nil {
+				t.Fatal(err)
+			}
+			preview, err := service.Preview(context.Background(), project.PreviewRequest{Selection: selection, Revision: fixtureHead}, model.Limits{})
+			if err != nil {
+				t.Fatal(err)
+			}
+			attempts := preview.Attempts()
+			candidate := attempts[len(attempts)-1]
+			accounting, _ := candidate.Files().Accounting()
+			stale := accounting.Stale()
+			if accounting.Status() != realization.Accounted || len(stale) != 1 || stale[0].Code != "registry.stale_link" || stale[0].Path.String() != "realization/lending.go" {
+				t.Fatalf("stale link is not reported as realization still to do: %+v %+v", accounting.Findings(), stale)
+			}
+			for manager, binds := range map[string]bool{"": false, "library": false, "lending/reminders": false, "lending": true, ".": true} {
+				err := p.ValidateCandidate(candidate, manager)
+				if binds != errors.Is(err, project.ErrCandidateInvalid) || binds && (!strings.Contains(err.Error(), "registry.stale_link") || !strings.Contains(err.Error(), "realization/lending.go")) {
+					t.Fatalf("Manager %q: stale link binding %v, error %v", manager, binds, err)
+				}
+				if got := len(project.StaleLinks(candidate, manager)); got != 1 && binds || got != 0 && !binds {
+					t.Fatalf("Manager %q sees %d stale links", manager, got)
+				}
+			}
+		})
 	}
 }
 

@@ -13,6 +13,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/organization"
+	"github.com/Glacius-Labs/Markitect/internal/realization"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
@@ -102,7 +103,12 @@ func (p Prepared) Checks() []ExecutionCheck {
 // ValidateCandidate preserves fixed intent while allowing registry realization.
 // Invalid candidates are legitimate inputs to review, but cannot be submitted
 // as a successful Implement. The adapter supplies a fixed revision acquisition.
-func (p Prepared) ValidateCandidate(a PreviewPreparationAttempt) error {
+//
+// A stale registry link is realization still to do (StaleLinks): it
+// invalidates the state only within responsible's responsibility, Root
+// covering every shard. An empty responsible binds none, so the fixed input of
+// a command keeps them as work for Implement.
+func (p Prepared) ValidateCandidate(a PreviewPreparationAttempt, responsible string) error {
 	if !p.Valid() {
 		return fmt.Errorf("missing prepared project")
 	}
@@ -169,12 +175,62 @@ func (p Prepared) ValidateCandidate(a PreviewPreparationAttempt) error {
 	if status != model.Passed {
 		return fmt.Errorf("%w: candidate structural observation incomplete", ErrIncompleteInputs)
 	}
+	if stale := StaleLinks(a, responsible); len(stale) != 0 {
+		return candidateError("registry links to Definitions the checked model no longer has", func(add func(code, path, message string)) {
+			for _, f := range stale {
+				add(f.Code, f.Path.String(), f.Message)
+			}
+		})
+	}
 	return nil
+}
+
+// StaleLinks returns the registry links of a checked state to Definitions the
+// model no longer has, limited to the shards within manager's responsibility:
+// Root covers every shard, another Manager the shards of its Package subtree,
+// and an empty manager none.
+func StaleLinks(a PreviewPreparationAttempt, manager string) []realization.Finding {
+	accounting, ok := a.Files().Accounting()
+	if !ok || manager == "" {
+		return nil
+	}
+	var stale []realization.Finding
+	for _, f := range accounting.Stale() {
+		owner, local := f.Owner.Package()
+		if manager == organization.Root || local && packageWithin(owner, manager) {
+			stale = append(stale, f)
+		}
+	}
+	return stale
 }
 
 // Keep candidate repair feedback at the existing error seam. Only actual
 // structural diagnostics are projected, never raw files or runtime inputs.
 func candidateStructuralError(a PreviewPreparationAttempt) error {
+	return candidateError("structural checks failed", func(add func(code, path, message string)) {
+		if accounting, ok := a.Files().Accounting(); ok {
+			for _, d := range accounting.Findings() {
+				add(d.Code, d.Path.String(), d.Message)
+			}
+		}
+		for _, d := range a.Registry().Diagnostics() {
+			add(d.Code, d.Source.String(), d.Message)
+		}
+		for _, d := range a.Files().Diagnostics() {
+			add(d.Code, d.Source.File, d.Message)
+		}
+		for _, d := range a.Model().Checked().Diagnostics {
+			add(d.Code, d.Source.Path, d.Message)
+		}
+		for _, d := range a.Contexts().Diagnostics() {
+			add(d.Code, "", d.Message)
+		}
+	})
+}
+
+// candidateError projects the diagnostics that list adds within the feedback
+// size limit.
+func candidateError(reason string, list func(add func(code, path, message string))) error {
 	const limit = 8192
 	var detail strings.Builder
 	omitted := false
@@ -197,28 +253,13 @@ func candidateStructuralError(a PreviewPreparationAttempt) error {
 		}
 		detail.WriteString(line)
 	}
-	if accounting, ok := a.Files().Accounting(); ok {
-		for _, d := range accounting.Findings() {
-			add(d.Code, d.Path.String(), d.Message)
-		}
-	}
-	for _, d := range a.Registry().Diagnostics() {
-		add(d.Code, d.Source.String(), d.Message)
-	}
-	for _, d := range a.Files().Diagnostics() {
-		add(d.Code, d.Source.File, d.Message)
-	}
-	for _, d := range a.Model().Checked().Diagnostics {
-		add(d.Code, d.Source.Path, d.Message)
-	}
-	for _, d := range a.Contexts().Diagnostics() {
-		add(d.Code, "", d.Message)
-	}
+	list(add)
 	if omitted {
 		detail.WriteString("\nAdditional structural diagnostics omitted (feedback size limit).")
 	}
-	return fmt.Errorf("%w: structural checks failed%s", ErrCandidateInvalid, detail.String())
+	return fmt.Errorf("%w: %s%s", ErrCandidateInvalid, reason, detail.String())
 }
+
 func sameSourceEntries(a, b []model.Entry) bool {
 	a = slices.Clone(a)
 	b = slices.Clone(b)
