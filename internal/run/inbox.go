@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/organization"
 )
@@ -456,13 +458,17 @@ func (x *execution) openQuestionsLocked(s *managerState) string {
 	return "; answer your open questions: " + strings.Join(open, ", ")
 }
 
+// exchange bounds the provider work of one response by MessageTimeout; the
+// time the host spends serving its tool calls does not count, so a parent may
+// await its working children longer. The Run deadline bounds everything.
 func (x *execution) exchange(s *managerState, m Message) error {
-	messageContext := x.ctx
-	cancel := func() {}
+	messageContext, cancel := context.WithCancelCause(x.ctx)
+	defer cancel(nil)
 	if x.request.MessageTimeout > 0 {
-		messageContext, cancel = context.WithTimeout(x.ctx, x.request.MessageTimeout)
+		clock := startClock(x.request.MessageTimeout, func() { cancel(context.DeadlineExceeded) })
+		defer clock.stop()
+		messageContext = context.WithValue(messageContext, clockKey{}, clock)
 	}
-	defer cancel()
 	returned := make(chan error, 1)
 	x.mu.Lock()
 	if err := x.admissionErrorLocked(); err != nil {
@@ -477,13 +483,58 @@ func (x *execution) exchange(s *managerState, m Message) error {
 	}()
 	select {
 	case err := <-returned:
-		if ctxErr := messageContext.Err(); ctxErr != nil {
-			return ctxErr
+		if messageContext.Err() != nil {
+			return context.Cause(messageContext)
 		}
 		return err
 	case <-messageContext.Done():
-		return messageContext.Err()
+		return context.Cause(messageContext)
 	}
+}
+
+// messageClock measures the provider work of one response against its limit
+// and expires once that work exceeds it. It pauses while a tool call is
+// served; stop ends it.
+type messageClock struct {
+	mu      sync.Mutex
+	timer   *time.Timer
+	left    time.Duration
+	since   time.Time
+	serving int
+	running bool
+}
+
+type clockKey struct{}
+
+func startClock(limit time.Duration, expire func()) *messageClock {
+	return &messageClock{timer: time.AfterFunc(limit, expire), left: limit, since: time.Now(), running: true}
+}
+
+// serve pauses the clock until the returned function ends the tool call.
+func (c *messageClock) serve() func() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.serving == 0 && c.running && c.timer.Stop() {
+		c.left -= time.Since(c.since)
+	} else if c.serving == 0 {
+		c.running = false
+	}
+	c.serving++
+	return func() {
+		c.mu.Lock()
+		defer c.mu.Unlock()
+		if c.serving--; c.serving == 0 && c.running {
+			c.since = time.Now()
+			c.timer.Reset(c.left)
+		}
+	}
+}
+
+func (c *messageClock) stop() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.running = false
+	c.timer.Stop()
 }
 
 // A blocked adapter cannot prevent terminal persistence. Timeout is an honest

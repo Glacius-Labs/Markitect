@@ -78,7 +78,7 @@ The native adapters wait for a pending tool's response and cannot supply synchro
 5. Close every Manager process/container/home, Run Git service and temporary volumes, including partial-start failures. Use bounded cleanup even after work cancellation; no further agent work is granted. Record actual close errors.
 6. Save and read back the terminal result including cleanup outcome, then return. Storage failure returns technical error plus available diagnostic identities; never claim a saved result exists. A crash before terminal storage is incomplete, not inferred success or automatic resume.
 
-Cleanup uncertainty, missing decisions and persistence failures block successful return/publication. Standalone caller provides finite limits. Apply supplies one shared concurrency-safe allowance and original deadline to every Run, including corrections. Resource counts have explicit technical meaning, not domain Turn semantics; no reset after Reject.
+Cleanup uncertainty, missing decisions and persistence failures block successful return/publication. Standalone caller provides finite limits. Apply supplies one shared concurrency-safe allowance and original deadline to every Run, including corrections. The per-message timeout bounds a response's provider work only; time the host spends serving its tool calls, such as a parent's `await` on working children, does not count against it. Resource counts have explicit technical meaning, not domain Turn semantics; no reset after Reject.
 
 A bounded probe on 23 October 2026 observed that host-directory binds through Windows/Docker Desktop do not preserve executable modes ([record](../validation/v1-qualification-20261024.md#bounded-component-probes)). Native candidate workspaces therefore use private Linux volumes.
 
