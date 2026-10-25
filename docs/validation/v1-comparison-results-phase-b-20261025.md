@@ -31,7 +31,7 @@ Date: 25 October 2026. This record reports Phase B of the [V1 comparison protoco
 
 ## Every run
 
-Time: M Apply seconds, B session seconds. Tokens: M provider usage summed over the Apply's threads; B per-run input plus output tokens (the resumed thread's total minus the previous step's). Files: comparable files changed against the start (M registry files in brackets). S rows are the extra chains' S1–S3, additional observations that are not counted (condition 1). Every T4 and S3 result has exactly its input tree. M published a new commit with the identical tree in chains 1, 2 and 5 and returned the input commit itself in chains 3 and 4; B's are new capture commits.
+Time: M Apply seconds, B session seconds. Tokens: M provider usage summed over the Apply's threads; B per-run input plus output tokens (the resumed thread's total minus the previous step's). Files: comparable files changed against the start (M registry files in brackets). S rows are the extra chains' S1–S3, additional observations that are not counted (condition 1). Every T4 and S3 result has exactly its input tree. At T4, M published a new commit with the identical tree in chains 1, 2 and 5 and returned the input commit itself in chains 3 and 4; both M S3 results are new commits with the identical tree. B's are new capture commits.
 
 | Run | M candidate | M s | M tokens | M msgs | M files | M conf. | B candidate | B s | B tokens | B files | B conf. |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -88,7 +88,7 @@ Time: M Apply seconds, B session seconds. Tokens: M provider usage summed over t
    - At 14:22 the second assessment of M-c1-T1 failed when the hidden-case build could not write to the assessor's own fresh volume ("permission denied"). The candidate binary never ran, and the candidate's own build and tests passed in the same assessment. The cause of the permission error was not found; a direct test of the same volume setup passed right afterwards.
    - M-c1-T1's third assessment, at 14:23, and the other 25 repeats ran cleanly.
    - Arm B had no failed or repeated assessment in Phase A or Phase B.
-   - Evidence in `phase-b\infra-failures\`: 24 of the 26 first-batch logs, the batch output covering all 26, and the 14:22 build log and output. The first-batch logs of M-c1-T1 and M-c1-T2 were overwritten by their repeats before they were preserved.
+   - Evidence in `phase-b\infra-failures\`: 24 of the 26 first-batch logs, the batch output covering all 26, and the 14:22 build log. The full output of the 14:22 attempt is in `phase-b\assess\M-c1-T1.infra-failed-1`. The first-batch logs of M-c1-T1 and M-c1-T2 were overwritten by their repeats before they were preserved.
 
 ## Limits
 
