@@ -12,7 +12,7 @@ Every local Package has a Manager, including the empty intermediate ones, and Ro
 
 | Area | Packages (Definitions at W0) |
 | --- | --- |
-| Shared | `workshop` (13): overview, program, requests, responses, invalid requests, argument values, initial state, results, records, order of checks, refusal codes, order of listed results, delivery |
+| Shared | `workshop` (14): overview, program, requests, responses, invalid requests, argument values, initial state, results, computed values, records, order of checks, refusal codes, order of listed results, delivery |
 | Policies | `policies` (empty); `policies/authorization` (2), `policies/audit` (3), `policies/money` (2), `policies/time` (3) |
 | Members | `members` (empty); `members/registry` (4), `members/memberships` (4) |
 | Training | `training` (7) |
@@ -44,30 +44,30 @@ C7 removes `billing/payments`: its four Definitions move to `billing/invoices` w
 
 Requirements [PR #713](https://github.com/Glacius-Labs/Markitect/pull/713) (Main `8a2231f1`) closed a W0 gap found by the uncounted smoke run. It inserted a paragraph at the end of w0 §2.5, the new §2.8 "Computed values and limits", and one statement each in c1, c2, c5 and c6. The model follows from that text only:
 
-- **W0:** the new Rule `workshop/computed-values` carries §2.8. Its links reach the Definitions whose computed values it bounds: invoices, certifications, reports, maintenance windows, stock, credit, metering, money, generated identifiers, audit targets and the program limits. `workshop/argument-values` gains the §2.5 paragraph.
+- **W0:** the new Rule `workshop/computed-values` carries §2.8. Its links reach the Definitions whose computed values it bounds: invoices, certifications, reports, maintenance windows, stock, credit, metering, money, the calendar of the time rule, generated identifiers, audit targets and the program limits. `workshop/argument-values` gains the §2.5 paragraph.
 - **C1, C2, C5 and C6:** their new statements amend `workshop/computed-values`.
-- **C3, C4, C7, C8 and C9:** no new text; they inherit the W0 change and the earlier delta edits.
+- **C3, C4, C7, C8 and C9:** no new text; they inherit the W0 change and the earlier delta edits. At C7 the new Rule's link to `record-payment` moves from `billing/payments` to `billing/invoices` with the fold.
 
 Against revision 1, every step adds one Definition and changes `workshop/argument-values`; [mapping/r2.md](../mapping/r2.md) lists the comparison per step. Packages, Managers and the execution configuration are unchanged. The single-agent documents were re-rendered; the renderer adds the section "Computed values and limits" and two listed substitutions ("rules of the model", "formula in the model" → "this document").
 
 | Step | Definitions | Operations | Managers | Canonical model digest | SHA-256 of `files.sha256` |
 | --- | --- | --- | --- | --- | --- |
-| w0 | 76 | 37 | 21 | `sha256:f3f48606aaae9bd11083dba21b2f5c655f4c1dc73567155aeaf4fa5c34314dc6` | `30bc5576b61bfefdcfae8d2be585fdb87a7bb60a9220d945f7249f1ddfcf47d9` |
-| c1 | 76 | 37 | 21 | `sha256:77be545aaaaddcd8ca8b2abd45f63cdf54aa5b519aa6c16e65cf1e0298b1ee4d` | `f907c3b1688971a8ecb894c5563050720410d920c56bee11d936e458582ed3a8` |
-| c2 | 78 | 38 | 21 | `sha256:8b001f62ff1e0b5fab2ad389bef1ce370087ca1da642aa4273022bf90971655f` | `844f987e1ac0caf98a8ef3f1723c3bfaa51eccfd042c12415a55de23e05679b9` |
-| c3 | 79 | 38 | 21 | `sha256:952ae0312ef6fbdda31766dadc2a635b0b6d8a1451ac28f9749f74d96c742b72` | `64694d54417777abd921b58cd411c1f2a89de2762ad66447c27f659ba7beee71` |
-| c4 | 79 | 38 | 21 | `sha256:6185f61fe23d49e81419cc1bb6e925c9374ba53556290e56edd348307deb4302` | `62efbd5d9a0c20c286b3a522d0fae6217c75700e87e2cdf4aea12c76b61d014e` |
-| c5 | 80 | 38 | 21 | `sha256:e8c2a3ec1543cf5311fb71b01ecf9f1ae5e0e46e39681b6c637da0b803aaf98e` | `4cbad3182b50e43a2ed8ef584ba5ffd456b35416f529a70865edf79cf2424522` |
-| c6 | 80 | 38 | 21 | `sha256:3db750b230d21e78b4c747934bf241c075e8ecc8e55c0a0d39f64c54bc5aaeff` | `1c15d40371b6caf6f66b578e8e49337cd2cfc467dbf97593b4e1314e85bdc1f1` |
-| c7 | 80 | 38 | 20 | `sha256:7e77f7b36abe85d69028eb2d7067c428a6f0dfc261fdaf683dc7bb2dd6da3ecc` | `3ef741ea309fadd6235349bd4dca4721fd11d8b4ae4ecf5999c930d27944f96d` |
-| c8 | 80 | 38 | 20 | `sha256:c6a8c775178a19fff57674b35c569047a5138ca57e0ff305745a1b8441f26611` | `2214a1fdea048b9c288388089a9083fe134969d2f359fb28c16e60bac01cfba0` |
-| c9 | 80 | 38 | 20 | `sha256:c6a8c775178a19fff57674b35c569047a5138ca57e0ff305745a1b8441f26611` | `2214a1fdea048b9c288388089a9083fe134969d2f359fb28c16e60bac01cfba0` |
+| w0 | 76 | 37 | 21 | `sha256:50900c22e3e8da94eb0b3a1f155952fc04d41dd63a09c227431251231df666d6` | `e6a30826b7972073bb5b5cb766276e93b5994b96ca7873f66761bdbb6e32bece` |
+| c1 | 76 | 37 | 21 | `sha256:7f5d4f1259352d4eedb8884393d15a94f0db4c02a8726f84003228e6fa4b1236` | `a84418ea993c0a91d2fc72fe2262bd3281027b89c90b63c6b0a41ea4249ac92c` |
+| c2 | 78 | 38 | 21 | `sha256:de98acfbb24454b783bb044f1d71668075386dae0a34bce78bae1c82919fc29c` | `919e537e0b96e602f741af5a0a13b3b073f3607a7a81bafd0287edec87a4d0e8` |
+| c3 | 79 | 38 | 21 | `sha256:5bc43bfb8664f4f6946b7354b5f42bec8ce0cf887cefd6f6a41d7ca9c886f4ee` | `ee8a77e73b583f60084168e7292cbd4b7d180932b3dcca3e9c07be112558ef35` |
+| c4 | 79 | 38 | 21 | `sha256:2eb42758d511e1f534907afba500438bc1817f65fcbcced91507201eff737e5b` | `82f121f3049a82e21eef644231ae15cb1f103e55e901102df308b79f24e45ca0` |
+| c5 | 80 | 38 | 21 | `sha256:881d221a4fa0f895b4498cb92b7664bac5db57fc5fdbebfadabd640ca25aee35` | `61a34e2e15df20f57cb4117281460bc2b166e576587e5ccb95deb1d07bff2de2` |
+| c6 | 80 | 38 | 21 | `sha256:a2458a702e850da4b2d786fc78e041fb5160dd13e2231bb2b20e21cea880c630` | `84a253049f90737b96ae50158c0dc02ee4535e53ec1b0c302f2e2c007adc611c` |
+| c7 | 80 | 38 | 20 | `sha256:814e0f2cc0b97635b97214d48935709519892f50d124e209481d11bd80d07235` | `c4a29659ca8482a159ef5e66ed477818c750085ce7d565bd3404f4b78c390901` |
+| c8 | 80 | 38 | 20 | `sha256:440466935089d64cc35fc172f4c8499d194a5f5d791756ecba87abb30bd60335` | `0b252201301386a7d6bf3cf7f2dc74abc9e88d967cf5cfd4445ffbced464cdcd` |
+| c9 | 80 | 38 | 20 | `sha256:440466935089d64cc35fc172f4c8499d194a5f5d791756ecba87abb30bd60335` | `0b252201301386a7d6bf3cf7f2dc74abc9e88d967cf5cfd4445ffbced464cdcd` |
 
 **Validation of revision 2:** each snapshot passed the structural check described under [Validation](#validation) on 25 October 2026, this time with its proposed [execution configuration](#execution-configuration-for-arm-m) in place of the ownership-only file, and with `markitect` built from Main `8a2231f1aec5619032ceee28d5df33fd9171b17d`. All ten returned exit code 0 and status `passed`, with the digests above.
 
 ## How the text became Definitions
 
-- **Bodies keep the neutral wording.** One Definition per neutral subsection, record table, rule or operation. Section references became body links. The five phrases that name the document ("of this document", "in this document", "agree with this document") read "the model" here; the renderer substitutes them back. Numbers stay in prose: there are no typed policy Kinds or Properties.
+- **Bodies keep the neutral wording.** One Definition per neutral subsection, record table, rule or operation. Section references became body links. The seven phrases that name the document ("of this document", "in this document", "agree with this document", "rules of this document", "formula in this document") read "the model" here; the renderer substitutes them back. Numbers stay in prose: there are no typed policy Kinds or Properties.
 - **Every operation is a UseCase** that opens with "Operation `x`. Request processing, results and delivery apply." The three links name the rules that W0 states for every operation: the order of checks (§3.1), the shape of results (§2.7) and the delivery and test obligations (§15). The Library model did the same with its shared input rule.
 - **Policy reach.** A Manager's context is its own Definitions, their direct link targets and the local Definitions that link to them ([select_context.go](../../../../internal/organization/select_context.go)). The operation index (§14) is split into the permission matrix in `policies/authorization` and the audit target list in `policies/audit`. Both list and link every operation, so each operation's Manager sees its permissions and audit target through incoming links. The authorization and audit rule bodies (the meaning of "own", the entry fields, the recording of refusals) reach the order of checks in `workshop` and their own Managers, but not every area Manager directly: the model does not say whether checks and auditing are realized centrally or per operation, which stays a realization choice. The money and time rules, the record table, the order of listed results and the cross-area rules (good standing, certification, maintenance, lockout, overdue block, charges, credit balance, opening hours, granularity and interval overlap) are linked where the text uses them.
 - **Not modeled:** the W0 paragraph that frames the document, change-relative wording such as "Until now …" or "still", and "What stays as it is" statements, which are change control. Clarifications in those sections that state a rule are carried, and so is C8's "including dates before the change", which carries a rule; [mapping/](../mapping) lists each case.

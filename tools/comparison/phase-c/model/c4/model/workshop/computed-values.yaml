@@ -15,6 +15,8 @@ imports:
     as: Audit
   - package: policies/money
     as: Money
+  - package: policies/time
+    as: Time
   - package: reporting
     as: Reporting
   - package: safety
@@ -26,7 +28,7 @@ kind: Software.Rule
 body: |-
   Request times and time arguments lie between 2000 and 2099 ([[argument-values|argument values]]), but some values the program computes from them lie later. Integers grow with the number of requests. These rules cover every computed value.
 
-  - **Times after 2099.** A computed timestamp or date can lie after 2099. It uses the same format as its type, with a four-digit year, and the Gregorian calendar continues as usual: 2100 is not a leap year, so `2099-03-01` plus 365 days is `2100-03-01`. The latest values a result can show are a `dueAt` of `2100-01-14T23:59Z` (14 days after `2099-12-31T23:59Z`) and an `expiresOn` of `2100-12-31` (365 days after `2099-12-31`). Points used only in comparisons can also lie after 2099: the first minute after the month `2099-12` and after the date `2099-12-31` are both `2100-01-01T00:00Z`. No computed time lies before `2000-01-01T00:00Z`.
+  - **Times after 2099.** A computed timestamp or date can lie after 2099. It uses the same format as its type, with a four-digit year, and the Gregorian [[Time.time|calendar]] continues as usual: 2100 is not a leap year, so `2099-03-01` plus 365 days is `2100-03-01`. The latest values a result can show are a `dueAt` of `2100-01-14T23:59Z` (14 days after `2099-12-31T23:59Z`) and an `expiresOn` of `2100-12-31` (365 days after `2099-12-31`). Points used only in comparisons can also lie after 2099: the first minute after the month `2099-12` and after the date `2099-12-31` are both `2100-01-01T00:00Z`. No computed time lies before `2000-01-01T00:00Z`.
   - **The end of the calendar.** No request time is later than `2099-12-31T23:59Z`. The following consequences follow from the rules of the model and are stated so that they are read only one way:
     - `2099-11` is the last month that can be [[Invoices.generate-invoices|invoiced]]. `generateInvoices` for `2099-12` is never accepted: when it reaches the operation rules ([[request-processing|order of checks]], check 7), it is refused with `month_not_ended`. The [[Reporting.revenue-report|revenue report]] for `2099-12` always has `invoicesGenerated` `false`.
     - An [[Invoices.invoice|invoice]] whose `dueAt` lies after 2099 is never overdue. A [[Training.certification|certification]] whose `expiresOn` lies after 2099 is never reported `expired`.
