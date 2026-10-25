@@ -1,0 +1,43 @@
+imports:
+  - package: software
+    as: Software
+  - package: billing/invoices
+    as: Invoices
+  - package: billing/payments
+    as: Payments
+  - package: bookings
+    as: Bookings
+  - package: equipment/maintenance
+    as: Maintenance
+  - package: materials
+    as: Materials
+  - package: policies/audit
+    as: Audit
+  - package: policies/money
+    as: Money
+  - package: policies/time
+    as: Time
+  - package: reporting
+    as: Reporting
+  - package: training
+    as: Training
+id: computed-values
+kind: Software.Rule
+body: |-
+  Request times and time arguments lie between 2000 and 2099 ([[argument-values|argument values]]), but some values the program computes from them lie later. Integers grow with the number of requests. These rules cover every computed value.
+
+  - **Times after 2099.** A computed timestamp or date can lie after 2099. It uses the same format as its type, with a four-digit year, and the Gregorian [[Time.time|calendar]] continues as usual: 2100 is not a leap year, so `2099-03-01` plus 365 days is `2100-03-01`. The latest values a result can show are a `dueAt` of `2100-01-14T23:59Z` (14 days after `2099-12-31T23:59Z`) and an `expiresOn` of `2100-12-31` (365 days after `2099-12-31`). Points used only in comparisons can also lie after 2099: the first minute after the month `2099-12` and after the date `2099-12-31` are both `2100-01-01T00:00Z`. No computed time lies before `2000-01-01T00:00Z`.
+  - **The end of the calendar.** No request time is later than `2099-12-31T23:59Z`. The following consequences follow from the rules of the model and are stated so that they are read only one way:
+    - `2099-11` is the last month that can be [[Invoices.generate-invoices|invoiced]]. `generateInvoices` for `2099-12` is never accepted: when it reaches the operation rules ([[request-processing|order of checks]], check 7), it is refused with `month_not_ended`. The [[Reporting.revenue-report|revenue report]] for `2099-12` always has `invoicesGenerated` `false`.
+    - An [[Invoices.invoice|invoice]] whose `dueAt` lies after 2099 is never overdue. A [[Training.certification|certification]] whose `expiresOn` lies after 2099 is never reported `expired`.
+    - The last day a [[Reporting.utilization-report|utilization report]] can include is `2099-12-30`, because `to` is at most `2099-12-31` and is excluded from the range.
+    - A [[Maintenance.maintenance-window|maintenance window]] ends at the latest at `2099-12-31T23:59Z`, so the last minute of 2099 cannot be covered. [[Bookings.reservation|Reservations]] end by closing time and are not affected.
+  - **Integers are exact and never negative.** Within the integer limit stated under "Large sums and counters" below, no computed integer is negative. [[Materials.shop|Stock]] cannot fall below 0 (`insufficient_stock`). [[Money.credit-balance|Credit]] and [[Payments.record-payment|payments]] are applied at most up to an invoice's balance. [[Bookings.metering|Metered minutes]] are at least 0, because a check-out cannot precede its check-in in the request-time order. Maintenance minutes are part of the open minutes they are subtracted from.
+  - **Single lines cannot overflow.** The argument ranges keep every line amount and the product inside its formula ([[Money.money|money]]) below 2^53. The largest is a [[Bookings.check-out|usage line]]: metered minutes are fewer than 52,596,000 (from `2000-01-01T00:00Z` to `2099-12-31T23:59Z`), and at 10000 cents per minute the product `minutes × 10000 × 100` stays below 5.26 × 10^13. A [[Materials.purchase-material|material line]]'s product is at most `10000 × 1000000 × 100` = 10^12.
+  - **Large sums and counters.** Sums and counters grow with the number of requests: invoice totals, balances, credit balances, stock, report sums and minute totals, `seq` and the numbers in generated identifiers. The program keeps every integer exact up to 9007199254740991 (2^53 − 1); signed 64-bit integer arithmetic satisfies this. Once a stored or returned integer, or an intermediate value of a formula in the model, would exceed 2^53 − 1, the rest of the run is not specified and is not tested. Reaching that limit takes at least tens of thousands of requests.
+  - **Generated identifiers stay valid identifiers.** A [[initial-state|generated identifier]] is its prefix followed by a number. Within the integer limit it has at most 20 characters (a four-character prefix and at most 16 digits), so it always meets the identifier format of the [[argument-values|argument values]] and can be passed back as an argument.
+  - **Audit targets are not identifiers.** An [[Audit.audit-targets|audit]] `target` is a plain string, or `null` in a refusal entry. A target that joins two values with `/` can be up to 129 characters long and need not meet the identifier format.
+  - **Durations.** A reservation lasts at most 240 minutes. Maintenance windows and metered sessions have no maximum length apart from the timestamp range.
+  - **Request size and depth.** The 64 KiB of the [[program|program rules]] are 65,536 bytes, not counting the line feed. Longer lines, and lines with any JSON value nested more than 100 levels deep in arrays or objects, are not specified and are not tested.
+  - **Counting depth.** Levels count arrays and objects only. The outermost array or object of the line, normally the request object, is level 1, and an array or object directly inside a level-n array or object is level n + 1. So `args` is level 2, and an array or object given as an argument value is level 3. Strings, numbers, booleans and `null` add no level. A JSON value is nested more than 100 levels deep when it is an array or object at level 101 or deeper, or lies inside one. Up to level 100, all other rules apply in full. A line that is not valid JSON is answered by the [[invalid-requests|invalid-request rules]] whatever its depth.
+spec: {}

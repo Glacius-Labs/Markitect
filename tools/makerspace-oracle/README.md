@@ -12,7 +12,7 @@ The author saw only `tools/comparison/phase-c/requirements/` at Main `795b8a2a` 
 | [builder.py](builder.py) | Case builder: explicit requests with explicit expected responses, deterministic generated identifiers, the expected audit log, user roles, the request-time order and unchanged-state snapshots around refusals. Authoring guards refuse a case that goes back in time without expecting `time_regression`. |
 | [world.py](world.py) | The shared starting world (Monday 2026-03-02) with fully stated results. |
 | [behavior.py](behavior.py) | Strict behavior cases: B-* per business area of W0, D-C1 to D-C8 per change. Every result is compared in full and the audit log is compared at the end. |
-| [probes.py](probes.py) | The 30 probe families, one rule cluster each (`FAMILIES` holds names and neutral references). |
+| [probes.py](probes.py) | The 31 probe families, one rule cluster each (`FAMILIES` holds names and neutral references), including the end-of-calendar cases of w0 2.8. |
 | [invariants.py](invariants.py) | Ten cross-area invariant checks over a mixed scenario; the scenario's statuses are judged once (INV-SCENARIO), each check fails only its own family. |
 | [census.py](census.py) | The expected change census for C3, C7 and C9 and a differential runner. |
 | [catalog.py](catalog.py) | The cumulative case set of a step. |
@@ -44,18 +44,18 @@ Probe families (calibration: one mutant each), behavior families, the scenario s
 
 | Step | Behavior cases | Probe families | Probe cases | Invariant checks | Distinct requests |
 | --- | --- | --- | --- | --- | --- |
-| W0 | 7 | 29 | 31 | 10 | 3673 |
-| C1 | 8 | 29 | 31 | 10 | 3686 |
-| C2 | 9 | 30 | 32 | 10 | 3899 |
-| C3 | 10 | 30 | 32 | 10 | 3925 |
-| C4 | 11 | 30 | 32 | 10 | 4013 |
-| C5 | 12 | 30 | 33 | 10 | 4080 |
-| C6 | 13 | 30 | 33 | 10 | 4105 |
-| C7 | 13 | 30 | 33 | 10 | 4105 |
-| C8 | 14 | 30 | 33 | 10 | 4137 |
-| C9 | 14 | 30 | 33 | 10 | 4137 |
+| W0 | 7 | 30 | 36 | 10 | 3746 |
+| C1 | 8 | 30 | 36 | 10 | 3759 |
+| C2 | 9 | 31 | 37 | 10 | 3979 |
+| C3 | 10 | 31 | 37 | 10 | 4005 |
+| C4 | 11 | 31 | 37 | 10 | 4093 |
+| C5 | 12 | 31 | 38 | 10 | 4163 |
+| C6 | 13 | 31 | 38 | 10 | 4188 |
+| C7 | 13 | 31 | 38 | 10 | 4188 |
+| C8 | 14 | 31 | 38 | 10 | 4220 |
+| C9 | 14 | 31 | 38 | 10 | 4220 |
 
-P-MONEY-LOCKOUT starts at C2. Every case of a step also runs at every later step, rendered for that step (for example, certification records lose `expiresOn` from C6 and opening hours change from C8).
+P-MONEY-LOCKOUT starts at C2. P-LIMITS (request size and depth, 129-character audit targets, the largest line amounts and century-long windows, w0 2.8) was added with the computed-value rules; the end-of-calendar cases of w0 2.8 (due dates and expiry dates in 2100, the last invoiceable month, the last utilization day, the block point) belong to P-TIME-BILLING, P-TIME-CERTIFICATION, P-REPORT-UTILIZATION and P-TIME-FORMAT. Every case of a step also runs at every later step, rendered for that step (for example, certification records lose `expiresOn` from C6 and opening hours change from C8).
 
 Change census (`census.py`): at C3 every hidden case without an accepted material purchase of 10 or more units must answer as the C2 program does, apart from the free `reason` wording; at C7 every case must answer as the C6 program does, apart from `reason`; at C9 every case must answer exactly as the C8 program does, `reason` included. The path census per arm stays with the comparison assessor.
 
@@ -89,11 +89,13 @@ python -I /harness/harness.py --step C3 --source S --commit C --limits JSON --pr
 
 Tested only where the requirements are unambiguous. Points for session V and the coordinator:
 
-1. **`actor` with a string that is not a valid identifier** (for example `"bad id!"`): `invalid_argument` if `actor` counts as an identifier argument (w0 2.2, 2.5, 3.1 check 1), or `unknown_actor` (3.1 check 2). No argument list types `actor`. Not tested; missing, `null` and wrong JSON types (2.5, closing paragraph) and unknown actors are.
+1. **`actor` with a string that is not a valid identifier**: settled by w0 2.5 (requirements PR #717): `invalid_argument` at check 1; only a valid identifier that names no user is `unknown_actor`. Tested in P-ARGUMENTS and P-CHECK-ORDER.
 2. **`at` read as a timestamp argument**: a malformed or out-of-range `at` is tested as `invalid_argument` (w0 2.5 timestamp row, 4.4 first bullet). Session V confirmed this reading.
 3. **Reads advance the request-time order**: w0 4.4 says "the most recent request answered `ok`", and c1 repeats it, so an accepted read moves the point too. Tested; easy to miss, not ambiguous; session V confirmed it.
 4. **Census at C3 and C7 ignores `reason`**: its wording is free (w0 2.3), and neither change fixes it. At C9 it is compared, because the requirements want no code change.
-5. Not testable or not tested: a last line without a line feed (the reused transport always sends one), duplicate member names and invalid UTF-8 (w0 2.4 excludes them), the exact 64 KiB boundary (a 60,000-byte line is tested), and characters whose Unicode `White_Space` property changed between versions (only stable whitespace is tested).
+5. Not testable or not tested: a last line without a line feed (the reused transport always sends one), duplicate member names and invalid UTF-8 (w0 2.4 excludes them), and characters whose Unicode `White_Space` property changed between versions (only stable whitespace is tested). The 65,536-byte line of w0 2.8 is tested exactly.
+6. **Nesting depth**: settled by w0 2.8 "Counting depth" (requirements PR #717): the request object is level 1. Level 100 is tested (an argument value nested to level 100, a 100-level array line) and an invalid JSON line of any depth; level 101 and deeper stay untested.
+7. Reachable only with impractically many requests, so not tested: generated identifiers of 20 or 21 characters and integers near 2^53 − 1 (w0 2.8). The largest values tested are a 52,592,519-minute usage line of 525,925,190,000 cents and a material line of 10^10 cents.
 
 ## Limits
 

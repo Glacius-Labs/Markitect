@@ -2,7 +2,6 @@
 
 Each line: sentence (section), reading implemented. Two independent reviews against the neutral text found no defects.
 
-1. 2.5 / 3.1 check 2: an `actor` that is not a valid identifier is refused `invalid_argument`, not `unknown_actor`.
 2. 2.4: an empty or whitespace-only line gets an `invalidRequest` response with `id` null.
 3. 11.1: `generateInvoices` for `2099-12` can never succeed, because the month ends after the last valid timestamp (`month_not_ended`).
 4. 7.2 / 11.1: dates computed past 2099 (an `expiresOn` or `dueAt` after 2099-12-31) are printed as such.

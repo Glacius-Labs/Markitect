@@ -105,7 +105,7 @@ class RequirementsTests(unittest.TestCase):
 class PhaseCTests(unittest.TestCase):
     """The single-agent Makerspace documents are the model snapshots, rendered verbatim."""
 
-    COUNTS = {"w0": 75, "c1": 75, "c2": 77, "c3": 78, "c4": 78, "c5": 79, "c6": 79, "c7": 79, "c8": 79, "c9": 79}
+    COUNTS = {"w0": 76, "c1": 76, "c2": 78, "c3": 79, "c4": 79, "c5": 80, "c6": 80, "c7": 80, "c8": 80, "c9": 80}
 
     @classmethod
     def setUpClass(cls):

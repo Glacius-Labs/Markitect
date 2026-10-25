@@ -1,0 +1,11 @@
+--- a/internal/ms/ops.go
++++ b/internal/ms/ops.go
+@@ -188,7 +188,7 @@
+ 	s.lastOK = c.at
+ 	if op.mutation {
+ 		s.audit = append(s.audit, &auditEntry{seq: len(s.audit) + 1, at: c.at, actor: c.actor.id,
+-			op: op.name, target: target})
++			op: op.name, target: target[:min(len(target), 100)]})
+ 	}
+ 	return response{status: "ok", result: result}
+ }

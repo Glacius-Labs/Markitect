@@ -59,6 +59,59 @@ class AnalyzeTests(unittest.TestCase):
         result = analyze.read(rows, "B")
         self.assertEqual((result["units"]["M"][:2], result["units"]["B"][:2]), ([1, 1], [0, 1]))
 
+    def test_rank_sum_thresholds_of_addendum_c(self):
+        # Complete separation is the only significant outcome with three chains per arm (1 of 20 splits).
+        self.assertAlmostEqual(analyze.rank_sum_one_sided([0, 1, 2], [3, 4, 5]), 0.05)
+        self.assertGreater(analyze.rank_sum_one_sided([0, 1, 4], [2, 3, 5]), 0.05)
+        # Five chains per arm: complete separation is 1 of 252 splits.
+        self.assertAlmostEqual(analyze.rank_sum_one_sided([0] * 5, [1] * 5), 1 / 252)
+        # Ties are mid-ranked: equal values give no evidence either way.
+        self.assertEqual(analyze.rank_sum_one_sided([2, 2, 2], [2, 2, 2]), 1.0)
+
+    def test_phase_c_readings(self):
+        def chains(arm, per_chain, step_errors=None):
+            rows = []
+            for chain, missed in enumerate(per_chain, 1):
+                for i, step in enumerate(analyze.CHAIN_STEPS["C"]):
+                    value = missed if i == 0 else 0
+                    rows.append({"arm": arm, "chain": chain, "scenario": step, **ALL, "C2": value == 0,
+                                 "missed_probe_families": value, "errors": (step_errors or []) if value else []})
+            return rows
+        supports = analyze.read_c(chains("M", [0, 0, 0]) + chains("B", [2, 3, 1], ["P-AUDIT"]))
+        self.assertEqual((supports["missed_total"], supports["rank_sum_one_sided_p"], supports["reading"]),
+                         ({"M": 0, "B": 6}, 0.05, "supports"))
+        self.assertEqual(analyze.read_c(chains("M", [0, 2, 0]) + chains("B", [1, 1, 1]))["reading"], "tendency")
+        self.assertEqual(analyze.read_c(chains("M", [0, 0, 0]) + chains("B", [0, 0, 0]))["reading"], "no quality advantage shown")
+        self.assertEqual(analyze.read_c(chains("M", [1, 1, 0]) + chains("B", [0, 0, 1]))["reading"], "counts against Markitect")
+        # An error type only M shows downgrades a significant result.
+        rows = chains("M", [0, 0, 0]) + chains("B", [2, 3, 1], ["P-AUDIT"])
+        rows[1].update(C6=False, errors=["C9-census"])
+        self.assertEqual(analyze.read_c(rows)["reading"], "tendency")
+        # A step without a candidate counts its blocker class separately.
+        rows = chains("M", [30, 0, 0]) + chains("B", [0, 0, 0])
+        rows[0]["blocker"] = "justified"
+        result = analyze.read_c(rows)
+        self.assertEqual((result["blockers"]["M"], result["reading"]), ({"justified": 1, "false": 0}, "counts against Markitect"))
+
+    def test_phase_c_refuses_what_it_cannot_read(self):
+        def chain(arm, number, steps=analyze.CHAIN_STEPS["C"], missed=0):
+            return [{"arm": arm, "chain": number, "scenario": s, **ALL, "missed_probe_families": missed} for s in steps]
+        full = chain("M", 1) + chain("B", 1)
+        with self.assertRaisesRegex(ValueError, "incomplete"):
+            analyze.read_c(chain("M", 1, analyze.CHAIN_STEPS["C"][:-1]) + chain("B", 1))
+        with self.assertRaisesRegex(ValueError, "duplicate"):
+            analyze.read_c(full + chain("B", 1, ("C4",)))
+        with self.assertRaisesRegex(ValueError, "not evaluable"):
+            analyze.read_c(full + chain("B", 2))
+        with self.assertRaisesRegex(ValueError, "not evaluable"):
+            analyze.read_c(chain("B", 1))
+        bad = chain("M", 1) + chain("B", 1)
+        del bad[3]["missed_probe_families"]
+        with self.assertRaisesRegex(ValueError, "integer"):
+            analyze.read_c(bad)
+        # A row that does not count is not part of a chain.
+        self.assertEqual(analyze.read_c(full + [{**full[0], "counts": False}])["reading"], "no quality advantage shown")
+
 
 if __name__ == "__main__":
     unittest.main()
