@@ -67,6 +67,42 @@ func TestApplyClosesRuntimeInstructionsThroughFreshCompleteCapture(t *testing.T)
 	}
 }
 
+// A Definition the owner deleted leaves a stale registry link. Removing it is
+// work for Implement, so the Apply structural preflight passes the input.
+func TestApplyPreflightAcceptsAStaleRegistryLink(t *testing.T) {
+	r := productFixture(t)
+	r.Write(".markitect/execution.yaml", "apiVersion: markitect.execution/v2\nchecks: []\n")
+	staleRegistryLink(r)
+	inputRoot := testkit.TempDir(t)
+	if err := os.WriteFile(filepath.Join(inputRoot, "runtime-rules.txt"), []byte("Exact runtime instruction bytes.\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	engine, _ := os.Executable()
+	text := fmt.Sprintf("apiVersion: markitect.runtime/v1\nagentProfiles:\n  account:\n    codexAppServer:\n      profileVersion: 2\n      engineExecutable: %q\n      imageID: %s\n      agentdVersion: development\n      recordedCodexSchemaDigest: %s\n      instructions:\n        - {boundary: %q, path: runtime-rules.txt}\ncheckProfiles: {}\n", engine, bootstrapImageID, bootstrapSchema, inputRoot)
+	if err := os.WriteFile(filepath.Join(inputRoot, "runtime.yaml"), []byte(text), 0600); err != nil {
+		t.Fatal(err)
+	}
+	manifest, _ := snapshot.NewPath(".markitect/model.yaml")
+	runtimePath, _ := snapshot.NewPath("runtime.yaml")
+	selection := project.InputSelection{Repository: r.Dir, Local: project.ModelSelection{Boundary: ".", ManifestPath: manifest}, RuntimeProfiles: []project.SourceLocation{{Boundary: inputRoot, Path: runtimePath}}}
+	repository, err := gitrepo.New(gitrepo.Limits{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	preparation := project.NewPreparationService(project.NewModelService(repository, repository))
+	agents := codexappserver.NewMetadataPreparer(func(codexappserver.EngineConfig) (codexappserver.ImageReader, error) {
+		return &bootstrapImageReader{}, nil
+	})
+	prepared, _, status, err := captureApplyInputs(context.Background(), preparation, repository, selection, agents, nil)
+	if err != nil || status != model.Passed || !prepared.Valid() {
+		t.Fatal("a stale registry link refused the Apply input", status, err)
+	}
+	accounting, _ := prepared.Attempt().Files().Accounting()
+	if stale := accounting.Stale(); len(stale) != 1 || stale[0].Path.String() != "docs/markitect/removed.md" {
+		t.Fatal("prepared input lost the stale link", stale)
+	}
+}
+
 func TestApplyCompositionPreparesFreshTranscriptDirectoryBeforeRunStartup(t *testing.T) {
 	enginePath, err := os.Executable()
 	if err != nil {

@@ -136,7 +136,7 @@ func TestRunRepositoryRootModelSnapshotsKeepEmptyPackagesOutsideGitAdministratio
 	if !linuxRoots || !localRoots {
 		return
 	}
-	fixed, err := snapshotGit(ctx, repo.Dir, localCommand, dirs)
+	fixed, err := snapshotGit(ctx, repo.Dir, localCommand, dirs, localExecutables(repo.Dir))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -99,12 +99,16 @@ type Handoff struct {
 
 // Check is the deterministic check of one fixed state: structural validity,
 // accounting and the declared checks placed in that Manager's copy. Checks
-// lists the declared checks that ran; a check not listed did not run.
+// lists the declared checks that ran; a check not listed did not run. Stale
+// lists the registry links in the Manager's responsibility to Definitions the
+// model does not have: they make an Implement or Verify check invalid, while
+// Assessment only reports them as realization still to do.
 type Check struct {
 	Commit     Commit   `json:"commit"`
 	Valid      bool     `json:"valid"`
 	Diagnostic string   `json:"diagnostic,omitempty"`
 	Checks     []string `json:"checks"`
+	Stale      []string `json:"stale,omitempty"`
 }
 type Integration struct {
 	Manager      string `json:"manager"`
