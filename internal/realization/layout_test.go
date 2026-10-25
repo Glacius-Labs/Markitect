@@ -2,12 +2,14 @@ package realization_test
 
 import (
 	"errors"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/realization"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 func layoutFacts() model.Result {
@@ -59,18 +61,22 @@ func ownerName(o realization.Owner) string {
 }
 
 // A Package removed or merged into another leaves orphaned registrations. Each
-// still explains its file and is stale realization for the Manager that now
-// owns the artifact's area, or for Root where no declared area owns it.
+// file they still explain is stale realization for the Manager that now owns
+// the file's area, or for Root where no declared area owns it; an orphaned
+// entry whose file is gone asks nothing, and a live entry takes a file over.
 func TestOrphanedRegistrationsGoToTheAreaOwner(t *testing.T) {
 	payments := owner(t, "payments")
 	reg := registry(t,
-		registration(t, payments, artifact(t, "realization/lending/pay.go", borrow)),
+		registration(t, payments, directoryArtifact(t, "realization/lending", borrow)),
 		registration(t, payments, artifact(t, "README.md", borrow)),
+		registration(t, payments, artifact(t, "realization/gone.go", borrow)),
+		registration(t, owner(t, "lending/reminders"), directoryArtifact(t, "realization/lending/reminders", borrow)),
 	)
-	report := realization.AccountFiles(layoutFacts(), fileTree(t, "realization/lending/pay.go", "README.md"), reg, nil, libraryLayout(t))
+	files := fileTree(t, "realization/lending/pay.go", "realization/lending/reminders/due.go", "README.md")
+	report := realization.AccountFiles(layoutFacts(), files, reg, nil, libraryLayout(t))
 	stale := report.Stale()
-	if report.Status() != realization.Accounted || len(report.Findings()) != 0 || len(stale) != 2 || len(report.Artifacts(borrow)) != 0 {
-		t.Fatalf("orphaned registrations failed accounting or counted as realization: %+v %+v", report.Findings(), stale)
+	if report.Status() != realization.Accounted || len(report.Findings()) != 0 || len(stale) != 2 || !reflect.DeepEqual(report.Artifacts(borrow), []snapshot.Path{path(t, "realization/lending/reminders/due.go")}) {
+		t.Fatalf("orphaned registrations failed accounting, counted as realization or kept a taken-over file: %+v %+v", report.Findings(), stale)
 	}
 	for _, f := range stale {
 		want := map[string]string{"README.md": ".", "realization/lending/pay.go": "lending"}[f.Path.String()]

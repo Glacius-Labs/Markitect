@@ -91,6 +91,22 @@ func prepareRegistry(checked model.Result, raw RawInputs) registryPreparation {
 			r.add(model.NotCompleted, "registry.source_uncaptured", path, nil, "A Census registry shard has no captured source observation.")
 		}
 	}
+	// A live registration supersedes an orphaned one at the same path, so the
+	// Manager taking an artifact over writes only its own shard.
+	orphaned := func(o realization.Owner) bool {
+		name, local := o.Package()
+		_, found := topology.Manager(name)
+		return local && !found
+	}
+	live := map[string]bool{}
+	for _, registration := range registrations {
+		if !orphaned(registration.Owner()) {
+			live[registration.Artifact().Selector()] = true
+		}
+	}
+	registrations = slices.DeleteFunc(registrations, func(registration realization.Registration) bool {
+		return orphaned(registration.Owner()) && live[registration.Artifact().Selector()]
+	})
 	registry, err := realization.NewRegistry(registrations)
 	if err != nil {
 		r.add(model.Failed, "registry.records_invalid", snapshot.Path{}, nil, err.Error())

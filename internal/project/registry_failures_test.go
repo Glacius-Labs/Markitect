@@ -177,4 +177,17 @@ func TestOrphanedShardsAreRealizationNotRegistryFailures(t *testing.T) {
 			t.Fatalf("%s: %s %+v %v", name, result.Status(), result.Diagnostics(), result.Orphaned())
 		}
 	}
+	// The Manager taking the artifact over registers it in its own shard; its
+	// live entry supersedes the orphaned one instead of duplicating it.
+	selection, raw := singleRegistry(t, ".markitect/registry/removed/registry.yaml", childRegistry)
+	registrySource(t, &selection, &raw, ".markitect/registry/lending/registry.yaml", childRegistry, true)
+	result := registryModel(t, selection, raw).PrepareRegistry()
+	registry, ok := result.Registry()
+	entries := registry.Entries()
+	if result.Status() != model.Passed || !ok || len(entries) != 1 {
+		t.Fatalf("a live registration did not supersede the orphaned one: %s %+v", result.Status(), result.Diagnostics())
+	}
+	if name, _ := entries[0].Owner().Package(); name != "lending" {
+		t.Fatal("the orphaned registration superseded the live one", name)
+	}
 }

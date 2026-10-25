@@ -168,26 +168,13 @@ func accountFiles(inventory modelInventory, tree snapshot.Tree, registry Registr
 		name, local := o.Package()
 		return ready && local && !packages[name]
 	}
-	areaOwner := func(a Artifact) (Owner, bool) {
-		if a.directory {
-			return layout.DirectoryOwner(a.path.String())
-		}
-		return layout.OwnerOf(a.path)
-	}
 	valid := map[string]bool{}
 	for _, entry := range registry.entries {
 		artifact := entry.artifact
 		path := artifact.path
 		ok := ready
 		if orphaned(entry.owner) {
-			// The Manager owning the artifact's area takes the registration
-			// over, Root where no declared area owns it. All of it is stale.
-			responsible := RootOwner()
-			if owner, owned := areaOwner(artifact); layout.declared && owned {
-				responsible = owner
-			}
-			name, _ := entry.owner.Package()
-			result.stale = append(result.stale, Finding{"registry.orphaned", path, responsible, model.Identity{}, fmt.Sprintf("%s is registered by Package %q, which the checked model does not have: %s registers it in its own shard with existing Definitions or removes it, and drops the old entry.", artifact.Selector(), name, responsible.label())})
+			// It realizes nothing; the files it still explains are stale below.
 			valid[artifact.Selector()] = false
 			continue
 		}
@@ -209,7 +196,13 @@ func accountFiles(inventory modelInventory, tree snapshot.Tree, registry Registr
 			}
 		}
 		if layout.declared {
-			expected, owned := areaOwner(artifact)
+			var expected Owner
+			var owned bool
+			if artifact.directory {
+				expected, owned = layout.DirectoryOwner(path.String())
+			} else {
+				expected, owned = layout.OwnerOf(path)
+			}
 			switch {
 			case !owned:
 				add("registry.outside_area", path, entry.owner, model.Identity{}, fmt.Sprintf("No declared area owns %s, so no Manager may register it.", artifact.Selector()))
@@ -228,16 +221,35 @@ func accountFiles(inventory modelInventory, tree snapshot.Tree, registry Registr
 		classified := classes[path]
 		state := statePath(path)
 		owner, owned := layout.OwnerOf(path)
-		_, exact := registry.Lookup(path)
+		exactEntry, exact := registry.Lookup(path)
+		exact = exact && !orphaned(exactEntry.owner)
 		if !state && len(classified) == 0 {
+			var orphan *Registration
 			for _, candidate := range registry.Covering(path) {
-				if layout.declared && !orphaned(candidate.owner) && (!owned || candidate.owner != owner) {
-					// Another owner's entry neither explains nor takes the file;
-					// an orphaned entry still explains it until it is taken over.
+				if orphaned(candidate.owner) {
+					if orphan == nil {
+						orphan = &candidate
+					}
+					continue
+				}
+				if layout.declared && (!owned || candidate.owner != owner) {
+					// Another owner's entry neither explains nor takes the file.
 					continue
 				}
 				file.registration, file.registered = candidate, true
 				break
+			}
+			if !file.registered && orphan != nil {
+				// Until the Manager owning the file's area, or Root where no
+				// declared area owns it, registers it, the orphaned entry
+				// explains the file as stale realization.
+				responsible := RootOwner()
+				if layout.declared && owned {
+					responsible = owner
+				}
+				name, _ := orphan.owner.Package()
+				file.registration, file.registered = *orphan, true
+				result.stale = append(result.stale, Finding{"registry.orphaned", path, responsible, model.Identity{}, fmt.Sprintf("The file is registered only by Package %q, which the checked model does not have: %s registers it in its own shard with existing Definitions, or removes it.", name, responsible.label())})
 			}
 		}
 		switch {

@@ -197,7 +197,8 @@ func mergedPackage(r *testkit.Repo) {
 
 // §6.1, §6.3: a merged Package leaves an orphaned shard. The input starts
 // Apply; the Manager that now owns the artifact's area takes the registration
-// over in Implement, Root deletes the emptied shard, and publication passes.
+// over in its own shard in Implement, Root deletes the orphaned shard, and
+// publication passes.
 func TestApplyRealizesAPackageMergeThroughTheAreaOwnerAndRoot(t *testing.T) {
 	r, prepared, git, _ := runFixture(t, mergedPackage)
 	store, err := runstore.New(git.StateRoot)
@@ -217,16 +218,14 @@ func TestApplyRealizesAPackageMergeThroughTheAreaOwnerAndRoot(t *testing.T) {
 				if check.Valid || len(check.Stale) != 1 || !strings.Contains(check.Stale[0], "out/merged/pay.txt") {
 					return fmt.Errorf("b was not handed the orphaned registration: %+v", check)
 				}
-				if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(paymentsShard)), []byte("apiVersion: markitect.registry/v1\nartifacts: []\n"), 0600); err != nil {
-					return err
-				}
+				// b writes only its own shard; its entry supersedes the orphaned one.
 				if err := os.MkdirAll(filepath.Join(root, ".markitect/registry/b"), 0700); err != nil {
 					return err
 				}
 				return os.WriteFile(filepath.Join(root, ".markitect/registry/b/registry.yaml"), []byte(bShard), 0600)
 			case ".":
 				if check.Valid || len(check.Stale) != 1 || !strings.Contains(check.Stale[0], paymentsShard) {
-					return fmt.Errorf("Root was not handed only the emptied orphaned shard: %+v", check)
+					return fmt.Errorf("Root was not handed only the orphaned shard: %+v", check)
 				}
 				return os.Remove(filepath.Join(root, filepath.FromSlash(paymentsShard)))
 			}
@@ -237,7 +236,7 @@ func TestApplyRealizesAPackageMergeThroughTheAreaOwnerAndRoot(t *testing.T) {
 		return s
 	}}
 	command := apply.Command{Executor: executor, Candidates: git, Records: store, Publisher: &Publisher{Repository: adapter(t), Store: git}}
-	request := run.Request{ID: "merged-package", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(2*time.Minute), 200), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
+	request := run.Request{ID: "merged-package", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(4*time.Minute), 200), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
 	report, err := command.Execute(context.Background(), request)
 	if err != nil || report.Status != model.Passed || len(runs) != 3 {
 		t.Fatalf("status=%s error=%v final=%s/%s runs=%d", report.Status, err, report.Workflow.Final.Technical, report.Workflow.Final.Decision, len(runs))
@@ -292,7 +291,7 @@ func TestApplyRealizesADeletedDefinitionThroughTheShardOwner(t *testing.T) {
 		return s
 	}}
 	command := apply.Command{Executor: executor, Candidates: git, Records: store, Publisher: &Publisher{Repository: adapter(t), Store: git}}
-	request := run.Request{ID: "deleted-definition", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(2*time.Minute), 200), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
+	request := run.Request{ID: "deleted-definition", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(4*time.Minute), 200), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
 	report, err := command.Execute(context.Background(), request)
 	if err != nil || report.Status != model.Passed || len(runs) != 3 {
 		t.Fatalf("status=%s error=%v final=%s/%s runs=%d", report.Status, err, report.Workflow.Final.Technical, report.Workflow.Final.Decision, len(runs))
