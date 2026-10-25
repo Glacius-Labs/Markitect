@@ -5,23 +5,29 @@ need, taken from the runner or Apply record, the assessment, the confirmed
 review findings and the census. Nothing here judges a candidate; it only
 combines the recorded criteria C1-C6 into conforming runs, independent units,
 exact intervals, the one-sided Fisher exact test and the reading of section 8
-(Phase A) or B5 (Phase B).
+(Phase A) or B5 (Phase B). Phase C (addendum C6) reads the chains' missed
+obligations instead: the sum over W0-C9 of failed probe families per chain,
+compared with an exact one-sided rank-sum (Mann-Whitney) permutation test.
 
-  python -I -B analyze.py LEDGER.json [--phase A|B]
+  python -I -B analyze.py LEDGER.json [--phase A|B|C]
 
-Ledger rows: {"arm": "M"|"B", "chain": 1..5, "scenario": "S1".."S4"|"T1".."T4",
+Ledger rows: {"arm": "M"|"B", "chain": 1..5, "scenario": "S1".."S4"|"T1".."T4"|"W0".."C9",
 "counts": true|false, "C1".."C6": true|false, "errors": [error types],
-"unsupported_success": bool, "false_blocker": bool}. A missing criterion is
+"unsupported_success": bool, "false_blocker": bool}; Phase C rows also carry
+"missed_probe_families" (int; every family of the step when there is no
+candidate) and "blocker" (null, "justified" or "false"). A missing criterion is
 not conforming.
 """
 import argparse
+import itertools
 import json
 import math
 import pathlib
 import sys
 
 CRITERIA = ("C1", "C2", "C3", "C4", "C5", "C6")
-CHAIN_STEPS = {"A": ("S1", "S2", "S3"), "B": ("T1", "T2", "T3", "T4")}
+CHAIN_STEPS = {"A": ("S1", "S2", "S3"), "B": ("T1", "T2", "T3", "T4"),
+               "C": ("W0", "C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9")}
 
 
 def conforming(row):
@@ -105,13 +111,69 @@ def read(rows, phase):
             "reading": reading}
 
 
+def rank_sum_one_sided(m, b):
+    """Exact one-sided Mann-Whitney test that M's values are lower.
+
+    P(rank sum of M <= observed) over every split of the pooled values into
+    groups of the arms' sizes, with mid-ranks for ties.
+    """
+    pooled = list(m) + list(b)
+    order = sorted(range(len(pooled)), key=lambda i: pooled[i])
+    ranks = [0.0] * len(pooled)
+    i = 0
+    while i < len(order):
+        j = i
+        while j + 1 < len(order) and pooled[order[j + 1]] == pooled[order[i]]:
+            j += 1
+        for k in range(i, j + 1):
+            ranks[order[k]] = (i + j) / 2 + 1
+        i = j + 1
+    observed = sum(ranks[:len(m)])
+    splits = list(itertools.combinations(range(len(pooled)), len(m)))
+    return sum(1 for s in splits if sum(ranks[k] for k in s) <= observed + 1e-9) / len(splits)
+
+
+def read_c(rows):
+    """Addendum C6: missed obligations per chain, the per-step check and the error-type downgrade."""
+    steps = CHAIN_STEPS["C"]
+    rows = [r for r in rows if r.get("counts", True) and r["scenario"] in steps]
+    totals = {arm: {} for arm in ("M", "B")}
+    for r in rows:
+        totals[r["arm"]][r["chain"]] = totals[r["arm"]].get(r["chain"], 0) + r["missed_probe_families"]
+    m, b = [totals["M"][c] for c in sorted(totals["M"])], [totals["B"][c] for c in sorted(totals["B"])]
+    p = rank_sum_one_sided(m, b) if m and b else None
+    present = [s for s in steps if any(r["scenario"] == s for r in rows)]
+    per_step = {s: {arm: {"missed": sum(r["missed_probe_families"] for r in rows if r["arm"] == arm and r["scenario"] == s),
+                          "conforming": [sum(conforming(r) for r in rows if r["arm"] == arm and r["scenario"] == s),
+                                         sum(1 for r in rows if r["arm"] == arm and r["scenario"] == s)]}
+                    for arm in ("M", "B")} for s in present}
+    errors = {arm: sorted({e for r in rows if r["arm"] == arm for e in r.get("errors", [])}) for arm in ("M", "B")}
+    m_only = sorted(set(errors["M"]) - set(errors["B"]))
+    m_not_worse = all(v["M"]["missed"] <= v["B"]["missed"] for v in per_step.values())
+    if sum(m) < sum(b):
+        reading = "supports" if p is not None and p <= 0.05 and m_not_worse and not m_only else "tendency"
+    elif sum(m) == sum(b):
+        reading = "no quality advantage shown"
+    else:
+        reading = "counts against Markitect"
+    runs = {arm: [sum(conforming(r) for r in rows if r["arm"] == arm), sum(1 for r in rows if r["arm"] == arm)] for arm in ("M", "B")}
+    blockers = {arm: {kind: sum(1 for r in rows if r["arm"] == arm and r.get("blocker") == kind) for kind in ("justified", "false")}
+                for arm in ("M", "B")}
+    return {"phase": "C", "missed_per_chain": {"M": m, "B": b}, "missed_total": {"M": sum(m), "B": sum(b)},
+            "rank_sum_one_sided_p": None if p is None else round(p, 4), "per_step": per_step,
+            "m_not_worse_at_any_step": m_not_worse, "conforming_steps": {arm: v + [clopper_pearson(*v)] for arm, v in runs.items()},
+            "error_types": errors, "m_only_error_types": m_only, "blockers": blockers,
+            "unsupported_success": {arm: sum(1 for r in rows if r["arm"] == arm and r.get("unsupported_success")) for arm in ("M", "B")},
+            "reading": reading}
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     p.add_argument("ledger")
-    p.add_argument("--phase", choices=["A", "B"], default="A")
+    p.add_argument("--phase", choices=["A", "B", "C"], default="A")
     a = p.parse_args(argv)
     rows = json.loads(pathlib.Path(a.ledger).read_text(encoding="utf-8"))
-    print(json.dumps(read(rows, a.phase), indent=2))
+    print(json.dumps(read_c(rows) if a.phase == "C" else read(rows, a.phase), indent=2))
     return 0
 
 
