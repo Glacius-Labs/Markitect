@@ -194,16 +194,23 @@ func (p Prepared) ValidateCandidateFor(a PreviewPreparationAttempt, manager stri
 	return nil
 }
 
-// StaleLinks returns the registry links of a checked state to Definitions the
-// model does not have, limited to the shards within manager's responsibility:
-// Root covers every shard, another Manager the shards of its Package subtree,
-// and CommandInput none.
+// StaleLinks returns the stale registry realization of a checked state within
+// manager's responsibility: links to Definitions the model does not have,
+// registrations of a Package it does not have, and that Package's shard. Each
+// belongs to the Manager accounting names; Root covers all of them and alone
+// deletes an orphaned shard, another Manager covers its Package subtree, and
+// CommandInput none.
 func StaleLinks(a PreviewPreparationAttempt, manager string) []realization.Finding {
 	accounting, ok := a.Files().Accounting()
 	if !ok || manager == CommandInput {
 		return nil
 	}
 	var stale []realization.Finding
+	if manager == organization.Root {
+		for _, shard := range a.Registry().Orphaned() {
+			stale = append(stale, realization.Finding{Code: "registry.orphaned_shard", Path: shard, Owner: realization.RootOwner(), Message: "This registry shard belongs to a Package the checked model does not have: delete it once its artifacts are registered by their owners or removed."})
+		}
+	}
 	for _, f := range accounting.Stale() {
 		owner, local := f.Owner.Package()
 		if manager == organization.Root || local && packageWithin(owner, manager) {

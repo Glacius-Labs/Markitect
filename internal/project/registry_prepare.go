@@ -53,7 +53,8 @@ func prepareRegistry(checked model.Result, raw RawInputs) registryPreparation {
 			packagePath = name
 		}
 		if _, found := topology.Manager(packagePath); !found {
-			r.add(model.Failed, "registry.unknown_owner", entry.Path(), nil, "Registry shard belongs to a Package outside the current local inventory. No Manager can realize a removed Package's artifacts: delete its shard and artifacts together with the Package.")
+			// A removed or merged Package leaves its shard as realization.
+			r.orphaned = append(r.orphaned, entry.Path())
 		}
 	}
 	sources := slices.Clone(raw.Registry)

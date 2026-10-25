@@ -9,6 +9,7 @@ body: >-
   Each Manager maintains only its own local registry of exact-file or directory entries with Definition links, forms and reasons; a directory entry covers only its registrant's eligible files below it, the most specific entry registers a file, and no file has two effective registrations.
   Missing paths, unexplained artifacts, duplicate accounting, wrong-owner registrations and changed authority inputs block, with machine-readable diagnostics addressed to the Manager that must act.
   A link to a Definition the checked model no longer has is stale realization, not invalid input: it is work for Implement, and neither a Manager's handoff nor a publication may keep one within its responsibility.
+  So is the shard of a Package the model no longer has: the Manager owning each registered artifact's area takes the registration over, or Root where no area owns it, and Root deletes the shard.
   Only the Orchestrator assembles the read-only derived registry view, from checked local versions, and records which versions it includes.
   Enforce writing ownership in every Agent's container: its own areas and its own registry writable, protected inputs and other owners' areas, deeper directories and exact files read-only; refuse an ownership shape that mounts cannot enforce instead of trusting prompts.
   Accept a basis or result only after the File check of the submitter's stable area composed with the accepted stand, so disjoint Managers work and finish concurrently without a mixed live view.

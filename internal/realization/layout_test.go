@@ -58,6 +58,33 @@ func ownerName(o realization.Owner) string {
 	return name
 }
 
+// A Package removed or merged into another leaves orphaned registrations. Each
+// still explains its file and is stale realization for the Manager that now
+// owns the artifact's area, or for Root where no declared area owns it.
+func TestOrphanedRegistrationsGoToTheAreaOwner(t *testing.T) {
+	payments := owner(t, "payments")
+	reg := registry(t,
+		registration(t, payments, artifact(t, "realization/lending/pay.go", borrow)),
+		registration(t, payments, artifact(t, "README.md", borrow)),
+	)
+	report := realization.AccountFiles(layoutFacts(), fileTree(t, "realization/lending/pay.go", "README.md"), reg, nil, libraryLayout(t))
+	stale := report.Stale()
+	if report.Status() != realization.Accounted || len(report.Findings()) != 0 || len(stale) != 2 || len(report.Artifacts(borrow)) != 0 {
+		t.Fatalf("orphaned registrations failed accounting or counted as realization: %+v %+v", report.Findings(), stale)
+	}
+	for _, f := range stale {
+		want := map[string]string{"README.md": ".", "realization/lending/pay.go": "lending"}[f.Path.String()]
+		if f.Code != "registry.orphaned" || ownerName(f.Owner) != want || !strings.Contains(f.Message, `"payments"`) {
+			t.Fatalf("orphaned registration is not addressed to its area owner: %+v", f)
+		}
+	}
+	for _, f := range report.Files() {
+		if f.Class() != realization.RegisteredArtifact {
+			t.Fatal("orphaned registration no longer explains its file", f.Entry().Path())
+		}
+	}
+}
+
 // The most specific area owns a path: exact files over directories, deeper
 // directories over shallower ones, for every Manager; uncovered paths have no
 // owner.

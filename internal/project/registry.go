@@ -34,6 +34,7 @@ type registryPreparation struct {
 	status      model.Status
 	registry    realization.Registry
 	discovered  []snapshot.Path
+	orphaned    []snapshot.Path
 	records     []RegistryRecord
 	diagnostics []RegistryDiagnostic
 }
@@ -58,6 +59,12 @@ func (r registryPreparation) Registry() (realization.Registry, bool) {
 }
 
 func (r registryPreparation) Discovered() []snapshot.Path { return slices.Clone(r.discovered) }
+
+// Orphaned lists the shards of Packages the checked model does not have, such
+// as one the owner removed or merged into another. They are realization still
+// to do: accounting hands their registrations to the area owners, and Root
+// deletes the shard (StaleLinks).
+func (r registryPreparation) Orphaned() []snapshot.Path { return slices.Clone(r.orphaned) }
 func (r registryPreparation) Records() []RegistryRecord {
 	result := slices.Clone(r.records)
 	for i := range result {

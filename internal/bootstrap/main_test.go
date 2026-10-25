@@ -232,6 +232,42 @@ func TestCheckReportsAStaleRegistryLinkAsRealizationStillToDo(t *testing.T) {
 	}
 }
 
+// A shard of a Package the model no longer has passes check too: its
+// registrations and the shard are listed as realization still to do.
+func TestCheckReportsAnOrphanedShardAsRealizationStillToDo(t *testing.T) {
+	repo := productFixture(t)
+	repo.Write("docs/markitect/removed.md", "realized by a removed Package\n")
+	repo.Write(".markitect/registry/removed/registry.yaml", "apiVersion: markitect.registry/v1\nartifacts:\n  - path: docs/markitect/removed.md\n    form: doc\n    realizes: [removed/guide]\n    why: Realized before the Package was removed.\n")
+	repo.Commit("Remove a Package that has a registry shard")
+	out := invoke(t, repo.Dir, 0, "check")
+	var r struct {
+		Status string
+		Stages struct {
+			Structural struct {
+				Registry struct {
+					Status   string
+					Orphaned []string
+				}
+				Files struct {
+					Accounting struct {
+						Stale []struct{ Code, Path, Owner string }
+					}
+				}
+			}
+		}
+	}
+	if err := json.Unmarshal([]byte(out), &r); err != nil {
+		t.Fatal(err)
+	}
+	registry, stale := r.Stages.Structural.Registry, r.Stages.Structural.Files.Accounting.Stale
+	if r.Status != "passed" || registry.Status != "passed" || len(registry.Orphaned) != 1 || registry.Orphaned[0] != ".markitect/registry/removed/registry.yaml" {
+		t.Fatal("an orphaned shard failed the input or was not listed", out)
+	}
+	if len(stale) != 1 || stale[0].Code != "registry.orphaned" || stale[0].Path != "docs/markitect/removed.md" || stale[0].Owner != "." {
+		t.Fatal("the orphaned registration is not work for its area owner", stale)
+	}
+}
+
 func TestDocumentationBindsTargetAndModelAndReadsBackActualWrite(t *testing.T) {
 	repo := productFixture(t)
 	first := docsPreview(t, repo.Dir)

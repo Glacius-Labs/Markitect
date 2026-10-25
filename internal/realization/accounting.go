@@ -99,10 +99,12 @@ func (a Accounting) TreeID() snapshot.TreeID  { return a.tree }
 func (a Accounting) Files() []File            { return slices.Clone(a.files) }
 func (a Accounting) Findings() []Finding      { return slices.Clone(a.findings) }
 
-// Stale returns the registry links to Definitions absent from the checked model
-// set, such as one the owner deleted. They are realization still to do, not
-// invalid accounting: the artifact stays registered to its owner, who removes
-// it or realigns the link. Whether a state may keep them is the caller's rule.
+// Stale returns realization still to do, not invalid accounting: links to
+// Definitions absent from the checked model set (registry.stale_link, for the
+// registrant) and registrations by a Package the model does not have
+// (registry.orphaned, for the Manager owning the artifact's area, else Root).
+// Each names in Owner the Manager that must act. Whether a state may keep
+// them is the caller's rule.
 func (a Accounting) Stale() []Finding { return slices.Clone(a.stale) }
 
 // Artifacts returns only present, unconflicted registrations whose owner was
@@ -160,11 +162,35 @@ func accountFiles(inventory modelInventory, tree snapshot.Tree, registry Registr
 			add("classification.missing_file", path, Owner{}, model.Identity{}, "The classified file is absent from the supplied tree.")
 		}
 	}
+	// orphaned reports a registrant that is no Package of the checked model,
+	// such as one the owner removed or merged into another.
+	orphaned := func(o Owner) bool {
+		name, local := o.Package()
+		return ready && local && !packages[name]
+	}
+	areaOwner := func(a Artifact) (Owner, bool) {
+		if a.directory {
+			return layout.DirectoryOwner(a.path.String())
+		}
+		return layout.OwnerOf(a.path)
+	}
 	valid := map[string]bool{}
 	for _, entry := range registry.entries {
 		artifact := entry.artifact
 		path := artifact.path
 		ok := ready
+		if orphaned(entry.owner) {
+			// The Manager owning the artifact's area takes the registration
+			// over, Root where no declared area owns it. All of it is stale.
+			responsible := RootOwner()
+			if owner, owned := areaOwner(artifact); layout.declared && owned {
+				responsible = owner
+			}
+			name, _ := entry.owner.Package()
+			result.stale = append(result.stale, Finding{"registry.orphaned", path, responsible, model.Identity{}, fmt.Sprintf("%s is registered by Package %q, which the checked model does not have: %s registers it in its own shard with existing Definitions or removes it, and drops the old entry.", artifact.Selector(), name, responsible.label())})
+			valid[artifact.Selector()] = false
+			continue
+		}
 		if !artifact.directory {
 			if _, found := tree.Lookup(path); !found {
 				add("registry.missing_file", path, entry.owner, model.Identity{}, "The registered artifact is absent from the supplied tree.")
@@ -176,10 +202,6 @@ func accountFiles(inventory modelInventory, tree snapshot.Tree, registry Registr
 			}
 		}
 		if ready {
-			if name, packageOwner := entry.owner.Package(); packageOwner && !packages[name] {
-				add("registry.unknown_owner", path, entry.owner, model.Identity{}, "The owner is not in the selected local model's own Package inventory.")
-				ok = false
-			}
 			for _, basis := range artifact.basis {
 				if !definitions[basis] {
 					result.stale = append(result.stale, Finding{"registry.stale_link", path, entry.owner, basis, fmt.Sprintf("The registered artifact links %s/%s, which the checked model does not have: remove the artifact and its registration, or link it to an existing Definition.", basis.Package, basis.ID)})
@@ -187,13 +209,7 @@ func accountFiles(inventory modelInventory, tree snapshot.Tree, registry Registr
 			}
 		}
 		if layout.declared {
-			var expected Owner
-			var owned bool
-			if artifact.directory {
-				expected, owned = layout.DirectoryOwner(path.String())
-			} else {
-				expected, owned = layout.OwnerOf(path)
-			}
+			expected, owned := areaOwner(artifact)
 			switch {
 			case !owned:
 				add("registry.outside_area", path, entry.owner, model.Identity{}, fmt.Sprintf("No declared area owns %s, so no Manager may register it.", artifact.Selector()))
@@ -215,8 +231,9 @@ func accountFiles(inventory modelInventory, tree snapshot.Tree, registry Registr
 		_, exact := registry.Lookup(path)
 		if !state && len(classified) == 0 {
 			for _, candidate := range registry.Covering(path) {
-				if layout.declared && (!owned || candidate.owner != owner) {
-					// Another owner's entry neither explains nor takes the file.
+				if layout.declared && !orphaned(candidate.owner) && (!owned || candidate.owner != owner) {
+					// Another owner's entry neither explains nor takes the file;
+					// an orphaned entry still explains it until it is taken over.
 					continue
 				}
 				file.registration, file.registered = candidate, true
