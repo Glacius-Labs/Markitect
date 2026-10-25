@@ -102,13 +102,17 @@ type Handoff struct {
 // lists the declared checks that ran; a check not listed did not run. Stale
 // lists the registry links in the Manager's responsibility to Definitions the
 // model does not have: they make an Implement or Verify check invalid, while
-// Assessment only reports them as realization still to do.
+// Assessment only reports them as realization still to do. BuildOutputs lists
+// the build outputs that the state leaves out: in Implement the untracked ELF
+// files of the Manager's copy that no registry shard names, in Verify those of
+// the Implement Run that produced the fixed input. They never fail a check.
 type Check struct {
-	Commit     Commit   `json:"commit"`
-	Valid      bool     `json:"valid"`
-	Diagnostic string   `json:"diagnostic,omitempty"`
-	Checks     []string `json:"checks"`
-	Stale      []string `json:"stale,omitempty"`
+	Commit       Commit   `json:"commit"`
+	Valid        bool     `json:"valid"`
+	Diagnostic   string   `json:"diagnostic,omitempty"`
+	Checks       []string `json:"checks"`
+	Stale        []string `json:"stale,omitempty"`
+	BuildOutputs []string `json:"buildOutputs,omitempty"`
 }
 type Integration struct {
 	Manager      string `json:"manager"`
@@ -209,12 +213,16 @@ func (a *Allowance) Ready(managers int) bool {
 }
 
 type Request struct {
-	MaxManagers        int
-	ID, Project        string
-	Prepared           project.Prepared
-	Input              project.CandidateRef
-	Mandate            Mandate
-	Findings           []Finding
+	MaxManagers int
+	ID, Project string
+	Prepared    project.Prepared
+	Input       project.CandidateRef
+	Mandate     Mandate
+	Findings    []Finding
+	// BuildOutputs names, for Verify, the build outputs of the Implement Run
+	// that produced Input. Root's assignment and every check of the fixed input
+	// carry them.
+	BuildOutputs       []string
 	Allowance          *Allowance
 	CleanupTimeout     time.Duration
 	PersistenceTimeout time.Duration
@@ -269,9 +277,10 @@ type Answer struct {
 	Text string `json:"text"`
 }
 type Assignment struct {
-	Task     string    `json:"task"`
-	Findings []Finding `json:"findings"`
-	Base     Commit    `json:"base"`
+	Task         string    `json:"task"`
+	Findings     []Finding `json:"findings"`
+	Base         Commit    `json:"base"`
+	BuildOutputs []string  `json:"buildOutputs,omitempty"`
 }
 type Event struct {
 	Assignment *Assignment `json:"assignment,omitempty"`
@@ -334,11 +343,14 @@ type DisposableCopy interface {
 	Close(context.Context) error
 }
 
+// Outputs lists the copy's build outputs: untracked ELF files that no registry
+// shard names, which Snapshot leaves out of every fixed state.
 type Copy interface {
 	Materialize(context.Context, snapshot.Tree, []snapshot.Path) (DisposableCopy, error)
 	Location() CopyLocation
 	Update(context.Context, Copy, Commit) error
 	Snapshot(context.Context) (Commit, error)
+	Outputs(context.Context) ([]string, error)
 	Inspect(context.Context, Commit) (project.PreviewPreparationAttempt, error)
 	Integrate(context.Context, Copy, Commit) (Commit, error)
 	Review(context.Context, Copy, Commit, Commit) (string, error)
