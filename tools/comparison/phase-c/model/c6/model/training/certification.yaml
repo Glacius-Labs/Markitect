@@ -1,0 +1,10 @@
+imports:
+  - package: software
+    as: Software
+id: certification
+kind: Software.Concept
+body: |-
+  A member has at most one certification per tool family. Certifications have no expiry: a certification stays valid from its issue until it is revoked. [[complete-course|Completing a course]] issues it: `issuedOn` is the date of the request time. If the member already has a certification for that family, revoked or not, it is replaced by a new valid one.
+
+  A certification is **valid on date D** when it is not revoked and `issuedOn ≤ D`. Reservations and check-ins always lie on or after the issue date, so in practice the reservation rule and the check-in rule only require a certification for the machine's family that is not revoked. Its reported `status` is `revoked` when revoked, otherwise `valid`.
+spec: {}

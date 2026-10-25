@@ -1,0 +1,72 @@
+imports:
+  - package: software
+    as: Software
+  - package: billing/invoices
+    as: Invoices
+  - package: billing/payments
+    as: Payments
+  - package: bookings
+    as: Bookings
+  - package: equipment/catalog
+    as: Catalog
+  - package: equipment/maintenance
+    as: Maintenance
+  - package: materials
+    as: Materials
+  - package: members/memberships
+    as: Memberships
+  - package: members/registry
+    as: Registry
+  - package: policies/audit
+    as: Audit
+  - package: reporting
+    as: Reporting
+  - package: safety
+    as: Safety
+  - package: training
+    as: Training
+id: permission-matrix
+kind: Software.Rule
+body: |-
+  This table is the permission matrix ([[authorization|authorization]]). It states, for each operation, its area and the permission of each role.
+
+  | Operation | Area | Member | Staff | Admin |
+  | --- | --- | --- | --- | --- |
+  | [[Registry.register-user|registerUser]] | Members | none | none | all |
+  | [[Registry.register-member|registerMember]] | Members | none | all | all |
+  | [[Registry.get-member|getMember]] | Members | own | all | all |
+  | [[Memberships.change-tier|changeTier]] | Members | none | all | all |
+  | [[Memberships.set-member-standing|setMemberStanding]] | Members | none | all | all |
+  | [[Training.add-course|addCourse]] | Training | none | all | all |
+  | [[Training.enroll-in-course|enrollInCourse]] | Training | own | all | all |
+  | [[Training.complete-course|completeCourse]] | Training | none | all | all |
+  | [[Training.revoke-certification|revokeCertification]] | Training | none | all | all |
+  | [[Training.list-certifications|listCertifications]] | Training | own | all | all |
+  | [[Catalog.add-family|addFamily]] | Equipment | none | none | all |
+  | [[Catalog.add-machine|addMachine]] | Equipment | none | none | all |
+  | [[Catalog.set-machine-rate|setMachineRate]] | Equipment | none | none | all |
+  | [[Catalog.list-machines|listMachines]] | Equipment | all | all | all |
+  | [[Maintenance.schedule-maintenance|scheduleMaintenance]] | Equipment | none | all | all |
+  | [[Maintenance.cancel-maintenance|cancelMaintenance]] | Equipment | none | all | all |
+  | [[Bookings.create-reservation|createReservation]] | Bookings | own | all | all |
+  | [[Bookings.cancel-reservation|cancelReservation]] | Bookings | own | all | all |
+  | [[Bookings.check-in|checkIn]] | Bookings | own | all | all |
+  | [[Bookings.check-out|checkOut]] | Bookings | own | all | all |
+  | [[Bookings.list-member-reservations|listMemberReservations]] | Bookings | own | all | all |
+  | [[Bookings.get-machine-schedule|getMachineSchedule]] | Bookings | all | all | all |
+  | [[Materials.add-material|addMaterial]] | Materials | none | all | all |
+  | [[Materials.restock-material|restockMaterial]] | Materials | none | all | all |
+  | [[Materials.purchase-material|purchaseMaterial]] | Materials | own | all | all |
+  | [[Materials.list-materials|listMaterials]] | Materials | all | all | all |
+  | [[Invoices.generate-invoices|generateInvoices]] | Billing | none | all | all |
+  | [[Invoices.list-invoices|listInvoices]] | Billing | own | all | all |
+  | [[Payments.record-payment|recordPayment]] | Billing | own | all | all |
+  | [[Payments.issue-credit|issueCredit]] | Billing | none | none | all |
+  | [[Payments.get-account|getAccount]] | Billing | own | all | all |
+  | [[Safety.report-incident|reportIncident]] | Safety | none | all | all |
+  | [[Safety.resolve-incident|resolveIncident]] | Safety | none | all | all |
+  | [[Safety.list-incidents|listIncidents]] | Safety | none | all | all |
+  | [[Reporting.utilization-report|utilizationReport]] | Reporting | none | all | all |
+  | [[Reporting.revenue-report|revenueReport]] | Reporting | none | all | all |
+  | [[Audit.list-audit-entries|listAuditEntries]] | Audit | none | none | all |
+spec: {}

@@ -1,0 +1,19 @@
+imports:
+  - package: software
+    as: Software
+  - package: bookings
+    as: Bookings
+  - package: workshop
+    as: Workshop
+id: schedule-maintenance
+kind: Software.UseCase
+body: |-
+  Operation `scheduleMaintenance`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+
+  Mutation.
+
+  - Arguments: `machineId` (identifier, an existing machine), `start` (timestamp), `end` (timestamp), `reason` (text).
+  - Refusals, in this order: `invalid_interval` when `end` is not after `start`; `starts_in_past` when `start` is before the request time; `reservation_conflict` when the window overlaps an active reservation of the machine (status `reserved` or `checkedIn`, [[Bookings.reservation|reservations]]).
+  - Effect: creates the [[maintenance-window|window]] with status `scheduled`.
+  - Result: `window`.
+spec: {}

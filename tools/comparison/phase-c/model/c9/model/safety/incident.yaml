@@ -1,0 +1,10 @@
+imports:
+  - package: software
+    as: Software
+  - package: equipment/catalog
+    as: Catalog
+id: incident
+kind: Software.Concept
+body: |-
+  Staff record safety incidents against [[Catalog.catalog|machines]]. An incident itself still blocks nothing; only its [[lockout|lockouts]] do.
+spec: {}

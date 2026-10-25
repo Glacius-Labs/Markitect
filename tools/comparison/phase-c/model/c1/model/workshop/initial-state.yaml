@@ -1,0 +1,35 @@
+imports:
+  - package: software
+    as: Software
+  - package: billing/invoices
+    as: Invoices
+  - package: billing/payments
+    as: Payments
+  - package: bookings
+    as: Bookings
+  - package: equipment/maintenance
+    as: Maintenance
+  - package: materials
+    as: Materials
+  - package: members/registry
+    as: Registry
+  - package: safety
+    as: Safety
+id: initial-state
+kind: Software.Rule
+body: |-
+  A new process contains exactly one [[Registry.registry|user]]: identifier `admin`, name `Administrator`, role `admin`. There are no members, families, machines, courses, materials, reservations, invoices, incidents or audit entries.
+
+  The program generates the identifiers of these records:
+
+  | Record | Format |
+  | --- | --- |
+  | [[Bookings.reservation|Reservation]] | `res-1`, `res-2`, … |
+  | [[Maintenance.maintenance-window|Maintenance window]] | `mnt-1`, `mnt-2`, … |
+  | [[Materials.purchase-material|Purchase]] | `pur-1`, `pur-2`, … |
+  | [[Invoices.invoice|Invoice]] | `inv-1`, `inv-2`, … |
+  | [[Payments.payment|Payment]] | `pay-1`, `pay-2`, … |
+  | [[Safety.incident|Incident]] | `inc-1`, `inc-2`, … |
+
+  Each kind has its own counter. The first record of a kind gets number 1 and each further record of that kind gets the next number, in decimal without leading zeros. Numbers are never reused. Refused and invalid requests consume no number. "Creation order" in the model means the order in which records of a kind were created, which is the order of their numbers.
+spec: {}

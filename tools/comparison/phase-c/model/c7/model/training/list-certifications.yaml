@@ -1,0 +1,12 @@
+imports:
+  - package: software
+    as: Software
+  - package: workshop
+    as: Workshop
+id: list-certifications
+kind: Software.UseCase
+body: |-
+  Operation `listCertifications`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+
+  Read. Arguments: `memberId` (identifier, an existing member). Result: `memberId` and `certifications`, all of the member's [[certification|certifications]], including revoked ones.
+spec: {}

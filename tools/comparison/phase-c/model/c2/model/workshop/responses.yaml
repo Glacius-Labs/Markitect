@@ -1,0 +1,28 @@
+imports:
+  - package: software
+    as: Software
+id: responses
+kind: Software.Rule
+body: |-
+  Every response is one JSON object on one line, with exactly the members shown for its status.
+
+  Success:
+
+  ```json
+  {"id":"q1","status":"ok","result":{"member":{"memberId":"ada","name":"Ada Byron","tier":"plus","standing":"good","registeredAt":"2026-03-02T09:00Z"}}}
+  ```
+
+  Refusal of a well-formed request ([[request-processing|processing a request]]):
+
+  ```json
+  {"id":"q2","status":"refused","code":"already_exists","reason":"A user with identifier ada already exists."}
+  ```
+
+  `code` is exactly one of the [[refusal-codes|refusal codes]]. `reason` is a nonempty, understandable explanation; its wording is free.
+
+  Invalid request ([[invalid-requests|invalid requests]]):
+
+  ```json
+  {"id":null,"status":"invalidRequest","reason":"The line is not valid JSON."}
+  ```
+spec: {}

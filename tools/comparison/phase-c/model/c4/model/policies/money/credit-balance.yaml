@@ -1,0 +1,14 @@
+imports:
+  - package: software
+    as: Software
+  - package: billing/invoices
+    as: Invoices
+  - package: billing/payments
+    as: Payments
+  - package: safety
+    as: Safety
+id: credit-balance
+kind: Software.Rule
+body: |-
+  Each member has a credit balance, initially 0. It increases by [[Payments.issue-credit|credits issued by an admin]], by [[Safety.lock-machine|lockout credits]] and by [[Payments.record-payment|overpayments]]. It decreases only when credit is applied to a new invoice ([[Invoices.invoice|charges and invoices]]). It is never negative. Credit is never paid out.
+spec: {}

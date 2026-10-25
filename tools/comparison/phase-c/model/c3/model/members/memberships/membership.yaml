@@ -1,0 +1,20 @@
+imports:
+  - package: software
+    as: Software
+  - package: billing/invoices
+    as: Invoices
+  - package: bookings
+    as: Bookings
+id: membership
+kind: Software.Concept
+body: |-
+  A membership has a tier and a [[good-standing|standing]]. The tier sets the monthly fee and the discount on machine usage:
+
+  | Tier | Monthly fee | Usage discount |
+  | --- | --- | --- |
+  | `basic` | 2500 cents | 0 % |
+  | `plus` | 4900 cents | 10 % |
+  | `pro` | 9900 cents | 25 % |
+
+  The fee is charged once for every invoiced month ([[Invoices.invoice|charges and invoices]]), without proration. The usage discount applies only to [[Bookings.check-out|usage charges]], never to course or material charges.
+spec: {}

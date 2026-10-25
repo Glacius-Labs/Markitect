@@ -1,0 +1,16 @@
+imports:
+  - package: software
+    as: Software
+  - package: workshop
+    as: Workshop
+id: restock-material
+kind: Software.UseCase
+body: |-
+  Operation `restockMaterial`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+
+  Mutation.
+
+  - Arguments: `materialId` (identifier, an existing material), `quantity` (integer 1 to 100000).
+  - Effect: the [[shop|stock]] increases by `quantity`.
+  - Result: `material`.
+spec: {}

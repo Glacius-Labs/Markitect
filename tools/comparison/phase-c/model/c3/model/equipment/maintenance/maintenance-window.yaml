@@ -1,0 +1,14 @@
+imports:
+  - package: software
+    as: Software
+  - package: bookings
+    as: Bookings
+  - package: equipment/catalog
+    as: Catalog
+  - package: reporting
+    as: Reporting
+id: maintenance-window
+kind: Software.Concept
+body: |-
+  A maintenance window takes a [[Catalog.catalog|machine]] out of service for an interval `[start, end)`. While a scheduled window overlaps a slot, the machine cannot be [[Bookings.reservation-rules|reserved]] for it, and since every use starts with a reservation and its check-in, the machine cannot be used in the window. The one exception is a session that is already checked in and runs past its reservation's end: it is not interrupted, keeps metering until check-out and counts in `usedMinutes` ([[Reporting.utilization-report|utilization report]]). Windows may use any minute, are not limited to opening hours and may overlap each other.
+spec: {}

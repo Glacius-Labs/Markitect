@@ -1,0 +1,8 @@
+imports:
+  - package: software
+    as: Software
+id: catalog
+kind: Software.Concept
+body: |-
+  The catalog holds tool families and machines. Each machine belongs to one family and has a rate in cents per minute. Families and machines are never removed.
+spec: {}

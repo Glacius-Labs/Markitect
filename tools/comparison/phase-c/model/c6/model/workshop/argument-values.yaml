@@ -1,0 +1,18 @@
+imports:
+  - package: software
+    as: Software
+id: argument-values
+kind: Software.Rule
+body: |-
+  | Value type | Rule |
+  | --- | --- |
+  | identifier | A JSON string of 1 to 64 characters from `A`–`Z`, `a`–`z`, `0`–`9`, `.`, `_` and `-`, whose first character is a letter or digit. Identifiers are compared exactly and are case-sensitive: `Ada` and `ada` are different identifiers. |
+  | text | A JSON string that contains at least one character without the Unicode `White_Space` property. It is stored and returned exactly as supplied, without trimming. |
+  | integer | A JSON number written as an optional minus sign followed by digits, without a fraction part or exponent (`10.0` and `1e3` are not integers), within the range the operation states. Every range in the model starts at 0 or higher, so any value written with a minus sign, including `-0`, is out of range. |
+  | timestamp | A JSON string `YYYY-MM-DDTHH:MMZ` naming a valid UTC calendar date and time from `2000-01-01T00:00Z` to `2099-12-31T23:59Z`, for example `2026-03-02T09:00Z`. Hours are `00` to `23`, minutes `00` to `59`; there are no seconds. |
+  | date | A JSON string `YYYY-MM-DD` naming a valid calendar date from `2000-01-01` to `2099-12-31`. `2026-02-29` is not valid; `2028-02-29` is. |
+  | month | A JSON string `YYYY-MM` from `2000-01` to `2099-12`. |
+  | enumeration | A JSON string equal to one of the listed values, compared exactly. |
+
+  An argument that is missing, `null`, of the wrong JSON type or outside its format or range is refused with `invalid_argument`. Each argument is checked on its own. Relationships between arguments, such as an end that is not after a start, and relationships to stored state are [[request-processing|checked later]] and have their own codes.
+spec: {}

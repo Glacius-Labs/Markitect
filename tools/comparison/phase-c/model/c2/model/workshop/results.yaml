@@ -1,0 +1,8 @@
+imports:
+  - package: software
+    as: Software
+id: results
+kind: Software.Rule
+body: |-
+  A `result` object has exactly the members its operation names, and every object inside it has exactly the members stated for it: records have the fields of the [[records|record list]], and other objects, such as an opening-hours object, a utilization row or the members of a report, have the fields their operation lists. There are never fewer or additional members. Nullable fields are present with the value `null` when they have no value. Lists are JSON arrays; an empty list is `[]`, never `null`. Amounts, counts and minutes are JSON integers. The order of members inside a JSON object is free; the order of list elements is fixed by the [[result-order|order of listed results]].
+spec: {}

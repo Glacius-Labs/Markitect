@@ -1,0 +1,20 @@
+imports:
+  - package: software
+    as: Software
+  - package: billing/invoices
+    as: Invoices
+  - package: bookings
+    as: Bookings
+  - package: workshop
+    as: Workshop
+id: change-tier
+kind: Software.UseCase
+body: |-
+  Operation `changeTier`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+
+  Mutation. Changes a member's tier.
+
+  - Arguments: `memberId` (identifier, an existing member), `tier` (enumeration `basic`, `plus` or `pro`).
+  - Effect: sets the [[membership|tier]]. Setting the current tier succeeds without a change. The new tier applies to membership fees of [[Invoices.generate-invoices|invoices generated afterwards]] and to usage charges created by [[Bookings.check-out|later check-outs]].
+  - Result: `member`.
+spec: {}

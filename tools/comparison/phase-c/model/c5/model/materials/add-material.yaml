@@ -1,0 +1,17 @@
+imports:
+  - package: software
+    as: Software
+  - package: workshop
+    as: Workshop
+id: add-material
+kind: Software.UseCase
+body: |-
+  Operation `addMaterial`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+
+  Mutation.
+
+  - Arguments: `materialId` (identifier), `name` (text), `unitPriceCents` (integer 1 to 1000000).
+  - Refusals: `already_exists` when a material with `materialId` exists.
+  - Effect: creates the [[shop|material]] with stock 0.
+  - Result: `material`.
+spec: {}

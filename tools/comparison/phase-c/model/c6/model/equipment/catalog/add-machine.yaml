@@ -1,0 +1,16 @@
+imports:
+  - package: software
+    as: Software
+  - package: workshop
+    as: Workshop
+id: add-machine
+kind: Software.UseCase
+body: |-
+  Operation `addMachine`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+
+  Mutation.
+
+  - Arguments: `machineId` (identifier), `name` (text), `familyId` (identifier, an existing family), `rateCentsPerMinute` (integer 1 to 10000).
+  - Refusals: `already_exists` when a [[catalog|machine]] with `machineId` exists.
+  - Result: `machine`.
+spec: {}

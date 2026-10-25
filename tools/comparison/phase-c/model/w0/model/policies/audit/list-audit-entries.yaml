@@ -1,0 +1,12 @@
+imports:
+  - package: software
+    as: Software
+  - package: workshop
+    as: Workshop
+id: list-audit-entries
+kind: Software.UseCase
+body: |-
+  Operation `listAuditEntries`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+
+  Read. Arguments: none besides `actor` and `at`. Result: `entries`, all [[audit|audit entries]] in `seq` order.
+spec: {}

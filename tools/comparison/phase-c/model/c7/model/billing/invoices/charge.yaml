@@ -1,0 +1,14 @@
+imports:
+  - package: software
+    as: Software
+  - package: bookings
+    as: Bookings
+  - package: materials
+    as: Materials
+  - package: training
+    as: Training
+id: charge
+kind: Software.Concept
+body: |-
+  [[Bookings.check-out|Usage]], [[Training.enroll-in-course|course]] and [[Materials.purchase-material|material]] charges collect on the member's account until they are invoiced. A charge belongs to the month of its `at`. A charge is **unbilled** until it appears on an [[invoice|invoice]].
+spec: {}

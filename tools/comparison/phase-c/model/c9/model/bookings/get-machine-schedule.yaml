@@ -1,0 +1,21 @@
+imports:
+  - package: software
+    as: Software
+  - package: equipment/maintenance
+    as: Maintenance
+  - package: policies/time
+    as: Time
+  - package: safety
+    as: Safety
+  - package: workshop
+    as: Workshop
+id: get-machine-schedule
+kind: Software.UseCase
+body: |-
+  Operation `getMachineSchedule`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+
+  Read. Shows one machine's day.
+
+  - Arguments: `machineId` (identifier, an existing machine), `date` (date).
+  - Result: `machineId`; `date`; `openingHours`, an object `{"open": "HH:MM", "close": "HH:MM"}` with [[Time.opening-hours|that day's times]], never `null` because every day has an opening period; `reservations`, the machine's [[reservation|reservations]] whose `start` falls on that date, in every status except `cancelled`; `maintenance`, the machine's [[Maintenance.maintenance-window|scheduled windows]] that overlap the interval from `00:00` of that date to `00:00` of the next date; `lockouts`, the machine's [[Safety.lockout|lockouts]] that overlap the interval from `00:00` of the date to `00:00` of the next date.
+spec: {}

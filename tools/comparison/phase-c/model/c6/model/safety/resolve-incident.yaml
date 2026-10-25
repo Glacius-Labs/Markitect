@@ -1,0 +1,17 @@
+imports:
+  - package: software
+    as: Software
+  - package: workshop
+    as: Workshop
+id: resolve-incident
+kind: Software.UseCase
+body: |-
+  Operation `resolveIncident`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+
+  Mutation.
+
+  - Arguments: `incidentId` (identifier, an existing incident), `resolution` (text).
+  - Refusals: `invalid_state` when the [[incident|incident]] is already resolved.
+  - Effect: status `resolved`, `resolution` as supplied, `resolvedAt` the request time.
+  - Result: `incident`.
+spec: {}

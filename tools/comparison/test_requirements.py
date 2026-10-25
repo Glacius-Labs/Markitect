@@ -1,12 +1,22 @@
 """The arm-B documentation is the canonical Library model, rendered verbatim."""
 
 import difflib
+import hashlib
+import importlib.util
 from pathlib import Path
 import unittest
 
 import requirements
 
 PACKET = Path(__file__).resolve().parent / "packet"
+PHASE_C = Path(__file__).resolve().parent / "phase-c"
+
+
+def load_phase_c_renderer():
+    spec = importlib.util.spec_from_file_location("phase_c_render", PHASE_C / "spec" / "render.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 class RequirementsTests(unittest.TestCase):
@@ -75,6 +85,78 @@ class RequirementsTests(unittest.TestCase):
         definition.update(package="library", imports={})
         with self.assertRaises(requirements.ModelError):
             requirements.render_body(definition, "library/realization")
+
+    def test_document_drops_empty_groups_and_refuses_duplicate_anchors(self):
+        files = {"model/area/sub/x.yaml": b"id: x\nkind: Software.Rule\nbody: |-\n  Text of x.\nspec: {}\n"}
+        sections = [(2, "Area", []), (3, "Sub", ["area/sub/x"]), (2, "Empty group", []), (3, "Gone", ["area/sub/y"])]
+        doc = requirements.Document("T", "Intro.", sections)
+        definitions = requirements.load_definitions(files, doc)
+        self.assertEqual(requirements.present_sections(definitions, doc), [(2, "Area", []), (3, "Sub", ["area/sub/x"])])
+        self.assertIn("## Area\n\n### Sub\n\nText of x.\n", requirements.render_document(definitions, doc))
+        twice = requirements.Document("T", "Intro.", [(2, "Sub", []), (3, "Sub", ["area/sub/x"])])
+        with self.assertRaises(requirements.ModelError):
+            requirements.render_document(definitions, twice)
+
+
+class PhaseCTests(unittest.TestCase):
+    """The single-agent Makerspace documents are the model snapshots, rendered verbatim."""
+
+    COUNTS = {"w0": 75, "c1": 75, "c2": 77, "c3": 78, "c4": 78, "c5": 79, "c6": 79, "c7": 79, "c8": 79, "c9": 79}
+
+    @classmethod
+    def setUpClass(cls):
+        cls.render = load_phase_c_renderer()
+
+    def test_committed_documents_are_the_current_rendering(self):
+        self.assertEqual(tuple(self.COUNTS), self.render.STEPS)
+        for step, count in self.COUNTS.items():
+            with self.subTest(step):
+                result = self.render.check(step)
+                self.assertTrue(result["identical_to_render"])
+                self.assertTrue(result["all_found"])
+                self.assertEqual(len(result["bindings"]), count)
+
+    def test_snapshot_manifests_cover_every_file(self):
+        for step in self.COUNTS:
+            with self.subTest(step):
+                root = PHASE_C / "model" / step
+                listed = {}
+                for line in (root / "files.sha256").read_text(encoding="utf-8").splitlines():
+                    digest, _, name = line.partition("  ")
+                    listed[name] = digest
+                files = sorted(p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file() and p.name != "files.sha256")
+                self.assertEqual(sorted(listed), files)
+                for name in files:
+                    self.assertEqual(listed[name], hashlib.sha256((root / name).read_bytes()).hexdigest(), name)
+
+    def test_steps_change_what_their_texts_state(self):
+        docs = {s: (PHASE_C / "spec" / f"requirements-{s}.md").read_text(encoding="utf-8") for s in self.COUNTS}
+        self.assertEqual(docs["c8"], docs["c9"])
+        self.assertEqual((PHASE_C / "model" / "c8" / "files.sha256").read_bytes(), (PHASE_C / "model" / "c9" / "files.sha256").read_bytes())
+        self.assertNotIn("actorRole", docs["w0"])
+        self.assertIn("actorRole", docs["c1"])
+        self.assertNotIn("lockMachine", docs["c1"])
+        self.assertIn("#### `lockMachine`", docs["c2"])
+        self.assertIn("| 25 or more | 12 |", docs["c3"])
+        self.assertIn("| Operation | Area | Member | Staff | Admin | Steward |", docs["c4"])
+        self.assertIn("account_overdue", docs["c5"])
+        self.assertIn("expiresOn", docs["c5"])
+        self.assertNotIn("expiresOn", docs["c6"])
+        self.assertIn("\n### Payments and credit\n", docs["c6"])
+        self.assertIn("\n### Invoices\n", docs["c7"])
+        self.assertNotIn("\n### Payments and credit\n", docs["c7"])
+        self.assertIn("\n#### Payments and credit\n", docs["c7"])
+        self.assertIn("| Sunday | 12:00 | 16:00 | 240 |", docs["c8"])
+        self.assertFalse(any(p.parts[-2] == "payments" for p in (PHASE_C / "model" / "c7" / "model").rglob("*.yaml")))
+
+    def test_every_link_resolves_and_no_model_vocabulary_remains(self):
+        for step in self.COUNTS:
+            with self.subTest(step):
+                text = (PHASE_C / "spec" / f"requirements-{step}.md").read_text(encoding="utf-8")
+                self.assertNotIn("[[", text)
+                anchors = {requirements.slug(line.lstrip("#").strip()) for line in text.splitlines() if line.startswith("#")}
+                for target in requirements.re.findall(r"\]\(#([a-z0-9-]+)\)", text):
+                    self.assertIn(target, anchors)
 
 
 if __name__ == "__main__":

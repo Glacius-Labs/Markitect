@@ -1,0 +1,13 @@
+imports:
+  - package: software
+    as: Software
+id: program
+kind: Software.Rule
+body: |-
+  - The Go module lives at `realization/go.mod`. The program's main package lives at `realization/cmd/makerspace`. From `realization/`, `go build ./cmd/makerspace` builds the program and `go test ./...` runs its tests. Only the Go standard library is used. Internal package layout and design are the implementer's choice.
+  - The program reads [[requests|requests]] from standard input, one JSON object per line, and writes exactly one [[responses|response]] line per request to standard output, in request order. It writes and flushes each response before it reads the next request. Standard output carries responses only: no banner, prompt or log line. Diagnostics, if any, go to standard error. When standard input closes, the program exits with exit code zero.
+  - One process holds one [[makerspace|makerspace]], which starts in the [[initial-state|initial state]]. Requests are processed one at a time, in order.
+  - The program never reads the machine clock, the network, environment-dependent data or files at run time, and writes no files. All time comes from the requests. Given the same request lines, it produces the same response lines.
+  - There is no reset, state import, clock override or other test-only operation.
+  - Request lines up to 64 KiB must be accepted.
+spec: {}

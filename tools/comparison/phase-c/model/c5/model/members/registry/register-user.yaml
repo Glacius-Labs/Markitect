@@ -1,0 +1,17 @@
+imports:
+  - package: software
+    as: Software
+  - package: workshop
+    as: Workshop
+id: register-user
+kind: Software.UseCase
+body: |-
+  Operation `registerUser`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+
+  Mutation. Registers a staff member, an admin or a steward.
+
+  - Arguments: `userId` (identifier), `name` (text), `role` (enumeration `staff`, `admin` or `steward`).
+  - Refusals: `already_exists` when any user, including a member, has the identifier `userId`.
+  - Effect: creates the [[registry|user]].
+  - Result: `user`.
+spec: {}

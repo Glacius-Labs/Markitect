@@ -1,0 +1,16 @@
+imports:
+  - package: software
+    as: Software
+  - package: billing/invoices
+    as: Invoices
+  - package: bookings
+    as: Bookings
+  - package: materials
+    as: Materials
+  - package: training
+    as: Training
+id: good-standing
+kind: Software.Rule
+body: |-
+  A member is **in good standing** when the standing is `good`. A suspended member cannot [[Bookings.create-reservation|make reservations]], [[Bookings.check-in|check in]], [[Materials.purchase-material|buy materials]] or [[Training.enroll-in-course|enroll in courses]]. Suspension does not cancel existing reservations or enrollments. A suspended member can still [[Bookings.cancel-reservation|cancel reservations]], [[Bookings.check-out|check out]], see their records and [[Invoices.record-payment|pay invoices]], and still receives the monthly fee. Reinstating good standing removes these restrictions; all other rules still apply.
+spec: {}

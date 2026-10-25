@@ -1,0 +1,23 @@
+imports:
+  - package: software
+    as: Software
+  - package: members/memberships
+    as: Memberships
+  - package: policies/money
+    as: Money
+  - package: policies/time
+    as: Time
+  - package: workshop
+    as: Workshop
+id: register-member
+kind: Software.UseCase
+body: |-
+  Operation `registerMember`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+
+  Mutation. Registers a member with a [[Memberships.membership|membership]].
+
+  - Arguments: `memberId` (identifier), `name` (text), `tier` (enumeration `basic`, `plus` or `pro`).
+  - Refusals: `already_exists` when any user has the identifier `memberId`.
+  - Effect: creates a user with role `member`, the given tier, standing `good`, `registeredAt` equal to the [[Time.time|request time]] and a [[Money.credit-balance|credit balance]] of 0.
+  - Result: `member`.
+spec: {}

@@ -1,0 +1,16 @@
+imports:
+  - package: software
+    as: Software
+  - package: workshop
+    as: Workshop
+id: report-incident
+kind: Software.UseCase
+body: |-
+  Operation `reportIncident`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+
+  Mutation.
+
+  - Arguments: `machineId` (identifier, an existing machine), `severity` (enumeration `low`, `medium` or `high`), `description` (text).
+  - Effect: creates an [[incident|incident]] with status `open`, `reportedBy` the actor, `reportedAt` the request time, and `resolution` and `resolvedAt` `null`. When a steward reports an incident, `reportedBy` is the steward's identifier.
+  - Result: `incident`.
+spec: {}

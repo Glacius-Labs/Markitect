@@ -1,0 +1,21 @@
+imports:
+  - package: software
+    as: Software
+  - package: bookings
+    as: Bookings
+  - package: reporting
+    as: Reporting
+  - package: workshop
+    as: Workshop
+id: cancel-maintenance
+kind: Software.UseCase
+body: |-
+  Operation `cancelMaintenance`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+
+  Mutation.
+
+  - Arguments: `windowId` (identifier, an existing maintenance window).
+  - Refusals: `invalid_state` when the window is already cancelled or its start is at or before the request time.
+  - Effect: the [[maintenance-window|window]] gets status `cancelled`. A cancelled window no longer blocks [[Bookings.reservation-rules|reservations]] and no longer counts in [[Bookings.get-machine-schedule|schedules]] or [[Reporting.utilization-report|reports]].
+  - Result: `window`.
+spec: {}

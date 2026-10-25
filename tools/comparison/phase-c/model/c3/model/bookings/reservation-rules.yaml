@@ -1,0 +1,27 @@
+imports:
+  - package: software
+    as: Software
+  - package: equipment/maintenance
+    as: Maintenance
+  - package: members/memberships
+    as: Memberships
+  - package: policies/time
+    as: Time
+  - package: safety
+    as: Safety
+  - package: training
+    as: Training
+id: reservation-rules
+kind: Software.Rule
+body: |-
+  [[create-reservation|A new reservation]] is accepted only when all of the following hold. These rules connect members, training, equipment and time:
+
+  1. its slot follows the [[Time.booking-granularity|booking granularity and duration limits]] and starts at or after the [[Time.time|request time]];
+  2. the slot lies inside the [[Time.opening-hours|opening hours]] of its start date;
+  3. the member is in [[Memberships.good-standing|good standing]];
+  4. the member holds a [[Training.certification|certification]] for the machine's family that is valid on the reservation date, which is the date of `start`;
+  5. no scheduled [[Maintenance.maintenance-window|maintenance window]] of the machine overlaps the slot;
+  6. no [[Safety.lockout|lockout]] of the machine overlaps the slot;
+  7. no other active [[reservation|reservation]] of the machine overlaps the slot;
+  8. no other active reservation of the member, on any machine, overlaps the slot.
+spec: {}

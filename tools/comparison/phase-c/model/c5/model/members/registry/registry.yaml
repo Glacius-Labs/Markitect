@@ -1,0 +1,12 @@
+imports:
+  - package: software
+    as: Software
+  - package: policies/authorization
+    as: Authorization
+  - package: workshop
+    as: Workshop
+id: registry
+kind: Software.Concept
+body: |-
+  The registry holds every user: the [[Workshop.initial-state|initial admin]], staff, admins and stewards [[register-user|registered by an admin]], and members [[register-member|registered by staff or admins]]. Users, including members, share one identifier space. Users are never deleted and their identifier, name and [[Authorization.authorization|role]] never change. A steward is a user, not a member: a steward's identifier does not name a member, and a steward has no membership, invoices or credit.
+spec: {}

@@ -1,0 +1,17 @@
+imports:
+  - package: software
+    as: Software
+  - package: workshop
+    as: Workshop
+id: complete-course
+kind: Software.UseCase
+body: |-
+  Operation `completeCourse`. [[Workshop.request-processing|Request processing]] and [[Workshop.delivery|delivery]] apply.
+
+  Mutation. Records that a member completed a [[course|course]] and certifies the member.
+
+  - Arguments: `courseId` (identifier, an existing course), `memberId` (identifier, an existing member).
+  - Refusals: `not_enrolled` when the member has no enrollment in this course with status `enrolled`.
+  - Effect: the enrollment gets status `completed` and `completedAt` equal to the request time. The member's certification for the course's family is issued ([[certification|certifications]]). Standing is not checked.
+  - Result: `enrollment` and `certification`.
+spec: {}
