@@ -506,7 +506,7 @@ func TestApplyVerifyRejectionStartsFreshCorrectionWithOriginalAllowanceAndFindin
 	command := apply.Command{Executor: executor, Candidates: git, Records: store, Publisher: &Publisher{Repository: adapter(t), Store: git}}
 	report, err := command.Execute(context.Background(), run.Request{ID: "correction", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: allowance, CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
 	if err != nil || report.Status != model.Passed || len(executor.requests) != 5 {
-		t.Fatal(report.Status, len(executor.requests), err)
+		t.Fatal(report.Status, len(executor.requests), err, report.Workflow.Final.Errors)
 	}
 	if got := executor.requests[3]; got.Mandate != run.Implement || got.Input != *report.Workflow.Runs[2].Candidate || !reflect.DeepEqual(got.Findings, report.Workflow.Runs[2].Findings) || len(got.Findings) == 0 {
 		t.Fatal("fresh correction lost exact candidate or mandatory Findings", got)
