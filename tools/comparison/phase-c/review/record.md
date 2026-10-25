@@ -9,7 +9,7 @@ Session V, 25 October 2026. Independent review of the four Phase C materials bef
 | Material | Pull request | Reviewed head | Base |
 | --- | --- | --- | --- |
 | R | [#702](https://github.com/Glacius-Labs/Markitect/pull/702), merged | Main `795b8a2af0b51a700ca7a7936852813a7b82770f` | – |
-| M | [#707](https://github.com/Glacius-Labs/Markitect/pull/707) | `599972d82e11ad0afa6a3d17ec81f6885942da4f` | contains R |
+| M | [#707](https://github.com/Glacius-Labs/Markitect/pull/707) | `599972d82e11ad0afa6a3d17ec81f6885942da4f`, then `180bf94cd367a6841330e9032e74ceb9ad604711` (adds the execution configuration; no snapshot or spec byte changes) | contains R |
 | I | [#703](https://github.com/Glacius-Labs/Markitect/pull/703) | `12fb6b4ce43df9550c41785a64d4b6a0991e2721` | contains R |
 | O | follows | – | – |
 
@@ -48,7 +48,15 @@ Notes (no change needed):
 
 M's `mapping/` was not used as evidence; the comparison above is independent of it.
 
-**Open for M:** the arm M `execution.yaml` proposal, to be added to #707 (ownership and the project check only).
+### Arm M's execution configuration
+
+`execution/w0.yaml` (W0–C6) and `execution/c7.yaml` (C7–C9) hold only ownership and checks, in the Library fixture's form. **Result: no product content beyond the model.** Ownership gives Root `./`, each Package `P` `realization/P/` and `workshop` also `realization/cmd/makerspace/`; the unit test confirms that the owners are exactly each step's Packages. The two checks run `go build ./cmd/makerspace` and `go test ./...` from `realization/`, both stated in R (§2.1, §15), on the example `go` check profile, which has Phase A's `project-tests` limits (1 CPU, 2 GiB, 64 processes). The tests pass at `180bf94c`.
+
+| Id | Note | For whom |
+| --- | --- | --- |
+| V1-N6 | Two differences from the Library fixture: a second check `project-build`, and a `project-tests` timeout of 5 minutes instead of 2. Both are part of arm M's treatment (a deterministic gate before publication that B does not have). | Protocol addendum C: list them as intended differences, and run the assessment's secondary own-check under the same 5-minute limit for both arms. |
+| V1-N7 | C7 needs the owner to replace `execution.yaml` together with the model, because the W0 configuration names the removed Package; ownership is owner input (coordinator's note). | Protocol addendum C: count it as owner attention on arm M's side. |
+| V1-N8 | After C7, files under `realization/billing/payments/` fall to the empty `billing` Package by prefix, and their registry links to the moved Definitions become stale. Arm M may move code or relink the registry to follow the fold, where arm B has no such cause. | Protocol addendum C: predeclare whether changes that only follow the Package fold (moves, registry relinks) count as justified at C7, so that C7 churn is judged by a rule fixed in advance. Registry files are already outside the comparable census. |
 
 ## 2. Oracle traceability and coverage
 
