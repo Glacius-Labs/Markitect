@@ -87,7 +87,21 @@ O's list: pending.
 
 ## 3. Calibration
 
-Pending. The dispatch is recorded here before the first engine call.
+### Dispatch (recorded before the first engine call)
+
+Bounded dispatch under the standing evidence authorization, recorded 25 October 2026 before any engine use.
+
+| Item | Value |
+| --- | --- |
+| Source | Oracle: `tools/makerspace-oracle` at O's head `9685ba4d4da07d203a79c8db0e5540033c4d7752`, run by its own entry point `harness.py`, with the reused Library transport `tools/library-oracle` (tree `9ec6409452e632819d0d234094da5656430c3041`, identical on Main). References: `tools/makerspace-reference` at I's head `12fb6b4ce43df9550c41785a64d4b6a0991e2721`; each mutant is its step tree with `mutant.patch` applied by I's `mutants/apply.sh` on the host. Runner: `calibrate-pass-1.py` (SHA-256 `cfc3110810d32eb06af5520d9997340ea66ac66efaf0ebd64050d185ed075269`), frozen outside the repository. |
+| Engine and images | Docker Desktop 29.9.2 on this machine. Build: `golang:1.27.1` (`sha256:162be5298a40…`). Oracle: `python:3.12-slim@sha256:a6e34c598f24…`, the Library oracle's pinned image. |
+| Runs (47) | 10 positive: each reference step W0–C9 against its step's cases, with the change census for C3 (start C2), C7 (start C6) and C9 (start C8). 30 negative: each mutant against the cases of its own step. 7 delta discrimination: reference step n−1 against the cases of step n for C1–C6 and C8 (C7 and C9 are byte-identical trees and covered by their positive runs). |
+| Expected | Positive: every case passes and the census is empty. Mutant: of the 30 probe families exactly its own fails; any failed behavior or invariant family is recorded as overlap. Delta: at least one family fails; the failed families are recorded. |
+| Limits | One attempt per run; the whole pass at most 2 h from the lock. Builds: one container, 1,200 s. Oracle: 1,500 s per container, four at a time, with the oracle's own limits (2 s per request, 120 s per process, 128 KiB per request, 8 MiB output). Every container: no network, uid 1000, no capabilities, `no-new-privileges`, read-only root, 512 MiB `/tmp`, 256 processes, 2 GiB, inputs mounted read-only. |
+| Abort | Credential-shaped text in any output (no login is mounted); a container left after its run; a failed census query; the 2 h limit. An abort stops scheduling and is recorded; nothing is retried. |
+| Cleanup | Every container (`--rm`) and both volumes carry the label `mk-vcal=pass-1`. The census of labeled containers and volumes must be empty before the pass and after it. `NATIVE-RUN.lock` is taken exclusively (the runner refuses if it is held) and removed only after a clean final census. |
+| Disagreements | Each is decided against R's text: the case or the reference is wrong. The author receives only the sentence and the expected behavior, never the other side's material. A corrected material gets one more run of the affected runs, recorded as pass 2 beside pass 1. |
+| Evidence | `C:\Users\Consiliari\Documents\Codex\Markitect-Phase-C-Review\calibration-pass-1\`: one oracle report and log per run, `summary.json` with builds, program hashes, results and both censuses. |
 
 Pre-check without an engine: every distinct reference tree (W0–C6, C8) builds and passes its own tests with Go 1.24.1 on Windows; `c7/` is byte-identical to `c6/` and `c9/` to `c8/`.
 
