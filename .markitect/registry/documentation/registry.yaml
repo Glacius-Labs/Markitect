@@ -48,6 +48,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Predeclares the DEC-072 comparison of Markitect with one agent given ordinary documentation, before any run.
+  - path: "docs/validation/v1-comparison-results-20261025.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Reports every Phase A run of the DEC-072 comparison with its raw outcome, deviations and the predeclared reading.
   - path: "docs/validation/a1-native-contract-proof-20261024.md"
     form: doc
     realizes: [documentation/current-guidance]
