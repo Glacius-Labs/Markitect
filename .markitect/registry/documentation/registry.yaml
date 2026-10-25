@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/v1-acceptance-directive-20261025.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the owner directive that separates technical V1 acceptance from product value and orders P0 to P4.
   - path: "docs/concepts/sources/v1-evidence-goal-20261024.md"
     form: doc
     realizes: [documentation/current-guidance]
