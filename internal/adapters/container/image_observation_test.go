@@ -347,13 +347,17 @@ func TestObserveImageFileCancelsInheritedStdout(t *testing.T) {
 	pidPath := filepath.Join(os.Getenv("MARKITECT_FAKE_COMMAND_ENGINE"), "stdout-holder")
 	deadline := time.Now().Add(5 * time.Second)
 	var holder *os.Process
-	for time.Now().Before(deadline) {
+	for holder == nil && time.Now().Before(deadline) {
+		// os.WriteFile is not atomic: the file can exist before its PID is
+		// written, and FindProcess fails on Windows for an invalid PID.
 		if raw, err := os.ReadFile(pidPath); err == nil {
-			pid, _ := strconv.Atoi(string(raw))
-			holder, _ = os.FindProcess(pid)
-			break
+			if pid, err := strconv.Atoi(string(raw)); err == nil && pid > 0 {
+				holder, _ = os.FindProcess(pid)
+			}
 		}
-		time.Sleep(5 * time.Millisecond)
+		if holder == nil {
+			time.Sleep(5 * time.Millisecond)
+		}
 	}
 	if holder == nil {
 		t.Fatal("fake engine did not start stdout holder")
