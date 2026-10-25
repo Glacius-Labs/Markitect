@@ -7,6 +7,7 @@ These reports preserve the exact scope, inputs, source references and outcomes s
 - [V1 qualification record: source checkpoints, probes and native Library evidence — 23 and 24 October 2026](v1-qualification-20261024.md)
 - [A1 native Codex contract proof of the Run collaboration contract — 24 October 2026](a1-native-contract-proof-20261024.md)
 - [V1 comparison protocol: Markitect against one agent with ordinary documentation — 24 October 2026](v1-comparison-protocol-20261024.md), predeclared for DEC-072
+- [V1 native requalification on frozen source e11e6cff — 24 and 25 October 2026](v1-requalification-20261025.md): step 4 of the delivery plan and arm M of the comparison's Phase A
 
 ## Release evidence
 

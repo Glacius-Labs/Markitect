@@ -52,6 +52,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Retains the bounded native Codex proof of the Run collaboration contract with its source and image binding, observations and limits.
+  - path: "docs/validation/v1-requalification-20261025.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the step-4 native requalification of V1 on frozen source e11e6cff, arm M of the comparison, with bindings, results, deviations and limits.
   - path: "docs/concepts/sources/v1-source-implementation-approval-20261023.md"
     form: doc
     realizes: [documentation/current-guidance]
