@@ -390,7 +390,7 @@ Recorded on the coordinator's decision of 25 October 2026, before any Phase B ru
 
 ## Addendum: Phase C (Makerspace)
 
-Status: **approved by the coordinator on 26 October 2026 (N = 3), before any counted Phase C run.** Uncounted smokes have run (C7); no counted run existed at approval. Phase A's and Phase B's text, tools and readings stay unchanged; Phase C is read by its own rule (C6) and never pooled with them.
+Status: **approved by the coordinator on 25 October 2026 (UTC), with N = 3,, before any counted Phase C run.** Uncounted smokes have run (C7); no counted run existed at approval. Phase A's and Phase B's text, tools and readings stay unchanged; Phase C is read by its own rule (C6) and never pooled with them.
 
 ### C1. Why another phase, and which project
 
@@ -633,12 +633,12 @@ Notes:
   - That is 2.5× the 102 messages and 4.3× the 1,265 s of the complete W0, with 21 of 32 Managers used.
 - **B:** one session, a 5,400 s deadline, 19× its W0 time.
 - **Estimate per chain:**
-  - M: W0 about 51 M tokens. Each change step costs about 22 M for Assessment and Verify over the complete hierarchy, plus Implement, estimated at 10–25 M against 28.5 M for the full W0 build. That gives about 32–47 M per change step, so **about 340–480 M tokens per chain, about 14–19 % of the weekly quota**, and about 3–4.5 h.
+  - M: W0 about 51 M tokens. Each change step costs about 22 M for Assessment and Verify over the complete hierarchy, plus Implement, estimated at 10–25 M against 28.5 M for the full W0 build. That gives about 32–47 M per change step, so **about 340–480 M tokens per chain, about 14–24 % of the weekly quota** at 20–25 M tokens per percent, and about 3–4.5 h.
   - B: about 12.5 M tokens (under 1 %) and about 50 minutes per chain.
 - **Quota guard**, an operational rule that does not affect any reading: no counted run starts while the weekly quota is at 90 % or more. The series then waits for the reset and continues in order.
 
 **N = 3 chains per arm** (proposal).
-- **Quota:** three chains need about 45–60 % of the weekly quota, with margin for repeats, on top of the 20 % already used. That fits the window that resets 2026-11-01. N = 5 would need about 75–100 % on top and does not fit.
+- **Quota:** three chains need about 41–72 % of the weekly quota, plus margin for repeats, on top of the 20 % already used. That is about 61–92 % of the window that resets 2026-11-01. The series may therefore reach the 90 % guard and pause for the reset; it then continues in order, which changes no reading. N = 5 would need about 70–120 % on top and does not fit one window.
 - **Power:** with N = 3, only complete separation of the arms' per-chain totals reaches p = 0.05. A smaller advantage reads at most as a tendency. This limit is stated in advance.
 - **Expectation, stated before the data:** W0 already shows a ceiling. Both arms pass every W0 case, so any difference must come from the changes C1–C9: missed obligations, regressions, change discipline and the C9 gate.
 
@@ -649,12 +649,13 @@ The study infrastructure is frozen with this addendum and does not change in con
 | Part | Identity |
 | --- | --- |
 | Assessor, hidden oracle, reading and cost tools | R_C `4840fb20`: `assess_candidate.py`, `tools/makerspace-oracle/`, `analyze.py`, `cost_breakdown.py` |
+| Review tools | R_C `4840fb20`, unchanged since R: `rubric.md`, `review-prompt.md` (review and confirmation prompts), `rubric_check.py` |
 | Arm B's runner and prompt | R `74b7d7df`: `runner.py` `249f8ab7…`, prompt `8a6c99a7…`, unchanged through R_C |
 | Arm B's documents | `phase-c/packet-4840fb20f52c/SHA256SUMS` |
 | Study binding | `phase-c/study.env`: RC `4840fb20`, image `3d75d81f…`, the packet |
 | Family catalog | `phase-c/e2e-v2/assess-<step>/assessment.json`, the ten positive controls |
-| Evidence-root scripts and records | `phase-c/FREEZE.sha256` (sha256 `12947f26fff052ea995a917f86bb0fc828a273927ab40aec403a78706d7b8721`): prepare-pc `49aecfba…`, run-b-pc `b7edb6ee…`, drive-b-pc-chain `c961a3b0…`, assess-pc `9aae63b3…`, assess-m-pc `3d97708b…`, build-ledger-pc `7795b9ae…`, quiet-monitor `20e1647d…`, e2e-assessor-v2 `c4efe155…`, prepare-review-pc `7168418b…`, save-review-pc `cfc47277…`, study.env `44a908ab…`, the packet and the ten catalog records. The run, assessment, ledger and monitor scripts were reviewed by an independent Opus review over four rounds; the last round accepted after a one-line fix, which is applied. The two review scripts, which follow Phase B's, are reviewed with this addendum. |
-| Arm M's runner | step 4's counted-run controller `controller-pc-review-02` (Markitect-V1-Requalification*8ef346), reviewed READY: `requalify.py` `cafb9fcd31400c8fdd94e1ff6f356b083bba48a8c60e3a8369c28be881ecef43`, 51 self-tests, `launch.py` `492d4874c60b53ec…`, its `SHA256SUMS` `535b0e31a4413e78c322fb3177fccbbc5fe01da628d2b7eb7688004f9a3cde56`. Its published checks are the fixture's declared IDs, each exactly once, and cleanup recognizes check containers by those IDs, so the retained `ee91c7e6` report now passes. |
+| Evidence-root scripts and records | `phase-c/FREEZE.sha256` (sha256 `648ca3b952640ad71b9ac99c465baf4200db2aa022cc348c5eab33a7155b04a0`; 23 files and 9 repository references), with these files: prepare-pc `49aecfba…`, run-b-pc `b7edb6ee…`, drive-b-pc-chain `c961a3b0…`, assess-pc `9aae63b3…`, assess-m-pc `3d97708b…`, build-ledger-pc `7a23207b…`, quiet-monitor `20e1647d…`, e2e-assessor-v2 `c4efe155…`, prepare-review-pc `ad99dffd…`, save-review-pc `f5974dfd…`, save-confirmation-pc `c0c0d27f…`, study.env `44a908ab…`, the packet and the ten catalog records. An independent Opus review covered the run, assessment, ledger and monitor scripts over four rounds; its last round accepted after a one-line fix, which is applied. The review scripts, which follow Phase B's, and the recorder of second-reviewer confirmations were reviewed with this addendum. |
+| Arm M's runner | step 4's counted-run controller `controller-pc-review-02` (`Markitect-V1-Requalification\528ef346\controller-pc-review-02`), reviewed READY: `requalify.py` `cafb9fcd31400c8fdd94e1ff6f356b083bba48a8c60e3a8369c28be881ecef43`, 51 self-tests, `launch.py` `492d4874c60b53ec…`, its `SHA256SUMS` `535b0e31a4413e78c322fb3177fccbbc5fe01da628d2b7eb7688004f9a3cde56`. Its published checks are the fixture's declared IDs, each exactly once, and cleanup recognizes check containers by those IDs, and its fixed `check_report` passes the retained `ee91c7e6` report. The smoke's recorded verdict stays `technical_fail` (C7). |
 
 ### C9. Limits
 
