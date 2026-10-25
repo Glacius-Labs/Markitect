@@ -12,9 +12,10 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/runstore"
+	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
-	"github.com/Glacius-Labs/Markitect/internal/workflow"
 )
 
 // These tests hold the build-output rule of the workspace capture to concept
@@ -257,7 +258,7 @@ func TestStagedBuildOutputFailsAccountingUntilUnstaged(t *testing.T) {
 	}
 }
 
-// collaborationRuns executes every Run of a workflow with fresh controlled
+// collaborationRuns executes every Run of an Apply with fresh controlled
 // collaborators over one fixture's actual Git; a script takes over per mandate.
 type collaborationRuns struct {
 	git     *LocalGit
@@ -272,7 +273,8 @@ func (e *collaborationRuns) Execute(ctx context.Context, request run.Request) (r
 	return (&run.Executor{Sessions: c, Workspaces: e.git, Records: e.records}).Execute(ctx, request)
 }
 
-// Scenarios 3 and 5 and a directory registration, up to Verify. a/deep runs go
+// Scenarios 3 and 5 and a directory registration, through a complete Apply.
+// a/deep runs go
 // build, which leaves out/tool; builds out/required, a binary the model
 // requires that a/deep does not register; and builds firmware/image below its
 // directory entry firmware/. The host cannot tell a forgotten artifact from a
@@ -280,9 +282,10 @@ func (e *collaborationRuns) Execute(ctx context.Context, request run.Request) (r
 // each is listed wherever the candidate is judged. a/deep's check and its
 // handoff to its parent list them, the stored Implement record keeps them, and
 // Verify's Root receives them with its assignment and its check of the fixed
-// input, so the independent review can find a missing required binary.
+// input, so the independent review can find a missing required binary. The
+// owner's checkout receives none of them.
 func TestLeftOutBuildOutputsAreVisibleUpToVerify(t *testing.T) {
-	_, prepared, git, input := runFixture(t)
+	owner, prepared, git, _ := runFixture(t)
 	records, err := runstore.New(git.StateRoot)
 	if err != nil {
 		t.Fatal(err)
@@ -324,11 +327,13 @@ func TestLeftOutBuildOutputsAreVisibleUpToVerify(t *testing.T) {
 			return false, err
 		},
 	}}
-	base := run.Request{ID: "left-out", Project: "fixture", Prepared: prepared, Input: input, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(10*time.Minute), 300), MessageTimeout: 3 * time.Minute, CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
+	command := apply.Command{Executor: runs, Candidates: git, Records: records, Publisher: &Publisher{Repository: adapter(t), Store: git}}
+	request := run.Request{ID: "left-out", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(10*time.Minute), 300), MessageTimeout: 3 * time.Minute, CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
 	ctx := context.Background()
-	out, err := workflow.Apply(ctx, runs, base)
-	if err != nil || len(out.Runs) != 3 || out.Final.Mandate != run.Verify || out.Final.Decision != run.Approve || out.Final.Candidate == nil {
-		t.Fatalf("workflow did not reach Verify approval: %d runs, %s %s %v", len(out.Runs), out.Final.Mandate, out.Final.Decision, err)
+	report, err := command.Execute(ctx, request)
+	out := report.Workflow
+	if err != nil || report.Status != model.Passed || len(out.Runs) != 3 || out.Final.Mandate != run.Verify || out.Final.Decision != run.Approve || out.Final.Candidate == nil {
+		t.Fatalf("Apply did not publish Verify's approval: %s, %d runs, %s %s %v", report.Status, len(out.Runs), out.Final.Mandate, out.Final.Decision, err)
 	}
 	for _, c := range runs.runs {
 		c.assertNoHostNarration(t)
@@ -351,12 +356,14 @@ func TestLeftOutBuildOutputsAreVisibleUpToVerify(t *testing.T) {
 	if err = git.Reopen(ctx, *out.Final.Candidate, candidate); err != nil {
 		t.Fatal(err)
 	}
-	for _, name := range want {
-		if _, err := os.Stat(filepath.Join(candidate, filepath.FromSlash(name))); !os.IsNotExist(err) {
-			t.Fatal("a left-out binary reached the candidate", name, err)
+	for _, root := range []string{candidate, owner.Dir} {
+		for _, name := range want {
+			if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(name))); !os.IsNotExist(err) {
+				t.Fatal("a left-out binary reached the candidate or the owner's checkout", name, err)
+			}
 		}
-	}
-	if data, err := os.ReadFile(filepath.Join(candidate, "firmware/README.md")); err != nil || string(data) != "Firmware images.\n" {
-		t.Fatal("the registered directory's text artifact did not reach the candidate", err)
+		if data, err := os.ReadFile(filepath.Join(root, "firmware/README.md")); err != nil || string(data) != "Firmware images.\n" {
+			t.Fatal("the registered directory's text artifact was not published", err)
+		}
 	}
 }

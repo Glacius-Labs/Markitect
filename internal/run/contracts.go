@@ -213,12 +213,12 @@ func (a *Allowance) Ready(managers int) bool {
 }
 
 type Request struct {
-	MaxManagers        int
-	ID, Project        string
-	Prepared           project.Prepared
-	Input              project.CandidateRef
-	Mandate            Mandate
-	Findings           []Finding
+	MaxManagers int
+	ID, Project string
+	Prepared    project.Prepared
+	Input       project.CandidateRef
+	Mandate     Mandate
+	Findings    []Finding
 	// BuildOutputs names, for Verify, the build outputs that the Implement Run
 	// producing Input left out of it. Root's assignment and every check of the
 	// fixed input carry them.
