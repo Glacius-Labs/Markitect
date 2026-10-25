@@ -203,7 +203,7 @@ func (c *collaboration) execute(t *testing.T, id string, mandate run.Mandate) ru
 	if err != nil {
 		t.Fatal(err)
 	}
-	request := run.Request{ID: id, Project: "fixture", Prepared: prepared, Input: input, Mandate: mandate, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(90*time.Second), 100), MessageTimeout: 45 * time.Second, CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
+	request := run.Request{ID: id, Project: "fixture", Prepared: prepared, Input: input, Mandate: mandate, MaxManagers: 5, Allowance: run.NewAllowance(runDeadline(t), 100), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
 	result, err := (&run.Executor{Sessions: c, Workspaces: git, Records: records}).Execute(context.Background(), request)
 	if c.stops {
 		c.assertNoHostNarration(t)
@@ -507,21 +507,23 @@ func TestRootCompletionRefusesAnEarlierJudgmentAfterItsStateChanged(t *testing.T
 				// End the response with this question open.
 				_, err := m.spec.Tools.Ask(ctx, "b", "Confirm your reviewed handoff.")
 				return true, err
-			case 2:
-				// b's answer and b's request arrive after Root judged.
-				for _, e := range message.Events {
-					if e.Question != nil {
-						if err := m.write(".gitignore", "*.ignored\n# reviewed by Root\n"); err != nil {
+			default:
+				// b's answer and b's request arrive after Root judged. They are two
+				// tool calls, so they come in one message or in two.
+				if len(message.Events) != 0 {
+					for _, e := range message.Events {
+						if e.Question != nil {
+							if err := m.write(".gitignore", "*.ignored\n# reviewed by Root\n"); err != nil {
+								return true, err
+							}
+						}
+						if err := m.handle(ctx, e); err != nil {
 							return true, err
 						}
 					}
-					if err := m.handle(ctx, e); err != nil {
-						return true, err
-					}
+					return true, nil
 				}
-				return true, nil
-			case 3:
-				if len(message.Events) != 0 || !strings.Contains(feedbackText(message), "your working state changed after your judgment") || !strings.Contains(feedbackText(message), "check your current state and judge again") {
+				if !strings.Contains(feedbackText(message), "your working state changed after your judgment") || !strings.Contains(feedbackText(message), "check your current state and judge again") {
 					return true, fmt.Errorf("Root completion relied on its earlier judgment: %+v", message)
 				}
 				return true, m.judge(ctx, run.Submitted, nil)
@@ -539,7 +541,7 @@ func TestRootCompletionRefusesAnEarlierJudgmentAfterItsStateChanged(t *testing.T
 	}
 	result := c.execute(t, "root-state", run.Implement)
 	root := c.manager(".")
-	if result.Decision != run.Submitted || root.judgments != 2 || len(root.messages) != 3 {
+	if last := root.messages[len(root.messages)-1]; result.Decision != run.Submitted || root.judgments != 2 || len(last.Events) != 0 || len(root.messages) < 3 || len(root.messages) > 4 {
 		t.Fatal("Root completion accepted a judgment of an older state", root.judgments, len(root.messages))
 	}
 	if got := c.read(t, ".gitignore"); !strings.Contains(got, "# reviewed by Root") {
@@ -616,10 +618,12 @@ func TestLateFindingInvalidatesAcceptanceAndJudgmentsAbove(t *testing.T) {
 					return true, m.judge(ctx, run.Submitted, nil)
 				case "a/deep":
 					if len(m.messages) == 2 && message.Events[0].Question != nil {
-						if err := m.spec.Tools.Reply(ctx, message.Events[0].Question.ID, "late finding"); err != nil {
+						// Judge before answering: a awaits the changed handoff once
+						// it has the answer, and would otherwise be refused.
+						if err := m.spec.Tools.Judge(ctx, late, []run.Finding{{Text: "The accepted handoff refutes an assumption."}}); err != nil {
 							return true, err
 						}
-						return true, m.spec.Tools.Judge(ctx, late, []run.Finding{{Text: "The accepted handoff refutes an assumption."}})
+						return true, m.spec.Tools.Reply(ctx, message.Events[0].Question.ID, "late finding")
 					}
 				}
 				return false, nil

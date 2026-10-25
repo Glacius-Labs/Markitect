@@ -106,10 +106,11 @@ func publicationGitShim(t *testing.T) string {
 	return dir
 }
 
+// observeBlockedGit waits until the armed query blocks or the caller returns;
+// the caller's window bounds a query that is never reached.
 func observeBlockedGit(t *testing.T, control string, cancel context.CancelFunc, done <-chan error, want error) {
 	t.Helper()
 	var process blockedGit
-	until := time.Now().Add(20 * time.Second)
 	for {
 		data, err := os.ReadFile(filepath.Join(control, "ready"))
 		if err == nil && json.Unmarshal(data, &process) == nil {
@@ -118,12 +119,8 @@ func observeBlockedGit(t *testing.T, control string, cancel context.CancelFunc, 
 		select {
 		case err := <-done:
 			t.Fatalf("Git query was not reached: %v", err)
-		default:
+		case <-time.After(10 * time.Millisecond):
 		}
-		if time.Now().After(until) {
-			t.Fatal("blocking Git query not observed")
-		}
-		time.Sleep(10 * time.Millisecond)
 	}
 	t.Cleanup(func() {
 		c, err := net.DialTimeout("tcp", process.Address, time.Second)
@@ -222,7 +219,7 @@ func TestPublicationGitQueriesCancelBeforeMutationAndAfterPartialTransfer(t *tes
 			} else {
 				arm()
 			}
-			window, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			window, cancel := context.WithDeadline(context.Background(), runDeadline(t))
 			defer cancel()
 			done := make(chan error, 1)
 			var published apply.Publication
