@@ -28,7 +28,7 @@ func TestGitConflictReturnsToOwningChildBeforeIntegration(t *testing.T) {
 	}
 	sessions := &conflictManagers{}
 	executor := run.Executor{Workspaces: g, Sessions: sessions, Records: store}
-	result, err := executor.Execute(context.Background(), run.Request{MaxManagers: 5, ID: "conflict-repair", Project: "fixture", Prepared: p, Input: ref, Mandate: run.Implement, Allowance: run.NewAllowance(time.Now().Add(90*time.Second), 100), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
+	result, err := executor.Execute(context.Background(), run.Request{MaxManagers: 5, ID: "conflict-repair", Project: "fixture", Prepared: p, Input: ref, Mandate: run.Implement, Allowance: run.NewAllowance(runDeadline(t), 100), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
 	if err != nil || result.Technical != run.Completed || result.Decision != run.Submitted || result.Candidate == nil {
 		t.Fatal(result, err)
 	}
@@ -467,7 +467,7 @@ func TestSessionCannotIgnoreTechnicalIntegrationFailure(t *testing.T) {
 			injected := errors.New("injected technical " + stage)
 			sessions := &ignoringManagers{}
 			executor := run.Executor{Workspaces: technicalWorkspaces{Workspaces: g, failure: injected}, Sessions: sessions, Records: store}
-			result, err := executor.Execute(context.Background(), run.Request{MaxManagers: 5, ID: "ignored-" + stage, Project: "fixture", Prepared: p, Input: ref, Mandate: run.Implement, Allowance: run.NewAllowance(time.Now().Add(time.Minute), 100), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
+			result, err := executor.Execute(context.Background(), run.Request{MaxManagers: 5, ID: "ignored-" + stage, Project: "fixture", Prepared: p, Input: ref, Mandate: run.Implement, Allowance: run.NewAllowance(runDeadline(t), 100), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
 			if !errors.Is(err, injected) || result.Technical == run.Completed || result.Candidate != nil || !sessions.ignored {
 				t.Fatal("ignored tool failure became success", result, err)
 			}

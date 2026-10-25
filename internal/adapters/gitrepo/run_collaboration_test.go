@@ -203,7 +203,7 @@ func (c *collaboration) execute(t *testing.T, id string, mandate run.Mandate) ru
 	if err != nil {
 		t.Fatal(err)
 	}
-	request := run.Request{ID: id, Project: "fixture", Prepared: prepared, Input: input, Mandate: mandate, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(90*time.Second), 100), MessageTimeout: 45 * time.Second, CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
+	request := run.Request{ID: id, Project: "fixture", Prepared: prepared, Input: input, Mandate: mandate, MaxManagers: 5, Allowance: run.NewAllowance(runDeadline(t), 100), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
 	result, err := (&run.Executor{Sessions: c, Workspaces: git, Records: records}).Execute(context.Background(), request)
 	if c.stops {
 		c.assertNoHostNarration(t)

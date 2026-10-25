@@ -86,7 +86,7 @@ func TestPublicationAllowsValidAddedAndDeletedRegistryShards(t *testing.T) {
 		t.Fatal(err)
 	}
 	records, _ := runstore.New(git.StateRoot)
-	verified, err := (&run.Executor{Sessions: &controlledManagers{crossed: make(chan struct{})}, Workspaces: git, Records: records}).Execute(ctx, run.Request{ID: "registry-verify", Project: "registry-fixture", Prepared: prepared, Input: ref, Mandate: run.Verify, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(time.Minute), 100), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
+	verified, err := (&run.Executor{Sessions: &controlledManagers{crossed: make(chan struct{})}, Workspaces: git, Records: records}).Execute(ctx, run.Request{ID: "registry-verify", Project: "registry-fixture", Prepared: prepared, Input: ref, Mandate: run.Verify, MaxManagers: 5, Allowance: run.NewAllowance(runDeadline(t), 100), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
 	if err != nil || verified.Technical != run.Completed || verified.Decision != run.Approve {
 		t.Fatal(verified.Technical, verified.Decision, err)
 	}
@@ -193,7 +193,7 @@ func TestCustomManifestPublicationUsesV1LockAndProtectedTargetStartsNoRun(t *tes
 		t.Fatal(err)
 	}
 	store, _ := runstore.New(git.StateRoot)
-	verified, err := (&run.Executor{Sessions: &controlledManagers{crossed: make(chan struct{})}, Workspaces: git, Records: store}).Execute(ctx, run.Request{ID: "custom-verify", Project: "custom-manifest", Prepared: prepared, Input: ref, Mandate: run.Verify, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(time.Minute), 100), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
+	verified, err := (&run.Executor{Sessions: &controlledManagers{crossed: make(chan struct{})}, Workspaces: git, Records: store}).Execute(ctx, run.Request{ID: "custom-verify", Project: "custom-manifest", Prepared: prepared, Input: ref, Mandate: run.Verify, MaxManagers: 5, Allowance: run.NewAllowance(runDeadline(t), 100), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -216,7 +216,7 @@ func TestCustomManifestPublicationUsesV1LockAndProtectedTargetStartsNoRun(t *tes
 	prepared = prepare()
 	executor := &applyExecutor{t: t, git: git, store: store}
 	command := apply.Command{Executor: executor, Candidates: git, Records: store, Publisher: publisher}
-	report, err := command.Execute(ctx, run.Request{ID: "protected", Project: "custom-manifest", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(time.Minute), 100)})
+	report, err := command.Execute(ctx, run.Request{ID: "protected", Project: "custom-manifest", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(runDeadline(t), 100)})
 	if err == nil || !strings.Contains(err.Error(), "non-protected") || len(executor.requests) != 0 || report.Publication != nil {
 		t.Fatal("protected target was not an early preflight refusal", err, len(executor.requests))
 	}

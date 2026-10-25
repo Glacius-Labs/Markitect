@@ -30,7 +30,7 @@ func TestLocalFetchPackedNoChange(t *testing.T) {
 	t.Setenv("HOME", isolatedHome)
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(isolatedHome, ".config"))
 	_, _, original, input := runFixture(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	ctx, cancel := context.WithDeadline(context.Background(), runDeadline(t))
 	defer cancel()
 	// Both ordinary file transport and the explicit upload-pack command must
 	// preserve a repository name containing spaces and shell metacharacters.
@@ -130,7 +130,7 @@ func TestLocalFetchPackedNoChange(t *testing.T) {
 	}
 	executor := &applyExecutor{t: t, git: git, store: store, noChange: true}
 	command := apply.Command{Executor: executor, Candidates: git, Records: store, Publisher: &Publisher{Repository: adapter(t), Store: git}}
-	report, err := command.Execute(ctx, run.Request{ID: "packed-nochange", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(2*time.Minute), 150), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
+	report, err := command.Execute(ctx, run.Request{ID: "packed-nochange", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(runDeadline(t), 150), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
 	if err != nil || report.Status != model.Passed || report.Publication == nil || !report.Publication.NoChange || !report.Publication.Readback || len(report.Publication.CompletedPaths) != 0 || len(executor.requests) != 3 {
 		t.Fatal("complete no-change source consumer failed", report.Status, report.Publication, err)
 	}
