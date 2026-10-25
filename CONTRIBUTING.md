@@ -38,6 +38,8 @@ python -B scripts/check-docs.py
 python -B -m unittest discover -s tools/library-oracle
 ```
 
+On Windows, real Git is much slower: `internal/adapters/gitrepo` alone took 23 minutes on the CI runner and up to 40 minutes on a loaded workstation. Use `-timeout=60m` there, as Windows CI does. Tests that do not test time take their Run deadline from the test's own deadline, so the `-timeout` value bounds a hang.
+
 Run `gofmt` on changed Go files and `git diff --check`. CI checks tracked Go formatting, every production/test/platform import, actual package-map entries, complete working/fixed accounting, selected hook/pipeline pins and generated view freshness. The independent Library oracle and bounded transport checks retain their scope. Obsolete engines and their tests/gates are removed together; no skips or success stubs may replace required checks.
 
 Check official generated view bytes:
