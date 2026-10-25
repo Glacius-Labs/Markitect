@@ -507,7 +507,21 @@ func copyCheck(c *Check) *Check {
 	check := *c
 	check.Checks = slices.Clone(c.Checks)
 	check.Stale = slices.Clone(c.Stale)
+	check.BuildOutputs = slices.Clone(c.BuildOutputs)
 	return &check
+}
+
+// BuildOutputs lists once each, sorted, the build outputs that the checks of
+// r's handoffs report: what an Implement Run left out of its candidate.
+func (r Result) BuildOutputs() []string {
+	var outputs []string
+	for _, h := range r.Handoffs {
+		if h.Check != nil {
+			outputs = append(outputs, h.Check.BuildOutputs...)
+		}
+	}
+	slices.Sort(outputs)
+	return slices.Compact(outputs)
 }
 
 func copyHandoff(h Handoff) Handoff {

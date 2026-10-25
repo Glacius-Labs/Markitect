@@ -16,6 +16,7 @@ import (
 	"reflect"
 	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -82,7 +83,7 @@ func localCommand(ctx context.Context, dir string, input []byte, args ...string)
 	if err := boundedCommandError(cmd.Run(), out, stderr); err != nil {
 		return "", fmt.Errorf("local Git %s: %w: %s", args[0], err, stderr.String())
 	}
-	if args[0] == "ls-tree" || args[0] == "diff" || args[0] == "ls-files" {
+	if args[0] == "ls-tree" || args[0] == "diff" || args[0] == "ls-files" || args[0] == "cat-file" {
 		return out.String(), nil
 	}
 	return strings.TrimSpace(out.String()), nil
@@ -446,6 +447,11 @@ func (c *localCopy) Snapshot(ctx context.Context) (run.Commit, error) {
 	return snapshotGit(ctx, c.location, localCommand, dirs, localExecutables(c.location))
 }
 
+// Outputs lists the copy's build outputs, which no fixed state holds.
+func (c *localCopy) Outputs(ctx context.Context) ([]string, error) {
+	return untrackedOutputs(ctx, c.location, localCommand, localExecutables(c.location))
+}
+
 // elfMagic opens every ELF file: the executables, objects and libraries that
 // builds in the Linux runtime produce.
 var elfMagic = []byte{0x7f, 'E', 'L', 'F'}
@@ -454,14 +460,79 @@ var elfMagic = []byte{0x7f, 'E', 'L', 'F'}
 // only their first bytes and follows no symlink; a vanished path is skipped.
 type elfProbe func(context.Context, []string) ([]string, error)
 
-// untrackedOutputs lists every untracked ELF file of a copy. Such build
-// outputs are operational state: they never enter a fixed commit.
+// untrackedOutputs lists the build outputs of a copy: its untracked ELF files
+// that no registry shard in its index names. Such files are operational state:
+// they never enter a fixed commit.
 func untrackedOutputs(ctx context.Context, dir string, command gitCommand, executables elfProbe) ([]string, error) {
+	elf, err := untrackedELF(ctx, dir, command, executables)
+	if err != nil {
+		return nil, err
+	}
+	return unregistered(ctx, dir, command, elf)
+}
+
+func untrackedELF(ctx context.Context, dir string, command gitCommand, executables elfProbe) ([]string, error) {
 	untracked, err := command(ctx, dir, nil, "ls-files", "--others", "-z")
 	if err != nil {
 		return nil, err
 	}
 	return executables(ctx, strings.FieldsFunc(untracked, func(r rune) bool { return r == 0 }))
+}
+
+// unregistered keeps the paths that no registry shard in the copy's index
+// names exactly: registration, not the file format, makes a file a
+// realization artifact. A directory entry claims no build output.
+func unregistered(ctx context.Context, dir string, command gitCommand, paths []string) ([]string, error) {
+	if len(paths) == 0 {
+		return nil, nil
+	}
+	listing, err := command(ctx, dir, nil, "ls-files", "-z", "--", ".markitect/registry")
+	if err != nil {
+		return nil, err
+	}
+	var shards []string
+	var request strings.Builder
+	for _, p := range strings.FieldsFunc(listing, func(r rune) bool { return r == 0 }) {
+		if strings.HasSuffix(p, "/registry.yaml") && !strings.Contains(p, "\n") {
+			shards = append(shards, p)
+			request.WriteString(":" + p + "\n")
+		}
+	}
+	registered := map[string]bool{}
+	if len(shards) != 0 {
+		out, err := command(ctx, dir, []byte(request.String()), "cat-file", "--batch")
+		if err != nil {
+			return nil, err
+		}
+		for _, shard := range shards {
+			header, rest, _ := strings.Cut(out, "\n")
+			fields := strings.Fields(header)
+			if len(fields) == 2 && fields[1] == "missing" {
+				out = rest
+				continue
+			}
+			size := -1
+			if len(fields) == 3 {
+				if size, err = strconv.Atoi(fields[2]); err != nil {
+					size = -1
+				}
+			}
+			if size < 0 || len(rest) <= size || rest[size] != '\n' {
+				return nil, fmt.Errorf("unreadable registry shard %s", shard)
+			}
+			for _, file := range project.RegisteredFiles(shard, []byte(rest[:size])) {
+				registered[file] = true
+			}
+			out = rest[size+1:]
+		}
+	}
+	var outputs []string
+	for _, p := range paths {
+		if !registered[p] {
+			outputs = append(outputs, p)
+		}
+	}
+	return outputs, nil
 }
 
 // clearOutputs removes the untracked build outputs that a merge of incoming
@@ -597,13 +668,18 @@ func snapshotGit(ctx context.Context, dir string, command gitCommand, dirs []str
 			return run.Commit{}, err
 		}
 	}
-	// Untracked ELF files, such as a Manager's own build outputs, stay untracked
-	// in the copy. Everything else, Gitignored or not, is captured.
-	outputs, err := untrackedOutputs(ctx, dir, command, executables)
+	// Untracked ELF files that no registry shard names, such as a Manager's own
+	// build outputs, stay untracked in the copy. Everything else, Gitignored or
+	// not, is captured; the shards are read once staged, as the copy holds them.
+	elf, err := untrackedELF(ctx, dir, command, executables)
 	if err != nil {
 		return run.Commit{}, err
 	}
 	if _, err = command(ctx, dir, nil, "add", "--force", "--all", "--", "."); err != nil {
+		return run.Commit{}, err
+	}
+	outputs, err := unregistered(ctx, dir, command, elf)
+	if err != nil {
 		return run.Commit{}, err
 	}
 	if len(outputs) != 0 {

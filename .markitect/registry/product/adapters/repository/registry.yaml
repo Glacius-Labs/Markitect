@@ -192,6 +192,10 @@ artifacts:
     form: test
     realizes: [product/adapters/repository/repository-boundaries, product/run/confirmed-run-history]
     why: "Proves each assignment, message and judgment counterexample of the collaboration contract and hierarchical questions with controlled Sessions on actual Git."
+  - path: "internal/adapters/gitrepo/run_build_output_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries, product/realization/artifact-accounting]
+    why: "Proves with controlled Sessions on actual Git that registration, not the file format, decides which binaries a candidate holds, and that every left-out build output stays visible up to Verify."
   - path: "internal/adapters/gitrepo/linux_native_test.go"
     form: test
     realizes: [product/adapters/repository/repository-boundaries, product/run/confirmed-run-history]
