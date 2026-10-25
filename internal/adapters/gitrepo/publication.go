@@ -9,7 +9,6 @@ import (
 	"runtime"
 
 	"github.com/Glacius-Labs/Markitect/internal/apply"
-	"github.com/Glacius-Labs/Markitect/internal/organization"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
@@ -92,8 +91,8 @@ func (p *Publisher) Publish(ctx context.Context, request apply.PublicationReques
 	if err != nil {
 		return out, err
 	}
-	// Nothing stale is published: Root's responsibility covers every shard.
-	if err = prepared.ValidateCandidate(attempt, organization.Root); err != nil {
+	// The complete candidate check keeps no stale registry link.
+	if err = prepared.ValidateCandidate(attempt); err != nil {
 		return out, err
 	}
 	if len(prepared.Checks()) > 0 {

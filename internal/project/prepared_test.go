@@ -50,20 +50,20 @@ func TestFixedProjectRejectsExternalInstructionMutationAndDistinguishesManifestF
 		attempts := r.Attempts()
 		return attempts[len(attempts)-1]
 	}
-	if err = p.ValidateCandidate(preview(), "."); err != nil {
+	if err = p.ValidateCandidate(preview()); err != nil {
 		t.Fatal("unchanged fixed input refused", err)
 	}
 	changed, _ := snapshot.NewEntry(location.Path, snapshot.Regular, []byte("mutated external guidance"))
 	actual.Instructions = append([]project.SourceFile(nil), raw.Instructions...)
 	actual.Instructions[len(actual.Instructions)-1].File = changed
-	if err = p.ValidateCandidate(preview(), "."); !errors.Is(err, project.ErrCandidateInvalid) {
+	if err = p.ValidateCandidate(preview()); !errors.Is(err, project.ErrCandidateInvalid) {
 		t.Fatal("external input drift was not rejected", err)
 	}
 	actual = raw
 	for _, incomplete := range []bool{false, true} {
 		_, _, inspection := partialManifest(t, incomplete)
 		observationErr = project.NewManifestPreflightError(selection.Local, inspection)
-		err = p.ValidateCandidate(preview(), ".")
+		err = p.ValidateCandidate(preview())
 		if err == nil || errors.Is(err, project.ErrCandidateInvalid) == incomplete {
 			t.Fatalf("known invalid vs incomplete manifest classification: incomplete=%v error=%v", incomplete, err)
 		}
@@ -105,7 +105,7 @@ func TestCandidateAccountingFeedbackIsBoundedDeterministicAndExcludesFileContent
 			t.Fatal(err)
 		}
 		attempts := preview.Attempts()
-		err = p.ValidateCandidate(attempts[len(attempts)-1], ".")
+		err = p.ValidateCandidate(attempts[len(attempts)-1])
 		if !errors.Is(err, project.ErrCandidateInvalid) {
 			t.Fatal("accounting refusal lost its semantic classification", err)
 		}
@@ -160,8 +160,11 @@ func TestStaleRegistryLinksBindOnlyTheResponsibleManagers(t *testing.T) {
 			if accounting.Status() != realization.Accounted || len(stale) != 1 || stale[0].Code != "registry.stale_link" || stale[0].Path.String() != "realization/lending.go" {
 				t.Fatalf("stale link is not reported as realization still to do: %+v %+v", accounting.Findings(), stale)
 			}
+			if err := p.ValidateCandidate(candidate); !errors.Is(err, project.ErrCandidateInvalid) || !strings.Contains(err.Error(), "registry.stale_link") {
+				t.Fatal("the complete candidate check kept a stale link", err)
+			}
 			for manager, binds := range map[string]bool{"": false, "library": false, "lending/reminders": false, "lending": true, ".": true} {
-				err := p.ValidateCandidate(candidate, manager)
+				err := p.ValidateCandidateFor(candidate, manager)
 				if binds != errors.Is(err, project.ErrCandidateInvalid) || binds && (!strings.Contains(err.Error(), "registry.stale_link") || !strings.Contains(err.Error(), "realization/lending.go")) {
 					t.Fatalf("Manager %q: stale link binding %v, error %v", manager, binds, err)
 				}

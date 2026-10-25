@@ -380,7 +380,7 @@ func linuxNativeCopyProbe(t *testing.T, publication bool) {
 		if e != nil {
 			t.Fatal(e)
 		}
-		if e = prepared.ValidateCandidate(a, "."); e != nil {
+		if e = prepared.ValidateCandidate(a); e != nil {
 			t.Fatal(e)
 		}
 		tree := a.Model().Inputs().Raw.Census

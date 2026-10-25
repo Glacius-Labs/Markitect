@@ -71,7 +71,7 @@ func TestPublicationAllowsValidAddedAndDeletedRegistryShards(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = prepared.ValidateCandidate(checked, "."); err != nil {
+	if err = prepared.ValidateCandidate(checked); err != nil {
 		t.Fatal(err)
 	}
 	ref, err := service.Retain(ctx, copy, fixed)

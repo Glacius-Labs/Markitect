@@ -411,7 +411,7 @@ func (x *execution) checkErr(ctx context.Context, s *managerState, commit Commit
 		if x.request.Mandate == Assessment {
 			responsible = ""
 		}
-		err = x.request.Prepared.ValidateCandidate(a, responsible)
+		err = x.request.Prepared.ValidateCandidateFor(a, responsible)
 	}
 	if err != nil || x.request.Mandate == Assessment {
 		return err

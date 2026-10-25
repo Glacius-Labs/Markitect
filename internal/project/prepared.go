@@ -103,12 +103,17 @@ func (p Prepared) Checks() []ExecutionCheck {
 // ValidateCandidate preserves fixed intent while allowing registry realization.
 // Invalid candidates are legitimate inputs to review, but cannot be submitted
 // as a successful Implement. The adapter supplies a fixed revision acquisition.
-//
-// A stale registry link is realization still to do (StaleLinks): it
-// invalidates the state only within responsible's responsibility, Root
-// covering every shard. An empty responsible binds none, so the fixed input of
-// a command keeps them as work for Implement.
-func (p Prepared) ValidateCandidate(a PreviewPreparationAttempt, responsible string) error {
+// A stale registry link (StaleLinks) is realization still to do; this complete
+// check is Root's and keeps none, as before publication.
+func (p Prepared) ValidateCandidate(a PreviewPreparationAttempt) error {
+	return p.ValidateCandidateFor(a, organization.Root)
+}
+
+// ValidateCandidateFor is ValidateCandidate for one Manager's responsibility:
+// it holds the state only to the stale registry links of that Manager's
+// Package subtree, every shard for Root. An empty manager holds it to none, so
+// the input of a command and Assessment keep them as work for Implement.
+func (p Prepared) ValidateCandidateFor(a PreviewPreparationAttempt, manager string) error {
 	if !p.Valid() {
 		return fmt.Errorf("missing prepared project")
 	}
@@ -175,7 +180,7 @@ func (p Prepared) ValidateCandidate(a PreviewPreparationAttempt, responsible str
 	if status != model.Passed {
 		return fmt.Errorf("%w: candidate structural observation incomplete", ErrIncompleteInputs)
 	}
-	if stale := StaleLinks(a, responsible); len(stale) != 0 {
+	if stale := StaleLinks(a, manager); len(stale) != 0 {
 		return candidateError("registry links to Definitions the checked model no longer has", func(add func(code, path, message string)) {
 			for _, f := range stale {
 				add(f.Code, f.Path.String(), f.Message)
