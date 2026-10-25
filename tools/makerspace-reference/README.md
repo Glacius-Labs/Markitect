@@ -14,6 +14,6 @@ Each step is its own Go module (`module makerspace`, standard library only) with
 
 Build and test one step: `cd c8 && go build ./cmd/makerspace && go test ./...`.
 
-`ambiguities.md` lists readings chosen where the text allows more than one. Mutants are not written yet; they wait for the oracle's probe-family list.
+`ambiguities.md` lists readings chosen where the text allows more than one.
 
 Mutants: `mutants/<family>/` holds `mutant.patch`, `STEP` (the tree it applies to) and `NOTE.md`; `mutants/apply.sh FAMILY DEST` copies the step tree and applies the patch. One mutant per oracle probe family (30). P-RULE-ORDER is not caught by the unit tests of its own tree.

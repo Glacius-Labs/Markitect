@@ -1,6 +1,6 @@
 # Readings chosen where the neutral text is open
 
-Each line: sentence (section), reading implemented. Reviewer findings are not yet applied.
+Each line: sentence (section), reading implemented. Two independent reviews against the neutral text found no defects.
 
 1. 2.5 / 3.1 check 2: an `actor` that is not a valid identifier is refused `invalid_argument`, not `unknown_actor`.
 2. 2.4: an empty or whitespace-only line gets an `invalidRequest` response with `id` null.
@@ -13,3 +13,6 @@ Each line: sentence (section), reading implemented. Reviewer findings are not ye
 9. 3.1 check 5: every `memberId` argument that refers to an existing record must name a user with role `member` (also in `revokeCertification`, `listCertifications`), otherwise `not_found`.
 10. C2: the cancelled set uses the reported status at the request time (a reservation whose end has passed is `missed` and is not cancelled).
 11. C1: a `forbidden` refusal is recorded only after checks 1 to 3 passed; `time_regression` and earlier are not recorded.
+12. C1: a `getMember` by a member for a nonexistent member is `not_found` (check 5 precedes ownership) and is not audited.
+13. 2.4: lone-surrogate escapes are accepted as U+FFFD and duplicate member names are last-wins (unspecified).
+14. 11.1: an invoice settled by credit at generation has status `paid` and never blocks (C5).
