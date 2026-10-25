@@ -9,7 +9,7 @@ Step 4 of the [delivery plan](../implementation-plan.md#steps): the native requa
 - Three S4 runs started from one fixed seeded realization. In all three the defect was found and repaired, and C6 was met under the final criterion.
 - **Not shown natively:** the public Verify Reject → fresh Implement → fresh Verify → publication branch (P5). No S4 run reached it, because Assessment caught the seeded defect every time (see [P5](#p5-public-verify-reject-branch)).
 - **Not covered:** [PR #696](https://github.com/Glacius-Labs/Markitect/pull/696), the refined idle stop, merged after F, so this series qualifies F's rule, not #696's.
-- **P4**, the obvious-seed ordinary repair run outside the comparison, did not pass its negative oracle gate as predeclared ([P4](#p4-obvious-seed-outside-the-comparison)).
+- **P4**, the obvious-seed ordinary repair run outside the comparison: its negative oracle gate failed as predeclared and passed a post-hoc corrected criterion ([P4](#p4-obvious-seed-outside-the-comparison)). The Apply then passed C1 and published a one-line repair, which the positive oracle confirmed with 12 of 12 cases.
 
 ## Binding
 
@@ -76,13 +76,42 @@ The S4 seed was designed so that Implement would preserve a defect that looked c
 
 P4 was planned as one ordinary-repair run with a one-line seed: `loan.DueDate < assessmentDate` became `<=` in `overdue.go`, tests untouched, as a single neutral root commit `72b36808` (patch SHA-256 `f212e8ec2fa81d043e277444bfad4ee41b8ef82fbb5b063c2fd2a8cb6588bd13`). The predeclared negative gate allowed oracle failures only in E10-overdue, plus E04-admission if that case assesses due-today loans.
 
-The gate's actual result (`oracle\p4-negative\result.json`, SHA-256 `1be019afccf759c15c996dba52186d00d120985a9b22b922663aa5d1121a0968`):
-- 8 of 12 cases failed: E02, E03, E04, E05, E10, E11, E12 and the paired fourth-loan witness.
-- Every one of the 8 errors is the same `response.result.notices` assertion, a due-today loan reported as overdue. No other assertion failed.
-- Discrimination was confirmed and no residue remained.
-- The oracle's state snapshots assess overdue on the loans' due date, so the boundary seed surfaces in every case that takes such a snapshot.
+The negative gate, `oracle\p4-negative\result.json` with SHA-256 `1be019afccf759c15c996dba52186d00d120985a9b22b922663aa5d1121a0968`:
 
-The gate therefore failed as written because the allowed set was predicted too narrowly, although the defect was detected and nothing else broke. **P4 status: pending the coordinator's decision. No P4 Apply has run.**
+| | Predeclared | Actual |
+| --- | --- | --- |
+| Failing cases | E10-overdue, and E04-admission only if it assesses due-today loans | 8 of 12: E02-copies, E03-successful-loan, E04-admission, E05-suspension, E10-overdue, E11-invalid-input, E12-callable, paired-fourth-loan |
+| Failing assertion | — | One in each case, always `response.result.notices: expected IDs [], got […]`. The request is `assessOverdue` at 2026-10-15, and every returned notice has due date 2026-10-15 |
+| Other assertions | — | None failed. E01, E06, E08 and E09 passed; discrimination was confirmed; no residue remained |
+| Gate as written | Pass | **Failed**: the allowed set was predicted too narrowly |
+
+The cause: in many cases the oracle's state snapshots assess overdue on the loans' due date. The boundary seed therefore surfaces in every case that takes such a snapshot, and each case stops at its first failure.
+
+**Corrected criterion, post hoc** (decided by the coordinator on 25 October 2026, after the gate result was observed; written into the P4 packet before the P4 Apply as `gate-criterion-posthoc.json`, SHA-256 `7d9618797e896bde161d4ae705d181c8615abec7950c218fc08236c4ea775a98`): the negative gate passes when at least one case fails and every failure is an overdue-notices assertion caused by a due-today loan. That means the failing request is `assessOverdue`, the expected notice set is empty, and every returned notice's due date equals the assessment date; discrimination must also be confirmed and the run residue-free.
+- Reason: the gate exists to show that the seed is detected and breaks nothing else. Only the predicted case list was wrong.
+- The mechanical evaluation, `gate-evaluation-posthoc.json` (SHA-256 `c08aa784a66e8129fcca946b5d80711fac5c7da16a247ba0b8c3d0dc94603174`), shows the gate passes the corrected criterion.
+- P4 stays outside the comparison and counts toward no comparison statistic. It had one attempt.
+
+The P4 Apply, `87f523e1fdef70765b8f58cebf5c1844`, passed C1:
+
+| Item | Value |
+| --- | --- |
+| Run | 600 s; 25 messages (8/11/6); 18 distinct threads; every Run closed |
+| Sequence | Assessment approved with 12 Findings; Implement submitted; Verify approved; publication of the verified candidate |
+| Published | 5 paths: `realization/lending/reminders/overdue.go`, the catalog, lending and members tests, and the members registry shard |
+| Final candidate | `eb7847432bad52b55820f923e88beb34c53e70f0` / tree `ca58bbfcea478582ae9c6835a095a47865d68b1f`; the bundle (SHA-256 `d55a908c…`) reopened exactly |
+| Tokens | 8,356,330 |
+| Evidence | `package-result.json` `ab86d4b28f28…`, `run-summary.json` `656ab7f3caa3…`, `files.sha256` `b9eeb732f676…`; no residue |
+
+The positive oracle on the final candidate, `oracle\p4-positive\result.json` (SHA-256 `d8c631463fb3654588e24aac436fb7f9378b1ce514eac596b8f202b50aef0b63`), confirmed the repair: m2 12 of 12 with discrimination, the evaluator at F, residue-free.
+
+The independent retained-result review found P4 clear, with notes:
+- In Assessment, four Managers (Root, `lending`, `lending/reminders`, `library`) named the defect. They read `overdue.go` and ran `go test`, where the existing test `TestAssessOverdueCurrentOpenStrictBeforeAndReadOnly` fails on the seeded input.
+- Implement reverted the one line (`<=` back to `<`, the exact inverse of the seed). It also added three cross-package regression tests and an accurate registry `why` text.
+- Verify approved.
+- No seed wording reached any writer input, no Note was written, and no residue or credential was found.
+
+**Limit:** the seed left its test in place, so P4 shows detection and repair when the project's own test signals the defect. It does not show detection of a defect that no test catches; the coherent S4 seed covers that case.
 
 ## Deviations and corrections
 
@@ -112,6 +141,6 @@ Execution host root: `Documents\Codex\Markitect-V1-Requalification\e11e6cff\`.
 - `inputs\<name>\`: committed inputs with `input-binding.json`.
 - `packets\<name>\`: `profile.json`, the binary and controller copies, the runtime profile and run-config template, `state-from-manifest.json` where state was carried, and `attempt-01\` with every step record, `run.json`, `fixture\`, `state\` (Run records, candidate bundles, transcripts, Notes, Apply report), `start.bundle`, `package-result.json`, `run-summary.json` and `files.sha256`, written last and excluding only itself.
 - `seeds\` and `handover\`: approved patches, seeded-input bundles and the seeded-line lists. These are never writer inputs.
-- `oracle\p4-negative\`: the P4 gate.
+- `oracle\p4-negative\` and `oracle\p4-positive\`: the P4 gate and the oracle on P4's final candidate.
 
 Run log and decisions: the step-4 notes of the coordinating session.
