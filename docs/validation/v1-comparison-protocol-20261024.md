@@ -465,7 +465,7 @@ Each step continues the arm's own actual result, defects included. A chain runs 
 - **`repeat`:** only when the attempt is shown to be an infrastructure failure, that is, the harness ended before any case ran or a technical fault provably independent of the candidate. The next attempt then runs, both stay recorded, and the last one counts.
 - **`no-candidate`:** every other case. The step counts **every probe family of the step as missed** (30 at W0 and C1, 31 from C2 on) and is not conforming, and the chain continues as above.
 
-The same rule applies to both arms. A failure that cannot be clearly separated from the candidate counts as the first result.
+The same rule applies to both arms. A failure that cannot be clearly separated from the candidate counts as the first result. **For Phase C, C4's rule replaces section 7's replacement rule.** A step gets at most two repeats, for both arms, and only a failure shown to be independent of the candidate qualifies. A third infrastructure failure at the same step stops the series, and it is reported.
 - An attempt that left a candidate, or for M raised a model blocker, is never repeated.
 - The study numbers each step's attempts from 01, because step 4 makes M's replacement attempt as a new packet.
 - Every attempt's time and tokens count toward the step's cost.
@@ -534,7 +534,7 @@ Every candidate of both arms is assessed with `assess_candidate.py` at R_C under
   - time, tokens, messages and quota.
 - **Unit and test:** the unit is the chain. The primary comparison is a one-sided exact permutation (Mann–Whitney) test that M's per-chain totals are lower.
 - **Reading:**
-  - **"Supports"** needs all three: p ≤ 0.05; M at no step missing more probe families than B, summed over chains; and no critical error type that only M shows.
+  - **"Supports"** needs all three: p ≤ 0.05; M at no step missing more probe families than B, summed over chains; and no error type that only M shows, over the error-type list below (as in section 8, B5 and `analyze.py`).
   - M lower without that: a **tendency**, not established.
   - Equal totals: **no quality advantage shown**. With M's higher cost, this counts against the claim.
   - B lower: **counts against Markitect**.
@@ -635,7 +635,7 @@ Notes:
 - **Estimate per chain:**
   - M: W0 about 51 M tokens. Each change step costs about 22 M for Assessment and Verify over the complete hierarchy, plus Implement, estimated at 10–25 M against 28.5 M for the full W0 build. That gives about 32–47 M per change step, so **about 340–480 M tokens per chain, about 14–24 % of the weekly quota** at 20–25 M tokens per percent, and about 3–4.5 h.
   - B: about 12.5 M tokens (under 1 %) and about 50 minutes per chain.
-- **Quota guard**, an operational rule that does not affect any reading: no counted run starts while the weekly quota is at 90 % or more. The series then waits for the reset and continues in order.
+- **Quota guard**, an operational rule that does not affect any reading: no counted run starts while the weekly quota is at 90 % or more. If the guard stops the series, it pauses between steps and resumes after the 1 November reset in the same order. A pause changes no rule and no order, and it is recorded. No chain or step is skipped or reordered because of quota.
 
 **N = 3 chains per arm** (proposal).
 - **Quota:** three chains need about 41–72 % of the weekly quota, plus margin for repeats, on top of the 20 % already used. That is about 61–92 % of the window that resets 2026-11-01. The series may therefore reach the 90 % guard and pause for the reset; it then continues in order, which changes no reading. N = 5 would need about 70–120 % on top and does not fit one window.
@@ -654,7 +654,7 @@ The study infrastructure is frozen with this addendum and does not change in con
 | Arm B's documents | `phase-c/packet-4840fb20f52c/SHA256SUMS` |
 | Study binding | `phase-c/study.env`: RC `4840fb20`, image `3d75d81f…`, the packet |
 | Family catalog | `phase-c/e2e-v2/assess-<step>/assessment.json`, the ten positive controls |
-| Evidence-root scripts and records | `phase-c/FREEZE.sha256` (sha256 `648ca3b952640ad71b9ac99c465baf4200db2aa022cc348c5eab33a7155b04a0`; 23 files and 9 repository references), with these files: prepare-pc `49aecfba…`, run-b-pc `b7edb6ee…`, drive-b-pc-chain `c961a3b0…`, assess-pc `9aae63b3…`, assess-m-pc `3d97708b…`, build-ledger-pc `7a23207b…`, quiet-monitor `20e1647d…`, e2e-assessor-v2 `c4efe155…`, prepare-review-pc `ad99dffd…`, save-review-pc `f5974dfd…`, save-confirmation-pc `c0c0d27f…`, study.env `44a908ab…`, the packet and the ten catalog records. An independent Opus review covered the run, assessment, ledger and monitor scripts over four rounds; its last round accepted after a one-line fix, which is applied. The review scripts, which follow Phase B's, and the recorder of second-reviewer confirmations were reviewed with this addendum. |
+| Evidence-root scripts and records | `phase-c/FREEZE.sha256` (sha256 `1530380d8a5426c078991d6c9ca5cc3ff2f4b39d9b9bea0f19dfd740450e6c9a`; 23 files and 9 repository references), with these files: prepare-pc `49aecfba…`, run-b-pc `b7edb6ee…`, drive-b-pc-chain `ac45b658…`, assess-pc `9aae63b3…`, assess-m-pc `d07cf41c…`, build-ledger-pc `74045912…`, quiet-monitor `20e1647d…`, e2e-assessor-v2 `c4efe155…`, prepare-review-pc `ad99dffd…`, save-review-pc `f5974dfd…`, save-confirmation-pc `c0c0d27f…`, study.env `44a908ab…`, the packet and the ten catalog records. An independent Opus review covered the run, assessment, ledger and monitor scripts over four rounds; its last round accepted after a one-line fix, which is applied. The review scripts, which follow Phase B's, and the recorder of second-reviewer confirmations were reviewed with this addendum. |
 | Arm M's runner | step 4's counted-run controller `controller-pc-review-02` (`Markitect-V1-Requalification\528ef346\controller-pc-review-02`), reviewed READY: `requalify.py` `cafb9fcd31400c8fdd94e1ff6f356b083bba48a8c60e3a8369c28be881ecef43`, 51 self-tests, `launch.py` `492d4874c60b53ec…`, its `SHA256SUMS` `535b0e31a4413e78c322fb3177fccbbc5fe01da628d2b7eb7688004f9a3cde56`. Its published checks are the fixture's declared IDs, each exactly once, and cleanup recognizes check containers by those IDs, and its fixed `check_report` passes the retained `ee91c7e6` report. The smoke's recorded verdict stays `technical_fail` (C7). |
 
 ### C9. Limits
