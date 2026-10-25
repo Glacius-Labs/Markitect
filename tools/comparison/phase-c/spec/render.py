@@ -31,6 +31,8 @@ SUBSTITUTIONS = [
     ("workshop/argument-values", "Every range in the model", "Every range in this document", 1),
     ("workshop/initial-state", "in the model means", "in this document means", 1),
     ("workshop/delivery", "agree with the model.", "agree with this document.", 1),
+    ("workshop/computed-values", "rules of the model", "rules of this document", 1),
+    ("workshop/computed-values", "formula in the model", "formula in this document", 1),
 ]
 
 
@@ -72,6 +74,7 @@ def sections(definitions):
         (3, "Argument values", ["workshop/argument-values"]),
         (3, "Initial state and generated identifiers", ["workshop/initial-state"]),
         (3, "Records in responses", ["workshop/results"]),
+        (3, "Computed values and limits", ["workshop/computed-values"]),
         (2, "Processing a request", []),
         (3, "Order of checks", ["workshop/request-processing"]),
         (3, "Refusal codes", ["workshop/refusal-codes"]),
