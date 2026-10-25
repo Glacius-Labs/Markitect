@@ -507,21 +507,23 @@ func TestRootCompletionRefusesAnEarlierJudgmentAfterItsStateChanged(t *testing.T
 				// End the response with this question open.
 				_, err := m.spec.Tools.Ask(ctx, "b", "Confirm your reviewed handoff.")
 				return true, err
-			case 2:
-				// b's answer and b's request arrive after Root judged.
-				for _, e := range message.Events {
-					if e.Question != nil {
-						if err := m.write(".gitignore", "*.ignored\n# reviewed by Root\n"); err != nil {
+			default:
+				// b's answer and b's request arrive after Root judged. They are two
+				// tool calls, so they come in one message or in two.
+				if len(message.Events) != 0 {
+					for _, e := range message.Events {
+						if e.Question != nil {
+							if err := m.write(".gitignore", "*.ignored\n# reviewed by Root\n"); err != nil {
+								return true, err
+							}
+						}
+						if err := m.handle(ctx, e); err != nil {
 							return true, err
 						}
 					}
-					if err := m.handle(ctx, e); err != nil {
-						return true, err
-					}
+					return true, nil
 				}
-				return true, nil
-			case 3:
-				if len(message.Events) != 0 || !strings.Contains(feedbackText(message), "your working state changed after your judgment") || !strings.Contains(feedbackText(message), "check your current state and judge again") {
+				if !strings.Contains(feedbackText(message), "your working state changed after your judgment") || !strings.Contains(feedbackText(message), "check your current state and judge again") {
 					return true, fmt.Errorf("Root completion relied on its earlier judgment: %+v", message)
 				}
 				return true, m.judge(ctx, run.Submitted, nil)
@@ -539,7 +541,7 @@ func TestRootCompletionRefusesAnEarlierJudgmentAfterItsStateChanged(t *testing.T
 	}
 	result := c.execute(t, "root-state", run.Implement)
 	root := c.manager(".")
-	if result.Decision != run.Submitted || root.judgments != 2 || len(root.messages) != 3 {
+	if last := root.messages[len(root.messages)-1]; result.Decision != run.Submitted || root.judgments != 2 || len(last.Events) != 0 || len(root.messages) < 3 || len(root.messages) > 4 {
 		t.Fatal("Root completion accepted a judgment of an older state", root.judgments, len(root.messages))
 	}
 	if got := c.read(t, ".gitignore"); !strings.Contains(got, "# reviewed by Root") {
