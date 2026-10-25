@@ -280,7 +280,7 @@ Status: **approved by the coordinator on 24 October 2026 at commit `4708c1b55aa9
 3. Phase B starts only after every Phase A run is done and assessed, and keeps the same serial engine discipline with step 4.
 4. If a stop condition or a systematic infrastructure failure uses up the budget, the study stops and reports instead of extending ceilings.
 
-Phase A's text, tools and decision rule above stay unchanged; Phase B is read by its own rule and never pooled with Phase A.
+Phase A's text, tools and decision rule above stay unchanged; Phase B is read by its own rule and never pooled with Phase A. Before any Phase B data, B8 moved arm M's Phase B to a later source F′ and gave up the counterbalanced pairs for Phase B.
 
 ### B1. Why another phase, and which project
 
@@ -377,3 +377,12 @@ This extends the table of section 4, which stays unchanged.
 | Carried E01–E12, witness, X01–X06 at M5 without suspension | as in section 4, with the M5 edits | as in section 4 |
 
 - **Independent review (condition 2), 24 October 2026.** A fresh Opus reviewer checked the materials at `999a6242` read-only against B1–B6. Its verdict: the overlays contain every T1–T3 edit and no other semantic change; the snapshots are coherent with no stale statement; the renderer reproduces M1 and M2 byte-identically and proves M3–M5; every new case is an unambiguous consequence of sentences in both representations, with correct date arithmetic. It built an independent reference library from the documents, which passes all 21, 27 and 26 cases and the discrimination at each profile, also through the oracle's real transport, and nine deliberately wrong variants were each caught. Its one must-fix, the obligation table above, and its should-fix items (the outer time limit, hash-binding the expectation files, the two wording additions, the program hash in the assessment record, follow-on edits and the fixture note) are applied in this commit; anchors are now checked for every profile. Left as known limits: no offline test exercises the assessor's m3–m5 container path, which the reviewer exercised end to end, and `loanClass: null` or non-string classes stay untested because the interface leaves them ambiguous.
+
+### B8. Pre-data amendment: arm M runs Phase B on F′ (25 October 2026)
+
+Recorded on the coordinator's decision of 25 October 2026, before any Phase B run of either arm.
+
+- **Finding of F.** Step 4's offline rehearsal showed that on F the Apply preflight refuses M's T3 input. The M5 snapshot deletes `members/set-member-status`, and the registry links to that Definition are then invalid, although [concept §6.3](../concepts/v1-concept.md#63-registry-maintenance-is-realization-project-intent-is-not) makes their cleanup part of the Managers' realization work. This is a product gap of F and is recorded as a finding of F: on F, every M T3 run would end before any Manager started.
+- **F′.** Arm M runs every Phase B run on F′, the Main commit that merges the fix for this gap (being made by the A4 session). Its SHA is recorded here before the first M run of Phase B. F′ also contains every change merged to Main after F, among them #696 (the Apply's idle stop counts every action, so read-only review is never a standstill). **M's Phase A ran on F; M's Phase B runs on F′.** Phase A is not re-run, and Phase B's M results are F′ results.
+- **Unchanged.** Arm B (runner, prompt, image and the documents m3–m5), the T fixtures and model snapshots, the hidden cases and the assessor at `43d0365e` stay exactly as frozen. The owner change at each step stays model-only.
+- **Order.** Arm B proceeds now; arm M follows once F′ exists. Phase B therefore does not run in counterbalanced pairs: B's runs precede M's in time. Each arm keeps the chain order of B5 (chains 1–3 T1–T4, then chains 4 and 5 with S1–S3 first). Time effects between the arms, such as provider load or model behavior changing over the hours between them, are a stated limit of Phase B.
