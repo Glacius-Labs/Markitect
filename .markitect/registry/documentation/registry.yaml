@@ -60,6 +60,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Records the step-4 native requalification of V1 on frozen source e11e6cff, arm M of the comparison, with bindings, results, deviations and limits.
+  - path: "docs/validation/v1-phase-b-arm-m-20261025.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records arm M's Phase B runs of the DEC-072 comparison on F′ and F's deletion refusal, with bindings, raw outcomes, reviews, deviations and limits.
   - path: "docs/concepts/sources/v1-source-implementation-approval-20261023.md"
     form: doc
     realizes: [documentation/current-guidance]
