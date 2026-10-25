@@ -100,6 +100,8 @@ A request whose `args` lack a stated argument, or carry an argument with a wrong
 
 An argument that is missing, `null`, of the wrong JSON type or outside its format or range is refused with `invalid_argument`. Each argument is checked on its own. Relationships between arguments, such as an end that is not after a start, and relationships to stored state are [checked later](#order-of-checks) and have their own codes.
 
+These formats and ranges apply to arguments, including `at`. An integer argument outside its range is out of range however many digits it has. Values the program computes can lie outside these ranges; [computed values and limits](#computed-values-and-limits) states the rules for those values.
+
 ### Initial state and generated identifiers
 
 A new process contains exactly one [user](#registry): identifier `admin`, name `Administrator`, role `admin`. There are no members, families, machines, courses, materials, reservations, invoices, incidents or audit entries.
@@ -120,6 +122,24 @@ Each kind has its own counter. The first record of a kind gets number 1 and each
 ### Records in responses
 
 A `result` object has exactly the members its operation names, and every object inside it has exactly the members stated for it: records have the fields of the [record list](#records), and other objects, such as an opening-hours object, a utilization row or the members of a report, have the fields their operation lists. There are never fewer or additional members. Nullable fields are present with the value `null` when they have no value. Lists are JSON arrays; an empty list is `[]`, never `null`. Amounts, counts and minutes are JSON integers. The order of members inside a JSON object is free; the order of list elements is fixed by the [order of listed results](#order-of-listed-results).
+
+### Computed values and limits
+
+Request times and time arguments lie between 2000 and 2099 ([argument values](#argument-values)), but some values the program computes from them lie later. Integers grow with the number of requests. These rules cover every computed value.
+
+- **Times after 2099.** A computed timestamp or date can lie after 2099. It uses the same format as its type, with a four-digit year, and the Gregorian calendar continues as usual: 2100 is not a leap year, so `2099-03-01` plus 365 days is `2100-03-01`. The latest values a result can show are a `dueAt` of `2100-01-14T23:59Z` (14 days after `2099-12-31T23:59Z`) and an `expiresOn` of `2100-12-31` (365 days after `2099-12-31`). Points used only in comparisons can also lie after 2099: the first minute after the month `2099-12` and after the date `2099-12-31` are both `2100-01-01T00:00Z`. No computed time lies before `2000-01-01T00:00Z`.
+- **The end of the calendar.** No request time is later than `2099-12-31T23:59Z`. The following consequences follow from the rules of this document and are stated so that they are read only one way:
+  - `2099-11` is the last month that can be [invoiced](#generateinvoices). `generateInvoices` for `2099-12` is never accepted: when it reaches the operation rules ([order of checks](#order-of-checks), check 7), it is refused with `month_not_ended`. The [revenue report](#revenuereport) for `2099-12` always has `invoicesGenerated` `false`.
+  - An [invoice](#charges-and-invoices) whose `dueAt` lies after 2099 is never overdue. A [certification](#certifications) whose `expiresOn` lies after 2099 is never reported `expired`.
+  - The last day a [utilization report](#utilizationreport) can include is `2099-12-30`, because `to` is at most `2099-12-31` and is excluded from the range.
+  - A [maintenance window](#maintenance) ends at the latest at `2099-12-31T23:59Z`, so the last minute of 2099 cannot be covered. [Reservations](#reservations) end by closing time and are not affected.
+- **Integers are exact and never negative.** Within the integer limit stated under "Large sums and counters" below, no computed integer is negative. [Stock](#materials) cannot fall below 0 (`insufficient_stock`). [Credit](#credit-balance) and [payments](#recordpayment) are applied at most up to an invoice's balance. [Metered minutes](#check-in-check-out-and-metering) are at least 0, because a check-out cannot precede its check-in in the request-time order. Maintenance minutes are part of the open minutes they are subtracted from.
+- **Single lines cannot overflow.** The argument ranges keep every line amount and the product inside its formula ([money](#money)) below 2^53. The largest is a [usage line](#checkout): metered minutes are fewer than 52,596,000 (from `2000-01-01T00:00Z` to `2099-12-31T23:59Z`), and at 10000 cents per minute the product `minutes × 10000 × 100` stays below 5.26 × 10^13. A [material line](#purchasematerial)'s product is at most `10000 × 1000000 × 100` = 10^12.
+- **Large sums and counters.** Sums and counters grow with the number of requests: invoice totals, balances, credit balances, stock, report sums and minute totals, `seq` and the numbers in generated identifiers. The program keeps every integer exact up to 9007199254740991 (2^53 − 1); signed 64-bit integer arithmetic satisfies this. Once a stored or returned integer, or an intermediate value of a formula in this document, would exceed 2^53 − 1, the rest of the run is not specified and is not tested. Reaching that limit takes at least tens of thousands of requests.
+- **Generated identifiers stay valid identifiers.** A [generated identifier](#initial-state-and-generated-identifiers) is its prefix followed by a number. Within the integer limit it has at most 20 characters (a four-character prefix and at most 16 digits), so it always meets the identifier format of the [argument values](#argument-values) and can be passed back as an argument.
+- **Audit targets are not identifiers.** An [audit](#audit-target-list) `target` is a plain string. A target that joins two values with `/` can be up to 129 characters long and need not meet the identifier format.
+- **Durations.** A reservation lasts at most 240 minutes. Maintenance windows and metered sessions have no maximum length apart from the timestamp range.
+- **Request size and depth.** The 64 KiB of the [program rules](#program-build-and-process) are 65,536 bytes, not counting the line feed. Longer lines, and lines with any JSON value nested more than 100 levels deep in arrays or objects, are not specified and are not tested.
 
 ## Processing a request
 

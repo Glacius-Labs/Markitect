@@ -15,4 +15,6 @@ body: |-
   | enumeration | A JSON string equal to one of the listed values, compared exactly. |
 
   An argument that is missing, `null`, of the wrong JSON type or outside its format or range is refused with `invalid_argument`. Each argument is checked on its own. Relationships between arguments, such as an end that is not after a start, and relationships to stored state are [[request-processing|checked later]] and have their own codes.
+
+  These formats and ranges apply to arguments, including `at`. An integer argument outside its range is out of range however many digits it has. Values the program computes can lie outside these ranges; [[computed-values|computed values and limits]] states the rules for those values.
 spec: {}

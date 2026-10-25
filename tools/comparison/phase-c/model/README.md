@@ -23,6 +23,8 @@ Every local Package has a Manager, including the empty intermediate ones, and Ro
 | Safety | `safety` (4) |
 | Reporting | `reporting` (3) |
 
+Revision 1, as merged in [PR #707](https://github.com/Glacius-Labs/Markitect/pull/707) (Main `fed1fe22`); the folders now hold [revision 2](#revision-2-computed-values-and-limits):
+
 | Step | Definitions | Operations | Packages | Managers | Canonical model digest |
 | --- | --- | --- | --- | --- | --- |
 | w0 | 75 | 37 | 20 | 21 | `sha256:08187407dd8a775355fc6986d7f3403037b6fbeb4ed2cf52c506ce0056b3a1e1` |
@@ -37,6 +39,31 @@ Every local Package has a Manager, including the empty intermediate ones, and Ro
 | c9 | 79 | 38 | 19 | 20 | `sha256:33cd40acaf29ae2f4dec099d9d4bfc2642549b4d0e41befc792ce440fab9de34` |
 
 C7 removes `billing/payments`: its four Definitions move to `billing/invoices` with unchanged local IDs, so their identities and every link to them change. The empty `billing` Package stays as the parent of `billing/invoices`; flattening billing into one `billing` Package would also change the identities of the five invoice Definitions, so the fold keeps the restructure to the four moved ones. C9 is byte-identical to C8.
+
+## Revision 2: computed values and limits
+
+Requirements [PR #713](https://github.com/Glacius-Labs/Markitect/pull/713) (Main `8a2231f1`) closed a W0 gap found by the uncounted smoke run. It inserted a paragraph at the end of w0 §2.5, the new §2.8 "Computed values and limits", and one statement each in c1, c2, c5 and c6. The model follows from that text only:
+
+- **W0:** the new Rule `workshop/computed-values` carries §2.8. Its links reach the Definitions whose computed values it bounds: invoices, certifications, reports, maintenance windows, stock, credit, metering, money, generated identifiers, audit targets and the program limits. `workshop/argument-values` gains the §2.5 paragraph.
+- **C1, C2, C5 and C6:** their new statements amend `workshop/computed-values`.
+- **C3, C4, C7, C8 and C9:** no new text; they inherit the W0 change and the earlier delta edits.
+
+Against revision 1, every step adds one Definition and changes `workshop/argument-values`; [mapping/r2.md](../mapping/r2.md) lists the comparison per step. Packages, Managers and the execution configuration are unchanged. The single-agent documents were re-rendered; the renderer adds the section "Computed values and limits" and two listed substitutions ("rules of the model", "formula in the model" → "this document").
+
+| Step | Definitions | Operations | Managers | Canonical model digest | SHA-256 of `files.sha256` |
+| --- | --- | --- | --- | --- | --- |
+| w0 | 76 | 37 | 21 | `sha256:f3f48606aaae9bd11083dba21b2f5c655f4c1dc73567155aeaf4fa5c34314dc6` | `30bc5576b61bfefdcfae8d2be585fdb87a7bb60a9220d945f7249f1ddfcf47d9` |
+| c1 | 76 | 37 | 21 | `sha256:77be545aaaaddcd8ca8b2abd45f63cdf54aa5b519aa6c16e65cf1e0298b1ee4d` | `f907c3b1688971a8ecb894c5563050720410d920c56bee11d936e458582ed3a8` |
+| c2 | 78 | 38 | 21 | `sha256:8b001f62ff1e0b5fab2ad389bef1ce370087ca1da642aa4273022bf90971655f` | `844f987e1ac0caf98a8ef3f1723c3bfaa51eccfd042c12415a55de23e05679b9` |
+| c3 | 79 | 38 | 21 | `sha256:952ae0312ef6fbdda31766dadc2a635b0b6d8a1451ac28f9749f74d96c742b72` | `64694d54417777abd921b58cd411c1f2a89de2762ad66447c27f659ba7beee71` |
+| c4 | 79 | 38 | 21 | `sha256:6185f61fe23d49e81419cc1bb6e925c9374ba53556290e56edd348307deb4302` | `62efbd5d9a0c20c286b3a522d0fae6217c75700e87e2cdf4aea12c76b61d014e` |
+| c5 | 80 | 38 | 21 | `sha256:e8c2a3ec1543cf5311fb71b01ecf9f1ae5e0e46e39681b6c637da0b803aaf98e` | `4cbad3182b50e43a2ed8ef584ba5ffd456b35416f529a70865edf79cf2424522` |
+| c6 | 80 | 38 | 21 | `sha256:3db750b230d21e78b4c747934bf241c075e8ecc8e55c0a0d39f64c54bc5aaeff` | `1c15d40371b6caf6f66b578e8e49337cd2cfc467dbf97593b4e1314e85bdc1f1` |
+| c7 | 80 | 38 | 20 | `sha256:7e77f7b36abe85d69028eb2d7067c428a6f0dfc261fdaf683dc7bb2dd6da3ecc` | `3ef741ea309fadd6235349bd4dca4721fd11d8b4ae4ecf5999c930d27944f96d` |
+| c8 | 80 | 38 | 20 | `sha256:c6a8c775178a19fff57674b35c569047a5138ca57e0ff305745a1b8441f26611` | `2214a1fdea048b9c288388089a9083fe134969d2f359fb28c16e60bac01cfba0` |
+| c9 | 80 | 38 | 20 | `sha256:c6a8c775178a19fff57674b35c569047a5138ca57e0ff305745a1b8441f26611` | `2214a1fdea048b9c288388089a9083fe134969d2f359fb28c16e60bac01cfba0` |
+
+**Validation of revision 2:** each snapshot passed the structural check described under [Validation](#validation) on 25 October 2026, this time with its proposed [execution configuration](#execution-configuration-for-arm-m) in place of the ownership-only file, and with `markitect` built from Main `8a2231f1aec5619032ceee28d5df33fd9171b17d`. All ten returned exit code 0 and status `passed`, with the digests above.
 
 ## How the text became Definitions
 
