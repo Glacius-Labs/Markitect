@@ -344,8 +344,9 @@ func (x *execution) await(ctx context.Context, s *managerState) (Event, error) {
 			continue
 		}
 		if !x.waitingLocked(s) {
+			next := x.nextStepLocked(s)
 			x.mu.Unlock()
-			return Event{}, fmt.Errorf("nothing can arrive: no direct child of yours is working and none of your questions is open; %s", x.nextStepLocked(s))
+			return Event{}, fmt.Errorf("nothing can arrive: no direct child of yours is working and none of your questions is open; %s", next)
 		}
 		if !x.othersRunningLocked(s) {
 			// Everyone else is idle: only an answer from this Manager unblocks them.
