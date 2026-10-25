@@ -23,4 +23,13 @@ Where the brief left a product choice open, these documents decide it and say so
 
 ## Transport
 
-The program speaks JSON Lines on standard input and output with the Library comparison program's envelope (`id`, `op`, `args`) and statuses (`ok`, `refused`, `invalidRequest`), so the Library oracle's process transport can be reused. Two differences: every refusal carries an exact `code`, and every `args` object carries the acting user (`actor`) and the request time (`at`).
+The program speaks JSON Lines on standard input and output with the Library comparison program's envelope (`id`, `op`, `args`) and statuses (`ok`, `refused`, `invalidRequest`), so the Library oracle's process transport can be reused. The differences from the Library contract:
+
+- every refusal carries an exact `code`;
+- every `args` object carries the acting user (`actor`) and the request time (`at`);
+- responses and results have exactly the stated members, where the Library allowed additional ones;
+- an invalid request echoes its `id` only when it is a nonempty string, so an empty `id` is answered with `null`.
+
+The Go module location `realization/go.mod` with the program at `realization/cmd/makerspace` is the same as the Library program's, because the shared comparison runner and assessment harness capture and build that directory.
+
+This README is study documentation. It is not part of any author's input; the inputs are `w0.md` and the change documents.
