@@ -157,6 +157,10 @@ Disagreements between the oracle and the references: none. Every expectation tha
 | P-ELIGIBILITY (suspension blocks enrollment) | P-RULE-ORDER | `enrollInCourse` refuses `member_suspended` before `already_enrolled` (w0 §7.1); the order can only be observed when suspension refuses. |
 | P-TIME-HOURS (opening hours) | P-REPORT-UTILIZATION | `openMinutes` are the minutes inside opening hours (w0 §13). |
 
+### Pass 2 dispatch (recorded before its first engine call)
+
+After O's fixes, the whole pass is repeated once as pass 2; pass 1 stays recorded unchanged. Same dispatch as pass 1 except: oracle at O's head `feda573ba79f62a92287c86f6054ec4940163a28` (the Library transport unchanged, tree `9ec64094…`); references and mutants unchanged (I's head `12fb6b4c`, the same patched trees); runner `calibrate-pass-2.py` (SHA-256 `55ebd0ce5bb051e4e172f4c783f617db77bffabb16edde566645a9fadbd8c2a4`), which differs from pass 1 only by the declared dependences below and the corrected census comparison; label `mk-vcal=pass-2`; evidence in `calibration-pass-2\`. Expected: as pass 1, with the six mutants of the declared dependences passing when they fail exactly their own family and their declared dependent.
+
 The primary "missed obligations" measure of protocol addendum C is the number of failed probe families, per step and summed per chain; behavior and invariant families are secondary (coordinator's decision, passed to the comparison session).
 
 Seventeen of the 30 mutants also fail a strict behavior family (B-*, D-*) or an invariant family. That follows from the design: behavior cases compare complete results and the whole audit log of their area. It matters for the metric, not for validity: if failed families are counted together, one fault can count two to ten times, depending on the rule.
