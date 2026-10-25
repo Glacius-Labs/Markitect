@@ -169,9 +169,6 @@ def p_envelope(step: str) -> list[dict[str, Any]]:
     c.ok("registerMember", S, later, {"memberId": "dup-b", "name": "Dup B", "tier": "basic"},
          {"member": has(memberId="dup-b")}, check=True, rid="dup")
     c.refuse("registerMember", S, later, {"memberId": "dup-a", "name": "Dup A", "tier": "basic"}, "already_exists", rid="dup")
-    text = "x" * 60000
-    c.ok("reportIncident", S, later, {"machineId": "L1", "severity": "low", "description": text},
-         lambda iid: {"incident": has(incidentId=iid, description=text)}, check=True)
     return [c.build()]
 
 
@@ -1007,6 +1004,16 @@ def p_time_format(step: str) -> list[dict[str, Any]]:
         c.refuse("generateInvoices", "admin", start, {"month": bad}, "invalid_argument")
     for good in ("2000-01", "2099-12"):
         c.ok("revenueReport", "admin", start, {"month": good}, has(month=good), check=True)
+    c.refuse("scheduleMaintenance", "admin", start, {"machineId": "M1", "start": "2099-12-31T23:00Z", "end": "2100-01-01T00:00Z", "reason": "R"},
+             "invalid_argument", cite=W("2.8", "A maintenance window ends at the latest at `2099-12-31T23:59Z`, so the last minute of 2099 cannot be covered."))
+    c.refuse("utilizationReport", "admin", start, {"from": "2099-12-31", "to": "2100-01-01"}, "invalid_argument",
+             cite=W("2.8", "because `to` is at most `2099-12-31`"))
+    if since(step, "C2"):
+        inc = c.ok("reportIncident", "admin", start, {"machineId": "M1", "severity": "low", "description": "D"})
+        cover = C(2, "Changes to existing operations and rules", "a lockout ends at the latest at `2099-12-31T23:59Z`, cannot cover the last minute of 2099")
+        c.refuse("lockMachine", "admin", start, {"incidentId": inc, "start": "2099-12-31T23:00Z", "end": "2100-01-01T00:00Z"}, "invalid_argument", cite=cover)
+        c.ok("lockMachine", "admin", start, {"incidentId": inc, "start": "2099-12-31T23:00Z", "end": "2099-12-31T23:59Z"},
+             lambda lid: {"lockout": has(end="2099-12-31T23:59Z"), "cancelledReservations": []}, check=True, cite=cover)
     c.ok("listMachines", "admin", "2099-12-31T23:59Z", {}, {"machines": [has(machineId="M1")]}, check=True)
     return [c.build()]
 
@@ -1195,7 +1202,7 @@ def p_time_certification(step: str) -> list[dict[str, Any]]:
          {"certification": f.certification(step, "bob", "laser", w.ISSUED, w.EXPIRES, "revoked")}, check=True,
          cite=W("7.2", "An expired certification can be revoked.") if expiry else C(6, "What changes", "refused with `not_certified` when the member has no certification for the family or it is already revoked, as before"))
     c.ok("listCertifications", S, "2027-03-02T00:00Z", {"memberId": "bob"}, bob("revoked"), check=True)
-    return [c.build()]
+    return [c.build(), _certification_end(step)]
 
 
 def p_time_billing(step: str) -> list[dict[str, Any]]:
@@ -1257,7 +1264,7 @@ def p_time_billing(step: str) -> list[dict[str, Any]]:
     generate(c, "2026-04", gen)
     c.ok("listInvoices", S, gen, {"memberId": "ada"}, {"memberId": "ada", "invoices": {"$filter": {"month": "2026-04"}, "items": [
         has(issuedAt=gen, dueAt="2026-06-08T10:00Z")]}}, check=True, cite=W("4.4", '"N days after timestamp t" is `t + N × 1440` minutes.'))
-    return [c.build()]
+    return [c.build(), _billing_end(step)]
 
 
 def p_eligibility(step: str) -> list[dict[str, Any]]:
@@ -1363,7 +1370,170 @@ def p_report_utilization(step: str) -> list[dict[str, Any]]:
     rows = [u(step, "L1", week, l1_maint, 268), u(step, "L2", week, l2_thu, l2_week), u(step, "L9", week, 0, 0), u(step, "W1", week, 0, 0)]
     c.ok("utilizationReport", S, ts(SUN, "00:30"), {"from": MON, "to": "2026-03-09"},
          {"from": MON, "to": "2026-03-09", "machines": rows, "totals": u(step, None, 4 * week, l1_maint + l2_thu, 268 + l2_week)}, check=True)
-    return [empty.build(), c.build()]
+    return [empty.build(), c.build(), _utilization_end(step)]
+
+
+# --- End of the calendar and other computed values (w0 2.8) -------------------------------------
+
+LAST = "2099-12-31T23:59Z"
+
+
+def _billing_end(step: str) -> dict[str, Any]:
+    """Due dates after 2099, the last invoiceable month and the block point near the end (w0 2.8, c5)."""
+    c = probe(step, "P-TIME-BILLING", "end-of-calendar")
+    c.ok("registerUser", "admin", "2099-09-02T09:00Z", {"userId": S, "name": "Sam", "role": "staff"})
+    c.ok("registerMember", S, "2099-09-02T09:00Z", {"memberId": "dee", "name": "Dee", "tier": "basic"})
+    for mid in ("ada", "bob", "cy"):
+        name, tier = w.MEMBERS[mid]
+        c.ok("registerMember", S, "2099-10-02T09:00Z", {"memberId": mid, "name": name, "tier": tier})
+    w.shop(c, "2099-10-02T09:00Z")
+    october = generate(c, "2099-10", "2099-11-17T23:58Z")  # due 2099-12-01T23:58Z: blocks from 2099-12-31T23:59Z
+    generate(c, "2099-09", "2099-11-17T23:59Z")  # dee only, due 2099-12-01T23:59Z: can never block
+    read = "2099-11-17T23:59Z"
+    c.ok("listInvoices", S, read, {"memberId": "cy"}, {"memberId": "cy", "invoices": [has(balanceCents={"$capture": "C10"})]}, check=True)
+    c.ok("listInvoices", S, read, {"memberId": "bob"}, {"memberId": "bob", "invoices": [has(balanceCents={"$capture": "B10"})]}, check=True)
+    c.ok("listInvoices", S, read, {"memberId": "dee"}, {"memberId": "dee", "invoices": {"$filter": {"month": "2099-10"}, "items": [
+        has(balanceCents={"$capture": "D10"})]}}, check=True)
+    c.ok("recordPayment", S, "2099-11-18T09:00Z", {"invoiceId": october["cy"], "amountCents": {"$ref": "C10"}})
+    c.ok("recordPayment", S, "2099-12-15T09:00Z", {"invoiceId": october["dee"], "amountCents": {"$ref": "D10"}})
+    block = since(step, "C5")
+    edge = "2099-12-31T23:58Z"
+    c.ok("purchaseMaterial", S, edge, {"memberId": "ada", "materialId": "acrylic", "quantity": 1})
+    if block:
+        c.ok("getAccount", S, edge, {"memberId": "ada"}, {"account": has(blocked=False)}, check=True)
+        c.refuse("purchaseMaterial", S, LAST, {"memberId": "ada", "materialId": "acrylic", "quantity": 1}, "account_overdue",
+                 cite=C(5, "What changes", "the block compares the request time with `dueAt` plus 43200 minutes"))
+        c.ok("getAccount", S, LAST, {"memberId": "ada"}, {"account": has(blocked=True)}, check=True)
+        never = C(5, "What changes", "an invoice whose `dueAt` is `2099-12-01T23:59Z` or later can never block, because no request time is later than `2099-12-31T23:59Z`.")
+        c.ok("purchaseMaterial", S, LAST, {"memberId": "dee", "materialId": "acrylic", "quantity": 1}, cite=never)
+        c.ok("getAccount", S, LAST, {"memberId": "dee"}, {"account": has(blocked=False)}, check=True, cite=never)
+    else:
+        c.ok("purchaseMaterial", S, LAST, {"memberId": "ada", "materialId": "acrylic", "quantity": 1})
+        c.ok("purchaseMaterial", S, LAST, {"memberId": "dee", "materialId": "acrylic", "quantity": 1})
+    c.refuse("generateInvoices", S, LAST, {"month": "2099-12"}, "month_not_ended",
+             cite=W("2.8", "`generateInvoices` for `2099-12` is never accepted: when it reaches the operation rules (section 3.1, check 7), it is refused with `month_not_ended`."))
+    generate(c, "2099-11", LAST)
+    c.ok("listInvoices", S, LAST, {"memberId": "bob"}, {"memberId": "bob", "invoices": {"$filter": {"month": "2099-11"}, "items": [
+        has(issuedAt=LAST, dueAt="2100-01-14T23:59Z", overdue=False)]}}, check=True,
+         cite=[W("2.8", "a `dueAt` of `2100-01-14T23:59Z` (14 days after `2099-12-31T23:59Z`)"), W("2.8", "An invoice whose `dueAt` lies after 2099 is never overdue.")])
+    c.ok("listInvoices", S, LAST, {"memberId": "bob"}, {"memberId": "bob", "invoices": {"$filter": {"month": "2099-10"}, "items": [has(overdue=True)]}}, check=True)
+    c.ok("getAccount", S, LAST, {"memberId": "bob"}, {"account": has(overdueBalanceCents={"$ref": "B10"})}, check=True)
+    zero = {k: 0 for k in ("invoiceCount", "membershipCents", "usageCents", "materialCents", "courseCents", "invoicedCents",
+                           "creditAppliedCents", "outstandingCents", "creditsIssuedCents")}
+    c.ok("revenueReport", S, LAST, {"month": "2099-12"}, {"month": "2099-12", "invoicesGenerated": False, **zero, "paymentsCents": {"$ref": "D10"}},
+         check=True, cite=W("2.8", "The revenue report for `2099-12` always has `invoicesGenerated` `false`."))
+    return c.build()
+
+
+def _certification_end(step: str) -> dict[str, Any]:
+    """Expiry dates after 2099 (w0 2.8); from C6 there is no expiry date at all."""
+    expiry = not since(step, "C6")
+    cites = ([W("2.8", "so `2099-03-01` plus 365 days is `2100-03-01`"),
+              W("2.8", "an `expiresOn` of `2100-12-31` (365 days after `2099-12-31`)"),
+              W("2.8", "A certification whose `expiresOn` lies after 2099 is never reported `expired`.")] if expiry else
+             [C(6, "What changes", "`expiresOn` no longer exists."), C(6, "What changes", "A certification stays valid from its issue until it is revoked.")])
+    c = Case(step, "P-TIME-CERTIFICATION-end-of-calendar", ["P-TIME-CERTIFICATION"], cites, strict=False)
+    early = "2099-03-01T08:00Z"
+    w.people(c, early, members=("ada", "bob"))
+    w.catalog(c, early)
+    c.ok("addCourse", S, early, {"courseId": "laser-101", "familyId": "laser", "title": "Laser basics", "feeCents": 0, "capacity": 10})
+
+    def certify(member, at, issued, expires):
+        c.ok("enrollInCourse", S, at, {"courseId": "laser-101", "memberId": member})
+        c.ok("completeCourse", S, at, {"courseId": "laser-101", "memberId": member},
+             {"enrollment": has(status="completed"), "certification": f.certification(step, member, "laser", issued, expires, "valid")}, check=True)
+
+    certify("ada", "2099-03-01T09:00Z", "2099-03-01", "2100-03-01")
+    certify("bob", LAST, "2099-12-31", "2100-12-31")
+    c.ok("listCertifications", S, LAST, {"memberId": "ada"},
+         {"memberId": "ada", "certifications": [f.certification(step, "ada", "laser", "2099-03-01", "2100-03-01", "valid")]}, check=True)
+    return c.build()
+
+
+def _utilization_end(step: str) -> dict[str, Any]:
+    """The last includable day, fully covered by maintenance (and from C2 a lockout): nothing available, never negative."""
+    cites = [W("2.8", "The last day a utilization report can include is `2099-12-30`, because `to` is at most `2099-12-31` and is excluded from the range."),
+             W("2.8", "Maintenance minutes are part of the open minutes they are subtracted from."),
+             C(2, "Changes to existing operations and rules", "Lockout minutes, like maintenance minutes, are part of the open minutes they are subtracted from, so `availableMinutes` is never negative.")]
+    c = Case(step, "P-REPORT-UTILIZATION-end-of-calendar", ["P-REPORT-UTILIZATION"], cites, strict=False)
+    t = "2099-12-01T09:00Z"
+    c.ok("addFamily", "admin", t, {"familyId": "fam", "name": "Family"})
+    for mid in ("M1", "M2"):
+        c.ok("addMachine", "admin", t, {"machineId": mid, "name": mid, "familyId": "fam", "rateCentsPerMinute": 1})
+    c.ok("scheduleMaintenance", "admin", t, {"machineId": "M1", "start": "2099-12-30T00:00Z", "end": LAST, "reason": "Last"})
+    locked = since(step, "C2")
+    if locked:
+        inc = c.ok("reportIncident", "admin", t, {"machineId": "M2", "severity": "high", "description": "Final"})
+        c.ok("lockMachine", "admin", t, {"incidentId": inc, "start": "2099-12-30T00:00Z", "end": LAST})
+    day = 840 if since(step, "C8") else 720  # Wednesday 2099-12-30
+    u = f.util_row
+    rows = [u(step, "M1", day, day, 0), u(step, "M2", day, 0, 0, day if locked else 0, day if locked else None)]
+    totals = u(step, None, 2 * day, day, 0, day if locked else 0, 2 * day if locked else None)
+    c.ok("utilizationReport", "admin", LAST, {"from": "2099-12-30", "to": "2099-12-31"},
+         {"from": "2099-12-30", "to": "2099-12-31", "machines": rows, "totals": totals}, check=True)
+    return c.build()
+
+
+def p_limits(step: str) -> list[dict[str, Any]]:
+    """Request size and depth, long audit targets, the largest line amounts and durations (w0 2.1, 2.8; c2)."""
+    t = T1
+    c = probe(step, "P-LIMITS", "request-size")
+    c.ok("addFamily", "admin", t, {"familyId": "fam", "name": "Family"})
+    c.ok("addMachine", "admin", t, {"machineId": "M1", "name": "Machine", "familyId": "fam", "rateCentsPerMinute": 1})
+    head = '{"id":"big","op":"reportIncident","args":{"actor":"admin","at":"%s","machineId":"M1","severity":"low","description":"' % t
+    tail = '"}}'
+    text = "x" * (65536 - len((head + tail).encode("utf-8")))
+    line = head + text + tail
+    assert len(line.encode("utf-8")) == 65536
+    c.ok_raw(line, "big", {"incident": has(description=text)},
+             cite=W("2.8", "The 64 KiB of section 2.1 are 65,536 bytes, not counting the line feed."))
+    deep = "[" * 88 + "]" * 88  # the request object, args and 88 arrays: 90 levels
+    c.refuse_raw("registerMember", "admin", t, '"memberId":"deep","name":%s,"tier":"basic"' % deep, "invalid_argument",
+                 cite=W("2.8", "lines with any JSON value nested more than 100 levels deep in arrays or objects, are not specified and are not tested."))
+    fam, course, member = "f" * 64, "c" * 64, "m" * 64
+    c.ok("addFamily", "admin", t, {"familyId": fam, "name": "Long family"})
+    c.ok("addCourse", "admin", t, {"courseId": course, "familyId": fam, "title": "Long course", "feeCents": 0, "capacity": 5})
+    c.ok("registerMember", "admin", t, {"memberId": member, "name": "Long member", "tier": "basic"})
+    mark = c.audit_mark("before", t)
+    c.ok("enrollInCourse", "admin", t, {"courseId": course, "memberId": member})
+    c.ok("completeCourse", "admin", t, {"courseId": course, "memberId": member})
+    c.ok("revokeCertification", "admin", t, {"memberId": member, "familyId": fam})
+    c.audit_since("before", mark, t, cite=W("2.8", "A target that joins two values with `/` can be up to 129 characters long and need not meet the identifier format."))
+
+    d = probe(step, "P-LIMITS", "large-values")
+    start = "2000-01-03T08:00Z"  # a Monday
+    d.ok("registerUser", "admin", start, {"userId": S, "name": "Sam", "role": "staff"})
+    d.ok("registerMember", S, start, {"memberId": "big", "name": "Big", "tier": "basic"})
+    d.ok("addFamily", "admin", start, {"familyId": "laser", "name": "Laser cutters"})
+    d.ok("addMachine", "admin", start, {"machineId": "M1", "name": "Fast", "familyId": "laser", "rateCentsPerMinute": 10000})
+    d.ok("addMachine", "admin", start, {"machineId": "M2", "name": "Slow", "familyId": "laser", "rateCentsPerMinute": 1})
+    d.ok("addCourse", S, start, {"courseId": "laser-101", "familyId": "laser", "title": "Laser basics", "feeCents": 0, "capacity": 1})
+    d.ok("enrollInCourse", S, start, {"courseId": "laser-101", "memberId": "big"})
+    d.ok("completeCourse", S, start, {"courseId": "laser-101", "memberId": "big"})
+    rid = w.reserve(d, "big", "M1", "2000-01-03T10:00Z", "2000-01-03T10:30Z", start)
+    durations = W("2.8", "Maintenance windows and metered sessions have no maximum length apart from the timestamp range.")
+    d.ok("scheduleMaintenance", S, start, {"machineId": "M2", "start": "2000-01-03T09:00Z", "end": LAST, "reason": "A century"},
+         lambda wid: {"window": has(start="2000-01-03T09:00Z", end=LAST)}, check=True, cite=durations)
+    if since(step, "C2"):
+        inc = d.ok("reportIncident", S, start, {"machineId": "M2", "severity": "low", "description": "Old"})
+        d.ok("lockMachine", S, start, {"incidentId": inc, "start": "2000-01-04T00:00Z", "end": LAST},
+             lambda lid: {"lockout": has(start="2000-01-04T00:00Z", end=LAST), "cancelledReservations": []}, check=True,
+             cite=C(2, "Changes to existing operations and rules", "has no maximum length apart from the timestamp range"))
+    d.ok("checkIn", S, "2000-01-03T10:00Z", {"reservationId": rid})
+    d.ok("addMaterial", S, "2000-01-03T10:00Z", {"materialId": "gold", "name": "Gold", "unitPriceCents": 1000000})
+    d.ok("restockMaterial", S, "2000-01-03T10:00Z", {"materialId": "gold", "quantity": 10000})
+    gold = f.line_amount(10000, 1000000, f.bulk_discount(step, 10000))
+    d.ok("purchaseMaterial", S, LAST, {"memberId": "big", "materialId": "gold", "quantity": 10000},
+         {"purchase": has(amountCents=gold), "material": ANY}, check=True,
+         cite=W("2.8", "A material line's product is at most `10000 × 1000000 × 100` = 10^12."))
+    minutes = 52592519  # 2000-01-03T10:00Z to 2099-12-31T23:59Z
+    usage = minutes * 10000
+    d.ok("checkOut", S, LAST, {"reservationId": rid},
+         {"reservation": has(meteredMinutes=minutes, amountCents=usage), "charge": has(quantity=minutes, amountCents=usage)}, check=True,
+         cite=[W("2.8", "The largest is a usage line: metered minutes are fewer than 52,596,000"), durations])
+    d.ok("getAccount", S, LAST, {"memberId": "big"}, {"account": has(unbilledCents=usage + gold)}, check=True,
+         cite=W("2.8", "The program keeps every integer exact up to 9007199254740991 (2^53 − 1); signed 64-bit integer arithmetic satisfies this."))
+    return [c.build(), d.build()]
 
 
 # --- Registry --------------------------------------------------------------------------------------
@@ -1373,15 +1543,15 @@ FAMILIES: list[tuple[str, str, list[dict[str, str]], Callable[[str], list[dict[s
                           W("2.2", "two requests with the same `id` are two separate requests."),
                           W("2.4", "the line is not valid JSON, is empty, or is not a JSON object;"),
                           W("2.4", "The response's `id` is the request's `id` when the line is a JSON object whose `id` member is a nonempty string; otherwise it is `null`."),
-                          W("2.4", "An invalid request changes nothing: no state, no audit entry, no identifier counter and no request-time order (section 4.4)."),
-                          W("2.1", "Request lines up to 64 KiB must be accepted.")], p_envelope),
+                          W("2.4", "An invalid request changes nothing: no state, no audit entry, no identifier counter and no request-time order (section 4.4).")], p_envelope),
     ("P-ARGUMENTS", "W0", [W("2.2", "All arguments are required; no operation has optional arguments."),
                            W("2.5", "whose first character is a letter or digit"),
                            W("2.5", "It is stored and returned exactly as supplied, without trimming."),
                            W("2.5", "(`10.0` and `1e3` are not integers)"),
                            W("2.5", "A JSON string equal to one of the listed values, compared exactly."),
                            W("2.5", "An argument that is missing, `null`, of the wrong JSON type or outside its format or range is refused with `invalid_argument`."),
-                           W("3.1", "every argument is present and valid by section 2.5")], p_arguments),
+                           W("3.1", "every argument is present and valid by section 2.5"),
+                           W("2.5", "An integer argument outside its range is out of range however many digits it has.")], p_arguments),
     ("P-CHECK-ORDER", "W0", [W("3.1", "The first check that fails decides the refusal and its code."),
                              W("3.1", "An argument that names a member must name a user whose role is `member`; the identifier of a staff or admin user does not name a member.")], p_check_order),
     ("P-RULE-ORDER", "W0", [W("7.1", "Refusals, in this order: `member_suspended` when the member is not in good standing; `already_enrolled`"),
@@ -1453,7 +1623,8 @@ FAMILIES: list[tuple[str, str, list[dict[str, str]], Callable[[str], list[dict[s
     ("P-TIME-FORMAT", "W0", [W("2.5", "naming a valid UTC calendar date and time from `2000-01-01T00:00Z` to `2099-12-31T23:59Z`"),
                              W("2.5", "`2026-02-29` is not valid; `2028-02-29` is."),
                              W("2.5", "A JSON string `YYYY-MM` from `2000-01` to `2099-12`."),
-                             W("2.5", "there are no seconds")], p_time_format),
+                             W("2.5", "there are no seconds"),
+                             W("2.5", "These formats and ranges apply to arguments, including `at`.")], p_time_format),
     ("P-TIME-HOURS", "W0", [W("4.4", "A reservation ending exactly at closing time is inside."), W("4.4", "Sunday has no opening period."),
                             W("9.1", "the slot `17:30`–`18:00` is inside opening hours and `17:30`–`18:30` is not"),
                             W("9.1", "or `null` on Sunday"),
@@ -1495,6 +1666,13 @@ FAMILIES: list[tuple[str, str, list[dict[str, str]], Callable[[str], list[dict[s
                                     W("13", "`invalid_interval` when `to` is not after `from` or the range is longer than 366 days."),
                                     W("13", "With no machines, all totals are 0."),
                                     C(8, "What changes", "the `openMinutes` of the utilization report, for every date, including dates before the change.")], p_report_utilization),
+    ("P-LIMITS", "W0", [W("2.1", "Request lines up to 64 KiB must be accepted."),
+                        W("2.8", "The 64 KiB of section 2.1 are 65,536 bytes, not counting the line feed."),
+                        W("2.8", "The argument ranges keep every line amount and the product inside its formula (section 4.3) below 2^53."),
+                        W("2.8", "The program keeps every integer exact up to 9007199254740991 (2^53 − 1); signed 64-bit integer arithmetic satisfies this."),
+                        W("2.8", "A target that joins two values with `/` can be up to 129 characters long and need not meet the identifier format."),
+                        W("2.8", "Maintenance windows and metered sessions have no maximum length apart from the timestamp range."),
+                        C(2, "Changes to existing operations and rules", "has no maximum length apart from the timestamp range")], p_limits),
 ]
 
 FAMILY_REFS = {name: refs for name, _, refs, _ in FAMILIES}

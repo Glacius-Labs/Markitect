@@ -28,13 +28,13 @@ import invariants  # noqa: E402
 import probes  # noqa: E402
 
 REQUIREMENTS = HERE.parents[1] / "tools" / "comparison" / "phase-c" / "requirements"
-# The family list sent to the coordinator and session I on 25 October 2026.
+# The family list sent to the coordinator and session I on 25 October 2026; P-LIMITS added with w0 2.8.
 SENT_FAMILIES = ["P-ENVELOPE", "P-ARGUMENTS", "P-CHECK-ORDER", "P-RULE-ORDER", "P-IDENTIFIERS", "P-NO-MUTATION",
                  "P-AUTHZ-ROLE", "P-AUTHZ-OWN", "P-AUTHZ-ALL", "P-AUDIT-ACCEPTED", "P-AUDIT-SILENT", "P-AUDIT-FORBIDDEN",
                  "P-MONEY-ROUNDING", "P-MONEY-USAGE", "P-MONEY-COURSE", "P-MONEY-MATERIALS", "P-MONEY-INVOICE",
                  "P-MONEY-CREDIT", "P-MONEY-REVENUE", "P-MONEY-LOCKOUT", "P-TIME-ORDER", "P-TIME-FORMAT", "P-TIME-HOURS",
                  "P-TIME-GRANULARITY", "P-TIME-INTERVALS", "P-TIME-BOOKING-STATES", "P-TIME-CERTIFICATION",
-                 "P-TIME-BILLING", "P-ELIGIBILITY", "P-REPORT-UTILIZATION"]
+                 "P-TIME-BILLING", "P-ELIGIBILITY", "P-REPORT-UTILIZATION", "P-LIMITS"]
 _CASES: dict[str, list] = {}
 
 
