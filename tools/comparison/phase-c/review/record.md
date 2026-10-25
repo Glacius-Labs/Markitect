@@ -60,7 +60,25 @@ M's `mapping/` was not used as evidence; the comparison above is independent of 
 
 ## 2. Oracle traceability and coverage
 
-Pending O's pull request.
+O's pull request [#708](https://github.com/Glacius-Labs/Markitect/pull/708) at `9685ba4d4da07d203a79c8db0e5540033c4d7752` (on R's merge). It changes only `tools/makerspace-oracle/` and names no model, spec, mapping or reference path. Its 28 self-tests pass.
+
+**Facts.** The oracle's operation table (`facts.py`) matches R's operation index in every cell and every operation's argument list in order (37 of 37); fees, discounts, the bulk table, opening hours, granularity and record shapes per step match R and the changes.
+
+**Citations.** 2,724 citations over all steps. Each fragment is verbatim in R (O's self-test). V checked the same fragments against the rendered spec of each step: 46 distinct fragments are not verbatim there. They are the change documents' own phrasing ("as before", "Section 3.1 … now reads"), cross-reference wording ("(section 4.2)" against a link), and the split operation index. Each of these sentences was matched by meaning in section 1, so every cited obligation is in both representations. Three w0 fragments stay cited after a change replaced them (§6.1 "Registers a staff member or an admin." from C4, §10's refusal order from C5, a shorter §4.2 fragment from C1), and the §4.4 fragment about closing time is dropped whole at C8 although its first sentence still holds. These are citation bookkeeping only (note V2-N1, sent to O).
+
+**Expectations against the text.** V read the case builders of all 30 probe families, the behavior cases D-C1 to D-C8 and the ten invariants, and recomputed the arithmetic of the utilization, lockout, billing, block, certification and rounding cases at both granularities. Results are compared exactly only where R fixes them (the exact member sets of the requirements' "Transport" rule, the list orders of §4.5); `reason` is checked only as nonempty; refusals are single-fault or follow R's stated order. No expectation goes beyond the text. The census (`census.py`) stays outside the families and does not change pass or fail.
+
+**Coverage.** Every operation family has authorization (all, own, none and the steward column), audit (accepted, silent, forbidden), money and time cases where R gives the operation such a rule; argument validation runs over every argument of every operation. The calibration exposed one gap, V2-F1 below.
+
+### O's ambiguity list
+
+| O# | Point | Decision |
+| --- | --- | --- |
+| 1 | `actor` with a string that is not an identifier | Untested, agreed. V reads `invalid_argument` (I's reading too), but no case needs it. |
+| 2 | Malformed `at` → `invalid_argument` | **Confirmed.** `at` is an argument (§2.2), §4.4 gives the formats, and "any valid `at`" presupposes validity. |
+| 3 | Accepted reads advance the request-time order | Text clear (§4.4 "the most recent request answered `ok`"). Tested, correct. |
+| 4 | Census compares `reason` only at C9 | Fine: the census is reported outside the families. Protocol addendum C must say how it is used at C9, where a repair of a non-conforming C8 start remains allowed. |
+| 5 | Unterminated last line, exact 64 KiB, `White_Space` version changes, duplicate names, invalid UTF-8 | Untested, agreed; R states the first two and excludes the last two. Known limits. |
 
 ### Ambiguity decisions
 
@@ -104,6 +122,31 @@ Bounded dispatch under the standing evidence authorization, recorded 25 October 
 | Evidence | `C:\Users\Consiliari\Documents\Codex\Markitect-Phase-C-Review\calibration-pass-1\`: one oracle report and log per run, `summary.json` with builds, program hashes, results and both censuses. |
 
 Pre-check without an engine: every distinct reference tree (W0–C6, C8) builds and passes its own tests with Go 1.24.1 on Windows; `c7/` is byte-identical to `c6/` and `c9/` to `c8/`.
+
+### Pass 1 (25 October 2026, 10:22:32–10:23:46 UTC)
+
+Lock taken 10:22:32 UTC. All 40 programs built (19 s), 47 runs executed, no abort, no credential-shaped text, no container left after any run. Labeled containers and volumes: none before, none after. The runner had a defect: it compared the final census as a tuple with a list, so it kept the lock although the census was clean. V checked the lock's nonce and an empty census by hand and removed the lock at 10:24:38 UTC. Total engine time 73 s.
+
+| Runs | Expected | Result |
+| --- | --- | --- |
+| 10 positive (W0–C9) | every case of the step passes; census empty at C3, C7, C9 | **10 of 10.** 49 to 58 cases per step, all passed; all three censuses empty. |
+| 7 delta (n−1 against n) | at least one family fails | **7 of 7.** C1: 11 families (audit fields and refusal entries). C2: 17 (an unknown `lockMachine` fails every family that touches it). C3: 5 (bulk tiers). C4: 8 (steward). C5: 7 (block). C6: 10 (expiry). C8: 7 (hours and granularity). |
+| 30 mutants | of the probe families, exactly its own fails | **17 of 30.** 29 mutants fail their own family. P-NO-MUTATION is not caught at all (49 of 49 cases pass). 12 also fail other probe families. |
+
+Disagreements between the oracle and the references: none. Every expectation that failed against a mutant is a correct consequence of R; no case had to be corrected against the text.
+
+**Uncaught mutant (finding V2-F1, oracle coverage).** The mutant changes an existing user's name when `registerMember` is refused with `already_exists`, against w0 §3.1 ("no record is created or changed") and §6.1 ("their identifier, name and role never change"). P-NO-MUTATION re-registers the staff user's identifier with its own name, which no operation can observe. Sent to O as the sentence and the expected behavior.
+
+**Cross-family failures (finding V2-F2, family independence).** Twelve mutants fail other probe families as well. By cause:
+
+| Kind | Families affected | Decision |
+| --- | --- | --- |
+| Predicted generated identifiers | P-TIME-HOURS, -GRANULARITY, -INTERVALS, -CERTIFICATION, P-ELIGIBILITY, P-RULE-ORDER fail under an identifier fault | Avoidable: capture identifiers outside P-IDENTIFIERS. Sent to O. |
+| Whole-invoice and total comparisons | P-MONEY-ROUNDING, -USAGE, -COURSE, -MATERIALS, -CREDIT, -REVENUE, P-TIME-BILLING fail under membership-line or course-charge faults | Avoidable: compare the family's own lines and fields. Sent to O. |
+| Unneeded assertions or setups | P-MONEY-ROUNDING asserts stock; P-TIME-ORDER uses a member read; P-IDENTIFIERS uses an ownership refusal; P-CHECK-ORDER advances time with a read; touching slots in P-TIME-BOOKING-STATES and P-REPORT-UTILIZATION setups | Avoidable. Sent to O. |
+| Rule observed through another rule | rounding via discounted usage before C3; revenue's lockout-credit amount; P-AUDIT-FORBIDDEN needs ownership violations; P-AUDIT-SILENT's C1 example combines time regression and missing permission; P-RULE-ORDER needs suspension; utilization's open minutes depend on opening hours | Inherent. Kept; needs the coordinator's agreement because it relaxes "exactly its own family". |
+
+Seventeen of the 30 mutants also fail a strict behavior family (B-*, D-*) or an invariant family. That follows from the design: behavior cases compare complete results and the whole audit log of their area. It matters for the metric, not for validity: if failed families are counted together, one fault can count two to ten times, depending on the rule.
 
 ## 4. Verdicts
 
