@@ -76,6 +76,7 @@ Totals: 17,362 s of Apply time, 525 messages and 203,572,935 provider-reported t
 - **Strict no-change (S3, T4).** In all seven runs every candidate tree equalled the input tree, publication reported `noChange=true` with no paths, and the target census was unchanged. The published commit is sometimes the input commit itself (c3-T4, c4-T4) and otherwise a new commit with the identical tree.
 - **Continuity.** Each input was built from the previous step's final bundle. Each carried state equalled the previous state file for file and was unchanged afterwards.
 - **Questions and corrections.** Every `ask` went to the direct parent or a direct child, and some were relayed by Root between siblings. There were no model blockers and no no-progress stops. In c4-S1 one delegate call was refused because a correction needs concrete Findings, and it was retried. In c3-T1, Root delegated one correction round.
+- **Shared Notes across steps (V11).** Notes from earlier steps stayed readable through the carried state. Managers treated Notes written under an older model as outdated, for example the five-loan limit after M2.
 
 ## Reviews
 
@@ -85,7 +86,7 @@ One independent retained-result review covered each chain segment. Each checked 
 - Chain 2: T1 and T2 CLEAR; T3 and T4 CLEAR WITH NOTES.
 - Chain 3: T1–T3 CLEAR; T4 CLEAR WITH NOTES.
 - Chain 4: T1 and T2 CLEAR; the other five CLEAR WITH NOTES.
-- CHAIN5_REVIEW_PLACEHOLDER
+- Chain 5: all seven CLEAR. It also checked every final candidate's registry: no dangling `realizes` target, no registered path missing and no unregistered `realization/` file.
 
 The notes changed no outcome:
 - A 4 MB `go build` binary (`realization/library`) reached intermediate handoff commits in some runs (c2-T3, c2-T4, c4-S3, c4-T3). Later commits removed it, and no published tree contains it. In other runs the checks caught it as `file.unexplained` or Root declined the handoff.
