@@ -2,7 +2,7 @@
 
 Session V, 25 October 2026. Independent review of the four Phase C materials before any Phase C run: the neutral requirements (R), the Markitect model with its rendered spec and mapping (M), the hidden oracle (O) and the hidden reference implementations with mutants (I). V is the only session that saw all four. The procedure was fixed in advance in [checklists.md](checklists.md).
 
-**Status: final, 25 October 2026.** All four materials are ready at the heads named in section 4.
+**Status: re-review in progress (section 5).** Sections 1–4 record the first review, final on 25 October 2026 for the heads named in section 4. R has since closed a gap in the requirements (PR #713), and the adapted materials are under review.
 
 ## Reviewed heads
 
@@ -202,3 +202,23 @@ Findings and their resolution:
 No finding required a change of the neutral text, so nothing went back to R.
 
 Calibration evidence, outside the repository: `C:\Users\Consiliari\Documents\Codex\Markitect-Phase-C-Review\` (`calibrate-pass-1.py`, `calibrate-pass-2.py`, `calibration-pass-1\`, `calibration-pass-2\`, each with one report and log per run and `summary.json`).
+
+## 5. Re-review after the computed-values change (PR #713)
+
+### Cause
+
+The uncounted feasibility smoke's arm M W0 Apply stopped on a genuine gap in R: arguments are typed 2000–2099, but computed values such as `dueAt` and `expiresOn` can reach 2100, and the month `2099-12` can never be invoiced. R closed the gap and its whole class in [PR #713](https://github.com/Glacius-Labs/Markitect/pull/713) (Main `8a2231f1`): a new w0 §2.8 "Computed values and limits", one paragraph in §2.5, and matching notes in C1, C2, C5 and C6. The change only inserts text.
+
+V checked the new text's arithmetic: 52,596,000 minutes from 2000 to the end of 2099; latest `dueAt` `2100-01-14T23:59Z`, latest `expiresOn` `2100-12-31` and latest block point `2100-02-13T23:59Z`; no invoice due at `2099-12-01T23:59Z` or later can block; generated identifiers of at most 20 characters (21 with `lock-`); audit targets of at most 129 characters. After the change, V found no further gap of the same kind: every computed value has a stated range or end-of-calendar rule, every operation can succeed for some valid argument except the stated `2099-12` case, and every limit a writer must choose is stated or declared unspecified.
+
+### Why the first review missed it
+
+The first review saw this class and decided it wrongly. I#4 (computed dates after 2099) was marked "open, untested", and I#3 (`2099-12` can never be invoiced) was marked "text clear". Both decisions asked only whether the oracle could test the point. Neither asked whether a writer could build the product without deciding it. "Untested" protected the oracle and left both writers with an unstated product decision.
+
+Such a gap is not neutral between the arms. Markitect's Managers escalate a model gap, and Apply stops without publication ([DEC-063](../../../../docs/concepts/register.md#dec-063-the-model-is-authoritative-defects-escalate)); one agent decides silently. The arms' first results would then differ because of the requirements, not the method.
+
+Could the checklist have caught it? Not as written: it treated R as the source and never reviewed R's own completeness, and its ambiguity rule accepted "untested" as a resolution. With two additions it would have: a completeness pass over R (computed values, features that can never be used, unstated limits) and the writer's-decision question for every "untested" ambiguity. Both are now in [checklists.md](checklists.md) (section 0b and the grading rules). Calibration could not catch it either, because the reference and the oracle agreed on an untested reading.
+
+### Inputs under review
+
+Pending the adapted pull requests of M, O and I. Calibration passes 1 and 2 (section 3) stay recorded as historical; they certify the earlier input version only.
