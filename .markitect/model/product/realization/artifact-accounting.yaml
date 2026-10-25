@@ -11,7 +11,7 @@ body: >-
   A link to a Definition the checked model no longer has is stale realization, not invalid input: it is work for Implement, and neither a Manager's handoff nor a publication may keep one within its responsibility.
   So is the shard of a Package the model no longer has: the Manager owning the area of each file it still explains, or Root where no area owns it, registers that file in its own registry, which supersedes the orphaned entry, or removes it, and Root deletes the shard.
   The global registry is a read-only view derived deterministically from the checked local registries, not a second truth.
-  Check registry and ownership accounting on the fixed state at every handoff, at Root completion and before publication; accounting says who is responsible for a file, not who changed it, so the authorship record is the task base, the fixed result and the integrated child commits, with no per-write enforcement or provenance ledger.
+  Check registry and ownership accounting on the fixed state of every Implement submission, of Root's judgment and completion and before publication; accounting says who is responsible for a file, not who changed it, so the authorship record is the task base, the fixed result and the integrated child commits, with no per-write enforcement or provenance ledger.
   Untracked ELF build outputs that no registry shard names stay out of every fixed state and are reported without failing a check; a shard that names the exact path accounts for the file as an ordinary artifact.
   Candidates preserve source identity and observed findings; pure accounting values do not schedule or publish work.
 spec: {}
