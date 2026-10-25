@@ -1140,7 +1140,7 @@ func TestNativeMessagesCarryEventsWithoutDemandingAJudgment(t *testing.T) {
 	}
 }
 
-// A native command, file change or tool call is activity of the Exchange that
+// Every completed native item but text is activity of the Exchange that
 // observed it, whatever its outcome and also on a native subagent thread.
 // Messages and reasoning are text; every Exchange starts without activity.
 func TestExchangeReportsObservedNativeExecutions(t *testing.T) {
@@ -1162,10 +1162,11 @@ func TestExchangeReportsObservedNativeExecutions(t *testing.T) {
 		items         []map[string]any
 		acted         bool
 	}{
-		{"text only", nil, []map[string]any{{"id": "r", "type": "reasoning"}}, false},
+		{"text only", nil, []map[string]any{{"id": "u", "type": "userMessage"}, {"id": "r", "type": "reasoning"}, {"id": "a", "type": "agentMessage", "phase": "commentary", "text": "Reading the input."}}, false},
 		{"failed command", nil, []map[string]any{{"id": "c", "type": "commandExecution", "command": "go test ./...", "status": "failed", "exitCode": 1}}, true},
 		{"file change", nil, []map[string]any{{"id": "f", "type": "fileChange", "status": "completed"}}, true},
 		{"tool call", nil, []map[string]any{{"id": "m", "type": "mcpToolCall", "server": "markitect", "tool": "check", "status": "completed"}}, true},
+		{"web search", nil, []map[string]any{{"id": "w", "type": "webSearch", "query": "Go module proxy"}}, true},
 		{"subagent command", []string{subagent, item("child-thread", "child-turn", map[string]any{"id": "s", "type": "commandExecution", "status": "completed"})}, nil, true},
 		{"next Exchange", nil, nil, false},
 	} {

@@ -39,6 +39,7 @@ type Agents struct {
 }
 
 var _ run.Sessions = (*Agents)(nil)
+var _ run.ActingSession = (*nativeSession)(nil)
 
 func NewAgents(engine *container.Engine, prepared runtimeconfig.PreparedProfile, credentials CredentialResolver) (*Agents, error) {
 	if engine == nil {
@@ -267,8 +268,8 @@ func (t *nativeSession) Exchange(ctx context.Context, message run.Message) (err 
 	return t.drainTerminals(active)
 }
 
-// Acted reports whether the last Exchange observed a native execution: a
-// command, a file change or a tool call, also on a native subagent thread.
+// Acted reports whether the last Exchange observed a native execution, any
+// completed item but text, also on a native subagent thread.
 func (t *nativeSession) Acted() bool {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -567,10 +568,11 @@ func (t *nativeSession) notification(m Message) error {
 		if m.method != "item/completed" {
 			return nil
 		}
-		// A command, file change or tool call ran something; messages and
-		// reasoning are text. Its outcome does not matter.
+		// Every item but text ran something: a command, a file change, a tool
+		// call, a web search or a subagent. Its outcome does not matter.
 		switch n.Item.Type {
-		case "commandExecution", "fileChange", "mcpToolCall":
+		case "userMessage", "agentMessage", "reasoning":
+		default:
 			t.acted = true
 		}
 		if !main {
