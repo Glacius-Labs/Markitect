@@ -15,7 +15,8 @@ Tools for the controlled comparison of Markitect V1 with the owner's primary bas
 | [phase-c/model/](phase-c/model/README.md), [phase-c/spec/](phase-c/spec/render.py), [phase-c/mapping/](phase-c/mapping/w0.md), [phase-c/execution/](phase-c/execution/w0.yaml) | Phase C: the canonical Makerspace model as one complete snapshot per step, arm B's documents rendered from them by this renderer with a Makerspace `Document`, the mapping from every neutral statement to its Definitions, and arm M's proposed execution configuration (ownership and project checks). |
 | [rubric.md](rubric.md), [review-prompt.md](review-prompt.md) | The artifact review rubric and the frozen prompts for the per-candidate reviewer and the confirming reviewer. Neither mentions arms or a comparison. |
 | [rubric_check.py](rubric_check.py) | Checks every critical review finding mechanically before a second reviewer is asked to confirm it. |
-| [analyze.py](analyze.py) | Applies the predeclared reading to the run ledger: conforming runs, independent units, exact intervals, the one-sided Fisher test and the reading of section 8 or B5. |
+| [analyze.py](analyze.py) | Applies the predeclared reading to the run ledger: conforming runs, independent units, exact intervals, the one-sided Fisher test and the reading of section 8 or B5; for Phase C the chains' missed probe families with an exact one-sided rank-sum test and the per-step check. |
+| [cost_breakdown.py](cost_breakdown.py) | Breaks an Apply's tokens, turns, tool calls and session time down by Run type, Manager level, Package and tool, from the Apply's own session transcripts. |
 
 The probes, the rubric, the review prompts and the oracle are assessor material. Writers receive only their fixture: arm B a Git repository with `requirements.md` and its prior work, arm M the Markitect fixture.
 

@@ -12,7 +12,7 @@ Every local Package has a Manager, including the empty intermediate ones, and Ro
 
 | Area | Packages (Definitions at W0) |
 | --- | --- |
-| Shared | `workshop` (13): overview, program, requests, responses, invalid requests, argument values, initial state, results, records, order of checks, refusal codes, order of listed results, delivery |
+| Shared | `workshop` (14): overview, program, requests, responses, invalid requests, argument values, initial state, results, computed values, records, order of checks, refusal codes, order of listed results, delivery |
 | Policies | `policies` (empty); `policies/authorization` (2), `policies/audit` (3), `policies/money` (2), `policies/time` (3) |
 | Members | `members` (empty); `members/registry` (4), `members/memberships` (4) |
 | Training | `training` (7) |
@@ -22,6 +22,8 @@ Every local Package has a Manager, including the empty intermediate ones, and Ro
 | Billing | `billing` (empty); `billing/invoices` (5), `billing/payments` (4) |
 | Safety | `safety` (4) |
 | Reporting | `reporting` (3) |
+
+Revision 1, as merged in [PR #707](https://github.com/Glacius-Labs/Markitect/pull/707) (Main `fed1fe22`); the folders now hold [revision 2](#revision-2-computed-values-and-limits):
 
 | Step | Definitions | Operations | Packages | Managers | Canonical model digest |
 | --- | --- | --- | --- | --- | --- |
@@ -38,9 +40,34 @@ Every local Package has a Manager, including the empty intermediate ones, and Ro
 
 C7 removes `billing/payments`: its four Definitions move to `billing/invoices` with unchanged local IDs, so their identities and every link to them change. The empty `billing` Package stays as the parent of `billing/invoices`; flattening billing into one `billing` Package would also change the identities of the five invoice Definitions, so the fold keeps the restructure to the four moved ones. C9 is byte-identical to C8.
 
+## Revision 2: computed values and limits
+
+Requirements [PR #713](https://github.com/Glacius-Labs/Markitect/pull/713) (Main `8a2231f1`) closed a W0 gap found by the uncounted smoke run. It inserted a paragraph at the end of w0 §2.5, the new §2.8 "Computed values and limits", and one statement each in c1, c2, c5 and c6. Requirements [PR #717](https://github.com/Glacius-Labs/Markitect/pull/717) (Main `a94c46f1`) then inserted two more W0 statements: the refusal for an `actor` that is not a valid identifier (after §2.5) and how nesting depth is counted (a §2.8 bullet). The model follows from that text only:
+
+- **W0:** the new Rule `workshop/computed-values` carries §2.8. Its links reach the Definitions whose computed values it bounds: invoices, certifications, reports, maintenance windows, stock, credit, metering, money, the calendar of the time rule, generated identifiers, audit targets and the program limits. `workshop/argument-values` gains the two §2.5 paragraphs, and `workshop/computed-values` includes the "Counting depth" bullet.
+- **C1, C2, C5 and C6:** their new statements amend `workshop/computed-values`.
+- **C3, C4, C7, C8 and C9:** no new text; they inherit the W0 change and the earlier delta edits. At C7 the new Rule's link to `record-payment` moves from `billing/payments` to `billing/invoices` with the fold.
+
+Against revision 1, every step adds one Definition and changes `workshop/argument-values`; [mapping/r2.md](../mapping/r2.md) lists the comparison per step. Packages, Managers and the execution configuration are unchanged. The single-agent documents were re-rendered; the renderer adds the section "Computed values and limits" and two listed substitutions ("rules of the model", "formula in the model" → "this document").
+
+| Step | Definitions | Operations | Managers | Canonical model digest | SHA-256 of `files.sha256` |
+| --- | --- | --- | --- | --- | --- |
+| w0 | 76 | 37 | 21 | `sha256:cfb7a9fea665827567aa26d63050b52d943d091689ce077d38c3b7138aa1dd13` | `1f6522589460cbe77a64413912f073c0e79aceaa03517d82046d073e61d9ee54` |
+| c1 | 76 | 37 | 21 | `sha256:f7a8bd292010908c64b972bd92965fb669fe57a02b88f5fa85a2863d87dab23e` | `82a06c012c7ea1382aa6575dc54a9faaa254835e8c4f9d96d3d762e02f4dfcef` |
+| c2 | 78 | 38 | 21 | `sha256:daf68db95376cbcab4625fee945604691275c8d87ee9759deeb4d70d706bbd6e` | `76b8c0ad745236dba4ad60a1417619d9ce0c0e8dec5195aba2735d32ddd0b5d8` |
+| c3 | 79 | 38 | 21 | `sha256:d9d631c784233e488fe7fb77952e87d0bfbf1496e49b44acf875f7170ca2fb1b` | `ac3d125d6990b14f5c1a1ffa4c1508ad91760090577f6d915efb0cf8cf402232` |
+| c4 | 79 | 38 | 21 | `sha256:e1f3acb6aef5ec24124c3c9aeb04fc2d28de7d8552b07faa31bb58c51ce07365` | `7efb664e91b16866c6421b7492e94ea7954238ea6ac491fce748c00445bafe8c` |
+| c5 | 80 | 38 | 21 | `sha256:5e61dc5212efa813f9263aec352c5ec1034d410aac9fc9f65276598fae3dcaab` | `4c4d5544fca64b709d750b905f65cc0d6b349c9b4a5bb937d363ff6dcf0221e1` |
+| c6 | 80 | 38 | 21 | `sha256:3a081c995f9ef5ab84522796b40d1016f72cd8653e801a270b6b78a024a926b1` | `027611c9d29ac05b502e44b71e835937197e9f3c7b145ee2aaa8acfcdaf07995` |
+| c7 | 80 | 38 | 20 | `sha256:4fb0c37a7ed795286130c78d417cd39a264cc94585c332c694b18f09d7da08de` | `f2a09010d45f3be05a1c94770774bd7a518dfb9346a77ff5f54b94b575658aec` |
+| c8 | 80 | 38 | 20 | `sha256:2505dc4bc3be83a25072569cabf235b64a6dced6497514368a31ef032ff0d6eb` | `cd1df82af94fd2de2ba4ede79311464f52c228a0bae03fa18e1e3b467ae58792` |
+| c9 | 80 | 38 | 20 | `sha256:2505dc4bc3be83a25072569cabf235b64a6dced6497514368a31ef032ff0d6eb` | `cd1df82af94fd2de2ba4ede79311464f52c228a0bae03fa18e1e3b467ae58792` |
+
+**Validation of revision 2:** each snapshot passed the structural check described under [Validation](#validation) on 25 October 2026, this time with its proposed [execution configuration](#execution-configuration-for-arm-m) in place of the ownership-only file, and with `markitect` built from Main `3f065d4323062ecceda922ace988f7ad6a8aed47`. All ten returned exit code 0 and status `passed`, with the digests above.
+
 ## How the text became Definitions
 
-- **Bodies keep the neutral wording.** One Definition per neutral subsection, record table, rule or operation. Section references became body links. The five phrases that name the document ("of this document", "in this document", "agree with this document") read "the model" here; the renderer substitutes them back. Numbers stay in prose: there are no typed policy Kinds or Properties.
+- **Bodies keep the neutral wording.** One Definition per neutral subsection, record table, rule or operation. Section references became body links. The seven phrases that name the document ("of this document", "in this document", "agree with this document", "rules of this document", "formula in this document") read "the model" here; the renderer substitutes them back. Numbers stay in prose: there are no typed policy Kinds or Properties.
 - **Every operation is a UseCase** that opens with "Operation `x`. Request processing, results and delivery apply." The three links name the rules that W0 states for every operation: the order of checks (§3.1), the shape of results (§2.7) and the delivery and test obligations (§15). The Library model did the same with its shared input rule.
 - **Policy reach.** A Manager's context is its own Definitions, their direct link targets and the local Definitions that link to them ([select_context.go](../../../../internal/organization/select_context.go)). The operation index (§14) is split into the permission matrix in `policies/authorization` and the audit target list in `policies/audit`. Both list and link every operation, so each operation's Manager sees its permissions and audit target through incoming links. The authorization and audit rule bodies (the meaning of "own", the entry fields, the recording of refusals) reach the order of checks in `workshop` and their own Managers, but not every area Manager directly: the model does not say whether checks and auditing are realized centrally or per operation, which stays a realization choice. The money and time rules, the record table, the order of listed results and the cross-area rules (good standing, certification, maintenance, lockout, overdue block, charges, credit balance, opening hours, granularity and interval overlap) are linked where the text uses them.
 - **Not modeled:** the W0 paragraph that frames the document, change-relative wording such as "Until now …" or "still", and "What stays as it is" statements, which are change control. Clarifications in those sections that state a rule are carried, and so is C8's "including dates before the change", which carries a rule; [mapping/](../mapping) lists each case.
