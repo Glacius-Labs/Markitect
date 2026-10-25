@@ -13,7 +13,8 @@ Product snapshot values, repository acquisition, canonical model digests and mai
 | Responsibility | Owner |
 | --- | --- |
 | Committed clean capture, working/fixed previews, exact source roots and census | `internal/adapters/gitrepo` |
-| Acquisition/metadata ports and source-bound preparation | `internal/apply` |
+| Acquisition ports and source-bound preparation | `internal/project` |
+| Static native and check profile metadata from acquired bytes | `internal/runtimeconfig` |
 | Pure path/file/tree identities and comparisons | `internal/snapshot` |
 | Pure canonical meaning and model digest | `internal/model` |
 | Registry, file classes, ownership and candidates | `internal/realization` |
@@ -26,11 +27,7 @@ A new input closure requires a fresh complete capture. Preparation never extends
 
 Committed Source capture returns actual HEAD and an opaque comparison guard after validating a clean committed repository. PreviewSource observes a working draft or an explicitly resolved full commit and returns no publication guard. Fixed preview refuses current external inputs without historical binding. The complete census includes Git-ignored untracked files and excludes only technical Git administration and `.markitect/state/**`.
 
-The maintenance-only `source.Input` retains fixed source files, modes and commit provenance for release packaging and installation. Its retained fingerprint is not the product snapshot.Tree digest, canonical model digest, Manager DTO or a publication guard. Current packaging accepts one root `cmd/` and `internal/` layout. Published archives keep their original bootstrap and identity.
-
-## Original v0.8.1 audit (historical)
-
-Earlier snapshot encodings and audits retain their original scope in [the preceding guide](https://github.com/Glacius-Labs/Markitect/blob/5ff3206917fa3b7482d9daedb903d57a919f56b8/docs/source-snapshots.md). That history is not the current compiler or acquisition contract.
+The maintenance-only `source.Input` retains fixed source files, modes and commit provenance for release packaging and installation. Its retained fingerprint is not the product snapshot.Tree digest, canonical model digest or a publication guard. Current packaging accepts one root `cmd/` and `internal/` layout. Published archives keep their original bootstrap and identity.
 
 ## Security and verification limits
 

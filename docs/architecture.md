@@ -1,103 +1,89 @@
 # Architecture
 
-**Current scope and proposed architecture, 23 October 2026:** the [latest owner instruction](concepts/sources/v1-scope-clarification-20261023.md) and [accepted V1 architecture](design/v1-execution-architecture.md) govern the [approved source implementation](concepts/sources/v1-source-implementation-approval-20261023.md). Full hierarchy in every mandate; runtime replacement is permitted; Extract/UI/authoring migration is excluded. The [counter-review](development/v1-architecture-audit-20261023.md) describes actual Main and the [plan](implementation-plan.md) owns coordinated source implementation and separate native execution gates. Remaining sections describe earlier source/design and impose no conflicting preservation requirement.
-
-<a id="current-s2-source-composition"></a>
-
-## Current S3 source composition
-
-`cmd/markitect -> bootstrap -> CLI -> Project` supplies structural check/context and the guarded generated model view. Optional `runtimeconfig` preparation observes acquired static native/check profiles. It does not resolve model roles, strategies or execution budgets.
-
-The standalone Run consumes the complete checked Project hierarchy and direct Session, Git, check and record ports. Every mandate uses fresh Manager environments, exact reviewed child commits, asynchronous questions and durable Notes/candidates/results. Run keeps an explicit assignment state per Manager and owns the fixed Manager tool set, including `judge` and `check`. Questions go only to the direct parent or a direct child. A judgment binds the received task and the assessed state; the end of a native response is not a judgment. Every Implement child submission reaches its parent with its check result, and an invalid one cannot be accepted or integrated. `gitrepo.LocalGit` preserves the complete Census and explicit empty model directories in independently reopened Git bundles; `runstore` persists terminal records and concurrent Notes. [Run](../internal/run/README.md) describes source evidence and its limits.
-
-Apply performs structural and target preflight, then Workflow sequences complete fresh Assessment, Implement and Verify Runs. Shared limits remain unchanged across correction Runs. After all Run resources close, Apply independently reopens stored Verify approval and host Git reconstructs and guards publication; declared publication checks receive fresh Linux copies. The old runtime has no fallback path. Native transport and provider qualification require their own bounded real evidence; controlled local Sessions do not establish that capability.
-
-## Historical architecture and source descriptions
-
-Everything below is retained source/design history. It is not the current V1 implementation entry or acceptance scope. Use the consolidated proposal and plan above, including the source audit for the actual assignment entrypoint.
-
-**Target/source boundary, 22 October 2026:** the owner accepted [Agent workspaces and reviewed handoffs](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/manager-apply-workflow.md) and its [documentation-only rebuild plan](implementation-plan.md#apply-rebuild-plan). The target uses one container/working copy per Agent assignment, reviewed Git handoffs and no domain Turns or required per-write enforcement. The executable instructions below describe the existing Pass implementation until migrated; they do not make the target available.
-
-Markitect is canonical model-first development with delegated realization. The [vision](vision.md#markitect-in-brief) owns that purpose; the [delivery plan](implementation-plan.md) owns the staged rebuild. The historical pre-V1 source implemented complete v1 Model check and read-only preparation, a separately guarded generated view and the Apply of [DEC-064](concepts/register.md#dec-064-checked-recursive-apply-passes-and-manager-teams), the selected `direct` work composition (Implement) or `staged` one (Plan, Prepare and Implement) and Verify as one recursive Pass process, plus a first Extract on the same process. Reliability and acceptance of that implementation remain unestablished; DEC-067 subsequently replaced that runtime in the current S3 source. The [runtime contract](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/manager-apply-runtime.md) owns its behavior.
+How the V1 source is composed and where each responsibility lives. [V1 concept 1.0](concepts/v1-concept.md) is the target and the [V1 execution architecture](design/v1-execution-architecture.md) owns the concrete package contracts. The [delivery plan](implementation-plan.md) lists the steps and known deviations, and the [qualification record](validation/v1-qualification-20261024.md) holds the evidence. Each package README owns its detail; the [code map](development/code-map.md) lists every package.
 
 ## Product flow
 
-`cmd/markitect → internal/bootstrap → CLI adapter → PreparationService → consumer-owned repository/profile ports`.
+`cmd/markitect → internal/bootstrap → CLI adapter → Project / Apply`.
 
-The repository adapter captures actual sources. ModelService checks only complete acquired inputs. PreparationService composes actual model, registry, complete file accounting, execution declarations and static context selection. Optional metadata/settings preparation uses explicit Orchestrator sources and actual profile adapters. The CLI presents those reports without inventing run records or execution readiness.
+- `check`, `context` and `docs` call [Project](../internal/project/README.md) directly. Project captures the sources through its own port, checks the model, registry and file accounting, reads the execution declarations and selects the static Manager contexts. These commands start no Agent and create no Run state.
+- `docs` renders the readable model view in `internal/modeldocs`; `internal/adapters/documents` writes it behind an independent guard that is separate from Apply publication.
+- `apply` prepares from one complete committed capture, then runs [Apply](../internal/apply/README.md): preflight, Workflow, and publication of the stored approval.
 
-Generated views use `internal/modeldocs` and its document-writer port, implemented by `internal/adapters/documents`. Their guard is independent of Apply publication.
-
-`apply` prepares from one complete committed capture and composes the actual ports: `cmd/markitect → internal/bootstrap → CLI adapter → PreparationService`, then `apply.Apply`, which composes the Passes of `run.Open`/`Pass`/`Finish` over `Agents`, `Workspaces`, `Checks` and `Evidence`, and finally the guarded `apply.Publisher`. Bootstrap alone builds the concrete adapters and the file evidence.
-
-## Authority and evidence
-
-The canonical model states intended behavior; exact registry entries state artifact ownership and Definition basis. Execution declarations, product defaults, Orchestrator observations and run evidence have separate responsibilities. A committed model binds its specification revision, not an authenticated human decision. Source checks, hosted CI, provider execution, releases and owner acceptance remain separate evidence.
+Bootstrap alone builds the concrete adapters and the state directory. CLI code parses arguments and presents reports. It does not invoke Git itself or start a second lifecycle.
 
 ## Layers
 
-All maintained Go packages use one root module. [The code map](development/code-map.md) inventories every actual package. [Import rules](development/modules.md#mechanical-dependency-gate) check explicit responsibilities in production, test and platform files.
+All maintained Go packages use one root module. [Modules](development/modules.md#dependency-direction) states the allowed imports, and a mechanical gate checks them in production, test and platform files.
 
-| Responsibility | Packages | Direction |
+| Responsibility | Packages | Depends on |
 | --- | --- | --- |
-| Canonical language values/Model check | `internal/model` | No other Markitect responsibility |
-| Fixed path/file/tree values | `internal/snapshot` | No other Markitect responsibility |
-| Topology, exact settings and context | `internal/organization` | Model and snapshot |
-| Ownership layout, accounting and candidates | `internal/realization` | Model and snapshot |
-| Orchestrator (Pass engine) | `internal/run` | Model, snapshot, organization and realization; no I/O |
-| Read-only preparation and consumer ports | `internal/apply` | Pure responsibilities |
-| Generated model view/write plan | `internal/modeldocs` | Apply, model and snapshot |
-| Physical/protocol adapters | Explicit `internal/adapters/*` packages | Their actual inward consumers; no general sibling privilege |
-| Composition | `internal/bootstrap` | Actual product services and adapters |
-| Product entrypoint | `cmd/markitect` | Bootstrap only |
-| Maintenance | Explicit `internal/tooling/*` packages and commands | Exact maintenance edges, separate from product execution |
+| Canonical language, Model check | `internal/model` | No other Markitect responsibility |
+| Fixed path, file and tree values | `internal/snapshot` | No other Markitect responsibility |
+| Manager topology, context selection and settings | `internal/organization` | Model, snapshot |
+| Registry, ownership, accounting and candidates | `internal/realization` | Model, snapshot |
+| Checked capture and preparation | `internal/project` | The four packages above and its own source port |
+| Static native and check profile metadata | `internal/runtimeconfig` | Model, organization, Project, snapshot; no Run or provider session |
+| Model-derived instructions for native Sessions, rendered by the native adapter | `internal/harness` | Project values; no I/O, no Run |
+| Closed hierarchical Run | `internal/run` | Project, organization, snapshot; Session, workspace, check and record ports |
+| Sequence of Runs | `internal/workflow` | Run values and its own Executor interface |
+| Preflight, publication after closure | `internal/apply` | Model, Project, Workflow, Run result values |
+| Generated model view | `internal/modeldocs` | Project, model, snapshot |
+| Concrete adapters | `internal/adapters/*`, `internal/agentd` | Their inward consumers; no general sibling privilege |
+| Composition | `internal/bootstrap` | Actual services and adapters |
+| Entrypoints | `cmd/markitect`, `cmd/markitect-agentd` | Bootstrap, agentd |
+| Maintenance | `internal/tooling/*`, `cmd/markitect-check-*`, `cmd/markitect-release` | Explicit maintenance edges, separate from product execution |
 
-## Core layer
+## Foundations and Project
 
-The old Core/Project DTO compiler has been removed. Current `model`, `snapshot`, `organization` and `realization` packages are pure values and deterministic operations over explicit supplied facts. They have no repository, filesystem, Git or provider responsibility. Canonical model digests, snapshot content/tree identities and acquisition guards remain different values.
+`model`, `snapshot`, `organization` and `realization` are pure values and deterministic operations over supplied facts. They have no repository, filesystem, Git or provider responsibility. Model digests, snapshot tree identities and acquisition guards are different values.
 
-There is one ordinary root and one Manager per local canonical Package, including authoritative intermediate and empty Packages. Manager topology is derived; it is not a canonical Manager Kind or a copy of the old DTO.
+There is one Root and one Manager per local modeled Package, including intermediate and empty Packages. The topology is derived from the model; it is not a canonical Manager Kind.
 
-## Infrastructure layer
+Project acquires through its `Source` and `PreviewSource` ports. A committed capture requires a clean HEAD; working and fixed previews never return a publication guard. `Prepared` is the immutable result: checked inputs, canonical result, topology and context, registry and layout, instructions and declared checks. A new input closure needs a fresh capture, never an extended old guard. Runtime profiles, provider settings and invocation limits are outside Project; `runtimeconfig` prepares the static metadata for them on request. Static metadata grants no execution capability.
 
-`gitrepo` implements Source, PreviewSource and explicit revision resolution. Committed capture requires clean HEAD and returns its comparison guard. Working/fixed previews never return that guard. It checks exact spellings, modes, physical directory identity, manifest roots and the complete census. Native aliases of the already confirmed selected root retain their repository coordinates; redirects and unbound external historical sources remain refused.
+## Run
 
-Metadata preparers parse explicitly selected source-bound profiles. Codex metadata preparation inspects the selected image and copies its recorded metadata without starting it; Check metadata preparation observes the selected executable without running it. These preparation paths invoke no provider session or project check. Separate Agent, workspace, check and publication adapters implement the execution ports described below. The document adapter writes a reviewed generated target through the independent guarded-write API.
+`run.Executor.Execute` runs one Assessment, Implement or Verify over the complete checked hierarchy. Every Manager gets a fresh native Session and its own Git copy; the native adapter loads the model-derived harness into that Session. Parents delegate to direct children, review the fixed child handoff by commit, integrate accepted work upward and answer questions that go only to a direct parent or child. Run keeps one explicit assignment state per Manager and owns the fixed Manager tool set (`delegate`, `await`, `review`, `ask`, `reply`, `judge`, `check`, `read_notes`, `append_note`). A judgment is bound to the received task and the assessed state; the end of a native response is not a judgment.
 
-## Application layer
+Every Implement child submission reaches its parent together with its check result, and the parent cannot approve or integrate an invalid one. Assessment and Verify keep the fixed input candidate; review scratch never replaces product bytes. Notes are optional attributed hints stored separately from the mandatory result.
 
-`internal/apply` owns the acquisition and metadata-preparation ports. It retains original requests, every actual capture attempt, known failures and incomplete observations. New closure inputs require a fresh complete acquisition, never an extended old guard. Static context preserves actual Definitions, resolved values and inclusion reasons. Settings resolution preserves authored absence and the original embedded defaults source.
+Run performs no process, provider or filesystem I/O itself. It consumes the Sessions, workspace, candidate-check and record ports, closes every Manager environment and the Git service on every path, saves and reads back the terminal result, and exposes one closed-result validation (`ValidateClosed`) that workflow and publication use without naming any Run resource. The [Run README](../internal/run/README.md) describes the collaboration contract, checks, Notes and limits.
 
-A passed captured settings preparation fixes the team, each Manager's profiles and instructions, the budget, the required checks and the layout. `Candidates.Account` accounts the start stand and every candidate against that capture, and `Publisher` publishes a verified tree against the captured source guard. Static profile metadata grants no execution capability.
+## Workflow and Apply
 
-Bootstrap alone constructs concrete adapters. CLI code owns parsing/presentation and uses the repository port to resolve explicit refs once. It does not invoke Git directly or reconstruct producer semantics.
+Workflow runs Assessment first. Assessment approval always leads to Implement, also when the result changes nothing. Implement submits a candidate; a fresh Verify alone can approve it. A Verify rejection carries mandatory Findings into a fresh Implement and a fresh Verify under the original shared allowance and deadline. Assessment rejection, a model blocker, or technical or cleanup uncertainty stops the command without publication; Apply never repairs the model.
 
-## Runtime layer
+After every Run has closed, Apply reopens the stored final Verify approval, and only then does the publisher reconstruct the verified candidate with host Git in an isolated repository, repeat the declared checks in fresh Linux copies, compare the complete captured Census, transfer guarded paths and read them back. Apply creates no owner commit and does not push. A transfer that fails part-way reports the completed paths. The [Apply README](../internal/apply/README.md) and the [publication boundary](../internal/adapters/gitrepo/PUBLISHER.md) describe the details.
 
-`internal/run` is the Orchestrator of one bound run: it runs each Pass as the one recursive base process for every Manager (explicit basis, technical check of the stable submitted area, parent acceptance, children, integration, complete result), seals it after the whole-stand Model check and File check, and runs Verify with fresh reviewers on one immutable candidate whose findings stay open until independently closed. It performs no file, process or provider I/O and keeps no journal; a run is not restored after an interruption. Every Agent's container enforces its Manager's ownership through directory and exact-file overlays of the shared tree.
+## Adapters
 
-The [container runtime](../internal/adapters/container/README.md) implements the isolation boundary ([DEC-037](concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). It starts hardened session containers from an immutable engine image ID and speaks the frame protocol of `internal/agentd/frame` with `markitect-agentd`, which runs the provider CLI, relays its streams, serves the Orchestrator tools over MCP and reports exits. The [base image](../packaging/runtime/README.md) pins Codex.
+| Adapter | Responsibility |
+| --- | --- |
+| `gitrepo` | Complete repository capture, private Run Git copies (`LinuxGit` on private Linux volumes for native Run copies, `LocalGit` for controlled tests and as the host-side candidate store and publication Git), self-contained stored candidates and guarded publication ([workspaces](../internal/adapters/gitrepo/WORKSPACES.md)) |
+| `runstore` | Immutable terminal Run results and concurrent project Notes |
+| `codexappserver` | Codex App Server Sessions with the model-derived harness and the nine Run tools ([README](../internal/adapters/codexappserver/README.md)) |
+| `container`, `internal/agentd` | Container engine client, the frame protocol and the session helper that runs the provider CLI and bridges its tools ([container runtime](../internal/adapters/container/README.md)) |
+| `checks` | Declared project checks in pinned containers over disposable input and home copies ([README](../internal/adapters/checks/README.md)) |
+| `documents` | Guarded write of the generated view |
+| `cli` | Command parsing and JSON reports |
 
-The [provider guide](guides/provider-adapters.md#container-runtime) routes to the implemented Codex Agent adapter, container workspaces, check runner and guarded publisher. Their prepared adapter smokes and any real provider run need separate authority and remain unexecuted by source tests. A structural or metadata pass cannot authorize execution effects or establish a complete Apply. There is no active legacy runtime or fallback execution engine, and the current CLI exposes no MCP server.
+Codex with normal account login is the only provider path in V1 ([D18](concepts/v1-concept.md#23-provider-scope-d18)). The [provider guide](guides/provider-adapters.md) covers the profiles and the native boundary. The [base image](../packaging/runtime/README.md) pins Codex.
 
-## Operational record storage
+## Authority and evidence
 
-Read-only preparation creates no run, candidate or evidence. An Apply or Extract keeps its evidence in the operator's state directory outside the repository (`runs/<runID>/events.jsonl`, transcripts and `report.json`) and holds one lock per state directory. Document writes retain observed completed paths if a later validation fails. A preview cannot fabricate run evidence.
+The canonical model states intended behavior; exact registry entries state artifact ownership and Definition basis. Execution declarations, runtime profiles, invocation limits and run evidence have separate owners. A committed model binds a specification revision, not an authenticated human decision. Source checks, hosted CI, provider execution, releases and owner acceptance are separate evidence.
 
-## Project artifact boundary
+Every regular file in the actual census is a protected canonical or control input, an exact registered artifact or an exact explained ignore. Registry shards derive their owner from their Package coordinate; each artifact links existing Definitions and has one owner. Gitignore is not accounting.
 
-Every regular file in the actual census is a protected canonical/control input, an exact registered artifact or an exact explained ignore. Registry shards derive their owner from their physical Package coordinate. Each artifact links existing Definitions and has one owner; a file may realize several Definitions. Gitignore is not accounting, and ignored files cannot satisfy required realization.
+## State and evidence storage
 
-## Fixed inputs and evidence
+Preparation creates no Run, candidate or evidence. `apply` keeps its state outside the repository in the operator's state directory: one `apply.lock` per state directory and, per repository identity, `applies/` (the Apply report), `runs/` (closed Run results), `candidates/` (stored Git bundles), `notes/`, `transcripts/` and `temporary/` (scratch for host Git). Document writes retain the observed completed paths if a later validation fails.
 
-Fixed previews inspect exactly the resolved full commit and refuse current external inputs without historical binding, even when the ref is HEAD. Working previews observe the actual draft. Neither is committed Apply capture. Captured source bytes/modes/provenance, canonical model digest and complete census identity remain visible in reports.
+The generated view distinguishes the canonical model digest, the rendered content digest and the source- and target-bound preview digest. Writes recheck sources and target, reject protected inputs and historical writes, and read back the actual bytes. Multi-file or interrupted effects are not assumed transactional.
 
-The generated view distinguishes canonical model, rendered content and source/target-bound preview digests. Writes recheck source and target, reject protected inputs and historical writes, and read back actual bytes under an independent guard. Multi-file or interrupted effects are not assumed transactional.
+## Distribution
 
-## Distribution and product boundary
+Source packaging, release publication and guarded installation are independent maintenance services. Source archives use the root `cmd/` and `internal/` layout. Source-smoke checks neither publish a release nor demonstrate provider or Apply acceptance. See [distribution](../packaging/README.md) and [operations](guides/operations.md#release-operations).
 
-Source packaging, release publication, distribution and guarded installation remain independent maintenance services. Current source archives use root `cmd/` and `internal/`; legacy/mixed layouts are refused. Embedded licenses, strategy defaults and selected test data are preserved. Source-smoke checks do not publish a release or demonstrate provider/Apply acceptance. See [distribution](../packaging/README.md) and [operations](guides/operations.md#release-operations).
-
-## Historical Project/Domain architecture
-
-Published releases retain their immutable contracts. The removed product generation is reconstructible from [5ff32069](https://github.com/Glacius-Labs/Markitect/tree/5ff3206917fa3b7482d9daedb903d57a919f56b8).
+Earlier product generations are listed in the [archive index](archive.md).

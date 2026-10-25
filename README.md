@@ -70,7 +70,7 @@ This is the type-system analogy: catch *expressible structural errors* before sp
 
 Every Run uses the **complete hierarchy derived from the checked model**. Each Manager receives its relevant model context, a fresh isolated environment, and its own Git working copy. Parents delegate to direct children, answer questions, review fixed child results, and integrate accepted changes. Children can receive concrete corrections without restarting unrelated work within that Run.
 
-The host handles technical coordination, finite limits, Git identities, and checks. **AI Managers judge meaning and integration.** There is no domain-level Turn/Pass micromanagement protocol.
+The host handles technical coordination, finite limits, Git identities, and checks. **AI Managers judge meaning and integration.** The host does not script their work step by step.
 
 ### 4. Assess, implement, verify — independently
 
@@ -117,7 +117,7 @@ spec:
 
 Changing `maxOpenLoans: 5` to `maxOpenLoans: 3` is a change of **accepted intent**, not a request to edit a particular source file. A conforming realization must reflect the new boundary in behavior, tests, and relevant documentation **without** deleting existing loans or breaking returns. Already-correct artifacts should remain correct, not be rewritten merely because an agent prefers a different style.
 
-The broader [Library M1 → M2 evaluation](docs/guides/measurement.md) tests whether Markitect can preserve those obligations across successive changes. That full preservation result is **not yet established** by the initial M1 success.
+The [measurement guide](docs/guides/measurement.md) describes how Markitect is compared with ordinary agentic coding on this example. A reliable preservation result across successive changes is **not yet established**.
 
 ## The project model
 
@@ -179,8 +179,8 @@ go run ./cmd/markitect apply \
 | Canonical v1 language, compiler and explicit file accounting | Implemented with source tests and model/architecture checks. |
 | `check`, `context` and guarded `docs` | Implemented in the current CLI. |
 | Standalone hierarchical Run and stored Git candidates/results/Notes | Implemented, with controlled tests and a bounded native Codex hierarchy proof. |
-| `apply`: Assessment → Implement → Verify → guarded publication | Implemented. **One complete native Codex Library M1 realization** has been recorded, using fresh six-Manager hierarchies in all three mandates and publishing 21 paths. [Evidence: PR #660](https://github.com/Glacius-Labs/Markitect/pull/660). |
-| Reliability across changes | **Not yet established.** M1 → M2 preservation, no-change, deliberate defects, independent functional oracles and repeated-run evaluation remain qualification work. |
+| `apply`: Assessment → Implement → Verify → guarded publication | Implemented. With native Codex, the [qualification record](docs/validation/v1-qualification-20261024.md) holds complete Library M1 and M2 (loan limit 5 → 3) Applies with independent outside oracles, a strict no-change Apply and a seeded defect repaired by an ordinary Implement. |
+| Reliability across changes | **Not yet established.** That evidence predates the final collaboration contract. Requalification on the frozen source, repetition for stability, the public Verify-rejection branch with publication, account refresh and owner acceptance remain open ([plan](docs/implementation-plan.md)). |
 | Provider support | Native Codex with dedicated normal-account login, with bounded evidence. V1 carries no other provider path; Claude follows later as its own adapter ([D18](docs/concepts/v1-concept.md#23-provider-scope-d18)). |
 | Other product surfaces | Extract, Cockpit/UI, interactive model authoring and the former Setup command are outside this narrow V1 scope. |
 

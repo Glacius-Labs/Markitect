@@ -6,7 +6,7 @@ Use this map to find the document that owns a decision, a guide or a piece of ev
 
 | If you want to… | Start here |
 |---|---|
-| Implement Markitect V1 | [V1 concept 1.0](concepts/v1-concept.md), [delivery plan](implementation-plan.md), [concrete Go architecture](design/v1-execution-architecture.md), [bounded assignments](development/v1-workstream-assignments.md), [qualification record](validation/v1-qualification-20261024.md) and [conformance audit](development/concept-conformance-audit-20261024.md) |
+| Implement Markitect V1 | [V1 concept 1.0](concepts/v1-concept.md), [delivery plan](implementation-plan.md), [concrete Go architecture](design/v1-execution-architecture.md), [code map](development/code-map.md) and [qualification record](validation/v1-qualification-20261024.md) |
 | Understand what Markitect is for, before assessing or redirecting it | [Markitect in brief](vision.md#markitect-in-brief), [Common misreadings](vision.md#common-misreadings) and the [concept register](concepts/register.md) |
 | Understand where the idea came from and why its mechanisms might help | [Origin and rationale](concepts/origin-and-rationale.md), the [owner's original account](concepts/sources/owner-origin-20261015.md) and the [product reflections](concepts/reflections/README.md) |
 | Use the current Model → Artifacts workflow | [Project workflow](guides/project-workflow.md), [Project operations](guides/project-operations.md) and [Provider adapters](guides/provider-adapters.md) |

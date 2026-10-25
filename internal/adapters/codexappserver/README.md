@@ -16,7 +16,7 @@ The metadata reader inspects the selected image, copies bounded whole `/opt/mark
 
 `Open(ctx, run.SessionSpec)` checks the exact prepared Manager, complete checked Project, supported tools and actual workspace location before resolving the selected opaque credential reference. Native execution accepts only an existing private Linux `Volume` plus `Subpath`, mounted directly at `/work` with no copy-up. A local `Directory` is explicitly unsupported. The native factory owns one separate fresh private home and one hardened Manager container. No host credential home is mounted.
 
-One agentd process and one Codex App Server process live until `Close`; the first `Exchange` starts a fresh thread and subsequent messages use it. No old domain Turn, Pass, assignment scheduler or API-key execution route remains. The native CLI's own wire turn is a protocol fact.
+One agentd process and one Codex App Server process live until `Close`; the first `Exchange` starts a fresh thread and subsequent messages use it. The native CLI's own wire turn is a protocol fact; Markitect adds no Turn layer and no API-key route.
 
 ## Harness, inbox and completion
 
@@ -34,4 +34,4 @@ Each Exchange sends Run's message as the JSON prompt: delivered events and Run's
 
 Only explicit `dedicated-runtime-login` input with `auth_mode: chatgpt`, account ID, ID token and access token is admitted. Mixed API-key authority, desktop mode and malformed login are refused. Refresh authority is removed from the Manager copy; this adapter does not refresh or rewrite the source. Credentials travel only through bounded private agentd initialization, not argv, environment, harness, Notes or product Git. Known tokens and their escaped forms are redacted. Fresh-login, expiry, refresh and fan-out support remain separately qualified.
 
-Pure codec, metadata and controlled-session tests establish source behavior. Historical private-init and Inbox probe binaries/evidence remain tied to their named pre-replacement commits; their old Turn-based test consumers were retired. Current LinuxGit, effective loading, native hierarchy, background-terminal drain, provider support, full Apply, hosted CI and owner acceptance remain separate claims.
+Pure codec, metadata and controlled-session tests establish source behavior. Current LinuxGit, effective loading, native hierarchy, background-terminal drain, provider support, full Apply, hosted CI and owner acceptance remain separate claims.

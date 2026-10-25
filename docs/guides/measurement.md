@@ -19,8 +19,6 @@ Freeze expected outcomes before execution, independently validate faulty/conform
 
 Report behavior, test semantics, documentation/configuration consistency, ownership/integration, preservation, missed conditions, unsupported success, false blockers and unknowns separately. State actual assessed scope and evidence in readable results. A green status, an external behavioral oracle or a complete registry is not a holistic proof. Human attention includes model/packet authoring, maintenance and recovery; runtime and money remain separate secondary observations.
 
-The [A–D supplement](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/development/claude-direct-runtime-handoff-20261021.md#primary-goal-supplement-and-current-handoff) prioritizes current discriminating checks within existing responsibilities and ceilings. The authoring and longitudinal exercises remain later bounded scopes; this adoption starts no additional series, does not rescore historical results and adds no UI implementation assignment.
-
 ## Staged method readiness
 
 Establish a usable ontology-to-reconciliation process before measuring comparative benefit. This procedure orders new work; it does not rescore historical cohorts, erase failures or waive contribution and release gates. A real missing capability from the accepted design must be implemented, not replaced by a mock and reported as working.
@@ -53,7 +51,7 @@ Keep initial setup, model maintenance, recovery and review effort visible. Recor
 
 ## Comparison factors and first results
 
-The [comparison source playground](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/experiments/test-projects/comparison/playground/README.md) supplies a small curated set of fixed packets, not a study runner. Record exact model, effort and profile bindings. The primary paired comparison uses the same model and effort for the ordinary coding Agent and every Markitect role; mixed role profiles are a separately labeled secondary condition. Give each pair the same maximal resources, timeouts, permissions, implementation freedom and human-help allowance. Measure actual resource use, human attention, money and elapsed time separately; equal ceilings do not imply equal cost.
+The [single-agent comparison tools](../../tools/comparison/README.md) supplies a small curated set of fixed packets, not a study runner. Record exact model, effort and profile bindings. The primary paired comparison uses the same model and effort for the ordinary coding Agent and every Markitect role; mixed role profiles are a separately labeled secondary condition. Give each pair the same maximal resources, timeouts, permissions, implementation freedom and human-help allowance. Measure actual resource use, human attention, money and elapsed time separately; equal ceilings do not imply equal cost.
 
 Declare project size separately from dependency and rule complexity, and distinguish greenfield implementation from existing-system changes, local changes from rules spanning responsibilities, and no added seed from an ordinary or subtle deliberately seeded defect. Use a small selected set before a full factor combination. The first Library/Readinglog set changes domain, language and organization together; its project differences are descriptive and do not isolate a causal size or complexity effect. Compare methods within each identical scenario/profile, including each model-profile condition, before drawing a broader conclusion.
 
@@ -67,7 +65,7 @@ The future product question is whether people can govern more autonomous enginee
 
 Use repeated realistic task/change sequences with the [same-content documentation-plus-Agent baseline](#quality-first-comparative-evaluation). Freeze task/rubric, source and policy history, actual agent/model settings, tool versions, permissions and environment. Counterbalance run order and use fresh isolated sessions. Include setup, discovery, recovery, specification authoring and recurring upkeep in both arms, not just the implementation interval. A single run or an unmatched policy history cannot establish sustained attention savings.
 
-The owner's priority is fidelity to intended meaning with less human attention. Extra Agent calls can be a good trade when they prevent omissions, manual inspection and correction prompts. Report monetary/token cost, human attention and elapsed time separately; Agent count alone establishes neither waste nor benefit. Observe both errors the operator notices and defects found only by independent assessment, so blind trust cannot look like attention saved. Parallel work can reduce elapsed time, but overlapping Agent activity must not be counted as overlapping human attention. The first Apply's sequential strategy remains unchanged.
+The owner's priority is fidelity to intended meaning with less human attention. Extra Agent calls can be a good trade when they prevent omissions, manual inspection and correction prompts. Report monetary/token cost, human attention and elapsed time separately; Agent count alone establishes neither waste nor benefit. Observe both errors the operator notices and defects found only by independent assessment, so blind trust cannot look like attention saved. Parallel work can reduce elapsed time, but overlapping Agent activity must not be counted as overlapping human attention.
 
 | Future metric | Required observation and limit |
 |---|---|
@@ -106,23 +104,21 @@ The object of evaluation is the delegated method: computed scope, bounded Manage
 
 Current component and oracle tests establish only their actual assertions and source. [CONTRIBUTING](../../CONTRIBUTING.md#verify-a-change) owns executable gates; the [Library oracle](../../tools/library-oracle/README.md) owns independent behavior expectations. A successful source check does not establish semantic realization or attention savings.
 
-The old authoring scenarios, `internal/app` examples and published-binary timing workload are retired. Their protocols and dated observations remain at [the pre-retirement measurement record](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/docs/measurement.md) and [benchmark source](https://github.com/Glacius-Labs/Markitect/tree/1f4a1ede214d05fd2fee615b3905207df7702426/benchmark). Removing obsolete commands does not rescore their results or establish a replacement benchmark. A new comparative study follows the current primary baseline above and requires its own authorization.
+A comparative study follows the current primary baseline above and requires its own authorization. Earlier measurement protocols and their dated observations are listed in the [archive index](../archive.md) and keep their original scope.
 
 ## Authoring exercise
 
-Use the canonical Library model and the [staged readiness gates](#staged-method-readiness) for current authoring and realization work. The earlier Project/Domain authoring exercise remains in [its source-bound record](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/docs/authoring-pilot.md).
+Use the canonical Library model and the [staged readiness gates](#staged-method-readiness) for current authoring and realization work.
 
 ## Controlled model comparison
 
-Prepare the task oracle outside the actor's context. Run baseline and Markitect variants from identical fixed snapshots with the same model, effort, permissions, and task. Use separate workspaces and fresh sessions; include discovery and recovery costs. An optional check-only variant can isolate the effect of context and impact queries.
+Prepare the task oracle outside the actor's context. Run baseline and Markitect variants from identical fixed snapshots with the same model, effort, permissions, and task. Use separate workspaces and fresh sessions; include discovery and recovery costs. An optional check-only variant can isolate the effect of the static context.
 
 Start with a small set of local Rule edits, shared rules, and dependency changes, then extend to renames, binding/scope changes, code-to-document inputs, provider-output drift, and stale references. Repeat each variant at least three times before describing a trend. Report successes and invalid runs alongside duration and token counts; separate correctness from speed.
 
-Capture only observed data: model-reported token usage, calls, tool calls, searches, files read, wall time, context bytes, affected entries, review reuse, and human interventions. Missing values remain unavailable; do not estimate tokens from bytes. Context/impact precision and recall require a known expected set. Report undefined ratios with numerator and denominator rather than substituting 100%.
+Capture only observed data: model-reported token usage, calls, tool calls, searches, files read, wall time, context bytes, affected entries and human interventions. Missing values remain unavailable; do not estimate tokens from bytes. Precision and recall of the selected context require a known expected set. Report undefined ratios with numerator and denominator rather than substituting 100%.
 
-Review reuse should be exercised for identical inputs, relevant changes, removed edges, tool/config changes, and unknown files. Reuse makes no model call. Compare the full repeated task before claiming sustained savings.
-
-The [2026-10-01 documentation pilot](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/history/assessments/authoring-pilot-20261001.md) records an incomplete first exercise and a six-run repeat with the mutation boundary stated in the task card. All six repeated candidates passed fixed structural and output checks and the four-path boundary. The blind semantic review found a further wording difference between task and rubric, while token and cost measures remained unavailable. State every scored requirement in both task card and review rubric before running another comparison; keep structural validity, requested semantics, and a narrow mutation boundary as separate results.
+State every scored requirement in both task card and review rubric before running a comparison; keep structural validity, requested semantics and a narrow mutation boundary as separate results.
 
 ## Optional local records
 
