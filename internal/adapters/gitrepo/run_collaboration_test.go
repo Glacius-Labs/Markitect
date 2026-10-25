@@ -616,10 +616,12 @@ func TestLateFindingInvalidatesAcceptanceAndJudgmentsAbove(t *testing.T) {
 					return true, m.judge(ctx, run.Submitted, nil)
 				case "a/deep":
 					if len(m.messages) == 2 && message.Events[0].Question != nil {
-						if err := m.spec.Tools.Reply(ctx, message.Events[0].Question.ID, "late finding"); err != nil {
+						// Judge before answering: a awaits the changed handoff once
+						// it has the answer, and would otherwise be refused.
+						if err := m.spec.Tools.Judge(ctx, late, []run.Finding{{Text: "The accepted handoff refutes an assumption."}}); err != nil {
 							return true, err
 						}
-						return true, m.spec.Tools.Judge(ctx, late, []run.Finding{{Text: "The accepted handoff refutes an assumption."}})
+						return true, m.spec.Tools.Reply(ctx, message.Events[0].Question.ID, "late finding")
 					}
 				}
 				return false, nil

@@ -636,10 +636,13 @@ func (m *controlledManager) handle(ctx context.Context, e run.Event) error {
 	switch {
 	case e.Question != nil:
 		if e.Question.Text == "Reassess the already accepted handoff." {
-			if err := tools.Reply(ctx, e.Question.ID, "late required correction"); err != nil {
+			// Record the finding before answering. The parent awaits the changed
+			// handoff once it has the answer; answering first lets that await run
+			// before the finding exists, and it is then refused.
+			if err := tools.Judge(ctx, run.Reject, []run.Finding{{Text: "Late required correction discovered after accepted integration."}}); err != nil {
 				return err
 			}
-			return tools.Judge(ctx, run.Reject, []run.Finding{{Text: "Late required correction discovered after accepted integration."}})
+			return tools.Reply(ctx, e.Question.ID, "late required correction")
 		}
 		return tools.Reply(ctx, e.Question.ID, "controlled answer from "+m.spec.Manager.Package)
 	case e.Answer != nil:
@@ -1118,7 +1121,13 @@ func (s *partialLibrarySessions) realize(ctx context.Context, m *controlledManag
 		s.libraryAttempts++
 		// Root scaffolding and peer code were authored after initial delegation.
 		// They must not appear through live propagation into this private copy.
-		for _, path := range []string{"realization/go.mod", "realization/peer/peer.go"} {
+		// A correction merges Root's baseline at delegation, which holds b's code
+		// once Root has integrated b first; Root writes its scaffolding last.
+		unexpected := []string{"realization/go.mod"}
+		if s.libraryAttempts == 1 {
+			unexpected = append(unexpected, "realization/peer/peer.go")
+		}
+		for _, path := range unexpected {
 			if _, err := os.Stat(filepath.Join(root, path)); !errors.Is(err, os.ErrNotExist) {
 				return fmt.Errorf("partial library unexpectedly has %s: %v", path, err)
 			}
