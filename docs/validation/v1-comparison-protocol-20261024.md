@@ -387,3 +387,289 @@ Recorded on the coordinator's decision of 25 October 2026, before any Phase B ru
 - **Unchanged.** Arm B (runner, prompt, image and the documents m3–m5), the T fixtures and model snapshots, the hidden cases and the assessor at `43d0365e` stay exactly as frozen. The owner change at each step stays model-only.
 - **F′ recorded.** F′ = `528ef346d3149002f53bf8eca1c54ea5613453ed`, the Main merge of #701 ("a deleted Definition's registry link is stale realization, not invalid input"). Between F and F′ the only product-code changes are #696 and #701; #698 changes one test only. M's runtime image on F′ is `sha256:dd0ddd7089b52024e96cc35655c4d8590caabaa6b6327923717584408403736f`, which differs from B's `sha256:1271a363…0ba9`, so the shared-image condition of section 2 does not hold for Phase B and is a stated limit. Step 4 started M-c1-T1 on F′ at 09:08 UTC on 25 October, before this record was written, so the record misses the "before the first M run" timing stated above; F′ was the source the coordinator dispatched to step 4 once #701 merged.
 - **Order.** Arm B starts before F′ exists, so Phase B gives up the counterbalanced pairs; at least B's first runs precede every M run. This replaces B3's order principle and B5's sentence that the extra chains run in counterbalanced pairs under Phase A's parity rule. Each arm keeps the chain order of B5 (chains 1–3 T1–T4, then chains 4 and 5 with S1–S3 first). Time effects between the arms, such as provider load or model behavior changing over the hours between them, are a stated limit of Phase B.
+
+## Addendum: Phase C (Makerspace)
+
+Status: **approved by the coordinator on 26 October 2026 (N = 3), before any counted Phase C run.** Uncounted smokes have run (C7); no counted run existed at approval. Phase A's and Phase B's text, tools and readings stay unchanged; Phase C is read by its own rule (C6) and never pooled with them.
+
+### C1. Why another phase, and which project
+
+Phases A and B tied on the small Library: behavior hit the ceiling in both arms. The thesis says Markitect's advantage should appear when one agent can no longer keep every obligation in view across areas and changes. Phase C therefore uses **Makerspace**, a community-workshop program written for this purpose from a one-page [brief](../../tools/comparison/phase-c/brief.md). Neutral requirements came first ([requirements](../../tools/comparison/phase-c/requirements/README.md), #702); the model, its renderings, the hidden oracle and the reference implementations were derived from them by separate sessions.
+
+| | Library (Phases A, B) | Makerspace (W0) |
+| --- | --- | --- |
+| Definitions | 22 | 75 |
+| Operations | 10 | 37 |
+| Packages / Managers | 5 / 6 | 20 / 21 |
+| B's document (words) | 2,669 | 8,222 |
+
+Cross-cutting policies (authorization, audit, money, time) apply to almost every operation, and several eligibility checks span three or four areas. The whole document still fits in a modern context window, so the claim under test is about attention and change fanout, not memory.
+
+### C2. Materials and sources
+
+- The first Phase C freeze was **F_C = `6595ebf672b9a5e08d7309665615834982a8e8b2`**. Its product code is identical to `3347cf0a`: F′ plus #706 (build outputs out of candidates, checks run once) and #705 (Package removal or merge, needed at C7). The first W0 smoke ran on F_C and its runtime image, `sha256:9593bdd0cb63b4d7a5fc403f5303cff17d3ccb591dd605ba08f40e4c3df9c8fc`, which was built by arm M's controller. In every Phase C run both arms use the same image, so the shared-image condition of section 2 holds again.
+- Materials, all reviewed and merged before this addendum:
+  - Requirements: #702 (`795b8a2a`).
+  - Model snapshots, renderings, mapping and execution configuration: #707 (`fed1fe22`).
+  - Reference implementations and mutants: #703 (`a559283b`).
+  - Hidden oracle: #708 (`6595ebf6`).
+  - Equivalence, traceability and calibration review: #709 (`9cee5f5c`).
+- V found the model equivalent to the requirements at all ten steps. Its oracle calibration, pass 2, matched expectations in 47 of 47 checks.
+- **Fix-and-resmoke.** The W0 smoke found boundary gaps in the requirements text (C7 below). R closed them and swept the whole text for the same class of gap (#713, #717). M, O, I and V adapted, and V certified the new input version, materials freeze v2 = **`4840fb20f52c1e0e0367e909d833919ca8a215c6`** (tree `b53319d1`; M #719, O #716, I #714; V's calibration pass 3: 48 of 48). **Both arms run every counted step on the runtime image built from F_final**: the final product state after P1, P3 and the A4 timeout fix, **F_final = `4d23f7aea0576ff5c477fd301b456a24bbb6dcb3`** (#725), image **`sha256:3d75d81f438e71254d01f013cd35e0c61f9eecfb8abba723b34e12158c33e943`** built from it by step 4 (base `c2920c61…`, codex-cli 0.162.0). Between materials v2 and F_final only V's review record changed under `tools/comparison/`. The study tooling, oracle, reference, model snapshots and B's documents are byte-identical, so R_C stays `4840fb20`. M's last smoke runs on F_final too. The study is rebound to that image once (`prepare-pc.sh`, which refuses any rebind after a counted run), and the ten positive controls run at that binding before the first counted run. Earlier smokes ran on the F_C image `9593bdd0`, recorded per run.
+- Assessment revision **R_C = `4840fb20`**, the materials freeze itself: `assess_candidate.py` profiles `w0`, `c1`–`c9` (#711), the adapted hidden oracle, `analyze.py --phase C` and `cost_breakdown.py` (#718). Its end-to-end positive controls on the reference passed before the fix (W0 49 of 49; C3 53 of 53 with an empty change census). On R_C and the F_final image they ran for all ten steps (`e2e-assessor-v2.sh`, each step from the previous step's reference), and **all ten pass**. Hidden cases grow from 54 at W0 to 63 at C9 (54, 55, 57, 58, 59, 61, 62, 62, 63, 63), families from 48 to 56, probe families 30 at W0 and C1 and 31 from C2. The change census is empty at C3, C7 and C9, and own checks pass at every step. Their family lists are the ledger's catalog per step. A first run failed at C7–C9 in the script, not the assessor: those references keep the previous tree, so an empty commit is needed. It is kept on record.
+- **One binding.** `phase-c/study.env` in the evidence root names R_C, the image and arm B's document packet. Every Phase C script reads it: run, assess, record and ledger. `prepare-pc.sh` writes it once and checks out the assessor clone at R_C. The packet holds the ten `spec/requirements-<step>.md` of the materials freeze, with their hashes, and is checked before every chain.
+
+### C3. Arms, conditions and treatment differences
+
+Phase A's arms and shared conditions apply, with these Phase C values:
+
+| | M | B |
+| --- | --- | --- |
+| Source and image | F_final, `3d75d81f…` | the same image; the Phase A runner and prompt (`8a6c99a7…`) |
+| Input per step (C4) | its last deliverable candidate plus one neutral commit that replaces `.markitect/model/` with the step's snapshot (`tools/comparison/phase-c/model/<step>` at the materials freeze) | its last deliverable capture plus one commit that replaces `requirements.md` with the step's rendering (`spec/requirements-<step>.md` at the materials freeze, from the packet) |
+| Continuation in a chain | the chain's state directory | the chain's Codex thread |
+| Deadline per run | 5,400 s (Apply) | 5,400 s (session) |
+| Messages | maxMessages **256** per Apply, maxManagers 32 | one input message |
+| Resources | Manager session limits as in Phase A | the six-Manager aggregate ceiling of Phase A (6 CPUs, 12 GiB, 1,152 processes) |
+
+**Intended treatment differences**, beyond Phase A's:
+
+- M's execution configuration (`tools/comparison/phase-c/execution/w0.yaml`) adds a `project-build` check and a 5-minute `project-tests` timeout compared with the Library fixture. The assessment's own checks run under the same 5-minute limit for both arms.
+- **Owner attention on arm M's side.** At C7 the owner replaces `execution.yaml` together with the model (`execution/c7.yaml`, which folds `billing/payments` into `billing/invoices`). B receives only the C7 document.
+
+### C4. Steps, order and attempts
+
+The ten steps are W0 (fresh build) and C1–C9:
+
+1. C1: audit of refusals.
+2. C2: safety lockouts.
+3. C3: bulk material prices.
+4. C4: the steward role.
+5. C5: overdue invoices block bookings and purchases.
+6. C6: certifications no longer expire.
+7. C7: payments fold into invoices, without a behavior change.
+8. C8: 15-minute booking granularity and new opening hours.
+9. C9: unchanged re-application.
+
+C8 and C9 render identical documents.
+
+Each step continues the arm's own actual result, defects included. A chain runs its ten steps in pairs, step by step, under Phase A's parity rule: M first in odd chains, B first in even chains. The serial engine lock applies. A step has one attempt unless the infrastructure rule below allows a repeat.
+
+**Deliverable candidate.**
+- For M, a deliverable candidate is a published one: Apply status `passed`.
+- For B, it is the capture of a session that completed. A session that hits its deadline or fails leaves none, just as an Apply that does not publish leaves none.
+
+**Input of a step.** Each step starts from the arm's last deliverable candidate in the chain, plus the step's model snapshot (M) or document (B). B also resumes that candidate's Codex thread. Until a chain has any deliverable candidate, a step starts as W0 does: M from the neutral input, B from an empty repository and a new thread. C9's document equals C8's, so after a deliverable C8 the C9 input is that candidate, unchanged.
+
+**A step without a candidate** stops the series until the operator records a decision in the step's run directory. There are two:
+- **`repeat`:** only when the attempt is shown to be an infrastructure failure, that is, the harness ended before any case ran or a technical fault provably independent of the candidate. The next attempt then runs, both stay recorded, and the last one counts.
+- **`no-candidate`:** every other case. The step counts **every probe family of the step as missed** (30 at W0 and C1, 31 from C2 on) and is not conforming, and the chain continues as above.
+
+The same rule applies to both arms. A failure that cannot be clearly separated from the candidate counts as the first result.
+- An attempt that left a candidate, or for M raised a model blocker, is never repeated.
+- The study numbers each step's attempts from 01, because step 4 makes M's replacement attempt as a new packet.
+- Every attempt's time and tokens count toward the step's cost.
+
+**Machine quietness** (coordinator, after the re-smoke).
+- No heavy parallel work may run on the machine during any counted run of either arm: no host test suite, no other Apply.
+- `quiet-monitor.sh` samples the host every minute while the engine lock is held. It records:
+  - test suites on the host (`go.exe`, `*.test.exe`);
+  - test processes in a running WSL Ubuntu;
+  - every Markitect process with its executable;
+  - running containers;
+  - CPU load.
+- A run is quiet when no sample shows a test suite or a Markitect process other than M's own Apply, which is the binary in its packet. A probe that fails is recorded as unknown, so a run with an unknown sample is reported as "unknown", never as quiet. The record is reported per run.
+- A counted run is started only on a quiet machine.
+- A run that turns out not to be quiet keeps its quality result, because repeating on that ground would let the operator choose results. Its time and tokens are reported but left out of the cost comparison. A technical failure in such a run may be repeated only under the infrastructure rule above.
+
+**P2 observation.** Step 4 also records a P2 observation (the Verify-reject path) on each M Apply. It is a technical observation for the acceptance report and never changes a study outcome.
+
+**Model blocker in a counted run (M).**
+- The Apply publishes nothing, so the step has no candidate and is scored as above.
+- The blocker is classified separately: **justified** when V confirms a genuine gap or contradiction in the step's text, otherwise **false**. The class is recorded before the ledger is built, and a false blocker also counts under section 8.
+- The results state the trade-off plainly: M stops on gaps, B guesses.
+
+### C5. Hidden assessment
+
+Every candidate of both arms is assessed with `assess_candidate.py` at R_C under the step's profile. The steps are:
+
+- **Hidden cases:** the Makerspace oracle's cumulative case set of the step, through the Library oracle's transport, with the oracle's own limits:
+  - behavior cases (B-* per area, D-C1–D-C8 per change);
+  - **30 probe families at W0 and C1, 31 from C2 on** (materials v2 add P-LIMITS);
+  - ten invariant checks over one mixed scenario, whose statuses are judged once as INV-SCENARIO.
+- **Change census:** at C3, C7 and C9, the step's cases are also run against the arm's own previous program.
+- **Own checks:** `go build ./cmd/makerspace` and `go test ./...` from `realization/`, under 300 s each in both limit profiles.
+- **Path census, scope greps, a blinded per-candidate review** with citation check and confirmation, against the step's rendered document, and the **contamination audit**, as in Phase A.
+
+**How the census is used:**
+
+- **C9** is the strict no-change gate. Any census difference to the arm's own C8 program, `reason` included, makes C9 non-conforming. So does any changed comparable path, and for M any changed registry path.
+- **C3 scope rule.** A C3 census difference, with `reason` ignored, is a change-discipline failure: any case without an accepted purchase of ten or more units must answer as the arm's C2 program does.
+- **C7 churn rule.** The same rule applies to both arms. A census difference, with `reason` ignored, is a change-discipline failure. Changes needed to keep the project valid under the documented fold are justified: for M, registry relinks and ownership-forced moves out of `realization/billing/payments/`. Behavior-neutral moves or renames that follow the fold are justified too. Any behavior change, and any edit outside the billing area, counts as unjustified churn. Moved or relinked lines per arm are reported as a separate secondary measure, so their cost stays visible.
+- **The billing area** is decided mechanically and identically for both arms, because B's layout is its own. A changed file in the blinded diff is outside the area when neither its path nor any of its changed lines contains `payment`, `invoice`, `billing`, `paid` or `pay` (case-insensitive, whole words for the last two). Registry shards are exempt. The rule is lenient by design. It catches edits with no billing connection; a behavior change anywhere is caught by the census, and removed behavior by R5's *unjustified* class.
+- A census that cannot run, because the arm's own previous program does not build, fails change discipline at that step.
+
+### C6. Outcomes, N and decision rule
+
+- **Conforming step:** all five criteria hold. Their names avoid the step names; the ledger keeps Phase A's keys, shown in brackets.
+  - **Technical** [C1]: as in Phase A.
+    - M: outcome `technical_pass` from step 4's controller, no residue, no failure. The controller's Makerspace profile must not apply the Library's "exactly one project-tests check" publication rule, which wrongly failed the F_final smoke. That fix lands before the first counted run, and the controller version is frozen with this addendum (C8).
+    - B: the session completed, no residue, login unchanged.
+  - **Hidden cases** [C2, C3]: the program built within the oracle's limits, and every hidden case of the step passes.
+  - **Own checks** [C4]: build and tests pass in both limit profiles.
+  - **Review** [C5]: no confirmed critical rubric finding, and no protected input changed.
+  - **Change discipline** [C6]: the C3 rule, the C7 rule and the C9 gate.
+- **Primary metric:** missed obligations per chain, the sum over the ten steps of **failed probe families**. Behavior-case families and invariant families are not added: in V's calibration, 17 of 30 single faults also failed a strict behavior or invariant family, so a combined count would weight one fault two to ten times.
+- **Declared dependences:** six probe families have declared inherent dependences, listed in V's review record. They count as they fall, the same for both arms, and are named as a limit.
+- **Secondary, reported per arm and step:**
+  - failed behavior families;
+  - invariant failures together with INV-SCENARIO, read as one signal, because a refused record-creating step stops the scenario and fails all ten invariant families with it;
+  - conforming steps;
+  - stale obligations (above all at C6);
+  - regressions of earlier families;
+  - R5 classes and changed lines;
+  - moved and relinked lines at C7;
+  - false blockers and unsupported success;
+  - M's Apply completion rate;
+  - time, tokens, messages and quota.
+- **Unit and test:** the unit is the chain. The primary comparison is a one-sided exact permutation (Mann–Whitney) test that M's per-chain totals are lower.
+- **Reading:**
+  - **"Supports"** needs all three: p ≤ 0.05; M at no step missing more probe families than B, summed over chains; and no critical error type that only M shows.
+  - M lower without that: a **tendency**, not established.
+  - Equal totals: **no quality advantage shown**. With M's higher cost, this counts against the claim.
+  - B lower: **counts against Markitect**.
+  - Section 8's list applies: unsupported success, false blockers, unjustified churn at C7, a failed C9 gate, and technical failures, each where B has none.
+- **Error types** (section 6) are, per step:
+  - every failed criterion;
+  - every failed family;
+  - `no-candidate` or `not-built`;
+  - `false-blocker`;
+  - `unsupported-success` (M published a candidate that fails any of C2–C5).
+  A step without a candidate, or whose candidate did not build, fails every family of the step. Each step's family list is the catalog of its positive control on the reference. This keeps the "only M" check fair when one arm has no program at a step.
+- **Regressions** are counted for candidates only. Steps without a candidate are reported as their own measure, so a blocked step is not also counted as dozens of regressions.
+- **N = 3 chains per arm** (C7). With N = 3, p ≤ 0.05 requires complete separation (minimum p = 0.05). With N = 5 the minimum p would be 0.004.
+
+**The owner's measures** and where each one is read:
+
+| Measure | Read from |
+| --- | --- |
+| Complete domain correctness | Hidden cases per step: probe families (primary), behavior families |
+| Cross-cutting invariants | Invariant families with INV-SCENARIO, as one signal |
+| Regressions after changes | A family that failed at a step but passed at the arm's previous deliverable step in the chain |
+| Unintended changes | Census differences at C3 and C7, files outside the billing area at C7, R5 *unjustified* |
+| No change and preservation | The C9 gate; the C3 scope rule |
+| Runtime and tokens | Per run and chain, below |
+| Human interventions | M's recorded interventions; the owner's C7 `execution.yaml` replacement (owner attention, M only); every operator decision, manual fix or restart, per arm |
+| Technical failure rates, incomplete runs | Per arm: repeats for infrastructure, steps without a candidate, model blockers by class, deadline hits, M's Apply completion rate |
+
+**Cost analysis**, predeclared under the owner's principle: if B handles Phase C equally well, the study explains why M costs more instead of raising the difficulty.
+- Every M Apply is broken down by `cost_breakdown.py` from its own session transcripts. It gives tokens (input, cached, output, reasoning), turns, tool calls and session time:
+  - by Run type (assessment, implement, verify, with correction pairs);
+  - by Manager level (Root = 0);
+  - by Package;
+  - by tool.
+- Messages come per Run type from the run summary.
+- B's cost per step is its session time and its own tokens: the thread's cumulative usage minus that of the result it resumed.
+- Reported per step and per chain:
+  - M/B ratios of time, tokens and messages;
+  - the shares of M's tokens by Run type and Manager level;
+  - the tool calls that dominate;
+  - whether the cost scales with the step's change or stays fixed per Apply.
+- These are descriptive measures; they do not enter the decision rule.
+
+### C7. Measured smoke (uncounted) and budget
+
+All smokes are uncounted. Every attempt is listed.
+
+| Smoke | Arm, materials, image | Result | Time | Tokens (in / cached / out) | Messages | Weekly quota |
+| --- | --- | --- | --- | --- | --- | --- |
+| F_C extra | B, F_C, 1271a363 | completed; 49 of 49 W0 cases | 386 s | 1,288,128 / 1,215,360 / 28,376 | 1 | – |
+| F_C | M, F_C, 9593bdd0 | **justified model blocker** at Root after Assessment: the 2099 range gap | 283 s | 7,504,914 / 6,568,704 / 22,092 | 22 | 14 → 15 % |
+| v2 attempt 01 | M, v2, 9593bdd0 | preflight infrastructure failure: the 60 s `docker cp` image observation timed out before any Run | 84 s | none | 0 | – |
+| v2 attempt 02 | M, v2, 9593bdd0 | **no candidate**: Assessment approved; Implement ended technically incomplete (16 of 21 handoffs) | 1,023 s | 30,907,760 / 28,617,600 / 129,685 | 61 (21 + 40) | 15 → 16 % |
+| v2 s2 | B, v2, 9593bdd0 | completed; 54 of 54 W0 cases, no failed family, own checks pass | 284 s | 843,829 / 782,208 / 25,090 | 1 | 15 → 15 % |
+| v2 official (s3) | B, v2, F_C image 9593bdd0, quiet (4 of 4 samples) | completed; 54 of 54 W0 cases, no failed family, own checks pass | 281 s | 1,223,533 / 1,124,608 / 26,112 | 1 | 16 → 16 % |
+| F_final attempt 01 | M, v2, F_final image | no candidate: Assessment approved; Implement stopped at 161 s on a controller defect (step 4 renamed the `go` check profile) | 412 s | 14,575,110 total | 63 (21 + 42) | – |
+| **F_final attempt 02** | M, v2, F_final image, quiet (19 of 19 samples) | **published**; Assessment, Implement and Verify approved, no correction; **54 of 54 W0 cases**, no failed family, own checks pass | **1,265 s** | **50,566,157 / 47,108,736 / 156,840** | **102 (21 + 60 + 21)** | 18 → 20 % |
+
+Notes:
+- **The 2099 gap.** Root found the boundary gap that V's equivalence review had missed, and stopped as DEC-063 requires. B passed all W0 cases with a silent choice: it formats dates past 2099 with no rule. R closed the gap and its class (#713, #717). On v2 M's Assessment approved the model.
+- **s2 is an extra measurement.** It ran on v2 before the coordinator's quietness rule. It overlapped no Apply, but quietness was not recorded. The official B smoke ran on a quiet machine afterwards.
+- **W0 on F_final: equal quality, very different cost.** Both arms pass all 54 W0 cases, with no failed family and their own checks passing.
+
+  | W0 | M (attempt 02) | B (official s3) | M / B |
+  | --- | --- | --- | --- |
+  | Time | 1,265 s | 281 s | 4.5× |
+  | Tokens (input + output) | 50.72 M | 1.25 M | 41× |
+  | Messages | 102 | 1 | |
+  | Changed files / lines | 44 + 20 registry / 3,396 | 6 / 1,363 | 2.5× lines |
+  | Test files / test lines | 21 / 1,722 | 1 / 410 | |
+
+- **Where M's cost goes** (the predeclared breakdown of the complete Apply, 63 sessions):
+  - By Run type: Assessment 7.25 M tokens, Implement 28.51 M, Verify 14.96 M.
+  - By Manager level: Root 8.67 M over 3 sessions; level 1 23.55 M over 30; level 2 18.50 M over 30.
+  - By tool, the heaviest calls: 328 shell commands, 107 awaits, 67 judgments, 65 checks, 64 delegations and 64 reviews.
+  - 93 % of M's input tokens are cached.
+  - Every Assessment Run measured so far costs 7.1–7.8 M tokens over 21 sessions, about six times B's whole W0 build, before any code is written. Every mandate runs the complete hierarchy, so this cost recurs at each step.
+- **M's complete W0 Apply** (`ee91c7e6`, packet `m-w0-02`), in step 4's record:
+  - Input: the revision-2 W0 (manifest `1f652258`, `w0.yaml` `2741e461`, model digest `cfb7a9fe`, 21 Managers). Limits 5,400 s, 256 messages, 32 Managers, messageTimeoutSeconds 600.
+  - Assessment approved, Implement submitted, Verify approved, with no correction.
+  - It published 64 paths (final `14d0c992`, tree `e0e47844`). project-build and project-tests passed on the final candidate, and the readback is true.
+  - By Run: Assessment 21 messages, 7.25 M tokens, 2.1 min; Implement 60 messages, 28.51 M tokens, 624 s; Verify 21 messages, 14.96 M tokens, 3.7 min.
+  - #725 (the per-message clock) is consistent with this run but not proven by it. Root's longest Implement turn took 573.6 s (338.5 s in host tools, 235.1 s with the provider), and no turn in any Run exceeded the 600 s limit.
+  - The P2 path (Verify reject, fresh Implement, fresh Verify) was not exercised, because the first Verify approved.
+- **M's earlier W0 attempts.**
+  - The v2 attempt 01 timed out on the engine in preflight while WSL was loaded.
+  - The v2 attempt 02 hit the old per-message timeout during Root's turn, before #725.
+  - The F_final attempt 01 failed on step 4's controller defect and was repeated under the infrastructure rule.
+  - Step 4's controller still marked the published attempt 02 `technical_fail`, through a Library assumption (`requalify.py:470`, exactly one project-tests check). That is a harness false negative; the verdict is kept as recorded, and the rule is fixed for the counted runs (C6, C8).
+- **The F_final attempt 01 was not quiet.** Two of its seven samples show another session's `go run ./cmd/markitect`, so its time is not a clean cost measurement. This is why the monitor now records executables.
+- **Quota.** The account reports integer percents of a weekly window, which next resets 2026-11-01 06:10Z.
+  - Usage rose from 14 % to 20 % over the smokes. M's complete W0 moved it from 18 to 20 % with 50.7 M tokens.
+  - That is roughly 20–25 M tokens per percent: a coarse estimate, and other use of the account cannot be excluded.
+
+**Budget for counted runs** (proposal):
+- **M:** maxMessages 256 per Apply, maxManagers 32, a 5,400 s deadline.
+  - That is 2.5× the 102 messages and 4.3× the 1,265 s of the complete W0, with 21 of 32 Managers used.
+- **B:** one session, a 5,400 s deadline, 19× its W0 time.
+- **Estimate per chain:**
+  - M: W0 about 51 M tokens. Each change step costs about 22 M for Assessment and Verify over the complete hierarchy, plus Implement, estimated at 10–25 M against 28.5 M for the full W0 build. That gives about 32–47 M per change step, so **about 340–480 M tokens per chain, about 14–19 % of the weekly quota**, and about 3–4.5 h.
+  - B: about 12.5 M tokens (under 1 %) and about 50 minutes per chain.
+- **Quota guard**, an operational rule that does not affect any reading: no counted run starts while the weekly quota is at 90 % or more. The series then waits for the reset and continues in order.
+
+**N = 3 chains per arm** (proposal).
+- **Quota:** three chains need about 45–60 % of the weekly quota, with margin for repeats, on top of the 20 % already used. That fits the window that resets 2026-11-01. N = 5 would need about 75–100 % on top and does not fit.
+- **Power:** with N = 3, only complete separation of the arms' per-chain totals reaches p = 0.05. A smaller advantage reads at most as a tendency. This limit is stated in advance.
+- **Expectation, stated before the data:** W0 already shows a ceiling. Both arms pass every W0 case, so any difference must come from the changes C1–C9: missed obligations, regressions, change discipline and the C9 gate.
+
+### C8. Frozen study infrastructure
+
+The study infrastructure is frozen with this addendum and does not change in content during counted runs. A defect found during the series is recorded as a finding. Any repair is a new, separately reported amendment; it is never presented as the original rule, and runs already made keep the version they ran with.
+
+| Part | Identity |
+| --- | --- |
+| Assessor, hidden oracle, reading and cost tools | R_C `4840fb20`: `assess_candidate.py`, `tools/makerspace-oracle/`, `analyze.py`, `cost_breakdown.py` |
+| Arm B's runner and prompt | R `74b7d7df`: `runner.py` `249f8ab7…`, prompt `8a6c99a7…`, unchanged through R_C |
+| Arm B's documents | `phase-c/packet-4840fb20f52c/SHA256SUMS` |
+| Study binding | `phase-c/study.env`: RC `4840fb20`, image `3d75d81f…`, the packet |
+| Family catalog | `phase-c/e2e-v2/assess-<step>/assessment.json`, the ten positive controls |
+| Evidence-root scripts and records | `phase-c/FREEZE.sha256` (sha256 `848da6f75500800c8aa8c788d0ada715d4f528f63c880f75293d171b5461b62e`): prepare-pc `49aecfba…`, run-b-pc `b7edb6ee…`, drive-b-pc-chain `c961a3b0…`, assess-pc `9aae63b3…`, assess-m-pc `3d97708b…`, build-ledger-pc `7795b9ae…`, quiet-monitor `20e1647d…`, e2e-assessor-v2 `c4efe155…`, study.env `44a908ab…`, the packet and the ten catalog records. Reviewed by an independent Opus review over four rounds; the last round accepted after a one-line fix, which is applied. |
+| Arm M's runner | step 4's counted-run controller `controller-pc-review-02` (Markitect-V1-Requalification*8ef346), reviewed READY: `requalify.py` `cafb9fcd31400c8fdd94e1ff6f356b083bba48a8c60e3a8369c28be881ecef43`, 51 self-tests, `launch.py` `492d4874c60b53ec…`, its `SHA256SUMS` `535b0e31a4413e78c322fb3177fccbbc5fe01da628d2b7eb7688004f9a3cde56`. Its published checks are the fixture's declared IDs, each exactly once, and cleanup recognizes check containers by those IDs, so the retained `ee91c7e6` report now passes. |
+
+### C9. Limits
+
+- One model and effort, one provider, one machine, and a small N.
+- The project is larger but still fits in one context.
+- The six declared probe-family dependences.
+- INV-SCENARIO folds the invariant families.
+- The mapping from neutral text to Definitions was not reviewed, because it is not an arm input.
+- The snapshot checks rest on M's record.
+- The blind review is judgment.
+- B's resource ceiling is the Phase A aggregate, not 21 Manager sessions.
+- The owner's C7 execution change is attention on M's side only.
+- The analyst is not blinded.
+- The billing-area rule at C7 is a word match: it can miss churn in a file that merely mentions billing.
+- The `repeat` and `no-candidate` decisions are the operator's, under C4's rule. Every decision is recorded with its evidence.
+- W0 already reaches the ceiling in both arms, so the comparison rests on nine change steps per chain.
+- Quota percents are integers and the account may carry other use, so cost-per-percent is approximate. Tokens are the cost measure; quota only gates the series.
+- Quietness is sampled once a minute, so short bursts of parallel work between samples can be missed.
