@@ -153,6 +153,23 @@ class PhaseCTests(unittest.TestCase):
         self.assertIn("| Sunday | 12:00 | 16:00 | 240 |", docs["c8"])
         self.assertFalse(any(p.parts[-2] == "payments" for p in (PHASE_C / "model" / "c7" / "model").rglob("*.yaml")))
 
+    def test_execution_ownership_names_exactly_the_packages_of_its_steps(self):
+        for config, steps in (("w0", ("w0", "c1", "c2", "c3", "c4", "c5", "c6")), ("c7", ("c7", "c8", "c9"))):
+            text = (PHASE_C / "execution" / f"{config}.yaml").read_text(encoding="utf-8")
+            owners = set(requirements.re.findall(r"owner: ([a-z/.]+)\}", text)) - {"."}
+            for step in steps:
+                with self.subTest(config=config, step=step):
+                    root = PHASE_C / "model" / step / "model"
+                    packages = set()
+                    for path in root.rglob("*.yaml"):
+                        parts = path.parent.relative_to(root).parts
+                        packages.update("/".join(parts[:i]) for i in range(1, len(parts) + 1))
+                    self.assertEqual(owners, packages)
+                    for package in packages:
+                        self.assertIn(f"- {{path: realization/{package}/, owner: {package}}}", text)
+            self.assertIn("args: [build, ./cmd/makerspace]", text)
+            self.assertIn("args: [test, ./...]", text)
+
     def test_every_link_resolves_and_no_model_vocabulary_remains(self):
         for step in self.COUNTS:
             with self.subTest(step):

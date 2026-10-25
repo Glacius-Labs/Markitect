@@ -53,7 +53,20 @@ Each snapshot was checked structurally in a throwaway fixture repository on 25 O
 markitect check --repo FIXTURE --model .markitect/model.yaml --dependency .markitect/dependencies/software/model.yaml --dependency .markitect/dependencies/core/model.yaml --revision HEAD
 ```
 
-All ten steps returned exit code 0, status `passed`, with the Package and Manager counts and digests above. This checks structure only: envelope, names, imports, links and the lock binding. It does not show that the model says what the neutral text says; the [mapping](../mapping) and the independent review cover that. Arm M's real fixture also needs its own `execution.yaml`, with ownership per Package and the project check; that belongs to the comparison fixture, not to this folder.
+All ten steps returned exit code 0, status `passed`, with the Package and Manager counts and digests above. This checks structure only: envelope, names, imports, links and the lock binding. It does not show that the model says what the neutral text says; the [mapping](../mapping) and the independent review cover that.
+
+## Execution configuration for arm M
+
+[execution/](../execution) proposes arm M's `.markitect/execution.yaml`, in the form of the Library fixture that [run-library-apply.ps1](../../../../scripts/run-library-apply.ps1) writes and that Phases A and B used. It holds nothing but Package ownership and the project checks:
+
+| File | Steps | Content |
+| --- | --- | --- |
+| [w0.yaml](../execution/w0.yaml) | W0–C6 | Root owns `./`; every Package `P`, including the empty intermediate ones, owns `realization/P/`; `workshop` also owns `realization/cmd/makerspace/` |
+| [c7.yaml](../execution/c7.yaml) | C7–C9 | The same without `billing/payments` |
+
+Both declare two Root checks on the Go profile `go` of the [runtime-profile example](../../../../examples/runtime-profile.example.yaml): `project-build` runs `go build ./cmd/makerspace` (required by `workshop/program`, 2 minutes) and `project-tests` runs `go test ./...` (required by `workshop/delivery`, 5 minutes, more than the Library's 2 because the program is about five times larger), both from `realization/`. The directory names follow the Package paths. The Go package names and the source layout inside each directory remain the implementer's choice.
+
+Each step's snapshot passes the same structural check with its configuration. C7 with the W0 configuration fails (`execution.package`: `billing/payments` no longer exists), so arm M's C7 fixture commit replaces `execution.yaml` together with the model. The registry stays as in the Library fixture: one empty Root shard, `apiVersion: markitect.registry/v1` with `artifacts: []`.
 
 ## Rendering and checks
 
