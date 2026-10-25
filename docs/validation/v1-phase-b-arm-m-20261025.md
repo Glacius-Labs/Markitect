@@ -36,7 +36,7 @@ Step 4's offline rehearsal built the T3 input from chain 1 (`4136b583` + M3 + M4
 
 ## Runs
 
-Order followed B8: chains 1–3 with T1–T4, then chains 4 and 5 with S1–S3 and T1–T4. Seconds are Apply process time. Messages are the sum and the Assessment/Implement/Verify split. Every Apply ran assessment → implement → verify with all six Managers in fresh native Sessions, and no run took the correction branch. Every final candidate bundle reopened exactly. There was no residue, the product's temporary area was empty after every run, each fixture had one worktree, and the credential scan found nothing.
+Order followed B8: chains 1–3 with T1–T4, then chains 4 and 5 with S1–S3 and T1–T4. Seconds are Apply process time. Messages are the sum and the Assessment/Implement/Verify split. Every Apply ran assessment → implement → verify with all six Managers in fresh native Sessions, and no run took the public correction branch (Verify Reject → fresh Implement; `correctionBranch` is false in all 26 reports). Every final candidate bundle reopened exactly. There was no residue, the product's temporary area was empty after every run, each fixture had one worktree, and the credential scan found nothing.
 
 | Packet | Apply | C1 / scenario | s | Messages | Paths | Final commit / tree | Tokens | `package-result.json` |
 | --- | --- | --- | ---: | --- | ---: | --- | ---: | --- |
@@ -71,12 +71,12 @@ Totals: 17,362 s of Apply time, 525 messages and 203,572,935 provider-reported t
 
 ## What the runs show
 
-- **Deletion through the hierarchy (T3, scenario B2).** In every T3 run the owning Managers removed or realigned the stale links during Implement: `members` in every chain, and in chain 2 also `lending` and `lending/reminders` in their own shards. The chain 1 and chain 3 reviews traced Assessment naming the links first. Root verified the result. No published candidate keeps a registry link to `members/set-member-status` or a `realizes` target the model lacks. The remaining mentions of `setMemberStatus` are tests expecting `invalidRequest`.
+- **Deletion through the hierarchy (T3, scenario B2).** In every T3 run, no stale link remains in the published candidate. For chains 1–3 the reviews traced the steps: Assessment named the links, then the owning Managers removed or realigned them in Implement (`members`, and in chain 2 also `lending` and `lending/reminders` in their own shards), and Root verified. No published candidate keeps a registry link to `members/set-member-status` or a `realizes` target the model lacks. The remaining mentions of `setMemberStatus` are tests expecting `invalidRequest`.
 - **Model changes on carried realizations (T1, T2).** Chains 1–3 continued from Phase A results built on F, and chains 4 and 5 ran every step on F′. All 10 T1 and T2 runs passed C1.
 - **Strict no-change (S3, T4).** In all seven runs every candidate tree equalled the input tree, publication reported `noChange=true` with no paths, and the target census was unchanged. The published commit is sometimes the input commit itself (c3-T4, c4-T4) and otherwise a new commit with the identical tree.
 - **Continuity.** Each input was built from the previous step's final bundle. Each carried state equalled the previous state file for file and was unchanged afterwards.
-- **Questions and corrections.** Every `ask` went to the direct parent or a direct child, and some were relayed by Root between siblings. There were no model blockers and no no-progress stops. In c4-S1 one delegate call was refused because a correction needs concrete Findings, and it was retried. In c3-T1, Root delegated one correction round.
-- **Shared Notes across steps (V11).** Notes from earlier steps stayed readable through the carried state. Managers treated Notes written under an older model as outdated, for example the five-loan limit after M2.
+- **Questions and corrections.** Every `ask` went to the direct parent or a direct child, and in c3-T2 and c4-T2 Root relayed a question between siblings, as those reviews record. There were no model blockers and no no-progress stops. In c4-S1 one delegate call was refused because a correction needs concrete Findings, and it was retried. In c3-T1 Root ran one correction round inside Implement, for a borrow-limit test.
+- **Shared Notes across steps (V11).** Notes from earlier steps stayed readable through the carried state. Managers treated Notes written under an older model as outdated, for example the five-loan limit after M2, as the chain 5 review records.
 
 ## Reviews
 
@@ -97,7 +97,8 @@ The notes changed no outcome:
 
 - **Preparation failure (offline).** The first `t1-c1` input failed before any engine call: the step script passed the commit with a trailing carriage return from Windows Python output. It is kept in `failed-preparation\t1-c1-crlf-commit`, and the script was fixed.
 - **Lock refusals.** The launches of c2-T3 and c3-T2 first found the shared lock held by a Phase C calibration job. The step script stopped before launching, so no attempt or launch record existed. Both were launched once the lock was free.
-- **Handover.** After 10 automatic cross-session messages the app paused further messages to the study, from c3-T3 on. Later runs were handed over through a shared notes file instead.
+- **Handover.** After 10 automatic cross-session messages the app paused further messages to the study, starting with the c3-T3 handover. Later runs were handed over through a shared notes file instead, and the final "done" message went through afterwards.
+- **Timing of the F′ record.** B8 records that M-c1-T1 started on F′ at 09:08 UTC, before the protocol had F′ written into it, so the "before the first M run" timing was missed. F′ was the source the coordinator dispatched once #701 merged.
 
 ## Limits
 
