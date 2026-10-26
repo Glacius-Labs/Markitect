@@ -802,6 +802,151 @@ func TestRepeatedNoProgressEndsTheRunIncomplete(t *testing.T) {
 	}
 }
 
+// WP5, the C8 sequence (phase C M-c3-C8): a answers Root's two questions with
+// ask instead of reply, then judges and hands off. The host closes both
+// questions at the handoff and tells Root why; a later question to the
+// handed-off a, which a leaves unanswered in plain text, is closed after that
+// one delivery. a's inaction never stops the Run, which completes.
+func TestQuestionsAHandedOffManagerLeavesOpenAreClosedAndTheRunCompletes(t *testing.T) {
+	aStarted, asked := make(chan struct{}), make(chan struct{})
+	closures := map[string]string{}
+	var early []string
+	var late string
+	c := &collaboration{}
+	c.script = func(ctx context.Context, m *collaborator, message run.Message) (bool, error) {
+		switch m.spec.Manager.Package {
+		case ".":
+			if len(m.messages) != 1 {
+				return false, nil
+			}
+			// until awaits the closures of ids and, when given, a further condition.
+			until := func(ids []string, also func() bool) error {
+				for {
+					done := also == nil || also()
+					for _, id := range ids {
+						done = done && closures[id] != ""
+					}
+					if done {
+						return nil
+					}
+					e, err := m.spec.Tools.Await(ctx)
+					if err != nil {
+						return err
+					}
+					if e.Answer != nil && e.Answer.Closed != "" {
+						closures[e.Answer.ID] = e.Answer.Closed
+						continue
+					}
+					if err = m.handle(ctx, e); err != nil {
+						return err
+					}
+				}
+			}
+			for _, e := range message.Events {
+				if err := m.handle(ctx, e); err != nil {
+					return true, err
+				}
+			}
+			m.started = true
+			for _, child := range m.spec.Manager.Children {
+				m.approved[child] = false
+				if err := m.spec.Tools.Delegate(ctx, child, "Realize your modeled responsibility.", nil); err != nil {
+					return true, err
+				}
+			}
+			select {
+			case <-aStarted:
+			case <-ctx.Done():
+				return true, ctx.Err()
+			}
+			for _, text := range []string{"Which interface do you need?", "Which limits apply?"} {
+				id, err := m.spec.Tools.Ask(ctx, "a", text)
+				if err != nil {
+					return true, err
+				}
+				early = append(early, id)
+			}
+			close(asked)
+			handedOff := func() bool {
+				for _, h := range m.pending {
+					if h.Manager == "a" {
+						return true
+					}
+				}
+				return false
+			}
+			if err := until(early, handedOff); err != nil {
+				return true, err
+			}
+			var err error
+			if late, err = m.spec.Tools.Ask(ctx, "a", "Explain your fixed handoff."); err != nil {
+				return true, err
+			}
+			if err = until([]string{late}, nil); err != nil {
+				return true, err
+			}
+			return true, m.complete(ctx)
+		case "a":
+			if len(m.messages) != 1 {
+				// The handed-off a answers in plain text, without a tool call.
+				return true, nil
+			}
+			for _, e := range message.Events {
+				if err := m.handle(ctx, e); err != nil {
+					return true, err
+				}
+			}
+			close(aStarted)
+			select {
+			case <-asked:
+			case <-ctx.Done():
+				return true, ctx.Err()
+			}
+			for range 2 {
+				e, err := m.spec.Tools.Await(ctx)
+				if err != nil {
+					return true, err
+				}
+				if e.Question == nil {
+					return true, fmt.Errorf("expected Root's question: %+v", e)
+				}
+				// The answer goes out through ask instead of reply.
+				if _, err = m.spec.Tools.Ask(ctx, ".", "About "+e.Question.ID+": nothing is needed."); err != nil {
+					return true, err
+				}
+			}
+			return true, m.complete(ctx)
+		}
+		return false, nil
+	}
+	result := c.execute(t, "closed-questions", run.Assessment)
+	if result.Decision != run.Approve || len(early) != 2 || late == "" {
+		t.Fatal("the Run did not complete with Root's questions", result.Decision, early, late)
+	}
+	for _, id := range append(early, late) {
+		if want := "a has handed off without answering your question " + id + "; continue from its handoff"; closures[id] != want {
+			t.Fatalf("question %s closed as %q, want %q", id, closures[id], want)
+		}
+	}
+	questions := 0
+	for i, message := range c.manager("a").messages {
+		for _, e := range message.Events {
+			if e.Question != nil && (i == 0 || e.Question.ID != late) {
+				t.Fatal("a question a left open was delivered again", i, e.Question.ID)
+			}
+			if e.Question != nil {
+				questions++
+			}
+		}
+		if i > 0 && len(message.Feedback) != 0 {
+			t.Fatal("the handed-off a was asked to continue", message.Feedback)
+		}
+	}
+	if questions != 1 {
+		t.Fatal("the question after the handoff was not delivered exactly once", questions)
+	}
+}
+
 // Read-only review is activity, not standstill: a reviewer spends continued
 // responses only on check, read_notes, native commands and a refused await,
 // none of which changes its copy, and then judges without being stopped.

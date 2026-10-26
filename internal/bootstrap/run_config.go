@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"slices"
 	"strings"
@@ -13,25 +14,29 @@ import (
 	"unicode/utf8"
 )
 
-var errRunConfig = errors.New("run configuration unavailable, incomplete or invalid; see the closed formatVersion 3 contract")
+var errRunConfig = errors.New("run configuration unavailable, incomplete or invalid; see the closed formatVersion 4 contract")
 var errRunConfigIO = errors.New("run configuration file could not be completely observed")
+
+// errRunConfigFormat3 refuses the previous format instead of reading its limit
+// with a changed meaning.
+var errRunConfigFormat3 = fmt.Errorf("%w: formatVersion 3 is no longer accepted; formatVersion 4 replaces messageTimeoutSeconds, which bounded all provider work of one response, with providerIdleTimeoutSeconds, which bounds provider work without a served tool call; set formatVersion 4 and choose providerIdleTimeoutSeconds for that meaning", errRunConfig)
 
 // runConfig holds explicit outer invocation limits and native credential sources.
 // ProductBuild is an operator assertion; it does not prove a source revision.
 type runConfig struct {
-	FormatVersion             int                         `json:"formatVersion"`
-	RepositoryIdentity        string                      `json:"repositoryIdentity"`
-	ProductBuild              string                      `json:"productBuild"`
-	StateDirectory            string                      `json:"stateDirectory"`
-	EngineExecutable          string                      `json:"engineExecutable"`
-	Deadline                  string                      `json:"deadline"`
-	WorkDeadline              string                      `json:"workDeadline,omitempty"`
-	MaxManagers               int                         `json:"maxManagers"`
-	MaxMessages               int                         `json:"maxMessages"`
-	MessageTimeoutSeconds     int                         `json:"messageTimeoutSeconds"`
-	CleanupTimeoutSeconds     int                         `json:"cleanupTimeoutSeconds"`
-	PersistenceTimeoutSeconds int                         `json:"persistenceTimeoutSeconds"`
-	Credentials               map[string]credentialSource `json:"credentials"`
+	FormatVersion              int                         `json:"formatVersion"`
+	RepositoryIdentity         string                      `json:"repositoryIdentity"`
+	ProductBuild               string                      `json:"productBuild"`
+	StateDirectory             string                      `json:"stateDirectory"`
+	EngineExecutable           string                      `json:"engineExecutable"`
+	Deadline                   string                      `json:"deadline"`
+	WorkDeadline               string                      `json:"workDeadline,omitempty"`
+	MaxManagers                int                         `json:"maxManagers"`
+	MaxMessages                int                         `json:"maxMessages"`
+	ProviderIdleTimeoutSeconds int                         `json:"providerIdleTimeoutSeconds"`
+	CleanupTimeoutSeconds      int                         `json:"cleanupTimeoutSeconds"`
+	PersistenceTimeoutSeconds  int                         `json:"persistenceTimeoutSeconds"`
+	Credentials                map[string]credentialSource `json:"credentials"`
 }
 
 func loadRunConfig(ctx context.Context, path string) (runConfig, error) {
@@ -55,10 +60,13 @@ func decodeRunConfig(data []byte) (runConfig, error) {
 	if err != nil {
 		return runConfig{}, err
 	}
+	if bytes.Equal(bytes.TrimSpace(root["formatVersion"]), []byte("3")) {
+		return runConfig{}, errRunConfigFormat3
+	}
 	// Only workDeadline is optional. Every other key is required, and any
 	// further key is refused, ownerDecisions included: no preloaded owner decision
 	// supplies model intent to a Run.
-	required := []string{"formatVersion", "repositoryIdentity", "productBuild", "stateDirectory", "engineExecutable", "deadline", "maxManagers", "maxMessages", "messageTimeoutSeconds", "cleanupTimeoutSeconds", "persistenceTimeoutSeconds", "credentials"}
+	required := []string{"formatVersion", "repositoryIdentity", "productBuild", "stateDirectory", "engineExecutable", "deadline", "maxManagers", "maxMessages", "providerIdleTimeoutSeconds", "cleanupTimeoutSeconds", "persistenceTimeoutSeconds", "credentials"}
 	for key := range root {
 		if !slices.Contains(required, key) && key != "workDeadline" {
 			return runConfig{}, errRunConfig
@@ -134,7 +142,7 @@ func runConfigObject(data []byte, keys ...string) (map[string]json.RawMessage, e
 }
 
 func (c runConfig) valid() bool {
-	if c.FormatVersion != 3 || !runConfigText(c.RepositoryIdentity) || len(c.RepositoryIdentity) > 256 || !runConfigText(c.ProductBuild) || !credentialPath(c.StateDirectory) || !credentialPath(c.EngineExecutable) {
+	if c.FormatVersion != 4 || !runConfigText(c.RepositoryIdentity) || len(c.RepositoryIdentity) > 256 || !runConfigText(c.ProductBuild) || !credentialPath(c.StateDirectory) || !credentialPath(c.EngineExecutable) {
 		return false
 	}
 	deadline, err := time.Parse(time.RFC3339, c.Deadline)
@@ -147,7 +155,7 @@ func (c runConfig) valid() bool {
 			return false
 		}
 	}
-	return c.MaxManagers > 0 && c.MaxManagers <= 1024 && c.MaxMessages >= c.MaxManagers && c.MaxMessages <= 4096 && c.MessageTimeoutSeconds > 0 && c.MessageTimeoutSeconds <= 3600 && c.CleanupTimeoutSeconds > 0 && c.CleanupTimeoutSeconds <= 60 && c.PersistenceTimeoutSeconds > 0 && c.PersistenceTimeoutSeconds <= 60
+	return c.MaxManagers > 0 && c.MaxManagers <= 1024 && c.MaxMessages >= c.MaxManagers && c.MaxMessages <= 4096 && c.ProviderIdleTimeoutSeconds > 0 && c.ProviderIdleTimeoutSeconds <= 3600 && c.CleanupTimeoutSeconds > 0 && c.CleanupTimeoutSeconds <= 60 && c.PersistenceTimeoutSeconds > 0 && c.PersistenceTimeoutSeconds <= 60
 }
 
 // deadline returns the configured wall-clock limit, or the zero time for none.

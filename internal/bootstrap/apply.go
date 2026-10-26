@@ -182,7 +182,7 @@ func applyExecution(preparation *project.PreparationService, repository *gitrepo
 		if err != nil {
 			return out, err
 		}
-		result, executionErr := command.Execute(ctx, runexec.Request{ID: id, Project: cfg.RepositoryIdentity, Prepared: prepared, Allowance: runexec.NewAllowance(cfg.deadline(), cfg.MaxMessages), MaxManagers: cfg.MaxManagers, MessageTimeout: time.Duration(cfg.MessageTimeoutSeconds) * time.Second, CleanupTimeout: time.Duration(cfg.CleanupTimeoutSeconds) * time.Second, PersistenceTimeout: time.Duration(cfg.PersistenceTimeoutSeconds) * time.Second})
+		result, executionErr := command.Execute(ctx, runexec.Request{ID: id, Project: cfg.RepositoryIdentity, Prepared: prepared, Allowance: runexec.NewAllowance(cfg.deadline(), cfg.MaxMessages), MaxManagers: cfg.MaxManagers, ProviderIdleTimeout: time.Duration(cfg.ProviderIdleTimeoutSeconds) * time.Second, CleanupTimeout: time.Duration(cfg.CleanupTimeoutSeconds) * time.Second, PersistenceTimeout: time.Duration(cfg.PersistenceTimeoutSeconds) * time.Second})
 		if lockErr := lock.Release(); lockErr != nil {
 			executionErr = errors.Join(executionErr, lockErr)
 			result.Status = model.NotCompleted

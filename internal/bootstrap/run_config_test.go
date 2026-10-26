@@ -17,17 +17,17 @@ func runConfigFixture(t *testing.T) map[string]any {
 	t.Helper()
 	dir := testkit.TempDir(t)
 	return map[string]any{
-		"formatVersion": 3, "repositoryIdentity": "source-test-repository", "productBuild": "explicit-frozen-source-test-build",
+		"formatVersion": 4, "repositoryIdentity": "source-test-repository", "productBuild": "explicit-frozen-source-test-build",
 		"stateDirectory": filepath.Join(dir, "state"), "engineExecutable": filepath.Join(dir, "engine-not-read-during-parsing"),
-		"deadline": "2026-10-23T23:00:00Z", "maxManagers": 64, "maxMessages": 128, "messageTimeoutSeconds": 120, "cleanupTimeoutSeconds": 30, "persistenceTimeoutSeconds": 30,
+		"deadline": "2026-10-23T23:00:00Z", "maxManagers": 64, "maxMessages": 128, "providerIdleTimeoutSeconds": 120, "cleanupTimeoutSeconds": 30, "persistenceTimeoutSeconds": 30,
 		"credentials": map[string]any{"dedicated": map[string]any{"provider": "codex-app-server", "mode": "dedicated-runtime-login", "path": filepath.Join(dir, "dedicated-credential-not-read")}},
 	}
 }
 
 func TestAssignmentInvocationBoundsAreClosedAndFinite(t *testing.T) {
 	document := runConfigFixture(t)
-	document["maxMessages"], document["messageTimeoutSeconds"] = 80, 120
-	if cfg, err := decodeRunConfig(configBytes(t, document)); err != nil || cfg.MaxMessages != 80 || cfg.MessageTimeoutSeconds != 120 {
+	document["maxMessages"], document["providerIdleTimeoutSeconds"] = 80, 120
+	if cfg, err := decodeRunConfig(configBytes(t, document)); err != nil || cfg.MaxMessages != 80 || cfg.ProviderIdleTimeoutSeconds != 120 {
 		t.Fatalf("assignment bounds were not retained: %+v %v", cfg, err)
 	}
 	for _, value := range []any{0, -1, 4097} {
@@ -38,10 +38,31 @@ func TestAssignmentInvocationBoundsAreClosedAndFinite(t *testing.T) {
 	}
 	document["maxMessages"] = 80
 	for _, value := range []any{0, -1, 3601} {
-		document["messageTimeoutSeconds"] = value
+		document["providerIdleTimeoutSeconds"] = value
 		if _, err := decodeRunConfig(configBytes(t, document)); err == nil {
-			t.Fatalf("admitted messageTimeoutSeconds %v", value)
+			t.Fatalf("admitted providerIdleTimeoutSeconds %v", value)
 		}
+	}
+}
+
+// Format 3 bounded all provider work of one response, format 4 bounds provider
+// work without a served tool call. A format 3 file is refused by name, and no
+// format reads the old limit with the new meaning.
+func TestRunConfigRefusesFormat3InsteadOfChangingItsMeaning(t *testing.T) {
+	old := runConfigFixture(t)
+	delete(old, "providerIdleTimeoutSeconds")
+	old["formatVersion"], old["messageTimeoutSeconds"] = 3, 600
+	renamed := runConfigFixture(t)
+	renamed["formatVersion"] = 3
+	for name, document := range map[string]map[string]any{"format 3": old, "format 3 with the new field": renamed} {
+		_, err := decodeRunConfig(configBytes(t, document))
+		if !errors.Is(err, errRunConfigFormat3) || !errors.Is(err, errRunConfig) || !strings.Contains(err.Error(), "formatVersion 3 is no longer accepted") || !strings.Contains(err.Error(), "providerIdleTimeoutSeconds") {
+			t.Fatalf("%s was not refused by name: %v", name, err)
+		}
+	}
+	old["formatVersion"] = 4
+	if _, err := decodeRunConfig(configBytes(t, old)); !errors.Is(err, errRunConfig) || errors.Is(err, errRunConfigFormat3) {
+		t.Fatalf("format 4 read the old message limit: %v", err)
 	}
 }
 
@@ -133,7 +154,7 @@ func TestRunConfigRefusesImplicitOrUnknownValues(t *testing.T) {
 	}
 	base := string(configBytes(t, runConfigFixture(t)))
 	for _, malformed := range []string{
-		strings.Replace(base, `"formatVersion":3`, `"formatVersion":3,"formatVersion":3`, 1),
+		strings.Replace(base, `"formatVersion":4`, `"formatVersion":4,"formatVersion":4`, 1),
 		strings.Replace(base, `"maxManagers":64`, `"maxManagers":64,"maxManagers":1`, 1),
 		strings.Replace(base, `"mode":"dedicated-runtime-login"`, `"mode":"dedicated-runtime-login","mode":"dedicated-runtime-login"`, 1),
 		strings.Replace(base, `"maxManagers":64`, `"maxManagers":9223372036854775808`, 1),

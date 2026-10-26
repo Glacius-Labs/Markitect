@@ -208,7 +208,9 @@ func (x *execution) acted(s *managerState, continued bool, before Commit) error 
 	defer x.mu.Unlock()
 	called := s.called
 	s.called = false
-	if !continued || called || executed || changed {
+	// Only an open assignment can stand still. A Manager without one has
+	// nothing to continue, and questions it leaves unanswered are closed.
+	if !continued || called || executed || changed || s.a.phase != active {
 		s.idle = 0
 		return nil
 	}
@@ -216,29 +218,37 @@ func (x *execution) acted(s *managerState, continued bool, before Commit) error 
 	if s.idle < maxIdle {
 		return nil
 	}
-	if s.a.phase != active {
-		return fmt.Errorf("%w: Manager %s took no action in %d continued responses in a row%s", ErrNoProgress, s.manager.Package, s.idle, x.openQuestionsLocked(s))
-	}
-	return fmt.Errorf("%w: Manager %s took no action in %d continued responses in a row on its assignment %q", ErrNoProgress, s.manager.Package, s.idle, s.a.task.Task)
+	return fmt.Errorf("%w: Manager %s took no action in %d continued responses in a row on its assignment %q%s", ErrNoProgress, s.manager.Package, s.idle, s.a.task.Task, x.openQuestionsLocked(s))
 }
 
-// responded follows the end of one native response: unanswered questions stay
-// open for the next message, and an active judged assignment is fixed.
+// responded follows the end of one native response: an active judged
+// assignment is fixed first. Then each question s received and left
+// unanswered is delivered again while s has an open assignment, and closed
+// otherwise. A question s has not received yet keeps its one delivery.
 func (x *execution) responded(s *managerState) error {
 	x.mu.Lock()
-	for _, q := range x.sortedQuestionsLocked() {
-		if q.To == s.manager.Package && q.delivered && !q.answered {
-			q.delivered = false
-			x.queueLocked(s, entry{event: Event{Question: &q.Question}, again: true})
-		}
-	}
 	j := s.a.judgment
 	fixable := s.a.phase == active && j != nil && s.manager.Package != organization.Root
 	x.mu.Unlock()
-	if !fixable {
-		return nil
+	if fixable {
+		if err := x.fix(s, j); err != nil {
+			return err
+		}
 	}
-	return x.fix(s, j)
+	x.mu.Lock()
+	defer x.mu.Unlock()
+	for _, q := range x.sortedQuestionsLocked() {
+		if q.To != s.manager.Package || !q.delivered || q.answered {
+			continue
+		}
+		if s.a.phase == active || s.a.phase == assigned {
+			q.delivered = false
+			x.queueLocked(s, entry{event: Event{Question: &q.Question}, again: true})
+		} else {
+			x.closeLocked(q)
+		}
+	}
+	return nil
 }
 
 func (x *execution) sortedQuestionsLocked() []*question {
@@ -368,6 +378,12 @@ func (x *execution) await(ctx context.Context, s *managerState) (Event, error) {
 	}
 }
 
+// maxOpenQuestions bounds the questions one Manager has asked whose answer has
+// not reached it yet. A question takes no allowance of its own: it costs only
+// as part of the message that delivers it, so this bound keeps both the
+// addressee's questions and the asker's answers finite.
+const maxOpenQuestions = 8
+
 // ask follows the hierarchy: only the direct parent or a direct child.
 func (x *execution) ask(ctx context.Context, from *managerState, to, text string) (string, error) {
 	if err := ctx.Err(); err != nil {
@@ -387,13 +403,21 @@ func (x *execution) ask(ctx context.Context, from *managerState, to, text string
 	if strings.TrimSpace(text) == "" {
 		return "", fmt.Errorf("empty Manager question; ask again with a question text")
 	}
-	if err := x.request.Allowance.take(); err != nil {
-		return "", err
-	}
 	x.mu.Lock()
 	defer x.mu.Unlock()
 	if err := x.admissionErrorLocked(); err != nil {
 		return "", err
+	}
+	// A question stays open until its answer, or the host's closure, is
+	// delivered to the asker.
+	open := 0
+	for _, q := range x.questions {
+		if q.From == from.manager.Package {
+			open++
+		}
+	}
+	if open >= maxOpenQuestions {
+		return "", fmt.Errorf("you have %d open questions; wait for answers with await before you ask again", open)
 	}
 	x.sequence++
 	q := &question{Question: Question{ID: fmt.Sprintf("%s-q%d", x.request.ID, x.sequence), From: from.manager.Package, To: to, Text: text}}
@@ -421,6 +445,22 @@ func (x *execution) reply(ctx context.Context, from *managerState, id, text stri
 	q.answered = true
 	x.queueLocked(x.states[q.From], entry{event: Event{Answer: &Answer{ID: id, From: from.manager.Package, Text: text}}})
 	return nil
+}
+
+// closeLocked ends q without an answer because its addressee has no open
+// assignment to answer it in: it handed off, or has no task. The asker receives
+// the reason and a next step in place of the answer.
+func (x *execution) closeLocked(q *question) {
+	reason := fmt.Sprintf("%s has no open assignment and did not answer your question %s; continue your work", q.To, q.ID)
+	if p := x.states[q.To].a.phase; p == fixed || p == reviewed {
+		reason = fmt.Sprintf("%s has handed off without answering your question %s; continue from its handoff", q.To, q.ID)
+	}
+	asker := x.states[q.From]
+	if asker.manager.Parent != "" {
+		reason += " or ask your parent"
+	}
+	q.answered = true
+	x.queueLocked(asker, entry{event: Event{Answer: &Answer{ID: q.ID, From: q.To, Closed: reason}}})
 }
 
 func (x *execution) root() *managerState { return x.states[organization.Root] }
@@ -459,14 +499,15 @@ func (x *execution) openQuestionsLocked(s *managerState) string {
 	return "; answer your open questions: " + strings.Join(open, ", ")
 }
 
-// exchange bounds the provider work of one response by MessageTimeout; the
-// time the host spends serving its tool calls does not count, so a parent may
-// await its working children longer. The Run deadline bounds everything.
+// exchange bounds each stretch of provider work in one response without a
+// served tool call by ProviderIdleTimeout. Serving a call does not count and
+// ends the stretch, so a Manager that keeps delegating, awaiting and reviewing
+// is never stopped by it. The Run deadline bounds everything.
 func (x *execution) exchange(s *managerState, m Message) error {
 	messageContext, cancel := context.WithCancelCause(x.ctx)
 	defer cancel(nil)
-	if x.request.MessageTimeout > 0 {
-		clock := startClock(x.request.MessageTimeout, func() { cancel(context.DeadlineExceeded) })
+	if x.request.ProviderIdleTimeout > 0 {
+		clock := startClock(x.request.ProviderIdleTimeout, func() { cancel(context.DeadlineExceeded) })
 		defer clock.stop()
 		messageContext = context.WithValue(messageContext, clockKey{}, clock)
 	}
@@ -493,31 +534,30 @@ func (x *execution) exchange(s *managerState, m Message) error {
 	}
 }
 
-// messageClock measures the provider work of one response against its limit
-// and expires once that work exceeds it. It pauses while a tool call is
-// served; stop ends it.
-type messageClock struct {
+// idleClock expires once the provider works for its limit without a served
+// tool call. It pauses while any tool call is served, and the end of the last
+// call in progress restarts it at its full limit. It never judges whether a
+// call was useful; stop ends it.
+type idleClock struct {
 	mu      sync.Mutex
 	timer   *time.Timer
-	left    time.Duration
-	since   time.Time
+	limit   time.Duration
 	serving int
 	running bool
 }
 
 type clockKey struct{}
 
-func startClock(limit time.Duration, expire func()) *messageClock {
-	return &messageClock{timer: time.AfterFunc(limit, expire), left: limit, since: time.Now(), running: true}
+func startClock(limit time.Duration, expire func()) *idleClock {
+	return &idleClock{timer: time.AfterFunc(limit, expire), limit: limit, running: true}
 }
 
 // serve pauses the clock until the returned function ends the tool call.
-func (c *messageClock) serve() func() {
+func (c *idleClock) serve() func() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if c.serving == 0 && c.running && c.timer.Stop() {
-		c.left -= time.Since(c.since)
-	} else if c.serving == 0 {
+	if c.serving == 0 && c.running && !c.timer.Stop() {
+		// The limit was reached before this call: the response already ends.
 		c.running = false
 	}
 	c.serving++
@@ -525,13 +565,12 @@ func (c *messageClock) serve() func() {
 		c.mu.Lock()
 		defer c.mu.Unlock()
 		if c.serving--; c.serving == 0 && c.running {
-			c.since = time.Now()
-			c.timer.Reset(c.left)
+			c.timer.Reset(c.limit)
 		}
 	}
 }
 
-func (c *messageClock) stop() {
+func (c *idleClock) stop() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.running = false

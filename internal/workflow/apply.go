@@ -57,6 +57,12 @@ func Apply(ctx context.Context, executor Executor, base run.Request) (out Result
 		if e != nil || verified.Decision != run.Reject {
 			return out, e
 		}
+		// Implement and Verify each need every Manager once. A pair the
+		// remaining allowance cannot start ends the command incomplete; the
+		// check promises no fit for a pair it starts.
+		if err := base.Allowance.Covers(2 * len(base.Prepared.Topology().Managers())); err != nil {
+			return out, fmt.Errorf("budget does not cover a correction pair, in which Implement and Verify each need every Manager once: %w", err)
+		}
 		base.Findings = append([]run.Finding(nil), verified.Findings...)
 		base.Input, base.BuildOutputs = *verified.Candidate, nil
 	}

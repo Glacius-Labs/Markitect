@@ -255,7 +255,7 @@ func TestNativeFreshCorrectionRunChain(t *testing.T) {
 			fail(err)
 		}
 		sessions.TranscriptRoot = transcripts
-		request := runexec.Request{ID: id, Project: cfg.RepositoryIdentity, Prepared: prepared, Input: input, Mandate: mandate, Findings: slices.Clone(feedback), Allowance: allowance, MaxManagers: cfg.MaxManagers, MessageTimeout: time.Duration(cfg.MessageTimeoutSeconds) * time.Second, CleanupTimeout: time.Duration(cfg.CleanupTimeoutSeconds) * time.Second, PersistenceTimeout: time.Duration(cfg.PersistenceTimeoutSeconds) * time.Second}
+		request := runexec.Request{ID: id, Project: cfg.RepositoryIdentity, Prepared: prepared, Input: input, Mandate: mandate, Findings: slices.Clone(feedback), Allowance: allowance, MaxManagers: cfg.MaxManagers, ProviderIdleTimeout: time.Duration(cfg.ProviderIdleTimeoutSeconds) * time.Second, CleanupTimeout: time.Duration(cfg.CleanupTimeoutSeconds) * time.Second, PersistenceTimeout: time.Duration(cfg.PersistenceTimeoutSeconds) * time.Second}
 		observed := stage{RequestID: id, TranscriptDirectory: transcripts, Input: input, Findings: slices.Clone(feedback), AllowanceUsedBefore: allowance.Used(), Transcripts: map[string]string{}}
 		returned, runErr := command.Executor.Execute(ctx, request)
 		observed.Returned, observed.UsedAfter = returned, allowance.Used()

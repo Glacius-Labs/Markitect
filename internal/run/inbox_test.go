@@ -180,6 +180,234 @@ func TestQuestionAnswerNeitherJudgesNorChangesTheAssignment(t *testing.T) {
 	}
 }
 
+type messageSession func(context.Context, Message) error
+
+func (f messageSession) Exchange(ctx context.Context, m Message) error { return f(ctx, m) }
+func (messageSession) Close(context.Context) error                     { return nil }
+
+// A question takes no allowance of its own (phase C M-c3-C4: 231 asks used 256
+// of 256 messages). A storm of questions reaches its idle receiver batched in
+// one message, which is the only message charged.
+func TestQuestionStormCostsOnlyItsBatchedDeliveryMessage(t *testing.T) {
+	x, root, a, deep := inboxExecution()
+	defer x.cancel()
+	// The askers stay in their own responses; a is busy until all have asked.
+	root.running, a.running, deep.running = true, true, true
+	for _, from := range []*managerState{root, deep} {
+		for i := range maxOpenQuestions {
+			if _, err := x.tools(from).Ask(context.Background(), "a", fmt.Sprintf("question %d from %s", i, from.manager.Package)); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	if used := x.request.Allowance.Used(); used != 0 {
+		t.Fatal("questions took allowance of their own", used)
+	}
+	var messages []Message
+	tools := x.tools(a)
+	a.session = messageSession(func(ctx context.Context, m Message) error {
+		messages = append(messages, m)
+		for _, e := range m.Events {
+			if e.Question != nil {
+				if err := tools.Reply(ctx, e.Question.ID, "answer"); err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	})
+	x.mu.Lock()
+	a.running = false
+	x.scheduleLocked(a)
+	x.mu.Unlock()
+	x.active.Wait()
+	x.calls.Wait()
+	if len(messages) != 1 || len(messages[0].Events) != 2*maxOpenQuestions || x.request.Allowance.Used() != 1 {
+		t.Fatal("the question storm was not delivered in one charged message", len(messages), x.request.Allowance.Used())
+	}
+	if len(root.queue) != maxOpenQuestions || len(deep.queue) != maxOpenQuestions {
+		t.Fatal("answers did not reach the askers", len(root.queue), len(deep.queue))
+	}
+}
+
+// Each Manager has at most maxOpenQuestions questions whose answer has not
+// reached it. One more is refused with the reason and the next step, takes
+// nothing and asks nothing; an answer makes room again once it is received.
+func TestOpenQuestionCapRefusesWithReasonAndNextStep(t *testing.T) {
+	x, root, a, _ := inboxExecution()
+	defer x.cancel()
+	root.running, a.running = true, true
+	ctx := context.Background()
+	var first string
+	for i := range maxOpenQuestions {
+		id, err := x.tools(root).Ask(ctx, "a", fmt.Sprintf("question %d", i))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if i == 0 {
+			first = id
+		}
+	}
+	if _, err := x.tools(root).Ask(ctx, "a", "one more"); err == nil || err.Error() != "you have 8 open questions; wait for answers with await before you ask again" {
+		t.Fatal("a question above the cap was not refused with its next step", err)
+	}
+	if len(x.questions) != maxOpenQuestions || len(a.queue) != maxOpenQuestions || x.request.Allowance.Used() != 0 {
+		t.Fatal("the refused question was kept, delivered or charged", len(x.questions), len(a.queue))
+	}
+	// The cap counts only the asker's own questions.
+	if _, err := x.tools(a).Ask(ctx, ".", "child question"); err != nil {
+		t.Fatal("questions to a Manager counted against it", err)
+	}
+	if err := x.tools(a).Reply(ctx, first, "answer"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := x.tools(root).Ask(ctx, "a", "next question"); err == nil {
+		t.Fatal("an answer root has not received made room")
+	}
+	for {
+		e, err := x.tools(root).Await(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if e.Answer != nil && e.Answer.ID == first {
+			break
+		}
+	}
+	if _, err := x.tools(root).Ask(ctx, "a", "next question"); err != nil {
+		t.Fatal("a received answer still counted as open", err)
+	}
+}
+
+// WP5 (phase C M-c3-C8: a child answered its parent's questions with ask
+// instead of reply and handed off; the host delivered them again until the
+// no-progress rule stopped the Run). A question its addressee leaves
+// unanswered at its handoff is closed, and the asker receives the reason and
+// next step instead of an answer. A later question still reaches the
+// handed-off Manager, which may answer it or report a late finding; left
+// unanswered, it is closed the same way and never delivered again.
+func TestQuestionsAManagerNoLongerAnswersAreClosedForTheAsker(t *testing.T) {
+	x, root, a, deep := inboxExecution()
+	defer x.cancel()
+	x.request.Mandate = Assessment
+	x.executor = &Executor{}
+	a.copy, deep.copy = toolFailureCopy{}, toolFailureCopy{}
+	// No driver starts: this test calls the tools and the end of deep's response.
+	root.running, a.running, deep.running = true, true, true
+	a.a.phase, a.a.version = active, 1
+	deep.a.phase, deep.a.version = active, 1
+	ctx := context.Background()
+	closed := func(id string) {
+		t.Helper()
+		want := "a/deep has handed off without answering your question " + id + "; continue from its handoff or ask your parent"
+		// A closure that never comes fails here instead of blocking the test.
+		bounded, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+		for {
+			e, err := x.tools(a).Await(bounded)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if e.Answer != nil && e.Answer.ID == id {
+				if e.Answer.Closed != want || e.Answer.Text != "" || e.Answer.From != "a/deep" {
+					t.Fatalf("question %s closed without its reason and next step: %+v", id, e.Answer)
+				}
+				return
+			}
+		}
+	}
+	first, err := x.tools(a).Ask(ctx, "a/deep", "What do you need?")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if e, err := x.tools(deep).Await(ctx); err != nil || e.Question == nil || e.Question.ID != first {
+		t.Fatal("the question did not reach its addressee", e, err)
+	}
+	// deep answers with ask instead of reply, judges and hands off.
+	if _, err := x.tools(deep).Ask(ctx, "a", "Nothing more."); err != nil {
+		t.Fatal(err)
+	}
+	if err := x.tools(deep).Judge(ctx, Approve, nil); err != nil {
+		t.Fatal(err)
+	}
+	if err := x.responded(deep); err != nil || deep.a.phase != fixed {
+		t.Fatal("deep did not hand off", deep.a.phase, err)
+	}
+	closed(first)
+	second, err := x.tools(a).Ask(ctx, "a/deep", "Explain your fixed handoff.")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if e, err := x.tools(deep).Await(ctx); err != nil || e.Question == nil || e.Question.ID != second {
+		t.Fatal("a question after the handoff did not reach the handed-off Manager", e, err)
+	}
+	// deep's response ends without a reply.
+	if err := x.responded(deep); err != nil || len(deep.queue) != 0 {
+		t.Fatal("the unanswered question was delivered again", deep.queue, err)
+	}
+	closed(second)
+	if len(x.questions) != 1 || x.questions["inbox-test-q2"] == nil {
+		t.Fatal("closed questions stayed open or deep's own question was lost", x.questions)
+	}
+}
+
+// A question that reaches a Manager after its judgment but before its handoff
+// is fixed is not closed unseen: the handed-off Manager receives it once and
+// may still answer it.
+func TestAQuestionQueuedDuringTheHandoffStillReachesTheManager(t *testing.T) {
+	x, root, a, deep := inboxExecution()
+	defer x.cancel()
+	x.request.Mandate = Assessment
+	x.executor = &Executor{}
+	a.copy, deep.copy = toolFailureCopy{}, toolFailureCopy{}
+	root.running, a.running, deep.running = true, true, true
+	a.a.phase, a.a.version = active, 1
+	deep.a.phase, deep.a.version = active, 1
+	ctx := context.Background()
+	if err := x.tools(deep).Judge(ctx, Approve, nil); err != nil {
+		t.Fatal(err)
+	}
+	id, err := x.tools(a).Ask(ctx, "a/deep", "Reassess your handoff.")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := x.responded(deep); err != nil || deep.a.phase != fixed {
+		t.Fatal("deep did not hand off", deep.a.phase, err)
+	}
+	if q := x.questions[id]; q == nil || q.answered {
+		t.Fatal("a question deep never received was closed at its handoff")
+	}
+	if e, err := x.tools(deep).Await(ctx); err != nil || e.Question == nil || e.Question.ID != id {
+		t.Fatal("the question did not reach the handed-off Manager", e, err)
+	}
+	if err := x.tools(deep).Reply(ctx, id, "Still valid."); err != nil {
+		t.Fatal("the handed-off Manager could not answer", err)
+	}
+}
+
+// The no-progress stop applies only to a Manager with an open assignment: a
+// handed-off Manager's inaction never stops the Run, while an open assignment
+// that stands still still does.
+func TestNoProgressStopsOnlyAnOpenAssignment(t *testing.T) {
+	x, _, _, deep := inboxExecution()
+	defer x.cancel()
+	deep.copy = toolFailureCopy{}
+	state := Commit{ID: "fixed", Tree: "tree"}
+	accepted(deep, "deep")
+	for range 2 * maxIdle {
+		if err := x.acted(deep, true, state); err != nil {
+			t.Fatal("a handed-off Manager's inaction stopped the Run", err)
+		}
+	}
+	deep.a.phase, deep.a.task = active, Assignment{Task: "realize"}
+	var err error
+	for range maxIdle {
+		err = x.acted(deep, true, state)
+	}
+	if !errors.Is(err, ErrNoProgress) || !strings.Contains(err.Error(), `on its assignment "realize"`) {
+		t.Fatal("an open assignment that stood still was not stopped", err)
+	}
+}
+
 // These are controlled port peers. The real Git/record Executor test separately
 // proves that a Session ignoring an integration error cannot persist success.
 type toolFailureCopy struct {
@@ -338,10 +566,10 @@ func (timedMessageSession) Exchange(ctx context.Context, _ Message) error {
 }
 func (timedMessageSession) Close(context.Context) error { return nil }
 
-func TestExchangeEnforcesPerMessageLimitWithinOriginalRunDeadline(t *testing.T) {
+func TestExchangeEnforcesIdleLimitWithinOriginalRunDeadline(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
-	x := &execution{ctx: ctx, request: Request{MessageTimeout: 20 * time.Millisecond}}
+	x := &execution{ctx: ctx, request: Request{ProviderIdleTimeout: 20 * time.Millisecond}}
 	start := time.Now()
 	err := x.exchange(&managerState{session: timedMessageSession{}}, Message{Feedback: []Finding{{Text: "bounded"}}})
 	if !errors.Is(err, context.DeadlineExceeded) || time.Since(start) > time.Second || ctx.Err() != nil {
@@ -355,16 +583,16 @@ type scriptedSession func(context.Context) error
 func (f scriptedSession) Exchange(ctx context.Context, _ Message) error { return f(ctx) }
 func (scriptedSession) Close(context.Context) error                     { return nil }
 
-// MessageTimeout bounds provider work, not the host serving tool calls: a
-// parent may await its working children beyond it, provider work around such
-// a call stays bounded, and the Run deadline bounds the waiting.
-func TestMessageTimeoutCountsProviderWorkNotServedToolCalls(t *testing.T) {
+// ProviderIdleTimeout bounds provider work, not the host serving tool calls: a
+// parent may await its working children beyond it, provider work after such a
+// call stays bounded, and the Run deadline bounds the waiting.
+func TestProviderIdleTimeoutCountsProviderWorkNotServedToolCalls(t *testing.T) {
 	const limit = 80 * time.Millisecond
 	setup := func(run time.Duration) (*execution, *managerState) {
 		x, _, a, deep := inboxExecution()
 		x.cancel()
 		x.ctx, x.cancel = context.WithTimeout(context.Background(), run)
-		x.request.MessageTimeout = limit
+		x.request.ProviderIdleTimeout = limit
 		// a awaits its working child inside its own response.
 		deep.a.phase, a.running, deep.running = active, true, true
 		return x, a
@@ -408,9 +636,37 @@ func TestMessageTimeoutCountsProviderWorkNotServedToolCalls(t *testing.T) {
 		start := time.Now()
 		go question(x, a, 3*limit)
 		err := x.exchange(a, Message{Feedback: []Finding{{Text: "work"}}})
-		// The answer arrives after 3*limit, so only an uncounted await gets there.
-		if elapsed := time.Since(start); !errors.Is(err, context.DeadlineExceeded) || elapsed < 3*limit || elapsed > 4*limit+time.Second || x.ctx.Err() != nil {
+		// The question arrives after 3*limit, so only an uncounted await gets
+		// there; the stall after it then gets the whole limit.
+		if elapsed := time.Since(start); !errors.Is(err, context.DeadlineExceeded) || elapsed < 4*limit || elapsed > 4*limit+time.Second || x.ctx.Err() != nil {
 			t.Fatal("a stall after a served call escaped or misused the limit", err, elapsed)
+		}
+		x.calls.Wait()
+	})
+	t.Run("a call ending during a parallel served call", func(t *testing.T) {
+		x, a := setup(time.Minute)
+		defer x.cancel()
+		x.executor = &Executor{Records: toolFailureRecords{}}
+		tools := x.tools(a)
+		a.session = scriptedSession(func(ctx context.Context) error {
+			awaited := make(chan error, 1)
+			go func() { _, err := tools.Await(ctx); awaited <- err }()
+			// read_notes starts and ends while await is still served.
+			clock := ctx.Value(clockKey{}).(*idleClock)
+			for serving := 0; serving == 0; {
+				clock.mu.Lock()
+				serving = clock.serving
+				clock.mu.Unlock()
+			}
+			if _, err := tools.ReadNotes(ctx, ""); err != nil {
+				return err
+			}
+			return <-awaited
+		})
+		start := time.Now()
+		go question(x, a, 4*limit)
+		if err := x.exchange(a, Message{Feedback: []Finding{{Text: "work"}}}); err != nil || time.Since(start) < 4*limit {
+			t.Fatal("the clock ran while a parallel call was still served", err, time.Since(start))
 		}
 		x.calls.Wait()
 	})
@@ -431,26 +687,108 @@ func TestMessageTimeoutCountsProviderWorkNotServedToolCalls(t *testing.T) {
 	})
 }
 
-// Provider work before and after served calls accumulates: serving pauses the
-// clock and never restarts it at its full limit.
-func TestMessageClockKeepsProviderWorkAcrossServedCalls(t *testing.T) {
-	clock := startClock(time.Hour, func() { t.Error("clock expired") })
-	defer clock.stop()
-	left := func() time.Duration {
-		clock.mu.Lock()
-		defer clock.mu.Unlock()
-		return clock.left
+// The idle limit restarts at every served tool call (phase C chain 3: Root hit
+// a whole-response limit six times while it kept delegating, awaiting and
+// reviewing). Active stretches longer than the limit together never stop a
+// response, a stall after them ends it after the limit, and the Run deadline
+// still ends a response that never stalls. No call is judged useful or not.
+func TestProviderIdleTimeoutRestartsAtEveryServedToolCall(t *testing.T) {
+	const limit = 200 * time.Millisecond
+	setup := func(run time.Duration) (*execution, *managerState, Tools) {
+		x, _, a, _ := inboxExecution()
+		x.cancel()
+		x.ctx, x.cancel = context.WithTimeout(context.Background(), run)
+		x.request.ProviderIdleTimeout = limit
+		x.executor = &Executor{Records: toolFailureRecords{}}
+		return x, a, x.tools(a)
 	}
-	for want := 30 * time.Millisecond; want <= 60*time.Millisecond; want += 30 * time.Millisecond {
-		time.Sleep(30 * time.Millisecond) // provider work
-		resume := clock.serve()
-		nested := clock.serve()
-		time.Sleep(30 * time.Millisecond) // served: not counted
-		nested()
-		if spent := time.Hour - left(); spent < want || spent > want+time.Second {
-			t.Fatalf("provider work %v counted as %v", want, spent)
+	// One active stretch: provider work for a quarter of the limit, then a
+	// served read_notes call.
+	stretch := func(ctx context.Context, tools Tools) error {
+		time.Sleep(limit / 4)
+		_, err := tools.ReadNotes(ctx, "")
+		return err
+	}
+	work := Message{Feedback: []Finding{{Text: "work"}}}
+	t.Run("active stretches exceed the limit together", func(t *testing.T) {
+		x, a, tools := setup(time.Minute)
+		defer x.cancel()
+		a.session = scriptedSession(func(ctx context.Context) error {
+			for range 8 {
+				if err := stretch(ctx, tools); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		start := time.Now()
+		if err := x.exchange(a, work); err != nil || time.Since(start) < 2*limit {
+			t.Fatal("served tool calls did not restart the idle limit", err, time.Since(start))
 		}
-		resume()
+		x.calls.Wait()
+	})
+	t.Run("a stall after active stretches", func(t *testing.T) {
+		x, a, tools := setup(time.Minute)
+		defer x.cancel()
+		a.session = scriptedSession(func(ctx context.Context) error {
+			for range 8 {
+				if err := stretch(ctx, tools); err != nil {
+					return err
+				}
+			}
+			<-ctx.Done()
+			return nil
+		})
+		start := time.Now()
+		err := x.exchange(a, work)
+		if elapsed := time.Since(start); !errors.Is(err, context.DeadlineExceeded) || elapsed < 3*limit || elapsed > 3*limit+time.Second || x.ctx.Err() != nil {
+			t.Fatal("a stall after active stretches escaped or misused the limit", err, elapsed)
+		}
+		x.calls.Wait()
+	})
+	t.Run("the Run deadline ends a response that never stalls", func(t *testing.T) {
+		x, a, tools := setup(3 * limit)
+		defer x.cancel()
+		a.session = scriptedSession(func(ctx context.Context) error {
+			for ctx.Err() == nil {
+				if err := stretch(ctx, tools); err != nil {
+					return err
+				}
+			}
+			return ctx.Err()
+		})
+		start := time.Now()
+		err := x.exchange(a, work)
+		if elapsed := time.Since(start); !errors.Is(err, context.DeadlineExceeded) || elapsed < 2*limit || x.ctx.Err() == nil {
+			t.Fatal("an active response outlived the Run deadline or ended at the idle limit", err, elapsed)
+		}
+		x.calls.Wait()
+	})
+}
+
+// Parallel tool calls: the clock stays paused while any call is served, and
+// only the end of the last one restarts it at its full limit.
+func TestIdleClockPausesWhileAnyParallelCallIsServed(t *testing.T) {
+	const limit = 100 * time.Millisecond
+	expired := make(chan struct{})
+	clock := startClock(limit, func() { close(expired) })
+	defer clock.stop()
+	first, second := clock.serve(), clock.serve()
+	first()
+	select {
+	case <-expired:
+		t.Fatal("the clock ran while a parallel call was still served")
+	case <-time.After(2 * limit):
+	}
+	start := time.Now()
+	second()
+	select {
+	case <-expired:
+		if elapsed := time.Since(start); elapsed < limit {
+			t.Fatal("the clock restarted below its full limit", elapsed)
+		}
+	case <-time.After(limit + time.Second):
+		t.Fatal("the clock did not restart after the last call")
 	}
 }
 

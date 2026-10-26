@@ -519,3 +519,94 @@ func TestApplyVerifyRejectionStartsFreshCorrectionWithOriginalAllowanceAndFindin
 		t.Fatal("message allowance reset", used, allowance.Used())
 	}
 }
+
+// budgetDrain spends the shared allowance in Verify down to keep messages
+// before Root's judgment takes effect: Root's judgment is held, and each
+// continued response reads Notes, which costs its message, until keep remain.
+type budgetDrain struct {
+	controlled *controlledManagers
+	allowance  *run.Allowance
+	keep       int
+}
+
+func (d budgetDrain) Open(ctx context.Context, spec run.SessionSpec) (run.Session, error) {
+	if spec.Manager.Package != "." {
+		return d.controlled.Open(ctx, spec)
+	}
+	root := &drainingRoot{allowance: d.allowance, keep: d.keep, tools: spec.Tools}
+	spec.Tools.Judge = func(_ context.Context, decision run.Decision, findings []run.Finding) error {
+		root.held, root.decision, root.findings = true, decision, findings
+		return nil
+	}
+	session, err := d.controlled.Open(ctx, spec)
+	if err != nil {
+		return session, err
+	}
+	root.Session = session
+	return root, nil
+}
+
+type drainingRoot struct {
+	run.Session
+	allowance *run.Allowance
+	keep      int
+	tools     run.Tools
+	held      bool
+	decision  run.Decision
+	findings  []run.Finding
+}
+
+func (r *drainingRoot) Exchange(ctx context.Context, m run.Message) error {
+	if !r.held {
+		return r.Session.Exchange(ctx, m)
+	}
+	if r.allowance.Remaining() > r.keep {
+		_, err := r.tools.ReadNotes(ctx, "")
+		return err
+	}
+	r.held = false
+	return r.tools.Judge(ctx, r.decision, r.findings)
+}
+
+// §20.1, §20.2 (phase C M-c3-C1: a correction pair started with 39 messages
+// left and needed at least 42): Apply starts no correction pair the remaining
+// shared allowance cannot start, as Implement and Verify each need every
+// Manager once. It ends incomplete with that cause, not with a refused Run
+// request. Only an impossible start is refused: with exactly enough messages
+// the pair starts, without a promise that it fits.
+func TestApplyStartsNoCorrectionPairTheRemainingBudgetCannotCover(t *testing.T) {
+	for _, short := range []bool{true, false} {
+		t.Run(fmt.Sprintf("short=%v", short), func(t *testing.T) {
+			_, prepared, git, _ := runFixture(t)
+			store, _ := runstore.New(git.StateRoot)
+			keep := 2 * len(prepared.Topology().Managers())
+			if short {
+				keep--
+			}
+			allowance := run.NewAllowance(runDeadline(t), 100)
+			drained := false
+			executor := &applyExecutor{t: t, git: git, store: store, rejectVerify: true, wrap: func(mandate run.Mandate, managers *controlledManagers) run.Sessions {
+				if mandate != run.Verify || drained {
+					return managers
+				}
+				drained = true
+				return budgetDrain{controlled: managers, allowance: allowance, keep: keep}
+			}}
+			command := apply.Command{Executor: executor, Candidates: git, Records: store, Publisher: &Publisher{Repository: adapter(t), Store: git}}
+			report, err := command.Execute(context.Background(), run.Request{ID: "correction-budget", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: allowance, CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
+			stopped := err != nil && strings.Contains(err.Error(), "budget does not cover a correction pair")
+			if !short {
+				if stopped || len(executor.requests) < 4 {
+					t.Fatal("a correction pair the allowance can start was refused", len(executor.requests), err)
+				}
+				return
+			}
+			if !stopped || !errors.Is(err, run.ErrBudget) || strings.Contains(err.Error(), "invalid Run request") {
+				t.Fatal("the impossible correction pair did not end as a budget stop", err)
+			}
+			if report.Status != model.NotCompleted || report.Publication != nil || len(executor.requests) != 3 || report.Workflow.Final.Decision != run.Reject || allowance.Remaining() != keep {
+				t.Fatal("the budget stop started a Run or was not incomplete", report.Status, len(executor.requests), report.Workflow.Final.Decision, allowance.Remaining())
+			}
+		})
+	}
+}
