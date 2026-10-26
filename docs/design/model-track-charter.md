@@ -1,6 +1,6 @@
 # Canonical model track: charter v0.2
 
-**Status:** approved by the owner on 26 October 2026, with the recommendations for D1–D5 ([source](../concepts/sources/model-track-approval-20261026.md)). v0.2 applied an independent review of the first draft and one point from the Evaluation session. Recording it here changed only its status, tense, link paths and the name of the leading session; the approved text is otherwise unchanged.
+**Status:** approved by the owner on 26 October 2026, with the recommendations for D1–D5 ([source](../concepts/sources/model-track-approval-20261026.md)). v0.2 applied an independent review of the first draft and one point from the Evaluation session. Recording it here changed only its status, tense, link paths, the name of the leading session, a "content Packages" precision and one grammar fix; the approved text is otherwise unchanged.
 
 **Basis:**
 - the owner's [founding intent](../concepts/sources/founding-intent-20261026.md);
