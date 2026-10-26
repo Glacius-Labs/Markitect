@@ -1,6 +1,6 @@
 # V1 comparison results, Phase C: the larger Makerspace project
 
-Date: 26 October 2026. This record reports Phase C of the [V1 comparison protocol](v1-comparison-protocol-20261024.md#addendum-phase-c-makerspace), approved with N = 3 and frozen before the first counted run. Phase C is read by its own rule (C6) and is never pooled with [Phase A](v1-comparison-results-20261025.md) or [Phase B](v1-comparison-results-phase-b-20261025.md). Decisions and one amendment made after counted data existed are recorded in [C10](v1-comparison-protocol-20261024.md#c10-post-data-amendment-and-decisions-26-october-2026). None of them changes a score.
+Date: 26 October 2026. This record reports Phase C of the [V1 comparison protocol](v1-comparison-protocol-20261024.md#addendum-phase-c-makerspace), approved with N = 3 and frozen before the first counted run. Phase C is read by its own rule (C6) and is never pooled with [Phase A](v1-comparison-results-20261025.md) or [Phase B](v1-comparison-results-phase-b-20261025.md). Decisions and one amendment made after counted data existed are recorded in [C10](v1-comparison-protocol-20261024.md#c10-post-data-amendment-and-decisions-26-october-2026). The ledger amendment changes no score. The continuation after step C5 of chain 2 set that step's score, choosing the outcome least favorable to M.
 
 ## Result
 
@@ -44,7 +44,7 @@ Date: 26 October 2026. This record reports Phase C of the [V1 comparison protoco
 - **Order and times** (26 October 2026, UTC, run start to run end; parity as predeclared):
   - chain 1, M first: 00:18–04:30;
   - chain 2, B first: 04:34–12:08, with waits after the capacity failures at M-c2-C5 (07:15–08:16 and 08:22–10:22);
-  - chain 3, M first: 12:14–16:54.
+  - chain 3, M first: 12:14–16:55.
 - **Attempts and decisions.** Every decision is recorded in the step's run directory.
   - **The operator's decisions under C4:**
     - two `repeat`s at M-c2-C5 (provider capacity);
@@ -181,7 +181,7 @@ Step 4 split each Root turn into host-served and provider time from its tool-cal
 All 33 M attempts used 1,627.8 M tokens.
 - **By Run type.** Tokens: Assessment 22 %, Implement 59 %, Verify 19 %. Messages: Assessment 668, Implement 2,449, Verify 415.
 - **By Manager level:** Root 14 %, level 1 50 %, level 2 36 %.
-- **By Package** (21 Packages): Root 14.0 %, `workshop` 9.9 %, `policies` 5.6 %, `bookings` 5.5 %, `billing` 5.1 %, `billing/invoices` 5.0 %, `policies/audit` 4.7 %, `safety` 4.5 %. The rest are below 4.5 % each.
+- **By Package** (21 Managers: Root and 20 Packages): Root 14.0 %, `workshop` 9.9 %, `policies` 5.6 %, `bookings` 5.5 %, `billing` 5.1 %, `billing/invoices` 5.0 %, `policies/audit` 4.7 %, `safety` 4.5 %. The rest are below 4.5 % each.
 - **Token kinds.**
   - M: 1,623.7 M input (93 % cached), 4.09 M output, 1.00 M of it reasoning.
   - B: 38.4 M input (97 % cached), 0.24 M output.
