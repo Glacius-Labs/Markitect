@@ -96,7 +96,7 @@ The owner [approved](concepts/sources/model-track-approval-20261026.md) the [mod
 | Work | Content | Order |
 |---|---|---|
 | W1 | Fitness review of core, compiler and context selection against the typed-language analogy; supplied the evidence for D3 | Report drafted and owner decisions taken (below); its scratch `markitect check` follows once the K-S/K-R probe has ended |
-| G1 | [Kind extension and one Core 1.2.0](concepts/register.md#dec-075-kind-extension-and-one-core-120): language-contract amendment, compiler, type-contract closure and modeled scope following `extends`, migration of everything checked from Main, `software-basics` 0.3.0 | After W1; implementation after the K-S/K-R probe, merge only after the F_fix pin |
+| G1 | [Kind interfaces and one Core 1.2.0](concepts/register.md#dec-075-kind-extension-and-one-core-120): `implements` instead of inheritance and `valueType` for the Core field `type` ([amended](concepts/sources/model-track-interfaces-20261026.md)); language-contract amendment, compiler, organization changes, migration of everything checked from Main, `software-basics` 0.3.0 | After W1; implementation after the K-S/K-R probe, merge only after the F_fix pin |
 | W2 | What a well-modeled project contains, building on DEC-061 | After W1, with W3 and W4 |
 | W3 | Quality criteria in the code analogy: warnings in the product, hard rules for Markitect's own reference and evaluation models | After W1, with W2 and W4 |
 | W4 | First outline of standard Libraries in a new top-level `libraries/` folder, absorbing `software-basics` (D4, amended by DEC-075) | After W1, with W2 and W3 |
