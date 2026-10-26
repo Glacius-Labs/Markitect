@@ -192,6 +192,7 @@ func applyExecution(preparation *project.PreparationService, repository *gitrepo
 			out.Error = executionErr.Error()
 		}
 		out.EvidencePath = filepath.Join(cfg.StateDirectory, cfg.RepositoryIdentity, "applies", id+".json")
+		out.ProviderRetries = sessions.ProviderRetries()
 		data, marshalErr := json.MarshalIndent(cli.ReportValue(out), "", "  ")
 		if marshalErr == nil {
 			marshalErr = writeStateFile(out.EvidencePath, append(data, '\n'), false)

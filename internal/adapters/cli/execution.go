@@ -27,6 +27,10 @@ type ApplyReport struct {
 	ID             string        `json:"id,omitempty"`
 	StateDirectory string        `json:"stateDirectory,omitempty"`
 	EvidencePath   string        `json:"evidencePath,omitempty"`
+
+	// ProviderRetries counts the native responses Markitect sent again after a
+	// transient provider error, apart from any repeat of the whole Apply.
+	ProviderRetries int `json:"providerRetries"`
 }
 type ApplyFunc func(context.Context, ApplyRequest) (ApplyReport, error)
 
