@@ -12,7 +12,8 @@
 
 | Where | Hard rules (H) | Review criteria (R) | Signals (S) |
 |---|---|---|---|
-| Our reference and evaluation models (the self-model, pilots, study portfolios) | Must pass | Must pass | Reviewed; each one kept is justified in one line |
+| Our reference and evaluation models (pilots, study portfolios) | Must pass | Must pass | Reviewed; each one kept is justified in one line |
+| Markitect's self-model | Exempt until its rewrite to the modeling guide, which is deferred until Markitect is stable ([DEC-074](../concepts/register.md#dec-074-canonical-model-track-parallel-to-v1), W6); measured and reported meanwhile | Exempt likewise | Reported |
 | Other projects | Reported by the W5 tool as findings | Reported | Reported |
 
 - The product does not block on these criteria (ENH-002, DEC-005). For now they live in the W5 tool. Warnings in `markitect check` would change the product CLI and need an owner decision first.
