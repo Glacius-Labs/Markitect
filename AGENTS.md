@@ -4,7 +4,7 @@ Markitect is model-first development with delegated realization. People maintain
 
 **Current target:** [V1 concept 1.0](docs/concepts/v1-concept.md) ([DEC-068](docs/concepts/register.md#dec-068-v1-concept-10)). V1 is Model → Artifacts: Assessment, Implement and Verify each run through the complete model-derived hierarchy in fresh Run environments; Apply publishes only a stored, verified candidate after every Run has closed. Extract, Cockpit/UI, interactive authoring and Setup are not part of V1. V1 acceptance covers Codex with normal account login. The [delivery plan](docs/implementation-plan.md) owns the current steps and the known deviations of the code from the concept.
 
-Before assessing product direction, read [Markitect in brief](docs/vision.md#markitect-in-brief), [Common misreadings](docs/vision.md#common-misreadings) and the [concept register](docs/concepts/register.md). Do not reopen an accepted entry without new evidence.
+Before assessing product direction, read [Markitect in brief](docs/vision.md#markitect-in-brief), [Founding intent](docs/vision.md#founding-intent), [Common misreadings](docs/vision.md#common-misreadings) and the [concept register](docs/concepts/register.md). Do not reopen an accepted entry without new evidence. The canonical model is meant as a typed language in prose: projects define their own Kinds, Libraries supply common ones, the compiler checks structure only, and a model is judged like code.
 
 ## Working rules
 
