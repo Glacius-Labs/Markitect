@@ -90,7 +90,7 @@ func (c *valueChecker) finding(a definitionAddress, code, path, message string, 
 func (c *valueChecker) spec(a definitionAddress, input Value, kind *definitionContract) (Value, Status) {
 	var output Value
 	status := kind.status
-	jobs := []valueJob{{mode: "object", input: input, output: &output, fields: kind.fields, complete: kind.status == Passed, path: "spec"}}
+	jobs := []valueJob{{mode: "object", input: input, output: &output, fields: kind.contractFields(), complete: kind.status == Passed, path: "spec"}}
 	problem := func(job valueJob, code, message string) {
 		status = Failed
 		c.finding(a, code, job.path, message, job.input)
@@ -263,11 +263,48 @@ func (c *valueChecker) reference(a definitionAddress, job valueJob, expected *Id
 	if target == nil || target.kind == nil || expected == nil {
 		return Value{}, NotCompleted
 	}
-	if *target.kind != *expected {
-		c.finding(a, "value.reference_kind", job.path, fmt.Sprintf("target %s/%s does not have the required Kind %s/%s.", id.Package, id.ID, expected.Package, expected.ID), job.input)
+	accepted, complete := c.satisfies(*target.kind, *expected)
+	if !complete {
+		return Value{}, NotCompleted
+	}
+	if !accepted {
+		c.finding(a, "value.reference_kind", job.path, fmt.Sprintf("target %s/%s does not have the required Kind %s/%s or a Kind implementing it.", id.Package, id.ID, expected.Package, expected.ID), job.input)
 		return Value{}, Failed
 	}
 	return Value{kind: ReferenceValue, reference: id, position: job.input.position}, Passed
+}
+
+// satisfies reports whether a Definition of Kind kind is accepted where
+// expected is required: the same Kind, or one that implements it directly or
+// through other interfaces (language contract §3.3). The walk is iterative and
+// visits each Kind once.
+func (c *valueChecker) satisfies(kind, expected Identity) (accepted, complete bool) {
+	complete = true
+	seen := map[Identity]bool{kind: true}
+	pending := []Identity{kind}
+	for len(pending) > 0 {
+		current := pending[len(pending)-1]
+		pending = pending[:len(pending)-1]
+		if current == expected {
+			return true, true
+		}
+		contract := c.contracts.definitions[current]
+		if contract == nil || contract.category != "kind" {
+			complete = false
+			continue
+		}
+		if contract.status != Passed {
+			// A partly resolved implements list may hide the required Kind.
+			complete = false
+		}
+		for _, iface := range contract.interfaces {
+			if !seen[iface] {
+				seen[iface] = true
+				pending = append(pending, iface)
+			}
+		}
+	}
+	return false, complete
 }
 
 // Meta defaults are conditional on actual resolved category/type. Ordinary
@@ -275,13 +312,17 @@ func (c *valueChecker) reference(a definitionAddress, job valueJob, expected *Id
 func typedMetaSpec(contract *definitionContract) Value {
 	object := Value{kind: ObjectValue}
 	if contract.category == "kind" {
-		object.fields = []Field{{Name: "properties", Value: typedDeclarationList(contract.fields)}}
+		// Both declarations are unordered; a missing implements is the empty list.
+		object.fields = []Field{
+			{Name: "implements", Value: typedDeclarationList(contract.interfaces)},
+			{Name: "properties", Value: typedDeclarationList(contract.fields)},
+		}
 		return object
 	}
 	p := contract.property
 	object.fields = []Field{
 		{Name: "name", Value: Value{kind: StringValue, text: p.name}},
-		{Name: "type", Value: Value{kind: EnumValue, text: p.valueType}},
+		{Name: "valueType", Value: Value{kind: EnumValue, text: p.valueType}},
 		{Name: "minCount", Value: Value{kind: IntegerValue, text: p.min.String()}},
 		{Name: "maxCount", Value: Value{kind: IntegerValue, text: p.max.String()}},
 	}

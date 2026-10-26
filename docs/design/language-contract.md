@@ -2,9 +2,11 @@
 
 **Status:** Completed v1 design baseline, confirmed by the user on 16 October 2026. This file is the sole normative source for the canonical form. The chosen v1 language scope is fully designed; there are no open language decisions within this scope.
 
+**Extension of 26 October 2026:** Kind interfaces (Section 3.3) and the value-type field `valueType`, with `markitect-core` 1.2.0, confirmed by the owner ([DEC-075](../concepts/register.md#dec-075-kind-extension-and-one-core-120), as amended); the [Kind interfaces design](kind-interfaces.md) keeps their reasoning and migration. It is the explicit extension decision that Section 11 requires for new language features.
+
 The design of the full v1 language is complete. As of 17 October 2026, the current source implements its product compiler; the [delivery plan](../implementation-plan.md) owns the remaining product work. The design probes show only the checks recorded for each probe. Compiler and repository checks do not prove real provider execution, Apply, a release or human acceptance. Project vocabulary and the separate procedure proposals are outside this language baseline.
 
-**Normative force:** MUST and MUST NOT denote mandatory rules and prohibitions respectively. MAY denotes a permitted option. The declarative rules, tables, grammars and the nine Core definitions of this specification are also normative. There is no implicit error correction. Examples and check reports outside this file are informative and cannot supplement or override these rules.
+**Normative force:** MUST and MUST NOT denote mandatory rules and prohibitions respectively. MAY denotes a permitted option. The declarative rules, tables, grammars and the ten Core definitions of this specification are also normative. There is no implicit error correction. Examples and check reports outside this file are informative and cannot supplement or override these rules.
 
 [Language history](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/minimal-language/language-history.md), [procedure proposals not yet chosen](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/minimal-language/procedure-proposals.md) and [executable Exchange example with bounded check evidence](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/minimal-language/exchange-example/README.md) are separate documents. They are not alternative language contracts.
 
@@ -53,7 +55,7 @@ The file name is not an identity. The containing folder, by contrast, determines
 
 ## 3. The fixed beginning: Kind and Property
 
-The fixed Core in the Package `markitect/core` consists of exactly nine definitions: the Kinds `Kind` and `Property` and the seven Properties `name`, `type`, `minCount`, `maxCount`, `values`, `target` and `properties`. Section 3.1 defines their complete contents.
+The fixed Core in the Package `markitect/core` consists of exactly ten definitions: the Kinds `Kind` and `Property` and the eight Properties `name`, `valueType`, `minCount`, `maxCount`, `values`, `target`, `properties` and `implements`. Section 3.1 defines their complete contents.
 
 The Core understands two fixed meta-Kinds:
 
@@ -67,22 +69,23 @@ In the fixed Core package, Kind itself is a definition of Kind; Property is a de
 | Meta-Property ID | Contract |
 | --- | --- |
 | name | Optional explicitly deviating field name; if omitted, the complete local Property ID applies. |
-| type | Required selection of a known value type. |
+| valueType | Required selection of a known value type. |
 | minCount | Required non-negative minimum count. |
 | maxCount | Required maximum count, or -1. |
 | values | For enum, required non-empty list of distinct permitted string values; otherwise not permitted. |
 | target | For reference, required reference to the target Kind; otherwise not permitted. |
 | properties | Optional list of references to property definitions: field contract of a Kind spec or of an object value according to Section 3.2. |
+| implements | Optional list of references to the interface Kinds a Kind implements according to Section 3.3; it has this meaning only on definitions of the meta-Kind Kind. |
 
-The compiler knows the meaning of these fields and checks the supplied self-description against the fixed beginning. The self-description does not create its own validity from prose. The Core identities and the bound Core content cannot be replaced by project definitions. A local Kind named Kind or an arbitrary import alias create no special rights. Arbitrary user-defined metaclasses are not provided for in this contract.
+The compiler knows the meaning of these fields and checks the supplied self-description against the fixed beginning. The self-description does not create its own validity from prose. The Core identities and the bound Core content cannot be replaced by project definitions. A local Kind named Kind or an arbitrary import alias create no special rights. Arbitrary user-defined metaclasses are not provided for in this contract; Kind interfaces relate ordinary Kinds only and never the two meta-Kinds.
 
 <a id="core-definitions"></a>
 
-### 3.1 Complete Core in nine definition files
+### 3.1 Complete Core in ten definition files
 
-All nine files belong to the package markitect/core. They need no imports because their reference targets lie in their own package. Each file has the same complete envelope. The effective field name of each meta-Property corresponds to its short local ID; spec.name is therefore omitted throughout.
+All ten files belong to the package markitect/core. They need no imports because their reference targets lie in their own package. Each file has the same complete envelope. The effective field name of each meta-Property corresponds to its short local ID; spec.name is therefore omitted throughout.
 
-Language note (DEC-069): the bodies of these nine definitions are the English wording of `markitect-core` 1.1.0, translated with unchanged meaning from the German bodies of 1.0.0 ([DEC-069](../concepts/register.md#dec-069-documentation-is-written-in-english)). Only this wording is the fixed Core. The German wording of 1.0.0 is preserved at the [archive point](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/minimal-language/language-contract.md#core-definitions).
+Language note: these ten definitions are `markitect-core` 1.2.0. It keeps the English bodies of 1.1.0 ([DEC-069](../concepts/register.md#dec-069-documentation-is-written-in-english)), renames the Property `type` to `valueType`, amends the bodies of `Kind`, `Property`, `values` and `target`, adds `implements` to the field contract of `Kind` and adds the definition `implements`. Only this wording is the fixed Core. Version 1.1.0 is preserved in the repository history; the German wording of 1.0.0 is preserved at the [archive point](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/minimal-language/language-contract.md#core-definitions).
 
 In the comparison with this fixed self-description, too, missing imports and explicitly set `imports: []` are equivalent according to Section 5.2. The authored form is preserved; an erroneous entry or a non-empty import list is not treated as an empty list.
 
@@ -96,10 +99,12 @@ kind: Kind
 body: >-
   Declares a type. properties names the permitted fields of the spec
   of its definitions. The body of a type definition describes their
-  shared meaning and applicable stipulations.
+  shared meaning and applicable stipulations. implements names interface
+  Kinds; the type declares every Property of each in properties.
 spec:
   properties:
     - properties
+    - implements
 ```
 
 **property.yaml**
@@ -110,11 +115,11 @@ kind: Kind
 body: >-
   Declares a field contract with value type and cardinality.
   The body describes the meaning of its values or relationships.
-  For type object, properties names the permitted fields of the object value.
+  For value type object, properties names the permitted fields of the object value.
 spec:
   properties:
     - name
-    - type
+    - valueType
     - minCount
     - maxCount
     - values
@@ -133,19 +138,19 @@ body: >-
   The effective field name must be unique within every contract
   that uses it.
 spec:
-  type: string
+  valueType: string
   minCount: 0
   maxCount: 1
 ```
 
-**type.yaml**
+**value-type.yaml**
 
 ```yaml
-id: type
+id: valueType
 kind: Property
 body: The value type of this Property, understood by the Core.
 spec:
-  type: enum
+  valueType: enum
   minCount: 1
   maxCount: 1
   values:
@@ -165,7 +170,7 @@ id: minCount
 kind: Property
 body: Non-negative minimum number of present values.
 spec:
-  type: integer
+  valueType: integer
   minCount: 1
   maxCount: 1
 ```
@@ -181,7 +186,7 @@ body: >-
   Exactly 1 denotes a single value; other maximum values denote
   a list.
 spec:
-  type: integer
+  valueType: integer
   minCount: 1
   maxCount: 1
 ```
@@ -193,10 +198,10 @@ id: values
 kind: Property
 body: >-
   Permitted string values of an enum Property.
-  For type enum, a non-empty list of distinct values is required.
+  For value type enum, a non-empty list of distinct values is required.
   For other value types, this entry is not permitted.
 spec:
-  type: string
+  valueType: string
   minCount: 0
   maxCount: -1
 ```
@@ -208,10 +213,12 @@ id: target
 kind: Property
 body: >-
   The Kind required of the referenced definitions.
-  For type reference, this entry is required.
+  Definitions of a Kind that implements the required Kind, directly
+  or through other interfaces, also satisfy it.
+  For value type reference, this entry is required.
   For other value types, it is not permitted.
 spec:
-  type: reference
+  valueType: reference
   target: Kind
   minCount: 0
   maxCount: 1
@@ -226,8 +233,25 @@ body: >-
   References the permitted field contracts of the object described here.
   The effective field names must be unique within this contract.
 spec:
-  type: reference
+  valueType: reference
   target: Property
+  minCount: 0
+  maxCount: -1
+```
+
+**implements.yaml**
+
+```yaml
+id: implements
+kind: Property
+body: >-
+  References the interface Kinds a Kind implements. The Kind must declare
+  every Property of each interface in its own properties, and its
+  definitions satisfy references that require the interface, directly
+  or indirectly. The implements graph must be acyclic.
+spec:
+  valueType: reference
+  target: Kind
   minCount: 0
   maxCount: -1
 ```
@@ -241,11 +265,33 @@ The fixed Core Property `properties` declares a list of standalone property defi
 | Definition considered | Meaning of the shared Property |
 | --- | --- |
 | kind is the fixed meta-Kind Kind | properties declares the permitted fields of the spec of the definitions of this Kind. This also applies to kind.yaml and property.yaml themselves. |
-| kind is the fixed meta-Kind Property and spec.type is object | properties declares the permitted fields of the respective object value. |
-| kind is the fixed meta-Kind Property with another spec.type | properties is not permitted as a contract entry, not even as an empty list. The already existing value type condition remains in force. |
+| kind is the fixed meta-Kind Property and spec.valueType is object | properties declares the permitted fields of the respective object value. |
+| kind is the fixed meta-Kind Property with another spec.valueType | properties is not permitted as a contract entry, not even as an empty list. The already existing value type condition remains in force. |
 | kind is an ordinary project Kind | Its own field contract applies. A field named properties permitted there, even when the shared Property is reused, is ordinary data content and creates no additional type or object contract operator. |
 
 The last row prevents an impermissible global reservation of the field name. A project Kind SchemaCatalog could declare properties as a list of property references and use it to describe concrete catalog entries. Such a catalog entry does not thereby become a Kind; only a definition of the fixed meta-Kind Kind declares a new type contract. The fixed language meaning depends on exactly bound meta-identities, not on written names or an arbitrary import alias.
+
+The same holds for `implements`. It has its meaning only on a definition of the fixed meta-Kind Kind. A field named implements on an ordinary project Kind is ordinary data content and implements nothing.
+
+<a id="kind-interfaces"></a>
+
+### 3.3 Kind interfaces
+
+A definition of the meta-Kind Kind MAY name interface Kinds under `implements`. Any ordinary Kind can serve as an interface. The following rules apply:
+
+| Subject | Rule |
+| --- | --- |
+| Conformance | A Kind that implements I MUST declare in its own `properties` every Property that I declares, by identical Property identity. It MAY declare more. Nothing is inherited: the field contract of a Kind is exactly its own `properties`. |
+| Interface targets | Every interface MUST be a definition of the meta-Kind Kind visible to the definition file. The meta-Kinds `Kind` and `Property` MUST NOT be implemented. A Kind MUST NOT name the same interface twice. |
+| Acyclicity | The graph of Kinds and the interfaces they implement MUST be acyclic. Across models this follows from the acyclic model dependency graph of Section 8.1. |
+| Reference acceptance | A value reference whose Property requires the target Kind T accepts a definition whose Kind is T or implements T, directly or through interfaces it implements. |
+| Meta positions | The positions `kind`, `target`, `properties` and `implements` themselves keep exact identity checks; acceptance through interfaces applies only to value references in a `spec`. |
+| Visibility | The implementer references each interface Property by its own identity, so the Property's Package must be visible to the implementer's file, and its model must be a direct dependency of the implementer's model (Section 8). A missing Property is reported with its Package and ID. |
+| Field names | Two interface Properties with the same effective field name cannot both be implemented: effective field names must stay unique in the implementer's `properties` (Section 5). |
+| Incomplete interfaces | Conformance against an interface whose own contract failed or is incomplete is not completed. Naming an interface that is already implemented through another interface is permitted. |
+| Meaning | The body of an implementing Kind must fulfil the meaning of its interfaces. That remains a semantic assessment. |
+
+Interfaces relate type contracts only. They create no inheritance of fields or bodies and no user-defined metaclass. Reusing a Library Property in a project Kind's own `properties` is ordinary Property reuse (Section 9, "Use Property under another Kind") and needs no interface.
 
 <a id="body"></a>
 
@@ -338,7 +384,7 @@ A link must be single-line in the decoded body. The authored source text may be 
 | number | Finite, exactly represented decimal number value; integers are also permitted. |
 | enum | One of the explicitly declared string values. |
 | object | Object with declared, closed field contracts. |
-| reference | Reference to an existing definition of the explicitly required Kind. |
+| reference | Reference to an existing definition of the explicitly required Kind or of a Kind that implements it, directly or transitively (Section 3.3). |
 
 The following fixed language rules apply to Properties:
 
@@ -397,6 +443,7 @@ Ordinary value lists are ordered. Declarative enumerations of the fixed Core and
 | --- | --- |
 | Ordinary multi-valued Property, including reference and object values | The order counts: [a, b] is different from [b, a]. Repetitions are preserved unless an additional contract excludes them. |
 | properties of a definition of the fixed meta-Kind Kind | Unordered declaration of the permitted fields. References are compared by canonical target identity. |
+| implements of a definition of the fixed meta-Kind Kind | Unordered declaration of the implemented interface Kinds. References are compared by canonical target identity. |
 | properties of an object Property of the fixed meta-Kind Property | Unordered declaration of the object field contract; the same target resolution applies. |
 | values of an enum Property of the fixed meta-Kind Property | Unordered set of permitted string values. The values remain exact and are not normalized or compared case-insensitively. |
 | File-local imports | Unordered selection of visible packages and declared aliases. The order creates no precedence in resolution. |
@@ -727,7 +774,7 @@ Processing takes place independently of document order:
 2. Capture exactly one complete definition from each definition file; check the uniform envelope, preserve provenance and reject identity collisions. Embedded property declarations and definition collections are errors.
 3. Resolve references unambiguously in the definition's own package and the imports of the respective definition file.
 4. Check meta-Kinds and property contracts against the fixed beginning and its language invariants.
-5. Form closed type contracts from the valid Kind/property definitions; determine the effective field name from spec.name or the complete local Property ID and reject name collisions.
+5. Form closed type contracts from the valid Kind/property definitions; determine the effective field name from spec.name or the complete local Property ID and reject name collisions; check interface conformance and reject `implements` cycles (Section 3.3).
 6. Check all definitions against their Kind, value types, cardinalities and reference targets.
 7. Form a fixed model state with complete bodies, type contracts, package bindings and resolved references.
 
@@ -745,7 +792,7 @@ A complete result MUST check envelope, one-file rule, fixed Core self-descriptio
 
 Structural validity proves neither the truth or completeness of binding prose nor suitable modeling, correct realization, executed runtime evidence or human acceptance. Domain contradictions remain semantic findings. Derived checklists are not a second canonical truth.
 
-Not part of v1 are compact or embedded definitions, additional namespaces, user-defined metaclasses, automatic name corrections or redirects, version ranges, multi-version imports and a general formal value-condition or execution language. Additional domain Kinds from libraries obtain no privileged compiler semantics.
+Kind interfaces according to Section 3.3 are part of v1 since `markitect-core` 1.2.0. Not part of v1 are compact or embedded definitions, additional namespaces, user-defined metaclasses, automatic name corrections or redirects, version ranges, multi-version imports and a general formal value-condition or execution language. Additional domain Kinds from libraries obtain no privileged compiler semantics.
 
 Context, semantic indexing, change assessment, realization mapping, check planning, delegation, integration and Apply are not procedures defined by this specification. The [separate procedure proposals](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/minimal-language/procedure-proposals.md) have not been selected. Diagnostic profiles, output formats, deployment and migration remain separate work. They add no required Kinds and do not change the v1 rules.
 

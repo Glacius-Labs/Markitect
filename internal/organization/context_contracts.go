@@ -26,10 +26,13 @@ func (b *contextBuilder) contracts(definition model.Definition) error {
 		return err
 	}
 	if definition.Kind == contextCoreKind {
-		return b.properties(definition)
+		if err := b.properties(definition); err != nil {
+			return err
+		}
+		return b.interfaces(definition)
 	}
 	if definition.Kind == contextCoreProperty {
-		value, present, err := contextField(definition, "type")
+		value, present, err := contextField(definition, "valueType")
 		text, textual := value.Text()
 		if err != nil || !present || !textual {
 			return fmt.Errorf("missing bound Property type in %+v", definition.Identity)
@@ -66,20 +69,67 @@ func (b *contextBuilder) properties(definition model.Definition) error {
 	return nil
 }
 
+// interfaces adds the interface Kinds a Kind implements, so that a Manager
+// sees every interface contract of the Kinds it uses (language contract §3.3).
+func (b *contextBuilder) interfaces(definition model.Definition) error {
+	ids, err := contextInterfaces(definition)
+	if err != nil {
+		return err
+	}
+	for i, id := range ids {
+		if err := b.typedTarget(definition, id, contextCoreKind, KindContract, "/spec/implements/"+strconv.Itoa(i)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func contextProperties(definition model.Definition) ([]model.Identity, error) {
-	value, present, err := contextField(definition, "properties")
+	return contextReferences(definition, "properties")
+}
+
+func contextInterfaces(definition model.Definition) ([]model.Identity, error) {
+	return contextReferences(definition, "implements")
+}
+
+// kindLineage returns kind and every interface it implements, directly or
+// through other interfaces, each once.
+func (b *contextBuilder) kindLineage(kind model.Identity) ([]model.Identity, error) {
+	seen := map[model.Identity]bool{kind: true}
+	lineage := []model.Identity{kind}
+	for i := 0; i < len(lineage); i++ {
+		entry, found := b.index[lineage[i]]
+		if !found || entry.Definition.Kind != contextCoreKind {
+			return nil, fmt.Errorf("missing bound Kind %+v", lineage[i])
+		}
+		interfaces, err := contextInterfaces(entry.Definition)
+		if err != nil {
+			return nil, err
+		}
+		for _, iface := range interfaces {
+			if !seen[iface] {
+				seen[iface] = true
+				lineage = append(lineage, iface)
+			}
+		}
+	}
+	return lineage, nil
+}
+
+func contextReferences(definition model.Definition, name string) ([]model.Identity, error) {
+	value, present, err := contextField(definition, name)
 	if err != nil || !present {
 		return nil, err
 	}
 	items, list := value.Items()
 	if !list {
-		return nil, fmt.Errorf("inconsistent bound properties in %+v", definition.Identity)
+		return nil, fmt.Errorf("inconsistent bound %s in %+v", name, definition.Identity)
 	}
 	ids := make([]model.Identity, len(items))
 	for i, item := range items {
 		id, reference := item.Reference()
 		if !reference {
-			return nil, fmt.Errorf("inconsistent bound Property reference in %+v", definition.Identity)
+			return nil, fmt.Errorf("inconsistent bound %s reference in %+v", name, definition.Identity)
 		}
 		ids[i] = id
 	}

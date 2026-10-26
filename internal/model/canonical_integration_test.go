@@ -29,7 +29,7 @@ func TestCanonicalSyntheticGoldenAndPublicTypedIR(t *testing.T) {
 	got := requireChecked(t, input)
 	// Independently authored expected model-digest/1 tree, not a round-trip of
 	// the encoder. Fixed Core bytes are separately checked against §8.3's vector.
-	wanted := `{"format":"markitect-model-digest/1","model":{"dependencies":{"markitect-core":"1.0"},"formatVersion":1,"id":"project"},"packages":{"feature":{"Record":{"body":"Contract fixture.","bodyLinks":[],"kind":["reference","markitect/core","Kind"],"spec":{"properties":["list",[["reference","feature","field"]]]}},"field":{"body":"Contract fixture.","bodyLinks":[],"kind":["reference","markitect/core","Property"],"spec":{"maxCount":["integer","1"],"minCount":["integer","0"],"name":["string","field"],"type":["enum","string"]}},"item":{"body":"Contract fixture.","bodyLinks":[],"kind":["reference","feature","Record"],"spec":{"field":["string","text"]}}}}}`
+	wanted := `{"format":"markitect-model-digest/1","model":{"dependencies":{"markitect-core":"1.0"},"formatVersion":1,"id":"project"},"packages":{"feature":{"Record":{"body":"Contract fixture.","bodyLinks":[],"kind":["reference","markitect/core","Kind"],"spec":{"implements":["list",[]],"properties":["list",[["reference","feature","field"]]]}},"field":{"body":"Contract fixture.","bodyLinks":[],"kind":["reference","markitect/core","Property"],"spec":{"maxCount":["integer","1"],"minCount":["integer","0"],"name":["string","field"],"valueType":["enum","string"]}},"item":{"body":"Contract fixture.","bodyLinks":[],"kind":["reference","feature","Record"],"spec":{"field":["string","text"]}}}}}`
 	if string(got.Models[0].Canonical) != wanted {
 		t.Fatalf("synthetic golden differs:\n got %s\nwant %s", got.Models[0].Canonical, wanted)
 	}
@@ -85,7 +85,11 @@ func TestCanonicalSourceAndAuthorReferenceInvariance(t *testing.T) {
 		}},
 		{"explicit Property name default", func(i *Input) {
 			entry := &i.Root.Entries[3]
-			entry.Bytes = bytes.Replace(entry.Bytes, []byte("type: reference"), []byte("name: link, type: reference"), 1)
+			edited := bytes.Replace(entry.Bytes, []byte("valueType: reference"), []byte("name: link, valueType: reference"), 1)
+			if bytes.Equal(edited, entry.Bytes) {
+				panic("explicit Property name edit did not change the fixture")
+			}
+			entry.Bytes = edited
 		}},
 	} {
 		t.Run(tt.name, func(t *testing.T) {

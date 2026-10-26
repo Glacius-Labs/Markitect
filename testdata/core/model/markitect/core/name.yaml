@@ -6,6 +6,6 @@ body: >-
   The effective field name must be unique within every contract
   that uses it.
 spec:
-  type: string
+  valueType: string
   minCount: 0
   maxCount: 1

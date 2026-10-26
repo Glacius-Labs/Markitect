@@ -2,6 +2,7 @@ package organization
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -25,7 +26,13 @@ func (b *contextBuilder) scoped(topology Topology, local []model.Definition, pat
 			return err
 		}
 		for _, definition := range local {
-			if definition.Kind != selector.Value.Kind {
+			// A selector on an interface Kind also selects Definitions of every
+			// Kind that implements it (language contract §3.3).
+			lineage, err := b.kindLineage(definition.Kind)
+			if err != nil {
+				return err
+			}
+			if !slices.Contains(lineage, selector.Value.Kind) {
 				continue
 			}
 			value, present, err := contextField(definition, name)
@@ -67,19 +74,26 @@ func (b *contextBuilder) scopeField(rule ScopeRule) (string, bool, error) {
 	if !found || kind.Definition.Kind != contextCoreKind {
 		return "", false, fmt.Errorf("scope selector has no bound Kind %+v", rule.Kind)
 	}
-	properties, err := contextProperties(kind.Definition)
+	// The scope field is declared by the Kind or by an interface it implements.
+	lineage, err := b.kindLineage(rule.Kind)
 	if err != nil {
 		return "", false, err
 	}
 	declared := false
-	for _, id := range properties {
-		declared = declared || id == rule.Property
+	for _, owner := range lineage {
+		properties, err := contextProperties(b.index[owner].Definition)
+		if err != nil {
+			return "", false, err
+		}
+		for _, id := range properties {
+			declared = declared || id == rule.Property
+		}
 	}
 	property, found := b.index[rule.Property]
 	if !declared || !found || property.Definition.Kind != contextCoreProperty {
 		return "", false, fmt.Errorf("scope Property %+v is not declared by Kind %+v", rule.Property, rule.Kind)
 	}
-	typeValue, _, err := contextField(property.Definition, "type")
+	typeValue, _, err := contextField(property.Definition, "valueType")
 	typeName, text := typeValue.Text()
 	if err != nil || !text || typeName != "string" && typeName != "enum" {
 		return "", false, fmt.Errorf("scope Property requires textual Package values")

@@ -108,6 +108,10 @@ artifacts:
     form: test
     realizes: [product/model/language-v1]
     why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/model/interfaces_test.go"
+    form: test
+    realizes: [product/model/language-v1]
+    why: Tests the stated responsibility and retains negative boundaries.
   - path: "internal/model/finalize.go"
     form: code
     realizes: [product/model/language-v1]

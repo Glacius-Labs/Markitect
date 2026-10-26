@@ -3,7 +3,9 @@ kind: Kind
 body: >-
   Declares a type. properties names the permitted fields of the spec
   of its definitions. The body of a type definition describes their
-  shared meaning and applicable stipulations.
+  shared meaning and applicable stipulations. implements names interface
+  Kinds; the type declares every Property of each in properties.
 spec:
   properties:
     - properties
+    - implements

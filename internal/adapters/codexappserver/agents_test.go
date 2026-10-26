@@ -320,8 +320,8 @@ func testSessionSpec(t *testing.T) run.SessionSpec {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	r.Write(".markitect/model.yaml", "formatVersion: 1\nid: native-fixture\nroot: model\ndependencies: {markitect-core: '1.1.0'}\n")
-	r.Write(".markitect/model-lock.yaml", "formatVersion: 1\nmodels:\n  markitect-core: {version: '1.1.0', digest: 'sha256:9552a7cdd560d8822854c286cd74d7dbb5d4277ee1fd16b25ef275213868e043'}\n")
+	r.Write(".markitect/model.yaml", "formatVersion: 1\nid: native-fixture\nroot: model\ndependencies: {markitect-core: '1.2.0'}\n")
+	r.Write(".markitect/model-lock.yaml", "formatVersion: 1\nmodels:\n  markitect-core: {version: '1.2.0', digest: 'sha256:b338a1d686be91495e893f085d85013cc91f8f740bef8725210adc2e276f000a'}\n")
 	r.Write(".markitect/model/a/thing.yaml", "imports: [{package: markitect/core, as: Core}]\nid: Thing\nkind: Core.Kind\nbody: Preserve the native fixture obligation.\nspec: {}\n")
 	r.Write(".markitect/execution.yaml", "apiVersion: markitect.execution/v2\ninstructions: {'.': [guide.md]}\nchecks: []\n")
 	r.Write("guide.md", "SELECTED MANAGER GUIDANCE ✓\n")

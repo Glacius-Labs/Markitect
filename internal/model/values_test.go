@@ -11,7 +11,7 @@ import (
 func singleValueInput(valueType, min, max, extra, spec string) Input {
 	return coreModelInput(
 		contractDefinition("feature/record.yaml", "Record", "Core.Kind", "{properties: [field]}"),
-		contractDefinition("feature/field.yaml", "field", "Core.Property", "{type: "+valueType+", minCount: "+min+", maxCount: "+max+extra+"}"),
+		contractDefinition("feature/field.yaml", "field", "Core.Property", "{valueType: "+valueType+", minCount: "+min+", maxCount: "+max+extra+"}"),
 		contractDefinition("feature/item.yaml", "item", "Record", spec),
 	)
 }
@@ -134,10 +134,10 @@ func TestValueCardinalityAndListShapes(t *testing.T) {
 func nestedValueInput(spec string) Input {
 	return coreModelInput(
 		contractDefinition("feature/record.yaml", "Record", "Core.Kind", "{properties: [node, rows]}"),
-		contractDefinition("feature/node.yaml", "node", "Core.Property", "{type: object, minCount: 0, maxCount: 1, properties: [node, words, required]}"),
-		contractDefinition("feature/rows.yaml", "rows", "Core.Property", "{type: object, minCount: 0, maxCount: -1, properties: [words]}"),
-		contractDefinition("feature/words.yaml", "words", "Core.Property", "{type: string, minCount: 0, maxCount: -1}"),
-		contractDefinition("feature/required.yaml", "required", "Core.Property", "{type: boolean, minCount: 1, maxCount: 1}"),
+		contractDefinition("feature/node.yaml", "node", "Core.Property", "{valueType: object, minCount: 0, maxCount: 1, properties: [node, words, required]}"),
+		contractDefinition("feature/rows.yaml", "rows", "Core.Property", "{valueType: object, minCount: 0, maxCount: -1, properties: [words]}"),
+		contractDefinition("feature/words.yaml", "words", "Core.Property", "{valueType: string, minCount: 0, maxCount: -1}"),
+		contractDefinition("feature/required.yaml", "required", "Core.Property", "{valueType: boolean, minCount: 1, maxCount: 1}"),
 		contractDefinition("feature/item.yaml", "item", "Record", spec),
 	)
 }
@@ -194,8 +194,8 @@ func TestClosedFieldsAndExactDeclaredSpelling(t *testing.T) {
 func TestOrdinaryPropertiesDataAndConditionalMetaDefaults(t *testing.T) {
 	input := coreModelInput(
 		contractDefinition("feature/catalog.yaml", "Catalog", "Core.Kind", "{properties: [Core.properties, words, box]}"),
-		contractDefinition("feature/words.yaml", "words", "Core.Property", "{type: string, minCount: 0, maxCount: -1}"),
-		contractDefinition("feature/box.yaml", "box", "Core.Property", "{type: object, minCount: 0, maxCount: 1}"),
+		contractDefinition("feature/words.yaml", "words", "Core.Property", "{valueType: string, minCount: 0, maxCount: -1}"),
+		contractDefinition("feature/box.yaml", "box", "Core.Property", "{valueType: object, minCount: 0, maxCount: 1}"),
 		contractDefinition("feature/item.yaml", "item", "Catalog", "{properties: [words, box, words]}"),
 	)
 	spec := requireValuesPassed(t, input)
@@ -236,7 +236,7 @@ func TestTypedValuesPreserveTextAndSourceBytes(t *testing.T) {
 func TestOrdinaryPropertiesStringAndNestedListDefaults(t *testing.T) {
 	input := coreModelInput(
 		contractDefinition("feature/record.yaml", "Record", "Core.Kind", "{properties: [properties]}"),
-		contractDefinition("feature/properties.yaml", "properties", "Core.Property", "{type: string, minCount: 0, maxCount: 1}"),
+		contractDefinition("feature/properties.yaml", "properties", "Core.Property", "{valueType: string, minCount: 0, maxCount: 1}"),
 		contractDefinition("feature/item.yaml", "item", "Record", "{properties: 'ordinary literal'}"),
 	)
 	// Fully qualify the declaration because both the own and Core Packages

@@ -8,6 +8,10 @@ artifacts:
     form: config
     realizes: [examples/independent-oracles]
     why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "testdata/core/model/markitect/core/implements.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
   - path: "testdata/core/model/markitect/core/kind.yaml"
     form: config
     realizes: [examples/independent-oracles]
@@ -36,7 +40,7 @@ artifacts:
     form: config
     realizes: [examples/independent-oracles]
     why: Preserves the owner-authored language, Apply or concept contract as a reference.
-  - path: "testdata/core/model/markitect/core/type.yaml"
+  - path: "testdata/core/model/markitect/core/value-type.yaml"
     form: config
     realizes: [examples/independent-oracles]
     why: Preserves the owner-authored language, Apply or concept contract as a reference.

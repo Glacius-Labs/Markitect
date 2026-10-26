@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-const core10Digest = "sha256:9f1a646b76796282c8e3fea2f6d0d5eb1276f954ca3894f3488763512b7d82d1"
+const core10Digest = "sha256:a972d8e445a13f87a0e1c43fb635f57085926be5f73ac10c104e6778212dbed0"
 
 func withLock(source SourceModel, text string, present bool) SourceModel {
 	path := joinPath(parent(source.ManifestPath), "model-lock.yaml")
@@ -116,7 +116,7 @@ func TestEntryLockFailureDoesNotInvalidateIndependentDependency(t *testing.T) {
 			t.Fatalf("invalid root lock accepted: %+v", got.Diagnostics)
 		}
 		requireNoPublicContent(t, got.Models[0])
-		if got.Models[1].Status != Passed || got.Models[1].Digest != core10Digest || len(got.Models[1].Definitions) != 9 || phaseStatus(got.Models[1], "lock") != Passed {
+		if got.Models[1].Status != Passed || got.Models[1].Digest != core10Digest || len(got.Models[1].Definitions) != 10 || phaseStatus(got.Models[1], "lock") != Passed {
 			t.Fatalf("consumer lock poisoned independent Core: status=%s digest=%s diagnostics=%+v", got.Models[1].Status, got.Models[1].Digest, got.Diagnostics)
 		}
 	}
@@ -274,7 +274,7 @@ func TestLockExactUnicodeAndLiteralVersionLabels(t *testing.T) {
 		input.Dependencies[0].Entries[0].Bytes = bytes.Replace(input.Dependencies[0].Entries[0].Bytes, []byte("version: '1.0'"), []byte("version: '"+version+"'"), 1)
 		// Derive the expected version-only change from the independent fixed
 		// Core byte vector, not from the product canonicalizer.
-		expected := strings.Replace(canonicalCoreVector, `"version":"1.1.0"`, `"version":"`+version+`"`, 1)
+		expected := strings.Replace(canonicalCoreVector, `"version":"1.2.0"`, `"version":"`+version+`"`, 1)
 		digest := fmt.Sprintf("sha256:%x", sha256.Sum256([]byte(expected)))
 		input.Root = withLock(input.Root, "formatVersion: 1\nmodels:\n  markitect-core: {version: '"+version+"', digest: '"+digest+"'}", true)
 		requireChecked(t, input)

@@ -1,5 +1,7 @@
 # Makerspace model snapshots
 
+> **Note, 26 October 2026:** since [DEC-075](../../../../docs/concepts/register.md#dec-075-kind-extension-and-one-core-120) (Core 1.2.0), `testdata/core` and `software-basics` on Main hold the new editions. These snapshots bind Core 1.1.0 and software-basics 0.2.0 as of the Phase C materials freeze `4840fb20f52c1e0e0367e909d833919ca8a215c6`, and are not checkable with the current compiler. Nothing else here changed.
+
 The canonical Markitect model of the Phase C Makerspace program, one complete snapshot per step. It is derived only from the neutral requirements: [w0.md](../requirements/w0.md) for W0, then each change document applied in order. The single-agent arm's documentation in [spec/](../spec) is rendered from these snapshots, and [mapping/](../mapping) ties every neutral statement to its Definitions.
 
 ## Layout

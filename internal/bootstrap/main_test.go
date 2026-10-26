@@ -392,7 +392,7 @@ func moveFixtureCore(t *testing.T, repo *testkit.Repo, destination, rootDeclarat
 	if err != nil {
 		t.Fatal(err)
 	}
-	repo.Write(".markitect/model.yaml", strings.Replace(string(local), "dependencies: {}", "dependencies: {markitect-core: '1.1.0'}", 1))
+	repo.Write(".markitect/model.yaml", strings.Replace(string(local), "dependencies: {}", "dependencies: {markitect-core: '1.2.0'}", 1))
 	lock, err := os.ReadFile("../../testdata/library/m1/model-lock.yaml")
 	if err != nil {
 		t.Fatal(err)

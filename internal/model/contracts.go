@@ -22,8 +22,17 @@ type definitionContract struct {
 	category string
 	kind     *Identity
 	property *propertyContract
-	fields   []Identity
-	status   Status
+	// fields are the Kind's own declared Properties, which are its whole
+	// field contract; interfaces its declared implements targets.
+	fields     []Identity
+	interfaces []Identity
+	status     Status
+}
+
+// contractFields is the closed field contract that values of a Kind or an
+// object Property must satisfy. Interfaces add nothing to it.
+func (d *definitionContract) contractFields() []Identity {
+	return d.fields
 }
 
 type contractResult struct {
@@ -99,10 +108,11 @@ func checkContracts(scopes []sourceScope, graph dependencyGraph, bindings author
 			} else {
 				switch contract.category {
 				case "kind":
-					if !c.closed(address, spec, "properties") {
+					if !c.closed(address, spec, "properties", "implements") {
 						contract.status = Failed
 					}
 					contract.fields = c.propertyList(address, spec, &contract.status)
+					contract.interfaces = c.interfaceList(address, spec, &contract.status)
 				case "property":
 					contract.property = c.property(address, spec, &contract.status)
 				}
@@ -112,6 +122,7 @@ func checkContracts(scopes []sourceScope, graph dependencyGraph, bindings author
 	}
 	c.checkFieldNames()
 	c.checkObjectCycles()
+	c.checkInterfaces()
 	coreStatus := c.checkCore()
 	for model := range scopes {
 		c.result.status[model] = combineStatus(c.result.status[model], coreStatus)
@@ -265,8 +276,160 @@ func (c *contractChecker) propertyList(a definitionAddress, spec Value, status *
 	return fields
 }
 
+// interfaceList checks the declared implements targets of a Kind: ordinary
+// Kinds only, each named once (language contract §3.3).
+func (c *contractChecker) interfaceList(a definitionAddress, spec Value, status *Status) []Identity {
+	value, present := lookup(spec, "implements")
+	if !present {
+		return nil
+	}
+	if value.kind != ListValue {
+		c.finding(a, "contract.implements_list", "implements must be a list of Kind references.", value)
+		*status = Failed
+		return nil
+	}
+	seen := map[Identity]bool{}
+	var interfaces []Identity
+	for _, item := range value.items {
+		id := c.reference(a, item, coreKind, status)
+		if id == nil {
+			continue
+		}
+		if *id == coreKind || *id == coreProperty {
+			c.finding(a, "contract.implements_meta", "The meta-Kinds Kind and Property cannot be implemented.", item)
+			*status = Failed
+			continue
+		}
+		if seen[*id] {
+			c.finding(a, "contract.implements_duplicate", "A Kind must not name the same interface twice.", item)
+			*status = Failed
+			continue
+		}
+		seen[*id] = true
+		interfaces = append(interfaces, *id)
+	}
+	return interfaces
+}
+
+type interfaceFrame struct {
+	id   Identity
+	next int
+}
+
+// checkInterfaces rejects implements cycles and checks that every Kind
+// declares each Property of every interface it names. The walk is iterative
+// and visits each Kind once.
+func (c *contractChecker) checkInterfaces() {
+	const (
+		unvisited = iota
+		active
+		done
+	)
+	state := map[Identity]int{}
+	for _, scope := range c.scopes {
+		for _, d := range scope.definitions {
+			root := c.result.definitions[d.identity]
+			if root == nil || root.category != "kind" || state[d.identity] != unvisited {
+				continue
+			}
+			stack := []interfaceFrame{{id: d.identity}}
+			state[d.identity] = active
+			for len(stack) > 0 {
+				top := &stack[len(stack)-1]
+				contract := c.result.definitions[top.id]
+				if top.next < len(contract.interfaces) {
+					target := contract.interfaces[top.next]
+					top.next++
+					next := c.result.definitions[target]
+					switch {
+					case next == nil || next.category != "kind":
+						c.incomplete(top.id)
+					case state[target] == active:
+						c.interfaceCycle(stack, target)
+					case state[target] == unvisited:
+						state[target] = active
+						stack = append(stack, interfaceFrame{id: target})
+					}
+					continue
+				}
+				c.conformance(top.id)
+				state[top.id] = done
+				stack = stack[:len(stack)-1]
+			}
+		}
+	}
+}
+
+func (c *contractChecker) interfaceCycle(stack []interfaceFrame, target Identity) {
+	start := len(stack) - 1
+	for start > 0 && stack[start].id != target {
+		start--
+	}
+	for _, f := range stack[start:] {
+		if address, ok := c.address(f.id); ok {
+			implements, _ := lookup(c.definitionSpec(address), "implements")
+			c.finding(address, "contract.implements_cycle", "The implements graph of Kinds must be acyclic.", implements)
+		}
+	}
+}
+
+// conformance requires every Property of each interface in the Kind's own
+// properties. An incomplete interface leaves conformance not completed.
+func (c *contractChecker) conformance(id Identity) {
+	contract := c.result.definitions[id]
+	if len(contract.interfaces) == 0 {
+		return
+	}
+	if contract.status != Passed {
+		// An implementer whose own properties did not fully resolve cannot be
+		// judged; an earlier finding or incompleteness already holds it.
+		c.incomplete(id)
+		return
+	}
+	own := map[Identity]bool{}
+	for _, field := range contract.fields {
+		own[field] = true
+	}
+	address, _ := c.address(id)
+	implements, _ := lookup(c.definitionSpec(address), "implements")
+	for _, target := range contract.interfaces {
+		iface := c.result.definitions[target]
+		if iface == nil || iface.category != "kind" || iface.status != Passed {
+			c.incomplete(id)
+			continue
+		}
+		for _, field := range iface.fields {
+			if !own[field] {
+				c.finding(address, "contract.implements_missing", fmt.Sprintf("Kind %s/%s implements %s/%s but does not declare its Property %s/%s.", id.Package, id.ID, target.Package, target.ID, field.Package, field.ID), implements)
+			}
+		}
+	}
+}
+
+// incomplete marks a Kind's contract and its model scope as not completed.
+func (c *contractChecker) incomplete(id Identity) {
+	contract := c.result.definitions[id]
+	contract.status = combineStatus(contract.status, NotCompleted)
+	if address, ok := c.address(id); ok {
+		c.result.status[address.model] = combineStatus(c.result.status[address.model], NotCompleted)
+	}
+}
+
+func (c *contractChecker) address(id Identity) (definitionAddress, bool) {
+	candidates := c.index[identityKey(id)]
+	if len(candidates) != 1 || c.definition(candidates[0]).identity != id {
+		return definitionAddress{}, false
+	}
+	return candidates[0], true
+}
+
+func (c *contractChecker) definitionSpec(a definitionAddress) Value {
+	spec, _ := lookup(c.definition(a).envelope, "spec")
+	return spec
+}
+
 func (c *contractChecker) property(a definitionAddress, spec Value, status *Status) *propertyContract {
-	if !c.closed(a, spec, "name", "type", "minCount", "maxCount", "values", "target", "properties") {
+	if !c.closed(a, spec, "name", "valueType", "minCount", "maxCount", "values", "target", "properties") {
 		*status = Failed
 	}
 	d := c.definition(a)
@@ -279,14 +442,14 @@ func (c *contractChecker) property(a definitionAddress, spec Value, status *Stat
 			p.name = name.text
 		}
 	}
-	typeValue, _ := lookup(spec, "type")
+	typeValue, _ := lookup(spec, "valueType")
 	if typeValue.kind == StringValue {
 		p.valueType = typeValue.text
 	}
 	switch p.valueType {
 	case "string", "boolean", "integer", "number", "enum", "object", "reference":
 	default:
-		c.finding(a, "contract.value_type", "type must select one of the seven fixed Core value types.", typeValue)
+		c.finding(a, "contract.value_type", "valueType must select one of the seven fixed Core value types.", typeValue)
 		*status = Failed
 	}
 	min, _ := lookup(spec, "minCount")
@@ -340,7 +503,7 @@ func (c *contractChecker) checkFieldNames() {
 			if contract == nil {
 				continue
 			}
-			fields := contract.fields
+			fields := contract.contractFields()
 			if contract.property != nil && contract.property.valueType == "object" {
 				fields = contract.property.fields
 			}

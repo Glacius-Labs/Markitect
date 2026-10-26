@@ -1,8 +1,8 @@
-id: type
+id: valueType
 kind: Property
 body: The value type of this Property, understood by the Core.
 spec:
-  type: enum
+  valueType: enum
   minCount: 1
   maxCount: 1
   values:

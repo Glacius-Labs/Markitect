@@ -19,7 +19,7 @@ func scopedContextInputs(t *testing.T, target, scope string) (project.InputSelec
 	selection, raw := executionInputs(t, content)
 	for _, definition := range []struct{ name, content string }{
 		{"policy/kind", "imports: [{package: markitect/core, as: Core}]\nid: ScopedRule\nkind: Core.Kind\nbody: Rule with explicit Package scope.\nspec: {properties: [appliesTo]}\n"},
-		{"policy/property", "imports: [{package: markitect/core, as: Core}]\nid: appliesTo\nkind: Core.Property\nbody: Explicit local Package paths.\nspec: {type: string, minCount: 0, maxCount: -1}\n"},
+		{"policy/property", "imports: [{package: markitect/core, as: Core}]\nid: appliesTo\nkind: Core.Property\nbody: Explicit local Package paths.\nspec: {valueType: string, minCount: 0, maxCount: -1}\n"},
 		{"rules/global", "imports: [{package: policy}, {package: extra}]\nid: global\nkind: policy/ScopedRule\ntitle: Global rule\nbody: 'Scoped rule references [[extra/far]].'\nspec: {appliesTo: ['.']}\n"},
 		{"rules/ancestor", fmt.Sprintf("imports: [{package: policy}]\nid: ancestor\nkind: policy/ScopedRule\nbody: Ancestor rule.\nspec: {appliesTo: [%q, %q]}\n", target, target)},
 		{"rules/sibling", "imports: [{package: policy}]\nid: sibling\nkind: policy/ScopedRule\nbody: Catalog only.\nspec: {appliesTo: [catalog]}\n"},
