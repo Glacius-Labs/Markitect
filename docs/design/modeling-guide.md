@@ -1,6 +1,6 @@
 # Modeling guide: what a well-modeled project contains
 
-**Status:** working version v0.2, 26 October 2026, of workstream W2 of the [canonical model track](model-track-charter.md). It was independently reviewed and includes the owner's architecture decisions of 26 October. It changes with the standard Libraries (W4) and the pilots (W6). It builds on the [founding intent](../concepts/sources/founding-intent-20261026.md), [DEC-061](../concepts/register.md#dec-061-what-an-extracted-model-contains), [DEC-063](../concepts/register.md#dec-063-the-model-is-authoritative-defects-escalate) and [Kind extension](../concepts/register.md#dec-075-kind-extension-and-one-core-120). The [quality criteria](model-quality-criteria.md) (W3) are its checkable side. The Kind names below are illustrative until the standard Libraries (W4) fix them.
+**Status:** working version v0.2, 26 October 2026, of workstream W2 of the [canonical model track](model-track-charter.md). It was independently reviewed and includes the owner's architecture decisions of 26 October. It changes with the standard Libraries (W4) and the pilots (W6). It builds on the [founding intent](../concepts/sources/founding-intent-20261026.md), [DEC-061](../concepts/register.md#dec-061-what-an-extracted-model-contains), [DEC-063](../concepts/register.md#dec-063-the-model-is-authoritative-defects-escalate) and [Kind interfaces](../concepts/register.md#dec-075-kind-interfaces-and-one-core-120). The [quality criteria](model-quality-criteria.md) (W3) are its checkable side. The Kind names below are illustrative until the standard Libraries (W4) fix them.
 
 ## The idea in one paragraph
 
@@ -56,10 +56,10 @@ This guide's rule: leave architecture open only where the owner explicitly choos
 - **Type what has shape:** arguments, codes, fields, references, scopes. Do not write "Arguments: …" as a Markdown list when a Kind can carry it.
 - **Every shared term is defined:** a value type, a field, or an enum value. A name such as `memberId` used across three Packages must not live only as a string in prose.
 - **Link what you depend on.** Context selection follows typed references and body links; an unlinked dependency is invisible to the Manager that needs it.
-- **Build on Library Kinds with `extends`; do not copy them.** Copy only when you must tighten a cardinality or change an object shape, which extension cannot do.
+- **Build on Library Kinds instead of copying them.** Reuse a Library's Properties in your own Kind's `properties`, and declare `implements` when your Kind should be accepted wherever the Library interface is required. The compiler then checks that your Kind declares every Property of the interface. Nothing is inherited, so each Kind shows its complete contract.
 
 ```yaml
-# A project Kind that builds on a Library Kind
+# A project Kind that implements a Library interface
 imports:
   - {package: markitect/core, as: Core}
   - {package: software/api, as: Api}
@@ -67,8 +67,8 @@ id: LedgerOperation
 kind: Core.Kind
 body: An operation that also posts its effect to the ledger.
 spec:
-  extends: [Api.Operation]
-  properties: [ledgerAccount]
+  implements: [Api.Operation]
+  properties: [Api.wireName, Api.mutation, Api.arguments, Api.refusals, Api.results, Api.permissions, ledgerAccount]
 ```
 
 ## 5. How files relate to the model

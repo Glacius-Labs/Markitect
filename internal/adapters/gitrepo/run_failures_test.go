@@ -35,6 +35,9 @@ func (f failingRecords) Read(ctx context.Context, p, id string) (run.Result, err
 	}
 	return r, err
 }
+func (f failingRecords) Approvals(ctx context.Context, p, key string) ([]run.Result, error) {
+	return f.Records.(*runstore.Store).Approvals(ctx, p, key)
+}
 
 type inspectFailure struct{ run.Workspaces }
 

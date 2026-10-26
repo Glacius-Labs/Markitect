@@ -35,6 +35,7 @@ type Prepared struct {
 	attempt  CapturedPreparationAttempt
 	topology organization.Topology
 	binding  string
+	basis    string
 }
 
 func Prepare(a CapturedPreparationAttempt) (Prepared, error) {
@@ -74,8 +75,48 @@ func Prepare(a CapturedPreparationAttempt) (Prepared, error) {
 			fmt.Fprintf(h, "%q:%q:%q:%d:%s\n", f.Location.Boundary, f.Location.Path.String(), f.RepositoryPath.String(), f.File.Mode(), f.File.ContentID().String())
 		}
 	}
-	return Prepared{a, t, hex.EncodeToString(h.Sum(nil))}, nil
+	basis, err := basisOf(raw, t)
+	if err != nil {
+		return Prepared{}, err
+	}
+	return Prepared{a, t, hex.EncodeToString(h.Sum(nil)), basis}, nil
 }
+
+// basisOf binds what a candidate is judged against, without the candidate's
+// own content or location: the checked model, every model source's manifest,
+// area and files, the Manager inventory and the execution, ignore and
+// instruction inputs by path, mode and bytes. The Census, the registry and
+// acquisition boundaries stay out, so the same model, execution configuration
+// and dependencies keep one basis across realizations and working
+// directories. Runtime profiles are operator settings and stay out too.
+func basisOf(raw RawInputs, t organization.Topology) (string, error) {
+	type source struct{ Manifest, Area, Files string }
+	var sources []source
+	for _, m := range append([]ModelSource{raw.Local}, raw.Dependencies...) {
+		sources = append(sources, source{m.Selection.ManifestPath.String(), m.RepositoryArea.String(), m.Files.Digest().String()})
+	}
+	data, err := json.Marshal(struct {
+		ModelID, ModelDigest string
+		Sources              []source
+		Managers             []organization.Manager
+	}{t.ModelID(), t.ModelDigest(), sources, t.Managers()})
+	if err != nil {
+		return "", err
+	}
+	h := sha256.New()
+	h.Write(data)
+	for i, group := range [][]SourceFile{raw.Execution, raw.Ignore, raw.Instructions} {
+		for _, f := range group {
+			fmt.Fprintf(h, "%d:%q:%q:%d:%s\n", i, f.Location.Path.String(), f.RepositoryPath.String(), f.File.Mode(), f.File.ContentID().String())
+		}
+	}
+	return hex.EncodeToString(h.Sum(nil)), nil
+}
+
+// Basis is the digest of what candidates of this preparation are judged
+// against. Two preparations with one basis differ at most in realization.
+func (p Prepared) Basis() string { return p.basis }
+
 func (p Prepared) Binding() string                     { return p.binding }
 func (p Prepared) Valid() bool                         { return p.binding != "" }
 func (p Prepared) Topology() organization.Topology     { return p.topology }

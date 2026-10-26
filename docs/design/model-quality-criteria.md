@@ -49,7 +49,7 @@
 | S5 | **Peer coupling** | Share of edges between peer feature Packages; edges to the kernel and shared policies are excluded | Report the value; compare in W6 | Low coupling, high cohesion | **Leaky modules** |
 | S6 | **Redundancy** | Near-duplicate sentences across Definitions | Threshold set in W6 | DRY | **Restated rule** |
 | S7 | **Unused structure** | Required or project-declared typed fields that no Definition sets (optional fields of Library Kinds excluded); unused imports | Any occurrence | Dead fields, unused imports | **Speculative type** |
-| S8 | **Copied Library Kind** | A project Kind whose fields include a Library Kind's without `extends`, unless it tightens a cardinality or changes an object shape | Any occurrence | Copy-paste inheritance | **Forked type** |
+| S8 | **Copied Library Kind** | A project Kind that copies a Library Kind's Property definitions instead of reusing the Library Properties, or that has all of a Library interface's Properties without declaring `implements` | Any occurrence | Copy-paste instead of reuse | **Forked type** |
 | S9 | **Isolated Definition** | A content Definition with no edge other than its `kind`; the project Package is exempt | Any occurrence | Dead code | **Orphan** |
 | S10 | **Open cross-Package choice** | A choice two or more Packages must agree on is neither decided nor stated as free | Review hint | — | **Silent gap** |
 

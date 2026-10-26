@@ -444,3 +444,15 @@ artifacts:
     form: code
     realizes: [examples/independent-oracles]
     why: Holds the hidden Phase C reference implementations that calibrate the Makerspace oracle.
+  - path: "tools/model-analysis/README.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Documents the model analysis tool, the meaning of each figure and signal, and its limits.
+  - path: "tools/model-analysis/model_analysis.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Analyzes a checked canonical model like code from its check report, as warnings only.
+  - path: "tools/model-analysis/test_model_analysis.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Tests the graph, reference, impact, lint and lock readings on small synthetic models.

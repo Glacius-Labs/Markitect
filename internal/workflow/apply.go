@@ -24,6 +24,11 @@ func Apply(ctx context.Context, executor Executor, base run.Request) (out Result
 	if executor == nil {
 		return out, fmt.Errorf("workflow executor unavailable")
 	}
+	// The bound input stays the command's capture across correction loops, so
+	// every Verify judges all changes made since then.
+	if base.Origin == (run.Origin{}) {
+		base.Origin.Input = base.Input
+	}
 	sequence := 0
 	execute := func(m run.Mandate) (run.Result, error) {
 		if err := ctx.Err(); err != nil {
@@ -45,7 +50,9 @@ func Apply(ctx context.Context, executor Executor, base run.Request) (out Result
 	if err != nil || assessment.Decision != run.Approve {
 		return out, err
 	}
-	base.Findings = append([]run.Finding(nil), assessment.Findings...)
+	// Only Findings that name a current Definition reach Implement; Assessment
+	// and Verify keep the others as Notes.
+	base.Findings = run.Initial(base.Prepared, assessment.Findings)
 	for {
 		result, e := execute(run.Implement)
 		if e != nil || result.Decision != run.Submitted {
@@ -63,7 +70,10 @@ func Apply(ctx context.Context, executor Executor, base run.Request) (out Result
 		if err := base.Allowance.Covers(2 * len(base.Prepared.Topology().Managers())); err != nil {
 			return out, fmt.Errorf("budget does not cover a correction pair, in which Implement and Verify each need every Manager once: %w", err)
 		}
-		base.Findings = append([]run.Finding(nil), verified.Findings...)
+		base.Findings = run.Initial(base.Prepared, verified.Findings)
+		if len(base.Findings) == 0 {
+			return out, fmt.Errorf("Verify %s rejected without a Finding that names a current Definition; a correction has nothing to act on", verified.ID)
+		}
 		base.Input, base.BuildOutputs = *verified.Candidate, nil
 	}
 }

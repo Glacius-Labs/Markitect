@@ -42,9 +42,21 @@ const (
 	Submitted    Decision = "submitted"
 )
 
+// Finding names the affected Definition of the checked model as Package/ID
+// when it has one; only such a Finding reaches Implement (Initial).
 type Finding struct {
-	Manager string `json:"manager"`
-	Text    string `json:"text"`
+	Manager    string `json:"manager"`
+	Definition string `json:"definition,omitempty"`
+	Text       string `json:"text"`
+}
+
+// Origin is the command's bound input. Verified names the stored Verify Run
+// that already approved exactly this input's content (tree) under the same
+// Basis; empty means the host states no such fact (Verified). It never says
+// the input is correct.
+type Origin struct {
+	Input    project.CandidateRef `json:"input"`
+	Verified string               `json:"verified,omitempty"`
 }
 type Note struct {
 	ID      string `json:"id"`
@@ -137,14 +149,18 @@ type ObservedSession interface{ Observation() SessionObservation }
 // act only through Run's tools and their copy, which Run observes itself.
 type ActingSession interface{ Acted() bool }
 
+// Basis is the Prepared basis the Run judged against; Origin is the command's
+// bound input with the host fact the Run received.
 type Result struct {
 	ID        string                      `json:"id"`
 	Project   string                      `json:"project"`
 	Binding   string                      `json:"binding"`
+	Basis     string                      `json:"basis"`
 	Mandate   Mandate                     `json:"mandate"`
 	Technical Technical                   `json:"technical"`
 	Decision  Decision                    `json:"decision,omitempty"`
 	Sessions  []ManagerSessionObservation `json:"sessions"`
+	Origin    Origin                      `json:"origin"`
 	Input     project.CandidateRef        `json:"input"`
 	Candidate *project.CandidateRef       `json:"candidate,omitempty"`
 	Findings  []Finding                   `json:"findings"`
@@ -244,8 +260,11 @@ type Request struct {
 	ID, Project string
 	Prepared    project.Prepared
 	Input       project.CandidateRef
-	Mandate     Mandate
-	Findings    []Finding
+	// Origin is the command's bound input, unchanged across correction loops.
+	// A zero Origin makes Input the bound input of a standalone Run.
+	Origin   Origin
+	Mandate  Mandate
+	Findings []Finding
 	// BuildOutputs names, for Verify, the build outputs of the Implement Run
 	// that produced Input. Root's assignment and every check of the fixed input
 	// carry them.
@@ -270,6 +289,7 @@ type SessionSpec struct {
 	Manager   organization.Manager
 	Mandate   Mandate
 	Prepared  project.Prepared
+	Origin    Origin
 	Workspace Copy
 	Findings  []Finding
 	Tools     Tools
@@ -308,11 +328,16 @@ type Answer struct {
 	Text   string `json:"text"`
 	Closed string `json:"closed,omitempty"`
 }
+
+// Changes is set only on Verify Root's assignment: the diff from the command's
+// bound input to the fixed input, above MaxChanges its complete file summary,
+// empty when nothing changed.
 type Assignment struct {
 	Task         string    `json:"task"`
 	Findings     []Finding `json:"findings"`
 	Base         Commit    `json:"base"`
 	BuildOutputs []string  `json:"buildOutputs,omitempty"`
+	Changes      *string   `json:"changes,omitempty"`
 }
 type Event struct {
 	Assignment *Assignment `json:"assignment,omitempty"`
@@ -340,9 +365,13 @@ type Tools struct {
 type Workspaces interface {
 	Open(context.Context, Request) (WorkspaceService, error)
 }
+
+// Changes is the complete diff from a stored candidate to the Run's fixed
+// input, read from durable storage without needing common history.
 type WorkspaceService interface {
 	Copy(context.Context, string, Commit) (Copy, error)
 	Retain(context.Context, Copy, Commit) (project.CandidateRef, error)
+	Changes(context.Context, project.CandidateRef) (string, error)
 	Close(context.Context) error
 }
 
@@ -463,6 +492,16 @@ func validateRequest(r Request) error {
 	}
 	if r.Mandate != Assessment && r.Mandate != Implement && r.Mandate != Verify {
 		return fmt.Errorf("invalid mandate")
+	}
+	if o := r.Origin.Input; o.Project != r.Project || o.Binding != r.Input.Binding || o.Format != r.Input.Format || o.Commit == "" || o.Tree == "" || r.Origin.Verified != "" && !validID(r.Origin.Verified) {
+		return fmt.Errorf("invalid bound input of the command")
+	}
+	if r.Mandate == Implement {
+		for _, f := range r.Findings {
+			if !defines(r.Prepared, f.Definition) {
+				return fmt.Errorf("Implement receives only Findings that name a Definition of the checked model")
+			}
+		}
 	}
 	// A shared allowance that cannot reach every Manager once is spent, not an
 	// invalid request: the command ends incomplete.

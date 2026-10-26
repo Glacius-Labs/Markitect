@@ -48,6 +48,14 @@ artifacts:
     form: code
     realizes: [product/run/confirmed-run-history]
     why: "Fixes checked handoffs, reviews, delegations and Root completion against the assignment state; a late finding invalidates the acceptances resting on it."
+  - path: "internal/run/handover.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Hands only Findings that name a current Definition to Implement, keeps the others as Notes, refuses unbound Verify reject Findings and states the already-verified fact only from a stored closed Verify approval under the same basis."
+  - path: "internal/run/handover_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: "Checks that tools refuse Findings naming unknown Definitions and unbound Verify reject Findings with the next step, and that long unbound Findings become complete Notes."
   - path: "internal/run/assignment.go"
     form: code
     realizes: [product/run/confirmed-run-history]
