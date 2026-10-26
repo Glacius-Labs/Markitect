@@ -16,6 +16,14 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Records the owner approval of the canonical model track charter with the recommendations for D1–D5.
+  - path: "docs/design/modeling-guide.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Guides what a well-modeled project contains and how to write a typed canonical model.
+  - path: "docs/design/model-quality-criteria.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: States the checkable quality criteria for canonical models.
   - path: "docs/design/model-track-charter.md"
     form: doc
     realizes: [documentation/current-guidance]
