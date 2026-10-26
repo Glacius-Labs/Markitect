@@ -10,13 +10,13 @@ import (
 // clock it changes nothing.
 func TestHostTimePausesTheResponseClock(t *testing.T) {
 	expired := make(chan struct{})
-	clock := startClock(20*time.Millisecond, func() { close(expired) })
+	clock := startClock(time.Second, func() { close(expired) })
 	defer clock.stop()
 	resume := HostTime(context.WithValue(context.Background(), clockKey{}, clock))
 	select {
 	case <-expired:
 		t.Fatal("the clock ran during host time")
-	case <-time.After(200 * time.Millisecond):
+	case <-time.After(1500 * time.Millisecond):
 	}
 	resume()
 	select {

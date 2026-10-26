@@ -8,6 +8,8 @@ import (
 	"maps"
 	"slices"
 	"time"
+
+	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
 )
 
 // transientErrors is the closed list of codexErrorInfo kinds after which a
@@ -16,9 +18,14 @@ import (
 // false) ended three Phase C Applies. Every other kind stays final.
 var transientErrors = map[string]bool{"serverOverloaded": true}
 
-// retryWaits are the pauses before the second and the third attempt of one
-// response: a response has at most two extra attempts.
-var retryWaits = []time.Duration{30 * time.Second, 120 * time.Second}
+// retryPolicy bounds the repeats of one response after a transient error.
+type retryPolicy struct {
+	waits []time.Duration // the pauses before each extra attempt
+	grace time.Duration   // how long the failed turn may take to end
+}
+
+// A response has at most two extra attempts, after 30 s and 120 s.
+var defaultRetry = retryPolicy{waits: []time.Duration{30 * time.Second, 120 * time.Second}, grace: 30 * time.Second}
 
 // providerError is a Codex error notification that Codex will not retry
 // itself. ended says why a transient one ends the response.
@@ -82,8 +89,21 @@ func (t *nativeSession) runTurn(ctx context.Context) error {
 		if err = t.pause(ctx, wait); err != nil {
 			return errors.Join(err, failure.end("the wait before attempt %d was interrupted", retries+2))
 		}
+		select {
+		case call, ok := <-t.peer.ToolCalls():
+			if ok {
+				return unserved(failure, call)
+			}
+		default:
+		}
 		t.retried(failure, retries+2, wait)
 	}
+}
+
+// unserved ends the response for a tool call of the failed turn: its result
+// reaches no model, so the call stays unserved.
+func unserved(failure *providerError, call frame.ToolCall) error {
+	return failure.end("the tool call %s reached the host after it and was not served, so the response's state is unclear", call.Name)
 }
 
 // recovery decides on a transient provider error once its failed turn ended.
@@ -92,7 +112,7 @@ func (t *nativeSession) runTurn(ctx context.Context) error {
 // continuing it from the actual thread, workspace and assignment state is not
 // supported yet. When it is unclear whether something ran, the response ends.
 func (t *nativeSession) recovery(ctx context.Context, failure *providerError, retries int) (time.Duration, error) {
-	waits := t.agents.retryWaits
+	waits := t.agents.retry.waits
 	switch {
 	case len(t.running) > 0:
 		keys := slices.Sorted(maps.Keys(t.running))
@@ -158,19 +178,21 @@ func (t *nativeSession) attempt(ctx context.Context) (*providerError, error) {
 	tools := t.peer.ToolCalls()
 	responseSeen := false
 	var failure *providerError
+	var ended <-chan time.Time // the failed turn's grace, once it failed
 	for {
 		var m Message
 		select {
 		case <-ctx.Done():
 			return nil, ctx.Err()
+		case <-ended:
+			return nil, failure.end("the failed turn did not end within %s", t.agents.retry.grace)
 		case call, ok := <-tools:
 			if !ok {
 				tools = nil
 				continue
 			}
 			if failure != nil {
-				// The failed turn's result reaches no model: the call stays unserved.
-				return nil, failure.end("the tool call %s reached the host after it and was not served, so the response's state is unclear", call.Name)
+				return nil, unserved(failure, call)
 			}
 			if err = t.answer(ctx, call); err != nil {
 				return nil, err
@@ -186,7 +208,7 @@ func (t *nativeSession) attempt(ctx context.Context) (*providerError, error) {
 		var provider *providerError
 		if errors.As(err, &provider) && provider.transient() {
 			if failure == nil {
-				failure = provider
+				failure, ended = provider, time.After(t.agents.retry.grace)
 			}
 			continue
 		}
@@ -197,7 +219,10 @@ func (t *nativeSession) attempt(ctx context.Context) (*providerError, error) {
 			continue
 		}
 		select {
-		case _, ok := <-tools:
+		case call, ok := <-tools:
+			if ok && failure != nil {
+				return nil, unserved(failure, call)
+			}
 			if ok {
 				return nil, fmt.Errorf("%w: unanswered tool at native completion", ErrProtocolIncomplete)
 			}

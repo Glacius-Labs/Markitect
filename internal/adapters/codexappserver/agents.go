@@ -37,7 +37,7 @@ type Agents struct {
 	profile        Profile
 	identity       string
 	credentials    CredentialResolver
-	retryWaits     []time.Duration
+	retry          retryPolicy
 	hostTime       func(context.Context) func()
 	retries        atomic.Int64
 }
@@ -62,7 +62,7 @@ func NewAgentsWithRuntime(start RuntimeStarter, prepared runtimeconfig.PreparedP
 	if err != nil || !ok || start == nil || credentials == nil {
 		return nil, errors.Join(ErrSession, err)
 	}
-	return &Agents{start: start, prepared: prepared, profile: p, identity: id, credentials: credentials, retryWaits: retryWaits, hostTime: run.HostTime}, nil
+	return &Agents{start: start, prepared: prepared, profile: p, identity: id, credentials: credentials, retry: defaultRetry, hostTime: run.HostTime}, nil
 }
 
 type ownedRuntime struct {
@@ -514,12 +514,12 @@ func (t *nativeSession) notification(m Message) error {
 				t.childIDBytes += len(n.Item.Child)
 			}
 		}
-		// A native item that started and has not completed may be running. Text
-		// runs nothing, and the host counts the Run tool calls it serves itself.
+		// A native item that started and has not completed may be running, also
+		// a Run tool call on its way to the host. Text runs nothing.
 		key := n.Thread + "/" + n.Item.ID
 		_, started := t.running[key]
 		switch {
-		case n.Item.Type == "userMessage" || n.Item.Type == "agentMessage" || n.Item.Type == "reasoning" || n.Item.Type == "mcpToolCall":
+		case n.Item.Type == "userMessage" || n.Item.Type == "agentMessage" || n.Item.Type == "reasoning":
 		case m.method == "item/started" && !started:
 			if len(key) > maxProtocolMessage-t.runningBytes {
 				return ErrProtocolLimit

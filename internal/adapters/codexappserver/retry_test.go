@@ -29,7 +29,7 @@ func retrying(t *testing.T, rt *fakeRuntime, spec run.SessionSpec, waits ...time
 	if waits == nil {
 		waits = []time.Duration{time.Millisecond, time.Millisecond}
 	}
-	a.retryWaits = waits
+	a.retry = retryPolicy{waits: waits, grace: time.Minute}
 	clock := &hostClock{}
 	a.hostTime = func(context.Context) func() {
 		clock.paused++
@@ -150,7 +150,8 @@ func TestTransientErrorAfterServedToolCallIsNotRepeated(t *testing.T) {
 }
 
 // A completed native execution is an action too. A native item that started
-// and did not complete may have run: the response ends honestly.
+// and did not complete may have run, also a Run tool call on its way to the
+// host: the response ends honestly.
 func TestTransientErrorAfterNativeActionEndsTheResponse(t *testing.T) {
 	for _, tc := range []struct {
 		name  string
@@ -158,7 +159,8 @@ func TestTransientErrorAfterNativeActionEndsTheResponse(t *testing.T) {
 		cause string
 	}{
 		{"completed", func(rt *fakeRuntime) { rt.failed = true }, "the response already acted (native executions completed)"},
-		{"running", func(rt *fakeRuntime) { rt.failRunning = true }, "native commandExecution " + string(codecThreadID) + "/cmd started and did not complete, so whether it ran is unclear"},
+		{"running", func(rt *fakeRuntime) { rt.failRunning = "commandExecution" }, "native commandExecution " + string(codecThreadID) + "/item-1 started and did not complete, so whether it ran is unclear"},
+		{"tool call on its way", func(rt *fakeRuntime) { rt.failRunning = "mcpToolCall" }, "native mcpToolCall " + string(codecThreadID) + "/item-1 started and did not complete, so whether it ran is unclear"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			rt := newRuntime()
@@ -215,6 +217,46 @@ func TestToolCallAfterTransientErrorIsNotServed(t *testing.T) {
 	}
 	if checks != 0 || len(rt.replies) != 0 {
 		t.Fatal("a call of the failed response was served", checks, rt.replies)
+	}
+}
+
+// A tool call of the failed turn that reaches the host during the wait is not
+// served in the repeat as if the repeat had made it.
+func TestToolCallDuringTheWaitEndsTheResponse(t *testing.T) {
+	rt := newRuntime()
+	rt.failures = []string{overloaded}
+	spec := testSessionSpec(t)
+	checks := 0
+	spec.Tools.Check = func(context.Context) (run.Check, error) {
+		checks++
+		return run.Check{}, nil
+	}
+	s, a, _ := retrying(t, rt, spec)
+	a.hostTime = func(context.Context) func() {
+		rt.tools <- frame.ToolCall{ID: 5, Name: "check", Arguments: json.RawMessage(`{}`), Meta: json.RawMessage(`{"threadId":"` + string(codecThreadID) + `"}`)}
+		return func() {}
+	}
+	err := s.Exchange(context.Background(), task("work"))
+	if !errors.Is(err, ErrProtocol) || !strings.Contains(err.Error(), "the tool call check reached the host after it and was not served") {
+		t.Fatal(err)
+	}
+	if checks != 0 || len(turnTexts(rt)) != 1 || a.ProviderRetries() != 0 {
+		t.Fatal("a late call was served or the response repeated", checks, len(turnTexts(rt)), a.ProviderRetries())
+	}
+}
+
+// A failed turn that does not end is not awaited without bound.
+func TestFailedTurnThatDoesNotEndEndsTheResponse(t *testing.T) {
+	rt := newRuntime()
+	rt.failures, rt.unended = []string{overloaded}, true
+	s, a, clock := retrying(t, rt, testSessionSpec(t))
+	a.retry.grace = 10 * time.Millisecond
+	err := s.Exchange(context.Background(), task("work"))
+	if !errors.Is(err, ErrProtocol) || !strings.Contains(err.Error(), "transient (serverOverloaded), but the failed turn did not end within 10ms") {
+		t.Fatal(err)
+	}
+	if len(turnTexts(rt)) != 1 || a.ProviderRetries() != 0 || clock.paused != 0 || !rt.closed {
+		t.Fatal("an unended turn was repeated", len(turnTexts(rt)), a.ProviderRetries(), clock, rt.closed)
 	}
 }
 

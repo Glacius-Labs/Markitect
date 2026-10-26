@@ -87,7 +87,7 @@ artifacts:
   - path: "internal/adapters/codexappserver/retry_test.go"
     form: test
     realizes: [product/ports-and-adapters]
-    why: "Exercises transient provider errors with controlled sessions: a repeat before any action, no repeat after served or native actions, unclear states, exhausted attempts, final kinds, the Run deadline and Close during the wait."
+    why: "Exercises transient provider errors with controlled sessions: a repeat before any action, no repeat after served or native actions, unclear states including a tool call in transit or during the wait, a failed turn that does not end, exhausted attempts, final kinds, the Run deadline and Close during the wait."
   - path: "internal/adapters/codexappserver/tools.go"
     form: code
     realizes: [product/ports-and-adapters]

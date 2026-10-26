@@ -32,11 +32,11 @@ Each Exchange sends Run's message as the JSON prompt: delivered events and Run's
 
 ## Transient provider errors
 
-A native `error` notification with `willRetry: false` ends the Exchange with its redacted message, unless its `codexErrorInfo` kind is transient. The closed list of transient kinds is `serverOverloaded` ("Selected model is at capacity"), which ended three Phase C Applies. A new entry needs observed evidence; every other kind, or none, stays final. After a transient error the adapter waits for the failed native turn to end. What the response had done by then decides what follows:
+A native `error` notification with `willRetry: false` ends the Exchange with its redacted message, unless its `codexErrorInfo` kind is transient. The closed list of transient kinds is `serverOverloaded` ("Selected model is at capacity"), which ended three Phase C Applies. A new entry needs observed evidence; every other kind, or none, stays final. After a transient error the adapter waits up to 30 s for the failed native turn to end; a turn that does not end ends the Exchange with the cause. What the response had done by then decides what follows:
 
 - Nothing yet: no Run tool call was served, and no native item completed or is still running. The adapter sends the same message again in the same thread. A response gets at most two extra attempts, after waits of 30 s and 120 s. A wait that would end after the Run deadline does not start. Waiting is host time: `run.HostTime` pauses Run's clock of the response.
 - Acted: Run tool calls were served or native executions completed. These actions are never repeated. A later continuation must start from the actual thread, workspace and assignment state. Whether a native thread accepts a new turn after such a failure awaits a native probe; until then the Exchange ends with the cause.
-- Unclear: a native item started and did not complete, or a tool call reached the host after the error. That call stays unserved. The Exchange ends with the cause.
+- Unclear: a native item started and did not complete, including a Run tool call on its way to the host, or a tool call reached the host after the error or during the wait. That call stays unserved. The Exchange ends with the cause.
 
 Each repeat adds a `retry` record to the transcript. `Agents.ProviderRetries()` counts the repeats across the profile's sessions for the Apply report. A study runner's repeats of whole Applies are separate.
 
