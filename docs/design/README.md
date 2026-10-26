@@ -9,4 +9,5 @@ Current design documents. Earlier design records are not kept on Main; the [arch
 | [Diagnostic contract](diagnostic-contract.md) | Diagnostic result separation and coordinates of the language |
 | [Modeling guide](modeling-guide.md) | What a well-modeled project contains: concerns, Packages as modules, typed Definitions, architecture as the model's own structure |
 | [Model quality criteria](model-quality-criteria.md) | Hard rules, review criteria and signals for canonical models, with their checks |
+| [Manager context](manager-context.md) | What each Manager receives as context: own Definitions, See also, type contracts, child areas and file paths |
 | [Canonical model track charter](model-track-charter.md) | Goal, workstreams and owner decisions of the track that makes the canonical model serve typed programming in prose |

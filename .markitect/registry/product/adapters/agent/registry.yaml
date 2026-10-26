@@ -96,6 +96,10 @@ artifacts:
     form: code
     realizes: [product/ports-and-adapters, product/organization/delegated-context]
     why: "Builds complete versioned rules, checked project/Manager context and mandate instructions for actual native renderer use, retaining provenance and exact selected instruction bytes."
+  - path: "internal/harness/harness_test.go"
+    form: test
+    realizes: [product/organization/delegated-context]
+    why: "Tests the rendered Manager context for Root, a parent and a leaf: own, See also and type-contract sections, the compact child-area index and repository files."
   - path: "internal/harness/README.md"
     form: doc
     realizes: [product/ports-and-adapters, product/organization/delegated-context]

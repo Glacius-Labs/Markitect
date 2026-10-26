@@ -40,6 +40,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: States the goal, workstreams and owner decisions of the canonical model track.
+  - path: "docs/design/manager-context.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: States what each Manager receives as context, its size bounds and how the harness renders it.
   - path: "docs/concepts/sources/v1-consistency-probe-approval-20261026.md"
     form: doc
     realizes: [documentation/current-guidance]

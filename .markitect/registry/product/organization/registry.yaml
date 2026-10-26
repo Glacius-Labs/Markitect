@@ -8,6 +8,10 @@ artifacts:
     form: test
     realizes: [product/organization/delegated-context]
     why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/organization/context_children.go"
+    form: code
+    realizes: [product/organization/delegated-context]
+    why: Implements the stated responsibility within its declared boundary.
   - path: "internal/organization/context_contracts.go"
     form: code
     realizes: [product/organization/delegated-context]
