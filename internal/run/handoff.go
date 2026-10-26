@@ -100,6 +100,9 @@ func (x *execution) decisionError(d Decision, findings []Finding) error {
 // late adverse finding. Root's judgment also passes its completion check.
 func (x *execution) judge(ctx context.Context, s *managerState, decision Decision, findings []Finding) error {
 	findings = origin(findings, s.manager.Package)
+	if err := x.findingsErr("judge", decision, findings); err != nil {
+		return err
+	}
 	x.mu.Lock()
 	if err := x.admissionErrorLocked(); err != nil {
 		x.mu.Unlock()
@@ -348,6 +351,9 @@ func (x *execution) review(ctx context.Context, s *managerState, child, commit s
 		return fmt.Errorf("reject and model_blocker need concrete Findings; review again with at least one Finding text")
 	}
 	findings = origin(findings, s.manager.Package)
+	if err := x.findingsErr("review", decision, findings); err != nil {
+		return err
+	}
 	x.mu.Lock()
 	if err := x.workingLocked(s); err != nil {
 		x.mu.Unlock()
@@ -433,6 +439,9 @@ func (x *execution) delegate(ctx context.Context, s *managerState, child, task s
 		return fmt.Errorf("a delegation needs a concrete task; delegate again with a task text")
 	}
 	findings = origin(findings, s.manager.Package)
+	if err := x.findingsErr("delegate", "", findings); err != nil {
+		return err
+	}
 	refusal := func(a assignment) error {
 		switch {
 		case a.phase == assigned || a.phase == active:

@@ -757,9 +757,10 @@ func (t *nativeSession) drainTerminals(ctx context.Context) error {
 func (a *Agents) documentFor(spec run.SessionSpec) (harness.Document, error) {
 	findings := make([]harness.Finding, len(spec.Findings))
 	for i, f := range spec.Findings {
-		findings[i] = harness.Finding{Manager: f.Manager, Text: f.Text}
+		findings[i] = harness.Finding{Manager: f.Manager, Definition: f.Definition, Text: f.Text}
 	}
-	doc, err := harness.Build(spec.Prepared, spec.Manager, string(spec.Mandate), findings)
+	origin := harness.Origin{Commit: spec.Origin.Input.Commit, Tree: spec.Origin.Input.Tree, Verified: spec.Origin.Verified}
+	doc, err := harness.Build(spec.Prepared, spec.Manager, string(spec.Mandate), findings, origin)
 	if err != nil {
 		return harness.Document{}, err
 	}

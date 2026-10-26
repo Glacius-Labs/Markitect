@@ -48,7 +48,7 @@ Land each contract with a caller and concrete implementation, never an interface
 | Contract owner | Producer -> consumer | Contents |
 | --- | --- | --- |
 | Project: Prepared/CandidateRef | Capture/Git store -> Run, diagnostics, Apply | Checked input binding; durable project-scoped storage key, Git object format, commit/tree; no live object/volume |
-| Run: Request/Result | Workflow or standalone caller -> Execute -> workflow/CLI | ID, mandate, prepared binding, input candidate, required Findings and shared allowance; technical completion, judgment, output reference, observations, actual cleanup |
+| Run: Request/Result | Workflow or standalone caller -> Execute -> workflow/CLI | ID, mandate, prepared binding, input candidate, the command's bound input with the optional host fact that it was already verified, required Findings and shared allowance; technical completion, judgment, output reference, observations, actual cleanup |
 | Run: closed-result validation | Run -> workflow and publication | One check that a stored or returned result is bound, technically completed, fully closed and carries a valid mandate decision with required Findings; callers do not know resource names |
 | Workflow: Executor | Run -> direct Apply composition | One fully closed Run per call; workflow chooses subsequent call |
 | Run: Sessions/session | Native adapter -> executor | Open with harness/workspace, ordinary messages/tools, cancellation/closure and observations; no domain Turn/Pass |
@@ -114,7 +114,7 @@ Native evidence is an early dependency gate, not a late observation: provider-de
 
 No Codex API-key route, profile branch or example exists; secret validation and redaction tests for account login remain. Native `turn/start` identifiers remain adapter facts. Each provider's qualification is independent; one does not certify another.
 
-Notes are persistent project-scoped noncanonical hints with provenance; they do not grant authority or schedule work. Mandatory Findings stay in results and explicit next-Run inputs. Verify sees fixed model/candidate and necessary technical observations, not Implement conversations/self-approval. Notes remain attributed hints. Hidden outside-oracle expectations never enter Implement context.
+Notes are persistent project-scoped noncanonical hints with provenance; they do not grant authority or schedule work. Mandatory Findings stay in results and explicit next-Run inputs; only Findings that name a Definition of the current checked model become Initial Findings of Implement, and Assessment and Verify keep the others as Notes ([DEC-073](../concepts/register.md#dec-073-change-minimality-on-an-unchanged-model)). Verify sees fixed model/candidate, the complete diff against the command's bound input across correction loops and necessary technical observations, not Implement conversations/self-approval. Notes remain attributed hints. Hidden outside-oracle expectations never enter Implement context.
 
 ## Acceptance and decisions
 

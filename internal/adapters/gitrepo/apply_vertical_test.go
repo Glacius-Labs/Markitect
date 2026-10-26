@@ -29,6 +29,7 @@ type applyExecutor struct {
 	managers               []*controlledManagers
 	noChange, rejectVerify bool
 	assessmentDecision     run.Decision
+	assessmentFindings     []run.Finding
 	failClose              bool
 	records                run.Records
 	// wrap, when set, supplies the Sessions of each Run around its managers.
@@ -89,7 +90,7 @@ func (e *applyExecutor) Execute(ctx context.Context, request run.Request) (run.R
 	}
 	managers := &controlledManagers{crossed: make(chan struct{})}
 	if request.Mandate == run.Assessment {
-		managers.forceDecision = e.assessmentDecision
+		managers.forceDecision, managers.rootFindings = e.assessmentDecision, e.assessmentFindings
 	}
 	managers.failClose = e.failClose
 	if e.noChange {
@@ -608,5 +609,183 @@ func TestApplyStartsNoCorrectionPairTheRemainingBudgetCannotCover(t *testing.T) 
 				t.Fatal("the budget stop started a Run or was not incomplete", report.Status, len(executor.requests), report.Workflow.Final.Decision, allowance.Remaining())
 			}
 		})
+	}
+}
+
+// fixtureRequest is an Apply request over the run fixture with ample limits.
+func fixtureRequest(t *testing.T, id string, prepared project.Prepared) run.Request {
+	return run.Request{ID: id, Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(runDeadline(t), 150), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
+}
+
+// rootChanges is the diff Verify Root's assignment carried, nil when no
+// assignment of the Run carried one.
+func rootChanges(c *controlledManagers) *string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for _, m := range c.messages {
+		for _, e := range m.Events {
+			if e.Assignment != nil && e.Assignment.Changes != nil {
+				return e.Assignment.Changes
+			}
+		}
+	}
+	return nil
+}
+
+// DEC-073: an Assessment Finding that names a current Definition reaches
+// Implement, as the repair of a defect under an unchanged model must. A Finding
+// drawn only from earlier Notes names none: Implement never receives it, and
+// it is kept as a Note, noted and not implemented.
+func TestApplyHandsImplementOnlyFindingsThatNameACurrentDefinition(t *testing.T) {
+	_, prepared, git, _ := runFixture(t)
+	store, _ := runstore.New(git.StateRoot)
+	repair := run.Finding{Manager: ".", Definition: "a/Thing", Text: "out/a.txt does not realize a/Thing; repair it."}
+	stale := run.Finding{Manager: ".", Text: "Earlier Notes suggest more test coverage."}
+	executor := &applyExecutor{t: t, git: git, store: store, assessmentFindings: []run.Finding{{Definition: repair.Definition, Text: repair.Text}, {Text: stale.Text}}}
+	command := apply.Command{Executor: executor, Candidates: git, Records: store, Publisher: &Publisher{Repository: adapter(t), Store: git}}
+	report, err := command.Execute(context.Background(), fixtureRequest(t, "initial", prepared))
+	if err != nil || report.Status != model.Passed || len(executor.requests) != 3 {
+		t.Fatal(report.Status, len(executor.requests), err)
+	}
+	assessment := report.Workflow.Runs[0]
+	if !slices.Contains(assessment.Findings, repair) || !slices.Contains(assessment.Findings, stale) {
+		t.Fatal("the Assessment result lost a Finding", assessment.Findings)
+	}
+	if got := executor.requests[1]; got.Mandate != run.Implement || !reflect.DeepEqual(got.Findings, []run.Finding{repair}) {
+		t.Fatal("Implement did not receive exactly the Definition-bound Finding", got.Findings)
+	}
+	for _, s := range executor.managers[1].sessions {
+		if !reflect.DeepEqual(s.spec.Findings, []run.Finding{repair}) {
+			t.Fatal("an Implement Manager's Initial Findings differ", s.spec.Manager.Package, s.spec.Findings)
+		}
+	}
+	page, err := store.Notes(context.Background(), "fixture", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	kept := 0
+	for _, n := range page.Notes {
+		if n.Run == assessment.ID && strings.Contains(n.Context, "noted, not implemented") {
+			if n.Text != stale.Text || n.Manager != "." {
+				t.Fatal("a Finding with a Definition became a Note, or the Note lost its origin", n)
+			}
+			kept++
+		}
+	}
+	if kept != 1 {
+		t.Fatal("the unbound Assessment Finding was not kept as exactly one Note", kept, page.Notes)
+	}
+}
+
+// DEC-073: every Verify judges the complete diff since the command's bound
+// input. A change of the first Implement stays visible to the Verify after a
+// correction, which receives the reject's Definition-bound Findings.
+func TestApplyVerifySeesTheDiffSinceTheBoundInputAcrossCorrections(t *testing.T) {
+	_, prepared, git, _ := runFixture(t)
+	store, _ := runstore.New(git.StateRoot)
+	executor := &applyExecutor{t: t, git: git, store: store, rejectVerify: true}
+	command := apply.Command{Executor: executor, Candidates: git, Records: store, Publisher: &Publisher{Repository: adapter(t), Store: git}}
+	report, err := command.Execute(context.Background(), fixtureRequest(t, "diff", prepared))
+	if err != nil || report.Status != model.Passed || len(executor.requests) != 5 {
+		t.Fatal(report.Status, len(executor.requests), err)
+	}
+	origin := executor.requests[0].Origin
+	if origin.Input != executor.requests[0].Input || origin.Verified != "" {
+		t.Fatal("the first Run is not bound to the captured input", origin)
+	}
+	for i, r := range executor.requests {
+		if r.Origin != origin || report.Workflow.Runs[i].Origin != origin {
+			t.Fatal("the bound input changed across the command", i, r.Origin)
+		}
+	}
+	rejected := *report.Workflow.Runs[2].Candidate
+	if executor.requests[3].Input != rejected {
+		t.Fatal("the correction did not start from the rejected candidate")
+	}
+	for i, m := range executor.managers {
+		changes := rootChanges(m)
+		if executor.requests[i].Mandate != run.Verify {
+			if changes != nil {
+				t.Fatal("a non-Verify Root received changes", i)
+			}
+			continue
+		}
+		// The first Implement changed out/a.txt; the correction left it alone.
+		if changes == nil || !strings.Contains(*changes, "out/a.txt") || !strings.Contains(*changes, "-initial") || !strings.Contains(*changes, "+parent result") {
+			t.Fatal("Verify did not see the change since the bound input", i, changes)
+		}
+	}
+	if got := executor.requests[3].Findings; len(got) == 0 || len(got) != len(report.Workflow.Runs[2].Findings) || !reflect.DeepEqual(got, run.Initial(prepared, report.Workflow.Runs[2].Findings)) {
+		t.Fatal("the correction lost a Definition-bound reject Finding", got)
+	}
+}
+
+// DEC-073 (WP4a): the host states that the bound input was already verified
+// only from a stored closed Verify approval of exactly that input under the
+// same basis. A first command gets no such fact; a command over the verified
+// candidate gets it in every Run and Session, and Verify sees no change.
+func TestApplyStatesTheVerifiedFactOnlyForAStoredApprovalOfTheSameInput(t *testing.T) {
+	r, prepared, git, _ := runFixture(t)
+	store, _ := runstore.New(git.StateRoot)
+	ctx := context.Background()
+	first := &applyExecutor{t: t, git: git, store: store}
+	command := apply.Command{Executor: first, Candidates: git, Records: store, Publisher: &Publisher{Repository: adapter(t), Store: git}}
+	report, err := command.Execute(ctx, fixtureRequest(t, "first", prepared))
+	if err != nil || report.Status != model.Passed || first.requests[0].Origin.Verified != "" {
+		t.Fatal("a first command received a fact or failed", report.Status, err)
+	}
+	approval := report.Workflow.Final
+	// The next command starts from exactly the verified candidate.
+	verified := t.TempDir()
+	if err = git.Reopen(ctx, approval.Input, verified); err != nil {
+		t.Fatal(err)
+	}
+	r.Git("fetch", "--quiet", verified, approval.Input.Commit)
+	r.Git("checkout", "--quiet", "--force", "-B", "codex/run-fixture", approval.Input.Commit)
+	r.Git("clean", "--quiet", "--force", "-x")
+	next := prepareFixture(t, r.Dir)
+	if next.Basis() != prepared.Basis() {
+		t.Fatal("realization changed the basis")
+	}
+	second := &applyExecutor{t: t, git: git, store: store, noChange: true}
+	command.Executor = second
+	report, err = command.Execute(ctx, fixtureRequest(t, "second", next))
+	if err != nil || report.Status != model.Passed || len(second.requests) != 3 {
+		t.Fatal(report.Status, err)
+	}
+	for i, request := range second.requests {
+		if request.Origin.Input.Commit != approval.Input.Commit || request.Origin.Verified != approval.ID || report.Workflow.Runs[i].Origin != request.Origin {
+			t.Fatal("the fact did not reach every Run", i, request.Origin)
+		}
+		for _, s := range second.managers[i].sessions {
+			if s.spec.Origin != request.Origin {
+				t.Fatal("a Session lacks the fact", s.spec.Manager.Package)
+			}
+		}
+	}
+	if changes := rootChanges(second.managers[2]); changes == nil || *changes != "" {
+		t.Fatal("Verify of an unchanged candidate saw changes", changes)
+	}
+	// No fact without the same basis, input and closed approval.
+	_, changed, _, _ := runFixture(t, func(r *testkit.Repo) {
+		r.Write(".markitect/execution.yaml", "# Changed execution configuration.\napiVersion: markitect.execution/v2\nchecks: []\n")
+	})
+	other := approval.Input
+	other.Tree = "other"
+	rejected := approval
+	rejected.Decision = run.Reject
+	unclosed := approval
+	unclosed.Cleanup = nil
+	for name, tc := range map[string]struct {
+		prepared project.Prepared
+		input    project.CandidateRef
+		stored   run.Result
+	}{"basis": {changed, approval.Input, approval}, "input": {prepared, other, approval}, "decision": {prepared, approval.Input, rejected}, "closure": {prepared, approval.Input, unclosed}} {
+		if got := run.Verified(tc.prepared, tc.input, []run.Result{tc.stored}); got != "" {
+			t.Fatal("fact without the same", name)
+		}
+	}
+	if run.Verified(prepared, approval.Input, []run.Result{approval}) != approval.ID {
+		t.Fatal("the stored approval itself gives no fact")
 	}
 }

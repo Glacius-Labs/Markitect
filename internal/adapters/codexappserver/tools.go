@@ -20,7 +20,8 @@ func validTools(t run.Tools) bool {
 // toolSpecs maps Run's fixed tool set. Descriptions state each tool's purpose
 // and arguments; Run's refusals name the reason and the possible next step.
 func toolSpecs() []frame.ToolSpec {
-	finding := map[string]any{"type": "array", "items": map[string]any{"type": "object", "properties": map[string]any{"text": map[string]string{"type": "string"}}, "required": []string{"text"}, "additionalProperties": false}}
+	definition := map[string]string{"type": "string", "description": "The affected Definition of the checked model as Package/ID. Only Findings that name one reach Implement; every Finding of a Verify reject names one."}
+	finding := map[string]any{"type": "array", "items": map[string]any{"type": "object", "properties": map[string]any{"text": map[string]string{"type": "string"}, "definition": definition}, "required": []string{"text"}, "additionalProperties": false}}
 	text := map[string]string{"type": "string"}
 	var out []frame.ToolSpec
 	add := func(name, description string, properties map[string]any, required ...string) {
@@ -43,14 +44,15 @@ func toolSpecs() []frame.ToolSpec {
 }
 
 type nativeFinding struct {
-	Text string `json:"text"`
+	Text       string `json:"text"`
+	Definition string `json:"definition"`
 }
 
 // findings drops nothing but the authoring identity: Run sets each origin.
 func findings(in []nativeFinding) []run.Finding {
 	out := make([]run.Finding, len(in))
 	for i, f := range in {
-		out[i] = run.Finding{Text: f.Text}
+		out[i] = run.Finding{Definition: f.Definition, Text: f.Text}
 	}
 	return out
 }
@@ -60,7 +62,7 @@ func dispatch(ctx context.Context, t run.Tools, name string, raw []byte) (string
 	var err error
 	if err = validateArguments(name, raw); err != nil {
 		if !errors.Is(err, errUnknownTool) {
-			err = fmt.Errorf("%w: invalid %s arguments; see the tool's input schema (a Finding is an object with one text string)", err, name)
+			err = fmt.Errorf("%w: invalid %s arguments; see the tool's input schema (a Finding is an object with a text string and an optional definition string)", err, name)
 		}
 		return err.Error(), err
 	}
@@ -216,15 +218,19 @@ func validateFindings(raw []byte) error {
 	}
 	for _, item := range items {
 		fields, err := protocolObject(item)
-		if err != nil || len(fields) != 1 {
+		if err != nil {
 			return ErrSession
 		}
-		value, ok := fields["text"]
-		if !ok {
+		if _, ok := fields["text"]; !ok {
 			return ErrSession
 		}
-		if _, err = protocolString(value); err != nil {
-			return err
+		for key, value := range fields {
+			if key != "text" && key != "definition" {
+				return ErrSession
+			}
+			if _, err = protocolString(value); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

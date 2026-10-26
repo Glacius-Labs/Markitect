@@ -432,9 +432,21 @@ func runFixture(t *testing.T, configure ...func(*testkit.Repo)) (*testkit.Repo, 
 		t.Fatal(err)
 	}
 	r.Write("out/accounted.ignored", "original ignored input\n")
-	selection := project.InputSelection{Repository: r.Dir, Local: project.ModelSelection{Boundary: ".", ManifestPath: fixturePath(t, ".markitect/model.yaml")}, Dependencies: []project.ModelSelection{{Boundary: ".markitect/dependencies/core", ManifestPath: fixturePath(t, "model.yaml")}}}
+	p := prepareFixture(t, r.Dir)
+	g := &LocalGit{StateRoot: t.TempDir(), TempRoot: t.TempDir()}
+	ref, err := g.Capture(ctx, "fixture", p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return r, p, g, ref
+}
+
+// prepareFixture captures and prepares the run fixture repository at dir.
+func prepareFixture(t *testing.T, dir string) project.Prepared {
+	t.Helper()
+	selection := project.InputSelection{Repository: dir, Local: project.ModelSelection{Boundary: ".", ManifestPath: fixturePath(t, ".markitect/model.yaml")}, Dependencies: []project.ModelSelection{{Boundary: ".markitect/dependencies/core", ManifestPath: fixturePath(t, "model.yaml")}}}
 	repo := adapter(t)
-	prepared, err := project.NewPreparationService(project.NewModelService(repo, repo)).Capture(ctx, project.CaptureRequest{Selection: selection}, model.Limits{})
+	prepared, err := project.NewPreparationService(project.NewModelService(repo, repo)).Capture(context.Background(), project.CaptureRequest{Selection: selection}, model.Limits{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -449,12 +461,7 @@ func runFixture(t *testing.T, configure ...func(*testkit.Repo)) (*testkit.Repo, 
 	if got := len(p.Topology().Managers()); got != 5 {
 		t.Fatalf("expected Root, two children, grandchild and empty Package: %d", got)
 	}
-	g := &LocalGit{StateRoot: t.TempDir(), TempRoot: t.TempDir()}
-	ref, err := g.Capture(ctx, "fixture", p)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return r, p, g, ref
+	return p
 }
 
 type controlledManagers struct {
@@ -468,6 +475,7 @@ type controlledManagers struct {
 	receiptCalls        int
 	acceptedRepair      bool
 	forceDecision       run.Decision
+	rootFindings        []run.Finding // Root's Findings with an Assessment or Verify approval
 	lateReject          bool
 	badManifest         bool
 	didLateReject       bool
@@ -803,8 +811,11 @@ func (m *controlledManager) work(ctx context.Context) error {
 			return err
 		}
 		decision = run.Approve
+		if m.spec.Manager.Package == "." {
+			findings = m.owner.rootFindings
+		}
 		if m.owner.forceDecision != "" {
-			decision, findings = m.owner.forceDecision, []run.Finding{{Text: "controlled semantic rejection"}}
+			decision, findings = m.owner.forceDecision, []run.Finding{{Definition: "a/Thing", Text: "controlled semantic rejection"}}
 		}
 	}
 	if m.owner.checkFirst && m.spec.Manager.Package == "." {
