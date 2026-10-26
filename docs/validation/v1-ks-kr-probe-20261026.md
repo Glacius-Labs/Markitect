@@ -172,11 +172,10 @@ Each cell counts answers matching the step's truth. Every other answer was "not 
 
 - **The section index in K-S's message**, an aid beyond "only the change documents" (Design above). It was recorded in the dispatch before the first run.
 - **K-R received no ticket.** Design section 2 gives K-R "the change ticket plus the full requirements". The dispatch followed section 10 and Phase C arm B, so K-R received only the re-rendered requirements and arm B's prompt. The arms therefore differ in the form of the change request as well as in the source of their knowledge, and the cost and change-discipline comparisons carry that difference.
-- **Analysis scripts after the freeze.** `probe/doc-truth/doctruth.py` was written at 17:42Z, after the series had started and before any quiz input existed. `probe/analyze_probe.py` was written during the series. Its last change during the series, at 20:50Z, only skipped rows still running or awaiting assessment. After the review it also made the C9 gate count protected inputs and build residue; the ledger and summary are byte-identical before and after that change. Neither script is in `probe/SHA256SUMS`; their final hashes are under [Retained evidence](#retained-evidence).
-- **Two rules not in `ANALYSIS.md`:**
+- **Analysis scripts after the freeze.** `probe/doc-truth/doctruth.py` was written at 17:42Z, after the series had started and before any quiz input existed. `probe/analyze_probe.py` was written during the series. Its last change during the series, at 20:50Z, only skipped rows still running or awaiting assessment; that is the operator's statement, because no earlier copy of the script was kept. After the review it also made the C9 gate count protected inputs and build residue; the ledger and summary are byte-identical before and after that change. Neither script is in `probe/SHA256SUMS`; their final hashes are under [Retained evidence](#retained-evidence).
+- **Two rules not in `ANALYSIS.md`,** each applied identically to both arms where it applies; at the ceiling neither changes any outcome:
   - the C7 billing-area word rule, taken from Phase C (protocol C5);
   - K-S's `requirements.md` left out of the protected-input check in the conforming count, a consequence of the K-S design.
-  Both are applied identically to both arms where they apply. At the ceiling neither changes any outcome.
 - **Budget.** 91.2 M Codex tokens against the dispatch's estimate of about 60 M. The dispatch set no token cap, and the quota guard did not come near 90 %.
 - **Post-hoc additions:** the stale-phrase search, the diff of K-S's `requirements.md`, the quiz transcript audit and the scorer self-check.
 
