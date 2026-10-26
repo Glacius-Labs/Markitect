@@ -2,7 +2,7 @@
 
 This pure package constructs complete checked instructions without I/O, provider calls or Run dependencies. The native adapter actually consumes `Document.Base` and `Document.Developer`; a builder or digest alone does not prove provider loading.
 
-The five layers are versioned Markitect working rules; bound checked Project and complete Manager hierarchy; exact Manager, selected canonical Definitions, typed fields, source digests and inclusion reasons; mandate, Findings and selected Manager instructions; and the provider's actual rendering, loader controls and offered Run tools. The first four are built here. The last is owned by each native adapter.
+The five layers are versioned Markitect working rules; bound checked Project and complete Manager hierarchy; exact Manager and its context: selected canonical Definitions with typed fields, source digests, inclusion reasons and repository files, grouped as own Definitions, See also and type contracts, then a compact index of each direct child's subtree; mandate, Findings and selected Manager instructions; and the provider's actual rendering, loader controls and offered Run tools. The first four are built here. The last is owned by each native adapter.
 
 `Rules` holds the Manager's role, the organization rules (hierarchy, questions along the tree, authority, Notes, workspace) and the answer format (`judge`, `check`, `review`). It does not explain how the host runs the hierarchy: message continuation, fixing handoffs and similar host states are not working rules. Tasks arrive as Run messages.
 

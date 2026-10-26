@@ -58,6 +58,7 @@ type ContextSelection struct {
 	modelDigest string
 	definitions []ContextDefinition
 	index       map[model.Identity]int
+	children    []ContextChild
 }
 
 func (c ContextSelection) Package() string     { return c.packagePath }

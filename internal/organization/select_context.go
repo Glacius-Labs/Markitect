@@ -26,6 +26,8 @@ type contextBuilder struct {
 // Own Definitions anchor direct outgoing spec/body edges and direct LOCAL
 // incoming edges. Connected/scoped Definitions get type contracts, but their
 // further business edges never expand the selection. Scope is local and explicit.
+// Each direct child also gets a compact index of its whole local subtree;
+// those summaries never enter the selection or its contract closure.
 // Coordinates are optional provenance, not a content-success gate. No source is
 // acquired or parsed, no context is rendered, and every error returns zero.
 func SelectContext(checked model.Result, packagePath string, scope []Setting[ScopeRule]) (ContextSelection, error) {
@@ -33,7 +35,8 @@ func SelectContext(checked model.Result, packagePath string, scope []Setting[Sco
 	if err != nil {
 		return ContextSelection{}, err
 	}
-	if _, found := topology.Manager(packagePath); !found {
+	manager, found := topology.Manager(packagePath)
+	if !found {
 		return ContextSelection{}, fmt.Errorf("context requires an exact local Manager: %q", packagePath)
 	}
 	b := contextBuilder{index: make(map[model.Identity]ContextDefinition), selected: make(map[model.Identity]ContextDefinition)}
@@ -88,7 +91,7 @@ func SelectContext(checked model.Result, packagePath string, scope []Setting[Sco
 			return ContextSelection{}, err
 		}
 	}
-	result := ContextSelection{topology: topology, scope: slices.Clone(scope), packagePath: packagePath, modelID: topology.ModelID(), modelDigest: topology.ModelDigest(), index: make(map[model.Identity]int)}
+	result := ContextSelection{topology: topology, scope: slices.Clone(scope), packagePath: packagePath, modelID: topology.ModelID(), modelDigest: topology.ModelDigest(), index: make(map[model.Identity]int), children: contextChildren(manager, local)}
 	for _, definition := range b.selected {
 		if definition.Definition.Source.Path == "" || definition.Definition.Source.Digest == "" {
 			return ContextSelection{}, fmt.Errorf("missing original source binding for %+v", definition.Definition.Identity)

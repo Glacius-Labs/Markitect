@@ -30,6 +30,7 @@ type contextReport struct {
 	ModelID              string `json:"modelID"`
 	CanonicalModelDigest string `json:"canonicalModelDigest"`
 	Definitions          []any  `json:"definitions"`
+	Children             []any  `json:"children"`
 }
 
 func (c *Command) prepare(ctx context.Context, request project.PreviewRequest, operation, packagePath string, metadata bool) (preparationReport, error) {
@@ -75,6 +76,13 @@ func (c *Command) prepare(ctx context.Context, request project.PreviewRequest, o
 			view := contextReport{Package: selected.Package(), ModelID: selected.ModelID(), CanonicalModelDigest: selected.ModelDigest()}
 			for _, d := range selected.Definitions() {
 				view.Definitions = append(view.Definitions, map[string]any{"definition": definitionReport(d.Definition), "canonicalModelDigest": d.ModelDigest, "reasons": d.Reasons})
+			}
+			for _, child := range selected.Children() {
+				definitions := []any{}
+				for _, d := range child.Definitions {
+					definitions = append(definitions, map[string]any{"identity": d.Identity, "kind": d.Kind, "title": d.Title, "source": d.Source})
+				}
+				view.Children = append(view.Children, map[string]any{"package": child.Package, "definitions": definitions})
 			}
 			r.Contexts = append(r.Contexts, view)
 		}

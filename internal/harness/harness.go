@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"path"
 	"reflect"
 	"strings"
 	"unicode/utf8"
@@ -14,7 +15,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
-const Version = 3
+const Version = 4
 
 // Rules holds role, organization rules and answer format. Task, context and
 // Findings arrive separately; how the host runs the hierarchy is not a rule.
@@ -69,45 +70,25 @@ func Build(p project.Prepared, manager organization.Manager, mandate string, fin
 	}
 	var b strings.Builder
 	fmt.Fprintf(&b, "Markitect harness v%d\n\nProject model: %s\nCanonical digest: %s\nPrepared binding: %s\n\n", Version, context.ModelID(), context.ModelDigest(), p.Binding())
-	writeJSON := func(label string, value any) error {
-		data, err := json.Marshal(value)
-		if err != nil {
-			return err
-		}
-		fmt.Fprintf(&b, "%s:\n%s\n\n", label, data)
-		return nil
-	}
 	for _, entry := range []struct {
 		label string
 		value any
 	}{{"Complete Manager hierarchy", p.Topology().Managers()}, {"Authored ownership", execution.Ownership}, {"Manager", manager}, {"Mandate", mandate}, {"Initial Findings", findings}, {"Bound input of this command", origin}} {
-		if err := writeJSON(entry.label, entry.value); err != nil {
+		if err := writeJSON(&b, entry.label, entry.value); err != nil {
 			return Document{}, err
 		}
 	}
 	if origin.Verified != "" {
 		fmt.Fprintf(&b, "Host fact: the stored Verify Run %s already approved a candidate with exactly this bound input's content under the same model, execution configuration and dependencies. This does not establish that its code or tests are correct.\n\n", origin.Verified)
 	}
-	b.WriteString("Checked selected Definitions (original body and exact typed fields):\n")
-	for _, selected := range context.Definitions() {
-		d := selected.Definition
-		if err := writeJSON("Definition identity and provenance", struct {
-			Identity, Kind       model.Identity
-			ModelID, ModelDigest string
-			Source               model.Source
-			Reasons              []organization.ContextReason
-			Title                *string
-			Links                []model.BodyLink
-		}{d.Identity, d.Kind, d.ModelID, selected.ModelDigest, d.Source, selected.Reasons, d.Title, d.BodyLinks}); err != nil {
-			return Document{}, err
-		}
-		fmt.Fprintf(&b, "Body (%d UTF-8 bytes):\n%s\nFields:\n", len(d.Body), d.Body)
-		for _, field := range d.Spec {
-			fmt.Fprintf(&b, "%s: %s\n", field.Name, renderValue(field.Value))
-		}
-		b.WriteByte('\n')
-	}
 	raw := p.Attempt().Model().Inputs().Raw
+	areas := map[string]string{raw.Local.Source.Origin: raw.Local.RepositoryArea.String()}
+	for _, dependency := range raw.Dependencies {
+		areas[dependency.Source.Origin] = dependency.RepositoryArea.String()
+	}
+	if err := writeContext(&b, context, areas); err != nil {
+		return Document{}, err
+	}
 	if execution.Instructions != nil {
 		for _, list := range execution.Instructions.Value {
 			if list.Package.Value != manager.Package {
@@ -154,6 +135,95 @@ artifacts:
 `+"```\n", shard)
 	}
 	return Document{Base: Rules, Developer: b.String()}, nil
+}
+
+// writeContext renders the selected Definitions in full as own, See also or
+// type contracts, then the compact child-area index. areas maps a model
+// source Origin to its repository area; every entry names its repository file.
+func writeContext(b *strings.Builder, context organization.ContextSelection, areas map[string]string) error {
+	// file is the repository path in /work; an external dependency has none.
+	file := func(source model.Source) string {
+		if area := areas[source.Origin]; area != "" {
+			return path.Join(area, source.Path)
+		}
+		return ""
+	}
+	sections := map[string][]organization.ContextDefinition{}
+	for _, selected := range context.Definitions() {
+		section := "contracts"
+		for _, reason := range selected.Reasons {
+			switch reason.Kind {
+			case organization.OwnDefinition:
+				section = "own"
+			case organization.OutgoingReference, organization.IncomingReference, organization.ModeledScope:
+				if section != "own" {
+					section = "see-also"
+				}
+			}
+		}
+		sections[section] = append(sections[section], selected)
+	}
+	for _, section := range []struct{ key, label string }{
+		{"own", "Own Definitions"},
+		{"see-also", "See also: linked and scoped Definitions"},
+		{"contracts", "Type contracts"},
+	} {
+		if len(sections[section.key]) == 0 {
+			fmt.Fprintf(b, "%s: none\n\n", section.label)
+			continue
+		}
+		fmt.Fprintf(b, "%s (original body and exact typed fields):\n", section.label)
+		for _, selected := range sections[section.key] {
+			d := selected.Definition
+			if err := writeJSON(b, "Definition identity and provenance", struct {
+				Identity, Kind       model.Identity
+				ModelID, ModelDigest string
+				Source               model.Source
+				File                 string `json:",omitempty"`
+				Reasons              []organization.ContextReason
+				Title                *string
+				Links                []model.BodyLink
+			}{d.Identity, d.Kind, d.ModelID, selected.ModelDigest, d.Source, file(d.Source), selected.Reasons, d.Title, d.BodyLinks}); err != nil {
+				return err
+			}
+			fmt.Fprintf(b, "Body (%d UTF-8 bytes):\n%s\nFields:\n", len(d.Body), d.Body)
+			for _, field := range d.Spec {
+				fmt.Fprintf(b, "%s: %s\n", field.Name, renderValue(field.Value))
+			}
+			b.WriteByte('\n')
+		}
+	}
+	if children := context.Children(); len(children) == 0 {
+		b.WriteString("Child areas: none\n\n")
+	} else {
+		b.WriteString("Child areas (compact index of each direct child's subtree):\n")
+		for _, child := range children {
+			if len(child.Definitions) == 0 {
+				fmt.Fprintf(b, "%s: none\n", child.Package)
+				continue
+			}
+			fmt.Fprintf(b, "%s:\n", child.Package)
+			for _, summary := range child.Definitions {
+				fmt.Fprintf(b, "- %s/%s kind %s/%s", summary.Identity.Package, summary.Identity.ID, summary.Kind.Package, summary.Kind.ID)
+				if summary.Title != nil {
+					title, _ := json.Marshal(*summary.Title)
+					fmt.Fprintf(b, " title %s", title)
+				}
+				fmt.Fprintf(b, " file %s\n", file(summary.Source))
+			}
+		}
+		b.WriteByte('\n')
+	}
+	return nil
+}
+
+func writeJSON(b *strings.Builder, label string, value any) error {
+	data, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(b, "%s:\n%s\n\n", label, data)
+	return nil
 }
 
 func mandateDuties(mandate string) string {

@@ -3,6 +3,7 @@ package organization_test
 import (
 	"fmt"
 	"reflect"
+	"slices"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
@@ -69,10 +70,80 @@ func TestContextDirectLinksAndContractsWithoutSecondBusinessHop(t *testing.T) {
 			t.Fatalf("root/empty local Package gained foreign or descendant content: %s %+v", path, got.Definitions())
 		}
 	}
+	if children := selection.Children(); len(children) != 1 || children[0].Package != "a/child" || len(children[0].Definitions) != 1 || children[0].Definitions[0].Identity != contextID("a/child", "child") {
+		t.Fatalf("parent child area lost: %+v", children)
+	}
 	// The exact checked content, including original body and optional spans,
 	// is carried through without a rendering/prose interpretation phase.
 	own, _ := selection.Definition(contextID("a", "own"))
 	if !reflect.DeepEqual(own.Definition, checked.Models[0].Definitions[0]) {
 		t.Fatal("original own Definition changed")
+	}
+}
+
+// Child areas index each direct child's whole subtree compactly, without
+// entering the selected set: Root, a parent, an intermediate and a leaf.
+func TestContextChildAreasIndexWholeSubtrees(t *testing.T) {
+	input := contextInput(t)
+	input.Root.Entries = append(input.Root.Entries, model.Entry{
+		Path: "model/a/child/leaf/deep.yaml", Kind: model.Regular,
+		Bytes: []byte("imports: [{package: software}]\nid: deep\nkind: software/Concept\ntitle: Deep title\nbody: Deep descendant.\nspec: {}\n"),
+	})
+	checked := checkFixture(t, input)
+	areas := func(pkg string) map[string][]model.Identity {
+		selection := requireContext(t, checked, pkg)
+		result := make(map[string][]model.Identity)
+		var order []string
+		for _, child := range selection.Children() {
+			order = append(order, child.Package)
+			if child.Definitions == nil {
+				t.Fatalf("%s: empty child area %q is not explicit", pkg, child.Package)
+			}
+			result[child.Package] = []model.Identity{}
+			for _, summary := range child.Definitions {
+				if _, selected := selection.Definition(summary.Identity); selected {
+					t.Errorf("%s: child summary entered the selected set: %+v", pkg, summary.Identity)
+				}
+				if summary.Kind != contextID("software", "Concept") || summary.Source.Path == "" || summary.Source.Digest == "" {
+					t.Errorf("%s: summary lost Kind or source: %+v", pkg, summary)
+				}
+				result[child.Package] = append(result[child.Package], summary.Identity)
+			}
+		}
+		if !slices.IsSorted(order) {
+			t.Errorf("%s: child areas not in topology order: %v", pkg, order)
+		}
+		return result
+	}
+	deep, own, child := contextID("a/child/leaf", "deep"), contextID("a", "own"), contextID("a/child", "child")
+	for pkg, want := range map[string]map[string][]model.Identity{
+		".": {
+			"a": {child, deep, own}, "b": {contextID("b", "near")}, "c": {contextID("c", "far")},
+			"empty": {}, "incoming": {contextID("incoming", "sender")}, "software": {},
+		},
+		"a":            {"a/child": {child, deep}},
+		"a/child":      {"a/child/leaf": {deep}},
+		"a/child/leaf": {},
+	} {
+		if got := areas(pkg); !reflect.DeepEqual(got, want) {
+			t.Errorf("%s child areas = %v, want %v", pkg, got, want)
+		}
+	}
+	if root := requireContext(t, checked, "."); len(root.Definitions()) != 0 {
+		t.Fatalf("Root gained selected Definitions: %+v", root.Definitions())
+	}
+	if leaf := requireContext(t, checked, "a/child/leaf"); leaf.Children() != nil {
+		t.Fatal("leaf has child areas")
+	}
+	if (organization.ContextSelection{}).Children() != nil {
+		t.Fatal("zero selection exposes child areas")
+	}
+	// Returned summaries are copies: changing one leaves the selection intact.
+	parent := requireContext(t, checked, "a/child")
+	first := parent.Children()
+	*first[0].Definitions[0].Title = "changed"
+	first[0].Definitions[0].Identity = own
+	if again := parent.Children()[0].Definitions[0]; *again.Title != "Deep title" || again.Identity != deep {
+		t.Fatalf("child summary aliases the selection: %+v", again)
 	}
 }
