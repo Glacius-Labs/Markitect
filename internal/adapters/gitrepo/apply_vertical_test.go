@@ -30,6 +30,7 @@ type applyExecutor struct {
 	noChange, rejectVerify bool
 	assessmentDecision     run.Decision
 	assessmentFindings     []run.Finding
+	realization            func(context.Context, *controlledManager) error // replaces Implement's writes
 	failClose              bool
 	records                run.Records
 	// wrap, when set, supplies the Sessions of each Run around its managers.
@@ -96,6 +97,9 @@ func (e *applyExecutor) Execute(ctx context.Context, request run.Request) (run.R
 	if e.noChange {
 		managers.noChange = true
 		managers.acceptedRepair = true
+	}
+	if request.Mandate == run.Implement {
+		managers.realization = e.realization
 	}
 	if request.Mandate == run.Verify && e.rejectVerify {
 		managers.forceDecision = run.Reject
@@ -492,6 +496,9 @@ func TestApplyNoChangeStillRunsEveryMandateAndPreservesCapturedIgnoredInput(t *t
 	if input.Commit == prepared.Attempt().Model().Inputs().Head {
 		t.Fatal("fixture did not distinguish captured ignored input from HEAD")
 	}
+	if changes := rootChanges(executor.managers[2]); changes == nil || *changes != "" {
+		t.Fatal("Verify of an unchanged candidate saw changes", changes)
+	}
 	for i, mandate := range []run.Mandate{run.Assessment, run.Implement, run.Verify} {
 		if executor.requests[i].Mandate != mandate {
 			t.Fatal(executor.requests[i].Mandate)
@@ -723,9 +730,18 @@ func TestApplyVerifySeesTheDiffSinceTheBoundInputAcrossCorrections(t *testing.T)
 // DEC-073 (WP4a): the host states that the bound input was already verified
 // only from a stored closed Verify approval of exactly that input under the
 // same basis. A first command gets no such fact; a command over the verified
-// candidate gets it in every Run and Session, and Verify sees no change.
+// candidate gets it in every Run and Session. The fact does not block a
+// needed repair: a Definition-bound Assessment Finding reaches Implement, and
+// Verify sees the repair against the bound input and may approve it.
 func TestApplyStatesTheVerifiedFactOnlyForAStoredApprovalOfTheSameInput(t *testing.T) {
-	r, prepared, git, _ := runFixture(t)
+	// Ordinary Git cannot commit an empty Package directory, so this owner's
+	// model gives the fixture's Package b/empty an obligation.
+	r, prepared, git, _ := runFixture(t, func(r *testkit.Repo) {
+		r.Write(".markitect/model/b/empty/duty.yaml", "imports: [{package: markitect/core, as: Core}]\nid: Duty\nkind: Core.Kind\nbody: An obligation of the formerly empty Package.\nspec: {}\n")
+	})
+	if tree := r.Git("ls-tree", "-r", "-t", "HEAD", ".markitect/model/b/empty"); !strings.Contains(tree, "duty.yaml") {
+		t.Fatal("the Package is not an ordinary Git tree", tree)
+	}
 	store, _ := runstore.New(git.StateRoot)
 	ctx := context.Background()
 	first := &applyExecutor{t: t, git: git, store: store}
@@ -735,26 +751,31 @@ func TestApplyStatesTheVerifiedFactOnlyForAStoredApprovalOfTheSameInput(t *testi
 		t.Fatal("a first command received a fact or failed", report.Status, err)
 	}
 	approval := report.Workflow.Final
-	// The next command starts from exactly the verified candidate.
-	verified := t.TempDir()
-	if err = git.Reopen(ctx, approval.Input, verified); err != nil {
-		t.Fatal(err)
-	}
-	r.Git("fetch", "--quiet", verified, approval.Input.Commit)
-	r.Git("checkout", "--quiet", "--force", "-B", "codex/run-fixture", approval.Input.Commit)
-	r.Git("clean", "--quiet", "--force", "-x")
+	// The owner commits the published candidate with ordinary Git: another
+	// commit, the same captured content.
+	r.Commit("owner commits the published candidate")
 	next := prepareFixture(t, r.Dir)
 	if next.Basis() != prepared.Basis() {
 		t.Fatal("realization changed the basis")
 	}
-	second := &applyExecutor{t: t, git: git, store: store, noChange: true}
+	defect := run.Finding{Manager: ".", Definition: "a/Thing", Text: "out/a.txt still violates a/Thing: repair it."}
+	repair := func(_ context.Context, m *controlledManager) error {
+		if m.spec.Manager.Package != "a" {
+			return nil
+		}
+		return os.WriteFile(filepath.Join(m.spec.Workspace.Location().Directory, "out", "a.txt"), []byte("repaired\n"), 0600)
+	}
+	second := &applyExecutor{t: t, git: git, store: store, noChange: true, assessmentFindings: []run.Finding{{Definition: defect.Definition, Text: defect.Text}}, realization: repair}
 	command.Executor = second
 	report, err = command.Execute(ctx, fixtureRequest(t, "second", next))
-	if err != nil || report.Status != model.Passed || len(second.requests) != 3 {
+	if err != nil || report.Status != model.Passed || len(second.requests) != 3 || report.Publication == nil || !report.Publication.Readback {
 		t.Fatal(report.Status, err)
 	}
+	if got := second.requests[1].Findings; !reflect.DeepEqual(got, []run.Finding{defect}) {
+		t.Fatal("the needed repair did not reach Implement under the fact", got)
+	}
 	for i, request := range second.requests {
-		if request.Origin.Input.Commit != approval.Input.Commit || request.Origin.Verified != approval.ID || report.Workflow.Runs[i].Origin != request.Origin {
+		if request.Origin.Input.Commit == approval.Input.Commit || request.Origin.Input.Tree != approval.Input.Tree || request.Origin.Verified != approval.ID || report.Workflow.Runs[i].Origin != request.Origin {
 			t.Fatal("the fact did not reach every Run", i, request.Origin)
 		}
 		for _, s := range second.managers[i].sessions {
@@ -763,11 +784,38 @@ func TestApplyStatesTheVerifiedFactOnlyForAStoredApprovalOfTheSameInput(t *testi
 			}
 		}
 	}
-	if changes := rootChanges(second.managers[2]); changes == nil || *changes != "" {
-		t.Fatal("Verify of an unchanged candidate saw changes", changes)
+	if changes := rootChanges(second.managers[2]); changes == nil || !strings.Contains(*changes, "-parent result") || !strings.Contains(*changes, "+repaired") {
+		t.Fatal("Verify did not see the repair against the bound input", changes)
+	}
+	// The published repair, committed by the owner and captured under another
+	// commit, keeps the fact of its approval; one changed byte loses it.
+	repaired := report.Workflow.Final
+	r.Commit("owner commits the published repair")
+	capture := func() (project.Prepared, project.CandidateRef, []run.Result) {
+		p := prepareFixture(t, r.Dir)
+		input, err := git.Capture(ctx, "fixture", p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		found, err := store.Approvals(ctx, "fixture", run.ApprovalKey(p.Basis(), input))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return p, input, found
+	}
+	same, input, found := capture()
+	if input.Commit == repaired.Input.Commit || input.Tree != repaired.Input.Tree || run.Verified(same, input, found) != repaired.ID {
+		t.Fatal("the same state under another commit lost the fact", input, repaired.Input)
+	}
+	r.Write("out/a.txt", "repairee\n")
+	r.Commit("owner changes one byte")
+	edited, input, found := capture()
+	if len(found) != 0 || run.Verified(edited, input, []run.Result{repaired, approval}) != "" {
+		t.Fatal("a one-byte change kept the fact")
 	}
 	// No fact without the same basis, input and closed approval.
 	_, changed, _, _ := runFixture(t, func(r *testkit.Repo) {
+		r.Write(".markitect/model/b/empty/duty.yaml", "imports: [{package: markitect/core, as: Core}]\nid: Duty\nkind: Core.Kind\nbody: An obligation of the formerly empty Package.\nspec: {}\n")
 		r.Write(".markitect/execution.yaml", "# Changed execution configuration.\napiVersion: markitect.execution/v2\nchecks: []\n")
 	})
 	other := approval.Input

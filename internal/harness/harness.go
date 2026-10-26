@@ -36,8 +36,9 @@ type Finding struct {
 }
 
 // Origin is the command's bound input. Verified names the stored Verify Run
-// that already approved exactly this input under the same model, execution
-// configuration and dependencies; empty means the host states no such fact.
+// that already approved exactly this input's content under the same model,
+// execution configuration and dependencies; empty means the host states no
+// such fact.
 type Origin struct {
 	Commit   string `json:"commit"`
 	Tree     string `json:"tree"`
@@ -85,7 +86,7 @@ func Build(p project.Prepared, manager organization.Manager, mandate string, fin
 		}
 	}
 	if origin.Verified != "" {
-		fmt.Fprintf(&b, "Host fact: the stored Verify Run %s already approved exactly this bound input under the same model, execution configuration and dependencies. This does not establish that its code or tests are correct.\n\n", origin.Verified)
+		fmt.Fprintf(&b, "Host fact: the stored Verify Run %s already approved a candidate with exactly this bound input's content under the same model, execution configuration and dependencies. This does not establish that its code or tests are correct.\n\n", origin.Verified)
 	}
 	b.WriteString("Checked selected Definitions (original body and exact typed fields):\n")
 	for _, selected := range context.Definitions() {
@@ -158,8 +159,7 @@ artifacts:
 func mandateDuties(mandate string) string {
 	switch mandate {
 	case "assessment":
-		return "Assessment examines the checked model's consistency, sufficiency and realizability with the full Manager hierarchy, without implementing. Missing or outdated artifacts are realization needs: report them as Findings; they are not grounds to reject model readiness. Assignment judgment for Assessment: use approve or reject for model readiness. Approve does not certify artifact conformity. An approved Assessment always proceeds through Implement, even when no artifact changes are needed. Material unresolved model decisions require model_blocker with concrete Findings. Reject also requires concrete Findings. Do not use submitted; review scratch edits never become the product candidate. " +
-			"A Finding reaches Implement only when it names the affected Definition of the checked model as definition (Package/ID); a Finding without one is kept as a Note and not implemented.\n"
+		return "Assessment examines the checked model's consistency, sufficiency and realizability with the full Manager hierarchy, without implementing. Missing or outdated artifacts are realization needs: report them as Findings; they are not grounds to reject model readiness. Assignment judgment for Assessment: use approve or reject for model readiness. Approve does not certify artifact conformity. An approved Assessment always proceeds through Implement, even when no artifact changes are needed. Material unresolved model decisions require model_blocker with concrete Findings. Reject also requires concrete Findings. Do not use submitted; review scratch edits never become the product candidate.\n"
 	case "implement":
 		return "For this Implement mandate, first reconcile the existing realization with the checked model's obligations, required checks and actual Findings. Change artifacts only for those obligations, checks or necessary consequences of that work. " +
 			"Preserve conforming artifacts, including code, tests, documentation and registry entries. Do not introduce optional coverage, refactoring or cosmetic changes solely to produce a diff. Repair genuine defects and missing required tests you discover when needed for those modeled obligations, required checks or actual Findings. " +
@@ -167,8 +167,7 @@ func mandateDuties(mandate string) string {
 			"Assignment judgment for this Implement mandate: every Manager including Root uses submitted for completed candidate work. Use reject or model_blocker with concrete Findings when warranted. Your own judge decision cannot be approve; parent review of a fixed child commit may approve it. Run aggregates the reviewed hierarchy's outcome and does not grant publication authority.\n"
 	case "verify":
 		return "Verify independently judges the fixed candidate's conformity to the checked model with the full Manager hierarchy. Do not repair the candidate during Verify. Realization Findings are returned to the host for a fresh Implement Run followed by a fresh Verify; you do not perform that repair in this Run. Assignment judgment for Verify: use approve or reject for the examined realization, or model_blocker for a material model defect. Reject and model_blocker require concrete Findings. Do not use submitted; review scratch edits never become the product candidate. " +
-			"Judge the candidate's changes against the bound input of this command within this conformance review; Root's assignment carries their complete diff. A change that removes conforming behavior or touches an unrelated area without a reference to a current obligation is a reject with a Finding; other optional additions are a Note. When the host states that the bound input was already verified and you find no defect, any change is a reject. " +
-			"Every Finding of a reject names the affected Definition as definition: for a change, a Definition that the changed artifact's registry entry realizes; for a failing declared check, the Definition that requires it.\n"
+			"Judge the candidate's changes against the bound input of this command within this conformance review; Root's assignment carries their diff. A change that removes conforming behavior or touches an unrelated area without a reference to a current obligation is a reject with a Finding; other optional additions are a Note. When the host states that the bound input was already verified and you find no defect, any change is a reject.\n"
 	}
 	return ""
 }

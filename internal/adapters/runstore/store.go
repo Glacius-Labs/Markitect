@@ -117,23 +117,23 @@ func read(ctx context.Context, path string, value any) error {
 }
 
 // Save stores r. A completed Verify approval is also indexed under what it
-// approved, so a later command finds it without reading every stored Run.
+// approved, so a later command finds it without reading every stored Run. The
+// index entry comes first: one without its record names nothing readable.
 func (s *Store) Save(ctx context.Context, r run.Result) error {
 	p, err := s.path(r.Project, "runs", r.ID)
 	if err != nil {
 		return err
 	}
-	if err = write(ctx, p, r); err != nil {
-		return err
+	if key, ok := r.Approval(); ok {
+		index, err := s.path(r.Project, filepath.Join("approvals", key), r.ID)
+		if err == nil {
+			err = write(ctx, index, r.ID)
+		}
+		if err != nil {
+			return err
+		}
 	}
-	key, ok := r.Approval()
-	if !ok {
-		return nil
-	}
-	if p, err = s.path(r.Project, filepath.Join("approvals", key), r.ID); err != nil {
-		return err
-	}
-	return write(ctx, p, r.ID)
+	return write(ctx, p, r)
 }
 
 // Approvals reads the stored results indexed under one approval key. A record

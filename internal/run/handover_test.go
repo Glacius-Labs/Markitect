@@ -31,7 +31,7 @@ func TestFindingsMustNameACheckedDefinitionWhereImplementReceivesThem(t *testing
 	x.request.Mandate = Verify
 	unbound := []Finding{{Text: "revert the optional test file"}}
 	err := x.tools(a).Judge(context.Background(), Reject, unbound)
-	for _, want := range []string{"Finding 1 of your reject names no Definition", ".markitect/registry/", "requiredBy", "Then judge again"} {
+	for _, want := range []string{"Finding 1 of your reject names no Definition", ".markitect/registry/", "requiredBy", "then judge again"} {
 		if err == nil || !strings.Contains(err.Error(), want) {
 			t.Fatal("unbound Verify reject not refused with its next step", err)
 		}
@@ -39,14 +39,44 @@ func TestFindingsMustNameACheckedDefinitionWhereImplementReceivesThem(t *testing
 	if a.a.judgment != nil {
 		t.Fatal("a refused reject left a judgment")
 	}
-	if err = x.tools(root).Review(context.Background(), "a", "c", Reject, unbound); err == nil || !strings.Contains(err.Error(), "Then review again") {
+	if err = x.tools(root).Review(context.Background(), "a", "c", Reject, unbound); err == nil || !strings.Contains(err.Error(), "then review again") {
 		t.Fatal("unbound Verify review reject not refused", err)
 	}
-	// Approvals and model blockers hand nothing to Implement.
+	// An unknown Definition in a Verify reject cannot be left empty either.
+	if err = x.tools(a).Judge(context.Background(), Reject, unknown); err == nil || !strings.Contains(err.Error(), "Any Definition of the checked model is accepted") || strings.Contains(err.Error(), "leave definition empty") {
+		t.Fatal("unknown Definition of a Verify reject without a usable next step", err)
+	}
+	// A Verify approval hands nothing to Implement: its Findings are Notes.
+	bound := []Finding{{Definition: "a/Thing", Text: "could use a boundary test"}}
+	if err = x.tools(a).Judge(context.Background(), Approve, bound); err == nil || !strings.Contains(err.Error(), "a Verify approval hands no Finding to Implement, so an optional addition is a Note") {
+		t.Fatal("Definition in a Verify approval not refused", err)
+	}
+	if err = x.tools(root).Review(context.Background(), "a", "c", Approve, bound); err == nil || !strings.Contains(err.Error(), "then review again") {
+		t.Fatal("Definition in a Verify review approval not refused", err)
+	}
 	for _, decision := range []Decision{Approve, ModelBlocker} {
 		if err = x.tools(a).Judge(context.Background(), decision, unbound); err != nil && strings.Contains(err.Error(), "Definition") {
 			t.Fatal(decision, "refused for its Definition", err)
 		}
+	}
+}
+
+// Verify Root receives a diff up to MaxChanges in full and a larger one as its
+// complete file summary with the way to read it.
+func TestVerifyChangesStayWithinOneAssignment(t *testing.T) {
+	small := "diff --git a/out/a.txt b/out/a.txt\n--- a/out/a.txt\n+++ b/out/a.txt\n-initial\n+changed\n"
+	if got := changes(small, "bound"); got != small {
+		t.Fatal(got)
+	}
+	large := small + "diff --git a/big.txt b/big.txt\n--- /dev/null\n+++ b/big.txt\n" + strings.Repeat("+line\n", MaxChanges/6+1)
+	got := changes(large, "bound")
+	for _, want := range []string{"read it with git diff bound in your copy", "a/out/a.txt b/out/a.txt +1 -1\n", "a/big.txt b/big.txt +"} {
+		if !strings.Contains(got, want) {
+			t.Fatal("summary lacks", want, got)
+		}
+	}
+	if len(got) > MaxChanges {
+		t.Fatal("summary exceeds the bound", len(got))
 	}
 }
 

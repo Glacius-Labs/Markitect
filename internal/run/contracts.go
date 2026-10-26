@@ -51,8 +51,9 @@ type Finding struct {
 }
 
 // Origin is the command's bound input. Verified names the stored Verify Run
-// that already approved exactly this input under the same Basis; empty means
-// the host states no such fact (Verified). It never says the input is correct.
+// that already approved exactly this input's content (tree) under the same
+// Basis; empty means the host states no such fact (Verified). It never says
+// the input is correct.
 type Origin struct {
 	Input    project.CandidateRef `json:"input"`
 	Verified string               `json:"verified,omitempty"`
@@ -328,8 +329,9 @@ type Answer struct {
 	Closed string `json:"closed,omitempty"`
 }
 
-// Changes is set only on Verify Root's assignment: the complete diff from the
-// command's bound input to the fixed input, empty when nothing changed.
+// Changes is set only on Verify Root's assignment: the diff from the command's
+// bound input to the fixed input, above MaxChanges its complete file summary,
+// empty when nothing changed.
 type Assignment struct {
 	Task         string    `json:"task"`
 	Findings     []Finding `json:"findings"`

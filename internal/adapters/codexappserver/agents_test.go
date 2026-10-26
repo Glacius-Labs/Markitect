@@ -1399,12 +1399,12 @@ func TestHarnessStatesBoundInputVerifiedFactAndFindingDefinitions(t *testing.T) 
 		}
 		verified := origin
 		verified.Verified = "earlier-verify"
-		if doc, err = harness.Build(spec.Prepared, spec.Manager, mandate, findings, verified); err != nil || !strings.Contains(doc.Developer, "Host fact: the stored Verify Run earlier-verify already approved exactly this bound input") {
+		if doc, err = harness.Build(spec.Prepared, spec.Manager, mandate, findings, verified); err != nil || !strings.Contains(doc.Developer, "Host fact: the stored Verify Run earlier-verify already approved a candidate with exactly this bound input's content") {
 			t.Fatal(mandate, "host fact missing", err)
 		}
 	}
 	doc, err := harness.Build(spec.Prepared, spec.Manager, "verify", nil, origin)
-	if err != nil || !strings.Contains(doc.Developer, "When the host states that the bound input was already verified and you find no defect, any change is a reject") || !strings.Contains(doc.Developer, "Every Finding of a reject names the affected Definition") {
+	if err != nil || !strings.Contains(doc.Developer, "When the host states that the bound input was already verified and you find no defect, any change is a reject") || !strings.Contains(doc.Developer, "other optional additions are a Note") {
 		t.Fatal("Verify tiers missing", err)
 	}
 	if _, err = harness.Build(spec.Prepared, spec.Manager, "verify", nil, harness.Origin{}); err == nil {

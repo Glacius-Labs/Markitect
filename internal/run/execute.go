@@ -90,14 +90,15 @@ func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
 		workErr = fmt.Errorf("workspace startup returned no handle")
 	}
 	// Verify judges the candidate's changes against the command's bound input,
-	// across correction loops; Root's assignment carries the complete diff.
-	var changes *string
+	// across correction loops; Root's assignment carries the diff (changes).
+	var carried *string
 	if workErr == nil && r.Mandate == Verify {
 		diff := ""
 		if r.Origin.Input.Commit != r.Input.Commit {
 			diff, workErr = service.Changes(x.ctx, r.Origin.Input)
 		}
-		changes = &diff
+		diff = changes(diff, r.Origin.Input.Commit)
+		carried = &diff
 	}
 	input := Commit{r.Input.Commit, r.Input.Tree}
 	// Complete environment and communication tree exists before ordinary work.
@@ -135,7 +136,7 @@ func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
 	if workErr == nil {
 		x.mu.Lock()
 		s := x.states[organization.Root]
-		task := Assignment{Task: rootTask, Findings: append([]Finding(nil), r.Findings...), Base: input, BuildOutputs: slices.Clone(r.BuildOutputs), Changes: changes}
+		task := Assignment{Task: rootTask, Findings: append([]Finding(nil), r.Findings...), Base: input, BuildOutputs: slices.Clone(r.BuildOutputs), Changes: carried}
 		s.a.assign(task)
 		x.queueLocked(s, entry{event: Event{Assignment: &task}})
 		x.mu.Unlock()

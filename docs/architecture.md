@@ -61,7 +61,7 @@ After every Run has closed, Apply reopens the stored final Verify approval, and 
 | Adapter | Responsibility |
 | --- | --- |
 | `gitrepo` | Complete repository capture, private Run Git copies (`LinuxGit` on private Linux volumes for native Run copies, `LocalGit` for controlled tests and as the host-side candidate store and publication Git), self-contained stored candidates and guarded publication ([workspaces](../internal/adapters/gitrepo/WORKSPACES.md)) |
-| `runstore` | Immutable terminal Run results and concurrent project Notes |
+| `runstore` | Immutable terminal Run results, an index of completed Verify approvals and concurrent project Notes |
 | `codexappserver` | Codex App Server Sessions with the model-derived harness and the nine Run tools ([README](../internal/adapters/codexappserver/README.md)) |
 | `container`, `internal/agentd` | Container engine client, the frame protocol and the session helper that runs the provider CLI and bridges its tools ([container runtime](../internal/adapters/container/README.md)) |
 | `checks` | Declared project checks in pinned containers over disposable input and home copies ([README](../internal/adapters/checks/README.md)) |
