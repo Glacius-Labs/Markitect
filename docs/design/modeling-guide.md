@@ -29,14 +29,14 @@ Write the model the way you would write a program in a typed language.
 | **Architecture** | The module structure **is the Package tree** (section 3). On top of it: allowed dependency directions, each Package's interface, and placement decisions the tree cannot show, such as where a policy is realized | Interface, DependencyRule, Placement | The Package tree itself; rules and placement in the project Package; interfaces in each Package |
 | **Way of working** | Test, documentation and convention obligations; required checks | TestObligation, DocObligation, Convention | The project Package; checks in `execution.yaml` |
 
-**Architecture is the owner's decision, encoded as the model's own structure.** In the owner's words: "Of course the project owner should decide the architecture and encode it in the canonical model". Encoding it does not mean describing it a second time. The model is code, so it has a structure of its own; a separate component description beside that structure would be a second architecture that drifts. This is in the spirit of concept §7.1, where the Manager organization is derived from the model and not maintained separately; the same holds for the code's module structure. So:
+**Architecture is the owner's decision, encoded as the model's own structure.** In the owner's words: "Of course the project owner should decide the architecture and encode it in the canonical model" ([source](../concepts/sources/model-architecture-20261026.md)). Encoding it does not mean describing it a second time; the owner approved that refinement in the same source, and its [recorded meaning](../concepts/sources/model-architecture-20261026.md#recorded-meaning) states the reading. The model is code, so it has a structure of its own; a separate component description beside that structure would be a second architecture that drifts. This is in the spirit of concept §7.1, where the Manager organization is derived from the model and not maintained separately; the same holds for the code's module structure. So:
 - the Package tree is the module structure, and the ownership areas in `execution.yaml` place each Package's code;
 - dependency rules on Packages state the allowed directions, and the model's own references obey them too;
 - Interface Definitions are each Package's public surface;
 - placement decisions state what the tree cannot show, for example "authorization is realized once, in `pipeline`";
 - layers inside an area become child Packages.
 
-Leaving architecture open is legitimate only where the owner explicitly chooses it.
+This guide's rule: leave architecture open only where the owner explicitly chooses to, and say so in the model.
 
 **Binding versus free.** A statement is binding when callers rely on it at the boundary, or when the owner decided it (DEC-061: "documented as intended"; DEC-063: what the model states holds). What the model leaves open, by the owner's explicit choice, is a realization choice that parents settle among their children (concept §7.3, DEC-063). Say explicitly when something is free, for example "the internal layout of this component is free".
 
