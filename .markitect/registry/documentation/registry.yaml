@@ -4,6 +4,14 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Records the owner's founding intent for the typed canonical model, Libraries, AI-written models and the Apply organization.
+  - path: "docs/concepts/sources/model-track-approval-20261026.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the owner approval of the canonical model track charter with the recommendations for D1–D5.
+  - path: "docs/design/model-track-charter.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: States the goal, workstreams and owner decisions of the canonical model track.
   - path: "docs/concepts/sources/v1-consistency-probe-approval-20261026.md"
     form: doc
     realizes: [documentation/current-guidance]
