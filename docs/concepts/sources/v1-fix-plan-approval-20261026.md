@@ -16,7 +16,7 @@ English translation: "Yes, M's known technical defects (provider retry, Apply-wi
 
 > Ja: WP4b/c als kleine Konzeptklarstellung freigegeben. Übergib den Fix-Plan v2 an den Coordinator, damit er ihn in den Delivery-Plan aufnimmt und die Sessions S1–S3 startet.
 
-English translation: "Yes: WP4b/c approved as a small concept clarification. Hand fix plan v2 to the coordinator so that he adds it to the delivery plan and starts sessions S1–S3."
+English translation: "Yes: WP4b/c approved as a small concept clarification. Hand fix plan v2 to the coordinator so that the coordinator adds it to the delivery plan and starts sessions S1–S3."
 
 ## Recorded meaning
 
