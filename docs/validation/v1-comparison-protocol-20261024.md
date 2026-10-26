@@ -674,3 +674,20 @@ The study infrastructure is frozen with this addendum and does not change in con
 - W0 already reaches the ceiling in both arms, so the comparison rests on nine change steps per chain.
 - Quota percents are integers and the account may carry other use, so cost-per-percent is approximate. Tokens are the cost measure; quota only gates the series.
 - Quietness is sampled once a minute, so short bursts of parallel work between samples can be missed.
+
+### C10. Post-data amendment and decisions (26 October 2026)
+
+These were recorded after counted data existed, each with the coordinator's approval. None of them is the original rule, and none changes a score. The [Phase C results](v1-comparison-results-phase-c-20261026.md) report them as such.
+
+- **Ledger builder amendment, after chain 2.**
+  - The frozen check in `build-ledger-pc.py` (`74045912…`, unchanged) required an M step's state packet to be the last deliverable step's packet.
+  - After a step without a candidate, step 4's controller takes state from the previous step's latest attempt and refuses any other. The frozen check stopped the build at M-c2-C6, whose candidate input was correct.
+  - `build-ledger-pc-a1.py` (`0890ece1…`) accepts either packet and still requires the candidate input to be the chain's last deliverable candidate.
+  - The chains 1–2 rows it builds are identical to a provisional build that relaxed only that check.
+- **Continuation after the predeclared stop at M-c2-C5.** M-c2-C5 had a third infrastructure failure at one step, and C4 left the continuation open.
+  - The coordinator recorded `no-candidate`, the outcome least favorable to M.
+  - The series resumed only after two hours and two successful uncounted capacity probes 30 minutes apart. Each later capacity repeat needed 60 minutes and a successful probe first.
+- **Chain 3** continued exactly as predeclared, decided after M-c3-C2: no stop, no product change and no new limit.
+- **Reporting.** The results add two descriptive sections, separate from the reading:
+  - domain misses on deliverable candidates, apart from technical outcomes by cause;
+  - a sensitivity line for step C5, beside the reading and never in its place.
