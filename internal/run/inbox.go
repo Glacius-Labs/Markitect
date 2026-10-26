@@ -336,25 +336,33 @@ func (x *execution) deliver(ctx context.Context, s *managerState, e entry) (Even
 // so a Manager never waits for an event that no one will send. A Manager
 // blocked in await waits too: when s starts blocking, every other blocked
 // Manager rechecks, so Managers that wait for each other never all block.
+// Each Manager has one await at a time: one wakeup reaches it through its
+// one signal, so an overlapping call is refused.
 func (x *execution) await(ctx context.Context, s *managerState) (Event, error) {
-	blocked := false
-	// unblock ends s's blocked wait; the caller holds x.mu. A wakeup that
-	// blocks again stays one wait, so it wakes no other Manager.
-	unblock := func() {
-		if blocked {
-			s.awaiting--
-			blocked = false
-		}
+	x.mu.Lock()
+	if s.awaitPending {
+		x.mu.Unlock()
+		return Event{}, fmt.Errorf("an earlier await of yours is still waiting; use its event before you await again")
 	}
+	s.awaitPending = true
+	x.mu.Unlock()
+	defer func() {
+		x.mu.Lock()
+		s.awaitPending, s.awaiting = false, false
+		x.mu.Unlock()
+	}()
 	for {
+		// A step that returns under the lock or delivers an event ends the
+		// blocked wait first. A wakeup that blocks again stays one wait and
+		// wakes no other Manager.
 		x.mu.Lock()
 		if err := x.admissionErrorLocked(); err != nil {
-			unblock()
+			s.awaiting = false
 			x.mu.Unlock()
 			return Event{}, err
 		}
 		if len(s.queue) != 0 {
-			unblock()
+			s.awaiting = false
 			e := s.queue[0]
 			s.queue = s.queue[1:]
 			x.mu.Unlock()
@@ -369,7 +377,7 @@ func (x *execution) await(ctx context.Context, s *managerState) (Event, error) {
 			continue
 		}
 		if !x.waitingLocked(s) {
-			unblock()
+			s.awaiting = false
 			next := x.nextStepLocked(s)
 			x.mu.Unlock()
 			return Event{}, fmt.Errorf("nothing can arrive: no direct child of yours is working and none of your questions is open; %s", next)
@@ -380,7 +388,7 @@ func (x *execution) await(ctx context.Context, s *managerState) (Event, error) {
 			// blocked in await, owes an answer, s waits for that answer instead.
 			next := x.openQuestionsLocked(s)
 			if next != "" || !x.answerOwedLocked() {
-				unblock()
+				s.awaiting = false
 				if next == "" {
 					next = "; " + x.nextStepLocked(s)
 				}
@@ -388,18 +396,14 @@ func (x *execution) await(ctx context.Context, s *managerState) (Event, error) {
 				return Event{}, fmt.Errorf("nothing can arrive: every other Manager is waiting%s", next)
 			}
 		}
-		if !blocked {
-			blocked = true
-			s.awaiting++
+		if !s.awaiting {
+			s.awaiting = true
 			x.wakeAwaitingLocked(s)
 		}
 		x.mu.Unlock()
 		select {
 		case <-s.signal:
 		case <-ctx.Done():
-			x.mu.Lock()
-			unblock()
-			x.mu.Unlock()
 			return Event{}, ctx.Err()
 		}
 	}
@@ -497,7 +501,7 @@ func (x *execution) root() *managerState { return x.states[organization.Root] }
 // has yet to take already wakes it.
 func (x *execution) othersRunningLocked(s *managerState) bool {
 	for _, other := range x.states {
-		if other != s && other.running && (other.awaiting == 0 || len(other.queue) != 0) {
+		if other != s && other.running && (!other.awaiting || len(other.queue) != 0) {
 			return true
 		}
 	}
@@ -508,7 +512,7 @@ func (x *execution) othersRunningLocked(s *managerState) bool {
 // whether anything can still arrive, now that s waits too.
 func (x *execution) wakeAwaitingLocked(s *managerState) {
 	for _, other := range x.states {
-		if other != s && other.awaiting > 0 {
+		if other != s && other.awaiting {
 			select {
 			case other.signal <- struct{}{}:
 			default:
@@ -517,12 +521,12 @@ func (x *execution) wakeAwaitingLocked(s *managerState) {
 	}
 }
 
-// answerOwedLocked reports whether a Manager blocked in await holds a question
-// it has not answered. Woken, that Manager is refused with the question named,
-// as openQuestionsLocked names it.
+// answerOwedLocked reports whether a running Manager blocked in await holds a
+// question it has not answered. Woken, that Manager is refused with the
+// question named, as openQuestionsLocked names it.
 func (x *execution) answerOwedLocked() bool {
 	for _, q := range x.questions {
-		if !q.answered && x.states[q.To].awaiting > 0 {
+		if to := x.states[q.To]; !q.answered && to.running && to.awaiting {
 			return true
 		}
 	}
