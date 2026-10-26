@@ -52,7 +52,7 @@ Output is UTF-8 whatever the console's code page, because Package names may use 
 | `isolated` | a content Definition has no edge in or out. A model written with empty `spec` and no links gets this for nearly every Definition |
 | `no-area` | a Package holds content Definitions but no registry record or execution ownership area names it as owner |
 | `unset-field` | a field of a local Kind is set by none of the local Definitions; only top-level `spec` fields. Imported Library Kinds may have optional fields a model never needs, so they are left out |
-| `undefined-term` | a backticked term is used in 3 or more Packages and no Definition in the report has that ID (case-insensitive). The report holds only the imported Definitions the model uses, and `true`, `false` and `null` never count |
+| `undefined-term` | a backticked term is used in 3 or more Packages and no local Definition has that ID (case-insensitive). Imported IDs do not count, because a model field `name` is not the Core Property `name`. `true`, `false` and `null` are never terms |
 | `unused-import` | a Definition file imports a Package that none of its edges and not its kind points into (needs `--repo`) |
 | `import-cycle` | Packages import each other in a cycle (needs `--repo`) |
 | `direction` | a Package edge breaks the rules file (needs `--rules`) |

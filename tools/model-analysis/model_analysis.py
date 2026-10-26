@@ -395,7 +395,7 @@ def lint(model, repo=None, rules=None, term_pattern=TERM_PATTERN):
             if field not in used[kind]:
                 warn("unset-field", text(kind), f"field `{field}` is set by no local Definition")
 
-    ids = {i[1].lower() for i in model.definitions} | LITERALS
+    ids = {i[1].lower() for i in model.local} | LITERALS  # an imported `name` Property is not this model's term
     term_packages = collections.defaultdict(set)
     for identity in model.local:
         for term in re.findall(r"`([^`\n]+)`", model.definitions[identity].get("body") or ""):
