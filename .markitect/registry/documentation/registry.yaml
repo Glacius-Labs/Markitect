@@ -128,6 +128,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Records arm M's counted Phase C runs of the DEC-072 comparison on F_final, with bindings, every attempt and its cause class, the Root turn split, P2 observations, infrastructure repeats, tooling verification and limits.
+  - path: "docs/validation/v1-ks-kr-probe-20261026.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the exploratory K-S against K-R drift probe on Phase C material, with its dispatch binding, AGENTS.md text and hash, every run with its outcome, the per-arm drift and doc-truth measures, cost and caveats.
   - path: "docs/validation/v1-final-review-20261025.md"
     form: doc
     realizes: [documentation/current-guidance]
