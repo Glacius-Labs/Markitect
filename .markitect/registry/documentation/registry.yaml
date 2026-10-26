@@ -4,6 +4,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Records the owner's founding intent for the typed canonical model, Libraries, AI-written models and the Apply organization.
+  - path: "docs/concepts/sources/model-track-w1-decisions-20261026.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the owner decisions on the W1 fitness review of the canonical model track, including Kind extension with one Core 1.2.0 and D3.
   - path: "docs/concepts/sources/model-track-approval-20261026.md"
     form: doc
     realizes: [documentation/current-guidance]
