@@ -4,6 +4,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Records the owner's founding intent for the typed canonical model, Libraries, AI-written models and the Apply organization.
+  - path: "docs/concepts/sources/model-architecture-20261026.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the owner decision that the project owner decides the architecture and the canonical model encodes it as its own structure.
   - path: "docs/concepts/sources/model-track-w1-decisions-20261026.md"
     form: doc
     realizes: [documentation/current-guidance]
