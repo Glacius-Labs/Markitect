@@ -1,4 +1,5 @@
-// Package runstore stores closed Run records and independently appended Notes.
+// Package runstore stores closed Run records, an index of completed Verify
+// approvals and independently appended Notes.
 package runstore
 
 import (
@@ -114,12 +115,60 @@ func read(ctx context.Context, path string, value any) error {
 	}
 	return ctx.Err()
 }
+
+// Save stores r. A completed Verify approval is also indexed under what it
+// approved, so a later command finds it without reading every stored Run. The
+// index entry comes first: one without its record names nothing readable.
 func (s *Store) Save(ctx context.Context, r run.Result) error {
 	p, err := s.path(r.Project, "runs", r.ID)
 	if err != nil {
 		return err
 	}
+	if key, ok := r.Approval(); ok {
+		index, err := s.path(r.Project, filepath.Join("approvals", key), r.ID)
+		if err == nil {
+			err = write(ctx, index, r.ID)
+		}
+		if err != nil {
+			return err
+		}
+	}
 	return write(ctx, p, r)
+}
+
+// Approvals reads the stored results indexed under one approval key. A record
+// that cannot be read is no evidence and is left out; the caller validates
+// every returned result itself.
+func (s *Store) Approvals(ctx context.Context, project, key string) ([]run.Result, error) {
+	if !valid(key) {
+		return nil, fmt.Errorf("invalid approval key")
+	}
+	p, err := s.path(project, filepath.Join("approvals", key), "unused")
+	if err != nil {
+		return nil, err
+	}
+	entries, err := os.ReadDir(filepath.Dir(p))
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	var out []run.Result
+	for _, e := range entries {
+		id, ok := strings.CutSuffix(e.Name(), ".json")
+		if !ok || !valid(id) {
+			continue
+		}
+		r, err := s.Read(ctx, project, id)
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+		if err == nil {
+			out = append(out, r)
+		}
+	}
+	return out, nil
 }
 func (s *Store) Read(ctx context.Context, project, id string) (run.Result, error) {
 	p, err := s.path(project, "runs", id)

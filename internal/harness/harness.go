@@ -14,7 +14,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
-const Version = 2
+const Version = 3
 
 // Rules holds role, organization rules and answer format. Task, context and
 // Findings arrive separately; how the host runs the hierarchy is not a rule.
@@ -28,21 +28,36 @@ Your shell and file tools operate only in your private /work Git working copy. G
 For Implement, a delegation gives the child your current working state as its baseline: prepare shared prerequisites within your ownership before delegating. Your later changes and integrated sibling work reach a child only through a correction. A correction after your review needs concrete Findings; it merges your current baseline into the child's existing work. Resolve reported merge conflicts in your own copy. Assessment and Verify keep their fixed input candidate; delegation does not change it.
 Answer format: judge records your judgment of your assignment with Findings. For Implement, every Manager including Root submits completed candidate work with submitted; no Implement Manager judges its own work approve. Assessment and Verify judge approve or reject; submitted is invalid there. A material model defect uses model_blocker. Reject and model_blocker require concrete Findings. Approving a child's fixed handoff with review is a separate parent responsibility, not your own judgment or publication approval. check runs the deterministic check of your current state. Final prose is not a result.`
 
+// Finding names the affected Definition as Package/ID when it has one.
 type Finding struct {
-	Manager string `json:"manager"`
-	Text    string `json:"text"`
+	Manager    string `json:"manager"`
+	Definition string `json:"definition,omitempty"`
+	Text       string `json:"text"`
+}
+
+// Origin is the command's bound input. Verified names the stored Verify Run
+// that already approved exactly this input's content under the same model,
+// execution configuration and dependencies; empty means the host states no
+// such fact.
+type Origin struct {
+	Commit   string `json:"commit"`
+	Tree     string `json:"tree"`
+	Verified string `json:"verified,omitempty"`
 }
 type Document struct{ Base, Developer string }
 
 // Build retains all selected Definitions, inclusion reasons, source digests,
 // authored ownership and explicit instruction order. Nothing is truncated.
-func Build(p project.Prepared, manager organization.Manager, mandate string, findings []Finding) (Document, error) {
+func Build(p project.Prepared, manager organization.Manager, mandate string, findings []Finding, origin Origin) (Document, error) {
 	actual, ok := p.Topology().Manager(manager.Package)
 	if !p.Valid() || !ok || !reflect.DeepEqual(actual, manager) {
 		return Document{}, fmt.Errorf("harness requires an exact checked Manager")
 	}
 	if mandate != "assessment" && mandate != "implement" && mandate != "verify" {
 		return Document{}, fmt.Errorf("unknown harness mandate")
+	}
+	if origin.Commit == "" || origin.Tree == "" {
+		return Document{}, fmt.Errorf("harness requires the bound input")
 	}
 	context, ok := p.Context(manager.Package)
 	if !ok {
@@ -65,10 +80,13 @@ func Build(p project.Prepared, manager organization.Manager, mandate string, fin
 	for _, entry := range []struct {
 		label string
 		value any
-	}{{"Complete Manager hierarchy", p.Topology().Managers()}, {"Authored ownership", execution.Ownership}, {"Manager", manager}, {"Mandate", mandate}, {"Initial Findings", findings}} {
+	}{{"Complete Manager hierarchy", p.Topology().Managers()}, {"Authored ownership", execution.Ownership}, {"Manager", manager}, {"Mandate", mandate}, {"Initial Findings", findings}, {"Bound input of this command", origin}} {
 		if err := writeJSON(entry.label, entry.value); err != nil {
 			return Document{}, err
 		}
+	}
+	if origin.Verified != "" {
+		fmt.Fprintf(&b, "Host fact: the stored Verify Run %s already approved a candidate with exactly this bound input's content under the same model, execution configuration and dependencies. This does not establish that its code or tests are correct.\n\n", origin.Verified)
 	}
 	b.WriteString("Checked selected Definitions (original body and exact typed fields):\n")
 	for _, selected := range context.Definitions() {
@@ -148,7 +166,8 @@ func mandateDuties(mandate string) string {
 			"Assessment approval does not replace this reconciliation. If no necessary changes are found, complete all modeled delegation, child reviews and required checks, then submit the unchanged candidate. " +
 			"Assignment judgment for this Implement mandate: every Manager including Root uses submitted for completed candidate work. Use reject or model_blocker with concrete Findings when warranted. Your own judge decision cannot be approve; parent review of a fixed child commit may approve it. Run aggregates the reviewed hierarchy's outcome and does not grant publication authority.\n"
 	case "verify":
-		return "Verify independently judges the fixed candidate's conformity to the checked model with the full Manager hierarchy. Do not repair the candidate during Verify. Realization Findings are returned to the host for a fresh Implement Run followed by a fresh Verify; you do not perform that repair in this Run. Assignment judgment for Verify: use approve or reject for the examined realization, or model_blocker for a material model defect. Reject and model_blocker require concrete Findings. Do not use submitted; review scratch edits never become the product candidate.\n"
+		return "Verify independently judges the fixed candidate's conformity to the checked model with the full Manager hierarchy. Do not repair the candidate during Verify. Realization Findings are returned to the host for a fresh Implement Run followed by a fresh Verify; you do not perform that repair in this Run. Assignment judgment for Verify: use approve or reject for the examined realization, or model_blocker for a material model defect. Reject and model_blocker require concrete Findings. Do not use submitted; review scratch edits never become the product candidate. " +
+			"Judge the candidate's changes against the bound input of this command within this conformance review; Root's assignment carries their diff. A change that removes conforming behavior or touches an unrelated area without a reference to a current obligation is a reject with a Finding; other optional additions are a Note. When the host states that the bound input was already verified and you find no defect, any change is a reject.\n"
 	}
 	return ""
 }

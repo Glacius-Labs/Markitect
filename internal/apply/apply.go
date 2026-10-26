@@ -15,8 +15,11 @@ import (
 type Candidates interface {
 	Capture(context.Context, string, project.Prepared) (project.CandidateRef, error)
 }
+
+// Approvals returns the stored results indexed under one run.ApprovalKey.
 type Records interface {
 	Read(context.Context, string, string) (run.Result, error)
+	Approvals(context.Context, string, string) ([]run.Result, error)
 }
 type PublicationRequest struct {
 	Prepared project.Prepared
@@ -69,6 +72,13 @@ func (c *Command) Execute(ctx context.Context, request run.Request) (out Report,
 	if err != nil {
 		return out, err
 	}
+	// The host states that the bound input was already verified only from a
+	// stored closed Verify approval of exactly it under the same basis.
+	approvals, err := c.Records.Approvals(ctx, request.Project, run.ApprovalKey(request.Prepared.Basis(), request.Input))
+	if err != nil {
+		return out, fmt.Errorf("stored Verify approvals unavailable: %w", err)
+	}
+	request.Origin = run.Origin{Input: request.Input, Verified: run.Verified(request.Prepared, request.Input, approvals)}
 	out.Workflow, err = workflow.Apply(ctx, c.Executor, request)
 	if err != nil {
 		return out, err
