@@ -6,7 +6,7 @@ The decision belongs to the [canonical model track](../../design/model-track-cha
 
 ## Context
 
-Summary by the recorder: the session had proposed a W6 pilot that remodels Markitect's own self-model. It was based on a finding: Markitect describes its own architecture in three places that disagree. These are the self-model's 18 Packages, the code map `internal/tooling/architecture/codemap.yaml` (43 Go packages with layers, purposes and owning documents) and the responsibility imports in the architecture gate's `target.go`. Project, Workflow and Harness have no Package of their own in the self-model. The proposal was to make the model the single source, with the architecture gate reading dependency rules from the model and the code map generated from it.
+Summary by the recorder: the session had proposed a W6 pilot that remodels Markitect's own self-model. It was based on a finding: Markitect describes its own architecture in three places that disagree. These are the self-model's Packages, the code map `internal/tooling/architecture/codemap.yaml` (43 Go packages with layers, purposes and owning documents) and the responsibility imports in the architecture gate's `target.go`. Project, Workflow and Harness have no Package of their own in the self-model. The proposal was to make the model the single source, with the architecture gate reading dependency rules from the model and the code map generated from it.
 
 ## Owner statements (verbatim)
 
@@ -27,6 +27,6 @@ It asked: "Should I adjust the plan that way and tell the Coordinator?"
 Recorder's interpretation:
 
 - **W6 has one pilot, Makerspace.** The self-model pilot is deferred until Markitect is stable, after V1 acceptance and the studies, because Markitect's own build should not depend on Markitect while it is in development.
-- **The self-model stays as it is.** Changes that keep it valid continue, such as the Core 1.2.0 migration of [DEC-075](../register.md#dec-075-kind-extension-and-one-core-120) and model updates that accompany product changes. CI's `markitect check` of the repository stays.
+- **The self-model stays as it is,** and CI's `markitect check` of the repository stays. Its Core 1.2.0 migration is decided separately in [DEC-075](../register.md#dec-075-kind-extension-and-one-core-120).
 - **The three-places finding stays on record** as a known deviation for later.
 - **The tooling review is not decided.** The owner's "Yes" answered the plan change; the offered review of the about 20 tooling packages is still open.
