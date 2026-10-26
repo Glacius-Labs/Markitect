@@ -16,12 +16,12 @@ func richContextInput(t *testing.T) model.Input {
 	for _, d := range []struct{ id, kind, spec string }{
 		{"Record", "Kind", "{properties: [edge, payload, unused, data]}"},
 		{"Rule", "Kind", "{properties: [applies]}"},
-		{"edge", "Property", "{name: links, type: reference, target: Record, minCount: 0, maxCount: -1}"},
-		{"payload", "Property", "{type: object, properties: [edge, note], minCount: 0, maxCount: 1}"},
-		{"note", "Property", "{type: string, minCount: 0, maxCount: 1}"},
-		{"unused", "Property", "{type: string, minCount: 0, maxCount: 1}"},
-		{"data", "Property", "{name: properties, type: string, minCount: 0, maxCount: 1}"},
-		{"applies", "Property", "{name: covers, type: string, minCount: 0, maxCount: -1}"},
+		{"edge", "Property", "{name: links, valueType: reference, target: Record, minCount: 0, maxCount: -1}"},
+		{"payload", "Property", "{valueType: object, properties: [edge, note], minCount: 0, maxCount: 1}"},
+		{"note", "Property", "{valueType: string, minCount: 0, maxCount: 1}"},
+		{"unused", "Property", "{valueType: string, minCount: 0, maxCount: 1}"},
+		{"data", "Property", "{name: properties, valueType: string, minCount: 0, maxCount: 1}"},
+		{"applies", "Property", "{name: covers, valueType: string, minCount: 0, maxCount: -1}"},
 	} {
 		input.Root.Entries = append(input.Root.Entries, model.Entry{Path: "model/types/" + strings.ToLower(d.id) + ".yaml", Kind: model.Regular,
 			Bytes: []byte(fmt.Sprintf("imports: [{package: markitect/core, as: Core}]\nid: %s\nkind: Core.%s\nbody: Explicit context contract fixture.\nspec: %s\n", d.id, d.kind, d.spec))})

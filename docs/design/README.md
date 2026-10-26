@@ -10,4 +10,5 @@ Current design documents. Earlier design records are not kept on Main; the [arch
 | [Modeling guide](modeling-guide.md) | What a well-modeled project contains: concerns, Packages as modules, typed Definitions, architecture as the model's own structure |
 | [Model quality criteria](model-quality-criteria.md) | Hard rules, review criteria and signals for canonical models, with their checks |
 | [Manager context](manager-context.md) | What each Manager receives as context: own Definitions, See also, type contracts, child areas and file paths |
+| [Kind interfaces](kind-interfaces.md) | Reasoning, rules and Core 1.2.0 migration for Kind interfaces and the `valueType` vocabulary; the normative text is the language contract |
 | [Canonical model track charter](model-track-charter.md) | Goal, workstreams and owner decisions of the track that makes the canonical model serve typed programming in prose |

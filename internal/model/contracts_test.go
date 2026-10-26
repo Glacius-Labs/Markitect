@@ -15,7 +15,7 @@ func TestFullPrescribedCoreCompletesEveryPhase(t *testing.T) {
 	input := Input{Root: completeCoreSource()}
 	got := Check(input)
 	if got.Status != Passed || len(got.Diagnostics) != 0 || len(got.Models) != 1 {
-		t.Fatalf("prescribed nine-file Core rejected: %+v", got)
+		t.Fatalf("prescribed ten-file Core rejected: %+v", got)
 	}
 	model := got.Models[0]
 	for _, phase := range model.Phases {
@@ -30,7 +30,7 @@ func TestFullPrescribedCoreCompletesEveryPhase(t *testing.T) {
 			}
 		}
 	}
-	if model.Status != Passed || len(model.Definitions) != 9 || len(model.Canonical) == 0 || model.Digest == "" {
+	if model.Status != Passed || len(model.Definitions) != 10 || len(model.Canonical) == 0 || model.Digest == "" {
 		t.Fatal("contract check produced full IR or canonical evidence")
 	}
 	slices.Reverse(input.Root.Entries)
@@ -45,13 +45,13 @@ func TestCoreComparesEffectiveContent(t *testing.T) {
 		entry := &input.Root.Entries[index]
 		text := string(entry.Bytes)
 		if entry.Path == "model/markitect/core/property.yaml" {
-			updated := strings.Replace(text, "    - name\n    - type\n    - minCount\n    - maxCount\n    - values\n    - target\n    - properties", "    - Core.properties\n    - Core.target\n    - Core.values\n    - Core.maxCount\n    - Core.minCount\n    - Core.type\n    - Core.name", 1)
+			updated := strings.Replace(text, "    - name\n    - valueType\n    - minCount\n    - maxCount\n    - values\n    - target\n    - properties", "    - Core.properties\n    - Core.target\n    - Core.values\n    - Core.maxCount\n    - Core.minCount\n    - Core.valueType\n    - Core.name", 1)
 			if updated == text {
 				t.Fatal("equivalence edit did not reorder and qualify Core fields")
 			}
 			text = updated
 		}
-		if entry.Path == "model/markitect/core/type.yaml" {
+		if entry.Path == "model/markitect/core/value-type.yaml" {
 			text = strings.Replace(text, "    - string\n    - boolean", "    - boolean\n    - string", 1)
 		}
 		if strings.HasPrefix(entry.Path, "model/markitect/core/") {
@@ -74,15 +74,15 @@ func TestCoreComparesEffectiveContent(t *testing.T) {
 
 func TestFixedCoreRejectsContentReplacements(t *testing.T) {
 	for _, tt := range []struct{ name, path, before, after, code string }{
-		{"body", "type.yaml", "The value type of this Property, understood by the Core.", "Another body.", "core.content"},
+		{"body", "value-type.yaml", "The value type of this Property, understood by the Core.", "Another body.", "core.content"},
 		{"title", "kind.yaml", "id: Kind", "title: Extra\nid: Kind", "core.content"},
 		{"cardinality", "name.yaml", "maxCount: 1", "maxCount: -1", "core.content"},
 		{"field default", "name.yaml", "spec:", "spec:\n  name: other", "core.content"},
 		{"missing field", "property.yaml", "    - target\n", "", "core.content"},
 		{"extra field", "kind.yaml", "spec:", "spec:\n  extra: []", "contract.unknown_field"},
 		{"duplicate field", "kind.yaml", "    - properties", "    - properties\n    - markitect/core/properties", "contract.property_duplicate"},
-		{"bad enum", "type.yaml", "    - boolean", "    - other", "core.content"},
-		{"case exact enum", "type.yaml", "    - boolean", "    - Boolean", "core.content"},
+		{"bad enum", "value-type.yaml", "    - boolean", "    - other", "core.content"},
+		{"case exact enum", "value-type.yaml", "    - boolean", "    - Boolean", "core.content"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			input := Input{Root: completeCoreSource()}
@@ -107,8 +107,8 @@ func TestFixedCoreRejectsContentReplacements(t *testing.T) {
 func TestDerivedContractsAndOrdinaryPropertiesField(t *testing.T) {
 	input := coreModelInput(
 		contractDefinition("vocabulary/catalog.yaml", "Catalog", "Core.Kind", "{properties: [Core.properties]}"),
-		contractDefinition("vocabulary/display-name.yaml", "displayName", "Core.Property", "{type: string, minCount: 0, maxCount: 1}"),
-		contractDefinition("vocabulary/nested.yaml", "nested", "Core.Property", "{type: object, minCount: 0, maxCount: -1, properties: [displayName, nested]}"),
+		contractDefinition("vocabulary/display-name.yaml", "displayName", "Core.Property", "{valueType: string, minCount: 0, maxCount: 1}"),
+		contractDefinition("vocabulary/nested.yaml", "nested", "Core.Property", "{valueType: object, minCount: 0, maxCount: -1, properties: [displayName, nested]}"),
 		contractDefinition("vocabulary/item.yaml", "item", "Catalog", "{properties: [Core.name, Core.name]}"),
 	)
 	got := Check(input)
@@ -119,30 +119,30 @@ func TestDerivedContractsAndOrdinaryPropertiesField(t *testing.T) {
 
 func TestContractMetadataAndTargetTypes(t *testing.T) {
 	for _, tt := range []struct{ name, id, kind, spec, code string }{
-		{"unknown value type", "field", "Core.Property", "{type: kindReference, minCount: 0, maxCount: 1}", "contract.value_type"},
-		{"missing minimum", "field", "Core.Property", "{type: string, maxCount: 1}", "contract.cardinality"},
-		{"decimal minimum", "field", "Core.Property", "{type: string, minCount: 0.0, maxCount: 1}", "contract.cardinality"},
-		{"negative minimum", "field", "Core.Property", "{type: string, minCount: -1, maxCount: 1}", "contract.cardinality"},
-		{"max below min", "field", "Core.Property", "{type: string, minCount: 2, maxCount: 1}", "contract.cardinality"},
-		{"invalid negative max", "field", "Core.Property", "{type: string, minCount: 0, maxCount: -2}", "contract.cardinality"},
-		{"empty explicit name", "field", "Core.Property", "{name: '', type: string, minCount: 0, maxCount: 1}", "contract.field_name"},
-		{"dotted name", "field", "Core.Property", "{name: a.b, type: string, minCount: 0, maxCount: 1}", "contract.field_name"},
+		{"unknown value type", "field", "Core.Property", "{valueType: kindReference, minCount: 0, maxCount: 1}", "contract.value_type"},
+		{"missing minimum", "field", "Core.Property", "{valueType: string, maxCount: 1}", "contract.cardinality"},
+		{"decimal minimum", "field", "Core.Property", "{valueType: string, minCount: 0.0, maxCount: 1}", "contract.cardinality"},
+		{"negative minimum", "field", "Core.Property", "{valueType: string, minCount: -1, maxCount: 1}", "contract.cardinality"},
+		{"max below min", "field", "Core.Property", "{valueType: string, minCount: 2, maxCount: 1}", "contract.cardinality"},
+		{"invalid negative max", "field", "Core.Property", "{valueType: string, minCount: 0, maxCount: -2}", "contract.cardinality"},
+		{"empty explicit name", "field", "Core.Property", "{name: '', valueType: string, minCount: 0, maxCount: 1}", "contract.field_name"},
+		{"dotted name", "field", "Core.Property", "{name: a.b, valueType: string, minCount: 0, maxCount: 1}", "contract.field_name"},
 		{"bad kind ID", "wrongKind", "Core.Kind", "{}", "name.category"},
-		{"bad property ID despite name", "Wrong", "Core.Property", "{name: field, type: string, minCount: 0, maxCount: 1}", "name.category"},
+		{"bad property ID despite name", "Wrong", "Core.Property", "{name: field, valueType: string, minCount: 0, maxCount: 1}", "name.category"},
 		{"bad concrete ID", "Wrong", "Example", "{}", "name.category"},
 		{"unknown kind spec", "Wrong", "Core.Kind", "{other: []}", "contract.unknown_field"},
-		{"forbidden object fields", "field", "Core.Property", "{type: string, minCount: 0, maxCount: 1, properties: []}", "contract.forbidden_field"},
-		{"forbidden values", "field", "Core.Property", "{type: object, minCount: 0, maxCount: 1, values: []}", "contract.forbidden_field"},
-		{"forbidden target", "field", "Core.Property", "{type: string, minCount: 0, maxCount: 1, target: Example}", "contract.forbidden_field"},
-		{"empty enum", "field", "Core.Property", "{type: enum, minCount: 0, maxCount: 1, values: []}", "contract.enum_values"},
-		{"duplicate exact enum", "field", "Core.Property", "{type: enum, minCount: 0, maxCount: 1, values: [a, a]}", "contract.enum_values"},
-		{"nonstring enum", "field", "Core.Property", "{type: enum, minCount: 0, maxCount: 1, values: [1]}", "contract.enum_values"},
-		{"reference needs target", "field", "Core.Property", "{type: reference, minCount: 0, maxCount: 1}", "contract.reference"},
-		{"target must be Kind", "field", "Core.Property", "{type: reference, minCount: 0, maxCount: 1, target: Core.name}", "contract.reference_target"},
+		{"forbidden object fields", "field", "Core.Property", "{valueType: string, minCount: 0, maxCount: 1, properties: []}", "contract.forbidden_field"},
+		{"forbidden values", "field", "Core.Property", "{valueType: object, minCount: 0, maxCount: 1, values: []}", "contract.forbidden_field"},
+		{"forbidden target", "field", "Core.Property", "{valueType: string, minCount: 0, maxCount: 1, target: Example}", "contract.forbidden_field"},
+		{"empty enum", "field", "Core.Property", "{valueType: enum, minCount: 0, maxCount: 1, values: []}", "contract.enum_values"},
+		{"duplicate exact enum", "field", "Core.Property", "{valueType: enum, minCount: 0, maxCount: 1, values: [a, a]}", "contract.enum_values"},
+		{"nonstring enum", "field", "Core.Property", "{valueType: enum, minCount: 0, maxCount: 1, values: [1]}", "contract.enum_values"},
+		{"reference needs target", "field", "Core.Property", "{valueType: reference, minCount: 0, maxCount: 1}", "contract.reference"},
+		{"target must be Kind", "field", "Core.Property", "{valueType: reference, minCount: 0, maxCount: 1, target: Core.name}", "contract.reference_target"},
 		{"field must be Property", "Wrong", "Core.Kind", "{properties: [Example]}", "contract.reference_target"},
 		{"properties must be list", "Wrong", "Core.Kind", "{properties: Core.name}", "contract.properties_list"},
 		{"same target twice", "Wrong", "Core.Kind", "{properties: [Core.name, markitect/core/name]}", "contract.property_duplicate"},
-		{"unknown property spec", "field", "Core.Property", "{type: string, minCount: 0, maxCount: 1, extra: 1}", "contract.unknown_field"},
+		{"unknown property spec", "field", "Core.Property", "{valueType: string, minCount: 0, maxCount: 1, extra: 1}", "contract.unknown_field"},
 		{"kind cannot target Property", "item", "Core.name", "{}", "contract.kind_target"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -158,13 +158,13 @@ func TestContractMetadataAndTargetTypes(t *testing.T) {
 func TestContractFieldNameCollisionsAndFullDefaultIDs(t *testing.T) {
 	input := coreModelInput(
 		contractDefinition("feature/example.yaml", "Example", "Core.Kind", "{properties: [displayName, other]}"),
-		contractDefinition("feature/name.yaml", "displayName", "Core.Property", "{type: string, minCount: 0, maxCount: 1}"),
-		contractDefinition("feature/other.yaml", "other", "Core.Property", "{name: displayName, type: string, minCount: 0, maxCount: 1}"),
+		contractDefinition("feature/name.yaml", "displayName", "Core.Property", "{valueType: string, minCount: 0, maxCount: 1}"),
+		contractDefinition("feature/other.yaml", "other", "Core.Property", "{name: displayName, valueType: string, minCount: 0, maxCount: 1}"),
 	)
 	if got := Check(input); !hasDiagnostic(got, "contract.field_collision") {
 		t.Fatalf("effective field collision not detected: %+v", got)
 	}
-	input.Root.Entries[3] = contractDefinition("feature/other.yaml", "other", "Core.Property", "{name: different, type: string, minCount: 0, maxCount: 1}")
+	input.Root.Entries[3] = contractDefinition("feature/other.yaml", "other", "Core.Property", "{name: different, valueType: string, minCount: 0, maxCount: 1}")
 	if got := Check(input); got.Status != Passed || len(got.Diagnostics) != 0 {
 		t.Fatalf("full local default ID was shortened or otherwise changed: %+v", got)
 	}
@@ -183,8 +183,8 @@ func TestMandatoryObjectCyclesAndOptionalTermination(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			input := coreModelInput(
-				contractDefinition("feature/a.yaml", "a", "Core.Property", "{type: object, minCount: "+tt.aMin+", maxCount: "+tt.aMax+", properties: [b]}"),
-				contractDefinition("feature/b.yaml", "b", "Core.Property", "{type: object, minCount: "+tt.bMin+", maxCount: 1, properties: [a]}"),
+				contractDefinition("feature/a.yaml", "a", "Core.Property", "{valueType: object, minCount: "+tt.aMin+", maxCount: "+tt.aMax+", properties: [b]}"),
+				contractDefinition("feature/b.yaml", "b", "Core.Property", "{valueType: object, minCount: "+tt.bMin+", maxCount: 1, properties: [a]}"),
 			)
 			got := Check(input)
 			if tt.fail {
@@ -258,8 +258,8 @@ func TestLocalKindAndPropertyNamesDoNotInstallMetaOperators(t *testing.T) {
 
 func TestLargeCountsAndExactEnumStrings(t *testing.T) {
 	input := coreModelInput(
-		contractDefinition("feature/large.yaml", "large", "Core.Property", "{type: string, minCount: 999999999999999999999999999999999999999999, maxCount: -1}"),
-		contractDefinition("feature/values.yaml", "choices", "Core.Property", "{type: enum, minCount: 0, maxCount: 0, values: ['', a, A, 'ü', ü]}"),
+		contractDefinition("feature/large.yaml", "large", "Core.Property", "{valueType: string, minCount: 999999999999999999999999999999999999999999, maxCount: -1}"),
+		contractDefinition("feature/values.yaml", "choices", "Core.Property", "{valueType: enum, minCount: 0, maxCount: 0, values: ['', a, A, 'ü', ü]}"),
 	)
 	if got := Check(input); got.Status != Passed || len(got.Diagnostics) != 0 {
 		t.Fatalf("counts were bounded or enum text was normalized/casefolded: %+v", got)
@@ -271,8 +271,8 @@ func TestKnownContractErrorsSurviveUnrelatedResourceRefusal(t *testing.T) {
 		name, code  string
 		definitions []Entry
 	}{
-		{"cardinality", "contract.cardinality", []Entry{contractDefinition("feature/a.yaml", "a", "Core.Property", "{type: string, minCount: -1, maxCount: 1}")}},
-		{"mandatory cycle", "contract.object_cycle", []Entry{contractDefinition("feature/a.yaml", "a", "Core.Property", "{type: object, minCount: 1, maxCount: 1, properties: [a]}")}},
+		{"cardinality", "contract.cardinality", []Entry{contractDefinition("feature/a.yaml", "a", "Core.Property", "{valueType: string, minCount: -1, maxCount: 1}")}},
+		{"mandatory cycle", "contract.object_cycle", []Entry{contractDefinition("feature/a.yaml", "a", "Core.Property", "{valueType: object, minCount: 1, maxCount: 1, properties: [a]}")}},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			input := coreModelInput(tt.definitions...)
@@ -291,7 +291,7 @@ func TestKnownContractErrorsSurviveUnrelatedResourceRefusal(t *testing.T) {
 func TestResolvedUnicodeCategoriesAndEffectiveFieldCollisions(t *testing.T) {
 	input := coreModelInput(
 		contractDefinition("feature/文档.yaml", "文档", "Core.Kind", "{properties: [größe]}"),
-		contractDefinition("feature/größe.yaml", "größe", "Core.Property", "{type: integer, minCount: 0, maxCount: 1}"),
+		contractDefinition("feature/größe.yaml", "größe", "Core.Property", "{valueType: integer, minCount: 0, maxCount: 1}"),
 		contractDefinition("feature/größe-٢.yaml", "größe-٢", "文档", "{größe: 2}"),
 	)
 	if got := Check(input); got.Status != Passed || len(got.Diagnostics) != 0 || phaseStatus(got.Models[0], "names_and_unicode") != Passed {
@@ -299,8 +299,8 @@ func TestResolvedUnicodeCategoriesAndEffectiveFieldCollisions(t *testing.T) {
 	}
 	input = coreModelInput(
 		contractDefinition("feature/example.yaml", "Example", "Core.Kind", "{properties: [one, two]}"),
-		contractDefinition("feature/one.yaml", "one", "Core.Property", "{name: straße, type: string, minCount: 0, maxCount: 1}"),
-		contractDefinition("feature/two.yaml", "two", "Core.Property", "{name: strasse, type: string, minCount: 0, maxCount: 1}"),
+		contractDefinition("feature/one.yaml", "one", "Core.Property", "{name: straße, valueType: string, minCount: 0, maxCount: 1}"),
+		contractDefinition("feature/two.yaml", "two", "Core.Property", "{name: strasse, valueType: string, minCount: 0, maxCount: 1}"),
 	)
 	if got := Check(input); got.Status != Failed || !hasDiagnostic(got, "contract.field_collision") {
 		t.Fatalf("Unicode effective field collision was not detected: %+v", got)

@@ -5,6 +5,6 @@ id: command
 kind: Core.Property
 body: The exact literal maintenance command required by this Check.
 spec:
-  type: string
+  valueType: string
   minCount: 1
   maxCount: 1

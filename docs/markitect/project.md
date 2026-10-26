@@ -4,7 +4,7 @@ Generated from acquired canonical v1 source bytes. This view is not execution or
 
 ## markitect
 
-Canonical model digest: `sha256:775a616a424ac917b8cf0d69aba0d8b72b4d4ce7167da4de8d38e99292b75f29`.
+Canonical model digest: `sha256:4b1d07ef12a7b3d4c1e676a7f934ae51456602ad3e365f98288278c735e96b41`.
 
 Manifest: `.markitect/model.yaml` (original bytes `sha256:d40feb9e02db275aed89d53b0a88849e463acaca076c8fa70fad38b367a68559`).
 
@@ -22,27 +22,43 @@ Keep canonical Library M1/M2 rules and the independent oracle unchanged. Treat c
 
 ### markitect/core/Kind
 
-Kind: `markitect/core/Kind`. Source: `.markitect/model/markitect/core/kind.yaml` (original bytes `sha256:94c9b4aed3c0acdedac13375d56039eb18554b2b28686a7becc3642fd81f2411`).
+Kind: `markitect/core/Kind`. Source: `.markitect/model/markitect/core/kind.yaml` (original bytes `sha256:4b04c13d1540fcd1ce6f48c0d38fe0b4550e88fbdf979da406a3e88db03ab6ab`).
 
-Declares a type. properties names the permitted fields of the spec of its definitions. The body of a type definition describes their shared meaning and applicable stipulations.
+Declares a type. properties names the permitted fields of the spec of its definitions. The body of a type definition describes their shared meaning and applicable stipulations. implements names interface Kinds; the type declares every Property of each in properties.
 
 Fields:
 
-- `properties`: [`markitect/core/properties`]
+- `implements`: []
+- `properties`: [`markitect/core/implements`, `markitect/core/properties`]
 
 ### markitect/core/Property
 
-Kind: `markitect/core/Kind`. Source: `.markitect/model/markitect/core/property.yaml` (original bytes `sha256:46a615230b96ff6ceb6dfc4582fff98d9b8678ee9f81b725def9f851ec8a1e8b`).
+Kind: `markitect/core/Kind`. Source: `.markitect/model/markitect/core/property.yaml` (original bytes `sha256:c35f800aeb4a5675f9b8ecb4d2fd56f93cef2bbce36b9d9609da2fa512c87532`).
 
-Declares a field contract with value type and cardinality. The body describes the meaning of its values or relationships. For type object, properties names the permitted fields of the object value.
+Declares a field contract with value type and cardinality. The body describes the meaning of its values or relationships. For value type object, properties names the permitted fields of the object value.
 
 Fields:
 
-- `properties`: [`markitect/core/maxCount`, `markitect/core/minCount`, `markitect/core/name`, `markitect/core/properties`, `markitect/core/target`, `markitect/core/type`, `markitect/core/values`]
+- `implements`: []
+- `properties`: [`markitect/core/maxCount`, `markitect/core/minCount`, `markitect/core/name`, `markitect/core/properties`, `markitect/core/target`, `markitect/core/valueType`, `markitect/core/values`]
+
+### markitect/core/implements
+
+Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/implements.yaml` (original bytes `sha256:5118d3fc628402af890b89fca0fed93a16995077c499853c947ac2257d986ac1`).
+
+References the interface Kinds a Kind implements. The Kind must declare every Property of each interface in its own properties, and its definitions satisfy references that require the interface, directly or indirectly. The implements graph must be acyclic.
+
+Fields:
+
+- `maxCount`: -1
+- `minCount`: 0
+- `name`: "implements"
+- `target`: `markitect/core/Kind`
+- `valueType`: "reference"
 
 ### markitect/core/maxCount
 
-Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/max-count.yaml` (original bytes `sha256:7965ac2a6c4d014f9279fccb7899a4111649d78c3e6fdc1b2c2c081b190b8049`).
+Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/max-count.yaml` (original bytes `sha256:5d25406794939533595d4758d28994028487deb76dfd285cdab0d8952adb6423`).
 
 Maximum number of present values. The value -1 permits any number of values within the tool limits. Other values must be at least minCount. Exactly 1 denotes a single value; other maximum values denote a list.
 
@@ -51,11 +67,11 @@ Fields:
 - `maxCount`: 1
 - `minCount`: 1
 - `name`: "maxCount"
-- `type`: "integer"
+- `valueType`: "integer"
 
 ### markitect/core/minCount
 
-Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/min-count.yaml` (original bytes `sha256:21b55a98cea8e61741cd569a61b35d464048751eaeb1da607d6e8da7aa005fee`).
+Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/min-count.yaml` (original bytes `sha256:a8e398c62276dc166f0f9a2346fa14dfb3ffe39f295c81521c5aa0ebcbd93fcc`).
 
 Non-negative minimum number of present values.
 
@@ -64,11 +80,11 @@ Fields:
 - `maxCount`: 1
 - `minCount`: 1
 - `name`: "minCount"
-- `type`: "integer"
+- `valueType`: "integer"
 
 ### markitect/core/name
 
-Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/name.yaml` (original bytes `sha256:0026b9de7a20f82c0b69a90fdbf1679369f69ff7a21c2227175b5b956c68da26`).
+Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/name.yaml` (original bytes `sha256:dbc913c9777e606f62672a1b932616f8a50c59126ebb0ce067a364c4762cf9a2`).
 
 Optional explicitly deviating non-empty field name. If omitted, the complete local ID of the Property applies as the field name. The effective field name must be unique within every contract that uses it.
 
@@ -77,11 +93,11 @@ Fields:
 - `maxCount`: 1
 - `minCount`: 0
 - `name`: "name"
-- `type`: "string"
+- `valueType`: "string"
 
 ### markitect/core/properties
 
-Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/properties.yaml` (original bytes `sha256:fb82b590b233aea97e905bfa582cc9d8b793c839361b194be2fe33f2d0f566bb`).
+Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/properties.yaml` (original bytes `sha256:cfc25c3acbf8c79c7ae509f0e1528be084f62d44c2fd0ac283025e4d4e544594`).
 
 References the permitted field contracts of the object described here. The effective field names must be unique within this contract.
 
@@ -91,13 +107,13 @@ Fields:
 - `minCount`: 0
 - `name`: "properties"
 - `target`: `markitect/core/Property`
-- `type`: "reference"
+- `valueType`: "reference"
 
 ### markitect/core/target
 
-Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/target.yaml` (original bytes `sha256:91fa530485a5dc91d8a52f2de3b58eb05f426bb5dc3d823e44352aaf01076ad4`).
+Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/target.yaml` (original bytes `sha256:b9bd2dc6efa7cce837b5c210dc7ab44ed05858fdc8b6568f2e8c836ade25d698`).
 
-The Kind required of the referenced definitions. For type reference, this entry is required. For other value types, it is not permitted.
+The Kind required of the referenced definitions. Definitions of a Kind that implements the required Kind, directly or through other interfaces, also satisfy it. For value type reference, this entry is required. For other value types, it is not permitted.
 
 Fields:
 
@@ -105,11 +121,11 @@ Fields:
 - `minCount`: 0
 - `name`: "target"
 - `target`: `markitect/core/Kind`
-- `type`: "reference"
+- `valueType`: "reference"
 
-### markitect/core/type
+### markitect/core/valueType
 
-Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/type.yaml` (original bytes `sha256:efb5851ff1f2c255384d89c382b6abe08aea1e1ff4c7d133825a856d8b00ecbd`).
+Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/value-type.yaml` (original bytes `sha256:2c824551fbdd6e741c4bbbb58f3871c70e0cec08fe99532ffaecb5f8a58c9422`).
 
 The value type of this Property, understood by the Core.
 
@@ -117,22 +133,22 @@ Fields:
 
 - `maxCount`: 1
 - `minCount`: 1
-- `name`: "type"
-- `type`: "enum"
+- `name`: "valueType"
+- `valueType`: "enum"
 - `values`: ["boolean", "enum", "integer", "number", "object", "reference", "string"]
 
 ### markitect/core/values
 
-Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/values.yaml` (original bytes `sha256:f6de4bd1609a1ecf09777a27e1dffa9eebc5ff9db74058bb070b00b3926f7791`).
+Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/values.yaml` (original bytes `sha256:4f662dad0b0375a193aa6256ed68320c1bebfb0ff6f522cf507a116a7caaa92d`).
 
-Permitted string values of an enum Property. For type enum, a non-empty list of distinct values is required. For other value types, this entry is not permitted.
+Permitted string values of an enum Property. For value type enum, a non-empty list of distinct values is required. For other value types, this entry is not permitted.
 
 Fields:
 
 - `maxCount`: -1
 - `minCount`: 0
 - `name`: "values"
-- `type`: "string"
+- `valueType`: "string"
 
 ### product/ports-and-adapters
 
@@ -323,6 +339,7 @@ A required source maintenance check. Its command is a literal command string for
 
 Fields:
 
+- `implements`: []
 - `properties`: [`vocabulary/command`]
 
 ### vocabulary/Rule
@@ -333,11 +350,12 @@ States intended behavior or an invariant in its named scope. Structural checks e
 
 Fields:
 
+- `implements`: []
 - `properties`: []
 
 ### vocabulary/command
 
-Kind: `markitect/core/Property`. Source: `.markitect/model/vocabulary/command.yaml` (original bytes `sha256:ecac1893689a487599ff7157422d6e9babd62c4c5109ad8ac93f146a81c15a9c`).
+Kind: `markitect/core/Property`. Source: `.markitect/model/vocabulary/command.yaml` (original bytes `sha256:dd80991cd39ac2b818c2c0ada3cd76a245365af57cc85c6ab5ea0bf036329881`).
 
 The exact literal maintenance command required by this Check.
 
@@ -346,4 +364,4 @@ Fields:
 - `maxCount`: 1
 - `minCount`: 1
 - `name`: "command"
-- `type`: "string"
+- `valueType`: "string"

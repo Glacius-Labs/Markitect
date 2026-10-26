@@ -40,6 +40,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: States the checkable quality criteria for canonical models.
+  - path: "docs/design/kind-interfaces.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Explains the reasoning, rules and Core 1.2.0 migration of Kind interfaces and the valueType vocabulary beside the normative language contract.
   - path: "docs/design/model-track-charter.md"
     form: doc
     realizes: [documentation/current-guidance]

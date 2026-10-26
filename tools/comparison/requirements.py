@@ -330,7 +330,7 @@ def render_body(definition, key, doc=None, links=None):
 
 def property_meaning(definition):
     spec = definition["spec"]
-    if spec != {"type": "integer", "minCount": "1", "maxCount": "1"}:
+    if spec != {"valueType": "integer", "minCount": "1", "maxCount": "1"}:
         raise ModelError("unsupported Property spec")
     return "Exactly one integer value is required."
 

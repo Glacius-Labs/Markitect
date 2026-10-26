@@ -2,9 +2,9 @@ id: values
 kind: Property
 body: >-
   Permitted string values of an enum Property.
-  For type enum, a non-empty list of distinct values is required.
+  For value type enum, a non-empty list of distinct values is required.
   For other value types, this entry is not permitted.
 spec:
-  type: string
+  valueType: string
   minCount: 0
   maxCount: -1

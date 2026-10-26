@@ -4,7 +4,7 @@ body: >-
   References the permitted field contracts of the object described here.
   The effective field names must be unique within this contract.
 spec:
-  type: reference
+  valueType: reference
   target: Property
   minCount: 0
   maxCount: -1

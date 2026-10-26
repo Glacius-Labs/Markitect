@@ -9,9 +9,9 @@ func referenceValueInput(spec string) Input {
 	return coreModelInput(
 		contractDefinition("feature/record.yaml", "Record", "Core.Kind", "{properties: [link, links, kindLink]}"),
 		contractDefinition("feature/alternate.yaml", "Alternate", "Core.Kind", "{}"),
-		contractDefinition("feature/link.yaml", "link", "Core.Property", "{type: reference, target: Record, minCount: 0, maxCount: 1}"),
-		contractDefinition("feature/links.yaml", "links", "Core.Property", "{type: reference, target: Record, minCount: 0, maxCount: -1}"),
-		contractDefinition("feature/kind-link.yaml", "kindLink", "Core.Property", "{type: reference, target: Core.Kind, minCount: 0, maxCount: 1}"),
+		contractDefinition("feature/link.yaml", "link", "Core.Property", "{valueType: reference, target: Record, minCount: 0, maxCount: 1}"),
+		contractDefinition("feature/links.yaml", "links", "Core.Property", "{valueType: reference, target: Record, minCount: 0, maxCount: -1}"),
+		contractDefinition("feature/kind-link.yaml", "kindLink", "Core.Property", "{valueType: reference, target: Core.Kind, minCount: 0, maxCount: 1}"),
 		contractDefinition("feature/item.yaml", "item", "Record", spec),
 		contractDefinition("feature/peer.yaml", "peer", "Record", "{}"),
 		contractDefinition("feature/wrong.yaml", "wrong", "Alternate", "{}"),
@@ -122,8 +122,8 @@ func TestValueErrorsVersusUnrelatedOrRelevantUnknownInventory(t *testing.T) {
 func TestNestedSchemaWithIncompleteFieldContractRemainsUnknown(t *testing.T) {
 	input := coreModelInput(
 		contractDefinition("feature/record.yaml", "Record", "Core.Kind", "{properties: [box]}"),
-		contractDefinition("feature/box.yaml", "box", "Core.Property", "{type: object, minCount: 0, maxCount: 1, properties: [link]}"),
-		addFileImport(contractDefinition("feature/link.yaml", "link", "Core.Property", "{type: reference, target: Unavailable.Kind, minCount: 0, maxCount: -1}"), "unavailable", "Unavailable"),
+		contractDefinition("feature/box.yaml", "box", "Core.Property", "{valueType: object, minCount: 0, maxCount: 1, properties: [link]}"),
+		addFileImport(contractDefinition("feature/link.yaml", "link", "Core.Property", "{valueType: reference, target: Unavailable.Kind, minCount: 0, maxCount: -1}"), "unavailable", "Unavailable"),
 		contractDefinition("feature/item.yaml", "item", "Record", "{box: {extra: a}}"),
 	)
 	addIncompleteModel(&input)

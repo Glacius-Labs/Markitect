@@ -6,6 +6,6 @@ body: >-
   Exactly 1 denotes a single value; other maximum values denote
   a list.
 spec:
-  type: integer
+  valueType: integer
   minCount: 1
   maxCount: 1

@@ -33,10 +33,10 @@ func projectCanonical(scope sourceScope, contracts contractResult, values valueR
 		}
 		fields := typed.items[1]
 		// Only actual Core meta declarations are unordered. An ordinary field
-		// called properties or values keeps the order checked by its contract.
+		// called properties, implements or values keeps the order checked by its contract.
 		for index := range fields.fields {
 			field := &fields.fields[index]
-			declaration := contract.category == "kind" && field.name == "properties" || contract.category == "property" && (field.name == "properties" || field.name == "values")
+			declaration := contract.category == "kind" && (field.name == "properties" || field.name == "implements") || contract.category == "property" && (field.name == "properties" || field.name == "values")
 			if declaration {
 				sortCanonicalDeclaration(&field.value)
 			}
