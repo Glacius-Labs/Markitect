@@ -71,7 +71,7 @@ The evaluation depends on this track. In the owner's words: "Our evaluations of 
 1. **Expressiveness.** Do object, list, enum and reference with cardinality cover what Libraries need? Known gaps:
    - maps;
    - variants or unions;
-   - Kind extension, such as a project Kind that refines a Library Kind;
+   - Kind extension, such as a project Kind that refines a Library Kind (since answered: Kind interfaces, [DEC-075](../concepts/register.md#dec-075-kind-interfaces-and-one-core-120));
    - references that accept several target Kinds;
    - string formats;
    - constraints across fields.
