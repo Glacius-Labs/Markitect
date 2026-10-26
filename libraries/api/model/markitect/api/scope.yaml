@@ -1,0 +1,11 @@
+imports:
+  - {package: markitect/core, as: Core}
+id: scope
+kind: Core.Property
+body: >-
+  all: on any record; own: only on records that belong to the caller.
+spec:
+  values: [own, all]
+  valueType: enum
+  minCount: 1
+  maxCount: 1

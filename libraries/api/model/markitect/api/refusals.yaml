@@ -1,0 +1,12 @@
+imports:
+  - {package: markitect/core, as: Core}
+id: refusals
+kind: Core.Property
+body: >-
+  The refusals of the operation in the order they are checked; the first that
+  applies is returned.
+spec:
+  properties: [refusal, when]
+  valueType: object
+  minCount: 0
+  maxCount: -1

@@ -1,0 +1,10 @@
+imports:
+  - {package: markitect/core, as: Core}
+id: nullable
+kind: Core.Property
+body: >-
+  Whether the field is present as null while it has no value.
+spec:
+  valueType: boolean
+  minCount: 0
+  maxCount: 1

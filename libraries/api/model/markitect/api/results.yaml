@@ -1,0 +1,12 @@
+imports:
+  - {package: markitect/core, as: Core}
+  - {package: markitect/values, as: Values}
+id: results
+kind: Core.Property
+body: >-
+  The fields of a successful result, in order.
+spec:
+  properties: [Values.fieldName, Values.ofType, Values.list, Values.nullable, Values.refersTo]
+  valueType: object
+  minCount: 0
+  maxCount: -1
