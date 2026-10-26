@@ -89,7 +89,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-072](#dec-072-stable-v1-justified-by-data) | Decision | Stable V1 justified by data | Accepted; stability and comparison evidence tracked in the delivery plan |
 | [DEC-073](#dec-073-change-minimality-on-an-unchanged-model) | Decision | Change minimality on an unchanged model | Accepted; implementation in session S3 of the delivery plan |
 | [DEC-074](#dec-074-canonical-model-track-parallel-to-v1) | Decision | Canonical model track, parallel to V1 | Accepted; W1 decisions taken, tracked in the delivery plan |
-| [DEC-075](#dec-075-kind-extension-and-one-core-120) | Decision | Kind extension and one Core 1.2.0 | Accepted; implementation in the canonical model track, merged after the F_fix pin |
+| [DEC-075](#dec-075-kind-extension-and-one-core-120) | Decision | Kind interfaces and one Core 1.2.0 | Accepted; implementation in the canonical model track, merged after the F_fix pin |
 | [DEC-076](#dec-076-markitect-is-developed-as-a-regular-software-project) | Decision | Markitect is developed as a regular software project | Accepted; retirement of the self-model and cleanup tracked in the delivery plan |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
@@ -924,17 +924,21 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Architecture:** the project owner decides the architecture, and the canonical model encodes it as its own structure: the Package tree with its ownership areas, Package dependency rules, Interface Definitions and placement decisions, with no second, descriptive architecture beside it ([owner decision](sources/model-architecture-20261026.md); the structural list is the session's proposal that the owner approved). The source reads this as leaving architecture open only by the owner's explicit choice.
 - **Owners:** the session "Markitect evaluation and canonical model design" leads W1 and W3 and drafts W2 and W4. The [delivery plan](../implementation-plan.md#canonical-model-track-owner-approval-26-october) tracks the track.
 
-### DEC-075 Kind extension and one Core 1.2.0
+<a id="dec-075-kind-extension-and-one-core-120"></a>
 
-- **Status:** Accepted by the owner, 26 October 2026 ([verbatim source](sources/model-track-w1-decisions-20261026.md)), confirming the G1 design v0.2 of the [canonical model track](#dec-074-canonical-model-track-parallel-to-v1) with Option A. It changes the protected foundation (concept §5.5). Not yet in source; the coordinator has asked for the design document to land with the implementation as `docs/design/kind-extension.md`.
-- **Decision:** a new Core Property `extends` on Kind lists base Kinds.
-  - A Kind's effective field contract is the union of its bases' contracts plus its own `properties`, with unique names and no overriding.
-  - A value reference whose target is a base Kind accepts Definitions of Kinds that extend it, directly or transitively. Meta positions stay exact.
-  - The extension graph is acyclic; `Kind` and `Property` cannot be bases, and user-defined metaclasses stay excluded.
-  - Whether a derived Kind's body contradicts its bases is semantic and stays with agents and reviewers ([DEC-003](#dec-003-the-compiler-is-a-borrowed-concept)).
-- **Core edition (Option A):** this creates `markitect-core` 1.2.0, and the compiler knows only that edition. Everything checked from Main migrates: fixtures, tests, the self-model's embedded Core and `software-basics`, which becomes 0.3.0 with identical Definitions. Frozen study material stays reproducible at its recorded commits, and no recorded result changes.
-- **Reason:** without extension, a project cannot build on a Library Kind; a copied Kind fails every reference to the original, so a standard Library would be copy-paste. One Core edition follows [DEC-032](#dec-032-quality-simplicity-and-stability-over-effort-and-compatibility).
-- **Owners and order:** the canonical model track's session implements it, with the language-contract amendment, the compiler, the type-contract closure and modeled scope following `extends`, and the migration. It merges only after the coordinator has pinned F_fix for the fix plan's native controls ([delivery plan](../implementation-plan.md#canonical-model-track-owner-approval-26-october)).
+### DEC-075 Kind interfaces and one Core 1.2.0
+
+- **Status:** Accepted by the owner, 26 October 2026, first as Kind extension with Option A ([W1 decisions](sources/model-track-w1-decisions-20261026.md)), then amended the same day, before any of that code merged, to interfaces instead of inheritance ([verbatim source](sources/model-track-interfaces-20261026.md)). It changes the protected foundation (concept §5.5). Not yet in source; the coordinator has asked for the design document to land with the implementation as `docs/design/kind-interfaces.md`.
+- **Decision:**
+  - A new Core Property `implements` on Kind lists interface Kinds. The compiler checks that the implementing Kind itself lists every Property each interface requires. No fields are inherited, so every Kind shows its whole contract.
+  - A value reference whose target is an interface Kind accepts Definitions of Kinds that implement it.
+  - Reusing a Library Kind's fields needs no new feature: a Kind lists the Library's Properties in its own `properties`.
+  - The Core Property `type`, a field's value type, is renamed `valueType`. Kind stays the type of a Definition.
+  - Whether a Kind's body fits the meaning of its interfaces is semantic and stays with agents and reviewers ([DEC-003](#dec-003-the-compiler-is-a-borrowed-concept)). Further rules follow the reworked design and its independent review.
+- **Superseded:** `extends` with inherited field contracts, as confirmed earlier the same day.
+- **Core edition (Option A):** this creates `markitect-core` 1.2.0, and the compiler knows only that edition. Everything checked from Main migrates: fixtures, tests, the self-model's embedded Core until slice R3a retires the self-model ([DEC-076](#dec-076-markitect-is-developed-as-a-regular-software-project)), and `software-basics`, which becomes 0.3.0 with identical Definitions. Frozen study material stays reproducible at its recorded commits, and no recorded result changes.
+- **Reason:** a project must build on Library Kinds, and references need "any of these". Interfaces give both without hidden inherited fields, inheritance chains or fragile bases, as Go does. One Core edition follows [DEC-032](#dec-032-quality-simplicity-and-stability-over-effort-and-compatibility).
+- **Owners and order:** the canonical model track's session implements it, with the language-contract amendment, the compiler, any organization changes the reworked design needs, and the migration; the modeling guide, the quality criteria and the charter replace their `extends` examples. It merges only after the coordinator has pinned F_fix for the fix plan's native controls ([delivery plan](../implementation-plan.md#canonical-model-track-owner-approval-26-october)).
 
 ### DEC-076 Markitect is developed as a regular software project
 
