@@ -31,4 +31,4 @@ Use this map to find the document that owns a decision, a guide or a piece of ev
 
 Source checks, provider runs, release evidence, comparative findings and human acceptance answer different questions. Follow each owner for its current scope; a dated report remains evidence for the inputs and outcome it records.
 
-The generated [project view](markitect/project.md) is a readable output of the canonical project model. Change its owner and regenerate the view when it needs an update. The [canonical Library model](../testdata/library/README.md) is the shared fixture of the qualification.
+Markitect itself is developed as an ordinary software project without a canonical self-model ([DEC-076](concepts/register.md#dec-076-markitect-is-developed-as-a-regular-software-project)); these documents are its canonical description, one owner per topic. The [canonical Library model](../testdata/library/README.md) is the shared fixture of the qualification.

@@ -1,7 +1,0 @@
-imports:
-  - package: vocabulary
-    as: Vocab
-id: source-checks
-kind: Vocab.Rule
-body: "Check exact package ownership and permitted imports, repository coverage, generated view freshness, module pins and literal pipeline commands against actual canonical preparation. Tests exercise failures and finite boundaries. No disabled gate, fake success or compatibility branch may make an unimplemented replacement appear complete."
-spec: {}

@@ -1,6 +1,6 @@
 # Development
 
-Markitect is built around canonical language v1 and delegated realization. Current source provides read-only preparation, the guarded generated model view, standalone hierarchical Runs and Apply through stored Verify approval and guarded publication. Extract, Cockpit and interactive authoring are retired. [AGENTS.md](AGENTS.md), the [delivery plan](docs/implementation-plan.md) and the bounded dispatch own authority and shared-file reservations. Source availability does not establish native runtime qualification.
+Markitect is built around canonical language v1 and delegated realization. Current source provides read-only preparation, the guarded generated model view, standalone hierarchical Runs and Apply through stored Verify approval and guarded publication. Extract, Cockpit and interactive authoring are retired. [AGENTS.md](AGENTS.md), the [delivery plan](docs/implementation-plan.md) and the bounded dispatch own authority and shared-file reservations. Source availability does not establish native runtime qualification. Markitect itself is developed as an ordinary software project without a canonical self-model ([DEC-076](docs/concepts/register.md#dec-076-markitect-is-developed-as-a-regular-software-project)).
 
 ## Ownership and layout
 
@@ -8,13 +8,13 @@ All maintained Go code belongs to one root module. `cmd/markitect` delegates to 
 
 The [code map](docs/development/code-map.md), [architecture](docs/architecture.md) and [dependency rules](docs/development/modules.md) describe actual packages. Shared hermetic `internal/testkit` is test-only and imports no Markitect package. The standalone bootstrap in `packaging/bootstrap` and source smoke in `tools/smoke` import no product package.
 
-The self-model is `.markitect/model.yaml`, its `model-lock.yaml` and Definition tree. An exact registry entry assigns each artifact to one responsibility and actual Definition basis. Canonical/control inputs are protected separately. An exact ignore needs a reason and never supplies missing realization. Implementation-only changes need not alter intent.
+Intent lives in ordinary documentation, one canonical page per topic ([documentation maintenance](docs/development/documentation.md)); a change updates that page together with the code. Target projects keep `.markitect/`; product code and tests that handle it use fixtures, never this repository's own files.
 
 ## Verify a change
 
 Use Git and Go from `go.mod`. Run meaningful local checks for the actual change. During development, automatic PR, Main-push and scheduled CI are paused; full CI remains available by manual dispatch and to the release workflow. Independent review and focused local checks are the default merge basis under the [delivery plan](docs/implementation-plan.md#integration). Do not repeat unrelated full suites for unchanged source. Do not edit sources while a gate runs, and await each running Go process before another Go command in the same worktree.
 
-For prose-only changes, check links in the changed pages with `python -B scripts/check-docs.py PATH...` and run `git diff --check`. Keep structural model/accounting preparation where required by [AGENTS.md](AGENTS.md). For code or control changes, run the relevant tests and validators; broaden validation when the changed contract or a concrete failure calls for it. Record actual results and limitations in the PR.
+For prose-only changes, check links in the changed pages with `python -B scripts/check-docs.py PATH...` and run `git diff --check`. For code or control changes, run the relevant tests and validators; broaden validation when the changed contract or a concrete failure calls for it. Record actual results and limitations in the PR.
 
 The full pipeline retains Linux quality checks, the race detector and optional Windows validation. Request it explicitly when useful:
 
@@ -30,9 +30,6 @@ go test ./... -count=1 -timeout=20m
 go vet ./...
 go build ./...
 go run ./cmd/markitect-check-architecture --repo .
-go run ./cmd/markitect check --repo .
-go run ./cmd/markitect check --repo . --revision HEAD
-go run ./cmd/markitect-check-modules --repo . --hooks .markitect/modules/githooks.config --pipelines .markitect/modules/pipelines.config
 python -B -m unittest discover -s scripts -p test_*.py
 python -B scripts/check-docs.py
 python -B -m unittest discover -s tools/library-oracle
@@ -40,18 +37,9 @@ python -B -m unittest discover -s tools/library-oracle
 
 On Windows, real Git is much slower: `internal/adapters/gitrepo` alone took 23 minutes on the CI runner and up to 40 minutes on a loaded workstation. Use `-timeout=60m` there, as Windows CI does. Tests that do not test time take their Run deadline from the test's own deadline, so the `-timeout` value bounds a hang.
 
-Run `gofmt` on changed Go files and `git diff --check`. CI checks tracked Go formatting, every production/test/platform import, actual package-map entries, complete working/fixed accounting, selected hook/pipeline pins and generated view freshness. The independent Library oracle and bounded transport checks retain their scope. Obsolete engines and their tests/gates are removed together; no skips or success stubs may replace required checks.
+Run `gofmt` on changed Go files and `git diff --check`. CI checks module checksums, tests with and without the race detector, vet, build, tracked Go formatting, every production/test/platform import and actual package-map entries, the packaged-source smoke, repository scripts, maintained documentation links, and the independent Library oracle with its bounded transport. Obsolete engines and their tests/gates are removed together; no skips or success stubs may replace required checks.
 
-Check official generated view bytes:
-
-```powershell
-$view = (go run ./cmd/markitect docs --repo . | ConvertFrom-Json).view
-if ($LASTEXITCODE -ne 0) { throw 'Preview failed' }
-$actual = 'sha256:' + (Get-FileHash -LiteralPath $view.path -Algorithm SHA256).Hash.ToLowerInvariant()
-if ($actual -ne $view.contentDigest) { throw 'Generated model view is stale' }
-```
-
-After model changes, use the preview's `previewDigest` for the guarded write in [AGENTS.md](AGENTS.md). Canonical working files must follow the repository's LF policy before preview: the view includes original-byte hashes, and staging CRLF files normalizes the index without changing those working bytes. After committing, also preview with `--revision HEAD` and compare its `contentDigest` with the committed view, as the CI freshness check does. Do not alter model hashing or hand-edit generated output to hide a byte mismatch. Regenerate the code map officially when packages or their mapped guidance change:
+Regenerate the code map officially when packages or their mapped guidance change:
 
 ```text
 go test ./internal/tooling/architecture -run TestCodeMapPage -update
@@ -77,4 +65,4 @@ The retired v0.14.1 distribution and its [preserved source and guide](https://gi
 
 ## Release work
 
-[Operations](docs/guides/operations.md) and [distribution](packaging/README.md) own separate release work. Maintenance entrypoints are under `cmd/markitect-release`, `cmd/markitect-check-architecture` and `cmd/markitect-check-modules`. Source packages retain the root license, embedded [notices](internal/tooling/licenses/notices.md), required test data and explicit invocation examples. Use an external build cache when needed; Gitignore does not filter the complete product census. A source version does not establish a published or accepted release.
+[Operations](docs/guides/operations.md) and [distribution](packaging/README.md) own separate release work. Maintenance entrypoints are under `cmd/markitect-release` and `cmd/markitect-check-architecture`. Source packages retain the root license, embedded [notices](internal/tooling/licenses/notices.md), required test data and explicit invocation examples. Use an external build cache when needed; Gitignore does not filter the complete product census. A source version does not establish a published or accepted release.

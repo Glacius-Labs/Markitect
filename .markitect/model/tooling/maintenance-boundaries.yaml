@@ -1,7 +1,0 @@
-imports:
-  - package: vocabulary
-    as: Vocab
-id: maintenance-boundaries
-kind: Vocab.Rule
-body: "Maintain strict root-layout source packaging, deterministic release archives, licenses, distribution and guarded installation as independent maintenance services. Reject unsupported files, redirection, nested modules and archive collisions. Keep required historical release evidence and the named archive refs. Retire public release pages and downloads only on explicit owner instruction; retain their source/asset identities and attestations without implying current availability. A source smoke is not release, installation, provider or Apply acceptance."
-spec: {}

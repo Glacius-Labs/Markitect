@@ -77,12 +77,12 @@ func TestSyncDistributionWritesChecksAndExportsDeterministicFiles(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"Intro stays here", "Footer stays here", "v1.2.3", digest(assets[assetNames(testTag)[2]]), digest(assets[assetNames(testTag)[1]]), "markitect-sample-v1.2.3"} {
+	for _, want := range []string{"Intro stays here", "Footer stays here", "v1.2.3", digest(assets[assetNames(testTag)[2]]), digest(assets[assetNames(testTag)[1]])} {
 		if !strings.Contains(string(gotReadme), want) {
 			t.Errorf("generated README omitted %q", want)
 		}
 	}
-	for _, want := range []string{"markitect check --repo .\\markitect-sample-v1.2.3", "markitect check --repo ./markitect-sample-v1.2.3", "markitect context product/model", "cmd/markitect@v1.2.3", "ConvertFrom-Json"} {
+	for _, want := range []string{"markitect check --repo .", "markitect context PACKAGE --repo .", "testdata/library/README.md", "cmd/markitect@v1.2.3", "ConvertFrom-Json"} {
 		if !strings.Contains(string(gotReadme), want) {
 			t.Errorf("generated README omitted current v1 source route %q", want)
 		}

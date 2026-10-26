@@ -1,8 +1,0 @@
-imports:
-  - package: vocabulary
-    as: Vocab
-id: go-build
-kind: Vocab.Check
-body: "Run the declared go-build source maintenance check and retain failures separately from runtime and acceptance evidence."
-spec:
-  command: "go build ./..."

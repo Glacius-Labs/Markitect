@@ -1,7 +1,0 @@
-imports:
-  - package: vocabulary
-    as: Vocab
-id: read-only-preparation
-kind: Vocab.Rule
-body: "Acquire explicitly selected model and control inputs through Project-owned ports. Prepare the Model check, registry, complete strict file accounting, authored ownership, scope, Manager instructions, declared checks and static contexts from one complete capture; recapture rather than extend an old guard. Preserve original bytes, source provenance and authored absence. Known invalid input differs from incomplete acquisition. Project does not decode runtime profiles, resolve strategies, roles or budgets, start Sessions, execute checks, allocate working copies or publish artifacts."
-spec: {}

@@ -73,33 +73,6 @@ jobs:
       - name: Verify modules
         run: go mod verify
 
-      - name: Check the self-hosted project model
-        shell: bash
-        run: |
-          # The full report goes to a file; a failure prints only its findings.
-          report="$RUNNER_TEMP/project-check.json"
-          go run ./cmd/markitect check --repo . --revision ${{ github.sha }} > "$report" || { grep -A3 '"code":' "$report" | head -n 200; exit 1; }
-          # check passes stale and orphaned registry realization as work for Apply; Main is maintained directly and keeps none.
-          if grep -Eq '"(stale|orphaned)": \[' "$report"; then grep -EA8 '"(stale|orphaned)": \[' "$report" | head -n 200; exit 1; fi
-
-      - name: Check that the project model view is current
-        if: runner.os == 'Linux'
-        shell: python {0}
-        run: |
-          # The rendered content digest is separate from the reviewed write-plan digest.
-          import hashlib, json, subprocess, sys
-          sha = "${{ github.sha }}"
-          view = json.loads(subprocess.run(["go", "run", "./cmd/markitect", "docs", "--repo", ".", "--revision", sha], check=True, stdout=subprocess.PIPE).stdout)["view"]
-          committed = subprocess.run(["git", "show", sha + ":" + view["path"]], check=True, stdout=subprocess.PIPE).stdout
-          if "sha256:" + hashlib.sha256(committed).hexdigest() != view["contentDigest"]:
-              sys.exit(view["path"] + " is stale; regenerate it with 'go run ./cmd/markitect docs --repo . --expect PREVIEW_DIGEST --write' and commit it.")
-
-      - name: Check full project artifact accounting
-        run: go run ./cmd/markitect check --repo .
-
-      - name: Check configured modules
-        run: go run ./cmd/markitect-check-modules --repo . --hooks .markitect/modules/githooks.config --pipelines .markitect/modules/pipelines.config
-
       - name: Check Go formatting
         shell: bash
         run: |

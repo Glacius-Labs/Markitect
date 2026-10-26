@@ -161,20 +161,6 @@ func (s *smoke) distributionChecks(bootstrapDir string) []check {
 		{"bootstrap prints third-party notices", func() error { return s.notices(bootstrapDir) }},
 		{"packaged CLI reports a build version", s.version},
 		{"real Library M1/M2 read-only preparation and refusals", s.libraryPreparation},
-		{"actual self-model structural accounting", func() error {
-			out, err := s.run(s.repo, nil, s.tool("markitect"), "check", "--repo", s.repo)
-			if err != nil {
-				return err
-			}
-			var report struct{ Status string }
-			if err := decode(out, &report); err != nil {
-				return err
-			}
-			if report.Status != "passed" {
-				return fmt.Errorf("self-model preparation did not pass: %s", tail(out))
-			}
-			return nil
-		}},
 	}
 }
 
@@ -241,7 +227,7 @@ func (s *smoke) buildTools(archive string) error {
 	if err := unzip(archive, source); err != nil {
 		return err
 	}
-	for _, name := range []string{"markitect", "markitect-release", "markitect-check-architecture", "markitect-check-modules", "markitect-agentd"} {
+	for _, name := range []string{"markitect", "markitect-release", "markitect-check-architecture", "markitect-agentd"} {
 		if _, err := s.run(source, nil, "go", "build", "-trimpath", "-buildvcs=false", "-o", s.tool(name), "./cmd/"+name); err != nil {
 			return err
 		}

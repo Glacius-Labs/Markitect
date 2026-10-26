@@ -26,7 +26,7 @@ The models that exist do not look like typed programs.
   - 49 backticked field names are used in 3 or more Packages without a Definition of their own.
 
   The last two figures come from a throwaway session script, not in the repository.
-- **Self-model:**
+- **Self-model** (retired on 26 October 2026, [DEC-076](../concepts/register.md#dec-076-markitect-is-developed-as-a-regular-software-project); kept as part of the diagnosis):
   - 26 content Definitions and no links at all;
   - 16 of its 18 content Packages hold one Definition each;
   - it embeds its own copy of `markitect/core` with `dependencies: {}`.

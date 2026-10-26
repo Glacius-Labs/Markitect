@@ -1,8 +1,0 @@
-imports:
-  - package: vocabulary
-    as: Vocab
-id: library-oracle
-kind: Vocab.Check
-body: "Run the declared library-oracle source maintenance check and retain failures separately from runtime and acceptance evidence."
-spec:
-  command: "python -B -m unittest discover -s tools/library-oracle"
