@@ -5,11 +5,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"slices"
 	"strings"
 	"unicode/utf8"
 
-	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
@@ -26,8 +24,13 @@ func defines(p project.Prepared, address string) bool {
 	if i <= 0 || i == len(address)-1 {
 		return false
 	}
-	m, ok := p.Topology().Manager(address[:i])
-	return ok && slices.Contains(m.Definitions, model.Identity{Package: address[:i], ID: address[i+1:]})
+	m, _ := p.Topology().Manager(address[:i])
+	for _, d := range m.Definitions {
+		if d.Package == address[:i] && d.ID == address[i+1:] {
+			return true
+		}
+	}
+	return false
 }
 
 // Initial is what the next Implement receives of a closed result's Findings:
