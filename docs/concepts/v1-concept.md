@@ -349,7 +349,7 @@ Verify is a fresh Run over exactly the candidate under review. The complete orga
 
 Verify does not repair the candidate; its own investigations and check files stay local. The result is Approve, Reject with the necessary realization Findings, or a model blocker. A Reject is a regular verification result, not a technical failure.
 
-Verify judges the candidate's changes against the Apply's bound input, across correction loops, within this conformance review (DEC-073). A change that removes conforming behavior or touches an unrelated area without a reason is a Reject with a Finding; other optional additions are a note. When the host states that the bound input was already verified under exactly this model, execution configuration and dependencies, and Verify finds no defect, any change is a Reject. There is no per-file form.
+Verify judges the candidate's changes against the Apply's bound input, across correction loops, within this conformance review (DEC-073). A change that removes conforming behavior or touches an unrelated area without a reference to a current obligation is a Reject with a Finding; other optional additions are a Note. When the host states that the bound input was already verified under exactly this model, execution configuration and dependencies, and Verify finds no defect, any change is a Reject. There is no per-file form.
 
 ### 11.4 Corrections after Verify
 
