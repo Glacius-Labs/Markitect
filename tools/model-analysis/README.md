@@ -10,9 +10,9 @@ The tool reads the JSON report of `markitect check`. Its per-Manager contexts, j
 go run ./cmd/markitect check --repo . > check.json
 ```
 
-Use the same `--model` and `--dependency` options as for any check. PowerShell 5.1 writes redirected output as UTF-16; the tool reads both encodings. Only a `passed` report with contexts is accepted.
+Use the same `--model` and `--dependency` options as for any check. PowerShell 5.1 writes redirected output as UTF-16; the tool reads both encodings. Every command except `lock` needs a `passed` report with contexts.
 
-File-local imports are not in the report. `lint --repo DIR` reads them from each Definition's source file, whose path in the report is relative to the checked repository. `lock --repo DIR` reads the dependency manifests the same way.
+File-local imports are not in the report. `lint --repo DIR` reads them from each Definition's source file. `lock --repo DIR` reads the dependency manifests the same way. A source's `Origin`, `gitrepo:BOUNDARY::MANIFEST`, says what its path is relative to: `.` means the repository given with `--repo`, and an absolute boundary is the directory of a manifest given by absolute path. The files are read from the working tree, also for a report made with `--revision`.
 
 ## Commands
 
@@ -21,8 +21,10 @@ python -I -B tools/model-analysis/model_analysis.py graph check.json [--json]
 python -I -B tools/model-analysis/model_analysis.py refs check.json PACKAGE/ID [--json]
 python -I -B tools/model-analysis/model_analysis.py impact old.json new.json [--transitive] [--json]
 python -I -B tools/model-analysis/model_analysis.py lint check.json [--repo DIR] [--rules RULES.json] [--json]
-python -I -B tools/model-analysis/model_analysis.py lock check.json [--repo DIR]
+python -I -B tools/model-analysis/model_analysis.py lock check.json [--repo DIR] [--out FILE]
 ```
+
+Output is UTF-8 whatever the console's code page, because Package names may use any script.
 
 **Edges.** An edge is a typed reference anywhere in a local Definition's `spec`, objects and lists included, or a body link. A Definition's `kind` is a type use and not an edge.
 
@@ -34,24 +36,30 @@ python -I -B tools/model-analysis/model_analysis.py lock check.json [--repo DIR]
 
 **refs** lists a Definition's incoming edges with their position, the local Definitions of that Kind when it is a Kind, and the registry artifacts that realize it.
 
-**impact** compares two reports. A Definition changed when its kind, title, body, spec or link targets differ; source paths, digests and link coordinates are provenance and do not count. It lists changed, added and removed local Definitions, the Definitions that reference any of them (by edge or as instances of a changed Kind), and the registry artifacts that realize either. `--transitive` follows referrers of referrers.
+**impact** compares two reports. A Definition changed when its kind, title, body, spec or link targets differ; source paths, digests and link coordinates are provenance and do not count. It lists:
+- changed, added and removed local Definitions;
+- changed imported Definitions, such as a Library Kind after a dependency update. Only those that both reports' contexts carry, that is, the type contracts and targets the model uses, can be compared;
+- the local Definitions that reference any of them, by edge or as instances of a changed Kind;
+- the registry artifacts that realize either.
+
+`--transitive` follows referrers of referrers.
 
 **lint** gives warnings, never failures ([ENH-002](../../docs/concepts/register.md#enh-002-model-quality-linter-and-metrics)); it exits 0 whatever it finds. The thresholds are provisional until W6 of the charter.
 
 | Signal | Warns when |
 |---|---|
 | `size` | a content Definition's body has more than 150 words; more than 300 is `strong` |
-| `isolated` | a content Definition has no edge in or out |
+| `isolated` | a content Definition has no edge in or out. A model written with empty `spec` and no links gets this for nearly every Definition |
 | `no-area` | a Package holds content Definitions but no registry record or execution ownership area names it as owner |
-| `unset-field` | a field of a Kind that local Definitions use is set by none of them; only top-level `spec` fields, Core meta-Kinds excluded |
-| `undefined-term` | a backticked term is used in 3 or more Packages and no Definition has that ID (case-insensitive) |
+| `unset-field` | a field of a local Kind is set by none of the local Definitions; only top-level `spec` fields. Imported Library Kinds may have optional fields a model never needs, so they are left out |
+| `undefined-term` | a backticked term is used in 3 or more Packages and no Definition in the report has that ID (case-insensitive). The report holds only the imported Definitions the model uses, and `true`, `false` and `null` never count |
 | `unused-import` | a Definition file imports a Package that none of its edges and not its kind points into (needs `--repo`) |
 | `import-cycle` | Packages import each other in a cycle (needs `--repo`) |
 | `direction` | a Package edge breaks the rules file (needs `--rules`) |
 
 A backticked term counts when it matches `--term-pattern`, by default `[A-Za-z][A-Za-z0-9]*`: field-name-like words such as `memberId`. Codes like `invalid_state` and phrases are left out.
 
-The rules file is JSON with `layers`, `forbid` or both. Layers run from top to bottom, and a Package may depend on Packages of its own or a lower layer only. Patterns are shell-style globs over Package paths:
+The rules file is JSON with `layers`, `forbid` or both. Layers run from top to bottom, and a Package may depend on Packages of its own or a lower layer only. Patterns are shell-style globs over Package paths, and `*` also matches `/`: `billing/*` covers `billing/a/b`.
 
 ```json
 {
@@ -60,11 +68,11 @@ The rules file is JSON with `layers`, `forbid` or both. Layers run from top to b
 }
 ```
 
-**lock** prints the `model-lock.yaml` text for every non-local model in the report: its version from the dependency's manifest and its `canonicalModelDigest`. A version it cannot read is printed as `UNKNOWN`, with a note on standard error.
+**lock** prints the `model-lock.yaml` text for every non-local model in the report: its version from the dependency's manifest and its `canonicalModelDigest`. Every scalar is double-quoted, so a version such as `1.0` stays a string. It also accepts a report whose own lock check failed, because dependency digests are reported even then; that is how a missing or outdated lock is written. A version or digest it cannot find is printed as `UNKNOWN`, with a note on standard error. `--out FILE` writes UTF-8 with LF line ends; PowerShell 5.1 redirection would write UTF-16.
 
 ## Limits
 
-- The import reader understands the forms the [language contract](../../docs/design/language-contract.md#imports) allows when written on one line or as a block list of `package`/`as` mappings. A file it does not understand is named in a note, not guessed.
+- The import reader understands the forms the [language contract](../../docs/design/language-contract.md#imports) allows: a flow list on one line, or a block list whose items are `package`/`as` mappings in block style. A file it does not understand, such as a block item written `- {package: a}`, is named in a note, not guessed.
 - The joined contexts hold every Definition of a Package that has a Manager. When the report's Definition count for the local model differs, `graph` says so.
 - `undefined-term` reads the term spelling literally: `issueCredit` is not matched to a Definition `issue-credit`.
 

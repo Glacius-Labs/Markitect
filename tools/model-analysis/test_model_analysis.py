@@ -22,7 +22,7 @@ def definition(address, kind, body="Text.", spec=None, links=()):
     package, local = ma.parse_identity(address)
     return {"identity": ref(address), "kind": ref(kind), "title": None, "body": body, "spec": spec or {},
             "bodyLinks": [{"Target": ref(t), "Display": None, "Coordinates": None} for t in links] or None,
-            "source": {"Origin": "repo", "Path": f"model/{package}/{local}.yaml", "Digest": "sha256:" + "3" * 64}}
+            "source": {"Origin": "gitrepo:.::model.yaml", "Path": f"model/{package}/{local}.yaml", "Digest": "sha256:" + "3" * 64}}
 
 
 def words(n):
@@ -52,21 +52,23 @@ IMPORTS = {
 }
 
 
-def report(content=CONTENT, records=None, ownership=("b",), vocabulary=VOCABULARY):
-    """A passed check report: one context per content Package, each with the vocabulary and imported Core."""
-    contexts = []
+def report(content=CONTENT, records=None, ownership=("b",), vocabulary=VOCABULARY, vocabulary_digest=LOCAL, core=CORE,
+           dependency=("gitrepo:.::deps/core/model.yaml", "deps/core/model.yaml")):
+    """A passed check report: a definition-free Root context, then one context per content Package with the vocabulary and imported Core."""
+    contexts = [{"package": ".", "modelID": "fixture", "canonicalModelDigest": LOCAL, "definitions": None}]
     for package in sorted({d["identity"]["Package"] for d in content}):
         own = [d for d in content if d["identity"]["Package"] == package]
-        entries = [{"definition": d, "canonicalModelDigest": LOCAL} for d in own + vocabulary]
-        entries += [{"definition": d, "canonicalModelDigest": CORE_DIGEST} for d in CORE]
+        entries = [{"definition": d, "canonicalModelDigest": LOCAL} for d in own]
+        entries += [{"definition": d, "canonicalModelDigest": vocabulary_digest} for d in vocabulary]
+        entries += [{"definition": d, "canonicalModelDigest": CORE_DIGEST} for d in core]
         contexts.append({"package": package, "modelID": "fixture", "canonicalModelDigest": LOCAL, "definitions": entries})
     if records is None:
         records = [{"Owner": "a", "Path": "src/a/x.go", "Form": "code", "Realizes": ["a/x"], "Why": "Implements."}]
     return {"status": "passed", "contexts": contexts, "stages": {"structural": {
         "model": {"models": [{"id": "fixture", "local": True, "definitions": len(content) + len(VOCABULARY), "canonicalModelDigest": LOCAL,
-                              "source": {"Origin": "repo", "Path": "model.yaml"}},
+                              "source": {"Origin": "gitrepo:.::model.yaml", "Path": "model.yaml"}},
                              {"id": "markitect-core", "local": False, "canonicalModelDigest": CORE_DIGEST,
-                              "source": {"Origin": "repo", "Path": "deps/core/model.yaml"}}]},
+                              "source": {"Origin": dependency[0], "Path": dependency[1]}}]},
         "registry": {"records": records},
         "execution": {"declarations": {"Ownership": {"Value": [{"Path": {"Value": "b/"}, "Owner": {"Value": p}} for p in ownership]}}}}}}
 
@@ -142,6 +144,13 @@ class ImpactTests(unittest.TestCase):
         self.assertEqual(r["changed"], ["vocab/Rule"])
         self.assertEqual(r["affected"], ["a/x", "b/y", "c/z", "d/lonely", "vocab/owner"])
 
+    def test_changed_imported_contract_reaches_local_users(self):
+        core = copy.deepcopy(CORE)
+        core[0]["body"] = "A new Core wording."
+        r = ma.impact(ma.Model(report()), ma.Model(report(core=core)))
+        self.assertEqual((r["changed"], r["changedImported"]), ([], ["markitect/core/Kind"]))
+        self.assertEqual(r["affected"], ["vocab/Rule"])
+
 
 class ImportReaderTests(unittest.TestCase):
     def test_forms(self):
@@ -184,6 +193,21 @@ class LintTests(unittest.TestCase):
         self.assertEqual({s for sig, _, s in found if sig == "direction"}, {"b -> a", "c -> a"})
         self.assertEqual(result["notes"], [])
 
+    def test_imported_kinds_literals_and_bom_files(self):
+        imported = ma.lint(ma.Model(report(vocabulary_digest=CORE_DIGEST)))
+        self.assertNotIn("unset-field", imported["counts"])
+        content = copy.deepcopy(CONTENT)
+        for d in content[:3]:
+            d["body"] += " `true`"
+        self.assertEqual([f["subject"] for f in ma.lint(ma.Model(report(content)))["findings"] if f["signal"] == "undefined-term"], ["fooBar"])
+        with tempfile.TemporaryDirectory() as tmp:
+            path = pathlib.Path(tmp, "x.yaml")
+            path.write_text(IMPORTS["a/x"], encoding="utf-8-sig")
+            model = ma.Model(report())
+            model.definitions[("a", "x")]["source"] = {"Origin": f"gitrepo:{tmp}::model.yaml", "Path": "x.yaml"}
+            imports, _ = ma.definition_imports(model, "unused")
+        self.assertEqual(len(imports[("a", "x")]), 4)
+
     def test_without_repo_import_signals_are_skipped_with_a_note(self):
         result = ma.lint(ma.Model(report()))
         self.assertFalse({"unused-import", "import-cycle"} & set(result["counts"]))
@@ -206,13 +230,36 @@ class LockTests(unittest.TestCase):
             manifest.parent.mkdir(parents=True)
             manifest.write_text('formatVersion: 1\nid: markitect-core\nversion: "1.1.0"\nroot: model\n', encoding="utf-8")
             text, notes = ma.lock_lines(report(), repo)
-        self.assertEqual(text, f"formatVersion: 1\nmodels:\n  markitect-core:\n    version: 1.1.0\n    digest: {CORE_DIGEST}\n")
+        self.assertEqual(text, f'formatVersion: 1\nmodels:\n  "markitect-core":\n    version: "1.1.0"\n    digest: "{CORE_DIGEST}"\n')
         self.assertEqual(notes, [])
 
-    def test_missing_manifest_is_noted(self):
+    def test_absolute_dependency_uses_its_own_boundary_and_stays_a_string(self):
+        with tempfile.TemporaryDirectory() as repo, tempfile.TemporaryDirectory() as library:
+            pathlib.Path(repo, "model.yaml").write_text("formatVersion: 1\nid: fixture\nversion: 9.9\n", encoding="utf-8")
+            pathlib.Path(library, "model.yaml").write_text("formatVersion: 1\nid: markitect-core\nversion: 1.0\n", encoding="utf-8")
+            text, notes = ma.lock_lines(report(dependency=(f"gitrepo:{library}::model.yaml", "model.yaml")), repo)
+        self.assertIn('    version: "1.0"\n', text)
+        self.assertEqual(notes, [])
+
+    def test_failed_report_still_gives_dependency_lines(self):
+        failed = report()
+        failed["status"] = "failed"
+        self.assertIn(CORE_DIGEST, ma.lock_lines(failed, "does-not-exist")[0])
+
+    def test_missing_manifest_is_noted_and_non_reports_refused(self):
         text, notes = ma.lock_lines(report(), "does-not-exist")
-        self.assertIn("version: UNKNOWN", text)
+        self.assertIn('version: "UNKNOWN"', text)
         self.assertEqual(len(notes), 1)
+        for bad in ({}, [], {"stages": {"structural": {"model": {"models": []}}}}):
+            with self.assertRaises(ma.InputError):
+                ma.lock_lines(bad)
+
+    def test_out_file_is_utf8_with_lf(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source, out = pathlib.Path(tmp, "report.json"), pathlib.Path(tmp, "model-lock.yaml")
+            source.write_text(json.dumps(report()), encoding="utf-8")
+            self.assertEqual(ma.main(["lock", str(source), "--repo", tmp, "--out", str(out)]), 0)
+            self.assertTrue(out.read_bytes().startswith(b"formatVersion: 1\nmodels:\n"))
 
 
 class CommandTests(unittest.TestCase):
@@ -234,6 +281,19 @@ class CommandTests(unittest.TestCase):
             code, out = self.run_main("impact", str(path), str(path))
             self.assertIn("Changed: 0", out)
             self.assertEqual(self.run_main("refs", str(path), "nope")[0], 2)
+            self.assertEqual(self.run_main("lint", str(path), "--term-pattern", "(")[0], 2)
+
+    def test_unicode_package_names_print_on_a_narrow_console(self):
+        content = [definition("文档/x", "vocab/Rule")]
+        with tempfile.TemporaryDirectory() as tmp:
+            path = pathlib.Path(tmp, "report.json")
+            path.write_text(json.dumps(report(content), ensure_ascii=False), encoding="utf-8")
+            raw = io.BytesIO()
+            console = io.TextIOWrapper(raw, encoding="cp1252")
+            with redirect_stdout(console):
+                self.assertEqual(ma.main(["graph", str(path)]), 0)
+                console.flush()
+        self.assertIn("文档".encode("utf-8"), raw.getvalue())
 
 
 if __name__ == "__main__":

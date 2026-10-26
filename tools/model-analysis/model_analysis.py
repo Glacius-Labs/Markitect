@@ -31,6 +31,7 @@ META_KINDS = {(CORE, "Kind"), (CORE, "Property")}
 WORDS_WARNING, WORDS_STRONG = 150, 300
 TERM_PACKAGES = 3
 TERM_PATTERN = r"[A-Za-z][A-Za-z0-9]*"
+LITERALS = {"true", "false", "null"}
 
 
 class InputError(Exception):
@@ -82,7 +83,7 @@ class Model:
     """The joined view of one check report."""
 
     def __init__(self, report):
-        if report.get("status") != "passed" or not report.get("contexts"):
+        if not isinstance(report, dict) or report.get("status") != "passed" or not report.get("contexts"):
             raise InputError("needs a passed `markitect check` report with contexts")
         self.definitions = {}
         self.local = set()
@@ -224,11 +225,17 @@ def _content_view(definition):
 
 
 def impact(old, new, transitive=False):
-    """Changed, added and removed local Definitions and who references them."""
-    changed = sorted(i for i in old.local & new.local if _content_view(old.definitions[i]) != _content_view(new.definitions[i]))
+    """Changed, added and removed local Definitions, changed imported contracts, and who references them.
+
+    Imported Definitions are compared only where both reports' contexts carry them.
+    """
+    common = old.definitions.keys() & new.definitions.keys()
+    differs = {i for i in common if _content_view(old.definitions[i]) != _content_view(new.definitions[i])}
+    changed = sorted(differs & old.local & new.local)
+    changed_imported = sorted(differs - old.local - new.local)
     added = sorted(new.local - old.local)
     removed = sorted(old.local - new.local)
-    seeds = set(changed) | set(added) | set(removed)
+    seeds = set(changed) | set(changed_imported) | set(added) | set(removed)
     referrers = collections.defaultdict(set)
     for model in (old, new):
         for s, t, _, _ in model.edges:
@@ -244,7 +251,8 @@ def impact(old, new, transitive=False):
     targets = {text(i) for i in seeds | affected}
     artifacts = sorted({(r.get("Path"), d) for model in (old, new) for r in model.records
                         for d in r.get("Realizes") or [] if d in targets})
-    return {"changed": [text(i) for i in changed], "added": [text(i) for i in added], "removed": [text(i) for i in removed],
+    return {"changed": [text(i) for i in changed], "changedImported": [text(i) for i in changed_imported],
+            "added": [text(i) for i in added], "removed": [text(i) for i in removed],
             "affected": [text(i) for i in sorted(affected)],
             "artifacts": [{"path": p, "realizes": d} for p, d in artifacts]}
 
@@ -306,14 +314,27 @@ def _import_entry(fields):
     return entry.get("package"), entry.get("as")
 
 
+def source_path(source, repo):
+    """The file a report Source names. Its Origin `gitrepo:BOUNDARY::MANIFEST` gives the
+    boundary its Path is relative to: `.` for a manifest given relative to the
+    repository, the manifest's directory for one given by absolute path."""
+    origin, boundary = source.get("Origin") or "", "."
+    if origin.startswith("gitrepo:") and "::" in origin:
+        boundary = origin[len("gitrepo:"):].rpartition("::")[0]
+    base = pathlib.Path(boundary)
+    if not base.is_absolute():
+        base = pathlib.Path(repo or ".") / base
+    return base / source.get("Path", "")
+
+
 def definition_imports(model, repo):
-    """{local Definition: [(package, alias)]} read from source files under repo; unread files are listed."""
+    """{local Definition: [(package, alias)]} read from the source files; files not read or understood are listed."""
     imports, unread = {}, []
     for identity in sorted(model.local):
-        path = pathlib.Path(repo) / (model.definitions[identity].get("source") or {}).get("Path", "")
+        path = source_path(model.definitions[identity].get("source") or {}, repo)
         try:
-            parsed = read_imports(path.read_text(encoding="utf-8"))
-        except OSError:
+            parsed = read_imports(path.read_text(encoding="utf-8-sig"))
+        except (OSError, UnicodeDecodeError):
             parsed = None
         if parsed is None:
             unread.append(text(identity))
@@ -365,7 +386,7 @@ def lint(model, repo=None, rules=None, term_pattern=TERM_PATTERN):
     for identity in model.local:
         used[model.kind(identity)].update((model.definitions[identity].get("spec") or {}).keys())
     for kind in sorted(used):
-        if kind in META_KINDS or kind not in model.definitions or model.kind(kind) != (CORE, "Kind"):
+        if kind in META_KINDS or kind not in model.local or model.kind(kind) != (CORE, "Kind"):
             continue
         for prop, _ in _spec_references((model.definitions[kind].get("spec") or {}).get("properties") or [], ""):
             if prop not in model.definitions:
@@ -374,7 +395,7 @@ def lint(model, repo=None, rules=None, term_pattern=TERM_PATTERN):
             if field not in used[kind]:
                 warn("unset-field", text(kind), f"field `{field}` is set by no local Definition")
 
-    ids = {i[1].lower() for i in model.definitions}
+    ids = {i[1].lower() for i in model.definitions} | LITERALS
     term_packages = collections.defaultdict(set)
     for identity in model.local:
         for term in re.findall(r"`([^`\n]+)`", model.definitions[identity].get("body") or ""):
@@ -420,32 +441,36 @@ def lint(model, repo=None, rules=None, term_pattern=TERM_PATTERN):
     return {"findings": findings, "counts": dict(collections.Counter(f["signal"] for f in findings)), "notes": notes}
 
 
-def _manifest(model_entry, repo):
-    """The manifest path a model entry names, resolved against repo or its Origin; None when absent."""
-    source = model_entry.get("source") or {}
-    candidates = [pathlib.Path(repo or ".") / source.get("Path", "")]
-    if source.get("Origin"):
-        candidates.append(pathlib.Path(source["Origin"]) / source.get("Path", ""))
-    return next((c for c in candidates if c.is_file()), None)
-
-
 def lock_lines(report, repo=None):
-    """model-lock.yaml text for every non-local model of a report, and notes on what could not be bound."""
+    """model-lock.yaml text for every non-local model of a report, and notes on what could not be bound.
+
+    Unlike the other commands this accepts a report whose own lock check failed:
+    dependency digests are reported even then, which is how a lock is bootstrapped.
+    Every scalar is double-quoted, because versions such as 1.0 must stay strings.
+    """
+    if not isinstance(report, dict):
+        raise InputError("not a check report")
     structural = (report.get("stages") or {}).get("structural") or {}
-    models = sorted((m for m in ((structural.get("model") or {}).get("models") or []) if not m.get("local")), key=lambda m: m["id"])
+    every = (structural.get("model") or {}).get("models") or []
+    if sum(1 for m in every if m.get("local")) != 1:
+        raise InputError("needs a check report that lists the local model and its dependencies")
+    models = sorted((m for m in every if not m.get("local")), key=lambda m: m["id"])
+    quote = lambda value: json.dumps(value, ensure_ascii=False)
     lines, notes = ["formatVersion: 1", "models:" + ("" if models else " {}")], []
     for m in models:
         version = None
-        manifest = _manifest(m, repo)
-        if manifest:
-            found = re.search(r"^version:\s*(.+?)\s*(#.*)?$", manifest.read_text(encoding="utf-8"), re.M)
+        manifest = source_path(m.get("source") or {}, repo)
+        if manifest.is_file():
+            found = re.search(r"^version:\s*(.+?)\s*(#.*)?$", manifest.read_text(encoding="utf-8-sig"), re.M)
             version = _unquote(found.group(1)) if found else None
         if version is None:
-            notes.append(f"{m['id']}: version not found; give --repo so the manifest can be read")
+            notes.append(f"{m['id']}: version not found in {manifest}; give --repo so the manifest can be read")
         digest = m.get("canonicalModelDigest") or ""
         if digest and not digest.startswith("sha256:"):
             digest = "sha256:" + digest
-        lines += [f"  {m['id']}:", f"    version: {version or 'UNKNOWN'}", f"    digest: {digest or 'UNKNOWN'}"]
+        if not digest:
+            notes.append(f"{m['id']}: no digest in the report; its model did not pass")
+        lines += [f"  {quote(m['id'])}:", f"    version: {quote(version or 'UNKNOWN')}", f"    digest: {quote(digest or 'UNKNOWN')}"]
     return "\n".join(lines) + "\n", notes
 
 
@@ -477,8 +502,9 @@ def format_refs(r):
 
 def format_impact(r):
     out = []
-    for key in ("changed", "added", "removed", "affected"):
-        out += [f"{key.capitalize()}: {len(r[key])}"] + [f"  {i}" for i in r[key]]
+    for key, label in (("changed", "Changed"), ("changedImported", "Changed imported"), ("added", "Added"),
+                       ("removed", "Removed"), ("affected", "Affected")):
+        out += [f"{label}: {len(r[key])}"] + [f"  {i}" for i in r[key]]
     out += [f"Artifacts: {len(r['artifacts'])}"] + [f"  {a['path']} (realizes {a['realizes']})" for a in r["artifacts"]]
     return "\n".join(out)
 
@@ -503,7 +529,9 @@ def main(argv=None):
         if name == "lint":
             sub.add_argument("--rules", help="JSON dependency-direction rules")
             sub.add_argument("--term-pattern", default=TERM_PATTERN, help="regular expression a backticked term must match")
-        if name != "lock":
+        if name == "lock":
+            sub.add_argument("--out", help="write the lock text to this file as UTF-8 with LF line ends")
+        else:
             sub.add_argument("--json", action="store_true")
     sub = commands.add_parser("impact")
     sub.add_argument("old")
@@ -511,10 +539,16 @@ def main(argv=None):
     sub.add_argument("--transitive", action="store_true", help="follow referrers of referrers")
     sub.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):  # Package names may be any Unicode; -I ignores PYTHONIOENCODING.
+            stream.reconfigure(encoding="utf-8")
     try:
         if args.command == "lock":
             output, notes = lock_lines(read_json(args.report), args.repo)
-            sys.stdout.write(output)
+            if args.out:
+                pathlib.Path(args.out).write_text(output, encoding="utf-8", newline="\n")
+            else:
+                sys.stdout.write(output)
             for note in notes:
                 print("note:", note, file=sys.stderr)
             return 0
@@ -528,8 +562,12 @@ def main(argv=None):
                 result, formatter = references(model, parse_identity(args.definition)), format_refs
             else:
                 rules = read_rules(args.rules) if args.rules else None
+                try:
+                    re.compile(args.term_pattern)
+                except re.error as error:
+                    raise InputError(f"--term-pattern: {error}") from None
                 result, formatter = lint(model, args.repo, rules, args.term_pattern), format_lint
-    except (InputError, OSError, KeyError, TypeError) as error:
+    except (InputError, OSError, KeyError, TypeError, AttributeError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
     print(json.dumps(result, indent=2, ensure_ascii=False) if args.json else formatter(result))
