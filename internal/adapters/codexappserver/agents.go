@@ -13,6 +13,7 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 	"unicode/utf8"
 
@@ -36,6 +37,9 @@ type Agents struct {
 	profile        Profile
 	identity       string
 	credentials    CredentialResolver
+	retryWaits     []time.Duration
+	hostTime       func(context.Context) func()
+	retries        atomic.Int64
 }
 
 var _ run.Sessions = (*Agents)(nil)
@@ -58,7 +62,7 @@ func NewAgentsWithRuntime(start RuntimeStarter, prepared runtimeconfig.PreparedP
 	if err != nil || !ok || start == nil || credentials == nil {
 		return nil, errors.Join(ErrSession, err)
 	}
-	return &Agents{start: start, prepared: prepared, profile: p, identity: id, credentials: credentials}, nil
+	return &Agents{start: start, prepared: prepared, profile: p, identity: id, credentials: credentials, retryWaits: retryWaits, hostTime: run.HostTime}, nil
 }
 
 type ownedRuntime struct {
@@ -144,6 +148,9 @@ type nativeSession struct {
 	turnID                            TurnID
 	model, final, prompt              string
 	acted                             bool // the current Exchange observed a native execution
+	served                            int  // Run tool calls the current Exchange served
+	running                           map[string]string
+	runningBytes                      int
 	nextRequest                       int64
 	children                          map[ThreadID]bool
 	childIDBytes                      int
@@ -261,7 +268,7 @@ func (t *nativeSession) Exchange(ctx context.Context, message run.Message) (err 
 	if err != nil {
 		return err
 	}
-	t.prompt, t.final, t.turnID, t.acted = string(payload), "", "", false
+	t.prompt, t.final, t.turnID, t.acted, t.served = string(payload), "", "", false, 0
 	if err = t.runTurn(active); err != nil {
 		return err
 	}
@@ -349,65 +356,6 @@ func (t *nativeSession) startThread(ctx context.Context) error {
 	return nil
 }
 
-func (t *nativeSession) runTurn(ctx context.Context) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-	if t.thread == "" {
-		if err := t.startThread(ctx); err != nil {
-			return err
-		}
-	}
-	t.nextRequest++
-	id := IntegerRequestID(t.nextRequest)
-	raw, err := t.enc.EncodeTurnStart(id, TurnStartParams{Thread: t.thread, Text: t.prompt, Effort: t.profile.Session.Effort})
-	if err != nil {
-		return err
-	}
-	if err = t.send(ctx, raw); err != nil {
-		return err
-	}
-	tools := t.peer.ToolCalls()
-	responseSeen := false
-	for {
-		var m Message
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case call, ok := <-tools:
-			if !ok {
-				tools = nil
-				continue
-			}
-			if err = t.answer(ctx, call); err != nil {
-				return err
-			}
-			continue
-		case e, ok := <-t.events:
-			if m, err = t.accept(e, ok); err != nil {
-				return err
-			}
-		}
-		status, err := t.observe(m, id, &responseSeen)
-		if err != nil {
-			return err
-		}
-		if status == "" {
-			continue
-		}
-		select {
-		case _, ok := <-tools:
-			if ok {
-				return fmt.Errorf("%w: unanswered tool at native completion", ErrProtocolIncomplete)
-			}
-		default:
-		}
-		if status != TurnCompleted {
-			return fmt.Errorf("%w: provider turn %s", ErrSession, status)
-		}
-		return nil
-	}
-}
 func (t *nativeSession) answer(ctx context.Context, call frame.ToolCall) error {
 	var meta struct {
 		Thread string `json:"threadId"`
@@ -504,7 +452,8 @@ func (t *nativeSession) notification(m Message) error {
 		var e struct {
 			Thread ThreadID `json:"threadId"`
 			Error  struct {
-				Message string `json:"message"`
+				Message string          `json:"message"`
+				Info    json.RawMessage `json:"codexErrorInfo"`
 			} `json:"error"`
 			WillRetry bool `json:"willRetry"`
 		}
@@ -518,7 +467,7 @@ func (t *nativeSession) notification(m Message) error {
 			return ErrProtocol
 		}
 		if !e.WillRetry {
-			return fmt.Errorf("%w: provider error: %s", ErrProtocol, t.redact([]byte(e.Error.Message)))
+			return &providerError{kind: errorKind(e.Error.Info), message: string(t.redact([]byte(e.Error.Message)))}
 		}
 	case "item/started", "item/completed":
 		var n struct {
@@ -564,6 +513,25 @@ func (t *nativeSession) notification(m Message) error {
 				t.children[n.Item.Child] = true
 				t.childIDBytes += len(n.Item.Child)
 			}
+		}
+		// A native item that started and has not completed may be running. Text
+		// runs nothing, and the host counts the Run tool calls it serves itself.
+		key := n.Thread + "/" + n.Item.ID
+		_, started := t.running[key]
+		switch {
+		case n.Item.Type == "userMessage" || n.Item.Type == "agentMessage" || n.Item.Type == "reasoning" || n.Item.Type == "mcpToolCall":
+		case m.method == "item/started" && !started:
+			if len(key) > maxProtocolMessage-t.runningBytes {
+				return ErrProtocolLimit
+			}
+			if t.running == nil {
+				t.running = make(map[string]string)
+			}
+			t.running[key] = n.Item.Type
+			t.runningBytes += len(key)
+		case m.method == "item/completed" && started:
+			delete(t.running, key)
+			t.runningBytes -= len(key)
 		}
 		if m.method != "item/completed" {
 			return nil

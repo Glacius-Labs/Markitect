@@ -101,6 +101,12 @@ type fakeRuntime struct {
 	errorText      string
 	stopFail       bool
 	notifications  []string
+
+	// failures fails the leading turns with these codexErrorInfo values; the
+	// flags set what the failing turn did before its error.
+	failures                           []string
+	failAfterTool, failRunning, failed bool
+	pendingFailure                     string
 }
 
 func newRuntime() *fakeRuntime {
@@ -183,6 +189,12 @@ func (f *fakeRuntime) WriteInput(data []byte) error {
 		for _, notification := range f.notifications {
 			f.emit(notification)
 		}
+		if len(f.failures) > 0 {
+			info := f.failures[0]
+			f.failures = f.failures[1:]
+			f.failTurn(info)
+			break
+		}
 		switch {
 		case f.errorText != "":
 			f.emit(`{"method":"error","params":{"error":{"message":"` + f.errorText + `"},"willRetry":false}}`)
@@ -229,10 +241,40 @@ func (f *fakeRuntime) finish() {
 	}
 	f.emit(`{"method":"turn/completed","params":{"threadId":"` + string(codecThreadID) + `","turn":{"id":"` + string(codecTurnID) + `","status":"` + status + `","items":[],"error":null}}}`)
 }
+
+// failTurn plays a turn that Codex fails with a provider error it will not
+// retry itself, after the actions the flags select.
+func (f *fakeRuntime) failTurn(info string) {
+	item := func(method, status string) string {
+		return `{"method":"` + method + `","params":{"threadId":"` + string(codecThreadID) + `","turnId":"` + string(codecTurnID) + `","item":{"id":"cmd","type":"commandExecution","command":"go test ./...","status":"` + status + `"}}}`
+	}
+	switch {
+	case f.failAfterTool:
+		f.pendingFailure = info
+		f.tools <- frame.ToolCall{ID: 9, Name: "check", Arguments: json.RawMessage(`{}`), Meta: json.RawMessage(`{"threadId":"` + string(codecThreadID) + `"}`)}
+		return
+	case f.failRunning:
+		f.emit(item("item/started", "inProgress"))
+	case f.failed:
+		f.emit(item("item/started", "inProgress"))
+		f.emit(item("item/completed", "failed"))
+	}
+	f.fail(info)
+}
+func (f *fakeRuntime) fail(info string) {
+	reported := `{"message":"Selected model is at capacity.","codexErrorInfo":` + info + `,"additionalDetails":null}`
+	f.emit(`{"method":"error","params":{"threadId":"` + string(codecThreadID) + `","turnId":"` + string(codecTurnID) + `","error":` + reported + `,"willRetry":false}}`)
+	f.emit(`{"method":"turn/completed","params":{"threadId":"` + string(codecThreadID) + `","turn":{"id":"` + string(codecTurnID) + `","status":"failed","items":[],"error":` + reported + `}}}`)
+}
 func (f *fakeRuntime) Reply(r frame.ToolReply) error {
 	f.mu.Lock()
 	f.replies = append(f.replies, r)
 	f.mu.Unlock()
+	if info := f.pendingFailure; info != "" {
+		f.pendingFailure = ""
+		f.fail(info)
+		return nil
+	}
 	f.finish()
 	return nil
 }
