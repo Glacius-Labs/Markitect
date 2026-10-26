@@ -332,6 +332,38 @@ func verifyBundle(ctx context.Context, ref project.CandidateRef, stored, probe s
 	return err
 }
 
+// Changes is the complete diff from one stored candidate to another. Both are
+// reopened from durable state into private repositories, so it needs neither a
+// live copy nor any ancestry between them.
+func (g *LocalGit) Changes(ctx context.Context, from, to project.CandidateRef) (string, error) {
+	if from.Project != to.Project || from.Format != to.Format {
+		return "", fmt.Errorf("compared candidates differ in project or object format")
+	}
+	reopen := func(ref project.CandidateRef) (string, error) {
+		dir, err := os.MkdirTemp(g.TempRoot, "markitect-changes-")
+		if err == nil {
+			err = g.Reopen(ctx, ref, dir)
+		}
+		return dir, err
+	}
+	dir, err := reopen(to)
+	defer os.RemoveAll(dir)
+	if err != nil {
+		return "", err
+	}
+	if from.Commit != to.Commit {
+		source, err := reopen(from)
+		defer os.RemoveAll(source)
+		if err != nil {
+			return "", err
+		}
+		if _, err = localCommand(ctx, dir, nil, "fetch", "--quiet", "--no-tags", source, from.Commit); err != nil {
+			return "", err
+		}
+	}
+	return localCommand(ctx, dir, nil, "diff", "--no-ext-diff", "--no-textconv", "--full-index", from.Commit, to.Commit, "--")
+}
+
 // Reopen uses only durable state. The destination must be empty and independent.
 func (g *LocalGit) Reopen(ctx context.Context, ref project.CandidateRef, destination string) error {
 	path, err := g.candidatePath(ref)
@@ -964,6 +996,11 @@ func (s *localService) Retain(ctx context.Context, copy run.Copy, commit run.Com
 		return project.CandidateRef{}, fmt.Errorf("candidate identity unavailable")
 	}
 	return s.adapter.retain(ctx, s.request.Project, s.request.Prepared, c.location, commit)
+}
+
+// Changes is the diff from a stored candidate to this Run's fixed input.
+func (s *localService) Changes(ctx context.Context, from project.CandidateRef) (string, error) {
+	return s.adapter.Changes(ctx, from, s.request.Input)
 }
 func removePrivate(ctx context.Context, parent, path string) error {
 	if err := ctx.Err(); err != nil {

@@ -4,6 +4,22 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Records the owner's founding intent for the typed canonical model, Libraries, AI-written models and the Apply organization.
+  - path: "docs/concepts/sources/regular-development-20261026.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the owner decision that Markitect is developed as a regular software project without a canonical self-model in its own repository.
+  - path: "docs/concepts/sources/self-model-pilot-deferred-20261026.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the owner decision to defer the self-model pilot of the canonical model track until Markitect is stable.
+  - path: "docs/concepts/sources/model-architecture-20261026.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the owner decision that the project owner decides the architecture and the canonical model encodes it as its own structure.
+  - path: "docs/concepts/sources/model-track-interfaces-20261026.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the owner decision to use interfaces instead of Kind extension in G1 and to rename the Core field type to valueType.
   - path: "docs/concepts/sources/model-track-w1-decisions-20261026.md"
     form: doc
     realizes: [documentation/current-guidance]
@@ -12,6 +28,14 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Records the owner approval of the canonical model track charter with the recommendations for D1–D5.
+  - path: "docs/design/modeling-guide.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Guides what a well-modeled project contains and how to write a typed canonical model.
+  - path: "docs/design/model-quality-criteria.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: States the checkable quality criteria for canonical models.
   - path: "docs/design/model-track-charter.md"
     form: doc
     realizes: [documentation/current-guidance]

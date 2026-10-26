@@ -449,3 +449,43 @@ func TestRandomIDNotesFromEarlierStoresStayReadable(t *testing.T) {
 		}
 	}
 }
+
+// DEC-073: a completed Verify approval with a basis is also found by what it
+// approved; other results are not indexed, and an unreadable indexed record is
+// no evidence.
+func TestCompletedVerifyApprovalsAreIndexedByBasisAndInput(t *testing.T) {
+	ctx := context.Background()
+	s, err := New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	approval := run.Result{ID: "approval", Project: "p", Basis: "basis", Mandate: run.Verify, Technical: run.Completed, Decision: run.Approve}
+	approval.Input.Project, approval.Input.Commit, approval.Input.Tree = "p", "c", "t"
+	input := approval.Input
+	rejection := approval
+	rejection.ID, rejection.Decision = "rejection", run.Reject
+	old := approval
+	old.ID, old.Basis = "old", ""
+	for _, r := range []run.Result{approval, rejection, old} {
+		if err = s.Save(ctx, r); err != nil {
+			t.Fatal(err)
+		}
+	}
+	key, ok := approval.Approval()
+	if _, indexed := rejection.Approval(); !ok || indexed || key != run.ApprovalKey("basis", input) {
+		t.Fatal("approval key", key, ok, indexed)
+	}
+	found, err := s.Approvals(ctx, "p", key)
+	if err != nil || len(found) != 1 || found[0].ID != "approval" {
+		t.Fatal("indexed approvals", found, err)
+	}
+	if found, err = s.Approvals(ctx, "p", run.ApprovalKey("other", input)); err != nil || len(found) != 0 {
+		t.Fatal("approvals under another key", found, err)
+	}
+	if err = os.WriteFile(filepath.Join(s.root, "p", "runs", "approval.json"), []byte("{"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if found, err = s.Approvals(ctx, "p", key); err != nil || len(found) != 0 {
+		t.Fatal("an unreadable record counted as evidence", found, err)
+	}
+}

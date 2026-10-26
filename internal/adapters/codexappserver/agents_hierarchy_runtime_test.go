@@ -373,7 +373,7 @@ func TestNativeHierarchyFixturePreparation(t *testing.T) {
 		t.Fatal("actual empty Package tree missing", e)
 	}
 	for _, m := range p.Topology().Managers() {
-		doc, e := (&Agents{}).documentFor(run.SessionSpec{Prepared: p, Manager: m, Mandate: run.Implement})
+		doc, e := (&Agents{}).documentFor(run.SessionSpec{Prepared: p, Manager: m, Mandate: run.Implement, Origin: testOrigin})
 		if e != nil || !strings.Contains(doc.Developer, "SELECTED_") {
 			t.Fatal("actual selected instruction acquisition missing", m.Package, e)
 		}
@@ -1205,7 +1205,7 @@ func hierarchyLoader(ctx context.Context, h *hierarchySessions, p project.Prepar
 		return e
 	}
 	manager, _ := p.Topology().Manager(".")
-	doc, e := h.agents.documentFor(run.SessionSpec{Prepared: p, Manager: manager, Mandate: run.Implement})
+	doc, e := h.agents.documentFor(run.SessionSpec{Prepared: p, Manager: manager, Mandate: run.Implement, Origin: testOrigin})
 	if e != nil {
 		return e
 	}

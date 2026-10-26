@@ -432,9 +432,21 @@ func runFixture(t *testing.T, configure ...func(*testkit.Repo)) (*testkit.Repo, 
 		t.Fatal(err)
 	}
 	r.Write("out/accounted.ignored", "original ignored input\n")
-	selection := project.InputSelection{Repository: r.Dir, Local: project.ModelSelection{Boundary: ".", ManifestPath: fixturePath(t, ".markitect/model.yaml")}, Dependencies: []project.ModelSelection{{Boundary: ".markitect/dependencies/core", ManifestPath: fixturePath(t, "model.yaml")}}}
+	p := prepareFixture(t, r.Dir)
+	g := &LocalGit{StateRoot: t.TempDir(), TempRoot: t.TempDir()}
+	ref, err := g.Capture(ctx, "fixture", p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return r, p, g, ref
+}
+
+// prepareFixture captures and prepares the run fixture repository at dir.
+func prepareFixture(t *testing.T, dir string) project.Prepared {
+	t.Helper()
+	selection := project.InputSelection{Repository: dir, Local: project.ModelSelection{Boundary: ".", ManifestPath: fixturePath(t, ".markitect/model.yaml")}, Dependencies: []project.ModelSelection{{Boundary: ".markitect/dependencies/core", ManifestPath: fixturePath(t, "model.yaml")}}}
 	repo := adapter(t)
-	prepared, err := project.NewPreparationService(project.NewModelService(repo, repo)).Capture(ctx, project.CaptureRequest{Selection: selection}, model.Limits{})
+	prepared, err := project.NewPreparationService(project.NewModelService(repo, repo)).Capture(context.Background(), project.CaptureRequest{Selection: selection}, model.Limits{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -449,12 +461,7 @@ func runFixture(t *testing.T, configure ...func(*testkit.Repo)) (*testkit.Repo, 
 	if got := len(p.Topology().Managers()); got != 5 {
 		t.Fatalf("expected Root, two children, grandchild and empty Package: %d", got)
 	}
-	g := &LocalGit{StateRoot: t.TempDir(), TempRoot: t.TempDir()}
-	ref, err := g.Capture(ctx, "fixture", p)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return r, p, g, ref
+	return p
 }
 
 type controlledManagers struct {
@@ -468,6 +475,7 @@ type controlledManagers struct {
 	receiptCalls        int
 	acceptedRepair      bool
 	forceDecision       run.Decision
+	rootFindings        []run.Finding // Root's Findings with an Assessment or Verify approval
 	lateReject          bool
 	badManifest         bool
 	didLateReject       bool
@@ -803,8 +811,11 @@ func (m *controlledManager) work(ctx context.Context) error {
 			return err
 		}
 		decision = run.Approve
+		if m.spec.Manager.Package == "." {
+			findings = m.owner.rootFindings
+		}
 		if m.owner.forceDecision != "" {
-			decision, findings = m.owner.forceDecision, []run.Finding{{Text: "controlled semantic rejection"}}
+			decision, findings = m.owner.forceDecision, []run.Finding{{Definition: "a/Thing", Text: "controlled semantic rejection"}}
 		}
 	}
 	if m.owner.checkFirst && m.spec.Manager.Package == "." {
@@ -956,6 +967,98 @@ func TestCompleteHierarchyUsesRealGitAndClosedDurableStateForEveryMandate(t *tes
 	}
 	if err := g.Reopen(ctx, ref, t.TempDir()); err != nil {
 		t.Fatal("candidate depended on original source", err)
+	}
+}
+
+// The basis survives realization, registry maintenance and another working
+// directory, and changes with the model or the execution configuration.
+func TestPreparedBasisLeavesOutRealizationAndLocation(t *testing.T) {
+	_, base, _, _ := runFixture(t)
+	_, realized, _, _ := runFixture(t, func(r *testkit.Repo) {
+		r.Write("out/b.txt", "realized\n")
+		r.Write(".markitect/registry/a/registry.yaml", "apiVersion: markitect.registry/v1\nartifacts:\n  - path: out/a.txt\n    form: code\n    realizes: [a/Thing]\n    why: Controlled parent artifact.\n  - path: out/accounted.ignored\n    form: code\n    realizes: [a/Thing]\n    why: Accounted Gitignored untracked input must survive capture.\n  - path: out/b.txt\n    form: code\n    realizes: [a/Thing]\n    why: A later realization.\n")
+	})
+	if realized.Binding() == base.Binding() || realized.Basis() != base.Basis() || base.Basis() == "" {
+		t.Fatal("realization changed the basis or left the binding", base.Basis(), realized.Basis())
+	}
+	for name, configure := range map[string]func(*testkit.Repo){
+		"model": func(r *testkit.Repo) {
+			r.Write(".markitect/model/a/thing.yaml", "imports: [{package: markitect/core, as: Core}]\nid: Thing\nkind: Core.Kind\nbody: A changed realization obligation.\nspec: {}\n")
+		},
+		"execution": func(r *testkit.Repo) {
+			r.Write(".markitect/execution.yaml", "# Changed execution configuration.\napiVersion: markitect.execution/v2\nchecks: []\n")
+		},
+	} {
+		if _, changed, _, _ := runFixture(t, configure); changed.Basis() == base.Basis() {
+			t.Fatal("a changed", name, "kept the basis")
+		}
+	}
+}
+
+// Changes diffs two stored candidates from durable state alone, also when
+// their histories share no commit.
+func TestChangesDiffsStoredCandidatesWithoutCommonHistory(t *testing.T) {
+	r, p, git, input := runFixture(t)
+	ctx := context.Background()
+	r.Git("checkout", "--quiet", "--orphan", "unrelated")
+	r.Write("out/a.txt", "changed\n")
+	r.Commit("unrelated history")
+	head, err := object(ctx, r.Dir, "HEAD")
+	if err != nil {
+		t.Fatal(err)
+	}
+	other, err := git.retain(ctx, input.Project, p, r.Dir, head)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if commits := strings.Fields(r.Git("rev-list", "--parents", "-n", "1", "HEAD")); len(commits) != 1 {
+		t.Fatal("the unrelated candidate has a parent", commits)
+	}
+	diff, err := git.Changes(ctx, input, other)
+	if err != nil || !strings.Contains(diff, "out/a.txt") || !strings.Contains(diff, "-initial") || !strings.Contains(diff, "+changed") {
+		t.Fatalf("incomplete stored diff: %v\n%s", err, diff)
+	}
+	if same, err := git.Changes(ctx, other, other); err != nil || same != "" {
+		t.Fatal("an unchanged candidate has changes", err, same)
+	}
+	foreign := other
+	foreign.Project = "other"
+	if _, err = git.Changes(ctx, input, foreign); err == nil {
+		t.Fatal("diffed candidates of different projects")
+	}
+}
+
+// DEC-073: Implement receives only Findings that name a current Definition,
+// and a Run's bound input belongs to its project and binding. A refused
+// request starts nothing; a valid one gets as far as its ports allow.
+func TestRunRequestsRefuseUnboundImplementFindingsAndForeignBoundInput(t *testing.T) {
+	_, p, git, input := runFixture(t)
+	store, _ := runstore.New(git.StateRoot)
+	executor := &run.Executor{Sessions: run.UnavailableSessions{}, Workspaces: git, Records: store}
+	ctx := context.Background()
+	request := func(id string, findings []run.Finding, origin run.Origin) run.Request {
+		return run.Request{ID: id, Project: "fixture", Prepared: p, Input: input, Origin: origin, Mandate: run.Implement, Findings: findings, MaxManagers: 5, Allowance: run.NewAllowance(runDeadline(t), 100), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
+	}
+	foreign := run.Origin{Input: input}
+	foreign.Input.Binding = "another binding"
+	for name, tc := range map[string]struct {
+		request run.Request
+		want    string
+	}{
+		"unbound": {request("unbound", []run.Finding{{Manager: ".", Text: "from old Notes"}}, run.Origin{}), "Implement receives only Findings that name a Definition"},
+		"unknown": {request("unknown", []run.Finding{{Manager: ".", Definition: "a/Missing", Text: "repair"}}, run.Origin{}), "Implement receives only Findings that name a Definition"},
+		"foreign": {request("foreign", nil, foreign), "invalid bound input of the command"},
+	} {
+		if _, err := executor.Execute(ctx, tc.request); err == nil || !strings.Contains(err.Error(), tc.want) {
+			t.Fatal(name, err)
+		}
+		if _, err := store.Read(ctx, "fixture", tc.request.ID); err == nil {
+			t.Fatal("a refused request left a Run record", name)
+		}
+	}
+	bound := request("bound", []run.Finding{{Manager: ".", Definition: "a/Thing", Text: "repair"}}, run.Origin{})
+	if _, err := executor.Execute(ctx, bound); !errors.Is(err, run.ErrUnavailable) {
+		t.Fatal("a Definition-bound Implement request was refused", err)
 	}
 }
 

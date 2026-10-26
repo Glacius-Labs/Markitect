@@ -68,7 +68,10 @@ type execution struct {
 }
 
 func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
-	x := &execution{executor: e, request: r, states: map[string]*managerState{}, questions: map[string]*question{}, settled: make(chan struct{}, 1), result: Result{ID: r.ID, Project: r.Project, Binding: r.Prepared.Binding(), Mandate: r.Mandate, Input: r.Input, Technical: Incomplete}}
+	if r.Origin == (Origin{}) {
+		r.Origin.Input = r.Input
+	}
+	x := &execution{executor: e, request: r, states: map[string]*managerState{}, questions: map[string]*question{}, settled: make(chan struct{}, 1), result: Result{ID: r.ID, Project: r.Project, Binding: r.Prepared.Binding(), Basis: r.Prepared.Basis(), Mandate: r.Mandate, Origin: r.Origin, Input: r.Input, Technical: Incomplete}}
 	if err := validateRequest(r); err != nil {
 		return x.result, err
 	}
@@ -86,6 +89,17 @@ func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
 	if workErr == nil && service == nil {
 		workErr = fmt.Errorf("workspace startup returned no handle")
 	}
+	// Verify judges the candidate's changes against the command's bound input,
+	// across correction loops; Root's assignment carries the diff (changes).
+	var carried *string
+	if workErr == nil && r.Mandate == Verify {
+		diff := ""
+		if r.Origin.Input.Commit != r.Input.Commit {
+			diff, workErr = service.Changes(x.ctx, r.Origin.Input)
+		}
+		diff = changes(diff, r.Origin.Input.Commit)
+		carried = &diff
+	}
 	input := Commit{r.Input.Commit, r.Input.Tree}
 	// Complete environment and communication tree exists before ordinary work.
 	if workErr == nil {
@@ -99,7 +113,7 @@ func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
 				workErr = fmt.Errorf("missing Manager copy")
 				break
 			}
-			s.session, workErr = e.Sessions.Open(x.ctx, SessionSpec{RunID: r.ID, Manager: m, Mandate: r.Mandate, Prepared: r.Prepared, Workspace: s.copy, Findings: append([]Finding(nil), r.Findings...), Tools: x.tools(s)})
+			s.session, workErr = e.Sessions.Open(x.ctx, SessionSpec{RunID: r.ID, Manager: m, Mandate: r.Mandate, Prepared: r.Prepared, Origin: r.Origin, Workspace: s.copy, Findings: append([]Finding(nil), r.Findings...), Tools: x.tools(s)})
 			if workErr != nil {
 				break
 			}
@@ -122,7 +136,7 @@ func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
 	if workErr == nil {
 		x.mu.Lock()
 		s := x.states[organization.Root]
-		task := Assignment{Task: rootTask, Findings: append([]Finding(nil), r.Findings...), Base: input, BuildOutputs: slices.Clone(r.BuildOutputs)}
+		task := Assignment{Task: rootTask, Findings: append([]Finding(nil), r.Findings...), Base: input, BuildOutputs: slices.Clone(r.BuildOutputs), Changes: carried}
 		s.a.assign(task)
 		x.queueLocked(s, entry{event: Event{Assignment: &task}})
 		x.mu.Unlock()
@@ -251,6 +265,15 @@ func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
 
 	if service != nil {
 		closeOne(gitServiceResource, service.Close)
+	}
+	if workersClosed && x.result.Technical == Completed {
+		notes, cancel := context.WithTimeout(context.WithoutCancel(ctx), r.PersistenceTimeout)
+		if err := x.noteUnbound(notes); err != nil {
+			workErr = fmt.Errorf("keep Findings without a Definition as Notes: %w", err)
+			x.result.Errors = append(x.result.Errors, workErr.Error())
+			x.result.Technical = Incomplete
+		}
+		cancel()
 	}
 	x.result.Messages = r.Allowance.Used() - used
 	terminal := copyResult(x.result)
@@ -498,7 +521,7 @@ func concreteFindings(findings []Finding) bool {
 func origin(findings []Finding, manager string) []Finding {
 	out := make([]Finding, len(findings))
 	for i, f := range findings {
-		out[i] = Finding{Manager: manager, Text: f.Text}
+		out[i] = Finding{Manager: manager, Definition: f.Definition, Text: f.Text}
 	}
 	return out
 }

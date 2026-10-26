@@ -69,7 +69,7 @@ packages:
     doc: docs/development/modules.md
   - path: internal/adapters/runstore
     layer: apply-adapter
-    purpose: Immutable terminal Run results and durable concurrent project Notes.
+    purpose: Immutable terminal Run results, an index of completed Verify approvals and durable concurrent project Notes.
     doc: internal/run/README.md
   - path: internal/bootstrap
     layer: apply-bootstrap

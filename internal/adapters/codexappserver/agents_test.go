@@ -300,6 +300,10 @@ func (f *fakeRuntime) Close() error {
 }
 
 func (f *fakeRuntime) ImageID() string { return fixtureImage }
+
+// testOrigin is the bound input of harness documents built outside a Run.
+var testOrigin = run.Origin{Input: project.CandidateRef{Commit: "input-commit", Tree: "input-tree"}}
+
 func testSessionSpec(t *testing.T) run.SessionSpec {
 	t.Helper()
 	r := testkit.NewRepo(t)
@@ -340,7 +344,7 @@ func testSessionSpec(t *testing.T) run.SessionSpec {
 	tools := run.Tools{Delegate: func(context.Context, string, string, []run.Finding) error { return nil }, Await: func(context.Context) (run.Event, error) {
 		return run.Event{Question: &run.Question{ID: "pending", From: "a", To: ".", Text: "counter-question"}}, nil
 	}, Review: func(context.Context, string, string, run.Decision, []run.Finding) error { return nil }, Ask: func(context.Context, string, string) (string, error) { return "new-id", nil }, Reply: func(context.Context, string, string) error { return nil }, ReadNotes: func(context.Context, string) (run.NotePage, error) { return run.NotePage{}, nil }, AppendNote: func(context.Context, string, string) (run.Note, error) { return run.Note{ID: "note"}, nil }, Judge: func(context.Context, run.Decision, []run.Finding) error { return nil }, Check: func(context.Context) (run.Check, error) { return run.Check{Valid: true}, nil }}
-	return run.SessionSpec{RunID: "native-run", Manager: manager, Prepared: p, Mandate: run.Implement, Workspace: &sessionCopy{location: run.CopyLocation{Volume: "private-run-volume", Subpath: "copies/root"}}, Tools: tools}
+	return run.SessionSpec{RunID: "native-run", Manager: manager, Prepared: p, Mandate: run.Implement, Origin: testOrigin, Workspace: &sessionCopy{location: run.CopyLocation{Volume: "private-run-volume", Subpath: "copies/root"}}, Tools: tools}
 }
 
 // Exercise the real Git review producer and native Event/MCP/frame consumer.
@@ -1224,7 +1228,7 @@ func TestExchangeReportsObservedNativeExecutions(t *testing.T) {
 // Invalid judge input is an ordinary tool refusal: the provider receives the
 // reason, Run receives no judgment and the Session stays usable.
 func TestInvalidJudgeArgumentsAreRefusedWithoutJudgment(t *testing.T) {
-	for _, raw := range []string{`{"decision":"submitted"}`, `{"decision":"submitted","findings":null}`, `{"decision":"submitted","findings":[{}]}`, `{"decision":"submitted","findings":[{"text":null}]}`, `{"decision":"submitted","findings":[{"manager":".","text":"origin is host-known"}]}`, `{"Decision":"submitted","findings":[]}`, `{"decision":"submitted","findings":[],"commit":"invented"}`, `{"decision":"success","findings":[]}`} {
+	for _, raw := range []string{`{"decision":"submitted"}`, `{"decision":"submitted","findings":null}`, `{"decision":"submitted","findings":[{}]}`, `{"decision":"submitted","findings":[{"text":null}]}`, `{"decision":"submitted","findings":[{"manager":".","text":"origin is host-known"}]}`, `{"decision":"submitted","findings":[{"text":"work","definition":null}]}`, `{"decision":"submitted","findings":[{"definition":"a/Thing"}]}`, `{"Decision":"submitted","findings":[]}`, `{"decision":"submitted","findings":[],"commit":"invented"}`, `{"decision":"success","findings":[]}`} {
 		t.Run(raw, func(t *testing.T) {
 			rt := newRuntime()
 			rt.judgmentText = raw
@@ -1336,7 +1340,7 @@ func TestSessionHarnessAccountingExamplePreparesActualArtifacts(t *testing.T) {
 			if !ok {
 				t.Fatal("checked Manager missing")
 			}
-			doc, err := harness.Build(p, manager, "implement", nil)
+			doc, err := harness.Build(p, manager, "implement", nil, harness.Origin{Commit: "input-commit", Tree: "input-tree"})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -1373,12 +1377,48 @@ func TestSessionHarnessAccountingExamplePreparesActualArtifacts(t *testing.T) {
 				t.Fatalf("delivered registry example rejected: %s %+v", got.Status(), got.Attempts())
 			}
 			for _, mandate := range []string{"assessment", "verify"} {
-				review, err := harness.Build(p, manager, mandate, nil)
+				review, err := harness.Build(p, manager, mandate, nil, harness.Origin{Commit: "input-commit", Tree: "input-tree"})
 				if err != nil || strings.Contains(review.Developer, "Artifact accounting for Implement") {
 					t.Fatalf("review mandate received repair instructions: %s %v", mandate, err)
 				}
 			}
 		})
+	}
+}
+
+// The harness states the bound input to every mandate, the host fact only when
+// it holds, each Initial Finding's Definition and Verify's tiers.
+func TestHarnessStatesBoundInputVerifiedFactAndFindingDefinitions(t *testing.T) {
+	spec := testSessionSpec(t)
+	origin := harness.Origin{Commit: "input-commit", Tree: "input-tree"}
+	findings := []harness.Finding{{Manager: ".", Definition: "a/Thing", Text: "repair the defect"}}
+	for _, mandate := range []string{"assessment", "implement", "verify"} {
+		doc, err := harness.Build(spec.Prepared, spec.Manager, mandate, findings, origin)
+		if err != nil || !strings.Contains(doc.Developer, `{"commit":"input-commit","tree":"input-tree"}`) || !strings.Contains(doc.Developer, `"definition":"a/Thing"`) || strings.Contains(doc.Developer, "Host fact") {
+			t.Fatal(mandate, "bound input, Definition or absent fact wrong", err)
+		}
+		verified := origin
+		verified.Verified = "earlier-verify"
+		if doc, err = harness.Build(spec.Prepared, spec.Manager, mandate, findings, verified); err != nil || !strings.Contains(doc.Developer, "Host fact: the stored Verify Run earlier-verify already approved a candidate with exactly this bound input's content") {
+			t.Fatal(mandate, "host fact missing", err)
+		}
+	}
+	doc, err := harness.Build(spec.Prepared, spec.Manager, "verify", nil, origin)
+	if err != nil || !strings.Contains(doc.Developer, "When the host states that the bound input was already verified and you find no defect, any change is a reject") || !strings.Contains(doc.Developer, "other optional additions are a Note") {
+		t.Fatal("Verify tiers missing", err)
+	}
+	if _, err = harness.Build(spec.Prepared, spec.Manager, "verify", nil, harness.Origin{}); err == nil {
+		t.Fatal("harness built without its bound input")
+	}
+}
+
+// A Finding's optional definition reaches Run unchanged; its origin stays host-known.
+func TestFindingDefinitionReachesRun(t *testing.T) {
+	var got []run.Finding
+	tools := run.Tools{Judge: func(_ context.Context, _ run.Decision, f []run.Finding) error { got = f; return nil }}
+	raw := `{"decision":"reject","findings":[{"text":"revert the change","definition":"a/Thing"},{"text":"an observation"}]}`
+	if _, err := dispatch(context.Background(), tools, "judge", json.RawMessage(raw)); err != nil || !reflect.DeepEqual(got, []run.Finding{{Definition: "a/Thing", Text: "revert the change"}, {Text: "an observation"}}) {
+		t.Fatal(got, err)
 	}
 }
 

@@ -56,7 +56,7 @@ The evaluation depends on this track. In the owner's words: "Our evaluations of 
 | W3 | **Quality criteria v0.2** in the code analogy | Hard rules and signals with a check each, plus an anti-pattern catalog. In scope: imports and links (cycles, coupling), size, missing types, unused typed fields. Later research: CRAP-style coverage (needs ENH-003) and model mutation (needs Apply runs) | Reviewed. Thresholds are provisional until W6 |
 | W4 | **Standard Libraries, first outline** | Library list and Kinds, oriented on Go/C# (`values`, `api`, `data`, `architecture`, `practice`); versioning and a compatibility promise; Kubernetes and Terraform as orientation for desired state, plan, apply and drift | Owner review of the outline; `api` and `values` drafted and compiled |
 | W5 | **Modeling skill and tooling** | A skill that makes an agent model to W2 and W3 with the Libraries. A separate tool under `tools/`, not yet a product CLI change, for W3 signals and "find all references" / impact | An agent with the skill writes a model from neutral requirements that passes W3 and an independent fidelity review against the requirements, without manual repair |
-| W6 | **Validation on pilots** | Makerspace remodeled beside the frozen Phase C models (w0, c1–c9 stay unchanged). The self-model remodeled as a second pilot, depending on `markitect-core` instead of embedding it | A sanity check, not a calibration: bounded Apply runs on the old and new Makerspace model, under a dispatch, compare delivery, coordination and cost. The self-model passes W3 |
+| W6 | **Validation on a pilot** | Makerspace remodeled beside the frozen Phase C models (w0, c1–c9 stay unchanged). Amended on 26 October 2026 ([owner decision](../concepts/sources/self-model-pilot-deferred-20261026.md)): the self-model pilot is deferred until Markitect is stable, after V1 acceptance and the studies, so that Markitect's own build does not depend on Markitect while it is in development | A sanity check, not a calibration: bounded Apply runs on the old and new Makerspace model, under a dispatch, compare delivery, coordination and cost |
 
 **Order:**
 1. W1 first.
@@ -71,7 +71,7 @@ The evaluation depends on this track. In the owner's words: "Our evaluations of 
 1. **Expressiveness.** Do object, list, enum and reference with cardinality cover what Libraries need? Known gaps:
    - maps;
    - variants or unions;
-   - Kind extension, such as a project Kind that refines a Library Kind;
+   - Kind extension, such as a project Kind that refines a Library Kind (since answered: Kind interfaces, [DEC-075](../concepts/register.md#dec-075-kind-interfaces-and-one-core-120));
    - references that accept several target Kinds;
    - string formats;
    - constraints across fields.

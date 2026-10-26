@@ -113,7 +113,7 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 | `internal/adapters/container` | Container engine client and the Orchestrator side of the agentd connection. | [docs/development/modules.md](modules.md) |
 | `internal/adapters/documents` | Concrete repository, profile metadata and document I/O. | [docs/development/modules.md](modules.md) |
 | `internal/adapters/gitrepo` | Complete repository capture, isolated Run Git copies and independently reopenable stored candidates. | [docs/development/modules.md](modules.md) |
-| `internal/adapters/runstore` | Immutable terminal Run results and durable concurrent project Notes. | [internal/run/README.md](../../internal/run/README.md) |
+| `internal/adapters/runstore` | Immutable terminal Run results, an index of completed Verify approvals and durable concurrent project Notes. | [internal/run/README.md](../../internal/run/README.md) |
 
 ## Composition
 
