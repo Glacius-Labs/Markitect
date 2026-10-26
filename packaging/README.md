@@ -22,7 +22,7 @@ go run ./cmd/markitect-release licenses
 
 ## Release contents and verification
 
-A future public release needs a fresh version tag, exact reviewed source, passing platform gates, a bundle, native Windows/Linux binaries and provenance. The publication tool verifies source/run/attempt identity, asset bytes, immutable-release policy and attestations. It never overwrites a tag or asset. Retired version tags must not be reused. Release pages and downloads are retired only on the owner's explicit instruction; retired releases keep their recorded source and asset identities and attestations without implying availability.
+A future public release needs a fresh version tag, exact reviewed source, passing platform gates, a bundle, native Windows/Linux binaries and provenance. The publication tool verifies source/run/attempt identity, asset bytes, immutable-release policy and attestations. It never overwrites a tag or asset. Retired version tags must not be reused. Required historical release evidence and the named archive refs are kept. Release pages and downloads are retired only on the owner's explicit instruction; retired releases keep their recorded source and asset identities and attestations without implying availability.
 
 The README keeps its release-generation markers for a future verified distribution. `markitect-release distribution --tag NEW_TAG --repo .` checks an actually published immutable release; `--write` updates local installation text and generated WinGet manifests. `--export-winget ABSENT_DIRECTORY` exports manifests for a separately reviewed catalog submission. No old manifest or catalog-validation workflow remains active on Main. Do not call these commands with a retired release tag.
 

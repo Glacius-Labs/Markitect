@@ -61,7 +61,7 @@
 
 ## Measured today (to be re-run with the W5 tool)
 
-The self-model column records the model retired by [DEC-076](../concepts/register.md#dec-076-markitect-is-developed-as-a-regular-software-project) and will not be re-run.
+The Makerspace column is to be re-run with the W5 tool. The self-model column records the model retired by [DEC-076](../concepts/register.md#dec-076-markitect-is-developed-as-a-regular-software-project) and will not be re-run.
 
 | | Makerspace c9 | Self-model |
 |---|---|---|
