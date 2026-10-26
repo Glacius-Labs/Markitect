@@ -58,7 +58,7 @@ Steps 2 and 3 do not reopen concept decisions. A newly observed contradiction be
 
 ## Acceptance and evaluation (owner directive 25 October)
 
-The [owner directive](concepts/sources/v1-acceptance-directive-20261025.md) separates technical V1 acceptance from product value and sets the order below. Comparison Phase A (tendency for Markitect, p 0.227) and Phase B (tie, p 1.0) are complete; their records are under `docs/validation/` and `tools/comparison/`. Bounds beyond the directive's own (no blanket timeout increase, no classification platform, attempts bounded in advance) are the coordinator's routine choices: no engine runs in P1 and P3, at most 3 P2 attempts, N from measured cost.
+The [owner directive](concepts/sources/v1-acceptance-directive-20261025.md) separates technical V1 acceptance from product value and sets the order below. Comparison Phase A (tendency for Markitect, p 0.227), Phase B (tie, p 1.0) and Phase C (counts against Markitect, p 0.95; [results](validation/v1-comparison-results-phase-c-20261026.md)) are complete; their records are under `docs/validation/` and `tools/comparison/`. Bounds beyond the directive's own (no blanket timeout increase, no classification platform, attempts bounded in advance) are the coordinator's routine choices: no engine runs in P1 and P3, at most 3 P2 attempts, N from measured cost.
 
 | Item | Work | Owner | Depends on | Bounds | Done when |
 |---|---|---|---|---|---|
