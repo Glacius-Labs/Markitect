@@ -4,6 +4,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Records the owner's founding intent for the typed canonical model, Libraries, AI-written models and the Apply organization.
+  - path: "docs/concepts/sources/self-model-pilot-deferred-20261026.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the owner decision to defer the self-model pilot of the canonical model track until Markitect is stable.
   - path: "docs/concepts/sources/model-architecture-20261026.md"
     form: doc
     realizes: [documentation/current-guidance]

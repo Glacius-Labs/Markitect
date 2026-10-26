@@ -911,7 +911,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - W3 quality criteria: warnings in the product, in line with [ENH-002](#enh-002-model-quality-linter-and-metrics), and hard rules only for Markitect's own reference and evaluation models;
   - W4 a first outline of standard Libraries;
   - W5 a modeling skill and a separate tool under `tools/`;
-  - W6 pilots: a Makerspace remodel beside the frozen Phase C models, and the self-model.
+  - W6 a pilot: a Makerspace remodel beside the frozen Phase C models. The self-model pilot is deferred until Markitect is stable, after V1 acceptance and the studies ([owner decision](sources/self-model-pilot-deferred-20261026.md)).
 - **Choices:**
   - D1: the track runs parallel to V1 and does not block V1 technical acceptance.
   - D2: no new entry for the compiler; [DEC-003](#dec-003-the-compiler-is-a-borrowed-concept) links the founding intent.
