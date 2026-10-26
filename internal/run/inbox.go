@@ -221,11 +221,22 @@ func (x *execution) acted(s *managerState, continued bool, before Commit) error 
 	return fmt.Errorf("%w: Manager %s took no action in %d continued responses in a row on its assignment %q%s", ErrNoProgress, s.manager.Package, s.idle, s.a.task.Task, x.openQuestionsLocked(s))
 }
 
-// responded follows the end of one native response: unanswered questions stay
-// open for the next message while s has an open assignment, and are closed
-// otherwise; an active judged assignment is fixed.
+// responded follows the end of one native response: an active judged
+// assignment is fixed first. Then each question s received and left
+// unanswered is delivered again while s has an open assignment, and closed
+// otherwise. A question s has not received yet keeps its one delivery.
 func (x *execution) responded(s *managerState) error {
 	x.mu.Lock()
+	j := s.a.judgment
+	fixable := s.a.phase == active && j != nil && s.manager.Package != organization.Root
+	x.mu.Unlock()
+	if fixable {
+		if err := x.fix(s, j); err != nil {
+			return err
+		}
+	}
+	x.mu.Lock()
+	defer x.mu.Unlock()
 	for _, q := range x.sortedQuestionsLocked() {
 		if q.To != s.manager.Package || !q.delivered || q.answered {
 			continue
@@ -237,13 +248,7 @@ func (x *execution) responded(s *managerState) error {
 			x.closeLocked(q)
 		}
 	}
-	j := s.a.judgment
-	fixable := s.a.phase == active && j != nil && s.manager.Package != organization.Root
-	x.mu.Unlock()
-	if !fixable {
-		return nil
-	}
-	return x.fix(s, j)
+	return nil
 }
 
 func (x *execution) sortedQuestionsLocked() []*question {

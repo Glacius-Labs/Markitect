@@ -299,8 +299,11 @@ func TestQuestionsAManagerNoLongerAnswersAreClosedForTheAsker(t *testing.T) {
 	closed := func(id string) {
 		t.Helper()
 		want := "a/deep has handed off without answering your question " + id + "; continue from its handoff or ask your parent"
+		// A closure that never comes fails here instead of blocking the test.
+		bounded, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
 		for {
-			e, err := x.tools(a).Await(ctx)
+			e, err := x.tools(a).Await(bounded)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -344,6 +347,40 @@ func TestQuestionsAManagerNoLongerAnswersAreClosedForTheAsker(t *testing.T) {
 	closed(second)
 	if len(x.questions) != 1 || x.questions["inbox-test-q2"] == nil {
 		t.Fatal("closed questions stayed open or deep's own question was lost", x.questions)
+	}
+}
+
+// A question that reaches a Manager after its judgment but before its handoff
+// is fixed is not closed unseen: the handed-off Manager receives it once and
+// may still answer it.
+func TestAQuestionQueuedDuringTheHandoffStillReachesTheManager(t *testing.T) {
+	x, root, a, deep := inboxExecution()
+	defer x.cancel()
+	x.request.Mandate = Assessment
+	x.executor = &Executor{}
+	a.copy, deep.copy = toolFailureCopy{}, toolFailureCopy{}
+	root.running, a.running, deep.running = true, true, true
+	a.a.phase, a.a.version = active, 1
+	deep.a.phase, deep.a.version = active, 1
+	ctx := context.Background()
+	if err := x.tools(deep).Judge(ctx, Approve, nil); err != nil {
+		t.Fatal(err)
+	}
+	id, err := x.tools(a).Ask(ctx, "a/deep", "Reassess your handoff.")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := x.responded(deep); err != nil || deep.a.phase != fixed {
+		t.Fatal("deep did not hand off", deep.a.phase, err)
+	}
+	if q := x.questions[id]; q == nil || q.answered {
+		t.Fatal("a question deep never received was closed at its handoff")
+	}
+	if e, err := x.tools(deep).Await(ctx); err != nil || e.Question == nil || e.Question.ID != id {
+		t.Fatal("the question did not reach the handed-off Manager", e, err)
+	}
+	if err := x.tools(deep).Reply(ctx, id, "Still valid."); err != nil {
+		t.Fatal("the handed-off Manager could not answer", err)
 	}
 }
 

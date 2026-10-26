@@ -242,13 +242,6 @@ func (x *execution) fix(s *managerState, j *judgment) error {
 	decision := requiredDecision(requiredDecision(j.decision, s.a.late), x.childOutcomeLocked(s))
 	s.a.fix(Handoff{Manager: s.manager.Package, Base: s.a.task.Base, Result: state, Children: slices.Clone(s.integrations), Findings: slices.Clone(j.findings), Decision: decision, Check: check})
 	x.queueHandoffLocked(s)
-	// A question s did not answer before its handoff is closed. A later
-	// question still reaches s, which may answer it or report a late finding.
-	for _, q := range x.sortedQuestionsLocked() {
-		if q.To == s.manager.Package && !q.answered {
-			x.closeLocked(q)
-		}
-	}
 	return nil
 }
 
