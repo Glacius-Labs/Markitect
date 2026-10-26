@@ -32,6 +32,14 @@ artifacts:
     form: code
     realizes: [product/run/confirmed-run-history]
     why: "Executes or verifies a closed complete Manager hierarchy, exact durable handoffs, independent reopening and concurrent project Notes with bounded failure handling."
+  - path: "internal/run/hosttime.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Lets a Session adapter spend host time outside the provider, such as the wait before repeating a response after a transient provider error, without counting it against the response clock; the Run deadline still bounds it."
+  - path: "internal/run/hosttime_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: "Checks that host time holds the response clock as a served tool call does, lets it run again afterwards and changes nothing without a clock."
   - path: "internal/run/inbox_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]

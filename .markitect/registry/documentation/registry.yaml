@@ -1,5 +1,21 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/v1-consistency-probe-approval-20261026.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the owner approval of the exploratory K-S against K-R consistency probe on Phase C material.
+  - path: "docs/validation/v1-technical-acceptance-20261026.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the technical V1 acceptance on F_final that the owner directive asks for, with binding, provider matrix, guarantee evidence, stability and open limits.
+  - path: "docs/validation/v1-comparison-report-20261026.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the comparison report across Phases A to C that the owner directive asks for, with quality, reliability, cost and the conclusions the data support.
+  - path: "docs/concepts/sources/v1-fix-plan-approval-20261026.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the owner approval of the product fixes before the next study and of the DEC-073 concept clarification.
   - path: "docs/concepts/sources/v1-acceptance-directive-20261025.md"
     form: doc
     realizes: [documentation/current-guidance]
@@ -60,6 +76,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Reports every Phase B run of the DEC-072 comparison with its raw outcome, deviations and the reading of B5.
+  - path: "docs/validation/v1-comparison-results-phase-c-20261026.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Reports every Phase C run of the DEC-072 comparison with its raw outcome, decisions, deviations and the reading of C6.
   - path: "docs/validation/a1-native-contract-proof-20261024.md"
     form: doc
     realizes: [documentation/current-guidance]
@@ -72,6 +92,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Records arm M's Phase B runs of the DEC-072 comparison on F′ and F's deletion refusal, with bindings, raw outcomes, reviews, deviations and limits.
+  - path: "docs/validation/v1-phase-c-arm-m-20261026.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records arm M's counted Phase C runs of the DEC-072 comparison on F_final, with bindings, every attempt and its cause class, the Root turn split, P2 observations, infrastructure repeats, tooling verification and limits.
   - path: "docs/validation/v1-final-review-20261025.md"
     form: doc
     realizes: [documentation/current-guidance]

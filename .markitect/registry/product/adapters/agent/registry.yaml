@@ -80,6 +80,14 @@ artifacts:
     form: test
     realizes: [product/ports-and-adapters, product/adapters/agent/closed-agent-metadata]
     why: "Prepares a checked five-Manager fixture and an explicitly dispatched native Run proof using production Git, Sessions, Notes and records, with loader conflicts, exact native observations, reviewed repair, same-Session questions and tracked-writer drain evidence."
+  - path: "internal/adapters/codexappserver/retry.go"
+    form: code
+    realizes: [product/ports-and-adapters]
+    why: "Repeats a native response after a transient provider error only while it has not acted, within two extra attempts, host-time waits and the Run deadline, ends acted or unclear responses with their cause and counts repeats."
+  - path: "internal/adapters/codexappserver/retry_test.go"
+    form: test
+    realizes: [product/ports-and-adapters]
+    why: "Exercises transient provider errors with controlled sessions: a repeat before any action, no repeat after served or native actions, unclear states including a tool call in transit or during the wait, a failed turn that does not end, exhausted attempts, final kinds, the Run deadline and Close during the wait."
   - path: "internal/adapters/codexappserver/tools.go"
     form: code
     realizes: [product/ports-and-adapters]

@@ -674,3 +674,22 @@ The study infrastructure is frozen with this addendum and does not change in con
 - W0 already reaches the ceiling in both arms, so the comparison rests on nine change steps per chain.
 - Quota percents are integers and the account may carry other use, so cost-per-percent is approximate. Tokens are the cost measure; quota only gates the series.
 - Quietness is sampled once a minute, so short bursts of parallel work between samples can be missed.
+
+### C10. Post-data amendment and decisions (26 October 2026)
+
+These were recorded after counted data existed, each with the coordinator's approval. None of them is the original rule. The ledger amendment changes no score. The continuation at M-c2-C5 set that step's score, choosing the outcome least favorable to M. The [Phase C results](v1-comparison-results-phase-c-20261026.md) report each as such.
+
+- **Ledger builder amendment, after chain 2.**
+  - The frozen check in `build-ledger-pc.py` (`74045912…`, unchanged) required an M step's state packet to be the last deliverable step's packet.
+  - After a step without a candidate, step 4's controller takes state from the previous step's latest attempt and refuses any other. The frozen check stopped the build at M-c2-C6, whose candidate input was correct.
+  - `build-ledger-pc-a1.py` (`0890ece1…`) accepts either packet and still requires the candidate input to be the chain's last deliverable candidate.
+  - The chains 1–2 rows it builds are identical to a provisional build that relaxed only that check.
+- **Continuation after the predeclared stop at M-c2-C5.** After a third infrastructure failure at M-c2-C5, C4 stopped the series and left the continuation open.
+  - The coordinator recorded `no-candidate`, the outcome least favorable to M.
+  - The series resumed only after two hours and two successful uncounted capacity probes 30 minutes apart. Each later capacity repeat needed 60 minutes and a successful probe first.
+- **Chain 3** continued as predeclared, decided after M-c3-C2: no stop, no product change and no new limit. The parallel product-fix sessions later broke C4's quietness rule for two of its runs; the results report this.
+- **Reporting.** The results add these descriptive sections, separate from the reading:
+  - the breakdown of technical outcomes by cause;
+  - domain misses on deliverable candidates only;
+  - the step C5 decision, with a sensitivity line beside the reading and never in its place;
+  - the fresh-start effect.

@@ -87,6 +87,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-070](#dec-070-parallel-writers-where-useful) | Decision | Parallel writers where useful | Accepted |
 | [DEC-071](#dec-071-repository-structure-and-archive) | Decision | Repository structure and archive | Accepted; execution in slice R2 |
 | [DEC-072](#dec-072-stable-v1-justified-by-data) | Decision | Stable V1 justified by data | Accepted; stability and comparison evidence tracked in the delivery plan |
+| [DEC-073](#dec-073-change-minimality-on-an-unchanged-model) | Decision | Change minimality on an unchanged model | Accepted; implementation in session S3 of the delivery plan |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -889,6 +890,13 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Status:** Accepted by the owner, 24 October 2026 ([verbatim source with translation](sources/v1-evidence-goal-20261024.md)).
 - **Decision:** V1 must be stable, and data must justify that it is stable and better than one agent doing everything.
 - **Recorded meaning (recorder's interpretation):** repeated native runs of the reference scenarios on the frozen final source provide the stability data. A controlled comparison against the owner's documentation-plus-one-Agent baseline in the [measurement guide](../guides/measurement.md#quality-first-comparative-evaluation) provides the comparison data. The study is authorized as bounded evidence work; release and deployment remain excluded.
+
+### DEC-073 Change minimality on an unchanged model
+
+- **Status:** Accepted by the owner, 26 October 2026 ([verbatim source with translation](sources/v1-fix-plan-approval-20261026.md)), as WP4b/c of the fix plan before the next study.
+- **Decision:** two small clarifications of concept 1.0. A Finding becomes an Initial Finding of Implement only when it names a Definition of the current checked model, which the host checks; other Findings are kept as Notes (§18.3, §3.5, §19.2). Verify receives the diff against the Apply's bound input, across correction loops, and judges it within its conformance review in tiers: removing conforming behavior or touching an unrelated area without a reference to a current obligation is a Reject, other optional additions are a Note, and when the host states that the input was already verified under the same model, execution configuration and dependencies and no defect is found, any change is a Reject (§11.3, §19.4). No per-file form and no self-assigned labels.
+- **Reason:** in the comparison study's Phase C, Implement changed an unchanged, already verified state twice (C9 in chains 1 and 2); Assessment Findings became Initial Findings without a reference, Root derived work from old Notes, and Verify saw no diff.
+- **Owners and scope:** session S3 implements it; the host fact that an input was already verified (WP4a) is context, not a concept change.
 
 ## Promises
 
