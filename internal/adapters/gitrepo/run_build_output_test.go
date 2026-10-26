@@ -108,7 +108,7 @@ func runCollaboration(t *testing.T, c *collaboration, id string) run.Result {
 		t.Fatal(err)
 	}
 	ctx := context.Background()
-	request := run.Request{ID: id, Project: "fixture", Prepared: prepared, Input: input, Mandate: run.Implement, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(5*time.Minute), 100), MessageTimeout: 3 * time.Minute, CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
+	request := run.Request{ID: id, Project: "fixture", Prepared: prepared, Input: input, Mandate: run.Implement, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(5*time.Minute), 100), ProviderIdleTimeout: 3 * time.Minute, CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
 	result, err := (&run.Executor{Sessions: c, Workspaces: git, Records: records}).Execute(ctx, request)
 	if err != nil || result.Technical != run.Completed || result.Candidate == nil {
 		t.Fatalf("Run did not complete: %s %v %v", result.Technical, result.Errors, err)
@@ -342,7 +342,7 @@ func TestLeftOutBuildOutputsAreVisibleUpToVerify(t *testing.T) {
 		},
 	}}
 	command := apply.Command{Executor: runs, Candidates: git, Records: records, Publisher: &Publisher{Repository: adapter(t), Store: git}}
-	request := run.Request{ID: "left-out", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(10*time.Minute), 300), MessageTimeout: 3 * time.Minute, CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
+	request := run.Request{ID: "left-out", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(10*time.Minute), 300), ProviderIdleTimeout: 3 * time.Minute, CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
 	ctx := context.Background()
 	report, err := command.Execute(ctx, request)
 	out := report.Workflow

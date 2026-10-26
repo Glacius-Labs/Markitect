@@ -84,8 +84,8 @@ apply options:
   --runtime-profile PATH   explicit absolute versioned Runtime profile document
   --repo, --model and repeated --dependency select committed capture inputs.
   Revision previews and --metadata are preparation options, not apply flags.
-  Configuration formatVersion 3 requires a UTC deadline, Manager/message
-  limits, message timeout, cleanup/persistence bounds, state/build assertions
+  Configuration formatVersion 4 requires a UTC deadline, Manager/message
+  limits, provider idle timeout, cleanup/persistence bounds, state/build assertions
   and dedicated normal-account credentials. No helper/harvest or API-key route.
   Apply preflight binds committed inputs and one explicit Codex account profile.
   Standalone Run has a closed hierarchy: questions remain inside that Run.

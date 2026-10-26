@@ -305,12 +305,13 @@ func (x *execution) complete() (Handoff, error) {
 }
 
 // toolContext serves one tool call within the Run's bounds. Serving it is host
-// time: it pauses the message clock of the response that called it.
+// time: it pauses the idle clock of the response that called it and restarts
+// that clock at its full limit when the call ends.
 func (x *execution) toolContext(caller context.Context) (context.Context, func()) {
 	ctx, cancel := context.WithCancel(x.ctx)
 	stop := context.AfterFunc(caller, cancel)
 	resume := func() {}
-	if clock, ok := caller.Value(clockKey{}).(*messageClock); ok {
+	if clock, ok := caller.Value(clockKey{}).(*idleClock); ok {
 		resume = clock.serve()
 	}
 	return ctx, func() { resume(); stop(); cancel() }

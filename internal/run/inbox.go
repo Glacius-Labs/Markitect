@@ -368,6 +368,11 @@ func (x *execution) await(ctx context.Context, s *managerState) (Event, error) {
 	}
 }
 
+// maxOpenQuestions bounds the questions one Manager has asked and nobody has
+// answered yet. A question takes no allowance of its own: it costs only as part
+// of the message that delivers it, so this bound keeps the queue finite.
+const maxOpenQuestions = 8
+
 // ask follows the hierarchy: only the direct parent or a direct child.
 func (x *execution) ask(ctx context.Context, from *managerState, to, text string) (string, error) {
 	if err := ctx.Err(); err != nil {
@@ -387,13 +392,19 @@ func (x *execution) ask(ctx context.Context, from *managerState, to, text string
 	if strings.TrimSpace(text) == "" {
 		return "", fmt.Errorf("empty Manager question; ask again with a question text")
 	}
-	if err := x.request.Allowance.take(); err != nil {
-		return "", err
-	}
 	x.mu.Lock()
 	defer x.mu.Unlock()
 	if err := x.admissionErrorLocked(); err != nil {
 		return "", err
+	}
+	open := 0
+	for _, q := range x.questions {
+		if q.From == from.manager.Package && !q.answered {
+			open++
+		}
+	}
+	if open >= maxOpenQuestions {
+		return "", fmt.Errorf("you have %d open questions; wait for answers with await before you ask again", open)
 	}
 	x.sequence++
 	q := &question{Question: Question{ID: fmt.Sprintf("%s-q%d", x.request.ID, x.sequence), From: from.manager.Package, To: to, Text: text}}
@@ -459,14 +470,15 @@ func (x *execution) openQuestionsLocked(s *managerState) string {
 	return "; answer your open questions: " + strings.Join(open, ", ")
 }
 
-// exchange bounds the provider work of one response by MessageTimeout; the
-// time the host spends serving its tool calls does not count, so a parent may
-// await its working children longer. The Run deadline bounds everything.
+// exchange bounds each stretch of provider work in one response without a
+// served tool call by ProviderIdleTimeout. Serving a call does not count and
+// ends the stretch, so a Manager that keeps delegating, awaiting and reviewing
+// is never stopped by it. The Run deadline bounds everything.
 func (x *execution) exchange(s *managerState, m Message) error {
 	messageContext, cancel := context.WithCancelCause(x.ctx)
 	defer cancel(nil)
-	if x.request.MessageTimeout > 0 {
-		clock := startClock(x.request.MessageTimeout, func() { cancel(context.DeadlineExceeded) })
+	if x.request.ProviderIdleTimeout > 0 {
+		clock := startClock(x.request.ProviderIdleTimeout, func() { cancel(context.DeadlineExceeded) })
 		defer clock.stop()
 		messageContext = context.WithValue(messageContext, clockKey{}, clock)
 	}
@@ -493,31 +505,30 @@ func (x *execution) exchange(s *managerState, m Message) error {
 	}
 }
 
-// messageClock measures the provider work of one response against its limit
-// and expires once that work exceeds it. It pauses while a tool call is
-// served; stop ends it.
-type messageClock struct {
+// idleClock expires once the provider works for its limit without a served
+// tool call. It pauses while any tool call is served, and the end of the last
+// call in progress restarts it at its full limit. It never judges whether a
+// call was useful; stop ends it.
+type idleClock struct {
 	mu      sync.Mutex
 	timer   *time.Timer
-	left    time.Duration
-	since   time.Time
+	limit   time.Duration
 	serving int
 	running bool
 }
 
 type clockKey struct{}
 
-func startClock(limit time.Duration, expire func()) *messageClock {
-	return &messageClock{timer: time.AfterFunc(limit, expire), left: limit, since: time.Now(), running: true}
+func startClock(limit time.Duration, expire func()) *idleClock {
+	return &idleClock{timer: time.AfterFunc(limit, expire), limit: limit, running: true}
 }
 
 // serve pauses the clock until the returned function ends the tool call.
-func (c *messageClock) serve() func() {
+func (c *idleClock) serve() func() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if c.serving == 0 && c.running && c.timer.Stop() {
-		c.left -= time.Since(c.since)
-	} else if c.serving == 0 {
+	if c.serving == 0 && c.running && !c.timer.Stop() {
+		// The limit was reached before this call: the response already ends.
 		c.running = false
 	}
 	c.serving++
@@ -525,13 +536,12 @@ func (c *messageClock) serve() func() {
 		c.mu.Lock()
 		defer c.mu.Unlock()
 		if c.serving--; c.serving == 0 && c.running {
-			c.since = time.Now()
-			c.timer.Reset(c.left)
+			c.timer.Reset(c.limit)
 		}
 	}
 }
 
-func (c *messageClock) stop() {
+func (c *idleClock) stop() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.running = false

@@ -1,5 +1,5 @@
 {
-  "formatVersion": 3,
+  "formatVersion": 4,
   "repositoryIdentity": "markitect-example",
   "productBuild": "PRODUCT_BUILD",
   "stateDirectory": "STATE_DIRECTORY",
@@ -7,7 +7,7 @@
   "deadline": "DEADLINE_UTC",
   "maxManagers": 32,
   "maxMessages": 128,
-  "messageTimeoutSeconds": 600,
+  "providerIdleTimeoutSeconds": 600,
   "cleanupTimeoutSeconds": 45,
   "persistenceTimeoutSeconds": 30,
   "credentials": {

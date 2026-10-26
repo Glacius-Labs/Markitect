@@ -198,6 +198,16 @@ func (a *Allowance) Used() int {
 	defer a.mu.Unlock()
 	return a.used
 }
+
+// Remaining observes the messages left; it grants none.
+func (a *Allowance) Remaining() int {
+	if a == nil {
+		return 0
+	}
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.remaining
+}
 func (a *Allowance) valid() bool {
 	if a == nil {
 		return false
@@ -226,9 +236,10 @@ type Request struct {
 	Allowance          *Allowance
 	CleanupTimeout     time.Duration
 	PersistenceTimeout time.Duration
-	// Zero retains the standalone caller's whole-Run deadline. Apply supplies
-	// its explicit finite per-message limit.
-	MessageTimeout time.Duration
+	// ProviderIdleTimeout bounds each stretch of provider work in one response
+	// without a served tool call. Zero retains the standalone caller's
+	// whole-Run deadline. Apply supplies its explicit finite limit.
+	ProviderIdleTimeout time.Duration
 }
 
 type Sessions interface {
@@ -423,14 +434,19 @@ func validID(s string) bool {
 	return s != "." && s != ".."
 }
 func validateRequest(r Request) error {
-	if r.MessageTimeout < 0 || r.MessageTimeout > time.Hour {
-		return fmt.Errorf("invalid per-message timeout")
+	if r.ProviderIdleTimeout < 0 || r.ProviderIdleTimeout > time.Hour {
+		return fmt.Errorf("invalid provider idle timeout")
 	}
-	if !validID(r.ID) || !validID(r.Project) || !r.Prepared.Valid() || r.Input.Project != r.Project || r.Input.Binding != r.Prepared.Binding() || r.Input.Commit == "" || r.Input.Tree == "" || !r.Allowance.valid() || r.MaxManagers <= 0 || len(r.Prepared.Topology().Managers()) > r.MaxManagers || !r.Allowance.minimum(len(r.Prepared.Topology().Managers())) || r.CleanupTimeout <= 0 || r.CleanupTimeout > time.Minute || r.PersistenceTimeout <= 0 || r.PersistenceTimeout > time.Minute {
+	if !validID(r.ID) || !validID(r.Project) || !r.Prepared.Valid() || r.Input.Project != r.Project || r.Input.Binding != r.Prepared.Binding() || r.Input.Commit == "" || r.Input.Tree == "" || r.Allowance == nil || r.MaxManagers <= 0 || len(r.Prepared.Topology().Managers()) > r.MaxManagers || r.CleanupTimeout <= 0 || r.CleanupTimeout > time.Minute || r.PersistenceTimeout <= 0 || r.PersistenceTimeout > time.Minute {
 		return fmt.Errorf("invalid Run request, checked binding or finite limits")
 	}
 	if r.Mandate != Assessment && r.Mandate != Implement && r.Mandate != Verify {
 		return fmt.Errorf("invalid mandate")
+	}
+	// A shared allowance that cannot reach every Manager once is spent, not an
+	// invalid request: the command ends incomplete.
+	if managers := len(r.Prepared.Topology().Managers()); !r.Allowance.Ready(managers) {
+		return fmt.Errorf("%w: the complete hierarchy of %d Managers needs at least %d messages before the deadline; %d remain", ErrBudget, managers, managers, r.Allowance.Remaining())
 	}
 	return nil
 }

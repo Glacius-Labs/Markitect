@@ -10,14 +10,14 @@ param(
     [string]$OutputRoot = (Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'Codex\Markitect-Library-Runs'),
     [int]$MaxMessages = 128,
     [int]$Minutes = 45,
-    [int]$MessageTimeoutSeconds = 600
+    [int]$ProviderIdleTimeoutSeconds = 600
 )
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 if ($MaxMessages -lt 1 -or $MaxMessages -gt 128 -or $Minutes -lt 1 -or
-    $MessageTimeoutSeconds -lt 1 -or $MessageTimeoutSeconds -gt 3600) {
-    throw 'Invocation limits require 1..128 messages, positive minutes, and 1..3600 seconds per message.'
+    $ProviderIdleTimeoutSeconds -lt 1 -or $ProviderIdleTimeoutSeconds -gt 3600) {
+    throw 'Invocation limits require 1..128 messages, positive minutes, and 1..3600 seconds of provider work without a served tool call.'
 }
 $sourceRepo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $docker = (Get-Command docker -ErrorAction Stop).Source
@@ -202,9 +202,9 @@ checkProfiles:
     [IO.File]::WriteAllText($profilePath, $profile + "`n", [Text.UTF8Encoding]::new($false))
     $deadline = [DateTime]::UtcNow.AddMinutes($Minutes).ToString('yyyy-MM-ddTHH:mm:ssZ')
     $config = [ordered]@{
-        formatVersion = 3; repositoryIdentity = 'small-library'; productBuild = $productBuild
+        formatVersion = 4; repositoryIdentity = 'small-library'; productBuild = $productBuild
         stateDirectory = $state; engineExecutable = $docker; deadline = $deadline
-        maxManagers = 32; maxMessages = $MaxMessages; messageTimeoutSeconds = $MessageTimeoutSeconds
+        maxManagers = 32; maxMessages = $MaxMessages; providerIdleTimeoutSeconds = $ProviderIdleTimeoutSeconds
         cleanupTimeoutSeconds = 60; persistenceTimeoutSeconds = 30
         credentials = @{ 'library-account-login' = @{ provider = 'codex-app-server'; mode = 'dedicated-runtime-login'; path = $CredentialPath } }
     }
@@ -217,7 +217,7 @@ checkProfiles:
         runConfigSha256 = (Get-FileHash -LiteralPath $configPath -Algorithm SHA256).Hash.ToLowerInvariant()
         fixtureCheckSha256 = (Get-FileHash -LiteralPath $fixtureCheck -Algorithm SHA256).Hash.ToLowerInvariant()
         baseImage = $baseImage; goImage = $goImage; runDirectory = $runDir
-        deadline = $deadline; maxMessages = $MaxMessages; messageTimeoutSeconds = $MessageTimeoutSeconds
+        deadline = $deadline; maxMessages = $MaxMessages; providerIdleTimeoutSeconds = $ProviderIdleTimeoutSeconds
     }
     [IO.File]::WriteAllText((Join-Path $runDir 'start.json'), (($manifest | ConvertTo-Json -Depth 5) + "`n"), [Text.UTF8Encoding]::new($false))
 
