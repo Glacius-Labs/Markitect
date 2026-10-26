@@ -57,5 +57,5 @@ Not supported:
 ## What comes next
 
 - The fix plan targets the reliability causes found here; its native controls run before a new frozen source F.
-- An exploratory probe, approved by the owner on 26 October and tracked in the [delivery plan](../implementation-plan.md#product-fixes-before-the-next-study-owner-approval-26-october), tests the remaining core claim without Markitect: whether an agent that maintains its own documentation from tickets drifts over time, compared with one that receives a re-rendered spec.
+- An exploratory probe ([owner approval](../concepts/sources/v1-consistency-probe-approval-20261026.md), tracked in the [delivery plan](../implementation-plan.md#product-fixes-before-the-next-study-owner-approval-26-october)) tests the remaining core claim without Markitect: whether an agent that maintains its own documentation from tickets drifts over time, compared with one that receives a re-rendered spec.
 - Whether a further study is worth its cost is the owner's decision.

@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/v1-consistency-probe-approval-20261026.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the owner approval of the exploratory K-S against K-R consistency probe on Phase C material.
   - path: "docs/validation/v1-technical-acceptance-20261026.md"
     form: doc
     realizes: [documentation/current-guidance]

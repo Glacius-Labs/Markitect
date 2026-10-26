@@ -74,7 +74,7 @@ Two separate final reports follow: technical V1 acceptance on F_final, and the c
 
 ## Product fixes before the next study (owner approval 26 October)
 
-The comparison study's Phase C on F_final found four product defects at Makerspace scale. The owner [approved](concepts/sources/v1-fix-plan-approval-20261026.md) the Architect's fix plan v2 to fix them before the next study, and then, after the native controls below, to freeze a new F (commit and image) before any study material is shared. Phase C stays untouched on F_final.
+The comparison study's Phase C on F_final found four product defects at Makerspace scale; a fifth (WP5, open questions to a handed-off Manager) surfaced at chain 3 step C8, and the coordinator added it to session S2 and informed the owner the same day, with no objection. The owner [approved](concepts/sources/v1-fix-plan-approval-20261026.md) the Architect's fix plan v2 to fix them before the next study, and then, after the native controls below, to freeze a new F (commit and image) before any study material is shared. Phase C stays untouched on F_final.
 
 | Session | Work | Write scope | Order |
 |---|---|---|---|
@@ -83,9 +83,9 @@ The comparison study's Phase C on F_final found four product defects at Makerspa
 | S3 | WP4: host fact that an input was already verified under the same binding; Initial Findings must name a current Definition; Verify sees the diff against the bound input and judges in tiers ([DEC-073](concepts/register.md#dec-073-change-minimality-on-an-unchanged-model)) | `internal/harness/`, findings hand-off in `internal/run`, stored Run results, Verify input | after S2 |
 | S2 (WP5) | Added by the coordinator within the approved purpose after Phase C step M-c3-C8: a question still unanswered when its addressee hands off is closed with a reason and a next step, a later question reaches a handed-off Manager once and is never re-delivered, and only a Manager with an open assignment counts toward the no-progress stop | `internal/run/inbox.go` | with S2 |
 
-An owner-approved exploratory probe (section 10 of the Architect's draft design for a consistency study, approved by the owner on 26 October) runs without Markitect on copies of the Phase C material: one agent maintaining its own documentation from tickets against one receiving the re-rendered spec, three chains each. It shares the engine lock with the native controls, goes first, and is reported descriptively.
+An exploratory probe ([owner approval](concepts/sources/v1-consistency-probe-approval-20261026.md), 26 October) runs without Markitect on copies of the Phase C material: one agent maintaining its own documentation from tickets against one receiving the re-rendered spec, three chains each. It shares the engine lock with the native controls, goes first, and is reported descriptively.
 
-WP3b (`delegate.after`) is deferred: the native control shows whether the existing sequencing (concept §8.1) suffices once accounting is fixed. During Phase C's counted runs the sessions ran no host Go work; the hosted CI stays their merge gate. After Phase C, bounded native controls run outside any study: a probe whether a Codex thread accepts a new turn after a system error (decides WP1's continuation after served actions), a fresh Makerspace W0 for WP2 and WP3, and C9 on a verified state for WP4.
+WP3b (`delegate.after`) is deferred: the native control shows whether the existing sequencing (concept §8.1) suffices once accounting is fixed. The sessions were to run no host Go work during Phase C's counted runs; their targeted tests broke quietness in B-c3-C8 and M-c3-C9 (Phase C incident 7). The hosted CI stays their merge gate. After Phase C, bounded native controls run outside any study: a probe whether a Codex thread accepts a new turn after a system error (decides WP1's continuation after served actions), a fresh Makerspace W0 and a fresh C4 for WP2, WP3 and WP5, and a no-change Apply on a verified state for WP4.
 
 ## Repository structure
 

@@ -6,7 +6,7 @@ Date: 26 October 2026. First of the two final reports the [owner directive](../c
 
 **Correct and safe as V1 on F_final; not yet reliable at the larger project size.**
 
-- On F_final itself: every concept guarantee has one clear holder in the host and its controlled tests passed in the full hosted CI on exactly the final commit; an independent review found no blocking finding. In every native Apply on F_final, nothing unverified was published and nothing leaked.
+- On F_final itself: every concept guarantee has one clear holder in the host, and its controlled tests, where it has them, passed in the full hosted CI on exactly the final commit; an independent review found no blocking finding. In every native Apply on F_final, nothing unverified was published and nothing leaked.
 - Native evidence on F_final is the Makerspace work (21 Managers): 19 of 32 Applies published. Of the 13 others, 3 stopped on the provider being at capacity and 10 on the product itself: 9 run limits and 1 defect in how open questions are handled.
 - The Library scenarios ran natively on the predecessor sources F and F′ (38 of 38 counted Applies plus P4); F_final changes since F′ are listed below and are covered by controlled tests and by the Makerspace runs.
 - The owner-approved fix plan (WP1–WP4, plus WP5 added by the coordinator) addresses the limits and the defect; the question-relay ordering (WP3b) stays deferred. None of these fixes is on F_final, and their native controls are still to run.
