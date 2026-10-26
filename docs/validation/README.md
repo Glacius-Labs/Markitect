@@ -14,6 +14,8 @@ These reports preserve the exact scope, inputs, source references and outcomes s
 - [V1 comparison Phase B, arm M, on F′ 528ef346 — 25 October 2026](v1-phase-b-arm-m-20261025.md): F's refusal of a Definition deletion, and the 26 arm-M runs on F′ with their raw outcomes
 - [V1 final review on F_final 4d23f7ae — 25 October 2026](v1-final-review-20261025.md): independent complete-diff and architecture review for technical V1 acceptance; no blocking finding, four should-fix
 - [V1 comparison Phase C, arm M, on F_final 4d23f7ae — 26 October 2026](v1-phase-c-arm-m-20261026.md): the 33 counted arm-M attempts; chains 1 and 2 published 19 of 20 steps, and chain 3, all fresh starts, published none, mostly ending at Root's 600 s message limit
+- [V1 technical acceptance on F_final — 26 October 2026](v1-technical-acceptance-20261026.md): first final report of the owner directive; correct and safe as V1, not yet reliable at the 21-Manager project size, with the limits the fix plan addresses
+- [V1 comparison report — 26 October 2026](v1-comparison-report-20261026.md): second final report; across Phases A–C the data do not support "Markitect V1 is better than one agent", at 9–10 times the time and 9–42 times the tokens
 
 ## Release evidence
 

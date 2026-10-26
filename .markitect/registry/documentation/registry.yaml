@@ -1,5 +1,13 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/validation/v1-technical-acceptance-20261026.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the technical V1 acceptance on F_final that the owner directive asks for, with binding, provider matrix, guarantee evidence, stability and open limits.
+  - path: "docs/validation/v1-comparison-report-20261026.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the comparison report across Phases A to C that the owner directive asks for, with quality, reliability, cost and the conclusions the data support.
   - path: "docs/concepts/sources/v1-fix-plan-approval-20261026.md"
     form: doc
     realizes: [documentation/current-guidance]
