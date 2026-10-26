@@ -208,7 +208,9 @@ func (x *execution) acted(s *managerState, continued bool, before Commit) error 
 	defer x.mu.Unlock()
 	called := s.called
 	s.called = false
-	if !continued || called || executed || changed {
+	// Only an open assignment can stand still. A Manager without one has
+	// nothing to continue, and questions it leaves unanswered are closed.
+	if !continued || called || executed || changed || s.a.phase != active {
 		s.idle = 0
 		return nil
 	}
@@ -216,20 +218,23 @@ func (x *execution) acted(s *managerState, continued bool, before Commit) error 
 	if s.idle < maxIdle {
 		return nil
 	}
-	if s.a.phase != active {
-		return fmt.Errorf("%w: Manager %s took no action in %d continued responses in a row%s", ErrNoProgress, s.manager.Package, s.idle, x.openQuestionsLocked(s))
-	}
-	return fmt.Errorf("%w: Manager %s took no action in %d continued responses in a row on its assignment %q", ErrNoProgress, s.manager.Package, s.idle, s.a.task.Task)
+	return fmt.Errorf("%w: Manager %s took no action in %d continued responses in a row on its assignment %q%s", ErrNoProgress, s.manager.Package, s.idle, s.a.task.Task, x.openQuestionsLocked(s))
 }
 
 // responded follows the end of one native response: unanswered questions stay
-// open for the next message, and an active judged assignment is fixed.
+// open for the next message while s has an open assignment, and are closed
+// otherwise; an active judged assignment is fixed.
 func (x *execution) responded(s *managerState) error {
 	x.mu.Lock()
 	for _, q := range x.sortedQuestionsLocked() {
-		if q.To == s.manager.Package && q.delivered && !q.answered {
+		if q.To != s.manager.Package || !q.delivered || q.answered {
+			continue
+		}
+		if s.a.phase == active || s.a.phase == assigned {
 			q.delivered = false
 			x.queueLocked(s, entry{event: Event{Question: &q.Question}, again: true})
+		} else {
+			x.closeLocked(q)
 		}
 	}
 	j := s.a.judgment
@@ -432,6 +437,22 @@ func (x *execution) reply(ctx context.Context, from *managerState, id, text stri
 	q.answered = true
 	x.queueLocked(x.states[q.From], entry{event: Event{Answer: &Answer{ID: id, From: from.manager.Package, Text: text}}})
 	return nil
+}
+
+// closeLocked ends q without an answer because its addressee has no open
+// assignment to answer it in: it handed off, or has no task. The asker receives
+// the reason and a next step in place of the answer.
+func (x *execution) closeLocked(q *question) {
+	reason := fmt.Sprintf("%s has no open assignment and did not answer your question %s; continue your work", q.To, q.ID)
+	if p := x.states[q.To].a.phase; p == fixed || p == reviewed {
+		reason = fmt.Sprintf("%s has handed off without answering your question %s; continue from its handoff", q.To, q.ID)
+	}
+	asker := x.states[q.From]
+	if asker.manager.Parent != "" {
+		reason += " or ask your parent"
+	}
+	q.answered = true
+	x.queueLocked(asker, entry{event: Event{Answer: &Answer{ID: q.ID, From: q.To, Closed: reason}}})
 }
 
 func (x *execution) root() *managerState { return x.states[organization.Root] }

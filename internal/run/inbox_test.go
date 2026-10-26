@@ -266,6 +266,99 @@ func TestOpenQuestionCapRefusesWithReasonAndNextStep(t *testing.T) {
 	}
 }
 
+// WP5 (phase C M-c3-C8: a child answered its parent's questions with ask
+// instead of reply and handed off; the host delivered them again until the
+// no-progress rule stopped the Run). A question its addressee leaves
+// unanswered at its handoff is closed, and the asker receives the reason and
+// next step instead of an answer. A later question still reaches the
+// handed-off Manager, which may answer it or report a late finding; left
+// unanswered, it is closed the same way and never delivered again.
+func TestQuestionsAManagerNoLongerAnswersAreClosedForTheAsker(t *testing.T) {
+	x, root, a, deep := inboxExecution()
+	defer x.cancel()
+	x.request.Mandate = Assessment
+	x.executor = &Executor{}
+	a.copy, deep.copy = toolFailureCopy{}, toolFailureCopy{}
+	// No driver starts: this test calls the tools and the end of deep's response.
+	root.running, a.running, deep.running = true, true, true
+	a.a.phase, a.a.version = active, 1
+	deep.a.phase, deep.a.version = active, 1
+	ctx := context.Background()
+	closed := func(id string) {
+		t.Helper()
+		want := "a/deep has handed off without answering your question " + id + "; continue from its handoff or ask your parent"
+		for {
+			e, err := x.tools(a).Await(ctx)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if e.Answer != nil && e.Answer.ID == id {
+				if e.Answer.Closed != want || e.Answer.Text != "" || e.Answer.From != "a/deep" {
+					t.Fatalf("question %s closed without its reason and next step: %+v", id, e.Answer)
+				}
+				return
+			}
+		}
+	}
+	first, err := x.tools(a).Ask(ctx, "a/deep", "What do you need?")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if e, err := x.tools(deep).Await(ctx); err != nil || e.Question == nil || e.Question.ID != first {
+		t.Fatal("the question did not reach its addressee", e, err)
+	}
+	// deep answers with ask instead of reply, judges and hands off.
+	if _, err := x.tools(deep).Ask(ctx, "a", "Nothing more."); err != nil {
+		t.Fatal(err)
+	}
+	if err := x.tools(deep).Judge(ctx, Approve, nil); err != nil {
+		t.Fatal(err)
+	}
+	if err := x.responded(deep); err != nil || deep.a.phase != fixed {
+		t.Fatal("deep did not hand off", deep.a.phase, err)
+	}
+	closed(first)
+	second, err := x.tools(a).Ask(ctx, "a/deep", "Explain your fixed handoff.")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if e, err := x.tools(deep).Await(ctx); err != nil || e.Question == nil || e.Question.ID != second {
+		t.Fatal("a question after the handoff did not reach the handed-off Manager", e, err)
+	}
+	// deep's response ends without a reply.
+	if err := x.responded(deep); err != nil || len(deep.queue) != 0 {
+		t.Fatal("the unanswered question was delivered again", deep.queue, err)
+	}
+	closed(second)
+	if len(x.questions) != 1 || x.questions["inbox-test-q2"] == nil {
+		t.Fatal("closed questions stayed open or deep's own question was lost", x.questions)
+	}
+}
+
+// The no-progress stop applies only to a Manager with an open assignment: a
+// handed-off Manager's inaction never stops the Run, while an open assignment
+// that stands still still does.
+func TestNoProgressStopsOnlyAnOpenAssignment(t *testing.T) {
+	x, _, _, deep := inboxExecution()
+	defer x.cancel()
+	deep.copy = toolFailureCopy{}
+	state := Commit{ID: "fixed", Tree: "tree"}
+	accepted(deep, "deep")
+	for range 2 * maxIdle {
+		if err := x.acted(deep, true, state); err != nil {
+			t.Fatal("a handed-off Manager's inaction stopped the Run", err)
+		}
+	}
+	deep.a.phase, deep.a.task = active, Assignment{Task: "realize"}
+	var err error
+	for range maxIdle {
+		err = x.acted(deep, true, state)
+	}
+	if !errors.Is(err, ErrNoProgress) || !strings.Contains(err.Error(), `on its assignment "realize"`) {
+		t.Fatal("an open assignment that stood still was not stopped", err)
+	}
+}
+
 // These are controlled port peers. The real Git/record Executor test separately
 // proves that a Session ignoring an integration error cannot persist success.
 type toolFailureCopy struct {

@@ -282,10 +282,13 @@ type Question struct {
 	To   string `json:"to"`
 	Text string `json:"text"`
 }
+// Answer carries the addressee's reply, or, when Closed is set, the host's
+// reason why the question closed without one and the next step.
 type Answer struct {
-	ID   string `json:"id"`
-	From string `json:"from"`
-	Text string `json:"text"`
+	ID     string `json:"id"`
+	From   string `json:"from"`
+	Text   string `json:"text"`
+	Closed string `json:"closed,omitempty"`
 }
 type Assignment struct {
 	Task         string    `json:"task"`
