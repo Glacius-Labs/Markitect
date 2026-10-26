@@ -636,7 +636,7 @@ Adapters only for old internal APIs, permanent compatibility layers, competing r
 
 A rewrite is not a reflex. The need for correction is measured by demonstrated contract and reliability problems. A large file is a hint of overloaded responsibility, not an automatic defect; spreading misunderstood state complexity over more files improves nothing. First the semantics become clear.
 
-Documentation and actual responsibilities are kept consistent together, with one canonical page per topic (DEC-076). Active entry documents contain current rules, not a sequence of historical work orders. Historical insights and failures stay archived but do not become binding again by being close to the current plan.
+Documentation and actual responsibilities are kept consistent together (DEC-076). Active entry documents contain current rules, not a sequence of historical work orders. Historical insights and failures stay archived but do not become binding again by being close to the current plan.
 
 ## 24. Development organization
 

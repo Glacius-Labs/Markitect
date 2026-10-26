@@ -10,7 +10,7 @@ Summary by the recorder: shortly before, the owner had deferred the self-model p
 
 > We should definately clean up and consolidate . We should also have at least canonical docs.
 
-The session asked (verbatim): "Is that what you mean by canonical docs, or do you mean cleaning up the human-written docs so each topic has exactly one canonical page?" and, after a note from the coordinator: "Do you want the self-model rewritten as the one canonical description of Markitect, without driving the build? Or one canonical hand-written page per topic? Or both?"
+The session had proposed (summary by the recorder) to rewrite the self-model as Markitect's canonical documentation, without it driving the build. It then asked (verbatim): "Is that what you mean by canonical docs, or do you mean cleaning up the human-written docs so each topic has exactly one canonical page?" and, after a note from the coordinator: "Do you want the self-model rewritten as the one canonical description of Markitect, without driving the build? Or one canonical hand-written page per topic? Or both?"
 
 > I think we should develop markitect just regularly via agentic coding, not by creating a canonical model, which we currently develop. So we just should have documentation as in a regular software project. Later we might consider using Markitect for developing Markitect itself. So yes, i think we should change that
 
