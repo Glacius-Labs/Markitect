@@ -25,6 +25,8 @@ type managerState struct {
 	// Guarded by execution.mu.
 	a            assignment
 	running      bool // a driver owns this Session's messages
+	awaitPending bool // this Manager's one await call is in progress
+	awaiting     bool // that await is blocked until something arrives
 	called       bool // the current response called a Manager tool
 	idle         int  // continued responses in a row that did nothing
 	queue        []entry
