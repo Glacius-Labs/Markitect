@@ -208,6 +208,23 @@ func (a *Allowance) Remaining() int {
 	defer a.mu.Unlock()
 	return a.remaining
 }
+
+// Covers observes whether messages can still be sent before the deadline,
+// without granting any. Its ErrBudget names what is short.
+func (a *Allowance) Covers(messages int) error {
+	if a == nil {
+		return errors.New("missing finite allowance")
+	}
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if !time.Now().Before(a.Deadline) {
+		return fmt.Errorf("%w: the deadline %s has passed", ErrBudget, a.Deadline.UTC().Format(time.RFC3339))
+	}
+	if a.remaining < messages {
+		return fmt.Errorf("%w: %d messages needed, %d remain", ErrBudget, messages, a.remaining)
+	}
+	return nil
+}
 func (a *Allowance) valid() bool {
 	if a == nil {
 		return false
@@ -448,8 +465,9 @@ func validateRequest(r Request) error {
 	}
 	// A shared allowance that cannot reach every Manager once is spent, not an
 	// invalid request: the command ends incomplete.
-	if managers := len(r.Prepared.Topology().Managers()); !r.Allowance.Ready(managers) {
-		return fmt.Errorf("%w: the complete hierarchy of %d Managers needs at least %d messages before the deadline; %d remain", ErrBudget, managers, managers, r.Allowance.Remaining())
+	managers := len(r.Prepared.Topology().Managers())
+	if err := r.Allowance.Covers(managers); err != nil {
+		return fmt.Errorf("the complete hierarchy of %d Managers cannot start: %w", managers, err)
 	}
 	return nil
 }

@@ -230,9 +230,9 @@ func TestQuestionStormCostsOnlyItsBatchedDeliveryMessage(t *testing.T) {
 	}
 }
 
-// Each Manager has at most maxOpenQuestions questions nobody has answered. One
-// more is refused with the reason and the next step, takes nothing and asks
-// nothing; an answer makes room again.
+// Each Manager has at most maxOpenQuestions questions whose answer has not
+// reached it. One more is refused with the reason and the next step, takes
+// nothing and asks nothing; an answer makes room again once it is received.
 func TestOpenQuestionCapRefusesWithReasonAndNextStep(t *testing.T) {
 	x, root, a, _ := inboxExecution()
 	defer x.cancel()
@@ -261,8 +261,20 @@ func TestOpenQuestionCapRefusesWithReasonAndNextStep(t *testing.T) {
 	if err := x.tools(a).Reply(ctx, first, "answer"); err != nil {
 		t.Fatal(err)
 	}
+	if _, err := x.tools(root).Ask(ctx, "a", "next question"); err == nil {
+		t.Fatal("an answer root has not received made room")
+	}
+	for {
+		e, err := x.tools(root).Await(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if e.Answer != nil && e.Answer.ID == first {
+			break
+		}
+	}
 	if _, err := x.tools(root).Ask(ctx, "a", "next question"); err != nil {
-		t.Fatal("an answered question still counted as open", err)
+		t.Fatal("a received answer still counted as open", err)
 	}
 }
 

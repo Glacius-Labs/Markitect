@@ -373,9 +373,10 @@ func (x *execution) await(ctx context.Context, s *managerState) (Event, error) {
 	}
 }
 
-// maxOpenQuestions bounds the questions one Manager has asked and nobody has
-// answered yet. A question takes no allowance of its own: it costs only as part
-// of the message that delivers it, so this bound keeps the queue finite.
+// maxOpenQuestions bounds the questions one Manager has asked whose answer has
+// not reached it yet. A question takes no allowance of its own: it costs only
+// as part of the message that delivers it, so this bound keeps both the
+// addressee's questions and the asker's answers finite.
 const maxOpenQuestions = 8
 
 // ask follows the hierarchy: only the direct parent or a direct child.
@@ -402,9 +403,11 @@ func (x *execution) ask(ctx context.Context, from *managerState, to, text string
 	if err := x.admissionErrorLocked(); err != nil {
 		return "", err
 	}
+	// A question stays open until its answer, or the host's closure, is
+	// delivered to the asker.
 	open := 0
 	for _, q := range x.questions {
-		if q.From == from.manager.Package && !q.answered {
+		if q.From == from.manager.Package {
 			open++
 		}
 	}
