@@ -17,7 +17,9 @@ This record covers the counted native runs of arm M in Phase C of the [compariso
 - **Totals:** 33 attempts, 32 of them with an Apply: 37,167 s of Apply time, 3,532 messages and 1,627,798,064 provider-reported tokens.
 - **Hygiene:** no residue and no credential hit in any attempt. The login file was unchanged across every Apply.
 - **P2:** the Verify-reject path was exercised once, partially, in chain 3's C1. Its observation is `technical` because the final Verify could not start ([P2](#p2-observation)).
-- **The limit that dominates chain 3 is a busy Root's total.** In chains 1 and 2, which continued from candidates, Root's Implement turn used at most 414 s of provider time. Chain 3's fresh starts put 18–62 questions on Root and reached 527–599 s ([Root split](#root-turn-split)).
+- **In chain 3 the limit that mattered was the total provider time of one busy Root turn** ([Root split](#root-turn-split)).
+  - The seven turns that hit it had reached 594–599 s of provider time, with 18–62 questions asked by Root and 26–46 replies.
+  - In chains 1 and 2, Root's Implement turns used at most 414 s, and the continuation steps 113–302 s.
 
 ## Binding
 
@@ -27,7 +29,7 @@ This record covers the counted native runs of arm M in Phase C of the [compariso
 | Product binary | Built from F_final with `-trimpath` and go1.27.1; module version `v0.0.0-20261025222723-4d23f7aea057`. SHA-256 `54cff11ffad14d88d98658745fb39b6a4b0dbdccd18dfa228a8d721c5f11057e` |
 | Images | Built from F_final's `packaging/runtime`. Base `sha256:c2920c613186459de91c78b416fe4d144d22dd97337a25ad86239a4d8310f915`; Go `sha256:3d75d81f438e71254d01f013cd35e0c61f9eecfb8abba723b34e12158c33e943` with `codex-cli 0.162.0` |
 | Provider | Codex App Server 0.162.0, `gpt-6-sol`, effort `high`, normal account login. The login file was only hashed; its hash was equal before and after every Apply |
-| Configuration and limits | The example runtime profile and run configuration (format 3): Apply deadline 5,400 s, 256 shared messages, 32 Managers, `messageTimeoutSeconds` 600. One attempt per step unless the study recorded a repeat. Shared `NATIVE-RUN.lock` |
+| Configuration and limits | The example runtime profile and run configuration (format 3), with `maxMessages` raised from the example's 128 to Phase C's 256: Apply deadline 5,400 s, 256 shared messages, 32 Managers, `messageTimeoutSeconds` 600. One attempt per step unless the study recorded a repeat. Shared `NATIVE-RUN.lock` |
 | Materials | Phase C materials freeze v2 (`4840fb20`). Every step's snapshot manifest and both execution files were pinned and re-verified before each input was committed. `w0.yaml` is `2741e461…` and `c7.yaml` is `749d2c81…`. Model digests: W0 `cfb7a9fe`, C1 `f7a8bd29`, C2 `daf68db9`, C3 `d9d631c7`, C4 `e1f3acb6`, C5 `5e61dc52`, C6 `3a081c99`, C7 `4fb0c37a`, C8 and C9 `2505dc4b` |
 | Inputs (C4) | A step continues from the chain's last published candidate plus one neutral commit that replaces `.markitect/model/` with the step's snapshot. At C7 that commit also replaces `execution.yaml` with `c7.yaml` and records owner attention. After a published C8, C9 is that candidate unchanged, with a strict no-change expectation. With no published candidate yet, a step starts as W0 does: a fresh repository from the step's snapshot and its pinned execution file. State is carried from the previous step's latest attempt |
 | Managers | 21 for W0–C6, 20 for C7–C9 (C7 folds `billing/payments` into `billing/invoices`) |
@@ -42,7 +44,7 @@ Uncounted smokes on W0 found three defects, all fixed before the first counted r
 - **Check-profile mapping.** The final smoke on F_final failed on a controller defect: it renamed the example's `go` check profile as for the Library. The controller was fixed.
 - **Controller verdict.** The replacement smoke `ee91c7e6` passed and published, but the controller reported a false negative: it expected exactly one `project-tests` check, a Library assumption. The controller was fixed and re-reviewed.
 
-One earlier re-smoke failed before any Run on a container-engine timeout under host load. The smoke records are in the step-4 notes ([Retained evidence](#retained-evidence)).
+One earlier re-smoke failed before any Run on a container-engine timeout under host load. The smoke records are in step 4's Phase C notes ([Retained evidence](#retained-evidence)).
 
 ## Runs
 
@@ -154,11 +156,13 @@ For every Root Implement turn, the split comes from the retained transcripts. Wa
 | m-c9-c3 | open when the Run ended | 699.3 | 101.1 | 598.2 | 38 | 46 |
 
 - **#725 holds natively.**
-  - The seven Root turns that ended at the limit ran 653–925 s wall, well past 600 s, because their host-served time was excluded.
+  - The seven Root turns that ended at the limit ran 678–925 s wall, well past 600 s, because their host-served time was excluded.
   - Each stopped when provider time reached the limit: its last recorded event was at 594–599 s.
   - C1's first Implement turn ran 1,029 s wall but used only 527 s of provider time, so it completed.
   - In C4 and C8, Root's turn was still under the limit when the Run ended for the reasons above.
-- **The limit bounds a busy turn's total, not inactivity.** No single model step was slow: the turns that hit the limit spent their provider time answering children, delegating, reviewing and running commands. Chains 1 and 2 stayed at or below 414 s because a continuation leaves Root few questions (0–17 asks).
+- **The limit bounds a busy turn's total, not inactivity.** No single model step was slow: the turns that hit the limit spent their provider time answering children, delegating, reviewing and running commands.
+  - In chains 1 and 2 the most was 414 s, in chain 2's fresh W0, and the continuation steps used 113–302 s with 0–3 asks.
+  - The same fresh W0 step reached the limit in chain 3. So the data shows spread between runs and growth with the size of a step, not an effect of continuation alone.
 
 ## P2 observation
 
@@ -188,11 +192,14 @@ No dedicated P2 attempt was run. The design reserves those for the case that Pha
 - **Probes.** Each uncounted probe was one short `codex exec` request with the counted model, effort and login, in a throwaway directory under the lock. It used no Markitect and no study input.
   - Probe 01 succeeded at 08:15:47–08:15:57Z, before attempt 03.
   - The chain resumed at C6 only after two more successful probes at least 30 minutes apart: 02 at 09:51:42Z and 03 at 10:22:21Z. Each returned exit 0, reply "ok" and no capacity message.
+- **Stop and resumption.**
+  - Attempt 03 was the step's third infrastructure failure, so C4's stop rule applied: the series stopped, and it was reported to the coordinator.
+  - The coordinator recorded the step as no-candidate, with no fourth attempt, and resumed the series at C6 after the two further probes.
 - **C6** continued from C4's candidate, with state from C5's latest attempt.
 
 **M-c3-W0, Docker Desktop idle shutdown.**
 - Attempt 01 (12:14:56Z) failed in preflight: `docker image inspect` hit its 20 s timeout and the container census its 8 s timeout.
-- Docker Desktop's backend log shows its idle module scanning volumes from 12:15:13Z and stopping the VM at 12:15:54Z ("idle: shutdown"). It restarted on demand at 12:16:08–12:16:24Z.
+- Docker Desktop's backend log, read at the time, showed its idle module scanning volumes from 12:15:13Z and stopping the VM at 12:15:54Z ("idle: shutdown"). It restarted on demand at 12:16:08–12:16:24Z. The log has since rotated and is not retained; the two preflight timeouts are in the attempt's step records.
 - No Apply, Session or provider call started. The study recorded repeat 1, the infrastructure rule.
 - From then on the study checked that the pinned image answered `docker image inspect` before each go.
 
@@ -202,7 +209,7 @@ Capacity failures and the preflight failure were the only repeats; every product
 
 - `controller-phase-c` passes `sha256sum -c SHA256SUMS` for `launch.py`, `rehearse-phase-c.sh`, `requalify.py` and `test_requalify.py`. No file in it is newer than its `SHA256SUMS`.
 - **Step script.** `launch\phase-c-step.sh` lies outside the controller. It is SHA-256 `3416123a37cf421bd3502508b1d4e3e66e3eb9286b7cc88ffab4f7ebf65cf1e9`, the version written before the first counted run.
-  - After M-c3-W0's preflight failure, a Docker-readiness wait and a fail-closed quiet check were added to it, from 12:18:06Z to 12:18:54Z, at the operator's own initiative.
+  - After M-c3-W0's preflight failure, step 4 added a Docker-readiness wait and a fail-closed quiet check to it on its own initiative. The edit existed from 12:18:06Z to 12:18:54Z.
   - The study declined changes to the launch helpers during the series, and the edit was reverted byte for byte, which the hash confirms. No launch ran in that window: attempt 01 started at 12:14:56Z and attempt 02 at 12:19:13Z.
   - Both improvements are recorded as findings for after Phase C.
 - **Read-only analysis.** The scripts in `analysis\` (`root-split.py`, `fail-check.py`, `record-table.py`, `record-split.py`) read retained evidence only and were never part of a launch.
@@ -211,13 +218,14 @@ Capacity failures and the preflight failure were the only repeats; every product
 
 - **Root split, first reports.** For M-c3-W0 attempt 02 and M-c3-C2, the first reports said Root "never blocked". They had measured tool calls by Codex's `mcpToolCall` items, which Codex emits only after the host replies. Measured from the `tool-call` → `tool-reply` pairs, Root's awaits did block; the table above uses those numbers. The mechanism stayed as reported, and both the study and the coordinator received the correction.
 - **Launch helper.** See [the frozen-tooling verification](#frozen-tooling-verification).
-- **C7 and C9 in chain 3** were fresh starts. Their bindings record `replaced: null` and no owner attention, although the configuration equals chain 2's C7 and C8 (`c7.yaml`), and C9 expected a fresh build instead of a strict no-change.
+- **Chain 3's C7–C9** were fresh starts built with `c7.yaml`. Their bindings record `replaced: null` and no owner attention, and C9 expected a fresh build, not a strict no-change.
+- **Series stop at M-c2-C5.** C4's rule stopped the series after the third capacity failure, and the stop was reported. The coordinator recorded the step as no-candidate and resumed the series at C6. C4 does not itself say how a stopped series resumes.
 
 ## Limits
 
 - **Chain 3 measures fresh builds only.** After W0 failed, C4 made every later step a fresh start, so chain 3 says nothing about continuing a candidate, and it is not comparable step by step with chains 1 and 2.
 - **Root split method.** The host's own clock is not logged. Host-served time comes from the transcript's call and reply timestamps, which put the observed expiry at 594–599 s against the 600 s limit.
-- **No retained-result reviews.** Unlike Phase B, the counted runs had no per-chain independent review of the retained results. This record was checked against the evidence by its own review.
+- **No retained-result reviews.** Unlike Phase B, the counted runs had no per-chain independent review of the retained results. Before merge, this record had one independent complete-diff review that recomputed its tables from the evidence. The verdict was READY WITH NOTES, and its findings are applied.
 - **P2** was exercised only partially, once.
 - **Time of day.** Chain 2's capacity failures came in one morning window; the probes and the later steps succeeded.
 - **Scope.** One fixture, one provider and model, one machine. Not covered: release, deployment, other providers, account refresh and owner acceptance.
@@ -227,8 +235,8 @@ Capacity failures and the preflight failure were the only repeats; every product
 Execution host root: `Documents\Codex\Markitect-V1-Requalification\4d23f7ae\`.
 - `controller-phase-c\` (with `SHA256SUMS`), `build\`, `launch\` (step, wait and probe scripts, launch records).
 - `inputs\<name>\` with `input-binding.json`.
-- `packets\m-<step>-c<chain>[-NN]\`, each with `attempt-01\` holding every step record, `state\` (Run records, candidate bundles, transcripts, Notes, Apply report), `package-result.json`, `run-summary.json` and `files.sha256`.
+- `packets\m-<step>-c<chain>[-NN]\`, each with `attempt-01\` holding every step record, `state\` (Run records, candidate bundles, transcripts, Notes, Apply report), `package-result.json`, `run-summary.json` and `files.sha256`. The uncounted smokes on F_final are `packets\m-w0\` and `packets\m-w0-02\`.
 - `probes\capacity-probe-0N\result.json`.
 - `analysis\`: the read-only scripts and the per-Apply `<packet>.root-split.json`.
 
-Run log, Root split and smoke records: the Phase C arm M notes of the coordinating session.
+Run log, Root split and smoke records: step 4's Phase C notes in the coordinating session's shared notes.
