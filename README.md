@@ -135,7 +135,7 @@ A Markitect project explicitly owns its inputs and file relationships under `.ma
 
 The model is **not a mirror of the file tree**. You choose the level of conceptual detail. The registry describes how real files implement those concepts; Package structure determines responsibility; declared checks provide executable evidence where available.
 
-See [Markitect's own model](.markitect/README.md), the [canonical language v1 contract](docs/design/language-contract.md), and the [Library model](testdata/library/README.md) for the actual format.
+See the [canonical language v1 contract](docs/design/language-contract.md) and the [Library model](testdata/library/README.md) for the actual format.
 
 <a id="run-the-current-source"></a>
 
@@ -148,12 +148,12 @@ git clone https://github.com/Glacius-Labs/Markitect.git
 cd Markitect
 
 go run ./cmd/markitect help
-go run ./cmd/markitect check --repo .
-go run ./cmd/markitect context product --repo .
-go run ./cmd/markitect docs --repo .
+go run ./cmd/markitect check --repo /path/to/your-project
+go run ./cmd/markitect context PACKAGE --repo /path/to/your-project
+go run ./cmd/markitect docs --repo /path/to/your-project
 ```
 
-These commands inspect the repository's own canonical model; they **do not launch agents**. `docs` previews the readable model view. To write a view, use `docs --expect PREVIEW_DIGEST --write` with the digest returned by a current preview.
+These commands inspect the canonical model under the project's `.markitect/`; they **do not launch agents**. Markitect's own repository is developed as an ordinary software project and keeps no such model; the [Library model](testdata/library/README.md) is a complete example. `docs` previews the readable model view. To write a view, use `docs --expect PREVIEW_DIGEST --write` with the digest returned by a current preview.
 
 ### Running Apply (advanced, experimental)
 
@@ -176,7 +176,7 @@ go run ./cmd/markitect apply \
 
 | Capability | Current evidence and limits |
 | --- | --- |
-| Canonical v1 language, compiler and explicit file accounting | Implemented with source tests and model/architecture checks. |
+| Canonical v1 language, compiler and explicit file accounting | Implemented with source tests and the architecture gate. |
 | `check`, `context` and guarded `docs` | Implemented in the current CLI. |
 | Standalone hierarchical Run and stored Git candidates/results/Notes | Implemented, with controlled tests and a bounded native Codex hierarchy proof. |
 | `apply`: Assessment → Implement → Verify → guarded publication | Implemented. With native Codex, the [qualification record](docs/validation/v1-qualification-20261024.md) holds complete Library M1 and M2 (loan limit 5 → 3) Applies with independent outside oracles, a strict no-change Apply and a seeded defect repaired by an ordinary Implement. |
@@ -207,7 +207,7 @@ The measure of success is whether projects remain consistent through real change
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for source checks, import boundaries, artifact registration, and independent review. Use [GitHub Issues](https://github.com/Glacius-Labs/Markitect/issues) for concrete defects or proposals. The project currently prioritizes fidelity to modeled intent, a small coherent architecture, and honest evidence over feature breadth.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for source checks, import boundaries, and independent review. Use [GitHub Issues](https://github.com/Glacius-Labs/Markitect/issues) for concrete defects or proposals. The project currently prioritizes fidelity to modeled intent, a small coherent architecture, and honest evidence over feature breadth.
 
 ## Distribution
 

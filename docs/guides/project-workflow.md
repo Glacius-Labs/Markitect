@@ -6,7 +6,7 @@
 
 ```text
 go run ./cmd/markitect check --repo .
-go run ./cmd/markitect context product/model --repo .
+go run ./cmd/markitect context PACKAGE --repo .
 ```
 
 The default manifest is `.markitect/model.yaml`. `--model` selects another exact manifest; repeat `--dependency PATH` for every dependency. There is no folder or registry discovery. The manifest and lock satisfy the [canonical v1 contract](../design/language-contract.md).

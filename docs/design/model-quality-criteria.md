@@ -13,9 +13,9 @@
 | Where | Hard rules (H) | Review criteria (R) | Signals (S) |
 |---|---|---|---|
 | Our reference and evaluation models (pilots, study portfolios) | Must pass | Must pass | Reviewed; each one kept is justified in one line |
-| Markitect's self-model | Exempt until its rewrite to the modeling guide, which is deferred until Markitect is stable ([DEC-074](../concepts/register.md#dec-074-canonical-model-track-parallel-to-v1), W6); measured and reported meanwhile | Exempt likewise | Reported |
 | Other projects | Reported by the W5 tool as findings | Reported | Reported |
 
+- Markitect's own repository keeps no canonical self-model ([DEC-076](../concepts/register.md#dec-076-markitect-is-developed-as-a-regular-software-project)); a later self-model pilot would be judged like a reference model.
 - The product does not block on these criteria (ENH-002, DEC-005). For now they live in the W5 tool. Warnings in `markitect check` would change the product CLI and need an owner decision first.
 - They are not the material-gap criteria of the mandatory Model assessment, which stays as accepted on 21 October 2026.
 
@@ -60,6 +60,8 @@
 - **Verifiability:** every Rule states how a violation would be noticed. A review hint now; mechanical once ENH-003 exists.
 
 ## Measured today (to be re-run with the W5 tool)
+
+The Makerspace column is to be re-run with the W5 tool. The self-model column records the model retired by [DEC-076](../concepts/register.md#dec-076-markitect-is-developed-as-a-regular-software-project) and will not be re-run.
 
 | | Makerspace c9 | Self-model |
 |---|---|---|

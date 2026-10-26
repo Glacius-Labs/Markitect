@@ -90,38 +90,34 @@ func TestBootstrapImageFactoryUsesOnlySelectedSourceBoundConfiguration(t *testin
 	}
 }
 
+// productFixture is a consumer repository with the product fixture under
+// .markitect/ and the normative Core copied into its own model tree.
 func productFixture(t *testing.T) *testkit.Repo {
 	t.Helper()
 	repo := testkit.NewRepo(t)
 	repo.Git("checkout", "-b", "codex/read-only-consumer-fixture")
-	err := filepath.WalkDir("../../.markitect/model", func(name string, e fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if e.IsDir() {
+	copyTree := func(source, target string) {
+		err := filepath.WalkDir(source, func(name string, e fs.DirEntry, err error) error {
+			if err != nil || e.IsDir() {
+				return err
+			}
+			relative, err := filepath.Rel(source, name)
+			if err != nil {
+				return err
+			}
+			data, err := os.ReadFile(name)
+			if err != nil {
+				return err
+			}
+			repo.Write(target+filepath.ToSlash(relative), string(data))
 			return nil
-		}
-		relative, err := filepath.Rel("../../.markitect/model", name)
-		if err != nil {
-			return err
-		}
-		data, err := os.ReadFile(name)
-		if err != nil {
-			return err
-		}
-		repo.Write(".markitect/model/"+filepath.ToSlash(relative), string(data))
-		return nil
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, name := range []string{"model.yaml", "model-lock.yaml", "execution.yaml"} {
-		data, err := os.ReadFile("../../.markitect/" + name)
+		})
 		if err != nil {
 			t.Fatal(err)
 		}
-		repo.Write(".markitect/"+name, string(data))
 	}
+	copyTree("testdata/product", ".markitect/")
+	copyTree("../../testdata/core/model/markitect/core", ".markitect/model/markitect/core/")
 	repo.Write("docs/markitect/project.md", "reviewed prior generated target\n")
 	repo.Write(".markitect/registry/documentation/registry.yaml", "apiVersion: markitect.registry/v1\nartifacts:\n  - path: docs/markitect/project.md\n    form: doc\n    realizes: [documentation/current-guidance]\n    why: The exact generated view target.\n")
 	repo.Commit("canonical v1 consumer fixture")

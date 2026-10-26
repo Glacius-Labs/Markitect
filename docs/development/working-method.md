@@ -1,12 +1,12 @@
 # Learning through complete workflows
 
-The owner adopted this working method on 17 October 2026 after the project-history discussion ([DEC-038](../concepts/register.md#dec-038-learn-through-complete-workflows), [original instructions](../concepts/sources/project-history-working-method-20261017.md)). Its binding intent lives in the canonical [repository Rule](../../.markitect/model/repository/learning-driven-workflow.yaml); this guide makes that Rule usable in day-to-day design and delivery. It governs how we develop Markitect, not the behavior required of every adopting project.
+The owner adopted this working method on 17 October 2026 after the project-history discussion ([DEC-038](../concepts/register.md#dec-038-learn-through-complete-workflows), [original instructions](../concepts/sources/project-history-working-method-20261017.md)). This guide is its canonical statement for day-to-day design and delivery. It governs how we develop Markitect, not the behavior required of every adopting project.
 
 ## Start from the workflow
 
 Read the [delivery plan](../implementation-plan.md) for the current target, scope and dependencies. Keep one complete user workflow as the next reference point: the current target of the delivery plan. The later working-day scenarios keep their own sequence and scope.
 
-A useful change advances that workflow or resolves a concrete failure, missing accepted obligation or necessary blocked step. Implementation choices within the accepted design can proceed normally. A genuinely new decision follows the existing owner process. A confirmed defect can require a design correction; stability is an opportunity to learn from use, not a requirement to preserve a known wrong design.
+A useful change advances that workflow or resolves a concrete failure, missing accepted obligation or necessary blocked step. Implementation choices within the accepted design can proceed normally. A genuinely new decision follows the existing owner process. A confirmed defect can require a design correction; stability is an opportunity to learn from use, not a requirement to preserve a known wrong design. An accepted foundation gets a coherent period of actual use; fix concrete failures, missing accepted obligations and necessary blocked steps before unrelated generalization.
 
 ## Explain a substantial design change
 
@@ -35,6 +35,8 @@ Alongside correctness and consistency, independent design review asks:
 
 Keep the existing quality and safety requirements. Simplification must preserve their intent; a second reviewer label or a larger collection of green checks does not itself establish a better outcome. Use the existing relevant review rather than creating a separate review institution for every change.
 
+Judge the Agent process against ordinary delegated coding practice. Prefer the smallest process that improves trust through model intent, clear responsibilities, independent perspectives and parent integration. Do not substitute longer prompts, mandatory evidence fields or completeness declarations for semantic judgment. Review removals as well as additions when protocol work obstructs the complete workflow. Keep an accepted guideline apart from proposed contract changes and their implementation; a technical supervision failure is not evidence that semantic review failed.
+
 ## Keep the owner oriented
 
 At a completed design decision, a changed workflow boundary or a delivery milestone, the responsible chat gives a short account of:
@@ -45,6 +47,10 @@ At a completed design decision, a changed workflow boundary or a delivery milest
 - which next observation could change our assessment.
 
 The delivering chat explains its result; the coordinating chat connects cross-package milestones to the overall workflow. Use existing owning documents and chat/PR evidence. Do not add another dashboard, recurring report automation or approval round. A package count alone does not describe a usable workflow.
+
+## Keep evidence in its scope
+
+A committed model binds the specification for its revision. Tests, source checks, smokes and reports are bounded evidence: they do not authenticate owner acceptance, establish runtime readiness or show provider performance. Keep the canonical Library M1/M2 rules and the independent Library oracle unchanged; controlled fixture and source-smoke results are mechanics evidence, and synthetic bookkeeping never proves delegated realization. Retire obsolete engines together with their command consumers, tests and gates; no disabled gate, skip, success stub or compatibility branch may make an unimplemented replacement look complete.
 
 ## Keep one knowledge owner
 

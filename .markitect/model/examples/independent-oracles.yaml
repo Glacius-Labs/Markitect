@@ -1,7 +1,0 @@
-imports:
-  - package: vocabulary
-    as: Vocab
-id: independent-oracles
-kind: Vocab.Rule
-body: "Keep canonical Library M1/M2 rules and the independent oracle unchanged. Treat controlled fixture and source-smoke results as bounded mechanics evidence. Retire obsolete fake product engines and command consumers together; synthetic bookkeeping never proves delegated realization or provider performance."
-spec: {}

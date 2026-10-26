@@ -111,22 +111,6 @@ packages:
     layer: maintenance
     purpose: Explicitly separated release and repository tooling.
     doc: docs/development/modules.md
-  - path: internal/tooling/modulechecks
-    layer: maintenance
-    purpose: Explicitly separated release and repository tooling.
-    doc: docs/development/modules.md
-  - path: internal/tooling/modulecli
-    layer: maintenance
-    purpose: Explicitly separated release and repository tooling.
-    doc: docs/development/modules.md
-  - path: internal/tooling/modules/githooks
-    layer: maintenance
-    purpose: Explicitly separated release and repository tooling.
-    doc: docs/development/modules.md
-  - path: internal/tooling/modules/pipelines
-    layer: maintenance
-    purpose: Explicitly separated release and repository tooling.
-    doc: docs/development/modules.md
   - path: internal/tooling/publish
     layer: maintenance
     purpose: Explicitly separated release and repository tooling.
@@ -148,10 +132,6 @@ packages:
     purpose: Explicitly separated release and repository tooling.
     doc: docs/development/modules.md
   - path: cmd/markitect-check-architecture
-    layer: maintenance-command
-    purpose: Thin entrypoints to maintenance services.
-    doc: docs/development/modules.md
-  - path: cmd/markitect-check-modules
     layer: maintenance-command
     purpose: Thin entrypoints to maintenance services.
     doc: docs/development/modules.md

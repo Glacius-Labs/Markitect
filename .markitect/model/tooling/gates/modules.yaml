@@ -1,8 +1,0 @@
-imports:
-  - package: vocabulary
-    as: Vocab
-id: modules
-kind: Vocab.Check
-body: "Run the declared modules source maintenance check and retain failures separately from runtime and acceptance evidence."
-spec:
-  command: "go run ./cmd/markitect-check-modules --repo . --hooks .markitect/modules/githooks.config --pipelines .markitect/modules/pipelines.config"

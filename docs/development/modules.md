@@ -8,6 +8,21 @@ Pure model and snapshot packages consume supplied bytes and values. Organization
 
 Run owns Session, WorkspaceService, CandidateChecks and Records ports. The repository adapter implements real private Git copies and self-contained stored candidates. The check adapter binds declared checks to prepared pinned container profiles and disposable input/home copies. The file record adapter provides immutable terminal results and concurrent project Notes. The native harness and provider adapters remain governed by their separately reviewed source and bounded feasibility evidence.
 
+Concrete adapters implement physical acquisition and protocols; the values they serve stay independent of execution and infrastructure. Outer runtime configuration acquires static native and check profile metadata and never resolves model intent. [Architecture](../architecture.md) describes the behavior behind each responsibility.
+
+## Package invariants
+
+This list owns the package-level invariants; the [concept](../concepts/v1-concept.md), the architecture and the guides own the behavior around them:
+
+- **Snapshot** represents exact repository-relative paths, modes, immutable bytes, trees and deterministic content identities, and performs no repository I/O. Tree and content digests stay distinct from canonical model digests. Invalid spellings, collisions and unsupported entries fail explicitly.
+- **Model** checks the complete canonical language v1 from supplied immutable sources, without filesystem, Git, process or provider dependencies. It keeps exact identities, values, links, provenance and deterministic model digests, and rejects invalid or incomplete constructs. The fixed Core Definitions hold the normative language contracts.
+- **Project** acquires explicitly selected model and control inputs through its own ports and prepares everything from one complete capture. It keeps original bytes, source provenance and authored absence, and distinguishes known invalid input from incomplete acquisition. It does not decode runtime profiles, resolve strategies, roles or budgets, start Sessions, execute checks, allocate working copies or publish.
+- **Repository adapter** captures the complete repository census and the selected inputs with exact paths, modes and bytes. It resolves a symbolic revision once, keeps the full identity, rejects redirects and changed directory identity, and never replaces historical sources with current external bytes.
+- **Agent profile metadata** binds the immutable runtime image identity and the whole metadata file bytes. Preparation may inspect the image and copy build metadata from a created, never started container; it never reads a host provider executable, probes a version, starts a Session or invokes a model. A build-recorded schema digest is an assertion, not an observed schema inventory. Instructions come only from captured inputs, and a static pass establishes neither runtime nor provider capability.
+- **Check adapter** keeps literal arguments, the fixed environment policy, finite resource and output limits, and exact image and executable identities. It runs each declared check against the fixed candidate on an independently verified disposable copy with an empty private home and keeps the actual image, tree, start, exit, output, timeout and closure observations. Unknown or uncertain execution or cleanup never counts as a passing check.
+- **CLI** reports actual statuses, sources and inclusion reasons; retained reports and printed JSON use the same final projection. Usage errors, known failures and incomplete work have distinct exit statuses.
+- **Model view** renders a deterministic view from compiled Definitions and keeps the canonical model digest, rendered byte digest and source/target-bound preview digest distinct. Its guarded write touches only the reviewed generated target after source and target rechecks, never model, control or instruction inputs, and keeps observed partial effects on failure.
+
 ## Dependency direction
 
 | Consumer | Allowed responsibility |
@@ -29,7 +44,7 @@ Run owns Session, WorkspaceService, CandidateChecks and Records ports. The repos
 | Product command | Bootstrap |
 | Maintenance command | Its specific maintenance CLI |
 
-The real-Git vertical test alone receives a test-only record-adapter edge. No sibling adapter or common tooling parent grants a general import exemption. Maintenance remains explicit: module checks consume structural Project preparation and pure hook/pipeline checkers; release uses source/license values; installation/publication use their own maintenance consumers.
+The real-Git vertical test alone receives a test-only record-adapter edge. No sibling adapter or common tooling parent grants a general import exemption. Maintenance remains explicit: the architecture gate reads Go sources, release uses source/license values, and installation and publication use their own maintenance consumers.
 
 ## Apply target dependencies
 
@@ -41,7 +56,7 @@ Every actual Go package has one exact `codemap.yaml` entry with a compatible res
 
 ## Adding, changing or removing a capability package
 
-Coordinate shared contracts first. Add a concrete responsibility/import decision in [the gate](../../internal/tooling/architecture/target.go), an exact code-map entry and its artifact registrations. Source packaging has its own explicit responsibility roots and data selection; update its positive/negative tests for a new package or embedded asset. Keep one root module and reject nested product modules. Delete obsolete source, commands and gates together.
+Coordinate shared contracts first. Add a concrete responsibility/import decision in [the gate](../../internal/tooling/architecture/target.go) and an exact code-map entry. Source packaging has its own explicit responsibility roots and data selection; update its positive/negative tests for a new package or embedded asset. Keep one root module and reject nested product modules. Delete obsolete source, commands and gates together.
 
 ## Mechanical dependency gate
 

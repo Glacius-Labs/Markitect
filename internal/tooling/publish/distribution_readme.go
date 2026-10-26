@@ -51,30 +51,15 @@ export PATH="$HOME/.local/bin:$PATH"
 <!-- markitect-release:install:end -->`
 	try := `## Try the installed CLI
 
-Clone the exact release source and inspect its canonical v1 self-model. These read-only operations start no session, check executable, workspace or Apply operation.
-
-Windows PowerShell:
-
-~~~powershell
-git clone --depth 1 --branch {{TAG}} https://github.com/Glacius-Labs/Markitect.git markitect-sample-{{TAG}}
-if ($LASTEXITCODE -ne 0) { throw 'Could not get the exact release source.' }
-markitect version
-markitect check --repo .\markitect-sample-{{TAG}}
-if ($LASTEXITCODE -ne 0) { throw 'Structural preparation failed.' }
-markitect context product/model --repo .\markitect-sample-{{TAG}}
-~~~
-
-Linux amd64:
+Markitect reads a Git repository that holds a canonical model under ` + "`.markitect/`" + `. Create one as the [project workflow](docs/guides/project-workflow.md) describes; the [canonical Library model](testdata/library/README.md) is a complete example. Then run these read-only operations from that repository. They start no session, check executable, workspace or Apply operation.
 
 ~~~sh
-set -e
-git clone --depth 1 --branch {{TAG}} https://github.com/Glacius-Labs/Markitect.git markitect-sample-{{TAG}}
 markitect version
-markitect check --repo ./markitect-sample-{{TAG}}
-markitect context product/model --repo ./markitect-sample-{{TAG}}
+markitect check --repo .
+markitect context PACKAGE --repo .
 ~~~
 
-The [project workflow](docs/guides/project-workflow.md) explains explicit manifests and dependencies, the structural and metadata stages, and the unavailable execution boundary. Published older releases retain their own immutable usage guides.
+The project workflow also explains explicit manifests and dependencies, the structural and metadata stages, and the unavailable execution boundary. Published older releases retain their own immutable usage guides.
 
 <!-- markitect-release:try:end -->`
 

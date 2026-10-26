@@ -96,7 +96,7 @@ Amended pinned bodies:
 | Inline test specs | 77 YAML `type:` occurrences in 9 Go test files (16 in the two embedded Core fixtures, the rest in contract, value and context tests); the interface tests are new |
 | Library fixtures | `software-basics` 0.3.0 (new digest only). `testdata/library/m1` has two Properties with `type` (`loan-period-days.yaml`, `max-open-loans.yaml`) |
 | Comparison tooling that reads m1 live | `tools/comparison/requirements.py` (`property_meaning` expects `type`) and the Phase B overlays it lays over m1 (`phase-b/m3/…/loan-period-days.yaml`, `short-loan-period-days.yaml`, `phase-b/m4/…/max-renewals.yaml`). These are migrated together; the rendered documents stay byte-identical, which `test_requirements.py` checks |
-| Self-model | Being retired (DEC-076, slice R3a). If R3a lands first, G1 drops its self-model changes. Otherwise G1 migrates its one Property (`vocabulary/command.yaml`) and the embedded Core, and regenerates `docs/markitect/project.md` |
+| Self-model | G1 landed first and migrated its one Property (`vocabulary/command.yaml`), the embedded Core and `docs/markitect/project.md`. Slice R3a then retired the self-model (DEC-076); the Property lives on in the bootstrap test fixture `internal/bootstrap/testdata/product/` |
 | Registry | The new tests `internal/model/interfaces_test.go` and `internal/organization/context_interfaces_test.go` have exact entries in the product/model and product/organization shards |
 | Frozen study material | Phase C snapshots and other records stay historical at their recorded commits, as already noted. The Phase B overlays above are the exception, because a live tool reads them |
 
