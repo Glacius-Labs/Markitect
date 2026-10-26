@@ -132,3 +132,7 @@ artifacts:
     form: test
     realizes: [product/cli/honest-read-only-interface]
     why: Tests one holder at a time, release, and independent state directories.
+  - path: "internal/bootstrap/libraries_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Verifies that the standard Libraries compile for a consuming project through the actual check command.
