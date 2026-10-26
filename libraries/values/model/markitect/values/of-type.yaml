@@ -1,0 +1,12 @@
+imports:
+  - {package: markitect/core, as: Core}
+id: ofType
+kind: Core.Property
+body: >-
+  The type of a field's value. An Entity type embeds the entity's fields.
+spec:
+  name: fieldType
+  target: FieldType
+  valueType: reference
+  minCount: 1
+  maxCount: 1

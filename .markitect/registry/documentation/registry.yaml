@@ -608,3 +608,7 @@ artifacts:
     form: config
     realizes: [documentation/current-guidance]
     why: Preserves original release and asset identities, tag objects and verified GitHub attestation observations before download removal.
+  - path: "docs/design/standard-libraries.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: States the accepted outline of the standard Libraries.

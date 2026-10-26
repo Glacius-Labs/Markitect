@@ -1,0 +1,10 @@
+imports:
+  - {package: markitect/core, as: Core}
+id: when
+kind: Core.Property
+body: >-
+  The condition under which the refusal applies.
+spec:
+  valueType: string
+  minCount: 1
+  maxCount: 1

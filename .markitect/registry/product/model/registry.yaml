@@ -244,3 +244,143 @@ artifacts:
     form: test
     realizes: [product/model/language-v1]
     why: Tests the stated responsibility and retains negative boundaries.
+  - path: "libraries/api/model-lock.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/api/model.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/api/model/markitect/api/arguments.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/api/model/markitect/api/code.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/api/model/markitect/api/for-role.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/api/model/markitect/api/mutation.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/api/model/markitect/api/operation.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/api/model/markitect/api/permissions.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/api/model/markitect/api/refusal-code.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/api/model/markitect/api/refusal.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/api/model/markitect/api/refusals.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/api/model/markitect/api/results.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/api/model/markitect/api/role.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/api/model/markitect/api/scope.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/api/model/markitect/api/when.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/api/model/markitect/api/wire-name.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/values/model-lock.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/values/model.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/values/model/markitect/values/base.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/values/model/markitect/values/enumeration.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/values/model/markitect/values/field-name.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/values/model/markitect/values/field-type.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/values/model/markitect/values/highest.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/values/model/markitect/values/list.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/values/model/markitect/values/lowest.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/values/model/markitect/values/meaning.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/values/model/markitect/values/measured-in.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/values/model/markitect/values/member-value.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/values/model/markitect/values/members.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/values/model/markitect/values/nullable.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/values/model/markitect/values/of-type.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/values/model/markitect/values/refers-to.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/values/model/markitect/values/scalar.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/values/model/markitect/values/symbol.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.
+  - path: "libraries/values/model/markitect/values/unit.yaml"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Ships the standard Library models that projects bind as checked dependencies of the canonical language.

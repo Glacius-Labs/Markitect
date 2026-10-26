@@ -1,0 +1,10 @@
+imports:
+  - {package: markitect/core, as: Core}
+id: mutation
+kind: Core.Property
+body: >-
+  Whether the operation changes state.
+spec:
+  valueType: boolean
+  minCount: 1
+  maxCount: 1
