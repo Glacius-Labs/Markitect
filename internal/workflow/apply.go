@@ -71,6 +71,9 @@ func Apply(ctx context.Context, executor Executor, base run.Request) (out Result
 			return out, fmt.Errorf("budget does not cover a correction pair, in which Implement and Verify each need every Manager once: %w", err)
 		}
 		base.Findings = run.Initial(base.Prepared, verified.Findings)
+		if len(base.Findings) == 0 {
+			return out, fmt.Errorf("Verify %s rejected without a Finding that names a current Definition; a correction has nothing to act on", verified.ID)
+		}
 		base.Input, base.BuildOutputs = *verified.Candidate, nil
 	}
 }

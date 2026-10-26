@@ -79,9 +79,9 @@ func (x *execution) definitionStep(s *managerState) string {
 			near = append(near, d.Package+"/"+d.ID)
 		}
 	}
-	step := "Name the current Definition whose obligation it affects as Package/ID: for a change, one that the changed artifact's entry in .markitect/registry/ realizes; for a failing declared check, its requiredBy Definition in .markitect/execution.yaml; otherwise a Definition of the affected area. Any Definition of the checked model is accepted"
+	step := "An optional addition does not belong in a reject: leave it out and record it with append_note. For a necessary correction, name the current Definition whose obligation it affects as Package/ID: for a change, one that the changed artifact's entry in .markitect/registry/ realizes; for a failing declared check, its requiredBy Definition in .markitect/execution.yaml; otherwise a Definition of the affected area. Any Definition of the checked model is accepted"
 	if len(near) != 0 {
-		step += "; those of your area and its parents are: " + strings.Join(near, ", ")
+		step += "; those of your area, its subtree and its parents are: " + strings.Join(near, ", ")
 	}
 	return step
 }
@@ -124,26 +124,31 @@ func (x *execution) noteUnbound(ctx context.Context) error {
 const MaxChanges = 256 << 10
 
 // changes is what Verify Root's assignment carries of diff from the bound
-// input commit: the diff itself, or above MaxChanges every changed file with
-// its added and removed lines and how to read the complete diff.
+// input commit: the diff itself, or above MaxChanges its changed files with
+// their added and removed lines and how to read the complete diff. A summary
+// that would itself exceed MaxChanges ends with the number of files it leaves
+// out and how to list them all.
 func changes(diff, bound string) string {
 	if len(diff) <= MaxChanges {
 		return diff
 	}
 	var b strings.Builder
-	fmt.Fprintf(&b, "The complete diff from the bound input %s is %d bytes, more than one assignment carries (%d); read it with git diff %s in your copy. Changed files with their added and removed lines:\n", bound, len(diff), MaxChanges, bound)
-	file, added, removed := "", 0, 0
+	fmt.Fprintf(&b, "The complete diff from the bound input %s is %d bytes, more than one assignment carries (%d); read it with git diff %s HEAD in your copy. Changed files with their added and removed lines:\n", bound, len(diff), MaxChanges, bound)
+	var files []string
+	file, added, removed, header := "", 0, 0, false
 	flush := func() {
 		if file != "" {
-			fmt.Fprintf(&b, "%s +%d -%d\n", file, added, removed)
+			files = append(files, fmt.Sprintf("%s +%d -%d\n", file, added, removed))
 		}
 	}
 	for _, line := range strings.Split(diff, "\n") {
 		switch {
 		case strings.HasPrefix(line, "diff --git "):
 			flush()
-			file, added, removed = strings.TrimPrefix(line, "diff --git "), 0, 0
-		case strings.HasPrefix(line, "+++ ") || strings.HasPrefix(line, "--- "):
+			file, added, removed, header = strings.TrimPrefix(line, "diff --git "), 0, 0, true
+		case strings.HasPrefix(line, "@@"):
+			header = false
+		case header:
 		case strings.HasPrefix(line, "+"):
 			added++
 		case strings.HasPrefix(line, "-"):
@@ -151,6 +156,13 @@ func changes(diff, bound string) string {
 		}
 	}
 	flush()
+	for i, f := range files {
+		if b.Len()+len(f) > MaxChanges-256 {
+			fmt.Fprintf(&b, "%d further changed files are not listed here; git diff --stat %s HEAD lists them all.\n", len(files)-i, bound)
+			break
+		}
+		b.WriteString(f)
+	}
 	return b.String()
 }
 

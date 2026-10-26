@@ -1028,6 +1028,40 @@ func TestChangesDiffsStoredCandidatesWithoutCommonHistory(t *testing.T) {
 	}
 }
 
+// DEC-073: Implement receives only Findings that name a current Definition,
+// and a Run's bound input belongs to its project and binding. A refused
+// request starts nothing; a valid one gets as far as its ports allow.
+func TestRunRequestsRefuseUnboundImplementFindingsAndForeignBoundInput(t *testing.T) {
+	_, p, git, input := runFixture(t)
+	store, _ := runstore.New(git.StateRoot)
+	executor := &run.Executor{Sessions: run.UnavailableSessions{}, Workspaces: git, Records: store}
+	ctx := context.Background()
+	request := func(id string, findings []run.Finding, origin run.Origin) run.Request {
+		return run.Request{ID: id, Project: "fixture", Prepared: p, Input: input, Origin: origin, Mandate: run.Implement, Findings: findings, MaxManagers: 5, Allowance: run.NewAllowance(runDeadline(t), 100), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
+	}
+	foreign := run.Origin{Input: input}
+	foreign.Input.Binding = "another binding"
+	for name, tc := range map[string]struct {
+		request run.Request
+		want    string
+	}{
+		"unbound": {request("unbound", []run.Finding{{Manager: ".", Text: "from old Notes"}}, run.Origin{}), "Implement receives only Findings that name a Definition"},
+		"unknown": {request("unknown", []run.Finding{{Manager: ".", Definition: "a/Missing", Text: "repair"}}, run.Origin{}), "Implement receives only Findings that name a Definition"},
+		"foreign": {request("foreign", nil, foreign), "invalid bound input of the command"},
+	} {
+		if _, err := executor.Execute(ctx, tc.request); err == nil || !strings.Contains(err.Error(), tc.want) {
+			t.Fatal(name, err)
+		}
+		if _, err := store.Read(ctx, "fixture", tc.request.ID); err == nil {
+			t.Fatal("a refused request left a Run record", name)
+		}
+	}
+	bound := request("bound", []run.Finding{{Manager: ".", Definition: "a/Thing", Text: "repair"}}, run.Origin{})
+	if _, err := executor.Execute(ctx, bound); !errors.Is(err, run.ErrUnavailable) {
+		t.Fatal("a Definition-bound Implement request was refused", err)
+	}
+}
+
 func TestDurableCandidateRetentionAndReopenUnderLongPaths(t *testing.T) {
 	r, prepared, original, input := runFixture(t)
 	ctx, cancel := context.WithDeadline(context.Background(), runDeadline(t))

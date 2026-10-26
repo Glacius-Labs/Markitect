@@ -20,7 +20,7 @@ func validTools(t run.Tools) bool {
 // toolSpecs maps Run's fixed tool set. Descriptions state each tool's purpose
 // and arguments; Run's refusals name the reason and the possible next step.
 func toolSpecs() []frame.ToolSpec {
-	definition := map[string]string{"type": "string", "description": "The affected Definition of the checked model as Package/ID. Only Findings that name one reach Implement. In Verify every Finding of a reject names one and a Finding of an approval none."}
+	definition := map[string]string{"type": "string", "description": "The affected Definition of the checked model as Package/ID. Only Findings that name one reach Implement. In Verify every Finding of a reject names one and a Finding of an approval none; record an optional addition with append_note instead."}
 	finding := map[string]any{"type": "array", "items": map[string]any{"type": "object", "properties": map[string]any{"text": map[string]string{"type": "string"}, "definition": definition}, "required": []string{"text"}, "additionalProperties": false}}
 	text := map[string]string{"type": "string"}
 	var out []frame.ToolSpec
