@@ -20,6 +20,8 @@ Tools for the controlled comparison of Markitect V1 with the owner's primary bas
 
 The probes, the rubric, the review prompts and the oracle are assessor material. Writers receive only their fixture: arm B a Git repository with `requirements.md` and its prior work, arm M the Markitect fixture.
 
+> **Note, 26 October 2026:** the Phase B overlays `phase-b/m3/model/lending/loan-period-days.yaml`, `short-loan-period-days.yaml` and `phase-b/m4/model/lending/max-renewals.yaml`, the m1 fixture they lay over, and `requirements.py` were migrated to `valueType` for [DEC-075](../../docs/concepts/register.md#dec-075-kind-extension-and-one-core-120) (Core 1.2.0). The recorded Phase B results bind these files at F′ `528ef346`; the rendered packets are unchanged.
+
 ## Self-check
 
 ```text
