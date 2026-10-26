@@ -4,6 +4,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Records the owner's founding intent for the typed canonical model, Libraries, AI-written models and the Apply organization.
+  - path: "docs/concepts/sources/regular-development-20261026.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the owner decision that Markitect is developed as a regular software project without a canonical self-model in its own repository.
   - path: "docs/concepts/sources/self-model-pilot-deferred-20261026.md"
     form: doc
     realizes: [documentation/current-guidance]

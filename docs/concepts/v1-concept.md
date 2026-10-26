@@ -11,7 +11,7 @@
 
 > **The canonical model describes the intended project world. The Manager organization is derived from it. The Managers realize, review and integrate that world; the host provides a few clear technical guarantees for it.**
 
-This version condenses v0.18 and closes its open items with decisions. The decision record governs D10–D18, later owner decisions in the register govern their subjects (DEC-069, DEC-070, DEC-073), and the owner's v0.18 governs all other content. Any other divergence in this version is an editing error and is reported to the coordinator. The document describes the target. The [delivery plan](../implementation-plan.md) tracks implementation status and known deviations of the code. It grants no implementation, release, deployment or acceptance approval.
+This version condenses v0.18 and closes its open items with decisions. The decision record governs D10–D18, later owner decisions in the register govern their subjects (DEC-069, DEC-070, DEC-073, DEC-076), and the owner's v0.18 governs all other content. Any other divergence in this version is an editing error and is reported to the coordinator. The document describes the target. The [delivery plan](../implementation-plan.md) tracks implementation status and known deviations of the code. It grants no implementation, release, deployment or acceptance approval.
 
 ## Reading rules
 
@@ -159,7 +159,7 @@ Structural validity is not semantic completeness. A correctly registered file is
 
 ### 5.5 Protected foundation and self-model
 
-The semantics of language, compiler, snapshot values, organization derivation and realization accounting stay protected; structural improvements must not change these guarantees in passing. Markitect's own canonical self-model describes the architecture actually chosen. Maintaining it is not a change of the model language.
+The semantics of language, compiler, snapshot values, organization derivation and realization accounting stay protected; structural improvements must not change these guarantees in passing. Markitect itself is developed as a regular software project with agentic coding and ordinary documentation; its own repository keeps no canonical self-model (DEC-076). Using Markitect for its own development is a later option.
 
 ## 6. Registry, ownership and complete file accounting
 
@@ -636,7 +636,7 @@ Adapters only for old internal APIs, permanent compatibility layers, competing r
 
 A rewrite is not a reflex. The need for correction is measured by demonstrated contract and reliability problems. A large file is a hint of overloaded responsibility, not an automatic defect; spreading misunderstood state complexity over more files improves nothing. First the semantics become clear.
 
-Self-model, registry shards, generated documentation and actual responsibilities are kept consistent together. Active entry documents contain current rules, not a sequence of historical work orders. Historical insights and failures stay archived but do not become binding again by being close to the current plan.
+Documentation and actual responsibilities are kept consistent together (DEC-076). Active entry documents contain current rules, not a sequence of historical work orders. Historical insights and failures stay archived but do not become binding again by being close to the current plan.
 
 ## 24. Development organization
 
@@ -793,7 +793,6 @@ They close the items A1–A6 and R1–R3 left open in v0.18. R1 (deadline in pub
 | Notes retrieval (D17) | Completely readable, bounded, stably ordered. | First reproduce the size conflict under control, then choose the smallest read interface: sort key, page size, cursor form, context filter, handling of very large individual Notes and of storage errors. |
 | Result validation (D15) | One validation in the Run contract. | Package cut and call sites. |
 | Generic AGENTS.md harness | Best-effort representation of instructions for unknown providers, not an adapter. | Timing and membership in V1 acceptance, recorded with the provider matrix. |
-| Self-model | Describes the chosen architecture. | Package cut for project preparation, workflow and harness. |
 
 ### 28.2 Limits of evidence and open acceptance decisions
 

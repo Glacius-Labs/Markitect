@@ -85,11 +85,12 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-068](#dec-068-v1-concept-10) | Decision | V1 concept 1.0 | Accepted; implementation tracked in the delivery plan |
 | [DEC-069](#dec-069-documentation-is-written-in-english) | Decision | Documentation is written in English | Accepted; canonical-model documents translated (#679), historical records archived (#688), core vocabulary translated (#690) |
 | [DEC-070](#dec-070-parallel-writers-where-useful) | Decision | Parallel writers where useful | Accepted |
-| [DEC-071](#dec-071-repository-structure-and-archive) | Decision | Repository structure and archive | Accepted; execution in slice R2 |
+| [DEC-071](#dec-071-repository-structure-and-archive) | Decision | Repository structure and archive | Accepted; execution in slice R2; keeping `.markitect/` here superseded by DEC-076 |
 | [DEC-072](#dec-072-stable-v1-justified-by-data) | Decision | Stable V1 justified by data | Accepted; stability and comparison evidence tracked in the delivery plan |
 | [DEC-073](#dec-073-change-minimality-on-an-unchanged-model) | Decision | Change minimality on an unchanged model | Accepted; implementation in session S3 of the delivery plan |
 | [DEC-074](#dec-074-canonical-model-track-parallel-to-v1) | Decision | Canonical model track, parallel to V1 | Accepted; W1 decisions taken, tracked in the delivery plan |
 | [DEC-075](#dec-075-kind-extension-and-one-core-120) | Decision | Kind extension and one Core 1.2.0 | Accepted; implementation in the canonical model track, merged after the F_fix pin |
+| [DEC-076](#dec-076-markitect-is-developed-as-a-regular-software-project) | Decision | Markitect is developed as a regular software project | Accepted; retirement of the self-model and cleanup tracked in the delivery plan |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -911,7 +912,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - W3 quality criteria: warnings in the product, in line with [ENH-002](#enh-002-model-quality-linter-and-metrics), and hard rules only for Markitect's own reference and evaluation models;
   - W4 a first outline of standard Libraries;
   - W5 a modeling skill and a separate tool under `tools/`;
-  - W6 a pilot: a Makerspace remodel beside the frozen Phase C models. The self-model pilot is deferred until Markitect is stable, after V1 acceptance and the studies ([owner decision](sources/self-model-pilot-deferred-20261026.md)).
+  - W6 a pilot: a Makerspace remodel beside the frozen Phase C models. The self-model pilot is deferred until Markitect is stable, after V1 acceptance and the studies ([owner decision](sources/self-model-pilot-deferred-20261026.md)), and with [DEC-076](#dec-076-markitect-is-developed-as-a-regular-software-project) it is only a later option.
 - **Choices:**
   - D1: the track runs parallel to V1 and does not block V1 technical acceptance.
   - D2: no new entry for the compiler; [DEC-003](#dec-003-the-compiler-is-a-borrowed-concept) links the founding intent.
@@ -934,6 +935,17 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Core edition (Option A):** this creates `markitect-core` 1.2.0, and the compiler knows only that edition. Everything checked from Main migrates: fixtures, tests, the self-model's embedded Core and `software-basics`, which becomes 0.3.0 with identical Definitions. Frozen study material stays reproducible at its recorded commits, and no recorded result changes.
 - **Reason:** without extension, a project cannot build on a Library Kind; a copied Kind fails every reference to the original, so a standard Library would be copy-paste. One Core edition follows [DEC-032](#dec-032-quality-simplicity-and-stability-over-effort-and-compatibility).
 - **Owners and order:** the canonical model track's session implements it, with the language-contract amendment, the compiler, the type-contract closure and modeled scope following `extends`, and the migration. It merges only after the coordinator has pinned F_fix for the fix plan's native controls ([delivery plan](../implementation-plan.md#canonical-model-track-owner-approval-26-october)).
+
+### DEC-076 Markitect is developed as a regular software project
+
+- **Status:** Accepted by the owner, 26 October 2026 ([verbatim source](sources/regular-development-20261026.md)). It amends [concept 1.0](v1-concept.md) §5.5, §23 and §28.1. Not yet carried out in the repository.
+- **Decision:** Markitect itself is developed with agentic coding and documentation as in a regular software project, without a canonical self-model in its own repository.
+- **Recorded meaning (recorder's reading, as in the source):**
+  - What depends on the self-model is retired with it: `.markitect/` with the self-model, registry shards, ignore rules, execution declarations and module pins, the generated view `docs/markitect/project.md`, CI's self-check and view freshness, and the model steps in `AGENTS.md`.
+  - "At least canonical docs" means one canonical page per topic.
+  - The decision concerns Markitect's own repository only. The product is unchanged: target projects keep their model under `.markitect/` with registry and complete file accounting ([DEC-006](#dec-006-every-file-is-covered-or-explicitly-ignored)).
+- **Supersedes:** the deliberate choice to keep `.markitect/` in Markitect's own repository ([repository structure](../implementation-plan.md#repository-structure), R1 of [DEC-071](#dec-071-repository-structure-and-archive)). The deferred self-model pilot of [DEC-074](#dec-074-canonical-model-track-parallel-to-v1) becomes a later option to use Markitect for its own development.
+- **Also asked:** the owner wants the code and the documentation cleaned up and consolidated. The scope is set by an inventory first, as R1 did for the repository structure ([delivery plan](../implementation-plan.md#regular-development-of-markitect-owner-decision-26-october)).
 
 ## Promises
 
