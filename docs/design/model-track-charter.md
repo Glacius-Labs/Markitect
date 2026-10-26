@@ -1,6 +1,6 @@
 # Canonical model track: charter v0.2
 
-**Status:** approved by the owner on 26 October 2026, with the recommendations for D1–D5 ([source](../concepts/sources/model-track-approval-20261026.md)). v0.2 applied an independent review of the first draft and one point from the Evaluation session.
+**Status:** approved by the owner on 26 October 2026, with the recommendations for D1–D5 ([source](../concepts/sources/model-track-approval-20261026.md)). v0.2 applied an independent review of the first draft and one point from the Evaluation session. Recording it here changed only its status, tense, link paths and the name of the leading session; the approved text is otherwise unchanged.
 
 **Basis:**
 - the owner's [founding intent](../concepts/sources/founding-intent-20261026.md);
@@ -28,7 +28,7 @@ The models that exist do not look like typed programs.
   The last two figures come from a throwaway session script, not in the repository.
 - **Self-model:**
   - 26 content Definitions and no links at all;
-  - 16 of its 18 Packages hold one Definition each;
+  - 16 of its 18 content Packages hold one Definition each;
   - it embeds its own copy of `markitect/core` with `dependencies: {}`.
 
 The evaluation depends on this track. In the owner's words: "Our evaluations of course are not good if the canonical model is bad by itself". D5 decides how the next study waits for it.
@@ -97,7 +97,7 @@ The evaluation depends on this track. In the owner's words: "Our evaluations of 
 ## Constraints
 
 - Language semantics, compiler, snapshot values, organization derivation and accounting are a protected foundation (concept §5.5). Changing them needs an explicit owner decision, never a side effect.
-- Running work is not disturbed: Phase C, the S1–S3 product fixes, and the K-S/K-R probe (an exploratory study of a self-maintaining single agent against one given rendered docs). No local Go during quiet-machine measurements.
+- Running work is not disturbed: Phase C, the S1–S3 product fixes, and the K-S/K-R probe (an exploratory study of a self-maintaining single agent against one agent given rendered docs). No local Go during quiet-machine measurements.
 - Real Apply runs only under a concrete bounded dispatch, under the standing evidence authorization.
 - Documentation in English (DEC-069). Owner statements stay verbatim in sources.
 
@@ -111,7 +111,7 @@ The owner approved every recommendation below ([source](../concepts/sources/mode
 | D2 | DEC-003 already matches the founding intent | **No new entry.** At most a cross-link from DEC-003 to the founding-intent source |
 | D3 | Dependency mechanism and body-link semantics (W1 question 2) | Decided after W1, with evidence |
 | D4 | Where Libraries live. Today `markitect-core` is under `testdata/core` and `software-basics` 0.2.0 under `testdata/library/vocabulary` | A new top-level `libraries/` folder with one owner shard, versioned like `markitect-core`. `software-basics` is absorbed into the new Libraries and kept frozen only for the existing fixtures |
-| D5 | Does the next comparison study (evaluation contract v0.3 and its consistency follow-up) wait for W1–W6, or run on the current models with a stated limitation? Under DEC-072 the comparison is V1 evidence | **It waits at least for W1–W4**, because models written the old way test Markitect with the problem it was built to solve |
+| D5 | Does the next comparison study (v0.3, the planned main study, and its follow-up; drafts not in the repository) wait for W1–W6, or run on the current models with a stated limitation? Under DEC-072 the comparison is V1 evidence | **It waits at least for W1–W4**, because models written the old way test Markitect with the problem it was built to solve |
 
 ## Working mode
 
@@ -119,4 +119,4 @@ The owner approved every recommendation below ([source](../concepts/sources/mode
 - Design-heavy pieces run on Opus, others on Sonnet with high effort.
 - Every deliverable gets an independent review before it reaches the owner.
 - Shared files (concept, register, plan, AGENTS.md) change only through the Coordinator.
-- W1 starts with read-only investigation; the scratch `markitect check` runs once the probe has ended.
+- First step after approval: W1, starting with the scratch `markitect check` once the probe has ended.
