@@ -9,7 +9,10 @@ and R1b the claimed absence is true on disk. With --s3, every R5 file
 classified optional or unjustified is a critical finding too, valid when the
 file appears in diff.patch.
 
-  python -I -B rubric_check.py --token-dir DIR --requirements FILE --review REVIEW.json [--s3]
+  python -I -B rubric_check.py --token-dir DIR --requirements FILE --review REVIEW.json [--s3] [--entry PATH]
+
+--entry names the program's main package for R1a; the default is the
+Library's, and Phase C passes realization/cmd/makerspace.
 """
 import argparse
 import json
@@ -60,7 +63,10 @@ def candidate_criticals(review, s3=False):
     return out
 
 
-def check(token_dir, requirements, review, s3=False):
+LIBRARY_ENTRY = "realization/cmd/library"
+
+
+def check(token_dir, requirements, review, s3=False, entry=LIBRARY_ENTRY):
     token = pathlib.Path(token_dir)
     candidate = token / "candidate"
     roots = (candidate, token / "start")
@@ -71,7 +77,7 @@ def check(token_dir, requirements, review, s3=False):
     for item, finding in candidate_criticals(review, s3):
         reason = None
         if item == "R1a":
-            present = (candidate / "realization/go.mod").is_file() and (candidate / "realization/cmd/library").is_dir()
+            present = (candidate / "realization/go.mod").is_file() and (candidate / entry).is_dir()
             reason = "the module and entry point exist" if present else None
         elif item == "R1b":
             tests = [p for p in candidate.rglob("*_test.go") if re.search(r"(?m)^func Test", p.read_text(encoding="utf-8", errors="replace"))]
@@ -99,8 +105,9 @@ def main(argv=None):
     p.add_argument("--requirements", required=True)
     p.add_argument("--review", required=True)
     p.add_argument("--s3", action="store_true", help="S3 with a non-conforming start: optional changes are critical too")
+    p.add_argument("--entry", default=LIBRARY_ENTRY, help="the program's main package for R1a, relative to the candidate")
     a = p.parse_args(argv)
-    result = check(a.token_dir, a.requirements, json.loads(pathlib.Path(a.review).read_text(encoding="utf-8")), a.s3)
+    result = check(a.token_dir, a.requirements, json.loads(pathlib.Path(a.review).read_text(encoding="utf-8")), a.s3, a.entry)
     print(json.dumps(result, indent=2))
     return 0
 
