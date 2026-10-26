@@ -16,11 +16,10 @@ Use Git and Go from `go.mod`. Run meaningful local checks for the actual change.
 
 For prose-only changes, check links in the changed pages with `python -B scripts/check-docs.py PATH...` and run `git diff --check`. For code or control changes, run the relevant tests and validators; broaden validation when the changed contract or a concrete failure calls for it. Record actual results and limitations in the PR.
 
-The full pipeline runs Linux quality checks and the race detector in about five minutes. A manual run is Linux only by default; add Windows at milestones and for Windows-sensitive changes such as Git, path, workflow or bootstrap-test edits. Release calls always include Windows.
+The full pipeline runs Linux quality checks and the race detector in about five minutes. CI has no Windows job.
 
 ```text
 gh workflow run ci.yaml --ref BRANCH
-gh workflow run ci.yaml --ref BRANCH -f windows=true
 ```
 
 Manual CI is optional for ordinary development merges. When explicitly required for an assignment, assess its result on the exact reviewed head and resolve relevant failures before integration. The Flake report is also manual. Release-owned calls retain their full validation. The commands below remain available for local or full validation:
@@ -36,7 +35,7 @@ python -B scripts/check-docs.py
 python -B -m unittest discover -s tools/library-oracle
 ```
 
-On Windows, real Git is much slower: `internal/adapters/gitrepo` alone took 23 minutes on the CI runner and up to 40 minutes on a loaded workstation. Use `-timeout=60m` there, as Windows CI does. Tests that do not test time take their Run deadline from the test's own deadline, so the `-timeout` value bounds a hang.
+Run broad Go suites on Linux, for example in WSL: on Windows, real Git is much slower, and `internal/adapters/gitrepo` alone takes 23 to 40 minutes instead of about two. Tests that do not test time take their Run deadline from the test's own deadline, so the `-timeout` value bounds a hang.
 
 Run `gofmt` on changed Go files and `git diff --check`. CI checks module checksums, tests with and without the race detector, vet, build, tracked Go formatting, every production/test/platform import and actual package-map entries, the packaged-source smoke, repository scripts, maintained documentation links, and the independent Library oracle with its bounded transport. Obsolete engines and their tests/gates are removed together; no skips or success stubs may replace required checks.
 
