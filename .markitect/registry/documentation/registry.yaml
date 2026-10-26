@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/v1-fix-plan-approval-20261026.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the owner approval of the product fixes before the next study and of the DEC-073 concept clarification.
   - path: "docs/concepts/sources/v1-acceptance-directive-20261025.md"
     form: doc
     realizes: [documentation/current-guidance]

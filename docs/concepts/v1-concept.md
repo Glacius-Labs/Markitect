@@ -11,7 +11,7 @@
 
 > **The canonical model describes the intended project world. The Manager organization is derived from it. The Managers realize, review and integrate that world; the host provides a few clear technical guarantees for it.**
 
-This version condenses v0.18 and closes its open items with decisions. The decision record governs D10–D18, later owner decisions in the register govern their subjects (DEC-069, DEC-070), and the owner's v0.18 governs all other content. Any other divergence in this version is an editing error and is reported to the coordinator. The document describes the target. The [delivery plan](../implementation-plan.md) tracks implementation status and known deviations of the code. It grants no implementation, release, deployment or acceptance approval.
+This version condenses v0.18 and closes its open items with decisions. The decision record governs D10–D18, later owner decisions in the register govern their subjects (DEC-069, DEC-070, DEC-073), and the owner's v0.18 governs all other content. Any other divergence in this version is an editing error and is reported to the coordinator. The document describes the target. The [delivery plan](../implementation-plan.md) tracks implementation status and known deviations of the code. It grants no implementation, release, deployment or acceptance approval.
 
 ## Reading rules
 
@@ -349,6 +349,8 @@ Verify is a fresh Run over exactly the candidate under review. The complete orga
 
 Verify does not repair the candidate; its own investigations and check files stay local. The result is Approve, Reject with the necessary realization Findings, or a model blocker. A Reject is a regular verification result, not a technical failure.
 
+Verify judges the candidate's changes against the Apply's bound input, across correction loops, within this conformance review (DEC-073). A change that removes conforming behavior or touches an unrelated area without a reason is a Reject with a Finding; other optional additions are a note. When the host states that the bound input was already verified under exactly this model, execution configuration and dependencies, and Verify finds no defect, any change is a Reject. There is no per-file form.
+
 ### 11.4 Corrections after Verify
 
 A realization Reject hands the model binding, the last candidate and the actual Findings to a new Implement Run, followed by a new Verify. The old Implement organization is not continued, and the new verifier does not receive its self-assessment as authority. A material model contradiction discovered late ends the command without publication; the model question is settled outside.
@@ -517,7 +519,7 @@ Sessions, active Manager trees and temporary workspace handles are no preconditi
 
 ### 18.3 Findings as an actionable handover
 
-A Finding shows which obligation is affected, what was observed, what is expected and which place enables the correction. A small understandable structure is enough. The host determines the origin from the actual Manager or checking mechanism. The next organization receives the necessary Findings explicitly, not hidden in an earlier chat history.
+A Finding shows which obligation is affected, what was observed, what is expected and which place enables the correction. A small understandable structure is enough. The host determines the origin from the actual Manager or checking mechanism. The next organization receives the necessary Findings explicitly, not hidden in an earlier chat history. A Finding becomes an Initial Finding of Implement only when it names a Definition of the current checked model; the host checks that the Definition exists. A Finding without such a reference is kept as a Note: noted, not implemented unasked (section 3.5, DEC-073).
 
 ### 18.4 Consistency across Run boundaries
 
@@ -539,7 +541,7 @@ Notes are not copied wholesale into every start prompt, but stay readable when n
 
 ### 19.4 Independence of Verify
 
-Verify receives the valid model, the exact candidate and necessary technical information. It takes over neither implementation conversations nor their self-assessment. Notes provide hints with their origin, but no predetermined truth about the candidate. Hidden expectations of independent external oracles do not reach implementers. Agent-written tests do not by themselves replace the independent domain quality proof.
+Verify receives the valid model, the exact candidate and necessary technical information, including the diff against the Apply's bound input and, when it holds, the host fact that this input was already verified under the same binding (DEC-073). It takes over neither implementation conversations nor their self-assessment. Notes provide hints with their origin, but no predetermined truth about the candidate. Hidden expectations of independent external oracles do not reach implementers. Agent-written tests do not by themselves replace the independent domain quality proof.
 
 ## 20. Errors, budgets and controlled termination
 

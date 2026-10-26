@@ -71,6 +71,18 @@ The [owner directive](concepts/sources/v1-acceptance-directive-20261025.md) sepa
 
 Two separate final reports follow: technical V1 acceptance on F_final, and the comparison with the product thesis. Release and deployment stay separate owner decisions.
 
+## Product fixes before the next study (owner approval 26 October)
+
+The comparison study's Phase C on F_final found four product defects at Makerspace scale. The owner [approved](concepts/sources/v1-fix-plan-approval-20261026.md) the Architect's fix plan v2 to fix them before the next study, and then to freeze a new F (commit and image) before any study material is shared. Phase C stays untouched on F_final.
+
+| Session | Work | Write scope | Order |
+|---|---|---|---|
+| S1 | WP1: bounded retry of transient provider errors (closed list, first `serverOverloaded`); no repeat of served actions; honest abort when unclear; at most 2 extra attempts within the Run deadline, counted in the report | `internal/adapters/codexappserver/` | parallel |
+| S2 | WP2: the per-message clock becomes a provider idle limit (`providerIdleTimeoutSeconds`, run-config format 4); WP3a: `ask` costs no own allowance unit, with a cap of 8 open questions per Manager; WP3c: an Apply checks before a correction pair that 2 × Managers messages remain and otherwise stops as an honest budget stop | `internal/run/inbox.go`, `internal/bootstrap/run_config.go`, `internal/apply/`, `internal/workflow/`, examples, docs | parallel |
+| S3 | WP4: host fact that an input was already verified under the same binding; Initial Findings must name a current Definition; Verify sees the diff against the bound input and judges in tiers ([DEC-073](concepts/register.md#dec-073-change-minimality-on-an-unchanged-model)) | `internal/harness/`, findings hand-off in `internal/run`, stored Run results, Verify input | after S2 |
+
+WP3b (`delegate.after`) is deferred: the native control shows whether the existing sequencing (concept §8.1) suffices once accounting is fixed. Until Phase C ends, the sessions run targeted tests only and use the hosted CI for full runs. After Phase C, bounded native controls run outside any study: a probe whether a Codex thread accepts a new turn after a system error (decides WP1's continuation after served actions), a fresh Makerspace W0 for WP2 and WP3, and C9 on a verified state for WP4.
+
 ## Repository structure
 
 The owner wants a repository that is state of the art, tidy and well organized. Two slices in step 3 deliver it, before the native requalification, so that step 4 qualifies the final layout. R1 is done ([PR #680](https://github.com/Glacius-Labs/Markitect/pull/680), [repository structure](development/repository-structure.md)), and the owner accepted its six recommendations ([DEC-071](concepts/register.md#dec-071-repository-structure-and-archive)). The ruleset protecting `archive/**` refs is active. R2 is done: the restructured layout is described in the [repository layout](development/repository-layout.md), and everything it removed from Main stays at the archive point `archive/main-pre-r2-20261024` (bundle included) that the [archive index](archive.md) lists, together with the six pinned pre-reset commits.
