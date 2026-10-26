@@ -26,7 +26,7 @@ Recorder's note: the reply was a reply button offered by the session. The app cu
 
 Recorder's interpretation:
 
-- **All W1 points are fixed, not measured first.** This includes the points that the draft report had proposed to measure in pilot W6 before changing: parent Managers seeing their children's Definitions, and DEC-028's "See also" section and files to read.
+- **All W1 points are fixed, not measured first.** The owner's message answered a list that included the smaller points, so this covers two points for which the draft report proposed something else: parent Managers seeing their children's Definitions, which the report would measure in pilot W6 before changing, and DEC-028's "See also" section and files to read, which it treated as a known deviation outside the track unless W6 showed the need.
 - **G1, Kind extension, design v0.2 with Option A.** A new Core Property `extends` on Kind lists base Kinds. A Kind's effective fields are its bases' fields plus its own, with no overriding. A value reference to a base Kind accepts Definitions of derived Kinds. The extension graph is acyclic, and `Kind` and `Property` cannot be bases. This creates Core 1.2.0. The compiler knows only that Core edition, and everything checked from Main migrates to it.
 - **D4 is amended.** `software-basics` becomes 0.3.0 with identical Definitions, instead of keeping 0.2.0 frozen for the existing fixtures.
 - **D3 is decided.** For structure analysis and linting, as the W1 report proposed it, a dependency edge is any typed reference or body link; imports are name resolution only. The language contract's statement that a link alone declares no positive dependency keeps its meaning for semantics.
