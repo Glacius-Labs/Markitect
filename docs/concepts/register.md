@@ -27,7 +27,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-010](#dec-010-evaluate-the-method-separately-from-its-execution-runtime) | Endorsed direction | Evaluate the method separately from its execution runtime | Endorsed; plan pending |
 | [DEC-011](#dec-011-detailed-planning-of-future-ideas-waits) | Decision | Detailed planning of future ideas waits | Accepted |
 | [DEC-012](#dec-012-government-ideas-evaluation-commissioned) | Decision | Government ideas evaluation commissioned | Accepted; result not adopted |
-| [DEC-013](#dec-013-linux-first-for-tests-and-the-playground) | Decision | Linux first for tests and the playground | Accepted; Windows job removed by DEC-077 |
+| [DEC-013](#dec-013-linux-first-for-tests-and-the-playground) | Decision | Linux first for tests and the playground | Accepted; Windows job removal decided in DEC-077 |
 | [DEC-014](#dec-014-compatibility-does-not-drive-decisions) | Decision | Compatibility does not drive decisions | Accepted |
 | [DEC-015](#dec-015-a-fresh-roadmap-earlier-plans-are-inputs) | Decision | A fresh roadmap; earlier plans are inputs | Accepted |
 | [DEC-016](#dec-016-a-clean-stable-testable-main-and-uniform-structure-first) | Decision | A clean, stable, testable main and uniform structure first | Accepted |
@@ -286,7 +286,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Consequences:**
   - The required pull-request gate runs on Linux. The Windows job is manual or nightly and does not block merges (backlog CI-02).
   - Windows support is revisited as backlog CI-05.
-- **Since 26 October 2026:** CI has no Windows job, and Markitect's execution moves to Linux containers ([DEC-077](#dec-077-development-pace-and-linux-first-execution)).
+- **Since 26 October 2026:** the owner decided to remove the Windows CI job ([PR #760](https://github.com/Glacius-Labs/Markitect/pull/760)), and Markitect's execution moves to Linux containers ([DEC-077](#dec-077-development-pace-and-linux-first-execution)).
 
 ### DEC-014 Compatibility does not drive decisions
 
@@ -956,12 +956,12 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-077 Development pace and Linux-first execution
 
-- **Status:** Accepted by the owner, 26 October 2026 ([verbatim source](sources/development-pace-20261026.md)), as directions to speed up development; the coordinator put them into effect the same evening.
+- **Status:** Accepted by the owner, 26 October 2026 ([verbatim source](sources/development-pace-20261026.md)), as directions to speed up development. The coordinator set the concrete rules below within these directions and put them into effect the same evening: the quiet-machine rule, the CI form and the runner design are the coordinator's, the removal of the Windows job and the Linux Docker way are the owner's.
 - **Decision (recorded meaning, as in the source):**
   - A quiet machine is needed only for counted study runs, where time and cost are measured, run as batches at milestones. Native controls, smokes and probes run alongside development and record the host load as a limit. During a native run nobody runs the full test suite or Docker image builds.
-  - CI runs on Linux only: Linux quality and the race detector. The Windows job is removed.
+  - CI runs on Linux: Linux quality and the race detector. The owner decided to remove the Windows job ([PR #760](https://github.com/Glacius-Labs/Markitect/pull/760)).
   - The day's owner decisions are recorded in one batched record, with few parallel writers.
-  - Markitect moves to the Linux Docker way: its execution, meaning the Apply host, tests and CI, runs on Linux. Windows stays the owner's host for model commands and for starting Apply through Docker Desktop.
+  - Markitect moves to the Linux Docker way: its execution, meaning the Apply host, tests and CI, runs on Linux, and model work keeps working on Windows. In the coordinator's design, Apply is started from Windows through Docker Desktop.
   - The Apply runner clones from a read-only mount of the owner's checkout and hands the verified result back as a branch pushed into that repository. The provider CLI login is mounted read-only; CLI login only, no API keys.
 - **Open:** whether Apply later runs in CI. The [delivery plan](../implementation-plan.md#linux-docker-way-owner-direction-26-october) tracks the slices.
 - **Supersedes:** [DEC-013](#dec-013-linux-first-for-tests-and-the-playground)'s manual or nightly Windows job.
