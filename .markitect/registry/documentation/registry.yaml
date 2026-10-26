@@ -64,6 +64,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Reports every Phase B run of the DEC-072 comparison with its raw outcome, deviations and the reading of B5.
+  - path: "docs/validation/v1-comparison-results-phase-c-20261026.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Reports every Phase C run of the DEC-072 comparison with its raw outcome, decisions, deviations and the reading of C6.
   - path: "docs/validation/a1-native-contract-proof-20261024.md"
     form: doc
     realizes: [documentation/current-guidance]
