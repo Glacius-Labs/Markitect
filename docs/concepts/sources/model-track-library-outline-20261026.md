@@ -6,7 +6,7 @@ It belongs to workstream W4 of the [canonical model track](../../design/model-tr
 
 ## Context
 
-Summary by the recorder: the session reported that the language change was reworked to interfaces ([DEC-075](../register.md#dec-075-kind-extension-and-one-core-120)) and that the standard Library outline was updated to match, as draft v0.3: "any field type" is an empty interface `FieldType`, simple values use `Scalar`, and architecture rules implement `Rule`. It said the outline waited for the owner's review. At that point the outline was a draft in the session's worktree; the session will add it to the repository as `docs/design/standard-libraries.md`.
+Summary by the recorder: the session reported that the language change was reworked to interfaces ([DEC-075](../register.md#dec-075-kind-extension-and-one-core-120)) and that the standard Library outline was updated to match, as draft v0.3: "any field type" is an empty interface `FieldType`, simple values use `Scalar`, and architecture rules implement `Rule`. It said the outline waited for the owner's review. At that point the outline was a draft in the session's worktree, not in the repository.
 
 ## Owner statement (verbatim)
 
