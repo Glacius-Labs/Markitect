@@ -16,9 +16,10 @@ Use Git and Go from `go.mod`. Run meaningful local checks for the actual change.
 
 For prose-only changes, check links in the changed pages with `python -B scripts/check-docs.py PATH...` and run `git diff --check`. For code or control changes, run the relevant tests and validators; broaden validation when the changed contract or a concrete failure calls for it. Record actual results and limitations in the PR.
 
-The full pipeline retains Linux quality checks, the race detector and optional Windows validation. Request it explicitly when useful:
+The full pipeline runs Linux quality checks and the race detector in about five minutes. A manual run is Linux only by default; add Windows at milestones and for Windows-sensitive changes such as Git, path, workflow or bootstrap-test edits. Release calls always include Windows.
 
 ```text
+gh workflow run ci.yaml --ref BRANCH
 gh workflow run ci.yaml --ref BRANCH -f windows=true
 ```
 

@@ -4,10 +4,11 @@ on:
   # Development policy: full validation is explicitly requested, not a merge wait.
   workflow_dispatch:
     inputs:
+      # Linux only by default; Windows runs at milestones and for Windows-sensitive changes.
       windows:
         description: Also run the Windows job
         type: boolean
-        default: true
+        default: false
   workflow_call:
     inputs:
       windows:
@@ -31,7 +32,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Manual and release calls include Windows by default; callers may opt out.
+        # Manual runs are Linux only unless windows is set; release calls include Windows by default.
         os: ${{ fromJSON(inputs.windows && '["ubuntu-24.04","windows-latest"]' || '["ubuntu-24.04"]') }}
     steps:
       - name: Check out source
