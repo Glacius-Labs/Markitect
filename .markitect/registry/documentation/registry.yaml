@@ -76,6 +76,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Records arm M's Phase B runs of the DEC-072 comparison on F′ and F's deletion refusal, with bindings, raw outcomes, reviews, deviations and limits.
+  - path: "docs/validation/v1-phase-c-arm-m-20261026.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records arm M's counted Phase C runs of the DEC-072 comparison on F_final, with bindings, every attempt and its cause class, the Root turn split, P2 observations, infrastructure repeats, tooling verification and limits.
   - path: "docs/validation/v1-final-review-20261025.md"
     form: doc
     realizes: [documentation/current-guidance]
