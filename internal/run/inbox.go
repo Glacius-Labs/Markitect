@@ -333,15 +333,28 @@ func (x *execution) deliver(ctx context.Context, s *managerState, e entry) (Even
 }
 
 // await returns the next event. It refuses at once when nothing can arrive,
-// so a Manager never waits for an event that no one will send.
+// so a Manager never waits for an event that no one will send. A Manager
+// blocked in await waits too: when s starts blocking, every other blocked
+// Manager rechecks, so Managers that wait for each other never all block.
 func (x *execution) await(ctx context.Context, s *managerState) (Event, error) {
+	blocked := false
+	// unblock ends s's blocked wait; the caller holds x.mu. A wakeup that
+	// blocks again stays one wait, so it wakes no other Manager.
+	unblock := func() {
+		if blocked {
+			s.awaiting--
+			blocked = false
+		}
+	}
 	for {
 		x.mu.Lock()
 		if err := x.admissionErrorLocked(); err != nil {
+			unblock()
 			x.mu.Unlock()
 			return Event{}, err
 		}
 		if len(s.queue) != 0 {
+			unblock()
 			e := s.queue[0]
 			s.queue = s.queue[1:]
 			x.mu.Unlock()
@@ -356,23 +369,37 @@ func (x *execution) await(ctx context.Context, s *managerState) (Event, error) {
 			continue
 		}
 		if !x.waitingLocked(s) {
+			unblock()
 			next := x.nextStepLocked(s)
 			x.mu.Unlock()
 			return Event{}, fmt.Errorf("nothing can arrive: no direct child of yours is working and none of your questions is open; %s", next)
 		}
 		if !x.othersRunningLocked(s) {
-			// Everyone else is idle: only an answer from this Manager unblocks them.
+			// Everyone else waits: only an answer unblocks them. A Manager with
+			// a question it has not answered is refused; while another one,
+			// blocked in await, owes an answer, s waits for that answer instead.
 			next := x.openQuestionsLocked(s)
-			if next == "" {
-				next = "; " + x.nextStepLocked(s)
+			if next != "" || !x.answerOwedLocked() {
+				unblock()
+				if next == "" {
+					next = "; " + x.nextStepLocked(s)
+				}
+				x.mu.Unlock()
+				return Event{}, fmt.Errorf("nothing can arrive: every other Manager is waiting%s", next)
 			}
-			x.mu.Unlock()
-			return Event{}, fmt.Errorf("nothing can arrive: every other Manager is waiting%s", next)
+		}
+		if !blocked {
+			blocked = true
+			s.awaiting++
+			x.wakeAwaitingLocked(s)
 		}
 		x.mu.Unlock()
 		select {
 		case <-s.signal:
 		case <-ctx.Done():
+			x.mu.Lock()
+			unblock()
+			x.mu.Unlock()
 			return Event{}, ctx.Err()
 		}
 	}
@@ -465,9 +492,37 @@ func (x *execution) closeLocked(q *question) {
 
 func (x *execution) root() *managerState { return x.states[organization.Root] }
 
+// othersRunningLocked reports whether another Manager can still send s
+// something: its driver runs and it is not blocked in await, or an event it
+// has yet to take already wakes it.
 func (x *execution) othersRunningLocked(s *managerState) bool {
 	for _, other := range x.states {
-		if other != s && other.running {
+		if other != s && other.running && (other.awaiting == 0 || len(other.queue) != 0) {
+			return true
+		}
+	}
+	return false
+}
+
+// wakeAwaitingLocked makes every other Manager blocked in await recheck
+// whether anything can still arrive, now that s waits too.
+func (x *execution) wakeAwaitingLocked(s *managerState) {
+	for _, other := range x.states {
+		if other != s && other.awaiting > 0 {
+			select {
+			case other.signal <- struct{}{}:
+			default:
+			}
+		}
+	}
+}
+
+// answerOwedLocked reports whether a Manager blocked in await holds a question
+// it has not answered. Woken, that Manager is refused with the question named,
+// as openQuestionsLocked names it.
+func (x *execution) answerOwedLocked() bool {
+	for _, q := range x.questions {
+		if !q.answered && x.states[q.To].awaiting > 0 {
 			return true
 		}
 	}

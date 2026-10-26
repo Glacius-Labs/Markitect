@@ -959,6 +959,131 @@ func TestReleasedDriverWakesBlockedAwait(t *testing.T) {
 	}
 }
 
+type awaitResult struct {
+	event Event
+	err   error
+}
+
+// awaitAsync runs s's await in its own goroutine.
+func awaitAsync(ctx context.Context, x *execution, s *managerState) <-chan awaitResult {
+	out := make(chan awaitResult, 1)
+	go func() {
+		event, err := x.await(ctx, s)
+		out <- awaitResult{event, err}
+	}()
+	return out
+}
+
+// blockedInAwait returns once s blocks in the await that reports to returned;
+// an await that returns instead, or never blocks, fails the test.
+func blockedInAwait(t *testing.T, x *execution, s *managerState, returned <-chan awaitResult) {
+	t.Helper()
+	bound := time.After(5 * time.Second)
+	for {
+		x.mu.Lock()
+		blocked := s.awaiting > 0
+		x.mu.Unlock()
+		if blocked {
+			return
+		}
+		select {
+		case r := <-returned:
+			t.Fatal(s.manager.Package, "returned from await instead of blocking", r.event, r.err)
+		case <-bound:
+			t.Fatal(s.manager.Package, "never blocked in await")
+		case <-time.After(time.Millisecond):
+		}
+	}
+}
+
+// Native control run: a child asked Root, Root awaited the child's handoff
+// without replying and the child awaited the answer. Each counted the other as
+// running, so both blocked until the Run deadline 76 minutes later. A Manager
+// blocked in await waits: whichever of them awaits last, the parent is refused
+// with the question it owes, and its reply reaches the waiting child.
+func TestMutualAwaitRefusesTheManagerThatOwesTheAnswer(t *testing.T) {
+	for _, parentFirst := range []bool{true, false} {
+		t.Run(fmt.Sprintf("parent awaits first %v", parentFirst), func(t *testing.T) {
+			x, root, a, _ := inboxExecution()
+			defer x.cancel()
+			// Both work inside their responses; a/deep has no task and stays idle.
+			root.running, a.running = true, true
+			root.a.phase, root.a.version = active, 1
+			a.a.phase, a.a.version = active, 1
+			// A deadlock ends every await here at this bound instead of hanging.
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			id, err := x.tools(a).Ask(ctx, ".", "Which interface do you expect?")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if e, err := x.await(ctx, root); err != nil || e.Question == nil || e.Question.ID != id {
+				t.Fatal("the question did not reach the parent", e, err)
+			}
+			var child <-chan awaitResult
+			var refusal error
+			if parentFirst {
+				parent := awaitAsync(ctx, x, root)
+				blockedInAwait(t, x, root, parent)
+				child = awaitAsync(ctx, x, a)
+				refusal = (<-parent).err
+			} else {
+				child = awaitAsync(ctx, x, a)
+				blockedInAwait(t, x, a, child)
+				_, refusal = x.await(ctx, root)
+			}
+			want := "nothing can arrive: every other Manager is waiting; answer your open questions: " + id + " from a"
+			if refusal == nil || refusal.Error() != want {
+				t.Fatal("the parent was not refused with the question it owes", refusal)
+			}
+			if err := x.tools(root).Reply(ctx, id, "The one the model names."); err != nil {
+				t.Fatal(err)
+			}
+			if r := <-child; r.err != nil || r.event.Answer == nil || r.event.Answer.ID != id {
+				t.Fatal("the waiting child did not receive the answer", r.event, r.err)
+			}
+			x.mu.Lock()
+			defer x.mu.Unlock()
+			if root.awaiting != 0 || a.awaiting != 0 {
+				t.Fatal("a returned await still counts as blocked", root.awaiting, a.awaiting)
+			}
+		})
+	}
+}
+
+// A Manager blocked in await waits, but it does not make another Manager's
+// await refuse while a third Manager really runs: that one can still send.
+func TestBlockedAwaitDoesNotRefuseWhileAnotherManagerRuns(t *testing.T) {
+	x, root, a, deep := inboxExecution()
+	defer x.cancel()
+	root.running, a.running, deep.running = true, true, true
+	root.a.phase, a.a.phase, deep.a.phase = active, active, active
+	rootCtx, stopRoot := context.WithCancel(context.Background())
+	defer stopRoot()
+	parent := awaitAsync(rootCtx, x, root)
+	blockedInAwait(t, x, root, parent)
+	// a blocks too and wakes Root, which checks again; a/deep still works.
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+	if _, err := x.await(ctx, a); !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatal("await refused although a/deep is running", err)
+	}
+	select {
+	case r := <-parent:
+		t.Fatal("Root's await returned although a/deep is running", r.event, r.err)
+	default:
+	}
+	stopRoot()
+	if r := <-parent; !errors.Is(r.err, context.Canceled) {
+		t.Fatal("Root's await refused although a/deep is running", r.err)
+	}
+	x.mu.Lock()
+	defer x.mu.Unlock()
+	if root.awaiting != 0 || a.awaiting != 0 {
+		t.Fatal("a returned await still counts as blocked", root.awaiting, a.awaiting)
+	}
+}
+
 // A refused await names the next step from its children's state. A child's
 // late finding changes that state at the same time, so the refusal reads it
 // under the Run lock; the race detector reports a read after unlocking.
