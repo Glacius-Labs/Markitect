@@ -91,7 +91,7 @@ The Package tree is the architecture (modeling guide §2). These Kinds add only 
 
 ## Location and use
 
-- `libraries/<library>/model.yaml` and `libraries/<library>/model/markitect/<library>/…`, registered in one owner shard (D4).
+- `libraries/<library>/model.yaml` and `libraries/<library>/model/markitect/<library>/…` (D4); since R3a ([DEC-076](../concepts/register.md#dec-076-markitect-is-developed-as-a-regular-software-project)) this repository keeps no registry, so the Libraries have no owner shard.
 - A project vendors the Libraries it uses and passes each one with `--dependency`. The W5 tool writes the lock entries.
 - A Library ships Kinds, not scoped Rule items, because modeled scope selects only the project's own Definitions. The W5 skill adds the `execution.yaml` selector.
 
