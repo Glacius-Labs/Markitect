@@ -4,6 +4,7 @@ Sources preserve where the [register](../register.md) entries come from. Owner s
 
 | Source | Origin | Content |
 |---|---|---|
+| [Founding intent](founding-intent-20261026.md) | Direct owner statements, 26 October 2026; verbatim (English) | The canonical model as a typed language in prose: project Kinds plus standard Libraries, a structure-only compiler, AI-written models through skills and tooling, the Apply organization after Conway's law and Clean Architecture, and the request that every agent knows this |
 | [V1 evidence goal](v1-evidence-goal-20261024.md) | Direct owner goal, 24 October 2026; verbatim with English translation | A stable V1 justified by data: stability through repeated native runs, superiority over one agent doing everything through the documented comparison |
 | [Repository structure decisions](repository-structure-decisions-20261024.md) | Direct owner decision, 24 October 2026; verbatim | Acceptance of the six R1 recommendations: archive scope, no translation of archived records, protected archive refs, pinned pre-reset commits, changed tag Rule, `internal/` moves in step 5 |
 | [Parallel writers](parallel-writers-20261024.md) | Direct owner decision, 24 October 2026; verbatim with English translation | More than two parallel writers where useful; exclusive scopes and review rules unchanged |

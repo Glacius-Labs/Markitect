@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/founding-intent-20261026.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the owner's founding intent for the typed canonical model, Libraries, AI-written models and the Apply organization.
   - path: "docs/concepts/sources/v1-consistency-probe-approval-20261026.md"
     form: doc
     realizes: [documentation/current-guidance]

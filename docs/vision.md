@@ -4,7 +4,7 @@ This is the canonical owner of Markitect's product thesis, intended division of 
 
 ## Markitect in brief
 
-Read this section first. The rest of this page develops it, and the [concept register](concepts/register.md) holds the individual decisions behind it.
+Read this section first, then [Founding intent](#founding-intent). The rest of this page develops them, and the [concept register](concepts/register.md) holds the individual decisions behind them.
 
 **What it is.**
 - People maintain one authoritative place: the canonical model of the project's intended world. The model holds the project's concepts, rules, boundaries, responsibilities, architecture and way of working.
@@ -40,6 +40,33 @@ These are [promises](concepts/register.md#promises), not established results.
 - Delegated realization is central to the product. It is not an optional layer on top of a validator.
 - Markitect's product owner has endorsed separating the method from any particular execution runtime. The accepted design puts native providers behind provider-neutral session contracts, with one container and working copy per Manager and Run; every Assessment, Implement and Verify uses fresh Manager environments ([DEC-068](concepts/register.md#dec-068-v1-concept-10)). V1 acceptance covers the Codex adapter; a Claude adapter follows on the stabilized session contract. S3 composes Apply and guarded publication in source; full native Apply qualification remains separate. The [delivery plan](implementation-plan.md), [provider guide](guides/provider-adapters.md) and delivery PRs distinguish implemented components from a demonstrated Apply; a runtime probe or adapter test alone does not establish the Manager process. See [DEC-010](concepts/register.md#dec-010-evaluate-the-method-separately-from-its-execution-runtime).
 - [Common misreadings](#common-misreadings) lists the readings to avoid.
+
+## Founding intent
+
+The owner's [founding intent](concepts/sources/founding-intent-20261026.md) explains why Markitect exists and what the canonical model is meant to be. Earlier accounts are the [origin account](concepts/sources/owner-origin-20261015.md) and the [conceptual influences](concepts/sources/conceptual-influences-20261017.md).
+
+**The problem.** A project built almost entirely with coding agents, documented in Markdown with rules, skills and agent instructions, drifted away from its code. Every consistency run took hours and found more inconsistencies. The owner lost track of which rules existed, what was defined and what had entered the project silently.
+
+**The answer is a typed language in prose.** In a strongly typed language, a compiler and explicit dependencies report issues at compile time instead of leaving them to be found later. The canonical model applies that to project intent:
+
+| Typed language | Canonical model |
+| --- | --- |
+| type, class, function signature | Kind |
+| field, parameter | Property |
+| declaration | Definition |
+| function body | body: binding prose that agents realize |
+| namespace, module | Package |
+| standard library, packages | Libraries, imported as model dependencies |
+| static type checker | compiler: structure only, never meaning |
+
+- The core stays clean. Projects define their own Kinds and so form their own language; Libraries supply common Kinds, oriented on what Go or C# ship, so that no project reinvents them.
+- The compiler checks structural correctness from the core alone. Meaning is judged by the agents and the Manager hierarchy.
+- The Apply organization follows Conway's law, Clean Architecture, clean code and modularity: Packages are modules, and each has a responsible Manager. Kubernetes and Terraform are further orientation points.
+- People decide intent. AI agents write the model through skills and Markitect's tooling, because people will not write the YAML themselves. Modeling skills and tooling are not part of V1, which excludes interactive model authoring ([concept §2.2](concepts/v1-concept.md#22-not-commissioned)); their scope is open ([recorder's notes](concepts/sources/founding-intent-20261026.md#recorders-notes)).
+
+**Consequences.**
+- Judge a model as you would judge code: dependencies, mutation testing, CRAP, clean architecture and size. A Definition of 500 words is prose compensating for missing Definitions.
+- A good model, what a well-modeled project contains, the standard Libraries and the modeling skills and tooling are still to be defined. Evaluations of Markitect are only as good as the model they use.
 
 ## Primary goal and prerequisites
 
