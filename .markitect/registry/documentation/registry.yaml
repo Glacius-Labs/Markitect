@@ -16,6 +16,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Records the owner decision that the project owner decides the architecture and the canonical model encodes it as its own structure.
+  - path: "docs/concepts/sources/model-track-library-outline-20261026.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the owner's acceptance of the standard Library outline v0.3 of the canonical model track.
   - path: "docs/concepts/sources/model-track-interfaces-20261026.md"
     form: doc
     realizes: [documentation/current-guidance]
