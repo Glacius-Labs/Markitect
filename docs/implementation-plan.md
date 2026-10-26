@@ -89,6 +89,21 @@ An exploratory probe ([owner approval](concepts/sources/v1-consistency-probe-app
 
 WP3b (`delegate.after`) is deferred: the native control shows whether the existing sequencing (concept §8.1) suffices once accounting is fixed. The sessions were to run no host Go work during Phase C's counted runs; their targeted tests broke quietness in B-c3-C8 and M-c3-C9 (Phase C incident 7). The hosted CI stays their merge gate. After Phase C, bounded native controls run outside any study: a probe whether a Codex thread accepts a new turn after a system error (decides WP1's continuation after served actions), a fresh Makerspace W0 and a fresh C4 for WP2, WP3 and WP5, and a no-change Apply on a verified state for WP4.
 
+## Canonical model track (owner approval 26 October)
+
+The owner [approved](concepts/sources/model-track-approval-20261026.md) the [model-track charter](design/model-track-charter.md) ([DEC-074](concepts/register.md#dec-074-canonical-model-track-parallel-to-v1)): a track parallel to V1 that makes the canonical model serve its [founding intent](vision.md#founding-intent), typed programming in prose. It does not block V1 technical acceptance, but the next comparison study (v0.3 and its follow-up) waits at least for W1–W4. The session "Markitect evaluation and canonical model design" leads it; the charter owns questions, deliverables and done conditions.
+
+| Work | Content | Order |
+|---|---|---|
+| W1 | Fitness review of core, compiler and context selection against the typed-language analogy; supplies the evidence for D3, the dependency mechanism and body-link semantics | First; read-only, its scratch `markitect check` after the K-S/K-R probe |
+| W2 | What a well-modeled project contains, building on DEC-061 | After W1, with W3 and W4 |
+| W3 | Quality criteria in the code analogy: warnings in the product, hard rules for Markitect's own reference and evaluation models | After W1, with W2 and W4 |
+| W4 | First outline of standard Libraries in a new top-level `libraries/` folder; `software-basics` absorbed, frozen for existing fixtures (D4) | After W1, with W2 and W3 |
+| W5 | Modeling skill and a separate tool under `tools/` | After W2–W4 |
+| W6 | Pilots: Makerspace remodeled beside the frozen Phase C models, and the self-model; bounded Apply runs only under a dispatch | Last |
+
+Language semantics, compiler, snapshot values, organization derivation and accounting change only by an explicit owner decision. Product changes from the track merge only after the coordinator has pinned F_fix for the fix plan's native controls, so that those controls test only S1–S3; the new F for the next study then includes them. W1 also found that DEC-028's See also section and files to read reach no Manager; concept 1.0 (§15.4) does not require them, and any change is decided within DEC-028. Changes to the concept, the register, this plan and `AGENTS.md` go through the coordinator.
+
 ## Repository structure
 
 The owner wants a repository that is state of the art, tidy and well organized. Two slices in step 3 deliver it, before the native requalification, so that step 4 qualifies the final layout. R1 is done ([PR #680](https://github.com/Glacius-Labs/Markitect/pull/680), [repository structure](development/repository-structure.md)), and the owner accepted its six recommendations ([DEC-071](concepts/register.md#dec-071-repository-structure-and-archive)). The ruleset protecting `archive/**` refs is active. R2 is done: the restructured layout is described in the [repository layout](development/repository-layout.md), and everything it removed from Main stays at the archive point `archive/main-pre-r2-20261024` (bundle included) that the [archive index](archive.md) lists, together with the six pinned pre-reset commits.

@@ -88,6 +88,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-071](#dec-071-repository-structure-and-archive) | Decision | Repository structure and archive | Accepted; execution in slice R2 |
 | [DEC-072](#dec-072-stable-v1-justified-by-data) | Decision | Stable V1 justified by data | Accepted; stability and comparison evidence tracked in the delivery plan |
 | [DEC-073](#dec-073-change-minimality-on-an-unchanged-model) | Decision | Change minimality on an unchanged model | Accepted; implementation in session S3 of the delivery plan |
+| [DEC-074](#dec-074-canonical-model-track-parallel-to-v1) | Decision | Canonical model track, parallel to V1 | Accepted; W1 running, tracked in the delivery plan |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -177,6 +178,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Interpretation (marked):** The owner's sentence about a "real compiler" breaks off without its predicate. The register reads it as follows: a compiler cannot read a naturally described world model, take context into account, fill unspecified gaps, interpret intent and still be deterministic with classical compiler guarantees. See the recorder's note in the source.
 - **Consequence:** Trust in realization comes from computed scope, independent review, declared checks and integration verification ([CPT-003](#cpt-003-two-parts-of-the-promise)).
 - **First-Apply clarification:** This consequence and [DEC-010](#dec-010-evaluate-the-method-separately-from-its-execution-runtime) retain earlier "computed scope" wording. Under [DEC-039](#dec-039-deterministic-manager-process), compilation supplies explicit obligations and responsibilities while every local Manager participates. Omitting out-of-scope Managers conflicts with that decision; Orchestrator-verified reuse is a separate proposal. Both remain unresolved under the [core's scope questions](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/history/apply-design-before-dec-056/manager-apply-core.md#not-settled-here). The earlier wording grants no exception to first-Apply participation.
+- **Founding intent:** the owner's [founding intent](sources/founding-intent-20261026.md) (26 October 2026) restates the typed-language analogy behind the name: the compiler checks structure, never meaning. This entry already matches it and stays unchanged ([DEC-074](#dec-074-canonical-model-track-parallel-to-v1), D2).
 
 ### DEC-004 The Manager hierarchy is core; Government belongs to a later axis
 
@@ -243,7 +245,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-011 Detailed planning of future ideas waits
 
-- **Status:** Accepted, owner, 9 October 2026 ([planning boundary](sources/concepts-chat-20261009/discussion-boundaries-20261009.md)). For Government, [DEC-019](#dec-019-government-code-starts-after-wave-2) supersedes these conditions. For working through the cockpit, [DEC-065](#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration) lifts the hold in bounded form. The owner's wording is in `USER-20261009-01`. The product chat restated the hold in the notes it attached to `-02`, `-03`, `-04` and `-06`.
+- **Status:** Accepted, owner, 9 October 2026 ([planning boundary](sources/concepts-chat-20261009/discussion-boundaries-20261009.md)). For Government, [DEC-019](#dec-019-government-code-starts-after-wave-2) supersedes these conditions. For working through the cockpit, [DEC-065](#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration) lifts the hold in bounded form, and [DEC-074](#dec-074-canonical-model-track-parallel-to-v1) does so for the canonical model track. The owner's wording is in `USER-20261009-01`. The product chat restated the hold in the notes it attached to `-02`, `-03`, `-04` and `-06`.
 - **Statement:**
   - The owner wants to discuss Markitect as if it were finished. Topics:
     - how it can be used;
@@ -897,6 +899,25 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Decision:** two small clarifications of concept 1.0. A Finding becomes an Initial Finding of Implement only when it names a Definition of the current checked model, which the host checks; other Findings are kept as Notes (§18.3, §3.5, §19.2). Verify receives the diff against the Apply's bound input, across correction loops, and judges it within its conformance review in tiers: removing conforming behavior or touching an unrelated area without a reference to a current obligation is a Reject, other optional additions are a Note, and when the host states that the input was already verified under the same model, execution configuration and dependencies and no defect is found, any change is a Reject (§11.3, §19.4). No per-file form and no self-assigned labels.
 - **Reason:** in the comparison study's Phase C, Implement changed an unchanged, already verified state twice (C9 in chains 1 and 2); Assessment Findings became Initial Findings without a reference, Root derived work from old Notes, and Verify saw no diff.
 - **Owners and scope:** session S3 implements it; the host fact that an input was already verified (WP4a) is context, not a concept change.
+
+### DEC-074 Canonical model track, parallel to V1
+
+- **Status:** Accepted by the owner, 26 October 2026 ([verbatim source](sources/model-track-approval-20261026.md)), approving the [model-track charter](../design/model-track-charter.md) with its recommendations D1–D5. It lifts the [DEC-011](#dec-011-detailed-planning-of-future-ideas-waits) planning hold for this bounded track only. Nothing is established yet.
+- **Decision:** a bounded track makes the canonical model serve its [founding intent](sources/founding-intent-20261026.md), typed programming in prose, in six workstreams:
+  - W1 a fitness review of core, compiler and context selection;
+  - W2 what a well-modeled project contains, building on [DEC-061](#dec-061-what-an-extracted-model-contains);
+  - W3 quality criteria: warnings in the product, as [ENH-002](#enh-002-model-quality-linter-and-metrics) directs, and hard rules only for Markitect's own reference and evaluation models;
+  - W4 a first outline of standard Libraries;
+  - W5 a modeling skill and a separate tool under `tools/`;
+  - W6 pilots: a Makerspace remodel beside the frozen Phase C models, and the self-model.
+- **Choices:**
+  - D1: the track runs parallel to V1 and does not block V1 technical acceptance; [concept §2.2](v1-concept.md#22-not-commissioned) stays as it is for V1.
+  - D2: no new entry for the compiler; [DEC-003](#dec-003-the-compiler-is-a-borrowed-concept) links the founding intent.
+  - D3: the dependency mechanism and the meaning of body links are decided after W1, with evidence.
+  - D4: standard Libraries live in a new top-level `libraries/` folder with one owner shard, versioned like `markitect-core`. `software-basics` is absorbed into them and stays frozen only for the existing fixtures.
+  - D5: the next comparison study (v0.3 and its follow-up) waits at least for W1–W4. This delays part of the [DEC-072](#dec-072-stable-v1-justified-by-data) evidence by the owner's choice.
+- **Boundaries:** language semantics, compiler, snapshot values, organization derivation and accounting stay a protected foundation (concept §5.5); changing them needs an explicit owner decision, never a side effect. Running work is not disturbed, real Apply runs need a bounded dispatch, and shared files change through the coordinator.
+- **Owners:** the session "Markitect evaluation and canonical model design" leads W1 and W3 and drafts W2 and W4. The [delivery plan](../implementation-plan.md#canonical-model-track-owner-approval-26-october) tracks the track.
 
 ## Promises
 
