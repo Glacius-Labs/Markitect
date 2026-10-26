@@ -30,6 +30,18 @@ class RubricCheckTests(unittest.TestCase):
                                         ("R2", True), ("R2", False), ("R5", False)])
             self.assertEqual(result["valid_criticals"], 4)
 
+    def test_the_entry_point_is_the_programs_own(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            token = Path(tmp) / "tok789"
+            (token / "candidate" / "realization" / "cmd" / "makerspace").mkdir(parents=True)
+            (token / "candidate" / "realization" / "go.mod").write_text("module makerspace\n", encoding="utf-8")
+            requirements = Path(tmp) / "requirements.md"
+            requirements.write_text("The program's main package lives at `realization/cmd/makerspace`.\n", encoding="utf-8")
+            review = {"token": "tok789", "R1a": False}
+            # A claim that the entry point is missing is true for the Library's path and false for Makerspace's.
+            self.assertTrue(rubric_check.check(token, requirements, review)["criticals"][0]["valid"])
+            self.assertFalse(rubric_check.check(token, requirements, review, entry="realization/cmd/makerspace")["criticals"][0]["valid"])
+
     def test_removals_are_cited_in_the_start_tree_or_the_diff(self):
         with tempfile.TemporaryDirectory() as tmp:
             token = Path(tmp) / "tok456"
