@@ -440,6 +440,12 @@ func (s *linuxService) Retain(ctx context.Context, copy run.Copy, fixed run.Comm
 		return s.export(ctx, c.directory, fixed, key, bundle)
 	})
 }
+
+// Changes is the diff from a stored candidate to this Run's fixed input, read
+// from durable storage outside the Run's volume.
+func (s *linuxService) Changes(ctx context.Context, from project.CandidateRef) (string, error) {
+	return s.adapter.Store.Changes(ctx, from, s.request.Input)
+}
 func (c *linuxCopy) Close(ctx context.Context) error { return c.service.remove(ctx, c.directory) }
 func (s *linuxService) Close(ctx context.Context) error {
 	var err error

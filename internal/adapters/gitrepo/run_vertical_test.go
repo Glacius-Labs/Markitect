@@ -959,6 +959,64 @@ func TestCompleteHierarchyUsesRealGitAndClosedDurableStateForEveryMandate(t *tes
 	}
 }
 
+// The basis survives realization, registry maintenance and another working
+// directory, and changes with the model or the execution configuration.
+func TestPreparedBasisLeavesOutRealizationAndLocation(t *testing.T) {
+	_, base, _, _ := runFixture(t)
+	_, realized, _, _ := runFixture(t, func(r *testkit.Repo) {
+		r.Write("out/b.txt", "realized\n")
+		r.Write(".markitect/registry/a/registry.yaml", "apiVersion: markitect.registry/v1\nartifacts:\n  - path: out/a.txt\n    form: code\n    realizes: [a/Thing]\n    why: Controlled parent artifact.\n  - path: out/accounted.ignored\n    form: code\n    realizes: [a/Thing]\n    why: Accounted Gitignored untracked input must survive capture.\n  - path: out/b.txt\n    form: code\n    realizes: [a/Thing]\n    why: A later realization.\n")
+	})
+	if realized.Binding() == base.Binding() || realized.Basis() != base.Basis() || base.Basis() == "" {
+		t.Fatal("realization changed the basis or left the binding", base.Basis(), realized.Basis())
+	}
+	for name, configure := range map[string]func(*testkit.Repo){
+		"model": func(r *testkit.Repo) {
+			r.Write(".markitect/model/a/thing.yaml", "imports: [{package: markitect/core, as: Core}]\nid: Thing\nkind: Core.Kind\nbody: A changed realization obligation.\nspec: {}\n")
+		},
+		"execution": func(r *testkit.Repo) {
+			r.Write(".markitect/execution.yaml", "# Changed execution configuration.\napiVersion: markitect.execution/v2\nchecks: []\n")
+		},
+	} {
+		if _, changed, _, _ := runFixture(t, configure); changed.Basis() == base.Basis() {
+			t.Fatal("a changed", name, "kept the basis")
+		}
+	}
+}
+
+// Changes diffs two stored candidates from durable state alone, also when
+// their histories share no commit.
+func TestChangesDiffsStoredCandidatesWithoutCommonHistory(t *testing.T) {
+	r, p, git, input := runFixture(t)
+	ctx := context.Background()
+	r.Git("checkout", "--quiet", "--orphan", "unrelated")
+	r.Write("out/a.txt", "changed\n")
+	r.Commit("unrelated history")
+	head, err := object(ctx, r.Dir, "HEAD")
+	if err != nil {
+		t.Fatal(err)
+	}
+	other, err := git.retain(ctx, input.Project, p, r.Dir, head)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if commits := strings.Fields(r.Git("rev-list", "--parents", "-n", "1", "HEAD")); len(commits) != 1 {
+		t.Fatal("the unrelated candidate has a parent", commits)
+	}
+	diff, err := git.Changes(ctx, input, other)
+	if err != nil || !strings.Contains(diff, "out/a.txt") || !strings.Contains(diff, "-initial") || !strings.Contains(diff, "+changed") {
+		t.Fatalf("incomplete stored diff: %v\n%s", err, diff)
+	}
+	if same, err := git.Changes(ctx, other, other); err != nil || same != "" {
+		t.Fatal("an unchanged candidate has changes", err, same)
+	}
+	foreign := other
+	foreign.Project = "other"
+	if _, err = git.Changes(ctx, input, foreign); err == nil {
+		t.Fatal("diffed candidates of different projects")
+	}
+}
+
 func TestDurableCandidateRetentionAndReopenUnderLongPaths(t *testing.T) {
 	r, prepared, original, input := runFixture(t)
 	ctx, cancel := context.WithDeadline(context.Background(), runDeadline(t))
