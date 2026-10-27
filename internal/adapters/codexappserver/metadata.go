@@ -183,17 +183,18 @@ func (p *preparation) parseMetadata(data []byte, config metadataConfig) {
 }
 
 func runtimeMetadata(data []byte) (map[string]string, error) {
-	// This is the three-key LF format emitted by packaging/runtime/Dockerfile,
-	// not a shell environment to source or a generated schema inventory.
+	// This is the LF format emitted by packaging/runtime/Dockerfile, not a
+	// shell environment to source or a generated schema inventory. The image
+	// also carries Claude Code, whose claude record this adapter ignores.
 	values := make(map[string]string)
 	for _, line := range strings.Split(strings.TrimSuffix(string(data), "\n"), "\n") {
 		key, value, ok := strings.Cut(line, "=")
-		if !ok || values[key] != "" || (key != "codex" && key != "codexSchema" && key != "agentd") || !literal(value) {
-			return nil, errors.New("runtime.env requires exactly three unique codex, codexSchema and agentd literal records")
+		if !ok || values[key] != "" || (key != "codex" && key != "codexSchema" && key != "agentd" && key != "claude") || !literal(value) {
+			return nil, errors.New("runtime.env requires unique codex, codexSchema and agentd literal records and allows only a claude record besides them")
 		}
 		values[key] = value
 	}
-	if len(values) != 3 {
+	if values["codex"] == "" || values["codexSchema"] == "" || values["agentd"] == "" {
 		return nil, errors.New("runtime.env is missing a required metadata record")
 	}
 	return values, nil

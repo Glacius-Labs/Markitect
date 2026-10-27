@@ -189,7 +189,7 @@ func TestRefusedStartCarriesTheReason(t *testing.T) {
 		a.finish()
 	}()
 	_, err = s.StartProvider(context.Background(), frame.Start{Argv: []string{"missing"}, Dir: "/work"})
-	if err == nil || !strings.Contains(err.Error(), "no such file") {
+	if err == nil || !strings.Contains(err.Error(), "agentd refused the start: start provider: exec: no such file") || !errors.Is(err, ErrRefused) {
 		t.Fatalf("start = %v", err)
 	}
 }

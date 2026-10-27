@@ -6,7 +6,9 @@
 package agentd
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -160,11 +162,23 @@ func (s *server) start(request uint64, req frame.Start) error {
 			return errors.New("the provider was already started")
 		}
 	}
+	// No provider runs now, so nothing can change the home between this check
+	// and the start. A change refuses the start; it is never repaired.
+	if s.home != nil && s.homeReady {
+		if err := s.home.verify(); err != nil {
+			s.mu.Unlock()
+			return s.refuse(request, "private home changed: "+err.Error())
+		}
+	}
 	tools := make(map[string]frame.ToolSpec, len(req.Tools))
 	for _, t := range req.Tools {
 		if t.Name == "" || len(t.InputSchema) == 0 {
 			s.mu.Unlock()
 			return errors.New("every tool needs a name and an input schema")
+		}
+		if meta := bytes.TrimSpace(t.Meta); len(t.Meta) != 0 && (!json.Valid(meta) || meta[0] != '{') {
+			s.mu.Unlock()
+			return fmt.Errorf("tool %q has a _meta value that is not a JSON object", t.Name)
 		}
 		if _, dup := tools[t.Name]; dup {
 			s.mu.Unlock()

@@ -4,17 +4,21 @@ package bootstrap
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"runtime"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/checks"
+	"github.com/Glacius-Labs/Markitect/internal/adapters/claudecode"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/cli"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/codexappserver"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/documents"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/gitrepo"
+	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/modeldocs"
 	"github.com/Glacius-Labs/Markitect/internal/project"
+	"github.com/Glacius-Labs/Markitect/internal/runtimeconfig"
 )
 
 func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
@@ -31,8 +35,23 @@ func run(ctx context.Context, goos string, args []string, stdout, stderr io.Writ
 	models := project.NewModelService(repository, repository)
 	preparation := project.NewPreparationService(models)
 	views := modeldocs.New(models, preparation, documents.Writer{})
-	agents := codexappserver.NewMetadataPreparer(images)
+	agents := agentMetadata{
+		"codexAppServer": codexappserver.NewMetadataPreparer(images),
+		"claudeCode":     claudecode.NewMetadataPreparer(claudecode.NewEngineImageReader),
+	}
 	checker := checks.NewMetadataPreparer(checks.NewEngineImageReaders().Reader)
 	execution := applyExecution(goos, preparation, repository, agents, checker)
 	return cli.New(preparation, agents, checker, repository, views, execution).Run(ctx, args, stdout, stderr)
+}
+
+// agentMetadata routes each Agent profile to the metadata preparer of its
+// section. The Runtime profile decoder admits exactly one known section per
+// profile, so a missing entry is an incomplete composition.
+type agentMetadata map[string]runtimeconfig.AgentProfilePreparer
+
+func (a agentMetadata) PrepareAgentProfile(ctx context.Context, input runtimeconfig.ProfileInput) (runtimeconfig.ProfileObservation, error) {
+	if preparer := a[input.Section()]; preparer != nil {
+		return preparer.PrepareAgentProfile(ctx, input)
+	}
+	return runtimeconfig.ProfileObservation{InputBinding: input.Binding(), Status: model.NotCompleted}, errors.New("no metadata preparer is composed for the selected Agent section")
 }

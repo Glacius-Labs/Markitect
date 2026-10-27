@@ -89,6 +89,11 @@ func TestControlMessagesNeedExactlyTheirBody(t *testing.T) {
 	bad := []frame.ControlMessage{
 		{Type: frame.TypeInitialize, Initialize: &frame.Initialize{}},
 		{Type: frame.TypeInitialize, Initialize: &frame.Initialize{CodexAuth: make([]byte, frame.MaxPrivateAuthBytes+1)}},
+		{Type: frame.TypeInitialize, Initialize: &frame.Initialize{CodexAuth: []byte("a"), Claude: &frame.ClaudeHome{Credentials: []byte("login"), SystemPrompt: "b", AppendSystemPrompt: "d"}}},
+		{Type: frame.TypeInitialize, Initialize: &frame.Initialize{Claude: &frame.ClaudeHome{Credentials: []byte("login"), SystemPrompt: "b"}}},
+		{Type: frame.TypeInitialize, Initialize: &frame.Initialize{Claude: &frame.ClaudeHome{SystemPrompt: "b", AppendSystemPrompt: "d"}}},
+		{Type: frame.TypeInitialize, Initialize: &frame.Initialize{Claude: &frame.ClaudeHome{SystemPrompt: "\xff", AppendSystemPrompt: "d"}}},
+		{Type: frame.TypeInitialize, Initialize: &frame.Initialize{Claude: &frame.ClaudeHome{Credentials: make([]byte, frame.MaxPrivateAuthBytes+1), SystemPrompt: "b", AppendSystemPrompt: "d"}}},
 		{Type: frame.TypeInitialized, Initialized: &frame.Initialized{}, Start: &frame.Start{}},
 		{Type: frame.TypeClearPrivateHome},
 		{Type: frame.TypeStart, Start: &frame.Start{Dir: "/work"}},
@@ -116,6 +121,7 @@ func TestControlMessagesNeedExactlyTheirBody(t *testing.T) {
 func TestPrivateInitializationIsOneBoundedStrictFrame(t *testing.T) {
 	for _, c := range []frame.ControlMessage{
 		{Type: frame.TypeInitialize, Request: 1, Initialize: &frame.Initialize{CodexAuth: make([]byte, frame.MaxPrivateAuthBytes)}},
+		{Type: frame.TypeInitialize, Request: 1, Initialize: &frame.Initialize{Claude: &frame.ClaudeHome{Credentials: []byte("login"), SystemPrompt: "base", AppendSystemPrompt: "developer"}}},
 		{Type: frame.TypeInitialized, Request: 1, Initialized: &frame.Initialized{}},
 		{Type: frame.TypeClearPrivateHome, Request: 2, ClearPrivateHome: &frame.ClearPrivateHome{}},
 		{Type: frame.TypePrivateHomeCleared, Request: 2, PrivateHomeCleared: &frame.PrivateHomeCleared{}},
