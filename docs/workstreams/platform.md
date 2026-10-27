@@ -47,19 +47,16 @@ In the lane's first discussion the owner set two rules:
 
 For a Windows user this leaves one way: install Docker Desktop and run `markitect` on Windows, which starts the Linux runner. Docker Desktop's own use of WSL 2 as its backend is internal to it and needs no setup. The runner's WSL launch form, WSL as a development host and a Docker Engine inside WSL are dropped as options.
 
-## Options
+The owner answered the lane's questions the same day:
+- **Our runs stay on our machine.** Markitect must work on an ordinary user's machine, so its own studies and native controls run on one too. No dedicated machine.
+- **Tests run on any machine, Windows included.** They are slow on Windows, which is a problem to understand and fix, not a reason to require Linux.
+- **Linux comes after Windows.** Once Apply works on Windows, it is tested on a Linux machine.
 
-These are directions to discuss, not plans. They are not exclusive.
+## Next
 
-1. **Docker Desktop as the only Windows requirement.** Keep today's form: Windows launches the runner through Docker Desktop, and Linux users run Apply natively. Leaves a Linux-host Apply, a native Linux engine and P6 open.
-2. **A dedicated machine for our own long and counted runs.** A host that only runs evaluations and native controls, so development sessions cannot disturb them (P6). It is for Markitect's own studies, not a user requirement. Costs a machine and moving logins there.
+1. **Why the tests are slow on Windows.** Find the cause and whether it can be fixed (P9). The first lead: real Git costs about 32 to 35 ms per process launch on Windows, and one three-Run test launches it about 2,100 times ([technical acceptance](../validation/v1-technical-acceptance-20261026.md)). Waits for the owner's go-ahead.
+2. **Apply on a Linux machine,** after Apply works on Windows.
 3. **After the Git variant.** If agents and the host exchange work through a Git remote instead of a mounted `.git` and a shared Run volume, the runner's mounts and parts of P1, P4 and P8 may disappear. Whether the host could then run natively on Windows again, still with Docker Desktop for the agents, is a question for the Git variant, recorded below.
-
-## Open owner questions
-
-1. **Long runs.** Should our counted studies and native controls move to a dedicated machine (option 2), or stay on the shared machine under the quiet-machine rule?
-2. **Our own Linux test runs.** [CONTRIBUTING](../../CONTRIBUTING.md#verify-a-change) suggests running broad Go suites in WSL. Does the no-WSL rule cover this too? If so, the simple replacements are CI only, or the same suites in a Linux container through Docker Desktop.
-3. **Linux users.** Native Apply on a Linux host has never been observed. Should it be observed once, and where?
 
 ## Dependency on the Git variant
 
