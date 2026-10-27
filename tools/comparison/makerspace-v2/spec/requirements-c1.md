@@ -111,7 +111,7 @@ A well-formed request is checked in the following order. The first check that fa
 6. **Ownership:** when the actor's permission for the operation is "own", the record concerned belongs to the actor (authorization) → otherwise `forbidden`.
 7. **Operation rules:** the refusals listed for the operation, in the order listed.
 
-When a check fails, the response is `status: "refused"` with the code and a reason, and nothing else happens, except that a `forbidden` refusal appends its audit entry: no record is created or changed, no identifier number is consumed, no audit entry is written and the request-time order is not advanced. When every check passes, all of the operation's effects take place together and the response is `status: "ok"`.
+When a check fails, the response is `status: "refused"` with the code and a reason, and nothing else happens, except that a `forbidden` refusal appends its audit entry: no record is created or changed, no identifier number is consumed, no other audit entry is written and the request-time order is not advanced. When every check passes, all of the operation's effects take place together and the response is `status: "ok"`.
 
 *Applies to every package.*
 
