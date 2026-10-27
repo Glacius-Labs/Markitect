@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/practice, as: Practice}
+id: documentation
+kind: Practice.DocumentationObligation
+body: |-
+  `realization/README.md` explains how to build, run and test the program, shows a short example session and states the scope. Code, tests and documentation agree with this model.
+spec:
+  appliesTo: [makerspace]

@@ -1,0 +1,21 @@
+imports:
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/equipment, as: Equipment}
+id: report-incident
+kind: Policies.AuditedOperation
+body: |-
+  Creates an incident with the next incident identifier, status `open`, `reportedBy` the actor (a steward's identifier when a steward reports it), `reportedAt` the request time, and `resolution` and `resolvedAt` `null`.
+spec:
+  wireName: reportIncident
+  mutation: true
+  arguments:
+    - {name: machineId, fieldType: Policies.identifier, refersTo: Equipment.machine}
+    - {name: severity, fieldType: severity}
+    - {name: description, fieldType: Policies.text}
+  results:
+    - {name: incident, fieldType: incident}
+  permissions:
+    - {role: Policies.staff-role, scope: all}
+    - {role: Policies.admin-role, scope: all}
+    - {role: Policies.steward-role, scope: all}
+  auditTarget: new incidentId

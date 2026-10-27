@@ -1,0 +1,12 @@
+imports:
+  - {package: markitect/values, as: Values}
+  - {package: makerspace/policies, as: Policies}
+id: unit-price-cents
+kind: Values.Scalar
+body: |-
+  The price of one unit of a material.
+spec:
+  base: integer
+  lowest: 1
+  highest: 1000000
+  measuredIn: Policies.cents

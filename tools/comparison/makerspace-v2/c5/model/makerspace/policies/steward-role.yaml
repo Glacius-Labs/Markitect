@@ -1,0 +1,7 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: steward-role
+kind: Api.Role
+body: |-
+  Stewards look after the machines and safety on the workshop floor. A steward is a user, not a member: a steward's identifier does not name a member, and a steward has no membership, invoices or credit. A steward has no access to billing.
+spec: {}

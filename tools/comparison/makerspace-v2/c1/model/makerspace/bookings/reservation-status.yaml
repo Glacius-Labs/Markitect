@@ -1,0 +1,13 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: reservation-status
+kind: Values.Enumeration
+body: |-
+  The status of a reservation; see [[reservations|reservations]] for stored and reported status.
+spec:
+  members:
+    - {value: reserved}
+    - {value: missed}
+    - {value: checkedIn}
+    - {value: completed}
+    - {value: cancelled}

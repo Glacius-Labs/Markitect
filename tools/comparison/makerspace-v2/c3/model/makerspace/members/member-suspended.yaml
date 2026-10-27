@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: member-suspended
+kind: Api.RefusalCode
+body: |-
+  The member is not in good standing.
+spec:
+  code: member_suspended

@@ -1,0 +1,22 @@
+imports:
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/members, as: Members}
+  - {package: makerspace/equipment, as: Equipment}
+id: revoke-certification
+kind: Policies.AuditedOperation
+body: |-
+  Withdraws the member's certification, for example after a safety incident. The certification becomes revoked; its dates do not change. Existing reservations stay, but check-in requires a valid certification. An expired certification can be revoked.
+spec:
+  wireName: revokeCertification
+  mutation: true
+  arguments:
+    - {name: memberId, fieldType: Policies.identifier, refersTo: Members.member}
+    - {name: familyId, fieldType: Policies.identifier, refersTo: Equipment.family}
+  refusals:
+    - {refusal: not-certified, when: the member has no certification for the family or it is already revoked}
+  results:
+    - {name: certification, fieldType: certification}
+  permissions:
+    - {role: Policies.staff-role, scope: all}
+    - {role: Policies.admin-role, scope: all}
+  auditTarget: memberId/familyId

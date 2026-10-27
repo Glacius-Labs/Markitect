@@ -1,0 +1,10 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: amount-cents
+kind: Values.Scalar
+body: |-
+  An amount of money; never negative.
+spec:
+  base: integer
+  lowest: 0
+  measuredIn: cents

@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: clock-time
+kind: Values.Scalar
+body: |-
+  A time of day `HH:MM`.
+spec:
+  base: string

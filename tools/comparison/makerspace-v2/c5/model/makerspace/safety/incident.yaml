@@ -1,0 +1,20 @@
+imports:
+  - {package: markitect/data, as: Data}
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/equipment, as: Equipment}
+id: incident
+kind: Data.Entity
+body: |-
+  A safety incident recorded against a machine, generated identifier `inc-N`. `resolution` and `resolvedAt` are `null` while open.
+spec:
+  fields:
+    - {name: incidentId, fieldType: Policies.identifier}
+    - {name: machineId, fieldType: Policies.identifier, refersTo: Equipment.machine}
+    - {name: severity, fieldType: severity}
+    - {name: description, fieldType: Policies.text}
+    - {name: reportedBy, fieldType: Policies.identifier}
+    - {name: reportedAt, fieldType: Policies.timestamp}
+    - {name: status, fieldType: incident-status}
+    - {name: resolution, fieldType: Policies.text, nullable: true}
+    - {name: resolvedAt, fieldType: Policies.timestamp, nullable: true}
+  key: incidentId

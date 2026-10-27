@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: reservation-conflict
+kind: Api.RefusalCode
+body: |-
+  An active reservation overlaps the maintenance window.
+spec:
+  code: reservation_conflict

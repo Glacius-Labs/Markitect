@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: account-overdue
+kind: Api.RefusalCode
+body: |-
+  The member has an invoice that is more than 30 days overdue.
+spec:
+  code: account_overdue

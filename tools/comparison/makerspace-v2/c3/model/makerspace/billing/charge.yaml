@@ -1,0 +1,16 @@
+imports:
+  - {package: markitect/data, as: Data}
+  - {package: makerspace/policies, as: Policies}
+id: charge
+kind: Data.Entity
+body: |-
+  A charge (invoice line) on a member's account. Its amount follows [[Policies.money|money]] and is fixed when the charge is created.
+spec:
+  fields:
+    - {name: kind, fieldType: charge-kind}
+    - {name: ref, fieldType: charge-ref}
+    - {name: quantity, fieldType: Policies.count}
+    - {name: unitPriceCents, fieldType: Policies.amount-cents}
+    - {name: discountPercent, fieldType: Policies.percent}
+    - {name: amountCents, fieldType: Policies.amount-cents}
+    - {name: at, fieldType: Policies.timestamp}

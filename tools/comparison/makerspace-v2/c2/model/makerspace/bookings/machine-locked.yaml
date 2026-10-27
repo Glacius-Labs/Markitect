@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: machine-locked
+kind: Api.RefusalCode
+body: |-
+  A lockout of the machine overlaps the reservation.
+spec:
+  code: machine_locked

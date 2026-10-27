@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: text
+kind: Values.Scalar
+body: |-
+  A JSON string that contains at least one character without the Unicode `White_Space` property. It is stored and returned exactly as supplied, without trimming.
+spec:
+  base: string

@@ -1,0 +1,12 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: user-role
+kind: Values.Enumeration
+body: |-
+  The role of a user; see [[authorization|authorization]].
+spec:
+  members:
+    - {value: member}
+    - {value: staff}
+    - {value: admin}
+    - {value: steward}

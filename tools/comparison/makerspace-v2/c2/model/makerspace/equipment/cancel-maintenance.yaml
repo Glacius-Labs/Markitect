@@ -1,0 +1,19 @@
+imports:
+  - {package: makerspace/policies, as: Policies}
+id: cancel-maintenance
+kind: Policies.AuditedOperation
+body: |-
+  The window gets status `cancelled`. A cancelled window no longer blocks reservations and no longer counts in schedules or reports.
+spec:
+  wireName: cancelMaintenance
+  mutation: true
+  arguments:
+    - {name: windowId, fieldType: Policies.identifier, refersTo: maintenance-window}
+  refusals:
+    - {refusal: Policies.invalid-state, when: the window is already cancelled or its start is at or before the request time}
+  results:
+    - {name: window, fieldType: maintenance-window}
+  permissions:
+    - {role: Policies.staff-role, scope: all}
+    - {role: Policies.admin-role, scope: all}
+  auditTarget: windowId

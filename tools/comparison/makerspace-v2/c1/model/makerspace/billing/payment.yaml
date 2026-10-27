@@ -1,0 +1,18 @@
+imports:
+  - {package: markitect/data, as: Data}
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/members, as: Members}
+id: payment
+kind: Data.Entity
+body: |-
+  A payment of one invoice, generated identifier `pay-N`.
+spec:
+  fields:
+    - {name: paymentId, fieldType: Policies.identifier}
+    - {name: invoiceId, fieldType: Policies.identifier, refersTo: invoice}
+    - {name: memberId, fieldType: Policies.identifier, refersTo: Members.member}
+    - {name: amountCents, fieldType: payment-cents}
+    - {name: appliedCents, fieldType: Policies.amount-cents}
+    - {name: creditedCents, fieldType: Policies.amount-cents}
+    - {name: at, fieldType: Policies.timestamp}
+  key: paymentId

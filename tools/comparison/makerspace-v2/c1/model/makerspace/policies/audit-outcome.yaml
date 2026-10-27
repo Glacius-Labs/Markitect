@@ -1,0 +1,10 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: audit-outcome
+kind: Values.Enumeration
+body: |-
+  Whether an audit entry records an accepted mutation or a `forbidden` refusal.
+spec:
+  members:
+    - {value: accepted}
+    - {value: refused}

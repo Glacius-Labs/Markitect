@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: month-not-ended
+kind: Api.RefusalCode
+body: |-
+  The month to invoice has not ended at the request time.
+spec:
+  code: month_not_ended

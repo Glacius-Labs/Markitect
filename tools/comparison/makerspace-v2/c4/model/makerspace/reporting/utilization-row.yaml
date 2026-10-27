@@ -1,0 +1,17 @@
+imports:
+  - {package: markitect/data, as: Data}
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/equipment, as: Equipment}
+id: utilization-row
+kind: Data.Entity
+body: |-
+  One machine's row of the utilization report.
+spec:
+  fields:
+    - {name: machineId, fieldType: Policies.identifier, refersTo: Equipment.machine}
+    - {name: openMinutes, fieldType: Policies.minute-count}
+    - {name: maintenanceMinutes, fieldType: Policies.minute-count}
+    - {name: lockoutMinutes, fieldType: Policies.minute-count}
+    - {name: availableMinutes, fieldType: Policies.minute-count}
+    - {name: usedMinutes, fieldType: Policies.minute-count}
+    - {name: utilizationPercent, fieldType: utilization-percent}

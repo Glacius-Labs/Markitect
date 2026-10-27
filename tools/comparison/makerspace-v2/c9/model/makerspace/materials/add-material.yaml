@@ -1,0 +1,21 @@
+imports:
+  - {package: makerspace/policies, as: Policies}
+id: add-material
+kind: Policies.AuditedOperation
+body: |-
+  Creates the material with stock 0.
+spec:
+  wireName: addMaterial
+  mutation: true
+  arguments:
+    - {name: materialId, fieldType: Policies.identifier}
+    - {name: name, fieldType: Policies.text}
+    - {name: unitPriceCents, fieldType: unit-price-cents}
+  refusals:
+    - {refusal: Policies.already-exists, when: "a material with `materialId` exists"}
+  results:
+    - {name: material, fieldType: material}
+  permissions:
+    - {role: Policies.staff-role, scope: all}
+    - {role: Policies.admin-role, scope: all}
+  auditTarget: materialId

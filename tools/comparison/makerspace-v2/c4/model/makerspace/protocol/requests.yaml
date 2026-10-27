@@ -1,0 +1,16 @@
+imports:
+  - {package: markitect/practice, as: Practice}
+  - {package: makerspace/policies, as: Policies}
+id: requests
+kind: Practice.Rule
+body: |-
+  A request is a UTF-8 JSON object with exactly three members:
+
+  ```json
+  {"id":"q1","op":"registerMember","args":{"actor":"admin","at":"2026-03-02T09:00Z","memberId":"ada","name":"Ada Byron","tier":"plus"}}
+  ```
+
+  - `id`: a nonempty string chosen by the caller. It is echoed in the response. It is only a correlation value, not a domain identifier and not an idempotency key; two requests with the same `id` are two separate requests.
+  - `op`: the wire name of one operation of this model. Names are case-sensitive.
+  - `args`: a JSON object with the operation's arguments. Every operation takes `actor` ([[Policies.identifier|identifier]], the acting user) and `at` ([[Policies.timestamp|timestamp]], the request time) in addition to the arguments it lists. All arguments are required; no operation has optional arguments.
+spec: {}

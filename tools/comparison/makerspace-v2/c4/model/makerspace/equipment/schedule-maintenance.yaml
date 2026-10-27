@@ -1,0 +1,25 @@
+imports:
+  - {package: makerspace/policies, as: Policies}
+id: schedule-maintenance
+kind: Policies.AuditedOperation
+body: |-
+  Creates the window with status `scheduled` and the next maintenance window identifier. A reservation is active when its reported status is `reserved` or `checkedIn`.
+spec:
+  wireName: scheduleMaintenance
+  mutation: true
+  arguments:
+    - {name: machineId, fieldType: Policies.identifier, refersTo: machine}
+    - {name: start, fieldType: Policies.timestamp}
+    - {name: end, fieldType: Policies.timestamp}
+    - {name: reason, fieldType: Policies.text}
+  refusals:
+    - {refusal: Policies.invalid-interval, when: "`end` is not after `start`"}
+    - {refusal: Policies.starts-in-past, when: "`start` is before the request time"}
+    - {refusal: reservation-conflict, when: the window overlaps an active reservation of the machine}
+  results:
+    - {name: window, fieldType: maintenance-window}
+  permissions:
+    - {role: Policies.staff-role, scope: all}
+    - {role: Policies.admin-role, scope: all}
+    - {role: Policies.steward-role, scope: all}
+  auditTarget: new windowId

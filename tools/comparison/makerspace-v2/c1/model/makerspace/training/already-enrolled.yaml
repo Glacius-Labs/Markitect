@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: already-enrolled
+kind: Api.RefusalCode
+body: |-
+  The member is already enrolled in the course.
+spec:
+  code: already_enrolled

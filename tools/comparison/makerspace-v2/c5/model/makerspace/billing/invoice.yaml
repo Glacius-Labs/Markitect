@@ -1,0 +1,23 @@
+imports:
+  - {package: markitect/data, as: Data}
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/members, as: Members}
+id: invoice
+kind: Data.Entity
+body: |-
+  An invoice of one member for one month, generated identifier `inv-N`.
+spec:
+  fields:
+    - {name: invoiceId, fieldType: Policies.identifier}
+    - {name: memberId, fieldType: Policies.identifier, refersTo: Members.member}
+    - {name: month, fieldType: Policies.month}
+    - {name: issuedAt, fieldType: Policies.timestamp}
+    - {name: dueAt, fieldType: Policies.timestamp}
+    - {name: lines, fieldType: charge, list: true}
+    - {name: totalCents, fieldType: Policies.amount-cents}
+    - {name: creditAppliedCents, fieldType: Policies.amount-cents}
+    - {name: paidCents, fieldType: Policies.amount-cents}
+    - {name: balanceCents, fieldType: Policies.amount-cents}
+    - {name: status, fieldType: invoice-status}
+    - {name: overdue, fieldType: Policies.flag}
+  key: invoiceId

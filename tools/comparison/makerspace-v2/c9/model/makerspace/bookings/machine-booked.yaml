@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: machine-booked
+kind: Api.RefusalCode
+body: |-
+  Another active reservation of the machine overlaps the reservation.
+spec:
+  code: machine_booked

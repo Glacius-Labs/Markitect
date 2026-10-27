@@ -1,0 +1,10 @@
+imports:
+  - {package: markitect/architecture, as: Architecture}
+id: safety-interface
+kind: Architecture.Interface
+body: |-
+  What other modules may use of safety: its operations and the incident record.
+spec:
+  appliesTo: [makerspace]
+  operations: [report-incident, resolve-incident, list-incidents]
+  types: [incident]

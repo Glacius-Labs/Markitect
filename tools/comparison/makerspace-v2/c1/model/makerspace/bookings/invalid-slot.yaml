@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: invalid-slot
+kind: Api.RefusalCode
+body: |-
+  A reservation does not follow the booking granularity or its duration limits.
+spec:
+  code: invalid_slot

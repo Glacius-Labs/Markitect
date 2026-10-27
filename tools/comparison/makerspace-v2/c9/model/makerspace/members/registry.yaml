@@ -1,0 +1,7 @@
+imports:
+  - {package: markitect/practice, as: Practice}
+id: registry
+kind: Practice.Rule
+body: |-
+  The registry holds every [[user|user]]: the initial admin, staff, admins and stewards registered by an admin, and members registered by staff or admins. Users, including members, share one identifier space. Users are never deleted and their identifier, name and role never change. A steward is a user, not a member.
+spec: {}

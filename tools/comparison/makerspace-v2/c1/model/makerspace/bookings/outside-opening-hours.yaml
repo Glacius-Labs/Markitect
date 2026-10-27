@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: outside-opening-hours
+kind: Api.RefusalCode
+body: |-
+  A reservation is not inside the opening hours of its day.
+spec:
+  code: outside_opening_hours

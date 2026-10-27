@@ -1,0 +1,20 @@
+imports:
+  - {package: makerspace/policies, as: Policies}
+id: resolve-incident
+kind: Policies.AuditedOperation
+body: |-
+  Status `resolved`, `resolution` as supplied, `resolvedAt` the request time.
+spec:
+  wireName: resolveIncident
+  mutation: true
+  arguments:
+    - {name: incidentId, fieldType: Policies.identifier, refersTo: incident}
+    - {name: resolution, fieldType: Policies.text}
+  refusals:
+    - {refusal: Policies.invalid-state, when: the incident is already resolved}
+  results:
+    - {name: incident, fieldType: incident}
+  permissions:
+    - {role: Policies.staff-role, scope: all}
+    - {role: Policies.admin-role, scope: all}
+  auditTarget: incidentId

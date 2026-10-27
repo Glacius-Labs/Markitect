@@ -1,0 +1,18 @@
+imports:
+  - {package: markitect/practice, as: Practice}
+  - {package: makerspace/policies, as: Policies}
+id: bulk-discount
+kind: Practice.Rule
+body: |-
+  Material purchases get a bulk discount that depends on the quantity of the single purchase:
+
+  | Quantity of the purchase | `discountPercent` |
+  | --- | --- |
+  | 1 to 9 | 0 |
+  | 10 to 24 | 5 |
+  | 25 or more | 12 |
+
+  Quantities of separate purchases, also by the same member or of the same material, are never added together. The table is the same for every material and every member; the membership tier plays no part in it, the tier's usage discount never applies to materials, and the bulk discount never applies to usage.
+
+  Examples, with the [[Policies.money|money]] formula: 9 units at 199 give `(9 × 199 × 100 + 50) div 100` = 1791; 10 units at 199 give `(10 × 199 × 95 + 50) div 100` = 1891; 25 units at 37 give `(25 × 37 × 88 + 50) div 100` = 814.
+spec: {}

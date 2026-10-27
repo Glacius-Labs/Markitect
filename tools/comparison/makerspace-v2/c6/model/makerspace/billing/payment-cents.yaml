@@ -1,0 +1,12 @@
+imports:
+  - {package: markitect/values, as: Values}
+  - {package: makerspace/policies, as: Policies}
+id: payment-cents
+kind: Values.Scalar
+body: |-
+  An amount paid or credited in one request.
+spec:
+  base: integer
+  lowest: 1
+  highest: 100000000
+  measuredIn: Policies.cents

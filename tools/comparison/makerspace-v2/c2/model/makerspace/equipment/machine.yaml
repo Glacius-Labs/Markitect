@@ -1,0 +1,14 @@
+imports:
+  - {package: markitect/data, as: Data}
+  - {package: makerspace/policies, as: Policies}
+id: machine
+kind: Data.Entity
+body: |-
+  A machine of one family with a rate in cents per minute.
+spec:
+  fields:
+    - {name: machineId, fieldType: Policies.identifier}
+    - {name: name, fieldType: Policies.text}
+    - {name: familyId, fieldType: Policies.identifier, refersTo: family}
+    - {name: rateCentsPerMinute, fieldType: rate-cents-per-minute}
+  key: machineId

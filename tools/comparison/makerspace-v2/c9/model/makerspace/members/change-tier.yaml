@@ -1,0 +1,18 @@
+imports:
+  - {package: makerspace/policies, as: Policies}
+id: change-tier
+kind: Policies.AuditedOperation
+body: |-
+  Sets the member's tier. Setting the current tier succeeds without a change. The new tier applies to membership fees of invoices generated afterwards and to usage charges created by later check-outs.
+spec:
+  wireName: changeTier
+  mutation: true
+  arguments:
+    - {name: memberId, fieldType: Policies.identifier, refersTo: member}
+    - {name: tier, fieldType: tier}
+  results:
+    - {name: member, fieldType: member}
+  permissions:
+    - {role: Policies.staff-role, scope: all}
+    - {role: Policies.admin-role, scope: all}
+  auditTarget: memberId

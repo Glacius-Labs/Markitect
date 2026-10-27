@@ -1,0 +1,11 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: severity
+kind: Values.Enumeration
+body: |-
+  The severity of an incident.
+spec:
+  members:
+    - {value: low}
+    - {value: medium}
+    - {value: high}

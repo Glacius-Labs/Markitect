@@ -1,0 +1,11 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: staff-role-choice
+kind: Values.Enumeration
+body: |-
+  The roles `registerUser` can give.
+spec:
+  members:
+    - {value: staff}
+    - {value: admin}
+    - {value: steward}

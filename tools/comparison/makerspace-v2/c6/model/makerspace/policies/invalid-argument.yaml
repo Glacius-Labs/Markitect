@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: invalid-argument
+kind: Api.RefusalCode
+body: |-
+  An argument is missing, `null`, of the wrong type, or outside its format or range.
+spec:
+  code: invalid_argument

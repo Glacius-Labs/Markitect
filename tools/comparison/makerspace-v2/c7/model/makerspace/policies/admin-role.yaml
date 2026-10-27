@@ -1,0 +1,7 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: admin-role
+kind: Api.Role
+body: |-
+  Admins also manage the catalog, credits and users.
+spec: {}

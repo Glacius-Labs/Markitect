@@ -1,0 +1,20 @@
+imports:
+  - {package: markitect/api, as: Api}
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/members, as: Members}
+id: list-invoices
+kind: Api.Operation
+body: |-
+  Returns all of the member's invoices.
+spec:
+  wireName: listInvoices
+  mutation: false
+  arguments:
+    - {name: memberId, fieldType: Policies.identifier, refersTo: Members.member}
+  results:
+    - {name: memberId, fieldType: Policies.identifier}
+    - {name: invoices, fieldType: invoice, list: true}
+  permissions:
+    - {role: Policies.member-role, scope: own}
+    - {role: Policies.staff-role, scope: all}
+    - {role: Policies.admin-role, scope: all}

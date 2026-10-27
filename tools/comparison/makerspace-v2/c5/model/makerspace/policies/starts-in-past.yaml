@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: starts-in-past
+kind: Api.RefusalCode
+body: |-
+  An interval starts before the request time.
+spec:
+  code: starts_in_past

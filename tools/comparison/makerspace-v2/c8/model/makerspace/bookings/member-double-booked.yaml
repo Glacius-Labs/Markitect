@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: member-double-booked
+kind: Api.RefusalCode
+body: |-
+  Another active reservation of the member overlaps the reservation.
+spec:
+  code: member_double_booked

@@ -1,0 +1,19 @@
+imports:
+  - {package: makerspace/policies, as: Policies}
+id: add-family
+kind: Policies.AuditedOperation
+body: |-
+  Creates the family.
+spec:
+  wireName: addFamily
+  mutation: true
+  arguments:
+    - {name: familyId, fieldType: Policies.identifier}
+    - {name: name, fieldType: Policies.text}
+  refusals:
+    - {refusal: Policies.already-exists, when: "a family with `familyId` exists"}
+  results:
+    - {name: family, fieldType: family}
+  permissions:
+    - {role: Policies.admin-role, scope: all}
+  auditTarget: familyId

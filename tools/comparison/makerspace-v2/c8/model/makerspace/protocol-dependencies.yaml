@@ -1,0 +1,9 @@
+imports:
+  - {package: markitect/architecture, as: Architecture}
+id: protocol-dependencies
+kind: Architecture.DependencyRule
+body: |-
+  The protocol module is the outer layer: it reads requests, runs the checks every operation shares and calls the area modules. It may depend on every other module; no module depends on it.
+spec:
+  appliesTo: [makerspace/protocol]
+  mayDependOn: [makerspace/policies, makerspace/members, makerspace/equipment, makerspace/billing, makerspace/training, makerspace/bookings, makerspace/materials, makerspace/safety, makerspace/reporting]

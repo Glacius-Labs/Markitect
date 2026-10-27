@@ -1,0 +1,24 @@
+imports:
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/equipment, as: Equipment}
+id: add-course
+kind: Policies.AuditedOperation
+body: |-
+  Creates the course with `enrolledCount` 0.
+spec:
+  wireName: addCourse
+  mutation: true
+  arguments:
+    - {name: courseId, fieldType: Policies.identifier}
+    - {name: familyId, fieldType: Policies.identifier, refersTo: Equipment.family}
+    - {name: title, fieldType: Policies.text}
+    - {name: feeCents, fieldType: fee-cents}
+    - {name: capacity, fieldType: capacity}
+  refusals:
+    - {refusal: Policies.already-exists, when: "a course with `courseId` exists"}
+  results:
+    - {name: course, fieldType: course}
+  permissions:
+    - {role: Policies.staff-role, scope: all}
+    - {role: Policies.admin-role, scope: all}
+  auditTarget: courseId

@@ -1,0 +1,10 @@
+imports:
+  - {package: markitect/core, as: Core}
+id: auditTarget
+kind: Core.Property
+body: |-
+  The `target` of the operation's [[audit-entry|audit entry]]: the name of an argument or of a new identifier whose value is the target; `a/b` joins two values with a slash, for example `laser-101/ada` for course `laser-101` and member `ada`; `month` is the month string, for example `2026-03`.
+spec:
+  valueType: string
+  minCount: 1
+  maxCount: 1

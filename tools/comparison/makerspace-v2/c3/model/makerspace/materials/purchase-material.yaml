@@ -1,0 +1,26 @@
+imports:
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/members, as: Members}
+  - {package: makerspace/billing, as: Billing}
+id: purchase-material
+kind: Policies.AuditedOperation
+body: |-
+  Sells material to the member. The stock decreases by `quantity`. A purchase is created with the next purchase identifier, the material's current unit price, the [[bulk-discount|bulk discount]] of its quantity as `discountPercent`, the amount by [[Policies.money|money]] and `at` the request time. A material [[Billing.charge|charge]] is created for the member: `kind` `material`, `ref` the purchase identifier, and the purchase's `quantity`, `unitPriceCents`, `discountPercent`, `amountCents` and `at`. The `material` result is the material after the change.
+spec:
+  wireName: purchaseMaterial
+  mutation: true
+  arguments:
+    - {name: memberId, fieldType: Policies.identifier, refersTo: Members.member}
+    - {name: materialId, fieldType: Policies.identifier, refersTo: material}
+    - {name: quantity, fieldType: purchase-quantity}
+  refusals:
+    - {refusal: Members.member-suspended, when: the member is not in good standing}
+    - {refusal: insufficient-stock, when: "the stock is lower than `quantity`"}
+  results:
+    - {name: purchase, fieldType: purchase}
+    - {name: material, fieldType: material}
+  permissions:
+    - {role: Policies.member-role, scope: own}
+    - {role: Policies.staff-role, scope: all}
+    - {role: Policies.admin-role, scope: all}
+  auditTarget: new purchaseId

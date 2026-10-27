@@ -1,0 +1,22 @@
+imports:
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/members, as: Members}
+id: complete-course
+kind: Policies.AuditedOperation
+body: |-
+  Records that the member completed the course: the enrollment gets status `completed` and `completedAt` equal to the request time. The member's certification for the course's family is issued as [[certifications|certifications]] states. Standing is not checked.
+spec:
+  wireName: completeCourse
+  mutation: true
+  arguments:
+    - {name: courseId, fieldType: Policies.identifier, refersTo: course}
+    - {name: memberId, fieldType: Policies.identifier, refersTo: Members.member}
+  refusals:
+    - {refusal: not-enrolled, when: "the member has no enrollment in this course with status `enrolled`"}
+  results:
+    - {name: enrollment, fieldType: enrollment}
+    - {name: certification, fieldType: certification}
+  permissions:
+    - {role: Policies.staff-role, scope: all}
+    - {role: Policies.admin-role, scope: all}
+  auditTarget: courseId/memberId

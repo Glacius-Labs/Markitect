@@ -1,0 +1,7 @@
+imports:
+  - {package: markitect/practice, as: Practice}
+id: reports
+kind: Practice.Rule
+body: |-
+  Reports are read-only and are calculated from the current state at the request time.
+spec: {}

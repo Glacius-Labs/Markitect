@@ -1,0 +1,7 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: member-role
+kind: Api.Role
+body: |-
+  Members are the workshop's customers.
+spec: {}

@@ -1,0 +1,19 @@
+imports:
+  - {package: markitect/data, as: Data}
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/members, as: Members}
+id: purchase
+kind: Data.Entity
+body: |-
+  A sale of material to a member, generated identifier `pur-N`.
+spec:
+  fields:
+    - {name: purchaseId, fieldType: Policies.identifier}
+    - {name: memberId, fieldType: Policies.identifier, refersTo: Members.member}
+    - {name: materialId, fieldType: Policies.identifier, refersTo: material}
+    - {name: quantity, fieldType: purchase-quantity}
+    - {name: unitPriceCents, fieldType: unit-price-cents}
+    - {name: discountPercent, fieldType: Policies.percent}
+    - {name: amountCents, fieldType: Policies.amount-cents}
+    - {name: at, fieldType: Policies.timestamp}
+  key: purchaseId

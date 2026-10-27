@@ -1,0 +1,9 @@
+imports:
+  - {package: markitect/architecture, as: Architecture}
+id: policies-dependencies
+kind: Architecture.DependencyRule
+body: |-
+  The policies module depends on no other module of the project; every other module may depend on it.
+spec:
+  appliesTo: [makerspace/policies]
+  mayDependOn: []

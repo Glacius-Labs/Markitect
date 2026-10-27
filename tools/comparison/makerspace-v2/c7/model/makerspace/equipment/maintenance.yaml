@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/practice, as: Practice}
+id: maintenance
+kind: Practice.Rule
+body: |-
+  A [[maintenance-window|maintenance window]] takes a machine out of service for an interval `[start, end)`. While a scheduled window overlaps a slot, the machine cannot be reserved for it, and since every use starts with a reservation and its check-in, the machine cannot be used in the window. The one exception is a session that is already checked in and runs past its reservation's end: it is not interrupted, keeps metering until check-out and counts in `usedMinutes` of the utilization report. Windows may use any minute, are not limited to opening hours and may overlap each other.
+spec:
+  appliesTo: [makerspace/equipment, makerspace/bookings, makerspace/reporting]

@@ -1,0 +1,12 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: charge-kind
+kind: Values.Enumeration
+body: |-
+  The kind of a charge.
+spec:
+  members:
+    - {value: membership}
+    - {value: usage}
+    - {value: material}
+    - {value: course}

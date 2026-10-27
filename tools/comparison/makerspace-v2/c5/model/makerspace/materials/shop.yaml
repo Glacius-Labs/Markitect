@@ -1,0 +1,7 @@
+imports:
+  - {package: markitect/practice, as: Practice}
+id: shop
+kind: Practice.Rule
+body: |-
+  The shop sells [[material|materials]] by unit. Each material has a unit price and a stock count, which starts at 0. Stock never goes below 0.
+spec: {}

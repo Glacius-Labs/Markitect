@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: not-certified
+kind: Api.RefusalCode
+body: |-
+  The member has no certification valid on the relevant date for the machine's family, or there is no certification to revoke.
+spec:
+  code: not_certified

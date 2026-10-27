@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: flag
+kind: Values.Scalar
+body: |-
+  A yes-or-no value.
+spec:
+  base: boolean

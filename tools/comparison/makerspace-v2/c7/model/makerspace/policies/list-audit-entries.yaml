@@ -1,0 +1,13 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: list-audit-entries
+kind: Api.Operation
+body: |-
+  Returns all audit entries in `seq` order.
+spec:
+  wireName: listAuditEntries
+  mutation: false
+  results:
+    - {name: entries, fieldType: audit-entry, list: true}
+  permissions:
+    - {role: admin-role, scope: all}

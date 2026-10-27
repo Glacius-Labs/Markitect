@@ -1,0 +1,12 @@
+imports:
+  - {package: markitect/values, as: Values}
+  - {package: makerspace/policies, as: Policies}
+id: rate-cents-per-minute
+kind: Values.Scalar
+body: |-
+  A machine's rate per minute.
+spec:
+  base: integer
+  lowest: 1
+  highest: 10000
+  measuredIn: Policies.cents

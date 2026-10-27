@@ -1,0 +1,11 @@
+imports:
+  - {package: markitect/practice, as: Practice}
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/bookings, as: Bookings}
+  - {package: makerspace/billing, as: Billing}
+id: tests
+kind: Practice.TestObligation
+body: |-
+  The tests run with `go test ./...` from `realization/`. They cover, for every operation, a successful request and each refusal code the operation lists; the four policies, including the permission matrix and audit entries; the boundary rules of [[Policies.time|time]] (half-open intervals, opening hours, granularity and duration limits) and of [[Policies.money|money]] (rounding per line); and the cross-area rules of [[Bookings.reservation-rules|reservations]] and [[Billing.charges-and-invoices|invoices]]. Tests and documentation do not expect or describe an expiry of certifications; a certification issued long before a reservation date is still accepted.
+spec:
+  appliesTo: [makerspace]

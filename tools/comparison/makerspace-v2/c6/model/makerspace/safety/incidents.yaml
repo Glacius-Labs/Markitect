@@ -1,0 +1,7 @@
+imports:
+  - {package: markitect/practice, as: Practice}
+id: incidents
+kind: Practice.Rule
+body: |-
+  Staff record safety [[incident|incidents]] against machines. An incident itself blocks nothing; staff can lock its machine with a lockout while it is open.
+spec: {}

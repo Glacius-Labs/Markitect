@@ -1,0 +1,20 @@
+imports:
+  - {package: makerspace/policies, as: Policies}
+id: cancel-reservation
+kind: Policies.AuditedOperation
+body: |-
+  The reservation gets status `cancelled`. There is no fee and no credit.
+spec:
+  wireName: cancelReservation
+  mutation: true
+  arguments:
+    - {name: reservationId, fieldType: Policies.identifier, refersTo: reservation}
+  refusals:
+    - {refusal: Policies.invalid-state, when: "the reported status is not `reserved`"}
+  results:
+    - {name: reservation, fieldType: reservation}
+  permissions:
+    - {role: Policies.member-role, scope: own}
+    - {role: Policies.staff-role, scope: all}
+    - {role: Policies.admin-role, scope: all}
+  auditTarget: reservationId

@@ -1,0 +1,15 @@
+imports:
+  - {package: markitect/data, as: Data}
+  - {package: makerspace/policies, as: Policies}
+id: member
+kind: Data.Entity
+body: |-
+  A user with role `member` and a membership.
+spec:
+  fields:
+    - {name: memberId, fieldType: Policies.identifier}
+    - {name: name, fieldType: Policies.text}
+    - {name: tier, fieldType: tier}
+    - {name: standing, fieldType: standing}
+    - {name: registeredAt, fieldType: Policies.timestamp}
+  key: memberId

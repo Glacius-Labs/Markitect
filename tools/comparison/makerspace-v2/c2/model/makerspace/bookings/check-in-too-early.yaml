@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: check-in-too-early
+kind: Api.RefusalCode
+body: |-
+  The reservation has not started yet.
+spec:
+  code: check_in_too_early

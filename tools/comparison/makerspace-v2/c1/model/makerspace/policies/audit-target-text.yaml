@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: audit-target-text
+kind: Values.Scalar
+body: |-
+  A plain string that identifies the record an operation acted on. A target that joins two values with `/` can be up to 129 characters long and need not meet the identifier format.
+spec:
+  base: string

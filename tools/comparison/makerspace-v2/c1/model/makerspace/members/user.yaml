@@ -1,0 +1,13 @@
+imports:
+  - {package: markitect/data, as: Data}
+  - {package: makerspace/policies, as: Policies}
+id: user
+kind: Data.Entity
+body: |-
+  A user of the program: the initial admin, staff and admins registered by an admin, and members registered by staff or admins.
+spec:
+  fields:
+    - {name: userId, fieldType: Policies.identifier}
+    - {name: name, fieldType: Policies.text}
+    - {name: role, fieldType: Policies.user-role}
+  key: userId

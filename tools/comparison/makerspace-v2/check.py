@@ -10,8 +10,11 @@ On Windows, set TMP and TEMP to %LOCALAPPDATA%\\Temp first if Git refuses the
 system temporary folder.
 
 Usage, from the repository root:
-  python -I -B tools/comparison/makerspace-v2/check.py check
+  python -I -B tools/comparison/makerspace-v2/check.py check [STEP]
   python -I -B tools/comparison/makerspace-v2/check.py lock
+
+STEP is w0 (default, `model/`) or a change step such as c1 (`c1/model/`); every
+step shares the manifest, lock and execution configuration.
 """
 import json
 import pathlib
@@ -47,11 +50,15 @@ def git(repo, *args):
         raise SystemExit(f"git {' '.join(args)} failed: {done.stderr.strip()}")
 
 
-def run_check(lock_text):
+def step_model(step):
+    return HERE / "model" if step == "w0" else HERE / step / "model"
+
+
+def run_check(lock_text, step="w0"):
     with tempfile.TemporaryDirectory() as tmp:
         repo = pathlib.Path(tmp)
         control = repo / ".markitect"
-        shutil.copytree(HERE / "model", control / "model")
+        shutil.copytree(step_model(step), control / "model")
         shutil.copy(HERE / "model.yaml", control / "model.yaml")
         shutil.copy(HERE / "execution.yaml", control / "execution.yaml")
         (control / "model-lock.yaml").write_text(lock_text, encoding="utf-8")
@@ -114,7 +121,8 @@ def lock_text(found):
 
 
 def main(argv):
-    if len(argv) != 2 or argv[1] not in ("check", "lock"):
+    step = argv[2] if len(argv) == 3 and argv[1] == "check" else "w0"
+    if len(argv) not in (2, 3) or argv[1] not in ("check", "lock") or not step_model(step).is_dir():
         print(__doc__)
         return 2
     vendored = sorted(p.name for p in (HERE / "libraries").iterdir() if p.is_dir())
@@ -126,7 +134,7 @@ def main(argv):
         print("vendored Libraries differ from their sources:", ", ".join(stale))
         return 1
     current = (HERE / "model-lock.yaml").read_text(encoding="utf-8") if (HERE / "model-lock.yaml").exists() else "formatVersion: 1\nmodels: {}\n"
-    code, out, err = run_check(current if argv[1] == "check" else "formatVersion: 1\nmodels: {}\n")
+    code, out, err = run_check(current if argv[1] == "check" else "formatVersion: 1\nmodels: {}\n", step)
     try:
         found = digests(out)
     except json.JSONDecodeError:
@@ -143,7 +151,7 @@ def main(argv):
     if code != 0:
         print("\n".join(findings(out)) or err)
         return 1
-    print(f"makerspace-v2 compiles; model digest {found.get('makerspace', '?')}")
+    print(f"makerspace-v2 {step} compiles; model digest {found.get('makerspace', '?')}")
     return 0
 
 

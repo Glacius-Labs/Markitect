@@ -1,0 +1,10 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: enrollment-status
+kind: Values.Enumeration
+body: |-
+  The status of an enrollment.
+spec:
+  members:
+    - {value: enrolled}
+    - {value: completed}
