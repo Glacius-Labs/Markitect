@@ -108,7 +108,7 @@ A well-formed request is checked in the following order. The first check that fa
 2. **Actor:** `actor` identifies an existing user of any role → otherwise `unknown_actor`.
 3. **Request time:** `at` is not earlier than the request time of the most recent request that was answered `ok` (time) → otherwise `time_regression`.
 4. **Role permission:** the actor's role may use the operation at all, as "all" or "own" in the operation's permissions → otherwise `forbidden`.
-5. **Referenced records:** every argument that refers to a record names one that exists, checked in the order the operation lists its arguments → otherwise `not_found`. An argument that names a member must name a user whose role is `member`; the identifier of a staff or admin user does not name a member.
+5. **Referenced records:** every argument that refers to a record names one that exists, checked in the order the operation lists its arguments → otherwise `not_found`. An argument that names a member must name a user whose role is `member`; the identifier of a staff, admin or steward user does not name a member.
 6. **Ownership:** when the actor's permission for the operation is "own", the record concerned belongs to the actor (authorization) → otherwise `forbidden`.
 7. **Operation rules:** the refusals listed for the operation, in the order listed.
 
