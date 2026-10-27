@@ -601,9 +601,38 @@ def format_lint(r):
     return "\n".join(out)
 
 
+def diagnostics(report):
+    """The findings of a check report, passed or not: (code, message) with follow-on `*_not_passed` findings last."""
+    found = []
+
+    def walk(node):
+        if isinstance(node, dict):
+            if isinstance(node.get("Code"), str) and isinstance(node.get("Message"), str):
+                found.append((node["Code"], node["Message"]))
+            for value in node.values():
+                walk(value)
+        elif isinstance(node, list):
+            for value in node:
+                walk(value)
+
+    walk(report)
+    unique = list(dict.fromkeys(found))
+    return {"status": report.get("status") if isinstance(report, dict) else None,
+            "findings": [{"code": c, "message": m} for c, m in sorted(unique, key=lambda f: f[0].endswith("_not_passed"))]}
+
+
+def format_diagnostics(r):
+    lines = [f"status: {r['status']}, {len(r['findings'])} findings"]
+    lines += [f"  [{f['code']}] {f['message']}" for f in r["findings"]]
+    return "\n".join(lines)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     commands = parser.add_subparsers(dest="command", required=True)
+    sub = commands.add_parser("diagnostics")
+    sub.add_argument("report")
+    sub.add_argument("--json", action="store_true")
     for name in ("graph", "refs", "lint", "lock"):
         sub = commands.add_parser(name)
         sub.add_argument("report")
@@ -637,7 +666,9 @@ def main(argv=None):
             for note in notes:
                 print("note:", note, file=sys.stderr)
             return 0
-        if args.command == "impact":
+        if args.command == "diagnostics":
+            result, formatter = diagnostics(read_json(args.report)), format_diagnostics
+        elif args.command == "impact":
             result, formatter = impact(Model(read_json(args.old)), Model(read_json(args.new)), args.transitive), format_impact
         else:
             model = Model(read_json(args.report))

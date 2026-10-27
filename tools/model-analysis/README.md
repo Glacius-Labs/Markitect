@@ -17,6 +17,7 @@ File-local imports are not in the report. `lint --repo DIR` reads them from each
 ## Commands
 
 ```text
+python -I -B tools/model-analysis/model_analysis.py diagnostics check.json [--json]
 python -I -B tools/model-analysis/model_analysis.py graph check.json [--json]
 python -I -B tools/model-analysis/model_analysis.py refs check.json PACKAGE/ID [--json]
 python -I -B tools/model-analysis/model_analysis.py impact old.json new.json [--transitive] [--json]
@@ -27,6 +28,8 @@ python -I -B tools/model-analysis/model_analysis.py lock check.json [--repo DIR]
 Output is UTF-8 whatever the console's code page, because Package names may use any script.
 
 **Edges.** An edge is a typed reference anywhere in a local Definition's `spec`, objects and lists included, or a body link. A Definition's `kind` is a type use and not an edge.
+
+**diagnostics** reads any report, also a failed one, and lists its findings by code with the root causes first; the follow-on `*_not_passed` findings come last. Use it when `check` fails: its own output names only the first problem.
 
 **graph** counts local and content Definitions (content means not of the Core meta-Kinds `Kind` or `Property`), spec references and body links. It reports:
 - distinct Definition edges and how many cross a Package boundary, with their share;

@@ -236,6 +236,15 @@ class LintTests(unittest.TestCase):
         found = self.signals(ma.lint(ma.Model(report(CONTENT + [op]))))
         self.assertIn(("decisions", "warning", "e/op"), found)
 
+    def test_diagnostics_read_failed_reports_root_cause_first(self):
+        failed = {"status": "failed", "stages": {"structural": {"model": {"diagnostics": [
+            {"Code": "registry.model_not_passed", "Message": "The model did not pass."},
+            {"Code": "lock.missing", "Message": "markitect-core has no lock entry."},
+            {"Code": "lock.missing", "Message": "markitect-core has no lock entry."}]}}}}
+        result = ma.diagnostics(failed)
+        self.assertEqual([f["code"] for f in result["findings"]], ["lock.missing", "registry.model_not_passed"])
+        self.assertEqual(result["status"], "failed")
+
     def test_prose_words_leave_out_tables_and_code(self):
         body = "Two words.\n\n| a | b |\n| --- | --- |\n| c | d |\n\n```json\n{\"x\": 1}\n```\nThree more words."
         self.assertEqual(ma.prose_words(body), 5)
