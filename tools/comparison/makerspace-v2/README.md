@@ -13,7 +13,7 @@ The Makerspace W0 program remodeled with the standard Libraries and an owner-dec
 | `model.yaml`, `model-lock.yaml`, `execution.yaml`, `model/` | The project model as it goes into a repository's `.markitect/`. `execution.yaml` maps each Package to its folder under `realization/`, selects `Practice.Rule` by `appliesTo` as modeled scope, and binds the build and test checks |
 | `libraries/` | Vendored copies of `markitect-core` 1.2.0 ([testdata/core](../../../testdata/core)) and `markitect-values`, `-data`, `-api`, `-practice`, `-architecture` 1.0.0 ([libraries/](../../../libraries)); the lock pins their digests |
 | `check.py` | Compiles the model with the real `markitect check` and verifies the lock and that each vendored Library equals its source |
-| `spec/render.py`, `spec/requirements-w0.md` | The single-agent arm's document, rendered from the model: every body verbatim, every typed field as fixed sentences and tables. `check` re-renders and compares |
+| `spec/render.py`, `spec/requirements-w0.md` | The single-agent arm's document, rendered from the model: every body (body links reduced to their text, two phrases about "the model" reworded), every typed field and each rule's scope as fixed sentences and tables. `check` re-renders and compares |
 | `requirements/w0.md` | The equivalence partner: the neutral requirements with section 16 "Architecture", rendered from the model, and §2.1 pointing to it |
 
 ```text
@@ -52,10 +52,10 @@ Architecture rules for structural checks (oracle authors derive their checks fro
 | Compiles | Yes, 181 Definitions in 11 Packages, 12 Managers with Root |
 | H1 rules reach consumers | Every Manager receives 24 to 31 Rules by modeled scope |
 | H2 no Package cycles | Holds; all model edges follow the dependency rules |
-| H4 shapes typed | All 38 operations, 21 records and 25 refusal codes are typed |
-| S5 peer coupling | 39 % of area edges go to another area (the rest go to policies) |
+| H4 shapes typed | All 37 operations, 20 records and 25 refusal codes are typed |
+| S5 peer coupling | Of the 22 Package edges leaving the eight area Packages, 14 (64 %) go to another area and 8 to policies. The cross-area rules of the requirements (reservations need members, training and equipment; usage, courses and purchases charge billing) make this high |
 | S3 stability | policies 0.00, members 0.28, equipment 0.45, billing 0.79, the other areas 0.87 to 1.00; edges point toward stabler Packages |
-| S1 size | None over 300 words of prose; 11 between 150 and 300, each one topic carried over whole from the requirements (overview, time, computed times, integer limits, argument values, order of checks, invoice generation, invalid requests, utilization report, money, request limits) |
+| S1 size | Prose words per body, table and code lines excluded: none over 300; 11 above 150, each one topic carried over whole from the requirements (overview, time, computed times, integer limits, argument values, order of checks, invoice generation, invalid requests, utilization report, money, request limits) |
 | R3 restatement | The requirements' "cross-area rules at a glance" were dropped from the overview: they restate the reservation and invoice rules |
 | G5 | Root still receives no context; the project Package `makerspace` sees its own rules |
 

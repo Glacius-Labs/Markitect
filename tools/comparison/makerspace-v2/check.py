@@ -6,11 +6,13 @@ nonzero unless the model compiles and `model-lock.yaml` pins the current
 Library digests; `lock` rewrites `model-lock.yaml` from the digests `check`
 reports. Both also require each vendored Library to equal its source.
 
+On Windows, set TMP and TEMP to %LOCALAPPDATA%\\Temp first if Git refuses the
+system temporary folder.
+
 Usage, from the repository root:
   python -I -B tools/comparison/makerspace-v2/check.py check
   python -I -B tools/comparison/makerspace-v2/check.py lock
 """
-import filecmp
 import json
 import pathlib
 import shutil
@@ -28,18 +30,21 @@ LIBRARIES = {  # vendored folder -> source folder in this repository
     "markitect-practice": REPO / "libraries" / "practice",
     "markitect-architecture": REPO / "libraries" / "architecture",
 }
-VERSIONS = {"markitect-core": "1.2.0"}
+CASCADE = ("_not_passed",)  # follow-on findings that only repeat an earlier failure
+
+
+def files(root):
+    return {p.relative_to(root).as_posix(): p.read_bytes() for p in sorted(pathlib.Path(root).rglob("*")) if p.is_file()}
 
 
 def same_tree(a, b):
-    compared = filecmp.dircmp(a, b)
-    if compared.left_only or compared.right_only or compared.diff_files or compared.funny_files:
-        return False
-    return all(same_tree(pathlib.Path(a) / d, pathlib.Path(b) / d) for d in compared.common_dirs)
+    return files(a) == files(b)
 
 
 def git(repo, *args):
-    subprocess.run(["git", *args], cwd=repo, check=True, capture_output=True)
+    done = subprocess.run(["git", "-c", "commit.gpgsign=false", *args], cwd=repo, capture_output=True, text=True)
+    if done.returncode != 0:
+        raise SystemExit(f"git {' '.join(args)} failed: {done.stderr.strip()}")
 
 
 def run_check(lock_text):
@@ -96,7 +101,7 @@ def findings(report):
                 walk(value)
 
     walk(json.loads(report))
-    return codes
+    return [c for c in codes if not c.split(":", 1)[0].endswith(CASCADE)] or codes
 
 
 def lock_text(found):
@@ -112,6 +117,10 @@ def main(argv):
     if len(argv) != 2 or argv[1] not in ("check", "lock"):
         print(__doc__)
         return 2
+    vendored = sorted(p.name for p in (HERE / "libraries").iterdir() if p.is_dir())
+    if vendored != sorted(LIBRARIES):
+        print("vendored Library folders differ from the expected set:", ", ".join(vendored))
+        return 1
     stale = [name for name, source in LIBRARIES.items() if not same_tree(HERE / "libraries" / name, source)]
     if stale:
         print("vendored Libraries differ from their sources:", ", ".join(stale))

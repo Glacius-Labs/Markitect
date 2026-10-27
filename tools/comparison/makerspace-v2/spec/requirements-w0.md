@@ -67,6 +67,8 @@ These formats and ranges apply to arguments, including `at`. An integer argument
 
 `actor` is an identifier argument and `at` is a timestamp argument of every operation. An `actor` that is missing, `null`, not a string or not a valid identifier, such as `"bad id!"` or a string of 65 characters, is refused with `invalid_argument` at check 1, like any other argument. Only a valid identifier that names no user is refused with `unknown_actor`, at check 2.
 
+*Applies to the protocol package.*
+
 A new process contains exactly one user: identifier `admin`, name `Administrator`, role `admin`. There are no members, families, machines, courses, materials, reservations, invoices, incidents or audit entries.
 
 The program generates the identifiers of these records:
@@ -82,6 +84,8 @@ The program generates the identifiers of these records:
 
 Each kind has its own counter. The first record of a kind gets number 1 and each further record of that kind gets the next number, in decimal without leading zeros. Numbers are never reused. Refused and invalid requests consume no number.
 
+*Applies to the protocol package.*
+
 The response is `status: "invalidRequest"` with a nonempty `reason` when:
 
 - the line is not valid JSON, is empty, or is not a JSON object;
@@ -95,6 +99,8 @@ The response's `id` is the request's `id` when the line is a JSON object whose `
 
 A request whose `args` lack a stated argument, or carry an argument with a wrong value, is not invalid in this sense. It is refused with code `invalid_argument`.
 
+*Applies to the protocol package.*
+
 A well-formed request is checked in the following order. The first check that fails decides the refusal and its code.
 
 1. **Arguments:** every argument is present and valid by argument values → otherwise `invalid_argument`.
@@ -107,13 +113,19 @@ A well-formed request is checked in the following order. The first check that fa
 
 When a check fails, the response is `status: "refused"` with the code and a reason, and nothing else happens: no record is created or changed, no identifier number is consumed, no audit entry is written and the request-time order is not advanced. When every check passes, all of the operation's effects take place together and the response is `status: "ok"`.
 
+*Applies to every package.*
+
 - The program reads requests from standard input, one JSON object per line, and writes exactly one response line per request to standard output, in request order. It writes and flushes each response before it reads the next request. Standard output carries responses only: no banner, prompt or log line. Diagnostics, if any, go to standard error. When standard input closes, the program exits with exit code zero.
 - One process holds one makerspace, which starts in the initial state. Requests are processed one at a time, in order.
 - The program never reads the machine clock, the network, environment-dependent data or files at run time, and writes no files. All time comes from the requests. Given the same request lines, it produces the same response lines.
 - There is no reset, state import, clock override or other test-only operation.
 - Request lines up to 64 KiB must be accepted.
 
+*Applies to the protocol package.*
+
 A `result` object has exactly the results its operation lists, and every object inside it has exactly the fields stated for its type. There are never fewer or additional members. Nullable fields are present with the value `null` when they have no value. Lists are JSON arrays; an empty list is `[]`, never `null`. Amounts, counts and minutes are JSON integers. The order of members inside a JSON object is free; the order of list elements is fixed by the order of listed results.
+
+*Applies to the protocol package.*
 
 A request is a UTF-8 JSON object with exactly three members:
 
@@ -124,6 +136,8 @@ A request is a UTF-8 JSON object with exactly three members:
 - `id`: a nonempty string chosen by the caller. It is echoed in the response. It is only a correlation value, not a domain identifier and not an idempotency key; two requests with the same `id` are two separate requests.
 - `op`: the wire name of one operation of this document. Names are case-sensitive.
 - `args`: a JSON object with the operation's arguments. Every operation takes `actor` (identifier, the acting user) and `at` (timestamp, the request time) in addition to the arguments it lists. All arguments are required; no operation has optional arguments.
+
+*Applies to the protocol package.*
 
 Every response is one JSON object on one line, with exactly the members shown for its status.
 
@@ -147,6 +161,8 @@ Invalid request:
 {"id":null,"status":"invalidRequest","reason":"The line is not valid JSON."}
 ```
 
+*Applies to the protocol package.*
+
 ## Shared rules and policies
 
 Operations are either mutations or reads, as each operation states. Every request to a mutation that is answered `ok` appends exactly one audit entry, even when the operation changes no data, such as setting a member's standing to its current value. Reads, refusals and invalid requests never append an entry. Entries are never changed or removed.
@@ -154,6 +170,8 @@ Operations are either mutations or reads, as each operation states. Every reques
 An audit entry has these fields: `seq`, the entry's position in the log, starting at 1 and increasing by 1 for each entry; `at`, the request time; `actor`, the acting user's identifier; `op`, the operation name; `target`, a string that identifies the record the operation acted on, as each mutation's audit target states.
 
 Admins read the log with `listAuditEntries`.
+
+*Applies to every package.*
 
 Every user has exactly one role, fixed when the user is registered: member, staff or admin.
 
@@ -171,7 +189,11 @@ A record concerned belongs to the actor when:
 
 A "none" permission is refused at check 4, an ownership violation at check 6 of the order of checks. Both use the code forbidden.
 
+*Applies to every package.*
+
 **Booking granularity is 30 minutes.** A reservation's start and end must each fall on a minute that is a multiple of 30 within the hour (`:00` or `:30`). A reservation lasts at least one granularity step (30 minutes) and at most 240 minutes.
+
+*Applies to the bookings package.*
 
 Request times and time arguments lie between 2000 and 2099, but some values the program computes from them lie later. Integers grow with the number of requests. This rule and integer limits, identifier limits and request limits cover every computed value.
 
@@ -182,12 +204,18 @@ Request times and time arguments lie between 2000 and 2099, but some values the 
   - The last day a utilization report can include is `2099-12-30`, because `to` is at most `2099-12-31` and is excluded from the range.
   - A maintenance window ends at the latest at `2099-12-31T23:59Z`, so the last minute of 2099 cannot be covered. Reservations end by closing time and are not affected.
 
+*Applies to every package.*
+
 - **Generated identifiers stay valid identifiers.** A generated identifier is its prefix followed by a number. Within the integer limit it has at most 20 characters (a four-character prefix and at most 16 digits), so it always meets the identifier format and can be passed back as an argument.
 - **Audit targets are not identifiers.** An audit `target` is a plain string. A target that joins two values with `/` can be up to 129 characters long and need not meet the identifier format.
+
+*Applies to every package.*
 
 - **Integers are exact and never negative.** Within the integer limit stated under "Large sums and counters" below, no computed integer is negative. Stock cannot fall below 0 (`insufficient_stock`). Credit and payments are applied at most up to an invoice's balance. Metered minutes are at least 0, because a check-out cannot precede its check-in in the request-time order. Maintenance minutes are part of the open minutes they are subtracted from.
 - **Single lines cannot overflow.** The argument ranges keep every line amount and the product inside its formula below 2^53. The largest is a usage line: metered minutes are fewer than 52,596,000 (from `2000-01-01T00:00Z` to `2099-12-31T23:59Z`), and at 10000 cents per minute the product `minutes × 10000 × 100` stays below 5.26 × 10^13. A material line's product is at most `10000 × 1000000 × 100` = 10^12.
 - **Large sums and counters.** Sums and counters grow with the number of requests: invoice totals, balances, credit balances, stock, report sums and minute totals, `seq` and the numbers in generated identifiers. The program keeps every integer exact up to 9007199254740991 (2^53 − 1); signed 64-bit integer arithmetic satisfies this. Once a stored or returned integer, or an intermediate value of a formula in this document, would exceed 2^53 − 1, the rest of the run is not specified and is not tested. Reaching that limit takes at least tens of thousands of requests.
+
+*Applies to every package.*
 
 Identifiers are ordered by ASCII byte value (so `-` < `.` < digits < uppercase letters < `_` < lowercase letters, and `M10` < `M9`). Listed results are ordered as follows:
 
@@ -208,6 +236,8 @@ Identifiers are ordered by ASCII byte value (so `-` < `.` < digits < uppercase l
 
 "Creation order" means the order in which records of a kind were created, which is the order of their generated numbers.
 
+*Applies to every package.*
+
 - All amounts are integer numbers of cents, represented as JSON integers. There are no fractions of a cent, no floating-point amounts and no currency field. Stored and returned amounts are never negative.
 - Every charge is a line with a `quantity`, a `unitPriceCents` and a `discountPercent`. Its amount is
   `amountCents = (quantity × unitPriceCents × (100 − discountPercent) + 50) div 100`,
@@ -215,6 +245,8 @@ Identifiers are ordered by ASCII byte value (so `-` < `.` < digits < uppercase l
   Example: 37 minutes at 45 cents with a 10 % discount: `(37 × 45 × 90 + 50) div 100 = 149900 div 100 = 1499` cents.
 - A charge's amount is fixed when the charge is created. Later changes to a rate, a tier or a price never change existing charges.
 - Each member has a credit balance, initially 0. It increases by credits issued by an admin and by overpayments. It decreases only when credit is applied to a new invoice. It is never negative. Credit is never paid out.
+
+*Applies to every package.*
 
 **Opening hours** are the same every week:
 
@@ -226,8 +258,12 @@ Identifiers are ordered by ASCII byte value (so `-` < `.` < digits < uppercase l
 
 The opening period of a day is the interval `[opens, closes)` on that date. A reservation is inside opening hours when its whole interval lies in the opening period of its start date: its start is at or after the opening time and its end is at or before the closing time of that same date. A reservation ending exactly at closing time is inside. Sunday has no opening period.
 
+*Applies to the bookings and reporting packages.*
+
 - **Request size and depth.** The 64 KiB request lines are 65,536 bytes, not counting the line feed. Longer lines, and lines with any JSON value nested more than 100 levels deep in arrays or objects, are not specified and are not tested.
 - **Counting depth.** Levels count arrays and objects only. The outermost array or object of the line, normally the request object, is level 1, and an array or object directly inside a level-n array or object is level n + 1. So `args` is level 2, and an array or object given as an argument value is level 3. Strings, numbers, booleans and `null` add no level. A JSON value is nested more than 100 levels deep when it is an array or object at level 101 or deeper, or lies inside one. Up to level 100, all other rules apply in full. A line that is not valid JSON is answered by the invalid-request rules whatever its depth.
+
+*Applies to every package.*
 
 - All times are UTC with a precision of one minute. Timestamps, dates and months use the formats timestamp, date and month. The day of the week of a timestamp is that of its UTC date. The date of a timestamp is its UTC calendar date.
 - **Request time:** `at` is the time at which the request happens. It is the program's only notion of "now". The request time of every request must not be earlier than the request time of the most recent request answered `ok`; an equal time is allowed. Refused and invalid requests do not move this point. Before the first `ok` response, any valid `at` is accepted.
@@ -235,6 +271,8 @@ The opening period of a day is the interval `[opens, closes)` on that date. A re
 - **Day and date arithmetic:** a day is 1440 minutes; "N days after timestamp t" is `t + N × 1440` minutes. "N days after date d" is the calendar date N days later, so `2027-03-01` plus 365 days is `2028-02-29`.
 - **Durations.** A reservation lasts at most 240 minutes. Maintenance windows and metered sessions have no maximum length apart from the timestamp range.
 - **States that depend on time** are evaluated at the request time of the request that reads or uses them: a reservation that is `missed`, a certification that is `expired` and an invoice that is `overdue`.
+
+*Applies to every package.*
 
 ### Value types
 
@@ -311,7 +349,11 @@ A membership has a tier and a standing. The fee of the tier is charged once for 
 
 A member is **in good standing** when the standing is `good`. A suspended member cannot make reservations, check in, buy materials or enroll in courses. Suspension does not cancel existing reservations or enrollments. A suspended member can still cancel reservations, check out, see their records and pay invoices, and still receives the monthly fee. Reinstating good standing removes these restrictions; all other rules still apply.
 
+*Applies to every package.*
+
 The registry holds every user: the initial admin, staff and admins registered by an admin, and members registered by staff or admins. Users, including members, share one identifier space. Users are never deleted and their identifier, name and role never change.
+
+*Applies to the members package.*
 
 Enumeration staff role choice: The roles `registerUser` can give.
 
@@ -417,9 +459,13 @@ A member has at most one certification per tool family. Completing a course issu
 
 A certification is **valid on date D** when it is not revoked and `issuedOn ≤ D < expiresOn`. It is not valid on its `expiresOn` date. Its reported `status` at a request time is `revoked` when revoked, otherwise `expired` when the date of the request time is on or after `expiresOn`, otherwise `valid`.
 
+*Applies to the training and bookings packages.*
+
 A course teaches the safe use of one tool family. It has a fee and a capacity. A member enrolls; staff record completion, which certifies the member for the course's family. There is one enrollment record per course and member. It is created by the first enrollment; a later enrollment after completion reuses and resets it.
 
 The course's `enrolledCount` is the number of its enrollments with status `enrolled`. A place becomes free when an enrollment is completed.
+
+*Applies to the training package.*
 
 | Value type | Base | Range | Rule |
 | --- | --- | --- | --- |
@@ -535,7 +581,11 @@ Mutation. Withdraws the member's certification, for example after a safety incid
 
 The catalog holds tool families and machines. Each machine belongs to one family and has a rate in cents per minute. Families and machines are never removed.
 
+*Applies to the equipment package.*
+
 A maintenance window takes a machine out of service for an interval `[start, end)`. While a scheduled window overlaps a slot, the machine cannot be reserved for it, and since every use starts with a reservation and its check-in, the machine cannot be used in the window. The one exception is a session that is already checked in and runs past its reservation's end: it is not interrupted, keeps metering until check-out and counts in `usedMinutes` of the utilization report. Windows may use any minute, are not limited to opening hours and may overlap each other.
+
+*Applies to the equipment, bookings and reporting packages.*
 
 | Value type | Base | Range | Rule |
 | --- | --- | --- | --- |
@@ -650,6 +700,8 @@ Mutation. Sets the rate. The rate is captured at check-in, so the new rate appli
 
 The member checks in when starting to use the machine and checks out when done. The program meters the minutes in between and charges them at the rate captured at check-in, with the member's tier discount.
 
+*Applies to the bookings package.*
+
 A new reservation is accepted only when all of the following hold. These rules connect members, training, equipment and time:
 
 1. its slot follows the booking granularity and duration limits and starts at or after the request time;
@@ -660,9 +712,13 @@ A new reservation is accepted only when all of the following hold. These rules c
 6. no other active reservation of the machine overlaps the slot;
 7. no other active reservation of the member, on any machine, overlaps the slot.
 
+*Applies to the bookings package.*
+
 A reservation books one machine for one member for an interval `[start, end)` on one day. Its stored status moves from `reserved` to `checkedIn` to `completed`, or from `reserved` to `cancelled`. Its reported status is the stored status, except that a stored `reserved` reservation whose `end` is at or before the request time is reported as `missed`. A missed reservation can no longer be checked in or cancelled and causes no charge.
 
 A reservation is **active** when its reported status is `reserved` or `checkedIn`. Only active reservations block a machine or a member. Conflicts are judged on the reserved interval `[start, end)`, not on the actual check-in and check-out times.
+
+*Applies to the bookings, equipment and reporting packages.*
 
 Enumeration reservation status: The status of a reservation; see reservations for stored and reported status.
 
@@ -772,6 +828,8 @@ Read. Returns all of the member's reservations in every status.
 
 The shop sells materials by unit. Each material has a unit price and a stock count, which starts at 0. Stock never goes below 0.
 
+*Applies to the materials package.*
+
 | Value type | Base | Range | Rule |
 | --- | --- | --- | --- |
 | purchase quantity | integer | 1 to 10000 | The number of units bought in one request. |
@@ -865,13 +923,19 @@ For a month M, every member whose `registeredAt` is before the first minute of t
 6. `paidCents` is 0. `balanceCents` is `totalCents − creditAppliedCents − paidCents`.
 7. `status` is `paid` when `balanceCents` is 0, otherwise `open`.
 
+*Applies to the billing, bookings, training, materials and reporting packages.*
+
 Because request times never go backwards and generation needs the month to have ended, no charge can be created for a month after that month was invoiced.
 
 An invoice is **overdue** at a request time when its status is `open` and the request time is at or after `dueAt`. The `overdue` field reports this at the request time of the response. Being overdue has no other effect.
 
 Worked example: member `ada` on tier `plus` uses a machine with rate 45 from `2026-03-03T10:00Z` to `10:37`. At check-out a usage charge of 1499 cents is created. Generating `2026-03` at `2026-04-01T08:00Z` gives `ada` an invoice with the membership line (4900) and the usage line (1499): `totalCents` 6399, due `2026-04-15T08:00Z`.
 
+*Applies to the billing and reporting packages.*
+
 A payment pays one invoice. The part of a payment that exceeds the invoice's balance becomes credit on the member's account. Admins can also issue credit as a goodwill gesture. Credit is applied automatically to the next invoices generated; it is never applied to an invoice that already exists.
+
+*Applies to the billing package.*
 
 | Value type | Base | Range | Rule |
 | --- | --- | --- | --- |
@@ -1008,6 +1072,8 @@ Mutation. `appliedCents` is the smaller of `amountCents` and the invoice's `bala
 
 Staff record safety incidents against machines. In this delivery an incident is a record only: it does not block reservations or use.
 
+*Applies to the safety package.*
+
 Enumeration incident status: The status of an incident.
 
 - `open`
@@ -1067,6 +1133,8 @@ Mutation. Status `resolved`, `resolution` as supplied, `resolvedAt` the request 
 ## Reporting
 
 Reports are read-only and are calculated from the current state at the request time.
+
+*Applies to the reporting package.*
 
 | Value type | Base | Range | Rule |
 | --- | --- | --- | --- |
@@ -1136,4 +1204,8 @@ Read. Shows how much each machine was used compared with the time it was availab
 
 `realization/README.md` explains how to build, run and test the program, shows a short example session and states the scope. Code, tests and documentation agree with this document.
 
+*Applies to every package.*
+
 The tests run with `go test ./...` from `realization/`. They cover, for every operation, a successful request and each refusal code the operation lists; the four policies, including the permission matrix and audit entries; the boundary rules of time (half-open intervals, opening hours, granularity and duration limits) and of money (rounding per line); and the cross-area rules of reservations and invoices.
+
+*Applies to every package.*

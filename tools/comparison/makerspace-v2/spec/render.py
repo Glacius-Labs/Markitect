@@ -17,6 +17,7 @@ Usage, from the repository root:
   python -I -B tools/comparison/makerspace-v2/spec/render.py architecture
 """
 import argparse
+import json
 import pathlib
 import re
 import sys
@@ -36,7 +37,7 @@ ROLES = [("member-role", "member"), ("staff-role", "staff"), ("admin-role", "adm
 def scalar_value(text):
     text = text.strip()
     if text.startswith('"'):
-        return bytes(text[1:-1], "utf-8").decode("unicode_escape").encode("latin-1").decode("utf-8")
+        return json.loads(text)  # the model's double-quoted strings are JSON strings
     if re.fullmatch(r"-?\d+", text):
         return int(text)
     if text in ("true", "false"):
@@ -48,7 +49,7 @@ def split_flow(text):
     """Split a YAML flow sequence or mapping body at top-level commas."""
     parts, depth, quoted, current = [], 0, False, ""
     for ch in text:
-        if ch == '"' and not current.endswith("\\"):
+        if ch == '"' and (len(current) - len(current.rstrip("\\"))) % 2 == 0:
             quoted = not quoted
         if not quoted and ch in "[{":
             depth += 1
@@ -81,6 +82,7 @@ def parse(path):
     """Parse the generated Definition layout: imports, id, kind, body |-, spec."""
     lines = path.read_text(encoding="utf-8").split("\n")
     out = {"imports": {}, "spec": {}}
+    seen_spec = False
     i = 0
     while i < len(lines):
         line = lines[i]
@@ -103,7 +105,7 @@ def parse(path):
             continue
         elif line == "spec: {}":
             pass
-        elif line.startswith("  ") and not line.startswith("    "):
+        elif line.startswith("  ") and not line.startswith("    ") and ":" in line and seen_spec:
             key, _, rest = line[2:].partition(":")
             if rest.strip():
                 out["spec"][key] = flow_value(rest)
@@ -113,6 +115,10 @@ def parse(path):
                     i += 1
                     items.append(flow_value(lines[i][6:]))
                 out["spec"][key] = items
+        elif line in ("imports:", "spec:"):
+            seen_spec = seen_spec or line == "spec:"
+        elif line:
+            raise ValueError(f"{path}: unexpected line {i + 1}: {line!r}")
         i += 1
     return out
 
@@ -146,18 +152,24 @@ def text(body):
     return out
 
 
+def value_range(spec):
+    low, high = spec.get("lowest"), spec.get("highest")
+    if low is not None and high is not None:
+        return f"{low} to {high}"
+    if low is not None:
+        return f"{low} or more"
+    if high is not None:
+        return f"at most {high}"
+    return ""
+
+
 def type_phrase(model, d, ref):
     t = model[resolve(model, d, ref)]
     k = kind_of(t)
     if k == "Scalar":
         s = t["spec"]
-        if s["base"] == "integer":
-            low, high = s.get("lowest"), s.get("highest")
-            if low is not None and high is not None:
-                return f"integer {low} to {high}"
-            if low is not None:
-                return f"integer {low} or more"
-            return "integer"
+        if s["base"] in ("integer", "number"):
+            return " ".join(filter(None, [s["base"], value_range(s)]))
         if s["base"] == "boolean":
             return "boolean"
         return t["id"].replace("-", " ")
@@ -192,6 +204,9 @@ def render_operation(model, d):
     results = s.get("results", [])
     out.append("- Result: " + ("; ".join(f"`{r['name']}` ({field_phrase(model, d, r)})" for r in results) or "none") + ".")
     given = {model[resolve(model, d, p["role"])]["id"]: p["scope"] for p in s.get("permissions", [])}
+    unknown = set(given) - {role for role, _ in ROLES}
+    if unknown:
+        raise ValueError(f"{d['id']}: permission for a role the document does not list: {sorted(unknown)}")
     out.append("- Permissions: " + ", ".join(f"{name} {given.get(role, 'none')}" for role, name in ROLES) + ".")
     if "auditTarget" in s:
         out.append(f"- Audit target: `{s['auditTarget']}`.")
@@ -215,10 +230,7 @@ def render_values(model, defs):
         out += ["| Value type | Base | Range | Rule |", "| --- | --- | --- | --- |"]
         for d in scalars:
             s = d["spec"]
-            rng = ""
-            if "lowest" in s or "highest" in s:
-                rng = f"{s.get('lowest', '')} to {s.get('highest', '')}".strip()
-                rng = rng[:-3] + " or more" if rng.endswith(" to") else rng
+            rng = value_range(s)
             unit = ""
             if "measuredIn" in s:
                 unit = " (" + model[resolve(model, d, s["measuredIn"])]["id"] + ")"
@@ -238,11 +250,23 @@ def render_codes(model, defs):
     return ["| Code | Meaning |", "| --- | --- |"] + [f"| `{d['spec']['code']}` | {text(d['body'])} |" for d in codes] + [""]
 
 
+def scope_phrase(d):
+    """Where a rule applies, as the model's appliesTo states it."""
+    applies = d["spec"].get("appliesTo")
+    if not applies:
+        return f"Applies to the {d['package'].split('/')[-1]} package."
+    if applies == ["makerspace"]:
+        return "Applies to every package."
+    names = [p.split("/")[-1] for p in applies]
+    return "Applies to the " + (", ".join(names[:-1]) + " and " + names[-1] if len(names) > 1 else names[0]) + \
+        (" packages." if len(names) > 1 else " package.")
+
+
 def render_rules(defs):
     out = []
     for d in defs:
         if kind_of(d) in ("Rule", "TestObligation", "DocumentationObligation"):
-            out += [text(d["body"]), ""]
+            out += [text(d["body"]), "", f"*{scope_phrase(d)}*", ""]
     return out
 
 
