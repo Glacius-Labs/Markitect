@@ -242,6 +242,23 @@ func TestStartReportsOutcomesWithoutABranch(t *testing.T) {
 	}
 }
 
+func TestStartAcceptsMainAndIgnoredFiles(t *testing.T) {
+	repo, _ := ownerCheckout(t)
+	git(t, repo, "branch", "-m", "main")
+	os.WriteFile(filepath.Join(repo, ".gitignore"), []byte("build/\n"), 0o644)
+	git(t, repo, "add", ".gitignore")
+	git(t, repo, "-c", "user.name=Owner", "-c", "user.email=owner@example.invalid", "commit", "--quiet", "-m", "ignore build")
+	os.MkdirAll(filepath.Join(repo, "build"), 0o755)
+	os.WriteFile(filepath.Join(repo, "build", "out.bin"), []byte("ignored\n"), 0o644)
+	launched, err := Start(context.Background(), launchRequest(t, repo, "nochange"))
+	if err != nil || launched.Result.ApplyStatus != StatusPassed || !launched.Result.NoChange {
+		t.Fatalf("main with an ignored file: %v %+v\n%s", err, launched.Result, logOf(launched))
+	}
+	if branch := git(t, repo, "branch", "--show-current"); branch != "main" {
+		t.Fatalf("checkout left main: %s", branch)
+	}
+}
+
 func TestStartRefusesAnUnpublishedChange(t *testing.T) {
 	repo, _ := ownerCheckout(t)
 	launched, err := Start(context.Background(), launchRequest(t, repo, "stray"))
@@ -260,8 +277,18 @@ func TestStartRefusesCheckoutsTheRunnerCannotClone(t *testing.T) {
 	t.Run("tracked change", func(t *testing.T) {
 		repo, _ := ownerCheckout(t)
 		os.WriteFile(filepath.Join(repo, "README.md"), []byte("edited\n"), 0o644)
-		if _, err := Start(context.Background(), launchRequest(t, repo, "change")); err == nil || !strings.Contains(err.Error(), "committed history only") {
+		_, err := Start(context.Background(), launchRequest(t, repo, "change"))
+		if err == nil || !strings.Contains(err.Error(), "1 uncommitted change(s) and 0 untracked file(s)") || !strings.Contains(err.Error(), "commit or remove them; runner mode applies committed history only") {
 			t.Fatalf("dirty checkout: %v", err)
+		}
+	})
+	t.Run("untracked file", func(t *testing.T) {
+		repo, _ := ownerCheckout(t)
+		os.MkdirAll(filepath.Join(repo, "notes"), 0o755)
+		os.WriteFile(filepath.Join(repo, "notes", "draft.md"), []byte("draft\n"), 0o644)
+		_, err := Start(context.Background(), launchRequest(t, repo, "change"))
+		if err == nil || !strings.Contains(err.Error(), "0 uncommitted change(s) and 1 untracked file(s)") || !strings.Contains(err.Error(), "notes/draft.md") {
+			t.Fatalf("untracked file: %v", err)
 		}
 	})
 	t.Run("detached HEAD", func(t *testing.T) {

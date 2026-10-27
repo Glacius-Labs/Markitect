@@ -166,10 +166,12 @@ func Start(ctx context.Context, r LaunchRequest) (out Launch, err error) {
 }
 
 // inspectCheckout returns the checkout's HEAD commit. The runner clones
-// committed history only, so tracked changes are refused like a native Apply
-// refuses them; untracked and ignored files never reach the runner. The
-// checkout must be a main working tree on a named branch: a linked worktree's
-// .git file names a host path that does not exist inside the runner.
+// committed history only, so it refuses uncommitted changes and untracked
+// files that Git does not ignore instead of dropping them; Git-ignored files
+// never reach the runner. Any named branch, main included, is accepted: the
+// runner writes only its clone and a new branch. The checkout must be a main
+// working tree: a linked worktree's .git file names a host path that does not
+// exist inside the runner.
 func inspectCheckout(ctx context.Context, repository string) (string, error) {
 	if !filepath.IsAbs(repository) || filepath.Clean(repository) != repository {
 		return "", fmt.Errorf("checkout must be an explicit absolute path")
@@ -203,14 +205,38 @@ func inspectCheckout(ctx context.Context, repository string) (string, error) {
 	if !validObjectID(base) {
 		return "", fmt.Errorf("checkout HEAD %q is not a full commit ID", base)
 	}
-	dirty, err := g.run(ctx, "status", "--porcelain=v1", "-z", "--untracked-files=no", "--ignore-submodules=none")
+	status, err := g.run(ctx, "status", "--porcelain=v1", "-z", "--untracked-files=all", "--no-renames", "--ignore-submodules=none")
 	if err != nil {
 		return "", err
 	}
-	if len(dirty) != 0 {
-		return "", fmt.Errorf("the runner clones committed history only; commit or remove the tracked changes first")
+	if err := refuseUncommitted(nulPaths(status)); err != nil {
+		return "", err
 	}
 	return base, nil
+}
+
+// refuseUncommitted fails closed on everything a clone would silently drop:
+// uncommitted changes to tracked files and untracked files Git does not ignore.
+func refuseUncommitted(entries []string) error {
+	var changed, untracked int
+	example := ""
+	for _, entry := range entries {
+		if len(entry) < 4 {
+			return fmt.Errorf("unexpected Git status entry")
+		}
+		if entry[:2] == "??" {
+			untracked++
+		} else {
+			changed++
+		}
+		if example == "" {
+			example = entry[3:]
+		}
+	}
+	if changed+untracked == 0 {
+		return nil
+	}
+	return fmt.Errorf("the checkout has %d uncommitted change(s) and %d untracked file(s), for example %q: commit or remove them; runner mode applies committed history only", changed, untracked, example)
 }
 
 // checkNewBranch requires a valid branch name that does not exist yet.
