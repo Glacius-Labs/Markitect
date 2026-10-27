@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
@@ -19,11 +18,11 @@ import (
 )
 
 func TestLocalFetchPackedNoChange(t *testing.T) {
-	// Host configuration must not disable physical long paths in acquisition.
+	// Acquisition and transport must leave host Git configuration alone.
 	// Override only this test-owned home; the shared testkit config is immutable.
 	isolatedHome := t.TempDir()
 	globalPath := filepath.Join(isolatedHome, ".gitconfig")
-	globalConfig := []byte(testkit.GlobalConfig + "\n[core]\n\tlongpaths = false\n")
+	globalConfig := []byte(testkit.GlobalConfig)
 	if err := os.WriteFile(globalPath, globalConfig, 0600); err != nil {
 		t.Fatal(err)
 	}
@@ -32,8 +31,8 @@ func TestLocalFetchPackedNoChange(t *testing.T) {
 	_, _, original, input := runFixture(t)
 	ctx, cancel := context.WithDeadline(context.Background(), runDeadline(t))
 	defer cancel()
-	// Both ordinary file transport and the explicit upload-pack command must
-	// preserve a repository name containing spaces and shell metacharacters.
+	// File transport must preserve a repository name containing spaces and
+	// shell metacharacters.
 	source := filepath.Join(t.TempDir(), "source ' ; & $()")
 	if err := os.MkdirAll(source, 0700); err != nil {
 		t.Fatal(err)
@@ -81,34 +80,13 @@ func TestLocalFetchPackedNoChange(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if bytes.Contains(beforeConfig, []byte("longpaths")) {
-		t.Fatal("fixture unexpectedly persisted a user-repository longpaths setting")
-	}
-	// Read the fixture explicitly; acquisition intentionally ignores globals.
-	if value, err := localCommand(ctx, source, nil, "config", "--file", globalPath, "--get", "core.longpaths"); err != nil || value != "false" {
-		t.Fatal("test-owned global longpaths=false control was not observed", string(value), err)
-	}
 	if packs, err := filepath.Glob(filepath.Join(source, ".git/objects/pack/*.pack")); err != nil || len(packs) == 0 {
 		t.Fatal("fixture did not use packed objects", packs, err)
 	}
 	root := t.TempDir()
-	for len(root) < 164 {
-		root = filepath.Join(root, "p")
-	}
 	git := &LocalGit{StateRoot: filepath.Join(root, "state"), TempRoot: filepath.Join(root, "temporary")}
 	if err := os.MkdirAll(git.TempRoot, 0700); err != nil {
 		t.Fatal(err)
-	}
-	// Even the shortest MkdirTemp suffix leaves the seed's pack path above
-	// Windows MAX_PATH. A loose-object fixture would miss this boundary.
-	if len(filepath.Join(git.TempRoot, "markitect-input-1", ".git/objects/pack/pack-"+strings.Repeat("a", 40)+".pack")) < 260 {
-		t.Fatal("regression does not cross the packed-object path boundary")
-	}
-	// Isolate packed-object reads from Git for Windows' separate -C limit:
-	// even the longest MkdirTemp suffix keeps Manager Git directories below
-	// 250, allowing room for Windows to expand a short user-directory name.
-	if len(filepath.Join(git.TempRoot, "markitect-run-"+strings.Repeat("9", 10), "manager-"+strings.Repeat("a", 32), ".git")) >= 250 {
-		t.Fatal("fixture crosses the separate Git working-directory boundary")
 	}
 	ref, err := git.Capture(ctx, "fixture", prepared)
 	if err != nil {

@@ -89,9 +89,21 @@ func safeStateDestination(repository, state string) error {
 	return nil
 }
 
-func applyExecution(preparation *project.PreparationService, repository *gitrepo.Repository, agents runtimeconfig.AgentProfilePreparer, checkMetadata runtimeconfig.CheckProfilePreparer) cli.ApplyFunc {
+// errWindowsApplyHost refuses native Apply on Windows. The Apply host runs on
+// Linux (DEC-077); on Windows, apply --runner starts it in the runner image.
+var errWindowsApplyHost = errors.New("native Apply is unavailable on Windows: the Apply host runs on Linux; " +
+	"start it in the Linux runner image with markitect apply --runner RUNNER_IMAGE_ID and the same options " +
+	"(see docs/guides/project-workflow.md#apply-in-the-linux-runner)")
+
+// applyExecution composes Apply for the host operating system goos. Native
+// Apply runs on Linux; on Windows only the runner launcher is composed.
+func applyExecution(goos string, preparation *project.PreparationService, repository *gitrepo.Repository, agents runtimeconfig.AgentProfilePreparer, checkMetadata runtimeconfig.CheckProfilePreparer) cli.ApplyFunc {
 	return func(ctx context.Context, request cli.ApplyRequest) (out cli.ApplyReport, err error) {
 		out = cli.ApplyReport{FormatVersion: 1, Operation: "apply", Status: model.NotCompleted}
+		// Refuse before any input is read, so nothing is observed or created.
+		if goos == "windows" && request.Runner == "" {
+			return out, errWindowsApplyHost
+		}
 		cfg, err := loadRunConfig(ctx, request.RunConfig)
 		if err != nil {
 			return out, err

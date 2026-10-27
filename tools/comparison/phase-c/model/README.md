@@ -86,7 +86,7 @@ All ten steps returned exit code 0, status `passed`, with the Package and Manage
 
 ## Execution configuration for arm M
 
-[execution/](../execution) proposes arm M's `.markitect/execution.yaml`, in the form of the Library fixture that [run-library-apply.ps1](../../../../scripts/run-library-apply.ps1) writes and that Phases A and B used. It holds nothing but Package ownership and the project checks:
+[execution/](../execution) proposes arm M's `.markitect/execution.yaml`, in the form of the Library fixture that [run-library-apply.ps1](https://github.com/Glacius-Labs/Markitect/blob/d4bc68ed9f6d808f807f616f5a122c90112c3ee6/scripts/run-library-apply.ps1) writes and that Phases A and B used. It holds nothing but Package ownership and the project checks:
 
 | File | Steps | Content |
 | --- | --- | --- |

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 
 	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/guardedwrite"
@@ -142,10 +141,6 @@ func (p *Publisher) Publish(ctx context.Context, request apply.PublicationReques
 	for _, d := range delta {
 		change := guardedwrite.Change{Path: d.Path().String(), Delete: d.Kind() == snapshot.Delete}
 		if e, exists := d.After(); exists {
-			beforeEntry, existed := d.Before()
-			if runtime.GOOS == "windows" && (existed && beforeEntry.Mode() != e.Mode() || !existed && e.Mode() == snapshot.Executable) {
-				return out, fmt.Errorf("%w: Windows publication cannot establish a changed executable mode at %s", ErrUnrepresentable, e.Path())
-			}
 			change.Bytes = e.Bytes()
 			change.Mode = 0644
 			if e.Mode() == snapshot.Executable {

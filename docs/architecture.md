@@ -8,7 +8,7 @@ How the V1 source is composed, where each responsibility lives and which contrac
 
 - `check`, `context` and `docs` call [Project](../internal/project/README.md) directly. Project captures the sources through its own port, checks the model, registry and file accounting, reads the execution declarations and selects the static Manager contexts. These commands start no Agent and create no Run state.
 - `docs` renders the readable model view in `internal/modeldocs`; `internal/adapters/documents` writes it behind an independent guard that is separate from Apply publication.
-- `apply` prepares from one complete committed capture, then runs [Apply](../internal/apply/README.md): preflight, Workflow, and publication of the stored approval.
+- `apply` prepares from one complete committed capture, then runs [Apply](../internal/apply/README.md): preflight, Workflow, and publication of the stored approval. This Apply host runs on Linux. On Windows, bootstrap refuses `apply` without `--runner` before it reads any input; `--runner` starts the same Apply in the [Linux runner](design/linux-runner.md), which hands its verified change back as a new branch.
 
 Bootstrap alone builds the concrete adapters and the state directory and injects them. CLI code parses arguments and presents reports. It does not invoke Git itself or start a second lifecycle. Run organizes the Managers, the workflow chooses the Runs and the command publishes: CLI → Apply → workflow → Run → Project and foundations.
 
@@ -151,7 +151,7 @@ Every regular file in the actual census is a protected canonical or control inpu
 
 ## State and evidence storage
 
-Preparation creates no Run, candidate or evidence. `apply` keeps its state outside the repository in the operator's state directory: one `apply.lock` per state directory and, per repository identity, `applies/` (the Apply report), `runs/` (closed Run results), `candidates/` (stored Git bundles), `notes/`, `transcripts/` and `temporary/` (scratch for host Git). Document writes retain the observed completed paths if a later validation fails.
+Preparation creates no Run, candidate or evidence. `apply` keeps its state outside the repository in the operator's state directory: one `apply.lock` per state directory and, per repository identity, `applies/` (the Apply report), `runs/` (closed Run results), `candidates/` (stored Git bundles), `notes/`, `transcripts/` and `temporary/` (scratch for host Git). In the Linux runner, this state directory is the engine volume `markitect-state-<repositoryIdentity>`. Document writes retain the observed completed paths if a later validation fails.
 
 A candidate is a self-contained Git bundle with a named candidate ref and bound metadata. It holds the candidate objects and their required ancestry without depending on an old volume or an incremental bundle, and is verified in an empty Git repository with exact commit and tree readback. A bundle is storage, not approval ([Git documentation](https://git-scm.com/docs/git-bundle)). Git objects and Run records share the project state root as separate records, and candidate data is secured before its terminal reference is written. Terminal records use a temporary file, atomic publication, flush and readback; no multi-file transaction is claimed. Notes are unique append records with atomic visibility and bounded reads, so concurrent processes cannot overwrite them. V1 needs no Git server, database, event sourcing, recovery framework or automatic garbage collection of retained evidence.
 

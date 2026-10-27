@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"runtime"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/checks"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/cli"
@@ -31,6 +32,6 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer, images co
 	views := modeldocs.New(models, preparation, documents.Writer{})
 	agents := codexappserver.NewMetadataPreparer(images)
 	checker := checks.NewMetadataPreparer(checks.NewEngineImageReaders().Reader)
-	execution := applyExecution(preparation, repository, agents, checker)
+	execution := applyExecution(runtime.GOOS, preparation, repository, agents, checker)
 	return cli.New(preparation, agents, checker, repository, views, execution).Run(ctx, args, stdout, stderr)
 }

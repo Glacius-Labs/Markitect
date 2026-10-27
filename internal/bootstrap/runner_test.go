@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -214,12 +215,44 @@ func TestRunnerModeSkipsTheHostBuildAndReachesTheCheckout(t *testing.T) {
 	f := newRunnerFixture(t)
 	request := f.request(t)
 	request.Build = "a-different-host-build"
-	out, err := applyExecution(nil, nil, nil, nil)(context.Background(), request)
+	// Windows composes the runner launcher; the launch itself runs on this host.
+	out, err := applyExecution("windows", nil, nil, nil, nil)(context.Background(), request)
 	if err == nil || strings.Contains(err.Error(), "invocation build") || !strings.Contains(err.Error(), ".git is a directory") || out.Status != model.NotCompleted {
 		t.Fatalf("runner mode: %v %+v", err, out)
 	}
 	request.Runner, request.ResultBranch = "", ""
-	if _, err := applyExecution(nil, nil, nil, nil)(context.Background(), request); err == nil || !strings.Contains(err.Error(), "invocation build") {
+	if _, err := applyExecution("linux", nil, nil, nil, nil)(context.Background(), request); err == nil || !strings.Contains(err.Error(), "invocation build") {
 		t.Fatalf("native mode keeps the build assertion: %v", err)
+	}
+}
+
+func TestNativeApplyOnWindowsIsRefusedWithTheRunnerAsNextStep(t *testing.T) {
+	dir := testkit.TempDir(t)
+	config, profile := filepath.Join(dir, "never-read-run.json"), filepath.Join(dir, "never-read-runtime.yaml")
+	var out, stderr bytes.Buffer
+	command := cli.New(nil, nil, nil, nil, nil, applyExecution("windows", nil, nil, nil, nil))
+	code := command.Run(context.Background(), []string{"apply", "--repo", dir, "--runtime-profile", profile, "--run-config", config}, &out, &stderr)
+	var report map[string]any
+	if err := json.Unmarshal(out.Bytes(), &report); err != nil {
+		t.Fatal(err, out.String())
+	}
+	message, _ := report["error"].(string)
+	if code != 3 || report["status"] != "not_completed" || message != errWindowsApplyHost.Error() {
+		t.Fatalf("code=%d report=%v stderr=%s", code, report, stderr.String())
+	}
+	// The refusal names the reason and the next step, and reads no input:
+	// a run configuration that was read would fail as unobservable instead.
+	for _, want := range []string{"runs on Linux", "markitect apply --runner RUNNER_IMAGE_ID", "docs/guides/project-workflow.md#apply-in-the-linux-runner"} {
+		if !strings.Contains(message, want) {
+			t.Fatalf("refusal lacks %q: %s", want, message)
+		}
+	}
+	if entries, err := os.ReadDir(dir); err != nil || len(entries) != 0 {
+		t.Fatalf("the refusal created %d entries: %v", len(entries), err)
+	}
+	// Linux keeps native Apply: the same request reaches the run configuration.
+	_, err := applyExecution("linux", nil, nil, nil, nil)(context.Background(), cli.ApplyRequest{RunConfig: config})
+	if !errors.Is(err, errRunConfigIO) {
+		t.Fatalf("native Apply on Linux: %v", err)
 	}
 }

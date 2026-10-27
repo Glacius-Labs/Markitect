@@ -96,7 +96,7 @@ The engine must run on the owner's machine, because bind sources and the socket 
 
 ## What stays on Windows
 
-The model commands `check`, `context` and `docs` keep running natively, and so does model editing. On Windows, `markitect apply --runner` validates the inputs, starts the runner through Docker Desktop and imports the result with the host's Git. The native Windows Apply host stays until slice L2 removes it.
+The model commands `check`, `context` and `docs` keep running natively, and so does model editing. On Windows, `markitect apply --runner` validates the inputs, starts the runner through Docker Desktop and imports the result with the host's Git. Since slice L2, `markitect apply` without `--runner` is refused on Windows before it reads any input, and the code that served only a native Windows Apply host is removed.
 
 ## Limits and open questions
 
