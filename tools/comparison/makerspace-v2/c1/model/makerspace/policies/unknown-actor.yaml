@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: unknown-actor
+kind: Api.RefusalCode
+body: |-
+  `actor` does not identify a user.
+spec:
+  code: unknown_actor

@@ -1,0 +1,10 @@
+imports:
+  - {package: markitect/architecture, as: Architecture}
+id: bookings-interface
+kind: Architecture.Interface
+body: |-
+  What other modules may use of bookings: its operations and the reservation record. Other modules also ask whether an active reservation of a machine overlaps an interval, and for the completed sessions of a machine.
+spec:
+  appliesTo: [makerspace]
+  operations: [create-reservation, cancel-reservation, check-in, check-out, list-member-reservations, get-machine-schedule]
+  types: [reservation, opening-hours-of-day]

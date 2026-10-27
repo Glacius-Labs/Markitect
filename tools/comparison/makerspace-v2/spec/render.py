@@ -12,8 +12,8 @@ architecture (modules, dependency rules, placements, interfaces).
 requirements copy (../requirements/w0.md) carries verbatim.
 
 Usage, from the repository root:
-  python -I -B tools/comparison/makerspace-v2/spec/render.py render [--out FILE]
-  python -I -B tools/comparison/makerspace-v2/spec/render.py check [--doc FILE]
+  python -I -B tools/comparison/makerspace-v2/spec/render.py render [--step STEP] [--out FILE]
+  python -I -B tools/comparison/makerspace-v2/spec/render.py check [--step STEP] [--doc FILE]
   python -I -B tools/comparison/makerspace-v2/spec/render.py architecture
 """
 import argparse
@@ -23,8 +23,7 @@ import re
 import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
-MODEL = HERE.parent / "model"
-DOC = HERE / "requirements-w0.md"
+TITLES_BY_STEP = {"w0": "W0 (fresh build)", "c1": "after C1"}
 LINK = re.compile(r"\[\[([^\]|]+)(?:\|([^\]]+))?\]\]")
 SUBSTITUTIONS = [("this model", "this document"), ("of the model", "of this document")]
 # Words that would tell the single-agent arm about Markitect (arm-equal wording).
@@ -125,11 +124,16 @@ def parse(path):
     return out
 
 
-def load():
+def model_dir(step):
+    return HERE.parent / "model" if step == "w0" else HERE.parent / step / "model"
+
+
+def load(step="w0"):
+    root = model_dir(step)
     model = {}
-    for path in sorted(MODEL.rglob("*.yaml")):
+    for path in sorted(root.rglob("*.yaml")):
         d = parse(path)
-        d["package"] = path.parent.relative_to(MODEL).as_posix()
+        d["package"] = path.parent.relative_to(root).as_posix()
         model[(d["package"], d["id"])] = d
     return model
 
@@ -304,10 +308,11 @@ def render_architecture(model):
     return out + [""]
 
 
-def render(model):
+def render(model, step="w0"):
     project = model[("makerspace", "makerspace")]
-    out = ["# Makerspace requirements: W0 (fresh build)", "",
-           "This document describes the complete product for the first delivery.", "",
+    intro = ("This document describes the complete product for the first delivery." if step == "w0" else
+             f"This document describes the complete product {TITLES_BY_STEP[step]}.")
+    out = [f"# Makerspace requirements: {TITLES_BY_STEP[step]}", "", intro, "",
            "## Overview", "", text(project["body"]), ""]
     out += render_architecture(model)
     out += ["## Program interface", ""] + render_rules(package(model, "protocol"))
@@ -333,17 +338,25 @@ def render(model):
     return "\n".join(out).rstrip("\n") + "\n"
 
 
-def check(model, doc):
-    expected = render(model)
+def check(model, doc, step="w0"):
+    expected = render(model, step)
     if doc != expected:
         return "the document differs from a fresh render"
     for (pkg, id_), d in model.items():
         if text(d["body"]) not in doc:
             return f"body of {pkg}/{id_} is missing"
-    neutral = (HERE.parent / "requirements" / "w0.md").read_text(encoding="utf-8")
     section = "\n".join(render_architecture(model)).replace("## Architecture", "## 16 Architecture", 1).rstrip("\n") + "\n"
-    if not neutral.endswith("\n\n" + section):
-        return "requirements/w0.md does not end with the model's architecture section"
+    if step == "w0":
+        neutral = (HERE.parent / "requirements" / "w0.md").read_text(encoding="utf-8")
+        if not neutral.endswith("\n\n" + section):
+            return "requirements/w0.md does not end with the model's architecture section"
+    else:
+        # A change step's neutral delta states every architecture line that differs from W0.
+        delta = (HERE.parent / "requirements" / f"{step}.md").read_text(encoding="utf-8")
+        before = set(render_architecture(load("w0")))
+        for line in render_architecture(model):
+            if line and line not in before and line not in delta:
+                return f"requirements/{step}.md does not state the changed architecture line: {line[:80]}"
     for name, content in (("the document", doc), ("requirements/w0.md section 16", section)):
         leaked = sorted({m.group(0) for m in FORBIDDEN.finditer(content)})
         if leaked:
@@ -354,17 +367,20 @@ def check(model, doc):
 def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("command", choices=["render", "check", "architecture"])
-    parser.add_argument("--out", type=pathlib.Path, default=DOC)
-    parser.add_argument("--doc", type=pathlib.Path, default=DOC)
+    parser.add_argument("--step", choices=sorted(TITLES_BY_STEP), default="w0")
+    parser.add_argument("--out", type=pathlib.Path)
+    parser.add_argument("--doc", type=pathlib.Path)
     args = parser.parse_args(argv)
-    model = load()
+    default = HERE / f"requirements-{args.step}.md"
+    args.out, args.doc = args.out or default, args.doc or default
+    model = load(args.step)
     if args.command == "render":
-        args.out.write_text(render(model), encoding="utf-8", newline="\n")
+        args.out.write_text(render(model, args.step), encoding="utf-8", newline="\n")
         return 0
     if args.command == "architecture":
         sys.stdout.buffer.write("\n".join(render_architecture(model)).encode("utf-8"))
         return 0
-    problem = check(model, args.doc.read_text(encoding="utf-8"))
+    problem = check(model, args.doc.read_text(encoding="utf-8"), args.step)
     if problem:
         print(problem)
         return 1

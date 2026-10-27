@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: charge-ref
+kind: Values.Scalar
+body: |-
+  What a charge is for: the member's tier, a reservation, a purchase or a course identifier.
+spec:
+  base: string

@@ -1,0 +1,22 @@
+imports:
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/billing, as: Billing}
+id: check-out
+kind: Policies.AuditedOperation
+body: |-
+  Status `completed`; `checkedOutAt` is the request time; `meteredMinutes` is `checkedOutAt − checkedInAt` in minutes, which may be 0 and may extend past the reservation's end or closing time. A usage [[Billing.charge|charge]] is created for the member: `kind` `usage`, `ref` the reservation identifier, `quantity` the metered minutes, `unitPriceCents` the captured rate, `discountPercent` the discount of the member's tier at check-out, `at` the request time. A charge of 0 cents is still created. The reservation's `amountCents` is the charge's amount. Standing is not checked.
+spec:
+  wireName: checkOut
+  mutation: true
+  arguments:
+    - {name: reservationId, fieldType: Policies.identifier, refersTo: reservation}
+  refusals:
+    - {refusal: Policies.invalid-state, when: "the status is not `checkedIn`"}
+  results:
+    - {name: reservation, fieldType: reservation}
+    - {name: charge, fieldType: Billing.charge}
+  permissions:
+    - {role: Policies.member-role, scope: own}
+    - {role: Policies.staff-role, scope: all}
+    - {role: Policies.admin-role, scope: all}
+  auditTarget: reservationId

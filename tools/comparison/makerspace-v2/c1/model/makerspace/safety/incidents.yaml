@@ -1,0 +1,7 @@
+imports:
+  - {package: markitect/practice, as: Practice}
+id: incidents
+kind: Practice.Rule
+body: |-
+  Staff record safety [[incident|incidents]] against machines. In this delivery an incident is a record only: it does not block reservations or use.
+spec: {}
