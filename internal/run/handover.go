@@ -8,6 +8,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/Glacius-Labs/Markitect/internal/organization"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
@@ -48,23 +49,46 @@ func Initial(p project.Prepared, findings []Finding) []Finding {
 // findingsErr refuses a Finding that names a Definition the checked model does
 // not have. In Verify a Definition marks what the correction Implement
 // receives: every Finding of a reject names one, a Finding of an approval none.
+// Root's approval of a change on an already verified input is the exception
+// (correcting): at least one of its Findings names the corrected Definition.
 func (x *execution) findingsErr(s *managerState, tool string, decision Decision, findings []Finding) error {
 	reject := x.request.Mandate == Verify && decision == Reject
+	correcting := tool == "judge" && x.correcting(s, decision)
+	named := false
 	for i, f := range findings {
 		switch {
-		case f.Definition != "" && x.request.Mandate == Verify && decision == Approve:
+		case f.Definition != "" && x.request.Mandate == Verify && decision == Approve && !correcting:
 			return fmt.Errorf("Finding %d of your approval names %s; a Verify approval hands no Finding to Implement, so an optional addition is a Note: leave definition empty, or reject if a change must be made, then %s again", i+1, f.Definition, tool)
 		case f.Definition != "" && !defines(x.request.Prepared, f.Definition):
 			next := "name an existing Definition as Package/ID or leave definition empty"
-			if reject {
+			switch {
+			case reject:
 				next = x.definitionStep(s)
+			case correcting:
+				next = "name as definition " + correctedDefinition
 			}
 			return fmt.Errorf("Finding %d names %s, which is not a Definition of the checked model; %s, then %s again", i+1, f.Definition, next, tool)
 		case f.Definition == "" && reject:
 			return fmt.Errorf("Finding %d of your reject names no Definition; a Verify reject hands its Findings to a new Implement, which receives only Findings that name a Definition of the checked model. %s, then %s again", i+1, x.definitionStep(s), tool)
 		}
+		named = named || f.Definition != ""
+	}
+	if correcting && !named {
+		return fmt.Errorf("the fixed input candidate %s differs from the command's bound input %s, which the host states Verify Run %s already verified, so your approval of this change names the defect it corrects. Judge approve again with a Finding that states the defect and names as definition %s. If you find no defect, judge reject instead: any change on a verified input without a defect is a reject", x.request.Input.Commit, x.request.Origin.Input.Commit, x.request.Origin.Verified, correctedDefinition)
 	}
 	return nil
+}
+
+// correctedDefinition is how to name the Definition whose defect a change on a
+// verified input corrects.
+const correctedDefinition = "the current Definition that the bound input violated, as Package/ID: one that a changed artifact's entry in .markitect/registry/ realizes, or any other Definition of the checked model"
+
+// correcting reports whether s's judgment approves a change on an already
+// verified input (DEC-073): s is Verify Root, whose judgment is the Run's, the
+// host states Origin.Verified and the fixed input differs from the bound
+// input. Without a named defect, such a change is a reject.
+func (x *execution) correcting(s *managerState, decision Decision) bool {
+	return x.request.Mandate == Verify && decision == Approve && s.manager.Package == organization.Root && x.request.Origin.Verified != "" && x.changed
 }
 
 // definitionStep names how to find the Definition a reject Finding affects and

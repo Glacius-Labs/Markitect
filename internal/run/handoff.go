@@ -332,7 +332,17 @@ func (x *execution) completeRoot() (Handoff, bool, error) {
 	if x.request.Mandate == Implement {
 		check = withOutputs(check, outputs)
 	}
-	h := Handoff{Manager: s.manager.Package, Base: s.a.task.Base, Result: state, Children: slices.Clone(s.integrations), Findings: slices.Clone(j.findings), Decision: requiredDecision(j.decision, x.childOutcomeLocked(s)), Check: check}
+	decision := requiredDecision(j.decision, x.childOutcomeLocked(s))
+	findings := slices.Clone(j.findings)
+	if x.request.Mandate == Verify && j.decision == Approve && decision != Approve {
+		// A Verify approval's Definition names the defect its change corrects,
+		// never work for Implement. Overruled by a child's outcome, its Findings
+		// keep their text in the record and become Notes (noteUnbound).
+		for i := range findings {
+			findings[i].Definition = ""
+		}
+	}
+	h := Handoff{Manager: s.manager.Package, Base: s.a.task.Base, Result: state, Children: slices.Clone(s.integrations), Findings: findings, Decision: decision, Check: check}
 	s.a.fix(h)
 	return h, true, nil
 }
