@@ -97,3 +97,16 @@ The owner-approved fix plan was merged (S1–S3, WP5) and checked by bounded nat
 | P2, public Verify-reject correction path | Exercised natively on F_fix2: Verify rejected with three Definition-bound Findings, a fresh correction pair corrected them, and the verified candidate was published with exact readback |
 
 The old-versus-new Makerspace pilot of 27 October ([record](v1-makerspace-gate-20261027.md)) then found one more product defect: the publication guard hashed model files in read order, so an unchanged repository whose model has a file beside a same-named folder was refused at publication. It is fixed ([PR #776](https://github.com/Glacius-Labs/Markitect/pull/776)). The controls ran on the Windows host with Linux containers. Markitect's execution then moves to a Linux runner image ([DEC-077](../concepts/register.md#dec-077-development-pace-and-linux-first-execution)); the new frozen F follows that change and the remaining fix.
+
+### New frozen source F2
+
+After the controls, the fixes they led to, the cleanup (R3a–R3c, DEC-076) and the Linux runner (L1–L3, DEC-077), the source was frozen again on 27 October 2026. The Claude adapter (slice K1) is not part of F2; V1's provider scope stays Codex (D18).
+
+| Item | Value |
+| --- | --- |
+| F2 | `7371cfd99d804596f6412951112a50def42bf037` (tree `bad23179710d10097f304433430ee56b0507ed18`) |
+| Hosted CI | [run 40472471232](https://github.com/Glacius-Labs/Markitect/actions/runs/40472471232) on exactly F2: Linux quality and race detector passed. CI has no Windows job since DEC-077 |
+| Product binary | SHA-256 `3cc245eb6fc4ff68c9aaebf144e6075e391cd9639b1dc966596978b1a4793d02`, productBuild `0.14.1+7371cfd9…`, `vcs.modified=false` |
+| Agent images | Base `sha256:d79691a0fd6093dd510f57c0866b2404ee0210a94c0a7487f56a6694502395a8`, Go `sha256:cf9a5db7c8653137b816c41cde3dcbfecdd9e23a2b247bc5b2eaa2260f3f5871`; `runtime.env` with Codex CLI 0.162.0 and agentd F2 |
+| Runner image | `sha256:8898574d971f03f4320ebfcbb6ec52622fcc9df6933ade5bf67c1f438e882364`, revision label F2 |
+| Native evidence closest to F2 | The Linux runner's qualification on Main `00c687b6` ([record](v1-l1-runner-qualification-20261027.md)); the fix-plan controls on F_fix and F_fix2 ([record](v1-fixplan-native-controls-20261027.md)); the Makerspace pilot on `be7813a6` and F_cmp2 ([record](v1-makerspace-gate-20261027.md)). F2 adds the R3 cleanup, which keeps behavior, and L2, which refuses native Apply on Windows; no native Apply ran on F2 itself |

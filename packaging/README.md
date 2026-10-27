@@ -1,10 +1,10 @@
 # Packaging and distribution
 
-The owner retired the old Project/Domain releases and binary downloads on 17 October 2026. There is currently no supported binary release of the new product. The Git tags no longer exist on GitHub; the commit behind each is recorded in the [retired release mapping](../docs/validation/retired-releases-20261017.json), and the 18 retired release versions `v0.1.0` to `v0.14.1` must not be reused. [Release identities, asset digests and attestations](../docs/validation/distribution-retirement-20261017.md) are retained. Use [current source](../README.md#run-the-current-source), [Project workflow](../docs/guides/project-workflow.md) and the [delivery plan](../docs/implementation-plan.md).
+The owner retired the old Project/Domain releases and binary downloads on 17 October 2026. There is currently no supported binary release of the new product. The Git tags no longer exist on GitHub; the commit behind each is recorded in the [retired release mapping](../docs/validation/retired-releases-20261017.json), and the 18 retired release versions `v0.1.0` to `v0.14.1` must not be reused. [Release identities, asset digests and attestations](../docs/validation/distribution-retirement-20261017.md) are retained. Use [current source](../README.md#run-the-current-source), the [project workflow](../docs/guides/project-workflow.md) and the [delivery plan](../docs/implementation-plan.md).
 
 ## What lives here
 
-`packaging/` holds what ships besides the binary: [`runtime/`](runtime/README.md) (the runtime container image and its project-image examples), [`runner/`](runner/Dockerfile) (the Linux runner image for Apply, described in the [runner design](../docs/design/linux-runner.md)), `bootstrap/` (the consumer bootstrap `run-markitect.go` that release bundles copy into `.markitect/bootstrap/run.go`, with its test), [`skills/markitect-modeling/`](skills/markitect-modeling/SKILL.md) (the skill that lets an AI agent write a canonical model with the standard Libraries and check it) and this guide.
+`packaging/` holds what ships besides the binary: [`runtime/`](runtime/README.md) (the runtime container image and its project-image examples), [`runner/`](runner/Dockerfile) (the Linux runner image for Apply, described in the [runner design](../docs/design/linux-runner.md) and built as the [project workflow](../docs/guides/project-workflow.md#apply-in-the-linux-runner) shows), `bootstrap/` (the consumer bootstrap `run-markitect.go` that release bundles copy into `.markitect/bootstrap/run.go`, with its test), [`skills/markitect-modeling/`](skills/markitect-modeling/SKILL.md) (the skill that lets an AI agent write a canonical model with the standard Libraries and check it) and this guide.
 
 ## Current source release tooling
 
@@ -20,10 +20,6 @@ go run ./cmd/markitect-release licenses
 
 `package` writes an absent source directory. `bundle` binds an absent ZIP to the exact source commit. `install` verifies the supplied digest and previews the complete project pin; only `--write` applies it. The source/bootstrap and portable build inject `internal/buildinfo.version`. Root `cmd/` and `internal/` are the supported layout; mixed or legacy `src/` layouts, unsupported files, redirection, nested modules and archive collisions are refused.
 
-## Release contents and verification
-
-A future public release needs a fresh version tag, exact reviewed source, passing platform gates, a bundle, native Windows/Linux binaries and provenance. Its publication must verify source/run/attempt identity, asset bytes, immutable-release policy and attestations, and never overwrite a tag or asset. The earlier GitHub-release and WinGet publisher was removed from Main; Git history keeps it. Retired version tags must not be reused. Required historical release evidence and the named archive refs are kept. Release pages and downloads are retired only on the owner's explicit instruction; retired releases keep their recorded source and asset identities and attestations without implying availability.
-
 ## Preview and install
 
 Inspect the source-bound local bundle and its SHA-256, preview the operations, then use `install --write` only within the intended consumer repository. The shared writer lock remains held through complete-pin readback, and the manifest is written last. Partial writes stay visible for inspection; they are never reported as an atomic success. Unchanged pins retain their bytes and modes.
@@ -38,9 +34,13 @@ go test ./packaging/bootstrap/run-markitect.go ./packaging/bootstrap/run-markite
 
 Use Git and the Go version in `go.mod`. Runtime containers and their separately authorized provider capabilities are described in [the runtime guide](runtime/README.md). Packaging or installation is not a runtime or Apply demonstration.
 
-## Owner publication
+## Release operations
 
-[Operations](../docs/guides/operations.md#release-operations) owns publication requirements. The retained release workflow builds and checks new tagged source; it grants no authority to publish. Publication requires the owner's explicit release instruction and exact source/run/assets. Inspect a read-only publication plan before any write, and verify the resulting release and every asset afterward.
+No binary release of the current product is offered; build from [current source](../README.md#run-the-current-source). The [archive index](../docs/archive.md) lists the pinned pre-reset commits behind the retired releases. Local packaging does not publish. The old download-based benchmark and WinGet validation workflow are retired with their fixtures and manifests. Dated release evidence keeps its original source and environment scope in the archived [production assessment](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/validation/production-assessment.md).
+
+A future public release needs the owner's explicit release instruction, a fresh version tag, a clean reviewed full commit, passing source and Linux gates, a bundle, native Windows and Linux binaries, provenance, the exact workflow/run/attempt identity and matching bundle, provenance and asset digests. The retained release workflow builds and checks new tagged source; it grants no authority to publish. The earlier GitHub-release and WinGet publisher was removed from Main and stays in Git history: a release restores it or writes a new one, inspects its read-only publication plan before any write, and afterwards verifies the immutable release, its attestations and every attached asset. Never overwrite a tag or asset, and never reuse a historical tag or a retired version. Required historical release evidence and the named archive refs are kept. Release pages and downloads are retired only on the owner's explicit instruction; retired releases keep their recorded source and asset identities and attestations without implying availability. Add download instructions to the README only after a release exists and is verified.
+
+CI transport is bounded: Go test artifacts remain for 14 days to support the flake report; commit-scoped source archives remain for 7 days. Named evidence, failed diagnostics and artifacts needed by current work are excluded from manual historical cleanup. Durable summaries, public attestations and source references belong in Git; temporary artifact URLs are not a permanent evidence store. [CONTRIBUTING](../CONTRIBUTING.md#verify-a-change) owns source gates.
 
 ## Historical content-package command
 

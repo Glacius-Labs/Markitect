@@ -9,11 +9,11 @@ Use this map to find the document that owns a decision, a guide or a piece of ev
 | Implement Markitect V1 | [V1 concept 1.0](concepts/v1-concept.md), [delivery plan](implementation-plan.md), [architecture](architecture.md), [code map](development/code-map.md) and [qualification record](validation/v1-qualification-20261024.md) |
 | Understand what Markitect is for, before assessing or redirecting it | [Markitect in brief](vision.md#markitect-in-brief), [Common misreadings](vision.md#common-misreadings) and the [concept register](concepts/register.md) |
 | Understand where the idea came from and why its mechanisms might help | [Origin and rationale](vision.md#origin-and-rationale) and the [owner's original account](concepts/sources/owner-origin-20261015.md); the archived product reflections are listed in the [archive index](archive.md#archived-pages) |
-| Use the current Model → Artifacts workflow | [Project workflow](guides/project-workflow.md), [Project operations](guides/project-operations.md) and [Provider adapters](guides/provider-adapters.md) |
+| Use Markitect on a project: the model commands, Apply on Linux or from Windows in the Linux runner, state, evidence and troubleshooting | [Project workflow](guides/project-workflow.md), the one user guide, and [Provider adapters](guides/provider-adapters.md) |
 | Understand the technical boundaries | [Architecture](architecture.md), the package READMEs it links and [Measurement](guides/measurement.md) |
 | Read the language specification | [Language contract](design/language-contract.md) and [diagnostic contract](design/diagnostic-contract.md), listed in the [design map](design/README.md) |
 | Contribute source | [Contribution checks](../CONTRIBUTING.md), the [development documents](#development) below, the [repository layout](development/repository-layout.md) and [documentation maintenance](development/documentation.md) |
-| Operate a release | [Operations](guides/operations.md), the [distribution guide](../packaging/README.md) and the [release evidence](validation/README.md) |
+| Operate a release | The [distribution guide](../packaging/README.md#release-operations) and the [release evidence](validation/README.md) |
 | Find an earlier design, experiment, trial or dated record | The [archive index](archive.md) |
 
 ## Canonical status and evidence owners

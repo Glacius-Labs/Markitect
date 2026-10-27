@@ -10,7 +10,7 @@ This repository holds Markitect's source and its documentation. It is developed 
 | `libraries/` | The standard Libraries (`values`, `data`, `api`, `practice`, `architecture`) that projects vendor and pass with `--dependency`; see [standard libraries](../design/standard-libraries.md). |
 | `testdata/` | Byte-stable fixtures shared by several packages, the smoke and the qualification: the `markitect/core` dependency and the canonical Library model M1. |
 | `tools/` | Independent tools that import no product code: the packaged-source smoke, the Library and Makerspace oracles, the Makerspace reference modules, the comparison study's runner and assessment, and the model analysis. |
-| `scripts/` | Maintainer scripts: documentation link check, CI test and flake reports, the native Library Apply operator script. |
+| `scripts/` | Maintainer scripts: documentation link check, CI test and flake reports. |
 | `packaging/` | What ships besides the binary: the runtime image, the Linux runner image, the consumer bootstrap, the modeling skill for agents and the distribution guide. |
 | `examples/` | Copyable runtime-profile and run configuration examples; tests keep them valid. |
 | `.github/` | Manual CI, release and flake-report workflows. |

@@ -1,6 +1,6 @@
 # Development
 
-Markitect is built around canonical language v1 and delegated realization. Current source provides read-only preparation, the guarded generated model view, standalone hierarchical Runs and Apply through stored Verify approval and guarded publication. Extract, Cockpit and interactive authoring are retired. [AGENTS.md](AGENTS.md), the [delivery plan](docs/implementation-plan.md) and the bounded dispatch own authority and shared-file reservations. Source availability does not establish native runtime qualification. Markitect itself is developed as an ordinary software project without a canonical self-model ([DEC-076](docs/concepts/register.md#dec-076-markitect-is-developed-as-a-regular-software-project)).
+Markitect is built around canonical language v1 and delegated realization. The [project workflow](docs/guides/project-workflow.md) describes the commands: the model commands run on Windows and Linux, while the Apply host, the tests and CI run on Linux, and Windows starts Apply in the Linux runner ([DEC-077](docs/concepts/register.md#dec-077-development-pace-and-linux-first-execution)). Extract, Cockpit and interactive authoring are retired. [AGENTS.md](AGENTS.md), the [delivery plan](docs/implementation-plan.md) and the bounded dispatch own authority and shared-file reservations. Source availability does not establish native runtime qualification. Markitect itself is developed as an ordinary software project without a canonical self-model ([DEC-076](docs/concepts/register.md#dec-076-markitect-is-developed-as-a-regular-software-project)).
 
 ## Ownership and layout
 
@@ -16,7 +16,7 @@ Use Git and Go from `go.mod`. Run meaningful local checks for the actual change.
 
 For prose-only changes, check links in the changed pages with `python -B scripts/check-docs.py PATH...` and run `git diff --check`. For code or control changes, run the relevant tests and validators; broaden validation when the changed contract or a concrete failure calls for it. Record actual results and limitations in the PR.
 
-The full pipeline runs Linux quality checks and the race detector in about five minutes. CI has no Windows job.
+The full pipeline runs Linux quality checks and the race detector in about five minutes. CI has no Windows job, but the model commands and the runner launcher still build for Windows: a change to code they reach also runs `GOOS=windows go vet ./...`.
 
 ```text
 gh workflow run ci.yaml --ref BRANCH
@@ -80,4 +80,4 @@ Before integration, obtain independent complete-diff review, run relevant local 
 
 ## Release work
 
-[Operations](docs/guides/operations.md) and [distribution](packaging/README.md) own separate release work. The maintenance entrypoint is `cmd/markitect-release`. Source packages retain the root license, embedded [notices](internal/buildinfo/notices.md), required test data and explicit invocation examples. Use an external build cache when needed; Gitignore does not filter the complete product census. A source version does not establish a published or accepted release.
+The [distribution guide](packaging/README.md#release-operations) owns release operations. The maintenance entrypoint is `cmd/markitect-release`. Source packages retain the root license, embedded [notices](internal/buildinfo/notices.md), required test data and explicit invocation examples. Use an external build cache when needed; Gitignore does not filter the complete product census. A source version does not establish a published or accepted release.

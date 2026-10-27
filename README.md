@@ -157,7 +157,7 @@ These commands inspect the canonical model under the project's `.markitect/`; th
 
 ### Running Apply (advanced, experimental)
 
-The current source includes `apply`, but it is **not** a one-command install or an automatic brownfield migration. It requires a reviewed and committed project model, explicit registry/ownership declarations, a clean target on an isolated non-protected Git branch, a pinned Linux container/runtime setup, normal Codex account credentials, and finite invocation limits.
+The current source includes `apply`, but it is **not** a one-command install or an automatic brownfield migration. It requires a reviewed and committed project model, explicit registry/ownership declarations, a clean, committed target (for a native Apply on an isolated non-protected Git branch), a pinned Linux container/runtime setup, normal Codex account credentials, and finite invocation limits.
 
 Start from [the runtime profile example](examples/runtime-profile.example.yaml) and [invocation example](examples/run.example.json). Copy them **outside** the repository and replace all placeholders, using actual runtime/image/build identities. Then invoke:
 
@@ -168,7 +168,7 @@ go run ./cmd/markitect apply \
   --run-config /absolute/path/run.json
 ```
 
-`apply` starts real provider and check processes and may modify files in the selected repository after verified publication. Read the [exact execution and safety requirements](docs/guides/project-workflow.md#execute-verify-and-apply) before using it. No general-purpose `init`, setup wizard, or Extract path is currently provided.
+This native form runs on Linux, where the Apply host runs. On Windows, add `--runner RUNNER_IMAGE_ID` to run the same Apply in the [Linux runner](docs/guides/project-workflow.md#apply-in-the-linux-runner) through Docker Desktop; it returns the verified change as a new branch. `apply` starts real provider and check processes and may modify files in the selected repository after verified publication. Read the [exact execution and safety requirements](docs/guides/project-workflow.md#execute-verify-and-apply) before using it. No general-purpose `init`, setup wizard, or Extract path is currently provided.
 
 ## Current status
 
