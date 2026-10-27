@@ -61,15 +61,18 @@
 
 ## Measured today (to be re-run with the W5 tool)
 
-The Makerspace column is to be re-run with the W5 tool. The self-model column records the model retired by [DEC-076](../concepts/register.md#dec-076-markitect-is-developed-as-a-regular-software-project) and will not be re-run.
+The first two columns were measured before the W5 tool; the self-model column records the model retired by [DEC-076](../concepts/register.md#dec-076-markitect-is-developed-as-a-regular-software-project) and will not be re-run. The third column is the W6 remodel [makerspace-v2](../../tools/comparison/makerspace-v2/README.md) at W0 (and its change chain for S4), measured on 27 October 2026 with [model_analysis.py](../../tools/model-analysis/README.md).
 
-| | Makerspace c9 | Self-model |
-|---|---|---|
-| H1 | No unreached owner decision found yet; tool pending | Coverage gap rather than H1: Project, Workflow and Harness lack Definitions (R1) |
-| H2 | Fails: all 15 Packages in one link cycle | Passes trivially: no edges |
-| H4 | Fails: all 38 operations list their arguments and refusals in prose | Partly: Checks are typed, Rules are prose |
-| R1 | Fails: no architecture (left to the implementer, with no owner decision) and almost no way of working | Partly |
-| S1 | About 5 over 300 words of prose (computed-values 886, audit 453, utilization-report 383, invoice 371, makerspace 354) | 5 over 300; the largest has 793 |
-| S2 | To be re-measured with the stated method; a plain count of backticked names finds 57, mostly roles, refusal codes and states | Not measured |
-| S4 | C1–C8: 2, 7, 1, 4, 6, 3, 8, 3 Packages (no Policy Kind yet, so no step counts as cross-cutting) | 13 of 18 commits touched one Package |
-| S9 | 0 | All 26 content Definitions |
+| | Makerspace c9 (phase C) | Self-model | makerspace-v2 W0 |
+|---|---|---|---|
+| H1 | No unreached owner decision found yet; tool pending | Coverage gap rather than H1: Project, Workflow and Harness lack Definitions (R1) | Holds: every Manager receives 24 to 31 Rules by modeled scope |
+| H2 | Fails: all 15 Packages in one link cycle | Passes trivially: no edges | Holds: 29 Package edges, 0 cycles, 0 `dependency-rule` findings |
+| H4 | Fails: all 38 operations list their arguments and refusals in prose | Partly: Checks are typed, Rules are prose | Holds: 37 operations, 20 records and 25 refusal codes typed |
+| R1 | Fails: no architecture (left to the implementer, with no owner decision) and almost no way of working | Partly | Holds: owner-approved architecture, test and documentation obligations |
+| S1 | About 5 over 300 words of prose (computed-values 886, audit 453, utilization-report 383, invoice 371, makerspace 354) | 5 over 300; the largest has 793 | None over 300 words of prose; 11 above 150 (largest: the project anchor 299, computed times 280, time 261) |
+| S2 | To be re-measured with the stated method; a plain count of backticked names finds 57, mostly roles, refusal codes and states | Not measured | 1 (`ok`, a wire status) |
+| S3 | Not measured | Not measured | Instability from policies 0.09 to the leaf areas 1.00; edges point toward stabler Packages |
+| S4 | C1–C8: 2, 7, 1, 4, 6, 3, 8, 3 Packages (no Policy Kind yet, so no step counts as cross-cutting) | 13 of 18 commits touched one Package | C1–C9: 4, 7, 1, 6, 5, 4, 3, 3, 0 modules; C1, C2, C4, C5, C6 and C8 touch policies (cross-cutting) |
+| S5 | Not measured | Not measured | 59 % of Definition edges cross a Package; 14 of 22 area Package edges go to another area |
+| S9 | 0 | All 26 content Definitions | 3 (metering, responses, reports) |
+| Decisions | Not measured | Not measured | Largest 9 (order of checks, createReservation); none over 10 at W0 |

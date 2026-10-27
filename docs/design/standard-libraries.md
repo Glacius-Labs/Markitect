@@ -105,3 +105,7 @@ The Package tree is the architecture (modeling guide §2). These Kinds add only 
 | Event now? | No, deferred |
 | Where does Project live? | In `practice`, the base Library that `architecture` builds on |
 | **Open for the owner:** alias-only import visibility as a Core change? | Recommended for evaluation after W6; until then, ambiguities are reported and fixed by qualification |
+| **Open for the owner:** an unordered refusal list? | `Api.refusals` is first-match ordered. Where requirements leave the precedence of simultaneous failures open, the listed order becomes a decision the owner must make (W5 trial, 27 October 2026). An optional flag that marks a list as unordered would keep such models free |
+| **Open for the owner:** refusal codes in an Interface? | `Architecture.Interface` lists operations and types only, so a refusal code another Package uses (`member_suspended` in bookings) cannot be part of the surface. A `refusals` field would close this |
+| **Open for the owner:** placing an invariant? | `Architecture.Placement.concern` must be a `Practice.Rule`, so a `Data.Invariant` cannot be placed. Widening the target to an interface both implement would allow it |
+| **Open for the owner:** a wire-envelope Kind? | No Library Kind models a request envelope or response statuses; both trials and makerspace-v2 state them as protocol Rules with examples. A Kind would type them |
