@@ -1,119 +1,96 @@
 # Evaluation suite (lane 4)
 
-The evaluation suite gives every Markitect variant and the classic baseline the same job and judges every outcome the same way. A variant joins the suite through one arm interface: the same inputs, the same output bundle, and then one shared assessment, review and analysis that no arm runs or influences. This page holds the lane's scope, the interface, a short state and its open owner questions, and links to the pages that own the details.
+The evaluation suite answers one question: which way of developing a project performs better, and in which areas? It works in three steps:
+
+1. **Task:** what we want to build.
+2. **Variant:** a solution is plugged in and builds it.
+3. **Evaluation:** the result is judged against fixed criteria.
+
+The suite treats every variant as a black box. It does not care how a variant works, which agents, tools or provider it uses, or whether it runs on Claude or Codex. Every evaluation can run with any provider; the provider is part of the variant's configuration, and the suite only records it. Since Codex is out of tokens, the current runs use Claude.
 
 The lane exists since the owner split Markitect's work into lanes on 27 October 2026. Its lead is the "Lane 4: Evaluation suite" session.
 
 ## Scope
 
 - **Owns:**
-  - [`tools/comparison`](../../tools/comparison/README.md): the shared assessment ([`assess_candidate.py`](../../tools/comparison/assess_candidate.py)), the review rubric and prompts, the ledger and [`analyze.py`](../../tools/comparison/analyze.py).
-  - The arm interface on this page and its shared checks.
-  - The baseline arm K, classic agentic coding: one agent with ordinary documentation of the same meaning. Today's runner is [`runner.py`](../../tools/comparison/runner.py) (arm B in the [comparison protocol](../validation/v1-comparison-protocol-20261024.md)).
-  - The task portfolio and the study designs of later suites.
+  - The task format, the variant interface, the criteria and the report.
+  - [`tools/comparison`](../../tools/comparison/README.md): the assessment ([`assess_candidate.py`](../../tools/comparison/assess_candidate.py)), the review rubric and prompts, and the analysis ([`analyze.py`](../../tools/comparison/analyze.py)).
+  - The task portfolio.
+  - The baseline variant, classic agentic coding: one coding agent with the task. Today's runner is [`runner.py`](../../tools/comparison/runner.py).
 - **Uses, does not own:**
-  - The hidden oracles in [`tools/library-oracle`](../../tools/library-oracle/README.md) and [`tools/makerspace-oracle`](../../tools/makerspace-oracle/README.md). They change only through their own reviewed PRs, never during counted runs.
-  - The arms of the other lanes. Each lane owns its arm's adapter; the suite owns only the contract the adapter meets.
-- **Arms:**
+  - The hidden oracles in [`tools/library-oracle`](../../tools/library-oracle/README.md) and [`tools/makerspace-oracle`](../../tools/makerspace-oracle/README.md).
+  - The variants. Each lane owns its own variant and how it meets the interface.
+- **Variants today:**
 
-  | Arm | Variant | Lane | Adapter today |
-  |---|---|---|---|
-  | M | Markitect with the host as coordinator | 1 | Step 4's controller (`requalify.py`), kept in the evidence root, outside the repository |
-  | P | Markitect Apply as a Claude Code plugin | 2 | [`armp.py`](https://github.com/Glacius-Labs/Markitect/blob/c76d2b77/tools/comparison/armp.py) on branch `dev/markitect-plugins-assessment-779f8e`, not on `main` |
-  | G | Agents collaborate through a Git remote ([DEC-078](../concepts/register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review)) | 3 | None yet. First a throwaway prototype (Root and two children on the Library, a local Run remote with a minimal referee) that writes the run bundle itself; a product binary only if the prototype holds up |
-  | K | Classic agentic coding, the baseline | 4 | `runner.py` |
+  | Variant | Lane |
+  |---|---|
+  | Markitect with the host as coordinator | 1 |
+  | Markitect Apply as a Claude Code plugin | 2 |
+  | Agents collaborating through a Git remote ([DEC-078](../concepts/register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review)) | 3 |
+  | Classic agentic coding, the baseline | 4 |
 
-## The arm interface
+## 1. The task
 
-Every arm is one command that runs one task and writes one output directory. Everything before it (building the task) and after it (checking, assessing, reviewing, analyzing) is shared and identical for every arm.
-
-```text
-ARM run --task TASK.json --out NEW_DIR
-```
-
-### Inputs: the task
-
-The suite writes `TASK.json`. An arm reads nothing else from the suite.
-
-| Field | Meaning |
-|---|---|
-| `taskId`, `chainId` | Suite, project, chain and step, for example `suite-1/library/chain-2/S3`, and the chain's ID, which stays the same across its steps. An arm derives stable per-chain names from it, such as M's `repositoryIdentity`, so that its Shared Notes and stored Runs carry over within the chain and never across chains or arms |
-| `start` | The target repository as a Git bundle, its commit, tree and owner branch (for example `dev/library-m2`). The arm works on this commit and nothing else |
-| `intent` | The step's intent in both forms, built from one canonical model snapshot: the model (`.markitect/`, with the execution configuration) and the ordinary document (`requirements.md`) rendered from it with the renderer's equivalence check. A model arm (M, P, G) gets only the model in `start`; arm K gets only the document. The same meaning is the fairness condition, proven by the renderer's check. The suite pins everything the intent binds: the Libraries' versions and their lock in the manifest, and the project checks and the Go image by digest. No arm rebinds them |
-| `provider`, `model`, `effort` | The model every arm of the suite uses, for example Codex Luna at high effort ([owner decision](../concepts/sources/owner-morning-decisions-20261027.md)), or one Claude model in a Claude suite ([below](#owner-decisions)) |
-| `limits` | Wall deadline, aggregate CPU, memory and process ceiling, network policy, and the shared engine lock. Equal for all arms. An arm that cannot enforce a limit says so in `run.json`, and the suite reports it as a limit of the comparison |
-| `armLimits` | An arm's own bounds, such as P's agent allowance and correction rounds or M's message budget. Fixed per arm in the suite's dispatch before any run; the suite records them and does not interpret them |
-| `login` | The path of the account login. The arm passes it on without its refresh token and never writes it to the output |
-| `previous` | The arm's own output directory of the chain's previous step, or none. What an arm carries over (K resumes its thread, M keeps its state directory) is its own business, but it reads only its own previous output. An arm that supports only single tasks, such as G's prototype, refuses a task with `previous` and takes part only in single-task suites |
-
-The suite, not the arm, builds the start of every chain step: the arm's own previous candidate, or its previous start when there was none, plus one commit with the step's intent change. Both arms of a chain therefore start each step from their own work under the same rule.
-
-### Output: the run bundle
-
-The arm writes `NEW_DIR`, which must not exist before:
+A task is a directory the suite writes:
 
 | Path | Content |
 |---|---|
-| `run.json` | The run record, below |
-| `start.bundle` | The start it received, unchanged |
-| `result.bundle` | The candidate: one commit that descends from the start. Absent when there is no candidate |
-| `transcripts/` | Every agent session's raw transcript. Usage and the model actually used are recomputed from these |
-| `continuation/` | Whatever the arm needs for the next step. Opaque to the suite |
-| `arm/` | Arm-specific evidence, such as an Apply report, a state directory or `work.bundle`. Opaque to the suite |
+| `task.md` | What to build or change, in ordinary language, with the delivery rules |
+| `model/` | The same intent as a canonical model, for variants that work from one. The suite proves that `task.md` and `model/` say the same |
+| `start.bundle` | The repository to start from, as a Git bundle with its commit. Empty for a new project |
+| `limits.json` | The wall-clock deadline |
 
-`run.json` holds:
+A **chain** is a sequence of tasks on one project, such as a fresh build followed by nine changes. For each step the suite builds the start from the variant's own previous result plus the step's change to `task.md` and `model/`.
 
-- `arm`, `armRevision` (commit and digest of the arm's code or binary), `taskId`;
-- `provider`, `model`, `effort` as requested;
-- `start` and `candidate` as commit and tree, with the bundles' SHA-256;
-- `reported`: whether there is a candidate, the blocker's text if a model blocker ended the run, and the arm's own status and cause verbatim (for M, the Apply status and its cause);
-- `limits` and `armLimits` as applied, each with `enforced: true|false`;
-- `startedUtc`, `endedUtc`, `wallSeconds`;
-- `usage` as the arm reports it: input, cache-read, cache-creation, output and reasoning tokens, each `null` when the provider does not report it, and sessions, turns and tool calls;
-- `retries`: inside the product and by the arm's runner, counted separately;
-- `quarantine`: the result of the arm's own secret scan.
+The hidden material (oracle, probes, rubric) never reaches a variant.
 
-### Shared after the arm
+## 2. The variant
 
-1. **Run check.** A shared checker validates `run.json`, recomputes every hash, checks that the candidate descends from the start, that the intent inputs are unchanged, that the transcripts name the requested model, that usage matches the transcripts and that no secret is in the output. A run that fails is an infrastructure error and never counts as a candidate.
-2. **Assessment.** [`assess_candidate.py`](../../tools/comparison/assess_candidate.py) from the frozen assessor revision: the hidden oracle and probes, the candidate's own build and tests in the frozen Go image, the change census and a blinded copy.
-3. **Review.** The blinded rubric review, the mechanical check of critical findings ([`rubric_check.py`](../../tools/comparison/rubric_check.py)) and a confirming reviewer. A model blocker is classified here as justified or false.
-4. **Ledger and analysis.** One builder turns run check, assessment and review into ledger rows, and [`analyze.py`](../../tools/comparison/analyze.py) applies the suite's predeclared reading. The arm never writes a ledger row.
+A variant is one command:
 
-The outcome of a run is decided by these shared steps, never by the arm's own report. The suite's classification rule, fixed before any data, maps the run check and `reported` to `candidate`, `no_candidate`, `model_blocker` or `infrastructure_error`. Borderline causes, such as a provider at capacity, are listed in that rule by name, so that no arm and no reader decides them after the fact.
+```text
+VARIANT TASK_DIR OUT_DIR [STATE_DIR]
+```
+
+- It reads `TASK_DIR` and works however it likes, with whatever provider and model its configuration names.
+- It writes `OUT_DIR/result.bundle`: the final repository, one commit that descends from the start. No result means no result.
+- It may write `OUT_DIR/run.json` with what it knows about itself: provider and model used, tokens, status and cause. The suite records this; it does not decide anything from it.
+- `STATE_DIR` is the variant's own memory within a chain. It is empty at the chain's first step and handed back unchanged at every later step. Only the variant reads it.
+- The suite starts the command, measures the wall time and stops it at the deadline.
+
+Plugging in a new variant means writing this one command. Nothing else in the suite changes.
+
+## 3. The evaluation
+
+The same for every variant, from frozen tools:
+
+| Area | How it is measured |
+|---|---|
+| **Correctness** | The hidden oracle and probes, through the program's public interface |
+| **Build and tests** | The result's own build and tests in a fixed container |
+| **Scope** | A census of every changed path: what was changed that the task did not ask for, and whether the given task and model were left untouched |
+| **Code quality** | A blinded review against a fixed rubric, with every critical finding checked mechanically and confirmed by a second reviewer |
+| **Delivery** | Whether a result came back at all, along a chain |
+| **Cost** | Wall time, and tokens where the variant reports them |
+
+**The report** shows each variant per area, with its uncertainty, and the predeclared comparison per area. There is no single overall score. The answer is which variant performs better in which areas.
 
 ## State
 
-- **Done:** Phases A, B and C compared arm M with one agent on the Library and Makerspace ([report](../validation/v1-comparison-report-20261026.md)). No quality advantage for M was shown; M cost 9 to 10 times the time and 9 to 42 times the tokens.
-- **Shared tools:** assessment, review and analysis exist and are tested. They are tied to the Library and Makerspace profiles and to a ledger builder that lives in the evidence root, not in the repository.
-- **Arms:**
-  - K's `result.json` and P's `result.json` are close to the run record; neither writes `run.json` yet.
-  - M's adapter is outside the repository.
-  - G has no adapter yet. Lane 3 agreed the interface: its prototype publishes one commit whose parent is the start and whose tree is the Verify-approved candidate onto a local bare target built from `start.bundle`, and the adapter bundles that tip as `result.bundle`. The Run remote, the referee's record and the Manager branches go into `arm/`. G runs on Codex Luna; its run waits for the owner's approval of its own bounded dispatch.
-- **Pilot:** the Makerspace old-versus-new gate cells stay on `gpt-6-sol` and are not rerun on Luna ([delivery plan](../implementation-plan.md#acceptance-and-evaluation-owner-directive-25-october)).
-- **Study design:** a draft evaluation contract (estimands per task type, fixed sample size, calibrated instruments, a model-quality gate, new projects written after the source freeze) and a draft follow-up study on consistency over long change chains exist as the lead's working drafts and are not yet in the repository.
+- **Done:** Phases A, B and C compared Markitect with one agent on the Library and Makerspace ([report](../validation/v1-comparison-report-20261026.md)). No quality advantage for Markitect was shown, at 9 to 10 times the time and 9 to 42 times the tokens.
+- **Tools:** assessment, review and analysis exist and are tested. They are tied to the Library and Makerspace and to the old arm runners, and the ledger builder lives outside the repository.
+- **Variants:**
+  - Lane 1's is run by step 4's controller outside the repository.
+  - Lane 2's has its own runner on a branch.
+  - Lane 3's is a prototype in preparation.
+  - The baseline has `runner.py`, which so far runs Codex only.
+- **Pilot:** the Makerspace old-versus-new gate cells stay as they ran on `gpt-6-sol`.
 
 ## Next
 
-1. **Interface agreed** with the leads of lanes 1, 2 and 3 on 27 October 2026, with their changes folded in above.
-2. **Shared parts on `main`, first, because the adapters build against them:** the `TASK.json` and `run.json` schemas, the run checker, the chain-start builder and the ledger builder in `tools/comparison`, with offline tests. No engine runs.
-3. **Adapters:**
-   - K: `runner.py` writes `run.json` (lane 4).
-   - P: `armp.py` writes `run.json` (lane 2).
-   - M: step 4's controller moves into the repository as arm M's adapter in `tools/arm-m/` (lane 1), running native Apply on Linux. Lane 1 starts after the schemas and the run checker are on `main`.
-   - G: lane 3's prototype writes the run bundle itself (lane 3).
-4. **Portfolio and contract:** the evaluation contract and the follow-up study go into `docs/validation/` for owner review; new projects and their oracles follow it.
-5. **First bounded dispatch,** after the owner's approval: one Library task per arm on the suite's model, as a smoke of the interface, not as a counted run.
-
-## Owner decisions
-
-- **Suites by provider (27 October 2026).** The owner, in the lane 4 session: "Yes: arm P runs in a separate Claude suite with M through K1 and K as one Claude Code session; Luna suites hold M, G and K."
-  - A suite fixes one provider and model for every arm.
-  - Arm P runs only in Claude Code, so it takes part only in a Claude suite. There M runs through the Claude adapter (K1) and K as one Claude Code session.
-  - Luna suites hold M, G and K.
-  - A Claude suite uses the owner's Claude subscription. M in a Claude suite needs K1's native qualification (K1b) first.
-
-## Open owner questions
-
-1. **The baseline's continuation.** Does K continue one agent thread across a chain (as in Phase C) or start a fresh session per step with the repository as its only memory? The recommendation is to decide after the early probe that compares both on Phase C material.
-2. **The evaluation contract.** Does the owner want the contract reviewed and approved as binding before the first counted suite? The recommendation is yes, so that the decision rule is fixed before any data.
+1. **Interface on `main`:** the task format, the variant command, and the suite runner that builds tasks and chain starts, starts a variant under its deadline and collects the result, with offline tests.
+2. **Evaluation on `main`:** the assessment, the review and the report per area, reading only `result.bundle` and the suite's own measurements.
+3. **Baseline:** one coding agent as a variant command, with Claude Code first and Codex as a configuration.
+4. **The other variants:** each lane wraps its variant in the command.
+5. **First bounded dispatch,** after the owner's approval: one Library task through every variant on Claude, as a smoke of the suite, not as a counted run.
+6. **Portfolio:** new projects with hidden oracles for the counted evaluation.
