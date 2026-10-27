@@ -32,6 +32,9 @@ WORDS_WARNING, WORDS_STRONG = 150, 300
 TERM_PACKAGES = 3
 TERM_PATTERN = r"[A-Za-z][A-Za-z0-9]*"
 LITERALS = {"true", "false", "null"}
+SCOPE_FIELDS = ("appliesTo", "mayDependOn", "realizedIn")  # Package strings of the Practice and Architecture Libraries
+NAME_KEYS = {"name", "value", "wireName", "code"}  # named things a spec defines without a Definition of their own
+DEPENDENCY_RULE = ("markitect/architecture", "DependencyRule")
 
 
 class InputError(Exception):
@@ -259,7 +262,7 @@ def impact(old, new, transitive=False):
 
 # Imports are not in the check report. This reader understands the import
 # forms the language contract allows: a block list of `package`/`as` mappings
-# or a flow list `[]` / `[{package: x, as: Y}]`, with plain or quoted scalars.
+# (block style or one flow mapping per item) or a flow list `[]` / `[{package: x, as: Y}]`, with plain or quoted scalars.
 _SCALAR = r"""("(?:[^"\\]|\\.)*"|'(?:[^']|'')*'|[^,\s{}\[\]#][^,{}\[\]#]*?)"""
 
 
@@ -296,6 +299,14 @@ def read_imports(source):
                 continue
             if not item[:1].isspace() and not item.startswith("-"):
                 break
+            flow = re.fullmatch(r"\s*-\s*\{([^{}]*)\}\s*(#.*)?", item)
+            if flow:  # a block list item written as one flow mapping
+                fields = [re.fullmatch(r"\s*(package|as)\s*:\s*" + _SCALAR + r"\s*", f) for f in flow.group(1).split(",")]
+                if not all(fields):
+                    return None
+                current = [f.groups() for f in fields]
+                result.append(current)
+                continue
             field = re.match(r"\s*(-\s+)?(package|as)\s*:\s*" + _SCALAR + r"\s*(#.*)?$", item)
             if not field:
                 return None
@@ -362,6 +373,47 @@ def _layer(rules, package):
     return None
 
 
+def prose_words(body):
+    """Words of a body outside Markdown tables and fenced code blocks (quality criteria S1)."""
+    words, fenced = 0, False
+    for line in (body or "").splitlines():
+        if line.lstrip().startswith("```"):
+            fenced = not fenced
+            continue
+        if not fenced and not line.lstrip().startswith("|"):
+            words += len(line.split())
+    return words
+
+
+def package_strings(spec):
+    """{field: [Package path]} of the Package-naming fields a Definition sets (modeled scope and architecture rules)."""
+    found = {}
+    for field in SCOPE_FIELDS:
+        value = (spec or {}).get(field)
+        values = value if isinstance(value, list) else [value] if isinstance(value, str) else []
+        if values:
+            found[field] = values
+    return found
+
+
+def covers(cover, package):
+    """Whether a named Package covers a Package: itself, the Packages below it, or everything for the Root `.`."""
+    return cover == "." or package == cover or package.startswith(cover + "/")
+
+
+def named_values(value):
+    """Field names, enumeration values, wire names and codes set anywhere in a spec."""
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if key in NAME_KEYS and isinstance(item, str):
+                yield item
+            else:
+                yield from named_values(item)
+    elif isinstance(value, list):
+        for item in value:
+            yield from named_values(item)
+
+
 def lint(model, repo=None, rules=None, term_pattern=TERM_PATTERN):
     """Warnings per register ENH-002. Each has a signal, a severity and a subject."""
     findings = []
@@ -371,13 +423,30 @@ def lint(model, repo=None, rules=None, term_pattern=TERM_PATTERN):
 
     content = model.content()
     for identity in content:
-        words = len((model.definitions[identity].get("body") or "").split())
+        words = prose_words(model.definitions[identity].get("body"))
         if words > WORDS_WARNING:
-            warn("size", text(identity), f"body has {words} words", "strong" if words > WORDS_STRONG else "warning")
-    connected = {s for s, t, _, _ in model.edges if s != t} | {t for s, t, _, _ in model.edges if s != t}
+            warn("size", text(identity), f"body has {words} words of prose", "strong" if words > WORDS_STRONG else "warning")
+    scoped = {i for i in model.local if package_strings(model.definitions[i].get("spec"))}
+    connected = {s for s, t, _, _ in model.edges if s != t} | {t for s, t, _, _ in model.edges if s != t} | scoped
     for identity in content:
         if identity not in connected:
-            warn("isolated", text(identity), "no typed reference or body link in or out")
+            warn("isolated", text(identity), "no typed reference, body link or Package scope in or out")
+
+    local_packages = set(model.packages(model.local))
+    existing = {"."} | {"/".join(p.split("/")[:n]) for p in local_packages for n in range(1, p.count("/") + 2)}
+    for identity in sorted(scoped):
+        for field, values in package_strings(model.definitions[identity].get("spec")).items():
+            for value in values:
+                if value not in existing:
+                    warn("unknown-package", text(identity), f"`{field}` names `{value}`, which is no Package of this model", "strong")
+
+    dependency_rules = [(model.definitions[i]["spec"].get("appliesTo") or [i[0]], model.definitions[i]["spec"].get("mayDependOn") or [], i)
+                        for i in sorted(model.local) if model.kind(i) == DEPENDENCY_RULE]
+    for source, target in sorted({(s[0], t[0]) for s, t, _, _ in model.edges if s[0] != t[0] and t[0] in local_packages}):
+        for applies, may, identity in dependency_rules:
+            governing = [a for a in applies if covers(a, source)]
+            if governing and not any(covers(a, target) for a in governing) and not any(covers(m, target) for m in may):
+                warn("dependency-rule", f"{source} -> {target}", f"not allowed by {text(identity)}", "strong")
     for package in model.packages(content):
         if package not in model.area_owners:
             warn("no-area", package, "holds content Definitions but owns no registered artifact or ownership area")
@@ -396,6 +465,7 @@ def lint(model, repo=None, rules=None, term_pattern=TERM_PATTERN):
                 warn("unset-field", text(kind), f"field `{field}` is set by no local Definition")
 
     ids = {i[1].lower() for i in model.local} | LITERALS  # an imported `name` Property is not this model's term
+    ids |= {n.lower() for i in model.local for n in named_values(model.definitions[i].get("spec"))}
     term_packages = collections.defaultdict(set)
     for identity in model.local:
         for term in re.findall(r"`([^`\n]+)`", model.definitions[identity].get("body") or ""):
