@@ -6,11 +6,11 @@ Use this map to find the document that owns a decision, a guide or a piece of ev
 
 | If you want to… | Start here |
 |---|---|
-| Implement Markitect V1 | [V1 concept 1.0](concepts/v1-concept.md), [delivery plan](implementation-plan.md), [concrete Go architecture](design/v1-execution-architecture.md), [code map](development/code-map.md) and [qualification record](validation/v1-qualification-20261024.md) |
+| Implement Markitect V1 | [V1 concept 1.0](concepts/v1-concept.md), [delivery plan](implementation-plan.md), [architecture](architecture.md), [code map](development/code-map.md) and [qualification record](validation/v1-qualification-20261024.md) |
 | Understand what Markitect is for, before assessing or redirecting it | [Markitect in brief](vision.md#markitect-in-brief), [Common misreadings](vision.md#common-misreadings) and the [concept register](concepts/register.md) |
 | Understand where the idea came from and why its mechanisms might help | [Origin and rationale](concepts/origin-and-rationale.md) and the [owner's original account](concepts/sources/owner-origin-20261015.md); the archived product reflections are listed in the [archive index](archive.md#archived-pages) |
 | Use the current Model → Artifacts workflow | [Project workflow](guides/project-workflow.md), [Project operations](guides/project-operations.md) and [Provider adapters](guides/provider-adapters.md) |
-| Understand the technical boundaries | [Architecture](architecture.md), [Source snapshots](guides/source-snapshots.md) and [Measurement](guides/measurement.md) |
+| Understand the technical boundaries | [Architecture](architecture.md), the package READMEs it links and [Measurement](guides/measurement.md) |
 | Read the language specification | [Language contract](design/language-contract.md) and [diagnostic contract](design/diagnostic-contract.md), listed in the [design map](design/README.md) |
 | Contribute source | [Contribution checks](../CONTRIBUTING.md), [development map](development/README.md), [repository layout](development/repository-layout.md) and [documentation maintenance](development/documentation.md) |
 | Operate a release | [Operations](guides/operations.md), the [distribution guide](../packaging/README.md) and the [release evidence](validation/README.md) |
@@ -22,7 +22,7 @@ Use this map to find the document that owns a decision, a guide or a piece of ev
 |---|---|
 | Product thesis and human/agent responsibilities | [Vision](vision.md) |
 | Product decisions, promises, assumptions, long-term vision, agreed but unscheduled directions, ideas and open questions, with their origin | [Concept record](concepts/README.md) |
-| Technical behavior and product boundaries | [Architecture](architecture.md) and the guides above |
+| Technical behavior, product boundaries, package contracts and invariants | [Architecture](architecture.md), the package READMEs and the guides above |
 | Work-package scope, dependencies and reservations | [Delivery plan](implementation-plan.md); actual candidates and checks live in chats and PRs |
 | Source and native evidence of V1 | [Qualification record](validation/v1-qualification-20261024.md) and the [validation map](validation/README.md), read at their recorded scope and source |
 | Published asset identity of the retired releases | [Distribution retirement record](validation/distribution-retirement-20261017.md) and its [retired release mapping](validation/retired-releases-20261017.json) |

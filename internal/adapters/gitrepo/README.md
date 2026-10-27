@@ -1,4 +1,8 @@
-# Run Git workspace service
+# Git repository adapter
+
+This adapter owns complete repository capture, the Run Git workspace service, self-contained stored candidates and guarded publication, each in its own collaborator. [Architecture](../../../docs/architecture.md#adapters) states its place among the adapters and the invariants of repository capture.
+
+## Run Git workspace service
 
 `LocalGit` owns one private service per Run and a separate actual repository per Manager. It never edits the selected user checkout. Initial capture materializes the complete checked Census, including accounted Gitignored untracked files, and preserves canonical empty Package directories as real Git tree entries.
 
@@ -13,3 +17,15 @@ Known limit: `LocalGit` starts one Git process per operation. On Windows each co
 `LinuxGit` supplies the production workspace shape: one held Git service and one owned private volume per Run, with independent Manager repositories in that volume. Native Sessions consume their volume/subpath directly. Fixed observations export bytes to a private host copy for Project inspection; product work is not synchronized through a writable Windows bind. Disposable check input and home copies use separate subpaths with verified bytes, Linux modes and explicit required directory inventories. Candidate bundles and captured external inputs are independently read back before retention.
 
 The Linux backend requires a separately observed container proof. Local fixtures, compilation and controlled command receipts do not establish its physical mode, isolation or cleanup behavior. The direct Windows bind probe failed mode preservation and is not the production workspace path.
+
+## Publication boundary
+
+Apply independently rereads final stored Verify approval after every Run closes. Publisher reopens the exact self-contained bundle and retained external inputs with host Git in a separate temporary repository. It validates the fixed model, controls, registry and accounting and repeats declared checks against independently materialized inputs and homes. Native publication checks create fresh owned Linux copies; they do not reopen a Run service or Manager.
+
+Compare the original complete captured Census with the candidate, including accounted Gitignored and untracked inputs. Git commit identity alone does not determine no-change. Even unchanged output must match the captured target and source guards. Original branch, HEAD, index objects, input coordinates and bytes remain bound. The source guard binds model entries in one canonical order, so the committed Git listing and publication's working-tree walk of an unchanged source agree.
+
+Guard the expected complete target before each ordered path transfer, accounting for completed writes without changing the index. Preserve concurrent user changes and report actual completed paths on transfer or readback failure. Registry realization may add or remove valid shards; their exact expected bytes remain in the Census. The cooperating V1 writer lock lives in excluded `.markitect/state` administration. No automatic owner commit or push occurs.
+
+The filesystem and unrelated editors are not a global transaction. Final readback and honest partial-transfer reporting remain necessary. See [Architecture](../../../docs/architecture.md#workflow-and-apply) and the [delivery plan](../../../docs/implementation-plan.md).
+
+Publication capture and every Git identity, branch and HEAD recheck use the original execution context, including selective identity fallback queries. Cancellation kills and waits for an active Git query, prevents subsequent target mutations and successful readback, and preserves the paths already transferred. The final file replacement and removal also check cancellation at their mutation boundary.

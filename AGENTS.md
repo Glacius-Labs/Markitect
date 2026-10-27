@@ -27,7 +27,7 @@ Markitect itself is developed as an ordinary software project: agentic coding, t
 
 - [V1 concept 1.0](docs/concepts/v1-concept.md): the target.
 - [Delivery plan](docs/implementation-plan.md): current steps, work streams, known deviations and integration rules.
-- [V1 execution architecture](docs/design/v1-execution-architecture.md): concrete packages and contracts.
+- [Architecture](docs/architecture.md): packages, layers, contracts and the Run and Apply flow.
 - [V1 qualification record](docs/validation/v1-qualification-20261024.md): native and source evidence so far, with its limits.
 - [Code map](docs/development/code-map.md): every Go package and its owning guide.
 - [Concept register](docs/concepts/register.md): accepted decisions and open questions.
