@@ -4,7 +4,8 @@ id: key
 kind: Core.Property
 body: >-
   The name of the field that identifies a record among all records of its
-  type. Absent when records of the type have no identity of their own.
+  type; it names one of the Entity's fields. Absent when records of the type
+  have no identity of their own.
 spec:
   valueType: string
   minCount: 0
