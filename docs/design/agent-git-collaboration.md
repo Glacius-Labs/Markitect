@@ -1,6 +1,6 @@
 # Agents collaborate through Git
 
-**Status: draft for owner discussion, 27 October 2026.** This is the G0 design for [DEC-078](../concepts/register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review). Nothing here is decided, and nothing is built. An independent architecture review of the first draft is folded in; [section 12](#12-rejected-alternatives) lists what it changed.
+**Status: design agreed for a prototype, 27 October 2026.** This is the G0 design for [DEC-078](../concepts/register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review). The owner answered the questions in [section 11](#11-questions-for-the-owner) the same day. Nothing is built; the prototype in [section 13](#13-suggested-next-step) comes first. An independent architecture review of the first draft is folded in; [section 12](#12-rejected-alternatives) lists what it changed.
 
 ## In short
 
@@ -175,7 +175,7 @@ Tailoring examples:
 - The Run configuration names the target: a Git URL or a local path, plus a branch. The default is the remote's default branch.
 - At publication the host writes **one commit** onto the target: parent `T`, tree = the approved candidate's tree, a fixed Markitect identity, and the Apply ID in the message. It updates the target only if it still points at `T` (compare-and-swap). The agents' working history stays in the evidence bundle and never reaches the owner's branch.
 - If the target moved during the Apply, nothing changes and the Apply reports a conflict. A later option is a new Implement on the new tip.
-- **Open:** a local target branch that is checked out in the owner's working tree. Either refuse, or update it with Git's `updateInstead` when the tree is clean.
+- A local target branch that is checked out in the owner's working tree is updated the way Git's `receive.denyCurrentBranch=updateInstead` does it: only when that working tree is clean, otherwise nothing changes and the Apply reports a conflict.
 
 ## 8. Windows
 
@@ -205,13 +205,13 @@ During the Run, the host only uses the container engine and Git over a local por
 
 ## 11. Questions for the owner
 
-1. **A referee during the Run:** is a rule-keeper that refuses and keeps the score, but never directs, acceptable as "the host only starts and stops"? Without it, the Run loses complete participation, late findings, the shared budget and deadlock detection, or each Manager's tools would have to enforce them.
-2. Harness level B: free local work and seven team tools?
-3. One branch per Manager in V1, with shared branches later?
-4. Publish one commit on top of `T` (clean owner history), rather than fast-forwarding to the agents' history?
-5. If the target moved during the Apply, fail closed?
-6. A local target branch that is checked out: refuse, or update it when the tree is clean?
-7. Build a prototype before any rebuild? It would pause the next evaluation suite.
+1. **A referee during the Run:** is a rule-keeper that refuses and keeps the score, but never directs, acceptable as "the host only starts and stops"? Without it, the Run loses complete participation, late findings, the shared budget and deadlock detection, or each Manager's tools would have to enforce them. **Answered 27 Oct: yes.** The owner accepted a referee that only refuses bad pushes, runs checks and keeps the score.
+2. Harness level B: free local work and seven team tools? **Answered: yes.**
+3. One branch per Manager in V1, with shared branches later? **Answered: yes.**
+4. Publish one commit on top of `T` (clean owner history), rather than fast-forwarding to the agents' history? **Answered: one commit.**
+5. If the target moved during the Apply, fail closed? **Answered: yes, fail closed;** no automatic new Implement.
+6. A local target branch that is checked out: refuse, or update it when the tree is clean? **Decided by the design as Git's default:** update only when the tree is clean (section 7).
+7. Build a prototype before any rebuild? It would pause the next evaluation suite. **Answered: prototype first.**
 
 ## 12. Rejected alternatives
 
