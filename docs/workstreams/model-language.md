@@ -51,24 +51,26 @@ On 27 October the owner let the previous session accept its own recommendations 
 
 The owner, in this lane's session: "Accept the recommendations on the five Library questions: unordered-refusal flag, refusals in Interface, invariant placement via an interface, no envelope Kind yet, no alias-only Core change yet. Prepare the plan, build nothing yet."
 
-### Plan (not started)
+The owner then refined the first point in the same discussion. A refusal is a possible problem; when it applies belongs in its own definition. Asked whether to replace the flag with an unordered list plus precedence stated in prose, the owner answered: "Yes". The flag is dropped.
+
+### Plan (not started; reviewed point by point with the owner)
 
 One PR, owned by this lane. No Core or compiler change, so lane 8 is not involved.
 
 | Change | Library | Version |
 |---|---|---|
-| New optional boolean Property `unorderedRefusals`. When true, any refusal that applies may be returned, because the requirements fix no precedence. The bodies of `refusals` and `Operation` say so. A project Operation Kind adds the Property only when it needs it | `api` | 1.1.0 |
-| New optional Property `refusalCodes` on `Interface`, a list of references to `Api.RefusalCode`; the body names refusal codes as part of the public surface | `architecture` | 1.1.0, on `api` 1.1.0 |
-| `Invariant` implements `Practice.Rule` and declares the optional `appliesTo`. A Placement's `concern` stays `Practice.Rule` and now accepts an Invariant. An invariant is a binding statement, so it is a Rule | `data` | 1.1.0, now depends on `practice` 1.0.0 |
+| `refusals` lists the refusals an operation can return, with no order and no "first one wins". When precedence matters, the model states it in prose: a Rule (as Makerspace's `order-of-checks` already does) or the operation's body. The bodies of `refusals` and `Operation` say so. The name `RefusalCode` stays | `api` | 2.0.0, because the list loses its order guarantee |
+| New optional Property `refusalCodes` on `Interface`, a list of references to `Api.RefusalCode`; the body names refusal codes as part of the public surface | `architecture` | 1.1.0, on `api` 2.0.0 (still to discuss) |
+| `Invariant` implements `Practice.Rule` and declares the optional `appliesTo`. A Placement's `concern` stays `Practice.Rule` and now accepts an Invariant. An invariant is a binding statement, so it is a Rule | `data` | 1.1.0, now depends on `practice` 1.0.0 (still to discuss) |
 
-All three are minor versions: existing models stay valid. Putting the flag into the `Operation` interface itself would make `api` 2.0.0 and force every project Operation Kind to change, for a field few operations need.
+Existing models stay structurally valid; only the meaning of the refusal list changes.
 
 **In the same PR:** the lock files, the version pins in `internal/bootstrap/libraries_test.go`, the [standard Libraries](../design/standard-libraries.md) page (Library sections and the answered-questions table), and a verbatim source record of the decision under `docs/concepts/sources/`.
 
 **Not changed:** `makerspace-v2` keeps its vendored 1.0.0 copies; it is frozen gate material. A v2.2 that uses the new fields would come only when the evaluation lane asks for it.
 
 **Follow-ups for other lanes, after the merge:**
-- Lane 7: update the modeling skill's Library reference and its rule that the listed refusal order is an owner decision (decision 8 above).
+- Lane 7: update the modeling skill's Library reference, and replace its rule that the listed refusal order is an owner decision (decision 8 above): precedence goes into a Rule only when the requirements state it.
 - The analysis tool's owner (question 2 below): count refusal codes in an Interface as typed uses in the `interface` signal.
 - Coordinator: a register line under DEC-074.
 
