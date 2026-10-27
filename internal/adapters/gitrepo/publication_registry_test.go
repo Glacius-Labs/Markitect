@@ -102,6 +102,18 @@ func TestPublicationAllowsValidAddedAndDeletedRegistryShards(t *testing.T) {
 	}
 }
 
+// closedApproval is the Publisher seam fixture's bound closed Verify approval
+// of candidate, without running Verify.
+func closedApproval(prepared project.Prepared, candidate project.CandidateRef) run.Result {
+	approval := run.Result{ID: "approved", Project: "fixture", Binding: prepared.Binding(), Mandate: run.Verify, Technical: run.Completed, Decision: run.Approve, Input: candidate, Candidate: &candidate}
+	for _, m := range prepared.Topology().Managers() {
+		approval.Handoffs = append(approval.Handoffs, run.Handoff{Manager: m.Package})
+		approval.Cleanup = append(approval.Cleanup, run.Closure{Resource: "session:" + m.Package, Closed: true}, run.Closure{Resource: "copy:" + m.Package, Closed: true})
+	}
+	approval.Cleanup = append(approval.Cleanup, run.Closure{Resource: "manager-workers", Closed: true}, run.Closure{Resource: "git-service", Closed: true})
+	return approval
+}
+
 // Nothing stale or orphaned is published: even a bound closed approval of a
 // candidate that still links a deleted Definition, or keeps a merged Package's
 // shard, is refused before any target write.
@@ -122,15 +134,8 @@ func TestPublicationRefusesACandidateWithAStaleRegistryLink(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			// This Publisher seam fixture supplies a bound closed approval; a real
-			// Verify cannot approve this candidate, because Root's check refuses it.
-			approval := run.Result{ID: "approved", Project: "fixture", Binding: prepared.Binding(), Mandate: run.Verify, Technical: run.Completed, Decision: run.Approve, Input: input, Candidate: &input}
-			for _, m := range prepared.Topology().Managers() {
-				approval.Handoffs = append(approval.Handoffs, run.Handoff{Manager: m.Package})
-				approval.Cleanup = append(approval.Cleanup, run.Closure{Resource: "session:" + m.Package, Closed: true}, run.Closure{Resource: "copy:" + m.Package, Closed: true})
-			}
-			approval.Cleanup = append(approval.Cleanup, run.Closure{Resource: "manager-workers", Closed: true}, run.Closure{Resource: "git-service", Closed: true})
-			published, err := (&Publisher{Repository: adapter(t), Store: git}).Publish(context.Background(), apply.PublicationRequest{Prepared: prepared, Approval: approval})
+			// A real Verify cannot approve this candidate, because Root's check refuses it.
+			published, err := (&Publisher{Repository: adapter(t), Store: git}).Publish(context.Background(), apply.PublicationRequest{Prepared: prepared, Approval: closedApproval(prepared, input)})
 			if !errors.Is(err, project.ErrCandidateInvalid) || !strings.Contains(err.Error(), tc.artifact) || published.Readback || len(published.CompletedPaths) != 0 {
 				t.Fatal("publication accepted stale registry realization", published, err)
 			}
