@@ -54,6 +54,7 @@ const help = `Markitect: canonical v1 model, preparation and recursive Apply
 
   check [options]           structural model, registry and file accounting
   context <package> [options]  actual static selection and inclusion reasons
+  tree [options]            model-derived Manager tree with ownership areas
   docs [options]            preview a generated v1 model view
   apply [options]          closed Assessment, Implement, Verify and guarded publication
   version | licenses | help
@@ -133,7 +134,7 @@ func (c *Command) Run(ctx context.Context, args []string, stdout, stderr io.Writ
 	if verb == "apply" {
 		return c.applyVerb(ctx, args[1:], stdout, stderr, emit)
 	}
-	if verb != "check" && verb != "context" && verb != "docs" {
+	if verb != "check" && verb != "context" && verb != "tree" && verb != "docs" {
 		fmt.Fprintln(stderr, "unknown operation:", verb)
 		return 2
 	}

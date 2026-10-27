@@ -187,6 +187,46 @@ func TestActualStructuralPreparationAndFixedContext(t *testing.T) {
 	invoke(t, repo.Dir, 0, "check", "--revision", "HEAD")
 }
 
+// tree reports the same model-derived Manager tree that Apply organizes: Root
+// first without a parent, and every child as a Manager that names its parent.
+func TestTreeReportsTheModelDerivedManagerTree(t *testing.T) {
+	repo := productFixture(t)
+	out := invoke(t, repo.Dir, 0, "tree", "--revision", "HEAD")
+	var r struct {
+		Status   string
+		Contexts []any
+		Managers []struct {
+			Package  string
+			Parent   *string
+			Children []string
+			Areas    []string
+		}
+	}
+	if err := json.Unmarshal([]byte(out), &r); err != nil {
+		t.Fatal(err)
+	}
+	if r.Status != "passed" || len(r.Contexts) != 0 || len(r.Managers) < 2 || r.Managers[0].Package != "." || r.Managers[0].Parent != nil {
+		t.Fatal(out)
+	}
+	parents := map[string]string{}
+	for _, m := range r.Managers {
+		if m.Children == nil || m.Areas == nil {
+			t.Fatalf("%s: lists must be present: %s", m.Package, out)
+		}
+		for _, child := range m.Children {
+			parents[child] = m.Package
+		}
+	}
+	for _, m := range r.Managers[1:] {
+		if m.Parent == nil || parents[m.Package] != *m.Parent {
+			t.Fatalf("%s: parent does not match the tree: %s", m.Package, out)
+		}
+	}
+	if _, found := parents["product/model"]; !found {
+		t.Fatal(out)
+	}
+}
+
 // staleRegistryLink leaves the product fixture an artifact of a Definition the
 // owner deleted from the model: its registry link is stale.
 func staleRegistryLink(repo *testkit.Repo) {
