@@ -48,7 +48,7 @@ Apply result → lands on the target branch (lane 3) or ends with a model blocke
 
 - **Intake** turns a trigger into a task: what was observed, its source, a link back, and a dedupe key. Several triggers about the same thing merge into one task. The raw trigger text stays at intake; see the safety section.
 - **Triage** is an agent judgment over the current model. A task is a repair only when triage can name the Definition and the expected behavior that Definition already states, the test of [§18.3](../concepts/v1-concept.md#183-findings-as-an-actionable-handover). If the model is silent on a behavior at the project boundary, that is a model gap ([DEC-063](../concepts/register.md#dec-063-the-model-is-authoritative-defects-escalate)), so the task becomes a model change.
-- **Repair** needs no model edit, but it needs a concept change. Today Findings enter Implement only from a Verify Reject, and the host sets their origin from the Manager or check that produced them ([§10.4](../concepts/v1-concept.md#104-apply-flow), §18.3). With no outside Finding, [DEC-073](../concepts/register.md#dec-073-change-minimality-on-an-unchanged-model) rejects any change to an input already verified under the same model, and Verify does not see the task. The repair path therefore needs an Apply input of outside Findings that Implement receives and that Verify independently confirms as fixed. Lane 9 owns the command side.
+- **Repair** needs no model edit, but it needs a concept change. Today Findings enter Implement only from a Verify Reject, and the host sets their origin from the Manager or check that produced them ([§10.4](../concepts/v1-concept.md#104-apply-flow), §18.3). With no outside Finding, [DEC-073](../concepts/register.md#dec-073-change-minimality-on-an-unchanged-model) rejects any change to an input already verified under the same model, and Verify does not see the task. The repair path therefore needs an Apply input of outside Findings that Implement receives and that Verify independently confirms as fixed. The [outside Findings design](../design/outside-findings.md) proposes it; lane 9 owns the command side.
 - **Model change** produces a proposed model revision, checked by the compiler and judged by its reviewers. It becomes the Apply's input only once accepted.
 - **Batching:** accepted changes can be collected into one model revision and one Apply, so that a busy day does not start twenty Applies.
 
@@ -83,12 +83,13 @@ Apply result → lands on the target branch (lane 3) or ends with a model blocke
 
 ## State
 
-- 27 October 2026: lane started; this sketch written. Nothing built, no owner decision yet.
+- 27 October 2026: lane started; this sketch written. Nothing built.
+- 27 October 2026: on question 1 the owner answered "Yes: design outside Findings as a concept 1.0 amendment, with the command side in lane 9. Still build nothing." The [outside Findings design](../design/outside-findings.md) is that proposal; it is not adopted.
 - The owner's commission of 27 October covers design only. The register records no lift of the [DEC-011](../concepts/register.md#dec-011-detailed-planning-of-future-ideas-waits) planning hold for this axis; it should record this commission as design-only.
 
 ## Open owner questions
 
-1. **Outside Findings.** Should Apply accept Findings from outside a Run, which Verify must independently confirm as fixed? Without it there is no repair path on an unchanged model. The recommendation is yes, as a concept 1.0 amendment, with the command side in lane 9.
+1. **Outside Findings.** Answered for design: the [proposal](../design/outside-findings.md) is written. Adopting it is the next owner decision, together with its three open points. A report about boundary behavior the model is silent on still ends the Apply as a model gap.
 2. **First slice.** After question 1, start with step 1 for repairs only, on one pilot project and one trigger source? The recommendation is yes, with GitHub issues as the source, because repairs leave the model unchanged.
 3. **Automatic spending.** Today provider turns are spent only on the owner's prompts and on runs or sessions the owner starts ([DEC-065](../concepts/register.md#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration), [DEC-066](../concepts/register.md#dec-066-the-cockpit-is-markitects-desktop-app-and-starts-and-stops-apply)). Step 1 needs one new decision that lets the loop run triage, proposals and Apply by itself, each within its budget. Does the owner want that?
 4. **Accepting model changes.** One by one as they come, or as a batch in a daily inbox? The recommendation is a daily batch.
