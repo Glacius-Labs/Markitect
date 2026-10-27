@@ -17,6 +17,7 @@ These reports preserve the exact scope, inputs, source references and outcomes s
 - [V1 technical acceptance on F_final — 26 October 2026](v1-technical-acceptance-20261026.md): first final report of the owner directive; correct and safe as V1, not yet reliable at the 21-Manager project size; the fix plan targets its limits
 - [V1 comparison report — 26 October 2026](v1-comparison-report-20261026.md): second final report; across Phases A–C the data do not support "Markitect V1 is better than one agent", at 9–10.5 times the time and 9–42 times the tokens
 - [K-S against K-R: exploratory drift probe on Phase C material — 26 October 2026](v1-ks-kr-probe-20261026.md): one agent maintaining its own documentation from tickets against the same agent given the re-rendered specification, 3 chains of 10 steps each; no drift in either arm: all 60 runs passed every hidden case and no doc-truth answer was stale or wrong, K-S at 1.5 times the tokens from C1 on
+- [Fix plan v2 native controls on F_fix 714ae136 and F_fix2 0075171c — 26 and 27 October 2026](v1-fixplan-native-controls-20261027.md): a thread accepts a new turn after an error-terminated one (WP1 proxy); a fresh W0 passed with the idle limit and new message accounting; a fresh C4 no longer exhausted its messages but hit an undetected mutual await, and with #759's fix it passed through a full Verify-reject correction pair; the "already verified" fact held, yet Verify approved a change without a Finding, a contract gap
 
 ## Release evidence
 
