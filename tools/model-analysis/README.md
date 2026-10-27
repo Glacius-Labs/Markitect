@@ -10,7 +10,7 @@ The tool reads the JSON report of `markitect check`. Its per-Manager contexts, j
 go run ./cmd/markitect check --repo . > check.json
 ```
 
-Use the same `--model` and `--dependency` options as for any check. PowerShell 5.1 writes redirected output as UTF-16; the tool reads both encodings. Every command except `lock` needs a `passed` report with contexts.
+Use the same `--model` and `--dependency` options as for any check. PowerShell 5.1 writes redirected output as UTF-16; the tool reads both encodings. `diagnostics` reads any report and `lock` reads one whose only failure is the missing lock; every other command needs a `passed` report with contexts.
 
 File-local imports are not in the report. `lint --repo DIR` reads them from each Definition's source file. `lock --repo DIR` reads the dependency manifests the same way. A source's `Origin`, `gitrepo:BOUNDARY::MANIFEST`, says what its path is relative to: `.` means the repository given with `--repo`, and an absolute boundary is the directory of a manifest given by absolute path. The files are read from the working tree, also for a report made with `--revision`.
 

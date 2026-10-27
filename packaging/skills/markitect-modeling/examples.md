@@ -2,7 +2,7 @@
 
 Contents: Manifest (`.markitect/model.yaml`); Execution configuration (`.markitect/execution.yaml`); Project anchor; Dependency rule; Placement; Interface; Cross-cutting rule; Rule for some areas; Bounded Scalar with a unit; Format Scalar; Enumeration with meanings; Unit; Role; Refusal code; Record; Project Kind implementing a Library interface; The project Kind's own Property; Operation (a mutation of the project Kind); Operation (a read); Operation that needs a record of another area.
 
-Each block is a complete Definition file from the Makerspace v2 reference model in the Markitect repository (`tools/comparison/makerspace-v2/`), which compiles with the standard Libraries. Copy the shape, not the content.
+Each block is a complete Definition file from the Makerspace v2 reference model in the Markitect repository (`tools/comparison/makerspace-v2/`), which compiles with the standard Libraries. Copy the shape, not the content: the reference model keeps a few justified lint warnings, listed in its README.
 
 ## Manifest (`.markitect/model.yaml`)
 

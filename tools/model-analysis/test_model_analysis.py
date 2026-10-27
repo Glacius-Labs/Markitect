@@ -226,6 +226,11 @@ class LintTests(unittest.TestCase):
         self.assertIn(("unknown-package", "strong", "arch/stray"), found)
         # A rule that reaches Managers by Package scope is not isolated.
         self.assertFalse({s for sig, _, s in found if sig == "isolated"} & {"arch/a-dependencies", "arch/stray"})
+        # Without appliesTo a rule governs only its own Package: b's rule does not reach b/inner.
+        own = [definition("b/rule", "markitect/architecture/DependencyRule", "b only.", {"mayDependOn": []}),
+               definition("b/inner/q", "vocab/Rule", "Inner.", {"owner": ref("a/x")})]
+        own_found = self.signals(ma.lint(ma.Model(report(CONTENT + own))))
+        self.assertEqual({s for sig, _, s in own_found if sig == "dependency-rule"}, {"b -> a"})
         # A field name set in a spec is a named thing, not an undefined term.
         self.assertNotIn("fooBar", {s for sig, _, s in found if sig == "undefined-term"})
 
@@ -253,8 +258,9 @@ class LintTests(unittest.TestCase):
         self.assertEqual(result["status"], "failed")
 
     def test_prose_words_leave_out_tables_and_code(self):
-        body = "Two words.\n\n| a | b |\n| --- | --- |\n| c | d |\n\n```json\n{\"x\": 1}\n```\nThree more words."
-        self.assertEqual(ma.prose_words(body), 5)
+        body = "Two words.\n\n| a | b |\n| --- | --- |\n| c | d |\n\n```json\n{\"x\": 1, \"if\": 2}\n```\n- Three more words.\n1. One."
+        self.assertEqual(ma.prose_words(body), 6)  # list markers, tables and code do not count
+        self.assertEqual(ma.decisions({"body": body}), 0)  # nor does an `if` inside code
         self.assertTrue(ma.covers(".", "a/b") and ma.covers("a", "a/b") and not ma.covers("a", "ab"))
 
     def test_without_repo_import_signals_are_skipped_with_a_note(self):

@@ -123,8 +123,8 @@ Claim "done" only in a final report in this form, with the outputs pasted from r
 
 ```text
 Check:   exit <code>, model digest <sha256>       (pasted)
-Lint:    <counts>; each warning fixed or justified (pasted)
-Graph:   <cycles>, <dependency-rule findings>      (pasted)
+Lint:    <counts incl. dependency-rule>; each warning fixed or justified (pasted)
+Graph:   <cycles>                                  (pasted)
 Trace:   <n> of <n> requirement statements mapped; inventions: <none or list>
 Open:    <points left open by the requirements>
 Status:  READY FOR REVIEW | NOT READY: <numbered fixes>

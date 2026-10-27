@@ -7,6 +7,8 @@ use. The report also carries the registry records and the authored execution
 ownership. File-local imports are not in the report; with --repo the tool
 reads them from each Definition's source file.
 
+  python -I -B model_analysis.py diagnostics REPORT [--json]
+  python -I -B model_analysis.py summary REPORT [--json]
   python -I -B model_analysis.py graph REPORT [--json]
   python -I -B model_analysis.py refs REPORT PACKAGE/ID [--json]
   python -I -B model_analysis.py impact OLD_REPORT NEW_REPORT [--transitive] [--json]
@@ -37,6 +39,7 @@ NAME_KEYS = {"name", "value", "wireName", "code"}  # named things a spec defines
 DEPENDENCY_RULE = ("markitect/architecture", "DependencyRule")
 PROJECT = ("markitect/practice", "Project")
 DECISIONS_WARNING, DECISIONS_STRONG = 10, 15  # provisional, like the size thresholds
+LIST_MARKER = re.compile(r"[-*+]|\d+[.)]")
 CONDITION = re.compile(r"\b(?:when|if|unless|otherwise|except)\b", re.IGNORECASE)
 
 
@@ -376,24 +379,27 @@ def _layer(rules, package):
     return None
 
 
-def prose_words(body):
-    """Words of a body outside Markdown tables and fenced code blocks (quality criteria S1)."""
-    words, fenced = 0, False
+def prose_lines(body):
+    """The lines of a body outside Markdown tables and fenced code blocks."""
+    fenced = False
     for line in (body or "").splitlines():
         if line.lstrip().startswith("```"):
             fenced = not fenced
             continue
         if not fenced and not line.lstrip().startswith("|"):
-            words += len(line.split())
-    return words
+            yield line
+
+
+def prose_words(body):
+    """Words of a body's prose (quality criteria S1); list markers such as `-` or `1.` are not words."""
+    return sum(1 for line in prose_lines(body) for token in line.split() if not LIST_MARKER.fullmatch(token))
 
 
 def decisions(definition):
     """The model's counterpart of cyclomatic complexity: each typed refusal is one branch, and so is
     each condition word in the body's prose (`when`, `if`, `unless`, `otherwise`, `except`)."""
     refusals = (definition.get("spec") or {}).get("refusals") or []
-    prose = " ".join(line for line in (definition.get("body") or "").splitlines() if not line.lstrip().startswith("|"))
-    return len(refusals) + len(CONDITION.findall(prose))
+    return len(refusals) + len(CONDITION.findall(" ".join(prose_lines(definition.get("body")))))
 
 
 def package_strings(spec):
@@ -456,11 +462,15 @@ def lint(model, repo=None, rules=None, term_pattern=TERM_PATTERN):
                 if value not in existing:
                     warn("unknown-package", text(identity), f"`{field}` names `{value}`, which is no Package of this model", "strong")
 
-    dependency_rules = [(model.definitions[i]["spec"].get("appliesTo") or [i[0]], model.definitions[i]["spec"].get("mayDependOn") or [], i)
-                        for i in sorted(model.local) if model.kind(i) == DEPENDENCY_RULE]
+    dependency_rules = []
+    for i in sorted(model.local):
+        if model.kind(i) == DEPENDENCY_RULE:
+            spec = model.definitions[i].get("spec") or {}
+            dependency_rules.append((spec.get("appliesTo") or None, spec.get("mayDependOn") or [], i))
     for source, target in sorted({(s[0], t[0]) for s, t, _, _ in model.edges if s[0] != t[0] and t[0] in local_packages}):
         for applies, may, identity in dependency_rules:
-            governing = [a for a in applies if covers(a, source)]
+            # Without appliesTo a rule governs only its own Package, not those below it (Practice.appliesTo).
+            governing = [a for a in applies if covers(a, source)] if applies else [identity[0]] if source == identity[0] else []
             if governing and not any(covers(a, target) for a in governing) and not any(covers(m, target) for m in may):
                 warn("dependency-rule", f"{source} -> {target}", f"not allowed by {text(identity)}", "strong")
     for package in model.packages(content):
