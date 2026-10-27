@@ -10,7 +10,7 @@ Context (summary by the recorder): the new model's C2 in the old-versus-new Make
 
 ## 2. The model for evaluations
 
-Context (summary by the recorder): the session had explained the Codex model used in the pilot (`gpt-6-sol`, effort high) and its cost.
+Context (summary by the recorder): the session had named the Codex model used in the pilot (`gpt-6-sol`, effort high) and said that Luna would use less quota.
 
 > That explains it. For comparison we should keep Sol now but later suites should take luna instead
 
@@ -18,6 +18,6 @@ Context (summary by the recorder): the session had explained the Codex model use
 
 Recorder's interpretation:
 
-- **The pilot's last cell, the new model's C2 on v2.1, runs at once on the remaining Codex quota.** A quota stop is a failed attempt. A Claude run needs the Claude adapter (slice K1), which started the same morning.
+- **Of the two options, the sessions chose to run the pilot's last cell, the new model's C2 on v2.1, at once on the remaining Codex quota,** because a Claude run needs the Claude adapter (slice K1), which started the same morning. The coordinator's dispatch counts a quota stop as a failed attempt.
 - **The current pilot stays on `gpt-6-sol`** so that its cells stay comparable.
-- **Later comparison and evaluation suites run on Codex Luna,** and both arms of a suite always use the same model.
+- **Later comparison and evaluation suites run on Codex Luna.** That both arms of a suite use the same model is the session's and coordinator's rule, so that a suite does not mix two variables.

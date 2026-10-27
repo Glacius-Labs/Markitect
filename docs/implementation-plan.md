@@ -61,7 +61,7 @@ Steps 2 and 3 do not reopen concept decisions. A newly observed contradiction be
 
 The [owner directive](concepts/sources/v1-acceptance-directive-20261025.md) separates technical V1 acceptance from product value and sets the order below. Comparison Phase A (no quality advantage shown as approved; a tendency for Markitect, p 0.227, only under a seed list changed after the first S4 run), Phase B (tie, p 1.0) and Phase C (counts against Markitect, p 0.95; [results](validation/v1-comparison-results-phase-c-20261026.md)) are complete; their records are under `docs/validation/` and `tools/comparison/`. Bounds beyond the directive's own (no blanket timeout increase, no classification platform, attempts bounded in advance) are the coordinator's routine choices: no engine runs in P1 and P3, at most 3 P2 attempts, N from measured cost.
 
-**Evaluation model.** The old-versus-new Makerspace pilot stays on `gpt-6-sol` for comparability. Later comparison and evaluation suites pin Codex Luna in their dispatch, and both arms of a suite always use the same model ([owner](concepts/sources/owner-morning-decisions-20261027.md)).
+**Evaluation model.** The old-versus-new Makerspace pilot stays on `gpt-6-sol` for comparability. Later comparison and evaluation suites pin Codex Luna in their dispatch ([owner](concepts/sources/owner-morning-decisions-20261027.md)). By the coordinator's rule, both arms of a suite use the same model.
 
 | Item | Work | Owner | Depends on | Bounds | Done when |
 |---|---|---|---|---|---|
