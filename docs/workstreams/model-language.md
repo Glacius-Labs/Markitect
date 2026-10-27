@@ -60,7 +60,7 @@ One PR, owned by this lane. No Core or compiler change, so lane 8 is not involve
 | Change | Library | Version |
 |---|---|---|
 | `refusals` lists the refusals an operation can return, with no order and no "first one wins". When precedence matters, the model states it in prose: a Rule (as Makerspace's `order-of-checks` already does) or the operation's body. The bodies of `refusals` and `Operation` say so. The name `RefusalCode` stays | `api` | 2.0.0, because the list loses its order guarantee |
-| New optional Property `refusalCodes` on `Interface`, a list of references to `Api.RefusalCode`; the body names refusal codes as part of the public surface | `architecture` | 1.1.0, on `api` 2.0.0 (still to discuss) |
+| New optional Property `refusalCodes` on `Interface`, a list of references to `Api.RefusalCode`; the body names refusal codes as part of the public surface | `architecture` | 1.1.0, on `api` 2.0.0. Discussed: handled as code handles it, where an error a package exports (Go's `os.ErrNotExist`) is part of its public API like its functions and types, and another package may return it only if it is exported |
 | `Invariant` implements `Practice.Rule` and declares the optional `appliesTo`. A Placement's `concern` stays `Practice.Rule` and now accepts an Invariant. An invariant is a binding statement, so it is a Rule | `data` | 1.1.0, now depends on `practice` 1.0.0 (still to discuss) |
 
 Existing models stay structurally valid; only the meaning of the refusal list changes.
