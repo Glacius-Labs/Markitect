@@ -53,6 +53,8 @@ The owner, in this lane's session: "Accept the recommendations on the five Libra
 
 The owner then refined the first point in the same discussion. A refusal is a possible problem; when it applies belongs in its own definition. Asked whether to replace the flag with an unordered list plus precedence stated in prose, the owner answered: "Yes". The flag is dropped.
 
+On the third point the owner asked to look at it as code does. Cross-cutting concerns sit in an outer layer, which is what `Placement` models; an invariant is enforced by the code that owns the data. Asked whether to drop the change, the owner answered: "Yes i agree". Invariants are not placed; an Invariant lives in the Package that owns its Entities, and that Package enforces it.
+
 ### Plan (not started; reviewed point by point with the owner)
 
 One PR, owned by this lane. No Core or compiler change, so lane 8 is not involved.
@@ -61,17 +63,15 @@ One PR, owned by this lane. No Core or compiler change, so lane 8 is not involve
 |---|---|---|
 | `refusals` lists the refusals an operation can return, with no order and no "first one wins". When precedence matters, the model states it in prose: a Rule (as Makerspace's `order-of-checks` already does) or the operation's body. The bodies of `refusals` and `Operation` say so. The name `RefusalCode` stays | `api` | 2.0.0, because the list loses its order guarantee |
 | New optional Property `refusalCodes` on `Interface`, a list of references to `Api.RefusalCode`; the body names refusal codes as part of the public surface | `architecture` | 1.1.0, on `api` 2.0.0. Discussed: handled as code handles it, where an error a package exports (Go's `os.ErrNotExist`) is part of its public API like its functions and types, and another package may return it only if it is exported |
-| `Invariant` implements `Practice.Rule` and declares the optional `appliesTo`. A Placement's `concern` stays `Practice.Rule` and now accepts an Invariant. An invariant is a binding statement, so it is a Rule | `data` | 1.1.0, now depends on `practice` 1.0.0 (still to discuss) |
-
 Existing models stay structurally valid; only the meaning of the refusal list changes.
 
 **In the same PR:** the lock files, the version pins in `internal/bootstrap/libraries_test.go`, the [standard Libraries](../design/standard-libraries.md) page (Library sections and the answered-questions table), and a verbatim source record of the decision under `docs/concepts/sources/`.
 
-**Not changed:** `makerspace-v2` keeps its vendored 1.0.0 copies; it is frozen gate material. A v2.2 that uses the new fields would come only when the evaluation lane asks for it.
+**Not changed:** `data`, `practice` and `values` stay at 1.0.0. `makerspace-v2` keeps its vendored 1.0.0 copies; it is frozen gate material. A v2.2 that uses the new fields would come only when the evaluation lane asks for it.
 
 **Follow-ups for other lanes, after the merge:**
-- Lane 7: update the modeling skill's Library reference, and replace its rule that the listed refusal order is an owner decision (decision 8 above): precedence goes into a Rule only when the requirements state it.
-- The analysis tool's owner (question 2 below): count refusal codes in an Interface as typed uses in the `interface` signal.
+- Lane 7: update the modeling skill's Library reference, and replace its rule that the listed refusal order is an owner decision (decision 8 above): precedence goes into a Rule only when the requirements state it. Add to the modeling guide: an Invariant lives in the Package that owns its Entities and is not placed.
+- The analysis tool's owner (question 2 below): count refusal codes in an Interface as typed uses in the `interface` signal, and flag an Invariant defined outside the Package that owns its Entities.
 - Coordinator: a register line under DEC-074.
 
 **Unchanged by decision:** no wire-envelope Kind, and imports stay visible without their alias. Both wait until a real model needs them.
