@@ -121,9 +121,9 @@ func (p *PreparedProfile) validateAgentImage() {
 	if p.input.namespace != "agentProfiles" || o.CheckImage != nil {
 		p.problem(model.Failed, "image_evidence", "Agent image evidence is agent-only and cannot mix with file/inventory evidence.")
 	}
-	// Decoding admits only the codexAppServer section for an Agent profile.
-	if (complete || image.Provider != "") && image.Provider != AgentImageCodexAppServer {
-		p.problem(model.Failed, "image_provider", "Unknown agent image provider discriminator.")
+	// Each Agent section has exactly one image provider.
+	if (complete || image.Provider != "") && image.Provider != agentImageProviders[p.input.section] {
+		p.problem(model.Failed, "image_provider", "Agent image provider differs from the selected Agent section.")
 	}
 	if complete || image.ImageID != "" {
 		if !profileSHA256(image.ImageID) {
@@ -150,8 +150,12 @@ func (p *PreparedProfile) validateAgentImage() {
 	if complete && !agentImageLiteral(o.Contract.Name) {
 		p.problem(model.Failed, "image_contract", "Image validation contract name must be a bounded nonblank literal without controls.")
 	}
-	if (complete || image.RecordedCodexSchemaDigest != "") && !profileSHA256(image.RecordedCodexSchemaDigest) {
+	codex := image.Provider == AgentImageCodexAppServer
+	if codex && (complete || image.RecordedCodexSchemaDigest != "") && !profileSHA256(image.RecordedCodexSchemaDigest) {
 		p.problem(model.Failed, "image_recorded_schema", "Codex image evidence requires the literal build-recorded sha256 schema digest, not an inventory assertion.")
+	}
+	if !codex && image.RecordedCodexSchemaDigest != "" {
+		p.problem(model.Failed, "image_recorded_schema", "Only Codex image evidence carries a recorded Codex schema digest.")
 	}
 }
 

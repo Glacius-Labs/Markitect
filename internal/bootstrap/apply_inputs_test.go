@@ -138,7 +138,7 @@ func TestApplyCompositionPreparesFreshTranscriptDirectoryBeforeRunStartup(t *tes
 				t.Fatal("fixture must begin without state", err)
 			}
 			sessions := &codexappserver.Agents{}
-			command, err := composeApplyCommand(cfg, id, repository, engine, sessions, checker, codexappserver.Profile{})
+			command, err := composeApplyCommand(cfg, id, repository, engine, codexAgents(sessions, codexappserver.Profile{}), checker)
 			if blocked {
 				if err == nil || command.Executor != nil {
 					t.Fatal("unusable transcript parent admitted a Run", err)

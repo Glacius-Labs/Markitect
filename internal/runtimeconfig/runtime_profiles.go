@@ -27,9 +27,9 @@ type CheckProfilePreparer interface {
 }
 
 // ProfileInput can only be produced from an acquired Runtime profile document by Apply.
-// Section names the selected adapter section (codexAppServer for an Agent or
-// container for a check); Inline returns that section, never a whole catalog
-// to parse.
+// Section names the selected adapter section (codexAppServer or claudeCode for
+// an Agent, container for a check); Inline returns that section, never a whole
+// catalog to parse.
 type ProfileInput struct {
 	document                        project.SourceFile
 	namespace, name, section, field string
@@ -68,7 +68,14 @@ type ProfileContract struct {
 
 type AgentImageProvider string
 
-const AgentImageCodexAppServer AgentImageProvider = "codex-app-server"
+const (
+	AgentImageCodexAppServer AgentImageProvider = "codex-app-server"
+	AgentImageClaudeCode     AgentImageProvider = "claude-code"
+)
+
+// agentImageProviders binds each Agent section to the one image provider its
+// adapter observes.
+var agentImageProviders = map[string]AgentImageProvider{"codexAppServer": AgentImageCodexAppServer, "claudeCode": AgentImageClaudeCode}
 
 // AgentImageMetadataFile identifies actual whole bytes read from a regular file
 // inside ImageID. Path is an exact canonical absolute POSIX image path, not a
@@ -83,8 +90,9 @@ type AgentImageMetadataFile struct {
 // AgentImageObservation is an adapter's static validation assertion, bound to an
 // immutable engine image ID (sha256:<64 lowercase hex digits>). CLIVersion and
 // AgentdVersion retain literal recorded values, not observed process handshakes.
-// RecordedCodexSchemaDigest is required; it is a build-recorded sha256 digest,
-// never a complete observed schema inventory.
+// RecordedCodexSchemaDigest is required for Codex and absent for Claude Code;
+// it is a build-recorded sha256 digest, never a complete observed schema
+// inventory.
 // Metadata binds the entire actual file, including other recorded values.
 // This evidence grants no process, credential, Session or execution authority.
 type AgentImageObservation struct {

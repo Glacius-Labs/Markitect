@@ -1,0 +1,60 @@
+# Claude Code native sessions
+
+The adapter implements static `runtimeconfig.AgentProfilePreparer` and the actual `run.Sessions` port for the Claude Code CLI with subscription login. It is an addition beyond V1's Codex scope ([D18](../../../docs/concepts/v1-concept.md#23-provider-scope-d18)); the owner scoped it as slice K1 ([owner decisions](../../../docs/concepts/sources/owner-night-decisions-20261027.md)). One prepared profile supplies one `Agents` instance. Outer composition chooses profiles; Project and Run do not import Runtime configuration. Source implementation does not establish provider qualification: increment 1 has source and fixture tests only, and the native qualification K1b is a later, coordinator-dispatched step.
+
+## Static preparation
+
+`claudeCode` in `markitect.runtime/v1` is a closed section, mutually exclusive with `codexAppServer`: a profile selects exactly one Agent section. `profileVersion: 1` requires absolute `engineExecutable`, immutable `imageID`, `agentdVersion`, ordered `instructions: [{boundary, path}]`, `credentialRef`, `maxWireBytes` (positive, at most 8 MiB per stream-json line) and the closed `session` object: `version: 1`, literal `model` (an alias such as `sonnet` or a full model name), `effort` (`low`, `medium`, `high`, `xhigh` or `max`), `baseInstructions`, `developerInstructions`, `store`, positive `cpus`, `memoryBytes`, `pids`, `tmpBytes`, and explicit `network` (empty selects the engine default; host networking is refused). There is no metadata-only version.
+
+The metadata reader inspects the selected image, copies bounded whole `/opt/markitect/runtime.env` bytes without starting the image, and checks its identity again. The shared image records both CLIs; this adapter requires the `claude` record `2.1.308 (Claude Code)` and the agentd version, and admits the Codex records beside them. The observation's provider is `claude-code` and carries no Codex schema digest. `ProfileFromPrepared` admits only complete, source-bound observations with the exact contract `markitect.claude-code.image-metadata` version 1, provider, image, metadata path, versions and captured instruction list.
+
+## Actual Run consumer
+
+`NewAgents(engine, preparedProfile, credentialResolver)` and `NewAgentsWithRuntime(starter, preparedProfile, credentialResolver)` construct the consumer. `Open(ctx, run.SessionSpec)` checks the exact prepared Manager, complete checked Project, supported tools and actual workspace location before resolving the selected opaque credential reference. Native execution accepts only an existing private Linux `Volume` plus `Subpath`, mounted at `/work` with no copy-up; a local `Directory` is unsupported. The native factory owns one fresh private home at `/home/agent` and one hardened Manager container per Manager.
+
+One Manager is one Claude Code conversation in one container. The adapter chooses a random session UUID at `Open`. Each `Exchange` starts a fresh provider process: the first with `--session-id`, every later one, and every repeat after a transient error once the conversation exists, with `--resume`. The process receives exactly one stream-json user message (Run's message as JSON), its standard input closes, and the response ends when the process exits. Stop then collects the exit, and agentd's process census must find no native process left behind; a detached process that could still write to `/work` ends the Exchange with an error. The provider's own turn is a protocol fact; Markitect adds no Turn layer.
+
+Launch arguments: `--print --input-format stream-json --output-format stream-json --verbose`, `--model`, `--effort`, `--system-prompt-file` and `--append-system-prompt-file`, `--permission-mode bypassPermissions --permission-prompts none`, `--tools Bash,Read,Edit,Write,Glob,Grep`, `--disable-slash-commands`, `--setting-sources user` and `--strict-mcp-config --mcp-config` naming only `markitect-agentd mcp`. The fixed provider environment sets `CLAUDE_CONFIG_DIR=/home/agent/.claude` and turns off CLAUDE.md and auto memory, background tasks, built-in subagents, file checkpointing, MCP tool search, updates and nonessential traffic, and strips credentials from the environments of the processes Claude Code starts (`CLAUDE_CODE_SUBPROCESS_ENV_SCRUB`). `providerArgv` and `providerEnvironment` in [profile.go](profile.go) hold the exact values. These controls require the native loading and conflicting-instruction proof; text construction alone does not establish loader priority.
+
+## Harness, tools and completion
+
+The pure [harness](../../harness/README.md) supplies versioned rules, checked Project and complete hierarchy, exact Manager and context, mandate, Findings and the command's bound input. The native renderer adds the selected literal profile instructions and captured runtime instructions. `Document.Base` replaces Claude Code's default system prompt and `Document.Developer` is appended to it; these exact strings determine `HarnessDigest`. agentd's one private initialization writes them to `/home/agent/.markitect/system-prompt.md` and `append-system-prompt.md`, outside product content, together with the login file. Native instructions and login that exceed one private setup frame (1 MiB) are refused at `Open`, never truncated. Optional `TranscriptRoot` is an explicit absolute evidence directory; fresh exclusive transcript files redact login tokens.
+
+Nine MCP tools call Run's fixed tool set with the Codex adapter's names, descriptions and schemas: `delegate`, `await`, `review`, `ask`, `reply`, `judge`, `check`, `read_notes` and `append_note`. Each tool declares `_meta` `anthropic/maxResultSizeChars` 500000, so a child's handoff diff reaches the parent inline instead of a file, and `anthropic/alwaysLoad`. Exact required keys, casing and field types are validated before any callback. Tool calls are served with the Exchange's context, so serving pauses Run's provider idle clock. Claude Code has no thread identity per call: the adapter instead refuses any stream message of a native subagent (a non-null `parent_tool_use_id`) and any control request.
+
+The end of a response carries no judgment: the Manager judges through `judge`. `Observation()` returns only the constructed session's `ProfileIdentity`, confirmed `ImageID` and `HarnessDigest`. `Acted()` reports whether the last Exchange completed any tool use, a Run tool call included; text and thinking do not count. `Close` cancels an active Exchange, stops a live process, clears the private files after observed exit, closes the container and removes only the owned home. Cleanup uncertainty remains an error.
+
+## Transient provider errors
+
+Claude Code retries a failed API request itself and reports each retry as `system/api_retry`. Once it gives up, the turn's `result` reports `is_error`, and the assistant message or the last retry names the error category. The closed list of transient categories is `overloaded`, a model at capacity (HTTP 529), mirroring the Codex adapter's one observed kind; it awaits Claude evidence from K1b. Every other category, or none, ends the Exchange with the redacted error. After a transient error the adapter waits up to 30 s for the failed process to exit. What the response had done by then decides what follows, with the Codex adapter's rules:
+
+- Nothing yet: no Run tool call was served and no tool use completed or is still open. The adapter repeats the same message in the same conversation, at most two extra attempts after waits of 30 s and 120 s, never past the Run deadline. Waiting is host time (`run.HostTime`).
+- Acted: Run tool calls were served or tool uses completed. These actions are never repeated; the Exchange ends with the cause.
+- Unclear: a tool use started without a result, or a tool call reached the host after the error or during the wait. That call stays unserved and the Exchange ends.
+
+Each repeat adds a `retry` record to the transcript; `Agents.ProviderRetries()` counts them for the Apply report.
+
+## Login
+
+Subscription login only, from a file the operator mounts read-only. There is no API-key route.
+
+- `subscription-credentials`: a Claude Code credentials file (`.credentials.json`) with a `claudeAiOauth` account login. The Manager copy keeps only `claudeAiOauth` without its refresh token and is installed as `/home/agent/.claude/.credentials.json` (mode 0600) through private agentd initialization. Other entries, such as MCP server logins, never reach a Manager. An access token already past `expiresAt` is refused at `Open`.
+- `subscription-token`: the long-lived token of `claude setup-token` in a file. It reaches the provider process as `CLAUDE_CODE_OAUTH_TOKEN` in the provider environment of each start (never the container environment, arguments, harness or Notes), and the subprocess scrub keeps it out of tool processes.
+
+An Anthropic API key in either file is refused, and composition refuses an Apply environment that sets `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN` or another API-key or provider variable, naming it. Before any inference, `Open` runs `claude auth status` in the container and requires the login method of the selected mode (`claude.ai` or `oauth_token`); an API key, API-key helper or other provider, for example from the image environment, is refused. Known tokens and their escaped forms are redacted from transcripts and errors.
+
+Refresh limitation: a read-only mount means this adapter never refreshes or rewrites the source login, and the Manager copy cannot refresh either. A credentials file works until its access token expires; renew the login on the host before an Apply that would outlast it. A single-file bind mount keeps the inode the launch saw, so a host-side renewal that replaces the file reaches only later launches. The one-year setup token avoids the short access-token lifetime. Fresh-login, expiry during a Run and concurrent fan-out need native evidence.
+
+## Stated CLI assumptions
+
+The codec and session follow the documented headless interface of the pinned CLI and are tested against authored fixtures, not provider captures. K1b must confirm on the pinned image:
+
+- the stream-json shapes consumed: `system/init` with `session_id` and `mcp_servers`, `system/api_retry` with `error`, `assistant` and `user` messages with `parent_tool_use_id` and content blocks, the assistant `error` category, and `result` with `subtype`, `is_error`, `result` or `errors`;
+- that one input message followed by closed standard input yields one response and process exit, with background tasks disabled;
+- that `--resume` continues the conversation across processes in the same private home, also after a failed attempt, and that a repeated message after a transient failure is accepted;
+- that the system prompt files replace and extend the default prompt, and that `--setting-sources user`, `CLAUDE_CODE_DISABLE_CLAUDE_MDS`, `--disable-slash-commands` and `--strict-mcp-config` keep repository instructions, hooks, skills and other MCP servers out;
+- that a credentials file without a refresh token authenticates until expiry, that `claude auth status` reports `claude.ai` or `oauth_token`, and that the subprocess scrub removes the token from tool environments;
+- that the tool `_meta` annotations keep Run tool results inline and loaded, and that the markitect MCP server reports `connected` or `pending` in `system/init`;
+- that `overloaded` is the category of a model at capacity once Claude Code's own retries end.
+
+Pure codec, metadata, credential and controlled-session tests establish source behavior only. Native loading, hierarchy, login lifetime, provider support, full Apply and owner acceptance remain separate claims.

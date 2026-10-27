@@ -1,5 +1,5 @@
 # Markitect runtime base image: the session helper markitect-agentd and the
-# pinned Codex CLI. Build it from the repository root:
+# pinned Codex and Claude Code CLIs. Build it from the repository root:
 #
 #   docker build -f packaging/runtime/Dockerfile -t markitect-runtime .
 #
@@ -40,6 +40,20 @@ RUN set -eu; \
     printf 'codex=%s\ncodexSchema=sha256:%s\nagentd=%s\n' \
       "$(codex --version)" "$schema" "$(markitect-agentd version)" \
       > /opt/markitect/runtime.env
+
+# The pinned Claude Code CLI, an addition beyond V1's Codex scope. It comes
+# after the Codex layers, which stay unchanged, and appends its claude record
+# to runtime.env. The version check uses a throwaway home, so no CLI state
+# lands in the image, and fails the build when the CLI is not the pinned one.
+ARG CLAUDE_CODE_VERSION=2.1.308
+RUN npm install --global --no-fund --no-audit \
+      "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" \
+ && npm cache clean --force
+RUN set -eu; \
+    version=$(HOME=/tmp/claude-version DISABLE_AUTOUPDATER=1 CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 claude --version); \
+    rm -rf /tmp/claude-version; \
+    test "$version" = "${CLAUDE_CODE_VERSION} (Claude Code)"; \
+    printf 'claude=%s\n' "$version" >> /opt/markitect/runtime.env
 
 ENV HOME=/home/agent
 USER 1000:1000

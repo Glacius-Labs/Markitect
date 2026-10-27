@@ -6,7 +6,9 @@
 package agentd
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -165,6 +167,10 @@ func (s *server) start(request uint64, req frame.Start) error {
 		if t.Name == "" || len(t.InputSchema) == 0 {
 			s.mu.Unlock()
 			return errors.New("every tool needs a name and an input schema")
+		}
+		if meta := bytes.TrimSpace(t.Meta); len(t.Meta) != 0 && (!json.Valid(meta) || meta[0] != '{') {
+			s.mu.Unlock()
+			return fmt.Errorf("tool %q has a _meta value that is not a JSON object", t.Name)
 		}
 		if _, dup := tools[t.Name]; dup {
 			s.mu.Unlock()

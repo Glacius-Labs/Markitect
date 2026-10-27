@@ -95,7 +95,7 @@ The message allowance counts messages to Managers. A question costs nothing of i
 
 ### Dedicated credential references
 
-Each exact credential reference selects a provider, mode and absolute native file. Codex accepts `dedicated-runtime-login`. There is no API-key route. Parsing and static metadata preparation do not read credentials. Only the native resolver reads the selected regular file with path/link checks, safe errors and a 1 MiB bound. The provider owns normal-login validation and the session copy; source files are not rotated by the resolver.
+Each exact credential reference selects a provider, mode and absolute native file. Codex (`codex-app-server`) accepts `dedicated-runtime-login`. Claude Code (`claude-code`), an addition beyond V1's Codex scope, accepts `subscription-credentials` (a Claude Code `.credentials.json` account login) and `subscription-token` (the token of `claude setup-token` in a file); see the [Claude adapter](../../internal/adapters/claudecode/README.md#login). There is no API-key route, and Apply with a Claude profile refuses an environment that sets an API-key variable such as `ANTHROPIC_API_KEY`. Parsing and static metadata preparation do not read credentials. Only the native resolver reads the selected regular file with path/link checks, safe errors and a 1 MiB bound. The provider owns normal-login validation and the session copy; source files are not rotated by the resolver.
 
 ### Results and evidence
 

@@ -8,7 +8,7 @@ This package is the product's client of the container engine ([DEC-037](../../..
 | --- | --- |
 | `NewEngine(path)` | Binds the absolute engine executable. The Orchestrator never searches PATH. |
 | `Engine.Start(ctx, spec)` | Runs one session container with agentd and returns its `Session` after agentd's hello. |
-| `Session.Initialize(ctx, req)` | Installs the bounded fixed private login file over that connection before provider startup; no shell, supplied path or extra container. |
+| `Session.Initialize(ctx, req)` | Installs the bounded fixed private provider home over that connection before provider startup: the Codex login file, or the Claude Code credentials and instruction files; no shell, supplied path or extra container. |
 | `Session.ClearPrivateHome(ctx)` | Confirms removal of the installed login after provider exit and before container closure. agentd retries cleanup on disconnect and reports failures. |
 | `Engine.RunHelper(ctx, spec, argv, stdin, stdout)` | Runs one command in a fresh container under the same hardening, for example `/usr/bin/tee`, `/bin/cat` or a project check. Run Git uses the retained exec service. |
 | `Engine.StartExec` / `ExecSession.Exec`, `Close` | Holds one hardened container with fixed mounts and executes literal commands as its configured non-root user. Cancellation removes the owned container so remote processes cannot outlive the failed exec. |
@@ -41,6 +41,7 @@ These rules come from real runs, recorded in the [handshake record](https://gith
 - **Codex runs with sandbox `danger-full-access`.** Its own sandbox cannot start in an unprivileged container. With `read-only` or `workspace-write`, every shell command fails, and the Agent may still report success. Read-only roles get read-only mounts instead.
 - **Run tools go through MCP.**
   - Codex: `-c mcp_servers={markitect={command="/usr/local/bin/markitect-agentd",args=["mcp"]}}`, with the features `apps`, `memories`, `multi_agent`, `multi_agent_v2`, `image_generation`, `browser_use` and `computer_use` switched off by `--disable` and `agents.enabled=false`. `providerArgv` in the [Codex adapter](../codexappserver/profile.go) holds the exact arguments.
+  - Claude Code: `--strict-mcp-config --mcp-config` naming only `markitect-agentd mcp`; the tools carry an MCP `_meta` (`frame.ToolSpec.Meta`) that keeps large results inline. `providerArgv` in the [Claude adapter](../claudecode/profile.go) holds the exact arguments. A provider may start a fresh process per message on the same connection: `Stop` collects each exit before the next `StartProvider`.
   - [cli_smoke_test.go](cli_smoke_test.go) and [cli_continuity_test.go](cli_continuity_test.go) show complete invocations.
 - **A conversation that may continue must be persistent.**
   - Codex threads are not ephemeral, and `CODEX_HOME` stays in the provider home (`/home/agent/.codex`).

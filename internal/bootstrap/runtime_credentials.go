@@ -7,15 +7,17 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/Glacius-Labs/Markitect/internal/adapters/claudecode"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/codexappserver"
 )
 
-// This matches the Codex adapter's admitted login/protocol bound. Credentials
-// are read whole, never truncated into a different credential.
+// This matches the adapters' admitted login/protocol bound. Credentials are
+// read whole, never truncated into a different credential.
 const maxRuntimeCredentialBytes = 1 << 20
 
 var (
@@ -35,17 +37,28 @@ type credentialSource struct {
 	Path     string `json:"path"`
 }
 
-// newCredentialResolver validates and copies explicit mappings without any
-// filesystem or environment access. Only invoking the returned resolver reads
-// its selected file. The adapter owns credential validation and session copies;
-// neither this constructor nor its resolver rotates or rewrites source files.
-func newCredentialResolver(sources map[string]credentialSource) (codexappserver.CredentialResolver, error) {
+// credentialModes are the admitted provider logins: normal account or
+// subscription login only, never an API key.
+var credentialModes = map[string][]string{
+	"codex-app-server": {"dedicated-runtime-login"},
+	"claude-code":      {claudecode.ModeCredentials, claudecode.ModeToken},
+}
+
+// credentialReader resolves one reference to its source and whole bytes.
+type credentialReader func(context.Context, string) (credentialSource, []byte, error)
+
+// newCredentialReader validates and copies explicit mappings without any
+// filesystem or environment access. Only invoking the returned reader reads
+// its selected file. The adapters own credential validation and session
+// copies; neither this constructor nor its reader rotates or rewrites source
+// files.
+func newCredentialReader(sources map[string]credentialSource) (credentialReader, error) {
 	if len(sources) == 0 {
 		return nil, errRuntimeCredential
 	}
 	bound := make(map[string]credentialSource, len(sources))
 	for ref, source := range sources {
-		validMode := source.Provider == "codex-app-server" && source.Mode == "dedicated-runtime-login"
+		validMode := slices.Contains(credentialModes[source.Provider], source.Mode)
 		if ref == "" || strings.TrimSpace(ref) != ref || strings.ContainsFunc(ref, unicode.IsControl) || !utf8.ValidString(ref) || !validMode {
 			return nil, errRuntimeCredential
 		}
@@ -54,18 +67,56 @@ func newCredentialResolver(sources map[string]credentialSource) (codexappserver.
 		}
 		bound[ref] = source
 	}
-	return func(ctx context.Context, ref string) (codexappserver.RuntimeCredential, error) {
+	return func(ctx context.Context, ref string) (credentialSource, []byte, error) {
 		source, found := bound[ref]
 		if !found || ctx == nil {
-			return codexappserver.RuntimeCredential{}, errRuntimeCredential
+			return credentialSource{}, nil, errRuntimeCredential
 		}
 		data, err := readRuntimeCredential(ctx, source.Path)
 		if err != nil {
 			// Paths, reference strings and underlying errors may contain sensitive
 			// text. No native error or credential byte escapes this boundary.
-			return codexappserver.RuntimeCredential{}, credentialReadError(err)
+			return credentialSource{}, nil, credentialReadError(err)
+		}
+		return source, data, nil
+	}, nil
+}
+
+// newCredentialResolver is the Codex view of the mapping: it resolves Codex
+// logins only.
+func newCredentialResolver(sources map[string]credentialSource) (codexappserver.CredentialResolver, error) {
+	read, err := newCredentialReader(sources)
+	if err != nil {
+		return nil, err
+	}
+	return func(ctx context.Context, ref string) (codexappserver.RuntimeCredential, error) {
+		source, data, err := read(ctx, ref)
+		if err != nil {
+			return codexappserver.RuntimeCredential{}, err
+		}
+		if source.Provider != "codex-app-server" {
+			return codexappserver.RuntimeCredential{}, errRuntimeCredential
 		}
 		return codexappserver.RuntimeCredential{Mode: source.Mode, RuntimeLogin: json.RawMessage(data)}, nil
+	}, nil
+}
+
+// newClaudeCredentialResolver is the Claude Code view of the mapping: it
+// resolves Claude subscription logins only.
+func newClaudeCredentialResolver(sources map[string]credentialSource) (claudecode.CredentialResolver, error) {
+	read, err := newCredentialReader(sources)
+	if err != nil {
+		return nil, err
+	}
+	return func(ctx context.Context, ref string) (claudecode.RuntimeCredential, error) {
+		source, data, err := read(ctx, ref)
+		if err != nil {
+			return claudecode.RuntimeCredential{}, err
+		}
+		if source.Provider != "claude-code" {
+			return claudecode.RuntimeCredential{}, errRuntimeCredential
+		}
+		return claudecode.RuntimeCredential{Mode: source.Mode, Login: data}, nil
 	}, nil
 }
 

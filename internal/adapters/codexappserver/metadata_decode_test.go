@@ -20,7 +20,8 @@ func TestRuntimeMetadataClosedFormatAndSupportedRecordedValues(t *testing.T) {
 		{"different agentd", strings.Replace(fixtureMetadata, "agentd=development", "agentd=another-build", 1)},
 		{"different schema", strings.Replace(fixtureMetadata, fixtureSchema, "sha256:"+strings.Repeat("c", 64), 1)},
 		{"missing", strings.Replace(fixtureMetadata, "agentd=development\n", "", 1)},
-		{"retired claude record", strings.Replace(fixtureMetadata, "codexSchema=", "claude=2.1.301 (Claude Code)\ncodexSchema=", 1)},
+		{"duplicate claude record", fixtureMetadata + "claude=2.1.308 (Claude Code)\nclaude=2.1.308 (Claude Code)\n"},
+		{"claude record without Codex", "claude=2.1.308 (Claude Code)\nagentd=development\n"},
 		{"duplicate", fixtureMetadata + "codex=codex-cli 0.162.0\n"},
 		{"unknown", fixtureMetadata + "ungranted=do-not-execute\n"},
 		{"shell syntax", strings.Replace(fixtureMetadata, "agentd=development", "export agentd=development", 1)},
@@ -42,6 +43,12 @@ func TestRuntimeMetadataClosedFormatAndSupportedRecordedValues(t *testing.T) {
 	out, err := imagesPreparer(&fakeImages{data: make([]byte, maxMetadataBytes+1)}).PrepareAgentProfile(context.Background(), input)
 	if err != nil || out.Status != model.NotCompleted || out.AgentImage == nil {
 		t.Fatalf("metadata bound: %v %+v", err, out)
+	}
+	// The shared image also records Claude Code; Codex preparation ignores it.
+	both := fixtureMetadata + "claude=2.1.308 (Claude Code)\n"
+	out, err = imagesPreparer(&fakeImages{data: []byte(both)}).PrepareAgentProfile(context.Background(), input)
+	if err != nil || out.Status != model.Passed || out.AgentImage.CLIVersion != supportedCodexVersion || out.AgentImage.Metadata.Size != int64(len(both)) {
+		t.Fatalf("the image's claude record refused Codex preparation: %v %+v", err, out)
 	}
 }
 

@@ -24,7 +24,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `container` | The container engine client that the adapters running containers share. | `protocol` | 1 |
 | `guardedwrite` | Guarded working-tree writes for publication, docs --write and bundle installation, with the Git and path helpers they share with source snapshots. | nothing | 1 |
 | `build` | Version identity and embedded license notices. | nothing | 1 |
-| `adapter` | Concrete repository, Session, check, record, runner, command-line and document adapters; no adapter imports another. | `model`, `snapshot`, `domain`, `project`, `service`, `usecase`, `container`, `build` | 7 |
+| `adapter` | Concrete repository, Session, check, record, runner, command-line and document adapters; no adapter imports another. | `model`, `snapshot`, `domain`, `project`, `service`, `usecase`, `container`, `build` | 8 |
 | `composition` | Constructs the actual services and their adapters. | `model`, `project`, `service`, `usecase`, `container`, `guardedwrite`, `adapter` | 1 |
 | `command` | Thin entrypoints to product composition. | `composition` | 1 |
 | `runner-command` | Thin entrypoint of the Linux runner image. | nothing | 1 |
@@ -40,10 +40,12 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | From | To | Files | Reason |
 |---|---|---|---|
 | `cmd/markitect-runner` | `internal/adapters/runner` | all | The runner image entrypoint starts the runner adapter directly. |
+| `internal/adapters/claudecode` | `internal/agentd/frame` | all | Claude Code Sessions use the frame values that the container client exposes. |
 | `internal/adapters/codexappserver` | `internal/agentd/frame` | all | Codex Sessions use the frame values that the container client exposes. |
 | `internal/adapters/documents` | `internal/guardedwrite` | all | The generated view is written through the reviewed guarded-write API only. |
 | `internal/adapters/gitrepo` | `internal/guardedwrite` | all | Publication transfers the verified candidate through guarded writes. |
 | `internal/tooling/release` | `internal/tooling/architecture` | all | The packager takes its source roots from this table. |
+| `internal/adapters/claudecode` | `internal/adapters/gitrepo` | tests only | Session tests prepare their checked fixture Project through real Git capture. |
 | `internal/adapters/codexappserver` | `internal/adapters/gitrepo` | tests only | Hierarchy tests run Codex Sessions over real Run Git copies. |
 | `internal/adapters/codexappserver` | `internal/adapters/runstore` | tests only | Hierarchy tests read the stored Run records. |
 | `internal/adapters/gitrepo` | `internal/adapters/checks` | tests only | The real-Git vertical tests compose workspaces with declared checks. |
@@ -120,6 +122,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | Package | Summary | Owning document |
 |---|---|---|
 | `internal/adapters/checks` | Package checks prepares pinned container-check metadata and observes bounded exact-candidate checks. | [internal/adapters/checks/README.md](../../internal/adapters/checks/README.md) |
+| `internal/adapters/claudecode` | Package claudecode runs Claude Code native Manager Sessions in Agent containers with subscription login, loads the model-derived harness into them, maps the Run tools and prepares static profile metadata from an explicitly selected runtime image. | [internal/adapters/claudecode/README.md](../../internal/adapters/claudecode/README.md) |
 | `internal/adapters/cli` | Package cli presents preparation and Apply. | [docs/architecture.md#adapters](../architecture.md#adapters) |
 | `internal/adapters/codexappserver` | Package codexappserver runs Codex native Manager Sessions in Agent containers, loads the model-derived harness into them, maps the Run tools and prepares static profile metadata from an explicitly selected runtime image. | [internal/adapters/codexappserver/README.md](../../internal/adapters/codexappserver/README.md) |
 | `internal/adapters/documents` | Package documents implements the narrow generated-view target observation and guarded write port. | [docs/architecture.md#adapters](../architecture.md#adapters) |

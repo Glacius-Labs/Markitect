@@ -10,9 +10,9 @@ Build `cmd/markitect` and use its CLI from the coding environment. `check` and `
 
 The closed `markitect.runtime/v1` document contains native Agent and Check profiles. Outer composition selects native profiles. Project's `markitect.execution/v2` declarations contain Package instructions and scoped checks, without provider roles, teams, strategies or invocation budgets. Invocation limits and normal account-login references belong to the explicit outer run configuration.
 
-Codex profile version 2 supports metadata only; version 3 adds the closed native session settings. The [Codex adapter](../../internal/adapters/codexappserver/README.md) documents exact fields and preparation evidence. Codex is the only Agent adapter in V1 ([D18](../concepts/v1-concept.md#23-provider-scope-d18)); the Runtime profile refuses any other Agent section. [Check profiles](../../internal/adapters/checks/README.md) bind pinned images, literal commands, environment policy and finite limits.
+Codex profile version 2 supports metadata only; version 3 adds the closed native session settings. The [Codex adapter](../../internal/adapters/codexappserver/README.md) documents exact fields and preparation evidence. Codex is V1's Agent adapter ([D18](../concepts/v1-concept.md#23-provider-scope-d18)). An Agent profile selects exactly one section, `codexAppServer` or `claudeCode`; the [Claude section](#claude-code) below describes the addition. [Check profiles](../../internal/adapters/checks/README.md) bind pinned images, literal commands, environment policy and finite limits.
 
-Codex metadata preparation may inspect a selected image and copy bounded whole `/opt/markitect/runtime.env` bytes from a created, never started container. It does not launch an Agent Session or provider. Check metadata preparation is process-free. Neither establishes effective native instructions, login, runtime support or semantic completion. Structural output never reports metadata as implicitly passed.
+Agent metadata preparation may inspect a selected image and copy bounded whole `/opt/markitect/runtime.env` bytes from a created, never started container. It does not launch an Agent Session or provider. Check metadata preparation is process-free. Neither establishes effective native instructions, login, runtime support or semantic completion. Structural output never reports metadata as implicitly passed.
 
 Fixed previews refuse unbound present-day external profile or dependency inputs, even for HEAD. Working previews retain observed bytes. Neither preview supplies an artifact publication guard.
 
@@ -20,11 +20,35 @@ Fixed previews refuse unbound present-day external profile or dependency inputs,
 
 ## Native Sessions and Git workspaces
 
-The concrete Codex adapter implements `run.Sessions`: one fresh private home and Manager container per Manager per Run, with an ordinary persistent native conversation until closure. It consumes the actual Linux volume/subpath supplied by [LinuxGit](../../internal/adapters/gitrepo/README.md#run-git-workspace-service), without a writable Windows bind or a host credential home. One held Git service and private volume serve each Run; each Manager has its own repository.
+The concrete Codex adapter implements `run.Sessions`: one fresh private home and Manager container per Manager per Run, with an ordinary persistent native conversation until closure. The Claude adapter implements the same port with one container and conversation per Manager. It consumes the actual Linux volume/subpath supplied by [LinuxGit](../../internal/adapters/gitrepo/README.md#run-git-workspace-service), without a writable Windows bind or a host credential home. One held Git service and private volume serve each Run; each Manager has its own repository.
 
 The pure [harness](../../internal/harness/README.md) supplies checked Project context, complete hierarchy, exact Manager, mandate and Findings. The native adapter supplies its actual rendering and loader controls. Nine Run tools (`delegate`, `await`, `review`, `ask`, `reply`, `judge`, `check`, `read_notes`, `append_note`) have one implementation each in Run; the adapter only maps them. `judge` records the decision separately from final prose. The [session helper](../../internal/agentd/) bridges native provider tools; the [container runtime](../../internal/adapters/container/README.md) owns concrete resource lifetime.
 
 [Container checks](../../internal/adapters/checks/README.md) use separate disposable input/home copies with verified bytes, modes and required directory inventories. Run retains independently reopenable candidates and terminal records after resource closure. [Publication](../../internal/adapters/gitrepo/README.md#publication-boundary) reads them in a separate host repository after every Run has closed.
+
+## Claude Code
+
+The [Claude adapter](../../internal/adapters/claudecode/README.md) is an addition beyond V1's Codex scope: D18 keeps V1 acceptance on Codex, and the owner scoped Claude as its own slice K1 ([owner decisions](../concepts/sources/owner-night-decisions-20261027.md)). Increment 1 implements it in source with fixture tests; its native qualification K1b inside the [Linux runner](../design/linux-runner.md) is still open, so no Claude run is qualified yet.
+
+Select it with a `claudeCode` section in place of `codexAppServer`:
+
+```yaml
+agentProfiles:
+  claude-agent:
+    claudeCode:
+      profileVersion: 1
+      engineExecutable: /usr/bin/docker
+      imageID: sha256:...
+      agentdVersion: ...
+      instructions: []
+      credentialRef: claude-account
+      maxWireBytes: 4194304
+      session: {version: 1, model: sonnet, effort: high, baseInstructions: '', developerInstructions: '', store: markitect-claude, cpus: 1, memoryBytes: 2147483648, pids: 192, tmpBytes: 268435456, network: ''}
+```
+
+The run configuration maps `claude-account` to provider `claude-code` with mode `subscription-credentials` (a Claude Code `.credentials.json` account login) or `subscription-token` (the long-lived token of `claude setup-token` in a file). Both are subscription logins, mounted read-only in the runner; there is no API-key route, and Apply refuses an environment that sets `ANTHROPIC_API_KEY` or another API-key or provider variable. The [base image](../../packaging/runtime/README.md) pins Claude Code `2.1.308` next to Codex.
+
+Each Manager gets one Claude Code conversation in its own container: every response is a fresh `claude --print` process with one stream-json message, the first creating the conversation and later ones resuming it. The adapter's README lists the launch controls, the login and refresh limits, the transient-error rules it shares with the Codex adapter and the CLI assumptions K1b must confirm.
 
 <a id="bring-your-own-executor"></a>
 
