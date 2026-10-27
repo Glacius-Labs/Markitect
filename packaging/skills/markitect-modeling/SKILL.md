@@ -41,17 +41,25 @@ Copy this checklist into your reply and tick it off as you go.
    - **Invariants** as `Data.Invariant` for what must always hold for records, above all around state changes (a balance is never negative; an unpaid order is never shipped).
    - **Operations** as `Api.Operation`: `wireName`, `mutation`, `arguments`, `refusals` in checking order with `when`, `results`, `permissions` (a role without an entry has none). The body states only the effect. For extra fields on every operation (an audit target), define a project Kind that `implements: [Api.Operation]` and declares all of its Properties plus the new one.
    - **Rules** as `Practice.Rule` or an obligation Kind with `appliesTo`. A behavior rule many Packages follow (input formats, money, time, the order of checks) lives once in the shared kernel with `appliesTo: [<project>]`; way-of-working obligations (tests, documentation) and architecture live in the project Package. One modeled-scope selector in `execution.yaml` brings every rule to the Managers its `appliesTo` names (see examples.md).
-   - **Refusals shared by every operation** (a missing or invalid argument, an unknown referenced record) are stated once in a rule such as the order of checks and are not listed on each operation; an operation lists only its own conditions. If the requirements leave the precedence of simultaneous failures open, say once in that rule that the listed order is not a required precedence.
-   - **Architecture** the owner approved: in the project Package a `Practice.Project`, one `Architecture.DependencyRule` per Package and an `Architecture.Placement` for each concern realized in one place; in each area an `Architecture.Interface`.
-   - **Code mapping:** `execution.yaml` ownership gives each Package its folder; its checks are the build and test commands.
+   - **Refusals shared by every operation** (a missing or invalid argument, an unknown referenced record) are stated once in a rule such as the order of checks and are not listed on each operation; an operation lists only its own conditions. That the shared codes are not linked from each operation is intended: the rule is their single source. If the requirements leave the precedence of simultaneous failures open, say once in that rule that the listed order is not a required precedence.
+   - **Refusal codes the requirements leave free:** `RefusalCode.code` is meant as the wire value. If the requirements put no code on the wire (only a status and a reason), name each condition with a model-internal code and state once, in the protocol's rules, that codes are not on the wire.
+   - **Architecture** the owner approved: in the project Package a `Practice.Project`, one `Architecture.DependencyRule` per child Package (the project Package itself needs none) and an `Architecture.Placement` for each concern realized in one place; in each area Package an `Architecture.Interface` (the shared kernel may have one listing its types; the outer layer needs none).
+   - **Code mapping:** `execution.yaml` ownership gives each Package its folder; a Package without code of its own, such as the project Package, owns the module root. The checks are the build and test commands.
 5. **Compile, lock and lint** (below) until clean.
 6. **Re-check the trace table** against the written files, then write the final report.
+
+## Scope and placement
+
+- `appliesTo` names Packages by path; a named Package includes every Package below it. `appliesTo: [<project>]` reaches every Manager; `appliesTo: [<project>/billing]` reaches billing and its children only. A rule without `appliesTo` governs only its own Package.
+- A Placement's `appliesTo` names the Packages that rely on it, usually the same as its concern's `appliesTo`; `realizedIn` names the one Package that realizes the concern for them.
 
 ## Statements
 
 - **Strong statements.** A rule is short, free of exceptions and true everywhere it applies. A rule full of "except when" and "unless" is several rules: split it into atomic ones, or make the exception its own Definition.
 - **Typed shapes.** Arguments, refusal codes, fields, results, permissions and scopes are typed fields, never lists in a body. A body line starting with "Arguments:", "Refusals:" or "Fields:" is a defect.
-- **Small.** Over 150 words of prose (tables and code excluded) or over 10 decisions (refusals and condition words) is a warning; over 300 words or 15 decisions holds several decisions: split it.
+- **Small.** Over 150 words of prose (tables and code excluded) or over 10 decisions is a warning; over 300 words or 15 decisions holds several decisions: split it. Decisions count each typed refusal plus each `when`, `if`, `unless`, `otherwise` or `except` in the prose outside tables.
+- **Formats are bodies.** A format-only Scalar (`base: string`, no bounds, the format in its body) is normal; bounds and units are typed wherever they exist.
+- **Wire shapes.** No Library Kind models a request envelope or response statuses yet. State them as rules in the outer layer with a short example; type every operation's own arguments and results as usual.
 - **Once.** Each decision is stated in exactly one Definition. Do not restate a rule in an overview, an example or another area; link to it.
 - **Dependencies follow the rules.** A typed reference or a body link into another Package is a dependency. Where the rules forbid it, describe the need in prose without a link and let the outer layer supply it.
 - **No process, no evidence, no second architecture.** No Manager steps, no run or test results, no component list beside the Package tree.
@@ -75,7 +83,7 @@ Copy this checklist into your reply and tick it off as you go.
 - A Package is a folder under the model root. Reference another Package's Definition through an import alias (`Members.member`); your own Package's without one.
 - **IDs:** no ID may equal a Core or Library ID ignoring case (the reserved list is at the end of reference.md). A Kind and a Property in one Package may not share an ID ignoring case. Qualify a short reference that becomes ambiguous across imports.
 - **YAML:** quote strings that contain `:`, `#`, `,`, `'`, `{`, `[`, or start with a backtick, a digit or a dash. Write bodies as literal blocks (`body: |-`).
-- **Body links:** `[[Alias.id|text]]` or `[[id|text]]`. Every link is a dependency edge.
+- **Body links:** `[[Alias.id|text]]` or `[[id|text]]`. Every link is a dependency edge, and its alias needs an import in the same file, like a typed reference.
 
 ## Project layout
 
@@ -110,7 +118,7 @@ The first `check`, before a lock exists, fails with `lock.missing`; that is expe
 
 ## Done: evidence, not belief
 
-Claim "done" only in a final report in this form, with the outputs pasted from runs made after your last edit:
+Claim "done" only in a final report in this form, with the outputs pasted from runs made after your last edit and commit. `python -I -B tools/model-analysis/model_analysis.py summary check.json` prints the status, the model digest and the Definitions per Package:
 
 ```text
 Check:   exit <code>, model digest <sha256>       (pasted)
