@@ -234,6 +234,45 @@ class LintTests(unittest.TestCase):
         # A field name set in a spec is a named thing, not an undefined term.
         self.assertNotIn("fooBar", {s for sig, _, s in found if sig == "undefined-term"})
 
+    def test_interfaces_bind_typed_uses_from_other_packages(self):
+        defs = [
+            definition("eq/eq-interface", "markitect/architecture/Interface", "Surface.",
+                       {"appliesTo": ["."], "operations": [], "types": [ref("eq/machine")]}),
+            definition("eq/machine", "vocab/Rule"), definition("eq/rate", "vocab/Rule"),
+            definition("eq/code", "markitect/api/RefusalCode", "Code.", {"code": "c"}),
+            definition("eq/inner/part", "vocab/Rule"),
+            definition("eq/inner/q", "vocab/Rule", "Own subtree.", {"owner": ref("eq/rate")}),
+            definition("nb/nb-interface", "markitect/architecture/Interface", "Binds no one.", {"types": []}),
+            definition("nb/t", "vocab/Rule"),
+            definition("bk/res", "vocab/Rule", "See [[eq/rate]].", {"uses": [ref("eq/machine"), ref("eq/rate"), ref("eq/code"),
+                                                                    ref("eq/inner/part"), ref("nb/t"), ref("eq/eq-interface")]},
+                       ["eq/rate"]),
+        ]
+        result = ma.lint(ma.Model(report(CONTENT + defs)))
+        found = {(f["subject"], f["severity"]) for f in result["findings"] if f["signal"] == "interface"}
+        # The nearest Interface above the target governs, including the Packages below it; its own subtree is free,
+        # an Interface without appliesTo binds no one, and body links are not uses.
+        self.assertEqual(found, {("bk/res -> eq/rate", "strong"), ("bk/res -> eq/inner/part", "strong")})
+        self.assertIn("1 cross-Package uses of refusal codes not checked against Interfaces, which cannot list refusal codes", result["notes"])
+
+    def test_interface_scope_several_interfaces_and_nesting(self):
+        defs = [
+            # A narrow appliesTo binds only bk; two Interfaces in one Package expose together.
+            definition("eq/one", "markitect/architecture/Interface", "One.", {"appliesTo": ["bk"], "types": [ref("eq/m")]}),
+            definition("eq/two", "markitect/architecture/Interface", "Two.", {"appliesTo": ["bk"], "types": [ref("eq/n")]}),
+            definition("eq/m", "vocab/Rule"), definition("eq/n", "vocab/Rule"), definition("eq/hidden", "vocab/Rule"),
+            # A nested Package's own Interface governs before the outer one.
+            definition("eq/sub/sub-interface", "markitect/architecture/Interface", "Sub.", {"appliesTo": ["."], "types": [ref("eq/sub/p")]}),
+            definition("eq/sub/p", "vocab/Rule"),
+            definition("bk/r", "vocab/Rule", "Uses.", {"uses": [ref("eq/m"), ref("eq/n"), ref("eq/sub/p")]}),
+            definition("zz/r", "vocab/Rule", "Outside appliesTo.", {"uses": [ref("eq/hidden")]}),
+        ]
+        found = {f["subject"] for f in ma.lint(ma.Model(report(CONTENT + defs)))["findings"] if f["signal"] == "interface"}
+        self.assertEqual(found, set())
+        defs[-2]["spec"]["uses"].append(ref("eq/hidden"))
+        found = {f["subject"] for f in ma.lint(ma.Model(report(CONTENT + defs)))["findings"] if f["signal"] == "interface"}
+        self.assertEqual(found, {"bk/r -> eq/hidden"})
+
     def test_decisions_count_refusals_and_conditions(self):
         refusals = [{"refusal": ref("a/x"), "when": "w"} for _ in range(9)]
         op = definition("e/op", "vocab/Rule", "Refused when late, unless urgent.\n| when | table |", {"refusals": refusals})

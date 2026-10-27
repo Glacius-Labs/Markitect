@@ -44,7 +44,7 @@ Copy this checklist into your reply and tick it off as you go.
    - **Refusals shared by every operation** (a missing or invalid argument, an unknown referenced record) are stated once in a rule such as the order of checks and are not listed on each operation; an operation lists only its own conditions. That the shared codes are not linked from each operation is intended: the rule is their single source. `Api.refusals` is ordered: the first refusal that applies is the one returned. If the requirements leave the precedence of simultaneous failures open, the order you list is a decision: propose it to the owner with the architecture, and do not also call it "not required" in a rule.
    - **Check order across layers:** when the outer layer checks request shape (unknown fields, wrong case) and the areas check arguments, say in the order-of-checks rule which comes first.
    - **Refusal codes the requirements leave free:** `RefusalCode.code` is meant as the wire value. If the requirements put no code on the wire (only a status and a reason), name each condition with a model-internal code and state once, in the protocol's rules, that codes are not on the wire.
-   - **Architecture** the owner approved: in the project Package a `Practice.Project`, one `Architecture.DependencyRule` per child Package (the project Package itself needs none) and an `Architecture.Placement` for each concern realized in one place; in each area Package an `Architecture.Interface` (the shared kernel may have one listing its types; the outer layer needs none).
+   - **Architecture** the owner approved: in the project Package a `Practice.Project`, one `Architecture.DependencyRule` per child Package (the project Package itself needs none) and an `Architecture.Placement` for each concern realized in one place; in each area Package an `Architecture.Interface` (the shared kernel may have one listing its types; the outer layer needs none). Every type another Package uses in a typed field, such as a Scalar that a record field reuses, belongs in its owner's Interface `types`; lint reports a missing one as `interface`.
    - **Code mapping:** `execution.yaml` ownership gives each Package its folder; a Package without code of its own, such as the project Package, owns the module root. The checks are the build and test commands.
 5. **Compile, lock and lint** (below) until clean.
 6. **Re-check the trace table** against the written files, then write the final report.
@@ -113,7 +113,7 @@ python -I -B tools/model-analysis/model_analysis.py lint check.json --repo .
 python -I -B tools/model-analysis/model_analysis.py graph check.json
 ```
 
-The first `check`, before a lock exists, fails with `lock.missing`; that is expected, and the lock command reads the digests from it. After that, `check` exits 0 only when the model compiles and the lock pins the current Library digests. When `check` fails, its own output names only the first problem: run `python -I -B tools/model-analysis/model_analysis.py diagnostics check.json` to see every finding, root causes first. Treat `unknown-package`, `dependency-rule`, `import-cycle` and every `strong` lint finding as errors.
+The first `check`, before a lock exists, fails with `lock.missing`; that is expected, and the lock command reads the digests from it. After that, `check` exits 0 only when the model compiles and the lock pins the current Library digests. When `check` fails, its own output names only the first problem: run `python -I -B tools/model-analysis/model_analysis.py diagnostics check.json` to see every finding, root causes first. Treat `unknown-package`, `dependency-rule`, `interface`, `import-cycle` and every `strong` lint finding as errors.
 
 **Known limits of the Libraries:** `Architecture.Interface` lists operations and types only, so a refusal code another Package uses cannot be listed there; `Architecture.Placement` places a `Practice.Rule`, so an invariant cannot be placed. Say so in the report instead of working around it.
 
@@ -123,7 +123,7 @@ Claim "done" only in a final report in this form, with the outputs pasted from r
 
 ```text
 Check:   exit <code>, model digest <sha256>       (pasted)
-Lint:    <counts incl. dependency-rule>; each warning fixed or justified (pasted)
+Lint:    <counts incl. dependency-rule and interface>; each warning fixed or justified (pasted)
 Graph:   <cycles>                                  (pasted)
 Trace:   <n> of <n> requirement statements mapped; inventions: <none or list>
 Open:    <points left open by the requirements>

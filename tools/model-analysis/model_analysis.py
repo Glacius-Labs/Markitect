@@ -37,6 +37,8 @@ LITERALS = {"true", "false", "null"}
 SCOPE_FIELDS = ("appliesTo", "mayDependOn", "realizedIn")  # Package strings of the Practice and Architecture Libraries
 NAME_KEYS = {"name", "value", "wireName", "code"}  # named things a spec defines without a Definition of their own
 DEPENDENCY_RULE = ("markitect/architecture", "DependencyRule")
+INTERFACE = ("markitect/architecture", "Interface")
+REFUSAL_CODE = ("markitect/api", "RefusalCode")  # an Interface cannot list one yet (open Library question)
 PROJECT = ("markitect/practice", "Project")
 DECISIONS_WARNING, DECISIONS_STRONG = 10, 15  # provisional, like the size thresholds
 LIST_MARKER = re.compile(r"[-*+]|\d+[.)]")
@@ -473,6 +475,30 @@ def lint(model, repo=None, rules=None, term_pattern=TERM_PATTERN):
             governing = [a for a in applies if covers(a, source)] if applies else [identity[0]] if source == identity[0] else []
             if governing and not any(covers(a, target) for a in governing) and not any(covers(m, target) for m in may):
                 warn("dependency-rule", f"{source} -> {target}", f"not allowed by {text(identity)}", "strong")
+
+    interfaces = collections.defaultdict(list)  # Package -> [(Interface, appliesTo, exposed Definitions)]
+    for i in sorted(model.local):
+        if model.kind(i) == INTERFACE:
+            spec = model.definitions[i].get("spec") or {}
+            exposed = {t for t, _ in _spec_references([spec.get("operations") or [], spec.get("types") or []], "")}
+            interfaces[i[0]].append((i, spec.get("appliesTo") or [], exposed | {i}))
+    unlisted_refusals = 0
+    for source, target in sorted({(s, t) for s, t, via, _ in model.edges if via == "spec" and s[0] != t[0]}):
+        # Typed uses only; body links are reading aids. The nearest Package above the target that has Interfaces
+        # governs it; its own subtree is not bound, and an Interface without appliesTo binds no one (v0.3.1).
+        if target not in model.local:
+            continue
+        owner = max((p for p in interfaces if covers(p, target[0])), key=lambda p: (p != ".", len(p)), default=None)
+        if owner is None or covers(owner, source[0]):
+            continue
+        binding = [(i, exposed) for i, applies, exposed in interfaces[owner] if any(covers(a, source[0]) for a in applies)]
+        if not binding:
+            continue
+        if model.kind(target) == REFUSAL_CODE:
+            unlisted_refusals += 1
+        elif not any(target in exposed for _, exposed in binding):
+            names = ", ".join(text(i) for i, _ in binding)
+            warn("interface", f"{text(source)} -> {text(target)}", f"`{target[1]}` is not exposed by {names}", "strong")
     for package in model.packages(content):
         if package not in model.area_owners:
             warn("no-area", package, "holds content Definitions but owns no registered artifact or ownership area")
@@ -512,6 +538,8 @@ def lint(model, repo=None, rules=None, term_pattern=TERM_PATTERN):
                     warn("direction", f"{source} -> {target}", "forbidden: " + rule.get("reason", f"{rule['from']} -> {rule['to']}"))
 
     notes = []
+    if unlisted_refusals:
+        notes.append(f"{unlisted_refusals} cross-Package uses of refusal codes not checked against Interfaces, which cannot list refusal codes")
     if repo is None:
         notes.append("imports not read (no --repo): unused-import and import-cycle signals skipped")
     else:
