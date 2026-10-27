@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 	"unicode/utf8"
@@ -124,6 +125,39 @@ func TestVerifiedChangeApprovalNamesTheCorrectedDefect(t *testing.T) {
 		}
 		if err = approve(root, bound); err == nil || !strings.Contains(err.Error(), "a Verify approval hands no Finding to Implement") {
 			t.Fatal(name, "approval with a Definition admitted", err)
+		}
+	}
+}
+
+// DEC-073: Root's approval names the defect a change corrects, which is no
+// work for Implement. When a child's reject overrules the approval, its
+// Findings lose their Definition, so the correction Implement does not receive
+// them; their text stays in the handoff. An approval that stands keeps them.
+func TestOverruledVerifyApprovalHandsItsCorrectedDefinitionToNoImplement(t *testing.T) {
+	for _, child := range []Decision{Reject, Approve} {
+		x, root, a, deep := inboxExecution()
+		x.request.Mandate = Verify
+		accepted(deep, "deep")
+		accepted(a, "a")
+		a.a.handoff.Decision = child
+		root.copy = toolFailureCopy{}
+		root.a.phase, root.a.version = active, 1
+		corrected := Finding{Manager: ".", Definition: "a/Thing", Text: "the change corrects a/Thing"}
+		root.a.judgment = &judgment{decision: Approve, findings: []Finding{corrected}}
+		h, done, err := x.completeRoot()
+		x.cancel()
+		if err != nil || !done {
+			t.Fatal(child, done, err)
+		}
+		want := corrected
+		if child == Reject {
+			want.Definition = ""
+		}
+		if h.Decision != child || len(h.Findings) != 1 || h.Findings[0] != want || !reflect.DeepEqual(root.a.handoff, h) {
+			t.Fatal(child, "Root's approval Findings are wrong in its handoff", h.Decision, h.Findings)
+		}
+		if root.a.judgment.findings[0] != corrected {
+			t.Fatal(child, "the judgment itself changed", root.a.judgment.findings)
 		}
 	}
 }
