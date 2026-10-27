@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strings"
 	"testing"
@@ -185,6 +186,62 @@ func TestActualStructuralPreparationAndFixedContext(t *testing.T) {
 		t.Fatal(out)
 	}
 	invoke(t, repo.Dir, 0, "check", "--revision", "HEAD")
+}
+
+// tree reports the same model-derived Manager tree that Apply organizes: Root
+// first without a parent, every local Manager once with its parent and direct
+// children, and the ownership areas declared for its Package in authored order.
+// The tree depends on the model alone: a failed file accounting leaves it in
+// the failed report, a model error removes it. check and context never report
+// one.
+func TestTreeReportsTheModelDerivedManagerTree(t *testing.T) {
+	repo := productFixture(t)
+	repo.Write(".markitect/execution.yaml", "apiVersion: markitect.execution/v2\nownership:\n  - {path: ./, owner: .}\n  - {path: docs/, owner: documentation}\n  - {path: internal/, owner: product/model}\n  - {path: cmd/, owner: product/model}\n")
+	repo.Commit("Declare ownership areas")
+	type manager struct {
+		Package  string
+		Parent   *string
+		Children []string
+		Areas    []string
+	}
+	var r struct {
+		Status   string
+		Contexts []any
+		Managers []manager
+	}
+	out := invoke(t, repo.Dir, 0, "tree", "--revision", "HEAD")
+	if err := json.Unmarshal([]byte(out), &r); err != nil {
+		t.Fatal(err)
+	}
+	root := "."
+	parent := func(p string) *string { return &p }
+	want := []manager{
+		{".", nil, []string{"documentation", "markitect", "product", "tooling", "vocabulary"}, []string{"./"}},
+		{"documentation", &root, []string{}, []string{"docs/"}},
+		{"markitect", &root, []string{"markitect/core"}, []string{}},
+		{"markitect/core", parent("markitect"), []string{}, []string{}},
+		{"product", &root, []string{"product/model"}, []string{}},
+		{"product/model", parent("product"), []string{}, []string{"internal/", "cmd/"}},
+		{"tooling", &root, []string{"tooling/gates"}, []string{}},
+		{"tooling/gates", parent("tooling"), []string{}, []string{}},
+		{"vocabulary", &root, []string{}, []string{}},
+	}
+	if r.Status != "passed" || len(r.Contexts) != 0 || !reflect.DeepEqual(r.Managers, want) {
+		t.Fatal(out)
+	}
+	for _, args := range [][]string{{"check", "--revision", "HEAD"}, {"context", "product", "--revision", "HEAD"}} {
+		if out := invoke(t, repo.Dir, 0, args...); strings.Contains(out, `"managers"`) {
+			t.Fatalf("%s reports a tree: %s", args[0], out)
+		}
+	}
+	repo.Write("unaccounted.txt", "a real census entry\n")
+	if out := invoke(t, repo.Dir, 1, "tree"); !strings.Contains(out, `"managers"`) || !strings.Contains(out, "unaccounted.txt") {
+		t.Fatal("a failed file accounting lost the tree: " + out)
+	}
+	repo.Write(".markitect/model/product/broken.yaml", "id: broken\nkind: NoSuchKind\nbody: Names a Kind that does not exist.\n")
+	if out := invoke(t, repo.Dir, 1, "tree"); strings.Contains(out, `"managers"`) || !strings.Contains(out, "broken.yaml") {
+		t.Fatal("a model error still reported a tree: " + out)
+	}
 }
 
 // staleRegistryLink leaves the product fixture an artifact of a Definition the
