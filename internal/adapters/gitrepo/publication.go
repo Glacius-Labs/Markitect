@@ -50,6 +50,24 @@ func (p *Publisher) Preflight(ctx context.Context, prepared project.Prepared) er
 	return err
 }
 
+// publicationBinding re-acquires the working target. It returns the actual
+// complete Census and the source guard with Census and registry restored to
+// the baseline. Realization may add/delete registry shards, whose exact current
+// bytes the caller's expected Census covers, so no original shard is reacquired
+// by name. Registry realization and completed transfers legitimately change
+// those two values; every other captured source coordinate/byte remains fixed.
+func (r *Repository) publicationBinding(ctx context.Context, selection project.InputSelection, baseline project.CapturedInputs) (snapshot.Tree, project.PublicationGuard, error) {
+	selection.Registry = nil
+	a, err := r.acquire(ctx, selection, "", false)
+	if err != nil {
+		return snapshot.Tree{}, "", err
+	}
+	census := a.raw.Census
+	a.raw.Census = baseline.Raw.Census
+	a.raw.Registry = baseline.Raw.Registry
+	return census, a.guard(), nil
+}
+
 func (c publicationCheckCopy) Materialize(ctx context.Context, tree snapshot.Tree, dirs []snapshot.Path) (run.DisposableCopy, error) {
 	return c.materialize(ctx, tree, dirs)
 }
@@ -150,22 +168,14 @@ func (p *Publisher) Publish(ctx context.Context, request apply.PublicationReques
 		if err := ctx.Err(); err != nil {
 			return err
 		}
-		selection := prepared.Selection()
-		// Realization may add/delete registry shards. Their exact current bytes
-		// are covered by expected Census; no original shard is reacquired by name.
-		selection.Registry = nil
-		a, err := p.Repository.acquire(ctx, selection, "", false)
+		census, binding, err := p.Repository.publicationBinding(ctx, prepared.Selection(), baseline)
 		if err != nil {
 			return err
 		}
-		if !a.raw.Census.Equal(expected) {
+		if !census.Equal(expected) {
 			return fmt.Errorf("%w: complete publication target Census drift", ErrChanged)
 		}
-		// Registry realization and completed transfers legitimately change those
-		// two values. Every other captured source coordinate/byte remains fixed.
-		a.raw.Census = before
-		a.raw.Registry = baseline.Raw.Registry
-		if a.guard() != baseline.Guard {
+		if binding != baseline.Guard {
 			return fmt.Errorf("%w: publication source binding drift", ErrChanged)
 		}
 		return nil
