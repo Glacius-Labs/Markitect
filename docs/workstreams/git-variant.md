@@ -32,10 +32,10 @@ The lane exists since the owner split Markitect's work into lanes on 27 October 
 
 - **G0:** design on `main` through [PR #795](https://github.com/Glacius-Labs/Markitect/pull/795).
 - **`variant/git`:** created from `main` at `eb1cf307`. No variant code yet.
-- **Prototype:** dispatch prepared below, awaiting the owner's approval. Nothing is built or run.
+- **Prototype:** the owner approved the dispatch below on 28 October 2026: "Approved: build the prototype, run P0, then P1 and P2 on Codex Luna within the limits on the state page." The build is in progress on `variant/git`.
 - **Sub-sessions:** none.
 
-## Prototype dispatch (awaiting owner approval)
+## Prototype dispatch (approved 28 October)
 
 The throwaway prototype of [design §13](../design/agent-git-collaboration.md#13-suggested-next-step). It answers one question: does the Git variant hold up against the current Library Apply on time, messages, tokens and the oracle?
 
@@ -83,6 +83,4 @@ The baseline for P2 is the host variant (arm M) on the same Library task on Code
 
 ## Open owner questions
 
-1. **Approve the prototype dispatch?** That means P0 now, then P1 and P2 on Codex Luna within the limits above. The recommendation is yes.
-2. **P1 with Root and two children?** Design §13 says "Root and two children", but the oracle needs the full Library tree. The recommendation is to keep P1 as that small mechanism run and to compare only in P2, with all 6 Managers.
-3. **Windows host.** The design notes that the Git variant's host could run natively on Windows. That would revisit DEC-077. The recommendation is to decide only after P2, with the platform lane.
+1. **Windows host.** The design notes that the Git variant's host could run natively on Windows. That would revisit DEC-077. The recommendation is to decide only after P2, with the platform lane.
