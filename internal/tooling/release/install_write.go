@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
+	"github.com/Glacius-Labs/Markitect/internal/guardedwrite"
 )
 
 func ensureInstallStateUnchanged(root string, state *installState) error {
@@ -40,15 +40,15 @@ func ensureInstallStateUnchanged(root string, state *installState) error {
 	return nil
 }
 
-func ensureHeadUnchanged(root string, before *source.Input) error {
+func ensureHeadUnchanged(root string, before *Input) error {
 	if before == nil {
-		out, err := source.GitOutput(root, "rev-parse", "--verify", "--end-of-options", "HEAD^{commit}")
+		out, err := guardedwrite.GitOutput(root, "rev-parse", "--verify", "--end-of-options", "HEAD^{commit}")
 		if err == nil && strings.TrimSpace(string(out)) != "" {
 			return errors.New("Git HEAD appeared during a fresh install; rerun the plan")
 		}
 		return nil
 	}
-	after, err := source.GitOutput(root, "rev-parse", "--verify", "--end-of-options", "HEAD^{commit}")
+	after, err := guardedwrite.GitOutput(root, "rev-parse", "--verify", "--end-of-options", "HEAD^{commit}")
 	if err != nil {
 		return fmt.Errorf("read Git HEAD during install: %w", err)
 	}

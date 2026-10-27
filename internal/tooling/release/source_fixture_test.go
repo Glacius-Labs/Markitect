@@ -1,4 +1,4 @@
-package source
+package release
 
 import (
 	"os"
@@ -54,4 +54,11 @@ func writeTestFile(t *testing.T, root, name, content string) {
 	if err := os.WriteFile(p, []byte(content), 0644); err != nil {
 		t.Fatal(err)
 	}
+}
+
+func gitFixture(t *testing.T) (*testkit.Repo, string) {
+	t.Helper()
+	repo := testkit.NewRepo(t)
+	repo.Write("seed.txt", "seed")
+	return repo, repo.Commit("seed")
 }

@@ -19,7 +19,7 @@ Product snapshot values, repository acquisition, canonical model digests and mai
 | Pure canonical meaning and model digest | `internal/model` |
 | Registry, file classes, ownership and candidates | `internal/realization` |
 | Generated view plan and independent guarded target write | `internal/modeldocs`, `internal/adapters/documents` |
-| Fixed release-source bytes/modes and package provenance | `internal/tooling/source`, `internal/tooling/release` |
+| Fixed release-source bytes/modes and package provenance | `internal/tooling/release` |
 
 A new input closure requires a fresh complete capture. Preparation never extends an old guard or fetches extra bytes into it.
 
@@ -27,7 +27,7 @@ A new input closure requires a fresh complete capture. Preparation never extends
 
 Committed Source capture returns actual HEAD and an opaque comparison guard after validating a clean committed repository. PreviewSource observes a working draft or an explicitly resolved full commit and returns no publication guard. Fixed preview refuses current external inputs without historical binding. The complete census includes Git-ignored untracked files and excludes only technical Git administration and `.markitect/state/**`.
 
-The maintenance-only `source.Input` retains fixed source files, modes and commit provenance for release packaging and installation. Its retained fingerprint is not the product snapshot.Tree digest, canonical model digest or a publication guard. Current packaging accepts one root `cmd/` and `internal/` layout. Published archives keep their original bootstrap and identity.
+The maintenance-only `release.Input` retains fixed source files, modes and commit provenance for release packaging and installation. Its retained fingerprint is not the product snapshot.Tree digest, canonical model digest or a publication guard. Current packaging accepts one root `cmd/` and `internal/` layout. Published archives keep their original bootstrap and identity.
 
 ## Security and verification limits
 

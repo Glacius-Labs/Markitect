@@ -1,17 +1,17 @@
-// Package source loads fixed or provisional snapshots from either the current
-// working tree or a committed Git tree.
-package source
+package release
 
 import (
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/Glacius-Labs/Markitect/internal/guardedwrite"
 )
 
 // Limits bounds memory and filesystem use while loading and materializing a
-// source  Load uses DefaultLimits; callers with larger trusted inputs
-// can use LoadWithLimits.
+// source snapshot. LoadSource uses DefaultLimits; callers with larger trusted
+// inputs can use LoadSourceWithLimits.
 type Limits struct {
 	MaxFiles      int
 	MaxFileBytes  int64
@@ -31,14 +31,14 @@ func DefaultLimits() Limits {
 	return Limits{MaxFiles: DefaultMaxFiles, MaxFileBytes: DefaultMaxFileBytes, MaxTotalBytes: DefaultMaxTotalBytes}
 }
 
-// Load reads the working tree when revision is empty, or the immutable Git
+// LoadSource reads the working tree when revision is empty, or the immutable Git
 // commit named by revision otherwise.
-func Load(root, revision string) (*Input, error) {
-	return LoadWithLimits(root, revision, DefaultLimits())
+func LoadSource(root, revision string) (*Input, error) {
+	return LoadSourceWithLimits(root, revision, DefaultLimits())
 }
 
-// LoadWithLimits is Load with caller-selected resource limits.
-func LoadWithLimits(root, revision string, limits Limits) (*Input, error) {
+// LoadSourceWithLimits is LoadSource with caller-selected resource limits.
+func LoadSourceWithLimits(root, revision string, limits Limits) (*Input, error) {
 	if err := validateLimits(limits); err != nil {
 		return nil, err
 	}
@@ -49,14 +49,14 @@ func LoadWithLimits(root, revision string, limits Limits) (*Input, error) {
 	if err != nil {
 		return nil, fmt.Errorf("resolve source root: %w", err)
 	}
-	if err := rejectSymlinkAncestors(abs); err != nil {
+	if err := guardedwrite.RejectSymlinkAncestors(abs); err != nil {
 		return nil, fmt.Errorf("source root: %w", err)
 	}
 	info, err := os.Lstat(abs)
 	if err != nil {
 		return nil, fmt.Errorf("stat source root: %w", err)
 	}
-	if isSymlink(info) || !info.IsDir() {
+	if guardedwrite.IsReparsePoint(info) || !info.IsDir() {
 		return nil, fmt.Errorf("source root must be a real directory: %s", abs)
 	}
 

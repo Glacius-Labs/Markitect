@@ -25,26 +25,7 @@ This list owns the package-level invariants; the [concept](../concepts/v1-concep
 
 ## Dependency direction
 
-| Consumer | Allowed responsibility |
-| --- | --- |
-| Model, snapshot | No other Markitect responsibility |
-| Organization, realization | Model, snapshot |
-| Project | Model, snapshot, organization, realization |
-| Run | Project, organization, snapshot |
-| Static runtime configuration | Project, model, organization, snapshot |
-| Model view | Project, model, snapshot |
-| Repository adapter | Project, Run, model, snapshot |
-| Check adapter | Project, static runtime configuration, Run, pure values, container API |
-| Record adapter | Run |
-| Provider adapters and native harness | Their exact inward consumers and physical transport, declared by the gate |
-| Container adapter and agentd | Agent frame protocol |
-| CLI | Project and static metadata reports, model view, pure report values, build metadata and license notices |
-| Document adapter | Model view and reviewed guarded-write API |
-| Bootstrap | Its actual services and adapters |
-| Product command | Bootstrap |
-| Maintenance command | Release packaging, source loading and build metadata |
-
-The real-Git vertical test alone receives a test-only record-adapter edge. No sibling adapter or common tooling parent grants a general import exemption. Maintenance remains explicit: the architecture gate reads Go sources, and release, which also installs bundles, uses source values and the guarded writer.
+Imports are allowed by layer. The one rule table in [`rules.go`](../../internal/tooling/architecture/rules.go) assigns every package a layer, lists which layers each layer may import and names the exceptions, some of them for test files only; the generated [code map](code-map.md) shows it. No sibling adapter or common tooling parent grants a general import exemption: adapters share only the container client.
 
 ## Apply target dependencies
 
@@ -52,15 +33,15 @@ This heading retains the design's historical link. The current gate covers actua
 
 ## Responsibility map
 
-Every actual Go package has one exact `codemap.yaml` entry with a compatible responsibility label, purpose and owning document. Generated [code-map.md](code-map.md) is byte-checked. The map is an actual inventory, not proof that an unimplemented design package exists.
+Every actual Go package has one row in the rule table with its layer and owning document, and one package doc comment whose first sentence is its summary. Generated [code-map.md](code-map.md) is byte-checked. The table is an actual inventory, not proof that an unimplemented design package exists.
 
 ## Adding, changing or removing a capability package
 
-Coordinate shared contracts first. Add a concrete responsibility/import decision in [the gate](../../internal/tooling/architecture/target.go) and an exact code-map entry. Source packaging has its own explicit responsibility roots and data selection; update its positive/negative tests for a new package or embedded asset. Keep one root module and reject nested product modules. Delete obsolete source, commands and gates together.
+Coordinate shared contracts first. Add, move or remove the package's row in [the rule table](../../internal/tooling/architecture/rules.go), give it a package doc comment and regenerate the code map. Source packaging takes its roots from the same table; update its data selection and tests for a new embedded asset. Keep one root module and reject nested product modules. Delete obsolete source, commands and gates together.
 
 ## Mechanical dependency gate
 
-`TestRepositoryArchitecture` in `internal/tooling/architecture` inspects all production, test and platform Go files; `go test ./...` runs it, and `go test ./internal/tooling/architecture` runs it alone. It checks unknown/removed packages, exact responsibility edges, absent producers, map completeness, owner-document links, external-test self imports and test-only testkit use. The document adapter may use only the reviewed guarded-write selectors. Third-party imports remain permitted; this is a Markitect dependency check, not a general proof of I/O purity.
+`TestRepositoryArchitecture` in `internal/tooling/architecture` inspects all production, test and platform Go files; `go test ./...` runs it, and `go test ./internal/tooling/architecture` runs it alone. It checks unknown/removed packages, layer directions and named exceptions, table completeness, owner-document links, external-test self imports and test-only testkit use. The document adapter may use only the reviewed guarded-write selectors. Third-party imports remain permitted; this is a Markitect dependency check, not a general proof of I/O purity.
 
 `internal/testkit` imports no Markitect package. Only test files may import it. The standalone consumer bootstrap (`packaging/bootstrap`) and source smoke import no Markitect packages. Go fixture directories and independent evaluation assets are not product package ownership exemptions.
 

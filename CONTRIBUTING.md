@@ -4,9 +4,9 @@ Markitect is built around canonical language v1 and delegated realization. Curre
 
 ## Ownership and layout
 
-All maintained Go code belongs to one root module. `cmd/markitect` delegates to `internal/bootstrap`; pure model, snapshot, organization and realization values have no infrastructure dependency. `internal/project` owns structural preparation and candidate validation. `internal/run` owns closed hierarchical execution; `internal/runtimeconfig` owns static native/check metadata. Concrete adapters implement repository capture, static profile metadata and document writes. Independent maintenance services have explicit `internal/tooling/` responsibilities; that parent grants no general import exemption.
+All maintained Go code belongs to one root module. `cmd/markitect` delegates to `internal/bootstrap`; pure model, snapshot, organization and realization values have no infrastructure dependency. `internal/project` owns structural preparation and candidate validation. `internal/run` owns closed hierarchical execution; `internal/runtimeconfig` owns static native/check metadata. Concrete adapters implement repository capture, static profile metadata and document writes; `internal/guardedwrite` guards every working-tree write. Independent maintenance services have explicit `internal/tooling/` responsibilities; that parent grants no general import exemption.
 
-The [code map](docs/development/code-map.md), [architecture](docs/architecture.md) and [dependency rules](docs/development/modules.md) describe actual packages. Shared hermetic `internal/testkit` is test-only and imports no Markitect package. The standalone bootstrap in `packaging/bootstrap` and source smoke in `tools/smoke` import no product package.
+One rule table in [`internal/tooling/architecture/rules.go`](internal/tooling/architecture/rules.go) gives every package its layer and allowed imports; the [architecture](docs/architecture.md#layers) explains it and the generated [code map](docs/development/code-map.md) lists every package. Shared hermetic `internal/testkit` is test-only and imports no Markitect package. The standalone bootstrap in `packaging/bootstrap` and source smoke in `tools/smoke` import no product package.
 
 Intent lives in ordinary documentation, one canonical page per topic ([documentation maintenance](docs/development/documentation.md)); a change updates that page together with the code. Target projects keep `.markitect/`; product code and tests that handle it use fixtures, never this repository's own files.
 
@@ -33,13 +33,16 @@ go test ./internal/tooling/architecture
 python -B -m unittest discover -s scripts -p test_*.py
 python -B scripts/check-docs.py
 python -B -m unittest discover -s tools/library-oracle
+python -B -m unittest discover -s tools/comparison
+python -B -m unittest discover -s tools/makerspace-oracle -p test_*.py
+python -B -m unittest discover -s tools/model-analysis
 ```
 
 Run broad Go suites on Linux, for example in WSL: on Windows, real Git is much slower, and `internal/adapters/gitrepo` alone takes 23 to 40 minutes instead of about two. Tests that do not test time take their Run deadline from the test's own deadline, so the `-timeout` value bounds a hang.
 
-Run `gofmt` on changed Go files and `git diff --check`. CI checks module checksums, tests with and without the race detector, vet, build, tracked Go formatting, every production/test/platform import and actual package-map entries, the packaged-source smoke, repository scripts, maintained documentation links, and the independent Library oracle with its bounded transport. Obsolete engines and their tests/gates are removed together; no skips or success stubs may replace required checks.
+Run `gofmt` on changed Go files and `git diff --check`. CI checks module checksums, tests with and without the race detector, vet, build, tracked Go formatting, every production/test/platform import against the architecture rule table, the packaged-source smoke, repository scripts, maintained documentation links, the independent Library oracle with its bounded transport, and the unit tests of the comparison, Makerspace oracle and model analysis tools. Obsolete engines and their tests/gates are removed together; no skips or success stubs may replace required checks.
 
-Regenerate the code map officially when packages or their mapped guidance change:
+Regenerate the code map when the rule table or a package doc comment changes:
 
 ```text
 go test ./internal/tooling/architecture -run TestCodeMapPage -update

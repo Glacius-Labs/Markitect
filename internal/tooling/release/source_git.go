@@ -1,19 +1,17 @@
-package source
+package release
 
 import (
 	"bufio"
 	"bytes"
-	"context"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"os/exec"
-	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
+
+	"github.com/Glacius-Labs/Markitect/internal/guardedwrite"
 )
 
 type treeFile struct {
@@ -67,10 +65,10 @@ func loadCommit(root, commit string, s *Input, limits Limits) error {
 		gitlink := kind == "commit" || mode == "160000"
 		// A gitlink is a directory in the working tree, so it is skipped
 		// wherever the working-tree reader would skip that directory.
-		if excludedFilePath(p) || (gitlink && excludedDirectoryPath(p)) {
+		if guardedwrite.ExcludedFile(p) || (gitlink && guardedwrite.ExcludedDirectory(p)) {
 			continue
 		}
-		if err := validateRepoPath(p); err != nil {
+		if err := guardedwrite.ValidateRepoPath(p); err != nil {
 			return err
 		}
 		if gitlink {
@@ -103,14 +101,14 @@ func loadCommit(root, commit string, s *Input, limits Limits) error {
 	for i, file := range files {
 		paths[i] = file.path
 	}
-	if err := validatePortablePaths(paths); err != nil {
+	if err := guardedwrite.ValidatePortablePaths(paths); err != nil {
 		return err
 	}
 	return loadBlobs(root, files, s)
 }
 
 func loadBlobs(root string, files []treeFile, s *Input) error {
-	return loadBlobsWithCommand(root, files, s, gitCommand)
+	return loadBlobsWithCommand(root, files, s, guardedwrite.GitCommand)
 }
 
 func loadBlobsWithCommand(root string, files []treeFile, s *Input, command func(root string, args ...string) *exec.Cmd) error {
@@ -196,47 +194,7 @@ func readBatchHeader(r *bufio.Reader) (string, error) {
 }
 
 func git(root string, args ...string) ([]byte, error) {
-	return GitOutput(root, args...)
-}
-
-// GitOutput runs Git against root while discarding inherited Git environment
-// variables. Those variables can silently redirect repository discovery,
-// indexes, objects or configuration to another checkout. The exact repository
-// is selected explicitly and marked safe for Git's ownership check.
-func GitOutput(root string, args ...string) ([]byte, error) {
-	cmd := gitCommand(root, args...)
-	out, err := cmd.Output()
-	if err == nil {
-		return out, nil
-	}
-	var ee *exec.ExitError
-	if errors.As(err, &ee) {
-		return nil, fmt.Errorf("%w: %s", err, strings.TrimSpace(string(ee.Stderr)))
-	}
-	return nil, err
-}
-
-// GitOutputContext binds the Git process and pipe drain to the caller's
-// original execution window. Cancellation is reported only after Wait returns.
-func GitOutputContext(ctx context.Context, root string, args ...string) ([]byte, error) {
-	return gitOutputContext(ctx, root, CleanGitEnv(), args...)
-}
-
-func gitOutputContext(ctx context.Context, root string, env []string, args ...string) ([]byte, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-	cmd := gitCommandWithEnvContext(ctx, root, env, args...)
-	cmd.WaitDelay = time.Second
-	out, err := cmd.Output()
-	if ctx.Err() != nil {
-		return nil, ctx.Err()
-	}
-	var exit *exec.ExitError
-	if errors.As(err, &exit) {
-		return nil, fmt.Errorf("%w: %s", err, strings.TrimSpace(string(exit.Stderr)))
-	}
-	return out, err
+	return guardedwrite.GitOutput(root, args...)
 }
 
 // GitOutputInput runs Git against root with input on stdin while preserving
@@ -244,7 +202,7 @@ func gitOutputContext(ctx context.Context, root string, env []string, args ...st
 // GitOutput. It is intended for operations such as hashing an already-captured
 // working-tree file through Git's path-specific clean filters.
 func GitOutputInput(root string, input []byte, args ...string) ([]byte, error) {
-	cmd := gitCommand(root, args...)
+	cmd := guardedwrite.GitCommand(root, args...)
 	cmd.Stdin = bytes.NewReader(input)
 	out, err := cmd.Output()
 	if err == nil {
@@ -255,41 +213,4 @@ func GitOutputInput(root string, input []byte, args ...string) ([]byte, error) {
 		return nil, fmt.Errorf("%w: %s", err, strings.TrimSpace(string(ee.Stderr)))
 	}
 	return nil, err
-}
-
-// CleanGitEnv returns the process environment without Git-specific variables.
-// It is also used for child gate processes so an ambient GIT_DIR cannot make
-// their repository checks inspect a different checkout.
-func CleanGitEnv() []string {
-	current := os.Environ()
-	clean := make([]string, 0, len(current))
-	for _, entry := range current {
-		key, _, ok := strings.Cut(entry, "=")
-		if !ok || strings.HasPrefix(strings.ToUpper(key), "GIT_") {
-			continue
-		}
-		clean = append(clean, entry)
-	}
-	return clean
-}
-
-func gitCommand(root string, args ...string) *exec.Cmd {
-	return gitCommandWithEnv(root, CleanGitEnv(), args...)
-}
-
-func gitCommandWithEnv(root string, env []string, args ...string) *exec.Cmd {
-	return gitCommandWithEnvContext(context.Background(), root, env, args...)
-}
-
-func gitCommandWithEnvContext(ctx context.Context, root string, env []string, args ...string) *exec.Cmd {
-	abs, err := filepath.Abs(root)
-	if err != nil {
-		// Callers validate and resolve root before invoking Git. Preserve a
-		// deterministic failing command if Abs nevertheless fails.
-		abs = root
-	}
-	gitArgs := append([]string{"--no-replace-objects", "-c", "safe.directory=" + filepath.ToSlash(abs), "-C", abs}, args...)
-	cmd := exec.CommandContext(ctx, "git", gitArgs...)
-	cmd.Env = env
-	return cmd
 }

@@ -10,11 +10,9 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-
-	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
-func snapshotModuleFiles(snapshot *source.Input) (map[string][]byte, error) {
+func snapshotModuleFiles(snapshot *Input) (map[string][]byte, error) {
 	if _, ok := snapshot.Files["go.mod"]; !ok {
 		return nil, errors.New("fixed source snapshot is missing root go.mod")
 	}
@@ -172,7 +170,7 @@ func moduleLayoutFiles(present map[string]bool) (string, string, error) {
 	return "cmd/markitect/main.go", "internal/", nil
 }
 
-func snapshotText(snapshot *source.Input, name string) ([]byte, error) {
+func snapshotText(snapshot *Input, name string) ([]byte, error) {
 	data, ok := snapshot.Files[name]
 	if !ok {
 		return nil, fmt.Errorf("fixed source snapshot is missing %s", name)
@@ -183,7 +181,7 @@ func snapshotText(snapshot *source.Input, name string) ([]byte, error) {
 	return normalizeTextSource(name, data)
 }
 
-func snapshotRegularFile(snapshot *source.Input, name string) bool {
+func snapshotRegularFile(snapshot *Input, name string) bool {
 	if snapshot == nil || snapshot.Modes == nil {
 		return false
 	}
@@ -191,7 +189,7 @@ func snapshotRegularFile(snapshot *source.Input, name string) bool {
 	return mode == "100644" || mode == "100755"
 }
 
-func validateSourceVersion(snapshot *source.Input, version string) error {
+func validateSourceVersion(snapshot *Input, version string) error {
 	sourcePath := "internal/buildinfo/version.go"
 	declarationToken := token.VAR
 	data, err := snapshotText(snapshot, sourcePath)

@@ -10,7 +10,6 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
 	"github.com/Glacius-Labs/Markitect/internal/tooling/release"
-	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
 func packageSource(root, output string, emit func(any) error) error {
@@ -41,7 +40,7 @@ func bundleSource(root, revision, output string, emit func(any) error) error {
 	if revision == "" || output == "" {
 		return errors.New("bundle requires --revision and --output pointing to an absent ZIP file")
 	}
-	fixed, err := source.Load(root, revision)
+	fixed, err := release.LoadSource(root, revision)
 	if err != nil {
 		return err
 	}

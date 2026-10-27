@@ -1,5 +1,7 @@
-// Package codexappserver prepares static metadata from an explicitly selected
-// runtime image. Preparation never starts that image, a Session or a provider.
+// Package codexappserver runs Codex native Manager Sessions in Agent
+// containers, loads the model-derived harness into them, maps the Run tools
+// and prepares static profile metadata from an explicitly selected runtime
+// image. Preparation never starts that image, a Session or a provider.
 package codexappserver
 
 import (

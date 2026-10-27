@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/Glacius-Labs/Markitect/internal/tooling/architecture"
 )
 
 var commandConfigurationExamples = []string{
@@ -22,41 +24,10 @@ func commandConfigurationExample(name string) bool {
 	return false
 }
 
-// Source archives contain one root module with these explicit responsibility
-// roots. Parent containers grant no privilege to unknown sibling packages.
-var sourceRoots = []string{
-	"cmd/markitect",
-	"cmd/markitect-release",
-	"cmd/markitect-agentd",
-	"cmd/markitect-runner",
-	"internal/model",
-	"internal/snapshot",
-	"internal/organization",
-	"internal/realization",
-	"internal/run",
-	"internal/project",
-	"internal/runtimeconfig",
-	"internal/harness",
-	"internal/adapters/runstore",
-	"internal/apply",
-	"internal/workflow",
-	"internal/modeldocs",
-	"internal/buildinfo",
-	"internal/agentd",
-	"internal/adapters/cli",
-	"internal/adapters/documents",
-	"internal/adapters/gitrepo",
-	"internal/adapters/codexappserver",
-	"internal/adapters/checks",
-	"internal/adapters/container",
-	"internal/adapters/runner",
-	"internal/bootstrap",
-	"internal/testkit",
-	"internal/tooling/architecture",
-	"internal/tooling/release",
-	"internal/tooling/source",
-	"internal/tooling/guardedwrite",
-}
+// Source archives contain one root module whose cmd/ and internal/ packages
+// are exactly those of the architecture rule table. Parent containers grant no
+// privilege to unknown sibling packages.
+var sourceRoots = architecture.Table.SourceRoots()
 
 func sourceRoot(name string) bool {
 	for _, root := range sourceRoots {

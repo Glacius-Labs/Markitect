@@ -1,5 +1,6 @@
-// Package architecture enforces repository import ownership without compiling
-// the inspected code. It also inspects tests and all platform-specific files.
+// Package architecture holds the repository's one architecture rule table and
+// enforces it without compiling the inspected code: every production, test and
+// platform-specific file imports only what its package's layer allows.
 package architecture
 
 import (
@@ -31,38 +32,35 @@ func (v Violation) String() string {
 	return fmt.Sprintf("%s:%d: %s imports %s: %s", v.Edge.File, v.Edge.Line, v.Edge.From, v.Edge.To, v.Rule)
 }
 
-// layer names an explicit current responsibility. Unknown and removed packages
-// have no import privilege, including test-only and platform-specific packages.
-func layer(p string) (string, string) {
-	if name, owner := targetLayer(p); name != "" {
-		return name, owner
-	}
-	return "unknown", p
-}
-
-func Check(edges []Edge) []Violation {
+// Check applies the table to import edges. A package without a row has no
+// import privilege, including test-only and platform-specific packages. An
+// edge with an empty To only classifies its file's package.
+func (r Rules) Check(edges []Edge) []Violation {
 	var out []Violation
 	for _, e := range edges {
-		from, owner := layer(e.From)
-		to, target := layer(e.To)
+		from, fromKnown := r.pkg(e.From)
+		fromLayer, _ := r.layer(from.Layer)
+		to, toKnown := r.pkg(e.To)
+		toLayer, _ := r.layer(to.Layer)
 		rule := ""
 		switch {
-		case from == "unknown":
-			rule = "unclassified product package"
+		case !fromKnown:
+			rule = "unclassified package: add a row to the rule table"
 		case e.To == "":
-		case from == "standalone" || from == "test-support":
-			rule = "standalone tooling and test support may not import Markitect packages"
-		case to == "unknown":
-			rule = "unclassified internal package"
+		case fromLayer.Standalone:
+			rule = "layer " + from.Layer + " may not import Markitect packages"
+		case !toKnown:
+			rule = "unclassified package: the rule table has no row for " + e.To
 		case e.From == e.To && !e.Test:
 			rule = "self-import is forbidden"
-		case to == "test-support" && !e.Test:
-			rule = "only test files may import testkit"
-		case to == "test-support":
-		case owner == target:
-		case e.Test && contains(responsibilityTestImports[owner], target):
-		case !contains(responsibilityImports[owner], target):
-			rule = "responsibility direction forbids " + owner + " -> " + target
+		case e.From == e.To:
+		case toLayer.TestOnly && !e.Test:
+			rule = "only test files may import " + e.To
+		case toLayer.TestOnly:
+		case r.allows(from.Layer, to.Layer):
+		case r.exception(e.From, e.To, e.Test):
+		default:
+			rule = fmt.Sprintf("layer %s may not import layer %s", from.Layer, to.Layer)
 		}
 		if rule != "" {
 			out = append(out, Violation{e, rule})
@@ -72,6 +70,9 @@ func Check(edges []Edge) []Violation {
 	return out
 }
 
+// Inspect returns one classifying edge for every Go file below cmd/,
+// internal/, tools/, examples/ and packaging/, and one edge for each of its
+// imports of a Markitect package.
 func Inspect(root string) ([]Edge, error) {
 	var edges []Edge
 	err := filepath.WalkDir(root, func(name string, entry fs.DirEntry, err error) error {
@@ -100,8 +101,7 @@ func Inspect(root string) ([]Edge, error) {
 			return err
 		}
 		rel = filepath.ToSlash(rel)
-		// Only product source and explicitly classified test/tool harnesses.
-		if !strings.HasPrefix(rel, "cmd/") && !strings.HasPrefix(rel, "internal/") && !strings.HasPrefix(rel, "src/") && !strings.HasPrefix(rel, "tools/") && !strings.HasPrefix(rel, "examples/") && !strings.HasPrefix(rel, "packaging/") && !strings.HasPrefix(rel, "benchmark/") {
+		if !strings.HasPrefix(rel, "cmd/") && !strings.HasPrefix(rel, "internal/") && !strings.HasPrefix(rel, "tools/") && !strings.HasPrefix(rel, "examples/") && !strings.HasPrefix(rel, "packaging/") {
 			return nil
 		}
 		packagePath := filepath.ToSlash(filepath.Dir(rel))

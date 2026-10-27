@@ -9,10 +9,10 @@ import (
 	"runtime"
 
 	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
-	"github.com/Glacius-Labs/Markitect/internal/tooling/guardedwrite"
 )
 
 // Publisher uses host Git and durable state after every Run has closed. The

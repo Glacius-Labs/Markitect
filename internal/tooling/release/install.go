@@ -9,8 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Glacius-Labs/Markitect/internal/tooling/guardedwrite"
-	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
+	"github.com/Glacius-Labs/Markitect/internal/guardedwrite"
 )
 
 var installPinPaths = []string{
@@ -58,7 +57,7 @@ type installFileState struct {
 
 type installState struct {
 	files  map[string]installFileState
-	head   *source.Input
+	head   *Input
 	branch string
 	kind   string
 }

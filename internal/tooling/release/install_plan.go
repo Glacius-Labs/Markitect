@@ -11,7 +11,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
+	"github.com/Glacius-Labs/Markitect/internal/guardedwrite"
 )
 
 func validateIncomingBundle(bundle *Bundle) error {
@@ -60,7 +60,7 @@ func buildInstallPlan(root string, bundle *Bundle) (*InstallPlan, *installState,
 	}
 
 	var err error
-	state.head, err = source.Load(root, "HEAD")
+	state.head, err = LoadSource(root, "HEAD")
 	if err != nil {
 		// A fresh plan is useful before a Git repository has an initial commit.
 		// Any existing pin set, and every write, still requires committed evidence.
@@ -74,7 +74,7 @@ func buildInstallPlan(root string, bundle *Bundle) (*InstallPlan, *installState,
 		// A plan outside Git is useful for a completely empty destination. In a
 		// Git worktree without a first commit, staged target paths are still a
 		// partial installation and must not be adopted.
-		if inside, insideErr := source.GitOutput(root, "rev-parse", "--is-inside-work-tree"); insideErr == nil && strings.TrimSpace(string(inside)) == "true" {
+		if inside, insideErr := guardedwrite.GitOutput(root, "rev-parse", "--is-inside-work-tree"); insideErr == nil && strings.TrimSpace(string(inside)) == "true" {
 			if err := ensureNoStagedInstallPins(root, false); err != nil {
 				return nil, nil, err
 			}
@@ -166,7 +166,7 @@ func ensureNoStagedInstallPins(root string, hasHead bool) error {
 		args = []string{"ls-files", "--stage", "-z", "--"}
 	}
 	args = append(args, installPaths...)
-	out, err := source.GitOutput(root, args...)
+	out, err := guardedwrite.GitOutput(root, args...)
 	if err != nil {
 		return fmt.Errorf("inspect staged release pins: %w", err)
 	}
@@ -234,7 +234,7 @@ func allInstallBytesMatch(current map[string]installFileState, target map[string
 }
 
 func installableBranch(root string) (string, error) {
-	branch, err := source.GitOutput(root, "branch", "--show-current")
+	branch, err := guardedwrite.GitOutput(root, "branch", "--show-current")
 	if err != nil {
 		return "", fmt.Errorf("install requires a Git worktree on a named non-protected branch: %w", err)
 	}

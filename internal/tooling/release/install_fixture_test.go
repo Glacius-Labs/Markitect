@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/internal/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
-	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -78,7 +78,7 @@ func runWriterGit(t *testing.T, root string, args ...string) string {
 	t.Helper()
 	commandArgs := append([]string{"-c", "safe.directory=" + filepath.ToSlash(root), "-C", root}, args...)
 	command := exec.Command("git", commandArgs...)
-	command.Env = source.CleanGitEnv()
+	command.Env = guardedwrite.CleanGitEnv()
 	output, err := command.CombinedOutput()
 	if err != nil {
 		t.Fatalf("git %v failed: %v\n%s", args, err, output)

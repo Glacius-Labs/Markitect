@@ -14,7 +14,7 @@ Bootstrap alone builds the concrete adapters and the state directory. CLI code p
 
 ## Layers
 
-All maintained Go packages use one root module. [Modules](development/modules.md#dependency-direction) states the allowed imports, and a mechanical gate checks them in production, test and platform files.
+All maintained Go packages use one root module. One rule table in [`internal/tooling/architecture/rules.go`](../internal/tooling/architecture/rules.go) gives every package a layer, lists which layers each layer may import and names the few exceptions; `TestRepositoryArchitecture` checks it in every production, test and platform file. Foundations never import outward, adapters share only the container client and import no other adapter, only test files import `internal/testkit`, and the consumer bootstrap and source smoke import no Markitect package. The generated [code map](development/code-map.md) shows the table, and the source packager accepts exactly its packages below `cmd/` and `internal/`. The table below describes the responsibilities.
 
 | Responsibility | Packages | Depends on |
 | --- | --- | --- |
@@ -26,13 +26,13 @@ All maintained Go packages use one root module. [Modules](development/modules.md
 | Static native and check profile metadata | `internal/runtimeconfig` | Model, organization, Project, snapshot; no Run or provider session |
 | Model-derived instructions for native Sessions, rendered by the native adapter | `internal/harness` | Project values; no I/O, no Run |
 | Closed hierarchical Run | `internal/run` | Project, organization, snapshot; Session, workspace, check and record ports |
-| Sequence of Runs | `internal/workflow` | Run values and its own Executor interface |
-| Preflight, publication after closure | `internal/apply` | Model, Project, Workflow, Run result values |
+| Preflight, the sequence of Runs, publication after closure | `internal/apply` | Model, Project, Run values and its own Executor interface; no adapter |
 | Generated model view | `internal/modeldocs` | Project, model, snapshot |
 | Concrete adapters | `internal/adapters/*`, `internal/agentd` | Their inward consumers; no general sibling privilege |
+| Guarded working-tree writes, Git identity and repository-path rules | `internal/guardedwrite` | No other Markitect responsibility |
 | Composition | `internal/bootstrap` | Actual services and adapters |
-| Entrypoints | `cmd/markitect`, `cmd/markitect-agentd` | Bootstrap, agentd |
-| Maintenance | `internal/tooling/*`, `cmd/markitect-check-*`, `cmd/markitect-release` | Explicit maintenance edges, separate from product execution |
+| Entrypoints | `cmd/markitect`, `cmd/markitect-runner`, `cmd/markitect-agentd` | Bootstrap, the runner adapter, agentd |
+| Maintenance | `internal/tooling/*`, `cmd/markitect-release` | The guarded writer and build data; separate from product execution |
 
 ## Foundations and Project
 

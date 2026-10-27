@@ -21,11 +21,11 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/adapters/runner"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/runstore"
 	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	runexec "github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/runtimeconfig"
-	"github.com/Glacius-Labs/Markitect/internal/tooling/guardedwrite"
 )
 
 // The optional work window is an additional cap on productive Runs, never a

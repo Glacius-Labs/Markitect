@@ -1,6 +1,4 @@
-// Package source defines a fixed collection of source files and deterministic
-// operations over snapshots, independent of how their bytes were obtained.
-package source
+package release
 
 import (
 	"bytes"

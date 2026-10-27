@@ -2,7 +2,6 @@ package release
 
 import (
 	"bytes"
-	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 	"os"
 	"path/filepath"
 	"strings"
@@ -273,7 +272,7 @@ func TestRawLegacyAndSchemaBoundariesMatchLiveAndFixed(t *testing.T) {
 	}
 }
 
-func fixedSourceSnapshot(t *testing.T, root string) *source.Input {
+func fixedSourceSnapshot(t *testing.T, root string) *Input {
 	t.Helper()
 	files := map[string][]byte{}
 	modes := map[string]string{}
@@ -294,13 +293,13 @@ func fixedSourceSnapshot(t *testing.T, root string) *source.Input {
 		}
 		relative = filepath.ToSlash(relative)
 		files[relative] = data
-		modes[relative] = source.RegularMode
+		modes[relative] = RegularMode
 		return nil
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	return &source.Input{Files: files, Modes: modes}
+	return &Input{Files: files, Modes: modes}
 }
 
 func writeLayoutFile(t *testing.T, root, relative, content string) {

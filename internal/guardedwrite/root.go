@@ -13,8 +13,6 @@ import (
 	"runtime"
 	"strings"
 	"sync"
-
-	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
 // publishedWriteError reports that the bytes were atomically published into
@@ -99,7 +97,7 @@ func SafeDestination(root, name string) (string, error) {
 		if i > 0 {
 			parent = strings.Join(parts[:i], "/")
 		}
-		if err := requireStoredName(listing, parent, part); err != nil {
+		if err := RequireStoredName(listing, parent, part); err != nil {
 			return "", fmt.Errorf("unsafe output path %s: %w", name, err)
 		}
 		resolved, err := filepath.EvalSymlinks(current)
@@ -133,23 +131,6 @@ func validateWritePath(name string) error {
 		}
 	}
 	return nil
-}
-
-// requireStoredName refuses an existing path component that Windows resolved
-// through another spelling. source.RequireStoredName is the one
-// implementation; source snapshots need it below this package.
-func requireStoredName(directory fs.FS, parent, part string) error {
-	return source.RequireStoredName(directory, parent, part)
-}
-
-// StoredNames applies the stored-name check to write paths below one
-// directory, remembering the directories it has proven. It is
-// source.StoredNames, the one implementation.
-type StoredNames = source.StoredNames
-
-// NewStoredNames returns the check for paths below directory.
-func NewStoredNames(directory fs.FS) *StoredNames {
-	return source.NewStoredNames(directory)
 }
 
 // Root pins all output mutations to the identity of the approved project
@@ -218,7 +199,7 @@ func (w *Root) checkPath(name string) error {
 		if i > 0 {
 			parent = strings.Join(parts[:i], "/")
 		}
-		if err := requireStoredName(w.root.FS(), parent, part); err != nil {
+		if err := RequireStoredName(w.root.FS(), parent, part); err != nil {
 			return fmt.Errorf("unsafe output path %s: %w", name, err)
 		}
 		if i < len(parts)-1 && !info.IsDir() {
@@ -387,7 +368,7 @@ func (w *Root) openDirectoryContext(ctx context.Context, name string, create boo
 		}
 		// Check after any create: a component missing from checkPath's view
 		// may since have resolved to an existing entry through an alias.
-		if err := requireStoredName(current.FS(), ".", part); err != nil {
+		if err := RequireStoredName(current.FS(), ".", part); err != nil {
 			closeCurrent()
 			return nil, nil, fmt.Errorf("unsafe output parent %s: %w", name, err)
 		}
@@ -798,7 +779,7 @@ func branchName(ctx context.Context, root string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	branch, err := source.GitOutputContext(ctx, absolute, "branch", "--show-current")
+	branch, err := GitOutputContext(ctx, absolute, "branch", "--show-current")
 	if err != nil {
 		return "", fmt.Errorf("writing canonical sources requires an isolated Git branch: %w", err)
 	}

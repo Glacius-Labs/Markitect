@@ -1,25 +1,28 @@
-package source
+package release
 
 import (
+	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"runtime"
 	"strings"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/internal/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
 func TestWorkingTreeDigestTracksAddedAndDeletedFiles(t *testing.T) {
 	root := t.TempDir()
 	writeTestFile(t, root, "one.txt", "one")
-	first, err := Load(root, "")
+	first, err := LoadSource(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
 	writeTestFile(t, root, "two.txt", "two")
-	second, err := Load(root, "")
+	second, err := LoadSource(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,7 +32,7 @@ func TestWorkingTreeDigestTracksAddedAndDeletedFiles(t *testing.T) {
 	if err := os.Remove(filepath.Join(root, "two.txt")); err != nil {
 		t.Fatal(err)
 	}
-	third, err := Load(root, "")
+	third, err := LoadSource(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -48,7 +51,7 @@ func TestWorkingTreeExclusionsAndMaterialize(t *testing.T) {
 	for _, dir := range []string{"vendor", "node_modules", "bin", "obj", ".artifacts", ".cache", ".worktrees", ".venv", "__pycache__"} {
 		writeTestFile(t, root, filepath.Join(dir, "nested", "hidden.txt"), "ignored")
 	}
-	s, err := Load(root, "")
+	s, err := LoadSource(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -94,7 +97,7 @@ func TestProtectedDocumentationAndProviderTreesMatchAcrossSnapshotModes(t *testi
 		repo.Write(p, "excluded")
 	}
 
-	working, err := Load(root, "")
+	working, err := LoadSource(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -110,7 +113,7 @@ func TestProtectedDocumentationAndProviderTreesMatchAcrossSnapshotModes(t *testi
 	}
 
 	revision := repo.Commit("initial")
-	fixed, err := Load(root, revision)
+	fixed, err := LoadSource(root, revision)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,11 +129,11 @@ func TestWorkingTreeCollisionDiagnosticDoesNotDependOnMapOrder(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(root, "Docs", "b.md")); err == nil {
 		t.Skip("case-insensitive filesystem cannot hold both Docs and docs")
 	}
-	requireSameError(t, func() error { _, err := Load(root, ""); return err }, `between "Docs" and "docs"`)
+	requireSameError(t, func() error { _, err := LoadSource(root, ""); return err }, `between "Docs" and "docs"`)
 }
 
 func TestWorkingTreeTakesTrackedModesFromIndexWhenGitIgnoresFileMode(t *testing.T) {
-	repo, _ := selectiveGitFixture(t)
+	repo, _ := gitFixture(t)
 	root := repo.Dir
 	// Git for Windows sets this; setting it here also covers other platforms.
 	repo.Git("config", "core.filemode", "false")
@@ -141,11 +144,11 @@ func TestWorkingTreeTakesTrackedModesFromIndexWhenGitIgnoresFileMode(t *testing.
 	if status := strings.TrimSpace(repo.Git("status", "--porcelain")); status != "" {
 		t.Fatalf("precondition: worktree not clean: %q", status)
 	}
-	working, err := Load(root, "")
+	working, err := LoadSource(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	fixed, err := Load(root, "HEAD")
+	fixed, err := LoadSource(root, "HEAD")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -157,7 +160,7 @@ func TestWorkingTreeTakesTrackedModesFromIndexWhenGitIgnoresFileMode(t *testing.
 	if err := os.Chmod(filepath.Join(root, "untracked.sh"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	withUntracked, err := Load(root, "")
+	withUntracked, err := LoadSource(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -177,7 +180,33 @@ func TestLoadRejectsWorkingTreeSymlinks(t *testing.T) {
 	if err := os.Symlink(target, filepath.Join(root, "link.txt")); err != nil {
 		t.Skipf("symlink creation unavailable: %v", err)
 	}
-	if _, err := Load(root, ""); err == nil || !strings.Contains(err.Error(), "symlink") {
+	if _, err := LoadSource(root, ""); err == nil || !strings.Contains(err.Error(), "symlink") {
 		t.Fatalf("Load error = %v, want symlink rejection", err)
+	}
+}
+
+func TestGitFileModeEnabledFollowsGitDefaultWhenUnset(t *testing.T) {
+	repo, _ := gitFixture(t)
+	root := repo.Dir
+	// Ensure the key exists before removing it, then verify no system/global
+	// setting shadows Git's documented default in this test environment.
+	repo.Git("config", "--local", "core.filemode", "true")
+	repo.Git("config", "--local", "--unset-all", "core.filemode")
+	cmd := exec.Command("git", "--no-replace-objects", "-C", root, "config", "--show-origin", "--get", "core.filemode")
+	cmd.Env = guardedwrite.CleanGitEnv()
+	if output, err := cmd.CombinedOutput(); err == nil {
+		t.Skipf("core.filemode is set outside the local test repository: %s", strings.TrimSpace(string(output)))
+	} else {
+		var exitErr *exec.ExitError
+		if !errors.As(err, &exitErr) || exitErr.ExitCode() != 1 {
+			t.Fatalf("inspect inherited core.filemode: %v\n%s", err, output)
+		}
+	}
+	if enabled, err := GitFileModeEnabled(root); err != nil || !enabled {
+		t.Fatalf("unset core.filemode = %v, err=%v; want Git default true", enabled, err)
+	}
+	repo.Git("config", "--local", "core.filemode", "false")
+	if enabled, err := GitFileModeEnabled(root); err != nil || enabled {
+		t.Fatalf("core.filemode=false read as %v, err=%v", enabled, err)
 	}
 }
