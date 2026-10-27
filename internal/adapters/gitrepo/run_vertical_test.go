@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -1073,6 +1074,9 @@ func TestRunRequestsRefuseUnboundImplementFindingsAndForeignBoundInput(t *testin
 }
 
 func TestDurableCandidateRetentionAndReopenUnderLongPaths(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("LocalGit serves the Linux Apply host and has no Windows long-path support")
+	}
 	r, prepared, original, input := runFixture(t)
 	ctx, cancel := context.WithDeadline(context.Background(), runDeadline(t))
 	defer cancel()

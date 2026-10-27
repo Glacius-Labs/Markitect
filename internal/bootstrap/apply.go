@@ -92,8 +92,8 @@ func safeStateDestination(repository, state string) error {
 // errWindowsApplyHost refuses native Apply on Windows. The Apply host runs on
 // Linux (DEC-077); on Windows, apply --runner starts it in the runner image.
 var errWindowsApplyHost = errors.New("native Apply is unavailable on Windows: the Apply host runs on Linux; " +
-	"start it in the Linux runner image with markitect apply --runner RUNNER_IMAGE_ID and the same options " +
-	"(see docs/guides/project-workflow.md#apply-in-the-linux-runner)")
+	"run it in the Linux runner image with markitect apply --runner RUNNER_IMAGE_ID and your other options " +
+	"(see docs/guides/project-workflow.md#apply-in-the-linux-runner for the inputs the runner takes)")
 
 // applyExecution composes Apply for the host operating system goos. Native
 // Apply runs on Linux; on Windows only the runner launcher is composed.

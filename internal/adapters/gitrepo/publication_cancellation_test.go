@@ -276,8 +276,8 @@ func TestPublicationGitQueriesCancelBeforeMutationAndAfterPartialTransfer(t *tes
 	})
 }
 
-// A Run's Git process ended by its context exits like a failed command, on
-// Windows with status 1 and no output. The error names the context's cause.
+// A Run's Git process ended by its context exits like a failed command. The
+// error names the context's cause.
 func TestLocalGitEndedByItsContextNamesTheCause(t *testing.T) {
 	dir := t.TempDir()
 	if _, err := localCommand(context.Background(), dir, nil, "init", "--quiet"); err != nil {

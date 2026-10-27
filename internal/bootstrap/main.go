@@ -18,10 +18,11 @@ import (
 )
 
 func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
-	return run(ctx, args, stdout, stderr, codexappserver.NewEngineImageReader)
+	return run(ctx, runtime.GOOS, args, stdout, stderr, codexappserver.NewEngineImageReader)
 }
 
-func run(ctx context.Context, args []string, stdout, stderr io.Writer, images codexappserver.ImageReaderFactory) int {
+// run composes the product for the host operating system goos.
+func run(ctx context.Context, goos string, args []string, stdout, stderr io.Writer, images codexappserver.ImageReaderFactory) int {
 	repository, err := gitrepo.New(gitrepo.Limits{})
 	if err != nil {
 		fmt.Fprintln(stderr, err)
@@ -32,6 +33,6 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer, images co
 	views := modeldocs.New(models, preparation, documents.Writer{})
 	agents := codexappserver.NewMetadataPreparer(images)
 	checker := checks.NewMetadataPreparer(checks.NewEngineImageReaders().Reader)
-	execution := applyExecution(runtime.GOOS, preparation, repository, agents, checker)
+	execution := applyExecution(goos, preparation, repository, agents, checker)
 	return cli.New(preparation, agents, checker, repository, views, execution).Run(ctx, args, stdout, stderr)
 }
