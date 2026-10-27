@@ -22,9 +22,7 @@ go run ./cmd/markitect-release licenses
 
 ## Release contents and verification
 
-A future public release needs a fresh version tag, exact reviewed source, passing platform gates, a bundle, native Windows/Linux binaries and provenance. The publication tool verifies source/run/attempt identity, asset bytes, immutable-release policy and attestations. It never overwrites a tag or asset. Retired version tags must not be reused. Required historical release evidence and the named archive refs are kept. Release pages and downloads are retired only on the owner's explicit instruction; retired releases keep their recorded source and asset identities and attestations without implying availability.
-
-The README keeps its release-generation markers for a future verified distribution. `markitect-release distribution --tag NEW_TAG --repo .` checks an actually published immutable release; `--write` updates local installation text and generated WinGet manifests. `--export-winget ABSENT_DIRECTORY` exports manifests for a separately reviewed catalog submission. No old manifest or catalog-validation workflow remains active on Main. Do not call these commands with a retired release tag.
+A future public release needs a fresh version tag, exact reviewed source, passing platform gates, a bundle, native Windows/Linux binaries and provenance. Its publication must verify source/run/attempt identity, asset bytes, immutable-release policy and attestations, and never overwrite a tag or asset. The earlier GitHub-release and WinGet publisher was removed from Main; Git history keeps it. Retired version tags must not be reused. Required historical release evidence and the named archive refs are kept. Release pages and downloads are retired only on the owner's explicit instruction; retired releases keep their recorded source and asset identities and attestations without implying availability.
 
 ## Preview and install
 
@@ -42,7 +40,7 @@ Use Git and the Go version in `go.mod`. Runtime containers and their separately 
 
 ## Owner publication
 
-[Operations](../docs/guides/operations.md#release-operations) owns publication requirements. The retained release workflow builds and checks new tagged source; it grants no authority to publish. Publication requires the owner's explicit release instruction and exact source/run/assets. Inspect the read-only publication plan before invoking its write operation, and verify the resulting release and every asset afterward.
+[Operations](../docs/guides/operations.md#release-operations) owns publication requirements. The retained release workflow builds and checks new tagged source; it grants no authority to publish. Publication requires the owner's explicit release instruction and exact source/run/assets. Inspect a read-only publication plan before any write, and verify the resulting release and every asset afterward.
 
 ## Historical content-package command
 

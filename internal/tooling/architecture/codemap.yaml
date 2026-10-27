@@ -111,10 +111,6 @@ packages:
     layer: maintenance
     purpose: Explicitly separated release and repository tooling.
     doc: docs/development/modules.md
-  - path: internal/tooling/publish
-    layer: maintenance
-    purpose: Explicitly separated release and repository tooling.
-    doc: docs/development/modules.md
   - path: internal/tooling/release
     layer: maintenance
     purpose: Explicitly separated release and repository tooling.

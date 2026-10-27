@@ -23,7 +23,6 @@ var targetRoots = []struct{ path, layer string }{
 	{"internal/agentd/frame", "agent-protocol"},
 	{"cmd/markitect-agentd", "runtime-command"},
 	{"cmd/markitect-runner", "apply-command"},
-	{"internal/tooling/publish", "maintenance"},
 	{"internal/tooling/release", "maintenance"},
 	{"internal/tooling/source", "maintenance"},
 	{"cmd/markitect-release", "maintenance-command"},
@@ -83,10 +82,9 @@ var responsibilityImports = map[string][]string{
 	"internal/realization":             {"internal/model", "internal/snapshot"},
 	"internal/run":                     {"internal/organization", "internal/project", "internal/snapshot"},
 	"internal/tooling/guardedwrite":    {"internal/tooling/source"},
-	"internal/tooling/publish":         {"internal/tooling/source", "internal/tooling/release"},
 	"internal/tooling/release":         {"internal/tooling/source"},
 	"internal/tooling/release/install": {"internal/tooling/source", "internal/tooling/release", "internal/tooling/guardedwrite"},
-	"internal/tooling/releasecli":      {"internal/buildinfo", "internal/tooling/source", "internal/tooling/release", "internal/tooling/release/install", "internal/tooling/publish"},
+	"internal/tooling/releasecli":      {"internal/buildinfo", "internal/tooling/source", "internal/tooling/release", "internal/tooling/release/install"},
 }
 
 // Only concrete fixture and composition needs receive test-only edges;

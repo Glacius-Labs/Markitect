@@ -44,7 +44,7 @@ This list owns the package-level invariants; the [concept](../concepts/v1-concep
 | Product command | Bootstrap |
 | Maintenance command | Its specific maintenance CLI |
 
-The real-Git vertical test alone receives a test-only record-adapter edge. No sibling adapter or common tooling parent grants a general import exemption. Maintenance remains explicit: the architecture gate reads Go sources, release uses source/license values, and installation and publication use their own maintenance consumers.
+The real-Git vertical test alone receives a test-only record-adapter edge. No sibling adapter or common tooling parent grants a general import exemption. Maintenance remains explicit: the architecture gate reads Go sources, release uses source/license values, and installation uses its own maintenance consumer.
 
 ## Apply target dependencies
 

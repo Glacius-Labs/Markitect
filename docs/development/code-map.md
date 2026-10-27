@@ -32,7 +32,7 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 | `agent-runtime` | Runs inside each Agent container: provider process, MCP bridge and stdio framing. | `agent-runtime` | 1 |
 | `runtime-command` | Thin entrypoint of the session helper. | `runtime-command` | 1 |
 | `build-data` | Version identity and embedded license notices. | `build-data` | 1 |
-| `maintenance` | Explicitly separated release and repository tooling. | `maintenance` | 7 |
+| `maintenance` | Explicitly separated release and repository tooling. | `maintenance` | 6 |
 | `maintenance-command` | Thin entrypoints to maintenance services. | `maintenance-command` | 1 |
 | `test-support` | Hermetic fixture support available only to tests. | `test-support` | 1 |
 | `standalone` | Public bootstrap and source smoke with no product imports. | `standalone` | 2 |
@@ -159,7 +159,6 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 |---|---|---|
 | `internal/tooling/architecture` | Explicitly separated release and repository tooling. | [docs/development/modules.md](modules.md) |
 | `internal/tooling/guardedwrite` | Explicitly separated release and repository tooling. | [docs/development/modules.md](modules.md) |
-| `internal/tooling/publish` | Explicitly separated release and repository tooling. | [docs/development/modules.md](modules.md) |
 | `internal/tooling/release` | Explicitly separated release and repository tooling. | [docs/development/modules.md](modules.md) |
 | `internal/tooling/release/install` | Explicitly separated release and repository tooling. | [docs/development/modules.md](modules.md) |
 | `internal/tooling/releasecli` | Explicitly separated release and repository tooling. | [docs/development/modules.md](modules.md) |

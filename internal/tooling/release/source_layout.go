@@ -55,7 +55,6 @@ var sourceRoots = []string{
 	"internal/tooling/architecture",
 	"internal/tooling/release",
 	"internal/tooling/releasecli",
-	"internal/tooling/publish",
 	"internal/tooling/source",
 	"internal/tooling/guardedwrite",
 }
