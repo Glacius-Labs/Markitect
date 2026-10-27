@@ -1,5 +1,7 @@
-// Package apply prepares fixed inputs for Apply. This first
-// model stage performs no repository I/O, execution or publication itself.
+// Package project prepares the checked structural input that every command
+// starts from: model, registry, accounting, declared instructions and checks,
+// and the static Manager contexts. It performs no repository I/O, execution or
+// publication itself; it acquires through its own Source ports.
 package project
 
 import (

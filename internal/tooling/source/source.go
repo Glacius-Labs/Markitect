@@ -1,5 +1,7 @@
 // Package source loads fixed or provisional snapshots from either the current
-// working tree or a committed Git tree.
+// working tree or a committed Git tree, and defines the fixed collection of
+// source files and deterministic operations over it, independent of how its
+// bytes were obtained.
 package source
 
 import (

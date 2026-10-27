@@ -14,7 +14,7 @@ Bootstrap alone builds the concrete adapters and the state directory. CLI code p
 
 ## Layers
 
-All maintained Go packages use one root module. [Modules](development/modules.md#dependency-direction) states the allowed imports, and a mechanical gate checks them in production, test and platform files.
+All maintained Go packages use one root module. One rule table in [`internal/tooling/architecture/rules.go`](../internal/tooling/architecture/rules.go) gives every package a layer, lists which layers each layer may import and names the few exceptions; `TestRepositoryArchitecture` checks it in every production, test and platform file. Foundations never import outward, adapters share only the container client and import no other adapter, only test files import `internal/testkit`, and the consumer bootstrap and source smoke import no Markitect package. The generated [code map](development/code-map.md) shows the table, and the source packager accepts exactly its packages below `cmd/` and `internal/`. The table below describes the responsibilities.
 
 | Responsibility | Packages | Depends on |
 | --- | --- | --- |
@@ -32,7 +32,7 @@ All maintained Go packages use one root module. [Modules](development/modules.md
 | Concrete adapters | `internal/adapters/*`, `internal/agentd` | Their inward consumers; no general sibling privilege |
 | Composition | `internal/bootstrap` | Actual services and adapters |
 | Entrypoints | `cmd/markitect`, `cmd/markitect-agentd` | Bootstrap, agentd |
-| Maintenance | `internal/tooling/*`, `cmd/markitect-check-*`, `cmd/markitect-release` | Explicit maintenance edges, separate from product execution |
+| Maintenance | `internal/tooling/*`, `cmd/markitect-release` | The guarded writer and build data; separate from product execution |
 
 ## Foundations and Project
 
