@@ -137,7 +137,7 @@ The owner [decided](concepts/sources/development-pace-20261026.md) that Markitec
 
 | Slice | Work | Order |
 |---|---|---|
-| L1 | The Linux runner image for the Apply host, and `markitect apply` on Windows starting it through Docker Desktop with the read-only checkout and login mounts and the Docker socket for the agent containers; the result returned as a branch | Increment 1 done ([PR #773](https://github.com/Glacius-Labs/Markitect/pull/773)): only the checkout's `.git` is mounted, a dirty checkout is refused, and only a local engine is accepted. Native qualification (image build, mount forms from Windows and WSL, one bounded Library Apply through the runner) is dispatched |
+| L1 | The Linux runner image for the Apply host, and `markitect apply` on Windows starting it through Docker Desktop with the read-only checkout and login mounts and the Docker socket for the agent containers; the result returned as a branch | Increment 1 done ([PR #773](https://github.com/Glacius-Labs/Markitect/pull/773)): only the checkout's `.git` is mounted, a dirty checkout is refused, and only a local engine is accepted. [Native qualification](validation/v1-l1-runner-qualification-20261027.md) on Main 00c687b6 passed from Windows: the image build, the mounts, one Library Apply handed back as a branch, and an early stop. The WSL form, which needs Docker Desktop's WSL integration, and a native Linux engine are open |
 | L2 | Remove Windows-only Apply host code and the release's Windows install smoke once L1 works; keep the model commands working on Windows | After L1 |
 | L3 | Documentation: project workflow, contribution checks, provider guide | With L1 and L2 |
 
