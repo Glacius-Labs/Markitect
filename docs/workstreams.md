@@ -22,6 +22,26 @@ This page lists the lanes and where each one keeps its state. It holds no status
 
 The state page paths are plain text, so a lane can add its page without touching this one.
 
+## Priority
+
+The owner, 27 October 2026: "The working streams and evaluator are currently our primary goal i think. It should achieve that each of them gets a stable version and can be evaluated and then we can decide which one of them performs well in which parameters of a project."
+
+Lanes 1 to 4 build, in three steps:
+
+1. **One yardstick.** Lane 4's arm interface becomes the one contract for every variant: the same task file in, the same `run.json` and bundle out, the same judging.
+2. **A stable version per variant.** One Library task runs end to end through that interface three times in a row without manual help. Order: classic baseline and host first, then plugin, then Git.
+3. **Comparison.** A small task set along project traits (size, kind of change, cost) runs on every variant with the same model inside a suite. The result is one table: which variant does well on which trait.
+
+Topic lanes 5 to 11 pause once their state page is up, until the owner opens a discussion.
+
+## State pages
+
+A lane's state page is the only place for its state; chats and messages are not. The page keeps three short parts, updated whenever a step ends:
+
+- **Now:** what the lane is doing.
+- **Next:** its next step.
+- **Questions for the owner:** each decision it needs, with its recommendation.
+
 ## Rules
 
 - **Shared code lives on `main`.** The compiler, the model, the Libraries and the evaluation suite are shared. A variant branch holds only that variant's code and merges `main` regularly, so the variants never fork the shared parts.
