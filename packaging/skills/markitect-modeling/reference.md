@@ -1,5 +1,7 @@
 # Standard Library reference
 
+Contents: markitect-values 1.0.0: Package `markitect/values`, alias `Values`; markitect-data 1.0.0: Package `markitect/data`, alias `Data`; markitect-api 1.0.0: Package `markitect/api`, alias `Api`; markitect-practice 1.0.0: Package `markitect/practice`, alias `Practice`; markitect-architecture 1.0.0: Package `markitect/architecture`, alias `Architecture`; Reserved IDs.
+
 Generated from the Library sources under `libraries/` of the Markitect repository. Each Library is its own model; a project lists the ones it uses in `model.yaml` and passes each with `--dependency`. Import a Library Package with an alias, for example `- {package: markitect/api, as: Api}`.
 
 Core 1.2.0 (`markitect/core`) defines the meta-Kinds: `Kind` (with `properties` and `implements`) and `Property` (with `name`, `valueType`, `minCount`, `maxCount`, `values`, `target`). `valueType` is one of `string`, `integer`, `number`, `boolean`, `enum`, `object`, `reference`. `maxCount: -1` means unbounded.

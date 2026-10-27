@@ -1,55 +1,84 @@
 ---
 name: markitect-modeling
-description: Write or change a Markitect canonical model (the typed YAML model under .markitect/) from requirements or an owner's decision, using the standard Libraries, and check it with markitect check and the model analysis tool. Use when asked to create a model, add or change operations, records, rules or architecture in a model, or to review a model's quality.
+description: Use when asked to create, extend or review a Markitect canonical model (the typed YAML under .markitect/), to turn requirements into a model, to add operations, records, rules or architecture to one, or to judge a model's quality.
 ---
 
 # Writing a Markitect canonical model
 
-A Markitect model is a program written in typed prose. Kinds are types, typed fields carry the shape, a Definition's body is its function body, and each Package is a module that becomes a Manager. Write it the way you would write code in a typed language: small, typed, no duplication, dependencies pointing one way.
+A Markitect model is a program written in typed prose. Kinds are types, typed fields carry the shape, a Definition's body is its function body, and each Package is a module that becomes a Manager. Write it the way you would write code in a typed language: small, typed, every rule stated once, dependencies pointing one way.
 
-Read [reference.md](reference.md) for the Library Kinds and [examples.md](examples.md) for copyable Definitions before writing.
+Before writing, read [reference.md](reference.md) (the Library Kinds) and [examples.md](examples.md) (copyable Definitions that compile).
 
 ## Who decides
 
 The owner decides; you write. Everything the model states always holds, so every statement is a decision.
 
-- Write only what the requirements or the owner state. If the requirements leave something open, leave it open. Do not invent a policy, a limit, an error case or a default.
-- **Architecture is the owner's decision.** If the owner has not decided the module cut and the dependency directions, propose them (a table: Package, what it holds, what it may depend on) and stop until the owner approves. Do not write Packages, DependencyRules, Placements or Interfaces that the owner has not approved.
-- A requirement that contradicts another, or that you cannot model without guessing, goes back to the owner as a question. Do not repair it in the model.
+- Write only what the requirements or the owner state. If the requirements leave something open, leave it open and say so where it matters. Do not invent a policy, a limit, an error case or a default.
+- **Architecture is the owner's decision.** If the owner has not decided the module cut and the dependency directions, propose them and **stop**: a table (Package, what it holds, what it may depend on), the placements, the code folders, and your questions. Write no model file until the owner answers.
+- A requirement that contradicts another, or that you cannot model without guessing, goes back to the owner as a question.
 
 ## Workflow
 
-1. **Read the requirements completely.** List what each concern needs: project (purpose, scope, language, build and test commands, permitted dependencies), value types, records, operations, cross-cutting rules, architecture, way of working (test and documentation duties).
-2. **Settle the architecture with the owner** (above). Definitions may not sit in the model root, so the project's own decisions live in a top-level project Package named after the project. Its children are the modules: usually a shared kernel (value types, roles, shared refusal codes and cross-cutting rules), an outer layer that wires requests to the areas, and one Package per area. Keep the tree flat unless the owner wants layers; an empty parent Package still becomes a Manager.
-3. **Write the vocabulary first:** Scalars with their ranges and units, Enumerations with their values and meanings, Units, Roles, RefusalCodes with their wire codes. Shared ones go into the shared kernel; one area's own ones go into that area.
-4. **Write the records** as `Data.Entity` with typed fields; `key` names the identifying field; `refersTo` says a field identifies an existing record. Embed a record by using its Entity as the field type.
-5. **Write the operations** as `Api.Operation`: `wireName`, `mutation`, `arguments`, `refusals` (in checking order, each with `when`), `results`, `permissions` (a role without an entry has none). The body states only the effect. If the project needs more fields on every operation (for example an audit target), define a project Kind that `implements: [Api.Operation]` and declares all of its Properties plus the new one.
-6. **Write the rules** as `Practice.Rule` (or one of its obligation Kinds) with `appliesTo`. A rule many Packages follow lives once in the shared kernel with `appliesTo: [<project>]`; add one modeled-scope selector to `execution.yaml` so it reaches every Manager (see examples.md).
-7. **Write the architecture the owner approved:** in the project Package a `Practice.Project`, one `Architecture.DependencyRule` per Package, `Architecture.Placement` for every cross-cutting concern realized in one place; in each area an `Architecture.Interface` with the operations and types others may use.
-8. **Map the code:** `execution.yaml` ownership gives each Package its folder; its checks are the build and test commands.
-9. **Compile, lock and lint** (below), fix every error and every strong warning, and justify each remaining warning in one line.
-10. **Check fidelity:** go through the requirements statement by statement and point at the Definition that carries each one. Then ask for an independent review against the requirements; a model is not done before that review.
+Copy this checklist into your reply and tick it off as you go.
 
-## Rules that the compiler does not catch
+```text
+[ ] 1 Requirements read completely; open points listed
+[ ] 2 Architecture approved by the owner (or proposed, and stopped)
+[ ] 3 Trace table: every requirement statement -> planned Definition
+[ ] 4 Vocabulary, records, operations, rules, architecture written
+[ ] 5 check exit 0, lock written
+[ ] 6 lint: no strong finding; every warning fixed or justified
+[ ] 7 Trace table re-checked against the written model
+[ ] 8 Final report written; independent review requested
+```
 
+1. **Read the requirements completely.** List what each concern needs: project (purpose, scope, language, build and test commands, permitted dependencies), value types, records, operations, cross-cutting rules, invariants, architecture, way of working (test and documentation duties).
+2. **Settle the architecture with the owner** (above). Definitions may not sit in the model root, so the project's own decisions live in a top-level project Package named after the project. Its children are the modules: usually a shared kernel (value types, roles, shared refusal codes, cross-cutting rules), an outer layer that wires requests to the areas, and one Package per area. Keep the tree flat unless the owner wants layers; an empty parent Package still becomes a Manager.
+3. **Write the trace table first:** each requirement statement, in order, mapped to the Definition (Package/ID and Kind) that will carry it. A statement without a target is a gap; a planned Definition without a statement is an invention. Fix both before writing YAML.
+4. **Write the model** in this order:
+   - **Vocabulary:** Scalars with ranges and units, Enumerations with values and meanings, Units, Roles, RefusalCodes with their wire codes. Shared ones in the shared kernel, an area's own ones in that area.
+   - **Records** as `Data.Entity` with typed fields; `key` names the identifying field; `refersTo` says a field identifies an existing record; an Entity as a field type embeds the record.
+   - **Invariants** as `Data.Invariant` for what must always hold for records, above all around state changes (a balance is never negative; an unpaid order is never shipped).
+   - **Operations** as `Api.Operation`: `wireName`, `mutation`, `arguments`, `refusals` in checking order with `when`, `results`, `permissions` (a role without an entry has none). The body states only the effect. For extra fields on every operation (an audit target), define a project Kind that `implements: [Api.Operation]` and declares all of its Properties plus the new one.
+   - **Rules** as `Practice.Rule` or an obligation Kind with `appliesTo`. A rule many Packages follow lives once in the shared kernel with `appliesTo: [<project>]`, and one modeled-scope selector in `execution.yaml` brings it to every Manager (see examples.md).
+   - **Architecture** the owner approved: in the project Package a `Practice.Project`, one `Architecture.DependencyRule` per Package and an `Architecture.Placement` for each concern realized in one place; in each area an `Architecture.Interface`.
+   - **Code mapping:** `execution.yaml` ownership gives each Package its folder; its checks are the build and test commands.
+5. **Compile, lock and lint** (below) until clean.
+6. **Re-check the trace table** against the written files, then write the final report.
+
+## Statements
+
+- **Strong statements.** A rule is short, free of exceptions and true everywhere it applies. A rule full of "except when" and "unless" is several rules: split it into atomic ones, or make the exception its own Definition.
 - **Typed shapes.** Arguments, refusal codes, fields, results, permissions and scopes are typed fields, never lists in a body. A body line starting with "Arguments:", "Refusals:" or "Fields:" is a defect.
-- **Small Definitions.** Over 150 words of prose (tables and code blocks excluded) is a warning; over 300 means it holds several decisions: split it.
-- **Once.** Each decision is stated in exactly one Definition. Do not restate a rule in an overview, an example or another area; link to it instead.
-- **Dependencies follow the rules.** A typed reference or a body link from one Package to another is a dependency. Where the dependency rules forbid it, describe the need in prose without a link, and let the outer layer supply it (dependency inversion).
-- **No process.** No Manager steps, no run results, no test evidence in the model.
-- **One architecture.** No component list or layer description beside the Package tree.
+- **Small.** Over 150 words of prose (tables and code excluded) or over 10 decisions (refusals and condition words) is a warning; over 300 words or 15 decisions holds several decisions: split it.
+- **Once.** Each decision is stated in exactly one Definition. Do not restate a rule in an overview, an example or another area; link to it.
+- **Dependencies follow the rules.** A typed reference or a body link into another Package is a dependency. Where the rules forbid it, describe the need in prose without a link and let the outer layer supply it.
+- **No process, no evidence, no second architecture.** No Manager steps, no run or test results, no component list beside the Package tree.
+
+## Red flags: stop when you think
+
+| Thought | Instead |
+|---|---|
+| "I'll pick a sensible architecture myself." | Propose it and stop for the owner. |
+| "The requirements don't say, I'll assume the usual behavior." | Leave it open, or ask. |
+| "No Library Kind fits, I'll describe it in the body." | Look in reference.md; if nothing fits, define a project Kind. |
+| "I'll list the arguments in the body for now." | Type them now. |
+| "This rule needs a few exceptions." | Split it into atomic rules. |
+| "The lint warning is cosmetic." | Fix it, or justify it in one line in the report. |
+| "It compiled earlier, it still compiles." | Run `check` again on the committed tree. |
+| "The model is done." | Only with the evidence below. |
 
 ## Files and names
 
-- One Definition per file: `imports`, `id`, `kind`, `body`, `spec`. File name: the ID in lower-case kebab case.
+- One Definition per file: `imports`, `id`, `kind`, `body`, `spec`; file name is the ID in lower-case kebab case.
 - A Package is a folder under the model root. Reference another Package's Definition through an import alias (`Members.member`); your own Package's without one.
-- **IDs:** no ID may equal a Core or Library ID ignoring case (`name`, `valueType`, `members`, `Operation`, `fields`, `key`, `code`, `scope`, `when`, `types`, `concern` and the others in reference.md). A Kind and a Property in one Package may not share an ID ignoring case. If a short reference becomes ambiguous across imports, qualify it.
+- **IDs:** no ID may equal a Core or Library ID ignoring case (the reserved list is at the end of reference.md). A Kind and a Property in one Package may not share an ID ignoring case. Qualify a short reference that becomes ambiguous across imports.
 - **YAML:** quote strings that contain `:`, `#`, `,`, `'`, `{`, `[`, or start with a backtick, a digit or a dash. Write bodies as literal blocks (`body: |-`).
-- **Body links:** `[[alias.id|text]]` or `[[id|text]]`. Every link is a dependency edge.
+- **Body links:** `[[Alias.id|text]]` or `[[id|text]]`. Every link is a dependency edge.
 
 ## Compile, lock and lint
 
-The model compiles with every Library passed explicitly. In a project repository with the model under `.markitect/` and the Libraries vendored, for example under `vendor/markitect/`:
+Run these exactly; only the paths change. The model lives under `.markitect/` of a Git repository, the Libraries are vendored (for example under `vendor/markitect/`), and every Library is passed with an absolute `--dependency` path in the platform's native spelling. `check` reads the committed tree: commit first.
 
 ```text
 markitect check --repo . --dependency ABS/vendor/markitect/core/model.yaml --dependency ABS/vendor/markitect/values/model.yaml ... > check.json
@@ -59,14 +88,19 @@ python -I -B tools/model-analysis/model_analysis.py lint check.json --repo .
 python -I -B tools/model-analysis/model_analysis.py graph check.json
 ```
 
-Use absolute dependency paths in the platform's native spelling. `check` exits 0 only when the model compiles and the lock pins the current Library digests. Commit before checking: `check` reads the committed tree.
+`check` exits 0 only when the model compiles and the lock pins the current Library digests. Treat `unknown-package`, `dependency-rule`, `import-cycle` and every `strong` finding as errors.
 
-Treat these lint signals as errors: `unknown-package`, `dependency-rule`, `import-cycle`, a `size` over 300. Fix `isolated`, `unused-import` and `undefined-term` unless you can say in one line why they are right.
+## Done: evidence, not belief
 
-## Done means
+Claim "done" only in a final report in this form, with the outputs pasted from runs made after your last edit:
 
-- `markitect check` exits 0 with the lock written.
-- `lint` has no strong finding; every warning is fixed or justified.
-- The graph has no cycle, and its edges follow the dependency rules.
-- Every requirement statement maps to a Definition, and nothing in the model lacks a source in the requirements or an owner decision.
-- An independent fidelity review found nothing missing or wrong.
+```text
+Check:   exit <code>, model digest <sha256>       (pasted)
+Lint:    <counts>; each warning fixed or justified (pasted)
+Graph:   <cycles>, <dependency-rule findings>      (pasted)
+Trace:   <n> of <n> requirement statements mapped; inventions: <none or list>
+Open:    <points left open by the requirements>
+Status:  READY FOR REVIEW | NOT READY: <numbered fixes>
+```
+
+Then ask for an independent review by someone who sees only the requirements and the model. The model is done when that review finds nothing missing or wrong.
