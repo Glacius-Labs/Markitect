@@ -4,7 +4,7 @@ The owner retired the old Project/Domain releases and binary downloads on 17 Oct
 
 ## What lives here
 
-`packaging/` holds what ships besides the binary: [`runtime/`](runtime/README.md) (the runtime container image and its project-image examples), `bootstrap/` (the consumer bootstrap `run-markitect.go` that release bundles copy into `.markitect/bootstrap/run.go`, with its test), [`skills/markitect-modeling/`](skills/markitect-modeling/SKILL.md) (the skill that lets an AI agent write a canonical model with the standard Libraries and check it) and this guide.
+`packaging/` holds what ships besides the binary: [`runtime/`](runtime/README.md) (the runtime container image and its project-image examples), [`runner/`](runner/Dockerfile) (the Linux runner image for Apply, described in the [runner design](../docs/design/linux-runner.md)), `bootstrap/` (the consumer bootstrap `run-markitect.go` that release bundles copy into `.markitect/bootstrap/run.go`, with its test), [`skills/markitect-modeling/`](skills/markitect-modeling/SKILL.md) (the skill that lets an AI agent write a canonical model with the standard Libraries and check it) and this guide.
 
 ## Current source release tooling
 

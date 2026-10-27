@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"encoding/json"
 	"reflect"
 	"strings"
 	"time"
@@ -56,6 +57,13 @@ func reportValue(value any) any {
 		return v.Format(time.RFC3339Nano)
 	case []byte:
 		return value
+	case json.RawMessage:
+		// An embedded report another Markitect process already projected,
+		// such as the runner's Apply report, passes through unchanged.
+		if len(v) == 0 {
+			return nil
+		}
+		return v
 	}
 	v := reflect.ValueOf(value)
 	switch v.Kind() {

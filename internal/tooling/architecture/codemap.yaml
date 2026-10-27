@@ -67,6 +67,10 @@ packages:
     layer: apply-adapter
     purpose: Complete repository capture, isolated Run Git copies and independently reopenable stored candidates.
     doc: docs/development/modules.md
+  - path: internal/adapters/runner
+    layer: apply-adapter
+    purpose: Linux runner launch with read-only checkout, login and engine-socket mounts, the in-image clone and Apply hand-back, and import of the verified change as a branch.
+    doc: docs/design/linux-runner.md
   - path: internal/adapters/runstore
     layer: apply-adapter
     purpose: Immutable terminal Run results, an index of completed Verify approvals and durable concurrent project Notes.
@@ -79,6 +83,10 @@ packages:
     layer: apply-command
     purpose: Thin entrypoint to product composition.
     doc: docs/development/modules.md
+  - path: cmd/markitect-runner
+    layer: apply-command
+    purpose: Thin entrypoint of the Linux runner image.
+    doc: docs/design/linux-runner.md
   - path: internal/agentd/frame
     layer: agent-protocol
     purpose: Frame protocol between the Orchestrator and the session helper.

@@ -18,6 +18,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/adapters/codexappserver"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/gitrepo"
+	"github.com/Glacius-Labs/Markitect/internal/adapters/runner"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/runstore"
 	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
@@ -95,7 +96,10 @@ func applyExecution(preparation *project.PreparationService, repository *gitrepo
 		if err != nil {
 			return out, err
 		}
-		if cfg.ProductBuild != request.Build || !stateName.MatchString(cfg.RepositoryIdentity) || len(cfg.RepositoryIdentity) > 100 || !time.Now().Before(cfg.deadline()) || !cfg.workDeadline().IsZero() && !time.Now().Before(cfg.workDeadline()) {
+		// In the runner the runner's own binary executes Apply and checks the
+		// asserted product build against itself.
+		buildRefused := request.Runner == "" && cfg.ProductBuild != request.Build
+		if buildRefused || !stateName.MatchString(cfg.RepositoryIdentity) || len(cfg.RepositoryIdentity) > 100 || !time.Now().Before(cfg.deadline()) || !cfg.workDeadline().IsZero() && !time.Now().Before(cfg.workDeadline()) {
 			return out, fmt.Errorf("invocation build, project identity or original deadline refused")
 		}
 		if err = safeStateDestination(request.Selection.Repository, cfg.StateDirectory); err != nil {
@@ -105,6 +109,9 @@ func applyExecution(preparation *project.PreparationService, repository *gitrepo
 			if inside(request.Selection.Repository, credential.Path) {
 				return out, fmt.Errorf("dedicated account input must be outside candidate content")
 			}
+		}
+		if request.Runner != "" {
+			return runnerApply(ctx, request, cfg, runner.Start)
 		}
 		ctx, cancel := context.WithDeadline(ctx, cfg.deadline())
 		defer cancel()
