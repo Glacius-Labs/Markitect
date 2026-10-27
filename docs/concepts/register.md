@@ -92,7 +92,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-075](#dec-075-kind-extension-and-one-core-120) | Decision | Kind interfaces and one Core 1.2.0 | Accepted; implementation in the canonical model track, merged after the F_fix pin |
 | [DEC-076](#dec-076-markitect-is-developed-as-a-regular-software-project) | Decision | Markitect is developed as a regular software project | Accepted; self-model retired (#756), cleanup tracked in the delivery plan |
 | [DEC-077](#dec-077-development-pace-and-linux-first-execution) | Decision | Development pace and Linux-first execution | Accepted; Linux-only CI, Linux Docker way tracked in the delivery plan; the runner's checkout mount and branch hand-back superseded by DEC-078 |
-| [DEC-078](#dec-078-agents-collaborate-through-a-git-remote-without-owner-review) | Decision | Agents collaborate through a Git remote, without owner review | Accepted direction; design open, tracked in the delivery plan |
+| [DEC-078](#dec-078-agents-collaborate-through-a-git-remote-without-owner-review) | Decision | Agents collaborate through a Git remote, without owner review | Accepted direction; G0 design agreed for a prototype; applies to the Git variant, Main keeps today's handoff and publication |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -973,7 +973,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-078 Agents collaborate through a Git remote, without owner review
 
-- **Status:** Accepted by the owner as a direction, 27 October 2026, with answers to three questions the same afternoon ([verbatim source](sources/git-remote-collaboration-20261027.md)). The mechanics are open design work, to be designed and discussed with the owner before anything is built, in the [delivery plan](../implementation-plan.md#git-remote-collaboration-owner-direction-27-october). Until that work lands, the implementation keeps the current mount, hand-back and working-tree publication.
+- **Status:** Accepted by the owner as a direction, 27 October 2026, with answers to three questions the same afternoon ([verbatim source](sources/git-remote-collaboration-20261027.md)). The [G0 design](../design/agent-git-collaboration.md) settles the mechanics; the owner answered its questions the same day and asked for a prototype first. The [delivery plan](../implementation-plan.md#git-remote-collaboration-owner-direction-27-october) tracks the slices.
 - **Decision (recorded meaning, as in the source):**
   - Agents collaborate through a Git remote, like engineers and their managers in a company. Before a run, a run branch is created from the target branch. Each agent pulls, commits and pushes, and Managers integrate their children's work the same way. No Git directory is mounted into a container.
   - The owner models, and the agents apply the model. A verified result lands on the target branch without a pull request that the owner reviews or merges. Trust comes from the many agents working independently, not from the owner reading the diff.
@@ -987,16 +987,15 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - Only a fresh Verify approval of the exact candidate allows publication.
   - Guarantees live in host state and the tool contract, not in prompts ([concept §3.7](v1-concept.md#37-tasks-not-process-d13)).
   - Provider CLIs log in with a normal account only, never with an API key.
-- **Supersedes:**
+- **Scope, 27 October 2026:** when the owner split the work into lanes, this decision became the Git variant (lane 3), whose code lives on the branch `variant/git`. The supersessions below apply to that variant. Main keeps today's mount, hand-back and working-tree publication until the owner adopts the variant.
+- **Supersedes (in the Git variant):**
   - [DEC-035](#dec-035-committed-model-in-owner-commit-accepts-the-result)'s rule that Apply never commits, merges or pushes, and its owner commit as the acceptance of the result.
   - [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs)'s retained rule that transfer makes no automatic owner commit or push.
   - The runner's checkout mount and branch hand-back in [DEC-077](#dec-077-development-pace-and-linux-first-execution).
   - [Concept 1.0](v1-concept.md) changes with the design: §10.4, §17.5 ("A Git server platform is not intended"), §21.2 to §21.4, V15 and the glossary's "Publication" entry; the [architecture](../architecture.md)'s "no Git server" changes too.
+- **Answered in G0, 27 October 2026:** free local Git plus seven team tools per Manager (harness level B), one branch per Manager, a Run-local remote with a passive referee, one published commit with compare-and-swap that fails closed when the target moved, and a prototype before any rebuild ([design section 11](../design/agent-git-collaboration.md#11-questions-for-the-owner)).
 - **Open:**
-  - Whether agents use Git themselves or only tools that the host provides and configures in each agent's own harness ([concept 1.0 §14.1](v1-concept.md#141-a-fixed-small-tool-set), [§15.5](v1-concept.md#155-v1-form-of-the-harness-d14)), and whether agents branch off separately or share a branch. The owner likes a hybrid and asks for a design first, drafted in the evaluation session.
-  - The form of the local remote, and the optional hosted remote behind it.
-  - What happens when the target branch moves during a run.
-  - The cleanup of run branches and the retention of evidence.
+  - Whether the prototype holds up against the current Library Apply, and whether the owner adopts the variant.
   - Whether V1's acceptance covers the new publication ([DEC-068](#dec-068-v1-concept-10)).
 
 ## Promises

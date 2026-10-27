@@ -1,6 +1,6 @@
 # Agents collaborate through Git
 
-**Status: design agreed for a prototype, 27 October 2026.** This is the G0 design for [DEC-078](../concepts/register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review). The owner answered the questions in [section 11](#11-questions-for-the-owner) the same day. Nothing is built; the prototype in [section 13](#13-suggested-next-step) comes first. An independent architecture review of the first draft is folded in; [section 12](#12-rejected-alternatives) lists what it changed.
+**Status: design agreed for a prototype, 27 October 2026.** This is the G0 design for [DEC-078](../concepts/register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review). The owner answered the questions in [section 11](#11-questions-for-the-owner) the same day. Nothing is built; the prototype in [section 13](#13-suggested-next-step) comes first. This is the Git variant (lane 3): its code lives on the branch `variant/git`, and Main keeps today's handoff and publication until the owner adopts it. An independent architecture review of the first draft is folded in; [section 12](#12-rejected-alternatives) lists what it changed.
 
 ## In short
 
