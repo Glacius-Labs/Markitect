@@ -1,0 +1,12 @@
+imports:
+  - {package: markitect/core, as: Core}
+  - {package: markitect/values, as: Values}
+id: types
+kind: Core.Property
+body: >-
+  The types the Interface exposes.
+spec:
+  target: Values.FieldType
+  valueType: reference
+  minCount: 0
+  maxCount: -1

@@ -13,10 +13,11 @@ import (
 
 // The standard Libraries under libraries/ must compile on the current Core
 // and be usable by a project: an Operation with typed arguments, refusals and
-// permissions, a project Kind implementing Api.Operation, and the value Kinds.
+// permissions, a project Kind implementing Api.Operation, the value Kinds, the
+// Project anchor and Rules, and the architecture Rules.
 func TestStandardLibrariesCompileForAProject(t *testing.T) {
 	repo := testkit.NewRepo(t)
-	repo.Write(".markitect/model.yaml", "formatVersion: 1\nid: library-consumer\nroot: model\ndependencies:\n  markitect-core: \"1.2.0\"\n  markitect-values: \"1.0.0\"\n  markitect-api: \"1.0.0\"\n")
+	repo.Write(".markitect/model.yaml", "formatVersion: 1\nid: library-consumer\nroot: model\ndependencies:\n  markitect-core: \"1.2.0\"\n  markitect-values: \"1.0.0\"\n  markitect-api: \"1.0.0\"\n  markitect-practice: \"1.0.0\"\n  markitect-architecture: \"1.0.0\"\n")
 	repo.Write(".markitect/model-lock.yaml", "formatVersion: 1\nmodels: {}\n")
 	repo.Write(".markitect/execution.yaml", "apiVersion: markitect.execution/v2\nownership:\n  - {path: ./, owner: shop}\n")
 	repo.Write(".markitect/registry/shop/registry.yaml", "apiVersion: markitect.registry/v1\nartifacts: []\n")
@@ -32,13 +33,20 @@ func TestStandardLibrariesCompileForAProject(t *testing.T) {
 		"audited-operation": "imports:\n  - {package: markitect/core, as: Core}\n  - {package: markitect/api, as: Api}\nid: AuditedOperation\nkind: Core.Kind\nbody: An operation that also names its audit target.\nspec:\n  implements: [Api.Operation]\n  properties: [Api.wireName, Api.mutation, Api.arguments, Api.refusals, Api.results, Api.permissions, auditTarget]\n",
 		"audit-target":      "imports:\n  - {package: markitect/core, as: Core}\nid: auditTarget\nkind: Core.Property\nbody: The record an audit entry names.\nspec:\n  valueType: string\n  minCount: 1\n  maxCount: 1\n",
 		"cancel-order":      "id: cancel-order\nkind: AuditedOperation\nbody: Cancels an open order.\nspec:\n  wireName: cancelOrder\n  mutation: true\n  arguments:\n    - {name: orderId, fieldType: customer-id, refersTo: customer-id}\n  results:\n    - {name: status, fieldType: order-status}\n    - {name: refund, fieldType: amount, nullable: true}\n  permissions:\n    - {role: clerk, scope: all}\n  auditTarget: order\n",
+		"shop":              "imports:\n  - {package: markitect/practice, as: Practice}\nid: shop\nkind: Practice.Project\nbody: The shop service.\nspec:\n  language: Go 1.27\n  moduleRoot: .\n  testCommand: go test ./...\n",
+		"handler-tests":     "imports:\n  - {package: markitect/practice, as: Practice}\nid: handler-tests\nkind: Practice.TestObligation\nbody: Every operation has a test per refusal.\nspec:\n  appliesTo: [shop]\n",
+		"security-duty":     "imports:\n  - {package: markitect/core, as: Core}\n  - {package: markitect/practice, as: Practice}\nid: SecurityObligation\nkind: Core.Kind\nbody: A duty about security.\nspec:\n  implements: [Practice.Rule]\n  properties: [Practice.appliesTo]\n",
+		"authorization":     "id: authorization\nkind: SecurityObligation\nbody: Every call is checked against the operation's permissions.\nspec:\n  appliesTo: [shop]\n",
+		"shop-interface":    "imports:\n  - {package: markitect/architecture, as: Architecture}\nid: shop-interface\nkind: Architecture.Interface\nbody: What other services may call.\nspec:\n  appliesTo: [.]\n  operations: [place-order, cancel-order]\n  types: [amount, order-status]\n",
+		"shop-dependencies": "imports:\n  - {package: markitect/architecture, as: Architecture}\nid: shop-dependencies\nkind: Architecture.DependencyRule\nbody: The shop depends on nothing else.\nspec:\n  appliesTo: [shop]\n  mayDependOn: []\n",
+		"auth-placement":    "imports:\n  - {package: markitect/architecture, as: Architecture}\nid: auth-placement\nkind: Architecture.Placement\nbody: Authorization runs before any handler.\nspec:\n  appliesTo: [shop]\n  concern: authorization\n  realizedIn: shop\n",
 	} {
 		repo.Write(".markitect/model/shop/"+name+".yaml", body)
 	}
 	repo.Commit("library consumer fixture")
 
 	var dependencies []string
-	for _, manifest := range []string{"../../testdata/core/model.yaml", "../../libraries/values/model.yaml", "../../libraries/api/model.yaml"} {
+	for _, manifest := range []string{"../../testdata/core/model.yaml", "../../libraries/values/model.yaml", "../../libraries/api/model.yaml", "../../libraries/practice/model.yaml", "../../libraries/architecture/model.yaml"} {
 		absolute, err := filepath.Abs(manifest)
 		if err != nil {
 			t.Fatal(err)
@@ -54,7 +62,7 @@ func TestStandardLibrariesCompileForAProject(t *testing.T) {
 	}
 	var lock strings.Builder
 	lock.WriteString("formatVersion: 1\nmodels:\n")
-	for _, model := range []struct{ id, version string }{{"markitect-core", "1.2.0"}, {"markitect-values", "1.0.0"}, {"markitect-api", "1.0.0"}} {
+	for _, model := range []struct{ id, version string }{{"markitect-core", "1.2.0"}, {"markitect-values", "1.0.0"}, {"markitect-api", "1.0.0"}, {"markitect-practice", "1.0.0"}, {"markitect-architecture", "1.0.0"}} {
 		digest, found := digests[model.id]
 		if !found {
 			t.Fatalf("Library %s did not compile: %s", model.id, first)
@@ -70,6 +78,11 @@ func TestStandardLibrariesCompileForAProject(t *testing.T) {
 		{"../../libraries/values/model-lock.yaml", "markitect-core"},
 		{"../../libraries/api/model-lock.yaml", "markitect-core"},
 		{"../../libraries/api/model-lock.yaml", "markitect-values"},
+		{"../../libraries/practice/model-lock.yaml", "markitect-core"},
+		{"../../libraries/architecture/model-lock.yaml", "markitect-core"},
+		{"../../libraries/architecture/model-lock.yaml", "markitect-values"},
+		{"../../libraries/architecture/model-lock.yaml", "markitect-api"},
+		{"../../libraries/architecture/model-lock.yaml", "markitect-practice"},
 	} {
 		data, err := os.ReadFile(shipped.lock)
 		if err != nil {

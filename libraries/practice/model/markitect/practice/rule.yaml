@@ -1,0 +1,11 @@
+imports:
+  - {package: markitect/core, as: Core}
+id: Rule
+kind: Core.Kind
+body: >-
+  A binding statement; the body is the rule. Every Kind that implements Rule
+  is a rule too and declares appliesTo. When the project's execution.yaml
+  selects Rule by appliesTo, each rule reaches the Managers of the Packages
+  it names.
+spec:
+  properties: [appliesTo]

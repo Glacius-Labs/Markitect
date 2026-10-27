@@ -7,7 +7,7 @@ This repository holds Markitect's source and its documentation. It is developed 
 | `cmd/` | Go entrypoints. `markitect` (the CLI) and `markitect-agentd` (runs inside the runtime container) ship; `markitect-check-architecture` and `markitect-release` are maintenance commands. |
 | `internal/` | Private Go packages of the product and its maintenance services. The [code map](code-map.md) lists every Go package of the module, its layer and owning guide; [modules](modules.md) states the allowed imports. |
 | `docs/` | Concept and decisions, design, guides, development, current evidence and the archive index [`docs/archive.md`](../archive.md). |
-| `libraries/` | The standard Libraries (`values`, `api`) that projects vendor and pass with `--dependency`; see [standard libraries](../design/standard-libraries.md). |
+| `libraries/` | The standard Libraries (`values`, `api`, `practice`, `architecture`) that projects vendor and pass with `--dependency`; see [standard libraries](../design/standard-libraries.md). |
 | `testdata/` | Byte-stable fixtures shared by several packages, the smoke and the qualification: the `markitect/core` dependency and the canonical Library model M1. |
 | `tools/` | Independent outside checks that import no product code: the packaged-source smoke and the Library oracle. |
 | `scripts/` | Maintainer scripts: documentation link check, CI test and flake reports, the native Library Apply operator script. |

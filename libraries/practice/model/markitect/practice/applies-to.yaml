@@ -1,0 +1,11 @@
+imports:
+  - {package: markitect/core, as: Core}
+id: appliesTo
+kind: Core.Property
+body: >-
+  The Packages the rule governs, as Package paths; a dot names the root
+  Package. Without it, the rule governs the Package it is defined in.
+spec:
+  valueType: string
+  minCount: 0
+  maxCount: -1

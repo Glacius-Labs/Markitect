@@ -1,0 +1,12 @@
+imports:
+  - {package: markitect/core, as: Core}
+  - {package: markitect/practice, as: Practice}
+id: Interface
+kind: Core.Kind
+body: >-
+  The public surface of the Package it is defined in: the operations and
+  types other Packages may use. The Packages in appliesTo use only what the
+  Interface exposes, never other parts of that Package.
+spec:
+  implements: [Practice.Rule]
+  properties: [Practice.appliesTo, operations, types]

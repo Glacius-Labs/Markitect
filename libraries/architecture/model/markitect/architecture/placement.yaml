@@ -1,0 +1,12 @@
+imports:
+  - {package: markitect/core, as: Core}
+  - {package: markitect/practice, as: Practice}
+id: Placement
+kind: Core.Kind
+body: >-
+  Where a cross-cutting rule is realized: the Package in realizedIn
+  implements the concern for the Packages in appliesTo, which do not
+  implement it themselves.
+spec:
+  implements: [Practice.Rule]
+  properties: [Practice.appliesTo, concern, realizedIn]
