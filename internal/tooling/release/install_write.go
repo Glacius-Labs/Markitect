@@ -1,4 +1,4 @@
-package releaseinstall
+package release
 
 import (
 	"bytes"
@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/internal/tooling/release"
 	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
@@ -82,7 +81,7 @@ func installWriteFailure(plan *InstallPlan, state *installState, cause error) (*
 	return plan, cause
 }
 
-func verifyInstalledBundle(root string, bundle *release.Bundle) error {
+func verifyInstalledBundle(root string, bundle *Bundle) error {
 	files := make(map[string][]byte, len(installPaths))
 	for _, name := range installPaths {
 		file, err := readInstallFile(root, name)
@@ -97,11 +96,11 @@ func verifyInstalledBundle(root string, bundle *release.Bundle) error {
 		}
 		files[name] = file.canonical
 	}
-	manifest, err := release.ParseBundleManifest(files[releaseManifestPath])
+	manifest, err := ParseBundleManifest(files[releaseManifestPath])
 	if err != nil {
 		return err
 	}
-	return release.ValidateBundleFiles(manifest, files, bundle.Manifest.SourceCommit)
+	return ValidateBundleFiles(manifest, files, bundle.Manifest.SourceCommit)
 }
 
 func safeInstallDestination(root, name string) (string, error) {

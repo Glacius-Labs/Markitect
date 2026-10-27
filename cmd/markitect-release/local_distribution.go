@@ -1,4 +1,4 @@
-package releasecli
+package main
 
 import (
 	"crypto/sha256"
@@ -10,7 +10,6 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
 	"github.com/Glacius-Labs/Markitect/internal/tooling/release"
-	"github.com/Glacius-Labs/Markitect/internal/tooling/release/install"
 	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
@@ -103,7 +102,7 @@ func installBundle(root, path, expectedSHA string, write bool, emit func(any) er
 	if err != nil {
 		return err
 	}
-	plan, err := releaseinstall.Install(root, bundle, write)
+	plan, err := release.Install(root, bundle, write)
 	if err != nil {
 		if plan != nil {
 			if emitErr := emit(map[string]any{"status": "failed", "plan": plan}); emitErr != nil {

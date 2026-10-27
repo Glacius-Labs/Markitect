@@ -54,7 +54,6 @@ var sourceRoots = []string{
 	"internal/testkit",
 	"internal/tooling/architecture",
 	"internal/tooling/release",
-	"internal/tooling/releasecli",
 	"internal/tooling/source",
 	"internal/tooling/guardedwrite",
 }

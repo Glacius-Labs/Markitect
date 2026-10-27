@@ -1,4 +1,4 @@
-package releaseinstall
+package release
 
 import (
 	"bytes"
@@ -11,11 +11,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/internal/tooling/release"
 	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
-func validateIncomingBundle(bundle *release.Bundle) error {
+func validateIncomingBundle(bundle *Bundle) error {
 	if bundle == nil {
 		return errors.New("release bundle is nil; parse and verify the bundle before installation")
 	}
@@ -31,20 +30,20 @@ func validateIncomingBundle(bundle *release.Bundle) error {
 		}
 	}
 	manifestBytes := bundle.Files[releaseManifestPath]
-	manifest, err := release.ParseBundleManifest(manifestBytes)
+	manifest, err := ParseBundleManifest(manifestBytes)
 	if err != nil {
 		return fmt.Errorf("validate release manifest: %w", err)
 	}
 	if !reflect.DeepEqual(manifest, bundle.Manifest) {
 		return errors.New("release bundle manifest bytes do not match the parsed manifest")
 	}
-	if err := release.ValidateBundleFiles(manifest, bundle.Files, manifest.SourceCommit); err != nil {
+	if err := ValidateBundleFiles(manifest, bundle.Files, manifest.SourceCommit); err != nil {
 		return fmt.Errorf("validate release bundle files: %w", err)
 	}
 	return nil
 }
 
-func buildInstallPlan(root string, bundle *release.Bundle) (*InstallPlan, *installState, error) {
+func buildInstallPlan(root string, bundle *Bundle) (*InstallPlan, *installState, error) {
 	state := &installState{files: make(map[string]installFileState, len(installPaths))}
 	for _, name := range installPaths {
 		file, err := readInstallFile(root, name)
@@ -99,12 +98,12 @@ func buildInstallPlan(root string, bundle *release.Bundle) (*InstallPlan, *insta
 		if err := validateCommittedPins(root, state, installPaths); err != nil {
 			return nil, nil, fmt.Errorf("existing release pins are not an unchanged committed installation: %w", err)
 		}
-		manifest, err := release.ParseBundleManifest(state.files[releaseManifestPath].canonical)
+		manifest, err := ParseBundleManifest(state.files[releaseManifestPath].canonical)
 		if err != nil {
 			return nil, nil, fmt.Errorf("read installed release manifest: %w", err)
 		}
 		oldFiles := pinFileMap(state.files, installPaths)
-		if err := release.ValidateBundleFiles(manifest, oldFiles, manifest.SourceCommit); err != nil {
+		if err := ValidateBundleFiles(manifest, oldFiles, manifest.SourceCommit); err != nil {
 			return nil, nil, fmt.Errorf("validate installed release: %w", err)
 		}
 		state.kind = "upgrade"

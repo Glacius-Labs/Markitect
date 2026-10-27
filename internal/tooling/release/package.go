@@ -1,4 +1,5 @@
-// Package release builds a portable, reproducible Markitect source archive.
+// Package release builds a portable, reproducible Markitect source archive and
+// a source-bound bundle, and installs a verified bundle into a consumer.
 package release
 
 import (

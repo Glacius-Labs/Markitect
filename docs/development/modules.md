@@ -42,9 +42,9 @@ This list owns the package-level invariants; the [concept](../concepts/v1-concep
 | Document adapter | Model view and reviewed guarded-write API |
 | Bootstrap | Its actual services and adapters |
 | Product command | Bootstrap |
-| Maintenance command | Its specific maintenance CLI |
+| Maintenance command | Release packaging, source loading and build metadata |
 
-The real-Git vertical test alone receives a test-only record-adapter edge. No sibling adapter or common tooling parent grants a general import exemption. Maintenance remains explicit: the architecture gate reads Go sources, release uses source/license values, and installation uses its own maintenance consumer.
+The real-Git vertical test alone receives a test-only record-adapter edge. No sibling adapter or common tooling parent grants a general import exemption. Maintenance remains explicit: the architecture gate reads Go sources, and release, which also installs bundles, uses source values and the guarded writer.
 
 ## Apply target dependencies
 

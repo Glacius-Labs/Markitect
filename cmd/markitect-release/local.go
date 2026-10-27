@@ -1,4 +1,4 @@
-package releasecli
+package main
 
 import (
 	"errors"

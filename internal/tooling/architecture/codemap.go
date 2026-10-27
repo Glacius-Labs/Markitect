@@ -53,7 +53,7 @@ var Layers = []MapLayer{
 	{"runtime-command", "Runtime command", "Thin entrypoint of the session helper.", []string{"runtime-command"}},
 	{"build-data", "Build data", "Version identity and embedded license notices.", []string{"build-data"}},
 	{"maintenance", "Maintenance", "Explicitly separated release and repository tooling.", []string{"maintenance"}},
-	{"maintenance-command", "Maintenance commands", "Thin entrypoints to maintenance services.", []string{"maintenance-command"}},
+	{"maintenance-command", "Maintenance commands", "Maintenance command-line entrypoints.", []string{"maintenance-command"}},
 	{"test-support", "Test support", "Hermetic fixture support available only to tests.", []string{"test-support"}},
 	{"standalone", "Standalone tools", "Public bootstrap and source smoke with no product imports.", []string{"standalone"}},
 }

@@ -1,4 +1,4 @@
-package releaseinstall
+package release
 
 import (
 	"bytes"
@@ -10,11 +10,8 @@ import (
 	"path/filepath"
 
 	"github.com/Glacius-Labs/Markitect/internal/tooling/guardedwrite"
-	"github.com/Glacius-Labs/Markitect/internal/tooling/release"
 	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
-
-const releaseManifestPath = ".markitect/tool/release.yaml"
 
 var installPinPaths = []string{
 	".markitect/tool/lock.yaml",
@@ -70,7 +67,7 @@ type installState struct {
 // With write=false it makes no filesystem changes. With write=true it requires
 // a named non-protected branch and committed HEAD, repeats the full preflight
 // under Markitect's shared writer lock, then writes the complete five-file set.
-func Install(root string, bundle *release.Bundle, write bool) (*InstallPlan, error) {
+func Install(root string, bundle *Bundle, write bool) (*InstallPlan, error) {
 	if err := validateIncomingBundle(bundle); err != nil {
 		return nil, err
 	}

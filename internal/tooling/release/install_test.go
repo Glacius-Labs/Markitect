@@ -1,4 +1,4 @@
-package releaseinstall
+package release
 
 import (
 	"bytes"

@@ -13,11 +13,9 @@ import (
 var targetRoots = []struct{ path, layer string }{
 	{"internal/adapters/codexappserver", "apply-adapter"},
 	{"internal/adapters/container", "apply-adapter"},
-	{"internal/tooling/release/install", "maintenance"},
 	{"internal/tooling/architecture", "maintenance"},
 	{"internal/tooling/guardedwrite", "maintenance"},
 	{"internal/adapters/documents", "apply-adapter"},
-	{"internal/tooling/releasecli", "maintenance"},
 	{"internal/adapters/gitrepo", "apply-adapter"},
 	{"internal/adapters/checks", "apply-adapter"},
 	{"internal/agentd/frame", "agent-protocol"},
@@ -67,7 +65,7 @@ var responsibilityImports = map[string][]string{
 	"cmd/markitect":                    {"internal/bootstrap"},
 	"cmd/markitect-agentd":             {"internal/agentd"},
 	"cmd/markitect-runner":             {"internal/adapters/runner"},
-	"cmd/markitect-release":            {"internal/tooling/releasecli"},
+	"cmd/markitect-release":            {"internal/buildinfo", "internal/tooling/release", "internal/tooling/source"},
 	"internal/adapters/checks":         {"internal/adapters/container", "internal/model", "internal/organization", "internal/project", "internal/run", "internal/runtimeconfig", "internal/snapshot"},
 	"internal/adapters/cli":            {"internal/apply", "internal/buildinfo", "internal/model", "internal/modeldocs", "internal/project", "internal/realization", "internal/runtimeconfig", "internal/snapshot"},
 	"internal/adapters/codexappserver": {"internal/adapters/container", "internal/agentd/frame", "internal/harness", "internal/model", "internal/organization", "internal/project", "internal/run", "internal/runtimeconfig", "internal/snapshot"},
@@ -82,9 +80,7 @@ var responsibilityImports = map[string][]string{
 	"internal/realization":             {"internal/model", "internal/snapshot"},
 	"internal/run":                     {"internal/organization", "internal/project", "internal/snapshot"},
 	"internal/tooling/guardedwrite":    {"internal/tooling/source"},
-	"internal/tooling/release":         {"internal/tooling/source"},
-	"internal/tooling/release/install": {"internal/tooling/source", "internal/tooling/release", "internal/tooling/guardedwrite"},
-	"internal/tooling/releasecli":      {"internal/buildinfo", "internal/tooling/source", "internal/tooling/release", "internal/tooling/release/install"},
+	"internal/tooling/release":         {"internal/tooling/guardedwrite", "internal/tooling/source"},
 }
 
 // Only concrete fixture and composition needs receive test-only edges;
