@@ -54,7 +54,7 @@ func TestHostPathSpellsMountSourcesPerPlatform(t *testing.T) {
 
 func TestMountsHoldTheCompleteRunnerSet(t *testing.T) {
 	spec := MountSpec{
-		Checkout:    `C:\Users\me\repo`,
+		GitDir:      `C:\Users\me\repo\.git`,
 		Invocation:  `C:\state\proj\runner\abc\invocation`,
 		Credentials: []string{`C:\Users\me\login-a.json`, `C:\Users\me\login-b.json`},
 		Output:      `C:\state\proj\runner\abc\result`,
@@ -65,7 +65,7 @@ func TestMountsHoldTheCompleteRunnerSet(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := []Mount{
-		{Type: "bind", Source: "C:/Users/me/repo", Target: "/markitect/checkout", ReadOnly: true},
+		{Type: "bind", Source: "C:/Users/me/repo/.git", Target: "/markitect/source.git", ReadOnly: true},
 		{Type: "bind", Source: "C:/state/proj/runner/abc/invocation", Target: "/markitect/invocation", ReadOnly: true},
 		{Type: "bind", Source: "C:/Users/me/login-a.json", Target: "/markitect/credentials/1.json", ReadOnly: true},
 		{Type: "bind", Source: "C:/Users/me/login-b.json", Target: "/markitect/credentials/2.json", ReadOnly: true},
@@ -77,20 +77,20 @@ func TestMountsHoldTheCompleteRunnerSet(t *testing.T) {
 		t.Fatalf("mounts:\n got %#v\nwant %#v", got, want)
 	}
 	// The same set from WSL keeps POSIX paths as given.
-	linux := MountSpec{Checkout: "/mnt/c/Users/me/repo", Invocation: "/home/me/state/inv", Credentials: []string{"/home/me/login.json"}, Output: "/home/me/state/out", StateVolume: "markitect-state-proj"}
+	linux := MountSpec{GitDir: "/mnt/c/Users/me/repo/.git", Invocation: "/home/me/state/inv", Credentials: []string{"/home/me/login.json"}, Output: "/home/me/state/out", StateVolume: "markitect-state-proj"}
 	got, err = Mounts("linux", linux)
-	if err != nil || got[0].Source != "/mnt/c/Users/me/repo" || got[2].Source != "/home/me/login.json" || got[3].Source != EngineSocket {
+	if err != nil || got[0].Source != "/mnt/c/Users/me/repo/.git" || got[2].Source != "/home/me/login.json" || got[3].Source != EngineSocket {
 		t.Fatalf("linux mounts: %#v %v", got, err)
 	}
 }
 
 func TestMountsRefuseIncompleteOrUnsafeSets(t *testing.T) {
-	good := MountSpec{Checkout: "/repo", Invocation: "/inv", Credentials: []string{"/login.json"}, Output: "/out", StateVolume: "markitect-state-proj"}
+	good := MountSpec{GitDir: "/repo/.git", Invocation: "/inv", Credentials: []string{"/login.json"}, Output: "/out", StateVolume: "markitect-state-proj"}
 	for name, mutate := range map[string]func(*MountSpec){
-		"no login":          func(s *MountSpec) { s.Credentials = nil },
-		"relative checkout": func(s *MountSpec) { s.Checkout = "repo" },
-		"volume name":       func(s *MountSpec) { s.StateVolume = "../state" },
-		"output":            func(s *MountSpec) { s.Output = "/out,readonly" },
+		"no login":               func(s *MountSpec) { s.Credentials = nil },
+		"relative Git directory": func(s *MountSpec) { s.GitDir = "repo/.git" },
+		"volume name":            func(s *MountSpec) { s.StateVolume = "../state" },
+		"output":                 func(s *MountSpec) { s.Output = "/out,readonly" },
 	} {
 		spec := good
 		mutate(&spec)
@@ -110,7 +110,7 @@ func TestRunArgsStartTheRunnerWithoutNetwork(t *testing.T) {
 	base := strings.Repeat("a", 40)
 	image := "sha256:" + strings.Repeat("b", 64)
 	mounts := []Mount{
-		{Type: "bind", Source: "/repo", Target: CheckoutDir, ReadOnly: true},
+		{Type: "bind", Source: "/repo/.git", Target: SourceDir, ReadOnly: true},
 		{Type: "volume", Source: "markitect-state-proj", Target: StateDir},
 	}
 	got, err := RunArgs(RunSpec{Name: "markitect-runner-1", Label: "1", Image: image, Base: base, Model: ".markitect/model.yaml", Dependencies: []string{"libs/core/model.yaml"}, Mounts: mounts})
@@ -119,7 +119,7 @@ func TestRunArgsStartTheRunnerWithoutNetwork(t *testing.T) {
 	}
 	want := []string{"run", "--rm", "--init", "--pull", "never", "--name", "markitect-runner-1", "--label", "markitect.runner=1",
 		"--network", "none", "--security-opt", "no-new-privileges",
-		"--mount", "type=bind,source=/repo,target=/markitect/checkout,readonly",
+		"--mount", "type=bind,source=/repo/.git,target=/markitect/source.git,readonly",
 		"--mount", "type=volume,source=markitect-state-proj,target=/markitect/state",
 		image, "--base", base, "--model", ".markitect/model.yaml", "--dependency", "libs/core/model.yaml"}
 	if !reflect.DeepEqual(got, want) {
@@ -139,6 +139,9 @@ func TestRunArgsStartTheRunnerWithoutNetwork(t *testing.T) {
 	}
 	if got := StopArgs("markitect-runner-1", 240e9); !reflect.DeepEqual(got, []string{"stop", "--time", "240", "markitect-runner-1"}) {
 		t.Fatalf("stop args %q", got)
+	}
+	if got := RemoveArgs("markitect-runner-1"); !reflect.DeepEqual(got, []string{"rm", "--force", "markitect-runner-1"}) {
+		t.Fatalf("remove args %q", got)
 	}
 }
 

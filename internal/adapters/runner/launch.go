@@ -114,21 +114,26 @@ func Start(ctx context.Context, r LaunchRequest) (out Launch, err error) {
 			return out, err
 		}
 	}
+	if err := checkLocalEngine(ctx, r.Engine); err != nil {
+		return out, err
+	}
 	var nonce [8]byte
 	if _, err := rand.Read(nonce[:]); err != nil {
 		return out, err
 	}
 	out.ID = hex.EncodeToString(nonce[:])
-	if out.Directory, err = prepareLaunchDirectory(r.OutputRoot, out.ID, r.RunConfig, r.RuntimeProfile); err != nil {
-		return out, err
-	}
-	mounts, err := Mounts(goos, MountSpec{Checkout: r.Repository, Invocation: filepath.Join(out.Directory, invocationSubdir), Credentials: r.Credentials, Output: filepath.Join(out.Directory, resultSubdir), StateVolume: r.StateVolume})
+	// Validate the complete invocation before anything is written.
+	dir := filepath.Join(r.OutputRoot, out.ID)
+	mounts, err := Mounts(goos, launchSpec(r, dir))
 	if err != nil {
 		return out, err
 	}
 	name := "markitect-runner-" + out.ID
 	args, err := RunArgs(RunSpec{Name: name, Label: out.ID, Image: r.Image, Base: out.Base, Model: r.Model, Dependencies: r.Dependencies, Mounts: mounts})
 	if err != nil {
+		return out, err
+	}
+	if out.Directory, err = prepareLaunchDirectory(r.OutputRoot, out.ID, r.RunConfig, r.RuntimeProfile); err != nil {
 		return out, err
 	}
 	runErr := runEngine(ctx, r.Engine, args, name, r.StopTimeout, out.Directory, log)
@@ -165,13 +170,43 @@ func Start(ctx context.Context, r LaunchRequest) (out Launch, err error) {
 	return out, nil
 }
 
-// inspectCheckout returns the checkout's HEAD commit. The runner clones
-// committed history only, so it refuses uncommitted changes and untracked
-// files that Git does not ignore instead of dropping them; Git-ignored files
-// never reach the runner. Any named branch, main included, is accepted: the
-// runner writes only its clone and a new branch. The checkout must be a main
-// working tree: a linked worktree's .git file names a host path that does not
-// exist inside the runner.
+// launchSpec names the host side of one launch's mounts. Only the checkout's
+// .git directory is mounted, never its working tree: the runner clones
+// committed objects, and untracked or ignored files such as .env stay on the host.
+func launchSpec(r LaunchRequest, dir string) MountSpec {
+	return MountSpec{GitDir: filepath.Join(r.Repository, ".git"), Invocation: filepath.Join(dir, invocationSubdir), Credentials: r.Credentials, Output: filepath.Join(dir, resultSubdir), StateVolume: r.StateVolume}
+}
+
+// checkLocalEngine requires the engine CLI to reach an engine on this machine.
+// The runner's bind sources and its socket mount resolve on the engine's host,
+// so a remote engine would see other paths, or none.
+func checkLocalEngine(ctx context.Context, engine string) error {
+	if os.Getenv("DOCKER_HOST") != "" {
+		return fmt.Errorf("DOCKER_HOST is set; the runner needs the local engine: unset DOCKER_HOST and use the local engine's context")
+	}
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, engine, "context", "inspect", "--format", "{{.Endpoints.docker.Host}}")
+	out, stderr := &boundedBuffer{limit: 4 << 10}, &boundedBuffer{limit: 4 << 10}
+	cmd.Stdout, cmd.Stderr = out, stderr
+	if err := cmd.Run(); err != nil || out.exceeded {
+		return fmt.Errorf("the engine's current context could not be read (%v: %s); the runner needs the local engine", err, strings.TrimSpace(stderr.String()))
+	}
+	endpoint := strings.TrimSpace(out.String())
+	if !strings.HasPrefix(endpoint, "unix://") && !strings.HasPrefix(endpoint, "npipe://") {
+		return fmt.Errorf("the engine's current context uses %q; the runner needs the local engine through a socket or named pipe: switch with \"docker context use default\" (or desktop-linux for Docker Desktop) and unset DOCKER_CONTEXT", endpoint)
+	}
+	return nil
+}
+
+// inspectCheckout returns the checkout's HEAD commit. The runner sees only the
+// checkout's .git directory and clones committed history from it, so the
+// launcher refuses uncommitted changes and untracked files that Git does not
+// ignore instead of dropping them; Git-ignored files stay on the host. Any
+// named branch, main included, is accepted: the runner writes only its clone
+// and a new branch. The checkout must be a main working tree with its own
+// objects: a linked worktree's .git file and object alternates name host paths
+// that do not exist inside the runner.
 func inspectCheckout(ctx context.Context, repository string) (string, error) {
 	if !filepath.IsAbs(repository) || filepath.Clean(repository) != repository {
 		return "", fmt.Errorf("checkout must be an explicit absolute path")
@@ -288,16 +323,25 @@ func runEngine(ctx context.Context, engine string, args []string, name string, s
 	cmd.Stdout, cmd.Stderr = w, w
 	cmd.Cancel = func() error {
 		// Stop the container, not only its CLI: a container left running would
-		// keep Apply going and hold the state lock.
-		for _, args := range [][]string{StopArgs(name, stopTimeout), {"rm", "--force", name}} {
-			stop := exec.Command(engine, args...)
-			if stop.Start() == nil {
-				go stop.Wait()
-				return nil
-			}
+		// keep Apply going and hold the state lock. A stop that cannot start or
+		// fails falls back to removing the container.
+		remove := func() error { return exec.Command(engine, RemoveArgs(name)...).Run() }
+		stop := exec.Command(engine, StopArgs(name, stopTimeout)...)
+		if stop.Start() == nil {
+			go func() {
+				if stop.Wait() != nil {
+					_ = remove()
+				}
+			}()
+			return nil
+		}
+		removal := exec.Command(engine, RemoveArgs(name)...)
+		if removal.Start() == nil {
+			go removal.Wait()
+			return nil
 		}
 		cmd.Process.Kill()
-		return fmt.Errorf("could not ask the engine to stop runner container %s", name)
+		return fmt.Errorf("could not ask the engine to stop runner container %s; remove it with \"docker rm --force %s\"", name, name)
 	}
 	cmd.WaitDelay = stopTimeout + time.Minute
 	if err := cmd.Run(); err != nil {
@@ -310,6 +354,9 @@ func runEngine(ctx context.Context, engine string, args []string, name string, s
 func StopArgs(name string, timeout time.Duration) []string {
 	return []string{"stop", "--time", strconv.Itoa(int(timeout.Seconds())), name}
 }
+
+// RemoveArgs returns the engine arguments that remove the runner at once.
+func RemoveArgs(name string) []string { return []string{"rm", "--force", name} }
 
 // importResult fetches the verified commit from the bundle and creates the
 // branch only if it does not exist. The commit must be a single-parent commit
@@ -329,7 +376,9 @@ func importResult(ctx context.Context, repository, bundle string, result Result,
 	if heads != result.Commit+" "+ResultRef {
 		return fmt.Errorf("result bundle does not hold exactly commit %s at %s", result.Commit, ResultRef)
 	}
-	if _, err := g.run(ctx, "-c", "transfer.fsckObjects=true", "fetch", "--quiet", "--no-tags", "--no-write-fetch-head", bundle, ResultRef); err != nil {
+	// Objects only: no FETCH_HEAD, tags, submodules or automatic maintenance.
+	// --no-auto-maintenance needs Git 2.29, like --no-write-fetch-head.
+	if _, err := g.run(ctx, "-c", "transfer.fsckObjects=true", "fetch", "--quiet", "--no-tags", "--no-write-fetch-head", "--no-auto-maintenance", "--recurse-submodules=no", bundle, ResultRef); err != nil {
 		return fmt.Errorf("fetch result bundle: %w", err)
 	}
 	if err := verifyResultCommit(ctx, g, result.Commit, result.Base, result.Paths); err != nil {

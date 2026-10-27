@@ -159,8 +159,8 @@ func cloneCheckout(ctx context.Context, layout Layout, base string) error {
 	if err := os.MkdirAll(filepath.Dir(layout.Clone), 0o700); err != nil {
 		return err
 	}
-	source := gitCall{safe: []string{layout.Checkout, filepath.Join(layout.Checkout, ".git")}}
-	if _, err := source.run(ctx, "clone", "--quiet", "--no-checkout", "--no-hardlinks", "--", fileURL(layout.Checkout), layout.Clone); err != nil {
+	source := gitCall{safe: []string{layout.Source}}
+	if _, err := source.run(ctx, "clone", "--quiet", "--no-checkout", "--no-hardlinks", "--", fileURL(layout.Source), layout.Clone); err != nil {
 		return fmt.Errorf("clone checkout: %w", err)
 	}
 	clone := gitCall{dir: layout.Clone}

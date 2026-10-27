@@ -1,6 +1,6 @@
 # Linux runner for Apply
 
-Slice L1 of the [Linux Docker way](../implementation-plan.md#linux-docker-way-owner-direction-26-october) ([DEC-077](../concepts/register.md#dec-077-development-pace-and-linux-first-execution)): the Apply host runs in one Linux runner image, started from the owner's machine through the container engine, for example Docker Desktop on Windows. The owner [accepted](../concepts/sources/development-pace-20261026.md#6-repository-and-login-in-the-apply-container) that the runner clones from a read-only mount of the checkout and hands the verified result back as a branch, and that the provider CLI login is mounted read-only, with no API keys. This page is the coordinator's design and its increment 1 in source: [`internal/adapters/runner`](../../internal/adapters/runner/layout.go), [`cmd/markitect-runner`](../../cmd/markitect-runner/main.go) and the [image recipe](../../packaging/runner/Dockerfile). Native qualification is a separate, dispatched step; see [limits](#limits-and-open-questions).
+Slice L1 of the [Linux Docker way](../implementation-plan.md#linux-docker-way-owner-direction-26-october) ([DEC-077](../concepts/register.md#dec-077-development-pace-and-linux-first-execution)): the Apply host runs in one Linux runner image, started from the owner's machine through the container engine, for example Docker Desktop on Windows. The owner [accepted](../concepts/sources/development-pace-20261026.md#6-repository-and-login-in-the-apply-container) that the runner clones from a read-only mount of the checkout and hands the verified result back as a branch, and that the provider CLI login is mounted read-only, with no API keys. In this design the read-only mount is the checkout's `.git` directory, never its working tree. This page is the coordinator's design and its increment 1 in source: [`internal/adapters/runner`](../../internal/adapters/runner/layout.go), [`cmd/markitect-runner`](../../cmd/markitect-runner/main.go) and the [image recipe](../../packaging/runner/Dockerfile). Native qualification is a separate, dispatched step; see [limits](#limits-and-open-questions).
 
 ## Flow
 
@@ -8,7 +8,7 @@ Slice L1 of the [Linux Docker way](../implementation-plan.md#linux-docker-way-ow
 owner host (Windows or WSL)                 runner container (Linux)
 markitect apply --runner IMAGE_ID ...
   check the checkout, translate inputs
-  docker run IMAGE_ID --base COMMIT  ----->  git clone the read-only checkout at COMMIT
+  docker run IMAGE_ID --base COMMIT  ----->  git clone the read-only .git at COMMIT
                                             markitect apply against the clone
                                               Agents, Git service, checks: sibling
                                               containers through the engine socket
@@ -22,20 +22,22 @@ Apply inside the runner is the unchanged product: the same preflight, Runs, Veri
 
 ## Runner image
 
-[`packaging/runner/Dockerfile`](../../packaging/runner/Dockerfile) builds `markitect` and `markitect-runner` from source in the pinned Go image, copies the static Docker CLI from a pinned `docker:cli` image and installs Git and CA certificates on a pinned `debian:trixie-slim`. The entrypoint is `markitect-runner --base COMMIT [--model PATH] [--dependency PATH]...`. The build passes `MARKITECT_REVISION`, which the linker injects as the build revision, so the runner's build identity is `<version>+<revision>`; `/opt/markitect/runner.env` records it with the CLI and Git versions. The image holds no credentials and no repository content.
+[`packaging/runner/Dockerfile`](../../packaging/runner/Dockerfile) builds `markitect` and `markitect-runner` from source in the pinned Go image, copies the static Docker CLI from a pinned `docker:cli` image and installs Git on a pinned `debian:trixie-slim`; it needs no CA certificates, because the runner has no network. The entrypoint is `markitect-runner --base COMMIT [--model PATH] [--dependency PATH]...`. The build passes `MARKITECT_REVISION`, which the linker injects as the build revision, so the runner's build identity is `<version>+<revision>`; `/opt/markitect/runner.env` records it with the CLI and Git versions. The image holds no credentials and no repository content.
 
-The runner runs as root. With the engine socket it controls the engine anyway, so it is trusted host code like the native Apply host; no Agent runs in it. Agents keep running in the hardened, non-root sibling containers of the [container adapter](../../internal/adapters/container/README.md). The runner itself has no network (`--network none`): it reaches the engine through the socket, and the Agent containers get their network from the runtime profile.
+The runner runs as root. It receives the engine's socket, which is host-level control of the engine, so it is trusted host code like the native Apply host; no Agent runs in it. Agents keep running in the hardened, non-root sibling containers of the [container adapter](../../internal/adapters/container/README.md). The runner itself has no network (`--network none`): it reaches the engine through the socket, and the Agent containers get their network from the runtime profile.
 
 ## Mounts
 
 | Target in the runner | Source | Mode | Purpose |
 |---|---|---|---|
-| `/markitect/checkout` | the owner's checkout | read-only bind | the clone source |
+| `/markitect/source.git` | the checkout's `.git` directory | read-only bind | the clone source |
 | `/markitect/invocation` | `invocation/` of the launch directory | read-only bind | the translated run configuration and runtime profile |
 | `/markitect/credentials/<n>.json` | each dedicated login of the run configuration | read-only bind of the file | the provider CLI login, never an API key |
 | `/var/run/docker.sock` | the engine's socket | bind | Apply's engine CLI |
 | `/markitect/output` | `result/` of the launch directory | writable bind | the hand-back area |
 | `/markitect/state` | volume `markitect-state-<repositoryIdentity>` | named volume | Apply state and evidence |
+
+Only the checkout's `.git` directory is mounted, never its working tree: untracked and ignored files such as `.env` are not visible to the runner. The runner clones committed objects and refs from that directory, and its clone gets a fresh configuration; the runner can read the Git directory's own configuration, such as remote URLs, but never prints it or copies it.
 
 Each login file is mounted on its own, never its directory. Before the launch, the host observes every login as a native Apply reads it: a regular, unredirected file of at most 1 MiB, with errors that name neither its path nor its content. A login path that the engine's mount syntax cannot carry is refused the same way. Logins stay outside the clone, so they cannot enter a candidate, and the runner never prints them; an engine error can still name a mount path, never a login's content.
 
@@ -62,11 +64,11 @@ The runner returns a Git bundle in the hand-back area, and the launcher fetches 
 
 Inside the runner:
 
-1. The entrypoint clones the read-only checkout through Git's own file transport, without hardlinks, checks out the launcher's observed base commit on the branch `markitect/runner` and removes the remote. A moved checkout fails the clone.
+1. The entrypoint clones the read-only Git directory through Git's own file transport, without hardlinks, checks out the launcher's observed base commit on the branch `markitect/runner` and removes the remote. A moved checkout fails the clone.
 2. `markitect apply` runs against the clone with the translated inputs. A stop request reaches Apply as SIGTERM, so it closes its containers and keeps its evidence.
 3. Only when Apply passed with a read-back publication, the entrypoint stages exactly the report's `completedPaths`, refuses any other change in the clone apart from Apply's `.markitect/state/` administration, commits with the fixed identity `Markitect Runner <runner@markitect.invalid>`, checks that the commit has the single parent base and changes exactly those paths, and bundles `markitect/runner` without base. A no-change publication returns no bundle.
 
-On the host, the launcher verifies the bundle and that it holds exactly the reported commit, fetches it with object checks and without writing a ref, repeats the parent and path check and creates the branch only if it does not exist (`update-ref` `create`). The branch defaults to `markitect/apply-<apply id>`; `--result-branch` names another. A stop request that arrives after the runner handed back a verified change does not cancel this short import; a failed import names the bundle, which stays in the launch directory. The owner's working tree, index and current branch never change: the launcher's Git takes no optional locks, and the import adds only the change's objects and the new branch. Apply still creates no owner commit: the runner's commit exists only on the new branch, which the owner reviews and merges like any other.
+On the host, the launcher verifies the bundle and that it holds exactly the reported commit, fetches it with object checks and without FETCH_HEAD, tags, submodules or automatic maintenance (`--no-auto-maintenance`, Git 2.29 like `--no-write-fetch-head`), repeats the parent and path check and creates the branch only if it does not exist (`update-ref` `create`). The branch defaults to `markitect/apply-<apply id>`; `--result-branch` names another. A stop request that arrives after the runner handed back a verified change does not cancel this short import; a failed import names the bundle, which stays in the launch directory. The owner's working tree, index and current branch never change: the launcher's Git takes no optional locks, and the import adds only the change's objects and the new branch. Apply still creates no owner commit: the runner's commit exists only on the new branch, which the owner reviews and merges like any other.
 
 ## Inputs
 
@@ -78,7 +80,9 @@ The owner's files keep their native meaning; the launcher derives the runner's c
 - **Checkout.** The runner applies committed history only and fails closed on anything a clone would drop: the launcher refuses uncommitted changes to tracked files and untracked files that Git does not ignore, names their count and an example, and says "commit or remove them; runner mode applies committed history only". Nothing is dropped silently. Git-ignored files are not refused and do not reach the runner (see [limits](#limits-and-open-questions)). The checkout must be the main working tree of a repository on a named branch, with its own objects (no `objects/info/alternates`).
 - **Branches.** The owner's branch may be any named branch, `main` included: the runner writes only its clone and a new branch, never the owner's branch. A result branch name that already exists is refused, before the launch and again at the import.
 
-The launch is bounded by the run configuration's deadline plus ten minutes for clone, hand-back and stop. Cancellation asks the engine to stop the runner container, not only its CLI, with a four-minute grace period that covers Apply's own cleanup and persistence bounds; if the stop cannot be requested, the launcher asks the engine to remove the container.
+The launch is bounded by the run configuration's deadline plus ten minutes for clone, hand-back and stop. Cancellation asks the engine to stop the runner container, not only its CLI, with a four-minute grace period that covers Apply's own cleanup and persistence bounds; if the stop cannot be requested or fails, the launcher asks the engine to remove the container.
+
+A host process that dies without cancelling, for example when it is killed or the machine shuts down, leaves the runner running until Apply's own deadline ends it, with the state lock held. Find it with `docker ps --filter label=markitect.runner`. Stop it with `docker stop --time 240 markitect-runner-<launch>`, so that Apply closes its containers and keeps its evidence; `docker rm --force markitect-runner-<launch>` is the last resort, after which Apply's sibling containers (label `markitect.store`) can remain.
 
 ## Path translation
 
@@ -88,7 +92,7 @@ The launcher spells host paths for the engine CLI it runs ([`HostPath`](../../in
 - **Windows with Docker Desktop:** a drive path becomes Docker Desktop's forward-slash drive form, `C:\Users\me\repo` becoming `C:/Users/me/repo`; Docker Desktop maps it into its Linux VM itself. The VM-side spelling (`/run/desktop/mnt/host/c/...` with the WSL 2 backend) depends on the backend and is never passed. UNC, device, WSL (`\\wsl$\...`), drive-relative and relative paths are refused; a checkout inside a WSL distribution is launched from WSL.
 - **Every platform:** characters that would change the meaning of the comma-separated `--mount` value are refused. The engine socket is the engine-side `/var/run/docker.sock`, which Docker Desktop and local engines provide.
 
-The engine must run on the owner's machine. A remote `DOCKER_HOST` would resolve the bind sources elsewhere, and rootless engines with another socket path are not supported in increment 1.
+The engine must run on the owner's machine, because bind sources and the socket mount resolve on the engine's host. The launcher refuses a set `DOCKER_HOST` and a current Docker context (including one selected by `DOCKER_CONTEXT`) whose endpoint is not a local socket or named pipe (`unix://`, `npipe://`), such as `tcp://` or `ssh://`; Docker Desktop's `desktop-linux` context is local. Rootless engines with another socket path are not supported in increment 1.
 
 ## What stays on Windows
 

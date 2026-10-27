@@ -92,9 +92,10 @@ apply options:
   Standalone Run has a closed hierarchy: questions remain inside that Run.
   Publication requires stored Verify approval after all Run resources close.
   --runner IMAGE_ID        run Apply in the Linux runner image through the
-                           run configuration's engine: it clones the committed
-                           checkout read-only and returns a verified change as
-                           a new branch; the checkout itself is never written
+                           run configuration's local engine: it clones committed
+                           history from the read-only .git directory and returns
+                           a verified change as a new branch; the checkout itself
+                           is never written
   --result-branch NAME     that branch (default markitect/apply-<apply id>)
 
 Exit codes: 0 requested stage passed; 1 known failure; 2 usage;

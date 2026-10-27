@@ -70,8 +70,9 @@ func (m Mount) arg() string {
 
 // MountSpec names the host side of the runner's mounts.
 type MountSpec struct {
-	// Checkout is the owner's checkout, mounted read-only.
-	Checkout string
+	// GitDir is the checkout's .git directory, mounted read-only. The working
+	// tree is never mounted, so untracked and ignored files stay on the host.
+	GitDir string
 	// Invocation holds the translated run configuration and runtime profile, mounted read-only.
 	Invocation string
 	// Credentials are the host login files, mounted read-only at CredentialPath(1..n).
@@ -96,8 +97,8 @@ func Mounts(goos string, s MountSpec) ([]Mount, error) {
 		mounts = append(mounts, Mount{Type: "bind", Source: source, Target: target, ReadOnly: readOnly})
 		return nil
 	}
-	if err := bind(s.Checkout, CheckoutDir, true); err != nil {
-		return nil, fmt.Errorf("checkout: %w", err)
+	if err := bind(s.GitDir, SourceDir, true); err != nil {
+		return nil, fmt.Errorf("checkout Git directory: %w", err)
 	}
 	if err := bind(s.Invocation, InvocationDir, true); err != nil {
 		return nil, fmt.Errorf("invocation: %w", err)

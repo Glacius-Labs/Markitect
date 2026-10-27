@@ -22,7 +22,7 @@ import (
 // Fixed paths inside the runner image. The launcher mounts the owner's inputs
 // at these targets; the entrypoint and Apply inside the image use them.
 const (
-	CheckoutDir     = "/markitect/checkout"
+	SourceDir       = "/markitect/source.git"
 	InvocationDir   = "/markitect/invocation"
 	CredentialDir   = "/markitect/credentials"
 	OutputDir       = "/markitect/output"
@@ -62,8 +62,8 @@ func CredentialPath(n int) string { return CredentialDir + "/" + strconv.Itoa(n)
 // Layout names the paths the entrypoint works with. ContainerLayout returns
 // the image's fixed paths; tests substitute temporary directories.
 type Layout struct {
-	// Checkout is the read-only mount of the owner's checkout.
-	Checkout string
+	// Source is the read-only mount of the checkout's Git directory, the clone source.
+	Source string
 	// Invocation holds the translated run configuration and runtime profile.
 	Invocation string
 	// Output is the writable hand-back area.
@@ -76,7 +76,7 @@ type Layout struct {
 
 // ContainerLayout returns the runner image's fixed layout.
 func ContainerLayout() Layout {
-	return Layout{Checkout: CheckoutDir, Invocation: InvocationDir, Output: OutputDir, Clone: CloneDir, Markitect: MarkitectBinary}
+	return Layout{Source: SourceDir, Invocation: InvocationDir, Output: OutputDir, Clone: CloneDir, Markitect: MarkitectBinary}
 }
 
 // Result is the runner's hand-back record in ResultFile. ApplyStatus is the

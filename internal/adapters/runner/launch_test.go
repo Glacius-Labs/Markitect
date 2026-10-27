@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -16,9 +17,10 @@ import (
 // the launcher, the mount set, the entrypoint and the import run end to end
 // with real Git but without a container engine or a provider.
 const (
-	helperRole  = "MARKITECT_RUNNER_TEST_ROLE"
-	helperMode  = "MARKITECT_RUNNER_TEST_MODE"
-	fakeApplyID = "0123456789abcdef0123456789abcdef"
+	helperRole     = "MARKITECT_RUNNER_TEST_ROLE"
+	helperMode     = "MARKITECT_RUNNER_TEST_MODE"
+	helperEndpoint = "MARKITECT_RUNNER_TEST_ENDPOINT"
+	fakeApplyID    = "0123456789abcdef0123456789abcdef"
 )
 
 func TestMain(m *testing.M) {
@@ -34,7 +36,15 @@ func TestMain(m *testing.M) {
 // fakeEngine plays "docker run": it maps every mount target to its host source
 // and runs the entrypoint with that layout, the clone beside the hand-back area.
 func fakeEngine(args []string) int {
-	if len(args) > 0 && args[0] == "stop" {
+	if len(args) > 0 && (args[0] == "stop" || args[0] == "rm") {
+		return 0
+	}
+	if len(args) > 1 && args[0] == "context" && args[1] == "inspect" {
+		endpoint := os.Getenv(helperEndpoint)
+		if endpoint == "" {
+			endpoint = "unix:///var/run/docker.sock"
+		}
+		fmt.Println(endpoint)
 		return 0
 	}
 	sources := map[string]string{}
@@ -60,11 +70,21 @@ func fakeEngine(args []string) int {
 			break
 		}
 	}
-	for _, target := range []string{CheckoutDir, InvocationDir, OutputDir, StateDir, EngineSocket, CredentialPath(1)} {
+	for _, target := range []string{SourceDir, InvocationDir, OutputDir, StateDir, EngineSocket, CredentialPath(1)} {
 		if sources[target] == "" {
 			fmt.Fprintln(os.Stderr, "fake engine: missing mount", target)
 			return 125
 		}
+	}
+	// The clone source is the checkout's Git directory, never its working tree.
+	source := filepath.FromSlash(sources[SourceDir])
+	if filepath.Base(source) != ".git" {
+		fmt.Fprintln(os.Stderr, "fake engine: the clone source is not a .git directory:", source)
+		return 125
+	}
+	if _, err := os.Stat(filepath.Join(source, "README.md")); err == nil {
+		fmt.Fprintln(os.Stderr, "fake engine: the working tree is visible through the clone source")
+		return 125
 	}
 	executable, err := os.Executable()
 	if err != nil {
@@ -72,7 +92,7 @@ func fakeEngine(args []string) int {
 	}
 	os.Setenv(helperRole, "apply")
 	output := filepath.FromSlash(sources[OutputDir])
-	layout := Layout{Checkout: filepath.FromSlash(sources[CheckoutDir]), Invocation: filepath.FromSlash(sources[InvocationDir]), Output: output, Clone: filepath.Join(filepath.Dir(output), "fake-clone"), Markitect: executable}
+	layout := Layout{Source: filepath.FromSlash(sources[SourceDir]), Invocation: filepath.FromSlash(sources[InvocationDir]), Output: output, Clone: filepath.Join(filepath.Dir(output), "fake-clone"), Markitect: executable}
 	return entry(context.Background(), entryArgs, os.Stderr, layout)
 }
 
@@ -161,6 +181,7 @@ func launchRequest(t *testing.T, repo, mode string) LaunchRequest {
 	}
 	t.Setenv(helperRole, "engine")
 	t.Setenv(helperMode, mode)
+	t.Setenv("DOCKER_HOST", "")
 	login := filepath.Join(t.TempDir(), "login.json")
 	if err := os.WriteFile(login, []byte(`{"tokens":{}}`), 0o600); err != nil {
 		t.Fatal(err)
@@ -256,6 +277,67 @@ func TestStartAcceptsMainAndIgnoredFiles(t *testing.T) {
 	}
 	if branch := git(t, repo, "branch", "--show-current"); branch != "main" {
 		t.Fatalf("checkout left main: %s", branch)
+	}
+}
+
+func TestMountSetHidesTheWorkingTree(t *testing.T) {
+	repo, _ := ownerCheckout(t)
+	os.WriteFile(filepath.Join(repo, ".gitignore"), []byte(".env\n"), 0o644)
+	git(t, repo, "add", ".gitignore")
+	git(t, repo, "-c", "user.name=Owner", "-c", "user.email=owner@example.invalid", "commit", "--quiet", "-m", "ignore env")
+	secret := filepath.Join(repo, ".env")
+	if err := os.WriteFile(secret, []byte("TOKEN=not-for-the-runner\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	request := launchRequest(t, repo, "nochange")
+	spec := launchSpec(request, filepath.Join(t.TempDir(), "launch"))
+	if spec.GitDir != filepath.Join(repo, ".git") {
+		t.Fatalf("clone source %s", spec.GitDir)
+	}
+	// No host path the runner receives contains the ignored file or any other
+	// working-tree file.
+	for _, host := range append([]string{spec.GitDir, spec.Invocation, spec.Output}, spec.Credentials...) {
+		for _, file := range []string{secret, filepath.Join(repo, "README.md")} {
+			if rel, err := filepath.Rel(host, file); err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+				t.Fatalf("mount %s exposes %s", host, file)
+			}
+		}
+	}
+	mounts, err := Mounts(runtime.GOOS, spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if mounts[0].Target != SourceDir || !strings.HasSuffix(mounts[0].Source, "/.git") || !mounts[0].ReadOnly {
+		t.Fatalf("clone source mount %+v", mounts[0])
+	}
+	// The complete launch still works from the Git directory alone.
+	if launched, err := Start(context.Background(), request); err != nil || !launched.Result.NoChange {
+		t.Fatalf("launch from the Git directory: %v %+v\n%s", err, launched.Result, logOf(launched))
+	}
+}
+
+func TestStartRequiresTheLocalEngine(t *testing.T) {
+	executable, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv(helperRole, "engine")
+	t.Setenv("DOCKER_HOST", "")
+	for endpoint, ok := range map[string]bool{
+		"unix:///var/run/docker.sock":               true,
+		"npipe:////./pipe/dockerDesktopLinuxEngine": true,
+		"tcp://build-host:2376":                     false,
+		"ssh://me@build-host":                       false,
+	} {
+		t.Setenv(helperEndpoint, endpoint)
+		if err := checkLocalEngine(context.Background(), executable); (err == nil) != ok {
+			t.Errorf("endpoint %s: %v", endpoint, err)
+		}
+	}
+	t.Setenv(helperEndpoint, "")
+	t.Setenv("DOCKER_HOST", "tcp://build-host:2376")
+	if err := checkLocalEngine(context.Background(), executable); err == nil || !strings.Contains(err.Error(), "unset DOCKER_HOST") {
+		t.Fatalf("DOCKER_HOST: %v", err)
 	}
 }
 
