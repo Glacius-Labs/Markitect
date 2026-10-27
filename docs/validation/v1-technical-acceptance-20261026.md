@@ -80,4 +80,20 @@ The [final review's table](v1-final-review-20261025.md#guarantees-and-their-hold
 
 ## What the owner decides
 
-Technical acceptance of V1 on F_final as a separate decision; release and deployment separately. The fix plan's native controls and the new frozen source F will extend this record with an addendum.
+Technical acceptance of V1 on F_final as a separate decision; release and deployment separately. The fix plan's native controls extend this record with the addendum below; the new frozen source F follows.
+
+## Addendum, 27 October 2026: the fix plan's native controls
+
+The owner-approved fix plan was merged (S1–S3, WP5) and checked by bounded native controls on F_fix `714ae136` and on F_fix2, F_fix plus the await fix ([record](v1-fixplan-native-controls-20261027.md)). Against the limits above:
+
+| Limit | Status after the controls |
+| --- | --- |
+| 1. Per-message clock on a coordinating Root | Fixed by the idle limit (WP2): a fresh Makerspace W0 published, and no Root turn came near the limit (longest provider-idle stretch 51 s) |
+| 2. Correction pair without a budget check | Fixed (WP3c): a correction pair started with enough messages and completed |
+| 3. Change minimality | Partly: the "already verified" fact reaches every Run, but the host still accepts an approval of a changed candidate without a named defect; a fix is in progress |
+| 4. Message allowance and question relay | Fixed for the observed case (WP3a): question traffic no longer exhausts the allowance; ordering by dependency (WP3b) stays deferred |
+| 5. Open questions to a handed-off Manager | Fixed (WP5). The controls found a related defect, an undetected mutual await between two Managers; it is fixed ([PR #759](https://github.com/Glacius-Labs/Markitect/pull/759)) and the affected case then published |
+| 6. One transient provider overload ends the Apply | Bounded retry in source (WP1); no overload occurred in the controls. A thread accepts a new turn after an error-terminated one (proxy probe) |
+| P2, public Verify-reject correction path | Exercised natively on F_fix2: Verify rejected with three Definition-bound Findings, a fresh correction pair corrected them, and the verified candidate was published with exact readback |
+
+The controls ran on the Windows host with Linux containers. Markitect's execution then moves to a Linux runner image ([DEC-077](../concepts/register.md#dec-077-development-pace-and-linux-first-execution)); the new frozen F follows that change and the remaining fix.

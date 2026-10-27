@@ -913,9 +913,9 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - W1 a fitness review of core, compiler and context selection;
   - W2 what a well-modeled project contains, building on [DEC-061](#dec-061-what-an-extracted-model-contains);
   - W3 quality criteria: warnings in the product, in line with [ENH-002](#enh-002-model-quality-linter-and-metrics), and hard rules only for Markitect's own reference and evaluation models;
-  - W4 a first outline of standard Libraries, [accepted by the owner](sources/model-track-library-outline-20261026.md) as draft v0.3 on 26 October 2026;
+  - W4 a first outline of standard Libraries, [accepted by the owner](sources/model-track-library-outline-20261026.md) as draft v0.3 on 26 October 2026 and with [clarifications v0.3.1](sources/model-track-w4-w6-decisions-20261027.md) on 27 October; the Libraries `values`, `api`, `practice`, `architecture` and `data` 1.0.0 are in `libraries/`;
   - W5 a modeling skill and a separate tool under `tools/`;
-  - W6 a pilot: a Makerspace remodel beside the frozen Phase C models. The self-model pilot is deferred until Markitect is stable, after V1 acceptance and the studies ([owner decision](sources/self-model-pilot-deferred-20261026.md)), and with [DEC-076](#dec-076-markitect-is-developed-as-a-regular-software-project) it is only a later option.
+  - W6 a pilot: a Makerspace remodel beside the frozen Phase C models, with the [owner-approved architecture](sources/model-track-w4-w6-decisions-20261027.md), W0 first; the owner ordered W4b, W6, then W5. The self-model pilot is deferred until Markitect is stable, after V1 acceptance and the studies ([owner decision](sources/self-model-pilot-deferred-20261026.md)), and with [DEC-076](#dec-076-markitect-is-developed-as-a-regular-software-project) it is only a later option.
 - **Choices:**
   - D1: the track runs parallel to V1 and does not block V1 technical acceptance.
   - D2: no new entry for the compiler; [DEC-003](#dec-003-the-compiler-is-a-borrowed-concept) links the founding intent.
