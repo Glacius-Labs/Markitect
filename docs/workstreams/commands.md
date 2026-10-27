@@ -1,0 +1,129 @@
+# Lane 9: agentic commands
+
+State page of the commands lane. It describes the agentic commands Markitect runs through the model-derived Manager hierarchy as **contracts**: what a command takes, what it returns and what it guarantees. How a variant realizes them (host as coordinator, Claude Code plugin, agents collaborating through Git) belongs to lanes 1–3.
+
+| | |
+|---|---|
+| **Status** | Stock-taking, 27 October 2026. Nothing is built in this lane until the owner says so. |
+| **Scope** | Command contracts: purpose, inputs, outputs, guarantees, status; candidate commands; open questions. |
+| **Not in scope** | Variant mechanics (lanes 1–3), evaluation (lane 4), model language and compiler (lanes 6, 8), continuous triggers (lane 10), UI (lane 11). |
+| **Sources** | [V1 concept 1.0](../concepts/v1-concept.md) (§4, §7, §9–§11, §18, §20, §21), the [concept register](../concepts/register.md), the [architecture](../architecture.md). This page links to them and does not change them. |
+
+## Terms
+
+Concept 1.0 separates three levels ([§4](../concepts/v1-concept.md#4-terms), [§10](../concepts/v1-concept.md#10-command-workflow-and-apply)):
+
+- **Command:** the named operation a user starts. It binds inputs, runs the initial check, owns the overall budget, runs a workflow and is responsible for the overall result and any publication. Today: `apply`.
+- **Workflow:** the order of Runs inside a command, with their handovers, repetitions, success and abort. It sees only closed Run results.
+- **Mandate:** the task of one Run through the complete organization. V1 has exactly three: Assessment, Implement, Verify ([D16](../concepts/v1-concept.md#105-extensibility-d16)).
+
+So a new command does not automatically need a new mandate. Many candidates below are a new workflow over the existing mandates.
+
+## Rules every agentic command keeps
+
+These hold for any command and any variant. Each comes from an accepted source.
+
+1. **Complete tree.** Every Run uses the complete model-derived organization: Root, every Package Manager, including empty and intermediate ones. The mandate changes the task, not the tree ([§7.2](../concepts/v1-concept.md#72-complete-participation-in-every-mandate); owner, [23 October](../concepts/sources/v1-scope-clarification-20261023.md)).
+2. **Model in charge.** The model is authoritative. A command never repairs the model on the side; a material model blocker ends the command without a result being published ([DEC-063](../concepts/register.md#dec-063-the-model-is-authoritative-defects-escalate)).
+3. **One direction.** A command changes the model or the artifacts, never both ([DEC-026](../concepts/register.md#dec-026-apply-comes-first-and-changes-only-artifacts)).
+4. **Closed Runs.** No question leaves a Run to the user or the invoking AI. Questions travel only along the tree ([D10](../concepts/v1-concept.md#82-communication-along-the-hierarchy-d10)).
+5. **Closed, validated results.** A Run returns a stored, readable result; one validation in the Run contract decides whether it is complete and bound ([D15](../concepts/v1-concept.md#103-validity-of-closed-results-d15)). A workflow builds only on such results.
+6. **One budget.** The command sets one finite budget; follow-up Runs draw from it and never reset it ([§20.2](../concepts/v1-concept.md#202-shared-finite-resources)).
+7. **Honest outcome.** Accepted, Reject, model blocker, failed and incomplete stay distinct; an agent's claim does not heal a technical error ([§20.1](../concepts/v1-concept.md#201-domain-and-technical-outcomes)).
+8. **Findings and Notes.** Findings that bind the next Run name a Definition of the checked model; everything else is a Shared Note with no authority ([§18.3](../concepts/v1-concept.md#183-findings-as-an-actionable-handover), [§19](../concepts/v1-concept.md#19-shared-notes-and-independent-verification)).
+9. **Checks at fixed points.** The same deterministic check runs before the workflow, at child handoffs, at Root completion and before publication ([§12](../concepts/v1-concept.md#12-checking-strategy-and-four-checkpoints)).
+10. **Only verified content is published.** Publication takes exactly the candidate a fresh Verify approved ([§21.1](../concepts/v1-concept.md#211-approval-of-the-exact-candidate); [DEC-078](../concepts/register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review) keeps this while it changes *how* publication works).
+
+## Current commands
+
+### Apply (Model → Artifacts)
+
+| | |
+|---|---|
+| **Purpose** | Bring the artifacts in line with the model, whether or not the model changed ([§10.4](../concepts/v1-concept.md#104-apply-flow)). |
+| **Inputs** | A committed target repository with a valid model, registry and execution declarations; a runtime profile; a run configuration with the budget. |
+| **Workflow** | Initial check → Assessment → Implement → Verify; a Verify Reject starts a fresh Implement and a fresh Verify with the bound Findings, under the same budget; final checks → publication. |
+| **Outputs** | The published, verified change (today written into the working tree, or returned as a new branch through the Linux runner) and a report naming the stored evidence. Or no change, with the reason: invalid input, Assessment Reject, model blocker, budget stop, technical failure, or a conflict with user changes. |
+| **Guarantees** | Rules 1–10. No owner commit today; [DEC-078](../concepts/register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review) moves publication to a target branch (lane 3). |
+| **Status** | V1, implemented and natively qualified with Codex ([qualification record](../validation/v1-qualification-20261024.md), [technical acceptance](../validation/v1-technical-acceptance-20261026.md)). |
+
+### Assessment (mandate)
+
+| | |
+|---|---|
+| **Purpose** | Is the structurally valid model a sufficient basis for realization? Each Manager judges its area and interfaces ([§11.1](../concepts/v1-concept.md#111-assessment)). |
+| **Inputs** | Checked model and project binding, fixed input candidate. |
+| **Outputs** | Approve, or Reject / model blocker with Findings. Changes nothing; helper files stay private. |
+| **Guarantees** | Missing or outdated artifacts are work for Implement, not a reason to reject. Approve does not mean the product is correct. |
+| **Status** | V1, implemented. Runs only inside Apply today. |
+
+### Implement (mandate)
+
+| | |
+|---|---|
+| **Purpose** | Reconcile the realization with the model, the required checks and the bound Findings ([§11.2](../concepts/v1-concept.md#112-implement)). |
+| **Inputs** | Checked model, input candidate, optional Initial Findings (each names a current Definition). |
+| **Outputs** | One fixed, integrated candidate, submitted, never self-approved. The unchanged candidate is a valid result. |
+| **Guarantees** | Changes stay within each Manager's area and the model's necessary consequences; no change only to show a diff ([§3.5](../concepts/v1-concept.md#35-focus-and-preservation)). Invalid child candidates reach the parent with their diagnostic and cannot be integrated ([D11](../concepts/v1-concept.md#84-faulty-handoffs-are-the-parents-responsibility-d11)). |
+| **Status** | V1, implemented. Runs only inside Apply today. |
+
+### Verify (mandate)
+
+| | |
+|---|---|
+| **Purpose** | A fresh, independent check of exactly one candidate against the model ([§11.3](../concepts/v1-concept.md#113-verify)). |
+| **Inputs** | Checked model, the candidate, the diff against the command's bound input and, when it holds, the host fact that this input was already verified ([DEC-073](../concepts/register.md#dec-073-change-minimality-on-an-unchanged-model)). No Implement conversations. |
+| **Outputs** | Approve; Reject with realization Findings; or model blocker. Changes nothing. |
+| **Guarantees** | Independence from the implementers ([§19.4](../concepts/v1-concept.md#194-independence-of-verify)); unjustified changes against the bound input are rejected. |
+| **Status** | V1, implemented. Runs only inside Apply today. |
+
+### Model tools (not agentic)
+
+`check`, `context` and `docs` start no Manager and are named here only for completeness. They belong to the compiler and model lanes ([project workflow](../guides/project-workflow.md)).
+
+### Extract (Artifacts → Model)
+
+| | |
+|---|---|
+| **Purpose** | Derive a model from existing artifacts ([DEC-057](../concepts/register.md#dec-057-three-fundamental-starting-situations), [DEC-061](../concepts/register.md#dec-061-what-an-extracted-model-contains)). |
+| **Inputs** | Fixed artifacts and a selected scope; no model yet. |
+| **Outputs** | A reviewed model proposal with registry, open questions and known realization deviations, for the owner to adopt. Artifacts stay unchanged. |
+| **Guarantees (as accepted)** | Provisional tree from a structure phase, stable within a round; read-only Verify against the proposal; completion blocked by unresolved essential model questions, not by known artifact defects. |
+| **Status** | Outside V1 ([§2.2](../concepts/v1-concept.md#22-not-commissioned)). A bounded version ran on the pre-V1 runtime on 19–20 October; the current source has none. Its owner questions conflict with rule 4 (see open question 4). |
+
+## Candidate commands
+
+Grouped by what they may change (rule 3). "Mandates" says whether the existing three suffice.
+
+| Candidate | Changes | Purpose | Mandates | Sources |
+|---|---|---|---|---|
+| **Verify only** (conformance report) | Nothing | Run Assessment or Verify on the current state and report Findings, without Implement or publication. | Existing | [§9.1](../concepts/v1-concept.md#91-independent-call-boundary) already requires standalone Runs |
+| **Impact check** | Nothing | For a proposed model change: which areas, artifacts and obligations it affects, and why, before Apply. | Probably a new read-only mandate | [DEC-018](../concepts/register.md#dec-018-the-knowledge-graph-explains-impact), [DEC-023](../concepts/register.md#dec-023-impact-marks-change-and-context-without-dropping-either), OQ-009 |
+| **Explain** | Nothing | Answer a question about the project ("where and why does X happen?") from the Managers that own it. | New read-only mandate | Lane brief |
+| **Operational check / doctor** | Nothing | Managers judge logs or runtime output of a running system against the model. | New read-only mandate | [IDEA-017](../concepts/register.md#idea-017-operational-check-through-the-managers) |
+| **Refactor** | Artifacts | Restructure artifacts without changing behavior. | Implement + Verify, with a task input | [DEC-044](../concepts/register.md#dec-044-commands-reuse-the-manager-organization) |
+| **Cleanup / bug hunt** | Artifacts | Find and remove dead code, or find and fix defects against unchanged intent. | Verify finds, Implement fixes | DEC-044 |
+| **Data migration** | Artifacts | Migrate existing runtime data after a model change. | Open | [§26.2](../concepts/v1-concept.md#262-change-from-five-to-three-loans) calls it a separate requirement |
+| **Extract** | Model | See above. | New mandates (structure, model) | DEC-057, DEC-061 |
+| **Optimize** | Model | Propose missing links and justified model improvements, without invention. | New mandate | DEC-044 |
+| **Model migration** | Model | Meaning-preserving Package moves and merges with explicit identity migration. | New mandate | DEC-044 (model-migration refinement) |
+
+Model-changing candidates touch lane 7 (modeling skills) and lane 10 (changes → model → Apply); they are listed here because they would run through the Manager tree.
+
+## What each variant must provide
+
+A variant implements a command by providing, in its own way: the complete tree per Run (rule 1), the closed and validated Run result (rule 5), the shared budget (rule 6), the four checkpoints (rule 9) and, for artifact-changing commands, publication of exactly the verified candidate (rule 10). The workflow of a command is the same across variants; the evaluation suite (lane 4) can then compare variants on the same command.
+
+## Open questions for the owner
+
+1. **Command or mandate.** Should new read-only commands reuse Assessment and Verify where they can (for example "Verify only"), and add a mandate only when no existing one fits (D16)?
+2. **Task input.** Today a command's only intent is the model plus bound Findings. Refactor, cleanup, explain and impact need a user's task or question as input. Is an ad-hoc task an allowed command input, or must every binding intent first go into the model (§3.5, [DEC-033](../concepts/register.md#dec-033-binding-intent-lives-only-in-the-model))?
+3. **Output of read-only commands.** A report only, or also Shared Notes, or bound Findings that a later Apply can take over?
+4. **Questions in model-changing commands.** Extract kept owner questions (DEC-063); runs are otherwise closed (DEC-078 retained). Does Extract end with open questions in its proposal instead of asking?
+5. **Adoption of model proposals.** Who adopts a model proposal from Extract, Optimize or a model migration, and does DEC-078's "no owner review" apply to the model too, or only to artifacts?
+6. **Cost of the full tree.** For small read-only commands (explain, impact) every Manager still participates. Confirm that this holds, or allow a Manager to decline quickly when its area is untouched.
+7. **Order.** Which candidates first? Proposal: "Verify only" (no new mandate, cheap to evaluate), then impact check, then Extract.
+
+## Log
+
+- 27 October 2026: page created from concept 1.0, the register and the architecture. No code.
