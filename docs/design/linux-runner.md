@@ -37,7 +37,7 @@ The runner runs as root. With the engine socket it controls the engine anyway, s
 | `/markitect/output` | `result/` of the launch directory | writable bind | the hand-back area |
 | `/markitect/state` | volume `markitect-state-<repositoryIdentity>` | named volume | Apply state and evidence |
 
-Each login file is mounted on its own, never its directory. Logins stay outside the clone, so they cannot enter a candidate, and the runner never prints them. A login path that the engine's mount syntax cannot carry is refused without repeating the path.
+Each login file is mounted on its own, never its directory. Before the launch, the host observes every login as a native Apply reads it: a regular, unredirected file of at most 1 MiB, with errors that name neither its path nor its content. A login path that the engine's mount syntax cannot carry is refused the same way. Logins stay outside the clone, so they cannot enter a candidate, and the runner never prints them; an engine error can still name a mount path, never a login's content.
 
 ## State and evidence
 
@@ -66,7 +66,7 @@ Inside the runner:
 2. `markitect apply` runs against the clone with the translated inputs. A stop request reaches Apply as SIGTERM, so it closes its containers and keeps its evidence.
 3. Only when Apply passed with a read-back publication, the entrypoint stages exactly the report's `completedPaths`, refuses any other change in the clone apart from Apply's `.markitect/state/` administration, commits with the fixed identity `Markitect Runner <runner@markitect.invalid>`, checks that the commit has the single parent base and changes exactly those paths, and bundles `markitect/runner` without base. A no-change publication returns no bundle.
 
-On the host, the launcher verifies the bundle and that it holds exactly the reported commit, fetches it without writing a ref, repeats the parent and path check and creates the branch only if it does not exist (`update-ref` `create`). The branch defaults to `markitect/apply-<apply id>`; `--result-branch` names another. The owner's working tree, index and current branch never change. Apply still creates no owner commit: the runner's commit exists only on the new branch, which the owner reviews and merges like any other.
+On the host, the launcher verifies the bundle and that it holds exactly the reported commit, fetches it with object checks and without writing a ref, repeats the parent and path check and creates the branch only if it does not exist (`update-ref` `create`). The branch defaults to `markitect/apply-<apply id>`; `--result-branch` names another. A stop request that arrives after the runner handed back a verified change does not cancel this short import; a failed import names the bundle, which stays in the launch directory. The owner's working tree, index and current branch never change: the launcher's Git takes no optional locks, and the import adds only the change's objects and the new branch. Apply still creates no owner commit: the runner's commit exists only on the new branch, which the owner reviews and merges like any other.
 
 ## Inputs
 
@@ -75,9 +75,9 @@ The owner's files keep their native meaning; the launcher derives the runner's c
 - **Run configuration.** The engine executable starts the runner, the state directory receives the launch directory and each dedicated login is mounted. The runner's copy names `/markitect/state`, the runner's engine CLI and `/markitect/credentials/<n>.json`, with logins numbered in reference order. Limits, deadlines, the project identity and `productBuild` stay unchanged. `productBuild` names the runner's build, which the runner checks against its own binary; the host binary's build is not checked.
 - **Runtime profile.** Every `engineExecutable` must name the run configuration's engine, as Apply already requires, and becomes the runner's engine CLI. Nothing else changes. Instruction boundaries must be repository-relative; anchors and aliases are refused.
 - **Model selection.** `--model` and `--dependency` must be repository-relative.
-- **Checkout.** The runner clones committed history: tracked changes are refused, as in a native Apply, and the checkout must be the main working tree of a repository on a named branch. Untracked and ignored files do not reach the runner. The owner's branch may be any named branch, `main` included, because the runner writes only its clone and the new branch.
+- **Checkout.** The runner clones committed history: tracked changes are refused, as in a native Apply, and the checkout must be the main working tree of a repository on a named branch, with its own objects (no `objects/info/alternates`). Untracked and ignored files do not reach the runner. The owner's branch may be any named branch, `main` included, because the runner writes only its clone and the new branch.
 
-The launch is bounded by the run configuration's deadline plus ten minutes for clone, hand-back and stop. Cancellation asks the engine to stop the runner with a four-minute grace period, which covers Apply's own cleanup and persistence bounds.
+The launch is bounded by the run configuration's deadline plus ten minutes for clone, hand-back and stop. Cancellation asks the engine to stop the runner container, not only its CLI, with a four-minute grace period that covers Apply's own cleanup and persistence bounds; if the stop cannot be requested, the launcher asks the engine to remove the container.
 
 ## Path translation
 
@@ -97,7 +97,7 @@ The model commands `check`, `context` and `docs` keep running natively, and so d
 
 - **Native qualification is open.** Source tests use a fake engine and a fake Apply with real Git. Not yet observed: the image build, Docker Desktop's acceptance of the forward-slash drive form and of the socket mount from `docker.exe`, socket access as root on Docker Desktop and a native engine, stop on Ctrl+C, and a complete Apply through the runner with a real login.
 - **Committed history only.** Accounted ignored or untracked inputs that a native Apply captures are absent in the clone, so a project that depends on them behaves differently in the runner.
-- **Linked worktrees and submodules** are refused, because their `.git` file names a host path that does not exist in the runner.
+- **Linked worktrees, submodules and shared clones** are refused, because their `.git` file or object alternates name host paths that do not exist in the runner.
 - **External instruction directories** and external manifests would need further read-only mounts.
 - **The state volume** has no garbage collection, and its evidence is read through a container.
 - **Apply in CI** remains open under DEC-077.

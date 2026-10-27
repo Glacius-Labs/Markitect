@@ -53,15 +53,27 @@ func (c gitCall) run(ctx context.Context, args ...string) ([]byte, error) {
 	cmd.Stdout, cmd.Stderr = out, stderr
 	err := cmd.Run()
 	if out.exceeded {
-		return nil, fmt.Errorf("Git %s output exceeds %d bytes", args[0], maxGitOutput)
+		return nil, fmt.Errorf("Git %s output exceeds %d bytes", subcommand(args), maxGitOutput)
 	}
 	if err != nil {
 		if ctx.Err() != nil {
 			return nil, ctx.Err()
 		}
-		return nil, fmt.Errorf("Git %s: %w: %s", args[0], err, strings.TrimSpace(stderr.String()))
+		return nil, fmt.Errorf("Git %s: %w: %s", subcommand(args), err, strings.TrimSpace(stderr.String()))
 	}
 	return out.Bytes(), nil
+}
+
+// subcommand names the Git command after any leading -c NAME=VALUE options.
+func subcommand(args []string) string {
+	for i := 0; i < len(args); i++ {
+		if args[i] == "-c" {
+			i++
+			continue
+		}
+		return args[i]
+	}
+	return "command"
 }
 
 // text runs the command and returns its trimmed output.
@@ -78,7 +90,8 @@ func gitEnvironment() []string {
 			env = append(env, value)
 		}
 	}
-	return append(env, "GIT_CONFIG_NOSYSTEM=1", "GIT_CONFIG_GLOBAL="+os.DevNull, "GIT_TERMINAL_PROMPT=0", "GIT_NO_LAZY_FETCH=1")
+	// No optional locks: status on the owner's checkout must not refresh its index.
+	return append(env, "GIT_CONFIG_NOSYSTEM=1", "GIT_CONFIG_GLOBAL="+os.DevNull, "GIT_TERMINAL_PROMPT=0", "GIT_NO_LAZY_FETCH=1", "GIT_OPTIONAL_LOCKS=0")
 }
 
 // nulPaths splits NUL-terminated Git path output.
@@ -108,6 +121,8 @@ func samePaths(a, b []string) bool {
 	return true
 }
 
+// boundedBuffer keeps at most limit bytes. Beyond it, it records the excess
+// and keeps draining, so the writing process never blocks on a full pipe.
 type boundedBuffer struct {
 	bytes.Buffer
 	limit    int64
@@ -115,9 +130,9 @@ type boundedBuffer struct {
 }
 
 func (b *boundedBuffer) Write(p []byte) (int, error) {
-	if int64(len(p)) > b.limit-int64(b.Len()) {
+	if b.exceeded || int64(len(p)) > b.limit-int64(b.Len()) {
 		b.exceeded = true
-		return 0, errors.New("output limit exceeded")
+		return len(p), nil
 	}
 	return b.Buffer.Write(p)
 }

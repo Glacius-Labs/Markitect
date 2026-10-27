@@ -279,6 +279,14 @@ func TestStartRefusesCheckoutsTheRunnerCannotClone(t *testing.T) {
 			t.Fatalf("linked worktree: %v", err)
 		}
 	})
+	t.Run("borrowed objects", func(t *testing.T) {
+		repo, _ := ownerCheckout(t)
+		shared := filepath.Join(t.TempDir(), "shared")
+		git(t, "", "clone", "--quiet", "--shared", repo, shared)
+		if _, err := Start(context.Background(), launchRequest(t, shared, "change")); err == nil || !strings.Contains(err.Error(), "alternates") {
+			t.Fatalf("shared clone: %v", err)
+		}
+	})
 	t.Run("existing result branch", func(t *testing.T) {
 		repo, _ := ownerCheckout(t)
 		git(t, repo, "branch", "taken")

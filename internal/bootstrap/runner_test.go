@@ -38,6 +38,11 @@ func newRunnerFixture(t *testing.T) runnerFixture {
 	if err := os.MkdirAll(f.repo, 0o755); err != nil {
 		t.Fatal(err)
 	}
+	for _, login := range f.logins {
+		if err := os.WriteFile(login, []byte(`{"tokens":{}}`), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
 	config := map[string]any{
 		"formatVersion": 4, "repositoryIdentity": "proj", "productBuild": "owner-asserted-build", "stateDirectory": f.state,
 		"engineExecutable": f.engine, "deadline": time.Now().Add(time.Hour).UTC().Format(time.RFC3339),
@@ -196,6 +201,12 @@ func TestRunnerApplyRefusesInputsTheRunnerCannotCarry(t *testing.T) {
 	other.EngineExecutable = filepath.Join(filepath.Dir(f.engine), "other-docker")
 	if _, err := runnerApply(context.Background(), f.request(t), other, never); err == nil || !strings.Contains(err.Error(), "engineExecutable") {
 		t.Fatalf("engine mismatch: %v", err)
+	}
+	if err := os.Remove(f.logins[1]); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := runnerApply(context.Background(), f.request(t), f.cfg, never); err == nil || !strings.Contains(err.Error(), "dedicated login 2") || strings.Contains(err.Error(), "b-login") {
+		t.Fatalf("missing login refused without its path: %v", err)
 	}
 }
 

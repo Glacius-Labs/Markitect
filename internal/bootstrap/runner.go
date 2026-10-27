@@ -54,6 +54,14 @@ func runnerApply(ctx context.Context, request cli.ApplyRequest, cfg runConfig, l
 	if err != nil {
 		return out, err
 	}
+	// Observe each login as a native Apply would before the engine mounts it:
+	// a regular, unredirected file within the byte limit. The bytes are dropped;
+	// errors name neither the path nor the content.
+	for i, login := range logins {
+		if _, err := readRuntimeCredential(ctx, login); err != nil {
+			return out, fmt.Errorf("dedicated login %d: %w", i+1, credentialReadError(err))
+		}
+	}
 	volume := "markitect-state-" + cfg.RepositoryIdentity
 	ctx, cancel := context.WithDeadline(ctx, cfg.deadline().Add(runnerGrace))
 	defer cancel()

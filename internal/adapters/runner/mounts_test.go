@@ -142,6 +142,27 @@ func TestRunArgsStartTheRunnerWithoutNetwork(t *testing.T) {
 	}
 }
 
+func TestBoundedBufferDrainsBeyondItsLimit(t *testing.T) {
+	b := &boundedBuffer{limit: 4}
+	for _, chunk := range []string{"ab", "cde", "f"} {
+		if n, err := b.Write([]byte(chunk)); err != nil || n != len(chunk) {
+			t.Fatalf("write %q: %d %v", chunk, n, err)
+		}
+	}
+	if !b.exceeded || b.String() != "ab" {
+		t.Fatalf("exceeded=%v kept %q", b.exceeded, b.String())
+	}
+}
+
+func TestGitErrorsNameTheSubcommand(t *testing.T) {
+	if got := subcommand([]string{"-c", "user.name=x", "-c", "user.email=y", "commit", "-m", "m"}); got != "commit" {
+		t.Fatalf("subcommand %q", got)
+	}
+	if got := subcommand([]string{"status"}); got != "status" {
+		t.Fatalf("subcommand %q", got)
+	}
+}
+
 func TestRepositoryRelative(t *testing.T) {
 	for _, p := range []string{".markitect/model.yaml", "libs/core/model.yaml", "a"} {
 		if !RepositoryRelative(p, false) {

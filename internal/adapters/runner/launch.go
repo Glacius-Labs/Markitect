@@ -24,6 +24,9 @@ const (
 	logFile          = "runner.log"
 )
 
+// importTimeout bounds the local fetch of the bundle and the branch creation.
+const importTimeout = 2 * time.Minute
+
 // LaunchRequest is one Apply started in the runner image from the owner's host.
 type LaunchRequest struct {
 	// Engine is the absolute path of the host's engine CLI, the run
@@ -83,7 +86,8 @@ func (l Launch) ReportPath() string {
 // a verified change as a new branch. The returned error names a failure of the
 // launch, the runner or the import; an Apply that did not pass is reported in
 // Result without an error. Start never changes the checkout's working tree,
-// index or current branch; it only creates the new branch.
+// index or current branch; the import adds the change's objects and creates
+// the new branch, nothing else.
 func Start(ctx context.Context, r LaunchRequest) (out Launch, err error) {
 	goos := r.GOOS
 	if goos == "" {
@@ -149,8 +153,13 @@ func Start(ctx context.Context, r LaunchRequest) (out Launch, err error) {
 	if branch == "" {
 		branch = "markitect/apply-" + result.ApplyID
 	}
-	if err := importResult(ctx, r.Repository, filepath.Join(out.Directory, resultSubdir, BundleFile), result, branch); err != nil {
-		return out, err
+	// The verified change exists now; a late stop request must not lose it, so
+	// the short local import gets its own bound.
+	importCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), importTimeout)
+	defer cancel()
+	bundle := filepath.Join(out.Directory, resultSubdir, BundleFile)
+	if err := importResult(importCtx, r.Repository, bundle, result, branch); err != nil {
+		return out, fmt.Errorf("import the verified change from %s: %w", bundle, err)
 	}
 	out.Branch, out.Commit = branch, result.Commit
 	return out, nil
@@ -168,6 +177,11 @@ func inspectCheckout(ctx context.Context, repository string) (string, error) {
 	info, err := os.Lstat(filepath.Join(repository, ".git"))
 	if err != nil || !info.IsDir() {
 		return "", fmt.Errorf("the runner needs a checkout whose .git is a directory; linked worktrees and submodules are not supported")
+	}
+	// Borrowed objects (clone --shared or --reference) live at host paths the
+	// runner cannot see.
+	if _, err := os.Lstat(filepath.Join(repository, ".git", "objects", "info", "alternates")); err == nil {
+		return "", fmt.Errorf("the runner needs a checkout with its own objects; this one borrows objects through objects/info/alternates")
 	}
 	g := gitCall{dir: repository}
 	top, err := g.text(ctx, "rev-parse", "--show-toplevel")
@@ -247,16 +261,21 @@ func runEngine(ctx context.Context, engine string, args []string, name string, s
 	cmd := exec.CommandContext(ctx, engine, args...)
 	cmd.Stdout, cmd.Stderr = w, w
 	cmd.Cancel = func() error {
-		stop := exec.Command(engine, StopArgs(name, stopTimeout)...)
-		if err := stop.Start(); err != nil {
-			return cmd.Process.Kill()
+		// Stop the container, not only its CLI: a container left running would
+		// keep Apply going and hold the state lock.
+		for _, args := range [][]string{StopArgs(name, stopTimeout), {"rm", "--force", name}} {
+			stop := exec.Command(engine, args...)
+			if stop.Start() == nil {
+				go stop.Wait()
+				return nil
+			}
 		}
-		go stop.Wait()
-		return nil
+		cmd.Process.Kill()
+		return fmt.Errorf("could not ask the engine to stop runner container %s", name)
 	}
 	cmd.WaitDelay = stopTimeout + time.Minute
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("runner container: %w", err)
+		return fmt.Errorf("runner container %s: %w", name, err)
 	}
 	return nil
 }
@@ -284,7 +303,7 @@ func importResult(ctx context.Context, repository, bundle string, result Result,
 	if heads != result.Commit+" "+ResultRef {
 		return fmt.Errorf("result bundle does not hold exactly commit %s at %s", result.Commit, ResultRef)
 	}
-	if _, err := g.run(ctx, "fetch", "--quiet", "--no-tags", "--no-write-fetch-head", bundle, ResultRef); err != nil {
+	if _, err := g.run(ctx, "-c", "transfer.fsckObjects=true", "fetch", "--quiet", "--no-tags", "--no-write-fetch-head", bundle, ResultRef); err != nil {
 		return fmt.Errorf("fetch result bundle: %w", err)
 	}
 	if err := verifyResultCommit(ctx, g, result.Commit, result.Base, result.Paths); err != nil {
