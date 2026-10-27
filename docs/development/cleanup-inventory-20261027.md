@@ -96,7 +96,7 @@ L2 removes Windows-only Apply host code after L1 works ([Linux Docker way](../im
 
 | Code | Why it is Apply-host only |
 |---|---|
-| `internal/bootstrap/runtime_credentials_windows.go` and its test | Credential files of the Apply host |
+| `internal/bootstrap/runtime_credentials_windows.go` and its test | Credential files of the Apply host. Correction after L2 ([PR #783](https://github.com/Glacius-Labs/Markitect/pull/783)): it stays, because `apply --runner` reads the run configuration, the runtime profile and the logins through it |
 | `internal/bootstrap/lock_windows.go` | The state-directory lock, used only by `apply` |
 | Windows branches in `internal/adapters/gitrepo/local_run.go`, `check_copy.go`, `publication.go` | Run copies, check copies and publication on a Windows host |
 | `scripts/run-library-apply.ps1` | Windows operator script for native Apply |
