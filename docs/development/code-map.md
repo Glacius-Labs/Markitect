@@ -25,9 +25,9 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 | `apply-usecase` | Checked capture, closed workflow and stored-candidate publication. | `apply-usecase` | 1 |
 | `apply-workflow` | Direct sequence of fully closed Runs using one shared allowance. | `apply-workflow` | 1 |
 | `model-view` | Deterministic readable view and reviewed source-bound write plan. | `model-view` | 1 |
-| `apply-adapter` | Concrete repository, container engine, Agent and check adapters, profile metadata and document I/O. | `apply-adapter` | 7 |
+| `apply-adapter` | Concrete repository, container engine, Agent and check adapters, profile metadata and document I/O. | `apply-adapter` | 8 |
 | `apply-bootstrap` | Constructs actual services and their adapters. | `apply-bootstrap` | 1 |
-| `apply-command` | Thin entrypoint to product composition. | `apply-command` | 1 |
+| `apply-command` | Thin entrypoint to product composition. | `apply-command` | 2 |
 | `agent-protocol` | Frame protocol between the Orchestrator and the session helper. | `agent-protocol` | 1 |
 | `agent-runtime` | Runs inside each Agent container: provider process, MCP bridge and stdio framing. | `agent-runtime` | 1 |
 | `runtime-command` | Thin entrypoint of the session helper. | `runtime-command` | 1 |
@@ -113,6 +113,7 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 | `internal/adapters/container` | Container engine client and the Orchestrator side of the agentd connection. | [docs/development/modules.md](modules.md) |
 | `internal/adapters/documents` | Concrete repository, profile metadata and document I/O. | [docs/development/modules.md](modules.md) |
 | `internal/adapters/gitrepo` | Complete repository capture, isolated Run Git copies and independently reopenable stored candidates. | [docs/development/modules.md](modules.md) |
+| `internal/adapters/runner` | Linux runner launch with read-only checkout, login and engine-socket mounts, the in-image clone and Apply hand-back, and import of the verified change as a branch. | [docs/design/linux-runner.md](../design/linux-runner.md) |
 | `internal/adapters/runstore` | Immutable terminal Run results, an index of completed Verify approvals and durable concurrent project Notes. | [internal/run/README.md](../../internal/run/README.md) |
 
 ## Composition
@@ -126,6 +127,7 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 | Package | Purpose | Owning document |
 |---|---|---|
 | `cmd/markitect` | Thin entrypoint to product composition. | [docs/development/modules.md](modules.md) |
+| `cmd/markitect-runner` | Thin entrypoint of the Linux runner image. | [docs/design/linux-runner.md](../design/linux-runner.md) |
 
 ## Agent protocol
 

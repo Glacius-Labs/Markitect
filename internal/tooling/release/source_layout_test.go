@@ -18,6 +18,8 @@ func rootLayoutFixture(t *testing.T) string {
 		"internal/project/prepared.go":                "package project\n",
 		"internal/runtimeconfig/prepare.go":           "package runtimeconfig\n",
 		"internal/adapters/runstore/store.go":         "package runstore\n",
+		"internal/adapters/runner/launch.go":          "package runner\n",
+		"cmd/markitect-runner/main.go":                "package main\n",
 		"internal/harness/harness.go":                 "package harness\n",
 		"internal/run/execute.go":                     "package run\n",
 		"internal/adapters/gitrepo/git.go":            "package gitrepo\n",
@@ -98,7 +100,7 @@ func TestRootLayoutLiveAndFixedMatch(t *testing.T) {
 		t.Fatal("live and fixed root selections differ")
 	}
 	contents := archiveContents(t, live)
-	for _, name := range []string{"cmd/markitect/main.go", "internal/model/vendor.go", "internal/project/prepared.go", "internal/runtimeconfig/prepare.go", "internal/adapters/runstore/store.go", "internal/harness/harness.go", "internal/run/execute.go", "internal/adapters/gitrepo/git.go", "internal/apply/testdata/fixture.json", "internal/adapters/documents/writer.go", "internal/tooling/release/install/install.go", "internal/testkit/testdata/hostile.gitconfig"} {
+	for _, name := range []string{"cmd/markitect/main.go", "internal/model/vendor.go", "internal/project/prepared.go", "internal/runtimeconfig/prepare.go", "internal/adapters/runstore/store.go", "internal/adapters/runner/launch.go", "cmd/markitect-runner/main.go", "internal/harness/harness.go", "internal/run/execute.go", "internal/adapters/gitrepo/git.go", "internal/apply/testdata/fixture.json", "internal/adapters/documents/writer.go", "internal/tooling/release/install/install.go", "internal/testkit/testdata/hostile.gitconfig"} {
 		if _, ok := contents[name]; !ok {
 			t.Errorf("omitted %s", name)
 		}

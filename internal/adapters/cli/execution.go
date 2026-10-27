@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -17,6 +18,27 @@ import (
 type ApplyRequest struct {
 	Selection        project.InputSelection
 	RunConfig, Build string
+	// Runner, when set, is the Linux runner image ID: Apply runs in that image
+	// and a verified change returns as ResultBranch (default markitect/apply-<id>).
+	Runner, ResultBranch string
+	// Log receives diagnostics of a runner launch; the JSON report stays on stdout.
+	Log io.Writer
+}
+
+// RunnerReport describes an Apply that ran in the Linux runner image: its
+// launch, the runner's own Apply report and the branch its verified change became.
+type RunnerReport struct {
+	Image       string          `json:"image"`
+	Launch      string          `json:"launch"`
+	Directory   string          `json:"directory"`
+	StateVolume string          `json:"stateVolume"`
+	Base        string          `json:"base,omitempty"`
+	ApplyStatus model.Status    `json:"applyStatus,omitempty"`
+	NoChange    bool            `json:"noChange"`
+	Branch      string          `json:"branch,omitempty"`
+	Commit      string          `json:"commit,omitempty"`
+	Paths       []string        `json:"paths,omitempty"`
+	Report      json.RawMessage `json:"report,omitempty"`
 }
 type ApplyReport struct {
 	FormatVersion  int           `json:"formatVersion"`
@@ -31,6 +53,9 @@ type ApplyReport struct {
 	// ProviderRetries counts the native responses Markitect sent again after a
 	// transient provider error, apart from any repeat of the whole Apply.
 	ProviderRetries int `json:"providerRetries"`
+
+	// Runner is present when Apply ran in the Linux runner image.
+	Runner *RunnerReport `json:"runner,omitempty"`
 }
 type ApplyFunc func(context.Context, ApplyRequest) (ApplyReport, error)
 
@@ -48,6 +73,8 @@ func (c *Command) applyVerb(ctx context.Context, args []string, stdout, stderr i
 	flags := flag.NewFlagSet(verb, flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	config := flags.String("run-config", "", "explicit absolute invocation configuration")
+	runnerImage := flags.String("runner", "", "Linux runner image ID (sha256:...)")
+	resultBranch := flags.String("result-branch", "", "branch for the runner's verified change")
 	var repo, manifest, runtimeProfile string
 	var dependencies manifestList
 	flags.StringVar(&repo, "repo", ".", "repository root")
@@ -61,7 +88,7 @@ func (c *Command) applyVerb(ctx context.Context, args []string, stdout, stderr i
 		}
 		return 2
 	}
-	if flags.NArg() != 0 {
+	if flags.NArg() != 0 || *resultBranch != "" && *runnerImage == "" {
 		fmt.Fprintln(stderr, "invalid execution arguments; see help")
 		return 2
 	}
@@ -93,7 +120,7 @@ func (c *Command) applyVerb(ctx context.Context, args []string, stdout, stderr i
 		return 2
 	}
 	selection.RuntimeProfiles = []project.SourceLocation{{Boundary: filepath.Dir(runtimeProfile), Path: path}}
-	report, err := c.apply(ctx, ApplyRequest{Selection: selection, RunConfig: *config, Build: buildinfo.Build()})
+	report, err := c.apply(ctx, ApplyRequest{Selection: selection, RunConfig: *config, Build: buildinfo.Build(), Runner: *runnerImage, ResultBranch: *resultBranch, Log: stderr})
 	report.FormatVersion, report.Operation = 1, verb
 	if err != nil {
 		report.Error = err.Error()
