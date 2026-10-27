@@ -43,15 +43,41 @@ On 27 October the owner let the previous session accept its own recommendations 
 |---|---|---|
 | 8 | When requirements leave the order of refusals open, the listed order is an owner decision | 6 |
 | 9 | makerspace-v2.1: the equipment Interface exposes `rate-cents-per-minute` instead of a separate rate type for bookings | 6 |
-| 4, 10 | The analysis tool reads the model's own architecture; a new `interface` signal checks typed uses only, not body links | 7 or 8 (open, question 3 below) |
+| 4, 10 | The analysis tool reads the model's own architecture; a new `interface` signal checks typed uses only, not body links | 7 or 8 (open, question 2 below) |
 | 1, 3, 5, 6, 7 | The modeling skill: built in parallel with the gate, lives in `packaging/skills/markitect-modeling/`, trialled twice on neutral library requirements | 7 |
 | 2 | Claude adapter after the Linux runner; V1 acceptance stays Codex-only | 1 and 5 |
 
+## Owner decision: the five Library questions (27 October 2026)
+
+The owner, in this lane's session: "Accept the recommendations on the five Library questions: unordered-refusal flag, refusals in Interface, invariant placement via an interface, no envelope Kind yet, no alias-only Core change yet. Prepare the plan, build nothing yet."
+
+### Plan (not started)
+
+One PR, owned by this lane. No Core or compiler change, so lane 8 is not involved.
+
+| Change | Library | Version |
+|---|---|---|
+| New optional boolean Property `unorderedRefusals`. When true, any refusal that applies may be returned, because the requirements fix no precedence. The bodies of `refusals` and `Operation` say so. A project Operation Kind adds the Property only when it needs it | `api` | 1.1.0 |
+| New optional Property `refusalCodes` on `Interface`, a list of references to `Api.RefusalCode`; the body names refusal codes as part of the public surface | `architecture` | 1.1.0, on `api` 1.1.0 |
+| `Invariant` implements `Practice.Rule` and declares the optional `appliesTo`. A Placement's `concern` stays `Practice.Rule` and now accepts an Invariant. An invariant is a binding statement, so it is a Rule | `data` | 1.1.0, now depends on `practice` 1.0.0 |
+
+All three are minor versions: existing models stay valid. Putting the flag into the `Operation` interface itself would make `api` 2.0.0 and force every project Operation Kind to change, for a field few operations need.
+
+**In the same PR:** the lock files, the version pins in `internal/bootstrap/libraries_test.go`, the [standard Libraries](../design/standard-libraries.md) page (Library sections and the answered-questions table), and a verbatim source record of the decision under `docs/concepts/sources/`.
+
+**Not changed:** `makerspace-v2` keeps its vendored 1.0.0 copies; it is frozen gate material. A v2.2 that uses the new fields would come only when the evaluation lane asks for it.
+
+**Follow-ups for other lanes, after the merge:**
+- Lane 7: update the modeling skill's Library reference and its rule that the listed refusal order is an owner decision (decision 8 above).
+- The analysis tool's owner (question 2 below): count refusal codes in an Interface as typed uses in the `interface` signal.
+- Coordinator: a register line under DEC-074.
+
+**Unchanged by decision:** no wire-envelope Kind, and imports stay visible without their alias. Both wait until a real model needs them.
+
 ## Open questions for the owner
 
-1. **Five Library and Core questions** from the pilot and the skill trials, listed with their recommendations in the [standard Libraries](../design/standard-libraries.md#answered-and-open-questions): import visibility by alias only, unordered refusal lists, refusal codes in an Interface, placing an invariant, and a wire-envelope Kind. The alias question was to be decided after the pilot, which is now done. The three Library field changes could land as one Library version with an update of `makerspace-v2`.
-2. **Small expressiveness gaps** (maps, unions, defaults, uniqueness, formats, ranges, constraints across fields). The unreviewed W1 draft recommends no Core change: Library patterns, and a revisit only if a real model is harmed. The owner's "fix all of that" after W1 may have meant these too; this needs a clear answer.
-3. **Who owns the analysis tool** (`tools/model-analysis/`): lane 7 (it supports writing models) or lane 8 (it checks models).
+1. **Small expressiveness gaps** (maps, unions, defaults, uniqueness, formats, ranges, constraints across fields). The unreviewed W1 draft recommends no Core change: Library patterns, and a revisit only if a real model is harmed. The owner's "fix all of that" after W1 may have meant these too; this needs a clear answer.
+2. **Who owns the analysis tool** (`tools/model-analysis/`): lane 7 (it supports writing models) or lane 8 (it checks models).
 
 ## Candidate ideas
 
