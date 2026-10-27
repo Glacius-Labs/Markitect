@@ -1,0 +1,10 @@
+imports:
+  - {package: markitect/core, as: Core}
+id: ConventionObligation
+kind: Core.Kind
+body: >-
+  A duty about conventions: naming, formatting, structure or style the code
+  follows.
+spec:
+  implements: [Rule]
+  properties: [appliesTo]

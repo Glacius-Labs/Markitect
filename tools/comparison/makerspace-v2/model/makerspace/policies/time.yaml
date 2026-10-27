@@ -1,0 +1,13 @@
+imports:
+  - {package: markitect/practice, as: Practice}
+id: time
+kind: Practice.Rule
+body: |-
+  - All times are UTC with a precision of one minute. Timestamps, dates and months use the formats [[timestamp|timestamp]], [[date|date]] and [[month|month]]. The day of the week of a timestamp is that of its UTC date. The date of a timestamp is its UTC calendar date.
+  - **Request time:** `at` is the time at which the request happens. It is the program's only notion of "now". The request time of every request must not be earlier than the request time of the most recent request answered `ok`; an equal time is allowed. Refused and invalid requests do not move this point. Before the first `ok` response, any valid `at` is accepted.
+  - **Intervals are half-open.** An interval `[start, end)` contains its start minute and excludes its end minute. Two intervals `[a, b)` and `[c, d)` overlap exactly when `a < d` and `c < b`; intervals that only touch, such as 10:00–11:00 and 11:00–12:00, do not overlap. The length of an interval in minutes is `end − start`.
+  - **Day and date arithmetic:** a day is 1440 minutes; "N days after timestamp t" is `t + N × 1440` minutes. "N days after date d" is the calendar date N days later, so `2027-03-01` plus 365 days is `2028-02-29`.
+  - **Durations.** A reservation lasts at most 240 minutes. Maintenance windows and metered sessions have no maximum length apart from the timestamp range.
+  - **States that depend on time** are evaluated at the request time of the request that reads or uses them: a reservation that is `missed`, a certification that is `expired` and an invoice that is `overdue`.
+spec:
+  appliesTo: [makerspace]

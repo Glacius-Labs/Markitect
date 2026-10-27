@@ -1,0 +1,19 @@
+imports:
+  - {package: markitect/practice, as: Practice}
+  - {package: makerspace/policies, as: Policies}
+id: invalid-requests
+kind: Practice.Rule
+body: |-
+  The response is `status: "invalidRequest"` with a nonempty `reason` when:
+
+  - the line is not valid JSON, is empty, or is not a JSON object;
+  - `id` is missing, is not a string or is empty;
+  - `op` is missing, is not a string or names no operation of this model;
+  - `args` is missing or is not a JSON object;
+  - the request object has a member other than `id`, `op` and `args`;
+  - `args` has a member that is not an argument of the named operation, including a member whose name differs from a stated argument only in letter case.
+
+  The response's `id` is the request's `id` when the line is a JSON object whose `id` member is a nonempty string; otherwise it is `null`. A last line that ends without a line feed is still a request and gets a response. Behavior for JSON objects with duplicate member names and for lines that are not valid UTF-8 is not specified and is not tested. An invalid request changes nothing: no state, no audit entry, no identifier counter and no request-time order.
+
+  A request whose `args` lack a stated argument, or carry an argument with a wrong value, is not invalid in this sense. It is refused with code [[Policies.invalid-argument|`invalid_argument`]].
+spec: {}

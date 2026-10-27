@@ -1,0 +1,7 @@
+imports:
+  - {package: markitect/core, as: Core}
+id: Role
+kind: Core.Kind
+body: >-
+  A role a caller can hold. Its body says who holds it.
+spec: {}

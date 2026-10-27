@@ -1,0 +1,36 @@
+imports:
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/members, as: Members}
+  - {package: makerspace/training, as: Training}
+  - {package: makerspace/equipment, as: Equipment}
+id: create-reservation
+kind: Policies.AuditedOperation
+body: |-
+  Creates the reservation with status `reserved` and the next reservation identifier.
+
+  Example: on Saturday `2026-03-07`, the slot `17:30`–`18:00` is inside opening hours and `17:30`–`18:30` is not; on Tuesday `2026-03-03`, `10:15`–`11:00` is refused with `invalid_slot`.
+spec:
+  wireName: createReservation
+  mutation: true
+  arguments:
+    - {name: memberId, fieldType: Policies.identifier, refersTo: Members.member}
+    - {name: machineId, fieldType: Policies.identifier, refersTo: Equipment.machine}
+    - {name: start, fieldType: Policies.timestamp}
+    - {name: end, fieldType: Policies.timestamp}
+  refusals:
+    - {refusal: Policies.invalid-interval, when: "`end` is not after `start`"}
+    - {refusal: invalid-slot, when: "`start` or `end` is not on a 30-minute boundary or the length is outside 30 to 240 minutes"}
+    - {refusal: Policies.starts-in-past, when: "`start` is before the request time"}
+    - {refusal: outside-opening-hours, when: the slot is not inside the opening hours of its start date}
+    - {refusal: Members.member-suspended, when: the member is not in good standing}
+    - {refusal: Training.not-certified, when: "the member has no certification for the machine's family valid on the date of `start`"}
+    - {refusal: machine-in-maintenance, when: a scheduled maintenance window of the machine overlaps the slot}
+    - {refusal: machine-booked, when: another active reservation of the machine overlaps the slot}
+    - {refusal: member-double-booked, when: another active reservation of the member overlaps the slot}
+  results:
+    - {name: reservation, fieldType: reservation}
+  permissions:
+    - {role: Policies.member-role, scope: own}
+    - {role: Policies.staff-role, scope: all}
+    - {role: Policies.admin-role, scope: all}
+  auditTarget: new reservationId

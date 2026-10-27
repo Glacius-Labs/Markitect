@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: timestamp
+kind: Values.Scalar
+body: |-
+  A JSON string `YYYY-MM-DDTHH:MMZ` naming a valid UTC calendar date and time from `2000-01-01T00:00Z` to `2099-12-31T23:59Z`, for example `2026-03-02T09:00Z`. Hours are `00` to `23`, minutes `00` to `59`; there are no seconds.
+spec:
+  base: string

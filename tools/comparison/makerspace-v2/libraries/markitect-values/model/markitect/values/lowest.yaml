@@ -1,0 +1,10 @@
+imports:
+  - {package: markitect/core, as: Core}
+id: lowest
+kind: Core.Property
+body: >-
+  The smallest permitted value of a numeric Scalar, inclusive.
+spec:
+  valueType: number
+  minCount: 0
+  maxCount: 1

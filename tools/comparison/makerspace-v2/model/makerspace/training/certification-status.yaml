@@ -1,0 +1,11 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: certification-status
+kind: Values.Enumeration
+body: |-
+  The reported status of a certification at a request time.
+spec:
+  members:
+    - {value: valid}
+    - {value: expired}
+    - {value: revoked}

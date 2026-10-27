@@ -1,0 +1,13 @@
+imports:
+  - {package: markitect/data, as: Data}
+id: audit-entry
+kind: Data.Entity
+body: |-
+  One entry of the audit log. Entries are never changed or removed.
+spec:
+  fields:
+    - {name: seq, fieldType: count}
+    - {name: at, fieldType: timestamp}
+    - {name: actor, fieldType: identifier}
+    - {name: op, fieldType: operation-name}
+    - {name: target, fieldType: audit-target-text}

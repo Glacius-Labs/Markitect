@@ -1,0 +1,11 @@
+imports:
+  - {package: markitect/architecture, as: Architecture}
+  - {package: makerspace/policies, as: Policies}
+id: audit-placement
+kind: Architecture.Placement
+body: |-
+  The protocol module appends the audit entry after a mutation is answered `ok`, using the operation's audit target; area modules do not write audit entries.
+spec:
+  appliesTo: [makerspace]
+  concern: Policies.audit
+  realizedIn: makerspace/protocol

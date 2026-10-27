@@ -1,0 +1,12 @@
+imports:
+  - {package: markitect/values, as: Values}
+  - {package: makerspace/policies, as: Policies}
+id: user-role
+kind: Values.Enumeration
+body: |-
+  The role of a user; see [[Policies.authorization|authorization]].
+spec:
+  members:
+    - {value: member}
+    - {value: staff}
+    - {value: admin}
