@@ -34,13 +34,22 @@ The third remark:
 
 > Also note, that we at some point agreed, that each agent becomes its individual harness, and that tooling could just be provided and configured for each agent, which they use so they dont use git themselves but just the tools that are allowed to them. Before we just jump into it we of course need to design this and discuss and see wether this direction would be better.
 
+## 5. Design first
+
+Context (recorder's summary): the session had leaned towards a hybrid: ordinary Git inside the agent's own clone, and harness tools for every move between agents. At 14:22 UTC the owner wrote:
+
+> I like your lean. I dont think we need the coordinator to discuss it yet. Lets design it first. Also each one of them could branch off the branch specified into its own branch, or they work in a shared one. They could in theory even talk via git and hand off stuff. We of course dont want to restrict to GitHub or GitLab or any specific remote. We want to implement against git, the abstraction. Also in general each agent should definately have its own tailored harness, just as they get their own tailored prompts. However how fine the harness should be is to be discussed. I also lean to not interfere with their local work as much. Also the topic with the coordinator having to micromanage everything seems wrong to me.
+
 ## Recorded meaning
 
 Recorder's reading:
 
 - **Agents collaborate through a Git remote, like engineers in a company.** Before a run, a run branch is created from the target branch. Each agent pulls from the remote, commits and pushes. Managers integrate their children's work the same way. No Git directory is mounted into a container.
 - **No owner review of the result.** The owner models, and the agents apply the model. A verified result lands on the target branch without a pull request that the owner reviews or merges. Trust comes from the many agents working independently, not from the owner reading the diff.
-- **Push credentials and a local remote.** A push token in every agent container is acceptable. A run should also work without a hosted remote, for example against a local remote.
+- **Push credentials and a local remote.** A push token in every agent container is acceptable. The owner asks to also consider a remote-less option, for example a local remote.
 - **The target branch.** "Main" stands for the branch the owner wants to work on, named per run.
-- **Git or harness tools.** The owner recalls the agreement that every agent has its own harness, and asks whether agents should not use Git themselves but only the tools the host provides and configures for them. This direction is to be designed and discussed before anything is built.
+- **Git or harness tools.** The owner recalls the agreement that every agent has its own harness, and asks whether agents should not use Git themselves but only the tools the host provides and configures for them. This direction is to be designed and discussed before anything is built. The owner likes the session's lean towards the hybrid. The design is drafted first, in the evaluation session.
+- **Git, not a vendor.** Markitect implements against Git as the abstraction, with no restriction to GitHub, GitLab or any specific remote. Agents may each branch off the specified branch or work in a shared one, and could even talk and hand off work through Git.
+- **Tailored harness.** Every agent has its own tailored harness, as it has its own tailored prompt. How fine-grained the harness is remains to be discussed. The owner leans towards interfering little with an agent's local work.
+- **Micromanagement.** The owner finds it wrong that "the coordinator" has to micromanage everything. The recorder does not interpret which role this names.
 - **Superseded and still open.** These statements reverse the earlier rule that Apply never commits, merges or pushes, and the runner's hand-back as a branch that the owner merges. They do not settle whether agents use Git or only harness tools, or what happens when the target branch moves during a run. Those mechanics are open design questions in the [delivery plan](../../implementation-plan.md#git-remote-collaboration-owner-direction-27-october).

@@ -978,7 +978,9 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - Agents collaborate through a Git remote, like engineers and their managers in a company. Before a run, a run branch is created from the target branch. Each agent pulls, commits and pushes, and Managers integrate their children's work the same way. No Git directory is mounted into a container.
   - The owner models, and the agents apply the model. A verified result lands on the target branch without a pull request that the owner reviews or merges. Trust comes from the many agents working independently, not from the owner reading the diff.
   - The target branch is the branch the owner wants to work on, named per run.
-  - A push credential in every agent container is acceptable. A run should also work without a hosted remote, for example against a local remote.
+  - A push credential in every agent container is acceptable. The owner asks to also consider a remote-less option, for example a local remote.
+  - Markitect implements against Git as the abstraction, not against GitHub, GitLab or any specific remote.
+  - Every agent has its own tailored harness; how fine-grained it is remains open. The owner leans towards interfering little with an agent's local work.
 - **Retained:**
   - The model is authoritative, and model blockers end execution ([DEC-063](#dec-063-the-model-is-authoritative-defects-escalate)).
   - Runs are closed: no question reaches the owner during a run.
@@ -991,7 +993,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - The runner's checkout mount and branch hand-back in [DEC-077](#dec-077-development-pace-and-linux-first-execution).
   - [Concept 1.0](v1-concept.md) changes with the design: §10.4, §17.5 ("A Git server platform is not intended"), §21.2 to §21.4, V15 and the glossary's "Publication" entry; the [architecture](../architecture.md)'s "no Git server" changes too.
 - **Open:**
-  - Whether agents use Git themselves or only tools that the host provides and configures in each agent's own harness ([concept 1.0 §14.1](v1-concept.md#141-a-fixed-small-tool-set), [§15](v1-concept.md#155-v1-form-of-the-harness-d14)). The owner asks for this direction to be designed and discussed first.
+  - Whether agents use Git themselves or only tools that the host provides and configures in each agent's own harness ([concept 1.0 §14.1](v1-concept.md#141-a-fixed-small-tool-set), [§15.5](v1-concept.md#155-v1-form-of-the-harness-d14)), and whether agents branch off separately or share a branch. The owner likes a hybrid and asks for a design first, drafted in the evaluation session.
   - The form of the local remote, and the optional hosted remote behind it.
   - What happens when the target branch moves during a run.
   - The cleanup of run branches and the retention of evidence.
