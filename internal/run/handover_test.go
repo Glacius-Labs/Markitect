@@ -63,6 +63,71 @@ func TestFindingsMustNameACheckedDefinitionWhereImplementReceivesThem(t *testing
 	}
 }
 
+// DEC-073: when the host states that the bound input was already verified and
+// the fixed input differs from it, Verify Root's approval names the defect the
+// change corrects. A plain approval, and one naming a Definition the checked
+// model lacks, are refused with the next step and record no judgment. Other
+// Managers, reviews and other decisions keep the ordinary rule. The admitted,
+// recorded approval needs a checked model; the real-Git Apply test
+// TestApplyStatesTheVerifiedFactOnlyForAStoredApprovalOfTheSameInput covers it.
+func TestVerifiedChangeApprovalNamesTheCorrectedDefect(t *testing.T) {
+	x, root, a, _ := inboxExecution()
+	defer x.cancel()
+	x.request.Mandate = Verify
+	x.request.Input = project.CandidateRef{Commit: "changed", Tree: "changed-tree"}
+	x.request.Origin = Origin{Input: project.CandidateRef{Commit: "bound", Tree: "bound-tree"}, Verified: "first-3-verify"}
+	x.changed = true
+	root.a.phase, root.a.version = active, 1
+	a.a.phase, a.a.version = active, 1
+	approve := func(s *managerState, findings []Finding) error {
+		return x.tools(s).Judge(context.Background(), Approve, findings)
+	}
+	err := approve(root, []Finding{{Text: "the candidate conforms"}})
+	for _, want := range []string{"candidate changed differs from the command's bound input bound", "Verify Run first-3-verify already verified", "names the defect it corrects", ".markitect/registry/", "judge reject instead"} {
+		if err == nil || !strings.Contains(err.Error(), want) {
+			t.Fatal("plain approval of a change on a verified input not refused with its next step", want, err)
+		}
+	}
+	err = approve(root, []Finding{{Definition: "a/Missing", Text: "the bound input violated it"}})
+	for _, want := range []string{"a/Missing, which is not a Definition of the checked model", "name as definition the current Definition that the bound input violated", "then judge again"} {
+		if err == nil || !strings.Contains(err.Error(), want) || strings.Contains(err.Error(), "leave definition empty") {
+			t.Fatal("unknown corrected Definition not refused with a usable next step", want, err)
+		}
+	}
+	if root.a.judgment != nil {
+		t.Fatal("a refused approval left a judgment")
+	}
+	// The rule binds the Run's judgment only: a child judges its own
+	// assignment, and reviews and Definition-free rejects stay as they were.
+	if err = x.findingsErr(a, "judge", Approve, nil); err != nil {
+		t.Fatal("a child's plain approval was refused", err)
+	}
+	bound := []Finding{{Definition: "a/Thing", Text: "corrects a/Thing"}}
+	if err = approve(a, bound); err == nil || !strings.Contains(err.Error(), "a Verify approval hands no Finding to Implement") {
+		t.Fatal("a child's approval with a Definition was admitted", err)
+	}
+	if err = x.tools(root).Review(context.Background(), "a", "c", Approve, bound); err == nil || !strings.Contains(err.Error(), "then review again") {
+		t.Fatal("a review approval with a Definition was admitted", err)
+	}
+	if err = x.tools(root).Judge(context.Background(), Reject, []Finding{{Text: "unbound"}}); err == nil || !strings.Contains(err.Error(), "of your reject names no Definition") {
+		t.Fatal("the reject rule changed", err)
+	}
+	// Without a change, or without the fact, a plain approval is admitted and
+	// an approval still names no Definition.
+	for name, setup := range map[string]func(){
+		"unchanged": func() { x.changed, x.request.Origin.Verified = false, "first-3-verify" },
+		"no fact":   func() { x.changed, x.request.Origin.Verified = true, "" },
+	} {
+		setup()
+		if err = x.findingsErr(root, "judge", Approve, []Finding{{Text: "conforms"}}); err != nil {
+			t.Fatal(name, "plain approval refused", err)
+		}
+		if err = approve(root, bound); err == nil || !strings.Contains(err.Error(), "a Verify approval hands no Finding to Implement") {
+			t.Fatal(name, "approval with a Definition admitted", err)
+		}
+	}
+}
+
 // Verify Root receives a diff up to MaxChanges in full and a larger one as its
 // complete file summary with the way to read it.
 func TestVerifyChangesStayWithinOneAssignment(t *testing.T) {

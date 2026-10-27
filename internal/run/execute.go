@@ -67,6 +67,9 @@ type execution struct {
 	checks         []CheckObservation
 	receiptsClosed bool
 	settled        chan struct{}
+	// changed is set before any Session opens when Verify's fixed input
+	// differs from the command's bound input: their diff is not empty.
+	changed bool
 }
 
 func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
@@ -99,6 +102,7 @@ func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
 		if r.Origin.Input.Commit != r.Input.Commit {
 			diff, workErr = service.Changes(x.ctx, r.Origin.Input)
 		}
+		x.changed = diff != ""
 		diff = changes(diff, r.Origin.Input.Commit)
 		carried = &diff
 	}
