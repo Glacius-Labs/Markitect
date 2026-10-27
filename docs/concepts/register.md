@@ -49,7 +49,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-032](#dec-032-quality-simplicity-and-stability-over-effort-and-compatibility) | Decision | Quality, simplicity and stability over effort and compatibility | Accepted |
 | [DEC-033](#dec-033-binding-intent-lives-only-in-the-model) | Decision | Binding intent lives only in the model | Accepted |
 | [DEC-034](#dec-034-removed-intent-removes-its-realization) | Decision | Removed intent removes its realization | Accepted |
-| [DEC-035](#dec-035-committed-model-in-owner-commit-accepts-the-result) | Decision | Committed model in, owner commit accepts the result | Accepted |
+| [DEC-035](#dec-035-committed-model-in-owner-commit-accepts-the-result) | Decision | Committed model in, owner commit accepts the result | Accepted; owner commit as acceptance superseded by DEC-078 |
 | [DEC-036](#dec-036-adopted-design-refinements-for-the-first-apply) | Decision | Adopted design refinements for the first Apply | Accepted |
 | [DEC-037](#dec-037-agent-sessions-and-checks-run-in-linux-containers) | Decision | Agent sessions and checks run in Linux containers | Accepted |
 | [DEC-038](#dec-038-learn-through-complete-workflows) | Decision | Learn through complete workflows | Accepted |
@@ -91,7 +91,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-074](#dec-074-canonical-model-track-parallel-to-v1) | Decision | Canonical model track, parallel to V1 | Accepted; W1 decisions taken, tracked in the delivery plan |
 | [DEC-075](#dec-075-kind-extension-and-one-core-120) | Decision | Kind interfaces and one Core 1.2.0 | Accepted; implementation in the canonical model track, merged after the F_fix pin |
 | [DEC-076](#dec-076-markitect-is-developed-as-a-regular-software-project) | Decision | Markitect is developed as a regular software project | Accepted; self-model retired (#756), cleanup tracked in the delivery plan |
-| [DEC-077](#dec-077-development-pace-and-linux-first-execution) | Decision | Development pace and Linux-first execution | Accepted; Linux-only CI, Linux Docker way tracked in the delivery plan |
+| [DEC-077](#dec-077-development-pace-and-linux-first-execution) | Decision | Development pace and Linux-first execution | Accepted; Linux-only CI, Linux Docker way tracked in the delivery plan; the runner's checkout mount and branch hand-back superseded by DEC-078 |
+| [DEC-078](#dec-078-agents-collaborate-through-a-git-remote-without-owner-review) | Decision | Agents collaborate through a Git remote, without owner review | Accepted direction; design open, tracked in the delivery plan |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -487,6 +488,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Status:** Accepted, owner, 16 October 2026, adopting recommendations B8 and A7 ([source](sources/consolidation-discussion-20261016.md#adopt-the-recommendations), [all recommendations](sources/consolidation-discussion-20261016.md#adopt-all-recommendations)).
 - **Statement:** Apply reads the model, configuration, registry and ignore policy from the committed state and refuses to start with uncommitted changes to tracked files or untracked files outside Git-ignored paths. It writes its verified result only into the working tree and never commits, merges or pushes. The owner's commit of the published result is the acceptance, just as a committed model revision is the accepted specification. A project can also require the owner's approval before publication for selected Packages.
 - **Owning documents:** the [Apply concept](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/manager-apply-concept.md#apply-lifecycle) and the [port contracts](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/history/apply-design-before-dec-056/manager-apply-port-contracts.md#guarded-publication-port).
+- **Superseded in part, 27 October 2026:** [DEC-078](#dec-078-agents-collaborate-through-a-git-remote-without-owner-review) lets a verified result land on the target branch without owner review. The rule that Apply never commits, merges or pushes, and the owner commit as acceptance, end with that design. Reading the model from committed state stands.
 
 ### DEC-036 Adopted design refinements for the first Apply
 
@@ -965,6 +967,31 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - The Apply runner clones from a read-only mount of the owner's checkout and hands the verified result back as a branch pushed into that repository. The provider CLI login is mounted read-only; CLI login only, no API keys.
 - **Open:** whether Apply later runs in CI. The [delivery plan](../implementation-plan.md#linux-docker-way-owner-direction-26-october) tracks the slices.
 - **Supersedes:** [DEC-013](#dec-013-linux-first-for-tests-and-the-playground)'s manual or nightly Windows job.
+- **Superseded in part, 27 October 2026:** [DEC-078](#dec-078-agents-collaborate-through-a-git-remote-without-owner-review) replaces the runner's read-only checkout mount and its hand-back as a branch with a Git remote. The rest of this entry stands.
+
+### DEC-078 Agents collaborate through a Git remote, without owner review
+
+- **Status:** Accepted by the owner as a direction, 27 October 2026 ([verbatim source](sources/git-remote-collaboration-20261027.md)). The mechanics are open design work in the [delivery plan](../implementation-plan.md#git-remote-collaboration-owner-direction-27-october). Until that work lands, the implementation keeps the current mount, hand-back and working-tree publication.
+- **Decision (recorded meaning, as in the source):**
+  - Agents collaborate through a Git remote, like engineers and their managers in a company. Before a run, a run branch is created from the target branch. Each agent pulls, commits and pushes, and Managers integrate their children's work the same way. No Git directory is mounted into a container, and no bundle is handed back.
+  - The owner models, and the agents apply the model. A verified result lands on the target branch without a pull request that the owner reviews or merges. Trust comes from the many independent agents and the verification, not from the owner reading the diff.
+- **Retained:**
+  - The model is authoritative, and model blockers end execution ([DEC-063](#dec-063-the-model-is-authoritative-defects-escalate)).
+  - Runs are closed: no question reaches the owner during a run.
+  - Only a fresh Verify approval of the exact candidate allows publication.
+  - Guarantees live in host state and the tool contract, not in prompts ([concept §3.7](v1-concept.md#37-tasks-not-process-d13)).
+  - Provider CLIs log in with a normal account only, never with an API key.
+- **Supersedes:**
+  - [DEC-035](#dec-035-committed-model-in-owner-commit-accepts-the-result)'s rule that Apply never commits, merges or pushes, and its owner commit as the acceptance of the result.
+  - The transfer without an automatic owner commit or push retained in [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs).
+  - The runner's checkout mount and branch hand-back in [DEC-077](#dec-077-development-pace-and-linux-first-execution).
+  - [Concept 1.0](v1-concept.md) §21.4 and the glossary's "Publication" entry change with the design.
+- **Open:**
+  - Where the remote lives, and how agents authenticate to it.
+  - What happens when the target branch moves during a run.
+  - How the target branch is named.
+  - The cleanup of run branches and the retention of evidence.
+  - Whether V1's acceptance covers the new publication.
 
 ## Promises
 

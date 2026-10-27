@@ -135,7 +135,7 @@ The owner [decided](concepts/sources/regular-development-20261026.md) that Marki
 
 ## Linux Docker way (owner direction 26 October)
 
-The owner [decided](concepts/sources/development-pace-20261026.md) that Markitect's execution moves to Linux ([DEC-077](concepts/register.md#dec-077-development-pace-and-linux-first-execution)): the Apply host, tests and CI run on Linux, and model work keeps working on Windows. The owner accepted that the runner clones from a read-only mount of the owner's checkout and hands the verified result back as a branch pushed into that repository; the provider CLI login is mounted read-only. Whether Apply later runs in CI is open. The slices below are the coordinator's design: one Linux runner image for the Apply host, started from Windows through Docker Desktop.
+The owner [decided](concepts/sources/development-pace-20261026.md) that Markitect's execution moves to Linux ([DEC-077](concepts/register.md#dec-077-development-pace-and-linux-first-execution)): the Apply host, tests and CI run on Linux, and model work keeps working on Windows. The owner accepted that the runner clones from a read-only mount of the owner's checkout and hands the verified result back as a branch pushed into that repository; the provider CLI login is mounted read-only. On 27 October the owner replaced the mount and the hand-back with a Git remote ([below](#git-remote-collaboration-owner-direction-27-october)). Whether Apply later runs in CI is open. The slices below are the coordinator's design: one Linux runner image for the Apply host, started from Windows through Docker Desktop.
 
 | Slice | Work | Order |
 |---|---|---|
@@ -144,6 +144,34 @@ The owner [decided](concepts/sources/development-pace-20261026.md) that Markitec
 | L3 | Documentation: project workflow, contribution checks, provider guide | Done ([PR #785](https://github.com/Glacius-Labs/Markitect/pull/785)): one user guide for native Apply on Linux and `--runner` from Windows; contribution checks include `GOOS=windows go vet ./...` for code the model commands or the launcher reach |
 
 Windows is then verified by a short manual smoke on the owner's machine at milestones: the model commands and one Apply start through Docker Desktop.
+
+## Git remote collaboration (owner direction 27 October)
+
+The owner [decided](concepts/sources/git-remote-collaboration-20261027.md) that agents work through a Git remote, like engineers and their managers in a company, and that a verified result lands on the target branch without owner review ([DEC-078](concepts/register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review)). Before a run, a run branch is created from the target branch. Each agent pulls, commits and pushes on its own branch, and each Manager fetches, reviews and merges its children's work and pushes. Nothing from Git is mounted, and no bundle is handed back. This replaces the runner's checkout mount and its hand-back as a branch, and publication into the owner's working tree. The Manager hierarchy, closed Runs, Verify and model blockers stay as they are. The current mount, hand-back and working-tree publication stay until G1 lands.
+
+Guarantees stay in host state, not in prompts:
+- **The handoff** is the agent's branch tip as the host reads it when the agent stops, not what the agent says.
+- **Integration:** the host checks that a parent merged exactly that commit.
+- **Publication:** the host moves the target branch to the verified commit only if the target is still at the run's base.
+- **Write access:** only the host may write the target branch.
+
+| Slice | Work | Order |
+|---|---|---|
+| G0 | Design: the remote layout (run branch, `markitect/<run>/<manager>` branches), handoff and merge checks, publication as a guarded push, credentials, cleanup and evidence retention, a threat model; concept 1.0 §10.4, §21.4 and the glossary amended | First; settles the open questions below |
+| G1 | Host side: the run configuration names the remote and the target branch; the host and the runner clone from the remote instead of a mount; publication pushes the verified commit to the target branch and refuses it if the target moved; the bundle hand-back, `--result-branch` and the working-tree transfer removed | After G0 |
+| G2 | Agent side: every agent clones the run branch and pushes its own branch; parents fetch their children's branches; the host reads branch tips at stop and checks merges. This replaces the current handoff: today every Manager's repository sits in the Run's one shared volume, and the host takes handoffs from there ([Run Git workspace service](../internal/adapters/gitrepo/README.md#run-git-workspace-service)) | After G0, parallel to G1 where scopes are disjoint |
+| G3 | Remote and credentials according to G0, with setup checks and clear refusals | With G1 and G2 |
+| G4 | Qualification: one Library Apply against a local remote, then one bounded Apply against a dedicated GitHub test repository, never Markitect's own | After G1–G3 |
+
+Open questions, with the coordinator's recommendations:
+1. **Where agents push.**
+   - Option (a): agents push straight to GitHub with short-lived per-agent tokens. GitHub can restrict a token only to its repository, not to one branch, so every agent could write every `markitect/*` branch.
+   - Option (b): the Run's existing Git service becomes the remote that agents pull from and push to over the network, each from its own clone in its own container. It can let each agent write only its own branch and needs no GitHub credential in any agent container. GitHub, or the project's own remote, then sees only the host: it fetches the base and pushes the verified result.
+   - Recommendation: (b) as the first form, with (a) possible later by configuration. This is the owner's choice.
+2. **The target moves during a run.** Recommendation: fail closed. The Apply ends with "target moved", publishes nothing, and a new Apply starts from the new target. A later step can merge the new target in and verify again.
+3. **The target branch.** Recommendation: the run configuration names it, and the remote's default branch applies when it does not.
+4. **Cleanup.** Recommendation: the host deletes the run's branches at the end of the Apply. The evidence keeps the branch commits in a host-side mirror inside the state volume.
+5. **V1 acceptance.** Recommendation: V1's acceptance covers the new publication, because the owner does not want the reviewed hand-back. The Manager hierarchy's evidence on F2 stays valid, because the change replaces only the transport of handoffs and the publication edge.
 
 <a id="work-streams"></a>
 
