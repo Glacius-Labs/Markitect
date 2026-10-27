@@ -64,19 +64,20 @@ type Initialize struct {
 	Claude    *ClaudeHome `json:"claude,omitempty"`
 }
 
-// ClaudeHome is the fixed private Claude Code setup: the optional subscription
+// ClaudeHome is the fixed private Claude Code setup: the subscription
 // credentials file (.claude/.credentials.json) and the two native instruction
 // files the CLI loads as its system prompt (.markitect/system-prompt.md and
-// .markitect/append-system-prompt.md). A long-lived subscription token travels
-// in the provider environment instead, so Credentials may be empty.
+// .markitect/append-system-prompt.md). agentd verifies before every later
+// start that the instruction files are unchanged and that no user-scope
+// Claude Code settings, memory or extensions appeared.
 type ClaudeHome struct {
-	Credentials        []byte `json:"credentials,omitempty"`
+	Credentials        []byte `json:"credentials"`
 	SystemPrompt       string `json:"systemPrompt"`
 	AppendSystemPrompt string `json:"appendSystemPrompt"`
 }
 
 func (h *ClaudeHome) valid() bool {
-	return h != nil && len(h.Credentials) <= MaxPrivateAuthBytes && h.SystemPrompt != "" && h.AppendSystemPrompt != "" && utf8.ValidString(h.SystemPrompt) && utf8.ValidString(h.AppendSystemPrompt)
+	return h != nil && len(h.Credentials) > 0 && len(h.Credentials) <= MaxPrivateAuthBytes && h.SystemPrompt != "" && h.AppendSystemPrompt != "" && utf8.ValidString(h.SystemPrompt) && utf8.ValidString(h.AppendSystemPrompt)
 }
 
 type Initialized struct{}

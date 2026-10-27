@@ -11,8 +11,11 @@ import (
 // not prove runtime support; native qualification K1b checks them.
 const fixtureSession = "00000000-0000-4000-8000-000000000001"
 
+// fixtureTools is the launch's exact tool list in the CLI's order.
+const fixtureTools = `["Bash","Read","Edit","Write","Glob","Grep","EndConversation","mcp__markitect__delegate","mcp__markitect__await","mcp__markitect__review","mcp__markitect__ask","mcp__markitect__reply","mcp__markitect__judge","mcp__markitect__check","mcp__markitect__read_notes","mcp__markitect__append_note"]`
+
 func fixtureInit(session string, servers string) string {
-	return `{"type":"system","subtype":"init","cwd":"/work","session_id":"` + session + `","tools":["Bash","Read","Edit","Write","Glob","Grep","mcp__markitect__await"],"mcp_servers":` + servers + `,"model":"claude-sonnet-5","permissionMode":"bypassPermissions","slash_commands":[],"apiKeySource":"none","claude_code_version":"2.1.308","output_style":"default","agents":[],"skills":[],"plugins":[],"uuid":"00000000-0000-4000-8000-0000000000a1","future":{"visible":true}}`
+	return `{"type":"system","subtype":"init","cwd":"/work","session_id":"` + session + `","tools":` + fixtureTools + `,"mcp_servers":` + servers + `,"model":"claude-sonnet-5","permissionMode":"bypassPermissions","slash_commands":[],"apiKeySource":"none","claude_code_version":"2.1.308","output_style":"default","agents":[],"skills":[],"plugins":[],"uuid":"00000000-0000-4000-8000-0000000000a1","future":{"visible":true}}`
 }
 
 const connectedServers = `[{"name":"markitect","status":"connected"}]`

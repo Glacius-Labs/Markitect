@@ -1,10 +1,15 @@
 package agentd
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
+	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
 )
@@ -20,10 +25,14 @@ func (s *server) initialize(request uint64, req frame.Initialize) error {
 		return s.refuse(request, "private home initialization is no longer available")
 	}
 	s.homeAttempted = true
-	s.home = &privateHome{}
+	s.home = &privateHome{claude: req.Claude != nil}
 	if err := s.home.install(s.cfg.PrivateHome, privateFiles(req)); err != nil {
 		_ = s.home.clear() // shutdown retries and reports any remaining cleanup error
-		return s.refuse(request, "private home initialization failed")
+		message := "private home initialization failed"
+		if errors.Is(err, errClaudeConfigNotEmpty) {
+			message += ": " + err.Error()
+		}
+		return s.refuse(request, message)
 	}
 	s.homeReady = true
 	return s.sendControl(frame.ControlMessage{Type: frame.TypeInitialized, Request: request, Initialized: &frame.Initialized{}})
@@ -41,14 +50,25 @@ func privateFiles(req frame.Initialize) []privateFile {
 	if req.Claude == nil {
 		return []privateFile{{".codex", "auth.json", req.CodexAuth}}
 	}
-	files := []privateFile{
+	return []privateFile{
 		{".markitect", "system-prompt.md", []byte(req.Claude.SystemPrompt)},
 		{".markitect", "append-system-prompt.md", []byte(req.Claude.AppendSystemPrompt)},
+		{".claude", ".credentials.json", req.Claude.Credentials},
 	}
-	if len(req.Claude.Credentials) != 0 {
-		files = append(files, privateFile{".claude", ".credentials.json", req.Claude.Credentials})
-	}
-	return files
+}
+
+// errClaudeConfigNotEmpty refuses a fresh home whose .claude already holds
+// entries, for example copied up from an image's /home/agent/.claude.
+var errClaudeConfigNotEmpty = errors.New("the private .claude directory is not empty, for example because the image ships /home/agent/.claude")
+
+// claudeUserScope names what Claude Code loads from its user-scope
+// configuration directory besides the login: settings (any settings*.json,
+// which can carry hooks, environment and permissions), memory, and agents,
+// skills, commands, output styles, plugins, rules, hooks and workflows.
+var claudeUserScope = []string{"CLAUDE.md", "CLAUDE.local.md", "agents", "skills", "commands", "output-styles", "plugins", "rules", "hooks", "workflows"}
+
+func claudeUserScopeEntry(name string) bool {
+	return slices.Contains(claudeUserScope, name) || strings.HasPrefix(name, "settings") && strings.HasSuffix(name, ".json")
 }
 
 func (s *server) clearPrivateHome(request uint64) error {
@@ -75,6 +95,10 @@ type privateHome struct {
 	root    *os.Root
 	dirs    map[string]*privateDir
 	created []privateFile // installed files, removed again by clear
+	claude  bool
+	// instructions are the Claude instruction files with the bytes installed,
+	// verified before every start.
+	instructions []privateFile
 }
 
 type privateDir struct {
@@ -99,6 +123,17 @@ func (h *privateHome) install(home string, files []privateFile) error {
 	if err != nil || !os.SameFile(info, opened) {
 		return refuse()
 	}
+	// An image's /home/agent/.claude reaches a fresh home volume through
+	// copy-up; Claude Code would load it as user-scope configuration.
+	if h.claude {
+		dir, err := h.dir(".claude")
+		if err != nil {
+			return refuse()
+		}
+		if names, err := dir.names(); err != nil || len(names) != 0 {
+			return errClaudeConfigNotEmpty
+		}
+	}
 	for _, file := range files {
 		if len(file.data) == 0 || len(file.data) > frame.MaxPayload {
 			return refuse()
@@ -121,8 +156,65 @@ func (h *privateHome) install(home string, files []privateFile) error {
 		if n != len(file.data) || writeErr != nil || syncErr != nil || closeErr != nil || statErr != nil || !os.SameFile(dir.info, current) {
 			return refuse()
 		}
+		if h.claude && file.dir == ".markitect" {
+			h.instructions = append(h.instructions, file)
+		}
 	}
 	return nil
+}
+
+// verify runs before every start of a Claude home. The Manager's tools run as
+// the provider's user and could rewrite the home between responses; each
+// fresh provider process would then load the change. The instruction files
+// must still hold exactly the installed bytes, and no user-scope Claude Code
+// entry may have appeared. A Codex home has nothing to verify.
+func (h *privateHome) verify() error {
+	if !h.claude {
+		return nil
+	}
+	for _, file := range h.instructions {
+		dir := h.dirs[file.dir]
+		if current, err := h.root.Lstat(file.dir); err != nil || !os.SameFile(dir.info, current) {
+			return fmt.Errorf("%s was replaced", file.dir)
+		}
+		info, err := dir.root.Lstat(file.name)
+		if err != nil || !info.Mode().IsRegular() || info.Size() != int64(len(file.data)) {
+			return fmt.Errorf("%s/%s is no longer the installed file", file.dir, file.name)
+		}
+		f, err := dir.root.Open(file.name)
+		if err != nil {
+			return fmt.Errorf("%s/%s is unreadable", file.dir, file.name)
+		}
+		data, err := io.ReadAll(io.LimitReader(f, int64(len(file.data))+1))
+		closeErr := f.Close()
+		if err != nil || closeErr != nil || !bytes.Equal(data, file.data) {
+			return fmt.Errorf("%s/%s changed", file.dir, file.name)
+		}
+	}
+	dir := h.dirs[".claude"]
+	if current, err := h.root.Lstat(".claude"); err != nil || !os.SameFile(dir.info, current) {
+		return errors.New(".claude was replaced")
+	}
+	names, err := dir.names()
+	if err != nil {
+		return errors.New(".claude is unreadable")
+	}
+	for _, name := range names {
+		if claudeUserScopeEntry(name) {
+			return fmt.Errorf(".claude/%s appeared; user-scope Claude Code settings, memory and extensions may not load", name)
+		}
+	}
+	return nil
+}
+
+// names lists the directory's entries through its held handle.
+func (d *privateDir) names() ([]string, error) {
+	f, err := d.root.Open(".")
+	if err != nil {
+		return nil, err
+	}
+	names, err := f.Readdirnames(-1)
+	return names, errors.Join(err, f.Close())
 }
 
 // dir creates or opens one fixed private directory directly below the home

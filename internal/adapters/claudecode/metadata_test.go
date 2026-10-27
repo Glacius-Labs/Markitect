@@ -31,8 +31,48 @@ func TestImageMetadataBindsTheSelectedImageAndWholeRuntimeRecord(t *testing.T) {
 	if out.Contract != (runtimeconfig.ProfileContract{Name: metadataContract, Version: 1}) || image.Provider != runtimeconfig.AgentImageClaudeCode || image.ImageID != fixtureImage || image.Metadata != want || image.CLIVersion != supportedClaudeVersion || image.AgentdVersion != "development" || image.RecordedCodexSchemaDigest != "" {
 		t.Fatalf("observation %+v %+v", out.Contract, image)
 	}
-	if !reflect.DeepEqual(fake.calls, []string{"inspect:" + fixtureImage, "read:" + fixtureImage + ":" + runtimeMetadataPath, "inspect:" + fixtureImage}) {
+	if !reflect.DeepEqual(fake.calls, []string{"inspect:" + fixtureImage, "read:" + fixtureImage + ":" + runtimeMetadataPath, "env:" + fixtureImage, "list:" + fixtureImage + ":/etc", "inspect:" + fixtureImage}) {
 		t.Fatal("acquisition sequence", fake.calls)
+	}
+}
+
+// The image itself may not configure Claude Code around the adapter: through
+// Claude or provider environment variables, or managed settings.
+func TestImageEnvironmentAndManagedSettingsAreRefused(t *testing.T) {
+	input := profileInput(t, claudeProfile(filepath.Join(t.TempDir(), "engine")), nil)
+	for name, tc := range map[string]struct {
+		images *fakeImages
+		want   string
+	}{
+		"API key":            {&fakeImages{env: []string{"PATH=/usr/bin", "ANTHROPIC_API_KEY=private"}}, "ANTHROPIC_API_KEY"},
+		"endpoint":           {&fakeImages{env: []string{"ANTHROPIC_BASE_URL=https://proxy.invalid"}}, "ANTHROPIC_BASE_URL"},
+		"Claude Code option": {&fakeImages{env: []string{"CLAUDE_CODE_USE_BEDROCK=1"}}, "CLAUDE_CODE_USE_BEDROCK"},
+		"Bedrock key":        {&fakeImages{env: []string{"AWS_BEARER_TOKEN_BEDROCK=private"}}, "AWS_BEARER_TOKEN_BEDROCK"},
+		"managed settings":   {&fakeImages{etc: []string{"etc", "etc/claude-code", "etc/claude-code/managed-settings.json"}}, "/etc/claude-code"},
+		"managed directory":  {&fakeImages{etc: []string{"etc", "etc/claude-code"}}, "/etc/claude-code"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			tc.images.data = []byte(fixtureMetadata)
+			out, err := imagesPreparer(tc.images).PrepareAgentProfile(context.Background(), input)
+			if err != nil || out.Status != model.Failed {
+				t.Fatalf("status=%s err=%v", out.Status, err)
+			}
+			found := false
+			for _, d := range out.Diagnostics {
+				found = found || strings.Contains(d.Message, tc.want) && !strings.Contains(d.Message, "private")
+			}
+			if !found {
+				t.Fatalf("no diagnostic naming %s: %+v", tc.want, out.Diagnostics)
+			}
+		})
+	}
+	allowed := &fakeImages{data: []byte(fixtureMetadata), env: []string{"CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1", "CLAUDE_HOME_NOTE=x"}}
+	if out, err := imagesPreparer(allowed).PrepareAgentProfile(context.Background(), input); err != nil || out.Status != model.Passed {
+		t.Fatalf("an allowed variable refused: %v %+v", err, out.Diagnostics)
+	}
+	failing := errors.New("controlled listing failure")
+	if out, err := imagesPreparer(&fakeImages{data: []byte(fixtureMetadata), etcErr: failing}).PrepareAgentProfile(context.Background(), input); !errors.Is(err, failing) || out.Status != model.NotCompleted {
+		t.Fatalf("a failed listing is incomplete, never absence: %v %s", err, out.Status)
 	}
 }
 

@@ -11,15 +11,14 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
 )
 
-// The two subscription login modes. There is no API-key mode.
-const (
-	// ModeCredentials is a Claude Code credentials file of a normal account
-	// login (.credentials.json with claudeAiOauth), mounted read-only.
-	ModeCredentials = "subscription-credentials"
-	// ModeToken is the long-lived subscription token of `claude setup-token`
-	// in a file, mounted read-only.
-	ModeToken = "subscription-token"
-)
+// ModeCredentials is the one Claude login mode: a Claude Code credentials file
+// of a normal account login (.credentials.json with claudeAiOauth), mounted
+// read-only. There is no API-key mode, and a long-lived token mode needs owner
+// acceptance first: such a token stays readable to the Manager's shell.
+const ModeCredentials = "subscription-credentials"
+
+// loginMethod is the authMethod `claude auth status` reports for it.
+const loginMethod = "claude.ai"
 
 // RuntimeCredential contains only explicitly selected subscription login
 // bytes. Refresh authority is not installed in a Manager copy.
@@ -31,10 +30,7 @@ type CredentialResolver func(context.Context, string) (RuntimeCredential, error)
 
 // login is one validated subscription login, prepared for one Manager.
 type login struct {
-	mode        string
 	credentials []byte // the access-only credentials copy for the private home
-	token       string // the subscription token for the provider environment
-	method      string // the authMethod `claude auth status` must report
 	secrets     [][]byte
 }
 
@@ -73,23 +69,13 @@ func parseLogin(c RuntimeCredential, now time.Time) (login, error) {
 	refuse := func(reason string) (login, error) {
 		return login{}, fmt.Errorf("%w: %s", ErrSession, reason)
 	}
+	if c.Mode != ModeCredentials {
+		return refuse("only the " + ModeCredentials + " login mode is admitted: map the credential to a Claude Code .credentials.json account login")
+	}
 	if len(c.Login) == 0 || len(c.Login) > frame.MaxPrivateAuthBytes {
 		return refuse("the subscription login is empty or exceeds its byte limit")
 	}
-	switch c.Mode {
-	case ModeCredentials:
-		return parseCredentials(c.Login, now)
-	case ModeToken:
-		token := strings.TrimSpace(string(c.Login))
-		if len(token) < 16 || len(token) > 4096 || strings.ContainsFunc(token, func(r rune) bool { return r <= ' ' || r > '~' }) {
-			return refuse("the subscription token file must hold one token of printable characters")
-		}
-		if strings.HasPrefix(token, apiKeyPrefix) {
-			return refuse("the token file holds an Anthropic API key; only a subscription token from claude setup-token is admitted")
-		}
-		return login{mode: ModeToken, token: token, method: "oauth_token", secrets: [][]byte{[]byte(token)}}, nil
-	}
-	return refuse("only the subscription-credentials and subscription-token login modes are admitted")
+	return parseCredentials(c.Login, now)
 }
 
 // parseCredentials admits a Claude Code credentials file with a claude.ai
@@ -137,7 +123,7 @@ func parseCredentials(data []byte, now time.Time) (login, error) {
 			return refuse("the account login has a malformed expiry")
 		}
 		if !now.Before(time.UnixMilli(ms)) {
-			return refuse("the account login's access token has expired; renew the login on the host (claude /login), because this adapter does not refresh it")
+			return refuse("the account login's access token has expired; run claude on the host to refresh the login, because this adapter never refreshes it")
 		}
 	}
 	delete(oauth, "refreshToken")
@@ -145,7 +131,7 @@ func parseCredentials(data []byte, now time.Time) (login, error) {
 	if err != nil || len(copied) > frame.MaxPrivateAuthBytes {
 		return refuse("the access-only credentials copy exceeds its byte limit")
 	}
-	return login{mode: ModeCredentials, credentials: copied, method: "claude.ai", secrets: secrets}, nil
+	return login{credentials: copied, secrets: secrets}, nil
 }
 
 // authMethod reads the authMethod of `claude auth status` JSON output.

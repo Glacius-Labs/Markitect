@@ -25,6 +25,12 @@ func (claudeImages) ImageID(context.Context, string) (string, error) { return bo
 func (claudeImages) ReadImageFile(context.Context, string, string) ([]byte, error) {
 	return []byte("codex=codex-cli 0.162.0\ncodexSchema=" + bootstrapSchema + "\nagentd=development\nclaude=2.1.308 (Claude Code)\n"), nil
 }
+func (claudeImages) ImageEnvironment(context.Context, string) ([]string, error) {
+	return []string{"PATH=/usr/local/bin:/usr/bin", "HOME=/home/agent"}, nil
+}
+func (claudeImages) ImageDirectoryNames(context.Context, string, string, int64) ([]string, error) {
+	return []string{"etc", "etc/hosts"}, nil
+}
 
 func claudeSection(engine string) string {
 	return fmt.Sprintf(`    claudeCode:
@@ -66,12 +72,9 @@ func fakeEngine(t *testing.T) string {
 }
 
 func testRouter() agentMetadata {
-	images := func(codexappserver.EngineConfig) (codexappserver.ImageReader, error) { return claudeImages{}, nil }
 	return agentMetadata{
-		"codexAppServer": codexappserver.NewMetadataPreparer(images),
-		"claudeCode": claudecode.NewMetadataPreparer(func(c claudecode.EngineConfig) (claudecode.ImageReader, error) {
-			return images(codexappserver.EngineConfig{Executable: c.Executable})
-		}),
+		"codexAppServer": codexappserver.NewMetadataPreparer(func(codexappserver.EngineConfig) (codexappserver.ImageReader, error) { return claudeImages{}, nil }),
+		"claudeCode":     claudecode.NewMetadataPreparer(func(claudecode.EngineConfig) (claudecode.ImageReader, error) { return claudeImages{}, nil }),
 	}
 }
 
@@ -115,28 +118,44 @@ func TestComposeAgentsSelectsClaudeWithItsSubscriptionLogin(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "ANTHROPIC_API_KEY") || strings.Contains(err.Error(), "private-key") {
 		t.Fatalf("API key environment: %v", err)
 	}
-	// The selected reference must name a Claude subscription login.
+	// The selected reference must name a Claude subscription login, and the
+	// refusal names the provider and mode it needs.
 	for _, source := range []credentialSource{
 		{Provider: "codex-app-server", Mode: "dedicated-runtime-login", Path: login},
 		{Provider: "claude-code", Mode: "api-key", Path: login},
 	} {
 		wrong := runConfig{Credentials: map[string]credentialSource{"claude-account": source}}
-		if _, err := composeAgents(binary, selected, wrong, nil); !errors.Is(err, errRuntimeCredential) {
-			t.Fatalf("%+v admitted: %v", source, err)
+		_, err := composeAgents(binary, selected, wrong, nil)
+		if !errors.Is(err, errRuntimeCredential) || !strings.Contains(err.Error(), "provider claude-code and mode subscription-credentials") || strings.Contains(err.Error(), login) {
+			t.Fatalf("%+v admitted or unexplained: %v", source, err)
+		}
+	}
+}
+
+// A mapping with an unknown provider or a mode its provider does not take is
+// refused with the provider and modes it needs.
+func TestCredentialMappingNamesTheExpectedProviderAndMode(t *testing.T) {
+	path := filepath.Join(testkit.TempDir(t), "never-read")
+	for source, want := range map[credentialSource]string{
+		{Provider: "claude-code", Mode: "subscription-token", Path: path}:         "provider claude-code takes mode subscription-credentials",
+		{Provider: "codex-app-server", Mode: "api-key", Path: path}:               "provider codex-app-server takes mode dedicated-runtime-login",
+		{Provider: "anthropic-api", Mode: "subscription-credentials", Path: path}: "use codex-app-server or claude-code",
+	} {
+		_, err := newCredentialReader(map[string]credentialSource{"ref": source})
+		if !errors.Is(err, errRuntimeCredential) || !strings.Contains(err.Error(), want) || strings.Contains(err.Error(), path) {
+			t.Fatalf("%+v: %v", source, err)
 		}
 	}
 }
 
 func TestCredentialViewsResolveOnlyTheirProvider(t *testing.T) {
 	dir := testkit.TempDir(t)
-	codexPath, claudePath, tokenPath := filepath.Join(dir, "codex.json"), filepath.Join(dir, "claude.json"), filepath.Join(dir, "token")
+	codexPath, claudePath := filepath.Join(dir, "codex.json"), filepath.Join(dir, "claude.json")
 	writeFakeCredential(t, codexPath, []byte("codex-login"))
 	writeFakeCredential(t, claudePath, []byte("claude-login"))
-	writeFakeCredential(t, tokenPath, []byte("claude-token"))
 	sources := map[string]credentialSource{
 		"codex":  {Provider: "codex-app-server", Mode: "dedicated-runtime-login", Path: codexPath},
 		"claude": {Provider: "claude-code", Mode: claudecode.ModeCredentials, Path: claudePath},
-		"token":  {Provider: "claude-code", Mode: claudecode.ModeToken, Path: tokenPath},
 	}
 	codex, err := newCredentialResolver(sources)
 	if err != nil {
@@ -152,16 +171,13 @@ func TestCredentialViewsResolveOnlyTheirProvider(t *testing.T) {
 	if _, err := codex(context.Background(), "claude"); !errors.Is(err, errRuntimeCredential) {
 		t.Fatal("the Codex view resolved a Claude login", err)
 	}
-	for ref, want := range map[string]claudecode.RuntimeCredential{"claude": {Mode: claudecode.ModeCredentials, Login: []byte("claude-login")}, "token": {Mode: claudecode.ModeToken, Login: []byte("claude-token")}} {
-		got, err := claude(context.Background(), ref)
-		if err != nil || got.Mode != want.Mode || string(got.Login) != string(want.Login) {
-			t.Fatal(ref, got, err)
-		}
+	if got, err := claude(context.Background(), "claude"); err != nil || got.Mode != claudecode.ModeCredentials || string(got.Login) != "claude-login" {
+		t.Fatal(got, err)
 	}
 	if _, err := claude(context.Background(), "codex"); !errors.Is(err, errRuntimeCredential) {
 		t.Fatal("the Claude view resolved a Codex login", err)
 	}
-	for _, mode := range []string{"api-key", "dedicated-runtime-login", "environment"} {
+	for _, mode := range []string{"api-key", "dedicated-runtime-login", "environment", "subscription-token"} {
 		if _, err := newClaudeCredentialResolver(map[string]credentialSource{"x": {Provider: "claude-code", Mode: mode, Path: claudePath}}); !errors.Is(err, errRuntimeCredential) {
 			t.Fatalf("Claude mode %q admitted: %v", mode, err)
 		}

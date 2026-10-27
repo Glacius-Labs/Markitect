@@ -83,6 +83,24 @@ func (t *nativeSession) runTurn(ctx context.Context) error {
 	}
 }
 
+// staleCall refuses a Run tool call that is queued while no running response
+// can receive its result: it stays unserved, and the Exchange ends instead of
+// serving it in a later response.
+func (t *nativeSession) staleCall(failure *providerError, when string) error {
+	select {
+	case call, ok := <-t.peer.ToolCalls():
+		if !ok {
+			return nil
+		}
+		if failure != nil {
+			return unserved(failure, call)
+		}
+		return fmt.Errorf("%w: the Run tool call %s arrived %s and was not served", ErrProtocolIncomplete, call.Name, when)
+	default:
+		return nil
+	}
+}
+
 // unserved ends the response for a tool call of the failed attempt: its result
 // reaches no model, so the call stays unserved.
 func unserved(failure *providerError, call frame.ToolCall) error {
@@ -160,7 +178,12 @@ func (t *nativeSession) attempt(ctx context.Context) (*providerError, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err = t.startProcess(ctx, providerArgv(t.session, t.persisted, t.profile.Session), "/work", toolSpecs()); err != nil {
+	// A call queued before this process exists belongs to an earlier one.
+	if err = t.staleCall(nil, "from an earlier response"); err != nil {
+		return nil, err
+	}
+	env := append(providerEnvironment(), toolTimeout(ctx, time.Now()))
+	if err = t.startProcess(ctx, providerArgv(t.session, t.persisted, t.profile.Session), "/work", env, toolSpecs()); err != nil {
 		return nil, err
 	}
 	t.tr.record("send", line)
@@ -174,6 +197,11 @@ func (t *nativeSession) attempt(ctx context.Context) (*providerError, error) {
 	tools := t.peer.ToolCalls()
 	var failure *providerError
 	var ended <-chan time.Time // the failed process's grace, once it failed
+	// A Run tool call is served only after this launch reported the checked
+	// configuration. The output and the call travel apart, so a call that
+	// overtakes the system/init line waits for it.
+	var held *frame.ToolCall
+	t.launched = false
 	for output := true; output; {
 		select {
 		case <-ctx.Done():
@@ -187,6 +215,10 @@ func (t *nativeSession) attempt(ctx context.Context) (*providerError, error) {
 			}
 			if failure != nil {
 				return nil, unserved(failure, call)
+			}
+			if !t.launched {
+				held, tools = &call, nil
+				continue
 			}
 			if err = t.answer(ctx, call); err != nil {
 				return nil, err
@@ -212,23 +244,34 @@ func (t *nativeSession) attempt(ctx context.Context) (*providerError, error) {
 			if err != nil {
 				return nil, err
 			}
+			if held != nil && t.launched {
+				call := *held
+				held, tools = nil, t.peer.ToolCalls()
+				if failure != nil {
+					return nil, unserved(failure, call)
+				}
+				if err = t.answer(ctx, call); err != nil {
+					return nil, err
+				}
+				t.served++
+			}
 		}
+	}
+	if held != nil {
+		return nil, fmt.Errorf("%w: the Run tool call %s arrived before the launch reported its configuration and was not served", ErrProtocolIncomplete, held.Name)
 	}
 	exit, err := t.collect(ctx)
 	if err != nil {
 		return nil, err
 	}
-	select {
-	case call, ok := <-tools:
-		if ok && failure != nil {
-			return nil, unserved(failure, call)
-		}
-		if ok {
-			return nil, fmt.Errorf("%w: unanswered tool at native completion", ErrProtocolIncomplete)
-		}
-	default:
+	if err = t.staleCall(failure, "at native completion"); err != nil {
+		return nil, err
 	}
 	if err = t.quiescent(ctx); err != nil {
+		return nil, err
+	}
+	// The census waited; a call that arrived meanwhile is never served later.
+	if err = t.staleCall(failure, "after native completion"); err != nil {
 		return nil, err
 	}
 	if failure != nil {

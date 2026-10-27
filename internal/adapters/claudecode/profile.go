@@ -8,7 +8,9 @@ import (
 	"io"
 	"math"
 	"regexp"
+	"strconv"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
@@ -31,6 +33,10 @@ const (
 // builtinTools is the fixed native tool set: shell and file tools. Native
 // subagents, web access, skills and background work stay unavailable.
 const builtinTools = "Bash,Read,Edit,Write,Glob,Grep"
+
+// alwaysPresentTools are built-in tools that --tools cannot remove while MCP
+// tools remain, as the CLI reference states for EndConversation.
+var alwaysPresentTools = []string{"EndConversation"}
 
 // Profile is everything a session needs from one captured Agent profile of
 // the Runtime profile: the immutable image, the opaque credential reference
@@ -149,10 +155,9 @@ func authStatusArgv() []string { return []string{claudeExecutable, "auth", "stat
 // configuration directory and switches off CLAUDE.md and memory loading,
 // background work, built-in subagents, MCP tool deferral, updates and other
 // nonessential traffic, and asks Claude Code to strip credentials from the
-// environments of the processes it starts. A subscription token is the only
-// credential it can carry.
-func providerEnvironment(token string) []string {
-	env := []string{
+// environments of the processes it starts. It carries no credential.
+func providerEnvironment() []string {
+	return []string{
 		"HOME=" + privateHome,
 		"CLAUDE_CONFIG_DIR=" + configDirectory,
 		"CLAUDE_CODE_DISABLE_CLAUDE_MDS=1",
@@ -168,10 +173,23 @@ func providerEnvironment(token string) []string {
 		// the token cap should the annotation not apply.
 		"MAX_MCP_OUTPUT_TOKENS=200000",
 	}
-	if token != "" {
-		env = append(env, "CLAUDE_CODE_OAUTH_TOKEN="+token)
+}
+
+// defaultToolTimeout is Claude Code's documented MCP tool timeout, set
+// explicitly when a response has no deadline.
+const defaultToolTimeout = 100_000_000 * time.Millisecond
+
+// toolTimeout is the MCP_TOOL_TIMEOUT of one response. The longest host await
+// is bounded by the Run deadline: Run cancels every served tool call when its
+// context ends, and a response's context carries that deadline. The timeout
+// lies a minute beyond it, so Claude Code never abandons a call the host is
+// still serving; the Run deadline ends it first.
+func toolTimeout(ctx context.Context, now time.Time) string {
+	timeout := defaultToolTimeout
+	if deadline, ok := ctx.Deadline(); ok {
+		timeout = max(deadline.Sub(now), 0) + time.Minute
 	}
-	return env
+	return "MCP_TOOL_TIMEOUT=" + strconv.FormatInt(timeout.Milliseconds(), 10)
 }
 
 // environmentNames returns only the names of KEY=VALUE entries, for evidence.

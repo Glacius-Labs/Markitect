@@ -121,10 +121,11 @@ const (
 	RejectedMessage       MessageKind = "rejected"
 )
 
-// Init is the consumed projection of the system/init message.
+// Init is the consumed projection of the system/init message. Plugins holds
+// the loaded plugins' names.
 type Init struct {
 	Session, Model, Version, APIKeySource, PermissionMode string
-	Tools                                                 []string
+	Tools, Agents, Skills, Plugins, SlashCommands         []string
 	MCPServers                                            []MCPServer
 }
 
@@ -321,6 +322,28 @@ func parseInit(o map[string]json.RawMessage) (Init, error) {
 	}
 	if err = json.Unmarshal(o["tools"], &i.Tools); err != nil || !array(o["tools"]) {
 		return Init{}, ErrProtocol
+	}
+	// Optional name lists: an absent list is empty.
+	for name, target := range map[string]*[]string{"agents": &i.Agents, "skills": &i.Skills, "slash_commands": &i.SlashCommands} {
+		if value, ok := o[name]; ok {
+			if !array(value) || json.Unmarshal(value, target) != nil {
+				return Init{}, ErrProtocol
+			}
+		}
+	}
+	if value, ok := o["plugins"]; ok {
+		var plugins []struct {
+			Name *string `json:"name"`
+		}
+		if !array(value) || json.Unmarshal(value, &plugins) != nil {
+			return Init{}, ErrProtocol
+		}
+		for _, p := range plugins {
+			if p.Name == nil {
+				return Init{}, ErrProtocol
+			}
+			i.Plugins = append(i.Plugins, *p.Name)
+		}
 	}
 	var servers []struct {
 		Name   *string `json:"name"`

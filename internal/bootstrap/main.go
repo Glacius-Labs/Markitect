@@ -37,10 +37,7 @@ func run(ctx context.Context, goos string, args []string, stdout, stderr io.Writ
 	views := modeldocs.New(models, preparation, documents.Writer{})
 	agents := agentMetadata{
 		"codexAppServer": codexappserver.NewMetadataPreparer(images),
-		// One injected engine reader serves both adapters' preparations.
-		"claudeCode": claudecode.NewMetadataPreparer(func(c claudecode.EngineConfig) (claudecode.ImageReader, error) {
-			return images(codexappserver.EngineConfig{Executable: c.Executable})
-		}),
+		"claudeCode":     claudecode.NewMetadataPreparer(claudecode.NewEngineImageReader),
 	}
 	checker := checks.NewMetadataPreparer(checks.NewEngineImageReaders().Reader)
 	execution := applyExecution(goos, preparation, repository, agents, checker)

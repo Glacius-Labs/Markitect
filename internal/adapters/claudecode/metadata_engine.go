@@ -11,9 +11,13 @@ type EngineConfig struct{ Executable string }
 
 // ImageReader exposes only inspection and copying from a never-started image.
 // ReadImageFile must return complete regular-file bytes, bounded to 1 MiB.
+// ImageEnvironment returns the image's configured environment entries;
+// ImageDirectoryNames lists one directory tree's entry paths, bounded.
 type ImageReader interface {
 	ImageID(context.Context, string) (string, error)
 	ReadImageFile(context.Context, string, string) ([]byte, error)
+	ImageEnvironment(context.Context, string) ([]string, error)
+	ImageDirectoryNames(context.Context, string, string, int64) ([]string, error)
 }
 
 type ImageReaderFactory func(EngineConfig) (ImageReader, error)

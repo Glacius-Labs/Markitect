@@ -11,6 +11,7 @@ import (
 	"io"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -147,9 +148,9 @@ type nativeSession struct {
 	tr           *transcript
 	login        login
 	secrets      [][]byte
-	env          []string
 	session      string // the Claude Code session ID the adapter chose
 	persisted    bool   // the conversation exists; later processes resume it
+	launched     bool   // the current process reported the checked launch
 	homeSetup    bool   // agentd may hold the private files
 	live         bool   // a provider process may be running
 	final        string
@@ -202,7 +203,7 @@ func (a *Agents) Open(ctx context.Context, spec run.SessionSpec) (run.Session, e
 	if t.login, err = parseLogin(credential, a.now()); err != nil {
 		return nil, err
 	}
-	t.secrets, t.env = t.login.secrets, providerEnvironment(t.login.token)
+	t.secrets = t.login.secrets
 	home := frame.Initialize{Claude: &frame.ClaudeHome{Credentials: t.login.credentials, SystemPrompt: doc.Base, AppendSystemPrompt: doc.Developer}}
 	if err = fitsSetup(home); err != nil {
 		return nil, err
@@ -258,7 +259,7 @@ func (t *nativeSession) recordSetup() {
 		HarnessDigest      string `json:"harnessDigest"`
 		SystemPrompt       string `json:"systemPrompt"`
 		AppendSystemPrompt string `json:"appendSystemPrompt"`
-	}{t.session, t.login.mode, t.document.Digest(), t.document.Base, t.document.Developer})
+	}{t.session, ModeCredentials, t.document.Digest(), t.document.Base, t.document.Developer})
 	t.tr.record("setup", data)
 }
 
@@ -280,8 +281,8 @@ func (t *nativeSession) checkLogin(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("%w: claude auth status reported no readable authMethod", ErrSession)
 	}
-	if method != t.login.method {
-		return fmt.Errorf("%w: Claude Code would authenticate with %q instead of the selected subscription login (%q); API keys, API-key helpers and third-party providers are refused", ErrSession, method, t.login.method)
+	if method != loginMethod {
+		return fmt.Errorf("%w: Claude Code would authenticate with %q instead of the selected subscription login (%q); API keys, API-key helpers, tokens and third-party providers are refused", ErrSession, method, loginMethod)
 	}
 	return nil
 }
@@ -289,7 +290,7 @@ func (t *nativeSession) checkLogin(ctx context.Context) error {
 // runProcess runs one short provider process with closed input and returns
 // its bounded output and exit.
 func (t *nativeSession) runProcess(ctx context.Context, argv []string, dir string, limit int64) ([]byte, frame.Exited, error) {
-	if err := t.startProcess(ctx, argv, dir, nil); err != nil {
+	if err := t.startProcess(ctx, argv, dir, providerEnvironment(), nil); err != nil {
 		return nil, frame.Exited{}, err
 	}
 	if err := t.io(ctx, t.peer.CloseInput); err != nil {
@@ -312,19 +313,26 @@ func (t *nativeSession) runProcess(ctx context.Context, argv []string, dir strin
 }
 
 // startProcess starts one provider process. A lost start reply can still have
-// started it, so it counts as live until its exit is collected.
-func (t *nativeSession) startProcess(ctx context.Context, argv []string, dir string, tools []frame.ToolSpec) error {
+// started it, so it counts as live until its exit is collected; a start agentd
+// refused, for example because the Manager changed its private home, started
+// none and ends the Session with agentd's reason.
+func (t *nativeSession) startProcess(ctx context.Context, argv []string, dir string, env []string, tools []frame.ToolSpec) error {
 	t.live = true
 	data, _ := json.Marshal(struct {
 		Argv []string `json:"argv"`
 		Dir  string   `json:"dir"`
 		Env  []string `json:"env"`
-	}{argv, dir, environmentNames(t.env)})
+	}{argv, dir, environmentNames(env)})
 	t.tr.record("start", data)
-	return t.io(ctx, func() error {
-		_, e := t.peer.StartProvider(ctx, frame.Start{Argv: argv, Dir: dir, Env: t.env, Tools: tools})
+	err := t.io(ctx, func() error {
+		_, e := t.peer.StartProvider(ctx, frame.Start{Argv: argv, Dir: dir, Env: env, Tools: tools})
 		return e
 	})
+	if errors.Is(err, container.ErrRefused) {
+		t.live = false
+		return fmt.Errorf("%w: %v", ErrSession, err)
+	}
+	return err
 }
 
 // collect observes the exit of the provider process whose output ended. Stop
@@ -474,17 +482,11 @@ func (t *nativeSession) observe(m Message) error {
 	}
 	switch m.Kind() {
 	case SystemInitMessage:
-		init := m.Init()
 		t.persisted = true
-		for _, server := range init.MCPServers {
-			if server.Name == "markitect" {
-				if !oneOf(server.Status, "connected", "pending") {
-					return fmt.Errorf("%w: the markitect MCP server is %q in Claude Code, so the Run tools are unavailable", ErrSession, server.Status)
-				}
-				return nil
-			}
+		if err := checkInit(m.Init()); err != nil {
+			return err
 		}
-		return fmt.Errorf("%w: Claude Code started without the markitect MCP server, so the Run tools are unavailable", ErrSession)
+		t.launched = true
 	case APIRetryMessage:
 		if kind := m.Retry().Error; kind != "" {
 			t.lastError = kind
@@ -527,6 +529,55 @@ func (t *nativeSession) observe(m Message) error {
 		return fmt.Errorf("%w: the provider sent a control request, which this adapter does not answer", ErrProtocolUnsupported)
 	}
 	return nil
+}
+
+// pinnedVersion is the claude_code_version the pinned CLI reports.
+var pinnedVersion = strings.TrimSuffix(supportedClaudeVersion, " (Claude Code)")
+
+// launchTools is the exact tool list every launch must report: the six
+// built-in tools, those --tools cannot remove, and the nine Run tools.
+func launchTools() []string {
+	tools := append(strings.Split(builtinTools, ","), alwaysPresentTools...)
+	for _, spec := range toolSpecs() {
+		tools = append(tools, "mcp__markitect__"+spec.Name)
+	}
+	slices.Sort(tools)
+	return tools
+}
+
+// checkInit requires, on every launch, the launch the adapter asked for: the
+// subscription login and no API key, the pinned CLI, the permission mode, the
+// exact tools with the connected Run tool server, and no agents, skills,
+// plugins or slash commands. A launch that loaded anything else ends the
+// Exchange before any tool call is served.
+func checkInit(init Init) error {
+	refuse := func(format string, args ...any) error {
+		return fmt.Errorf("%w: the Claude Code launch reported %s", ErrSession, fmt.Sprintf(format, args...))
+	}
+	switch {
+	case init.APIKeySource != "none":
+		return refuse("the API key source %q; only the subscription login (none) is admitted", init.APIKeySource)
+	case init.Version != pinnedVersion:
+		return refuse("version %q instead of the pinned %s", init.Version, pinnedVersion)
+	case init.PermissionMode != "bypassPermissions":
+		return refuse("permission mode %q instead of bypassPermissions", init.PermissionMode)
+	case len(init.Agents)+len(init.Skills)+len(init.Plugins)+len(init.SlashCommands) != 0:
+		return refuse("agents %q, skills %q, plugins %q or slash commands %q; none may load", init.Agents, init.Skills, init.Plugins, init.SlashCommands)
+	}
+	tools := slices.Clone(init.Tools)
+	slices.Sort(tools)
+	if want := launchTools(); !slices.Equal(tools, want) {
+		return refuse("the tools %q instead of exactly %q", init.Tools, want)
+	}
+	for _, server := range init.MCPServers {
+		if server.Name == "markitect" {
+			if !oneOf(server.Status, "connected", "pending") {
+				return refuse("the markitect MCP server as %q, so the Run tools are unavailable", server.Status)
+			}
+			return nil
+		}
+	}
+	return refuse("no markitect MCP server, so the Run tools are unavailable")
 }
 
 // started records a tool use that may now run, also a Run tool call on its

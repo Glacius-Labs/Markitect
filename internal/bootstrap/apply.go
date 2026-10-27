@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 	"time"
 
@@ -152,7 +151,7 @@ func applyExecution(goos string, preparation *project.PreparationService, reposi
 			}
 			if profile.Input().Namespace() == "agentProfiles" {
 				if selected != nil {
-					return out, fmt.Errorf("Apply requires exactly one executable Agent profile: codexAppServer, or claudeCode as an addition beyond V1's Codex scope")
+					return out, fmt.Errorf("more than one Agent profile; keep one")
 				}
 				value := profile
 				selected = &value
@@ -256,9 +255,8 @@ func composeAgents(engine *container.Engine, selected runtimeconfig.PreparedProf
 		if err != nil {
 			return nativeAgents{}, err
 		}
-		credential := cfg.Credentials[profile.CredentialRef]
-		if credential.Provider != "codex-app-server" || credential.Mode != "dedicated-runtime-login" {
-			return nativeAgents{}, errRuntimeCredential
+		if err := profileCredential(cfg, profile.CredentialRef, "codexAppServer", "codex-app-server", "dedicated-runtime-login"); err != nil {
+			return nativeAgents{}, err
 		}
 		resolve, err := newCredentialResolver(cfg.Credentials)
 		if err != nil {
@@ -277,9 +275,8 @@ func composeAgents(engine *container.Engine, selected runtimeconfig.PreparedProf
 		if err != nil {
 			return nativeAgents{}, err
 		}
-		credential := cfg.Credentials[profile.CredentialRef]
-		if credential.Provider != "claude-code" || !slices.Contains(credentialModes["claude-code"], credential.Mode) {
-			return nativeAgents{}, errRuntimeCredential
+		if err := profileCredential(cfg, profile.CredentialRef, "claudeCode", "claude-code", claudecode.ModeCredentials); err != nil {
+			return nativeAgents{}, err
 		}
 		resolve, err := newClaudeCredentialResolver(cfg.Credentials)
 		if err != nil {
@@ -292,6 +289,17 @@ func composeAgents(engine *container.Engine, selected runtimeconfig.PreparedProf
 		return claudeAgents(sessions, profile), nil
 	}
 	return nativeAgents{}, fmt.Errorf("Agent section %q has no adapter", selected.Input().Section())
+}
+
+// profileCredential requires the profile's credential reference to name the
+// provider and mode its adapter admits, and says which ones when it does not.
+// The reference and path may be sensitive and stay out of the error.
+func profileCredential(cfg runConfig, ref, section, provider, mode string) error {
+	credential := cfg.Credentials[ref]
+	if credential.Provider != provider || credential.Mode != mode {
+		return fmt.Errorf("%w: the %s profile's credentialRef must name a credential with provider %s and mode %s", errRuntimeCredential, section, provider, mode)
+	}
+	return nil
 }
 
 // composeApplyCommand prepares host evidence before any Run can acquire resources.

@@ -43,8 +43,14 @@ func TestCodecEncodesOneUserMessage(t *testing.T) {
 
 func TestCodecProjectsTheConsumedOutputShapes(t *testing.T) {
 	init := decodeOne(t, fixtureInit(fixtureSession, connectedServers))
-	if init.Kind() != SystemInitMessage || init.Session() != fixtureSession || !reflect.DeepEqual(init.Init(), Init{Session: fixtureSession, Model: "claude-sonnet-5", Version: "2.1.308", APIKeySource: "none", PermissionMode: "bypassPermissions", Tools: []string{"Bash", "Read", "Edit", "Write", "Glob", "Grep", "mcp__markitect__await"}, MCPServers: []MCPServer{{"markitect", "connected"}}}) {
+	var tools []string
+	_ = json.Unmarshal([]byte(fixtureTools), &tools)
+	if init.Kind() != SystemInitMessage || init.Session() != fixtureSession || !reflect.DeepEqual(init.Init(), Init{Session: fixtureSession, Model: "claude-sonnet-5", Version: "2.1.308", APIKeySource: "none", PermissionMode: "bypassPermissions", Tools: tools, Agents: []string{}, Skills: []string{}, SlashCommands: []string{}, MCPServers: []MCPServer{{"markitect", "connected"}}}) {
 		t.Fatalf("init %+v", init.Init())
+	}
+	loaded := decodeOne(t, strings.Replace(strings.Replace(fixtureInit(fixtureSession, connectedServers), `"plugins":[]`, `"plugins":[{"name":"p","path":"/x"}]`, 1), `"agents":[]`, `"agents":["general-purpose"]`, 1))
+	if !reflect.DeepEqual(loaded.Init().Plugins, []string{"p"}) || !reflect.DeepEqual(loaded.Init().Agents, []string{"general-purpose"}) {
+		t.Fatalf("loaded extensions %+v", loaded.Init())
 	}
 	retry := decodeOne(t, fixtureRetry(fixtureSession, "overloaded"))
 	if retry.Kind() != APIRetryMessage || retry.Retry() != (APIRetry{Attempt: 1, Error: "overloaded"}) {

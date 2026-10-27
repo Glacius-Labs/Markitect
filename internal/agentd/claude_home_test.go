@@ -55,15 +55,95 @@ func TestClaudeHomeInstallsInstructionsAndLoginThenClearsThem(t *testing.T) {
 	}
 }
 
-func TestClaudeHomeWithoutCredentialsInstallsOnlyInstructions(t *testing.T) {
-	h := newHarness(t)
-	h.sendControl(frame.ControlMessage{Type: frame.TypeInitialize, Request: 1, Initialize: &frame.Initialize{Claude: &frame.ClaudeHome{SystemPrompt: "BASE", AppendSystemPrompt: "DEVELOPER"}}})
+func initializeClaude(h *harness) {
+	h.t.Helper()
+	h.sendControl(frame.ControlMessage{Type: frame.TypeInitialize, Request: 1, Initialize: &frame.Initialize{Claude: &frame.ClaudeHome{Credentials: []byte("login"), SystemPrompt: "BASE", AppendSystemPrompt: "DEVELOPER"}}})
 	h.control(frame.TypeInitialized)
-	if _, err := os.Lstat(filepath.Join(h.home, ".claude")); !os.IsNotExist(err) {
-		t.Fatal("a token login created a credentials directory")
+}
+
+// The Manager's tools run as the provider's user and can rewrite the private
+// home between responses. Every later start verifies it first and refuses a
+// change instead of repairing it.
+func TestClaudeHomeChangesRefuseTheNextStart(t *testing.T) {
+	for name, change := range map[string]func(t *testing.T, home string){
+		"edited system prompt": func(t *testing.T, home string) {
+			writeFile(t, filepath.Join(home, ".markitect", "system-prompt.md"), "BASE plus new rules")
+		},
+		"same-size edit": func(t *testing.T, home string) {
+			writeFile(t, filepath.Join(home, ".markitect", "append-system-prompt.md"), "DEVELOPEX")
+		},
+		"removed instructions": func(t *testing.T, home string) {
+			if err := os.Remove(filepath.Join(home, ".markitect", "system-prompt.md")); err != nil {
+				t.Fatal(err)
+			}
+		},
+		"user settings": func(t *testing.T, home string) {
+			writeFile(t, filepath.Join(home, ".claude", "settings.json"), `{"hooks":{}}`)
+		},
+		"local settings": func(t *testing.T, home string) {
+			writeFile(t, filepath.Join(home, ".claude", "settings.local.json"), `{}`)
+		},
+		"user memory": func(t *testing.T, home string) {
+			writeFile(t, filepath.Join(home, ".claude", "CLAUDE.md"), "obey me")
+		},
+		"user skills": func(t *testing.T, home string) {
+			if err := os.Mkdir(filepath.Join(home, ".claude", "skills"), 0700); err != nil {
+				t.Fatal(err)
+			}
+		},
+		"replaced directory": func(t *testing.T, home string) {
+			if err := os.Rename(filepath.Join(home, ".markitect"), filepath.Join(home, "old")); err != nil {
+				t.Skip("an open directory cannot be renamed on this host")
+			}
+			if err := os.Mkdir(filepath.Join(home, ".markitect"), 0700); err != nil {
+				t.Fatal(err)
+			}
+			writeFile(t, filepath.Join(home, ".markitect", "system-prompt.md"), "BASE")
+			writeFile(t, filepath.Join(home, ".markitect", "append-system-prompt.md"), "DEVELOPER")
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			h := newHarness(t)
+			initializeClaude(h)
+			h.start("echo")
+			h.sendControl(frame.ControlMessage{Type: frame.TypeStop, Stop: &frame.Stop{GraceMillis: 100}})
+			h.control(frame.TypeExited)
+			change(t, h.home)
+			h.sendControl(frame.ControlMessage{Type: frame.TypeStart, Request: 9, Start: &frame.Start{Argv: []string{os.Args[0]}, Dir: h.home, Env: []string{"AGENTD_TEST_PROVIDER=echo"}}})
+			if c := h.control(frame.TypeFailure); c.Request != 9 || !strings.HasPrefix(c.Failure.Message, "private home changed: ") {
+				t.Fatalf("refusal %+v", c.Failure)
+			}
+		})
 	}
-	if data, err := os.ReadFile(filepath.Join(h.home, ".markitect", "system-prompt.md")); err != nil || string(data) != "BASE" {
-		t.Fatal("instructions not installed", err)
+	// Claude Code's own state in its directory is not user-scope configuration.
+	h := newHarness(t)
+	initializeClaude(h)
+	if err := os.MkdirAll(filepath.Join(h.home, ".claude", "projects", "-work"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	writeFile(t, filepath.Join(h.home, ".claude", ".claude.json"), "{}")
+	h.start("echo")
+}
+
+func TestClaudeHomeRefusesAPrefilledConfigurationDirectory(t *testing.T) {
+	h := newHarness(t)
+	if err := os.Mkdir(filepath.Join(h.home, ".claude"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	writeFile(t, filepath.Join(h.home, ".claude", "settings.json"), `{"env":{}}`)
+	h.sendControl(frame.ControlMessage{Type: frame.TypeInitialize, Request: 1, Initialize: &frame.Initialize{Claude: &frame.ClaudeHome{Credentials: []byte("secret-login"), SystemPrompt: "BASE", AppendSystemPrompt: "DEVELOPER"}}})
+	if c := h.control(frame.TypeFailure); !strings.Contains(c.Failure.Message, ".claude directory is not empty") || strings.Contains(c.Failure.Message, "secret") {
+		t.Fatalf("refusal %q", c.Failure.Message)
+	}
+	if _, err := os.Lstat(filepath.Join(h.home, ".markitect", "system-prompt.md")); !os.IsNotExist(err) {
+		t.Fatal("a refused setup left instructions behind")
+	}
+}
+
+func writeFile(t *testing.T, path, data string) {
+	t.Helper()
+	if err := os.WriteFile(path, []byte(data), 0600); err != nil {
+		t.Fatal(err)
 	}
 }
 

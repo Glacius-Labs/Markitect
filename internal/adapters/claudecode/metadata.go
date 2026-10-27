@@ -10,6 +10,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
+	"slices"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
@@ -152,6 +153,10 @@ func (m *MetadataPreparer) PrepareAgentProfile(ctx context.Context, input runtim
 		p.acquisition(err)
 		return p.out, p.err
 	}
+	if err := p.inspectImage(ctx, reader, imageID); err != nil {
+		p.acquisition(err)
+		return p.out, p.err
+	}
 	observed, err := reader.ImageID(ctx, config.imageID)
 	if err != nil {
 		p.acquisition(err)
@@ -176,6 +181,44 @@ func (p *preparation) parseMetadata(data []byte, config metadataConfig) {
 	if image.AgentdVersion != config.agentd {
 		p.issue(model.Failed, "agentd_version", "/agentdVersion", "Recorded agentd build differs from the selected literal version.")
 	}
+}
+
+// imageEnvironmentAllowed are the Claude Code variables an image may set: the
+// adapter sets the same value itself.
+var imageEnvironmentAllowed = []string{"CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"}
+
+// maxEtcArchive bounds the archive of the image's /etc that preparation
+// streams to find managed settings.
+const maxEtcArchive = 256 << 20
+
+// inspectImage closes the routes by which the image itself could configure
+// Claude Code around the adapter: environment variables that select an API
+// key, provider, endpoint or behavior, and managed settings under
+// /etc/claude-code, which always load and which --setting-sources cannot
+// turn off. Names are reported, values never.
+func (p *preparation) inspectImage(ctx context.Context, reader ImageReader, imageID string) error {
+	env, err := reader.ImageEnvironment(ctx, imageID)
+	if err != nil {
+		return err
+	}
+	for _, entry := range env {
+		name, _, _ := strings.Cut(entry, "=")
+		claude := strings.HasPrefix(name, "ANTHROPIC_") || strings.HasPrefix(name, "CLAUDE_CODE_") || slices.Contains(apiKeyVariables, name)
+		if claude && !slices.Contains(imageEnvironmentAllowed, name) {
+			p.issue(model.Failed, "image_environment", "/imageID", "The image environment sets "+name+", which would configure Claude Code around the adapter; remove it from the image.")
+		}
+	}
+	names, err := reader.ImageDirectoryNames(ctx, imageID, "/etc", maxEtcArchive)
+	if err != nil {
+		return err
+	}
+	for _, name := range names {
+		if name == "etc/claude-code" || strings.HasPrefix(name, "etc/claude-code/") {
+			p.issue(model.Failed, "managed_settings", "/imageID", "The image ships /etc/claude-code (managed settings such as managed-settings.json), which Claude Code always loads; remove it from the image.")
+			break
+		}
+	}
+	return nil
 }
 
 // runtimeMetadata reads the LF records of packaging/runtime/Dockerfile. The

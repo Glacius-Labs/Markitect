@@ -110,7 +110,7 @@ func TestExchangesResumeOneConversationWithOneMessageEach(t *testing.T) {
 		if err := json.Unmarshal([]byte(message.Message.Content[0].Text), &delivered); err != nil || delivered.Events[0].Assignment == nil {
 			t.Fatalf("response %d does not carry Run's message: %v", i, err)
 		}
-		if p.start.Dir != "/work" || len(p.start.Tools) != 9 || !slices.Contains(p.start.Env, "CLAUDE_CODE_DISABLE_CLAUDE_MDS=1") || !slices.Contains(p.start.Env, "ENABLE_TOOL_SEARCH=false") {
+		if p.start.Dir != "/work" || len(p.start.Tools) != 9 || !slices.Contains(p.start.Env, "CLAUDE_CODE_DISABLE_CLAUDE_MDS=1") || !slices.Contains(p.start.Env, "ENABLE_TOOL_SEARCH=false") || !strings.HasPrefix(p.start.Env[len(p.start.Env)-1], "MCP_TOOL_TIMEOUT=") {
 			t.Fatalf("response %d start %+v", i, p.start)
 		}
 	}
@@ -169,23 +169,22 @@ func TestActedCountsCompletedToolUsesOnly(t *testing.T) {
 	}
 }
 
-// The token login reaches only the provider environment; transcripts and
-// errors carry neither token form.
-func TestTokenLoginAndTranscriptRedaction(t *testing.T) {
+// The login reaches the provider only through the private setup; transcripts
+// carry neither token, and no credential enters any provider environment.
+func TestLoginStaysPrivateAndTranscriptsRedactIt(t *testing.T) {
 	rt := newRuntime()
-	rt.authStatus = `{"loggedIn":true,"authMethod":"oauth_token"}`
-	rt.play = lines(0, fixtureInit("SESSION", connectedServers), fixtureAssistant("SESSION", textBlock("leaked "+fixtureToken)), fixtureResult("SESSION", "done "+fixtureToken))
-	a := agentsFor(t, rt, RuntimeCredential{Mode: ModeToken, Login: []byte(fixtureToken + "\n")})
+	access, refresh := "sk-ant-oat01-private-access", "sk-ant-ort01-private-refresh"
+	rt.play = lines(0, fixtureInit("SESSION", connectedServers), fixtureAssistant("SESSION", textBlock("leaked "+access+" and "+refresh)), fixtureResult("SESSION", "done "+access))
+	a := agentsFor(t, rt, credentialsLogin())
 	a.TranscriptRoot = t.TempDir()
 	s := openSession(t, a, testSessionSpec(t))
-	if rt.setup.Claude.Credentials != nil {
-		t.Fatal("a token login installed a credentials file")
-	}
 	if err := s.Exchange(context.Background(), task("work")); err != nil {
 		t.Fatal(err)
 	}
-	if !slices.Contains(rt.responses()[0].start.Env, "CLAUDE_CODE_OAUTH_TOKEN="+fixtureToken) {
-		t.Fatal("the token did not reach the provider environment")
+	for _, p := range rt.processes {
+		if strings.Contains(strings.Join(p.start.Env, " "), "private") || strings.Contains(strings.Join(p.start.Argv, " "), "private") {
+			t.Fatal("a credential reached a provider environment or argument")
+		}
 	}
 	if err := s.Close(context.Background()); err != nil {
 		t.Fatal(err)
@@ -198,8 +197,8 @@ func TestTokenLoginAndTranscriptRedaction(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(string(data), "private-long-lived") || !strings.Contains(string(data), "[REDACTED]") {
-		t.Fatal("transcript leaked the token or redacted nothing")
+	if strings.Contains(string(data), "private-access") || strings.Contains(string(data), "private-refresh") || !strings.Contains(string(data), "[REDACTED]") {
+		t.Fatal("transcript leaked a token or redacted nothing")
 	}
 	for _, direction := range []string{`"setup"`, `"start"`, `"login"`, `"send"`, `"receive"`, `"exit"`} {
 		if !strings.Contains(string(data), `"direction":`+direction) {
@@ -261,7 +260,7 @@ func TestStreamViolationsEndTheExchange(t *testing.T) {
 		play func(*fakeProcess)
 		want string
 	}{
-		"no markitect server":  {lines(0, fixtureInit("SESSION", `[{"name":"other","status":"connected"}]`), fixtureResult("SESSION", "done")), "without the markitect MCP server"},
+		"no markitect server":  {lines(0, fixtureInit("SESSION", `[{"name":"other","status":"connected"}]`), fixtureResult("SESSION", "done")), "no markitect MCP server"},
 		"failed server":        {lines(0, fixtureInit("SESSION", `[{"name":"markitect","status":"failed"}]`), fixtureResult("SESSION", "done")), `"failed"`},
 		"native subagent":      {lines(0, fixtureInit("SESSION", connectedServers), strings.Replace(fixtureAssistant("SESSION", textBlock("child")), `"parent_tool_use_id":null`, `"parent_tool_use_id":"toolu_agent"`, 1), fixtureResult("SESSION", "done")), "subagent"},
 		"control request":      {lines(0, fixtureInit("SESSION", connectedServers), `{"type":"control_request","request_id":"r","request":{"subtype":"can_use_tool"}}`), "control request"},
@@ -287,6 +286,89 @@ func TestStreamViolationsEndTheExchange(t *testing.T) {
 				t.Fatal("a closed session accepted another Exchange")
 			}
 		})
+	}
+}
+
+// Every launch must report exactly the launch the adapter asked for; anything
+// else ends the Exchange before a tool call is served.
+func TestLaunchMustReportTheRequestedConfiguration(t *testing.T) {
+	base := fixtureInit("SESSION", connectedServers)
+	for name, tc := range map[string]struct{ init, want string }{
+		"API key":           {strings.Replace(base, `"apiKeySource":"none"`, `"apiKeySource":"ANTHROPIC_API_KEY"`, 1), `API key source "ANTHROPIC_API_KEY"`},
+		"other version":     {strings.Replace(base, `"claude_code_version":"2.1.308"`, `"claude_code_version":"2.1.309"`, 1), `version "2.1.309"`},
+		"missing version":   {strings.Replace(base, `"claude_code_version":"2.1.308",`, ``, 1), `version ""`},
+		"permission mode":   {strings.Replace(base, `"permissionMode":"bypassPermissions"`, `"permissionMode":"default"`, 1), `permission mode "default"`},
+		"extra tool":        {strings.Replace(base, `"Bash",`, `"Bash","WebFetch",`, 1), "the tools"},
+		"subagent tool":     {strings.Replace(base, `"Bash",`, `"Bash","Agent",`, 1), "the tools"},
+		"missing Run tool":  {strings.Replace(base, `"mcp__markitect__judge",`, ``, 1), "the tools"},
+		"foreign MCP tool":  {strings.Replace(base, `"Bash",`, `"Bash","mcp__other__x",`, 1), "the tools"},
+		"agents":            {strings.Replace(base, `"agents":[]`, `"agents":["general-purpose"]`, 1), "none may load"},
+		"skills":            {strings.Replace(base, `"skills":[]`, `"skills":["deploy"]`, 1), "none may load"},
+		"plugins":           {strings.Replace(base, `"plugins":[]`, `"plugins":[{"name":"p","path":"/x"}]`, 1), "none may load"},
+		"slash commands":    {strings.Replace(base, `"slash_commands":[]`, `"slash_commands":["compact"]`, 1), "none may load"},
+		"failed Run server": {fixtureInit("SESSION", `[{"name":"markitect","status":"needs-auth"}]`), `"needs-auth"`},
+	} {
+		t.Run(name, func(t *testing.T) {
+			rt := newRuntime()
+			rt.play = func(p *fakeProcess) {
+				p.emit(strings.ReplaceAll(tc.init, "SESSION", p.session))
+				p.runTool("toolu_judge", "judge", `{"decision":"submitted","findings":[]}`)
+			}
+			spec := testSessionSpec(t)
+			decisions := judgments(&spec)
+			s := openSession(t, agentsFor(t, rt, credentialsLogin()), spec)
+			err := s.Exchange(context.Background(), task("work"))
+			if err == nil || !strings.Contains(err.Error(), tc.want) || len(*decisions) != 0 {
+				t.Fatalf("got %v with judgments %v, want %q", err, *decisions, tc.want)
+			}
+		})
+	}
+}
+
+// agentd refuses a start when the Manager changed its private home; no
+// process started, so the Session ends with the reason and without a stop.
+func TestRefusedStartEndsTheSessionWithAgentdsReason(t *testing.T) {
+	rt := newRuntime()
+	s := openSession(t, agentsFor(t, rt, credentialsLogin()), testSessionSpec(t))
+	if err := s.Exchange(context.Background(), task("first")); err != nil {
+		t.Fatal(err)
+	}
+	rt.refuseNext = "private home changed: .claude/settings.json appeared"
+	before := len(rt.calls)
+	err := s.Exchange(context.Background(), task("second"))
+	if err == nil || !strings.Contains(err.Error(), ".claude/settings.json appeared") {
+		t.Fatalf("refused start: %v", err)
+	}
+	if after := rt.calls[before:]; !slices.Equal(after, []string{"refused", "clear", "close"}) {
+		t.Fatalf("closure after a refused start: %v", after)
+	}
+}
+
+// A Run tool call queued when no running response can receive its result is
+// refused, never served in a later response.
+func TestStaleRunToolCallsAreNeverServed(t *testing.T) {
+	stale := frame.ToolCall{ID: 77, Name: "check", Arguments: json.RawMessage(`{}`)}
+	rt := newRuntime()
+	s := openSession(t, agentsFor(t, rt, credentialsLogin()), testSessionSpec(t))
+	rt.tools <- stale
+	if err := s.Exchange(context.Background(), task("work")); err == nil || !strings.Contains(err.Error(), "arrived from an earlier response") || len(rt.replies) != 0 || len(rt.responses()) != 0 {
+		t.Fatalf("queued call before the response: %v %+v", err, rt.replies)
+	}
+	// A call that arrives while the census waits after the exit.
+	rt = newRuntime()
+	rt.onCensus = func(f *fakeRuntime) {
+		f.onCensus = nil
+		f.tools <- stale
+	}
+	s = openSession(t, agentsFor(t, rt, credentialsLogin()), testSessionSpec(t))
+	err := s.Exchange(context.Background(), task("work"))
+	if err == nil || !strings.Contains(err.Error(), "arrived after native completion") {
+		t.Fatalf("call during the census: %v", err)
+	}
+	for _, r := range rt.replies {
+		if r.ID == stale.ID {
+			t.Fatal("the stale call was served")
+		}
 	}
 }
 

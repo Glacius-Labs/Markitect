@@ -99,6 +99,9 @@ type fakeImages struct {
 	calls               []string
 	ids                 []string
 	inspectErr, readErr error
+	env                 []string
+	etc                 []string
+	envErr, etcErr      error
 }
 
 func (f *fakeImages) ImageID(_ context.Context, ref string) (string, error) {
@@ -113,6 +116,20 @@ func (f *fakeImages) ImageID(_ context.Context, ref string) (string, error) {
 func (f *fakeImages) ReadImageFile(_ context.Context, id, path string) ([]byte, error) {
 	f.calls = append(f.calls, "read:"+id+":"+path)
 	return f.data, f.readErr
+}
+func (f *fakeImages) ImageEnvironment(_ context.Context, id string) ([]string, error) {
+	f.calls = append(f.calls, "env:"+id)
+	if f.env == nil {
+		return []string{"PATH=/usr/local/bin:/usr/bin", "HOME=/home/agent", "NODE_VERSION=22"}, f.envErr
+	}
+	return f.env, f.envErr
+}
+func (f *fakeImages) ImageDirectoryNames(_ context.Context, id, dir string, _ int64) ([]string, error) {
+	f.calls = append(f.calls, "list:"+id+":"+dir)
+	if f.etc == nil {
+		return []string{"etc", "etc/hosts", "etc/ssl", "etc/ssl/certs"}, f.etcErr
+	}
+	return f.etc, f.etcErr
 }
 func imagesPreparer(f *fakeImages) *MetadataPreparer {
 	return NewMetadataPreparer(func(EngineConfig) (ImageReader, error) { return f, nil })

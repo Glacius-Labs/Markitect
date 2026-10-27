@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -41,7 +42,18 @@ type credentialSource struct {
 // subscription login only, never an API key.
 var credentialModes = map[string][]string{
 	"codex-app-server": {"dedicated-runtime-login"},
-	"claude-code":      {claudecode.ModeCredentials, claudecode.ModeToken},
+	"claude-code":      {claudecode.ModeCredentials},
+}
+
+// credentialModeError names the provider and mode a credential reference
+// would need. Provider and mode are configuration words; the reference and
+// path may be sensitive and stay out.
+func credentialModeError(source credentialSource) error {
+	modes, known := credentialModes[source.Provider]
+	if !known {
+		return fmt.Errorf("%w: unknown provider %q; use codex-app-server or claude-code", errRuntimeCredential, source.Provider)
+	}
+	return fmt.Errorf("%w: provider %s takes mode %s, not %q", errRuntimeCredential, source.Provider, strings.Join(modes, " or "), source.Mode)
 }
 
 // credentialReader resolves one reference to its source and whole bytes.
@@ -58,9 +70,11 @@ func newCredentialReader(sources map[string]credentialSource) (credentialReader,
 	}
 	bound := make(map[string]credentialSource, len(sources))
 	for ref, source := range sources {
-		validMode := slices.Contains(credentialModes[source.Provider], source.Mode)
-		if ref == "" || strings.TrimSpace(ref) != ref || strings.ContainsFunc(ref, unicode.IsControl) || !utf8.ValidString(ref) || !validMode {
+		if ref == "" || strings.TrimSpace(ref) != ref || strings.ContainsFunc(ref, unicode.IsControl) || !utf8.ValidString(ref) {
 			return nil, errRuntimeCredential
+		}
+		if !slices.Contains(credentialModes[source.Provider], source.Mode) {
+			return nil, credentialModeError(source)
 		}
 		if !credentialPath(source.Path) {
 			return nil, errCredentialPath

@@ -162,6 +162,14 @@ func (s *server) start(request uint64, req frame.Start) error {
 			return errors.New("the provider was already started")
 		}
 	}
+	// No provider runs now, so nothing can change the home between this check
+	// and the start. A change refuses the start; it is never repaired.
+	if s.home != nil && s.homeReady {
+		if err := s.home.verify(); err != nil {
+			s.mu.Unlock()
+			return s.refuse(request, "private home changed: "+err.Error())
+		}
+	}
 	tools := make(map[string]frame.ToolSpec, len(req.Tools))
 	for _, t := range req.Tools {
 		if t.Name == "" || len(t.InputSchema) == 0 {

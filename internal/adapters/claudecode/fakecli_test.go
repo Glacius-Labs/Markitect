@@ -130,6 +130,8 @@ type fakeRuntime struct {
 	closed     bool
 	stopErr    error
 	initErr    error
+	refuseNext string                // agentd refuses the next response start with this reason
+	onCensus   func(rt *fakeRuntime) // runs inside each census
 }
 
 func newRuntime() *fakeRuntime {
@@ -155,6 +157,11 @@ func (f *fakeRuntime) ClearPrivateHome(context.Context) error {
 	return nil
 }
 func (f *fakeRuntime) StartProvider(_ context.Context, s frame.Start) (frame.Started, error) {
+	if reason := f.refuseNext; reason != "" && !slices.Equal(s.Argv, authStatusArgv()) {
+		f.refuseNext = ""
+		f.record("refused")
+		return frame.Started{}, fmt.Errorf("%w: the start: %s", container.ErrRefused, reason)
+	}
 	p := &fakeProcess{rt: f, start: s, stdout: newStream(), killed: make(chan struct{})}
 	for i := 0; i+1 < len(s.Argv); i++ {
 		if s.Argv[i] == "--session-id" || s.Argv[i] == "--resume" {
@@ -225,6 +232,9 @@ func (f *fakeRuntime) Stop(context.Context, int64) (frame.Exited, error) {
 }
 func (f *fakeRuntime) Census(context.Context) ([]frame.Process, error) {
 	f.record("census")
+	if f.onCensus != nil {
+		f.onCensus(f)
+	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if len(f.census) == 0 {

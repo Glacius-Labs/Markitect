@@ -1,6 +1,7 @@
 package claudecode
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"strings"
@@ -14,15 +15,10 @@ var credentialNow = time.UnixMilli(1_800_000_000_000)
 // login with refresh authority and an unrelated MCP server login.
 const fixtureCredentials = `{"claudeAiOauth":{"accessToken":"sk-ant-oat01-private-access","refreshToken":"sk-ant-ort01-private-refresh","expiresAt":1900000000000,"scopes":["user:inference","user:profile"],"subscriptionType":"max"},"mcpOAuth":{"server":{"accessToken":"private-mcp"}}}`
 
-const fixtureToken = "sk-ant-oat01-private-long-lived-token"
-
 func TestCredentialsCopyKeepsOnlyTheAccessLogin(t *testing.T) {
 	l, err := parseLogin(RuntimeCredential{Mode: ModeCredentials, Login: []byte(fixtureCredentials)}, credentialNow)
 	if err != nil {
 		t.Fatal(err)
-	}
-	if l.mode != ModeCredentials || l.method != "claude.ai" || l.token != "" {
-		t.Fatalf("login %+v", l)
 	}
 	var copied map[string]map[string]any
 	if err := json.Unmarshal(l.credentials, &copied); err != nil || len(copied) != 1 {
@@ -40,25 +36,26 @@ func TestCredentialsCopyKeepsOnlyTheAccessLogin(t *testing.T) {
 	}
 }
 
-func TestTokenLoginTravelsOnlyInTheProviderEnvironment(t *testing.T) {
-	l, err := parseLogin(RuntimeCredential{Mode: ModeToken, Login: []byte(fixtureToken + "\n")}, credentialNow)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if l.token != fixtureToken || l.credentials != nil || l.method != "oauth_token" || len(l.secrets) != 1 {
-		t.Fatalf("token login %+v", l)
-	}
-	env := providerEnvironment(l.token)
-	if env[len(env)-1] != "CLAUDE_CODE_OAUTH_TOKEN="+fixtureToken || !contains(env, "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1") {
+// The provider environment carries no credential; MCP_TOOL_TIMEOUT lies a
+// minute beyond the response's deadline, Claude Code's default without one.
+func TestProviderEnvironmentCarriesNoCredentialAndBoundsToolCalls(t *testing.T) {
+	env := providerEnvironment()
+	if !contains(env, "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1") || !contains(env, "CLAUDE_CODE_DISABLE_CLAUDE_MDS=1") {
 		t.Fatalf("environment %v", env)
 	}
-	for _, name := range environmentNames(env) {
-		if strings.Contains(name, fixtureToken) {
-			t.Fatal("environment evidence carries the token")
+	for _, entry := range env {
+		if strings.Contains(entry, "OAUTH") || strings.Contains(entry, "API_KEY") || strings.Contains(entry, "AUTH_TOKEN") {
+			t.Fatalf("credential variable %s", entry)
 		}
 	}
-	if strings.Contains(strings.Join(providerEnvironment(""), " "), "OAUTH") {
-		t.Fatal("a credentials-file login set a token variable")
+	now := time.Now()
+	ctx, cancel := context.WithDeadline(context.Background(), now.Add(2*time.Hour))
+	defer cancel()
+	if got := toolTimeout(ctx, now); got != "MCP_TOOL_TIMEOUT=7260000" {
+		t.Fatal(got)
+	}
+	if got := toolTimeout(context.Background(), now); got != "MCP_TOOL_TIMEOUT=100000000" {
+		t.Fatal(got)
 	}
 }
 
@@ -69,16 +66,15 @@ func TestLoginRefusesAPIKeysOtherModesMalformedAndExpired(t *testing.T) {
 		cred   RuntimeCredential
 		reason string
 	}{
-		{"API key mode", RuntimeCredential{Mode: "api-key", Login: []byte("sk-ant-api03-x")}, "login modes"},
-		{"API key token", RuntimeCredential{Mode: ModeToken, Login: []byte("sk-ant-api03-private-key-value")}, "API key"},
+		{"API key mode", RuntimeCredential{Mode: "api-key", Login: []byte("sk-ant-api03-x")}, "only the subscription-credentials login mode"},
+		{"token mode", RuntimeCredential{Mode: "subscription-token", Login: []byte("sk-ant-oat01-private-token")}, "only the subscription-credentials login mode"},
 		{"API key in credentials", RuntimeCredential{Mode: ModeCredentials, Login: []byte(`{"claudeAiOauth":{"accessToken":"sk-ant-api03-private"}}`)}, "API key"},
 		{"console API key file", RuntimeCredential{Mode: ModeCredentials, Login: []byte(`{"primaryApiKey":"sk-ant-api03-private"}`)}, "claudeAiOauth"},
 		{"no access token", RuntimeCredential{Mode: ModeCredentials, Login: []byte(`{"claudeAiOauth":{"refreshToken":"r"}}`)}, "access token"},
-		{"expired", RuntimeCredential{Mode: ModeCredentials, Login: []byte(expired)}, "expired"},
+		{"expired", RuntimeCredential{Mode: ModeCredentials, Login: []byte(expired)}, "run claude on the host to refresh the login"},
 		{"malformed expiry", RuntimeCredential{Mode: ModeCredentials, Login: []byte(`{"claudeAiOauth":{"accessToken":"a","expiresAt":"soon"}}`)}, "expiry"},
 		{"duplicate keys", RuntimeCredential{Mode: ModeCredentials, Login: []byte(`{"claudeAiOauth":{"accessToken":"a","accessToken":"b"}}`)}, "JSON object"},
-		{"token with spaces", RuntimeCredential{Mode: ModeToken, Login: []byte("two words in one token file")}, "printable"},
-		{"empty", RuntimeCredential{Mode: ModeToken}, "empty"},
+		{"empty", RuntimeCredential{Mode: ModeCredentials}, "empty"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			_, err := parseLogin(tc.cred, credentialNow)
