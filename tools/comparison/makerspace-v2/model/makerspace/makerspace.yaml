@@ -17,11 +17,6 @@ body: |-
 
   Four policies apply to every operation: [[Policies.authorization|authorization]], [[Policies.audit|audit]], [[Policies.money|money]] and [[Policies.time|time]].
 
-  Cross-area rules at a glance:
-
-  - A reservation needs a member in good standing, a certification for the machine's family that is valid on the reservation date, a machine without maintenance in the reserved slot, a free machine, and a slot inside opening hours that follows the booking granularity.
-  - Machine use produces a usage charge in billing, an audit entry and report data. Course enrollments and material purchases also produce charges.
-
   Out of scope: persistence across runs, network access, user interfaces, concurrency, real payments or refunds, notifications, scheduled jobs, deletion of records and integration with other systems.
 
   The Go module lives at `realization/go.mod`; the program's main package lives at `realization/cmd/makerspace`. Only the Go standard library is used. Each Package of this model is one Go package under `realization/`, named after the Package, for example `realization/billing`; `realization/protocol` and `realization/cmd/makerspace` belong to the protocol Package.

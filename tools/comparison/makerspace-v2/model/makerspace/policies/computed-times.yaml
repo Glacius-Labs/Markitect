@@ -11,6 +11,5 @@ body: |-
     - An invoice whose `dueAt` lies after 2099 is never overdue. A certification whose `expiresOn` lies after 2099 is never reported `expired`.
     - The last day a utilization report can include is `2099-12-30`, because `to` is at most `2099-12-31` and is excluded from the range.
     - A maintenance window ends at the latest at `2099-12-31T23:59Z`, so the last minute of 2099 cannot be covered. Reservations end by closing time and are not affected.
-  - **Durations.** A reservation lasts at most 240 minutes. Maintenance windows and metered sessions have no maximum length apart from the timestamp range.
 spec:
   appliesTo: [makerspace]

@@ -3,7 +3,7 @@ imports:
 id: record-payment
 kind: Policies.AuditedOperation
 body: |-
-  `appliedCents` is the smaller of `amountCents` and the invoice's `balanceCents`; `creditedCents` is `amountCents − appliedCents`. The invoice's `paidCents` increases and its `balanceCents` decreases by `appliedCents`; when `balanceCents` reaches 0 its status becomes `paid`. The member's credit balance increases by `creditedCents`. A payment record is created with the next payment identifier, `memberId` the invoice's member (whoever acts) and `at` the request time. Paying after the due date is allowed. `creditBalanceCents` is the member's credit balance after the change.
+  `appliedCents` is the smaller of `amountCents` and the invoice's `balanceCents`; `creditedCents` is `amountCents − appliedCents`. The invoice's `paidCents` increases and its `balanceCents` decreases by `appliedCents`; when `balanceCents` reaches 0 its status becomes `paid`. The member's credit balance increases by `creditedCents`. A payment record is created with the next payment identifier, `memberId` the invoice's member (whoever acts) and `at` the request time. Paying after the due date is allowed. The `invoice` result is the invoice after the change; `creditBalanceCents` is the member's credit balance after the change.
 spec:
   wireName: recordPayment
   mutation: true

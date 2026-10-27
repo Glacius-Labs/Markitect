@@ -4,7 +4,7 @@ imports:
 id: charge
 kind: Data.Entity
 body: |-
-  A charge (invoice line) on a member's account. Its amount follows [[Policies.money|money]] and is fixed when the charge is created. It has no identifier of its own.
+  A charge (invoice line) on a member's account. Its amount follows [[Policies.money|money]] and is fixed when the charge is created.
 spec:
   fields:
     - {name: kind, fieldType: charge-kind}

@@ -7,4 +7,3 @@ body: |-
 spec:
   base: integer
   lowest: 0
-  highest: 100

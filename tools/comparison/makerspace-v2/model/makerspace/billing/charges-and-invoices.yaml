@@ -18,11 +18,5 @@ body: |-
   5. `creditAppliedCents` is the smaller of the member's credit balance and `totalCents`. The credit balance decreases by that amount.
   6. `paidCents` is 0. `balanceCents` is `totalCents − creditAppliedCents − paidCents`.
   7. `status` is `paid` when `balanceCents` is 0, otherwise `open`.
-
-  Because request times never go backwards and generation needs the month to have ended, no charge can be created for a month after that month was invoiced.
-
-  An invoice is **overdue** at a request time when its status is `open` and the request time is at or after `dueAt`. The `overdue` field reports this at the request time of the response. Being overdue has no other effect.
-
-  Worked example: member `ada` on tier `plus` uses a machine with rate 45 from `2026-03-03T10:00Z` to `10:37`. At check-out a usage charge of 1499 cents is created. Generating `2026-03` at `2026-04-01T08:00Z` gives `ada` an invoice with the membership line (4900) and the usage line (1499): `totalCents` 6399, due `2026-04-15T08:00Z`.
 spec:
   appliesTo: [makerspace/billing, makerspace/bookings, makerspace/training, makerspace/materials, makerspace/reporting]
