@@ -22,6 +22,6 @@ Context (recorder's summary): the session proposed GitHub only at the runner's e
 
 Recorder's reading:
 
-- **Agents collaborate through a Git remote, like engineers in a company.** Before a run, a run branch is created from the target branch. Each agent pulls from the remote, commits and pushes. Managers integrate their children's work the same way. No Git directory is mounted into a container, and no bundle is handed back.
-- **No owner review of the result.** The owner models, and the agents apply the model. A verified result lands on the target branch without a pull request that the owner reviews or merges. Trust comes from the many independent agents and the verification, not from the owner reading the diff.
+- **Agents collaborate through a Git remote, like engineers in a company.** Before a run, a run branch is created from the target branch. Each agent pulls from the remote, commits and pushes. Managers integrate their children's work the same way. No Git directory is mounted into a container.
+- **No owner review of the result.** The owner models, and the agents apply the model. A verified result lands on the target branch without a pull request that the owner reviews or merges. Trust comes from the many agents working independently, not from the owner reading the diff.
 - **Superseded and still open.** These statements reverse the earlier rule that Apply never commits, merges or pushes, and the runner's hand-back as a branch that the owner merges. They do not settle where the remote lives, how agents authenticate, or what happens when the target branch moves during a run. Those mechanics are open design questions in the [delivery plan](../../implementation-plan.md#git-remote-collaboration-owner-direction-27-october).

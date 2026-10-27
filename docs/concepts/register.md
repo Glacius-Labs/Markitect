@@ -81,7 +81,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-064](#dec-064-checked-recursive-apply-passes-and-manager-teams) | Decision | Checked recursive Apply passes and Manager teams | Base integrated; evidence-driven hardening adopted, implementation and new evidence pending |
 | [DEC-065](#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration) | Decision | Work through the cockpit: agent-proposed model changes and configuration | Accepted by the owner; implementation started |
 | [DEC-066](#dec-066-the-cockpit-is-markitects-desktop-app-and-starts-and-stops-apply) | Decision | The cockpit is Markitect's desktop app and starts and stops Apply | Accepted by the owner; implemented; first real acceptance recorded |
-| [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs) | Decision | Agent workspaces and reviewed handoffs | Accepted; partially superseded by the V1 scope clarification and [DEC-068](#dec-068-v1-concept-10) |
+| [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs) | Decision | Agent workspaces and reviewed handoffs | Accepted; partially superseded by the V1 scope clarification and [DEC-068](#dec-068-v1-concept-10); no-push rule and handoff transport superseded by DEC-078 |
 | [DEC-068](#dec-068-v1-concept-10) | Decision | V1 concept 1.0 | Accepted; implementation tracked in the delivery plan |
 | [DEC-069](#dec-069-documentation-is-written-in-english) | Decision | Documentation is written in English | Accepted; canonical-model documents translated (#679), historical records archived (#688), core vocabulary translated (#690) |
 | [DEC-070](#dec-070-parallel-writers-where-useful) | Decision | Parallel writers where useful | Accepted |
@@ -865,11 +865,13 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Proportionate enforcement:** Ownership, fixed intent and review independence are working rules checked through normal review. Per-file write overlays, read-only reviewer mounts, container freezing and custom proof/evidence protocols are not required. Ordinary command observations and tests remain available for judgment; Git commits identify the reviewed result. The Host supplies execution, communication, retained results and finite limits.
 - **Replaced mechanics:** No domain Turns, repeated-progress/empty-Turn rules, shared writable stand, universal basis approval, general basis/result invalidation graph, mandatory probe-receipt/dispute/disposition system or automatic whole-tree correction loop. Provider conversation events remain internal adapter facts. This supersedes conflicting mechanics in DEC-037, DEC-039, DEC-051, DEC-056, DEC-059 and DEC-064, without deleting their original sources or invalidating historical evidence.
 - **Retained intent:** Model authority, required Package responsibility, strict initial file accounting, preservation, parent/child communication, meaningful independent review and integration, required final checks, honest incomplete outcomes and transfer without an automatic owner commit/push. Confirmed model problems still end execution and are corrected outside it. Extract keeps its distinct authority and separately owned workflow.
+- **Superseded in part, 27 October 2026:** [DEC-078](#dec-078-agents-collaborate-through-a-git-remote-without-owner-review) ends the retained rule that transfer makes no automatic owner commit or push, and moves handoffs to a Git remote. The rest of this entry stands.
 - **Owners and scope:** [Accepted workflow](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/manager-apply-workflow.md); [Apply rebuild plan](../implementation-plan.md#apply-rebuild-plan). Current executable/configuration/canonical self-model migrate only with explicitly commissioned implementation slices. No provider allowance, new study, release or deployment is granted. The old reuse rollback is history, not the implementation plan for this different workspace architecture.
 
 ### DEC-068 V1 concept 1.0
 
 - **Status:** Accepted by the owner, 24 October 2026 ([decision record](sources/v1-concept-decisions-20261024.md); [owner concept v0.18](sources/v1-concept-v018-20261024.md)).
+- **Pending change, 27 October 2026:** [DEC-078](#dec-078-agents-collaborate-through-a-git-remote-without-owner-review) changes publication and handoffs; the concept passages it names change with its design.
 - **Decision:** [Concept 1.0](v1-concept.md) is the consolidated V1 concept reference. It condenses the owner's v0.18, keeps its decisions D1–D9 and closes its open items A1–A6 and R1–R3 with D10–D18: questions only between direct parent and child (D10); every Implement child candidate reaches the parent with its check result, invalid candidates cannot be integrated, and a child can use a check tool for optional self-correction (D11); a judgment belongs to the assignment and assessed state, not to a message, with an explicit host-side assignment state (D12); agents get tasks, not process, through a fixed small tool set (D13); the V1 harness uses native base/developer instructions (D14); closed-result validation belongs to the Run contract (D15); exactly three mandates (D16); bounded, stably ordered Notes pages within the transport limit (D17); V1 acceptance covers Codex, with Claude as the next provider on the stabilized contract (D18).
 - **Supersedes:** conflicting statements in the [V1 scope clarification](sources/v1-scope-clarification-20261023.md), the v0.17-based [architecture](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/design/v1-execution-architecture.md) as previously written and [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs), for example questions to any Manager of a Run and a fresh judgment after every active message. Their original sources remain unchanged.
 - **Provider scope:** D18 was proposed as a recommendation and accepted with the other proposals; see the recorder's note in the decision record.
@@ -973,8 +975,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 - **Status:** Accepted by the owner as a direction, 27 October 2026 ([verbatim source](sources/git-remote-collaboration-20261027.md)). The mechanics are open design work in the [delivery plan](../implementation-plan.md#git-remote-collaboration-owner-direction-27-october). Until that work lands, the implementation keeps the current mount, hand-back and working-tree publication.
 - **Decision (recorded meaning, as in the source):**
-  - Agents collaborate through a Git remote, like engineers and their managers in a company. Before a run, a run branch is created from the target branch. Each agent pulls, commits and pushes, and Managers integrate their children's work the same way. No Git directory is mounted into a container, and no bundle is handed back.
-  - The owner models, and the agents apply the model. A verified result lands on the target branch without a pull request that the owner reviews or merges. Trust comes from the many independent agents and the verification, not from the owner reading the diff.
+  - Agents collaborate through a Git remote, like engineers and their managers in a company. Before a run, a run branch is created from the target branch. Each agent pulls, commits and pushes, and Managers integrate their children's work the same way. No Git directory is mounted into a container.
+  - The owner models, and the agents apply the model. A verified result lands on the target branch without a pull request that the owner reviews or merges. Trust comes from the many agents working independently, not from the owner reading the diff.
 - **Retained:**
   - The model is authoritative, and model blockers end execution ([DEC-063](#dec-063-the-model-is-authoritative-defects-escalate)).
   - Runs are closed: no question reaches the owner during a run.
@@ -983,15 +985,15 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - Provider CLIs log in with a normal account only, never with an API key.
 - **Supersedes:**
   - [DEC-035](#dec-035-committed-model-in-owner-commit-accepts-the-result)'s rule that Apply never commits, merges or pushes, and its owner commit as the acceptance of the result.
-  - The transfer without an automatic owner commit or push retained in [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs).
+  - [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs)'s retained rule that transfer makes no automatic owner commit or push.
   - The runner's checkout mount and branch hand-back in [DEC-077](#dec-077-development-pace-and-linux-first-execution).
-  - [Concept 1.0](v1-concept.md) §21.4 and the glossary's "Publication" entry change with the design.
+  - [Concept 1.0](v1-concept.md) changes with the design: §10.4, §17.5 ("A Git server platform is not intended"), §21.2 to §21.4, V15 and the glossary's "Publication" entry, and the [architecture](../architecture.md)'s "no Git server".
 - **Open:**
   - Where the remote lives, and how agents authenticate to it.
   - What happens when the target branch moves during a run.
   - How the target branch is named.
   - The cleanup of run branches and the retention of evidence.
-  - Whether V1's acceptance covers the new publication.
+  - Whether V1's acceptance covers the new publication ([DEC-068](#dec-068-v1-concept-10)).
 
 ## Promises
 
