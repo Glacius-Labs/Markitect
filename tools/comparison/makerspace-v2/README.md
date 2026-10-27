@@ -69,6 +69,8 @@ Architecture rules for structural checks (oracle authors derive their checks fro
 - **Accepted difference.** The model drops w0 §1's "cross-area rules at a glance" (R3: it restates the reservation and invoice rules); the neutral copy keeps it. Neither arm loses information.
 - **Arm-equal wording.** `spec/render.py check` refuses Markitect vocabulary (Package, Definition, Kind, Library aliases, Manager, "model", body-link brackets) in the single-agent document and in §16.
 - **Change deltas carry section 16 lines.** `requirements/c2.md`, `c5.md` and `c6.md` add the architecture lines those steps change (C2: the bookings dependency on safety and the bookings and billing interfaces; C5: the billing interface; C6: the training interface), rendered from the model like §16 itself: pilot only. The owner decided on 27 October 2026 that C2's lockouts live in bookings.
+- **Comparable data.** The single-agent documents here carry section 16 and its changes; Phase C's arm B never had them, so old arm B results are no baseline for either side of this material. The old-versus-new comparison runs Markitect on the Phase C model and on this model on one current source; a single-agent reference would have to be re-run on these documents. Never mix in old arm B data.
+- **Task typing.** C1, C2, C5 and C6 change interface or dependency lines of section 16, so in the pilot they count as partly architecture changes besides their behavior change.
 - **To watch in the pilot.** The `policies` Manager's context of 187 items may drive cost or failures on the Markitect side.
 
 ## Findings for the Libraries
