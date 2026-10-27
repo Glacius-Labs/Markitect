@@ -40,7 +40,7 @@ The suite writes `TASK.json`. An arm reads nothing else from the suite.
 | `taskId` | Suite, project, chain and step, for example `suite-1/library/chain-2/S3` |
 | `start` | The target repository as a Git bundle, its commit and tree. The arm works on this commit and nothing else |
 | `intent` | The step's intent in both forms, built from one canonical model snapshot: the model (`.markitect/`, with the execution configuration) and the ordinary document (`requirements.md`) rendered from it with the renderer's equivalence check. A model arm (M, P, G) gets only the model in `start`; arm K gets only the document. The same meaning is the fairness condition, proven by the renderer's check |
-| `provider`, `model`, `effort` | The model every arm of the suite uses, for example Codex Luna at high effort ([owner decision](../concepts/sources/owner-morning-decisions-20261027.md)) |
+| `provider`, `model`, `effort` | The model every arm of the suite uses, for example Codex Luna at high effort ([owner decision](../concepts/sources/owner-morning-decisions-20261027.md)), or one Claude model in a Claude suite ([below](#owner-decisions)) |
 | `limits` | Wall deadline, aggregate CPU, memory and process ceiling, network policy, and the shared engine lock. Equal for all arms |
 | `login` | The path of the account login. The arm passes it on without its refresh token and never writes it to the output |
 | `previous` | The arm's own output directory of the chain's previous step, or none. What an arm carries over (K resumes its thread, M keeps its state directory) is its own business, but it reads only its own previous output |
@@ -103,8 +103,15 @@ The outcome of a run is decided by these shared steps, never by the arm's own re
 4. **Portfolio and contract:** the evaluation contract and the follow-up study go into `docs/validation/` for owner review; new projects and their oracles follow it.
 5. **First bounded dispatch,** after the owner's approval: one Library task per arm on the suite's model, as a smoke of the interface, not as a counted run.
 
+## Owner decisions
+
+- **Suites by provider (27 October 2026).** The owner, in the lane 4 session: "Yes: arm P runs in a separate Claude suite with M through K1 and K as one Claude Code session; Luna suites hold M, G and K."
+  - A suite fixes one provider and model for every arm.
+  - Arm P runs only in Claude Code, so it takes part only in a Claude suite. There M runs through the Claude adapter (K1) and K as one Claude Code session.
+  - Luna suites hold M, G and K.
+  - A Claude suite uses the owner's Claude subscription. M in a Claude suite needs K1's native qualification (K1b) first.
+
 ## Open owner questions
 
-1. **Arm P and the suite's model.** Arm P runs only in Claude Code, so it cannot run on Codex Luna. The recommendation: a suite fixes one provider and model for every arm; P takes part in a Claude suite in which M runs through the Claude adapter (K1) and K through one Claude Code session, and Luna suites hold M, G and K. A Claude suite uses the owner's Claude subscription.
-2. **The baseline's continuation.** Does K continue one agent thread across a chain (as in Phase C) or start a fresh session per step with the repository as its only memory? The recommendation is to decide after the early probe that compares both on Phase C material.
-3. **The evaluation contract.** Does the owner want the contract reviewed and approved as binding before the first counted suite? The recommendation is yes, so that the decision rule is fixed before any data.
+1. **The baseline's continuation.** Does K continue one agent thread across a chain (as in Phase C) or start a fresh session per step with the repository as its only memory? The recommendation is to decide after the early probe that compares both on Phase C material.
+2. **The evaluation contract.** Does the owner want the contract reviewed and approved as binding before the first counted suite? The recommendation is yes, so that the decision rule is fixed before any data.
