@@ -804,7 +804,7 @@ Before owner acceptance, provider scope, runtime limits, repetition evidence and
 |---|---|
 | [Owner concept v0.18](sources/v1-concept-v018-20261024.md), 24 October 2026 | Verbatim text of the consolidated owner version with D1–D9 and its sources Q1–Q4, in German. |
 | [Decision record](sources/v1-concept-decisions-20261024.md), 24 October 2026 | Owner acceptance of the proposed decisions D10–D18. |
-| [Conformance audit](../development/concept-conformance-audit-20261024.md), 24 October 2026 | Static review at commit `6c7d758c`; origin of A1–A6 and R1–R3. Not a replacement concept. |
+| [Conformance audit](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/development/concept-conformance-audit-20261024.md), 24 October 2026 | Static review at commit `6c7d758c`; origin of A1–A6 and R1–R3. Not a replacement concept. |
 | [V1 scope clarification](sources/v1-scope-clarification-20261023.md), [source implementation approval](sources/v1-source-implementation-approval-20261023.md) | Earlier owner foundations, consolidated by v0.18 and this version. |
 
 Changes to this document show whether they change the target, choose a technical variant or only improve the text. A change of the target needs an owner decision with a register entry. Implementation status and evidence belong in the delivery plan and in validation reports, not here. Like all Markitect documentation, this document is written in English ([DEC-069](register.md#dec-069-documentation-is-written-in-english)).

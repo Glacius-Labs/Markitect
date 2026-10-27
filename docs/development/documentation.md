@@ -16,7 +16,7 @@ Start at the [documentation map](../README.md) and the nearest local map. Search
 | Current design documents | [Design map](../design/README.md) |
 | Earlier designs, experiments and records | [Archive index](../archive.md) |
 | Fixed source, adoption, or method evidence | [Validation map](../validation/README.md) and the individual report |
-| Release asset claims | [Production assessment](../validation/production-assessment.md) |
+| Published asset identity of the retired releases | [Distribution retirement record](../validation/distribution-retirement-20261017.md) and its [retired release mapping](../validation/retired-releases-20261017.json) |
 | Repository layout and where new files go | [Repository layout](repository-layout.md) |
 
 Dated proposals, supplied research and earlier records are not kept on Main. They stay at the archive points listed in the [archive index](../archive.md), which is the one place to find them. A proposal or assessment does not become product behavior merely because it is documented. Material that becomes historical moves out of Main in one change: remove its files, add an index entry and rewrite remaining links to full-SHA permalinks.

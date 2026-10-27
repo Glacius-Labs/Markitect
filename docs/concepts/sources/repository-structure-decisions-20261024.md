@@ -1,6 +1,6 @@
 # Owner decisions: repository structure
 
-Date: 24 October 2026. Source: the owner's direct message in a Claude Code session, after the R1 inventory ([repository structure](../../development/repository-structure.md), PR #680) listed six decisions for the owner in its §11, each with the assistant's recommendation. The owner statement is verbatim.
+Date: 24 October 2026. Source: the owner's direct message in a Claude Code session, after the R1 inventory ([repository structure](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/development/repository-structure.md), PR #680) listed six decisions for the owner in its §11, each with the assistant's recommendation. The owner statement is verbatim.
 
 ## Owner decision (verbatim)
 

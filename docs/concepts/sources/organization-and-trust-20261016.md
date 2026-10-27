@@ -2,7 +2,7 @@
 
 Date: 16 October 2026.
 
-Recorder's note: Direct owner messages from the Markitect chat comparing the Manager north star with Main and discussing future use. The two statements below are preserved in their original language and order; paragraph spacing is normalized. The owner subsequently asked to keep these thoughts in the repository documentation, preferably on the concept branch. The [reflection](../reflections/organization-and-trust-20261016.md) separates the summary from assistant interpretation. These statements describe desired outcomes, experience and hypotheses; they do not adopt every assistant proposal from the conversation.
+Recorder's note: Direct owner messages from the Markitect chat comparing the Manager north star with Main and discussing future use. The two statements below are preserved in their original language and order; paragraph spacing is normalized. The owner subsequently asked to keep these thoughts in the repository documentation, preferably on the concept branch. The [reflection](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/concepts/reflections/organization-and-trust-20261016.md) separates the summary from assistant interpretation. These statements describe desired outcomes, experience and hypotheses; they do not adopt every assistant proposal from the conversation.
 
 ## Desired working life
 

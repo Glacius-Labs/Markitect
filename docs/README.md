@@ -8,7 +8,7 @@ Use this map to find the document that owns a decision, a guide or a piece of ev
 |---|---|
 | Implement Markitect V1 | [V1 concept 1.0](concepts/v1-concept.md), [delivery plan](implementation-plan.md), [concrete Go architecture](design/v1-execution-architecture.md), [code map](development/code-map.md) and [qualification record](validation/v1-qualification-20261024.md) |
 | Understand what Markitect is for, before assessing or redirecting it | [Markitect in brief](vision.md#markitect-in-brief), [Common misreadings](vision.md#common-misreadings) and the [concept register](concepts/register.md) |
-| Understand where the idea came from and why its mechanisms might help | [Origin and rationale](concepts/origin-and-rationale.md), the [owner's original account](concepts/sources/owner-origin-20261015.md) and the [product reflections](concepts/reflections/README.md) |
+| Understand where the idea came from and why its mechanisms might help | [Origin and rationale](concepts/origin-and-rationale.md) and the [owner's original account](concepts/sources/owner-origin-20261015.md); the archived product reflections are listed in the [archive index](archive.md#archived-pages) |
 | Use the current Model → Artifacts workflow | [Project workflow](guides/project-workflow.md), [Project operations](guides/project-operations.md) and [Provider adapters](guides/provider-adapters.md) |
 | Understand the technical boundaries | [Architecture](architecture.md), [Source snapshots](guides/source-snapshots.md) and [Measurement](guides/measurement.md) |
 | Read the language specification | [Language contract](design/language-contract.md) and [diagnostic contract](design/diagnostic-contract.md), listed in the [design map](design/README.md) |
@@ -25,7 +25,7 @@ Use this map to find the document that owns a decision, a guide or a piece of ev
 | Technical behavior and product boundaries | [Architecture](architecture.md) and the guides above |
 | Work-package scope, dependencies and reservations | [Delivery plan](implementation-plan.md); actual candidates and checks live in chats and PRs |
 | Source and native evidence of V1 | [Qualification record](validation/v1-qualification-20261024.md) and the [validation map](validation/README.md), read at their recorded scope and source |
-| Published asset identity and release claims | [Production assessment](validation/production-assessment.md) |
+| Published asset identity of the retired releases | [Distribution retirement record](validation/distribution-retirement-20261017.md) and its [retired release mapping](validation/retired-releases-20261017.json) |
 | Pre-reset commits, earlier designs and retired scope | [Archive index](archive.md) |
 | Contribution and hosted validation commands | [CONTRIBUTING.md](../CONTRIBUTING.md) |
 
