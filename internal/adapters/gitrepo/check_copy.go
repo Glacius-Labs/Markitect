@@ -8,7 +8,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"runtime"
 	"slices"
 
 	"github.com/Glacius-Labs/Markitect/internal/run"
@@ -44,9 +43,6 @@ func (c *localCopy) Materialize(ctx context.Context, tree snapshot.Tree, dirs []
 	for _, e := range tree.Entries() {
 		if err = ctx.Err(); err != nil {
 			return copy, err
-		}
-		if runtime.GOOS == "windows" && e.Mode() == snapshot.Executable {
-			return copy, fmt.Errorf("local Windows check copy cannot establish POSIX executable mode")
 		}
 		file := filepath.Join(dir, filepath.FromSlash(e.Path().String()))
 		if err = os.MkdirAll(filepath.Dir(file), 0700); err != nil {

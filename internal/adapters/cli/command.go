@@ -94,7 +94,8 @@ apply options:
                            run configuration's local engine: it clones committed
                            history from the read-only .git directory and returns
                            a verified change as a new branch; the checkout itself
-                           is never written
+                           is never written. Required on Windows: the Apply host
+                           runs on Linux
   --result-branch NAME     that branch (default markitect/apply-<apply id>)
 
 Exit codes: 0 requested stage passed; 1 known failure; 2 usage;
