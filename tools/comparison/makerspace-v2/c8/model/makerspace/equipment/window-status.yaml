@@ -1,0 +1,10 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: window-status
+kind: Values.Enumeration
+body: |-
+  The status of a maintenance window.
+spec:
+  members:
+    - {value: scheduled}
+    - {value: cancelled}

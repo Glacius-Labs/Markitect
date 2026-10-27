@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: minute
+kind: Values.Unit
+body: |-
+  One minute of time.
+spec:
+  symbol: min

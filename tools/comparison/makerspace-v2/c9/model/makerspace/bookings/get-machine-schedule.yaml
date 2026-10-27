@@ -1,0 +1,26 @@
+imports:
+  - {package: markitect/api, as: Api}
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/equipment, as: Equipment}
+id: get-machine-schedule
+kind: Api.Operation
+body: |-
+  Shows one machine's day: `openingHours` holds that day's opening and closing times; every day has opening hours; `reservations` are the machine's reservations whose `start` falls on that date, in every status except `cancelled`; `maintenance` are the machine's scheduled windows that overlap the interval from `00:00` of that date to `00:00` of the next date; `lockouts` are the machine's lockouts that overlap the same interval.
+spec:
+  wireName: getMachineSchedule
+  mutation: false
+  arguments:
+    - {name: machineId, fieldType: Policies.identifier, refersTo: Equipment.machine}
+    - {name: date, fieldType: Policies.date}
+  results:
+    - {name: machineId, fieldType: Policies.identifier}
+    - {name: date, fieldType: Policies.date}
+    - {name: openingHours, fieldType: opening-hours-of-day}
+    - {name: reservations, fieldType: reservation, list: true}
+    - {name: maintenance, fieldType: Equipment.maintenance-window, list: true}
+    - {name: lockouts, fieldType: lockout, list: true}
+  permissions:
+    - {role: Policies.member-role, scope: all}
+    - {role: Policies.staff-role, scope: all}
+    - {role: Policies.admin-role, scope: all}
+    - {role: Policies.steward-role, scope: all}

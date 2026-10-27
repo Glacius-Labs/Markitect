@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: time-regression
+kind: Api.RefusalCode
+body: |-
+  `at` is earlier than the request time of the latest request answered `ok`.
+spec:
+  code: time_regression

@@ -1,0 +1,16 @@
+imports:
+  - {package: markitect/practice, as: Practice}
+id: audit
+kind: Practice.Rule
+body: |-
+  Operations are either mutations or reads, as each operation states. Every request to a mutation that is answered `ok` appends exactly one [[audit-entry|audit entry]] with outcome `accepted`, even when the operation changes no data, such as setting a member's standing to its current value, and every request refused with [[forbidden|`forbidden`]] appends exactly one entry with outcome `refused`. This holds for every operation, mutations and reads alike, and for both kinds of `forbidden`: a role without permission (check 4) and an ownership violation (check 6). Reads answered `ok`, other refusals and invalid requests append nothing. Entries are never changed or removed.
+
+  An audit entry has these fields: `seq`, the entry's position in the log, starting at 1 and increasing by 1 for each entry of the one shared sequence; `at`, the request time; `actor`, the acting user's identifier; `actorRole`, that user's role; `op`, the requested operation's name; `target`, a string that identifies the record the operation acted on, as each mutation's [[auditTarget|audit target]] states, or `null` in a refusal entry; `outcome`, `accepted` or `refused`.
+
+  A refusal entry changes nothing else: no other record, no identifier counter, and the request-time order is still set only by requests answered `ok`. A refusal entry can therefore carry a later `at` than the accepted entry that follows it; `listAuditEntries` still returns entries in `seq` order. A request that fails an earlier check than the permission checks, such as `time_regression`, is not recorded, even when the actor also lacks permission.
+
+  Example: member `ada` sends `listAuditEntries` at `2026-03-05T10:00Z`. The response is a `forbidden` refusal, and the log gains `{"seq": 7, "at": "2026-03-05T10:00Z", "actor": "ada", "actorRole": "member", "op": "listAuditEntries", "target": null, "outcome": "refused"}` (with `seq` the next number).
+
+  Admins read the log with [[list-audit-entries|`listAuditEntries`]].
+spec:
+  appliesTo: [makerspace]

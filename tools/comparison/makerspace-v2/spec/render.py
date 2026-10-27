@@ -23,7 +23,8 @@ import re
 import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
-TITLES_BY_STEP = {"w0": "W0 (fresh build)", "c1": "after C1"}
+STEPS = ["w0", "c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9"]
+TITLES_BY_STEP = {"w0": "W0 (fresh build)", **{s: f"after {s.upper()}" for s in STEPS[1:]}}
 LINK = re.compile(r"\[\[([^\]|]+)(?:\|([^\]]+))?\]\]")
 SUBSTITUTIONS = [("this model", "this document"), ("of the model", "of this document")]
 # Words that would tell the single-agent arm about Markitect (arm-equal wording).
@@ -31,7 +32,11 @@ FORBIDDEN = re.compile(r"Package|Definition|\bKinds?\b|\b(?:Core|Values|Data|Api
 AREAS = ["members", "training", "equipment", "bookings", "materials", "billing", "safety", "reporting"]
 TITLES = {"members": "Members", "training": "Training", "equipment": "Equipment", "bookings": "Bookings",
           "materials": "Materials", "billing": "Billing", "safety": "Safety", "reporting": "Reporting"}
-ROLES = [("member-role", "member"), ("staff-role", "staff"), ("admin-role", "admin")]
+ALL_ROLES = [("member-role", "member"), ("staff-role", "staff"), ("admin-role", "admin"), ("steward-role", "steward")]
+
+
+def roles(model):
+    return [(r, n) for r, n in ALL_ROLES if ("makerspace/policies", r) in model]
 
 
 # ---------------------------------------------------------------- loading
@@ -210,10 +215,10 @@ def render_operation(model, d):
     results = s.get("results", [])
     out.append("- Result: " + ("; ".join(f"`{r['name']}` ({field_phrase(model, d, r)})" for r in results) or "none") + ".")
     given = {model[resolve(model, d, p["role"])]["id"]: p["scope"] for p in s.get("permissions", [])}
-    unknown = set(given) - {role for role, _ in ROLES}
+    unknown = set(given) - {role for role, _ in roles(model)}
     if unknown:
         raise ValueError(f"{d['id']}: permission for a role the document does not list: {sorted(unknown)}")
-    out.append("- Permissions: " + ", ".join(f"{name} {given.get(role, 'none')}" for role, name in ROLES) + ".")
+    out.append("- Permissions: " + ", ".join(f"{name} {given.get(role, 'none')}" for role, name in roles(model)) + ".")
     if "auditTarget" in s:
         out.append(f"- Audit target: `{s['auditTarget']}`.")
     return out + [""]
@@ -322,7 +327,7 @@ def render(model, step="w0"):
     out += [f"- Unit {d['id']} (`{d['spec']['symbol']}`): {text(d['body'])}" for d in pol if kind_of(d) == "Unit"] + [""]
     out += [line for d in pol if kind_of(d) == "Entity" for line in render_entity(model, d)]
     out += ["### Roles", ""] + [f"- `{model[('makerspace/policies', r)]['id'].split('-')[0]}`: {text(model[('makerspace/policies', r)]['body'])}"
-                                for r, _ in ROLES] + [""]
+                                for r, _ in roles(model)] + [""]
     out += ["### Shared refusal codes", ""] + render_codes(model, pol)
     out += ["### Operations", ""]
     out += [line for d in pol if kind_of(d) in ("Operation", "AuditedOperation") for line in render_operation(model, d)]
@@ -351,9 +356,9 @@ def check(model, doc, step="w0"):
         if not neutral.endswith("\n\n" + section):
             return "requirements/w0.md does not end with the model's architecture section"
     else:
-        # A change step's neutral delta states every architecture line that differs from W0.
+        # A change step's neutral delta states every architecture line that differs from the step before.
         delta = (HERE.parent / "requirements" / f"{step}.md").read_text(encoding="utf-8")
-        before = set(render_architecture(load("w0")))
+        before = set(render_architecture(load(STEPS[STEPS.index(step) - 1])))
         for line in render_architecture(model):
             if line and line not in before and line not in delta:
                 return f"requirements/{step}.md does not state the changed architecture line: {line[:80]}"

@@ -1,0 +1,17 @@
+imports:
+  - {package: markitect/data, as: Data}
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/equipment, as: Equipment}
+id: course
+kind: Data.Entity
+body: |-
+  A course that teaches the safe use of one tool family, with a fee and a capacity.
+spec:
+  fields:
+    - {name: courseId, fieldType: Policies.identifier}
+    - {name: familyId, fieldType: Policies.identifier, refersTo: Equipment.family}
+    - {name: title, fieldType: Policies.text}
+    - {name: feeCents, fieldType: fee-cents}
+    - {name: capacity, fieldType: capacity}
+    - {name: enrolledCount, fieldType: Policies.count}
+  key: courseId

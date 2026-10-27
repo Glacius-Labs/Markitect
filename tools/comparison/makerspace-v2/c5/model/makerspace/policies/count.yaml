@@ -1,0 +1,9 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: count
+kind: Values.Scalar
+body: |-
+  A count, quantity or sequence number; never negative.
+spec:
+  base: integer
+  lowest: 0

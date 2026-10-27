@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: invalid-interval
+kind: Api.RefusalCode
+body: |-
+  An interval's end is not after its start, or a report range is longer than allowed.
+spec:
+  code: invalid_interval

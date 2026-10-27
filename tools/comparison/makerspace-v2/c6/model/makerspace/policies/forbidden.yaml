@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: forbidden
+kind: Api.RefusalCode
+body: |-
+  The actor's role may not use the operation, or may use it only for the actor's own records and the record concerned belongs to another member.
+spec:
+  code: forbidden

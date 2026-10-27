@@ -1,0 +1,10 @@
+imports:
+  - {package: markitect/core, as: Core}
+  - {package: markitect/api, as: Api}
+id: AuditedOperation
+kind: Core.Kind
+body: |-
+  An operation that changes state and therefore names the target of its audit entry.
+spec:
+  implements: [Api.Operation]
+  properties: [Api.wireName, Api.mutation, Api.arguments, Api.refusals, Api.results, Api.permissions, auditTarget]

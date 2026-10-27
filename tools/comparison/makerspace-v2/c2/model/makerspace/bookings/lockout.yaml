@@ -1,0 +1,18 @@
+imports:
+  - {package: markitect/data, as: Data}
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/equipment, as: Equipment}
+  - {package: makerspace/safety, as: Safety}
+id: lockout
+kind: Data.Entity
+body: |-
+  A lockout of one incident's machine, generated identifier `lock-N`.
+spec:
+  fields:
+    - {name: lockoutId, fieldType: Policies.identifier}
+    - {name: incidentId, fieldType: Policies.identifier, refersTo: Safety.incident}
+    - {name: machineId, fieldType: Policies.identifier, refersTo: Equipment.machine}
+    - {name: start, fieldType: Policies.timestamp}
+    - {name: end, fieldType: Policies.timestamp}
+    - {name: cancelledReservationIds, fieldType: Policies.identifier, list: true, refersTo: reservation}
+  key: lockoutId

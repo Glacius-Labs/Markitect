@@ -1,0 +1,26 @@
+imports:
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/members, as: Members}
+  - {package: makerspace/billing, as: Billing}
+id: enroll-in-course
+kind: Policies.AuditedOperation
+body: |-
+  Enrolls the member in the course. The enrollment gets status `enrolled`, `enrolledAt` equal to the request time and `completedAt` `null`. A course [[Billing.charge|charge]] is created for the member: `kind` `course`, `ref` the course identifier, `quantity` 1, `unitPriceCents` the course fee, `discountPercent` 0, `at` the request time. A course with fee 0 creates a charge of 0 cents. The `course` result is the course after the change.
+spec:
+  wireName: enrollInCourse
+  mutation: true
+  arguments:
+    - {name: courseId, fieldType: Policies.identifier, refersTo: course}
+    - {name: memberId, fieldType: Policies.identifier, refersTo: Members.member}
+  refusals:
+    - {refusal: Members.member-suspended, when: the member is not in good standing}
+    - {refusal: already-enrolled, when: "the member's enrollment in this course has status `enrolled`"}
+    - {refusal: course-full, when: "`enrolledCount` equals `capacity`"}
+  results:
+    - {name: enrollment, fieldType: enrollment}
+    - {name: course, fieldType: course}
+  permissions:
+    - {role: Policies.member-role, scope: own}
+    - {role: Policies.staff-role, scope: all}
+    - {role: Policies.admin-role, scope: all}
+  auditTarget: courseId/memberId

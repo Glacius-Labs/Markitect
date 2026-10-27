@@ -1,0 +1,9 @@
+imports:
+  - {package: markitect/architecture, as: Architecture}
+id: reporting-dependencies
+kind: Architecture.DependencyRule
+body: |-
+  The reporting module depends only on equipment, bookings, billing, policies.
+spec:
+  appliesTo: [makerspace/reporting]
+  mayDependOn: [makerspace/equipment, makerspace/bookings, makerspace/billing, makerspace/policies]

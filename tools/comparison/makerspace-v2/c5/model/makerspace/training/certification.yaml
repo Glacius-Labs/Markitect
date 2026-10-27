@@ -1,0 +1,16 @@
+imports:
+  - {package: markitect/data, as: Data}
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/members, as: Members}
+  - {package: makerspace/equipment, as: Equipment}
+id: certification
+kind: Data.Entity
+body: |-
+  A member's certification for one tool family.
+spec:
+  fields:
+    - {name: memberId, fieldType: Policies.identifier, refersTo: Members.member}
+    - {name: familyId, fieldType: Policies.identifier, refersTo: Equipment.family}
+    - {name: issuedOn, fieldType: Policies.date}
+    - {name: expiresOn, fieldType: Policies.date}
+    - {name: status, fieldType: certification-status}

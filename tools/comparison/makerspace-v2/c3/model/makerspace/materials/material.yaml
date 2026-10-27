@@ -1,0 +1,14 @@
+imports:
+  - {package: markitect/data, as: Data}
+  - {package: makerspace/policies, as: Policies}
+id: material
+kind: Data.Entity
+body: |-
+  A material sold by unit, with a unit price and a stock count.
+spec:
+  fields:
+    - {name: materialId, fieldType: Policies.identifier}
+    - {name: name, fieldType: Policies.text}
+    - {name: unitPriceCents, fieldType: unit-price-cents}
+    - {name: stock, fieldType: Policies.count}
+  key: materialId

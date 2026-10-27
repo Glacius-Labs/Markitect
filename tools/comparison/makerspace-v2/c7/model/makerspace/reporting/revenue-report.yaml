@@ -1,0 +1,40 @@
+imports:
+  - {package: markitect/api, as: Api}
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/billing, as: Billing}
+id: revenue-report
+kind: Api.Operation
+body: |-
+  Summarizes billing for one month:
+
+  - `invoicesGenerated`: whether [[Billing.invoice|invoices]] for the month have been generated;
+  - `invoiceCount`: the number of invoices of the month;
+  - `membershipCents`, `usageCents`, `materialCents`, `courseCents`: the sums of the line amounts of each kind on the invoices of the month;
+  - `invoicedCents`: the sum of those four;
+  - `creditAppliedCents`: the sum of `creditAppliedCents` over the invoices of the month;
+  - `outstandingCents`: the sum of `balanceCents` over the invoices of the month at the request time;
+  - `paymentsCents`: the sum of `amountCents` of all [[Billing.payment|payments]] whose `at` lies in the month, for any invoice, including the parts that became credit;
+  - `creditsIssuedCents`: the sum of credits issued with `issueCredit` whose request time lies in the month, plus the lockout credits of `lockMachine` requests whose request time lies in the month. Credit from overpayments is not included.
+
+  For a month without generated invoices, the invoice figures are 0 and `invoicesGenerated` is `false`; payments and issued credits are still reported.
+spec:
+  wireName: revenueReport
+  mutation: false
+  arguments:
+    - {name: month, fieldType: Policies.month}
+  results:
+    - {name: month, fieldType: Policies.month}
+    - {name: invoicesGenerated, fieldType: Policies.flag}
+    - {name: invoiceCount, fieldType: Policies.count}
+    - {name: membershipCents, fieldType: Policies.amount-cents}
+    - {name: usageCents, fieldType: Policies.amount-cents}
+    - {name: materialCents, fieldType: Policies.amount-cents}
+    - {name: courseCents, fieldType: Policies.amount-cents}
+    - {name: invoicedCents, fieldType: Policies.amount-cents}
+    - {name: creditAppliedCents, fieldType: Policies.amount-cents}
+    - {name: outstandingCents, fieldType: Policies.amount-cents}
+    - {name: paymentsCents, fieldType: Policies.amount-cents}
+    - {name: creditsIssuedCents, fieldType: Policies.amount-cents}
+  permissions:
+    - {role: Policies.staff-role, scope: all}
+    - {role: Policies.admin-role, scope: all}

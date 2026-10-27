@@ -1,0 +1,16 @@
+imports:
+  - {package: markitect/api, as: Api}
+  - {package: makerspace/policies, as: Policies}
+id: list-materials
+kind: Api.Operation
+body: |-
+  Returns all materials.
+spec:
+  wireName: listMaterials
+  mutation: false
+  results:
+    - {name: materials, fieldType: material, list: true}
+  permissions:
+    - {role: Policies.member-role, scope: all}
+    - {role: Policies.staff-role, scope: all}
+    - {role: Policies.admin-role, scope: all}

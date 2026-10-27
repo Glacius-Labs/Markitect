@@ -1,0 +1,16 @@
+imports:
+  - {package: markitect/api, as: Api}
+  - {package: makerspace/policies, as: Policies}
+id: list-incidents
+kind: Api.Operation
+body: |-
+  Returns all incidents.
+spec:
+  wireName: listIncidents
+  mutation: false
+  results:
+    - {name: incidents, fieldType: incident, list: true}
+  permissions:
+    - {role: Policies.staff-role, scope: all}
+    - {role: Policies.admin-role, scope: all}
+    - {role: Policies.steward-role, scope: all}

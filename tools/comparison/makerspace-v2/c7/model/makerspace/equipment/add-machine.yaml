@@ -1,0 +1,21 @@
+imports:
+  - {package: makerspace/policies, as: Policies}
+id: add-machine
+kind: Policies.AuditedOperation
+body: |-
+  Creates the machine.
+spec:
+  wireName: addMachine
+  mutation: true
+  arguments:
+    - {name: machineId, fieldType: Policies.identifier}
+    - {name: name, fieldType: Policies.text}
+    - {name: familyId, fieldType: Policies.identifier, refersTo: family}
+    - {name: rateCentsPerMinute, fieldType: rate-cents-per-minute}
+  refusals:
+    - {refusal: Policies.already-exists, when: "a machine with `machineId` exists"}
+  results:
+    - {name: machine, fieldType: machine}
+  permissions:
+    - {role: Policies.admin-role, scope: all}
+  auditTarget: machineId

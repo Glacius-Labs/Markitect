@@ -1,0 +1,10 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: minute-count
+kind: Values.Scalar
+body: |-
+  A number of minutes; never negative.
+spec:
+  base: integer
+  lowest: 0
+  measuredIn: minute

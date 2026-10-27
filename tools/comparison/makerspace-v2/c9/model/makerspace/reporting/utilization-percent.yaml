@@ -1,0 +1,9 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: utilization-percent
+kind: Values.Scalar
+body: |-
+  A utilization in percent; it can exceed 100.
+spec:
+  base: integer
+  lowest: 0

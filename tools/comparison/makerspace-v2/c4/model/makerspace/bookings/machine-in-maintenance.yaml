@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: machine-in-maintenance
+kind: Api.RefusalCode
+body: |-
+  A maintenance window of the machine overlaps the reservation.
+spec:
+  code: machine_in_maintenance

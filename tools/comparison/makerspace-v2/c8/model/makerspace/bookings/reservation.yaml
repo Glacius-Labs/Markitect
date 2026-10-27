@@ -1,0 +1,23 @@
+imports:
+  - {package: markitect/data, as: Data}
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/members, as: Members}
+  - {package: makerspace/equipment, as: Equipment}
+id: reservation
+kind: Data.Entity
+body: |-
+  A reservation of one machine for one member, generated identifier `res-N`. `checkedInAt` and `rateCentsPerMinute` are `null` until check-in; `checkedOutAt`, `meteredMinutes` and `amountCents` are `null` until check-out.
+spec:
+  fields:
+    - {name: reservationId, fieldType: Policies.identifier}
+    - {name: memberId, fieldType: Policies.identifier, refersTo: Members.member}
+    - {name: machineId, fieldType: Policies.identifier, refersTo: Equipment.machine}
+    - {name: start, fieldType: Policies.timestamp}
+    - {name: end, fieldType: Policies.timestamp}
+    - {name: status, fieldType: reservation-status}
+    - {name: checkedInAt, fieldType: Policies.timestamp, nullable: true}
+    - {name: checkedOutAt, fieldType: Policies.timestamp, nullable: true}
+    - {name: rateCentsPerMinute, fieldType: Equipment.rate-cents-per-minute, nullable: true}
+    - {name: meteredMinutes, fieldType: Policies.minute-count, nullable: true}
+    - {name: amountCents, fieldType: Policies.amount-cents, nullable: true}
+  key: reservationId

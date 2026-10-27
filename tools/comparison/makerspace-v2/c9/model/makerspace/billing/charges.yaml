@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/practice, as: Practice}
+id: charges
+kind: Practice.Rule
+body: |-
+  **Charges.** Usage, course and material [[charge|charges]] collect on the member's account until they are invoiced. A charge belongs to the month of its `at`. A charge is unbilled until it appears on an invoice.
+spec:
+  appliesTo: [makerspace/billing, makerspace/bookings, makerspace/training, makerspace/materials, makerspace/reporting]

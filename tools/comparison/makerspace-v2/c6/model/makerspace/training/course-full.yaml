@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: course-full
+kind: Api.RefusalCode
+body: |-
+  The course has no free place.
+spec:
+  code: course_full

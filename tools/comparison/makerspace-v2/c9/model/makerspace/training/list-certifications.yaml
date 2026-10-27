@@ -1,0 +1,20 @@
+imports:
+  - {package: markitect/api, as: Api}
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/members, as: Members}
+id: list-certifications
+kind: Api.Operation
+body: |-
+  Returns all of the member's certifications, including revoked ones.
+spec:
+  wireName: listCertifications
+  mutation: false
+  arguments:
+    - {name: memberId, fieldType: Policies.identifier, refersTo: Members.member}
+  results:
+    - {name: memberId, fieldType: Policies.identifier}
+    - {name: certifications, fieldType: certification, list: true}
+  permissions:
+    - {role: Policies.member-role, scope: own}
+    - {role: Policies.staff-role, scope: all}
+    - {role: Policies.admin-role, scope: all}

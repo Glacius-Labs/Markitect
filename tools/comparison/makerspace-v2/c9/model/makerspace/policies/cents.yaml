@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: cents
+kind: Values.Unit
+body: |-
+  One cent; all amounts are integer numbers of cents.
+spec:
+  symbol: ct

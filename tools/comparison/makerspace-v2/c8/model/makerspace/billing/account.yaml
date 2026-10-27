@@ -1,0 +1,16 @@
+imports:
+  - {package: markitect/data, as: Data}
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/members, as: Members}
+id: account
+kind: Data.Entity
+body: |-
+  A member's account summary.
+spec:
+  fields:
+    - {name: memberId, fieldType: Policies.identifier, refersTo: Members.member}
+    - {name: creditBalanceCents, fieldType: Policies.amount-cents}
+    - {name: openBalanceCents, fieldType: Policies.amount-cents}
+    - {name: overdueBalanceCents, fieldType: Policies.amount-cents}
+    - {name: unbilledCents, fieldType: Policies.amount-cents}
+    - {name: blocked, fieldType: Policies.flag}

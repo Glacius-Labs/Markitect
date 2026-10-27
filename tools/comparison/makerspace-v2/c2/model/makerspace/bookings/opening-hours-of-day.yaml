@@ -1,0 +1,11 @@
+imports:
+  - {package: markitect/data, as: Data}
+  - {package: makerspace/policies, as: Policies}
+id: opening-hours-of-day
+kind: Data.Entity
+body: |-
+  The opening hours of one day.
+spec:
+  fields:
+    - {name: open, fieldType: Policies.clock-time}
+    - {name: close, fieldType: Policies.clock-time}

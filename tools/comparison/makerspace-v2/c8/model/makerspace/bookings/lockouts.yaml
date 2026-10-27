@@ -1,0 +1,11 @@
+imports:
+  - {package: markitect/practice, as: Practice}
+  - {package: makerspace/safety, as: Safety}
+id: lockouts
+kind: Practice.Rule
+body: |-
+  A [[lockout|lockout]] belongs to one open [[Safety.incident|incident]] and locks that incident's machine for an interval `[start, end)`. Like maintenance windows, lockouts may use any minute, are not limited to opening hours and may overlap each other and maintenance windows. An incident can have several lockouts. A lockout cannot be changed, cancelled or ended early; resolving its incident does not end it. An incident itself blocks nothing; only its lockouts do.
+
+  A lockout prevents new reservations of the machine in its interval and is excluded from the machine's available time in the utilization report. It never interrupts a checked-in session: a session already checked in when the lockout is created, and a session that overruns its reservation's end into a lockout, both keep metering until check-out, and all their metered minutes count. Scheduling maintenance that overlaps a lockout is allowed, and a lockout never causes `reservation_conflict`.
+spec:
+  appliesTo: [makerspace/bookings, makerspace/reporting, makerspace/safety]

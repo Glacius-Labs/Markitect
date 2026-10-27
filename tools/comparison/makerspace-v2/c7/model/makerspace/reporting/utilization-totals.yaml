@@ -1,0 +1,15 @@
+imports:
+  - {package: markitect/data, as: Data}
+  - {package: makerspace/policies, as: Policies}
+id: utilization-totals
+kind: Data.Entity
+body: |-
+  The totals of the utilization report.
+spec:
+  fields:
+    - {name: openMinutes, fieldType: Policies.minute-count}
+    - {name: maintenanceMinutes, fieldType: Policies.minute-count}
+    - {name: lockoutMinutes, fieldType: Policies.minute-count}
+    - {name: availableMinutes, fieldType: Policies.minute-count}
+    - {name: usedMinutes, fieldType: Policies.minute-count}
+    - {name: utilizationPercent, fieldType: utilization-percent}

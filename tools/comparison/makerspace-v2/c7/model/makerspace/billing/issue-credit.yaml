@@ -1,0 +1,21 @@
+imports:
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/members, as: Members}
+id: issue-credit
+kind: Policies.AuditedOperation
+body: |-
+  The member's credit balance increases by `amountCents`. The credit counts as issued at the request time for the revenue report. `creditBalanceCents` is the member's credit balance after the change.
+spec:
+  wireName: issueCredit
+  mutation: true
+  arguments:
+    - {name: memberId, fieldType: Policies.identifier, refersTo: Members.member}
+    - {name: amountCents, fieldType: payment-cents}
+    - {name: reason, fieldType: Policies.text}
+  results:
+    - {name: memberId, fieldType: Policies.identifier}
+    - {name: amountCents, fieldType: payment-cents}
+    - {name: creditBalanceCents, fieldType: Policies.amount-cents}
+  permissions:
+    - {role: Policies.admin-role, scope: all}
+  auditTarget: memberId

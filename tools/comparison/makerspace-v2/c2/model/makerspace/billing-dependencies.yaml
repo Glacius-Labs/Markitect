@@ -1,0 +1,9 @@
+imports:
+  - {package: markitect/architecture, as: Architecture}
+id: billing-dependencies
+kind: Architecture.DependencyRule
+body: |-
+  The billing module depends only on members, policies.
+spec:
+  appliesTo: [makerspace/billing]
+  mayDependOn: [makerspace/members, makerspace/policies]

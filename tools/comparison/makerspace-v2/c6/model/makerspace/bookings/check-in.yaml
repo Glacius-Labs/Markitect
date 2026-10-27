@@ -1,0 +1,25 @@
+imports:
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/members, as: Members}
+  - {package: makerspace/training, as: Training}
+id: check-in
+kind: Policies.AuditedOperation
+body: |-
+  Status `checkedIn`; `checkedInAt` is the request time; `rateCentsPerMinute` is the machine's current rate. A missed, cancelled, checked-in or completed reservation is refused with `invalid_state`.
+spec:
+  wireName: checkIn
+  mutation: true
+  arguments:
+    - {name: reservationId, fieldType: Policies.identifier, refersTo: reservation}
+  refusals:
+    - {refusal: Policies.invalid-state, when: "the reported status is not `reserved`"}
+    - {refusal: check-in-too-early, when: "the request time is before `start`"}
+    - {refusal: Members.member-suspended, when: the member is not in good standing}
+    - {refusal: Training.not-certified, when: "the member has no certification for the machine's family that is not revoked"}
+  results:
+    - {name: reservation, fieldType: reservation}
+  permissions:
+    - {role: Policies.member-role, scope: own}
+    - {role: Policies.staff-role, scope: all}
+    - {role: Policies.admin-role, scope: all}
+  auditTarget: reservationId

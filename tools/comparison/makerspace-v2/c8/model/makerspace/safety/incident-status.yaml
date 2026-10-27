@@ -1,0 +1,10 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: incident-status
+kind: Values.Enumeration
+body: |-
+  The status of an incident.
+spec:
+  members:
+    - {value: open}
+    - {value: resolved}

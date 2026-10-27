@@ -1,0 +1,11 @@
+imports:
+  - {package: markitect/practice, as: Practice}
+id: program
+kind: Practice.Rule
+body: |-
+  - The program reads requests from standard input, one JSON object per line, and writes exactly one response line per request to standard output, in request order. It writes and flushes each response before it reads the next request. Standard output carries responses only: no banner, prompt or log line. Diagnostics, if any, go to standard error. When standard input closes, the program exits with exit code zero.
+  - One process holds one makerspace, which starts in the [[initial-state|initial state]]. Requests are processed one at a time, in order.
+  - The program never reads the machine clock, the network, environment-dependent data or files at run time, and writes no files. All time comes from the requests. Given the same request lines, it produces the same response lines.
+  - There is no reset, state import, clock override or other test-only operation.
+  - Request lines up to 64 KiB must be accepted.
+spec: {}

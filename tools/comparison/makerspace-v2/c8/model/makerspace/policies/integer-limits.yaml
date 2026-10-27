@@ -1,0 +1,10 @@
+imports:
+  - {package: markitect/practice, as: Practice}
+id: integer-limits
+kind: Practice.Rule
+body: |-
+  - **Integers are exact and never negative.** Within the integer limit stated under "Large sums and counters" below, no computed integer is negative. Stock cannot fall below 0 (`insufficient_stock`). Credit and payments are applied at most up to an invoice's balance. Metered minutes are at least 0, because a check-out cannot precede its check-in in the request-time order. Maintenance and lockout minutes are part of the open minutes they are subtracted from, so `availableMinutes` is never negative.
+  - **Single lines cannot overflow.** The argument ranges keep every line amount and the product inside its [[money|formula]] below 2^53. The largest is a usage line: metered minutes are fewer than 52,596,000 (from `2000-01-01T00:00Z` to `2099-12-31T23:59Z`), and at 10000 cents per minute the product `minutes × 10000 × 100` stays below 5.26 × 10^13. A material line's product is at most `10000 × 1000000 × 100` = 10^12.
+  - **Large sums and counters.** Sums and counters grow with the number of requests: invoice totals, balances, credit balances including lockout credits, stock, report sums and minute totals, `seq` and the numbers in generated identifiers. The program keeps every integer exact up to 9007199254740991 (2^53 − 1); signed 64-bit integer arithmetic satisfies this. Once a stored or returned integer, or an intermediate value of a formula in this model, would exceed 2^53 − 1, the rest of the run is not specified and is not tested. Reaching that limit takes at least tens of thousands of requests.
+spec:
+  appliesTo: [makerspace]

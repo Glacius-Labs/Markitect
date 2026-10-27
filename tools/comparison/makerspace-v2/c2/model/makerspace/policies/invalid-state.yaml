@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: invalid-state
+kind: Api.RefusalCode
+body: |-
+  The record is not in a state that allows the operation.
+spec:
+  code: invalid_state

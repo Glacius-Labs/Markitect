@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: insufficient-stock
+kind: Api.RefusalCode
+body: |-
+  The material's stock is lower than the requested quantity.
+spec:
+  code: insufficient_stock

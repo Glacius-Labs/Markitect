@@ -1,0 +1,18 @@
+imports:
+  - {package: makerspace/policies, as: Policies}
+id: restock-material
+kind: Policies.AuditedOperation
+body: |-
+  The stock increases by `quantity`.
+spec:
+  wireName: restockMaterial
+  mutation: true
+  arguments:
+    - {name: materialId, fieldType: Policies.identifier, refersTo: material}
+    - {name: quantity, fieldType: restock-quantity}
+  results:
+    - {name: material, fieldType: material}
+  permissions:
+    - {role: Policies.staff-role, scope: all}
+    - {role: Policies.admin-role, scope: all}
+  auditTarget: materialId

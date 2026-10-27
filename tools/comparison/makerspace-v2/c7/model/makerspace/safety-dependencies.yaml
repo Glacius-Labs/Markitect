@@ -1,0 +1,9 @@
+imports:
+  - {package: markitect/architecture, as: Architecture}
+id: safety-dependencies
+kind: Architecture.DependencyRule
+body: |-
+  The safety module depends only on equipment, policies.
+spec:
+  appliesTo: [makerspace/safety]
+  mayDependOn: [makerspace/equipment, makerspace/policies]

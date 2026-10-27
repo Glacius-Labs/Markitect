@@ -1,0 +1,11 @@
+imports:
+  - {package: markitect/architecture, as: Architecture}
+  - {package: makerspace/policies, as: Policies}
+id: billing-interface
+kind: Architecture.Interface
+body: |-
+  What other modules may use of billing: its operations and the charge, invoice, payment and account records. Other modules create a charge for a member through billing, and billing computes its amount by [[Policies.money|money]]. Other modules also grant lockout credits through billing.
+spec:
+  appliesTo: [makerspace]
+  operations: [generate-invoices, list-invoices, record-payment, issue-credit, get-account]
+  types: [charge, invoice, payment, account]

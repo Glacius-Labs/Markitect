@@ -1,0 +1,21 @@
+imports:
+  - {package: makerspace/policies, as: Policies}
+id: register-member
+kind: Policies.AuditedOperation
+body: |-
+  Registers a member with a membership: creates a user with role `member`, the given tier, standing `good`, `registeredAt` equal to the request time and a credit balance of 0.
+spec:
+  wireName: registerMember
+  mutation: true
+  arguments:
+    - {name: memberId, fieldType: Policies.identifier}
+    - {name: name, fieldType: Policies.text}
+    - {name: tier, fieldType: tier}
+  refusals:
+    - {refusal: Policies.already-exists, when: "any user has the identifier `memberId`"}
+  results:
+    - {name: member, fieldType: member}
+  permissions:
+    - {role: Policies.staff-role, scope: all}
+    - {role: Policies.admin-role, scope: all}
+  auditTarget: memberId

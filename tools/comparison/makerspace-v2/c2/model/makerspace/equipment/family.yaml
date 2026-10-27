@@ -1,0 +1,12 @@
+imports:
+  - {package: markitect/data, as: Data}
+  - {package: makerspace/policies, as: Policies}
+id: family
+kind: Data.Entity
+body: |-
+  A tool family, such as laser cutters.
+spec:
+  fields:
+    - {name: familyId, fieldType: Policies.identifier}
+    - {name: name, fieldType: Policies.text}
+  key: familyId

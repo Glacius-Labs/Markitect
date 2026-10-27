@@ -1,0 +1,7 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: staff-role
+kind: Api.Role
+body: |-
+  Staff run the front desk and the workshop floor.
+spec: {}

@@ -1,0 +1,21 @@
+imports:
+  - {package: makerspace/policies, as: Policies}
+id: generate-invoices
+kind: Policies.AuditedOperation
+body: |-
+  Creates the invoices as [[charges-and-invoices|charges and invoices]] describes and marks the month as invoiced, even when there is no member to invoice.
+spec:
+  wireName: generateInvoices
+  mutation: true
+  arguments:
+    - {name: month, fieldType: Policies.month}
+  refusals:
+    - {refusal: month-not-ended, when: "the request time is before the first minute of the following month (for `2026-03`, before `2026-04-01T00:00Z`)"}
+    - {refusal: already-invoiced, when: invoices for this month were generated before}
+  results:
+    - {name: month, fieldType: Policies.month}
+    - {name: invoices, fieldType: invoice, list: true}
+  permissions:
+    - {role: Policies.staff-role, scope: all}
+    - {role: Policies.admin-role, scope: all}
+  auditTarget: month

@@ -1,0 +1,10 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: capacity
+kind: Values.Scalar
+body: |-
+  The number of places of a course.
+spec:
+  base: integer
+  lowest: 1
+  highest: 1000

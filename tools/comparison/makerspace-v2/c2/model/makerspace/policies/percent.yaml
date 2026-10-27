@@ -1,0 +1,9 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: percent
+kind: Values.Scalar
+body: |-
+  A discount in percent.
+spec:
+  base: integer
+  lowest: 0

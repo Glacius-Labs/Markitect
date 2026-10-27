@@ -1,0 +1,19 @@
+imports:
+  - {package: markitect/api, as: Api}
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/members, as: Members}
+id: get-account
+kind: Api.Operation
+body: |-
+  Returns the member's account: `creditBalanceCents` is the member's credit balance; `openBalanceCents` is the sum of `balanceCents` over the member's invoices with status `open`; `overdueBalanceCents` is the same sum over the member's overdue invoices; `unbilledCents` is the sum of the amounts of the member's unbilled charges; `blocked` states whether the member is blocked at the request time.
+spec:
+  wireName: getAccount
+  mutation: false
+  arguments:
+    - {name: memberId, fieldType: Policies.identifier, refersTo: Members.member}
+  results:
+    - {name: account, fieldType: account}
+  permissions:
+    - {role: Policies.member-role, scope: own}
+    - {role: Policies.staff-role, scope: all}
+    - {role: Policies.admin-role, scope: all}

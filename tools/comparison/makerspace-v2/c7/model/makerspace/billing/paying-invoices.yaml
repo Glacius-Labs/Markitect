@@ -1,0 +1,7 @@
+imports:
+  - {package: markitect/practice, as: Practice}
+id: paying-invoices
+kind: Practice.Rule
+body: |-
+  **Paying an invoice.** A [[payment|payment]] pays one invoice. The part of it that exceeds the invoice's balance becomes credit on the member's account. Paying after the due date is allowed; an invoice that is `paid` takes no further payment.
+spec: {}

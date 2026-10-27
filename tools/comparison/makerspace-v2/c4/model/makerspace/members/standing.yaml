@@ -1,0 +1,10 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: standing
+kind: Values.Enumeration
+body: |-
+  A member's standing.
+spec:
+  members:
+    - {value: good, meaning: In good standing.}
+    - {value: suspended, meaning: Not in good standing.}

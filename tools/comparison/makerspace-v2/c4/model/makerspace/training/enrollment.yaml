@@ -1,0 +1,15 @@
+imports:
+  - {package: markitect/data, as: Data}
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/members, as: Members}
+id: enrollment
+kind: Data.Entity
+body: |-
+  The enrollment of one member in one course. `completedAt` is `null` while enrolled.
+spec:
+  fields:
+    - {name: courseId, fieldType: Policies.identifier, refersTo: course}
+    - {name: memberId, fieldType: Policies.identifier, refersTo: Members.member}
+    - {name: status, fieldType: enrollment-status}
+    - {name: enrolledAt, fieldType: Policies.timestamp}
+    - {name: completedAt, fieldType: Policies.timestamp, nullable: true}

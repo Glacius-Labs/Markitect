@@ -1,0 +1,17 @@
+imports:
+  - {package: makerspace/policies, as: Policies}
+id: set-machine-rate
+kind: Policies.AuditedOperation
+body: |-
+  Sets the rate. The rate is captured at check-in, so the new rate applies to check-ins after the change. Reservations already checked in keep their captured rate, and existing charges do not change.
+spec:
+  wireName: setMachineRate
+  mutation: true
+  arguments:
+    - {name: machineId, fieldType: Policies.identifier, refersTo: machine}
+    - {name: rateCentsPerMinute, fieldType: rate-cents-per-minute}
+  results:
+    - {name: machine, fieldType: machine}
+  permissions:
+    - {role: Policies.admin-role, scope: all}
+  auditTarget: machineId

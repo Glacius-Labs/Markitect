@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: identifier
+kind: Values.Scalar
+body: |-
+  A JSON string of 1 to 64 characters from `A`–`Z`, `a`–`z`, `0`–`9`, `.`, `_` and `-`, whose first character is a letter or digit. Identifiers are compared exactly and are case-sensitive: `Ada` and `ada` are different identifiers.
+spec:
+  base: string

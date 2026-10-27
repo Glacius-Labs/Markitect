@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: not-found
+kind: Api.RefusalCode
+body: |-
+  A referenced record does not exist.
+spec:
+  code: not_found

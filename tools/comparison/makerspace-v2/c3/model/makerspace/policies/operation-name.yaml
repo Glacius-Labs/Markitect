@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: operation-name
+kind: Values.Scalar
+body: |-
+  The name of an operation, as in a request's `op`.
+spec:
+  base: string

@@ -1,0 +1,12 @@
+imports:
+  - {package: markitect/values, as: Values}
+  - {package: makerspace/policies, as: Policies}
+id: fee-cents
+kind: Values.Scalar
+body: |-
+  A course fee.
+spec:
+  base: integer
+  lowest: 0
+  highest: 1000000
+  measuredIn: Policies.cents
