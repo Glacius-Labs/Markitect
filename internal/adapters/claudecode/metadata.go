@@ -203,7 +203,9 @@ func (p *preparation) inspectImage(ctx context.Context, reader ImageReader, imag
 	}
 	for _, entry := range env {
 		name, _, _ := strings.Cut(entry, "=")
-		claude := strings.HasPrefix(name, "ANTHROPIC_") || strings.HasPrefix(name, "CLAUDE_CODE_") || slices.Contains(apiKeyVariables, name)
+		// NODE_OPTIONS can load code into the CLI, which could forge its
+		// launch report.
+		claude := strings.HasPrefix(name, "ANTHROPIC_") || strings.HasPrefix(name, "CLAUDE_CODE_") || name == "NODE_OPTIONS" || slices.Contains(apiKeyVariables, name)
 		if claude && !slices.Contains(imageEnvironmentAllowed, name) {
 			p.issue(model.Failed, "image_environment", "/imageID", "The image environment sets "+name+", which would configure Claude Code around the adapter; remove it from the image.")
 		}

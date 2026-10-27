@@ -92,18 +92,28 @@ func TestTransientErrorBeforeAnyActionRepeatsInTheSameConversation(t *testing.T)
 	}
 }
 
-// A response that never initialized its conversation repeats with the same
-// session ID instead of resuming a conversation that does not exist.
-func TestRepeatBeforeTheConversationExistsKeepsTheSessionID(t *testing.T) {
-	rt := newRuntime()
-	rt.play = sequence(lines(1, fixtureFailure("SESSION", "overloaded")...), judged("submitted"))
-	s, _, _ := retrying(t, rt, testSessionSpec(t))
-	if err := s.Exchange(context.Background(), task("work")); err != nil {
-		t.Fatal(err)
-	}
-	responses := rt.responses()
-	if len(responses) != 2 || flagValue(responses[1].start.Argv, "--session-id") != s.session {
-		t.Fatal("the repeat lost the adapter's session ID")
+// A launch that never reported system/init is refused, even when it ends in
+// a successful result or a transient failure: its configuration is unchecked.
+func TestLaunchWithoutInitIsRefused(t *testing.T) {
+	for name, tc := range map[string]struct {
+		play func(*fakeProcess)
+		want string
+	}{
+		"successful result":  {lines(0, fixtureAssistant("SESSION", textBlock("Done.")), fixtureResult("SESSION", "Done.")), "before its launch reported system/init"},
+		"bare result":        {lines(0, fixtureResult("SESSION", "Done.")), "before its launch reported system/init"},
+		"transient failure":  {lines(1, fixtureFailure("SESSION", "overloaded")...), "before its launch reported system/init"},
+		"tool use":           {lines(0, fixtureAssistant("SESSION", toolUse("toolu_1", "Bash")), fixtureToolResult("SESSION", "toolu_1"), fixtureResult("SESSION", "Done.")), "before its launch reported system/init"},
+		"nothing but status": {lines(0, `{"type":"system","subtype":"status","session_id":"SESSION"}`), "without reporting its launch"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			rt := newRuntime()
+			rt.play = sequence(tc.play, judged("submitted"))
+			s, a, _ := retrying(t, rt, testSessionSpec(t))
+			err := s.Exchange(context.Background(), task("work"))
+			if err == nil || !strings.Contains(err.Error(), tc.want) || len(rt.responses()) != 1 || a.ProviderRetries() != 0 || s.Acted() {
+				t.Fatalf("got %v after %d responses, want %q", err, len(rt.responses()), tc.want)
+			}
+		})
 	}
 }
 

@@ -480,6 +480,11 @@ func (t *nativeSession) observe(m Message) error {
 	if m.Session() != "" && m.Session() != t.session {
 		return fmt.Errorf("%w: the provider reported another session than the adapter's", ErrProtocol)
 	}
+	// Conversation and result lines count only after the launch reported its
+	// checked configuration.
+	if !t.launched && (m.Kind() == AssistantMessage || m.Kind() == UserMessage || m.Kind() == ResultMessage) {
+		return fmt.Errorf("%w: the provider sent a %s message before its launch reported system/init", ErrSession, m.Kind())
+	}
 	switch m.Kind() {
 	case SystemInitMessage:
 		t.persisted = true

@@ -40,7 +40,7 @@ func TestCredentialsCopyKeepsOnlyTheAccessLogin(t *testing.T) {
 // minute beyond the response's deadline, Claude Code's default without one.
 func TestProviderEnvironmentCarriesNoCredentialAndBoundsToolCalls(t *testing.T) {
 	env := providerEnvironment()
-	if !contains(env, "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1") || !contains(env, "CLAUDE_CODE_DISABLE_CLAUDE_MDS=1") {
+	if !contains(env, "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1") || !contains(env, "CLAUDE_CODE_DISABLE_CLAUDE_MDS=1") || !contains(env, "NODE_OPTIONS=") {
 		t.Fatalf("environment %v", env)
 	}
 	for _, entry := range env {

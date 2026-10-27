@@ -62,13 +62,16 @@ func privateFiles(req frame.Initialize) []privateFile {
 var errClaudeConfigNotEmpty = errors.New("the private .claude directory is not empty, for example because the image ships /home/agent/.claude")
 
 // claudeUserScope names what Claude Code loads from its user-scope
-// configuration directory besides the login: settings (any settings*.json,
-// which can carry hooks, environment and permissions), memory, and agents,
-// skills, commands, output styles, plugins, rules, hooks and workflows.
+// configuration directory besides the login: settings (any JSON file whose
+// name contains "settings", which covers settings.json, settings.local.json
+// and cached server-managed settings such as remote-settings.json, and can
+// carry hooks, environment and permissions), memory, and agents, skills,
+// commands, output styles, plugins, rules, hooks and workflows. It is an
+// interim deny-list until the pinned CLI's own state entries are observed.
 var claudeUserScope = []string{"CLAUDE.md", "CLAUDE.local.md", "agents", "skills", "commands", "output-styles", "plugins", "rules", "hooks", "workflows"}
 
 func claudeUserScopeEntry(name string) bool {
-	return slices.Contains(claudeUserScope, name) || strings.HasPrefix(name, "settings") && strings.HasSuffix(name, ".json")
+	return slices.Contains(claudeUserScope, name) || strings.Contains(name, "settings") && strings.HasSuffix(name, ".json")
 }
 
 func (s *server) clearPrivateHome(request uint64) error {

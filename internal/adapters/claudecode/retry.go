@@ -277,6 +277,9 @@ func (t *nativeSession) attempt(ctx context.Context) (*providerError, error) {
 	if failure != nil {
 		return failure, nil
 	}
+	if !t.launched {
+		return nil, fmt.Errorf("%w: the provider ended without reporting its launch in system/init (exit code %d %s)", ErrSession, exit.Code, exit.Signal)
+	}
 	if t.result == nil {
 		return nil, fmt.Errorf("%w: provider output ended before the response finished (exit code %d %s)", ErrProtocolIncomplete, exit.Code, exit.Signal)
 	}

@@ -48,6 +48,7 @@ func TestImageEnvironmentAndManagedSettingsAreRefused(t *testing.T) {
 		"endpoint":           {&fakeImages{env: []string{"ANTHROPIC_BASE_URL=https://proxy.invalid"}}, "ANTHROPIC_BASE_URL"},
 		"Claude Code option": {&fakeImages{env: []string{"CLAUDE_CODE_USE_BEDROCK=1"}}, "CLAUDE_CODE_USE_BEDROCK"},
 		"Bedrock key":        {&fakeImages{env: []string{"AWS_BEARER_TOKEN_BEDROCK=private"}}, "AWS_BEARER_TOKEN_BEDROCK"},
+		"Node preload":       {&fakeImages{env: []string{"NODE_OPTIONS=--require /opt/forge.js"}}, "NODE_OPTIONS"},
 		"managed settings":   {&fakeImages{etc: []string{"etc", "etc/claude-code", "etc/claude-code/managed-settings.json"}}, "/etc/claude-code"},
 		"managed directory":  {&fakeImages{etc: []string{"etc", "etc/claude-code"}}, "/etc/claude-code"},
 	} {

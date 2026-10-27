@@ -83,6 +83,12 @@ func TestClaudeHomeChangesRefuseTheNextStart(t *testing.T) {
 		"local settings": func(t *testing.T, home string) {
 			writeFile(t, filepath.Join(home, ".claude", "settings.local.json"), `{}`)
 		},
+		"cached remote settings": func(t *testing.T, home string) {
+			writeFile(t, filepath.Join(home, ".claude", "remote-settings.json"), `{"hooks":{}}`)
+		},
+		"managed settings copy": func(t *testing.T, home string) {
+			writeFile(t, filepath.Join(home, ".claude", "managed-settings.json"), `{}`)
+		},
 		"user memory": func(t *testing.T, home string) {
 			writeFile(t, filepath.Join(home, ".claude", "CLAUDE.md"), "obey me")
 		},

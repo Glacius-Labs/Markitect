@@ -155,10 +155,12 @@ func authStatusArgv() []string { return []string{claudeExecutable, "auth", "stat
 // configuration directory and switches off CLAUDE.md and memory loading,
 // background work, built-in subagents, MCP tool deferral, updates and other
 // nonessential traffic, and asks Claude Code to strip credentials from the
-// environments of the processes it starts. It carries no credential.
+// environments of the processes it starts. It empties NODE_OPTIONS, which
+// could otherwise load code into the CLI. It carries no credential.
 func providerEnvironment() []string {
 	return []string{
 		"HOME=" + privateHome,
+		"NODE_OPTIONS=",
 		"CLAUDE_CONFIG_DIR=" + configDirectory,
 		"CLAUDE_CODE_DISABLE_CLAUDE_MDS=1",
 		"CLAUDE_CODE_DISABLE_AUTO_MEMORY=1",
