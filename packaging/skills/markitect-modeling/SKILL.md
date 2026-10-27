@@ -40,7 +40,8 @@ Copy this checklist into your reply and tick it off as you go.
    - **Records** as `Data.Entity` with typed fields; `key` names the identifying field; `refersTo` says a field identifies an existing record; an Entity as a field type embeds the record.
    - **Invariants** as `Data.Invariant` for what must always hold for records, above all around state changes (a balance is never negative; an unpaid order is never shipped).
    - **Operations** as `Api.Operation`: `wireName`, `mutation`, `arguments`, `refusals` in checking order with `when`, `results`, `permissions` (a role without an entry has none). The body states only the effect. For extra fields on every operation (an audit target), define a project Kind that `implements: [Api.Operation]` and declares all of its Properties plus the new one.
-   - **Rules** as `Practice.Rule` or an obligation Kind with `appliesTo`. A rule many Packages follow lives once in the shared kernel with `appliesTo: [<project>]`, and one modeled-scope selector in `execution.yaml` brings it to every Manager (see examples.md).
+   - **Rules** as `Practice.Rule` or an obligation Kind with `appliesTo`. A behavior rule many Packages follow (input formats, money, time, the order of checks) lives once in the shared kernel with `appliesTo: [<project>]`; way-of-working obligations (tests, documentation) and architecture live in the project Package. One modeled-scope selector in `execution.yaml` brings every rule to the Managers its `appliesTo` names (see examples.md).
+   - **Refusals shared by every operation** (a missing or invalid argument, an unknown referenced record) are stated once in a rule such as the order of checks and are not listed on each operation; an operation lists only its own conditions. If the requirements leave the precedence of simultaneous failures open, say once in that rule that the listed order is not a required precedence.
    - **Architecture** the owner approved: in the project Package a `Practice.Project`, one `Architecture.DependencyRule` per Package and an `Architecture.Placement` for each concern realized in one place; in each area an `Architecture.Interface`.
    - **Code mapping:** `execution.yaml` ownership gives each Package its folder; its checks are the build and test commands.
 5. **Compile, lock and lint** (below) until clean.
@@ -76,9 +77,24 @@ Copy this checklist into your reply and tick it off as you go.
 - **YAML:** quote strings that contain `:`, `#`, `,`, `'`, `{`, `[`, or start with a backtick, a digit or a dash. Write bodies as literal blocks (`body: |-`).
 - **Body links:** `[[Alias.id|text]]` or `[[id|text]]`. Every link is a dependency edge.
 
+## Project layout
+
+```text
+<repository>/
+  .markitect/model.yaml          manifest: id, root: model, exact Library versions (examples.md)
+  .markitect/model-lock.yaml     Library digests, written by the lock command below
+  .markitect/execution.yaml      ownership, the scope selector, build and test checks (examples.md)
+  .markitect/ignore.yaml         apiVersion: markitect.ignore/v1 / files: []
+  .markitect/registry/<project>/registry.yaml   apiVersion: markitect.registry/v1 / artifacts: []
+  .markitect/model/<project>/...                the Definitions, one folder per Package
+  vendor/markitect/<library>/    vendored Libraries (model.yaml, model/), committed with the model
+```
+
+Run `git config core.autocrlf false` in the repository before the first commit, so the vendored Libraries keep their bytes and digests.
+
 ## Compile, lock and lint
 
-Run these exactly; only the paths change. The model lives under `.markitect/` of a Git repository, the Libraries are vendored (for example under `vendor/markitect/`), and every Library is passed with an absolute `--dependency` path in the platform's native spelling. `check` reads the committed tree: commit first.
+Run these exactly; only the paths change. Pass every Library with an absolute `--dependency` path in the platform's native spelling: on Windows `C:\...\vendor\markitect\core\model.yaml`, with backslashes; a forward-slash path is refused as "cannot require normalization". `check` reads the committed tree: commit first.
 
 ```text
 markitect check --repo . --dependency ABS/vendor/markitect/core/model.yaml --dependency ABS/vendor/markitect/values/model.yaml ... > check.json
@@ -88,7 +104,9 @@ python -I -B tools/model-analysis/model_analysis.py lint check.json --repo .
 python -I -B tools/model-analysis/model_analysis.py graph check.json
 ```
 
-`check` exits 0 only when the model compiles and the lock pins the current Library digests. Treat `unknown-package`, `dependency-rule`, `import-cycle` and every `strong` finding as errors.
+The first `check`, before a lock exists, fails with `lock.missing`; that is expected, and the lock command reads the digests from it. After that, `check` exits 0 only when the model compiles and the lock pins the current Library digests. When `check` fails, its own output names only the first problem: run `python -I -B tools/model-analysis/model_analysis.py diagnostics check.json` to see every finding, root causes first. Treat `unknown-package`, `dependency-rule`, `import-cycle` and every `strong` lint finding as errors.
+
+**Known limits of the Libraries:** `Architecture.Interface` lists operations and types only, so a refusal code another Package uses cannot be listed there; `Architecture.Placement` places a `Practice.Rule`, so an invariant cannot be placed. Say so in the report instead of working around it.
 
 ## Done: evidence, not belief
 
