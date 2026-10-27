@@ -1,13 +1,16 @@
 package release
 
 import (
+	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"runtime"
 	"strings"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/internal/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
@@ -179,5 +182,31 @@ func TestLoadRejectsWorkingTreeSymlinks(t *testing.T) {
 	}
 	if _, err := LoadSource(root, ""); err == nil || !strings.Contains(err.Error(), "symlink") {
 		t.Fatalf("Load error = %v, want symlink rejection", err)
+	}
+}
+
+func TestGitFileModeEnabledFollowsGitDefaultWhenUnset(t *testing.T) {
+	repo, _ := gitFixture(t)
+	root := repo.Dir
+	// Ensure the key exists before removing it, then verify no system/global
+	// setting shadows Git's documented default in this test environment.
+	repo.Git("config", "--local", "core.filemode", "true")
+	repo.Git("config", "--local", "--unset-all", "core.filemode")
+	cmd := exec.Command("git", "--no-replace-objects", "-C", root, "config", "--show-origin", "--get", "core.filemode")
+	cmd.Env = guardedwrite.CleanGitEnv()
+	if output, err := cmd.CombinedOutput(); err == nil {
+		t.Skipf("core.filemode is set outside the local test repository: %s", strings.TrimSpace(string(output)))
+	} else {
+		var exitErr *exec.ExitError
+		if !errors.As(err, &exitErr) || exitErr.ExitCode() != 1 {
+			t.Fatalf("inspect inherited core.filemode: %v\n%s", err, output)
+		}
+	}
+	if enabled, err := GitFileModeEnabled(root); err != nil || !enabled {
+		t.Fatalf("unset core.filemode = %v, err=%v; want Git default true", enabled, err)
+	}
+	repo.Git("config", "--local", "core.filemode", "false")
+	if enabled, err := GitFileModeEnabled(root); err != nil || enabled {
+		t.Fatalf("core.filemode=false read as %v, err=%v", enabled, err)
 	}
 }

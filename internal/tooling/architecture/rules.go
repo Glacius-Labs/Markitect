@@ -71,9 +71,10 @@ var Table = Rules{
 		{Name: "container", Title: "Container client", Meaning: "The container engine client that the adapters running containers share.", Imports: []string{"protocol"}},
 		{Name: "guardedwrite", Title: "Guarded write", Meaning: "Guarded working-tree writes for publication, docs --write and bundle installation, with the Git and path helpers they share with source snapshots."},
 		{Name: "build", Title: "Build data", Meaning: "Version identity and embedded license notices."},
-		{Name: "adapter", Title: "Adapters", Meaning: "Concrete repository, Session, check, record, runner, command-line and document adapters; no adapter imports another.", Imports: []string{"model", "snapshot", "domain", "project", "service", "usecase", "container", "guardedwrite", "build"}},
+		{Name: "adapter", Title: "Adapters", Meaning: "Concrete repository, Session, check, record, runner, command-line and document adapters; no adapter imports another.", Imports: []string{"model", "snapshot", "domain", "project", "service", "usecase", "container", "build"}},
 		{Name: "composition", Title: "Composition", Meaning: "Constructs the actual services and their adapters.", Imports: []string{"model", "project", "service", "usecase", "container", "guardedwrite", "adapter"}},
 		{Name: "command", Title: "Product commands", Meaning: "Thin entrypoints to product composition.", Imports: []string{"composition"}},
+		{Name: "runner-command", Title: "Runner command", Meaning: "Thin entrypoint of the Linux runner image."},
 		{Name: "agent", Title: "Session helper", Meaning: "Runs inside each Agent container: provider process, MCP bridge and stdio framing.", Imports: []string{"protocol"}},
 		{Name: "agent-command", Title: "Session helper command", Meaning: "Thin entrypoint of the session helper.", Imports: []string{"agent"}},
 		{Name: "maintenance", Title: "Maintenance", Meaning: "The import gate and release packaging, separate from product execution.", Imports: []string{"guardedwrite"}},
@@ -105,7 +106,7 @@ var Table = Rules{
 		{"internal/adapters/runstore", "adapter", "internal/run/README.md"},
 		{"internal/bootstrap", "composition", "docs/architecture.md#product-flow"},
 		{"cmd/markitect", "command", "docs/architecture.md#product-flow"},
-		{"cmd/markitect-runner", "command", "docs/design/linux-runner.md"},
+		{"cmd/markitect-runner", "runner-command", "docs/design/linux-runner.md"},
 		{"internal/agentd", "agent", "internal/adapters/container/README.md"},
 		{"cmd/markitect-agentd", "agent-command", "internal/adapters/container/README.md"},
 		{"internal/tooling/architecture", "maintenance", "docs/architecture.md#layers"},
@@ -118,6 +119,8 @@ var Table = Rules{
 	Exceptions: []Exception{
 		{From: "cmd/markitect-runner", To: "internal/adapters/runner", Reason: "The runner image entrypoint starts the runner adapter directly."},
 		{From: "internal/adapters/codexappserver", To: "internal/agentd/frame", Reason: "Codex Sessions use the frame values that the container client exposes."},
+		{From: "internal/adapters/documents", To: "internal/guardedwrite", Reason: "The generated view is written through the reviewed guarded-write API only."},
+		{From: "internal/adapters/gitrepo", To: "internal/guardedwrite", Reason: "Publication transfers the verified candidate through guarded writes."},
 		{From: "internal/tooling/release", To: "internal/tooling/architecture", Reason: "The packager takes its source roots from this table."},
 		{From: "internal/adapters/codexappserver", To: "internal/adapters/gitrepo", TestOnly: true, Reason: "Hierarchy tests run Codex Sessions over real Run Git copies."},
 		{From: "internal/adapters/codexappserver", To: "internal/adapters/runstore", TestOnly: true, Reason: "Hierarchy tests read the stored Run records."},
@@ -176,8 +179,9 @@ func (r Rules) exception(from, to string, test bool) bool {
 var layerName = regexp.MustCompile(`^[a-z][a-z-]*[a-z]$`)
 
 // Validate reports every inconsistency of the table itself: unknown or
-// duplicate names, unordered packages, standalone layers with imports and
-// exceptions that name unknown packages or that the layers already allow.
+// duplicate names, a layer importing a layer listed after it, unordered
+// packages, standalone layers with imports and exceptions that name unknown
+// packages or that the layers already allow.
 func (r Rules) Validate() []string {
 	var problems []string
 	report := func(format string, args ...any) { problems = append(problems, fmt.Sprintf(format, args...)) }
@@ -209,6 +213,8 @@ func (r Rules) Validate() []string {
 				report("layer %q: imports layer %q twice", l.Name, to)
 			case target.TestOnly:
 				report("layer %q: test-only layer %q needs no import rule", l.Name, to)
+			case order[to] > order[l.Name]:
+				report("layer %q: may import only itself and layers listed before it, not %q", l.Name, to)
 			}
 			seen[to] = true
 		}

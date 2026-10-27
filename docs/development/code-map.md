@@ -24,9 +24,10 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `container` | The container engine client that the adapters running containers share. | `protocol` | 1 |
 | `guardedwrite` | Guarded working-tree writes for publication, docs --write and bundle installation, with the Git and path helpers they share with source snapshots. | nothing | 1 |
 | `build` | Version identity and embedded license notices. | nothing | 1 |
-| `adapter` | Concrete repository, Session, check, record, runner, command-line and document adapters; no adapter imports another. | `model`, `snapshot`, `domain`, `project`, `service`, `usecase`, `container`, `guardedwrite`, `build` | 7 |
+| `adapter` | Concrete repository, Session, check, record, runner, command-line and document adapters; no adapter imports another. | `model`, `snapshot`, `domain`, `project`, `service`, `usecase`, `container`, `build` | 7 |
 | `composition` | Constructs the actual services and their adapters. | `model`, `project`, `service`, `usecase`, `container`, `guardedwrite`, `adapter` | 1 |
-| `command` | Thin entrypoints to product composition. | `composition` | 2 |
+| `command` | Thin entrypoints to product composition. | `composition` | 1 |
+| `runner-command` | Thin entrypoint of the Linux runner image. | nothing | 1 |
 | `agent` | Runs inside each Agent container: provider process, MCP bridge and stdio framing. | `protocol` | 1 |
 | `agent-command` | Thin entrypoint of the session helper. | `agent` | 1 |
 | `maintenance` | The import gate and release packaging, separate from product execution. | `guardedwrite` | 2 |
@@ -40,6 +41,8 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 |---|---|---|---|
 | `cmd/markitect-runner` | `internal/adapters/runner` | all | The runner image entrypoint starts the runner adapter directly. |
 | `internal/adapters/codexappserver` | `internal/agentd/frame` | all | Codex Sessions use the frame values that the container client exposes. |
+| `internal/adapters/documents` | `internal/guardedwrite` | all | The generated view is written through the reviewed guarded-write API only. |
+| `internal/adapters/gitrepo` | `internal/guardedwrite` | all | Publication transfers the verified candidate through guarded writes. |
 | `internal/tooling/release` | `internal/tooling/architecture` | all | The packager takes its source roots from this table. |
 | `internal/adapters/codexappserver` | `internal/adapters/gitrepo` | tests only | Hierarchy tests run Codex Sessions over real Run Git copies. |
 | `internal/adapters/codexappserver` | `internal/adapters/runstore` | tests only | Hierarchy tests read the stored Run records. |
@@ -135,6 +138,11 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | Package | Summary | Owning document |
 |---|---|---|
 | `cmd/markitect` | Command markitect is the Markitect command line: check, context, docs, apply, version and licenses. | [docs/architecture.md#product-flow](../architecture.md#product-flow) |
+
+## Runner command
+
+| Package | Summary | Owning document |
+|---|---|---|
 | `cmd/markitect-runner` | Command markitect-runner is the entrypoint of the Linux runner image (docs/design/linux-runner.md). | [docs/design/linux-runner.md](../design/linux-runner.md) |
 
 ## Session helper

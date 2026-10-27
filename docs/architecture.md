@@ -31,7 +31,7 @@ All maintained Go packages use one root module. One rule table in [`internal/too
 | Concrete adapters | `internal/adapters/*`, `internal/agentd` | Their inward consumers; no general sibling privilege |
 | Guarded working-tree writes, Git identity and repository-path rules | `internal/guardedwrite` | No other Markitect responsibility |
 | Composition | `internal/bootstrap` | Actual services and adapters |
-| Entrypoints | `cmd/markitect`, `cmd/markitect-agentd` | Bootstrap, agentd |
+| Entrypoints | `cmd/markitect`, `cmd/markitect-runner`, `cmd/markitect-agentd` | Bootstrap, the runner adapter, agentd |
 | Maintenance | `internal/tooling/*`, `cmd/markitect-release` | The guarded writer and build data; separate from product execution |
 
 ## Foundations and Project

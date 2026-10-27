@@ -134,6 +134,11 @@ func TestLayerDirections(t *testing.T) {
 		{"internal/adapters/gitrepo", "internal/adapters/codexappserver", none},
 		{"internal/adapters/codexappserver", "internal/agentd", none},
 		{"internal/adapters/runner", "internal/bootstrap", none},
+		// Only the repository and document adapters write the working tree.
+		{"internal/adapters/cli", "internal/guardedwrite", none},
+		{"internal/adapters/codexappserver", "internal/guardedwrite", none},
+		{"internal/adapters/checks", "internal/guardedwrite", none},
+		{"internal/adapters/runstore", "internal/guardedwrite", none},
 		{"internal/adapters/documents", "internal/tooling/release", none},
 		{"internal/adapters/container", "internal/agentd", none},
 		{"internal/adapters/container", "internal/apply", none},
@@ -147,6 +152,8 @@ func TestLayerDirections(t *testing.T) {
 		{"cmd/markitect", "internal/apply", none},
 		{"cmd/markitect", "internal/adapters/cli", none},
 		{"cmd/markitect-agentd", "internal/bootstrap", none},
+		{"cmd/markitect-runner", "internal/bootstrap", none},
+		{"cmd/markitect-runner", "internal/adapters/cli", none},
 		{"cmd/markitect-release", "internal/bootstrap", none},
 		// Maintenance stays apart from the product.
 		{"internal/tooling/release", "internal/apply", none},
@@ -394,6 +401,8 @@ func TestValidateReportsEveryTableProblem(t *testing.T) {
 			{Name: "Bad_Name", Title: "Bad", Meaning: "Bad.", Standalone: true, Imports: []string{"low"}},
 			{Name: "fixtures", Title: "Fixtures", Meaning: "Fixtures.", TestOnly: true},
 			{Name: "user", Title: "User", Meaning: "User.", Imports: []string{"fixtures"}},
+			{Name: "upward", Title: "Upward", Meaning: "Upward.", Imports: []string{"later"}},
+			{Name: "later", Title: "Later", Meaning: "Later."},
 		},
 		Packages: []Package{
 			{"internal/high", "high", "README.md"},
@@ -418,6 +427,7 @@ func TestValidateReportsEveryTableProblem(t *testing.T) {
 		`layer "high": imports layer "low" twice`,
 		`layer "high": imports unknown layer "missing"`,
 		`layer "user": test-only layer "fixtures" needs no import rule`,
+		`layer "upward": may import only itself and layers listed before it, not "later"`,
 		`package "internal/low": packages must be ordered by layer, then by path`,
 		`package "internal/low": duplicate`,
 		`package "internal/low": owning document is missing`,

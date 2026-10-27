@@ -155,9 +155,9 @@ class ParityTests(unittest.TestCase):
                                ("realization/cover.out", b"mode: set\n"), ("realization/README.md", b"usage\n")):
                 (work / path).parent.mkdir(parents=True, exist_ok=True)
                 (work / path).write_bytes(data)
-            # Replace /tmp/ first: on Linux the temporary directory itself lies
-            # below /tmp/, so replacing it after /work would rewrite that path too.
-            script = runner.CAPTURE.replace("/tmp/", Path(tmp).as_posix() + "/").replace("/work", work.as_posix())
+            # Replace the exact tokens: the temporary directory itself may lie
+            # below /tmp/ or contain /work, as on Linux.
+            script = runner.CAPTURE.replace("cd /work;", "cd " + work.as_posix() + ";").replace("/tmp/result.bundle", Path(tmp).as_posix() + "/result.bundle")
             subprocess.run([shutil.which("sh"), "-c", script.replace("; cat ", "; true ")], check=True, capture_output=True)
             tracked = git("ls-tree", "-r", "--name-only", "HEAD", cwd=work).split()
             self.assertIn("realization/cmd/library/main.go", tracked)  # ignored by "library", kept
