@@ -240,7 +240,10 @@ func (a *Agents) Open(ctx context.Context, spec run.SessionSpec) (run.Session, e
 // never truncated.
 func fitsSetup(home frame.Initialize) error {
 	payload, err := frame.EncodeControl(frame.ControlMessage{Type: frame.TypeInitialize, Request: 1 << 62, Initialize: &home})
-	if err != nil || len(payload) > frame.MaxPayload {
+	if err != nil {
+		return fmt.Errorf("%w: the private setup is invalid: %v", ErrSession, err)
+	}
+	if len(payload) > frame.MaxPayload {
 		size := len(home.Claude.SystemPrompt) + len(home.Claude.AppendSystemPrompt)
 		return fmt.Errorf("%w: the native instructions (%d bytes) and login exceed the private setup frame of %d bytes", ErrSession, size, frame.MaxPayload)
 	}
@@ -260,8 +263,9 @@ func (t *nativeSession) recordSetup() {
 }
 
 // checkLogin asks the CLI which login it would use, before any inference. It
-// must be the selected subscription login: an API key, an API-key helper or
-// another provider, for example from the image environment, is refused.
+// must be the selected subscription login: an API key, an API-key helper or a
+// third-party provider such as Bedrock, for example from the image
+// environment, is refused. authMethod does not reveal a custom API endpoint.
 func (t *nativeSession) checkLogin(ctx context.Context) error {
 	out, exit, err := t.runProcess(ctx, authStatusArgv(), privateHome, maxAuthStatusBytes)
 	if err != nil {
@@ -277,7 +281,7 @@ func (t *nativeSession) checkLogin(ctx context.Context) error {
 		return fmt.Errorf("%w: claude auth status reported no readable authMethod", ErrSession)
 	}
 	if method != t.login.method {
-		return fmt.Errorf("%w: Claude Code would authenticate with %q instead of the selected subscription login (%q); API keys, API-key helpers and other providers are refused", ErrSession, method, t.login.method)
+		return fmt.Errorf("%w: Claude Code would authenticate with %q instead of the selected subscription login (%q); API keys, API-key helpers and third-party providers are refused", ErrSession, method, t.login.method)
 	}
 	return nil
 }
@@ -489,8 +493,10 @@ func (t *nativeSession) observe(m Message) error {
 		if m.Parent() != "" {
 			return fmt.Errorf("%w: the provider reported native subagent work, and native delegation is disabled", ErrProtocol)
 		}
-		if kind := m.ErrorKind(); kind != "" {
-			t.lastError = kind
+		// An assistant message names the error that ended its request, or none
+		// when Claude Code's own retries recovered: an earlier category is stale.
+		if m.Kind() == AssistantMessage {
+			t.lastError = m.ErrorKind()
 		}
 		for _, b := range m.Blocks() {
 			switch {
@@ -675,7 +681,12 @@ func (t *nativeSession) quiescent(ctx context.Context) error {
 			case <-timer.C:
 			}
 		}
-		processes, err := t.peer.Census(ctx)
+		var processes []frame.Process
+		err := t.io(ctx, func() error {
+			var e error
+			processes, e = t.peer.Census(ctx)
+			return e
+		})
 		if err != nil {
 			return fmt.Errorf("%w: the process census after the provider's exit failed: %v", ErrSession, t.safe(err))
 		}

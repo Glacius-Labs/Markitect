@@ -123,6 +123,8 @@ func TestActedOrUnclearResponsesAreNotRepeated(t *testing.T) {
 		"open tool use":      {overloaded(fixtureAssistant("SESSION", toolUse("toolu_2", "Edit"))), "toolu_2 started and did not complete"},
 		"final category":     {lines(1, append([]string{fixtureInit("SESSION", connectedServers)}, fixtureFailure("SESSION", "server_error")...)...), "(server_error)"},
 		"no category":        {lines(1, fixtureInit("SESSION", connectedServers), `{"type":"result","subtype":"error_during_execution","is_error":true,"session_id":"SESSION","errors":["boom"]}`), "boom"},
+		// Claude Code's own retry recovered; the later failure has no category.
+		"recovered retry": {lines(1, fixtureInit("SESSION", connectedServers), fixtureRetry("SESSION", "overloaded"), fixtureAssistant("SESSION", textBlock("Recovered.")), `{"type":"result","subtype":"error_during_execution","is_error":true,"session_id":"SESSION","errors":["late failure"]}`), "provider error: late failure"},
 	} {
 		t.Run(name, func(t *testing.T) {
 			rt := newRuntime()

@@ -346,6 +346,60 @@ func TestCloseCancelsAnActiveExchangeAndStopsTheProcess(t *testing.T) {
 	}
 }
 
+// A failed setup returns its partial handle; closing it still attempts the
+// private cleanup, because a lost reply may have installed files.
+func TestFailedSetupReturnsThePartialHandleAndCleansUp(t *testing.T) {
+	rt := newRuntime()
+	rt.initErr = errors.New("setup reply lost")
+	s, err := agentsFor(t, rt, credentialsLogin()).Open(context.Background(), testSessionSpec(t))
+	if err == nil || s == nil {
+		t.Fatal("a failed setup must return its error and partial handle", err)
+	}
+	if err := s.Close(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(rt.calls, []string{"initialize", "clear", "close"}) {
+		t.Fatalf("cleanup after a failed setup: %v", rt.calls)
+	}
+}
+
+// A provider whose exit is unconfirmed keeps its login: cleanup is uncertain
+// and reported, never a removal under a running provider.
+func TestUnconfirmedStopKeepsTheLoginAndReportsUncertainty(t *testing.T) {
+	rt := newRuntime()
+	entered := make(chan struct{})
+	spec := testSessionSpec(t)
+	spec.Tools.Await = func(ctx context.Context) (run.Event, error) {
+		close(entered)
+		<-ctx.Done()
+		return run.Event{}, ctx.Err()
+	}
+	rt.play = func(p *fakeProcess) {
+		p.emit(fixtureInit(p.session, connectedServers))
+		p.runTool("toolu_await", "await", "{}")
+	}
+	s := openSession(t, agentsFor(t, rt, credentialsLogin()), spec)
+	done := make(chan error, 1)
+	go func() { done <- s.Exchange(context.Background(), task("wait")) }()
+	select {
+	case <-entered:
+	case <-time.After(10 * time.Second):
+		t.Fatal("await not entered")
+	}
+	rt.mu.Lock()
+	rt.stopErr = errors.New("stop unconfirmed")
+	calls := len(rt.calls)
+	rt.mu.Unlock()
+	if err := s.Close(context.Background()); err == nil || !strings.Contains(err.Error(), "stop unconfirmed") {
+		t.Fatalf("uncertain closure reported as %v", err)
+	}
+	<-done
+	after := rt.calls[calls:]
+	if slices.Contains(after, "clear") || !slices.Contains(after, "stop") || !slices.Contains(after, "close") {
+		t.Fatalf("closure under an unconfirmed stop: %v", after)
+	}
+}
+
 func TestInvalidToolArgumentsAndUnknownToolsReachNoCallback(t *testing.T) {
 	rt := newRuntime()
 	spec := testSessionSpec(t)

@@ -129,7 +129,7 @@ type fakeRuntime struct {
 	play       func(*fakeProcess)
 	closed     bool
 	stopErr    error
-	sessionIDs []string
+	initErr    error
 }
 
 func newRuntime() *fakeRuntime {
@@ -148,7 +148,7 @@ func (f *fakeRuntime) Initialize(_ context.Context, req frame.Initialize) error 
 	f.mu.Lock()
 	f.setup = &req
 	f.mu.Unlock()
-	return nil
+	return f.initErr
 }
 func (f *fakeRuntime) ClearPrivateHome(context.Context) error {
 	f.record("clear")

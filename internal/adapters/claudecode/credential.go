@@ -39,12 +39,12 @@ type login struct {
 }
 
 // apiKeyVariables name the environment variables through which Claude Code
-// would authenticate with an API key or route to another provider instead of
-// the subscription login.
+// would authenticate with an API key, carry another Authorization header, or
+// route to another provider or endpoint instead of the subscription login.
 var apiKeyVariables = []string{
 	"ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_AWS_API_KEY", "ANTHROPIC_FOUNDRY_API_KEY",
 	"ANTHROPIC_FOUNDRY_AUTH_TOKEN", "AWS_BEARER_TOKEN_BEDROCK", "CLAUDE_CODE_USE_BEDROCK",
-	"CLAUDE_CODE_USE_VERTEX", "CLAUDE_CODE_USE_FOUNDRY",
+	"CLAUDE_CODE_USE_VERTEX", "CLAUDE_CODE_USE_FOUNDRY", "ANTHROPIC_BASE_URL", "ANTHROPIC_CUSTOM_HEADERS",
 }
 
 // RefuseAPIKeys refuses an environment that sets an API-key or provider
@@ -55,7 +55,7 @@ func RefuseAPIKeys(environ []string) error {
 		name, value, _ := strings.Cut(entry, "=")
 		for _, refused := range apiKeyVariables {
 			if strings.EqualFold(name, refused) && value != "" {
-				return fmt.Errorf("%w: %s is set in the Apply environment; the Claude adapter authenticates only with a Claude subscription login and never with an API key or another provider, so unset it", ErrSession, refused)
+				return fmt.Errorf("%w: %s is set in the Apply environment; the Claude adapter authenticates only with a Claude subscription login against Anthropic and never with an API key, another provider or another endpoint, so unset it", ErrSession, refused)
 			}
 		}
 	}

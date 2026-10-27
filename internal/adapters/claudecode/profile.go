@@ -148,8 +148,8 @@ func authStatusArgv() []string { return []string{claudeExecutable, "auth", "stat
 // providerEnvironment is the fixed provider environment. It pins the private
 // configuration directory and switches off CLAUDE.md and memory loading,
 // background work, built-in subagents, MCP tool deferral, updates and other
-// nonessential traffic, and it strips credentials from the environments of
-// the processes Claude Code starts. A subscription token is the only
+// nonessential traffic, and asks Claude Code to strip credentials from the
+// environments of the processes it starts. A subscription token is the only
 // credential it can carry.
 func providerEnvironment(token string) []string {
 	env := []string{
@@ -164,6 +164,9 @@ func providerEnvironment(token string) []string {
 		"DISABLE_AUTOUPDATER=1",
 		"CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1",
 		"ENABLE_TOOL_SEARCH=false",
+		// The tools' size annotation governs text results; this also lifts
+		// the token cap should the annotation not apply.
+		"MAX_MCP_OUTPUT_TOKENS=200000",
 	}
 	if token != "" {
 		env = append(env, "CLAUDE_CODE_OAUTH_TOKEN="+token)

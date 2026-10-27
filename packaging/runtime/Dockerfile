@@ -43,16 +43,25 @@ RUN set -eu; \
 
 # The pinned Claude Code CLI, an addition beyond V1's Codex scope. It comes
 # after the Codex layers, which stay unchanged, and appends its claude record
-# to runtime.env. The version check uses a throwaway home, so no CLI state
-# lands in the image, and fails the build when the CLI is not the pinned one.
+# to runtime.env. The checks use a throwaway home, so no CLI state lands in the
+# image, and fail the build when the CLI is not the pinned one or lacks a
+# launch flag the Claude adapter passes (the two prompt-file flags are
+# documented but not listed in --help).
 ARG CLAUDE_CODE_VERSION=2.1.308
 RUN npm install --global --no-fund --no-audit \
       "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" \
  && npm cache clean --force
 RUN set -eu; \
-    version=$(HOME=/tmp/claude-version DISABLE_AUTOUPDATER=1 CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 claude --version); \
+    export HOME=/tmp/claude-version DISABLE_AUTOUPDATER=1 CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1; \
+    version=$(claude --version); \
+    help=$(claude --help); \
     rm -rf /tmp/claude-version; \
     test "$version" = "${CLAUDE_CODE_VERSION} (Claude Code)"; \
+    for flag in --print --input-format --output-format --verbose --session-id --resume --model --effort \
+        --permission-mode --permission-prompts --tools --disable-slash-commands --setting-sources \
+        --strict-mcp-config --mcp-config; do \
+      printf '%s\n' "$help" | grep -qE -- "${flag}( |,|$)" || { echo "claude ${version} lacks ${flag}" >&2; exit 1; }; \
+    done; \
     printf 'claude=%s\n' "$version" >> /opt/markitect/runtime.env
 
 ENV HOME=/home/agent
