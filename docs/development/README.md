@@ -6,6 +6,7 @@ Start engineering work through [AGENTS.md](../../AGENTS.md), the [working method
 |---|---|
 | [Repository layout](repository-layout.md) | Where everything lives in this repository, where new things go and what enforces it |
 | [Repository structure](repository-structure.md) | R1 inventory of every file, the accepted target layout (DEC-071), the archive mechanism and the R2 work list |
+| [Cleanup inventory](cleanup-inventory-20261027.md) | R3b inventory of every Go package, command and maintained page as keep, merge, archive or delete, the canonical page per topic and the R3c work list (DEC-076) |
 | [V1 bounded assignments](v1-workstream-assignments.md) | Writer scopes for steps 2 and 3 of the delivery plan: Run contract (D10–D13, D15, D17) and provider scope (D18) |
 | [Concept conformance audit](concept-conformance-audit-20261024.md) | Supplied static audit of Main `6c7d758c` against the V1 concept; origin of A1–A6 and R1–R3, closed by concept 1.0 |
 | [V1 counter-review](v1-architecture-audit-20261023.md) and [source archive](v1-source-archive-20261023.md) | Source-bound v0.17 counter-review and the verified pre-cutover archive |
