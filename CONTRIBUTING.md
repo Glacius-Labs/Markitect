@@ -58,13 +58,25 @@ It packages and builds root-layout source, tests the standalone bootstrap and dr
 
 ## Pull requests and parallel work
 
-Verify checkout, branch, full SHA and dirty state before edits. Use the coordinator's exact integrated base and one assigned non-protected branch/worktree per writer. Preserve unrelated work; never stash across worktrees, reset it or force-push reviewed heads. Shared contracts and dependencies need explicit coordination.
+The [delivery plan](docs/implementation-plan.md) owns current scopes, dependencies, path reservations and integration order, and the [working method](docs/development/working-method.md) governs design learning and owner orientation. This section owns execution inside an assigned package. Candidate progress and checks live in the package's chat and PR; there is no separate backlog or dashboard.
 
-Before integration, obtain independent complete-diff review, run relevant local checks and resolve findings. Freeze the exact reviewed head. The delivering chat merges directly with a merge commit and `--match-head-commit`, without waiting for hosted CI by default; recompose only for conflicts or substantive overlap and renew relevant review/checks after a changed candidate. If an assignment explicitly requires manual CI, bind it to that head and wait in the background. Preserve failed observations and distinguish local from hosted evidence. Publication, provider runs, studies and owner acceptance need separate authority and evidence.
+### Assignment
 
-## Historical Project/Domain contracts
+Read [AGENTS.md](AGENTS.md), the plan and the technical contract. Verify checkout, branch, full SHA and dirty state before edits. Use the coordinator's exact integrated base and one assigned non-protected branch and isolated worktree per writer. Preserve unrelated work; never stash across worktrees, reset another checkout or force-push reviewed heads.
 
-The retired v0.14.1 distribution and its [preserved source and guide](https://github.com/Glacius-Labs/Markitect/tree/7dbd599c81540c8203a1b7f83afbc335174f4f1f) retain their contract. The preceding source generation remains at [5ff32069](https://github.com/Glacius-Labs/Markitect/tree/5ff3206917fa3b7482d9daedb903d57a919f56b8). Current consumers do not reinterpret those formats or revive their runtime.
+One chat owns one bounded package or API slice and its tests. The dispatch lists paths, inputs, acceptance and dependency gates. Subagents are permitted within that scope. Unresolved shared semantics block dependent implementation; independent work can proceed. No model or provider claim replaces actual verification.
+
+### Shared files and contracts
+
+Shared contracts and dependencies need explicit coordination. The coordinator owns root dependencies and the plan; the plan's [work streams](docs/implementation-plan.md#work-streams) assign exclusive scopes, and everything else stays with the coordinator. Others request a concrete change, with intended behavior, consumer and cases, rather than editing a shared file. Two chats cannot own the same contract, generated output or helper.
+
+Producers own value types; consumers own ports. Add no global types or interface package and no duplicate definitions to unblock an adapter; [Architecture](docs/architecture.md#adding-changing-or-removing-a-package) states how packages are added. Tests and fixtures live with their package. An external dependency needs the coordinator's agreement and an exact pin; root module changes have one writer.
+
+### Integration
+
+Run focused checks and inspect the actual changed files; preserve failures and unknowns with their exact source identity. Open a focused PR with the package, scope, contracts, base and head and the validation, and distinguish implemented behavior from scaffolding or proposed APIs. Regenerate generated views from their sources.
+
+Before integration, obtain independent complete-diff review, run relevant local checks and resolve findings. Freeze the exact reviewed head. The delivering chat merges directly with a merge commit and `--match-head-commit`, without waiting for hosted CI by default, as the plan's [integration rules](docs/implementation-plan.md#integration) state; recompose only for conflicts or substantive overlap and renew relevant review/checks after a changed candidate. If an assignment explicitly requires manual CI, bind it to that head and wait in the background. Preserve failed observations and distinguish local from hosted evidence. A source package is not a real Agent run, a successful Library Apply, a release or human acceptance: publication, provider runs, studies and owner acceptance need separate scope, finite authority and evidence.
 
 ## Release work
 

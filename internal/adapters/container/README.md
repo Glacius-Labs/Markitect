@@ -1,6 +1,6 @@
 # Container runtime adapter
 
-This package is the product's client of the container engine ([DEC-037](../../../docs/concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). It starts hardened session and helper containers, speaks the [agentd frame protocol](../../agentd/frame/frame.go) and manages volumes and images. It knows no tasks, models or reviews. The [V1 execution architecture](../../../docs/design/v1-execution-architecture.md) owns the runtime contract, and the [base image](../../../packaging/runtime/README.md) its image contract.
+This package is the product's client of the container engine ([DEC-037](../../../docs/concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). It starts hardened session and helper containers, speaks the [agentd frame protocol](../../agentd/frame/frame.go) and manages volumes and images. It knows no tasks, models or reviews. [Architecture](../../../docs/architecture.md) owns the runtime contract, and the [base image](../../../packaging/runtime/README.md) its image contract.
 
 ## API
 
@@ -12,7 +12,7 @@ This package is the product's client of the container engine ([DEC-037](../../..
 | `Session.ClearPrivateHome(ctx)` | Confirms removal of the installed login after provider exit and before container closure. agentd retries cleanup on disconnect and reports failures. |
 | `Engine.RunHelper(ctx, spec, argv, stdin, stdout)` | Runs one command in a fresh container under the same hardening, for example `/usr/bin/tee`, `/bin/cat` or a project check. Run Git uses the retained exec service. |
 | `Engine.StartExec` / `ExecSession.Exec`, `Close` | Holds one hardened container with fixed mounts and executes literal commands as its configured non-root user. Cancellation removes the owned container so remote processes cannot outlive the failed exec. |
-| `Engine.StartOwnedExec` | The explicit Run Git exception: adds only `CAP_CHOWN`, verifies empty private assignment roots and initializes their ownership with one fixed root exec before returning a non-root-only session. Ordinary engine/Agent/check launches are unchanged; the [workspace service](../gitrepo/WORKSPACES.md) records the lifecycle. |
+| `Engine.StartOwnedExec` | The explicit Run Git exception: adds only `CAP_CHOWN`, verifies empty private assignment roots and initializes their ownership with one fixed root exec before returning a non-root-only session. Ordinary engine/Agent/check launches are unchanged; the [workspace service](../gitrepo/README.md#run-git-workspace-service) records the lifecycle. |
 | `Engine.RunCommand(ctx, spec, argv, env, maxOutputBytes)` | Runs a literal command with fixed environment additions, observes actual container start, terminal state and image, and retains bounded combined output with truncation. A known target nonzero exit is a result. |
 | `Engine.InspectVolume`, `VolumeMounts`, `CreateVolumeExclusive` | Observes volume labels and every container mounting the exact volume, and refuses adoption of preexisting volumes. Exclusive creation verifies a private random label after Docker's idempotent create; Docker provides no atomic exclusive-create primitive. |
 | `Engine.Pause` / `Engine.Unpause` | Freezes and resumes every process in a container. |

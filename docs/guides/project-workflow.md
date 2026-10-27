@@ -40,7 +40,7 @@ docs/markitect/project.md    official generated readable view
 
 Model granularity and artifact locations remain the author's choice. Canonical dependency manifests are explicitly selected; they are not discovered under an assumed directory. The operator supplies an explicit Runtime profile document for requested metadata preparation. No automatic scaffold, configuration migration or execution is implied.
 
-Run keeps durable candidates, terminal records and project Notes outside the repository in the explicitly selected state root. Temporary Manager and Git environments close before a Run returns; stored data can be reopened independently. See the [Run](../../internal/run/README.md) and [workspace service](../../internal/adapters/gitrepo/WORKSPACES.md). Native Apply qualification is separate evidence. Read-only preparation creates no Run state.
+Run keeps durable candidates, terminal records and project Notes outside the repository in the explicitly selected state root. Temporary Manager and Git environments close before a Run returns; stored data can be reopened independently. See the [Run](../../internal/run/README.md) and [workspace service](../../internal/adapters/gitrepo/README.md#run-git-workspace-service). Native Apply qualification is separate evidence. Read-only preparation creates no Run state.
 
 ### Ownership and boundaries
 

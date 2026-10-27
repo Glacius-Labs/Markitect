@@ -20,11 +20,11 @@ Fixed previews refuse unbound present-day external profile or dependency inputs,
 
 ## Native Sessions and Git workspaces
 
-The concrete Codex adapter implements `run.Sessions`: one fresh private home and Manager container per Manager per Run, with an ordinary persistent native conversation until closure. It consumes the actual Linux volume/subpath supplied by [LinuxGit](../../internal/adapters/gitrepo/WORKSPACES.md), without a writable Windows bind or a host credential home. One held Git service and private volume serve each Run; each Manager has its own repository.
+The concrete Codex adapter implements `run.Sessions`: one fresh private home and Manager container per Manager per Run, with an ordinary persistent native conversation until closure. It consumes the actual Linux volume/subpath supplied by [LinuxGit](../../internal/adapters/gitrepo/README.md#run-git-workspace-service), without a writable Windows bind or a host credential home. One held Git service and private volume serve each Run; each Manager has its own repository.
 
 The pure [harness](../../internal/harness/README.md) supplies checked Project context, complete hierarchy, exact Manager, mandate and Findings. The native adapter supplies its actual rendering and loader controls. Nine Run tools (`delegate`, `await`, `review`, `ask`, `reply`, `judge`, `check`, `read_notes`, `append_note`) have one implementation each in Run; the adapter only maps them. `judge` records the decision separately from final prose. The [session helper](../../internal/agentd/) bridges native provider tools; the [container runtime](../../internal/adapters/container/README.md) owns concrete resource lifetime.
 
-[Container checks](../../internal/adapters/checks/README.md) use separate disposable input/home copies with verified bytes, modes and required directory inventories. Run retains independently reopenable candidates and terminal records after resource closure. [Publication](../../internal/adapters/gitrepo/PUBLISHER.md) reads them in a separate host repository after every Run has closed.
+[Container checks](../../internal/adapters/checks/README.md) use separate disposable input/home copies with verified bytes, modes and required directory inventories. Run retains independently reopenable candidates and terminal records after resource closure. [Publication](../../internal/adapters/gitrepo/README.md#publication-boundary) reads them in a separate host repository after every Run has closed.
 
 <a id="bring-your-own-executor"></a>
 

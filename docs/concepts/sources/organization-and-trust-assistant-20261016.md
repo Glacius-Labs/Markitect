@@ -2,7 +2,7 @@
 
 Date: 16 October 2026.
 
-Recorder's note: The owner supplied this earlier assistant response as `Pasted text.txt` and asked to extract and preserve ideas from it alongside their own management analogy. The response below is the supplied text, not an owner statement or an adopted design. The attachment SHA-256 is `baf8ea52f73da6d4b91446fe3f66428d1124d90e8268e175cd5cc751f640913f`. The [reflection](../reflections/organization-and-trust-20261016.md#extracted-ideas-and-their-status) records the extraction and distinguishes origins and status. The [owner source](organization-and-trust-20261016.md) preserves the original owner statements separately.
+Recorder's note: The owner supplied this earlier assistant response as `Pasted text.txt` and asked to extract and preserve ideas from it alongside their own management analogy. The response below is the supplied text, not an owner statement or an adopted design. The attachment SHA-256 is `baf8ea52f73da6d4b91446fe3f66428d1124d90e8268e175cd5cc751f640913f`. The [reflection](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/concepts/reflections/organization-and-trust-20261016.md#extracted-ideas-and-their-status) records the extraction and distinguishes origins and status. The [owner source](organization-and-trust-20261016.md) preserves the original owner statements separately.
 
 ## Supplied response
 

@@ -1,6 +1,6 @@
 # Operations
 
-Current source provides canonical v1 read-only preparation, a guarded generated model view and `apply`. [Project operations](project-operations.md) is the command reference; [distribution](../../packaging/README.md) owns separate maintenance packaging and publication. Dated evidence retains its original source/environment scope in the [production assessment](../validation/production-assessment.md).
+Current source provides canonical v1 read-only preparation, a guarded generated model view and `apply`. [Project operations](project-operations.md) is the command reference; [distribution](../../packaging/README.md) owns separate maintenance packaging and publication. Dated evidence retains its original source/environment scope in the [production assessment](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/validation/production-assessment.md).
 
 ## Authoring and checking
 

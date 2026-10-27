@@ -56,7 +56,7 @@ On the host, each launch gets `<stateDirectory>/<repositoryIdentity>/runner/<lau
 
 ## Sibling containers and workspaces
 
-Apply starts the Agent containers, the Git service and the check containers through the socket. The engine creates them on its own host, next to the runner, so a bind-mount source would be resolved on that host, not inside the runner. The current [container adapter](../../internal/adapters/container/spec.go) never creates a bind mount: every mount is `type=volume`, optionally with a volume subpath; bytes enter through exec streams and leave through `docker cp ... -`. The [Git workspaces](../../internal/adapters/gitrepo/WORKSPACES.md) already live on private Linux volumes. No path from inside the runner therefore reaches the engine, and sibling containers work unchanged. Code that Apply runs must keep it that way: no bind mount of a runner path.
+Apply starts the Agent containers, the Git service and the check containers through the socket. The engine creates them on its own host, next to the runner, so a bind-mount source would be resolved on that host, not inside the runner. The current [container adapter](../../internal/adapters/container/spec.go) never creates a bind mount: every mount is `type=volume`, optionally with a volume subpath; bytes enter through exec streams and leave through `docker cp ... -`. The [Git workspaces](../../internal/adapters/gitrepo/README.md#run-git-workspace-service) already live on private Linux volumes. No path from inside the runner therefore reaches the engine, and sibling containers work unchanged. Code that Apply runs must keep it that way: no bind mount of a runner path.
 
 ## Result hand-back
 

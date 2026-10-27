@@ -119,7 +119,7 @@ Recorder's note: The owner supplied an [assessment](concept-assessment-20261016.
 
 > Prüfe auch nochmal die docs. Ich habe in einer anderen Session ein paar weitere Dinge ausgearbeitet, die wir im Hinterkopf behalten sollten
 
-The [working-day reflection](../reflections/desired-working-day-20261016.md) and its original owner messages supply the continuing-assignment, question and mandate context.
+The [working-day reflection](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/concepts/reflections/desired-working-day-20261016.md) and its original owner messages supply the continuing-assignment, question and mandate context.
 
 ## Specify configuration and journal
 

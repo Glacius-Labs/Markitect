@@ -197,10 +197,10 @@ The measure of success is whether projects remain consistent through real change
 ## Documentation
 
 - [Product vision](docs/vision.md) — the thesis, responsibilities, and limitations
-- [Origin and rationale](docs/concepts/origin-and-rationale.md) — why the idea emerged
+- [Origin and rationale](docs/vision.md#origin-and-rationale) — why the idea emerged
 - [Canonical language v1](docs/design/language-contract.md) — the authoritative model format
 - [Project workflow](docs/guides/project-workflow.md) — exact commands and runtime prerequisites
-- [V1 execution architecture](docs/design/v1-execution-architecture.md) — Run, Workflow, Harness, storage, and publication boundaries
+- [Architecture](docs/architecture.md) — packages, Run, workflow, harness, storage, and publication boundaries
 - [Library example](testdata/library/README.md) — the worked model and policy-change scenario
 - [Measurement](docs/guides/measurement.md) — evaluation against conventional agentic work
 - [Documentation map](docs/README.md) — all maintained references

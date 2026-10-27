@@ -2,7 +2,7 @@
 
 Date: 17 October 2026.
 
-Recorder's note: Direct owner message in the chat assessing the current concept and the first complete Apply. The owner then requested an assessment against these foundations and an update to the documentation on Main. The statement below preserves the original language and spelling; Markdown spacing is normalized. The literal `&#x20;` is retained from the message. This is a restatement of motivation and desired outcomes, not evidence that the product has achieved them or an instruction to remove independent Agent review. The [rationale](../origin-and-rationale.md#foundations-restated-on-17-october-2026) separates the editorial explanation from this source.
+Recorder's note: Direct owner message in the chat assessing the current concept and the first complete Apply. The owner then requested an assessment against these foundations and an update to the documentation on Main. The statement below preserves the original language and spelling; Markdown spacing is normalized. The literal `&#x20;` is retained from the message. This is a restatement of motivation and desired outcomes, not evidence that the product has achieved them or an instruction to remove independent Agent review. The [rationale](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/concepts/origin-and-rationale.md#foundations-restated-on-17-october-2026) separates the editorial explanation from this source.
 
 ## Owner statement
 

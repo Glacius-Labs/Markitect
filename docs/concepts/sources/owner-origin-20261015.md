@@ -2,7 +2,7 @@
 
 **Source:** Direct statement by Markitect's product owner in the documentation task on 15 October 2026, Europe/Berlin. The text below is preserved verbatim. This is the date of this retrospective account, not a claim about when the original project or each idea began. The owner did not name the adopting project in this statement.
 
-This account adds the concrete originating project, conflicting representations and causal sequence to the earlier [owner product description](owner-product-description-20261009.md). It does not replace that source or revise the status of existing decisions. The [origin and rationale](../origin-and-rationale.md) separates the account into problems, concepts, assumptions and hoped-for outcomes and links them to the [register](../register.md).
+This account adds the concrete originating project, conflicting representations and causal sequence to the earlier [owner product description](owner-product-description-20261009.md). It does not replace that source or revise the status of existing decisions. The [origin and rationale](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/concepts/origin-and-rationale.md) separates the account into problems, concepts, assumptions and hoped-for outcomes and links them to the [register](../register.md).
 
 The Core/Module/Product rules are examples from the originating adopting project. They are not universal rules imposed by Markitect. The statement records experience and intent; it supplies no new implementation or comparative evidence.
 
