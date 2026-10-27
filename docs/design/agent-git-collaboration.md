@@ -45,15 +45,15 @@ These rules stay ([DEC-078 Retained](../concepts/register.md#dec-078-agents-coll
 |---|---|---|
 | **Host** | Start: create the Run remote and referee, write the base and the first task, generate the harnesses, start the Managers. Stop: collect evidence, choose the next Run, publish, clean up | Talk to Managers during the Run, continue them, commit or merge for them |
 | **Referee** | Accept or refuse each push by the rules; run the required checks; keep the score; report when the Run is done or stuck | Assign work, plan, answer questions, edit code |
-| **Manager** | Its area's work, in its own clone, with its own tools; delegate, review and integrate children | Write anyone else's refs |
+| **Manager** | Its area's work, in its own clone, with its own tools; delegate, review and integrate children | Write anyone else's refs (`mk/notes` is shared) |
 
-The referee is the one place that interprets the rules. It replaces today's Run assignment machinery, but it is reactive: it only acts when a Manager pushes or waits. The host keeps its Run-time role to start and stop.
+The referee is the one place that interprets the rules. It is trusted host-side infrastructure, started and stopped by the host, so DEC-078's "guarantees live in host state" holds: the guarantees live in the referee's state. It replaces today's Run assignment machinery, but it is reactive: it only acts when a Manager pushes or waits. The host keeps its Run-time role to start and stop.
 
 ### Start
 
 1. Choose the Run's base `B`. For the first Assessment and Implement, `B` is the target branch's tip `T`. For Verify and for a correction Implement, `B` is the candidate under review.
 2. Start the Run remote with `B` as `mk/base`, and start the referee.
-3. Create one credential per Manager for this Run remote only. Generate each Manager's harness from the model and start its container with its own volume. The container clones the remote and checks out its own branch. No volume is shared between Managers.
+3. Create one credential per Manager for this Run remote only and place it in that Manager's container, never in its harness text ([§16.2](../concepts/v1-concept.md#162-account-login-and-protection-of-secrets)). Generate each Manager's harness from the model and start its container with its own volume. The container clones the remote and checks out its own branch. No volume is shared between Managers.
 4. Write Root's task as the first message. Verify Root's task carries what it carries today: the diff against the command's bound input, the already-verified fact and the Implement Run's build outputs ([§19.4](../concepts/v1-concept.md#194-independence-of-verify)).
 5. Seed `mk/notes` from the project's Shared Notes.
 
@@ -66,7 +66,7 @@ The referee reports one of four outcomes, and each one maps to a concept §20.1 
 | Root's final judgment is valid, and the whole hierarchy has handed off and been accepted | completed, with Root's judgment |
 | Root reports a model blocker | completed, model blocker |
 | Budget exhausted, deadline passed, or deadlock (every Manager waits and nobody owes an answer) | technically incomplete |
-| A container or the referee failed | technically incomplete |
+| A container or the referee failed | failed |
 
 Then the host:
 1. stops the Manager containers;
@@ -90,9 +90,10 @@ A hosted remote is optional and is only an edge. The host fetches `T` from it at
 | `mk/<manager>/work` | that Manager | forward only, descends from `mk/base`; frozen at the base in Assessment and Verify |
 | `mk/<manager>/talk` | that Manager | forward only, each commit adds exactly one new message file and changes nothing else |
 | `mk/notes` | any Manager | forward only, each commit adds new Note files and changes none |
+| `mk/<manager>/wip` | that Manager's supervisor | private safety copy of uncommitted work at each response end (section 6); evidence, never a handoff |
 | `mk/score/...` | referee | handoffs, reviews, check results, budget |
 
-A Manager writes only its own refs. The referee holds a global lock while it decides a push, so a review cannot race a new handoff or a check result.
+A Manager writes only its own refs and `mk/notes`. The referee holds a global lock while it decides a push, so a review cannot race a new handoff or a check result.
 
 ## 3. Talking through Git
 
@@ -135,14 +136,14 @@ A shared branch could come later for a deliberate pair, for example an implement
 | Corrections start from the parent's current state | A reject carries the parent's current `work` tip. The child's next handoff must contain it, or it is refused with that reason |
 | Areas and the registry | The check of each handoff, as today: structure, accounting and the declared checks placed in that Manager's area |
 | Root's result is checked | Root's final judgment must name a commit with a passed complete check |
-| A shared budget | The referee counts messages across the Run against the Run's allowance ([§20.2](../concepts/v1-concept.md#202-shared-finite-resources)) and stops the Run when it runs out |
+| A shared budget | The referee counts messages and resources against the command's one budget, shared by all its Runs ([§20.2](../concepts/v1-concept.md#202-shared-finite-resources)), and stops the Run when it runs out |
 | Runs are closed | Root has no parent, so no message can leave the Run |
 
 What the referee does **not** promise: who typed which line inside a parent's integration. A parent can copy a child's files instead of merging them. The real guarantee is the one the parent's own handoff gets: it is checked, and its parent reviews it, as today ([§8.3](../concepts/v1-concept.md#83-handoff-review-and-integration)). The first draft's merge-provenance rule is dropped.
 
 ## 6. Each Manager's own harness
 
-The harness is generated from the model for each Manager: instructions (role, org chart, context and answer format), tools, skills, its credential and the refs it may write. It is tailored the way the prompt is.
+The harness is generated from the model for each Manager: instructions (role, org chart, context and answer format), tools, skills and the refs it may write. Its credential is placed in the container, not in the harness text. It is tailored the way the prompt is.
 
 How fine the harness should be: three levels.
 
@@ -175,11 +176,11 @@ Tailoring examples:
 - The Run configuration names the target: a Git URL or a local path, plus a branch. The default is the remote's default branch.
 - At publication the host writes **one commit** onto the target: parent `T`, tree = the approved candidate's tree, a fixed Markitect identity, and the Apply ID in the message. It updates the target only if it still points at `T` (compare-and-swap). The agents' working history stays in the evidence bundle and never reaches the owner's branch.
 - If the target moved during the Apply, nothing changes and the Apply reports a conflict. A later option is a new Implement on the new tip.
-- A local target branch that is checked out in the owner's working tree is updated the way Git's `receive.denyCurrentBranch=updateInstead` does it: only when that working tree is clean, otherwise nothing changes and the Apply reports a conflict.
+- A local target branch that is checked out in the owner's working tree is updated the way Git's opt-in `receive.denyCurrentBranch=updateInstead` does it (Git's default is to refuse): only when that working tree is clean, otherwise nothing changes and the Apply reports a conflict. This is a guarded ref update, not today's file-by-file working-tree transfer.
 
 ## 8. Windows
 
-During the Run, the host only uses the container engine and Git over a local port. It may therefore run natively on Windows again, and the runner image could go. The provider login file is still mounted until login happens inside the container. The referee needs the engine socket for the declared checks; it is trusted infrastructure like the host. The prototype must show this.
+During the Run, the host only uses the container engine and Git over a local port. It could therefore run natively on Windows again, and the runner image could go. That would revisit [DEC-077](../concepts/register.md#dec-077-development-pace-and-linux-first-execution)'s Linux-first Apply host and needs an owner decision; the prototype only gathers evidence for it. The provider login file is still mounted until login happens inside the container. The referee needs the engine socket for the declared checks; it is trusted infrastructure like the host. The prototype must show this.
 
 ## 9. What changes in the code
 
@@ -190,7 +191,7 @@ During the Run, the host only uses the container engine and Git over a local por
 | Run assignment state, `await`, question closing, judgment invalidation, shared allowance, deadlock detection | The referee, with the same rules, reacting to pushes and waits |
 | The host continuing idle Managers | The per-container supervisor, which asks the referee |
 | The Git workspace service, host-captured handoffs, per-parent write serialization, the shared Run volume | The Run remote, the agents' own clones and pushes |
-| The runner's `.git` mount, bundle hand-back and result branch; working-tree publication | Removed; publication is one compare-and-swap commit |
+| The runner's `.git` mount, bundle hand-back and result branch; today's file-by-file working-tree transfer | Removed; publication is one compare-and-swap commit (section 7) |
 
 **Stays:** the model compiler, harness generation, the checks (run by the referee), the provider adapters, the workflow sequence, Notes (seeded and harvested), the Run record and the publication gate.
 
@@ -210,7 +211,7 @@ During the Run, the host only uses the container engine and Git over a local por
 3. One branch per Manager in V1, with shared branches later? **Answered: yes.**
 4. Publish one commit on top of `T` (clean owner history), rather than fast-forwarding to the agents' history? **Answered: one commit.**
 5. If the target moved during the Apply, fail closed? **Answered: yes, fail closed;** no automatic new Implement.
-6. A local target branch that is checked out: refuse, or update it when the tree is clean? **Decided by the design as Git's default:** update only when the tree is clean (section 7).
+6. A local target branch that is checked out: refuse, or update it when the tree is clean? **Decided by the design**, not by the owner: update only when the tree is clean, as Git's opt-in `updateInstead` does (section 7).
 7. Build a prototype before any rebuild? It would pause the next evaluation suite. **Answered: prototype first.**
 
 ## 12. Rejected alternatives
