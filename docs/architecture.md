@@ -66,6 +66,7 @@ After every Run has closed, Apply reopens the stored final Verify approval, and 
 | `container`, `internal/agentd` | Container engine client, the frame protocol and the session helper that runs the provider CLI and bridges its tools ([container runtime](../internal/adapters/container/README.md)) |
 | `checks` | Declared project checks in pinned containers over disposable input and home copies ([README](../internal/adapters/checks/README.md)) |
 | `documents` | Guarded write of the generated view |
+| `runner` | `markitect apply --runner`: starts the Linux runner image through the local container engine with the checkout's `.git` and the provider logins mounted read-only, and imports the verified result as a new branch ([design](design/linux-runner.md)) |
 | `cli` | Command parsing and JSON reports |
 
 Codex with normal account login is the only provider path in V1 ([D18](concepts/v1-concept.md#23-provider-scope-d18)). The [provider guide](guides/provider-adapters.md) covers the profiles and the native boundary. The [base image](../packaging/runtime/README.md) pins Codex.
