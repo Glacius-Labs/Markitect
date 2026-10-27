@@ -82,7 +82,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-065](#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration) | Decision | Work through the cockpit: agent-proposed model changes and configuration | Accepted by the owner; implementation started |
 | [DEC-066](#dec-066-the-cockpit-is-markitects-desktop-app-and-starts-and-stops-apply) | Decision | The cockpit is Markitect's desktop app and starts and stops Apply | Accepted by the owner; implemented; first real acceptance recorded |
 | [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs) | Decision | Agent workspaces and reviewed handoffs | Accepted; partially superseded by the V1 scope clarification and [DEC-068](#dec-068-v1-concept-10); no-push rule and handoff transport superseded by DEC-078 |
-| [DEC-068](#dec-068-v1-concept-10) | Decision | V1 concept 1.0 | Accepted; implementation tracked in the delivery plan |
+| [DEC-068](#dec-068-v1-concept-10) | Decision | V1 concept 1.0 | Accepted; implementation tracked in the delivery plan; publication and handoffs change with DEC-078 |
 | [DEC-069](#dec-069-documentation-is-written-in-english) | Decision | Documentation is written in English | Accepted; canonical-model documents translated (#679), historical records archived (#688), core vocabulary translated (#690) |
 | [DEC-070](#dec-070-parallel-writers-where-useful) | Decision | Parallel writers where useful | Accepted |
 | [DEC-071](#dec-071-repository-structure-and-archive) | Decision | Repository structure and archive | Accepted; execution in slice R2; keeping `.markitect/` here superseded by DEC-076 |
@@ -973,10 +973,12 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-078 Agents collaborate through a Git remote, without owner review
 
-- **Status:** Accepted by the owner as a direction, 27 October 2026 ([verbatim source](sources/git-remote-collaboration-20261027.md)). The mechanics are open design work in the [delivery plan](../implementation-plan.md#git-remote-collaboration-owner-direction-27-october). Until that work lands, the implementation keeps the current mount, hand-back and working-tree publication.
+- **Status:** Accepted by the owner as a direction, 27 October 2026, with answers to three questions the same afternoon ([verbatim source](sources/git-remote-collaboration-20261027.md)). The mechanics are open design work, to be designed and discussed with the owner before anything is built, in the [delivery plan](../implementation-plan.md#git-remote-collaboration-owner-direction-27-october). Until that work lands, the implementation keeps the current mount, hand-back and working-tree publication.
 - **Decision (recorded meaning, as in the source):**
   - Agents collaborate through a Git remote, like engineers and their managers in a company. Before a run, a run branch is created from the target branch. Each agent pulls, commits and pushes, and Managers integrate their children's work the same way. No Git directory is mounted into a container.
   - The owner models, and the agents apply the model. A verified result lands on the target branch without a pull request that the owner reviews or merges. Trust comes from the many agents working independently, not from the owner reading the diff.
+  - The target branch is the branch the owner wants to work on, named per run.
+  - A push credential in every agent container is acceptable. A run should also work without a hosted remote, for example against a local remote.
 - **Retained:**
   - The model is authoritative, and model blockers end execution ([DEC-063](#dec-063-the-model-is-authoritative-defects-escalate)).
   - Runs are closed: no question reaches the owner during a run.
@@ -987,11 +989,11 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - [DEC-035](#dec-035-committed-model-in-owner-commit-accepts-the-result)'s rule that Apply never commits, merges or pushes, and its owner commit as the acceptance of the result.
   - [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs)'s retained rule that transfer makes no automatic owner commit or push.
   - The runner's checkout mount and branch hand-back in [DEC-077](#dec-077-development-pace-and-linux-first-execution).
-  - [Concept 1.0](v1-concept.md) changes with the design: §10.4, §17.5 ("A Git server platform is not intended"), §21.2 to §21.4, V15 and the glossary's "Publication" entry, and the [architecture](../architecture.md)'s "no Git server".
+  - [Concept 1.0](v1-concept.md) changes with the design: §10.4, §17.5 ("A Git server platform is not intended"), §21.2 to §21.4, V15 and the glossary's "Publication" entry; the [architecture](../architecture.md)'s "no Git server" changes too.
 - **Open:**
-  - Where the remote lives, and how agents authenticate to it.
+  - Whether agents use Git themselves or only tools that the host provides and configures in each agent's own harness ([concept 1.0 §14.1](v1-concept.md#141-a-fixed-small-tool-set), [§15](v1-concept.md#155-v1-form-of-the-harness-d14)). The owner asks for this direction to be designed and discussed first.
+  - The form of the local remote, and the optional hosted remote behind it.
   - What happens when the target branch moves during a run.
-  - How the target branch is named.
   - The cleanup of run branches and the retention of evidence.
   - Whether V1's acceptance covers the new publication ([DEC-068](#dec-068-v1-concept-10)).
 
