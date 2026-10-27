@@ -1,11 +1,16 @@
 package gitrepo
 
 import (
+	"bytes"
+	"cmp"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
+	"slices"
 	"strconv"
+	"strings"
 
+	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
@@ -17,7 +22,7 @@ func (a *acquisition) guard() project.PublicationGuard {
 		_, _ = hash.Write(length[:])
 		_, _ = hash.Write([]byte(text))
 	}
-	write("gitrepo-capture/2")
+	write("gitrepo-capture/3")
 	write(a.git.path)
 	write(a.git.gitDir)
 	write(a.git.commonDir)
@@ -35,8 +40,16 @@ func (a *acquisition) guard() project.PublicationGuard {
 		write(s.Root.String())
 		write(s.Source.Origin)
 		write(s.Source.ManifestPath)
-		write(strconv.Itoa(len(s.Source.Entries)))
-		for _, entry := range s.Source.Entries {
+		// Entry order is an acquisition detail, not source content: a committed
+		// Capture lists Git paths in byte order ("a-b.yaml" before "a/c.yaml"),
+		// while publication's working-tree walk descends into "a/" first. Bind
+		// every entry, duplicates included, in one canonical order.
+		entries := slices.Clone(s.Source.Entries)
+		slices.SortFunc(entries, func(x, y model.Entry) int {
+			return cmp.Or(strings.Compare(x.Path, y.Path), strings.Compare(string(x.Kind), string(y.Kind)), bytes.Compare(x.Bytes, y.Bytes))
+		})
+		write(strconv.Itoa(len(entries)))
+		for _, entry := range entries {
 			write(entry.Path)
 			write(string(entry.Kind))
 			write(string(entry.Bytes))
@@ -54,5 +67,5 @@ func (a *acquisition) guard() project.PublicationGuard {
 			write(file.File.ContentID().String())
 		}
 	}
-	return project.PublicationGuard("gitrepo-capture/2:" + hex.EncodeToString(hash.Sum(nil)))
+	return project.PublicationGuard("gitrepo-capture/3:" + hex.EncodeToString(hash.Sum(nil)))
 }
