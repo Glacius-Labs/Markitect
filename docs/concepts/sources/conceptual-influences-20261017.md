@@ -1,6 +1,6 @@
 # Owner account of Markitect's conceptual influences
 
-Date: 17 October 2026. Source: direct owner message in the marketing chat `01a1495c-4b1d-7d82-b1c1-d1fd276d131a`. The account below is an English translation; the original German wording remains in that chat and earlier commits of this documentation branch. The owner subsequently required English throughout repository content. This is provenance, not a change to the frozen Apply concept. [Origin and rationale](../origin-and-rationale.md#foundations-restated-on-17-october-2026) organizes the influences; current decisions retain their status in the [register](../register.md).
+Date: 17 October 2026. Source: direct owner message in the marketing chat `01a1495c-4b1d-7d82-b1c1-d1fd276d131a`. The account below is an English translation; the original German wording remains in that chat and earlier commits of this documentation branch. The owner subsequently required English throughout repository content. This is provenance, not a change to the frozen Apply concept. [Origin and rationale](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/concepts/origin-and-rationale.md#foundations-restated-on-17-october-2026) organizes the influences; current decisions retain their status in the [register](../register.md).
 
 ## Owner statement — English translation
 

@@ -4,20 +4,7 @@ This guide routes maintainers through the repository's existing documentation co
 
 ## Find the owner before writing
 
-Start at the [documentation map](../README.md) and the nearest local map. Search for the document that already owns the subject, then update that owner instead of creating a parallel account.
-
-| Subject | Canonical owner |
-|---|---|
-| Product thesis and human/agent responsibilities | [Vision](../vision.md) |
-| Technical behavior and boundaries | [Architecture](../architecture.md) and the relevant current workflow or operations guide |
-| Current source scope and future implementation | [Implementation roadmap](../implementation-plan.md) |
-| Delivery scopes, dependencies and reservations | [Delivery plan](../implementation-plan.md); chats/PRs own candidate evidence |
-| Contribution and validation commands | [CONTRIBUTING.md](../../CONTRIBUTING.md) |
-| Current design documents | [Design map](../design/README.md) |
-| Earlier designs, experiments and records | [Archive index](../archive.md) |
-| Fixed source, adoption, or method evidence | [Validation map](../validation/README.md) and the individual report |
-| Published asset identity of the retired releases | [Distribution retirement record](../validation/distribution-retirement-20261017.md) and its [retired release mapping](../validation/retired-releases-20261017.json) |
-| Repository layout and where new files go | [Repository layout](repository-layout.md) |
+Start at the [documentation map](../README.md) and the nearest local map. Its [owner table](../README.md#canonical-status-and-evidence-owners) names the canonical owner of each subject; search for the document that already owns the subject, then update that owner instead of creating a parallel account.
 
 Dated proposals, supplied research and earlier records are not kept on Main. They stay at the archive points listed in the [archive index](../archive.md), which is the one place to find them. A proposal or assessment does not become product behavior merely because it is documented. Material that becomes historical moves out of Main in one change: remove its files, add an index entry and rewrite remaining links to full-SHA permalinks.
 

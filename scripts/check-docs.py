@@ -39,8 +39,6 @@ DEFAULT_DOCUMENTS = (
     "docs/guides/measurement.md",
     "docs/guides/operations.md",
     "docs/archive.md",
-    "docs/development/README.md",
-    "docs/development/parallel-work.md",
     "docs/development/documentation.md",
     "docs/design/README.md",
     "docs/validation/README.md",
