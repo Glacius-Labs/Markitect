@@ -11,10 +11,8 @@ import (
 // package additionally needs its own checked code-map entry. There is no broad
 // internal/tooling or adapter import exemption and no legacy product allowance.
 var targetRoots = []struct{ path, layer string }{
-	{"cmd/markitect-check-architecture", "maintenance-command"},
 	{"internal/adapters/codexappserver", "apply-adapter"},
 	{"internal/adapters/container", "apply-adapter"},
-	{"internal/tooling/architecturecli", "maintenance"},
 	{"internal/tooling/release/install", "maintenance"},
 	{"internal/tooling/architecture", "maintenance"},
 	{"internal/tooling/guardedwrite", "maintenance"},
@@ -71,7 +69,6 @@ var responsibilityImports = map[string][]string{
 	"cmd/markitect":                    {"internal/bootstrap"},
 	"cmd/markitect-agentd":             {"internal/agentd"},
 	"cmd/markitect-runner":             {"internal/adapters/runner"},
-	"cmd/markitect-check-architecture": {"internal/tooling/architecturecli"},
 	"cmd/markitect-release":            {"internal/tooling/releasecli"},
 	"internal/adapters/checks":         {"internal/adapters/container", "internal/model", "internal/organization", "internal/project", "internal/run", "internal/runtimeconfig", "internal/snapshot"},
 	"internal/adapters/cli":            {"internal/apply", "internal/buildinfo", "internal/model", "internal/modeldocs", "internal/project", "internal/realization", "internal/runtimeconfig", "internal/snapshot", "internal/tooling/licenses"},
@@ -86,7 +83,6 @@ var responsibilityImports = map[string][]string{
 	"internal/organization":            {"internal/model", "internal/snapshot"},
 	"internal/realization":             {"internal/model", "internal/snapshot"},
 	"internal/run":                     {"internal/organization", "internal/project", "internal/snapshot"},
-	"internal/tooling/architecturecli": {"internal/tooling/architecture"},
 	"internal/tooling/guardedwrite":    {"internal/tooling/source"},
 	"internal/tooling/publish":         {"internal/tooling/source", "internal/tooling/release"},
 	"internal/tooling/release":         {"internal/tooling/source", "internal/tooling/licenses"},

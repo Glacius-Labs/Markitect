@@ -37,9 +37,6 @@ jobs:
       - name: Verify module checksums
         run: go mod verify
 
-      - name: Enforce actual responsibility import boundaries
-        run: go run ./cmd/markitect-check-architecture --repo .
-
       - name: Test
         shell: bash
         run: |

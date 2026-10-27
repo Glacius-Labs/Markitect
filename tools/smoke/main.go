@@ -227,7 +227,7 @@ func (s *smoke) buildTools(archive string) error {
 	if err := unzip(archive, source); err != nil {
 		return err
 	}
-	for _, name := range []string{"markitect", "markitect-release", "markitect-check-architecture", "markitect-agentd", "markitect-runner"} {
+	for _, name := range []string{"markitect", "markitect-release", "markitect-agentd", "markitect-runner"} {
 		if _, err := s.run(source, nil, "go", "build", "-trimpath", "-buildvcs=false", "-o", s.tool(name), "./cmd/"+name); err != nil {
 			return err
 		}

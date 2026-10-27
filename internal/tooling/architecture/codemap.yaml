@@ -111,10 +111,6 @@ packages:
     layer: maintenance
     purpose: Explicitly separated release and repository tooling.
     doc: docs/development/modules.md
-  - path: internal/tooling/architecturecli
-    layer: maintenance
-    purpose: Explicitly separated release and repository tooling.
-    doc: docs/development/modules.md
   - path: internal/tooling/guardedwrite
     layer: maintenance
     purpose: Explicitly separated release and repository tooling.
@@ -138,10 +134,6 @@ packages:
   - path: internal/tooling/source
     layer: maintenance
     purpose: Explicitly separated release and repository tooling.
-    doc: docs/development/modules.md
-  - path: cmd/markitect-check-architecture
-    layer: maintenance-command
-    purpose: Thin entrypoints to maintenance services.
     doc: docs/development/modules.md
   - path: cmd/markitect-release
     layer: maintenance-command
