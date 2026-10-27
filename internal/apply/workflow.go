@@ -1,5 +1,4 @@
-// Package workflow selects fully closed Runs. It owns no Git, storage or provider.
-package workflow
+package apply
 
 import (
 	"context"
@@ -9,18 +8,21 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
+// Executor runs one fully closed Run.
 type Executor interface {
 	Execute(context.Context, run.Request) (run.Result, error)
 }
 
-type Result struct {
+// WorkflowResult lists every Run of one command and the final one.
+type WorkflowResult struct {
 	Runs  []run.Result `json:"runs"`
 	Final run.Result   `json:"final"`
 }
 
-// Apply uses the same original allowance for every mandate and correction.
+// runWorkflow selects fully closed Runs; it owns no Git, storage or provider.
+// It uses the same original allowance for every mandate and correction.
 // Assessment approval enables Implement even when implementation changes nothing.
-func Apply(ctx context.Context, executor Executor, base run.Request) (out Result, err error) {
+func runWorkflow(ctx context.Context, executor Executor, base run.Request) (out WorkflowResult, err error) {
 	if executor == nil {
 		return out, fmt.Errorf("workflow executor unavailable")
 	}

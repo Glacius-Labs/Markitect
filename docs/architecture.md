@@ -26,8 +26,7 @@ All maintained Go packages use one root module. One rule table in [`internal/too
 | Static native and check profile metadata | `internal/runtimeconfig` | Model, organization, Project, snapshot; no Run or provider session |
 | Model-derived instructions for native Sessions, rendered by the native adapter | `internal/harness` | Project values; no I/O, no Run |
 | Closed hierarchical Run | `internal/run` | Project, organization, snapshot; Session, workspace, check and record ports |
-| Sequence of Runs | `internal/workflow` | Run values and its own Executor interface |
-| Preflight, publication after closure | `internal/apply` | Model, Project, Workflow, Run result values |
+| Preflight, the sequence of Runs, publication after closure | `internal/apply` | Model, Project, Run values and its own Executor interface; no adapter |
 | Generated model view | `internal/modeldocs` | Project, model, snapshot |
 | Concrete adapters | `internal/adapters/*`, `internal/agentd` | Their inward consumers; no general sibling privilege |
 | Guarded working-tree writes, Git identity and repository-path rules | `internal/guardedwrite` | No other Markitect responsibility |

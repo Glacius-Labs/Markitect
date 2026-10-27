@@ -19,7 +19,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `domain` | Manager topology, ownership and accounting over model and snapshot values. | `model`, `snapshot` | 2 |
 | `project` | Checked structural preparation that every command starts from. | `model`, `snapshot`, `domain` | 1 |
 | `service` | Run execution, static runtime metadata, harness instructions and the model view over a checked Project. | `model`, `snapshot`, `domain`, `project` | 4 |
-| `usecase` | Command preflight, the sequence of closed Runs and stored-candidate publication. | `model`, `project`, `service` | 2 |
+| `usecase` | Command preflight, the sequence of closed Runs and stored-candidate publication. | `model`, `project`, `service` | 1 |
 | `protocol` | Frame protocol between the Orchestrator and the session helper. | nothing | 1 |
 | `container` | The container engine client that the adapters running containers share. | `protocol` | 1 |
 | `guardedwrite` | Guarded working-tree writes for publication, docs --write and bundle installation, with the Git and path helpers they share with source snapshots. | nothing | 1 |
@@ -40,7 +40,6 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 |---|---|---|---|
 | `cmd/markitect-runner` | `internal/adapters/runner` | all | The runner image entrypoint starts the runner adapter directly. |
 | `internal/adapters/codexappserver` | `internal/agentd/frame` | all | Codex Sessions use the frame values that the container client exposes. |
-| `internal/apply` | `internal/workflow` | all | Apply runs the sequence of closed Runs. |
 | `internal/tooling/release` | `internal/tooling/architecture` | all | The packager takes its source roots from this table. |
 | `internal/adapters/codexappserver` | `internal/adapters/gitrepo` | tests only | Hierarchy tests run Codex Sessions over real Run Git copies. |
 | `internal/adapters/codexappserver` | `internal/adapters/runstore` | tests only | Hierarchy tests read the stored Run records. |
@@ -87,8 +86,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/apply` | Package apply composes checked capture, closed Runs and durable publication. | [internal/apply/README.md](../../internal/apply/README.md) |
-| `internal/workflow` | Package workflow selects fully closed Runs. | [internal/apply/README.md](../../internal/apply/README.md) |
+| `internal/apply` | Package apply composes checked capture, the sequence of closed Runs and durable publication. | [internal/apply/README.md](../../internal/apply/README.md) |
 
 ## Agent protocol
 

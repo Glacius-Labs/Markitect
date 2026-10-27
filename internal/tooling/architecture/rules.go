@@ -92,7 +92,6 @@ var Table = Rules{
 		{"internal/run", "service", "internal/run/README.md"},
 		{"internal/runtimeconfig", "service", "docs/architecture.md#foundations-and-project"},
 		{"internal/apply", "usecase", "internal/apply/README.md"},
-		{"internal/workflow", "usecase", "internal/apply/README.md"},
 		{"internal/agentd/frame", "protocol", "internal/adapters/container/README.md"},
 		{"internal/adapters/container", "container", "internal/adapters/container/README.md"},
 		{"internal/guardedwrite", "guardedwrite", "docs/architecture.md#state-and-evidence-storage"},
@@ -119,7 +118,6 @@ var Table = Rules{
 	Exceptions: []Exception{
 		{From: "cmd/markitect-runner", To: "internal/adapters/runner", Reason: "The runner image entrypoint starts the runner adapter directly."},
 		{From: "internal/adapters/codexappserver", To: "internal/agentd/frame", Reason: "Codex Sessions use the frame values that the container client exposes."},
-		{From: "internal/apply", To: "internal/workflow", Reason: "Apply runs the sequence of closed Runs."},
 		{From: "internal/tooling/release", To: "internal/tooling/architecture", Reason: "The packager takes its source roots from this table."},
 		{From: "internal/adapters/codexappserver", To: "internal/adapters/gitrepo", TestOnly: true, Reason: "Hierarchy tests run Codex Sessions over real Run Git copies."},
 		{From: "internal/adapters/codexappserver", To: "internal/adapters/runstore", TestOnly: true, Reason: "Hierarchy tests read the stored Run records."},

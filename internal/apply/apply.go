@@ -1,4 +1,5 @@
-// Package apply composes checked capture, closed Runs and durable publication.
+// Package apply composes checked capture, the sequence of closed Runs and
+// durable publication.
 package apply
 
 import (
@@ -9,7 +10,6 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
-	"github.com/Glacius-Labs/Markitect/internal/workflow"
 )
 
 type Candidates interface {
@@ -37,15 +37,15 @@ type Publisher interface {
 	Publish(context.Context, PublicationRequest) (Publication, error)
 }
 type Command struct {
-	Executor   workflow.Executor
+	Executor   Executor
 	Candidates Candidates
 	Records    Records
 	Publisher  Publisher
 }
 type Report struct {
-	Status      model.Status    `json:"status"`
-	Workflow    workflow.Result `json:"workflow"`
-	Publication *Publication    `json:"publication,omitempty"`
+	Status      model.Status   `json:"status"`
+	Workflow    WorkflowResult `json:"workflow"`
+	Publication *Publication   `json:"publication,omitempty"`
 }
 
 func ValidateApproval(p project.Prepared, value run.Result) error {
@@ -79,7 +79,7 @@ func (c *Command) Execute(ctx context.Context, request run.Request) (out Report,
 		return out, fmt.Errorf("stored Verify approvals unavailable: %w", err)
 	}
 	request.Origin = run.Origin{Input: request.Input, Verified: run.Verified(request.Prepared, request.Input, approvals)}
-	out.Workflow, err = workflow.Apply(ctx, c.Executor, request)
+	out.Workflow, err = runWorkflow(ctx, c.Executor, request)
 	if err != nil {
 		return out, err
 	}

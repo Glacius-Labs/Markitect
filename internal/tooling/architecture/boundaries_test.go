@@ -79,8 +79,6 @@ func TestLayerDirections(t *testing.T) {
 		{"internal/harness", "internal/project", both},
 		{"internal/modeldocs", "internal/project", both},
 		{"internal/apply", "internal/run", both},
-		{"internal/apply", "internal/workflow", both},
-		{"internal/workflow", "internal/run", both},
 		{"internal/adapters/cli", "internal/apply", both},
 		{"internal/adapters/cli", "internal/modeldocs", both},
 		{"internal/adapters/cli", "internal/buildinfo", both},
@@ -125,8 +123,7 @@ func TestLayerDirections(t *testing.T) {
 		{"internal/apply", "internal/organization", none},
 		{"internal/apply", "internal/snapshot", none},
 		{"internal/apply", "internal/adapters/gitrepo", none},
-		{"internal/workflow", "internal/adapters/gitrepo", none},
-		{"internal/workflow", "internal/adapters/runstore", none},
+		{"internal/apply", "internal/adapters/runstore", none},
 		// Adapters share only the container client; the frame is Codex's alone.
 		{"internal/adapters/cli", "internal/adapters/gitrepo", none},
 		{"internal/adapters/cli", "internal/adapters/runner", none},
