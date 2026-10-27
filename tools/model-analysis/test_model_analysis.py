@@ -32,8 +32,8 @@ def words(n):
 CORE = [definition("markitect/core/Kind", "markitect/core/Kind"), definition("markitect/core/Property", "markitect/core/Kind")]
 VOCABULARY = [
     definition("vocab/Rule", "markitect/core/Kind", spec={"properties": [ref("vocab/owner"), ref("vocab/level")]}),
-    definition("vocab/owner", "markitect/core/Property", spec={"type": "reference", "target": ref("vocab/Rule"), "minCount": {"integer": "0"}, "maxCount": {"integer": "1"}}),
-    definition("vocab/level", "markitect/core/Property", spec={"name": "lvl", "type": "string", "minCount": {"integer": "0"}, "maxCount": {"integer": "1"}}),
+    definition("vocab/owner", "markitect/core/Property", spec={"valueType": "reference", "target": ref("vocab/Rule"), "minCount": {"integer": "0"}, "maxCount": {"integer": "1"}}),
+    definition("vocab/level", "markitect/core/Property", spec={"name": "lvl", "valueType": "string", "minCount": {"integer": "0"}, "maxCount": {"integer": "1"}}),
 ]
 CONTENT = [
     definition("a/x", "vocab/Rule", "Uses `fooBar`, `x` and `ok_code`. " + words(160), {"owner": ref("b/y")}, ["c/z"]),
@@ -159,10 +159,13 @@ class ImportReaderTests(unittest.TestCase):
         self.assertEqual(ma.read_imports(IMPORTS["c/z"]), [("vocab", None), ("a", None)])
         self.assertEqual(ma.read_imports("imports: []\nid: q\n"), [])
         self.assertEqual(ma.read_imports("id: q\nbody: |-\n  imports: [x]\n"), [])
+        # The block list of flow mappings that the standard Libraries use.
+        self.assertEqual(ma.read_imports("imports:\n  - {package: markitect/core, as: Core}\n  - {package: a}\nid: q\n"),
+                         [("markitect/core", "Core"), ("a", None)])
 
     def test_unsupported_forms_are_reported_not_guessed(self):
         self.assertIsNone(ma.read_imports("imports: [\n  {package: a}]\n"))
-        self.assertIsNone(ma.read_imports("imports:\n  - {package: a}\n"))
+        self.assertIsNone(ma.read_imports("imports:\n  - {package: a, version: 1}\n"))
 
 
 class LintTests(unittest.TestCase):
@@ -207,6 +210,58 @@ class LintTests(unittest.TestCase):
             model.definitions[("a", "x")]["source"] = {"Origin": f"gitrepo:{tmp}::model.yaml", "Path": "x.yaml"}
             imports, _ = ma.definition_imports(model, "unused")
         self.assertEqual(len(imports[("a", "x")]), 4)
+
+    def test_architecture_rules_from_the_model(self):
+        rules = [
+            definition("arch/a-dependencies", "markitect/architecture/DependencyRule", "a uses b only.",
+                       {"appliesTo": ["a"], "mayDependOn": ["b"]}),
+            definition("arch/c-dependencies", "markitect/architecture/DependencyRule", "c uses a.",
+                       {"appliesTo": ["c"], "mayDependOn": ["a"]}),
+            definition("arch/stray", "markitect/practice/TestObligation", "Test it.", {"appliesTo": ["nowhere"]}),
+            definition("arch/fields", "vocab/Rule", "Uses `fooBar`.", {"fields": [{"name": "fooBar", "fieldType": ref("a/x")}]}),
+        ]
+        found = self.signals(ma.lint(ma.Model(report(CONTENT + rules))))
+        # a -> c breaks a's rule; a -> b and c -> a are allowed; b has no rule.
+        self.assertEqual({s for sig, _, s in found if sig == "dependency-rule"}, {"a -> c"})
+        self.assertIn(("unknown-package", "strong", "arch/stray"), found)
+        # A rule that reaches Managers by Package scope is not isolated.
+        self.assertFalse({s for sig, _, s in found if sig == "isolated"} & {"arch/a-dependencies", "arch/stray"})
+        # Without appliesTo a rule governs only its own Package: b's rule does not reach b/inner.
+        own = [definition("b/rule", "markitect/architecture/DependencyRule", "b only.", {"mayDependOn": []}),
+               definition("b/inner/q", "vocab/Rule", "Inner.", {"owner": ref("a/x")})]
+        own_found = self.signals(ma.lint(ma.Model(report(CONTENT + own))))
+        self.assertEqual({s for sig, _, s in own_found if sig == "dependency-rule"}, {"b -> a"})
+        # A field name set in a spec is a named thing, not an undefined term.
+        self.assertNotIn("fooBar", {s for sig, _, s in found if sig == "undefined-term"})
+
+    def test_decisions_count_refusals_and_conditions(self):
+        refusals = [{"refusal": ref("a/x"), "when": "w"} for _ in range(9)]
+        op = definition("e/op", "vocab/Rule", "Refused when late, unless urgent.\n| when | table |", {"refusals": refusals})
+        self.assertEqual(ma.decisions(op), 11)  # 9 refusals, `when` and `unless`; the table row does not count
+        found = self.signals(ma.lint(ma.Model(report(CONTENT + [op]))))
+        self.assertIn(("decisions", "warning", "e/op"), found)
+
+    def test_summary_and_the_exempt_project_anchor(self):
+        anchor = definition("p/p", "markitect/practice/Project", "The project.", {"language": "Go"})
+        result = ma.summary(report(CONTENT + [anchor]))
+        self.assertEqual((result["modelID"], result["modelDigest"], result["packages"]["p"]), ("fixture", LOCAL, 1))
+        found = self.signals(ma.lint(ma.Model(report(CONTENT + [anchor]))))
+        self.assertNotIn(("isolated", "warning", "p/p"), found)
+
+    def test_diagnostics_read_failed_reports_root_cause_first(self):
+        failed = {"status": "failed", "stages": {"structural": {"model": {"diagnostics": [
+            {"Code": "registry.model_not_passed", "Message": "The model did not pass."},
+            {"Code": "lock.missing", "Message": "markitect-core has no lock entry."},
+            {"Code": "lock.missing", "Message": "markitect-core has no lock entry."}]}}}}
+        result = ma.diagnostics(failed)
+        self.assertEqual([f["code"] for f in result["findings"]], ["lock.missing", "registry.model_not_passed"])
+        self.assertEqual(result["status"], "failed")
+
+    def test_prose_words_leave_out_tables_and_code(self):
+        body = "Two words.\n\n| a | b |\n| --- | --- |\n| c | d |\n\n```json\n{\"x\": 1, \"if\": 2}\n```\n- Three more words.\n1. One."
+        self.assertEqual(ma.prose_words(body), 6)  # list markers, tables and code do not count
+        self.assertEqual(ma.decisions({"body": body}), 0)  # nor does an `if` inside code
+        self.assertTrue(ma.covers(".", "a/b") and ma.covers("a", "a/b") and not ma.covers("a", "ab"))
 
     def test_without_repo_import_signals_are_skipped_with_a_note(self):
         result = ma.lint(ma.Model(report()))
