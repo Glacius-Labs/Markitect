@@ -1,6 +1,6 @@
 # Standard Libraries
 
-**Status:** outline v0.3, accepted by the owner on 26 October 2026; v0.3.1 adds clarifications found while drafting `practice` and `architecture`, marked "v0.3.1" below, accepted by the owner on 27 October 2026. Canonical model track, workstream W4, built on [Kind interfaces](kind-interfaces.md) (DEC-075 as amended, Core 1.2.0), the [modeling guide](modeling-guide.md) and charter decision D4. `markitect-values`, `markitect-api`, `markitect-practice` and `markitect-architecture` are drafted under `libraries/`; `data` follows.
+**Status:** outline v0.3, accepted by the owner on 26 October 2026; v0.3.1 adds clarifications found while drafting `practice` and `architecture`, marked "v0.3.1" below, accepted by the owner on 27 October 2026. Canonical model track, workstream W4, built on [Kind interfaces](kind-interfaces.md) (DEC-075 as amended, Core 1.2.0), the [modeling guide](modeling-guide.md) and charter decision D4. All five Libraries are drafted under `libraries/`.
 
 ## Principles
 
@@ -42,7 +42,7 @@ The types of fields, and the shared field-shape Properties.
 
 | Definition | Shape | Notes |
 |---|---|---|
-| **Entity** implements Values.FieldType | `fields` (object list of the field-shape Properties), `key` (string, the identifying field name) | Fields are object values on the Entity, not separate Definitions |
+| **Entity** implements Values.FieldType | `fields` (object list of the field-shape Properties), `key` (string, the identifying field name; optional, absent for records without identity of their own) | Fields are object values on the Entity, not separate Definitions. Drafting note: `key` is optional because records such as an invoice line have no identity of their own |
 | **Invariant** | `entities` (references to Entity) | The rule is the body |
 
 ### `markitect-api`, Package `markitect/api`
