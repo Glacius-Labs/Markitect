@@ -12,7 +12,7 @@ The coordinator dispatched it under the [standing evidence authorization](../con
 | --- | --- | --- |
 | W0 | **Published** after one correction pair. Oracle 54/54, deliverable | **Published** in attempt 02 on F_cmp2. Oracle 54/54, deliverable; import graph conforming. Attempt 01 hit a publication defect ([W0, new](#w0-new-the-publication-defect)) |
 | C1 | **Published**. Oracle 55/55, deliverable | **Published**. Oracle 55/55, deliverable; import graph conforming |
-| C2 | **Published**. Oracle 57/57, deliverable | **Not published:** Root ended Assessment with a **model blocker** in the makerspace-v2 model ([C2, new](#c2-new-model-blocker)) |
+| C2 | **Published**. Oracle 57/57, deliverable | **Not published:** Root ended Assessment with a **model blocker** in the makerspace-v2 model ([C2, new](#c2-new-model-blocker)). Attempt 02 on makerspace-v2.1, which addresses it, **published**: oracle 57/57, deliverable, import graph conforming ([addendum](#addendum-new-c2-on-makerspace-v21)) |
 
 **Reading.**
 - Both models produced deliverable programs at every step they published. The hidden Makerspace oracle passed every case.
@@ -25,7 +25,7 @@ The coordinator dispatched it under the [standing evidence authorization](../con
 - At C2, the Managers reported a contradiction in the new model's equipment Interface. The same definitions are in all three steps, but only C2's Assessment flagged them.
 - The gate found one product defect, a publication guard that depended on read order. It is fixed.
 
-No Apply left residue or a credential hit, and the runtime login was unchanged in all seven. Usage rose from 75 % to 94 %, and no quota stop occurred. What this pilot cannot show is under [Limits](#limits).
+No Apply left residue or a credential hit, and the runtime login was unchanged in all seven of the original series. Usage rose from 75 % to 94 % before the addendum, and no quota stop occurred. What this pilot cannot show is under [Limits](#limits).
 
 ## Binding
 
@@ -62,7 +62,7 @@ The source is be7813a6 for the old arm and new W0 attempt 01, and F_cmp2 for the
 | new C1 (`m-new-c1`, F_cmp2) | `0963aeb9b6cdc15946e3c2fa8a0c3df1` | technical pass, passed | 1,359 | 39 (12/15/12) | 11 | `c19a5c04` / `49873842` | 32,083,025 | 0 | not exercised |
 | new C2 (`m-new-c2`, F_cmp2) | `8a1aafa228b0c0f51f6729a24c343fd3` | failed: model blocker in Assessment | 279 | 12 (12) | 0 | — | 9,578,873 | 0 | not exercised |
 
-The seven Applies used 11,791 s and 411,091,757 tokens.
+The seven Applies of the original series used 11,791 s and 411,091,757 tokens. The [addendum](#addendum-new-c2-on-makerspace-v21)'s eighth used 1,647 s and 45,970,909 tokens more.
 
 | Apply | Root turns | Root's peak provider turn | Root's longest turn | Root's `ask` / `reply` calls | Oracle | Import graph | Usage before → after |
 | --- | ---: | ---: | ---: | --- | --- | --- | --- |
@@ -133,13 +133,46 @@ So no DependencyRule edge was exercised beyond protocol's. The check sees import
 - **The oracle's limits, as confirmed by the Evaluation session:**
   - a mechanical comparison of the requirement and rendered specification texts, not a semantic review;
   - no test of the new architecture (requirements §16);
-  - valid for W0, C1 and C2 only.
+  - valid for W0, C1 and C2 only;
+  - confirmed for the v2.0 texts; the addendum's v2.1 changes only the section-16 Interface line, and the confirmation was not repeated.
 - **Quality** is measured by the hidden oracle and the candidates' own build and tests only. There was no rubric review of the code. The import graph covers module-internal import edges of the new arm only.
+
+## Addendum: new C2 on makerspace-v2.1
+
+After the [owner's instruction of 27 October](../concepts/sources/owner-morning-decisions-20261027.md#1-the-last-pilot-cell), the coordinator dispatched one more cell: new C2, attempt 02, on makerspace-v2.1. It ran on Codex, because no Claude adapter exists yet, with the remaining quota and the gate's limits, gates and abort rules. A quota stop would have been a failed attempt classed "quota", not repeated.
+
+- **Model.** [PR #779](https://github.com/Glacius-Labs/Markitect/pull/779) (makerspace-v2.1) changes only `equipment/equipment-interface.yaml`, in W0 and every change step. It adds `rate-cents-per-minute` to the Interface's types and names "the machine rate type" in its body. The rendered requirement texts change only in that Interface line of section 16, which the oracle does not test. Manifest, lock, execution file, Libraries, oracle and assessor are unchanged.
+- **Binding.**
+  - F_cmp2's binary and images, as for the rest of the new arm.
+  - The C2 v2.1 model from a clean clone at Main `00c687b6`: tree `5efef6d9`, digest `sha256:b61d791a5fcb5c6fb78fed0f43cc9d9e4549dac929f9b49e4c45d38dc9863e84`, 12 Managers.
+  - The digest was measured with F_cmp2's `markitect check` on a scratch commit, and the same method reproduced the v2.0 pin `ed20df5b`. The controller then confirmed the input's digest equals the pin.
+  - The controller gained an arm entry `new21`, with chain 2, its own material clone and pins, and passes its 66 self-tests.
+- **Chain.**
+  - The step continued new C1's published candidate (`c19a5c04`), with new C1's state, under rule C4.
+  - The swap from C1's v2.0 model to C2's v2.1 model therefore carries the Interface fix along with C2's own change.
+  - Old C2, and new W0 and C1, stay as recorded on v2.0.
+
+| Item | Value |
+| --- | --- |
+| Apply (`m-new-c2-02`) | `07dd328612c62bce56ee081dc41fe660`. Technical pass, passed. Runs: assessment approve, implement submitted, verify approve, with no correction |
+| Cost | 1,647 s, 41 messages (12/17/12), 16 paths, 45,970,909 tokens, 0 retries, no residue or credential hit, login unchanged |
+| Final commit / tree | `5a0ea178` / `4b472975` |
+| Root | 3 turns, peak provider turn 25.7 s, longest turn 889 s, `ask` / `reply` 0 / 0 |
+| Oracle at c2 | 57/57, deliverable, mechanical pass, 0 failed families, census unchanged |
+| Import graph | Conforming: 28 Go files, 10 internal imports, all from `protocol`. C2's permission `bookings → safety` went unused |
+| Usage | 95 % → 97 %. The launch was quiet |
+
+**Reading.**
+- On v2.1 the new model's C2 published, and the candidate passed every hidden case. Its Assessment did not raise the contradiction again. With one run per attempt, that does not show the change caused the pass; the v2.0 stop may have been detection variation as much as a property of v2.0.
+- **Against new C1:** 41 against 39 messages, but 46.0 M against 32.1 M tokens (+43 %) and 1,647 s against 1,359 s (+21 %), for a larger change (16 paths against 11).
+- **Against old C2:** fewer messages (41 against 66), but more tokens (46.0 M against 43.8 M, about +5 %) and more time (1,647 s against 1,427 s, about +15 %). The W0 and C1 cost figures in the [Result](#result) do not carry over to C2.
+- The approval does not show that v2.1 holds no other latent contradiction. It shows only that this Assessment raised none.
+- **The oracle's fit** was confirmed by the Evaluation session for the v2.0 texts and was not repeated for v2.1. v2.1 changes only the section-16 Interface line, which the oracle does not test.
 
 ## Evidence
 
 The packets, measures, quota and quiet records live on the host:
 - `Documents\Codex\Markitect-V1-Requalification\gate\be7813a6\` (the old arm and new W0 attempt 01);
-- `Documents\Codex\Markitect-V1-Requalification\gate\14310a70\` (the new arm on F_cmp2).
+- `Documents\Codex\Markitect-V1-Requalification\gate\14310a70\` (the new arm on F_cmp2, including the addendum's `m-new-c2-02` and its material clone `material-00c687b6`).
 
 Each step has `measures\<name>\summary.json`, `control-report.json`, `oracle\` and, for new, `import-graph.json`. The kit lives under `gate\controller-gate`, `gate\launch` and `gate\measures`.
