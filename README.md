@@ -168,7 +168,7 @@ go run ./cmd/markitect apply \
   --run-config /absolute/path/run.json
 ```
 
-`apply` starts real provider and check processes and may modify files in the selected repository after verified publication. Read the [exact execution and safety requirements](docs/guides/project-workflow.md#execute-verify-and-apply) before using it. No general-purpose `init`, setup wizard, or Extract path is currently provided.
+This native form runs on Linux, where the Apply host runs. On Windows, add `--runner RUNNER_IMAGE_ID` to run the same Apply in the [Linux runner](docs/guides/project-workflow.md#apply-in-the-linux-runner) through Docker Desktop; it returns the verified change as a new branch. `apply` starts real provider and check processes and may modify files in the selected repository after verified publication. Read the [exact execution and safety requirements](docs/guides/project-workflow.md#execute-verify-and-apply) before using it. No general-purpose `init`, setup wizard, or Extract path is currently provided.
 
 ## Current status
 
