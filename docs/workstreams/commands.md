@@ -159,9 +159,15 @@ From Traycer's [software factory guide](https://traycer.ai/software-factory):
 - **A3. Extract and other model changes** (owner, 27 October 2026): this lane ignores Extract; model changes are Authoring, not Commands. The earlier questions on Extract's owner questions and on who adopts model proposals leave this lane with it.
 - **A4. Frame** (owner, 27 October 2026): the frame and names above, single Runs startable directly, Custom Commands as the goal, one Result type.
 
+- **A5. Result of read-only Commands and hand-over to Apply** (owner, 28 October 2026, accepting the lane's recommendation; was Q1):
+  - A read-only Command returns the one Result type without a candidate: status (completed, failed, incomplete); verdict (Approve or Reject for Verify only, "answered" for explain and impact); Findings, each naming a Definition with what was observed, what is expected and where to correct it; the answer (prose for explain, affected areas for impact); the IDs of the Shared Notes it appended; pointers to the stored Run records. Notes stay in the Notes store and keep no authority.
+  - Apply takes Findings over only when the user passes a Result in explicitly, for example `apply --findings RESULT`. The host checks that the Result is stored and closed (the one validation, D15) and that each Finding's Definition exists in the current model; a Finding whose Definition is gone becomes a Note (DEC-073). If the artifacts changed since, the Findings still enter, and Implementation judges whether each still applies.
+  - A Verify-only approval of exactly the current artifacts under the same model, execution configuration and dependencies can serve a later Apply as the "already verified" fact (DEC-073).
+  - Nothing is taken over automatically (§19.2). Automatic hand-over, such as a nightly Verify feeding Apply, is a trigger and belongs to the continuous-change lane.
+
 ### Open
 
-- **Q1. Result of read-only Commands.** Lane recommendation, not yet confirmed: a stored Result with a verdict and Findings; Findings that name a Definition stay Findings, everything else becomes a Shared Note; Apply takes Findings only when the user passes them in explicitly, never on its own.
+- **Q1.** Answered as A5.
 - **Q2. Analysis or Run.** Where the line falls for a given capability, for example impact. Rule of thumb in the frame.
 - **Q3. Workflow form.** How a Custom Command's Workflow is defined: fixed in code, declared as data, or both. Concept 1.0 wants no DSL in V1 (§2.4).
 - **Q4. Order.** Which Commands first? Proposal: Verify only (no new Run kind, cheap to evaluate), then impact check.
@@ -174,3 +180,4 @@ From Traycer's [software factory guide](https://traycer.ai/software-factory):
 - 27 October 2026: page created from concept 1.0, the register and the architecture; independent review applied; outside input from two article analyses added. No code.
 - 27 October 2026: owner answered the task-input question (A2).
 - 27 October 2026: owner agreed the frame and names, reuse of Run kinds and that Extract is Authoring (A1, A3, A4); questions renumbered.
+- 28 October 2026: owner answered Q1 (A5: Result of read-only Commands, hand-over to Apply).
