@@ -4,7 +4,7 @@ imports:
 id: operations
 kind: Core.Property
 body: >-
-  The operations the Interface exposes.
+  The operations the Interface exposes, defined in its Package or below it.
 spec:
   target: Api.Operation
   valueType: reference

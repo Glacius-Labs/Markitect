@@ -4,9 +4,12 @@ imports:
 id: DependencyRule
 kind: Core.Kind
 body: >-
-  An allowlist: the Packages in appliesTo may depend only on themselves and
-  on the Packages in mayDependOn. A dependency is any typed reference or body
-  link in the model and any import in the code that realizes it.
+  An allowlist between the project's own Packages: each Package in appliesTo,
+  with the Packages below it, may depend only on itself and on the Packages
+  in mayDependOn and below them. A dependency is any typed reference or body
+  link in the model and any import in the code that realizes it. Libraries,
+  Core and third-party code are governed by the permitted dependencies of the
+  Project.
 spec:
   implements: [Practice.Rule]
   properties: [Practice.appliesTo, mayDependOn]

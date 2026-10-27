@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
+	"go.yaml.in/yaml/v3"
 )
 
 // The standard Libraries under libraries/ must compile on the current Core
@@ -73,24 +74,61 @@ func TestStandardLibrariesCompileForAProject(t *testing.T) {
 	repo.Commit("lock the Libraries")
 	checkReport(t, repo.Dir, 0, dependencies)
 
-	// The locks shipped with the Libraries must name the current digests.
-	for _, shipped := range []struct{ lock, model string }{
-		{"../../libraries/values/model-lock.yaml", "markitect-core"},
-		{"../../libraries/api/model-lock.yaml", "markitect-core"},
-		{"../../libraries/api/model-lock.yaml", "markitect-values"},
-		{"../../libraries/practice/model-lock.yaml", "markitect-core"},
-		{"../../libraries/architecture/model-lock.yaml", "markitect-core"},
-		{"../../libraries/architecture/model-lock.yaml", "markitect-values"},
-		{"../../libraries/architecture/model-lock.yaml", "markitect-api"},
-		{"../../libraries/architecture/model-lock.yaml", "markitect-practice"},
+	// The Library targets constrain: each broken use must fail with its finding.
+	for _, broken := range []struct{ file, body, code string }{
+		{"auth-placement", "imports:\n  - {package: markitect/architecture, as: Architecture}\nid: auth-placement\nkind: Architecture.Placement\nbody: A Project is not a Rule.\nspec:\n  appliesTo: [shop]\n  concern: shop\n  realizedIn: shop\n", "value.reference_kind"},
+		{"shop-interface", "imports:\n  - {package: markitect/architecture, as: Architecture}\nid: shop-interface\nkind: Architecture.Interface\nbody: A Role is not an Operation.\nspec:\n  appliesTo: [.]\n  operations: [clerk]\n", "value.reference_kind"},
+		{"security-duty", "imports:\n  - {package: markitect/core, as: Core}\n  - {package: markitect/practice, as: Practice}\nid: SecurityObligation\nkind: Core.Kind\nbody: A Rule without appliesTo.\nspec:\n  implements: [Practice.Rule]\n  properties: []\n", "contract.implements_missing"},
 	} {
-		data, err := os.ReadFile(shipped.lock)
+		path := ".markitect/model/shop/" + broken.file + ".yaml"
+		original, err := os.ReadFile(filepath.Join(repo.Dir, filepath.FromSlash(path)))
 		if err != nil {
 			t.Fatal(err)
 		}
-		if !strings.Contains(string(data), "digest: "+digests[shipped.model]) {
-			t.Fatalf("%s does not pin the current %s digest %s", shipped.lock, shipped.model, digests[shipped.model])
+		repo.Write(path, broken.body)
+		repo.Commit("break " + broken.file)
+		if report := checkReport(t, repo.Dir, 1, dependencies); !strings.Contains(string(report), `"`+broken.code+`"`) {
+			t.Fatalf("broken %s did not report %s:\n%s", broken.file, broken.code, report)
 		}
+		repo.Write(path, string(original))
+		repo.Commit("restore " + broken.file)
+	}
+
+	// Each shipped Library lock must pin exactly its manifest's dependencies,
+	// with their versions and current digests.
+	manifests, err := filepath.Glob("../../libraries/*/model.yaml")
+	if err != nil || len(manifests) == 0 {
+		t.Fatalf("no Library manifests: %v", err)
+	}
+	for _, manifest := range manifests {
+		var declared struct {
+			Dependencies map[string]string `yaml:"dependencies"`
+		}
+		var locked struct {
+			Models map[string]struct{ Version, Digest string } `yaml:"models"`
+		}
+		readYAML(t, manifest, &declared)
+		readYAML(t, filepath.Join(filepath.Dir(manifest), "model-lock.yaml"), &locked)
+		if len(locked.Models) != len(declared.Dependencies) {
+			t.Fatalf("%s locks %d models for %d dependencies", manifest, len(locked.Models), len(declared.Dependencies))
+		}
+		for id, version := range declared.Dependencies {
+			entry, found := locked.Models[id]
+			if !found || entry.Version != version || entry.Digest != digests[id] {
+				t.Fatalf("%s: lock entry for %s is %+v, want version %s and digest %s", manifest, id, entry, version, digests[id])
+			}
+		}
+	}
+}
+
+func readYAML(t *testing.T, path string, into any) {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := yaml.Unmarshal(data, into); err != nil {
+		t.Fatalf("%s: %v", path, err)
 	}
 }
 

@@ -3,7 +3,8 @@ imports:
 id: mayDependOn
 kind: Core.Property
 body: >-
-  The Packages that may be depended on, as Package paths. Empty means none.
+  The project Packages that may be depended on, as Package paths. Absent or
+  empty means none.
 spec:
   valueType: string
   minCount: 0

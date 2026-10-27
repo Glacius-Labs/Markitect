@@ -4,9 +4,9 @@ imports:
 id: Placement
 kind: Core.Kind
 body: >-
-  Where a cross-cutting rule is realized: the Package in realizedIn
-  implements the concern for the Packages in appliesTo, which do not
-  implement it themselves.
+  Where a cross-cutting rule is realized: the Package in realizedIn realizes
+  the concern for the Packages in appliesTo, which do not realize it
+  themselves. appliesTo usually equals the appliesTo of the concern.
 spec:
   implements: [Practice.Rule]
   properties: [Practice.appliesTo, concern, realizedIn]
