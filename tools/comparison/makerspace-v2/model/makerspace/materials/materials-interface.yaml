@@ -1,0 +1,10 @@
+imports:
+  - {package: markitect/architecture, as: Architecture}
+id: materials-interface
+kind: Architecture.Interface
+body: |-
+  What other Packages may use of materials: its operations and the material and purchase records.
+spec:
+  appliesTo: [makerspace]
+  operations: [add-material, restock-material, purchase-material, list-materials]
+  types: [material, purchase]

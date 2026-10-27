@@ -1,0 +1,10 @@
+imports:
+  - {package: markitect/core, as: Core}
+id: list
+kind: Core.Property
+body: >-
+  Whether the field holds a list of values; absent means a single value.
+spec:
+  valueType: boolean
+  minCount: 0
+  maxCount: 1

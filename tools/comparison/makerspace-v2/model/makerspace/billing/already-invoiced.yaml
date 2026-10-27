@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: already-invoiced
+kind: Api.RefusalCode
+body: |-
+  Invoices for the month have already been generated.
+spec:
+  code: already_invoiced

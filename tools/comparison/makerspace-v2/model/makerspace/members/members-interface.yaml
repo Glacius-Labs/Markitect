@@ -1,0 +1,10 @@
+imports:
+  - {package: markitect/architecture, as: Architecture}
+id: members-interface
+kind: Architecture.Interface
+body: |-
+  What other Packages may use of members: its operations, the user and member records, tier and standing, and the refusal `member_suspended`. Other Packages also ask whether a member exists, whether the member is in good standing, and the member's tier with its monthly fee and usage discount.
+spec:
+  appliesTo: [makerspace]
+  operations: [register-user, register-member, get-member, change-tier, set-member-standing]
+  types: [user, member, tier, standing]

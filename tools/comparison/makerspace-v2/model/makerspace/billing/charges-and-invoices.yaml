@@ -1,0 +1,28 @@
+imports:
+  - {package: markitect/practice, as: Practice}
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/members, as: Members}
+id: charges-and-invoices
+kind: Practice.Rule
+body: |-
+  Usage, course and material [[charge|charges]] collect on the member's account until they are invoiced. A charge belongs to the month of its `at`. A charge is **unbilled** until it appears on an invoice.
+
+  [[invoice|Invoices]] are generated per calendar month, for all members at once, when staff request it. Generation for a month is possible once the month has ended at the request time, and only once per month. Months can be generated in any order.
+
+  For a month M, every [[Members.member|member]] whose `registeredAt` is before the first minute of the month after M receives one invoice, whatever the member's standing. The invoice is built as follows:
+
+  1. `invoiceId` is the next invoice identifier. Members are processed in ascending `memberId` order.
+  2. `issuedAt` is the request time; `dueAt` is 14 days after `issuedAt`.
+  3. `lines` starts with the membership line: `kind` `membership`, `ref` the member's current tier, `quantity` 1, `unitPriceCents` the tier's monthly fee, `discountPercent` 0, `at` the request time. All of the member's unbilled charges whose `at` lies in month M follow, ordered as [[Policies.list-order|the order of listed results]] states. These charges are no longer unbilled.
+  4. `totalCents` is the sum of the line amounts.
+  5. `creditAppliedCents` is the smaller of the member's credit balance and `totalCents`. The credit balance decreases by that amount.
+  6. `paidCents` is 0. `balanceCents` is `totalCents − creditAppliedCents − paidCents`.
+  7. `status` is `paid` when `balanceCents` is 0, otherwise `open`.
+
+  Because request times never go backwards and generation needs the month to have ended, no charge can be created for a month after that month was invoiced.
+
+  An invoice is **overdue** at a request time when its status is `open` and the request time is at or after `dueAt`. The `overdue` field reports this at the request time of the response. Being overdue has no other effect.
+
+  Worked example: member `ada` on tier `plus` uses a machine with rate 45 from `2026-03-03T10:00Z` to `10:37`. At check-out a usage charge of 1499 cents is created. Generating `2026-03` at `2026-04-01T08:00Z` gives `ada` an invoice with the membership line (4900) and the usage line (1499): `totalCents` 6399, due `2026-04-15T08:00Z`.
+spec:
+  appliesTo: [makerspace/billing, makerspace/bookings, makerspace/training, makerspace/materials, makerspace/reporting]

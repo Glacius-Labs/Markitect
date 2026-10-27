@@ -1,0 +1,10 @@
+formatVersion: 1
+id: makerspace
+root: model
+dependencies:
+  markitect-core: "1.2.0"
+  markitect-values: "1.0.0"
+  markitect-data: "1.0.0"
+  markitect-api: "1.0.0"
+  markitect-practice: "1.0.0"
+  markitect-architecture: "1.0.0"

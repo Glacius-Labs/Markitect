@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/api, as: Api}
+id: already-exists
+kind: Api.RefusalCode
+body: |-
+  A record with the supplied identifier already exists.
+spec:
+  code: already_exists

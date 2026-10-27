@@ -1,0 +1,16 @@
+imports:
+  - {package: markitect/api, as: Api}
+  - {package: makerspace/policies, as: Policies}
+id: list-machines
+kind: Api.Operation
+body: |-
+  Returns all machines.
+spec:
+  wireName: listMachines
+  mutation: false
+  results:
+    - {name: machines, fieldType: machine, list: true}
+  permissions:
+    - {role: Policies.member-role, scope: all}
+    - {role: Policies.staff-role, scope: all}
+    - {role: Policies.admin-role, scope: all}

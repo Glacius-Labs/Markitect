@@ -1,0 +1,10 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: restock-quantity
+kind: Values.Scalar
+body: |-
+  The number of units added to stock in one request.
+spec:
+  base: integer
+  lowest: 1
+  highest: 100000

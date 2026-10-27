@@ -1,0 +1,9 @@
+imports:
+  - {package: markitect/core, as: Core}
+id: FieldType
+kind: Core.Kind
+body: >-
+  Any type a field, argument or result can have. It is an interface without
+  Properties: every Kind that implements it is accepted where a FieldType is
+  required. It has no items of its own.
+spec: {}

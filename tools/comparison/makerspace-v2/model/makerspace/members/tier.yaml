@@ -1,0 +1,11 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: tier
+kind: Values.Enumeration
+body: |-
+  A membership tier. It sets the monthly fee and the discount on machine usage.
+spec:
+  members:
+    - {value: basic, meaning: "Monthly fee 2500 cents, usage discount 0 %."}
+    - {value: plus, meaning: "Monthly fee 4900 cents, usage discount 10 %."}
+    - {value: pro, meaning: "Monthly fee 9900 cents, usage discount 25 %."}

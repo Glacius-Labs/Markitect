@@ -1,0 +1,10 @@
+imports:
+  - {package: markitect/architecture, as: Architecture}
+id: equipment-interface
+kind: Architecture.Interface
+body: |-
+  What other Packages may use of equipment: its operations and the family, machine and maintenance window records. Other Packages also ask for a machine's family and current rate and for the scheduled windows of a machine that overlap an interval. Equipment in turn needs to know whether an active reservation of a machine overlaps an interval; it declares that need, and the protocol Package supplies the answer from bookings.
+spec:
+  appliesTo: [makerspace]
+  operations: [add-family, add-machine, set-machine-rate, list-machines, schedule-maintenance, cancel-maintenance]
+  types: [family, machine, maintenance-window]

@@ -1,0 +1,10 @@
+imports:
+  - {package: markitect/architecture, as: Architecture}
+id: reporting-interface
+kind: Architecture.Interface
+body: |-
+  What other Packages may use of reporting: its operations and its report rows.
+spec:
+  appliesTo: [makerspace]
+  operations: [utilization-report, revenue-report]
+  types: [utilization-row, utilization-totals]

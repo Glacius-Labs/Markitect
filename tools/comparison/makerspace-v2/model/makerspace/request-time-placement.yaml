@@ -1,0 +1,11 @@
+imports:
+  - {package: markitect/architecture, as: Architecture}
+  - {package: makerspace/policies, as: Policies}
+id: request-time-placement
+kind: Architecture.Placement
+body: |-
+  The protocol Package keeps the request-time order (check 3) and passes the request time to the area Packages as their only notion of now.
+spec:
+  appliesTo: [makerspace]
+  concern: Policies.time
+  realizedIn: makerspace/protocol

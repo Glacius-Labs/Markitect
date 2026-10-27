@@ -1,0 +1,9 @@
+imports:
+  - {package: markitect/architecture, as: Architecture}
+id: equipment-dependencies
+kind: Architecture.DependencyRule
+body: |-
+  The equipment Package depends only on policies. Where maintenance must know about reservations, equipment declares what it needs and the protocol Package supplies it from bookings, so equipment never depends on bookings.
+spec:
+  appliesTo: [makerspace/equipment]
+  mayDependOn: [makerspace/policies]

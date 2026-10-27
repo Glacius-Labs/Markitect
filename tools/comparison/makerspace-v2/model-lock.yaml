@@ -1,0 +1,20 @@
+formatVersion: 1
+models:
+  markitect-core:
+    version: 1.2.0
+    digest: sha256:b338a1d686be91495e893f085d85013cc91f8f740bef8725210adc2e276f000a
+  markitect-values:
+    version: 1.0.0
+    digest: sha256:dd8500a35a25d58d5c2fb46032c0e582809dcf5978890be4d6da5277e5991147
+  markitect-data:
+    version: 1.0.0
+    digest: sha256:9528390f680f60e46e376d48c1bee02a29b974ad3f40451aa9e4fa9851fdb732
+  markitect-api:
+    version: 1.0.0
+    digest: sha256:2a3f15d0ff9d1066307f71ba9e35c0c91e1a1d863109191875cf8cefcf87397d
+  markitect-practice:
+    version: 1.0.0
+    digest: sha256:d2c1c8c5755bbb922c77e4c3716e5894c8deb6da154bedc6d75613892389b44f
+  markitect-architecture:
+    version: 1.0.0
+    digest: sha256:a63185fb61e2f9445ff450cecb21682de1d76030c9de1589a0daa4327fa05e8c

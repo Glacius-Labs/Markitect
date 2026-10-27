@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/values, as: Values}
+id: month
+kind: Values.Scalar
+body: |-
+  A JSON string `YYYY-MM` from `2000-01` to `2099-12`.
+spec:
+  base: string

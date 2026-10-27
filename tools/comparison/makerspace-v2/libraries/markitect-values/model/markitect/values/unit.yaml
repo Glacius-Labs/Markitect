@@ -1,0 +1,8 @@
+imports:
+  - {package: markitect/core, as: Core}
+id: Unit
+kind: Core.Kind
+body: >-
+  A unit a numeric Scalar is measured in, for example cents or minutes.
+spec:
+  properties: [symbol]

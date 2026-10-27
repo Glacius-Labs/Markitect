@@ -1,0 +1,12 @@
+id: implements
+kind: Property
+body: >-
+  References the interface Kinds a Kind implements. The Kind must declare
+  every Property of each interface in its own properties, and its
+  definitions satisfy references that require the interface, directly
+  or indirectly. The implements graph must be acyclic.
+spec:
+  valueType: reference
+  target: Kind
+  minCount: 0
+  maxCount: -1

@@ -1,0 +1,16 @@
+imports:
+  - {package: markitect/data, as: Data}
+  - {package: makerspace/policies, as: Policies}
+id: maintenance-window
+kind: Data.Entity
+body: |-
+  A maintenance window of a machine, generated identifier `mnt-N`.
+spec:
+  fields:
+    - {name: windowId, fieldType: Policies.identifier}
+    - {name: machineId, fieldType: Policies.identifier, refersTo: machine}
+    - {name: start, fieldType: Policies.timestamp}
+    - {name: end, fieldType: Policies.timestamp}
+    - {name: reason, fieldType: Policies.text}
+    - {name: status, fieldType: window-status}
+  key: windowId

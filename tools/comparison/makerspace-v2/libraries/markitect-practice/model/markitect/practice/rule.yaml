@@ -1,0 +1,9 @@
+imports:
+  - {package: markitect/core, as: Core}
+id: Rule
+kind: Core.Kind
+body: >-
+  A binding statement; the body is the rule. Every Kind that implements Rule
+  is a rule too and declares appliesTo.
+spec:
+  properties: [appliesTo]

@@ -1,0 +1,12 @@
+imports:
+  - {package: markitect/architecture, as: Architecture}
+  - {package: makerspace/policies, as: Policies}
+  - {package: makerspace/protocol, as: Protocol}
+id: authorization-placement
+kind: Architecture.Placement
+body: |-
+  Checks 2, 4 and 6 of the [[Protocol.order-of-checks|order of checks]] run once, in the protocol Package, before any operation's own rules; area Packages do not check roles or ownership themselves.
+spec:
+  appliesTo: [makerspace]
+  concern: Policies.authorization
+  realizedIn: makerspace/protocol

@@ -1,0 +1,7 @@
+imports:
+  - {package: markitect/practice, as: Practice}
+id: catalog
+kind: Practice.Rule
+body: |-
+  The catalog holds tool [[family|families]] and [[machine|machines]]. Each machine belongs to one family and has a rate in cents per minute. Families and machines are never removed.
+spec: {}

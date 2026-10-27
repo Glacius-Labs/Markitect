@@ -1,0 +1,20 @@
+imports:
+  - {package: makerspace/policies, as: Policies}
+id: register-user
+kind: Policies.AuditedOperation
+body: |-
+  Registers a staff member or an admin: creates the user.
+spec:
+  wireName: registerUser
+  mutation: true
+  arguments:
+    - {name: userId, fieldType: Policies.identifier}
+    - {name: name, fieldType: Policies.text}
+    - {name: role, fieldType: staff-role-choice}
+  refusals:
+    - {refusal: Policies.already-exists, when: "any user, including a member, has the identifier `userId`"}
+  results:
+    - {name: user, fieldType: user}
+  permissions:
+    - {role: Policies.admin-role, scope: all}
+  auditTarget: userId

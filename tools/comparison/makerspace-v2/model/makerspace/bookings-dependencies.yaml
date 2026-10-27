@@ -1,0 +1,9 @@
+imports:
+  - {package: markitect/architecture, as: Architecture}
+id: bookings-dependencies
+kind: Architecture.DependencyRule
+body: |-
+  The bookings Package depends only on members, training, equipment, billing, policies.
+spec:
+  appliesTo: [makerspace/bookings]
+  mayDependOn: [makerspace/members, makerspace/training, makerspace/equipment, makerspace/billing, makerspace/policies]

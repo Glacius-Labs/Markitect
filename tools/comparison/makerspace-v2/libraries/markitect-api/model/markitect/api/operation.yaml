@@ -1,0 +1,11 @@
+imports:
+  - {package: markitect/core, as: Core}
+id: Operation
+kind: Core.Kind
+body: >-
+  A request the program accepts: its wire name, arguments, refusals checked in
+  order, results and the roles permitted to call it. The body states its
+  effect. Project Kinds that implement Operation declare these Properties and
+  may add their own.
+spec:
+  properties: [wireName, mutation, arguments, refusals, results, permissions]

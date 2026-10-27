@@ -1,0 +1,30 @@
+apiVersion: markitect.execution/v2
+ownership:
+  - {path: ./, owner: .}
+  - {path: realization/, owner: makerspace}
+  - {path: realization/cmd/makerspace/, owner: makerspace/protocol}
+  - {path: realization/protocol/, owner: makerspace/protocol}
+  - {path: realization/policies/, owner: makerspace/policies}
+  - {path: realization/members/, owner: makerspace/members}
+  - {path: realization/equipment/, owner: makerspace/equipment}
+  - {path: realization/billing/, owner: makerspace/billing}
+  - {path: realization/training/, owner: makerspace/training}
+  - {path: realization/bookings/, owner: makerspace/bookings}
+  - {path: realization/materials/, owner: makerspace/materials}
+  - {path: realization/safety/, owner: makerspace/safety}
+  - {path: realization/reporting/, owner: makerspace/reporting}
+scope:
+  - {kind: markitect/practice/Rule, property: markitect/practice/appliesTo}
+checks:
+  - id: project-build
+    profile: go
+    directory: realization
+    args: [build, ./cmd/makerspace]
+    requiredBy: makerspace/makerspace
+    timeout: 2m
+  - id: project-tests
+    profile: go
+    directory: realization
+    args: [test, ./...]
+    requiredBy: makerspace/tests
+    timeout: 5m

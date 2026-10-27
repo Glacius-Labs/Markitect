@@ -1,0 +1,9 @@
+imports:
+  - {package: markitect/architecture, as: Architecture}
+id: training-dependencies
+kind: Architecture.DependencyRule
+body: |-
+  The training Package depends only on members, equipment, billing, policies.
+spec:
+  appliesTo: [makerspace/training]
+  mayDependOn: [makerspace/members, makerspace/equipment, makerspace/billing, makerspace/policies]

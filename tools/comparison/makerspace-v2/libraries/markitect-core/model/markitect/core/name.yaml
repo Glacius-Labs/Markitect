@@ -1,0 +1,11 @@
+id: name
+kind: Property
+body: >-
+  Optional explicitly deviating non-empty field name.
+  If omitted, the complete local ID of the Property applies as the field name.
+  The effective field name must be unique within every contract
+  that uses it.
+spec:
+  valueType: string
+  minCount: 0
+  maxCount: 1
