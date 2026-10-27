@@ -20,7 +20,7 @@ The lane exists since the owner split Markitect's work into lanes on 27 October 
   |---|---|---|---|
   | M | Markitect with the host as coordinator | 1 | Step 4's controller (`requalify.py`), kept in the evidence root, outside the repository |
   | P | Markitect Apply as a Claude Code plugin | 2 | [`armp.py`](https://github.com/Glacius-Labs/Markitect/blob/c76d2b77/tools/comparison/armp.py) on branch `dev/markitect-plugins-assessment-779f8e`, not on `main` |
-  | G | Agents collaborate through a Git remote ([DEC-078](../concepts/register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review)) | 3 | None yet; G is `markitect apply` from lane 3's branch, so arm M's adapter with another binary |
+  | G | Agents collaborate through a Git remote ([DEC-078](../concepts/register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review)) | 3 | None yet. First a throwaway prototype (Root and two children on the Library, a local Run remote with a minimal referee) that writes the run bundle itself; a product binary only if the prototype holds up |
   | K | Classic agentic coding, the baseline | 4 | `runner.py` |
 
 ## The arm interface
@@ -43,7 +43,7 @@ The suite writes `TASK.json`. An arm reads nothing else from the suite.
 | `provider`, `model`, `effort` | The model every arm of the suite uses, for example Codex Luna at high effort ([owner decision](../concepts/sources/owner-morning-decisions-20261027.md)), or one Claude model in a Claude suite ([below](#owner-decisions)) |
 | `limits` | Wall deadline, aggregate CPU, memory and process ceiling, network policy, and the shared engine lock. Equal for all arms |
 | `login` | The path of the account login. The arm passes it on without its refresh token and never writes it to the output |
-| `previous` | The arm's own output directory of the chain's previous step, or none. What an arm carries over (K resumes its thread, M keeps its state directory) is its own business, but it reads only its own previous output |
+| `previous` | The arm's own output directory of the chain's previous step, or none. What an arm carries over (K resumes its thread, M keeps its state directory) is its own business, but it reads only its own previous output. An arm that supports only single tasks, such as G's prototype, refuses a task with `previous` and takes part only in single-task suites |
 
 The suite, not the arm, builds the start of every chain step: the arm's own previous candidate, or its previous start when there was none, plus one commit with the step's intent change. Both arms of a chain therefore start each step from their own work under the same rule.
 
@@ -87,7 +87,7 @@ The outcome of a run is decided by these shared steps, never by the arm's own re
 - **Arms:**
   - K's `result.json` and P's `result.json` are close to the run record; neither writes `run.json` yet.
   - M's adapter is outside the repository.
-  - G has no adapter.
+  - G has no adapter yet. Lane 3 agreed the interface: its prototype publishes one commit whose parent is the start and whose tree is the Verify-approved candidate onto a local bare target built from `start.bundle`, and the adapter bundles that tip as `result.bundle`. The Run remote, the referee's record and the Manager branches go into `arm/`. G runs on Codex Luna; its run waits for the owner's approval of its own bounded dispatch.
 - **Pilot:** the Makerspace old-versus-new gate cells stay on `gpt-6-sol` and are not rerun on Luna ([delivery plan](../implementation-plan.md#acceptance-and-evaluation-owner-directive-25-october)).
 - **Study design:** a draft evaluation contract (estimands per task type, fixed sample size, calibrated instruments, a model-quality gate, new projects written after the source freeze) and a draft follow-up study on consistency over long change chains exist as the lead's working drafts and are not yet in the repository.
 
@@ -99,7 +99,7 @@ The outcome of a run is decided by these shared steps, never by the arm's own re
    - K: `runner.py` writes `run.json` (lane 4).
    - P: `armp.py` writes `run.json` (lane 2).
    - M: step 4's controller moves into the repository as arm M's adapter (lane 1).
-   - G: lane 3's binary through M's adapter, once G1 lands.
+   - G: lane 3's prototype writes the run bundle itself (lane 3).
 4. **Portfolio and contract:** the evaluation contract and the follow-up study go into `docs/validation/` for owner review; new projects and their oracles follow it.
 5. **First bounded dispatch,** after the owner's approval: one Library task per arm on the suite's model, as a smoke of the interface, not as a counted run.
 
