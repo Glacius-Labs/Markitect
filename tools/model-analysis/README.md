@@ -18,6 +18,7 @@ File-local imports are not in the report. `lint --repo DIR` reads them from each
 
 ```text
 python -I -B tools/model-analysis/model_analysis.py diagnostics check.json [--json]
+python -I -B tools/model-analysis/model_analysis.py summary check.json [--json]
 python -I -B tools/model-analysis/model_analysis.py graph check.json [--json]
 python -I -B tools/model-analysis/model_analysis.py refs check.json PACKAGE/ID [--json]
 python -I -B tools/model-analysis/model_analysis.py impact old.json new.json [--transitive] [--json]
@@ -30,6 +31,8 @@ Output is UTF-8 whatever the console's code page, because Package names may use 
 **Edges.** An edge is a typed reference anywhere in a local Definition's `spec`, objects and lists included, or a body link. A Definition's `kind` is a type use and not an edge.
 
 **diagnostics** reads any report, also a failed one, and lists its findings by code with the root causes first; the follow-on `*_not_passed` findings come last. Use it when `check` fails: its own output names only the first problem.
+
+**summary** prints what a final report pastes: the status, the local model's ID and digest, and its Definitions per Package.
 
 **graph** counts local and content Definitions (content means not of the Core meta-Kinds `Kind` or `Property`), spec references and body links. It reports:
 - distinct Definition edges and how many cross a Package boundary, with their share;
@@ -53,7 +56,7 @@ Output is UTF-8 whatever the console's code page, because Package names may use 
 |---|---|
 | `size` | a content Definition's body has more than 150 words of prose; more than 300 is `strong`. Markdown table rows and fenced code blocks do not count (quality criteria S1) |
 | `decisions` | a content Definition has more than 10 decisions, the model's counterpart of cyclomatic complexity: each typed refusal is one, and so is each condition word (`when`, `if`, `unless`, `otherwise`, `except`) in its prose; more than 15 is `strong`. Thresholds are provisional; a CRAP-style risk needs tests bound to statements first (register ENH-003) |
-| `isolated` | a content Definition has no edge in or out and names no Package in `appliesTo`, `mayDependOn` or `realizedIn`. A model written with empty `spec` and no links gets this for nearly every Definition |
+| `isolated` | a content Definition has no edge in or out and names no Package in `appliesTo`, `mayDependOn` or `realizedIn`. The project anchor (`Practice.Project`) is exempt, as quality criteria S9 says. A model written with empty `spec` and no links gets this for nearly every Definition |
 | `unknown-package` (strong) | `appliesTo`, `mayDependOn` or `realizedIn` names a Package this model does not have; `.` is the Root. A wrong name in a modeled scope stops context selection for every Manager |
 | `dependency-rule` (strong) | a Package edge between local Packages breaks a `markitect/architecture` DependencyRule of the model: a Package covered by the rule's `appliesTo` (with the Packages below it) depends on a Package outside that subtree and outside `mayDependOn` (with the Packages below them). Edges into Libraries are not counted |
 | `no-area` | a Package holds content Definitions but no registry record or execution ownership area names it as owner |

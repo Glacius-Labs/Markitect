@@ -35,6 +35,7 @@ LITERALS = {"true", "false", "null"}
 SCOPE_FIELDS = ("appliesTo", "mayDependOn", "realizedIn")  # Package strings of the Practice and Architecture Libraries
 NAME_KEYS = {"name", "value", "wireName", "code"}  # named things a spec defines without a Definition of their own
 DEPENDENCY_RULE = ("markitect/architecture", "DependencyRule")
+PROJECT = ("markitect/practice", "Project")
 DECISIONS_WARNING, DECISIONS_STRONG = 10, 15  # provisional, like the size thresholds
 CONDITION = re.compile(r"\b(?:when|if|unless|otherwise|except)\b", re.IGNORECASE)
 
@@ -444,7 +445,7 @@ def lint(model, repo=None, rules=None, term_pattern=TERM_PATTERN):
     scoped = {i for i in model.local if package_strings(model.definitions[i].get("spec"))}
     connected = {s for s, t, _, _ in model.edges if s != t} | {t for s, t, _, _ in model.edges if s != t} | scoped
     for identity in content:
-        if identity not in connected:
+        if identity not in connected and model.kind(identity) != PROJECT:  # the project anchor is exempt (criteria S9)
             warn("isolated", text(identity), "no typed reference, body link or Package scope in or out")
 
     local_packages = set(model.packages(model.local))
@@ -621,6 +622,22 @@ def diagnostics(report):
             "findings": [{"code": c, "message": m} for c, m in sorted(unique, key=lambda f: f[0].endswith("_not_passed"))]}
 
 
+def summary(report):
+    """The lines a final report pastes: status, the local model's digest and Definition and Package counts."""
+    model = Model(report)
+    local = next((m for m in model.models if m.get("local")), {})
+    per_package = collections.Counter(i[0] for i in model.local)
+    return {"status": report.get("status"), "modelID": local.get("id"), "modelDigest": local.get("canonicalModelDigest"),
+            "definitions": len(model.local), "packages": dict(sorted(per_package.items()))}
+
+
+def format_summary(r):
+    lines = [f"status: {r['status']}", f"model: {r['modelID']} {r['modelDigest']}",
+             f"definitions: {r['definitions']} in {len(r['packages'])} Packages"]
+    lines += [f"  {package}: {count}" for package, count in r["packages"].items()]
+    return "\n".join(lines)
+
+
 def format_diagnostics(r):
     lines = [f"status: {r['status']}, {len(r['findings'])} findings"]
     lines += [f"  [{f['code']}] {f['message']}" for f in r["findings"]]
@@ -633,7 +650,7 @@ def main(argv=None):
     sub = commands.add_parser("diagnostics")
     sub.add_argument("report")
     sub.add_argument("--json", action="store_true")
-    for name in ("graph", "refs", "lint", "lock"):
+    for name in ("summary", "graph", "refs", "lint", "lock"):
         sub = commands.add_parser(name)
         sub.add_argument("report")
         if name == "refs":
@@ -672,7 +689,9 @@ def main(argv=None):
             result, formatter = impact(Model(read_json(args.old)), Model(read_json(args.new)), args.transitive), format_impact
         else:
             model = Model(read_json(args.report))
-            if args.command == "graph":
+            if args.command == "summary":
+                result, formatter = summary(read_json(args.report)), format_summary
+            elif args.command == "graph":
                 result, formatter = package_graph(model), format_graph
             elif args.command == "refs":
                 result, formatter = references(model, parse_identity(args.definition)), format_refs

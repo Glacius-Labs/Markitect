@@ -236,6 +236,13 @@ class LintTests(unittest.TestCase):
         found = self.signals(ma.lint(ma.Model(report(CONTENT + [op]))))
         self.assertIn(("decisions", "warning", "e/op"), found)
 
+    def test_summary_and_the_exempt_project_anchor(self):
+        anchor = definition("p/p", "markitect/practice/Project", "The project.", {"language": "Go"})
+        result = ma.summary(report(CONTENT + [anchor]))
+        self.assertEqual((result["modelID"], result["modelDigest"], result["packages"]["p"]), ("fixture", LOCAL, 1))
+        found = self.signals(ma.lint(ma.Model(report(CONTENT + [anchor]))))
+        self.assertNotIn(("isolated", "warning", "p/p"), found)
+
     def test_diagnostics_read_failed_reports_root_cause_first(self):
         failed = {"status": "failed", "stages": {"structural": {"model": {"diagnostics": [
             {"Code": "registry.model_not_passed", "Message": "The model did not pass."},
