@@ -59,7 +59,7 @@ These are directions to discuss, not plans. They are not exclusive.
 
 ## Dependency on the Git variant
 
-Asked the Git variant on 27 October, answer pending:
+The Git variant's prototype runs where the host variant's Apply runs today. These questions wait until the owner opens this lane's discussion:
 - Where does the host run under G0: Linux only, or natively on Windows if it only talks to the engine and a remote?
 - Does the shared Run volume with per-Manager subpaths go away?
 - Is the local remote a container, a host-side bare repository or a volume?
