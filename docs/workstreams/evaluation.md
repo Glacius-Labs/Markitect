@@ -37,11 +37,12 @@ The suite writes `TASK.json`. An arm reads nothing else from the suite.
 
 | Field | Meaning |
 |---|---|
-| `taskId` | Suite, project, chain and step, for example `suite-1/library/chain-2/S3` |
-| `start` | The target repository as a Git bundle, its commit and tree. The arm works on this commit and nothing else |
-| `intent` | The step's intent in both forms, built from one canonical model snapshot: the model (`.markitect/`, with the execution configuration) and the ordinary document (`requirements.md`) rendered from it with the renderer's equivalence check. A model arm (M, P, G) gets only the model in `start`; arm K gets only the document. The same meaning is the fairness condition, proven by the renderer's check |
+| `taskId`, `chainId` | Suite, project, chain and step, for example `suite-1/library/chain-2/S3`, and the chain's ID, which stays the same across its steps. An arm derives stable per-chain names from it, such as M's `repositoryIdentity`, so that its Shared Notes and stored Runs carry over within the chain and never across chains or arms |
+| `start` | The target repository as a Git bundle, its commit, tree and owner branch (for example `dev/library-m2`). The arm works on this commit and nothing else |
+| `intent` | The step's intent in both forms, built from one canonical model snapshot: the model (`.markitect/`, with the execution configuration) and the ordinary document (`requirements.md`) rendered from it with the renderer's equivalence check. A model arm (M, P, G) gets only the model in `start`; arm K gets only the document. The same meaning is the fairness condition, proven by the renderer's check. The suite pins everything the intent binds: the Libraries' versions and their lock in the manifest, and the project checks and the Go image by digest. No arm rebinds them |
 | `provider`, `model`, `effort` | The model every arm of the suite uses, for example Codex Luna at high effort ([owner decision](../concepts/sources/owner-morning-decisions-20261027.md)), or one Claude model in a Claude suite ([below](#owner-decisions)) |
-| `limits` | Wall deadline, aggregate CPU, memory and process ceiling, network policy, and the shared engine lock. Equal for all arms |
+| `limits` | Wall deadline, aggregate CPU, memory and process ceiling, network policy, and the shared engine lock. Equal for all arms. An arm that cannot enforce a limit says so in `run.json`, and the suite reports it as a limit of the comparison |
+| `armLimits` | An arm's own bounds, such as P's agent allowance and correction rounds or M's message budget. Fixed per arm in the suite's dispatch before any run; the suite records them and does not interpret them |
 | `login` | The path of the account login. The arm passes it on without its refresh token and never writes it to the output |
 | `previous` | The arm's own output directory of the chain's previous step, or none. What an arm carries over (K resumes its thread, M keeps its state directory) is its own business, but it reads only its own previous output. An arm that supports only single tasks, such as G's prototype, refuses a task with `previous` and takes part only in single-task suites |
 
@@ -65,9 +66,10 @@ The arm writes `NEW_DIR`, which must not exist before:
 - `arm`, `armRevision` (commit and digest of the arm's code or binary), `taskId`;
 - `provider`, `model`, `effort` as requested;
 - `start` and `candidate` as commit and tree, with the bundles' SHA-256;
-- `outcome`: `candidate`, `no_candidate`, `model_blocker` (with the blocker's text) or `infrastructure_error` (with its cause);
+- `reported`: whether there is a candidate, the blocker's text if a model blocker ended the run, and the arm's own status and cause verbatim (for M, the Apply status and its cause);
+- `limits` and `armLimits` as applied, each with `enforced: true|false`;
 - `startedUtc`, `endedUtc`, `wallSeconds`;
-- `usage` as the arm reports it: input, cached, output and reasoning tokens, sessions, turns and tool calls;
+- `usage` as the arm reports it: input, cache-read, cache-creation, output and reasoning tokens, each `null` when the provider does not report it, and sessions, turns and tool calls;
 - `retries`: inside the product and by the arm's runner, counted separately;
 - `quarantine`: the result of the arm's own secret scan.
 
@@ -78,7 +80,7 @@ The arm writes `NEW_DIR`, which must not exist before:
 3. **Review.** The blinded rubric review, the mechanical check of critical findings ([`rubric_check.py`](../../tools/comparison/rubric_check.py)) and a confirming reviewer. A model blocker is classified here as justified or false.
 4. **Ledger and analysis.** One builder turns run check, assessment and review into ledger rows, and [`analyze.py`](../../tools/comparison/analyze.py) applies the suite's predeclared reading. The arm never writes a ledger row.
 
-The outcome of a run is decided by these shared steps, never by the arm's own report.
+The outcome of a run is decided by these shared steps, never by the arm's own report. The suite's classification rule, fixed before any data, maps the run check and `reported` to `candidate`, `no_candidate`, `model_blocker` or `infrastructure_error`. Borderline causes, such as a provider at capacity, are listed in that rule by name, so that no arm and no reader decides them after the fact.
 
 ## State
 
@@ -93,12 +95,12 @@ The outcome of a run is decided by these shared steps, never by the arm's own re
 
 ## Next
 
-1. **Agree the interface** with the leads of lanes 1, 2 and 3.
-2. **Shared parts on `main`:** the `TASK.json` and `run.json` schemas, the run checker, the chain-start builder and the ledger builder in `tools/comparison`, with offline tests. No engine runs.
+1. **Interface agreed** with the leads of lanes 1, 2 and 3 on 27 October 2026, with their changes folded in above.
+2. **Shared parts on `main`, first, because the adapters build against them:** the `TASK.json` and `run.json` schemas, the run checker, the chain-start builder and the ledger builder in `tools/comparison`, with offline tests. No engine runs.
 3. **Adapters:**
    - K: `runner.py` writes `run.json` (lane 4).
    - P: `armp.py` writes `run.json` (lane 2).
-   - M: step 4's controller moves into the repository as arm M's adapter (lane 1).
+   - M: step 4's controller moves into the repository as arm M's adapter in `tools/arm-m/` (lane 1), running native Apply on Linux. Lane 1 starts after the schemas and the run checker are on `main`.
    - G: lane 3's prototype writes the run bundle itself (lane 3).
 4. **Portfolio and contract:** the evaluation contract and the follow-up study go into `docs/validation/` for owner review; new projects and their oracles follow it.
 5. **First bounded dispatch,** after the owner's approval: one Library task per arm on the suite's model, as a smoke of the interface, not as a counted run.
