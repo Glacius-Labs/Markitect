@@ -20,7 +20,13 @@ function respond(prompt, opts) {
     used[rule.label] = (used[rule.label] || 0) + 1
     if (rule.times && used[rule.label] > rule.times) continue
     const value = JSON.parse(JSON.stringify(rule.answer))
-    if (value.commit === 'NEW') value.commit = 'c' + String(++commits).padStart(39, '0')
+    if (value.commit === 'NEW') value.commit = String(++commits).padStart(40, 'c')
+    // "CHILDREN": accept every child named in the handoffs the prompt lists
+    // that the rule does not return.
+    if (value.accepted === 'CHILDREN') {
+      const listed = JSON.parse(/Your children's handoffs: (\[.*\])\n/.exec(prompt)[1]).map(h => h.pkg)
+      value.accepted = listed.filter(p => !(value.returned || []).some(x => x.pkg === p))
+    }
     return value
   }
   throw new Error('no rule for ' + label)

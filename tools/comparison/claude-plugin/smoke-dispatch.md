@@ -31,7 +31,7 @@ S2 and S3 are skipped and recorded when their predecessor has no candidate.
 | --- | --- |
 | Per Apply | deadline 2,700 s (as arm M), then the session's process tree is killed |
 | Agents per Apply | 150 agent calls; 2 Verify correction rounds; 2 returns per parent; 3 questions per Manager |
-| Project check in the publication guard | 120 s per declared check |
+| Project check in the publication guard | 600 s per declared check |
 | Login | each run refuses to start when the access token expires within deadline + 600 s |
 | Whole chain | 4 Applies, at most about 3 hours, plus 4 assessments under the assessor's own limits |
 | Cost | Claude subscription usage; no API key. Arm M used about 7 million tokens per Library Apply on Codex; P's use is unknown and recorded per run from the transcripts |
@@ -54,7 +54,7 @@ Kill the chain's process tree (`taskkill /PID <chain.pid> /T /F`); this also end
 
 - After each run the runner removes every worktree, the work repository and the login copy under `C:\Users\Consiliari\AppData\Local\Temp\mk-armp\<run>`, and records anything left as residue, which fails the technical pass.
 - After an abort: delete `mk-armp\<run>` and remove the lock file only if its holder is `comparison arm P`.
-- Retained per run: `result.json`, `session.stream.jsonl`, `transcripts/`, `state/` (prepare, workflow result, publication, check notes), `start.bundle`, `result.bundle`, `work.bundle` and `files.sha256`. No login copy is retained, and the secret scan quarantines any output that contains the access token.
+- Retained per run: `result.json`, `session.stream.jsonl`, `transcripts/`, `state/` (prepare, the host record of every agent, workflow result, publication), `start.bundle`, `result.bundle`, `work.bundle` and `files.sha256`. No login copy is retained, and the secret scan quarantines any output that contains the access token.
 
 ## Result
 

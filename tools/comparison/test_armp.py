@@ -103,7 +103,7 @@ FAKE_CLAUDE = r'''
 import json, os, pathlib, sys
 state = pathlib.Path(os.environ["MARKITECT_STATE_DIR"]); state.mkdir(parents=True, exist_ok=True)
 login = json.loads(pathlib.Path(os.environ["CLAUDE_CONFIG_DIR"], ".credentials.json").read_text())
-seen = {k: v for k, v in os.environ.items() if k.startswith(("MARKITECT_", "GIT_AUTHOR"))}
+seen = {k: v for k, v in os.environ.items() if k.startswith(("MARKITECT_", "GIT_", "HOME"))}
 (state / "seen.json").write_text(json.dumps({"argv": sys.argv[1:], "env": seen, "login": sorted(login["claudeAiOauth"]), "cwd": os.getcwd()}))
 project = pathlib.Path(os.environ["CLAUDE_CONFIG_DIR"], "projects", "p"); project.mkdir(parents=True)
 (project / "s.jsonl").write_text(json.dumps({"type": "assistant", "requestId": "r", "message": {"id": "m", "usage": {"input_tokens": 3, "output_tokens": 4}}}) + "\n")
@@ -142,10 +142,18 @@ class Run(unittest.TestCase):
             self.assertEqual((seen["env"]["MARKITECT_RUN_ID"], seen["env"]["MARKITECT_OWNER_BRANCH"], seen["env"]["MARKITECT_MAX_AGENTS"]),
                              ("p-test-1", "dev/library-m1", "7"))
             self.assertEqual(seen["env"]["GIT_AUTHOR_NAME"], "Markitect Manager")
+            self.assertEqual(seen["argv"], ["/markitect:apply"])
+            self.assertEqual((pathlib.Path(seen["env"]["HOME"]).name, seen["env"]["GIT_CONFIG_NOSYSTEM"], seen["env"]["GIT_CONFIG_VALUE_1"]),
+                             ("home", "1", ""))
             self.assertTrue((out / "start.bundle").exists() and (out / "work.bundle").exists() and not (out / "result.bundle").exists())
             self.assertFalse((tmp / "work" / "p-test-1").exists())
             self.assertFalse((tmp / "lock").exists())
             self.assertIn("result.json", (out / "files.sha256").read_text())
+
+
+def verifier_record(package, round_, head, decision, mandate="Verify"):
+    return {"agentType": "markitect:verifier", "head": head, "answer": {"decision": decision},
+            "header": {"mandate": mandate, "round": round_, "run": "r1", "package": package}}
 
 
 class Host(unittest.TestCase):
@@ -155,19 +163,24 @@ class Host(unittest.TestCase):
                 mock.patch.object(sys, "stderr", io.StringIO()):
             return mkp.cmd_guard(None)
 
-    def test_guard_refuses_host_owned_git_operations_only(self):
-        for refused in ["git push origin x", "git notes --ref=markitect-check add -f -m x HEAD", "git update-ref refs/heads/a b",
-                        "git worktree remove ../w", "git branch -D mk/r/i1/a", "git branch -f markitect/apply/r x",
-                        "git checkout dev/library-m1", "git reset --hard refs/heads/dev/library-m1", "markitect.exe apply --repo ."]:
+    def test_guard_judges_the_git_subcommand_not_message_or_path_text(self):
+        for refused in ["git push origin x", "git -C ../w push", "cd x && git push", "git notes --ref=markitect-check add -f -m x HEAD",
+                        "git update-ref refs/heads/a b", "git worktree remove ../w", "git branch -D mk/r/i1/a",
+                        "git branch -f markitect/apply/r x", "git checkout dev/library-m1", "git reset --hard refs/heads/dev/library-m1",
+                        "markitect.exe apply --repo .", "C:/bin/markitect apply"]:
             self.assertEqual(self.guard(refused), 2, refused)
-        for allowed in ["git checkout -B mk/r/i1/catalog abc", "git merge --no-ff abc", "git notes --ref=markitect-check show abc",
-                        "git diff abc...def", "go test ./...", "git checkout --detach abc"]:
+        for allowed in ["git checkout -B mk/r/i1/catalog/w3 abc", "git merge --no-ff abc", "git notes --ref=markitect-check show abc",
+                        "git diff abc...def", "go test ./...", "git checkout --detach abc",
+                        'git commit -m "add push notification handler"', 'git commit -m "markitect apply rules for loans"',
+                        "cat .markitect/model/lending/apply-rules.yaml", 'git commit -m "update release notes: add loans"',
+                        "git log --grep=push", "echo dev/library-m1", "git log dev/library-m1..HEAD"]:
             self.assertEqual(self.guard(allowed), 0, allowed)
 
-    def test_tree_nesting_and_protected_paths(self):
+    def test_tree_nesting_and_protected_paths_including_renames(self):
         tree = mkp.nest([{"package": ".", "children": ["a"], "areas": ["./"]},
                          {"package": "a", "children": ["a/b"], "areas": ["x/"]}, {"package": "a/b", "children": [], "areas": []}])
         self.assertEqual(tree["children"][0]["children"][0]["pkg"], "a/b")
+        self.assertEqual(mkp.packages(tree), [".", "a", "a/b"])
         self.assertEqual(mkp.slug("."), "_root")
         self.assertEqual(mkp.slug("lending/reminders"), "lending--reminders")
         with tempfile.TemporaryDirectory() as tmp:
@@ -175,32 +188,73 @@ class Host(unittest.TestCase):
             base = run_git(repo, "rev-parse", "HEAD")
             (repo / ".markitect" / "registry").mkdir()
             (repo / ".markitect" / "registry" / "registry.yaml").write_text("x\n")
-            (repo / ".markitect" / "model" / "lending" / "loan-policy.yaml").write_text("changed\n")
+            run_git(repo, "mv", ".markitect/model/lending/loan-policy.yaml", "realization-policy.yaml")
             run_git(repo, "add", "--all")
             run_git(repo, "-c", "user.name=f", "-c", "user.email=f@x.invalid", "commit", "-q", "-m", "c")
             self.assertEqual(mkp.changed_protected(repo, base, "HEAD"), [".markitect/model/lending/loan-policy.yaml"])
 
-    def test_publish_refuses_without_approval_and_a_foreign_candidate(self):
+    def test_the_record_hook_reads_header_and_answer_from_the_agents_own_transcript(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = library_repo(tmp)
+            head = run_git(repo, "rev-parse", "HEAD")
+            transcript = pathlib.Path(tmp) / "agent-a1.jsonl"
+            prompt = 'Markitect Verify round 2, run r1. You are the Manager of lending/reminders (Package "lending/reminders").\nMore.'
+            transcript.write_text("\n".join(json.dumps(e) for e in [
+                {"type": "user", "message": {"role": "user", "content": prompt}},
+                {"type": "assistant", "message": {"content": [{"type": "text", "text": "checking"}]}},
+                {"type": "assistant", "message": {"content": [{"type": "tool_use", "name": "StructuredOutput",
+                                                               "input": {"decision": "approve", "findings": [], "summary": "ok"}}]}},
+            ]) + "\n", encoding="utf-8")
+            state = pathlib.Path(tmp) / "state"
+            hook = {"agent_type": "markitect:verifier", "agent_id": "a1", "cwd": str(repo), "agent_transcript_path": str(transcript)}
+            with mock.patch.dict(os.environ, {"MARKITECT_STATE_DIR": str(state), "MARKITECT_RUN_ID": "r1"}), \
+                    mock.patch.object(sys, "stdin", io.StringIO(json.dumps(hook))):
+                self.assertEqual(mkp.cmd_record(None), 0)
+            record = json.loads((state / "r1" / "agents" / "a1.json").read_text())
+            self.assertEqual(record["header"], {"mandate": "Verify", "round": 2, "run": "r1", "package": "lending/reminders"})
+            self.assertEqual((record["head"], record["answer"]["decision"]), (head, "approve"))
+            with mock.patch.dict(os.environ, {"MARKITECT_STATE_DIR": str(state), "MARKITECT_RUN_ID": "r1"}), \
+                    mock.patch.object(sys, "stdin", io.StringIO(json.dumps(dict(hook, agent_type="general-purpose", agent_id="a2")))):
+                self.assertEqual(mkp.cmd_record(None), 0)
+            self.assertFalse((state / "r1" / "agents" / "a2.json").exists())
+
+    def test_only_a_round_in_which_every_package_approved_the_same_commit_counts(self):
+        everyone = [".", "a", "a/b"]
+        full = [verifier_record(p, 1, "c1", "approve") for p in everyone]
+        self.assertEqual(mkp.verified_candidate(full, everyone), (1, "c1"))
+        self.assertEqual(mkp.verified_candidate(full[:2], everyone), (None, None))
+        self.assertEqual(mkp.verified_candidate(full + [verifier_record("a/b", 1, "c1", "reject")], everyone), (None, None))
+        self.assertEqual(mkp.verified_candidate(full[:2] + [verifier_record("a/b", 1, "base", "approve")], everyone), (None, None))
+        self.assertEqual(mkp.verified_candidate([verifier_record(p, 0, "c1", "approve", "Assessment") for p in everyone], everyone), (None, None))
+        later = [verifier_record(p, 2, "c2", "approve") for p in everyone]
+        self.assertEqual(mkp.verified_candidate(full + later, everyone), (2, "c2"))
+
+    def test_publish_needs_the_hosts_records_and_a_root_result_of_this_run(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = library_repo(tmp)
             base = run_git(repo, "rev-parse", "HEAD")
             state = pathlib.Path(tmp) / "state"
-            (state / "r1").mkdir(parents=True)
-            (state / "r1" / "prepare.json").write_text(json.dumps({"base": base, "branch": "dev/library-m1", "baseTree": "t"}))
+            (state / "r1" / "agents").mkdir(parents=True)
+            tree = {"pkg": ".", "areas": ["./"], "children": [{"pkg": "a", "areas": ["a/"], "children": []}]}
+            (state / "r1" / "prepare.json").write_text(json.dumps({"base": base, "branch": "dev/library-m1", "baseTree": "t", "tree": tree}))
             result = pathlib.Path(tmp) / "wr.json"
+            result.write_text(json.dumps({"outcome": "approved", "candidate": base}))
+            publish = lambda: mkp.cmd_publish(mock.Mock(run_id="r1", result=str(result)))
             cwd = os.getcwd()
             try:
                 os.chdir(repo)
                 with mock.patch.dict(os.environ, {"MARKITECT_STATE_DIR": str(state)}), redirect_stdout(io.StringIO()):
-                    result.write_text(json.dumps({"outcome": "reject", "at": "Verify"}))
-                    self.assertEqual(mkp.cmd_publish(mock.Mock(run_id="r1", result=str(result))), 1)
-                    result.write_text(json.dumps({"outcome": "approved", "candidate": base}))
-                    self.assertEqual(mkp.cmd_publish(mock.Mock(run_id="r1", result=str(result))), 1)
+                    self.assertEqual(publish(), 1)
+                    record = json.loads((state / "r1" / "publication.json").read_text())
+                    self.assertEqual(record["reason"], "no Verify round in which every Package approved one candidate")
+                    for i, p in enumerate(("." , "a")):
+                        (state / "r1" / "agents" / f"v{i}.json").write_text(json.dumps(verifier_record(p, 1, base, "approve")))
+                    self.assertEqual(publish(), 1)
+                    record = json.loads((state / "r1" / "publication.json").read_text())
+                    self.assertEqual(record["candidate"], base)
+                    self.assertFalse(record["guards"]["candidateIsRootResult"])
             finally:
                 os.chdir(cwd)
-            record = json.loads((state / "r1" / "publication.json").read_text())
-            self.assertFalse(record["published"])
-            self.assertFalse(record["guards"]["candidateIsRootIntegration"])
             self.assertEqual(run_git(repo, "branch", "--list", "markitect/apply/*"), "")
 
 
@@ -211,7 +265,7 @@ TREE = {"pkg": ".", "areas": ["./"], "children": [
 PACKAGES = [".", "catalog", "lending", "lending/reminders"]
 APPROVE = {"decision": "approve", "findings": [], "summary": "ok"}
 SUBMIT = {"status": "submitted", "commit": "NEW", "account": "done", "briefs": []}
-INTEGRATE = {"status": "submitted", "accepted": [], "returned": [], "commit": "NEW", "account": "merged"}
+INTEGRATE = {"status": "submitted", "accepted": "CHILDREN", "returned": [], "commit": "NEW", "account": "merged"}
 
 
 @unittest.skipUnless(NODE, "node is not installed")
@@ -238,8 +292,8 @@ class Workflow(unittest.TestCase):
             self.assertEqual(sorted(l.split(":")[1] for l in self.labels(run, mandate)), sorted(PACKAGES), mandate)
         self.assertEqual(sorted(l.split(":")[1] for l in self.labels(run, "integrate:")), [".", "lending"])
         verify = self.labels(run, "verify:")
-        self.assertLess(verify.index("verify:lending/reminders"), verify.index("verify:lending"))
-        self.assertEqual(verify[-1], "verify:.")
+        self.assertLess(verify.index("verify:lending/reminders:1"), verify.index("verify:lending:1"))
+        self.assertEqual(verify[-1], "verify:.:1")
         self.assertTrue(all(c["isolation"] == "worktree" for c in run["calls"]))
         self.assertTrue(all(c["agentType"] == "markitect:verifier" for c in run["calls"] if c["label"].startswith(("assessment", "verify"))))
         self.assertEqual(run["result"]["candidate"], run["result"]["rounds"][0]["implement"]["commit"])
@@ -284,6 +338,23 @@ class Workflow(unittest.TestCase):
         run = self.simulate([{"label": "assessment:catalog", "answer": blocker}] + self.base_rules())
         self.assertEqual((run["result"]["outcome"], run["result"]["at"]), ("model_blocker", "Assessment"))
         self.assertEqual(self.labels(run, "work:"), [])
+
+    def test_a_child_the_review_left_undecided_is_reviewed_again(self):
+        partial = {"status": "submitted", "accepted": ["lending"], "returned": [], "commit": "NEW", "account": "forgot catalog"}
+        run = self.simulate([{"label": "integrate:.:i1:r0", "answer": partial}] + self.base_rules())
+        self.assertEqual(run["result"]["outcome"], "approved")
+        self.assertEqual(self.labels(run, "integrate:.:i1"), ["integrate:.:i1:r0", "integrate:.:i1:r1"])
+        self.assertEqual(len(self.labels(run, "work:catalog:i1")), 1)
+
+    def test_every_agent_gets_its_own_branch(self):
+        run = self.simulate(self.base_rules())
+        branches = [c["label"].rsplit(":", 1)[1] for c in run["calls"] if c["label"].startswith("work:")]
+        self.assertEqual(len(branches), len(set(branches)))
+
+    def test_an_error_outside_parallel_still_ends_with_its_reason(self):
+        run = self.simulate(self.base_rules(), maxAgents=3)
+        self.assertEqual((run["result"]["outcome"], run["result"]["allowance"]), ("incomplete", "agent allowance 3 used up"))
+        self.assertIn("agent allowance 3 used up", run["result"]["error"])
 
     def test_the_agent_allowance_is_finite(self):
         run = self.simulate(self.base_rules(), maxAgents=5)

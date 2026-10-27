@@ -58,7 +58,7 @@ INPUT_IDENTITY = ("Markitect Library Fixture", "fixture@markitect.invalid")
 MANAGER_IDENTITY = ("Markitect Manager", "manager@markitect.invalid")
 M2_EDIT = (b"  maxOpenLoans: 5\n", b"  maxOpenLoans: 3\n")
 LIMITS = {"deadline": 2700, "max_agents": 150, "max_corrections": 2, "max_returns": 2, "max_questions": 3,
-          "check_timeout": 120, "kill": 15, "login_margin": 600}
+          "check_timeout": 600, "kill": 15, "login_margin": 600}
 TOOLS = ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "Workflow"]
 DENIED = ["Agent", "WebFetch", "WebSearch", "NotebookEdit"]
 
@@ -160,15 +160,36 @@ def session_login(raw, deadline_seconds, margin):
 
 # --- Session ------------------------------------------------------------------
 
-def claude_argv(claude, model, effort):
+def claude_argv(claude, model, effort, state):
     argv = [claude, "-p", "/markitect:apply", "--plugin-dir", str(PLUGIN), "--output-format", "stream-json", "--verbose",
-            "--strict-mcp-config", "--setting-sources", "project",
+            "--strict-mcp-config", "--setting-sources", "project", "--add-dir", str(state),
             "--allowedTools", *TOOLS, "--disallowedTools", *DENIED]
     if model:
         argv += ["--model", model]
     if effort:
         argv += ["--effort", effort]
     return argv
+
+
+KEPT = ("CLAUDE_CODE_GIT_BASH_PATH",)
+
+
+def session_env(work, state):
+    """The session's environment: no user Claude, Anthropic or Markitect settings,
+    a private home, Git without system configuration or credential helper, and
+    the user's Go module path so builds need no fresh downloads."""
+    gopath = subprocess.run(["go", "env", "GOPATH"], capture_output=True, text=True).stdout.strip()
+    env = {k: v for k, v in os.environ.items()
+           if k in KEPT or not k.startswith(("CLAUDE", "ANTHROPIC", "MARKITECT_", "GIT_", "GH_", "GITHUB_"))}
+    home = work / "home"
+    home.mkdir(parents=True, exist_ok=True)
+    env.update(identity_env(MANAGER_IDENTITY))
+    env.update(HOME=str(home), USERPROFILE=str(home), GIT_CONFIG_NOSYSTEM="1", GIT_TERMINAL_PROMPT="0",
+               GIT_CONFIG_COUNT="2", GIT_CONFIG_KEY_0="core.longpaths", GIT_CONFIG_VALUE_0="true",
+               GIT_CONFIG_KEY_1="credential.helper", GIT_CONFIG_VALUE_1="")
+    if gopath:
+        env["GOPATH"] = gopath
+    return env
 
 
 def kill_tree(proc):
@@ -297,14 +318,14 @@ def run(a):
             git(repo, "reset", "-q", "--hard", a.commit)
             result.update(input_commit=a.commit, input_tree=git(repo, "rev-parse", a.commit + "^{tree}"), owner_branch=branch)
             git(repo, "bundle", "create", str(out / "start.bundle"), branch)
-            env = {k: v for k, v in os.environ.items() if not k.startswith(("CLAUDE", "ANTHROPIC", "MARKITECT_"))}
-            env.update(identity_env(MANAGER_IDENTITY))
+            env = session_env(work, state)
             env.update(CLAUDE_CONFIG_DIR=str(config), MARKITECT_BIN=str(pathlib.Path(a.markitect).resolve()),
                        MARKITECT_STATE_DIR=str(state), MARKITECT_RUN_ID=a.label, MARKITECT_OWNER_BRANCH=branch,
                        MARKITECT_MAX_AGENTS=str(a.max_agents), MARKITECT_MAX_CORRECTIONS=str(LIMITS["max_corrections"]),
                        MARKITECT_MAX_RETURNS=str(LIMITS["max_returns"]), MARKITECT_MAX_QUESTIONS=str(LIMITS["max_questions"]),
                        MARKITECT_CHECK_TIMEOUT=str(LIMITS["check_timeout"]))
-            argv = claude_argv(a.claude, a.model, a.effort)
+            state.mkdir(parents=True)
+            argv = claude_argv(a.claude, a.model, a.effort, state)
             result["argv"] = argv
             result["session_started_utc"] = now()
             session = run_session(argv, repo, env, out / "session.stream.jsonl", out / "session.stderr.log", deadline)
@@ -350,9 +371,10 @@ def run(a):
                 result["residue"].append({"work_removal": str(e)})
             if work.exists():
                 result["residue"].append({"work": str(work)})
+            # The owner's own Claude use may refresh the login during a run; that is
+            # recorded, not a failure: the run's copy cannot refresh.
             result["login_sha256_before"], result["login_sha256_after"] = login_before, (sha256_file(credentials) if credentials.exists() else None)
-            if result["login_sha256_before"] != result["login_sha256_after"]:
-                result["residue"].append("the user's login changed during the run")
+            result["login_changed_during_run"] = result["login_sha256_before"] != result["login_sha256_after"]
             result["secret_in_outputs"], result["secret_scan_unreadable"] = runner.files_containing(out, secrets)
             result["quarantine"] = bool(result["secret_in_outputs"] or result["secret_scan_unreadable"])
             secrets = None

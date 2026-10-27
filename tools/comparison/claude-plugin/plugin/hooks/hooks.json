@@ -1,10 +1,10 @@
 {
-  "description": "Markitect arm P host: the check note on every Manager handoff and the Bash guard",
+  "description": "Markitect arm P host: the record of every agent's answer, the check note on every Manager handoff and the Bash guard",
   "hooks": {
     "SubagentStop": [
       {
         "hooks": [
-          { "type": "command", "command": "python \"${CLAUDE_PLUGIN_ROOT}/scripts/mkp.py\" note", "timeout": 300 }
+          { "type": "command", "command": "python \"${CLAUDE_PLUGIN_ROOT}/scripts/mkp.py\" record", "timeout": 300 }
         ]
       }
     ],
