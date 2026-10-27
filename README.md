@@ -177,7 +177,7 @@ This native form runs on Linux, where the Apply host runs. On Windows, add `--ru
 | Capability | Current evidence and limits |
 | --- | --- |
 | Canonical v1 language, compiler and explicit file accounting | Implemented with source tests and the architecture gate. |
-| `check`, `context` and guarded `docs` | Implemented in the current CLI. |
+| `check`, `context`, `tree` and guarded `docs` | Implemented in the current CLI. |
 | Standalone hierarchical Run and stored Git candidates/results/Notes | Implemented, with controlled tests and a bounded native Codex hierarchy proof. |
 | `apply`: Assessment → Implement → Verify → guarded publication | Implemented. With native Codex, the [qualification record](docs/validation/v1-qualification-20261024.md) holds complete Library M1 and M2 (loan limit 5 → 3) Applies with independent outside oracles, a strict no-change Apply and a seeded defect repaired by an ordinary Implement. |
 | Reliability across changes | **Not yet established.** That evidence predates the final collaboration contract. Requalification on the frozen source, repetition for stability, the public Verify-rejection branch with publication, account refresh and owner acceptance remain open ([plan](docs/implementation-plan.md)). |

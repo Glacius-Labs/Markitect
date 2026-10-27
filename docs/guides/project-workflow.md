@@ -69,7 +69,7 @@ An omitted revision observes the actual draft, including Gitignored files. `--re
 
 ### Tree
 
-`tree --repo PATH` runs the same preparation as `check` and, when it is complete, adds `managers`: the model-derived Manager tree that Apply organizes. Every local Manager is listed once, Root first, with its parent, its direct children and the ownership areas the execution declarations give its Package. Like `context`, it creates no Run or evidence record.
+`tree --repo PATH` runs the same preparation as `check` and adds `managers`: the model-derived Manager tree that Apply organizes. Every local Manager is listed once, Root first, as `package`, `parent` (null for Root), its direct `children` and the `areas` the execution ownership gives its Package, in authored order. Like `context`, the tree depends on the model alone: a failed file accounting fails the report but keeps the tree, and a failed Model check leaves it out. It creates no Run or evidence record.
 
 ### Generated documentation
 

@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strings"
 	"testing"
@@ -188,42 +189,58 @@ func TestActualStructuralPreparationAndFixedContext(t *testing.T) {
 }
 
 // tree reports the same model-derived Manager tree that Apply organizes: Root
-// first without a parent, and every child as a Manager that names its parent.
+// first without a parent, every local Manager once with its parent and direct
+// children, and the ownership areas declared for its Package in authored order.
+// The tree depends on the model alone: a failed file accounting leaves it in
+// the failed report, a model error removes it. check and context never report
+// one.
 func TestTreeReportsTheModelDerivedManagerTree(t *testing.T) {
 	repo := productFixture(t)
-	out := invoke(t, repo.Dir, 0, "tree", "--revision", "HEAD")
+	repo.Write(".markitect/execution.yaml", "apiVersion: markitect.execution/v2\nownership:\n  - {path: ./, owner: .}\n  - {path: docs/, owner: documentation}\n  - {path: internal/, owner: product/model}\n  - {path: cmd/, owner: product/model}\n")
+	repo.Commit("Declare ownership areas")
+	type manager struct {
+		Package  string
+		Parent   *string
+		Children []string
+		Areas    []string
+	}
 	var r struct {
 		Status   string
 		Contexts []any
-		Managers []struct {
-			Package  string
-			Parent   *string
-			Children []string
-			Areas    []string
-		}
+		Managers []manager
 	}
+	out := invoke(t, repo.Dir, 0, "tree", "--revision", "HEAD")
 	if err := json.Unmarshal([]byte(out), &r); err != nil {
 		t.Fatal(err)
 	}
-	if r.Status != "passed" || len(r.Contexts) != 0 || len(r.Managers) < 2 || r.Managers[0].Package != "." || r.Managers[0].Parent != nil {
+	root := "."
+	parent := func(p string) *string { return &p }
+	want := []manager{
+		{".", nil, []string{"documentation", "markitect", "product", "tooling", "vocabulary"}, []string{"./"}},
+		{"documentation", &root, []string{}, []string{"docs/"}},
+		{"markitect", &root, []string{"markitect/core"}, []string{}},
+		{"markitect/core", parent("markitect"), []string{}, []string{}},
+		{"product", &root, []string{"product/model"}, []string{}},
+		{"product/model", parent("product"), []string{}, []string{"internal/", "cmd/"}},
+		{"tooling", &root, []string{"tooling/gates"}, []string{}},
+		{"tooling/gates", parent("tooling"), []string{}, []string{}},
+		{"vocabulary", &root, []string{}, []string{}},
+	}
+	if r.Status != "passed" || len(r.Contexts) != 0 || !reflect.DeepEqual(r.Managers, want) {
 		t.Fatal(out)
 	}
-	parents := map[string]string{}
-	for _, m := range r.Managers {
-		if m.Children == nil || m.Areas == nil {
-			t.Fatalf("%s: lists must be present: %s", m.Package, out)
-		}
-		for _, child := range m.Children {
-			parents[child] = m.Package
+	for _, args := range [][]string{{"check", "--revision", "HEAD"}, {"context", "product", "--revision", "HEAD"}} {
+		if out := invoke(t, repo.Dir, 0, args...); strings.Contains(out, `"managers"`) {
+			t.Fatalf("%s reports a tree: %s", args[0], out)
 		}
 	}
-	for _, m := range r.Managers[1:] {
-		if m.Parent == nil || parents[m.Package] != *m.Parent {
-			t.Fatalf("%s: parent does not match the tree: %s", m.Package, out)
-		}
+	repo.Write("unaccounted.txt", "a real census entry\n")
+	if out := invoke(t, repo.Dir, 1, "tree"); !strings.Contains(out, `"managers"`) || !strings.Contains(out, "unaccounted.txt") {
+		t.Fatal("a failed file accounting lost the tree: " + out)
 	}
-	if _, found := parents["product/model"]; !found {
-		t.Fatal(out)
+	repo.Write(".markitect/model/product/broken.yaml", "id: broken\nkind: NoSuchKind\nbody: Names a Kind that does not exist.\n")
+	if out := invoke(t, repo.Dir, 1, "tree"); strings.Contains(out, `"managers"`) || !strings.Contains(out, "broken.yaml") {
+		t.Fatal("a model error still reported a tree: " + out)
 	}
 }
 
