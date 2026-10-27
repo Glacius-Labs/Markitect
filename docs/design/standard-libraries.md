@@ -1,6 +1,6 @@
 # Standard Libraries
 
-**Status:** outline v0.3, accepted by the owner on 26 October 2026. Canonical model track, workstream W4, built on [Kind interfaces](kind-interfaces.md) (DEC-075 as amended, Core 1.2.0), the [modeling guide](modeling-guide.md) and charter decision D4. `markitect-values` and `markitect-api` are drafted under `libraries/`; `data`, `practice` and `architecture` follow.
+**Status:** outline v0.3, accepted by the owner on 26 October 2026; v0.3.1 adds clarifications found while drafting `practice` and `architecture`, marked "v0.3.1" below, accepted by the owner on 27 October 2026. Canonical model track, workstream W4, built on [Kind interfaces](kind-interfaces.md) (DEC-075 as amended, Core 1.2.0), the [modeling guide](modeling-guide.md) and charter decision D4. `markitect-values`, `markitect-api`, `markitect-practice` and `markitect-architecture` are drafted under `libraries/`; `data` follows.
 
 ## Principles
 
@@ -59,8 +59,8 @@ Event is deferred until a pilot needs it. A transport binding (HTTP route and st
 
 | Definition | Shape | Notes |
 |---|---|---|
-| **Project** | `language` (string); `moduleRoot` (string, repository-relative); `permittedDependencies` (strings; absent or empty means nothing beyond the standard library); `buildCommand`, `testCommand` (strings, run in `moduleRoot`) | The project Package's anchor (DEC-061). The required checks in `execution.yaml` are authoritative; these fields describe them for readers and agents |
-| **Rule** (interface Kind with a field) | `appliesTo` (Package strings, optional) | A binding statement. With `appliesTo` and one `scope` selector on Rule in `execution.yaml`, it reaches every Manager in scope, including items of every Kind that implements Rule |
+| **Project** | `language` (string); `moduleRoot` (string, repository-relative); `permittedDependencies` (strings; absent or empty means nothing beyond the standard library); `buildCommand`, `testCommand` (strings, run in `moduleRoot`; v0.3.1: optional) | The project Package's anchor (DEC-061). The required checks in `execution.yaml` are authoritative; these fields describe them for readers and agents |
+| **Rule** (interface Kind with a field) | `appliesTo` (Package strings, optional; v0.3.1: a named Package includes the Packages below it, as modeled scope delivers it; absent or empty, the Rule governs only its own Package) | A binding statement. With `appliesTo` and one `scope` selector on Rule in `execution.yaml`, it reaches every Manager in scope, including items of every Kind that implements Rule |
 | **TestObligation**, **DocumentationObligation**, **ConventionObligation** implement Rule | `appliesTo` | Way-of-working duties. A project adds its own, for example a SecurityObligation, by implementing Rule |
 
 ### `markitect-architecture`, Package `markitect/architecture`
@@ -69,9 +69,9 @@ The Package tree is the architecture (modeling guide §2). These Kinds add only 
 
 | Definition | Shape | Notes |
 |---|---|---|
-| **Interface** implements Practice.Rule | `appliesTo`, `operations` (references to Api.Operation), `types` (references to Values.FieldType) | A Package's public surface; the Package is where the Interface lives. Other Packages use only what an Interface exposes (a W5 tool rule) |
-| **DependencyRule** implements Practice.Rule | `appliesTo`, `mayDependOn` (Package strings) | An allowlist for the Packages in `appliesTo`, checked against the model's Package graph (D3) and against the code's imports by project checks |
-| **Placement** implements Practice.Rule | `appliesTo`, `concern` (reference to Practice.Rule), `realizedIn` (Package string) | Where a cross-cutting rule is realized, for example authorization in `pipeline` |
+| **Interface** implements Practice.Rule | `appliesTo`, `operations` (references to Api.Operation), `types` (references to Values.FieldType) | A Package's public surface; the Package is where the Interface lives. Other Packages use only what an Interface exposes (a W5 tool rule). v0.3.1: the Package's own subtree is not bound by it; `appliesTo` names the bound Packages, usually `.` |
+| **DependencyRule** implements Practice.Rule | `appliesTo`, `mayDependOn` (Package strings) | An allowlist for the Packages in `appliesTo`, checked against the model's Package graph (D3) and against the code's imports by project checks. v0.3.1: only dependencies between the project's own Packages count, subtrees included on both sides; Libraries, Core and third-party code fall under `Project.permittedDependencies`; absent or empty `mayDependOn` means none |
+| **Placement** implements Practice.Rule | `appliesTo`, `concern` (reference to Practice.Rule), `realizedIn` (Package string) | Where a cross-cutting rule is realized, for example authorization in `pipeline`. v0.3.1: `appliesTo` usually equals the concern's |
 
 ## What this replaces
 
