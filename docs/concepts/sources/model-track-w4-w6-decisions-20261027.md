@@ -6,7 +6,7 @@ They belong to the [canonical model track](../../design/model-track-charter.md) 
 
 ## 1. Track order
 
-Context (summary by the recorder): the session proposed the next steps: the architecture Library first, because the pilot needs owner-decided architecture, then the Makerspace remodel (W6), then the modeling skill (W5).
+Context (summary by the recorder): the session proposed the next steps: the architecture Library first, because it lets the owner decide a project's architecture inside the model and the Makerspace remodel needs it, then the remodel (W6), then the modeling skill (W5). It also offered starting the remodel right away as an alternative.
 
 > Start with the architecture Library, then the Makerspace remodel, then the modeling skill.
 

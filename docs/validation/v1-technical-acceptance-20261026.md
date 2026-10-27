@@ -88,12 +88,12 @@ The owner-approved fix plan was merged (S1–S3, WP5) and checked by bounded nat
 
 | Limit | Status after the controls |
 | --- | --- |
-| 1. Per-message clock on a coordinating Root | Fixed by the idle limit (WP2): a fresh Makerspace W0 published, and no Root turn came near the limit (longest provider-idle stretch 51 s) |
+| 1. Per-message clock on a coordinating Root | The idle limit (WP2) behaved as intended: a fresh Makerspace W0 published, and no Root turn came near the limit (longest provider-idle stretch 51 s); the limit itself was not reached |
 | 2. Correction pair without a budget check | Fixed (WP3c): a correction pair started with enough messages and completed |
 | 3. Change minimality | Partly: the "already verified" fact reaches every Run, but the host still accepts an approval of a changed candidate without a named defect; a fix is in progress |
-| 4. Message allowance and question relay | Fixed for the observed case (WP3a): question traffic no longer exhausts the allowance; ordering by dependency (WP3b) stays deferred |
+| 4. Message allowance and question relay | Fixed for the observed case (WP3a): question traffic no longer exhausts the allowance, although fewer asks were made too, so the accounting change is not isolated as the only cause; ordering by dependency (WP3b) stays deferred |
 | 5. Open questions to a handed-off Manager | Fixed (WP5). The controls found a related defect, an undetected mutual await between two Managers; it is fixed ([PR #759](https://github.com/Glacius-Labs/Markitect/pull/759)) and the affected case then published |
-| 6. One transient provider overload ends the Apply | Bounded retry in source (WP1); no overload occurred in the controls. A thread accepts a new turn after an error-terminated one (proxy probe) |
+| 6. One transient provider overload ends the Apply | Bounded retry in source (WP1); no overload occurred in the controls. A thread accepts a new turn after one ended by a non-retrying provider error (proxy probe); that continuing after served actions is safe is not shown |
 | P2, public Verify-reject correction path | Exercised natively on F_fix2: Verify rejected with three Definition-bound Findings, a fresh correction pair corrected them, and the verified candidate was published with exact readback |
 
 The controls ran on the Windows host with Linux containers. Markitect's execution then moves to a Linux runner image ([DEC-077](../concepts/register.md#dec-077-development-pace-and-linux-first-execution)); the new frozen F follows that change and the remaining fix.
