@@ -6,7 +6,7 @@ How the V1 source is composed and where each responsibility lives. [V1 concept 1
 
 `cmd/markitect → internal/bootstrap → CLI adapter → Project / Apply`.
 
-- `check`, `context` and `docs` call [Project](../internal/project/README.md) directly. Project captures the sources through its own port, checks the model, registry and file accounting, reads the execution declarations and selects the static Manager contexts. These commands start no Agent and create no Run state.
+- `check`, `context`, `tree` and `docs` call [Project](../internal/project/README.md) directly. Project captures the sources through its own port, checks the model, registry and file accounting, reads the execution declarations and selects the static Manager contexts. These commands start no Agent and create no Run state.
 - `docs` renders the readable model view in `internal/modeldocs`; `internal/adapters/documents` writes it behind an independent guard that is separate from Apply publication.
 - `apply` prepares from one complete committed capture, then runs [Apply](../internal/apply/README.md): preflight, Workflow, and publication of the stored approval.
 

@@ -49,7 +49,7 @@ packages:
     doc: docs/development/modules.md
   - path: internal/adapters/cli
     layer: apply-adapter
-    purpose: Command parsing and JSON reports for check, context, docs and explicit Apply.
+    purpose: Command parsing and JSON reports for check, context, tree, docs and explicit Apply.
     doc: docs/development/modules.md
   - path: internal/adapters/codexappserver
     layer: apply-adapter

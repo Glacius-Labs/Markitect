@@ -1,6 +1,6 @@
 # Project operations
 
-The current commands are `check`, `context`, `docs`, `apply`, `version`, `licenses` and `help`. Build from `cmd/markitect`; [Project workflow](project-workflow.md) owns the sequence and [CONTRIBUTING](../../CONTRIBUTING.md) owns source gates.
+The current commands are `check`, `context`, `tree`, `docs`, `apply`, `version`, `licenses` and `help`. Build from `cmd/markitect`; [Project workflow](project-workflow.md) owns the sequence and [CONTRIBUTING](../../CONTRIBUTING.md) owns source gates.
 
 Assessment, Implement and Verify are mandates of `apply`, not separate commands. Extract, Cockpit, interactive authoring and Setup are not part of V1.
 

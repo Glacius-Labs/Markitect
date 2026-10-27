@@ -9,9 +9,14 @@ exact intervals, the one-sided Fisher exact test and the reading of section 8
 obligations instead: the sum over W0-C9 of failed probe families per chain,
 compared with an exact one-sided rank-sum (Mann-Whitney) permutation test.
 
-  python -I -B analyze.py LEDGER.json [--phase A|B|C]
+  python -I -B analyze.py LEDGER.json [--phase A|B|C] [--arms TREATMENT,BASELINE]
 
-Ledger rows: {"arm": "M"|"B", "chain": 1..5, "scenario": "S1".."S4"|"T1".."T4"|"W0".."C9",
+--arms reads any two arms of the ledger, for example P,B or P,M for the
+Claude-plugin arm P: the treatment takes the slot named M in the result and
+the baseline the slot named B, and the result names the pair under "arms".
+The default M,B is the protocol's reading.
+
+Ledger rows: {"arm": "M"|"B"|"P", "chain": 1..5, "scenario": "S1".."S4"|"T1".."T4"|"W0".."C9",
 "counts": true|false, "C1".."C6": true|false, "errors": [error types],
 "unsupported_success": bool, "false_blocker": bool}; Phase C rows also carry
 "missed_probe_families" (int; every family of the step when there is no
@@ -198,10 +203,23 @@ def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     p.add_argument("ledger")
     p.add_argument("--phase", choices=["A", "B", "C"], default="A")
+    p.add_argument("--arms", default="M,B", help="TREATMENT,BASELINE (default M,B)")
     a = p.parse_args(argv)
-    rows = json.loads(pathlib.Path(a.ledger).read_text(encoding="utf-8"))
-    print(json.dumps(read_c(rows) if a.phase == "C" else read(rows, a.phase), indent=2))
+    arms = a.arms.split(",")
+    if len(arms) != 2 or arms[0] == arms[1] or not all(arms):
+        p.error("--arms needs two different arms, for example P,B")
+    rows = pair(json.loads(pathlib.Path(a.ledger).read_text(encoding="utf-8")), *arms)
+    result = read_c(rows) if a.phase == "C" else read(rows, a.phase)
+    if arms != ["M", "B"]:
+        result["arms"] = {"M": arms[0], "B": arms[1]}
+    print(json.dumps(result, indent=2))
     return 0
+
+
+def pair(rows, treatment, baseline):
+    """The rows of two arms, relabelled into the reading's M and B slots."""
+    slots = {treatment: "M", baseline: "B"}
+    return [dict(r, arm=slots[r["arm"]]) for r in rows if r["arm"] in slots]
 
 
 if __name__ == "__main__":

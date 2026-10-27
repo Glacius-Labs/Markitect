@@ -1,0 +1,20 @@
+{
+  "description": "Markitect arm P host: the check note on every Manager handoff and the Bash guard",
+  "hooks": {
+    "SubagentStop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "python \"${CLAUDE_PLUGIN_ROOT}/scripts/mkp.py\" note", "timeout": 300 }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "python \"${CLAUDE_PLUGIN_ROOT}/scripts/mkp.py\" guard", "timeout": 20 }
+        ]
+      }
+    ]
+  }
+}

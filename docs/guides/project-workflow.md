@@ -1,13 +1,16 @@
 # Project workflow
 
-`check`, `context` and guarded `docs` consume structural Project preparation and start no Agent. `apply` runs Assessment, Implement and Verify, each over the complete model-derived Manager hierarchy, and publishes only the independently reopened stored Verify approval after all Run resources close. Extract, Cockpit, interactive authoring and Setup are not part of V1. The [architecture](../architecture.md) explains the responsibilities and the [delivery plan](../implementation-plan.md) owns implementation status and evidence authority.
+`check`, `context`, `tree` and guarded `docs` consume structural Project preparation and start no Agent. `apply` runs Assessment, Implement and Verify, each over the complete model-derived Manager hierarchy, and publishes only the independently reopened stored Verify approval after all Run resources close. Extract, Cockpit, interactive authoring and Setup are not part of V1. The [architecture](../architecture.md) explains the responsibilities and the [delivery plan](../implementation-plan.md) owns implementation status and evidence authority.
 
 ## Connect and inspect
 
 ```text
 go run ./cmd/markitect check --repo .
 go run ./cmd/markitect context PACKAGE --repo .
+go run ./cmd/markitect tree --repo .
 ```
+
+`tree` reports the model-derived Manager tree that Apply organizes: every local Manager, Root first, with its parent, its direct children and the ownership areas the execution declarations give its Package.
 
 The default manifest is `.markitect/model.yaml`. `--model` selects another exact manifest; repeat `--dependency PATH` for every dependency. There is no folder or registry discovery. The manifest and lock satisfy the [canonical v1 contract](../design/language-contract.md).
 
