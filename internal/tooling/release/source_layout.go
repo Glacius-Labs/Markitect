@@ -27,7 +27,6 @@ func commandConfigurationExample(name string) bool {
 var sourceRoots = []string{
 	"cmd/markitect",
 	"cmd/markitect-release",
-	"cmd/markitect-check-architecture",
 	"cmd/markitect-agentd",
 	"cmd/markitect-runner",
 	"internal/model",
@@ -54,11 +53,7 @@ var sourceRoots = []string{
 	"internal/bootstrap",
 	"internal/testkit",
 	"internal/tooling/architecture",
-	"internal/tooling/architecturecli",
-	"internal/tooling/licenses",
 	"internal/tooling/release",
-	"internal/tooling/releasecli",
-	"internal/tooling/publish",
 	"internal/tooling/source",
 	"internal/tooling/guardedwrite",
 }

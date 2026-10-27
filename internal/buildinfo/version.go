@@ -1,4 +1,5 @@
-// Package buildinfo owns the version shared by product and release tools.
+// Package buildinfo owns the version and the upstream license notices shared
+// by product and release tools.
 package buildinfo
 
 import "runtime/debug"

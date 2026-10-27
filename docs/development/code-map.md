@@ -31,9 +31,9 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 | `agent-protocol` | Frame protocol between the Orchestrator and the session helper. | `agent-protocol` | 1 |
 | `agent-runtime` | Runs inside each Agent container: provider process, MCP bridge and stdio framing. | `agent-runtime` | 1 |
 | `runtime-command` | Thin entrypoint of the session helper. | `runtime-command` | 1 |
-| `build-data` | Version identity and embedded license notices. | `build-data` | 2 |
-| `maintenance` | Explicitly separated release and repository tooling. | `maintenance` | 8 |
-| `maintenance-command` | Thin entrypoints to maintenance services. | `maintenance-command` | 2 |
+| `build-data` | Version identity and embedded license notices. | `build-data` | 1 |
+| `maintenance` | Explicitly separated release and repository tooling. | `maintenance` | 4 |
+| `maintenance-command` | Maintenance command-line entrypoints. | `maintenance-command` | 1 |
 | `test-support` | Hermetic fixture support available only to tests. | `test-support` | 1 |
 | `standalone` | Public bootstrap and source smoke with no product imports. | `standalone` | 2 |
 
@@ -152,27 +152,21 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 | Package | Purpose | Owning document |
 |---|---|---|
 | `internal/buildinfo` | Version identity and embedded license notices. | [docs/development/modules.md](modules.md) |
-| `internal/tooling/licenses` | Version identity and embedded license notices. | [docs/development/modules.md](modules.md) |
 
 ## Maintenance
 
 | Package | Purpose | Owning document |
 |---|---|---|
 | `internal/tooling/architecture` | Explicitly separated release and repository tooling. | [docs/development/modules.md](modules.md) |
-| `internal/tooling/architecturecli` | Explicitly separated release and repository tooling. | [docs/development/modules.md](modules.md) |
 | `internal/tooling/guardedwrite` | Explicitly separated release and repository tooling. | [docs/development/modules.md](modules.md) |
-| `internal/tooling/publish` | Explicitly separated release and repository tooling. | [docs/development/modules.md](modules.md) |
-| `internal/tooling/release` | Explicitly separated release and repository tooling. | [docs/development/modules.md](modules.md) |
-| `internal/tooling/release/install` | Explicitly separated release and repository tooling. | [docs/development/modules.md](modules.md) |
-| `internal/tooling/releasecli` | Explicitly separated release and repository tooling. | [docs/development/modules.md](modules.md) |
+| `internal/tooling/release` | Source package, source-bound bundle and guarded bundle installation into a consumer. | [docs/development/modules.md](modules.md) |
 | `internal/tooling/source` | Explicitly separated release and repository tooling. | [docs/development/modules.md](modules.md) |
 
 ## Maintenance commands
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `cmd/markitect-check-architecture` | Thin entrypoints to maintenance services. | [docs/development/modules.md](modules.md) |
-| `cmd/markitect-release` | Thin entrypoints to maintenance services. | [docs/development/modules.md](modules.md) |
+| `cmd/markitect-release` | Release maintenance command and its flag handling. | [docs/development/modules.md](modules.md) |
 
 ## Test support
 

@@ -1,4 +1,4 @@
-package releaseinstall
+package release
 
 import (
 	"bytes"
@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
-	"github.com/Glacius-Labs/Markitect/internal/tooling/release"
 	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 	"go.yaml.in/yaml/v3"
 )
@@ -93,7 +92,7 @@ func commitInstallPins(t *testing.T, root, message string) {
 	runWriterGit(t, root, "commit", "-m", message)
 }
 
-func installTestBundle(t *testing.T, sourceID, version, marker string) *release.Bundle {
+func installTestBundle(t *testing.T, sourceID, version, marker string) *Bundle {
 	t.Helper()
 	// Keep the fixture unmistakably binary so core.autocrlf never treats the
 	// byte-exact archive pin as text during checkout.
@@ -105,25 +104,25 @@ func installTestBundle(t *testing.T, sourceID, version, marker string) *release.
 		".markitect/bootstrap/run.go":      []byte("package main // " + marker + "\n"),
 		".markitect/tool/source.zip":       archive,
 	}
-	manifest := release.BundleManifest{SchemaVersion: 2, Version: version, SourceCommit: strings.Repeat(sourceID, 40), SourceRepository: "github.com/Glacius-Labs/Markitect"}
+	manifest := BundleManifest{SchemaVersion: 2, Version: version, SourceCommit: strings.Repeat(sourceID, 40), SourceRepository: "github.com/Glacius-Labs/Markitect"}
 	names := append([]string(nil), installPinPaths...)
 	sort.Strings(names)
 	for _, name := range names {
-		manifest.Files = append(manifest.Files, release.BundleFile{Path: name, SHA256: digestInstallBytes(files[name])})
+		manifest.Files = append(manifest.Files, BundleFile{Path: name, SHA256: digestInstallBytes(files[name])})
 	}
 	manifestBytes, err := yaml.Marshal(manifest)
 	if err != nil {
 		t.Fatal(err)
 	}
 	files[releaseManifestPath] = manifestBytes
-	bundle := &release.Bundle{Manifest: manifest, Files: files, SHA256: digestInstallBytes([]byte("outer bundle " + marker))}
+	bundle := &Bundle{Manifest: manifest, Files: files, SHA256: digestInstallBytes([]byte("outer bundle " + marker))}
 	if err := validateIncomingBundle(bundle); err != nil {
 		t.Fatalf("test bundle invalid: %v", err)
 	}
 	return bundle
 }
 
-func writeBundleToRoot(t *testing.T, root string, bundle *release.Bundle, includeManifest bool) {
+func writeBundleToRoot(t *testing.T, root string, bundle *Bundle, includeManifest bool) {
 	t.Helper()
 	for _, name := range installPaths {
 		if name == releaseManifestPath && !includeManifest {

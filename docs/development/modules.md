@@ -38,13 +38,13 @@ This list owns the package-level invariants; the [concept](../concepts/v1-concep
 | Record adapter | Run |
 | Provider adapters and native harness | Their exact inward consumers and physical transport, declared by the gate |
 | Container adapter and agentd | Agent frame protocol |
-| CLI | Project and static metadata reports, model view, pure report values, build metadata and licenses |
+| CLI | Project and static metadata reports, model view, pure report values, build metadata and license notices |
 | Document adapter | Model view and reviewed guarded-write API |
 | Bootstrap | Its actual services and adapters |
 | Product command | Bootstrap |
-| Maintenance command | Its specific maintenance CLI |
+| Maintenance command | Release packaging, source loading and build metadata |
 
-The real-Git vertical test alone receives a test-only record-adapter edge. No sibling adapter or common tooling parent grants a general import exemption. Maintenance remains explicit: the architecture gate reads Go sources, release uses source/license values, and installation and publication use their own maintenance consumers.
+The real-Git vertical test alone receives a test-only record-adapter edge. No sibling adapter or common tooling parent grants a general import exemption. Maintenance remains explicit: the architecture gate reads Go sources, and release, which also installs bundles, uses source values and the guarded writer.
 
 ## Apply target dependencies
 
@@ -60,7 +60,7 @@ Coordinate shared contracts first. Add a concrete responsibility/import decision
 
 ## Mechanical dependency gate
 
-`go run ./cmd/markitect-check-architecture --repo .` inspects all production, test and platform Go files. It checks unknown/removed packages, exact responsibility edges, absent producers, map completeness, owner-document links, external-test self imports and test-only testkit use. The document adapter may use only the reviewed guarded-write selectors. Third-party imports remain permitted; this is a Markitect dependency check, not a general proof of I/O purity.
+`TestRepositoryArchitecture` in `internal/tooling/architecture` inspects all production, test and platform Go files; `go test ./...` runs it, and `go test ./internal/tooling/architecture` runs it alone. It checks unknown/removed packages, exact responsibility edges, absent producers, map completeness, owner-document links, external-test self imports and test-only testkit use. The document adapter may use only the reviewed guarded-write selectors. Third-party imports remain permitted; this is a Markitect dependency check, not a general proof of I/O purity.
 
 `internal/testkit` imports no Markitect package. Only test files may import it. The standalone consumer bootstrap (`packaging/bootstrap`) and source smoke import no Markitect packages. Go fixture directories and independent evaluation assets are not product package ownership exemptions.
 

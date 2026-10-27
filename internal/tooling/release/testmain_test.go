@@ -1,4 +1,4 @@
-package releasecli
+package release
 
 import (
 	"testing"

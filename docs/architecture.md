@@ -85,6 +85,6 @@ The generated view distinguishes the canonical model digest, the rendered conten
 
 ## Distribution
 
-Source packaging, release publication and guarded installation are independent maintenance services. Source archives use the root `cmd/` and `internal/` layout. Source-smoke checks neither publish a release nor demonstrate provider or Apply acceptance. See [distribution](../packaging/README.md) and [operations](guides/operations.md#release-operations).
+Source packaging, bundling and guarded installation are independent maintenance services; Main has no release publisher. Source archives use the root `cmd/` and `internal/` layout. Source-smoke checks neither publish a release nor demonstrate provider or Apply acceptance. See [distribution](../packaging/README.md) and [operations](guides/operations.md#release-operations).
 
 Earlier product generations are listed in the [archive index](archive.md).

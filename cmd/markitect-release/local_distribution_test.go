@@ -1,4 +1,4 @@
-package releasecli
+package main
 
 import (
 	"bytes"
@@ -16,7 +16,7 @@ import (
 func invokeRelease(t *testing.T, args ...string) (int, string, string) {
 	t.Helper()
 	var out, errout bytes.Buffer
-	code := Run(args, &out, &errout)
+	code := runMain(args, &out, &errout)
 	return code, out.String(), errout.String()
 }
 

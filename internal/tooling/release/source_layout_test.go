@@ -25,7 +25,7 @@ func rootLayoutFixture(t *testing.T) string {
 		"internal/adapters/gitrepo/git.go":            "package gitrepo\n",
 		"internal/apply/testdata/fixture.json":        "literal historical fixture\n",
 		"internal/adapters/documents/writer.go":       "package documents\n",
-		"internal/tooling/release/install/install.go": "package releaseinstall\n",
+		"internal/tooling/release/install.go":         "package release\n",
 		"internal/testkit/testdata/hostile.gitconfig": "[core]\n hooksPath=blocked\n",
 	} {
 		writeLayoutFile(t, root, name, content)
@@ -100,7 +100,7 @@ func TestRootLayoutLiveAndFixedMatch(t *testing.T) {
 		t.Fatal("live and fixed root selections differ")
 	}
 	contents := archiveContents(t, live)
-	for _, name := range []string{"cmd/markitect/main.go", "internal/model/vendor.go", "internal/project/prepared.go", "internal/runtimeconfig/prepare.go", "internal/adapters/runstore/store.go", "internal/adapters/runner/launch.go", "cmd/markitect-runner/main.go", "internal/harness/harness.go", "internal/run/execute.go", "internal/adapters/gitrepo/git.go", "internal/apply/testdata/fixture.json", "internal/adapters/documents/writer.go", "internal/tooling/release/install/install.go", "internal/testkit/testdata/hostile.gitconfig"} {
+	for _, name := range []string{"cmd/markitect/main.go", "internal/model/vendor.go", "internal/project/prepared.go", "internal/runtimeconfig/prepare.go", "internal/adapters/runstore/store.go", "internal/adapters/runner/launch.go", "cmd/markitect-runner/main.go", "internal/harness/harness.go", "internal/run/execute.go", "internal/adapters/gitrepo/git.go", "internal/apply/testdata/fixture.json", "internal/adapters/documents/writer.go", "internal/tooling/release/install.go", "internal/testkit/testdata/hostile.gitconfig"} {
 		if _, ok := contents[name]; !ok {
 			t.Errorf("omitted %s", name)
 		}
@@ -216,7 +216,7 @@ func TestRootLayoutRequiresCommandAndInternalGoSources(t *testing.T) {
 }
 
 func TestRootResponsibilityPrefixesAreExact(t *testing.T) {
-	for _, name := range []string{"internal/model/a.go", "internal/tooling/release/install/a.go", "internal/adapters/documents/a.go", "internal/adapters/codexappserver/codec.go", "cmd/markitect/main.go"} {
+	for _, name := range []string{"internal/model/a.go", "internal/tooling/release/a.go", "internal/adapters/documents/a.go", "internal/adapters/codexappserver/codec.go", "cmd/markitect/main.go"} {
 		if !sourceRoot(name) {
 			t.Errorf("rejected %s", name)
 		}

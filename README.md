@@ -213,22 +213,14 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for source checks, import boundaries, and
 
 The earlier Project/Domain downloads were retired. There is currently no supported binary release of this model-first V1. The release evidence remains on Main and the former tags are mapped to commits in the [retired release mapping](docs/validation/retired-releases-20261017.json); see the [retirement record](docs/validation/distribution-retirement-20261017.md).
 
-<!-- markitect-release:install:start -->
-
 ### Installation
 
 Build from the current reviewed source using the Go version in `go.mod`. Published binary installation instructions will be added only after source-bound release qualification.
-
-<!-- markitect-release:install:end -->
-
-<!-- markitect-release:try:start -->
 
 ### Examples and evaluation
 
 Start with the [canonical Library model](testdata/library/README.md), [project workflow](docs/guides/project-workflow.md), and [independent Library oracle](tools/library-oracle/README.md). The complete two-Apply policy-change demonstration remains a separate acceptance target.
 
-<!-- markitect-release:try:end -->
-
 ## License
 
-Apache-2.0. See [LICENSE](LICENSE) and [third-party notices](internal/tooling/licenses/notices.md).
+Apache-2.0. See [LICENSE](LICENSE) and [third-party notices](internal/buildinfo/notices.md).

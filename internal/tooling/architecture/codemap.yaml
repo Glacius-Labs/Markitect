@@ -103,15 +103,7 @@ packages:
     layer: build-data
     purpose: Version identity and embedded license notices.
     doc: docs/development/modules.md
-  - path: internal/tooling/licenses
-    layer: build-data
-    purpose: Version identity and embedded license notices.
-    doc: docs/development/modules.md
   - path: internal/tooling/architecture
-    layer: maintenance
-    purpose: Explicitly separated release and repository tooling.
-    doc: docs/development/modules.md
-  - path: internal/tooling/architecturecli
     layer: maintenance
     purpose: Explicitly separated release and repository tooling.
     doc: docs/development/modules.md
@@ -119,33 +111,17 @@ packages:
     layer: maintenance
     purpose: Explicitly separated release and repository tooling.
     doc: docs/development/modules.md
-  - path: internal/tooling/publish
-    layer: maintenance
-    purpose: Explicitly separated release and repository tooling.
-    doc: docs/development/modules.md
   - path: internal/tooling/release
     layer: maintenance
-    purpose: Explicitly separated release and repository tooling.
-    doc: docs/development/modules.md
-  - path: internal/tooling/release/install
-    layer: maintenance
-    purpose: Explicitly separated release and repository tooling.
-    doc: docs/development/modules.md
-  - path: internal/tooling/releasecli
-    layer: maintenance
-    purpose: Explicitly separated release and repository tooling.
+    purpose: Source package, source-bound bundle and guarded bundle installation into a consumer.
     doc: docs/development/modules.md
   - path: internal/tooling/source
     layer: maintenance
     purpose: Explicitly separated release and repository tooling.
     doc: docs/development/modules.md
-  - path: cmd/markitect-check-architecture
-    layer: maintenance-command
-    purpose: Thin entrypoints to maintenance services.
-    doc: docs/development/modules.md
   - path: cmd/markitect-release
     layer: maintenance-command
-    purpose: Thin entrypoints to maintenance services.
+    purpose: Release maintenance command and its flag handling.
     doc: docs/development/modules.md
   - path: internal/testkit
     layer: test-support

@@ -17,7 +17,6 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/runtimeconfig"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
-	"github.com/Glacius-Labs/Markitect/internal/tooling/licenses"
 )
 
 // RevisionResolver resolves an explicitly selected ref exactly once. Only its
@@ -124,7 +123,7 @@ func (c *Command) Run(ctx context.Context, args []string, stdout, stderr io.Writ
 		return emit(map[string]string{"version": buildinfo.Version()})
 	}
 	if verb == "licenses" {
-		_, err := io.WriteString(stdout, licenses.Text)
+		_, err := io.WriteString(stdout, buildinfo.Notices)
 		if err != nil {
 			return 3
 		}

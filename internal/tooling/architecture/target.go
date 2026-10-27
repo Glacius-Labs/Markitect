@@ -11,22 +11,16 @@ import (
 // package additionally needs its own checked code-map entry. There is no broad
 // internal/tooling or adapter import exemption and no legacy product allowance.
 var targetRoots = []struct{ path, layer string }{
-	{"cmd/markitect-check-architecture", "maintenance-command"},
 	{"internal/adapters/codexappserver", "apply-adapter"},
 	{"internal/adapters/container", "apply-adapter"},
-	{"internal/tooling/architecturecli", "maintenance"},
-	{"internal/tooling/release/install", "maintenance"},
 	{"internal/tooling/architecture", "maintenance"},
 	{"internal/tooling/guardedwrite", "maintenance"},
 	{"internal/adapters/documents", "apply-adapter"},
-	{"internal/tooling/releasecli", "maintenance"},
 	{"internal/adapters/gitrepo", "apply-adapter"},
-	{"internal/tooling/licenses", "build-data"},
 	{"internal/adapters/checks", "apply-adapter"},
 	{"internal/agentd/frame", "agent-protocol"},
 	{"cmd/markitect-agentd", "runtime-command"},
 	{"cmd/markitect-runner", "apply-command"},
-	{"internal/tooling/publish", "maintenance"},
 	{"internal/tooling/release", "maintenance"},
 	{"internal/tooling/source", "maintenance"},
 	{"cmd/markitect-release", "maintenance-command"},
@@ -71,10 +65,9 @@ var responsibilityImports = map[string][]string{
 	"cmd/markitect":                    {"internal/bootstrap"},
 	"cmd/markitect-agentd":             {"internal/agentd"},
 	"cmd/markitect-runner":             {"internal/adapters/runner"},
-	"cmd/markitect-check-architecture": {"internal/tooling/architecturecli"},
-	"cmd/markitect-release":            {"internal/tooling/releasecli"},
+	"cmd/markitect-release":            {"internal/buildinfo", "internal/tooling/release", "internal/tooling/source"},
 	"internal/adapters/checks":         {"internal/adapters/container", "internal/model", "internal/organization", "internal/project", "internal/run", "internal/runtimeconfig", "internal/snapshot"},
-	"internal/adapters/cli":            {"internal/apply", "internal/buildinfo", "internal/model", "internal/modeldocs", "internal/project", "internal/realization", "internal/runtimeconfig", "internal/snapshot", "internal/tooling/licenses"},
+	"internal/adapters/cli":            {"internal/apply", "internal/buildinfo", "internal/model", "internal/modeldocs", "internal/project", "internal/realization", "internal/runtimeconfig", "internal/snapshot"},
 	"internal/adapters/codexappserver": {"internal/adapters/container", "internal/agentd/frame", "internal/harness", "internal/model", "internal/organization", "internal/project", "internal/run", "internal/runtimeconfig", "internal/snapshot"},
 	"internal/adapters/container":      {"internal/agentd/frame"},
 	"internal/adapters/documents":      {"internal/modeldocs", "internal/tooling/guardedwrite"},
@@ -86,12 +79,8 @@ var responsibilityImports = map[string][]string{
 	"internal/organization":            {"internal/model", "internal/snapshot"},
 	"internal/realization":             {"internal/model", "internal/snapshot"},
 	"internal/run":                     {"internal/organization", "internal/project", "internal/snapshot"},
-	"internal/tooling/architecturecli": {"internal/tooling/architecture"},
 	"internal/tooling/guardedwrite":    {"internal/tooling/source"},
-	"internal/tooling/publish":         {"internal/tooling/source", "internal/tooling/release"},
-	"internal/tooling/release":         {"internal/tooling/source", "internal/tooling/licenses"},
-	"internal/tooling/release/install": {"internal/tooling/source", "internal/tooling/release", "internal/tooling/guardedwrite"},
-	"internal/tooling/releasecli":      {"internal/buildinfo", "internal/tooling/source", "internal/tooling/licenses", "internal/tooling/release", "internal/tooling/release/install", "internal/tooling/publish"},
+	"internal/tooling/release":         {"internal/tooling/guardedwrite", "internal/tooling/source"},
 }
 
 // Only concrete fixture and composition needs receive test-only edges;
@@ -100,6 +89,7 @@ var responsibilityTestImports = map[string][]string{
 	"internal/bootstrap":               {"internal/snapshot"},
 	"internal/adapters/codexappserver": {"internal/adapters/gitrepo", "internal/adapters/runstore"},
 	"internal/adapters/gitrepo":        {"internal/adapters/runstore", "internal/adapters/checks", "internal/runtimeconfig", "internal/organization", "internal/realization"},
+	"internal/tooling/release":         {"internal/buildinfo"},
 }
 
 // Edge.Test alone cannot distinguish internal from external Go tests.
