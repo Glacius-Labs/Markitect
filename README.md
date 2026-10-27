@@ -231,4 +231,4 @@ Start with the [canonical Library model](testdata/library/README.md), [project w
 
 ## License
 
-Apache-2.0. See [LICENSE](LICENSE) and [third-party notices](internal/tooling/licenses/notices.md).
+Apache-2.0. See [LICENSE](LICENSE) and [third-party notices](internal/buildinfo/notices.md).

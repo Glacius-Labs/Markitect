@@ -19,7 +19,6 @@ var targetRoots = []struct{ path, layer string }{
 	{"internal/adapters/documents", "apply-adapter"},
 	{"internal/tooling/releasecli", "maintenance"},
 	{"internal/adapters/gitrepo", "apply-adapter"},
-	{"internal/tooling/licenses", "build-data"},
 	{"internal/adapters/checks", "apply-adapter"},
 	{"internal/agentd/frame", "agent-protocol"},
 	{"cmd/markitect-agentd", "runtime-command"},
@@ -71,7 +70,7 @@ var responsibilityImports = map[string][]string{
 	"cmd/markitect-runner":             {"internal/adapters/runner"},
 	"cmd/markitect-release":            {"internal/tooling/releasecli"},
 	"internal/adapters/checks":         {"internal/adapters/container", "internal/model", "internal/organization", "internal/project", "internal/run", "internal/runtimeconfig", "internal/snapshot"},
-	"internal/adapters/cli":            {"internal/apply", "internal/buildinfo", "internal/model", "internal/modeldocs", "internal/project", "internal/realization", "internal/runtimeconfig", "internal/snapshot", "internal/tooling/licenses"},
+	"internal/adapters/cli":            {"internal/apply", "internal/buildinfo", "internal/model", "internal/modeldocs", "internal/project", "internal/realization", "internal/runtimeconfig", "internal/snapshot"},
 	"internal/adapters/codexappserver": {"internal/adapters/container", "internal/agentd/frame", "internal/harness", "internal/model", "internal/organization", "internal/project", "internal/run", "internal/runtimeconfig", "internal/snapshot"},
 	"internal/adapters/container":      {"internal/agentd/frame"},
 	"internal/adapters/documents":      {"internal/modeldocs", "internal/tooling/guardedwrite"},
@@ -85,9 +84,9 @@ var responsibilityImports = map[string][]string{
 	"internal/run":                     {"internal/organization", "internal/project", "internal/snapshot"},
 	"internal/tooling/guardedwrite":    {"internal/tooling/source"},
 	"internal/tooling/publish":         {"internal/tooling/source", "internal/tooling/release"},
-	"internal/tooling/release":         {"internal/tooling/source", "internal/tooling/licenses"},
+	"internal/tooling/release":         {"internal/tooling/source"},
 	"internal/tooling/release/install": {"internal/tooling/source", "internal/tooling/release", "internal/tooling/guardedwrite"},
-	"internal/tooling/releasecli":      {"internal/buildinfo", "internal/tooling/source", "internal/tooling/licenses", "internal/tooling/release", "internal/tooling/release/install", "internal/tooling/publish"},
+	"internal/tooling/releasecli":      {"internal/buildinfo", "internal/tooling/source", "internal/tooling/release", "internal/tooling/release/install", "internal/tooling/publish"},
 }
 
 // Only concrete fixture and composition needs receive test-only edges;
@@ -96,6 +95,7 @@ var responsibilityTestImports = map[string][]string{
 	"internal/bootstrap":               {"internal/snapshot"},
 	"internal/adapters/codexappserver": {"internal/adapters/gitrepo", "internal/adapters/runstore"},
 	"internal/adapters/gitrepo":        {"internal/adapters/runstore", "internal/adapters/checks", "internal/runtimeconfig", "internal/organization", "internal/realization"},
+	"internal/tooling/release":         {"internal/buildinfo"},
 }
 
 // Edge.Test alone cannot distinguish internal from external Go tests.

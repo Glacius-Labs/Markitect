@@ -65,4 +65,4 @@ The retired v0.14.1 distribution and its [preserved source and guide](https://gi
 
 ## Release work
 
-[Operations](docs/guides/operations.md) and [distribution](packaging/README.md) own separate release work. The maintenance entrypoint is `cmd/markitect-release`. Source packages retain the root license, embedded [notices](internal/tooling/licenses/notices.md), required test data and explicit invocation examples. Use an external build cache when needed; Gitignore does not filter the complete product census. A source version does not establish a published or accepted release.
+[Operations](docs/guides/operations.md) and [distribution](packaging/README.md) own separate release work. The maintenance entrypoint is `cmd/markitect-release`. Source packages retain the root license, embedded [notices](internal/buildinfo/notices.md), required test data and explicit invocation examples. Use an external build cache when needed; Gitignore does not filter the complete product census. A source version does not establish a published or accepted release.

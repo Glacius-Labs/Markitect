@@ -103,10 +103,6 @@ packages:
     layer: build-data
     purpose: Version identity and embedded license notices.
     doc: docs/development/modules.md
-  - path: internal/tooling/licenses
-    layer: build-data
-    purpose: Version identity and embedded license notices.
-    doc: docs/development/modules.md
   - path: internal/tooling/architecture
     layer: maintenance
     purpose: Explicitly separated release and repository tooling.

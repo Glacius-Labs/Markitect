@@ -53,7 +53,6 @@ var sourceRoots = []string{
 	"internal/bootstrap",
 	"internal/testkit",
 	"internal/tooling/architecture",
-	"internal/tooling/licenses",
 	"internal/tooling/release",
 	"internal/tooling/releasecli",
 	"internal/tooling/publish",

@@ -8,7 +8,6 @@ import (
 	"runtime"
 
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
-	"github.com/Glacius-Labs/Markitect/internal/tooling/licenses"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -59,8 +58,8 @@ func runLocal(command string, args []string, out, errout io.Writer) error {
 		_, err := fmt.Fprintf(out, "Markitect %s (%s/%s)\n", buildinfo.Version(), runtime.GOOS, runtime.GOARCH)
 		return err
 	case "licenses":
-		n, err := io.WriteString(out, licenses.Text)
-		if err == nil && n != len(licenses.Text) {
+		n, err := io.WriteString(out, buildinfo.Notices)
+		if err == nil && n != len(buildinfo.Notices) {
 			return io.ErrShortWrite
 		}
 		return err

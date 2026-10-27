@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/tooling/licenses"
+	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
 )
 
 func TestSourceDistributionsRetainEmbeddedNotices(t *testing.T) {
@@ -16,7 +16,7 @@ func TestSourceDistributionsRetainEmbeddedNotices(t *testing.T) {
 	if err := os.MkdirAll(filepath.Dir(full), 0755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(full, []byte(licenses.Text), 0644); err != nil {
+	if err := os.WriteFile(full, []byte(buildinfo.Notices), 0644); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(filepath.Dir(full), "unrelated.md"), []byte("unrelated"), 0644); err != nil {
@@ -29,20 +29,20 @@ func TestSourceDistributionsRetainEmbeddedNotices(t *testing.T) {
 	assertNotices := func(archive []byte) {
 		t.Helper()
 		contents := archiveContents(t, archive)
-		if !bytes.Equal(contents[embeddedNoticesPath], []byte(licenses.Text)) {
+		if !bytes.Equal(contents[embeddedNoticesPath], []byte(buildinfo.Notices)) {
 			t.Fatal("source archive omitted or changed the complete embedded notices")
 		}
-		if _, exists := contents["internal/tooling/licenses/unrelated.md"]; exists {
+		if _, exists := contents["internal/buildinfo/unrelated.md"]; exists {
 			t.Fatal("notice inclusion broadened to unrelated internal Markdown")
 		}
 	}
 	assertNotices(archive)
 
 	fixed := bundleSnapshot()
-	fixed.Files[embeddedNoticesPath] = []byte(licenses.Text)
+	fixed.Files[embeddedNoticesPath] = []byte(buildinfo.Notices)
 	fixed.Modes[embeddedNoticesPath] = "100644"
-	fixed.Files["internal/tooling/licenses/unrelated.md"] = []byte("unrelated")
-	fixed.Modes["internal/tooling/licenses/unrelated.md"] = "100644"
+	fixed.Files["internal/buildinfo/unrelated.md"] = []byte("unrelated")
+	fixed.Modes["internal/buildinfo/unrelated.md"] = "100644"
 	bundleBytes, err := BuildBundle(fixed, "1.2.3")
 	if err != nil {
 		t.Fatal(err)

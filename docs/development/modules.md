@@ -38,7 +38,7 @@ This list owns the package-level invariants; the [concept](../concepts/v1-concep
 | Record adapter | Run |
 | Provider adapters and native harness | Their exact inward consumers and physical transport, declared by the gate |
 | Container adapter and agentd | Agent frame protocol |
-| CLI | Project and static metadata reports, model view, pure report values, build metadata and licenses |
+| CLI | Project and static metadata reports, model view, pure report values, build metadata and license notices |
 | Document adapter | Model view and reviewed guarded-write API |
 | Bootstrap | Its actual services and adapters |
 | Product command | Bootstrap |

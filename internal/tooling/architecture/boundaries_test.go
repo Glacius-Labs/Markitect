@@ -64,7 +64,7 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/modeldocs", "internal/project", true},
 		{"internal/modeldocs", "internal/adapters/documents", false},
 		{"internal/adapters/cli", "internal/modeldocs", true},
-		{"internal/adapters/cli", "internal/tooling/licenses", true},
+		{"internal/adapters/cli", "internal/buildinfo", true},
 		{"internal/adapters/cli", "internal/tooling/releasecli", false},
 		{"internal/adapters/cli", "internal/adapters/gitrepo", false},
 		{"internal/adapters/documents", "internal/tooling/guardedwrite", true},
