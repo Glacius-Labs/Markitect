@@ -33,11 +33,14 @@ go test ./internal/tooling/architecture
 python -B -m unittest discover -s scripts -p test_*.py
 python -B scripts/check-docs.py
 python -B -m unittest discover -s tools/library-oracle
+python -B -m unittest discover -s tools/comparison
+python -B -m unittest discover -s tools/makerspace-oracle -p test_*.py
+python -B -m unittest discover -s tools/model-analysis
 ```
 
 Run broad Go suites on Linux, for example in WSL: on Windows, real Git is much slower, and `internal/adapters/gitrepo` alone takes 23 to 40 minutes instead of about two. Tests that do not test time take their Run deadline from the test's own deadline, so the `-timeout` value bounds a hang.
 
-Run `gofmt` on changed Go files and `git diff --check`. CI checks module checksums, tests with and without the race detector, vet, build, tracked Go formatting, every production/test/platform import and actual package-map entries, the packaged-source smoke, repository scripts, maintained documentation links, and the independent Library oracle with its bounded transport. Obsolete engines and their tests/gates are removed together; no skips or success stubs may replace required checks.
+Run `gofmt` on changed Go files and `git diff --check`. CI checks module checksums, tests with and without the race detector, vet, build, tracked Go formatting, every production/test/platform import against the architecture rule table, the packaged-source smoke, repository scripts, maintained documentation links, the independent Library oracle with its bounded transport, and the unit tests of the comparison, Makerspace oracle and model analysis tools. Obsolete engines and their tests/gates are removed together; no skips or success stubs may replace required checks.
 
 Regenerate the code map when the rule table or a package doc comment changes:
 
