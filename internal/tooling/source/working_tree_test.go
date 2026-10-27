@@ -130,7 +130,7 @@ func TestWorkingTreeCollisionDiagnosticDoesNotDependOnMapOrder(t *testing.T) {
 }
 
 func TestWorkingTreeTakesTrackedModesFromIndexWhenGitIgnoresFileMode(t *testing.T) {
-	repo, _ := selectiveGitFixture(t)
+	repo, _ := gitFixture(t)
 	root := repo.Dir
 	// Git for Windows sets this; setting it here also covers other platforms.
 	repo.Git("config", "core.filemode", "false")

@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/Glacius-Labs/Markitect/internal/guardedwrite"
 )
 
 // Limits bounds memory and filesystem use while loading and materializing a
@@ -51,14 +53,14 @@ func LoadWithLimits(root, revision string, limits Limits) (*Input, error) {
 	if err != nil {
 		return nil, fmt.Errorf("resolve source root: %w", err)
 	}
-	if err := rejectSymlinkAncestors(abs); err != nil {
+	if err := guardedwrite.RejectSymlinkAncestors(abs); err != nil {
 		return nil, fmt.Errorf("source root: %w", err)
 	}
 	info, err := os.Lstat(abs)
 	if err != nil {
 		return nil, fmt.Errorf("stat source root: %w", err)
 	}
-	if isSymlink(info) || !info.IsDir() {
+	if guardedwrite.IsReparsePoint(info) || !info.IsDir() {
 		return nil, fmt.Errorf("source root must be a real directory: %s", abs)
 	}
 

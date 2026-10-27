@@ -5,8 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/Glacius-Labs/Markitect/internal/guardedwrite"
 )
 
 func loadWorkingTree(root string, s *Input, limits Limits) error {
@@ -23,7 +26,7 @@ func loadWorkingTree(root string, s *Input, limits Limits) error {
 			if relDir != "" {
 				rel = relDir + "/" + name
 			}
-			if excludedFilePath(rel) {
+			if guardedwrite.ExcludedFile(rel) {
 				continue
 			}
 			info, err := os.Lstat(filepath.Join(dir, name))
@@ -31,13 +34,13 @@ func loadWorkingTree(root string, s *Input, limits Limits) error {
 				return fmt.Errorf("stat source path %q: %w", rel, err)
 			}
 			if info.IsDir() {
-				if excludedDirectoryPath(rel) {
+				if guardedwrite.ExcludedDirectory(rel) {
 					continue
 				}
-				if err := validateRepoPath(rel); err != nil {
+				if err := guardedwrite.ValidateRepoPath(rel); err != nil {
 					return err
 				}
-				if isSymlink(info) {
+				if guardedwrite.IsReparsePoint(info) {
 					return fmt.Errorf("refusing to traverse symlink or reparse point %q", rel)
 				}
 				if err := walk(filepath.Join(dir, name), rel); err != nil {
@@ -45,13 +48,13 @@ func loadWorkingTree(root string, s *Input, limits Limits) error {
 				}
 				continue
 			}
-			if isSymlink(info) {
+			if guardedwrite.IsReparsePoint(info) {
 				return fmt.Errorf("refusing to read symlink or reparse point %q", rel)
 			}
 			if !info.Mode().IsRegular() {
 				return fmt.Errorf("unsupported non-regular source file %q", rel)
 			}
-			if err := validateRepoPath(rel); err != nil {
+			if err := guardedwrite.ValidateRepoPath(rel); err != nil {
 				return err
 			}
 			if info.Size() > limits.MaxFileBytes {
@@ -80,7 +83,7 @@ func loadWorkingTree(root string, s *Input, limits Limits) error {
 	if err := walk(root, ""); err != nil {
 		return err
 	}
-	if err := validatePortablePaths(snapshotPaths(s)); err != nil {
+	if err := guardedwrite.ValidatePortablePaths(snapshotPaths(s)); err != nil {
 		return err
 	}
 	return applyIndexModes(root, s)
@@ -97,10 +100,10 @@ func applyIndexModes(root string, s *Input) error {
 	}
 	var index []byte
 	if err == nil {
-		index, err = GitOutput(root, "ls-files", "--stage", "-z")
+		index, err = guardedwrite.GitOutput(root, "ls-files", "--stage", "-z")
 	}
 	if err != nil {
-		inside, insideErr := GitOutput(root, "rev-parse", "--is-inside-work-tree")
+		inside, insideErr := guardedwrite.GitOutput(root, "rev-parse", "--is-inside-work-tree")
 		if insideErr != nil || strings.TrimSpace(string(inside)) != "true" {
 			return nil
 		}
@@ -124,39 +127,23 @@ func applyIndexModes(root string, s *Input) error {
 	return nil
 }
 
-func excludedDirectoryPath(p string) bool {
-	parts := strings.Split(p, "/")
-	for _, component := range parts {
-		if component == ".git" {
-			return true
+// GitFileModeEnabled returns Git's effective core.filemode setting. When the
+// setting is absent, Git defaults it on for all platforms.
+func GitFileModeEnabled(root string) (bool, error) {
+	output, err := guardedwrite.GitOutput(root, "config", "--bool", "--get", "core.filemode")
+	if err == nil {
+		switch strings.TrimSpace(string(output)) {
+		case "true":
+			return true, nil
+		case "false":
+			return false, nil
+		default:
+			return false, fmt.Errorf("Git returned an invalid core.filemode value %q", strings.TrimSpace(string(output)))
 		}
 	}
-	if len(parts) > 0 {
-		switch parts[0] {
-		case "docs", ".agents", ".claude", ".codex":
-			return false
-		case ".artifacts", ".cache", ".worktrees", ".venv", "__pycache__", "vendor":
-			return true
-		}
+	var exitErr *exec.ExitError
+	if errors.As(err, &exitErr) && exitErr.ExitCode() == 1 {
+		return true, nil
 	}
-	for _, component := range parts {
-		switch component {
-		case "bin", "obj", "node_modules", "vendor":
-			return true
-		}
-	}
-	return false
-}
-
-func excludedFilePath(p string) bool {
-	parts := strings.Split(p, "/")
-	for _, component := range parts {
-		if component == ".git" {
-			return true // linked worktrees store a .git file instead of a directory
-		}
-	}
-	if len(parts) < 2 {
-		return false
-	}
-	return excludedDirectoryPath(strings.Join(parts[:len(parts)-1], "/"))
+	return false, err
 }

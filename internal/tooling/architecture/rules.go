@@ -49,7 +49,7 @@ type Rules struct {
 
 // The document writer may use only the reviewed guarded-write API.
 const (
-	GuardedWritePackage   = "internal/tooling/guardedwrite"
+	GuardedWritePackage   = "internal/guardedwrite"
 	DocumentWriterPackage = "internal/adapters/documents"
 )
 
@@ -69,7 +69,7 @@ var Table = Rules{
 		{Name: "usecase", Title: "Apply", Meaning: "Command preflight, the sequence of closed Runs and stored-candidate publication.", Imports: []string{"model", "project", "service"}},
 		{Name: "protocol", Title: "Agent protocol", Meaning: "Frame protocol between the Orchestrator and the session helper."},
 		{Name: "container", Title: "Container client", Meaning: "The container engine client that the adapters running containers share.", Imports: []string{"protocol"}},
-		{Name: "guardedwrite", Title: "Guarded write", Meaning: "Guarded working-tree writes for publication, docs --write and bundle installation."},
+		{Name: "guardedwrite", Title: "Guarded write", Meaning: "Guarded working-tree writes for publication, docs --write and bundle installation, with the Git and path helpers they share with source snapshots."},
 		{Name: "build", Title: "Build data", Meaning: "Version identity and embedded license notices."},
 		{Name: "adapter", Title: "Adapters", Meaning: "Concrete repository, Session, check, record, runner, command-line and document adapters; no adapter imports another.", Imports: []string{"model", "snapshot", "domain", "project", "service", "usecase", "container", "guardedwrite", "build"}},
 		{Name: "composition", Title: "Composition", Meaning: "Constructs the actual services and their adapters.", Imports: []string{"model", "project", "service", "usecase", "container", "guardedwrite", "adapter"}},
@@ -95,7 +95,7 @@ var Table = Rules{
 		{"internal/workflow", "usecase", "internal/apply/README.md"},
 		{"internal/agentd/frame", "protocol", "internal/adapters/container/README.md"},
 		{"internal/adapters/container", "container", "internal/adapters/container/README.md"},
-		{"internal/tooling/guardedwrite", "guardedwrite", "docs/architecture.md#state-and-evidence-storage"},
+		{"internal/guardedwrite", "guardedwrite", "docs/architecture.md#state-and-evidence-storage"},
 		{"internal/buildinfo", "build", "docs/architecture.md#distribution"},
 		{"internal/adapters/checks", "adapter", "internal/adapters/checks/README.md"},
 		{"internal/adapters/cli", "adapter", "docs/architecture.md#adapters"},
@@ -121,7 +121,6 @@ var Table = Rules{
 		{From: "cmd/markitect-runner", To: "internal/adapters/runner", Reason: "The runner image entrypoint starts the runner adapter directly."},
 		{From: "internal/adapters/codexappserver", To: "internal/agentd/frame", Reason: "Codex Sessions use the frame values that the container client exposes."},
 		{From: "internal/apply", To: "internal/workflow", Reason: "Apply runs the sequence of closed Runs."},
-		{From: "internal/tooling/guardedwrite", To: "internal/tooling/source", Reason: "Guarded writes take their Git and stored-name helpers from the source loader."},
 		{From: "internal/tooling/release", To: "internal/tooling/architecture", Reason: "The packager takes its source roots from this table."},
 		{From: "internal/tooling/release", To: "internal/tooling/source", Reason: "Packaging and installation load fixed source snapshots."},
 		{From: "internal/adapters/codexappserver", To: "internal/adapters/gitrepo", TestOnly: true, Reason: "Hierarchy tests run Codex Sessions over real Run Git copies."},

@@ -88,7 +88,7 @@ func TestLoadPinnedCommitIgnoresAmbientGitRepositoryOverrides(t *testing.T) {
 }
 
 func TestLoadPinnedCommitSkipsGitlinksInExcludedDirectories(t *testing.T) {
-	repo, _ := selectiveGitFixture(t)
+	repo, _ := gitFixture(t)
 	root := repo.Dir
 	repo.Git("update-index", "--add", "--cacheinfo", "160000,"+strings.Repeat("a", 40)+",vendor/lib")
 	repo.Git("update-index", "--add", "--cacheinfo", "160000,"+strings.Repeat("b", 40)+",node_modules")
@@ -116,32 +116,11 @@ func TestLoadPinnedCommitSkipsGitlinksInExcludedDirectories(t *testing.T) {
 }
 
 func TestLoadPinnedCommitRejectsIncludedGitlinkAsSubmodule(t *testing.T) {
-	repo, _ := selectiveGitFixture(t)
+	repo, _ := gitFixture(t)
 	repo.Git("update-index", "--add", "--cacheinfo", "160000,"+strings.Repeat("a", 40)+",lib")
 	commitIndex(repo, "gitlink")
 	_, err := Load(repo.Dir, "HEAD")
 	if err == nil || !strings.Contains(err.Error(), "submodule") {
 		t.Fatalf("Load(HEAD) error = %v, want submodule rejection", err)
-	}
-}
-
-func TestCleanGitEnvDropsGitVariablesCaseInsensitively(t *testing.T) {
-	t.Setenv("gIt_DiR", "foreign")
-	t.Setenv("GIT_CONFIG_PARAMETERS", "injected")
-	t.Setenv("MARKITECT_TEST_VALUE", "preserved")
-	values := make(map[string]string)
-	for _, entry := range CleanGitEnv() {
-		key, value, ok := strings.Cut(entry, "=")
-		if ok {
-			values[strings.ToUpper(key)] = value
-		}
-	}
-	for key := range values {
-		if strings.HasPrefix(key, "GIT_") {
-			t.Errorf("Git variable %s survived environment cleanup", key)
-		}
-	}
-	if values["MARKITECT_TEST_VALUE"] != "preserved" {
-		t.Fatal("non-Git environment variable was not preserved")
 	}
 }

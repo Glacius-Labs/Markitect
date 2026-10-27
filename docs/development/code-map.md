@@ -8,7 +8,7 @@ The page is generated from the rule table in [rules.go](../../internal/tooling/a
 go test ./internal/tooling/architecture -run TestCodeMapPage -update
 ```
 
-`TestRepositoryArchitecture` checks every production, test and platform file against the table: a package imports only the layers its own layer lists and the named exceptions, only test files import a test-only layer, a standalone layer imports no Markitect package, and the document writer `internal/adapters/documents` uses only the reviewed guarded API of `internal/tooling/guardedwrite`. Every Go package needs exactly one row, an existing owning document and one package doc comment. The source packager accepts exactly the table's packages below `cmd/` and `internal/`. [Architecture](../architecture.md#layers) describes the layers.
+`TestRepositoryArchitecture` checks every production, test and platform file against the table: a package imports only the layers its own layer lists and the named exceptions, only test files import a test-only layer, a standalone layer imports no Markitect package, and the document writer `internal/adapters/documents` uses only the reviewed guarded API of `internal/guardedwrite`. Every Go package needs exactly one row, an existing owning document and one package doc comment. The source packager accepts exactly the table's packages below `cmd/` and `internal/`. [Architecture](../architecture.md#layers) describes the layers.
 
 ## Layers
 
@@ -22,7 +22,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `usecase` | Command preflight, the sequence of closed Runs and stored-candidate publication. | `model`, `project`, `service` | 2 |
 | `protocol` | Frame protocol between the Orchestrator and the session helper. | nothing | 1 |
 | `container` | The container engine client that the adapters running containers share. | `protocol` | 1 |
-| `guardedwrite` | Guarded working-tree writes for publication, docs --write and bundle installation. | nothing | 1 |
+| `guardedwrite` | Guarded working-tree writes for publication, docs --write and bundle installation, with the Git and path helpers they share with source snapshots. | nothing | 1 |
 | `build` | Version identity and embedded license notices. | nothing | 1 |
 | `adapter` | Concrete repository, Session, check, record, runner, command-line and document adapters; no adapter imports another. | `model`, `snapshot`, `domain`, `project`, `service`, `usecase`, `container`, `guardedwrite`, `build` | 7 |
 | `composition` | Constructs the actual services and their adapters. | `model`, `project`, `service`, `usecase`, `container`, `guardedwrite`, `adapter` | 1 |
@@ -41,7 +41,6 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `cmd/markitect-runner` | `internal/adapters/runner` | all | The runner image entrypoint starts the runner adapter directly. |
 | `internal/adapters/codexappserver` | `internal/agentd/frame` | all | Codex Sessions use the frame values that the container client exposes. |
 | `internal/apply` | `internal/workflow` | all | Apply runs the sequence of closed Runs. |
-| `internal/tooling/guardedwrite` | `internal/tooling/source` | all | Guarded writes take their Git and stored-name helpers from the source loader. |
 | `internal/tooling/release` | `internal/tooling/architecture` | all | The packager takes its source roots from this table. |
 | `internal/tooling/release` | `internal/tooling/source` | all | Packaging and installation load fixed source snapshots. |
 | `internal/adapters/codexappserver` | `internal/adapters/gitrepo` | tests only | Hierarchy tests run Codex Sessions over real Run Git copies. |
@@ -108,7 +107,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/tooling/guardedwrite` | Package guardedwrite applies selected working-tree changes only while the repository, branch, HEAD and captured file bytes are unchanged. | [docs/architecture.md#state-and-evidence-storage](../architecture.md#state-and-evidence-storage) |
+| `internal/guardedwrite` | Package guardedwrite applies selected working-tree changes only while the repository, branch, HEAD and captured file bytes are unchanged. | [docs/architecture.md#state-and-evidence-storage](../architecture.md#state-and-evidence-storage) |
 
 ## Build data
 

@@ -17,8 +17,8 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/internal/run"
-	"github.com/Glacius-Labs/Markitect/internal/tooling/guardedwrite"
 )
 
 type blockedGit struct {

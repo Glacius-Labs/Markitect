@@ -9,8 +9,8 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/internal/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
-	"github.com/Glacius-Labs/Markitect/internal/tooling/guardedwrite"
 )
 
 func TestMain(m *testing.M) { testkit.Main(m) }

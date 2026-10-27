@@ -1,7 +1,8 @@
 // Package guardedwrite applies selected working-tree changes only while the
 // repository, branch, HEAD and captured file bytes are unchanged. It also owns
-// the anchored write root those checks build on; the remaining legacy writers
-// in the host root package use that root until they are removed.
+// the anchored write root those checks build on, and the Git identity, Git
+// output and repository-path rules that guarded writes and source snapshots
+// share.
 package guardedwrite
 
 import (
@@ -18,8 +19,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-
-	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
 // File is the exact working-tree state captured for one selected
@@ -36,7 +35,7 @@ type File struct {
 // rejects changes to the capture after CaptureFiles returns.
 type Capture struct {
 	Root     string
-	Identity source.GitIdentity
+	Identity GitIdentity
 	// Head is a full commit ID, or `unborn:<symbolic-ref>` for a new named
 	// branch with no commit yet. A later first commit invalidates that capture.
 	Head   string
@@ -369,7 +368,7 @@ func normalizeGuardedPaths(input []string) ([]string, error) {
 		}
 		seen[name] = struct{}{}
 	}
-	if err := source.ValidateIncludedPaths(paths); err != nil {
+	if err := ValidateIncludedPaths(paths); err != nil {
 		return nil, fmt.Errorf("selected paths are unsafe or have portable aliases: %w", err)
 	}
 	sort.Strings(paths)
@@ -404,36 +403,36 @@ func normalizeGuardedChanges(changes []Change, selected map[string]File) ([]Chan
 		}
 		change.Bytes = append([]byte(nil), change.Bytes...)
 	}
-	if err := source.ValidateIncludedPaths(paths); err != nil {
+	if err := ValidateIncludedPaths(paths); err != nil {
 		return nil, fmt.Errorf("guarded changes have unsafe or portable path aliases: %w", err)
 	}
 	sort.Slice(result, func(i, j int) bool { return result[i].Path < result[j].Path })
 	return result, nil
 }
 
-func guardedGitState(ctx context.Context, root string) (source.GitIdentity, string, string, error) {
-	identity, err := source.IdentifyGitContext(ctx, root)
+func guardedGitState(ctx context.Context, root string) (GitIdentity, string, string, error) {
+	identity, err := IdentifyGitContext(ctx, root)
 	if err != nil {
-		return source.GitIdentity{}, "", "", fmt.Errorf("identify guarded write repository: %w", err)
+		return GitIdentity{}, "", "", fmt.Errorf("identify guarded write repository: %w", err)
 	}
 	branch, err := branchName(ctx, root)
 	if err != nil {
-		return source.GitIdentity{}, "", "", err
+		return GitIdentity{}, "", "", err
 	}
-	head, err := source.GitOutputContext(ctx, root, "rev-parse", "--verify", "HEAD^{commit}")
+	head, err := GitOutputContext(ctx, root, "rev-parse", "--verify", "HEAD^{commit}")
 	if err != nil {
-		headRef, refErr := source.GitOutputContext(ctx, root, "symbolic-ref", "--quiet", "HEAD")
+		headRef, refErr := GitOutputContext(ctx, root, "symbolic-ref", "--quiet", "HEAD")
 		if refErr != nil {
-			return source.GitIdentity{}, "", "", fmt.Errorf("read guarded write HEAD: %w", err)
+			return GitIdentity{}, "", "", fmt.Errorf("read guarded write HEAD: %w", err)
 		}
 		ref := strings.TrimSpace(string(headRef))
 		if ref != "refs/heads/"+branch {
-			return source.GitIdentity{}, "", "", fmt.Errorf("unborn guarded write HEAD %q does not match named branch %q", ref, branch)
+			return GitIdentity{}, "", "", fmt.Errorf("unborn guarded write HEAD %q does not match named branch %q", ref, branch)
 		}
-		if _, branchRefErr := source.GitOutputContext(ctx, root, "show-ref", "--verify", "--quiet", ref); branchRefErr == nil {
-			return source.GitIdentity{}, "", "", fmt.Errorf("named branch ref %s exists but guarded HEAD does not resolve to a commit: %w", ref, err)
+		if _, branchRefErr := GitOutputContext(ctx, root, "show-ref", "--verify", "--quiet", ref); branchRefErr == nil {
+			return GitIdentity{}, "", "", fmt.Errorf("named branch ref %s exists but guarded HEAD does not resolve to a commit: %w", ref, err)
 		} else if !gitExitedWithCode(branchRefErr, 1) {
-			return source.GitIdentity{}, "", "", fmt.Errorf("verify guarded unborn branch ref %s: %w", ref, branchRefErr)
+			return GitIdentity{}, "", "", fmt.Errorf("verify guarded unborn branch ref %s: %w", ref, branchRefErr)
 		}
 		return identity, branch, "unborn:" + ref, nil
 	}
@@ -445,7 +444,7 @@ func gitExitedWithCode(err error, code int) bool {
 	return errors.As(err, &exit) && exit.ExitCode() == code
 }
 
-func ensureGuardedGitState(ctx context.Context, root string, expectedIdentity source.GitIdentity, expectedBranch, expectedHead string) error {
+func ensureGuardedGitState(ctx context.Context, root string, expectedIdentity GitIdentity, expectedBranch, expectedHead string) error {
 	identity, branch, head, err := guardedGitState(ctx, root)
 	if err != nil {
 		return err
@@ -527,7 +526,7 @@ func cloneGuardedWriteFiles(files map[string]File) map[string]File {
 func guardedCaptureSeal(capture *Capture) (string, error) {
 	data, err := json.Marshal(struct {
 		Root          string
-		Identity      source.GitIdentity
+		Identity      GitIdentity
 		Head          string
 		Branch        string
 		Files         map[string]File
