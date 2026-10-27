@@ -101,7 +101,7 @@ Grouped by what they may change (rule 3). "Mandates" says whether the existing t
 | **Impact check** | Nothing | For a proposed model change: which areas, artifacts and obligations it affects, and why, before Apply. | Probably a new read-only mandate | [DEC-018](../concepts/register.md#dec-018-the-knowledge-graph-explains-impact), [DEC-023](../concepts/register.md#dec-023-impact-marks-change-and-context-without-dropping-either), OQ-009 |
 | **Explain** | Nothing | Answer a question about the project ("where and why does X happen?") from the Managers that own it. | New read-only mandate | Lane brief |
 | **Operational check / doctor** | Nothing | Managers judge logs or runtime output of a running system against the model. | New read-only mandate | [IDEA-017](../concepts/register.md#idea-017-operational-check-through-the-managers) |
-| **Refactor** | Artifacts | Restructure artifacts without changing behavior. | Implement + Verify, with a task input | DEC-044 |
+| **Refactor** | Artifacts | Restructure artifacts without changing behavior. | Implement + Verify, with a task input (question 2) | DEC-044 |
 | **Cleanup / bug hunt** | Artifacts | Find and remove dead code, or find and fix defects against unchanged intent. | Verify finds, Implement fixes | DEC-044 |
 | **Custom command** | Artifacts or nothing | A project-defined operation over the Manager tree. | Open | DEC-044; [§2.4](../concepts/v1-concept.md#24-later) (user-defined workflows later, no DSL in V1) |
 | **Data migration** | Artifacts | Migrate existing runtime data after a model change. | Open | [§26.2](../concepts/v1-concept.md#262-change-from-five-to-three-loans) calls it a separate requirement |
@@ -137,7 +137,12 @@ From Traycer's [software factory guide](https://traycer.ai/software-factory):
 ## Open questions for the owner
 
 1. **Command or mandate.** DEC-044 already accepts Verify, Cleanup, Bughunt, Refactor and Custom Commands as commands over the tree. Should they reuse Assessment, Implement and Verify where they can, and add a mandate only when none fits (D16)?
-2. **Task input.** Today a command's only intent is the model plus bound Findings. Refactor, cleanup, explain and impact need a user's task or question as input. Is an ad-hoc task an allowed command input, or must every binding intent first go into the model (§3.5, [DEC-033](../concepts/register.md#dec-033-binding-intent-lives-only-in-the-model))?
+2. **Task input. Answered by the owner, 27 October 2026** (accepting the lane's recommendation in the lane chat): a command may take a task or question from the user, but the task never adds a binding obligation. The test is [DEC-033](../concepts/register.md#dec-033-binding-intent-lives-only-in-the-model)'s: if violating something makes an artifact wrong, it is model content.
+   - Read-only commands (explain, impact check, Verify only) may take a free question; they change nothing.
+   - Model-changing commands (Optimize, model migration) turn the task into a model proposal that the owner adopts.
+   - Artifact-changing commands (refactor, cleanup) may take a task only for choices the model leaves free. A task that would make a result wrong when violated goes into the model first, then through Apply.
+   - The task is a goal for Implement, not a rule for Verify: Verify still judges against the model and the diff against the bound input. Whether a refactor met its task is a matter for the Managers' review. A later Apply keeps the result, since conforming artifacts are preserved (§3.5).
+   - A bug hunt needs no task: a bug is a model violation, so Verify finds it and Implement fixes it.
 3. **Output of read-only commands.** A report only, or also Shared Notes, or bound Findings that a later Apply can take over?
 4. **Questions in model-changing commands.** Extract kept owner questions (DEC-063); Runs are otherwise closed (rule 4, kept by DEC-078). Does Extract end with open questions in its proposal instead of asking mid-run?
 5. **Adoption of other model proposals.** The owner adopts an Extract proposal. Is that the same for Optimize and model migration, and does DEC-078's "no owner review" stay limited to artifacts?
@@ -149,3 +154,4 @@ From Traycer's [software factory guide](https://traycer.ai/software-factory):
 ## Log
 
 - 27 October 2026: page created from concept 1.0, the register and the architecture; independent review applied; outside input from two article analyses added. No code.
+- 27 October 2026: owner answered question 2 (task input).
