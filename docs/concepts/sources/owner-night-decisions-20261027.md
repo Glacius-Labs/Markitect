@@ -34,7 +34,7 @@ Context (summary by the recorder): the coordinator answered that the Claude adap
 
 ## 5. Delegation while the owner is away
 
-> The modeling skill for agents is the last item of the order you set, and it hasn't been started => This we can start in parallel i think. I trust your judgement. Also im going idle now, so dont ask for approval and just bring the project on and auto accept your recommendations. Later we will discuss how it went and what you decided. Id like to see results
+> The modeling skill for agents is the last item of the order you set, and it hasn’t been started => This we can start in parallel i think. I trust your judgement. Also im going idle now, so dont ask for approval and just bring the project on and auto accept your recommendations. Later we will discuss how it went and what you decided. Id like to see results
 
 ## Recorded meaning
 
