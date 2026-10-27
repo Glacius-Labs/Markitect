@@ -112,7 +112,7 @@ Each exact credential reference selects a provider, mode and absolute native fil
 
 ### Execute, verify, and apply
 
-The target must be on an isolated non-protected branch, for example `git switch -c dev/realization`, with its tracked baseline committed. Apply checks this existing write policy before opening any Manager resources and again during publication. On Linux, run Apply natively:
+The target's tracked baseline must be committed. Natively, the target must also be on an isolated non-protected branch, for example `git switch -c dev/realization`; Apply checks this existing write policy before opening any Manager resources and again during publication. The runner accepts any named branch, because it publishes into its own clone ([checkout form](#apply-in-the-linux-runner)). On Linux, run Apply natively:
 
 ```sh
 "ABSOLUTE_MARKITECT_BINARY" apply --repo "REPOSITORY" --runtime-profile "ABSOLUTE_RUNTIME_YAML" --run-config "ABSOLUTE_RUN_JSON"
@@ -130,7 +130,7 @@ The [Run](../../internal/run/README.md) gives every Manager its own fresh enviro
 
 ### Apply in the Linux runner
 
-`--runner RUNNER_IMAGE_ID` runs the same Apply in the [Linux runner image](../design/linux-runner.md), started through the run configuration's engine. On Windows this is the only form of Apply, started through Docker Desktop; on Linux it is optional. Apply inside the runner is the unchanged product: the same preflight, Runs, Verify approval and guarded publication, here into the runner's own clone.
+`--runner RUNNER_IMAGE_ID` runs the same Apply in the [Linux runner image](../design/linux-runner.md), started through the run configuration's engine. On Windows this is the only form of Apply, started through Docker Desktop; on Linux it is optional. Apply inside the runner is the unchanged product: the same preflight, Runs, Verify approval and guarded publication, here into the runner's own clone. The [runner design](../design/linux-runner.md) owns the rationale and the exact mechanics; this section is how to use it.
 
 Build the image from the repository root at the source to run, then read its ID and its build:
 
@@ -154,7 +154,7 @@ docker run --rm --entrypoint cat RUNNER_IMAGE_ID /opt/markitect/runner.env
 - **Existing branch.** A result branch name that already exists is refused, before the launch and again at the import.
 - **Paths.** On Windows, drive paths such as `C:\Users\me\repo` are passed in Docker Desktop's `C:/Users/me/repo` form; UNC, device, WSL (`\\wsl$\...`), drive-relative and relative paths are refused, as is any path that would change the meaning of the `--mount` value. A checkout inside a WSL distribution is launched from WSL.
 
-**Result branch.** Only when Apply passed with a read-back publication does the runner commit exactly the published paths, as `Markitect Runner <runner@markitect.invalid>` on top of the observed base, and hand them back as a Git bundle. The launcher verifies the bundle, checks that the commit has the single parent base and changes exactly the published paths, and creates the branch `markitect/apply-<apply id>`, or the name given with `--result-branch`. The checkout's working tree, index and current branch stay unchanged. Review and merge the branch like any other: Apply still creates no owner commit, and the runner's commit exists only on the new branch. A no-change publication returns no branch. A failed import names the bundle, which stays in the launch directory.
+**Result branch.** Only when Apply passed with a read-back publication does the runner commit exactly the published paths, as `Markitect Runner <runner@markitect.invalid>` on top of the observed base, and hand them back as a Git bundle. The launcher verifies the bundle, checks that the commit has the single parent base and changes exactly the published paths, and creates the branch `markitect/apply-<apply id>`, or the name given with `--result-branch` (accepted only with `--runner`). The checkout's working tree, index and current branch stay unchanged. Review and merge the branch like any other: Apply still creates no owner commit, and the runner's commit exists only on the new branch. A no-change publication returns no branch. A failed import names the bundle, which stays in the launch directory.
 
 **Stopping.** The launch is bounded by the run configuration's deadline plus ten minutes for clone, hand-back and stop. Ctrl+C asks the engine to stop the runner container with a four-minute grace period, so Apply closes its containers and keeps its evidence; a stop that arrives after a verified hand-back does not cancel the short import. A host process that dies without cancelling leaves the runner running until Apply's own deadline, with the state lock held: find it with `docker ps --filter label=markitect.runner` and stop it with `docker stop --time 240 markitect-runner-<launch>`. `docker rm --force markitect-runner-<launch>` is the last resort, after which Apply's sibling containers (label `markitect.store`) can remain.
 
@@ -162,7 +162,7 @@ docker run --rm --entrypoint cat RUNNER_IMAGE_ID /opt/markitect/runner.env
 
 ## State and evidence
 
-Preparation and generated-document operations create no Run, candidate or evidence. The CLI names the project state directory and the immutable Apply report, whose `evidencePath` is `<state>/<repositoryIdentity>/applies/<apply id>.json`. Beside it, Run records live under `runs/`, candidates under `candidates/`, Notes under `notes/`, native transcripts under `transcripts/<apply id>/` and host-Git scratch under `temporary/`; one `apply.lock` per state directory serializes Applies. The retained Apply report and printed JSON use the same final status/outcome projection.
+Preparation and generated-document operations create no Run, candidate or evidence. The CLI names the project state directory and the immutable Apply report, whose `evidencePath` is `<state>/<repositoryIdentity>/applies/<apply id>.json`. Beside it, Run records live under `runs/`, the index of completed Verify approvals under `approvals/`, candidates under `candidates/`, Notes under `notes/`, native transcripts under `transcripts/<apply id>/` and host-Git scratch under `temporary/`; one `apply.lock` per state directory serializes Applies. The retained Apply report and printed JSON use the same final status/outcome projection.
 
 Each Run persists the exact input reference, Project binding, technical and semantic outcomes, required findings, handoffs, actual check receipts and closure observations, plus concrete native identity observations when available. Temporary Manager and Git environments close before a Run returns; candidates, terminal records and Notes stay in the state root and can be reopened independently by new adapter instances ([Run](../../internal/run/README.md), [workspace service](../../internal/adapters/gitrepo/README.md#run-git-workspace-service)). Candidates are independently verified self-contained bundles; external captured inputs remain in that same candidate directory. Shared Notes retain their Run/Manager/context and survive concurrent appends.
 

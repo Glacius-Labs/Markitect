@@ -157,7 +157,7 @@ These commands inspect the canonical model under the project's `.markitect/`; th
 
 ### Running Apply (advanced, experimental)
 
-The current source includes `apply`, but it is **not** a one-command install or an automatic brownfield migration. It requires a reviewed and committed project model, explicit registry/ownership declarations, a clean target on an isolated non-protected Git branch, a pinned Linux container/runtime setup, normal Codex account credentials, and finite invocation limits.
+The current source includes `apply`, but it is **not** a one-command install or an automatic brownfield migration. It requires a reviewed and committed project model, explicit registry/ownership declarations, a clean, committed target (for a native Apply on an isolated non-protected Git branch), a pinned Linux container/runtime setup, normal Codex account credentials, and finite invocation limits.
 
 Start from [the runtime profile example](examples/runtime-profile.example.yaml) and [invocation example](examples/run.example.json). Copy them **outside** the repository and replace all placeholders, using actual runtime/image/build identities. Then invoke:
 
