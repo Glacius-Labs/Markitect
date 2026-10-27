@@ -4,7 +4,7 @@ The Makerspace W0 program remodeled with the standard Libraries and an owner-dec
 
 **Role.** Pilot-only material: Stage 1 (pilot) of the evaluation and the development and calibration of its instruments. It is not portfolio material; confirmatory portfolio models come from an independent model author. The frozen [phase-b/](../phase-b) and [phase-c/](../phase-c) material stays untouched.
 
-**Source.** The neutral requirements [phase-c/requirements/w0.md](../phase-c/requirements/w0.md) as of the Phase C materials freeze `4840fb20f52c1e0e0367e909d833919ca8a215c6`, plus the architecture the owner approved on 27 October 2026. Change steps are not remodeled yet; the pilot needs C1 (cross-cutting), C7 (architecture change) and C9 (no change) in a later slice.
+**Source.** The neutral requirements [phase-c/requirements/w0.md](../phase-c/requirements/w0.md) as of the Phase C materials freeze `4840fb20f52c1e0e0367e909d833919ca8a215c6`, plus the architecture the owner approved on 27 October 2026, and the change steps [phase-c/requirements/c1.md](../phase-c/requirements/c1.md) to c9.md applied in order, as the Evaluation session chose, so that the old-versus-new Apply comparison runs on the same neutral deltas as Phase C. That comparison is pilot or uncounted material and runs under its own bounded dispatch.
 
 ## Contents
 
@@ -15,10 +15,11 @@ The Makerspace W0 program remodeled with the standard Libraries and an owner-dec
 | `check.py` | Compiles the model with the real `markitect check` and verifies the lock and that each vendored Library equals its source |
 | `spec/render.py`, `spec/requirements-w0.md` | The single-agent arm's document, rendered from the model: every body (body links reduced to their text, two phrases about "the model" reworded), every typed field and each rule's scope as fixed sentences and tables. `check` re-renders and compares |
 | `requirements/w0.md` | The equivalence partner: the neutral requirements with section 16 "Architecture", rendered from the model, and §2.1 pointing to it |
+| `c1/model/` … `c9/model/`, `spec/requirements-c1.md` … `-c9.md`, `requirements/c1.md` … `c9.md` | The change steps: one complete model snapshot per step (each includes all earlier changes; they share the manifest, lock and execution configuration), its rendered single-agent document, and the neutral delta, which is phase-c's text plus the section 16 lines the step changes. C9 is byte-identical to C8 |
 
 ```text
-python -I -B tools/comparison/makerspace-v2/check.py check
-python -I -B tools/comparison/makerspace-v2/spec/render.py check
+python -I -B tools/comparison/makerspace-v2/check.py check [STEP]
+python -I -B tools/comparison/makerspace-v2/spec/render.py check [--step STEP]
 ```
 
 ## Architecture
@@ -32,7 +33,7 @@ The language does not allow Definitions directly in the model root, so the owner
 | `equipment` | Families, machines, maintenance | policies |
 | `billing` | Charges, invoices, payments, credit, accounts | members, policies |
 | `training` | Courses, enrollments, certifications | members, equipment, billing, policies |
-| `bookings` | Reservations, check-in, metering, schedules | members, training, equipment, billing, policies |
+| `bookings` | Reservations, check-in, metering, schedules; lockouts from C2 | members, training, equipment, billing, policies; safety from C2 |
 | `materials` | Stock and purchases | members, billing, policies |
 | `safety` | Incidents | equipment, policies |
 | `reporting` | Utilization and revenue reports | equipment, bookings, billing, policies |
@@ -58,6 +59,8 @@ Architecture rules for structural checks (oracle authors derive their checks fro
 | S1 size | Prose words per body, table and code lines excluded: none over 300; 11 above 150, each one topic carried over whole from the requirements (overview, time, computed times, integer limits, argument values, order of checks, invoice generation, invalid requests, utilization report, money, request limits) |
 | R3 restatement | The requirements' "cross-area rules at a glance" were dropped from the overview: they restate the reservation and invoice rules |
 | G5 | Root still receives no context; the project Package `makerspace` sees its own rules |
+| S4 change locality | Modules whose Definitions a step changes: C1 4, C2 7, C3 1, C4 6, C5 5, C6 4, C7 3, C8 3, C9 0. C1, C2, C4, C5, C6 and C8 touch policies and count as cross-cutting. C7 is description only, yet touches 3 modules because renamed billing rules change the links that point to them. Phase C's old model: 2, 7, 1, 4, 6, 3, 8, 3 |
+| Change steps | Every step compiles, keeps its dependency rules and passes the renderer's checks |
 
 ## Equivalence record
 
@@ -65,6 +68,7 @@ Architecture rules for structural checks (oracle authors derive their checks fro
 - **Who chose the module cut.** The model-track session proposed the cut (ten flat modules, `policies` as the shared kernel, `protocol` as the outer layer) and the owner approved it. For the portfolio, whether a good engineer would choose this cut independent of Markitect is the neutrality question of §4.1a and must be answered by someone outside the Markitect side.
 - **Accepted difference.** The model drops w0 §1's "cross-area rules at a glance" (R3: it restates the reservation and invoice rules); the neutral copy keeps it. Neither arm loses information.
 - **Arm-equal wording.** `spec/render.py check` refuses Markitect vocabulary (Package, Definition, Kind, Library aliases, Manager, "model", body-link brackets) in the single-agent document and in §16.
+- **Change deltas carry section 16 lines.** `requirements/c2.md`, `c5.md` and `c6.md` add the architecture lines those steps change (C2: the bookings dependency on safety and the bookings and billing interfaces; C5: the billing interface; C6: the training interface), rendered from the model like §16 itself: pilot only. The owner decided on 27 October 2026 that C2's lockouts live in bookings.
 - **To watch in the pilot.** The `policies` Manager's context of 187 items may drive cost or failures on the Markitect side.
 
 ## Findings for the Libraries
