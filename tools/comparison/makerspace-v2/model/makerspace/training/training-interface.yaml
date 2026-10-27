@@ -3,7 +3,7 @@ imports:
 id: training-interface
 kind: Architecture.Interface
 body: |-
-  What other Packages may use of training: its operations, the course, enrollment and certification records, and the refusal `not_certified`. Other Packages also ask whether a member holds a certification for a family that is valid on a date.
+  What other modules may use of training: its operations, the course, enrollment and certification records, and the refusal `not_certified`. Other modules also ask whether a member holds a certification for a family that is valid on a date.
 spec:
   appliesTo: [makerspace]
   operations: [add-course, enroll-in-course, complete-course, revoke-certification, list-certifications]

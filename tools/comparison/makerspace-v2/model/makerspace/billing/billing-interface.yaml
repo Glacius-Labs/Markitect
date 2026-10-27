@@ -4,7 +4,7 @@ imports:
 id: billing-interface
 kind: Architecture.Interface
 body: |-
-  What other Packages may use of billing: its operations and the charge, invoice, payment and account records. Other Packages create a charge for a member through billing; billing computes its amount by [[Policies.money|money]].
+  What other modules may use of billing: its operations and the charge, invoice, payment and account records. Other modules create a charge for a member through billing; billing computes its amount by [[Policies.money|money]].
 spec:
   appliesTo: [makerspace]
   operations: [generate-invoices, list-invoices, record-payment, issue-credit, get-account]

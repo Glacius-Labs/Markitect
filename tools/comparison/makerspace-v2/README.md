@@ -59,6 +59,14 @@ Architecture rules for structural checks (oracle authors derive their checks fro
 | R3 restatement | The requirements' "cross-area rules at a glance" were dropped from the overview: they restate the reservation and invoice rules |
 | G5 | Root still receives no context; the project Package `makerspace` sees its own rules |
 
+## Equivalence record
+
+- **Section 16 is derived from the model.** `requirements/w0.md` §16 is rendered from the model's architecture, so the equivalence check on the architecture compares the model with itself. That is acceptable for pilot material only; for portfolio material, v0.3 §4.1a requires the reverse order: the requirements author writes the architecture section first, the neutrality review approves the module cut, and the model author derives the model from it.
+- **Who chose the module cut.** The model-track session proposed the cut (ten flat modules, `policies` as the shared kernel, `protocol` as the outer layer) and the owner approved it. For the portfolio, whether a good engineer would choose this cut independent of Markitect is the neutrality question of §4.1a and must be answered by someone outside the Markitect side.
+- **Accepted difference.** The model drops w0 §1's "cross-area rules at a glance" (R3: it restates the reservation and invoice rules); the neutral copy keeps it. Neither arm loses information.
+- **Arm-equal wording.** `spec/render.py check` refuses Markitect vocabulary (Package, Definition, Kind, Library aliases, Manager, "model", body-link brackets) in the single-agent document and in §16.
+- **To watch in the pilot.** The `policies` Manager's context of 187 items may drive cost or failures on the Markitect side.
+
 ## Findings for the Libraries
 
 - **Internal capabilities have no Kind.** Areas use each other through capabilities that are not wire operations ("is this certification valid on date D?"). `Architecture.Interface` lists only `Api.Operation`s and types, so these live in Interface bodies as prose.

@@ -6,7 +6,7 @@ itself. Typed `spec` fields are written as fixed sentences and tables, so the
 document carries exactly what the model states: operations with arguments,
 refusals, results, permissions and audit targets; records with their fields;
 value types with their formats and ranges; refusal codes; and the
-architecture (Packages, dependency rules, placements, interfaces).
+architecture (modules, dependency rules, placements, interfaces).
 
 `architecture` prints only the architecture section, which the neutral
 requirements copy (../requirements/w0.md) carries verbatim.
@@ -27,6 +27,8 @@ MODEL = HERE.parent / "model"
 DOC = HERE / "requirements-w0.md"
 LINK = re.compile(r"\[\[([^\]|]+)(?:\|([^\]]+))?\]\]")
 SUBSTITUTIONS = [("this model", "this document"), ("of the model", "of this document")]
+# Words that would tell the single-agent arm about Markitect (arm-equal wording).
+FORBIDDEN = re.compile(r"Package|Definition|\bKinds?\b|\b(?:Core|Values|Data|Api|Practice|Architecture)\.|\[\[|\bmodel\b|Manager")
 AREAS = ["members", "training", "equipment", "bookings", "materials", "billing", "safety", "reporting"]
 TITLES = {"members": "Members", "training": "Training", "equipment": "Equipment", "bookings": "Bookings",
           "materials": "Materials", "billing": "Billing", "safety": "Safety", "reporting": "Reporting"}
@@ -280,14 +282,14 @@ def render_architecture(model):
            f"The program is written in {project['language']}; the module root is `{project['moduleRoot']}`. "
            f"`{project['buildCommand']}` builds it and `{project['testCommand']}` runs its tests. "
            "No dependency beyond the language's standard library is permitted.", "",
-           "Each Package below is one Go package under the module root, named after it.", ""]
+           "Each module below is one Go package under the module root, named after it.", ""]
     rules = sorted((d for d in package(model, "") if kind_of(d) == "DependencyRule"), key=lambda d: d["id"])
-    out += ["| Package | May depend on | Rule |", "| --- | --- | --- |"]
+    out += ["| Module | May depend on | Rule |", "| --- | --- | --- |"]
     for d in rules:
         pkg = d["spec"]["appliesTo"][0].split("/")[-1]
         may = ", ".join(p.split("/")[-1] for p in d["spec"]["mayDependOn"]) or "nothing"
         out.append(f"| `{pkg}` | {may} | {text(d['body'])} |")
-    out += ["", "A dependency is any use of another Package's records, rules or operations, in the documentation and in the code. "
+    out += ["", "A dependency is any use of another module's records, rules or operations, in the documentation and in the code. "
             "The standard library is not counted.", ""]
     for d in sorted((d for d in package(model, "") if kind_of(d) == "Placement"), key=lambda d: d["id"]):
         concern = model[resolve(model, d, d["spec"]["concern"])]["id"]
@@ -342,6 +344,10 @@ def check(model, doc):
     section = "\n".join(render_architecture(model)).replace("## Architecture", "## 16 Architecture", 1).rstrip("\n") + "\n"
     if not neutral.endswith("\n\n" + section):
         return "requirements/w0.md does not end with the model's architecture section"
+    for name, content in (("the document", doc), ("requirements/w0.md section 16", section)):
+        leaked = sorted({m.group(0) for m in FORBIDDEN.finditer(content)})
+        if leaked:
+            return f"{name} uses Markitect vocabulary: {', '.join(leaked)}"
     return None
 
 

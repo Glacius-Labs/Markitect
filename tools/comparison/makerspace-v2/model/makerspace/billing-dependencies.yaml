@@ -3,7 +3,7 @@ imports:
 id: billing-dependencies
 kind: Architecture.DependencyRule
 body: |-
-  The billing Package depends only on members, policies.
+  The billing module depends only on members, policies.
 spec:
   appliesTo: [makerspace/billing]
   mayDependOn: [makerspace/members, makerspace/policies]

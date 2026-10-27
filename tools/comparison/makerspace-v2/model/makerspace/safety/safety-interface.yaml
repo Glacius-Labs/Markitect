@@ -3,7 +3,7 @@ imports:
 id: safety-interface
 kind: Architecture.Interface
 body: |-
-  What other Packages may use of safety: its operations and the incident record.
+  What other modules may use of safety: its operations and the incident record.
 spec:
   appliesTo: [makerspace]
   operations: [report-incident, resolve-incident, list-incidents]

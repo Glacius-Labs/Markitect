@@ -3,7 +3,7 @@ imports:
 id: materials-dependencies
 kind: Architecture.DependencyRule
 body: |-
-  The materials Package depends only on members, billing, policies.
+  The materials module depends only on members, billing, policies.
 spec:
   appliesTo: [makerspace/materials]
   mayDependOn: [makerspace/members, makerspace/billing, makerspace/policies]

@@ -3,7 +3,7 @@ imports:
 id: reporting-dependencies
 kind: Architecture.DependencyRule
 body: |-
-  The reporting Package depends only on equipment, bookings, billing, policies.
+  The reporting module depends only on equipment, bookings, billing, policies.
 spec:
   appliesTo: [makerspace/reporting]
   mayDependOn: [makerspace/equipment, makerspace/bookings, makerspace/billing, makerspace/policies]

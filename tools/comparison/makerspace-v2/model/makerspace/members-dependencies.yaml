@@ -3,7 +3,7 @@ imports:
 id: members-dependencies
 kind: Architecture.DependencyRule
 body: |-
-  The members Package depends only on policies.
+  The members module depends only on policies.
 spec:
   appliesTo: [makerspace/members]
   mayDependOn: [makerspace/policies]

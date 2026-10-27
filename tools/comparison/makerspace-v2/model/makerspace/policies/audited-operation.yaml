@@ -4,7 +4,7 @@ imports:
 id: AuditedOperation
 kind: Core.Kind
 body: |-
-  An operation that changes state and therefore names the target of its audit entry. It is an Api.Operation with one more field.
+  An operation that changes state and therefore names the target of its audit entry.
 spec:
   implements: [Api.Operation]
   properties: [Api.wireName, Api.mutation, Api.arguments, Api.refusals, Api.results, Api.permissions, auditTarget]

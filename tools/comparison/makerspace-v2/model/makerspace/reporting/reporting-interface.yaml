@@ -3,7 +3,7 @@ imports:
 id: reporting-interface
 kind: Architecture.Interface
 body: |-
-  What other Packages may use of reporting: its operations and its report rows.
+  What other modules may use of reporting: its operations and its report rows.
 spec:
   appliesTo: [makerspace]
   operations: [utilization-report, revenue-report]

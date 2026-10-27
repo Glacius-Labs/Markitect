@@ -3,7 +3,7 @@ imports:
 id: policies-dependencies
 kind: Architecture.DependencyRule
 body: |-
-  The policies Package depends on no other Package of the project; every other Package may depend on it.
+  The policies module depends on no other module of the project; every other module may depend on it.
 spec:
   appliesTo: [makerspace/policies]
   mayDependOn: []

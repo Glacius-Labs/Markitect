@@ -19,41 +19,41 @@ Four policies apply to every operation: authorization, audit, money and time.
 
 Out of scope: persistence across runs, network access, user interfaces, concurrency, real payments or refunds, notifications, scheduled jobs, deletion of records and integration with other systems.
 
-The Go module lives at `realization/go.mod`; the program's main package lives at `realization/cmd/makerspace`. Only the Go standard library is used. Each Package of this document is one Go package under `realization/`, named after the Package, for example `realization/billing`; `realization/protocol` and `realization/cmd/makerspace` belong to the protocol Package.
+The Go module lives at `realization/go.mod`; the program's main package lives at `realization/cmd/makerspace`. Only the Go standard library is used. The program is divided into the modules of its architecture; each module is one Go package under `realization/`, named after the module, for example `realization/billing`; `realization/protocol` and `realization/cmd/makerspace` belong to the protocol module.
 
 ## Architecture
 
 The program is written in Go; the module root is `realization`. `go build ./cmd/makerspace` builds it and `go test ./...` runs its tests. No dependency beyond the language's standard library is permitted.
 
-Each Package below is one Go package under the module root, named after it.
+Each module below is one Go package under the module root, named after it.
 
-| Package | May depend on | Rule |
+| Module | May depend on | Rule |
 | --- | --- | --- |
-| `billing` | members, policies | The billing Package depends only on members, policies. |
-| `bookings` | members, training, equipment, billing, policies | The bookings Package depends only on members, training, equipment, billing, policies. |
-| `equipment` | policies | The equipment Package depends only on policies. Where maintenance must know about reservations, equipment declares what it needs and the protocol Package supplies it from bookings, so equipment never depends on bookings. |
-| `materials` | members, billing, policies | The materials Package depends only on members, billing, policies. |
-| `members` | policies | The members Package depends only on policies. |
-| `policies` | nothing | The policies Package depends on no other Package of the project; every other Package may depend on it. |
-| `protocol` | policies, members, equipment, billing, training, bookings, materials, safety, reporting | The protocol Package is the outer layer: it reads requests, runs the checks every operation shares and calls the area Packages. It may depend on every other Package; no Package depends on it. |
-| `reporting` | equipment, bookings, billing, policies | The reporting Package depends only on equipment, bookings, billing, policies. |
-| `safety` | equipment, policies | The safety Package depends only on equipment, policies. |
-| `training` | members, equipment, billing, policies | The training Package depends only on members, equipment, billing, policies. |
+| `billing` | members, policies | The billing module depends only on members, policies. |
+| `bookings` | members, training, equipment, billing, policies | The bookings module depends only on members, training, equipment, billing, policies. |
+| `equipment` | policies | The equipment module depends only on policies. Where maintenance must know about reservations, equipment declares what it needs and the protocol module supplies it from bookings, so equipment never depends on bookings. |
+| `materials` | members, billing, policies | The materials module depends only on members, billing, policies. |
+| `members` | policies | The members module depends only on policies. |
+| `policies` | nothing | The policies module depends on no other module of the project; every other module may depend on it. |
+| `protocol` | policies, members, equipment, billing, training, bookings, materials, safety, reporting | The protocol module is the outer layer: it reads requests, runs the checks every operation shares and calls the area modules. It may depend on every other module; no module depends on it. |
+| `reporting` | equipment, bookings, billing, policies | The reporting module depends only on equipment, bookings, billing, policies. |
+| `safety` | equipment, policies | The safety module depends only on equipment, policies. |
+| `training` | members, equipment, billing, policies | The training module depends only on members, equipment, billing, policies. |
 
-A dependency is any use of another Package's records, rules or operations, in the documentation and in the code. The standard library is not counted.
+A dependency is any use of another module's records, rules or operations, in the documentation and in the code. The standard library is not counted.
 
-- **Audit** is realized in `protocol`: The protocol Package appends the audit entry after a mutation is answered `ok`, using the operation's audit target; area Packages do not write audit entries.
-- **Authorization** is realized in `protocol`: Checks 2, 4 and 6 of the order of checks run once, in the protocol Package, before any operation's own rules; area Packages do not check roles or ownership themselves.
-- **Time** is realized in `protocol`: The protocol Package keeps the request-time order (check 3) and passes the request time to the area Packages as their only notion of now.
+- **Audit** is realized in `protocol`: The protocol module appends the audit entry after a mutation is answered `ok`, using the operation's audit target; area modules do not write audit entries.
+- **Authorization** is realized in `protocol`: Checks 2, 4 and 6 of the order of checks run once, in the protocol module, before any operation's own rules; area modules do not check roles or ownership themselves.
+- **Time** is realized in `protocol`: The protocol module keeps the request-time order (check 3) and passes the request time to the area modules as their only notion of now.
 
-- **Members interface:** What other Packages may use of members: its operations, the user and member records, tier and standing, and the refusal `member_suspended`. Other Packages also ask whether a member exists, whether the member is in good standing, and the member's tier with its monthly fee and usage discount. Operations: `registerUser`, `registerMember`, `getMember`, `changeTier`, `setMemberStanding`. Types: user, member, tier, standing.
-- **Training interface:** What other Packages may use of training: its operations, the course, enrollment and certification records, and the refusal `not_certified`. Other Packages also ask whether a member holds a certification for a family that is valid on a date. Operations: `addCourse`, `enrollInCourse`, `completeCourse`, `revokeCertification`, `listCertifications`. Types: course, enrollment, certification.
-- **Equipment interface:** What other Packages may use of equipment: its operations and the family, machine and maintenance window records. Other Packages also ask for a machine's family and current rate and for the scheduled windows of a machine that overlap an interval. Equipment in turn needs to know whether an active reservation of a machine overlaps an interval; it declares that need, and the protocol Package supplies the answer from bookings. Operations: `addFamily`, `addMachine`, `setMachineRate`, `listMachines`, `scheduleMaintenance`, `cancelMaintenance`. Types: family, machine, maintenance window.
-- **Bookings interface:** What other Packages may use of bookings: its operations and the reservation record. Other Packages also ask whether an active reservation of a machine overlaps an interval, and for the completed sessions of a machine. Operations: `createReservation`, `cancelReservation`, `checkIn`, `checkOut`, `listMemberReservations`, `getMachineSchedule`. Types: reservation, opening hours of day.
-- **Materials interface:** What other Packages may use of materials: its operations and the material and purchase records. Operations: `addMaterial`, `restockMaterial`, `purchaseMaterial`, `listMaterials`. Types: material, purchase.
-- **Billing interface:** What other Packages may use of billing: its operations and the charge, invoice, payment and account records. Other Packages create a charge for a member through billing; billing computes its amount by money. Operations: `generateInvoices`, `listInvoices`, `recordPayment`, `issueCredit`, `getAccount`. Types: charge, invoice, payment, account.
-- **Safety interface:** What other Packages may use of safety: its operations and the incident record. Operations: `reportIncident`, `resolveIncident`, `listIncidents`. Types: incident.
-- **Reporting interface:** What other Packages may use of reporting: its operations and its report rows. Operations: `utilizationReport`, `revenueReport`. Types: utilization row, utilization totals.
+- **Members interface:** What other modules may use of members: its operations, the user and member records, tier and standing, and the refusal `member_suspended`. Other modules also ask whether a member exists, whether the member is in good standing, and the member's tier with its monthly fee and usage discount. Operations: `registerUser`, `registerMember`, `getMember`, `changeTier`, `setMemberStanding`. Types: user, member, tier, standing.
+- **Training interface:** What other modules may use of training: its operations, the course, enrollment and certification records, and the refusal `not_certified`. Other modules also ask whether a member holds a certification for a family that is valid on a date. Operations: `addCourse`, `enrollInCourse`, `completeCourse`, `revokeCertification`, `listCertifications`. Types: course, enrollment, certification.
+- **Equipment interface:** What other modules may use of equipment: its operations and the family, machine and maintenance window records. Other modules also ask for a machine's family and current rate and for the scheduled windows of a machine that overlap an interval. Equipment in turn needs to know whether an active reservation of a machine overlaps an interval; it declares that need, and the protocol module supplies the answer from bookings. Operations: `addFamily`, `addMachine`, `setMachineRate`, `listMachines`, `scheduleMaintenance`, `cancelMaintenance`. Types: family, machine, maintenance window.
+- **Bookings interface:** What other modules may use of bookings: its operations and the reservation record. Other modules also ask whether an active reservation of a machine overlaps an interval, and for the completed sessions of a machine. Operations: `createReservation`, `cancelReservation`, `checkIn`, `checkOut`, `listMemberReservations`, `getMachineSchedule`. Types: reservation, opening hours of day.
+- **Materials interface:** What other modules may use of materials: its operations and the material and purchase records. Operations: `addMaterial`, `restockMaterial`, `purchaseMaterial`, `listMaterials`. Types: material, purchase.
+- **Billing interface:** What other modules may use of billing: its operations and the charge, invoice, payment and account records. Other modules create a charge for a member through billing; billing computes its amount by money. Operations: `generateInvoices`, `listInvoices`, `recordPayment`, `issueCredit`, `getAccount`. Types: charge, invoice, payment, account.
+- **Safety interface:** What other modules may use of safety: its operations and the incident record. Operations: `reportIncident`, `resolveIncident`, `listIncidents`. Types: incident.
+- **Reporting interface:** What other modules may use of reporting: its operations and its report rows. Operations: `utilizationReport`, `revenueReport`. Types: utilization row, utilization totals.
 
 ## Program interface
 
@@ -339,7 +339,7 @@ Read. Returns all audit entries in `seq` order.
 
 ### Audited operations
 
-An operation that changes state and therefore names the target of its audit entry. It is an Api.Operation with one more field.
+An operation that changes state and therefore names the target of its audit entry.
 
 The `target` of the operation's audit entry: the name of an argument or of a new identifier whose value is the target; `a/b` joins two values with a slash, for example `laser-101/ada` for course `laser-101` and member `ada`; `month` is the month string, for example `2026-03`.
 

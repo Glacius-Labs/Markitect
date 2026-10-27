@@ -19,7 +19,7 @@ body: |-
 
   Out of scope: persistence across runs, network access, user interfaces, concurrency, real payments or refunds, notifications, scheduled jobs, deletion of records and integration with other systems.
 
-  The Go module lives at `realization/go.mod`; the program's main package lives at `realization/cmd/makerspace`. Only the Go standard library is used. Each Package of this model is one Go package under `realization/`, named after the Package, for example `realization/billing`; `realization/protocol` and `realization/cmd/makerspace` belong to the protocol Package.
+  The Go module lives at `realization/go.mod`; the program's main package lives at `realization/cmd/makerspace`. Only the Go standard library is used. The program is divided into the modules of its architecture; each module is one Go package under `realization/`, named after the module, for example `realization/billing`; `realization/protocol` and `realization/cmd/makerspace` belong to the protocol module.
 spec:
   language: Go
   moduleRoot: realization

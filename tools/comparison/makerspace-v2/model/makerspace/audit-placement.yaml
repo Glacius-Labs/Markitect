@@ -4,7 +4,7 @@ imports:
 id: audit-placement
 kind: Architecture.Placement
 body: |-
-  The protocol Package appends the audit entry after a mutation is answered `ok`, using the operation's audit target; area Packages do not write audit entries.
+  The protocol module appends the audit entry after a mutation is answered `ok`, using the operation's audit target; area modules do not write audit entries.
 spec:
   appliesTo: [makerspace]
   concern: Policies.audit
