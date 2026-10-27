@@ -229,6 +229,13 @@ class LintTests(unittest.TestCase):
         # A field name set in a spec is a named thing, not an undefined term.
         self.assertNotIn("fooBar", {s for sig, _, s in found if sig == "undefined-term"})
 
+    def test_decisions_count_refusals_and_conditions(self):
+        refusals = [{"refusal": ref("a/x"), "when": "w"} for _ in range(9)]
+        op = definition("e/op", "vocab/Rule", "Refused when late, unless urgent.\n| when | table |", {"refusals": refusals})
+        self.assertEqual(ma.decisions(op), 11)  # 9 refusals, `when` and `unless`; the table row does not count
+        found = self.signals(ma.lint(ma.Model(report(CONTENT + [op]))))
+        self.assertIn(("decisions", "warning", "e/op"), found)
+
     def test_prose_words_leave_out_tables_and_code(self):
         body = "Two words.\n\n| a | b |\n| --- | --- |\n| c | d |\n\n```json\n{\"x\": 1}\n```\nThree more words."
         self.assertEqual(ma.prose_words(body), 5)

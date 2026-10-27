@@ -35,6 +35,8 @@ LITERALS = {"true", "false", "null"}
 SCOPE_FIELDS = ("appliesTo", "mayDependOn", "realizedIn")  # Package strings of the Practice and Architecture Libraries
 NAME_KEYS = {"name", "value", "wireName", "code"}  # named things a spec defines without a Definition of their own
 DEPENDENCY_RULE = ("markitect/architecture", "DependencyRule")
+DECISIONS_WARNING, DECISIONS_STRONG = 10, 15  # provisional, like the size thresholds
+CONDITION = re.compile(r"\b(?:when|if|unless|otherwise|except)\b", re.IGNORECASE)
 
 
 class InputError(Exception):
@@ -385,6 +387,14 @@ def prose_words(body):
     return words
 
 
+def decisions(definition):
+    """The model's counterpart of cyclomatic complexity: each typed refusal is one branch, and so is
+    each condition word in the body's prose (`when`, `if`, `unless`, `otherwise`, `except`)."""
+    refusals = (definition.get("spec") or {}).get("refusals") or []
+    prose = " ".join(line for line in (definition.get("body") or "").splitlines() if not line.lstrip().startswith("|"))
+    return len(refusals) + len(CONDITION.findall(prose))
+
+
 def package_strings(spec):
     """{field: [Package path]} of the Package-naming fields a Definition sets (modeled scope and architecture rules)."""
     found = {}
@@ -426,6 +436,11 @@ def lint(model, repo=None, rules=None, term_pattern=TERM_PATTERN):
         words = prose_words(model.definitions[identity].get("body"))
         if words > WORDS_WARNING:
             warn("size", text(identity), f"body has {words} words of prose", "strong" if words > WORDS_STRONG else "warning")
+    for identity in content:
+        count = decisions(model.definitions[identity])
+        if count > DECISIONS_WARNING:
+            warn("decisions", text(identity), f"{count} decisions (refusals and conditions)",
+                 "strong" if count > DECISIONS_STRONG else "warning")
     scoped = {i for i in model.local if package_strings(model.definitions[i].get("spec"))}
     connected = {s for s, t, _, _ in model.edges if s != t} | {t for s, t, _, _ in model.edges if s != t} | scoped
     for identity in content:

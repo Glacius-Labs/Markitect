@@ -49,6 +49,7 @@ Output is UTF-8 whatever the console's code page, because Package names may use 
 | Signal | Warns when |
 |---|---|
 | `size` | a content Definition's body has more than 150 words of prose; more than 300 is `strong`. Markdown table rows and fenced code blocks do not count (quality criteria S1) |
+| `decisions` | a content Definition has more than 10 decisions, the model's counterpart of cyclomatic complexity: each typed refusal is one, and so is each condition word (`when`, `if`, `unless`, `otherwise`, `except`) in its prose; more than 15 is `strong`. Thresholds are provisional; a CRAP-style risk needs tests bound to statements first (register ENH-003) |
 | `isolated` | a content Definition has no edge in or out and names no Package in `appliesTo`, `mayDependOn` or `realizedIn`. A model written with empty `spec` and no links gets this for nearly every Definition |
 | `unknown-package` (strong) | `appliesTo`, `mayDependOn` or `realizedIn` names a Package this model does not have; `.` is the Root. A wrong name in a modeled scope stops context selection for every Manager |
 | `dependency-rule` (strong) | a Package edge between local Packages breaks a `markitect/architecture` DependencyRule of the model: a Package covered by the rule's `appliesTo` (with the Packages below it) depends on a Package outside that subtree and outside `mayDependOn` (with the Packages below them). Edges into Libraries are not counted |
