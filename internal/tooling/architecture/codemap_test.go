@@ -9,16 +9,12 @@ import (
 	"testing"
 )
 
-var updateCodeMap = flag.Bool("update", false, "rewrite "+CodeMapPage+" from "+CodeMapSource)
+var updateCodeMap = flag.Bool("update", false, "rewrite "+CodeMapPage+" from "+RulesSource)
 
 var repositoryRoot = filepath.Join("..", "..", "..")
 
-func TestCodeMapCoversRepository(t *testing.T) {
-	m, err := LoadCodeMap(repositoryRoot)
-	if err != nil {
-		t.Fatal(err)
-	}
-	problems, err := CheckCodeMap(repositoryRoot, m)
+func TestRuleTableCoversRepository(t *testing.T) {
+	problems, err := Table.CheckInventory(repositoryRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -28,11 +24,10 @@ func TestCodeMapCoversRepository(t *testing.T) {
 }
 
 func TestCodeMapPage(t *testing.T) {
-	m, err := LoadCodeMap(repositoryRoot)
+	want, err := Table.RenderCodeMap(repositoryRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := RenderCodeMap(m)
 	page := filepath.Join(repositoryRoot, filepath.FromSlash(CodeMapPage))
 	if *updateCodeMap {
 		if err := os.WriteFile(page, want, 0o644); err != nil {
@@ -49,17 +44,23 @@ func TestCodeMapPage(t *testing.T) {
 	}
 }
 
-func TestCodeMapLayersMatchResponsibilities(t *testing.T) {
-	for _, r := range targetRoots {
-		found := false
-		for _, l := range Layers {
-			if l.Name == r.layer && contains(l.Gate, r.layer) {
-				found = true
-			}
+func TestSourceRootsAreTheProductTreePackages(t *testing.T) {
+	roots := Table.SourceRoots()
+	seen := map[string]bool{}
+	for _, root := range roots {
+		seen[root] = true
+		if !strings.HasPrefix(root, "cmd/") && !strings.HasPrefix(root, "internal/") {
+			t.Errorf("source root outside cmd/ and internal/: %s", root)
 		}
-		if !found {
-			t.Errorf("missing display layer for %s: %s", r.path, r.layer)
+	}
+	for _, p := range Table.Packages {
+		inTree := strings.HasPrefix(p.Path, "cmd/") || strings.HasPrefix(p.Path, "internal/")
+		if inTree != seen[p.Path] {
+			t.Errorf("%s: source root %v, product tree %v", p.Path, seen[p.Path], inTree)
 		}
+	}
+	if !seen["cmd/markitect"] || !seen["internal/testkit"] || seen["packaging/bootstrap"] || seen["tools/smoke"] {
+		t.Errorf("source roots: %v", roots)
 	}
 }
 
@@ -91,95 +92,122 @@ func TestPackagesFollowGoListRules(t *testing.T) {
 	}
 }
 
-func TestCheckCodeMapReportsEveryProblem(t *testing.T) {
+func TestCheckInventoryReportsEveryProblem(t *testing.T) {
 	root := t.TempDir()
-	for name, content := range map[string]string{
+	writeFixture(t, root, map[string]string{
 		"go.mod":                      "module example\n",
-		"internal/model/c.go":         "package core\n",
-		"internal/apply/h.go":         "package host\n",
+		"internal/model/c.go":         "package model\n",
+		"internal/apply/h.go":         "package apply\n",
 		"internal/apply/missing/m.go": "package missing\n",
 		"docs/owner.md":               "# Owner\n\n## Real section\n\n```text\n# Not a heading\n```\n\n<a id=\"explicit\"></a>\n",
-	} {
-		p := filepath.Join(root, filepath.FromSlash(name))
-		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(p, []byte(content), 0o644); err != nil {
-			t.Fatal(err)
-		}
-	}
-	valid := CodeMap{Packages: []MappedPackage{
-		{Path: "internal/model", Layer: "apply-model", Purpose: "Core.", Doc: "docs/owner.md#real-section"},
-		{Path: "internal/apply", Layer: "apply-usecase", Purpose: "Host.", Doc: "docs/owner.md#explicit"},
-		{Path: "internal/apply/missing", Layer: "apply-usecase", Purpose: "Missing.", Doc: "docs/owner.md"},
+	})
+	valid := Rules{Layers: Table.Layers, Packages: []Package{
+		{"internal/model", "model", "docs/owner.md#real-section"},
+		{"internal/apply", "usecase", "docs/owner.md#explicit"},
 	}}
-	if problems, err := CheckCodeMap(root, valid); err != nil || len(problems) != 0 {
-		t.Fatalf("valid map: %v %v", problems, err)
+	if problems, err := valid.CheckInventory(root); err != nil || len(problems) != 1 || problems[0] != "missing package internal/apply/missing: add a row to the rule table" {
+		t.Fatalf("valid rows: %v %v", problems, err)
 	}
-	bad := CodeMap{Packages: []MappedPackage{
-		{Path: "internal/apply", Layer: "apply-usecase", Purpose: "Host.", Doc: "docs/owner.md"},
-		{Path: "internal/model", Layer: "apply-adapter", Purpose: "Core.", Doc: "docs/owner.md#not-a-heading"},
-		{Path: "internal/gone", Layer: "apply-model", Purpose: "", Doc: "docs/absent.md"},
-		{Path: "internal/gone", Layer: "nonsense", Purpose: "a | b", Doc: "../outside.md"},
+	bad := Rules{Layers: Table.Layers, Packages: []Package{
+		{"internal/model", "model", "docs/owner.md#not-a-heading"},
+		{"internal/apply", "usecase", "docs/owner.md"},
+		{"internal/gone", "usecase", "docs/absent.md"},
+		{"internal/other", "usecase", "../outside.md"},
 	}}
-	problems, err := CheckCodeMap(root, bad)
+	problems, err := bad.CheckInventory(root)
 	if err != nil {
 		t.Fatal(err)
 	}
 	text := strings.Join(problems, "\n")
 	for _, want := range []string{
-		`entry 2 (internal/model): layer "apply-adapter" does not match import-gate layer "apply-model"`,
-		`entry 2 (internal/model): owning document: docs/owner.md has no anchor #not-a-heading`,
-		`entry 3 (internal/gone): layer "apply-model" does not match import-gate layer "unknown"`,
-		`entry 3 (internal/gone): entries must be ordered by layer, then by path`,
-		`entry 3 (internal/gone): purpose must be one non-empty line`,
-		`entry 3 (internal/gone): owning document: docs/absent.md does not exist`,
-		`entry 4 (internal/gone): duplicate path`,
-		`entry 4 (internal/gone): unknown layer "nonsense"`,
-		`entry 4 (internal/gone): purpose must be one non-empty line`,
-		`entry 4 (internal/gone): owning document: "../outside.md" is not a clean repository-relative path`,
-		"missing package internal/apply/missing: add an entry to " + CodeMapSource,
-		"extra entry internal/gone: no Go package exists there; remove it from " + CodeMapSource,
+		"package internal/model: owning document: docs/owner.md has no anchor #not-a-heading",
+		"package internal/gone: owning document: docs/absent.md does not exist",
+		`package internal/other: owning document: "../outside.md" is not a clean repository-relative path`,
+		"missing package internal/apply/missing: add a row to the rule table",
+		"extra row internal/gone: no Go package exists there; remove it from the rule table",
+		"extra row internal/other: no Go package exists there; remove it from the rule table",
 	} {
 		if !strings.Contains(text, want) {
 			t.Errorf("missing problem %q in:\n%s", want, text)
 		}
 	}
-	if len(problems) != 12 {
-		t.Errorf("got %d problems, want 12:\n%s", len(problems), text)
+	if len(problems) != 6 {
+		t.Errorf("got %d problems, want 6:\n%s", len(problems), text)
 	}
 }
 
-func TestParseCodeMapIsStrict(t *testing.T) {
-	for _, input := range []string{
-		"packages:\n  - path: a\n    owner: x\n",
-		"packages: []\n---\npackages: []\n",
-		"other: 1\n",
+func TestSummariesNeedExactlyOneDocComment(t *testing.T) {
+	rules := Rules{Layers: Table.Layers, Packages: []Package{{"internal/model", "model", "README.md"}}}
+	for _, tc := range []struct {
+		name  string
+		files map[string]string
+		want  string
+	}{
+		{"one", map[string]string{"a.go": "// Package model checks models. More text.\npackage model\n", "b.go": "package model\n", "a_test.go": "// Package model tests.\npackage model\n"}, "Package model checks models."},
+		{"none", map[string]string{"a.go": "package model\n"}, "package internal/model has no package doc comment"},
+		{"build constraint only", map[string]string{"a.go": "//go:build windows\n\npackage model\n"}, "package internal/model has no package doc comment"},
+		{"two", map[string]string{"a.go": "// Package model a.\npackage model\n", "b.go": "// Package model b.\npackage model\n"}, "package internal/model has package doc comments in a.go, b.go; keep one"},
+		{"pipe", map[string]string{"a.go": "// Package model a | b.\npackage model\n"}, "must be non-empty and contain no '|'"},
 	} {
-		if _, err := ParseCodeMap([]byte(input)); err == nil {
-			t.Errorf("accepted %q", input)
-		}
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			files := map[string]string{}
+			for name, content := range tc.files {
+				files["internal/model/"+name] = content
+			}
+			writeFixture(t, root, files)
+			got, err := rules.Summaries(root)
+			if strings.HasPrefix(tc.want, "Package ") {
+				if err != nil || got["internal/model"] != tc.want {
+					t.Fatalf("%v %v", got, err)
+				}
+			} else if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("%v %v, want %s", got, err, tc.want)
+			}
+		})
 	}
 }
 
 func TestRenderCodeMapLinksFromPageDirectory(t *testing.T) {
-	page := string(RenderCodeMap(CodeMap{Packages: []MappedPackage{
-		{Path: "internal/model", Layer: "apply-model", Purpose: "Checks.", Doc: "docs/architecture.md#go"},
-		{Path: "cmd/markitect", Layer: "apply-command", Purpose: "Runs.", Doc: "CONTRIBUTING.md"},
-		{Path: "internal/tooling/release", Layer: "maintenance", Purpose: "Builds.", Doc: "docs/development/modules.md"},
-	}}))
+	root := t.TempDir()
+	writeFixture(t, root, map[string]string{
+		"internal/model/m.go":           "// Package model checks.\npackage model\n",
+		"cmd/markitect/main.go":         "// Command markitect runs.\npackage main\n",
+		"internal/tooling/release/r.go": "// Package release builds.\npackage release\n",
+		"internal/buildinfo/b.go":       "// Package buildinfo knows the version.\npackage buildinfo\n",
+	})
+	rules := Rules{Layers: Table.Layers, Packages: []Package{
+		{"internal/model", "model", "docs/architecture.md#go"},
+		{"internal/buildinfo", "build", "docs/development/other.md"},
+		{"cmd/markitect", "command", "CONTRIBUTING.md"},
+		{"internal/tooling/release", "maintenance", "internal/tooling/release/README.md"},
+	}, Exceptions: []Exception{
+		{From: "internal/tooling/release", To: "internal/buildinfo", TestOnly: true, Reason: "Tests read the notices."},
+		{From: "cmd/markitect", To: "internal/model", Reason: "A fixture edge."},
+	}}
+	data, err := rules.RenderCodeMap(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	page := string(data)
 	for _, want := range []string{
-		"| `internal/model` | Checks. | [docs/architecture.md](../architecture.md#go) |",
-		"| `cmd/markitect` | Runs. | [CONTRIBUTING.md](../../CONTRIBUTING.md) |",
-		"| `internal/tooling/release` | Builds. | [docs/development/modules.md](modules.md) |",
-		"[codemap.yaml](../../internal/tooling/architecture/codemap.yaml)",
+		"| `internal/model` | Package model checks. | [docs/architecture.md#go](../architecture.md#go) |",
+		"| `cmd/markitect` | Command markitect runs. | [CONTRIBUTING.md](../../CONTRIBUTING.md) |",
+		"| `internal/buildinfo` | Package buildinfo knows the version. | [docs/development/other.md](other.md) |",
+		"| `internal/tooling/release` | Package release builds. | [internal/tooling/release/README.md](../../internal/tooling/release/README.md) |",
+		"| `model` | The canonical language check over supplied bytes. | nothing | 1 |",
+		"| `command` | Thin entrypoints to product composition. | `composition` | 1 |",
+		"| `test-support` | Hermetic fixtures. Only test files may import it. It imports no Markitect package, not even from tests. | nothing | 0 |",
+		"| `cmd/markitect` | `internal/model` | all | A fixture edge. |\n| `internal/tooling/release` | `internal/buildinfo` | tests only | Tests read the notices. |",
+		"[rules.go](../../internal/tooling/architecture/rules.go)",
+		"[Architecture](../architecture.md#layers)",
 		CodeMapUpdate,
 	} {
 		if !strings.Contains(page, want) {
 			t.Errorf("rendered page lacks %q:\n%s", want, page)
 		}
 	}
-	if strings.Contains(page, "## Modules") {
+	if strings.Contains(page, "## Snapshots") {
 		t.Error("rendered a section for an empty layer")
 	}
 }

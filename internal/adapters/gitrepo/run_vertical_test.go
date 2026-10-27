@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -475,7 +476,8 @@ type controlledManagers struct {
 	receiptCalls        int
 	acceptedRepair      bool
 	forceDecision       run.Decision
-	rootFindings        []run.Finding // Root's Findings with an Assessment or Verify approval
+	rootFindings        []run.Finding   // Root's Findings with an Assessment or Verify approval
+	refusedApprovals    [][]run.Finding // Verify Root's approvals tried first, each refused
 	lateReject          bool
 	badManifest         bool
 	didLateReject       bool
@@ -817,6 +819,15 @@ func (m *controlledManager) work(ctx context.Context) error {
 		if m.owner.forceDecision != "" {
 			decision, findings = m.owner.forceDecision, []run.Finding{{Definition: "a/Thing", Text: "controlled semantic rejection"}}
 		}
+		if m.spec.Mandate == run.Verify && decision == run.Approve && m.spec.Manager.Package == "." {
+			for _, attempt := range m.owner.refusedApprovals {
+				refusal := tools.Judge(ctx, run.Approve, attempt)
+				if refusal == nil {
+					return fmt.Errorf("Verify Root's approval with %v was admitted", attempt)
+				}
+				m.owner.refused(refusal)
+			}
+		}
 	}
 	if m.owner.checkFirst && m.spec.Manager.Package == "." {
 		check, err := tools.Check(ctx)
@@ -1063,6 +1074,9 @@ func TestRunRequestsRefuseUnboundImplementFindingsAndForeignBoundInput(t *testin
 }
 
 func TestDurableCandidateRetentionAndReopenUnderLongPaths(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("LocalGit serves the Linux Apply host and has no Windows long-path support")
+	}
 	r, prepared, original, input := runFixture(t)
 	ctx, cancel := context.WithDeadline(context.Background(), runDeadline(t))
 	defer cancel()

@@ -30,9 +30,13 @@ type applyExecutor struct {
 	noChange, rejectVerify bool
 	assessmentDecision     run.Decision
 	assessmentFindings     []run.Finding
-	realization            func(context.Context, *controlledManager) error // replaces Implement's writes
-	failClose              bool
-	records                run.Records
+	// verifyFindings are Verify Root's approval Findings; refusedApprovals are
+	// the approvals it tries first, each of which must be refused.
+	verifyFindings   []run.Finding
+	refusedApprovals [][]run.Finding
+	realization      func(context.Context, *controlledManager) error // replaces Implement's writes
+	failClose        bool
+	records          run.Records
 	// wrap, when set, supplies the Sessions of each Run around its managers.
 	wrap func(run.Mandate, *controlledManagers) run.Sessions
 }
@@ -100,6 +104,9 @@ func (e *applyExecutor) Execute(ctx context.Context, request run.Request) (run.R
 	}
 	if request.Mandate == run.Implement {
 		managers.realization = e.realization
+	}
+	if request.Mandate == run.Verify {
+		managers.rootFindings, managers.refusedApprovals = e.verifyFindings, e.refusedApprovals
 	}
 	if request.Mandate == run.Verify && e.rejectVerify {
 		managers.forceDecision = run.Reject
@@ -732,7 +739,9 @@ func TestApplyVerifySeesTheDiffSinceTheBoundInputAcrossCorrections(t *testing.T)
 // same basis. A first command gets no such fact; a command over the verified
 // candidate gets it in every Run and Session. The fact does not block a
 // needed repair: a Definition-bound Assessment Finding reaches Implement, and
-// Verify sees the repair against the bound input and may approve it.
+// Verify sees the repair against the bound input and approves it only with a
+// Finding that names the current Definition whose defect it corrects, which
+// the result records. An unchanged candidate under the fact needs none.
 func TestApplyStatesTheVerifiedFactOnlyForAStoredApprovalOfTheSameInput(t *testing.T) {
 	// Ordinary Git cannot commit an empty Package directory, so this owner's
 	// model gives the fixture's Package b/empty an obligation.
@@ -765,11 +774,21 @@ func TestApplyStatesTheVerifiedFactOnlyForAStoredApprovalOfTheSameInput(t *testi
 		}
 		return os.WriteFile(filepath.Join(m.spec.Workspace.Location().Directory, "out", "a.txt"), []byte("repaired\n"), 0600)
 	}
-	second := &applyExecutor{t: t, git: git, store: store, noChange: true, assessmentFindings: []run.Finding{{Definition: defect.Definition, Text: defect.Text}}, realization: repair}
+	// Verify Root's approval of the repair names the defect it corrects; a
+	// plain approval and one naming an unknown Definition are refused first.
+	corrected := run.Finding{Manager: ".", Definition: "a/Thing", Text: "The bound input's out/a.txt violated a/Thing; the change corrects it."}
+	second := &applyExecutor{t: t, git: git, store: store, noChange: true, assessmentFindings: []run.Finding{{Definition: defect.Definition, Text: defect.Text}}, realization: repair,
+		verifyFindings: []run.Finding{{Definition: corrected.Definition, Text: corrected.Text}}, refusedApprovals: [][]run.Finding{nil, {{Definition: "a/Missing", Text: corrected.Text}}}}
 	command.Executor = second
 	report, err = command.Execute(ctx, fixtureRequest(t, "second", next))
 	if err != nil || report.Status != model.Passed || len(second.requests) != 3 || report.Publication == nil || !report.Publication.Readback {
 		t.Fatal(report.Status, err)
+	}
+	if refusals := second.managers[2].refusals; len(refusals) != 2 || !strings.Contains(refusals[0], "Verify Run "+approval.ID+" already verified") || !strings.Contains(refusals[0], "names the defect it corrects") || !strings.Contains(refusals[1], "a/Missing, which is not a Definition of the checked model") {
+		t.Fatal("an approval of the change without a current corrected Definition was not refused", refusals)
+	}
+	if verified := report.Workflow.Runs[2]; verified.Decision != run.Approve || !slices.Contains(verified.Findings, corrected) {
+		t.Fatal("the Verify result does not record the corrected Definition", verified.Decision, verified.Findings)
 	}
 	if got := second.requests[1].Findings; !reflect.DeepEqual(got, []run.Finding{defect}) {
 		t.Fatal("the needed repair did not reach Implement under the fact", got)
@@ -806,6 +825,17 @@ func TestApplyStatesTheVerifiedFactOnlyForAStoredApprovalOfTheSameInput(t *testi
 	same, input, found := capture()
 	if input.Commit == repaired.Input.Commit || input.Tree != repaired.Input.Tree || run.Verified(same, input, found) != repaired.ID {
 		t.Fatal("the same state under another commit lost the fact", input, repaired.Input)
+	}
+	// Under the fact, an unchanged candidate needs no named defect: Verify
+	// sees an empty diff and approves plainly.
+	third := &applyExecutor{t: t, git: git, store: store, noChange: true}
+	command.Executor = third
+	report, err = command.Execute(ctx, fixtureRequest(t, "third", same))
+	if err != nil || report.Status != model.Passed || len(third.requests) != 3 || third.requests[2].Origin.Verified != repaired.ID {
+		t.Fatal("the unchanged verified input was not approved plainly", report.Status, err)
+	}
+	if changes := rootChanges(third.managers[2]); changes == nil || *changes != "" || len(third.managers[2].refusals) != 0 {
+		t.Fatal("Verify of the unchanged input saw changes or a refusal", changes, third.managers[2].refusals)
 	}
 	r.Write("out/a.txt", "repairee\n")
 	r.Commit("owner changes one byte")

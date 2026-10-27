@@ -8,11 +8,27 @@ Links to archived files use the full commit SHA, never a branch or tag name, bec
 
 | Archive point | Commit | What it holds |
 |---|---|---|
+| Branch `archive/main-pre-r3c-20261027` | [`e6d9b94a64c2083ee1487414a728a520a87def03`](https://github.com/Glacius-Labs/Markitect/tree/e6d9b94a64c2083ee1487414a728a520a87def03) (tree `0fbc1d063bdada18dfe826e9641a47a3732122cf`) | Main on 27 October 2026, immediately before the documentation steps of the cleanup (R3c). Contains every page removed or merged by R3c, and is in Main's ancestry |
 | Branch `archive/main-pre-r2-20261024` | [`2389e252a85e3896da91f5f4649a3394b9222b2c`](https://github.com/Glacius-Labs/Markitect/tree/2389e252a85e3896da91f5f4649a3394b9222b2c) (tree `fec8e0c2fc16413e2e206cfb220059791338dfc1`) | Main on 24 October 2026, immediately before the repository restructuring (R2). Contains every file removed or moved by R2, and is in Main's ancestry |
-| Branch `archive/v1-pre-cutover-20261023` | [`447ac3b152de79b52de80513e14dc94349a060bd`](https://github.com/Glacius-Labs/Markitect/tree/447ac3b152de79b52de80513e14dc94349a060bd) | The source snapshot of 23 October 2026 before the Extract, Cockpit, authoring and Setup retirement; see the [source archive record](development/v1-source-archive-20261023.md) |
+| Branch `archive/v1-pre-cutover-20261023` | [`447ac3b152de79b52de80513e14dc94349a060bd`](https://github.com/Glacius-Labs/Markitect/tree/447ac3b152de79b52de80513e14dc94349a060bd) (tree `6bd59e02d929dc94fe82f799cefc0da18ff7984c`) | The source snapshot of 23 October 2026 before the Extract, Cockpit, authoring and Setup retirement; see [its bundle](#bundle-of-the-pre-cutover-archive-point) |
 | Pre-reset commits | Six, below | History before the reset of 23 October 2026, which Main's history does not contain |
 
-The refs under `archive/` are protected against deletion and force-push by the ruleset "Protect archive refs". Both Main-derived points also exist as Git bundles outside the repository, so a second history reset cannot remove them.
+The refs under `archive/` are protected against deletion and force-push by the ruleset "Protect archive refs". The three Main-derived points also exist as Git bundles outside the repository, so a second history reset cannot remove them. Restore an archive point into a new empty destination outside existing checkouts; never reset or overwrite an active implementation checkout to restore history. An archive point holds committed source only, not local credentials, operator state, provider histories or uncommitted planning documents.
+
+### Bundle of the R3c archive point
+
+- File: `C:\Users\Consiliari\Glacius Labs\Markitect-archives\main-pre-r3c-20261027\markitect-e6d9b94a.bundle`
+- SHA-256: `12facd617ae41029f0a7b073705acfb742ac16ffac1bce7e30dcb8af0e3be70b`. The bundle holds the full history (615 commits) under the ref `archive/main-pre-r3c-20261027`.
+- A restore check (clone, `git fsck --full`, exact commit and tree, empty status) sits beside it in `restore-check`.
+
+Restore from the named reference or, if it is unavailable, from the bundle after verifying its hash:
+
+```text
+git clone --branch archive/main-pre-r3c-20261027 https://github.com/Glacius-Labs/Markitect.git NEW_EMPTY_DESTINATION
+git clone --branch archive/main-pre-r3c-20261027 PATH_TO_BUNDLE NEW_EMPTY_DESTINATION
+```
+
+Require commit `e6d9b94a64c2083ee1487414a728a520a87def03`, tree `0fbc1d063bdada18dfe826e9641a47a3732122cf` and an empty status.
 
 ### Bundle of the R2 archive point
 
@@ -20,25 +36,48 @@ The refs under `archive/` are protected against deletion and force-push by the r
 - SHA-256: `8db5fa6899fd0c8941901f4985a405e2bf3c056ea52ff0168e4caf76d30905e9`. The bundle holds the full history (222 commits) under the ref `archive/main-pre-r2-20261024`.
 - A restore check (clone, `git fsck --full`, exact commit and tree, empty status) sits beside it in `restore-check`.
 
-Restore from the named reference or, if it is unavailable, from the bundle after verifying its hash. Use a new empty destination outside existing checkouts:
+Restore from the named reference or, if it is unavailable, from the bundle after verifying its hash:
 
 ```text
 git clone --branch archive/main-pre-r2-20261024 https://github.com/Glacius-Labs/Markitect.git NEW_EMPTY_DESTINATION
 git clone --branch archive/main-pre-r2-20261024 PATH_TO_BUNDLE NEW_EMPTY_DESTINATION
 ```
 
-Require commit `2389e252a85e3896da91f5f4649a3394b9222b2c`, tree `fec8e0c2fc16413e2e206cfb220059791338dfc1` and an empty status. The restore procedure of the pre-cutover bundle is in its [record](development/v1-source-archive-20261023.md).
+Require commit `2389e252a85e3896da91f5f4649a3394b9222b2c`, tree `fec8e0c2fc16413e2e206cfb220059791338dfc1` and an empty status.
+
+### Bundle of the pre-cutover archive point
+
+The pre-cutover point was created and verified before any S1 source removal under the [source implementation approval](concepts/sources/v1-source-implementation-approval-20261023.md). It preserves the integrated source before the Extract, Cockpit/UI, authoring and Setup retirement; it is not a release or runtime-readiness claim. The remote branch was pushed without force and read back at the exact commit. Ordinary implementation cleanup must not delete the ref or the bundle. It is a source snapshot, not a dependency on dangling historical objects: the snapshot commit has no parents, so it establishes no ancestry to the pre-reset commits.
+
+- File: `C:\Users\Consiliari\Glacius Labs\Markitect-archives\v1-pre-cutover-20261023\markitect-447ac3b.bundle`
+- SHA-256: `6336E2E48E46F9FA35EB278C66C3BCBA9EB058664951676B56A8336CB40124BB`. The bundle records a complete history and the `refs/heads/main` reference, but no default HEAD, so a clone selects `main` explicitly.
+- A restore check (checkout, `git fsck --full`, exact commit and tree, empty status) succeeded and sits beside it in `restore-check`; it is not an implementation worktree. Bundle verification succeeded independently of that checkout. A copy of the restore guide sits beside the bundle as `RESTORE.md`.
+
+Restore from the named reference or, if it has moved or is unavailable, from the bundle after verifying its hash:
+
+```powershell
+git clone --branch archive/v1-pre-cutover-20261023 https://github.com/Glacius-Labs/Markitect.git NEW_EMPTY_DESTINATION
+$bundlePath = 'C:\Users\Consiliari\Glacius Labs\Markitect-archives\v1-pre-cutover-20261023\markitect-447ac3b.bundle'
+Get-FileHash -Algorithm SHA256 -LiteralPath $bundlePath
+git clone --branch main $bundlePath 'C:\path\to\new-restored-markitect'
+git -C 'C:\path\to\new-restored-markitect' fsck --full
+git -C 'C:\path\to\new-restored-markitect' rev-parse HEAD
+git -C 'C:\path\to\new-restored-markitect' rev-parse 'HEAD^{tree}'
+git -C 'C:\path\to\new-restored-markitect' status --short
+```
+
+Require commit `447ac3b152de79b52de80513e14dc94349a060bd`, tree `6bd59e02d929dc94fe82f799cefc0da18ff7984c` and an empty status.
 
 ### Pre-reset commits
 
-The history reset of 23 October 2026 removed these commits from every branch. Each is pinned by an archive ref, which keeps it reachable on GitHub.
+The history reset of 23 October 2026 removed these commits from every branch. Each is pinned by an archive ref, which keeps it reachable on GitHub. The retired `v0.14.1` distribution and the preceding source generation keep their own contracts; current consumers do not reinterpret those formats or revive their runtime.
 
 | Ref | Commit | Date | What it holds | Cited by |
 |---|---|---|---|---|
-| `archive/pre-reset-7dbd599c` | [`7dbd599c81540c8203a1b7f83afbc335174f4f1f`](https://github.com/Glacius-Labs/Markitect/tree/7dbd599c81540c8203a1b7f83afbc335174f4f1f) | 7 Oct 2026 | Source of release `v0.14.1`, the last Project/Domain release | [Production assessment](validation/production-assessment.md), [documentation maintenance](development/documentation.md), [CONTRIBUTING](../CONTRIBUTING.md) |
-| `archive/pre-reset-3ebe3c6e` | [`3ebe3c6e6d283b998020350334e24a7303b089b7`](https://github.com/Glacius-Labs/Markitect/tree/3ebe3c6e6d283b998020350334e24a7303b089b7) | 16 Oct 2026 | The evening rules and the consistency review of the working-day reflection | [Reflections](concepts/reflections/README.md), [working-day discussion](concepts/sources/working-day-discussion-20261016.md) |
+| `archive/pre-reset-7dbd599c` | [`7dbd599c81540c8203a1b7f83afbc335174f4f1f`](https://github.com/Glacius-Labs/Markitect/tree/7dbd599c81540c8203a1b7f83afbc335174f4f1f) | 7 Oct 2026 | Source of release `v0.14.1`, the last Project/Domain release | [Production assessment](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/validation/production-assessment.md), [documentation maintenance](development/documentation.md) |
+| `archive/pre-reset-3ebe3c6e` | [`3ebe3c6e6d283b998020350334e24a7303b089b7`](https://github.com/Glacius-Labs/Markitect/tree/3ebe3c6e6d283b998020350334e24a7303b089b7) | 16 Oct 2026 | The evening rules and the consistency review of the working-day reflection | [Reflections](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/concepts/reflections/README.md), [working-day discussion](concepts/sources/working-day-discussion-20261016.md) |
 | `archive/pre-reset-bc4b49e7` | [`bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310`](https://github.com/Glacius-Labs/Markitect/tree/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310) | 16 Oct 2026 | Main with the work-item backlog (`docs/work-items/backlog.yaml`) | [Concept register](concepts/register.md) |
-| `archive/pre-reset-5ff32069` | [`5ff3206917fa3b7482d9daedb903d57a919f56b8`](https://github.com/Glacius-Labs/Markitect/tree/5ff3206917fa3b7482d9daedb903d57a919f56b8) | 17 Oct 2026 | The removed product generation before the Apply rebuild | [Architecture](architecture.md), [CONTRIBUTING](../CONTRIBUTING.md), [Project operations](guides/project-operations.md) |
+| `archive/pre-reset-5ff32069` | [`5ff3206917fa3b7482d9daedb903d57a919f56b8`](https://github.com/Glacius-Labs/Markitect/tree/5ff3206917fa3b7482d9daedb903d57a919f56b8) | 17 Oct 2026 | The removed product generation before the Apply rebuild | [Architecture](architecture.md), [Vision](vision.md) |
 | `archive/pre-reset-1f4a1ede` | [`1f4a1ede214d05fd2fee615b3905207df7702426`](https://github.com/Glacius-Labs/Markitect/tree/1f4a1ede214d05fd2fee615b3905207df7702426) | 17 Oct 2026 | The complete pre-retirement tree, the basis of the [retirement record](validation/distribution-retirement-20261017.md) | [Measurement](guides/measurement.md), [packaging guide](../packaging/README.md), [examples](../examples/README.md) |
 | `archive/pre-reset-0c28097c` | [`0c28097c030bc5d031b501002bc85634cd66a4c8`](https://github.com/Glacius-Labs/Markitect/tree/0c28097c030bc5d031b501002bc85634cd66a4c8) | 20 Oct 2026 | Main when the Apply workflow terminology was recorded | [Apply workflow conversation](concepts/sources/terminology-and-file-accounting-20261020.md) |
 
@@ -76,9 +115,42 @@ These designs are accepted as later directions but have no V1 consumer. They sta
 | Commands (Extract, Verify, Optimize) | [`docs/design/canonical-model/commands.md`](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/commands.md) |
 | Init, adoption and skills | [`docs/design/`](https://github.com/Glacius-Labs/Markitect/tree/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design): `init-adoption-preparation.md`, `selective-adoption-handoff.md`, `brownfield-representation-adoption.md`, `project-capability-skills-20261009.md`, `modeling-skill-guidance.md` |
 
+## Removed and merged by R3c
+
+R3c consolidated the remaining documentation after the owner decided to develop Markitect as a regular software project ([DEC-076](concepts/register.md#dec-076-markitect-is-developed-as-a-regular-software-project); [cleanup inventory](development/cleanup-inventory-20261027.md)). The pages below left Main at the R3c archive point. Both tables list the register entries that cite a page, for orientation.
+
+### Archived pages
+
+| Page | Location at the archive point | What it holds and why it still matters | Register |
+|---|---|---|---|
+| Product reflections | [`docs/concepts/reflections/`](https://github.com/Glacius-Labs/Markitect/tree/e6d9b94a64c2083ee1487414a728a520a87def03/docs/concepts/reflections) (README and four reflections of 16 October) | Dated discussions of trust through organized agent work, a working day with delegated realization, its demonstration and experience without implicit rules, with owner wording and assistant interpretation kept apart. They discuss the pre-V1 Apply design that concept 1.0 superseded; the owner sources they quote stay on Main | VIS-001, ENH-006, IDEA-001, IDEA-017 |
+| Repository structure (R1) | [`docs/development/repository-structure.md`](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/development/repository-structure.md) | The R1 inventory of every file, the accepted target layout, the archive mechanism and the R2 work list, which R2 executed | DEC-071 |
+| V1 bounded assignments | [`docs/development/v1-workstream-assignments.md`](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/development/v1-workstream-assignments.md) | Writer scopes of delivery-plan steps 2 and 3: the Run contract (D10–D13, D15, D17) and the provider scope (D18). Both steps are done | none |
+| Concept conformance audit | [`docs/development/concept-conformance-audit-20261024.md`](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/development/concept-conformance-audit-20261024.md) | The supplied static audit of Main `6c7d758c` against the V1 concept; origin of A1–A6 and R1–R3, closed by concept 1.0 | none |
+| V1 counter-review | [`docs/development/v1-architecture-audit-20261023.md`](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/development/v1-architecture-audit-20261023.md) | The source-bound counter-review of the v0.17 architecture of 23 October, superseded by concept 1.0 | DEC-067 |
+| Production assessment | [`docs/validation/production-assessment.md`](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/validation/production-assessment.md) | Source, platform and publisher evidence of the retired releases up to `v0.14.1`, with its limits. The releases no longer exist, so its role as owner of release asset claims has nothing left to own; the [retirement record](validation/distribution-retirement-20261017.md) and the [retired release mapping](validation/retired-releases-20261017.json) stay on Main | none |
+
+### Merged pages
+
+These pages were folded into a current page. Their pre-merge text stays at the archive point, except for the two operations guides: R3c step 12 merged them after the archive point, together with slice L3, so their pre-merge text is linked at Main `1eec3f0e`, the last commit that has them.
+
+| Former page | Now in | Pre-merge text | Register |
+|---|---|---|---|
+| `docs/development/v1-source-archive-20261023.md` | [Bundle of the pre-cutover archive point](#bundle-of-the-pre-cutover-archive-point) | [At the archive point](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/development/v1-source-archive-20261023.md) | none |
+| `docs/design/v1-execution-architecture.md` | [Architecture](architecture.md): its current contracts (package direction, ports, Run lifecycle, candidates and state, checks and review, harness, provider and authentication). Its scope statement for the source cut, the proposed package locations, the stream ownership of the Sessions port, the Phase C rationale and the acceptance plan stay only at the archive point | [At the archive point](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/design/v1-execution-architecture.md) | DEC-067, DEC-068 |
+| `docs/development/modules.md` | [Architecture](architecture.md): dependency direction, the [import gate](architecture.md#import-gate) and [how to add a package](architecture.md#adding-changing-or-removing-a-package); the package invariants in [Foundations and Project](architecture.md#foundations-and-project), [Adapters](architecture.md#adapters) and [State and evidence storage](architecture.md#state-and-evidence-storage) | [At the archive point](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/development/modules.md) | none |
+| `docs/guides/source-snapshots.md` | [Architecture](architecture.md#foundations-and-project): snapshot values, capture identity and acquisition limits; the release input in [Distribution](architecture.md#distribution) | [At the archive point](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/guides/source-snapshots.md) | none |
+| `docs/guides/project-operations.md` | [Project workflow](guides/project-workflow.md#model-commands): the command reference for `check`, `context`, `docs` and `apply` | [On Main before the merge](https://github.com/Glacius-Labs/Markitect/blob/1eec3f0e043da2a49ddd94222e236c714ba39e8b/docs/guides/project-operations.md) | DEC-044 |
+| `docs/guides/operations.md` | [Project workflow](guides/project-workflow.md#operations): authoring, rendering and troubleshooting; [release operations](../packaging/README.md#release-operations) in the distribution guide. Its stale lines about module gates and registry facts of the self-model were dropped | [On Main before the merge](https://github.com/Glacius-Labs/Markitect/blob/1eec3f0e043da2a49ddd94222e236c714ba39e8b/docs/guides/operations.md) | none |
+| `internal/adapters/gitrepo/WORKSPACES.md` | [Git repository adapter](../internal/adapters/gitrepo/README.md#run-git-workspace-service) | [At the archive point](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/internal/adapters/gitrepo/WORKSPACES.md) | none |
+| `internal/adapters/gitrepo/PUBLISHER.md` | [Git repository adapter](../internal/adapters/gitrepo/README.md#publication-boundary) | [At the archive point](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/internal/adapters/gitrepo/PUBLISHER.md) | none |
+| `docs/development/parallel-work.md` | [CONTRIBUTING](../CONTRIBUTING.md#pull-requests-and-parallel-work), without its lines about the Extract stream, project-model coverage, the cutover and the pre-V1 Go boundaries | [At the archive point](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/development/parallel-work.md) | none |
+| `docs/development/README.md` | [Documentation map](README.md#development) | [At the archive point](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/development/README.md) | none |
+| `docs/concepts/origin-and-rationale.md` | [Vision](vision.md#origin-and-rationale) | [At the archive point](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/concepts/origin-and-rationale.md) | CPT-001 and the register index |
+
 ## Moved, not archived
 
-These files are still on Main under new paths; their content is unchanged apart from path and link updates (the packaging, Library and oracle READMEs and the oracle container scripts also carry the edits their new places need). After R2, slice C1 translated the Core in `testdata/core` into English as `markitect-core` 1.1.0 and moved the Library manifests and lock to it.
+These files are still on Main under new paths; their content is unchanged apart from path and link updates (the packaging, Library and oracle READMEs and the oracle container scripts also carry the edits their new places need). After R2, slice C1 translated the Core in `testdata/core` into English as `markitect-core` 1.1.0 and moved the Library manifests and lock to it. R3c later archived the production assessment, merged `source-snapshots.md` into the architecture and merged `project-operations.md` and `operations.md` into the project workflow and the distribution guide ([above](#removed-and-merged-by-r3c)).
 
 | Former path | Current path |
 |---|---|

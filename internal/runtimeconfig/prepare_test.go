@@ -55,35 +55,75 @@ func (f agentPeer) PrepareAgentProfile(ctx context.Context, p ProfileInput) (Pro
 	return f(ctx, p)
 }
 
-// Codex is the only Agent adapter; a Claude section is refused before any port runs.
-func TestPrepareRefusesClaudeAgentSection(t *testing.T) {
+// A profile selects exactly one Agent adapter: codexAppServer or claudeCode.
+// Both sections in one profile are refused before any port runs.
+func TestPrepareSelectsExactlyOneAgentSection(t *testing.T) {
 	for _, tc := range []struct {
-		name, entry string
-		noSection   bool
+		name, entry, section string
 	}{
-		{"alone", "    claudeCode: {profileVersion: 1}\n", true},
-		{"alongside", "    codexAppServer: {profileVersion: 3}\n    claudeCode: {profileVersion: 1}\n", false},
+		{"codex", "    codexAppServer: {profileVersion: 3}\n", "codexAppServer"},
+		{"claude", "    claudeCode: {profileVersion: 1}\n", "claudeCode"},
+		{"both", "    codexAppServer: {profileVersion: 3}\n    claudeCode: {profileVersion: 1}\n", ""},
+		{"neither", "    other: {profileVersion: 1}\n", ""},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			doc := "apiVersion: markitect.runtime/v1\nagentProfiles:\n  markitect-agent:\n" + tc.entry + "checkProfiles: {}\n"
-			calls := 0
-			r, err := Prepare(context.Background(), runtimeInputs(t, doc), agentPeer(func(context.Context, ProfileInput) (ProfileObservation, error) {
-				calls++
-				return ProfileObservation{}, nil
+			var sections []string
+			r, err := Prepare(context.Background(), runtimeInputs(t, doc), agentPeer(func(_ context.Context, p ProfileInput) (ProfileObservation, error) {
+				sections = append(sections, p.Section())
+				return ProfileObservation{InputBinding: p.Binding(), Status: model.NotCompleted}, nil
 			}), nil)
-			if err != nil || r.Status != model.Failed || calls != 0 || len(r.Profiles) != 0 {
-				t.Fatalf("status=%s calls=%d profiles=%d error=%v", r.Status, calls, len(r.Profiles), err)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if tc.section != "" {
+				if len(sections) != 1 || sections[0] != tc.section || len(r.Profiles) != 1 {
+					t.Fatalf("section %s did not reach the Agent port alone: %v %+v", tc.section, sections, r.Diagnostics)
+				}
+				return
+			}
+			if r.Status != model.Failed || len(sections) != 0 || len(r.Profiles) != 0 {
+				t.Fatalf("status=%s sections=%v profiles=%d", r.Status, sections, len(r.Profiles))
 			}
 			found := map[string]string{}
 			for _, d := range r.Diagnostics {
 				found[d.Code+" "+d.Source.Field] = d.Message
 			}
-			if got := found["runtime.unknown_key /agentProfiles/markitect-agent/claudeCode"]; !strings.Contains(got, `"claudeCode"`) {
-				t.Fatalf("Claude section not named as unknown: %v", r.Diagnostics)
-			}
-			// Without a Codex section the refusal also names the only Agent section.
-			if got, ok := found["runtime.section /agentProfiles/markitect-agent"]; ok != tc.noSection || ok && !strings.HasSuffix(got, "adapter section: codexAppServer.") {
+			if got := found["runtime.section /agentProfiles/markitect-agent"]; !strings.HasSuffix(got, "adapter section: codexAppServer or claudeCode.") {
 				t.Fatalf("section refusal differs: %v", r.Diagnostics)
+			}
+		})
+	}
+}
+
+// Each Agent section binds its own image provider; Claude Code evidence
+// carries no Codex schema digest.
+func TestPrepareBindsAgentImageProviderToSection(t *testing.T) {
+	path, _ := snapshot.NewPath("runtime.env")
+	metadata, _ := snapshot.NewEntry(path, snapshot.Regular, []byte("claude=x\nagentd=y\n"))
+	image := func(provider AgentImageProvider, schema string) *AgentImageObservation {
+		return &AgentImageObservation{Provider: provider, ImageID: "sha256:" + strings.Repeat("b", 64), Metadata: AgentImageMetadataFile{Path: "/opt/markitect/runtime.env", ContentID: metadata.ContentID(), Size: 18}, CLIVersion: "2.1.308 (Claude Code)", AgentdVersion: "y", RecordedCodexSchemaDigest: schema}
+	}
+	for _, tc := range []struct {
+		name  string
+		image *AgentImageObservation
+		pass  bool
+	}{
+		{"claude evidence", image(AgentImageClaudeCode, ""), true},
+		{"codex provider in a claude section", image(AgentImageCodexAppServer, "sha256:"+strings.Repeat("c", 64)), false},
+		{"claude evidence with a codex schema", image(AgentImageClaudeCode, "sha256:"+strings.Repeat("c", 64)), false},
+		{"unknown provider", image("other", ""), false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			doc := "apiVersion: markitect.runtime/v1\nagentProfiles:\n  markitect-agent:\n    claudeCode: {profileVersion: 1}\ncheckProfiles: {}\n"
+			r, err := Prepare(context.Background(), runtimeInputs(t, doc), agentPeer(func(_ context.Context, p ProfileInput) (ProfileObservation, error) {
+				return ProfileObservation{InputBinding: p.Binding(), Status: model.Passed, Contract: ProfileContract{Name: "markitect.claude-code.image-metadata", Version: 1}, AgentImage: tc.image}, nil
+			}), nil)
+			if err != nil || len(r.Profiles) != 1 {
+				t.Fatal(err, r.Diagnostics)
+			}
+			if _, ok := r.Profiles[0].Identity(); ok != tc.pass {
+				t.Fatalf("identity=%v, want %v: %+v", ok, tc.pass, r.Profiles[0].Observation().Diagnostics)
 			}
 		})
 	}

@@ -14,7 +14,6 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
-	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -63,14 +62,7 @@ func safeKey(s string) bool {
 	return true
 }
 func localCommand(ctx context.Context, dir string, input []byte, args ...string) (string, error) {
-	// Git for Windows also needs long paths for its state-owned pack files.
-	prefix := []string{"--no-replace-objects", "--literal-pathspecs", "-c", "core.longpaths=true", "-c", "core.hooksPath=", "-c", "core.fsmonitor=false", "-c", "core.autocrlf=false", "-c", "commit.gpgsign=false", "-c", "user.name=Markitect Run", "-c", "user.email=run@markitect.invalid", "-C", dir}
-	if runtime.GOOS == "windows" && len(args) > 0 && args[0] == "fetch" {
-		// The local upload-pack server needs its own long-path setting. Client
-		// -c does not cover its source object reads. Keep source paths separate
-		// from this static command and leave user repository config untouched.
-		args = append([]string{"fetch", "--upload-pack=git -c core.longpaths=true upload-pack"}, args[1:]...)
-	}
+	prefix := []string{"--no-replace-objects", "--literal-pathspecs", "-c", "core.hooksPath=", "-c", "core.fsmonitor=false", "-c", "core.autocrlf=false", "-c", "commit.gpgsign=false", "-c", "user.name=Markitect Run", "-c", "user.email=run@markitect.invalid", "-C", dir}
 	cmd := exec.CommandContext(ctx, "git", append(prefix, args...)...)
 	cmd.Env = append(gitEnvironment(), "GIT_ALLOW_PROTOCOL=file", "GIT_CONFIG_NOSYSTEM=1", "GIT_CONFIG_GLOBAL="+os.DevNull)
 	cmd.WaitDelay = time.Second
@@ -82,8 +74,8 @@ func localCommand(ctx context.Context, dir string, input []byte, args ...string)
 	cmd.Stderr = stderr
 	if err := boundedCommandError(cmd.Run(), out, stderr); err != nil {
 		if ctx.Err() != nil {
-			// Git killed for its context exits like a failed command, on Windows
-			// with status 1 and no output. Name the actual cause, as acquisition does.
+			// Git killed for its context exits like a failed command. Name the
+			// actual cause, as acquisition does.
 			return "", fmt.Errorf("local Git %s: %w (%v)", args[0], ctx.Err(), err)
 		}
 		return "", fmt.Errorf("local Git %s: %w: %s", args[0], err, stderr.String())
@@ -223,16 +215,7 @@ func (g *LocalGit) retain(ctx context.Context, id string, p project.Prepared, re
 		if _, err = localCommand(ctx, export, nil, "fetch", "--quiet", "--no-tags", repo, c.ID+":"+name); err != nil {
 			return err
 		}
-		selection := name
-		if runtime.GOOS == "windows" {
-			// Git 2.56 cannot bundle long loose refs even with longpaths enabled.
-			// Pack and enumerate this export's sole ref, preserving its full name.
-			if _, err = localCommand(ctx, export, nil, "pack-refs", "--all"); err != nil {
-				return err
-			}
-			selection = "--all"
-		}
-		_, err = localCommand(ctx, export, nil, "bundle", "create", bundle, selection)
+		_, err = localCommand(ctx, export, nil, "bundle", "create", bundle, name)
 		return err
 	})
 }

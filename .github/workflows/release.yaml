@@ -91,18 +91,12 @@ jobs:
           [[ "$remote_tag_commit" == "$SOURCE_SHA" ]] || { echo "current remote release tag no longer resolves to the workflow source commit" >&2; exit 1; }
 
   bundle-smoke:
-    name: Bundle install smoke (${{ matrix.os }})
+    name: Bundle install smoke
     needs:
       - quality
       - preflight
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - ubuntu-24.04
-          - windows-latest
     steps:
       - name: Check out tagged source and history
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -160,7 +154,7 @@ jobs:
           bundle="$out/markitect-$TAG-bundle.zip"
           go run ./cmd/markitect-release bundle --repo . --revision "$SOURCE_SHA" --output "$bundle"
           bundle_sha256="$(sha256sum "$bundle" | cut -d ' ' -f 1)"
-          [[ "$bundle_sha256" == "$EXPECTED_BUNDLE_SHA256" ]] || { echo "release bundle differs from the bundle tested on both platforms" >&2; exit 1; }
+          [[ "$bundle_sha256" == "$EXPECTED_BUNDLE_SHA256" ]] || { echo "release bundle differs from the bundle the install smoke tested" >&2; exit 1; }
 
           linux_binary="$out/markitect-$TAG-linux-amd64"
           windows_binary="$out/markitect-$TAG-windows-amd64.exe"

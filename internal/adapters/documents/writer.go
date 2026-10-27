@@ -11,8 +11,8 @@ import (
 	"io/fs"
 	"os"
 
+	"github.com/Glacius-Labs/Markitect/internal/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/internal/modeldocs"
-	"github.com/Glacius-Labs/Markitect/internal/tooling/guardedwrite"
 )
 
 type Writer struct{}

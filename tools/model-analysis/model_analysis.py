@@ -7,6 +7,8 @@ use. The report also carries the registry records and the authored execution
 ownership. File-local imports are not in the report; with --repo the tool
 reads them from each Definition's source file.
 
+  python -I -B model_analysis.py diagnostics REPORT [--json]
+  python -I -B model_analysis.py summary REPORT [--json]
   python -I -B model_analysis.py graph REPORT [--json]
   python -I -B model_analysis.py refs REPORT PACKAGE/ID [--json]
   python -I -B model_analysis.py impact OLD_REPORT NEW_REPORT [--transitive] [--json]
@@ -32,6 +34,15 @@ WORDS_WARNING, WORDS_STRONG = 150, 300
 TERM_PACKAGES = 3
 TERM_PATTERN = r"[A-Za-z][A-Za-z0-9]*"
 LITERALS = {"true", "false", "null"}
+SCOPE_FIELDS = ("appliesTo", "mayDependOn", "realizedIn")  # Package strings of the Practice and Architecture Libraries
+NAME_KEYS = {"name", "value", "wireName", "code"}  # named things a spec defines without a Definition of their own
+DEPENDENCY_RULE = ("markitect/architecture", "DependencyRule")
+INTERFACE = ("markitect/architecture", "Interface")
+REFUSAL_CODE = ("markitect/api", "RefusalCode")  # an Interface cannot list one yet (open Library question)
+PROJECT = ("markitect/practice", "Project")
+DECISIONS_WARNING, DECISIONS_STRONG = 10, 15  # provisional, like the size thresholds
+LIST_MARKER = re.compile(r"[-*+]|\d+[.)]")
+CONDITION = re.compile(r"\b(?:when|if|unless|otherwise|except)\b", re.IGNORECASE)
 
 
 class InputError(Exception):
@@ -259,7 +270,7 @@ def impact(old, new, transitive=False):
 
 # Imports are not in the check report. This reader understands the import
 # forms the language contract allows: a block list of `package`/`as` mappings
-# or a flow list `[]` / `[{package: x, as: Y}]`, with plain or quoted scalars.
+# (block style or one flow mapping per item) or a flow list `[]` / `[{package: x, as: Y}]`, with plain or quoted scalars.
 _SCALAR = r"""("(?:[^"\\]|\\.)*"|'(?:[^']|'')*'|[^,\s{}\[\]#][^,{}\[\]#]*?)"""
 
 
@@ -296,6 +307,14 @@ def read_imports(source):
                 continue
             if not item[:1].isspace() and not item.startswith("-"):
                 break
+            flow = re.fullmatch(r"\s*-\s*\{([^{}]*)\}\s*(#.*)?", item)
+            if flow:  # a block list item written as one flow mapping
+                fields = [re.fullmatch(r"\s*(package|as)\s*:\s*" + _SCALAR + r"\s*", f) for f in flow.group(1).split(",")]
+                if not all(fields):
+                    return None
+                current = [f.groups() for f in fields]
+                result.append(current)
+                continue
             field = re.match(r"\s*(-\s+)?(package|as)\s*:\s*" + _SCALAR + r"\s*(#.*)?$", item)
             if not field:
                 return None
@@ -362,6 +381,58 @@ def _layer(rules, package):
     return None
 
 
+def prose_lines(body):
+    """The lines of a body outside Markdown tables and fenced code blocks."""
+    fenced = False
+    for line in (body or "").splitlines():
+        if line.lstrip().startswith("```"):
+            fenced = not fenced
+            continue
+        if not fenced and not line.lstrip().startswith("|"):
+            yield line
+
+
+def prose_words(body):
+    """Words of a body's prose (quality criteria S1); list markers such as `-` or `1.` are not words."""
+    return sum(1 for line in prose_lines(body) for token in line.split() if not LIST_MARKER.fullmatch(token))
+
+
+def decisions(definition):
+    """The model's counterpart of cyclomatic complexity: each typed refusal is one branch, and so is
+    each condition word in the body's prose (`when`, `if`, `unless`, `otherwise`, `except`)."""
+    refusals = (definition.get("spec") or {}).get("refusals") or []
+    return len(refusals) + len(CONDITION.findall(" ".join(prose_lines(definition.get("body")))))
+
+
+def package_strings(spec):
+    """{field: [Package path]} of the Package-naming fields a Definition sets (modeled scope and architecture rules)."""
+    found = {}
+    for field in SCOPE_FIELDS:
+        value = (spec or {}).get(field)
+        values = value if isinstance(value, list) else [value] if isinstance(value, str) else []
+        if values:
+            found[field] = values
+    return found
+
+
+def covers(cover, package):
+    """Whether a named Package covers a Package: itself, the Packages below it, or everything for the Root `.`."""
+    return cover == "." or package == cover or package.startswith(cover + "/")
+
+
+def named_values(value):
+    """Field names, enumeration values, wire names and codes set anywhere in a spec."""
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if key in NAME_KEYS and isinstance(item, str):
+                yield item
+            else:
+                yield from named_values(item)
+    elif isinstance(value, list):
+        for item in value:
+            yield from named_values(item)
+
+
 def lint(model, repo=None, rules=None, term_pattern=TERM_PATTERN):
     """Warnings per register ENH-002. Each has a signal, a severity and a subject."""
     findings = []
@@ -371,13 +442,63 @@ def lint(model, repo=None, rules=None, term_pattern=TERM_PATTERN):
 
     content = model.content()
     for identity in content:
-        words = len((model.definitions[identity].get("body") or "").split())
+        words = prose_words(model.definitions[identity].get("body"))
         if words > WORDS_WARNING:
-            warn("size", text(identity), f"body has {words} words", "strong" if words > WORDS_STRONG else "warning")
-    connected = {s for s, t, _, _ in model.edges if s != t} | {t for s, t, _, _ in model.edges if s != t}
+            warn("size", text(identity), f"body has {words} words of prose", "strong" if words > WORDS_STRONG else "warning")
     for identity in content:
-        if identity not in connected:
-            warn("isolated", text(identity), "no typed reference or body link in or out")
+        count = decisions(model.definitions[identity])
+        if count > DECISIONS_WARNING:
+            warn("decisions", text(identity), f"{count} decisions (refusals and conditions)",
+                 "strong" if count > DECISIONS_STRONG else "warning")
+    scoped = {i for i in model.local if package_strings(model.definitions[i].get("spec"))}
+    connected = {s for s, t, _, _ in model.edges if s != t} | {t for s, t, _, _ in model.edges if s != t} | scoped
+    for identity in content:
+        if identity not in connected and model.kind(identity) != PROJECT:  # the project anchor is exempt (criteria S9)
+            warn("isolated", text(identity), "no typed reference, body link or Package scope in or out")
+
+    local_packages = set(model.packages(model.local))
+    existing = {"."} | {"/".join(p.split("/")[:n]) for p in local_packages for n in range(1, p.count("/") + 2)}
+    for identity in sorted(scoped):
+        for field, values in package_strings(model.definitions[identity].get("spec")).items():
+            for value in values:
+                if value not in existing:
+                    warn("unknown-package", text(identity), f"`{field}` names `{value}`, which is no Package of this model", "strong")
+
+    dependency_rules = []
+    for i in sorted(model.local):
+        if model.kind(i) == DEPENDENCY_RULE:
+            spec = model.definitions[i].get("spec") or {}
+            dependency_rules.append((spec.get("appliesTo") or None, spec.get("mayDependOn") or [], i))
+    for source, target in sorted({(s[0], t[0]) for s, t, _, _ in model.edges if s[0] != t[0] and t[0] in local_packages}):
+        for applies, may, identity in dependency_rules:
+            # Without appliesTo a rule governs only its own Package, not those below it (Practice.appliesTo).
+            governing = [a for a in applies if covers(a, source)] if applies else [identity[0]] if source == identity[0] else []
+            if governing and not any(covers(a, target) for a in governing) and not any(covers(m, target) for m in may):
+                warn("dependency-rule", f"{source} -> {target}", f"not allowed by {text(identity)}", "strong")
+
+    interfaces = collections.defaultdict(list)  # Package -> [(Interface, appliesTo, exposed Definitions)]
+    for i in sorted(model.local):
+        if model.kind(i) == INTERFACE:
+            spec = model.definitions[i].get("spec") or {}
+            exposed = {t for t, _ in _spec_references([spec.get("operations") or [], spec.get("types") or []], "")}
+            interfaces[i[0]].append((i, spec.get("appliesTo") or [], exposed | {i}))
+    unlisted_refusals = 0
+    for source, target in sorted({(s, t) for s, t, via, _ in model.edges if via == "spec" and s[0] != t[0]}):
+        # Typed uses only; body links are reading aids. The nearest Package above the target that has Interfaces
+        # governs it; its own subtree is not bound, and an Interface without appliesTo binds no one (v0.3.1).
+        if target not in model.local:
+            continue
+        owner = max((p for p in interfaces if covers(p, target[0])), key=lambda p: (p != ".", len(p)), default=None)
+        if owner is None or covers(owner, source[0]):
+            continue
+        binding = [(i, exposed) for i, applies, exposed in interfaces[owner] if any(covers(a, source[0]) for a in applies)]
+        if not binding:
+            continue
+        if model.kind(target) == REFUSAL_CODE:
+            unlisted_refusals += 1
+        elif not any(target in exposed for _, exposed in binding):
+            names = ", ".join(text(i) for i, _ in binding)
+            warn("interface", f"{text(source)} -> {text(target)}", f"`{target[1]}` is not exposed by {names}", "strong")
     for package in model.packages(content):
         if package not in model.area_owners:
             warn("no-area", package, "holds content Definitions but owns no registered artifact or ownership area")
@@ -396,6 +517,7 @@ def lint(model, repo=None, rules=None, term_pattern=TERM_PATTERN):
                 warn("unset-field", text(kind), f"field `{field}` is set by no local Definition")
 
     ids = {i[1].lower() for i in model.local} | LITERALS  # an imported `name` Property is not this model's term
+    ids |= {n.lower() for i in model.local for n in named_values(model.definitions[i].get("spec"))}
     term_packages = collections.defaultdict(set)
     for identity in model.local:
         for term in re.findall(r"`([^`\n]+)`", model.definitions[identity].get("body") or ""):
@@ -416,6 +538,8 @@ def lint(model, repo=None, rules=None, term_pattern=TERM_PATTERN):
                     warn("direction", f"{source} -> {target}", "forbidden: " + rule.get("reason", f"{rule['from']} -> {rule['to']}"))
 
     notes = []
+    if unlisted_refusals:
+        notes.append(f"{unlisted_refusals} cross-Package uses of refusal codes not checked against Interfaces, which cannot list refusal codes")
     if repo is None:
         notes.append("imports not read (no --repo): unused-import and import-cycle signals skipped")
     else:
@@ -516,10 +640,55 @@ def format_lint(r):
     return "\n".join(out)
 
 
+def diagnostics(report):
+    """The findings of a check report, passed or not: (code, message) with follow-on `*_not_passed` findings last."""
+    found = []
+
+    def walk(node):
+        if isinstance(node, dict):
+            if isinstance(node.get("Code"), str) and isinstance(node.get("Message"), str):
+                found.append((node["Code"], node["Message"]))
+            for value in node.values():
+                walk(value)
+        elif isinstance(node, list):
+            for value in node:
+                walk(value)
+
+    walk(report)
+    unique = list(dict.fromkeys(found))
+    return {"status": report.get("status") if isinstance(report, dict) else None,
+            "findings": [{"code": c, "message": m} for c, m in sorted(unique, key=lambda f: f[0].endswith("_not_passed"))]}
+
+
+def summary(report):
+    """The lines a final report pastes: status, the local model's digest and Definition and Package counts."""
+    model = Model(report)
+    local = next((m for m in model.models if m.get("local")), {})
+    per_package = collections.Counter(i[0] for i in model.local)
+    return {"status": report.get("status"), "modelID": local.get("id"), "modelDigest": local.get("canonicalModelDigest"),
+            "definitions": len(model.local), "packages": dict(sorted(per_package.items()))}
+
+
+def format_summary(r):
+    lines = [f"status: {r['status']}", f"model: {r['modelID']} {r['modelDigest']}",
+             f"definitions: {r['definitions']} in {len(r['packages'])} Packages"]
+    lines += [f"  {package}: {count}" for package, count in r["packages"].items()]
+    return "\n".join(lines)
+
+
+def format_diagnostics(r):
+    lines = [f"status: {r['status']}, {len(r['findings'])} findings"]
+    lines += [f"  [{f['code']}] {f['message']}" for f in r["findings"]]
+    return "\n".join(lines)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     commands = parser.add_subparsers(dest="command", required=True)
-    for name in ("graph", "refs", "lint", "lock"):
+    sub = commands.add_parser("diagnostics")
+    sub.add_argument("report")
+    sub.add_argument("--json", action="store_true")
+    for name in ("summary", "graph", "refs", "lint", "lock"):
         sub = commands.add_parser(name)
         sub.add_argument("report")
         if name == "refs":
@@ -552,11 +721,15 @@ def main(argv=None):
             for note in notes:
                 print("note:", note, file=sys.stderr)
             return 0
-        if args.command == "impact":
+        if args.command == "diagnostics":
+            result, formatter = diagnostics(read_json(args.report)), format_diagnostics
+        elif args.command == "impact":
             result, formatter = impact(Model(read_json(args.old)), Model(read_json(args.new)), args.transitive), format_impact
         else:
             model = Model(read_json(args.report))
-            if args.command == "graph":
+            if args.command == "summary":
+                result, formatter = summary(read_json(args.report)), format_summary
+            elif args.command == "graph":
                 result, formatter = package_graph(model), format_graph
             elif args.command == "refs":
                 result, formatter = references(model, parse_identity(args.definition)), format_refs

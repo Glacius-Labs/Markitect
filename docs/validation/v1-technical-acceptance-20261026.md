@@ -74,7 +74,7 @@ The [final review's table](v1-final-review-20261025.md#guarantees-and-their-hold
 4. **Message allowance and question relay.** Questions to parent or children only, an Apply-wide allowance and no ordering of shared prerequisites let question traffic exhaust the allowance (M-c3-C4). Fix plan WP3a removes the double charge; WP3b, ordering by dependency, stays deferred until its native control.
 5. **Open questions to a handed-off Manager** stayed open, and its non-action stopped the whole Run (M-c3-C8). WP5, added by the coordinator to session S2's scope, closes such questions; it is not yet merged. After the aborts of M-c2-C5 attempt 01 and M-c3-C8, the closure records confirm 23 of 44 and 22 of 42 closures ("exec container is closed"), although no containers or volumes remained.
 6. **One transient provider overload ends the whole Apply** (M-c2-C5, three times). The records say the overload may depend on M's load of about 21 parallel sessions. Fix plan WP1 adds a bounded retry.
-7. **Windows host:** about 32–35 ms per Git process launch, about 2,100 launches in one three-Run test ([workspace notes](../../internal/adapters/gitrepo/WORKSPACES.md)); a performance limit, not a correctness one.
+7. **Windows host:** about 32–35 ms per Git process launch, about 2,100 launches in one three-Run test ([workspace notes](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/internal/adapters/gitrepo/WORKSPACES.md)); a performance limit, not a correctness one.
 8. **Should-fix from the final review, scheduled for step 5:** Cockpit leftovers in `internal/bootstrap/lock.go` (dead code). The review's note 6 records a documented boundary: a directory registry entry does not claim an untracked ELF file, which is reported and never fails a check.
 9. Account refresh during long Applies and a second provider are not established.
 
@@ -96,4 +96,17 @@ The owner-approved fix plan was merged (S1–S3, WP5) and checked by bounded nat
 | 6. One transient provider overload ends the Apply | Bounded retry in source (WP1); no overload occurred in the controls. A thread accepts a new turn after one ended by a non-retrying provider error (proxy probe); that continuing after served actions is safe is not shown |
 | P2, public Verify-reject correction path | Exercised natively on F_fix2: Verify rejected with three Definition-bound Findings, a fresh correction pair corrected them, and the verified candidate was published with exact readback |
 
-The controls ran on the Windows host with Linux containers. Markitect's execution then moves to a Linux runner image ([DEC-077](../concepts/register.md#dec-077-development-pace-and-linux-first-execution)); the new frozen F follows that change and the remaining fix.
+The old-versus-new Makerspace pilot of 27 October ([record](v1-makerspace-gate-20261027.md)) then found one more product defect: the publication guard hashed model files in read order, so an unchanged repository whose model has a file beside a same-named folder was refused at publication. It is fixed ([PR #776](https://github.com/Glacius-Labs/Markitect/pull/776)). The controls ran on the Windows host with Linux containers. Markitect's execution then moves to a Linux runner image ([DEC-077](../concepts/register.md#dec-077-development-pace-and-linux-first-execution)); the new frozen F follows that change and the remaining fix.
+
+### New frozen source F2
+
+After the controls, the fixes they led to, the cleanup (R3a–R3c, DEC-076) and the Linux runner (L1–L3, DEC-077), the source was frozen again on 27 October 2026. The Claude adapter (slice K1) is not part of F2; V1's provider scope stays Codex (D18).
+
+| Item | Value |
+| --- | --- |
+| F2 | `7371cfd99d804596f6412951112a50def42bf037` (tree `bad23179710d10097f304433430ee56b0507ed18`) |
+| Hosted CI | [run 40472471232](https://github.com/Glacius-Labs/Markitect/actions/runs/40472471232) on exactly F2: Linux quality and race detector passed. CI has no Windows job since DEC-077 |
+| Product binary | SHA-256 `3cc245eb6fc4ff68c9aaebf144e6075e391cd9639b1dc966596978b1a4793d02`, productBuild `0.14.1+7371cfd9…`, `vcs.modified=false` |
+| Agent images | Base `sha256:d79691a0fd6093dd510f57c0866b2404ee0210a94c0a7487f56a6694502395a8`, Go `sha256:cf9a5db7c8653137b816c41cde3dcbfecdd9e23a2b247bc5b2eaa2260f3f5871`; `runtime.env` with Codex CLI 0.162.0 and agentd F2 |
+| Runner image | `sha256:8898574d971f03f4320ebfcbb6ec52622fcc9df6933ade5bf67c1f438e882364`, revision label F2 |
+| Native evidence closest to F2 | The Linux runner's qualification on Main `00c687b6` ([record](v1-l1-runner-qualification-20261027.md)); the fix-plan controls on F_fix and F_fix2 ([record](v1-fixplan-native-controls-20261027.md)); the Makerspace pilot on `be7813a6` and F_cmp2 ([record](v1-makerspace-gate-20261027.md)). F2 adds the R3 cleanup, which keeps behavior, and L2, which refuses native Apply on Windows; no native Apply ran on F2 itself |

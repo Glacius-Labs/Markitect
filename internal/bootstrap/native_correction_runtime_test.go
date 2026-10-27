@@ -232,7 +232,7 @@ func TestNativeFreshCorrectionRunChain(t *testing.T) {
 		fail(err)
 	}
 	chain := filepath.Base(output)
-	command, err := composeApplyCommand(cfg, chain, repository, engine, sessions, checker, profile)
+	command, err := composeApplyCommand(cfg, chain, repository, engine, codexAgents(sessions, profile), checker)
 	if err != nil {
 		fail(err)
 	}

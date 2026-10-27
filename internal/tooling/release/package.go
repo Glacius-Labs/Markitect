@@ -1,4 +1,7 @@
-// Package release builds a portable, reproducible Markitect source archive.
+// Package release builds a portable, reproducible Markitect source archive and
+// a source-bound bundle, and installs a verified bundle into a consumer. It
+// loads the fixed or provisional source snapshots it packages from the working
+// tree or a committed Git tree.
 package release
 
 import (
@@ -58,7 +61,7 @@ type sourceFile struct {
 	data []byte
 }
 
-const embeddedNoticesPath = "internal/tooling/licenses/notices.md"
+const embeddedNoticesPath = "internal/buildinfo/notices.md"
 
 func validVersion(version string) bool {
 	if strings.HasPrefix(version, "v") {

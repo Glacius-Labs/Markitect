@@ -10,7 +10,7 @@ The owner supplied the consolidated concept v0.18 ([verbatim](v1-concept-v018-20
 
 English translation: "Check the current state of Markitect against the concept here. Our goal is to review and refine this concept one final time and then record it. Then we want to implement V1 stably and cleanly. The highest priority is quality, cleanliness and excellent architecture. We generally prefer simplicity. Before you start implementing anything, give me your assessment and your plan for how we should proceed."
 
-Recorder's note: the assistant compared v0.18 with Main `334e7c3133ff294c0b827e623d80185e3d3ac9af` and the supplied [static audit](../../development/concept-conformance-audit-20261024.md). It confirmed the audit's A1, A2, A3, A5 and R2 observations in source and found R1 already fixed by PR #672.
+Recorder's note: the assistant compared v0.18 with Main `334e7c3133ff294c0b827e623d80185e3d3ac9af` and the supplied [static audit](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/development/concept-conformance-audit-20261024.md). It confirmed the audit's A1, A2, A3, A5 and R2 observations in source and found R1 already fixed by PR #672.
 
 ## Assistant proposals (quoted)
 

@@ -23,6 +23,15 @@ const (
 // within the close timeout and was removed by force.
 var ErrForcedClose = errors.New("the container did not end within the close timeout and was removed by force")
 
+// ErrRefused matches a request that agentd answered with a failure: agentd
+// carried out nothing, so a refused start started no provider.
+var ErrRefused = errors.New("agentd refused the request")
+
+type refusal struct{ purpose, message string }
+
+func (r refusal) Error() string      { return "agentd refused the " + r.purpose + ": " + r.message }
+func (refusal) Is(target error) bool { return target == ErrRefused }
+
 // Session is the Orchestrator side of one agentd connection. Provider output is
 // buffered up to a bound, so control replies such as a census or the exit
 // never wait for the consumer. Tool calls arrive on a short queue; the
@@ -207,7 +216,7 @@ func (s *Session) request(ctx context.Context, c frame.ControlMessage, purpose s
 	select {
 	case r := <-reply:
 		if r.Type == frame.TypeFailure {
-			return frame.ControlMessage{}, fmt.Errorf("agentd refused the %s: %s", purpose, r.Failure.Message)
+			return frame.ControlMessage{}, refusal{purpose, r.Failure.Message}
 		}
 		return r, nil
 	case <-s.ended:

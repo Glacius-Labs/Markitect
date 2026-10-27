@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -57,13 +58,13 @@ func TestBootstrapImageFactoryUsesOnlySelectedSourceBoundConfiguration(t *testin
 		return reader, nil
 	}
 	var out, errout bytes.Buffer
-	code := run(context.Background(), []string{"check", "--repo", repo.Dir}, &out, &errout, factory)
+	code := run(context.Background(), runtime.GOOS, []string{"check", "--repo", repo.Dir}, &out, &errout, factory)
 	if code != 0 || len(received) != 0 {
 		t.Fatalf("structural preparation used engine: exit=%d factories=%v stderr=%s", code, received, errout.String())
 	}
 	out.Reset()
 	errout.Reset()
-	code = run(context.Background(), []string{"check", "--repo", repo.Dir, "--metadata", "--runtime-profile", runtimeProfile}, &out, &errout, factory)
+	code = run(context.Background(), runtime.GOOS, []string{"check", "--repo", repo.Dir, "--metadata", "--runtime-profile", runtimeProfile}, &out, &errout, factory)
 	if code != 0 {
 		t.Fatalf("metadata exit=%d stderr=%s output=%s", code, errout.String(), out.String())
 	}

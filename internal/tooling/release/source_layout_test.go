@@ -2,7 +2,6 @@ package release
 
 import (
 	"bytes"
-	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 	"os"
 	"path/filepath"
 	"strings"
@@ -18,12 +17,14 @@ func rootLayoutFixture(t *testing.T) string {
 		"internal/project/prepared.go":                "package project\n",
 		"internal/runtimeconfig/prepare.go":           "package runtimeconfig\n",
 		"internal/adapters/runstore/store.go":         "package runstore\n",
+		"internal/adapters/runner/launch.go":          "package runner\n",
+		"cmd/markitect-runner/main.go":                "package main\n",
 		"internal/harness/harness.go":                 "package harness\n",
 		"internal/run/execute.go":                     "package run\n",
 		"internal/adapters/gitrepo/git.go":            "package gitrepo\n",
 		"internal/apply/testdata/fixture.json":        "literal historical fixture\n",
 		"internal/adapters/documents/writer.go":       "package documents\n",
-		"internal/tooling/release/install/install.go": "package releaseinstall\n",
+		"internal/tooling/release/install.go":         "package release\n",
 		"internal/testkit/testdata/hostile.gitconfig": "[core]\n hooksPath=blocked\n",
 	} {
 		writeLayoutFile(t, root, name, content)
@@ -98,7 +99,7 @@ func TestRootLayoutLiveAndFixedMatch(t *testing.T) {
 		t.Fatal("live and fixed root selections differ")
 	}
 	contents := archiveContents(t, live)
-	for _, name := range []string{"cmd/markitect/main.go", "internal/model/vendor.go", "internal/project/prepared.go", "internal/runtimeconfig/prepare.go", "internal/adapters/runstore/store.go", "internal/harness/harness.go", "internal/run/execute.go", "internal/adapters/gitrepo/git.go", "internal/apply/testdata/fixture.json", "internal/adapters/documents/writer.go", "internal/tooling/release/install/install.go", "internal/testkit/testdata/hostile.gitconfig"} {
+	for _, name := range []string{"cmd/markitect/main.go", "internal/model/vendor.go", "internal/project/prepared.go", "internal/runtimeconfig/prepare.go", "internal/adapters/runstore/store.go", "internal/adapters/runner/launch.go", "cmd/markitect-runner/main.go", "internal/harness/harness.go", "internal/run/execute.go", "internal/adapters/gitrepo/git.go", "internal/apply/testdata/fixture.json", "internal/adapters/documents/writer.go", "internal/tooling/release/install.go", "internal/testkit/testdata/hostile.gitconfig"} {
 		if _, ok := contents[name]; !ok {
 			t.Errorf("omitted %s", name)
 		}
@@ -160,7 +161,7 @@ func TestCodexCodecLiveAndFixedSourceBytes(t *testing.T) {
 }
 
 func TestRootLayoutRejectsUnsupportedInputsBeforeFiltering(t *testing.T) {
-	for _, name := range []string{"internal/adapters/cockpit/web/index.html", "internal/authoring/session.go", "src/cmd/markitect/main.go", "internal/other/x.txt", "internal/model-extra/x.go", "internal/run-extra/x.go", "internal/adapters/direct.go", "internal/adapters/gitrepo-extra/git.go", "internal/adapters/checks-extra/profile.go", "internal/adapters/claudecode/codec.go", "internal/adapters/codexappserver-extra/codec.go", "internal/adapters/unowned/codec.go", "internal/tooling-extra/release/x.go", "internal/tooling/other/x.go", "cmd/other/main.go", "internal/model/nested/go.mod"} {
+	for _, name := range []string{"internal/adapters/cockpit/web/index.html", "internal/authoring/session.go", "src/cmd/markitect/main.go", "internal/other/x.txt", "internal/model-extra/x.go", "internal/run-extra/x.go", "internal/adapters/direct.go", "internal/adapters/gitrepo-extra/git.go", "internal/adapters/checks-extra/profile.go", "internal/adapters/claudecode-extra/codec.go", "internal/adapters/codexappserver-extra/codec.go", "internal/adapters/unowned/codec.go", "internal/tooling-extra/release/x.go", "internal/tooling/other/x.go", "cmd/other/main.go", "internal/model/nested/go.mod"} {
 		t.Run(name, func(t *testing.T) {
 			root := rootLayoutFixture(t)
 			writeLayoutFile(t, root, name, "unexpected\n")
@@ -214,7 +215,7 @@ func TestRootLayoutRequiresCommandAndInternalGoSources(t *testing.T) {
 }
 
 func TestRootResponsibilityPrefixesAreExact(t *testing.T) {
-	for _, name := range []string{"internal/model/a.go", "internal/tooling/release/install/a.go", "internal/adapters/documents/a.go", "internal/adapters/codexappserver/codec.go", "cmd/markitect/main.go"} {
+	for _, name := range []string{"internal/model/a.go", "internal/tooling/release/a.go", "internal/adapters/documents/a.go", "internal/adapters/codexappserver/codec.go", "cmd/markitect/main.go"} {
 		if !sourceRoot(name) {
 			t.Errorf("rejected %s", name)
 		}
@@ -271,7 +272,7 @@ func TestRawLegacyAndSchemaBoundariesMatchLiveAndFixed(t *testing.T) {
 	}
 }
 
-func fixedSourceSnapshot(t *testing.T, root string) *source.Input {
+func fixedSourceSnapshot(t *testing.T, root string) *Input {
 	t.Helper()
 	files := map[string][]byte{}
 	modes := map[string]string{}
@@ -292,13 +293,13 @@ func fixedSourceSnapshot(t *testing.T, root string) *source.Input {
 		}
 		relative = filepath.ToSlash(relative)
 		files[relative] = data
-		modes[relative] = source.RegularMode
+		modes[relative] = RegularMode
 		return nil
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	return &source.Input{Files: files, Modes: modes}
+	return &Input{Files: files, Modes: modes}
 }
 
 func writeLayoutFile(t *testing.T, root, relative, content string) {

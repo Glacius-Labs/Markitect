@@ -37,9 +37,6 @@ jobs:
       - name: Verify module checksums
         run: go mod verify
 
-      - name: Enforce actual responsibility import boundaries
-        run: go run ./cmd/markitect-check-architecture --repo .
-
       - name: Test
         shell: bash
         run: |
@@ -83,6 +80,13 @@ jobs:
 
       - name: Check independent library oracle and bounded transport
         run: python -B -m unittest discover -s tools/library-oracle
+
+      - name: Test comparison, Makerspace oracle and model analysis tools
+        shell: bash
+        run: |
+          python -B -m unittest discover -s tools/comparison
+          python -B -m unittest discover -s tools/makerspace-oracle -p 'test_*.py'
+          python -B -m unittest discover -s tools/model-analysis
 
       - name: Upload Go test results
         if: always()

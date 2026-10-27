@@ -56,4 +56,4 @@ A committed model binds the specification for its revision. Tests, source checks
 
 [Documentation maintenance](documentation.md) owns placement and historical/current boundaries. Record intent at its canonical owner, preserve owner decisions with their source, and link from guides and maps. Keep dated assessments as assessments. An accepted working-method change does not turn an earlier assistant judgment into a measured result.
 
-The [parallel-work guide](parallel-work.md) explains bounded execution. The [delivery plan](../implementation-plan.md#integration) owns exact-head review, CI and direct delivery merges; this method does not replace those rules or require unrelated repeated checks.
+[CONTRIBUTING](../../CONTRIBUTING.md#pull-requests-and-parallel-work) explains bounded execution. The [delivery plan](../implementation-plan.md#integration) owns exact-head review, CI and direct delivery merges; this method does not replace those rules or require unrelated repeated checks.

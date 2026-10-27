@@ -6,8 +6,7 @@ This is the home of Markitect's long-term vision, product-level decisions, clari
 |---|---|
 | [V1 concept 1.0](v1-concept.md) | The consolidated V1 target: scope, principles, organization, Run, workflow, harness, acceptance and decisions D1–D18 ([DEC-068](register.md#dec-068-v1-concept-10)) |
 | [Register](register.md) | All entries with ID, status, origin and links, and the mapping of earlier collections |
-| [Origin and rationale](origin-and-rationale.md) | The owner's originating project, causal sequence, problems, concepts and assumptions, connected to the existing register |
-| [Product reflections](reflections/README.md) | Dated discussions of future use, organizational ideas and trust, with owner wording and assistant interpretation kept distinct |
+| [Origin and rationale](../vision.md#origin-and-rationale) | The owner's originating project, causal sequence, problems, concepts and assumptions, connected to the existing register; a section of the vision |
 | [Sources](sources/README.md) | Owner statements kept verbatim with provenance, including the origin account, product description, idea review and snapshots of the Concepts and Ideas chats' collections |
 
 ## Before assessing or redirecting Markitect
@@ -18,15 +17,7 @@ Accepted and clarified entries are the current basis. Do not reopen them without
 
 ## How this record relates to other documents
 
-| Owner | Holds |
-|---|---|
-| [Vision](../vision.md) | The accepted thesis as readable prose. It links here for individual entries. |
-| This record | Individual decisions, promises, assumptions, concepts, enhancements, ideas and open questions, with status and origin |
-| [Delivery plan](../implementation-plan.md) | Current delivery scope and coordination. Chats/PRs record candidate progress and exact evidence. |
-| [Architecture](../architecture.md) and the workflow guides | Implemented behavior |
-| [Measurement](../guides/measurement.md) | Evaluation procedure |
-| [Strategy sources](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/strategy/README.md) | Original strategy bundles from earlier phases, kept with their provenance |
-| [Design records](../design/README.md) | Proposals, assessments and design evidence from different stages |
+The [documentation map](../README.md#canonical-status-and-evidence-owners) names the owner of every other subject, from the current design documents to the original strategy bundles in the archive. The [vision](../vision.md) holds the accepted thesis as readable prose and links here for individual entries.
 
 Summaries in the vision and other documents may restate entries. If a summary differs from an entry, the entry and its source govern; correct the summary.
 

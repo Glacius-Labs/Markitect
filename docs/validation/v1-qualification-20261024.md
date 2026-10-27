@@ -1,6 +1,6 @@
 # V1 qualification record — 23 and 24 October 2026
 
-This record keeps the source integration checkpoints, bounded probes and native qualification evidence for the V1 source composition up to Main `334e7c3133ff294c0b827e623d80185e3d3ac9af`. Its text moved unchanged from the [delivery plan](../implementation-plan.md) and the [V1 execution architecture](../design/v1-execution-architecture.md) on 24 October 2026, when [concept 1.0](../concepts/v1-concept.md) was recorded; only links were adjusted.
+This record keeps the source integration checkpoints, bounded probes and native qualification evidence for the V1 source composition up to Main `334e7c3133ff294c0b827e623d80185e3d3ac9af`. Its text moved unchanged from the [delivery plan](../implementation-plan.md) and the [V1 execution architecture](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/design/v1-execution-architecture.md) on 24 October 2026, when [concept 1.0](../concepts/v1-concept.md) was recorded; only links were adjusted.
 
 Each observation is bound to its stated source, runtime and limits. Concept 1.0 changes the Run collaboration contract (D10–D17). Evidence on the earlier contract does not qualify the changed contract; requalification follows the delivery plan. Retained packets live on the execution host under the stated paths. Failed attempts remain failures.
 

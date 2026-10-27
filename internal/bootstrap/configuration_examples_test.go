@@ -49,7 +49,8 @@ func TestExplicitAccountConfigurationExampleLoadsAndInvalidPreflightStartsNothin
 	}
 	var out, stderr bytes.Buffer
 	calls := 0
-	code := run(context.Background(), []string{"apply", "--repo", dir, "--runtime-profile", filepath.Join(dir, "never-read-runtime.yaml"), "--run-config", config}, &out, &stderr, func(codexappserver.EngineConfig) (codexappserver.ImageReader, error) {
+	// Native Apply preflight runs on the Linux Apply host; Windows refuses it earlier.
+	code := run(context.Background(), "linux", []string{"apply", "--repo", dir, "--runtime-profile", filepath.Join(dir, "never-read-runtime.yaml"), "--run-config", config}, &out, &stderr, func(codexappserver.EngineConfig) (codexappserver.ImageReader, error) {
 		calls++
 		t.Fatal("invalid Apply preflight acquired runtime metadata")
 		return nil, nil

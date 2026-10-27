@@ -157,7 +157,7 @@ These commands inspect the canonical model under the project's `.markitect/`; th
 
 ### Running Apply (advanced, experimental)
 
-The current source includes `apply`, but it is **not** a one-command install or an automatic brownfield migration. It requires a reviewed and committed project model, explicit registry/ownership declarations, a clean target on an isolated non-protected Git branch, a pinned Linux container/runtime setup, normal Codex account credentials, and finite invocation limits.
+The current source includes `apply`, but it is **not** a one-command install or an automatic brownfield migration. It requires a reviewed and committed project model, explicit registry/ownership declarations, a clean, committed target (for a native Apply on an isolated non-protected Git branch), a pinned Linux container/runtime setup, normal Codex account credentials, and finite invocation limits.
 
 Start from [the runtime profile example](examples/runtime-profile.example.yaml) and [invocation example](examples/run.example.json). Copy them **outside** the repository and replace all placeholders, using actual runtime/image/build identities. Then invoke:
 
@@ -168,7 +168,7 @@ go run ./cmd/markitect apply \
   --run-config /absolute/path/run.json
 ```
 
-`apply` starts real provider and check processes and may modify files in the selected repository after verified publication. Read the [exact execution and safety requirements](docs/guides/project-workflow.md#execute-verify-and-apply) before using it. No general-purpose `init`, setup wizard, or Extract path is currently provided.
+This native form runs on Linux, where the Apply host runs. On Windows, add `--runner RUNNER_IMAGE_ID` to run the same Apply in the [Linux runner](docs/guides/project-workflow.md#apply-in-the-linux-runner) through Docker Desktop; it returns the verified change as a new branch. `apply` starts real provider and check processes and may modify files in the selected repository after verified publication. Read the [exact execution and safety requirements](docs/guides/project-workflow.md#execute-verify-and-apply) before using it. No general-purpose `init`, setup wizard, or Extract path is currently provided.
 
 ## Current status
 
@@ -197,10 +197,10 @@ The measure of success is whether projects remain consistent through real change
 ## Documentation
 
 - [Product vision](docs/vision.md) — the thesis, responsibilities, and limitations
-- [Origin and rationale](docs/concepts/origin-and-rationale.md) — why the idea emerged
+- [Origin and rationale](docs/vision.md#origin-and-rationale) — why the idea emerged
 - [Canonical language v1](docs/design/language-contract.md) — the authoritative model format
 - [Project workflow](docs/guides/project-workflow.md) — exact commands and runtime prerequisites
-- [V1 execution architecture](docs/design/v1-execution-architecture.md) — Run, Workflow, Harness, storage, and publication boundaries
+- [Architecture](docs/architecture.md) — packages, Run, workflow, harness, storage, and publication boundaries
 - [Library example](testdata/library/README.md) — the worked model and policy-change scenario
 - [Measurement](docs/guides/measurement.md) — evaluation against conventional agentic work
 - [Documentation map](docs/README.md) — all maintained references
@@ -213,22 +213,14 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for source checks, import boundaries, and
 
 The earlier Project/Domain downloads were retired. There is currently no supported binary release of this model-first V1. The release evidence remains on Main and the former tags are mapped to commits in the [retired release mapping](docs/validation/retired-releases-20261017.json); see the [retirement record](docs/validation/distribution-retirement-20261017.md).
 
-<!-- markitect-release:install:start -->
-
 ### Installation
 
 Build from the current reviewed source using the Go version in `go.mod`. Published binary installation instructions will be added only after source-bound release qualification.
-
-<!-- markitect-release:install:end -->
-
-<!-- markitect-release:try:start -->
 
 ### Examples and evaluation
 
 Start with the [canonical Library model](testdata/library/README.md), [project workflow](docs/guides/project-workflow.md), and [independent Library oracle](tools/library-oracle/README.md). The complete two-Apply policy-change demonstration remains a separate acceptance target.
 
-<!-- markitect-release:try:end -->
-
 ## License
 
-Apache-2.0. See [LICENSE](LICENSE) and [third-party notices](internal/tooling/licenses/notices.md).
+Apache-2.0. See [LICENSE](LICENSE) and [third-party notices](internal/buildinfo/notices.md).

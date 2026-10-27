@@ -17,7 +17,6 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/runtimeconfig"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
-	"github.com/Glacius-Labs/Markitect/internal/tooling/licenses"
 )
 
 // RevisionResolver resolves an explicitly selected ref exactly once. Only its
@@ -92,6 +91,13 @@ apply options:
   Apply preflight binds committed inputs and one explicit Codex account profile.
   Standalone Run has a closed hierarchy: questions remain inside that Run.
   Publication requires stored Verify approval after all Run resources close.
+  --runner IMAGE_ID        run Apply in the Linux runner image through the
+                           run configuration's local engine: it clones committed
+                           history from the read-only .git directory and returns
+                           a verified change as a new branch; the checkout itself
+                           is never written. Required on Windows: the Apply host
+                           runs on Linux
+  --result-branch NAME     that branch (default markitect/apply-<apply id>)
 
 Exit codes: 0 requested stage passed; 1 known failure; 2 usage;
 3 incomplete observation, I/O/budget refusal or unavailable operation.
@@ -119,7 +125,7 @@ func (c *Command) Run(ctx context.Context, args []string, stdout, stderr io.Writ
 		return emit(map[string]string{"version": buildinfo.Version()})
 	}
 	if verb == "licenses" {
-		_, err := io.WriteString(stdout, licenses.Text)
+		_, err := io.WriteString(stdout, buildinfo.Notices)
 		if err != nil {
 			return 3
 		}

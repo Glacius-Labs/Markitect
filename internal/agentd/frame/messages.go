@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"unicode/utf8"
 )
 
 // ControlType names a control message.
@@ -13,7 +14,7 @@ type ControlType string
 const (
 	// TypeHello is agentd's first message: its frame-protocol version.
 	TypeHello ControlType = "hello"
-	// TypeInitialize installs private login data before the first provider starts.
+	// TypeInitialize installs the private provider home before the first provider starts.
 	TypeInitialize  ControlType = "initialize"
 	TypeInitialized ControlType = "initialized"
 	// TypeClearPrivateHome removes the installed login after provider exit.
@@ -54,11 +55,29 @@ type ControlMessage struct {
 	PrivateHomeCleared *PrivateHomeCleared `json:"privateHomeCleared,omitempty"`
 }
 
-// Initialize carries only the allowlisted Codex auth file, never a path or
-// shell command. The payload is private transport, excluded from transcripts.
-// Its JSON encoding (including base64 expansion) must fit one bounded frame.
+// Initialize carries exactly one allowlisted provider home, never a path or
+// shell command: the Codex auth file, or the Claude Code files. The payload is
+// private transport, excluded from transcripts. Its JSON encoding (including
+// base64 expansion) must fit one bounded frame.
 type Initialize struct {
-	CodexAuth []byte `json:"codexAuth"`
+	CodexAuth []byte      `json:"codexAuth,omitempty"`
+	Claude    *ClaudeHome `json:"claude,omitempty"`
+}
+
+// ClaudeHome is the fixed private Claude Code setup: the subscription
+// credentials file (.claude/.credentials.json) and the two native instruction
+// files the CLI loads as its system prompt (.markitect/system-prompt.md and
+// .markitect/append-system-prompt.md). agentd verifies before every later
+// start that the instruction files are unchanged and that no user-scope
+// Claude Code settings, memory or extensions appeared.
+type ClaudeHome struct {
+	Credentials        []byte `json:"credentials"`
+	SystemPrompt       string `json:"systemPrompt"`
+	AppendSystemPrompt string `json:"appendSystemPrompt"`
+}
+
+func (h *ClaudeHome) valid() bool {
+	return h != nil && len(h.Credentials) > 0 && len(h.Credentials) <= MaxPrivateAuthBytes && h.SystemPrompt != "" && h.AppendSystemPrompt != "" && utf8.ValidString(h.SystemPrompt) && utf8.ValidString(h.AppendSystemPrompt)
 }
 
 type Initialized struct{}
@@ -128,10 +147,13 @@ type Process struct {
 }
 
 // ToolSpec is one Orchestrator tool as offered to the provider through MCP.
+// Meta is the tool's optional MCP _meta object, passed to the provider's
+// tools/list unchanged, for example a provider's result-size annotation.
 type ToolSpec struct {
 	Name        string          `json:"name"`
 	Description string          `json:"description"`
 	InputSchema json.RawMessage `json:"inputSchema"`
+	Meta        json.RawMessage `json:"_meta,omitempty"`
 }
 
 // ToolCall is a provider's call of an Orchestrator tool. ID is assigned by agentd and
@@ -240,7 +262,9 @@ func (c ControlMessage) validate() error {
 	case TypeHello:
 		matches = c.Hello != nil
 	case TypeInitialize:
-		matches = c.Initialize != nil && len(c.Initialize.CodexAuth) > 0 && len(c.Initialize.CodexAuth) <= MaxPrivateAuthBytes
+		codex := c.Initialize != nil && len(c.Initialize.CodexAuth) > 0 && len(c.Initialize.CodexAuth) <= MaxPrivateAuthBytes && c.Initialize.Claude == nil
+		claude := c.Initialize != nil && len(c.Initialize.CodexAuth) == 0 && c.Initialize.Claude.valid()
+		matches = codex || claude
 	case TypeInitialized:
 		matches = c.Initialized != nil
 	case TypeClearPrivateHome:
