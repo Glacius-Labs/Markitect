@@ -1,4 +1,4 @@
-package source
+package release
 
 import (
 	"bufio"

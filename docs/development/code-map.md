@@ -29,7 +29,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `command` | Thin entrypoints to product composition. | `composition` | 2 |
 | `agent` | Runs inside each Agent container: provider process, MCP bridge and stdio framing. | `protocol` | 1 |
 | `agent-command` | Thin entrypoint of the session helper. | `agent` | 1 |
-| `maintenance` | The import gate and release packaging, separate from product execution. | `guardedwrite` | 3 |
+| `maintenance` | The import gate and release packaging, separate from product execution. | `guardedwrite` | 2 |
 | `maintenance-command` | Release maintenance entrypoint. | `maintenance`, `build` | 1 |
 | `test-support` | Hermetic fixtures. Only test files may import it. It imports no Markitect package, not even from tests. | nothing | 1 |
 | `standalone` | Consumer bootstrap and source smoke. It imports no Markitect package, not even from tests. | nothing | 2 |
@@ -42,7 +42,6 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `internal/adapters/codexappserver` | `internal/agentd/frame` | all | Codex Sessions use the frame values that the container client exposes. |
 | `internal/apply` | `internal/workflow` | all | Apply runs the sequence of closed Runs. |
 | `internal/tooling/release` | `internal/tooling/architecture` | all | The packager takes its source roots from this table. |
-| `internal/tooling/release` | `internal/tooling/source` | all | Packaging and installation load fixed source snapshots. |
 | `internal/adapters/codexappserver` | `internal/adapters/gitrepo` | tests only | Hierarchy tests run Codex Sessions over real Run Git copies. |
 | `internal/adapters/codexappserver` | `internal/adapters/runstore` | tests only | Hierarchy tests read the stored Run records. |
 | `internal/adapters/gitrepo` | `internal/adapters/checks` | tests only | The real-Git vertical tests compose workspaces with declared checks. |
@@ -158,7 +157,6 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 |---|---|---|
 | `internal/tooling/architecture` | Package architecture holds the repository's one architecture rule table and enforces it without compiling the inspected code: every production, test and platform-specific file imports only what its package's layer allows. | [docs/architecture.md#layers](../architecture.md#layers) |
 | `internal/tooling/release` | Package release builds a portable, reproducible Markitect source archive and a source-bound bundle, and installs a verified bundle into a consumer. | [docs/architecture.md#distribution](../architecture.md#distribution) |
-| `internal/tooling/source` | Package source loads fixed or provisional snapshots from either the current working tree or a committed Git tree, and defines the fixed collection of source files and deterministic operations over it, independent of how its bytes were obtained. | [docs/architecture.md#distribution](../architecture.md#distribution) |
 
 ## Maintenance command
 

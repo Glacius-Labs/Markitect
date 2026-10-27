@@ -1,4 +1,4 @@
-package source
+package release
 
 import (
 	"os"
@@ -24,7 +24,7 @@ func TestLoadPinnedCommitIgnoresWorkingTreeChanges(t *testing.T) {
 	}
 	repo.Write("added.txt", "uncommitted")
 
-	s, err := Load(root, revision)
+	s, err := LoadSource(root, revision)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -72,7 +72,7 @@ func TestLoadPinnedCommitIgnoresAmbientGitRepositoryOverrides(t *testing.T) {
 	t.Setenv("GIT_OBJECT_DIRECTORY", filepath.Join(foreign, ".git", "objects"))
 	t.Setenv("GIT_CONFIG_PARAMETERS", "'core.repositoryformatversion=999'")
 
-	snapshot, err := Load(selected, selectedRevision)
+	snapshot, err := LoadSource(selected, selectedRevision)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -94,13 +94,13 @@ func TestLoadPinnedCommitSkipsGitlinksInExcludedDirectories(t *testing.T) {
 	repo.Git("update-index", "--add", "--cacheinfo", "160000,"+strings.Repeat("b", 40)+",node_modules")
 	commitIndex(repo, "excluded gitlinks")
 
-	working, err := Load(root, "")
+	working, err := LoadSource(root, "")
 	if err != nil {
 		t.Fatalf("working Load: %v", err)
 	}
-	fixed, err := Load(root, "HEAD")
+	fixed, err := LoadSource(root, "HEAD")
 	if err != nil {
-		t.Fatalf("Load(HEAD) with excluded gitlinks: %v", err)
+		t.Fatalf("LoadSource(HEAD) with excluded gitlinks: %v", err)
 	}
 	for _, p := range []string{"vendor/lib", "node_modules"} {
 		if _, ok := working.Files[p]; ok {
@@ -119,8 +119,8 @@ func TestLoadPinnedCommitRejectsIncludedGitlinkAsSubmodule(t *testing.T) {
 	repo, _ := gitFixture(t)
 	repo.Git("update-index", "--add", "--cacheinfo", "160000,"+strings.Repeat("a", 40)+",lib")
 	commitIndex(repo, "gitlink")
-	_, err := Load(repo.Dir, "HEAD")
+	_, err := LoadSource(repo.Dir, "HEAD")
 	if err == nil || !strings.Contains(err.Error(), "submodule") {
-		t.Fatalf("Load(HEAD) error = %v, want submodule rejection", err)
+		t.Fatalf("LoadSource(HEAD) error = %v, want submodule rejection", err)
 	}
 }

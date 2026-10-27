@@ -105,7 +105,6 @@ func TestLayerDirections(t *testing.T) {
 		{"cmd/markitect-release", "internal/tooling/release", both},
 		{"cmd/markitect-release", "internal/buildinfo", both},
 		{"internal/tooling/release", "internal/guardedwrite", both},
-		{"internal/tooling/source", "internal/guardedwrite", both},
 		{"internal/tooling/release", "internal/tooling/architecture", both},
 
 		// Foundations and services never import outward or sideways.
@@ -138,8 +137,7 @@ func TestLayerDirections(t *testing.T) {
 		{"internal/adapters/gitrepo", "internal/adapters/codexappserver", none},
 		{"internal/adapters/codexappserver", "internal/agentd", none},
 		{"internal/adapters/runner", "internal/bootstrap", none},
-		{"internal/adapters/documents", "internal/tooling/source", none},
-		{"internal/adapters/gitrepo", "internal/tooling/source", none},
+		{"internal/adapters/documents", "internal/tooling/release", none},
 		{"internal/adapters/container", "internal/agentd", none},
 		{"internal/adapters/container", "internal/apply", none},
 		{"internal/adapters/container", "internal/model", none},
@@ -149,7 +147,6 @@ func TestLayerDirections(t *testing.T) {
 		{"internal/bootstrap", "internal/organization", none},
 		{"internal/bootstrap", "internal/realization", none},
 		{"internal/bootstrap", "internal/tooling/release", none},
-		{"internal/bootstrap", "internal/tooling/source", none},
 		{"cmd/markitect", "internal/apply", none},
 		{"cmd/markitect", "internal/adapters/cli", none},
 		{"cmd/markitect-agentd", "internal/bootstrap", none},
@@ -157,7 +154,6 @@ func TestLayerDirections(t *testing.T) {
 		// Maintenance stays apart from the product.
 		{"internal/tooling/release", "internal/apply", none},
 		{"internal/tooling/release", "internal/model", none},
-		{"internal/tooling/source", "internal/model", none},
 		{"internal/tooling/architecture", "internal/tooling/release", none},
 		{"internal/guardedwrite", "internal/model", none},
 		{"internal/guardedwrite", "internal/tooling/release", none},

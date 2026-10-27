@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"strings"
 	"testing"
-
-	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
 func TestBuildBundleIsDeterministicAndBindsFiveFiles(t *testing.T) {
@@ -57,24 +55,24 @@ func TestBuildBundleIsDeterministicAndBindsFiveFiles(t *testing.T) {
 func TestBuildBundleRejectsUnfixedOrUnboundSource(t *testing.T) {
 	tests := []struct {
 		name    string
-		change  func(*source.Input)
+		change  func(*Input)
 		version string
 	}{
-		{name: "provisional", change: func(s *source.Input) { s.Provisional = true }, version: "1.2.3"},
-		{name: "short commit", change: func(s *source.Input) { s.ID = "deadbeef" }, version: "1.2.3"},
-		{name: "version mismatch", change: func(*source.Input) {}, version: "1.2.4"},
-		{name: "version with tag prefix", change: func(*source.Input) {}, version: "v1.2.3"},
-		{name: "nonliteral source version", change: func(s *source.Input) {
+		{name: "provisional", change: func(s *Input) { s.Provisional = true }, version: "1.2.3"},
+		{name: "short commit", change: func(s *Input) { s.ID = "deadbeef" }, version: "1.2.3"},
+		{name: "version mismatch", change: func(*Input) {}, version: "1.2.4"},
+		{name: "version with tag prefix", change: func(*Input) {}, version: "v1.2.3"},
+		{name: "nonliteral source version", change: func(s *Input) {
 			s.Files["internal/buildinfo/version.go"] = []byte("package buildinfo\nvar version = currentVersion()\n")
 		}, version: "1.2.3"},
-		{name: "foreign module", change: func(s *source.Input) {
+		{name: "foreign module", change: func(s *Input) {
 			s.Files["go.mod"] = []byte("module example.invalid/foreign\n\ngo 1.27.1\n")
 		}, version: "1.2.3"},
-		{name: "missing paired test", change: func(s *source.Input) {
+		{name: "missing paired test", change: func(s *Input) {
 			delete(s.Files, "packaging/bootstrap/run-markitect_test.go")
 			delete(s.Modes, "packaging/bootstrap/run-markitect_test.go")
 		}, version: "1.2.3"},
-		{name: "missing license", change: func(s *source.Input) {
+		{name: "missing license", change: func(s *Input) {
 			delete(s.Files, "LICENSE")
 			delete(s.Modes, "LICENSE")
 		}, version: "1.2.3"},

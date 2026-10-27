@@ -1,5 +1,7 @@
 // Package release builds a portable, reproducible Markitect source archive and
-// a source-bound bundle, and installs a verified bundle into a consumer.
+// a source-bound bundle, and installs a verified bundle into a consumer. It
+// loads the fixed or provisional source snapshots it packages from the working
+// tree or a committed Git tree.
 package release
 
 import (

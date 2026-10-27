@@ -12,7 +12,6 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/guardedwrite"
-	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
 func validateIncomingBundle(bundle *Bundle) error {
@@ -61,7 +60,7 @@ func buildInstallPlan(root string, bundle *Bundle) (*InstallPlan, *installState,
 	}
 
 	var err error
-	state.head, err = source.Load(root, "HEAD")
+	state.head, err = LoadSource(root, "HEAD")
 	if err != nil {
 		// A fresh plan is useful before a Git repository has an initial commit.
 		// Any existing pin set, and every write, still requires committed evidence.

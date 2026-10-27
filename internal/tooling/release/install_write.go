@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/guardedwrite"
-	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
 func ensureInstallStateUnchanged(root string, state *installState) error {
@@ -41,7 +40,7 @@ func ensureInstallStateUnchanged(root string, state *installState) error {
 	return nil
 }
 
-func ensureHeadUnchanged(root string, before *source.Input) error {
+func ensureHeadUnchanged(root string, before *Input) error {
 	if before == nil {
 		out, err := guardedwrite.GitOutput(root, "rev-parse", "--verify", "--end-of-options", "HEAD^{commit}")
 		if err == nil && strings.TrimSpace(string(out)) != "" {

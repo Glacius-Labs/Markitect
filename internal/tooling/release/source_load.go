@@ -1,8 +1,4 @@
-// Package source loads fixed or provisional snapshots from either the current
-// working tree or a committed Git tree, and defines the fixed collection of
-// source files and deterministic operations over it, independent of how its
-// bytes were obtained.
-package source
+package release
 
 import (
 	"errors"
@@ -14,8 +10,8 @@ import (
 )
 
 // Limits bounds memory and filesystem use while loading and materializing a
-// source  Load uses DefaultLimits; callers with larger trusted inputs
-// can use LoadWithLimits.
+// source snapshot. LoadSource uses DefaultLimits; callers with larger trusted
+// inputs can use LoadSourceWithLimits.
 type Limits struct {
 	MaxFiles      int
 	MaxFileBytes  int64
@@ -35,14 +31,14 @@ func DefaultLimits() Limits {
 	return Limits{MaxFiles: DefaultMaxFiles, MaxFileBytes: DefaultMaxFileBytes, MaxTotalBytes: DefaultMaxTotalBytes}
 }
 
-// Load reads the working tree when revision is empty, or the immutable Git
+// LoadSource reads the working tree when revision is empty, or the immutable Git
 // commit named by revision otherwise.
-func Load(root, revision string) (*Input, error) {
-	return LoadWithLimits(root, revision, DefaultLimits())
+func LoadSource(root, revision string) (*Input, error) {
+	return LoadSourceWithLimits(root, revision, DefaultLimits())
 }
 
-// LoadWithLimits is Load with caller-selected resource limits.
-func LoadWithLimits(root, revision string, limits Limits) (*Input, error) {
+// LoadSourceWithLimits is LoadSource with caller-selected resource limits.
+func LoadSourceWithLimits(root, revision string, limits Limits) (*Input, error) {
 	if err := validateLimits(limits); err != nil {
 		return nil, err
 	}
