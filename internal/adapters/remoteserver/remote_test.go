@@ -4,7 +4,9 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -472,6 +474,10 @@ func TestPathsThatDifferOnlyInCaseAreRefused(t *testing.T) {
 }
 
 func TestTheHostsLandingCheckChangesNoBranch(t *testing.T) {
+	if _, err := exec.LookPath("sh"); err != nil && runtime.GOOS == "windows" {
+		// Outside a Git hook only Git Bash puts sh and its tools on PATH.
+		t.Skip("needs sh on PATH, as in Git Bash")
+	}
 	r := newRemote(t, nil)
 	m := r.agent("members", maker)
 	refs := func() string { return run(t, "", "--git-dir="+r.l.Repo(), "for-each-ref") }
@@ -503,8 +509,12 @@ func TestTheHostsLandingCheckChangesNoBranch(t *testing.T) {
 	if after := refs(); after != before {
 		t.Fatalf("the landing check changed refs:\n%s\n%s", before, after)
 	}
-	if e := r.log(); e[len(e)-1].Kind != "landing-check" || e[len(e)-1].User != "host" {
-		t.Fatalf("last log entry %+v", e[len(e)-1])
+	log := r.log()
+	if e := log[len(log)-1]; e.Kind != "landing-check" || e.User != "host" || !e.Accepted {
+		t.Fatalf("last log entry %+v, want the host's passing landing check", e)
+	}
+	if e := log[len(log)-2]; e.Kind != "landing-check" || e.Accepted || !strings.Contains(e.Reason, `"no-fail-marker" failed`) {
+		t.Fatalf("the failing landing check is logged as %+v", e)
 	}
 }
 
