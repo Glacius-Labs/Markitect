@@ -1,0 +1,64 @@
+{
+  "format": 1,
+  "kind": "defect",
+  "expected": "no-landing",
+  "description": "A gap that changes behavior at the boundary: the account block applies to a 'long overdue' invoice, and every statement of the 30-day threshold, its minute count and its worked example is gone. When a reservation is refused with account_overdue is observable, so the Run must end without landing.",
+  "recordedUtc": "2026-10-28T22:09:44+00:00",
+  "series": "makerspace",
+  "step": "C5",
+  "model": [
+    {
+      "path": "model/billing/account-blocks.md",
+      "old": "the request time is more than 30 days after its `dueAt`, that is, later than `dueAt` plus 43200 minutes; at exactly `dueAt` plus 30 days the member is not yet blocked.",
+      "new": "the invoice is long overdue."
+    },
+    {
+      "path": "model/billing/account-blocks.md",
+      "old": "\n\nExample: an invoice issued at `2026-04-01T08:00Z` is due at `2026-04-15T08:00Z`. While it is open, a reservation request at `2026-05-15T08:00Z` is not blocked; one at `2026-05-15T08:01Z` is refused with `account_overdue`.",
+      "new": ""
+    },
+    {
+      "path": "model/billing/billing-interface.md",
+      "old": "more than 30 days overdue.",
+      "new": "long overdue."
+    },
+    {
+      "path": "model/project.md",
+      "old": "An invoice more than 30 days overdue blocks",
+      "new": "A long-overdue invoice blocks"
+    },
+    {
+      "path": "model/computed-times.md",
+      "old": ", and the block compares the request time with `dueAt` plus 43200 minutes, a point as late as `2100-02-13T23:59Z`.",
+      "new": "."
+    }
+  ],
+  "task": [
+    {
+      "old": "the request time is more than 30 days after its `dueAt`, that is, later than `dueAt` plus 43200 minutes; at exactly `dueAt` plus 30 days the member is not yet blocked.",
+      "new": "the invoice is long overdue."
+    },
+    {
+      "old": "\n\nExample: an invoice issued at `2026-04-01T08:00Z` is due at `2026-04-15T08:00Z`. While it is open, a reservation request at `2026-05-15T08:00Z` is not blocked; one at `2026-05-15T08:01Z` is refused with `account_overdue`.",
+      "new": ""
+    },
+    {
+      "old": "more than 30 days overdue. |",
+      "new": "long overdue. |"
+    },
+    {
+      "old": "An invoice more than 30 days overdue blocks",
+      "new": "A long-overdue invoice blocks"
+    },
+    {
+      "old": ", and the block compares the request time with `dueAt` plus 43200 minutes, a point as late as `2100-02-13T23:59Z`.",
+      "new": "."
+    }
+  ],
+  "absent": [
+    "30 days",
+    "43200",
+    "2100-02-13",
+    "2026-05-15"
+  ]
+}

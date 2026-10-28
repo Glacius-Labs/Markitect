@@ -4,18 +4,23 @@ The suite runner, its judging and reporting, and the baseline variant of the [ev
 
 | File | Use |
 | --- | --- |
-| [suite.py](suite.py) | `task` builds a task directory, `run` runs one variant on one task, `chain` runs a sequence of steps that each start from the variant's own previous result; `judge`, `review` and `report` evaluate them |
+| [suite.py](suite.py) | `task` builds a task directory, `run` runs one variant on one task, `chain` runs a sequence of steps that each start from the variant's own previous result; `judge`, `judge-chain`, `review` and `report` evaluate them |
 | [sandbox.py](sandbox.py) | The sandbox of `run --sandbox` and `chain --sandbox`: one container per run on an egress-limited network |
+| [series.py](series.py) | The change series of the portfolio: each step's `task.md` and concept 2.0 model as a chain step (`steps --series library\|makerspace`) |
+| [native.py](native.py) | The native arm mode of `run --native` and `chain --native`: the variant's host on the machine, its own containers on the same egress-limited network, checked from the engine's events |
+| [native_standin.py](native_standin.py) | A scripted stand-in for a native arm: one Run container per run, which writes a change, changes nothing, leaves the network, leaves residue or runs the escape probe |
 | [sandbox/](sandbox/Dockerfile) | The sandbox image, its egress gateway (`egress.py`) and the default series configuration (`series.json`) |
 | [claude_code.py](claude_code.py) | The baseline variant: one headless Claude Code session with the task, in an isolated configuration |
 | [escape_probe.py](escape_probe.py) | A variant without a model that tries to leave the sandbox and reports each attempt |
 | [judging.py](judging.py) | `suite.py judge`: runs a task's judge folder in one container without network and checks its `judge.json` |
-| [judges.py](judges.py) | Judge sources in [`tools/evaluation-judges`](../evaluation-judges/library-m1/README.md): `export` writes a judge folder from a frozen revision, `selftest` runs a judge on its reference result and seeded mutants |
+| [judges.py](judges.py) | Judge sources in [`tools/evaluation-judges`](../evaluation-judges/library-m1/README.md): `export` writes a judge folder from a frozen revision, `selftest` runs a judge on its references and seeded mutants, `start` writes a fixed reference start |
 | [reviewing.py](reviewing.py), [reviewer.py](reviewer.py) | `suite.py review`: the blinded copy, the reviewer and confirmation sessions in the sandbox, the citation check and the variant guess |
 | [classify.py](classify.py) | The failure classifier: void (provider, infrastructure, signed variant runtime), invalid or result |
 | [tokens.py](tokens.py) | The suite's token count over every transcript of a run, subagents included |
-| [report.py](report.py) | `suite.py report`: one table per area for a series ledger |
-| [test_suite.py](test_suite.py), [test_sandbox.py](test_sandbox.py), [test_judging.py](test_judging.py), [test_reviewing.py](test_reviewing.py), [test_classify.py](test_classify.py) | Offline tests with real Git, fake variants, a fake `claude`, fake engines, and recorded runs and transcripts ([testdata/](testdata/README.md)) |
+| [results.py](results.py) | The Result contract and its check: every checklist item has a verdict with evidence |
+| [reading.py](reading.py) | The paired reading of a contrast: the 95 % interval of the paired difference |
+| [report.py](report.py), [acceptance.py](acceptance.py) | `suite.py report`: one table per area for a series ledger, then one per acceptance criterion of concept 2.0 §15 |
+| [test_suite.py](test_suite.py), [test_sandbox.py](test_sandbox.py), [test_judging.py](test_judging.py), [test_series.py](test_series.py), [test_native.py](test_native.py), [test_acceptance.py](test_acceptance.py), [test_reviewing.py](test_reviewing.py), [test_classify.py](test_classify.py) | Offline tests with real Git, fake variants, a fake `claude`, fake engines, and recorded runs and transcripts ([testdata/](testdata/README.md)) |
 
 ## Use
 
@@ -25,9 +30,12 @@ python -I -B tools/evaluation/suite.py run --task TASK_DIR --model claude:claude
     --sandbox IMAGE_ID --variant-code tools/evaluation [--login FILE] [--series FILE] [--lock FILE] \
     -- python3 -I -B /variant/claude_code.py
 python -I -B tools/evaluation/suite.py chain --step STEP_DIR [--step STEP_DIR ...] [--start BUNDLE] --deadline-seconds 2700 --model claude:claude-sonnet-5-5 --out CHAIN_DIR [SANDBOX OPTIONS] -- VARIANT...
-python -I -B tools/evaluation/suite.py judge --run RUN_DIR --judge JUDGE_DIR --out JUDGMENT_DIR [--lock FILE]
+python -I -B tools/evaluation/suite.py judge --run RUN_DIR --judge JUDGE_DIR [--step STEP] --out JUDGMENT_DIR [--lock FILE]
+python -I -B tools/evaluation/suite.py judge-chain --chain CHAIN_DIR --judge JUDGE_DIR --steps W0,C1,... --out DIR [--lock FILE]
 python -I -B tools/evaluation/suite.py review --run RUN_DIR --judge JUDGE_DIR --out REVIEW_DIR --sandbox IMAGE_ID --variant-code tools/evaluation [--lock FILE]
 python -I -B tools/evaluation/suite.py report --ledger LEDGER.json --out REPORT_DIR
+python -I -B tools/evaluation/suite.py run --task TASK_DIR --model claude:claude-sonnet-5-5 --out RUN_DIR \
+    --native IMAGE_ID --hidden-absent PATH [--hidden-absent PATH ...] [--lock FILE] -- VARIANT...
 ```
 
 For `task`, `--model` is the canonical model directory. For `run` and `chain`, `--model` names the evaluation's model as `PROVIDER:MODEL_ID`; the suite gives it to the variant in `EVALUATION_MODEL`. A chain step directory holds `task.md` and an optional `model/`.
@@ -67,6 +75,14 @@ The container has a read-only root, no capabilities, `no-new-privileges`, a non-
 
 **Host mode.** Without `--sandbox` the variant runs as a host process. That is for tests only: `suite.json` says `"conditions": "host"` and `"validForCounting": false`.
 
+## The native arm mode
+
+With `--native IMAGE_ID` ([native.py](native.py)) the variant's host runs natively on the machine, outside the sandbox. It is for a variant whose host is trusted, reviewed code that runs its agents only in containers of its own: the concept 2.0 arm. The suite stands up the same internal network and egress gateway as for the sandbox (from the sandbox image `IMAGE_ID`) and starts the variant command as a host process with `EVALUATION_MODEL`, the access-only login copy in `EVALUATION_LOGIN`, and what its containers need to join the network: `EVALUATION_NETWORK`, `EVALUATION_HOSTS` (provider endpoints at the gateway, for `--add-host`), `EVALUATION_DNS` (a resolver that resolves nothing), `EVALUATION_LABEL` and `EVALUATION_ENGINE`.
+
+While the variant runs, the suite records the engine's events (`RUN_DIR/engine-events.jsonl`). Afterwards every container started during the run, other than the gateway, must have joined the internal network or no network; one that joined any other network is an **escape**, and the run is invalid. The gateway is known by its container ID, not by a label the variant could copy. The check fails closed: an event record that ends early or never shows the run's own network makes the run void. Containers and networks the variant left after a normal end are residue (the run is void); at the deadline the suite stops them, as it stops a sandbox. **Hidden material stays off the machine:** each `--hidden-absent PATH`, where the protocol says hidden material could lie, must not exist before or after the run. `suite.json` says `"conditions": "native"`.
+
+**The stand-in arm** ([native_standin.py](native_standin.py)) tests this the same way on Windows and on Linux before the 2.0 arm exists: `-- python -I -B tools/evaluation/native_standin.py --image IMAGE_ID [--probe]`. Its one Run container acts as the first line of `task.md` says (`change`, `nothing`, `escape`, `leave`); with `--probe` it runs the escape probe as an agent in a Run container.
+
 ## Judging
 
 A task's hidden judge is a folder: `judge.json` and the judge's files (oracle, probes, rubric). `judge.json` names the judge image by digest, the command, a time limit and container limits ([judging.py](judging.py)). The suite appends `TASK_DIR START_BUNDLE RESULT_BUNDLE OUT_DIR` to the command. It runs the command in one container without network, with read-only copies of the judge folder at `/judge`, the task at `/task`, the start bundle at `/start/start.bundle` and the result bundle at `/result/result.bundle`, and `/out` writable. The container has a read-only root, no capabilities, `no-new-privileges`, a non-root user and a private `/tmp`; the suite stops it at the time limit and removes it.
@@ -75,7 +91,25 @@ The judge writes `/out/judge.json` with the result's commit and three areas: `co
 
 A judge folder in this repository is a source. `judges.py export --source DIR --rev REV --out JUDGE_DIR` writes the folder the suite runs: each file named in the source's `include` map, taken from the frozen revision `REV`, with its SHA-256 under `frozen`. `judges.py selftest --source DIR --judge JUDGE_DIR --task TASK_DIR --out DIR [--lock FILE]` builds the source's reference result and each seeded mutant on the task's start and judges each in the container. It passes when the reference passes every area and every mutant fails where it is seeded.
 
-**The Library judge** ([tools/evaluation-judges/library-m1](../evaluation-judges/library-m1/README.md)) is the comparison's M1 assessment in one container. It runs the [Library oracle](../library-oracle/README.md) with its opposite-profile witness, the six [hidden probes](../comparison/probes.py), the result's own `go build ./cmd/library` and `go test ./...`, and [assess_candidate.py](../comparison/assess_candidate.py)'s census of every changed path. Its image is the pinned `golang:1.27.1-bookworm`, the Go of the sandbox, whose Python comes with Mercurial.
+## Change series
+
+The steps come from [series.py](series.py): `python -I -B tools/evaluation/series.py steps --series library|makerspace --out DIR` writes one step directory per step, named as the judges' steps (Library `M1` to `M5`, Makerspace `W0` to `C9`), each with `task.md` (the rendered single-agent document) and `model/` (the step's concept 2.0 `.markitect/` content from [tools/evaluation-tasks](../evaluation-tasks/README.md)). The **planted tasks** are records in [tools/evaluation-judges/plants](../evaluation-judges/plants/README.md); `judges.py plant` writes a planted step and its judge folder.
+
+A change series runs two ways. **End to end**, `chain` runs every step from the variant's own previous result, and `judge-chain` judges each delivered step at its step. **From fixed reference starts**, each change runs as an independent task whose start is the reference result of the step before: `judges.py start --source DIR --step STEP --out START.bundle` writes it, `task --start START.bundle` makes the task, and `judge --step` judges the run.
+
+A **series judge** names its `steps` in `judge.json`. The suite passes the step in `EVALUATION_STEP` and the judge answers cumulatively: every case of this step and of every earlier one, as this step renders them. Its `judge.json` adds `step`, `correctness.byStep` (planned, passed and failed per step that introduced the cases, for every step up to this one; the suite refuses a judgment that leaves one out) and `drift`:
+
+- `forgottenRules`: cases of an earlier step that fail now;
+- `staleFiles`: terms a step retired, still in the program's non-test source;
+- `unaccounted`: files of the whole tree that neither the build (`go list` on Linux, Windows and macOS), the documentation, the module files, test data nor Markitect's bookkeeping account for; `null` when the build cannot be listed.
+
+`drift` is computed on the whole tree, so the judgment of a chain's last step is the series' drift check, the same for every variant. `judge-chain` writes `chain-judgment.json`: each step's counts and drift, the **regressions** (cases that passed at one step and fail at a later one) and `finalDrift`, with `lastStepJudged` saying whether the chain reached and judged its last step.
+
+A series judge source names one reference per step (`references`: a tree and the prefix it goes to) and may name `patchMutants`, a folder of oracle-family mutants (`STEP` and `mutant.patch` per family), each of which must fail a case of its family. `selftest` builds one task per step from a fixed reference start, judges every step's reference (which must pass every area with no drift) and every mutant at its step; `--case NAME` runs a selection.
+
+**The Library and Makerspace series judges** ([library](../evaluation-judges/library/README.md), [makerspace](../evaluation-judges/makerspace/README.md)) share [judgekit.py](../evaluation-judges/common/judgekit.py). The Library judge covers M1 to M5 with the Phase A and B cases; the Makerspace judge covers W0 to C9 with the hidden Makerspace oracle and its change census at C3, C7 and C9.
+
+**The Library M1 judge** ([tools/evaluation-judges/library-m1](../evaluation-judges/library-m1/README.md)) is the comparison's M1 assessment in one container. It runs the [Library oracle](../library-oracle/README.md) with its opposite-profile witness, the six [hidden probes](../comparison/probes.py), the result's own `go build ./cmd/library` and `go test ./...`, and [assess_candidate.py](../comparison/assess_candidate.py)'s census of every changed path. Its image is the pinned `golang:1.27.1-bookworm`, the Go of the sandbox, whose Python comes with Mercurial.
 
 ## The review
 
@@ -93,6 +127,18 @@ Each session runs in the evaluation sandbox like a variant (`--sandbox IMAGE_ID 
 [tokens.py](tokens.py) counts tokens over every `*.jsonl` file a run left: Claude Code transcripts, subagent transcripts and stream output alike, each response once by its message ID. It matches a hand count and the session's own totals on a recorded session with 22 subagents ([testdata/](testdata/README.md)).
 
 `suite.py report --ledger LEDGER.json` ([report.py](report.py)) reads a series ledger, a JSON file that lists every launch with its variant, task, run, judgment and review. It writes `report.md` and `report.json`: one table per area and a list of every launch with its class. The areas are human attention first, then Correctness, Build and tests, Scope, Code quality, Delivery, the void rate and the descriptive cost. There is no overall score.
+
+Then come the acceptance areas ([acceptance.py](acceptance.py)), one table per criterion of [concept 2.0 §15](../../docs/concepts/v2-concept.md#15-acceptance). The ledger adds `repetition` and `step` to each launch, `chains` (each with its `judge-chain` output and an optional `verifyFull` Result), `contrasts` and, per planted task, `tasks.NAME.planted`:
+
+| Criterion | Table |
+| --- | --- |
+| Correct | Landed changes (delivered and different from the start) that pass every hidden case |
+| No drift | Per chain: forgotten rules, stale files and unaccounted files after its last step, the regressions along it, and the variant's own `verify --full` where it has one |
+| Nothing skipped | Every Result a variant returns ([results.py](results.py)): items without verdict, without evidence, without an approving checker, and checks that did not run on the whole repository |
+| Stops right | Planted defects without landing, harmless gaps landed; a launch without result counts as wrong |
+| At least as trustworthy as K | Per contrast, the paired difference by task, step and repetition, its 95 % interval ([reading.py](reading.py)), the design's reading and whether the variant is at least as good |
+
+A planted defect's launch counts under Stops right only. **The Result contract:** a variant that keeps a checklist writes one Result per Run as `OUT_DIR/results/RUN.json` (format in [results.py](results.py)); `python -I -B tools/evaluation/results.py RUN_DIR` checks one run. **A planted task's** judge folder holds `plant.json` (kind, expected outcome, description, time recorded); `suite.py judge` scores the outcome itself ([judging.py](judging.py)).
 
 ## The escape probe
 
@@ -121,4 +167,4 @@ A real run uses the owner's Claude subscription and needs an owner-approved boun
 python -B -m unittest discover -s tools/evaluation
 ```
 
-On Windows, set `TMP` and `TEMP` to a user temp directory first. The Library judge's self-test needs Go 1.27 or later on the path and is skipped without it; it takes about a minute.
+On Windows, set `TMP` and `TEMP` to a user temp directory first. The judges' self-tests need Linux and Go 1.27 or later on the path and are skipped without them: the Library M1 judge takes about a minute, the Library series judge about a minute and a half, and the Makerspace sample (a fresh build, a census step, the retired terms, an unchanged step and each kind of mutant) about two minutes. The full Makerspace self-test runs in the judge container.

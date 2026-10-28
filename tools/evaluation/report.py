@@ -25,12 +25,19 @@ Areas, each a table per variant:
   delivery                   results delivered and timeouts
   void rate                  launches, void by kind, invalid
   cost (descriptive)         wall time, tokens over every transcript, and the cost the CLI states
+
+Then one table per acceptance criterion of concept 2.0 §15 (acceptance.py):
+correct, no drift, nothing skipped, stops right and at least as trustworthy
+as K. A launch of a planted defect is scored only there: its result is meant
+not to land.
 """
 import json
 import pathlib
 import statistics
 
+import acceptance
 import classify
+import results
 import tokens
 
 FORMAT = 1
@@ -44,27 +51,35 @@ def read(path):
     return value if isinstance(value, dict) else None
 
 
-def launch_facts(base, launch, signatures):
+def launch_facts(base, launch, signatures, tasks=None):
     """Everything the report needs from one launch."""
     run = base / launch["run"]
     if not run.is_dir():
         # A wrong path in the ledger is the ledger's error, not a launch without a record.
         raise ValueError(f"launch {launch['id']}: {run} does not exist")
     record = read(run / "suite.json") or {}
-    facts = {"id": launch["id"], "variant": launch["variant"], "task": launch["task"],
+    plant = ((tasks or {}).get(launch["task"]) or {}).get("planted")
+    facts = {"id": launch["id"], "variant": launch["variant"], "task": launch["task"], "repetition": launch.get("repetition"),
+             "step": launch.get("step"), "plantKind": plant, "planted": plant == "defect",
              **classify.classify(run, signatures, launch["variant"])}
     if facts["class"] != "result":
         return facts
     reported = record.get("reported") or {}
     counted = tokens.count(run / "variant") if (run / "variant").is_dir() else None
     facts.update(delivered=bool(record.get("delivered")), timedOut=bool(record.get("timedOut")), wallSeconds=record.get("wallSeconds"),
-                 costUsd=(reported.get("usage") or {}).get("costUsd"), tokens=counted if counted and counted["responses"] else None)
+                 costUsd=(reported.get("usage") or {}).get("costUsd"), tokens=counted if counted and counted["responses"] else None,
+                 landed=bool((record.get("result") or {}).get("changedPaths")), results=results.check_run(run))
     judgment = read(base / launch["judgment"] / "judgment.json") if launch.get("judgment") else None
     if facts["delivered"]:
         if not judgment or not judgment.get("valid") or judgment.get("commit") != (record.get("result") or {}).get("commit"):
             facts["missing"] = "no valid judgment of this result"
         else:
-            facts["areas"] = judgment["areas"]
+            if judgment.get("stops"):
+                facts["stops"] = judgment["stops"]
+            if judgment.get("areas") and not facts["planted"]:
+                facts["areas"] = judgment["areas"]
+            elif not judgment.get("stops"):
+                facts["missing"] = "the judgment has no areas"
     review = read(base / launch["review"] / "review.json") if launch.get("review") else None
     if facts["delivered"] and review and review.get("valid") and review.get("commit") == (record.get("result") or {}).get("commit"):
         facts["review"] = {"confirmed": review["criticals"]["confirmed"], "valid": review["criticals"]["valid"],
@@ -124,18 +139,19 @@ def report(ledger_path):
         raise ValueError(f"{ledger_path} is not a series ledger")
     base = ledger_path.parent
     signatures = read(base / ledger["signatures"]) if ledger.get("signatures") else None
-    facts = [launch_facts(base, launch, signatures) for launch in ledger["launches"]]
+    tasks = ledger.get("tasks") or {}
+    facts = [launch_facts(base, launch, signatures, tasks) for launch in ledger["launches"]]
     planned = planned_cases(facts)
     for f in facts:
-        if f["class"] == "result":
+        if f["class"] == "result" and not f["planted"]:
             f["attention"] = attention(f, planned)
     variants = sorted({f["variant"] for f in facts})
-    tasks = ledger.get("tasks") or {}
     out = [f"# Series report: {ledger.get('series', ledger_path.stem)}", "",
            "One table per area; there is no overall score. Counted are the launches classified as results; "
            "a result without a delivered commit, or one that timed out, counts as a failure in Correctness and Delivery. "
            "Values are mean (min-max, n).", ""]
-    by = {v: [f for f in facts if f["variant"] == v and f["class"] == "result"] for v in variants}
+    # A planted defect's result is meant not to land: it is scored under Stops right only.
+    by = {v: [f for f in facts if f["variant"] == v and f["class"] == "result" and not f["planted"]] for v in variants}
     missing = [f"{f['id']}: {f['missing']}" for f in facts if f.get("missing")]
     if missing:
         out += ["**Not judged:** " + "; ".join(missing) + ".", ""]
@@ -225,7 +241,9 @@ def report(ledger_path):
     rows = [[f["id"], f["variant"], f["task"], f["class"], f["kind"] or "",
              json.dumps(f["evidence"], ensure_ascii=False) if f["evidence"] else ""] for f in facts]
     out.append(table("Launches", ["Launch", "Variant", "Task", "Class", "Kind", "Evidence"], rows))
-    return "\n".join(out), {"format": FORMAT, "series": ledger.get("series"), "launches": facts}
+    text, data = acceptance.tables(ledger, base, facts, table)
+    out.append(text)
+    return "\n".join(out), {"format": FORMAT, "series": ledger.get("series"), "launches": facts, **data}
 
 
 def write(ledger_path, out_dir):

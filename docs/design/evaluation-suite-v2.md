@@ -1,6 +1,6 @@
 # Evaluation suite v2
 
-**Status:** design, approved in direction by the owner on 28 October 2026; E1 and E2 are built. On 28 October 2026 the target became concept 2.0, and E3 to E6 were replaced by steps T6 and T7 of its [build](../implementation-plan.md#concept-20-build), which compare one 2.0 implementation with K; the sections on the arms M, P and G below are historical. The [evaluation suite guide](../guides/evaluation-suite.md) stays the contract of what is built and changes with each increment.
+**Status:** design, approved in direction by the owner on 28 October 2026; E1 and E2 are built. On 28 October 2026 the target became concept 2.0, and E3 to E6 were replaced by steps T6 and T7 of its [build](../implementation-plan.md#concept-20-build), which compare one 2.0 implementation with K; the sections on the arms M, P and G below are historical. T6's parts that do not need the 2.0 implementation are built ([T6 below](#t6-evaluation-against-15)); the 2.0 arm itself, the converted tasks and the planted defects are not. The [evaluation suite guide](../guides/evaluation-suite.md) stays the contract of what is built and changes with each increment.
 
 ## Why
 
@@ -89,6 +89,26 @@ The new project's requirements, model, hidden oracle, seeded mutants and rubric 
 
 G joins at E3 once it has a provider (Codex tokens or a Claude backend), after its prototype's review fixes. If it misses the pilot, it is not counted in E6.
 
+## T6: evaluation against §15
+
+**Built,** on 28 October 2026 (the [guide](../guides/evaluation-suite.md) and the [runner's README](../../tools/evaluation/README.md) hold the contract):
+
+- **Change series.** Series judges answer for a step and every earlier one, with counts per introducing step, and the suite refuses a judgment that is not cumulative. `judge-chain` judges a whole chain and adds the regressions along it and its final drift. `judges.py start` writes fixed reference starts, so that each change also runs as an independent task (section D's units).
+- **Judges.** The [Makerspace judge](../../tools/evaluation-judges/makerspace/README.md) (W0 to C9, wrapped from the Phase C assessment, with the oracle's change census at C3, C7 and C9) and the [Library series judge](../../tools/evaluation-judges/library/README.md) (M1 to M5, the Phase A and B cases, with new reference results for M2 to M5). Each passes its references and fails its mutants: six scope and drift mutants and 31 oracle-family mutants for the Makerspace, seven for the Library.
+- **One area per §15 criterion** in the report: correct, no drift (the judges' drift checks, applied the same way to K, and a slot for the 2.0 arm's own `verify --full`), nothing skipped (the [Result contract](../../tools/evaluation/results.py) that T4's Result page fills), stops right, and the paired reading of this design's section D against K.
+- **The native arm mode** for the 2.0 arm, with a scripted stand-in arm that also runs the escape probe as an agent in a Run container.
+- **The series' inputs and the planted tasks.** [series.py](../../tools/evaluation/series.py) pairs each step's single-agent document with its concept 2.0 model from T2 under the judges' step names. Five [planted tasks](../../tools/evaluation-judges/plants/README.md), recorded on 28 October 2026 before any run: three defects (two contradictions and a threshold left open, at Library M2 and Makerspace C3 and C5) and two harmless gaps (Library M2, Makerspace C6), each edited the same way in the model and in `task.md`; every planted model compiles.
+
+**Recommendation: how K is scored on planted tasks** (for the owner to decide in the protocol; not decided here). Score every variant with one mechanical rule: a result equal to its start did not land; anything else landed. A planted defect is scored right when nothing landed, a harmless gap when something landed; a gap's landed change is also judged under Correct like any other. For this to be fair to K, the stop must be open to it in words it reads: every task's delivery rules, the same for every arm, should say that if the requirements contradict each other or leave open a behavior at the program's boundary, the agent changes nothing and says why in its final report. Without that sentence K is told to implement, and a K that never stops measures the prompt rather than the practice. The reason K gives is recorded for the reader, not scored; the 2.0 arm's Result says why its Run ended. The alternative, judging K's report text for a named defect, needs a reviewer and is less reproducible.
+
+**Not built yet, and why:**
+
+- The 2.0 arm's variant command (T4, T5), and its escape probe as an agent in one of its own Run containers: the stand-in shows the plumbing.
+- **Fixed reference starts for the 2.0 arm.** A reference start holds `realization/` only. The 2.0 compiler refuses a repository whose files no registry page lists, so the 2.0 arm needs registry pages for the reference results, or its own adoption step before the counted Run. Registry pages in the start are harmless for K, so the cleaner answer is that the starts carry them; T2 and T4 decide this.
+- The new project's judge. Its author wrote it to the judge interface; to judge a series, it reads its step from `EVALUATION_STEP` and declares `steps` in its `judge.json`.
+- WSL Linux runs of the native mode need Docker Desktop's WSL integration for the Linux distribution, which is off on this machine.
+
 ## Open questions
 
 1. **Minimum meaningful difference and the run and quota budget per counted series:** the pilot measures spread and quota use; the protocol asks for both.
+2. **The stop rule for K** (T6 above): the owner decides whether every task's delivery rules carry the stop sentence and whether stops are scored mechanically.

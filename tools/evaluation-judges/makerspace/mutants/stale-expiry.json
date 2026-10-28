@@ -1,0 +1,10 @@
+{
+  "description": "A stale file after C6: the certification's retired expiry field is still named in the source.",
+  "step": "C6",
+  "write": {
+    "realization/internal/ms/expiry.go": "package ms\n\n// certificationExpiryField names the certification's expiry in results.\nconst certificationExpiryField = \"expiresOn\"\n"
+  },
+  "expect": {
+    "stale": true
+  }
+}

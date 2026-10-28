@@ -1,0 +1,12 @@
+{
+  "description": "A touched protected input: the result carries its own TASK.md with a changed rule.",
+  "step": "M5",
+  "write": {
+    "TASK.md": "# Small library requirements\n\nMembers may be suspended again.\n"
+  },
+  "expect": {
+    "protected": [
+      "TASK.md"
+    ]
+  }
+}

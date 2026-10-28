@@ -1,0 +1,12 @@
+{
+  "description": "A touched protected input: the result carries its own TASK.md with a changed rule.",
+  "step": "C4",
+  "write": {
+    "TASK.md": "# Makerspace\n\nStewards may also issue credit.\n"
+  },
+  "expect": {
+    "protected": [
+      "TASK.md"
+    ]
+  }
+}

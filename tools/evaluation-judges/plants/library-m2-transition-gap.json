@@ -1,0 +1,40 @@
+{
+  "format": 1,
+  "kind": "gap",
+  "expected": "landing",
+  "description": "A harmless gap: the model no longer says what happens to a member who already holds more open loans than the lowered limit. A library starts empty in every process and keeps nothing across restarts, and under the new limit no member can exceed it, so the answer never shows at the boundary: realization freedom, and the change should land.",
+  "recordedUtc": "2026-10-28T22:09:44+00:00",
+  "series": "library",
+  "step": "M2",
+  "model": [
+    {
+      "path": "model/lending/loan-policy.md",
+      "old": "It is an admission limit, not permission to remove existing loans when they exceed a later lower limit.",
+      "new": "It is an admission limit."
+    },
+    {
+      "path": "model/lending/loan-policy.md",
+      "old": " The values do not authorize deletion or forced return of existing loans: a lower limit neither deletes existing loans nor forces their return; while at or above that limit, the member cannot start another loan.",
+      "new": ""
+    }
+  ],
+  "task": [
+    {
+      "old": "It is an admission limit, not permission to remove existing loans when they exceed a later lower limit.",
+      "new": "It is an admission limit."
+    },
+    {
+      "old": " Values do not authorize deletion or forced return of existing loans.",
+      "new": ""
+    },
+    {
+      "old": " A lower limit neither deletes existing loans nor forces their return; while at or above that limit, the member cannot start another loan.",
+      "new": ""
+    }
+  ],
+  "absent": [
+    "later lower limit",
+    "forced return",
+    "lower limit neither"
+  ]
+}
