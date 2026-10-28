@@ -46,7 +46,6 @@ def setup():
     os.makedirs(CODEX_HOME, exist_ok=True)
     shutil.copy("/mk/login/auth.json", os.path.join(CODEX_HOME, "auth.json"))
     os.chmod(os.path.join(CODEX_HOME, "auth.json"), 0o600)
-    shutil.copy("/mk/harness.md", os.path.join(CODEX_HOME, "AGENTS.md"))
     bindir = os.path.expanduser("~/bin")
     os.makedirs(bindir, exist_ok=True)
     with open(os.path.join(bindir, "mk"), "w") as f:
@@ -89,7 +88,11 @@ def push_wip():
 
 
 def turn(prompt, session):
+    if not session:
+        with open("/mk/harness.md") as f:
+            prompt = f.read() + "\n\n---\n\n" + prompt
     common = ["--json", "--model", os.environ["MK_MODEL"], "-c", f"model_reasoning_effort={os.environ['MK_EFFORT']}",
+              "-c", "project_doc_max_bytes=0",
               "--dangerously-bypass-approvals-and-sandbox", "--skip-git-repo-check"]
     if session:
         cmd = ["codex", "exec", "resume", session, *common, prompt]

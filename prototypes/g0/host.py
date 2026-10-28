@@ -65,7 +65,14 @@ def run(spec):
     rundir = tempfile.mkdtemp(prefix=f"mkp-{rid}-")
     logindir = tempfile.mkdtemp(prefix=f"mkp-{rid}-login-")
     os.chmod(logindir, 0o755)
-    shutil.copy(spec["login"], os.path.join(logindir, "auth.json"))
+    # a session copy without the refresh token, as arm M makes it: no container can rotate the account login
+    with open(spec["login"]) as f:
+        login = json.load(f)
+    if login.get("auth_mode") != "chatgpt" or login.get("OPENAI_API_KEY"):
+        raise RuntimeError("the login must be a normal account login without an API key")
+    login.setdefault("tokens", {})["refresh_token"] = ""
+    with open(os.path.join(logindir, "auth.json"), "w") as f:
+        json.dump(login, f)
     os.chmod(os.path.join(logindir, "auth.json"), 0o644)
     creds = {m["name"]: secrets.token_hex(16) for m in spec["managers"]}
     cfg = {k: spec[k] for k in ("phase", "base", "baseRef", "rootTask", "checkCommands", "messageBudget", "deadlineSeconds")}

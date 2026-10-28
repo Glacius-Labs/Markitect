@@ -360,7 +360,8 @@ class Referee:
                     self.end("incomplete", reason="deadline passed")
                     break
                 idle = (self.waiting == set(self.parent) and self.checks_running == 0
-                        and not any(self.inbox.values()))
+                        and not any(self.inbox.values())
+                        and not any(self.is_open(n)["open"] for n in self.parent))
                 if not idle:
                     self.quiet_since = None
                     continue

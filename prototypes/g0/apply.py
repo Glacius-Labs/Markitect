@@ -62,7 +62,7 @@ def harness(spec, fixture, mandate, base, origin, findings, out):
         with open(m["harness"]) as f:
             developer = f.read()
         text = rules.format(name=name(m["package"]), parent=name(m["parent"]) if m["parent"] else "none (you are Root)",
-                            children=", ".join(name(c) for c in m["children"]) or "none")
+                            children=", ".join(name(c) for c in (m["children"] or [])) or "none")
         file = m["harness"].replace(".developer.md", ".harness.md")
         with open(file, "w", newline="\n") as f:
             f.write(text + "\n\n" + developer)
