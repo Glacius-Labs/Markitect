@@ -19,11 +19,13 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `domain` | Registry pages, ownership and file accounting over a compiled model. | `model` | 1 |
 | `project` | Loads and checks a project's Markitect folder from a repository state. | `model`, `assets`, `domain` | 1 |
 | `service` | Questions about a loaded project: references, graph, impact with checklists, and lint. | `model`, `assets`, `domain`, `project` | 1 |
+| `agent-port` | How the Run engine starts a maker or checker for a Manager and observes how it ends. | nothing | 1 |
+| `agent-fake` | Scripted makers and checkers that work on a Run's remote with real Git, for tests. Only test files may import it. | `agent-port` | 1 |
 | `protocol` | Frame protocol between the Orchestrator and the session helper. | nothing | 1 |
 | `container` | The container engine client that the adapters running containers share. | `protocol` | 1 |
 | `guardedwrite` | Guarded working-tree writes for bundle installation, with the Git and path helpers they share with source snapshots. | nothing | 1 |
 | `build` | Version identity and embedded license notices. | nothing | 1 |
-| `adapter` | Concrete Git and command-line adapters; no adapter imports another. | `model`, `assets`, `domain`, `project`, `service`, `build` | 2 |
+| `adapter` | Concrete Git and command-line adapters; no adapter imports another. | `model`, `assets`, `domain`, `project`, `service`, `agent-port`, `build` | 2 |
 | `composition` | Constructs the command line with its adapters. | `model`, `project`, `service`, `adapter` | 1 |
 | `command` | Thin entrypoints to product composition. | `composition` | 1 |
 | `agent` | Runs inside each Agent container: provider process, MCP bridge and stdio framing. | `protocol` | 1 |
@@ -70,6 +72,18 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | Package | Summary | Owning document |
 |---|---|---|
 | `internal/analysis` | Package analysis answers questions about a loaded project without starting agents: who links to a Definition, the Package dependency graph, what a change reaches and each Manager's checklist, and the lint warnings that measure the model like code. | [docs/guides/model-language.md#impact-and-checklists](../guides/model-language.md#impact-and-checklists) |
+
+## Agent port
+
+| Package | Summary | Owning document |
+|---|---|---|
+| `internal/agentport` | Package agentport is the boundary between the Run engine and the agents it starts (concept 2.0 §6.2, §12): the engine starts a maker or a checker for one Manager with its role, task, checklist, tools and deadline, and observes how it ends. | [internal/agentport/README.md](../../internal/agentport/README.md) |
+
+## Scripted agents
+
+| Package | Summary | Owning document |
+|---|---|---|
+| `internal/agentport/agentfake` | Package agentfake is a scripted implementation of agentport.Agents for tests: every start of a Manager's maker or checker runs the next scripted Step, which works on the Run's remote with real Git and calls the host's tools as an agent would. | [internal/agentport/README.md](../../internal/agentport/README.md) |
 
 ## Agent protocol
 
