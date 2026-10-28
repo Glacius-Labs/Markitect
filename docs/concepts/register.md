@@ -93,6 +93,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-076](#dec-076-markitect-is-developed-as-a-regular-software-project) | Decision | Markitect is developed as a regular software project | Accepted; self-model retired (#756), cleanup tracked in the delivery plan |
 | [DEC-077](#dec-077-development-pace-and-linux-first-execution) | Decision | Development pace and Linux-first execution | Accepted; Linux-only CI, Linux Docker way tracked in the delivery plan; the runner's checkout mount and branch hand-back superseded by DEC-078 |
 | [DEC-078](#dec-078-agents-collaborate-through-a-git-remote-without-owner-review) | Decision | Agents collaborate through a Git remote, without owner review | Accepted direction; design open, tracked in the delivery plan |
+| [DEC-079](#dec-079-the-model-is-as-explicit-as-good-documentation) | Decision | The model is as explicit as good documentation | Accepted |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -1000,6 +1001,16 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - What happens when the target branch moves during a run.
   - The cleanup of run branches and the retention of evidence.
 - **Answered, 27 October 2026:** V1's acceptance covers the current publication; the Git variant is judged after its prototype and is not part of V1's acceptance ([DEC-068](#dec-068-v1-concept-10), [verbatim source](sources/owner-evening-decisions-20261027.md#5-v1s-acceptance-scope-2015-utc)).
+
+### DEC-079 The model is as explicit as good documentation
+
+- **Status:** Accepted by the owner, 28 October 2026 ([verbatim source](sources/model-explicitness-20261028.md)). It sets the yardstick for the language, the standard Libraries and project Kinds. Core, compiler and Libraries are unchanged by it.
+- **Decision:** a statement belongs in the model, typed or as a Definition of its own, when good documentation of the project would state it that explicitly. What good documentation would not state is too detailed for the model and is left to the agents that realize it. In the owner's words: "For example a foreach loop or a map is not mentioned in documentation. What is mentioned are endpoints, use cases, user interfaces such as cli or rest interfaces and so on. Also maybe definitions about what a book is and so on. The body and coding is basically just prose and up to the agent."
+- **Also decided:** a Definition stays one YAML file with a Markdown body; no second file format.
+- **Recorded meaning (recorder's reading, as in the source):**
+  - Maps, unions, defaults and typed formats are not added to Core or the Libraries. Uniqueness beyond an Entity's `key` and constraints across fields stay prose in Rules or Invariants; ranges stay as `Values.Scalar` has them. This closes the expressiveness gaps of W1 ([DEC-074](#dec-074-canonical-model-track-parallel-to-v1)).
+  - It agrees with [DEC-061](#dec-061-what-an-extracted-model-contains): the binding part is what callers rely on, and incidental detail is free.
+- **Open:** the test shows two things good documentation states and the standard Libraries have no Kind for: use cases, and how an interface is reached (REST routes and statuses, CLI commands and flags). Whether they get Library Kinds is a separate owner question on the [topics page](../workstreams/topics.md#questions-for-the-owner).
 
 ## Promises
 

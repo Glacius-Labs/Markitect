@@ -10,20 +10,20 @@ State page of the Topics session: the owner's single place to discuss Markitect'
 
 ## Now
 
-- **Quick confirmations** (step 1 of the [order](#next)). Done: one topics page instead of seven lane pages, with the permanent records kept on Main; Main made consistent again after #806 (see [Done here](#done-here)). Question 33 (Windows tests) parked by the owner.
+- **Design walk-through, part 1: the language.** On 28 October the owner restated what Markitect is ([source](../concepts/sources/model-explicitness-20261028.md#1-what-markitect-is-restated)) and started a walk through the whole design. Decided: the model is as explicit as good documentation, and Definitions stay YAML with a Markdown body ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation)). Next in the language: questions 38 and 39.
+- **Basis:** clean. One topics page instead of seven lane pages; Main consistent again after #806 (see [Done here](#done-here)); lane worktrees and branches removed; question 33 (Windows tests) parked.
 
 ## Next
 
-The suggested discussion order. Each step unblocks the ones after it.
+The design walk-through, one part at a time, as the owner asked on 28 October. Each part says how it works today, what is open and a recommendation.
 
-1. Quick confirmations.
-2. **The analysis layer** (questions 1–5, 37): one Go analysis core in the product; where Analysis ends and a Run starts.
-3. **Findings from outside a Run** (23, 25): one input for `apply --findings` and outside reports; adopt the amendment and pick its timing.
-4. **The Result and the Commands** (18–22, 24): order of Commands, convergence, decision page, renaming.
-5. **Authoring** (9, 12–17): next trial, interview first, Extract as a skill mode, shipping, who accepts model changes, the cost measure, the delegated decisions.
-6. **Cockpit explorer** (30–32), once step 2 has settled where the analysis lives.
-7. **Language gaps and risk per Package** (8, 10, 11).
-8. **Autonomy** (26–29, 34, 35), last, because it depends on the Git variant and on steps 3 and 4.
+1. **The language** (questions 38, 39, 10, 11, 9): use cases and interface bindings, risk per Package, the Library design check, the delegated decisions.
+2. **The compiler and the analysis layer** (1–7, 37): one Go analysis core in the product; where Analysis ends and a Run starts; what counts as an error.
+3. **The Manager organization:** how the hierarchy is derived from the model and what each Manager knows.
+4. **Runs, Commands and the Result** (18–24): order of Commands, convergence, the decision page, renaming.
+5. **Publication and the Git variant** (34, 35, and the parked 33).
+6. **Change over time:** Authoring (12–17), outside Findings (23, 25) and continuous change (26–29).
+7. **The Cockpit** (30–32).
 
 ## Topics in short
 
@@ -87,6 +87,9 @@ Verbatim, with the date. Words in brackets are context added by the recorder.
 - 28 Oct: "Why do we even have so many git commands being issued? This sounds like we are definately doing something wrong here"
 
 **Model language**
+- 28 Oct [keep one file format: YAML with a Markdown body]: "Yes i agree with you. Lets talk about explicitness"
+- 28 Oct: "We should be cautious here. We dont want to create a completely new programming language i think. Lets see what we are trying to achieve. We want to describe the project in a consistent model. We dont need full explicitness so that we actually code in markitect. If we introduce maps and model as explicit as code would, we might not gain much from that."
+- 28 Oct: "We can ask a simple question i think. Would a good documentation be that explicit? If yes we should support it, if not its too detailed. For example a foreach loop or a map is not mentioned in documentation. What is mentioned are endpoints, use cases, user interfaces such as cli or rest interfaces and so on. Also maybe definitions about what a book is and so on. The body and coding is basically just prose and up to the agent.", then [record it as the rule] "Yes" ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation))
 - 27 Oct: "Accept the recommendations on the five Library questions: unordered-refusal flag, refusals in Interface, invariant placement via an interface, no envelope Kind yet, no alias-only Core change yet. Prepare the plan, build nothing yet."
 - 27 Oct [on the name RefusalCode]: "If its just for makerspace and not library we can go with Refusal Code. Lets discuss what the problem is" (The name sits in the standard `api` Library; the owner did not reopen it.)
 - 27 Oct: "Why does the order even matter? As i read it those are just potential problems that might occur. If the model is not clear about it, when which one applies, those should simply be definitions themselves and explain it there"
@@ -134,7 +137,7 @@ Verbatim, with the date. Words in brackets are context added by the recorder.
 
 ### B. Language
 
-8. **Small language gaps** (maps, unions, defaults, uniqueness, formats, ranges, constraints across fields). Rec: no Core change; Library patterns, revisited only if a real model suffers. Did "fix all of that" (26 Oct) cover these?
+8. **Small language gaps: closed** (owner, 28 October, [DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation)). Good documentation does not state maps, unions, defaults or typed formats, so the model does not either.
 9. **Decisions taken under delegation** (log on branch `handover/model-quality-log`). To discuss: 9 (v2.1 Interface exposes `rate-cents-per-minute`), 4 and 10 (the analysis tool reads the model's own architecture; the `interface` signal checks typed uses only). To confirm: 1, 3, 5, 6, 7 (the skill) and 2 (Claude adapter timing). Decision 8 was replaced by the refusal decision.
 10. **Risk per Package.** A risk level, a "what failure looks like" statement or a protected flag on a Package? Rec: a Library Kind, not Core; with a deterministic hold after Verify when protected files change, and a circuit breaker.
 11. **"Do it the way code does"** as a standing check for Library design? It removed two of three proposed changes.
@@ -182,6 +185,11 @@ Verbatim, with the date. Words in brackets are context added by the recorder.
 
 36. **Modeling guide Kind names.** Done on 28 October: the guide v0.3 names the Library Kinds.
 37. **What counts as an error lives in prose.** The skill tells agents to treat `unknown-package`, `dependency-rule`, `interface`, `import-cycle` and every strong lint finding as errors; no tool contract says so, and lint thresholds are provisional ([OQ-002](../concepts/register.md#open-questions)). No recommendation yet; it belongs with questions 3 and 4.
+
+### I. Raised by the documentation test (DEC-079)
+
+38. **Use cases.** Good documentation describes use cases ("a member reserves a machine"); no Library has a Kind for them, so they hide in operation bodies and Rules.
+39. **How an interface is reached.** Good documentation names REST routes and statuses, CLI commands and flags; the standard Libraries leave them in Rule bodies for now.
 
 ## Handed to Build
 
