@@ -44,6 +44,8 @@ def check(result):
     if not isinstance(items, list) or not all(isinstance(i, dict) for i in items):
         problems.append("items must be a list of objects")
         items = []
+    elif not items and result.get("outcome") == "landed":
+        problems.append("a landed Result has no checklist items")
     name = lambda i: f"{i.get('manager')}:{i.get('item')}"  # noqa: E731
     checks = result.get("requiredChecks") or {}
     findings = result.get("findings")

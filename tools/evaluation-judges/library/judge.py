@@ -117,7 +117,7 @@ def judge(task, start_bundle, result_bundle, tmp):
             cases, oracle_errors = oracle_cases(step, program, module, cwd)
         else:
             cases = [{"id": c, "passed": False, "errors": ["not built"]} for c in planned]
-    record["correctness"] = judgekit.correctness(cases, step, STEPS, first)
+    record["correctness"] = judgekit.correctness(cases, step, STEPS, first, planned)
     record["buildAndTests"] = {"build": build, "tests": tests}
     record["drift"] = judgekit.drift(cases, step, candidate, REQUESTED, json.loads((HERE / "drift.json").read_text(encoding="utf-8"))["retired"],
                                      STEPS, judgekit.go_accounted(module, env) if (module / "go.mod").is_file() else set())

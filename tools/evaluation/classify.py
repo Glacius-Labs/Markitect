@@ -110,17 +110,18 @@ def classify(run_dir, signatures=None, variant=None):
     if record is None:
         return outcome("void", "infrastructure", "the suite wrote no readable suite.json")
     box = record.get("sandbox") or {}
-    domains = PROVIDER_DOMAINS.get(str(record.get("model", "")).partition(":")[0], ())
-    needed = sorted(name for name in (box.get("egress") or {}).get("refused") or {}
-                    if any(name == d or name.endswith("." + d) for d in domains))
-    if needed:
-        return outcome("void", "infrastructure", "the gateway refused the provider's " + ", ".join(needed), True)
+    # First what makes a run invalid whatever else happened: it never voids into a relaunch.
     if box.get("escapes"):
         # A container of the variant left the evaluation's network: the run did not take place under its conditions.
         return outcome("invalid", None, "a container outside the evaluation network: " + ", ".join(
             str(c.get("name") or c.get("id")) for c in box["escapes"]))
     if box.get("hiddenPresent"):
         return outcome("invalid", None, "hidden material was on the machine: " + ", ".join(box["hiddenPresent"]))
+    domains = PROVIDER_DOMAINS.get(str(record.get("model", "")).partition(":")[0], ())
+    needed = sorted(name for name in (box.get("egress") or {}).get("refused") or {}
+                    if any(name == d or name.endswith("." + d) for d in domains))
+    if needed:
+        return outcome("void", "infrastructure", "the gateway refused the provider's " + ", ".join(needed), True)
     if record.get("conditions") in COUNTED and not record.get("validForCounting"):
         cause = box.get("error") or ("residue: " + ", ".join(box.get("residue") or []) if box.get("residue") else "not valid for counting")
         return outcome("void", "infrastructure", cause)

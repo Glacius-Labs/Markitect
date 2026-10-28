@@ -64,6 +64,7 @@ class ResultCheckTest(unittest.TestCase):
         self.assertIn("no change", results.check_run(self.run_with(result_page(), changed=False))["problems"][0])
         self.assertTrue(results.check_run(self.run_with(result_page("not-landed"), changed=False))["complete"])
         self.assertIn("not a Result", results.check_run(self.run_with({"format": 2}))["problems"][0])
+        self.assertIn("no checklist items", results.check_run(self.run_with(result_page(items=[])))["problems"][0])
 
     def test_a_run_without_results_has_nothing_to_check(self):
         self.assertIsNone(results.check_run(RUN))
@@ -156,7 +157,7 @@ class AcceptanceReportTest(unittest.TestCase):
         self.assertTrue(self.row("Delivery", "K").startswith("| K | 3/3 |"))
 
     def test_nothing_skipped_reads_every_result(self):
-        self.assertEqual(self.row("§15.3 Nothing skipped", "2.0"), "| 2.0 | 5 | 4 | 4 | 1 | 0 | 0 | 0 | none |")
+        self.assertEqual(self.row("§15.3 Nothing skipped", "2.0"), "| 2.0 | 5 | 1 | 4 | 4 | 1 | 0 | 0 | 0 | v-plant: no Result |")
         self.assertIn("no Results: the variant keeps no checklist", self.row("§15.3 Nothing skipped", "K"))
 
     def test_no_drift_shows_the_final_drift_and_the_verify_slot(self):

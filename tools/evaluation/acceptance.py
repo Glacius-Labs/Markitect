@@ -85,16 +85,19 @@ def nothing_skipped(facts, variants, table):
         mine = [f for f in facts if f["variant"] == v and f["class"] == "result"]
         checked = [f["results"] for f in mine if f.get("results")]
         if not checked:
-            rows.append([v, len(mine), 0, "n/a", "n/a", "n/a", "n/a", "n/a", "no Results: the variant keeps no checklist"])
+            rows.append([v, len(mine), "n/a", 0, "n/a", "n/a", "n/a", "n/a", "n/a", "no Results: the variant keeps no checklist"])
             continue
+        # A variant that returns Results returns one for every delivered launch; a launch without one skipped everything.
+        missing = [f["id"] for f in mine if f.get("delivered") and not f.get("results")]
         all_results = [r for c in checked for r in c["results"]]
-        rows.append([v, len(mine), len(all_results), sum(r.get("items", 0) for r in all_results),
+        rows.append([v, len(mine), len(missing), len(all_results), sum(r.get("items", 0) for r in all_results),
                      sum(len(r.get("skipped", [])) for r in all_results), sum(len(r.get("unsupported", [])) for r in all_results),
                      sum(len(r.get("unapproved", [])) for r in all_results), sum(bool(r.get("checksIncomplete")) for r in all_results),
-                     "; ".join(p for c in checked for p in c["problems"]) or "none"])
-    return table("§15.3 Nothing skipped", ["Variant", "Launches", "Results", "Items", "Without verdict", "Without evidence",
-                                           "Without approving checker", "Checks not on the whole repository", "Problems"], rows,
-                 "Each Result a variant returns in results/ (results.py), checked item by item.")
+                     "; ".join([f"{i}: no Result" for i in missing] + [p for c in checked for p in c["problems"]]) or "none"])
+    return table("§15.3 Nothing skipped", ["Variant", "Launches", "Delivered without a Result", "Results", "Items", "Without verdict",
+                                           "Without evidence", "Without approving checker", "Checks not on the whole repository", "Problems"],
+                 rows, "Each Result a variant returns in results/ (results.py), checked item by item. A variant that returns Results "
+                       "must return one for every delivered launch.")
 
 
 def stops_right(facts, variants, table):

@@ -75,7 +75,9 @@ FAKE_ENGINE = textwrap.dedent(r'''
     elif args[0] == "kill":
         pass
     elif args[0] == "inspect" and opt("--format") == "{{.Id}}":
-        sys.exit(0 if args[-1] in state["containers"] else 1)
+        if args[-1] not in state["containers"]:
+            sys.exit(1)
+        print(args[-1])
     elif args[0] == "inspect" and "NetworkSettings" in opt("--format"):
         print(json.dumps({n: {"IPAddress": "10.9.0.2"} for n in state["networks"]}))
     elif args[0] == "inspect" and ".State.Running" in opt("--format"):
@@ -85,6 +87,8 @@ FAKE_ENGINE = textwrap.dedent(r'''
     elif args[:2] == ["rm", "-f"]:
         state["containers"].pop(args[2], None); save()
     elif args[0] == "events":
+        if os.environ.get("FAKE_EVENTS") == "dead":
+            sys.exit("cannot connect to the engine")
         seen = 0
         while True:
             lines = open(log).read().splitlines() if os.path.exists(log) else []
@@ -189,6 +193,26 @@ class NativeTest(unittest.TestCase):
         result = classify.classify(out)
         self.assertEqual(result["class"], "invalid")
         self.assertIn("outside the evaluation network", json.dumps(result["evidence"]))
+
+    def test_without_an_event_record_the_check_fails_closed(self):
+        os.environ["FAKE_EVENTS"] = "dead"
+        record, out = self.run_mode("change")
+        self.assertFalse(record["validForCounting"])
+        self.assertIn("event record", record["sandbox"]["error"])
+        self.assertEqual(classify.classify(out)["class"], "void")
+
+    def test_a_copied_gateway_label_does_not_hide_an_escape(self):
+        (self.tmp / "copycat.py").write_text(textwrap.dedent('''
+            import json, os, subprocess, sys
+            engine = json.loads(os.environ["EVALUATION_ENGINE"])
+            run_id = os.environ["EVALUATION_LABEL"].rpartition("=")[2]
+            subprocess.run([*engine, "run", "--name", "copycat", "--label", "markitect.evaluation=" + run_id, os.environ["FAKE_IMAGE"],
+                            sys.executable, "-c", "pass"], check=True)
+            subprocess.run([*engine, "rm", "-f", "copycat"], check=True)
+        '''))
+        record, out = self.run_mode("copy", [sys.executable, "-B", str(self.tmp / "copycat.py")])
+        self.assertEqual([c["name"] for c in record["sandbox"]["escapes"]], ["copycat"])
+        self.assertEqual(classify.classify(out)["class"], "invalid")
 
     def test_a_container_the_arm_leaves_is_residue_and_removed(self):
         record, out = self.run_mode("leave")

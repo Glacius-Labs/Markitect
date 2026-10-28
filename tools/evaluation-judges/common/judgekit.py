@@ -9,7 +9,8 @@ three areas of every judge (correctness, buildAndTests, scope) it answers:
   correctness.byStep   planned, passed and failed cases per step that introduced them, for every step up to this one
   drift                forgottenRules: cases of an earlier step that fail now;
                        staleFiles: retired terms still in the program's source;
-                       unaccounted: files in the whole tree that neither the build, the docs nor Markitect's
+                       unaccounted: files in the whole tree that neither the build (its Go and embedded
+                       files), the module files, vendored code, test data, the docs nor Markitect's
                        bookkeeping account for
 
 `drift` is computed on the whole tree, not on the step's diff, so a judgment of
@@ -153,9 +154,13 @@ def introduced(case_ids_by_step, steps):
     return first
 
 
-def correctness(cases, step, steps, first):
-    """The correctness area with byStep for every step up to this one; cases carry introducedIn."""
+def correctness(cases, step, steps, first, planned=()):
+    """The correctness area with byStep for every step up to this one; cases carry introducedIn.
+
+    A planned case that did not run, because the oracle stopped early, fails."""
     upto = steps[:steps.index(step) + 1]
+    ran = {c["id"] for c in cases}
+    cases = cases + [{"id": c, "passed": False, "errors": ["did not run"]} for c in planned if c not in ran]
     for c in cases:
         c["introducedIn"] = first.get(c["id"], step)
     failed = [c["id"] for c in cases if not c["passed"]]
@@ -184,7 +189,7 @@ def go_accounted(module, env):
                 break
             package, i = decoder.raw_decode(text, i)
             directory = pathlib.Path(package.get("Dir", ""))
-            for key in ("GoFiles", "CgoFiles", "TestGoFiles", "XTestGoFiles"):
+            for key in ("GoFiles", "CgoFiles", "TestGoFiles", "XTestGoFiles", "EmbedFiles", "TestEmbedFiles", "XTestEmbedFiles"):
                 used.update((directory / name).resolve() for name in package.get(key) or [])
     return used
 
@@ -200,9 +205,9 @@ def unaccounted(tree, requested, go_used):
             continue
         if rel.startswith(requested):
             inner = rel[len(requested):]
-            if inner in ("go.mod", "go.sum") or "/testdata/" in "/" + inner:
+            if inner in ("go.mod", "go.sum") or "/testdata/" in "/" + inner or inner.startswith("vendor/"):
                 continue
-            if rel.endswith(".go") and path.resolve() in go_used:
+            if path.resolve() in go_used:
                 continue
         found.append(rel)
     return found

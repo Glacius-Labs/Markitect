@@ -24,8 +24,8 @@ MAKERSPACE = JUDGES / "makerspace"
 MODEL = "claude:claude-sonnet-5-5"
 
 # A fake series judge over the steps A1, A2, A3: case c-<step> is introduced at each step, and every case passes
-# except as FAKE_SERIES_MODE says: "regress" fails c-A1 from A3 on, "flat" leaves earlier steps out of byStep,
-# "other-step" answers for another step.
+# except as FAKE_SERIES_MODE says: "regress" fails c-A1 at A3, "regress-early" fails c-A1 from A2 on, "flat" leaves
+# earlier steps out of byStep, "other-step" answers for another step.
 FAKE_SERIES_JUDGE = textwrap.dedent(r'''
     import json, os, pathlib, subprocess, sys
     task, start, result, out = sys.argv[-4:]
@@ -33,7 +33,8 @@ FAKE_SERIES_JUDGE = textwrap.dedent(r'''
     steps = ["A1", "A2", "A3"]
     upto = steps[:steps.index(step) + 1]
     commit = subprocess.run(["git", "bundle", "list-heads", result], capture_output=True, text=True).stdout.split()[0]
-    cases = [{"id": "c-" + s, "passed": not (mode == "regress" and s == "A1" and step == "A3")} for s in upto]
+    failing = (mode == "regress" and step == "A3") or (mode == "regress-early" and step != "A1")
+    cases = [{"id": "c-" + s, "passed": not (failing and s == "A1")} for s in upto]
     failed = [c["id"] for c in cases if not c["passed"]]
     by = {s: {"planned": 1, "passed": int(not ("c-" + s) in failed), "failed": int(("c-" + s) in failed)} for s in upto}
     if mode == "flat":
@@ -112,12 +113,18 @@ class SeriesJudgeTest(Engine):
         record = suite.judge_chain(self.chain, self.judge, ["A1", "A2", "A3"], self.tmp / "judged", self.engine)
         self.assertEqual([r["step"] for r in record["steps"]], ["A1", "A2", "A3"])
         self.assertTrue(all(r["valid"] for r in record["steps"]))
-        self.assertEqual(record["regressions"], [{"case": "c-A1", "passedAt": "A1", "failsAt": "A3"}])
+        # passedAt is the last step at which the case passed.
+        self.assertEqual(record["regressions"], [{"case": "c-A1", "passedAt": "A2", "failsAt": "A3"}])
         self.assertEqual(record["finalDrift"]["step"], "A3")
         self.assertEqual(record["finalDrift"]["forgottenRules"], ["c-A1"])
         self.assertTrue(record["lastStepJudged"])
         self.assertTrue((self.tmp / "judged" / "step-03" / "judgment.json").is_file())
         self.assertEqual(json.loads((self.chain / "chain.json").read_text())["steps"][0]["name"], "A1")
+
+    def test_a_case_that_keeps_failing_is_one_regression(self):
+        os.environ["FAKE_SERIES_MODE"] = "regress-early"
+        record = suite.judge_chain(self.chain, self.judge, ["A1", "A2", "A3"], self.tmp / "early", self.engine)
+        self.assertEqual(record["regressions"], [{"case": "c-A1", "passedAt": "A1", "failsAt": "A2"}])
 
     def test_a_chain_needs_a_judge_step_per_chain_step(self):
         with self.assertRaisesRegex(suite.SuiteError, "name a judge step"):

@@ -421,11 +421,13 @@ def judge_chain(chain_dir, judge_dir, steps, out, engine):
             if judgment["valid"] and judgment["areas"]:
                 c = judgment["areas"]["correctness"]
                 entry.update(planned=c["planned"], failed=c["failed"], byStep=c.get("byStep"), drift=judgment["areas"].get("drift"))
+                # One regression per pass-then-fail: a case that keeps failing counts once, until it passes again.
                 for case, passed in (case_results(target) or {}).items():
                     if passed:
-                        seen.setdefault(case, step)
-                    elif case in seen:
+                        seen[case] = step
+                    elif seen.get(case):
                         regressions.append({"case": case, "passedAt": seen[case], "failsAt": step})
+                        seen[case] = None
         rows.append(entry)
     judged = [r for r in rows if r.get("drift") is not None]
     record = {"format": FORMAT, "chain": str(chain_dir.resolve()), "judge": str(pathlib.Path(judge_dir).resolve()),

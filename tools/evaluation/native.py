@@ -38,6 +38,9 @@ import uuid
 import sandbox as sandboxing
 
 EVENTS_SECONDS = 10
+# The event record starts this early, so that an engine clock behind the host's misses nothing; account() skips what
+# came before the run's own network.
+EVENTS_MARGIN = 300
 ALLOWED_NONE = "none"
 
 
@@ -89,13 +92,14 @@ class Native:
                 del login
                 if engine.must("image", ["image", "inspect", "--format", "{{.Id}}", self.image]).strip() != self.image:
                     raise sandboxing.SandboxError("the image ID differs")
-                since = str(int(time.time()) - 1)
+                since = str(int(time.time()) - EVENTS_MARGIN)
                 gateway_ip = sandboxing.open_egress(engine, run_id, label, self.image, self.hosts, networks, containers)
                 record["gatewayAddress"] = gateway_ip
-                events_file = open(run_dir / "engine-events.jsonl", "wb")
+                gateway_id = engine.must("gateway-id", ["inspect", "--format", "{{.Id}}", f"{run_id}-gateway"]).strip()
+                events_file, events_err = open(run_dir / "engine-events.jsonl", "wb"), open(run_dir / "engine-events.stderr.log", "wb")
                 # From before the network stood up, so that nothing the variant starts is missed.
                 events = subprocess.Popen([*self.engine, "events", "--since", since, "--format", "{{json .}}"], stdout=events_file,
-                                          stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL)
+                                          stderr=events_err, stdin=subprocess.DEVNULL)
                 env = dict(os.environ, EVALUATION_MODEL=model, EVALUATION_LOGIN=str(login_file), EVALUATION_NETWORK=internal,
                            EVALUATION_HOSTS=",".join(f"{h}:{gateway_ip}" for h in self.hosts), EVALUATION_DNS=sandboxing.NO_DNS,
                            EVALUATION_LABEL=f"{sandboxing.LABEL_KEY}.arm={run_id}", EVALUATION_ENGINE=json.dumps(self.engine))
@@ -111,13 +115,17 @@ class Native:
             finally:
                 if events:
                     time.sleep(1)  # the engine reports the last events with a short delay
+                    if events.poll() is not None:
+                        record.setdefault("error", f"the engine's event record ended early (exit {events.returncode}): "
+                                                   "the network check is incomplete")
                     events.terminate()
                     try:
                         events.wait(timeout=EVENTS_SECONDS)
                     except subprocess.TimeoutExpired:
                         events.kill()
                     events_file.close()
-                    self.account(engine, run_id, internal, run_dir / "engine-events.jsonl", record, timing["timedOut"])
+                    events_err.close()
+                    self.account(engine, gateway_id, internal, run_dir / "engine-events.jsonl", record, timing["timedOut"])
                 sandboxing.close_egress(engine, run_id, label, run_dir, record, networks, containers)
                 record["residue"] = record["residue"] + record.pop("armResidue", [])
                 login_file.unlink(missing_ok=True)
@@ -127,10 +135,11 @@ class Native:
         sandboxing.quarantine(record, secrets, run_dir, state)
         return timing, record
 
-    def account(self, engine, run_id, internal, events_path, record, timed_out):
+    def account(self, engine, gateway_id, internal, events_path, record, timed_out):
         """Every container the variant started and the networks it joined; remove what it left.
 
-        What it left after a normal end is residue; at the deadline the suite stops it, as it stops the sandbox."""
+        What it left after a normal end is residue; at the deadline the suite stops it, as it stops the sandbox.
+        A record that never shows the run's own network failed: the check fails closed."""
         started, joined, created_networks, begun = {}, {}, {}, False
         for line in events_path.read_text(encoding="utf-8", errors="replace").splitlines():
             try:
@@ -139,18 +148,20 @@ class Native:
                 continue
             attrs = (event.get("Actor") or {}).get("Attributes") or {}
             kind, action = event.get("Type"), event.get("Action")
-            # The record starts a second early, so that nothing is missed; what came before this run's network is not its.
+            # The record starts early, so that nothing is missed; what came before this run's network is not its.
             if not begun:
                 begun = kind == "network" and action == "create" and attrs.get("name") == internal
                 continue
             if kind == "container" and action == "start":
-                if attrs.get(sandboxing.LABEL_KEY) == run_id:
-                    continue  # the suite's own gateway
+                if event.get("id") == gateway_id:
+                    continue  # the suite's own gateway, by its ID: a label the variant could copy
                 started[event.get("id") or (event.get("Actor") or {}).get("ID")] = attrs.get("name")
             elif kind == "network" and action == "connect":
                 joined.setdefault(attrs.get("container"), set()).add(attrs.get("name"))
-            elif kind == "network" and action == "create" and not attrs.get("name", "").startswith(run_id):
+            elif kind == "network" and action == "create" and attrs.get("name") != internal.removesuffix("-internal") + "-egress":
                 created_networks[(event.get("Actor") or {}).get("ID")] = attrs.get("name")
+        if not begun:
+            record.setdefault("error", "the engine's event record does not show the run's network: the network check did not run")
         record["armContainers"] = [{"id": cid[:12], "name": name, "networks": sorted(joined.get(cid, []))} for cid, name in started.items()]
         record["escapes"] = [c for c in record["armContainers"] if not c["networks"] or set(c["networks"]) - {internal, ALLOWED_NONE}]
         left = []
