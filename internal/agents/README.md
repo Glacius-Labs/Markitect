@@ -34,6 +34,23 @@ With `Config.Transcripts` set, every start writes `RUN/MANAGER-ROLE-ROUND.jsonl`
 
 The lower layer, `agents.Start` with a `Spec` and `Agent.Send`, is the same machinery for one agent; a conversation can take further turns, which resume it.
 
+## Composition
+
+`markitect apply` and `verify` build the agents in `internal/bootstrap` from the environment:
+
+| Variable | Meaning | Default |
+| --- | --- | --- |
+| `MARKITECT_MANAGER_IMAGE` | The Manager image, built from `packaging/runtime` with the project's toolchain | required |
+| `MARKITECT_ENGINE` | The Docker CLI | `docker` on `PATH` |
+| `MARKITECT_PROVIDER` | `claude` or `codex` | `claude` |
+| `MARKITECT_LOGIN` | The account login file | `~/.claude/.credentials.json` or `~/.codex/auth.json` |
+| `MARKITECT_MODEL`, `MARKITECT_EFFORT` | Model and effort of every maker and checker | `claude-sonnet-5-5` (Codex: `gpt-6-sol`), `high` |
+| `MARKITECT_NETWORK` | The network that reaches the provider | `bridge` |
+| `MARKITECT_HOSTS`, `MARKITECT_DNS` | Extra host entries (`name:address`) and name servers, comma-separated | none |
+| `MARKITECT_TRANSCRIPTS` | A folder for the agents' transcripts | none |
+
+Each container gets 1 CPU, 2 GiB of memory, 256 processes and 256 MiB of temporary space.
+
 ## Failure classes
 
 A failed start carries a class, so that the evaluation's classifier can void the provider's failures and count everything else ([evaluation suite](../../docs/guides/evaluation-suite.md)):

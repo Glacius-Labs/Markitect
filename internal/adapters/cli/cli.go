@@ -1,5 +1,6 @@
 // Package cli is the markitect command line: init, check, lock, refs, graph,
-// impact, lint, version and licenses. None of them starts an agent.
+// impact and lint, which start no agent; apply and verify, which start a Run;
+// version and licenses.
 package cli
 
 import (
@@ -12,6 +13,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/Glacius-Labs/Markitect/internal/agentport"
 	"github.com/Glacius-Labs/Markitect/internal/analysis"
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
 	"github.com/Glacius-Labs/Markitect/internal/model"
@@ -48,7 +50,7 @@ const (
 	OK       = 0
 	Failed   = 1 // the command ran and found errors
 	Misused  = 2 // the command could not run
-	usageTop = `markitect is the canonical model tool of Markitect. No command starts an agent.
+	usageTop = `markitect is the canonical model tool of Markitect. Only apply and verify start agents.
 
 Usage:
   markitect init   [--repo DIR] [--name TITLE]   set up a project and install the skills
@@ -59,6 +61,11 @@ Usage:
   markitect impact [--repo DIR] [--json] --base COMMIT [--full] [--findings FILE]
                                                   what a change reaches, and each Manager's checklist
   markitect lint   [--repo DIR] [--json]          measure the model like code: warnings only
+  markitect apply  [--repo DIR] [--json] [--base COMMIT] [--full] [--findings FILE] [RUN OPTIONS]
+                                                  realize the change with a Run and land it
+  markitect verify [--repo DIR] [--json] [--base COMMIT] [--full] [--findings-out FILE] [RUN OPTIONS]
+                                                  check the change with checkers only; changes nothing
+        RUN OPTIONS: --remote NAME --branch NAME --run NAME --deadline D --starts N --rounds N --start-timeout D
   markitect version
   markitect licenses
 `
@@ -67,6 +74,7 @@ Usage:
 // CLI runs one command.
 type CLI struct {
 	Git    Git
+	Runs   Runs
 	Stdout io.Writer
 	Stderr io.Writer
 }
@@ -95,6 +103,10 @@ func (c CLI) Run(ctx context.Context, args []string) int {
 		code, err = c.impact(ctx, rest)
 	case "lint":
 		code, err = c.lint(ctx, rest)
+	case "apply":
+		code, err = c.runCommand(ctx, agentport.Apply, rest)
+	case "verify":
+		code, err = c.runCommand(ctx, agentport.Verify, rest)
 	case "version":
 		fmt.Fprintln(c.Stdout, "markitect", buildinfo.Build())
 	case "licenses":

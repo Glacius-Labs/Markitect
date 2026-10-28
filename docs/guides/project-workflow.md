@@ -1,6 +1,6 @@
 # Project workflow
 
-This is the one guide for using Markitect on a project. It walks through the commands of [concept 2.0](../concepts/v2-concept.md) that exist today: `init`, `check`, `lock`, `refs`, `graph`, `impact` and `lint`. None of them starts an agent. The [model language guide](model-language.md) owns the details: the `.markitect/` layout, Definitions, Kinds and Libraries, links, the registry and every command's options. `apply` and `verify`, which start agents, come with step T4 of the [delivery plan](../implementation-plan.md#concept-20-build).
+This is the one guide for using Markitect on a project. It walks through the commands of [concept 2.0](../concepts/v2-concept.md) that exist today: the model commands `init`, `check`, `lock`, `refs`, `graph`, `impact` and `lint`, which start no agent, and `apply` and `verify`, which start a Run. The [model language guide](model-language.md) owns the model commands' details: the `.markitect/` layout, Definitions, Kinds and Libraries, links, the registry and every option. The [Run engine](../../internal/run/README.md) owns how a Run works, its Result and landing.
 
 The commands run wherever Go and Git run, on Windows, Linux and macOS. Build them from `cmd/markitect`, or run them from source:
 
@@ -52,9 +52,20 @@ markitect graph --repo PATH
 markitect impact --repo PATH --base COMMIT [--full] [--findings FILE]
 ```
 
-`impact` compares the base commit with the working tree: the changed and reached Definitions, the reached files with their owners, the Managers that would work, and each Manager's checklist. `--findings` adds Findings from a Findings page. T4's `apply` and `verify` will start their agents from this checklist ([impact and checklists](model-language.md#impact-and-checklists)).
+`impact` compares the base commit with the working tree: the changed and reached Definitions, the reached files with their owners, the Managers that would work, and each Manager's checklist. `--findings` adds Findings from a Findings page. `apply` and `verify` start their agents from this checklist ([impact and checklists](model-language.md#impact-and-checklists)).
 
-Every command except `init` and `lock` takes `--json`. Exit code 0 means success, 1 that the command ran and found errors, 2 that it could not run.
+## 7. Apply and verify
+
+```text
+markitect apply  --repo PATH [--base COMMIT] [--full] [--findings FILE] [--remote NAME] [--branch NAME]
+markitect verify --repo PATH [--base COMMIT] [--full] [--findings-out FILE] [--remote NAME] [--branch NAME]
+```
+
+Commit and push the model change first: a Run starts from the tip of the target branch, never from the working tree, and lands by pushing to it. The target is the current branch's upstream by default. `apply` gives every Manager the change reaches a maker and a checker, merges their approved work up to Root and lands it when Root's checker approves; you then pull it like any colleague's push. `verify` starts checkers only and changes nothing. The base is the last commit Markitect landed; name one with `--base` for the first Run, or use `--full`. Both print the Result page (`--json` prints JSON) and commit it under `.markitect/results/`: with the landing, or on the Run branch `markitect/runs/<run>` when the Run does not land, with the reason. `verify --findings-out FILE` writes its Findings for `apply --findings FILE`.
+
+`--run` names the Run (lower-case letters, digits, `.`, `_`, `-`). `--deadline`, `--starts`, `--rounds` and `--start-timeout` bound the Run; when a bound is reached, the Run stops honestly as incomplete and lands nothing. A Run needs Docker, a Manager image and an account login. Build the image from `packaging/runtime` with the project's toolchain and name it in `MARKITECT_MANAGER_IMAGE`. The provider is Claude Code by default (`MARKITECT_PROVIDER=codex` selects Codex), logged in through its own CLI on this host; the [Manager agents](../../internal/agents/README.md#composition) guide lists every setting. Without an image both commands say so and start nothing.
+
+Every command except `init` and `lock` takes `--json`. Exit code 0 means success, 1 that the command ran and found errors, 2 that it could not run. For `apply` 0 means landed or nothing to do, for `verify` that every item conforms; 1 means the Run ran and did not land, or found something.
 
 ## Troubleshooting
 
@@ -65,3 +76,7 @@ Every command except `init` and `lock` takes `--json`. Exit code 0 means success
 | `package.cycle` | Move the shared concept into a common parent, or invert the dependency ([links, scope and visibility](model-language.md#links-scope-and-visibility)). |
 | `lint.stale` | A registry page still names a removed Definition, file or Package. The page's Package cleans it up; `impact` puts it on that Manager's checklist. |
 | `impact` refuses to run | The project has compile errors; run `check` and fix them first. |
+| `apply` ends as `check-failed` | The start commit does not compile; no agent started. Fix the model, commit, push and run again. |
+| `apply` ends as `kept` | The work was approved but did not land; the Result on `markitect/runs/<run>` says why, for example that the target moved over the Run's impact. Run `apply` again from the new state. |
+| `apply` ends as `model-defect` | Root found a defect in the model. The Result's decisions for the owner say what to settle; change the model and run again. |
+| "no Run has landed yet" | Name the first base with `--base COMMIT`, or use `--full`. |
