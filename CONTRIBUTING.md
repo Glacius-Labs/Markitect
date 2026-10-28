@@ -38,7 +38,7 @@ python -B -m unittest discover -s tools/makerspace-oracle -p test_*.py
 python -B -m unittest discover -s tools/model-analysis
 ```
 
-Run broad Go suites on Linux, for example in WSL: on Windows, real Git is much slower, and `internal/adapters/gitrepo` alone takes 23 to 40 minutes instead of about two. Tests that do not test time take their Run deadline from the test's own deadline, so the `-timeout` value bounds a hang.
+Broad Go suites run in Linux CI by manual dispatch (above). For now they are not run on Windows: real Git starts are much slower there, and the full suite takes about 50 minutes instead of about three ([measurement](docs/validation/windows-test-time-20261028.md); the owner parked the fix on 28 October 2026, see the [topics page](docs/workstreams/topics.md)). Tests that do not test time take their Run deadline from the test's own deadline, so the `-timeout` value bounds a hang.
 
 Run `gofmt` on changed Go files and `git diff --check`. CI checks module checksums, tests with and without the race detector, vet, build, tracked Go formatting, every production/test/platform import against the architecture rule table, the packaged-source smoke, repository scripts, maintained documentation links, the independent Library oracle with its bounded transport, and the unit tests of the comparison, Makerspace oracle and model analysis tools. Obsolete engines and their tests/gates are removed together; no skips or success stubs may replace required checks.
 
