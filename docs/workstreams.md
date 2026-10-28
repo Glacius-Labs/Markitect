@@ -1,51 +1,44 @@
 # Workstreams
 
-Since 27 October 2026, Markitect work runs in independent lanes, so that one chat never mixes several topics. The owner asked for it: "Id like to partition those so that we have independant workstreams on all of that and dont mix everything in one chat. Also each variant or prototype of Markitect should get an own coordinator or responsible session, which can create subsessions for parallel work. We dont want to loose track here".
+Since 28 October 2026, Markitect work runs in two sessions. The owner replaced the eleven lanes of 27 October: "instead of all those parallel session we need one session which is responsible to coordinate and discuss the evaluation suite and the three variants. We need one session for discussion of the various topics."
 
-This page lists the lanes and where each one keeps its state. It holds no status itself: each lane owns its page under `docs/workstreams/` and updates only that page.
+This page lists the sessions, the variants and where each keeps its state. It holds no status itself.
 
-## Lanes
+## Sessions
 
-| # | Lane | Kind | Responsible session | Branch | State page |
-|---|---|---|---|---|---|
-| 1 | Host variant: today's V1, the host coordinates the Manager hierarchy | variant | Lane 1: Host variant lead (the Coordinator) | `main` | `workstreams/host-variant.md` |
-| 2 | Plugin variant: Markitect as a Claude Code plugin (arm P) | variant | Lane 2: Plugin variant lead | `variant/plugin` | `workstreams/plugin-variant.md` |
-| 3 | Git variant: Managers collaborate through a Git remote; the host only starts and stops ([DEC-078](concepts/register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review)) | variant | Lane 3: Git variant lead | `variant/git` | `workstreams/git-variant.md` |
-| 4 | Evaluation suite: the same job and the same judging for every variant; classic agentic coding is the baseline arm | shared | Lane 4: Evaluation suite | `main` | `workstreams/evaluation.md` |
-| 5 | Windows and Linux execution | topic | Lane 5: Windows / Linux execution | `main` | `workstreams/platform.md` |
-| 6 | Canonical model language: Kinds, Libraries, quality | topic | Lane 6: Canonical model language | `main` | `workstreams/model-language.md` |
-| 7 | Modeling skills: how people and agents design and change a model | topic | Lane 7: Modeling skills and model design | `main` | `workstreams/modeling-skills.md` |
-| 8 | Compiler: what `markitect check` checks and reports | topic | Lane 8: Compiler capabilities | `main` | `workstreams/compiler.md` |
-| 9 | Agentic commands run through the Manager hierarchy | topic | Lane 9: Agentic commands | `main` | `workstreams/commands.md` |
-| 10 | Continuous change: outside triggers become tasks, model changes and Applies | topic | Lane 10: Continuous change from triggers | `main` | `workstreams/continuous-change.md` |
-| 11 | Cockpit or IDE for seeing and understanding the model and its runs | topic | Lane 11: Cockpit / IDE | `main` | `workstreams/cockpit.md` |
+| Session | Does | Builds | State page |
+|---|---|---|---|
+| Build and evaluation | Coordinates the evaluation suite and the variants, runs their dispatches and integrates their PRs | yes, the only session that builds | [build.md](workstreams/build.md) |
+| Topics | Discusses the product topics with the owner (model language and skills, compiler, commands, continuous change, platform, Cockpit) and records the decisions | no; it writes docs only | `workstreams/topics.md` |
+| Lane 1: host variant | Finishes its current task, then hands arm M over to Build and ends | until the handover | [host-variant.md](workstreams/host-variant.md) |
 
-The state page paths are plain text, so a lane can add its page without touching this one.
+Both sessions sit in the sidebar folder "Markitect". The lane sessions 2 to 11 end once the owner agrees; their state moves into the two pages above.
+
+## Variants
+
+The evaluation suite treats every variant as a black box with the same task in and the same judging out.
+
+| Arm | Variant | Branch |
+|---|---|---|
+| M | Host variant: today's V1, the host coordinates the Manager hierarchy | `main` |
+| P | Plugin variant: Markitect's Apply method as a Claude Code plugin | `variant/plugin` |
+| G | Git variant: Managers collaborate through a Run-local Git remote ([DEC-078](concepts/register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review)); prototype on `dev/g0-prototype` | `variant/git` |
+| K | Baseline: classic agentic coding, one Claude Code session with the task | the suite on `main` |
 
 ## Priority
 
 The owner, 27 October 2026: "The working streams and evaluator are currently our primary goal i think. It should achieve that each of them gets a stable version and can be evaluated and then we can decide which one of them performs well in which parameters of a project."
 
-Lanes 1 to 4 build, in three steps:
+Three steps:
 
-1. **One yardstick.** Lane 4's arm interface becomes the one contract for every variant: the same task file in, the same `run.json` and bundle out, the same judging.
-2. **A stable version per variant.** One Library task runs end to end through that interface three times in a row without manual help. Order: classic baseline and host first, then plugin, then Git.
-3. **Comparison.** A small task set along project traits (size, kind of change, cost) runs on every variant with the same model inside a suite. The result is one table: which variant does well on which trait.
-
-Topic lanes 5 to 11 pause once their state page is up, until the owner opens a discussion.
-
-## State pages
-
-A lane's state page is the only place for its state; chats and messages are not. The page keeps three short parts, updated whenever a step ends:
-
-- **Now:** what the lane is doing.
-- **Next:** its next step.
-- **Questions for the owner:** each decision it needs, with its recommendation.
+1. **One yardstick.** The evaluation suite's variant command is the one contract for every variant: the same task folder in, a result bundle out, the same judging.
+2. **A stable version per variant.** One Library task runs end to end through the suite three times in a row without manual help. Order: K and M first, then P, then G.
+3. **Comparison.** A small task set along project traits (size, kind of change, cost) runs on every variant with the same model. The result is one table per area: which variant does well where. There is no overall score.
 
 ## Rules
 
-- **Shared code lives on `main`.** The compiler, the model, the Libraries and the evaluation suite are shared. A variant branch holds only that variant's code and merges `main` regularly, so the variants never fork the shared parts.
-- **One lane, one scope.** A lane changes only its own files. When it needs another lane's files, it asks that lane's session.
-- **Leads may delegate.** A variant lead may start its own sub-sessions for parallel pieces with disjoint files.
-- **Topic lanes discuss first.** They take stock, write their state page and discuss with the owner before they build.
-- **The usual rules still apply.** [AGENTS.md](../AGENTS.md), the [working method](development/working-method.md) and the [integration policy](implementation-plan.md#integration) govern every lane. Real container, provider or Apply runs need a bounded dispatch.
+- **One state page per session.** It keeps three short parts, updated whenever a step ends: **Now**, **Next** and **Questions for the owner**, each question with a recommendation. Chats, messages and dashboards are not state.
+- **Few sessions at once.** At most about three sessions work at the same time. Build starts short sub-sessions for concrete jobs, one job and one PR each, and ends each one when its PR is merged.
+- **Topics hands work to Build.** When an owner decision needs code, Topics sends Build one clear task.
+- **Shared code lives on `main`.** The compiler, the model, the Libraries and the evaluation suite are shared. A variant branch holds only that variant's code and merges `main` regularly.
+- **The usual rules still apply.** [AGENTS.md](../AGENTS.md), the [working method](development/working-method.md) and the [integration policy](implementation-plan.md#integration) govern every session. Each real container, provider or Apply run needs a bounded dispatch the owner approves, one at a time on the shared engine.
