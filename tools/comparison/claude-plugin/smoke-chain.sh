@@ -42,10 +42,19 @@ check_sha() { [ "$(sha256sum "$1" | cut -d' ' -f1)" = "$2" ] || die "sha256 of $
 check_sha "$S1_BUNDLE" "$S1_SHA"; check_sha "$S4_BUNDLE" "$S4_SHA"; check_sha "$SEED" "$SEED_SHA"
 cp "$S1_BUNDLE" "$EV/inputs/p-s1-c1.bundle"; cp "$S4_BUNDLE" "$EV/inputs/p-s4-r1.bundle"
 
-say "build markitect from $SOURCE"
-(cd "$SRC" && env -u GOFLAGS GOWORK=off GOENV=off CGO_ENABLED=0 go build -trimpath -buildvcs=true -o "$EV/bin/markitect.exe" ./cmd/markitect) || die "build failed"
+# The compiler is arm M's frozen source F plus frozen-tree.patch (`markitect
+# tree`): arm M's inputs carry the Core of F, which later Core versions refuse.
+PATCH="$HERE/frozen-tree.patch"
+BUILD="$WORK/frozen-build"
+say "build markitect from $F + frozen-tree.patch (plugin source $SOURCE)"
+rm -rf "$BUILD"; git -C "$SRC" worktree prune
+git -C "$SRC" worktree add -q --detach "$BUILD" "$F" || die "frozen worktree failed"
+git -C "$BUILD" apply "$PATCH" || die "frozen-tree.patch does not apply to $F"
+(cd "$BUILD" && env -u GOFLAGS GOWORK=off GOENV=off CGO_ENABLED=0 go build -trimpath -buildvcs=true -o "$EV/bin/markitect.exe" ./cmd/markitect) || die "build failed"
+git -C "$SRC" worktree remove --force "$BUILD" || die "frozen worktree not removed"
 cat > "$EV/binding.json" <<EOF
-{"source": "$SOURCE", "markitect_sha256": "$(sha256sum "$EV/bin/markitect.exe" | cut -d' ' -f1)",
+{"source": "$SOURCE", "markitect_source": "$F", "markitect_patch_sha256": "$(sha256sum "$PATCH" | cut -d' ' -f1)",
+ "markitect_sha256": "$(sha256sum "$EV/bin/markitect.exe" | cut -d' ' -f1)",
  "claude": "$(claude --version)", "model": "$MODEL", "effort": "$EFFORT", "deadline_seconds": $DEADLINE,
  "max_agents": $MAX_AGENTS, "s1": "$S1_COMMIT", "s4": "$S4_COMMIT", "assessor_rev": "$R", "oracle_rev": "$F", "go_image": "$GO_IMAGE"}
 EOF

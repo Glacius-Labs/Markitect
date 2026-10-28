@@ -1,6 +1,6 @@
 # Arm P Library smoke chain: dispatch
 
-Status: **smoke-01 failed on a plugin defect (fixed); smoke-02 awaits the owner's go-ahead.** It runs only after the owner's go-ahead, under the [standing evidence authorization](../../../docs/concepts/sources/v1-source-implementation-approval-20261023.md#subsequent-standing-evidence-authorization). Failed attempts stay recorded.
+Status: **smoke-01 and smoke-02 failed before any Apply (both causes fixed); smoke-03 awaits the owner's go-ahead.** It runs only after the owner's go-ahead, under the [standing evidence authorization](../../../docs/concepts/sources/v1-source-implementation-approval-20261023.md#subsequent-standing-evidence-authorization). Failed attempts stay recorded.
 
 ## Question
 
@@ -21,7 +21,7 @@ S2 and S3 are skipped and recorded when their predecessor has no candidate.
 
 ## Binding
 
-- **Source:** the committed head of this branch at launch. The script refuses local changes, records `git rev-parse HEAD` in `binding.json` and builds `markitect.exe` from it (`-trimpath -buildvcs=true`, `CGO_ENABLED=0`).
+- **Source:** the plugin and runner come from the committed head of this branch at launch. The script refuses local changes and records `git rev-parse HEAD` in `binding.json`. `markitect.exe` is built from arm M's frozen source F `e11e6cff` plus [frozen-tree.patch](frozen-tree.patch), which adds only `markitect tree` (`-trimpath -buildvcs=true`, `CGO_ENABLED=0`). Its sha256 and the patch's are recorded in `binding.json`. Arm M's inputs carry F's Core, which Core 1.2.0 on `main` refuses (smoke-02), so the plugin checks them with the compiler arm M used.
 - **Provider:** Claude Code 2.1.309 on Windows, normal account login (Claude subscription), model `claude-sonnet-5-5`, effort `high` for every agent (the owner's model rule for agent roles). Each run has its own `CLAUDE_CONFIG_DIR` with a login copy without refresh token. No user settings, plugins, CLAUDE.md, memory or MCP servers reach a run, and a run cannot rotate the login.
 - **Assessment:** unchanged `assess_candidate.py` from the frozen comparison source R `74b7d7df` with oracle F `e11e6cff` and Go image `sha256:1271a363…`, as for arms M and B, with blinded copies and tokens kept apart.
 
@@ -67,4 +67,12 @@ Approved by the owner and launched at 13:37 UTC from `43ed751b`. Evidence is in 
 - **Fix:** the workflow is renamed `walk`. An offline test now refuses any workflow that shares a name with a command. A Haiku probe confirmed that `/markitect:apply` now begins with `mkp.py prepare`.
 - **Before the run:** the CLI login file had expired, so it was refreshed with one Haiku call at the owner's request. Docker Desktop was started by the owner.
 
-A rerun is a new attempt, smoke-02, from the fixed head.
+### smoke-02, 28 October 2026: failed before any Apply
+
+Approved by the owner and launched at 13:41 UTC from `bdf1472e`. Evidence is in `C:\Users\Consiliari\Documents\Codex\Markitect-ArmP\smoke-02`.
+
+- **What happened:** the command now ran as intended. `prepare` ran `markitect check` and stopped S1 after 11 s and S4 after 15 s without starting any Manager. No residue was left.
+- **Cause:** a binding defect. `markitect.exe` was built from this branch, whose Core is 1.2.0 since 26 October. Arm M's inputs carry the Core of F, so the check refused them (`core.missing`, `core.content`, `contract.value_type`).
+- **Fix:** the chain builds `markitect.exe` from F plus `frozen-tree.patch`. With that build, `tree` passes on both bound inputs (S1 `ee7c5d98`, S4 `b079bec1`) and reports the Library's six Managers with their areas.
+
+A rerun is a new attempt, smoke-03, from the fixed head.
