@@ -28,8 +28,9 @@ import time
 
 FORMAT = 1
 LOG_TAIL = 4000
-# Markitect's own bookkeeping: registry pages and Results. Anything else under .markitect/ is a protected input.
-BOOKKEEPING = (".markitect/registry/", ".markitect/results/")
+# Markitect's own bookkeeping: registry pages (Root's is registry.md), the ignore list and Results.
+# Anything else under .markitect/ is a protected input.
+BOOKKEEPING = (".markitect/registry.md", ".markitect/registry/", ".markitect/ignore.md", ".markitect/results/")
 TASK_INPUTS = ("task.md", "TASK.md")
 # Files outside the program that every repository may carry.
 REPOSITORY_FILES = re.compile(r"(^|/)(\.gitignore|\.gitattributes)$")

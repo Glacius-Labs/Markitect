@@ -222,6 +222,7 @@ class JudgeKitTest(unittest.TestCase):
         (task / "model" / "root").mkdir(parents=True)
         (task / "model" / "root" / "project.md").write_bytes(b"model\n")
         for rel, data in {"realization/a.go": b"package a\n", ".markitect/registry/a.md": b"r\n", ".markitect/results/r1.md": b"r\n",
+                          ".markitect/registry.md": b"r\n", ".markitect/ignore.md": b"i\n",
                           ".markitect/model/root/project.md": b"model\n", ".markitect/model/root/rule.md": b"edited\n",
                           "TASK.md": b"t\n", "tool": b"\x7fELF....", "ci.yaml": b"x\n"}.items():
             (repo / rel).parent.mkdir(parents=True, exist_ok=True)
@@ -232,7 +233,8 @@ class JudgeKitTest(unittest.TestCase):
         self.assertEqual(result["unrequested"], ["ci.yaml", "tool"])
         self.assertEqual(result["protectedTouched"], [".markitect/model/root/rule.md", "TASK.md"])
         categories = {c["path"]: c["category"] for c in result["changedPaths"]}
-        self.assertEqual(categories[".markitect/registry/a.md"], "bookkeeping")
+        for path in (".markitect/registry/a.md", ".markitect/registry.md", ".markitect/ignore.md", ".markitect/results/r1.md"):
+            self.assertEqual(categories[path], "bookkeeping", path)
         self.assertEqual(categories["realization/a.go"], "requested")
 
 
