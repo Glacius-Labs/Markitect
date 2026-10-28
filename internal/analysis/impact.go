@@ -247,12 +247,15 @@ func reachedFiles(in ImpactInput, reasons map[string][]string) []ReachedFile {
 
 // changedDefinitions compares the Definitions of two states, the project's
 // and the Libraries'. The base state reads the standard Libraries from this
-// binary, so a Library also counts as changed when its content differs from
-// the digest the base commit's lock pinned: then all its Kinds changed.
+// binary, so a standard Library also counts as changed when its content
+// differs from the digest the base commit's lock pinned: then all its Kinds
+// changed.
 func changedDefinitions(base, cur *project.Project) []Change {
 	changedLibrary := map[string]bool{}
 	for _, lib := range cur.Libraries {
-		if locked, ok := base.Lock.Libraries[lib.Name]; ok && locked.Digest != model.LibraryDigest(lib.Files) {
+		// Committed Libraries are compared file by file below; only a standard
+		// Library is read from this binary on both sides.
+		if locked, ok := base.Lock.Libraries[lib.Name]; ok && lib.Standard && locked.Digest != model.LibraryDigest(lib.Files) {
 			changedLibrary[lib.Name] = true
 		}
 	}

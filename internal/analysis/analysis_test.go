@@ -291,6 +291,33 @@ func TestImpactLibraryUpgrade(t *testing.T) {
 	}
 }
 
+func TestImpactLocalLibraryComparesKindByKind(t *testing.T) {
+	withWeb := func(page string) memRepo {
+		r := library(t)
+		r[project.ManifestFile] = "libraries:\n  std: 1.0.0\n  web: 0.1.0\n"
+		r[project.LibraryDir+"/web/Page.md"] = page
+		r[project.LibraryDir+"/web/Form.md"] = "---\nkind: Kind\n---\n# Form\n"
+		r[m+"catalog/search.md"] = def("web/Form", "Search", "Finds a [[catalog/book]].")
+		r[project.RegistryDir+"/catalog.md"] += "| src/catalog/search.go | [[catalog/search]] | Search form |\n"
+		r["src/catalog/search.go"] = "package catalog\n"
+		p, err := project.Load(r)
+		if err != nil {
+			t.Fatal(err)
+		}
+		r[project.LockFile] = string(model.RenderLock(p.Libraries))
+		return r
+	}
+	base := withWeb("---\nkind: Kind\n---\n# Page\n")
+	cur := withWeb("---\nkind: Kind\n---\n# Page\n\nNow with a title bar.\n")
+	im := impact(t, base, cur, nil, nil, false)
+	if len(im.Definitions) != 1 || im.Definitions[0] != (Change{Path: "web/Page", Change: Modified}) {
+		t.Fatalf("changed = %+v; only the edited Kind changed", im.Definitions)
+	}
+	if len(im.Packages) != 0 {
+		t.Fatalf("no Definition is of Kind Page, yet %v work", im.Packages)
+	}
+}
+
 func TestFindingsEmptyHeadingIsAnErrorNotACrash(t *testing.T) {
 	_, ds := ParseFindings("f.md", []byte("# Findings\n\n##\n\nObserved: x\n"))
 	expectWarning(t, ds, "findings.syntax", "exactly one link")

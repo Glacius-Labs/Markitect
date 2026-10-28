@@ -12,6 +12,14 @@ func TestPlainFileCellIsReadAsWritten(t *testing.T) {
 	}
 }
 
+func TestPlainFileCellAtTheRootKeepsItsMarkup(t *testing.T) {
+	reg, ds := account(t, []string{"__init__.py"}, nil,
+		page("", table+"| __init__.py | [[project]] | Package marker |\n"))
+	if len(ds) != 0 || reg.Entries["__init__.py"] == nil {
+		t.Fatalf("entries = %v, diagnostics = %v", reg.Entries, ds)
+	}
+}
+
 func TestUnescapedLabelBarInRegistryRow(t *testing.T) {
 	_, ds := account(t, []string{"a.go"}, nil,
 		page("", table+"| a.go | [[members/member|member]] | lost cell |\n"))

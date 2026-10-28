@@ -25,6 +25,9 @@ type LibrarySource struct {
 	Version string
 	Dir     string // where the files come from, for diagnostics
 	Files   []File
+	// Standard marks a Library built into the binary rather than committed
+	// in the project.
+	Standard bool
 }
 
 // Source is everything Compile reads: the model folder and the Libraries.

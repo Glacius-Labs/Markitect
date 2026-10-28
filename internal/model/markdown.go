@@ -172,6 +172,10 @@ func (p Page) LinksIn(root ast.Node) []RawLink {
 // from its first text to its last, so that a path such as pkg/__init__.py is
 // not read as emphasis.
 func (p Page) RawText(n ast.Node) string {
+	if n.Type() == ast.TypeBlock && n.Lines().Len() > 0 {
+		// A table cell keeps its source segment.
+		return strings.TrimSpace(string(n.Lines().Value(p.Body)))
+	}
 	start, stop := -1, -1
 	_ = ast.Walk(n, func(c ast.Node, entering bool) (ast.WalkStatus, error) {
 		if t, ok := c.(*ast.Text); ok && entering {

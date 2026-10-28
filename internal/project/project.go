@@ -111,9 +111,12 @@ func Load(repo Repository) (*Project, error) {
 			ds.Add("project.file", f, 0, "%s holds only the manifest, lock, execution.yaml, ignore.md, the registry, the model, Libraries, results and the installed tool", Dir)
 		}
 	}
-	local, err := LocalLibraries(repo, libraryFiles)
-	if err != nil {
-		return nil, err
+	local := map[string][]model.File{}
+	for _, f := range libraryFiles {
+		name, file, _ := strings.Cut(strings.TrimPrefix(f, LibraryDir+"/"), "/")
+		if data, ok := read(f); ok {
+			local[name] = append(local[name], model.File{Path: file, Data: data})
+		}
 	}
 	p.loadManifest(read, present, local, &ds)
 	if !present[ChecksFile] {
@@ -194,7 +197,7 @@ func LibrarySource(ref model.LibraryRef, local map[string][]model.File) (model.L
 		if ref.Version != libraries.Version {
 			return model.LibrarySource{}, "library.version", fmt.Sprintf("this markitect ships %s %s, not %s", ref.Name, libraries.Version, ref.Version)
 		}
-		lib := model.LibrarySource{Name: ref.Name, Version: ref.Version, Dir: "markitect:" + ref.Name}
+		lib := model.LibrarySource{Name: ref.Name, Version: ref.Version, Dir: "markitect:" + ref.Name, Standard: true}
 		for _, f := range files {
 			lib.Files = append(lib.Files, model.File{Path: f.Path, Data: f.Data})
 		}
