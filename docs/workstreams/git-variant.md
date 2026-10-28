@@ -32,7 +32,19 @@ The lane exists since the owner split Markitect's work into lanes on 27 October 
 
 - **G0:** design on `main` through [PR #795](https://github.com/Glacius-Labs/Markitect/pull/795).
 - **`variant/git`:** created from `main` at `eb1cf307`. No variant code yet.
-- **Prototype:** the owner approved the dispatch below on 28 October 2026: "Approved: build the prototype, run P0, then P1 and P2 on Codex Luna within the limits on the state page." The build is in progress on `variant/git`.
+- **Prototype:** the owner approved the dispatch below on 28 October 2026: "Approved: build the prototype, run P0, then P1 and P2 on Codex Luna within the limits on the state page."
+  - **Built:** the referee, the seven team tools, the supervisor, the host's start and stop, the Apply driver and a harness generator are on `dev/g0-prototype`, based on `variant/git`. The harness generator renders the same per-Manager model context as arm M.
+  - **P0 passed** on 28 October with 34 of 34 cases, with no provider, on Docker Desktop's Linux engine:
+    - per-Manager credentials;
+    - refused pushes to foreign refs and to `mk/base`;
+    - a refused message to a sibling;
+    - check results shown to the parent;
+    - a failed check that cannot be accepted;
+    - a reject that carries the parent's work and a correction that must sync it;
+    - complete participation before the final handoff;
+    - a clean teardown.
+  - **P1 and P2 are paused** at the owner's request until lane 1 is done. WSL Ubuntu has no Docker access here, so the approved WSL host could not run anyway; the owner said not to run in WSL for now. No provider run has happened.
+  - **P1 runs the full tree:** it uses all 6 Library Managers for one Implement Run. A cut-down tree of Root, `catalog` and `members` is not a valid model, because both import `lending` and the build contract lives in `library`.
 - **Sub-sessions:** none.
 
 ## Prototype dispatch (approved 28 October)
