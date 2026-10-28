@@ -4,6 +4,7 @@ This is the home of Markitect's long-term vision, product-level decisions, clari
 
 | Document | Content |
 |---|---|
+| [Concept 2.0](v2-concept.md) | Draft for the owner's review, 28 October 2026: the redesign of DEC-079 to DEC-085 in one readable order; replaces concept 1.0 as the target once accepted |
 | [V1 concept 1.0](v1-concept.md) | The consolidated V1 target: scope, principles, organization, Run, workflow, harness, acceptance and decisions D1–D18 ([DEC-068](register.md#dec-068-v1-concept-10)) |
 | [Register](register.md) | All entries with ID, status, origin and links, and the mapping of earlier collections |
 | [Origin and rationale](../vision.md#origin-and-rationale) | The owner's originating project, causal sequence, problems, concepts and assumptions, connected to the existing register; a section of the vision |
