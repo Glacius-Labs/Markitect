@@ -86,6 +86,8 @@ Next to the model, outside it ([DEC-081](register.md#dec-081-the-organization-kn
 
 Layout conventions, such as where tests live, are Rules in Root.
 
+**Markitect's own files** under `.markitect/` (Definitions, registry pages, manifest, lock, `execution.yaml`) need no registry entry; the compiler accounts for them itself. The hooks enforce who changes them: the model's Definitions, the manifest, the lock and `execution.yaml` never change in a Run, only through the owner, `markitect init` or `markitect lock`; a registry page changes only through its own Package's Manager.
+
 ## 5. The organization
 
 - Every Package is a Manager; the Package tree is the Manager tree, with Root at the top as today.
@@ -202,7 +204,7 @@ No app for now ([DEC-085](register.md#dec-085-markdown-tools-are-the-cockpit-for
 5. **The checklist: decided** 28 October: own Definitions the change reaches, inherited Definitions the change reaches, and assigned Findings; everything with `--full`.
 6. **Hooks and integration: decided** 28 October: parents push their own paths plus unchanged, approved child commits; the checker's approval is a commit without file changes; the required checks run on every submission.
 7. **Commands without a model change: decided** 28 October: a base (by default the last landed commit) with impact over model and file changes; focus Commands take the whole tree or `--package`; in `verify` the checkers write the verdicts.
-8. **Control files.** Must the model files, registry pages, manifest, lock and `execution.yaml` be registered or ignored?
+8. **Control files: decided** 28 October: accounted automatically; the hooks refuse model, manifest, lock and `execution.yaml` changes in a Run and let only a Package's own Manager change its registry page.
 9. **Results and leftovers.** Where Results are stored, especially when nothing lands; cleanup of Run branches and retention of evidence (open since DEC-078); landing while the user's local checkout has uncommitted changes.
 10. **Acceptance.** What counts as concept 2.0 being achieved; concept 1.0's acceptance (§25) does not carry over.
 
