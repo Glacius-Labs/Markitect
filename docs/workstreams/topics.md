@@ -10,7 +10,7 @@ State page of the Topics session: the owner's single place to discuss Markitect'
 
 ## Now
 
-- **Quick confirmations** (step 1 of the [order](#next)). Done: one topics page instead of seven lane pages, with the permanent records kept on Main; Main made consistent again after #806 (see [Done here](#done-here)). Open: the Windows Git-start fix (question 33).
+- **Quick confirmations** (step 1 of the [order](#next)). Done: one topics page instead of seven lane pages, with the permanent records kept on Main; Main made consistent again after #806 (see [Done here](#done-here)). Question 33 (Windows tests) parked by the owner.
 
 ## Next
 
@@ -71,6 +71,7 @@ Verbatim, with the date. Words in brackets are context added by the recorder.
 **This session**
 - 28 Oct [fold the six lane PRs: keep the C5 trial record, the two design pages and the Windows test-time numbers on Main; fold the lane pages into this page]: "Yes, fold them"
 - 28 Oct [instead of handing the #806 follow-ups to Build]: "Fix everything and every inconsistency. If you are unsure ask me. Dont talk to the build chat. Just bring a consistent and clean state to main"
+- 28 Oct [on fixing the Windows Git starts, question 33]: "This session is for discussing and designing. We will come to that later. Lets first see that we have a clean basis and then discuss markitect, its design completely and how things work. Maybe the windows tests will be fixed conceptually then. For now we just dont execute those tests since they take so long"
 
 **General**
 - 27 Oct: "The topics sessions are just there so when i have some time i can discuss those topics and maybe refine them."
@@ -173,7 +174,7 @@ Verbatim, with the date. Words in brackets are context added by the recorder.
 
 ### G. Platform
 
-33. **[B] Fix the Windows Git-start waste?** Rec: the four fixes in the [test-time record](../validation/windows-test-time-20261028.md), as one Build task with a before-and-after measurement on this machine. Also: do empty folders need to exist in Git at all?
+33. **Windows Git-start waste: parked** (owner, 28 October). Not fixed now; the Go tests are not run on Windows for now, and the cause may be settled by the design discussion. The [test-time record](../validation/windows-test-time-20261028.md) keeps the numbers and the four fix options.
 34. **Git variant consequences** (needs the G0 answers, PR #795): can the host run natively on Windows again, with Docker Desktop only for agents? Does the shared Run volume go away? Is the local remote a container, a host bare repository or a volume?
 35. **Silent missing inputs in the runner** (P8): a Git-ignored file the model accounts is silently absent through the runner. Refuse it instead?
 
@@ -197,7 +198,7 @@ On the owner's instruction of 28 October this session made Main consistent after
 
 ### Ready to hand over
 
-Waiting for one owner answer, then one task each: the Windows Git-start fix (33); `markitect lock` and readable `check` output (1); the two skill fixes and the C7 or C2 trial (12); explorer E1 (1 and 30), which also needs the source packager's allowlist to carry the embedded page.
+Waiting for one owner answer, then one task each: `markitect lock` and readable `check` output (1); the two skill fixes and the C7 or C2 trial (12); explorer E1 (1 and 30), which also needs the source packager's allowlist to carry the embedded page.
 
 ### Housekeeping
 
@@ -211,7 +212,7 @@ Waiting for one owner answer, then one task each: the Windows Git-start fix (33)
 - The **agreed names** in new code and docs; old names stay in the concept until renamed (question 24).
 - **`markitect tree` JSON** is pinned by `TestTreeReportsTheModelDerivedManagerTree`; the plugin variant depends on it.
 - **Libraries:** `api` 2.0.0 and `architecture` 1.1.0 are current.
-- **Platform rules:** no WSL, no Linux machine required; tests must run on Windows too; studies run on our own machine; Linux Apply is tested only after Windows Apply works.
+- **Platform rules:** no WSL, no Linux machine required; tests must be able to run on Windows too, but for now the Go tests are not run there because they take too long (question 33); studies run on our own machine; Linux Apply is tested only after Windows Apply works.
 
 ### Risks for evaluation runs
 
