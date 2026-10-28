@@ -15,7 +15,9 @@ whatever the session left with a fixed identity and writes result.bundle,
 run.json, the session's stream and its transcripts. Every step of a chain is a
 fresh session; the repository is its memory, and STATE_DIR is unused.
 
-This is separation, not a sandbox: the session runs as the user on the host.
+The login is the suite's EVALUATION_LOGIN when it sets one, as the sandbox does
+(`suite.py run --sandbox`). In host mode the session runs as the user on the
+host: that is separation, not a sandbox.
 """
 import argparse
 import json
@@ -39,7 +41,7 @@ TOOLS = ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "Agent", "TodoWrite"]
 DENIED = ["WebFetch", "WebSearch"]
 IDENTITY = ("Claude Code Baseline", "baseline@markitect.invalid")
 MARGIN, LOGIN_MARGIN, KILL = 60, 300, 15
-KEPT = ("CLAUDE_CODE_GIT_BASH_PATH",)
+KEPT = ("CLAUDE_CODE_GIT_BASH_PATH", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC")
 
 
 class VariantError(Exception):
@@ -176,7 +178,7 @@ def capture(repo, start, out, env, secrets):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--claude", default=shutil.which("claude") or "claude")
-    parser.add_argument("--credentials", default=str(pathlib.Path.home() / ".claude" / ".credentials.json"))
+    parser.add_argument("--credentials", default=os.environ.get("EVALUATION_LOGIN") or str(pathlib.Path.home() / ".claude" / ".credentials.json"))
     parser.add_argument("--effort")
     parser.add_argument("task")
     parser.add_argument("out")

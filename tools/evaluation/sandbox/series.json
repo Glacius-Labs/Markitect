@@ -1,0 +1,11 @@
+{
+  "limits": {
+    "cpus": "8",
+    "memoryBytes": 17179869184,
+    "pids": 4096,
+    "tmpBytes": 8589934592
+  },
+  "egress": {
+    "claude": ["api.anthropic.com"]
+  }
+}

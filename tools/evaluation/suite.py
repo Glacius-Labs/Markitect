@@ -9,13 +9,20 @@ records what it measured itself in suite.json. How the variant works is the
 variant's business.
 
   python -I -B suite.py task --task-md FILE [--model DIR] [--start BUNDLE] --deadline-seconds N --out NEW_DIR
-  python -I -B suite.py run --task DIR --out NEW_DIR --model PROVIDER:MODEL_ID [--state DIR] -- VARIANT...
+  python -I -B suite.py run --task DIR --out NEW_DIR --model PROVIDER:MODEL_ID [--state DIR] [SANDBOX...] -- VARIANT...
   python -I -B suite.py chain --step DIR [--step DIR ...] [--start BUNDLE] --deadline-seconds N --model PROVIDER:MODEL_ID \
-      --out NEW_DIR -- VARIANT...
+      --out NEW_DIR [SANDBOX...] -- VARIANT...
+
+  SANDBOX: --sandbox IMAGE_ID --variant-code DIR [--login FILE] [--series FILE] [--engine BIN] [--lock FILE]
 
 A chain step directory holds task.md and an optional model/. Each step starts
 from the variant's own previous result, or from the previous start when there
 was none; one state directory is handed to the variant at every step.
+
+With --sandbox, the variant command runs inside one container per run
+(sandbox.py): it receives /task /out [/state], its code is at /variant and the
+access-only login at EVALUATION_LOGIN. Without it, the variant runs as a host
+process: for tests only, and suite.json marks the run as not valid for counting.
 """
 import argparse
 import datetime
@@ -29,6 +36,10 @@ import subprocess
 import sys
 import tempfile
 import time
+
+# Isolated mode (-I) leaves the script's directory off the path.
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import sandbox as sandboxing  # noqa: E402
 
 FORMAT = 1
 START_IDENTITY = ("Evaluation Suite", "suite@markitect.invalid")
@@ -195,8 +206,10 @@ def model_check(model, report):
     return f"{report['provider']}:{report['model']}" == model
 
 
-def run(task_dir, variant, out, model, state=None):
-    """Run one variant on one task under the evaluation's model. Writes OUT/suite.json; the variant writes OUT/variant/."""
+def run(task_dir, variant, out, model, state=None, sandbox=None):
+    """Run one variant on one task under the evaluation's model, in the sandbox when one is given.
+
+    Writes OUT/suite.json; the variant writes OUT/variant/."""
     task_dir, out = pathlib.Path(task_dir), pathlib.Path(out)
     task = read_task(task_dir)
     if out.exists():
@@ -209,15 +222,23 @@ def run(task_dir, variant, out, model, state=None):
     (out / "variant").mkdir()
     record = {"format": FORMAT, "task": {"path": str(task_dir.resolve()), "intentSha256": task["intentSha256"], "start": task["start"]["commit"],
                                          "deadlineSeconds": task["deadlineSeconds"]},
-              "variant": {"argv": list(variant)}, "model": model, "startedUtc": now()}
+              "variant": {"argv": list(variant)}, "model": model, "conditions": "sandbox" if sandbox else "host",
+              "startedUtc": now()}
+    stdout, stderr, deadline = out / "variant.stdout.log", out / "variant.stderr.log", task["deadlineSeconds"]
     with tempfile.TemporaryDirectory() as tmp:
         # The variant works on its own copy; the task stays untouched for the evaluation.
         copy = pathlib.Path(tmp) / "task"
         shutil.copytree(task_dir, copy)
-        argv = [*variant, str(copy), str((out / "variant").resolve())] + ([str(pathlib.Path(state).resolve())] if state else [])
-        env = dict(os.environ, EVALUATION_MODEL=model)
-        record.update(start_variant(argv, env, out / "variant.stdout.log", out / "variant.stderr.log", task["deadlineSeconds"]))
+        if sandbox:
+            timing, record["sandbox"] = sandbox.run(copy, out / "variant", pathlib.Path(state).resolve() if state else None, variant, model,
+                                                    deadline, out, lambda argv: start_variant(argv, dict(os.environ), stdout, stderr, deadline))
+            record.update(timing)
+        else:
+            argv = [*variant, str(copy), str((out / "variant").resolve())] + ([str(pathlib.Path(state).resolve())] if state else [])
+            record.update(start_variant(argv, dict(os.environ, EVALUATION_MODEL=model), stdout, stderr, deadline))
     record["endedUtc"] = now()
+    # Only a sandboxed run whose sandbox stood up and left nothing behind ran under the evaluation's conditions.
+    record["validForCounting"] = bool(sandbox) and "error" not in record["sandbox"] and not record["sandbox"]["residue"]
     try:
         # The variant got a copy, but could still reach the original by path.
         read_task(task_dir)
@@ -246,7 +267,7 @@ def chain_start(task_dir, step_record, out):
         git(tmp, "bundle", "create", str(pathlib.Path(out).resolve()), "refs/heads/start")
 
 
-def chain(steps, start, deadline, variant, out, model):
+def chain(steps, start, deadline, variant, out, model, sandbox=None):
     out = pathlib.Path(out)
     if out.exists():
         raise SuiteError(f"{out} exists")
@@ -267,20 +288,36 @@ def chain(steps, start, deadline, variant, out, model):
                     bundle = pathlib.Path(tmp) / "start.bundle"
                     chain_start(out / f"step-{i - 1:02d}" / "task", records[-1], bundle)
                     make_task(step / "task.md", step / "model" if (step / "model").is_dir() else None, bundle, deadline, task_dir)
-            record = run(task_dir, variant, run_dir, model, state)
+            record = run(task_dir, variant, run_dir, model, state, sandbox)
         except SuiteError as e:
             # The chain cannot go on, but every step that ran stays on record.
             error = {"step": i, "error": str(e)}
             break
         record["resultBundle"] = str(run_dir / "variant" / "result.bundle")
         records.append(record)
-    summary = {"format": FORMAT, "model": model,
+    summary = {"format": FORMAT, "model": model, "conditions": "sandbox" if sandbox else "host",
                "steps": [{"step": i, "delivered": r["delivered"], "timedOut": r["timedOut"], "wallSeconds": r["wallSeconds"],
-                          "modelMatches": r["modelMatches"], "result": r["result"]["commit"] if r["result"] else None}
+                          "modelMatches": r["modelMatches"], "validForCounting": r["validForCounting"],
+                          "result": r["result"]["commit"] if r["result"] else None}
                          for i, r in enumerate(records, 1)],
                "stopped": error}
     (out / "chain.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
     return summary
+
+
+def sandbox_from(a):
+    """The sandbox the arguments name, checked before anything is written; None in host mode."""
+    if not a.sandbox:
+        if a.variant_code or a.login or a.lock:
+            raise SuiteError("--variant-code, --login and --lock need --sandbox")
+        return None
+    if not a.variant_code:
+        raise SuiteError("--sandbox needs --variant-code")
+    provider = a.model.partition(":")[0]
+    login = a.login or (str(pathlib.Path.home() / ".claude" / ".credentials.json") if provider == "claude" else None)
+    if not login:
+        raise SuiteError(f"--sandbox needs --login for {provider}")
+    return sandboxing.Sandbox([a.engine], a.sandbox, sandboxing.load_series(a.series), a.variant_code, login, provider)
 
 
 def main(argv=None):
@@ -308,16 +345,27 @@ def main(argv=None):
     c.add_argument("--deadline-seconds", type=int, required=True)
     c.add_argument("--out", required=True)
     c.add_argument("--model", required=True, help="the evaluation's model as PROVIDER:MODEL_ID")
+    for p in (r, c):
+        p.add_argument("--sandbox", metavar="IMAGE_ID", help="run the variant in the evaluation sandbox of this image")
+        p.add_argument("--variant-code", help="the variant's code, mounted read-only at /variant")
+        p.add_argument("--login", help="the provider login to copy access-only (default: the user's Claude login)")
+        p.add_argument("--series", default=str(sandboxing.DEFAULT_SERIES), help="the series' safety limit and egress")
+        p.add_argument("--engine", default=os.environ.get("MARKITECT_ENGINE") or shutil.which("docker") or "docker")
+        p.add_argument("--lock", help="exclusive engine lock file shared with the other runners")
     a = parser.parse_args(argv)
     try:
         if a.cmd == "task":
             result = make_task(a.task_md, a.model, a.start, a.deadline_seconds, a.out)
-        elif a.cmd == "run":
-            record = run(a.task, variant, a.out, a.model, a.state)
-            result = {k: record[k] for k in ("delivered", "timedOut", "exitCode", "wallSeconds", "resultError", "modelMatches")}
         else:
-            result = chain(a.step, a.start, a.deadline_seconds, variant, a.out, a.model)
-    except SuiteError as e:
+            box = sandbox_from(a)
+            with sandboxing.engine_lock(a.lock, "evaluation suite", str(pathlib.Path(a.out).resolve())):
+                if a.cmd == "run":
+                    record = run(a.task, variant, a.out, a.model, a.state, box)
+                    result = {k: record[k] for k in ("delivered", "timedOut", "exitCode", "wallSeconds", "resultError", "modelMatches",
+                                                     "conditions", "validForCounting", "reported")}
+                else:
+                    result = chain(a.step, a.start, a.deadline_seconds, variant, a.out, a.model, box)
+    except (SuiteError, sandboxing.SandboxError) as e:
         print(f"suite: {e}", file=sys.stderr)
         return 2
     print(json.dumps(result, indent=2))
