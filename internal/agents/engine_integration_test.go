@@ -137,22 +137,26 @@ func (r *scriptedReader) Outcome() agents.Outcome {
 	return agents.Outcome{}
 }
 
-// TestRealEngineManagersWorkThroughTheRunRemote starts a real Run remote
-// with its hooks and real Manager containers of the Manager image, whose
-// scripted turns call the Manager tools over agentd's MCP bridge: a maker's
-// push outside its area is refused and its work kept, its submission passes
-// the hook and the required check, and its checker approves it with an
-// empty commit. Nothing of the Run remains.
-//
-//	MARKITECT_TEST_ENGINE         absolute path of the Docker CLI
-//	MARKITECT_TEST_MANAGER_IMAGE  the Manager image (packaging/runtime)
-func TestRealEngineManagersWorkThroughTheRunRemote(t *testing.T) {
+// realRun is a real Run remote with its hooks on the engine, seeded with the
+// library fixture and the changes, where members works on its member.
+type realRun struct {
+	ctx     context.Context
+	engine  *container.Engine
+	imageID string
+	remote  *remotecontainer.Remote
+	run     string
+	base    string
+}
+
+func (r *realRun) token(user string) string { return "token-" + user + "-0123456789" }
+
+func newRealRun(t *testing.T, changes map[string]string) *realRun {
 	enginePath, image := os.Getenv("MARKITECT_TEST_ENGINE"), os.Getenv("MARKITECT_TEST_MANAGER_IMAGE")
 	if enginePath == "" || image == "" {
 		t.Skip("set MARKITECT_TEST_ENGINE and MARKITECT_TEST_MANAGER_IMAGE")
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
-	defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Minute)
+	t.Cleanup(cancel)
 	remoteEngine, err := remotecontainer.NewEngine(enginePath)
 	if err != nil {
 		t.Fatal(err)
@@ -175,18 +179,21 @@ func TestRealEngineManagersWorkThroughTheRunRemote(t *testing.T) {
 	if out, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build markitect-remote: %v\n%s", err, out)
 	}
-	run := fmt.Sprintf("t4b-%d", time.Now().UnixNano())
+	r := &realRun{ctx: ctx, engine: engine, imageID: imageID, run: fmt.Sprintf("t4b-%d", time.Now().UnixNano())}
 	t.Cleanup(func() {
-		if err := remotecontainer.Sweep(context.Background(), remoteEngine, run); err != nil {
+		if err := remotecontainer.Sweep(context.Background(), remoteEngine, r.run); err != nil {
 			t.Errorf("sweep: %v", err)
 		}
-		for _, v := range must(engine.Volumes(context.Background(), remotecontainer.RunLabel, run)) {
+		for _, v := range must(engine.Volumes(context.Background(), remotecontainer.RunLabel, r.run)) {
 			t.Errorf("volume %s remained", v)
 			_ = engine.RemoveVolume(context.Background(), v)
 		}
 	})
 
 	_, repo := library(t)
+	for f, data := range changes {
+		repo[f] = data
+	}
 	source := filepath.Join(t.TempDir(), "source")
 	for f, data := range repo {
 		path := filepath.Join(source, filepath.FromSlash(f))
@@ -200,10 +207,9 @@ func TestRealEngineManagersWorkThroughTheRunRemote(t *testing.T) {
 	git(t, source, "init", "-q")
 	git(t, source, "add", "-A")
 	git(t, source, "commit", "-q", "-m", "base")
-	base := git(t, source, "rev-parse", "HEAD")
+	r.base = git(t, source, "rev-parse", "HEAD")
 
-	token := func(user string) string { return "token-" + user + "-0123456789" }
-	plan := &runremote.Plan{Run: run, Mode: runremote.Apply, Base: base,
+	plan := &runremote.Plan{Run: r.run, Mode: runremote.Apply, Base: r.base,
 		Checks: []project.Check{{Name: "tree", Command: "test -f src/members/member.go", Timeout: time.Minute, Environment: imageID}},
 		Managers: []runremote.Manager{
 			{ID: "", Working: true},
@@ -215,38 +221,56 @@ func TestRealEngineManagersWorkThroughTheRunRemote(t *testing.T) {
 		user, manager string
 		role          runremote.Role
 	}{{"root-maker", "", runremote.Maker}, {"root-checker", "", runremote.Checker}, {"members-maker", "members", runremote.Maker}, {"members-checker", "members", runremote.Checker}} {
-		sum := sha256.Sum256([]byte(token(a.user)))
+		sum := sha256.Sum256([]byte(r.token(a.user)))
 		plan.Agents = append(plan.Agents, runremote.Agent{User: a.user, Manager: a.manager, Role: a.role, TokenSHA256: hex.EncodeToString(sum[:])})
 	}
 	var bundle bytes.Buffer
-	if err := remotecontainer.StartBundle(ctx, "git", source, base, &bundle); err != nil {
+	if err := remotecontainer.StartBundle(ctx, "git", source, r.base, &bundle); err != nil {
 		t.Fatal(err)
 	}
-	remote, err := remotecontainer.Start(ctx, remoteEngine, remotecontainer.Spec{Image: imageID, Binary: binary, Plan: plan, Limits: remotecontainer.Limits{CPUs: "1", Memory: "1g", Pids: 512}}, &bundle)
+	r.remote, err = remotecontainer.Start(ctx, remoteEngine, remotecontainer.Spec{Image: imageID, Binary: binary, Plan: plan, Limits: remotecontainer.Limits{CPUs: "1", Memory: "1g", Pids: 512}}, &bundle)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer remote.Close(context.Background())
+	t.Cleanup(func() { r.remote.Close(context.Background()) })
+	return r
+}
 
+// start runs one start of members' maker or checker through the port.
+func (r *realRun) start(t *testing.T, cfg agents.Config, role agentport.Role, deadline time.Duration) agentport.End {
+	t.Helper()
+	cfg.Runtime, cfg.Image = agents.EngineRuntime(r.engine), r.imageID
+	g, err := agents.New(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	user := "members-" + string(role)
+	return g.Run(r.ctx, agentport.Start{Run: r.run, Mode: agentport.Apply, Role: role, Round: 1,
+		Manager:   agentport.Manager{ID: "members", Parent: "."},
+		Checklist: []agentport.Item{{Key: "members/member", Part: agentport.Own, Definition: "members/member", Why: "changed"}},
+		Git:       agentport.GitAccess{URL: r.remote.URL, Network: r.remote.Network, Branch: "managers/members", Base: r.base, User: user, Token: r.token(user)},
+		Tools:     []agentport.Tool{agentport.ToolAsk, agentport.ToolEscalate, agentport.ToolNote}, Deadline: time.Now().Add(deadline)}, &host{})
+}
+
+// TestRealEngineManagersWorkThroughTheRunRemote starts a real Run remote
+// with its hooks and real Manager containers of the Manager image, whose
+// scripted turns call the Manager tools over agentd's MCP bridge: a maker's
+// push outside its area is refused and its work kept, its submission passes
+// the hook and the required check, and its checker approves it with an
+// empty commit. Nothing of the Run remains.
+//
+//	MARKITECT_TEST_ENGINE         absolute path of the Docker CLI
+//	MARKITECT_TEST_MANAGER_IMAGE  the Manager image (packaging/runtime)
+func TestRealEngineManagersWorkThroughTheRunRemote(t *testing.T) {
+	r := newRealRun(t, nil)
 	loginFile := filepath.Join(t.TempDir(), "login.json")
 	if err := os.WriteFile(loginFile, []byte("{}"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	transcripts := t.TempDir()
-	run1 := func(role agentport.Role, provider *scripted) agentport.End {
-		t.Helper()
-		g, err := agents.New(agents.Config{Runtime: agents.EngineRuntime(engine), Provider: provider, Image: imageID,
-			Limits: agents.Limits{CPUs: 1, MemoryBytes: 1 << 30, Pids: 256, TmpBytes: 128 << 20}, LoginFile: loginFile,
-			Model: "scripted", Effort: "high", Transcripts: transcripts})
-		if err != nil {
-			t.Fatal(err)
-		}
-		user := "members-" + string(role)
-		return g.Run(ctx, agentport.Start{Run: run, Mode: agentport.Apply, Role: role, Round: 1,
-			Manager:   agentport.Manager{ID: "members", Parent: "."},
-			Checklist: []agentport.Item{{Key: "members/member", Part: agentport.Own, Definition: "members/member", Why: "changed"}},
-			Git:       agentport.GitAccess{URL: remote.URL, Network: remote.Network, Branch: "managers/members", Base: base, User: user, Token: token(user)},
-			Tools:     []agentport.Tool{agentport.ToolNote}, Deadline: time.Now().Add(5 * time.Minute)}, &host{})
+	cfg := func(p *scripted) agents.Config {
+		return agents.Config{Provider: p, Limits: agents.Limits{CPUs: 1, MemoryBytes: 1 << 30, Pids: 256, TmpBytes: 128 << 20},
+			LoginFile: loginFile, Model: "scripted", Effort: "high", Transcripts: transcripts}
 	}
 	verdict := []map[string]string{{"item": "members/member", "verdict": "changed", "evidence": "type Member in src/members/member.go"}}
 	maker := &scripted{steps: [][]step{{
@@ -256,24 +280,25 @@ func TestRealEngineManagersWorkThroughTheRunRemote(t *testing.T) {
 		{"write": "src/members/member.go", "text": "package members\n\ntype Member struct{}\n"},
 		{"call": "submit", "args": map[string]any{"summary": "Realize the member", "verdicts": verdict}},
 	}}}
-	if end := run1(agentport.Maker, maker); end.Reason != agentport.Finished || end.Cleanup != "" || end.Agent != "scripted:scripted" {
+	if end := r.start(t, cfg(maker), agentport.Maker, 5*time.Minute); end.Reason != agentport.Finished || end.Cleanup != "" || end.Agent != "scripted:scripted" {
 		t.Fatalf("maker end %+v", end)
 	}
-	if len(maker.results) != 2 || !strings.HasPrefix(maker.results[0], "refused: the remote refused the push") || !strings.HasPrefix(maker.results[1], "ok: submitted ") {
+	if len(maker.results) != 2 || !strings.HasPrefix(maker.results[0], "refused: the push to managers/members did not go through") ||
+		!strings.Contains(maker.results[0], "README.md") || !strings.HasPrefix(maker.results[1], "ok: submitted ") {
 		t.Fatalf("maker results %q", maker.results)
 	}
 	checker := &scripted{steps: [][]step{{
 		{"call": "review", "args": map[string]any{"outcome": "approved", "checks": []map[string]string{{"item": "members/member", "answer": "confirmed", "evidence": "read src/members/member.go"}}}},
 	}}}
-	if end := run1(agentport.Checker, checker); end.Reason != agentport.Finished || end.Cleanup != "" {
+	if end := r.start(t, cfg(checker), agentport.Checker, 5*time.Minute); end.Reason != agentport.Finished || end.Cleanup != "" {
 		t.Fatalf("checker end %+v", end)
 	}
 	if len(checker.results) != 1 || !strings.HasPrefix(checker.results[0], "ok: approved ") {
 		t.Fatalf("checker results %q", checker.results)
 	}
 	for _, name := range []string{"members-maker-1.jsonl", "members-checker-1.jsonl"} {
-		data, err := os.ReadFile(filepath.Join(transcripts, run, name))
-		if err != nil || !bytes.Contains(data, []byte(`"kind":"tool-call"`)) || bytes.Contains(data, []byte(token("members-maker"))) {
+		data, err := os.ReadFile(filepath.Join(transcripts, r.run, name))
+		if err != nil || !bytes.Contains(data, []byte(`"kind":"tool-call"`)) || bytes.Contains(data, []byte(r.token("members-maker"))) {
 			t.Fatalf("transcript %s: %v", name, err)
 		}
 	}
