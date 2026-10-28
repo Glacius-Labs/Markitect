@@ -7,7 +7,7 @@ kind: std/Rule
 
 1. `invoiceId` is the next invoice identifier. Members are processed in ascending `memberId` order.
 2. `issuedAt` is the request time; `dueAt` is 14 days after `issuedAt`.
-3. `lines` starts with the membership line: `kind` `membership`, `ref` the member's current tier, `quantity` 1, `unitPriceCents` the tier's monthly fee, `discountPercent` 0, `at` the request time. All of the member's unbilled charges whose `at` lies in month M follow, ordered as [[list-order|the order of listed results]] states. These charges are no longer unbilled.
+3. `lines` starts with the membership line: `kind` `membership`, `ref` the member's current tier, `quantity` 1, `unitPriceCents` the [[members/tier|tier]]'s monthly fee, `discountPercent` 0, `at` the request time. All of the member's unbilled charges whose `at` lies in month M follow, ordered as [[list-order|the order of listed results]] states. These charges are no longer unbilled.
 4. `totalCents` is the sum of the line amounts.
 5. `creditAppliedCents` is the smaller of the member's credit balance and `totalCents`. The credit balance decreases by that amount.
 6. `paidCents` is 0. `balanceCents` is `totalCents − creditAppliedCents − paidCents`.

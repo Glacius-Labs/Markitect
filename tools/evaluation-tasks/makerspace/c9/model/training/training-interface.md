@@ -6,6 +6,7 @@ kind: Interface
 What other modules may use of training: its operations, the course, enrollment and certification records, and the refusal `not_certified`. Other modules also ask whether a member holds a certification for a family that is not revoked.
 
 - **Operations:** [[training/add-course]], [[training/enroll-in-course]], [[training/complete-course]], [[training/revoke-certification]], [[training/list-certifications]].
+- **Uses:** [[members/members-interface]], [[equipment/equipment-interface]], [[billing/billing-interface]].
 - **Records:** [[training/course]], [[training/enrollment]], [[training/certification]].
 
 The refusal codes of this module:

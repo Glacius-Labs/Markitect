@@ -33,10 +33,6 @@ Each new delta changes exactly what the old step changed and nothing else. Every
 - **No typed fields.** The `LendingPolicy` Kind and its Properties became one Rule with a table of the values and their meanings, verbatim.
 - **Additions without new meaning:** the Feature-to-operation sentences, and that the loan policy is the single source of its values.
 
-## Limits
-
-`markitect check` for 2.0 was not yet merged when the review ran; the steps compiled with no error on the T1 session's working tree, and the [check run on T1's merged code](#check-on-t1) is recorded below.
-
 ## Check on T1
 
-To be filled once T1 lands on `main`.
+The reviewer could not run the 2.0 `markitect check`, which was not built yet. Every step compiles with no error on T1's branch `dev/awesome-chaum-554c4d` at `e3c922ee`, with the lock that branch's `markitect lock` writes; Root's link to the grandchild Package `lending/reminders` is accepted, as the reviewer expected. To be confirmed on `main` once T1 merges.

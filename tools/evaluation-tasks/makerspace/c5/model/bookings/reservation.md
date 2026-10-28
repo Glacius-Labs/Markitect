@@ -12,10 +12,10 @@ A reservation of one machine for one member, generated identifier `res-N`. `chec
 - `machineId`: identifier, naming an existing [[equipment/machine]]
 - `start`: timestamp
 - `end`: timestamp
-- `status`: one of `reserved`, `missed`, `checkedIn`, `completed` or `cancelled`
+- `status`: one of `reserved`, `missed`, `checkedIn`, `completed` or `cancelled`; see [[bookings/reservations]] for stored and reported status
 - `checkedInAt`: timestamp, or `null`
 - `checkedOutAt`: timestamp, or `null`
-- `rateCentsPerMinute`: integer from `1` to `10000` cents (a machine's rate per minute), or `null`
+- `rateCentsPerMinute`: integer from `1` to `10000` cents per minute (a machine's rate per minute), or `null`
 - `meteredMinutes`: minute count, or `null`
 - `amountCents`: cent amount, or `null`
 

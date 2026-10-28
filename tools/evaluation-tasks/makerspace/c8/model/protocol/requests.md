@@ -14,4 +14,4 @@ A request is a UTF-8 JSON object with exactly three members:
 - `op`: the wire name of one operation of this model. Names are case-sensitive.
 - `args`: a JSON object with the operation's arguments. Every operation takes `actor` ([[values|identifier]], the acting user) and `at` ([[values|timestamp]], the request time) in addition to the arguments it lists. All arguments are required; no operation has optional arguments.
 
-The operations are those of the module interfaces: [[members/members-interface]], [[equipment/equipment-interface]], [[billing/billing-interface]], [[training/training-interface]], [[bookings/bookings-interface]], [[materials/materials-interface]], [[safety/safety-interface]], [[reporting/reporting-interface]].
+The operations are those of the module interfaces, [[members/members-interface]], [[equipment/equipment-interface]], [[billing/billing-interface]], [[training/training-interface]], [[bookings/bookings-interface]], [[materials/materials-interface]], [[safety/safety-interface]], [[reporting/reporting-interface]], and [[list-audit-entries]] of the project itself.

@@ -3,7 +3,7 @@ kind: Operation
 ---
 # Schedule maintenance
 
-Creates the window with status `scheduled` and the next maintenance window identifier. A reservation is active when its reported status is `reserved` or `checkedIn`.
+Creates the window with status `scheduled` and the next maintenance window identifier. A reservation is active when its reported status is `reserved` or `checkedIn`. A `reserved` reservation whose `end` is at or before the request time is `missed` and no longer active. Overlap is judged on the reserved interval `[start, end)`, not on the actual check-in and check-out times.
 
 - **Wire name:** `scheduleMaintenance`, a mutation.
 - **Arguments** besides `actor` and `at`, in the formats of [[values]]:

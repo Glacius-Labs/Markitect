@@ -10,7 +10,7 @@ Creates the machine.
   - `machineId`: identifier
   - `name`: text
   - `familyId`: identifier, naming an existing [[equipment/family]]
-  - `rateCentsPerMinute`: integer from `1` to `10000` cents (a machine's rate per minute)
+  - `rateCentsPerMinute`: integer from `1` to `10000` cents per minute (a machine's rate per minute)
 - **Refusals** at check 7, in this order:
   1. `already_exists` when a machine with `machineId` exists.
 - **Result:**

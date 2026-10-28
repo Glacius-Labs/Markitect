@@ -9,7 +9,7 @@ Each step folder is the content of a target project's `.markitect/` folder, as t
 ```text
 <project>/<step>/
   manifest.yaml     std 1.0.0, nothing else
-  lock.yaml         written by markitect lock
+  lock.yaml         written by markitect lock; rewrite it when the std Library changes
   execution.yaml    the required checks: go build and go test in realization/
   model/            the Root Package
 ```
@@ -35,7 +35,7 @@ Both conversions keep every statement and rewrite only form. The equivalence rec
 - **Kinds.** Concepts, Rules, Features and the project anchor use `std`. Neither project has a REST or CLI interface: the Library's JSON Lines interface stays one Root Rule with an operations table, and each Feature names its operation. The Makerspace defines two Kinds of its own at Root, `Operation` (one protocol operation with wire name, arguments, refusals, result, permissions and audit target) and `Interface` (what other modules may use of one module).
 - **No typed fields.** Typed values became prose: the Library's loan policy holds its limit and periods in one table; the Makerspace's records list their fields, its operations their arguments and results. Value types and enumerations used in one place are written where they are used; the shared formats are one Root Concept, [values](makerspace/w0/model/values.md), and the shared refusal codes another.
 - **Root is the project.** Everything that used to apply to the whole project lives in Root: the Library's `library` Package; the Makerspace's project Package, its `policies` Package (shared formats, roles, refusal codes, the audit log and the project-wide rules) and the project-wide protocol rules `order-of-checks` and `argument-values`. Root may not link down into a Package, so it names Packages instead (`[[lending]]`). The Makerspace's `policies` Go package stays a module of the [architecture](makerspace/w0/model/architecture.md), owned by the project itself.
-- **Scope is location.** A rule that used to reach other modules through `appliesTo` now lives in the module it belongs to and is linked from each module it binds. Where that link would close a cycle (bookings' reservation and lockout rules for equipment and safety), the consuming module states its need itself, as before.
+- **Scope is location.** A rule that used to reach other modules through `appliesTo` now lives in the module it belongs to and is linked from each module it binds ("Rules of other modules that apply here"). Where that link would close a cycle (bookings' reservation and lockout rules for equipment and safety), the consuming module states the part it needs itself. Each interface links the interfaces of the modules its module may use, and protocol links them all. Three reaches changed with the move: `argument-values` now reaches every module, not only protocol, while the [architecture](makerspace/w0/model/architecture.md) keeps the whole order of checks in protocol; `opening-hours` and `booking-granularity` live in bookings, which realizes them; equipment, safety, reporting and protocol no longer receive `membership`, which constrains none of their operations.
 - **No cycles.** Links point up or sideways. Library `members` and `catalog` no longer link `lending`: eligibility and availability state the rule for lending in prose, and lending links them.
 - **Visibility.** A Makerspace Definition is internal unless its module's interface lists it, a rule of it binds another module, or another module links it.
 

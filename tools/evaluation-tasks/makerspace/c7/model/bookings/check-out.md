@@ -3,7 +3,7 @@ kind: Operation
 ---
 # Check out
 
-Status `completed`; `checkedOutAt` is the request time; `meteredMinutes` is `checkedOutAt − checkedInAt` in minutes, which may be 0 and may extend past the reservation's end or closing time. A usage [[billing/charge]] is created for the member: `kind` `usage`, `ref` the reservation identifier, `quantity` the metered minutes, `unitPriceCents` the captured rate, `discountPercent` the discount of the member's tier at check-out, `at` the request time. A charge of 0 cents is still created. The reservation's `amountCents` is the charge's amount. Standing is not checked.
+Status `completed`; `checkedOutAt` is the request time; `meteredMinutes` is `checkedOutAt − checkedInAt` in minutes, which may be 0 and may extend past the reservation's end or closing time. A usage [[billing/charge]] is created for the member: `kind` `usage`, `ref` the reservation identifier, `quantity` the metered minutes, `unitPriceCents` the captured rate, `discountPercent` the discount of the member's [[members/tier|tier]] at check-out, `at` the request time. A charge of 0 cents is still created. The reservation's `amountCents` is the charge's amount. Standing is not checked.
 
 Rules of other modules that apply here: [[billing/charges]].
 

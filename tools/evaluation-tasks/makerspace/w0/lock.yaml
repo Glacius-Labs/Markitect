@@ -1,0 +1,5 @@
+# Written by markitect lock from the manifest. Do not edit.
+libraries:
+  std:
+    version: 1.0.0
+    digest: sha256:116d53f28a01acee77087130cf3f999f42274e36b0cdb949cbd766a2885a5b39

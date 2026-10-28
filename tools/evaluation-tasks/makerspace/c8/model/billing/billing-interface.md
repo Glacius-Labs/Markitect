@@ -6,6 +6,7 @@ kind: Interface
 What other modules may use of billing: its operations, the charge, invoice, payment and account records, and the refusal `account_overdue`. Other modules create a charge for a member through billing, and billing computes its amount by [[money]]. Other modules also grant lockout credits through billing and ask whether a member is blocked.
 
 - **Operations:** [[billing/generate-invoices]], [[billing/list-invoices]], [[billing/record-payment]], [[billing/issue-credit]], [[billing/get-account]].
+- **Uses:** [[members/members-interface]].
 - **Records:** [[billing/charge]], [[billing/invoice]], [[billing/payment]], [[billing/account]].
 
 The refusal codes of this module:

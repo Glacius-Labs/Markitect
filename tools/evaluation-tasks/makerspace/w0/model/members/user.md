@@ -9,6 +9,6 @@ A user of the program: the initial admin, staff and admins registered by an admi
 
 - `userId`: identifier
 - `name`: text
-- `role`: one of `member`, `staff` or `admin`
+- `role`: one of `member`, `staff` or `admin`; see authorization
 
 A record is identified by `userId`.

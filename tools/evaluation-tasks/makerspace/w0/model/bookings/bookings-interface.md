@@ -6,6 +6,7 @@ kind: Interface
 What other modules may use of bookings: its operations and the reservation record. Other modules also ask whether an active reservation of a machine overlaps an interval, and for the completed sessions of a machine.
 
 - **Operations:** [[bookings/create-reservation]], [[bookings/cancel-reservation]], [[bookings/check-in]], [[bookings/check-out]], [[bookings/list-member-reservations]], [[bookings/get-machine-schedule]].
+- **Uses:** [[members/members-interface]], [[training/training-interface]], [[equipment/equipment-interface]], [[billing/billing-interface]].
 - **Records:** [[bookings/reservation]], [[bookings/opening-hours-of-day]].
 
 The refusal codes of this module:

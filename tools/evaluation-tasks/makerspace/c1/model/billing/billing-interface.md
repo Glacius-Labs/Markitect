@@ -6,6 +6,7 @@ kind: Interface
 What other modules may use of billing: its operations and the charge, invoice, payment and account records. Other modules create a charge for a member through billing; billing computes its amount by [[money]].
 
 - **Operations:** [[billing/generate-invoices]], [[billing/list-invoices]], [[billing/record-payment]], [[billing/issue-credit]], [[billing/get-account]].
+- **Uses:** [[members/members-interface]].
 - **Records:** [[billing/charge]], [[billing/invoice]], [[billing/payment]], [[billing/account]].
 
 The refusal codes of this module:
