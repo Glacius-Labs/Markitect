@@ -1,6 +1,6 @@
 # Standard Libraries
 
-**Status:** outline v0.3, accepted by the owner on 26 October 2026; v0.3.1 adds clarifications found while drafting `practice` and `architecture`, marked "v0.3.1" below, accepted by the owner on 27 October 2026. Canonical model track, workstream W4, built on [Kind interfaces](kind-interfaces.md) (DEC-075 as amended, Core 1.2.0), the [modeling guide](modeling-guide.md) and charter decision D4. All five Libraries are drafted under `libraries/`.
+**Status:** outline v0.3, accepted by the owner on 26 October 2026; v0.3.1 adds clarifications found while drafting `practice` and `architecture`, marked "v0.3.1" below, accepted by the owner on 27 October 2026. The owner decided the open Library questions on 27 and 28 October 2026 ([source](../concepts/sources/library-questions-20261028.md)): `api` 2.0.0 and `architecture` 1.1.0. Canonical model track, workstream W4, built on [Kind interfaces](kind-interfaces.md) (DEC-075 as amended, Core 1.2.0), the [modeling guide](modeling-guide.md) and charter decision D4. All five Libraries are drafted under `libraries/`.
 
 ## Principles
 
@@ -49,8 +49,8 @@ The types of fields, and the shared field-shape Properties.
 
 | Definition | Shape | Notes |
 |---|---|---|
-| **Operation** (interface Kind with fields) | `wireName` (string), `mutation` (boolean), `arguments` (object list of the field-shape Properties; constraints in the body), `refusals` (ordered object list: `refusal` → RefusalCode, `when` string), `results` (object list of the field-shape Properties), `permissions` (object list: `forRole` (field name `role`) → Role, `scope` enum own/all) | Usable directly, or implemented by project Kinds that add fields, for example an audit target. A role without a permission entry has none |
-| **RefusalCode** | `code` (string, the wire value) | One Definition per code; shared codes live in a shared Package |
+| **Operation** (interface Kind with fields) | `wireName` (string), `mutation` (boolean), `arguments` (object list of the field-shape Properties; constraints in the body), `refusals` (object list without order: `refusal` → RefusalCode, `when` string; since 2.0.0 no "first one wins", and where precedence matters a Rule or the operation's body states it), `results` (object list of the field-shape Properties), `permissions` (object list: `forRole` (field name `role`) → Role, `scope` enum own/all) | Usable directly, or implemented by project Kinds that add fields, for example an audit target. A role without a permission entry has none |
+| **RefusalCode** | `code` (string, the wire value) | One Definition per code; shared codes live in a shared Package. Another Package uses a code only if an Interface exposes it, as an exported error in Go |
 | **Role** | none | The body says who holds it |
 
 Event is deferred until a pilot needs it. A transport binding (HTTP route and status, CLI command, line protocol) is commonly needed but not in this outline; for now it stays in Rule bodies.
@@ -69,9 +69,9 @@ The Package tree is the architecture (modeling guide §2). These Kinds add only 
 
 | Definition | Shape | Notes |
 |---|---|---|
-| **Interface** implements Practice.Rule | `appliesTo`, `operations` (references to Api.Operation), `types` (references to Values.FieldType) | A Package's public surface; the Package is where the Interface lives. Other Packages use only what an Interface exposes (a W5 tool rule). v0.3.1: the Package's own subtree is not bound by it; `appliesTo` names the bound Packages, usually `.` |
+| **Interface** implements Practice.Rule | `appliesTo`, `operations` (references to Api.Operation), `types` (references to Values.FieldType), `refusalCodes` (references to Api.RefusalCode; since 1.1.0) | A Package's public surface; the Package is where the Interface lives. Other Packages use only what an Interface exposes (a W5 tool rule). v0.3.1: the Package's own subtree is not bound by it; `appliesTo` names the bound Packages, usually `.` |
 | **DependencyRule** implements Practice.Rule | `appliesTo`, `mayDependOn` (Package strings) | An allowlist for the Packages in `appliesTo`, checked against the model's Package graph (D3) and against the code's imports by project checks. v0.3.1: only dependencies between the project's own Packages count, subtrees included on both sides; Libraries, Core and third-party code fall under `Project.permittedDependencies`; absent or empty `mayDependOn` means none |
-| **Placement** implements Practice.Rule | `appliesTo`, `concern` (reference to Practice.Rule), `realizedIn` (Package string) | Where a cross-cutting rule is realized, for example authorization in `pipeline`. v0.3.1: `appliesTo` usually equals the concern's |
+| **Placement** implements Practice.Rule | `appliesTo`, `concern` (reference to Practice.Rule), `realizedIn` (Package string) | Where a cross-cutting rule is realized, for example authorization in `pipeline`. v0.3.1: `appliesTo` usually equals the concern's. An Invariant is not placed: the Package that owns its Entities enforces it, as code that owns data guards its invariants |
 
 ## What this replaces
 
@@ -85,7 +85,7 @@ The Package tree is the architecture (modeling guide §2). These Kinds add only 
 
 ## Versioning and compatibility
 
-- Each Library starts at 1.0.0 and depends on `markitect-core` 1.2.0. Projects pin exact versions; versions are exact labels (language contract §8.1).
+- Each Library started at 1.0.0 and depends on `markitect-core` 1.2.0. Current: `values`, `practice` and `data` 1.0.0, `api` 2.0.0, `architecture` 1.1.0. Projects pin exact versions; versions are exact labels (language contract §8.1).
 - **Authoring policy:** a change to the Properties of an interface Kind breaks its implementers, as adding a method to a Go interface does, so it needs a new major version. New Kinds, new enum values and new optional fields inside object Properties are minor versions; a minor version can still require a project to qualify a short reference (below).
 - **Known limit:** an import makes every ID of the imported Package visible unqualified (language contract §8). A new Library Definition can therefore make a project's existing short reference ambiguous; the compiler reports it, and the project qualifies the reference. Imports visible only through their alias, as in Go, would remove this. That is a possible Core change, recorded as a W1 finding, not part of W4.
 
@@ -104,8 +104,8 @@ The Package tree is the architecture (modeling guide §2). These Kinds add only 
 | How strict is compatibility? | Interface Properties change only in a major version |
 | Event now? | No, deferred |
 | Where does Project live? | In `practice`, the base Library that `architecture` builds on |
-| **Open for the owner:** alias-only import visibility as a Core change? | Recommended for evaluation after W6; until then, ambiguities are reported and fixed by qualification |
-| **Open for the owner:** an unordered refusal list? | `Api.refusals` is first-match ordered. Where requirements leave the precedence of simultaneous failures open, the listed order becomes a decision the owner must make (W5 trial, 27 October 2026). An optional flag that marks a list as unordered would keep such models free |
-| **Open for the owner:** refusal codes in an Interface? | `Architecture.Interface` lists operations and types only, so a refusal code another Package uses (`member_suspended` in bookings) cannot be part of the surface. A `refusals` field would close this |
-| **Open for the owner:** placing an invariant? | `Architecture.Placement.concern` must be a `Practice.Rule`, so a `Data.Invariant` cannot be placed. Widening the target to an interface both implement would allow it |
-| **Open for the owner:** a wire-envelope Kind? | No Library Kind models a request envelope or response statuses; both trials and makerspace-v2 state them as protocol Rules with examples. A Kind would type them |
+| Alias-only import visibility as a Core change? | Not now (owner, 27 October 2026). Ambiguities are reported and fixed by qualification until a real model shows harm |
+| Must a refusal list be ordered? | No (owner, 28 October 2026). A refusal is a possible problem, and when it applies belongs to its own entry. Since `api` 2.0.0 the list has no order; precedence, where it matters, is a Rule, as Makerspace's `order-of-checks` states it. This replaced an "unordered" flag before it was built |
+| Refusal codes in an Interface? | Yes (owner, 28 October 2026), as in code, where a package's exported errors are part of its public API. `architecture` 1.1.0 adds `refusalCodes` |
+| Placing an invariant? | No (owner, 28 October 2026). Placement is for cross-cutting concerns; an Invariant lives in, and is enforced by, the Package that owns its Entities |
+| A wire-envelope Kind? | Not yet (owner, 27 October 2026). Models state envelopes and statuses as protocol Rules until a real model needs a Kind |

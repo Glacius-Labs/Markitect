@@ -1,9 +1,9 @@
 formatVersion: 1
 id: markitect-architecture
-version: "1.0.0"
+version: "1.1.0"
 root: model
 dependencies:
   markitect-core: "1.2.0"
   markitect-values: "1.0.0"
-  markitect-api: "1.0.0"
+  markitect-api: "2.0.0"
   markitect-practice: "1.0.0"

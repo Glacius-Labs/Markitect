@@ -3,8 +3,10 @@ imports:
 id: refusals
 kind: Core.Property
 body: >-
-  The refusals of the operation in the order they are checked; the first that
-  applies is returned.
+  The refusals the operation can return, each with the condition under which
+  it applies. The list has no order. When several refusals can apply to the
+  same request and it matters which one is returned, a Rule or the body of the
+  operation states the precedence.
 spec:
   properties: [refusal, when]
   valueType: object

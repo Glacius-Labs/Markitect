@@ -1,6 +1,6 @@
 formatVersion: 1
 id: markitect-api
-version: "1.0.0"
+version: "2.0.0"
 root: model
 dependencies:
   markitect-core: "1.2.0"
