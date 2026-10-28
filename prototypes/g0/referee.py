@@ -479,11 +479,29 @@ class Server(socketserver.ThreadingMixIn, http.server.HTTPServer):
     allow_reuse_address = True
 
 
+def seed(cfg):
+    """Create the Run remote from the host's start bundle: mk/base and every work ref at the base."""
+    subprocess.run(["git", "init", "-q", "--bare", "-b", "mk/base", REPO], check=True)
+    git("config", "http.receivepack", "true")
+    git("config", "receive.denyDeletes", "true")
+    git("config", "uploadpack.allowAnySHA1InWant", "true")
+    git("fetch", "-q", "/run/start.bundle", f"+{cfg['baseRef']}:refs/heads/mk/base")
+    if git("rev-parse", "refs/heads/mk/base") != cfg["base"]:
+        raise RuntimeError("start bundle does not hold the configured base")
+    for m in cfg["managers"]:
+        git("update-ref", f"refs/heads/mk/{m['name']}/work", cfg["base"])
+    git("update-ref", "refs/heads/mk/notes", cfg["base"])
+    hook = os.path.join(REPO, "hooks", "pre-receive")
+    shutil.copy("/mk/bin/pre-receive", hook)
+    os.chmod(hook, 0o755)
+
+
 def main():
     global REF
     with open("/run/config.json") as f:
         cfg = json.load(f)
     os.makedirs(STATE, exist_ok=True)
+    seed(cfg)
     REF = Referee(cfg)
     threading.Thread(target=REF.watchdog, daemon=True).start()
     print("referee listening on :8080", flush=True)

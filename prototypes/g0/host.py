@@ -54,7 +54,7 @@ def run(spec):
     shutil.copy(spec["login"], os.path.join(logindir, "auth.json"))
     os.chmod(os.path.join(logindir, "auth.json"), 0o644)
     creds = {m["name"]: secrets.token_hex(16) for m in spec["managers"]}
-    cfg = {k: spec[k] for k in ("phase", "base", "rootTask", "checkCommands", "messageBudget", "deadlineSeconds")}
+    cfg = {k: spec[k] for k in ("phase", "base", "baseRef", "rootTask", "checkCommands", "messageBudget", "deadlineSeconds")}
     cfg["checkTimeout"] = spec.get("checkTimeout", 300)
     cfg["managers"] = [{"name": m["name"], "parent": m["parent"]} for m in spec["managers"]]
     cfg["credentials"] = {t: n for n, t in creds.items()}

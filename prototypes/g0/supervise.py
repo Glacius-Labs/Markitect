@@ -47,6 +47,12 @@ def setup():
     shutil.copy("/mk/login/auth.json", os.path.join(CODEX_HOME, "auth.json"))
     os.chmod(os.path.join(CODEX_HOME, "auth.json"), 0o600)
     shutil.copy("/mk/harness.md", os.path.join(CODEX_HOME, "AGENTS.md"))
+    bindir = os.path.expanduser("~/bin")
+    os.makedirs(bindir, exist_ok=True)
+    with open(os.path.join(bindir, "mk"), "w") as f:
+        f.write('#!/bin/sh\nexec python3 /mk/bin/mk "$@"\n')
+    os.chmod(os.path.join(bindir, "mk"), 0o755)
+    os.environ["PATH"] = bindir + ":" + os.environ["PATH"]
     helper = '!f() { echo "username=$MK_NAME"; echo "password=$MK_TOKEN"; }; f'
     subprocess.run(["git", "config", "--global", "credential.helper", helper], check=True)
     subprocess.run(["git", "config", "--global", "user.name", NAME], check=True)
