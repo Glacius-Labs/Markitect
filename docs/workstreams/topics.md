@@ -10,14 +10,14 @@ State page of the Topics session: the owner's single place to discuss Markitect'
 
 ## Now
 
-- **Quick confirmations** (step 1 of the [order](#next)). Done: one topics page instead of seven lane pages, with the permanent records kept on Main. Open: hand the [#806 follow-ups](#ready-to-hand-over) to Build, and the Windows Git-start fix (question 33).
+- **Quick confirmations** (step 1 of the [order](#next)). Done: one topics page instead of seven lane pages, with the permanent records kept on Main. Open: hand the [#806 follow-ups](#ready-to-hand-over) to Build, with the guide's Kind names (question 36); and the Windows Git-start fix (question 33).
 
 ## Next
 
 The suggested discussion order. Each step unblocks the ones after it.
 
 1. Quick confirmations.
-2. **The analysis layer** (questions 1–5): one Go analysis core in the product; where Analysis ends and a Run starts.
+2. **The analysis layer** (questions 1–5, 37): one Go analysis core in the product; where Analysis ends and a Run starts.
 3. **Findings from outside a Run** (23, 25): one input for `apply --findings` and outside reports; adopt the amendment and pick its timing.
 4. **The Result and the Commands** (18–22, 24): order of Commands, convergence, decision page, renaming.
 5. **Authoring** (9, 12–17): next trial, interview first, Extract as a skill mode, shipping, who accepts model changes, the cost measure, the delegated decisions.
@@ -73,6 +73,7 @@ Verbatim, with the date. Words in brackets are context added by the recorder.
 
 **General**
 - 27 Oct: "The topics sessions are just there so when i have some time i can discuss those topics and maybe refine them."
+- 28 Oct: "instead of all those parallel session we need one session which is responsible to coordinate and discuss the evaluation suite and the three variants. We need one session for discussion of the various topics."
 - 28 Oct: "The topics touch too strongly to be discussed independently."
 
 **Platform**
@@ -85,17 +86,29 @@ Verbatim, with the date. Words in brackets are context added by the recorder.
 
 **Model language**
 - 27 Oct: "Accept the recommendations on the five Library questions: unordered-refusal flag, refusals in Interface, invariant placement via an interface, no envelope Kind yet, no alias-only Core change yet. Prepare the plan, build nothing yet."
+- 27 Oct [on the name RefusalCode]: "If its just for makerspace and not library we can go with Refusal Code. Lets discuss what the problem is" (The name sits in the standard `api` Library; the owner did not reopen it.)
 - 27 Oct: "Why does the order even matter? As i read it those are just potential problems that might occur. If the model is not clear about it, when which one applies, those should simply be definitions themselves and explain it there"
 - 27 Oct [unordered list, precedence as a Rule, no flag]: "Yes"
 - 27 Oct [refusal codes in an Interface]: "Just think about how this is handled in code. We should do it the same way"
 - 27 Oct [no invariant placement; invariants live with their data]: "Yes i agree"
 - 27 Oct: "Build the two Library changes as planned, in one PR."
-- 28 Oct: "Merge it", then "We will be responsible for all of that so we can close Lane 7 and instead we will do this here"
+- 28 Oct: "Merge it", then "We will be responsible for all of that so we can close Lane 7 and instead we will do this here", then "Or wait, just merge. We will need to rearrange this"
 
 **Modeling skills**
 - 27 Oct: "Go with the change-task trial first: a fresh agent with only the skill makes one Makerspace change step on makerspace-v2.1."
 
-**Commands:** the frame and A1–A6 are recorded on the [commands page](commands.md).
+**Commands** (the frame and A1–A6 themselves are on the [commands page](commands.md))
+- 27 Oct [a Command may take a user task, but binding intent goes into the model first]: "Yes"
+- 27 Oct [reuse Run kinds; a new one only when none fits]: "Yes exactly"
+- 27 Oct [read-only results]: "Good question. They should return some sort of result i guess. Shared Notes too. And Apply should of course get it too if it makes sense. Or what do you recommend?"
+- 27 Oct [Extract]: "We should ignore extract completely. I think extract is something that changes the model and might maybe just be some sort of skill just as modelling too."
+- 27 Oct [who accepts model changes]: "Good question. We must discuss here"
+- 27 Oct: "Those are good and fundamental questions. We must first discuss the concepts we have here. Lets not rush it. We have sevaral things here: The compiler things that do check or some sort of static analysis, runs, commands that orchestrate runs like apply and so on. We need a good architecture and model for this"
+- 27 Oct: "We should allow for single runs directly too. Custom Commands should be our goal. I think a unified result type would be great. The last one im not sure. In general your interpretation fits my thoughts well. We just need good names to not mix those things up"
+- 27 Oct [frame and names]: "Yes that works for me. The namings we had were confusing"
+- 27 Oct [A5: read-only Result; Apply takes Findings only when passed in]: "Yes"
+- 28 Oct [A6: Commands as declarations from a small fixed vocabulary; project Run kinds in principle]: "Yes i agree"
+- 28 Oct: "Lets talk about those too. Give me the questions and your recommendations" (answered by questions 2 and 18–24)
 
 **Continuous change**
 - 27 Oct: "Yes: design outside Findings as a concept 1.0 amendment, with the command side in lane 9. Still build nothing."
@@ -153,7 +166,7 @@ Verbatim, with the date. Words in brackets are context added by the recorder.
 
 ### F. Cockpit
 
-30. **[B] Approve the model explorer design and decide when to build.** Sub-points: the four areas, with lint shown inside Map and Read; the name `explore` until run views join; a local server in `markitect` and a plain page, no build chain; this session's handover to Build writes the code; read-only first. Depends on question 1.
+30. **[B] Approve the model explorer design and decide when to build.** Sub-points: the four areas, with lint shown inside Map and Read; the name `explore` until run views join; a local server in `markitect` and a plain page, no build chain; the Build session writes the code (Codex's single-writer role ended with the old cockpit); read-only first. Depends on question 1.
 31. **Run views read only the Result.** Largely settled by A4; confirm. Records on Windows sit in the Docker volume, and there is no live event stream.
 32. **Personal agent in the Cockpit** ([IDEA-015](../concepts/register.md#idea-015-cockpit-with-a-conversational-personal-agent)) stays parked unless the owner says otherwise.
 
@@ -162,6 +175,11 @@ Verbatim, with the date. Words in brackets are context added by the recorder.
 33. **[B] Fix the Windows Git-start waste?** Rec: the four fixes in the [test-time record](../validation/windows-test-time-20261028.md), as one Build task with a before-and-after measurement on this machine. Also: do empty folders need to exist in Git at all?
 34. **Git variant consequences** (needs the G0 answers, PR #795): can the host run natively on Windows again, with Docker Desktop only for agents? Does the shared Run volume go away? Is the local remote a container, a host bare repository or a volume?
 35. **Silent missing inputs in the runner** (P8): a Git-ignored file the model accounts is silently absent through the runner. Refuse it instead?
+
+### H. Added when folding
+
+36. **Modeling guide Kind names.** The guide still uses the illustrative names (Policy, Obligation, ValueType) written before the Libraries 1.0.0; the skill uses the real ones. Rec: align now, together with the #806 follow-ups.
+37. **What counts as an error lives in prose.** The skill tells agents to treat `unknown-package`, `dependency-rule`, `interface`, `import-cycle` and every strong lint finding as errors; no tool contract says so, and lint thresholds are provisional ([OQ-002](../concepts/register.md#open-questions)). No recommendation yet; it belongs with questions 3 and 4.
 
 ## Handed to Build
 
@@ -177,7 +195,12 @@ Owner-approved, waiting for the go-ahead to send:
   - Delivery plan: the W4 row ("all 1.0.0") and the stale W1 row.
   - Register: a line under DEC-074; the DEC-075 status ("Not yet in source"); record the continuous-change commission as design only under the DEC-011 hold.
 
-Waiting for one owner answer, then one task each: the Windows Git-start fix (33); `markitect lock` and readable `check` output (1); the two skill fixes and the C7 or C2 trial (12); explorer E1 (1 and 30).
+Waiting for one owner answer, then one task each: the Windows Git-start fix (33); `markitect lock` and readable `check` output (1); the two skill fixes and the C7 or C2 trial (12); explorer E1 (1 and 30), which also needs the source packager's allowlist to carry the embedded page.
+
+### Housekeeping
+
+- Branch `handover/model-quality-log` holds the unreviewed drafts behind question 9. Keep it until question 9 is reviewed, then delete it.
+- Other open PRs that touch these topics: #795 (G0 design, answers question 34), #792 (lanes overview, which the Build session rewrites for the two-session structure) and #803 (record of the owner's evening decisions of 27 October).
 
 ### Contracts the variants and the evaluation suite follow now
 
@@ -187,6 +210,12 @@ Waiting for one owner answer, then one task each: the Windows Git-start fix (33)
 - **`markitect tree` JSON** is pinned by `TestTreeReportsTheModelDerivedManagerTree`; the plugin variant depends on it.
 - **Libraries:** `api` 2.0.0 and `architecture` 1.1.0 are current.
 - **Platform rules:** no WSL, no Linux machine required; tests must run on Windows too; studies run on our own machine; Linux Apply is tested only after Windows Apply works.
+
+### Risks for evaluation runs
+
+- P8: Git-ignored files the model accounts are silently absent in the runner, so its baseline differs from a native run.
+- P6: long runs on the shared Windows machine get killed (reaped shells, stray `pkill`, other sessions' load).
+- The runner is qualified for six Managers only.
 
 ### Measurements wanted from evaluation
 

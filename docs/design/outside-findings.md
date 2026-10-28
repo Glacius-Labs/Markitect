@@ -47,7 +47,7 @@ An **outside report** is a claim to check, not an order. It becomes a Finding on
 
 ## Command side
 
-The commands lane (lane 9) owns how outside reports reach Apply, for example a file argument, and its limits. Continuous change needs only a bound input of this shape and the per-report status in the result.
+The commands topic owns how outside reports reach Apply, for example a file argument, and its limits. Continuous change needs only a bound input of this shape and the per-report status in the result.
 
 ## Open points
 

@@ -4,7 +4,7 @@ The owner asked on 27 October 2026: "Yes, find out why the tests are slow on Win
 
 ## Setup
 
-- **Command:** `go test ./... -count=1` on Windows 11, compared with Linux CI on the same source.
+- **Command:** `go test ./... -count=1` on Windows 11. The Linux figures are from Linux CI.
 - **Second run:** every Git start was counted through a logging wrapper on `PATH` (scratch tooling, not in the repository).
 
 ## Result
@@ -27,8 +27,4 @@ The owner asked on 27 October 2026: "Yes, find out why the tests are slow on Win
 3. Call the real `git.exe` instead of the launcher.
 4. Run independent `gitrepo` tests in parallel.
 
-Options 1 and 2 alone cover over 80 % of the starts. A further question is whether empty folders need to exist in Git at all; a placeholder file would remove the directory rebuild.
-
-## Limits
-
-One machine, one measurement per configuration, under the load of other sessions. The per-start costs are averages from the counting run, not a controlled benchmark.
+Together the four target over 80 % of the starts. A further question is whether empty folders need to exist in Git at all; a placeholder file would remove the directory rebuild.
