@@ -1,0 +1,25 @@
+---
+kind: std/Project
+---
+# Makerspace
+
+Makerspace runs the day-to-day operations of a fictional community workshop. It is one local program. Front-desk tools send it requests on behalf of the person who acts; the program decides, records and answers.
+
+- **Members** join on a membership tier and pay a monthly fee that depends on the tier. Staff can suspend a member; a suspended member is not in good standing.
+- **Training:** courses certify members for a tool family, such as laser cutters.
+- **Equipment:** machines belong to a tool family and have a rate per minute. Staff schedule maintenance windows during which a machine cannot be reserved.
+- **Bookings:** members reserve machines in 30-minute steps inside opening hours, check in when they start and check out when they finish. They are charged for every metered minute at the machine's rate, minus a tier discount.
+- **Materials:** a small shop sells materials from stock.
+- **Billing:** once a month staff generate invoices: one per member, with the monthly fee and all charges of that month. An invoice is due 14 days after it is issued. Members pay their invoices; an overpayment becomes credit, and credit reduces the next invoice. An invoice more than 30 days overdue blocks reservations and purchases until it is paid.
+- **Safety:** staff record safety incidents per machine and can lock a machine after an incident.
+- **Reporting:** staff and admins read utilization and revenue reports.
+
+Four policies apply to every operation: [[authorization]], [[audit]], [[money]] and [[time]].
+
+Out of scope: persistence across runs, network access, user interfaces, concurrency, real payments or refunds, notifications, scheduled jobs, deletion of records and integration with other systems.
+
+The Go module lives at `realization/go.mod`; the program's main package lives at `realization/cmd/makerspace`. Only the Go standard library is used. The program is divided into the modules of its architecture; each module is one Go package under `realization/`, named after the module, for example `realization/billing`; `realization/protocol` and `realization/cmd/makerspace` belong to the protocol module.
+
+The program is written in Go. From `realization/`, `go build ./cmd/makerspace` builds it and `go test ./...` runs its tests.
+
+The modules are described in the [[architecture]]: the area modules [[members]], [[equipment]], [[billing]], [[training]], [[bookings]], [[materials]], [[safety]] and [[reporting]], the outer layer [[protocol]], and the shared policies module, which this folder describes: [[values]], [[refusal-codes]], roles and the project-wide rules.

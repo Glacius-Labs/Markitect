@@ -1,0 +1,18 @@
+---
+kind: std/Rule
+---
+# Charges and invoices
+
+Usage, course and material [[billing/charge|charges]] collect on the member's account until they are invoiced. A charge belongs to the month of its `at`. A charge is **unbilled** until it appears on an invoice.
+
+[[billing/invoice|Invoices]] are generated per calendar month, for all members at once, when staff request it. Generation for a month is possible once the month has ended at the request time, and only once per month. Months can be generated in any order.
+
+For a month M, every [[members/member]] whose `registeredAt` is before the first minute of the month after M receives one invoice, whatever the member's standing. The invoice is built as follows:
+
+1. `invoiceId` is the next invoice identifier. Members are processed in ascending `memberId` order.
+2. `issuedAt` is the request time; `dueAt` is 14 days after `issuedAt`.
+3. `lines` starts with the membership line: `kind` `membership`, `ref` the member's current tier, `quantity` 1, `unitPriceCents` the tier's monthly fee, `discountPercent` 0, `at` the request time. All of the member's unbilled charges whose `at` lies in month M follow, ordered as [[list-order|the order of listed results]] states. These charges are no longer unbilled.
+4. `totalCents` is the sum of the line amounts.
+5. `creditAppliedCents` is the smaller of the member's credit balance and `totalCents`. The credit balance decreases by that amount.
+6. `paidCents` is 0. `balanceCents` is `totalCents − creditAppliedCents − paidCents`.
+7. `status` is `paid` when `balanceCents` is 0, otherwise `open`.

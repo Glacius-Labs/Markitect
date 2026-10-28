@@ -1,0 +1,8 @@
+---
+kind: std/Rule
+---
+# Account blocks
+
+A member is **blocked** at a request time when at least one of the member's invoices has status `open` and the request time is more than 30 days after its `dueAt`, that is, later than `dueAt` plus 43200 minutes; at exactly `dueAt` plus 30 days the member is not yet blocked. The block ends only when each such invoice reaches status `paid`: a partial payment that leaves a balance does not end it, and since credit is never applied to an existing invoice, issuing credit does not end it either. A blocked member cannot make reservations or buy materials (`account_overdue`), whoever acts: the member, staff or an admin. The block is not a standing; existing reservations stay, and check-in, check-out, cancellation, course enrollment, payments, credits and invoice generation are not blocked.
+
+Example: an invoice issued at `2026-04-01T08:00Z` is due at `2026-04-15T08:00Z`. While it is open, a reservation request at `2026-05-15T08:00Z` is not blocked; one at `2026-05-15T08:01Z` is refused with `account_overdue`.
