@@ -11,7 +11,9 @@ The owner, 28 October 2026: "The evaluation suite is critical and should be suit
 3. **The judging is wired to two projects** and does not read the suite's output.
 4. **Three runs per cell are too few** to compare variants whose results vary from run to run.
 
-Smaller gaps: the failure rule, the resource limits and the token count treat variants with many agents differently from variants with one; the human work of writing requirements or a model is not counted; and blinding of the code review is weaker than assumed.
+Smaller gaps: technical failures were counted as if they were results; the human work of writing requirements or a model is not counted; and blinding of the code review is weaker than assumed.
+
+**What is measured.** The goal is better results for less human attention, not for less computing ([vision](../vision.md#the-thesis)). Human attention is what a person must put in (requirements, a model) and what they must still find and repair afterwards (the defects the hidden judge finds). Time, tokens and machine use are reported, not optimized.
 
 ## Decisions
 
@@ -23,7 +25,7 @@ Every variant runs under the same conditions, so that the variant, not the envir
 
 - **One image** in `tools/evaluation/sandbox/`: Debian with Git and the Go and Python versions of the runtime image, plus pinned Claude Code and Codex CLIs. A series pins it by digest.
 - **One container per run,** started by `suite.py run --sandbox IMAGE`. Mounts: `/task` read-only, `/out` and `/state` writable, `/variant` read-only (the variant's own code), and the access-only login copy read-only. Nothing else from the host. A non-root user.
-- **One resource ceiling per variant,** the same for every variant in a series: CPU, memory and processes summed over all of a variant's containers. Docker limits each container, so each variant declares its per-container limits (M through its runtime profile), the suite checks that their sum stays within the series ceiling, and the ledger records them. A variant with many Managers shares the ceiling among them, as the Phase A–C baseline did with the six-Manager ceiling.
+- **No equal compute budget.** Each variant uses the machine and the tokens it needs. One generous safety limit per run, the same for every variant, protects the machine; each variant declares its per-container limits (M through its runtime profile) and the ledger records them. The limit and the task deadline are set well above what the pilot measured; a run that exceeds either is a result, not a technical failure.
 - **Network:** one egress-limited network. Its only route out allows the evaluation provider's endpoints, enforced at network level so that no tool needs a proxy setting: no web, no GitHub, no Go module proxy (`GOPROXY=off`). Portfolio tasks therefore require the Go standard library only.
 - **Variants that start containers.** M and G run their Managers in containers. This is the one exception to the mount rule: their sandbox also gets the host engine's socket, for their own variant code (trusted and reviewed), never for an agent. The socket gives root over the host; that is acceptable because no hidden material is on the machine during runs (below) and agents cannot reach the socket. The container adapter mounts volumes only, and every Manager container joins the same egress-limited network.
 - **Hidden material stays off the machine during runs.** The judge folder is fetched only for judging, after the runs. For the public tasks, a transcript audit additionally checks that no agent read or quoted oracle material, as Phase A–C did.
@@ -39,9 +41,15 @@ Each task brings its hidden judge, stored apart from the task folder; the suite 
 - **Judges are tested:** each task carries a reference result that its judge must pass and a few seeded mutants (a broken rule, an unrequested change, a failing build) that it must fail.
 - **Code quality, secondary:** `suite.py review` makes a blinded copy: tree and diff with `.markitect/` and registry files removed; the code itself stays unchanged, and the arm-guess rate below measures what blinding is left. A fresh reviewer judges it against the task's rubric; every critical finding is checked mechanically and confirmed by a second reviewer, reusing the Phase A–C rubric check and prompts. Each reviewer also guesses the variant, and the report gives how often it guessed right. All four arms run on Claude, so a Claude reviewer's family bias falls on every arm alike; it is a stated limit, and a reviewer of another family is used when one is available.
 - **Delivery** comes from the suite's own `suite.json` and `chain.json`.
-- **Failures are classified the same way for every variant.** One pre-coded classifier sorts every unsuccessful run as variant, provider (capacity, rate limit, server error) or infrastructure. The same retry rule for provider errors applies to every variant, and the report shows both readings: all runs, and runs without provider or infrastructure failures.
-- **Cost:** wall time, and tokens counted by one suite-owned parser over every transcript of a run, subagents included, plus the subscription quota a run used. With one provider and one model, tokens are comparable across variants.
-- **Human input:** for each task, the effort of the input a variant actually uses: the requirements for K, the requirements and the model for M, P and G. For the Library and the Makerspace, `task.md` is rendered from the model and that effort is unavailable. For the new project the author writes neutral requirements first, as `task.md`, and the model second, and times each; the guide's task section changes with E4 to allow a `task.md` that is not rendered.
+- **Technical failures do not count.** Each variant is made to run without technical issues first, then evaluated. One pre-coded classifier, the same for every variant, separates:
+  - a **technical failure:** the provider (capacity, rate limit, server error), the infrastructure (engine, sandbox, suite), or the variant's own runtime machinery outside the agents' work (a host crash, a lost session). The run is void: it is recorded and relaunched, and it never enters the results;
+  - a **result:** everything the variant's work produced, including a wrong or incomplete result, a timeout, and a deliberate stop such as a model blocker.
+
+  A failure of the variant's own runtime is technical only if it matches a signature written into the protocol before the series, and no agent output (a handoff, a tool call, a report or a blocker) led to it. A crash of the Claude or Codex CLI counts the same for every variant. The report shows the void rate per variant.
+
+  A variant enters a counted series only after its stability gate (section D). If technical failures recur during a series beyond the share the protocol sets, that variant leaves the series and goes back to stabilization; the report says so, it is never left out silently.
+- **Cost, descriptive:** wall time, and tokens counted by one suite-owned parser over every transcript of a run, subagents included, plus the subscription quota a run used. They are reported, not a target.
+- **Human attention, the primary area:** the defects a person would still have to find and repair (from Correctness, Build and tests, Scope, confirmed critical code-quality findings, and steps with no result), and, for each task, the effort of the input a variant actually uses: the requirements for K, the requirements and the model for M, P and G. For the Library and the Makerspace, `task.md` is rendered from the model and that effort is unavailable. For the new project the author writes neutral requirements first, as `task.md`, and the model second, and times each; the guide's task section changes with E4 to allow a `task.md` that is not rendered. These counts stand in for the attention of review, correction and waiting; they do not measure it directly.
 - **`suite.py report`** reads every run, judgment and review of a series and writes one table per area. There is no overall score.
 - The existing Library and Makerspace assessment (`tools/comparison/assess_candidate.py`) becomes their judges.
 
@@ -59,21 +67,22 @@ The new project's requirements, model, hidden oracle, seeded mutants and rubric 
 
 ## D. Counted evaluations
 
+- **Stability gate:** before a counted series, each variant runs three Library runs in a row and one Makerspace chain without a technical failure. Technical failures found here are fixed in the variant, not counted.
 - **Pilot first, uncounted:** the Library and the Makerspace chain for every variant that will be counted, G included if it is counted. It calibrates time, token use, spread and the plumbing. Pilot data never counts.
-- **Protocol per counted series,** approved by the owner before the first counted run: tasks, variants and their frozen revisions, the model, the repetitions, the run order, the budget, the stop rules and the reading.
-- **Primary contrasts:** one or two, named in the protocol, for example M against K and P against K. Each has one primary endpoint, such as the share of hidden cases passed, and a minimum meaningful difference that the owner sets.
+- **Protocol per counted series,** approved by the owner before the first counted run: tasks, variants and their frozen revisions, the model, the repetitions, the run order, the series' run and quota budget (how many runs we can afford, not a per-run limit), the stop rules, the technical-failure signatures and the reading.
+- **Primary contrasts:** one or two, named in the protocol, for example M against K and P against K. Each has one primary endpoint about human attention, such as the share of hidden cases passed (the defects left for a person), and a minimum meaningful difference that the owner sets.
 - **Units:** the new project's changes run as independent tasks, each from a fixed reference start, five repetitions each per variant. This gives more units and no failure cascade. Its full chain runs a few times per variant for sustained coherence, as a secondary result.
 - **Order:** by repetition, all variants in turn, the order rotated per repetition, so that time of day and provider load fall on every variant alike.
 - **Reading:** the 95 % interval of the paired difference, blocked by repetition and task. Each contrast reads as better, worse, "a meaningful advantage is excluded" or undecided. Secondary areas are reported descriptively. The owner decides on the tables.
-- **Ledger:** every launch is recorded, including failures, timeouts and aborts, with its failure class.
+- **Ledger:** every launch is recorded, including voided technical failures, timeouts and aborts, with its class.
 
 ## Increments
 
 | # | Builds | Done when |
 |---|---|---|
-| E1 | The sandbox image, `run --sandbox`, the egress limit and the resource ceiling; K runs in it. The new project's authoring starts | Offline tests pass; the escape probe fails all three reads; a bounded smoke of K on the Library delivers in three runs in a row, each with a result, a model match and no quarantine. It replaces the [host smoke](../validation/eval-k-library-smoke-20261028.md) |
-| E2 | `judge`, `review`, `report`, the failure classifier and the token parser; the Library judge | The Library judge passes its reference and fails its mutants; the classifier sorts recorded provider, infrastructure and variant failures correctly, and the token parser matches a hand count on a recorded transcript with subagents; the E1 smoke's results are judged and reported per area |
-| E3 | The variant commands for M (new `tools/arm-m/`) and P, with M's Manager containers on the egress-limited network | M and P each deliver in three Library runs in a row, each with a result, a model match and no quarantine |
+| E1 | The sandbox image, `run --sandbox`, the egress limit and the safety limit; K runs in it. The new project's authoring starts | Offline tests pass; the escape probe fails all three reads; a bounded smoke of K on the Library delivers in three runs in a row, each with a result, a model match and no quarantine. It replaces the [host smoke](../validation/eval-k-library-smoke-20261028.md) |
+| E2 | `judge`, `review`, `report`, the failure classifier and the token parser; the Library judge; the guide's failure rule becomes: "A timeout or a missing result caused by the variant's work counts as a failure in Correctness and Delivery; a technical failure is void and relaunched." | The Library judge passes its reference and fails its mutants; the classifier sorts recorded provider, infrastructure and variant failures correctly, and the token parser matches a hand count on a recorded transcript with subagents; the E1 smoke's results are judged and reported per area |
+| E3 | The variant commands for M (new `tools/arm-m/`) and P, with M's Manager containers on the egress-limited network | M and P each deliver in three Library runs in a row without a technical failure, each with a result, a model match and no quarantine |
 | E4 | The Makerspace chain task and judge; the new project's tasks and judge | Each judge passes its reference and fails its mutants; the new project's equivalence check is recorded |
 | E5 | The pilot series | Pilot report and a proposed protocol for the owner |
 | E6 | The counted series | Report per area, owner decision |
@@ -84,4 +93,4 @@ G joins at E3 once it has a provider (Codex tokens or a Claude backend), after i
 
 1. **Confirmatory test:** the new project instead of the Makerspace chain (section C).
 2. **Where the new project's hidden material lives.** Recommendation: a private GitHub repository owned by Glacius Labs, so that it is versioned and backed up but not public.
-3. **Minimum meaningful difference and budget per counted series:** the pilot measures spread and cost; the protocol asks for both.
+3. **Minimum meaningful difference and the run and quota budget per counted series:** the pilot measures spread and quota use; the protocol asks for both.

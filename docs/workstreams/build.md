@@ -18,7 +18,7 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 
 The suite becomes decision-grade first: [evaluation suite v2](../design/evaluation-suite-v2.md), increments E1 to E6.
 
-1. **E1, one sandbox:** the sandbox image, `suite.py run --sandbox`, the egress limit, the resource ceiling and the escape probe; then a bounded smoke of K on the Library in the sandbox, three runs in a row. The new project's authoring starts. It replaces the [host smoke](../validation/eval-k-library-smoke-20261028.md), which does not run.
+1. **E1, one sandbox:** the sandbox image, `suite.py run --sandbox`, the egress limit, the safety limit and the escape probe; then a bounded smoke of K on the Library in the sandbox, three runs in a row. The new project's authoring starts. It replaces the [host smoke](../validation/eval-k-library-smoke-20261028.md), which does not run.
 2. **E2, judges and report:** `judge`, `review` and `report`, with the Library judge.
 3. **E3, engine variants:**
    - **Arm M:** a new adapter in `tools/arm-m/` that uses the host engine, with its Manager containers on the egress-limited network, from lane 1's controller: native Apply on Linux, one repository identity per chain and arm, the state directory as its continuation, the candidate committed with a fixed identity, the Apply status and cause reported unchanged. A frozen build that contains the Claude adapter. K1b's follow-ups before counted runs on Claude: a short smoke with a correction round so that `--resume` runs natively, an allow-list instead of the deny-list for the entries agentd watches in the Manager's home, and a check that the access-only login outlasts a long run.
@@ -33,6 +33,7 @@ The suite becomes decision-grade first: [evaluation suite v2](../design/evaluati
 
 - **Model, 28 October 2026:** every arm runs on Claude Sonnet 5.5 (`claude:claude-sonnet-5-5`); Codex runs are recorded separately once Codex has tokens again. The owner: "Sonnet 5.5 for all".
 - **Evaluation suite v2, 28 October 2026:** the portfolio is the Library as a smoke only, the Makerspace chain as the main test and one new, larger, private project; the suite gets one sandbox for every variant, judges as plug-ins, enough repetitions, a reviewer of another model family when available, and human input as its own area ([design](../design/evaluation-suite-v2.md)). The owner: "Yes lets go with your recommendation and address all of these. The evaluation suite is critical and should be suitable to give us data to base our decisions upon."
+- **What is measured, 28 October 2026:** the evaluation judges results against the human attention they need, not the computing they use; time, tokens and machine use are reported, not equalized. Technical failures do not count: each variant is made to run without technical issues, then evaluated ([design](../design/evaluation-suite-v2.md#b-judges-are-plug-ins-too)). The owner: "The goal is not to get better result in less computing. The goal is to get better results in less human attention." and "Technical failures shouldnt count. We should make each of them work without technical issues and then evaluate".
 
 ## Questions for the owner
 
