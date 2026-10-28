@@ -21,6 +21,7 @@ type preparationReport struct {
 	Source            any             `json:"source"`
 	Stages            map[string]any  `json:"stages"`
 	Contexts          []contextReport `json:"contexts,omitempty"`
+	Managers          []managerReport `json:"managers,omitempty"`
 	Attempts          []any           `json:"attempts"`
 	Error             string          `json:"error,omitempty"`
 }
@@ -31,6 +32,15 @@ type contextReport struct {
 	CanonicalModelDigest string `json:"canonicalModelDigest"`
 	Definitions          []any  `json:"definitions"`
 	Children             []any  `json:"children"`
+}
+
+// managerReport is one node of the model-derived Manager tree, Root first,
+// with the authored ownership areas of exactly that Package.
+type managerReport struct {
+	Package  string   `json:"package"`
+	Parent   *string  `json:"parent"`
+	Children []string `json:"children"`
+	Areas    []string `json:"areas"`
 }
 
 func (c *Command) prepare(ctx context.Context, request project.PreviewRequest, operation, packagePath string, metadata bool) (preparationReport, error) {
@@ -68,6 +78,34 @@ func (c *Command) prepare(ctx context.Context, request project.PreviewRequest, o
 	r.Source = map[string]any{"observation": mode, "head": inputs.Head, "revision": inputs.Revision, "request": m.Request(), "censusContentDigest": inputs.Raw.Census.Digest().String(), "censusFiles": len(inputs.Raw.Census.Entries())}
 	r.Stages["structural"] = attemptReport(final)
 	selections, complete := final.Contexts().Selections()
+	if complete && operation == "tree" {
+		// Selections hold every local Manager, Root first, with its direct
+		// children; areas come from the authored ownership of each Package.
+		areas := map[string][]string{}
+		if ownership := final.Execution().Partial().Ownership; ownership != nil {
+			for _, area := range ownership.Value {
+				areas[area.Owner.Value] = append(areas[area.Owner.Value], area.Path.Value)
+			}
+		}
+		parents := map[string]string{}
+		for _, selected := range selections {
+			node := managerReport{Package: selected.Package(), Children: []string{}, Areas: areas[selected.Package()]}
+			if node.Areas == nil {
+				node.Areas = []string{}
+			}
+			for _, child := range selected.Children() {
+				node.Children = append(node.Children, child.Package)
+				parents[child.Package] = selected.Package()
+			}
+			r.Managers = append(r.Managers, node)
+		}
+		for i := range r.Managers {
+			if parent, found := parents[r.Managers[i].Package]; found {
+				r.Managers[i].Parent = &parent
+			}
+		}
+		return r, err
+	}
 	if complete {
 		for _, selected := range selections {
 			if operation == "context" && selected.Package() != packagePath {

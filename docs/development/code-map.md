@@ -140,7 +140,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `cmd/markitect` | Command markitect is the Markitect command line: check, context, docs, apply, version and licenses. | [docs/architecture.md#product-flow](../architecture.md#product-flow) |
+| `cmd/markitect` | Command markitect is the Markitect command line: check, context, tree, docs, apply, version and licenses. | [docs/architecture.md#product-flow](../architecture.md#product-flow) |
 
 ## Runner command
 
