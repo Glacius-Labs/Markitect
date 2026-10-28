@@ -71,7 +71,8 @@ def load(judge_dir):
         raise JudgeError(f"{path}: the command must be a non-empty list of strings")
     if seconds <= 0 or min(float(checked["cpus"]), checked["memoryBytes"], checked["pids"], checked["tmpBytes"]) <= 0:
         raise JudgeError(f"{path}: the time limit and every container limit must be positive")
-    return {"name": config.get("name"), "image": config["image"], "command": command, "timeoutSeconds": seconds, "limits": checked}
+    return {"name": config.get("name"), "image": config["image"], "command": command, "timeoutSeconds": seconds, "limits": checked,
+            "reviewEntry": config.get("reviewEntry")}
 
 
 def folder_digest(root):
@@ -111,7 +112,7 @@ def container_argv(name, label, config, user, mounts, workdir="/tmp"):
     argv = ["run", "--name", name, "--label", label, "--init", "--network", "none", *sandboxing.hardening(user),
             "--tmpfs", f"/tmp:rw,exec,nosuid,nodev,mode=1777,size={limits['tmpBytes']}",
             "--cpus", limits["cpus"], "--memory", str(limits["memoryBytes"]), "--memory-swap", str(limits["memoryBytes"]),
-            "--pids-limit", str(limits["pids"]), "-e", "HOME=/tmp", "--workdir", workdir]
+            "--pids-limit", str(limits["pids"]), "-e", "HOME=/tmp", "-e", f"EVALUATION_JUDGE_CONTAINER={name}", "--workdir", workdir]
     for src, dst, ro in mounts:
         argv += ["--mount", f"type=bind,src={src},dst={dst}" + (",readonly" if ro else "")]
     return argv + [config["image"], *config["command"], *MOUNTS]

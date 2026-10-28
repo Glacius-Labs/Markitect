@@ -22,7 +22,9 @@ in several:
 The result's code is agent-produced. It runs as the judge's user, so with
 --contained the judge stops every other process in the container and empties
 OUT_DIR before it writes judge.json: nothing the result started can write the
-judgment.
+judgment. It does so only when the suite's container says so in
+EVALUATION_JUDGE_CONTAINER; anywhere else the same call would stop every
+process of the user.
 """
 import argparse
 import hashlib
@@ -38,7 +40,7 @@ import time
 
 HERE = pathlib.Path(__file__).resolve().parent
 # Exported, the judge folder holds the tools it wraps; in the repository they sit at its root.
-ROOT = HERE if (HERE / "tools").is_dir() else HERE.parents[3]
+ROOT = HERE if (HERE / "tools").is_dir() else HERE.parents[2]
 sys.path[:0] = [str(ROOT / "tools" / "comparison"), str(ROOT / "tools" / "library-oracle")]
 import assess as oracle  # noqa: E402  (tools/library-oracle/assess.py)
 import assess_candidate  # noqa: E402
@@ -74,6 +76,7 @@ def command(argv, cwd, seconds, env):
         out, _ = proc.communicate(timeout=seconds)
         timed_out = False
     except subprocess.TimeoutExpired:
+        # Also when the step ended but something it started still holds its output.
         timed_out = True
     if os.name == "nt":
         if proc.poll() is None:
@@ -84,7 +87,12 @@ def command(argv, cwd, seconds, env):
         except ProcessLookupError:
             pass
     if timed_out:
-        out, _ = proc.communicate()
+        try:
+            out, _ = proc.communicate(timeout=10)
+        except subprocess.TimeoutExpired:
+            # A process that left the group still holds the output: give up on reading it.
+            proc.kill()
+            out = b"(output not read: a process outside the step still held it)"
     log = out.decode(errors="replace")
     return {"exit": None if timed_out else proc.returncode, "timedOut": timed_out, "passed": not timed_out and proc.returncode == 0,
             "seconds": round(time.monotonic() - started, 1), "log": log[-LOG_TAIL:]}
@@ -216,8 +224,9 @@ def judge(task, start_bundle, result_bundle, tmp):
 def stop_everything_else():
     """Kill every other process this user runs in the container: whatever the result started is gone.
 
-    Only inside a container: on a host the same call would stop every process of the user."""
-    if not pathlib.Path("/.dockerenv").exists():
+    Only in the suite's judge container, which sets EVALUATION_JUDGE_CONTAINER: anywhere else the same call
+    would stop every process of the user."""
+    if not os.environ.get("EVALUATION_JUDGE_CONTAINER"):
         return
     try:
         os.kill(-1, signal.SIGKILL)

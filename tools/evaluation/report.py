@@ -47,6 +47,9 @@ def read(path):
 def launch_facts(base, launch, signatures):
     """Everything the report needs from one launch."""
     run = base / launch["run"]
+    if not run.is_dir():
+        # A wrong path in the ledger is the ledger's error, not a launch without a record.
+        raise ValueError(f"launch {launch['id']}: {run} does not exist")
     record = read(run / "suite.json") or {}
     facts = {"id": launch["id"], "variant": launch["variant"], "task": launch["task"],
              **classify.classify(run, signatures, launch["variant"])}
@@ -81,7 +84,7 @@ def planned_cases(facts):
 def attention(f, planned):
     """The defects a person would still have to find and repair, per kind; None when the run is not judged."""
     if not f["delivered"]:
-        return {"noResult": 1, "casesFailed": planned.get(f["task"])}
+        return {"noResult": 1, "casesFailed": planned.get(f["task"]), "confirmedCriticals": 0}
     if "areas" not in f:
         return None
     a = f["areas"]
@@ -110,7 +113,7 @@ def table(title, header, rows, note=None):
     if note:
         lines += [note, ""]
     lines += ["| " + " | ".join(header) + " |", "|" + "---|" * len(header)]
-    lines += ["| " + " | ".join(str(c) for c in row) + " |" for row in rows]
+    lines += ["| " + " | ".join(str(c).replace("|", "\\|") for c in row) + " |" for row in rows]
     return "\n".join(lines) + "\n"
 
 
@@ -140,7 +143,8 @@ def report(ledger_path):
     rows = []
     for v in variants:
         att = [f["attention"] for f in by[v] if f.get("attention")]
-        total = [sum(x for x in a.values() if x is not None) for a in att]
+        # A total only where every count is known: a delivered result needs its review too.
+        total = [sum(a.values()) if None not in a.values() else None for a in att]
         rows.append([v, len(by[v]), spread(total), spread([a["casesFailed"] for a in att]), spread([a.get("buildFailed") for a in att]),
                      spread([a.get("testsFailed") for a in att]), spread([a.get("unrequested") for a in att]),
                      spread([a.get("protected") for a in att]), spread([a.get("confirmedCriticals") for a in att]),
@@ -150,7 +154,9 @@ def report(ledger_path):
     out.append(table("Human attention (primary)", ["Variant", "Results", "Defects left per run", "Cases failed", "Build failed",
                                                      "Tests failed", "Unrequested paths", "Protected inputs touched",
                                                      "Confirmed critical findings", "Steps with no result"], rows,
-                     "Defects a person would still have to find and repair, per run. Input effort per task: " + effort + "."))
+                     "Defects a person would still have to find and repair, per run. A result that does not build fails every case; "
+                     "a step without a result fails every case and counts once more as a step with no result. The total covers runs "
+                     "with every count known. Input effort per task: " + effort + "."))
 
     rows = []
     for v in variants:

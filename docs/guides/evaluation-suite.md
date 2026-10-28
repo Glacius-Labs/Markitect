@@ -15,7 +15,7 @@ The Build and evaluation session owns the suite and its variants ([build page](.
 - **The suite owns:**
   - The task format, the variant interface, the criteria and the report.
   - The suite runner in [`tools/evaluation`](../../tools/evaluation/README.md), with its judging, review, failure classifier, token count and report, and the baseline variant there.
-  - The tasks' judges: the Library judge in [`tools/evaluation/judges`](../../tools/evaluation/judges/library-m1/README.md).
+  - The tasks' judges: the Library judge in [`tools/evaluation-judges`](../../tools/evaluation-judges/library-m1/README.md).
   - The assessment, review prompts, rubric check and analysis in [`tools/comparison`](../../tools/comparison/README.md), which the judges and the review reuse.
   - The task portfolio.
 - **It uses:** the hidden oracles in [`tools/library-oracle`](../../tools/library-oracle/README.md) and [`tools/makerspace-oracle`](../../tools/makerspace-oracle/README.md).
@@ -85,7 +85,7 @@ A timeout or a missing result caused by the variant's work counts as a failure i
 
 **Technical failures.** One pre-coded classifier, the same for every variant, sorts every launch ([classify.py](../../tools/evaluation/classify.py)). A technical failure is void: it is recorded, relaunched and never counted. It is a failure of the infrastructure (the sandbox, the engine or the suite), of the provider (a session ended on an API error for capacity, a rate or usage limit, a server error or a refused login), or of the variant's own runtime machinery, but only when it matches a signature written into the series protocol before the series and no agent output led to it. Everything else is a result, including a wrong or incomplete result, a timeout and a deliberate stop such as a model blocker. A run under other conditions or on another model is invalid and not counted.
 
-**The report** (`suite.py report`) reads every launch, judgment and review of a series from its ledger and shows each variant per area, human attention first, with the void rate per variant and the predeclared comparison per area. There is no single overall score. The answer is which variant performs better in which areas.
+**The report** (`suite.py report`) reads every launch, judgment and review of a series from its ledger and shows each variant per area, human attention first, with the void rate per variant. Today it gives the mean, range and count per area; the predeclared comparison per area and its uncertainty come with the counted series (increment E6). There is no single overall score. The answer is which variant performs better in which areas.
 
 **Counted evaluations.** Each one has its own protocol, approved before the first counted run, like the [Phase A–C protocol](../validation/v1-comparison-protocol-20261024.md):
 - tasks and repetitions;
@@ -96,9 +96,9 @@ A timeout or a missing result caused by the variant's work counts as a failure i
 
 ## Limits
 
-- **Isolation.** The sandbox keeps a variant away from the host's files, the web and the engine. The Library and Makerspace oracles are still public, in this repository and on GitHub; a transcript audit checks that no agent quoted them. The new project's oracle stays off the machine during runs ([design](../design/evaluation-suite-v2.md#a-equal-conditions-one-sandbox)). Variants that start their own containers (M, G) need the engine socket in their sandbox; that comes with increment E3 and is not built yet.
+- **Isolation.** The sandbox keeps a variant away from the host's files, the web and the engine. A variant's own code is mounted, so judge sources (references, mutants, oracles) never sit in a folder that is mounted as variant code: the Library judge lives in `tools/evaluation-judges`, apart from `tools/evaluation`. The Library and Makerspace oracles are still public, in this repository and on GitHub; a transcript audit checks that no agent quoted them. The new project's oracle stays off the machine during runs ([design](../design/evaluation-suite-v2.md#a-equal-conditions-one-sandbox)). Variants that start their own containers (M, G) need the engine socket in their sandbox; that comes with increment E3 and is not built yet.
 - **Egress by name.** The gateway allows provider host names, not addresses: a tool that resolves names itself, without `/etc/hosts`, cannot reach the provider. Content sent to an allowed host is not inspected, so the provider endpoint itself remains a way out for anything the sandbox holds, the access-only login included.
-- **Not limited:** disk. `/out` and `/state` are host folders; the safety limit covers CPUs, memory, processes and `/tmp` only.
+- **Not limited:** disk. `/out` and `/state` of a run and `/out` of a judge are host folders; the safety limit covers CPUs, memory, processes and `/tmp` only.
 - **Reviewer family.** The earlier studies used reviewers of another model family than the writers. With Claude writers, a Codex reviewer restores that; if none is available, the report states the same-family review as a limit. The review runs on Claude today.
-- **One judge container.** A judge runs the result's own code (its build, tests and program) in the container that holds the oracle. The result's processes cannot reach the network or the host, and the Library judge stops them before it writes its answer. They could still read the oracle while they run, which for the public Library and Makerspace oracles adds nothing.
+- **One judge container.** A judge runs the result's own code (its build, tests and program) in the container that holds the oracle. The result's processes cannot reach the network or the host, and the Library judge stops them before it writes its answer, when the suite's container tells it that it may (`EVALUATION_JUDGE_CONTAINER`). They could still read the oracle while they run, which for the public Library and Makerspace oracles adds nothing.
 - **Tokens by transcript.** The token count reads Claude Code transcripts and stream output. A variant whose sessions leave no transcript in its output has no token count.

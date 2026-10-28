@@ -3,7 +3,7 @@
   python -I -B judges.py export --source DIR [--rev REV] --out NEW_DIR
   python -I -B judges.py selftest --source DIR --judge JUDGE_DIR --task TASK_DIR --out NEW_DIR [--engine BIN] [--lock FILE]
 
-A judge source (for example judges/library-m1/) holds the judge's
+A judge source (for example tools/evaluation-judges/library-m1/) holds the judge's
 `judge.json` with an `include` map from each file of the judge folder to its
 path in this repository, a `reference/` result tree and seeded `mutants/`.
 `export` writes the self-contained judge folder `suite.py judge` runs: each

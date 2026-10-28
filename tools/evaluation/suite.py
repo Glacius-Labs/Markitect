@@ -49,6 +49,8 @@ import time
 
 # Isolated mode (-I) leaves the script's directory off the path.
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+# Run as a script, this module is __main__; the modules below import it as `suite`, and must get this one.
+sys.modules.setdefault("suite", sys.modules[__name__])
 import judging  # noqa: E402
 import report as reporting  # noqa: E402
 import reviewing  # noqa: E402

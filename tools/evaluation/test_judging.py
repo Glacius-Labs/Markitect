@@ -16,7 +16,7 @@ import judges  # noqa: E402
 import judging  # noqa: E402
 import suite  # noqa: E402
 
-LIBRARY = HERE / "judges" / "library-m1"
+LIBRARY = HERE.parent / "evaluation-judges" / "library-m1"
 
 # A fake engine for judges: `image inspect` knows FAKE_JUDGE_IMAGE only, `run` runs the command on the host with each
 # mount target replaced by its source (python3 by this Python, --contained dropped: on a host it must never stop the
@@ -152,6 +152,8 @@ class JudgeRunnerTest(Engine):
         for flag in ("--read-only", "--init"):
             self.assertIn(flag, run)
         self.assertEqual(run[run.index("--cap-drop") + 1], "ALL")
+        # Only the suite's container lets the judge stop every other process.
+        self.assertIn("EVALUATION_JUDGE_CONTAINER=" + run[run.index("--name") + 1], run)
         written = json.loads((self.tmp / "judgment" / "judge.json").read_text())
         self.assertEqual(written["commit"], judgment["commit"])
         self.assertIn(["rm", "-f", run[run.index("--name") + 1]], self.calls())
@@ -196,6 +198,14 @@ class JudgeRunnerTest(Engine):
         (self.run_dir / "suite.json").write_text(json.dumps(record))
         with self.assertRaisesRegex(suite.SuiteError, "nothing to judge"):
             self.judged()
+
+
+class HiddenMaterialTest(unittest.TestCase):
+    def test_no_judge_material_is_in_the_folder_variants_get_as_their_code(self):
+        # The documented commands mount tools/evaluation at /variant in every variant run and reviewer session.
+        found = [p.relative_to(HERE).as_posix() for p in HERE.rglob("*")
+                 if p.name in ("judge.json", "go.mod") or p.parent.name in ("reference", "mutants")]
+        self.assertEqual(found, [])
 
 
 class LibraryJudgeTest(Engine):

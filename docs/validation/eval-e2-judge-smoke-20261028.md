@@ -9,7 +9,7 @@ This smoke checks increment E2 of [evaluation suite v2](../design/evaluation-sui
 | Item | Value |
 |---|---|
 | Source | `tools/evaluation` at the reviewed head of the E2 pull request; the operator records its full SHA here as `REV` before the first step |
-| Judge | `tools/evaluation/judges/library-m1`, exported once from `REV` with `judges.py export --rev REV`; its `judge.json` and folder digest are recorded |
+| Judge | `tools/evaluation-judges/library-m1`, exported once from `REV` with `judges.py export --rev REV`; its `judge.json` and folder digest are recorded |
 | Judge image | `golang@sha256:69a7b9788769bec032d238959b61854e9ae87f57be9029ec04e9885fabf99195` (`golang:1.27.1-bookworm`), already on this engine as the sandbox's build stage; nothing is pulled |
 | Sandbox image | `sha256:e0b20d8a8c88a0a4b37f151af45618e764f8687b023b10bcb6d3b5148c5e5dad`, the E1 image. `tools/evaluation/sandbox/` is unchanged since it was built (`git diff 4f7cf4d5 REV -- tools/evaluation/sandbox` is empty) |
 | Series configuration | [`tools/evaluation/sandbox/series.json`](../../tools/evaluation/sandbox/series.json), as in E1 |
@@ -24,8 +24,8 @@ Set `TMP` and `TEMP` to `C:\Users\Consiliari\AppData\Local\Temp` first; Docker D
 **(a) Judge self-test:** five judge containers (the reference and four mutants).
 
 ```text
-python -I -B tools/evaluation/judges.py export --source tools/evaluation/judges/library-m1 --rev REV --out OUT\judge-library-m1
-python -I -B tools/evaluation/judges.py selftest --source tools/evaluation/judges/library-m1 --judge OUT\judge-library-m1 --task EVAL\library-m1-task --out OUT\selftest --lock LOCK
+python -I -B tools/evaluation/judges.py export --source tools/evaluation-judges/library-m1 --rev REV --out OUT\judge-library-m1
+python -I -B tools/evaluation/judges.py selftest --source tools/evaluation-judges/library-m1 --judge OUT\judge-library-m1 --task EVAL\library-m1-task --out OUT\selftest --lock LOCK
 ```
 
 It passes when `selftest.json` says `"passed": true`: the reference passes all 19 cases, its build, its tests and the scope; `broken-rule` fails a case, `failing-build` fails its build, `unrequested-change` shows `.github/workflows/ci.yaml` as unrequested and `protected-input` shows `TASK.md` as a protected input touched. Then, and only then, (b) starts.

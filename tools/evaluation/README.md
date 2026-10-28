@@ -10,7 +10,7 @@ The suite runner, its judging and reporting, and the baseline variant of the [ev
 | [claude_code.py](claude_code.py) | The baseline variant: one headless Claude Code session with the task, in an isolated configuration |
 | [escape_probe.py](escape_probe.py) | A variant without a model that tries to leave the sandbox and reports each attempt |
 | [judging.py](judging.py) | `suite.py judge`: runs a task's judge folder in one container without network and checks its `judge.json` |
-| [judges.py](judges.py), [judges/](judges/library-m1/README.md) | Judge sources: `export` writes a judge folder from a frozen revision, `selftest` runs a judge on its reference result and seeded mutants. [judges/library-m1](judges/library-m1/README.md) is the Library judge |
+| [judges.py](judges.py) | Judge sources in [`tools/evaluation-judges`](../evaluation-judges/library-m1/README.md): `export` writes a judge folder from a frozen revision, `selftest` runs a judge on its reference result and seeded mutants |
 | [reviewing.py](reviewing.py), [reviewer.py](reviewer.py) | `suite.py review`: the blinded copy, the reviewer and confirmation sessions in the sandbox, the citation check and the variant guess |
 | [classify.py](classify.py) | The failure classifier: void (provider, infrastructure, signed variant runtime), invalid or result |
 | [tokens.py](tokens.py) | The suite's token count over every transcript of a run, subagents included |
@@ -75,7 +75,7 @@ The judge writes `/out/judge.json` with the result's commit and three areas: `co
 
 A judge folder in this repository is a source. `judges.py export --source DIR --rev REV --out JUDGE_DIR` writes the folder the suite runs: each file named in the source's `include` map, taken from the frozen revision `REV`, with its SHA-256 under `frozen`. `judges.py selftest --source DIR --judge JUDGE_DIR --task TASK_DIR --out DIR [--lock FILE]` builds the source's reference result and each seeded mutant on the task's start and judges each in the container. It passes when the reference passes every area and every mutant fails where it is seeded.
 
-**The Library judge** ([judges/library-m1](judges/library-m1/README.md)) is the comparison's M1 assessment in one container. It runs the [Library oracle](../library-oracle/README.md) with its opposite-profile witness, the six [hidden probes](../comparison/probes.py), the result's own `go build ./cmd/library` and `go test ./...`, and [assess_candidate.py](../comparison/assess_candidate.py)'s census of every changed path. Its image is the pinned `golang:1.27.1-bookworm`, the Go of the sandbox, whose Python comes with Mercurial.
+**The Library judge** ([tools/evaluation-judges/library-m1](../evaluation-judges/library-m1/README.md)) is the comparison's M1 assessment in one container. It runs the [Library oracle](../library-oracle/README.md) with its opposite-profile witness, the six [hidden probes](../comparison/probes.py), the result's own `go build ./cmd/library` and `go test ./...`, and [assess_candidate.py](../comparison/assess_candidate.py)'s census of every changed path. Its image is the pinned `golang:1.27.1-bookworm`, the Go of the sandbox, whose Python comes with Mercurial.
 
 ## The review
 

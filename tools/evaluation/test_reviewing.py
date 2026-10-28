@@ -67,6 +67,8 @@ FAKE_CLAUDE = textwrap.dedent('''
                                                 "requirement": "The loan period is 14 calendar days."}]
         answer = {"token": token_dir.name, "R1a": True, "R1b": True, "R1c": {"run": True, "test": True, "scope": True}, "R2": findings,
                   "R3a": [], "R4": [], "R5": [], "R7": [], "R6": "", "variantGuess": {"variant": "K", "why": "one session"}}
+    if mode == "wrong-shape" and not prompt.startswith("A reviewer reported"):
+        answer["R1c"] = ["run"]
     text = "no answer" if mode == "garbage" else "```json\\n" + json.dumps(answer) + "\\n```"
     print(json.dumps({"type": "system", "subtype": "init", "model": argv[argv.index("--model") + 1], "session_id": "s1"}))
     print(json.dumps({"type": "result", "subtype": "success", "result": text, "num_turns": 2, "usage": {"input_tokens": 5, "output_tokens": 7}}))
@@ -94,7 +96,7 @@ class ReviewTest(unittest.TestCase):
         self.run_dir = self.tmp / "run"
         suite.run(self.tmp / "task", [sys.executable, "-B", str(self.tmp / "variant.py")], self.run_dir, MODEL)
         self.judge = self.tmp / "judge"
-        judges.export(HERE / "judges" / "library-m1", self.judge)
+        judges.export(HERE.parent / "evaluation-judges" / "library-m1", self.judge)
         self.reviewer = [sys.executable, "-B", str(HERE / "reviewer.py"), "--claude", str(self.claude), "--credentials", str(self.credentials)]
         self._env = dict(os.environ)
 
@@ -160,6 +162,12 @@ class ReviewTest(unittest.TestCase):
         for p in (self.tmp / "boxed").rglob("*"):
             if p.is_file():
                 self.assertNotIn(b"SECRET", p.read_bytes(), p)
+
+    def test_an_answer_of_the_wrong_shape_is_invalid_and_still_recorded(self):
+        result = self.reviewed("wrong-shape")
+        self.assertFalse(result["valid"])
+        self.assertTrue(any("rubric's format" in p for p in result["problems"]), result["problems"])
+        self.assertTrue((self.tmp / "review" / "review.json").is_file())
 
     def test_a_review_without_an_answer_is_invalid(self):
         result = self.reviewed("garbage")
@@ -253,9 +261,9 @@ class ReportTest(unittest.TestCase):
         text, _ = report.report(self.tmp / "ledger.json")
         self.assertEqual(self.row(text, "Delivery", "M"), "| M | 2/3 | 1 | 1 |")
         self.assertEqual(self.row(text, "Correctness", "M"), "| M | 9.5 (0-19, n=2) | 19 (19-19, n=2) | 1/2 | none |")
-        # m-none left every case and its step without a result; m-unjudged is not judged and stays out.
+        # m-none left every case and its step without a result; m-a has no review, so no total; m-unjudged stays out.
         self.assertEqual(self.row(text, "Human attention (primary)", "M"),
-                         "| M | 3 | 11 (2-20, n=2) | 9.5 (0-19, n=2) | 0 (n=1) | 0 (n=1) | 1 (n=1) | 1 (n=1) | n/a | 1 |")
+                         "| M | 3 | 20 (n=1) | 9.5 (0-19, n=2) | 0 (n=1) | 0 (n=1) | 1 (n=1) | 1 (n=1) | 0 (n=1) | 1 |")
         self.assertIn("m-unjudged: no valid judgment of this result", text)
 
     def test_human_attention_adds_the_defects_left(self):
@@ -263,6 +271,13 @@ class ReportTest(unittest.TestCase):
         # k-a: nothing left; k-b: one failed case, failed tests and one confirmed finding.
         self.assertTrue(self.row(text, "Human attention (primary)", "K").startswith("| K | 2 | 1.5 (0-3, n=2) |"))
         self.assertIn("unavailable (task.md is rendered from the model)", text)
+
+    def test_a_wrong_run_path_in_the_ledger_is_refused(self):
+        ledger = json.loads((self.tmp / "ledger.json").read_text())
+        ledger["launches"][0]["run"] = "k-typo"
+        (self.tmp / "ledger.json").write_text(json.dumps(ledger))
+        with self.assertRaisesRegex(ValueError, "k-typo"):
+            report.report(self.tmp / "ledger.json")
 
     def test_the_cli_writes_the_report_once(self):
         out = self.tmp / "report"

@@ -20,7 +20,7 @@ import os
 import pathlib
 import re
 import shutil
-import subprocess
+import tarfile
 import tempfile
 import uuid
 
@@ -135,7 +135,10 @@ def review(run_dir, judge_dir, out, model, box=None, reviewer=REVIEWER, deadline
     material = out / "material"
     (material / token).mkdir(parents=True)
     commit = record["result"]["commit"]
-    blind(task_dir, record["task"]["start"], run_dir / "variant" / "result.bundle", commit, material / token)
+    try:
+        blind(task_dir, record["task"]["start"], run_dir / "variant" / "result.bundle", commit, material / token)
+    except (OSError, RuntimeError, tarfile.TarError) as e:
+        raise judging.JudgeError(f"the result cannot be blinded: {type(e).__name__}: {e}")
     shutil.copyfile(task_dir / "task.md", material / "requirements.md")
     shutil.copyfile(rubric, material / "rubric.md")
     result = {"format": judging.FORMAT, "run": str(run_dir.resolve()), "commit": commit, "token": token, "model": model,
@@ -151,8 +154,12 @@ def review(run_dir, judge_dir, out, model, box=None, reviewer=REVIEWER, deadline
         result["problems"].append("the review answers for another token")
     else:
         entry = config.get("reviewEntry") or rubric_check.LIBRARY_ENTRY
-        result["check"] = rubric_check.check(material / token, material / "requirements.md", first["answer"], entry=entry)
-        for i, critical in enumerate(c for c in result["check"]["criticals"] if c["valid"]):
+        try:
+            result["check"] = rubric_check.check(material / token, material / "requirements.md", first["answer"], entry=entry)
+        except (AttributeError, TypeError, ValueError) as e:
+            # The answer does not have the rubric's shape: the review is invalid, and its record is still written.
+            result["problems"].append(f"the review answer does not follow the rubric's format: {type(e).__name__}: {e}")
+        for i, critical in enumerate(c for c in (result.get("check") or {"criticals": []})["criticals"] if c["valid"]):
             finding = {"item": critical["item"], **critical["finding"]}
             s = session(f"confirm-{i + 1}", confirm_prompt.replace("FINDING", json.dumps(finding, ensure_ascii=False)), token,
                         material, out, model, box, reviewer, deadline)

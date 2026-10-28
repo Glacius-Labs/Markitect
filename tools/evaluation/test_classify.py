@@ -69,6 +69,9 @@ class ClassifierTest(unittest.TestCase):
         result = classify.classify(run)
         self.assertEqual(result["class"], "void")
         self.assertTrue(result["stopsSeries"])
+        # A name outside the provider's domains, or a connection without one, is the variant's own attempt: a result.
+        run = self.edited("result-k03", lambda r: r["sandbox"]["egress"]["refused"].update({"github.com": 1, "(none)": 3}))
+        self.assertEqual(classify.classify(run)["class"], "result")
         (self.tmp / "nothing").mkdir()
         self.assertEqual(classify.classify(self.tmp / "nothing")["kind"], "infrastructure")
 

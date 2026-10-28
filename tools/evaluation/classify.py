@@ -7,9 +7,10 @@ It sorts one run, from its suite.json and what the variant left in RUN_DIR, into
 - void: a technical failure. The run is recorded and relaunched, and it never
   enters the results. Three kinds:
   - infrastructure: the sandbox did not stand up, its container never started,
-    its gateway stopped, it left residue, the gateway refused a server name the
-    provider's CLI needs (this also stops the series), the suite wrote no
-    record, or the variant command could not be started at all;
+    its gateway stopped, it left residue, the gateway refused a server name in
+    the provider's own domains, which its CLI needs (this also stops the
+    series), the suite wrote no record, or the variant command could not be
+    started at all;
   - provider: a provider session's last response is an API error for capacity,
     a rate or usage limit, a server error or a refused login, and the run did
     not end normally (no result, a non-zero exit or a timeout);
@@ -36,8 +37,13 @@ import sys
 
 # The `error` field of a Claude Code API error message, and the HTTP status of a stream-json result, that a provider
 # causes: capacity, rate or usage limits, server errors and a refused login.
-PROVIDER_ERRORS = {"rate_limit", "server_error", "overloaded", "overloaded_error", "api_error", "authentication_failed"}
+# `billing_error` and `unknown` (as for a dropped connection) are in no recorded run yet.
+PROVIDER_ERRORS = {"rate_limit", "server_error", "overloaded", "overloaded_error", "api_error", "authentication_failed", "billing_error",
+                   "unknown"}
 PROVIDER_STATUS = {401, 403, 429, 500, 502, 503, 504, 529}
+# The provider's own domains: a refused name under one of them is an endpoint its CLI needs and the series lacks.
+# Any other refused name, such as an agent trying GitHub, is the variant's work.
+PROVIDER_DOMAINS = {"claude": ("anthropic.com", "claude.ai", "claude.com"), "codex": ("openai.com", "chatgpt.com")}
 # The variant command never ran: the interpreter or the engine could not start its program.
 NOT_STARTED = re.compile(r"can't open file '[^']*'|executable file not found|exec format error|OCI runtime (create|exec) failed")
 
@@ -99,9 +105,11 @@ def classify(run_dir, signatures=None, variant=None):
     if record is None:
         return outcome("void", "infrastructure", "the suite wrote no readable suite.json")
     box = record.get("sandbox") or {}
-    refused = (box.get("egress") or {}).get("refused")
-    if refused:
-        return outcome("void", "infrastructure", "the gateway refused " + ", ".join(sorted(refused)), True)
+    domains = PROVIDER_DOMAINS.get(str(record.get("model", "")).partition(":")[0], ())
+    needed = sorted(name for name in (box.get("egress") or {}).get("refused") or {}
+                    if any(name == d or name.endswith("." + d) for d in domains))
+    if needed:
+        return outcome("void", "infrastructure", "the gateway refused the provider's " + ", ".join(needed), True)
     if record.get("conditions") == "sandbox" and not record.get("validForCounting"):
         cause = box.get("error") or ("residue: " + ", ".join(box.get("residue") or []) if box.get("residue") else "not valid for counting")
         return outcome("void", "infrastructure", cause)

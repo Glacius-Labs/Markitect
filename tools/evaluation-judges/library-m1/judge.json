@@ -6,7 +6,7 @@
   "timeoutSeconds": 2400,
   "limits": {"cpus": "4", "memoryBytes": 4294967296, "pids": 1024, "tmpBytes": 2147483648},
   "include": {
-    "judge.py": "tools/evaluation/judges/library-m1/judge.py",
+    "judge.py": "tools/evaluation-judges/library-m1/judge.py",
     "rubric.md": "tools/comparison/rubric.md",
     "tools/comparison/assess_candidate.py": "tools/comparison/assess_candidate.py",
     "tools/comparison/runner.py": "tools/comparison/runner.py",
