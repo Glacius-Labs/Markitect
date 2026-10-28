@@ -7,7 +7,7 @@
 | **Version** | 2.0 – accepted target |
 | **Date** | 28 October 2026 |
 | **Basis** | The owner's decisions of 28 October 2026 in the Topics session's design walk-through: [DEC-079](register.md#dec-079-the-model-is-as-explicit-as-good-documentation) to [DEC-085](register.md#dec-085-markdown-tools-are-the-cockpit-for-now), and [DEC-061](register.md#dec-061-what-an-extracted-model-contains) as confirmed that day. The register entries govern; this page puts them in one readable order. |
-| **State** | Accepted by the owner as Markitect's target on 28 October 2026 ([DEC-086](register.md#dec-086-concept-20-is-the-target)). Designed, nothing built. [Concept 1.0](v1-concept.md) describes Main until 2.0 is built. |
+| **State** | Accepted by the owner as Markitect's target on 28 October 2026 ([DEC-086](register.md#dec-086-concept-20-is-the-target)). Being built in the steps of the [delivery plan](../implementation-plan.md#concept-20-build). |
 
 ## 1. What Markitect is for
 
@@ -98,7 +98,7 @@ Layout conventions, such as where tests live, are Rules in Root.
 
 ### 6.1 Who works
 
-Impact decides, like an incremental build ([DEC-082](register.md#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager)). A model change reaches the Definitions it changes; through the registry the files that realize them; through links and the code's own imports the Packages that depend on them; and their parents up to Root. Untouched areas do not start. The required checks always run on the whole repository, and an occasional full Run catches what impact missed.
+Impact decides, like an incremental build ([DEC-082](register.md#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager)). A model change reaches the Definitions it changes; through the registry the files that realize them; through links the Packages that depend on them; and their parents up to Root. Untouched areas do not start. Impact does not follow the code's own imports: the required checks always run on the whole repository and catch what a change breaks there, and an occasional full Run catches what impact missed.
 
 ### 6.2 One Run, maker and checker
 
@@ -106,7 +106,7 @@ One Run handles a change. Every working Manager is two agents with their own har
 
 - **The checklist** has three parts: the Manager's own Definitions the change reaches (changed, linking to something changed, or realized by files the change touches); inherited Definitions the change itself edited, so a changed Rule at Root becomes an item for every Manager below it, while an ancestor's Definition that is only reached through a touched file or a link does not; and every Finding assigned to it. With `--full` it holds all own and all inherited Definitions. A verdict means "conforms to this item and to the Rules above it", so a change that breaks an unchanged inherited Rule still fails.
 - **The maker** gives every item on its checklist a verdict with evidence: conforms, changed, or model problem. It checks that each makes sense, plans, implements and checks again.
-- **The checker** is fresh. It sees only the model and the diff, re-checks every verdict and sends defects straight back to the maker.
+- **The checker** is fresh. It sees the model, the repository at the submission and its diff, and nothing its maker wrote besides the commit: it does not read the Shared Notes. It re-checks every verdict and sends defects straight back to the maker.
 
 The parent reviews and integrates its children's approved work. Root's checker is the final independent check before landing. The model is authoritative and is never repaired by a Run ([DEC-063](register.md#dec-063-the-model-is-authoritative-defects-escalate)): a Manager that cannot settle a matter within the model escalates it to its parent, which settles it if the model allows; a gap without effect at the project boundary is realization freedom, decided and documented by the Manager. A real model defect, a contradiction or a gap that changes behavior at the boundary, ends the Run at Root without landing.
 
@@ -115,8 +115,8 @@ The parent reviews and integrates its children's approved work. Root's checker i
 - Each Run has its own Git remote. Every Manager pushes to its own branch. A handoff is a commit; the checker approves with a commit of its own; the parent merges.
 - The verdicts are lines in the submission commit's message, like Git trailers. The checker approves or rejects with a commit on the maker's branch that changes no file and only confirms each verdict; a checker never edits.
 - A parent's push may contain its own changes in its own paths plus merged child commits, unchanged and approved by that child's checker; it cannot slip edits into a child's area.
-- The required checks run on every submission, child or parent, on that branch's full repository state, and again on the parent's merged state.
-- Server-side hooks on the Run's remote carry the guarantees, which agents cannot skip: a Manager pushes only to its own branch and its own paths; a submission passes the required checks; every item on its checklist has a verdict. Local hooks in each harness only give early feedback.
+- The required checks run on every submission, child or parent, on that branch's full repository state, and again on the parent's merged state. The host also compiles every submission and the state it lands with `markitect check`, so a file that enters unregistered never lands.
+- Server-side hooks on the Run's remote carry the guarantees, which agents cannot skip: a Manager pushes only to its own branch and its own paths; a submission compiles and passes the required checks; every item on its checklist has a verdict. Local hooks in each harness only give early feedback.
 - Messages carry assignments, questions and escalations along the tree, never work. Nobody blocks waiting for a message.
 - No question reaches the owner during a Run.
 
@@ -140,7 +140,7 @@ Results live in the repository as Markdown under `.markitect/results/<run>.md`: 
 | `bughunt`, `security` | checkers only, with that focus | nothing | Findings; where the model is silent, model proposals |
 | `cleanup` | makers and checkers on the unchanged model; behavior stays | artifacts, by landing | the Result |
 
-Every Command takes a base, by default the last commit Markitect landed. Impact is everything that changed since then, in the model or in the files: a changed file reaches its Definitions through the registry, so `verify` after hand edits checks exactly what they touched, and nothing changed means nothing to do. `--full` covers everything. `bughunt`, `security` and `cleanup` take the whole tree by default, narrowable with `--package`. In `verify`, the checkers write the verdicts as commits without file changes, and the hooks require a complete checklist as in `apply`.
+Every Command takes a base, by default the last commit Markitect landed. Impact is everything that changed since then, in the model or in the files: a changed file reaches its Definitions through the registry, so `verify` after hand edits checks exactly what they touched, and nothing changed means nothing to do. `--full` covers everything. `bughunt`, `security` and `cleanup` take the whole tree by default, narrowable with `--package`. In `verify`, the checkers write the verdicts as commits without file changes, and the hooks require a complete checklist as in `apply`; the required checks run on the whole repository as in every Run.
 
 `apply` and `verify` come first. The others are short declarations over the same mechanism and follow; projects add their own the same way. `explain` comes later.
 
@@ -210,7 +210,9 @@ No app for now ([DEC-085](register.md#dec-085-markdown-tools-are-the-cockpit-for
 9. **Results and leftovers: decided** 28 October: Results in the repository under `.markitect/results/`; Run branches cleaned up after landing; the working tree is never touched.
 10. **Acceptance: decided** 28 October (§15).
 
-**Details for the build:** the verdict trailer format; how far impact follows dependents; the harness and model of makers and checkers; when the full Run is due; the format of a mandate; the Result page's exact layout.
+**Decided after the first build steps** (29 October 2026, on an independent check of the code against this concept): landing compiles every submission and the state it lands; `verify` runs the required checks; the checker does not read the Shared Notes; impact does not follow the code's own imports (§6.1); how planted defects are scored (§15).
+
+**Details for the build:** the verdict trailer format; the harness and model of makers and checkers; when the full Run is due; the format of a mandate; the Result page's exact layout.
 
 **Parked:** the Windows test time ([question 33](../workstreams/topics.md#questions-for-the-owner)), to be judged again after the rebuild.
 
@@ -223,7 +225,7 @@ Concept 2.0 is achieved when the evaluation suite shows, on a small project (the
 1. **Correct:** every landed change passes hidden behavior tests that no agent saw.
 2. **No drift:** after the series, an independent `verify --full` finds nothing left over: no stale file, no forgotten rule, every file accounted for.
 3. **Nothing skipped:** in every Result, every checklist item has a verdict with evidence.
-4. **Stops right:** planted model defects end the Run without landing; harmless gaps do not.
+4. **Stops right:** planted model defects end the Run without landing; harmless gaps do not. A result equal to its start counts as not landed, for every arm alike, and every arm gets the same instruction: when the requirements contradict each other or leave a boundary behavior open, change nothing and say why.
 5. **At least as trustworthy as today's practice:** on the same series, the results are at least as consistent as one strong agent with ordinary documentation ([DEC-002](register.md#dec-002-trust-is-measured-against-todays-practice)). Cost is reported, not judged.
 
 The same series runs natively on Windows and on Linux, on our own machine. The exact numbers, the change series and the planted defects belong to the evaluation design.

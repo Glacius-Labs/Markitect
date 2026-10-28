@@ -10,7 +10,7 @@ State page of the Topics session: the owner's single place to discuss Markitect'
 
 ## Now
 
-- **Concept 2.0 is the target** (accepted 28 October, [DEC-086](../concepts/register.md#dec-086-concept-20-is-the-target)). The design walk-through ([source](../concepts/sources/model-explicitness-20261028.md#1-what-markitect-is-restated)) settled DEC-079 to DEC-085 and the ten review questions; [concept 2.0](../concepts/v2-concept.md) puts them in one order with its acceptance. Nothing is built. Handed to the Build and evaluation session on 28 October (see [Handed to Build](#handed-to-build)).
+- **Concept 2.0 is the target** (accepted 28 October, [DEC-086](../concepts/register.md#dec-086-concept-20-is-the-target)). The design walk-through ([source](../concepts/sources/model-explicitness-20261028.md#1-what-markitect-is-restated)) settled DEC-079 to DEC-085 and the ten review questions; [concept 2.0](../concepts/v2-concept.md) puts them in one order with its acceptance. Handed to the Build and evaluation session on 28 October (see [Handed to Build](#handed-to-build)); being built in the [delivery plan's steps](../implementation-plan.md#concept-20-build).
 - **Basis:** clean. One topics page instead of seven lane pages; Main consistent again after #806 (see [Done here](#done-here)); the topic lane worktrees and branches removed (the old Cockpit lane worktree now serves the General session); question 33 (Windows tests) parked.
 
 ## Next
@@ -93,6 +93,7 @@ What is decided and lives nowhere else; decisions with their own page are linked
 - **Commands** (27–28 October): the frame, the names and A1–A6 ([commands page](commands.md)).
 - **Cockpit** (28 October; [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now)): no Cockpit app for now; Markitect writes everything as Markdown, so Markdown tools are the cockpit; the model explorer stays a proposal; the personal agent stays parked.
 - **Organization of this work** (28 October): one Topics session for all design topics and one Build and evaluation session; the topic lanes are folded into this page. The owner restated what Markitect is ([source](../concepts/sources/model-explicitness-20261028.md#1-what-markitect-is-restated)).
+- **Build conformance** (29 October; [DEC-082](../concepts/register.md#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager), [DEC-086](../concepts/register.md#dec-086-concept-20-is-the-target)): an independent check found T1 to T4a and #856 true to concept 2.0 except one gap, landing without compiling, and four points for the owner. Decided: landing compiles every submission and the state it lands; `verify` runs the required checks; the checker sees the model, the repository at the submission and its diff, but not the Shared Notes; impact does not follow the code's own imports; on planted defects a result equal to its start counts as not landed, with the same instruction for every arm. A lock so that overlapping Runs take turns, and deleting old Run branches, go to T5.
 - **Records** (28 October): decisions are recorded in plain words with their date, without verbatim quotes or attributions ([record rule 1](../concepts/README.md#adding-and-changing-entries)).
 
 ## Questions for the owner
@@ -176,6 +177,7 @@ What is decided and lives nowhere else; decisions with their own page are linked
 ## Handed to Build
 
 - **28 October 2026: build concept 2.0.** On the owner's go-ahead, one message to the Build and evaluation session: build the evaluation suite and the implementations against [concept 2.0](../concepts/v2-concept.md) and its acceptance (§15), and write the steps into the [delivery plan](../implementation-plan.md). Consistency and quality first, cost second. Noted for the G0 prototype: server-side hooks instead of a referee, maker and checker per Manager, verdicts as commit trailers.
+- **29 October 2026: conformance fixes.** On the owner's go-ahead, one message to Build: compile every submission and the landed state; required checks in `verify`; no Shared Notes for the checker; the target lock and Run-branch cleanup into T5; the planted-defect scoring accepted ([Decided](#decided)).
 
 ### Done here
 

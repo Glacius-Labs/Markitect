@@ -6,7 +6,7 @@ Canonical page of the commands topic, one of the topics on the [topics page](top
 
 | | |
 |---|---|
-| **Status** | The frame below and answers A1–A6 are agreed with the owner (27 and 28 October 2026). Nothing is built until the owner says so. The open questions are on the [topics page](topics.md#d-commands-and-the-result). |
+| **Status** | The frame below and answers A1–A6 are agreed with the owner (27 and 28 October 2026). `apply` and `verify` are built as part of [concept 2.0](../concepts/v2-concept.md#7-commands-that-start-agents); the others come after its acceptance. The open questions are on the [topics page](topics.md#d-commands-and-the-result). |
 | **Scope** | Command contracts: purpose, inputs, outputs, guarantees, status; candidate commands; open questions. |
 | **Not in scope** | How a variant realizes a command; the evaluation suite; model language, modeling and Authoring, and the compiler; continuous triggers; the Cockpit. The variants and the evaluation suite belong to the [Build and evaluation session](build.md); the rest are other topics on the [topics page](topics.md). |
 | **Sources** | [V1 concept 1.0](../concepts/v1-concept.md) (§4, §7, §9–§12, §18–§21), the [concept register](../concepts/register.md), the [architecture](../architecture.md). This page links to them and does not change them. |
