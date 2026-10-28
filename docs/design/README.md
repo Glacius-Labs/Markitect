@@ -12,4 +12,6 @@ Current design documents. Earlier design records are not kept on Main; the [arch
 | [Manager context](manager-context.md) | What each Manager receives as context: own Definitions, See also, type contracts, child areas and file paths |
 | [Standard Libraries](standard-libraries.md) | The accepted outline of the standard Libraries (values, practice, data, api, architecture), their dependencies and versioning |
 | [Kind interfaces](kind-interfaces.md) | Reasoning, rules and Core 1.2.0 migration for Kind interfaces and the `valueType` vocabulary; the normative text is the language contract |
+| [Model explorer](model-explorer.md) | Proposal: the read-only model explorer, the Cockpit's first slice; nothing built |
+| [Outside Findings](outside-findings.md) | Proposed concept 1.0 amendment: outside reports as an Apply input, confirmed against the model by Assessment and checked by Verify |
 | [Canonical model track charter](model-track-charter.md) | Goal, workstreams and owner decisions of the track that makes the canonical model serve typed programming in prose |
