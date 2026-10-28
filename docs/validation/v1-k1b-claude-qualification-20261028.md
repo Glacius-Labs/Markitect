@@ -13,7 +13,7 @@ It also answers the CLI assumptions that the adapter README lists for K1b. The d
 | Question | Verdict |
 | --- | --- |
 | Q1, native Managers with the subscription login | **Works after a source fix.** On Main `ac56780d`, attempt 1 ended at the first Manager after 95 s. In the adapter's provider environment, `claude auth status` exited 1, because `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1` makes Claude Code 2.1.308 refuse every command without bubblewrap. Offline probes of the pinned CLI then showed two more launch-contract gaps: built-in plugins that the launch check refuses, and an expected `EndConversation` tool that the CLI does not report. [PR #807](https://github.com/Glacius-Labs/Markitect/pull/807) fixes all three. On its head `9630f381`, all 18 Manager sessions passed the login check and every launch check |
-| Q2, one Apply through the runner | **Passed on `9630f381`.** Attempt 2 passed: Assessment approved, Implement submitted, Verify approved, with 18 messages, in 752 s. The verified change arrived as the new branch `markitect/apply-4628d7795d09736e6c8ca6530f50c363`. The input checkout was unchanged. No login value and no token pattern appeared in the evidence. No container or volume of either attempt remained |
+| Q2, one Apply through the runner | **Passed on `9630f381`.** Attempt 2 passed: Assessment approved, Implement submitted, Verify approved, with 18 messages, in 752 s. The verified change arrived as the new branch `markitect/apply-4628d7795d09736e6c8ca6530f50c363`. The input checkout was unchanged. No value of the real login appeared in the evidence, and the attempts' own outputs held no token pattern. No container or volume of either attempt remained |
 
 **Model.** The Managers ran `claude-sonnet-5-5`, as every init line reported, selected with the alias `sonnet` at effort `high`.
 
@@ -43,7 +43,7 @@ It also answers the CLI assumptions that the adapter README lists for K1b. The d
 
 | Item | Value |
 | --- | --- |
-| Launch | 13:46:09Z to 13:47:45Z, 95 s, launcher exit code 3. Runner container `markitect-runner-7b882f525481ea3a` |
+| Launch | 13:46:10Z to 13:47:45Z, 95 s, launcher exit code 3. Runner container `markitect-runner-7b882f525481ea3a` |
 | Apply | `dc5f4c5597bd47d55266cc38f50a04ad`, `not_completed`: "Claude Code session refused or incomplete: claude auth status reported no readable authMethod". The Assessment Run ended technically failed with 0 messages. Its four resources, Root's session and working copy, the Manager workers and the Git service, were recorded as closed. No inference, no tokens, no branch |
 | Root's transcript | Setup at 13:47:43.93Z. `claude auth status` exited 1 after 0.11 s, and the adapter read no `authMethod` from its output. The transcript keeps only the method and the exit code, never the status output |
 | Stop cause | A source defect. With the adapter's provider environment, Claude Code 2.1.308 refuses every command. Adding one variable at a time to a minimal environment in the Go image shows that `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1` alone causes it: "bubblewrap is required for subprocess env scrubbing and isolation". The image has no bubblewrap, and the hardened container could not run it. The image build's flag check runs `claude --help` without that environment, so it could not see this |
@@ -51,7 +51,7 @@ It also answers the CLI assumptions that the adapter README lists for K1b. The d
 
 ## Offline probes between the attempts
 
-Before spending a second attempt, the pinned CLI was probed in freeze 1's Go image. The probes ran without network, with a read-only root, as user 1000, on a temporary home with a dummy access-only login and no real token. A stand-in stdio MCP server advertised the nine Run tools. No probe reached a provider.
+Before spending a second attempt, the pinned CLI was probed in freeze 1's Go image; the evidence keeps each probe's script, output and container arguments. The probes ran without network, with a read-only root, as user 1000, on a temporary home with a dummy access-only login and no real token. A stand-in stdio MCP server advertised the nine Run tools. No probe reached a provider.
 
 | Probe | Observation |
 | --- | --- |
@@ -112,7 +112,9 @@ The adapter README lists what K1b must confirm on the pinned image.
   - the launch directory, the host state directory and the extracted state volume (50 files for attempt 2);
   - the checked-out result branch with its commit text.
 
-  It searched for token key names, JWTs, Anthropic key and token shapes, bearer headers and the login's own token values. The values were held in memory only. There was no match. A final scan of all 419 evidence files found no login value. Pattern matches occurred only in the product binaries (key names in code), the probe scripts (dummy tokens) and the scan tool.
+  It searched for token key names, JWTs, Anthropic key and token shapes, bearer headers and the login's own token values. The values were held in memory only. There was no match.
+
+  A final scan covered all 589 evidence files except the two source clones, and its output is kept with the evidence. It found no login value. Pattern matches occurred only in the product binaries (key names in code), the probe scripts (dummy tokens) and the scan tool.
 - **Lock.** `NATIVE-RUN.lock` was released after each attempt.
 
 The evidence is kept outside the repository: for each attempt, the build records, the input, `pre.json` and `post.json`, the launch logs, the extracted state volume and the analysis. The probes keep their scripts and outputs.
@@ -122,7 +124,7 @@ The evidence is kept outside the repository: for each attempt, the build records
 - **One Apply, on the smallest native case.** One pass with 6 Managers, one response per Manager and no correction. Not exercised: `--resume` across responses, a Verify reject with a correction pair, a repeat after a transient error, `overloaded`, and larger projects with more concurrent Managers on one subscription.
 - **Main needs #807.** On Main `ac56780d`, every Claude Apply ends at the first Manager. Attempt 2 ran on the fix head before its merge.
 - **The source tests could not see these defects.** They use authored fixtures. The CLI's behaviour under the adapter's environment and flags was first observed offline and then natively. The new test pins one captured init line, not the CLI.
-- **The login was not stressed.** The whole run fit inside one access-token lifetime of about eight hours. The host's interactive Claude session refreshes the source file, and the mount is read-only. A long evaluation run can outlast a token; the README's refresh limitation applies.
+- **The login was not stressed.** The access token still had about seven hours left when the run ended, so neither expiry nor refresh occurred. The mount is read-only and the Manager copies carry no refresh token, so a long evaluation run can outlast a token; the README's refresh limitation applies.
 - **Loading.** Not observed: a repository `CLAUDE.md` or `AGENTS.md` in `/work`, and the replacement of the default system prompt as the provider sees it.
 - **Engine and launch.** Docker Desktop only. The launcher ran in a WMI-started wrapper, not from a console. No cancellation was tried.
 - **Offline probes.** They used a dummy token without network. Attempt 2's 18 native init lines confirm their plugin and tool-list observations; their retry and error categories remain offline observations.

@@ -125,7 +125,7 @@ After every Run has closed, Apply reopens the stored final Verify approval, and 
 | `gitrepo` | Complete repository capture, private Run Git copies (`LinuxGit` on private Linux volumes for native Run copies, `LocalGit` for controlled tests and as the host-side candidate store and publication Git), self-contained stored candidates and guarded publication, in separate collaborators ([README](../internal/adapters/gitrepo/README.md)) |
 | `runstore` | Immutable terminal Run results, an index of completed Verify approvals and concurrent project Notes |
 | `codexappserver` | Codex App Server Sessions with the model-derived harness and the nine Run tools ([README](../internal/adapters/codexappserver/README.md)) |
-| `claudecode` | Claude Code Sessions with subscription login, the model-derived harness as system prompt and the nine Run tools; an addition beyond V1's Codex scope, native qualification open ([README](../internal/adapters/claudecode/README.md)) |
+| `claudecode` | Claude Code Sessions with subscription login, the model-derived harness as system prompt and the nine Run tools; an addition beyond V1's Codex scope; its first native Apply passed in [K1b](validation/v1-k1b-claude-qualification-20261028.md) ([README](../internal/adapters/claudecode/README.md)) |
 | `container`, `internal/agentd` | Container engine client, the frame protocol and the session helper that runs the provider CLI and bridges its tools ([container runtime](../internal/adapters/container/README.md)) |
 | `checks` | Declared project checks in pinned containers over disposable input and home copies ([README](../internal/adapters/checks/README.md)) |
 | `documents` | Guarded write of the generated view |
