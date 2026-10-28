@@ -10,20 +10,6 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/tooling/architecture"
 )
 
-var commandConfigurationExamples = []string{
-	"examples/runtime-profile.example.yaml",
-	"examples/run.example.json",
-}
-
-func commandConfigurationExample(name string) bool {
-	for _, path := range commandConfigurationExamples {
-		if name == path {
-			return true
-		}
-	}
-	return false
-}
-
 // Source archives contain one root module whose cmd/ and internal/ packages
 // are exactly those of the architecture rule table. Parent containers grant no
 // privilege to unknown sibling packages.

@@ -6,12 +6,12 @@ Use this map to find the document that owns a decision, a guide or a piece of ev
 
 | If you want to… | Start here |
 |---|---|
-| Implement Markitect | [Concept 2.0](concepts/v2-concept.md) (the target), [V1 concept 1.0](concepts/v1-concept.md) (what Main implements), [delivery plan](implementation-plan.md), [architecture](architecture.md), [code map](development/code-map.md) and [qualification record](validation/v1-qualification-20261024.md) |
+| Implement Markitect | [Concept 2.0](concepts/v2-concept.md) (the target), the [delivery plan](implementation-plan.md) and its [concept 2.0 build](implementation-plan.md#concept-20-build), [architecture](architecture.md) and [code map](development/code-map.md); [V1 concept 1.0](concepts/v1-concept.md) and the [qualification record](validation/v1-qualification-20261024.md) record V1 |
 | Understand what Markitect is for, before assessing or redirecting it | [Markitect in brief](vision.md#markitect-in-brief), [Common misreadings](vision.md#common-misreadings) and the [concept register](concepts/register.md) |
 | Understand where the idea came from and why its mechanisms might help | [Origin and rationale](vision.md#origin-and-rationale) and the [owner's original account](concepts/sources/owner-origin-20261015.md); the archived product reflections are listed in the [archive index](archive.md#archived-pages) |
-| Use Markitect on a project: the model commands, Apply on Linux or from Windows in the Linux runner, state, evidence and troubleshooting | [Project workflow](guides/project-workflow.md), the one user guide, and [Provider adapters](guides/provider-adapters.md) |
+| Use Markitect on a project: set it up, write and register the model, check, lint and impact | [Project workflow](guides/project-workflow.md), the one user guide |
+| Write or read a model: Definitions, Kinds and Libraries, links, the registry, the commands and their diagnostics | [Model language](guides/model-language.md), the canonical description of the language |
 | Understand the technical boundaries | [Architecture](architecture.md), the package READMEs it links and [Measurement](guides/measurement.md) |
-| Read the language specification | [Language contract](design/language-contract.md) and [diagnostic contract](design/diagnostic-contract.md), listed in the [design map](design/README.md) |
 | Contribute source | [Contribution checks](../CONTRIBUTING.md), the [development documents](#development) below, the [repository layout](development/repository-layout.md) and [documentation maintenance](development/documentation.md) |
 | Operate a release | The [distribution guide](../packaging/README.md#release-operations) and the [release evidence](validation/README.md) |
 | Find an earlier design, experiment, trial or dated record | The [archive index](archive.md) |
@@ -24,6 +24,7 @@ This is the one owner table; other pages link here instead of keeping their own.
 |---|---|
 | Product thesis, human/agent responsibilities, the delegated method, Markitect's origin and the long-term operating model | [Vision](vision.md) |
 | Product decisions, promises, assumptions, long-term vision, agreed but unscheduled directions, ideas and open questions, with their origin | [Concept record](concepts/README.md) |
+| The model language, the `.markitect/` layout and the model commands | [Model language](guides/model-language.md) |
 | Technical behavior, product boundaries, package contracts and invariants | [Architecture](architecture.md), the package READMEs and the guides above |
 | Workstreams: the Build and evaluation and Topics sessions, the variants, their branches and state pages | [Workstreams](workstreams.md) |
 | Work-package scope, dependencies and reservations, current source and release status and planned implementation | [Delivery plan](implementation-plan.md); actual candidates and checks live in chats and PRs |
@@ -37,7 +38,7 @@ This is the one owner table; other pages link here instead of keeping their own.
 
 Source checks, provider runs, release evidence, comparative findings and human acceptance answer different questions. Follow each owner for its current scope; a dated report remains evidence for the inputs and outcome it records.
 
-Markitect itself is developed as an ordinary software project without a canonical self-model ([DEC-076](concepts/register.md#dec-076-markitect-is-developed-as-a-regular-software-project)); these documents are its canonical description, one owner per topic. The [canonical Library model](../testdata/library/README.md) is the shared fixture of the qualification.
+Markitect itself is developed as an ordinary software project without a canonical self-model ([DEC-076](concepts/register.md#dec-076-markitect-is-developed-as-a-regular-software-project)); these documents are its canonical description, one owner per topic. The [canonical Library model](../testdata/library/README.md) is the shared fixture of V1's qualification, still in the V1 language until step T2 converts it.
 
 ## Development
 

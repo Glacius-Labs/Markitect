@@ -1,9 +1,0 @@
-imports:
-  - {package: markitect/core, as: Core}
-id: DocumentationObligation
-kind: Core.Kind
-body: >-
-  A duty about documentation: what must be documented, where and for whom.
-spec:
-  implements: [Rule]
-  properties: [appliesTo]

@@ -15,15 +15,17 @@ func rootLayoutFixture(t *testing.T) string {
 		"go.mod": "module github.com/Glacius-Labs/Markitect\n", "go.sum": "", "LICENSE": "license\n",
 		"cmd/markitect/main.go": "package main\n", "internal/model/model.go": "package model\n",
 		"internal/project/prepared.go":                "package project\n",
-		"internal/runtimeconfig/prepare.go":           "package runtimeconfig\n",
-		"internal/adapters/runstore/store.go":         "package runstore\n",
-		"internal/adapters/runner/launch.go":          "package runner\n",
-		"cmd/markitect-runner/main.go":                "package main\n",
-		"internal/harness/harness.go":                 "package harness\n",
-		"internal/run/execute.go":                     "package run\n",
-		"internal/adapters/gitrepo/git.go":            "package gitrepo\n",
-		"internal/apply/testdata/fixture.json":        "literal historical fixture\n",
-		"internal/adapters/documents/writer.go":       "package documents\n",
+		"internal/realization/registry.go":            "package realization\n",
+		"internal/analysis/impact.go":                 "package analysis\n",
+		"internal/adapters/repo/git.go":               "package repo\n",
+		"cmd/markitect-agentd/main.go":                "package main\n",
+		"internal/agentd/agentd.go":                   "package agentd\n",
+		"internal/project/testdata/fixture.json":      "literal historical fixture\n",
+		"internal/adapters/cli/cli.go":                "package cli\n",
+		"internal/libraries/libraries.go":             "package libraries\n",
+		"internal/libraries/std/Rule.md":              "---\nkind: Kind\n---\n# Rule\n",
+		"internal/skills/skills.go":                   "package skills\n",
+		"internal/skills/markitect-modeling/SKILL.md": "# Modeling\n",
 		"internal/tooling/release/install.go":         "package release\n",
 		"internal/testkit/testdata/hostile.gitconfig": "[core]\n hooksPath=blocked\n",
 	} {
@@ -32,18 +34,11 @@ func rootLayoutFixture(t *testing.T) string {
 	return root
 }
 
-func TestCommandConfigurationExamplesSurviveLiveAndFixedPackaging(t *testing.T) {
+func TestEmbeddedFilesSurviveLiveAndFixedPackaging(t *testing.T) {
+	// The standard Libraries and the skills are built into the binary, so a
+	// packaged source must carry them; other text below those packages stays out.
 	root := rootLayoutFixture(t)
-	want := map[string][]byte{}
-	for _, name := range []string{"examples/runtime-profile.example.yaml", "examples/run.example.json"} {
-		data, err := os.ReadFile(filepath.Join(sourceModuleRoot(t), filepath.FromSlash(name)))
-		if err != nil {
-			t.Fatal(err)
-		}
-		want[name] = bytes.ReplaceAll(data, []byte("\r\n"), []byte("\n"))
-		writeLayoutFile(t, root, name, string(data))
-	}
-	writeLayoutFile(t, root, "examples/unrelated.json", "do not package arbitrary examples\n")
+	writeLayoutFile(t, root, "internal/libraries/notes.txt", "do not package\n")
 	live, _, err := Package(root, "1.2.3")
 	if err != nil {
 		t.Fatal(err)
@@ -62,13 +57,13 @@ func TestCommandConfigurationExamplesSurviveLiveAndFixedPackaging(t *testing.T) 
 	}
 	for _, archive := range [][]byte{live, fixed} {
 		contents := archiveContents(t, archive)
-		for name, data := range want {
-			if !bytes.Equal(contents[name], data) {
-				t.Errorf("configuration example omitted or changed: %s", name)
+		for _, name := range []string{"internal/libraries/std/Rule.md", "internal/skills/markitect-modeling/SKILL.md"} {
+			if _, ok := contents[name]; !ok {
+				t.Errorf("embedded file omitted: %s", name)
 			}
 		}
-		if _, found := contents["examples/unrelated.json"]; found {
-			t.Error("packaged an unrelated example")
+		if _, found := contents["internal/libraries/notes.txt"]; found {
+			t.Error("packaged unrelated text")
 		}
 	}
 }
@@ -99,7 +94,7 @@ func TestRootLayoutLiveAndFixedMatch(t *testing.T) {
 		t.Fatal("live and fixed root selections differ")
 	}
 	contents := archiveContents(t, live)
-	for _, name := range []string{"cmd/markitect/main.go", "internal/model/vendor.go", "internal/project/prepared.go", "internal/runtimeconfig/prepare.go", "internal/adapters/runstore/store.go", "internal/adapters/runner/launch.go", "cmd/markitect-runner/main.go", "internal/harness/harness.go", "internal/run/execute.go", "internal/adapters/gitrepo/git.go", "internal/apply/testdata/fixture.json", "internal/adapters/documents/writer.go", "internal/tooling/release/install.go", "internal/testkit/testdata/hostile.gitconfig"} {
+	for _, name := range []string{"cmd/markitect/main.go", "internal/model/vendor.go", "internal/project/prepared.go", "internal/realization/registry.go", "internal/analysis/impact.go", "internal/adapters/repo/git.go", "cmd/markitect-agentd/main.go", "internal/agentd/agentd.go", "internal/project/testdata/fixture.json", "internal/adapters/cli/cli.go", "internal/libraries/std/Rule.md", "internal/skills/markitect-modeling/SKILL.md", "internal/tooling/release/install.go", "internal/testkit/testdata/hostile.gitconfig"} {
 		if _, ok := contents[name]; !ok {
 			t.Errorf("omitted %s", name)
 		}
@@ -120,13 +115,13 @@ func TestRootLayoutLiveAndFixedMatch(t *testing.T) {
 	}
 }
 
-// Use the real adapter package bytes so both live and fixed source selections must
-// carry the codec and its synthetic tests, not a successful placeholder package.
-func TestCodexCodecLiveAndFixedSourceBytes(t *testing.T) {
+// Use the real compiler package bytes so both live and fixed source selections
+// must carry the code and its tests, not a successful placeholder package.
+func TestModelSourceLiveAndFixedSourceBytes(t *testing.T) {
 	root := rootLayoutFixture(t)
 	originals := make(map[string][]byte)
-	for _, name := range []string{"codec.go", "codec_fixture_test.go", "codec_test.go"} {
-		path := "internal/adapters/codexappserver/" + name
+	for _, name := range []string{"compile.go", "markdown.go", "compile_test.go"} {
+		path := "internal/model/" + name
 		data, err := os.ReadFile(filepath.Join("..", "..", "..", filepath.FromSlash(path)))
 		if err != nil {
 			t.Fatal(err)
@@ -161,7 +156,7 @@ func TestCodexCodecLiveAndFixedSourceBytes(t *testing.T) {
 }
 
 func TestRootLayoutRejectsUnsupportedInputsBeforeFiltering(t *testing.T) {
-	for _, name := range []string{"internal/adapters/cockpit/web/index.html", "internal/authoring/session.go", "src/cmd/markitect/main.go", "internal/other/x.txt", "internal/model-extra/x.go", "internal/run-extra/x.go", "internal/adapters/direct.go", "internal/adapters/gitrepo-extra/git.go", "internal/adapters/checks-extra/profile.go", "internal/adapters/claudecode-extra/codec.go", "internal/adapters/codexappserver-extra/codec.go", "internal/adapters/unowned/codec.go", "internal/tooling-extra/release/x.go", "internal/tooling/other/x.go", "cmd/other/main.go", "internal/model/nested/go.mod"} {
+	for _, name := range []string{"internal/adapters/cockpit/web/index.html", "internal/authoring/session.go", "src/cmd/markitect/main.go", "internal/other/x.txt", "internal/model-extra/x.go", "internal/run-extra/x.go", "internal/adapters/direct.go", "internal/adapters/repo-extra/git.go", "internal/adapters/cli-extra/cli.go", "internal/run/execute.go", "internal/apply/apply.go", "internal/adapters/unowned/codec.go", "internal/tooling-extra/release/x.go", "internal/tooling/other/x.go", "cmd/other/main.go", "internal/model/nested/go.mod"} {
 		t.Run(name, func(t *testing.T) {
 			root := rootLayoutFixture(t)
 			writeLayoutFile(t, root, name, "unexpected\n")
@@ -215,7 +210,7 @@ func TestRootLayoutRequiresCommandAndInternalGoSources(t *testing.T) {
 }
 
 func TestRootResponsibilityPrefixesAreExact(t *testing.T) {
-	for _, name := range []string{"internal/model/a.go", "internal/tooling/release/a.go", "internal/adapters/documents/a.go", "internal/adapters/codexappserver/codec.go", "cmd/markitect/main.go"} {
+	for _, name := range []string{"internal/model/a.go", "internal/tooling/release/a.go", "internal/adapters/cli/a.go", "internal/adapters/repo/git.go", "cmd/markitect/main.go"} {
 		if !sourceRoot(name) {
 			t.Errorf("rejected %s", name)
 		}

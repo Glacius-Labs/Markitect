@@ -71,92 +71,52 @@ func TestLayerDirections(t *testing.T) {
 		from, to string
 		allowed  int
 	}{
-		{"internal/organization", "internal/model", both},
-		{"internal/realization", "internal/snapshot", both},
+		{"internal/realization", "internal/model", both},
 		{"internal/project", "internal/realization", both},
-		{"internal/run", "internal/organization", both},
-		{"internal/run", "internal/project", both},
-		{"internal/harness", "internal/project", both},
-		{"internal/modeldocs", "internal/project", both},
-		{"internal/apply", "internal/run", both},
-		{"internal/adapters/cli", "internal/apply", both},
-		{"internal/adapters/cli", "internal/modeldocs", both},
+		{"internal/project", "internal/libraries", both},
+		{"internal/analysis", "internal/project", both},
+		{"internal/adapters/cli", "internal/analysis", both},
+		{"internal/adapters/cli", "internal/skills", both},
 		{"internal/adapters/cli", "internal/buildinfo", both},
-		{"internal/adapters/documents", "internal/guardedwrite", both},
-		{"internal/adapters/checks", "internal/run", both},
-		{"internal/adapters/checks", "internal/adapters/container", both},
-		{"internal/adapters/gitrepo", "internal/apply", both},
-		{"internal/adapters/gitrepo", "internal/adapters/container", both},
-		{"internal/adapters/gitrepo", "internal/guardedwrite", both},
-		{"internal/adapters/codexappserver", "internal/adapters/container", both},
-		{"internal/adapters/codexappserver", "internal/agentd/frame", both},
-		{"internal/adapters/codexappserver", "internal/harness", both},
+		{"internal/adapters/repo", "internal/project", both},
 		{"internal/adapters/container", "internal/agentd/frame", both},
 		{"internal/agentd", "internal/agentd/frame", both},
-		{"internal/bootstrap", "internal/adapters/container", both},
-		{"internal/bootstrap", "internal/adapters/gitrepo", both},
-		{"internal/bootstrap", "internal/adapters/runner", both},
-		{"internal/bootstrap", "internal/model", both},
+		{"internal/bootstrap", "internal/adapters/cli", both},
+		{"internal/bootstrap", "internal/adapters/repo", both},
 		{"cmd/markitect", "internal/bootstrap", both},
 		{"cmd/markitect-agentd", "internal/agentd", both},
-		{"cmd/markitect-runner", "internal/adapters/runner", both},
 		{"cmd/markitect-release", "internal/tooling/release", both},
 		{"cmd/markitect-release", "internal/buildinfo", both},
 		{"internal/tooling/release", "internal/guardedwrite", both},
 		{"internal/tooling/release", "internal/tooling/architecture", both},
 
-		// Foundations and services never import outward or sideways.
-		{"internal/model", "internal/snapshot", none},
-		{"internal/snapshot", "internal/model", none},
-		{"internal/model", "internal/run", none},
+		// Foundations never import outward.
+		{"internal/model", "internal/realization", none},
+		{"internal/model", "internal/libraries", none},
 		{"internal/model", "internal/bootstrap", none},
-		{"internal/organization", "internal/realization", none},
-		{"internal/organization", "internal/project", none},
-		{"internal/project", "internal/run", none},
-		{"internal/run", "internal/apply", none},
-		{"internal/run", "internal/harness", none},
-		{"internal/run", "internal/adapters/gitrepo", none},
-		{"internal/run", "internal/adapters/checks", none},
-		{"internal/harness", "internal/run", none},
-		{"internal/harness", "internal/adapters/codexappserver", none},
-		{"internal/modeldocs", "internal/adapters/documents", none},
-		{"internal/apply", "internal/organization", none},
-		{"internal/apply", "internal/snapshot", none},
-		{"internal/apply", "internal/adapters/gitrepo", none},
-		{"internal/apply", "internal/adapters/runstore", none},
-		// Adapters share only the container client; the frame is Codex's alone.
-		{"internal/adapters/cli", "internal/adapters/gitrepo", none},
-		{"internal/adapters/cli", "internal/adapters/runner", none},
-		{"internal/adapters/cli", "internal/tooling/release", none},
-		{"internal/adapters/checks", "internal/adapters/codexappserver", none},
-		{"internal/adapters/checks", "internal/agentd/frame", none},
-		{"internal/adapters/gitrepo", "internal/agentd/frame", none},
-		{"internal/adapters/gitrepo", "internal/adapters/codexappserver", none},
-		{"internal/adapters/codexappserver", "internal/agentd", none},
-		{"internal/adapters/runner", "internal/bootstrap", none},
-		// Only the repository and document adapters write the working tree.
+		{"internal/libraries", "internal/model", none},
+		{"internal/skills", "internal/model", none},
+		{"internal/realization", "internal/project", none},
+		{"internal/project", "internal/analysis", none},
+		{"internal/analysis", "internal/adapters/repo", none},
+		{"internal/analysis", "internal/adapters/cli", none},
+		// Adapters do not import each other, nor the agent side.
+		{"internal/adapters/cli", "internal/adapters/repo", none},
+		{"internal/adapters/repo", "internal/adapters/cli", none},
+		{"internal/adapters/cli", "internal/adapters/container", none},
 		{"internal/adapters/cli", "internal/guardedwrite", none},
-		{"internal/adapters/codexappserver", "internal/guardedwrite", none},
-		{"internal/adapters/checks", "internal/guardedwrite", none},
-		{"internal/adapters/runstore", "internal/guardedwrite", none},
-		{"internal/adapters/documents", "internal/tooling/release", none},
+		{"internal/adapters/cli", "internal/tooling/release", none},
 		{"internal/adapters/container", "internal/agentd", none},
-		{"internal/adapters/container", "internal/apply", none},
 		{"internal/adapters/container", "internal/model", none},
 		{"internal/agentd", "internal/adapters/container", none},
 		{"internal/agentd/frame", "internal/model", none},
-		// Composition and entrypoints.
-		{"internal/bootstrap", "internal/organization", none},
-		{"internal/bootstrap", "internal/realization", none},
+		// Entrypoints stay thin.
 		{"internal/bootstrap", "internal/tooling/release", none},
-		{"cmd/markitect", "internal/apply", none},
 		{"cmd/markitect", "internal/adapters/cli", none},
+		{"cmd/markitect", "internal/model", none},
 		{"cmd/markitect-agentd", "internal/bootstrap", none},
-		{"cmd/markitect-runner", "internal/bootstrap", none},
-		{"cmd/markitect-runner", "internal/adapters/cli", none},
 		{"cmd/markitect-release", "internal/bootstrap", none},
 		// Maintenance stays apart from the product.
-		{"internal/tooling/release", "internal/apply", none},
 		{"internal/tooling/release", "internal/model", none},
 		{"internal/tooling/architecture", "internal/tooling/release", none},
 		{"internal/guardedwrite", "internal/model", none},
@@ -165,14 +125,9 @@ func TestLayerDirections(t *testing.T) {
 		{"tools/smoke", "internal/bootstrap", none},
 
 		// Test composition only.
-		{"internal/adapters/gitrepo", "internal/adapters/checks", testOnly},
-		{"internal/adapters/gitrepo", "internal/adapters/runstore", testOnly},
-		{"internal/adapters/codexappserver", "internal/adapters/gitrepo", testOnly},
-		{"internal/adapters/codexappserver", "internal/adapters/runstore", testOnly},
-		{"internal/bootstrap", "internal/snapshot", testOnly},
 		{"internal/tooling/release", "internal/buildinfo", testOnly},
 		{"internal/model", "internal/testkit", testOnly},
-		{"internal/adapters/gitrepo", "internal/testkit", testOnly},
+		{"internal/adapters/repo", "internal/testkit", testOnly},
 	} {
 		for _, test := range []bool{false, true} {
 			allowed := tc.allowed == both || tc.allowed == testOnly && test
@@ -185,7 +140,7 @@ func TestLayerDirections(t *testing.T) {
 }
 
 func TestUnknownPackagesHaveNoPrivilege(t *testing.T) {
-	for _, unknown := range []string{"src/internal/core", "src/cmd/markitect", "benchmark/runner", "internal/common", "internal/adapters/other", "internal/tooling/other", "internal/modelx", "internal/agentd/frame/sub", "internal/adapters/gitrepo/sub"} {
+	for _, unknown := range []string{"src/internal/core", "src/cmd/markitect", "benchmark/runner", "internal/common", "internal/adapters/other", "internal/tooling/other", "internal/modelx", "internal/agentd/frame/sub", "internal/adapters/repo/sub"} {
 		for _, edge := range []Edge{{From: unknown}, {From: "internal/model", To: unknown}, {From: unknown, To: "internal/testkit", Test: true}, {From: "internal/bootstrap", To: unknown, Test: true}} {
 			got := Table.Check([]Edge{edge})
 			if len(got) != 1 || !strings.Contains(got[0].Rule, "unclassified package") {
@@ -200,23 +155,23 @@ func TestForbiddenLayerImportFailsInEveryFile(t *testing.T) {
 		t.Run(file, func(t *testing.T) {
 			root := t.TempDir()
 			writeFixture(t, root, map[string]string{
-				"README.md":                  "# Owner\n",
-				"internal/model/" + file:     "package model\nimport _ \"" + ModulePath + "internal/apply\"\n",
-				"internal/apply/producer.go": "package apply\n",
+				"README.md":                     "# Owner\n",
+				"internal/model/" + file:        "package model\nimport _ \"" + ModulePath + "internal/analysis\"\n",
+				"internal/analysis/producer.go": "package analysis\n",
 			})
-			got, err := fixtureRules(t, "internal/model", "internal/apply").CheckRepository(root)
-			if err != nil || len(got) != 1 || got[0].Edge.File != "internal/model/"+file || got[0].Edge.Line != 2 || got[0].Rule != "layer model may not import layer usecase" {
+			got, err := fixtureRules(t, "internal/model", "internal/analysis").CheckRepository(root)
+			if err != nil || len(got) != 1 || got[0].Edge.File != "internal/model/"+file || got[0].Edge.Line != 2 || got[0].Rule != "layer model may not import layer service" {
 				t.Fatalf("%v %v", got, err)
 			}
 		})
 	}
 	root := t.TempDir()
 	writeFixture(t, root, map[string]string{
-		"README.md":                             "# Owner\n",
-		"internal/adapters/gitrepo/git.go":      "package gitrepo\nimport _ \"" + ModulePath + "internal/adapters/codexappserver\"\n",
-		"internal/adapters/codexappserver/c.go": "package codexappserver\n",
+		"README.md":                     "# Owner\n",
+		"internal/adapters/repo/git.go": "package repo\nimport _ \"" + ModulePath + "internal/adapters/cli\"\n",
+		"internal/adapters/cli/c.go":    "package cli\n",
 	})
-	got, err := fixtureRules(t, "internal/adapters/gitrepo", "internal/adapters/codexappserver").CheckRepository(root)
+	got, err := fixtureRules(t, "internal/adapters/repo", "internal/adapters/cli").CheckRepository(root)
 	if err != nil || len(got) != 1 || got[0].Rule != "layer adapter may not import layer adapter" {
 		t.Fatalf("adapter imported a sibling adapter: %v %v", got, err)
 	}
@@ -271,76 +226,19 @@ func TestUnknownPackageFails(t *testing.T) {
 	}
 	// An import of a package the table does not classify is a violation.
 	root := t.TempDir()
-	writeFixture(t, root, map[string]string{"README.md": "# Owner\n", "internal/organization/o.go": "package organization\nimport _ \"" + ModulePath + "internal/model\"\n"})
-	got, err := fixtureRules(t, "internal/organization").CheckRepository(root)
+	writeFixture(t, root, map[string]string{"README.md": "# Owner\n", "internal/realization/o.go": "package realization\nimport _ \"" + ModulePath + "internal/model\"\n"})
+	got, err := fixtureRules(t, "internal/realization").CheckRepository(root)
 	if err != nil || len(got) != 1 || !strings.Contains(got[0].Rule, "unclassified package") {
 		t.Fatalf("import of an unclassified package accepted: %v %v", got, err)
-	}
-}
-
-func TestRealGitRecordCompositionEdgeStaysTestOnly(t *testing.T) {
-	// External gitrepo tests compose the concrete workspace adapter with the
-	// record store; production continues to consume the Run record port.
-	for _, file := range []string{"fixture_windows_test.go", "fixture_linux_test.go", "fixture_windows.go", "fixture_linux.go"} {
-		t.Run(file, func(t *testing.T) {
-			root := t.TempDir()
-			test := strings.HasSuffix(file, "_test.go")
-			pkg := "gitrepo"
-			if test {
-				pkg += "_test"
-			}
-			writeFixture(t, root, map[string]string{
-				"README.md":                              "# Owner\n",
-				"internal/adapters/runstore/producer.go": "package runstore\n",
-				"internal/adapters/gitrepo/" + file:      "package " + pkg + "\nimport _ \"" + ModulePath + "internal/adapters/runstore\"\n",
-			})
-			got, err := fixtureRules(t, "internal/adapters/gitrepo", "internal/adapters/runstore").CheckRepository(root)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if test {
-				if len(got) != 0 {
-					t.Fatal("external test composition refused", got)
-				}
-			} else if len(got) != 1 || got[0].Edge.File != "internal/adapters/gitrepo/"+file || got[0].Rule != "layer adapter may not import layer adapter" {
-				t.Fatal("production workspace adapter imported the record store", got)
-			}
-		})
-	}
-}
-
-func TestCodexProfileImportsAcrossPlatforms(t *testing.T) {
-	for _, producer := range []struct{ path, pkg string }{
-		{"internal/project", "project"},
-		{"internal/runtimeconfig", "runtimeconfig"},
-		{"internal/model", "model"},
-		{"internal/organization", "organization"},
-		{"internal/snapshot", "snapshot"},
-		{"internal/agentd/frame", "frame"},
-	} {
-		for _, file := range []string{"profile_windows.go", "profile_linux.go", "profile_windows_test.go", "profile_linux_test.go"} {
-			t.Run(producer.pkg+"/"+file, func(t *testing.T) {
-				root := t.TempDir()
-				writeFixture(t, root, map[string]string{
-					"README.md":                                "# Owner\n",
-					producer.path + "/producer.go":             "package " + producer.pkg + "\n",
-					"internal/adapters/codexappserver/" + file: "package codexappserver\nimport _ \"" + ModulePath + producer.path + "\"\n",
-				})
-				got, err := fixtureRules(t, producer.path, "internal/adapters/codexappserver").CheckRepository(root)
-				if err != nil || len(got) != 0 {
-					t.Fatalf("Codex profile dependency refused: %v %v", got, err)
-				}
-			})
-		}
 	}
 }
 
 func TestBootstrapCompositionAcrossPlatforms(t *testing.T) {
 	for _, producer := range []struct{ path, pkg string }{
 		{"internal/project", "project"},
-		{"internal/adapters/codexappserver", "codexappserver"},
+		{"internal/adapters/cli", "cli"},
+		{"internal/adapters/repo", "repo"},
 		{"internal/model", "model"},
-		{"internal/runtimeconfig", "runtimeconfig"},
 	} {
 		for _, file := range []string{"fixture_windows_test.go", "fixture_linux_test.go", "fixture_windows.go", "fixture_linux.go"} {
 			t.Run(producer.pkg+"/"+file, func(t *testing.T) {
@@ -443,10 +341,6 @@ func TestValidateReportsEveryTableProblem(t *testing.T) {
 			t.Errorf("missing problem %q in:\n%s", want, text)
 		}
 	}
-	partial := Rules{Layers: Table.Layers, Packages: []Package{{DocumentWriterPackage, "adapter", "README.md"}}}
-	if text := strings.Join(partial.Validate(), "\n"); !strings.Contains(text, "the guarded-write rule needs rows for both") {
-		t.Errorf("guarded-write rule without its writer accepted: %s", text)
-	}
 }
 
 func TestSelfImportsRequireExternalTests(t *testing.T) {
@@ -457,21 +351,6 @@ func TestSelfImportsRequireExternalTests(t *testing.T) {
 		root := t.TempDir()
 		writeFixture(t, root, map[string]string{"README.md": "# Owner\n", "internal/model/" + tc.file: "package " + tc.pkg + "\nimport _ \"" + ModulePath + "internal/model\"\n"})
 		v, err := fixtureRules(t, "internal/model").CheckRepository(root)
-		if err != nil || len(v) != tc.want {
-			t.Fatalf("%+v: %v %v", tc, v, err)
-		}
-	}
-}
-
-func TestDocumentWriterMayOnlyUseReviewedGuardedAPI(t *testing.T) {
-	for _, tc := range []struct {
-		alias, expr string
-		want        int
-	}{{"gw", "gw.OpenRoot(\".\")", 0}, {"gw", "gw.CaptureFiles(\".\", nil)", 0}, {"gw", "gw.UnreviewedPrimitive()", 1}, {".", "OpenRoot(\".\")", 1}} {
-		root := t.TempDir()
-		name := DocumentWriterPackage + "/w.go"
-		writeFixture(t, root, map[string]string{name: "package documents\nimport " + tc.alias + " \"" + ModulePath + GuardedWritePackage + "\"\nfunc f(){" + tc.expr + "}\n"})
-		v, err := CheckGuardedWriteUse(root, []Edge{{From: DocumentWriterPackage, To: GuardedWritePackage, File: name}})
 		if err != nil || len(v) != tc.want {
 			t.Fatalf("%+v: %v %v", tc, v, err)
 		}

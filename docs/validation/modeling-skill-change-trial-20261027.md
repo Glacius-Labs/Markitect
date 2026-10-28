@@ -1,6 +1,6 @@
 # Modeling skill change trial: Makerspace C5 — 27 October 2026
 
-The owner approved one trial of the modeling lane, now tracked on the [topics page](../workstreams/topics.md#modeling-skills): a fresh agent with only the [modeling skill](../../packaging/skills/markitect-modeling/SKILL.md) turns one Makerspace change request into a model change. The two earlier skill trials ([PR #771](https://github.com/Glacius-Labs/Markitect/pull/771)) wrote a new model; this one changes an existing model. It is a bounded source trial: no Apply, no container and no provider run beyond the two Claude Code subagents.
+The owner approved one trial of the modeling lane, now tracked on the [topics page](../workstreams/topics.md#modeling-skills): a fresh agent with only the [modeling skill](https://github.com/Glacius-Labs/Markitect/blob/f23c2e12d9833efa61e5e65c90018016423abe74/packaging/skills/markitect-modeling/SKILL.md) turns one Makerspace change request into a model change. The two earlier skill trials ([PR #771](https://github.com/Glacius-Labs/Markitect/pull/771)) wrote a new model; this one changes an existing model. It is a bounded source trial: no Apply, no container and no provider run beyond the two Claude Code subagents.
 
 ## Setup
 

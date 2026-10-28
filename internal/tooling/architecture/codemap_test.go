@@ -95,24 +95,24 @@ func TestPackagesFollowGoListRules(t *testing.T) {
 func TestCheckInventoryReportsEveryProblem(t *testing.T) {
 	root := t.TempDir()
 	writeFixture(t, root, map[string]string{
-		"go.mod":                      "module example\n",
-		"internal/model/c.go":         "package model\n",
-		"internal/apply/h.go":         "package apply\n",
-		"internal/apply/missing/m.go": "package missing\n",
-		"docs/owner.md":               "# Owner\n\n## Real section\n\n```text\n# Not a heading\n```\n\n<a id=\"explicit\"></a>\n",
+		"go.mod":                         "module example\n",
+		"internal/model/c.go":            "package model\n",
+		"internal/analysis/h.go":         "package analysis\n",
+		"internal/analysis/missing/m.go": "package missing\n",
+		"docs/owner.md":                  "# Owner\n\n## Real section\n\n```text\n# Not a heading\n```\n\n<a id=\"explicit\"></a>\n",
 	})
 	valid := Rules{Layers: Table.Layers, Packages: []Package{
 		{"internal/model", "model", "docs/owner.md#real-section"},
-		{"internal/apply", "usecase", "docs/owner.md#explicit"},
+		{"internal/analysis", "service", "docs/owner.md#explicit"},
 	}}
-	if problems, err := valid.CheckInventory(root); err != nil || len(problems) != 1 || problems[0] != "missing package internal/apply/missing: add a row to the rule table" {
+	if problems, err := valid.CheckInventory(root); err != nil || len(problems) != 1 || problems[0] != "missing package internal/analysis/missing: add a row to the rule table" {
 		t.Fatalf("valid rows: %v %v", problems, err)
 	}
 	bad := Rules{Layers: Table.Layers, Packages: []Package{
 		{"internal/model", "model", "docs/owner.md#not-a-heading"},
-		{"internal/apply", "usecase", "docs/owner.md"},
-		{"internal/gone", "usecase", "docs/absent.md"},
-		{"internal/other", "usecase", "../outside.md"},
+		{"internal/analysis", "service", "docs/owner.md"},
+		{"internal/gone", "service", "docs/absent.md"},
+		{"internal/other", "service", "../outside.md"},
 	}}
 	problems, err := bad.CheckInventory(root)
 	if err != nil {
@@ -123,7 +123,7 @@ func TestCheckInventoryReportsEveryProblem(t *testing.T) {
 		"package internal/model: owning document: docs/owner.md has no anchor #not-a-heading",
 		"package internal/gone: owning document: docs/absent.md does not exist",
 		`package internal/other: owning document: "../outside.md" is not a clean repository-relative path`,
-		"missing package internal/apply/missing: add a row to the rule table",
+		"missing package internal/analysis/missing: add a row to the rule table",
 		"extra row internal/gone: no Go package exists there; remove it from the rule table",
 		"extra row internal/other: no Go package exists there; remove it from the rule table",
 	} {
@@ -195,7 +195,7 @@ func TestRenderCodeMapLinksFromPageDirectory(t *testing.T) {
 		"| `cmd/markitect` | Command markitect runs. | [CONTRIBUTING.md](../../CONTRIBUTING.md) |",
 		"| `internal/buildinfo` | Package buildinfo knows the version. | [docs/development/other.md](other.md) |",
 		"| `internal/tooling/release` | Package release builds. | [internal/tooling/release/README.md](../../internal/tooling/release/README.md) |",
-		"| `model` | The canonical language check over supplied bytes. | nothing | 1 |",
+		"| `model` | The model language over supplied bytes: Definitions, Kinds, links, visibility, cycles, manifest and lock. | nothing | 1 |",
 		"| `command` | Thin entrypoints to product composition. | `composition` | 1 |",
 		"| `test-support` | Hermetic fixtures. Only test files may import it. It imports no Markitect package, not even from tests. | nothing | 0 |",
 		"| `cmd/markitect` | `internal/model` | all | A fixture edge. |\n| `internal/tooling/release` | `internal/buildinfo` | tests only | Tests read the notices. |",
@@ -207,7 +207,7 @@ func TestRenderCodeMapLinksFromPageDirectory(t *testing.T) {
 			t.Errorf("rendered page lacks %q:\n%s", want, page)
 		}
 	}
-	if strings.Contains(page, "## Snapshots") {
+	if strings.Contains(page, "## Analysis") {
 		t.Error("rendered a section for an empty layer")
 	}
 }

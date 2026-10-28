@@ -37,7 +37,7 @@ The model is typed programming in prose: Core 1.2.0 with Kind interfaces ([DEC-0
 
 ### Modeling skills
 
-The [modeling skill](../../packaging/skills/markitect-modeling/SKILL.md), the [modeling guide](../design/modeling-guide.md) and the [analysis tool](../../tools/model-analysis/README.md). A fresh agent with only the skill wrote a new model twice (PR #771) and changed an existing one faithfully once ([C5 trial](../validation/modeling-skill-change-trial-20261027.md)). Untested: renames (C7), architecture changes (C2), review and blocker repair. No everyday change workflow is written, and the skill reaches no user. The skill, the guide (v0.3) and the tool follow `api` 2.0.0 and `architecture` 1.1.0; the tool's tests run in CI. Since the owner said "We will be responsible for all of that", model language and modeling skills are one topic.
+The [modeling skill](https://github.com/Glacius-Labs/Markitect/blob/f23c2e12d9833efa61e5e65c90018016423abe74/packaging/skills/markitect-modeling/SKILL.md), the [modeling guide](../design/modeling-guide.md) and the [analysis tool](https://github.com/Glacius-Labs/Markitect/blob/f23c2e12d9833efa61e5e65c90018016423abe74/tools/model-analysis/README.md). A fresh agent with only the skill wrote a new model twice (PR #771) and changed an existing one faithfully once ([C5 trial](../validation/modeling-skill-change-trial-20261027.md)). Untested: renames (C7), architecture changes (C2), review and blocker repair. No everyday change workflow is written, and the skill reaches no user. The skill, the guide (v0.3) and the tool follow `api` 2.0.0 and `architecture` 1.1.0; the tool's tests run in CI. Since the owner said "We will be responsible for all of that", model language and modeling skills are one topic.
 
 ### Compiler
 

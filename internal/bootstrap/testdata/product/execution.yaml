@@ -1,8 +1,0 @@
-apiVersion: markitect.execution/v2
-checks:
-  - id: go-tests
-    profile: go
-    directory: .
-    args: [test, ./..., -count=1]
-    requiredBy: tooling/gates/go-tests
-    timeout: 10m

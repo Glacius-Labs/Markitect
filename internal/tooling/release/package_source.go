@@ -36,21 +36,6 @@ func collect(moduleDir string) ([]sourceFile, error) {
 			return nil, err
 		}
 	}
-	// The Bootstrap configuration test consumes the same two examples users
-	// copy. Include these exact data files without admitting another Go root.
-	examplesDir := filepath.Join(moduleDir, "examples")
-	if _, err := os.Lstat(examplesDir); err == nil {
-		if err := requireRealDirectory(examplesDir); err != nil {
-			return nil, fmt.Errorf("configuration examples directory: %w", err)
-		}
-		for _, name := range commandConfigurationExamples {
-			if err := appendRegularFile(moduleDir, name, &files, false); err != nil {
-				return nil, err
-			}
-		}
-	} else if !os.IsNotExist(err) {
-		return nil, fmt.Errorf("inspect configuration examples: %w", err)
-	}
 	schemaDir := filepath.Join(moduleDir, "schema")
 	if info, err := os.Lstat(schemaDir); err == nil {
 		if info.Mode()&os.ModeSymlink != 0 || !info.IsDir() {
@@ -92,7 +77,7 @@ func walkSourceTree(moduleDir, start string, files *[]sourceFile) error {
 			return fmt.Errorf("refusing symlink in Markitect source tree: %s", rel)
 		}
 		ext := strings.ToLower(filepath.Ext(entry.Name()))
-		if ext != ".go" && !embeddedNotices(rel) && !sourceTestData(rel) {
+		if ext != ".go" && !embeddedFile(rel) && !sourceTestData(rel) {
 			return nil
 		}
 		return appendRegularFile(moduleDir, rel, files, true)
@@ -178,7 +163,7 @@ func appendRegularFile(moduleDir, relative string, files *[]sourceFile, required
 func normalizeTextSource(name string, data []byte) ([]byte, error) {
 	base := strings.ToLower(filepath.Base(name))
 	ext := strings.ToLower(filepath.Ext(base))
-	isText := base == "go.mod" || base == "go.sum" || base == "license" || ext == ".go" || ext == ".md" || ext == ".yaml" || ext == ".yml" || commandConfigurationExample(name)
+	isText := base == "go.mod" || base == "go.sum" || base == "license" || ext == ".go" || ext == ".md" || ext == ".yaml" || ext == ".yml"
 	if !isText {
 		return data, nil
 	}
@@ -204,6 +189,12 @@ func requireRealDirectory(dir string) error {
 	return nil
 }
 
-func embeddedNotices(name string) bool {
-	return name == embeddedNoticesPath
+// embeddedFile reports whether a non-Go file below a source root is built
+// into the binary: the license notices, and the standard Libraries' and the
+// skills' Markdown.
+func embeddedFile(name string) bool {
+	if name == embeddedNoticesPath {
+		return true
+	}
+	return strings.EqualFold(filepath.Ext(name), ".md") && (strings.HasPrefix(name, "internal/libraries/") || strings.HasPrefix(name, "internal/skills/"))
 }
