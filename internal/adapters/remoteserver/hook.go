@@ -46,7 +46,7 @@ func Hook(l Layout, stdin io.Reader, stderr io.Writer) int {
 		dec = runremote.Decision{Reason: "the push carries no authenticated user. Next: push over the Run's remote URL with your credentials."}
 	default:
 		repo := gitRepo{git: git, dir: l.Repo(), env: os.Environ()}
-		dec = runremote.Decide(plan, runremote.NewPatternOwnership(plan), repo, newCheckRunner(l, repo), user, updates)
+		dec = runremote.Decide(plan, runremote.NewPatternOwnership(plan), repo, newCheckRunner(l, repo, stderr), user, updates)
 	}
 	if err := appendLog(l, Entry{Time: time.Now().UTC().Format(time.RFC3339Nano), User: user, Updates: updates, Decision: dec}); err != nil && dec.Accepted {
 		dec = runremote.Decision{Reason: fmt.Sprintf("the remote could not record the push: %v. Next: push again.", err)}

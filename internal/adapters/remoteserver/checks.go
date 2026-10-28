@@ -34,20 +34,22 @@ const (
 // repository, and every process of that user is killed before the next check
 // starts. Elsewhere (tests) checks run as the current user.
 type checkRunner struct {
-	repo    gitRepo
-	dir     string
-	seqFile string
-	isolate bool
+	// progress tells the pusher which check runs.
+	progress io.Writer
+	repo     gitRepo
+	dir      string
+	seqFile  string
+	isolate  bool
 }
 
-func newCheckRunner(l Layout, repo gitRepo) *checkRunner {
+func newCheckRunner(l Layout, repo gitRepo, progress io.Writer) *checkRunner {
 	dir := filepath.Join(l.Tmp(), "checks")
 	isolate := isolated()
 	if isolate {
 		// Outside the root-only remote directory, so a check user can reach its own copy.
 		dir = filepath.Join(filepath.Dir(l.Root), "checks")
 	}
-	return &checkRunner{repo: repo, dir: dir, seqFile: filepath.Join(l.Root, "check-seq"), isolate: isolate}
+	return &checkRunner{progress: progress, repo: repo, dir: dir, seqFile: filepath.Join(l.Root, "check-seq"), isolate: isolate}
 }
 
 func (c *checkRunner) Run(commit runremote.Commit, checks []runremote.Check) (results []runremote.CheckResult, err error) {
@@ -86,6 +88,7 @@ func (c *checkRunner) Run(commit runremote.Commit, checks []runremote.Check) (re
 	}
 	env := checkEnv(home, tmp)
 	for _, check := range checks {
+		fmt.Fprintf(c.progress, "running the required check %s on %.12s\n", check.Name, commit.ID)
 		r := c.runOne(check, filepath.Join(repo, filepath.FromSlash(check.Directory)), env, uid)
 		results = append(results, r)
 		if !r.Passed {
