@@ -3,7 +3,7 @@ kind: std/Rule
 ---
 # Loan policy
 
-The loan policy states the admission limit and the calendar-day duration used for new loans. It is the single source of both values:
+The loan policy states the admission limit and the calendar-day duration used for new loans. It is the single source of both values, each a required positive integer:
 
 | Value | Setting | Meaning |
 | --- | --- | --- |
