@@ -16,6 +16,7 @@ sys.path.insert(0, str(JUDGES / "common"))
 import judgekit  # noqa: E402
 import judges  # noqa: E402
 import judging  # noqa: E402
+import series  # noqa: E402
 import suite  # noqa: E402
 from test_judging import IMAGE, Engine, go_version  # noqa: E402
 
@@ -292,6 +293,57 @@ class SeriesSourceTest(unittest.TestCase):
         first = judgekit.introduced({s: [c["id"] for c in catalog.build_cases(s)] for s in steps}, steps)
         self.assertEqual(sum(v == "W0" for v in first.values()), len(catalog.build_cases("W0")))
         self.assertEqual({v for v in first.values()} - set(steps), set())
+
+
+class PortfolioSeriesTest(unittest.TestCase):
+    """The change series' inputs (series.py) and the planted tasks (tools/evaluation-judges/plants)."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.tmp = pathlib.Path(self._tmp.name)
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def test_each_series_has_the_judges_steps_and_both_representations(self):
+        for name, source in (("library", LIBRARY), ("makerspace", MAKERSPACE)):
+            self.assertEqual(series.steps(name), judges.source_config(source)["steps"])
+            written = series.write_steps(name, self.tmp / name)
+            self.assertEqual(len(written), len(series.steps(name)))
+            for folder in map(pathlib.Path, written):
+                with self.subTest(step=folder.name):
+                    self.assertTrue((folder / "task.md").read_text(encoding="utf-8").startswith("# "))
+                    for part in ("manifest.yaml", "lock.yaml", "execution.yaml", "model/project.md"):
+                        self.assertTrue((folder / "model" / part).is_file(), part)
+        with self.assertRaisesRegex(series.SeriesError, "not steps"):
+            series.write_steps("library", self.tmp / "bad", ["M9"])
+
+    def test_every_plant_edits_both_representations_once(self):
+        plants = sorted((JUDGES / "plants").glob("*.json"))
+        self.assertEqual({json.loads(p.read_text(encoding="utf-8"))["kind"] for p in plants}, {"defect", "gap"})
+        for path in plants:
+            with self.subTest(plant=path.stem):
+                record = json.loads(path.read_text(encoding="utf-8"))
+                self.assertLess(datetime.datetime.fromisoformat(record["recordedUtc"]), datetime.datetime.now(datetime.timezone.utc))
+                result = judges.plant(path, self.tmp / path.stem / "step", None, self.tmp / path.stem / "judge")
+                self.assertEqual(result["expected"], {"defect": "no-landing", "gap": "landing"}[record["kind"]])
+                original = self.tmp / path.stem / "original"
+                series.write_step(record["series"], record["step"], original)
+                planted = self.tmp / path.stem / "step"
+                self.assertNotEqual((planted / "task.md").read_bytes(), (original / "task.md").read_bytes())
+                for edit in record["model"]:
+                    self.assertNotEqual((planted / "model" / edit["path"]).read_bytes(), (original / "model" / edit["path"]).read_bytes())
+                self.assertEqual(judging.load_plant(self.tmp / path.stem / "judge")["kind"], record["kind"])
+
+    def test_a_planted_judge_folder_carries_the_series_judge(self):
+        judge = self.tmp / "judge"
+        judges.export(LIBRARY, judge)
+        plant = JUDGES / "plants" / "library-m2-transition-gap.json"
+        judges.plant(plant, self.tmp / "step", judge, self.tmp / "planted-judge")
+        self.assertEqual(judging.load(self.tmp / "planted-judge")["steps"], judges.source_config(LIBRARY)["steps"])
+        self.assertTrue((self.tmp / "planted-judge" / "plant.json").is_file())
+        with self.assertRaisesRegex(judging.JudgeError, "does not judge"):
+            judges.plant(JUDGES / "plants" / "makerspace-c3-discount-contradiction.json", self.tmp / "s2", judge, self.tmp / "j2")
 
 
 @unittest.skipUnless(sys.platform == "linux" and (go_version() or 0) >= 27,

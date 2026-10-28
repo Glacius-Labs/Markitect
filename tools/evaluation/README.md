@@ -6,6 +6,7 @@ The suite runner, its judging and reporting, and the baseline variant of the [ev
 | --- | --- |
 | [suite.py](suite.py) | `task` builds a task directory, `run` runs one variant on one task, `chain` runs a sequence of steps that each start from the variant's own previous result; `judge`, `judge-chain`, `review` and `report` evaluate them |
 | [sandbox.py](sandbox.py) | The sandbox of `run --sandbox` and `chain --sandbox`: one container per run on an egress-limited network |
+| [series.py](series.py) | The change series of the portfolio: each step's `task.md` and concept 2.0 model as a chain step (`steps --series library\|makerspace`) |
 | [native.py](native.py) | The native arm mode of `run --native` and `chain --native`: the variant's host on the machine, its own containers on the same egress-limited network, checked from the engine's events |
 | [native_standin.py](native_standin.py) | A scripted stand-in for a native arm: one Run container per run, which writes a change, changes nothing, leaves the network, leaves residue or runs the escape probe |
 | [sandbox/](sandbox/Dockerfile) | The sandbox image, its egress gateway (`egress.py`) and the default series configuration (`series.json`) |
@@ -91,6 +92,8 @@ The judge writes `/out/judge.json` with the result's commit and three areas: `co
 A judge folder in this repository is a source. `judges.py export --source DIR --rev REV --out JUDGE_DIR` writes the folder the suite runs: each file named in the source's `include` map, taken from the frozen revision `REV`, with its SHA-256 under `frozen`. `judges.py selftest --source DIR --judge JUDGE_DIR --task TASK_DIR --out DIR [--lock FILE]` builds the source's reference result and each seeded mutant on the task's start and judges each in the container. It passes when the reference passes every area and every mutant fails where it is seeded.
 
 ## Change series
+
+The steps come from [series.py](series.py): `python -I -B tools/evaluation/series.py steps --series library|makerspace --out DIR` writes one step directory per step, named as the judges' steps (Library `M1` to `M5`, Makerspace `W0` to `C9`), each with `task.md` (the rendered single-agent document) and `model/` (the step's concept 2.0 `.markitect/` content from [tools/evaluation-tasks](../evaluation-tasks/README.md)). The **planted tasks** are records in [tools/evaluation-judges/plants](../evaluation-judges/plants/README.md); `judges.py plant` writes a planted step and its judge folder.
 
 A change series runs two ways. **End to end**, `chain` runs every step from the variant's own previous result, and `judge-chain` judges each delivered step at its step. **From fixed reference starts**, each change runs as an independent task whose start is the reference result of the step before: `judges.py start --source DIR --step STEP --out START.bundle` writes it, `task --start START.bundle` makes the task, and `judge --step` judges the run.
 

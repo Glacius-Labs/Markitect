@@ -1,0 +1,22 @@
+{
+  "format": 1,
+  "kind": "defect",
+  "expected": "no-landing",
+  "description": "A contradiction at the boundary: the bulk-discount table gives 8 % for 10 to 24 units, while its worked example for 10 units uses 5 % (the factor 95). The discount is in every purchase's result, so the Run must end without landing.",
+  "recordedUtc": "2026-10-28T22:09:44+00:00",
+  "series": "makerspace",
+  "step": "C3",
+  "model": [
+    {
+      "path": "model/materials/bulk-discount.md",
+      "old": "| 10 to 24 | 5 |",
+      "new": "| 10 to 24 | 8 |"
+    }
+  ],
+  "task": [
+    {
+      "old": "| 10 to 24 | 5 |",
+      "new": "| 10 to 24 | 8 |"
+    }
+  ]
+}

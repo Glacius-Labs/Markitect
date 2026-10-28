@@ -1,0 +1,22 @@
+{
+  "format": 1,
+  "kind": "gap",
+  "expected": "landing",
+  "description": "A harmless gap: the test obligations no longer say that a certification issued long before a reservation date must be shown to be accepted. The behavior itself is stated (a certification stays valid until revoked); only what the tests cover is left open, which never shows at the boundary, so the change should land.",
+  "recordedUtc": "2026-10-28T22:09:44+00:00",
+  "series": "makerspace",
+  "step": "C6",
+  "model": [
+    {
+      "path": "model/tests.md",
+      "old": "Tests and documentation do not expect or describe an expiry of certifications; a certification issued long before a reservation date is still accepted.",
+      "new": "Tests and documentation do not expect or describe an expiry of certifications."
+    }
+  ],
+  "task": [
+    {
+      "old": "Tests and documentation do not expect or describe an expiry of certifications; a certification issued long before a reservation date is still accepted.",
+      "new": "Tests and documentation do not expect or describe an expiry of certifications."
+    }
+  ]
+}

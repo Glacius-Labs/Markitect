@@ -3,6 +3,7 @@
   python -I -B judges.py export --source DIR [--rev REV] --out NEW_DIR
   python -I -B judges.py selftest --source DIR --judge JUDGE_DIR [--task TASK_DIR] --out NEW_DIR [--case NAME ...] [--engine BIN] [--lock FILE]
   python -I -B judges.py start --source DIR --step STEP [--base BUNDLE] --out NEW_BUNDLE
+  python -I -B judges.py plant --plant FILE --step-out NEW_DIR [--judge JUDGE_DIR] [--judge-out NEW_DIR]
 
 A judge source (for example tools/evaluation-judges/library-m1/) holds the judge's
 `judge.json` with an `include` map from each file of the judge folder to its
@@ -33,6 +34,12 @@ from a fixed reference start: the reference result of the step before.
 one commit on BASE (default: the suite's empty start), in a one-branch bundle.
 It is the start of the step after STEP when that step runs as an independent
 task.
+
+`plant` writes a planted task (tools/evaluation-judges/plants/NAME.json): the
+series step (series.py) with the plant's edits applied, each exactly once, to
+both task.md and the model, so that every variant sees the same defect or gap;
+and its judge folder, the exported series judge with the plant record as
+plant.json. Run it from the fixed reference start of the step before.
 """
 import argparse
 import hashlib
@@ -48,6 +55,7 @@ import tempfile
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import judging  # noqa: E402
 import sandbox as sandboxing  # noqa: E402
+import series  # noqa: E402
 import suite  # noqa: E402
 
 REPO = pathlib.Path(__file__).resolve().parents[2]
@@ -286,6 +294,48 @@ def selftest(source, judge_dir, task_dir, out, engine, only=None):
     return summary
 
 
+def edit_once(path, old, new):
+    text = path.read_text(encoding="utf-8")
+    if text.count(old) != 1:
+        raise judging.JudgeError(f"{path}: the plant's text occurs {text.count(old)} times, not once: {old[:60]!r}")
+    path.write_text(text.replace(old, new), encoding="utf-8", newline="\n")
+
+
+def plant(plant_file, step_out, judge=None, judge_out=None):
+    """A planted task: the series step with the plant's edits in both its task.md and its model, and its judge folder.
+
+    The judge folder is the exported series judge (when given) plus plant.json, so a harmless gap's landed change
+    is judged at its step like any other while the suite scores the outcome."""
+    plant_file, step_out = pathlib.Path(plant_file), pathlib.Path(step_out)
+    record = json.loads(plant_file.read_text(encoding="utf-8"))
+    if not record.get("model") or not record.get("task"):
+        raise judging.JudgeError(f"{plant_file}: a plant edits both the model and task.md, so every variant sees the same defect")
+    with tempfile.TemporaryDirectory() as tmp:
+        shutil.copyfile(plant_file, pathlib.Path(tmp) / "plant.json")
+        judging.load_plant(tmp)
+    try:
+        series.write_step(record["series"], record["step"], step_out)
+    except series.SeriesError as e:
+        raise judging.JudgeError(str(e))
+    for edit in record["model"]:
+        edit_once(step_out / "model" / edit["path"], edit["old"], edit["new"])
+    for edit in record["task"]:
+        edit_once(step_out / "task.md", edit["old"], edit["new"])
+    if judge_out:
+        judge_out = pathlib.Path(judge_out)
+        if judge_out.exists():
+            raise judging.JudgeError(f"{judge_out} exists")
+        if judge:
+            if judging.load(judge)["steps"] and record["step"] not in judging.load(judge)["steps"]:
+                raise judging.JudgeError(f"{judge} does not judge the step {record['step']}")
+            shutil.copytree(judge, judge_out)
+        else:
+            judge_out.mkdir(parents=True)
+        shutil.copyfile(plant_file, judge_out / "plant.json")
+    return {"step": record["step"], "kind": record["kind"], "expected": record["expected"], "stepDir": str(step_out),
+            "judge": str(judge_out) if judge_out else None}
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -305,10 +355,17 @@ def main(argv=None):
     t.add_argument("--step", required=True)
     t.add_argument("--base", help="the bundle to build on (default: the suite's empty start)")
     t.add_argument("--out", required=True)
+    n = sub.add_parser("plant")
+    n.add_argument("--plant", required=True, help="a planted task record (tools/evaluation-judges/plants/NAME.json)")
+    n.add_argument("--step-out", required=True, help="the planted chain step to write: task.md and model/")
+    n.add_argument("--judge", help="the exported series judge to copy into the judge folder")
+    n.add_argument("--judge-out", help="the judge folder to write: the judge, if given, and plant.json")
     a = p.parse_args(argv)
     try:
         if a.cmd == "export":
             result = export(a.source, a.out, a.rev)
+        elif a.cmd == "plant":
+            result = plant(a.plant, a.step_out, a.judge, a.judge_out)
         elif a.cmd == "start":
             result = start(a.source, a.step, a.out, a.base)
         else:
