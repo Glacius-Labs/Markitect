@@ -39,8 +39,8 @@ func (o PatternOwnership) Owner(file string) string {
 }
 
 // Match reports whether a slash-separated pattern matches a repository path:
-// "**" as a whole segment matches any number of segments, other segments
-// match one path segment as path.Match does.
+// "**" as a whole segment matches any number of segments (at the end, at
+// least one), other segments match one path segment as path.Match does.
 func Match(pattern, file string) bool {
 	return match(strings.Split(pattern, "/"), strings.Split(file, "/"))
 }
@@ -48,7 +48,12 @@ func Match(pattern, file string) bool {
 func match(pat, segs []string) bool {
 	for len(pat) > 0 {
 		if pat[0] == "**" {
-			for i := 0; i <= len(segs); i++ {
+			// A trailing "**" matches what lies inside, at least one segment.
+			first := 0
+			if len(pat) == 1 {
+				first = 1
+			}
+			for i := first; i <= len(segs); i++ {
 				if match(pat[1:], segs[i:]) {
 					return true
 				}
