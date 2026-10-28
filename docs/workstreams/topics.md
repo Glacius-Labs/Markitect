@@ -10,7 +10,7 @@ State page of the Topics session: the owner's single place to discuss Markitect'
 
 ## Now
 
-- **Design walk-through** (started 28 October; the owner restated what Markitect is, [source](../concepts/sources/model-explicitness-20261028.md#1-what-markitect-is-restated)). Settled as designs, nothing built: the language and Libraries ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation), [DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation)), the organization ([DEC-081](../concepts/register.md#dec-081-the-organization-knows-broad-at-the-top-and-deep-below)), the Runs, Result and Commands ([DEC-082](../concepts/register.md#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager)) and the platform ([DEC-083](../concepts/register.md#dec-083-the-host-runs-natively-each-run-lives-in-containers)). Then Authoring, more Commands, one Finding input and continuous change ([DEC-084](../concepts/register.md#dec-084-continuous-change-triggers-become-findings-or-model-proposals-autonomy-grows-in-steps)). Then the Cockpit ([DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now)). The sweep closed every question the redesign answers. Open: questions 7 (finding Libraries), 14 (confirm DEC-061's reading) and 15 (shipping the skills); 33 parked until after the rebuild.
+- **Design walk-through** (started 28 October; the owner restated what Markitect is, [source](../concepts/sources/model-explicitness-20261028.md#1-what-markitect-is-restated)). Settled as designs, nothing built: the language and Libraries ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation), [DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation)), the organization ([DEC-081](../concepts/register.md#dec-081-the-organization-knows-broad-at-the-top-and-deep-below)), the Runs, Result and Commands ([DEC-082](../concepts/register.md#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager)) and the platform ([DEC-083](../concepts/register.md#dec-083-the-host-runs-natively-each-run-lives-in-containers)). Then Authoring, more Commands, one Finding input and continuous change ([DEC-084](../concepts/register.md#dec-084-continuous-change-triggers-become-findings-or-model-proposals-autonomy-grows-in-steps)). Then the Cockpit ([DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now)). The sweep closed every question the redesign answers. Then how Libraries are found (question 7). Then DEC-061's reading confirmed (question 14). Then the skills ship inside the CLI through `markitect init` (question 15). No question is open except 33, parked until after the rebuild.
 - **Basis:** clean. One topics page instead of seven lane pages; Main consistent again after #806 (see [Done here](#done-here)); the topic lane worktrees and branches removed (the old Cockpit lane worktree now serves the General session); question 33 (Windows tests) parked.
 
 ## Next
@@ -107,7 +107,7 @@ What is decided and lives nowhere else; decisions with their own page are linked
 4. **Closed** 28 October: compile errors are structure, cycles, visibility and accounting; everything else is a warning (DEC-080).
 5. **Closed** 28 October: language and compiler rules change only by owner decision, as DEC-080 defines them.
 6. **Closed** 28 October: no Cockpit app ([DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now)).
-7. **Dependency discovery** from the lock instead of repeated `--dependency`. Needs an answer on what the lock and manifest mean. Not urgent.
+7. **Closed** 28 October: the standard Libraries ship inside the binary; others are committed under `.markitect/libraries/`; no `--dependency` flags (DEC-080).
 
 ### B. Language
 
@@ -120,8 +120,8 @@ What is decided and lives nowhere else; decisions with their own page are linked
 
 12. **Closed** 28 October: the skill is rewritten after the rebuild and trialled then.
 13. **Closed** 28 October: the skill asks first when something is open (Authoring).
-14. **Extract: decided** 28 October as its own skill that uses the modeling skill. Still open: confirm DEC-061 round 2 (the binding part is the contract callers rely on).
-15. **Shipping the skill** with the plugin variant, the CLI, or both? Rec: decide with the plugin variant; depends on question 1.
+14. **Extract: decided** 28 October as its own skill that uses the modeling skill; DEC-061's round-2 reading confirmed the same day.
+15. **Closed** 28 October: the skills are built into the binary, and `markitect init` sets up a project and installs or updates them (DEC-080).
 16. **Who accepts model changes: decided** 28 October: the owner accepts every model change; later, changes from triggers should not each need review (see [Decided](#decided)).
 17. **Closed** 28 October: consistency and quality are the main measure; cost comes second (DEC-082).
 
