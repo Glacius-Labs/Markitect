@@ -1,0 +1,10 @@
+{
+  "description": "A stale file after M5: the removed suspended status is still defined in the source.",
+  "step": "M5",
+  "write": {
+    "realization/internal/library/status.go": "package library\n\n// memberSuspended was the status of a suspended member.\nconst memberSuspended = \"suspended\"\n"
+  },
+  "expect": {
+    "stale": true
+  }
+}

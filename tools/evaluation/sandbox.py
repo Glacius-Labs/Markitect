@@ -244,11 +244,11 @@ class Sandbox:
                  *variant, "/task", "/out", *(["/state"] if state else [])]
         return argv
 
-    def gateway_argv(self, name, label, network):
-        allow = [a for h in self.hosts for a in ("--allow", h)]
-        return ["create", "--name", name, "--label", label, "--network", network, *hardening("1000:1000"),
-                "--sysctl", "net.ipv4.ip_unprivileged_port_start=443", "--cpus", GATEWAY["cpus"], "--memory", GATEWAY["memory"],
-                "--pids-limit", GATEWAY["pids"], "--entrypoint", "python3", self.image, "-I", "-B", "/opt/evaluation/egress.py", *allow]
+    conditions = "sandbox"
+
+    def valid(self, record):
+        """Whether the run took place under the evaluation's conditions: the sandbox stood up and left nothing behind."""
+        return "error" not in record and "container" in record and not record["residue"]
 
     def run(self, task, out, state, variant, model, deadline, run_dir, launch):
         """Run the variant command in a fresh sandbox.
@@ -259,7 +259,7 @@ class Sandbox:
         """
         run_id = "eval-" + uuid.uuid4().hex[:12]
         label = f"{LABEL_KEY}={run_id}"
-        internal, egress, gateway, box = (f"{run_id}-{n}" for n in ("internal", "egress", "gateway", "sandbox"))
+        internal, gateway, box = (f"{run_id}-{n}" for n in ("internal", "gateway", "sandbox"))
         engine = Engine(self.engine)
         record = {**self.describe(), "runId": run_id, "network": internal, "steps": engine.steps}
         timing = {"exitCode": None, "timedOut": False, "wallSeconds": 0.0}
@@ -273,25 +273,8 @@ class Sandbox:
                 del login
                 if engine.must("image", ["image", "inspect", "--format", "{{.Id}}", self.image]).strip() != self.image:
                     raise SandboxError("the image ID differs")
-                leftovers = census(engine, "census-before", LABEL_KEY)
-                if leftovers:
-                    raise SandboxError("evaluation containers or networks of another run exist: " + ", ".join(leftovers))
-                # The internal network's bridge carries no host address (isolated gateway mode), so nothing on the
-                # engine's host is reachable from it.
-                for name, extra in ((internal, ["--internal", "--opt", "com.docker.network.bridge.gateway_mode_ipv4=isolated"]),
-                                    (egress, [])):
-                    networks.append(name)
-                    engine.must("network-" + name[len(run_id) + 1:], ["network", "create", *extra, "--label", label, name])
-                containers.append(gateway)
-                engine.must("gateway-create", self.gateway_argv(gateway, label, egress))
-                engine.must("gateway-connect", ["network", "connect", internal, gateway])
-                engine.must("gateway-start", ["start", gateway])
-                nets = json.loads(engine.must("gateway-address", ["inspect", "--format", "{{json .NetworkSettings.Networks}}", gateway]))
-                gateway_ip = ((nets or {}).get(internal) or {}).get("IPAddress")
-                if not gateway_ip:
-                    raise SandboxError("the gateway has no address on the internal network")
+                gateway_ip = open_egress(engine, run_id, label, self.image, self.hosts, networks, containers)
                 record["gatewayAddress"] = gateway_ip
-                wait_ready(engine, gateway)
                 mounts = {"task": host_path(task), "out": host_path(out), "state": host_path(state) if state else None,
                           "login": host_path(login_file)}
                 containers.append(box)
@@ -317,31 +300,72 @@ class Sandbox:
             except Exception as e:  # noqa: BLE001 - whatever failed, the run is recorded and cleaned up
                 record["error"] = f"{type(e).__name__}: {e}"
             finally:
-                if gateway in containers:
-                    code, logs = engine("gateway-logs", ["logs", gateway])
-                    if code == 0:
-                        record["egress"] = egress_summary(logs)
-                        try:
-                            (run_dir / "egress.jsonl").write_text(logs, encoding="utf-8")
-                        except OSError as e:
-                            record.setdefault("error", f"the gateway log could not be kept: {e}")
-                for name in reversed(containers):
-                    engine("remove-" + name[len(run_id) + 1:], ["rm", "-f", name], KILL_SECONDS)
-                for name in reversed(networks):
-                    engine("remove-" + name[len(run_id) + 1:], ["network", "rm", name], KILL_SECONDS)
+                close_egress(engine, run_id, label, run_dir, record, networks, containers)
                 login_file.unlink(missing_ok=True)
-                try:
-                    record["residue"] = census(engine, "census-after", label)
-                except SandboxError as e:
-                    record["residue"] = [f"unknown: {e}"]
-        if secrets:
-            # The state directory outlives the run in a chain, so it is searched too.
-            hits = [(root, p) for root in (run_dir, state) if root for p in files_containing(root, secrets)]
-            for _, p in hits:
-                p.unlink()
-            record["quarantine"] = [(p.relative_to(run_dir) if root == run_dir else pathlib.Path("state") / p.relative_to(root)).as_posix()
-                                    for root, p in hits]
+        quarantine(record, secrets, run_dir, state)
         return timing, record
+
+
+def open_egress(engine, run_id, label, image, hosts, networks, containers):
+    """The run's internal network and its egress gateway; returns the gateway's address on the internal network.
+
+    Refuses while another run's containers or networks exist. Every name it creates is added to networks and
+    containers at once, so that close_egress removes it whatever fails later."""
+    internal, egress, gateway = (f"{run_id}-{n}" for n in ("internal", "egress", "gateway"))
+    leftovers = census(engine, "census-before", LABEL_KEY)
+    if leftovers:
+        raise SandboxError("evaluation containers or networks of another run exist: " + ", ".join(leftovers))
+    # The internal network's bridge carries no host address (isolated gateway mode), so nothing on the
+    # engine's host is reachable from it.
+    for name, extra in ((internal, ["--internal", "--opt", "com.docker.network.bridge.gateway_mode_ipv4=isolated"]), (egress, [])):
+        networks.append(name)
+        engine.must("network-" + name[len(run_id) + 1:], ["network", "create", *extra, "--label", label, name])
+    containers.append(gateway)
+    allow = [a for h in hosts for a in ("--allow", h)]
+    engine.must("gateway-create", ["create", "--name", gateway, "--label", label, "--network", egress, *hardening("1000:1000"),
+                                   "--sysctl", "net.ipv4.ip_unprivileged_port_start=443", "--cpus", GATEWAY["cpus"],
+                                   "--memory", GATEWAY["memory"], "--pids-limit", GATEWAY["pids"], "--entrypoint", "python3", image,
+                                   "-I", "-B", "/opt/evaluation/egress.py", *allow])
+    engine.must("gateway-connect", ["network", "connect", internal, gateway])
+    engine.must("gateway-start", ["start", gateway])
+    nets = json.loads(engine.must("gateway-address", ["inspect", "--format", "{{json .NetworkSettings.Networks}}", gateway]))
+    gateway_ip = ((nets or {}).get(internal) or {}).get("IPAddress")
+    if not gateway_ip:
+        raise SandboxError("the gateway has no address on the internal network")
+    wait_ready(engine, gateway)
+    return gateway_ip
+
+
+def close_egress(engine, run_id, label, run_dir, record, networks, containers):
+    """Keep the gateway's log, remove the run's containers and networks, and count what is left by the run's label."""
+    gateway = f"{run_id}-gateway"
+    if gateway in containers:
+        code, logs = engine("gateway-logs", ["logs", gateway])
+        if code == 0:
+            record["egress"] = egress_summary(logs)
+            try:
+                (run_dir / "egress.jsonl").write_text(logs, encoding="utf-8")
+            except OSError as e:
+                record.setdefault("error", f"the gateway log could not be kept: {e}")
+    for name in reversed(containers):
+        engine("remove-" + name[len(run_id) + 1:], ["rm", "-f", name], KILL_SECONDS)
+    for name in reversed(networks):
+        engine("remove-" + name[len(run_id) + 1:], ["network", "rm", name], KILL_SECONDS)
+    try:
+        record["residue"] = census(engine, "census-after", label)
+    except SandboxError as e:
+        record["residue"] = [f"unknown: {e}"]
+
+
+def quarantine(record, secrets, run_dir, state):
+    """Delete, unread, every file of the run and the chain's state that holds the login."""
+    if secrets:
+        # The state directory outlives the run in a chain, so it is searched too.
+        hits = [(root, p) for root in (run_dir, state) if root for p in files_containing(root, secrets)]
+        for _, p in hits:
+            p.unlink()
+        record["quarantine"] = [(p.relative_to(run_dir) if root == run_dir else pathlib.Path("state") / p.relative_to(root)).as_posix()
+                                for root, p in hits]
 
 
 def census(engine, step, label):

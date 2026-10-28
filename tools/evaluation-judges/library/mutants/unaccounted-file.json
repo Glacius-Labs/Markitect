@@ -1,0 +1,12 @@
+{
+  "description": "A file nothing accounts for: notes left in the program's folder.",
+  "step": "M3",
+  "write": {
+    "realization/notes.txt": "todo: short loans\n"
+  },
+  "expect": {
+    "unaccounted": [
+      "realization/notes.txt"
+    ]
+  }
+}

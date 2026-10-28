@@ -19,8 +19,8 @@ import suite  # noqa: E402
 LIBRARY = HERE.parent / "evaluation-judges" / "library-m1"
 
 # A fake engine for judges: `image inspect` knows FAKE_JUDGE_IMAGE only, `run` runs the command on the host with each
-# mount target replaced by its source (python3 by this Python, --contained dropped: on a host it must never stop the
-# user's processes), and FAKE_RESIDUE leaves a container behind.
+# mount target replaced by its source (python3 by this Python, --contained dropped and only EVALUATION_STEP passed on:
+# on a host it must never stop the user's processes), and FAKE_RESIDUE leaves a container behind.
 FAKE_ENGINE = textwrap.dedent(r'''
     import json, os, subprocess, sys
     args = sys.argv[1:]
@@ -36,11 +36,13 @@ FAKE_ENGINE = textwrap.dedent(r'''
         pass
     elif args[0] == "run":
         assert args[args.index("--network") + 1] == "none", "the judge must have no network"
-        mounts, i = [], 1
+        mounts, i, env = [], 1, dict(os.environ)
         while args[i] != os.environ["FAKE_JUDGE_IMAGE"]:
             if args[i] == "--mount":
                 fields = dict(f.partition("=")[::2] for f in args[i + 1].split(","))
                 mounts.append((fields["dst"], fields["src"], "readonly" in args[i + 1]))
+            if args[i] == "-e" and args[i + 1].startswith("EVALUATION_STEP="):
+                env["EVALUATION_STEP"] = args[i + 1].partition("=")[2]
             i += 1 if args[i] in ("--init", "--read-only") else 2
         assert [m[2] for m in mounts] == [True, True, True, True, False], mounts
         mounts.sort(key=lambda m: -len(m[0]))
@@ -49,7 +51,7 @@ FAKE_ENGINE = textwrap.dedent(r'''
                 if a == dst or a.startswith(dst + "/"):
                     return src + a[len(dst):]
             return sys.executable if a == "python3" else a
-        sys.exit(subprocess.run([host(a) for a in args[i + 1:] if a != "--contained"]).returncode)
+        sys.exit(subprocess.run([host(a) for a in args[i + 1:] if a != "--contained"], env=env).returncode)
     else:
         sys.exit("fake engine: unknown call " + " ".join(args))
 ''')

@@ -1,0 +1,61 @@
+{
+  "format": 1,
+  "name": "library",
+  "image": "golang@sha256:69a7b9788769bec032d238959b61854e9ae87f57be9029ec04e9885fabf99195",
+  "command": [
+    "python3",
+    "-I",
+    "-B",
+    "/judge/judge.py",
+    "--contained"
+  ],
+  "timeoutSeconds": 2400,
+  "limits": {
+    "cpus": "4",
+    "memoryBytes": 4294967296,
+    "pids": 1024,
+    "tmpBytes": 2147483648
+  },
+  "steps": [
+    "M1",
+    "M2",
+    "M3",
+    "M4",
+    "M5"
+  ],
+  "references": {
+    "M1": {
+      "tree": "tools/evaluation-judges/library-m1/reference",
+      "at": ""
+    },
+    "M2": {
+      "tree": "tools/evaluation-judges/library/references/m2",
+      "at": ""
+    },
+    "M3": {
+      "tree": "tools/evaluation-judges/library/references/m3",
+      "at": ""
+    },
+    "M4": {
+      "tree": "tools/evaluation-judges/library/references/m4",
+      "at": ""
+    },
+    "M5": {
+      "tree": "tools/evaluation-judges/library/references/m5",
+      "at": ""
+    }
+  },
+  "include": {
+    "judge.py": "tools/evaluation-judges/library/judge.py",
+    "judgekit.py": "tools/evaluation-judges/common/judgekit.py",
+    "drift.json": "tools/evaluation-judges/library/drift.json",
+    "rubric.md": "tools/comparison/rubric.md",
+    "tools/comparison/phase_b_cases.py": "tools/comparison/phase_b_cases.py",
+    "tools/comparison/probes.py": "tools/comparison/probes.py",
+    "tools/library-oracle/assess.py": "tools/library-oracle/assess.py",
+    "tools/library-oracle/driver.py": "tools/library-oracle/driver.py",
+    "tools/library-oracle/oracle.py": "tools/library-oracle/oracle.py",
+    "tools/library-oracle/expectations/m1.json": "tools/library-oracle/expectations/m1.json",
+    "tools/library-oracle/expectations/m2.json": "tools/library-oracle/expectations/m2.json"
+  }
+}

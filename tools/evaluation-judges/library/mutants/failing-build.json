@@ -1,0 +1,15 @@
+{
+  "description": "A failing build: the entry point calls Serve with a missing argument.",
+  "step": "M2",
+  "replace": [
+    {
+      "path": "realization/cmd/library/main.go",
+      "old": "protocol.Serve(os.Stdin, os.Stdout)",
+      "new": "protocol.Serve(os.Stdin)"
+    }
+  ],
+  "expect": {
+    "buildFails": true,
+    "correctnessFails": true
+  }
+}

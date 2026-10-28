@@ -6,16 +6,16 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 
 ## Now
 
-- **Target:** [concept 2.0](../concepts/v2-concept.md) since 28 October; the owner handed its build to this session through the Topics session. Its steps T1 to T7 are in the [delivery plan](../implementation-plan.md#concept-20-build). The owner chose the shape: one implementation, compared with K. T1 is on `main` ([PR #850](https://github.com/Glacius-Labs/Markitect/pull/850)): the Markdown language, `check`, `lock`, `refs`, `graph`, `impact` with checklists, `lint`, `init` and both skills; it removed the V1 Run host and the old language. T2 is on `main` ([PR #849](https://github.com/Glacius-Labs/Markitect/pull/849)): the Library m1–m5 and Makerspace w0–c9 models in the 2.0 form, each step passing `check`, with equivalence records. T3 is on `main` ([PR #853](https://github.com/Glacius-Labs/Markitect/pull/853)): the Run remote container, its server-side hooks and the verdict trailer format, tested on Linux and Windows with Docker.
+- **Target:** [concept 2.0](../concepts/v2-concept.md) since 28 October; the owner handed its build to this session through the Topics session. Its steps T1 to T7 are in the [delivery plan](../implementation-plan.md#concept-20-build). The owner chose the shape: one implementation, compared with K. T1 is on `main` ([PR #850](https://github.com/Glacius-Labs/Markitect/pull/850)): the Markdown language, `check`, `lock`, `refs`, `graph`, `impact` with checklists, `lint`, `init` and both skills; it removed the V1 Run host and the old language. T2 is on `main` ([PR #849](https://github.com/Glacius-Labs/Markitect/pull/849)): the Library m1–m5 and Makerspace w0–c9 models in the 2.0 form, each step passing `check`, with equivalence records. T3 is on `main` ([PR #853](https://github.com/Glacius-Labs/Markitect/pull/853)): the Run remote container, its server-side hooks and the verdict trailer format, tested on Linux and Windows with Docker. T4a is on `main` ([PR #857](https://github.com/Glacius-Labs/Markitect/pull/857)): the engine, the agent port, the Result page and landing, with `apply` and `verify`. T6 is on `main` ([PR #854](https://github.com/Glacius-Labs/Markitect/pull/854)): change series with cumulative judges for Library M1–M5 and Makerspace W0–C9, one report area per §15 criterion, five planted tasks and the native arm mode; its Linux native round is open.
 - **Suite:** E1 and E2 of [evaluation suite v2](../design/evaluation-suite-v2.md) are on `main` in [`tools/evaluation`](../../tools/evaluation/README.md): one sandbox per run with an egress limit, `judge`, `review`, `report`, the failure classifier and the token parser. The [E1 smoke](../validation/eval-e1-sandbox-smoke-20261028.md) and the [E2 smoke](../validation/eval-e2-judge-smoke-20261028.md) passed: the sandbox held, the Library judge separates its reference from its mutants, and K's runs k-02 to k-04 pass all 19 hidden cases with no critical finding. K's capture fix is confirmed.
 - **New project:** authored in the private repository: a fresh build and seven changes, each with requirements, a model, a hidden judge that passes its reference and fails its six mutants, and an equivalence review. Build has not seen its content. Its models are converted to the 2.0 form with equivalence records, its judge image is pinned, and its judge self-test passed on Linux for all eight steps.
 - **Concept 1.0 arms:** stopped on 28 October with the shape decision: M (V1, removed from `main` by T1), P (`variant/plugin`) and G (`dev/g0-prototype`, the start of T3).
-- **Running:** T4a (engine, Result, landing), T4b (agents, containers, harness) and T6 (suite against §15, draft [PR #854](https://github.com/Glacius-Labs/Markitect/pull/854)).
+- **Running:** T4b (agents, containers, harness, [PR #856](https://github.com/Glacius-Labs/Markitect/pull/856)), rebasing, then the first native Claude runs.
 
 ## Next
 
-1. **T6:** review and merge its PR.
-2. **T4, Run engine with `apply` and `verify`:** split into T4a and T4b, both running since 28 October; then one native Claude smoke on the Library.
+1. **T4b:** merge, then the native Claude smoke on the Library with the engine and the adapters together.
+2. **T5, native host:** the T4 smoke on Windows and on Linux; the suite's native round on Linux with it.
 3. **New project:** its tasks wired into the suite once T6 is on `main`.
 
 ## Decisions
@@ -35,4 +35,4 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 
 ## Questions for the owner
 
-None open.
+1. **How K is scored on planted tasks (§15, stops right).** Recommendation: one mechanical rule for every arm: a result equal to its start did not land. Every task's delivery rules tell every arm, in the same words, to change nothing and say why if the requirements contradict each other or leave a boundary behavior open ([design](../design/evaluation-suite-v2.md)).

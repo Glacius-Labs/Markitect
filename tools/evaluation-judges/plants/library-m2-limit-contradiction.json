@@ -1,0 +1,23 @@
+{
+  "format": 1,
+  "kind": "defect",
+  "expected": "no-landing",
+  "description": "A contradiction at the boundary: the loan policy's table sets the loan limit to 3, while the rule below it says the open-loan count must not exceed five. Which limit borrowing enforces is observable at the program's boundary, so the Run must end without landing.",
+  "recordedUtc": "2026-10-28T22:09:44+00:00",
+  "series": "library",
+  "step": "M2",
+  "model": [
+    {
+      "path": "model/lending/loan-policy.md",
+      "old": "the resulting current open-loan count of the member must not exceed the loan limit.",
+      "new": "the resulting current open-loan count of the member must not exceed five."
+    }
+  ],
+  "task": [
+    {
+      "old": "the resulting current open-loan count of the member must not exceed the value of [maximum open loans](#lending-policy) in the table above.",
+      "new": "the resulting current open-loan count of the member must not exceed five."
+    }
+  ],
+  "absent": []
+}

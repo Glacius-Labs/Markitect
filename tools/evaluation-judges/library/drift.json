@@ -1,0 +1,14 @@
+{
+  "retired": [
+    {
+      "step": "M5",
+      "pattern": "setMemberStatus|SetMemberStatus",
+      "cite": "requirements-m5.md: Members have no status: the library does not suspend members."
+    },
+    {
+      "step": "M5",
+      "pattern": "\"suspended\"",
+      "cite": "requirements-m5.md: There are no reservations, member suspensions, fees, ..."
+    }
+  ]
+}

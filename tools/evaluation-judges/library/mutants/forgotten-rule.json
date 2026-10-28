@@ -1,0 +1,15 @@
+{
+  "description": "A forgotten rule: at M4 a member may hold four open loans, not the three of M2.",
+  "step": "M4",
+  "replace": [
+    {
+      "path": "realization/internal/library/library.go",
+      "old": "MaxOpenLoans = 3",
+      "new": "MaxOpenLoans = 4"
+    }
+  ],
+  "expect": {
+    "correctnessFails": true,
+    "forgotten": true
+  }
+}
