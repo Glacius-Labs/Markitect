@@ -19,7 +19,7 @@ The Build and evaluation session owns the suite and its variants ([build page](.
   - The assessment, review prompts, rubric check and analysis in [`tools/comparison`](../../tools/comparison/README.md), which the judges and the review reuse.
   - The task portfolio.
 - **It uses:** the hidden oracles in [`tools/library-oracle`](../../tools/library-oracle/README.md) and [`tools/makerspace-oracle`](../../tools/makerspace-oracle/README.md).
-- **Variants:** each meets the variant interface in its own code; the [workstreams](../workstreams.md#variants) list them.
+- **Variants:** each meets the variant interface in its own code; the [workstreams](../workstreams.md#arms) list them.
 
 ## 1. The task
 
