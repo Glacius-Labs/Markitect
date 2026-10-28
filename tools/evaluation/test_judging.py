@@ -248,7 +248,8 @@ class LibraryJudgeTest(Engine):
         stems = {p.stem for p in (LIBRARY / "mutants").glob("*.json")}
         self.assertTrue({"broken-rule", "unrequested-change", "failing-build"} <= stems, stems)
 
-    @unittest.skipUnless((go_version() or 0) >= 27, "needs Go 1.27 or later on the path")
+    @unittest.skipUnless(sys.platform == "linux" and (go_version() or 0) >= 27,
+                         "the judge runs in a Linux container; needs Linux and Go 1.27 or later on the path")
     def test_reference_passes_and_mutants_fail(self):
         os.environ["FAKE_JUDGE_IMAGE"] = json.loads((LIBRARY / "judge.json").read_text())["image"]
         judge = self.tmp / "judge"
