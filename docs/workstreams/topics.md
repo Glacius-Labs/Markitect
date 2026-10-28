@@ -4,7 +4,7 @@ State page of the Topics session: the owner's single place to discuss Markitect'
 
 | | |
 |---|---|
-| **How it works** | The owner and this session discuss one question at a time. Each decision is recorded here verbatim with its date. When a decision needs code, it goes to the Build session as one bounded task (see [Handed to Build](#handed-to-build)). This session writes documentation only. |
+| **How it works** | The owner and this session discuss one question at a time. Each decision is recorded in plain words with its date, on its own page where it has one, otherwise under [Decided](#decided). When a decision needs code, it goes to the Build session as one bounded task (see [Handed to Build](#handed-to-build)). This session writes documentation only. |
 | **Canonical pages** | The [commands page](commands.md) owns the commands frame, the agreed names and answers A1–A6. Accepted decisions go to the [concept register](../concepts/register.md); proposals live under [design](../design/README.md); evidence under [validation](../validation/README.md). This page links to them and does not repeat them. |
 | **Folded lane pages** | Full-SHA permalinks of the lane pages as they were when folded: [platform](https://github.com/Glacius-Labs/Markitect/blob/b212a2f338f253b533f64a61a04cc9d03db065f2/docs/workstreams/platform.md) (lane 5), [model language](https://github.com/Glacius-Labs/Markitect/blob/df1f255fe2a88658973e128dc831806f977d0dd3/docs/workstreams/model-language.md) (lane 6), [modeling skills](https://github.com/Glacius-Labs/Markitect/blob/b18f562c42efaab0ce4646ec235f0024bd3243d3/docs/workstreams/modeling-skills.md) (lane 7), [compiler](https://github.com/Glacius-Labs/Markitect/blob/cedd21c106e6f9991ab42501470d55bc74dd813d/docs/workstreams/compiler.md) (lane 8), [continuous change](https://github.com/Glacius-Labs/Markitect/blob/9e5d9c6b864c3c2fc16ddc1fb91e5e363a55949a/docs/workstreams/continuous-change.md) (lane 10), [Cockpit](https://github.com/Glacius-Labs/Markitect/blob/604a421bacf93eb507935f6196014d39b2e3f1a6/docs/workstreams/cockpit.md) (lane 11). |
 
@@ -64,62 +64,18 @@ A desktop UI for understanding the model and its runs, outside V1. The old cockp
 - **Risk per Package** joins the model-language idea, protected Packages in continuous change and deeper review for risky areas (question 10).
 - **Extract** is Authoring, not a Command (question 14).
 
-## Owner decisions
+## Decided
 
-Verbatim, with the date. Words in brackets are context added by the recorder.
+What is decided and lives nowhere else; decisions with their own page are linked.
 
-**This session**
-- 28 Oct [fold the six lane PRs: keep the C5 trial record, the two design pages and the Windows test-time numbers on Main; fold the lane pages into this page]: "Yes, fold them"
-- 28 Oct [instead of handing the #806 follow-ups to Build]: "Fix everything and every inconsistency. If you are unsure ask me. Dont talk to the build chat. Just bring a consistent and clean state to main"
-- 28 Oct [on fixing the Windows Git starts, question 33]: "This session is for discussing and designing. We will come to that later. Lets first see that we have a clean basis and then discuss markitect, its design completely and how things work. Maybe the windows tests will be fixed conceptually then. For now we just dont execute those tests since they take so long"
-
-**General**
-- 27 Oct: "The topics sessions are just there so when i have some time i can discuss those topics and maybe refine them."
-- 28 Oct: "instead of all those parallel session we need one session which is responsible to coordinate and discuss the evaluation suite and the three variants. We need one session for discussion of the various topics."
-- 28 Oct: "The topics touch too strongly to be discussed independently."
-
-**Platform**
-- 27 Oct: "We will not run from WSL. This involves too much fiddling. We want simple solutions. Also we cant expect everyone who uses it to have a Linux machine."
-- 27 Oct [a dedicated machine for long runs]: "Since Markitect should work on someones machine, we should also test on our machine"
-- 27 Oct [tests in WSL]: "The tests should be able to run on any machine. Why should this be an issue? We just dont do it on Windows since it takes too long. We should maybe find out why it takes so long on windows and if we can fix that."
-- 27 Oct [Apply on Linux]: "Once it runs on Windows we will test it on a Linux machine"
-- 27 Oct: "Yes, find out why the tests are slow on Windows and what would fix it. Measure and report only, no code changes yet."
-- 28 Oct: "Why do we even have so many git commands being issued? This sounds like we are definately doing something wrong here"
-
-**Model language**
-- 28 Oct [keep one file format: YAML with a Markdown body]: "Yes i agree with you. Lets talk about explicitness"
-- 28 Oct: "We should be cautious here. We dont want to create a completely new programming language i think. Lets see what we are trying to achieve. We want to describe the project in a consistent model. We dont need full explicitness so that we actually code in markitect. If we introduce maps and model as explicit as code would, we might not gain much from that."
-- 28 Oct: "We can ask a simple question i think. Would a good documentation be that explicit? If yes we should support it, if not its too detailed. For example a foreach loop or a map is not mentioned in documentation. What is mentioned are endpoints, use cases, user interfaces such as cli or rest interfaces and so on. Also maybe definitions about what a book is and so on. The body and coding is basically just prose and up to the agent.", then [record it as the rule] "Yes" ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation))
-- 27 Oct: "Accept the recommendations on the five Library questions: unordered-refusal flag, refusals in Interface, invariant placement via an interface, no envelope Kind yet, no alias-only Core change yet. Prepare the plan, build nothing yet."
-- 27 Oct [on the name RefusalCode]: "If its just for makerspace and not library we can go with Refusal Code. Lets discuss what the problem is" (The name sits in the standard `api` Library; the owner did not reopen it.)
-- 27 Oct: "Why does the order even matter? As i read it those are just potential problems that might occur. If the model is not clear about it, when which one applies, those should simply be definitions themselves and explain it there"
-- 27 Oct [unordered list, precedence as a Rule, no flag]: "Yes"
-- 27 Oct [refusal codes in an Interface]: "Just think about how this is handled in code. We should do it the same way"
-- 27 Oct [no invariant placement; invariants live with their data]: "Yes i agree"
-- 27 Oct: "Build the two Library changes as planned, in one PR."
-- 28 Oct: "Merge it", then "We will be responsible for all of that so we can close Lane 7 and instead we will do this here", then "Or wait, just merge. We will need to rearrange this"
-
-**Modeling skills**
-- 27 Oct: "Go with the change-task trial first: a fresh agent with only the skill makes one Makerspace change step on makerspace-v2.1."
-
-**Commands** (the frame and A1–A6 themselves are on the [commands page](commands.md))
-- 27 Oct [a Command may take a user task, but binding intent goes into the model first]: "Yes"
-- 27 Oct [reuse Run kinds; a new one only when none fits]: "Yes exactly"
-- 27 Oct [read-only results]: "Good question. They should return some sort of result i guess. Shared Notes too. And Apply should of course get it too if it makes sense. Or what do you recommend?"
-- 27 Oct [Extract]: "We should ignore extract completely. I think extract is something that changes the model and might maybe just be some sort of skill just as modelling too."
-- 27 Oct [who accepts model changes]: "Good question. We must discuss here"
-- 27 Oct: "Those are good and fundamental questions. We must first discuss the concepts we have here. Lets not rush it. We have sevaral things here: The compiler things that do check or some sort of static analysis, runs, commands that orchestrate runs like apply and so on. We need a good architecture and model for this"
-- 27 Oct: "We should allow for single runs directly too. Custom Commands should be our goal. I think a unified result type would be great. The last one im not sure. In general your interpretation fits my thoughts well. We just need good names to not mix those things up"
-- 27 Oct [frame and names]: "Yes that works for me. The namings we had were confusing"
-- 27 Oct [A5: read-only Result; Apply takes Findings only when passed in]: "Yes"
-- 28 Oct [A6: Commands as declarations from a small fixed vocabulary; project Run kinds in principle]: "Yes i agree"
-- 28 Oct: "Lets talk about those too. Give me the questions and your recommendations" (answered by questions 2 and 18–24)
-
-**Continuous change**
-- 27 Oct: "Yes: design outside Findings as a concept 1.0 amendment, with the command side in lane 9. Still build nothing."
-
-**Cockpit**
-- 27 Oct: "Yes: plan a read-only model explorer as the first Cockpit slice, but build nothing yet. Send me the design for it first."
+- **Platform** (27–28 October): no running from WSL and no Linux machine required; our studies run on our own machine; Linux Apply is tested only after Windows Apply works. The Windows Git-start fix is parked, and the Go tests are not run on Windows for now ([measurement](../validation/windows-test-time-20261028.md)).
+- **Libraries** (27–28 October, [PR #806](https://github.com/Glacius-Labs/Markitect/pull/806)): refusal lists have no order; an Interface exposes refusal codes; an Invariant lives with its data and is not placed; no wire-envelope Kind and no alias-only imports yet ([standard Libraries](../design/standard-libraries.md#answered-and-open-questions)).
+- **Language** (28 October): the model is as explicit as good documentation, and Definitions stay YAML with a Markdown body ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation)).
+- **Modeling skills** (27 October): the change-task trial first; it ran as C5 and passed ([record](../validation/modeling-skill-change-trial-20261027.md)).
+- **Commands** (27–28 October): the frame, the names and A1–A6 ([commands page](commands.md)).
+- **Continuous change and Cockpit** (27 October): outside Findings and the read-only model explorer are designed as proposals; nothing is built.
+- **Organization of this work** (28 October): one Topics session for all design topics and one Build and evaluation session; the topic lanes are folded into this page. The owner restated what Markitect is ([source](../concepts/sources/model-explicitness-20261028.md#1-what-markitect-is-restated)).
+- **Records** (28 October): decisions are recorded in plain words with their date, without verbatim quotes or attributions ([record rule 1](../concepts/README.md#adding-and-changing-entries)).
 
 ## Questions for the owner
 
@@ -137,7 +93,7 @@ Verbatim, with the date. Words in brackets are context added by the recorder.
 
 ### B. Language
 
-8. **Small language gaps: closed** by the owner's documentation test of 28 October ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation)). Applied by the recorder: good documentation does not state maps, unions, defaults or typed formats, so the model does not either.
+8. **Small language gaps: closed** by [DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation): good documentation does not state maps, unions, defaults or typed formats, so the model does not either.
 9. **Decisions taken under delegation** (log on branch `handover/model-quality-log`). To discuss: 9 (v2.1 Interface exposes `rate-cents-per-minute`), 4 and 10 (the analysis tool reads the model's own architecture; the `interface` signal checks typed uses only). To confirm: 1, 3, 5, 6, 7 (the skill) and 2 (Claude adapter timing). Decision 8 was replaced by the refusal decision.
 10. **Risk per Package.** A risk level, a "what failure looks like" statement or a protected flag on a Package? Rec: a Library Kind, not Core; with a deterministic hold after Verify when protected files change, and a circuit breaker.
 11. **"Do it the way code does"** as a standing check for Library design? It removed two of three proposed changes.
