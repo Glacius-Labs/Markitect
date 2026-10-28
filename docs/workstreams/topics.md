@@ -160,6 +160,10 @@ What is decided and lives nowhere else; decisions with their own page are linked
 36. **Modeling guide Kind names.** Done on 28 October: the guide v0.3 names the Library Kinds.
 37. **Closed** 28 October: see question 4.
 
+### K. Before building concept 2.0
+
+41. **Ten questions** raised by the independent review of the [concept 2.0 draft](../concepts/v2-concept.md#14-open): Root and the project Package, overlapping path patterns, what a parent may name below it, internal Definitions and the Managers above, the checklist, hooks and integration, Commands without a model change, control files, Results and leftovers, acceptance. They are listed there with their context.
+
 ### J. Library areas
 
 40. **Which Library areas does Markitect ship?** Decided 28 October: `std`, `rest` and `cli` (see [Decided](#decided)).

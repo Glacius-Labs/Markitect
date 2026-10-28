@@ -42,7 +42,7 @@ A [[members/member|member]] reserves a [[equipment/machine|machine]] for a slot.
 - Core offers one thing: a Definition has a Kind and a body. A Kind is itself a Definition, of Kind `Kind`, whose body says what it is and how it is used.
 - A Library is a set of Kind Definitions for one technical area, so that not every project defines them. No Kind has a special meaning to Markitect.
 - The standard Libraries are `std` for every project (Project, Rule, Concept, Feature, Decision), `rest` (Endpoint) and `cli` (Command). More areas come only when a real project needs them. A project writes its own Kinds for anything else, one small file each.
-- The standard Libraries ship inside the `markitect` binary. Other Libraries are committed under `.markitect/libraries/<name>/`. The manifest names each Library with its exact version, and the lock pins its digest.
+- The standard Libraries ship inside the `markitect` binary. Other Libraries are committed under `.markitect/libraries/<name>/`. The manifest names each Library with its version, and the lock pins its digest. The Libraries are rebuilt as 1.0.0, with no compatibility to earlier versions; existing models are converted, and frozen study material stays at its recorded commits.
 
 ### 2.3 Links, scope and visibility
 
@@ -71,7 +71,7 @@ One tool, `markitect`, written in Go, with no Python and no other runtime ([DEC-
 
 **Compile errors:** a Kind or link that does not resolve; a link to an internal Definition from outside its subtree; a cycle between Packages; a Library version that does not match the lock; a repository file that is neither registered nor ignored; two Packages claiming the same file; a registry entry for a Git-ignored file.
 
-**Lint warnings:** coupling and instability per Package; dependencies from stable to unstable Packages; size of Definitions and Packages; Definitions nothing links to and no file realizes; the reach of a change; a Package with no Definitions of its own and only one child; later, change hotspots from Git history. Thresholds are tuned on real models.
+**Lint warnings:** coupling and instability per Package; dependencies from stable to unstable Packages; size of Definitions and Packages; Definitions nothing links to and no file realizes; the reach of a change; a Package with no Definitions of its own and only one child; later, change hotspots from Git history.
 
 ## 4. The realization record
 
@@ -86,7 +86,7 @@ Layout conventions, such as where tests live, are Rules in the project Package.
 
 ## 5. The organization
 
-- Every Package is a Manager; the Package tree is the Manager tree. The Root Manager owns the model root.
+- Every Package is a Manager; the Package tree is the Manager tree, with Root at the top as today.
 - A Manager knows its own Package's Definitions, everything its parents define, and the public Definitions it links to in other Packages. Of its children it sees a table of contents of their public Definitions (title and first sentence) and reads the full text when it needs to, for example to review their work. Breadth at the top, depth below, comes from where things are placed.
 - A parent settles matters that cross its children's areas and owns what they share.
 
@@ -100,22 +100,22 @@ Impact decides, like an incremental build ([DEC-082](register.md#dec-082-one-run
 
 One Run handles a change. Every working Manager is two agents with their own harness:
 
-- **The maker** gives every Definition in its scope, and every Finding it received, a verdict with evidence: conforms, changed, or model problem. It checks that each makes sense, plans, implements and checks again.
-- **The checker** is fresh. It sees the model and the diff, re-checks every verdict and sends defects straight back to the maker.
+- **The maker** gives every item on its checklist, the Definitions the change reaches in its area and every Finding it received, a verdict with evidence: conforms, changed, or model problem. It checks that each makes sense, plans, implements and checks again.
+- **The checker** is fresh. It sees only the model and the diff, re-checks every verdict and sends defects straight back to the maker.
 
-The parent reviews and integrates its children's approved work. Root's checker is the final independent check before landing. A model problem ends the Run without landing; the model is authoritative and is never repaired by a Run ([DEC-063](register.md#dec-063-the-model-is-authoritative-defects-escalate)).
+The parent reviews and integrates its children's approved work. Root's checker is the final independent check before landing. The model is authoritative and is never repaired by a Run ([DEC-063](register.md#dec-063-the-model-is-authoritative-defects-escalate)): a Manager that cannot settle a matter within the model escalates it to its parent, which settles it if the model allows; a gap without effect at the project boundary is realization freedom, decided and documented by the Manager. A real model defect, a contradiction or a gap that changes behavior at the boundary, ends the Run at Root without landing.
 
 ### 6.3 Git, hooks and messages
 
 - Each Run has its own Git remote. Every Manager pushes to its own branch. A handoff is a commit; the checker approves with a commit of its own; the parent merges.
 - The verdicts are lines in the submission commit's message, like Git trailers.
-- Server-side hooks on the Run's remote carry the guarantees, which agents cannot skip: a Manager pushes only to its own branch and its own paths; a submission passes the required checks; every Definition and Finding in its scope has a verdict. Local hooks in each harness only give early feedback.
+- Server-side hooks on the Run's remote carry the guarantees, which agents cannot skip: a Manager pushes only to its own branch and its own paths; a submission passes the required checks; every item on its checklist has a verdict. Local hooks in each harness only give early feedback.
 - Messages carry assignments, questions and escalations along the tree, never work. Nobody blocks waiting for a message.
 - No question reaches the owner during a Run.
 
 ### 6.4 The Result
 
-Every Run ends with one Result page, written by the host from commits, verdicts and checks, never by an agent: the outcome; per Definition and Finding its verdict, evidence and approving checker; what did not take part and why, and whether the required checks ran on the whole repository; decisions only the owner can make, each with a recommendation; and side observations (Shared Notes). Every Command returns this Result.
+Every Run ends with one Result page, written by the host from commits, verdicts and checks, never by an agent: the outcome; per checklist item its verdict, evidence and approving checker; what did not take part and why, and whether the required checks ran on the whole repository; decisions only the owner can make, each with a recommendation; and side observations (Shared Notes). Every Command that starts agents returns this Result; Findings and model proposals are part of it.
 
 ### 6.5 Landing
 
@@ -127,13 +127,13 @@ A Run starts from a fixed commit of the target branch. If the branch has not mov
 |---|---|---|---|
 | `apply` | makers and checkers; impact by default, `--full` for the whole tree | artifacts, by landing | the Result |
 | `verify` | checkers only; impact or `--full` | nothing | the Result with Findings |
-| `improve` | each Manager uses `lint`, `graph` and `refs` on its area | a model proposal branch | a model diff for the owner |
+| `improve` | each Manager uses `lint`, `graph` and `refs` on its area | a model proposal | a model diff for the owner |
 | `bughunt`, `security` | checkers only, with that focus | nothing | Findings; where the model is silent, model proposals |
 | `cleanup` | makers and checkers on the unchanged model; behavior stays | artifacts, by landing | the Result |
 
-Each is a short declaration over the same mechanism; projects add their own the same way. `explain` comes later.
+`apply` and `verify` come first. The others are short declarations over the same mechanism and follow; projects add their own the same way. `explain` comes later.
 
-**One Finding input for every source.** A Finding names a Definition and says what was observed and what is expected. `apply --findings FILE` takes Findings from `verify`, `bughunt`, `security` or, later, issues and incidents; raw report text never reaches an agent. Each Finding becomes a checklist item of the Manager owning that Definition. A report about something the model does not state is a model proposal, not a Finding.
+**One Finding input for every source.** A Finding names a Definition and says what was observed and what is expected. `apply --findings FILE` takes Findings from `verify`, `bughunt`, `security` or, later, issues and incidents; raw report text never reaches an agent. A Finding whose Definition no longer exists becomes a side note. Each Finding becomes a checklist item of the Manager owning that Definition. A report about something the model does not state is a model proposal, not a Finding.
 
 ## 8. Authoring
 
@@ -147,7 +147,7 @@ The host runs natively on Windows, Linux and macOS and needs only Docker ([DEC-0
 
 ## 10. Continuous change
 
-Triggers such as issues, incidents and dependency updates pass an intake adapter that rewrites them into tasks; triage turns each into a Finding for `apply` or into a model proposal ([DEC-084](register.md#dec-084-continuous-change-triggers-become-findings-or-model-proposals-autonomy-grows-in-steps)). The loop runs outside Markitect, as a scheduled job or in CI. Autonomy grows in steps the owner decides: first, repairs run automatically and model proposals wait in a daily inbox; then a mandate lets agents accept certain kinds of model change, with a daily briefing for the owner. Budgets, undo and a circuit breaker bound the loop. It is built after the core.
+Triggers such as issues, incidents and dependency updates pass an intake adapter that rewrites them into tasks; triage turns each into a Finding for `apply` or into a model proposal ([DEC-084](register.md#dec-084-continuous-change-triggers-become-findings-or-model-proposals-autonomy-grows-in-steps)). The loop runs outside Markitect, as a scheduled job or in CI. Autonomy grows in steps the owner decides: first, repairs run automatically and model proposals wait in a daily inbox; then a mandate lets agents accept certain kinds of model change: a fresh checker accepts proposals within it, and the owner gets a daily briefing. Budgets, undo and a circuit breaker bound the loop. It is built after the core; the first slice is the first step on one pilot project, with GitHub issues as the source.
 
 ## 11. Cockpit
 
@@ -163,6 +163,9 @@ No app for now ([DEC-085](register.md#dec-085-markdown-tools-are-the-cockpit-for
 - A command has a finite budget that corrections share; deadlines reach the blocking operation; cleanup is honest ([§20](v1-concept.md#20-errors-budgets-and-controlled-termination)).
 - Shared Notes record side observations with their origin and carry no authority ([§19](v1-concept.md#19-shared-notes-and-independent-verification)).
 - Providers sit behind a provider-neutral boundary and use account login only ([§16](v1-concept.md#16-providers-and-authentication)).
+- The initial gate: if `check` fails, no agent starts ([§5.3](v1-concept.md#53-initial-gate)).
+- The host makes no domain decisions; Managers decide within their area ([§3.3](v1-concept.md#33-manager-autonomy-with-clear-responsibility)).
+- Delegation runs only through the Manager tree; native provider sub-agents do not bypass it ([§7.4](v1-concept.md#74-no-second-delegation-organization)). Messages go only to the direct parent or children ([§8.2](v1-concept.md#82-communication-along-the-hierarchy-d10)).
 
 ## 13. Replaced from concept 1.0
 
@@ -178,9 +181,26 @@ No app for now ([DEC-085](register.md#dec-085-markdown-tools-are-the-cockpit-for
 | Publication from stored acceptance into the working tree, or a branch handed back by the runner | Landing as in a merge queue (§6.5) |
 | Apply host on Linux only; the Linux runner on Windows | Native host everywhere with Docker (§9) |
 | The Python analysis tool | `markitect` subcommands (§3) |
+| An invalid child submission still reaches the parent, which rejects it (D11, §8.4) | Server-side hooks refuse it before it lands on the Run's remote (§6.3) |
+| Only the exact approved candidate is published (§21.1) | After a clean merge with a moved branch, the merged state lands if the required checks pass and nothing in the Run's impact changed (§6.5) |
 
 ## 14. Open
 
-- **Details for the build:** the hook mechanics and the verdict trailer format; how far impact follows dependents; the harness and model of makers and checkers; when the full Run is due; the format of a mandate; the Result page's exact layout.
-- **Parked:** the Windows test time ([question 33](../workstreams/topics.md#questions-for-the-owner)), to be judged again after the rebuild.
-- **Order:** the design is settled first; the evaluation and the implementations are then built against it.
+**Questions for the owner before building** (raised by the independent review of this draft):
+
+1. **Root and the project Package.** Is the project Package Root itself, or a child of Root? Scope by location makes layout conventions and project-wide Rules reach everything only if they sit at Root.
+2. **Overlapping path patterns.** May Root own `src/**` while a child owns `src/billing/**`, with the most specific pattern winning, or is that a conflict?
+3. **What a parent may name below it.** Links never point down, so a parent cannot name its children's Definitions, for example which child provides a shared interface. And is a Definition's Kind an edge, so that a Kind must sit at or above its users?
+4. **Internal Definitions and the Managers above.** A parent reviewing a child, Root's checker, or a shared-file entry may need a child's internal Definitions. Does visibility bind only sideways, not upwards?
+5. **The checklist.** Exactly which Definitions are on a Manager's checklist: its own Package's Definitions that the change reaches, also the inherited Rules, or everything in its area on a `--full` Run?
+6. **Hooks and integration.** A parent pushes merged child commits; where does the checker's approval commit go; must a child's submission pass the whole-repository checks before its siblings are integrated?
+7. **Commands without a model change.** What `verify`, `cleanup` and `bughunt` take as their impact when the model has not changed, and who writes the verdicts in `verify`, which has no makers.
+8. **Control files.** Must the model files, registry pages, manifest, lock and `execution.yaml` be registered or ignored?
+9. **Results and leftovers.** Where Results are stored, especially when nothing lands; cleanup of Run branches and retention of evidence (open since DEC-078); landing while the user's local checkout has uncommitted changes.
+10. **Acceptance.** What counts as concept 2.0 being achieved; concept 1.0's acceptance (§25) does not carry over.
+
+**Details for the build:** the verdict trailer format; how far impact follows dependents; the harness and model of makers and checkers; when the full Run is due; the format of a mandate; the Result page's exact layout.
+
+**Parked:** the Windows test time ([question 33](../workstreams/topics.md#questions-for-the-owner)), to be judged again after the rebuild.
+
+**Order:** the design is settled first; the evaluation and the implementations are then built against it.
