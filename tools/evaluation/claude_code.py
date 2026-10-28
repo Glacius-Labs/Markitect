@@ -2,6 +2,9 @@
 
   python -I -B claude_code.py [--claude BIN] [--credentials FILE] [--effort LEVEL] TASK_DIR OUT_DIR [STATE_DIR]
 
+Run it only through the suite: the suite starts it in its own process group,
+which it stops at the end.
+
 The model comes from the suite's EVALUATION_MODEL (claude:MODEL_ID). The
 variant clones the task's start, places task.md as TASK.md (never committed),
 and runs one headless `claude -p` session in the clone with an isolated

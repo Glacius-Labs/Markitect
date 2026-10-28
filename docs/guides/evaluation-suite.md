@@ -44,8 +44,8 @@ VARIANT TASK_DIR OUT_DIR [STATE_DIR]
 ```
 
 - It reads `TASK_DIR` and works however it likes. The evaluation's model is in the environment variable `EVALUATION_MODEL`, as provider and exact model ID, for example `claude:claude-sonnet-5-5`.
-- It writes `OUT_DIR/result.bundle`: the final repository, one commit that descends from the start.
-- It may write `OUT_DIR/run.json` with what it knows about itself: the provider and model it actually used, tokens, status and cause. The suite checks only that the reported model is the evaluation's model; a run on another model is invalid.
+- It writes `OUT_DIR/result.bundle`: the final repository, one branch tip that descends from the start. A result equal to the start counts as delivered, with no changes.
+- It may write `OUT_DIR/run.json` with what it knows about itself: the provider and model it actually used, tokens, status and cause. The suite checks only that the reported model is the evaluation's model and records the answer; the report treats a run on another model as invalid.
 - `STATE_DIR` is the variant's own memory within a chain. It is empty at the first step and handed back unchanged at every later step.
 - The suite starts the command, measures the wall time, stops it at the deadline and checks that the result descends from the start.
 

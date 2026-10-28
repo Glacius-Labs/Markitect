@@ -12,20 +12,21 @@ The suite runner and the baseline variant of the [evaluation suite](../../docs/g
 
 ```text
 python -I -B tools/evaluation/suite.py task --task-md TASK.md [--model MODEL_DIR] [--start BUNDLE] --deadline-seconds 2700 --out TASK_DIR
-python -I -B tools/evaluation/suite.py run --task TASK_DIR --model claude:claude-sonnet-5-5 --out RUN_DIR -- python -I -B tools/evaluation/claude_code.py
+python -I -B tools/evaluation/suite.py run --task TASK_DIR --model claude:claude-sonnet-5-5 --out RUN_DIR [--state STATE_DIR] -- python -I -B tools/evaluation/claude_code.py
+python -I -B tools/evaluation/suite.py chain --step STEP_DIR [--step STEP_DIR ...] [--start BUNDLE] --deadline-seconds 2700 --model claude:claude-sonnet-5-5 --out CHAIN_DIR -- VARIANT...
 ```
 
-`--model` names the evaluation's model as `PROVIDER:MODEL_ID`. The suite gives it to the variant in `EVALUATION_MODEL`.
+For `task`, `--model` is the canonical model directory. For `run` and `chain`, `--model` names the evaluation's model as `PROVIDER:MODEL_ID`; the suite gives it to the variant in `EVALUATION_MODEL`. A chain step directory holds `task.md` and an optional `model/`.
 
 The variant command receives `TASK_DIR OUT_DIR [STATE_DIR]`. It works on a copy of the task and writes `OUT_DIR/result.bundle`, and optionally `OUT_DIR/run.json`.
 
-The suite writes `RUN_DIR/suite.json`. It holds the wall time, whether the variant timed out and its exit code. It also holds whether a result was delivered: its commit, tree and changed paths, or why there is none. Finally, it holds the variant's own report and whether the model in that report matches the evaluation's model. A result counts only when it is one commit that descends from the task's start.
+The suite writes `RUN_DIR/suite.json`. It holds the wall time, whether the variant timed out and its exit code. It also holds whether a result was delivered: its commit, tree and changed paths, or why there is none. Finally, it holds the variant's own report and whether the model in that report matches the evaluation's model. A result counts only when it is one branch tip that descends from the task's start; a result equal to the start counts as delivered with no changes. A `false` model match makes the run invalid in the report.
 
 In a chain, a step without a result is followed by a step that starts from that step's start. One state directory is handed to the variant at every step.
 
 ## The baseline
 
-`claude_code.py` copies the task's `task.md` into a clone of the start as an uncommitted `TASK.md`. It then runs `claude -p` with a fixed prompt, the evaluation's model, no user settings, plugins, CLAUDE.md, memory or MCP servers, and a copy of the login without its refresh token. It stops the session a minute before the deadline, commits what is left with a fixed identity, and writes `result.bundle`, `run.json`, the session's stream and its transcripts.
+`claude_code.py [--claude BIN] [--credentials FILE] [--effort LEVEL]` takes the `claude` binary, the login file to copy and an optional effort level. Run it only through the suite, which starts it in its own process group. It copies the task's `task.md` into a clone of the start as an uncommitted `TASK.md`. It then runs `claude -p` with a fixed prompt, the evaluation's model, no user settings, plugins, CLAUDE.md, memory or MCP servers, and a copy of the login without its refresh token. It stops the session a minute before the deadline, commits what is left with a fixed identity, and writes `result.bundle`, `run.json`, the session's stream and its transcripts.
 
 Safeguards:
 - **Git:** clone, session and commit share one Git setting, with no system or user configuration, no line-ending conversion, no hooks and no credentials.
