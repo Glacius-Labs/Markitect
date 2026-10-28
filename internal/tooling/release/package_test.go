@@ -67,7 +67,7 @@ func TestPackageOmitsRetiredEmbeddedAuthoringSource(t *testing.T) {
 		t.Fatal("source archive omitted or changed the root license")
 	}
 	for name := range contents {
-		if strings.HasPrefix(name, prefix+"internal/apply/embedded/") {
+		if strings.HasPrefix(name, prefix+"internal/project/embedded/") {
 			t.Errorf("retired embedded authoring source was packaged: %s", name)
 		}
 	}

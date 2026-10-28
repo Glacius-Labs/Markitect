@@ -18,10 +18,10 @@ func bundleSnapshot() *Input {
 		"cmd/markitect/main.go":         []byte("package main\n"),
 		"internal/buildinfo/version.go": []byte("package buildinfo\nvar version = \"1.2.3\"\n"),
 		"internal/model/model.go":       []byte("package core\n"),
-		"internal/apply/embedded/resources/skill.yaml": []byte("kind: Skill\n"),
-		"packaging/bootstrap/run-markitect.go":         []byte("package main\r\n"),
-		"packaging/bootstrap/run-markitect_test.go":    []byte("package main\r\n"),
-		"schema/manifest.yaml":                         []byte("schemaVersion: 1\r\n"),
+		"internal/project/embedded/resources/skill.yaml": []byte("kind: Skill\n"),
+		"packaging/bootstrap/run-markitect.go":           []byte("package main\r\n"),
+		"packaging/bootstrap/run-markitect_test.go":      []byte("package main\r\n"),
+		"schema/manifest.yaml":                           []byte("schemaVersion: 1\r\n"),
 	}
 	modes := make(map[string]string, len(files))
 	for name := range files {

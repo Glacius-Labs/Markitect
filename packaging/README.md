@@ -4,7 +4,7 @@ The owner retired the old Project/Domain releases and binary downloads on 17 Oct
 
 ## What lives here
 
-`packaging/` holds what ships besides the binary: [`runtime/`](runtime/README.md) (the runtime container image and its project-image examples), [`runner/`](runner/Dockerfile) (the Linux runner image for Apply, described in the [runner design](../docs/design/linux-runner.md) and built as the [project workflow](../docs/guides/project-workflow.md#apply-in-the-linux-runner) shows), `bootstrap/` (the consumer bootstrap `run-markitect.go` that release bundles copy into `.markitect/bootstrap/run.go`, with its test), [`skills/markitect-modeling/`](skills/markitect-modeling/SKILL.md) (the skill that lets an AI agent write a canonical model with the standard Libraries and check it) and this guide.
+`packaging/` holds what ships besides the binary: [`runtime/`](runtime/README.md) (the runtime container image and its project-image examples, kept for the Run engine of step T4), `bootstrap/` (the consumer bootstrap `run-markitect.go` that release bundles copy into `.markitect/bootstrap/run.go`, with its test) and this guide. The standard Libraries and the agent skills are built into the binary ([`internal/libraries`](../internal/libraries/), [`internal/skills`](../internal/skills/)), and `markitect init` installs the skills. V1's Linux runner image was removed with step T1; its recipe is at the [base commit](https://github.com/Glacius-Labs/Markitect/blob/f23c2e12d9833efa61e5e65c90018016423abe74/packaging/runner/Dockerfile).
 
 ## Current source release tooling
 

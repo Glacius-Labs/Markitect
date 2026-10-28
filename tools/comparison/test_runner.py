@@ -94,46 +94,8 @@ class FixtureTests(unittest.TestCase):
 
 
 class ParityTests(unittest.TestCase):
-    def test_codex_switches_equal_the_manager_provider_switches(self):
-        source = (REPO / "internal/adapters/codexappserver/profile.go").read_text(encoding="utf-8")
-        body = source[source.index("func providerArgv()"):]
-        body = body[:body.index("\n}\n")]
-        literals = [json.loads('"' + s + '"') if not s.startswith("`") else s[1:-1]
-                    for s in re.findall(r'"((?:[^"\\]|\\.)*)"|(`[^`]*`)', body) for s in s if s]
-        literals = literals[literals.index("app-server") + 1:]
-        mcp = next(i for i, s in enumerate(literals) if s.startswith("mcp_servers="))
-        self.assertEqual(literals[mcp - 1], "-c")
-        del literals[mcp - 1:mcp + 1]
-        self.assertEqual(literals, runner.CODEX_SWITCHES)
-
-    def test_session_limits_and_hardening_equal_a_manager_session(self):
-        profile = (REPO / "examples/runtime-profile.example.yaml").read_text(encoding="utf-8")
-        values = dict(re.findall(r"^\s+(cpus|memoryBytes|pids|tmpBytes|network|effort): (.*)$", profile, re.M))
-        self.assertEqual(values["cpus"], runner.SESSION_LIMITS["cpus"])
-        self.assertEqual(values["memoryBytes"], runner.SESSION_LIMITS["memory"])
-        self.assertEqual(values["pids"], runner.SESSION_LIMITS["pids"])
-        self.assertEqual(values["tmpBytes"], runner.SESSION_LIMITS["tmp"])
-        self.assertEqual(values["network"], "''")
-        self.assertEqual(values["effort"], runner.EFFORT)
-        argv = runner.session_argv("mk-cmp-x", IMAGE, "w", "h", "prompt")
-        spec = (REPO / "internal/adapters/container/spec.go").read_text(encoding="utf-8")
-        for flag in ("--read-only", "--init", "no-new-privileges", "/tmp:rw,exec,nosuid,nodev,mode=1777,size="):
-            self.assertIn(flag, spec)
-            self.assertTrue(any(flag in a for a in argv), flag)
-        self.assertNotIn("--network", argv)  # the engine default network, like the Manager session
-        # The aggregate ceiling of the six Manager sessions an Apply can run at once.
-        self.assertEqual(argv[argv.index("--cpus") + 1], "6")
-        self.assertEqual(argv[argv.index("--memory") + 1], str(6 * 2147483648))
-        self.assertEqual(argv[argv.index("--pids-limit") + 1], "1152")
-        self.assertEqual(argv[-1], "prompt")
-        self.assertIn('approval_policy="never"', argv)
-        self.assertIn('sandbox_mode="danger-full-access"', argv)
-        thread = "0199a213-81c0-7800-8aa1-bbab2a035a53"
-        resumed = runner.session_argv("mk-cmp-x", IMAGE, "w", "h", "prompt", thread)
-        codex = resumed[resumed.index(IMAGE) + 1:]
-        self.assertEqual(codex[:2], ["exec", "resume"])
-        self.assertEqual(codex[-2:], [thread, "prompt"])
-        self.assertEqual(codex[2:-2], argv[argv.index(IMAGE) + 2:-1])  # identical switches
+    # The switches and session limits were pinned to V1's Manager sessions;
+    # T1 removed that code, so the parity holds at the recorded study commits.
 
     def test_stream_errors_are_recorded_but_only_turn_failures_fail(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -28,7 +28,7 @@ func snapshotModuleFiles(snapshot *Input) (map[string][]byte, error) {
 		if err := safeArchivePath(relative); err != nil {
 			return nil, fmt.Errorf("unsafe source snapshot path %q: %w", name, err)
 		}
-		include := relative == "go.mod" || relative == "go.sum" || relative == "README.md" || relative == "LICENSE" || commandConfigurationExample(relative)
+		include := relative == "go.mod" || relative == "go.sum" || relative == "README.md" || relative == "LICENSE"
 		if sourceTreePath(relative) {
 			include = includeSourceTreeFile(relative)
 		}
@@ -64,7 +64,7 @@ func collectModuleSnapshot(files map[string][]byte) ([]sourceFile, error) {
 			continue
 		}
 		ext := strings.ToLower(path.Ext(name))
-		include := name == "README.md" || name == "LICENSE" || commandConfigurationExample(name)
+		include := name == "README.md" || name == "LICENSE"
 		if sourceTreePath(name) {
 			include = includeSourceTreeFile(name)
 		}
@@ -101,7 +101,7 @@ func includeSourceTreeFile(name string) bool {
 	if !sourceRoot(name) || hasExcludedSourceDirectory(name) {
 		return false
 	}
-	return strings.EqualFold(path.Ext(name), ".go") || embeddedNotices(name) || sourceTestData(name)
+	return strings.EqualFold(path.Ext(name), ".go") || embeddedFile(name) || sourceTestData(name)
 }
 
 func validateSnapshotModuleLayout(files []sourceFile) error {

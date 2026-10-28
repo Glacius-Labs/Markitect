@@ -1,5 +1,7 @@
 # Diagnostic coordinates: separate tool contract
 
+**Superseded:** [DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation) replaced the v1 language whose coordinates this page fixes; step T1 built the new form and removed the v1 form. The [model language guide](../guides/model-language.md) describes Main and its diagnostics. This page is kept for its reasoning.
+
 **Status:** Chosen tool contract, separate from the [normative language specification v1](language-contract.md). This profile stipulates the meaning of exact body link coordinates. It is not an additional prerequisite for language conformance or canonical bytes and not a new Core definition. Complete support by the Go product compiler is not claimed by this.
 
 Tools may offer this profile. If they output an exact coordinate, it MUST satisfy the following rules; they must not guess positions. For the profile, MUST, MAY and MUST NOT apply as mandatory rule, permission and prohibition.

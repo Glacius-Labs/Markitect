@@ -47,34 +47,24 @@ type Rules struct {
 	Exceptions []Exception
 }
 
-// The document writer may use only the reviewed guarded-write API.
-const (
-	GuardedWritePackage   = "internal/guardedwrite"
-	DocumentWriterPackage = "internal/adapters/documents"
-)
-
-var guardedWriteAPI = map[string]bool{
-	"OpenRoot": true, "CaptureFiles": true, "CaptureV1Files": true, "ApplyOrderedChecked": true, "Change": true, "Result": true,
-}
-
 // Table is the repository's one architecture rule table. The import gate, the
 // generated code map and the source packager's roots all derive from it.
 var Table = Rules{
 	Layers: []Layer{
-		{Name: "model", Title: "Canonical model", Meaning: "The canonical language check over supplied bytes."},
-		{Name: "snapshot", Title: "Snapshots", Meaning: "Immutable repository tree values."},
-		{Name: "domain", Title: "Organization and realization", Meaning: "Manager topology, ownership and accounting over model and snapshot values.", Imports: []string{"model", "snapshot"}},
-		{Name: "project", Title: "Project", Meaning: "Checked structural preparation that every command starts from.", Imports: []string{"model", "snapshot", "domain"}},
-		{Name: "service", Title: "Services", Meaning: "Run execution, static runtime metadata, harness instructions and the model view over a checked Project.", Imports: []string{"model", "snapshot", "domain", "project"}},
-		{Name: "usecase", Title: "Apply", Meaning: "Command preflight, the sequence of closed Runs and stored-candidate publication.", Imports: []string{"model", "project", "service"}},
+		{Name: "model", Title: "Canonical model", Meaning: "The model language over supplied bytes: Definitions, Kinds, links, visibility, cycles, manifest and lock."},
+		{Name: "assets", Title: "Built-in files", Meaning: "Files built into the binary: the standard Libraries and the skills."},
+		{Name: "domain", Title: "Realization record", Meaning: "Registry pages, ownership and file accounting over a compiled model.", Imports: []string{"model"}},
+		{Name: "project", Title: "Project", Meaning: "Loads and checks a project's Markitect folder from a repository state.", Imports: []string{"model", "assets", "domain"}},
+		{Name: "service", Title: "Analysis", Meaning: "Questions about a loaded project: references, graph, impact with checklists, and lint.", Imports: []string{"model", "assets", "domain", "project"}},
+		{Name: "remote", Title: "Run remote rules", Meaning: "A Run's plan, its verdict trailers and the decision of the remote's hooks.", Imports: []string{"model", "assets", "domain", "project", "service"}},
 		{Name: "protocol", Title: "Agent protocol", Meaning: "Frame protocol between the Orchestrator and the session helper."},
 		{Name: "container", Title: "Container client", Meaning: "The container engine client that the adapters running containers share.", Imports: []string{"protocol"}},
-		{Name: "guardedwrite", Title: "Guarded write", Meaning: "Guarded working-tree writes for publication, docs --write and bundle installation, with the Git and path helpers they share with source snapshots."},
+		{Name: "guardedwrite", Title: "Guarded write", Meaning: "Guarded working-tree writes for bundle installation, with the Git and path helpers they share with source snapshots."},
 		{Name: "build", Title: "Build data", Meaning: "Version identity and embedded license notices."},
-		{Name: "adapter", Title: "Adapters", Meaning: "Concrete repository, Session, check, record, runner, command-line and document adapters; no adapter imports another.", Imports: []string{"model", "snapshot", "domain", "project", "service", "usecase", "container", "build"}},
-		{Name: "composition", Title: "Composition", Meaning: "Constructs the actual services and their adapters.", Imports: []string{"model", "project", "service", "usecase", "container", "guardedwrite", "adapter"}},
+		{Name: "adapter", Title: "Adapters", Meaning: "Concrete Git, command-line and Run remote adapters; no adapter imports another.", Imports: []string{"model", "assets", "domain", "project", "service", "remote", "build"}},
+		{Name: "composition", Title: "Composition", Meaning: "Constructs the command line with its adapters.", Imports: []string{"model", "project", "service", "adapter"}},
 		{Name: "command", Title: "Product commands", Meaning: "Thin entrypoints to product composition.", Imports: []string{"composition"}},
-		{Name: "runner-command", Title: "Runner command", Meaning: "Thin entrypoint of the Linux runner image."},
+		{Name: "remote-command", Title: "Run remote command", Meaning: "Thin entrypoint of a Run's remote container.", Imports: []string{"adapter"}},
 		{Name: "agent", Title: "Session helper", Meaning: "Runs inside each Agent container: provider process, MCP bridge and stdio framing.", Imports: []string{"protocol"}},
 		{Name: "agent-command", Title: "Session helper command", Meaning: "Thin entrypoint of the session helper.", Imports: []string{"agent"}},
 		{Name: "maintenance", Title: "Maintenance", Meaning: "The import gate and release packaging, separate from product execution.", Imports: []string{"guardedwrite"}},
@@ -83,31 +73,24 @@ var Table = Rules{
 		{Name: "standalone", Title: "Standalone tools", Meaning: "Consumer bootstrap and source smoke.", Standalone: true},
 	},
 	Packages: []Package{
-		{"internal/model", "model", "docs/architecture.md#foundations-and-project"},
-		{"internal/snapshot", "snapshot", "docs/architecture.md#foundations-and-project"},
-		{"internal/organization", "domain", "docs/architecture.md#foundations-and-project"},
-		{"internal/realization", "domain", "docs/architecture.md#foundations-and-project"},
-		{"internal/project", "project", "internal/project/README.md"},
-		{"internal/harness", "service", "internal/harness/README.md"},
-		{"internal/modeldocs", "service", "docs/architecture.md#product-flow"},
-		{"internal/run", "service", "internal/run/README.md"},
-		{"internal/runtimeconfig", "service", "docs/architecture.md#foundations-and-project"},
-		{"internal/apply", "usecase", "internal/apply/README.md"},
+		{"internal/model", "model", "docs/guides/model-language.md#definitions"},
+		{"internal/libraries", "assets", "docs/guides/model-language.md#kinds-and-libraries"},
+		{"internal/skills", "assets", "docs/guides/model-language.md#commands"},
+		{"internal/realization", "domain", "docs/guides/model-language.md#the-realization-record"},
+		{"internal/project", "project", "docs/guides/model-language.md#the-projects-markitect-folder"},
+		{"internal/analysis", "service", "docs/guides/model-language.md#impact-and-checklists"},
+		{"internal/runremote", "remote", "internal/runremote/README.md"},
 		{"internal/agentd/frame", "protocol", "internal/adapters/container/README.md"},
 		{"internal/adapters/container", "container", "internal/adapters/container/README.md"},
-		{"internal/guardedwrite", "guardedwrite", "docs/architecture.md#state-and-evidence-storage"},
+		{"internal/guardedwrite", "guardedwrite", "docs/architecture.md#distribution"},
 		{"internal/buildinfo", "build", "docs/architecture.md#distribution"},
-		{"internal/adapters/checks", "adapter", "internal/adapters/checks/README.md"},
-		{"internal/adapters/claudecode", "adapter", "internal/adapters/claudecode/README.md"},
-		{"internal/adapters/cli", "adapter", "docs/architecture.md#adapters"},
-		{"internal/adapters/codexappserver", "adapter", "internal/adapters/codexappserver/README.md"},
-		{"internal/adapters/documents", "adapter", "docs/architecture.md#adapters"},
-		{"internal/adapters/gitrepo", "adapter", "docs/architecture.md#adapters"},
-		{"internal/adapters/runner", "adapter", "docs/design/linux-runner.md"},
-		{"internal/adapters/runstore", "adapter", "internal/run/README.md"},
+		{"internal/adapters/cli", "adapter", "docs/guides/model-language.md#commands"},
+		{"internal/adapters/remotecontainer", "adapter", "internal/runremote/README.md#the-container"},
+		{"internal/adapters/remoteserver", "adapter", "internal/runremote/README.md"},
+		{"internal/adapters/repo", "adapter", "docs/guides/model-language.md#the-projects-markitect-folder"},
 		{"internal/bootstrap", "composition", "docs/architecture.md#product-flow"},
-		{"cmd/markitect", "command", "docs/architecture.md#product-flow"},
-		{"cmd/markitect-runner", "runner-command", "docs/design/linux-runner.md"},
+		{"cmd/markitect", "command", "docs/guides/model-language.md#commands"},
+		{"cmd/markitect-remote", "remote-command", "internal/runremote/README.md"},
 		{"internal/agentd", "agent", "internal/adapters/container/README.md"},
 		{"cmd/markitect-agentd", "agent-command", "internal/adapters/container/README.md"},
 		{"internal/tooling/architecture", "maintenance", "docs/architecture.md#layers"},
@@ -118,18 +101,7 @@ var Table = Rules{
 		{"tools/smoke", "standalone", "docs/architecture.md#distribution"},
 	},
 	Exceptions: []Exception{
-		{From: "cmd/markitect-runner", To: "internal/adapters/runner", Reason: "The runner image entrypoint starts the runner adapter directly."},
-		{From: "internal/adapters/claudecode", To: "internal/agentd/frame", Reason: "Claude Code Sessions use the frame values that the container client exposes."},
-		{From: "internal/adapters/codexappserver", To: "internal/agentd/frame", Reason: "Codex Sessions use the frame values that the container client exposes."},
-		{From: "internal/adapters/documents", To: "internal/guardedwrite", Reason: "The generated view is written through the reviewed guarded-write API only."},
-		{From: "internal/adapters/gitrepo", To: "internal/guardedwrite", Reason: "Publication transfers the verified candidate through guarded writes."},
 		{From: "internal/tooling/release", To: "internal/tooling/architecture", Reason: "The packager takes its source roots from this table."},
-		{From: "internal/adapters/claudecode", To: "internal/adapters/gitrepo", TestOnly: true, Reason: "Session tests prepare their checked fixture Project through real Git capture."},
-		{From: "internal/adapters/codexappserver", To: "internal/adapters/gitrepo", TestOnly: true, Reason: "Hierarchy tests run Codex Sessions over real Run Git copies."},
-		{From: "internal/adapters/codexappserver", To: "internal/adapters/runstore", TestOnly: true, Reason: "Hierarchy tests read the stored Run records."},
-		{From: "internal/adapters/gitrepo", To: "internal/adapters/checks", TestOnly: true, Reason: "The real-Git vertical tests compose workspaces with declared checks."},
-		{From: "internal/adapters/gitrepo", To: "internal/adapters/runstore", TestOnly: true, Reason: "The real-Git vertical tests store and read back Run records."},
-		{From: "internal/bootstrap", To: "internal/snapshot", TestOnly: true, Reason: "Composition tests build snapshot check values."},
 		{From: "internal/tooling/release", To: "internal/buildinfo", TestOnly: true, Reason: "Tests compare the packaged notices with the embedded ones."},
 	},
 }
@@ -269,13 +241,6 @@ func (r Rules) Validate() []string {
 		if !line(x.Reason) {
 			report("exception %s: reason must be a single non-empty line without '|'", name)
 		}
-	}
-	// A table that classifies only one package of the guarded-write rule would
-	// silently check nothing; a partial fixture table may have neither.
-	_, writer := r.pkg(GuardedWritePackage)
-	_, user := r.pkg(DocumentWriterPackage)
-	if writer != user {
-		report("the guarded-write rule needs rows for both %s and %s", GuardedWritePackage, DocumentWriterPackage)
 	}
 	return problems
 }

@@ -1,0 +1,8 @@
+---
+kind: std/Rule
+---
+# Certifications
+
+A member has at most one [[training/certification]] per tool family. Completing a course issues it: `issuedOn` is the date of the request time. If the member already has a certification for that family, revoked or not, it is replaced by the newly issued, valid one. A certification has no expiry: it stays valid from its issue until it is revoked.
+
+A certification is **valid on date D** when it is not revoked and `issuedOn ≤ D`. Reservations and check-ins always lie on or after the issue date, so in practice they require a certification for the machine's family that is not revoked. Its `status` is `revoked` when revoked, otherwise `valid`.

@@ -1,9 +1,0 @@
-*
-!go.mod
-!go.sum
-!cmd/markitect/
-!cmd/markitect-runner/
-!internal/
-internal/**/testdata/
-internal/**/*_test.go
-internal/testkit/

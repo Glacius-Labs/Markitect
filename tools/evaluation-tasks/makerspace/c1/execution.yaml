@@ -1,0 +1,11 @@
+checks:
+  - name: build
+    command: go build ./cmd/makerspace
+    directory: realization
+    timeout: 2m
+    environment: golang:1.27
+  - name: test
+    command: go test ./...
+    directory: realization
+    timeout: 5m
+    environment: golang:1.27

@@ -1,6 +1,6 @@
 # Markitect: normative language specification v1
 
-**Redesign decided, not built:** [DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation) replaces this with Markdown Definitions without typed fields, a single Core `Kind` and Libraries of plain Kind Definitions. This page describes Main today.
+**Superseded:** [DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation) replaced the v1 language this page specifies with Markdown Definitions without typed fields, a single Core `Kind` and Libraries of plain Kind Definitions; step T1 built it and removed the v1 form. The [model language guide](../guides/model-language.md) describes Main. This page is kept for its reasoning.
 
 **Status:** Completed v1 design baseline, confirmed by the user on 16 October 2026. This file is the sole normative source for the canonical form. The chosen v1 language scope is fully designed; there are no open language decisions within this scope.
 

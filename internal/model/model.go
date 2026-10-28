@@ -1,209 +1,188 @@
-// Package model checks explicitly supplied canonical model sources.
-// It performs no filesystem, repository, process or provider operations.
-//
-// Check validates canonical v1 content, the entry lock, and model-digest/1
-// bytes. Exact body-link coordinate coverage is a separate tool profile.
 package model
 
-// Identity is a canonical Definition address. Model IDs and source filenames
-// are provenance, not additional components of a Definition's identity.
-type Identity struct {
-	Package string
-	ID      string
-}
-
-// EntryKind describes an acquired source entry. Acquisition must report
-// redirects rather than follow them. Implicit parent directories are allowed;
-// explicit Directory entries retain otherwise empty directories.
-type EntryKind string
-
-const (
-	Regular   EntryKind = "regular"
-	Directory EntryKind = "directory"
-	Redirect  EntryKind = "redirect"
+import (
+	"regexp"
+	"sort"
+	"strings"
 )
 
-// Entry is relative to the supplied model source's acquisition boundary.
-// Path uses '/' without normalization; Bytes is meaningful only for Regular.
-type Entry struct {
-	Path  string
-	Kind  EntryKind
-	Bytes []byte
+// CoreKind is the one Definition Core offers: the Kind of every Kind.
+const CoreKind = "Kind"
+
+// RootPackage is the path of the Root Package, the model folder itself.
+const RootPackage = ""
+
+// File is one input file, its path relative to the folder it was read from,
+// with forward slashes.
+type File struct {
+	Path string
+	Data []byte
 }
 
-// SourceModel supplies a complete acquired tree, not a prefiltered list of
-// Definition files. Origin is an opaque provenance label. ManifestPath names
-// the explicitly selected model.yaml within Entries. Entries remain a slice so
-// duplicate paths cannot disappear before validation.
-// Each SourceModel is a separate acquired boundary. Before Definition capture,
-// the caller must establish physically distinct, non-nested model roots and
-// complete, exactly spelled directories/files. Forbidden redirects in the
-// relative root path, model tree, manifest and lock must be reported without
-// following them. Check verifies the supplied relative paths/entries;
-// opaque origins are not physical-root evidence and are never interpreted as
-// filesystem paths.
-type SourceModel struct {
-	Origin       string
-	ManifestPath string
-	Entries      []Entry
+// LibrarySource is one Library the manifest names, with its files.
+type LibrarySource struct {
+	Name    string
+	Version string
+	Dir     string // where the files come from, for diagnostics
+	Files   []File
+	// Standard marks a Library built into the binary rather than committed
+	// in the project.
+	Standard bool
 }
 
-// Input supplies the local model and every available dependency as bytes.
-// Supplying a dependency does not grant import visibility or select a version.
-type Input struct {
-	Root         SourceModel
-	Dependencies []SourceModel
-	Limits       Limits
-}
-
-// Limits are tool budgets, not language maxima. Zero selects the documented
-// default. Negative values are invalid configuration. A limit refusal is
-// not_completed, never evidence that a model violates the language.
-type Limits struct {
-	SourceBytes     int64
-	Entries         int
-	YAMLDepth       int
-	Models          int
-	BodyBytes       int
-	MarkdownNesting int
-}
-
-// DefaultLimits returns the finite budgets used for zero-valued limit fields.
-// SourceBytes and Entries cover the entire supplied input, including metadata
-// and files outside a declared model root. Models includes the local model.
-// YAMLDepth counts the root as one. BodyBytes bounds each decoded original
-// UTF-8 body before Markdown preprocessing. MarkdownNesting bounds actual block
-// depth (Document excluded), pending Goldmark bracket opener calls per inline
-// block, and constructed AST depth. These are tool refusals, not language maxima.
-func DefaultLimits() Limits {
-	return Limits{SourceBytes: 64 << 20, Entries: 100000, YAMLDepth: 128, Models: 1024, BodyBytes: 2_000_000, MarkdownNesting: 128}
-}
-
-type Status string
-
-const (
-	Passed       Status = "passed"
-	Failed       Status = "failed"
-	NotCompleted Status = "not_completed"
-)
-
-// Source binds diagnostics and IR to an exact acquired path and opaque Origin.
-// For regular files, Digest hashes the original bytes; it is not a canonical
-// model content digest. Directory provenance has an empty Digest. A directory
-// path may be implicit in a supplied descendant; it is not physical-root proof.
+// Source is everything Compile reads: the model folder and the Libraries.
 type Source struct {
-	Origin string
-	Path   string
-	Digest string
+	Dir       string // repository-relative model folder, for diagnostics
+	Files     []File
+	Libraries []LibrarySource
 }
 
-// Position counts one-based lines and Unicode-codepoint columns. A diagnostic
-// may identify a token start; it does not promise an exact body-link YAML span.
-type Position struct {
-	Line   int
-	Column int
+// Model is a compiled model. It is complete even when Compile reports errors;
+// unresolved links then have an empty Target.
+type Model struct {
+	Definitions map[string]*Definition // by ID: "members/member", "std/Rule", "Kind"
+	Packages    map[string]*Package    // by path; RootPackage is ""
+	Libraries   map[string]*Library
+	// Edges are the explicit dependencies between Packages: from, to, and the
+	// links that make them. The implicit edge from a child to its parent is
+	// not listed.
+	Edges map[string]map[string][]Use
 }
 
-type Diagnostic struct {
-	Code     string
-	Message  string
-	Source   Source
-	Position *Position
+// Library is one loaded Library.
+type Library struct {
+	Name        string
+	Version     string
+	Definitions []string
 }
 
-type Phase struct {
-	Name   string
-	Status Status
-}
-
-// Result separates content validity from exact body-link coordinate coverage.
-// A zero Result does not claim success. Diagnostics are deterministically
-// ordered by origin, path, position, code and message.
-type Result struct {
-	Status      Status
-	Models      []ModelResult
-	Diagnostics []Diagnostic
-	Limits      Limits
-	Coordinates Status
-}
-
-// ModelResult validates a supplied model in its complete requirement closure.
-// Packages, Definitions, Canonical and Digest are absent unless this scope fully
-// passed. A passed scope's Packages is its complete own directory inventory in
-// exact UTF-8 name order; an empty list is authoritative only with Status == Passed.
-// Only Input.Root has an entry-lock obligation. For a supplied dependency,
-// lock=passed means no separate sidecar is required in this Model check; its own
-// content may pass independently beside an invalid consumer or entry lock.
-// Provided sidecars never replace the entry lock; their known loader errors
-// remain diagnostics. Result.Status aggregates the complete supplied input.
-type ModelResult struct {
-	Origin      string
-	Manifest    Source
-	Local       bool
-	ID          string
-	Status      Status
-	Phases      []Phase
-	Packages    []Package
-	Definitions []Definition
-	Canonical   []byte
-	Digest      string
-}
-
-// Package is an exact, nonempty directory name relative to the selected model
-// root. Source.Path is relative to the SourceModel acquisition boundary, with
-// its opaque Origin and no directory Digest. Implicit parents, intermediate
-// Packages and empty leaves are included; the model root itself is excluded.
-// This inventory does not make empty Packages importable or include them in
-// canonical bytes. Each ModelResult contains only its own Packages.
+// Package is one folder of the model.
 type Package struct {
-	Name   string
-	Source Source
+	Path        string
+	Parent      string
+	Children    []string
+	Definitions []string // own Definition IDs, sorted
 }
 
-// Definition is the checked, resolved language value, independent of paths,
-// author reference spelling and source ordering. Body remains unchanged.
+// Definition is one Markdown file of the model, of a Library, or Core's Kind.
 type Definition struct {
-	Identity  Identity
-	ModelID   string
-	Kind      Identity
-	Body      string
-	Title     *string
-	Spec      []Field
-	BodyLinks []BodyLink
-	Source    Source
+	ID       string
+	Library  string // "" for the project's model, "core" for Kind
+	Package  string // Package path for the project's model
+	File     string // repository-relative file
+	Kind     string // resolved Kind ID; "" when it does not resolve
+	Internal bool
+	Title    string
+	Words    int
+	Data     []byte // the file's bytes, for comparison
+	// Links holds the front matter's Kind reference first (Kind is true),
+	// then every body link.
+	Links []Link
 }
 
-// Field uses the effective contract field name, not the Property's address.
-// Model check output orders fields by their exact UTF-8 names.
-type Field struct {
-	Name  string
-	Value Value
+// Link is one resolved reference of a Definition.
+type Link struct {
+	Raw     string // the path as written
+	Target  string // Definition ID or Package path; "" when unresolved
+	Package bool   // the target is a Package
+	Kind    bool   // the front matter's kind
+	Line    int
 }
 
-// BodyLink preserves occurrence order and repetition. Display distinguishes
-// omitted display text from an explicitly supplied literal display string.
-type BodyLink struct {
-	Target      Identity
-	Display     *string
-	Coordinates *LinkCoordinates
+// Use is one link that makes a Package depend on another.
+type Use struct {
+	From   string // Definition ID
+	Target string // linked Definition ID or Package path
+	Kind   bool
+	File   string
+	Line   int
 }
 
-// LinkCoordinates separates independently provable body and YAML spans under
-// diagnostic-contract.md. An unavailable span is nil, never a guessed zero.
-type LinkCoordinates struct {
-	Body   *BodySpan
-	Source *SourceSpan
+// InModel reports whether the Definition belongs to the project's model.
+func (d *Definition) InModel() bool { return d.Library == "" }
+
+// PackageName returns a Package path for people: "Root" for the Root Package.
+func PackageName(path string) string {
+	if path == RootPackage {
+		return "Root"
+	}
+	return path
 }
 
-// BodySpan addresses the decoded original body in zero-based UTF-8 bytes.
-type BodySpan struct {
-	StartByte int
-	EndByte   int // Exclusive.
+// ParentOf returns the parent of a Package path.
+func ParentOf(path string) string {
+	if i := strings.LastIndexByte(path, '/'); i >= 0 {
+		return path[:i]
+	}
+	return RootPackage
 }
 
-// SourceSpan addresses the original YAML with one-based Unicode-codepoint
-// positions. End is exclusive; CRLF counts as one line break.
-type SourceSpan struct {
-	Start Position
-	End   Position
+// Within reports whether Package p is q or lies below it.
+func Within(p, q string) bool {
+	return q == RootPackage || p == q || strings.HasPrefix(p, q+"/")
+}
+
+// Ancestors returns the Packages above p, nearest first, ending with Root.
+func Ancestors(p string) []string {
+	var out []string
+	for p != RootPackage {
+		p = ParentOf(p)
+		out = append(out, p)
+	}
+	return out
+}
+
+// PackageOf returns the Package a model Definition ID lies in.
+func PackageOf(id string) string { return ParentOf(id) }
+
+// SortedPackages returns every Package path in order, Root first.
+func (m *Model) SortedPackages() []string {
+	out := make([]string, 0, len(m.Packages))
+	for p := range m.Packages {
+		out = append(out, p)
+	}
+	sort.Strings(out)
+	return out
+}
+
+// ModelDefinitions returns the IDs of the project's own Definitions, sorted.
+func (m *Model) ModelDefinitions() []string {
+	var out []string
+	for id, d := range m.Definitions {
+		if d.InModel() {
+			out = append(out, id)
+		}
+	}
+	sort.Strings(out)
+	return out
+}
+
+// Subtree returns p and every Package below it, sorted.
+func (m *Model) Subtree(p string) []string {
+	var out []string
+	for q := range m.Packages {
+		if Within(q, p) {
+			out = append(out, q)
+		}
+	}
+	sort.Strings(out)
+	return out
+}
+
+var segment = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_-]*$`)
+
+// ValidSegment reports whether s may name a Package, a Definition or a Library.
+func ValidSegment(s string) bool { return segment.MatchString(s) }
+
+// ValidPath reports whether every segment of a slash-separated path is valid.
+func ValidPath(p string) bool {
+	if p == "" {
+		return false
+	}
+	for _, s := range strings.Split(p, "/") {
+		if !ValidSegment(s) {
+			return false
+		}
+	}
+	return true
 }

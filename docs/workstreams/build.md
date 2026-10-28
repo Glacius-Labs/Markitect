@@ -6,17 +6,17 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 
 ## Now
 
-- **Target:** [concept 2.0](../concepts/v2-concept.md) since 28 October; the owner handed its build to this session through the Topics session. Its steps T1 to T7 are in the [delivery plan](../implementation-plan.md#concept-20-build). The owner chose the shape: one implementation, compared with K. Nothing of 2.0 is built.
+- **Target:** [concept 2.0](../concepts/v2-concept.md) since 28 October; the owner handed its build to this session through the Topics session. Its steps T1 to T7 are in the [delivery plan](../implementation-plan.md#concept-20-build). The owner chose the shape: one implementation, compared with K. T1 is on `main` ([PR #850](https://github.com/Glacius-Labs/Markitect/pull/850)): the Markdown language, `check`, `lock`, `refs`, `graph`, `impact` with checklists, `lint`, `init` and both skills; it removed the V1 Run host and the old language. T2 is on `main` ([PR #849](https://github.com/Glacius-Labs/Markitect/pull/849)): the Library m1–m5 and Makerspace w0–c9 models in the 2.0 form, each step passing `check`, with equivalence records. T3 is on `main` ([PR #853](https://github.com/Glacius-Labs/Markitect/pull/853)): the Run remote container, its server-side hooks and the verdict trailer format, tested on Linux and Windows with Docker.
 - **Suite:** E1 and E2 of [evaluation suite v2](../design/evaluation-suite-v2.md) are on `main` in [`tools/evaluation`](../../tools/evaluation/README.md): one sandbox per run with an egress limit, `judge`, `review`, `report`, the failure classifier and the token parser. The [E1 smoke](../validation/eval-e1-sandbox-smoke-20261028.md) and the [E2 smoke](../validation/eval-e2-judge-smoke-20261028.md) passed: the sandbox held, the Library judge separates its reference from its mutants, and K's runs k-02 to k-04 pass all 19 hidden cases with no critical finding. K's capture fix is confirmed.
-- **New project:** authored in the private repository: a fresh build and seven changes, each with requirements, a model, a hidden judge that passes its reference and fails its six mutants, and an equivalence review. Build has not seen its content. Its models are in the concept 1.0 form, its judge image is not pinned, and its checks ran on Windows only.
-- **Concept 1.0 arms:** stopped on 28 October with the shape decision: M (V1 on `main` until 2.0 replaces it), P (`variant/plugin`) and G (`dev/g0-prototype`, the start of T3).
-- **Running:** the T1 session (language and compiler), started 28 October; no real run.
+- **New project:** authored in the private repository: a fresh build and seven changes, each with requirements, a model, a hidden judge that passes its reference and fails its six mutants, and an equivalence review. Build has not seen its content. Its models are converted to the 2.0 form with equivalence records, its judge image is pinned, and its judge self-test passed on Linux for all eight steps.
+- **Concept 1.0 arms:** stopped on 28 October with the shape decision: M (V1, removed from `main` by T1), P (`variant/plugin`) and G (`dev/g0-prototype`, the start of T3).
+- **Running:** T4a (engine, Result, landing), T4b (agents, containers, harness) and T6 (suite against §15, draft [PR #854](https://github.com/Glacius-Labs/Markitect/pull/854)).
 
 ## Next
 
-1. **T1, language and compiler:** running in its own session; Build reviews and merges its PR.
-2. **Beside T1:** T3's hooks from the G0 prototype without its referee, and T6's suite work: change-series tasks, planted model defects and the drift check.
-3. **Small follow-ups:** the new project's models converted to the 2.0 form by its author, and its judge image pinned and self-tested on Linux.
+1. **T6:** review and merge its PR.
+2. **T4, Run engine with `apply` and `verify`:** split into T4a and T4b, both running since 28 October; then one native Claude smoke on the Library.
+3. **New project:** its tasks wired into the suite once T6 is on `main`.
 
 ## Decisions
 
@@ -30,6 +30,8 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 - **Shape of the 2.0 build, 28 October 2026:** one implementation of concept 2.0, compared with K. The plugin variant and V1's open steps 4 and 5 stop; the Git variant's prototype becomes the start of T3 ([build steps](../implementation-plan.md#concept-20-build)). The owner accepted Build's proposal.
 
 - **Acceptance portfolio, 28 October 2026:** concept 2.0 is accepted on the Library and Makerspace, as §15 says, plus the new, unseen project as the check on material nobody tuned on, because arm M was tuned on Makerspace. Its tasks join T6. The owner accepted Build's recommendation.
+
+- **Standing run approval, 28 October 2026:** the owner approved, in advance, the real container and provider runs of the concept 2.0 build and of the evaluation suite. That covers smokes, judge self-tests and the pilot; Build and its sub-sessions run them without asking again. Each run still has a written bounded dispatch under `docs/validation/` (source, limits, abort, cleanup, then its results, failed attempts included), holds the shared engine lock, uses account login only, and never an API key. Not covered: the counted acceptance series, whose protocol the owner approves (T7), and any release or deployment.
 
 ## Questions for the owner
 

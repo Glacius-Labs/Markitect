@@ -1,6 +1,6 @@
 # Standard Libraries
 
-**Redesign decided, not built:** [DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation) replaces this with Markdown Definitions without typed fields, a single Core `Kind` and Libraries of plain Kind Definitions. This page describes Main today.
+**Superseded:** [DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation) replaced these Libraries; the standard Libraries are now `std`, `rest` and `cli` 1.0.0 with Markdown Definitions without typed fields, a single Core `Kind` and Libraries of plain Kind Definitions; step T1 built it and removed the v1 form. The [model language guide](../guides/model-language.md) describes Main. This page is kept for its reasoning.
 
 **Status:** outline v0.3, accepted by the owner on 26 October 2026; v0.3.1 adds clarifications found while drafting `practice` and `architecture`, marked "v0.3.1" below, accepted by the owner on 27 October 2026. The owner decided the open Library questions on 27 and 28 October 2026 ([source](../concepts/sources/library-questions-20261028.md)): `api` 2.0.0 and `architecture` 1.1.0. Canonical model track, workstream W4, built on [Kind interfaces](kind-interfaces.md) (DEC-075 as amended, Core 1.2.0), the [modeling guide](modeling-guide.md) and charter decision D4. All five Libraries are drafted under `libraries/`.
 
