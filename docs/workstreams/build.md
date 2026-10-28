@@ -14,7 +14,7 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 
 ## Next
 
-1. **T4b:** merge, then the native Claude smoke on the Library with the engine and the adapters together.
+1. **T4:** the native Claude smoke on the Library (running), and the three fixes from the owner's concept check of 29 October.
 2. **T5, native host:** the T4 smoke on Windows and on Linux; the suite's native round on Linux with it.
 3. **New project:** its tasks wired into the suite once T6 is on `main`.
 
