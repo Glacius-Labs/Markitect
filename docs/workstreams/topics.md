@@ -10,7 +10,7 @@ State page of the Topics session: the owner's single place to discuss Markitect'
 
 ## Now
 
-- **Design walk-through, part 1: the language.** On 28 October the owner restated what Markitect is ([source](../concepts/sources/model-explicitness-20261028.md#1-what-markitect-is-restated)) and started a walk through the whole design. Decided so far: the model is as explicit as good documentation; Definitions, bodies and links with few typed fields, as Markdown with YAML front matter; Libraries `domain`, `application`, `api`, `practice`, `architecture` (see [Decided](#decided)). Decided next: no typed fields at all; Core shrinks to almost nothing. Open: the title detail; `implements` goes to the organization topic.
+- **Design walk-through, part 1: the language.** On 28 October the owner restated what Markitect is ([source](../concepts/sources/model-explicitness-20261028.md#1-what-markitect-is-restated)) and started a walk through the whole design. Decided so far: the model is as explicit as good documentation; Definitions, bodies and links with few typed fields, as Markdown with YAML front matter; Libraries `domain`, `application`, `api`, `practice`, `architecture` (see [Decided](#decided)). Then no typed fields at all, Core as a single `Kind`, and everything a Package defines reaching its subtree. The language is settled as [DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation). Next: the compiler.
 - **Basis:** clean. One topics page instead of seven lane pages; Main consistent again after #806 (see [Done here](#done-here)); the topic lane worktrees and branches removed (the old Cockpit lane worktree now serves the General session); question 33 (Windows tests) parked.
 
 ## Next
@@ -73,10 +73,10 @@ What is decided and lives nowhere else; decisions with their own page are linked
 - **Language** (28 October; designed, not built):
   - The model is as explicit as good documentation ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation)).
   - No typed fields. A Definition is its Kind, its imports, a body and links, written like documentation; Kinds are named classifications whose body says what they mean. Three rules replace the fields: scope is location (a Rule applies to its own Package and everything below it); the Kind gives links their meaning (what an Interface links to is what it exposes; what a DependencyRule links to is what its Package may depend on); links may target Packages. Exact values such as wire names, refusal codes and enumeration values are written in backticks in prose.
-  - A Definition is a Markdown file with YAML front matter (kind, imports); the file name is the ID. Open detail: the title as the first heading or as a field.
-  - Core shrinks to almost nothing: no Properties and no value types. Whether Kinds keep `implements` depends on how context selection uses Kinds (organization topic).
-  - Consequence for the organization topic: with scope as location, a parent's Rules reach its children, which today they do not.
-  - The Libraries follow clean architecture and are rebuilt as 1.0.0, without compatibility: `domain` (Entity, Value, Enumeration, Invariant, Event), `application` (UseCase, Role, RefusalCode), `api` (Endpoint; REST and CLI bindings later), `practice` (Project, Rule, the obligations), `architecture` (Interface, DependencyRule, Placement).
+  - A Definition is a Markdown file with YAML front matter (kind, imports); the file name is the ID and the main heading is the title.
+  - Core is a single Definition, `Kind`: no Properties, value types or `implements`. Everything a Package defines reaches its whole subtree; the three obligation Kinds collapse into `Rule`.
+  - Recorded as one register entry, [DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation).
+  - The Libraries follow clean architecture and are rebuilt as 1.0.0, without compatibility: `domain` (Entity, Value, Enumeration, Invariant, Event), `application` (UseCase, Role, RefusalCode), `api` (Endpoint; REST and CLI bindings later), `practice` (Project, Rule), `architecture` (Interface, DependencyRule, Placement).
   - The design is settled first; the evaluation and the implementations are then built against it, while the owner also redesigns the Runs.
 - **Modeling skills** (27 October): the change-task trial first; it ran as C5 and passed ([record](../validation/modeling-skill-change-trial-20261027.md)).
 - **Commands** (27–28 October): the frame, the names and A1–A6 ([commands page](commands.md)).
