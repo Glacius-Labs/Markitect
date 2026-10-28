@@ -1,6 +1,6 @@
 # Standard Libraries
 
-**Redesign decided, not built:** [DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation) replaces this with Markdown Definitions without typed fields. This page describes Main today.
+**Redesign decided, not built:** [DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation) replaces this with Markdown Definitions without typed fields, a single Core `Kind` and Libraries of plain Kind Definitions. This page describes Main today.
 
 **Status:** outline v0.3, accepted by the owner on 26 October 2026; v0.3.1 adds clarifications found while drafting `practice` and `architecture`, marked "v0.3.1" below, accepted by the owner on 27 October 2026. The owner decided the open Library questions on 27 and 28 October 2026 ([source](../concepts/sources/library-questions-20261028.md)): `api` 2.0.0 and `architecture` 1.1.0. Canonical model track, workstream W4, built on [Kind interfaces](kind-interfaces.md) (DEC-075 as amended, Core 1.2.0), the [modeling guide](modeling-guide.md) and charter decision D4. All five Libraries are drafted under `libraries/`.
 
@@ -112,5 +112,5 @@ The Package tree is the architecture (modeling guide §2). These Kinds add only 
 | Refusal codes in an Interface? | Yes, as in code, where a package's exported errors are part of its public API. `architecture` 1.1.0 adds `refusalCodes` |
 | Placing an invariant? | No. Placement is for cross-cutting concerns; an Invariant lives in, and is enforced by, the Package that owns its Entities |
 | Maps, unions, defaults, typed formats? | No ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation)). Good documentation does not state them; uniqueness beyond `key` and constraints across fields stay prose in Rules or Invariants |
-| Use cases, REST routes, CLI commands? | Redesign decided, not built: an `application` Library for use cases, `api` for how they are reached, as part of a rebuild of all Libraries ([topics page](../workstreams/topics.md#decided)) |
+| Use cases, REST routes, CLI commands? | Part of the redesign: which Library areas Markitect ships is open ([topics page](../workstreams/topics.md#j-library-areas)) |
 | A wire-envelope Kind? | Not yet. Models state envelopes and statuses as protocol Rules until a real model needs a Kind |

@@ -10,7 +10,7 @@ State page of the Topics session: the owner's single place to discuss Markitect'
 
 ## Now
 
-- **Design walk-through, part 1: the language.** On 28 October the owner restated what Markitect is ([source](../concepts/sources/model-explicitness-20261028.md#1-what-markitect-is-restated)) and started a walk through the whole design. Decided so far: the model is as explicit as good documentation; Definitions, bodies and links with few typed fields, as Markdown with YAML front matter; Libraries `domain`, `application`, `api`, `practice`, `architecture` (see [Decided](#decided)). Then no typed fields at all, Core as a single `Kind`, and everything a Package defines reaching its subtree. The language is settled as [DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation). Next: the compiler.
+- **Design walk-through, part 1: the language.** On 28 October the owner restated what Markitect is ([source](../concepts/sources/model-explicitness-20261028.md#1-what-markitect-is-restated)) and started a walk through the whole design. Decided so far: the model is as explicit as good documentation; Definitions, bodies and links with few typed fields, as Markdown with YAML front matter; Libraries `domain`, `application`, `api`, `practice`, `architecture` (see [Decided](#decided)). Then no typed fields at all, Core as a single `Kind`, scope by location, no Kind with a special meaning, Go's cycle rule and code-like metrics ([DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation)). Next: which Library areas to ship (question 40).
 - **Basis:** clean. One topics page instead of seven lane pages; Main consistent again after #806 (see [Done here](#done-here)); the topic lane worktrees and branches removed (the old Cockpit lane worktree now serves the General session); question 33 (Windows tests) parked.
 
 ## Next
@@ -69,15 +69,16 @@ A desktop UI for understanding the model and its runs, outside V1. The old cockp
 What is decided and lives nowhere else; decisions with their own page are linked.
 
 - **Platform** (27–28 October): no running from WSL and no Linux machine required; our studies run on our own machine; Linux Apply is tested only after Windows Apply works. The Windows Git-start fix is parked, and the Go tests are not run on Windows for now ([measurement](../validation/windows-test-time-20261028.md)).
-- **Libraries** (27–28 October, [PR #806](https://github.com/Glacius-Labs/Markitect/pull/806)): refusal lists have no order; an Interface exposes refusal codes; an Invariant lives with its data and is not placed; no wire-envelope Kind and no alias-only imports yet ([standard Libraries](../design/standard-libraries.md#answered-and-open-questions)).
-- **Language** (28 October; designed, not built):
+- **Libraries** (27–28 October, [PR #806](https://github.com/Glacius-Labs/Markitect/pull/806)): refusal lists have no order; an Interface exposes refusal codes; an Invariant lives with its data and is not placed; no wire-envelope Kind and no alias-only imports yet ([standard Libraries](../design/standard-libraries.md#answered-and-open-questions)). Today's Libraries on Main; replaced by the redesign below once built.
+- **Language** (28 October; designed, not built; [DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation)):
   - The model is as explicit as good documentation ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation)).
-  - No typed fields. A Definition is its Kind, its imports, a body and links, written like documentation; Kinds are named classifications whose body says what they mean. Three rules replace the fields: scope is location (a Rule applies to its own Package and everything below it); the Kind gives links their meaning (what an Interface links to is what it exposes; what a DependencyRule links to is what its Package may depend on); links may target Packages. Exact values such as wire names, refusal codes and enumeration values are written in backticks in prose.
-  - A Definition is a Markdown file with YAML front matter (kind, imports); the file name is the ID and the main heading is the title.
-  - Core is a single Definition, `Kind`: no Properties, value types or `implements`. Everything a Package defines reaches its whole subtree; the three obligation Kinds collapse into `Rule`.
-  - Recorded as one register entry, [DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation).
-  - The Libraries follow clean architecture and are rebuilt as 1.0.0, without compatibility: `domain` (Entity, Value, Enumeration, Invariant, Event), `application` (UseCase, Role, RefusalCode), `api` (Endpoint; REST and CLI bindings later), `practice` (Project, Rule), `architecture` (Interface, DependencyRule, Placement).
+  - Core offers one thing: a Definition with a Kind and a body. A Kind is a Definition of Kind `Kind`. No typed fields.
+  - A Definition is a Markdown file with YAML front matter (Kind, imports); the file name is the ID, the main heading the title. Links may target Packages. Scope is location.
+  - A Library is a set of Kind Definitions for one area; no Kind has a special meaning to Markitect. Libraries are rebuilt as 1.0.0. Which areas Markitect ships is open (question 40).
+  - Go's cycle rule: every link between Packages is an edge, the implicit child-to-parent edge too; a cycle is a compile error, so links point up or sideways, never down.
+  - The model is measured like code from its links (coupling, wrong-way dependencies, size, dead Definitions, reach of a change); warnings only.
   - The design is settled first; the evaluation and the implementations are then built against it, while the owner also redesigns the Runs.
+- **Compiler and analysis** (28 October): one tool, in the product, in Go, in the `markitect` CLI: `check` (errors), `lock`, `refs`, `graph`, `impact --base <commit>`, `lint` (warnings). No Python; the tool under `tools/model-analysis/` is retired. This answers question 1 in direction.
 - **Modeling skills** (27 October): the change-task trial first; it ran as C5 and passed ([record](../validation/modeling-skill-change-trial-20261027.md)).
 - **Commands** (27–28 October): the frame, the names and A1–A6 ([commands page](commands.md)).
 - **Continuous change and Cockpit** (27 October): outside Findings and the read-only model explorer are designed as proposals; nothing is built.
@@ -149,10 +150,14 @@ What is decided and lives nowhere else; decisions with their own page are linked
 36. **Modeling guide Kind names.** Done on 28 October: the guide v0.3 names the Library Kinds.
 37. **What counts as an error lives in prose.** The skill tells agents to treat `unknown-package`, `dependency-rule`, `interface`, `import-cycle` and every strong lint finding as errors; no tool contract says so, and lint thresholds are provisional ([OQ-002](../concepts/register.md#open-questions)). No recommendation yet; it belongs with questions 3 and 4.
 
+### J. Library areas
+
+40. **Which Library areas does Markitect ship?** A Library is just Kind Definitions for an area. Candidates from the discussion: `ddd` (Aggregate, Entity, ValueObject, DomainEvent, DomainException), `clean-architecture` (UseCase, Port and what the layer needs), `api` (Endpoint, later REST and CLI bindings), `practice` (Project, Rule). Open: whether to ship opinionated areas at all, and how few.
+
 ### I. Raised by the documentation test (DEC-079)
 
-38. **Use cases.** Direction decided 28 October: an `application` Library holds them (see [Decided](#decided)). Good documentation describes use cases ("a member reserves a machine"); no Library has a Kind for them, so they hide in operation bodies and Rules.
-39. **How an interface is reached.** Direction decided 28 October: `api` holds the bindings to use cases. Good documentation names REST routes and statuses, CLI commands and flags; the standard Libraries leave them in Rule bodies for now.
+38. **Use cases.** Folded into question 40: a use case Kind belongs to whichever Library area covers it.
+39. **How an interface is reached** (REST routes, CLI commands). Folded into question 40.
 
 ## Handed to Build
 
