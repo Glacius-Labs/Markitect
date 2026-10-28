@@ -90,7 +90,7 @@ spec:
 - **Identities are stable.** Moving a Definition to another Package changes its identity and every reference to it (language contract §9). Makerspace's C7 fold of `billing/payments` into `billing/invoices` is a real example. Plan Packages so that moves stay rare.
 - **A change of intent touches the Definitions that state it.** If an ordinary change touches many Packages, the cut is wrong, the code equivalent of shotgun surgery. A genuinely cross-cutting rule change may touch many.
 - **The model diff is the change order.** Keep it readable for the owner: one concern per change.
-- **Refusals have no order.** An operation lists the refusals it can return, each with its condition. When several can apply to one request and it matters which one is returned, a Rule such as the order of checks, or the operation's body, states the precedence. If the owner left it open, it stays open.
+- **Refusals have no order.** An operation lists the refusals it can return, each with its condition. When several can apply to one request and it matters which one is returned, a Rule such as the order of checks, or the operation's body, states the precedence.
 
 ## 8. Worked example: Makerspace, remodeled (sketch)
 

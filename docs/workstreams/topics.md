@@ -57,7 +57,7 @@ A desktop UI for understanding the model and its runs, outside V1. The old cockp
 
 ### Links between the topics
 
-- **Model analysis** is one question raised in four places. Every lane recommends one Go implementation in the product, used by the skill, the explorer and the impact Command, and retiring the Python tool (question 1).
+- **Model analysis** is one question raised in four places. Every topic lane recommended one Go implementation in the product, used by the skill, the explorer and the impact Command, and retiring the Python tool (question 1).
 - **Compiler, lint and Libraries.** The compiler stays Library-blind; lint may know the standard Libraries and only warns (questions 3, 4).
 - **Outside Findings.** `apply --findings RESULT` (A5) and continuous change's outside reports are the same channel (question 23).
 - **One Result** (A4) feeds the Cockpit's run views, the evaluation suite and all variants; the decision page and the "proof package" are one question (questions 20, 31).
@@ -190,7 +190,7 @@ Nothing yet.
 
 On the owner's instruction of 28 October this session made Main consistent after #806 itself, instead of handing it to Build:
 - [Modeling guide](../design/modeling-guide.md) v0.3: the Library Kind names, refusals without order, Interfaces with refusal codes, an Invariant with its data.
-- The modeling skill: `api` 2.0.0 and `architecture` 1.1.0 in its reference and examples; refusals without order (precedence in a rule only when the requirements state it); Interfaces list refusal codes; an Invariant lives with its Entities.
+- The modeling skill: `api` 2.0.0 and `architecture` 1.1.0 in its reference and examples; refusals without order (where precedence matters, a rule or the operation's body states it); Interfaces list refusal codes; an Invariant lives with its Entities.
 - The analysis tool: the `interface` signal checks refusal codes against `refusalCodes` (a note only for an architecture Library before 1.1.0); a new `invariant-owner` signal.
 - `makerspace-v2/check.py` accepts its frozen 1.0.0 Library copies again, with a note.
 - Delivery plan rows W1–W4; register lines under DEC-011, DEC-074, DEC-075 and DEC-076; the commands page points its open questions here.

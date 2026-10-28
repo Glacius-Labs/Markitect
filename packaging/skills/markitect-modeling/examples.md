@@ -372,7 +372,7 @@ spec:
 
 ## Operation (a mutation of the project Kind)
 
-Refusals have no order; where it matters which one is returned, a rule such as the order of checks states it. A role without a permission entry has none; the body states only the effect.
+Refusals have no order; where it matters which one is returned, a rule such as the order of checks, or the operation's body, states it. A role without a permission entry has none; the body states only the effect.
 
 `model/makerspace/bookings/create-reservation.yaml`
 

@@ -5,8 +5,9 @@ checked with every vendored Library passed by `--dependency`. `check` exits
 nonzero unless the model compiles and `model-lock.yaml` pins the current
 Library digests; `lock` rewrites `model-lock.yaml` from the digests `check`
 reports. Both also require each vendored Library to equal its source when
-both have the same version. A vendored Library older than its source is frozen
-gate material: it is named in a note, and the lock still pins its digest.
+both have the same version. A vendored Library with another version than its
+source is frozen gate material: it is named in a note, and the lock still pins
+its digest.
 
 On Windows, set TMP and TEMP to %LOCALAPPDATA%\\Temp first if Git refuses the
 system temporary folder.
