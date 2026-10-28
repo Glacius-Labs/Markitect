@@ -25,4 +25,24 @@ This is the dispatch and the record of the first real Claude Code turns in conce
 
 ## Results
 
-Not run yet: the host login's access token expired at 21:36Z, before the dispatch. The run waits for a refreshed login.
+| Question | Verdict |
+| --- | --- |
+| Q1, Claude Managers in the 2.0 container | **Passed.** Both starts passed the login check (`claude auth status`: `claude.ai`) and the launch check of their only turn: `system/init` reported `claude-sonnet-5-5`, `2.1.308`, `apiKeySource` `none`, and exactly the six built-in tools plus the start's Manager tools (maker: `submit`, `ask`, `escalate`, `note`; checker: `review`, `ask`, `escalate`, `note`). Both ended `finished` through the agent port with an empty `Cleanup` |
+| Q2, through the real Run remote | **Passed.** The maker wrote `src/members/member.go` (`Member` with `Name` and `ID`, and a `Validate`) and called `submit` once. The hook accepted it after the required check (`578019593b6f`, one `changed` verdict). The checker read the diff and the registry page and approved it with a commit that changes no file (`6dba3c087b22`), which the hook accepted |
+
+One attempt was used, at 22:25:03–22:25:34Z (31 s for both starts, including container start, clone and cleanup).
+
+| Item | Value |
+| --- | --- |
+| Freeze | `20716c7c53c5c25772bd502cd98ce6538e814803`, clean worktree. The native test then gained an assertion on the branch's trailers, which does not change what ran |
+| Image | `sha256:3e1e0cd65f2b9b47adf3000b98045c824530018ade3c70f6f664a4420229dfce`, built from the freeze with `MARKITECT_VERSION=20716c7c` |
+| Engine | Docker Desktop 29.9.2 on Windows 11, host-native |
+| Login | Before the dispatch, under the engine lock, the host login was refreshed with one `claude -p "ok"` on the host, with every `ANTHROPIC_*` and `CLAUDE_*` variable cleared, as Build directed: its expiry moved from 21:36:23Z to 06:24:14Z on 29 October. No token value was recorded |
+| Tokens | Maker: 29,837 input (21,725 of them cache reads), 926 output. Checker: 22,679 input (14,644 cache reads), 935 output |
+| Lock | Held from before the refresh (taken about 22:23Z) to 22:26:02Z, then released by nonce. No other container ran on the engine |
+| Cleanup | After the test, no container, volume or network of the Run remained |
+| Credentials | The post-check scanned all seven evidence files for the login's access and refresh tokens, the agents' remote tokens, Anthropic key shapes, JWTs and token key names with values: no match |
+
+**Observation.** The maker added a rule the model does not state: `Validate` also rejects an empty `Name`. The checker saw it and approved anyway, reasoning that it follows from "full name". Under concept §12 (conforming artifacts preserved, optional improvements noted, not made unasked), this is a borderline addition. It is recorded here for the evaluation's judgement, not changed in the harness.
+
+**Not exercised:** a rejection and a second round, messages along the tree, more than one Manager, the deadline, a provider failure and its class, and Codex, which has no tokens.

@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -62,6 +63,10 @@ func TestNativeClaudeMakerAndChecker(t *testing.T) {
 	}
 	if checker.Reason != agentport.Finished || checker.Cleanup != "" {
 		t.Fatalf("checker end %+v\nbranch:\n%s", checker, log)
+	}
+	// The work is on the remote: a submission and its review.
+	if !strings.Contains(log, "Markitect-Verdict: members/member |") || !strings.Contains(log, "Markitect-Review: ") {
+		t.Fatalf("the branch holds no submission and review:\n%s", log)
 	}
 }
 

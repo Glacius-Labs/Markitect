@@ -24,7 +24,7 @@ These reports preserve the exact scope, inputs, source references and outcomes s
 
 ## Concept 2.0 build
 
-- [T4b Claude Code adapter: native qualification in the 2.0 Manager container — 28 October 2026](t4b-claude-adapter-20261028.md): dispatch for one real Claude maker and checker against a real Run remote; not run yet, waiting for a refreshed host login
+- [T4b Claude Code adapter: native qualification in the 2.0 Manager container — 28 October 2026](t4b-claude-adapter-20261028.md): one real Claude maker and checker in the 2.0 Manager container against a real Run remote passed on 20716c7c: launch and login checks held, the submission passed the hook and its check, and the checker approved with an empty commit, in 31 s; no secret in the evidence, nothing left on the engine
 
 ## Modeling and platform
 
