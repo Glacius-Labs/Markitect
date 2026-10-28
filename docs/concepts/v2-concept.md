@@ -128,6 +128,8 @@ Every Run ends with one Result page, written by the host from commits, verdicts 
 
 A Run starts from a fixed commit of the target branch. If the branch has not moved, the result lands without the owner's review ([DEC-078](register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review)). If it moved, the host merges the new commits in; the result lands only if the merge is clean, the required checks pass on the merged state and the incoming changes touch nothing in the Run's impact. Otherwise it stays on its branch, the Result says why, and a follow-up Run starts from the new state. Runs whose impact overlaps take turns on one branch.
 
+Results live in the repository as Markdown under `.markitect/results/<run>.md`: a landing Result is part of the landing commit; a Result that does not land stays on its Run branch, pushed as `markitect/runs/<run>`. A Run's containers and remote go away when it ends; the branches of landed Runs are deleted, the others stay until a later Run lands over the same impact or the owner deletes them. Markitect never touches the user's working tree: a Run starts from a commit, and landing updates the target branch, which the user pulls like any colleague's push.
+
 ## 7. Commands that start agents
 
 | Command | Agents | Changes | Ends with |
@@ -205,7 +207,7 @@ No app for now ([DEC-085](register.md#dec-085-markdown-tools-are-the-cockpit-for
 6. **Hooks and integration: decided** 28 October: parents push their own paths plus unchanged, approved child commits; the checker's approval is a commit without file changes; the required checks run on every submission.
 7. **Commands without a model change: decided** 28 October: a base (by default the last landed commit) with impact over model and file changes; focus Commands take the whole tree or `--package`; in `verify` the checkers write the verdicts.
 8. **Control files: decided** 28 October: accounted automatically; the hooks refuse model, manifest, lock and `execution.yaml` changes in a Run and let only a Package's own Manager change its registry page.
-9. **Results and leftovers.** Where Results are stored, especially when nothing lands; cleanup of Run branches and retention of evidence (open since DEC-078); landing while the user's local checkout has uncommitted changes.
+9. **Results and leftovers: decided** 28 October: Results in the repository under `.markitect/results/`; Run branches cleaned up after landing; the working tree is never touched.
 10. **Acceptance.** What counts as concept 2.0 being achieved; concept 1.0's acceptance (§25) does not carry over.
 
 **Details for the build:** the verdict trailer format; how far impact follows dependents; the harness and model of makers and checkers; when the full Run is due; the format of a mandate; the Result page's exact layout.
