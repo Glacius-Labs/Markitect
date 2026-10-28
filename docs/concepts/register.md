@@ -94,6 +94,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-077](#dec-077-development-pace-and-linux-first-execution) | Decision | Development pace and Linux-first execution | Accepted; Linux-only CI, Linux Docker way tracked in the delivery plan; the runner's checkout mount and branch hand-back superseded by DEC-078 |
 | [DEC-078](#dec-078-agents-collaborate-through-a-git-remote-without-owner-review) | Decision | Agents collaborate through a Git remote, without owner review | Accepted direction; design open, tracked in the delivery plan |
 | [DEC-079](#dec-079-the-model-is-as-explicit-as-good-documentation) | Decision | The model is as explicit as good documentation | Accepted |
+| [DEC-080](#dec-080-the-model-is-typed-documentation) | Decision | The model is typed documentation | Accepted design; not built |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -1011,6 +1012,29 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - Maps, unions, defaults and typed formats are not added to Core or the Libraries. Uniqueness beyond an Entity's `key` and constraints across fields stay prose in Rules or Invariants; ranges stay as `Values.Scalar` has them. This closes the expressiveness gaps of W1 ([DEC-074](#dec-074-canonical-model-track-parallel-to-v1)): they are settled by this test, not by additions.
   - It agrees with [DEC-061](#dec-061-what-an-extracted-model-contains): the binding part is what callers rely on, and incidental detail is free.
 - **Open:** the test shows two things good documentation states and the standard Libraries have no Kind for: use cases, and how an interface is reached (REST routes and statuses, CLI commands and flags). Whether they get Library Kinds is a separate owner question on the [topics page](../workstreams/topics.md#questions-for-the-owner).
+
+### DEC-080 The model is typed documentation
+
+- **Status:** Accepted by the owner as the design of the canonical language and the standard Libraries, 28 October 2026, in the Topics session's design walk-through ([topics page](../workstreams/topics.md#decided)). Not built. The design is settled first; the evaluation and the implementations are then built against it.
+- **Decision:**
+  - A Definition is one Markdown file with YAML front matter. The front matter holds its Kind and imports; the body is documentation with links. The file name is the ID, the main heading is the title, and a Package is a folder.
+  - There are no typed fields. Kinds are named classifications whose body says what they mean. Exact values such as wire names, refusal codes and enumeration values are written in prose.
+  - Three rules replace the fields. Scope is location: everything a Package defines reaches its whole subtree. The Kind gives links their meaning: what an Interface links to is what it exposes, and what a DependencyRule links to is what its Package may depend on. Links may target Packages.
+  - Core is a single Definition, `Kind`. There are no Properties, value types or `implements`.
+  - The standard Libraries follow clean architecture and are rebuilt as 1.0.0, with no compatibility to earlier versions:
+    - `domain`: Entity, Value, Enumeration, Invariant, Event;
+    - `application`: UseCase, Role, RefusalCode;
+    - `api`: Endpoint, with REST and CLI bindings later;
+    - `practice`: Project, Rule;
+    - `architecture`: Interface, DependencyRule, Placement.
+  - The yardstick is [DEC-079](#dec-079-the-model-is-as-explicit-as-good-documentation): the model states what good documentation would.
+- **Supersedes, once built:** the language contract v1 and Core 1.2.0 with its Kind interfaces and value types ([DEC-075](#dec-075-kind-extension-and-one-core-120)); the Libraries `values`, `data`, `api`, `practice` and `architecture` of W4 ([DEC-074](#dec-074-canonical-model-track-parallel-to-v1)); D3's distinction between typed references and body links, since only links remain; and the YAML file format.
+- **Consequences:**
+  - Context selection changes: a parent's Definitions reach its children, which today they do not. The organization topic settles the details.
+  - The compiler loses its typing of fields and values. It keeps names, imports, links, Library versions, the Package tree and file accounting.
+  - The analysis lint reads links by Kind instead of typed fields.
+  - The modeling skill and guide are rewritten for the new form.
+  - Existing models are converted. Frozen study material stays at its recorded commits.
 
 ## Promises
 

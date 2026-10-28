@@ -1,5 +1,7 @@
 # Markitect: normative language specification v1
 
+**Redesign decided, not built:** [DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation) replaces this with Markdown Definitions without typed fields. This page describes Main today.
+
 **Status:** Completed v1 design baseline, confirmed by the user on 16 October 2026. This file is the sole normative source for the canonical form. The chosen v1 language scope is fully designed; there are no open language decisions within this scope.
 
 **Extension of 26 October 2026:** Kind interfaces (Section 3.3) and the value-type field `valueType`, with `markitect-core` 1.2.0, confirmed by the owner ([DEC-075](../concepts/register.md#dec-075-kind-extension-and-one-core-120), as amended); the [Kind interfaces design](kind-interfaces.md) keeps their reasoning and migration. It is the explicit extension decision that Section 11 requires for new language features.
