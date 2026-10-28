@@ -96,6 +96,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-079](#dec-079-the-model-is-as-explicit-as-good-documentation) | Decision | The model is as explicit as good documentation | Accepted |
 | [DEC-080](#dec-080-the-model-is-typed-documentation) | Decision | The model is typed documentation | Accepted design; not built |
 | [DEC-081](#dec-081-the-organization-knows-broad-at-the-top-and-deep-below) | Decision | The organization knows broad at the top and deep below | Accepted design; not built |
+| [DEC-082](#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager) | Decision | One Run per change: impact decides who works, maker and checker per Manager | Accepted direction; details open, not built |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -1047,6 +1048,17 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - `execution.yaml` keeps only the required checks: name, command, directory, timeout and the environment it runs in. The host runs them at the fixed points of a Run, and a submission that fails them is refused ([DEC-055](#dec-055-a-submission-must-pass-its-required-checks)). Modeled scope disappears, since scope is location.
 - **Supersedes, once built:** the ownership and scope declarations of `execution.yaml`, the YAML registry shards, and the context rules of the [Manager context](../design/manager-context.md) design where they differ.
 - **Open:** how Managers collaborate in a Run (delegation, review, integration), which the owner is redesigning together with the Runs.
+
+### DEC-082 One Run per change: impact decides who works, maker and checker per Manager
+
+- **Status:** Accepted by the owner as the direction of the Run redesign, 28 October 2026, in the Topics session's design walk-through ([topics page](../workstreams/topics.md#decided)). Details are open; not built.
+- **Priority:** consistency of the artifacts with the canonical model and their quality come first, so that the owner does not need to review, nothing drifts and the process can be trusted. Time and token cost come second.
+- **Direction:**
+  - Impact decides who works, like an incremental build. A model change reaches the Definitions it changes, through the registry the files that realize them, through links and the code's own imports the Packages that depend on them, and their parents up to Root. Untouched areas do not start. The required checks always run on the whole repository, and a full audit Run now and then catches what impact missed.
+  - One Run per change instead of Assessment, Implement and Verify as separate full-tree Runs. Every Manager is two agents: a maker and a fresh checker that sees only the model and the diff.
+  - Every Definition in a Manager's scope gets a verdict with its evidence: conforms, changed, or model problem. The host refuses a submission while a Definition is left open. The maker checks that each Definition makes sense, plans, implements and checks again; the checker re-checks every verdict and sends defects straight back.
+  - The parent reviews and integrates its children. Root's checker is the final independent check before publication. A model problem still ends the Run without publication ([DEC-063](#dec-063-the-model-is-authoritative-defects-escalate)).
+- **Changes, once built:** impact narrows participation, unlike [DEC-039](#dec-039-deterministic-manager-process); Assessment, Implement and Verify as separate Runs ([concept 1.0 §10.4, §11](v1-concept.md#104-apply-flow), [DEC-058](#dec-058-apply-always-executes-before-independent-verify)) become one Run with makers and checkers.
 
 ## Promises
 
