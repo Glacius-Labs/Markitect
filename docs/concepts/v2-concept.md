@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| **Version** | 2.0 – draft for the owner's review |
+| **Version** | 2.0 – accepted target |
 | **Date** | 28 October 2026 |
 | **Basis** | The owner's decisions of 28 October 2026 in the Topics session's design walk-through: [DEC-079](register.md#dec-079-the-model-is-as-explicit-as-good-documentation) to [DEC-085](register.md#dec-085-markdown-tools-are-the-cockpit-for-now), and [DEC-061](register.md#dec-061-what-an-extracted-model-contains) as confirmed that day. The register entries govern; this page puts them in one readable order. |
-| **State** | Designed, nothing built. On the owner's acceptance it replaces [concept 1.0](v1-concept.md) as the target. Until then concept 1.0 describes Main. |
+| **State** | Accepted by the owner as Markitect's target on 28 October 2026 ([DEC-086](register.md#dec-086-concept-20-is-the-target)). Designed, nothing built. [Concept 1.0](v1-concept.md) describes Main until 2.0 is built. |
 
 ## 1. What Markitect is for
 

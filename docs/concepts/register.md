@@ -1,5 +1,7 @@
 # Concept register
 
+**Current target, 28 October 2026:** [Concept 2.0](v2-concept.md) ([DEC-086](#dec-086-concept-20-is-the-target)), not built yet.
+
 **Current V1 concept, 24 October 2026:** [Concept 1.0](v1-concept.md) consolidates the owner's concept v0.18 and the accepted decisions D10–D18 ([DEC-068](#dec-068-v1-concept-10)). It supersedes conflicting statements in the earlier [V1 scope clarification](sources/v1-scope-clarification-20261023.md), the [source implementation approval](sources/v1-source-implementation-approval-20261023.md) and older entries; their original text stays. The [delivery plan](../implementation-plan.md) governs implementation and tracks known deviations of the code.
 
 This register records Markitect's long-term vision, product-level decisions, clarifications, endorsed directions, promises, assumptions, concepts, future enhancements, ideas and open questions. Each entry has a status and an origin. "Owner" means Markitect's product owner. The [concept record guide](README.md) defines entry types, statuses and the rules for changing entries. The [vision](../vision.md) presents the thesis these entries support. Earlier collections from the Concepts and Ideas chats are preserved in the [sources](sources/README.md) and mapped [below](#imported-collections).
@@ -82,7 +84,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-065](#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration) | Decision | Work through the cockpit: agent-proposed model changes and configuration | Accepted by the owner; implementation started |
 | [DEC-066](#dec-066-the-cockpit-is-markitects-desktop-app-and-starts-and-stops-apply) | Decision | The cockpit is Markitect's desktop app and starts and stops Apply | Accepted by the owner; implemented; first real acceptance recorded |
 | [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs) | Decision | Agent workspaces and reviewed handoffs | Accepted; partially superseded by the V1 scope clarification and [DEC-068](#dec-068-v1-concept-10); no-push rule and handoff transport superseded by DEC-078 |
-| [DEC-068](#dec-068-v1-concept-10) | Decision | V1 concept 1.0 | Accepted; implementation tracked in the delivery plan; publication and handoffs change with DEC-078 |
+| [DEC-068](#dec-068-v1-concept-10) | Decision | V1 concept 1.0 | Accepted; implemented on Main; superseded as the target by DEC-086 |
 | [DEC-069](#dec-069-documentation-is-written-in-english) | Decision | Documentation is written in English | Accepted; canonical-model documents translated (#679), historical records archived (#688), core vocabulary translated (#690) |
 | [DEC-070](#dec-070-parallel-writers-where-useful) | Decision | Parallel writers where useful | Accepted |
 | [DEC-071](#dec-071-repository-structure-and-archive) | Decision | Repository structure and archive | Accepted; execution in slice R2; keeping `.markitect/` here superseded by DEC-076 |
@@ -100,6 +102,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-083](#dec-083-the-host-runs-natively-each-run-lives-in-containers) | Decision | The host runs natively; each Run lives in containers | Accepted design; not built |
 | [DEC-084](#dec-084-continuous-change-triggers-become-findings-or-model-proposals-autonomy-grows-in-steps) | Decision | Continuous change: triggers become Findings or model proposals, autonomy grows in steps | Accepted direction; design only |
 | [DEC-085](#dec-085-markdown-tools-are-the-cockpit-for-now) | Decision | Markdown tools are the cockpit for now | Accepted |
+| [DEC-086](#dec-086-concept-20-is-the-target) | Decision | Concept 2.0 is the target | Accepted; not built |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -1100,6 +1103,13 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 - **Status:** Accepted by the owner, 28 October 2026, in the Topics session's design walk-through ([topics page](../workstreams/topics.md#decided)).
 - **Decision:** no Cockpit app for now. Markitect writes everything it produces as Markdown (the model per [DEC-080](#dec-080-the-model-is-typed-documentation), the registry pages, the Result of every Run, and `lint`, `impact` and `graph` output), so ordinary Markdown tools are the cockpit: Obsidian or an editor to explore the model and its links, GitHub to read Results. The [model explorer](../design/model-explorer.md) stays a proposal, to be picked up if real use shows something those tools cannot show, such as impact on the graph or a live view of a running Run. The personal agent of [IDEA-015](#idea-015-cockpit-with-a-conversational-personal-agent) stays parked.
+
+### DEC-086 Concept 2.0 is the target
+
+- **Status:** Accepted by the owner, 28 October 2026.
+- **Decision:** [concept 2.0](v2-concept.md) is Markitect's target. It brings together [DEC-079](#dec-079-the-model-is-as-explicit-as-good-documentation) to [DEC-085](#dec-085-markdown-tools-are-the-cockpit-for-now), the confirmed reading of [DEC-061](#dec-061-what-an-extracted-model-contains) and the answers to the ten questions its review raised, with its acceptance in §15.
+- **Supersedes:** [concept 1.0](v1-concept.md) as the target ([DEC-068](#dec-068-v1-concept-10)). Concept 1.0 stays the record of V1 and describes what Main implements until concept 2.0 is built.
+- **Next:** the evaluation suite and the implementations are built against concept 2.0 and its acceptance; the Build and evaluation session writes those steps into the [delivery plan](../implementation-plan.md).
 
 ## Promises
 
