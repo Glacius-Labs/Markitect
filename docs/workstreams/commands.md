@@ -1,12 +1,12 @@
 # Agentic commands
 
-**Redesign decided, not built:** [DEC-082](../concepts/register.md#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager) replaces the three Run kinds with one Run per change, makers and checkers, and the Commands `apply` and `verify`. This page records the frame as agreed on 27 and 28 October 2026 and describes Main today.
+**Redesign decided, being built:** [DEC-082](../concepts/register.md#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager) replaces the three Run kinds with one Run per change, makers and checkers, and the Commands `apply` and `verify`. This page records the frame as agreed on 27 and 28 October 2026 and describes Main today.
 
 Canonical page of the commands topic, one of the topics on the [topics page](topics.md). It describes the agentic commands Markitect runs through the model-derived Manager hierarchy as **contracts**: what a command takes, what it returns and what it guarantees. How a variant realizes them belongs to the variants: the host variant (today's V1), the Claude Code plugin variant and the Git variant ([DEC-078](../concepts/register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review)). The [workstreams](../workstreams.md) page lists the sessions and variants.
 
 | | |
 |---|---|
-| **Status** | The frame below and answers A1–A6 are agreed with the owner (27 and 28 October 2026). Nothing is built until the owner says so. The open questions are on the [topics page](topics.md#d-commands-and-the-result). |
+| **Status** | The frame below and answers A1–A6 are agreed with the owner (27 and 28 October 2026). `apply` and `verify` are built as part of [concept 2.0](../concepts/v2-concept.md#7-commands-that-start-agents); the others come after its acceptance. The open questions are on the [topics page](topics.md#d-commands-and-the-result). |
 | **Scope** | Command contracts: purpose, inputs, outputs, guarantees, status; candidate commands; open questions. |
 | **Not in scope** | How a variant realizes a command; the evaluation suite; model language, modeling and Authoring, and the compiler; continuous triggers; the Cockpit. The variants and the evaluation suite belong to the [Build and evaluation session](build.md); the rest are other topics on the [topics page](topics.md). |
 | **Sources** | [V1 concept 1.0](../concepts/v1-concept.md) (§4, §7, §9–§12, §18–§21), the [concept register](../concepts/register.md), the [architecture](../architecture.md). This page links to them and does not change them. |

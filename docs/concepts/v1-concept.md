@@ -9,7 +9,7 @@
 | **Scope** | Narrow V1: Model → Artifacts |
 | **Basis** | The owner's concept [v0.18](sources/v1-concept-v018-20261024.md) and decisions D10–D18 accepted on 24 October ([decision record](sources/v1-concept-decisions-20261024.md), [DEC-068](register.md#dec-068-v1-concept-10)); English text per [DEC-069](register.md#dec-069-documentation-is-written-in-english) |
 
-> **Superseded as the target on 28 October 2026** by [concept 2.0](v2-concept.md) ([DEC-086](register.md#dec-086-concept-20-is-the-target)). This page stays the record of V1 and describes what Main implements until concept 2.0 is built.
+> **Superseded as the target on 28 October 2026** by [concept 2.0](v2-concept.md) ([DEC-086](register.md#dec-086-concept-20-is-the-target)). This page stays the record of V1; concept 2.0's first build step replaced V1's language and Run host on Main.
 
 > **The canonical model describes the intended project world. The Manager organization is derived from it. The Managers realize, review and integrate that world; the host provides a few clear technical guarantees for it.**
 

@@ -1,6 +1,6 @@
 # Concept register
 
-**Current target, 28 October 2026:** [Concept 2.0](v2-concept.md) ([DEC-086](#dec-086-concept-20-is-the-target)), not built yet.
+**Current target, 28 October 2026:** [Concept 2.0](v2-concept.md) ([DEC-086](#dec-086-concept-20-is-the-target)), being built ([delivery plan](../implementation-plan.md#concept-20-build)).
 
 **Current V1 concept, 24 October 2026:** [Concept 1.0](v1-concept.md) consolidates the owner's concept v0.18 and the accepted decisions D10–D18 ([DEC-068](#dec-068-v1-concept-10)). It supersedes conflicting statements in the earlier [V1 scope clarification](sources/v1-scope-clarification-20261023.md), the [source implementation approval](sources/v1-source-implementation-approval-20261023.md) and older entries; their original text stays. The [delivery plan](../implementation-plan.md) governs implementation and tracks known deviations of the code.
 
@@ -98,11 +98,11 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-079](#dec-079-the-model-is-as-explicit-as-good-documentation) | Decision | The model is as explicit as good documentation | Accepted |
 | [DEC-080](#dec-080-the-model-is-typed-documentation) | Decision | The model is typed documentation | Accepted design; not built |
 | [DEC-081](#dec-081-the-organization-knows-broad-at-the-top-and-deep-below) | Decision | The organization knows broad at the top and deep below | Accepted design; not built |
-| [DEC-082](#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager) | Decision | One Run per change: impact decides who works, maker and checker per Manager | Accepted direction; details open, not built |
+| [DEC-082](#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager) | Decision | One Run per change: impact decides who works, maker and checker per Manager | Accepted; being built |
 | [DEC-083](#dec-083-the-host-runs-natively-each-run-lives-in-containers) | Decision | The host runs natively; each Run lives in containers | Accepted design; not built |
 | [DEC-084](#dec-084-continuous-change-triggers-become-findings-or-model-proposals-autonomy-grows-in-steps) | Decision | Continuous change: triggers become Findings or model proposals, autonomy grows in steps | Accepted direction; design only |
 | [DEC-085](#dec-085-markdown-tools-are-the-cockpit-for-now) | Decision | Markdown tools are the cockpit for now | Accepted |
-| [DEC-086](#dec-086-concept-20-is-the-target) | Decision | Concept 2.0 is the target | Accepted; not built |
+| [DEC-086](#dec-086-concept-20-is-the-target) | Decision | Concept 2.0 is the target | Accepted; being built |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -1059,11 +1059,11 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-082 One Run per change: impact decides who works, maker and checker per Manager
 
-- **Status:** Accepted by the owner as the direction of the Run redesign, 28 October 2026, in the Topics session's design walk-through ([topics page](../workstreams/topics.md#decided)). Details are open; not built.
+- **Status:** Accepted by the owner as the direction of the Run redesign, 28 October 2026, in the Topics session's design walk-through ([topics page](../workstreams/topics.md#decided)); details decided with concept 2.0 ([DEC-086](#dec-086-concept-20-is-the-target)) and on 29 October 2026 (below); being built.
 - **Priority:** consistency of the artifacts with the canonical model and their quality come first, so that the owner does not need to review, nothing drifts and the process can be trusted. Time and token cost come second.
 - **Direction:**
-  - Impact decides who works, like an incremental build. A model change reaches the Definitions it changes, through the registry the files that realize them, through links and the code's own imports the Packages that depend on them, and their parents up to Root. Untouched areas do not start. The required checks always run on the whole repository, and a full audit Run now and then catches what impact missed.
-  - One Run per change instead of Assessment, Implement and Verify as separate full-tree Runs. Every Manager is two agents: a maker and a fresh checker that sees only the model and the diff.
+  - Impact decides who works, like an incremental build. A model change reaches the Definitions it changes, through the registry the files that realize them, through links the Packages that depend on them, and their parents up to Root; not through the code's own imports (29 October 2026). Untouched areas do not start. The required checks always run on the whole repository, and a full audit Run now and then catches what impact missed.
+  - One Run per change instead of Assessment, Implement and Verify as separate full-tree Runs. Every Manager is two agents: a maker and a fresh checker that sees the model, the repository at the submission and its diff, but not the Shared Notes (29 October 2026).
   - A Manager's checklist (owner, 28 October 2026): its own Definitions the change reaches, inherited Definitions the change itself edited (a changed Rule at Root becomes an item for every Manager below it; an ancestor's Definition only reached through a touched file or a link does not), and every Finding assigned to it; with `--full`, all own and inherited Definitions. A verdict means conforming to the item and to the Rules above it.
   - Every Definition in a Manager's scope gets a verdict with its evidence: conforms, changed, or model problem. The host refuses a submission while a Definition is left open. The maker checks that each Definition makes sense, plans, implements and checks again; the checker re-checks every verdict and sends defects straight back.
   - The parent reviews and integrates its children. Root's checker is the final independent check before publication. A model problem still ends the Run without publication ([DEC-063](#dec-063-the-model-is-authoritative-defects-escalate)).
@@ -1074,6 +1074,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - Two Commands to start, both returning the Result: `markitect apply` realizes the model with makers and checkers, for the impact of a change by default and for the whole tree with `--full`, the occasional audit that also repairs drift; `markitect verify` only checks, with checkers only, and changes nothing. A `verify` Result can be passed into a later `apply` as its starting Findings. Every Command takes a base, by default the last commit Markitect landed, and its impact covers changes in the model and in the files since then; `bughunt`, `security` and `cleanup` take the whole tree or `--package`; in `verify` the checkers write the verdicts (owner, 28 October 2026). `explain` and custom Commands come later. Further Commands are short declarations over the same mechanism (makers and checkers, or checkers only, with a focus): `improve` (Managers use `lint`, `graph` and `refs` on their area and propose model changes for the owner to accept), `bughunt` and `security` (checkers only; a defect the model covers goes to `apply` as a repair, one where the model is silent becomes a model proposal), and `cleanup` (makers and checkers on the unchanged model; behavior stays). Projects add their own the same way.
   - One Finding input for every source (`verify`, `bughunt`, `security`, later issues and incidents): a Finding names a Definition and says what was observed and what is expected; raw report text never reaches an agent. `apply --findings FILE` takes them; a Finding whose Definition is gone becomes a side note. Each Finding is a checklist item of the Manager owning that Definition: the maker fixes it, the checker confirms it, and the Result shows it per Finding. A report about something the model does not state is a model proposal for the owner, not a Finding. This replaces the [outside Findings](../design/outside-findings.md) design.
   - The model tools `check`, `lock`, `refs`, `graph`, `impact` and `lint` start no agents.
+- **Clarified, 29 October 2026,** after an independent check of the first build steps against concept 2.0: landing compiles every submission and the state it lands with `markitect check`, so a file that enters unregistered never lands; `verify` runs the required checks like every Run; the checker sees the model, the repository at the submission and its diff, but not the Shared Notes, so nothing its maker wrote besides the commit reaches it; impact follows links and the registry, not the code's own imports, since the required checks run on the whole repository and the occasional full Run catches the rest.
 - **Changes, once built:** impact narrows participation, unlike [DEC-039](#dec-039-deterministic-manager-process); Assessment, Implement and Verify as separate Runs ([concept 1.0 §10.4, §11](v1-concept.md#104-apply-flow), [DEC-058](#dec-058-apply-always-executes-before-independent-verify)) become one Run with makers and checkers.
 
 ### DEC-083 The host runs natively; each Run lives in containers
@@ -1108,8 +1109,9 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 - **Status:** Accepted by the owner, 28 October 2026.
 - **Decision:** [concept 2.0](v2-concept.md) is Markitect's target. It brings together [DEC-079](#dec-079-the-model-is-as-explicit-as-good-documentation) to [DEC-085](#dec-085-markdown-tools-are-the-cockpit-for-now), the confirmed reading of [DEC-061](#dec-061-what-an-extracted-model-contains) and the answers to the ten questions its review raised, with its acceptance in §15.
-- **Supersedes:** [concept 1.0](v1-concept.md) as the target ([DEC-068](#dec-068-v1-concept-10)). Concept 1.0 stays the record of V1 and describes what Main implements until concept 2.0 is built.
+- **Supersedes:** [concept 1.0](v1-concept.md) as the target ([DEC-068](#dec-068-v1-concept-10)). Concept 1.0 stays the record of V1; concept 2.0's first build step replaced V1's language and Run host on Main.
 - **Next:** the evaluation suite and the implementations are built against concept 2.0 and its acceptance; the Build and evaluation session writes those steps into the [delivery plan](../implementation-plan.md).
+- **Clarified, 29 October 2026:** on planted model defects (§15, stops right), a result equal to its start counts as not landed, for every arm alike, and every arm gets the same instruction to change nothing and say why when the requirements contradict each other or leave a boundary behavior open.
 
 ## Promises
 
