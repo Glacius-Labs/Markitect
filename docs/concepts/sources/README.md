@@ -1,6 +1,6 @@
 # Concept record sources
 
-Sources preserve where the [register](../register.md) entries come from. Owner statements stay verbatim and in their original language, and any context a recorder adds is labeled. Do not edit source text. Record a change of meaning as a new or superseding register entry.
+Sources preserve where the [register](../register.md) entries come from. Owner statements stay verbatim and in their original language, and any context a recorder adds is labeled. Do not edit source text. Record a change of meaning as a new or superseding register entry. New decisions need no source file ([record rule 1](../README.md#adding-and-changing-entries)).
 
 | Source | Origin | Content |
 |---|---|---|

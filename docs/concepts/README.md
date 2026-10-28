@@ -7,7 +7,7 @@ This is the home of Markitect's long-term vision, product-level decisions, clari
 | [V1 concept 1.0](v1-concept.md) | The consolidated V1 target: scope, principles, organization, Run, workflow, harness, acceptance and decisions D1–D18 ([DEC-068](register.md#dec-068-v1-concept-10)) |
 | [Register](register.md) | All entries with ID, status, origin and links, and the mapping of earlier collections |
 | [Origin and rationale](../vision.md#origin-and-rationale) | The owner's originating project, causal sequence, problems, concepts and assumptions, connected to the existing register; a section of the vision |
-| [Sources](sources/README.md) | Owner statements kept verbatim with provenance, including the origin account, product description, idea review and snapshots of the Concepts and Ideas chats' collections |
+| [Sources](sources/README.md) | Earlier owner statements kept verbatim with provenance, including the origin account, product description, idea review and snapshots of the Concepts and Ideas chats' collections |
 
 ## Before assessing or redirecting Markitect
 
@@ -57,7 +57,7 @@ This record does not track whether work is scheduled or implemented. When an enh
 
 ## Adding and changing entries
 
-1. **Preserve the source.** Add owner statements verbatim, in their original language, as a dated file under `sources/`. Any context added there must be labeled as a recorder's note. In the register, mark an interpretation as such.
+1. **Record the decision, not the conversation.** A register entry states what the owner decided and when, in plain words. It needs no verbatim quote and no source file, and other documents do not attribute their rules to the owner. The files under `sources/` stay as the record of earlier decisions.
 2. **One entry per fact.** Link to the owning document instead of copying its content. The register gives the decision and its origin; the vision, architecture, roadmap and measurement keep their own subjects.
 3. **Never overwrite silently.** A change of meaning gets a new entry, or the old entry is marked Superseded with a link to its successor. Keep the old entry.
 4. **Only the owner decides.** An agent proposal enters as an `IDEA`, an `OQ` or a part of an entry that is explicitly labeled as a proposal. It stays that way until the owner decides. An agent's agreement, review or report is not acceptance.
@@ -65,4 +65,4 @@ This record does not track whether work is scheduled or implemented. When an enh
 6. **Keep summaries in step.** When an entry changes, also correct any summary of it, for example in the vision's brief or its table of misreadings.
 7. **Ideas move on.** When an idea is evaluated, it becomes a decision, an enhancement or a rejected entry. Its ID stays in the cross-references.
 
-Write entries, and all other documentation, in English ([DEC-069](register.md#dec-069-documentation-is-written-in-english)). Under the record rules above, quotes in a source keep their original language; as noted in the DEC-069 scope notes, add an English translation when a source serves as a reference.
+Write entries, and all other documentation, in English ([DEC-069](register.md#dec-069-documentation-is-written-in-english)). Quotes in an existing source keep their original language; as noted in the DEC-069 scope notes, add an English translation when a source serves as a reference.
