@@ -98,6 +98,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-081](#dec-081-the-organization-knows-broad-at-the-top-and-deep-below) | Decision | The organization knows broad at the top and deep below | Accepted design; not built |
 | [DEC-082](#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager) | Decision | One Run per change: impact decides who works, maker and checker per Manager | Accepted direction; details open, not built |
 | [DEC-083](#dec-083-the-host-runs-natively-each-run-lives-in-containers) | Decision | The host runs natively; each Run lives in containers | Accepted design; not built |
+| [DEC-084](#dec-084-continuous-change-triggers-become-findings-or-model-proposals-autonomy-grows-in-steps) | Decision | Continuous change: triggers become Findings or model proposals, autonomy grows in steps | Accepted direction; design only |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -1078,6 +1079,18 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - Agents see only what Git tracks, so the compiler refuses a registry entry for a Git-ignored file instead of leaving it silently missing.
 - **Supersedes, once built:** the Linux runner ([design](../design/linux-runner.md)) and the Linux-only Apply host of [DEC-077](#dec-077-development-pace-and-linux-first-execution); the shared Run volume and the mounted checkout.
 - **Consequence:** much of the Git machinery behind today's slow Windows tests is expected to disappear; the parked fix is judged again after the rebuild.
+
+### DEC-084 Continuous change: triggers become Findings or model proposals, autonomy grows in steps
+
+- **Status:** Accepted by the owner as the direction for continuous change, 28 October 2026, in the Topics session's design walk-through ([topics page](../workstreams/topics.md#decided)). Design only; built after the rebuild of DEC-080 to DEC-083. It is the later axis of [DEC-004](#dec-004-the-manager-hierarchy-is-core-government-belongs-to-a-later-axis), with [IDEA-002](#idea-002-government-delegated-model-maintenance) as its final form.
+- **Direction:**
+  - A trigger (issue, incident, dependency update) passes an intake adapter per source that rewrites it into a task; raw trigger text never reaches a Manager. Triage asks whether a Definition already states the expected behavior: if so, the task becomes a Finding for `apply --findings` ([DEC-082](#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager)); if not, it becomes a model proposal. The task closes with the Result, and the source is updated.
+  - The loop runs outside Markitect, as a scheduled job or in CI that calls `markitect` commands; there is no daemon in the product.
+  - Autonomy grows in steps, each an owner decision. Step 1: repairs run automatically, and model proposals wait in a daily inbox for the owner. Step 2: the owner grants a mandate, the kinds of model change agents may accept themselves; a fresh checker accepts proposals within it, and the owner gets a daily briefing instead of reviewing each change.
+  - Spending has a budget per day and per task; when it is used up, the loop stops and says so.
+  - Undo: a wrong repair is reverted; a wrong model change is reverted together with its realization.
+  - A circuit breaker drops the loop back a step when reverts or incidents increase, until the owner widens it again.
+  - First slice after the rebuild: step 1 on one pilot project, with GitHub issues as the source.
 
 ## Promises
 
