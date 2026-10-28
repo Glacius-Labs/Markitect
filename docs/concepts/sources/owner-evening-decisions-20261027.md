@@ -51,7 +51,7 @@ Context (recorder's summary): the session then proposed that each lane's state p
 
 > Yes: lane pages as the only state, status from you on demand, no more messages to lanes unless I ask.
 
-## 5. V1's acceptance scope (late evening)
+## 5. V1's acceptance scope (20:15 UTC)
 
 Context (recorder's summary): the coordinator's lane page had asked whether V1's acceptance on `main` covers today's publication, with the Git variant judged after its prototype. The coordinator recommended yes. It put the question to the owner with two prepared answer buttons:
 
@@ -74,13 +74,13 @@ Recorder's reading:
   - Publication is one commit that fails closed when the target moved.
   - A throwaway prototype comes before any rebuild.
   
-  The Git variant's G0 design, `docs/design/agent-git-collaboration.md`, holds the details.
+  The Git variant's G0 design, `docs/design/agent-git-collaboration.md` ([PR #795](https://github.com/Glacius-Labs/Markitect/pull/795), not yet on `main`), holds the details.
 - **Lanes (section 3).** From 27 October, Markitect's work ran in eleven lanes, each with a responsible session. Variant leads could start sub-sessions. On 28 October the owner replaced the lanes with two sessions, as the [workstreams overview](../../workstreams.md) records.
 - **Priority and tracking (section 4):**
   - Lanes 1 to 4 build, in the three steps of the overview, and the topic lanes pause once their state page is up.
   - A lane's state page is the only place for that lane's state.
   - The lanes overview session reports status when the owner asks, and messages the lanes only when the owner asks.
 - **V1's acceptance scope (section 5):**
-  - V1's acceptance on `main` covers today's publication: native publication into the working tree on Linux, and the runner's hand-back as a branch.
+  - V1's acceptance on `main` covers the current publication: native publication into the working tree on Linux, and the runner's hand-back as a branch.
   - The Git variant's publication ([DEC-078](../register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review)) is judged after its prototype and is not part of V1's acceptance.
   - This answers the delivery plan's question 5 on V1 acceptance. The recorder reads it as the scope of that acceptance, not as the owner's acceptance of V1 itself, which still follows step 5 as a separate decision.

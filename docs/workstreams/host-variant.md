@@ -21,12 +21,12 @@ The lane exists since the owner split Markitect's work into lanes on 27 October 
 
 ## Now
 
-- **K1b, done:** the first native Claude Code Apply passed on its second of three attempts, after the launch fix in [PR #807](https://github.com/Glacius-Labs/Markitect/pull/807) ([record](../validation/v1-k1b-claude-qualification-20261028.md)). Since `c87e0660`, `main` runs a Library-sized Apply on Claude through the runner with the subscription login. Each Manager answered one message, so `--resume` across responses was not exercised.
+- **K1b, done:** the first native Claude Code Apply, one Library Apply through the runner with the subscription login, passed on its second attempt, on the head of the launch fix in [PR #807](https://github.com/Glacius-Labs/Markitect/pull/807) ([record](../validation/v1-k1b-claude-qualification-20261028.md)). The dispatch allowed three attempts, and two were used. `c87e0660` brings that fix to `main`; no native Apply ran on `main` itself. Each Manager answered one message, so `--resume` across responses was not exercised.
 - **Handover:** lane 1's current task is done. The handover of arm M waits for the owner's answer on the [build page](build.md#questions-for-the-owner).
 - **Step 1, the shared yardstick:** lane 1 agreed to the evaluation suite's variant command. The suite, [PR #793](https://github.com/Glacius-Labs/Markitect/pull/793), is not on `main` yet, and arm M's adapter waits for it.
 - **Where V1 stands:**
   - **Acceptance:** the [technical acceptance record](../validation/v1-technical-acceptance-20261026.md) of 26 October finds V1 correct and safe on F_final, but not yet reliable at Makerspace size. The owner approved the fix plan for those limits. Its native controls then ran, and the fixes they led to were merged. The record's addendum of 27 October gives no new verdict.
-  - **Acceptance scope:** V1's acceptance on `main` covers today's publication, and the Git variant is judged after its prototype ([owner, 27 October](../concepts/sources/owner-evening-decisions-20261027.md#5-v1s-acceptance-scope-late-evening)).
+  - **Acceptance scope:** V1's acceptance on `main` covers the current publication (working-tree publication and the runner's branch hand-back), and the Git variant is judged after its prototype ([owner, 27 October](../concepts/sources/owner-evening-decisions-20261027.md#5-v1s-acceptance-scope-2015-utc)).
   - **Frozen source:** F2 is `7371cfd9`, with its CI run, binary and images pinned ([F2](../validation/v1-technical-acceptance-20261026.md#new-frozen-source-f2)). No native Apply ran on F2 itself.
   - **Steps:** steps 1 to 3 are done. Step 4 has native evidence on F, F′ and the fix-plan controls. Step 5 is open ([steps](../implementation-plan.md#steps)).
   - **Linux runner:** L1 increment 1, L2 and L3 are done. L1's WSL form and a native Linux engine are open ([Linux Docker way](../implementation-plan.md#linux-docker-way-owner-direction-26-october)).
