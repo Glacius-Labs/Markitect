@@ -31,7 +31,8 @@ FAKE_ENGINE = textwrap.dedent(r'''
         json.dump(state, open(path, "w"))
     def event(kind, action, ident, **attrs):
         with open(log, "a") as f:
-            f.write(json.dumps({"Type": kind, "Action": action, "id": ident, "Actor": {"ID": ident, "Attributes": attrs}}) + "\n")
+            # As Docker 29 writes them: the object's ID in Actor.ID only.
+            f.write(json.dumps({"Type": kind, "Action": action, "Actor": {"ID": ident, "Attributes": attrs}}) + "\n")
     def labels(name):
         k, _, v = state["containers"][name]["label"].partition("=")
         return {k: v} if k else {}
@@ -170,6 +171,9 @@ class NativeTest(unittest.TestCase):
         self.assertEqual((record["conditions"], record["validForCounting"]), ("native", True))
         self.assertEqual([c["networks"] for c in box["armContainers"]], [[box["network"]]])
         self.assertEqual((box["escapes"], box["residue"]), ([], []))
+        # The gateway is the suite's, known by its ID, and still there for its log.
+        self.assertNotIn(box["runId"] + "-gateway", [c["name"] for c in box["armContainers"]])
+        self.assertIn("allowed", box["egress"])
         self.assertEqual(box["variantEnv"]["EVALUATION_NETWORK"], box["network"])
         self.assertEqual(box["variantEnv"]["EVALUATION_HOSTS"], "api.anthropic.com:10.9.0.2")
         self.assertIn("A\tSTANDIN.md", record["result"]["changedPaths"])

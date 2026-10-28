@@ -152,14 +152,16 @@ class Native:
             if not begun:
                 begun = kind == "network" and action == "create" and attrs.get("name") == internal
                 continue
+            # Current engines name the object in Actor.ID only; the top-level id is a deprecated copy.
+            ident = (event.get("Actor") or {}).get("ID") or event.get("id")
             if kind == "container" and action == "start":
-                if event.get("id") == gateway_id:
+                if ident == gateway_id:
                     continue  # the suite's own gateway, by its ID: a label the variant could copy
-                started[event.get("id") or (event.get("Actor") or {}).get("ID")] = attrs.get("name")
+                started[ident] = attrs.get("name")
             elif kind == "network" and action == "connect":
                 joined.setdefault(attrs.get("container"), set()).add(attrs.get("name"))
             elif kind == "network" and action == "create" and attrs.get("name") != internal.removesuffix("-internal") + "-egress":
-                created_networks[(event.get("Actor") or {}).get("ID")] = attrs.get("name")
+                created_networks[ident] = attrs.get("name")
         if not begun:
             record.setdefault("error", "the engine's event record does not show the run's network: the network check did not run")
         record["armContainers"] = [{"id": cid[:12], "name": name, "networks": sorted(joined.get(cid, []))} for cid, name in started.items()]
