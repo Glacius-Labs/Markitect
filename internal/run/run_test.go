@@ -336,6 +336,34 @@ func TestLandingRefusesAFailingMergedState(t *testing.T) {
 	}
 }
 
+// The host compiles the state it lands: a merge of two states that each
+// compile, but together give two Packages the same pattern, does not land.
+func TestLandingRefusesAMergedStateThatDoesNotCompile(t *testing.T) {
+	f := newFixture(t)
+	base, _ := changeBook(f)
+	a := f.agents
+	catalogPage := "---\npaths: [src/catalog/**, src/shared/**]\n---\n" + table + "| src/catalog/book.go | [[catalog/book]] | Type |\n"
+	a.On("catalog", maker, a.Submit(nil, map[string]string{
+		"src/catalog/book.go":               "package catalog\n\ntype Book struct{ ISBN string }\n",
+		project.RegistryDir + "/catalog.md": catalogPage,
+	}, word("changed")))
+	a.On("catalog", checker, a.Review(nil))
+	a.On(".", maker, a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
+	// The colleague's change compiles alone and is outside the impact.
+	a.On(".", checker, f.approveAfter(map[string]string{
+		"src/shared/x.go":                   "package shared\n",
+		project.RegistryDir + "/members.md": "---\npaths: [src/members/**, src/shared/**]\n---\n" + table + "| src/members/member.go | [[members/member]] | Type |\n| src/shared/x.go | [[members/member]] | Shared |\n",
+	}))
+
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateKept || !strings.Contains(r.Why, "the merged state does not compile") || !strings.Contains(r.Why, "src/shared/**") {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+	if strings.Contains(f.show("main", "src/catalog/book.go"), "ISBN") {
+		t.Fatal("the work landed")
+	}
+}
+
 func TestVerifyWithNoChangesStartsNothing(t *testing.T) {
 	f := newFixture(t)
 	start := f.tip("main")
@@ -367,6 +395,34 @@ func TestVerifyGivesVerdictsWithoutChanges(t *testing.T) {
 		if st.Role != checker {
 			t.Fatalf("verify started a %s", st.Role)
 		}
+	}
+	// The required checks ran on the whole repository, as in every Run.
+	if rc := r.RequiredChecks; !rc.Ran || !rc.WholeRepository || rc.Commit == "" || len(rc.Checks) != 1 {
+		t.Fatalf("required checks %+v", rc)
+	}
+}
+
+func TestVerifyReportsFailingRequiredChecks(t *testing.T) {
+	f := newFixture(t)
+	base := f.tip("main")
+	f.write(map[string]string{
+		m + "catalog/book.md":               def("std/Concept", "Book", "A book has a title and an `isbn`."),
+		"src/catalog/FAIL":                  "x\n",
+		project.RegistryDir + "/catalog.md": "---\npaths: [src/catalog/**]\n---\n" + table + "| src/catalog/book.go | [[catalog/book]] | Type |\n| src/catalog/FAIL | [[catalog/book]] | Marker |\n",
+	})
+	f.commit("book has an isbn, and the checks fail")
+	a := f.agents
+	a.On("catalog", checker, a.Verdicts(word("conforms")))
+	a.On(".", checker, a.Verdicts(word("conforms")))
+	r := f.run(run.Request{Mode: agentport.Verify, Base: base})
+	if r.State != run.StateFindings || !strings.Contains(r.Why, "required checks that did not pass") || len(r.Findings) != 0 {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+	if rc := r.RequiredChecks; rc.Ran || rc.Commit == "" || len(rc.Checks) != 1 || rc.Checks[0].Passed {
+		t.Fatalf("required checks %+v", rc)
+	}
+	if !strings.Contains(string(run.Page(r)), "and did not pass") {
+		t.Fatal("the Result page does not say the checks did not pass")
 	}
 }
 
@@ -488,9 +544,15 @@ func TestHostToolsRefuseOutsideTheTree(t *testing.T) {
 		if _, err := h.Ask(ctx, "may I?"); err == nil {
 			return agentfake.Fail(errorf("a checker asked"))
 		}
-		page, err := h.Notes(ctx, "")
-		if err != nil || len(page.Notes) != 1 {
-			return agentfake.Fail(errorf("notes %+v %v", page, err))
+		// A checker is fresh: it leaves Notes but does not read its maker's.
+		if len(s.Tools) != 1 || s.Tools[0] != agentport.ToolNote {
+			return agentfake.Fail(errorf("checker tools %v", s.Tools))
+		}
+		if page, err := h.Notes(ctx, ""); err == nil {
+			return agentfake.Fail(errorf("a checker read the Notes: %+v", page))
+		}
+		if _, err := h.Note(ctx, "book.go has no doc comment"); err != nil {
+			return agentfake.Fail(err)
 		}
 		return a.Review(nil)(ctx, s, h)
 	})
@@ -498,11 +560,14 @@ func TestHostToolsRefuseOutsideTheTree(t *testing.T) {
 		if _, err := h.Ask(ctx, "anyone?"); err == nil {
 			return agentfake.Fail(errorf("Root asked a parent"))
 		}
+		if page, err := h.Notes(ctx, ""); err != nil || len(page.Notes) != 2 {
+			return agentfake.Fail(errorf("notes %+v %v", page, err))
+		}
 		return a.Submit([]string{"managers/catalog"}, nil, word("conforms"))(ctx, s, h)
 	})
 	a.On(".", checker, a.Review(nil))
 	r := f.run(run.Request{Base: base})
-	if r.State != run.StateLanded || len(r.Notes) != 1 {
+	if r.State != run.StateLanded || len(r.Notes) != 2 {
 		t.Fatalf("%s with %d notes: %s", r.State, len(r.Notes), r.Why)
 	}
 }

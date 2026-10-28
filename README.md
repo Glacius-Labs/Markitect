@@ -69,7 +69,7 @@ The compiler does **not** prove that natural-language requirements have been cor
 
 ### 3. A maker and a checker for every working Manager
 
-Impact decides who works, like an incremental build. Every working Manager is a maker, which gives each item on its checklist a verdict with evidence, and a fresh checker, which sees only the model and the diff and sends defects back. Parents review and integrate their children's approved work. Each Run has its own Git remote, and server-side hooks enforce that a Manager pushes only its own paths and that every submission passes the required checks.
+Impact decides who works, like an incremental build. Every working Manager is a maker, which gives each item on its checklist a verdict with evidence, and a fresh checker, which sees the model, the repository at the submission and its diff, but not the Shared Notes, and sends defects back. Parents review and integrate their children's approved work. Each Run has its own Git remote, and server-side hooks enforce that a Manager pushes only its own paths and that every submission compiles and passes the required checks.
 
 A real defect in the model ends the Run without landing; agents never rewrite accepted intent.
 

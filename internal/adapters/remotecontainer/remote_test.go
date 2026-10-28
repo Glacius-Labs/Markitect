@@ -14,6 +14,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/libraries"
+	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/runremote"
 )
@@ -68,13 +70,23 @@ func newFixture(t *testing.T) *fixture {
 // directory and base commit.
 func (f *fixture) source() (string, string) {
 	dir := f.t.TempDir()
+	// The project compiles, since the hook compiles every submission.
+	lib, _ := libraries.Files("std")
+	std := model.LibrarySource{Name: "std", Version: libraries.Version}
+	for _, lf := range lib {
+		std.Files = append(std.Files, model.File{Path: lf.Path, Data: lf.Data})
+	}
+	table := "| File | Realizes | Why |\n|---|---|---|\n"
 	files := map[string]string{
-		"README.md":                      "# Library\n",
-		"ci.sh":                          "exit 0\n",
-		"src/members/member.go":          "package members\n",
-		".markitect/model/project.md":    "# Library\n",
-		".markitect/registry.md":         "# Root\n",
-		".markitect/registry/members.md": "# members\n",
+		"README.md":                             "# Library\n",
+		"ci.sh":                                 "exit 0\n",
+		"src/members/member.go":                 "package members\n",
+		project.ManifestFile:                    "libraries:\n  std: " + libraries.Version + "\n",
+		project.LockFile:                        string(model.RenderLock([]model.LibrarySource{std})),
+		project.ModelDir + "/project.md":        "---\nkind: std/Project\n---\n# Library\n\nA library.\n",
+		project.ModelDir + "/members/member.md": "---\nkind: std/Concept\n---\n# Member\n\nA person.\n",
+		project.RootPage:                        table + "| README.md | [[project]] | Overview |\n| ci.sh | [[project]] | Required check |\n",
+		project.RegistryDir + "/members.md":     "---\npaths: [src/members/**]\n---\n" + table + "| src/members/member.go | [[members/member]] | Type |\n",
 	}
 	for name, content := range files {
 		p := filepath.Join(dir, filepath.FromSlash(name))

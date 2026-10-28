@@ -142,6 +142,7 @@ func TestASubmissionPassesTheRequiredChecksOnTheBranchState(t *testing.T) {
 	r := newRemote(t, nil)
 	m := r.agent("members", maker)
 	m.write("src/members/FAIL", "x\n")
+	m.write(".markitect/registry/members.md", membersPage("src/members/FAIL"))
 	m.commit("work in progress")
 	m.mustPush() // work without verdicts runs no check
 	m.commit(submission("members", "members/member"))
@@ -150,6 +151,28 @@ func TestASubmissionPassesTheRequiredChecksOnTheBranchState(t *testing.T) {
 		t.Fatalf("the pusher does not see the check result:\n%s", out)
 	}
 	m.git("rm", "-q", "src/members/FAIL")
+	m.write(".markitect/registry/members.md", membersPage())
+	m.commit(submission("members", "members/member"))
+	m.mustPush()
+}
+
+// A file that enters unregistered, even in the maker's own area, never
+// reaches a submission: the hook compiles it as `markitect check` does.
+func TestASubmissionCompiles(t *testing.T) {
+	r := newRemote(t, nil)
+	m := r.agent("members", maker)
+	m.write("src/members/extra.go", "package members\n")
+	m.commit("work in progress")
+	m.mustPush() // work without verdicts is not compiled
+	m.commit(submission("members", "members/member"))
+	out := m.mustRefuse("does not compile: `markitect check` finds 1 compile errors")
+	if !strings.Contains(out, "src/members/extra.go") || !strings.Contains(out, "neither registered nor ignored") || !strings.Contains(out, "Next:") {
+		t.Fatalf("the refusal does not name the error and a next step:\n%s", out)
+	}
+	if e := r.log(); e[len(e)-1].Accepted || len(e[len(e)-1].Checks) != 0 {
+		t.Fatalf("last log entry %+v, want a refusal before the checks", e[len(e)-1])
+	}
+	m.write(".markitect/registry/members.md", membersPage("src/members/extra.go"))
 	m.commit(submission("members", "members/member"))
 	m.mustPush()
 }
@@ -369,17 +392,20 @@ func TestOnlyTheRunsAgentsReachTheRemote(t *testing.T) {
 	}
 }
 
-func TestVerifyTakesVerdictsWithoutFileChanges(t *testing.T) {
-	r := newRemote(t, func(p *runremote.Plan) {
-		p.Mode = runremote.Verify
-		var agents []runremote.Agent
-		for _, a := range p.Agents {
-			if a.Role == runremote.Checker {
-				agents = append(agents, a)
-			}
+// verifyPlan turns the plan into one for verify, with checkers only.
+func verifyPlan(p *runremote.Plan) {
+	p.Mode = runremote.Verify
+	var agents []runremote.Agent
+	for _, a := range p.Agents {
+		if a.Role == runremote.Checker {
+			agents = append(agents, a)
 		}
-		p.Agents = agents
-	})
+	}
+	p.Agents = agents
+}
+
+func TestVerifyTakesVerdictsWithoutFileChanges(t *testing.T) {
+	r := newRemote(t, verifyPlan)
 	c := r.agent("members", checker)
 	c.write("src/members/member.go", "fixed\n")
 	c.commit(submission("members", "members/member"))
@@ -394,8 +420,9 @@ func TestVerifyTakesVerdictsWithoutFileChanges(t *testing.T) {
 	// A defect a verify checker finds is a deviation, which becomes a Finding.
 	c.commit("Verify\n\nMarkitect-Manager: members\nMarkitect-Verdict: members/member | deviates | member.go accepts an empty name\n")
 	c.mustPush()
-	if e := r.log(); e[len(e)-1].Kind != "verdicts" {
-		t.Fatalf("last log entry %+v", e[len(e)-1])
+	// The required checks run on the whole repository, as in every Run.
+	if e := r.log(); e[len(e)-1].Kind != "verdicts" || len(e[len(e)-1].Checks) != 1 || !e[len(e)-1].Checks[0].Passed {
+		t.Fatalf("last log entry %+v, want verdicts whose check passed", e[len(e)-1])
 	}
 	// One commit, on the tip alone.
 	c.commit("a")
@@ -405,6 +432,21 @@ func TestVerifyTakesVerdictsWithoutFileChanges(t *testing.T) {
 	merge := c.git("commit-tree", "HEAD^{tree}", "-p", "HEAD", "-p", r.plan.Base, "-m", submission("members", "members/member"))
 	c.git("reset", "-q", "--hard", merge)
 	c.mustRefuse("as its only parent")
+}
+
+// In verify a failing check is a result, not a refusal: the checker cannot
+// fix it, and the Result reports it.
+func TestVerifyRecordsAFailingCheck(t *testing.T) {
+	r := newRemote(t, func(p *runremote.Plan) {
+		verifyPlan(p)
+		p.Checks = []project.Check{{Name: "broken", Command: "exit 3", Timeout: time.Minute, Environment: "test-image"}}
+	})
+	c := r.agent("members", checker)
+	c.commit(submission("members", "members/member"))
+	c.mustPush()
+	if e := r.log(); !e[len(e)-1].Accepted || len(e[len(e)-1].Checks) != 1 || e[len(e)-1].Checks[0].Passed || e[len(e)-1].Checks[0].Exit != 3 {
+		t.Fatalf("last log entry %+v, want accepted verdicts with the failing check", e[len(e)-1])
+	}
 }
 
 func TestAReviewAnswersEachItemOnceOnTheTipAlone(t *testing.T) {
@@ -429,6 +471,8 @@ func TestChecksThatCannotRunRefuseTheSubmission(t *testing.T) {
 	m := r.agent("members", maker)
 	// A gitlink cannot be checked out, so the checks' copy cannot hold the state.
 	m.git("update-index", "--add", "--cacheinfo", "160000,"+r.plan.Base+",src/members/vendor")
+	m.write(".markitect/registry/members.md", membersPage("src/members/vendor"))
+	m.git("add", ".markitect/registry/members.md")
 	m.git("commit", "-q", "-m", submission("members", "members/member"))
 	m.mustRefuse("the required checks could not run")
 }

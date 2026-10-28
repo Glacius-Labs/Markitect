@@ -13,9 +13,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/runremote"
 )
 
@@ -132,6 +134,27 @@ func (r gitRepo) Files(commit string) ([]string, error) {
 	}
 	return files, nil
 }
+
+// State is a commit's full state for the compiler, as the host's Git reads
+// it: a committed state has no Git-ignored files.
+func (r gitRepo) State(commit string) project.Repository { return state{r: r, commit: commit} }
+
+type state struct {
+	r      gitRepo
+	commit string
+}
+
+func (s state) Files() ([]string, error) {
+	files, err := s.r.Files(s.commit)
+	sort.Strings(files)
+	return files, err
+}
+
+func (s state) Read(file string) ([]byte, error) {
+	return s.r.run("cat-file", "blob", s.commit+":"+file)
+}
+
+func (state) GitIgnored(string) bool { return false }
 
 // Tips reads the branch's reflog, which Git writes in the same transaction as
 // every update and which no agent can touch.

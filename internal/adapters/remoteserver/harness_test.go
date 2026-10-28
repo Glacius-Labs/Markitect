@@ -16,6 +16,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/libraries"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/runremote"
@@ -32,24 +33,46 @@ func TestMain(m *testing.M) {
 }
 
 // The fixture project: Root with the children members and loans, and cards
-// below members. Every Package works; each has a maker and a checker.
-var fixtureFiles = map[string]string{
-	"README.md":                            "# Library\n",
-	"go.work":                              "go 1.27\n",
-	"src/members/member.go":                "package members\n",
-	"src/members/cards/card.go":            "package cards\n",
-	"src/loans/loan.go":                    "package loans\n",
-	".markitect/manifest.yaml":             "libraries:\n  std: 1.0.0\n",
-	".markitect/lock.yaml":                 "std 1.0.0\n",
-	".markitect/execution.yaml":            "checks: []\n",
-	".markitect/ignore.md":                 "| Path | Why |\n|---|---|\n",
-	".markitect/model/project.md":          "---\nkind: std/Project\n---\n# Library\n",
-	".markitect/model/members/member.md":   "---\nkind: std/Concept\n---\n# Member\n",
-	".markitect/model/loans/loan.md":       "---\nkind: std/Concept\n---\n# Loan\n",
-	".markitect/registry.md":               "# Root\n",
-	".markitect/registry/members.md":       "# members\n",
-	".markitect/registry/members/cards.md": "# cards\n",
-	".markitect/registry/loans.md":         "# loans\n",
+// below members. Every Package works; each has a maker and a checker. It
+// compiles, since the hook compiles every submission.
+var fixtureFiles = func() map[string]string {
+	files, _ := libraries.Files("std")
+	std := model.LibrarySource{Name: "std", Version: libraries.Version}
+	for _, f := range files {
+		std.Files = append(std.Files, model.File{Path: f.Path, Data: f.Data})
+	}
+	def := func(kind, title string) string {
+		return "---\nkind: " + kind + "\n---\n# " + title + "\n\nA " + title + ".\n"
+	}
+	return map[string]string{
+		"README.md":                                 "# Library\n",
+		"go.work":                                   "go 1.27\n",
+		"src/members/member.go":                     "package members\n",
+		"src/members/cards/card.go":                 "package cards\n",
+		"src/loans/loan.go":                         "package loans\n",
+		project.ManifestFile:                        "libraries:\n  std: " + libraries.Version + "\n",
+		project.LockFile:                            string(model.RenderLock([]model.LibrarySource{std})),
+		project.ChecksFile:                          "checks: []\n",
+		project.ModelDir + "/project.md":            def("std/Project", "Library"),
+		project.ModelDir + "/members/member.md":     def("std/Concept", "Member"),
+		project.ModelDir + "/members/cards/card.md": def("std/Concept", "Card"),
+		project.ModelDir + "/loans/loan.md":         def("std/Concept", "Loan"),
+		project.RootPage:                            registryTable + "| README.md | [[project]] | Overview |\n| go.work | [[project]] | Workspace |\n",
+		project.RegistryDir + "/members.md":         membersPage(),
+		project.RegistryDir + "/members/cards.md":   "---\npaths: [src/members/cards/**]\n---\n" + registryTable + "| src/members/cards/card.go | [[members/cards/card]] | Type |\n",
+		project.RegistryDir + "/loans.md":           "---\npaths: [src/loans/**]\n---\n" + registryTable + "| src/loans/loan.go | [[loans/loan]] | Type |\n",
+	}
+}()
+
+const registryTable = "| File | Realizes | Why |\n|---|---|---|\n"
+
+// membersPage is members' registry page with member.go and the extra files.
+func membersPage(extra ...string) string {
+	page := "---\npaths: [src/members/**]\n---\n" + registryTable + "| src/members/member.go | [[members/member]] | Type |\n"
+	for _, f := range extra {
+		page += "| " + f + " | [[members/member]] | Part |\n"
+	}
+	return page
 }
 
 // failCheck fails when the tree holds a file named FAIL, so a scripted maker

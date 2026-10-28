@@ -340,7 +340,7 @@ func (s *schedule) startLocked(ctx context.Context, n *node, role agentport.Role
 	}
 	st := agentport.Start{Run: s.plan.Run, Mode: s.req.Mode, Role: role, Round: n.rounds[role], Task: task,
 		Manager: agentport.Manager{ID: n.name, Parent: parentName(n)}, Checklist: n.items, Inbox: inbox, Deadline: deadline,
-		Tools: tools(s.req.Mode, role, n)}
+		Tools: tools(role, n)}
 	for _, c := range n.children {
 		st.Manager.Children = append(st.Manager.Children, c.name)
 	}
@@ -371,12 +371,13 @@ func parentName(n *node) string {
 	return n.parent.name
 }
 
-func tools(mode agentport.Mode, role agentport.Role, n *node) []agentport.Tool {
-	ts := []agentport.Tool{agentport.ToolNote, agentport.ToolNotes}
-	if mode == agentport.Verify || role == agentport.Checker {
-		return ts
+// tools are the host tools of a start. A checker, the only role in verify,
+// only leaves Notes: it is fresh and does not read them (concept 2.0 §6.2).
+func tools(role agentport.Role, n *node) []agentport.Tool {
+	if role == agentport.Checker {
+		return []agentport.Tool{agentport.ToolNote}
 	}
-	ts = append(ts, agentport.ToolAsk, agentport.ToolEscalate)
+	ts := []agentport.Tool{agentport.ToolNote, agentport.ToolNotes, agentport.ToolAsk, agentport.ToolEscalate}
 	if len(n.children) > 0 {
 		ts = append(ts, agentport.ToolAnswer, agentport.ToolAssign)
 	}
