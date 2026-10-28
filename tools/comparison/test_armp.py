@@ -3,6 +3,7 @@ import io
 import json
 import os
 import pathlib
+import re
 import shutil
 import subprocess
 import sys
@@ -76,6 +77,22 @@ class Login(unittest.TestCase):
             armp.session_login(raw.encode(), 8 * 3600, 600)
         with self.assertRaises(armp.RunError):
             armp.session_login(b'{"mcpOAuth": {}}', 10, 0)
+
+
+class Plugin(unittest.TestCase):
+    def test_no_workflow_shares_a_name_with_a_command(self):
+        # Claude Code also offers a plugin workflow as a slash command; with the
+        # same name, `claude -p /markitect:apply` started the workflow without
+        # the command's prepare step (smoke-01, 28 October 2026).
+        commands = {p.stem for p in (armp.PLUGIN / "commands").glob("*.md")}
+        workflows = set()
+        for script in (armp.PLUGIN / "workflows").glob("*.js"):
+            name = re.search(r"^\s*name:\s*'([^']+)'", script.read_text(encoding="utf-8"), re.M).group(1)
+            workflows.add(name)
+            self.assertEqual(script.stem, name)
+        self.assertEqual(commands & workflows, set())
+        command = (armp.PLUGIN / "commands" / "apply.md").read_text(encoding="utf-8")
+        self.assertEqual({f"markitect:{w}" for w in workflows}, set(re.findall(r'`name: "(markitect:[^"]+)"`', command)))
 
 
 class Records(unittest.TestCase):

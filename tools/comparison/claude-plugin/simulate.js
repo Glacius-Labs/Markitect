@@ -6,7 +6,7 @@ const fs = require('fs')
 const path = require('path')
 
 const scenario = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'))
-let source = fs.readFileSync(path.join(__dirname, 'plugin', 'workflows', 'apply.js'), 'utf8')
+let source = fs.readFileSync(path.join(__dirname, 'plugin', 'workflows', 'walk.js'), 'utf8')
 source = source.replace('export const meta', 'const meta')
 
 const calls = []

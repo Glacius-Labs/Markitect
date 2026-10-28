@@ -1,6 +1,6 @@
 # Arm P Library smoke chain: dispatch
 
-Status: **proposed, not run.** It runs only after the owner's go-ahead, under the [standing evidence authorization](../../../docs/concepts/sources/v1-source-implementation-approval-20261023.md#subsequent-standing-evidence-authorization). Failed attempts stay recorded.
+Status: **smoke-01 failed on a plugin defect (fixed); smoke-02 awaits the owner's go-ahead.** It runs only after the owner's go-ahead, under the [standing evidence authorization](../../../docs/concepts/sources/v1-source-implementation-approval-20261023.md#subsequent-standing-evidence-authorization). Failed attempts stay recorded.
 
 ## Question
 
@@ -58,4 +58,13 @@ Kill the chain's process tree (`taskkill /PID <chain.pid> /T /F`); this also end
 
 ## Result
 
-Not run.
+### smoke-01, 28 October 2026: failed before any Apply
+
+Approved by the owner and launched at 13:37 UTC from `43ed751b`. Evidence is in `C:\Users\Consiliari\Documents\Codex\Markitect-ArmP\smoke-01`.
+
+- **What happened:** S1 and S4 each ended after about 16 s without a candidate. S2 and S3 were skipped and nothing was assessed. Each session used about 1,000 output tokens and left no residue.
+- **Cause:** a defect in the plugin. Claude Code also offers a plugin workflow as a slash command, and the workflow was named `apply` like the command. Headless `claude -p /markitect:apply` therefore started the workflow with no arguments. The command's prepare, workflow and publish steps never ran, and no Manager agent started. The session agent reported the missing prepare record and stopped, as it should.
+- **Fix:** the workflow is renamed `walk`. An offline test now refuses any workflow that shares a name with a command. A Haiku probe confirmed that `/markitect:apply` now begins with `mkp.py prepare`.
+- **Before the run:** the CLI login file had expired, so it was refreshed with one Haiku call at the owner's request. Docker Desktop was started by the owner.
+
+A rerun is a new attempt, smoke-02, from the fixed head.

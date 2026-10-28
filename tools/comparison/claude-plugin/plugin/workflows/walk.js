@@ -1,5 +1,5 @@
 export const meta = {
-  name: 'apply',
+  name: 'walk',
   description: 'Markitect Apply (arm P): Assessment, Implement and Verify through the compiled Manager tree',
   whenToUse: 'Invoked by /markitect:apply after mkp.py prepare passed. args: the prepare record {runId, base, mkp, tree} plus {maxCorrections, maxReturns, maxQuestions, maxAgents}.',
   phases: [{ title: 'Assessment' }, { title: 'Implement' }, { title: 'Verify' }],

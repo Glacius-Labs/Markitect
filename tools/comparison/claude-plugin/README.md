@@ -13,7 +13,7 @@ The [comparison report](../../../docs/validation/v1-comparison-report-20261026.m
 | Piece | File | Does |
 | --- | --- | --- |
 | Command | [plugin/commands/apply.md](plugin/commands/apply.md) | `/markitect:apply`: prepare, run the workflow, store its result, publish. The session agent only connects these steps |
-| Workflow | [plugin/workflows/apply.js](plugin/workflows/apply.js) | Assessment, Implement and Verify over the tree; correction rounds after a Verify reject; limits |
+| Workflow | [plugin/workflows/walk.js](plugin/workflows/walk.js) | Assessment, Implement and Verify over the tree; correction rounds after a Verify reject; limits |
 | Agents | [plugin/agents/manager.md](plugin/agents/manager.md), [plugin/agents/verifier.md](plugin/agents/verifier.md) | The native Manager rules from `internal/harness`. The verifier has no file-writing tools |
 | Host steps | [plugin/scripts/mkp.py](plugin/scripts/mkp.py) | `prepare` (structural check, `markitect tree`), `check` and `context` for agents, the `record` and `guard` hooks, the publication guard |
 | Hooks | [plugin/hooks/hooks.json](plugin/hooks/hooks.json) | `SubagentStop` records every Markitect agent's mandate, round, Package, checked-out commit and structured answer from the agent's own transcript, and attaches `markitect check` of every Manager handoff as a git note (D11); `PreToolUse` refuses push, ref and worktree surgery, forged notes, publication branches and the owner's branch, judging only the command word and git subcommand |
