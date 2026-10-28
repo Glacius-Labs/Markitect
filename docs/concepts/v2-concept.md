@@ -108,7 +108,7 @@ One Run handles a change. Every working Manager is two agents with their own har
 - **The maker** gives every item on its checklist a verdict with evidence: conforms, changed, or model problem. It checks that each makes sense, plans, implements and checks again.
 - **The checker** is fresh. It sees the model, the repository at the submission and its diff, and nothing its maker wrote besides the commit: it does not read the Shared Notes. It re-checks every verdict and sends defects straight back to the maker.
 
-The parent reviews and integrates its children's approved work. Root's checker is the final independent check before landing. The model is authoritative and is never repaired by a Run ([DEC-063](register.md#dec-063-the-model-is-authoritative-defects-escalate)): a Manager that cannot settle a matter within the model escalates it to its parent, which settles it if the model allows; a gap without effect at the project boundary is realization freedom, decided and documented by the Manager. A real model defect, a contradiction or a gap that changes behavior at the boundary, ends the Run at Root without landing.
+A parent with items of its own in the change submits its own files first, and its children start from that approved commit, so shared files such as a module file exist before the children's required checks run; a parent without own items lets its children start at once. The host enforces this order on every level. The parent reviews and integrates its children's approved work. Root's checker is the final independent check before landing. The model is authoritative and is never repaired by a Run ([DEC-063](register.md#dec-063-the-model-is-authoritative-defects-escalate)): a Manager that cannot settle a matter within the model escalates it to its parent, which settles it if the model allows; a gap without effect at the project boundary is realization freedom, decided and documented by the Manager. A real model defect, a contradiction or a gap that changes behavior at the boundary, ends the Run at Root without landing.
 
 ### 6.3 Git, hooks and messages
 
@@ -210,7 +210,7 @@ No app for now ([DEC-085](register.md#dec-085-markdown-tools-are-the-cockpit-for
 9. **Results and leftovers: decided** 28 October: Results in the repository under `.markitect/results/`; Run branches cleaned up after landing; the working tree is never touched.
 10. **Acceptance: decided** 28 October (§15).
 
-**Decided after the first build steps** (29 October 2026, on an independent check of the code against this concept): landing compiles every submission and the state it lands; `verify` runs the required checks; the checker does not read the Shared Notes; impact does not follow the code's own imports (§6.1); how planted defects are scored (§15).
+**Decided after the first build steps** (29 October 2026, on an independent check of the code against this concept): landing compiles every submission and the state it lands; `verify` runs the required checks; the checker does not read the Shared Notes; impact does not follow the code's own imports (§6.1); how planted defects are scored (§15); after the first native Run, a parent submits its own files before its children start (§6.2).
 
 **Details for the build:** the verdict trailer format; the harness and model of makers and checkers; when the full Run is due; the format of a mandate; the Result page's exact layout.
 
