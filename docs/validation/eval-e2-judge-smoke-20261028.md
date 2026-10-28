@@ -8,7 +8,7 @@ This smoke checks increment E2 of [evaluation suite v2](../design/evaluation-sui
 
 | Item | Value |
 |---|---|
-| Source | `tools/evaluation` at the reviewed head of the E2 pull request; the operator records its full SHA here as `REV` before the first step |
+| Source | `tools/evaluation` and `tools/evaluation-judges` at the reviewed head of the E2 pull request, `REV` = `06d4b691ebbc3932c9f2af375dd9f4e8d4f5167b` |
 | Judge | `tools/evaluation-judges/library-m1`, exported once from `REV` with `judges.py export --rev REV`; its `judge.json` and folder digest are recorded |
 | Judge image | `golang@sha256:69a7b9788769bec032d238959b61854e9ae87f57be9029ec04e9885fabf99195` (`golang:1.27.1-bookworm`), already on this engine as the sandbox's build stage; nothing is pulled |
 | Sandbox image | `sha256:e0b20d8a8c88a0a4b37f151af45618e764f8687b023b10bcb6d3b5148c5e5dad`, the E1 image. `tools/evaluation/sandbox/` is unchanged since it was built (`git diff 4f7cf4d5 REV -- tools/evaluation/sandbox` is empty) |
