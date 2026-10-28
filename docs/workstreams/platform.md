@@ -54,9 +54,19 @@ The owner answered the lane's questions the same day:
 
 ## Next
 
-1. **Why the tests are slow on Windows.** Find the cause and whether it can be fixed (P9). The first lead: real Git costs about 32 to 35 ms per process launch on Windows, and one three-Run test launches it about 2,100 times ([technical acceptance](../validation/v1-technical-acceptance-20261026.md)). Waits for the owner's go-ahead.
+1. **Why the tests are slow on Windows (P9).** Measured on 28 October with the full suite on this machine (head `7db54909`), see [findings](#windows-test-time-28-october). The fix waits for the owner's go-ahead.
 2. **Apply on a Linux machine,** after Apply works on Windows.
 3. **After the Git variant.** If agents and the host exchange work through a Git remote instead of a mounted `.git` and a shared Run volume, the runner's mounts and parts of P1, P4 and P8 may disappear. Whether the host could then run natively on Windows again, still with Docker Desktop for the agents, is a question for the Git variant, recorded below.
+
+## Windows test time, 28 October
+
+`go test ./... -count=1` took about 50 minutes on Windows and about 3 minutes on Linux CI. One package sets the pace: `internal/adapters/gitrepo` took 2,985 s on Windows and about 119 s on Linux. A second run counted every Git start through a logging wrapper (scratch tooling, not in the repository).
+
+- **Cause: Git process starts.** The suite started Git about 90,000 times, 77,000 of them from `gitrepo`'s tests. One start costs about 1 ms on Linux and about 23 ms on an idle Windows machine, 35 to 55 ms under test load. That accounts for nearly all of `gitrepo`'s Windows time.
+- **Where the starts come from in `gitrepo`:** `rev-parse` 22,000, `mktree` 18,000, `ls-tree` 17,000, `ls-files` 7,000; everything else is under 2,000 each. `mktree` and `ls-tree` come from rebuilding directory trees one level at a time after every snapshot (`withDirectoriesUsing` in `local_run.go`). `rev-parse` resolves revisions one process at a time.
+- **Two Windows extras:** `git` on `PATH` is Git for Windows' launcher, which starts the real `git.exe` as a second process (about 23 ms instead of 10 to 12 ms per start). The 103 `gitrepo` tests run one after another; parallel starts give about 3.5 to 4 times the throughput.
+- **Fix options:** build the directory trees in one step or in Go; resolve revisions in one long-lived Git process (as blob reads already do with `cat-file --batch`); call the real `git.exe` instead of the launcher; run independent tests in parallel. Together they target over 80 % of the starts. Code changes belong to the owning lanes and wait for the owner.
+- `codexappserver`, `claudecode` and `bootstrap` also took 3 to 5 minutes each on Windows, mostly through the same Git starts.
 
 ## Dependency on the Git variant
 
