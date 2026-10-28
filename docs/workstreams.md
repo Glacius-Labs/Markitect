@@ -11,7 +11,7 @@ This page lists the sessions, the variants and where each keeps its state. It ho
 | Build and evaluation | Coordinates the evaluation suite and the variants, runs their dispatches and integrates their PRs | yes, the only session that builds | [build.md](workstreams/build.md) |
 | Topics | Discusses the product topics with the owner (model language and skills, compiler, commands, continuous change, platform, Cockpit) and records the decisions | no; it writes docs only | [topics.md](workstreams/topics.md) |
 
-Both sessions sit in the sidebar folder "Markitect". Lane 1 handed the host variant over to Build on 28 October 2026, and its page folded into the build page. The other lane sessions end once the owner agrees. The evaluation, plugin and Git variant pages fold into the build page as their PRs land. The topic lane pages were folded into the topics page on 28 October 2026; the [commands page](workstreams/commands.md) stays as the canonical page for the commands frame.
+Both sessions sit in the sidebar folder "Markitect". Lane 1 handed the host variant over to Build on 28 October 2026, and its page folded into the build page. The other lane sessions end once the owner agrees. The plugin and Git variant pages fold into the build page as their PRs land; the suite's contract is the [evaluation suite guide](guides/evaluation-suite.md). The topic lane pages were folded into the topics page on 28 October 2026; the [commands page](workstreams/commands.md) stays as the canonical page for the commands frame.
 
 ## Variants
 
@@ -22,7 +22,7 @@ The evaluation suite treats every variant as a black box with the same task in a
 | M | Host variant: today's V1, the host coordinates the Manager hierarchy | `main` |
 | P | Plugin variant: Markitect's Apply method as a Claude Code plugin | `variant/plugin` |
 | G | Git variant: Managers collaborate through a Run-local Git remote ([DEC-078](concepts/register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review)); prototype on `dev/g0-prototype` | `variant/git` |
-| K | Baseline: classic agentic coding, one Claude Code session with the task | part of the suite ([PR #793](https://github.com/Glacius-Labs/Markitect/pull/793), not yet on `main`) |
+| K | Baseline: classic agentic coding, one Claude Code session with the task | the suite on `main` |
 
 ## Priority
 

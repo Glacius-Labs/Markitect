@@ -27,7 +27,7 @@ This is the one owner table; other pages link here instead of keeping their own.
 | Technical behavior, product boundaries, package contracts and invariants | [Architecture](architecture.md), the package READMEs and the guides above |
 | Workstreams: the Build and evaluation and Topics sessions, the variants, their branches and state pages | [Workstreams](workstreams.md) |
 | Work-package scope, dependencies and reservations, current source and release status and planned implementation | [Delivery plan](implementation-plan.md); actual candidates and checks live in chats and PRs |
-| Evaluation procedure, staged readiness and how benefits are tested | [Measurement](guides/measurement.md) |
+| Evaluation procedure, staged readiness and how benefits are tested | [Measurement](guides/measurement.md) and the [evaluation suite](guides/evaluation-suite.md), which runs every variant on the same task and judges the results the same way |
 | Source, native, adoption and method evidence | [Qualification record](validation/v1-qualification-20261024.md), the [validation map](validation/README.md) and the individual report, read at their recorded scope and source |
 | Published asset identity of the retired releases | [Distribution retirement record](validation/distribution-retirement-20261017.md) and its [retired release mapping](validation/retired-releases-20261017.json) |
 | Current design documents | [Design map](design/README.md) |

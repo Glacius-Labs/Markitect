@@ -39,6 +39,8 @@ Correct implementation with a stale model, correct model with a missed target, p
 
 ## Quality-first comparative evaluation
 
+The [evaluation suite](evaluation-suite.md) is the current runner for comparisons: every variant gets the same task and the same judging.
+
 The primary study asks whether the method better addresses the problems it is designed for: losing intent through forgotten obligations, overlooked consequences, contradictory representations or ignored rules. The owner [specified the primary comparison](../concepts/sources/human-attention-and-baseline-20261017.md#comparison-baseline) on 17 October 2026: ordinary documentation containing the same intended meaning as the canonical model, given to one coding Agent with the instruction, "Lies dir die Doku durch und implementiere das so" (read the documentation and implement it accordingly). Markitect adds its typed model and systematic realization process. Count authoring and maintaining both the ordinary documentation and the canonical model as human work from the same predeclared starting point.
 
 Give both sides equivalent requirements, rules, interfaces, relationships and acceptance obligations. Preserve the same project starting state, available implementation tools, execution environment, Agent model/effort settings and authorized freedom. The ordinary documentation may be well structured and linked, and the Agent may use ordinary build and test tools. Do not withhold a requirement from the documentation merely because Markitect expresses it in a typed Definition. Independent outcome assessment uses the same hidden expectations for both sides and remains outside both writers' control.
