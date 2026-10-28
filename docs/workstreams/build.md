@@ -1,6 +1,6 @@
 # Build and evaluation
 
-The Build and evaluation session builds concept 2.0 and the evaluation suite that measures it, and it is the only session that builds ([workstreams](../workstreams.md)). It owns the suite and all four arms: K, P and G since 28 October, and M since lane 1 handed it over the same day. For arm M this includes the host variant's code on `main` (the Run and Apply host, the harness, the Codex and Claude Code adapters, the Linux runner), the V1 records under `docs/validation/` and the [delivery plan](../implementation-plan.md), which owns V1's steps and known deviations. This page holds only the session's state.
+The Build and evaluation session builds concept 2.0 and the evaluation suite that measures it, and it is the only session that builds ([workstreams](../workstreams.md)). It owns the suite and all four arms: K, P and G since 28 October, and M since lane 1 handed it over the same day. For arm M this includes the host variant's code on `main` (the Run and Apply host, the harness, the Codex and Claude Code adapters, the Linux runner), the V1 records under `docs/validation/` and the [delivery plan](../implementation-plan.md), which owns the concept 2.0 build steps as well as V1's steps and known deviations. This page holds only the session's state.
 
 The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doing. Can you bring it to main and then we will start discussing and managing the evaluation suite and the three execution variants from here?"
 
@@ -30,4 +30,4 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 ## Questions for the owner
 
 1. **Shape of the 2.0 build.** One implementation of concept 2.0, compared with K; P and V1's open steps stop, and G's prototype becomes the start of T3. Recommendation: yes.
-2. **Acceptance portfolio.** Concept 2.0's acceptance names the Library and Makerspace; the suite's decision made the new, unseen project the real test, because arm M was tuned on Makerspace. Recommendation: accept on the Library and Makerspace as §15 says, and add the new project as the unseen check.
+2. **Acceptance portfolio.** Concept 2.0's acceptance names the Library and Makerspace; the suite's decision made the new, unseen project the real test, because arm M was tuned on Makerspace. Recommendation: accept on the Library and Makerspace as §15 says, and add the new project as the unseen check; its tasks then join T6.
