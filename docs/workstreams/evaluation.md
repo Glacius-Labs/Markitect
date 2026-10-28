@@ -6,7 +6,7 @@ The evaluation suite answers one question: which way of developing a project per
 2. **Variant:** a solution is plugged in and builds it.
 3. **Evaluation:** the result is judged against fixed criteria.
 
-The suite treats every variant as a black box. It does not care how a variant works, which agents, tools or provider it uses, or whether it runs on Claude or Codex. Every evaluation can run with any provider; the provider is part of the variant's configuration, and the suite only records it. Since Codex is out of tokens, the current runs use Claude.
+The suite treats every variant as a black box. It does not care how a variant works or which agents and tools it uses. Every evaluation can run with Claude or with Codex. The evaluation names one model, the suite hands it to every variant, and the variant uses it however it runs. A difference in results then comes from the variant, not from the model.
 
 The lane exists since the owner split Markitect's work into lanes on 27 October 2026. Its lead is the "Lane 4: Evaluation suite" session.
 
@@ -14,9 +14,9 @@ The lane exists since the owner split Markitect's work into lanes on 27 October 
 
 - **Owns:**
   - The task format, the variant interface, the criteria and the report.
-  - [`tools/comparison`](../../tools/comparison/README.md): the assessment ([`assess_candidate.py`](../../tools/comparison/assess_candidate.py)), the review rubric and prompts, and the analysis ([`analyze.py`](../../tools/comparison/analyze.py)).
+  - The suite runner in [`tools/evaluation`](../../tools/evaluation/README.md) and the baseline variant there.
+  - The assessment, review and analysis in [`tools/comparison`](../../tools/comparison/README.md).
   - The task portfolio.
-  - The baseline variant, classic agentic coding: one coding agent with the task. Today's runner is [`runner.py`](../../tools/comparison/runner.py).
 - **Uses, does not own:**
   - The hidden oracles in [`tools/library-oracle`](../../tools/library-oracle/README.md) and [`tools/makerspace-oracle`](../../tools/makerspace-oracle/README.md).
   - The variants. Each lane owns its own variant and how it meets the interface.
@@ -27,7 +27,7 @@ The lane exists since the owner split Markitect's work into lanes on 27 October 
   | Markitect with the host as coordinator | 1 |
   | Markitect Apply as a Claude Code plugin | 2 |
   | Agents collaborating through a Git remote ([DEC-078](../concepts/register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review)) | 3 |
-  | Classic agentic coding, the baseline | 4 |
+  | Classic agentic coding, the baseline: one Claude Code session with the task | 4 |
 
 ## 1. The task
 
@@ -36,11 +36,11 @@ A task is a directory the suite writes:
 | Path | Content |
 |---|---|
 | `task.md` | What to build or change, in ordinary language, with the delivery rules |
-| `model/` | The same intent as a canonical model, for variants that work from one. The suite proves that `task.md` and `model/` say the same |
-| `start.bundle` | The repository to start from, as a Git bundle with its commit. Empty for a new project |
-| `limits.json` | The wall-clock deadline |
+| `model/` | The same intent as a canonical model, for variants that work from one. `task.md` is rendered mechanically from `model/`, reviewed once for the same meaning and frozen. Every variant receives both |
+| `start.bundle` | The repository to start from, as a Git bundle. For a new project, one empty commit |
+| `task.json` | The start commit, the deadline and a digest over the rest |
 
-A **chain** is a sequence of tasks on one project, such as a fresh build followed by nine changes. For each step the suite builds the start from the variant's own previous result plus the step's change to `task.md` and `model/`.
+A **chain** is a sequence of tasks on one project, such as a fresh build followed by nine changes. Each step starts from the variant's own previous result. After a step without a result, the next step starts from that step's start. Each counted evaluation states this rule before any run, because it can decide a chain.
 
 The hidden material (oracle, probes, rubric) never reaches a variant.
 
@@ -52,11 +52,11 @@ A variant is one command:
 VARIANT TASK_DIR OUT_DIR [STATE_DIR]
 ```
 
-- It reads `TASK_DIR` and works however it likes, with whatever provider and model its configuration names.
-- It writes `OUT_DIR/result.bundle`: the final repository, one commit that descends from the start. No result means no result.
-- It may write `OUT_DIR/run.json` with what it knows about itself: provider and model used, tokens, status and cause. The suite records this; it does not decide anything from it.
-- `STATE_DIR` is the variant's own memory within a chain. It is empty at the chain's first step and handed back unchanged at every later step. Only the variant reads it.
-- The suite starts the command, measures the wall time and stops it at the deadline.
+- It reads `TASK_DIR` and works however it likes. The evaluation's model is in the environment variable `EVALUATION_MODEL`, as provider and exact model ID, for example `claude:claude-sonnet-5-5`.
+- It writes `OUT_DIR/result.bundle`: the final repository, one commit that descends from the start.
+- It may write `OUT_DIR/run.json` with what it knows about itself: the provider and model it actually used, tokens, status and cause. The suite checks only that the reported model is the evaluation's model; a run on another model is invalid.
+- `STATE_DIR` is the variant's own memory within a chain. It is empty at the first step and handed back unchanged at every later step.
+- The suite starts the command, measures the wall time, stops it at the deadline and checks that the result descends from the start.
 
 Plugging in a new variant means writing this one command. Nothing else in the suite changes.
 
@@ -68,29 +68,42 @@ The same for every variant, from frozen tools:
 |---|---|
 | **Correctness** | The hidden oracle and probes, through the program's public interface |
 | **Build and tests** | The result's own build and tests in a fixed container |
-| **Scope** | A census of every changed path: what was changed that the task did not ask for, and whether the given task and model were left untouched |
-| **Code quality** | A blinded review against a fixed rubric, with every critical finding checked mechanically and confirmed by a second reviewer |
-| **Delivery** | Whether a result came back at all, along a chain |
-| **Cost** | Wall time, and tokens where the variant reports them |
+| **Scope** | A census of every changed path against the start: what changed that the task did not ask for. A result that changes `task.md` or `model/` loses here, and is otherwise evaluated with the original files put back |
+| **Code quality** | A blinded review against a fixed rubric. Every critical finding is checked mechanically and confirmed by a second reviewer |
+| **Delivery** | Whether a result came back, step by step along a chain |
+| **Cost** | Wall time, measured by the suite. Tokens are reported as the variant states them, descriptively, and are not compared, because providers count them differently |
+
+A timeout or a missing result is never dropped: it counts as a failure in Correctness and Delivery.
 
 **The report** shows each variant per area, with its uncertainty, and the predeclared comparison per area. There is no single overall score. The answer is which variant performs better in which areas.
 
+**Counted evaluations.** Each one has its own protocol, approved before the first counted run, like the [Phase A–C protocol](../validation/v1-comparison-protocol-20261024.md):
+- tasks and repetitions;
+- run order;
+- the model;
+- the decision rule and the test per area;
+- the frozen tool revisions.
+
 ## State
 
-- **Done:** Phases A, B and C compared Markitect with one agent on the Library and Makerspace ([report](../validation/v1-comparison-report-20261026.md)). No quality advantage for Markitect was shown, at 9 to 10 times the time and 9 to 42 times the tokens.
-- **Tools:** assessment, review and analysis exist and are tested. They are tied to the Library and Makerspace and to the old arm runners, and the ledger builder lives outside the repository.
+- **Done:** Phases A, B and C compared Markitect with one agent on the Library and Makerspace ([report](../validation/v1-comparison-report-20261026.md)). No phase showed a quality advantage for Markitect, and Phase C, the large project, counts against it. Markitect cost 9 to 10.5 times the time and 9 to 42 times the tokens.
+- **Suite runner and baseline:** [`tools/evaluation`](../../tools/evaluation/README.md) builds tasks and chains, runs any variant command under its deadline and checks its result. Its baseline variant runs one Claude Code session. Both are tested offline; nothing has run against a provider.
+- **Assessment:** assessment, review and analysis exist in `tools/comparison` and are tested. They are tied to the Library and Makerspace, and they do not yet read the suite's output.
 - **Variants:**
-  - Lane 1's is run by step 4's controller outside the repository.
+  - Lane 1's is run by step 4's controller, outside the repository.
   - Lane 2's has its own runner on a branch.
   - Lane 3's is a prototype in preparation.
-  - The baseline has `runner.py`, which so far runs Codex only.
-- **Pilot:** the Makerspace old-versus-new gate cells stay as they ran on `gpt-6-sol`.
+- **Model:** Codex is out of tokens, so evaluations run on Claude for now. The old-versus-new Makerspace comparison, which checks the remodeled Makerspace input against the old one, keeps its earlier `gpt-6-sol` runs.
+
+## Limits
+
+- **Isolation.** Variants run as processes of the user on the host, so a variant could read the hidden oracles in this repository. Before counted runs, variants run in an isolated environment that sees only `TASK_DIR`, `OUT_DIR` and `STATE_DIR`, and the portfolio's oracles live outside the repository.
+- **Reviewer family.** The earlier studies used reviewers of another model family than the writers. With Claude writers, a Codex reviewer restores that; if none is available, the report states the same-family review as a limit.
 
 ## Next
 
-1. **Interface on `main`:** the task format, the variant command, and the suite runner that builds tasks and chain starts, starts a variant under its deadline and collects the result, with offline tests.
-2. **Evaluation on `main`:** the assessment, the review and the report per area, reading only `result.bundle` and the suite's own measurements.
-3. **Baseline:** one coding agent as a variant command, with Claude Code first and Codex as a configuration.
-4. **The other variants:** each lane wraps its variant in the command.
-5. **First bounded dispatch,** after the owner's approval: one Library task through every variant on Claude, as a smoke of the suite, not as a counted run.
-6. **Portfolio:** new projects with hidden oracles for the counted evaluation.
+1. **Assessment on the suite's output:** the assessment, the review and the report per area read `suite.json` and `result.bundle`.
+2. **The other variants:** each lane wraps its variant in the command.
+3. **Isolation** of the variant command, as above.
+4. **First bounded dispatch,** after the owner's approval: one Library task through every variant on Claude, as a smoke of the suite, not as a counted run.
+5. **Portfolio:** new projects with hidden oracles, kept outside the repository, for the counted evaluations.

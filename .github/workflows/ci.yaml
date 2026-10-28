@@ -85,6 +85,7 @@ jobs:
         shell: bash
         run: |
           python -B -m unittest discover -s tools/comparison
+          python -B -m unittest discover -s tools/evaluation
           python -B -m unittest discover -s tools/makerspace-oracle -p 'test_*.py'
           python -B -m unittest discover -s tools/model-analysis
 
