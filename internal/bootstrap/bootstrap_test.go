@@ -160,8 +160,13 @@ func TestUsageAndRefusals(t *testing.T) {
 	if Run(context.Background(), nil, &out, &errOut) != 0 || !strings.Contains(out.String(), "markitect impact") {
 		t.Fatalf("usage = %s", out.String())
 	}
-	if Run(context.Background(), []string{"apply"}, &out, &errOut) != 2 || !strings.Contains(errOut.String(), `unknown command "apply"`) {
+	if Run(context.Background(), []string{"bughunt"}, &out, &errOut) != 2 || !strings.Contains(errOut.String(), `unknown command "bughunt"`) {
 		t.Fatalf("unknown command: %s", errOut.String())
+	}
+	// Without provider adapters apply starts nothing, not even a remote.
+	errOut.Reset()
+	if Run(context.Background(), []string{"apply"}, &out, &errOut) != 2 || !strings.Contains(errOut.String(), "no provider adapters") {
+		t.Fatalf("apply without adapters: %s", errOut.String())
 	}
 	dir := testkit.TempDir(t)
 	if code, _, errOut := run(t, dir, "check"); code != 2 || !strings.Contains(errOut, "not inside a Git repository") {

@@ -1,6 +1,6 @@
 # Architecture
 
-How the source is composed, where each responsibility lives and which contracts hold between the packages. Main is being rebuilt to [concept 2.0](concepts/v2-concept.md) ([DEC-086](concepts/register.md#dec-086-concept-20-is-the-target)) in the steps of the [delivery plan](implementation-plan.md#concept-20-build). T1 built the model language and the model commands, T3 the [Run remote](../internal/runremote/README.md) with its hooks. The Run engine with `apply` and `verify` returns with T4, the native host with T5. Until then no command starts an agent.
+How the source is composed, where each responsibility lives and which contracts hold between the packages. Main is being rebuilt to [concept 2.0](concepts/v2-concept.md) ([DEC-086](concepts/register.md#dec-086-concept-20-is-the-target)) in the steps of the [delivery plan](implementation-plan.md#concept-20-build). T1 built the model language and the model commands, T3 the [Run remote](../internal/runremote/README.md) with its hooks, T4 the [Run engine](../internal/run/README.md) with `apply` and `verify` and the [agent port](../internal/agentport/README.md); the provider adapters follow with T4b and the native host with T5.
 
 This page owns the package contracts. The [model language guide](guides/model-language.md) owns the language, the `.markitect/` layout and the commands; the [code map](development/code-map.md) lists every package with its owning document. V1's Run, Apply, adapter and state architecture is kept at the base commit of T1: [architecture of V1](https://github.com/Glacius-Labs/Markitect/blob/f23c2e12d9833efa61e5e65c90018016423abe74/docs/architecture.md).
 
@@ -16,6 +16,8 @@ This page owns the package contracts. The [model language guide](guides/model-la
 
 None of these commands starts an agent, a container or a Run, and none needs credentials. The [commands](guides/model-language.md#commands) section gives their options and exit codes.
 
+`apply` and `verify` run `cmd/markitect → internal/bootstrap → CLI adapter → Run engine`. The CLI adapter parses the options and Findings and calls its `Runs` port; bootstrap implements it with the [Run engine](../internal/run/README.md) (`internal/run`) over three ports: the host's Git (`internal/adapters/rungit`, a private bare repository that only fetches from and pushes to the target), the Run remote (`internal/adapters/remotecontainer`) and the agents (`internal/agentport`, implemented by the provider adapters). The engine checks, computes impact through analysis, builds the remote's plan through `internal/runremote`, schedules the makers and checkers, writes the Result and lands it.
+
 ## Layers
 
 All Go packages use one root module. One rule table in [`internal/tooling/architecture/rules.go`](../internal/tooling/architecture/rules.go) gives every package a layer and its owning document, lists which layers each layer may import and names the few exceptions. The [import gate](#import-gate) enforces it, and the generated [code map](development/code-map.md) shows the table. The source packager accepts exactly the table's packages below `cmd/` and `internal/`.
@@ -28,13 +30,15 @@ All Go packages use one root module. One rule table in [`internal/tooling/archit
 | Loading and checking a project's `.markitect/` folder from one repository state | `internal/project` | Model, the built-in files, realization; its own `Repository` port |
 | References, graph, impact with checklists, lint | `internal/analysis` | Project and the packages below it |
 | The Run remote's rules: a Run's plan from impact, the verdict trailers and the hook's decision | `internal/runremote` | Analysis and the packages below it |
-| Git, command-line and Run remote adapters; no adapter imports another | `internal/adapters/repo`, `internal/adapters/cli`, `internal/adapters/remoteserver` (inside the Run container), `internal/adapters/remotecontainer` (the host's side) | Their inward consumers and build data |
-| Composition | `internal/bootstrap` | The CLI and repo adapters |
+| How the Run engine starts a maker or checker and observes how it ends | `internal/agentport` | No other Markitect package |
+| The Run engine: who works, the schedule along the tree, the Result and landing | `internal/run` | Runremote, analysis and the packages below them; the agent port |
+| Git, command-line and Run remote adapters; no adapter imports another | `internal/adapters/repo`, `internal/adapters/cli`, `internal/adapters/remoteserver` (inside the Run container), `internal/adapters/remotecontainer` (the host's side), `internal/adapters/rungit` (the host's Git for a Run) | Their inward consumers and build data |
+| Composition | `internal/bootstrap` | The adapters, the Run engine and the agent port |
 | Entrypoints | `cmd/markitect`; `cmd/markitect-remote`, the Run container's program | Bootstrap; the remote server adapter |
 | Container engine client, frame protocol and session helper, kept for T4 | `internal/adapters/container`, `internal/agentd/frame`, `internal/agentd`, `cmd/markitect-agentd` | The frame protocol only |
 | Guarded working-tree writes for bundle installation; version and license notices | `internal/guardedwrite`, `internal/buildinfo` | No other Markitect package |
 | Maintenance | `internal/tooling/*`, `cmd/markitect-release` | The guarded writer and build data; separate from product execution |
-| Test support, test files only | `internal/testkit` | No Markitect package |
+| Test support, test files only | `internal/testkit`; `internal/agentport/agentfake`, scripted agents | No Markitect package; the agent port |
 | Standalone: consumer bootstrap and source smoke | `packaging/bootstrap`, `tools/smoke` | No Markitect package |
 
 The pure packages (`model`, `realization`, `analysis`, `runremote`) read no files and start no process; their callers hand them bytes. `model` and `realization` return every error as a diagnostic with a code, which the [model language guide](guides/model-language.md) lists. The container client, the frame protocol and the session helper have no product consumer until T4; they stay because T4's Run engine starts its agents through them.
