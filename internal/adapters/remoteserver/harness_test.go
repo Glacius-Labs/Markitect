@@ -14,7 +14,10 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/runremote"
 )
 
@@ -36,13 +39,14 @@ var fixtureFiles = map[string]string{
 	"src/members/member.go":                "package members\n",
 	"src/members/cards/card.go":            "package cards\n",
 	"src/loans/loan.go":                    "package loans\n",
-	".markitect/markitect.yaml":            "name: library\n",
-	".markitect/markitect.lock":            "std 1.0.0\n",
+	".markitect/manifest.yaml":             "libraries:\n  std: 1.0.0\n",
+	".markitect/lock.yaml":                 "std 1.0.0\n",
 	".markitect/execution.yaml":            "checks: []\n",
+	".markitect/ignore.md":                 "| Path | Why |\n|---|---|\n",
 	".markitect/model/project.md":          "---\nkind: std/Project\n---\n# Library\n",
 	".markitect/model/members/member.md":   "---\nkind: std/Concept\n---\n# Member\n",
 	".markitect/model/loans/loan.md":       "---\nkind: std/Concept\n---\n# Loan\n",
-	".markitect/registry/root.md":          "# Root\n",
+	".markitect/registry.md":               "# Root\n",
 	".markitect/registry/members.md":       "# members\n",
 	".markitect/registry/members/cards.md": "# cards\n",
 	".markitect/registry/loans.md":         "# loans\n",
@@ -52,32 +56,41 @@ var fixtureFiles = map[string]string{
 // decides whether its submission passes.
 const failCheck = `test -z "$(find . -name FAIL -not -path './.git/*')"`
 
+// The tests name Managers as trailers do: "." for Root.
+func id(name string) string {
+	if name == "." {
+		return model.RootPackage
+	}
+	return name
+}
+
 func fixturePlan(base string) *runremote.Plan {
 	p := &runremote.Plan{
-		Run:       "test-run",
-		Mode:      runremote.Apply,
-		Base:      base,
-		Protected: []string{".markitect/**"},
-		Checks:    []runremote.Check{{Name: "no-fail-marker", Command: failCheck, TimeoutSeconds: 60}},
+		Run:    "test-run",
+		Mode:   runremote.Apply,
+		Base:   base,
+		Checks: []project.Check{{Name: "no-fail-marker", Command: failCheck, Timeout: time.Minute, Environment: "test-image"}},
 		Managers: []runremote.Manager{
-			{ID: ".", Registry: ".markitect/registry/root.md", Working: true, Checklist: []string{"project"}},
-			{ID: "members", Parent: ".", Patterns: []string{"src/members/**"}, Registry: ".markitect/registry/members.md", Working: true, Checklist: []string{"members/member"}},
-			{ID: "members/cards", Parent: "members", Patterns: []string{"src/members/cards/**"}, Registry: ".markitect/registry/members/cards.md", Working: true, Checklist: []string{"members/cards/card"}},
-			{ID: "loans", Parent: ".", Patterns: []string{"src/loans/**"}, Registry: ".markitect/registry/loans.md", Working: true, Checklist: []string{"loans/loan"}},
+			{ID: "", Working: true, Checklist: []string{"project"}},
+			{ID: "loans", Patterns: []string{"src/loans/**"}, Working: true, Checklist: []string{"loans/loan"}},
+			{ID: "members", Patterns: []string{"src/members/**"}, Working: true, Checklist: []string{"members/member"}},
+			{ID: "members/cards", Patterns: []string{"src/members/cards/**"}, Working: true, Checklist: []string{"members/cards/card"}},
 		},
+		Pages: map[string]string{},
 	}
 	for _, m := range p.Managers {
+		p.Pages[runremote.PageFile(m.ID)] = m.ID
 		for _, role := range []runremote.Role{runremote.Maker, runremote.Checker} {
-			user := userOf(m.ID, role)
+			user := userOf(runremote.Name(m.ID), role)
 			p.Agents = append(p.Agents, runremote.Agent{User: user, Manager: m.ID, Role: role, TokenSHA256: tokenHash(user)})
 		}
 	}
 	return p
 }
 
-func userOf(manager string, role runremote.Role) string {
-	name := map[string]string{".": "root", "members": "members", "members/cards": "cards", "loans": "loans"}[manager]
-	return name + "-" + string(role)
+func userOf(name string, role runremote.Role) string {
+	short := map[string]string{".": "root", "members": "members", "members/cards": "cards", "loans": "loans"}[name]
+	return short + "-" + string(role)
 }
 
 func tokenOf(user string) string { return "token-" + user }
@@ -163,7 +176,7 @@ func (r *remote) agent(manager string, role runremote.Role) *agent {
 	u.User = url.UserPassword(user, tokenOf(user))
 	dir := filepath.Join(r.t.TempDir(), user)
 	run(r.t, "", "clone", "-q", u.String(), dir)
-	a := &agent{t: r.t, dir: dir, user: user, branch: runremote.Branch(manager)}
+	a := &agent{t: r.t, dir: dir, user: user, branch: runremote.Branch(id(manager))}
 	a.git("checkout", "-q", "-B", "work", "origin/"+a.branch)
 	return a
 }

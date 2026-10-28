@@ -1,82 +1,55 @@
 package runremote
 
 import (
-	"path"
-	"strings"
+	"sort"
+
+	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/realization"
 )
 
-// Ownership answers which Package owns a repository file. The registry's
-// pattern semantics belong to the compiler (step T1); until its registry
-// lands, PatternOwnership stands in with the rule the concept states (§4):
-// the most specific pattern wins and Root owns every file no Package claims.
-type Ownership interface {
-	Owner(file string) string
+// Ownership answers which Package owns a repository file, with the
+// registry's own pattern rules (docs/guides/model-language.md): the most
+// specific matching pattern wins, Root owns what no pattern claims.
+type Ownership struct {
+	patterns map[string][]realization.Pattern
 }
 
-// PatternOwnership matches the Managers' patterns of a plan.
-type PatternOwnership struct{ plan *Plan }
+// NewOwnership reads the Managers' patterns of a plan.
+func NewOwnership(p *Plan) Ownership {
+	o := Ownership{patterns: map[string][]realization.Pattern{}}
+	for _, m := range p.Managers {
+		for _, text := range m.Patterns {
+			o.patterns[m.ID] = append(o.patterns[m.ID], realization.Pattern{Text: text})
+		}
+	}
+	return o
+}
 
-// NewPatternOwnership returns the stand-in ownership of the plan's patterns.
-func NewPatternOwnership(p *Plan) PatternOwnership { return PatternOwnership{p} }
-
-// Owner returns the Package whose matching pattern is the most specific: the
-// one with the most literal characters, then the deeper Package, then the
-// smaller ID. Root owns what no pattern matches.
-func (o PatternOwnership) Owner(file string) string {
-	best, bestScore, bestDepth := RootID, -1, -1
-	for _, m := range o.plan.Managers {
-		for _, pattern := range m.Patterns {
-			if !Match(pattern, file) {
+// Owner returns the Package that owns file, and the Packages that claim it
+// equally when two are tied, which the compiler refuses.
+func (o Ownership) Owner(file string) (string, []string) {
+	best, score := model.RootPackage, -1
+	var tied []string
+	ids := make([]string, 0, len(o.patterns))
+	for id := range o.patterns {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	for _, id := range ids {
+		for _, p := range o.patterns[id] {
+			if !p.Match(file) {
 				continue
 			}
-			score, depth := literal(pattern), strings.Count(m.ID, "/")
-			if score > bestScore || score == bestScore && (depth > bestDepth || depth == bestDepth && m.ID < best) {
-				best, bestScore, bestDepth = m.ID, score, depth
+			switch s := p.Specificity(); {
+			case s > score:
+				best, score, tied = id, s, nil
+			case s == score && id != best:
+				tied = append(tied, id)
 			}
 		}
 	}
-	return best
-}
-
-// Match reports whether a slash-separated pattern matches a repository path:
-// "**" as a whole segment matches any number of segments (at the end, at
-// least one), other segments match one path segment as path.Match does.
-func Match(pattern, file string) bool {
-	return match(strings.Split(pattern, "/"), strings.Split(file, "/"))
-}
-
-func match(pat, segs []string) bool {
-	for len(pat) > 0 {
-		if pat[0] == "**" {
-			// A trailing "**" matches what lies inside, at least one segment.
-			first := 0
-			if len(pat) == 1 {
-				first = 1
-			}
-			for i := first; i <= len(segs); i++ {
-				if match(pat[1:], segs[i:]) {
-					return true
-				}
-			}
-			return false
-		}
-		if len(segs) == 0 {
-			return false
-		}
-		if ok, err := path.Match(pat[0], segs[0]); err != nil || !ok {
-			return false
-		}
-		pat, segs = pat[1:], segs[1:]
+	if len(tied) > 0 {
+		return best, append([]string{best}, tied...)
 	}
-	return len(segs) == 0
-}
-
-func literal(pattern string) int {
-	n := 0
-	for _, r := range pattern {
-		if !strings.ContainsRune("*?[]", r) {
-			n++
-		}
-	}
-	return n
+	return best, nil
 }

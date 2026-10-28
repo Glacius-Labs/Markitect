@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/runremote"
 )
 
@@ -72,7 +73,7 @@ func (f *fixture) source() (string, string) {
 		"ci.sh":                          "exit 0\n",
 		"src/members/member.go":          "package members\n",
 		".markitect/model/project.md":    "# Library\n",
-		".markitect/registry/root.md":    "# Root\n",
+		".markitect/registry.md":         "# Root\n",
 		".markitect/registry/members.md": "# members\n",
 	}
 	for name, content := range files {
@@ -101,16 +102,17 @@ func (f *fixture) source() (string, string) {
 func token(user string) string { return "token-" + user }
 
 func (f *fixture) plan(base string) *runremote.Plan {
-	p := &runremote.Plan{Run: f.run, Mode: runremote.Apply, Base: base, Protected: []string{".markitect/**"},
-		Checks: []runremote.Check{{Name: "ci", Command: "sh ci.sh", TimeoutSeconds: 120}},
+	p := &runremote.Plan{Run: f.run, Mode: runremote.Apply, Base: base,
+		Checks: []project.Check{{Name: "ci", Command: "sh ci.sh", Timeout: 2 * time.Minute, Environment: f.image}},
 		Managers: []runremote.Manager{
-			{ID: ".", Registry: ".markitect/registry/root.md", Working: true, Checklist: []string{"project"}},
-			{ID: "members", Parent: ".", Patterns: []string{"src/members/**"}, Registry: ".markitect/registry/members.md", Working: true, Checklist: []string{"members/member"}},
-		}}
+			{ID: "", Working: true, Checklist: []string{"project"}},
+			{ID: "members", Patterns: []string{"src/members/**"}, Working: true, Checklist: []string{"members/member"}},
+		},
+		Pages: map[string]string{project.RootPage: "", project.RegistryDir + "/members.md": "members"}}
 	for _, a := range []struct {
 		user, manager string
 		role          runremote.Role
-	}{{"root-maker", ".", runremote.Maker}, {"root-checker", ".", runremote.Checker}, {"members-maker", "members", runremote.Maker}, {"members-checker", "members", runremote.Checker}} {
+	}{{"root-maker", "", runremote.Maker}, {"root-checker", "", runremote.Checker}, {"members-maker", "members", runremote.Maker}, {"members-checker", "members", runremote.Checker}} {
 		sum := sha256.Sum256([]byte(token(a.user)))
 		p.Agents = append(p.Agents, runremote.Agent{User: a.user, Manager: a.manager, Role: a.role, TokenSHA256: hex.EncodeToString(sum[:])})
 	}
@@ -122,7 +124,7 @@ func (f *fixture) start(plan *runremote.Plan, repo, commit string) (*Remote, err
 	if err := StartBundle(f.ctx, "git", repo, commit, &bundle); err != nil {
 		f.t.Fatal(err)
 	}
-	return Start(f.ctx, f.engine, Spec{Image: f.image, Binary: f.binary, Plan: plan, Limits: Limits{CPUs: "2", Memory: "1g", Pids: 512}}, &bundle)
+	return Start(f.ctx, f.engine, Spec{Binary: f.binary, Plan: plan, Limits: Limits{CPUs: "2", Memory: "1g", Pids: 512}}, &bundle)
 }
 
 // manager starts one scripted agent's container on the Run's network.
@@ -216,34 +218,55 @@ for p in /proc/[0-9]*; do
   [ "$(stat -c %u "$p" 2>/dev/null)" = "$me" ] && continue
   kill -9 "${p#/proc/}" 2>/dev/null && echo "ATTACK killed ${p#/proc/}"
 done
-(sleep 600 >/dev/null 2>&1 &)
+echo 1000 > /proc/self/oom_score_adj 2>/dev/null; echo 0 > /proc/self/oom_score_adj 2>/dev/null && echo "ATTACK left the memory limit's victims"
+setsid sleep 600 >/dev/null 2>&1 < /dev/null &
+for d in /tmp /var/tmp /dev/shm /run/lock; do echo planted > "$d/t3-marker" 2>/dev/null; done
+command -v ipcmk >/dev/null && ipcmk -M 1024 >/dev/null
 git ls-remote http://remote:8080/run.git >/dev/null 2>&1 && echo "ATTACK read the repository"
+exit 0
+`
+	// The next check, of another user, must find nothing of the first.
+	probe := `echo "uid=$(id -u)"
+for d in /tmp /var/tmp /dev/shm /run/lock; do [ -e "$d/t3-marker" ] && echo "LEFT $d/t3-marker"; done
+ipcs -m 2>/dev/null | grep -q "^0x" && echo "LEFT shared memory"
 exit 0
 `
 	f.sh(root, `cd /tmp/w && git checkout -q -b w origin/root && git merge -q --no-edit origin/managers/members && cat > ci.sh <<'EOF'
 `+attack+`EOF
 git add ci.sh && git commit -q -m attack -m '`+trailers(runremote.Trailers{Manager: ".", Verdicts: []runremote.Line{{Item: "project", Word: runremote.Changed, Evidence: "merged members"}}})+`' && git push -q origin HEAD:refs/heads/root`)
 
-	log, err := r.Log(f.ctx)
-	if err != nil {
-		t.Fatal(err)
+	lastCheck := func() string {
+		log, err := r.Log(f.ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var last struct {
+			Accepted bool
+			Checks   []runremote.CheckResult
+		}
+		lines := bytes.Split(bytes.TrimSpace(log), []byte("\n"))
+		if err := json.Unmarshal(lines[len(lines)-1], &last); err != nil {
+			t.Fatal(err)
+		}
+		if !last.Accepted || len(last.Checks) != 1 || !strings.Contains(last.Checks[0].Output, "uid=61") {
+			t.Fatalf("the check did not run as a check user: %+v", last)
+		}
+		return last.Checks[0].Output
 	}
-	var last struct {
-		Accepted bool
-		Checks   []runremote.CheckResult
-	}
-	lines := bytes.Split(bytes.TrimSpace(log), []byte("\n"))
-	if err := json.Unmarshal(lines[len(lines)-1], &last); err != nil {
-		t.Fatal(err)
-	}
-	if !last.Accepted || len(last.Checks) != 1 || !strings.Contains(last.Checks[0].Output, "uid=61") || strings.Contains(last.Checks[0].Output, "ATTACK") {
-		t.Fatalf("the check ran with access to the remote: %+v", last)
+	if out := lastCheck(); strings.Contains(out, "ATTACK") {
+		t.Fatalf("the check reached the remote:\n%s", out)
 	}
 	if after := hookSum(); after != before {
 		t.Fatalf("the remote's files changed:\n%s\n%s", before, after)
 	}
 	if left := f.sh(r.Container, `for p in /proc/[0-9]*; do u=$(stat -c %u $p 2>/dev/null) || continue; [ "$u" -ge 61000 ] && echo "$p $u"; done; true`); strings.TrimSpace(left) != "" {
 		t.Fatalf("check processes outlived the check:\n%s", left)
+	}
+	f.sh(root, `cd /tmp/w && cat > ci.sh <<'EOF'
+`+probe+`EOF
+git add ci.sh && git commit -q -m probe -m '`+trailers(runremote.Trailers{Manager: ".", Verdicts: []runremote.Line{{Item: "project", Word: runremote.Changed, Evidence: "probe"}}})+`' && git push -q origin HEAD:refs/heads/root`)
+	if out := lastCheck(); strings.Contains(out, "LEFT") {
+		t.Fatalf("a check found what an earlier one left:\n%s", out)
 	}
 	f.sh(rc, `cd /tmp/w && git fetch -q && git checkout -q -b w origin/root && git commit -q --allow-empty -m approve -m '`+
 		trailers(runremote.Trailers{Manager: ".", Review: runremote.Approved, Checks: []runremote.Line{{Item: "project", Word: runremote.Confirmed, Evidence: "read"}}})+`' && git push -q origin HEAD:refs/heads/root`)

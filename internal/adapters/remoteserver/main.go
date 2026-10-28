@@ -115,6 +115,11 @@ func serve(ctx context.Context, l Layout, listen string) error {
 	if err := os.MkdirAll(l.Tmp(), 0o700); err != nil {
 		return err
 	}
+	if isolated() {
+		if err := protect(); err != nil {
+			return fmt.Errorf("protect the remote from the memory limit: %w", err)
+		}
+	}
 	srv := &http.Server{Addr: listen, Handler: &Server{Layout: l, Plan: plan, Git: git}, ReadHeaderTimeout: 30 * time.Second}
 	ln, err := net.Listen("tcp", listen)
 	if err != nil {

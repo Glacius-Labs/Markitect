@@ -236,5 +236,5 @@ Details the concept leaves open, settled while building T1:
 - **Stale realization** is reported, not refused (above): a registry link to a deleted Definition or an entry for a missing file does not block the Run that cleans it up. A repository file without any entry stays a compile error. Confirmed by the owner on 28 October 2026 (concept §3).
 - **Inherited items** are only Definitions above that the change itself changed, not those reached through a file or a link; otherwise a README edit at Root would make every Manager work. Confirmed by the owner on 28 October 2026 (concept §6.2).
 - **How far impact follows.** One step of links, and the registry in both directions. The code's own imports are not followed yet; a later step that knows the realization's languages can widen reach.
-- **The required check's environment** is the container image it runs in; T3 binds how the Run's remote runs it.
+- **The required check's environment** is the container image it runs in. The Run's remote runs every check in that one image, so all checks of a project name the same image ([Run remote](../../internal/runremote/README.md#required-checks)).
 - **Skills** are installed into `.claude/skills/` (Claude Code) and `.agents/skills/` (the Agent Skills folder that Codex and other agents read).

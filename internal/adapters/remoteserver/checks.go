@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -16,12 +17,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/runremote"
 )
 
 const (
-	// checkUIDs are the throwaway users of the checks: each check run takes
-	// the next one, so nothing one run leaves behind is writable for the next.
+	// checkUIDs are the users the checks run as: each check run takes the
+	// next one, and everything it leaves is removed before the next starts.
 	checkUIDBase  = 61000
 	checkUIDCount = 2000
 	// outputTail is how much of a check's output the pusher and the log see.
@@ -30,15 +32,15 @@ const (
 
 // checkRunner runs the required checks on a copy of a commit's tree. When the
 // remote runs as root on Linux, as it does in its container, every check runs
-// as a fresh unprivileged user that can neither read the plan nor write the
-// repository, and every process of that user is killed before the next check
-// starts. Elsewhere (tests) checks run as the current user.
+// as an unprivileged user of its own that can neither read the plan nor write
+// the repository; afterwards every process, file and IPC object of that user
+// is removed. Elsewhere (tests) checks run as the current user.
 type checkRunner struct {
 	// progress tells the pusher which check runs.
 	progress io.Writer
+	layout   Layout
 	repo     gitRepo
 	dir      string
-	seqFile  string
 	isolate  bool
 }
 
@@ -49,23 +51,33 @@ func newCheckRunner(l Layout, repo gitRepo, progress io.Writer) *checkRunner {
 		// Outside the root-only remote directory, so a check user can reach its own copy.
 		dir = filepath.Join(filepath.Dir(l.Root), "checks")
 	}
-	return &checkRunner{progress: progress, repo: repo, dir: dir, seqFile: filepath.Join(l.Root, "check-seq"), isolate: isolate}
+	return &checkRunner{progress: progress, layout: l, repo: repo, dir: dir, isolate: isolate}
 }
 
-func (c *checkRunner) Run(commit runremote.Commit, checks []runremote.Check) (results []runremote.CheckResult, err error) {
+func (c *checkRunner) Run(commit runremote.Commit, checks []project.Check) (results []runremote.CheckResult, err error) {
 	if err := os.MkdirAll(c.dir, 0o711); err != nil {
+		return nil, err
+	}
+	image, err := readEnvironment(c.layout)
+	if err != nil {
 		return nil, err
 	}
 	uid, err := c.nextUID()
 	if err != nil {
 		return nil, err
 	}
+	if c.isolate {
+		// Checks inherit this: the first victims of the memory limit.
+		if err := victim(); err != nil {
+			return nil, err
+		}
+	}
 	work, err := os.MkdirTemp(c.dir, "check-")
 	if err != nil {
 		return nil, err
 	}
 	defer func() {
-		if serr := sweep(uid, c.isolate); serr != nil && err == nil {
+		if serr := sweep(c.layout, uid, c.isolate); serr != nil && err == nil {
 			results, err = nil, serr
 		}
 		if rerr := os.RemoveAll(work); rerr != nil && err == nil {
@@ -86,7 +98,7 @@ func (c *checkRunner) Run(commit runremote.Commit, checks []runremote.Check) (re
 			return nil, err
 		}
 	}
-	env := checkEnv(home, tmp)
+	env := checkEnv(image, home, tmp)
 	for _, check := range checks {
 		fmt.Fprintf(c.progress, "running the required check %s on %.12s\n", check.Name, commit.ID)
 		r := c.runOne(check, filepath.Join(repo, filepath.FromSlash(check.Directory)), env, uid)
@@ -99,13 +111,13 @@ func (c *checkRunner) Run(commit runremote.Commit, checks []runremote.Check) (re
 }
 
 func (c *checkRunner) nextUID() (int, error) {
-	seq := 0
-	if b, err := os.ReadFile(c.seqFile); err == nil {
+	seq, file := 0, filepath.Join(c.layout.Root, "check-seq")
+	if b, err := os.ReadFile(file); err == nil {
 		seq, _ = strconv.Atoi(strings.TrimSpace(string(b)))
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return 0, err
 	}
-	if err := os.WriteFile(c.seqFile, []byte(strconv.Itoa(seq+1)), 0o600); err != nil {
+	if err := os.WriteFile(file, []byte(strconv.Itoa(seq+1)), 0o600); err != nil {
 		return 0, err
 	}
 	return checkUIDBase + seq%checkUIDCount, nil
@@ -238,26 +250,59 @@ func extract(r io.Reader, dir string) ([]string, error) {
 	}
 }
 
-func checkEnv(home, tmp string) []string {
-	env := []string{"PATH=" + os.Getenv("PATH"), "HOME=" + home, "TMPDIR=" + tmp, "LANG=C.UTF-8"}
-	if runtime.GOOS == "windows" {
-		for _, k := range []string{"SYSTEMROOT", "WINDIR", "COMSPEC", "PATHEXT", "TEMP", "TMP"} {
-			env = append(env, k+"="+os.Getenv(k))
-		}
+// environmentName holds the image's environment, recorded when the remote is
+// seeded: the environment a check runs in.
+const environmentName = "environment.json"
+
+func recordEnvironment(l Layout) error {
+	b, err := json.Marshal(os.Environ())
+	if err != nil {
+		return err
 	}
-	return env
+	return os.WriteFile(filepath.Join(l.Root, environmentName), b, 0o600)
 }
 
-func (c *checkRunner) runOne(check runremote.Check, dir string, env []string, uid int) runremote.CheckResult {
+func readEnvironment(l Layout) ([]string, error) {
+	b, err := os.ReadFile(filepath.Join(l.Root, environmentName))
+	if err != nil {
+		return nil, err
+	}
+	var env []string
+	return env, json.Unmarshal(b, &env)
+}
+
+// checkEnv is the image's environment with a fresh HOME and TMPDIR; every
+// other variable that points into the image's home, PATH excepted, points
+// into the fresh one, so no cache is shared between check runs.
+func checkEnv(image []string, home, tmp string) []string {
+	old := ""
+	for _, kv := range image {
+		if v, ok := strings.CutPrefix(kv, "HOME="); ok && v != "/" {
+			old = strings.TrimSuffix(v, "/")
+		}
+	}
+	var env []string
+	for _, kv := range image {
+		k, v, _ := strings.Cut(kv, "=")
+		switch {
+		case k == "HOME" || k == "TMPDIR" || k == "PWD" || k == "OLDPWD" || k == "REMOTE_USER",
+			strings.HasPrefix(k, "GIT_"), strings.HasPrefix(k, "MARKITECT_"):
+			continue
+		case old != "" && k != "PATH" && (v == old || strings.HasPrefix(v, old+"/")):
+			v = home + v[len(old):]
+		}
+		env = append(env, k+"="+v)
+	}
+	return append(env, "HOME="+home, "TMPDIR="+tmp)
+}
+
+func (c *checkRunner) runOne(check project.Check, dir string, env []string, uid int) runremote.CheckResult {
 	r := runremote.CheckResult{Name: check.Name, Exit: -1}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(check.TimeoutSeconds)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), check.Timeout)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, shell(), "-c", check.Command)
 	cmd.Dir = dir
-	cmd.Env = append([]string(nil), env...)
-	for k, v := range check.Environment {
-		cmd.Env = append(cmd.Env, k+"="+v)
-	}
+	cmd.Env = env
 	out := &tailBuffer{limit: outputTail}
 	cmd.Stdout, cmd.Stderr = out, out
 	cmd.WaitDelay = 10 * time.Second
@@ -265,7 +310,6 @@ func (c *checkRunner) runOne(check runremote.Check, dir string, env []string, ui
 	start := time.Now()
 	err := cmd.Start()
 	if err == nil {
-		started(cmd)
 		err = cmd.Wait()
 		finished(cmd)
 	}

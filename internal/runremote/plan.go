@@ -9,6 +9,11 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+
+	"github.com/Glacius-Labs/Markitect/internal/analysis"
+	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/project"
+	"github.com/Glacius-Labs/Markitect/internal/realization"
 )
 
 // Mode says what the agents of a Run may push.
@@ -47,24 +52,24 @@ type Plan struct {
 	Base string `json:"base"`
 	// Managers lists every Package of the model, working or not.
 	Managers []Manager `json:"managers"`
-	Agents   []Agent   `json:"agents"`
-	// Protected are path patterns no push may change: the model, the
-	// manifest, the lock, execution.yaml and the rest of .markitect/. A
-	// Manager's registry page is the one exception, owned by its Manager.
-	Protected []string `json:"protected"`
+	// Pages maps every registry page a Run may change to the Package whose
+	// Manager changes it: a live Package's page, whether or not it exists
+	// yet, to that Package, and the page of a Package that no longer exists
+	// to Root, which cleans it up. Everything else below .markitect/ is
+	// protected: the model, the manifest, the lock, execution.yaml, the
+	// ignore page, Libraries and Results.
+	Pages  map[string]string `json:"pages"`
+	Agents []Agent           `json:"agents"`
 	// Checks are the required checks of execution.yaml, run in order.
-	Checks []Check `json:"checks"`
+	Checks []project.Check `json:"checks"`
 }
 
 // Manager is one Package of the model.
 type Manager struct {
-	// ID is the Package's path in the model; Root's ID is ".".
-	ID     string `json:"id"`
-	Parent string `json:"parent,omitempty"`
+	// ID is the Package's path in the model; Root's is "".
+	ID string `json:"id"`
 	// Patterns are the path patterns the Package owns at the base.
 	Patterns []string `json:"patterns,omitempty"`
-	// Registry is the repository path of the Package's registry page.
-	Registry string `json:"registry"`
 	// Working Managers have a branch, agents and a checklist in this Run.
 	Working   bool     `json:"working,omitempty"`
 	Checklist []string `json:"checklist,omitempty"`
@@ -80,27 +85,24 @@ type Agent struct {
 	TokenSHA256 string `json:"tokenSha256"`
 }
 
-// Check is one required check of execution.yaml.
-type Check struct {
-	Name    string `json:"name"`
-	Command string `json:"command"`
-	// Directory is relative to the repository root; empty means the root.
-	Directory      string            `json:"directory,omitempty"`
-	TimeoutSeconds int               `json:"timeoutSeconds"`
-	Environment    map[string]string `json:"environment,omitempty"`
-}
-
-// RootID is Root's Package ID.
-const RootID = "."
-
 // Branch names a Manager's branch in the Run's remote: root for Root, and
 // managers/ plus the Package path with every "/" written as "." for the
-// others, so that nested Packages never collide as Git refs do.
+// others, so that nested Packages never collide as Git refs do. Package
+// names hold no ".", so no two Packages share a branch.
 func Branch(id string) string {
-	if id == RootID {
+	if id == model.RootPackage {
 		return RootBranch
 	}
 	return "managers/" + strings.ReplaceAll(id, "/", ".")
+}
+
+// Name is how trailers and messages write a Package ID: "." for Root, which
+// no Package path can be.
+func Name(id string) string {
+	if id == model.RootPackage {
+		return "."
+	}
+	return id
 }
 
 // Manager returns the Manager with that ID.
@@ -123,42 +125,100 @@ func (p *Plan) Agent(user string) (Agent, bool) {
 	return Agent{}, false
 }
 
-// ByBranch returns the working Manager whose branch that is.
-func (p *Plan) ByBranch(branch string) (Manager, bool) {
-	for _, m := range p.Managers {
-		if m.Working && Branch(m.ID) == branch {
-			return m, true
-		}
+// Image is the container image the required checks run in, and so the Run
+// remote's image; empty when the project has no checks.
+func (p *Plan) Image() string {
+	if len(p.Checks) == 0 {
+		return ""
 	}
-	return Manager{}, false
-}
-
-// Within reports whether Package id lies in the subtree of Package top,
-// itself included.
-func (p *Plan) Within(id, top string) bool {
-	for id != "" {
-		if id == top {
-			return true
-		}
-		m, ok := p.Manager(id)
-		if !ok {
-			return false
-		}
-		id = m.Parent
-	}
-	return false
+	return p.Checks[0].Environment
 }
 
 // ChildToward returns the direct child of top whose subtree holds id, which
 // lies strictly below top.
-func (p *Plan) ChildToward(top, id string) string {
-	for {
-		m, _ := p.Manager(id)
-		if m.Parent == top {
-			return id
-		}
-		id = m.Parent
+func ChildToward(top, id string) string {
+	for model.ParentOf(id) != top {
+		id = model.ParentOf(id)
 	}
+	return id
+}
+
+// PlanFor builds the plan of a Run from the project at the base commit and
+// the impact of the change: every Package with its patterns, the working
+// Managers with their checklists, the registry pages and the required checks.
+// The host adds the agents.
+func PlanFor(run string, mode Mode, base string, p *project.Project, imp analysis.Impact) (*Plan, error) {
+	if len(p.Errors) > 0 {
+		return nil, fmt.Errorf("the project at the base has %d compile errors; no Run starts", len(p.Errors))
+	}
+	plan := &Plan{Run: run, Mode: mode, Base: base, Pages: map[string]string{}, Checks: p.Checks}
+	lists := map[string]analysis.Checklist{}
+	for _, c := range imp.Checklists {
+		lists[c.Package] = c
+	}
+	working := map[string]bool{}
+	for _, pkg := range imp.Packages {
+		working[pkg] = true
+	}
+	for _, id := range p.Model.SortedPackages() {
+		m := Manager{ID: id, Working: working[id]}
+		if page, ok := p.Registry.Pages[id]; ok {
+			for _, pattern := range page.Patterns {
+				m.Patterns = append(m.Patterns, pattern.Text)
+			}
+		}
+		if m.Working {
+			m.Checklist = Items(lists[id])
+		}
+		plan.Managers = append(plan.Managers, m)
+		plan.Pages[PageFile(id)] = id
+	}
+	for _, page := range p.Registry.Pages {
+		if page.Orphaned {
+			plan.Pages[page.File] = model.RootPackage
+		}
+	}
+	return plan, nil
+}
+
+// PageFile is the registry page of a Package.
+func PageFile(id string) string {
+	if id == model.RootPackage {
+		return project.RootPage
+	}
+	return project.RegistryDir + "/" + id + ".md"
+}
+
+// Items are the checklist items of one Manager as verdict trailers name
+// them: a Definition by its ID, the n-th Finding as "finding n on ID", and
+// stale realization by its code, subject and place.
+func Items(c analysis.Checklist) []string {
+	var items []string
+	for _, i := range c.Own {
+		items = append(items, i.Definition)
+	}
+	for _, i := range c.Inherited {
+		items = append(items, i.Definition)
+	}
+	for n, f := range c.Findings {
+		items = append(items, fmt.Sprintf("finding %d on %s", n+1, f.Definition))
+	}
+	for _, s := range c.Stale {
+		subject := s.File
+		if s.Code == "stale.definition" {
+			subject = s.Target
+		}
+		place := s.PageFile
+		if s.Line > 0 {
+			place = fmt.Sprintf("%s:%d", place, s.Line)
+		}
+		if subject == "" {
+			items = append(items, s.Code+" "+place)
+		} else {
+			items = append(items, s.Code+" "+subject+" at "+place)
+		}
+	}
+	return items
 }
 
 // Validate reports every inconsistency of the plan. A Run never starts on an
@@ -172,69 +232,70 @@ func (p *Plan) Validate() error {
 	if p.Mode != Apply && p.Mode != Verify {
 		report("mode %q: must be %q or %q", p.Mode, Apply, Verify)
 	}
-	if !fullCommit(p.Base) {
-		report("base %q: must be a full commit id", p.Base)
+	if len(p.Base) != 40 || strings.Trim(p.Base, "0123456789abcdef") != "" {
+		report("base %q: must be a full SHA-1 commit id", p.Base)
 	}
-	ids, branches, pages := map[string]bool{}, map[string]string{}, map[string]string{}
+	ids := map[string]bool{}
 	for _, m := range p.Managers {
 		if ids[m.ID] {
 			report("manager %q: duplicate", m.ID)
 		}
 		ids[m.ID] = true
 	}
-	if !ids[RootID] {
-		report("manager %q: Root is missing", RootID)
+	if !ids[model.RootPackage] {
+		report("managers: Root is missing")
 	}
+	branches := map[string]string{}
 	for _, m := range p.Managers {
-		switch {
-		case m.ID == RootID && m.Parent != "":
-			report("manager %q: Root has no parent", m.ID)
-		case m.ID != RootID && !ids[m.Parent]:
-			report("manager %q: parent %q is not a Manager", m.ID, m.Parent)
-		case m.ID != RootID && !validPackagePath(m.ID):
-			report("manager %q: not a valid Package path", m.ID)
+		if m.ID != model.RootPackage && (!model.ValidPath(m.ID) || !ids[model.ParentOf(m.ID)]) {
+			report("manager %q: not a Package path below another Manager", m.ID)
 		}
-		if !validRepoPath(m.Registry) {
-			report("manager %q: registry page %q is not a clean repository path", m.ID, m.Registry)
-		} else if other, dup := pages[m.Registry]; dup {
-			report("manager %q: registry page %q is also %q's", m.ID, m.Registry, other)
+		for _, pattern := range m.Patterns {
+			if err := realization.ValidatePattern(pattern); err != nil {
+				report("manager %q: pattern %q: %v", Name(m.ID), pattern, err)
+			}
 		}
-		pages[m.Registry] = m.ID
 		if !m.Working {
 			if len(m.Checklist) > 0 {
-				report("manager %q: a Manager that does not work has no checklist", m.ID)
+				report("manager %q: a Manager that does not work has no checklist", Name(m.ID))
 			}
 			continue
 		}
 		b := Branch(m.ID)
 		if !validBranch(b) {
-			report("manager %q: branch %q is not a valid Git branch name", m.ID, b)
+			report("manager %q: branch %q is not a valid Git branch name", Name(m.ID), b)
 		} else if other, dup := branches[b]; dup {
-			report("manager %q: branch %q is also %q's", m.ID, b, other)
+			report("manager %q: branch %q is also %q's", Name(m.ID), b, other)
 		}
-		branches[b] = m.ID
-		if parent, ok := p.Manager(m.Parent); m.ID != RootID && ok && !parent.Working {
-			report("manager %q: works, but its parent %q does not", m.ID, m.Parent)
-		}
-		if len(m.Checklist) == 0 {
-			report("manager %q: a working Manager needs a checklist", m.ID)
+		branches[b] = Name(m.ID)
+		if parent, ok := p.Manager(model.ParentOf(m.ID)); m.ID != model.RootPackage && ok && !parent.Working {
+			report("manager %q: works, but its parent %q does not", Name(m.ID), Name(parent.ID))
 		}
 		seen := map[string]bool{}
 		for _, item := range m.Checklist {
-			if !validItem(item) {
-				report("manager %q: checklist item %q is empty or holds '|' or a line break", m.ID, item)
+			if strings.TrimSpace(item) != item || item == "" || strings.ContainsAny(item, "|\r\n") {
+				report("manager %q: checklist item %q is empty, padded or holds '|' or a line break", Name(m.ID), item)
 			}
 			if seen[item] {
-				report("manager %q: checklist item %q is listed twice", m.ID, item)
+				report("manager %q: checklist item %q is listed twice", Name(m.ID), item)
 			}
 			seen[item] = true
 		}
 	}
-	if p.cyclic() {
-		report("managers: the parent links form a cycle")
+	pages := make([]string, 0, len(p.Pages))
+	for f := range p.Pages {
+		pages = append(pages, f)
 	}
-	users := map[string]bool{}
-	roles := map[string]bool{}
+	sort.Strings(pages)
+	for _, f := range pages {
+		if f != project.RootPage && !(strings.HasPrefix(f, project.RegistryDir+"/") && strings.HasSuffix(f, ".md") && realization.ValidFile(f)) {
+			report("page %q: not a registry page", f)
+		}
+		if !ids[p.Pages[f]] {
+			report("page %q: Package %q is not a Manager", f, p.Pages[f])
+		}
+	}
+	users, roles := map[string]bool{}, map[string]bool{}
 	for _, a := range p.Agents {
 		if a.User == "" || strings.ContainsAny(a.User, ":@/ \t\r\n") {
 			report("agent %q: user must be non-empty without ':', '@', '/' or white space", a.User)
@@ -246,7 +307,7 @@ func (p *Plan) Validate() error {
 		m, ok := p.Manager(a.Manager)
 		switch {
 		case !ok || !m.Working:
-			report("agent %q: Manager %q does not work in this Run", a.User, a.Manager)
+			report("agent %q: Manager %q does not work in this Run", a.User, Name(a.Manager))
 		case a.Role != Maker && a.Role != Checker:
 			report("agent %q: role %q must be %q or %q", a.User, a.Role, Maker, Checker)
 		case p.Mode == Verify && a.Role == Maker:
@@ -254,23 +315,11 @@ func (p *Plan) Validate() error {
 		}
 		key := a.Manager + "\x00" + string(a.Role)
 		if roles[key] {
-			report("agent %q: Manager %q already has a %s", a.User, a.Manager, a.Role)
+			report("agent %q: Manager %q already has a %s", a.User, Name(a.Manager), a.Role)
 		}
 		roles[key] = true
-		if len(a.TokenSHA256) != 64 || strings.Trim(strings.ToLower(a.TokenSHA256), "0123456789abcdef") != "" {
-			report("agent %q: tokenSha256 must be 64 hex digits", a.User)
-		}
-	}
-	for _, pattern := range p.Protected {
-		if !validPattern(pattern) {
-			report("protected pattern %q is not a clean relative pattern", pattern)
-		}
-	}
-	for _, m := range p.Managers {
-		for _, pattern := range m.Patterns {
-			if !validPattern(pattern) {
-				report("manager %q: pattern %q is not a clean relative pattern", m.ID, pattern)
-			}
+		if len(a.TokenSHA256) != 64 || strings.Trim(a.TokenSHA256, "0123456789abcdef") != "" {
+			report("agent %q: tokenSha256 must be 64 lower-case hex digits", a.User)
 		}
 	}
 	names := map[string]bool{}
@@ -279,76 +328,23 @@ func (p *Plan) Validate() error {
 			report("check %q: name missing or duplicate", c.Name)
 		}
 		names[c.Name] = true
-		if strings.TrimSpace(c.Command) == "" {
+		switch {
+		case strings.TrimSpace(c.Command) == "":
 			report("check %q: command missing", c.Name)
-		}
-		if c.Directory != "" && !validRepoPath(c.Directory) {
+		case c.Directory != "" && c.Directory != "." && !realization.ValidFile(c.Directory):
 			report("check %q: directory %q is not a clean relative path", c.Name, c.Directory)
-		}
-		if c.TimeoutSeconds <= 0 {
-			report("check %q: timeoutSeconds must be positive", c.Name)
-		}
-		keys := make([]string, 0, len(c.Environment))
-		for k := range c.Environment {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-		for _, k := range keys {
-			if k == "" || strings.ContainsAny(k, "=\x00") || strings.Contains(c.Environment[k], "\x00") {
-				report("check %q: environment entry %q is not valid", c.Name, k)
-			}
+		case c.Timeout <= 0:
+			report("check %q: timeout must be positive", c.Name)
+		case c.Environment == "":
+			report("check %q: names no image", c.Name)
+		case c.Environment != p.Image():
+			report("check %q: runs in %q, but the Run's remote runs every check in one image, %q", c.Name, c.Environment, p.Image())
 		}
 	}
 	if len(problems) > 0 {
 		return errors.New("invalid Run plan:\n- " + strings.Join(problems, "\n- "))
 	}
 	return nil
-}
-
-func (p *Plan) cyclic() bool {
-	for _, m := range p.Managers {
-		seen := map[string]bool{}
-		for id := m.ID; id != ""; {
-			if seen[id] {
-				return true
-			}
-			seen[id] = true
-			next, ok := p.Manager(id)
-			if !ok {
-				break
-			}
-			id = next.Parent
-		}
-	}
-	return false
-}
-
-func fullCommit(s string) bool {
-	return (len(s) == 40 || len(s) == 64) && strings.Trim(s, "0123456789abcdef") == ""
-}
-
-func validItem(s string) bool {
-	return strings.TrimSpace(s) == s && s != "" && !strings.ContainsAny(s, "|\r\n")
-}
-
-func validRepoPath(p string) bool {
-	if p == "" || strings.HasPrefix(p, "/") || strings.HasSuffix(p, "/") || strings.Contains(p, "\\") {
-		return false
-	}
-	for _, seg := range strings.Split(p, "/") {
-		if seg == "" || seg == "." || seg == ".." {
-			return false
-		}
-	}
-	return true
-}
-
-func validPackagePath(p string) bool {
-	return validRepoPath(p) && !strings.ContainsAny(p, "\x00\r\n")
-}
-
-func validPattern(p string) bool {
-	return validRepoPath(p) && !strings.ContainsAny(p, "\x00\r\n")
 }
 
 // validBranch applies Git's ref name rules to refs/heads/<b>.

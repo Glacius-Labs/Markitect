@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+
+	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
 // ZeroID is Git's id of a missing ref in a push update.
@@ -28,7 +31,10 @@ type Repo interface {
 	IsAncestor(a, b string) (bool, error)
 	// Changed lists the paths whose content or mode differ between two commits.
 	Changed(a, b string) ([]string, error)
-	// Tips lists the commits a branch has pointed to in this Run, oldest first.
+	// Files lists every path of a commit's tree.
+	Files(commit string) ([]string, error)
+	// Tips lists the commits a branch has pointed to in this Run, oldest
+	// first; a branch of the Run without that record is an error.
 	Tips(branch string) ([]string, error)
 }
 
@@ -46,7 +52,7 @@ type CheckResult struct {
 // CheckRunner runs the required checks on a commit's full repository state.
 // An error means the checks could not run; it is never a pass.
 type CheckRunner interface {
-	Run(commit Commit, checks []Check) ([]CheckResult, error)
+	Run(commit Commit, checks []project.Check) ([]CheckResult, error)
 }
 
 // Update is one ref update of a push.
@@ -76,7 +82,7 @@ func Decide(plan *Plan, own Ownership, repo Repo, checks CheckRunner, user strin
 	if err != nil {
 		dec = refuse("the remote could not decide: %v. Next: push again; if this repeats, report it to your parent.", err)
 	}
-	dec.Manager, dec.Role = m.ID, agent.Role
+	dec.Manager, dec.Role = Name(m.ID), agent.Role
 	return dec
 }
 
@@ -101,8 +107,8 @@ func (d *decider) decide(updates []Update) (Decision, error) {
 			return refuse("%s is not your branch; you may push only to %s. Next: push with `git push origin HEAD:%s`.", u.Ref, own, own), nil
 		}
 	}
-	if len(updates) != 1 {
-		return refuse("push your branch %s once, not %d updates. Next: push it alone.", own, len(updates)), nil
+	if len(updates) == 0 {
+		return refuse("the push updates nothing. Next: push your branch %s.", own), nil
 	}
 	u := updates[0]
 	switch {
@@ -136,8 +142,8 @@ func (d *decider) decide(updates []Update) (Decision, error) {
 			return refuse("commit %s: %v. Next: rewrite that commit's message (it is not on the remote yet) and push again.", short(id), perr), nil
 		}
 		switch {
-		case t.Kind != Plain && t.Manager != d.m.ID:
-			return refuse("commit %s names Manager %q in %s, but you work for %q. Next: name your own Manager.", short(id), t.Manager, KeyManager, d.m.ID), nil
+		case t.Kind != Plain && t.Manager != Name(d.m.ID):
+			return refuse("commit %s names Manager %q in %s, but you work for %q. Next: name your own Manager.", short(id), t.Manager, KeyManager, Name(d.m.ID)), nil
 		case t.Kind == Review && d.plan.Mode == Verify:
 			return refuse("commit %s carries %s lines; in verify a checker gives its own verdicts with %s lines. Next: write verdicts instead.", short(id), KeyReview, KeyVerdict), nil
 		case t.Kind == Review && d.agent.Role != Checker:
@@ -169,7 +175,7 @@ func (d *decider) work(u Update) (Decision, error) {
 		return Decision{}, err
 	}
 	t, perr := ParseMessage(tip.Message)
-	if perr != nil || t.Kind != Submission || t.Manager != d.m.ID {
+	if perr != nil || t.Kind != Submission || t.Manager != Name(d.m.ID) {
 		return Decision{Accepted: true, Kind: "work"}, nil
 	}
 	if problem := d.checklist(t.Verdicts); problem != "" {
@@ -217,8 +223,8 @@ func (d *decider) review(u Update, fresh []string) (Decision, error) {
 		return refuse("review %s changes files; a checker never edits. Send defects to your maker in the review instead. %s", short(u.New), next), nil
 	}
 	st, perr := ParseMessage(sub.Message)
-	if u.Old == d.plan.Base || perr != nil || st.Kind != Submission || st.Manager != d.m.ID {
-		return refuse("the tip %s of your branch is no submission of %q, so there is nothing to review. Next: wait for your maker's submission.", short(u.Old), d.m.ID), nil
+	if u.Old == d.plan.Base || perr != nil || st.Kind != Submission || st.Manager != Name(d.m.ID) {
+		return refuse("the tip %s of your branch is no submission of %q, so there is nothing to review. Next: wait for your maker's submission.", short(u.Old), Name(d.m.ID)), nil
 	}
 	t, _ := ParseMessage(c.Message)
 	if t.Kind != Review {
@@ -253,7 +259,7 @@ func (d *decider) review(u Update, fresh []string) (Decision, error) {
 		}
 		sort.Strings(missing)
 		return refuse("review %s approves without confirming %s. Next: re-check and confirm every verdict.", short(u.New), strings.Join(missing, ", ")), nil
-	case t.Review == Rejected && disputed == 0:
+	case t.Review == Rejected && disputed == 0 && len(submitted) > 0:
 		return refuse("review %s rejects without disputing an item. Next: dispute the items you found defective, with the defect as evidence.", short(u.New)), nil
 	}
 	return Decision{Accepted: true, Kind: "review"}, nil
@@ -323,17 +329,15 @@ func (d *decider) checklist(verdicts []Line) string {
 // Manager owns is free. A file below it must be as the child toward its owner
 // last had it approved, as far as the tip has taken it in, else as at the
 // base. A file outside its subtree must be as on its parent's branch, in the
-// newest state the tip has taken in, else as at the base. Protected files
-// stay as at the base. A registry page belongs to its own Package.
+// newest state the tip has taken in, else as at the base. A registry page
+// belongs to its own Package; everything else below .markitect/ stays as at
+// the base. A file two Packages claim equally, or a path that differs from
+// another only in case, is refused.
 func (d *decider) content(tip string) ([]string, error) {
-	pages := map[string]string{}
-	for _, m := range d.plan.Managers {
-		pages[m.Registry] = m.ID
-	}
 	base := d.plan.Base
 	parentRef := base
-	if d.m.Parent != "" {
-		ref, err := d.newest(Branch(d.m.Parent), tip, func(string) (bool, error) { return true, nil })
+	if d.m.ID != model.RootPackage {
+		ref, err := d.newest(Branch(model.ParentOf(d.m.ID)), tip, func(string) (bool, error) { return true, nil })
 		if err != nil {
 			return nil, err
 		}
@@ -341,7 +345,7 @@ func (d *decider) content(tip string) ([]string, error) {
 	}
 	childRef := map[string]string{}
 	for _, c := range d.plan.Managers {
-		if c.Parent != d.m.ID || c.ID == d.m.ID {
+		if c.ID == model.RootPackage || model.ParentOf(c.ID) != d.m.ID {
 			continue
 		}
 		ref := base
@@ -354,38 +358,37 @@ func (d *decider) content(tip string) ([]string, error) {
 		}
 		childRef[c.ID] = ref
 	}
+	me, parent := Name(d.m.ID), Name(model.ParentOf(d.m.ID))
 	// required returns the commit whose content the file must keep, or ""
 	// when the Manager may change it.
 	required := func(file string) (string, string) {
-		owner, page := pages[file]
+		owner, page := d.plan.Pages[file]
+		what := "is the registry page of"
 		if !page {
-			for _, pattern := range d.plan.Protected {
-				if Match(pattern, file) {
-					return base, "is protected: the model, the manifest, the lock and execution.yaml change only through the owner, never in a Run"
-				}
+			if strings.HasPrefix(file, project.Dir+"/") {
+				return base, "is protected: the model, the manifest, the lock, execution.yaml and the rest of " + project.Dir + "/ change only through the owner, never in a Run"
 			}
-			owner = d.own.Owner(file)
-		}
-		what := "belongs to"
-		if page {
-			what = "is the registry page of"
+			var tied []string
+			owner, tied = d.own.Owner(file)
+			if len(tied) > 0 {
+				return base, fmt.Sprintf("is claimed equally by %s, which the registry does not allow", quoteAll(tied))
+			}
+			what = "belongs to"
 		}
 		switch {
 		case owner == d.m.ID:
 			return "", ""
-		case d.plan.Within(owner, d.m.ID):
-			child := d.plan.ChildToward(d.m.ID, owner)
+		case model.Within(owner, d.m.ID):
+			child := ChildToward(d.m.ID, owner)
 			ref := childRef[child]
 			if ref == base {
-				return ref, fmt.Sprintf("%s %q below you; it must stay as at the base until you merge %q's approved work", what, owner, child)
+				return ref, fmt.Sprintf("%s %q below you; it must stay as at the base until you merge %q's approved work", what, Name(owner), child)
 			}
-			return ref, fmt.Sprintf("%s %q below you; it must be exactly as in %q's approved commit %s that you merged", what, owner, child, short(ref))
-		case d.m.Parent == "":
-			return base, fmt.Sprintf("%s %q", what, owner)
+			return ref, fmt.Sprintf("%s %q below you; it must be exactly as in %q's approved commit %s that you merged", what, Name(owner), child, short(ref))
 		case parentRef == base:
-			return base, fmt.Sprintf("%s %q outside your area; it must stay as at the base. Ask your parent %q for a change there", what, owner, d.m.Parent)
+			return base, fmt.Sprintf("%s %q outside your area; it must stay as at the base. Ask your parent %q for a change there", what, Name(owner), parent)
 		default:
-			return parentRef, fmt.Sprintf("%s %q outside your area; it must be exactly as in your parent's state %s that you merged. Ask your parent %q for a change there", what, owner, short(parentRef), d.m.Parent)
+			return parentRef, fmt.Sprintf("%s %q outside your area; it must be exactly as in your parent's state %s that you merged. Ask your parent %q for a change there", what, Name(owner), short(parentRef), parent)
 		}
 	}
 	refs := map[string]bool{base: true, parentRef: true}
@@ -397,12 +400,15 @@ func (d *decider) content(tip string) ([]string, error) {
 		ordered = append(ordered, r)
 	}
 	sort.Strings(ordered)
-	var problems []string
+	var problems, fromBase []string
 	seen := map[string]bool{}
 	for _, ref := range ordered {
 		changed, err := d.repo.Changed(ref, tip)
 		if err != nil {
 			return nil, err
+		}
+		if ref == base {
+			fromBase = changed
 		}
 		for _, file := range changed {
 			want, why := required(file)
@@ -413,11 +419,76 @@ func (d *decider) content(tip string) ([]string, error) {
 			problems = append(problems, fmt.Sprintf("%s %s. Next: restore it with `git checkout %s -- %s`, commit and push again.", file, why, short(want), file))
 		}
 	}
+	collisions, err := d.caseCollisions(tip, fromBase)
+	if err != nil {
+		return nil, err
+	}
+	problems = append(problems, collisions...)
 	sort.Strings(problems)
 	if len(problems) > 0 {
-		problems = append([]string{fmt.Sprintf("the tip %s of %s changes files outside %q's area:", short(tip), d.branch, d.m.ID)}, problems...)
+		problems = append([]string{fmt.Sprintf("the tip %s of %s changes files outside %q's area:", short(tip), d.branch, me)}, problems...)
 	}
 	return problems, nil
+}
+
+// caseCollisions refuses a changed path that differs only in case from
+// another path of the tip, file or folder: a checkout on Windows or macOS
+// holds both as one, so one Manager could overwrite another's file.
+func (d *decider) caseCollisions(tip string, changed []string) ([]string, error) {
+	if len(changed) == 0 {
+		return nil, nil
+	}
+	files, err := d.repo.Files(tip)
+	if err != nil {
+		return nil, err
+	}
+	spellings := map[string]map[string]bool{}
+	for _, f := range files {
+		for _, p := range prefixes(f) {
+			folded := strings.ToLower(p)
+			if spellings[folded] == nil {
+				spellings[folded] = map[string]bool{}
+			}
+			spellings[folded][p] = true
+		}
+	}
+	var problems []string
+	reported := map[string]bool{}
+	for _, f := range changed {
+		for _, p := range prefixes(f) {
+			folded := strings.ToLower(p)
+			if len(spellings[folded]) < 2 || reported[folded] {
+				continue
+			}
+			reported[folded] = true
+			var all []string
+			for s := range spellings[folded] {
+				all = append(all, s)
+			}
+			sort.Strings(all)
+			problems = append(problems, fmt.Sprintf("%s differ only in case, and a checkout on Windows or macOS holds them as one. Next: keep one spelling.", strings.Join(all, " and ")))
+		}
+	}
+	return problems, nil
+}
+
+// prefixes returns a path's folders and the path itself.
+func prefixes(file string) []string {
+	var out []string
+	for i, r := range file {
+		if r == '/' {
+			out = append(out, file[:i])
+		}
+	}
+	return append(out, file)
+}
+
+func quoteAll(ids []string) string {
+	q := make([]string, len(ids))
+	for i, id := range ids {
+		q[i] = fmt.Sprintf("%q", Name(id))
+	}
+	return strings.Join(q, " and ")
 }
 
 // newest returns the newest commit the branch has pointed to in this Run that
@@ -453,7 +524,7 @@ func (d *decider) approved(id, manager string) (bool, error) {
 		return false, err
 	}
 	t, perr := ParseMessage(c.Message)
-	return perr == nil && t.Kind == Review && t.Review == Approved && t.Manager == manager, nil
+	return perr == nil && t.Kind == Review && t.Review == Approved && t.Manager == Name(manager), nil
 }
 
 func short(id string) string {

@@ -80,8 +80,15 @@ func Seed(l Layout, git string, bundle io.Reader, hook []string) error {
 		return strings.TrimSpace(string(out)), nil
 	}
 	repo := l.Repo()
-	if _, err := g("init", "-q", "--bare", repo); err != nil {
-		return err
+	// The hooks read branch history from the files reflog; Git before 2.45
+	// knows no other ref format and no --ref-format.
+	if _, err := g("init", "-q", "--bare", "--ref-format=files", repo); err != nil {
+		if !strings.Contains(err.Error(), "ref-format") {
+			return err
+		}
+		if _, err := g("init", "-q", "--bare", repo); err != nil {
+			return err
+		}
 	}
 	for _, kv := range repoConfig {
 		if _, err := g("--git-dir="+repo, "config", kv[0], kv[1]); err != nil {
@@ -135,6 +142,14 @@ func Seed(l Layout, git string, bundle io.Reader, hook []string) error {
 	script := "#!/bin/sh\nexec " + shellQuote(append(append([]string(nil), hook...), "hook", "--root", filepath.ToSlash(l.Root))) + "\n"
 	if err := os.WriteFile(filepath.Join(hooks, "pre-receive"), []byte(script), 0o755); err != nil {
 		return err
+	}
+	if err := recordEnvironment(l); err != nil {
+		return err
+	}
+	if isolated() {
+		if err := harden(l); err != nil {
+			return fmt.Errorf("harden the container for checks: %w", err)
+		}
 	}
 	return os.WriteFile(filepath.Join(l.Root, seedName), []byte(plan.Base+"\n"), 0o600)
 }

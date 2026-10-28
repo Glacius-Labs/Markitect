@@ -2,9 +2,12 @@ package remoteserver
 
 import (
 	"net/url"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/runremote"
 )
 
@@ -80,7 +83,8 @@ func TestTheModelManifestLockAndExecutionNeverChange(t *testing.T) {
 	r := newRemote(t, nil)
 	for _, who := range []string{".", "members"} {
 		m := r.agent(who, maker)
-		for _, file := range []string{".markitect/model/members/member.md", ".markitect/markitect.yaml", ".markitect/markitect.lock", ".markitect/execution.yaml", ".markitect/model/new.md", ".markitect/results/x.md"} {
+		for _, file := range []string{".markitect/model/members/member.md", ".markitect/manifest.yaml", ".markitect/lock.yaml", ".markitect/execution.yaml",
+			".markitect/ignore.md", ".markitect/model/new.md", ".markitect/results/x.md", ".markitect/registry/nobody.md", ".markitect/libraries/x/k.md"} {
 			m.write(file, "changed\n")
 			m.commit("touch " + file)
 			m.mustRefuse("is protected")
@@ -147,18 +151,24 @@ func TestASubmissionPassesTheRequiredChecksOnTheBranchState(t *testing.T) {
 
 func TestACheckThatRunsOutOfTimeFails(t *testing.T) {
 	r := newRemote(t, func(p *runremote.Plan) {
-		p.Checks = append(p.Checks, runremote.Check{Name: "slow", Command: "sleep 30", TimeoutSeconds: 1})
+		p.Checks = append(p.Checks, project.Check{Name: "slow", Command: "sleep 30", Timeout: time.Second, Environment: "test-image"})
 	})
 	m := r.agent("members", maker)
 	m.commit(submission("members", "members/member"))
 	m.mustRefuse(`the required check "slow" ran out of time`)
 }
 
-func TestTheChecksSeeTheBranchsFullStateAsACleanCheckout(t *testing.T) {
+func TestTheChecksSeeTheBranchsFullStateInTheImagesEnvironment(t *testing.T) {
+	// The image's environment, as the remote records it at seeding; a
+	// variable inside the image's home moves into the check's fresh home.
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("T3_WANT", "package members // v2")
+	t.Setenv("T3_CACHE", home+"/cache")
 	r := newRemote(t, func(p *runremote.Plan) {
-		p.Checks = []runremote.Check{{Name: "state", Directory: "src", TimeoutSeconds: 60,
-			Environment: map[string]string{"WANT": "package members // v2"},
-			Command:     `test "$(cat members/member.go)" = "$WANT" && test -f ../go.work && test -z "$(git status --porcelain)" && touch built.txt`}}
+		p.Checks = []project.Check{{Name: "state", Directory: "src", Timeout: time.Minute, Environment: "test-image",
+			Command: `test "$(cat members/member.go)" = "$T3_WANT" && test -f ../go.work && test -z "$(git status --porcelain)" &&
+test "$T3_CACHE" = "$HOME/cache" && test "$HOME" != "` + filepath.ToSlash(home) + `" && test -w "$TMPDIR" && touch built.txt`}}
 	})
 	m := r.agent("members", maker)
 	m.write("src/members/member.go", "package members // v2")
@@ -380,4 +390,89 @@ func TestVerifyTakesVerdictsWithoutFileChanges(t *testing.T) {
 	if e := r.log(); e[len(e)-1].Kind != "verdicts" {
 		t.Fatalf("last log entry %+v", e[len(e)-1])
 	}
+	// One commit, on the tip alone.
+	c.commit("a")
+	c.commit(submission("members", "members/member"))
+	c.mustRefuse("exactly one new commit")
+	c.git("reset", "-q", "--hard", "origin/"+c.branch)
+	merge := c.git("commit-tree", "HEAD^{tree}", "-p", "HEAD", "-p", r.plan.Base, "-m", submission("members", "members/member"))
+	c.git("reset", "-q", "--hard", merge)
+	c.mustRefuse("as its only parent")
+}
+
+func TestAReviewAnswersEachItemOnceOnTheTipAlone(t *testing.T) {
+	r := newRemote(t, nil)
+	m := r.agent("members", maker)
+	m.commit(submission("members", "members/member"))
+	m.mustPush()
+	c := r.agent("members", checker)
+	c.commit("Review\n\nMarkitect-Manager: members\nMarkitect-Review: approved\n" +
+		"Markitect-Check: members/member | confirmed | read\nMarkitect-Check: members/member | confirmed | read again\n")
+	c.mustRefuse(`answers "members/member" twice`)
+	c.git("reset", "-q", "--hard", "origin/"+c.branch)
+	// A review that also merges another commit is no review of the tip.
+	merge := c.git("commit-tree", "HEAD^{tree}", "-p", "HEAD", "-p", r.plan.Base, "-m",
+		review("members", runremote.Approved, map[string]string{"members/member": runremote.Confirmed}))
+	c.git("reset", "-q", "--hard", merge)
+	c.mustRefuse("as its only parent")
+}
+
+func TestChecksThatCannotRunRefuseTheSubmission(t *testing.T) {
+	r := newRemote(t, nil)
+	m := r.agent("members", maker)
+	// A gitlink cannot be checked out, so the checks' copy cannot hold the state.
+	m.git("update-index", "--add", "--cacheinfo", "160000,"+r.plan.Base+",src/members/vendor")
+	m.git("commit", "-q", "-m", submission("members", "members/member"))
+	m.mustRefuse("the required checks could not run")
+}
+
+func TestAParentIntegratesSeveralChildrenAndMaySubmitWithoutItems(t *testing.T) {
+	r := newRemote(t, func(p *runremote.Plan) { p.Managers[0].Checklist = nil })
+	for _, child := range []struct{ name, file, item string }{{"members", "src/members/member.go", "members/member"}, {"loans", "src/loans/loan.go", "loans/loan"}} {
+		a := r.agent(child.name, maker)
+		a.write(child.file, "package x // v2\n")
+		a.commit(submission(child.name, child.item))
+		a.mustPush()
+		r.approve(child.name, child.item)
+	}
+	root := r.agent(".", maker)
+	root.sync()
+	root.git("merge", "-q", "--no-edit", "origin/managers/members")
+	root.git("merge", "-q", "--no-edit", "origin/managers/loans")
+	// Root has no checklist items: its Manager line alone submits.
+	root.commit("Integrate\n\nMarkitect-Manager: .\n")
+	root.mustPush()
+	if e := r.log(); e[len(e)-1].Kind != "submission" || len(e[len(e)-1].Checks) != 1 {
+		t.Fatalf("last log entry %+v", e[len(e)-1])
+	}
+	// Its checker may reject it without an item to dispute, or approve it.
+	c := r.agent(".", checker)
+	c.commit("Review\n\nThe merge of loans drops the members change.\n\nMarkitect-Manager: .\nMarkitect-Review: rejected\n")
+	c.mustPush()
+	root.sync()
+	root.git("merge", "-q", "--ff-only", "origin/root")
+	root.commit("Integrate\n\nMarkitect-Manager: .\n")
+	root.mustPush()
+	r.approve(".")
+}
+
+func TestPathsThatDifferOnlyInCaseAreRefused(t *testing.T) {
+	r := newRemote(t, nil)
+	root := r.agent(".", maker)
+	// Staged without touching the clone, which may not tell the two apart.
+	blob := root.git("hash-object", "-w", "README.md")
+	root.git("update-index", "--add", "--cacheinfo", "100644,"+blob+",src/Members/member.go")
+	root.git("commit", "-q", "-m", "shadow a child's file")
+	root.mustRefuse("src/Members and src/members differ only in case")
+}
+
+func TestAFileTwoPackagesClaimEquallyIsRefused(t *testing.T) {
+	r := newRemote(t, func(p *runremote.Plan) {
+		p.Managers[1].Patterns = append(p.Managers[1].Patterns, "src/x?/**")
+		p.Managers[2].Patterns = append(p.Managers[2].Patterns, "src/?y/**")
+	})
+	root := r.agent(".", maker)
+	root.write("src/xy/a.go", "package xy\n")
+	root.commit("new folder")
+	root.mustRefuse(`is claimed equally by "loans" and "members"`)
 }
