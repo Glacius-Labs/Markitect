@@ -35,4 +35,4 @@ Each new delta changes exactly what the old step changed and nothing else. Every
 
 ## Check on T1
 
-The reviewer could not run the 2.0 `markitect check`, which was not built yet. Every step compiles with no error on T1's branch `dev/awesome-chaum-554c4d` at `e3c922ee`, with the lock that branch's `markitect lock` writes; Root's link to the grandchild Package `lending/reminders` is accepted, as the reviewer expected. To be confirmed on `main` once T1 merges.
+The reviewer could not run the 2.0 `markitect check`, which was not built yet. Every step compiles with no error on T1's branch `dev/awesome-chaum-554c4d` at `721d9f0b`, with the lock that branch's `markitect lock` writes; Root's link to the grandchild Package `lending/reminders` is accepted, as the reviewer expected. To be confirmed on `main` once T1 merges.

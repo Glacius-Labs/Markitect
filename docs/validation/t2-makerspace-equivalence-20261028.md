@@ -49,4 +49,4 @@ All fixes are made by the conversion, so they hold in every step.
 
 ## Check on T1
 
-Every step compiles with no error on T1's branch `dev/awesome-chaum-554c4d` at `e3c922ee`, with the lock that branch's `markitect lock` writes. To be confirmed on `main` once T1 merges.
+Every step compiles with no error on T1's branch `dev/awesome-chaum-554c4d` at `721d9f0b`, with the lock that branch's `markitect lock` writes. To be confirmed on `main` once T1 merges.
