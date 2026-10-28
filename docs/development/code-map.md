@@ -19,13 +19,15 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `domain` | Registry pages, ownership and file accounting over a compiled model. | `model` | 1 |
 | `project` | Loads and checks a project's Markitect folder from a repository state. | `model`, `assets`, `domain` | 1 |
 | `service` | Questions about a loaded project: references, graph, impact with checklists, and lint. | `model`, `assets`, `domain`, `project` | 1 |
+| `remote` | A Run's plan, its verdict trailers and the decision of the remote's hooks. | `model`, `assets`, `domain`, `project`, `service` | 1 |
 | `protocol` | Frame protocol between the Orchestrator and the session helper. | nothing | 1 |
 | `container` | The container engine client that the adapters running containers share. | `protocol` | 1 |
 | `guardedwrite` | Guarded working-tree writes for bundle installation, with the Git and path helpers they share with source snapshots. | nothing | 1 |
 | `build` | Version identity and embedded license notices. | nothing | 1 |
-| `adapter` | Concrete Git and command-line adapters; no adapter imports another. | `model`, `assets`, `domain`, `project`, `service`, `build` | 2 |
+| `adapter` | Concrete Git, command-line and Run remote adapters; no adapter imports another. | `model`, `assets`, `domain`, `project`, `service`, `remote`, `build` | 4 |
 | `composition` | Constructs the command line with its adapters. | `model`, `project`, `service`, `adapter` | 1 |
 | `command` | Thin entrypoints to product composition. | `composition` | 1 |
+| `remote-command` | Thin entrypoint of a Run's remote container. | `adapter` | 1 |
 | `agent` | Runs inside each Agent container: provider process, MCP bridge and stdio framing. | `protocol` | 1 |
 | `agent-command` | Thin entrypoint of the session helper. | `agent` | 1 |
 | `maintenance` | The import gate and release packaging, separate from product execution. | `guardedwrite` | 2 |
@@ -71,6 +73,12 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 |---|---|---|
 | `internal/analysis` | Package analysis answers questions about a loaded project without starting agents: who links to a Definition, the Package dependency graph, what a change reaches and each Manager's checklist, and the lint warnings that measure the model like code. | [docs/guides/model-language.md#impact-and-checklists](../guides/model-language.md#impact-and-checklists) |
 
+## Run remote rules
+
+| Package | Summary | Owning document |
+|---|---|---|
+| `internal/runremote` | Package runremote holds the rules of a Run's Git remote (concept 2.0 §6.3): the Run's plan, the commit trailers that carry verdicts and reviews, and the decision the server-side hook makes on every push. | [internal/runremote/README.md](../../internal/runremote/README.md) |
+
 ## Agent protocol
 
 | Package | Summary | Owning document |
@@ -100,6 +108,8 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | Package | Summary | Owning document |
 |---|---|---|
 | `internal/adapters/cli` | Package cli is the markitect command line: init, check, lock, refs, graph, impact, lint, version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
+| `internal/adapters/remotecontainer` | Package remotecontainer starts and removes a Run's remote container from the host, natively on Windows, Linux and macOS with only the Docker CLI. | [internal/runremote/README.md#the-container](../../internal/runremote/README.md#the-container) |
+| `internal/adapters/remoteserver` | Package remoteserver is the Run remote inside its container: the Git smart HTTP server with one credential per agent, the pre-receive hook that applies the rules of internal/runremote, the required checks under a throwaway user, and seeding and exporting the bare repository. | [internal/runremote/README.md](../../internal/runremote/README.md) |
 | `internal/adapters/repo` | Package repo reads a project's repository through Git: the working tree as Git sees it, a base commit, and the files changed between them. | [docs/guides/model-language.md#the-projects-markitect-folder](../guides/model-language.md#the-projects-markitect-folder) |
 
 ## Composition
@@ -113,6 +123,12 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | Package | Summary | Owning document |
 |---|---|---|
 | `cmd/markitect` | Command markitect is the Markitect command line: init, check, lock, refs, graph, impact, lint, version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
+
+## Run remote command
+
+| Package | Summary | Owning document |
+|---|---|---|
+| `cmd/markitect-remote` | Command markitect-remote is the program of a Run's remote container (internal/runremote/README.md): it seeds the bare repository, serves it to the Managers, decides every push as its pre-receive hook and exports the result. | [internal/runremote/README.md](../../internal/runremote/README.md) |
 
 ## Session helper
 
