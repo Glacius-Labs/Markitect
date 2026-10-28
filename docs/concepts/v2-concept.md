@@ -51,6 +51,8 @@ A [[members/member|member]] reserves a [[equipment/machine|machine]] for a slot.
 - **Scope is location:** everything a Package defines reaches its whole subtree.
 - **Visibility as in Go:** a Definition is public unless it says `internal: true`; an internal Definition is visible only to its own Package and the Packages below it.
 - **Cycles as in Go:** every link between two Packages is an edge, and so is the implicit edge from a child to its parents. A cycle is a compile error, so links point up or sideways, never down. A cycle is broken by moving the shared concept into a common parent, or by inverting the dependency: the needing side describes its need, and the other side links to it.
+- A parent may link to a child Package, which names part of the organization and is no edge ("authorization is realized in [[pipeline]]"), but not to a Definition inside it.
+- Using a Kind is an edge, so shared Kinds sit at Root or in a Library.
 
 ### 2.4 How explicit
 
@@ -190,7 +192,7 @@ No app for now ([DEC-085](register.md#dec-085-markdown-tools-are-the-cockpit-for
 
 1. **Root and the project Package: decided** 28 October: the project Package is Root itself.
 2. **Overlapping path patterns: decided** 28 October: the most specific pattern wins; Root owns what no other Package claims; two Packages with the same pattern is a compile error.
-3. **What a parent may name below it.** Links never point down, so a parent cannot name its children's Definitions, for example which child provides a shared interface. And is a Definition's Kind an edge, so that a Kind must sit at or above its users?
+3. **What a parent may name below it: decided** 28 October: a parent may link to a child Package (no edge) but not to Definitions inside it; using a Kind is an edge.
 4. **Internal Definitions and the Managers above.** A parent reviewing a child, Root's checker, or a shared-file entry may need a child's internal Definitions. Does visibility bind only sideways, not upwards?
 5. **The checklist.** Exactly which Definitions are on a Manager's checklist: its own Package's Definitions that the change reaches, also the inherited Rules, or everything in its area on a `--full` Run?
 6. **Hooks and integration.** A parent pushes merged child commits; where does the checker's approval commit go; must a child's submission pass the whole-repository checks before its siblings are integrated?
