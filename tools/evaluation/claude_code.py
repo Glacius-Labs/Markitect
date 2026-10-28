@@ -15,12 +15,15 @@ whatever the session left with a fixed identity and writes result.bundle,
 run.json, the session's stream and its transcripts. Every step of a chain is a
 fresh session; the repository is its memory, and STATE_DIR is unused.
 
-This is separation, not a sandbox: the session runs as the user on the host.
+The login is the suite's EVALUATION_LOGIN when it sets one, as the sandbox does
+(`suite.py run --sandbox`). In host mode the session runs as the user on the
+host: that is separation, not a sandbox.
 """
 import argparse
 import json
 import os
 import pathlib
+import re
 import shutil
 import signal
 import subprocess
@@ -39,7 +42,8 @@ TOOLS = ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "Agent", "TodoWrite"]
 DENIED = ["WebFetch", "WebSearch"]
 IDENTITY = ("Claude Code Baseline", "baseline@markitect.invalid")
 MARGIN, LOGIN_MARGIN, KILL = 60, 300, 15
-KEPT = ("CLAUDE_CODE_GIT_BASH_PATH",)
+KEPT = ("CLAUDE_CODE_GIT_BASH_PATH", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC")
+KEPT_IGNORED = re.compile(r"(\.go|\.md|(^|/)go\.(mod|sum))$")
 
 
 class VariantError(Exception):
@@ -162,6 +166,12 @@ def capture(repo, start, out, env, secrets):
     """
     (repo / ".git" / "index.lock").unlink(missing_ok=True)  # left behind when the session was killed mid-commit
     git(repo, "add", "-A", env=env)
+    # The session's own .gitignore stays in force, except for sources it would drop by accident, such as a
+    # binary's name `library` that also matches cmd/library/ (the Phase A-C capture rule).
+    ignored = git(repo, "ls-files", "-z", "-o", "-i", "--exclude-standard", env=env).split("\0")
+    kept = [p for p in ignored if KEPT_IGNORED.search(p) and p != "TASK.md"]
+    if kept:
+        git(repo, "add", "-f", "--", *kept, env=env)
     if git(repo, "status", "--porcelain", env=env):
         git(repo, "commit", "-q", "--no-verify", "-m", "Baseline session result", env=env)
     head = git(repo, "rev-parse", "HEAD", env=env)
@@ -176,7 +186,7 @@ def capture(repo, start, out, env, secrets):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--claude", default=shutil.which("claude") or "claude")
-    parser.add_argument("--credentials", default=str(pathlib.Path.home() / ".claude" / ".credentials.json"))
+    parser.add_argument("--credentials", default=os.environ.get("EVALUATION_LOGIN") or str(pathlib.Path.home() / ".claude" / ".credentials.json"))
     parser.add_argument("--effort")
     parser.add_argument("task")
     parser.add_argument("out")
