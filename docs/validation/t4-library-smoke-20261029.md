@@ -24,4 +24,38 @@ The first run of concept 2.0's whole Run: T4a's engine, T3's Run remote and T4b'
 
 ## Results
 
-Pending.
+| Question | Verdict |
+| --- | --- |
+| Native Claude re-run | **Passed** at the source, 23:20:53–23:21:24Z: the maker's submission passed the hook and its check, and the checker approved it with a commit that changes no file |
+| Q1, a whole Run | **Passed.** `markitect apply --full` started the Run remote and 25 agent starts for the five working Managers (`.`, `catalog`, `lending`, `lending/reminders`, `members`): 18 maker and 7 checker starts. Every start ended `finished` on `claude-sonnet-5-5`, and the Run ended with a Result |
+| Q2, landing | **Passed.** Outcome `landed`, exit 0, 23:21:25–23:32:25Z (11 minutes). Every checklist item of every Manager has a verdict with evidence and its approving checker, and Root's checker approved the integrated state. The required checks passed on the whole repository at the integrated commit (`build` 2.4 s, `test` 1.0 s). The result is `main` of the target at `32bb2b250a76`, with the Result page at `.markitect/results/r20261028-232125.md` |
+
+| Item | Value |
+| --- | --- |
+| Binding | Main `2ce96daf`, tree `a9279f1c` = PR #856's frozen head `3647ebce`. `markitect.exe` and `markitect-remote` built from it. Manager image `sha256:6ac2af372824…`, Go Manager image `sha256:10b5bd8d9cf8…`, both built from `3647ebce`. `golang:1.27` = local `golang:1.27.1`, `sha256:162be5298a40…` |
+| Project | 19 Definitions in 5 Packages, base `363af488`. The target was a local bare repository, so no hosted repository changed |
+| Tokens | 3,777,706 input and 140,605 output for the Run (from the Result). The re-run: 30 s, about 52,000 input tokens |
+| Lock | Held 23:20:53–23:32:26Z by nonce, and again for the judge below. Before that it was held by another session's judge self-test, and this dispatch waited for it |
+| Cleanup | Afterwards no container, volume or network of the Run remained |
+| Credentials | The post-check scanned all 35 evidence files (Result, transcripts, outputs, target log) for the login's tokens, the agents' Git tokens, key names with values, JWTs and Anthropic key shapes: no match |
+
+**What landed holds up.** In a fresh clone of the target:
+
+- `go build ./cmd/library`, `go vet ./...` and `go test ./...` pass in `realization/` (six packages with tests).
+- `markitect check` reports `ok: 19 Definitions in 5 Packages, 15 files accounted`.
+
+As extra evidence, beyond this dispatch, the Library's hidden M1 judge (`tools/evaluation-judges/library-m1`, exported at the source) judged the landed commit against the base, under the lock:
+
+- 19 of 19 hidden cases passed, and build and tests passed.
+- No protected input was touched.
+- Its scope census flags two paths as unrequested: Root's registry page `.markitect/registry.md` and the Result page `.markitect/results/r20261028-232125.md`. The judge exempts only `.markitect/registry/`, so for the 2.0 arm these are a gap in the judge's contract, not unrequested work.
+
+**How the organization worked.** It took 18 messages (questions, escalations, answers, assignments, and the host's notices of approved child work):
+
+- **The scaffold was missing.** Every child's first submission was refused by the required `build` check: `realization/go.mod` and `cmd/library` lie in Root's area, and the check runs on each branch's full state (concept §6.3).
+- **The children escalated.** They asked their parents rather than writing outside their areas.
+- **Root resolved it.** It published the module scaffold on `root` and assigned each child an exact API. The children merged `root` into their branches; the hook accepts that because the net change against `root` stays in their area.
+- **Rounds and reviews.** `lending` needed five maker rounds and Root four. Every one of the seven reviews approved. `catalog` and `members` each had a second review because their makers submitted again after an approval, on top of a newer `root`.
+- **Integration.** Root then merged every approved child, wired the ten operations and passed its checker.
+
+**Not exercised:** Codex; a model defect (no planted defect); a moved target; `verify`; Linux as the host (T5).
