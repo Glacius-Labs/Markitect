@@ -1,6 +1,6 @@
 # Agentic commands
 
-**Redesign decided, not built:** [DEC-082](../concepts/register.md#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager) replaces the three Run kinds with one Run per change, makers and checkers, and the Commands `apply` and `verify`. This page records the frame as agreed on 27 and 28 October 2026 and describes Main today.
+**Redesign decided, being built:** [DEC-082](../concepts/register.md#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager) replaces the three Run kinds with one Run per change, makers and checkers, and the Commands `apply` and `verify`. This page records the frame as agreed on 27 and 28 October 2026 and describes Main today.
 
 Canonical page of the commands topic, one of the topics on the [topics page](topics.md). It describes the agentic commands Markitect runs through the model-derived Manager hierarchy as **contracts**: what a command takes, what it returns and what it guarantees. How a variant realizes them belongs to the variants: the host variant (today's V1), the Claude Code plugin variant and the Git variant ([DEC-078](../concepts/register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review)). The [workstreams](../workstreams.md) page lists the sessions and variants.
 
