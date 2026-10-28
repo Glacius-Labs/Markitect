@@ -184,10 +184,18 @@ func TestCheckerSeesSubmissionVerdictsAndDiff(t *testing.T) {
 	lacks(t, d.Task, "xxxxxxxx")
 }
 
+func TestAParentWithAnEmptyChecklistIntegrates(t *testing.T) {
+	p := library(t)
+	d := render(t, Input{Run: "r1", Mode: Apply, Role: Maker, Package: "", Project: p, Working: []string{"", "members"}})
+	contains(t, d.Task, "Your checklist is empty: integrate your children's approved work")
+	lacks(t, d.Task, "## Checklist")
+}
+
 func TestVerifyCheckerSubmitsVerdictsOnTheBase(t *testing.T) {
 	p := library(t)
 	d := render(t, Input{Run: "r1", Mode: Verify, Role: Checker, Package: "members", Project: p, Items: items("members/member")})
-	contains(t, d.Task, "at the Run's base conforms", "Call `submit`")
+	contains(t, d.Task, "at the Run's base conforms", "Call `submit`", "`deviates`")
+	lacks(t, d.Task, "`changed`")
 	if _, err := Render(Input{Run: "r1", Mode: Verify, Role: Maker, Package: "members", Project: p, Items: items("members/member")}); err == nil {
 		t.Error("verify has no makers")
 	}
@@ -199,7 +207,6 @@ func TestRenderRefusesWhatNoAgentCanWorkFrom(t *testing.T) {
 	cases := map[string]func(*Input){
 		"no project":        func(in *Input) { in.Project = nil },
 		"unknown Package":   func(in *Input) { in.Package = "nope" },
-		"empty checklist":   func(in *Input) { in.Items = nil },
 		"pipe in key":       func(in *Input) { in.Items = []Item{{Key: "a|b"}} },
 		"checker no commit": func(in *Input) { in.Role = Checker },
 		"unknown mode":      func(in *Input) { in.Mode = "improve" },
@@ -231,12 +238,14 @@ func TestItemsKeyEveryPartForThePlan(t *testing.T) {
 	for _, it := range Items(c) {
 		keys = append(keys, it.Key+" "+it.Part)
 	}
-	want := []string{"members/member own", "loan-limit inherited", "finding-1:members/member finding", "stale:members/old stale", "stale:src/members/gone.go stale", "stale:.markitect/registry/old.md stale"}
+	want := []string{"members/member own", "loan-limit inherited", "finding 1 on members/member finding",
+		"stale.definition members/old at .markitect/registry/members.md:4 stale", "stale.definition members/old at .markitect/registry/members.md:5 stale",
+		"stale.file src/members/gone.go at .markitect/registry/members.md stale", "stale.page .markitect/registry/old.md stale"}
 	if strings.Join(keys, ",") != strings.Join(want, ",") {
 		t.Fatalf("keys %q, want %q", keys, want)
 	}
 	got := Items(c)
-	if got[2].Detail != "observed: no card; expected: a card" || !strings.Contains(got[3].Detail, ":4 links members/old") || !strings.Contains(got[3].Detail, ":5 links") {
+	if got[2].Detail != "observed: no card; expected: a card" || !strings.Contains(got[3].Detail, ":4 links members/old") || got[6].Detail != ".markitect/registry/old.md is the page of a Package that no longer exists" {
 		t.Fatalf("details: %+v", got)
 	}
 }

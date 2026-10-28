@@ -113,11 +113,7 @@ func (a *Agent) dispatch(ctx context.Context, name string, raw json.RawMessage) 
 		if err := decode(raw, &args); err != nil {
 			return "", err
 		}
-		to := ""
-		if in.Package != "" {
-			to = harness.ManagerID(model.ParentOf(in.Package))
-		}
-		return a.message(ctx, name, to, args.Text)
+		return a.message(ctx, name, model.ParentOf(in.Package), args.Text)
 	}
 	return "", refuse("there is no tool %q", name)
 }
@@ -146,13 +142,20 @@ type checkArgs struct {
 	Evidence string `json:"evidence"`
 }
 
-func (a *Agent) id() string { return harness.ManagerID(a.spec.Input.Package) }
+// id is the Manager as trailers name it: "." for Root.
+func (a *Agent) id() string { return runremote.Name(a.spec.Input.Package) }
 
-func (a *Agent) branch() string { return runremote.Branch(a.id()) }
+func (a *Agent) branch() string { return runremote.Branch(a.spec.Input.Package) }
 
 // checkVerdicts requires exactly one verdict per checklist item, with a
-// known word and evidence, as the remote's hook will.
+// word of the mode and evidence, as the remote's hook will: a maker conforms,
+// changed or model-problem, a verify checker conforms, deviates or
+// model-problem.
 func (a *Agent) checkVerdicts(args []verdictArgs) ([]runremote.Line, error) {
+	words := []string{runremote.Conforms, runremote.Changed, runremote.ModelProblem}
+	if a.spec.Input.Mode == harness.Verify {
+		words[1] = runremote.Deviates
+	}
 	want := map[string]bool{}
 	for _, it := range a.spec.Input.Items {
 		want[it.Key] = true
@@ -167,8 +170,8 @@ func (a *Agent) checkVerdicts(args []verdictArgs) ([]runremote.Line, error) {
 			problems = append(problems, fmt.Sprintf("%q is no item of your checklist", item))
 		case given[item]:
 			problems = append(problems, fmt.Sprintf("%q has more than one verdict", item))
-		case word != runremote.Conforms && word != runremote.Changed && word != runremote.ModelProblem:
-			problems = append(problems, fmt.Sprintf("%q: the verdict %q is not conforms, changed or model-problem", item, word))
+		case word != words[0] && word != words[1] && word != words[2]:
+			problems = append(problems, fmt.Sprintf("%q: the verdict %q is not %s", item, word, strings.Join(words, ", ")))
 		case evidence == "":
 			problems = append(problems, fmt.Sprintf("%q: the verdict gives no evidence", item))
 		}
@@ -382,7 +385,7 @@ func (a *Agent) neighbour(to string) (string, error) {
 	pkg := a.spec.Input.Package
 	switch {
 	case to == "parent" && pkg != "":
-		return harness.ManagerID(model.ParentOf(pkg)), nil
+		return model.ParentOf(pkg), nil
 	case to == "parent":
 		return "", refuse("Root has no parent")
 	case a.isChild(to):
@@ -396,13 +399,17 @@ func (a *Agent) message(ctx context.Context, kind, to, text string) (string, err
 	if text == "" || len(text) > maxToolText {
 		return "", refuse("the text must be between 1 and %d bytes", maxToolText)
 	}
-	if err := a.spec.Messages.Send(ctx, Message{Kind: kind, From: a.id(), To: to, Text: text}); err != nil {
+	from := a.spec.Input.Package
+	if kind == harness.ToolEscalate && from == "" {
+		to = ""
+	}
+	if err := a.spec.Messages.Send(ctx, Message{Kind: kind, From: from, To: to, Text: text}); err != nil {
 		return "", refuse("not sent: %v", err)
 	}
-	if to == "" {
-		return "escalated: the Run ends at Root without landing", nil
+	if kind == harness.ToolEscalate && from == "" {
+		return "escalated: a model defect ends the Run at Root without landing", nil
 	}
-	return "sent to " + to, nil
+	return "sent to " + runremote.Name(to), nil
 }
 
 // flat writes text on one line, as a trailer value must be.

@@ -57,10 +57,13 @@ func Tools(mode Mode, role Role, children bool) []Tool {
 	return append(tools, ask, answer, escalate)
 }
 
-const verdictSchema = `{"type":"object","additionalProperties":false,"required":["item","verdict","evidence"],"properties":{` +
-	`"item":{"type":"string","description":"the checklist item's key"},` +
-	`"verdict":{"type":"string","enum":["conforms","changed","model-problem"]},` +
-	`"evidence":{"type":"string","description":"files, tests or Definitions that show the verdict holds"}}}`
+// verdictSchema is one verdict with the words of a mode (runremote).
+func verdictSchema(words string) string {
+	return `{"type":"object","additionalProperties":false,"required":["item","verdict","evidence"],"properties":{` +
+		`"item":{"type":"string","description":"the checklist item's key"},` +
+		`"verdict":{"type":"string","enum":` + words + `},` +
+		`"evidence":{"type":"string","description":"files, tests or Definitions that show the verdict holds"}}}`
+}
 
 var makerSubmit = Tool{
 	Name: ToolSubmit,
@@ -69,16 +72,16 @@ var makerSubmit = Tool{
 		"or refuses the push; a refusal returns its reason and nothing is lost. Returns the submitted commit.",
 	Schema: json.RawMessage(`{"type":"object","additionalProperties":false,"required":["summary","verdicts"],"properties":{` +
 		`"summary":{"type":"string","description":"one line: what the submission does"},` +
-		`"verdicts":{"type":"array","description":"exactly one verdict per checklist item","items":` + verdictSchema + `}}}`),
+		`"verdicts":{"type":"array","description":"exactly one verdict per checklist item","items":` + verdictSchema(`["conforms","changed","model-problem"]`) + `}}}`),
 }
 
 var verifySubmit = Tool{
 	Name: ToolSubmit,
 	Description: "Push your verdicts for every checklist item as one commit that changes no file. " +
-		"conforms: the repository conforms to the item; changed: it does not and needs a change, which the evidence describes; " +
+		"conforms: the repository conforms to the item; deviates: it does not, and the evidence says what you observed and what the model expects; " +
 		"model-problem: the model contradicts itself or leaves open behavior at the project boundary. Returns the commit.",
 	Schema: json.RawMessage(`{"type":"object","additionalProperties":false,"required":["verdicts"],"properties":{` +
-		`"verdicts":{"type":"array","description":"exactly one verdict per checklist item","items":` + verdictSchema + `}}}`),
+		`"verdicts":{"type":"array","description":"exactly one verdict per checklist item","items":` + verdictSchema(`["conforms","deviates","model-problem"]`) + `}}}`),
 }
 
 var review = Tool{

@@ -64,16 +64,8 @@ type Document struct {
 	Base, Context, Task string
 }
 
-// ManagerID is the Package's Manager ID in the Run's plan and trailers: the
-// Package path, "." for Root.
-func ManagerID(pkg string) string {
-	if pkg == "" {
-		return runremote.RootID
-	}
-	return pkg
-}
-
-// Render writes the documents of one agent.
+// Render writes the documents of one agent. An empty checklist is a parent
+// that only integrates its children's work.
 func Render(in Input) (Document, error) {
 	if in.Project == nil || in.Project.Model == nil {
 		return Document{}, fmt.Errorf("harness: no loaded project")
@@ -83,9 +75,6 @@ func Render(in Input) (Document, error) {
 	}
 	if _, ok := in.Project.Model.Packages[in.Package]; !ok {
 		return Document{}, fmt.Errorf("harness: no Package %q in the model", in.Package)
-	}
-	if len(in.Items) == 0 {
-		return Document{}, fmt.Errorf("harness: Manager %s has no checklist item", ManagerID(in.Package))
 	}
 	switch {
 	case in.Mode != Apply && in.Mode != Verify:
@@ -110,8 +99,6 @@ type renderer struct {
 	in Input
 	m  *model.Model
 }
-
-func (r renderer) id() string { return ManagerID(r.in.Package) }
 
 func (r renderer) working(pkg string) bool {
 	for _, w := range r.in.Working {
@@ -150,7 +137,7 @@ func (r renderer) base() string {
 		b.WriteString("As checker you judge whether the repository at the Run's base conforms to each checklist item. You never edit files.\n\n")
 	}
 	b.WriteString("# Repository\n\n")
-	branch := runremote.Branch(r.id())
+	branch := runremote.Branch(in.Package)
 	fmt.Fprintf(&b, "- `/work` is your clone of the Run's remote (`origin`), on your Manager's branch `%s`. The branch `%s` is the Run's starting commit.\n", branch, runremote.BaseBranch)
 	if page := r.page(in.Package); page != "" {
 		fmt.Fprintf(&b, "- Your Package's registry page is `%s`.", page)
@@ -170,8 +157,8 @@ func (r renderer) base() string {
 	}
 	b.WriteString("- Every repository file outside `.markitect/` is listed on its owner's registry page, with the Definitions it realizes, or ignored.\n")
 	if in.Package != "" {
-		parent := ManagerID(model.ParentOf(in.Package))
-		fmt.Fprintf(&b, "- Your parent is %s, on branch `%s`.\n", packageName(model.ParentOf(in.Package)), runremote.Branch(parent))
+		parent := model.ParentOf(in.Package)
+		fmt.Fprintf(&b, "- Your parent is %s, on branch `%s`.\n", packageName(parent), runremote.Branch(parent))
 	}
 	if kids := r.children(); len(kids) > 0 {
 		var names []string
@@ -287,19 +274,23 @@ func (r renderer) task() string {
 	in := r.in
 	b.WriteString("# Task\n\n")
 	switch {
+	case in.Role == Maker && len(in.Items) == 0:
+		b.WriteString("Your checklist is empty: integrate your children's approved work into your branch and submit it, with no verdict.\n\n")
 	case in.Role == Maker:
 		b.WriteString("Make the repository conform to every item on your checklist, and give each item a verdict. " +
 			"A verdict means: conforms to this item and to the Rules above it, so a change that breaks an unchanged inherited Rule does not conform.\n\n")
 	case in.Mode == Apply:
-		fmt.Fprintf(&b, "Re-check every verdict of submission `%s` on branch `%s` against the model and the repository at that commit.\n\n", in.Submission.Commit, runremote.Branch(r.id()))
+		fmt.Fprintf(&b, "Re-check every verdict of submission `%s` on branch `%s` against the model and the repository at that commit.\n\n", in.Submission.Commit, runremote.Branch(in.Package))
 	default:
 		b.WriteString("Judge whether the repository at the Run's base conforms to every item on your checklist and to the Rules above it.\n\n")
 	}
-	b.WriteString("## Checklist\n\n| Item | Part | Why |\n|---|---|---|\n")
-	for _, it := range in.Items {
-		fmt.Fprintf(&b, "| `%s` | %s | %s |\n", it.Key, it.Part, cell(it.Detail))
+	if len(in.Items) > 0 {
+		b.WriteString("## Checklist\n\n| Item | Part | Why |\n|---|---|---|\n")
+		for _, it := range in.Items {
+			fmt.Fprintf(&b, "| `%s` | %s | %s |\n", it.Key, it.Part, cell(it.Detail))
+		}
+		b.WriteString("\n")
 	}
-	b.WriteString("\n")
 	if in.Role == Checker && in.Mode == Apply {
 		s := in.Submission
 		b.WriteString("## Submitted verdicts\n\n| Item | Verdict | Evidence |\n|---|---|---|\n")
@@ -331,7 +322,8 @@ func (r renderer) task() string {
 		b.WriteString("Call `review` with one answer per submitted verdict, `confirmed` or `disputed`, each with evidence: what you read or ran, and for a dispute what is wrong and where. " +
 			"The outcome is `approved` when you confirm every verdict and `rejected` when you dispute at least one.\n")
 	default:
-		b.WriteString("Call `submit` with exactly one verdict per checklist item: `conforms`, `changed` (it does not conform and needs a change, which the evidence states as observed and expected) or `model-problem`, each with evidence.\n")
+		b.WriteString("Call `submit` with exactly one verdict per checklist item, each with evidence: `conforms`; `deviates`, when the repository does not conform, with what you observed and what the model expects; " +
+			"or `model-problem`, when the model contradicts itself or leaves open behavior at the project boundary for this item.\n")
 	}
 	return b.String()
 }

@@ -134,8 +134,9 @@ type Spec struct {
 // Message is one message an agent sends along the tree.
 type Message struct {
 	Kind string // assign, ask, answer or escalate (harness tool names)
-	// From is the sender's Manager ID; To the receiver's, "" for an
-	// escalation from Root, which ends the Run without landing.
+	// From and To are Package IDs, "" for Root. An escalation from Root
+	// has no receiver: it is a model defect and ends the Run without
+	// landing.
 	From, To string
 	Text     string
 }
@@ -272,8 +273,7 @@ func (a *Agent) clone(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	id := harness.ManagerID(s.Input.Package)
-	identity := fmt.Sprintf("%s %s", id, s.Input.Role)
+	identity := fmt.Sprintf("%s %s", runremote.Name(s.Input.Package), s.Input.Role)
 	steps := []struct {
 		argv  []string
 		stdin string
@@ -283,7 +283,7 @@ func (a *Agent) clone(ctx context.Context) error {
 		{[]string{gitPath, "config", "--global", "user.email", s.Remote.User + "@run.markitect.invalid"}, ""},
 		{[]string{gitPath, "config", "--global", "core.autocrlf", "false"}, ""},
 		{[]string{gitPath, "credential", "approve"}, fmt.Sprintf("protocol=http\nhost=%s\nusername=%s\npassword=%s\n\n", host, s.Remote.User, s.Remote.Token)},
-		{[]string{gitPath, "clone", "--quiet", "--origin", "origin", "--branch", runremote.Branch(id), s.Remote.URL, workDir}, ""},
+		{[]string{gitPath, "clone", "--quiet", "--origin", "origin", "--branch", runremote.Branch(s.Input.Package), s.Remote.URL, workDir}, ""},
 	}
 	for _, step := range steps {
 		if err := a.git(ctx, step.argv, step.stdin, io.Discard); err != nil {

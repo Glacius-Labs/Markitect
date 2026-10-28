@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/analysis"
-	"github.com/Glacius-Labs/Markitect/internal/realization"
+	"github.com/Glacius-Labs/Markitect/internal/runremote"
 )
 
 // Parts of a checklist (concept 2.0 §6.2).
@@ -16,8 +16,8 @@ const (
 	PartStale     = "stale"
 )
 
-// Item is one checklist item as a Manager receives it. Key names it in the
-// Run's plan and in the verdict trailers; it holds no "|" and no line break.
+// Item is one checklist item as a Manager receives it. Key names it as the
+// Run's plan and the verdict trailers do (runremote.Items).
 type Item struct {
 	Key  string
 	Part string
@@ -29,55 +29,35 @@ type Item struct {
 	Detail string
 }
 
-// Items turns one Manager's checklist into its items, in the order own,
-// inherited, Findings, stale. Own and inherited items are keyed by their
-// Definition ID, Findings by "finding-N:" and their Definition, stale
-// realization by "stale:" and the file, the missing Definition or the
-// orphaned page. Stale entries that name the same thing are one item. The
-// engine names the plan's checklist with these keys, so the hooks and the
-// Managers agree on them.
+// Items turns one Manager's checklist into its items, keyed as the Run's
+// plan keys them, in the order own, inherited, Findings, stale.
 func Items(c analysis.Checklist) []Item {
+	keys := runremote.Items(c)
 	var items []Item
 	for _, it := range c.Own {
-		items = append(items, Item{Key: it.Definition, Part: PartOwn, Definition: it.Definition, Detail: strings.Join(it.Reasons, "; ")})
+		items = append(items, Item{Part: PartOwn, Definition: it.Definition, Detail: strings.Join(it.Reasons, "; ")})
 	}
 	for _, it := range c.Inherited {
-		items = append(items, Item{Key: it.Definition, Part: PartInherited, Definition: it.Definition, Detail: strings.Join(it.Reasons, "; ")})
+		items = append(items, Item{Part: PartInherited, Definition: it.Definition, Detail: strings.Join(it.Reasons, "; ")})
 	}
-	for i, f := range c.Findings {
-		items = append(items, Item{
-			Key: fmt.Sprintf("finding-%d:%s", i+1, f.Definition), Part: PartFinding, Definition: f.Definition,
-			Detail: "observed: " + oneLine(f.Observed) + "; expected: " + oneLine(f.Expected),
-		})
+	for _, f := range c.Findings {
+		items = append(items, Item{Part: PartFinding, Definition: f.Definition, Detail: "observed: " + oneLine(f.Observed) + "; expected: " + oneLine(f.Expected)})
 	}
-	seen := map[string]int{}
 	for _, s := range c.Stale {
-		key, item := staleItem(s)
-		if at, ok := seen[key]; ok {
-			items[at].Detail += "; " + item.Detail
-			continue
+		item := Item{Part: PartStale, Detail: fmt.Sprintf("%s lists %s, which no longer exists", s.PageFile, s.File)}
+		switch {
+		case s.Code == "stale.definition":
+			item.Definition = s.Target
+			item.Detail = fmt.Sprintf("%s:%d links %s, which no longer exists", s.PageFile, s.Line, s.Target)
+		case s.File == "":
+			item.Detail = fmt.Sprintf("%s is the page of a Package that no longer exists", s.PageFile)
 		}
-		seen[key] = len(items)
 		items = append(items, item)
 	}
-	return items
-}
-
-func staleItem(s realization.Stale) (string, Item) {
-	var key, detail, definition string
-	switch {
-	case s.Code == "stale.definition":
-		key, definition = "stale:"+s.Target, s.Target
-		detail = fmt.Sprintf("%s:%d links %s, which no longer exists", s.PageFile, s.Line, s.Target)
-	case s.File != "":
-		key = "stale:" + s.File
-		detail = fmt.Sprintf("%s lists %s (%s)", s.PageFile, s.File, s.Code)
-	default:
-		key = "stale:" + s.PageFile
-		detail = fmt.Sprintf("%s is the page of a Package that no longer exists", s.PageFile)
+	for i := range items {
+		items[i].Key = keys[i]
 	}
-	key = strings.NewReplacer("|", "/", "\n", " ", "\r", " ").Replace(key)
-	return key, Item{Key: key, Part: PartStale, Definition: definition, Detail: detail}
+	return items
 }
 
 func oneLine(s string) string {

@@ -600,9 +600,9 @@ func TestMessagesGoAlongTheTreeOnly(t *testing.T) {
 	}
 	want := []agents.Message{
 		{Kind: "assign", From: "members", To: "members/cards", Text: "realize the card limit"},
-		{Kind: "ask", From: "members", To: ".", Text: "which limit?"},
+		{Kind: "ask", From: "members", To: "", Text: "which limit?"},
 		{Kind: "answer", From: "members", To: "members/cards", Text: "three"},
-		{Kind: "escalate", From: "members", To: ".", Text: "the model contradicts itself"},
+		{Kind: "escalate", From: "members", To: "", Text: "the model contradicts itself"},
 	}
 	if fmt.Sprint(f.sink.sent) != fmt.Sprint(want) {
 		t.Fatalf("sent %+v", f.sink.sent)
@@ -632,7 +632,7 @@ func TestRootEscalationEndsTheRun(t *testing.T) {
 	if _, err := a.Send(context.Background(), ""); err != nil {
 		t.Fatal(err)
 	}
-	if len(f.sink.sent) != 1 || f.sink.sent[0].To != "" || f.sink.sent[0].From != "." {
+	if len(f.sink.sent) != 1 || f.sink.sent[0].To != "" || f.sink.sent[0].From != "" || f.sink.sent[0].Kind != "escalate" {
 		t.Fatalf("sent %+v", f.sink.sent)
 	}
 }
@@ -716,5 +716,55 @@ func TestProcessesThatOutliveTheTurnAreAnError(t *testing.T) {
 	f.rt.census = []frame.Process{{PID: 9, Command: "sleep"}}
 	if _, err := a.Send(context.Background(), ""); err == nil || !strings.Contains(err.Error(), "outlived the turn") {
 		t.Fatalf("leftover process accepted: %v", err)
+	}
+}
+
+func TestVerifyCheckerPushesItsVerdictsWithoutChangingAFile(t *testing.T) {
+	f := setup(t, harness.Checker, "members", "members/member")
+	f.spec.Input.Mode, f.spec.Input.Submission = harness.Verify, nil
+	var texts []string
+	f.rt.script = func(s *fakeSession, argv []string, stdin []byte) int {
+		s.line(initLine("submit"))
+		for _, word := range []string{"changed", "deviates"} {
+			text, _ := s.call("submit", map[string]any{"verdicts": []map[string]string{{"item": "members/member", "verdict": word, "evidence": "observed no card; expected a card"}}})
+			texts = append(texts, text)
+		}
+		s.line(resultLine)
+		return 0
+	}
+	a := f.start(t)
+	if _, err := a.Send(context.Background(), ""); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(texts[0], `"changed" is not conforms, deviates, model-problem`) || !strings.Contains(texts[1], "submitted the verdicts") {
+		t.Fatalf("verify submits: %q", texts)
+	}
+	tip := git(t, f.bare, "rev-parse", "managers/members")
+	if git(t, f.bare, "rev-parse", tip+"^{tree}") != git(t, f.bare, "rev-parse", "base^{tree}") || git(t, f.bare, "rev-parse", tip+"^") != git(t, f.bare, "rev-parse", "base") {
+		t.Fatal("the verdicts changed a file")
+	}
+	tr, err := runremote.ParseMessage(git(t, f.bare, "log", "-1", "--format=%B", tip))
+	if err != nil || tr.Kind != runremote.Submission || tr.Verdicts[0].Word != runremote.Deviates {
+		t.Fatalf("trailers %+v %v", tr, err)
+	}
+}
+
+func TestAnIntegratingParentSubmitsWithItsManagerLineAlone(t *testing.T) {
+	f := setup(t, harness.Maker, "")
+	var text string
+	var isErr bool
+	f.rt.script = func(s *fakeSession, argv []string, stdin []byte) int {
+		s.line(initLine("submit", "assign", "ask", "answer", "escalate"))
+		text, isErr = s.call("submit", map[string]any{"summary": "Integrate members", "verdicts": []map[string]string{}})
+		s.line(resultLine)
+		return 0
+	}
+	a := f.start(t)
+	if _, err := a.Send(context.Background(), ""); err != nil {
+		t.Fatal(err)
+	}
+	tr, err := runremote.ParseMessage(git(t, f.bare, "log", "-1", "--format=%B", "root"))
+	if isErr || err != nil || tr.Kind != runremote.Submission || tr.Manager != "." || len(tr.Verdicts) != 0 {
+		t.Fatalf("submission %q %+v %v", text, tr, err)
 	}
 }
