@@ -61,8 +61,8 @@ python -I -B tools/evaluation/suite.py run --task TASK_DIR --model claude:claude
 - One container per run, from one image pinned by its image ID, with a read-only root and a non-root user. It sees the task read-only at `/task`, writes `/out` and `/state`, has its own code read-only at `/variant` and an access-only copy of the provider login read-only at `EVALUATION_LOGIN`. Nothing else from the host.
 - One safety limit per run from the series configuration (CPUs, memory, processes, `/tmp`), the same for every variant. It protects the machine and is not a budget: a run that exceeds it is a result.
 - The network's only route out is the evaluation provider's endpoints, enforced at network level, so no tool needs a proxy setting: no web, no GitHub, no Go module proxy. Portfolio tasks therefore need the Go standard library only.
-- The suite removes the run's containers and networks afterwards and records what it could not remove. A run with leftovers, or whose sandbox failed to start, is not valid for counting.
-- An escape probe, a variant without a model, checks before a series that the sandbox holds: reading host files, reaching github.com and reaching a container engine must all fail.
+- The suite removes the run's containers and networks afterwards and records what it could not remove. A run is not valid for counting when its sandbox did not stand up, its container never started, its egress gateway stopped, or something is left.
+- An escape probe, a variant without a model, checks before a series that the sandbox holds: reading host files, reaching GitHub or the web, and reaching a container engine or the host must all fail.
 
 A run without `--sandbox` runs the command as a host process. That is for tests only, and `suite.json` marks it as not valid for counting.
 
@@ -93,5 +93,6 @@ A timeout or a missing result is never dropped: it counts as a failure in Correc
 ## Limits
 
 - **Isolation.** The sandbox keeps a variant away from the host's files, the web and the engine. The Library and Makerspace oracles are still public, in this repository and on GitHub; a transcript audit checks that no agent quoted them. The new project's oracle stays off the machine during runs ([design](../design/evaluation-suite-v2.md#a-equal-conditions-one-sandbox)). Variants that start their own containers (M, G) need the engine socket in their sandbox; that comes with increment E3 and is not built yet.
-- **Egress by name.** The gateway allows provider host names, not addresses: a tool that resolves names itself, without `/etc/hosts`, cannot reach the provider. Content sent to an allowed host is not inspected. The engine's resolver may still answer name lookups inside the sandbox, although no address it returns can be reached.
+- **Egress by name.** The gateway allows provider host names, not addresses: a tool that resolves names itself, without `/etc/hosts`, cannot reach the provider. Content sent to an allowed host is not inspected, so the provider endpoint itself remains a way out for anything the sandbox holds, the access-only login included.
+- **Not limited:** disk. `/out` and `/state` are host folders; the safety limit covers CPUs, memory, processes and `/tmp` only.
 - **Reviewer family.** The earlier studies used reviewers of another model family than the writers. With Claude writers, a Codex reviewer restores that; if none is available, the report states the same-family review as a limit.

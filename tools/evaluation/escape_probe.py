@@ -8,10 +8,13 @@ escapes, each of which must fail:
 - **host files:** a mount that is not one of the suite's, a known host mount
   path, or a repository marker (a .git directory, AGENTS.md, an oracle
   directory) anywhere outside the suite's mounts;
-- **GitHub:** github.com by name, by two of its addresses, and through the
+- **GitHub and the web:** resolving github.com or example.com at all, reaching
+  them by name, GitHub and public resolvers by address, and GitHub through the
   egress gateway with GitHub's server name;
-- **engine:** a container engine socket file, DOCKER_HOST, and the engine's TCP
-  ports on the gateway, the host and the default route.
+- **engine and host:** a container engine socket file, DOCKER_HOST, the
+  engine's TCP ports on the gateway, the host names and the first address of
+  every attached subnet (where an engine puts its host side), and common
+  service ports there.
 
 It also opens a TLS handshake with the allowed provider endpoint (no request is
 sent), so that blocked escapes are not just a missing network. It writes every
@@ -33,6 +36,8 @@ HOST_PATHS = ("/mnt", "/host_mnt", "/hostfs", "/run/desktop/mnt/host", "/Users",
 MARKER_DIRS = {".git", "library-oracle", "makerspace-oracle", "Markitect-Evaluation"}
 MARKER_FILES = {"AGENTS.md"}
 GITHUB_ADDRESSES = ("140.82.112.3", "140.82.121.4")
+WEB_ADDRESSES = (("1.1.1.1", 443), ("8.8.8.8", 53), ("8.8.8.8", 443))
+HOST_PORTS = (22, 53, 80, 443, 3000, 5432, 8080)
 ENGINE_SOCKETS = ("/var/run/docker.sock", "/run/docker.sock", "/var/run/docker.sock.raw", "/run/desktop/docker.sock",
                   "/run/podman/podman.sock", "/run/containerd/containerd.sock")
 ENGINE_PORTS = (2375, 2376)
@@ -107,16 +112,28 @@ def resolve(name):
         return []
 
 
-def default_route():
-    """The IPv4 default gateway from /proc/net/route, or None."""
+def route_hosts(table):
+    """From /proc/net/route: the default gateway and the first address of every directly attached subnet,
+    where an engine puts its bridge's host-side address."""
+    hosts = []
+    for line in table.splitlines()[1:]:
+        fields = line.split()
+        try:
+            destination, gateway, mask = (int(fields[i], 16).to_bytes(4, "little") for i in (1, 2, 7))
+        except (IndexError, ValueError):
+            continue
+        if destination == bytes(4) and gateway != bytes(4):
+            hosts.append(socket.inet_ntoa(gateway))
+        elif destination != bytes(4) and gateway == bytes(4) and mask != b"\xff" * 4:
+            hosts.append(socket.inet_ntoa((int.from_bytes(destination, "big") + 1).to_bytes(4, "big")))
+    return hosts
+
+
+def local_hosts():
     try:
-        for line in pathlib.Path("/proc/net/route").read_text().splitlines()[1:]:
-            fields = line.split()
-            if fields[1] == "00000000":
-                return socket.inet_ntoa(int(fields[2], 16).to_bytes(4, "little"))
-    except (OSError, IndexError, ValueError):
-        pass
-    return None
+        return route_hosts(pathlib.Path("/proc/net/route").read_text())
+    except OSError:
+        return []
 
 
 def host_files():
@@ -133,11 +150,14 @@ def host_files():
 
 
 def github(gateway):
-    names = resolve("github.com")
-    attempts = [{"target": "dns github.com", "reached": False, "detail": "resolves to " + ", ".join(names) if names else "does not resolve",
-                 "informational": True}]
-    attempts += [tcp(a, 443) for a in names[:2]] + [tcp(a, 443) for a in GITHUB_ADDRESSES]
-    attempts.append(tcp("example.com", 443))
+    attempts = []
+    for name in ("github.com", "example.com"):
+        names = resolve(name)
+        # A name that resolves is a channel out through the engine's resolver, even if no address answers.
+        attempts.append({"target": f"dns {name}", "reached": bool(names),
+                         "detail": "resolves to " + ", ".join(names) if names else "does not resolve"})
+        attempts += [tcp(a, 443) for a in names[:2]]
+    attempts += [tcp(a, 443) for a in GITHUB_ADDRESSES] + [tcp(a, p) for a, p in WEB_ADDRESSES]
     if gateway:
         attempts.append(tls(gateway, 443, "github.com"))
         attempts.append(tcp(gateway, 80))
@@ -148,8 +168,10 @@ def engine(gateway):
     attempts = [unix_socket(p) for p in ENGINE_SOCKETS]
     if os.environ.get("DOCKER_HOST"):
         attempts.append({"target": "DOCKER_HOST", "reached": True, "detail": "set"})
-    hosts = [h for h in (gateway, default_route(), *ENGINE_HOSTS) if h]
+    hosts = [h for h in (gateway, *local_hosts(), *ENGINE_HOSTS) if h]
     attempts += [tcp(h, p, 2) for h in dict.fromkeys(hosts) for p in ENGINE_PORTS]
+    # The host side of the bridge: any service the engine's host offers there would be a way out.
+    attempts += [tcp(h, p, 2) for h in dict.fromkeys(local_hosts()) if h != gateway for p in HOST_PORTS]
     return attempts
 
 

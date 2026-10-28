@@ -152,7 +152,8 @@ def kill_tree(proc):
         pass
 
 
-def start_variant(argv, env, stdout, stderr, deadline):
+def start_variant(argv, env, stdout, stderr, deadline, on_deadline=None):
+    """Run the variant command under the deadline; on_deadline() runs first when the deadline expires."""
     kw = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == "nt" else {"start_new_session": True}
     started = time.monotonic()
     with open(stdout, "wb") as out, open(stderr, "wb") as err:
@@ -162,13 +163,15 @@ def start_variant(argv, env, stdout, stderr, deadline):
             timed_out = False
         except subprocess.TimeoutExpired:
             timed_out = True
+            if on_deadline:
+                on_deadline()
         kill_tree(proc)
     return {"exitCode": proc.returncode, "timedOut": timed_out, "wallSeconds": round(time.monotonic() - started, 1)}
 
 
 def collect_result(task_dir, start_commit, bundle):
     """The candidate a result bundle carries, checked against the task's start."""
-    if not bundle.is_file():
+    if bundle.is_symlink() or not bundle.is_file():
         return None, "no result.bundle"
     with tempfile.TemporaryDirectory() as tmp:
         try:
@@ -190,7 +193,7 @@ def collect_result(task_dir, start_commit, bundle):
 
 
 def reported(path):
-    if not path.is_file():
+    if path.is_symlink() or not path.is_file():
         return None
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
@@ -230,15 +233,17 @@ def run(task_dir, variant, out, model, state=None, sandbox=None):
         copy = pathlib.Path(tmp) / "task"
         shutil.copytree(task_dir, copy)
         if sandbox:
-            timing, record["sandbox"] = sandbox.run(copy, out / "variant", pathlib.Path(state).resolve() if state else None, variant, model,
-                                                    deadline, out, lambda argv: start_variant(argv, dict(os.environ), stdout, stderr, deadline))
+            timing, record["sandbox"] = sandbox.run(
+                copy, out / "variant", pathlib.Path(state).resolve() if state else None, variant, model, deadline, out,
+                lambda argv, stop: start_variant(argv, dict(os.environ), stdout, stderr, deadline, stop))
             record.update(timing)
         else:
             argv = [*variant, str(copy), str((out / "variant").resolve())] + ([str(pathlib.Path(state).resolve())] if state else [])
             record.update(start_variant(argv, dict(os.environ, EVALUATION_MODEL=model), stdout, stderr, deadline))
     record["endedUtc"] = now()
     # Only a sandboxed run whose sandbox stood up and left nothing behind ran under the evaluation's conditions.
-    record["validForCounting"] = bool(sandbox) and "error" not in record["sandbox"] and not record["sandbox"]["residue"]
+    record["validForCounting"] = (bool(sandbox) and "error" not in record["sandbox"] and "container" in record["sandbox"]
+                                  and not record["sandbox"]["residue"])
     try:
         # The variant got a copy, but could still reach the original by path.
         read_task(task_dir)
@@ -295,6 +300,10 @@ def chain(steps, start, deadline, variant, out, model, sandbox=None):
             break
         record["resultBundle"] = str(run_dir / "variant" / "result.bundle")
         records.append(record)
+        if "error" in record.get("sandbox", {}):
+            # A sandbox that did not stand up is no step of the variant's; the chain stops rather than run on.
+            error = {"step": i, "error": "sandbox: " + record["sandbox"]["error"]}
+            break
     summary = {"format": FORMAT, "model": model, "conditions": "sandbox" if sandbox else "host",
                "steps": [{"step": i, "delivered": r["delivered"], "timedOut": r["timedOut"], "wallSeconds": r["wallSeconds"],
                           "modelMatches": r["modelMatches"], "validForCounting": r["validForCounting"],

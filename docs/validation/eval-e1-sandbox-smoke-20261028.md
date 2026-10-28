@@ -9,7 +9,7 @@ This smoke checks increment E1 of [evaluation suite v2](../design/evaluation-sui
 | Item | Value |
 |---|---|
 | Source | `tools/evaluation` at the `main` commit that carries this page |
-| Image | Built from that commit with `docker build -t markitect-eval-sandbox tools/evaluation/sandbox`; the operator records its image ID (`docker image inspect --format "{{.Id}}"`) here before the first run and passes it as `IMAGE_ID`. A pre-merge build of the PR head had `sha256:dc93abc3…0505c73` |
+| Image | Built from that commit with `docker build -t markitect-eval-sandbox tools/evaluation/sandbox`; the operator records its image ID (`docker image inspect --format "{{.Id}}"`) here before the first run and passes it as `IMAGE_ID`. A pre-merge build of the reviewed PR source had `sha256:e0b20d8a…c5e5dad`; image IDs differ between builds |
 | Series configuration | [`tools/evaluation/sandbox/series.json`](../../tools/evaluation/sandbox/series.json): 8 CPUs, 16 GiB memory without swap, 4,096 processes, 8 GiB `/tmp`; egress for Claude only to `api.anthropic.com` |
 | Model | `claude:claude-sonnet-5-5` ([owner, 28 October](../workstreams/build.md#decisions)) |
 | Login | The owner's Claude subscription login (`%USERPROFILE%\.claude\.credentials.json`), copied per run without its refresh token and mounted read-only; never an API key. The suite refuses a run unless the login outlives the deadline plus 300 s (3,000 s); the operator checks the expiry before each run |
@@ -37,8 +37,8 @@ python -I -B tools/evaluation/suite.py run --task EVAL\library-m1-task --model c
 
 - **Time:** 2,700 s per run, enforced by the suite; K stops its session 60 s before. The probe takes about two minutes.
 - **Machine:** the series' safety limit per run (above), plus 1 CPU and 256 MiB for the egress gateway. One run at a time.
-- **Attempts:** the probe runs once. K runs until three runs in a row are each a result, at most six launches in all (about 4.5 hours). A run is **void** and relaunched only when it is a technical failure by these signatures, written before the series:
-  - the sandbox did not stand up or left residue (`sandbox.error` or `sandbox.residue` in `suite.json`), or the suite or engine failed;
+- **Attempts:** the probe runs once; if its sandbox does not stand up (for example, the engine refuses the internal network's isolated gateway mode), the smoke stops and the cause is reported. K runs until three runs in a row are each a result, at most six launches in all (about 4.5 hours). A run is **void** and relaunched only when it is a technical failure by these signatures, written before the series:
+  - the sandbox did not stand up, its container never started, its gateway stopped, or it left residue (`validForCounting` is `false`, with `sandbox.error` or `sandbox.residue` in `suite.json`), or the suite or engine failed;
   - the provider failed: the session's final result is an API error for capacity, rate limit or a server error, or the session never started because the login was refused;
   - the gateway refused a server name that Claude Code needs (`sandbox.egress.refused` in `suite.json`). This voids the run and **stops the series**: adding an endpoint to the series configuration is a reviewed change and a new dispatch.
 

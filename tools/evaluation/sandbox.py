@@ -39,6 +39,7 @@ LOGIN_TARGET = "/login/credentials.json"
 GATEWAY = {"cpus": "1", "memory": "268435456", "pids": "256"}
 ENGINE_SECONDS, READY_SECONDS, KILL_SECONDS = 60, 30, 20
 LOGIN_MARGIN = 300
+NO_DNS = "192.0.2.1"  # TEST-NET-1: never routed
 IMAGE_ID = re.compile(r"sha256:[0-9a-f]{64}")
 HOST = re.compile(r"[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+")
 
@@ -178,9 +179,17 @@ class engine_lock:
 # --- Secrets ---------------------------------------------------------------------
 
 def files_containing(root, secrets):
-    """Files below root that contain a secret; a bundle is searched through its unpacked objects."""
+    """Files below root that contain a secret; a bundle is searched through its unpacked objects.
+
+    Links and special files the variant left are never followed: they are reported as hits and removed with them.
+    """
     found = []
-    for path in sorted(p for p in pathlib.Path(root).rglob("*") if p.is_file()):
+    for path in sorted(pathlib.Path(root).rglob("*")):
+        if path.is_symlink() or (path.exists() and not path.is_dir() and not path.is_file()):
+            found.append(path)
+            continue
+        if not path.is_file():
+            continue
         data = path.read_bytes()
         if path.suffix == ".bundle" and data:
             with tempfile.TemporaryDirectory() as tmp:
@@ -222,7 +231,9 @@ class Sandbox:
         if state:
             mounts.append(("bind", state, "/state", False))
         mounts += [("bind", self.variant_code, "/variant", True), ("bind", login, LOGIN_TARGET, True)]
-        argv = ["run", "--name", name, "--label", label, "--init", "--network", network,
+        # The engine's resolver forwards to an address that has no route from the internal network, so names outside
+        # /etc/hosts never resolve.
+        argv = ["run", "--name", name, "--label", label, "--init", "--network", network, "--dns", NO_DNS,
                 *[f"--add-host={h}:{gateway_ip}" for h in self.hosts], *hardening(self.user),
                 "--tmpfs", f"/tmp:rw,exec,nosuid,nodev,mode=1777,size={limits['tmpBytes']}",
                 "--cpus", limits["cpus"], "--memory", str(limits["memoryBytes"]), "--memory-swap", str(limits["memoryBytes"]),
@@ -240,9 +251,11 @@ class Sandbox:
                 "--pids-limit", GATEWAY["pids"], "--entrypoint", "python3", self.image, "-I", "-B", "/opt/evaluation/egress.py", *allow]
 
     def run(self, task, out, state, variant, model, deadline, run_dir, launch):
-        """Run the variant command in a fresh sandbox; launch(argv) runs the engine CLI under the deadline.
+        """Run the variant command in a fresh sandbox.
 
-        Returns the launch's timing (exitCode, timedOut, wallSeconds) and the sandbox record.
+        launch(argv, on_deadline) runs the engine CLI under the deadline and calls on_deadline() first when it
+        expires, so that the container stops before the CLI does. Returns the launch's timing (exitCode, timedOut,
+        wallSeconds) and the sandbox record; an "error" in the record means the run did not take place as intended.
         """
         run_id = "eval-" + uuid.uuid4().hex[:12]
         label = f"{LABEL_KEY}={run_id}"
@@ -263,7 +276,10 @@ class Sandbox:
                 leftovers = census(engine, "census-before", LABEL_KEY)
                 if leftovers:
                     raise SandboxError("evaluation containers or networks of another run exist: " + ", ".join(leftovers))
-                for name, extra in ((internal, ["--internal"]), (egress, [])):
+                # The internal network's bridge carries no host address (isolated gateway mode), so nothing on the
+                # engine's host is reachable from it.
+                for name, extra in ((internal, ["--internal", "--opt", "com.docker.network.bridge.gateway_mode_ipv4=isolated"]),
+                                    (egress, [])):
                     networks.append(name)
                     engine.must("network-" + name[len(run_id) + 1:], ["network", "create", *extra, "--label", label, name])
                 containers.append(gateway)
@@ -271,7 +287,7 @@ class Sandbox:
                 engine.must("gateway-connect", ["network", "connect", internal, gateway])
                 engine.must("gateway-start", ["start", gateway])
                 nets = json.loads(engine.must("gateway-address", ["inspect", "--format", "{{json .NetworkSettings.Networks}}", gateway]))
-                gateway_ip = (nets.get(internal) or {}).get("IPAddress")
+                gateway_ip = ((nets or {}).get(internal) or {}).get("IPAddress")
                 if not gateway_ip:
                     raise SandboxError("the gateway has no address on the internal network")
                 record["gatewayAddress"] = gateway_ip
@@ -282,21 +298,33 @@ class Sandbox:
                 argv = self.sandbox_argv(box, label, internal, gateway_ip, mounts["task"], mounts["out"], mounts["state"],
                                          mounts["login"], model, variant)
                 record["argv"] = argv
-                timing = launch([*self.engine, *argv])
-                if timing["timedOut"]:
-                    engine("sandbox-kill", ["kill", box], KILL_SECONDS)
+
+                def stop():
+                    # At the deadline the container stops before the CLI, so nothing it writes later can count.
+                    if engine("sandbox-kill", ["kill", box], KILL_SECONDS)[0] != 0:
+                        record["killFailed"] = True
+                timing = launch([*self.engine, *argv], stop)
                 code, state_json = engine("sandbox-state", ["inspect", "--format", "{{json .State}}", box])
-                if code == 0:
-                    s = json.loads(state_json)
-                    record["container"] = {"exitCode": s.get("ExitCode"), "oomKilled": s.get("OOMKilled")}
-            except (SandboxError, OSError, ValueError) as e:
+                s = json.loads(state_json) if code == 0 else None
+                if not isinstance(s, dict) or str(s.get("StartedAt", "")).startswith("0001-"):
+                    raise SandboxError("the sandbox container never started")
+                record["container"] = {"exitCode": s.get("ExitCode"), "oomKilled": s.get("OOMKilled")}
+                if record.get("killFailed") and s.get("Running"):
+                    raise SandboxError("the sandbox container could not be stopped at the deadline")
+                code, gw = engine("gateway-state", ["inspect", "--format", "{{json .State.Running}}", gateway])
+                if code != 0 or gw.strip() != "true":
+                    raise SandboxError("the egress gateway stopped during the run")
+            except Exception as e:  # noqa: BLE001 - whatever failed, the run is recorded and cleaned up
                 record["error"] = f"{type(e).__name__}: {e}"
             finally:
                 if gateway in containers:
                     code, logs = engine("gateway-logs", ["logs", gateway])
                     if code == 0:
-                        (run_dir / "egress.jsonl").write_text(logs, encoding="utf-8")
                         record["egress"] = egress_summary(logs)
+                        try:
+                            (run_dir / "egress.jsonl").write_text(logs, encoding="utf-8")
+                        except OSError as e:
+                            record.setdefault("error", f"the gateway log could not be kept: {e}")
                 for name in reversed(containers):
                     engine("remove-" + name[len(run_id) + 1:], ["rm", "-f", name], KILL_SECONDS)
                 for name in reversed(networks):
@@ -307,10 +335,12 @@ class Sandbox:
                 except SandboxError as e:
                     record["residue"] = [f"unknown: {e}"]
         if secrets:
-            hits = files_containing(run_dir, secrets)
-            for p in hits:
+            # The state directory outlives the run in a chain, so it is searched too.
+            hits = [(root, p) for root in (run_dir, state) if root for p in files_containing(root, secrets)]
+            for _, p in hits:
                 p.unlink()
-            record["quarantine"] = [p.relative_to(run_dir).as_posix() for p in hits]
+            record["quarantine"] = [(p.relative_to(run_dir) if root == run_dir else pathlib.Path("state") / p.relative_to(root)).as_posix()
+                                    for root, p in hits]
         return timing, record
 
 

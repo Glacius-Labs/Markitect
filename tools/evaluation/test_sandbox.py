@@ -26,7 +26,9 @@ GATEWAY_IP = "10.9.0.2"
 
 # A fake engine. It keeps its containers and networks in FAKE_DIR/engine.json, logs every call and runs a
 # sandbox's command on the host with each mount target replaced by its source. FAKE_NOT_READY keeps the
-# gateway from reporting ready; FAKE_KEEP makes removals fail silently, leaving residue.
+# gateway from reporting ready; FAKE_KEEP makes removals fail silently, leaving residue; FAKE_RUN_FAIL fails a run
+# before its container starts, as a bad flag or mount would; FAKE_GATEWAY_DEAD reports the gateway stopped. A run
+# also checks that FAKE_LOCK, when set, is held while it runs.
 FAKE_ENGINE = textwrap.dedent(r'''
     import json, os, subprocess, sys
     args, d = sys.argv[1:], os.environ["FAKE_DIR"]
@@ -58,8 +60,14 @@ FAKE_ENGINE = textwrap.dedent(r'''
         state["containers"][opt("--name")] = opt("--label"); save()
     elif args[0] == "inspect" and "NetworkSettings" in opt("--format"):
         print(json.dumps({n: {"IPAddress": "10.9.0.2"} for n in state["networks"]}))
+    elif args[0] == "inspect" and ".State.Running" in opt("--format"):
+        print("false" if os.environ.get("FAKE_GATEWAY_DEAD") else "true")
     elif args[0] == "inspect":
-        print(json.dumps({"ExitCode": state.get("exit", {}).get(args[-1]), "OOMKilled": False}))
+        if args[-1] not in state["containers"]:
+            sys.exit("no such container")
+        started = args[-1] in state.get("exit", {})
+        print(json.dumps({"ExitCode": state.get("exit", {}).get(args[-1]) or 0, "OOMKilled": False, "Running": False,
+                          "StartedAt": "2026-10-28T00:00:00Z" if started else "0001-01-01T00:00:00Z"}))
     elif args[0] == "logs":
         if not os.environ.get("FAKE_NOT_READY"):
             for e in ({"ready": True, "port": 443}, {"sni": "api.anthropic.com", "allowed": True},
@@ -71,6 +79,8 @@ FAKE_ENGINE = textwrap.dedent(r'''
     elif args[0] == "run":
         name = opt("--name")
         state["containers"][name] = opt("--label"); save()
+        if os.environ.get("FAKE_RUN_FAIL"):
+            sys.exit(125)
         mounts, env, i = [], dict(os.environ), 1
         while args[i] != os.environ["FAKE_IMAGE"]:
             if args[i] == "--mount":
@@ -87,6 +97,9 @@ FAKE_ENGINE = textwrap.dedent(r'''
                     return src + a[len(dst):]
             return a
         env = {k: host(v) for k, v in env.items()}
+        if env.get("FAKE_LOCK") and not os.path.exists(env["FAKE_LOCK"]):
+            sys.exit("the engine lock is not held")
+        state = json.load(open(path)); state.setdefault("exit", {})[name] = None; save()
         code = subprocess.run([host(a) for a in args[i + 1:]], env=env).returncode
         state = json.load(open(path)); state.setdefault("exit", {})[name] = code; save()
         sys.exit(code)
@@ -196,7 +209,9 @@ class SandboxRunTest(unittest.TestCase):
             self.assertEqual(argv[argv.index("--user") + 1], f"{os.getuid()}:{os.getgid()}")
         # The internal network has no route out; the gateway alone joins both networks.
         log = calls(self.tmp)
-        self.assertIn(["network", "create", "--internal", "--label", f"markitect.evaluation={run_id}", f"{run_id}-internal"], log)
+        self.assertIn(["network", "create", "--internal", "--opt", "com.docker.network.bridge.gateway_mode_ipv4=isolated",
+                       "--label", f"markitect.evaluation={run_id}", f"{run_id}-internal"], log)
+        self.assertEqual(argv[argv.index("--dns") + 1], sandbox.NO_DNS)
         self.assertIn(["network", "create", "--label", f"markitect.evaluation={run_id}", f"{run_id}-egress"], log)
         self.assertIn(["network", "connect", f"{run_id}-internal", f"{run_id}-gateway"], log)
         create = next(c for c in log if c[0] == "create")
@@ -240,6 +255,31 @@ class SandboxRunTest(unittest.TestCase):
         self.assertFalse(any(c[0] == "run" for c in calls(self.tmp)))
         self.assertEqual(record["sandbox"]["residue"], [])
 
+    def test_a_container_that_never_started_is_not_valid(self):
+        os.environ["FAKE_RUN_FAIL"] = "1"
+        record = suite.run(self.task("ok"), self.variant, self.tmp / "run", MODEL, sandbox=self.box())
+        self.assertEqual(record["exitCode"], 125)
+        self.assertIn("never started", record["sandbox"]["error"])
+        self.assertFalse(record["validForCounting"])
+        self.assertEqual(record["sandbox"]["residue"], [])
+
+    def test_a_gateway_that_dies_during_the_run_voids_it(self):
+        os.environ["FAKE_GATEWAY_DEAD"] = "1"
+        record = suite.run(self.task("ok"), self.variant, self.tmp / "run", MODEL, sandbox=self.box())
+        self.assertIn("gateway stopped", record["sandbox"]["error"])
+        self.assertFalse(record["validForCounting"])
+
+    def test_links_left_in_the_output_are_removed_unread(self):
+        out = self.tmp / "links"
+        out.mkdir()
+        (out / "target.json").write_text("{}")
+        try:
+            (out / "run.json").symlink_to(out / "target.json")
+        except OSError:
+            self.skipTest("no symlinks here")
+        self.assertEqual(sandbox.files_containing(out, [b"SECRET"]), [out / "run.json"])
+        self.assertIsNone(suite.reported(out / "run.json"))
+
     def test_residue_makes_the_run_invalid(self):
         os.environ["FAKE_KEEP"] = "1"
         record = suite.run(self.task("ok"), self.variant, self.tmp / "run", MODEL, sandbox=self.box())
@@ -252,6 +292,27 @@ class SandboxRunTest(unittest.TestCase):
         record = suite.run(self.task("ok"), self.variant, self.tmp / "run", MODEL, sandbox=self.box())
         self.assertIn("eval-old-sandbox", record["sandbox"]["error"])
         self.assertFalse(any(c[0] == "run" for c in calls(self.tmp)))
+
+    def test_chain_stops_when_the_sandbox_fails(self):
+        os.environ["FAKE_RUN_FAIL"] = "1"
+        steps = []
+        for i in (1, 2):
+            d = self.tmp / "steps" / str(i)
+            d.mkdir(parents=True)
+            (d / "task.md").write_text("ok\n")
+            steps.append(d)
+        summary = suite.chain(steps, None, 120, self.variant, self.tmp / "chain", MODEL, self.box())
+        self.assertEqual(len(summary["steps"]), 1)
+        self.assertEqual(summary["stopped"]["step"], 1)
+        self.assertIn("never started", summary["stopped"]["error"])
+
+    def test_a_login_written_to_state_is_quarantined(self):
+        state = self.tmp / "state"
+        state.mkdir()
+        (state / "copy.txt").write_text("sk-access-SECRET")
+        record = suite.run(self.task("ok"), self.variant, self.tmp / "run", MODEL, state, sandbox=self.box())
+        self.assertEqual(record["sandbox"]["quarantine"], ["state/copy.txt"])
+        self.assertFalse((state / "copy.txt").exists())
 
     def test_chain_in_the_sandbox_keeps_state(self):
         steps = []
@@ -283,6 +344,13 @@ class SandboxRunTest(unittest.TestCase):
             engine.chmod(0o755)
         task = self.task("ok")
         common = ["run", "--task", str(task), "--model", MODEL]
+        lock.write_text("{}")
+        busy = suite.main([*common, "--out", str(self.tmp / "busy"), "--sandbox", IMAGE, "--variant-code", str(self.code),
+                           "--login", str(self.login), "--engine", str(engine), "--lock", str(lock), "--", *self.variant])
+        self.assertEqual(busy, 2)
+        self.assertFalse((self.tmp / "busy").exists())
+        lock.unlink()
+        os.environ["FAKE_LOCK"] = str(lock)
         self.assertEqual(suite.main([*common, "--out", str(self.tmp / "bad"), "--lock", str(lock), "--", *self.variant]), 2)
         self.assertFalse((self.tmp / "bad").exists())
         code = suite.main([*common, "--out", str(self.tmp / "cli"), "--sandbox", IMAGE, "--variant-code", str(self.code),
@@ -374,8 +442,12 @@ class EgressGatewayTest(unittest.TestCase):
             hello, back = exchange("localhost")
             self.assertEqual(back, hello)
             self.assertEqual(exchange("github.com")[1], b"")
+            with socket.create_connection(("127.0.0.1", port), timeout=5) as s:
+                s.sendall(b"GET / HTTP/1.1\r\nHost: github.com\r\n\r\n")
+                s.shutdown(socket.SHUT_WR)
+                self.assertEqual(s.recv(100), b"")
             deadline = time.monotonic() + 5
-            while len(lines) < 3 and time.monotonic() < deadline:
+            while len([e for e in lines if "sni" in e]) < 3 and time.monotonic() < deadline:
                 time.sleep(0.05)
         finally:
             egress.log = old_log
@@ -386,6 +458,7 @@ class EgressGatewayTest(unittest.TestCase):
         self.assertTrue(entries["localhost"]["allowed"])
         self.assertEqual(entries["localhost"]["bytesDown"], len(hello))
         self.assertFalse(entries["github.com"]["allowed"])
+        self.assertFalse(entries[None]["allowed"])
 
 
 class EscapeProbeTest(unittest.TestCase):
@@ -412,6 +485,14 @@ class EscapeProbeTest(unittest.TestCase):
                 (root / p).write_text("x")
             found = escape_probe.markers(str(root), (str(root / "task"),))
             self.assertEqual([pathlib.Path(f).relative_to(root).as_posix() for f in found], ["host/repo/.git", "host/repo/AGENTS.md"])
+
+    def test_route_hosts_name_the_gateway_and_each_subnet_host_side(self):
+        head = "Iface\tDestination\tGateway\tFlags\tRefCnt\tUse\tMetric\tMask\tMTU\tWindow\tIRTT\n"
+        bridge = (head + "eth0\t00000000\t010011AC\t0003\t0\t0\t0\t00000000\t0\t0\t0\n"
+                  "eth0\t000011AC\t00000000\t0001\t0\t0\t0\t0000FFFF\t0\t0\t0\n")
+        self.assertEqual(escape_probe.route_hosts(bridge), ["172.17.0.1", "172.17.0.1"])
+        internal = head + "eth0\t000016AC\t00000000\t0001\t0\t0\t0\t0000FFFF\t0\t0\t0\n"
+        self.assertEqual(escape_probe.route_hosts(internal), ["172.22.0.1"])
 
     def test_tcp_reaches_a_listener_and_not_a_closed_port(self):
         with socket.socket() as listener:

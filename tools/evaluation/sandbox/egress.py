@@ -22,8 +22,11 @@ RECORD_LIMIT = 5 + 16384
 HELLO_SECONDS = 10
 CONNECT_SECONDS = 15
 CHUNK = 65536
+DRAIN_SECONDS = 30
+CONNECTIONS = 64  # two threads each, well inside the gateway's process limit
 
 _print = threading.Lock()
+slots = threading.BoundedSemaphore(CONNECTIONS)
 
 
 def log(entry):
@@ -113,15 +116,21 @@ def handle(client, peer, allowed, upstream_port):
         up = threading.Thread(target=pipe, args=(client, upstream, entry, "bytesUp"), daemon=True)
         up.start()
         pipe(upstream, client, entry, "bytesDown")
-        up.join()
-    except OSError as e:
+        # The provider has finished; a client that never closes its side must not hold the connection open.
+        up.join(DRAIN_SECONDS)
+    except (OSError, RuntimeError) as e:
         entry["error"] = f"{type(e).__name__}: {e}"
     finally:
         for s in (client, upstream):
             if s is not None:
+                try:
+                    s.shutdown(socket.SHUT_RDWR)
+                except OSError:
+                    pass
                 s.close()
         entry["seconds"] = round(time.monotonic() - started, 3)
         log(entry)
+        slots.release()
 
 
 def serve(allowed, port, upstream_port=443, ready=None):
@@ -137,7 +146,17 @@ def serve(allowed, port, upstream_port=443, ready=None):
             client, peer = server.accept()
         except OSError:
             return
-        threading.Thread(target=handle, args=(client, peer, allowed, upstream_port), daemon=True).start()
+        # Beyond the cap, or when no thread can start, the connection is refused and the gateway lives on.
+        if not slots.acquire(blocking=False):
+            log({"peer": peer[0], "sni": None, "allowed": False, "error": "connection limit"})
+            client.close()
+            continue
+        try:
+            threading.Thread(target=handle, args=(client, peer, allowed, upstream_port), daemon=True).start()
+        except RuntimeError as e:
+            log({"peer": peer[0], "sni": None, "allowed": False, "error": f"RuntimeError: {e}"})
+            client.close()
+            slots.release()
 
 
 def main(argv=None):
