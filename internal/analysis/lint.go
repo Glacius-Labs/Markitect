@@ -100,6 +100,7 @@ func reachOf(p *project.Project, id string) map[string]bool {
 	for _, pkg := range m.Subtree(d.Package) {
 		add(pkg) // its own Package and, through the inherited item, every one below
 	}
+	reached := map[string]bool{id: true}
 	for _, other := range m.Definitions {
 		if !other.InModel() {
 			continue
@@ -107,12 +108,14 @@ func reachOf(p *project.Project, id string) map[string]bool {
 		for _, l := range other.Links {
 			if l.Target == id {
 				add(other.Package)
+				reached[other.ID] = true
 			}
 		}
 	}
+	// The files that realize a reached Definition are reached too.
 	for file, e := range p.Registry.Entries {
 		for _, r := range e.Realizes {
-			if r == id {
+			if reached[r] {
 				add(p.Registry.Owner[file])
 			}
 		}

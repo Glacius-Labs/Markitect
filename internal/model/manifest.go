@@ -41,7 +41,7 @@ var version = regexp.MustCompile(`^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-
 func ParseManifest(file string, data []byte) (Manifest, Diagnostics) {
 	var ds Diagnostics
 	var m Manifest
-	top, err := mapping(data)
+	top, err := Mapping(data)
 	if err != nil {
 		ds.Add("manifest.syntax", file, 0, "%v", err)
 		return m, ds
@@ -53,7 +53,7 @@ func ParseManifest(file string, data []byte) (Manifest, Diagnostics) {
 	}
 	libs := top["libraries"]
 	if libs == nil {
-		ds.Add("manifest.syntax", file, 0, "the manifest must name its Libraries, at least std:\nlibraries:\n  std: 1.0.0")
+		ds.Add("manifest.syntax", file, 0, "the manifest must name its Libraries under libraries, at least std: 1.0.0")
 		return m, ds
 	}
 	if libs.Kind != yaml.MappingNode {
@@ -85,7 +85,7 @@ func ParseManifest(file string, data []byte) (Manifest, Diagnostics) {
 func ParseLock(file string, data []byte) (Lock, Diagnostics) {
 	var ds Diagnostics
 	lock := Lock{Libraries: map[string]Locked{}}
-	top, err := mapping(data)
+	top, err := Mapping(data)
 	if err != nil {
 		ds.Add("lock.syntax", file, 0, "%v; run markitect lock", err)
 		return lock, ds
@@ -162,8 +162,8 @@ func LibraryDigest(files []File) string {
 	return "sha256:" + hex.EncodeToString(h.Sum(nil))
 }
 
-// mapping decodes a YAML document whose top level is a mapping.
-func mapping(data []byte) (map[string]*yaml.Node, error) {
+// Mapping decodes a YAML document whose top level is a mapping.
+func Mapping(data []byte) (map[string]*yaml.Node, error) {
 	var doc yaml.Node
 	if err := yaml.Unmarshal(data, &doc); err != nil {
 		return nil, fmt.Errorf("not valid YAML: %v", err)
@@ -184,7 +184,3 @@ func mapping(data []byte) (map[string]*yaml.Node, error) {
 	}
 	return out, nil
 }
-
-// Mapping decodes a YAML document whose top level is a mapping, for the other
-// control files.
-func Mapping(data []byte) (map[string]*yaml.Node, error) { return mapping(data) }

@@ -1,6 +1,7 @@
 package realization
 
 import (
+	"regexp"
 	"sort"
 	"strings"
 
@@ -167,11 +168,11 @@ func (a *accountant) parsePage(src PageFile) {
 		}
 		for _, item := range node.Content {
 			if item.Kind != yaml.ScalarNode {
-				a.diags.Add("registry.pattern", src.File, item.Line, "each path pattern is a string such as src/members/**")
+				a.diags.Add("registry.pattern", src.File, item.Line+doc.FrontLine, "each path pattern is a string such as src/members/**")
 				continue
 			}
 			if err := ValidatePattern(item.Value); err != nil {
-				a.diags.Add("registry.pattern", src.File, item.Line, "%v", err)
+				a.diags.Add("registry.pattern", src.File, item.Line+doc.FrontLine, "%v", err)
 				continue
 			}
 			page.Patterns = append(page.Patterns, Pattern{Text: item.Value, Line: item.Line + doc.FrontLine})
@@ -186,9 +187,14 @@ func (a *accountant) parsePage(src PageFile) {
 			a.diags.Add("registry.table", src.File, line, "a registry row has three cells: File, Realizes, Why")
 			return
 		}
-		file := strings.Trim(doc.InlineText(cells[0]), "` ")
+		file := strings.Trim(doc.RawText(cells[0]), "` ")
 		if !ValidFile(file) {
 			a.diags.Add("registry.table", src.File, line, "%q is not a repository-relative file path", file)
+			return
+		}
+		if unescapedBar.MatchString(sourceLine(doc, line)) {
+			// The table split the link at its label bar, and a cell was lost.
+			a.diags.Add("registry.table", src.File, line, `a link label inside a table needs its bar escaped as \|, as in [[members/member\|member]]`)
 			return
 		}
 		entry := &Entry{File: file, Package: src.Package, PageFile: src.File, Line: line, Reason: doc.InlineText(cells[2])}
@@ -211,7 +217,7 @@ func (a *accountant) resolve(src PageFile, raw model.RawLink, entry *Entry) (str
 		return target, true
 	case ok || a.in.Model.Packages[target] != nil:
 		a.diags.Add("registry.link", src.File, raw.Line, "[[%s]] is not a Definition of the model; a registry entry links the Definitions its file realizes", raw.Target)
-	case !validLinkPath(target):
+	case !model.ValidPath(target):
 		a.diags.Add("registry.link", src.File, raw.Line, "[[%s]] is not a model path such as members/member", raw.Target)
 	case a.reg.Pages[src.Package].Orphaned:
 		// The whole page is stale; its links need no item of their own.
@@ -219,15 +225,6 @@ func (a *accountant) resolve(src PageFile, raw model.RawLink, entry *Entry) (str
 		a.reg.Stale = append(a.reg.Stale, Stale{Code: "stale.definition", Package: src.Package, PageFile: src.File, Line: raw.Line, File: entry.File, Target: target})
 	}
 	return "", false
-}
-
-func validLinkPath(p string) bool {
-	for _, s := range strings.Split(p, "/") {
-		if !model.ValidSegment(s) {
-			return false
-		}
-	}
-	return true
 }
 
 func (a *accountant) parseIgnore(f model.File) []Pattern {
@@ -241,7 +238,7 @@ func (a *accountant) parseIgnore(f model.File) []Pattern {
 	}
 	var patterns []Pattern
 	forTables(doc, "path", func(cells []ast.Node, line int) {
-		text := strings.Trim(doc.InlineText(cells[0]), "` ")
+		text := strings.Trim(doc.RawText(cells[0]), "` ")
 		if len(cells) != 2 || strings.TrimSpace(doc.InlineText(cells[1])) == "" {
 			a.diags.Add("ignore.syntax", f.Path, line, "an ignore row has two cells: Path and Why, with a reason")
 			return
@@ -364,7 +361,7 @@ func (a *accountant) checkEntries(visible map[string]bool) {
 			case !visible[e.File] && a.in.GitIgnored != nil && a.in.GitIgnored(e.File):
 				a.diags.Add("registry.git_ignored", e.PageFile, e.Line, "%s is ignored by Git, so agents never see it; remove the entry or stop ignoring the file", e.File)
 			case !visible[e.File]:
-				a.reg.Stale = append(a.reg.Stale, Stale{Code: "stale.file", Package: e.Package, PageFile: e.PageFile, Line: e.Line, File: e.File})
+				a.reg.Stale = append(a.reg.Stale, Stale{Code: "stale.file", Package: livePackage(page), PageFile: e.PageFile, Line: e.Line, File: e.File})
 			case a.reg.Ignored[e.File]:
 				a.diags.Add("registry.ignored_file", e.PageFile, e.Line, "%s is also on the ignore page; a file is either registered or ignored", e.File)
 			case page.Orphaned:
@@ -396,4 +393,25 @@ func (a *accountant) sortedAllPages() []string {
 	}
 	sort.Strings(out)
 	return out
+}
+
+// unescapedBar finds a [[target|label]] link whose bar is not escaped.
+var unescapedBar = regexp.MustCompile(`\[\[[^\]|]*[^\]|\\]\|`)
+
+// sourceLine returns one line of a page's body by its file line number.
+func sourceLine(doc model.Page, line int) string {
+	lines := strings.Split(string(doc.Body), "\n")
+	if i := line - doc.BodyLine; i >= 0 && i < len(lines) {
+		return lines[i]
+	}
+	return ""
+}
+
+// livePackage is the Manager that cleans up a page's stale entries: its own
+// Package, or Root when that Package no longer exists.
+func livePackage(page *Page) string {
+	if page.Orphaned {
+		return model.RootPackage
+	}
+	return page.Package
 }

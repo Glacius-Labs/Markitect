@@ -270,18 +270,30 @@ func TestImpactFull(t *testing.T) {
 }
 
 func TestImpactLibraryUpgrade(t *testing.T) {
+	// A new binary whose std differs from what the base commit locked: both
+	// states read std from this binary, so only the lock shows the change.
 	base := library(t)
-	cur := base.clone()
-	bp, cp := loadRepo(t, base), loadRepo(t, cur)
-	// Simulate a changed std Kind between two binaries.
-	changedRule := *bp.Model.Definitions["std/Rule"]
-	changedRule.Data = append([]byte("old "), changedRule.Data...)
-	bp.Model.Definitions["std/Rule"] = &changedRule
-	im := ComputeImpact(ImpactInput{Base: bp, Current: cp})
+	base[project.LockFile] = strings.Replace(base[project.LockFile], "digest: sha256:", "digest: sha256:0", 1)
+	bp, err := project.Load(base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	im := ComputeImpact(ImpactInput{Base: bp, Current: loadRepo(t, library(t))})
+	if len(im.Definitions) != 5 || im.Definitions[0] != (Change{Path: "std/Concept", Change: Modified}) {
+		t.Fatalf("changed = %+v", im.Definitions)
+	}
 	root, _ := checklist(im, "")
-	if ids(root.Own) != "loan-limit" || !strings.Contains(root.Own[0].Reasons[0], "is of Kind [[std/Rule]]") {
+	if ids(root.Own) != "loan-limit,project" || !strings.Contains(root.Own[0].Reasons[0], "is of Kind [[std/Rule]]") {
 		t.Fatalf("root = %+v", root)
 	}
+	if got := strings.Join(packages(im), ","); got != ",catalog,members,members/loans" {
+		t.Fatalf("working = %q", got)
+	}
+}
+
+func TestFindingsEmptyHeadingIsAnErrorNotACrash(t *testing.T) {
+	_, ds := ParseFindings("f.md", []byte("# Findings\n\n##\n\nObserved: x\n"))
+	expectWarning(t, ds, "findings.syntax", "exactly one link")
 }
 
 func packages(im Impact) []string { return im.Packages }

@@ -7,7 +7,7 @@ description: Use when asked to adopt Markitect in an existing repository, to "ex
 
 Extract reads a repository and writes the model a good maintainer would document: what the project is, which areas it has, what callers rely on. It also writes the realization record, so every file has one owner. You change only `.markitect/`; the code stays as it is. Read the `markitect-modeling` skill first (form, placement, error codes) and write every Definition as it says.
 
-The owner accepts the result. You hand over a diff and the open questions; you decide nothing that the code and its documentation leave open.
+An extraction is a conversation with the owner, who accepts every model change. Where the code and its documentation leave something open, ask the owner before you write it; you decide nothing they leave open.
 
 ## Steps
 
@@ -18,7 +18,7 @@ The owner accepts the result. You hand over a diff and the open questions; you d
 [ ] 4 Definitions written
 [ ] 5 Registry pages and ignore page written
 [ ] 6 markitect check passes; markitect lint read
-[ ] 7 Diff and open questions handed to the owner
+[ ] 7 Diff handed to the owner
 ```
 
 ### 1. Set up
@@ -35,9 +35,9 @@ Read the README and documentation, the entry points, the folder structure and wh
 
 **Free part:** what a caller can observe but cannot reasonably depend on stays out: message wording and detail, generated identifier formats, which failure is reported when several apply, field order, and all internal structure, names, wiring, data structures and step order, unless the artifacts fix them as intended. Do not write loops, maps or algorithms.
 
-**Do not invent intent.** Where code and documentation disagree, where the code looks accidental or wrong, or where a rule seems to hold only by habit, do not choose: write the part that is clear and record an open question. Do not model a bug as intended.
+**Do not invent intent.** Where code and documentation disagree, where the code looks accidental or wrong, or where a rule seems to hold only by habit, do not choose: ask the owner which one the model should state, and write it after the answer. Record an open question only when the owner chooses to leave the point open. Do not model a bug as intended.
 
-**Packages follow the code's real areas:** a folder or module with one responsibility, a clear boundary and its own tests, usually one level under the root. Prefer few. Do not split what always changes together; do not make a Package for a single file. The project itself is Root: the anchor, the layout and build conventions as Rules, the architecture, shared Kinds, and the files that serve everything (README, CI, build files). Let the Package dependencies follow the real imports, but the model has no cycles: if the code has one, model the direction the documentation intends and raise the cycle as a question. If the code allows two reasonable cuts, ask the owner before you write.
+**Packages follow the code's real areas:** a folder or module with one responsibility, a clear boundary and its own tests, usually one level under the root. Prefer few. Do not split what always changes together; do not make a Package for a single file. The project itself is Root: the anchor, the layout and build conventions as Rules, the architecture, shared Kinds, and the files that serve everything (README, CI, build files). Let the Package dependencies follow the real imports, but the model has no cycles: if the code has one, ask the owner which direction the model should state before you write it. If the code allows two reasonable cuts, ask the owner before you write.
 
 ### 4. Write the Definitions
 
@@ -69,8 +69,8 @@ Leave the work on its branch as a diff; commit only if the owner asked. Report b
 
 - the Packages you chose and why, and the alternatives you rejected;
 - what the model states, and what you left free on purpose;
-- where code and documentation disagree, or the code looks wrong, as a numbered list of open questions, each with the evidence;
+- the points where code and documentation disagreed, each with the owner's answer, and any point the owner chose to leave open, with the evidence;
 - the proposed checks, the ignored files and why, and the lint warnings that remain with one line each;
 - the final `markitect check` line.
 
-The owner reads the diff, answers the questions, and merges it or sends it back. Corrections to the model go through the `markitect-modeling` skill.
+The owner reads the diff and merges it or sends it back. Corrections to the model go through the `markitect-modeling` skill.

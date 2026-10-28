@@ -109,7 +109,7 @@ func (c *compiler) loadModel(src Source) {
 			c.diags.Add("model.file", file, 0, "the model folder holds only Definitions (.md files) and Package folders")
 			continue
 		}
-		if !validPath(id) {
+		if !ValidPath(id) {
 			c.diags.Add("model.name", file, 0, "%q is not a valid Definition path: every folder and file name starts with a letter or digit and uses only letters, digits, - and _", f.Path)
 			continue
 		}
@@ -126,7 +126,12 @@ func (c *compiler) loadModel(src Source) {
 		}
 		note(parent, segments[len(segments)-1], "file")
 		if _, taken := c.m.Definitions[id]; taken {
-			continue // Core's Kind or a Library Kind; reported as reserved below
+			what := "a Library Kind"
+			if id == CoreKind {
+				what = "Core's Kind"
+			}
+			c.diags.Add("model.reserved", file, 0, "%s is already the ID of %s; choose another name", id, what)
+			continue
 		}
 		d := c.parseDefinition(id, file, f.Data)
 		if d == nil {
@@ -169,13 +174,18 @@ func (c *compiler) reserved(dir, name string) {
 func (c *compiler) parseDefinition(id, file string, data []byte) *Definition {
 	page, err := ParsePage(data)
 	if err != nil {
+		// Keep the Definition, so that links to it still resolve and one
+		// broken file reports one error.
 		c.diags.Add("definition.front_matter", file, page.FrontLine, "%v", err)
-		return nil
+		d := &Definition{ID: id, File: file, Data: data}
+		c.m.Definitions[id] = d
+		c.rawKind[id] = rawKind{}
+		return d
 	}
 	d := &Definition{ID: id, File: file, Data: data, Words: Words(page.Body)}
 	kind := rawKind{line: max(page.FrontLine, 1)}
 	if page.FrontLine == 0 {
-		c.diags.Add("definition.front_matter", file, 1, "a Definition starts with front matter that names its kind:\n---\nkind: std/Feature\n---")
+		c.diags.Add("definition.front_matter", file, 1, "a Definition starts with front matter that names its kind, such as kind: std/Feature between two lines ---")
 	}
 	for key, node := range page.Front {
 		switch key {
@@ -184,7 +194,7 @@ func (c *compiler) parseDefinition(id, file string, data []byte) *Definition {
 				c.diags.Add("definition.front_matter", file, node.Line, "kind must be a path such as std/Feature")
 				continue
 			}
-			kind = rawKind{value: strings.TrimSpace(node.Value), line: node.Line}
+			kind = rawKind{value: strings.TrimSuffix(strings.TrimSpace(node.Value), ".md"), line: node.Line}
 		case "internal":
 			if node.Kind != yaml.ScalarNode || node.Tag != "!!bool" {
 				c.diags.Add("definition.front_matter", file, node.Line, "internal must be true or false")
@@ -252,7 +262,7 @@ func (c *compiler) resolveLink(d *Definition, raw string, line int, kind bool) L
 		what, code = "kind", "kind.unresolved"
 	}
 	target := strings.TrimSuffix(raw, ".md")
-	if !validPath(target) {
+	if !ValidPath(target) {
 		c.diags.Add("link.syntax", d.File, line, "%s %q is not a path such as members/member or std/Rule: no leading or trailing /, no .., only letters, digits, - and _ in each name", what, raw)
 		return link
 	}

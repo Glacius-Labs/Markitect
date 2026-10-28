@@ -171,8 +171,8 @@ var segment = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_-]*$`)
 // ValidSegment reports whether s may name a Package, a Definition or a Library.
 func ValidSegment(s string) bool { return segment.MatchString(s) }
 
-// validPath reports whether every segment of a slash-separated path is valid.
-func validPath(p string) bool {
+// ValidPath reports whether every segment of a slash-separated path is valid.
+func ValidPath(p string) bool {
 	if p == "" {
 		return false
 	}

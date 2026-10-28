@@ -327,6 +327,6 @@ func (c CLI) impact(ctx context.Context, args []string) (int, error) {
 			analysis.Impact
 		}{b.ID(), im})
 	}
-	fmt.Fprint(c.Stdout, renderImpact(b.ID(), im, p.Model))
+	fmt.Fprint(c.Stdout, renderImpact(b.ID(), im))
 	return OK, nil
 }

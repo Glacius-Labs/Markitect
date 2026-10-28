@@ -46,6 +46,7 @@ type Repository interface {
 type Project struct {
 	Files     []string // every visible repository file
 	Manifest  model.Manifest
+	Lock      model.Lock // empty when the lock is missing or unreadable
 	Libraries []model.LibrarySource
 	Model     *model.Model
 	Registry  *realization.Registry
@@ -75,8 +76,7 @@ func Load(repo Repository) (*Project, error) {
 	present := map[string]bool{}
 	var modelFiles []model.File
 	var pages []realization.PageFile
-	local := map[string][]model.File{}
-	var others []string
+	var libraryFiles, others []string
 	for _, f := range files {
 		present[f] = true
 		rel, own := strings.CutPrefix(f, Dir+"/")
@@ -104,15 +104,16 @@ func Load(repo Repository) (*Project, error) {
 				modelFiles = append(modelFiles, model.File{Path: rest, Data: data})
 			}
 		case first == "libraries" && strings.Contains(rest, "/"):
-			name, file, _ := strings.Cut(rest, "/")
-			if data, ok := read(f); ok {
-				local[name] = append(local[name], model.File{Path: file, Data: data})
-			}
+			libraryFiles = append(libraryFiles, f)
 		case first == "results", first == "tool", first == "bootstrap":
 			// Run Results and the installed tool; accounted for here.
 		default:
 			ds.Add("project.file", f, 0, "%s holds only the manifest, lock, execution.yaml, ignore.md, the registry, the model, Libraries, results and the installed tool", Dir)
 		}
+	}
+	local, err := LocalLibraries(repo, libraryFiles)
+	if err != nil {
+		return nil, err
 	}
 	p.loadManifest(read, present, local, &ds)
 	if !present[ChecksFile] {
@@ -176,6 +177,7 @@ func (p *Project) loadManifest(read func(string) ([]byte, bool), present map[str
 		lock, errs := model.ParseLock(LockFile, data)
 		*ds = append(*ds, errs...)
 		if len(errs) == 0 {
+			p.Lock = lock
 			*ds = append(*ds, model.VerifyLock(LockFile, lock, p.Libraries)...)
 		}
 	}

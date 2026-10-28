@@ -29,6 +29,7 @@ var markdown = goldmark.New(goldmark.WithExtensions(extension.Table))
 // CommonMark with GitHub tables. A front matter block opens with a line
 // "---" at the very start of the file and closes with the next line "---".
 func ParsePage(data []byte) (Page, error) {
+	data = bytes.TrimPrefix(data, []byte("\xef\xbb\xbf")) // an editor's byte-order mark
 	page := Page{Front: map[string]*yaml.Node{}, Body: data, BodyLine: 1}
 	if !bytes.HasPrefix(data, []byte("---\n")) && !bytes.HasPrefix(data, []byte("---\r\n")) {
 		page.Root = markdown.Parser().Parse(text.NewReader(page.Body))
@@ -106,12 +107,26 @@ func (p Page) Title() (string, int, error) {
 	if !ok || heading.Level != 1 {
 		return "", p.BodyLine, fmt.Errorf("the body must start with a level-1 heading, the title")
 	}
+	line := p.NodeLine(heading, p.BodyLine)
 	for n := first.NextSibling(); n != nil; n = n.NextSibling() {
 		if h, ok := n.(*ast.Heading); ok && h.Level == 1 {
-			return "", p.Line(n.Lines().At(0).Start), fmt.Errorf("only one level-1 heading is allowed; the title is the first")
+			return "", p.NodeLine(h, line), fmt.Errorf("only one level-1 heading is allowed; the title is the first")
 		}
 	}
-	return strings.TrimSpace(string(heading.Lines().Value(p.Body))), p.Line(heading.Lines().At(0).Start), nil
+	title := strings.TrimSpace(string(heading.Lines().Value(p.Body)))
+	if title == "" {
+		return "", line, fmt.Errorf("the title heading is empty")
+	}
+	return title, line, nil
+}
+
+// NodeLine returns the file line where a block node's text starts, or
+// fallback when the node has no text, such as an empty heading.
+func (p Page) NodeLine(n ast.Node, fallback int) int {
+	if n.Lines().Len() == 0 {
+		return fallback
+	}
+	return p.Line(n.Lines().At(0).Start)
 }
 
 // RawLink is a [[target]] link as written, before resolution.
@@ -120,19 +135,18 @@ type RawLink struct {
 	Line   int
 }
 
-var wikiLink = regexp.MustCompile(`\[\[([^\[\]\n\x00]+?)\]\]`)
+// wikiLink matches [[target]], [[target#section]] and [[target|label]]. The
+// target stops at code, a line break, # or |; the label and section may hold
+// anything up to the closing brackets, also code and line breaks.
+var wikiLink = regexp.MustCompile(`\[\[([^\[\]|#\n\x00]+)(?:[#|][^\[\]]*?)?\]\]`)
 
 // Links returns every [[...]] link of the body outside code, in order.
 func (p Page) Links() []RawLink {
-	return p.linksIn(p.Root)
+	return p.LinksIn(p.Root)
 }
 
 // LinksIn returns the links of one node of the page's body.
-func (p Page) LinksIn(n ast.Node) []RawLink {
-	return p.linksIn(n)
-}
-
-func (p Page) linksIn(root ast.Node) []RawLink {
+func (p Page) LinksIn(root ast.Node) []RawLink {
 	var links []RawLink
 	_ = ast.Walk(root, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
 		if !entering || n.Type() != ast.TypeBlock {
@@ -145,18 +159,33 @@ func (p Page) linksIn(root ast.Node) []RawLink {
 		var offsets []int
 		inlineText(n, p.Body, &buf, &offsets)
 		for _, m := range wikiLink.FindAllSubmatchIndex(buf, -1) {
-			target := string(buf[m[2]:m[3]])
-			if i := strings.IndexByte(target, '|'); i >= 0 {
-				target = strings.TrimSuffix(target[:i], `\`)
-			}
-			if i := strings.IndexByte(target, '#'); i >= 0 {
-				target = target[:i]
-			}
+			// A label bar escaped as \| in a table leaves the backslash here.
+			target := strings.TrimSuffix(string(buf[m[2]:m[3]]), `\`)
 			links = append(links, RawLink{Target: strings.TrimSpace(target), Line: p.Line(offsets[m[0]])})
 		}
 		return ast.WalkSkipChildren, nil
 	})
 	return links
+}
+
+// RawText returns the source text of a node's inline content as written,
+// from its first text to its last, so that a path such as pkg/__init__.py is
+// not read as emphasis.
+func (p Page) RawText(n ast.Node) string {
+	start, stop := -1, -1
+	_ = ast.Walk(n, func(c ast.Node, entering bool) (ast.WalkStatus, error) {
+		if t, ok := c.(*ast.Text); ok && entering {
+			if start < 0 || t.Segment.Start < start {
+				start = t.Segment.Start
+			}
+			stop = max(stop, t.Segment.Stop)
+		}
+		return ast.WalkContinue, nil
+	})
+	if start < 0 {
+		return ""
+	}
+	return strings.TrimSpace(string(p.Body[start:stop]))
 }
 
 // InlineText returns the plain text of a node's inline content; code spans

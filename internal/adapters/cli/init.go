@@ -82,7 +82,8 @@ func (c CLI) init(ctx context.Context, args []string) (int, error) {
 }
 
 // installSkills writes every skill file into each skill folder and removes
-// files of the same skills that the binary no longer ships.
+// every other file of a markitect-* skill: files and skills the binary no
+// longer ships.
 func installSkills(ws Workspace) ([]string, error) {
 	want := map[string][]byte{}
 	for _, f := range skills.Files() {
@@ -91,16 +92,14 @@ func installSkills(ws Workspace) ([]string, error) {
 		}
 	}
 	for _, dir := range SkillDirs {
-		for _, name := range skills.Names() {
-			existing, err := ws.List(dir + "/" + name)
-			if err != nil {
-				return nil, err
-			}
-			for _, f := range existing {
-				if _, keep := want[f]; !keep {
-					if err := ws.Remove(f); err != nil {
-						return nil, err
-					}
+		existing, err := ws.List(dir)
+		if err != nil {
+			return nil, err
+		}
+		for _, f := range existing {
+			if _, keep := want[f]; !keep && strings.HasPrefix(strings.TrimPrefix(f, dir+"/"), "markitect-") {
+				if err := ws.Remove(f); err != nil {
+					return nil, err
 				}
 			}
 		}
@@ -180,7 +179,8 @@ func (c CLI) writeLock(ws Workspace) (int, error) {
 		return Misused, fmt.Errorf("read the manifest: %w; run markitect init", err)
 	}
 	manifest, ds := model.ParseManifest(project.ManifestFile, data)
-	files, err := ws.List(project.LibraryDir)
+	// The same files Git sees, as check reads them.
+	files, err := ws.Files()
 	if err != nil {
 		return Misused, err
 	}

@@ -13,19 +13,19 @@ Read [reference.md](reference.md) for the form, the Kinds and the error codes, a
 
 The owner accepts every model change. You propose; the owner reads the Markdown diff and merges it. A Run never changes the model.
 
-- Write only what the owner or the requirements state. Do not invent a policy, a limit, an error case or a default. If something is open, ask, or leave it out and list it as an open question.
+- Write only what the owner or the requirements state. Do not invent a policy, a limit, an error case or a default. If something is open, ask the owner before you write that part, and write it only after the answer.
 - The cut into Packages and the directions of dependencies are the owner's decision. If they are not decided, propose them (a table: Package, what it holds, what it may depend on) and stop for the answer before you write.
 - Two requirements that contradict each other, or one you cannot model without guessing, go back to the owner as a question.
 
 ## Workflow
 
 ```text
-[ ] 1 Read the requirements or the discussion; list the open points
+[ ] 1 Read the requirements or the discussion; ask the owner about every open point
 [ ] 2 Packages and dependency directions agreed with the owner
 [ ] 3 Each statement mapped to a planned Definition (none left over, none invented)
 [ ] 4 Definitions written; markitect check passes
 [ ] 5 markitect lint, refs, graph, impact read; warnings fixed or justified
-[ ] 6 Diff and open questions handed to the owner
+[ ] 6 Diff handed to the owner
 ```
 
 Use the tools while you work, not only at the end:
@@ -95,7 +95,7 @@ Every other code is listed in `reference.md`. A cycle or unresolved link usually
 | Thought | Instead |
 |---|---|
 | "I'll choose the Packages myself." | Propose them and stop for the owner. |
-| "The requirements don't say, I'll assume the usual." | Leave it out and list it as an open question. |
+| "The requirements don't say, I'll assume the usual." | Stop and ask the owner before writing it. |
 | "I'll describe how it works inside." | Leave algorithms and data structures to the agents. |
 | "This rule needs a few exceptions." | Split it into several Rules. |
 | "Package A just needs one link to B's Definition." | Check `graph`: does it close a cycle, or add a ninth dependency? |
@@ -104,4 +104,4 @@ Every other code is listed in `reference.md`. A cycle or unresolved link usually
 
 ## Done
 
-Report to the owner: the diff; the output of `check` (ok line) and of `lint` (warnings fixed or justified); the result of `impact`, so the owner sees what the change makes the agents do; and the open questions. Deleting or renaming a Definition leaves registry entries that name it. That is stale realization, not an error: `check` passes, `lint` warns, and the next Run cleans it up. Say so in the report; do not edit the registry pages in a model change (each Package's Manager maintains its page; only an extraction writes them).
+Report to the owner: the diff; the output of `check` (ok line) and of `lint` (warnings fixed or justified); the result of `impact`, so the owner sees what the change makes the agents do; and any point the owner chose to leave open. Deleting or renaming a Definition leaves registry entries that name it. That is stale realization, not an error: `check` passes, `lint` warns, and the next Run cleans it up. Say so in the report; do not edit the registry pages in a model change (each Package's Manager maintains its page; only an extraction writes them).

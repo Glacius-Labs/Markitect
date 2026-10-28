@@ -95,7 +95,7 @@ type ImpactInput struct {
 func ComputeImpact(in ImpactInput) Impact {
 	cur := in.Current.Model
 	im := Impact{Full: in.Full, Files: in.Changed}
-	im.Definitions = changedDefinitions(in.Base.Model, cur)
+	im.Definitions = changedDefinitions(in.Base, in.Current)
 
 	reasons := map[string][]string{}
 	reach := func(id, why string) {
@@ -245,25 +245,33 @@ func reachedFiles(in ImpactInput, reasons map[string][]string) []ReachedFile {
 	return out
 }
 
-// changedDefinitions compares the Definitions of two models, the project's
-// and the Libraries'.
-func changedDefinitions(base, cur *model.Model) []Change {
+// changedDefinitions compares the Definitions of two states, the project's
+// and the Libraries'. The base state reads the standard Libraries from this
+// binary, so a Library also counts as changed when its content differs from
+// the digest the base commit's lock pinned: then all its Kinds changed.
+func changedDefinitions(base, cur *project.Project) []Change {
+	changedLibrary := map[string]bool{}
+	for _, lib := range cur.Libraries {
+		if locked, ok := base.Lock.Libraries[lib.Name]; ok && locked.Digest != model.LibraryDigest(lib.Files) {
+			changedLibrary[lib.Name] = true
+		}
+	}
 	var out []Change
-	for _, id := range sortedIDs(cur) {
-		d := cur.Definitions[id]
+	for _, id := range sortedIDs(cur.Model) {
+		d := cur.Model.Definitions[id]
 		if d.Library == "core" {
 			continue
 		}
-		old := base.Definitions[id]
+		old := base.Model.Definitions[id]
 		switch {
 		case old == nil:
 			out = append(out, Change{Path: id, Change: Added})
-		case !bytes.Equal(old.Data, d.Data):
+		case !bytes.Equal(old.Data, d.Data) || changedLibrary[d.Library]:
 			out = append(out, Change{Path: id, Change: Modified})
 		}
 	}
-	for _, id := range sortedIDs(base) {
-		if base.Definitions[id].Library != "core" && cur.Definitions[id] == nil {
+	for _, id := range sortedIDs(base.Model) {
+		if base.Model.Definitions[id].Library != "core" && cur.Model.Definitions[id] == nil {
 			out = append(out, Change{Path: id, Change: Removed})
 		}
 	}

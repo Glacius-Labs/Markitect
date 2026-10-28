@@ -89,7 +89,7 @@ func renderLint(warnings model.Diagnostics, g analysis.Graph) string {
 	return b.String()
 }
 
-func renderImpact(base string, im analysis.Impact, m *model.Model) string {
+func renderImpact(base string, im analysis.Impact) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "# Impact since %s\n\n", short(base))
 	if im.Full {

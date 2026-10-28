@@ -47,7 +47,7 @@ func ParseFindings(file string, data []byte) ([]Finding, model.Diagnostics) {
 			if h.Level == 1 {
 				continue
 			}
-			line := page.Line(h.Lines().At(0).Start)
+			line := page.NodeLine(h, page.BodyLine)
 			links := page.LinksIn(h)
 			if len(links) != 1 {
 				ds.Add("findings.syntax", file, line, "a Finding's heading holds exactly one link, the Definition it names, such as ## [[members/member]]")
