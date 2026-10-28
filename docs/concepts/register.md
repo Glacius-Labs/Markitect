@@ -95,6 +95,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-078](#dec-078-agents-collaborate-through-a-git-remote-without-owner-review) | Decision | Agents collaborate through a Git remote, without owner review | Accepted direction; design open, tracked in the delivery plan |
 | [DEC-079](#dec-079-the-model-is-as-explicit-as-good-documentation) | Decision | The model is as explicit as good documentation | Accepted |
 | [DEC-080](#dec-080-the-model-is-typed-documentation) | Decision | The model is typed documentation | Accepted design; not built |
+| [DEC-081](#dec-081-the-organization-knows-broad-at-the-top-and-deep-below) | Decision | The organization knows broad at the top and deep below | Accepted design; not built |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -1035,6 +1036,17 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - The lint no longer checks declared architecture rules; it measures the link graph.
   - The modeling skill and guide are rewritten for the new form.
   - Existing models are converted. Frozen study material stays at its recorded commits.
+
+### DEC-081 The organization knows broad at the top and deep below
+
+- **Status:** Accepted by the owner as the design of the Manager organization and the realization record, 28 October 2026, in the Topics session's design walk-through ([topics page](../workstreams/topics.md#decided)). Not built. It builds on [DEC-080](#dec-080-the-model-is-typed-documentation).
+- **Decision:**
+  - One Package, one Manager, always, also for a Package that only groups others. The lint warns about a Package with no Definitions of its own and only one child.
+  - A Manager knows its own Package's Definitions, everything its parents define, and the public Definitions it links to in other Packages. Of its children it sees a table of contents of their public Definitions (title and first sentence), with the full text on request, for example to review their work.
+  - The registry stays: for every repository file, the Definitions it realizes and why. The owning Manager maintains it, and the compiler checks it, so a file that enters silently, even inside an owned folder, is an error. It becomes Markdown: one page per Package with a table of files, links to the Definitions they realize and a short reason. Ownership moves onto that page: the page says which folders the Package owns, and no two Packages may claim the same folder. The registry stays separate from the model; Apply never changes the model.
+  - `execution.yaml` keeps only the required checks: name, command, directory, timeout and the environment it runs in. The host runs them at the fixed points of a Run, and a submission that fails them is refused ([DEC-055](#dec-055-a-submission-must-pass-its-required-checks)). Modeled scope disappears, since scope is location.
+- **Supersedes, once built:** the ownership and scope declarations of `execution.yaml`, the YAML registry shards, and the context rules of the [Manager context](../design/manager-context.md) design where they differ.
+- **Open:** how Managers collaborate in a Run (delegation, review, integration), which the owner is redesigning together with the Runs.
 
 ## Promises
 

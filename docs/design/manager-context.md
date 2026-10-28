@@ -1,5 +1,7 @@
 # Manager context: child areas, See also and file paths
 
+**Redesign decided, not built:** [DEC-081](../concepts/register.md#dec-081-the-organization-knows-broad-at-the-top-and-deep-below) changes what each Manager receives. This page describes Main today.
+
 Status: accepted by the coordinator on 26 October 2026 for implementation. It answers two of the W1 fitness review's context gaps, which the owner asked to fix ([W1 decisions](../concepts/sources/model-track-w1-decisions-20261026.md), [DEC-074](../concepts/register.md#dec-074-canonical-model-track-parallel-to-v1)). It stays within [DEC-027](../concepts/register.md#dec-027-strict-links-with-an-optional-optimizer) and [DEC-028](../concepts/register.md#dec-028-context-follows-need-to-know-and-starts-simple), and gives a partial answer to [OQ-006](../concepts/register.md#open-questions).
 
 ## Problem
