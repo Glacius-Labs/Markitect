@@ -1,0 +1,1 @@
+{"type":"assistant","uuid":"317ab620-ca2e-408f-89d8-f66649a6f7ad","isSidechain":false,"timestamp":"2026-08-18T15:58:47.567Z","message":{"id":"msg_011CeAVPRYvvJWgCkgxd8QPw","model":"claude-opus-5","role":"assistant","content":[{"type":"text","removed":true}],"usage":{"input_tokens":2,"cache_creation_input_tokens":496,"cache_read_input_tokens":337215,"output_tokens":869}}}

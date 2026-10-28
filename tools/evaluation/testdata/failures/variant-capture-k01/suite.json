@@ -1,0 +1,94 @@
+{
+  "format": 1,
+  "task": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Codex\\Markitect-Evaluation\\library-m1-task",
+    "intentSha256": "35d9364152d2deb45b539f0029bfcb1cc0a320b6d3a4eea692c5d195e52e5156",
+    "start": "1ffcbca58aba8ef60ba1770e76c5acaea26ff7a5",
+    "deadlineSeconds": 2700
+  },
+  "variant": {
+    "argv": [
+      "python3",
+      "-I",
+      "-B",
+      "/variant/claude_code.py",
+      "--effort",
+      "high"
+    ]
+  },
+  "model": "claude:claude-sonnet-5-5",
+  "conditions": "sandbox",
+  "startedUtc": "2026-10-28T17:13:23.971927+00:00",
+  "sandbox": {
+    "image": "sha256:e0b20d8a8c88a0a4b37f151af45618e764f8687b023b10bcb6d3b5148c5e5dad",
+    "user": "1000:1000",
+    "limits": {
+      "cpus": "8",
+      "memoryBytes": 17179869184,
+      "pids": 4096,
+      "tmpBytes": 8589934592
+    },
+    "seriesSha256": "8667891c06c28eecb7130870a4ba54a511f49ec70d38fc9c8852e42a62c0e9d8",
+    "egressAllow": [
+      "api.anthropic.com"
+    ],
+    "variantCode": "C:/Users/Consiliari/Glacius Labs/Markitect/.claude/worktrees/p3-gitrepo-stability-0f67e8/tools/evaluation",
+    "runId": "eval-739fad5582b0",
+    "network": "eval-739fad5582b0-internal",
+    "gatewayAddress": "192.168.80.1",
+    "container": {
+      "exitCode": 0,
+      "oomKilled": false
+    },
+    "egress": {
+      "allowed": {
+        "api.anthropic.com": 3
+      },
+      "refused": {}
+    },
+    "residue": [],
+    "quarantine": []
+  },
+  "exitCode": 0,
+  "timedOut": false,
+  "wallSeconds": 151.7,
+  "endedUtc": "2026-10-28T17:15:58.922919+00:00",
+  "validForCounting": true,
+  "result": {
+    "commit": "923716891d6b9a87e9d16c49071f334de582346d",
+    "tree": "7d886f89a7596dc8b2506556affd0dab3af657ab",
+    "bundleSha256": "96d13ad94fda1179f90dd3e881279fefcf95d23f9e428d6705696c6d7b89cfce",
+    "changedPaths": [
+      "A\trealization/.gitignore",
+      "A\trealization/README.md",
+      "A\trealization/go.mod",
+      "A\trealization/internal/jsonl/jsonl.go",
+      "A\trealization/internal/jsonl/jsonl_test.go"
+    ]
+  },
+  "resultError": null,
+  "delivered": true,
+  "reported": {
+    "provider": "claude",
+    "model": "claude-sonnet-5-5",
+    "status": "completed",
+    "cause": null,
+    "requestedModel": "claude-sonnet-5-5",
+    "exitCode": 0,
+    "timedOut": false,
+    "sessionSeconds": 150.8,
+    "sessionId": "d1f472fe-e0e8-4301-a051-3a19dfce8c3b",
+    "usage": {
+      "inputTokens": 14,
+      "cacheReadTokens": 191531,
+      "cacheCreationTokens": 35980,
+      "outputTokens": 24238,
+      "reasoningTokens": null,
+      "turns": 7,
+      "costUsd": 0.4054811
+    },
+    "sessionResult": "success",
+    "resultCommit": "923716891d6b9a87e9d16c49071f334de582346d"
+  },
+  "modelMatches": true
+}

@@ -1,0 +1,22 @@
+{
+  "provider": "claude",
+  "model": "claude-sonnet-5-5",
+  "status": "completed",
+  "cause": null,
+  "requestedModel": "claude-sonnet-5-5",
+  "exitCode": 0,
+  "timedOut": false,
+  "sessionSeconds": 205.2,
+  "sessionId": "3d19452b-1061-43dd-bbe2-a058293c3a96",
+  "usage": {
+    "inputTokens": 26,
+    "cacheReadTokens": 510250,
+    "cacheCreationTokens": 45323,
+    "outputTokens": 32076,
+    "reasoningTokens": null,
+    "turns": 14,
+    "costUsd": 0.5531290000000001
+  },
+  "sessionResult": "success",
+  "resultCommit": "57ce6ee2f0d437013f5e6c6154f778365e76d012"
+}

@@ -1,0 +1,5 @@
+{
+  "description": "A touched protected input: the result carries its own TASK.md with a changed loan limit.",
+  "write": {"TASK.md": "# Small library requirements\n\nA member may hold at most six open loans.\n"},
+  "expect": {"protected": ["TASK.md"]}
+}

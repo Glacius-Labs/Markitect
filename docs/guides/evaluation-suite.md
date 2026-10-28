@@ -14,8 +14,9 @@ The Build and evaluation session owns the suite and its variants ([build page](.
 
 - **The suite owns:**
   - The task format, the variant interface, the criteria and the report.
-  - The suite runner in [`tools/evaluation`](../../tools/evaluation/README.md) and the baseline variant there.
-  - The assessment, review and analysis in [`tools/comparison`](../../tools/comparison/README.md).
+  - The suite runner in [`tools/evaluation`](../../tools/evaluation/README.md), with its judging, review, failure classifier, token count and report, and the baseline variant there.
+  - The tasks' judges: the Library judge in [`tools/evaluation-judges`](../../tools/evaluation-judges/library-m1/README.md).
+  - The assessment, review prompts, rubric check and analysis in [`tools/comparison`](../../tools/comparison/README.md), which the judges and the review reuse.
   - The task portfolio.
 - **It uses:** the hidden oracles in [`tools/library-oracle`](../../tools/library-oracle/README.md) and [`tools/makerspace-oracle`](../../tools/makerspace-oracle/README.md).
 - **Variants:** each meets the variant interface in its own code; the [workstreams](../workstreams.md#variants) list them.
@@ -68,20 +69,23 @@ A run without `--sandbox` runs the command as a host process. That is for tests 
 
 ## 3. The evaluation
 
-The same for every variant, from frozen tools:
+The same for every variant, from frozen tools. Each task brings its hidden **judge**: a folder with `judge.json`, which names the judge image by digest and its command, and the judge's files (oracle, probes, rubric), kept apart from the task. `suite.py judge` runs it in one container without network, with the result, the start and the task read-only, and the judge answers the first three areas ([how it works](../../tools/evaluation/README.md#judging)). Each judge is tested: it passes a reference result and fails seeded mutants, at least a broken rule, an unrequested change and a failing build.
 
 | Area | How it is measured |
 |---|---|
-| **Correctness** | The hidden oracle and probes, through the program's public interface |
-| **Build and tests** | The result's own build and tests in a fixed container |
+| **Human attention** (primary) | The defects a person would still have to find and repair: failed hidden cases, a failed build or failed tests, unrequested paths, protected inputs touched, confirmed critical code-quality findings and steps with no result. Next to them, for each task, the effort of the input a variant uses, where it is known. These counts stand in for the attention of review, correction and waiting; they do not measure it directly |
+| **Correctness** | The judge's hidden oracle and probes, through the program's public interface: cases passed and failed |
+| **Build and tests** | The result's own build and tests, run by the judge |
 | **Scope** | A census of every changed path against the start: what changed that the task did not ask for. A result that changes `task.md` or `model/` loses here, and is otherwise evaluated with the original files put back |
-| **Code quality** | A blinded review against a fixed rubric. Every critical finding is checked mechanically and confirmed by a second reviewer |
-| **Delivery** | Whether a result came back, step by step along a chain |
-| **Cost** | Wall time, measured by the suite. Tokens are reported as the variant states them, descriptively, and are not compared, because providers count them differently |
+| **Code quality** (secondary) | A blinded review against the task's rubric (`suite.py review`): tree and diff without `.markitect/` and registry files, the code unchanged. Every critical finding is checked mechanically and confirmed by a second reviewer. Each reviewer also guesses the variant, and the report gives how often it guessed right: what the blinding leaves |
+| **Delivery** | Whether a result came back in time, step by step along a chain |
+| **Cost** (descriptive) | Wall time, measured by the suite, and tokens counted by the suite over every transcript of a run, subagents included, with the cost the CLI states. Reported, not optimized |
 
-A timeout or a missing result is never dropped: it counts as a failure in Correctness and Delivery.
+A timeout or a missing result caused by the variant's work counts as a failure in Correctness and Delivery; a technical failure is void and relaunched.
 
-**The report** shows each variant per area, with its uncertainty, and the predeclared comparison per area. There is no single overall score. The answer is which variant performs better in which areas.
+**Technical failures.** One pre-coded classifier, the same for every variant, sorts every launch ([classify.py](../../tools/evaluation/classify.py)). A technical failure is void: it is recorded, relaunched and never counted. It is a failure of the infrastructure (the sandbox, the engine or the suite), of the provider (a session ended on an API error for capacity, a rate or usage limit, a server error or a refused login), or of the variant's own runtime machinery, but only when it matches a signature written into the series protocol before the series and no agent output led to it. Everything else is a result, including a wrong or incomplete result, a timeout and a deliberate stop such as a model blocker. A run under other conditions or on another model is invalid and not counted.
+
+**The report** (`suite.py report`) reads every launch, judgment and review of a series from its ledger and shows each variant per area, human attention first, with the void rate per variant. Today it gives the mean, range and count per area; the predeclared comparison per area and its uncertainty come with the counted series (increment E6). There is no single overall score. The answer is which variant performs better in which areas.
 
 **Counted evaluations.** Each one has its own protocol, approved before the first counted run, like the [Phase A–C protocol](../validation/v1-comparison-protocol-20261024.md):
 - tasks and repetitions;
@@ -92,7 +96,9 @@ A timeout or a missing result is never dropped: it counts as a failure in Correc
 
 ## Limits
 
-- **Isolation.** The sandbox keeps a variant away from the host's files, the web and the engine. The Library and Makerspace oracles are still public, in this repository and on GitHub; a transcript audit checks that no agent quoted them. The new project's oracle stays off the machine during runs ([design](../design/evaluation-suite-v2.md#a-equal-conditions-one-sandbox)). Variants that start their own containers (M, G) need the engine socket in their sandbox; that comes with increment E3 and is not built yet.
+- **Isolation.** The sandbox keeps a variant away from the host's files, the web and the engine. A variant's own code is mounted, so judge sources (references, mutants, oracles) never sit in a folder that is mounted as variant code: the Library judge lives in `tools/evaluation-judges`, apart from `tools/evaluation`. The Library and Makerspace oracles are still public, in this repository and on GitHub; a transcript audit checks that no agent quoted them. The new project's oracle stays off the machine during runs ([design](../design/evaluation-suite-v2.md#a-equal-conditions-one-sandbox)). Variants that start their own containers (M, G) need the engine socket in their sandbox; that comes with increment E3 and is not built yet.
 - **Egress by name.** The gateway allows provider host names, not addresses: a tool that resolves names itself, without `/etc/hosts`, cannot reach the provider. Content sent to an allowed host is not inspected, so the provider endpoint itself remains a way out for anything the sandbox holds, the access-only login included.
-- **Not limited:** disk. `/out` and `/state` are host folders; the safety limit covers CPUs, memory, processes and `/tmp` only.
-- **Reviewer family.** The earlier studies used reviewers of another model family than the writers. With Claude writers, a Codex reviewer restores that; if none is available, the report states the same-family review as a limit.
+- **Not limited:** disk. `/out` and `/state` of a run and `/out` of a judge are host folders; the safety limit covers CPUs, memory, processes and `/tmp` only.
+- **Reviewer family.** The earlier studies used reviewers of another model family than the writers. With Claude writers, a Codex reviewer restores that; if none is available, the report states the same-family review as a limit. The review runs on Claude today.
+- **One judge container.** A judge runs the result's own code (its build, tests and program) in the container that holds the oracle. The result's processes cannot reach the network or the host, and the Library judge stops them before it writes its answer, when the suite's container tells it that it may (`EVALUATION_JUDGE_CONTAINER`). They could still read the oracle while they run, which for the public Library and Makerspace oracles adds nothing.
+- **Tokens by transcript.** The token count reads Claude Code transcripts and stream output. A variant whose sessions leave no transcript in its output has no token count.

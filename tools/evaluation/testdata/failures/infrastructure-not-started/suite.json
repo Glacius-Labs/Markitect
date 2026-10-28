@@ -1,0 +1,58 @@
+{
+  "format": 1,
+  "task": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Codex\\Markitect-Evaluation\\library-m1-task",
+    "intentSha256": "35d9364152d2deb45b539f0029bfcb1cc0a320b6d3a4eea692c5d195e52e5156",
+    "start": "1ffcbca58aba8ef60ba1770e76c5acaea26ff7a5",
+    "deadlineSeconds": 2700
+  },
+  "variant": {
+    "argv": [
+      "python3",
+      "-I",
+      "-B",
+      "C:/Program Files/Git/variant/escape_probe.py"
+    ]
+  },
+  "model": "claude:claude-sonnet-5-5",
+  "conditions": "sandbox",
+  "startedUtc": "2026-10-28T17:11:44.884213+00:00",
+  "sandbox": {
+    "image": "sha256:e0b20d8a8c88a0a4b37f151af45618e764f8687b023b10bcb6d3b5148c5e5dad",
+    "user": "1000:1000",
+    "limits": {
+      "cpus": "8",
+      "memoryBytes": 17179869184,
+      "pids": 4096,
+      "tmpBytes": 8589934592
+    },
+    "seriesSha256": "8667891c06c28eecb7130870a4ba54a511f49ec70d38fc9c8852e42a62c0e9d8",
+    "egressAllow": [
+      "api.anthropic.com"
+    ],
+    "variantCode": "C:/Users/Consiliari/Glacius Labs/Markitect/.claude/worktrees/p3-gitrepo-stability-0f67e8/tools/evaluation",
+    "runId": "eval-3f31110d4e4c",
+    "network": "eval-3f31110d4e4c-internal",
+    "gatewayAddress": "192.168.80.1",
+    "container": {
+      "exitCode": 2,
+      "oomKilled": false
+    },
+    "egress": {
+      "allowed": {},
+      "refused": {}
+    },
+    "residue": [],
+    "quarantine": []
+  },
+  "exitCode": 2,
+  "timedOut": false,
+  "wallSeconds": 0.6,
+  "endedUtc": "2026-10-28T17:11:48.225186+00:00",
+  "validForCounting": true,
+  "result": null,
+  "resultError": "no result.bundle",
+  "delivered": false,
+  "reported": null,
+  "modelMatches": null
+}
