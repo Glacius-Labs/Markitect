@@ -491,6 +491,12 @@ func (a *Agent) serve(ctx context.Context, done <-chan struct{}) {
 			if !ok {
 				return
 			}
+			// A call queued when the turn ended is not served.
+			select {
+			case <-done:
+				return
+			default:
+			}
 			a.record("tool-call", call)
 			reply := a.call(ctx, call)
 			a.record("tool-reply", reply)

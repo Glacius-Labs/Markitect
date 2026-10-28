@@ -23,7 +23,7 @@ A start does, in order:
 5. Loads the project at the Run's base commit from the clone (`git ls-tree` and `git archive` of `.markitect/`, as a commit holds only tracked files) and, for a checker in `apply`, the submission at the tip of the branch: its verdict trailers and its diff from the base. A project with compile errors starts no agent.
 6. Renders the harness and installs the private home through agentd: the access-only login copy and, for Claude Code, the two system prompt files.
 7. Runs the CLI's own login report (`claude auth status`, `codex login status`) and requires the account login.
-8. Runs one provider turn whose message is the harness's task. The turn ends when the provider ends it, at the start's deadline or when `ctx` ends; agentd then stops the process group. A tool call still running is cut off and awaited, so nothing of the turn reaches the host or the remote after `Run` returns. A process still in the container 30 seconds later is an error.
+8. Runs one provider turn whose message is the harness's task. The turn ends when the provider ends it, at the start's deadline or when `ctx` ends; agentd then stops the process group. A tool call still running is cut off and awaited, and a call queued by then is not served, so no host tool call of the turn happens after `Run` returns. A push the cut-off call had already sent may still be accepted by the remote once its hook finishes; the engine reads the remote after the start, so it sees such a push either way. A process still in the container 30 seconds later is an error.
 9. Removes the login from the private home, ends the container and removes both volumes.
 
 The start's deadline bounds every step, the clone and the login check included.
@@ -70,7 +70,7 @@ The tools reach the host over MCP through `markitect-agentd mcp`. Every answer, 
 | `ask`, `escalate`, `answer`, `assign` | as the start allows | `Host.Ask`, `Escalate`, `Answer` (by the message ID from the Inbox) and `Assign` (to a working child). |
 | `note`, `notes` | as the start allows | `Host.Note` records a Shared Note; `Host.Notes` reads them a page at a time. |
 
-The host decides every message; its refusal reaches the agent as it is. The host's own Git in the clone runs no hooks, no file-system monitor and no replace refs, so nothing the agent plants there changes what the Git tools do or report. Reading the model needs no tool: `/work` holds `.markitect/`, and the image carries `markitect` for `check`, `refs`, `graph`, `impact --base base` and `lint`. Merging approved child commits is plain Git in the clone. The guarantees stay in the remote's hooks; the Git tools only give early, exact feedback.
+The host decides every message; its refusal reaches the agent as it is. The host's own Git in the clone runs no hooks, no file-system monitor and no replace refs. Other configuration the agent writes into its clone still applies, for example a clean filter or a URL rewrite; that is the agent's own container and user, and the remote's hooks still decide what is accepted. Reading the model needs no tool: `/work` holds `.markitect/`, and the image carries `markitect` for `check`, `refs`, `graph`, `impact --base base` and `lint`. Merging approved child commits is plain Git in the clone. The guarantees stay in the remote's hooks; the Git tools only give early, exact feedback.
 
 ## Claude Code
 

@@ -97,7 +97,8 @@ func (g *Agents) Run(ctx context.Context, s agentport.Start, host agentport.Host
 		case ctx.Err() != nil:
 			end.Reason = agentport.Cancelled
 		case startCtx.Err() != nil:
-			end.Reason = agentport.DeadlineReached
+			// The deadline, not the step it cut off, ended the start.
+			end.Reason, end.Detail = agentport.DeadlineReached, "the start's deadline passed before the agent's turn: "+strings.TrimPrefix(end.Detail, string(class)+": ")
 		}
 		if errors.Is(err, errCleanup) {
 			end.Cleanup = err.Error()
