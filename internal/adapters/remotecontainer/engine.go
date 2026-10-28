@@ -61,8 +61,8 @@ func (e *Engine) Arch(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if os, err := e.output(ctx, "version", "--format", "{{.Server.Os}}"); err != nil || os != "linux" {
-		return "", errors.Join(err, fmt.Errorf("the container engine runs %q containers; a Run needs Linux", os))
+	if system, err := e.output(ctx, "version", "--format", "{{.Server.Os}}"); err != nil || system != "linux" {
+		return "", errors.Join(err, fmt.Errorf("the container engine runs %q containers; a Run needs Linux", system))
 	}
 	return arch, nil
 }

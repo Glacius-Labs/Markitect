@@ -11,10 +11,16 @@ func isolated() bool { return false }
 
 func prepare(*exec.Cmd, int, bool) {}
 
-func started(*exec.Cmd) {}
-
 func finished(*exec.Cmd) {}
+
+func lockChecks(Layout) (func(), error) { return func() {}, nil }
+
+func protect() error { return nil }
+
+func victim() error { return nil }
 
 func chownTree(string, int) error { return nil }
 
-func sweep(int, bool) error { return nil }
+func harden(Layout) error { return nil }
+
+func sweep(Layout, int, bool) error { return nil }

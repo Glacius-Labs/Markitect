@@ -119,15 +119,26 @@ func (r gitRepo) Changed(a, b string) ([]string, error) {
 	return files, nil
 }
 
+func (r gitRepo) Files(commit string) ([]string, error) {
+	out, err := r.run("ls-tree", "-r", "-z", "--name-only", "--full-tree", commit)
+	if err != nil {
+		return nil, err
+	}
+	var files []string
+	for _, f := range strings.Split(string(out), "\x00") {
+		if f != "" {
+			files = append(files, f)
+		}
+	}
+	return files, nil
+}
+
 // Tips reads the branch's reflog, which Git writes in the same transaction as
 // every update and which no agent can touch.
 func (r gitRepo) Tips(branch string) ([]string, error) {
 	f, err := os.Open(filepath.Join(r.dir, "logs", "refs", "heads", filepath.FromSlash(branch)))
-	if errors.Is(err, os.ErrNotExist) {
-		return nil, nil
-	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("the record of branch %s: %w", branch, err)
 	}
 	defer f.Close()
 	var tips []string

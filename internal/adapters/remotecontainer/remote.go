@@ -39,7 +39,9 @@ type Limits struct {
 
 // Spec is one Run's remote.
 type Spec struct {
-	// Image holds Git, a POSIX shell and whatever the required checks need.
+	// Image is the remote's image when the plan has no required checks; with
+	// checks it is the image they name. It holds Git, a POSIX shell and
+	// coreutils besides what the checks need.
 	Image string
 	// Binary is markitect-remote built for Linux on the engine's architecture.
 	Binary string
@@ -72,6 +74,15 @@ func Start(ctx context.Context, e *Engine, spec Spec, bundle io.Reader) (r *Remo
 	if !runID.MatchString(run) {
 		return nil, fmt.Errorf("run %q: a container name needs lower-case letters, digits, '.', '_' or '-'", run)
 	}
+	image := spec.Plan.Image()
+	switch {
+	case image == "" && spec.Image == "":
+		return nil, errors.New("the plan has no required checks, so the remote needs an image")
+	case image == "":
+		image = spec.Image
+	case spec.Image != "" && spec.Image != image:
+		return nil, fmt.Errorf("the required checks run in %q, not in %q", image, spec.Image)
+	}
 	files, err := payload(spec)
 	if err != nil {
 		return nil, err
@@ -97,7 +108,7 @@ func Start(ctx context.Context, e *Engine, spec Spec, bundle io.Reader) (r *Remo
 	args := []string{"create", "--name", r.Container, "--label", label, "--label", "markitect.role=remote",
 		"--network", r.Network, "--network-alias", Alias,
 		"--user", "0:0", "--init", "--security-opt", "no-new-privileges", "--cap-drop", "ALL"}
-	for _, c := range []string{"CHOWN", "DAC_OVERRIDE", "FOWNER", "KILL", "SETUID", "SETGID"} {
+	for _, c := range []string{"CHOWN", "DAC_OVERRIDE", "FOWNER", "KILL", "SETUID", "SETGID", "SYS_RESOURCE"} {
 		args = append(args, "--cap-add", c)
 	}
 	if spec.Limits.CPUs != "" {
@@ -109,7 +120,7 @@ func Start(ctx context.Context, e *Engine, spec Spec, bundle io.Reader) (r *Remo
 	if spec.Limits.Pids > 0 {
 		args = append(args, "--pids-limit", strconv.Itoa(spec.Limits.Pids))
 	}
-	args = append(args, "--entrypoint", program, spec.Image, "serve", "--root", root)
+	args = append(args, "--entrypoint", program, image, "serve", "--root", root)
 	if err := e.run(ctx, nil, nil, args...); err != nil {
 		return nil, err
 	}
@@ -174,6 +185,23 @@ func (r *Remote) Export(ctx context.Context, w io.Writer) error {
 	return r.engine.run(ctx, nil, w, "exec", r.Container, program, "export", "--root", root)
 }
 
+// Check runs the required checks on a commit the host holds, such as the
+// merge of a moved target branch before landing, isolated as the hook runs
+// them and without changing any branch of the Run. The bundle holds the
+// commit and may be thin against the Run's branches. A failing check is a
+// result; an error means the checks could not run.
+func (r *Remote) Check(ctx context.Context, bundle io.Reader, commit string) ([]runremote.CheckResult, error) {
+	var out bytes.Buffer
+	if err := r.engine.run(ctx, bundle, &out, "exec", "-i", r.Container, program, "check", "--root", root, "--commit", commit); err != nil {
+		return nil, err
+	}
+	var results []runremote.CheckResult
+	if err := json.Unmarshal(out.Bytes(), &results); err != nil {
+		return nil, fmt.Errorf("the remote's check results: %w", err)
+	}
+	return results, nil
+}
+
 // Log returns the remote's decision log, one JSON entry per push.
 func (r *Remote) Log(ctx context.Context) ([]byte, error) {
 	var out bytes.Buffer
@@ -182,15 +210,23 @@ func (r *Remote) Log(ctx context.Context) ([]byte, error) {
 }
 
 // Close removes the remote container with its volumes and the Run's
-// network. The Run's Manager containers must be gone first; Sweep removes
-// everything of a Run at once.
+// network, as far as they still exist. The Run's Manager containers must be
+// gone first; Sweep removes everything of a Run at once.
 func (r *Remote) Close(ctx context.Context) error {
-	err := r.engine.run(ctx, nil, nil, "rm", "--force", "--volumes", r.Container)
-	if nerr := r.engine.run(ctx, nil, nil, "network", "rm", r.Network); nerr != nil {
-		err = errors.Join(err, nerr)
-	}
-	if err != nil {
+	label := "label=" + RunLabel + "=" + r.run
+	if ids, err := r.engine.output(ctx, "ps", "--all", "--quiet", "--filter", label, "--filter", "name=^"+r.Container+"$"); err != nil {
 		return err
+	} else if ids != "" {
+		if err := r.engine.run(ctx, nil, nil, "rm", "--force", "--volumes", ids); err != nil {
+			return err
+		}
+	}
+	if nets, err := r.engine.output(ctx, "network", "ls", "--quiet", "--filter", label, "--filter", "name=^"+r.Network+"$"); err != nil {
+		return err
+	} else if nets != "" {
+		if err := r.engine.run(ctx, nil, nil, "network", "rm", nets); err != nil {
+			return err
+		}
 	}
 	return r.engine.gone(ctx, r.run)
 }

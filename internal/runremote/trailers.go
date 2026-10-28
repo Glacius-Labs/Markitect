@@ -13,11 +13,14 @@ const (
 	KeyCheck   = "Markitect-Check"
 )
 
-// Verdicts a maker gives a checklist item.
+// Verdicts on a checklist item. Deviates is the verify checker's word for an
+// item the realization does not conform to, which becomes a Finding; a maker
+// in apply fixes such an item instead and never writes it.
 const (
 	Conforms     = "conforms"
 	Changed      = "changed"
 	ModelProblem = "model-problem"
+	Deviates     = "deviates"
 )
 
 // Review outcomes and per-item answers of a checker.
@@ -66,7 +69,7 @@ func ParseMessage(message string) (Trailers, error) {
 		start--
 	}
 	for i, l := range lines[:start] {
-		if strings.HasPrefix(l, "Markitect-") {
+		if markitectKey(l) {
 			return Trailers{}, fmt.Errorf("line %d %q: Markitect trailer lines must form the message's last paragraph", i+1, l)
 		}
 	}
@@ -85,16 +88,14 @@ func ParseMessage(message string) (Trailers, error) {
 	}
 	found := false
 	for _, e := range entries {
-		if strings.HasPrefix(e[0], "Markitect-") {
-			found = true
-		}
+		found = found || markitectKey(e[0])
 	}
 	if !found {
 		return Trailers{}, nil
 	}
 	for _, e := range entries {
 		key, value := e[0], e[1]
-		if !strings.HasPrefix(key, "Markitect-") {
+		if !markitectKey(key) {
 			if key == "" || strings.ContainsAny(key, " \t") {
 				return Trailers{}, fmt.Errorf("%q: every line of the trailer paragraph must be \"Key: value\"", key+value)
 			}
@@ -110,7 +111,7 @@ func ParseMessage(message string) (Trailers, error) {
 			}
 			t.Manager = value
 		case KeyVerdict:
-			l, err := parseLine(key, value, Conforms, Changed, ModelProblem)
+			l, err := parseLine(key, value, Conforms, Changed, ModelProblem, Deviates)
 			if err != nil {
 				return Trailers{}, err
 			}
@@ -130,7 +131,7 @@ func ParseMessage(message string) (Trailers, error) {
 			}
 			t.Review = value
 		default:
-			return Trailers{}, fmt.Errorf("%s: unknown Markitect trailer; use %s, %s, %s or %s", key, KeyManager, KeyVerdict, KeyReview, KeyCheck)
+			return Trailers{}, fmt.Errorf("%s: unknown Markitect trailer; use exactly %s, %s, %s or %s", key, KeyManager, KeyVerdict, KeyReview, KeyCheck)
 		}
 	}
 	switch {
@@ -138,16 +139,23 @@ func ParseMessage(message string) (Trailers, error) {
 		return Trailers{}, fmt.Errorf("Markitect trailers need a %s line naming your Manager", KeyManager)
 	case len(t.Verdicts) > 0 && (t.Review != "" || len(t.Checks) > 0):
 		return Trailers{}, fmt.Errorf("a commit holds either %s lines (a submission) or %s and %s lines (a review), not both", KeyVerdict, KeyReview, KeyCheck)
-	case len(t.Verdicts) > 0:
-		t.Kind = Submission
 	case t.Review != "":
 		t.Kind = Review
 	case len(t.Checks) > 0:
 		return Trailers{}, fmt.Errorf("%s lines need a %s line", KeyCheck, KeyReview)
 	default:
-		return Trailers{}, fmt.Errorf("%s alone is no submission or review; add %s lines, or %s and %s lines", KeyManager, KeyVerdict, KeyReview, KeyCheck)
+		// A Manager with an empty checklist, a parent that only integrates,
+		// submits with its Manager line alone.
+		t.Kind = Submission
 	}
 	return t, nil
+}
+
+// markitectKey reports whether a line or key starts with "Markitect-" in any
+// case: Git matches trailer keys without regard to case, so a key in another
+// case must be refused, not read as plain text.
+func markitectKey(s string) bool {
+	return len(s) >= len("Markitect-") && strings.EqualFold(s[:len("Markitect-")], "Markitect-")
 }
 
 func parseLine(key, value string, words ...string) (Line, error) {
