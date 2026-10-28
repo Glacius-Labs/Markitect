@@ -69,7 +69,7 @@ One tool, `markitect`, written in Go, with no Python and no other runtime ([DEC-
 | `impact --base <commit>` | What a model change reaches: Definitions, files, Packages | none |
 | `lint` | Measures the model like code: warnings only | none |
 
-**Compile errors:** a Kind or link that does not resolve; a link to an internal Definition from outside its subtree; a cycle between Packages; a Library version that does not match the lock; a repository file that is neither registered nor ignored; two Packages claiming the same file; a registry entry for a Git-ignored file.
+**Compile errors:** a Kind or link that does not resolve; a link to an internal Definition from outside its subtree; a cycle between Packages; a Library version that does not match the lock; a repository file that is neither registered nor ignored; two Packages claiming the same path pattern; a registry entry for a Git-ignored file.
 
 **Lint warnings:** coupling and instability per Package; dependencies from stable to unstable Packages; size of Definitions and Packages; Definitions nothing links to and no file realizes; the reach of a change; a Package with no Definitions of its own and only one child; later, change hotspots from Git history.
 
@@ -77,7 +77,7 @@ One tool, `markitect`, written in Go, with no Python and no other runtime ([DEC-
 
 Next to the model, outside it ([DEC-081](register.md#dec-081-the-organization-knows-broad-at-the-top-and-deep-below)):
 
-- **Registry:** one Markdown page per Package. It names the path patterns the Package owns (several, for example `src/billing/**`, `tests/billing/**`, `docs/billing*.md`) and lists every file there with links to the Definitions it realizes and a short reason. The owning Manager maintains it; the compiler checks it. A file that enters silently, even inside an owned folder, is an error.
+- **Registry:** one Markdown page per Package. It names the path patterns the Package owns (several, for example `src/billing/**`, `tests/billing/**`, `docs/billing*.md`) and lists every file there with links to the Definitions it realizes and a short reason. The owning Manager maintains it; the compiler checks it. The most specific pattern wins, as in `CODEOWNERS`; Root owns every file no other Package claims, so every file has exactly one owner. Owning is not accounting: every file must still be listed on its owner's page or be ignored, so a file that enters silently, even inside an owned folder, is an error.
 - **Shared files** such as the README, a CI pipeline or a compose file are owned by the lowest common parent of the Packages they serve, often Root, and their entry links every Definition they realize. A child that needs a change there asks its parent ([DEC-060](register.md#dec-060-owners-realize-others-use-parents-settle-cross-area-matters)).
 - **Ignore list:** files that deliberately belong to no Package.
 - **`execution.yaml`** holds only the required checks: name, command, directory, timeout and environment. They are the one proof in a Run that does not come from an agent.
@@ -189,7 +189,7 @@ No app for now ([DEC-085](register.md#dec-085-markdown-tools-are-the-cockpit-for
 **Questions for the owner before building** (raised by the independent review of this draft):
 
 1. **Root and the project Package: decided** 28 October: the project Package is Root itself.
-2. **Overlapping path patterns.** May Root own `src/**` while a child owns `src/billing/**`, with the most specific pattern winning, or is that a conflict?
+2. **Overlapping path patterns: decided** 28 October: the most specific pattern wins; Root owns what no other Package claims; two Packages with the same pattern is a compile error.
 3. **What a parent may name below it.** Links never point down, so a parent cannot name its children's Definitions, for example which child provides a shared interface. And is a Definition's Kind an edge, so that a Kind must sit at or above its users?
 4. **Internal Definitions and the Managers above.** A parent reviewing a child, Root's checker, or a shared-file entry may need a child's internal Definitions. Does visibility bind only sideways, not upwards?
 5. **The checklist.** Exactly which Definitions are on a Manager's checklist: its own Package's Definitions that the change reaches, also the inherited Rules, or everything in its area on a `--full` Run?
