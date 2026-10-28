@@ -1,5 +1,5 @@
-// Command markitect is the Markitect command line: check, context, docs,
-// apply, version and licenses. It delegates everything to internal/bootstrap.
+// Command markitect is the Markitect command line: check, context, tree,
+// docs, apply, version and licenses. It delegates everything to internal/bootstrap.
 package main
 
 import (

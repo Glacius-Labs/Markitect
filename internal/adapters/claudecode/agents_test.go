@@ -91,7 +91,7 @@ func TestExchangesResumeOneConversationWithOneMessageEach(t *testing.T) {
 			t.Fatal("missing launch control", flag)
 		}
 	}
-	for flag, value := range map[string]string{"--input-format": "stream-json", "--output-format": "stream-json", "--model": "sonnet", "--effort": "high", "--system-prompt-file": systemPromptPath, "--append-system-prompt-file": appendSystemPromptPath, "--permission-mode": "bypassPermissions", "--permission-prompts": "none", "--tools": builtinTools, "--setting-sources": "user", "--mcp-config": mcpConfig} {
+	for flag, value := range map[string]string{"--input-format": "stream-json", "--output-format": "stream-json", "--model": "sonnet", "--effort": "high", "--system-prompt-file": systemPromptPath, "--append-system-prompt-file": appendSystemPromptPath, "--permission-mode": "bypassPermissions", "--permission-prompts": "none", "--tools": builtinTools, "--setting-sources": "user", "--settings": launchSettings, "--mcp-config": mcpConfig} {
 		if got := flagValue(second, flag); got != value {
 			t.Fatalf("%s = %q, want %q", flag, got, value)
 		}

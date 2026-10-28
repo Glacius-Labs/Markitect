@@ -1,6 +1,6 @@
 # Runtime base image
 
-This directory defines the Linux image used by the native adapters and container checks. It contains `markitect-agentd`, pinned Codex `0.162.0`, pinned Claude Code `2.1.308`, Node, Git, Python 3 and CA certificates. Installed CLI binaries do not establish adapter support or provider qualification. The Codex adapter implements Run Sessions and is V1's Agent provider; the [Claude adapter](../../internal/adapters/claudecode/README.md) is an addition beyond V1's scope whose native qualification (K1b) is open.
+This directory defines the Linux image used by the native adapters and container checks. It contains `markitect-agentd`, pinned Codex `0.162.0`, pinned Claude Code `2.1.308`, Node, Git, Python 3 and CA certificates. Installed CLI binaries do not establish adapter support or provider qualification. The Codex adapter implements Run Sessions and is V1's Agent provider; the [Claude adapter](../../internal/adapters/claudecode/README.md) is an addition beyond V1's scope whose first native Apply is [recorded in K1b](../../docs/validation/v1-k1b-claude-qualification-20261028.md).
 
 Build explicitly from the repository root when a new image is required:
 

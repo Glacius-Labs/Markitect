@@ -38,14 +38,19 @@ func TestCredentialsCopyKeepsOnlyTheAccessLogin(t *testing.T) {
 
 // The provider environment carries no credential; MCP_TOOL_TIMEOUT lies a
 // minute beyond the response's deadline, Claude Code's default without one.
+// Subprocess environment scrubbing stays off: the pinned CLI refuses every
+// command with it unless bubblewrap is installed.
 func TestProviderEnvironmentCarriesNoCredentialAndBoundsToolCalls(t *testing.T) {
 	env := providerEnvironment()
-	if !contains(env, "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1") || !contains(env, "CLAUDE_CODE_DISABLE_CLAUDE_MDS=1") || !contains(env, "NODE_OPTIONS=") {
+	if !contains(env, "CLAUDE_CODE_DISABLE_CLAUDE_MDS=1") || !contains(env, "NODE_OPTIONS=") {
 		t.Fatalf("environment %v", env)
 	}
 	for _, entry := range env {
 		if strings.Contains(entry, "OAUTH") || strings.Contains(entry, "API_KEY") || strings.Contains(entry, "AUTH_TOKEN") {
 			t.Fatalf("credential variable %s", entry)
+		}
+		if strings.HasPrefix(entry, "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=") {
+			t.Fatalf("scrubbing needs bubblewrap, which the image lacks: %s", entry)
 		}
 	}
 	now := time.Now()

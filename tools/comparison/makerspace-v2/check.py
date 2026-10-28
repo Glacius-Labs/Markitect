@@ -4,7 +4,10 @@ The model folder is copied into a fresh Git repository as `.markitect/` and
 checked with every vendored Library passed by `--dependency`. `check` exits
 nonzero unless the model compiles and `model-lock.yaml` pins the current
 Library digests; `lock` rewrites `model-lock.yaml` from the digests `check`
-reports. Both also require each vendored Library to equal its source.
+reports. Both also require each vendored Library to equal its source when
+both have the same version. A vendored Library with another version than its
+source is frozen gate material: it is named in a note, and the lock still pins
+its digest.
 
 On Windows, set TMP and TEMP to %LOCALAPPDATA%\\Temp first if Git refuses the
 system temporary folder.
@@ -42,6 +45,13 @@ def files(root):
 
 def same_tree(a, b):
     return files(a) == files(b)
+
+
+def version(root):
+    for line in (pathlib.Path(root) / "model.yaml").read_text(encoding="utf-8").splitlines():
+        if line.startswith("version:"):
+            return line.split(":", 1)[1].strip().strip('"')
+    return None
 
 
 def git(repo, *args):
@@ -129,7 +139,12 @@ def main(argv):
     if vendored != sorted(LIBRARIES):
         print("vendored Library folders differ from the expected set:", ", ".join(vendored))
         return 1
-    stale = [name for name, source in LIBRARIES.items() if not same_tree(HERE / "libraries" / name, source)]
+    frozen = [(name, version(HERE / "libraries" / name), version(source)) for name, source in LIBRARIES.items()
+              if version(HERE / "libraries" / name) != version(source)]
+    for name, kept, current in frozen:
+        print(f"note: vendored {name} {kept} is kept frozen; the source is {current}")
+    stale = [name for name, source in LIBRARIES.items()
+             if name not in {f[0] for f in frozen} and not same_tree(HERE / "libraries" / name, source)]
     if stale:
         print("vendored Libraries differ from their sources:", ", ".join(stale))
         return 1

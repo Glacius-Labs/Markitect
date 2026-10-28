@@ -15,10 +15,11 @@ import (
 // The standard Libraries under libraries/ must compile on the current Core
 // and be usable by a project: an Operation with typed arguments, refusals and
 // permissions, a project Kind implementing Api.Operation, the value Kinds, the
-// Project anchor and Rules, the architecture Rules, and record Entities.
+// Project anchor and Rules, the architecture Rules with an Interface that
+// exposes a refusal code, and record Entities.
 func TestStandardLibrariesCompileForAProject(t *testing.T) {
 	repo := testkit.NewRepo(t)
-	repo.Write(".markitect/model.yaml", "formatVersion: 1\nid: library-consumer\nroot: model\ndependencies:\n  markitect-core: \"1.2.0\"\n  markitect-values: \"1.0.0\"\n  markitect-api: \"1.0.0\"\n  markitect-practice: \"1.0.0\"\n  markitect-architecture: \"1.0.0\"\n  markitect-data: \"1.0.0\"\n")
+	repo.Write(".markitect/model.yaml", "formatVersion: 1\nid: library-consumer\nroot: model\ndependencies:\n  markitect-core: \"1.2.0\"\n  markitect-values: \"1.0.0\"\n  markitect-api: \"2.0.0\"\n  markitect-practice: \"1.0.0\"\n  markitect-architecture: \"1.1.0\"\n  markitect-data: \"1.0.0\"\n")
 	repo.Write(".markitect/model-lock.yaml", "formatVersion: 1\nmodels: {}\n")
 	repo.Write(".markitect/execution.yaml", "apiVersion: markitect.execution/v2\nownership:\n  - {path: ./, owner: shop}\n")
 	repo.Write(".markitect/registry/shop/registry.yaml", "apiVersion: markitect.registry/v1\nartifacts: []\n")
@@ -38,7 +39,7 @@ func TestStandardLibrariesCompileForAProject(t *testing.T) {
 		"handler-tests":     "imports:\n  - {package: markitect/practice, as: Practice}\nid: handler-tests\nkind: Practice.TestObligation\nbody: Every operation has a test per refusal.\nspec:\n  appliesTo: [shop]\n",
 		"security-duty":     "imports:\n  - {package: markitect/core, as: Core}\n  - {package: markitect/practice, as: Practice}\nid: SecurityObligation\nkind: Core.Kind\nbody: A duty about security.\nspec:\n  implements: [Practice.Rule]\n  properties: [Practice.appliesTo]\n",
 		"authorization":     "id: authorization\nkind: SecurityObligation\nbody: Every call is checked against the operation's permissions.\nspec:\n  appliesTo: [shop]\n",
-		"shop-interface":    "imports:\n  - {package: markitect/architecture, as: Architecture}\nid: shop-interface\nkind: Architecture.Interface\nbody: What other services may call.\nspec:\n  appliesTo: [.]\n  operations: [place-order, cancel-order]\n  types: [amount, order-status]\n",
+		"shop-interface":    "imports:\n  - {package: markitect/architecture, as: Architecture}\nid: shop-interface\nkind: Architecture.Interface\nbody: What other services may call.\nspec:\n  appliesTo: [.]\n  operations: [place-order, cancel-order]\n  types: [amount, order-status]\n  refusalCodes: [out-of-stock]\n",
 		"shop-dependencies": "imports:\n  - {package: markitect/architecture, as: Architecture}\nid: shop-dependencies\nkind: Architecture.DependencyRule\nbody: The shop depends on nothing else.\nspec:\n  appliesTo: [shop]\n  mayDependOn: []\n",
 		"order":             "imports:\n  - {package: markitect/data, as: Data}\nid: order\nkind: Data.Entity\nbody: An order of a customer.\nspec:\n  key: orderId\n  fields:\n    - {name: orderId, fieldType: order-id}\n    - {name: customerId, fieldType: customer-id, refersTo: customer}\n    - {name: status, fieldType: order-status}\n    - {name: total, fieldType: amount}\n",
 		"order-id":          "imports:\n  - {package: markitect/values, as: Values}\nid: order-id\nkind: Values.Scalar\nbody: The identifier of an order.\nspec:\n  base: string\n",
@@ -68,7 +69,7 @@ func TestStandardLibrariesCompileForAProject(t *testing.T) {
 	}
 	var lock strings.Builder
 	lock.WriteString("formatVersion: 1\nmodels:\n")
-	for _, model := range []struct{ id, version string }{{"markitect-core", "1.2.0"}, {"markitect-values", "1.0.0"}, {"markitect-api", "1.0.0"}, {"markitect-practice", "1.0.0"}, {"markitect-architecture", "1.0.0"}, {"markitect-data", "1.0.0"}} {
+	for _, model := range []struct{ id, version string }{{"markitect-core", "1.2.0"}, {"markitect-values", "1.0.0"}, {"markitect-api", "2.0.0"}, {"markitect-practice", "1.0.0"}, {"markitect-architecture", "1.1.0"}, {"markitect-data", "1.0.0"}} {
 		digest, found := digests[model.id]
 		if !found {
 			t.Fatalf("Library %s did not compile: %s", model.id, first)
@@ -83,6 +84,7 @@ func TestStandardLibrariesCompileForAProject(t *testing.T) {
 	for _, broken := range []struct{ file, body, code string }{
 		{"auth-placement", "imports:\n  - {package: markitect/architecture, as: Architecture}\nid: auth-placement\nkind: Architecture.Placement\nbody: A Project is not a Rule.\nspec:\n  appliesTo: [shop]\n  concern: shop\n  realizedIn: shop\n", "value.reference_kind"},
 		{"shop-interface", "imports:\n  - {package: markitect/architecture, as: Architecture}\nid: shop-interface\nkind: Architecture.Interface\nbody: A Role is not an Operation.\nspec:\n  appliesTo: [.]\n  operations: [clerk]\n", "value.reference_kind"},
+		{"shop-interface", "imports:\n  - {package: markitect/architecture, as: Architecture}\nid: shop-interface\nkind: Architecture.Interface\nbody: A Role is not a RefusalCode.\nspec:\n  appliesTo: [.]\n  refusalCodes: [clerk]\n", "value.reference_kind"},
 		{"paid-total", "imports:\n  - {package: markitect/data, as: Data}\nid: paid-total\nkind: Data.Invariant\nbody: A Scalar is not an Entity.\nspec:\n  entities: [amount]\n", "value.reference_kind"},
 		{"security-duty", "imports:\n  - {package: markitect/core, as: Core}\n  - {package: markitect/practice, as: Practice}\nid: SecurityObligation\nkind: Core.Kind\nbody: A Rule without appliesTo.\nspec:\n  implements: [Practice.Rule]\n  properties: []\n", "contract.implements_missing"},
 	} {

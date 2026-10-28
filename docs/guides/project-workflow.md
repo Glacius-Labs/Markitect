@@ -1,12 +1,12 @@
 # Project workflow
 
-This is the one guide for using Markitect on a project. The commands are `check`, `context`, `docs`, `apply`, `version`, `licenses` and `help`; build them from `cmd/markitect`. `check`, `context` and guarded `docs` consume structural Project preparation and start no Agent. `apply` runs Assessment, Implement and Verify, each over the complete model-derived Manager hierarchy, and publishes only the independently reopened stored Verify approval after all Run resources close. Assessment, Implement and Verify are mandates of `apply`, not separate commands. Extract, Cockpit, interactive authoring and Setup are not part of V1, and the CLI has no MCP server. The [architecture](../architecture.md) explains the responsibilities, the [delivery plan](../implementation-plan.md) owns implementation status and evidence authority, and [CONTRIBUTING](../../CONTRIBUTING.md) owns Markitect's own source gates.
+This is the one guide for using Markitect on a project. The commands are `check`, `context`, `tree`, `docs`, `apply`, `version`, `licenses` and `help`; build them from `cmd/markitect`. `check`, `context`, `tree` and guarded `docs` consume structural Project preparation and start no Agent. `apply` runs Assessment, Implement and Verify, each over the complete model-derived Manager hierarchy, and publishes only the independently reopened stored Verify approval after all Run resources close. Assessment, Implement and Verify are mandates of `apply`, not separate commands. Extract, Cockpit, interactive authoring and Setup are not part of V1, and the CLI has no MCP server. The [architecture](../architecture.md) explains the responsibilities, the [delivery plan](../implementation-plan.md) owns implementation status and evidence authority, and [CONTRIBUTING](../../CONTRIBUTING.md) owns Markitect's own source gates.
 
 ## Where the commands run
 
 The model commands run wherever Go and Git run. The Apply host runs on Linux ([DEC-077](../concepts/register.md#dec-077-development-pace-and-linux-first-execution)).
 
-| Host | `check`, `context`, `docs` | `apply` |
+| Host | `check`, `context`, `tree`, `docs` | `apply` |
 |---|---|---|
 | Linux | Native | Native, or in the [Linux runner](#apply-in-the-linux-runner) with `--runner` |
 | Windows | Native | Only in the Linux runner, started through Docker Desktop with `--runner RUNNER_IMAGE_ID`. Without `--runner`, `apply` is refused before it reads any input |
@@ -47,6 +47,7 @@ There is no automatic conversion, scaffold or Brownfield runtime.
 ```text
 go run ./cmd/markitect check --repo .
 go run ./cmd/markitect context PACKAGE --repo .
+go run ./cmd/markitect tree --repo .
 go run ./cmd/markitect docs --repo .
 ```
 
@@ -65,6 +66,10 @@ An omitted revision observes the actual draft, including Gitignored files. `--re
 ### Context
 
 `context PACKAGE --repo PATH` selects one local Package, including intermediate or empty Packages from the Model check inventory; `.` selects the ordinary Root. It reports the actual Definition content, resolved values, provenance and inclusion reasons. Imported Packages are not local Managers. It creates no task prompt, mandate, Run, budget or evidence record.
+
+### Tree
+
+`tree --repo PATH` runs the same preparation as `check` and adds `managers`: the model-derived Manager tree that Apply organizes. Every local Manager is listed once, Root first, as `package`, `parent` (null for Root), its direct `children` and the `areas` the execution ownership gives its Package, in authored order. Like `context`, the tree depends on the model alone: a failed file accounting fails the report but keeps the tree, and a failed Model check leaves it out. It creates no Run or evidence record.
 
 ### Generated documentation
 
