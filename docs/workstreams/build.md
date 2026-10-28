@@ -10,11 +10,11 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 - **Suite:** E1 and E2 of [evaluation suite v2](../design/evaluation-suite-v2.md) are on `main` in [`tools/evaluation`](../../tools/evaluation/README.md): one sandbox per run with an egress limit, `judge`, `review`, `report`, the failure classifier and the token parser. The [E1 smoke](../validation/eval-e1-sandbox-smoke-20261028.md) and the [E2 smoke](../validation/eval-e2-judge-smoke-20261028.md) passed: the sandbox held, the Library judge separates its reference from its mutants, and K's runs k-02 to k-04 pass all 19 hidden cases with no critical finding. K's capture fix is confirmed.
 - **New project:** authored in the private repository: a fresh build and seven changes, each with requirements, a model, a hidden judge that passes its reference and fails its six mutants, and an equivalence review. Build has not seen its content. Its models are in the concept 1.0 form, its judge image is not pinned, and its checks ran on Windows only.
 - **Concept 1.0 arms:** stopped on 28 October with the shape decision: M (V1 on `main` until 2.0 replaces it), P (`variant/plugin`) and G (`dev/g0-prototype`, the start of T3).
-- **Running:** no real run and no sub-session.
+- **Running:** the T1 session (language and compiler), started 28 October; no real run.
 
 ## Next
 
-1. **T1, language and compiler,** in one writing session.
+1. **T1, language and compiler:** running in its own session; Build reviews and merges its PR.
 2. **Beside T1:** T3's hooks from the G0 prototype without its referee, and T6's suite work: change-series tasks, planted model defects and the drift check.
 3. **Small follow-ups:** the new project's models converted to the 2.0 form by its author, and its judge image pinned and self-tested on Linux.
 
@@ -29,6 +29,8 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 
 - **Shape of the 2.0 build, 28 October 2026:** one implementation of concept 2.0, compared with K. The plugin variant and V1's open steps 4 and 5 stop; the Git variant's prototype becomes the start of T3 ([build steps](../implementation-plan.md#concept-20-build)). The owner accepted Build's proposal.
 
+- **Acceptance portfolio, 28 October 2026:** concept 2.0 is accepted on the Library and Makerspace, as §15 says, plus the new, unseen project as the check on material nobody tuned on, because arm M was tuned on Makerspace. Its tasks join T6. The owner accepted Build's recommendation.
+
 ## Questions for the owner
 
-1. **Acceptance portfolio.** Concept 2.0's acceptance names the Library and Makerspace; the suite's decision made the new, unseen project the real test, because arm M was tuned on Makerspace. Recommendation: accept on the Library and Makerspace as §15 says, and add the new project as the unseen check; its tasks then join T6.
+None open.
