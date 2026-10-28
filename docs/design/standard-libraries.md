@@ -110,5 +110,5 @@ The Package tree is the architecture (modeling guide §2). These Kinds add only 
 | Refusal codes in an Interface? | Yes, as in code, where a package's exported errors are part of its public API. `architecture` 1.1.0 adds `refusalCodes` |
 | Placing an invariant? | No. Placement is for cross-cutting concerns; an Invariant lives in, and is enforced by, the Package that owns its Entities |
 | Maps, unions, defaults, typed formats? | No ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation)). Good documentation does not state them; uniqueness beyond `key` and constraints across fields stay prose in Rules or Invariants |
-| Use cases, REST routes, CLI commands? | Open. Good documentation states them and no Library has a Kind for them yet ([topics page](../workstreams/topics.md#questions-for-the-owner)) |
+| Use cases, REST routes, CLI commands? | Redesign decided, not built: an `application` Library for use cases, `api` for how they are reached, as part of a rebuild of all Libraries ([topics page](../workstreams/topics.md#decided)) |
 | A wire-envelope Kind? | Not yet. Models state envelopes and statuses as protocol Rules until a real model needs a Kind |
