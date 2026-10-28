@@ -128,6 +128,14 @@ def bundle_head(bundle):
     return heads.pop()
 
 
+# Every task ends with the same stop rule, so that stopping on a contradiction is open to
+# every variant in words it reads; a planted task is then scored by one mechanical rule
+# (a result equal to its start did not land). Owner decision, 28 October 2026.
+STOP_RULE = ("\n\n## Delivery rule\n\n"
+             "If the requirements contradict each other, or leave open a behavior at the program's boundary, "
+             "change nothing and say why in your final report.\n")
+
+
 def make_task(task_md, model, start, deadline, out):
     out = pathlib.Path(out)
     if out.exists():
@@ -135,7 +143,8 @@ def make_task(task_md, model, start, deadline, out):
     if deadline <= 0:
         raise SuiteError("the deadline must be positive")
     out.mkdir(parents=True)
-    shutil.copyfile(task_md, out / "task.md")
+    text = pathlib.Path(task_md).read_text(encoding="utf-8")
+    (out / "task.md").write_bytes((text.rstrip("\n") + STOP_RULE).encode("utf-8"))
     if model:
         shutil.copytree(model, out / "model")
     if start:

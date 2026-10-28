@@ -93,6 +93,13 @@ class SuiteTest(unittest.TestCase):
         with self.assertRaisesRegex(suite.SuiteError, "does not match"):
             suite.read_task(task)
 
+    def test_every_task_ends_with_the_same_stop_rule(self):
+        task = self.task("ok")
+        text = (task / "task.md").read_text(encoding="utf-8")
+        self.assertEqual(text.splitlines()[0], "ok")
+        self.assertTrue(text.endswith(suite.STOP_RULE))
+        self.assertEqual(text.count("## Delivery rule"), 1)
+
     def test_empty_start_is_reproducible(self):
         a, b = self.tmp / "a.bundle", self.tmp / "b.bundle"
         suite.empty_start(a)
