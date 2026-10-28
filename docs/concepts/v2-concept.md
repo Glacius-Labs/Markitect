@@ -34,7 +34,7 @@ A [[members/member|member]] reserves a [[equipment/machine|machine]] for a slot.
 
 - The front matter holds the Kind and, where needed, `internal: true`. Nothing else.
 - The file name is the ID; the main heading is the title; the body is documentation with links.
-- A Package is a folder. Packages nest.
+- A Package is a folder. Packages nest. The model's root folder is the Root Package and holds the project itself: the project anchor, project-wide Rules, layout conventions and the architecture, which by location reach every Manager.
 - There are no typed fields. Exact values such as wire names and error codes are written in prose, in backticks.
 
 ### 2.2 Kinds and Libraries
@@ -82,7 +82,7 @@ Next to the model, outside it ([DEC-081](register.md#dec-081-the-organization-kn
 - **Ignore list:** files that deliberately belong to no Package.
 - **`execution.yaml`** holds only the required checks: name, command, directory, timeout and environment. They are the one proof in a Run that does not come from an agent.
 
-Layout conventions, such as where tests live, are Rules in the project Package.
+Layout conventions, such as where tests live, are Rules in Root.
 
 ## 5. The organization
 
@@ -188,7 +188,7 @@ No app for now ([DEC-085](register.md#dec-085-markdown-tools-are-the-cockpit-for
 
 **Questions for the owner before building** (raised by the independent review of this draft):
 
-1. **Root and the project Package.** Is the project Package Root itself, or a child of Root? Scope by location makes layout conventions and project-wide Rules reach everything only if they sit at Root.
+1. **Root and the project Package: decided** 28 October: the project Package is Root itself.
 2. **Overlapping path patterns.** May Root own `src/**` while a child owns `src/billing/**`, with the most specific pattern winning, or is that a conflict?
 3. **What a parent may name below it.** Links never point down, so a parent cannot name its children's Definitions, for example which child provides a shared interface. And is a Definition's Kind an edge, so that a Kind must sit at or above its users?
 4. **Internal Definitions and the Managers above.** A parent reviewing a child, Root's checker, or a shared-file entry may need a child's internal Definitions. Does visibility bind only sideways, not upwards?
