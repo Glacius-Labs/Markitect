@@ -56,7 +56,7 @@ Copy this checklist into your reply and tick it off as you go.
 
 ## Statements
 
-- **As explicit as good documentation, no more.** Model what good documentation of the project would state: concepts, operations and their contracts, rules, architecture. Loops, maps, data structures and algorithms are the realizing agent's choice; do not model them.
+- **As explicit as good documentation, no more.** Model what good documentation of the project would state: concepts, operations and their contracts, rules, architecture. Loops, maps, internal data structures and algorithms are the realizing agent's choice; do not model them.
 - **Strong statements.** A rule is short, free of exceptions and true everywhere it applies. A rule full of "except when" and "unless" is several rules: split it into atomic ones, or make the exception its own Definition.
 - **Typed shapes.** Arguments, refusal codes, fields, results, permissions and scopes are typed fields, never lists in a body. A body line starting with "Arguments:", "Refusals:" or "Fields:" is a defect.
 - **Small.** Over 150 words of prose (tables and code excluded) or over 10 decisions is a warning; over 300 words or 15 decisions holds several decisions: split it. Decisions count each typed refusal plus each `when`, `if`, `unless`, `otherwise` or `except` in the prose outside tables.

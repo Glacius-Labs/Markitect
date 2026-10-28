@@ -5,7 +5,7 @@
 ## Principles
 
 Oriented on what Go and C# ship:
-- **As explicit as good documentation, no more** ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation)). A Library supports what good documentation of a project would state that explicitly: domain concepts, operations and their contracts, rules, architecture. Loops, maps, data structures and algorithms are left to the realizing agents.
+- **As explicit as good documentation, no more** ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation)). A Library supports what good documentation of a project would state that explicitly: domain concepts, operations and their contracts, rules, architecture. Loops, maps, internal data structures and algorithms are left to the realizing agents.
 - **A small set of stable Libraries, cut by technical concern, not by project.** Anything domain-specific belongs in the project.
 - **Libraries add Kinds and Properties only.** They get no compiler semantics (language contract §11).
 - **No inheritance.** A project Kind reuses Library Properties in its own `properties`, and declares `implements` where it must be accepted in place of a Library interface. Every Kind shows its whole contract.
@@ -109,6 +109,6 @@ The Package tree is the architecture (modeling guide §2). These Kinds add only 
 | Must a refusal list be ordered? | No (owner, 28 October 2026). A refusal is a possible problem, and when it applies belongs to its own entry. Since `api` 2.0.0 the list has no order; precedence, where it matters, is a Rule, as Makerspace's `order-of-checks` states it. This replaced an "unordered" flag before it was built |
 | Refusal codes in an Interface? | Yes (owner, 28 October 2026), as in code, where a package's exported errors are part of its public API. `architecture` 1.1.0 adds `refusalCodes` |
 | Placing an invariant? | No (owner, 28 October 2026). Placement is for cross-cutting concerns; an Invariant lives in, and is enforced by, the Package that owns its Entities |
-| Maps, unions, defaults, typed formats? | No (owner, 28 October 2026, [DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation)). Good documentation does not state them; uniqueness beyond `key` and constraints across fields stay prose in Rules or Invariants |
+| Maps, unions, defaults, typed formats? | No, by the owner's documentation test of 28 October 2026 as the recorder applies it ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation)). Good documentation does not state them; uniqueness beyond `key` and constraints across fields stay prose in Rules or Invariants |
 | Use cases, REST routes, CLI commands? | Open. Good documentation states them and no Library has a Kind for them yet ([topics page](../workstreams/topics.md#questions-for-the-owner)) |
 | A wire-envelope Kind? | Not yet (owner, 27 October 2026). Models state envelopes and statuses as protocol Rules until a real model needs a Kind |

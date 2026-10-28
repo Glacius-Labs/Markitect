@@ -11,7 +11,7 @@ State page of the Topics session: the owner's single place to discuss Markitect'
 ## Now
 
 - **Design walk-through, part 1: the language.** On 28 October the owner restated what Markitect is ([source](../concepts/sources/model-explicitness-20261028.md#1-what-markitect-is-restated)) and started a walk through the whole design. Decided: the model is as explicit as good documentation, and Definitions stay YAML with a Markdown body ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation)). Next in the language: questions 38 and 39.
-- **Basis:** clean. One topics page instead of seven lane pages; Main consistent again after #806 (see [Done here](#done-here)); lane worktrees and branches removed; question 33 (Windows tests) parked.
+- **Basis:** clean. One topics page instead of seven lane pages; Main consistent again after #806 (see [Done here](#done-here)); the topic lane worktrees and branches removed (the old Cockpit lane worktree now serves the General session); question 33 (Windows tests) parked.
 
 ## Next
 
@@ -33,7 +33,7 @@ Execution is Linux-first ([DEC-077](../concepts/register.md#dec-077-development-
 
 ### Model language
 
-The model is typed programming in prose: Core 1.2.0 with Kind interfaces ([DEC-075](../concepts/register.md#dec-075-kind-extension-and-one-core-120)) and five [standard Libraries](../design/standard-libraries.md). Since PR #806, `api` is 2.0.0 (refusals are an unordered list; a Rule states precedence when it matters) and `architecture` is 1.1.0 (an Interface can list `refusalCodes`). Invariants are not placed; an Invariant lives in the Package that owns its data. `makerspace-v2` keeps its frozen 1.0.0 copies as gate material.
+The model is typed programming in prose: Core 1.2.0 with Kind interfaces ([DEC-075](../concepts/register.md#dec-075-kind-extension-and-one-core-120)) and five [standard Libraries](../design/standard-libraries.md). Since PR #806, `api` is 2.0.0 (refusals are an unordered list; a Rule states precedence when it matters) and `architecture` is 1.1.0 (an Interface can list `refusalCodes`). Invariants are not placed; an Invariant lives in the Package that owns its data. `makerspace-v2` keeps its frozen 1.0.0 copies as gate material. The yardstick for what the language and Libraries express is good documentation ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation)); Definitions stay YAML with a Markdown body.
 
 ### Modeling skills
 
@@ -137,7 +137,7 @@ Verbatim, with the date. Words in brackets are context added by the recorder.
 
 ### B. Language
 
-8. **Small language gaps: closed** (owner, 28 October, [DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation)). Good documentation does not state maps, unions, defaults or typed formats, so the model does not either.
+8. **Small language gaps: closed** by the owner's documentation test of 28 October ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation)). Applied by the recorder: good documentation does not state maps, unions, defaults or typed formats, so the model does not either.
 9. **Decisions taken under delegation** (log on branch `handover/model-quality-log`). To discuss: 9 (v2.1 Interface exposes `rate-cents-per-minute`), 4 and 10 (the analysis tool reads the model's own architecture; the `interface` signal checks typed uses only). To confirm: 1, 3, 5, 6, 7 (the skill) and 2 (Claude adapter timing). Decision 8 was replaced by the refusal decision.
 10. **Risk per Package.** A risk level, a "what failure looks like" statement or a protected flag on a Package? Rec: a Library Kind, not Core; with a deterministic hold after Verify when protected files change, and a circuit breaker.
 11. **"Do it the way code does"** as a standing check for Library design? It removed two of three proposed changes.

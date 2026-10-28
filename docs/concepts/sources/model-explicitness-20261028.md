@@ -36,7 +36,7 @@ Context (summary by the recorder): the session proposed adopting this test as th
 
 ## Recorded meaning
 
-- **The test.** A statement belongs in the model, typed or as a Definition, when good documentation of the project would state it that explicitly. What good documentation would not state, such as loops, maps, data structures or algorithms, is too detailed and is left to the agents that realize the model. Bodies are prose.
+- **The test.** A statement belongs in the model, typed or as a Definition, when good documentation of the project would state it that explicitly. What good documentation would not state, such as loops, maps, internal data structures or algorithms, is too detailed and is left to the agents that realize the model. Bodies are prose.
 - **One file format.** A Definition stays a YAML file with a Markdown body.
 - **Consequences for the open language question.** Maps, unions, defaults and typed formats are not added. Uniqueness beyond an Entity's `key` and constraints across fields stay prose in Rules or Invariants. Ranges stay as `Values.Scalar` has them.
 - **Not decided here.** Whether use cases and interface bindings (REST routes, CLI commands) get Library Kinds is a separate question that the test raised.
