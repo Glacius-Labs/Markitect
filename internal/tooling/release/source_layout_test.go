@@ -156,7 +156,7 @@ func TestModelSourceLiveAndFixedSourceBytes(t *testing.T) {
 }
 
 func TestRootLayoutRejectsUnsupportedInputsBeforeFiltering(t *testing.T) {
-	for _, name := range []string{"internal/adapters/cockpit/web/index.html", "internal/authoring/session.go", "src/cmd/markitect/main.go", "internal/other/x.txt", "internal/model-extra/x.go", "internal/run-extra/x.go", "internal/adapters/direct.go", "internal/adapters/repo-extra/git.go", "internal/adapters/cli-extra/cli.go", "internal/harness/harness.go", "internal/apply/apply.go", "internal/adapters/unowned/codec.go", "internal/tooling-extra/release/x.go", "internal/tooling/other/x.go", "cmd/other/main.go", "internal/model/nested/go.mod"} {
+	for _, name := range []string{"internal/adapters/cockpit/web/index.html", "internal/authoring/session.go", "src/cmd/markitect/main.go", "internal/other/x.txt", "internal/model-extra/x.go", "internal/run-extra/x.go", "internal/adapters/direct.go", "internal/adapters/repo-extra/git.go", "internal/adapters/cli-extra/cli.go", "internal/harness-extra/harness.go", "internal/apply/apply.go", "internal/adapters/unowned/codec.go", "internal/tooling-extra/release/x.go", "internal/tooling/other/x.go", "cmd/other/main.go", "internal/model/nested/go.mod"} {
 		t.Run(name, func(t *testing.T) {
 			root := rootLayoutFixture(t)
 			writeLayoutFile(t, root, name, "unexpected\n")

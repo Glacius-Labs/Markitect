@@ -25,10 +25,12 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `run` | One Run per change: who works, makers and checkers along the tree, the Result and landing. | `model`, `assets`, `domain`, `project`, `service`, `remote`, `agent-port` | 1 |
 | `protocol` | Frame protocol between the Orchestrator and the session helper. | nothing | 1 |
 | `container` | The container engine client that the adapters running containers share. | `protocol` | 1 |
+| `harness` | What a maker or checker receives: its role, the model it knows, its task and the tool contract. | `model`, `assets`, `domain`, `project`, `service`, `remote`, `agent-port` | 1 |
+| `agents` | One maker or checker in its container: login, clone, provider turns and the Manager tools, with the Claude Code and Codex adapters. | `model`, `assets`, `domain`, `project`, `remote`, `agent-port`, `protocol`, `container`, `harness`, `agents` | 3 |
 | `guardedwrite` | Guarded working-tree writes for bundle installation, with the Git and path helpers they share with source snapshots. | nothing | 1 |
 | `build` | Version identity and embedded license notices. | nothing | 1 |
 | `adapter` | Concrete Git, command-line and Run remote adapters; no adapter imports another. | `model`, `assets`, `domain`, `project`, `service`, `remote`, `agent-port`, `run`, `build` | 5 |
-| `composition` | Constructs the command line with its adapters. | `model`, `project`, `service`, `remote`, `agent-port`, `run`, `adapter` | 1 |
+| `composition` | Constructs the command line with its adapters. | `model`, `project`, `service`, `remote`, `agent-port`, `container`, `agents`, `run`, `adapter` | 1 |
 | `command` | Thin entrypoints to product composition. | `composition` | 1 |
 | `remote-command` | Thin entrypoint of a Run's remote container. | `adapter` | 1 |
 | `agent` | Runs inside each Agent container: provider process, MCP bridge and stdio framing. | `protocol` | 1 |
@@ -43,6 +45,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | From | To | Files | Reason |
 |---|---|---|---|
 | `internal/tooling/release` | `internal/tooling/architecture` | all | The packager takes its source roots from this table. |
+| `internal/agents` | `internal/adapters/remotecontainer` | tests only | The real-engine test starts real Managers against a real Run remote. |
 | `internal/run` | `internal/adapters/remoteserver` | tests only | The engine's scripted Runs push through the Run remote's real hooks. |
 | `internal/run` | `internal/adapters/rungit` | tests only | The engine's scripted Runs use the host's real Git. |
 | `internal/tooling/release` | `internal/buildinfo` | tests only | Tests compare the packaged notices with the embedded ones. |
@@ -113,6 +116,20 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | Package | Summary | Owning document |
 |---|---|---|
 | `internal/adapters/container` | Package container is the Orchestrator's client of the container engine. | [internal/adapters/container/README.md](../../internal/adapters/container/README.md) |
+
+## Manager harness
+
+| Package | Summary | Owning document |
+|---|---|---|
+| `internal/harness` | Package harness renders what one maker or checker of a Manager receives (concept 2.0 §5, §6.2): its role and repository, the model it knows, its task with the checklist, and the answer format, together with the tools it answers through. | [internal/agents/README.md#harness](../../internal/agents/README.md#harness) |
+
+## Manager agents
+
+| Package | Summary | Owning document |
+|---|---|---|
+| `internal/agents` | Package agents starts and drives one agent of a Manager (concept 2.0 §6.2, §9): a maker or a checker, each in its own hardened Linux container that clones the Run's remote, with a provider CLI logged in through an access-only copy of the account login. | [internal/agents/README.md](../../internal/agents/README.md) |
+| `internal/agents/claude` | Package claude is the Claude Code adapter of the agent runtime: the launch contract of the pinned CLI in a Manager container, the access-only copy of the account login, and the reader of its stream-json output with the failure classes the evaluation voids. | [internal/agents/README.md#claude-code](../../internal/agents/README.md#claude-code) |
+| `internal/agents/codex` | Package codex is the Codex adapter of the agent runtime: the launch contract of the pinned Codex CLI's exec mode in a Manager container, the access-only copy of the ChatGPT account login, and the reader of its JSON events with the failure classes the evaluation voids. | [internal/agents/README.md#codex](../../internal/agents/README.md#codex) |
 
 ## Guarded write
 

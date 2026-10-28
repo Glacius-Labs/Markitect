@@ -1,6 +1,6 @@
 # Container runtime adapter
 
-This package is the product's client of the container engine ([DEC-037](../../../docs/concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). It starts hardened session and helper containers, speaks the [agentd frame protocol](../../agentd/frame/frame.go) and manages volumes and images. It knows no tasks, models or reviews. [Architecture](../../../docs/architecture.md#layers) places it, and the [base image](../../../packaging/runtime/README.md) owns its image contract. It has no product consumer until step T4's Run engine; step T1 removed V1's adapters that used it, so the passages below that name them describe V1, with links to its code at the base commit of T1.
+This package is the product's client of the container engine ([DEC-037](../../../docs/concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). It starts hardened session and helper containers, speaks the [agentd frame protocol](../../agentd/frame/frame.go) and manages volumes and images. It knows no tasks, models or reviews. [Architecture](../../../docs/architecture.md#layers) places it, and the [Manager image](../../../packaging/runtime/README.md) owns its image contract. Its consumer in concept 2.0 is the [Manager agent runtime](../../agents/README.md) of step T4; step T1 removed V1's adapters that used it, so the passages below that name them describe V1, with links to its code at the base commit of T1.
 
 ## API
 
@@ -8,6 +8,8 @@ This package is the product's client of the container engine ([DEC-037](../../..
 | --- | --- |
 | `NewEngine(path)` | Binds the absolute engine executable. The Orchestrator never searches PATH. |
 | `Engine.Start(ctx, spec)` | Runs one session container with agentd and returns its `Session` after agentd's hello. |
+| `Engine.Exec(ctx, name, dir, argv, stdin, stdout)` | Runs one literal command in a running container as its user, without a shell. A nonzero exit is an `*ExecError` with the command's bounded standard error; any other error means the command may not have run. The agent runtime runs Git in a Manager's clone this way. |
+| `Engine.Volumes(ctx, key, value)` | The names of the volumes that carry a label, for a sweep. |
 | `Session.Initialize(ctx, req)` | Installs the bounded fixed private provider home over that connection before provider startup: the Codex login file, or the Claude Code credentials and instruction files; no shell, supplied path or extra container. |
 | `Session.ClearPrivateHome(ctx)` | Confirms removal of the installed login after provider exit and before container closure. agentd retries cleanup on disconnect and reports failures. For a Claude home, agentd verifies before every start that the instruction files are unchanged and that no user-scope Claude Code entry appeared, and refuses the start otherwise. |
 | `Engine.RunHelper(ctx, spec, argv, stdin, stdout)` | Runs one command in a fresh container under the same hardening, for example `/usr/bin/tee`, `/bin/cat` or a project check. Run Git uses the retained exec service. |
@@ -24,6 +26,10 @@ This package is the product's client of the container engine ([DEC-037](../../..
 | `Session.StartProvider`, `WriteInput`, `CloseInput`, `Stdout` | The provider CLI's process and standard streams. Output is buffered up to 32 MiB, so control replies never wait for the reader. A request agentd refuses, for example a start it refuses after the Claude private home changed, matches `ErrRefused`: agentd carried out nothing. |
 | `Session.ToolCalls`, `Reply` | Run tool calls arriving over MCP through `markitect-agentd mcp`. `ToolCall.Meta` carries the provider's own call metadata. |
 | `Session.Census`, `Stop`, `Exited`, `Diagnostics`, `Close` | The container's processes, stop with grace, the observed exit, the tail of standard error, and the end of the connection. `Close` returns `ErrForcedClose` (joined with the engine process result) when the container did not end within the close timeout and had to be removed by force; a nil result means it ended by itself. |
+
+## Networks
+
+`ContainerSpec.Network` names the first network and `MoreNetworks` further ones the container joins at start, for example a Manager's provider network and its Run's internal network. `Hosts` adds `--add-host` entries (`name:address`) and `DNS` sets the name servers. The host network is refused, and so is a further network without a first one or a network named twice.
 
 ## Image file observations
 

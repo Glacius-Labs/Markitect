@@ -16,16 +16,13 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/adapters/remotecontainer"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/remoteserver"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/rungit"
-	"github.com/Glacius-Labs/Markitect/internal/agentport"
 	runengine "github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/runremote"
 )
 
 // newAgents constructs the provider adapters that start makers and
 // checkers in their containers.
-var newAgents = func(context.Context) (agentport.Agents, error) {
-	return nil, errors.New("this build has no provider adapters yet, so apply and verify start no agents")
-}
+var newAgents = providerAgents
 
 // runs builds one Run engine per command: the host's Git over the target
 // repository, the Run's remote in a container and the provider adapters.

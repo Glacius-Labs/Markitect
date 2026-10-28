@@ -1,6 +1,6 @@
 # Architecture
 
-How the source is composed, where each responsibility lives and which contracts hold between the packages. Main is being rebuilt to [concept 2.0](concepts/v2-concept.md) ([DEC-086](concepts/register.md#dec-086-concept-20-is-the-target)) in the steps of the [delivery plan](implementation-plan.md#concept-20-build). T1 built the model language and the model commands, T3 the [Run remote](../internal/runremote/README.md) with its hooks, T4 the [Run engine](../internal/run/README.md) with `apply` and `verify` and the [agent port](../internal/agentport/README.md); the provider adapters follow with T4b and the native host with T5.
+How the source is composed, where each responsibility lives and which contracts hold between the packages. Main is being rebuilt to [concept 2.0](concepts/v2-concept.md) ([DEC-086](concepts/register.md#dec-086-concept-20-is-the-target)) in the steps of the [delivery plan](implementation-plan.md#concept-20-build). T1 built the model language and the model commands, T3 the [Run remote](../internal/runremote/README.md) with its hooks, T4 the [Run engine](../internal/run/README.md) with `apply` and `verify` and the [agent port](../internal/agentport/README.md), and T4b the [Manager agents](../internal/agents/README.md) with the Claude Code and Codex adapters; the native host follows with T5.
 
 This page owns the package contracts. The [model language guide](guides/model-language.md) owns the language, the `.markitect/` layout and the commands; the [code map](development/code-map.md) lists every package with its owning document. V1's Run, Apply, adapter and state architecture is kept at the base commit of T1: [architecture of V1](https://github.com/Glacius-Labs/Markitect/blob/f23c2e12d9833efa61e5e65c90018016423abe74/docs/architecture.md).
 
@@ -35,13 +35,15 @@ All Go packages use one root module. One rule table in [`internal/tooling/archit
 | Git, command-line and Run remote adapters; no adapter imports another | `internal/adapters/repo`, `internal/adapters/cli`, `internal/adapters/remoteserver` (inside the Run container), `internal/adapters/remotecontainer` (the host's side), `internal/adapters/rungit` (the host's Git for a Run) | Their inward consumers and build data |
 | Composition | `internal/bootstrap` | The adapters, the Run engine and the agent port |
 | Entrypoints | `cmd/markitect`; `cmd/markitect-remote`, the Run container's program | Bootstrap; the remote server adapter |
-| Container engine client, frame protocol and session helper, kept for T4 | `internal/adapters/container`, `internal/agentd/frame`, `internal/agentd`, `cmd/markitect-agentd` | The frame protocol only |
+| Container engine client, frame protocol and session helper | `internal/adapters/container`, `internal/agentd/frame`, `internal/agentd`, `cmd/markitect-agentd` | The frame protocol only |
+| What a maker or checker receives: role, model context, task with checklist, tool contract | `internal/harness` | Analysis, the Run remote's rules and the packages below them |
+| One Manager agent in its container, with the Claude Code and Codex adapters ([Manager agents](../internal/agents/README.md)) | `internal/agents`, `internal/agents/claude`, `internal/agents/codex` | The harness, the container client, the frame protocol and the Run remote's rules |
 | Guarded working-tree writes for bundle installation; version and license notices | `internal/guardedwrite`, `internal/buildinfo` | No other Markitect package |
 | Maintenance | `internal/tooling/*`, `cmd/markitect-release` | The guarded writer and build data; separate from product execution |
 | Test support, test files only | `internal/testkit`; `internal/agentport/agentfake`, scripted agents | No Markitect package; the agent port |
 | Standalone: consumer bootstrap and source smoke | `packaging/bootstrap`, `tools/smoke` | No Markitect package |
 
-The pure packages (`model`, `realization`, `analysis`, `runremote`) read no files and start no process; their callers hand them bytes. `model` and `realization` return every error as a diagnostic with a code, which the [model language guide](guides/model-language.md) lists. The container client, the frame protocol and the session helper have no product consumer until T4; they stay because T4's Run engine starts its agents through them.
+The pure packages (`model`, `realization`, `analysis`, `runremote`, `harness`) read no files and start no process; their callers hand them bytes. `model` and `realization` return every error as a diagnostic with a code, which the [model language guide](guides/model-language.md) lists. The container client, the frame protocol and the session helper serve the [Manager agents](../internal/agents/README.md), which T4's Run engine starts.
 
 ### Import gate
 

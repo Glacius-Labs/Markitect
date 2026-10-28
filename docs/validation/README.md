@@ -22,6 +22,10 @@ These reports preserve the exact scope, inputs, source references and outcomes s
 - [L1 Linux runner: native qualification on Main 00c687b6 — 27 October 2026](v1-l1-runner-qualification-20261027.md): from Windows, Docker Desktop accepted the runner's mounts, and root reached the engine socket. The WSL form was not observed, because WSL integration is off on this host. One Library Apply through the runner passed and arrived as a new branch. The input checkout stayed unchanged, the credential-pattern scans found nothing, and the cleanup was complete. An early cancellation stopped in 5 s with the evidence kept
 - [K1b Claude Code adapter: first native qualification through the Linux runner — 28 October 2026](v1-k1b-claude-qualification-20261028.md): on Main ac56780d the first Claude Manager failed its login check. Offline probes of the pinned CLI found two more launch-contract gaps, and PR #807 fixes all three. On its head 9630f381, one Library Apply through the runner passed with Sonnet Managers and the owner's subscription login and arrived as a new branch, in 752 s and 5.5 million tokens, mostly cache reads. `--resume`, transient errors, login expiry and larger projects were not exercised
 
+## Concept 2.0 build
+
+- [T4b Claude Code adapter: native qualification in the 2.0 Manager container — 28 October 2026](t4b-claude-adapter-20261028.md): one real Claude maker and checker in the 2.0 Manager container against a real Run remote passed on 20716c7c: launch and login checks held, the submission passed the hook and its check, and the checker approved with an empty commit, in 31 s; no secret in the evidence, nothing left on the engine
+
 ## Modeling and platform
 
 - [Modeling skill change trial: Makerspace C5 — 27 October 2026](modeling-skill-change-trial-20261027.md): a fresh agent with only the modeling skill changed makerspace-v2.1 from C4 to C5; an independent review found it faithful, with no owner questions and no repair, at about 144 k tokens; the skill's size limit split one rule that reads better whole

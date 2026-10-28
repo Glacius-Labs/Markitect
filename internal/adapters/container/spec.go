@@ -19,6 +19,8 @@ var (
 	containerIDPattern = regexp.MustCompile(`^[0-9a-f]{64}$`)
 	labelPattern       = regexp.MustCompile(`^[a-z0-9][a-z0-9.-]{0,127}$`)
 	userPattern        = regexp.MustCompile(`^([1-9][0-9]{0,9}):([1-9][0-9]{0,9})$`)
+	addressPattern     = regexp.MustCompile(`^[0-9A-Fa-f.:]{2,45}$`)
+	hostPattern        = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9.-]{0,252}:[0-9A-Fa-f.:]{2,45}$`)
 )
 
 // Mount gives a container one named volume, or with Subpath one directory of
@@ -58,6 +60,15 @@ type ContainerSpec struct {
 	// Network names the engine network; empty selects the engine default.
 	// The host network is refused.
 	Network string
+	// MoreNetworks are further engine networks the container joins, for
+	// example a Run's internal network beside the one that reaches the
+	// provider. They need a Network.
+	MoreNetworks []string
+	// Hosts are extra host entries as "name:address".
+	Hosts []string
+	// DNS are the addresses of the name servers the container uses; empty
+	// keeps the engine's.
+	DNS []string
 }
 
 // runArgs validates the spec and returns the engine's run arguments for the
@@ -101,6 +112,29 @@ func (s ContainerSpec) runArgs(entry []string) ([]string, error) {
 	}
 	if s.Network != "" {
 		args = append(args, "--network", s.Network)
+	}
+	if len(s.MoreNetworks) > 0 && s.Network == "" {
+		return nil, fmt.Errorf("container %s joins further networks without a first one", s.Name)
+	}
+	joined := map[string]bool{s.Network: true}
+	for _, n := range s.MoreNetworks {
+		if !namePattern.MatchString(n) || n == "host" || joined[n] {
+			return nil, fmt.Errorf("network %q is not a further plain isolated engine network", n)
+		}
+		joined[n] = true
+		args = append(args, "--network", n)
+	}
+	for _, h := range s.Hosts {
+		if !hostPattern.MatchString(h) {
+			return nil, fmt.Errorf("host entry %q is not name:address", h)
+		}
+		args = append(args, "--add-host", h)
+	}
+	for _, d := range s.DNS {
+		if !addressPattern.MatchString(d) {
+			return nil, fmt.Errorf("name server %q is not an address", d)
+		}
+		args = append(args, "--dns", d)
 	}
 	labels, err := labelArgs(s.Labels)
 	if err != nil {

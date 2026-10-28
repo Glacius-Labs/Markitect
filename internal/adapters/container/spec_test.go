@@ -79,6 +79,12 @@ func TestRunArgsRefuseUnsafeSpecs(t *testing.T) {
 		"no store label":      func(s *ContainerSpec) { s.Labels = nil },
 		"label newline":       func(s *ContainerSpec) { s.Labels["io.markitect.store"] = "a\nb" },
 		"odd network":         func(s *ContainerSpec) { s.Network = "container:other" },
+		"further host":        func(s *ContainerSpec) { s.Network = "provider"; s.MoreNetworks = []string{"host"} },
+		"further twice":       func(s *ContainerSpec) { s.Network = "provider"; s.MoreNetworks = []string{"provider"} },
+		"further alone":       func(s *ContainerSpec) { s.MoreNetworks = []string{"markitect-run-r1"} },
+		"host option":         func(s *ContainerSpec) { s.Hosts = []string{"--privileged"} },
+		"host no address":     func(s *ContainerSpec) { s.Hosts = []string{"api.anthropic.com"} },
+		"dns name":            func(s *ContainerSpec) { s.DNS = []string{"dns.example"} },
 	}
 	for name, mutate := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -89,6 +95,22 @@ func TestRunArgsRefuseUnsafeSpecs(t *testing.T) {
 				t.Fatalf("unsafe spec accepted: %s", strings.Join(args, " "))
 			}
 		})
+	}
+}
+
+func TestRunArgsJoinSeveralNetworksWithHostsAndNameServers(t *testing.T) {
+	s := validSpec()
+	s.Network, s.MoreNetworks = "evaluation", []string{"markitect-run-r1"}
+	s.Hosts, s.DNS = []string{"api.anthropic.com:10.0.0.2"}, []string{"10.0.0.53"}
+	got, err := s.runArgs([]string{AgentdPath, "serve"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	joined := strings.Join(got, " ")
+	for _, want := range []string{"--network evaluation --network markitect-run-r1", "--add-host api.anthropic.com:10.0.0.2", "--dns 10.0.0.53"} {
+		if !strings.Contains(joined, want) {
+			t.Fatalf("run args lack %q: %s", want, joined)
+		}
 	}
 }
 
