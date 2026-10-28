@@ -162,7 +162,7 @@ What is decided and lives nowhere else; decisions with their own page are linked
 
 ### K. Before building concept 2.0
 
-41. **Ten questions** raised by the independent review of the [concept 2.0 draft](../concepts/v2-concept.md#14-open): Root and the project Package, overlapping path patterns, what a parent may name below it, internal Definitions and the Managers above, the checklist, hooks and integration, Commands without a model change, control files, Results and leftovers, acceptance. They are listed there with their context.
+41. **Ten questions before building: all decided** 28 October and folded into the [concept 2.0 draft](../concepts/v2-concept.md), including its acceptance (§15).
 
 ### J. Library areas
 

@@ -34,7 +34,7 @@ A [[members/member|member]] reserves a [[equipment/machine|machine]] for a slot.
 
 - The front matter holds the Kind and, where needed, `internal: true`. Nothing else.
 - The file name is the ID; the main heading is the title; the body is documentation with links.
-- A Package is a folder. Packages nest.
+- A Package is a folder. Packages nest. The model's root folder is the Root Package and holds the project itself: the project anchor, project-wide Rules, layout conventions and the architecture, which by location reach every Manager.
 - There are no typed fields. Exact values such as wire names and error codes are written in prose, in backticks.
 
 ### 2.2 Kinds and Libraries
@@ -49,8 +49,10 @@ A [[members/member|member]] reserves a [[equipment/machine|machine]] for a slot.
 - A link names its target by path: `[[members/member]]` inside the model, `[[std/Rule]]` for a Library. Links may target Packages. There are no imports.
 - A link between two Packages is a dependency.
 - **Scope is location:** everything a Package defines reaches its whole subtree.
-- **Visibility as in Go:** a Definition is public unless it says `internal: true`; an internal Definition is visible only to its own Package and the Packages below it.
+- **Visibility as in Go:** a Definition is public unless it says `internal: true`; only its own Package and the Packages below it may link to an internal Definition. Visibility binds links, not reading: any Manager above and any checker may read a child's internal Definitions when reviewing, and registry entries may link any Definition they realize. Internal Definitions do not enter other Packages' Managers' starting context.
 - **Cycles as in Go:** every link between two Packages is an edge, and so is the implicit edge from a child to its parents. A cycle is a compile error, so links point up or sideways, never down. A cycle is broken by moving the shared concept into a common parent, or by inverting the dependency: the needing side describes its need, and the other side links to it.
+- A parent may link to a child Package, which names part of the organization and is no edge ("authorization is realized in [[pipeline]]"), but not to a Definition inside it.
+- Using a Kind is an edge, so shared Kinds sit at Root or in a Library.
 
 ### 2.4 How explicit
 
@@ -69,7 +71,7 @@ One tool, `markitect`, written in Go, with no Python and no other runtime ([DEC-
 | `impact --base <commit>` | What a model change reaches: Definitions, files, Packages | none |
 | `lint` | Measures the model like code: warnings only | none |
 
-**Compile errors:** a Kind or link that does not resolve; a link to an internal Definition from outside its subtree; a cycle between Packages; a Library version that does not match the lock; a repository file that is neither registered nor ignored; two Packages claiming the same file; a registry entry for a Git-ignored file.
+**Compile errors:** a Kind or link that does not resolve; a link to an internal Definition from outside its subtree; a cycle between Packages; a Library version that does not match the lock; a repository file that is neither registered nor ignored; two Packages claiming the same path pattern; a registry entry for a Git-ignored file.
 
 **Lint warnings:** coupling and instability per Package; dependencies from stable to unstable Packages; size of Definitions and Packages; Definitions nothing links to and no file realizes; the reach of a change; a Package with no Definitions of its own and only one child; later, change hotspots from Git history.
 
@@ -77,12 +79,14 @@ One tool, `markitect`, written in Go, with no Python and no other runtime ([DEC-
 
 Next to the model, outside it ([DEC-081](register.md#dec-081-the-organization-knows-broad-at-the-top-and-deep-below)):
 
-- **Registry:** one Markdown page per Package. It names the path patterns the Package owns (several, for example `src/billing/**`, `tests/billing/**`, `docs/billing*.md`) and lists every file there with links to the Definitions it realizes and a short reason. The owning Manager maintains it; the compiler checks it. A file that enters silently, even inside an owned folder, is an error.
+- **Registry:** one Markdown page per Package. It names the path patterns the Package owns (several, for example `src/billing/**`, `tests/billing/**`, `docs/billing*.md`) and lists every file there with links to the Definitions it realizes and a short reason. The owning Manager maintains it; the compiler checks it. The most specific pattern wins, as in `CODEOWNERS`; Root owns every file no other Package claims, so every file has exactly one owner. Owning is not accounting: every file must still be listed on its owner's page or be ignored, so a file that enters silently, even inside an owned folder, is an error.
 - **Shared files** such as the README, a CI pipeline or a compose file are owned by the lowest common parent of the Packages they serve, often Root, and their entry links every Definition they realize. A child that needs a change there asks its parent ([DEC-060](register.md#dec-060-owners-realize-others-use-parents-settle-cross-area-matters)).
 - **Ignore list:** files that deliberately belong to no Package.
 - **`execution.yaml`** holds only the required checks: name, command, directory, timeout and environment. They are the one proof in a Run that does not come from an agent.
 
-Layout conventions, such as where tests live, are Rules in the project Package.
+Layout conventions, such as where tests live, are Rules in Root.
+
+**Markitect's own files** under `.markitect/` (Definitions, registry pages, manifest, lock, `execution.yaml`) need no registry entry; the compiler accounts for them itself. The hooks enforce who changes them: the model's Definitions, the manifest, the lock and `execution.yaml` never change in a Run, only through the owner, `markitect init` or `markitect lock`; a registry page changes only through its own Package's Manager.
 
 ## 5. The organization
 
@@ -100,7 +104,8 @@ Impact decides, like an incremental build ([DEC-082](register.md#dec-082-one-run
 
 One Run handles a change. Every working Manager is two agents with their own harness:
 
-- **The maker** gives every item on its checklist, the Definitions the change reaches in its area and every Finding it received, a verdict with evidence: conforms, changed, or model problem. It checks that each makes sense, plans, implements and checks again.
+- **The checklist** has three parts: the Manager's own Definitions the change reaches (changed, linking to something changed, or realized by files the change touches); inherited Definitions the change reaches, so a changed Rule at Root becomes an item for every Manager below it; and every Finding assigned to it. With `--full` it holds all own and all inherited Definitions. A verdict means "conforms to this item and to the Rules above it", so a change that breaks an unchanged inherited Rule still fails.
+- **The maker** gives every item on its checklist a verdict with evidence: conforms, changed, or model problem. It checks that each makes sense, plans, implements and checks again.
 - **The checker** is fresh. It sees only the model and the diff, re-checks every verdict and sends defects straight back to the maker.
 
 The parent reviews and integrates its children's approved work. Root's checker is the final independent check before landing. The model is authoritative and is never repaired by a Run ([DEC-063](register.md#dec-063-the-model-is-authoritative-defects-escalate)): a Manager that cannot settle a matter within the model escalates it to its parent, which settles it if the model allows; a gap without effect at the project boundary is realization freedom, decided and documented by the Manager. A real model defect, a contradiction or a gap that changes behavior at the boundary, ends the Run at Root without landing.
@@ -108,7 +113,9 @@ The parent reviews and integrates its children's approved work. Root's checker i
 ### 6.3 Git, hooks and messages
 
 - Each Run has its own Git remote. Every Manager pushes to its own branch. A handoff is a commit; the checker approves with a commit of its own; the parent merges.
-- The verdicts are lines in the submission commit's message, like Git trailers.
+- The verdicts are lines in the submission commit's message, like Git trailers. The checker approves or rejects with a commit on the maker's branch that changes no file and only confirms each verdict; a checker never edits.
+- A parent's push may contain its own changes in its own paths plus merged child commits, unchanged and approved by that child's checker; it cannot slip edits into a child's area.
+- The required checks run on every submission, child or parent, on that branch's full repository state, and again on the parent's merged state.
 - Server-side hooks on the Run's remote carry the guarantees, which agents cannot skip: a Manager pushes only to its own branch and its own paths; a submission passes the required checks; every item on its checklist has a verdict. Local hooks in each harness only give early feedback.
 - Messages carry assignments, questions and escalations along the tree, never work. Nobody blocks waiting for a message.
 - No question reaches the owner during a Run.
@@ -121,6 +128,8 @@ Every Run ends with one Result page, written by the host from commits, verdicts 
 
 A Run starts from a fixed commit of the target branch. If the branch has not moved, the result lands without the owner's review ([DEC-078](register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review)). If it moved, the host merges the new commits in; the result lands only if the merge is clean, the required checks pass on the merged state and the incoming changes touch nothing in the Run's impact. Otherwise it stays on its branch, the Result says why, and a follow-up Run starts from the new state. Runs whose impact overlaps take turns on one branch.
 
+Results live in the repository as Markdown under `.markitect/results/<run>.md`: a landing Result is part of the landing commit; a Result that does not land stays on its Run branch, pushed as `markitect/runs/<run>`. A Run's containers and remote go away when it ends; the branches of landed Runs are deleted, the others stay until a later Run lands over the same impact or the owner deletes them. Markitect never touches the user's working tree: a Run starts from a commit, and landing updates the target branch, which the user pulls like any colleague's push.
+
 ## 7. Commands that start agents
 
 | Command | Agents | Changes | Ends with |
@@ -130,6 +139,8 @@ A Run starts from a fixed commit of the target branch. If the branch has not mov
 | `improve` | each Manager uses `lint`, `graph` and `refs` on its area | a model proposal | a model diff for the owner |
 | `bughunt`, `security` | checkers only, with that focus | nothing | Findings; where the model is silent, model proposals |
 | `cleanup` | makers and checkers on the unchanged model; behavior stays | artifacts, by landing | the Result |
+
+Every Command takes a base, by default the last commit Markitect landed. Impact is everything that changed since then, in the model or in the files: a changed file reaches its Definitions through the registry, so `verify` after hand edits checks exactly what they touched, and nothing changed means nothing to do. `--full` covers everything. `bughunt`, `security` and `cleanup` take the whole tree by default, narrowable with `--package`. In `verify`, the checkers write the verdicts as commits without file changes, and the hooks require a complete checklist as in `apply`.
 
 `apply` and `verify` come first. The others are short declarations over the same mechanism and follow; projects add their own the same way. `explain` comes later.
 
@@ -186,21 +197,33 @@ No app for now ([DEC-085](register.md#dec-085-markdown-tools-are-the-cockpit-for
 
 ## 14. Open
 
-**Questions for the owner before building** (raised by the independent review of this draft):
+**Questions for the owner before building** (raised by the independent review of this draft; all ten decided on 28 October 2026 and folded into the sections above):
 
-1. **Root and the project Package.** Is the project Package Root itself, or a child of Root? Scope by location makes layout conventions and project-wide Rules reach everything only if they sit at Root.
-2. **Overlapping path patterns.** May Root own `src/**` while a child owns `src/billing/**`, with the most specific pattern winning, or is that a conflict?
-3. **What a parent may name below it.** Links never point down, so a parent cannot name its children's Definitions, for example which child provides a shared interface. And is a Definition's Kind an edge, so that a Kind must sit at or above its users?
-4. **Internal Definitions and the Managers above.** A parent reviewing a child, Root's checker, or a shared-file entry may need a child's internal Definitions. Does visibility bind only sideways, not upwards?
-5. **The checklist.** Exactly which Definitions are on a Manager's checklist: its own Package's Definitions that the change reaches, also the inherited Rules, or everything in its area on a `--full` Run?
-6. **Hooks and integration.** A parent pushes merged child commits; where does the checker's approval commit go; must a child's submission pass the whole-repository checks before its siblings are integrated?
-7. **Commands without a model change.** What `verify`, `cleanup` and `bughunt` take as their impact when the model has not changed, and who writes the verdicts in `verify`, which has no makers.
-8. **Control files.** Must the model files, registry pages, manifest, lock and `execution.yaml` be registered or ignored?
-9. **Results and leftovers.** Where Results are stored, especially when nothing lands; cleanup of Run branches and retention of evidence (open since DEC-078); landing while the user's local checkout has uncommitted changes.
-10. **Acceptance.** What counts as concept 2.0 being achieved; concept 1.0's acceptance (§25) does not carry over.
+1. **Root and the project Package: decided** 28 October: the project Package is Root itself.
+2. **Overlapping path patterns: decided** 28 October: the most specific pattern wins; Root owns what no other Package claims; two Packages with the same pattern is a compile error.
+3. **What a parent may name below it: decided** 28 October: a parent may link to a child Package (no edge) but not to Definitions inside it; using a Kind is an edge.
+4. **Internal Definitions and the Managers above: decided** 28 October: visibility binds links; reading upward and registry links stay free.
+5. **The checklist: decided** 28 October: own Definitions the change reaches, inherited Definitions the change reaches, and assigned Findings; everything with `--full`.
+6. **Hooks and integration: decided** 28 October: parents push their own paths plus unchanged, approved child commits; the checker's approval is a commit without file changes; the required checks run on every submission.
+7. **Commands without a model change: decided** 28 October: a base (by default the last landed commit) with impact over model and file changes; focus Commands take the whole tree or `--package`; in `verify` the checkers write the verdicts.
+8. **Control files: decided** 28 October: accounted automatically; the hooks refuse model, manifest, lock and `execution.yaml` changes in a Run and let only a Package's own Manager change its registry page.
+9. **Results and leftovers: decided** 28 October: Results in the repository under `.markitect/results/`; Run branches cleaned up after landing; the working tree is never touched.
+10. **Acceptance: decided** 28 October (§15).
 
 **Details for the build:** the verdict trailer format; how far impact follows dependents; the harness and model of makers and checkers; when the full Run is due; the format of a mandate; the Result page's exact layout.
 
 **Parked:** the Windows test time ([question 33](../workstreams/topics.md#questions-for-the-owner)), to be judged again after the rebuild.
 
 **Order:** the design is settled first; the evaluation and the implementations are then built against it.
+
+## 15. Acceptance
+
+Concept 2.0 is achieved when the evaluation suite shows, on a small project (the library) and a larger one (Makerspace), each over a series of changes:
+
+1. **Correct:** every landed change passes hidden behavior tests that no agent saw.
+2. **No drift:** after the series, an independent `verify --full` finds nothing left over: no stale file, no forgotten rule, every file accounted for.
+3. **Nothing skipped:** in every Result, every checklist item has a verdict with evidence.
+4. **Stops right:** planted model defects end the Run without landing; harmless gaps do not.
+5. **At least as trustworthy as today's practice:** on the same series, the results are at least as consistent as one strong agent with ordinary documentation ([DEC-002](register.md#dec-002-trust-is-measured-against-todays-practice)). Cost is reported, not judged.
+
+The same series runs natively on Windows and on Linux, on our own machine. The exact numbers, the change series and the planted defects belong to the evaluation design.
