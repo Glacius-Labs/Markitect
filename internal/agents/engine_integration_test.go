@@ -19,6 +19,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/remotecontainer"
 	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
+	"github.com/Glacius-Labs/Markitect/internal/agentport"
 	"github.com/Glacius-Labs/Markitect/internal/agents"
 	"github.com/Glacius-Labs/Markitect/internal/harness"
 	"github.com/Glacius-Labs/Markitect/internal/project"
@@ -185,7 +186,7 @@ func TestRealEngineManagersWorkThroughTheRunRemote(t *testing.T) {
 		}
 	})
 
-	p, repo := library(t)
+	_, repo := library(t)
 	source := filepath.Join(t.TempDir(), "source")
 	for f, data := range repo {
 		path := filepath.Join(source, filepath.FromSlash(f))
@@ -227,21 +228,25 @@ func TestRealEngineManagersWorkThroughTheRunRemote(t *testing.T) {
 	}
 	defer remote.Close(context.Background())
 
-	start := func(role harness.Role, sub *harness.Submission, provider *scripted) *agents.Agent {
+	loginFile := filepath.Join(t.TempDir(), "login.json")
+	if err := os.WriteFile(loginFile, []byte("{}"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	transcripts := t.TempDir()
+	run1 := func(role agentport.Role, provider *scripted) agentport.End {
 		t.Helper()
-		user := "members-" + string(role)
-		a, err := agents.Start(ctx, agents.EngineRuntime(engine), provider, agents.Spec{
-			Name: "markitect-run-" + run + "-" + user, Labels: map[string]string{remotecontainer.RunLabel: run}, Image: imageID,
-			Limits:     agents.Limits{CPUs: 1, MemoryBytes: 1 << 30, Pids: 256, TmpBytes: 128 << 20},
-			RunNetwork: remote.Network, Remote: agents.Remote{URL: remote.URL, User: user, Token: token(user)},
-			Login: []byte("{}"), Model: "scripted", Effort: "high", Messages: &sink{}, Deadline: time.Now().Add(5 * time.Minute),
-			Input: harness.Input{Run: run, Mode: harness.Apply, Role: role, Package: "members", Project: p, Working: []string{"", "members"},
-				Items: []harness.Item{{Key: "members/member", Part: harness.PartOwn, Definition: "members/member", Detail: "changed"}}, Submission: sub},
-		})
+		g, err := agents.New(agents.Config{Runtime: agents.EngineRuntime(engine), Provider: provider, Image: imageID,
+			Limits: agents.Limits{CPUs: 1, MemoryBytes: 1 << 30, Pids: 256, TmpBytes: 128 << 20}, LoginFile: loginFile,
+			Model: "scripted", Effort: "high", Transcripts: transcripts})
 		if err != nil {
 			t.Fatal(err)
 		}
-		return a
+		user := "members-" + string(role)
+		return g.Run(ctx, agentport.Start{Run: run, Mode: agentport.Apply, Role: role, Round: 1,
+			Manager:   agentport.Manager{ID: "members", Parent: "."},
+			Checklist: []agentport.Item{{Key: "members/member", Part: agentport.Own, Definition: "members/member", Why: "changed"}},
+			Git:       agentport.GitAccess{URL: remote.URL, Network: remote.Network, Branch: "managers/members", Base: base, User: user, Token: token(user)},
+			Tools:     []agentport.Tool{agentport.ToolNote}, Deadline: time.Now().Add(5 * time.Minute)}, &host{})
 	}
 	verdict := []map[string]string{{"item": "members/member", "verdict": "changed", "evidence": "type Member in src/members/member.go"}}
 	maker := &scripted{steps: [][]step{{
@@ -251,30 +256,26 @@ func TestRealEngineManagersWorkThroughTheRunRemote(t *testing.T) {
 		{"write": "src/members/member.go", "text": "package members\n\ntype Member struct{}\n"},
 		{"call": "submit", "args": map[string]any{"summary": "Realize the member", "verdicts": verdict}},
 	}}}
-	m := start(harness.Maker, nil, maker)
-	out, err := m.Send(ctx, "")
-	if err != nil || out.End != agents.Answered {
-		t.Fatalf("maker turn %+v %v", out, err)
+	if end := run1(agentport.Maker, maker); end.Reason != agentport.Finished || end.Cleanup != "" || end.Agent != "scripted:scripted" {
+		t.Fatalf("maker end %+v", end)
 	}
 	if len(maker.results) != 2 || !strings.HasPrefix(maker.results[0], "refused: the remote refused the push") || !strings.HasPrefix(maker.results[1], "ok: submitted ") {
 		t.Fatalf("maker results %q", maker.results)
 	}
-	if err := m.Close(ctx); err != nil {
-		t.Fatal(err)
-	}
-
 	checker := &scripted{steps: [][]step{{
 		{"call": "review", "args": map[string]any{"outcome": "approved", "checks": []map[string]string{{"item": "members/member", "answer": "confirmed", "evidence": "read src/members/member.go"}}}},
 	}}}
-	c := start(harness.Checker, &harness.Submission{Commit: "tip", Diff: "diff"}, checker)
-	if out, err := c.Send(ctx, ""); err != nil || out.End != agents.Answered {
-		t.Fatalf("checker turn %+v %v", out, err)
+	if end := run1(agentport.Checker, checker); end.Reason != agentport.Finished || end.Cleanup != "" {
+		t.Fatalf("checker end %+v", end)
 	}
 	if len(checker.results) != 1 || !strings.HasPrefix(checker.results[0], "ok: approved ") {
 		t.Fatalf("checker results %q", checker.results)
 	}
-	if err := c.Close(ctx); err != nil {
-		t.Fatal(err)
+	for _, name := range []string{"members-maker-1.jsonl", "members-checker-1.jsonl"} {
+		data, err := os.ReadFile(filepath.Join(transcripts, run, name))
+		if err != nil || !bytes.Contains(data, []byte(`"kind":"tool-call"`)) || bytes.Contains(data, []byte(token("members-maker"))) {
+			t.Fatalf("transcript %s: %v", name, err)
+		}
 	}
 }
 

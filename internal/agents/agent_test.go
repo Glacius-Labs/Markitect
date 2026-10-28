@@ -18,6 +18,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
 	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
+	"github.com/Glacius-Labs/Markitect/internal/agentport"
 	"github.com/Glacius-Labs/Markitect/internal/agents"
 	"github.com/Glacius-Labs/Markitect/internal/agents/claude"
 	"github.com/Glacius-Labs/Markitect/internal/harness"
@@ -305,22 +306,47 @@ func initLine(tools ...string) string {
 
 const resultLine = `{"type":"result","subtype":"success","is_error":false,"result":"done","session_id":"s-1","usage":{"input_tokens":10,"cache_creation_input_tokens":20,"cache_read_input_tokens":30,"output_tokens":40}}`
 
-// --- the messages the agent sends ---
+// --- the engine's host tools ---
 
-type sink struct {
-	mu   sync.Mutex
-	sent []agents.Message
+type call struct{ Tool, To, Text string }
+
+// host records the host tool calls and refuses a text that asks for it.
+type host struct {
+	mu    sync.Mutex
+	calls []call
 }
 
-func (s *sink) Send(_ context.Context, m agents.Message) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if strings.Contains(m.Text, "refuse") {
-		return errors.New("the engine refuses this")
+func (h *host) record(tool, to, text string) (agentport.Message, error) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if strings.Contains(text, "refuse") {
+		return agentport.Message{}, errors.New("the engine refuses this; ask your parent instead")
 	}
-	s.sent = append(s.sent, m)
-	return nil
+	h.calls = append(h.calls, call{tool, to, text})
+	return agentport.Message{ID: fmt.Sprintf("m-%d", len(h.calls)), To: to}, nil
 }
+func (h *host) Ask(_ context.Context, text string) (agentport.Message, error) {
+	return h.record("ask", "", text)
+}
+func (h *host) Escalate(_ context.Context, text string) (agentport.Message, error) {
+	return h.record("escalate", "", text)
+}
+func (h *host) Answer(_ context.Context, to, text string) (agentport.Message, error) {
+	return h.record("answer", to, text)
+}
+func (h *host) Assign(_ context.Context, child, text string) (agentport.Message, error) {
+	return h.record("assign", child, text)
+}
+func (h *host) Note(_ context.Context, text string) (agentport.Note, error) {
+	m, err := h.record("note", "", text)
+	return agentport.Note{ID: m.ID, Text: text}, err
+}
+func (h *host) Notes(_ context.Context, after string) (agentport.NotePage, error) {
+	h.record("notes", after, "")
+	return agentport.NotePage{Notes: []agentport.Note{{ID: "n-1", Manager: "catalog", Role: agentport.Maker, Text: "the README is stale"}}}, nil
+}
+
+var allTools = []agentport.Tool{agentport.ToolAsk, agentport.ToolEscalate, agentport.ToolAnswer, agentport.ToolAssign, agentport.ToolNote, agentport.ToolNotes}
 
 func login(t *testing.T, expires time.Time) []byte {
 	raw, _ := json.Marshal(map[string]any{"claudeAiOauth": map[string]any{"accessToken": "sk-ant-oat01-ACCESS-SECRET", "refreshToken": "sk-ant-ort01-REFRESH-SECRET", "expiresAt": expires.UnixMilli(), "scopes": []string{"user:inference"}}})
@@ -329,32 +355,38 @@ func login(t *testing.T, expires time.Time) []byte {
 
 type fixture struct {
 	rt         *fakeRuntime
-	sink       *sink
+	host       *host
 	spec       agents.Spec
 	bare       string
 	transcript *bytes.Buffer
 }
 
-func setup(t *testing.T, role harness.Role, pkg string, items ...string) *fixture {
+// setup prepares one agent of the Manager id with its checklist; Root works
+// with members, and members with members/cards.
+func setup(t *testing.T, role agentport.Role, id string, items ...string) *fixture {
 	t.Helper()
-	p, repo := library(t)
+	_, repo := library(t)
 	bare := remote(t, repo)
-	var its []harness.Item
+	var checklist []agentport.Item
 	for _, i := range items {
-		its = append(its, harness.Item{Key: i, Part: harness.PartOwn, Definition: i, Detail: "changed"})
+		checklist = append(checklist, agentport.Item{Key: i, Part: agentport.Own, Definition: i, Why: "changed"})
 	}
-	in := harness.Input{Run: "r1", Mode: harness.Apply, Role: role, Package: pkg, Project: p, Items: its, Working: []string{"", "members", "members/cards"}}
-	if role == harness.Checker {
-		in.Submission = &harness.Submission{Commit: "c0ffee", Diff: "diff"}
+	manager := agentport.Manager{ID: id, Parent: ".", Children: []string{"members/cards"}}
+	if id == "." {
+		manager = agentport.Manager{ID: ".", Children: []string{"members"}}
 	}
-	f := &fixture{rt: newRuntime(t, bare), sink: &sink{}, bare: bare, transcript: &bytes.Buffer{}}
+	pkg := harness.Package(id)
+	user := strings.ReplaceAll(pkg, "/", ".") + "-" + string(role)
+	f := &fixture{rt: newRuntime(t, bare), host: &host{}, bare: bare, transcript: &bytes.Buffer{}}
 	f.spec = agents.Spec{
-		Name: "markitect-run-r1-members-maker", Labels: map[string]string{"markitect.run": "r1"}, Image: "sha256:" + strings.Repeat("a", 64),
+		Name: "markitect-run-r1-" + user, Labels: map[string]string{agents.RunLabel: "r1"}, Image: "sha256:" + strings.Repeat("a", 64),
 		Limits:  agents.Limits{CPUs: 1, MemoryBytes: 2 << 30, Pids: 256, TmpBytes: 256 << 20},
-		Network: "evaluation", RunNetwork: "markitect-run-r1",
-		Remote: agents.Remote{URL: remoteURL, User: "members-maker", Token: "run-token-SECRET-123"},
-		Login:  login(t, time.Now().Add(2*time.Hour)), Model: "claude-sonnet-5-5", Effort: "high",
-		Input: in, Messages: f.sink, Transcript: f.transcript, Deadline: time.Now().Add(time.Hour),
+		Network: "evaluation",
+		Start: agentport.Start{Run: "r1", Mode: agentport.Apply, Role: role, Manager: manager, Round: 1, Checklist: checklist, Tools: allTools,
+			Git:      agentport.GitAccess{URL: remoteURL, Network: "markitect-run-r1", Branch: runremote.Branch(pkg), Base: git(t, bare, "rev-parse", "base"), User: user, Token: "run-token-SECRET-123"},
+			Deadline: time.Now().Add(time.Hour)},
+		Host:  f.host,
+		Login: login(t, time.Now().Add(2*time.Hour)), Model: "claude-sonnet-5-5", Effort: "high", Transcript: f.transcript,
 	}
 	return f
 }
@@ -369,8 +401,11 @@ func (f *fixture) start(t *testing.T) *agents.Agent {
 	return a
 }
 
+// makerTools are the tools a maker with all host tools has.
+var makerTools = []string{"submit", "ask", "escalate", "answer", "assign", "note", "notes"}
+
 func TestStartPreparesTheContainerLoginAndClone(t *testing.T) {
-	f := setup(t, harness.Maker, "members", "members/member")
+	f := setup(t, agentport.Maker, "members", "members/member")
 	a := f.start(t)
 	spec := f.rt.spec
 	if spec.Network != "evaluation" || len(spec.MoreNetworks) != 1 || spec.MoreNetworks[0] != "markitect-run-r1" || spec.User != "1000:1000" || spec.Workdir != "/work" {
@@ -402,7 +437,7 @@ func TestStartPreparesTheContainerLoginAndClone(t *testing.T) {
 }
 
 func TestStartRefusesAnExpiredOrShortLivedLoginAndAnotherAuthMethod(t *testing.T) {
-	f := setup(t, harness.Maker, "members", "members/member")
+	f := setup(t, agentport.Maker, "members", "members/member")
 	f.spec.Login = login(t, time.Now().Add(-time.Minute))
 	var se *agents.StartError
 	if _, err := agents.Start(context.Background(), f.rt, claude.Provider{}, f.spec); !errors.As(err, &se) || se.Class != agents.LoginFailed {
@@ -423,11 +458,11 @@ func TestStartRefusesAnExpiredOrShortLivedLoginAndAnotherAuthMethod(t *testing.T
 }
 
 func TestMakerSubmitsWithTrailersAndTheTurnAnswers(t *testing.T) {
-	f := setup(t, harness.Maker, "members", "members/member")
+	f := setup(t, agentport.Maker, "members", "members/member")
 	var first, second string
 	var firstErr, secondErr bool
 	f.rt.script = func(s *fakeSession, argv []string, stdin []byte) int {
-		s.line(initLine("submit", "assign", "ask", "answer", "escalate"))
+		s.line(initLine(makerTools...))
 		os.WriteFile(filepath.Join(s.rt.work, "src", "members", "member.go"), []byte("package members\n\ntype Member struct{}\n"), 0o644)
 		first, firstErr = s.call("submit", map[string]any{"summary": "Member", "verdicts": []map[string]string{}})
 		second, secondErr = s.call("submit", map[string]any{"summary": "Realize the member\nwith a type", "verdicts": []map[string]string{
@@ -469,7 +504,7 @@ func TestMakerSubmitsWithTrailersAndTheTurnAnswers(t *testing.T) {
 	}
 	// A later turn resumes the conversation and carries only its message.
 	f.rt.script = func(s *fakeSession, argv []string, stdin []byte) int {
-		s.line(strings.Replace(initLine("submit", "assign", "ask", "answer", "escalate"), "s-1", "s-1", 1))
+		s.line(strings.Replace(initLine(makerTools...), "s-1", "s-1", 1))
 		s.line(resultLine)
 		return 0
 	}
@@ -489,7 +524,7 @@ func TestMakerSubmitsWithTrailersAndTheTurnAnswers(t *testing.T) {
 }
 
 func TestARefusedPushLeavesTheWorkAsItWas(t *testing.T) {
-	f := setup(t, harness.Maker, "members", "members/member")
+	f := setup(t, agentport.Maker, "members", "members/member")
 	hook := filepath.Join(f.bare, "hooks", "pre-receive")
 	if err := os.WriteFile(hook, []byte("#!/bin/sh\necho 'refused: required check go-test failed; fix the test and push again' >&2\nexit 1\n"), 0o755); err != nil {
 		t.Fatal(err)
@@ -497,7 +532,7 @@ func TestARefusedPushLeavesTheWorkAsItWas(t *testing.T) {
 	var text string
 	var isErr bool
 	f.rt.script = func(s *fakeSession, argv []string, stdin []byte) int {
-		s.line(initLine("submit", "assign", "ask", "answer", "escalate"))
+		s.line(initLine(makerTools...))
 		os.WriteFile(filepath.Join(s.rt.work, "src", "members", "member.go"), []byte("broken\n"), 0o644)
 		text, isErr = s.call("submit", map[string]any{"summary": "x", "verdicts": []map[string]string{{"item": "members/member", "verdict": "changed", "evidence": "e"}}})
 		s.line(resultLine)
@@ -519,7 +554,7 @@ func TestARefusedPushLeavesTheWorkAsItWas(t *testing.T) {
 }
 
 func TestCheckerReviewsTheTipWithACommitThatChangesNoFile(t *testing.T) {
-	f := setup(t, harness.Checker, "members", "members/member")
+	f := setup(t, agentport.Checker, "members", "members/member")
 	f.spec.Name = "markitect-run-r1-members-checker"
 	// The maker's submission at the tip of the branch.
 	maker := filepath.Join(t.TempDir(), "maker")
@@ -550,6 +585,10 @@ func TestCheckerReviewsTheTipWithACommitThatChangesNoFile(t *testing.T) {
 	if _, err := a.Send(context.Background(), ""); err != nil {
 		t.Fatal(err)
 	}
+	// The checker's task names the submission and its verdicts as the clone holds them.
+	if task := f.rt.session.stdin.String(); !strings.Contains(task, "submission `"+submission+"`") || !strings.Contains(task, "| `members/member` | changed | type Member |") || !strings.Contains(task, "+type Member struct{}") {
+		t.Fatalf("checker task: %s", task)
+	}
 	if !errs[0] || !strings.Contains(texts[0], "an approval disputes no verdict") || !errs[1] || !strings.Contains(texts[1], "has no answer") {
 		t.Fatalf("inconsistent reviews accepted: %q", texts)
 	}
@@ -569,24 +608,24 @@ func TestCheckerReviewsTheTipWithACommitThatChangesNoFile(t *testing.T) {
 	}
 }
 
-func TestMessagesGoAlongTheTreeOnly(t *testing.T) {
-	f := setup(t, harness.Maker, "members", "members/member")
+func TestHostToolsReachTheEngineAndItsRefusalsTheAgent(t *testing.T) {
+	f := setup(t, agentport.Maker, "members", "members/member")
 	var texts []string
 	var errs []bool
 	f.rt.script = func(s *fakeSession, argv []string, stdin []byte) int {
-		s.line(initLine("submit", "assign", "ask", "answer", "escalate"))
+		s.line(initLine(makerTools...))
 		for _, c := range []struct {
 			name string
 			args map[string]string
 		}{
 			{"assign", map[string]string{"child": "members/cards", "text": "realize the card limit"}},
-			{"ask", map[string]string{"to": "parent", "text": "which limit?"}},
-			{"answer", map[string]string{"to": "members/cards", "text": "three"}},
+			{"ask", map[string]string{"text": "which limit?"}},
+			{"answer", map[string]string{"to": "m-7", "text": "three"}},
 			{"escalate", map[string]string{"text": "the model contradicts itself"}},
-			{"ask", map[string]string{"to": "catalog", "text": "x"}},
-			{"assign", map[string]string{"child": "members", "text": "x"}},
-			{"ask", map[string]string{"to": "parent", "text": "please refuse"}},
-			{"ask", map[string]string{"to": "parent", "text": "x", "extra": "y"}},
+			{"note", map[string]string{"text": "the README is stale"}},
+			{"notes", map[string]string{}},
+			{"ask", map[string]string{"text": "please refuse"}},
+			{"ask", map[string]string{"text": "x", "extra": "y"}},
 		} {
 			text, isErr := s.call(c.name, c.args)
 			texts, errs = append(texts, text), append(errs, isErr)
@@ -598,61 +637,60 @@ func TestMessagesGoAlongTheTreeOnly(t *testing.T) {
 	if _, err := a.Send(context.Background(), ""); err != nil {
 		t.Fatal(err)
 	}
-	want := []agents.Message{
-		{Kind: "assign", From: "members", To: "members/cards", Text: "realize the card limit"},
-		{Kind: "ask", From: "members", To: "", Text: "which limit?"},
-		{Kind: "answer", From: "members", To: "members/cards", Text: "three"},
-		{Kind: "escalate", From: "members", To: "", Text: "the model contradicts itself"},
+	want := []call{{"assign", "members/cards", "realize the card limit"}, {"ask", "", "which limit?"}, {"answer", "m-7", "three"},
+		{"escalate", "", "the model contradicts itself"}, {"note", "", "the README is stale"}, {"notes", "", ""}}
+	if fmt.Sprint(f.host.calls) != fmt.Sprint(want) {
+		t.Fatalf("host calls %+v", f.host.calls)
 	}
-	if fmt.Sprint(f.sink.sent) != fmt.Sprint(want) {
-		t.Fatalf("sent %+v", f.sink.sent)
-	}
-	for i := 4; i < len(errs); i++ {
-		if !errs[i] {
-			t.Errorf("call %d accepted: %s", i, texts[i])
+	for i := 0; i < 6; i++ {
+		if errs[i] {
+			t.Errorf("call %d refused: %s", i, texts[i])
 		}
 	}
-	if !strings.Contains(texts[6], "the engine refuses this") || !strings.Contains(texts[7], "schema") {
-		t.Fatalf("refusals: %q", texts[6:])
+	if texts[0] != "sent as m-1 to members/cards" || texts[4] != "recorded as Note m-5" || !strings.Contains(texts[5], `"Text":"the README is stale"`) {
+		t.Fatalf("results %q", texts[:6])
+	}
+	if !errs[6] || !strings.Contains(texts[6], "the engine refuses this; ask your parent instead") || !errs[7] || !strings.Contains(texts[7], "schema") {
+		t.Fatalf("refusals %q", texts[6:])
 	}
 }
 
-func TestRootEscalationEndsTheRun(t *testing.T) {
-	f := setup(t, harness.Maker, "", "project")
+func TestOnlyTheStartsToolsAreOffered(t *testing.T) {
+	f := setup(t, agentport.Maker, "members", "members/member")
+	f.spec.Start.Tools = []agentport.Tool{agentport.ToolEscalate}
+	var text string
+	var isErr bool
 	f.rt.script = func(s *fakeSession, argv []string, stdin []byte) int {
-		s.line(initLine("submit", "assign", "ask", "answer", "escalate"))
-		if text, isErr := s.call("ask", map[string]string{"to": "parent", "text": "x"}); !isErr || !strings.Contains(text, "Root has no parent") {
-			panic(text)
-		}
-		s.call("escalate", map[string]string{"text": "contradiction"})
+		s.line(initLine("submit", "escalate"))
+		text, isErr = s.call("ask", map[string]string{"text": "x"})
 		s.line(resultLine)
 		return 0
 	}
 	a := f.start(t)
-	if _, err := a.Send(context.Background(), ""); err != nil {
-		t.Fatal(err)
+	if out, err := a.Send(context.Background(), ""); err != nil || out.End != agents.Answered {
+		t.Fatalf("outcome %+v %v", out, err)
 	}
-	if len(f.sink.sent) != 1 || f.sink.sent[0].To != "" || f.sink.sent[0].From != "" || f.sink.sent[0].Kind != "escalate" {
-		t.Fatalf("sent %+v", f.sink.sent)
+	if !isErr || !strings.Contains(text, `no tool "ask"`) || len(f.host.calls) != 0 {
+		t.Fatalf("ask: %v %s %v", isErr, text, f.host.calls)
 	}
 }
 
 func TestTurnEndsAtTheDeadline(t *testing.T) {
-	f := setup(t, harness.Maker, "members", "members/member")
+	f := setup(t, agentport.Maker, "members", "members/member")
 	f.rt.script = func(s *fakeSession, argv []string, stdin []byte) int {
-		s.line(initLine("submit", "assign", "ask", "answer", "escalate"))
+		s.line(initLine(makerTools...))
 		<-s.stop
 		return -1
 	}
-	f.spec.Deadline = time.Now().Add(3 * time.Second)
+	f.spec.Start.Deadline = time.Now().Add(3 * time.Second)
 	a := f.start(t)
 	out, err := a.Send(context.Background(), "")
 	if err != nil || out.End != agents.Deadline {
 		t.Fatalf("outcome %+v %v", out, err)
 	}
-	f = setup(t, harness.Maker, "members", "members/member")
+	f = setup(t, agentport.Maker, "members", "members/member")
 	f.rt.script = func(s *fakeSession, argv []string, stdin []byte) int {
-		s.line(initLine("submit", "assign", "ask", "answer", "escalate"))
+		s.line(initLine(makerTools...))
 		<-s.stop
 		return -1
 	}
@@ -666,13 +704,13 @@ func TestTurnEndsAtTheDeadline(t *testing.T) {
 
 func TestLaunchContractBreachesFailTheTurn(t *testing.T) {
 	cases := map[string][]string{
-		"native sub-agent": {initLine("submit", "assign", "ask", "answer", "escalate"), `{"type":"assistant","parent_tool_use_id":"toolu_1","message":{"role":"assistant","content":[]}}`},
-		"api key":          {strings.Replace(initLine("submit", "assign", "ask", "answer", "escalate"), `"apiKeySource":"none"`, `"apiKeySource":"ANTHROPIC_API_KEY"`, 1)},
+		"native sub-agent": {initLine(makerTools...), `{"type":"assistant","parent_tool_use_id":"toolu_1","message":{"role":"assistant","content":[]}}`},
+		"api key":          {strings.Replace(initLine(makerTools...), `"apiKeySource":"none"`, `"apiKeySource":"ANTHROPIC_API_KEY"`, 1)},
 		"no init":          {resultLine},
 	}
 	for name, lines := range cases {
 		t.Run(name, func(t *testing.T) {
-			f := setup(t, harness.Maker, "members", "members/member")
+			f := setup(t, agentport.Maker, "members", "members/member")
 			f.rt.script = func(s *fakeSession, argv []string, stdin []byte) int {
 				for _, l := range lines {
 					s.line(l)
@@ -690,9 +728,9 @@ func TestLaunchContractBreachesFailTheTurn(t *testing.T) {
 }
 
 func TestProviderFailureIsClassified(t *testing.T) {
-	f := setup(t, harness.Maker, "members", "members/member")
+	f := setup(t, agentport.Maker, "members", "members/member")
 	f.rt.script = func(s *fakeSession, argv []string, stdin []byte) int {
-		s.line(initLine("submit", "assign", "ask", "answer", "escalate"))
+		s.line(initLine(makerTools...))
 		s.line(`{"type":"system","subtype":"api_retry","attempt":1,"error":"overloaded","session_id":"s-1"}`)
 		s.line(`{"type":"assistant","parent_tool_use_id":null,"error":"overloaded","isApiErrorMessage":true,"message":{"role":"assistant","content":[{"type":"text","text":"API Error: 529 overloaded"}]},"session_id":"s-1"}`)
 		s.line(`{"type":"result","subtype":"success","is_error":true,"result":"API Error: 529","session_id":"s-1","usage":{}}`)
@@ -706,9 +744,9 @@ func TestProviderFailureIsClassified(t *testing.T) {
 }
 
 func TestProcessesThatOutliveTheTurnAreAnError(t *testing.T) {
-	f := setup(t, harness.Maker, "members", "members/member")
+	f := setup(t, agentport.Maker, "members", "members/member")
 	f.rt.script = func(s *fakeSession, argv []string, stdin []byte) int {
-		s.line(initLine("submit", "assign", "ask", "answer", "escalate"))
+		s.line(initLine(makerTools...))
 		s.line(resultLine)
 		return 0
 	}
@@ -720,8 +758,8 @@ func TestProcessesThatOutliveTheTurnAreAnError(t *testing.T) {
 }
 
 func TestVerifyCheckerPushesItsVerdictsWithoutChangingAFile(t *testing.T) {
-	f := setup(t, harness.Checker, "members", "members/member")
-	f.spec.Input.Mode, f.spec.Input.Submission = harness.Verify, nil
+	f := setup(t, agentport.Checker, "members", "members/member")
+	f.spec.Start.Mode = agentport.Verify
 	var texts []string
 	f.rt.script = func(s *fakeSession, argv []string, stdin []byte) int {
 		s.line(initLine("submit"))
@@ -750,11 +788,11 @@ func TestVerifyCheckerPushesItsVerdictsWithoutChangingAFile(t *testing.T) {
 }
 
 func TestAnIntegratingParentSubmitsWithItsManagerLineAlone(t *testing.T) {
-	f := setup(t, harness.Maker, "")
+	f := setup(t, agentport.Maker, ".")
 	var text string
 	var isErr bool
 	f.rt.script = func(s *fakeSession, argv []string, stdin []byte) int {
-		s.line(initLine("submit", "assign", "ask", "answer", "escalate"))
+		s.line(initLine(makerTools...))
 		text, isErr = s.call("submit", map[string]any{"summary": "Integrate members", "verdicts": []map[string]string{}})
 		s.line(resultLine)
 		return 0

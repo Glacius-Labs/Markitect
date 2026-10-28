@@ -1,16 +1,19 @@
 package harness
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/internal/agentport"
 	"github.com/Glacius-Labs/Markitect/internal/analysis"
 	"github.com/Glacius-Labs/Markitect/internal/libraries"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/realization"
+	"github.com/Glacius-Labs/Markitect/internal/runremote"
 )
 
 type memRepo map[string]string
@@ -80,12 +83,21 @@ func library(t *testing.T) *project.Project {
 	return p
 }
 
-func items(defs ...string) []Item {
-	var out []Item
+func items(defs ...string) []agentport.Item {
+	var out []agentport.Item
 	for _, d := range defs {
-		out = append(out, Item{Key: d, Part: PartOwn, Definition: d, Detail: "changed"})
+		out = append(out, agentport.Item{Key: d, Part: agentport.Own, Definition: d, Why: "changed"})
 	}
 	return out
+}
+
+// start is an agent start for the Manager id with its working children.
+func start(mode agentport.Mode, role agentport.Role, id string, children []string, checklist []agentport.Item) agentport.Start {
+	parent := ""
+	if id != "." {
+		parent = runremote.Name(model.ParentOf(id))
+	}
+	return agentport.Start{Run: "r1", Mode: mode, Role: role, Manager: agentport.Manager{ID: id, Parent: parent, Children: children}, Round: 1, Checklist: checklist}
 }
 
 func render(t *testing.T, in Input) Document {
@@ -117,7 +129,7 @@ func lacks(t *testing.T, text string, unwanted ...string) {
 
 func TestMakerKnowsOwnInheritedLinkedAndItsChildrenTableOfContents(t *testing.T) {
 	p := library(t)
-	d := render(t, Input{Run: "r1", Mode: Apply, Role: Maker, Package: "members", Project: p, Items: items("members/member"), Working: []string{"", "members", "members/loans"}})
+	d := render(t, Input{Start: start(Apply, Maker, "members", []string{"members/loans"}, items("members/member")), Project: p})
 	contains(t, d.Base,
 		"maker of the Manager of Package `members` in Markitect Run `r1` (apply)",
 		"on your Manager's branch `managers/members`",
@@ -141,14 +153,14 @@ func TestMakerKnowsOwnInheritedLinkedAndItsChildrenTableOfContents(t *testing.T)
 
 func TestLinkedDefinitionsInOtherPackagesAreShownInFull(t *testing.T) {
 	p := library(t)
-	d := render(t, Input{Run: "r1", Mode: Apply, Role: Maker, Package: "catalog", Project: p, Items: items("catalog/book")})
+	d := render(t, Input{Start: start(Apply, Maker, "catalog", nil, items("catalog/book")), Project: p})
 	contains(t, d.Context, "## Linked from these", "### `members/member`", "A person who borrows. Has a card.")
 	lacks(t, d.Context, "### `members/secret`", "## Child")
 }
 
 func TestRootSeesItsChildrenOnlyAsTableOfContentsAndOwnsUnclaimedPaths(t *testing.T) {
 	p := library(t)
-	d := render(t, Input{Run: "r1", Mode: Apply, Role: Maker, Package: "", Project: p, Items: items("project"), Working: []string{"", "catalog"}})
+	d := render(t, Input{Start: start(Apply, Maker, ".", []string{"catalog"}, items("project")), Project: p})
 	contains(t, d.Base, "of Root in", "branch `root`", "`.markitect/registry.md`", "every path no other Package claims", "`catalog` (branch `managers/catalog`)")
 	lacks(t, d.Base, "Your parent", "`members` (branch")
 	contains(t, d.Context, "## Child catalog", "## Child members", "- `members/member`", "- `members/loans/loan`")
@@ -156,60 +168,71 @@ func TestRootSeesItsChildrenOnlyAsTableOfContentsAndOwnsUnclaimedPaths(t *testin
 	contains(t, d.Task, "| `project` | own | changed |")
 }
 
-func TestMakerTaskAndAnswerFormat(t *testing.T) {
+func TestMakerTaskInboxAndAnswerFormat(t *testing.T) {
 	p := library(t)
-	in := Input{Run: "r1", Mode: Apply, Role: Maker, Package: "members", Project: p, Items: []Item{
-		{Key: "members/member", Part: PartOwn, Definition: "members/member", Detail: "changed | renamed"},
-		{Key: "loan-limit", Part: PartInherited, Definition: "loan-limit", Detail: "changed"},
-	}}
-	d := render(t, in)
-	contains(t, d.Task, "| `members/member` | own | changed \\| renamed |", "| `loan-limit` | inherited | changed |",
-		"Call `submit` with exactly one verdict per checklist item", "`model-problem`", "escalate")
+	s := start(Apply, Maker, "members", nil, []agentport.Item{
+		{Key: "members/member", Part: agentport.Own, Definition: "members/member", Why: "changed | renamed"},
+		{Key: "loan-limit", Part: agentport.Inherited, Definition: "loan-limit", Why: "changed"},
+	})
+	s.Inbox = []agentport.Message{
+		{ID: "m-1", Kind: agentport.Review, From: "members", To: "members", Text: "Rejected: no test at the limit."},
+		{ID: "m-2", Kind: agentport.Answer, From: ".", To: "members", ReplyTo: "m-0", Text: "Five, as the Rule says."},
+	}
+	d := render(t, Input{Start: s, Project: p})
+	contains(t, d.Task, "Make the repository conform", "| `members/member` | own | changed \\| renamed |", "| `loan-limit` | inherited | changed |",
+		"## Messages for you", "### `m-1`: review from `members`\n\nRejected: no test at the limit.", "### `m-2`: answer from `.`, answering `m-0`",
+		"Call `submit` with exactly one verdict per checklist item", "`model-problem`", "escalate", "arrive with a later start")
 	lacks(t, d.Task, "Submitted verdicts")
+	s.Task = "Correct the submission your checker rejected."
+	d = render(t, Input{Start: s, Project: p})
+	contains(t, d.Task, "# Task\n\nCorrect the submission your checker rejected.\n\n## Checklist")
+	lacks(t, d.Task, "Make the repository conform")
 }
 
 func TestCheckerSeesSubmissionVerdictsAndDiff(t *testing.T) {
 	p := library(t)
 	sub := &Submission{Commit: "abc123", Verdicts: []Verdict{{Item: "members/member", Verdict: "changed", Evidence: "member.go ```x```"}},
 		Diff: "diff --git a/src/members/member.go b/src/members/member.go\n+type Member struct{}\n"}
-	d := render(t, Input{Run: "r1", Mode: Apply, Role: Checker, Package: "members", Project: p, Items: items("members/member"), Submission: sub})
+	d := render(t, Input{Start: start(Apply, Checker, "members", nil, items("members/member")), Project: p, Submission: sub})
 	contains(t, d.Base, "As checker you re-check", "accepts from you only a commit that changes no file")
 	lacks(t, d.Base, "As maker")
 	contains(t, d.Task, "submission `abc123` on branch `managers/members`", "| `members/member` | changed | member.go ```x``` |",
 		"```diff\ndiff --git a/src/members/member.go", "Call `review`")
 	sub.Diff = strings.Repeat("x", MaxInlineDiff+1)
 	sub.Files = []string{"M src/members/member.go"}
-	d = render(t, Input{Run: "r1", Mode: Apply, Role: Checker, Package: "members", Project: p, Items: items("members/member"), Submission: sub})
+	d = render(t, Input{Start: start(Apply, Checker, "members", nil, items("members/member")), Project: p, Submission: sub})
 	contains(t, d.Task, "`git diff base abc123`", "- M src/members/member.go")
 	lacks(t, d.Task, "xxxxxxxx")
 }
 
 func TestAParentWithAnEmptyChecklistIntegrates(t *testing.T) {
 	p := library(t)
-	d := render(t, Input{Run: "r1", Mode: Apply, Role: Maker, Package: "", Project: p, Working: []string{"", "members"}})
+	d := render(t, Input{Start: start(Apply, Maker, ".", []string{"members"}, nil), Project: p})
 	contains(t, d.Task, "Your checklist is empty: integrate your children's approved work")
 	lacks(t, d.Task, "## Checklist")
 }
 
 func TestVerifyCheckerSubmitsVerdictsOnTheBase(t *testing.T) {
 	p := library(t)
-	d := render(t, Input{Run: "r1", Mode: Verify, Role: Checker, Package: "members", Project: p, Items: items("members/member")})
+	d := render(t, Input{Start: start(Verify, Checker, "members", nil, items("members/member")), Project: p})
 	contains(t, d.Task, "at the Run's base conforms", "Call `submit`", "`deviates`")
 	lacks(t, d.Task, "`changed`")
-	if _, err := Render(Input{Run: "r1", Mode: Verify, Role: Maker, Package: "members", Project: p, Items: items("members/member")}); err == nil {
+	if _, err := Render(Input{Start: start(Verify, Maker, "members", nil, items("members/member")), Project: p}); err == nil {
 		t.Error("verify has no makers")
 	}
 }
 
 func TestRenderRefusesWhatNoAgentCanWorkFrom(t *testing.T) {
 	p := library(t)
-	ok := Input{Run: "r1", Mode: Apply, Role: Maker, Package: "members", Project: p, Items: items("members/member")}
+	ok := Input{Start: start(Apply, Maker, "members", nil, items("members/member")), Project: p}
 	cases := map[string]func(*Input){
 		"no project":        func(in *Input) { in.Project = nil },
-		"unknown Package":   func(in *Input) { in.Package = "nope" },
-		"pipe in key":       func(in *Input) { in.Items = []Item{{Key: "a|b"}} },
-		"checker no commit": func(in *Input) { in.Role = Checker },
-		"unknown mode":      func(in *Input) { in.Mode = "improve" },
+		"unknown Package":   func(in *Input) { in.Start.Manager.ID = "nope" },
+		"root as empty":     func(in *Input) { in.Start.Manager.ID = "" },
+		"pipe in key":       func(in *Input) { in.Start.Checklist = []agentport.Item{{Key: "a|b"}} },
+		"checker no commit": func(in *Input) { in.Start.Role = Checker },
+		"unknown mode":      func(in *Input) { in.Start.Mode = "improve" },
+		"not a child":       func(in *Input) { in.Start.Manager.Children = []string{"catalog"} },
 		"compile errors":    func(in *Input) { q := *p; q.Errors = model.Diagnostics{{Code: "x"}}; in.Project = &q },
 	}
 	for name, mutate := range cases {
@@ -245,12 +268,12 @@ func TestItemsKeyEveryPartForThePlan(t *testing.T) {
 		t.Fatalf("keys %q, want %q", keys, want)
 	}
 	got := Items(c)
-	if got[2].Detail != "observed: no card; expected: a card" || !strings.Contains(got[3].Detail, ":4 links members/old") || got[6].Detail != ".markitect/registry/old.md is the page of a Package that no longer exists" {
+	if got[2].Why != "observed: no card; expected: a card" || !strings.Contains(got[3].Why, ":4 links members/old") || got[6].Why != ".markitect/registry/old.md is the page of a Package that no longer exists" {
 		t.Fatalf("details: %+v", got)
 	}
 }
 
-func TestToolsPerRole(t *testing.T) {
+func TestToolsPerStart(t *testing.T) {
 	names := func(ts []Tool) string {
 		var out []string
 		for _, tool := range ts {
@@ -258,19 +281,27 @@ func TestToolsPerRole(t *testing.T) {
 		}
 		return strings.Join(out, ",")
 	}
+	all := []agentport.Tool{agentport.ToolAsk, agentport.ToolEscalate, agentport.ToolAnswer, agentport.ToolAssign, agentport.ToolNote, agentport.ToolNotes, "unknown"}
 	for _, c := range []struct {
-		mode     Mode
-		role     Role
-		children bool
-		want     string
+		mode  agentport.Mode
+		role  agentport.Role
+		tools []agentport.Tool
+		want  string
 	}{
-		{Apply, Maker, true, "submit,assign,ask,answer,escalate"},
-		{Apply, Maker, false, "submit,ask,answer,escalate"},
-		{Apply, Checker, false, "review"},
-		{Verify, Checker, false, "submit"},
+		{Apply, Maker, all, "submit,ask,escalate,answer,assign,note,notes"},
+		{Apply, Maker, []agentport.Tool{agentport.ToolEscalate}, "submit,escalate"},
+		{Apply, Checker, []agentport.Tool{agentport.ToolNote}, "review,note"},
+		{Verify, Checker, nil, "submit"},
 	} {
-		if got := names(Tools(c.mode, c.role, c.children)); got != c.want {
+		s := agentport.Start{Mode: c.mode, Role: c.role, Tools: c.tools}
+		if got := names(Tools(s)); got != c.want {
 			t.Errorf("%s %s: %s, want %s", c.mode, c.role, got, c.want)
+		}
+	}
+	for _, tool := range Tools(agentport.Start{Mode: Apply, Role: Maker, Tools: all}) {
+		var schema map[string]any
+		if err := json.Unmarshal(tool.Schema, &schema); err != nil || schema["type"] != "object" {
+			t.Errorf("%s: schema %s %v", tool.Name, tool.Schema, err)
 		}
 	}
 }

@@ -1,71 +1,74 @@
 # Manager agents
 
-Every working Manager of a [concept 2.0](../../docs/concepts/v2-concept.md) Run is two agents, a maker and a fresh checker (§6.2). This page is the canonical description of how one agent runs: its container, its login, its harness, the tools it answers through, the provider adapters and the default model. It is part B of step T4 of the [delivery plan](../../docs/implementation-plan.md#concept-20-build); the Run engine that starts agents, sends them messages and writes the Result is part A. The [Run remote](../runremote/README.md) they push to is step T3.
+Every working Manager of a [concept 2.0](../../docs/concepts/v2-concept.md) Run is two agents, a maker and a fresh checker (§6.2). This page is the canonical description of how one agent runs: its container, its login, its harness, the tools it answers through, the provider adapters and the default model. It is part B of step T4 of the [delivery plan](../../docs/implementation-plan.md#concept-20-build). The Run engine of part A starts agents through the [agent port](../agentport/README.md), which this package implements; the [Run remote](../runremote/README.md) they push to is step T3.
 
 | Package | Role |
 | --- | --- |
-| `internal/harness` | Pure: renders what a maker or checker receives from the loaded project and its checklist, and the tool contract. |
-| `internal/agents` | One agent in its container: start, login check, clone, one provider turn per message, the Manager tools, close. Knows no provider. |
+| `internal/harness` | Pure: renders what a maker or checker receives from the engine's start, the project at the Run's base and the submission, and the tool contract. |
+| `internal/agents` | Implements `agentport.Agents`: one agent per start in its container, with login check, clone, provider turn, Manager tools and cleanup. Knows no provider. |
 | `internal/agents/claude` | The Claude Code adapter: launch contract, access-only login copy, stream-json reader, failure classes. |
 | `internal/agents/codex` | The Codex adapter: the same for `codex exec`. |
 | `packaging/runtime` | The Manager image. |
 
-## One agent
+## One start
 
-`agents.Start` takes a `Spec` and a `Provider` and does, in order:
+`agents.New(Config)` takes what every agent of a Run shares: the container runtime (`EngineRuntime` of the container client), the `Provider` (`claude.Provider` or `codex.Provider`), the Manager image's ID, the limits, the network that reaches the provider with any hosts and name servers, the operator's login file, the model and effort, and an optional transcript directory. `Agents.Run(ctx, start, host)` then runs one start of the port and returns its `End` only once the agent has ended and what it created is gone. Each start is a fresh agent with its own container and conversation; what an earlier start did is on the Run's remote, and what happened since arrives in the start's `Inbox`.
 
-1. Renders the harness (below). A project with compile errors starts no agent.
-2. Admits the operator's login file through the provider and refuses an API key, an expired access token and an access token that expires before the agent's deadline.
-3. Creates two fresh volumes, `NAME-home` at `/home/agent` and `NAME-work` at `/work`, labelled like the container, so that a sweep by the Run's label finds them.
-4. Starts the container from the Manager image: `markitect-agentd serve` as user `1000:1000`, read-only root, no capabilities, no new privileges, the given CPU, memory, process and temporary-space limits. It joins the network that reaches the provider (`Network`, for example the evaluation's egress-limited network) and the Run's internal network (`RunNetwork`, `markitect-run-RUN`); `Hosts` and `DNS` pass to the engine as they are. No folder of the user's is mounted.
-5. Installs the private home through agentd: the access-only login copy and, for Claude Code, the two system prompt files.
-6. Runs the CLI's own login report (`claude auth status`, `codex login status`) and requires the account login.
-7. Stores the agent's remote user and token in Git's credential store in the private home and clones `http://remote:8080/run.git` into `/work` at the Manager's branch (`runremote.Branch`). The token is the agent's own identity at the remote; the remote holds only its hash.
+A start does, in order:
 
-`Agent.Send(ctx, message)` runs one provider turn. The first turn's message is the harness's task, followed by `message` when it is not empty; later turns carry only `message`, so the engine's events (a checker's rejection, an answer, a child's approval) arrive as later turns. A turn ends when the provider ends it, at the agent's deadline (`Deadline`) or when `ctx` ends (`Stopped`); agentd then stops the process group, and a process that outlived the turn is an error. The `Outcome` says how the turn ended, its failure class, the provider conversation, the reported model and the token usage. Nothing waits for a message: the message tools return at once.
+1. Reads the login file and admits it through the provider: an API key, an expired access token and an access token that expires before the start's deadline are refused.
+2. Creates two fresh volumes, `NAME-home` at `/home/agent` and `NAME-work` at `/work`. They and the container carry the label `markitect.run=RUN`, so the Run remote's sweep finds them.
+3. Starts the container from the Manager image: `markitect-agentd serve` as user `1000:1000`, read-only root, no capabilities, no new privileges, the configured CPU, memory, process and temporary-space limits. It joins the provider's network (`Config.Network`; `bridge` is the engine's default, the evaluation passes its egress-limited one) and the Run's internal network (`Start.Git.Network`); without a provider network it reaches the remote only. No folder of the user's is mounted.
+4. Stores the agent's remote user and token in Git's credential store in the private home and clones the remote into `/work` at the Manager's branch. The token is the agent's own identity at the remote; the remote holds only its hash.
+5. Loads the project at the Run's base commit from the clone (`git ls-tree` and `git archive` of `.markitect/`, as a commit holds only tracked files) and, for a checker in `apply`, the submission at the tip of the branch: its verdict trailers and its diff from the base. A project with compile errors starts no agent.
+6. Renders the harness and installs the private home through agentd: the access-only login copy and, for Claude Code, the two system prompt files.
+7. Runs the CLI's own login report (`claude auth status`, `codex login status`) and requires the account login.
+8. Runs one provider turn whose message is the harness's task. The turn ends when the provider ends it, at the start's deadline or when `ctx` ends; agentd then stops the process group, and a process that outlived the turn is an error.
+9. Removes the login from the private home, ends the container and removes both volumes.
 
-`Agent.Close` removes the login from the private home, ends the container and removes both volumes; every failure is reported. A failed start removes what it created.
+The `End` maps the turn: `finished`, `deadline`, `cancelled` or `failed`. `Agent` is `provider:model` as the provider reported it, and `Usage` counts the input tokens (cache reads and writes included) and the output tokens. A failed `Detail` starts with the failure class (below), for example `capacity: overloaded: API Error: 529`. `Cleanup` is empty only when the container and both volumes are gone.
 
-`Spec.Transcript` receives the provider's output lines as they came and the host's records (turns, tool calls and replies, outcomes) as lines of type `markitect`. Every secret, the login's tokens and the remote token, is redacted before it is written, also from tool results and errors.
+With `Config.Transcripts` set, every start writes `RUN/MANAGER-ROLE-ROUND.jsonl` there: the provider's output lines as they came, so the evaluation's classifier reads them like a provider's own transcript, and the host's records (the turn, tool calls and replies, the outcome) as lines of type `markitect`. Every secret, the login's tokens and the remote token, is redacted before it is written, also from tool results and errors.
+
+The lower layer, `agents.Start` with a `Spec` and `Agent.Send`, is the same machinery for one agent; a conversation can take further turns, which resume it.
 
 ## Failure classes
 
-A failed turn carries a class, so that the evaluation's classifier can void the provider's failures and count everything else ([evaluation suite](../../docs/guides/evaluation-suite.md)):
+A failed start carries a class, so that the evaluation's classifier can void the provider's failures and count everything else ([evaluation suite](../../docs/guides/evaluation-suite.md)):
 
 | Class | Claude Code | Codex |
 | --- | --- | --- |
 | `capacity` | `overloaded`, HTTP 529 | "at capacity", "overloaded", 529 |
 | `rate-limit` | `rate_limit`, `billing_error`, 429 | rate or usage limit, 429 |
 | `server-error` | `server_error`, `api_error`, `unknown` (a dropped connection), 5xx | 5xx, a broken stream or connection |
-| `login` | `authentication_failed`, 401, 403; a refused or expired login at start (`StartError`) | 401, 403, an expired token; the same at start |
+| `login` | `authentication_failed`, 401, 403; a refused or expired login at start | 401, 403, an expired token; the same at start |
 | `other` | everything else, including a breach of the launch contract | the same |
 
 Claude Code's category is the one of the last failed request after its own retries: an `api_retry` line or the assistant message's `error`; a later assistant message without an error clears it. Codex's class is read from the error text of `turn.failed` or `error`.
 
 ## Harness
 
-The harness renders three texts per agent; prompts are a task and an answer format, and process lives in host state and the tools ([concept §12](../../docs/concepts/v2-concept.md#12-kept-from-concept-10)).
+The harness renders three texts per start; prompts are a task and an answer format, and process lives in host state and the tools ([concept §12](../../docs/concepts/v2-concept.md#12-kept-from-concept-10)).
 
 - **Base:** the role (maker or checker of which Manager, in which Run and mode) and the repository: the clone and the branches, the registry page and the paths the Package claims, the parent and the children that work in this Run, what the remote accepts from this agent, and the `markitect` commands that read the model in `/work`.
 - **Context**, the model the Manager knows (§5): its own Package's Definitions, everything its parents define (Root first), the Definitions these link to in other Packages, the Kinds of all of them in full, and for each direct child a table of contents of the public Definitions in its subtree, with title and first sentence. Every entry names its file; nothing is truncated.
-- **Task:** the checklist (item key, part, why) and the answer format. A maker makes the repository conform to every item and submits one verdict per item; a parent with an empty checklist integrates its children's approved work and submits with no verdict. A checker in `apply` re-checks every verdict of one submission against the model and the diff from `base`; the diff is inline up to 256 KiB and listed by file above that. A checker in `verify` judges the base.
+- **Task:** the engine's task text (`Start.Task`; without one, the role's default task), the checklist (item key, part, why), for a checker in `apply` the submitted verdicts and the diff from `base` (inline up to 256 KiB, listed by file above that), the messages of the start's `Inbox` with their IDs, and the answer format. A maker makes the repository conform to every item and submits one verdict per item; a parent with an empty checklist integrates its children's approved work and submits with no verdict. A checker in `verify` judges the base.
 
-`harness.Items` turns an impact checklist into items keyed exactly as the Run's plan keys them (`runremote.Items`). For Claude Code, Base replaces the CLI's system prompt and Context is appended to it; for Codex both precede the task in the first message.
+`harness.Items` turns an impact checklist into the port's items, keyed exactly as the Run's plan keys them (`runremote.Items`). For Claude Code, Base replaces the CLI's system prompt and Context is appended to it; for Codex both precede the task in the first message.
 
 ## Tools
 
-The tools reach the host over MCP through `markitect-agentd mcp`. Every answer, a refusal included, is a tool result the agent reads; a refusal never ends the turn.
+The tools reach the host over MCP through `markitect-agentd mcp`. Every answer, a refusal included, is a tool result the agent reads; a refusal never ends the turn. A start offers the Git tool of its role and mode and the host tools its `Start.Tools` lists, no others.
 
 | Tool | Who | Does |
 | --- | --- | --- |
 | `submit` | maker | Requires one verdict per checklist item (`conforms`, `changed`, `model-problem`) with evidence, commits the whole working tree with the [verdict trailers](../runremote/README.md#verdict-trailers) and pushes it to the Manager's branch. A push the remote refuses (paths, checks, trailers) returns the hook's reason, and the commit is undone, so the work stays as it was. |
 | `submit` | verify checker | One verdict per item (`conforms`, `deviates`, `model-problem`) as a commit with the tip's tree on the tip, pushed. |
 | `review` | apply checker | Fetches the branch, requires its tip to be a submission, one answer per submitted verdict (`confirmed`, `disputed`) with evidence, and an outcome that matches them (approved only with no dispute, rejected only with one). Writes the review as a commit with the submission's tree on the submission (`git commit-tree`), so it changes no file whatever the working tree holds, and pushes it. |
-| `assign` | maker with children in the Run | A message to a direct child. |
-| `ask`, `answer` | maker | A message to `parent` or a direct child in the Run. |
-| `escalate` | maker | A message to the parent. Root's escalation has no receiver: it is a model defect and ends the Run without landing (§6.2). |
+| `ask`, `escalate`, `answer`, `assign` | as the start allows | `Host.Ask`, `Escalate`, `Answer` (by the message ID from the Inbox) and `Assign` (to a working child). |
+| `note`, `notes` | as the start allows | `Host.Note` records a Shared Note; `Host.Notes` reads them a page at a time. |
 
-The message tools hand `agents.Message{Kind, From, To, Text}` (Package IDs, `""` for Root) to the engine's `Sink`; the engine's refusal returns to the agent. Reading the model needs no tool: `/work` holds `.markitect/`, and the image carries `markitect` for `check`, `refs`, `graph`, `impact --base base` and `lint`. Merging approved child commits is plain Git in the clone. The guarantees stay in the remote's hooks; the tools only give early, exact feedback.
+The host decides every message; its refusal reaches the agent as it is. Reading the model needs no tool: `/work` holds `.markitect/`, and the image carries `markitect` for `check`, `refs`, `graph`, `impact --base base` and `lint`. Merging approved child commits is plain Git in the clone. The guarantees stay in the remote's hooks; the Git tools only give early, exact feedback.
 
 ## Claude Code
 
@@ -100,6 +103,8 @@ Why: quality comes first, and the comparison with one strong agent is fair only 
 
 ## Tests and evidence
 
-`internal/harness` tests render Root, a parent with children, a leaf, a checker with an inline and an oversized diff, verify, and an integrating parent over an in-memory project, and key every checklist part. The provider packages test the launch arguments and environment, the login copies and refusals, the login reports, and the readers over authored stream lines: answers with usage, every launch-contract breach and every failure class. `internal/agents` drives scripted provider processes through the real agent runtime with the host's Git standing in for the container's: the clone, a submission with trailers, an incomplete submission, a refused push that leaves the work in place, reviews that the contract refuses and one it pushes as an empty commit, verify verdicts, an integrating parent, messages along the tree and their refusals, Root's escalation, the deadline and cancellation, launch-contract breaches, a provider failure's class, a process that outlives its turn, and that no secret reaches the transcript.
+`internal/harness` tests render Root, a parent with children, a leaf, a maker with an Inbox and an engine task, a checker with an inline and an oversized diff, verify, and an integrating parent over an in-memory project, key every checklist part, and offer the tools of each start. The provider packages test the launch arguments and environment, the login copies and refusals, the login reports, and the readers over authored stream lines: answers with usage, every launch-contract breach and every failure class. `internal/agents` drives scripted provider processes through the real agent runtime with the host's Git standing in for the container's: the clone, the base project and the submission read from it, a submission with trailers, an incomplete submission, a refused push that leaves the work in place, reviews that the contract refuses and one it pushes as an empty commit, verify verdicts, an integrating parent, the host tools and their refusals, a tool the start does not offer, the deadline and cancellation, launch-contract breaches, a provider failure's class, a process that outlives its turn, `Agents.Run`'s ends with usage, class and transcript, and that no secret reaches a transcript.
 
-These are source tests. The CLIs' stream shapes are authored from the documented interfaces and K1b's captures; Codex's `exec` events and its error texts have not been observed with a provider yet. A real Claude or Codex turn needs an owner-approved dispatch; that qualification is still open.
+`TestRealEngineManagersWorkThroughTheRunRemote` runs with `MARKITECT_TEST_ENGINE` (the Docker CLI's absolute path) and `MARKITECT_TEST_MANAGER_IMAGE` (an image built from `packaging/runtime`). It starts a real Run remote with its hooks and two starts through `Agents.Run` in real Manager containers, whose provider is a scripted MCP client of agentd in the image: the maker's push outside its area is refused by the hook and its work kept, its submission passes the hook and the required check, the checker's approval is accepted, the transcripts hold the tool calls and no token, and nothing of the Run remains. It passed natively on Windows with Docker Desktop on 28 October 2026.
+
+These are source and engine tests without a provider. The CLIs' stream shapes are authored from the documented interfaces and K1b's captures; Codex's `exec` events and its error texts have not been observed with a provider yet. A real Claude or Codex turn needs an owner-approved dispatch; that qualification is still open.

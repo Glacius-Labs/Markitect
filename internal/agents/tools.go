@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
+	"github.com/Glacius-Labs/Markitect/internal/agentport"
 	"github.com/Glacius-Labs/Markitect/internal/harness"
-	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/runremote"
 )
 
@@ -50,72 +50,66 @@ func (a *Agent) dispatch(ctx context.Context, name string, raw json.RawMessage) 
 	for _, t := range a.tools {
 		offered = offered || t.Name == name
 	}
+	start, host := a.spec.Start, a.spec.Host
 	if !offered {
-		return "", refuse("there is no tool %q for the %s", name, a.spec.Input.Role)
+		return "", refuse("there is no tool %q for this %s", name, start.Role)
 	}
-	in := a.spec.Input
-	switch {
-	case name == harness.ToolSubmit && in.Role == harness.Maker:
-		var args struct {
-			Summary  string        `json:"summary"`
-			Verdicts []verdictArgs `json:"verdicts"`
-		}
-		if err := decode(raw, &args); err != nil {
-			return "", err
-		}
-		return a.submit(ctx, args.Summary, args.Verdicts)
-	case name == harness.ToolSubmit:
-		var args struct {
-			Verdicts []verdictArgs `json:"verdicts"`
-		}
-		if err := decode(raw, &args); err != nil {
-			return "", err
+	var args struct {
+		Summary  string        `json:"summary"`
+		Verdicts []verdictArgs `json:"verdicts"`
+		Outcome  string        `json:"outcome"`
+		Checks   []checkArgs   `json:"checks"`
+		Text     string        `json:"text"`
+		To       string        `json:"to"`
+		Child    string        `json:"child"`
+		After    string        `json:"after"`
+	}
+	// The schema of each tool is closed; the provider checks it, and decode
+	// refuses unknown fields.
+	if err := decode(raw, &args); err != nil {
+		return "", err
+	}
+	var m agentport.Message
+	var err error
+	switch agentport.Tool(name) {
+	case harness.ToolSubmit:
+		if start.Role == agentport.Maker {
+			return a.submit(ctx, args.Summary, args.Verdicts)
 		}
 		return a.verdicts(ctx, args.Verdicts)
-	case name == harness.ToolReview:
-		var args struct {
-			Outcome string      `json:"outcome"`
-			Checks  []checkArgs `json:"checks"`
-		}
-		if err := decode(raw, &args); err != nil {
-			return "", err
-		}
+	case harness.ToolReview:
 		return a.review(ctx, args.Outcome, args.Checks)
-	case name == harness.ToolAssign:
-		var args struct {
-			Child string `json:"child"`
-			Text  string `json:"text"`
-		}
-		if err := decode(raw, &args); err != nil {
-			return "", err
-		}
-		if !a.isChild(args.Child) {
-			return "", refuse("%q is none of your children in this Run: %s", args.Child, strings.Join(a.children(), ", "))
-		}
-		return a.message(ctx, name, args.Child, args.Text)
-	case name == harness.ToolAsk || name == harness.ToolAnswer:
-		var args struct {
-			To   string `json:"to"`
-			Text string `json:"text"`
-		}
-		if err := decode(raw, &args); err != nil {
-			return "", err
-		}
-		to, err := a.neighbour(args.To)
+	case agentport.ToolAsk:
+		m, err = host.Ask(ctx, args.Text)
+	case agentport.ToolEscalate:
+		m, err = host.Escalate(ctx, args.Text)
+	case agentport.ToolAnswer:
+		m, err = host.Answer(ctx, args.To, args.Text)
+	case agentport.ToolAssign:
+		m, err = host.Assign(ctx, args.Child, args.Text)
+	case agentport.ToolNote:
+		note, err := host.Note(ctx, args.Text)
 		if err != nil {
-			return "", err
+			return "", refusal(err.Error())
 		}
-		return a.message(ctx, name, to, args.Text)
-	case name == harness.ToolEscalate:
-		var args struct {
-			Text string `json:"text"`
+		return "recorded as Note " + note.ID, nil
+	case agentport.ToolNotes:
+		page, err := host.Notes(ctx, args.After)
+		if err != nil {
+			return "", refusal(err.Error())
 		}
-		if err := decode(raw, &args); err != nil {
-			return "", err
-		}
-		return a.message(ctx, name, model.ParentOf(in.Package), args.Text)
+		raw, err := json.Marshal(page)
+		return string(raw), err
+	default:
+		return "", refuse("there is no tool %q", name)
 	}
-	return "", refuse("there is no tool %q", name)
+	if err != nil {
+		return "", refusal(err.Error())
+	}
+	if m.To == "" {
+		return fmt.Sprintf("sent as %s", m.ID), nil
+	}
+	return fmt.Sprintf("sent as %s to %s", m.ID, m.To), nil
 }
 
 func decode(raw json.RawMessage, v any) error {
@@ -143,9 +137,9 @@ type checkArgs struct {
 }
 
 // id is the Manager as trailers name it: "." for Root.
-func (a *Agent) id() string { return runremote.Name(a.spec.Input.Package) }
+func (a *Agent) id() string { return a.spec.Start.Manager.ID }
 
-func (a *Agent) branch() string { return runremote.Branch(a.spec.Input.Package) }
+func (a *Agent) branch() string { return a.spec.Start.Git.Branch }
 
 // checkVerdicts requires exactly one verdict per checklist item, with a
 // word of the mode and evidence, as the remote's hook will: a maker conforms,
@@ -153,11 +147,11 @@ func (a *Agent) branch() string { return runremote.Branch(a.spec.Input.Package) 
 // model-problem.
 func (a *Agent) checkVerdicts(args []verdictArgs) ([]runremote.Line, error) {
 	words := []string{runremote.Conforms, runremote.Changed, runremote.ModelProblem}
-	if a.spec.Input.Mode == harness.Verify {
+	if a.spec.Start.Mode == agentport.Verify {
 		words[1] = runremote.Deviates
 	}
 	want := map[string]bool{}
-	for _, it := range a.spec.Input.Items {
+	for _, it := range a.spec.Start.Checklist {
 		want[it.Key] = true
 	}
 	given := map[string]bool{}
@@ -178,7 +172,7 @@ func (a *Agent) checkVerdicts(args []verdictArgs) ([]runremote.Line, error) {
 		given[item] = true
 		lines = append(lines, runremote.Line{Item: item, Word: word, Evidence: evidence})
 	}
-	for _, it := range a.spec.Input.Items {
+	for _, it := range a.spec.Start.Checklist {
 		if !given[it.Key] {
 			problems = append(problems, fmt.Sprintf("%q has no verdict", it.Key))
 		}
@@ -369,47 +363,6 @@ func (a *Agent) push(ctx context.Context, commit string) error {
 		return refuse("the remote refused the push to %s: %v", a.branch(), err)
 	}
 	return nil
-}
-
-func (a *Agent) isChild(pkg string) bool {
-	for _, c := range a.children() {
-		if c == pkg {
-			return true
-		}
-	}
-	return false
-}
-
-// neighbour resolves "parent" or a direct child to a Manager ID.
-func (a *Agent) neighbour(to string) (string, error) {
-	pkg := a.spec.Input.Package
-	switch {
-	case to == "parent" && pkg != "":
-		return model.ParentOf(pkg), nil
-	case to == "parent":
-		return "", refuse("Root has no parent")
-	case a.isChild(to):
-		return to, nil
-	}
-	return "", refuse("%q is neither parent nor one of your children in this Run (%s)", to, strings.Join(a.children(), ", "))
-}
-
-func (a *Agent) message(ctx context.Context, kind, to, text string) (string, error) {
-	text = strings.TrimSpace(text)
-	if text == "" || len(text) > maxToolText {
-		return "", refuse("the text must be between 1 and %d bytes", maxToolText)
-	}
-	from := a.spec.Input.Package
-	if kind == harness.ToolEscalate && from == "" {
-		to = ""
-	}
-	if err := a.spec.Messages.Send(ctx, Message{Kind: kind, From: from, To: to, Text: text}); err != nil {
-		return "", refuse("not sent: %v", err)
-	}
-	if kind == harness.ToolEscalate && from == "" {
-		return "escalated: a model defect ends the Run at Root without landing", nil
-	}
-	return "sent to " + runremote.Name(to), nil
 }
 
 // flat writes text on one line, as a trailer value must be.

@@ -1,11 +1,12 @@
 // Package agents starts and drives one agent of a Manager (concept 2.0
 // §6.2, §9): a maker or a checker, each in its own hardened Linux container
 // that clones the Run's remote, with a provider CLI logged in through an
-// access-only copy of the account login. It runs one provider turn per
-// message and serves the Manager tools: submit and review push to the Run's
-// remote with the verdict trailers, and the message tools hand assignments,
-// questions, answers and escalations to the engine. It knows no provider; the
-// Claude Code and Codex adapters supply the launch contract.
+// access-only copy of the account login. It implements the engine's agent
+// port: a start renders the harness from the project at the Run's base, runs
+// the provider and serves the Manager tools: submit and review push to the
+// Run's remote with the verdict trailers, the host tools reach the engine.
+// It knows no provider; the Claude Code and Codex adapters supply the launch
+// contract.
 package agents
 
 import (
@@ -22,6 +23,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
 	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
+	"github.com/Glacius-Labs/Markitect/internal/agentport"
 	"github.com/Glacius-Labs/Markitect/internal/harness"
 	"github.com/Glacius-Labs/Markitect/internal/runremote"
 )
@@ -93,60 +95,32 @@ type Limits struct {
 	TmpBytes    int64
 }
 
-// Remote is the agent's access to the Run's remote: the repository URL on
-// the Run's network and the agent's own user and token (concept 2.0 §6.3).
-type Remote struct {
-	URL, User, Token string
-}
-
-// Spec is everything one agent needs.
+// Spec is everything one agent needs: the engine's start and host, and the
+// adapter's configuration.
 type Spec struct {
 	// Name is the container's unique name; its volumes carry it as prefix.
 	Name string
-	// Labels mark the container and its volumes, at least with the Run, so
-	// that a sweep finds them.
+	// Labels mark the container and its volumes, so that a sweep finds them.
 	Labels map[string]string
 	Image  string
 	Limits Limits
-	// Network reaches the provider ("bridge" for the engine's default);
-	// RunNetwork is the Run's internal network with the remote. Without a
-	// Network the container reaches the remote only. Hosts and DNS are
-	// passed to the engine as they are.
-	Network, RunNetwork string
-	Hosts, DNS          []string
-	Remote              Remote
+	// Network reaches the provider ("bridge" for the engine's default).
+	// The container also joins the Run's network, Start.Git.Network; without
+	// a Network it reaches the remote only. Hosts and DNS are passed to the
+	// engine as they are.
+	Network    string
+	Hosts, DNS []string
+	Start      agentport.Start
+	Host       agentport.Host
 	// Login is the operator's login file for the provider.
 	Login  []byte
 	Model  string
 	Effort string
-	// Input is what the harness renders the agent's documents from.
-	Input harness.Input
-	// Messages receives the agent's assignments, questions, answers and
-	// escalations.
-	Messages Sink
 	// Transcript, when set, receives the agent's provider output and tool
 	// calls as JSON lines, with every secret redacted.
 	Transcript io.Writer
-	// Deadline ends every turn at the latest.
-	Deadline time.Time
 	// Now is the clock; nil is time.Now.
 	Now func() time.Time
-}
-
-// Message is one message an agent sends along the tree.
-type Message struct {
-	Kind string // assign, ask, answer or escalate (harness tool names)
-	// From and To are Package IDs, "" for Root. An escalation from Root
-	// has no receiver: it is a model defect and ends the Run without
-	// landing.
-	From, To string
-	Text     string
-}
-
-// Sink takes an agent's messages. A returned error is a refusal whose text
-// the agent receives.
-type Sink interface {
-	Send(context.Context, Message) error
 }
 
 // Agent is one started agent.
@@ -155,6 +129,7 @@ type Agent struct {
 	provider Provider
 	rt       Runtime
 	session  Session
+	pkg      string
 	doc      harness.Document
 	tools    []harness.Tool
 	secrets  [][]byte
@@ -166,44 +141,46 @@ type Agent struct {
 	closed       bool
 }
 
-var namePattern = regexp.MustCompile(`^[a-z0-9][a-z0-9_.-]{0,100}$`)
+var namePattern = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$`)
 
-// Start starts the agent's container, installs its login, checks that the
-// CLI uses the account login, and clones the Run's remote at the Manager's
-// branch. It starts no turn. A failed start removes what it created.
+// Start starts the agent's container, clones the Run's remote at the
+// Manager's branch, renders the harness from the project at the Run's base,
+// installs the login and checks that the CLI uses the account login. It
+// starts no turn. A failed start removes what it created.
 func Start(ctx context.Context, rt Runtime, p Provider, spec Spec) (*Agent, error) {
 	now := time.Now
 	if spec.Now != nil {
 		now = spec.Now
 	}
-	if !namePattern.MatchString(spec.Name) || len(spec.Labels) == 0 || spec.Messages == nil || spec.Remote.URL == "" || spec.Remote.User == "" || spec.Remote.Token == "" || spec.Model == "" || spec.Effort == "" || spec.RunNetwork == "" || spec.Deadline.IsZero() {
-		return nil, errors.New("agents: an agent needs a plain name, labels, a message sink, its remote access, a model, an effort, the Run's network and a deadline")
+	s, g := spec.Start, spec.Start.Git
+	if !namePattern.MatchString(spec.Name) || len(spec.Labels) == 0 || spec.Host == nil || g.URL == "" || g.User == "" || g.Token == "" || g.Network == "" || g.Base == "" || spec.Model == "" || spec.Effort == "" || s.Deadline.IsZero() || s.Manager.ID == "" {
+		return nil, errors.New("agents: an agent needs a plain name, labels, a host, its remote access with the Run's network and base, a model, an effort, its Manager and a deadline")
 	}
-	if strings.ContainsAny(spec.Remote.User+spec.Remote.Token, ":@/\n\r ") {
-		return nil, errors.New("agents: the remote user and token must be plain")
+	if strings.ContainsAny(g.User+g.Token, ":@/\n\r ") || !commitPattern.MatchString(g.Base) {
+		return nil, errors.New("agents: the remote user, token and base must be plain")
 	}
-	doc, err := harness.Render(spec.Input)
-	if err != nil {
-		return nil, err
+	pkg := harness.Package(s.Manager.ID)
+	if g.Branch != runremote.Branch(pkg) {
+		return nil, fmt.Errorf("agents: the branch %q is not Manager %s's branch %q", g.Branch, s.Manager.ID, runremote.Branch(pkg))
 	}
 	login, err := p.Login(spec.Login, now())
 	if err != nil {
 		return nil, &StartError{Class: LoginFailed, Err: err}
 	}
-	if !login.Expires.IsZero() && !login.Expires.After(spec.Deadline) {
-		return nil, &StartError{Class: LoginFailed, Err: fmt.Errorf("the %s login's access token expires at %s, before the deadline %s; refresh the login on the host first", p.Name(), login.Expires.UTC().Format(time.RFC3339), spec.Deadline.UTC().Format(time.RFC3339))}
+	if !login.Expires.IsZero() && !login.Expires.After(s.Deadline) {
+		return nil, &StartError{Class: LoginFailed, Err: fmt.Errorf("the %s login's access token expires at %s, before the deadline %s; refresh the login on the host first", p.Name(), login.Expires.UTC().Format(time.RFC3339), s.Deadline.UTC().Format(time.RFC3339))}
 	}
-	home, err := p.Home(login, doc)
-	if err != nil {
+	a := &Agent{spec: spec, provider: p, rt: rt, pkg: pkg, secrets: append(login.Secrets, []byte(g.Token))}
+	if err := a.start(ctx, login); err != nil {
+		if cerr := a.Close(context.WithoutCancel(ctx)); cerr != nil {
+			err = errors.Join(err, fmt.Errorf("%w: %v", errCleanup, cerr))
+		}
 		return nil, err
-	}
-	a := &Agent{spec: spec, provider: p, rt: rt, doc: doc, secrets: append(login.Secrets, []byte(spec.Remote.Token))}
-	a.tools = harness.Tools(spec.Input.Mode, spec.Input.Role, len(a.children()) > 0)
-	if err := a.start(ctx, home); err != nil {
-		return nil, errors.Join(err, a.Close(context.WithoutCancel(ctx)))
 	}
 	return a, nil
 }
+
+var commitPattern = regexp.MustCompile(`^[0-9a-f]{40}([0-9a-f]{24})?$`)
 
 // StartError is a start that failed in a way the evaluation sorts: a refused
 // or expired login is the provider's, everything else is Other.
@@ -215,7 +192,7 @@ type StartError struct {
 func (e *StartError) Error() string { return fmt.Sprintf("agent start (%s): %v", e.Class, e.Err) }
 func (e *StartError) Unwrap() error { return e.Err }
 
-func (a *Agent) start(ctx context.Context, home frame.Initialize) error {
+func (a *Agent) start(ctx context.Context, login Login) error {
 	s := a.spec
 	for _, v := range []string{s.Name + "-home", s.Name + "-work"} {
 		if err := a.rt.CreateVolume(ctx, v, s.Labels); err != nil {
@@ -231,23 +208,43 @@ func (a *Agent) start(ctx context.Context, home frame.Initialize) error {
 		Name: s.Name, Image: s.Image, Labels: labels, User: user, Workdir: workDir,
 		Mounts: []container.Mount{{Volume: s.Name + "-home", Target: homeDir}, {Volume: s.Name + "-work", Target: workDir}},
 		CPUs:   s.Limits.CPUs, MemoryBytes: s.Limits.MemoryBytes, Pids: s.Limits.Pids, TmpBytes: s.Limits.TmpBytes,
-		Network: s.RunNetwork, Hosts: s.Hosts, DNS: s.DNS,
+		Network: s.Start.Git.Network, Hosts: s.Hosts, DNS: s.DNS,
 	}
 	if s.Network != "" {
-		spec.Network, spec.MoreNetworks = s.Network, []string{s.RunNetwork}
+		spec.Network, spec.MoreNetworks = s.Network, []string{s.Start.Git.Network}
 	}
 	session, err := a.rt.Start(ctx, spec)
 	if err != nil {
 		return err
 	}
 	a.session = session
+	if err := a.clone(ctx); err != nil {
+		return err
+	}
+	in := harness.Input{Start: s.Start}
+	if in.Project, err = a.loadBase(ctx); err != nil {
+		return err
+	}
+	if s.Start.Role == agentport.Checker && s.Start.Mode == agentport.Apply {
+		if in.Submission, err = a.submission(ctx); err != nil {
+			return err
+		}
+	}
+	if a.doc, err = harness.Render(in); err != nil {
+		return err
+	}
+	a.tools = harness.Tools(s.Start)
+	home, err := a.provider.Home(login, a.doc)
+	if err != nil {
+		return err
+	}
 	if err := session.Initialize(ctx, home); err != nil {
 		return err
 	}
 	if err := a.checkLogin(ctx); err != nil {
 		return &StartError{Class: LoginFailed, Err: err}
 	}
-	return a.clone(ctx)
+	return nil
 }
 
 // checkLogin runs the CLI's own login report before any inference.
@@ -274,22 +271,22 @@ func (a *Agent) checkLogin(ctx context.Context) error {
 // only Git reads it, and clones the remote at the Manager's branch. A
 // checker in apply starts at the branch's tip, the submission it reviews.
 func (a *Agent) clone(ctx context.Context) error {
-	s := a.spec
-	host, err := remoteHost(s.Remote.URL)
+	s, g := a.spec, a.spec.Start.Git
+	host, err := remoteHost(g.URL)
 	if err != nil {
 		return err
 	}
-	identity := fmt.Sprintf("%s %s", runremote.Name(s.Input.Package), s.Input.Role)
+	identity := fmt.Sprintf("%s %s", s.Start.Manager.ID, s.Start.Role)
 	steps := []struct {
 		argv  []string
 		stdin string
 	}{
 		{[]string{gitPath, "config", "--global", "credential.helper", "store"}, ""},
 		{[]string{gitPath, "config", "--global", "user.name", identity}, ""},
-		{[]string{gitPath, "config", "--global", "user.email", s.Remote.User + "@run.markitect.invalid"}, ""},
+		{[]string{gitPath, "config", "--global", "user.email", g.User + "@run.markitect.invalid"}, ""},
 		{[]string{gitPath, "config", "--global", "core.autocrlf", "false"}, ""},
-		{[]string{gitPath, "credential", "approve"}, fmt.Sprintf("protocol=http\nhost=%s\nusername=%s\npassword=%s\n\n", host, s.Remote.User, s.Remote.Token)},
-		{[]string{gitPath, "clone", "--quiet", "--origin", "origin", "--branch", runremote.Branch(s.Input.Package), s.Remote.URL, workDir}, ""},
+		{[]string{gitPath, "credential", "approve"}, fmt.Sprintf("protocol=http\nhost=%s\nusername=%s\npassword=%s\n\n", host, g.User, g.Token)},
+		{[]string{gitPath, "clone", "--quiet", "--origin", "origin", "--branch", g.Branch, g.URL, workDir}, ""},
 	}
 	for _, step := range steps {
 		if err := a.git(ctx, step.argv, step.stdin, io.Discard); err != nil {
@@ -318,26 +315,9 @@ func (a *Agent) git(ctx context.Context, argv []string, stdin string, stdout io.
 	return nil
 }
 
-func (a *Agent) children() []string {
-	var out []string
-	in := a.spec.Input
-	pkg, ok := in.Project.Model.Packages[in.Package]
-	if !ok {
-		return nil
-	}
-	for _, c := range pkg.Children {
-		for _, w := range in.Working {
-			if w == c {
-				out = append(out, c)
-			}
-		}
-	}
-	return out
-}
-
 // Send runs one turn: the message goes to the provider conversation, and the
-// turn ends when the provider ends it, at the deadline or when ctx ends.
-// Tool calls are served while it runs. The first turn's message is the
+// turn ends when the provider ends it, at the start's deadline or when ctx
+// ends. Tool calls are served while it runs. The first turn's message is the
 // harness's task; message is then appended to it when not empty.
 func (a *Agent) Send(ctx context.Context, message string) (Outcome, error) {
 	a.mu.Lock()
@@ -358,12 +338,12 @@ func (a *Agent) Send(ctx context.Context, message string) (Outcome, error) {
 		names[i] = t.Name
 		specs[i] = frame.ToolSpec{Name: t.Name, Description: t.Description, InputSchema: t.Schema}
 	}
-	turn := Turn{First: first, Conversation: conversation, Message: message, Document: a.doc, Model: a.spec.Model, Effort: a.spec.Effort, Tools: names, Deadline: a.spec.Deadline}
+	turn := Turn{First: first, Conversation: conversation, Message: message, Document: a.doc, Model: a.spec.Model, Effort: a.spec.Effort, Tools: names, Deadline: a.spec.Start.Deadline}
 	argv, env, stdin, err := a.provider.Turn(turn)
 	if err != nil {
 		return Outcome{}, err
 	}
-	turnCtx, cancel := context.WithDeadline(ctx, a.spec.Deadline)
+	turnCtx, cancel := context.WithDeadline(ctx, a.spec.Start.Deadline)
 	defer cancel()
 	if _, err := a.session.StartProvider(turnCtx, frame.Start{Argv: argv, Dir: workDir, Env: env, Tools: specs}); err != nil {
 		return Outcome{}, err

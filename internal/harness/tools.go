@@ -1,34 +1,24 @@
 package harness
 
-import "encoding/json"
+import (
+	"encoding/json"
 
-// Role is an agent's part in its Manager.
-type Role string
-
-const (
-	Maker   Role = "maker"
-	Checker Role = "checker"
+	"github.com/Glacius-Labs/Markitect/internal/agentport"
 )
 
-// Mode is the Command a Run serves.
-type Mode string
-
+// The roles and modes of the agent port.
 const (
-	// Apply: makers change the repository, checkers review their submissions.
-	Apply Mode = "apply"
-	// Verify: checkers only, each giving its checklist verdicts on the base.
-	Verify Mode = "verify"
+	Maker   = agentport.Maker
+	Checker = agentport.Checker
+	Apply   = agentport.Apply
+	Verify  = agentport.Verify
 )
 
-// Tool names. The adapters serve them; the harness names them in the answer
-// format.
+// The Git tools: an agent's work reaches the Run's remote through them. The
+// host tools (agentport.Tool*) carry messages and Notes.
 const (
-	ToolSubmit   = "submit"
-	ToolReview   = "review"
-	ToolAssign   = "assign"
-	ToolAsk      = "ask"
-	ToolAnswer   = "answer"
-	ToolEscalate = "escalate"
+	ToolSubmit = "submit"
+	ToolReview = "review"
 )
 
 // Tool is one Manager tool as offered to the provider: its name, what it
@@ -40,21 +30,25 @@ type Tool struct {
 	Schema      json.RawMessage
 }
 
-// Tools returns the tools of one agent. A maker in apply submits and sends
-// messages along the tree, and assigns only when it has children in the Run.
-// A checker in apply reviews; a checker in verify submits its verdicts.
-func Tools(mode Mode, role Role, children bool) []Tool {
+// Tools returns the tools of one start: the Git tool of its role and mode
+// (a maker submits, a checker in apply reviews, a checker in verify submits
+// its verdicts) and the host tools the start may call.
+func Tools(s agentport.Start) []Tool {
+	var tools []Tool
 	switch {
-	case role == Checker && mode == Verify:
-		return []Tool{verifySubmit}
-	case role == Checker:
-		return []Tool{review}
+	case s.Role == Maker:
+		tools = append(tools, makerSubmit)
+	case s.Mode == Verify:
+		tools = append(tools, verifySubmit)
+	default:
+		tools = append(tools, review)
 	}
-	tools := []Tool{makerSubmit}
-	if children {
-		tools = append(tools, assign)
+	for _, t := range s.Tools {
+		if tool, ok := hostTools[t]; ok {
+			tools = append(tools, tool)
+		}
 	}
-	return append(tools, ask, answer, escalate)
+	return tools
 }
 
 // verdictSchema is one verdict with the words of a mode (runremote).
@@ -86,7 +80,7 @@ var verifySubmit = Tool{
 
 var review = Tool{
 	Name: ToolReview,
-	Description: "Answer the submission with a commit that changes no file, pushed to the maker's branch: approved when you " +
+	Description: "Answer the submission at the tip of the maker's branch with a commit that changes no file: approved when you " +
 		"confirm every verdict, rejected when you dispute at least one. The maker receives a rejection with your evidence. " +
 		"Returns the review commit.",
 	Schema: json.RawMessage(`{"type":"object","additionalProperties":false,"required":["outcome","checks"],"properties":{` +
@@ -96,32 +90,42 @@ var review = Tool{
 		`"evidence":{"type":"string","description":"what you read or ran; for a dispute, what is wrong and where"}}}}}}`),
 }
 
-var assign = Tool{
-	Name:        ToolAssign,
-	Description: "Send an assignment to one of your direct children: a matter you settled that its area must realize. Returns at once.",
-	Schema: json.RawMessage(`{"type":"object","additionalProperties":false,"required":["child","text"],"properties":{` +
-		`"child":{"type":"string","description":"the child's Package path"},"text":{"type":"string"}}}`),
-}
+const textOnly = `{"type":"object","additionalProperties":false,"required":["text"],"properties":{"text":{"type":"string"}}}`
 
-var ask = Tool{
-	Name:        ToolAsk,
-	Description: "Send a question to your parent or to one of your direct children. Returns at once; the answer arrives as a later message.",
-	Schema: json.RawMessage(`{"type":"object","additionalProperties":false,"required":["to","text"],"properties":{` +
-		`"to":{"type":"string","description":"parent, or a direct child's Package path"},"text":{"type":"string"}}}`),
-}
-
-var answer = Tool{
-	Name:        ToolAnswer,
-	Description: "Answer a question you received from your parent or a direct child. Returns at once.",
-	Schema: json.RawMessage(`{"type":"object","additionalProperties":false,"required":["to","text"],"properties":{` +
-		`"to":{"type":"string","description":"parent, or a direct child's Package path"},"text":{"type":"string"}}}`),
-}
-
-var escalate = Tool{
-	Name: ToolEscalate,
-	Description: "Escalate a matter you cannot settle within the model to your parent, which settles it if the model allows. " +
-		"At Root, an escalation is a model defect: a contradiction, or a gap that changes behavior at the project boundary; " +
-		"it ends the Run without landing. Returns at once.",
-	Schema: json.RawMessage(`{"type":"object","additionalProperties":false,"required":["text"],"properties":{` +
-		`"text":{"type":"string","description":"the matter, the Definitions involved and why the model does not settle it"}}}`),
+var hostTools = map[agentport.Tool]Tool{
+	agentport.ToolAsk: {
+		Name:        string(agentport.ToolAsk),
+		Description: "Ask your parent a question. Returns at once; the answer arrives with a later start.",
+		Schema:      json.RawMessage(textOnly),
+	},
+	agentport.ToolEscalate: {
+		Name: string(agentport.ToolEscalate),
+		Description: "Hand your parent a matter you cannot settle within the model; it settles it if the model allows. " +
+			"At Root an escalation is a model defect, a contradiction or a gap that changes behavior at the project boundary, and ends the Run without landing. Returns at once.",
+		Schema: json.RawMessage(`{"type":"object","additionalProperties":false,"required":["text"],"properties":{` +
+			`"text":{"type":"string","description":"the matter, the Definitions involved and why the model does not settle it"}}}`),
+	},
+	agentport.ToolAnswer: {
+		Name:        string(agentport.ToolAnswer),
+		Description: "Answer a question or escalation you received, by its message ID. Returns at once.",
+		Schema: json.RawMessage(`{"type":"object","additionalProperties":false,"required":["to","text"],"properties":{` +
+			`"to":{"type":"string","description":"the ID of the question or escalation"},"text":{"type":"string"}}}`),
+	},
+	agentport.ToolAssign: {
+		Name:        string(agentport.ToolAssign),
+		Description: "Send one of your children in this Run a task: a matter you settled that its area must realize, or a correction after your review. Returns at once.",
+		Schema: json.RawMessage(`{"type":"object","additionalProperties":false,"required":["child","text"],"properties":{` +
+			`"child":{"type":"string","description":"the child's Package path"},"text":{"type":"string"}}}`),
+	},
+	agentport.ToolNote: {
+		Name:        string(agentport.ToolNote),
+		Description: "Record a side observation as a Shared Note, with you as its origin. A Note carries no authority.",
+		Schema:      json.RawMessage(textOnly),
+	},
+	agentport.ToolNotes: {
+		Name:        string(agentport.ToolNotes),
+		Description: "Read the Run's Shared Notes, oldest first, a page at a time; pass the previous page's next cursor to read on.",
+		Schema: json.RawMessage(`{"type":"object","additionalProperties":false,"properties":{` +
+			`"after":{"type":"string","description":"the cursor of the next page; empty for the first"}}}`),
+	},
 }
