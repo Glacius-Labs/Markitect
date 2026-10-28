@@ -88,7 +88,11 @@ func Page(r *Result) []byte {
 	if len(r.Starts) > 0 {
 		b.WriteString("\n## Agent starts\n\n| Manager | Role | Round | Ended | Agent | Seconds | Detail |\n|---|---|---|---|---|---|---|\n")
 		for _, st := range r.Starts {
-			fmt.Fprintf(&b, "| %s | %s | %d | %s | %s | %.0f | %s |\n", cell(st.Manager), st.Role, st.Round, st.Reason, cell(st.Agent), st.Seconds, cell(st.Detail))
+			ended := string(st.Reason)
+			if st.Class != "" {
+				ended += " (" + string(st.Class) + ")"
+			}
+			fmt.Fprintf(&b, "| %s | %s | %d | %s | %s | %.0f | %s |\n", cell(st.Manager), st.Role, st.Round, ended, cell(st.Agent), st.Seconds, cell(st.Detail))
 		}
 	}
 	if len(r.Messages) > 0 {

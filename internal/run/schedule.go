@@ -392,7 +392,7 @@ func (s *schedule) onEnd(ctx context.Context, ev ended) {
 	n := ev.n
 	n.running = false
 	s.running--
-	s.records = append(s.records, AgentStart{Manager: n.name, Role: ev.role, Round: ev.round, Reason: ev.end.Reason, Detail: ev.end.Detail,
+	s.records = append(s.records, AgentStart{Manager: n.name, Role: ev.role, Round: ev.round, Reason: ev.end.Reason, Detail: ev.end.Detail, Class: ev.end.Class,
 		Agent: ev.end.Agent, Usage: ev.end.Usage, Seconds: s.e.now().Sub(ev.began).Seconds()})
 	if ev.end.Cleanup != "" {
 		s.leftovers = append(s.leftovers, fmt.Sprintf("%s %s round %d: %s", n.name, ev.role, ev.round, ev.end.Cleanup))

@@ -139,7 +139,9 @@ type AgentStart struct {
 	Round   int              `json:"round"`
 	Reason  agentport.Reason `json:"reason"`
 	Detail  string           `json:"detail,omitempty"`
-	Agent   string           `json:"agent,omitempty"`
-	Usage   agentport.Usage  `json:"usage"`
-	Seconds float64          `json:"seconds"`
+	// Class is the provider's failure class of a failed start.
+	Class   agentport.FailureClass `json:"class,omitempty"`
+	Agent   string                 `json:"agent,omitempty"`
+	Usage   agentport.Usage        `json:"usage"`
+	Seconds float64                `json:"seconds"`
 }

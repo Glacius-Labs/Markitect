@@ -210,12 +210,27 @@ const (
 	Cancelled Reason = "cancelled"
 )
 
+// FailureClass is the cause of a failed end at the provider.
+type FailureClass string
+
+const (
+	Capacity    FailureClass = "capacity"
+	RateLimit   FailureClass = "rate-limit"
+	ServerError FailureClass = "server-error"
+	Login       FailureClass = "login"
+	Other       FailureClass = "other"
+)
+
 // End is how an agent ended. Finished says nothing about the quality of the
 // work; the engine reads that from the Run's remote.
 type End struct {
 	Reason Reason
 	// Detail explains Failed, DeadlineReached and Cancelled.
 	Detail string
+	// Class sorts a Failed end by its cause at the provider, so that a
+	// provider failure can be told apart from the agent's own; empty for
+	// every other reason.
+	Class FailureClass
 	// Agent names the provider and model that ran, as observed.
 	Agent string
 	Usage Usage

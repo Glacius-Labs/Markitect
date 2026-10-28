@@ -19,7 +19,7 @@
 | `Tools` | the host tools this start may call |
 | `Deadline` | when the agent must have ended |
 
-An agent's work reaches the engine only through Git: submissions, reviews and merges are commits on the Run's remote, in the trailer format of the Run remote. `End.Reason` says only how the agent ended (finished, failed, deadline, cancelled); the engine reads what it did from the remote. `End.Cleanup` is empty only when everything the start created is gone.
+An agent's work reaches the engine only through Git: submissions, reviews and merges are commits on the Run's remote, in the trailer format of the Run remote. `End.Reason` says only how the agent ended (finished, failed, deadline, cancelled), and `End.Class` sorts a failed end by its cause at the provider (capacity, rate-limit, server-error, login, other), so that provider failures can be told apart; the engine reads what it did from the remote. `End.Cleanup` is empty only when everything the start created is gone.
 
 ## Host tools
 
