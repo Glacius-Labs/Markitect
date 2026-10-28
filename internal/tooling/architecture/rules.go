@@ -109,6 +109,7 @@ var Table = Rules{
 	Exceptions: []Exception{
 		{From: "internal/tooling/release", To: "internal/tooling/architecture", Reason: "The packager takes its source roots from this table."},
 		{From: "internal/tooling/release", To: "internal/buildinfo", TestOnly: true, Reason: "Tests compare the packaged notices with the embedded ones."},
+		{From: "internal/agents", To: "internal/adapters/remotecontainer", TestOnly: true, Reason: "The real-engine test starts real Managers against a real Run remote."},
 	},
 }
 

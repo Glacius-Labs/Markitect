@@ -108,8 +108,10 @@ type Spec struct {
 	Labels map[string]string
 	Image  string
 	Limits Limits
-	// Network reaches the provider; RunNetwork is the Run's internal network
-	// with the remote. Hosts and DNS are passed to the engine as they are.
+	// Network reaches the provider ("bridge" for the engine's default);
+	// RunNetwork is the Run's internal network with the remote. Without a
+	// Network the container reaches the remote only. Hosts and DNS are
+	// passed to the engine as they are.
 	Network, RunNetwork string
 	Hosts, DNS          []string
 	Remote              Remote
@@ -225,12 +227,16 @@ func (a *Agent) start(ctx context.Context, home frame.Initialize) error {
 	for k, v := range s.Labels {
 		labels[k] = v
 	}
-	session, err := a.rt.Start(ctx, container.ContainerSpec{
+	spec := container.ContainerSpec{
 		Name: s.Name, Image: s.Image, Labels: labels, User: user, Workdir: workDir,
 		Mounts: []container.Mount{{Volume: s.Name + "-home", Target: homeDir}, {Volume: s.Name + "-work", Target: workDir}},
 		CPUs:   s.Limits.CPUs, MemoryBytes: s.Limits.MemoryBytes, Pids: s.Limits.Pids, TmpBytes: s.Limits.TmpBytes,
-		Network: s.Network, MoreNetworks: []string{s.RunNetwork}, Hosts: s.Hosts, DNS: s.DNS,
-	})
+		Network: s.RunNetwork, Hosts: s.Hosts, DNS: s.DNS,
+	}
+	if s.Network != "" {
+		spec.Network, spec.MoreNetworks = s.Network, []string{s.RunNetwork}
+	}
+	session, err := a.rt.Start(ctx, spec)
 	if err != nil {
 		return err
 	}

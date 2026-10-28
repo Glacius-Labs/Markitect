@@ -42,6 +42,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | From | To | Files | Reason |
 |---|---|---|---|
 | `internal/tooling/release` | `internal/tooling/architecture` | all | The packager takes its source roots from this table. |
+| `internal/agents` | `internal/adapters/remotecontainer` | tests only | The real-engine test starts real Managers against a real Run remote. |
 | `internal/tooling/release` | `internal/buildinfo` | tests only | Tests compare the packaged notices with the embedded ones. |
 
 ## Canonical model
