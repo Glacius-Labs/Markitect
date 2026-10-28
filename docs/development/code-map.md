@@ -20,13 +20,15 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `project` | Loads and checks a project's Markitect folder from a repository state. | `model`, `assets`, `domain` | 1 |
 | `service` | Questions about a loaded project: references, graph, impact with checklists, and lint. | `model`, `assets`, `domain`, `project` | 1 |
 | `remote` | A Run's plan, its verdict trailers and the decision of the remote's hooks. | `model`, `assets`, `domain`, `project`, `service` | 1 |
+| `agent-port` | How the Run engine starts a maker or checker for a Manager and observes how it ends. | nothing | 1 |
+| `agent-fake` | Scripted makers and checkers that work on a Run's remote with real Git, for tests. Only test files may import it. | `agent-port` | 1 |
 | `protocol` | Frame protocol between the Orchestrator and the session helper. | nothing | 1 |
 | `container` | The container engine client that the adapters running containers share. | `protocol` | 1 |
-| `harness` | What a maker or checker receives: its role, the model it knows, its task and the tool contract. | `model`, `assets`, `domain`, `project`, `service`, `remote` | 1 |
-| `agents` | One maker or checker in its container: login, clone, provider turns and the Manager tools, with the Claude Code and Codex adapters. | `model`, `assets`, `domain`, `project`, `remote`, `protocol`, `container`, `harness`, `agents` | 3 |
+| `harness` | What a maker or checker receives: its role, the model it knows, its task and the tool contract. | `model`, `assets`, `domain`, `project`, `service`, `remote`, `agent-port` | 1 |
+| `agents` | One maker or checker in its container: login, clone, provider turns and the Manager tools, with the Claude Code and Codex adapters. | `model`, `assets`, `domain`, `project`, `remote`, `agent-port`, `protocol`, `container`, `harness`, `agents` | 3 |
 | `guardedwrite` | Guarded working-tree writes for bundle installation, with the Git and path helpers they share with source snapshots. | nothing | 1 |
 | `build` | Version identity and embedded license notices. | nothing | 1 |
-| `adapter` | Concrete Git, command-line and Run remote adapters; no adapter imports another. | `model`, `assets`, `domain`, `project`, `service`, `remote`, `build` | 4 |
+| `adapter` | Concrete Git, command-line and Run remote adapters; no adapter imports another. | `model`, `assets`, `domain`, `project`, `service`, `remote`, `agent-port`, `build` | 4 |
 | `composition` | Constructs the command line with its adapters. | `model`, `project`, `service`, `adapter` | 1 |
 | `command` | Thin entrypoints to product composition. | `composition` | 1 |
 | `remote-command` | Thin entrypoint of a Run's remote container. | `adapter` | 1 |
@@ -81,6 +83,18 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | Package | Summary | Owning document |
 |---|---|---|
 | `internal/runremote` | Package runremote holds the rules of a Run's Git remote (concept 2.0 §6.3): the Run's plan, the commit trailers that carry verdicts and reviews, and the decision the server-side hook makes on every push. | [internal/runremote/README.md](../../internal/runremote/README.md) |
+
+## Agent port
+
+| Package | Summary | Owning document |
+|---|---|---|
+| `internal/agentport` | Package agentport is the boundary between the Run engine and the agents it starts (concept 2.0 §6.2, §12): the engine starts a maker or a checker for one Manager with its role, task, checklist, tools and deadline, and observes how it ends. | [internal/agentport/README.md](../../internal/agentport/README.md) |
+
+## Scripted agents
+
+| Package | Summary | Owning document |
+|---|---|---|
+| `internal/agentport/agentfake` | Package agentfake is a scripted implementation of agentport.Agents for tests: every start of a Manager's maker or checker runs the next scripted Step, which works on the Run's remote with real Git and calls the host's tools as an agent would. | [internal/agentport/README.md](../../internal/agentport/README.md) |
 
 ## Agent protocol
 
