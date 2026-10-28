@@ -59,9 +59,13 @@ Gaps today:
 
 Points 1 to 7 need only the check report and the analysis logic, so no host change. Point 8 needs run records that the UI can read.
 
+## State
+
+On 27 October 2026 the owner chose a read-only model explorer as the first slice and asked for its design before any code. The design is the [model explorer](../design/model-explorer.md) proposal. Nothing is built.
+
 ## Open owner questions
 
-1. **When and what first.** The Cockpit is outside V1. When should building start, and with what? The recommendation is a read-only model explorer (points 1 to 7) first, then views of closed runs, and a live view last.
+1. **When and what first.** Answered for the first slice: a read-only model explorer (points 1 to 7), designed first. Views of closed runs come next and a live view last. When building starts is open.
 2. **Technology.** The recommendation is the old shape: a local server inside `markitect` and a plain page in an app window, with no build chain. The alternatives are a native shell (Tauri, Electron, Wails) or static HTML generated like `markitect docs`.
 3. **Where the graph logic lives.** The analysis logic is in the Python tool under `tools/`, the product is Go. Should the Cockpit start as a tool next to it, or move that logic into Go in the product? The recommendation is to move it into the product once the explorer is wanted, so there is one implementation.
 4. **Read-only or editing.** DEC-065 let an Agent propose model changes from the cockpit. Interactive authoring is outside V1 and touches the modeling-skills lane. The recommendation is read-only first; editing stays in the editor and the agent chat.
