@@ -59,7 +59,7 @@ Each task brings its hidden judge, stored apart from the task folder; the suite 
 |---|---|---|
 | Library M1 | Small project: shows that a variant and the suite work technically; never a comparison | Public (in this repository) |
 | Makerspace chain: fresh build W0 and changes C1 to C9 | Intermediate: a first idea of what works, without much effort; pilot and descriptive results | Public; arm M was tuned on it ([gate](../validation/v1-makerspace-gate-20261027.md)) and its README marks it pilot-only |
-| A new, larger project: a fresh build and about six to eight changes | The confirmatory test, on unseen material | Private, outside this repository, published only after the comparison |
+| A new, larger project: a fresh build and about six to eight changes | The confirmatory test, on unseen material | Private, in the private repository `Glacius-Labs/Markitect-Evaluation` (owner, 28 October 2026), published only after the comparison |
 
 **Owner, 28 October 2026:** "Library is just there as a small project, to test that a variant technically works and that the eval suite works. Makerspace is an intermediate, where we can get an idea what works without much effort. As you propose the real test should be the new unseen one". The design review had found that arm M was developed against the Makerspace chain, so a result there cannot confirm anything.
 
@@ -91,5 +91,4 @@ G joins at E3 once it has a provider (Codex tokens or a Claude backend), after i
 
 ## Open questions
 
-1. **Where the new project's hidden material lives.** Recommendation: a private GitHub repository owned by Glacius Labs, so that it is versioned and backed up but not public.
-2. **Minimum meaningful difference and the run and quota budget per counted series:** the pilot measures spread and quota use; the protocol asks for both.
+1. **Minimum meaningful difference and the run and quota budget per counted series:** the pilot measures spread and quota use; the protocol asks for both.
