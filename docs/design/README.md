@@ -14,4 +14,5 @@ Current design documents. Earlier design records are not kept on Main; the [arch
 | [Kind interfaces](kind-interfaces.md) | Reasoning, rules and Core 1.2.0 migration for Kind interfaces and the `valueType` vocabulary; the normative text is the language contract |
 | [Model explorer](model-explorer.md) | Proposal: the read-only model explorer, the Cockpit's first slice; nothing built |
 | [Outside Findings](outside-findings.md) | Proposed concept 1.0 amendment: outside reports as an Apply input, confirmed against the model by Assessment and checked by Verify |
+| [Evaluation suite v2](evaluation-suite-v2.md) | How the evaluation suite becomes decision-grade: one sandbox, judges as plug-ins, the portfolio, counted series; increments E1 to E6 |
 | [Canonical model track charter](model-track-charter.md) | Goal, workstreams and owner decisions of the track that makes the canonical model serve typed programming in prose |
