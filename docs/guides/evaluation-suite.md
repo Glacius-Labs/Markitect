@@ -27,7 +27,7 @@ A task is a directory the suite writes:
 
 | Path | Content |
 |---|---|
-| `task.md` | What to build or change, in ordinary language, with the delivery rules |
+| `task.md` | What to build or change, in ordinary language, with the delivery rules. `suite.py task` ends every `task.md` with the same stop rule: if the requirements contradict each other or leave open a behavior at the program's boundary, change nothing and say why in the final report (owner, 28 October 2026) |
 | `model/` | The same intent as a canonical model, for variants that work from one. `task.md` is rendered mechanically from `model/`, reviewed once for the same meaning and frozen. Every variant receives both |
 | `start.bundle` | The repository to start from, as a Git bundle. For a new project, one empty commit |
 | `task.json` | The start commit, the deadline and a digest over the rest |

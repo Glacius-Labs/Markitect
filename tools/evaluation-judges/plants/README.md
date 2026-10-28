@@ -23,4 +23,4 @@ python -I -B tools/evaluation/suite.py task --task-md STEP_DIR/task.md --model S
 python -I -B tools/evaluation/suite.py judge --run RUN --judge PLANTED_JUDGE --step M2 --out JUDGMENT
 ```
 
-How K is scored on these tasks is the owner's decision; the [suite design](../../../docs/design/evaluation-suite-v2.md#t6-evaluation-against-15) recommends one mechanical rule for every variant and a stop sentence in every task's delivery rules.
+Every variant is scored on these tasks by one mechanical rule (a result equal to its start did not land), and `suite.py task` ends every `task.md` with the same stop rule; decided by the owner on 28 October 2026 ([suite design](../../../docs/design/evaluation-suite-v2.md#t6-evaluation-against-15)).

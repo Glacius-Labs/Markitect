@@ -33,6 +33,8 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 
 - **Standing run approval, 28 October 2026:** the owner approved, in advance, the real container and provider runs of the concept 2.0 build and of the evaluation suite. That covers smokes, judge self-tests and the pilot; Build and its sub-sessions run them without asking again. Each run still has a written bounded dispatch under `docs/validation/` (source, limits, abort, cleanup, then its results, failed attempts included), holds the shared engine lock, uses account login only, and never an API key. Not covered: the counted acceptance series, whose protocol the owner approves (T7), and any release or deployment.
 
+- **Scoring the stops, 28 October 2026:** every arm is scored on planted tasks by one mechanical rule: a result equal to its start did not land. Every task ends with the same stop rule for every arm: if the requirements contradict each other or leave a boundary behavior open, change nothing and say why. The owner accepted Build's recommendation.
+
 ## Questions for the owner
 
-1. **How K is scored on planted tasks (§15, stops right).** Recommendation: one mechanical rule for every arm: a result equal to its start did not land. Every task's delivery rules tell every arm, in the same words, to change nothing and say why if the requirements contradict each other or leave a boundary behavior open ([design](../design/evaluation-suite-v2.md)).
+None open.
