@@ -20,12 +20,15 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `project` | Loads and checks a project's Markitect folder from a repository state. | `model`, `assets`, `domain` | 1 |
 | `service` | Questions about a loaded project: references, graph, impact with checklists, and lint. | `model`, `assets`, `domain`, `project` | 1 |
 | `remote` | A Run's plan, its verdict trailers and the decision of the remote's hooks. | `model`, `assets`, `domain`, `project`, `service` | 1 |
+| `agent-port` | How the Run engine starts a maker or checker for a Manager and observes how it ends. | nothing | 1 |
+| `agent-fake` | Scripted makers and checkers that work on a Run's remote with real Git, for tests. Only test files may import it. | `agent-port` | 1 |
+| `run` | One Run per change: who works, makers and checkers along the tree, the Result and landing. | `model`, `assets`, `domain`, `project`, `service`, `remote`, `agent-port` | 1 |
 | `protocol` | Frame protocol between the Orchestrator and the session helper. | nothing | 1 |
 | `container` | The container engine client that the adapters running containers share. | `protocol` | 1 |
 | `guardedwrite` | Guarded working-tree writes for bundle installation, with the Git and path helpers they share with source snapshots. | nothing | 1 |
 | `build` | Version identity and embedded license notices. | nothing | 1 |
-| `adapter` | Concrete Git, command-line and Run remote adapters; no adapter imports another. | `model`, `assets`, `domain`, `project`, `service`, `remote`, `build` | 4 |
-| `composition` | Constructs the command line with its adapters. | `model`, `project`, `service`, `adapter` | 1 |
+| `adapter` | Concrete Git, command-line and Run remote adapters; no adapter imports another. | `model`, `assets`, `domain`, `project`, `service`, `remote`, `agent-port`, `run`, `build` | 5 |
+| `composition` | Constructs the command line with its adapters. | `model`, `project`, `service`, `remote`, `agent-port`, `run`, `adapter` | 1 |
 | `command` | Thin entrypoints to product composition. | `composition` | 1 |
 | `remote-command` | Thin entrypoint of a Run's remote container. | `adapter` | 1 |
 | `agent` | Runs inside each Agent container: provider process, MCP bridge and stdio framing. | `protocol` | 1 |
@@ -40,6 +43,8 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | From | To | Files | Reason |
 |---|---|---|---|
 | `internal/tooling/release` | `internal/tooling/architecture` | all | The packager takes its source roots from this table. |
+| `internal/run` | `internal/adapters/remoteserver` | tests only | The engine's scripted Runs push through the Run remote's real hooks. |
+| `internal/run` | `internal/adapters/rungit` | tests only | The engine's scripted Runs use the host's real Git. |
 | `internal/tooling/release` | `internal/buildinfo` | tests only | Tests compare the packaged notices with the embedded ones. |
 
 ## Canonical model
@@ -79,6 +84,24 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 |---|---|---|
 | `internal/runremote` | Package runremote holds the rules of a Run's Git remote (concept 2.0 §6.3): the Run's plan, the commit trailers that carry verdicts and reviews, and the decision the server-side hook makes on every push. | [internal/runremote/README.md](../../internal/runremote/README.md) |
 
+## Agent port
+
+| Package | Summary | Owning document |
+|---|---|---|
+| `internal/agentport` | Package agentport is the boundary between the Run engine and the agents it starts (concept 2.0 §6.2, §12): the engine starts a maker or a checker for one Manager with its role, task, checklist, tools and deadline, and observes how it ends. | [internal/agentport/README.md](../../internal/agentport/README.md) |
+
+## Scripted agents
+
+| Package | Summary | Owning document |
+|---|---|---|
+| `internal/agentport/agentfake` | Package agentfake is a scripted implementation of agentport.Agents for tests: every start of a Manager's maker or checker runs the next scripted Step, which works on the Run's remote with real Git and calls the host's tools as an agent would. | [internal/agentport/README.md](../../internal/agentport/README.md) |
+
+## Run engine
+
+| Package | Summary | Owning document |
+|---|---|---|
+| `internal/run` | Package run is the Run engine of concept 2.0 (§6, §7): one Run per change. | [internal/run/README.md](../../internal/run/README.md) |
+
 ## Agent protocol
 
 | Package | Summary | Owning document |
@@ -107,16 +130,17 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/adapters/cli` | Package cli is the markitect command line: init, check, lock, refs, graph, impact, lint, version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
+| `internal/adapters/cli` | Package cli is the markitect command line: init, check, lock, refs, graph, impact and lint, which start no agent; apply and verify, which start a Run; version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
 | `internal/adapters/remotecontainer` | Package remotecontainer starts and removes a Run's remote container from the host, natively on Windows, Linux and macOS with only the Docker CLI. | [internal/runremote/README.md#the-container](../../internal/runremote/README.md#the-container) |
 | `internal/adapters/remoteserver` | Package remoteserver is the Run remote inside its container: the Git smart HTTP server with one credential per agent, the pre-receive hook that applies the rules of internal/runremote, the required checks under a throwaway user, and seeding and exporting the bare repository. | [internal/runremote/README.md](../../internal/runremote/README.md) |
 | `internal/adapters/repo` | Package repo reads a project's repository through Git: the working tree as Git sees it, a base commit, and the files changed between them. | [docs/guides/model-language.md#the-projects-markitect-folder](../guides/model-language.md#the-projects-markitect-folder) |
+| `internal/adapters/rungit` | Package rungit is the host's own Git work for a Run (concept 2.0 §9): a private bare repository that reads the target branch, makes the start bundle, imports what the Run's remote holds, merges and writes the Result commit, and pushes to the target repository. | [internal/run/README.md#host-git](../../internal/run/README.md#host-git) |
 
 ## Composition
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/bootstrap` | Package bootstrap constructs the command line with its Git adapter. | [docs/architecture.md#product-flow](../architecture.md#product-flow) |
+| `internal/bootstrap` | Package bootstrap constructs the command line with its adapters: Git for the model commands, and for apply and verify the Run engine with the host's Git, the Run remote in a container and the provider adapters. | [docs/architecture.md#product-flow](../architecture.md#product-flow) |
 
 ## Product commands
 
