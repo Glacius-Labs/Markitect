@@ -6,7 +6,7 @@ Use this map to find the document that owns a decision, a guide or a piece of ev
 
 | If you want to… | Start here |
 |---|---|
-| Implement Markitect V1 | [V1 concept 1.0](concepts/v1-concept.md), [delivery plan](implementation-plan.md), [architecture](architecture.md), [code map](development/code-map.md) and [qualification record](validation/v1-qualification-20261024.md) |
+| Implement Markitect | [Concept 2.0](concepts/v2-concept.md) (the target), [V1 concept 1.0](concepts/v1-concept.md) (what Main implements), [delivery plan](implementation-plan.md), [architecture](architecture.md), [code map](development/code-map.md) and [qualification record](validation/v1-qualification-20261024.md) |
 | Understand what Markitect is for, before assessing or redirecting it | [Markitect in brief](vision.md#markitect-in-brief), [Common misreadings](vision.md#common-misreadings) and the [concept register](concepts/register.md) |
 | Understand where the idea came from and why its mechanisms might help | [Origin and rationale](vision.md#origin-and-rationale) and the [owner's original account](concepts/sources/owner-origin-20261015.md); the archived product reflections are listed in the [archive index](archive.md#archived-pages) |
 | Use Markitect on a project: the model commands, Apply on Linux or from Windows in the Linux runner, state, evidence and troubleshooting | [Project workflow](guides/project-workflow.md), the one user guide, and [Provider adapters](guides/provider-adapters.md) |

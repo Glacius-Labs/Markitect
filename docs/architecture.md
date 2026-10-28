@@ -1,6 +1,6 @@
 # Architecture
 
-How the V1 source is composed, where each responsibility lives and which contracts and invariants hold between the packages. [V1 concept 1.0](concepts/v1-concept.md) is the target ([DEC-068](concepts/register.md#dec-068-v1-concept-10)) and this page owns the concrete package contracts. The [delivery plan](implementation-plan.md) lists the steps and known deviations, and the [qualification record](validation/v1-qualification-20261024.md) holds the evidence. Each package README owns its detail; the [code map](development/code-map.md) lists every package.
+How the V1 source is composed, where each responsibility lives and which contracts and invariants hold between the packages. This page describes Main, which implements [V1 concept 1.0](concepts/v1-concept.md) ([DEC-068](concepts/register.md#dec-068-v1-concept-10)); the target is [concept 2.0](concepts/v2-concept.md) ([DEC-086](concepts/register.md#dec-086-concept-20-is-the-target)), not built yet. This page owns the concrete package contracts. The [delivery plan](implementation-plan.md) lists the steps and known deviations, and the [qualification record](validation/v1-qualification-20261024.md) holds the evidence. Each package README owns its detail; the [code map](development/code-map.md) lists every package.
 
 ## Product flow
 
