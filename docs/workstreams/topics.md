@@ -10,7 +10,7 @@ State page of the Topics session: the owner's single place to discuss Markitect'
 
 ## Now
 
-- **Concept 2.0 is the target** (accepted 28 October, [DEC-086](../concepts/register.md#dec-086-concept-20-is-the-target)). The design walk-through ([source](../concepts/sources/model-explicitness-20261028.md#1-what-markitect-is-restated)) settled DEC-079 to DEC-085 and the ten review questions; [concept 2.0](../concepts/v2-concept.md) puts them in one order with its acceptance. Nothing is built. Next: the Build and evaluation session builds the evaluation suite and the implementations against it, when the owner hands it over.
+- **Concept 2.0 is the target** (accepted 28 October, [DEC-086](../concepts/register.md#dec-086-concept-20-is-the-target)). The design walk-through ([source](../concepts/sources/model-explicitness-20261028.md#1-what-markitect-is-restated)) settled DEC-079 to DEC-085 and the ten review questions; [concept 2.0](../concepts/v2-concept.md) puts them in one order with its acceptance. Nothing is built. Handed to the Build and evaluation session on 28 October (see [Handed to Build](#handed-to-build)).
 - **Basis:** clean. One topics page instead of seven lane pages; Main consistent again after #806 (see [Done here](#done-here)); the topic lane worktrees and branches removed (the old Cockpit lane worktree now serves the General session); question 33 (Windows tests) parked.
 
 ## Next
@@ -175,7 +175,7 @@ What is decided and lives nowhere else; decisions with their own page are linked
 
 ## Handed to Build
 
-Nothing yet.
+- **28 October 2026: build concept 2.0.** On the owner's go-ahead, one message to the Build and evaluation session: build the evaluation suite and the implementations against [concept 2.0](../concepts/v2-concept.md) and its acceptance (§15), and write the steps into the [delivery plan](../implementation-plan.md). Consistency and quality first, cost second. Noted for the G0 prototype: server-side hooks instead of a referee, maker and checker per Manager, verdicts as commit trailers.
 
 ### Done here
 
