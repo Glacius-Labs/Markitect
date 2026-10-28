@@ -2,11 +2,11 @@
 
 Contents: Manifest (`.markitect/model.yaml`); Execution configuration (`.markitect/execution.yaml`); Project anchor; Dependency rule; Placement; Interface; Cross-cutting rule; Rule for some areas; Bounded Scalar with a unit; Format Scalar; Enumeration with meanings; Unit; Role; Refusal code; Record; Project Kind implementing a Library interface; The project Kind's own Property; Operation (a mutation of the project Kind); Operation (a read); Operation that needs a record of another area.
 
-Each block is a complete Definition file from the Makerspace v2 reference model in the Markitect repository (`tools/comparison/makerspace-v2/`), which compiles with the standard Libraries. Copy the shape, not the content: the reference model keeps a few justified lint warnings, listed in its README.
+Each block is a complete Definition file from the Makerspace v2 reference model in the Markitect repository (`tools/comparison/makerspace-v2/`), which compiles with the standard Libraries. Copy the shape, not the content: the reference model keeps a few justified lint warnings, listed in its README. It stays on the 1.0.0 Libraries it was written for; a new model uses the current versions in the manifest below.
 
 ## Manifest (`.markitect/model.yaml`)
 
-The project model's ID, its root folder and the exact Library versions; `model-lock.yaml` beside it pins their digests (write it with `model_analysis.py lock`).
+The project model's ID, its root folder and the exact Library versions, here the current ones; `model-lock.yaml` beside it pins their digests (write it with `model_analysis.py lock`).
 
 `model.yaml`
 
@@ -18,9 +18,9 @@ dependencies:
   markitect-core: "1.2.0"
   markitect-values: "1.0.0"
   markitect-data: "1.0.0"
-  markitect-api: "1.0.0"
+  markitect-api: "2.0.0"
   markitect-practice: "1.0.0"
-  markitect-architecture: "1.0.0"
+  markitect-architecture: "1.1.0"
 ```
 
 ## Execution configuration (`.markitect/execution.yaml`)
@@ -138,7 +138,7 @@ spec:
 
 ## Interface
 
-Each area's public surface, in that area.
+Each area's public surface, in that area. Since `markitect-architecture` 1.1.0 an Interface also lists, in `refusalCodes`, the refusal codes other Packages may return or expect; the reference model predates it.
 
 `model/makerspace/billing/billing-interface.yaml`
 
@@ -372,7 +372,7 @@ spec:
 
 ## Operation (a mutation of the project Kind)
 
-Refusals in checking order; a role without a permission entry has none; the body states only the effect.
+Refusals have no order; where it matters which one is returned, a rule such as the order of checks, or the operation's body, states it. A role without a permission entry has none; the body states only the effect.
 
 `model/makerspace/bookings/create-reservation.yaml`
 

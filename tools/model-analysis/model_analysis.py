@@ -38,7 +38,8 @@ SCOPE_FIELDS = ("appliesTo", "mayDependOn", "realizedIn")  # Package strings of 
 NAME_KEYS = {"name", "value", "wireName", "code"}  # named things a spec defines without a Definition of their own
 DEPENDENCY_RULE = ("markitect/architecture", "DependencyRule")
 INTERFACE = ("markitect/architecture", "Interface")
-REFUSAL_CODE = ("markitect/api", "RefusalCode")  # an Interface cannot list one yet (open Library question)
+REFUSAL_CODE = ("markitect/api", "RefusalCode")  # an Interface lists them in refusalCodes since architecture 1.1.0
+INVARIANT = ("markitect/data", "Invariant")
 PROJECT = ("markitect/practice", "Project")
 DECISIONS_WARNING, DECISIONS_STRONG = 10, 15  # provisional, like the size thresholds
 LIST_MARKER = re.compile(r"[-*+]|\d+[.)]")
@@ -433,6 +434,15 @@ def named_values(value):
             yield from named_values(item)
 
 
+def lists_refusal_codes(model):
+    """Whether the architecture Library in use lets an Interface list refusal codes (1.1.0 and later)."""
+    contract = model.definitions.get(INTERFACE)
+    if contract is None:  # no local Interface, so nothing is bound
+        return False
+    properties = (contract.get("spec") or {}).get("properties") or []
+    return any(target[1] == "refusalCodes" for target, _ in _spec_references(properties, ""))
+
+
 def lint(model, repo=None, rules=None, term_pattern=TERM_PATTERN):
     """Warnings per register ENH-002. Each has a signal, a severity and a subject."""
     findings = []
@@ -480,8 +490,10 @@ def lint(model, repo=None, rules=None, term_pattern=TERM_PATTERN):
     for i in sorted(model.local):
         if model.kind(i) == INTERFACE:
             spec = model.definitions[i].get("spec") or {}
-            exposed = {t for t, _ in _spec_references([spec.get("operations") or [], spec.get("types") or []], "")}
+            surface = [spec.get("operations") or [], spec.get("types") or [], spec.get("refusalCodes") or []]
+            exposed = {t for t, _ in _spec_references(surface, "")}
             interfaces[i[0]].append((i, spec.get("appliesTo") or [], exposed | {i}))
+    refusals_listable = lists_refusal_codes(model)
     unlisted_refusals = 0
     for source, target in sorted({(s, t) for s, t, via, _ in model.edges if via == "spec" and s[0] != t[0]}):
         # Typed uses only; body links are reading aids. The nearest Package above the target that has Interfaces
@@ -494,11 +506,19 @@ def lint(model, repo=None, rules=None, term_pattern=TERM_PATTERN):
         binding = [(i, exposed) for i, applies, exposed in interfaces[owner] if any(covers(a, source[0]) for a in applies)]
         if not binding:
             continue
-        if model.kind(target) == REFUSAL_CODE:
+        if model.kind(target) == REFUSAL_CODE and not refusals_listable:
             unlisted_refusals += 1
         elif not any(target in exposed for _, exposed in binding):
             names = ", ".join(text(i) for i, _ in binding)
             warn("interface", f"{text(source)} -> {text(target)}", f"`{target[1]}` is not exposed by {names}", "strong")
+    for identity in sorted(model.local):
+        # An Invariant lives in the Package that owns its Entities, or above them; it is not placed.
+        if model.kind(identity) != INVARIANT:
+            continue
+        entities = {t for t, _ in _spec_references((model.definitions[identity].get("spec") or {}).get("entities") or [], "")}
+        owners = sorted({t[0] for t in entities})
+        if owners and not any(covers(identity[0], owner) for owner in owners):
+            warn("invariant-owner", text(identity), "defined outside the Package that owns its Entities: " + ", ".join(owners))
     for package in model.packages(content):
         if package not in model.area_owners:
             warn("no-area", package, "holds content Definitions but owns no registered artifact or ownership area")
@@ -539,7 +559,8 @@ def lint(model, repo=None, rules=None, term_pattern=TERM_PATTERN):
 
     notes = []
     if unlisted_refusals:
-        notes.append(f"{unlisted_refusals} cross-Package uses of refusal codes not checked against Interfaces, which cannot list refusal codes")
+        notes.append(f"{unlisted_refusals} cross-Package uses of refusal codes not checked against Interfaces: "
+                     "the architecture Library in use is older than 1.1.0 and cannot list refusal codes")
     if repo is None:
         notes.append("imports not read (no --repo): unused-import and import-cycle signals skipped")
     else:

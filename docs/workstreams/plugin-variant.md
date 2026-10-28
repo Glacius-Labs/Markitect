@@ -9,7 +9,7 @@ The lane exists since the owner split Markitect's work into lanes on 27 October 
 - **Owns:**
   - The long-lived branch `variant/plugin`, which holds only variant code under `tools/comparison/` and merges `main` regularly. The code is the plugin (`claude-plugin/plugin/`: command, workflow, Manager and verifier agents, hooks, host steps), its runner `armp.py`, the workflow simulator and their tests.
   - The plugin variant's dispatches and their results.
-- **Shared, on `main`:** `markitect tree`, the model-derived Manager tree the workflow walks ([PR #802](https://github.com/Glacius-Labs/Markitect/pull/802)). The compiler lane keeps its output shape stable or agrees changes with this lane.
+- **Shared, on `main`:** `markitect tree`, the model-derived Manager tree the workflow walks ([PR #802](https://github.com/Glacius-Labs/Markitect/pull/802)). The compiler topic keeps its output shape stable or agrees changes with this lane.
 - **Uses, does not own:** the compiler, the model and the Libraries, and the evaluation suite with its [variant interface](https://github.com/Glacius-Labs/Markitect/pull/793).
 
 ## State
