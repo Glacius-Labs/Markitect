@@ -28,6 +28,20 @@ func prepare(cmd *exec.Cmd, uid int, isolate bool) {
 	cmd.Cancel = func() error { return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL) }
 }
 
+// lockChecks makes check runs of the hook and of the host's landing check
+// take turns, so no two check users live at once.
+func lockChecks(l Layout) (func(), error) {
+	f, err := os.OpenFile(filepath.Join(l.Root, "check.lock"), os.O_RDWR|os.O_CREATE, 0o600)
+	if err != nil {
+		return nil, err
+	}
+	if err := syscall.Flock(int(f.Fd()), syscall.LOCK_EX); err != nil {
+		f.Close()
+		return nil, err
+	}
+	return func() { f.Close() }, nil
+}
+
 // finished ends whatever the check left running in its process group.
 func finished(cmd *exec.Cmd) {
 	if cmd.Process != nil {

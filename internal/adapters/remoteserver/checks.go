@@ -58,6 +58,12 @@ func (c *checkRunner) Run(commit runremote.Commit, checks []project.Check) (resu
 	if err := os.MkdirAll(c.dir, 0o711); err != nil {
 		return nil, err
 	}
+	// The host's landing check runs beside the hooks; check runs take turns.
+	unlock, err := lockChecks(c.layout)
+	if err != nil {
+		return nil, err
+	}
+	defer unlock()
 	image, err := readEnvironment(c.layout)
 	if err != nil {
 		return nil, err

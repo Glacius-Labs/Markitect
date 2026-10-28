@@ -13,6 +13,8 @@ func prepare(*exec.Cmd, int, bool) {}
 
 func finished(*exec.Cmd) {}
 
+func lockChecks(Layout) (func(), error) { return func() {}, nil }
+
 func protect() error { return nil }
 
 func victim() error { return nil }

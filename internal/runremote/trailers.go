@@ -13,11 +13,14 @@ const (
 	KeyCheck   = "Markitect-Check"
 )
 
-// Verdicts a maker gives a checklist item.
+// Verdicts on a checklist item. Deviates is the verify checker's word for an
+// item the realization does not conform to, which becomes a Finding; a maker
+// in apply fixes such an item instead and never writes it.
 const (
 	Conforms     = "conforms"
 	Changed      = "changed"
 	ModelProblem = "model-problem"
+	Deviates     = "deviates"
 )
 
 // Review outcomes and per-item answers of a checker.
@@ -108,7 +111,7 @@ func ParseMessage(message string) (Trailers, error) {
 			}
 			t.Manager = value
 		case KeyVerdict:
-			l, err := parseLine(key, value, Conforms, Changed, ModelProblem)
+			l, err := parseLine(key, value, Conforms, Changed, ModelProblem, Deviates)
 			if err != nil {
 				return Trailers{}, err
 			}

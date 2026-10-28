@@ -310,6 +310,8 @@ func (d *decider) checklist(verdicts []Line) string {
 			return fmt.Sprintf("%q is not on your checklist. Next: give verdicts only for your checklist items: %s.", v.Item, strings.Join(d.m.Checklist, ", "))
 		case seen[v.Item]:
 			return fmt.Sprintf("%q has two verdicts. Next: give each item one verdict.", v.Item)
+		case v.Word == Deviates && d.plan.Mode == Apply:
+			return fmt.Sprintf("%q is %s: in apply a maker makes the realization conform and says %s, or reports %s. Next: fix it and submit again.", v.Item, Deviates, Changed, ModelProblem)
 		}
 		seen[v.Item] = true
 	}

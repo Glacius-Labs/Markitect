@@ -1,7 +1,9 @@
 package remoteserver
 
 import (
+	"io"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -109,16 +111,17 @@ func TestASubmissionNeedsAVerdictForEveryChecklistItem(t *testing.T) {
 	m := r.agent("members", maker)
 	m.write("src/members/member.go", "package members // v2\n")
 	cases := map[string]string{
-		submission("members", "members/member"):                                                 "no verdict for members/rules",
-		submission("members", "members/member", "members/rules", "loans/loan"):                  "\"loans/loan\" is not on your checklist",
-		submission("members", "members/member", "members/rules", "members/rules"):               "has two verdicts",
-		submission("loans", "loans/loan"):                                                       "but you work for \"members\"",
-		"Submit\n\nMarkitect-Manager: members\nMarkitect-Verdict: members/member | changed |\n": "gives no evidence",
-		"Submit\n\nMarkitect-Manager: members\nMarkitect-Verdict: members/member | fine | ok\n": "must be one of conforms, changed, model-problem",
-		"Submit\n\nMarkitect-Manager: members\nMarkitect-Verdict: members/member changed\n":     "must read",
-		"Submit\n\nMarkitect-Verdict: members/member | changed | ok\n\nMore text.\n":            "must form the message's last paragraph",
-		"Submit\n\nMarkitect-Verdict: members/member | changed | ok\n":                          "need a Markitect-Manager line",
-		"Submit\n\nMarkitect-Manager: members\nMarkitect-Verdikt: x | changed | ok\n":           "unknown Markitect trailer",
+		submission("members", "members/member"):                                                                                                      "no verdict for members/rules",
+		submission("members", "members/member", "members/rules", "loans/loan"):                                                                       "\"loans/loan\" is not on your checklist",
+		submission("members", "members/member", "members/rules", "members/rules"):                                                                    "has two verdicts",
+		submission("loans", "loans/loan"):                                                                                                            "but you work for \"members\"",
+		"Submit\n\nMarkitect-Manager: members\nMarkitect-Verdict: members/member | changed |\n":                                                      "gives no evidence",
+		"Submit\n\nMarkitect-Manager: members\nMarkitect-Verdict: members/member | fine | ok\n":                                                      "must be one of conforms, changed, model-problem",
+		"Submit\n\nMarkitect-Manager: members\nMarkitect-Verdict: members/member changed\n":                                                          "must read",
+		"Submit\n\nMarkitect-Manager: members\nMarkitect-Verdict: members/member | deviates | x\nMarkitect-Verdict: members/rules | conforms | ok\n": "in apply a maker makes the realization conform",
+		"Submit\n\nMarkitect-Verdict: members/member | changed | ok\n\nMore text.\n":                                                                 "must form the message's last paragraph",
+		"Submit\n\nMarkitect-Verdict: members/member | changed | ok\n":                                                                               "need a Markitect-Manager line",
+		"Submit\n\nMarkitect-Manager: members\nMarkitect-Verdikt: x | changed | ok\n":                                                                "unknown Markitect trailer",
 	}
 	for message, want := range cases {
 		m.git("add", "-A")
@@ -385,7 +388,8 @@ func TestVerifyTakesVerdictsWithoutFileChanges(t *testing.T) {
 	c.commit(review("members", runremote.Approved, map[string]string{"members/member": runremote.Confirmed}))
 	c.mustRefuse("in verify a checker gives its own verdicts")
 	c.git("reset", "-q", "--hard", "origin/"+c.branch)
-	c.commit(submission("members", "members/member"))
+	// A defect a verify checker finds is a deviation, which becomes a Finding.
+	c.commit("Verify\n\nMarkitect-Manager: members\nMarkitect-Verdict: members/member | deviates | member.go accepts an empty name\n")
 	c.mustPush()
 	if e := r.log(); e[len(e)-1].Kind != "verdicts" {
 		t.Fatalf("last log entry %+v", e[len(e)-1])
@@ -464,6 +468,43 @@ func TestPathsThatDifferOnlyInCaseAreRefused(t *testing.T) {
 	root.git("update-index", "--add", "--cacheinfo", "100644,"+blob+",src/Members/member.go")
 	root.git("commit", "-q", "-m", "shadow a child's file")
 	root.mustRefuse("src/Members and src/members differ only in case")
+}
+
+func TestTheHostsLandingCheckChangesNoBranch(t *testing.T) {
+	r := newRemote(t, nil)
+	m := r.agent("members", maker)
+	refs := func() string { return run(t, "", "--git-dir="+r.l.Repo(), "for-each-ref") }
+	before := refs()
+	check := func(commit string) ([]runremote.CheckResult, error) {
+		bundle := filepath.Join(t.TempDir(), "landing.bundle")
+		m.git("bundle", "create", "-q", bundle, "HEAD", "--not", "origin/"+m.branch)
+		f, err := os.Open(bundle)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer f.Close()
+		return LandingCheck(r.l, r.git, f, commit, io.Discard)
+	}
+	// A merged state only the host holds, thin against the Run's branches.
+	m.write("src/members/FAIL", "x\n")
+	failing := m.commit("merged state")
+	if res, err := check(failing); err != nil || len(res) != 1 || res[0].Passed {
+		t.Fatalf("landing check of a failing state: %+v %v", res, err)
+	}
+	m.git("rm", "-q", "src/members/FAIL")
+	passing := m.commit("fixed merged state")
+	if res, err := check(passing); err != nil || len(res) != 1 || !res[0].Passed {
+		t.Fatalf("landing check of a passing state: %+v %v", res, err)
+	}
+	if _, err := check(strings.Repeat("e", 40)); err == nil || !strings.Contains(err.Error(), "does not hold the commit") {
+		t.Fatalf("landing check of a missing commit: %v", err)
+	}
+	if after := refs(); after != before {
+		t.Fatalf("the landing check changed refs:\n%s\n%s", before, after)
+	}
+	if e := r.log(); e[len(e)-1].Kind != "landing-check" || e[len(e)-1].User != "host" {
+		t.Fatalf("last log entry %+v", e[len(e)-1])
+	}
 }
 
 func TestAFileTwoPackagesClaimEquallyIsRefused(t *testing.T) {

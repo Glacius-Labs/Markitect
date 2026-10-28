@@ -7,7 +7,7 @@ Every Run of [concept 2.0](../../docs/concepts/v2-concept.md) has its own Git re
 | `internal/runremote` | The plan, the trailer format and `Decide`, the hook's decision over repository facts. It runs no Git and no process. |
 | `internal/adapters/remoteserver` | The program inside the container: Git smart HTTP with one credential per agent, the pre-receive hook, the required checks, seeding and export. |
 | `internal/adapters/remotecontainer` | The host side: starts and removes the container with the Docker CLI only, natively on Windows, Linux and macOS. |
-| `cmd/markitect-remote` | The container's entrypoint (`seed`, `serve`, `hook`, `ready`, `export`, `log`). |
+| `cmd/markitect-remote` | The container's entrypoint (`seed`, `serve`, `hook`, `ready`, `check`, `export`, `log`). |
 
 ## The plan
 
@@ -58,7 +58,7 @@ Verdicts and reviews are [Git trailers](https://git-scm.com/docs/git-interpret-t
 | Key | Value | In |
 | --- | --- | --- |
 | `Markitect-Manager` | the Manager's Package ID, `.` for Root | every submission and review |
-| `Markitect-Verdict` | `ITEM \| conforms\|changed\|model-problem \| EVIDENCE` | a submission |
+| `Markitect-Verdict` | `ITEM \| conforms\|changed\|model-problem\|deviates \| EVIDENCE` | a submission |
 | `Markitect-Review` | `approved` or `rejected` | a review |
 | `Markitect-Check` | `ITEM \| confirmed\|disputed \| EVIDENCE` | a review |
 
@@ -83,7 +83,7 @@ Markitect-Check: members/loans/loan | disputed | loan_test.go never tests a memb
 Markitect-Check: loan-limit | confirmed | read src/loans
 ```
 
-In `verify` the checker writes the `Markitect-Verdict` lines itself, without a maker. [`trailers.go`](trailers.go) parses and writes the format.
+In `verify` the checker writes the `Markitect-Verdict` lines itself, without a maker, and `deviates` says that the realization does not conform to the item, with the defect as evidence; the engine turns it into a Finding. In `apply` a maker never writes `deviates`: it makes the realization conform, or reports `model-problem`. [`trailers.go`](trailers.go) parses and writes the format.
 
 ## Required checks
 
@@ -95,7 +95,7 @@ Checks run code the agents wrote, so they never run as the remote. Each check ru
 
 ## The container
 
-`remotecontainer.Start` creates the Run's internal network `markitect-run-<run>` and the container `markitect-run-<run>-remote` with the alias `remote`, so the repository is `http://remote:8080/run.git` on that network. The image is the checks' image, or `Spec.Image` when the project has none; it holds Git, a POSIX shell, coreutils and `ipcrm` besides what the checks need. The container runs the remote as root with only the capabilities it needs (`CHOWN`, `DAC_OVERRIDE`, `FOWNER`, `KILL`, `SETUID`, `SETGID`, `SYS_RESOURCE`), `no-new-privileges`, an init process and the given CPU, memory and process limits. The host copies the program and the plan in as a tar stream, starts the container, streams the start bundle into `seed` and waits until it serves; `StartBundle` makes that bundle from the user's repository without changing it. `Export` streams a bundle of every branch out, `Log` the decision log. `Close` removes the container and the network, as far as they exist; `Sweep` removes everything that carries the Run's label, also after a host that stopped without cleaning up. A failed start removes what it created. No folder is mounted.
+`remotecontainer.Start` creates the Run's internal network `markitect-run-<run>` and the container `markitect-run-<run>-remote` with the alias `remote`, so the repository is `http://remote:8080/run.git` on that network. The image is the checks' image, or `Spec.Image` when the project has none; it holds Git, a POSIX shell, coreutils and `ipcrm` besides what the checks need. The container runs the remote as root with only the capabilities it needs (`CHOWN`, `DAC_OVERRIDE`, `FOWNER`, `KILL`, `SETUID`, `SETGID`, `SYS_RESOURCE`), `no-new-privileges`, an init process and the given CPU, memory and process limits. The host copies the program and the plan in as a tar stream, starts the container, streams the start bundle into `seed` and waits until it serves; `StartBundle` makes that bundle from the user's repository without changing it. `Export` streams a bundle of every branch out, `Log` the decision log. `Check` is the host's landing check (concept §6.5): it streams in a bundle holding a commit only the host has, such as the merge of a moved target branch, and runs the required checks on that commit's full state as the hook runs them, taking turns with the hook's checks; it changes no branch of the Run, and the decision log records it as user `host`, kind `landing-check`. A failing check is a result; an error means the checks could not run. `Close` removes the container and the network, as far as they exist; `Sweep` removes everything that carries the Run's label, also after a host that stopped without cleaning up. A failed start removes what it created. No folder is mounted.
 
 The program is `markitect-remote` built for Linux on the engine's architecture (`Engine.Arch`); how the host obtains it is the native host's matter (step T5).
 

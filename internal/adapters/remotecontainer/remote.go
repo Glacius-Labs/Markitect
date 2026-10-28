@@ -185,6 +185,23 @@ func (r *Remote) Export(ctx context.Context, w io.Writer) error {
 	return r.engine.run(ctx, nil, w, "exec", r.Container, program, "export", "--root", root)
 }
 
+// Check runs the required checks on a commit the host holds, such as the
+// merge of a moved target branch before landing, isolated as the hook runs
+// them and without changing any branch of the Run. The bundle holds the
+// commit and may be thin against the Run's branches. A failing check is a
+// result; an error means the checks could not run.
+func (r *Remote) Check(ctx context.Context, bundle io.Reader, commit string) ([]runremote.CheckResult, error) {
+	var out bytes.Buffer
+	if err := r.engine.run(ctx, bundle, &out, "exec", "-i", r.Container, program, "check", "--root", root, "--commit", commit); err != nil {
+		return nil, err
+	}
+	var results []runremote.CheckResult
+	if err := json.Unmarshal(out.Bytes(), &results); err != nil {
+		return nil, fmt.Errorf("the remote's check results: %w", err)
+	}
+	return results, nil
+}
+
 // Log returns the remote's decision log, one JSON entry per push.
 func (r *Remote) Log(ctx context.Context) ([]byte, error) {
 	var out bytes.Buffer

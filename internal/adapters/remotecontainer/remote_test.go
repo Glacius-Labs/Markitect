@@ -287,6 +287,31 @@ git add ci.sh && git commit -q -m probe -m '`+trailers(runremote.Trailers{Manage
 		t.Fatalf("exported heads lack Root's approval %s: %v\n%s", approved, err, heads)
 	}
 
+	// The host checks a merged state only it holds before landing.
+	hostGit := func(args ...string) string {
+		out, err := exec.Command("git", append([]string{"-C", repo, "-c", "user.name=Host", "-c", "user.email=host@example"}, args...)...).CombinedOutput()
+		if err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, out)
+		}
+		return strings.TrimSpace(string(out))
+	}
+	hostGit("fetch", "-q", bundle, "refs/heads/root:refs/heads/landed")
+	merged := hostGit("commit-tree", "-p", "landed", "-m", "merged with the moved target", "landed^{tree}")
+	hostGit("update-ref", "refs/heads/merged", merged)
+	var thin bytes.Buffer
+	cmd := exec.Command("git", "-C", repo, "bundle", "create", "-q", "-", "merged", "--not", approved)
+	cmd.Stdout = &thin
+	if err := cmd.Run(); err != nil {
+		t.Fatalf("bundle: %v", err)
+	}
+	results, err := r.Check(f.ctx, &thin, merged)
+	if err != nil || len(results) != 1 || !results[0].Passed {
+		t.Fatalf("landing check: %+v %v", results, err)
+	}
+	if again := f.sh(r.Container, `git --git-dir=/srv/markitect/run.git for-each-ref --format='%(objectname)' refs/heads/root`); strings.TrimSpace(again) != approved {
+		t.Fatalf("the landing check moved root to %s", again)
+	}
+
 	// Removal leaves nothing of the Run.
 	if err := Sweep(f.ctx, f.engine, f.run); err != nil {
 		t.Fatal(err)
