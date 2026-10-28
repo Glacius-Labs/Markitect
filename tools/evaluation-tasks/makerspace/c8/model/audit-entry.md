@@ -10,7 +10,7 @@ One entry of the audit log. Entries are never changed or removed. `target` is `n
 - `seq`: count
 - `at`: timestamp
 - `actor`: identifier
-- `actorRole`: one of `member`, `staff`, `admin` or `steward`; see authorization
+- `actorRole`: one of the roles of [[authorization]]
 - `op`: operation name
 - `target`: audit target, or `null`
 - `outcome`: `accepted` or `refused`

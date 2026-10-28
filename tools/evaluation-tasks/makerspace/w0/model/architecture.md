@@ -18,16 +18,9 @@ The program is divided into the modules below, with one-way dependencies; the ow
 | `reporting` | [[reporting]] | `equipment`, `bookings`, `billing`, `policies` |
 | `protocol` | [[protocol]] | `policies`, `members`, `equipment`, `billing`, `training`, `bookings`, `materials`, `safety`, `reporting` |
 
-- The policies module depends on no other module of the project; every other module may depend on it.
-- The members module depends only on policies.
-- The equipment module depends only on policies. Where maintenance must know about reservations, equipment declares what it needs and the protocol module supplies it from bookings, so equipment never depends on bookings.
-- The billing module depends only on members, policies.
-- The training module depends only on members, equipment, billing, policies.
-- The bookings module depends only on members, training, equipment, billing, policies.
-- The materials module depends only on members, billing, policies.
-- The safety module depends only on equipment, policies.
-- The reporting module depends only on equipment, bookings, billing, policies.
-- The protocol module is the outer layer: it reads requests, runs the checks every operation shares and calls the area modules. It may depend on every other module; no module depends on it.
+- `policies`: The policies module depends on no other module of the project; every other module may depend on it.
+- `equipment`: Where maintenance must know about reservations, equipment declares what it needs and the protocol module supplies it from bookings, so equipment never depends on bookings.
+- `protocol`: The protocol module is the outer layer: it reads requests, runs the checks every operation shares and calls the area modules. It may depend on every other module; no module depends on it.
 
 **Placements.** Some project-wide rules are realized once, in one module:
 

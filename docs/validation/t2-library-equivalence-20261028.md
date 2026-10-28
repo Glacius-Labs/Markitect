@@ -20,7 +20,7 @@
 | `m4` | one renewal per loan | equivalent |
 | `m5` | no suspension, `setMemberStatus` removed | equivalent |
 
-Each new delta changes exactly what the old step changed and nothing else. Every link resolves in every step; Root names only Packages; the Package edges are lending → catalog, lending → members, lending/reminders → members and the implicit child-to-parent edges, so no step has a cycle.
+Each new delta changes exactly what the old step changed and nothing else. Every link resolves in every step; Root names only Packages; the Package edges are lending → catalog, lending → members, lending/reminders → members (m1 to m4) and the implicit child-to-parent edges, so no step has a cycle.
 
 ## Fixes
 

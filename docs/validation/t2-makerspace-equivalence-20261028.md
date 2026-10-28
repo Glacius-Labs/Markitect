@@ -1,13 +1,13 @@
 # T2: Makerspace models, old and new equivalent
 
-**Verdict:** the ten Makerspace steps in the [concept 2.0](../concepts/v2-concept.md) form say the same as their concept 1.0 originals, after three small fixes and four wording fixes that were applied to every step. Step T2 of the [concept 2.0 build](../implementation-plan.md#concept-20-build).
+**Verdict:** the ten Makerspace steps in the [concept 2.0](../concepts/v2-concept.md) form say the same as their concept 1.0 originals, after the fixes below, which the conversion applies to every step a fix concerns. Step T2 of the [concept 2.0 build](../implementation-plan.md#concept-20-build).
 
 | | |
 |---|---|
 | Date | 28 October 2026 |
 | Old | [makerspace-v2](../../tools/comparison/makerspace-v2/README.md) v2.1: `model/` (W0, 181 Definitions) and `c1/model/` to `c9/model/` |
 | New | [tools/evaluation-tasks/makerspace](../../tools/evaluation-tasks/README.md) `w0` (108 Definitions) to `c9` |
-| Reviewers | Two independent Claude Opus 5.5 subagents that did not write the conversion: one walked every old W0 file against the new model, the other compared each old change step's diff with the new one and checked the 2.0 structure of every step by script |
+| Reviewers | Two independent Claude Opus 5.5 subagents that did not write the conversion: one walked every old W0 file against the new model, the other compared each old change step's diff with the new one and checked the 2.0 structure of every step by script. A third, the complete-diff review, compared every operation and record of all ten steps with the old ones by script and found nothing the first two missed |
 | Hidden material | The Makerspace oracle, judges and requirements are unchanged |
 
 ## Result
@@ -35,7 +35,8 @@ All fixes are made by the conversion, so they hold in every step.
 2. **Order of checks placed in protocol** (meaning): `order-of-checks` and `argument-values` moved from protocol to Root, which the architecture makes the `policies` module. The [architecture](../../tools/evaluation-tasks/makerspace/w0/model/architecture.md) now says protocol realizes the whole order of checks, including checks 1 and 5, and Root holds these rules only so every module reads them.
 3. **Interfaces reach their users** (meaning): every module used to see every interface. Each interface now links the interfaces of the modules its module may use, and billing's invoice building and bookings' check-out link [tier](../../tools/evaluation-tasks/makerspace/w0/model/members/tier.md), which holds the fee and the discount.
 4. **Lockouts outlive incidents** (wording, C2 on): safety cannot link bookings' lockout rule without a cycle, so [incidents](../../tools/evaluation-tasks/makerspace/c2/model/safety/incidents.md) now states the part it needs: resolving an incident does not end its lockouts.
-5. **Wording:** the `Interface` Kind admits public rules that bind other modules; [schedule maintenance](../../tools/evaluation-tasks/makerspace/w0/model/equipment/schedule-maintenance.md) states what a missed reservation is and that overlap is judged on the reserved interval; the machine rate reads "cents per minute"; the reservation's `status` links the reservation rules again.
+5. **Wording:** the `Interface` Kind admits public rules that bind other modules; [schedule maintenance](../../tools/evaluation-tasks/makerspace/w0/model/equipment/schedule-maintenance.md) states what a missed reservation is and that overlap is judged on the reserved interval; the machine rate reads "cents per minute"; the reservation's `status` links `bookings/reservations` again.
+6. **Stated once** (from the complete-diff review): the role set is listed only in [authorization](../../tools/evaluation-tasks/makerspace/w0/model/authorization.md), and the user's `role` and the audit entry's `actorRole` link it; the architecture's notes no longer repeat the dependency table. Argument ranges stay written on each operation that takes the argument, as interface documentation does; a change step that changes a range edits each of those operations.
 
 ## How the form changed, with the same information
 
