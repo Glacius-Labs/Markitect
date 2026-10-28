@@ -74,7 +74,7 @@ What is decided and lives nowhere else; decisions with their own page are linked
   - The model is as explicit as good documentation ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation)).
   - Core offers one thing: a Definition with a Kind and a body. A Kind is a Definition of Kind `Kind`. No typed fields.
   - A Definition is a Markdown file with YAML front matter (Kind, imports); the file name is the ID, the main heading the title. Links may target Packages. Scope is location.
-  - A Library is a set of Kind Definitions for one area; no Kind has a special meaning to Markitect. Libraries are rebuilt as 1.0.0. Which areas Markitect ships is open (question 40).
+  - A Library is a set of Kind Definitions for one area; no Kind has a special meaning to Markitect. Libraries are rebuilt as 1.0.0. Libraries are cut by technical area, like a programming language's packages, not by method: `std` for every project (Project, Rule, Concept, Feature, Decision), `rest` (Endpoint) and `cli` (Command); further areas such as events or UI only when a real project needs them. Error codes and roles are Concepts.
   - Go's cycle rule: every link between Packages is an edge, the implicit child-to-parent edge too; a cycle is a compile error, so links point up or sideways, never down.
   - The model is measured like code from its links (coupling, wrong-way dependencies, size, dead Definitions, reach of a change); warnings only.
   - The design is settled first; the evaluation and the implementations are then built against it, while the owner also redesigns the Runs.
@@ -152,7 +152,7 @@ What is decided and lives nowhere else; decisions with their own page are linked
 
 ### J. Library areas
 
-40. **Which Library areas does Markitect ship?** A Library is just Kind Definitions for an area. Candidates from the discussion: `ddd` (Aggregate, Entity, ValueObject, DomainEvent, DomainException), `clean-architecture` (UseCase, Port and what the layer needs), `api` (Endpoint, later REST and CLI bindings), `practice` (Project, Rule). Open: whether to ship opinionated areas at all, and how few.
+40. **Which Library areas does Markitect ship?** Decided 28 October: `std`, `rest` and `cli` (see [Decided](#decided)).
 
 ### I. Raised by the documentation test (DEC-079)
 
