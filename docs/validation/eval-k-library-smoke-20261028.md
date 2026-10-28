@@ -1,6 +1,6 @@
 # Evaluation suite: first smoke, baseline K on the Library
 
-**Status: proposed, waiting for the owner's approval.** Nothing in this dispatch has run.
+**Status: superseded, never run.** On 28 October 2026 the owner chose to make the suite decision-grade first; the first K smoke runs in the sandbox instead, as increment E1 of [evaluation suite v2](../design/evaluation-suite-v2.md).
 
 This is the first real use of the [evaluation suite](../guides/evaluation-suite.md). It checks step 2 of the [plan](../workstreams.md#priority) for the baseline: one Library task, three runs in a row through the suite without manual help. It is a smoke, not a counted evaluation: no comparison is drawn from it, and it has no decision rule.
 
