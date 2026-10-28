@@ -17,7 +17,7 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 ## Next
 
 1. **Assessment on the suite's output:** the assessment, the review and the report per area read `suite.json` and `result.bundle`.
-2. **First suite dispatch:** build the Library task folder with `suite.py task` and write the bounded dispatch for three K runs in a row on Claude Sonnet 5.5, then ask the owner.
+2. **First suite dispatch:** the [K smoke on the Library](../validation/eval-k-library-smoke-20261028.md) is written and its task folder is built; it waits for the owner's approval.
 3. **Arm M:**
    - The adapter in `tools/arm-m/`, from lane 1's controller: native Apply on Linux, one repository identity per chain and arm, the state directory as its continuation, the candidate committed with a fixed identity, the Apply status and cause reported unchanged, offline tests only.
    - A frozen build that contains the Claude adapter, then three Library runs in a row through the suite, under a bounded dispatch.
@@ -28,10 +28,14 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 6. **One page:** fold the plugin and Git variant pages into this one as their PRs land.
 7. **Before counted runs:** isolation of the variant command and a task portfolio with oracles outside the repository ([limits](../guides/evaluation-suite.md#limits)).
 
+## Decisions
+
+- **Model, 28 October 2026:** every arm runs on Claude Sonnet 5.5 (`claude:claude-sonnet-5-5`); Codex runs are recorded separately once Codex has tokens again. The owner: "Sonnet 5.5 for all".
+
 ## Questions for the owner
 
-1. **P smoke 03.** May it run once nothing else holds the engine? Recommendation: yes; it shows whether the plugin completes an Apply at all.
-2. **Model for the comparison.** Recommendation: Claude Sonnet 5.5 for every arm; Codex runs are recorded separately and return when Codex has tokens again.
+1. **First K smoke.** May the [dispatch](../validation/eval-k-library-smoke-20261028.md) run: three baseline runs on the Library, one after another, 45 minutes each at most, on the owner's Claude subscription? Recommendation: yes, now; the login is valid long enough and nothing else holds the engine.
+2. **P smoke 03.** May it run once nothing else holds the engine? Recommendation: yes; it shows whether the plugin completes an Apply at all.
 3. **G's provider.** The prototype runs on Codex only. Recommendation: wait for Codex tokens rather than add a Claude backend now, and fix the review findings meanwhile.
 4. **Isolation before counted runs.** Variants run as the user and could read the hidden oracles. Recommendation: isolate the variants and move the oracles out of the repository before step 3, the comparison; name same-family review as a limit while no Codex reviewer is available.
 5. **Long-lived Claude token for M.** Recommendation: no; keep the access-only login copy, because a Manager's shell could read a token that is valid for a year.

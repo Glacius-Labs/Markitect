@@ -26,6 +26,7 @@ These reports preserve the exact scope, inputs, source references and outcomes s
 
 - [Modeling skill change trial: Makerspace C5 — 27 October 2026](modeling-skill-change-trial-20261027.md): a fresh agent with only the modeling skill changed makerspace-v2.1 from C4 to C5; an independent review found it faithful, with no owner questions and no repair, at about 144 k tokens; the skill's size limit split one rule that reads better whole
 - [Why the Go tests are slow on Windows — 28 October 2026](windows-test-time-20261028.md): about 50 minutes on Windows against 3 on Linux CI, almost all of it about 90,000 Git process starts at 23–55 ms each; four fix options, none built
+- [Evaluation suite: first smoke, baseline K on the Library — 28 October 2026](eval-k-library-smoke-20261028.md): dispatch for three baseline runs through the suite on Claude Sonnet 5.5; proposed, not run
 
 ## Release evidence
 
