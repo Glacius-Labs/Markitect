@@ -97,6 +97,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-080](#dec-080-the-model-is-typed-documentation) | Decision | The model is typed documentation | Accepted design; not built |
 | [DEC-081](#dec-081-the-organization-knows-broad-at-the-top-and-deep-below) | Decision | The organization knows broad at the top and deep below | Accepted design; not built |
 | [DEC-082](#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager) | Decision | One Run per change: impact decides who works, maker and checker per Manager | Accepted direction; details open, not built |
+| [DEC-083](#dec-083-the-host-runs-natively-each-run-lives-in-containers) | Decision | The host runs natively; each Run lives in containers | Accepted design; not built |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -1064,6 +1065,17 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - Landing, as CI merge queues do: a Run starts from a fixed commit of the target branch. If the branch has not moved, the result lands. If it moved, the host merges the new commits in; the result lands only if the merge is clean, the required checks pass on the merged state and the incoming changes touch nothing in the Run's impact. Otherwise it stays on its branch, the Result says why, and a follow-up Run starts from the new state. Runs whose impact overlaps take turns on one target branch; others may run in parallel. This answers DEC-078's open point on a moving target branch.
   - Two Commands to start, both returning the Result: `markitect apply` realizes the model with makers and checkers, for the impact of a change by default and for the whole tree with `--full`, the occasional audit that also repairs drift; `markitect verify` only checks, with checkers only, and changes nothing. A `verify` Result can be passed into a later `apply` as its starting Findings. `explain` and custom Commands come later. The model tools `check`, `lock`, `refs`, `graph`, `impact` and `lint` start no agents.
 - **Changes, once built:** impact narrows participation, unlike [DEC-039](#dec-039-deterministic-manager-process); Assessment, Implement and Verify as separate Runs ([concept 1.0 §10.4, §11](v1-concept.md#104-apply-flow), [DEC-058](#dec-058-apply-always-executes-before-independent-verify)) become one Run with makers and checkers.
+
+### DEC-083 The host runs natively; each Run lives in containers
+
+- **Status:** Accepted by the owner as the platform design, 28 October 2026, in the Topics session's design walk-through ([topics page](../workstreams/topics.md#decided)). Not built. It follows from [DEC-082](#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager).
+- **Decision:**
+  - The host runs natively on Windows, Linux and macOS. It needs only Docker (Docker Desktop on Windows and macOS), no WSL and no Linux runner.
+  - Each Run gets one Linux container as its remote: a bare Git repository with the server-side hooks and the required checks. The Manager containers clone from it and push to it over the container network. No folder of the user's is mounted into a container.
+  - The host's own Git work is two steps: put the starting commit into the Run's remote, and land the result.
+  - Agents see only what Git tracks, so the compiler refuses a registry entry for a Git-ignored file instead of leaving it silently missing.
+- **Supersedes, once built:** the Linux runner ([design](../design/linux-runner.md)) and the Linux-only Apply host of [DEC-077](#dec-077-development-pace-and-linux-first-execution); the shared Run volume and the mounted checkout.
+- **Consequence:** much of the Git machinery behind today's slow Windows tests is expected to disappear; the parked fix is judged again after the rebuild.
 
 ## Promises
 
