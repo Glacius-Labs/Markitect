@@ -1,6 +1,6 @@
 # Evaluation suite v2
 
-**Status:** design, approved in direction by the owner on 28 October 2026; built in increments E1 to E6. The [evaluation suite guide](../guides/evaluation-suite.md) stays the contract of what is built and changes with each increment.
+**Status:** design, approved in direction by the owner on 28 October 2026; E1 and E2 are built. On 28 October 2026 the target became concept 2.0, and E3 to E6 were replaced by steps T6 and T7 of its [build](../implementation-plan.md#concept-20-build), which compare one 2.0 implementation with K; the sections on the arms M, P and G below are historical. The [evaluation suite guide](../guides/evaluation-suite.md) stays the contract of what is built and changes with each increment.
 
 ## Why
 
