@@ -55,7 +55,7 @@ func TestRunEndsFinishedWithUsageTranscriptAndNothingLeft(t *testing.T) {
 	}
 }
 
-func TestRunNamesTheFailureClassFirst(t *testing.T) {
+func TestRunReportsTheFailureClass(t *testing.T) {
 	f := setup(t, agentport.Maker, "members", "members/member")
 	f.rt.script = func(s *fakeSession, argv []string, stdin []byte) int {
 		s.line(initLine(makerTools...))
@@ -64,16 +64,16 @@ func TestRunNamesTheFailureClassFirst(t *testing.T) {
 		return 1
 	}
 	g, _ := newAgents(t, f, f.spec.Login)
-	if end := g.Run(context.Background(), f.spec.Start, f.host); end.Reason != agentport.Failed || !strings.HasPrefix(end.Detail, "rate-limit: ") {
+	if end := g.Run(context.Background(), f.spec.Start, f.host); end.Reason != agentport.Failed || end.Class != agentport.RateLimit {
 		t.Fatalf("end %+v", end)
 	}
 	g, _ = newAgents(t, f, nil)
-	if end := g.Run(context.Background(), f.spec.Start, f.host); end.Reason != agentport.Failed || !strings.HasPrefix(end.Detail, "login: ") {
+	if end := g.Run(context.Background(), f.spec.Start, f.host); end.Reason != agentport.Failed || end.Class != agentport.Login {
 		t.Fatalf("no login file: %+v", end)
 	}
 	expired := setup(t, agentport.Maker, "members", "members/member")
 	g, _ = newAgents(t, expired, login(t, time.Now().Add(-time.Hour)))
-	if end := g.Run(context.Background(), expired.spec.Start, expired.host); end.Reason != agentport.Failed || !strings.HasPrefix(end.Detail, "login: ") || end.Cleanup != "" {
+	if end := g.Run(context.Background(), expired.spec.Start, expired.host); end.Reason != agentport.Failed || end.Class != agentport.Login || end.Cleanup != "" {
 		t.Fatalf("expired login: %+v", end)
 	}
 }

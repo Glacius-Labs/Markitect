@@ -169,23 +169,24 @@ const (
 
 // Message is one message along the tree.
 type Message struct {
-	ID   string
-	Kind string
+	ID   string `json:"id"`
+	Kind string `json:"kind"`
 	// From and To are Manager IDs; From is empty for the host.
-	From, To string
+	From string `json:"from,omitempty"`
+	To   string `json:"to"`
 	// ReplyTo is the question or escalation an answer answers.
-	ReplyTo string
-	Text    string
+	ReplyTo string `json:"replyTo,omitempty"`
+	Text    string `json:"text"`
 }
 
 // Note is one Shared Note: a side observation with its origin and no
 // authority (concept 1.0 §19).
 type Note struct {
-	ID      string
-	Manager string
-	Role    Role
-	Text    string
-	Time    time.Time
+	ID      string    `json:"id"`
+	Manager string    `json:"manager"`
+	Role    Role      `json:"role"`
+	Text    string    `json:"text"`
+	Time    time.Time `json:"time"`
 }
 
 // NotePage is one page of Notes, oldest first. Next is the cursor of the
@@ -209,12 +210,27 @@ const (
 	Cancelled Reason = "cancelled"
 )
 
+// FailureClass is the cause of a failed end at the provider.
+type FailureClass string
+
+const (
+	Capacity    FailureClass = "capacity"
+	RateLimit   FailureClass = "rate-limit"
+	ServerError FailureClass = "server-error"
+	Login       FailureClass = "login"
+	Other       FailureClass = "other"
+)
+
 // End is how an agent ended. Finished says nothing about the quality of the
 // work; the engine reads that from the Run's remote.
 type End struct {
 	Reason Reason
 	// Detail explains Failed, DeadlineReached and Cancelled.
 	Detail string
+	// Class sorts a Failed end by its cause at the provider, so that a
+	// provider failure can be told apart from the agent's own; empty for
+	// every other reason.
+	Class FailureClass
 	// Agent names the provider and model that ran, as observed.
 	Agent string
 	Usage Usage
@@ -226,6 +242,6 @@ type End struct {
 // Usage is what the provider reported for one start; zero when it reported
 // nothing.
 type Usage struct {
-	InputTokens  int64
-	OutputTokens int64
+	InputTokens  int64 `json:"inputTokens"`
+	OutputTokens int64 `json:"outputTokens"`
 }

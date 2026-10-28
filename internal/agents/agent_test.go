@@ -648,7 +648,7 @@ func TestHostToolsReachTheEngineAndItsRefusalsTheAgent(t *testing.T) {
 			t.Errorf("call %d refused: %s", i, texts[i])
 		}
 	}
-	if texts[0] != "sent as m-1 to members/cards" || texts[4] != "recorded as Note m-5" || !strings.Contains(texts[5], `"Text":"the README is stale"`) {
+	if texts[0] != "sent as m-1 to members/cards" || texts[4] != "recorded as Note m-5" || !strings.Contains(texts[5], `"text":"the README is stale"`) {
 		t.Fatalf("results %q", texts[:6])
 	}
 	if !errs[6] || !strings.Contains(texts[6], "the engine refuses this; ask your parent instead") || !errs[7] || !strings.Contains(texts[7], "schema") {

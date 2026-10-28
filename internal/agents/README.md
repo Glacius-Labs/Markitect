@@ -28,7 +28,7 @@ A start does, in order:
 
 The start's deadline bounds every step, the clone and the login check included.
 
-The `End` maps the turn: `finished`, `deadline`, `cancelled` or `failed`. `Agent` is `provider:model`, with the model the provider reported, or the configured one when it reports none (Codex), and `Usage` counts the input tokens (cache reads and writes included) and the output tokens. A failed `Detail` starts with the failure class (below), for example `capacity: overloaded: API Error: 529`. `Cleanup` is empty only when the container and both volumes are gone.
+The `End` maps the turn: `finished`, `deadline`, `cancelled` or `failed`. `Agent` is `provider:model`, with the model the provider reported, or the configured one when it reports none (Codex), and `Usage` counts the input tokens (cache reads and writes included) and the output tokens. A failed `End` carries its failure class (below) in `Class`, and `Detail` says what happened, for example `overloaded: API Error: 529`. `Cleanup` is empty only when the container and both volumes are gone.
 
 With `Config.Transcripts` set, every start writes `RUN/MANAGER-ROLE-ROUND.jsonl` there: the provider's output lines as they came, so the evaluation's classifier reads them like a provider's own transcript, and the host's records (the turn, tool calls and replies, the outcome) as lines of type `markitect`. Every secret, the login's tokens and the remote token, is redacted before it is written, and from tool results, errors and the `End`.
 

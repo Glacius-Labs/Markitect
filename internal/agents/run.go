@@ -95,10 +95,10 @@ func (g *Agents) Run(ctx context.Context, s agentport.Start, host agentport.Host
 		end = failed(end, class, err)
 		switch {
 		case ctx.Err() != nil:
-			end.Reason = agentport.Cancelled
+			end.Reason, end.Class = agentport.Cancelled, ""
 		case startCtx.Err() != nil:
 			// The deadline, not the step it cut off, ended the start.
-			end.Reason, end.Detail = agentport.DeadlineReached, "the start's deadline passed before the agent's turn: "+strings.TrimPrefix(end.Detail, string(class)+": ")
+			end.Reason, end.Class, end.Detail = agentport.DeadlineReached, "", "the start's deadline passed before the agent's turn: "+end.Detail
 		}
 		if errors.Is(err, errCleanup) {
 			end.Cleanup = err.Error()
@@ -129,13 +129,14 @@ func (g *Agents) Run(ctx context.Context, s agentport.Start, host agentport.Host
 	return end
 }
 
-// failed ends a start as failed. The Detail starts with the failure class,
-// so the evaluation can void the provider's failures.
+// failed ends a start as failed with its failure class, so the evaluation
+// can void the provider's failures. The agent runtime's classes carry the
+// port's values.
 func failed(end agentport.End, class Class, err error) agentport.End {
 	if class == "" {
 		class = Other
 	}
-	end.Reason, end.Detail = agentport.Failed, string(class)+": "+err.Error()
+	end.Reason, end.Class, end.Detail = agentport.Failed, agentport.FailureClass(class), err.Error()
 	return end
 }
 
