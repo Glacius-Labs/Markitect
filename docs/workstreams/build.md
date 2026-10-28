@@ -1,34 +1,22 @@
 # Build and evaluation
 
-The Build and evaluation session coordinates the evaluation suite and the variants, and it is the only session that builds ([workstreams](../workstreams.md)). It owns the suite and all four arms: K, P and G since 28 October, and M since lane 1 handed it over the same day. For arm M this includes the host variant's code on `main` (the Run and Apply host, the harness, the Codex and Claude Code adapters, the Linux runner), the V1 records under `docs/validation/` and the [delivery plan](../implementation-plan.md), which owns V1's steps and known deviations. This page holds only the session's state.
+The Build and evaluation session builds concept 2.0 and the evaluation suite that measures it, and it is the only session that builds ([workstreams](../workstreams.md)). It owns the suite and all four arms: K, P and G since 28 October, and M since lane 1 handed it over the same day. For arm M this includes the host variant's code on `main` (the Run and Apply host, the harness, the Codex and Claude Code adapters, the Linux runner), the V1 records under `docs/validation/` and the [delivery plan](../implementation-plan.md), which owns the concept 2.0 build steps as well as V1's steps and known deviations. This page holds only the session's state.
 
 The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doing. Can you bring it to main and then we will start discussing and managing the evaluation suite and the three execution variants from here?"
 
 ## Now
 
-- **Suite and baseline K:** the [suite](../guides/evaluation-suite.md) runner and the Claude Code baseline are on `main` in [`tools/evaluation`](../../tools/evaluation/README.md). E1 is done: one sandbox per run with an egress limit, and the [sandbox smoke](../validation/eval-e1-sandbox-smoke-20261028.md) passed: the escape probe found it closed and K delivered three Library runs in a row. Its first run exposed a capture defect in K that dropped Go sources; the fix is on `main` but has not run against a provider yet. Nothing is judged yet. The assessment, review and analysis in `tools/comparison` are tied to the Library and Makerspace and do not read the suite's output yet; the old-versus-new Makerspace comparison keeps its earlier Codex `gpt-6-sol` runs. Earlier, Phases A to C compared Markitect with one agent and showed no quality advantage at 9 to 10.5 times the time ([report](../validation/v1-comparison-report-20261026.md)).
-- **Arm M, V1:** the [technical acceptance record](../validation/v1-technical-acceptance-20261026.md) finds V1 correct and safe on F_final, but not yet reliable at Makerspace size; the frozen source is [F2](../validation/v1-technical-acceptance-20261026.md#new-frozen-source-f2). V1's acceptance covers the current publication; today's handoff and publication stay until the owner adopts the Git variant, which is judged after its prototype ([owner, 27 October](../concepts/sources/owner-evening-decisions-20261027.md#5-v1s-acceptance-scope-2015-utc)).
-- **Arm M, Claude:** K1b, the first native Claude Code Apply, passed on its second of three allowed attempts ([record](../validation/v1-k1b-claude-qualification-20261028.md)). Its launch fix is on `main`, but no native Apply ran on `main` itself. Neither Claude change is in F2, and V1's provider scope stays Codex (D18).
-- **Arm M, suite:** lane 1's repository work is all on `main`. The suite adapter is not started; lane 1's controller scripts are outside the repository under `Documents\Codex\Markitect-V1-Requalification\`.
-- **Arm P:** the plugin and its runner pass 70 offline tests on `variant/plugin`. Smoke attempts 01 and 02 failed before any Apply; both causes are fixed offline. Smoke 03 waits for the owner ([plugin page](plugin-variant.md)).
-- **Arm G:** the prototype passed P0 with scripted Managers, 34 of 34. An independent review says go after fixes, with ten blocking findings, recorded next to the code ([review](https://github.com/Glacius-Labs/Markitect/blob/94e28e12b73ee7ee26eff4589ee90d2c758119aa/prototypes/g0/review-20261028.md)). Its design is in [PR #795](https://github.com/Glacius-Labs/Markitect/pull/795). The prototype runs on Codex only, which is out of tokens.
-- **New project:** authored in the private repository: a fresh build and seven changes, each with requirements, a model that compiles, a hidden judge that passes its reference and fails its six mutants, and an equivalence review that ends equivalent. Build has not seen its content. Its judge image is not built or pinned yet, and its checks ran on Windows only.
+- **Target:** [concept 2.0](../concepts/v2-concept.md) since 28 October; the owner handed its build to this session through the Topics session. Its steps T1 to T7 are in the [delivery plan](../implementation-plan.md#concept-20-build); the proposed shape (one implementation, compared with K) awaits the owner. Nothing of 2.0 is built.
+- **Suite:** E1 and E2 of [evaluation suite v2](../design/evaluation-suite-v2.md) are on `main` in [`tools/evaluation`](../../tools/evaluation/README.md): one sandbox per run with an egress limit, `judge`, `review`, `report`, the failure classifier and the token parser. The [E1 smoke](../validation/eval-e1-sandbox-smoke-20261028.md) and the [E2 smoke](../validation/eval-e2-judge-smoke-20261028.md) passed: the sandbox held, the Library judge separates its reference from its mutants, and K's runs k-02 to k-04 pass all 19 hidden cases with no critical finding. K's capture fix is confirmed.
+- **New project:** authored in the private repository: a fresh build and seven changes, each with requirements, a model, a hidden judge that passes its reference and fails its six mutants, and an equivalence review. Build has not seen its content. Its models are in the concept 1.0 form, its judge image is not pinned, and its checks ran on Windows only.
+- **Concept 1.0 arms:** M (V1 on `main`), P (`variant/plugin`) and G (`dev/g0-prototype`) are where they were on 28 October; none is developed further until the owner decides the shape.
 - **Running:** no real run and no sub-session.
 
 ## Next
 
-The suite becomes decision-grade first: [evaluation suite v2](../design/evaluation-suite-v2.md), increments E1 to E6.
-
-1. **E2, judges and report:** `judge`, `review` and `report`, the failure classifier and the token parser, with the Library judge; judge the E1 smoke's runs k-02 and k-03 (k-01's result is incomplete through K's capture defect). One more K run in the sandbox confirms the capture fix.
-2. **E2 follow-up for the new project:** build and pin its judge image, and run its judge self-tests on Linux.
-3. **E3, engine variants:**
-   - **Arm M:** a new adapter in `tools/arm-m/` that uses the host engine, with its Manager containers on the egress-limited network, from lane 1's controller: native Apply on Linux, one repository identity per chain and arm, the state directory as its continuation, the candidate committed with a fixed identity, the Apply status and cause reported unchanged. A frozen build that contains the Claude adapter. K1b's follow-ups before counted runs on Claude: a short smoke with a correction round so that `--resume` runs natively, an allow-list instead of the deny-list for the entries agentd watches in the Manager's home, and a check that the access-only login outlasts a long run.
-   - **Arm P:** smoke 03 when the owner approves and the engine is free, then the variant command around `armp.py`.
-4. **E4, portfolio:** the Makerspace chain task and judge, and the new project's tasks wired into the suite.
-5. **E5 and E6:** the pilot series, then the counted series under an approved protocol.
-6. **Arm G:** fix the ten blocking findings offline on `dev/g0-prototype`; it joins at E3 once it has a provider.
-7. **Arm M, V1:** step 5, the acceptance package ([steps](../implementation-plan.md#steps)), and the small follow-ups: Capture refuses an empty Package directory; WP3b's dependency order is deferred; whether WP1 may continue after served actions is open.
-8. **One page:** fold the plugin and Git variant pages into this one as their PRs land.
+1. **T1, language and compiler,** in one writing session, once the owner confirms the shape.
+2. **Beside T1:** T3's hooks from the G0 prototype without its referee, and T6's suite work: change-series tasks, planted model defects and the drift check.
+3. **Small follow-ups:** the new project's models converted to the 2.0 form by its author, and its judge image pinned and self-tested on Linux.
 
 ## Decisions
 
@@ -41,6 +29,5 @@ The suite becomes decision-grade first: [evaluation suite v2](../design/evaluati
 
 ## Questions for the owner
 
-1. **P smoke 03.** May it run once nothing else holds the engine? Recommendation: yes; it shows whether the plugin completes an Apply at all.
-2. **G's provider.** The prototype runs on Codex only. Recommendation: wait for Codex tokens rather than add a Claude backend now, and fix the review findings meanwhile.
-3. **Long-lived Claude token for M.** Recommendation: no; keep the access-only login copy, because a Manager's shell could read a token that is valid for a year.
+1. **Shape of the 2.0 build.** One implementation of concept 2.0, compared with K; P and V1's open steps stop, and G's prototype becomes the start of T3. Recommendation: yes.
+2. **Acceptance portfolio.** Concept 2.0's acceptance names the Library and Makerspace; the suite's decision made the new, unseen project the real test, because arm M was tuned on Makerspace. Recommendation: accept on the Library and Makerspace as §15 says, and add the new project as the unseen check; its tasks then join T6.
