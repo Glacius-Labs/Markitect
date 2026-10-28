@@ -6,17 +6,17 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 
 ## Now
 
-- **Target:** [concept 2.0](../concepts/v2-concept.md) since 28 October; the owner handed its build to this session through the Topics session. Its steps T1 to T7 are in the [delivery plan](../implementation-plan.md#concept-20-build). The owner chose the shape: one implementation, compared with K. Nothing of 2.0 is built.
+- **Target:** [concept 2.0](../concepts/v2-concept.md) since 28 October; the owner handed its build to this session through the Topics session. Its steps T1 to T7 are in the [delivery plan](../implementation-plan.md#concept-20-build). The owner chose the shape: one implementation, compared with K. T1 is on `main` ([PR #850](https://github.com/Glacius-Labs/Markitect/pull/850)): the Markdown language, `check`, `lock`, `refs`, `graph`, `impact` with checklists, `lint`, `init` and both skills; it removed the V1 Run host and the old language. T2 is on `main` ([PR #849](https://github.com/Glacius-Labs/Markitect/pull/849)): the Library m1–m5 and Makerspace w0–c9 models in the 2.0 form, each step passing `check`, with equivalence records.
 - **Suite:** E1 and E2 of [evaluation suite v2](../design/evaluation-suite-v2.md) are on `main` in [`tools/evaluation`](../../tools/evaluation/README.md): one sandbox per run with an egress limit, `judge`, `review`, `report`, the failure classifier and the token parser. The [E1 smoke](../validation/eval-e1-sandbox-smoke-20261028.md) and the [E2 smoke](../validation/eval-e2-judge-smoke-20261028.md) passed: the sandbox held, the Library judge separates its reference from its mutants, and K's runs k-02 to k-04 pass all 19 hidden cases with no critical finding. K's capture fix is confirmed.
-- **New project:** authored in the private repository: a fresh build and seven changes, each with requirements, a model, a hidden judge that passes its reference and fails its six mutants, and an equivalence review. Build has not seen its content. Its models are in the concept 1.0 form, its judge image is not pinned, and its checks ran on Windows only.
-- **Concept 1.0 arms:** stopped on 28 October with the shape decision: M (V1 on `main` until 2.0 replaces it), P (`variant/plugin`) and G (`dev/g0-prototype`, the start of T3).
-- **Running:** the T1 session (language and compiler), started 28 October; no real run.
+- **New project:** authored in the private repository: a fresh build and seven changes, each with requirements, a model, a hidden judge that passes its reference and fails its six mutants, and an equivalence review. Build has not seen its content. Its author is converting its models to the 2.0 form; its judge image is not pinned, and its checks ran on Windows only.
+- **Concept 1.0 arms:** stopped on 28 October with the shape decision: M (V1, removed from `main` by T1), P (`variant/plugin`) and G (`dev/g0-prototype`, the start of T3).
+- **Running:** the T3 session (Run remote and hooks), the T6 session (suite against §15) and the new project's author (conversion); no real run.
 
 ## Next
 
-1. **T1, language and compiler:** running in its own session; Build reviews and merges its PR.
-2. **Beside T1:** T3's hooks from the G0 prototype without its referee, and T6's suite work: change-series tasks, planted model defects and the drift check.
-3. **Small follow-ups:** the new project's models converted to the 2.0 form by its author, and its judge image pinned and self-tested on Linux.
+1. **T3 and T6:** review and merge their PRs.
+2. **T4, Run engine with `apply` and `verify`:** starts once T3 is on `main`.
+3. **New project:** after its conversion, its judge image pinned and self-tested on Linux under a dispatch.
 
 ## Decisions
 
