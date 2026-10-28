@@ -25,7 +25,17 @@ In a chain, a step without a result is followed by a step that starts from that 
 
 ## The baseline
 
-`claude_code.py` copies the task's `task.md` into a clone of the start as an uncommitted `TASK.md`. It then runs `claude -p` with a fixed prompt, the evaluation's model, no user settings, plugins, CLAUDE.md, memory or MCP servers, and a copy of the login without its refresh token. It stops the session a minute before the deadline, commits what is left with a fixed identity, and writes `result.bundle`, `run.json`, the session's stream and its transcripts. If a login secret appears in the output, it deletes the stream and the transcripts and marks the run as quarantined. Every chain step is a fresh session. The session runs as the user on the host: this is separation, not a sandbox.
+`claude_code.py` copies the task's `task.md` into a clone of the start as an uncommitted `TASK.md`. It then runs `claude -p` with a fixed prompt, the evaluation's model, no user settings, plugins, CLAUDE.md, memory or MCP servers, and a copy of the login without its refresh token. It stops the session a minute before the deadline, commits what is left with a fixed identity, and writes `result.bundle`, `run.json`, the session's stream and its transcripts.
+
+Safeguards:
+- **Git:** clone, session and commit share one Git setting, with no system or user configuration, no line-ending conversion, no hooks and no credentials.
+- **Login:** the login copy is deleted as soon as the session ends. Before bundling, every commit since the start is searched for the login. If the login appears there or in any output, nothing is delivered, the stream and the transcripts are deleted, and the run is marked quarantined.
+- **Fresh sessions:** every chain step is a fresh session.
+
+Limits:
+- The session runs as the user on the host: this is separation, not a sandbox.
+- The repository's own `.claude/` settings still load, as they would for any developer. This includes settings the agent wrote in an earlier step.
+- On Windows, a background process that the session leaves behind after a normal exit is not stopped. On Linux, the whole process group is stopped.
 
 A real run uses the owner's Claude subscription and needs an owner-approved bounded dispatch.
 

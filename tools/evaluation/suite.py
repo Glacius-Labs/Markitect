@@ -125,12 +125,16 @@ def read_task(task_dir):
 # --- Running a variant --------------------------------------------------------
 
 def kill_tree(proc):
-    if proc.poll() is not None:
-        return
+    """Kill the variant and everything it started. On POSIX the whole process group goes, also
+    after a normal exit; on Windows taskkill follows the tree only while the variant still runs."""
     if os.name == "nt":
-        subprocess.run(["taskkill", "/PID", str(proc.pid), "/T", "/F"], capture_output=True)
+        if proc.poll() is None:
+            subprocess.run(["taskkill", "/PID", str(proc.pid), "/T", "/F"], capture_output=True)
     else:
-        os.killpg(proc.pid, signal.SIGKILL)
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
     try:
         proc.wait(timeout=KILL_SECONDS)
     except subprocess.TimeoutExpired:
@@ -143,11 +147,12 @@ def start_variant(argv, env, stdout, stderr, deadline):
     with open(stdout, "wb") as out, open(stderr, "wb") as err:
         proc = subprocess.Popen(argv, env=env, stdout=out, stderr=err, stdin=subprocess.DEVNULL, **kw)
         try:
-            code, timed_out = proc.wait(timeout=deadline), False
+            proc.wait(timeout=deadline)
+            timed_out = False
         except subprocess.TimeoutExpired:
-            kill_tree(proc)
-            code, timed_out = proc.returncode, True
-    return {"exitCode": code, "timedOut": timed_out, "wallSeconds": round(time.monotonic() - started, 1)}
+            timed_out = True
+        kill_tree(proc)
+    return {"exitCode": proc.returncode, "timedOut": timed_out, "wallSeconds": round(time.monotonic() - started, 1)}
 
 
 def collect_result(task_dir, start_commit, bundle):
@@ -213,7 +218,12 @@ def run(task_dir, variant, out, model, state=None):
         env = dict(os.environ, EVALUATION_MODEL=model)
         record.update(start_variant(argv, env, out / "variant.stdout.log", out / "variant.stderr.log", task["deadlineSeconds"]))
     record["endedUtc"] = now()
-    record["result"], record["resultError"] = collect_result(task_dir, task["start"]["commit"], out / "variant" / "result.bundle")
+    try:
+        # The variant got a copy, but could still reach the original by path.
+        read_task(task_dir)
+        record["result"], record["resultError"] = collect_result(task_dir, task["start"]["commit"], out / "variant" / "result.bundle")
+    except SuiteError as e:
+        record["result"], record["resultError"] = None, f"the task changed during the run: {e}"
     record["delivered"] = record["result"] is not None
     record["reported"] = reported(out / "variant" / "run.json")
     record["modelMatches"] = model_check(model, record["reported"])
@@ -223,10 +233,12 @@ def run(task_dir, variant, out, model, state=None):
 
 def chain_start(task_dir, step_record, out):
     """The next step's start: this step's result, or this step's start when there was none, as one complete bundle."""
-    commit = step_record["result"]["commit"] if step_record["delivered"] else step_record["task"]["start"]
+    task = read_task(task_dir)
+    start = task["start"]["commit"]
+    commit = step_record["result"]["commit"] if step_record["delivered"] else start
     with tempfile.TemporaryDirectory() as tmp:
         git(tmp, "init", "-q", "--bare")
-        git(tmp, "fetch", "-q", str((pathlib.Path(task_dir) / "start.bundle").resolve()), "+refs/*:refs/suite/start/*")
+        git(tmp, "fetch", "-q", str((pathlib.Path(task_dir) / "start.bundle").resolve()), f"+{start}:refs/suite/start")
         if step_record["delivered"]:
             result = pathlib.Path(step_record["resultBundle"])
             git(tmp, "fetch", "-q", str(result.resolve()), f"+{commit}:refs/suite/result")
@@ -243,24 +255,30 @@ def chain(steps, start, deadline, variant, out, model):
     out.mkdir(parents=True)
     state = out / "state"
     state.mkdir()
-    records = []
+    records, error = [], None
     for i, step in enumerate(steps, 1):
         step = pathlib.Path(step)
         task_dir, run_dir = out / f"step-{i:02d}" / "task", out / f"step-{i:02d}" / "run"
-        if i == 1:
-            make_task(step / "task.md", step / "model" if (step / "model").is_dir() else None, start, deadline, task_dir)
-        else:
-            with tempfile.TemporaryDirectory() as tmp:
-                bundle = pathlib.Path(tmp) / "start.bundle"
-                chain_start(out / f"step-{i - 1:02d}" / "task", records[-1], bundle)
-                make_task(step / "task.md", step / "model" if (step / "model").is_dir() else None, bundle, deadline, task_dir)
-        record = run(task_dir, variant, run_dir, model, state)
+        try:
+            if i == 1:
+                make_task(step / "task.md", step / "model" if (step / "model").is_dir() else None, start, deadline, task_dir)
+            else:
+                with tempfile.TemporaryDirectory() as tmp:
+                    bundle = pathlib.Path(tmp) / "start.bundle"
+                    chain_start(out / f"step-{i - 1:02d}" / "task", records[-1], bundle)
+                    make_task(step / "task.md", step / "model" if (step / "model").is_dir() else None, bundle, deadline, task_dir)
+            record = run(task_dir, variant, run_dir, model, state)
+        except SuiteError as e:
+            # The chain cannot go on, but every step that ran stays on record.
+            error = {"step": i, "error": str(e)}
+            break
         record["resultBundle"] = str(run_dir / "variant" / "result.bundle")
         records.append(record)
     summary = {"format": FORMAT, "model": model,
                "steps": [{"step": i, "delivered": r["delivered"], "timedOut": r["timedOut"], "wallSeconds": r["wallSeconds"],
                           "modelMatches": r["modelMatches"], "result": r["result"]["commit"] if r["result"] else None}
-                         for i, r in enumerate(records, 1)]}
+                         for i, r in enumerate(records, 1)],
+               "stopped": error}
     (out / "chain.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
     return summary
 

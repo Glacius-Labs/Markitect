@@ -27,6 +27,9 @@ FAKE = textwrap.dedent("""
     spec = json.loads((task / "task.json").read_text())
     if mode == "sleep":
         time.sleep(60)
+    if mode == "tamper":
+        # In a chain the original task sits next to the run directory.
+        (out.parent.parent / "task" / "task.md").write_text("changed\\n")
     if state:
         with open(state / "seen.txt", "a") as f:
             f.write(mode + "\\n")
@@ -155,6 +158,28 @@ class SuiteTest(unittest.TestCase):
         self.assertEqual((repo / "work.txt").read_text().split(), ["ok", "ok"])
         self.assertEqual((out / "state" / "seen.txt").read_text().split(), ["ok", "none", "ok"])
 
+    def test_changed_task_invalidates_the_run_and_stops_the_chain(self):
+        steps = [self.step("1", "tamper"), self.step("2", "ok")]
+        summary = suite.chain(steps, None, 120, self.variant, self.tmp / "chain", MODEL)
+        self.assertEqual([s["delivered"] for s in summary["steps"]], [False])
+        record = json.loads((self.tmp / "chain" / "step-01" / "run" / "suite.json").read_text())
+        self.assertIn("the task changed", record["resultError"])
+        self.assertEqual(summary["stopped"]["step"], 2)
+        self.assertTrue((self.tmp / "chain" / "chain.json").is_file())
+
+    def test_chain_from_a_head_only_start_bundle(self):
+        repo = self.tmp / "origin"
+        repo.mkdir()
+        git(repo, "init", "-q")
+        (repo / "a.txt").write_text("a\n")
+        git(repo, "add", "-A")
+        git(repo, "-c", "user.name=o", "-c", "user.email=o@x", "-c", "commit.gpgsign=false", "commit", "-q", "-m", "a")
+        bundle = self.tmp / "head.bundle"
+        git(repo, "bundle", "create", str(bundle), "HEAD")
+        summary = suite.chain([self.step("1", "ok"), self.step("2", "ok")], bundle, 120, self.variant, self.tmp / "chain", MODEL)
+        self.assertEqual([s["delivered"] for s in summary["steps"]], [True, True])
+        self.assertIsNone(summary["stopped"])
+
     def test_cli_runs_a_task(self):
         task = self.task("ok")
         code = suite.main(["run", "--task", str(task), "--out", str(self.tmp / "cli"), "--model", MODEL, "--", *self.variant])
@@ -164,10 +189,12 @@ class SuiteTest(unittest.TestCase):
 
 # A fake `claude`: checks its isolation, edits the repository and writes a stream-json result.
 FAKE_CLAUDE = textwrap.dedent("""
-    import json, os, pathlib, sys
+    import json, os, pathlib, subprocess, sys, time
     cwd = pathlib.Path.cwd()
-    assert (cwd / "TASK.md").is_file(), "TASK.md missing"
+    mode = (cwd / "TASK.md").read_text().splitlines()[0]
     assert not any(k.startswith(("ANTHROPIC", "EVALUATION_")) for k in os.environ), "leaked variable"
+    autocrlf = subprocess.run(["git", "config", "core.autocrlf"], capture_output=True, text=True).stdout.strip()
+    assert autocrlf == "false", "line endings not fixed: " + autocrlf
     config = pathlib.Path(os.environ["CLAUDE_CONFIG_DIR"])
     login = json.loads((config / ".credentials.json").read_text())["claudeAiOauth"]
     assert "refreshToken" not in login, "refresh token reached the session"
@@ -175,6 +202,10 @@ FAKE_CLAUDE = textwrap.dedent("""
     model = argv[argv.index("--model") + 1]
     assert sys.stdin.read().startswith("Read the documentation in TASK.md"), "prompt not on stdin"
     (cwd / "main.go").write_text("package main\\n")
+    if mode == "leak":
+        (cwd / "token.txt").write_text(login["accessToken"])
+    if mode == "sleep":
+        time.sleep(120)
     (config / "projects" / "p").mkdir(parents=True)
     (config / "projects" / "p" / "s.jsonl").write_text("{}\\n")
     print(json.dumps({"type": "system", "subtype": "init", "model": model, "session_id": "s1"}))
@@ -200,12 +231,35 @@ class ClaudeCodeTest(unittest.TestCase):
         expires = int((time.time() + 7200) * 1000)
         self.credentials.write_text(json.dumps({"claudeAiOauth": {"accessToken": "sk-access-SECRET", "refreshToken": "sk-refresh-SECRET",
                                                                   "expiresAt": expires}}))
-        (self.tmp / "task.md").write_text("Build it.\n")
-        self.task = self.tmp / "task"
-        suite.make_task(self.tmp / "task.md", None, None, 600, self.task)
+        self.task = self.make("ok", 600)
+        self.variant = [sys.executable, "-B", str(HERE / "claude_code.py"), "--claude", str(self.claude), "--credentials", str(self.credentials)]
 
     def tearDown(self):
         self._tmp.cleanup()
+
+    def make(self, mode, deadline):
+        (self.tmp / f"{mode}.md").write_text(mode + "\n")
+        task = self.tmp / f"task-{mode}"
+        suite.make_task(self.tmp / f"{mode}.md", None, None, deadline, task)
+        return task
+
+    def test_a_committed_login_is_never_delivered(self):
+        record = suite.run(self.make("leak", 600), self.variant, self.tmp / "run", MODEL)
+        self.assertFalse(record["delivered"])
+        self.assertEqual(record["reported"]["status"], "quarantined")
+        out = self.tmp / "run" / "variant"
+        self.assertFalse((out / "result.bundle").exists())
+        for p in out.rglob("*"):
+            if p.is_file():
+                self.assertNotIn(b"SECRET", p.read_bytes(), p)
+
+    def test_a_timed_out_session_still_delivers_its_work(self):
+        # 63 s deadline less the 60 s margin: the session is stopped after 3 s, well before the suite's deadline.
+        record = suite.run(self.make("sleep", 63), self.variant, self.tmp / "run", MODEL)
+        self.assertFalse(record["timedOut"])
+        self.assertEqual(record["reported"]["status"], "timed_out")
+        self.assertTrue(record["delivered"], record["resultError"])
+        self.assertEqual(record["result"]["changedPaths"], ["A\tmain.go"])
 
     def test_login_copy_has_no_refresh_token_and_must_outlive_the_session(self):
         copy, secrets = claude_code.session_login(self.credentials.read_bytes(), 600)
@@ -215,8 +269,7 @@ class ClaudeCodeTest(unittest.TestCase):
             claude_code.session_login(self.credentials.read_bytes(), 10 * 3600)
 
     def test_baseline_through_the_suite(self):
-        variant = [sys.executable, "-B", str(HERE / "claude_code.py"), "--claude", str(self.claude), "--credentials", str(self.credentials)]
-        record = suite.run(self.task, variant, self.tmp / "run", MODEL)
+        record = suite.run(self.task, self.variant, self.tmp / "run", MODEL)
         self.assertTrue(record["delivered"], (record["resultError"], record["reported"]))
         self.assertTrue(record["modelMatches"], (record["reported"], (self.tmp / "run" / "variant" / "session.stderr.log").read_text()))
         self.assertEqual(record["reported"]["status"], "completed")
@@ -230,8 +283,7 @@ class ClaudeCodeTest(unittest.TestCase):
                 self.assertNotIn(b"SECRET", p.read_bytes(), p)
 
     def test_baseline_refuses_another_provider(self):
-        variant = [sys.executable, "-B", str(HERE / "claude_code.py"), "--claude", str(self.claude), "--credentials", str(self.credentials)]
-        record = suite.run(self.task, variant, self.tmp / "run", "codex:gpt-6-luna")
+        record = suite.run(self.task, self.variant, self.tmp / "run", "codex:gpt-6-luna")
         self.assertFalse(record["delivered"])
         self.assertIn("EVALUATION_MODEL", record["reported"]["cause"])
 
