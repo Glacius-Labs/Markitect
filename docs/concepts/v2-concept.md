@@ -136,6 +136,8 @@ A Run starts from a fixed commit of the target branch. If the branch has not mov
 | `bughunt`, `security` | checkers only, with that focus | nothing | Findings; where the model is silent, model proposals |
 | `cleanup` | makers and checkers on the unchanged model; behavior stays | artifacts, by landing | the Result |
 
+Every Command takes a base, by default the last commit Markitect landed. Impact is everything that changed since then, in the model or in the files: a changed file reaches its Definitions through the registry, so `verify` after hand edits checks exactly what they touched, and nothing changed means nothing to do. `--full` covers everything. `bughunt`, `security` and `cleanup` take the whole tree by default, narrowable with `--package`. In `verify`, the checkers write the verdicts as commits without file changes, and the hooks require a complete checklist as in `apply`.
+
 `apply` and `verify` come first. The others are short declarations over the same mechanism and follow; projects add their own the same way. `explain` comes later.
 
 **One Finding input for every source.** A Finding names a Definition and says what was observed and what is expected. `apply --findings FILE` takes Findings from `verify`, `bughunt`, `security` or, later, issues and incidents; raw report text never reaches an agent. A Finding whose Definition no longer exists becomes a side note. Each Finding becomes a checklist item of the Manager owning that Definition. A report about something the model does not state is a model proposal, not a Finding.
@@ -199,7 +201,7 @@ No app for now ([DEC-085](register.md#dec-085-markdown-tools-are-the-cockpit-for
 4. **Internal Definitions and the Managers above: decided** 28 October: visibility binds links; reading upward and registry links stay free.
 5. **The checklist: decided** 28 October: own Definitions the change reaches, inherited Definitions the change reaches, and assigned Findings; everything with `--full`.
 6. **Hooks and integration: decided** 28 October: parents push their own paths plus unchanged, approved child commits; the checker's approval is a commit without file changes; the required checks run on every submission.
-7. **Commands without a model change.** What `verify`, `cleanup` and `bughunt` take as their impact when the model has not changed, and who writes the verdicts in `verify`, which has no makers.
+7. **Commands without a model change: decided** 28 October: a base (by default the last landed commit) with impact over model and file changes; focus Commands take the whole tree or `--package`; in `verify` the checkers write the verdicts.
 8. **Control files.** Must the model files, registry pages, manifest, lock and `execution.yaml` be registered or ignored?
 9. **Results and leftovers.** Where Results are stored, especially when nothing lands; cleanup of Run branches and retention of evidence (open since DEC-078); landing while the user's local checkout has uncommitted changes.
 10. **Acceptance.** What counts as concept 2.0 being achieved; concept 1.0's acceptance (§25) does not carry over.
