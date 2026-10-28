@@ -34,9 +34,10 @@ const (
 // subagents, web access, skills and background work stay unavailable.
 const builtinTools = "Bash,Read,Edit,Write,Glob,Grep"
 
-// alwaysPresentTools are built-in tools that --tools cannot remove while MCP
-// tools remain, as the CLI reference states for EndConversation.
-var alwaysPresentTools = []string{"EndConversation"}
+// launchSettings turns off every plugin built into the pinned CLI. Without it
+// 2.1.308 loads cc-plugin-agents-md and cc-plugin-plugin-authoring; the others
+// load under conditions the adapter does not control.
+const launchSettings = `{"enabledPlugins":{"cc-plugin-agents-md@builtin":false,"cc-plugin-claude-test@builtin":false,"cc-plugin-diff@builtin":false,"cc-plugin-easel@builtin":false,"cc-plugin-mermaid@builtin":false,"cc-plugin-mods-guide@builtin":false,"cc-plugin-plugin-authoring@builtin":false,"cc-plugin-responsive-mode@builtin":false,"cc-plugin-sec-default@builtin":false,"cc-plugin-telemetry@builtin":false,"cc-plugin-tips@builtin":false,"cc-plugin-you-should-know@builtin":false}}`
 
 // Profile is everything a session needs from one captured Agent profile of
 // the Runtime profile: the immutable image, the opaque credential reference
@@ -131,9 +132,9 @@ const mcpConfig = `{"mcpServers":{"markitect":{"type":"stdio","command":"/usr/lo
 // providerArgv starts one non-interactive response. The first response
 // creates the conversation under the adapter's session ID; every later one
 // resumes it. The harness replaces the default system prompt; project
-// settings, CLAUDE.md, skills, slash commands and other MCP servers are not
-// loaded, and the permission mode lets native tools run without prompts in
-// the container, which is the sandbox.
+// settings, CLAUDE.md, built-in plugins, skills, slash commands and other MCP
+// servers are not loaded, and the permission mode lets native tools run
+// without prompts in the container, which is the sandbox.
 func providerArgv(session string, resume bool, p SessionProfile) []string {
 	conversation := []string{"--session-id", session}
 	if resume {
@@ -144,7 +145,7 @@ func providerArgv(session string, resume bool, p SessionProfile) []string {
 	return append(args, "--model", p.Model, "--effort", p.Effort,
 		"--system-prompt-file", systemPromptPath, "--append-system-prompt-file", appendSystemPromptPath,
 		"--permission-mode", "bypassPermissions", "--permission-prompts", "none",
-		"--tools", builtinTools, "--disable-slash-commands", "--setting-sources", "user",
+		"--tools", builtinTools, "--disable-slash-commands", "--setting-sources", "user", "--settings", launchSettings,
 		"--strict-mcp-config", "--mcp-config", mcpConfig)
 }
 
@@ -154,9 +155,10 @@ func authStatusArgv() []string { return []string{claudeExecutable, "auth", "stat
 // providerEnvironment is the fixed provider environment. It pins the private
 // configuration directory and switches off CLAUDE.md and memory loading,
 // background work, built-in subagents, MCP tool deferral, updates and other
-// nonessential traffic, and asks Claude Code to strip credentials from the
-// environments of the processes it starts. It empties NODE_OPTIONS, which
-// could otherwise load code into the CLI. It carries no credential.
+// nonessential traffic. It empties NODE_OPTIONS, which could otherwise load
+// code into the CLI. It carries no credential, so it leaves Claude Code's
+// subprocess environment scrubbing off: 2.1.308 requires bubblewrap for it
+// and refuses every command, `auth status` included, without it.
 func providerEnvironment() []string {
 	return []string{
 		"HOME=" + privateHome,
@@ -169,7 +171,6 @@ func providerEnvironment() []string {
 		"CLAUDE_CODE_DISABLE_FILE_CHECKPOINTING=1",
 		"CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1",
 		"DISABLE_AUTOUPDATER=1",
-		"CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1",
 		"ENABLE_TOOL_SEARCH=false",
 		// The tools' size annotation governs text results; this also lifts
 		// the token cap should the annotation not apply.
