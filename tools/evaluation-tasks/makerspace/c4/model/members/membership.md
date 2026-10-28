@@ -1,0 +1,8 @@
+---
+kind: std/Rule
+---
+# Membership
+
+A membership has a [[members/tier]] and a [[members/member|standing]]. The fee of the tier is charged once for every invoiced month, without proration. The usage discount applies only to usage charges, never to course or material charges.
+
+A member is **in good standing** when the standing is `good`. A suspended member cannot make reservations, check in, buy materials or enroll in courses. Suspension does not cancel existing reservations or enrollments. A suspended member can still cancel reservations, check out, see their records and pay invoices, and still receives the monthly fee. Reinstating good standing removes these restrictions; all other rules still apply.

@@ -1,0 +1,14 @@
+---
+kind: std/Rule
+---
+# Inputs
+
+Every operation of the [[project|library]] requires its stated inputs.
+
+- Identifiers are nonempty opaque values compared exactly; differently spelled identifiers are not silently combined.
+- Names and titles contain at least one non-whitespace character.
+- Dates are explicitly supplied valid calendar dates without times or time zones; behavior does not depend on the machine clock.
+- Missing required inputs, empty identifiers, invalid dates and unknown requested records are refused with an understandable reason and no observable state change. Invalid requests do not partially register records or change loans, and expected refusals do not produce unhandled crashes.
+- When multiple conditions fail, reporting any actual failing condition is sufficient.
+- Exact error text, transport and identifier generation are implementation choices.
+- Successful outcomes and refusals are observable through operation results and state inspection. Reads change no state; no ordering of returned loan lists is required.
