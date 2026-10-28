@@ -43,7 +43,7 @@ Context (recorder's summary): the session proposed eleven lanes. Each lane has a
 
 > Look again what each one of them is doing. Then lets plan what we should prioritize. The topics sessions are just there so when i have some time i can discuss those topics and maybe refine them. The working streams and evaluator are currently our primary goal i think. It should achieve that each of them gets a stable version and can be evaluated and then we can decide which one of them performs well in which parameters of a project. So we need a simple plan here that does not get us overwhelmed and chaotic.
 
-Context (recorder's summary): the session proposed a three-step plan for lanes 1 to 4: one yardstick, a stable version per variant, and a comparison. The topic lanes would pause. The workstreams overview, `docs/workstreams.md`, records the plan. The owner wrote:
+Context (recorder's summary): the session proposed a three-step plan for lanes 1 to 4: one yardstick, a stable version per variant, and a comparison. The topic lanes would pause. The [workstreams overview](../../workstreams.md) records the plan. The owner wrote:
 
 > Yes, send the plan to the lanes: topic lanes pause after their page PR, L1–L4 follow the three steps.
 
@@ -75,7 +75,7 @@ Recorder's reading:
   - A throwaway prototype comes before any rebuild.
   
   The Git variant's G0 design, `docs/design/agent-git-collaboration.md`, holds the details.
-- **Lanes (section 3).** Markitect's work runs in eleven lanes, each with a responsible session, as listed in the workstreams overview, `docs/workstreams.md`. Variant leads may start sub-sessions.
+- **Lanes (section 3).** From 27 October, Markitect's work ran in eleven lanes, each with a responsible session. Variant leads could start sub-sessions. On 28 October the owner replaced the lanes with two sessions, as the [workstreams overview](../../workstreams.md) records.
 - **Priority and tracking (section 4):**
   - Lanes 1 to 4 build, in the three steps of the overview, and the topic lanes pause once their state page is up.
   - A lane's state page is the only place for that lane's state.
