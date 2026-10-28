@@ -83,9 +83,13 @@ const capturedInit = `{"type":"system","subtype":"init","cwd":"/work","session_i
 
 const capturedDefaultPlugins = `[{"name":"cc-plugin-agents-md","path":"builtin","source":"cc-plugin-agents-md@builtin"},{"name":"cc-plugin-plugin-authoring","path":"builtin","source":"cc-plugin-plugin-authoring@builtin"}]`
 
+// builtinPlugins are the plugins the 2.1.308 binary registers.
+var builtinPlugins = []string{"agents-md", "claude-test", "diff", "easel", "mermaid", "mods-guide", "plugin-authoring",
+	"responsive-mode", "sec-default", "telemetry", "tips", "you-should-know"}
+
 // The pinned CLI's own init line passes the launch check only with the
-// built-in plugins turned off, and launchSettings turns off every plugin it
-// loads by default.
+// built-in plugins turned off, and launchSettings turns off exactly the
+// binary's built-in plugins, those it loads by default included.
 func TestPinnedCLIInitPassesTheLaunchCheck(t *testing.T) {
 	if err := checkInit(decodeOne(t, capturedInit).Init()); err != nil {
 		t.Fatal(err)
@@ -106,9 +110,12 @@ func TestPinnedCLIInitPassesTheLaunchCheck(t *testing.T) {
 			t.Fatalf("launch settings leave %s on", p.Source)
 		}
 	}
-	for name, enabled := range settings.EnabledPlugins {
-		if enabled {
-			t.Fatalf("launch settings turn %s on", name)
+	if len(settings.EnabledPlugins) != len(builtinPlugins) {
+		t.Fatalf("launch settings name %d plugins, not the binary's %d", len(settings.EnabledPlugins), len(builtinPlugins))
+	}
+	for _, name := range builtinPlugins {
+		if enabled, ok := settings.EnabledPlugins["cc-plugin-"+name+"@builtin"]; !ok || enabled {
+			t.Fatalf("launch settings leave cc-plugin-%s on", name)
 		}
 	}
 }

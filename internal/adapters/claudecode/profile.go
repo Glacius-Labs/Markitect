@@ -34,9 +34,10 @@ const (
 // subagents, web access, skills and background work stay unavailable.
 const builtinTools = "Bash,Read,Edit,Write,Glob,Grep"
 
-// launchSettings turns off every plugin built into the pinned CLI. Without it
-// 2.1.308 loads cc-plugin-agents-md and cc-plugin-plugin-authoring; the others
-// load under conditions the adapter does not control.
+// launchSettings turns off the twelve plugins the pinned CLI's binary
+// registers. Without network, 2.1.308 loaded cc-plugin-agents-md and
+// cc-plugin-plugin-authoring by default; the binary registers the others under
+// conditions the adapter does not control.
 const launchSettings = `{"enabledPlugins":{"cc-plugin-agents-md@builtin":false,"cc-plugin-claude-test@builtin":false,"cc-plugin-diff@builtin":false,"cc-plugin-easel@builtin":false,"cc-plugin-mermaid@builtin":false,"cc-plugin-mods-guide@builtin":false,"cc-plugin-plugin-authoring@builtin":false,"cc-plugin-responsive-mode@builtin":false,"cc-plugin-sec-default@builtin":false,"cc-plugin-telemetry@builtin":false,"cc-plugin-tips@builtin":false,"cc-plugin-you-should-know@builtin":false}}`
 
 // Profile is everything a session needs from one captured Agent profile of
