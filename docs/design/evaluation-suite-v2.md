@@ -1,6 +1,6 @@
 # Evaluation suite v2
 
-**Status:** design, approved in direction by the owner on 28 October 2026; built in increments E1 to E6. The [evaluation suite guide](../guides/evaluation-suite.md) stays the contract of what is built and changes with each increment. One change to the owner's portfolio decision waits for the owner (section C).
+**Status:** design, approved in direction by the owner on 28 October 2026; built in increments E1 to E6. The [evaluation suite guide](../guides/evaluation-suite.md) stays the contract of what is built and changes with each increment.
 
 ## Why
 
@@ -17,7 +17,7 @@ Smaller gaps: technical failures were counted as if they were results; the human
 
 ## Decisions
 
-Owner, 28 October 2026: every arm runs on Claude Sonnet 5.5 ([build page](../workstreams/build.md#decisions)); the portfolio is the Library as a smoke only, the Makerspace chain as the main test, and one new, larger project; all gaps above are addressed ("Yes lets go with your recommendation and address all of these.").
+Owner, 28 October 2026: every arm runs on Claude Sonnet 5.5 ([build page](../workstreams/build.md#decisions)); the portfolio is the Library as a smoke only, the Makerspace chain as the main test (later the same day an intermediate; the new project is the real test, section C), and one new, larger project; all gaps above are addressed ("Yes lets go with your recommendation and address all of these.").
 
 ## A. Equal conditions: one sandbox
 
@@ -57,11 +57,11 @@ Each task brings its hidden judge, stored apart from the task folder; the suite 
 
 | Task | Role | Hidden material |
 |---|---|---|
-| Library M1 | Smoke and stability check; never a comparison | Public (in this repository) |
-| Makerspace chain: fresh build W0 and changes C1 to C9 | Pilot and descriptive results: size, a long chain, cross-cutting rules | Public; arm M was tuned on it ([gate](../validation/v1-makerspace-gate-20261027.md)) and its README marks it pilot-only |
+| Library M1 | Small project: shows that a variant and the suite work technically; never a comparison | Public (in this repository) |
+| Makerspace chain: fresh build W0 and changes C1 to C9 | Intermediate: a first idea of what works, without much effort; pilot and descriptive results | Public; arm M was tuned on it ([gate](../validation/v1-makerspace-gate-20261027.md)) and its README marks it pilot-only |
 | A new, larger project: a fresh build and about six to eight changes | The confirmatory test, on unseen material | Private, outside this repository, published only after the comparison |
 
-**Waiting for the owner:** the owner chose the Makerspace chain as the main test. The design review found that arm M was developed against it, so a result there cannot confirm anything. The recommendation is to make the new project the confirmatory test and report the Makerspace descriptively.
+**Owner, 28 October 2026:** "Library is just there as a small project, to test that a variant technically works and that the eval suite works. Makerspace is an intermediate, where we can get an idea what works without much effort. As you propose the real test should be the new unseen one". The design review had found that arm M was developed against the Makerspace chain, so a result there cannot confirm anything.
 
 The new project's requirements, model, hidden oracle, seeded mutants and rubric are written by an author who works on none of the variants, and the equivalence of requirements and model is checked and recorded once. The author also writes a reference implementation for every step, in the layout the model's execution configuration names (`realization/`), so that each change task can start from the reference result of the step before, and every variant, M included, can continue from it. Build proposes the domain; the owner may veto it. Authoring starts with E1, because it takes longest. The variants are frozen before anyone working on them sees it.
 
@@ -91,6 +91,5 @@ G joins at E3 once it has a provider (Codex tokens or a Claude backend), after i
 
 ## Open questions
 
-1. **Confirmatory test:** the new project instead of the Makerspace chain (section C).
-2. **Where the new project's hidden material lives.** Recommendation: a private GitHub repository owned by Glacius Labs, so that it is versioned and backed up but not public.
-3. **Minimum meaningful difference and the run and quota budget per counted series:** the pilot measures spread and quota use; the protocol asks for both.
+1. **Where the new project's hidden material lives.** Recommendation: a private GitHub repository owned by Glacius Labs, so that it is versioned and backed up but not public.
+2. **Minimum meaningful difference and the run and quota budget per counted series:** the pilot measures spread and quota use; the protocol asks for both.
