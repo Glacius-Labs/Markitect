@@ -1,0 +1,5 @@
+{
+  "description": "A broken rule: a member may hold six open loans instead of five.",
+  "replace": [{"path": "realization/internal/library/library.go", "old": "MaxOpenLoans = 5", "new": "MaxOpenLoans = 6"}],
+  "expect": {"correctnessFails": true}
+}

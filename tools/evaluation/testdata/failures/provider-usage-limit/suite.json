@@ -1,0 +1,100 @@
+{
+  "format": 1,
+  "task": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Codex\\Markitect-Evaluation\\library-m1-task",
+    "intentSha256": "35d9364152d2deb45b539f0029bfcb1cc0a320b6d3a4eea692c5d195e52e5156",
+    "start": "1ffcbca58aba8ef60ba1770e76c5acaea26ff7a5",
+    "deadlineSeconds": 2700
+  },
+  "variant": {
+    "argv": [
+      "python3",
+      "-I",
+      "-B",
+      "/variant/claude_code.py",
+      "--effort",
+      "high"
+    ]
+  },
+  "model": "claude:claude-sonnet-5-5",
+  "conditions": "sandbox",
+  "startedUtc": "2026-10-28T17:16:11.841818+00:00",
+  "sandbox": {
+    "image": "sha256:e0b20d8a8c88a0a4b37f151af45618e764f8687b023b10bcb6d3b5148c5e5dad",
+    "user": "1000:1000",
+    "limits": {
+      "cpus": "8",
+      "memoryBytes": 17179869184,
+      "pids": 4096,
+      "tmpBytes": 8589934592
+    },
+    "seriesSha256": "8667891c06c28eecb7130870a4ba54a511f49ec70d38fc9c8852e42a62c0e9d8",
+    "egressAllow": [
+      "api.anthropic.com"
+    ],
+    "variantCode": "C:/Users/Consiliari/Glacius Labs/Markitect/.claude/worktrees/p3-gitrepo-stability-0f67e8/tools/evaluation",
+    "runId": "eval-359762d48bcd",
+    "network": "eval-359762d48bcd-internal",
+    "gatewayAddress": "192.168.80.1",
+    "container": {
+      "exitCode": 0,
+      "oomKilled": false
+    },
+    "egress": {
+      "allowed": {
+        "api.anthropic.com": 3
+      },
+      "refused": {}
+    },
+    "residue": [],
+    "quarantine": []
+  },
+  "exitCode": 1,
+  "timedOut": false,
+  "wallSeconds": 203.8,
+  "endedUtc": "2026-10-28T17:19:38.467222+00:00",
+  "validForCounting": true,
+  "result": {
+    "commit": "8d1d1e5f54d731c4183f02858d1964e0312ac22d",
+    "tree": "09f709d63f5a08ab08d7168285298754d3336b0c",
+    "bundleSha256": "bd9373c538baddfd2be6df993823a40aaf58c413ded2b9b835310f4d07fabe0e",
+    "changedPaths": [
+      "A\trealization/.gitignore",
+      "A\trealization/README.md",
+      "A\trealization/cmd/library/main.go",
+      "A\trealization/cmd/library/main_test.go",
+      "A\trealization/go.mod",
+      "A\trealization/internal/jsonl/server.go",
+      "A\trealization/internal/jsonl/server_test.go",
+      "A\trealization/internal/library/date.go",
+      "A\trealization/internal/library/date_test.go",
+      "A\trealization/internal/library/library.go",
+      "A\trealization/internal/library/library_test.go"
+    ]
+  },
+  "resultError": null,
+  "delivered": true,
+  "reported": {
+    "provider": "claude",
+    "model": "claude-sonnet-5-5",
+    "status": "failed",
+    "cause": null,
+    "requestedModel": "claude-sonnet-5-5",
+    "exitCode": 1,
+    "timedOut": false,
+    "sessionSeconds": 202.9,
+    "sessionId": "a04de998-36d6-44b1-859f-57bf13d6e2d4",
+    "usage": {
+      "inputTokens": 24,
+      "cacheReadTokens": 427686,
+      "cacheCreationTokens": 41148,
+      "outputTokens": 28760,
+      "reasoningTokens": null,
+      "turns": 13,
+      "costUsd": 0.4950086
+    },
+    "sessionResult": "error_during_execution",
+    "resultCommit": "8d1d1e5f54d731c4183f02858d1964e0312ac22d"
+  },
+  "modelMatches": true
+}

@@ -1,0 +1,21 @@
+{
+  "format": 1,
+  "name": "library-m1",
+  "image": "golang@sha256:69a7b9788769bec032d238959b61854e9ae87f57be9029ec04e9885fabf99195",
+  "command": ["python3", "-I", "-B", "/judge/judge.py", "--contained"],
+  "timeoutSeconds": 2400,
+  "limits": {"cpus": "4", "memoryBytes": 4294967296, "pids": 1024, "tmpBytes": 2147483648},
+  "include": {
+    "judge.py": "tools/evaluation/judges/library-m1/judge.py",
+    "rubric.md": "tools/comparison/rubric.md",
+    "tools/comparison/assess_candidate.py": "tools/comparison/assess_candidate.py",
+    "tools/comparison/runner.py": "tools/comparison/runner.py",
+    "tools/comparison/probes.py": "tools/comparison/probes.py",
+    "tools/library-oracle/assess.py": "tools/library-oracle/assess.py",
+    "tools/library-oracle/driver.py": "tools/library-oracle/driver.py",
+    "tools/library-oracle/oracle.py": "tools/library-oracle/oracle.py",
+    "tools/library-oracle/expectations/m1.json": "tools/library-oracle/expectations/m1.json",
+    "tools/library-oracle/expectations/m2.json": "tools/library-oracle/expectations/m2.json",
+    "tools/library-oracle/container/assess.py": "tools/library-oracle/container/assess.py"
+  }
+}

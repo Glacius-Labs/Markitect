@@ -26,6 +26,7 @@ These reports preserve the exact scope, inputs, source references and outcomes s
 
 - [Modeling skill change trial: Makerspace C5 — 27 October 2026](modeling-skill-change-trial-20261027.md): a fresh agent with only the modeling skill changed makerspace-v2.1 from C4 to C5; an independent review found it faithful, with no owner questions and no repair, at about 144 k tokens; the skill's size limit split one rule that reads better whole
 - [Why the Go tests are slow on Windows — 28 October 2026](windows-test-time-20261028.md): about 50 minutes on Windows against 3 on Linux CI, almost all of it about 90,000 Git process starts at 23–55 ms each; four fix options, none built
+- [Evaluation suite E2: judge smoke — 28 October 2026](eval-e2-judge-smoke-20261028.md): dispatch for the Library judge's self-test in its container, judging, review and a per-area report of the E1 baseline runs, and one K run confirming the capture fix; awaiting approval
 - [Evaluation suite E1: sandbox smoke — 28 October 2026](eval-e1-sandbox-smoke-20261028.md): the escape probe and three baseline runs on the Library inside the sandbox; passed, with a K capture defect found and fixed
 - [Evaluation suite: first smoke, baseline K on the Library — 28 October 2026](eval-k-library-smoke-20261028.md): dispatch for three baseline runs through the suite on Claude Sonnet 5.5; superseded by the sandbox smoke of evaluation suite v2, never run
 
