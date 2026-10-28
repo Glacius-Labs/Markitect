@@ -10,9 +10,8 @@ This page lists the sessions, the variants and where each keeps its state. It ho
 |---|---|---|---|
 | Build and evaluation | Coordinates the evaluation suite and the variants, runs their dispatches and integrates their PRs | yes, the only session that builds | [build.md](workstreams/build.md) |
 | Topics | Discusses the product topics with the owner (model language and skills, compiler, commands, continuous change, platform, Cockpit) and records the decisions | no; it writes docs only | [topics.md](workstreams/topics.md) |
-| Lane 1: host variant | Finishes its current task, then hands arm M over to Build and ends | until the handover | [host-variant.md](workstreams/host-variant.md) |
 
-Both sessions sit in the sidebar folder "Markitect". The lane sessions 2 to 11 end once the owner agrees. The evaluation, plugin and Git variant pages fold into the build page as their PRs land. The topic lane pages were folded into the topics page on 28 October 2026; the [commands page](workstreams/commands.md) stays as the canonical page for the commands frame.
+Both sessions sit in the sidebar folder "Markitect". Lane 1 handed the host variant over to Build on 28 October 2026, and its page folded into the build page. The other lane sessions end once the owner agrees. The evaluation, plugin and Git variant pages fold into the build page as their PRs land. The topic lane pages were folded into the topics page on 28 October 2026; the [commands page](workstreams/commands.md) stays as the canonical page for the commands frame.
 
 ## Variants
 
