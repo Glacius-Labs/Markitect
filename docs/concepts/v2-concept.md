@@ -111,7 +111,9 @@ The parent reviews and integrates its children's approved work. Root's checker i
 ### 6.3 Git, hooks and messages
 
 - Each Run has its own Git remote. Every Manager pushes to its own branch. A handoff is a commit; the checker approves with a commit of its own; the parent merges.
-- The verdicts are lines in the submission commit's message, like Git trailers.
+- The verdicts are lines in the submission commit's message, like Git trailers. The checker approves or rejects with a commit on the maker's branch that changes no file and only confirms each verdict; a checker never edits.
+- A parent's push may contain its own changes in its own paths plus merged child commits, unchanged and approved by that child's checker; it cannot slip edits into a child's area.
+- The required checks run on every submission, child or parent, on that branch's full repository state, and again on the parent's merged state.
 - Server-side hooks on the Run's remote carry the guarantees, which agents cannot skip: a Manager pushes only to its own branch and its own paths; a submission passes the required checks; every item on its checklist has a verdict. Local hooks in each harness only give early feedback.
 - Messages carry assignments, questions and escalations along the tree, never work. Nobody blocks waiting for a message.
 - No question reaches the owner during a Run.
@@ -196,7 +198,7 @@ No app for now ([DEC-085](register.md#dec-085-markdown-tools-are-the-cockpit-for
 3. **What a parent may name below it: decided** 28 October: a parent may link to a child Package (no edge) but not to Definitions inside it; using a Kind is an edge.
 4. **Internal Definitions and the Managers above: decided** 28 October: visibility binds links; reading upward and registry links stay free.
 5. **The checklist: decided** 28 October: own Definitions the change reaches, inherited Definitions the change reaches, and assigned Findings; everything with `--full`.
-6. **Hooks and integration.** A parent pushes merged child commits; where does the checker's approval commit go; must a child's submission pass the whole-repository checks before its siblings are integrated?
+6. **Hooks and integration: decided** 28 October: parents push their own paths plus unchanged, approved child commits; the checker's approval is a commit without file changes; the required checks run on every submission.
 7. **Commands without a model change.** What `verify`, `cleanup` and `bughunt` take as their impact when the model has not changed, and who writes the verdicts in `verify`, which has no makers.
 8. **Control files.** Must the model files, registry pages, manifest, lock and `execution.yaml` be registered or ignored?
 9. **Results and leftovers.** Where Results are stored, especially when nothing lands; cleanup of Run branches and retention of evidence (open since DEC-078); landing while the user's local checkout has uncommitted changes.
