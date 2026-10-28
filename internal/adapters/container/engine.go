@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -203,6 +204,61 @@ func (e *Engine) Containers(ctx context.Context, key, value string) ([]string, e
 		return nil, err
 	}
 	return strings.Fields(string(out)), nil
+}
+
+// Volumes lists the names of all volumes that carry the label key with the
+// value.
+func (e *Engine) Volumes(ctx context.Context, key, value string) ([]string, error) {
+	if !labelPattern.MatchString(key) || strings.ContainsAny(value, "\n\r\x00") {
+		return nil, fmt.Errorf("label %q is not a plain engine label", key)
+	}
+	out, err := e.output(ctx, "volume", "ls", "--quiet", "--filter", "label="+key+"="+value)
+	if err != nil {
+		return nil, err
+	}
+	return strings.Fields(string(out)), nil
+}
+
+// ExecError is a command that ran in the container and exited nonzero. Its
+// diagnostics are the command's bounded standard error.
+type ExecError struct {
+	Code        int
+	Diagnostics string
+}
+
+func (e *ExecError) Error() string {
+	return fmt.Sprintf("exit status %d: %s", e.Code, e.Diagnostics)
+}
+
+// Exec runs one literal command in a running container as the container's
+// user, in directory dir, with stdin as its standard input. Its standard
+// output goes to stdout. A nonzero exit is an *ExecError; any other error
+// means the command may not have run. argv[0] is an absolute path inside the
+// image; no shell interprets the arguments.
+func (e *Engine) Exec(ctx context.Context, name, dir string, argv []string, stdin io.Reader, stdout io.Writer) error {
+	if !namePattern.MatchString(name) {
+		return fmt.Errorf("container name %q is not a plain engine name", name)
+	}
+	if !absolute(dir) || len(argv) == 0 || !absolute(argv[0]) {
+		return fmt.Errorf("exec in %s needs an absolute directory and command, not %q in %q", name, argv, dir)
+	}
+	args := append([]string{"exec", "--interactive", "--workdir", dir, name}, argv...)
+	cmd := exec.CommandContext(ctx, e.path, args...)
+	stderr := &boundedBuffer{max: maxCommandOutput}
+	cmd.Stdin, cmd.Stdout, cmd.Stderr = stdin, stdout, stderr
+	err := cmd.Run()
+	var exit *exec.ExitError
+	switch {
+	case err == nil:
+		return nil
+	case ctx.Err() != nil:
+		return ctx.Err()
+	case errors.As(err, &exit) && exit.ExitCode() > 0 && exit.ExitCode() < 125:
+		// 125 to 127 are the engine's own failures to run the command.
+		return &ExecError{Code: exit.ExitCode(), Diagnostics: strings.TrimSpace(stderr.String())}
+	default:
+		return fmt.Errorf("container engine exec in %s: %w: %s", name, err, strings.TrimSpace(stderr.String()))
+	}
 }
 
 // RemoveContainer stops and removes a container. The Orchestrator uses it to end
