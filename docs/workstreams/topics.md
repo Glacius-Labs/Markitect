@@ -78,6 +78,7 @@ What is decided and lives nowhere else; decisions with their own page are linked
   - Recorded as one register entry, [DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation).
   - The Libraries follow clean architecture and are rebuilt as 1.0.0, without compatibility: `domain` (Entity, Value, Enumeration, Invariant, Event), `application` (UseCase, Role, RefusalCode), `api` (Endpoint; REST and CLI bindings later), `practice` (Project, Rule), `architecture` (Interface, DependencyRule, Placement).
   - The design is settled first; the evaluation and the implementations are then built against it, while the owner also redesigns the Runs.
+- **Compiler and analysis** (28 October): one tool, in the product, in Go, in the `markitect` CLI: `check` (errors), `lock`, `refs`, `graph`, `impact --base <commit>`, `lint` (warnings). No Python; the tool under `tools/model-analysis/` is retired. This answers question 1 in direction.
 - **Modeling skills** (27 October): the change-task trial first; it ran as C5 and passed ([record](../validation/modeling-skill-change-trial-20261027.md)).
 - **Commands** (27–28 October): the frame, the names and A1–A6 ([commands page](commands.md)).
 - **Continuous change and Cockpit** (27 October): outside Findings and the read-only model explorer are designed as proposals; nothing is built.
