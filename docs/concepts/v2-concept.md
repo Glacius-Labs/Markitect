@@ -102,7 +102,8 @@ Impact decides, like an incremental build ([DEC-082](register.md#dec-082-one-run
 
 One Run handles a change. Every working Manager is two agents with their own harness:
 
-- **The maker** gives every item on its checklist, the Definitions the change reaches in its area and every Finding it received, a verdict with evidence: conforms, changed, or model problem. It checks that each makes sense, plans, implements and checks again.
+- **The checklist** has three parts: the Manager's own Definitions the change reaches (changed, linking to something changed, or realized by files the change touches); inherited Definitions the change reaches, so a changed Rule at Root becomes an item for every Manager below it; and every Finding assigned to it. With `--full` it holds all own and all inherited Definitions. A verdict means "conforms to this item and to the Rules above it", so a change that breaks an unchanged inherited Rule still fails.
+- **The maker** gives every item on its checklist a verdict with evidence: conforms, changed, or model problem. It checks that each makes sense, plans, implements and checks again.
 - **The checker** is fresh. It sees only the model and the diff, re-checks every verdict and sends defects straight back to the maker.
 
 The parent reviews and integrates its children's approved work. Root's checker is the final independent check before landing. The model is authoritative and is never repaired by a Run ([DEC-063](register.md#dec-063-the-model-is-authoritative-defects-escalate)): a Manager that cannot settle a matter within the model escalates it to its parent, which settles it if the model allows; a gap without effect at the project boundary is realization freedom, decided and documented by the Manager. A real model defect, a contradiction or a gap that changes behavior at the boundary, ends the Run at Root without landing.
@@ -194,7 +195,7 @@ No app for now ([DEC-085](register.md#dec-085-markdown-tools-are-the-cockpit-for
 2. **Overlapping path patterns: decided** 28 October: the most specific pattern wins; Root owns what no other Package claims; two Packages with the same pattern is a compile error.
 3. **What a parent may name below it: decided** 28 October: a parent may link to a child Package (no edge) but not to Definitions inside it; using a Kind is an edge.
 4. **Internal Definitions and the Managers above: decided** 28 October: visibility binds links; reading upward and registry links stay free.
-5. **The checklist.** Exactly which Definitions are on a Manager's checklist: its own Package's Definitions that the change reaches, also the inherited Rules, or everything in its area on a `--full` Run?
+5. **The checklist: decided** 28 October: own Definitions the change reaches, inherited Definitions the change reaches, and assigned Findings; everything with `--full`.
 6. **Hooks and integration.** A parent pushes merged child commits; where does the checker's approval commit go; must a child's submission pass the whole-repository checks before its siblings are integrated?
 7. **Commands without a model change.** What `verify`, `cleanup` and `bughunt` take as their impact when the model has not changed, and who writes the verdicts in `verify`, which has no makers.
 8. **Control files.** Must the model files, registry pages, manifest, lock and `execution.yaml` be registered or ignored?
