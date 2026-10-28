@@ -1,5 +1,6 @@
 *
 !go.mod
 !go.sum
-!internal/agentd/
+!internal/
 !cmd/markitect-agentd/
+!cmd/markitect/
