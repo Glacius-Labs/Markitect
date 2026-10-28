@@ -164,16 +164,31 @@ From Traycer's [software factory guide](https://traycer.ai/software-factory):
   - Apply takes Findings over only when the user passes a Result in explicitly, for example `apply --findings RESULT`. The host checks that the Result is stored and closed (the one validation, D15) and that each Finding's Definition exists in the current model; a Finding whose Definition is gone becomes a Note (DEC-073). If the artifacts changed since, the Findings still enter, and Implementation judges whether each still applies.
   - A Verify-only approval of exactly the current artifacts under the same model, execution configuration and dependencies can serve a later Apply as the "already verified" fact (DEC-073).
   - Nothing is taken over automatically (§19.2). Automatic hand-over, such as a nightly Verify feeding Apply, is a trigger and belongs to the continuous-change lane.
+- **A6. Workflow form** (owner, 28 October 2026, accepting the lane's recommendation; was Q3): both, with a small fixed vocabulary.
+  - A few building blocks live in code: run a Run kind, branch on its verdict, go back with Findings, publish. A Command is a short declaration that combines them. Built-in Commands such as `apply` and `verify` are declared the same way as custom ones. Apply, roughly:
+
+    ```yaml
+    apply:
+      - assessment:     { on reject: stop }
+      - implementation
+      - verification:   { on reject: back to implementation with findings }
+      - publish
+    ```
+
+  - Limits that keep it from becoming a language (concept §2.4, no DSL): only closed Results pass between steps, with no variables; the only branches are the verdicts (Approve, Reject, model blocker); loops are bounded by the shared budget; a Command may take the user's task as input (A2); Analysis checks a declaration before anything starts.
+  - Declarations live in the execution configuration, not in the model: they are execution choices, not intent ([DEC-033](../concepts/register.md#dec-033-binding-intent-lives-only-in-the-model)).
+  - Projects may define their own Run kinds, for example a security review as a Verification with its own focus, as they define their own Kinds in the model. A Run kind is then task text, answer format and Gates, and the host keeps it generic. Agreed in principle; the details are open (Q8).
 
 ### Open
 
 - **Q1.** Answered as A5.
 - **Q2. Analysis or Run.** Where the line falls for a given capability, for example impact. Rule of thumb in the frame.
-- **Q3. Workflow form.** How a Custom Command's Workflow is defined: fixed in code, declared as data, or both. Concept 1.0 wants no DSL in V1 (§2.4).
+- **Q3.** Answered as A6.
 - **Q4. Order.** Which Commands first? Proposal: Verify only (no new Run kind, cheap to evaluate), then impact check.
 - **Q5. Convergence.** Should a Verification after a Reject re-check the whole candidate (today) or focus on the new diff and the earlier Findings, with a cap on correction rounds beyond the shared budget?
 - **Q6. Result form.** Should the Result end in a short proof package (commands and output, failing-then-passing tests, a "not covered" list) for the owner, instead of the diff?
 - **Q7. Cost of the full tree.** Rule 1 stands. If the evaluation suite measures read-only Commands as too costly, is that new evidence to revisit, or is the cost accepted?
+- **Q8. Project-defined Run kinds.** What a project may set for its own Run kind (task text, answer format, Gates, allowed verdicts), whether it may change artifacts, and how it stays generic in the host.
 
 ## Log
 
@@ -181,3 +196,4 @@ From Traycer's [software factory guide](https://traycer.ai/software-factory):
 - 27 October 2026: owner answered the task-input question (A2).
 - 27 October 2026: owner agreed the frame and names, reuse of Run kinds and that Extract is Authoring (A1, A3, A4); questions renumbered.
 - 28 October 2026: owner answered Q1 (A5: Result of read-only Commands, hand-over to Apply).
+- 28 October 2026: owner answered Q3 (A6: Workflow form, project-defined Run kinds in principle); Q8 added.
