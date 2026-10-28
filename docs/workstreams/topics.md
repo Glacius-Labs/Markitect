@@ -10,7 +10,7 @@ State page of the Topics session: the owner's single place to discuss Markitect'
 
 ## Now
 
-- **Design walk-through** (started 28 October; the owner restated what Markitect is, [source](../concepts/sources/model-explicitness-20261028.md#1-what-markitect-is-restated)). Settled as designs, nothing built: the language and Libraries ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation), [DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation)), the organization ([DEC-081](../concepts/register.md#dec-081-the-organization-knows-broad-at-the-top-and-deep-below)), the Runs, Result and Commands ([DEC-082](../concepts/register.md#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager)) and the platform ([DEC-083](../concepts/register.md#dec-083-the-host-runs-natively-each-run-lives-in-containers)). Then Authoring, more Commands, one Finding input and continuous change ([DEC-084](../concepts/register.md#dec-084-continuous-change-triggers-become-findings-or-model-proposals-autonomy-grows-in-steps)). Next: the Cockpit, then a sweep of the remaining open questions.
+- **Design walk-through** (started 28 October; the owner restated what Markitect is, [source](../concepts/sources/model-explicitness-20261028.md#1-what-markitect-is-restated)). Settled as designs, nothing built: the language and Libraries ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation), [DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation)), the organization ([DEC-081](../concepts/register.md#dec-081-the-organization-knows-broad-at-the-top-and-deep-below)), the Runs, Result and Commands ([DEC-082](../concepts/register.md#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager)) and the platform ([DEC-083](../concepts/register.md#dec-083-the-host-runs-natively-each-run-lives-in-containers)). Then Authoring, more Commands, one Finding input and continuous change ([DEC-084](../concepts/register.md#dec-084-continuous-change-triggers-become-findings-or-model-proposals-autonomy-grows-in-steps)). Then the Cockpit ([DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now)). Next: a sweep of the remaining open questions.
 - **Basis:** clean. One topics page instead of seven lane pages; Main consistent again after #806 (see [Done here](#done-here)); the topic lane worktrees and branches removed (the old Cockpit lane worktree now serves the General session); question 33 (Windows tests) parked.
 
 ## Next
@@ -91,7 +91,7 @@ What is decided and lives nowhere else; decisions with their own page are linked
 - **Compiler and analysis** (28 October): one tool, in the product, in Go, in the `markitect` CLI: `check` (errors), `lock`, `refs`, `graph`, `impact --base <commit>`, `lint` (warnings). No Python; the tool under `tools/model-analysis/` is retired. This answers question 1 in direction.
 - **Modeling skills** (27 October): the change-task trial first; it ran as C5 and passed ([record](../validation/modeling-skill-change-trial-20261027.md)).
 - **Commands** (27–28 October): the frame, the names and A1–A6 ([commands page](commands.md)).
-- **Continuous change and Cockpit** (27 October): outside Findings and the read-only model explorer are designed as proposals; nothing is built.
+- **Cockpit** (28 October; [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now)): no Cockpit app for now; Markitect writes everything as Markdown, so Markdown tools are the cockpit; the model explorer stays a proposal; the personal agent stays parked.
 - **Organization of this work** (28 October): one Topics session for all design topics and one Build and evaluation session; the topic lanes are folded into this page. The owner restated what Markitect is ([source](../concepts/sources/model-explicitness-20261028.md#1-what-markitect-is-restated)).
 - **Records** (28 October): decisions are recorded in plain words with their date, without verbatim quotes or attributions ([record rule 1](../concepts/README.md#adding-and-changing-entries)).
 
@@ -145,9 +145,9 @@ What is decided and lives nowhere else; decisions with their own page are linked
 
 ### F. Cockpit
 
-30. **[B] Approve the model explorer design and decide when to build.** Sub-points: the four areas, with lint shown inside Map and Read; the name `explore` until run views join; a local server in `markitect` and a plain page, no build chain; the Build session writes the code (Codex's single-writer role ended with the old cockpit); read-only first. Depends on question 1.
-31. **Run views read only the Result.** Largely settled by A4; confirm. Records on Windows sit in the Docker volume, and there is no live event stream.
-32. **Personal agent in the Cockpit** ([IDEA-015](../concepts/register.md#idea-015-cockpit-with-a-conversational-personal-agent)) stays parked unless the owner says otherwise.
+30. **Decided** 28 October as part of [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now).
+31. **Decided** 28 October as part of [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now).
+32. **Decided** 28 October as part of [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now).
 
 ### G. Platform
 
