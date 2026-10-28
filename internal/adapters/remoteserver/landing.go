@@ -78,9 +78,15 @@ func LandingCheck(l Layout, git string, bundle io.Reader, commit string, progres
 	if len(plan.Checks) > 0 {
 		results, err = newCheckRunner(l, repo, progress).Run(c, plan.Checks)
 	}
+	// Accepted only when every check passed, as for a submission.
 	dec := runremote.Decision{Accepted: err == nil, Kind: "landing-check", Checks: results}
 	if err != nil {
 		dec.Reason = fmt.Sprintf("the required checks could not run on %s: %v", commit, err)
+	}
+	for _, r := range results {
+		if !r.Passed && dec.Accepted {
+			dec.Accepted, dec.Reason = false, fmt.Sprintf("the required check %q failed on %s", r.Name, commit)
+		}
 	}
 	if lerr := appendLog(l, Entry{Time: time.Now().UTC().Format(time.RFC3339Nano), User: "host",
 		Updates: []runremote.Update{{New: commit}}, Decision: dec}); lerr != nil && err == nil {
