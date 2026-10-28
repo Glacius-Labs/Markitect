@@ -1,6 +1,6 @@
 # Evaluation suite runner
 
-The suite runner and the baseline variant of the [evaluation suite](../../docs/workstreams/evaluation.md). The suite builds a task, runs one variant command on it under a deadline, and checks and records its result. It does not care how a variant works or which provider it uses. The assessment of results stays in [`tools/comparison`](../comparison/README.md).
+The suite runner and the baseline variant of the [evaluation suite](../../docs/guides/evaluation-suite.md). The suite builds a task, runs one variant command on it under a deadline, and checks and records its result. It does not care how a variant works or which provider it uses. The assessment of results stays in [`tools/comparison`](../comparison/README.md).
 
 | File | Use |
 | --- | --- |

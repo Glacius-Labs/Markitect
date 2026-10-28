@@ -1,4 +1,4 @@
-# Evaluation suite (lane 4)
+# Evaluation suite
 
 The evaluation suite answers one question: which way of developing a project performs better, and in which areas? It works in three steps:
 
@@ -8,26 +8,17 @@ The evaluation suite answers one question: which way of developing a project per
 
 The suite treats every variant as a black box. It does not care how a variant works or which agents and tools it uses. Every evaluation can run with Claude or with Codex. The evaluation names one model, the suite hands it to every variant, and the variant uses it however it runs. A difference in results then comes from the variant, not from the model.
 
-The lane exists since the owner split Markitect's work into lanes on 27 October 2026. Its lead is the "Lane 4: Evaluation suite" session.
+The Build and evaluation session owns the suite and its variants ([build page](../workstreams/build.md)); this guide is the suite's contract.
 
 ## Scope
 
-- **Owns:**
+- **The suite owns:**
   - The task format, the variant interface, the criteria and the report.
   - The suite runner in [`tools/evaluation`](../../tools/evaluation/README.md) and the baseline variant there.
   - The assessment, review and analysis in [`tools/comparison`](../../tools/comparison/README.md).
   - The task portfolio.
-- **Uses, does not own:**
-  - The hidden oracles in [`tools/library-oracle`](../../tools/library-oracle/README.md) and [`tools/makerspace-oracle`](../../tools/makerspace-oracle/README.md).
-  - The variants. Each lane owns its own variant and how it meets the interface.
-- **Variants today:**
-
-  | Variant | Lane |
-  |---|---|
-  | Markitect with the host as coordinator | 1 |
-  | Markitect Apply as a Claude Code plugin | 2 |
-  | Agents collaborating through a Git remote ([DEC-078](../concepts/register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review)) | 3 |
-  | Classic agentic coding, the baseline: one Claude Code session with the task | 4 |
+- **It uses:** the hidden oracles in [`tools/library-oracle`](../../tools/library-oracle/README.md) and [`tools/makerspace-oracle`](../../tools/makerspace-oracle/README.md).
+- **Variants:** each meets the variant interface in its own code; the [workstreams](../workstreams.md#variants) list them.
 
 ## 1. The task
 
@@ -84,26 +75,7 @@ A timeout or a missing result is never dropped: it counts as a failure in Correc
 - the decision rule and the test per area;
 - the frozen tool revisions.
 
-## State
-
-- **Done:** Phases A, B and C compared Markitect with one agent on the Library and Makerspace ([report](../validation/v1-comparison-report-20261026.md)). No phase showed a quality advantage for Markitect, and Phase C, the large project, counts against it. Markitect cost 9 to 10.5 times the time and 9 to 42 times the tokens.
-- **Suite runner and baseline:** [`tools/evaluation`](../../tools/evaluation/README.md) builds tasks and chains, runs any variant command under its deadline and checks its result. Its baseline variant runs one Claude Code session. Both are tested offline; nothing has run against a provider.
-- **Assessment:** assessment, review and analysis exist in `tools/comparison` and are tested. They are tied to the Library and Makerspace, and they do not yet read the suite's output.
-- **Variants:**
-  - Lane 1's is run by step 4's controller, outside the repository.
-  - Lane 2's has its own runner on a branch.
-  - Lane 3's is a prototype in preparation.
-- **Model:** Codex is out of tokens, so evaluations run on Claude for now. The old-versus-new Makerspace comparison, which checks the remodeled Makerspace input against the old one, keeps its earlier `gpt-6-sol` runs.
-
 ## Limits
 
 - **Isolation.** Variants run as processes of the user on the host, so a variant could read the hidden oracles in this repository. Before counted runs, variants run in an isolated environment that sees only `TASK_DIR`, `OUT_DIR` and `STATE_DIR`, and the portfolio's oracles live outside the repository.
 - **Reviewer family.** The earlier studies used reviewers of another model family than the writers. With Claude writers, a Codex reviewer restores that; if none is available, the report states the same-family review as a limit.
-
-## Next
-
-1. **Assessment on the suite's output:** the assessment, the review and the report per area read `suite.json` and `result.bundle`.
-2. **The other variants:** each lane wraps its variant in the command.
-3. **Isolation** of the variant command, as above.
-4. **First bounded dispatch,** after the owner's approval: one Library task through every variant on Claude, as a smoke of the suite, not as a counted run.
-5. **Portfolio:** new projects with hidden oracles, kept outside the repository, for the counted evaluations.

@@ -6,17 +6,17 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 
 ## Now
 
-- **Suite and baseline K:** [PR #793](https://github.com/Glacius-Labs/Markitect/pull/793) holds the suite runner, the Claude Code baseline and the evaluation page. 18 offline tests pass and both reviews are applied. It is not on `main`, has had no Linux CI and has never run against a provider.
+- **Suite and baseline K:** the [suite](../guides/evaluation-suite.md) runner and the Claude Code baseline are on `main` in [`tools/evaluation`](../../tools/evaluation/README.md), tested offline only; nothing has run against a provider. The assessment, review and analysis in `tools/comparison` do not read the suite's output yet. Earlier, Phases A to C compared Markitect with one agent and showed no quality advantage at 9 to 10.5 times the time ([report](../validation/v1-comparison-report-20261026.md)).
 - **Arm M, V1:** the [technical acceptance record](../validation/v1-technical-acceptance-20261026.md) finds V1 correct and safe on F_final, but not yet reliable at Makerspace size; the frozen source is [F2](../validation/v1-technical-acceptance-20261026.md#new-frozen-source-f2). V1's acceptance covers the current publication; today's handoff and publication stay until the owner adopts the Git variant, which is judged after its prototype ([owner, 27 October](../concepts/sources/owner-evening-decisions-20261027.md#5-v1s-acceptance-scope-2015-utc)).
 - **Arm M, Claude:** K1b, the first native Claude Code Apply, passed on its second of three allowed attempts ([record](../validation/v1-k1b-claude-qualification-20261028.md)). Its launch fix is on `main`, but no native Apply ran on `main` itself. Neither Claude change is in F2, and V1's provider scope stays Codex (D18).
-- **Arm M, suite:** lane 1's repository work is all on `main`. The suite adapter waits for #793; lane 1's controller scripts are outside the repository under `Documents\Codex\Markitect-V1-Requalification\`.
+- **Arm M, suite:** lane 1's repository work is all on `main`. The suite adapter is not started; lane 1's controller scripts are outside the repository under `Documents\Codex\Markitect-V1-Requalification\`.
 - **Arm P:** the plugin and its runner pass 70 offline tests on `variant/plugin`. Smoke attempts 01 and 02 failed before any Apply; both causes are fixed offline. Smoke 03 waits for the owner ([plugin page](plugin-variant.md)).
 - **Arm G:** the prototype passed P0 with scripted Managers, 34 of 34. An independent review says go after fixes, with ten blocking findings, recorded next to the code ([review](https://github.com/Glacius-Labs/Markitect/blob/94e28e12b73ee7ee26eff4589ee90d2c758119aa/prototypes/g0/review-20261028.md)). Its design is in [PR #795](https://github.com/Glacius-Labs/Markitect/pull/795). The prototype runs on Codex only, which is out of tokens.
 - **Running:** no real run and no sub-session.
 
 ## Next
 
-1. **Suite on `main`:** Linux CI on #793's head, freeze, merge.
+1. **Assessment on the suite's output:** the assessment, the review and the report per area read `suite.json` and `result.bundle`.
 2. **First suite dispatch:** build the Library task folder with `suite.py task` and write the bounded dispatch for three K runs in a row on Claude Sonnet 5.5, then ask the owner.
 3. **Arm M:**
    - The adapter in `tools/arm-m/`, from lane 1's controller: native Apply on Linux, one repository identity per chain and arm, the state directory as its continuation, the candidate committed with a fixed identity, the Apply status and cause reported unchanged, offline tests only.
@@ -25,7 +25,8 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
    - V1 step 5, the acceptance package ([steps](../implementation-plan.md#steps)), and the small follow-ups: Capture refuses an empty Package directory; WP3b's dependency order is deferred; whether WP1 may continue after served actions is open.
 4. **Arm P:** smoke 03 when the owner approves and the engine is free, then the variant command around `armp.py`.
 5. **Arm G:** fix the ten blocking findings offline on `dev/g0-prototype`; no provider run before the owner answers the provider question.
-6. **One page:** fold the evaluation, plugin and Git variant pages into this one as their PRs land.
+6. **One page:** fold the plugin and Git variant pages into this one as their PRs land.
+7. **Before counted runs:** isolation of the variant command and a task portfolio with oracles outside the repository ([limits](../guides/evaluation-suite.md#limits)).
 
 ## Questions for the owner
 
