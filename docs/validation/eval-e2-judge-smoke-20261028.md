@@ -1,6 +1,6 @@
 # Evaluation suite E2: judge smoke
 
-**Status: approved on 28 October 2026.** The owner approved this page as written on PR #830 in the E2 session: "Approve, run it". The independent review's findings were applied first; the reviewed head `REV` is `06d4b691ebbc3932c9f2af375dd9f4e8d4f5167b`.
+**Status: approved and run on 28 October 2026, passed ([results](#results)).** The owner approved this page as written on PR #830 in the E2 session: "Approve, run it". The independent review's findings were applied first; the reviewed head `REV` is `06d4b691ebbc3932c9f2af375dd9f4e8d4f5167b`.
 
 This smoke checks increment E2 of [evaluation suite v2](../design/evaluation-suite-v2.md#increments) on this machine (Windows, Docker Desktop's Linux engine): (a) the Library judge passes its reference result and fails its seeded mutants in its container; (b) the [E1 smoke](eval-e1-sandbox-smoke-20261028.md)'s runs k-02 and k-03 are judged, (c) reviewed and (e) reported per area; and (d) one K run in the sandbox confirms the capture fix that followed k-01. It is a smoke, not a counted evaluation: no comparison is drawn from it. k-01 is not judged: K's capture defect left its result incomplete.
 
@@ -77,3 +77,23 @@ Outside the repository, under `EVAL\e2-judge\`: the exported judge folder, `self
 ## What a pass means
 
 The Library judge separates its reference from its mutants in its container; the E1 results and a new K result are judged, reviewed and reported per area; and K's capture keeps every source. That meets the E2 smoke criterion. It says nothing about which variant is better: E2 has one variant and no counted series.
+
+## Results
+
+**Source.** Every step ran from `REV` `06d4b691` on 28 October 2026, in the order below, each under the engine lock. The judge was exported from `REV`: folder digest `cd5432f0…1dc4ea2`, image ID `sha256:69a7b978…abf99195` as pinned. Every step succeeded at its first attempt: nothing was repeated, voided or aborted.
+
+| Step | Outcome |
+|---|---|
+| (a) Self-test | Passed. `reference`: 19 of 19 cases, own build and tests pass, no scope finding. `broken-rule`: E04-admission fails, and its own tests fail. `failing-build`: the build fails, so all 19 cases fail. `unrequested-change`: `.github/workflows/ci.yaml` unrequested. `protected-input`: `TASK.md` touched. Each judge container took 5.6 to 6.6 s |
+| (b) Judging k-02, k-03 | Both valid: 19 of 19 cases, own build and tests pass, no unrequested path, no protected input touched. About 6 s each. Their own tests had failed on the Windows host only, because a test runs the built binary without `.exe`; in the Linux judge they pass |
+| (c) Review k-02, k-03 | Both valid. Each reviewer read the requirements, the rubric, the README, the tests and the core code (10 tool calls, 21 and 25 s, 0.15 and 0.16 USD as the CLI states it) and reported no critical finding, so no confirming session ran. Both guessed K |
+| (d) K run k-04 | A result: delivered in 160 s with 9 paths, model match, valid for counting, no quarantine, egress only to `api.anthropic.com` (3 connections). Its `.gitignore` again ignores `library`, the pattern that dropped k-01's sources, and all nine files the session reports writing are in the commit: the capture fix holds. Judged valid at 19 of 19, own build and tests pass, no scope finding; reviewed valid with no critical finding, guessed K (27 s) |
+| (e) Report | Written for k-02, k-03 and k-04: 0 defects left per run, 19 of 19 cases, build and tests 3 of 3, no unrequested path, no critical finding, 3 of 3 delivered in time, no void launch. The suite's token count matches the output tokens the CLI states for each run (26,929 to 32,076) |
+
+**Provider use.** One K session and three reviewer sessions of the 2 and 16 allowed.
+
+**Cleanup.** After the series, no container or network with the label `markitect.evaluation` or `markitect.evaluation.judge` remained, no login copy was left in the temporary folder, the lock was released, and no `quarantine` entry appeared.
+
+**Limits seen.** With one variant, the variant guess is right by construction: it measures nothing yet. The reviews were short (about 10 tool calls on programs of 1,200 to 1,450 lines of Go), which matches a clean result but is not evidence of depth. The Windows test failure in (b) is a reminder that results are judged on Linux only.
+
+**Verdict.** The smoke criterion is met: the Library judge passes its reference and fails its four mutants in its container; k-02, k-03 and the new k-04 are judged, reviewed and reported per area; and K's capture fix is confirmed against a provider.
