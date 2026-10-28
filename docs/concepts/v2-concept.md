@@ -71,7 +71,7 @@ One tool, `markitect`, written in Go, with no Python and no other runtime ([DEC-
 | `impact --base <commit>` | What a model change reaches: Definitions, files, Packages | none |
 | `lint` | Measures the model like code: warnings only | none |
 
-**Compile errors:** a Kind or link that does not resolve; a link to an internal Definition from outside its subtree; a cycle between Packages; a Library version that does not match the lock; a repository file that is neither registered nor ignored; two Packages claiming the same path pattern; a registry entry for a Git-ignored file.
+**Compile errors:** a Kind or link that does not resolve; a link to an internal Definition from outside its subtree; a cycle between Packages; a Library version that does not match the lock; a repository file that is neither registered nor ignored; two Packages claiming the same path pattern; a registry entry for a Git-ignored file. A stale registry entry, which links a Definition the owner deleted or names a file that no longer exists, is no compile error: `lint` warns, and the owning Manager gets it as a checklist item, so deleting a Definition never blocks the Run that removes its realization.
 
 **Lint warnings:** coupling and instability per Package; dependencies from stable to unstable Packages; size of Definitions and Packages; Definitions nothing links to and no file realizes; the reach of a change; a Package with no Definitions of its own and only one child; later, change hotspots from Git history.
 
@@ -104,7 +104,7 @@ Impact decides, like an incremental build ([DEC-082](register.md#dec-082-one-run
 
 One Run handles a change. Every working Manager is two agents with their own harness:
 
-- **The checklist** has three parts: the Manager's own Definitions the change reaches (changed, linking to something changed, or realized by files the change touches); inherited Definitions the change reaches, so a changed Rule at Root becomes an item for every Manager below it; and every Finding assigned to it. With `--full` it holds all own and all inherited Definitions. A verdict means "conforms to this item and to the Rules above it", so a change that breaks an unchanged inherited Rule still fails.
+- **The checklist** has three parts: the Manager's own Definitions the change reaches (changed, linking to something changed, or realized by files the change touches); inherited Definitions the change itself edited, so a changed Rule at Root becomes an item for every Manager below it, while an ancestor's Definition that is only reached through a touched file or a link does not; and every Finding assigned to it. With `--full` it holds all own and all inherited Definitions. A verdict means "conforms to this item and to the Rules above it", so a change that breaks an unchanged inherited Rule still fails.
 - **The maker** gives every item on its checklist a verdict with evidence: conforms, changed, or model problem. It checks that each makes sense, plans, implements and checks again.
 - **The checker** is fresh. It sees only the model and the diff, re-checks every verdict and sends defects straight back to the maker.
 
