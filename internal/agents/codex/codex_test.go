@@ -66,6 +66,14 @@ func TestCheckAuth(t *testing.T) {
 	if err := (Provider{}).CheckAuth([]byte("Logged in using ChatGPT\n")); err != nil {
 		t.Fatal(err)
 	}
+	// The pinned CLI reports on standard error, after any warning.
+	argv, _ := Provider{}.AuthStatus()
+	if argv[0] != "/bin/sh" || !strings.HasSuffix(argv[2], "login status 2>&1") {
+		t.Fatalf("auth status %q", argv)
+	}
+	if err := (Provider{}).CheckAuth([]byte("WARNING: proceeding, even though we could not create PATH aliases\nLogged in using ChatGPT\n")); err != nil {
+		t.Fatal(err)
+	}
 	for _, out := range []string{"Logged in using an API key - ***", "Not logged in", ""} {
 		if (Provider{}).CheckAuth([]byte(out)) == nil {
 			t.Errorf("admitted %q", out)
@@ -124,6 +132,9 @@ func TestReaderAnswersWithTheThreadAndUsage(t *testing.T) {
 	}
 	if _, err := read(t, agents.Turn{}, `{"type":"item.started","item":{"type":"collab_tool_call"}}`); err == nil {
 		t.Fatal("native multi-agent work accepted")
+	}
+	if out, _ := read(t, agents.Turn{}, `{"type":"error","message":"Reconnecting... 1/5 (stream error: 503)"}`, `{"type":"turn.completed","usage":{}}`); out.End != agents.Answered {
+		t.Fatalf("a turn that recovered from a reconnect failed: %+v", out)
 	}
 	if out, _ := read(t, agents.Turn{}, `{"type":"thread.started","thread_id":"th-1"}`); out.End != "" {
 		t.Fatalf("a turn without its end answered: %+v", out)

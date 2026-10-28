@@ -81,7 +81,11 @@ func (g *Agents) Run(ctx context.Context, s agentport.Start, host agentport.Host
 		Network: cfg.Network, Hosts: cfg.Hosts, DNS: cfg.DNS, Start: s, Host: host,
 		Login: login, Model: cfg.Model, Effort: cfg.Effort, Transcript: transcript, Now: cfg.Now,
 	}
-	a, err := Start(ctx, cfg.Runtime, cfg.Provider, spec)
+	// The deadline bounds the start too: the clone, the base and the login
+	// check.
+	startCtx, cancel := context.WithDeadline(ctx, s.Deadline)
+	defer cancel()
+	a, err := Start(startCtx, cfg.Runtime, cfg.Provider, spec)
 	if err != nil {
 		class := Other
 		var se *StartError
@@ -89,8 +93,11 @@ func (g *Agents) Run(ctx context.Context, s agentport.Start, host agentport.Host
 			class = se.Class
 		}
 		end = failed(end, class, err)
-		if ctx.Err() != nil {
+		switch {
+		case ctx.Err() != nil:
 			end.Reason = agentport.Cancelled
+		case startCtx.Err() != nil:
+			end.Reason = agentport.DeadlineReached
 		}
 		if errors.Is(err, errCleanup) {
 			end.Cleanup = err.Error()
@@ -108,7 +115,7 @@ func (g *Agents) Run(ctx context.Context, s agentport.Start, host agentport.Host
 	end.Usage = agentport.Usage{InputTokens: out.Usage.Input + out.Usage.CacheCreation + out.Usage.CacheRead, OutputTokens: out.Usage.Output}
 	switch {
 	case sendErr != nil:
-		return failed(end, Other, sendErr)
+		return failed(end, Other, errors.New(string(a.redact([]byte(sendErr.Error())))))
 	case out.End == Answered:
 		end.Reason = agentport.Finished
 	case out.End == Deadline:

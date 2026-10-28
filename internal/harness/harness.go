@@ -296,7 +296,7 @@ func (r renderer) task() string {
 			fence := fenceFor([]byte(s.Diff))
 			fmt.Fprintf(&b, "%sdiff\n%s\n%s\n\n", fence, strings.TrimRight(s.Diff, "\n"), fence)
 		} else {
-			fmt.Fprintf(&b, "The diff has %d bytes, more than is shown here; `git diff %s %s` in `/work` shows it. Changed files:\n\n", len(s.Diff), runremote.BaseBranch, s.Commit)
+			fmt.Fprintf(&b, "The diff is larger than %d KiB, more than is shown here; `git diff %s %s` in `/work` shows it. Changed files:\n\n", MaxInlineDiff>>10, runremote.BaseBranch, s.Commit)
 			for _, f := range s.Files {
 				fmt.Fprintf(&b, "- %s\n", f)
 			}

@@ -18,6 +18,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 const (
@@ -246,6 +247,9 @@ func (e *Engine) Exec(ctx context.Context, name, dir string, argv []string, stdi
 	cmd := exec.CommandContext(ctx, e.path, args...)
 	stderr := &boundedBuffer{max: maxCommandOutput}
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = stdin, stdout, stderr
+	// A cancelled exec ends the engine client; its streams are not waited
+	// for beyond this.
+	cmd.WaitDelay = 5 * time.Second
 	err := cmd.Run()
 	var exit *exec.ExitError
 	switch {

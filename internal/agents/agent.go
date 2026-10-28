@@ -38,7 +38,15 @@ const (
 	stopWait = 10 * time.Second
 	// maxLine bounds one line of provider output.
 	maxLine = 8 << 20
+	// loginMargin is how long an access token must outlive the deadline: a
+	// CLI may try to refresh shortly before expiry, which the access-only
+	// copy cannot.
+	loginMargin = 10 * time.Minute
 )
+
+// settle bounds how long a Git command of a tool call that the turn's end
+// cut off may take to end in the container before the census counts it.
+var settle = 30 * time.Second
 
 // Runtime is the container engine as the agent runtime uses it.
 // EngineRuntime adapts the container client.
@@ -167,7 +175,7 @@ func Start(ctx context.Context, rt Runtime, p Provider, spec Spec) (*Agent, erro
 	if err != nil {
 		return nil, &StartError{Class: LoginFailed, Err: err}
 	}
-	if !login.Expires.IsZero() && !login.Expires.After(s.Deadline) {
+	if !login.Expires.IsZero() && !login.Expires.After(s.Deadline.Add(loginMargin)) {
 		return nil, &StartError{Class: LoginFailed, Err: fmt.Errorf("the %s login's access token expires at %s, before the deadline %s; refresh the login on the host first", p.Name(), login.Expires.UTC().Format(time.RFC3339), s.Deadline.UTC().Format(time.RFC3339))}
 	}
 	a := &Agent{spec: spec, provider: p, rt: rt, pkg: pkg, secrets: append(login.Secrets, []byte(g.Token))}
@@ -256,8 +264,22 @@ func (a *Agent) checkLogin(ctx context.Context) error {
 	if err := a.session.CloseInput(); err != nil {
 		return err
 	}
-	out, readErr := io.ReadAll(io.LimitReader(a.session.Stdout(), 1<<20))
-	exit, err := a.session.Stop(ctx, stopWait.Milliseconds())
+	read := make(chan []byte, 1)
+	go func() {
+		out, _ := io.ReadAll(io.LimitReader(a.session.Stdout(), 1<<20))
+		read <- out
+	}()
+	var out []byte
+	var readErr error
+	select {
+	case out = <-read:
+	case <-ctx.Done():
+		readErr = ctx.Err()
+	}
+	exit, err := a.session.Stop(context.WithoutCancel(ctx), stopWait.Milliseconds())
+	if readErr != nil {
+		<-read
+	}
 	if err := errors.Join(readErr, err); err != nil {
 		return err
 	}
@@ -307,12 +329,22 @@ func remoteHost(url string) (string, error) {
 
 // git runs one Git command in the container's clone and redacts its
 // diagnostics.
+//
+// The clone is the agent's to change, so the host's Git runs no hooks, no
+// file-system monitor and no replace refs the agent may have planted. A
+// command that ran and failed stays an *container.ExecError.
 func (a *Agent) git(ctx context.Context, argv []string, stdin string, stdout io.Writer) error {
+	argv = append([]string{argv[0], "-c", "core.hooksPath=/dev/null", "-c", "core.fsmonitor=false", "--no-replace-objects"}, argv[1:]...)
 	err := a.rt.Exec(ctx, a.spec.Name, workDir, argv, strings.NewReader(stdin), stdout)
-	if err != nil {
+	var exit *container.ExecError
+	switch {
+	case err == nil:
+		return nil
+	case errors.As(err, &exit):
+		return &container.ExecError{Code: exit.Code, Diagnostics: string(a.redact([]byte(exit.Diagnostics)))}
+	default:
 		return errors.New(string(a.redact([]byte(err.Error()))))
 	}
-	return nil
 }
 
 // Send runs one turn: the message goes to the provider conversation, and the
@@ -356,8 +388,11 @@ func (a *Agent) Send(ctx context.Context, message string) (Outcome, error) {
 	reader := a.provider.Reader(turn)
 	lines := make(chan error, 1)
 	go func() { lines <- a.read(reader) }()
-	serving := make(chan struct{})
-	go a.serve(turnCtx, serving)
+	serving, served := make(chan struct{}), make(chan struct{})
+	go func() {
+		defer close(served)
+		a.serve(turnCtx, serving)
+	}()
 
 	var lineErr error
 	var end End
@@ -373,12 +408,16 @@ func (a *Agent) Send(ctx context.Context, message string) (Outcome, error) {
 	if end != "" {
 		<-lines
 	}
+	// A tool call still running is cut off and awaited, so that nothing of
+	// the turn reaches the host or the remote after Send returns.
 	close(serving)
+	cancel()
+	<-served
 	if stopErr != nil {
 		return Outcome{}, stopErr
 	}
-	if left, err := a.session.Census(context.WithoutCancel(ctx)); err != nil || len(left) > 0 {
-		return Outcome{}, errors.Join(err, fmt.Errorf("agents: %d processes outlived the turn", len(left)))
+	if err := a.quiet(context.WithoutCancel(ctx)); err != nil {
+		return Outcome{}, err
 	}
 	out := reader.Outcome()
 	switch {
@@ -418,6 +457,27 @@ func (a *Agent) read(r Reader) error {
 		}
 	}
 	return scanner.Err()
+}
+
+// quiet requires that no process of the turn remains in the container. A
+// Git command of a cut-off tool call may take a moment to end after its
+// engine client was stopped; anything still running after settle is an
+// error.
+func (a *Agent) quiet(ctx context.Context) error {
+	limit := time.Now().Add(settle)
+	for {
+		left, err := a.session.Census(ctx)
+		if err != nil {
+			return err
+		}
+		if len(left) == 0 {
+			return nil
+		}
+		if time.Now().After(limit) {
+			return fmt.Errorf("agents: %d processes outlived the turn", len(left))
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
 }
 
 // serve answers tool calls until the turn ends.

@@ -9,6 +9,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
 	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
 	"github.com/Glacius-Labs/Markitect/internal/agentport"
 	"github.com/Glacius-Labs/Markitect/internal/harness"
@@ -261,7 +262,9 @@ func (a *Agent) review(ctx context.Context, outcome string, args []checkArgs) (s
 		problems = append(problems, fmt.Sprintf("the outcome %q is not approved or rejected", outcome))
 	case outcome == runremote.Approved && disputed:
 		problems = append(problems, "an approval disputes no verdict")
-	case outcome == runremote.Rejected && !disputed:
+	case outcome == runremote.Rejected && !disputed && len(sub.Verdicts) > 0:
+		// A submission without verdicts, an integrating parent's, can be
+		// rejected without a dispute, as the hook allows.
 		problems = append(problems, "a rejection disputes at least one verdict")
 	}
 	if len(problems) > 0 {
@@ -359,10 +362,17 @@ func (a *Agent) rev(ctx context.Context, ref string) (string, error) {
 // its reason and next step, comes back to the agent as a refusal.
 func (a *Agent) push(ctx context.Context, commit string) error {
 	err := a.git(ctx, []string{gitPath, "push", "--quiet", "origin", commit + ":refs/heads/" + a.branch()}, "", io.Discard)
-	if err != nil {
-		return refuse("the remote refused the push to %s: %v", a.branch(), err)
+	var exit *container.ExecError
+	switch {
+	case err == nil:
+		return nil
+	case errors.As(err, &exit):
+		// The remote's refusal, or a push Git could not make; its own words
+		// say which.
+		return refuse("the push to %s did not go through: %s", a.branch(), exit.Diagnostics)
+	default:
+		return err
 	}
-	return nil
 }
 
 // flat writes text on one line, as a trailer value must be.

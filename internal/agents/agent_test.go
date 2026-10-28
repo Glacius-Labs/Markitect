@@ -188,6 +188,7 @@ func (r *fakeRuntime) Exec(ctx context.Context, name, dir string, argv []string,
 	}
 	cmd := exec.CommandContext(ctx, "git", append([]string{"-c", "url." + filepath.ToSlash(r.bare) + ".insteadOf=" + remoteURL}, args...)...)
 	cmd.Dir = dir
+	cmd.WaitDelay = time.Second
 	cmd.Env = append(os.Environ(), "HOME="+r.home, "GIT_CONFIG_GLOBAL="+filepath.Join(r.home, ".gitconfig"), "GIT_CONFIG_NOSYSTEM=1", "GIT_TERMINAL_PROMPT=0")
 	var stderr bytes.Buffer
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = stdin, stdout, &stderr
@@ -744,6 +745,7 @@ func TestProviderFailureIsClassified(t *testing.T) {
 }
 
 func TestProcessesThatOutliveTheTurnAreAnError(t *testing.T) {
+	defer agents.SetSettle(time.Second)()
 	f := setup(t, agentport.Maker, "members", "members/member")
 	f.rt.script = func(s *fakeSession, argv []string, stdin []byte) int {
 		s.line(initLine(makerTools...))

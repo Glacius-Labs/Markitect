@@ -17,8 +17,10 @@ func (Provider) Reader(t agents.Turn) agents.Reader {
 type reader struct {
 	thread    string
 	completed bool
-	failure   string
-	usage     agents.Usage
+	// failure is the error of a failed turn; lastError the latest error
+	// event, which may be a reconnect the turn recovered from.
+	failure, lastError string
+	usage              agents.Usage
 }
 
 type event struct {
@@ -64,18 +66,21 @@ func (r *reader) Line(raw []byte) error {
 			r.failure = e.Error.Message
 		}
 	case "error":
-		r.failure = e.Message
+		r.lastError = e.Message
 	}
 	return nil
 }
 
 func (r *reader) Outcome() agents.Outcome {
 	out := agents.Outcome{Conversation: r.thread, Usage: r.usage}
+	// A completed turn answered, whatever error events came before it.
 	switch {
-	case r.failure != "":
-		out.End, out.Class, out.Detail = agents.Failed, classify(r.failure), r.failure
 	case r.completed:
 		out.End = agents.Answered
+	case r.failure != "":
+		out.End, out.Class, out.Detail = agents.Failed, classify(r.failure), r.failure
+	case r.lastError != "":
+		out.End, out.Class, out.Detail = agents.Failed, classify(r.lastError), r.lastError
 	}
 	return out
 }

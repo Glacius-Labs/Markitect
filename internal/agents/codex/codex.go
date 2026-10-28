@@ -53,15 +53,26 @@ func (Provider) Home(l agents.Login, _ harness.Document) (frame.Initialize, erro
 	return frame.Initialize{CodexAuth: l.Copy}, nil
 }
 
+// AuthStatus runs `codex login status` with its standard error on standard
+// output: the pinned CLI prints its report on standard error (observed
+// offline in the pinned image).
 func (Provider) AuthStatus() ([]string, []string) {
-	return []string{executable, "-c", `cli_auth_credentials_store="file"`, "login", "status"}, environment()
+	return []string{"/bin/sh", "-c", "exec " + executable + ` -c cli_auth_credentials_store='"file"' login status 2>&1`}, environment()
 }
 
-// CheckAuth requires the ChatGPT account login.
-func (Provider) CheckAuth(stdout []byte) error {
-	status := strings.TrimSpace(string(stdout))
-	if status != "Logged in using ChatGPT" {
-		return fmt.Errorf("codex login status reports %q; only the ChatGPT account login is admitted", firstLine(status))
+// CheckAuth requires the ChatGPT account login: one line of the report
+// says so, and none names an API key.
+func (Provider) CheckAuth(out []byte) error {
+	chatGPT := false
+	for _, line := range strings.Split(string(out), "\n") {
+		line = strings.TrimSpace(line)
+		if strings.Contains(strings.ToLower(line), "api key") {
+			return fmt.Errorf("codex login status reports %q; only the ChatGPT account login is admitted", line)
+		}
+		chatGPT = chatGPT || line == "Logged in using ChatGPT"
+	}
+	if !chatGPT {
+		return fmt.Errorf("codex login status reports %q; only the ChatGPT account login is admitted", firstLine(strings.TrimSpace(string(out))))
 	}
 	return nil
 }
