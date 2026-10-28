@@ -23,6 +23,7 @@ import argparse
 import json
 import os
 import pathlib
+import re
 import shutil
 import signal
 import subprocess
@@ -42,6 +43,7 @@ DENIED = ["WebFetch", "WebSearch"]
 IDENTITY = ("Claude Code Baseline", "baseline@markitect.invalid")
 MARGIN, LOGIN_MARGIN, KILL = 60, 300, 15
 KEPT = ("CLAUDE_CODE_GIT_BASH_PATH", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC")
+KEPT_IGNORED = re.compile(r"(\.go|\.md|(^|/)go\.(mod|sum))$")
 
 
 class VariantError(Exception):
@@ -164,6 +166,12 @@ def capture(repo, start, out, env, secrets):
     """
     (repo / ".git" / "index.lock").unlink(missing_ok=True)  # left behind when the session was killed mid-commit
     git(repo, "add", "-A", env=env)
+    # The session's own .gitignore stays in force, except for sources it would drop by accident, such as a
+    # binary's name `library` that also matches cmd/library/ (the Phase A-C capture rule).
+    ignored = git(repo, "ls-files", "-z", "-o", "-i", "--exclude-standard", env=env).split("\0")
+    kept = [p for p in ignored if KEPT_IGNORED.search(p) and p != "TASK.md"]
+    if kept:
+        git(repo, "add", "-f", "--", *kept, env=env)
     if git(repo, "status", "--porcelain", env=env):
         git(repo, "commit", "-q", "--no-verify", "-m", "Baseline session result", env=env)
     head = git(repo, "rev-parse", "HEAD", env=env)

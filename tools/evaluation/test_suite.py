@@ -204,6 +204,13 @@ FAKE_CLAUDE = textwrap.dedent("""
     (cwd / "main.go").write_text("package main\\n")
     if mode == "leak":
         (cwd / "token.txt").write_text(login["accessToken"])
+    if mode == "ignore":
+        # A binary's name that also matches the source directories, as in the first sandbox smoke.
+        (cwd / ".gitignore").write_text("library\\n")
+        for p in ("cmd/library/main.go", "internal/library/library.go", "internal/library/README.md"):
+            (cwd / p).parent.mkdir(parents=True, exist_ok=True)
+            (cwd / p).write_text("package library\\n")
+        (cwd / "library").write_bytes(b"\\x7fELF")
     if mode == "sleep":
         time.sleep(120)
     (config / "projects" / "p").mkdir(parents=True)
@@ -260,6 +267,13 @@ class ClaudeCodeTest(unittest.TestCase):
         self.assertEqual(record["reported"]["status"], "timed_out")
         self.assertTrue(record["delivered"], record["resultError"])
         self.assertEqual(record["result"]["changedPaths"], ["A\tmain.go"])
+
+    def test_sources_an_over_broad_gitignore_matches_are_kept(self):
+        record = suite.run(self.make("ignore", 600), self.variant, self.tmp / "run", MODEL)
+        self.assertTrue(record["delivered"], record["resultError"])
+        self.assertEqual(sorted(record["result"]["changedPaths"]),
+                         ["A\t.gitignore", "A\tcmd/library/main.go", "A\tinternal/library/README.md",
+                          "A\tinternal/library/library.go", "A\tmain.go"])
 
     def test_login_copy_has_no_refresh_token_and_must_outlive_the_session(self):
         copy, secrets = claude_code.session_login(self.credentials.read_bytes(), 600)

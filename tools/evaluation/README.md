@@ -68,6 +68,7 @@ The container has a read-only root, no capabilities, `no-new-privileges`, a non-
 
 Safeguards:
 - **Git:** clone, session and commit share one Git setting, with no system or user configuration, no line-ending conversion, no hooks and no credentials.
+- **Capture:** the session's own `.gitignore` applies, except for Go sources, module files and Markdown, which an over-broad pattern (a binary named `library` also matches `cmd/library/`) would otherwise drop silently. This is the Phase A–C capture rule.
 - **Login:** the login copy is deleted as soon as the session ends. Before bundling, every commit since the start is searched for the login. If the login appears there or in any output, nothing is delivered, the stream and the transcripts are deleted, and the run is marked quarantined.
 - **Fresh sessions:** every chain step is a fresh session.
 

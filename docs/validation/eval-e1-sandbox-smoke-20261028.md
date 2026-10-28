@@ -1,6 +1,6 @@
 # Evaluation suite E1: sandbox smoke
 
-**Status: proposed, not run.** It needs the owner's approval as a bounded dispatch under the [standing evidence authorization](../concepts/sources/v1-source-implementation-approval-20261023.md#subsequent-standing-evidence-authorization). It replaces the [host smoke](eval-k-library-smoke-20261028.md), which was never run.
+**Status: run on 28 October 2026, passed, with one defect in K's capture found and fixed ([results](#results)).** The owner approved it in the Build session the same day: "I approve, complete the sandbox if you think it will do". It replaces the [host smoke](eval-k-library-smoke-20261028.md), which was never run.
 
 This smoke checks increment E1 of [evaluation suite v2](../design/evaluation-suite-v2.md#increments) on this machine (Windows, Docker Desktop's Linux engine): (a) the escape probe finds the sandbox closed, and (b) the baseline K delivers in three Library runs in a row inside the sandbox. It is a smoke, not a counted evaluation: no comparison is drawn from it.
 
@@ -58,3 +58,26 @@ Outside the repository, under `EVAL\e1-sandbox\`: per run its `suite.json` (with
 ## What a pass means
 
 The probe finds the sandbox closed, and K delivers three times in a row inside it with a result, a model match and no quarantine. That meets the E1 smoke criterion. It says nothing about quality; judging comes with E2.
+
+## Results
+
+**Source.** The runs used the PR branch `dev/eval-v2-e1-sandbox`, not `main`: PR #822 was not merged yet. The image was `sha256:e0b20d8a8c88a0a4b37f151af45618e764f8687b023b10bcb6d3b5148c5e5dad`, built from `4f7cf4d5`. Probe-03 and the K runs used `41a61b24`, which differs from `4f7cf4d5` only in the probe fix below. Docker Desktop 29.9.2 had 16 CPUs and 31 GiB. Every launch is listed, in order:
+
+| Launch | Outcome | Class |
+|---|---|---|
+| probe-01 | The variant never ran: Git Bash rewrote `/variant/escape_probe.py` into a Windows path before Python saw it. The sandbox itself stood up and was removed cleanly (gateway `192.168.80.1`, no residue) | Void: operator error. All later launches went through PowerShell |
+| probe-02 | `escaped`, on one finding only: `/usr/sbin/docker-init`, the engine's `--init` binary, reported as a foreign mount. The probe allowed only `/sbin/docker-init`. Every other attempt was blocked: no name resolved (github.com, example.com, `host.docker.internal`), GitHub, 1.1.1.1 and 8.8.8.8 were unreachable by address ("Network is unreachable"), the gateway closed a TLS handshake for github.com, and no engine socket or engine port answered. The allowed endpoint completed TLS 1.3 through the gateway | Void: probe defect, fixed in `41a61b24` |
+| probe-03 | `contained`, `egressWorks: true`, valid for counting, no residue, no quarantine. The gateway log shows `api.anthropic.com` allowed and `github.com` refused | Pass |
+| k-01 | Delivered in 152 s: model match, valid for counting, no quarantine. The session completed successfully in 7 turns. Its result commit lacks four of the nine source files the session reports writing (`cmd/library/main.go`, `internal/library/date.go`, `library.go`, `library_test.go`), see below | Result |
+| k-02 | Delivered in 204 s: 11 paths, model match, valid for counting, no quarantine | Result |
+| k-03 | Delivered in 206 s: 10 paths, model match, valid for counting, no quarantine | Result |
+
+**Network.** Docker Desktop accepted the internal network in isolated gateway mode, so the bridge had no host address and the gateway container took the subnet's first address. The gateway's `--sysctl` and the sandbox's `--dns 192.0.2.1` were also accepted. Claude Code 2.1.308, with an access-only login and `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1`, reached only `api.anthropic.com`: three connections per run, and no refused name.
+
+**Defect found in K.** k-01's session wrote a `.gitignore` with the line `library` to ignore its binary. That pattern also matches the `cmd/library/` and `internal/library/` folders. K's capture ran `git add -A`, so it silently dropped those sources. This is K's own capture machinery, not the agent's work: the agent's tree was complete, but the delivered commit was not. No technical-failure signature named this before the series, so k-01 stays a result, as the protocol requires. The fix keeps ignored Go sources, module files and Markdown, which is the Phase A–C capture rule in [`tools/comparison/runner.py`](../../tools/comparison/runner.py). It comes with an offline test of this exact case. K has not run against a provider since the fix.
+
+**Cleanup.** After the series, no container or network with the label `markitect.evaluation` remained. No login copy was left in the temporary folder, the lock was released, and no `quarantine` entry appeared.
+
+**Usage, descriptive.** k-01 to k-03 used 7, 13 and 14 turns, 24,238 to 32,076 output tokens, and 0.41 to 0.55 USD equivalent as Claude Code reports it.
+
+**Verdict.** The smoke criterion is met: the probe found the sandbox closed, and K delivered three times in a row with a result, a model match and no quarantine. Because of the capture defect, k-01's result does not show the agent's full work. Judging it in E2 would understate K, so it should not be judged.
