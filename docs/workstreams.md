@@ -31,6 +31,6 @@ Concept 2.0's acceptance (§15) is the yardstick: correct against hidden tests, 
 ## Rules
 
 - **One state page per session.** It keeps three short parts, updated whenever a step ends: **Now**, **Next** and **Questions for the owner**, each question with a recommendation. Chats, messages and dashboards are not state.
-- **Few sessions at once.** At most about three sessions work at the same time. Build starts short sub-sessions for concrete jobs, one job and one PR each, and ends each one when its PR is merged.
+- **Few sessions at once.** At most five sessions work at the same time (owner, 28 October 2026; earlier about three). Build starts short sub-sessions for concrete jobs, one job and one PR each, and ends each one when its PR is merged.
 - **Topics hands work to Build.** When an owner decision needs code, Topics sends Build one clear task.
 - **The usual rules still apply.** [AGENTS.md](../AGENTS.md), the [working method](development/working-method.md) and the [integration policy](implementation-plan.md#integration) govern every session. Each real container, provider or Apply run needs a bounded dispatch the owner approves, one at a time on the shared engine.
