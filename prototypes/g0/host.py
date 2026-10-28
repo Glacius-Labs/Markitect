@@ -43,6 +43,20 @@ def cleanup(label, run_net):
     return {"containersLeft": len(left), "networksLeft": len(nets)}
 
 
+def usage_of(ev):
+    """Sum the Codex turn usage of every Manager; total = input + output tokens."""
+    usage = {}
+    for root, _, files in os.walk(os.path.join(ev, "managers")):
+        if "usage.jsonl" in files:
+            with open(os.path.join(root, "usage.jsonl")) as f:
+                for line in f:
+                    for k, v in json.loads(line).items():
+                        if k not in ("seconds", "exit") and isinstance(v, int):
+                            usage[k] = usage.get(k, 0) + v
+    usage["total_tokens"] = usage.get("input_tokens", 0) + usage.get("output_tokens", 0)
+    return usage
+
+
 def run(spec):
     rid = spec["runId"]
     label, net = rid, f"mkp-{rid}"
@@ -65,6 +79,7 @@ def run(spec):
         os.chmod(d, 0o755)
         for n in os.listdir(d):
             os.chmod(os.path.join(d, n), 0o644)
+    TOOLS = ["-v", f"{os.path.abspath(spec['tools'])}:/mk/tools:ro"] if spec.get("tools") else []
     started = time.time()
     result = {"runId": rid, "phase": spec["phase"], "base": spec["base"]}
     try:
@@ -72,7 +87,7 @@ def run(spec):
         sh("docker", "run", "-d", "--name", f"{net}-referee", "--network", net, "--network-alias", "referee",
            "--label", f"mkproto={label}", "--entrypoint", "python3",
            "-v", f"{rundir}:/run:ro", "-v", f"{HERE}:/mk/bin:ro", "-v", f"{os.path.abspath(ev)}/referee:/state",
-           spec["image"], "/mk/bin/referee.py")
+           *TOOLS, spec["image"], "/mk/bin/referee.py")
         for _ in range(60):
             if os.path.exists(os.path.join(ev, "referee", "score.json")):
                 break
@@ -90,7 +105,7 @@ def run(spec):
                "-e", f"PATH={PATH}",
                "-v", f"{HERE}:/mk/bin:ro", "-v", f"{os.path.abspath(m['harness'])}:/mk/harness.md:ro",
                "-v", f"{logindir}:/mk/login:ro", "-v", f"{out}:/out",
-               spec["image"], "/mk/bin/supervise.py")
+               *TOOLS, spec["image"], "/mk/bin/supervise.py")
         result["started"] = round(time.time() - started, 1)
         hard = started + spec["deadlineSeconds"] + 120
         score = {}
@@ -102,6 +117,9 @@ def run(spec):
             except (OSError, ValueError):
                 continue
             if score.get("final"):
+                break
+            if spec.get("tokenLimit") and usage_of(ev).get("total_tokens", 0) > spec["tokenLimit"]:
+                score["final"] = {"outcome": "incomplete", "reason": "token limit exceeded"}
                 break
             running = sh("docker", "ps", "-q", "--filter", f"label=mkproto={label}", check=False).split()
             if len(running) <= 1:
@@ -118,7 +136,7 @@ def run(spec):
             if len(sh("docker", "ps", "-q", "--filter", f"label=mkproto={label}", check=False).split()) <= 1:
                 break
             time.sleep(5)
-        sh("docker", "cp", f"{net}-referee:/srv/run.git", os.path.join(ev, "run.git"), check=False)
+        sh("docker", "cp", f"{net}-referee:/home/agent/srv/run.git", os.path.join(ev, "run.git"), check=False)
         for c in sh("docker", "ps", "-a", "--filter", f"label=mkproto={label}", "--format", "{{.Names}}",
                     check=False).split():
             with open(os.path.join(ev, f"{c}.log"), "w") as f:
@@ -130,15 +148,7 @@ def run(spec):
         shutil.rmtree(logindir, ignore_errors=True)
         shutil.rmtree(rundir, ignore_errors=True)
     result["seconds"] = round(time.time() - started, 1)
-    usage = {}
-    for root, _, files in os.walk(os.path.join(ev, "managers")):
-        if "usage.jsonl" in files:
-            with open(os.path.join(root, "usage.jsonl")) as f:
-                for line in f:
-                    for k, v in json.loads(line).items():
-                        if k not in ("seconds", "exit") and isinstance(v, int):
-                            usage[k] = usage.get(k, 0) + v
-    result["usage"] = usage
+    result["usage"] = usage_of(ev)
     with open(os.path.join(ev, "result.json"), "w") as f:
         json.dump(result, f, indent=1)
     return result

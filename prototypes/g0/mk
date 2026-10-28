@@ -149,8 +149,11 @@ def cmd_check(args):
     with tempfile.TemporaryDirectory() as d:
         git("add", "-A")
         tree = git("write-tree")
-        subprocess.run(f"git -C {WORK} archive {tree} | tar -x -C {d}", shell=True, check=True)
         git("reset", "-q")
+        snap = git("commit-tree", tree, "-p", "HEAD", "-m", "mk check snapshot")
+        subprocess.run(["git", "clone", "-q", "--no-checkout", WORK, d], check=True)
+        subprocess.run(["git", "-C", d, "fetch", "-q", WORK, snap], check=True)
+        subprocess.run(["git", "-C", d, "checkout", "-q", "--detach", snap], check=True)
         for c in cmds:
             print(f"$ {c}", flush=True)
             if subprocess.run(c, shell=True, cwd=d).returncode != 0:
@@ -176,7 +179,14 @@ def cmd_review(args):
     h = child_handoff(child)
     msg = {"to": child, "kind": "review", "commit": h["commit"], "accept": accept,
            "findings": [{"text": f} for f in findings], "text": " ".join(args[2:])}
-    push(f"{talk_commit(msg)}:refs/heads/mk/{NAME}/talk")
+    refspecs = [f"{talk_commit(msg)}:refs/heads/mk/{NAME}/talk"]
+    if not accept and me()["phase"] == "implement":
+        # a reject carries the parent's current work, which the child must merge (mk sync)
+        git("add", "-A")
+        if git("status", "--porcelain"):
+            git("commit", "-q", "-m", f"work of {NAME} at the review of {child}")
+        refspecs.insert(0, f"{git('rev-parse', 'HEAD')}:refs/heads/mk/{NAME}/work")
+    push(*refspecs)
     print(f"{'accepted' if accept else 'rejected'} {child}'s handoff {h['commit'][:12]}")
 
 

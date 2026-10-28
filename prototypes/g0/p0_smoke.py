@@ -102,6 +102,8 @@ def main(image, evidence):
                      'git checkout -q -B work "refs/remotes/origin/mk/$MK_NAME/work"')
             p = sh("docker", "exec", f"{NET}-{n}", "sh", "-c", setup, check=False)
             expect(f"{n} clones the Run remote with its own credential", p.returncode == 0, p.stderr)
+        if not all(r["pass"] for r in results):
+            raise RuntimeError("setup failed; later cases would only time out")
 
         p = ex("a", "git config --global credential.helper '!f() { echo username=a; echo password=wrong; }; f' && "
                     "git ls-remote origin 2>&1; git config --global credential.helper "
@@ -118,8 +120,8 @@ def main(image, evidence):
         p = ex("a", "echo x > x.txt && git add x.txt && git commit -qm x && git push origin HEAD:refs/heads/mk/b/work 2>&1")
         expect("a push to another Manager's ref is refused", p.returncode != 0 and "refused by the referee" in p.stdout + p.stderr,
                p.stdout + p.stderr)
-        ex("a", "git reset -q --hard HEAD~1")
         p = ex("a", "git push origin HEAD:refs/heads/mk/base 2>&1")
+        ex("a", "git reset -q --hard HEAD~1")
         expect("a push to mk/base is refused", p.returncode != 0, p.stdout + p.stderr)
 
         events = wait_for("a", lambda e: e.get("kind") == "task")
@@ -140,18 +142,17 @@ def main(image, evidence):
         expect("root sees b's handoff with a failed check", checks.get("b") == "fail", json.dumps(events))
         ok, out = mk("root", "review", "b", "accept")
         expect("accepting a failed handoff is refused", not ok and "failed its check" in out, out)
-        ok, out = mk("root", "review", "b", "reject", "--finding", "b.go does not compile", "fix it")
-        expect("root rejects b with a Finding", ok, out)
         ok, out = mk("root", "review", "a", "accept")
         expect("root accepts a", ok, out)
         ok, out = mk("root", "take", "a")
         expect("root takes a's accepted handoff", ok, out)
+        ok, out = mk("root", "review", "b", "reject", "--finding", "b.go does not compile", "fix it")
+        expect("root rejects b with a Finding, carrying its current work", ok, out)
         ok, out = mk("root", "take", "b")
         expect("root cannot take b's rejected handoff", not ok and "not accepted" in out, out)
 
         ok, out = mk("root", "hand-off", "push integration so far")
         expect("root's handoff is refused while b is not accepted", not ok, out)
-        ex("root", "git push -q origin HEAD:refs/heads/mk/root/work")
         events = wait_for("b", lambda e: e.get("kind") == "review")
         expect("b receives the reject with its Finding", any(e.get("kind") == "review" and e.get("accept") is False for e in events),
                json.dumps(events))
@@ -162,7 +163,7 @@ def main(image, evidence):
         expect("b syncs the parent's current work", ok, out)
         ok, out = mk("b", "hand-off", "fixed")
         expect("b hands off the correction", ok, out)
-        events = wait_for("root", lambda e: e.get("kind") == "handoff" and e.get("from") == "b" and e.get("check") == "pass")
+        events = wait_for("root", lambda e: e.get("kind") == "handoff" and e.get("from") == "b" and e.get("check") in ("pass", "fail"))
         expect("root sees b's corrected handoff pass", any(e.get("from") == "b" and e.get("check") == "pass" for e in events),
                json.dumps(events))
         ok, out = mk("root", "review", "b", "accept")
@@ -180,12 +181,12 @@ def main(image, evidence):
             time.sleep(2)
         expect("the referee reports completed", final and final.get("outcome") == "completed", json.dumps(final))
         if final and final.get("commit"):
-            files = sh("docker", "exec", f"{NET}-referee", "git", "-C", "/srv/run.git", "ls-tree", "-r", "--name-only",
+            files = sh("docker", "exec", f"{NET}-referee", "git", "-C", "/home/agent/srv/run.git", "ls-tree", "-r", "--name-only",
                        final["commit"]).stdout.split()
             expect("the final commit holds a and b", "a/a.go" in files and "b/b.go" in files, " ".join(files))
         ok, out = mk("a", "send", "root", "question", "after the end")
         expect("pushes after the end are refused", not ok and "has ended" in out, out)
-        sh("docker", "cp", f"{NET}-referee:/srv/run.git", os.path.join(evidence, "run.git"), check=False)
+        sh("docker", "cp", f"{NET}-referee:/home/agent/srv/run.git", os.path.join(evidence, "run.git"), check=False)
     finally:
         ids = sh("docker", "ps", "-aq", "--filter", f"label=mkproto={LABEL}", check=False).stdout.split()
         if ids:

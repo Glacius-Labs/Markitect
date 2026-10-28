@@ -9,7 +9,7 @@ counts. Throwaway prototype code (design section 13), not product code.
 
 Layout inside the referee container:
   /run/config.json   written by the host before start (see load_config)
-  /srv/run.git       the Run remote, seeded by the host
+  /home/agent/srv/run.git   the Run remote, seeded from /run/start.bundle
   /state/            score.json, events.jsonl, checks/
 """
 import base64
@@ -25,7 +25,7 @@ import threading
 import time
 import urllib.parse
 
-REPO = "/srv/run.git"
+REPO = "/home/agent/srv/run.git"
 STATE = "/state"
 KINDS = {"task", "question", "answer", "handoff", "review", "finding"}
 VERDICTS = {"approve", "reject", "blocker"}
@@ -71,9 +71,10 @@ class Referee:
         self.refusals = []
         self.final = None
         self.started = time.time()
-        self.deliver(self.root, {"kind": "task", "from": "host", "text": cfg["rootTask"]})
-        self.m[self.root]["tasked"] = True
-        self.save()
+        with self.lock:
+            self.deliver(self.root, {"kind": "task", "from": "host", "text": cfg["rootTask"]})
+            self.m[self.root]["tasked"] = True
+            self.save()
 
     # --- bookkeeping -------------------------------------------------------
     def log(self, event):
@@ -176,7 +177,7 @@ class Referee:
             if to not in allowed:
                 raise Refusal(f"{path}: {user} may write only to its parent or direct children: {sorted(allowed)}")
             if kind == "review":
-                self.review(user, to, msg)
+                self.review(user, to, msg, work_new)
             elif kind == "task":
                 if to not in self.children[user]:
                     raise Refusal(f"{path}: tasks go to direct children only")
@@ -229,7 +230,7 @@ class Referee:
             self.checks_running += 1
             threading.Thread(target=self.run_check, args=(user, h), daemon=True).start()
 
-    def review(self, user, child, msg):
+    def review(self, user, child, msg, work_new=None):
         h = self.latest(child)
         if not h:
             raise Refusal(f"{child} has not handed off anything to review")
@@ -243,7 +244,7 @@ class Referee:
             h["accepted"] = True
             self.m[child]["requiredBase"] = None
         elif msg.get("accept") is False:
-            tip = git("rev-parse", f"refs/heads/mk/{user}/work")
+            tip = work_new or git("rev-parse", f"refs/heads/mk/{user}/work")
             self.m[child]["requiredBase"] = tip
             h["accepted"] = False
         else:
@@ -262,7 +263,8 @@ class Referee:
         log_path = os.path.join(out_dir, f"{user.replace('/', '_')}-{commit[:12]}.log")
         ok = False
         try:
-            subprocess.run(f"git -C {REPO} archive {commit} | tar -x -C {work}", shell=True, check=True)
+            subprocess.run(["git", "clone", "-q", "--no-checkout", REPO, work], check=True)
+            subprocess.run(["git", "-C", work, "checkout", "-q", "--detach", commit], check=True)
             with open(log_path, "w") as log:
                 ok = True
                 for cmd in self.cfg["checkCommands"]:
@@ -454,7 +456,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
     def cgi(self, user, url):
         body = self.body()
-        env = {"PATH": os.environ["PATH"], "GIT_PROJECT_ROOT": "/srv", "GIT_HTTP_EXPORT_ALL": "1",
+        env = {"PATH": os.environ["PATH"], "GIT_PROJECT_ROOT": "/home/agent/srv", "GIT_HTTP_EXPORT_ALL": "1",
                "REMOTE_USER": user, "REMOTE_ADDR": self.client_address[0],
                "REQUEST_METHOD": self.command, "PATH_INFO": url.path[len("/git"):],
                "QUERY_STRING": url.query, "CONTENT_TYPE": self.headers.get("Content-Type", ""),
