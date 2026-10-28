@@ -253,7 +253,38 @@ class LintTests(unittest.TestCase):
         # The nearest Interface above the target governs, including the Packages below it; its own subtree is free,
         # an Interface without appliesTo binds no one, and body links are not uses.
         self.assertEqual(found, {("bk/res -> eq/rate", "strong"), ("bk/res -> eq/inner/part", "strong")})
-        self.assertIn("1 cross-Package uses of refusal codes not checked against Interfaces, which cannot list refusal codes", result["notes"])
+        self.assertIn("1 cross-Package uses of refusal codes not checked against Interfaces: "
+                      "the architecture Library in use is older than 1.1.0 and cannot list refusal codes", result["notes"])
+
+    def test_interfaces_expose_refusal_codes_since_architecture_1_1(self):
+        contract = definition("markitect/architecture/Interface", "markitect/core/Kind", "Surface.", {"properties": [
+            ref("markitect/practice/appliesTo"), ref("markitect/architecture/operations"), ref("markitect/architecture/types"),
+            ref("markitect/architecture/refusalCodes")]})
+        defs = [
+            definition("eq/eq-interface", "markitect/architecture/Interface", "Surface.",
+                       {"appliesTo": ["."], "refusalCodes": [ref("eq/listed")]}),
+            definition("eq/listed", "markitect/api/RefusalCode", "Code.", {"code": "listed"}),
+            definition("eq/hidden", "markitect/api/RefusalCode", "Code.", {"code": "hidden"}),
+            definition("bk/res", "vocab/Rule", "Refuses.", {"uses": [ref("eq/listed"), ref("eq/hidden")]}),
+        ]
+        result = ma.lint(ma.Model(report(CONTENT + defs, core=CORE + [contract])))
+        found = {f["subject"] for f in result["findings"] if f["signal"] == "interface"}
+        self.assertEqual(found, {"bk/res -> eq/hidden"})
+        self.assertFalse(any("refusal codes" in note for note in result["notes"]))
+
+    def test_invariants_live_with_their_entities(self):
+        defs = [
+            definition("eq/record", "vocab/Rule"), definition("eq/sub/part", "vocab/Rule"),
+            definition("eq/holds", "markitect/data/Invariant", "Always.", {"entities": [ref("eq/record")]}),
+            definition("eq/above", "markitect/data/Invariant", "Always.", {"entities": [ref("eq/sub/part")]}),
+            definition("eq/sub/below", "markitect/data/Invariant", "Always.", {"entities": [ref("eq/record")]}),
+            definition("bk/elsewhere", "markitect/data/Invariant", "Always.", {"entities": [ref("eq/record"), ref("eq/sub/part")]}),
+        ]
+        found = {f["subject"]: f["message"] for f in ma.lint(ma.Model(report(CONTENT + defs)))["findings"]
+                 if f["signal"] == "invariant-owner"}
+        # Its own Package or one above the Entities holds it; a Package below or beside them does not.
+        self.assertEqual(set(found), {"eq/sub/below", "bk/elsewhere"})
+        self.assertTrue(found["bk/elsewhere"].endswith("eq, eq/sub"))
 
     def test_interface_scope_several_interfaces_and_nesting(self):
         defs = [

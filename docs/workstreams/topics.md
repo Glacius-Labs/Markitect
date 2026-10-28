@@ -10,7 +10,7 @@ State page of the Topics session: the owner's single place to discuss Markitect'
 
 ## Now
 
-- **Quick confirmations** (step 1 of the [order](#next)). Done: one topics page instead of seven lane pages, with the permanent records kept on Main. Open: hand the [#806 follow-ups](#ready-to-hand-over) to Build, with the guide's Kind names (question 36); and the Windows Git-start fix (question 33).
+- **Quick confirmations** (step 1 of the [order](#next)). Done: one topics page instead of seven lane pages, with the permanent records kept on Main; Main made consistent again after #806 (see [Done here](#done-here)). Open: the Windows Git-start fix (question 33).
 
 ## Next
 
@@ -37,7 +37,7 @@ The model is typed programming in prose: Core 1.2.0 with Kind interfaces ([DEC-0
 
 ### Modeling skills
 
-The [modeling skill](../../packaging/skills/markitect-modeling/SKILL.md), the [modeling guide](../design/modeling-guide.md) and the [analysis tool](../../tools/model-analysis/README.md). A fresh agent with only the skill wrote a new model twice (PR #771) and changed an existing one faithfully once ([C5 trial](../validation/modeling-skill-change-trial-20261027.md)). Untested: renames (C7), architecture changes (C2), review and blocker repair. No everyday change workflow is written; the skill reaches no user; the tool has no CI gate. Since the owner said "We will be responsible for all of that", model language and modeling skills are one topic.
+The [modeling skill](../../packaging/skills/markitect-modeling/SKILL.md), the [modeling guide](../design/modeling-guide.md) and the [analysis tool](../../tools/model-analysis/README.md). A fresh agent with only the skill wrote a new model twice (PR #771) and changed an existing one faithfully once ([C5 trial](../validation/modeling-skill-change-trial-20261027.md)). Untested: renames (C7), architecture changes (C2), review and blocker repair. No everyday change workflow is written, and the skill reaches no user. The skill, the guide (v0.3) and the tool follow `api` 2.0.0 and `architecture` 1.1.0; the tool's tests run in CI. Since the owner said "We will be responsible for all of that", model language and modeling skills are one topic.
 
 ### Compiler
 
@@ -70,6 +70,7 @@ Verbatim, with the date. Words in brackets are context added by the recorder.
 
 **This session**
 - 28 Oct [fold the six lane PRs: keep the C5 trial record, the two design pages and the Windows test-time numbers on Main; fold the lane pages into this page]: "Yes, fold them"
+- 28 Oct [instead of handing the #806 follow-ups to Build]: "Fix everything and every inconsistency. If you are unsure ask me. Dont talk to the build chat. Just bring a consistent and clean state to main"
 
 **General**
 - 27 Oct: "The topics sessions are just there so when i have some time i can discuss those topics and maybe refine them."
@@ -178,29 +179,30 @@ Verbatim, with the date. Words in brackets are context added by the recorder.
 
 ### H. Added when folding
 
-36. **Modeling guide Kind names.** The guide still uses the illustrative names (Policy, Obligation, ValueType) written before the Libraries 1.0.0; the skill uses the real ones. Rec: align now, together with the #806 follow-ups.
+36. **Modeling guide Kind names.** Done on 28 October: the guide v0.3 names the Library Kinds.
 37. **What counts as an error lives in prose.** The skill tells agents to treat `unknown-package`, `dependency-rule`, `interface`, `import-cycle` and every strong lint finding as errors; no tool contract says so, and lint thresholds are provisional ([OQ-002](../concepts/register.md#open-questions)). No recommendation yet; it belongs with questions 3 and 4.
 
 ## Handed to Build
 
 Nothing yet.
 
-### Ready to hand over
+### Done here
 
-Owner-approved, waiting for the go-ahead to send:
-- **#806 follow-ups** (Main is inconsistent since #806), as one PR:
-  - [Modeling guide](../design/modeling-guide.md): drop "ordered refusals"; add that an Invariant lives in the Package that owns its Entities and is not placed.
-  - The modeling skill: pin `api` 2.0.0 and `architecture` 1.1.0 in its reference and examples; replace its rule that the listed refusal order is an owner decision (precedence goes into a Rule only when the requirements state it).
-  - The analysis tool: count `refusalCodes` in the `interface` signal; flag an Invariant defined outside the Package that owns its data.
-  - Delivery plan: the W4 row ("all 1.0.0") and the stale W1 row.
-  - Register: a line under DEC-074; the DEC-075 status ("Not yet in source"); record the continuous-change commission as design only under the DEC-011 hold.
+On the owner's instruction of 28 October this session made Main consistent after #806 itself, instead of handing it to Build:
+- [Modeling guide](../design/modeling-guide.md) v0.3: the Library Kind names, refusals without order, Interfaces with refusal codes, an Invariant with its data.
+- The modeling skill: `api` 2.0.0 and `architecture` 1.1.0 in its reference and examples; refusals without order (precedence in a rule only when the requirements state it); Interfaces list refusal codes; an Invariant lives with its Entities.
+- The analysis tool: the `interface` signal checks refusal codes against `refusalCodes` (a note only for an architecture Library before 1.1.0); a new `invariant-owner` signal.
+- `makerspace-v2/check.py` accepts its frozen 1.0.0 Library copies again, with a note.
+- Delivery plan rows W1–W4; register lines under DEC-011, DEC-074, DEC-075 and DEC-076; the commands page points its open questions here.
+
+### Ready to hand over
 
 Waiting for one owner answer, then one task each: the Windows Git-start fix (33); `markitect lock` and readable `check` output (1); the two skill fixes and the C7 or C2 trial (12); explorer E1 (1 and 30), which also needs the source packager's allowlist to carry the embedded page.
 
 ### Housekeeping
 
 - Branch `handover/model-quality-log` holds the unreviewed drafts behind question 9. Keep it until question 9 is reviewed, then delete it.
-- Other open PRs that touch these topics: #795 (G0 design, answers question 34), #792 (lanes overview, which the Build session rewrites for the two-session structure) and #803 (record of the owner's evening decisions of 27 October).
+- Other open PRs that touch these topics: #795 (G0 design, answers question 34) and #803 (record of the owner's evening decisions of 27 October).
 
 ### Contracts the variants and the evaluation suite follow now
 

@@ -1,12 +1,12 @@
-# Agentic commands (lane 9)
+# Agentic commands
 
-State page of the commands lane. It describes the agentic commands Markitect runs through the model-derived Manager hierarchy as **contracts**: what a command takes, what it returns and what it guarantees. How a variant realizes them belongs to the variant lanes: the host variant (today's V1), the Claude Code plugin variant and the Git variant ([DEC-078](../concepts/register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review)). The lane overview is `docs/workstreams.md`.
+Canonical page of the commands topic, one of the topics on the [topics page](topics.md). It describes the agentic commands Markitect runs through the model-derived Manager hierarchy as **contracts**: what a command takes, what it returns and what it guarantees. How a variant realizes them belongs to the variants: the host variant (today's V1), the Claude Code plugin variant and the Git variant ([DEC-078](../concepts/register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review)). The [workstreams](../workstreams.md) page lists the sessions and variants.
 
 | | |
 |---|---|
-| **Status** | In discussion with the owner, 27 October 2026. The frame below is agreed; nothing is built in this lane until the owner says so. |
+| **Status** | The frame below and answers A1–A6 are agreed with the owner (27 and 28 October 2026). Nothing is built until the owner says so. The open questions are on the [topics page](topics.md#d-commands-and-the-result). |
 | **Scope** | Command contracts: purpose, inputs, outputs, guarantees, status; candidate commands; open questions. |
-| **Not in scope** | How a variant realizes a command; the evaluation suite; model language, modeling and Authoring, and the compiler; continuous triggers; the Cockpit. Each has its own lane. |
+| **Not in scope** | How a variant realizes a command; the evaluation suite; model language, modeling and Authoring, and the compiler; continuous triggers; the Cockpit. The variants and the evaluation suite belong to the [Build and evaluation session](build.md); the rest are other topics on the [topics page](topics.md). |
 | **Sources** | [V1 concept 1.0](../concepts/v1-concept.md) (§4, §7, §9–§12, §18–§21), the [concept register](../concepts/register.md), the [architecture](../architecture.md). This page links to them and does not change them. |
 
 ## Frame and names
@@ -100,7 +100,7 @@ These rules come from V1 Apply. Since no Command changes the model (frame above)
 
 ### Model tools (not agentic)
 
-`check`, `context` and `docs` start no Manager and are named here only for completeness. They belong to the compiler and model lanes ([project workflow](../guides/project-workflow.md)).
+`check`, `context` and `docs` start no Manager and are named here only for completeness. They belong to the compiler topic ([project workflow](../guides/project-workflow.md)).
 
 ### Extract: Authoring, not a Command
 
@@ -121,7 +121,7 @@ Grouped by what they may change (rule 3). "Run kinds" says whether Assessment, I
 | **Custom Command** | Artifacts or nothing | A project-defined Workflow over the Manager tree. The goal (frame). | Existing ones, or new where none fits | DEC-044; [§2.4](../concepts/v1-concept.md#24-later) (user-defined workflows later, no DSL in V1) |
 | **Data migration** | Artifacts | Migrate existing runtime data after a model change. | Open | [§26.2](../concepts/v1-concept.md#262-change-from-five-to-three-loans) calls it a separate requirement |
 
-Extract, Optimize and model migration change the model, so they are Authoring and leave this list for the modeling-skills lane; DEC-044 and DEC-057 keep their accepted content.
+Extract, Optimize and model migration change the model, so they are Authoring and leave this list for the modeling-skills topic; DEC-044 and DEC-057 keep their accepted content.
 
 ## What each variant must provide
 
@@ -156,14 +156,14 @@ From Traycer's [software factory guide](https://traycer.ai/software-factory):
   - Artifact-changing Commands (refactor, cleanup) may take a task only for choices the model leaves free. A task that would make a result wrong when violated goes into the model first, then through Apply.
   - The task is a goal for Implementation, not a rule for Verification: Verification still judges against the model and the diff against the bound input. Whether a refactor met its task is a matter for the Managers' review. A later Apply keeps the result, since conforming artifacts are preserved (§3.5).
   - A bug hunt needs no task: a bug is a model violation, so Verification finds it and Implementation fixes it.
-- **A3. Extract and other model changes** (owner, 27 October 2026): this lane ignores Extract; model changes are Authoring, not Commands. The earlier questions on Extract's owner questions and on who adopts model proposals leave this lane with it.
+- **A3. Extract and other model changes** (owner, 27 October 2026): Commands ignore Extract; model changes are Authoring, not Commands. The earlier questions on Extract's owner questions and on who adopts model proposals went to Authoring with it.
 - **A4. Frame** (owner, 27 October 2026): the frame and names above, single Runs startable directly, Custom Commands as the goal, one Result type.
 
 - **A5. Result of read-only Commands and hand-over to Apply** (owner, 28 October 2026, accepting the lane's recommendation; was Q1):
   - A read-only Command returns the one Result type without a candidate: status (completed, failed, incomplete); verdict (Approve or Reject for Verify only, "answered" for explain and impact); Findings, each naming a Definition with what was observed, what is expected and where to correct it; the answer (prose for explain, affected areas for impact); the IDs of the Shared Notes it appended; pointers to the stored Run records. Notes stay in the Notes store and keep no authority.
   - Apply takes Findings over only when the user passes a Result in explicitly, for example `apply --findings RESULT`. The host checks that the Result is stored and closed (the one validation, D15) and that each Finding's Definition exists in the current model; a Finding whose Definition is gone becomes a Note (DEC-073). If the artifacts changed since, the Findings still enter, and Implementation judges whether each still applies.
   - A Verify-only approval of exactly the current artifacts under the same model, execution configuration and dependencies can serve a later Apply as the "already verified" fact (DEC-073).
-  - Nothing is taken over automatically (§19.2). Automatic hand-over, such as a nightly Verify feeding Apply, is a trigger and belongs to the continuous-change lane.
+  - Nothing is taken over automatically (§19.2). Automatic hand-over, such as a nightly Verify feeding Apply, is a trigger and belongs to continuous change.
 - **A6. Workflow form** (owner, 28 October 2026, accepting the lane's recommendation; was Q3): both, with a small fixed vocabulary.
   - A few building blocks live in code: run a Run kind, branch on its verdict, go back with Findings, publish. A Command is a short declaration that combines them. Built-in Commands such as `apply` and `verify` are declared the same way as custom ones. Apply, roughly:
 
@@ -181,14 +181,7 @@ From Traycer's [software factory guide](https://traycer.ai/software-factory):
 
 ### Open
 
-- **Q1.** Answered as A5.
-- **Q2. Analysis or Run.** Where the line falls for a given capability, for example impact. Rule of thumb in the frame.
-- **Q3.** Answered as A6.
-- **Q4. Order.** Which Commands first? Proposal: Verify only (no new Run kind, cheap to evaluate), then impact check.
-- **Q5. Convergence.** Should a Verification after a Reject re-check the whole candidate (today) or focus on the new diff and the earlier Findings, with a cap on correction rounds beyond the shared budget?
-- **Q6. Result form.** Should the Result end in a short proof package (commands and output, failing-then-passing tests, a "not covered" list) for the owner, instead of the diff?
-- **Q7. Cost of the full tree.** Rule 1 stands. If the evaluation suite measures read-only Commands as too costly, is that new evidence to revisit, or is the cost accepted?
-- **Q8. Project-defined Run kinds.** What a project may set for its own Run kind (task text, answer format, Gates, allowed verdicts), whether it may change artifacts, and how it stays generic in the host.
+The open questions moved to the [topics page](topics.md#questions-for-the-owner) on 28 October 2026, with a recommendation each: Q2 (Analysis or Run) is question 2 there; Q4 to Q8 (order, convergence, Result form, cost of the full tree, project-defined Run kinds) are questions 18 to 22.
 
 ## Log
 
@@ -197,3 +190,4 @@ From Traycer's [software factory guide](https://traycer.ai/software-factory):
 - 27 October 2026: owner agreed the frame and names, reuse of Run kinds and that Extract is Authoring (A1, A3, A4); questions renumbered.
 - 28 October 2026: owner answered Q1 (A5: Result of read-only Commands, hand-over to Apply).
 - 28 October 2026: owner answered Q3 (A6: Workflow form, project-defined Run kinds in principle); Q8 added.
+- 28 October 2026: the topic lanes were folded into the Topics session; the open questions moved to the topics page.

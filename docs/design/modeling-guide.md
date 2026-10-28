@@ -1,6 +1,6 @@
 # Modeling guide: what a well-modeled project contains
 
-**Status:** working version v0.2, 26 October 2026, of workstream W2 of the [canonical model track](model-track-charter.md). It was independently reviewed and includes the owner's architecture decisions of 26 October. It changes with the standard Libraries (W4) and the pilots (W6). It builds on the [founding intent](../concepts/sources/founding-intent-20261026.md), [DEC-061](../concepts/register.md#dec-061-what-an-extracted-model-contains), [DEC-063](../concepts/register.md#dec-063-the-model-is-authoritative-defects-escalate) and [Kind interfaces](../concepts/register.md#dec-075-kind-interfaces-and-one-core-120). The [quality criteria](model-quality-criteria.md) (W3) are its checkable side. The Kind names below are illustrative until the standard Libraries (W4) fix them.
+**Status:** working version v0.3, 28 October 2026, of workstream W2 of the [canonical model track](model-track-charter.md). v0.2 was independently reviewed and includes the owner's architecture decisions of 26 October; v0.3 names the Kinds of the [standard Libraries](standard-libraries.md) and follows the Library decisions of 27 and 28 October ([source](../concepts/sources/library-questions-20261028.md)): refusals have no order, an Interface exposes refusal codes, and an Invariant lives with its data. It changes with the standard Libraries (W4) and the pilots (W6). It builds on the [founding intent](../concepts/sources/founding-intent-20261026.md), [DEC-061](../concepts/register.md#dec-061-what-an-extracted-model-contains), [DEC-063](../concepts/register.md#dec-063-the-model-is-authoritative-defects-escalate) and [Kind interfaces](../concepts/register.md#dec-075-kind-interfaces-and-one-core-120). The [quality criteria](model-quality-criteria.md) (W3) are its checkable side.
 
 ## The idea in one paragraph
 
@@ -19,20 +19,20 @@ Write the model the way you would write a program in a typed language.
 
 ## 2. What a project model covers
 
-| Concern | What the model states | Illustrative Kinds | Lives in |
+| Concern | What the model states | Library Kinds | Lives in |
 |---|---|---|---|
-| **Project** | Purpose, scope and non-goals; the technical boundary (language, build and test commands, permitted dependencies); delivery obligations | Project, Obligation | The project Package (DEC-061) |
-| **Values** | Value formats and ranges, units, money and time rules, enumerations | ValueType, Enum, Unit | A shared kernel Package |
-| **Domain data** | Entities with their fields (as object lists on the Entity), relationships and invariants | Entity, Invariant | The Package that owns the entity |
-| **Behavior and API** | Operations with arguments, ordered refusals with their wire codes, results and permissions; events | Operation, RefusalCode, Role, Event | The Package that owns the behavior |
-| **Cross-cutting policies** | Rules that apply to many Packages, such as authorization or the order of checks | Policy, with a scope field such as `appliesTo` | A shared Package. It reaches every Manager through modeled scope: a `scope` selector in `execution.yaml` names the Kind and the field ([context_scope.go](../../internal/organization/context_scope.go)) |
-| **Architecture** | The module structure **is the Package tree** (section 3). On top of it: allowed dependency directions, each Package's interface, and placement decisions the tree cannot show, such as where a policy is realized | Interface, DependencyRule, Placement | The Package tree itself; rules and placement in the project Package; interfaces in each Package |
-| **Way of working** | Test, documentation and convention obligations; required checks | TestObligation, DocObligation, Convention | The project Package; checks in `execution.yaml` |
+| **Project** | Purpose, scope and non-goals; the technical boundary (language, build and test commands, permitted dependencies); delivery obligations | `Practice.Project`, `Practice.Rule` | The project Package (DEC-061) |
+| **Values** | Value formats and ranges, units, money and time rules, enumerations | `Values.Scalar`, `Values.Enumeration`, `Values.Unit` | A shared kernel Package |
+| **Domain data** | Entities with their fields (as object lists on the Entity), relationships and invariants | `Data.Entity`, `Data.Invariant` | The Package that owns the Entities. An Invariant lives there too and that Package enforces it; it is not placed |
+| **Behavior and API** | Operations with arguments, refusals with their wire codes, results and permissions; events | `Api.Operation`, `Api.RefusalCode`, `Api.Role`; events have no Library Kind yet | The Package that owns the behavior |
+| **Cross-cutting policies** | Rules that apply to many Packages, such as authorization or the order of checks | `Practice.Rule`, with its scope in `appliesTo` | A shared Package. It reaches every Manager through modeled scope: a `scope` selector in `execution.yaml` names the Kind and the field ([context_scope.go](../../internal/organization/context_scope.go)) |
+| **Architecture** | The module structure **is the Package tree** (section 3). On top of it: allowed dependency directions, each Package's interface, and placement decisions the tree cannot show, such as where a policy is realized | `Architecture.Interface`, `Architecture.DependencyRule`, `Architecture.Placement` | The Package tree itself; rules and placement in the project Package; interfaces in each Package |
+| **Way of working** | Test, documentation and convention obligations; required checks | `Practice.TestObligation`, `Practice.DocumentationObligation`, `Practice.ConventionObligation` | The project Package; checks in `execution.yaml` |
 
 **Architecture is the owner's decision, encoded as the model's own structure.** In the owner's words: "Of course the project owner should decide the architecture and encode it in the canonical model" ([source](../concepts/sources/model-architecture-20261026.md)). Encoding it does not mean describing it a second time; the owner approved that refinement in the same source, and its [recorded meaning](../concepts/sources/model-architecture-20261026.md#recorded-meaning) states the reading. The model is code, so it has a structure of its own; a separate component description beside that structure would be a second architecture that drifts. This is in the spirit of concept §7.1, where the Manager organization is derived from the model and not maintained separately; the same holds for the code's module structure. So:
 - the Package tree is the module structure, and the ownership areas in `execution.yaml` place each Package's code;
 - dependency rules on Packages state the allowed directions, and the model's own references obey them too;
-- Interface Definitions are each Package's public surface;
+- Interface Definitions are each Package's public surface: the operations, types and refusal codes other Packages may use, as a package exports its functions, types and errors in code;
 - placement decisions state what the tree cannot show, for example "authorization is realized once, in `pipeline`";
 - layers inside an area become child Packages.
 
@@ -62,7 +62,7 @@ This guide's rule: leave architecture open only where the owner explicitly choos
 # A project Kind that implements a Library interface
 imports:
   - {package: markitect/core, as: Core}
-  - {package: software/api, as: Api}
+  - {package: markitect/api, as: Api}
 id: LedgerOperation
 kind: Core.Kind
 body: An operation that also posts its effect to the ledger.
@@ -90,6 +90,7 @@ spec:
 - **Identities are stable.** Moving a Definition to another Package changes its identity and every reference to it (language contract §9). Makerspace's C7 fold of `billing/payments` into `billing/invoices` is a real example. Plan Packages so that moves stay rare.
 - **A change of intent touches the Definitions that state it.** If an ordinary change touches many Packages, the cut is wrong, the code equivalent of shotgun surgery. A genuinely cross-cutting rule change may touch many.
 - **The model diff is the change order.** Keep it readable for the owner: one concern per change.
+- **Refusals have no order.** An operation lists the refusals it can return, each with its condition. When several can apply to one request and it matters which one is returned, a Rule such as the order of checks, or the operation's body, states the precedence. If the owner left it open, it stays open.
 
 ## 8. Worked example: Makerspace, remodeled (sketch)
 
@@ -103,16 +104,16 @@ Illustrative architecture decisions, expressed as the Package tree plus rules:
 
 | Package (= module) | Owns | Notable Definitions |
 |---|---|---|
-| `makerspace` (project) | Purpose, technical boundary (Go module, standard library only, line protocol), delivery obligations, the dependency rules and placement decisions above | Project, Obligation, DependencyRule, Placement |
-| `pipeline` | The central request pipeline and the protocol adapter: order of checks, results, delivery, authorization and audit | Interface; Policy items with modeled scope |
-| `kernel` | Value types, money, time, records and the refusal codes shared by all areas | ValueType items (`identifier`, `month`, `cents`), Money and Time policies |
+| `makerspace` (project) | Purpose, technical boundary (Go module, standard library only, line protocol), delivery obligations, the dependency rules and placement decisions above | Project, Rules, DependencyRule, Placement |
+| `pipeline` | The central request pipeline and the protocol adapter: order of checks, results, delivery, authorization and audit | Interface; Rules with modeled scope |
+| `kernel` | Value types, money, time, records and the refusal codes shared by all areas | Scalars (`identifier`, `month`, `cents`), money and time Rules, RefusalCodes |
 | `members`, `training`, `equipment`, `safety`, `bookings`, `materials`, `billing`, `reporting` | One area each, with its entities, operations and its interface | Interface, Entity, Operation |
 
 A typed operation, with imports, links and the unchanged wire codes:
 
 ```yaml
 imports:
-  - {package: software/api, as: Api}
+  - {package: markitect/api, as: Api}
   - {package: kernel, as: Kernel}
   - {package: pipeline, as: Access}
 id: generate-invoices
@@ -124,14 +125,16 @@ spec:
   wireName: generateInvoices
   mutation: true
   arguments:
-    - {argument: month, argumentType: Kernel.month}
+    - {name: month, fieldType: Kernel.month}
   refusals:
     - {refusal: month-not-ended, when: "the request time is before the first minute of the following month"}
     - {refusal: already-invoiced, when: "invoices for this month were generated before"}
-  resultFields: [month, invoices]
+  results:
+    - {name: month, fieldType: Kernel.month}
+    - {name: invoices, fieldType: invoice, list: true}
   permissions:
-    - {forRole: Access.staff, scope: all}
-    - {forRole: Access.admin, scope: all}
+    - {role: Access.staff, scope: all}
+    - {role: Access.admin, scope: all}
 ```
 
 Each refusal code Definition carries its wire value (`code: month_not_ended`), so callers see no change. The pipeline policies reach every operation's Manager through modeled scope, which replaces the per-operation links to request processing, results and delivery. Roles live in `pipeline` with authorization, so the alias stays `Access`.
