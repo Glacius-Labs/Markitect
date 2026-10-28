@@ -1,104 +1,190 @@
 package model
 
-// ManifestInput supplies only the explicitly selected manifest's original bytes.
-// ManifestPath is an exact relative path ending in model.yaml; Origin is opaque.
-// Zero limit fields select DefaultLimits. SourceBytes counts these bytes alone;
-// YAMLDepth bounds decoding. All negative Limits fields are invalid configuration.
-type ManifestInput struct {
-	Origin       string
-	ManifestPath string
-	Bytes        []byte
-	Limits       Limits
+import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"regexp"
+	"sort"
+
+	"go.yaml.in/yaml/v3"
+)
+
+// LibraryRef is one Library the manifest names.
+type LibraryRef struct {
+	Name    string
+	Version string
+	Line    int
 }
 
-// ManifestResult reports only manifest decoding and lexical language validity.
-// Root is the exact declared path relative to the manifest directory, including
-// '.', and is absent unless Status == Passed. A zero result provides no root.
-// Source binds original bytes after byte admission; its Digest is empty if
-// configuration or byte admission refused inspection. Diagnostics retain their
-// original source coordinates and are deterministically ordered.
-//
-// Passed does not establish root existence, physical spelling or separation,
-// redirect safety, a captured tree, dependency availability, a lock, complete
-// Model check, acquisition authority or permission to apply anything.
-type ManifestResult struct {
-	Status      Status
-	Source      Source
-	Root        string
-	Diagnostics []Diagnostic
+// Manifest is the project's .markitect/manifest.yaml.
+type Manifest struct {
+	Libraries []LibraryRef // sorted by name
 }
 
-// InspectManifest uses Check's manifest decoder and lexical validation over
-// explicitly supplied bytes. It reads no directory, dependency or lock and
-// neither repairs nor changes input bytes. Resource refusal is NotCompleted;
-// known manifest violations are Failed, including beside a decoding limit.
-func InspectManifest(input ManifestInput) ManifestResult {
-	r := ManifestResult{Status: NotCompleted, Source: Source{Origin: input.Origin, Path: input.ManifestPath}}
-	if invalidLimits(input.Limits) {
-		r.Diagnostics = []Diagnostic{{Code: "config.invalid_limit", Message: "Limits must be nonnegative; zero selects the default."}}
-		return r
+// Locked is one Library entry of the lock.
+type Locked struct {
+	Version string
+	Digest  string
+	Line    int
+}
+
+// Lock is the project's .markitect/lock.yaml, written by markitect lock.
+type Lock struct {
+	Libraries map[string]Locked
+}
+
+var version = regexp.MustCompile(`^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$`)
+
+// ParseManifest reads a manifest. file names it in diagnostics.
+func ParseManifest(file string, data []byte) (Manifest, Diagnostics) {
+	var ds Diagnostics
+	var m Manifest
+	top, err := mapping(data)
+	if err != nil {
+		ds.Add("manifest.syntax", file, 0, "%v", err)
+		return m, ds
 	}
-	limits := effectiveLimits(input.Limits)
-	c := sourceChecker{model: SourceModel{Origin: input.Origin, ManifestPath: input.ManifestPath}, limits: limits}
-	entry := Entry{Path: input.ManifestPath}
-	admitted := int64(len(input.Bytes)) <= limits.SourceBytes
-	if admitted {
-		entry.Kind, entry.Bytes = Regular, input.Bytes
-		r.Source = source(input.Origin, entry)
-	}
-	pathValid := c.manifestPathValid(entry)
-	if !admitted {
-		c.limited = true
-		c.diagnostics = append(c.diagnostics, Diagnostic{Code: "limit.source_bytes", Message: "The supplied manifest exceeds the source-byte budget.", Source: r.Source})
-	} else if pathValid {
-		root, rootOK := c.readManifest(entry)
-		if !c.failed && !c.limited && rootOK {
-			r.Status, r.Root = Passed, root
+	for key, node := range top {
+		if key != "libraries" {
+			ds.Add("manifest.syntax", file, node.Line, "unknown key %q: the manifest holds only libraries", key)
 		}
 	}
-	if c.failed {
-		r.Status = Failed
+	libs := top["libraries"]
+	if libs == nil {
+		ds.Add("manifest.syntax", file, 0, "the manifest must name its Libraries, at least std:\nlibraries:\n  std: 1.0.0")
+		return m, ds
 	}
-	r.Diagnostics = c.diagnostics
-	sortDiagnostics(r.Diagnostics)
-	return r
+	if libs.Kind != yaml.MappingNode {
+		ds.Add("manifest.syntax", file, libs.Line, "libraries must map each Library name to its version")
+		return m, ds
+	}
+	for i := 0; i+1 < len(libs.Content); i += 2 {
+		k, v := libs.Content[i], libs.Content[i+1]
+		if !ValidSegment(k.Value) {
+			ds.Add("manifest.syntax", file, k.Line, "%q cannot name a Library", k.Value)
+			continue
+		}
+		if v.Kind != yaml.ScalarNode || !version.MatchString(v.Value) {
+			ds.Add("manifest.syntax", file, v.Line, "Library %s needs a version such as 1.0.0", k.Value)
+			continue
+		}
+		m.Libraries = append(m.Libraries, LibraryRef{Name: k.Value, Version: v.Value, Line: k.Line})
+	}
+	sort.Slice(m.Libraries, func(i, j int) bool { return m.Libraries[i].Name < m.Libraries[j].Name })
+	for i := 1; i < len(m.Libraries); i++ {
+		if m.Libraries[i].Name == m.Libraries[i-1].Name {
+			ds.Add("manifest.syntax", file, m.Libraries[i].Line, "Library %s is named twice", m.Libraries[i].Name)
+		}
+	}
+	return m, ds
 }
 
-func (c *sourceChecker) manifestPathValid(selected Entry) bool {
-	if !validPath(c.model.ManifestPath) || basename(c.model.ManifestPath) != "model.yaml" {
-		c.problem("input.manifest_path", "ManifestPath must explicitly select a relative model.yaml path.", selected, nil)
-		return false
+// ParseLock reads a lock. file names it in diagnostics.
+func ParseLock(file string, data []byte) (Lock, Diagnostics) {
+	var ds Diagnostics
+	lock := Lock{Libraries: map[string]Locked{}}
+	top, err := mapping(data)
+	if err != nil {
+		ds.Add("lock.syntax", file, 0, "%v; run markitect lock", err)
+		return lock, ds
 	}
-	return true
+	libs := top["libraries"]
+	if len(top) != 1 || libs == nil || libs.Kind != yaml.MappingNode {
+		ds.Add("lock.syntax", file, 0, "the lock is not in the form markitect lock writes; run markitect lock")
+		return lock, ds
+	}
+	for i := 0; i+1 < len(libs.Content); i += 2 {
+		k, v := libs.Content[i], libs.Content[i+1]
+		var entry struct {
+			Version string `yaml:"version"`
+			Digest  string `yaml:"digest"`
+		}
+		if err := v.Decode(&entry); err != nil || entry.Version == "" || entry.Digest == "" {
+			ds.Add("lock.syntax", file, k.Line, "the entry for %s needs version and digest; run markitect lock", k.Value)
+			continue
+		}
+		lock.Libraries[k.Value] = Locked{Version: entry.Version, Digest: entry.Digest, Line: k.Line}
+	}
+	return lock, ds
 }
 
-// Keep lexical validation and known metadata in one place. Check continues
-// with its own root/tree/lock checks; inspection publishes only a valid Root.
-// Preserve known manifest facts even when later Definition capture is refused.
-func (c *sourceChecker) readManifest(manifest Entry) (string, bool) {
-	v, valid := c.decode(manifest)
-	if !valid {
-		return "", false
+// RenderLock writes the lock for the given Libraries.
+func RenderLock(libs []LibrarySource) []byte {
+	sorted := append([]LibrarySource(nil), libs...)
+	sort.Slice(sorted, func(i, j int) bool { return sorted[i].Name < sorted[j].Name })
+	var b bytes.Buffer
+	b.WriteString("# Written by markitect lock from the manifest. Do not edit.\nlibraries:\n")
+	for _, l := range sorted {
+		fmt.Fprintf(&b, "  %s:\n    version: %s\n    digest: %s\n", l.Name, l.Version, LibraryDigest(l.Files))
 	}
-	c.closed(v, []string{"formatVersion", "id", "version", "root", "dependencies"}, manifest)
-	c.manifestNames(v, manifest)
-	c.formatVersion(v, manifest)
-	c.scope.modelID, _ = c.requiredText(v, "id", manifest)
-	c.scope.manifest = manifest
-	if version, present := lookup(v, "version"); present {
-		c.nonemptyText(version, "version", manifest)
-	}
-	root, rootOK := c.requiredText(v, "root", manifest)
-	c.dependencies(v, manifest)
-	c.scope.version, c.scope.versionDeclared = lookup(v, "version")
-	dependencies, _ := lookup(v, "dependencies")
-	for _, dependency := range dependencies.fields {
-		c.scope.requirements = append(c.scope.requirements, modelRequirement{id: dependency.Name, version: dependency.Value})
-	}
-	c.scope.manifestReady = !c.failed && !c.limited
-	if rootOK && root != "." && !validPath(root) {
-		c.problem("manifest.root_path", "root must be '.' or an exact relative directory path without dot components.", manifest, nil)
-		return root, false
-	}
-	return root, rootOK
+	return b.Bytes()
 }
+
+// VerifyLock reports every Library whose version or content does not match
+// the lock, and lock entries the manifest does not name.
+func VerifyLock(file string, lock Lock, libs []LibrarySource) Diagnostics {
+	var ds Diagnostics
+	named := map[string]bool{}
+	for _, l := range libs {
+		named[l.Name] = true
+		locked, ok := lock.Libraries[l.Name]
+		switch {
+		case !ok:
+			ds.Add("lock.mismatch", file, 0, "Library %s %s is not in the lock; run markitect lock", l.Name, l.Version)
+		case locked.Version != l.Version:
+			ds.Add("lock.mismatch", file, locked.Line, "the lock pins %s %s, but the manifest names %s; run markitect lock", l.Name, locked.Version, l.Version)
+		case locked.Digest != LibraryDigest(l.Files):
+			ds.Add("lock.mismatch", file, locked.Line, "the content of Library %s %s does not match the digest the lock pins; restore the Library or run markitect lock", l.Name, l.Version)
+		}
+	}
+	for name, locked := range lock.Libraries {
+		if !named[name] {
+			ds.Add("lock.mismatch", file, locked.Line, "the lock pins %s, which the manifest does not name; run markitect lock", name)
+		}
+	}
+	return ds
+}
+
+// LibraryDigest is the SHA-256 over a Library's files, in path order, each as
+// its path, a NUL byte, its content and a NUL byte.
+func LibraryDigest(files []File) string {
+	sorted := append([]File(nil), files...)
+	sort.Slice(sorted, func(i, j int) bool { return sorted[i].Path < sorted[j].Path })
+	h := sha256.New()
+	for _, f := range sorted {
+		h.Write([]byte(f.Path))
+		h.Write([]byte{0})
+		h.Write(f.Data)
+		h.Write([]byte{0})
+	}
+	return "sha256:" + hex.EncodeToString(h.Sum(nil))
+}
+
+// mapping decodes a YAML document whose top level is a mapping.
+func mapping(data []byte) (map[string]*yaml.Node, error) {
+	var doc yaml.Node
+	if err := yaml.Unmarshal(data, &doc); err != nil {
+		return nil, fmt.Errorf("not valid YAML: %v", err)
+	}
+	out := map[string]*yaml.Node{}
+	if len(doc.Content) == 0 {
+		return out, nil
+	}
+	top := doc.Content[0]
+	if top.Kind != yaml.MappingNode {
+		return nil, fmt.Errorf("the top level must be a mapping")
+	}
+	for i := 0; i+1 < len(top.Content); i += 2 {
+		if _, dup := out[top.Content[i].Value]; dup {
+			return nil, fmt.Errorf("the key %q appears twice", top.Content[i].Value)
+		}
+		out[top.Content[i].Value] = top.Content[i+1]
+	}
+	return out, nil
+}
+
+// Mapping decodes a YAML document whose top level is a mapping, for the other
+// control files.
+func Mapping(data []byte) (map[string]*yaml.Node, error) { return mapping(data) }

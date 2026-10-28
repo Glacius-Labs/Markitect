@@ -2,7 +2,6 @@ package architecture
 
 import (
 	"fmt"
-	"go/ast"
 	"go/parser"
 	"go/token"
 	"io/fs"
@@ -11,7 +10,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 	"unicode"
 )
@@ -33,11 +31,6 @@ func (r Rules) CheckRepository(root string) ([]Violation, error) {
 		return nil, err
 	}
 	out := r.Check(edges)
-	guarded, err := CheckGuardedWriteUse(root, edges)
-	if err != nil {
-		return nil, err
-	}
-	out = append(out, guarded...)
 	selfImports, err := r.checkSelfImports(root, edges)
 	if err != nil {
 		return nil, err
@@ -145,83 +138,6 @@ func (r Rules) checkSelfImports(root string, edges []Edge) ([]Violation, error) 
 			out = append(out, Violation{e, "only external test packages may import their own package"})
 		}
 	}
-	return out, nil
-}
-
-// CheckGuardedWriteUse parses every file of DocumentWriterPackage that imports
-// GuardedWritePackage. It reports each selector on the import name outside
-// the guarded API, and every dot import, which would hide the identifiers
-// used. A blank import references nothing. A local name that shadows the
-// import name counts as the package.
-func CheckGuardedWriteUse(root string, edges []Edge) ([]Violation, error) {
-	files := map[string]string{}
-	for _, e := range edges {
-		if e.To == GuardedWritePackage && e.From == DocumentWriterPackage {
-			files[e.File] = e.From
-		}
-	}
-	names := make([]string, 0, len(files))
-	for name := range files {
-		names = append(names, name)
-	}
-	sort.Strings(names)
-	var out []Violation
-	for _, name := range names {
-		found, err := guardedWriteReferences(root, name, files[name])
-		if err != nil {
-			return nil, err
-		}
-		out = append(out, found...)
-	}
-	sortViolations(out)
-	return out, nil
-}
-
-func guardedWriteReferences(root, rel, from string) ([]Violation, error) {
-	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, filepath.Join(root, filepath.FromSlash(rel)), nil, parser.SkipObjectResolution)
-	if err != nil {
-		return nil, err
-	}
-	pkg := path.Base(GuardedWritePackage)
-	var out []Violation
-	report := func(pos token.Pos, rule string) {
-		out = append(out, Violation{Edge{rel, fset.Position(pos).Line, from, GuardedWritePackage, strings.HasSuffix(rel, "_test.go")}, rule})
-	}
-	local := map[string]bool{}
-	for _, imp := range f.Imports {
-		imported, err := strconv.Unquote(imp.Path.Value)
-		if err != nil {
-			return nil, err
-		}
-		if imported != ModulePath+GuardedWritePackage {
-			continue
-		}
-		name := pkg
-		if imp.Name != nil {
-			name = imp.Name.Name
-		}
-		switch name {
-		case "_":
-		case ".":
-			report(imp.Pos(), "the document writer may not dot-import "+pkg+"; use qualified names so the gate can check them")
-		default:
-			local[name] = true
-		}
-	}
-	api := make([]string, 0, len(guardedWriteAPI))
-	for name := range guardedWriteAPI {
-		api = append(api, name)
-	}
-	sort.Strings(api)
-	ast.Inspect(f, func(n ast.Node) bool {
-		if sel, ok := n.(*ast.SelectorExpr); ok {
-			if x, ok := sel.X.(*ast.Ident); ok && local[x.Name] && !guardedWriteAPI[sel.Sel.Name] {
-				report(sel.Pos(), fmt.Sprintf("the document writer may use only the guarded write API (%s), not %s.%s", strings.Join(api, ", "), pkg, sel.Sel.Name))
-			}
-		}
-		return true
-	})
 	return out, nil
 }
 
