@@ -540,9 +540,9 @@ func (t *nativeSession) observe(m Message) error {
 var pinnedVersion = strings.TrimSuffix(supportedClaudeVersion, " (Claude Code)")
 
 // launchTools is the exact tool list every launch must report: the six
-// built-in tools, those --tools cannot remove, and the nine Run tools.
+// built-in tools and the nine Run tools.
 func launchTools() []string {
-	tools := append(strings.Split(builtinTools, ","), alwaysPresentTools...)
+	tools := strings.Split(builtinTools, ",")
 	for _, spec := range toolSpecs() {
 		tools = append(tools, "mcp__markitect__"+spec.Name)
 	}

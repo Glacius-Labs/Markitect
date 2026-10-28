@@ -177,11 +177,11 @@ This native form runs on Linux, where the Apply host runs. On Windows, add `--ru
 | Capability | Current evidence and limits |
 | --- | --- |
 | Canonical v1 language, compiler and explicit file accounting | Implemented with source tests and the architecture gate. |
-| `check`, `context` and guarded `docs` | Implemented in the current CLI. |
+| `check`, `context`, `tree` and guarded `docs` | Implemented in the current CLI. |
 | Standalone hierarchical Run and stored Git candidates/results/Notes | Implemented, with controlled tests and a bounded native Codex hierarchy proof. |
 | `apply`: Assessment → Implement → Verify → guarded publication | Implemented. With native Codex, the [qualification record](docs/validation/v1-qualification-20261024.md) holds complete Library M1 and M2 (loan limit 5 → 3) Applies with independent outside oracles, a strict no-change Apply and a seeded defect repaired by an ordinary Implement. |
 | Reliability across changes | **Not yet established.** That evidence predates the final collaboration contract. Requalification on the frozen source, repetition for stability, the public Verify-rejection branch with publication, account refresh and owner acceptance remain open ([plan](docs/implementation-plan.md)). |
-| Provider support | Native Codex with dedicated normal-account login, with bounded evidence. V1 carries no other provider path; Claude follows later as its own adapter ([D18](docs/concepts/v1-concept.md#23-provider-scope-d18)). |
+| Provider support | Native Codex with dedicated normal-account login, with bounded evidence. V1 carries no other provider path ([D18](docs/concepts/v1-concept.md#23-provider-scope-d18)). Claude Code with subscription login is a separate adapter beyond V1; its first native Apply is [recorded in K1b](docs/validation/v1-k1b-claude-qualification-20261028.md). |
 | Other product surfaces | Extract, Cockpit/UI, interactive model authoring and the former Setup command are outside this narrow V1 scope. |
 
 The compiler can reject malformed structure and missing declared relationships. **It cannot know whether the model omitted a real user need, whether an AI correctly understood prose, or whether green agent-written tests actually test the right thing.** Independent review, integration, project checks, and outside evaluation are intended to improve trust—not to turn agent work into a formal proof.

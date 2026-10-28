@@ -34,7 +34,7 @@ Natively, the host's resolver reads the selected login file. In the [Linux runne
 
 ## Claude Code
 
-The [Claude adapter](../../internal/adapters/claudecode/README.md) is an addition beyond V1's Codex scope: D18 keeps V1 acceptance on Codex, and the owner scoped Claude as its own slice K1 ([owner decisions](../concepts/sources/owner-night-decisions-20261027.md)). Increment 1 implements it in source with fixture tests; its native qualification K1b inside the [Linux runner](../design/linux-runner.md) is still open, so no Claude run is qualified yet.
+The [Claude adapter](../../internal/adapters/claudecode/README.md) is an addition beyond V1's Codex scope: D18 keeps V1 acceptance on Codex, and the owner scoped Claude as its own slice K1 ([owner decisions](../concepts/sources/owner-night-decisions-20261027.md)). Increment 1 implements it in source with fixture tests. The [K1b record](../validation/v1-k1b-claude-qualification-20261028.md) holds its first native evidence: one Library Apply inside the [Linux runner](../design/linux-runner.md) passed with the launch-control fixes of [PR #807](https://github.com/Glacius-Labs/Markitect/pull/807), and failed at the first Manager without them.
 
 Select it with a `claudeCode` section in place of `codexAppServer`:
 
@@ -54,7 +54,7 @@ agentProfiles:
 
 The run configuration maps `claude-account` to provider `claude-code` with mode `subscription-credentials`: a Claude Code `.credentials.json` account login, mounted read-only in the runner. It is the only Claude mode; a long-lived token mode needs owner acceptance first. Apply refuses an environment that sets `ANTHROPIC_API_KEY` or another API-key, provider or endpoint variable. The [base image](../../packaging/runtime/README.md) pins Claude Code `2.1.308` next to Codex.
 
-Each Manager gets one Claude Code conversation in its own container: every response is a fresh `claude --print` process with one stream-json message, the first creating the conversation and later ones resuming it. Before each start, agentd checks that the Manager has not changed its private instruction files or added user-scope Claude Code settings, and each launch must report the expected login, version, permission mode and tools. The adapter's README lists the launch controls, the login and refresh limits, the transient-error rules it shares with the Codex adapter and the CLI assumptions K1b must confirm.
+Each Manager gets one Claude Code conversation in its own container: every response is a fresh `claude --print` process with one stream-json message, the first creating the conversation and later ones resuming it. Before each start, agentd checks that the Manager has not changed its private instruction files or added user-scope Claude Code settings, and each launch must report the expected login, version, permission mode and tools. The adapter's README lists the launch controls, the login and refresh limits, the transient-error rules it shares with the Codex adapter and the CLI assumptions, which the K1b record answers.
 
 <a id="bring-your-own-executor"></a>
 

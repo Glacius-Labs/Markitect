@@ -4,10 +4,10 @@ imports:
 id: Interface
 kind: Core.Kind
 body: >-
-  The public surface of the Package it is defined in: the operations and
-  types that other Packages may use. Packages outside that Package and the
-  Packages below it use only what the Interface exposes. appliesTo names the
-  Packages bound by it, usually the root.
+  The public surface of the Package it is defined in: the operations, types
+  and refusal codes that other Packages may use. Packages outside that Package
+  and the Packages below it use only what the Interface exposes. appliesTo
+  names the Packages bound by it, usually the root.
 spec:
   implements: [Practice.Rule]
-  properties: [Practice.appliesTo, operations, types]
+  properties: [Practice.appliesTo, operations, types, refusalCodes]
