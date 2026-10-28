@@ -30,7 +30,8 @@ import sys
 
 SECONDS = 5
 SUITE_MOUNTS = ("/task", "/out", "/state", "/variant", "/login", "/tmp")
-ENGINE_FILES = ("/etc/hosts", "/etc/hostname", "/etc/resolv.conf", "/sbin/docker-init")  # the engine's own, in every container
+# The engine's own, in every container; --init mounts its init binary at either path, depending on the engine.
+ENGINE_FILES = ("/etc/hosts", "/etc/hostname", "/etc/resolv.conf", "/sbin/docker-init", "/usr/sbin/docker-init")
 SYSTEM = ("/proc", "/sys", "/dev")
 HOST_PATHS = ("/mnt", "/host_mnt", "/hostfs", "/run/desktop/mnt/host", "/Users", "/c")
 MARKER_DIRS = {".git", "library-oracle", "makerspace-oracle", "Markitect-Evaluation"}

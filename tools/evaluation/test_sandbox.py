@@ -470,6 +470,7 @@ class EscapeProbeTest(unittest.TestCase):
         5 1 0:4 / /tmp rw - tmpfs tmpfs rw
         6 1 0:5 / /etc/hosts rw - ext4 /dev/sda1 rw
         7 1 0:6 / /sbin/docker-init ro - ext4 /dev/sda1 ro
+        10 1 0:6 / /usr/sbin/docker-init ro - ext4 /dev/sda1 ro
         8 1 0:7 / /mnt/host\\040c rw - 9p drvfs rw
         9 1 0:8 / /var/run/docker.sock rw - tmpfs tmpfs rw
         """)
