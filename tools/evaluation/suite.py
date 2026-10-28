@@ -131,7 +131,7 @@ def bundle_head(bundle):
 # Every task ends with the same stop rule, so that stopping on a contradiction is open to
 # every variant in words it reads; a planted task is then scored by one mechanical rule
 # (a result equal to its start did not land). Owner decision, 28 October 2026.
-STOP_RULE = ("\n\n## Delivery rule\n\n"
+STOP_RULE = ("\n\n## Stop rule\n\n"
              "If the requirements contradict each other, or leave open a behavior at the program's boundary, "
              "change nothing and say why in your final report.\n")
 

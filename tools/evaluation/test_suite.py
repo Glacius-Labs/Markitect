@@ -98,7 +98,7 @@ class SuiteTest(unittest.TestCase):
         text = (task / "task.md").read_text(encoding="utf-8")
         self.assertEqual(text.splitlines()[0], "ok")
         self.assertTrue(text.endswith(suite.STOP_RULE))
-        self.assertEqual(text.count("## Delivery rule"), 1)
+        self.assertEqual(text.count("## Stop rule"), 1)
 
     def test_empty_start_is_reproducible(self):
         a, b = self.tmp / "a.bundle", self.tmp / "b.bundle"
