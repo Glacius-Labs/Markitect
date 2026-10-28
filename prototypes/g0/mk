@@ -1,0 +1,227 @@
+#!/usr/bin/env python3
+"""mk: the seven team tools of a Manager (G0 harness level B), as one script.
+
+Local work in /work is free: Git, building, tests, editors. Every step that
+reaches another Manager goes through these tools. Each is Git plus at most one
+message; a refusal by the referee is printed word for word.
+
+  mk send TO KIND TEXT [--commit SHA]    task, question, answer or finding to your parent or a direct child
+  mk wait [--timeout SECONDS]            what arrived for you (messages, child handoffs with check results)
+  mk hand-off [--verdict V] [--finding F]... [TEXT]
+                                         commit and push your work and hand it to your parent;
+                                         in assessment/verify a judgment: --verdict approve|reject|blocker
+  mk check                               run the declared check on your current work (optional self-check)
+  mk review CHILD accept|reject [--finding F]... [TEXT]    parents: judge a child's latest handoff
+  mk take CHILD                          parents: merge a child's accepted handoff into your work
+  mk sync                                children: merge your parent's current work into yours
+  mk whoami                              your name, parent, children, phase and state
+"""
+import json
+import os
+import subprocess
+import sys
+import tempfile
+import urllib.error
+import urllib.request
+import base64
+
+NAME = os.environ["MK_NAME"]
+API = os.environ["MK_API"]
+TOKEN = os.environ["MK_TOKEN"]
+WORK = "/work"
+ZERO = "0" * 40
+
+
+def api(path, timeout=30):
+    req = urllib.request.Request(API + path)
+    req.add_header("Authorization", "Basic " + base64.b64encode(f"{NAME}:{TOKEN}".encode()).decode())
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return json.load(r)
+
+
+def git(*args, env=None, check=True, capture=True):
+    p = subprocess.run(["git", "-C", WORK, *args], capture_output=capture, text=True,
+                       env={**os.environ, **(env or {})})
+    if check and p.returncode != 0:
+        die(f"git {' '.join(args)} failed:\n{(p.stderr or '').strip()}")
+    return (p.stdout or "").strip()
+
+
+def die(text):
+    print(text, file=sys.stderr)
+    sys.exit(1)
+
+
+def flags(args, name):
+    vals, rest, i = [], [], 0
+    while i < len(args):
+        if args[i] == name and i + 1 < len(args):
+            vals.append(args[i + 1])
+            i += 2
+        else:
+            rest.append(args[i])
+            i += 1
+    return vals, rest
+
+
+def talk_commit(msg):
+    """Build one commit on mk/NAME/talk that adds exactly one message file."""
+    ref = f"refs/heads/mk/{NAME}/talk"
+    subprocess.run(["git", "-C", WORK, "fetch", "-q", "origin", f"+{ref}:refs/mk/talk"], capture_output=True)
+    tip = git("rev-parse", "-q", "--verify", "refs/mk/talk", check=False)
+    with tempfile.TemporaryDirectory() as d:
+        env = {"GIT_INDEX_FILE": os.path.join(d, "index")}
+        if tip:
+            git("read-tree", tip, env=env)
+            n = len(git("ls-tree", "--name-only", f"{tip}:messages").split()) + 1
+        else:
+            n = 1
+        blob = subprocess.run(["git", "-C", WORK, "hash-object", "-w", "--stdin"], input=json.dumps(msg, indent=1),
+                              capture_output=True, text=True, check=True).stdout.strip()
+        git("update-index", "--add", "--cacheinfo", f"100644,{blob},messages/{n:04d}-{msg['kind']}.json", env=env)
+        tree = git("write-tree", env=env)
+    parents = ["-p", tip] if tip else []
+    return git("commit-tree", tree, *parents, "-m", f"{msg['kind']} from {NAME} to {msg.get('to') or 'parent'}")
+
+
+def push(*refspecs):
+    p = subprocess.run(["git", "-C", WORK, "push", "--atomic", "--porcelain", "origin", *refspecs],
+                       capture_output=True, text=True)
+    if p.returncode != 0:
+        lines = [l[len("remote: "):] if l.startswith("remote: ") else l for l in p.stderr.splitlines()]
+        refused = [l for l in lines if "refused by the referee" in l or "referee unavailable" in l]
+        die("\n".join(refused) or "\n".join(lines))
+
+
+def me():
+    return api("/me")
+
+
+def cmd_send(args):
+    commits, args = flags(args, "--commit")
+    if len(args) < 3:
+        die("usage: mk send TO KIND TEXT [--commit SHA]")
+    to, kind, text = args[0], args[1], " ".join(args[2:])
+    msg = {"to": to, "kind": kind, "text": text}
+    if commits:
+        msg["commit"] = git("rev-parse", commits[0])
+    push(f"{talk_commit(msg)}:refs/heads/mk/{NAME}/talk")
+    print(f"sent {kind} to {to}")
+
+
+def cmd_wait(args):
+    t, _ = flags(args, "--timeout")
+    events = api(f"/wait?timeout={int(t[0]) if t else 60}", timeout=320)
+    if not events:
+        print("nothing arrived. You may end your turn; you are resumed when something arrives.")
+    for e in events:
+        print(json.dumps(e, indent=1))
+
+
+def cmd_hand_off(args):
+    verdicts, args = flags(args, "--verdict")
+    findings, args = flags(args, "--finding")
+    text = " ".join(args)
+    info = me()
+    refspecs = []
+    if info["phase"] == "implement" and (not verdicts or verdicts[0] != "blocker"):
+        git("add", "-A")
+        if git("status", "--porcelain"):
+            git("commit", "-q", "-m", text or f"handoff from {NAME}")
+        commit = git("rev-parse", "HEAD")
+        refspecs.append(f"{commit}:refs/heads/mk/{NAME}/work")
+    else:
+        commit = info["base"] if info["phase"] != "implement" else git("rev-parse", "HEAD")
+        if info["phase"] == "implement":
+            refspecs.append(f"{commit}:refs/heads/mk/{NAME}/work")
+    msg = {"to": info["parent"], "kind": "handoff", "commit": commit, "text": text,
+           "findings": [{"text": f} for f in findings]}
+    if verdicts:
+        msg["verdict"] = verdicts[0]
+    refspecs.append(f"{talk_commit(msg)}:refs/heads/mk/{NAME}/talk")
+    push(*refspecs)
+    print(f"handed off {commit[:12]} to {info['parent'] or 'the Run (final judgment)'}; "
+          f"the referee checks it and reports the result to {'your parent' if info['parent'] else 'you'}")
+
+
+def cmd_check(args):
+    cmds = json.loads(os.environ.get("MK_CHECK", "[]"))
+    with tempfile.TemporaryDirectory() as d:
+        git("add", "-A")
+        tree = git("write-tree")
+        subprocess.run(f"git -C {WORK} archive {tree} | tar -x -C {d}", shell=True, check=True)
+        git("reset", "-q")
+        for c in cmds:
+            print(f"$ {c}", flush=True)
+            if subprocess.run(c, shell=True, cwd=d).returncode != 0:
+                die("check failed")
+    print("check passed")
+
+
+def child_handoff(child):
+    try:
+        h = api(f"/handoff?child={child}")
+    except urllib.error.HTTPError as e:
+        die(json.load(e).get("error", str(e)))
+    if not h:
+        die(f"{child} has not handed off anything yet")
+    return h
+
+
+def cmd_review(args):
+    findings, args = flags(args, "--finding")
+    if len(args) < 2 or args[1] not in ("accept", "reject"):
+        die("usage: mk review CHILD accept|reject [--finding F]... [TEXT]")
+    child, accept = args[0], args[1] == "accept"
+    h = child_handoff(child)
+    msg = {"to": child, "kind": "review", "commit": h["commit"], "accept": accept,
+           "findings": [{"text": f} for f in findings], "text": " ".join(args[2:])}
+    push(f"{talk_commit(msg)}:refs/heads/mk/{NAME}/talk")
+    print(f"{'accepted' if accept else 'rejected'} {child}'s handoff {h['commit'][:12]}")
+
+
+def merge(ref, commit, what):
+    git("fetch", "-q", "origin", f"+refs/heads/{ref}:refs/remotes/origin/{ref}")
+    if subprocess.run(["git", "-C", WORK, "merge-base", "--is-ancestor", commit, "HEAD"]).returncode == 0:
+        print(f"{what} {commit[:12]} is already in your work")
+        return
+    git("add", "-A")
+    if git("status", "--porcelain"):
+        git("commit", "-q", "-m", f"work of {NAME} before merging {what}")
+    p = subprocess.run(["git", "-C", WORK, "merge", "--no-edit", "-m", f"merge {what} {commit[:12]}", commit],
+                       capture_output=True, text=True)
+    if p.returncode != 0:
+        die(f"merge of {what} stopped with conflicts; resolve them in /work and commit:\n{p.stdout}{p.stderr}")
+    print(f"merged {what} {commit[:12]}")
+
+
+def cmd_take(args):
+    if not args:
+        die("usage: mk take CHILD")
+    h = child_handoff(args[0])
+    if not h.get("accepted"):
+        die(f"{args[0]}'s latest handoff {h['commit'][:12]} is not accepted; review it first")
+    merge(f"mk/{args[0]}/work", h["commit"], f"{args[0]}'s handoff")
+
+
+def cmd_sync(args):
+    parent = me()["parent"]
+    if not parent:
+        die("you have no parent")
+    ref = f"mk/{parent}/work"
+    git("fetch", "-q", "origin", f"+refs/heads/{ref}:refs/remotes/origin/{ref}")
+    merge(ref, git("rev-parse", f"refs/remotes/origin/{ref}"), f"{parent}'s work")
+
+
+def cmd_whoami(args):
+    print(json.dumps(me(), indent=1))
+
+
+TOOLS = {"send": cmd_send, "wait": cmd_wait, "hand-off": cmd_hand_off, "check": cmd_check,
+         "review": cmd_review, "take": cmd_take, "sync": cmd_sync, "whoami": cmd_whoami}
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2 or sys.argv[1] not in TOOLS:
+        print(__doc__)
+        sys.exit(2)
+    TOOLS[sys.argv[1]](sys.argv[2:])
