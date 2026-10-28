@@ -79,6 +79,8 @@ spec:
 
 ## 6. What does not belong in the model
 
+The test ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation)): would good documentation of the project state it this explicitly? If not, it is too detailed for the model.
+
 - **Consequences of other rules,** restated "so that they are read only one way". If a rule needs that, the rule is unclear: fix the rule.
 - **Process descriptions:** how Managers should work. That is the host's and the harness's job.
 - **Undecided implementation detail:** private names, internal step order, data structures.
