@@ -1,6 +1,6 @@
 # Claude Code native sessions
 
-The adapter implements static `runtimeconfig.AgentProfilePreparer` and the actual `run.Sessions` port for the Claude Code CLI with subscription login. It is an addition beyond V1's Codex scope ([D18](../../../docs/concepts/v1-concept.md#23-provider-scope-d18)); the owner scoped it as slice K1 ([owner decisions](../../../docs/concepts/sources/owner-night-decisions-20261027.md)). One prepared profile supplies one `Agents` instance. Outer composition chooses profiles; Project and Run do not import Runtime configuration. Source implementation does not establish provider qualification: increment 1 has source and fixture tests only, and the native qualification K1b is a later, coordinator-dispatched step.
+The adapter implements static `runtimeconfig.AgentProfilePreparer` and the actual `run.Sessions` port for the Claude Code CLI with subscription login. It is an addition beyond V1's Codex scope ([D18](../../../docs/concepts/v1-concept.md#23-provider-scope-d18)); the owner scoped it as slice K1 ([owner decisions](../../../docs/concepts/sources/owner-night-decisions-20261027.md)). One prepared profile supplies one `Agents` instance. Outer composition chooses profiles; Project and Run do not import Runtime configuration. Source implementation does not establish provider qualification. The [K1b record](../../../docs/validation/v1-k1b-claude-qualification-20261028.md) holds the first native evidence: one Library Apply through the Linux runner passed on the launch-control fixes of [PR #807](https://github.com/Glacius-Labs/Markitect/pull/807), after the first attempt failed without them.
 
 ## Static preparation
 
@@ -67,3 +67,5 @@ The codec and session follow the documented headless interface of the pinned CLI
 - that `overloaded` is the category of a model at capacity once Claude Code's own retries end; the documented categories list it separately from `server_error`, and K1b records the category actually observed.
 
 Pure codec, metadata, credential and controlled-session tests establish source behavior only. Native loading, hierarchy, login lifetime, provider support, full Apply and owner acceptance remain separate claims.
+
+The [K1b record](../../../docs/validation/v1-k1b-claude-qualification-20261028.md#k1b-assumptions) answers each assumption above, as confirmed, refuted or not reached, from one native Library Apply and offline probes of the pinned CLI.

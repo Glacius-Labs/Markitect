@@ -34,7 +34,7 @@ Natively, the host's resolver reads the selected login file. In the [Linux runne
 
 ## Claude Code
 
-The [Claude adapter](../../internal/adapters/claudecode/README.md) is an addition beyond V1's Codex scope: D18 keeps V1 acceptance on Codex, and the owner scoped Claude as its own slice K1 ([owner decisions](../concepts/sources/owner-night-decisions-20261027.md)). Increment 1 implements it in source with fixture tests; its native qualification K1b inside the [Linux runner](../design/linux-runner.md) is still open, so no Claude run is qualified yet.
+The [Claude adapter](../../internal/adapters/claudecode/README.md) is an addition beyond V1's Codex scope: D18 keeps V1 acceptance on Codex, and the owner scoped Claude as its own slice K1 ([owner decisions](../concepts/sources/owner-night-decisions-20261027.md)). Increment 1 implements it in source with fixture tests. The [K1b record](../validation/v1-k1b-claude-qualification-20261028.md) holds its first native evidence: one Library Apply inside the [Linux runner](../design/linux-runner.md) passed with the launch-control fixes of [PR #807](https://github.com/Glacius-Labs/Markitect/pull/807), and failed at the first Manager without them.
 
 Select it with a `claudeCode` section in place of `codexAppServer`:
 
