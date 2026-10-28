@@ -1,6 +1,6 @@
 # Evaluation suite E2: judge smoke
 
-**Status: proposed on 28 October 2026, awaiting the owner's approval.** Nothing below has run against a container engine or a provider yet.
+**Status: approved on 28 October 2026.** The owner approved this page as written on PR #830 in the E2 session: "Approve, run it". The independent review's findings were applied first; the reviewed head `REV` is `06d4b691ebbc3932c9f2af375dd9f4e8d4f5167b`.
 
 This smoke checks increment E2 of [evaluation suite v2](../design/evaluation-suite-v2.md#increments) on this machine (Windows, Docker Desktop's Linux engine): (a) the Library judge passes its reference result and fails its seeded mutants in its container; (b) the [E1 smoke](eval-e1-sandbox-smoke-20261028.md)'s runs k-02 and k-03 are judged, (c) reviewed and (e) reported per area; and (d) one K run in the sandbox confirms the capture fix that followed k-01. It is a smoke, not a counted evaluation: no comparison is drawn from it. k-01 is not judged: K's capture defect left its result incomplete.
 
