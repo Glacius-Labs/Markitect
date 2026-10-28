@@ -31,5 +31,10 @@
       "old": " A lower limit neither deletes existing loans nor forces their return; while at or above that limit, the member cannot start another loan.",
       "new": ""
     }
+  ],
+  "absent": [
+    "later lower limit",
+    "forced return",
+    "lower limit neither"
   ]
 }

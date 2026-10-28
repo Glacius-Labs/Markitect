@@ -321,6 +321,11 @@ def plant(plant_file, step_out, judge=None, judge_out=None):
         edit_once(step_out / "model" / edit["path"], edit["old"], edit["new"])
     for edit in record["task"]:
         edit_once(step_out / "task.md", edit["old"], edit["new"])
+    # What a plant removes must be gone from everything a variant reads, not only from the places it edited.
+    left = [f"{p.relative_to(step_out).as_posix()}: {s!r}" for p in sorted(step_out.rglob("*")) if p.is_file()
+            for s in record.get("absent", []) if s in p.read_text(encoding="utf-8", errors="replace")]
+    if left:
+        raise judging.JudgeError(f"{plant_file.name}: the planted step still states what the plant removes: " + "; ".join(left))
     if judge_out:
         judge_out = pathlib.Path(judge_out)
         if judge_out.exists():

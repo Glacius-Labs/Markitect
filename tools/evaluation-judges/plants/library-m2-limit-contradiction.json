@@ -18,5 +18,6 @@
       "old": "the resulting current open-loan count of the member must not exceed the value of [maximum open loans](#lending-policy) in the table above.",
       "new": "the resulting current open-loan count of the member must not exceed five."
     }
-  ]
+  ],
+  "absent": []
 }

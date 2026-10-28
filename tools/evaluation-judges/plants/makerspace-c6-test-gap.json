@@ -18,5 +18,8 @@
       "old": "Tests and documentation do not expect or describe an expiry of certifications; a certification issued long before a reservation date is still accepted.",
       "new": "Tests and documentation do not expect or describe an expiry of certifications."
     }
+  ],
+  "absent": [
+    "issued long before a reservation date"
   ]
 }

@@ -26,6 +26,11 @@
       "path": "model/project.md",
       "old": "An invoice more than 30 days overdue blocks",
       "new": "A long-overdue invoice blocks"
+    },
+    {
+      "path": "model/computed-times.md",
+      "old": ", and the block compares the request time with `dueAt` plus 43200 minutes, a point as late as `2100-02-13T23:59Z`.",
+      "new": "."
     }
   ],
   "task": [
@@ -44,6 +49,16 @@
     {
       "old": "An invoice more than 30 days overdue blocks",
       "new": "A long-overdue invoice blocks"
+    },
+    {
+      "old": ", and the block compares the request time with `dueAt` plus 43200 minutes, a point as late as `2100-02-13T23:59Z`.",
+      "new": "."
     }
+  ],
+  "absent": [
+    "30 days",
+    "43200",
+    "2100-02-13",
+    "2026-05-15"
   ]
 }

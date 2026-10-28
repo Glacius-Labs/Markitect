@@ -85,7 +85,10 @@ def sha256_file(path):
 
 
 def git(repo, *args, env=None):
-    p = subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True, env=env)
+    # No automatic gc or maintenance: a fetch would start it in the background, writing into a temporary repository
+    # while it is removed.
+    p = subprocess.run(["git", "-c", "gc.auto=0", "-c", "maintenance.auto=false", "-C", str(repo), *args], capture_output=True,
+                       text=True, env=env)
     if p.returncode != 0:
         raise SuiteError(f"git {' '.join(args)}: {p.stderr.strip()}")
     return p.stdout.strip()

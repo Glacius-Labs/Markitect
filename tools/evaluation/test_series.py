@@ -335,6 +335,13 @@ class PortfolioSeriesTest(unittest.TestCase):
                     self.assertNotEqual((planted / "model" / edit["path"]).read_bytes(), (original / "model" / edit["path"]).read_bytes())
                 self.assertEqual(judging.load_plant(self.tmp / path.stem / "judge")["kind"], record["kind"])
 
+    def test_a_plant_that_leaves_its_removed_statement_elsewhere_is_refused(self):
+        record = json.loads((JUDGES / "plants" / "makerspace-c5-threshold-gap.json").read_text(encoding="utf-8"))
+        record["model"], record["task"] = record["model"][:-1], record["task"][:-1]  # keep the "Times after 2099" sentence
+        (self.tmp / "partial.json").write_text(json.dumps(record), encoding="utf-8")
+        with self.assertRaisesRegex(judging.JudgeError, "still states.*43200"):
+            judges.plant(self.tmp / "partial.json", self.tmp / "partial")
+
     def test_a_planted_judge_folder_carries_the_series_judge(self):
         judge = self.tmp / "judge"
         judges.export(LIBRARY, judge)
