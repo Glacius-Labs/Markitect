@@ -58,7 +58,7 @@ RUN set -eu; \
     rm -rf /tmp/claude-version; \
     test "$version" = "${CLAUDE_CODE_VERSION} (Claude Code)"; \
     for flag in --print --input-format --output-format --verbose --session-id --resume --model --effort \
-        --permission-mode --permission-prompts --tools --disable-slash-commands --setting-sources \
+        --permission-mode --permission-prompts --tools --disable-slash-commands --setting-sources --settings \
         --strict-mcp-config --mcp-config; do \
       printf '%s\n' "$help" | grep -qE -- "${flag}( |,|$)" || { echo "claude ${version} lacks ${flag}" >&2; exit 1; }; \
     done; \
