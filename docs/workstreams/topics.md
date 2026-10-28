@@ -70,7 +70,7 @@ What is decided and lives nowhere else; decisions with their own page are linked
 
 - **Platform** (27–28 October): no running from WSL and no Linux machine required; our studies run on our own machine; Linux Apply is tested only after Windows Apply works. The Windows Git-start fix is parked, and the Go tests are not run on Windows for now ([measurement](../validation/windows-test-time-20261028.md)).
 - **Libraries** (27–28 October, [PR #806](https://github.com/Glacius-Labs/Markitect/pull/806)): refusal lists have no order; an Interface exposes refusal codes; an Invariant lives with its data and is not placed; no wire-envelope Kind and no alias-only imports yet ([standard Libraries](../design/standard-libraries.md#answered-and-open-questions)).
-- **Language** (28 October): the model is as explicit as good documentation, and Definitions stay YAML with a Markdown body ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation)).
+- **Language** (28 October): the model is as explicit as good documentation, and Definitions stay YAML with a Markdown body ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation)). Core stays as it is (ten Definitions), and the five standard Libraries (`values`, `data`, `api`, `practice`, `architecture`) stay the cut; new Kinds go into them, not into Core.
 - **Modeling skills** (27 October): the change-task trial first; it ran as C5 and passed ([record](../validation/modeling-skill-change-trial-20261027.md)).
 - **Commands** (27–28 October): the frame, the names and A1–A6 ([commands page](commands.md)).
 - **Continuous change and Cockpit** (27 October): outside Findings and the read-only model explorer are designed as proposals; nothing is built.
