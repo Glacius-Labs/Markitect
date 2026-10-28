@@ -72,8 +72,8 @@ func chownTree(dir string, uid int) error {
 const writableName = "writable.json"
 
 // harden runs once at seeding in the container: it records the folders every
-// user may write and takes write access for others from every file, so a
-// check can change nothing it does not own.
+// user may write, makes them sticky and takes write access for others from
+// every file, so a check can change nothing it does not own.
 func harden(l Layout) error {
 	var dirs []string
 	err := filepath.WalkDir("/", func(p string, e fs.DirEntry, err error) error {
@@ -93,6 +93,10 @@ func harden(l Layout) error {
 		switch {
 		case e.IsDir():
 			dirs = append(dirs, p)
+			// Sticky, so a check user can remove or replace only its own entries.
+			if info.Mode()&fs.ModeSticky == 0 {
+				return os.Chmod(p, info.Mode().Perm()|fs.ModeSticky)
+			}
 		case info.Mode().IsRegular():
 			return os.Chmod(p, info.Mode().Perm()&^0o002)
 		}

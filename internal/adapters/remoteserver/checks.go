@@ -297,6 +297,10 @@ func checkEnv(image []string, home, tmp string) []string {
 		case old != "" && k != "PATH" && (v == old || strings.HasPrefix(v, old+"/")):
 			v = home + v[len(old):]
 		}
+		if k == "PATH" && runtime.GOOS == "windows" {
+			// Tests on Windows only: Git for Windows puts its tools on the hook's PATH.
+			v = os.Getenv("PATH")
+		}
 		env = append(env, k+"="+v)
 	}
 	return append(env, "HOME="+home, "TMPDIR="+tmp)

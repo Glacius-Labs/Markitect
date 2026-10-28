@@ -149,7 +149,7 @@ func (d *decider) decide(updates []Update) (Decision, error) {
 		case t.Kind == Review && d.agent.Role != Checker:
 			return refuse("commit %s carries %s lines; only your checker writes a review, as one commit of its own. Next: remove them from your commit message.", short(id), KeyReview), nil
 		case t.Kind == Submission && d.plan.Mode == Apply && d.agent.Role == Checker:
-			return refuse("commit %s carries %s lines; a checker confirms or disputes verdicts with %s lines. Next: write a review instead.", short(id), KeyVerdict, KeyCheck), nil
+			return refuse("commit %s is a submission (%s without %s); a checker answers with a review. Next: add %s and %s lines, and no %s lines.", short(id), KeyManager, KeyReview, KeyReview, KeyCheck, KeyVerdict), nil
 		}
 	}
 	switch {

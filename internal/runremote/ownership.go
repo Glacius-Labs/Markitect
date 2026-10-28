@@ -1,6 +1,7 @@
 package runremote
 
 import (
+	"slices"
 	"sort"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
@@ -43,7 +44,7 @@ func (o Ownership) Owner(file string) (string, []string) {
 			switch s := p.Specificity(); {
 			case s > score:
 				best, score, tied = id, s, nil
-			case s == score && id != best:
+			case s == score && id != best && !slices.Contains(tied, id):
 				tied = append(tied, id)
 			}
 		}

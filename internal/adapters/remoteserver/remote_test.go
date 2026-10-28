@@ -171,7 +171,7 @@ func TestTheChecksSeeTheBranchsFullStateInTheImagesEnvironment(t *testing.T) {
 	r := newRemote(t, func(p *runremote.Plan) {
 		p.Checks = []project.Check{{Name: "state", Directory: "src", Timeout: time.Minute, Environment: "test-image",
 			Command: `test "$(cat members/member.go)" = "$T3_WANT" && test -f ../go.work && test -z "$(git status --porcelain)" &&
-test "$T3_CACHE" = "$HOME/cache" && test "$HOME" != "` + filepath.ToSlash(home) + `" && test -w "$TMPDIR" && touch built.txt`}}
+test "${T3_CACHE%/cache}" -ef "$HOME" && ! test "$HOME" -ef "` + filepath.ToSlash(home) + `" && test -w "$TMPDIR" && touch built.txt`}}
 	})
 	m := r.agent("members", maker)
 	m.write("src/members/member.go", "package members // v2")
@@ -212,7 +212,8 @@ func TestAReviewIsOneCommitThatChangesNoFile(t *testing.T) {
 			c.commit(review("members", runremote.Approved, map[string]string{"members/member": runremote.Confirmed, "loans/loan": runremote.Confirmed}))
 		}, "which the submission gives no verdict"},
 		{func() { c.commit("note"); c.commit(review("members", runremote.Approved, all)) }, "exactly one new commit"},
-		{func() { c.commit(submission("members", "members/member")) }, "a checker confirms or disputes verdicts"},
+		{func() { c.commit(submission("members", "members/member")) }, "a checker answers with a review"},
+		{func() { c.commit("Only a Manager line\n\nMarkitect-Manager: members\n") }, "a checker answers with a review"},
 		{func() { c.commit("plain") }, "needs Markitect-Review and Markitect-Check lines"},
 	}
 	for _, tc := range cases {
