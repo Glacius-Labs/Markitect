@@ -10,7 +10,7 @@ State page of the Topics session: the owner's single place to discuss Markitect'
 
 ## Now
 
-- **Design walk-through, part 1: the language.** On 28 October the owner restated what Markitect is ([source](../concepts/sources/model-explicitness-20261028.md#1-what-markitect-is-restated)) and started a walk through the whole design. Decided: the model is as explicit as good documentation, and Definitions stay YAML with a Markdown body ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation)). Next in the language: questions 38 and 39.
+- **Design walk-through, part 1: the language.** On 28 October the owner restated what Markitect is ([source](../concepts/sources/model-explicitness-20261028.md#1-what-markitect-is-restated)) and started a walk through the whole design. Decided so far: the model is as explicit as good documentation; Definitions, bodies and links with few typed fields, as Markdown with YAML front matter; Libraries `domain`, `application`, `api`, `practice`, `architecture` (see [Decided](#decided)). Next: how far Core and the compiler shrink.
 - **Basis:** clean. One topics page instead of seven lane pages; Main consistent again after #806 (see [Done here](#done-here)); the topic lane worktrees and branches removed (the old Cockpit lane worktree now serves the General session); question 33 (Windows tests) parked.
 
 ## Next
@@ -33,7 +33,7 @@ Execution is Linux-first ([DEC-077](../concepts/register.md#dec-077-development-
 
 ### Model language
 
-The model is typed programming in prose: Core 1.2.0 with Kind interfaces ([DEC-075](../concepts/register.md#dec-075-kind-extension-and-one-core-120)) and five [standard Libraries](../design/standard-libraries.md). Since PR #806, `api` is 2.0.0 (refusals are an unordered list; a Rule states precedence when it matters) and `architecture` is 1.1.0 (an Interface can list `refusalCodes`). Invariants are not placed; an Invariant lives in the Package that owns its data. `makerspace-v2` keeps its frozen 1.0.0 copies as gate material. The yardstick for what the language and Libraries express is good documentation ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation)); Definitions stay YAML with a Markdown body.
+The model is typed programming in prose: Core 1.2.0 with Kind interfaces ([DEC-075](../concepts/register.md#dec-075-kind-extension-and-one-core-120)) and five [standard Libraries](../design/standard-libraries.md). Since PR #806, `api` is 2.0.0 (refusals are an unordered list; a Rule states precedence when it matters) and `architecture` is 1.1.0 (an Interface can list `refusalCodes`). Invariants are not placed; an Invariant lives in the Package that owns its data. `makerspace-v2` keeps its frozen 1.0.0 copies as gate material. That is Main today. A redesign of the language and Libraries is decided and not built (see [Decided](#decided)).
 
 ### Modeling skills
 
@@ -70,7 +70,13 @@ What is decided and lives nowhere else; decisions with their own page are linked
 
 - **Platform** (27–28 October): no running from WSL and no Linux machine required; our studies run on our own machine; Linux Apply is tested only after Windows Apply works. The Windows Git-start fix is parked, and the Go tests are not run on Windows for now ([measurement](../validation/windows-test-time-20261028.md)).
 - **Libraries** (27–28 October, [PR #806](https://github.com/Glacius-Labs/Markitect/pull/806)): refusal lists have no order; an Interface exposes refusal codes; an Invariant lives with its data and is not placed; no wire-envelope Kind and no alias-only imports yet ([standard Libraries](../design/standard-libraries.md#answered-and-open-questions)).
-- **Language** (28 October): the model is as explicit as good documentation, and Definitions stay YAML with a Markdown body ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation)).
+- **Language** (28 October; designed, not built):
+  - The model is as explicit as good documentation ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation)).
+  - Definitions, bodies and links by default, written like documentation. Typed fields only where Markitect itself evaluates them (scope, architecture rules, what an Interface exposes) or a value must be exact (enumeration values, refusal codes, wire names). Inputs, results, permissions, refusals and record fields are prose with links; Kinds are the classification.
+  - A Definition is a Markdown file with YAML front matter (kind, imports, the few typed fields); the file name is the ID. Open detail: the title as the first heading or as a field.
+  - Core stays minimal; new Kinds go into the Libraries.
+  - The Libraries follow clean architecture and are rebuilt as 1.0.0, without compatibility: `domain` (Entity, Value, Enumeration, Invariant, Event), `application` (UseCase, Role, RefusalCode), `api` (Endpoint; REST and CLI bindings later), `practice` (Project, Rule, the obligations), `architecture` (Interface with one `exposes` list, DependencyRule, Placement).
+  - The design is settled first; the evaluation and the implementations are then built against it, while the owner also redesigns the Runs.
 - **Modeling skills** (27 October): the change-task trial first; it ran as C5 and passed ([record](../validation/modeling-skill-change-trial-20261027.md)).
 - **Commands** (27–28 October): the frame, the names and A1–A6 ([commands page](commands.md)).
 - **Continuous change and Cockpit** (27 October): outside Findings and the read-only model explorer are designed as proposals; nothing is built.
@@ -144,8 +150,8 @@ What is decided and lives nowhere else; decisions with their own page are linked
 
 ### I. Raised by the documentation test (DEC-079)
 
-38. **Use cases.** Good documentation describes use cases ("a member reserves a machine"); no Library has a Kind for them, so they hide in operation bodies and Rules.
-39. **How an interface is reached.** Good documentation names REST routes and statuses, CLI commands and flags; the standard Libraries leave them in Rule bodies for now.
+38. **Use cases.** Direction decided 28 October: an `application` Library holds them (see [Decided](#decided)). Good documentation describes use cases ("a member reserves a machine"); no Library has a Kind for them, so they hide in operation bodies and Rules.
+39. **How an interface is reached.** Direction decided 28 October: `api` holds the bindings to use cases. Good documentation names REST routes and statuses, CLI commands and flags; the standard Libraries leave them in Rule bodies for now.
 
 ## Handed to Build
 
