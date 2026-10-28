@@ -17,11 +17,11 @@ The Build and evaluation session coordinates the evaluation suite and the varian
 3. **Arm M:** after the owner says lane 1 is done, take over the adapter `tools/arm-m/` and a frozen build that contains the Claude adapter, then three Library runs through the suite.
 4. **Arm P:** smoke 03 when the owner approves and the engine is free, then the variant command around `armp.py`.
 5. **Arm G:** fix the ten blocking findings offline on `dev/g0-prototype`; no provider run before the owner answers the provider question.
-6. **One page:** fold the evaluation, plugin, Git and host variant pages into this one as their PRs land.
+6. **One page:** fold the evaluation, plugin and Git variant pages into this one as their PRs land.
 
 ## Questions for the owner
 
-1. **Lane 1 handover.** K1b passed. May lane 1 merge #807 and #808, hand arm M to Build and end? Recommendation: yes; it unblocks arm M and ends the pause on G.
+1. **Lane 1 handover.** K1b passed. Is lane 1 done once its open K1b PRs are merged, so that it hands arm M to Build and ends? Recommendation: yes; it unblocks arm M and ends the pause on G.
 2. **P smoke 03.** May it run once nothing else holds the engine? Recommendation: yes; it shows whether the plugin completes an Apply at all.
 3. **Model for the comparison.** Recommendation: Claude Sonnet 5.5 for every arm; Codex runs are recorded separately and return when Codex has tokens again.
 4. **G's provider.** The prototype runs on Codex only. Recommendation: wait for Codex tokens rather than add a Claude backend now, and fix the review findings meanwhile.

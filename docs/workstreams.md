@@ -12,7 +12,7 @@ This page lists the sessions, the variants and where each keeps its state. It ho
 | Topics | Discusses the product topics with the owner (model language and skills, compiler, commands, continuous change, platform, Cockpit) and records the decisions | no; it writes docs only | `workstreams/topics.md` |
 | Lane 1: host variant | Finishes its current task, then hands arm M over to Build and ends | until the handover | [host-variant.md](workstreams/host-variant.md) |
 
-Both sessions sit in the sidebar folder "Markitect". The lane sessions 2 to 11 end once the owner agrees; their state moves into the two pages above.
+Both sessions sit in the sidebar folder "Markitect". The lane sessions 2 to 11 end once the owner agrees. The evaluation, plugin and Git variant pages fold into the build page as their PRs land; the topic lane pages stay as they are until the owner opens their discussion.
 
 ## Variants
 
@@ -23,7 +23,7 @@ The evaluation suite treats every variant as a black box with the same task in a
 | M | Host variant: today's V1, the host coordinates the Manager hierarchy | `main` |
 | P | Plugin variant: Markitect's Apply method as a Claude Code plugin | `variant/plugin` |
 | G | Git variant: Managers collaborate through a Run-local Git remote ([DEC-078](concepts/register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review)); prototype on `dev/g0-prototype` | `variant/git` |
-| K | Baseline: classic agentic coding, one Claude Code session with the task | the suite on `main` |
+| K | Baseline: classic agentic coding, one Claude Code session with the task | part of the suite ([PR #793](https://github.com/Glacius-Labs/Markitect/pull/793), not yet on `main`) |
 
 ## Priority
 
