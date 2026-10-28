@@ -1,6 +1,6 @@
 # Kind interfaces and the value-type vocabulary
 
-**Redesign decided, not built:** [DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation) replaces this with Markdown Definitions without typed fields, a single Core `Kind` and Libraries of plain Kind Definitions. This page describes Main today.
+**Superseded:** [DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation) replaced Kind interfaces and Core 1.2.0 with Markdown Definitions without typed fields, a single Core `Kind` and Libraries of plain Kind Definitions; step T1 built it and removed the v1 form. The [model language guide](../guides/model-language.md) describes Main. This page is kept for its reasoning.
 
 **Status:** design v0.3, 26 October 2026, after an independent review (nothing blocking; all should-fix points applied). The owner confirmed the direction on 26 October 2026: Go-style interfaces instead of inheritance, and a clean type vocabulary ([DEC-075](../concepts/register.md#dec-075-kind-extension-and-one-core-120), as amended). It replaces design v0.2 (Kind extension with `extends`), which never merged. The normative text is [language contract §3.3](language-contract.md#kind-interfaces); this document keeps the reasoning and the migration for the [canonical model track](model-track-charter.md).
 

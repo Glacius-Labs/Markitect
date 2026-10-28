@@ -87,7 +87,7 @@ The evaluation depends on this track. In the owner's words: "Our evaluations of 
 4. **Context selection.** A Manager gets:
    - its own Definitions;
    - one hop of outgoing references and links, plus local incoming ones;
-   - **modeled scope**: Definitions whose scope field covers the Package, configured in `execution.yaml` ([context_scope.go](../../internal/organization/context_scope.go));
+   - **modeled scope**: Definitions whose scope field covers the Package, configured in `execution.yaml` ([context_scope.go](https://github.com/Glacius-Labs/Markitect/blob/f23c2e12d9833efa61e5e65c90018016423abe74/internal/organization/context_scope.go));
    - type contracts, followed transitively.
 
    The observed Makerspace limit is the second hop: rule bodies reached only through the permission matrix do not reach each operation's Manager ([Phase C model README](../../tools/comparison/phase-c/model/README.md)). Would modeled scope solve that? Answer OQ-006 with evidence, within DEC-028.

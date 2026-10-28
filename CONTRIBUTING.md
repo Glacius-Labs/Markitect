@@ -1,10 +1,10 @@
 # Development
 
-Markitect is built around canonical language v1 and delegated realization. The [project workflow](docs/guides/project-workflow.md) describes the commands: the model commands run on Windows and Linux, while the Apply host, the tests and CI run on Linux, and Windows starts Apply in the Linux runner ([DEC-077](docs/concepts/register.md#dec-077-development-pace-and-linux-first-execution)). Extract, Cockpit and interactive authoring are retired. [AGENTS.md](AGENTS.md), the [delivery plan](docs/implementation-plan.md) and the bounded dispatch own authority and shared-file reservations. Source availability does not establish native runtime qualification. Markitect itself is developed as an ordinary software project without a canonical self-model ([DEC-076](docs/concepts/register.md#dec-076-markitect-is-developed-as-a-regular-software-project)).
+Markitect is being rebuilt to [concept 2.0](docs/concepts/v2-concept.md) in the steps of the [delivery plan](docs/implementation-plan.md#concept-20-build). The [project workflow](docs/guides/project-workflow.md) describes the commands, which run on Windows, Linux and macOS; the tests and CI run on Linux ([DEC-077](docs/concepts/register.md#dec-077-development-pace-and-linux-first-execution)). [AGENTS.md](AGENTS.md), the [delivery plan](docs/implementation-plan.md) and the bounded dispatch own authority and shared-file reservations. Source availability does not establish native runtime qualification. Markitect itself is developed as an ordinary software project without a canonical self-model ([DEC-076](docs/concepts/register.md#dec-076-markitect-is-developed-as-a-regular-software-project)).
 
 ## Ownership and layout
 
-All maintained Go code belongs to one root module. `cmd/markitect` delegates to `internal/bootstrap`; pure model, snapshot, organization and realization values have no infrastructure dependency. `internal/project` owns structural preparation and candidate validation. `internal/run` owns closed hierarchical execution; `internal/runtimeconfig` owns static native/check metadata. Concrete adapters implement repository capture, static profile metadata and document writes; `internal/guardedwrite` guards every working-tree write. Independent maintenance services have explicit `internal/tooling/` responsibilities; that parent grants no general import exemption.
+All maintained Go code belongs to one root module. `cmd/markitect` delegates to `internal/bootstrap`, which constructs the CLI adapter with the Git adapter. `internal/model` and `internal/realization` compile the model and the realization record from supplied bytes, `internal/project` loads a project from one repository state, and `internal/analysis` answers questions about it; none of them reads files or starts processes itself. `internal/guardedwrite` guards bundle installation. Independent maintenance services have explicit `internal/tooling/` responsibilities; that parent grants no general import exemption.
 
 One rule table in [`internal/tooling/architecture/rules.go`](internal/tooling/architecture/rules.go) gives every package its layer and allowed imports; the [architecture](docs/architecture.md#layers) explains it and the generated [code map](docs/development/code-map.md) lists every package. Shared hermetic `internal/testkit` is test-only and imports no Markitect package. The standalone bootstrap in `packaging/bootstrap` and source smoke in `tools/smoke` import no product package.
 
@@ -16,7 +16,7 @@ Use Git and Go from `go.mod`. Run meaningful local checks for the actual change.
 
 For prose-only changes, check links in the changed pages with `python -B scripts/check-docs.py PATH...` and run `git diff --check`. For code or control changes, run the relevant tests and validators; broaden validation when the changed contract or a concrete failure calls for it. Record actual results and limitations in the PR.
 
-The full pipeline runs Linux quality checks and the race detector in about five minutes. CI has no Windows job, but the model commands and the runner launcher still build for Windows: a change to code they reach also runs `GOOS=windows go vet ./...`.
+The full pipeline runs Linux quality checks and the race detector in about five minutes. CI has no Windows job, but the model commands still build for Windows: a change to code they reach also runs `GOOS=windows go vet ./...`.
 
 ```text
 gh workflow run ci.yaml --ref BRANCH
@@ -34,13 +34,13 @@ python -B -m unittest discover -s scripts -p test_*.py
 python -B scripts/check-docs.py
 python -B -m unittest discover -s tools/library-oracle
 python -B -m unittest discover -s tools/comparison
+python -B -m unittest discover -s tools/evaluation
 python -B -m unittest discover -s tools/makerspace-oracle -p test_*.py
-python -B -m unittest discover -s tools/model-analysis
 ```
 
 Broad Go suites run in Linux CI by manual dispatch (above). For now they are not run on Windows: real Git starts are much slower there, and the full suite takes about 50 minutes instead of about three ([measurement](docs/validation/windows-test-time-20261028.md); the owner parked the fix on 28 October 2026, see the [topics page](docs/workstreams/topics.md)). Tests that do not test time take their Run deadline from the test's own deadline, so the `-timeout` value bounds a hang.
 
-Run `gofmt` on changed Go files and `git diff --check`. CI checks module checksums, tests with and without the race detector, vet, build, tracked Go formatting, every production/test/platform import against the architecture rule table, the packaged-source smoke, repository scripts, maintained documentation links, the independent Library oracle with its bounded transport, and the unit tests of the comparison, Makerspace oracle and model analysis tools. Obsolete engines and their tests/gates are removed together; no skips or success stubs may replace required checks.
+Run `gofmt` on changed Go files and `git diff --check`. CI checks module checksums, tests with and without the race detector, vet, build, tracked Go formatting, every production/test/platform import against the architecture rule table, the packaged-source smoke, repository scripts, maintained documentation links, the independent Library oracle with its bounded transport, and the unit tests of the comparison, evaluation and Makerspace oracle tools. Obsolete engines and their tests/gates are removed together; no skips or success stubs may replace required checks.
 
 Regenerate the code map when the rule table or a package doc comment changes:
 
@@ -54,7 +54,7 @@ Run the packaged source smoke in a fresh external work directory:
 go run ./tools/smoke -repo . -work ABSOLUTE_EMPTY_EXTERNAL_DIRECTORY
 ```
 
-It packages and builds root-layout source, tests the standalone bootstrap and drives actual Library M1/M2 preparation, static context, fixed-source refusals and Apply's rejection of missing or legacy invocation configuration before resource acquisition. It starts no Agent or container, so it does not run an Apply, implement the Library or establish provider/Apply/release acceptance. The `bundle` smoke belongs to separately authorized release work and writes an isolated consumer installation.
+It packages and builds root-layout source, tests the standalone bootstrap and drives the packaged CLI over a small project in a temporary repository: `init`, `check`, `lock`, `refs`, `graph`, `lint` and `impact`, and the refusal of a model that does not compile. It starts no agent or container, so it establishes no provider or release acceptance. The `bundle` smoke belongs to separately authorized release work and writes an isolated consumer installation.
 
 ## Pull requests and parallel work
 
@@ -80,4 +80,4 @@ Before integration, obtain independent complete-diff review, run relevant local 
 
 ## Release work
 
-The [distribution guide](packaging/README.md#release-operations) owns release operations. The maintenance entrypoint is `cmd/markitect-release`. Source packages retain the root license, embedded [notices](internal/buildinfo/notices.md), required test data and explicit invocation examples. Use an external build cache when needed; Gitignore does not filter the complete product census. A source version does not establish a published or accepted release.
+The [distribution guide](packaging/README.md#release-operations) owns release operations. The maintenance entrypoint is `cmd/markitect-release`. Source packages retain the root license, embedded [notices](internal/buildinfo/notices.md), the embedded Libraries and skills, and required test data. Use an external build cache when needed; Gitignore does not filter the complete product census. A source version does not establish a published or accepted release.

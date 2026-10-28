@@ -30,7 +30,7 @@ DEFAULT_DOCUMENTS = (
     "SECURITY.md",
     "docs/README.md",
     "docs/guides/project-workflow.md",
-    "docs/guides/provider-adapters.md",
+    "docs/guides/model-language.md",
     "docs/architecture.md",
     "docs/development/repository-layout.md",
     "docs/implementation-plan.md",
@@ -43,7 +43,6 @@ DEFAULT_DOCUMENTS = (
     "docs/concepts/README.md",
     "docs/concepts/register.md",
     "docs/concepts/sources/README.md",
-    "examples/README.md",
     "packaging/README.md",
     "tools/library-oracle/README.md",
 )
