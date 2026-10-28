@@ -1,5 +1,7 @@
 # Outside Findings
 
+**Superseded before adoption:** [DEC-082](../concepts/register.md#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager) takes one Finding input for every source, each Finding a checklist item for its Manager. This page is kept as the earlier proposal.
+
 **Status:** proposed amendment to [concept 1.0](../concepts/v1-concept.md), design only. The owner asked for this design on 27 October 2026: "Yes: design outside Findings as a concept 1.0 amendment, with the command side in lane 9. Still build nothing." It is not adopted. Adoption is a separate owner decision for the [register](../concepts/register.md); the concept's text then changes through its owner. It comes from the continuous-change lane and is now tracked on the [topics page](../workstreams/topics.md#continuous-change).
 
 ## Problem
