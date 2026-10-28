@@ -1,0 +1,14 @@
+{
+  "description": "A broken rule of M3: a short loan lasts eight days instead of seven.",
+  "step": "M3",
+  "replace": [
+    {
+      "path": "realization/internal/library/library.go",
+      "old": "ShortLoanPeriodDays = 7",
+      "new": "ShortLoanPeriodDays = 8"
+    }
+  ],
+  "expect": {
+    "correctnessFails": true
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "description": "A forgotten rule: at C5 the plus tier's monthly fee of W0 is 4800 cents instead of 4900.",
+  "step": "C5",
+  "replace": [
+    {
+      "path": "realization/internal/ms/model.go",
+      "old": "\t\treturn 4900\n",
+      "new": "\t\treturn 4800\n"
+    }
+  ],
+  "expect": {
+    "correctnessFails": true,
+    "forgotten": true
+  }
+}

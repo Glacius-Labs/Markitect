@@ -1,0 +1,6 @@
+{
+  "retired": [
+    {"step": "C6", "pattern": "expiresOn|ExpiresOn", "cite": "c6.md: The field `expiresOn` is removed and must not appear in any result."},
+    {"step": "C6", "pattern": "\"expired\"", "cite": "c6.md: The status `expired` no longer exists."}
+  ]
+}

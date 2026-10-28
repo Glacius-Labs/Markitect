@@ -1,0 +1,38 @@
+{
+  "format": 1,
+  "name": "makerspace",
+  "image": "golang@sha256:69a7b9788769bec032d238959b61854e9ae87f57be9029ec04e9885fabf99195",
+  "command": ["python3", "-I", "-B", "/judge/judge.py", "--contained"],
+  "timeoutSeconds": 3600,
+  "limits": {"cpus": "4", "memoryBytes": 4294967296, "pids": 1024, "tmpBytes": 2147483648},
+  "steps": ["W0", "C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9"],
+  "references": {
+    "W0": {"tree": "tools/makerspace-reference/w0", "at": "realization"},
+    "C1": {"tree": "tools/makerspace-reference/c1", "at": "realization"},
+    "C2": {"tree": "tools/makerspace-reference/c2", "at": "realization"},
+    "C3": {"tree": "tools/makerspace-reference/c3", "at": "realization"},
+    "C4": {"tree": "tools/makerspace-reference/c4", "at": "realization"},
+    "C5": {"tree": "tools/makerspace-reference/c5", "at": "realization"},
+    "C6": {"tree": "tools/makerspace-reference/c6", "at": "realization"},
+    "C7": {"tree": "tools/makerspace-reference/c7", "at": "realization"},
+    "C8": {"tree": "tools/makerspace-reference/c8", "at": "realization"},
+    "C9": {"tree": "tools/makerspace-reference/c9", "at": "realization"}
+  },
+  "patchMutants": "tools/makerspace-reference/mutants",
+  "include": {
+    "judge.py": "tools/evaluation-judges/makerspace/judge.py",
+    "judgekit.py": "tools/evaluation-judges/common/judgekit.py",
+    "drift.json": "tools/evaluation-judges/makerspace/drift.json",
+    "rubric.md": "tools/comparison/phase-c/rubric.md",
+    "tools/library-oracle/driver.py": "tools/library-oracle/driver.py",
+    "tools/makerspace-oracle/behavior.py": "tools/makerspace-oracle/behavior.py",
+    "tools/makerspace-oracle/builder.py": "tools/makerspace-oracle/builder.py",
+    "tools/makerspace-oracle/catalog.py": "tools/makerspace-oracle/catalog.py",
+    "tools/makerspace-oracle/census.py": "tools/makerspace-oracle/census.py",
+    "tools/makerspace-oracle/facts.py": "tools/makerspace-oracle/facts.py",
+    "tools/makerspace-oracle/harness.py": "tools/makerspace-oracle/harness.py",
+    "tools/makerspace-oracle/invariants.py": "tools/makerspace-oracle/invariants.py",
+    "tools/makerspace-oracle/probes.py": "tools/makerspace-oracle/probes.py",
+    "tools/makerspace-oracle/world.py": "tools/makerspace-oracle/world.py"
+  }
+}

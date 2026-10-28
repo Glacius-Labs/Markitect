@@ -17,7 +17,9 @@ It sorts one run, from its suite.json and what the variant left in RUN_DIR, into
   - variant runtime: a signature of the variant's own runtime machinery,
     written into the series protocol before the series, matches the run.
 - invalid: the run did not take place under the evaluation's conditions (host
-  mode) or reports another model than the evaluation's. It is not counted.
+  mode; in native mode, a container of the variant outside the evaluation
+  network, or hidden material on the machine) or reports another model than
+  the evaluation's. It is not counted.
 - result: everything else, including a wrong or incomplete result, a timeout, a
   missing result, a crash of a CLI and a deliberate stop such as a model
   blocker.
@@ -45,6 +47,9 @@ PROVIDER_STATUS = {401, 403, 429, 500, 502, 503, 504, 529}
 # Any other refused name, such as an agent trying GitHub, is the variant's work.
 PROVIDER_DOMAINS = {"claude": ("anthropic.com", "claude.ai", "claude.com"), "codex": ("openai.com", "chatgpt.com")}
 # The variant command never ran: the interpreter or the engine could not start its program.
+# The conditions a counted run takes place under: the sandbox, or a trusted variant host natively with its containers
+# on the same egress-limited network (native.py).
+COUNTED = ("sandbox", "native")
 NOT_STARTED = re.compile(r"can't open file '[^']*'|executable file not found|exec format error|OCI runtime (create|exec) failed")
 
 
@@ -110,7 +115,13 @@ def classify(run_dir, signatures=None, variant=None):
                     if any(name == d or name.endswith("." + d) for d in domains))
     if needed:
         return outcome("void", "infrastructure", "the gateway refused the provider's " + ", ".join(needed), True)
-    if record.get("conditions") == "sandbox" and not record.get("validForCounting"):
+    if box.get("escapes"):
+        # A container of the variant left the evaluation's network: the run did not take place under its conditions.
+        return outcome("invalid", None, "a container outside the evaluation network: " + ", ".join(
+            str(c.get("name") or c.get("id")) for c in box["escapes"]))
+    if box.get("hiddenPresent"):
+        return outcome("invalid", None, "hidden material was on the machine: " + ", ".join(box["hiddenPresent"]))
+    if record.get("conditions") in COUNTED and not record.get("validForCounting"):
         cause = box.get("error") or ("residue: " + ", ".join(box.get("residue") or []) if box.get("residue") else "not valid for counting")
         return outcome("void", "infrastructure", cause)
     variant_out = run_dir / "variant"
@@ -129,7 +140,7 @@ def classify(run_dir, signatures=None, variant=None):
         value = at(record, signature["path"])
         if value is not None and re.search(signature["pattern"], value if isinstance(value, str) else json.dumps(value)):
             return outcome("void", "variant runtime", {"signature": signature["id"], "path": signature["path"]})
-    if record.get("conditions") != "sandbox":
+    if record.get("conditions") not in COUNTED:
         return outcome("invalid", None, "host mode")
     if record.get("modelMatches") is False:
         return outcome("invalid", None, "the variant reports another model")

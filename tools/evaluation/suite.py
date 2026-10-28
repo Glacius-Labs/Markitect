@@ -13,11 +13,13 @@ variant's business.
   python -I -B suite.py chain --step DIR [--step DIR ...] [--start BUNDLE] --deadline-seconds N --model PROVIDER:MODEL_ID \
       --out NEW_DIR [SANDBOX...] -- VARIANT...
 
-  python -I -B suite.py judge --run RUN_DIR --judge JUDGE_DIR --out NEW_DIR [--engine BIN] [--lock FILE]
+  python -I -B suite.py judge --run RUN_DIR --judge JUDGE_DIR [--step STEP] --out NEW_DIR [--engine BIN] [--lock FILE]
+  python -I -B suite.py judge-chain --chain CHAIN_DIR --judge JUDGE_DIR --steps STEP,STEP,... --out NEW_DIR [--engine BIN] [--lock FILE]
   python -I -B suite.py review --run RUN_DIR --judge JUDGE_DIR --out NEW_DIR [--model PROVIDER:MODEL_ID] [SANDBOX...]
   python -I -B suite.py report --ledger FILE --out NEW_DIR
 
   SANDBOX: --sandbox IMAGE_ID --variant-code DIR [--login FILE] [--series FILE] [--engine BIN] [--lock FILE]
+       or --native IMAGE_ID --hidden-absent PATH [--hidden-absent PATH ...] [--login FILE] [--series FILE] [--engine BIN] [--lock FILE]
 
 A chain step directory holds task.md and an optional model/. Each step starts
 from the variant's own previous result, or from the previous start when there
@@ -27,9 +29,16 @@ With --sandbox, the variant command runs inside one container per run
 (sandbox.py): it receives /task /out [/state], its code is at /variant and the
 access-only login at EVALUATION_LOGIN. Without it, the variant runs as a host
 process: for tests only, and suite.json marks the run as not valid for counting.
+With --native, the variant's host runs natively and its own containers join the
+same egress-limited network (native.py): for trusted variant code such as the
+concept 2.0 arm, whose agents run only in its containers.
 
 `judge` runs the task's hidden judge on a run's result in a container without
-network (judging.py) and writes judgment.json and the judge's own judge.json.
+network (judging.py) and writes judgment.json and the judge's own judge.json;
+a series judge is told the step it judges. `judge-chain` judges every step of
+a chain with a series judge and adds what only the whole chain shows: the cases
+that passed at one step and fail at a later one, and the drift after its last
+step.
 `review` makes the blinded code review of a result (reviewing.py); its
 reviewer sessions run in the sandbox, with --variant-code naming this folder.
 `report` writes one table per area for a series ledger (report.py).
@@ -52,6 +61,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 # Run as a script, this module is __main__; the modules below import it as `suite`, and must get this one.
 sys.modules.setdefault("suite", sys.modules[__name__])
 import judging  # noqa: E402
+import native as nativing  # noqa: E402
 import report as reporting  # noqa: E402
 import reviewing  # noqa: E402
 import sandbox as sandboxing  # noqa: E402
@@ -240,7 +250,7 @@ def run(task_dir, variant, out, model, state=None, sandbox=None):
     (out / "variant").mkdir()
     record = {"format": FORMAT, "task": {"path": str(task_dir.resolve()), "intentSha256": task["intentSha256"], "start": task["start"]["commit"],
                                          "deadlineSeconds": task["deadlineSeconds"]},
-              "variant": {"argv": list(variant)}, "model": model, "conditions": "sandbox" if sandbox else "host",
+              "variant": {"argv": list(variant)}, "model": model, "conditions": sandbox.conditions if sandbox else "host",
               "startedUtc": now()}
     stdout, stderr, deadline = out / "variant.stdout.log", out / "variant.stderr.log", task["deadlineSeconds"]
     with tempfile.TemporaryDirectory() as tmp:
@@ -250,15 +260,14 @@ def run(task_dir, variant, out, model, state=None, sandbox=None):
         if sandbox:
             timing, record["sandbox"] = sandbox.run(
                 copy, out / "variant", pathlib.Path(state).resolve() if state else None, variant, model, deadline, out,
-                lambda argv, stop: start_variant(argv, dict(os.environ), stdout, stderr, deadline, stop))
+                lambda argv, stop, env=None: start_variant(argv, env or dict(os.environ), stdout, stderr, deadline, stop))
             record.update(timing)
         else:
             argv = [*variant, str(copy), str((out / "variant").resolve())] + ([str(pathlib.Path(state).resolve())] if state else [])
             record.update(start_variant(argv, dict(os.environ, EVALUATION_MODEL=model), stdout, stderr, deadline))
     record["endedUtc"] = now()
-    # Only a sandboxed run whose sandbox stood up and left nothing behind ran under the evaluation's conditions.
-    record["validForCounting"] = (bool(sandbox) and "error" not in record["sandbox"] and "container" in record["sandbox"]
-                                  and not record["sandbox"]["residue"])
+    # Only a sandboxed or native run that stood up and left nothing behind ran under the evaluation's conditions.
+    record["validForCounting"] = bool(sandbox) and sandbox.valid(record["sandbox"])
     try:
         # The variant got a copy, but could still reach the original by path.
         read_task(task_dir)
@@ -319,10 +328,10 @@ def chain(steps, start, deadline, variant, out, model, sandbox=None):
             # A sandbox that did not stand up is no step of the variant's; the chain stops rather than run on.
             error = {"step": i, "error": "sandbox: " + record["sandbox"]["error"]}
             break
-    summary = {"format": FORMAT, "model": model, "conditions": "sandbox" if sandbox else "host",
+    summary = {"format": FORMAT, "model": model, "conditions": sandbox.conditions if sandbox else "host",
                "steps": [{"step": i, "delivered": r["delivered"], "timedOut": r["timedOut"], "wallSeconds": r["wallSeconds"],
                           "modelMatches": r["modelMatches"], "validForCounting": r["validForCounting"],
-                          "result": r["result"]["commit"] if r["result"] else None}
+                          "result": r["result"]["commit"] if r["result"] else None, "name": pathlib.Path(steps[i - 1]).name}
                          for i, r in enumerate(records, 1)],
                "stopped": error}
     (out / "chain.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
@@ -347,13 +356,28 @@ def judged_run(run_dir):
     return record, task_dir, bundle
 
 
-def judge(run_dir, judge_dir, out, engine):
-    """Run the task's judge on one run's result; writes OUT/judgment.json and the judge's OUT/judge.json."""
+def judge(run_dir, judge_dir, out, engine, step=None):
+    """Run the task's judge on one run's result; writes OUT/judgment.json and the judge's OUT/judge.json.
+
+    A planted task's outcome is scored here, from the run's own record (judging.stops)."""
     out = pathlib.Path(out)
     record, task_dir, bundle = judged_run(run_dir)
     if out.exists():
         raise SuiteError(f"{out} exists")
-    judgment = judging.run_judge(engine, judge_dir, task_dir, bundle, record["result"]["commit"])
+    plant = judging.load_plant(judge_dir)
+    if (pathlib.Path(judge_dir) / "judge.json").is_file():
+        judgment = judging.run_judge(engine, judge_dir, task_dir, bundle, record["result"]["commit"], step)
+    elif plant:
+        judgment = {"format": judging.FORMAT, "judge": {"plantOnly": True, "folderSha256": judging.folder_digest(judge_dir)},
+                    "commit": record["result"]["commit"], "step": step, "startedUtc": now(), "steps": [], "problems": [],
+                    "residue": [], "areas": None, "output": None, "endedUtc": now()}
+    else:
+        raise SuiteError(f"{judge_dir} holds neither judge.json nor plant.json")
+    if plant:
+        judgment["stops"] = judging.stops(plant, record)
+        if not judgment["stops"]["recordedBeforeRun"]:
+            judgment["problems"].append("the plant was recorded after the run started: it does not count")
+    judgment["valid"] = not judgment["problems"]
     judgment["run"] = str(pathlib.Path(run_dir).resolve())
     out.mkdir(parents=True)
     output = judgment.pop("output")
@@ -363,19 +387,77 @@ def judge(run_dir, judge_dir, out, engine):
     return judgment
 
 
-def sandbox_from(a):
-    """The sandbox the arguments name, checked before anything is written; None in host mode."""
-    if not a.sandbox:
-        if a.variant_code or a.login or a.lock:
-            raise SuiteError("--variant-code, --login and --lock need --sandbox")
+def case_results(judgment_dir):
+    """{case ID: passed} from a judge's judge.json, or None."""
+    try:
+        output = json.loads((pathlib.Path(judgment_dir) / "judge.json").read_text(encoding="utf-8"))
+        return {c["id"]: bool(c["passed"]) for c in output["correctness"]["cases"]}
+    except (OSError, ValueError, KeyError, TypeError):
         return None
-    if not a.variant_code:
+
+
+def judge_chain(chain_dir, judge_dir, steps, out, engine):
+    """Judge every delivered step of a chain at its step; writes OUT/chain-judgment.json and one folder per step.
+
+    Across the steps it records regressions, the cases that passed at one step and fail at a later one, and the
+    drift of the last step judged: after the series, the judge's drift checks of the chain's end result."""
+    chain_dir, out = pathlib.Path(chain_dir), pathlib.Path(out)
+    try:
+        summary = json.loads((chain_dir / "chain.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        raise SuiteError(f"{chain_dir} has no readable chain.json: {e}")
+    if len(steps) < len(summary["steps"]):
+        raise SuiteError(f"the chain ran {len(summary['steps'])} steps; name a judge step for each")
+    if out.exists():
+        raise SuiteError(f"{out} exists")
+    out.mkdir(parents=True)
+    rows, seen, regressions = [], {}, []
+    for i, (row, step) in enumerate(zip(summary["steps"], steps), 1):
+        entry = {"step": step, "run": f"step-{i:02d}", "delivered": row["delivered"]}
+        if row["delivered"]:
+            target = out / f"step-{i:02d}"
+            judgment = judge(chain_dir / f"step-{i:02d}" / "run", judge_dir, target, engine, step)
+            entry.update(valid=judgment["valid"], problems=judgment["problems"])
+            if judgment["valid"] and judgment["areas"]:
+                c = judgment["areas"]["correctness"]
+                entry.update(planned=c["planned"], failed=c["failed"], byStep=c.get("byStep"), drift=judgment["areas"].get("drift"))
+                for case, passed in (case_results(target) or {}).items():
+                    if passed:
+                        seen.setdefault(case, step)
+                    elif case in seen:
+                        regressions.append({"case": case, "passedAt": seen[case], "failsAt": step})
+        rows.append(entry)
+    judged = [r for r in rows if r.get("drift") is not None]
+    record = {"format": FORMAT, "chain": str(chain_dir.resolve()), "judge": str(pathlib.Path(judge_dir).resolve()),
+              "steps": rows, "regressions": regressions,
+              "finalDrift": {"step": judged[-1]["step"], **judged[-1]["drift"]} if judged else None,
+              # The drift is the series' only when the chain reached its last step and that step was judged.
+              "lastStepJudged": len(rows) == len(steps) and bool(judged) and judged[-1]["run"] == rows[-1]["run"]}
+    (out / "chain-judgment.json").write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+    return record
+
+
+def sandbox_from(a):
+    """The sandbox or native conditions the arguments name, checked before anything is written; None in host mode."""
+    native = getattr(a, "native", None)
+    if a.sandbox and native:
+        raise SuiteError("--sandbox and --native exclude each other")
+    if not a.sandbox and not native:
+        if a.variant_code or a.login or a.lock or getattr(a, "hidden_absent", None):
+            raise SuiteError("--variant-code, --login, --lock and --hidden-absent need --sandbox or --native")
+        return None
+    if a.sandbox and not a.variant_code:
         raise SuiteError("--sandbox needs --variant-code")
+    if native and (a.variant_code or not a.hidden_absent):
+        raise SuiteError("--native takes no --variant-code and needs --hidden-absent for each place hidden material could lie")
     provider = a.model.partition(":")[0]
     login = a.login or (str(pathlib.Path.home() / ".claude" / ".credentials.json") if provider == "claude" else None)
     if not login:
-        raise SuiteError(f"--sandbox needs --login for {provider}")
-    return sandboxing.Sandbox([a.engine], a.sandbox, sandboxing.load_series(a.series), a.variant_code, login, provider)
+        raise SuiteError(f"--sandbox and --native need --login for {provider}")
+    series = sandboxing.load_series(a.series)
+    if native:
+        return nativing.Native([a.engine], native, series, login, provider, a.hidden_absent)
+    return sandboxing.Sandbox([a.engine], a.sandbox, series, a.variant_code, login, provider)
 
 
 def main(argv=None):
@@ -404,18 +486,29 @@ def main(argv=None):
     c.add_argument("--out", required=True)
     c.add_argument("--model", required=True, help="the evaluation's model as PROVIDER:MODEL_ID")
     j = sub.add_parser("judge")
+    j.add_argument("--step", help="the step a series judge judges")
+    jc = sub.add_parser("judge-chain")
+    jc.add_argument("--chain", required=True)
+    jc.add_argument("--judge", required=True, help="an exported series judge folder")
+    jc.add_argument("--steps", required=True, help="the judge's step for each chain step, comma-separated")
+    jc.add_argument("--out", required=True)
     v = sub.add_parser("review")
     for p in (j, v):
         p.add_argument("--run", required=True)
         p.add_argument("--judge", required=True, help="an exported judge folder (judges.py export)")
         p.add_argument("--out", required=True)
-    j.add_argument("--engine", default=os.environ.get("MARKITECT_ENGINE") or shutil.which("docker") or "docker")
-    j.add_argument("--lock", help="exclusive engine lock file shared with the other runners")
+    for p in (j, jc):
+        p.add_argument("--engine", default=os.environ.get("MARKITECT_ENGINE") or shutil.which("docker") or "docker")
+        p.add_argument("--lock", help="exclusive engine lock file shared with the other runners")
     v.add_argument("--model", help="the reviewers' model as PROVIDER:MODEL_ID (default: the run's model)")
     v.add_argument("--deadline-seconds", type=int, default=reviewing.DEADLINE, help="each reviewer session's time")
     o = sub.add_parser("report")
     o.add_argument("--ledger", required=True)
     o.add_argument("--out", required=True)
+    for p in (r, c):
+        p.add_argument("--native", metavar="IMAGE_ID", help="run the variant's host natively; its containers join the egress-limited "
+                                                            "network, whose gateway runs from this sandbox image")
+        p.add_argument("--hidden-absent", action="append", metavar="PATH", help="a place hidden material could lie; must not exist")
     for p in (r, c, v):
         p.add_argument("--sandbox", metavar="IMAGE_ID", help="run the variant in the evaluation sandbox of this image")
         p.add_argument("--variant-code", help="the variant's code, mounted read-only at /variant")
@@ -432,11 +525,15 @@ def main(argv=None):
             result = {"launches": len(data["launches"]), "report": str(pathlib.Path(a.out) / "report.md")}
         elif a.cmd == "judge":
             with sandboxing.engine_lock(a.lock, "evaluation judge", str(pathlib.Path(a.out).resolve())):
-                judgment = judge(a.run, a.judge, a.out, [a.engine])
-            result = {"valid": judgment["valid"], "problems": judgment["problems"], "areas": judgment["areas"] and {
+                judgment = judge(a.run, a.judge, a.out, [a.engine], a.step)
+            result = {"valid": judgment["valid"], "problems": judgment["problems"], "stops": judgment.get("stops"), "areas": judgment["areas"] and {
                 "correctness": {k: judgment["areas"]["correctness"][k] for k in ("planned", "passed", "failed", "failedCases")},
                 "build": judgment["areas"]["buildAndTests"]["build"]["passed"], "tests": judgment["areas"]["buildAndTests"]["tests"]["passed"],
                 "unrequested": judgment["areas"]["scope"]["unrequested"], "protectedTouched": judgment["areas"]["scope"]["protectedTouched"]}}
+        elif a.cmd == "judge-chain":
+            with sandboxing.engine_lock(a.lock, "evaluation judge", str(pathlib.Path(a.out).resolve())):
+                record = judge_chain(a.chain, a.judge, [s.strip() for s in a.steps.split(",") if s.strip()], a.out, [a.engine])
+            result = {k: record[k] for k in ("steps", "regressions", "finalDrift", "lastStepJudged")}
         elif a.cmd == "review":
             record, _, _ = judged_run(a.run)
             a.model = a.model or record["model"]

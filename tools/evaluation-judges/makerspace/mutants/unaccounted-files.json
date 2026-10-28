@@ -1,0 +1,14 @@
+{
+  "description": "Files nothing accounts for: a Go file the build ignores and a leftover backup.",
+  "step": "C2",
+  "write": {
+    "realization/internal/ms/scratch.go": "//go:build ignore\n\npackage ms\n\nconst scratch = 1\n",
+    "realization/internal/ms/ops.go.orig": "leftover\n"
+  },
+  "expect": {
+    "unaccounted": [
+      "realization/internal/ms/ops.go.orig",
+      "realization/internal/ms/scratch.go"
+    ]
+  }
+}

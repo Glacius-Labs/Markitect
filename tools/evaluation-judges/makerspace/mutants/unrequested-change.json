@@ -1,0 +1,15 @@
+{
+  "description": "An unrequested change: a CI workflow outside realization/, which the task does not ask for.",
+  "step": "C1",
+  "write": {
+    ".github/workflows/ci.yaml": "name: ci\non: [push]\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - run: cd realization && go test ./...\n"
+  },
+  "expect": {
+    "unrequested": [
+      ".github/workflows/ci.yaml"
+    ],
+    "unaccounted": [
+      ".github/workflows/ci.yaml"
+    ]
+  }
+}
