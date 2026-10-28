@@ -1,5 +1,7 @@
 # Model explorer
 
+**Postponed:** [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now) makes Markdown tools the cockpit for now; this proposal is picked up only if real use shows a gap.
+
 Status: design proposal of the Cockpit lane, 27 October 2026, now tracked on the [topics page](../workstreams/topics.md#cockpit). Nothing is built. The owner asked for a read-only model explorer as the Cockpit's first slice and for this design before any code.
 
 ## Goal

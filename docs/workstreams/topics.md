@@ -10,19 +10,19 @@ State page of the Topics session: the owner's single place to discuss Markitect'
 
 ## Now
 
-- **Design walk-through** (started 28 October; the owner restated what Markitect is, [source](../concepts/sources/model-explicitness-20261028.md#1-what-markitect-is-restated)). Settled as designs, nothing built: the language and Libraries ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation), [DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation)), the organization ([DEC-081](../concepts/register.md#dec-081-the-organization-knows-broad-at-the-top-and-deep-below)), the Runs, Result and Commands ([DEC-082](../concepts/register.md#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager)) and the platform ([DEC-083](../concepts/register.md#dec-083-the-host-runs-natively-each-run-lives-in-containers)). Then Authoring, more Commands, one Finding input and continuous change ([DEC-084](../concepts/register.md#dec-084-continuous-change-triggers-become-findings-or-model-proposals-autonomy-grows-in-steps)). Next: the Cockpit, then a sweep of the remaining open questions.
+- **Design walk-through** (started 28 October; the owner restated what Markitect is, [source](../concepts/sources/model-explicitness-20261028.md#1-what-markitect-is-restated)). Settled as designs, nothing built: the language and Libraries ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation), [DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation)), the organization ([DEC-081](../concepts/register.md#dec-081-the-organization-knows-broad-at-the-top-and-deep-below)), the Runs, Result and Commands ([DEC-082](../concepts/register.md#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager)) and the platform ([DEC-083](../concepts/register.md#dec-083-the-host-runs-natively-each-run-lives-in-containers)). Then Authoring, more Commands, one Finding input and continuous change ([DEC-084](../concepts/register.md#dec-084-continuous-change-triggers-become-findings-or-model-proposals-autonomy-grows-in-steps)). Then the Cockpit ([DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now)). The sweep closed every question the redesign answers. Open: questions 7 (finding Libraries), 14 (confirm DEC-061's reading) and 15 (shipping the skills); 33 parked until after the rebuild.
 - **Basis:** clean. One topics page instead of seven lane pages; Main consistent again after #806 (see [Done here](#done-here)); the topic lane worktrees and branches removed (the old Cockpit lane worktree now serves the General session); question 33 (Windows tests) parked.
 
 ## Next
 
 The design walk-through, one part at a time, as the owner asked on 28 October. Each part says how it works today, what is open and a recommendation.
 
-1. **The language** (questions 38, 39, 10, 11, 9): use cases and interface bindings, risk per Package, the Library design check, the delegated decisions.
-2. **The compiler and the analysis layer** (1–7, 37): one Go analysis core in the product; where Analysis ends and a Run starts; what counts as an error.
-3. **The Manager organization:** how the hierarchy is derived from the model and what each Manager knows.
-4. **Runs, Commands and the Result** (18–24): order of Commands, convergence, the decision page, renaming.
-5. **Publication and the Git variant** (34, 35, and the parked 33).
-6. **Change over time:** Authoring (12–17), outside Findings (23, 25) and continuous change (26–29).
+1. **Closed** 28 October: one Go tool in the CLI ([DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation)).
+2. **Closed** 28 October: the model tools start no agents ([DEC-082](../concepts/register.md#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager)).
+3. **Closed** 28 October: the lint knows no special Kinds; it measures the link graph (DEC-080).
+4. **Closed** 28 October: compile errors are structure, cycles, visibility and accounting; everything else is a warning (DEC-080).
+5. **Closed** 28 October: language and compiler rules change only by owner decision, as DEC-080 defines them.
+6. **Closed** 28 October: no Cockpit app ([DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now)).
 7. **The Cockpit** (30–32).
 
 ## Topics in short
@@ -91,7 +91,7 @@ What is decided and lives nowhere else; decisions with their own page are linked
 - **Compiler and analysis** (28 October): one tool, in the product, in Go, in the `markitect` CLI: `check` (errors), `lock`, `refs`, `graph`, `impact --base <commit>`, `lint` (warnings). No Python; the tool under `tools/model-analysis/` is retired. This answers question 1 in direction.
 - **Modeling skills** (27 October): the change-task trial first; it ran as C5 and passed ([record](../validation/modeling-skill-change-trial-20261027.md)).
 - **Commands** (27–28 October): the frame, the names and A1–A6 ([commands page](commands.md)).
-- **Continuous change and Cockpit** (27 October): outside Findings and the read-only model explorer are designed as proposals; nothing is built.
+- **Cockpit** (28 October; [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now)): no Cockpit app for now; Markitect writes everything as Markdown, so Markdown tools are the cockpit; the model explorer stays a proposal; the personal agent stays parked.
 - **Organization of this work** (28 October): one Topics session for all design topics and one Build and evaluation session; the topic lanes are folded into this page. The owner restated what Markitect is ([source](../concepts/sources/model-explicitness-20261028.md#1-what-markitect-is-restated)).
 - **Records** (28 October): decisions are recorded in plain words with their date, without verbatim quotes or attributions ([record rule 1](../concepts/README.md#adding-and-changing-entries)).
 
@@ -101,39 +101,39 @@ What is decided and lives nowhere else; decisions with their own page are linked
 
 ### A. Analysis layer
 
-1. **[B] Model analysis in the product, and who owns it?** Rec: yes. First `markitect lock` and a readable `check` output (small, no compiler change); then one Go analysis package (edges, graph, refs, impact with `--base REV`, lint); then retire the Python tool. Owned here, with the skill as its first user. Unblocks the explorer, impact and shipping the skill.
-2. **[B] Where does Analysis stop and a Run start?** Rec: Analysis never calls an agent; Runs get Analysis facts as input. Impact = Analysis lists what is linked (a model diff), and an optional Run judges what else is affected.
-3. **May product lint know the standard Libraries?** Rec: yes, warnings only; the compiler stays Library-blind.
-4. **Should any lint signal become a compiler error?** Rec: only through a language change, for example a value type for Package references.
-5. **What needs an explicit owner decision?** Rec: `internal/model` semantics and diagnostics do; read-only commands and the analysis package follow normal PR rules.
-6. **A partial model when the check fails?** Rec: start without it.
+1. **Closed** 28 October: one Go tool in the CLI ([DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation)).
+2. **Closed** 28 October: the model tools start no agents ([DEC-082](../concepts/register.md#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager)).
+3. **Closed** 28 October: the lint knows no special Kinds; it measures the link graph (DEC-080).
+4. **Closed** 28 October: compile errors are structure, cycles, visibility and accounting; everything else is a warning (DEC-080).
+5. **Closed** 28 October: language and compiler rules change only by owner decision, as DEC-080 defines them.
+6. **Closed** 28 October: no Cockpit app ([DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now)).
 7. **Dependency discovery** from the lock instead of repeated `--dependency`. Needs an answer on what the lock and manifest mean. Not urgent.
 
 ### B. Language
 
 8. **Small language gaps: closed** by [DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation): good documentation does not state maps, unions, defaults or typed formats, so the model does not either.
-9. **Decisions taken under delegation** (log on branch `handover/model-quality-log`). To discuss: 9 (v2.1 Interface exposes `rate-cents-per-minute`), 4 and 10 (the analysis tool reads the model's own architecture; the `interface` signal checks typed uses only). To confirm: 1, 3, 5, 6, 7 (the skill) and 2 (Claude adapter timing). Decision 8 was replaced by the refusal decision.
-10. **Risk per Package.** A risk level, a "what failure looks like" statement or a protected flag on a Package? Rec: a Library Kind, not Core; with a deterministic hold after Verify when protected files change, and a circuit breaker.
-11. **"Do it the way code does"** as a standing check for Library design? It removed two of three proposed changes.
+9. **Closed** 28 October: the delegated decisions concerned the old Libraries and the Python tool, which the rebuild replaces; the drafts branch `handover/model-quality-log` is deleted.
+10. **Closed** 28 October: risk is a Rule in the Package, in prose; what agents may decide alone is part of the mandate ([DEC-084](../concepts/register.md#dec-084-continuous-change-triggers-become-findings-or-model-proposals-autonomy-grows-in-steps)).
+11. **Closed** 28 October: "do it the way code does" is how the redesign was made.
 
 ### C. Authoring
 
-12. **[B] Next modeling step after C5.** Rec: two skill fixes (a size limit signals a missing concept, not a reason to split; an example belongs with its rule), then one harder trial, C7 (renames) or C2 (architecture), then write the everyday change workflow from both.
-13. **Interview first?** Rec: yes for new models and architecture; no for change requests that leave nothing open.
+12. **Closed** 28 October: the skill is rewritten after the rebuild and trialled then.
+13. **Closed** 28 October: the skill asks first when something is open (Authoring).
 14. **Extract: decided** 28 October as its own skill that uses the modeling skill. Still open: confirm DEC-061 round 2 (the binding part is the contract callers rely on).
 15. **Shipping the skill** with the plugin variant, the CLI, or both? Rec: decide with the plugin variant; depends on question 1.
 16. **Who accepts model changes: decided** 28 October: the owner accepts every model change; later, changes from triggers should not each need review (see [Decided](#decided)).
-17. **Main measure for modeling:** a model change must cost less than a throwaway spec. Rec: adopt. C5 cost about 144k tokens, with no baseline yet.
+17. **Closed** 28 October: consistency and quality are the main measure; cost comes second (DEC-082).
 
 ### D. Commands and the Result
 
 18. **Which Commands first: decided** 28 October: `apply` and `verify` ([DEC-082](../concepts/register.md#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager)).
-19. **Verify convergence after a Reject.** Rec: keep the fresh full check; add the earlier Findings as input with a status per Finding; new Findings in unchanged, approved areas become "pre-existing" Notes; a round cap in the declaration.
+19. **Closed** 28 October: replaced by maker and checker per Manager (DEC-082).
 20. **The Result's form: decided** 28 October as one host-written Result page per Run ([DEC-082](../concepts/register.md#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager)).
-21. **Cost of the full tree for read-only Commands.** Rec: wait for evaluation data, then decide whether it counts as new evidence.
-22. **Project-defined Run kinds, the details:** task text, answer format, Gates, allowed verdicts, whether it may change artifacts.
+21. **Closed** 28 October: replaced by impact (DEC-082).
+22. **Closed** 28 October: replaced by Command declarations with a focus (DEC-082).
 23. **One channel for outside Findings: decided** 28 October (DEC-082): one Finding input for every source.
-24. **When to rename** mandate/Implement/Verify/check to the agreed names in concept, register and code? Rec: in one concept pass after V1 acceptance; new code uses the new names now.
+24. **Closed** 28 October: the rebuild uses the new names from the start.
 
 ### E. Continuous change
 
@@ -145,9 +145,9 @@ What is decided and lives nowhere else; decisions with their own page are linked
 
 ### F. Cockpit
 
-30. **[B] Approve the model explorer design and decide when to build.** Sub-points: the four areas, with lint shown inside Map and Read; the name `explore` until run views join; a local server in `markitect` and a plain page, no build chain; the Build session writes the code (Codex's single-writer role ended with the old cockpit); read-only first. Depends on question 1.
-31. **Run views read only the Result.** Largely settled by A4; confirm. Records on Windows sit in the Docker volume, and there is no live event stream.
-32. **Personal agent in the Cockpit** ([IDEA-015](../concepts/register.md#idea-015-cockpit-with-a-conversational-personal-agent)) stays parked unless the owner says otherwise.
+30. **Decided** 28 October as part of [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now).
+31. **Decided** 28 October as part of [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now).
+32. **Decided** 28 October as part of [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now).
 
 ### G. Platform
 
@@ -158,7 +158,7 @@ What is decided and lives nowhere else; decisions with their own page are linked
 ### H. Added when folding
 
 36. **Modeling guide Kind names.** Done on 28 October: the guide v0.3 names the Library Kinds.
-37. **What counts as an error lives in prose.** The skill tells agents to treat `unknown-package`, `dependency-rule`, `interface`, `import-cycle` and every strong lint finding as errors; no tool contract says so, and lint thresholds are provisional ([OQ-002](../concepts/register.md#open-questions)). No recommendation yet; it belongs with questions 3 and 4.
+37. **Closed** 28 October: see question 4.
 
 ### J. Library areas
 
@@ -188,7 +188,6 @@ Waiting for one owner answer, then one task each: `markitect lock` and readable 
 
 ### Housekeeping
 
-- Branch `handover/model-quality-log` holds the unreviewed drafts behind question 9. Keep it until question 9 is reviewed, then delete it.
 - Other open PRs that touch these topics: #795 (G0 design, answers question 34) and #803 (record of the owner's evening decisions of 27 October).
 
 ### Contracts the variants and the evaluation suite follow now

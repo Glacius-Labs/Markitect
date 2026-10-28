@@ -99,6 +99,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-082](#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager) | Decision | One Run per change: impact decides who works, maker and checker per Manager | Accepted direction; details open, not built |
 | [DEC-083](#dec-083-the-host-runs-natively-each-run-lives-in-containers) | Decision | The host runs natively; each Run lives in containers | Accepted design; not built |
 | [DEC-084](#dec-084-continuous-change-triggers-become-findings-or-model-proposals-autonomy-grows-in-steps) | Decision | Continuous change: triggers become Findings or model proposals, autonomy grows in steps | Accepted direction; design only |
+| [DEC-085](#dec-085-markdown-tools-are-the-cockpit-for-now) | Decision | Markdown tools are the cockpit for now | Accepted |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -1091,6 +1092,11 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - Undo: a wrong repair is reverted; a wrong model change is reverted together with its realization.
   - A circuit breaker drops the loop back a step when reverts or incidents increase, until the owner widens it again.
   - First slice after the rebuild: step 1 on one pilot project, with GitHub issues as the source.
+
+### DEC-085 Markdown tools are the cockpit for now
+
+- **Status:** Accepted by the owner, 28 October 2026, in the Topics session's design walk-through ([topics page](../workstreams/topics.md#decided)).
+- **Decision:** no Cockpit app for now. Markitect writes everything it produces as Markdown (the model per [DEC-080](#dec-080-the-model-is-typed-documentation), the registry pages, the Result of every Run, and `lint`, `impact` and `graph` output), so ordinary Markdown tools are the cockpit: Obsidian or an editor to explore the model and its links, GitHub to read Results. The [model explorer](../design/model-explorer.md) stays a proposal, to be picked up if real use shows something those tools cannot show, such as impact on the graph or a live view of a running Run. The personal agent of [IDEA-015](#idea-015-cockpit-with-a-conversational-personal-agent) stays parked.
 
 ## Promises
 
