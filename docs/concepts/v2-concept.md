@@ -197,7 +197,7 @@ No app for now ([DEC-085](register.md#dec-085-markdown-tools-are-the-cockpit-for
 
 ## 14. Open
 
-**Questions for the owner before building** (raised by the independent review of this draft):
+**Questions for the owner before building** (raised by the independent review of this draft; all ten decided on 28 October 2026 and folded into the sections above):
 
 1. **Root and the project Package: decided** 28 October: the project Package is Root itself.
 2. **Overlapping path patterns: decided** 28 October: the most specific pattern wins; Root owns what no other Package claims; two Packages with the same pattern is a compile error.
@@ -208,10 +208,22 @@ No app for now ([DEC-085](register.md#dec-085-markdown-tools-are-the-cockpit-for
 7. **Commands without a model change: decided** 28 October: a base (by default the last landed commit) with impact over model and file changes; focus Commands take the whole tree or `--package`; in `verify` the checkers write the verdicts.
 8. **Control files: decided** 28 October: accounted automatically; the hooks refuse model, manifest, lock and `execution.yaml` changes in a Run and let only a Package's own Manager change its registry page.
 9. **Results and leftovers: decided** 28 October: Results in the repository under `.markitect/results/`; Run branches cleaned up after landing; the working tree is never touched.
-10. **Acceptance.** What counts as concept 2.0 being achieved; concept 1.0's acceptance (§25) does not carry over.
+10. **Acceptance: decided** 28 October (§15).
 
 **Details for the build:** the verdict trailer format; how far impact follows dependents; the harness and model of makers and checkers; when the full Run is due; the format of a mandate; the Result page's exact layout.
 
 **Parked:** the Windows test time ([question 33](../workstreams/topics.md#questions-for-the-owner)), to be judged again after the rebuild.
 
 **Order:** the design is settled first; the evaluation and the implementations are then built against it.
+
+## 15. Acceptance
+
+Concept 2.0 is achieved when the evaluation suite shows, on a small project (the library) and a larger one (Makerspace), each over a series of changes:
+
+1. **Correct:** every landed change passes hidden behavior tests that no agent saw.
+2. **No drift:** after the series, an independent `verify --full` finds nothing left over: no stale file, no forgotten rule, every file accounted for.
+3. **Nothing skipped:** in every Result, every checklist item has a verdict with evidence.
+4. **Stops right:** planted model defects end the Run without landing; harmless gaps do not.
+5. **At least as trustworthy as today's practice:** on the same series, the results are at least as consistent as one strong agent with ordinary documentation ([DEC-002](register.md#dec-002-trust-is-measured-against-todays-practice)). Cost is reported, not judged.
+
+The same series runs natively on Windows and on Linux, on our own machine. The exact numbers, the change series and the planted defects belong to the evaluation design.
