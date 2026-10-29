@@ -76,7 +76,7 @@ The review fixes (`cc44e98d`) and the trailer fix (`4d63d305`) came after attemp
 
 **Attempt 1** (`t5-codex-1`, source `4d63d305`, the same Go Manager image), 01:52–02:17Z.
 
-**Model.** It ran `gpt-6-sol`: the adapter's default at the time, which every provider event confirms. It did not run Luna. After this run, the Codex default became `gpt-6-luna`, in `internal/bootstrap` beside Claude's default, because the owner's Codex series run on Luna and Sol runs only when a dispatch names it with `MARKITECT_MODEL`. A Luna repeat of this smoke follows the counted series.
+**Model.** It ran `gpt-6-sol`, the adapter's default at the time. The turn metadata Codex attaches to its MCP calls names `gpt-6-sol` in 40 of the 42 starts. The other two made no call: lending/reminders's third checker start failed on capacity, and its fourth was cancelled at the stop. It did not run Luna. After this run, the Codex default became `gpt-6-luna`, in `internal/bootstrap` beside Claude's default, because the owner's Codex series run on Luna and Sol runs only when a dispatch names it with `MARKITECT_MODEL`. A Luna repeat of this smoke follows the counted series.
 
 **Q6, `apply`: did not land.** It ended `incomplete` after 24 minutes: "Manager lending used its 6 maker starts without approved work". Its Result stays on `markitect/runs/t5-codex-1-apply`.
 
@@ -96,7 +96,7 @@ The review fixes (`cc44e98d`) and the trailer fix (`4d63d305`) came after attemp
 
 **Q6, `verify --full`: correct outcome.** It ended `findings` in 55 seconds. With nothing landed, the target held the model only.
 
-- All five checkers pushed verdicts, so the trailer fix held for Codex too.
+- All five checkers pushed verdicts. The trailer fix is still unobserved for Codex: with nothing landed, `verify` started from the owner's commit, not from a landing commit with `Run-*` trailers.
 - They gave all 40 items `deviates` with evidence, and their reviews were approved.
 - The required `build` check ran once on Root's verdicts and failed, as it must on a repository without code.
 - 556,887 input and 8,256 output tokens.
