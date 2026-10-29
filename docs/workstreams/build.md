@@ -19,8 +19,10 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 
 ## Next
 
-1. **T7, pilot:** its report, with the organization's cost per Manager on the fixed starts.
-2. **Counted series:** the protocol, its independent review recorded under `docs/validation/`, then the counted series on the Library, Makerspace and the new project.
+1. **Result fixes,** from an independent assessment of `main`: a Run whose commit is on the target after a failed landing push counts as landed (decided by ancestry), and the stored Result page holds the cleanup's outcome as the returned Result does. Then the full-check count below in every Result. Neither bug can occur in the pilot, whose targets take one Run at a time and whose arm keeps the returned Result.
+2. **T7, pilot:** its report, with the organization's cost per Manager on the fixed starts.
+3. **Counted series:** the protocol, its independent review recorded under `docs/validation/`, then the counted series on the Library, Makerspace and the new project. A native Codex smoke since the submit reply's fix, once the engine is free.
+4. **The owner's time:** after the counted series, the owner's measurement below.
 
 ## Decisions
 
@@ -46,6 +48,8 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 - **Fixed starts, 29 October 2026:** a fixed reference start reaches the 2.0 arm with registry pages that link each file to the Definitions it realizes, written as an owner adopting Markitect would write them; K gets the same reference files without the pages. This holds for every fixed start the pilot runs and for every fixed start of the counted series. The case without pages ([record](../validation/t7-arm-smoke-20261029.md)) ran once, as the escalation fix's regression run (above). Build decided on the T7 session's finding.
 
 - **Pilot scope, 29 October 2026:** in the pilot, the 2.0 arm runs the chains M1–M5 and W0–C9, the Library's fixed starts M2–M5 and every planted task (two on the Library, three on Makerspace; a planted task also starts from a reference result, so it gets that result's registry pages). It skips the Makerspace fixed starts C1–C9; K runs them too. With one run per task and each chain step counted as one launch, that is 57 launches: 24 for the 2.0 arm and 33 for K. The counted series runs every fixed start for both arms. The T7 session advised this scope, and the owner chose it there: "Library only, as advised".
+
+- **Full check and the series' claim, 29 October 2026:** the full check is `verify --full`, at every milestone the owner names and once ten changes have landed since the last one; an `apply --full` that lands counts too. Every Result says how many changes have landed since then and, from ten on, that a full check is due; the host starts nothing itself. The counted series claims only what it measures: at least K's quality and fewer defects left for a person per change at comparable input, not saved time. Time saved is measured afterwards: on the new project the owner takes three changes per arm to acceptance, blinded, and records minutes and corrections. The owner decided through the Topics session ([DEC-082](../concepts/register.md#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager), [concept §15](../concepts/v2-concept.md), PRs [#883](https://github.com/Glacius-Labs/Markitect/pull/883) and [#884](https://github.com/Glacius-Labs/Markitect/pull/884)).
 
 - **A new Package's first path patterns, 29 October 2026:** when the owner adds a Package, the owner also writes its registry page with the first path patterns. From then on its Manager maintains them, and a change takes effect from the next Run. `lint` warns about a Package other than Root that claims no pattern. The owner accepted Build's recommendation through the Topics session ([DEC-081](../concepts/register.md#dec-081-the-organization-knows-broad-at-the-top-and-deep-below), [PR #876](https://github.com/Glacius-Labs/Markitect/pull/876)).
 
