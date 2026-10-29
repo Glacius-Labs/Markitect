@@ -1,7 +1,7 @@
 """The change series of the portfolio: each step's task.md and model, as chain steps.
 
   python -I -B series.py steps --series library|makerspace [--steps M1,M2,...] --out NEW_DIR
-  python -I -B series.py base --series library|makerspace --step STEP --out NEW_DIR
+  python -I -B series.py base --series library|makerspace --step STEP [--unlinked] --out NEW_DIR
 
 A step directory holds what `suite.py task` and `suite.py chain --step` read:
 `task.md`, the ordinary documentation every variant receives, and `model/`,
@@ -20,7 +20,8 @@ plus the project's registry pages, which give each Package the paths it owns
 wrote for that step's reference result (tools/evaluation-tasks/PROJECT/
 references/STEP/), which name every file of the reference with its owner and the
 Definitions it realizes. The 2.0 arm adopts the start with them; K never reads
-the base model.
+the base model. `--unlinked` leaves the pages out on purpose: the arm then adopts
+every file with a row without links (a regression run of that fallback).
 
 The step names are the steps of the series judges in tools/evaluation-judges
 (`suite.py judge --step`, `judge-chain --steps`). Nothing here is hidden
@@ -78,19 +79,20 @@ def reference_pages(series, step, repo=REPO):
     """The registry pages an owner wrote for STEP's reference result, or None: <project>/references/<step>/."""
     _, model = sources(series, step, repo)
     pages = model.parent / "references" / step.lower()
-    return pages if (pages / "registry.md").is_file() else None
+    return pages if (pages / "registry.md").is_file() and (pages / "registry").is_dir() else None
 
 
-def write_base(series, step, out, repo=REPO):
+def write_base(series, step, out, repo=REPO, pages=True):
     """The model a fixed reference start of STEP realizes, as `suite.py task --base-model` takes it: STEP's model with
     the registry pages of STEP's reference result, which name each of its files with its owner and the Definitions it
-    realizes. Without such pages, the project's own pages, and the 2.0 arm adopts the files without links."""
+    realizes. Without such pages, or with pages=False (the unlinked fallback, chosen on purpose), the project's own
+    pages, and the 2.0 arm adopts the files without links."""
     out = pathlib.Path(out)
     if out.exists():
         raise SeriesError(f"{out} exists")
     _, model = sources(series, step, repo)
     shutil.copytree(model, out)
-    pages = reference_pages(series, step, repo)
+    pages = reference_pages(series, step, repo) if pages else None
     if pages:
         shutil.copytree(pages / "registry", out / "registry")
         shutil.copyfile(pages / "registry.md", out / "registry.md")
@@ -120,11 +122,12 @@ def main(argv=None):
     b = sub.add_parser("base")
     b.add_argument("--series", required=True)
     b.add_argument("--step", required=True, help="the step whose reference result is the start")
+    b.add_argument("--unlinked", action="store_true", help="leave out the reference's registry pages: the arm adopts without links")
     b.add_argument("--out", required=True)
     a = p.parse_args(argv)
     try:
         if a.cmd == "base":
-            written = write_base(a.series, a.step, a.out)
+            written = write_base(a.series, a.step, a.out, pages=not a.unlinked)
         else:
             written = write_steps(a.series, a.out, [x.strip() for x in a.steps.split(",")] if a.steps else None)
     except SeriesError as e:

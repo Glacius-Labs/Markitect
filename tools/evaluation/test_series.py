@@ -438,12 +438,59 @@ class ReferencePagesTest(unittest.TestCase):
                     self.assertEqual({p.relative_to(model / "registry").as_posix()[:-3] for p in (model / "registry").rglob("*.md")}, packages)
                     self.assertNotIn("/**", "".join(p.read_text(encoding="utf-8") for p in pages))
 
+    def test_every_file_is_listed_once_on_the_page_of_its_owner(self):
+        """Every file of the reference exactly once, on the page of the lowest common parent of the Packages it links."""
+        row = re.compile(r"^\| `([^`]+)` \| ([^|]*) \|", re.M)
+        for name, steps in STARTS.items():
+            for step in steps:
+                with self.subTest(series=name, step=step), tempfile.TemporaryDirectory() as tmp:
+                    series.write_base(name, step, pathlib.Path(tmp) / "base")
+                    model = pathlib.Path(tmp) / "base"
+                    packages = {p.relative_to(model / "model").as_posix() for p in (model / "model").rglob("*") if p.is_dir()}
+                    listed = []
+                    for page in [model / "registry.md", *(model / "registry").rglob("*.md")]:
+                        owner = "" if page.name == "registry.md" and page.parent == model else page.relative_to(model / "registry").as_posix()[:-3]
+                        for path, cell in row.findall(page.read_text(encoding="utf-8")):
+                            listed.append(path)
+                            homes = []
+                            for link in LINK.findall(cell):
+                                parts = link.split("/")[:-1]
+                                while parts and "/".join(parts) not in packages:
+                                    parts.pop()
+                                homes.append(parts)
+                            common = homes[0] if homes else []
+                            for h in homes[1:]:
+                                n = 0
+                                while n < min(len(common), len(h)) and common[n] == h[n]:
+                                    n += 1
+                                common = common[:n]
+                            self.assertEqual("/".join(common), owner, path)
+                    tree, at = judges.references(JUDGES / name)[step]
+                    files = sorted(((at + "/") if at else "") + p.relative_to(tree).as_posix() for p in tree.rglob("*") if p.is_file())
+                    self.assertEqual(sorted(listed), files)
+
+    def test_no_planted_text_is_in_the_pages_of_a_plants_start(self):
+        """A planted task starts from the reference of the step before; its pages hold nothing the plant removes."""
+        before = {"M2": "M1", "C3": "C2", "C5": "C4", "C6": "C5"}
+        for plant in sorted((JUDGES / "plants").glob("*.json")):
+            record = json.loads(plant.read_text(encoding="utf-8"))
+            removed = list(record.get("absent", [])) + [e["old"] for e in record["model"]]
+            with self.subTest(plant=plant.stem), tempfile.TemporaryDirectory() as tmp:
+                series.write_base(record["series"], before[record["step"]], pathlib.Path(tmp) / "base")
+                model = pathlib.Path(tmp) / "base"
+                text = "".join(p.read_text(encoding="utf-8") for p in [model / "registry.md", *(model / "registry").rglob("*.md")])
+                self.assertEqual([s for s in removed if s in text], [])
+
     def test_a_step_without_pages_gets_the_projects(self):
         with tempfile.TemporaryDirectory() as tmp:
             base = series.write_base("library", "M5", pathlib.Path(tmp) / "base")
             self.assertIsNone(base["pages"])
             self.assertTrue((pathlib.Path(tmp) / "base" / "registry" / "lending.md").is_file())
             self.assertFalse((pathlib.Path(tmp) / "base" / "registry.md").exists())
+            # The unlinked fallback, chosen on purpose for a step that has pages: the project's pages, as for M5.
+            self.assertEqual(series.main(["base", "--series", "library", "--step", "M1", "--unlinked", "--out", str(pathlib.Path(tmp) / "plain")]), 0)
+            self.assertFalse((pathlib.Path(tmp) / "plain" / "registry.md").exists())
+            self.assertIn("realization/internal/lending/**", (pathlib.Path(tmp) / "plain" / "registry" / "lending.md").read_text(encoding="utf-8"))
 
 
 @unittest.skipUnless(go_version() and go_version() >= 27, "needs Go 1.27 or later to build markitect")
