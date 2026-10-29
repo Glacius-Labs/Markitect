@@ -95,6 +95,9 @@ func (h *host) up(t agentport.Tool, kind, text string) (agentport.Message, error
 	m := s.send(n, kind, n.parent.name, "", text)
 	n.waitFor[m.ID] = true
 	n.sent = true
+	if kind == agentport.Escalation {
+		s.hold(n, m.ID)
+	}
 	return m, nil
 }
 

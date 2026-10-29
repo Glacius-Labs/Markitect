@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -143,6 +144,7 @@ func TestEscalationSettledByParent(t *testing.T) {
 	base, _ := changeBook(f)
 	a := f.agents
 	var question string
+	var rootEnded atomic.Bool
 	a.On("catalog", maker,
 		agentfake.Call(func(ctx context.Context, s agentport.Start, h agentport.Host) error {
 			m, err := h.Escalate(ctx, "Must an isbn be unique across copies?")
@@ -153,6 +155,11 @@ func TestEscalationSettledByParent(t *testing.T) {
 			if len(s.Inbox) != 1 || s.Inbox[0].Kind != agentport.Answer || s.Inbox[0].ReplyTo != question {
 				return agentfake.Fail(errorf("no answer: %+v", s.Inbox))
 			}
+			// The answer settles the matter only once Root's start has
+			// ended, which could still have changed Root's files.
+			if !rootEnded.Load() {
+				return agentfake.Fail(errorf("catalog started again while Root's answering start ran"))
+			}
 			return a.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ Title, ISBN string }\n"}, word("changed"))(ctx, s, h)
 		})
 	a.On("catalog", checker, a.Review(nil))
@@ -162,6 +169,8 @@ func TestEscalationSettledByParent(t *testing.T) {
 				return errorf("Root got %+v", s.Inbox)
 			}
 			_, err := h.Answer(ctx, s.Inbox[0].ID, "Per title, as the model says nothing more: realization freedom.")
+			time.Sleep(500 * time.Millisecond)
+			rootEnded.Store(true)
 			return err
 		}),
 		a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
@@ -173,6 +182,274 @@ func TestEscalationSettledByParent(t *testing.T) {
 	}
 	if len(r.Messages) < 2 || r.Messages[0].Kind != agentport.Escalation {
 		t.Fatalf("messages %+v", r.Messages)
+	}
+}
+
+// The shape of the T7 smoke's launch 3: Root has no items, so catalog starts
+// at once; the change needs a file of Root's, so catalog escalates and Root
+// settles it with a commit of its own. Root's settlement is checked before
+// its child is approved, catalog continues from that approval, and only then
+// does Root integrate catalog's approved work. Before, catalog restarted on
+// the answer without Root's fix and Root's submission waited for catalog's
+// approval, so neither could converge.
+func TestEscalationSettledByAParentsCommit(t *testing.T) {
+	f := newFixture(t)
+	base, _ := changeBook(f)
+	a := f.agents
+	readme := "# Library\n\nBooks carry an isbn.\n"
+	var escalation string
+	a.On("catalog", maker,
+		agentfake.Call(func(ctx context.Context, s agentport.Start, h agentport.Host) error {
+			m, err := h.Escalate(ctx, "The isbn must be in README.md, which is Root's file.")
+			escalation = m.ID
+			return err
+		}),
+		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+			var answered, told bool
+			for _, msg := range s.Inbox {
+				answered = answered || (msg.Kind == agentport.Answer && msg.ReplyTo == escalation)
+				told = told || strings.Contains(msg.Text, s.Git.Base)
+			}
+			if !answered || !told {
+				return agentfake.Fail(errorf("catalog starts again without the answer and its parent's approval %s: %+v", s.Git.Base, s.Inbox))
+			}
+			// A submission must hold the commit its work continues from.
+			return a.Submit(nil, map[string]string{"src/catalog/book.go": isbn}, word("changed"))(ctx, s, h)
+		},
+		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+			if len(s.Inbox) != 1 || !strings.Contains(s.Inbox[0].Text, "does not contain "+s.Git.Base) {
+				return agentfake.Fail(errorf("inbox %+v", s.Inbox))
+			}
+			return a.Submit([]string{"root"}, nil, word("changed"))(ctx, s, h)
+		})
+	a.On("catalog", checker, func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+		w, err := a.Clone(ctx, s)
+		if err != nil {
+			return agentfake.Fail(err)
+		}
+		if data, err := os.ReadFile(filepath.Join(w.Dir, "README.md")); err != nil || string(data) != readme {
+			return a.Review(map[string]string{"catalog/book": "README.md does not name the isbn"})(ctx, s, h)
+		}
+		return a.Review(nil)(ctx, s, h)
+	})
+	a.On(".", maker,
+		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+			if len(s.Inbox) != 1 || s.Inbox[0].Kind != agentport.Escalation || !strings.Contains(s.Task, "catalog") {
+				return agentfake.Fail(errorf("Root got %+v, task %q", s.Inbox, s.Task))
+			}
+			if _, err := h.Answer(ctx, s.Inbox[0].ID, "README.md names the isbn now; continue from my approved work."); err != nil {
+				return agentfake.Fail(err)
+			}
+			return a.Submit(nil, map[string]string{"README.md": readme}, word("conforms"))(ctx, s, h)
+		},
+		a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
+	a.On(".", checker, a.Review(nil), a.Review(nil))
+
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateLanded {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+	if f.show("main", "README.md") != strings.TrimSpace(readme) || !strings.Contains(f.show("main", "src/catalog/book.go"), "ISBN") {
+		t.Fatal("the settlement or the child's work did not land")
+	}
+	// Root's settlement was approved before catalog started again, and
+	// catalog was approved before Root integrated it.
+	if got := startOrder(a); got != "catalog maker, . maker, . checker, catalog maker, catalog maker, catalog checker, . maker, . checker" {
+		t.Fatalf("order: %s", got)
+	}
+}
+
+// startOrder lists the starts in the order they began.
+func startOrder(a *agentfake.Agents) string {
+	var order []string
+	for _, st := range a.Starts() {
+		order = append(order, st.Manager.ID+" "+string(st.Role))
+	}
+	return strings.Join(order, ", ")
+}
+
+// pushWork returns a maker Step that pushes a work commit, no submission.
+func pushWork(a *agentfake.Agents, files map[string]string) agentfake.Step {
+	return func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+		w, err := a.Clone(ctx, s)
+		if err != nil {
+			return agentfake.Fail(err)
+		}
+		for f, content := range files {
+			if err := w.Write(f, content); err != nil {
+				return agentfake.Fail(err)
+			}
+		}
+		if err := w.Commit("work in progress"); err != nil {
+			return agentfake.Fail(err)
+		}
+		if err := w.Push(); err != nil {
+			return agentfake.Fail(err)
+		}
+		return agentfake.Done()
+	}
+}
+
+// readmeReview approves only a submission whose README.md is readme.
+func readmeReview(a *agentfake.Agents, readme string) agentfake.Step {
+	return func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+		w, err := a.Clone(ctx, s)
+		if err != nil {
+			return agentfake.Fail(err)
+		}
+		if data, err := os.ReadFile(filepath.Join(w.Dir, "README.md")); err != nil || string(data) != readme {
+			return a.Review(map[string]string{"catalog/book": "README.md does not name the isbn"})(ctx, s, h)
+		}
+		return a.Review(nil)(ctx, s, h)
+	}
+}
+
+// A child that escalates and submits in the same start, and a parent that
+// answers and pushes only a work commit: the parent is still asked for a
+// submission, and the child's submission from before the settlement is never
+// reviewed.
+func TestASettlementOutlivesStaleWork(t *testing.T) {
+	f := newFixture(t)
+	base, _ := changeBook(f)
+	a := f.agents
+	readme := "# Library\n\nBooks carry an isbn.\n"
+	a.On("catalog", maker,
+		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+			if _, err := h.Escalate(ctx, "The isbn must be in README.md, which is Root's file."); err != nil {
+				return agentfake.Fail(err)
+			}
+			return a.Submit(nil, map[string]string{"src/catalog/book.go": isbn}, word("changed"))(ctx, s, h)
+		},
+		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+			if len(s.Inbox) != 2 || !strings.Contains(s.Inbox[1].Text, s.Git.Base) {
+				return agentfake.Fail(errorf("inbox %+v", s.Inbox))
+			}
+			return a.Submit([]string{"root"}, nil, word("changed"))(ctx, s, h)
+		})
+	a.On("catalog", checker, readmeReview(a, readme))
+	a.On(".", maker,
+		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+			if _, err := h.Answer(ctx, s.Inbox[0].ID, "README.md names the isbn now."); err != nil {
+				return agentfake.Fail(err)
+			}
+			return pushWork(a, map[string]string{"README.md": readme})(ctx, s, h)
+		},
+		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+			if len(s.Inbox) != 1 || !strings.Contains(s.Inbox[0].Text, "which is no submission") {
+				return agentfake.Fail(errorf("inbox %+v", s.Inbox))
+			}
+			return a.Submit(nil, nil, word("conforms"))(ctx, s, h)
+		},
+		a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
+	a.On(".", checker, a.Review(nil), a.Review(nil))
+
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateLanded {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+	if got := startOrder(a); got != "catalog maker, . maker, . maker, . checker, catalog maker, catalog checker, . maker, . checker" {
+		t.Fatalf("order: %s", got)
+	}
+}
+
+// An approved model-problem verdict escalates as the tool does: the parent's
+// settlement with a commit is checked first, and the child continues from it.
+// loans escalates to members, whose settling commit names a model problem and
+// so escalates to Root. Root and then members answer without a change; loans
+// still continues from members' approved settlement.
+func TestAnAnswerKeepsTheParentsSettlement(t *testing.T) {
+	f := newFixture(t)
+	base := f.tip("main")
+	f.write(map[string]string{
+		m + "members/member.md":     def("std/Concept", "Member", "A person with a card."),
+		m + "members/loans/loan.md": def("std/Concept", "Loan", "A [[members/member]] borrows with a card."),
+	})
+	f.commit("cards")
+	a := f.agents
+	var escalation string
+	a.On("members/loans", maker,
+		agentfake.Call(func(ctx context.Context, s agentport.Start, h agentport.Host) error {
+			m, err := h.Escalate(ctx, "The card type is in src/members/member.go, members' file.")
+			escalation = m.ID
+			return err
+		}),
+		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+			var told bool
+			for _, msg := range s.Inbox {
+				told = told || (strings.Contains(msg.Text, s.Git.Base) && strings.Contains(msg.Text, escalation))
+			}
+			if !told {
+				return agentfake.Fail(errorf("loans starts again from %s without members' settlement: %+v", s.Git.Base, s.Inbox))
+			}
+			return a.Submit([]string{"managers/members"}, map[string]string{"src/members/loans/loan.go": "package loans\n\nconst Card = true\n"}, word("changed"))(ctx, s, h)
+		})
+	a.On("members/loans", checker, a.Review(nil))
+	answer := func(ctx context.Context, s agentport.Start, h agentport.Host) error {
+		for _, msg := range s.Inbox {
+			if msg.Kind == agentport.Escalation {
+				_, err := h.Answer(ctx, msg.ID, "Realization freedom; nothing more to change.")
+				return err
+			}
+		}
+		return errorf("%s got %+v", s.Manager.ID, s.Inbox)
+	}
+	a.On("members", maker,
+		a.Submit(nil, nil, word("conforms")),
+		a.Submit(nil, map[string]string{"src/members/member.go": "package members\n\ntype Card string\n"}, word("model-problem")),
+		agentfake.Call(func(ctx context.Context, s agentport.Start, h agentport.Host) error {
+			if len(s.Inbox) != 1 || s.Inbox[0].Kind != agentport.Answer {
+				return errorf("members got %+v", s.Inbox)
+			}
+			_, err := h.Answer(ctx, escalation, "Realization freedom; nothing more to change.")
+			return err
+		}),
+		a.Submit([]string{"managers/members.loans"}, nil, word("conforms")))
+	a.On("members", checker, a.Review(nil), a.Review(nil), a.Review(nil))
+	a.On(".", maker, agentfake.Call(answer), a.Submit([]string{"managers/members"}, nil, word("conforms")))
+	a.On(".", checker, a.Review(nil))
+
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateLanded {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+	if !strings.Contains(f.show("main", "src/members/member.go"), "Card") || !strings.Contains(f.show("main", "src/members/loans/loan.go"), "Card") {
+		t.Fatal("the settlement or the child's work did not land")
+	}
+}
+
+func TestAModelProblemSettledByAParentsCommit(t *testing.T) {
+	f := newFixture(t)
+	base, _ := changeBook(f)
+	a := f.agents
+	readme := "# Library\n\nBooks carry an isbn.\n"
+	a.On("catalog", maker,
+		a.Submit(nil, nil, word("model-problem")),
+		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+			if len(s.Inbox) != 2 || !strings.Contains(s.Inbox[1].Text, s.Git.Base) {
+				return agentfake.Fail(errorf("inbox %+v", s.Inbox))
+			}
+			return a.Submit([]string{"root"}, map[string]string{"src/catalog/book.go": isbn}, word("changed"))(ctx, s, h)
+		})
+	a.On("catalog", checker, a.Review(nil), readmeReview(a, readme))
+	a.On(".", maker,
+		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+			if len(s.Inbox) != 1 || s.Inbox[0].Kind != agentport.Escalation {
+				return agentfake.Fail(errorf("Root got %+v", s.Inbox))
+			}
+			if _, err := h.Answer(ctx, s.Inbox[0].ID, "README.md names the isbn now."); err != nil {
+				return agentfake.Fail(err)
+			}
+			return a.Submit(nil, map[string]string{"README.md": readme}, word("conforms"))(ctx, s, h)
+		},
+		a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
+	a.On(".", checker, a.Review(nil), a.Review(nil))
+
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateLanded {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+	if got := startOrder(a); got != "catalog maker, catalog checker, . maker, . checker, catalog maker, catalog checker, . maker, . checker" {
+		t.Fatalf("order: %s", got)
 	}
 }
 

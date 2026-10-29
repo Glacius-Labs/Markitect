@@ -479,7 +479,7 @@ func TestMakerSubmitsWithTrailersAndTheTurnAnswers(t *testing.T) {
 	if !firstErr || !strings.Contains(first, `"members/member" has no verdict`) {
 		t.Fatalf("incomplete submission: %v %s", firstErr, first)
 	}
-	if secondErr || !strings.Contains(second, "submitted ") {
+	if secondErr || !strings.Contains(second, "submitted ") || !strings.Contains(second, "not an approval") || !strings.Contains(second, "review message in your inbox") {
 		t.Fatalf("submission: %v %s", secondErr, second)
 	}
 	if out.End != agents.Answered || out.Conversation != "s-1" || out.Model != "claude-sonnet-5-5" || out.Usage.CacheRead != 30 {
