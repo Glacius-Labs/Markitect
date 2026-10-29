@@ -51,14 +51,15 @@ The owner's [founding intent](concepts/sources/founding-intent-20261026.md) expl
 
 | Typed language | Canonical model |
 | --- | --- |
-| type, class, function signature | Kind, itself a Definition of Kind `Kind` |
-| declaration | Definition: one Markdown file with front matter |
+| type, class, function signature | Kind |
+| field, parameter | Property |
+| declaration | Definition |
 | function body | body: binding prose that agents realize |
-| namespace, module | Package: a folder |
-| standard library, packages | Libraries of Kind Definitions; `std`, `rest` and `cli` ship in the binary |
+| namespace, module | Package |
+| standard library, packages | Libraries, imported as model dependencies |
 | static type checker | compiler: structure only, never meaning |
 
-Concept 2.0 keeps the analogy but has no typed fields and no imports: exact values such as error codes are written in prose, and links name their target by path ([concept §2](concepts/v2-concept.md#2-the-model)). The founding intent was given while the model was still V1's typed YAML with imports ([V1 concept](concepts/v1-concept.md)).
+The owner gave this analogy while the model was still V1's typed YAML. Concept 2.0 keeps it with two changes: there are no typed Properties, so exact values such as error codes are written in prose, and there are no imports, since links name their target by path and Libraries ship in the binary ([concept §2](concepts/v2-concept.md#2-the-model)). A Kind is itself a Definition of Kind `Kind`, a Definition is one Markdown file with front matter, and a Package is a folder.
 
 - The core stays clean. Projects define their own Kinds and so form their own language; Libraries supply common Kinds, oriented on what Go or C# ship, so that no project reinvents them.
 - The compiler checks structural correctness from the core alone. Meaning is judged by the agents and the Manager hierarchy.
@@ -109,7 +110,7 @@ The owner's [foundations](#foundations-restated-on-17-october-2026) connect mode
 
 ## Product definition
 
-**Markitect is the canonical model of a project's intended world and the responsibilities for realizing it.** A project organizes concepts, rules, architecture, workflows and decisions into Packages. One Manager per Package realizes that slice, and the Managers form a hierarchy that follows the Packages ([DEC-025](concepts/register.md#dec-025-package-managers-organize-realization)). Markitect keeps a registry, one Markdown page per Package maintained by its Manager, that links every file to the Definitions it realizes; every other file is a Markitect input or explicitly ignored ([§4](concepts/v2-concept.md#4-the-realization-record)). The model lives under `.markitect/` in the adopting repository, as Markdown that people and agents read directly. Provider, editor and file-format choices are implementation details unless the project deliberately makes them part of its intent.
+**Markitect is the canonical model of a project's intended world and the responsibilities for realizing it.** A project organizes concepts, rules, architecture, workflows and decisions into Packages. One Manager per Package realizes that slice, and the Managers form a hierarchy that follows the Packages ([DEC-025](concepts/register.md#dec-025-package-managers-organize-realization)). Markitect keeps a registry, one Markdown page per Package maintained by its Manager, that links every realizing file to the Definitions it realizes; every other file is a Markitect input or explicitly ignored ([§4](concepts/v2-concept.md#4-the-realization-record)). The model lives under `.markitect/` in the adopting repository, as Markdown that people and agents read directly. Provider, editor and file-format choices are implementation details unless the project deliberately makes them part of its intent.
 
 **Owners change the model. Managers coordinate realization.** The target flow is:
 
