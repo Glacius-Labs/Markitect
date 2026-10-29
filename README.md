@@ -93,7 +93,7 @@ or above the limit, the member cannot borrow another copy. Returning a copy is
 always possible.
 ```
 
-Changing `5` to `3` changes **accepted intent**; which files must follow is Markitect's work. A conforming realization must reflect the new boundary in behavior, tests, and relevant documentation **without** deleting existing loans or breaking returns. Artifacts that are already correct stay as they are, whatever style an agent would prefer.
+Changing `5` to `3` changes **accepted intent**; which files must follow is for the Managers to determine. A conforming realization must reflect the new boundary in behavior, tests, and relevant documentation **without** deleting existing loans or breaking returns. Artifacts that are already correct must stay as they are, whatever style an agent would prefer.
 
 The [Library model](testdata/library/README.md) is this example in full; it is still in V1's form until step T2 converts it. The [measurement guide](docs/guides/measurement.md) describes how Markitect is compared with ordinary agentic coding. A reliable preservation result across successive changes is **not yet established**.
 
