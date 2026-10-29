@@ -236,6 +236,12 @@ class JudgeKitTest(unittest.TestCase):
         for path in (".markitect/registry/a.md", ".markitect/registry.md", ".markitect/ignore.md", ".markitect/results/r1.md"):
             self.assertEqual(categories[path], "bookkeeping", path)
         self.assertEqual(categories["realization/a.go"], "requested")
+        # A model file the task's model no longer has may go, as the owner's own change of the model; one it still has may not.
+        before = suite.git(repo, "rev-parse", "HEAD")
+        run("rm", "-q", ".markitect/model/root/rule.md", ".markitect/model/root/project.md")
+        run("-c", "commit.gpgsign=false", "commit", "-q", "-m", "next step")
+        result = judgekit.scope(task, repo, before, suite.git(repo, "rev-parse", "HEAD"), "realization/")
+        self.assertEqual(result["protectedTouched"], [".markitect/model/root/project.md"])
 
 
 class SeriesSourceTest(unittest.TestCase):
@@ -317,6 +323,13 @@ class PortfolioSeriesTest(unittest.TestCase):
                     self.assertTrue((folder / "task.md").read_text(encoding="utf-8").startswith("# "))
                     for part in ("manifest.yaml", "lock.yaml", "execution.yaml", "model/project.md"):
                         self.assertTrue((folder / "model" / part).is_file(), part)
+                    # The owner's registry pages give every Package below Root its paths before the first Run.
+                    packages = {p.relative_to(folder / "model" / "model").as_posix() for p in (folder / "model" / "model").rglob("*")
+                                if p.is_dir()}
+                    pages = {p.relative_to(folder / "model" / "registry").as_posix()[:-3] for p in (folder / "model" / "registry").rglob("*.md")}
+                    self.assertEqual(pages, packages)
+                    for page in (folder / "model" / "registry").rglob("*.md"):
+                        self.assertRegex(page.read_text(encoding="utf-8"), r"^---\npaths:\n(  - realization/\S+/\*\*\n)+---\n")
         with self.assertRaisesRegex(series.SeriesError, "not steps"):
             series.write_steps("library", self.tmp / "bad", ["M9"])
 

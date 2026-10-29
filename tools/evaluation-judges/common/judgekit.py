@@ -29,7 +29,8 @@ import time
 FORMAT = 1
 LOG_TAIL = 4000
 # Markitect's own bookkeeping: registry pages (Root's is registry.md), the ignore list and Results.
-# Anything else under .markitect/ is a protected input.
+# Anything else under .markitect/ is a protected input: the task's model, which the 2.0 arm commits as the owner's
+# input; it is in scope when it is as the task's model has it (as_task_model).
 BOOKKEEPING = (".markitect/registry.md", ".markitect/registry/", ".markitect/ignore.md", ".markitect/results/")
 TASK_INPUTS = ("task.md", "TASK.md")
 # Files outside the program that every repository may carry.
@@ -113,16 +114,17 @@ def is_binary(repo, rev, path):
     return blob.returncode == 0 and (blob.stdout[:4] == b"\x7fELF" or blob.stdout[:2] == b"MZ")
 
 
-def model_copy(task, repo, commit, path):
-    """Whether a changed file under .markitect/ is byte-equal to the task's own model file at the same relative path."""
+def as_task_model(task, repo, commit, path, status):
+    """Whether a changed file under .markitect/ is as the task's own model has it at the same relative path: byte-equal,
+    or deleted where the task's model has no such file (the owner removed it from the model, as at Library M5)."""
     if not path.startswith(".markitect/"):
         return False
     rest = path[len(".markitect/"):]
+    origins = (task / "model" / rest, task / "model" / rest.removeprefix("model/"))
+    if status == "D":
+        return not any(origin.exists() for origin in origins)
     blob = subprocess.run(["git", "-C", str(repo), "cat-file", "blob", f"{commit}:{path}"], capture_output=True).stdout
-    for origin in (task / "model" / rest, task / "model" / rest.removeprefix("model/")):
-        if origin.is_file() and origin.read_bytes() == blob:
-            return True
-    return False
+    return any(origin.is_file() and origin.read_bytes() == blob for origin in origins)
 
 
 def scope(task, repo, start, commit, requested):
@@ -139,7 +141,7 @@ def scope(task, repo, start, commit, requested):
         else:
             category = "requested" if path.startswith(requested) else "other"
         changed.append({"status": status, "path": path, "category": category})
-        if category == "protected" and not (status != "D" and model_copy(task, repo, commit, path)):
+        if category == "protected" and not as_task_model(task, repo, commit, path, status):
             protected.append(path)
         elif category in ("build_residue", "other"):
             unrequested.append(path)

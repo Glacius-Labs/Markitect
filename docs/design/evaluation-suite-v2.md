@@ -1,6 +1,6 @@
 # Evaluation suite v2
 
-**Status:** design, approved in direction by the owner on 28 October 2026; E1 and E2 are built. On 28 October 2026 the target became concept 2.0, and E3 to E6 were replaced by steps T6 and T7 of its [build](../implementation-plan.md#concept-20-build), which compare one 2.0 implementation with K; the sections on the arms M, P and G below are historical. T6's parts that do not need the 2.0 implementation are built ([T6 below](#t6-evaluation-against-15)); the 2.0 arm itself, the converted tasks and the planted defects are not. The [evaluation suite guide](../guides/evaluation-suite.md) stays the contract of what is built and changes with each increment.
+**Status:** design, approved in direction by the owner on 28 October 2026; E1 and E2 are built. On 28 October 2026 the target became concept 2.0, and E3 to E6 were replaced by steps T6 and T7 of its [build](../implementation-plan.md#concept-20-build), which compare one 2.0 implementation with K; the sections on the arms M, P and G below are historical. T6's parts that do not need the 2.0 implementation are built ([T6 below](#t6-evaluation-against-15)); the converted tasks and the planted defects followed with T6, and the 2.0 arm itself with T7. The [evaluation suite guide](../guides/evaluation-suite.md) stays the contract of what is built and changes with each increment.
 
 ## Why
 
@@ -101,12 +101,13 @@ G joins at E3 once it has a provider (Codex tokens or a Claude backend), after i
 
 **How K is scored on planted tasks: decided by the owner on 28 October 2026, as recommended here.** `suite.py task` ends every `task.md` with the stop rule (`STOP_RULE` in [suite.py](../../tools/evaluation/suite.py)), which every arm receives; the 2.0 arm also stops by its own rule, a model defect ends the Run at Root (concept 2.0 §6.2). Score every variant with one mechanical rule: a result equal to its start did not land; anything else landed. A planted defect is scored right when nothing landed, a harmless gap when something landed; a gap's landed change is also judged under Correct like any other. For this to be fair to K, the stop must be open to it in words it reads: every task's delivery rules, the same for every arm, should say that if the requirements contradict each other or leave open a behavior at the program's boundary, the agent changes nothing and says why in its final report. Without that sentence K is told to implement, and a K that never stops measures the prompt rather than the practice. The reason K gives is recorded for the reader, not scored; the 2.0 arm's Result says why its Run ended. The alternative, judging K's report text for a named defect, needs a reviewer and is less reproducible.
 
+**Built with T7,** on 29 October 2026: the 2.0 arm's variant command ([markitect_arm.py](../../tools/evaluation/README.md#the-concept-20-arm)). It commits the task's model as the owner's input before its Run, with the project's registry pages, which give each Package its paths: a Run reads ownership from its base, so a fresh project needs them before its first Run, and [tools/evaluation-tasks](../../tools/evaluation-tasks/README.md) now carries one set per project. **Fixed reference starts** are answered by the arm's own adoption step, not by registry pages in the starts: the arm commits the start's model (the task's new `base-model/`) with one registry row without links per file, then the change, and runs on the change. K's starts stay as they were.
+
 **Not built yet, and why:**
 
-- The 2.0 arm's variant command (T4, T5), and its escape probe as an agent in one of its own Run containers: the stand-in shows the plumbing.
-- **Fixed reference starts for the 2.0 arm.** A reference start holds `realization/` only. The 2.0 compiler refuses a repository whose files no registry page lists, so the 2.0 arm needs registry pages for the reference results, or its own adoption step before the counted Run. Registry pages in the start are harmless for K, so the cleaner answer is that the starts carry them; T2 and T4 decide this.
+- The 2.0 arm's escape probe as an agent in one of its own Run containers: the host offers no way to start a probe as an agent, and the stand-in shows the plumbing. The suite checks the arm's containers' networks on every run instead.
 - The new project's judge. Its author wrote it to the judge interface; to judge a series, it reads its step from `EVALUATION_STEP` and declares `steps` in its `judge.json`.
-- WSL Linux runs of the native mode need Docker Desktop's WSL integration for the Linux distribution, which is off on this machine.
+- WSL Linux runs of the native mode needed Docker Desktop's WSL integration for the Linux distribution; WSL Ubuntu reaches Docker since 29 October 2026.
 
 ## Open questions
 

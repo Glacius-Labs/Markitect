@@ -93,6 +93,19 @@ class SuiteTest(unittest.TestCase):
         with self.assertRaisesRegex(suite.SuiteError, "does not match"):
             suite.read_task(task)
 
+    def test_a_base_model_belongs_to_a_start_and_is_part_of_the_task(self):
+        s = self.step("based", "based", model=True)
+        with self.assertRaisesRegex(suite.SuiteError, "base model"):
+            suite.make_task(s / "task.md", s / "model", None, 120, self.tmp / "no-start", s / "model")
+        start = self.tmp / "start.bundle"
+        suite.empty_start(start)
+        task = self.tmp / "task-based"
+        suite.make_task(s / "task.md", s / "model", start, 120, task, s / "model")
+        self.assertTrue((task / "base-model" / "m.yaml").is_file())
+        (task / "base-model" / "m.yaml").write_text("kind: Changed\n")
+        with self.assertRaisesRegex(suite.SuiteError, "does not match"):
+            suite.read_task(task)
+
     def test_every_task_ends_with_the_same_stop_rule(self):
         task = self.task("ok")
         text = (task / "task.md").read_text(encoding="utf-8")
@@ -164,6 +177,17 @@ class SuiteTest(unittest.TestCase):
         subprocess.run(["git", "clone", "-q", "-b", "result", str(out / "step-03" / "run" / "variant" / "result.bundle"), str(repo)], check=True)
         self.assertEqual((repo / "work.txt").read_text().split(), ["ok", "ok"])
         self.assertEqual((out / "state" / "seen.txt").read_text().split(), ["ok", "none", "ok"])
+
+    def test_a_chain_continues_an_earlier_one_with_its_state(self):
+        first = suite.chain([self.step("1", "ok")], None, 120, self.variant, self.tmp / "first", MODEL)
+        bundle = self.tmp / "first" / "step-01" / "run" / "variant" / "result.bundle"
+        with self.assertRaisesRegex(suite.SuiteError, "does not exist"):
+            suite.chain([self.step("2", "ok")], bundle, 120, self.variant, self.tmp / "bad", MODEL, state=self.tmp / "nowhere")
+        summary = suite.chain([self.step("3", "ok")], bundle, 120, self.variant, self.tmp / "second", MODEL, state=self.tmp / "first" / "state")
+        self.assertEqual(suite.read_task(self.tmp / "second" / "step-01" / "task")["start"]["commit"], first["steps"][0]["result"])
+        self.assertEqual((self.tmp / "first" / "state" / "seen.txt").read_text().split(), ["ok", "ok"])
+        self.assertFalse((self.tmp / "second" / "state").exists())
+        self.assertTrue(summary["steps"][0]["delivered"])
 
     def test_changed_task_invalidates_the_run_and_stops_the_chain(self):
         steps = [self.step("1", "tamper"), self.step("2", "ok")]

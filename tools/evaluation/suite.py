@@ -1,16 +1,18 @@
 """The evaluation suite: build a task, run one variant on it, collect the result.
 
 A task is a directory: task.md (what to build), an optional model/ (the same
-intent as a canonical model), start.bundle (the repository to start from) and
-task.json (the start commit, the deadline and a digest over the rest). A
+intent as a canonical model), start.bundle (the repository to start from), an
+optional base-model/ (the model a fixed reference start realizes, for variants
+that work from a model) and task.json (the start commit, the deadline and a
+digest over the rest). A
 variant is any command; the suite appends TASK_DIR OUT_DIR [STATE_DIR], hands it
 the evaluation's model in EVALUATION_MODEL, runs it under the deadline and
 records what it measured itself in suite.json. How the variant works is the
 variant's business.
 
-  python -I -B suite.py task --task-md FILE [--model DIR] [--start BUNDLE] --deadline-seconds N --out NEW_DIR
+  python -I -B suite.py task --task-md FILE [--model DIR] [--start BUNDLE [--base-model DIR]] --deadline-seconds N --out NEW_DIR
   python -I -B suite.py run --task DIR --out NEW_DIR --model PROVIDER:MODEL_ID [--state DIR] [SANDBOX...] -- VARIANT...
-  python -I -B suite.py chain --step DIR [--step DIR ...] [--start BUNDLE] --deadline-seconds N --model PROVIDER:MODEL_ID \
+  python -I -B suite.py chain --step DIR [--step DIR ...] [--start BUNDLE [--state DIR]] --deadline-seconds N --model PROVIDER:MODEL_ID \
       --out NEW_DIR [SANDBOX...] -- VARIANT...
 
   python -I -B suite.py judge --run RUN_DIR --judge JUDGE_DIR [--step STEP] --out NEW_DIR [--engine BIN] [--lock FILE]
@@ -97,10 +99,11 @@ def git(repo, *args, env=None):
 # --- Tasks --------------------------------------------------------------------
 
 def intent_digest(task_dir):
-    """One digest over task.md, model/ and start.bundle: paths and bytes."""
+    """One digest over task.md, model/, base-model/ and start.bundle: paths and bytes."""
     h = hashlib.sha256()
     root = pathlib.Path(task_dir)
-    files = [root / "task.md", root / "start.bundle", *sorted(p for p in (root / "model").rglob("*") if p.is_file())]
+    files = [root / "task.md", root / "start.bundle", *sorted(p for p in (root / "model").rglob("*") if p.is_file()),
+             *sorted(p for p in (root / "base-model").rglob("*") if p.is_file())]
     for p in files:
         h.update(p.relative_to(root).as_posix().encode() + b"\0" + p.read_bytes() + b"\0")
     return h.hexdigest()
@@ -136,17 +139,22 @@ STOP_RULE = ("\n\n## Stop rule\n\n"
              "change nothing and say why in your final report.\n")
 
 
-def make_task(task_md, model, start, deadline, out):
+def make_task(task_md, model, start, deadline, out, base_model=None):
     out = pathlib.Path(out)
     if out.exists():
         raise SuiteError(f"{out} exists")
     if deadline <= 0:
         raise SuiteError("the deadline must be positive")
+    if base_model and not (start and model):
+        raise SuiteError("a base model belongs to a start, and to a task with a model")
     out.mkdir(parents=True)
     text = pathlib.Path(task_md).read_text(encoding="utf-8")
     (out / "task.md").write_bytes((text.rstrip("\n") + STOP_RULE).encode("utf-8"))
     if model:
         shutil.copytree(model, out / "model")
+    if base_model:
+        # The model the start realizes, so that a variant working from a model can tell the change from the start.
+        shutil.copytree(base_model, out / "base-model")
     if start:
         shutil.copyfile(start, out / "start.bundle")
     else:
@@ -308,15 +316,21 @@ def chain_start(task_dir, step_record, out):
         git(tmp, "bundle", "create", str(pathlib.Path(out).resolve()), "refs/heads/start")
 
 
-def chain(steps, start, deadline, variant, out, model, sandbox=None):
+def chain(steps, start, deadline, variant, out, model, sandbox=None, state=None):
+    """Run the steps in order, each from the previous step's result. With `state`, the chain continues an earlier one,
+    for example after a void step: the variant gets that state directory, and `start` is the earlier chain's last
+    delivered result."""
     out = pathlib.Path(out)
     if out.exists():
         raise SuiteError(f"{out} exists")
     if not steps:
         raise SuiteError("a chain needs at least one step")
+    if state is not None and not pathlib.Path(state).is_dir():
+        raise SuiteError(f"the state directory {state} does not exist")
     out.mkdir(parents=True)
-    state = out / "state"
-    state.mkdir()
+    if state is None:
+        state = out / "state"
+        state.mkdir()
     records, error = [], None
     for i, step in enumerate(steps, 1):
         step = pathlib.Path(step)
@@ -486,6 +500,7 @@ def main(argv=None):
     t.add_argument("--task-md", required=True)
     t.add_argument("--model")
     t.add_argument("--start")
+    t.add_argument("--base-model", help="the model the start realizes, for a fixed reference start")
     t.add_argument("--deadline-seconds", type=int, required=True)
     t.add_argument("--out", required=True)
     r = sub.add_parser("run")
@@ -496,6 +511,7 @@ def main(argv=None):
     c = sub.add_parser("chain")
     c.add_argument("--step", action="append", required=True)
     c.add_argument("--start")
+    c.add_argument("--state", help="continue an earlier chain: its state directory, handed to the variant at every step")
     c.add_argument("--deadline-seconds", type=int, required=True)
     c.add_argument("--out", required=True)
     c.add_argument("--model", required=True, help="the evaluation's model as PROVIDER:MODEL_ID")
@@ -533,7 +549,7 @@ def main(argv=None):
     a = parser.parse_args(argv)
     try:
         if a.cmd == "task":
-            result = make_task(a.task_md, a.model, a.start, a.deadline_seconds, a.out)
+            result = make_task(a.task_md, a.model, a.start, a.deadline_seconds, a.out, a.base_model)
         elif a.cmd == "report":
             data = reporting.write(a.ledger, a.out)
             result = {"launches": len(data["launches"]), "report": str(pathlib.Path(a.out) / "report.md")}
@@ -564,7 +580,7 @@ def main(argv=None):
                     result = {k: record[k] for k in ("delivered", "timedOut", "exitCode", "wallSeconds", "resultError", "modelMatches",
                                                      "conditions", "validForCounting", "reported")}
                 else:
-                    result = chain(a.step, a.start, a.deadline_seconds, variant, a.out, a.model, box)
+                    result = chain(a.step, a.start, a.deadline_seconds, variant, a.out, a.model, box, a.state)
     except (SuiteError, sandboxing.SandboxError, judging.JudgeError, ValueError) as e:
         print(f"suite: {e}", file=sys.stderr)
         return 2

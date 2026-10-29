@@ -14,7 +14,13 @@ K, returns none, and the check does not apply to it.
               "verdict": "conforms" or "changed" or "model-problem", "evidence": "...",
               "checker": "billing/checker", "approved": true}],
    "notParticipating": [{"package": "...", "reason": "..."}],
-   "findings": [{"definition": "...", "observed": "...", "expected": "..."}]}
+   "findings": [{"definition": "...", "observed": "...", "expected": "..."}],
+   "starts": [{"manager": "billing", "role": "maker", "round": 1, "reason": "finished" or "failed" or ...,
+               "class": "capacity" or "rate-limit" or "server-error" or "login" or "other", "agent": "claude:MODEL_ID"}]}
+
+`starts`, optional, lists the Run's agent starts in the order they ended; the
+failure classifier reads a provider failure from them (classify.py). The 2.0
+arm's Result is `markitect apply --json` as it is, which carries more fields.
 
 An item is skipped when it has no verdict, unsupported when its evidence is
 empty, and unapproved when no checker approved it. A Result whose required
