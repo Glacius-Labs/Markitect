@@ -26,6 +26,20 @@ FAKE_ENGINE = textwrap.dedent(r'''
     import json, os, subprocess, sys, time
     args, d = sys.argv[1:], os.environ["FAKE_DIR"]
     path, log = os.path.join(d, "engine.json"), os.path.join(d, "events.jsonl")
+    if (args[:2] == ["network", "inspect"] and "Internal" in (args[3] if len(args) > 3 else "") and os.environ.get("FAKE_INSPECT_LATE")
+            and args[-1].endswith("-" + os.environ["FAKE_INSPECT_LATE"])):
+        # A slow engine: the suite's inspection of the variant's network named FAKE_INSPECT_LATE arrives only after the
+        # variant has removed it.
+        until = time.time() + 30
+        while time.time() < until:
+            try:
+                nets = json.load(open(path)).get("networks", {})
+            except (OSError, ValueError):
+                time.sleep(0.05)  # a state file the arm is still writing: read it again
+                continue
+            if not any(args[-1] in (n, item.get("id")) for n, item in nets.items()):
+                break
+            time.sleep(0.05)
     state = json.load(open(path)) if os.path.exists(path) else {"containers": {}, "networks": {}, "volumes": {}, "seq": 0}
     def save():
         json.dump(state, open(path, "w"))
@@ -160,16 +174,41 @@ SLEEPER = textwrap.dedent('''
 # A native arm whose agent, like the 2.0 host's, joins the evaluation network and a network of the arm's own, created
 # with ARM_NETWORK_FLAGS, as a Run's remote and agents share one.
 OWN_NETWORK = textwrap.dedent('''
-    import json, os, subprocess
+    import json, os, subprocess, time
     engine = json.loads(os.environ["EVALUATION_ENGINE"])
     e = lambda *a: subprocess.run([*engine, *a], check=True, capture_output=True)
+    calls = os.path.join(os.environ["FAKE_DIR"], "calls.jsonl")
+
+    def inspections():
+        """The suite's inspections of networks named arm-run-net so far; the engine's call log is shared by every run."""
+        seen = []
+        for line in open(calls) if os.path.exists(calls) else []:
+            try:
+                seen.append(json.loads(line))
+            except ValueError:
+                pass  # a line the engine is still writing
+        return sum(c[:2] == ["network", "inspect"] and "Internal" in c[3] and c[-1].endswith("-arm-run-net") for c in seen)
+
+    before = inspections()
+
+    def inspected(n):
+        """Wait until the suite has inspected n of this run's networks, as a Run's network lives long enough to be;
+        with ARM_NO_WAIT, go on at once, as a variant that removes its network quickly does."""
+        until = time.monotonic() + 30
+        while not os.environ.get("ARM_NO_WAIT") and time.monotonic() < until:
+            if inspections() >= before + n:
+                return
+            time.sleep(0.05)
+
     if os.environ.get("ARM_RECREATE"):
         # An internal network first, then another of the same name that is not.
         e("network", "create", "--internal", "arm-run-net")
+        inspected(1)
         e("network", "rm", "arm-run-net")
     if os.environ.get("ARM_VOLUME"):
         e("volume", "create", "arm-left-volume")
     e("network", "create", *os.environ["ARM_NETWORK_FLAGS"].split(), "arm-run-net")
+    inspected(2 if os.environ.get("ARM_RECREATE") else 1)
     e("create", "--name", "arm-agent", "--label", os.environ["EVALUATION_LABEL"], "--network", os.environ["EVALUATION_NETWORK"],
       os.environ["FAKE_IMAGE"])
     e("network", "connect", "arm-run-net", "arm-agent")
@@ -270,16 +309,26 @@ class NativeTest(unittest.TestCase):
         os.environ["ARM_NETWORK_FLAGS"] = "--driver bridge"
         os.environ["ARM_RECREATE"] = "1"
         record, _ = self.run_mode("recreated", variant)
-        # The first may be gone before it is inspected (None); either way the second, of the same name, is its own network.
+        # The second, of the same name, is its own network: inspected as not internal, whatever the first was.
         networks = record["sandbox"]["armNetworks"]
-        self.assertEqual(([n["name"] for n in networks], networks[0]["internal"] in (True, None), networks[1]["internal"]),
-                         (["arm-run-net", "arm-run-net"], True, False))
+        self.assertEqual([(n["name"], n["internal"]) for n in networks], [("arm-run-net", True), ("arm-run-net", False)])
         self.assertNotEqual(networks[0]["id"], networks[1]["id"])
         self.assertEqual([c["name"] for c in record["sandbox"]["escapes"]], ["arm-agent"])
         del os.environ["ARM_RECREATE"]
         os.environ.update(ARM_NETWORK_FLAGS="--internal", FAKE_UNINSPECTABLE="arm-run-net")
         record, out = self.run_mode("uninspectable", variant)
         self.assertEqual([n["internal"] for n in record["sandbox"]["armNetworks"]], [None])
+        self.assertEqual(classify.classify(out)["class"], "invalid")
+
+    def test_a_network_gone_before_its_inspection_counts_as_not_internal(self):
+        # The suite inspects a network when its create event arrives. A variant that removes it before then (here the
+        # engine answers the inspection only once the network is gone, and the arm does not wait) leaves it uninspected:
+        # it counts as not internal, so the container that joined it is an escape, even though the network was internal.
+        (self.tmp / "own.py").write_text(OWN_NETWORK)
+        os.environ.update(ARM_NETWORK_FLAGS="--internal", ARM_NO_WAIT="1", FAKE_INSPECT_LATE="arm-run-net")
+        record, out = self.run_mode("gone", [sys.executable, "-B", str(self.tmp / "own.py")])
+        self.assertEqual([(n["name"], n["internal"]) for n in record["sandbox"]["armNetworks"]], [("arm-run-net", None)])
+        self.assertEqual([c["name"] for c in record["sandbox"]["escapes"]], ["arm-agent"])
         self.assertEqual(classify.classify(out)["class"], "invalid")
 
     def test_a_volume_the_arm_leaves_is_residue(self):
