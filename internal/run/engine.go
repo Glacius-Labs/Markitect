@@ -289,6 +289,10 @@ func (e *Engine) Run(ctx context.Context, req Request) (*Result, error) {
 				r.Why = "every checklist item conforms"
 			}
 		}
+		if isFullCheck(r) {
+			// This Run is the full check: it examined its start.
+			r.FullCheck = FullCheck{Since: r.Start}
+		}
 		release(&r.Cleanup)
 		e.keep(ctx, r, s)
 	default:
@@ -326,6 +330,7 @@ func (e *Engine) prepare(ctx context.Context, req Request, r *Result) (string, *
 	}
 	base = bc.ID
 	r.Base, r.Start = base, start
+	r.FullCheck = e.fullCheck(ctx, req.Target, start)
 
 	cur, err := project.Load(e.Git.State(ctx, start))
 	if err != nil {

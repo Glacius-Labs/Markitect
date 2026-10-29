@@ -127,6 +127,17 @@ func (e *Engine) land(ctx context.Context, r *Result, s *schedule, remote Remote
 			r.Cleanup = append(r.Cleanup, fmt.Sprintf("the kept Run branches could not be read, so none that this landing covers is deleted: %v", err))
 		}
 		r.Replaced = sortedKeys(replaced)
+		// The count includes this landing, read before this landing deletes
+		// a verify's Run branch it covers; a landed apply --full starts it
+		// again.
+		r.FullCheck = FullCheck{}
+		if !r.Full {
+			r.FullCheck = e.fullCheck(ctx, r.Target, state)
+			if r.FullCheck.Note == "" {
+				r.FullCheck.Landed++
+				r.FullCheck.Due = r.FullCheck.Landed >= FullCheckEvery
+			}
+		}
 		page := e.stamp(r)
 		commit, err := e.Git.Write(ctx, state, map[string][]byte{ResultFile(r.Run): Page(page)}, resultMessage(r, cand))
 		if err != nil {
