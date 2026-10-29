@@ -14,7 +14,7 @@ Step T5 of the [delivery plan](../implementation-plan.md#concept-20-build): the 
 
 | Item | Value |
 | --- | --- |
-| Source | Branch `dev/nifty-bartik-d01344` at `9420764c` (Main `3f47835a` plus the T5 change), and after a fix at `4d63d305`. `markitect` built for the host and `markitect-remote` for Linux from the attempt's source; the Manager images built from it too |
+| Source | Branch `dev/nifty-bartik-d01344`: `9420764c` (Main `3f47835a` plus the T5 change), then after each defect fix `4d63d305` and `33d87c09`, as each attempt names. The final head adds after `33d87c09` only the refusal of an explicit `MARKITECT_NETWORK=bridge` and documentation. `markitect` built for the host and `markitect-remote` for Linux from the attempt's source; the Manager images built from it too |
 | Images | The Manager image from `packaging/runtime` at the source, then its Go example on it, named by engine image ID. The Run remote and its checks use `golang:1.27`, which `execution.yaml` names: the local `golang:1.27.1` image tagged so, no pull |
 | Project | A fresh repository: T2's Library M1 model as `.markitect/`, `markitect init`, one registry page per Package claiming `realization/internal/<package>/**` (Root owns the rest); `markitect check` passes. The target is `main` of a local bare repository, so no hosted repository changes |
 | Commands | `markitect apply --full --deadline 60m`, then `markitect verify --full --deadline 30m`, with `MARKITECT_MANAGER_IMAGE`, `MARKITECT_REMOTE_BINARY`, `MARKITECT_ENGINE`, `MARKITECT_LOGIN` and `MARKITECT_TRANSCRIPTS`; Claude Code 2.1.308, `claude-sonnet-5-5`, effort `high`. Every `ANTHROPIC_*` and `CLAUDE_*` variable is cleared for both commands |
@@ -38,6 +38,16 @@ An owner decision of 29 October 2026 (recorded in PR #868) adds one run: the sam
 | Limits, abort, lock, cleanup, evidence | As above: one attempt, a second only after a fix; `apply` 60 minutes, `verify` 30 minutes; the shared engine lock; nothing labelled with either Run may remain; the post-check scans all evidence for every token of the login |
 
 ## Results
+
+**In short.** At `33d87c09`, `apply --full` landed and `verify --full` verified natively on Windows (attempt 4) and on Linux (attempt 2). The suite's native round held on Linux. The earlier attempts found three defects, all fixed in this change: an absolute engine path (harness), host trailers in the agents' namespace, and the engine's `bridge` network on Linux. The Codex run on Windows did not land: its agents confused an accepted push with an approval, a tool-contract finding for T7.
+
+**Limits.**
+
+- One attempt per configuration; this is a smoke, not a measure of reliability.
+- Local bare targets only: a push of `refs/markitect/lock/*` to GitHub is not yet observed, nor are two real Runs at once on one target. Source tests cover those.
+- macOS is not observed.
+- Linux is WSL Ubuntu against Docker Desktop's engine, not a native Linux engine.
+
 
 ### Windows with Claude
 
@@ -71,6 +81,16 @@ The review fixes (`cc44e98d`) and the trailer fix (`4d63d305`) came after attemp
 - **`verify --full` verified** (Q3) in 57 seconds, exit 0. Five checker starts, one per Manager, gave all 40 items `conforms`, with no Findings and no decisions for the owner. The required checks ran once, on Root's verdicts, whose tree is the start commit's (`4e5c7be`, the landing), and passed. Its Result stays on `markitect/runs/t5-win-3-verify`. 676,443 input and 15,823 output tokens.
 - **The landed state holds up**: in a fresh clone, `markitect check` says `ok: 19 Definitions in 5 Packages, 21 files accounted`, and build, vet and test pass.
 - Cleanup: no container, volume or network of either Run remained, and the lock ref was gone. The secret scan of 141 evidence files found nothing.
+
+**Attempt 4** (`t5-win-4`, source `33d87c09`, Go Manager image `sha256:5dbb6f1bf22d…`), 02:44–02:55Z: **passed** again, on the source of the Linux pass. That source changed the provider network after attempt 3.
+
+- **`apply` landed** in 9 minutes 7 seconds, exit 0, with 14 starts, every one `finished`, and 7 messages.
+  - All 40 items were approved.
+  - The checks passed (`build` 2.6 s, `test` 1.0 s).
+  - 1,617,562 input and 60,525 output tokens.
+- **`verify --full` verified** in 60 seconds: 5 starts, all 40 items `conforms`, and the checks passed on the landing.
+- **The landed state holds up** in a fresh clone.
+- **Cleanup:** the lock was held 02:44:22–02:54:35Z. Nothing remained on the engine, and the secret scan of 137 files found nothing.
 
 ### Linux with Claude
 

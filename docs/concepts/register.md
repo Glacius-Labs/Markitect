@@ -99,7 +99,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-080](#dec-080-the-model-is-typed-documentation) | Decision | The model is typed documentation | Accepted design; not built |
 | [DEC-081](#dec-081-the-organization-knows-broad-at-the-top-and-deep-below) | Decision | The organization knows broad at the top and deep below | Accepted design; not built |
 | [DEC-082](#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager) | Decision | One Run per change: impact decides who works, maker and checker per Manager | Accepted; being built |
-| [DEC-083](#dec-083-the-host-runs-natively-each-run-lives-in-containers) | Decision | The host runs natively; each Run lives in containers | Accepted; built in T5, observed on Windows |
+| [DEC-083](#dec-083-the-host-runs-natively-each-run-lives-in-containers) | Decision | The host runs natively; each Run lives in containers | Accepted; built in T5 |
 | [DEC-084](#dec-084-continuous-change-triggers-become-findings-or-model-proposals-autonomy-grows-in-steps) | Decision | Continuous change: triggers become Findings or model proposals, autonomy grows in steps | Accepted direction; design only |
 | [DEC-085](#dec-085-markdown-tools-are-the-cockpit-for-now) | Decision | Markdown tools are the cockpit for now | Accepted |
 | [DEC-086](#dec-086-concept-20-is-the-target) | Decision | Concept 2.0 is the target | Accepted; being built |
@@ -1079,7 +1079,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-083 The host runs natively; each Run lives in containers
 
-- **Status:** Accepted by the owner as the platform design, 28 October 2026, in the Topics session's design walk-through ([topics page](../workstreams/topics.md#decided)). Built in step T5 of the [delivery plan](../implementation-plan.md#concept-20-build); the [native smoke](../validation/t5-native-host-20261029.md) passed on Windows, and Linux is not yet observed. It follows from [DEC-082](#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager).
+- **Status:** Accepted by the owner as the platform design, 28 October 2026, in the Topics session's design walk-through ([topics page](../workstreams/topics.md#decided)). Built in step T5 of the [delivery plan](../implementation-plan.md#concept-20-build); the [native smoke](../validation/t5-native-host-20261029.md) passed on Windows and on Linux (WSL Ubuntu); macOS is not yet observed. It follows from [DEC-082](#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager).
 - **Decision:**
   - The host runs natively on Windows, Linux and macOS. It needs only Docker (Docker Desktop on Windows and macOS), no WSL and no Linux runner.
   - Each Run gets one Linux container as its remote: a bare Git repository with the server-side hooks and the required checks. The Manager containers clone from it and push to it over the container network. No folder of the user's is mounted into a container.
