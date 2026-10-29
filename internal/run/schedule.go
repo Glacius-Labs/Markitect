@@ -72,6 +72,11 @@ type node struct {
 	// told is the children's approvals the maker last got to merge.
 	told string
 
+	// released: the Manager may start; from is the commit its work starts
+	// from, the base or a state of its parent's branch (concept 2.0 §6.2).
+	released bool
+	from     string
+
 	tip                string // the branch tip after the last start
 	submission         string // the newest submission at the tip, awaiting review
 	approvedSubmission string
@@ -105,7 +110,7 @@ func newSchedule(e *Engine, req Request, plan *runremote.Plan, cur *project.Proj
 			continue
 		}
 		n := &node{id: m.ID, name: runremote.Name(m.ID), branch: runremote.Branch(m.ID), rounds: map[agentport.Role]int{},
-			waitFor: map[string]bool{}, unanswered: map[string]agentport.Message{}, reminded: map[string]bool{}, tip: plan.Base}
+			waitFor: map[string]bool{}, unanswered: map[string]agentport.Message{}, reminded: map[string]bool{}, tip: plan.Base, from: plan.Base}
 		n.items = checklistItems(lists[m.ID])
 		s.nodes[m.ID] = n
 	}
@@ -248,6 +253,8 @@ func (s *schedule) waitingLocked() string {
 		switch {
 		case s.req.Mode == agentport.Verify && !n.done:
 			parts = append(parts, n.name+" has no verdicts")
+		case s.req.Mode == agentport.Apply && !n.released:
+			parts = append(parts, n.name+" waits for its parent's approved work")
 		case s.req.Mode == agentport.Apply && !n.approved:
 			parts = append(parts, fmt.Sprintf("%s is not approved (waits for %d answers)", n.name, len(n.waitFor)))
 		}
@@ -273,12 +280,17 @@ func (s *schedule) step(ctx context.Context) {
 			}
 			continue
 		}
+		if !n.released && !s.releaseLocked(ctx, n) {
+			continue
+		}
 		switch {
 		case n.submission != "":
 			s.startLocked(ctx, n, agentport.Checker, s.reviewTask(n))
 		case len(n.inbox) > 0:
 			s.startLocked(ctx, n, agentport.Maker, s.makerTask(n))
-		case n.rounds[agentport.Maker] == 0 && len(n.waitFor) == 0 && s.childrenApproved(n):
+		case n.rounds[agentport.Maker] == 0 && len(n.waitFor) == 0 && (len(n.items) > 0 || s.childrenApproved(n)):
+			// A parent with items of its own submits before its children
+			// start; one without waits for their approved work.
 			s.startLocked(ctx, n, agentport.Maker, s.makerTask(n))
 		case n.rounds[agentport.Maker] > 0 && len(n.children) > 0 && s.childrenApproved(n) && s.approvals(n) != n.told:
 			// The children's approved work changed since the maker last
@@ -303,9 +315,43 @@ func (s *schedule) step(ctx context.Context) {
 	}
 }
 
+// releaseLocked lets a Manager start in apply (concept 2.0 §6.2): Root at
+// once; any other once its parent may start and, when the parent has items
+// of its own, has approved work. Its branch then starts from that approval,
+// or from where its parent started, so shared files of the parent exist
+// before the child's required checks run.
+func (s *schedule) releaseLocked(ctx context.Context, n *node) bool {
+	p := n.parent
+	if p == nil {
+		n.released = true
+		return true
+	}
+	if !p.released && !s.releaseLocked(ctx, p) {
+		return false
+	}
+	from := p.from
+	if len(p.items) > 0 {
+		if !p.approved {
+			return false
+		}
+		from = p.approval
+	}
+	if from != s.plan.Base {
+		if err := s.remote.StartFrom(ctx, n.branch, from); err != nil {
+			s.stopLocked(StateIncomplete, fmt.Sprintf("Manager %s could not start from its parent's state %s: %v", n.name, short(from), err))
+			return false
+		}
+	}
+	n.released, n.from, n.tip = true, from, from
+	return true
+}
+
+// childrenApproved: every working child has approved work that holds its
+// whole subtree's, so a parent first approved for its own files does not
+// count while its children work.
 func (s *schedule) childrenApproved(n *node) bool {
 	for _, c := range n.children {
-		if !c.approved || c.running || len(c.waitFor) > 0 || len(c.inbox) > 0 {
+		if !c.approved || c.running || len(c.waitFor) > 0 || len(c.inbox) > 0 || !s.childrenApproved(c) {
 			return false
 		}
 	}
@@ -325,9 +371,10 @@ func (s *schedule) startLocked(ctx context.Context, n *node, role agentport.Role
 	}
 	s.starts++
 	n.rounds[role]++
-	if role == agentport.Maker && len(n.children) > 0 && s.childrenApproved(n) {
-		// The task names the children's approvals, so the maker has them.
-		n.told = s.approvals(n)
+	if role == agentport.Maker && len(n.children) > 0 && s.childrenApproved(n) && s.approvals(n) != n.told {
+		// The task names the children's approvals, so the maker has them;
+		// whatever started it, its own approval no longer holds.
+		n.told, n.approved = s.approvals(n), false
 	}
 	n.running, n.sent = true, false
 	inbox := n.inbox
@@ -340,7 +387,7 @@ func (s *schedule) startLocked(ctx context.Context, n *node, role agentport.Role
 	}
 	st := agentport.Start{Run: s.plan.Run, Mode: s.req.Mode, Role: role, Round: n.rounds[role], Task: task,
 		Manager: agentport.Manager{ID: n.name, Parent: parentName(n)}, Checklist: n.items, Inbox: inbox, Deadline: deadline,
-		Tools: tools(s.req.Mode, role, n)}
+		Tools: tools(role, n)}
 	for _, c := range n.children {
 		st.Manager.Children = append(st.Manager.Children, c.name)
 	}
@@ -348,7 +395,7 @@ func (s *schedule) startLocked(ctx context.Context, n *node, role agentport.Role
 		st.Inbox = nil
 	}
 	cred := s.creds[n.id][role]
-	st.Git = agentport.GitAccess{URL: s.remote.URL(), Network: s.remote.Network(), Branch: n.branch, Base: s.plan.Base, User: cred.user, Token: cred.token}
+	st.Git = agentport.GitAccess{URL: s.remote.URL(), Network: s.remote.Network(), Branch: n.branch, Base: n.from, User: cred.user, Token: cred.token}
 	h := &host{s: s, n: n, role: role, tools: map[agentport.Tool]bool{}}
 	for _, t := range st.Tools {
 		h.tools[t] = true
@@ -371,12 +418,13 @@ func parentName(n *node) string {
 	return n.parent.name
 }
 
-func tools(mode agentport.Mode, role agentport.Role, n *node) []agentport.Tool {
-	ts := []agentport.Tool{agentport.ToolNote, agentport.ToolNotes}
-	if mode == agentport.Verify || role == agentport.Checker {
-		return ts
+// tools are the host tools of a start. A checker, the only role in verify,
+// only leaves Notes: it is fresh and does not read them (concept 2.0 §6.2).
+func tools(role agentport.Role, n *node) []agentport.Tool {
+	if role == agentport.Checker {
+		return []agentport.Tool{agentport.ToolNote}
 	}
-	ts = append(ts, agentport.ToolAsk, agentport.ToolEscalate)
+	ts := []agentport.Tool{agentport.ToolNote, agentport.ToolNotes, agentport.ToolAsk, agentport.ToolEscalate}
 	if len(n.children) > 0 {
 		ts = append(ts, agentport.ToolAnswer, agentport.ToolAssign)
 	}
@@ -475,7 +523,12 @@ func (s *schedule) afterMaker(ctx context.Context, n *node, tip string, moved bo
 		return true, nil
 	}
 	var missing []string
+	// A parent's own work comes first; its children start from its
+	// approval (concept 2.0 §6.2).
 	for _, ch := range n.children {
+		if s.ownFirst(n) {
+			break
+		}
 		if !ch.approved {
 			// The child is still working; its approval brings a host
 			// message and a new start.

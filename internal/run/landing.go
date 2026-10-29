@@ -23,9 +23,10 @@ func ResultFile(run string) string { return path.Join(project.ResultsDir, run+".
 
 // land lands Root's approved work as in a merge queue (concept 2.0 §6.5):
 // unchanged target, fast-forward; moved target, merge, but only when the
-// merge is clean, the required checks pass on the merged state and the
-// incoming changes touch nothing in the Run's impact. Otherwise the work
-// stays on its Run branch and the Result says why.
+// merge is clean, compiles, passes the required checks and the incoming
+// changes touch nothing in the Run's impact. The host compiles every state it
+// lands (§6.3). Otherwise the work stays on its Run branch and the Result
+// says why.
 func (e *Engine) land(ctx context.Context, r *Result, s *schedule, remote Remote) {
 	root := s.nodes[model.RootPackage]
 	cand := root.approval
@@ -46,6 +47,10 @@ func (e *Engine) land(ctx context.Context, r *Result, s *schedule, remote Remote
 		e.keepOn(ctx, r, cand, pushed, StateKept, why, err)
 		return
 	}
+	if why, err := e.compile(ctx, cand); err != nil || why != "" {
+		e.keepOn(ctx, r, cand, pushed, StateKept, "Root's approved work "+why, err)
+		return
+	}
 	for attempt := 1; attempt <= landAttempts; attempt++ {
 		tip, err := e.Git.Fetch(ctx, r.Target)
 		if err != nil {
@@ -54,6 +59,11 @@ func (e *Engine) land(ctx context.Context, r *Result, s *schedule, remote Remote
 		}
 		state := cand
 		if tip != r.Start {
+			// Until the merged state is checked, the checks named are those
+			// of Root's approved work, which is not what would land.
+			if len(s.plan.Checks) > 0 {
+				r.RequiredChecks.Note = fmt.Sprintf("%s moved to %s, and no merged state was checked", r.Target, short(tip))
+			}
 			if ok, err := e.Git.Contains(ctx, tip, r.Start); err != nil || !ok {
 				e.keepOn(ctx, r, cand, pushed, StateKept, fmt.Sprintf("%s was rewritten to %s, which no longer holds the Run's start", r.Target, short(tip)), err)
 				return
@@ -66,6 +76,10 @@ func (e *Engine) land(ctx context.Context, r *Result, s *schedule, remote Remote
 			merged, conflicts, err := e.Git.Merge(ctx, tip, cand, fmt.Sprintf("Markitect Run %s: merge onto %s", r.Run, r.Target))
 			if err != nil || len(conflicts) > 0 {
 				e.keepOn(ctx, r, cand, pushed, StateKept, fmt.Sprintf("%s moved to %s and the merge conflicts in %s", r.Target, short(tip), strings.Join(conflicts, ", ")), err)
+				return
+			}
+			if why, err := e.compile(ctx, merged); err != nil || why != "" {
+				e.keepOn(ctx, r, cand, pushed, StateKept, fmt.Sprintf("%s moved to %s and the merged state %s", r.Target, short(tip), why), err)
 				return
 			}
 			if len(s.plan.Checks) > 0 {
@@ -245,6 +259,19 @@ func (e *Engine) incoming(ctx context.Context, s *schedule, start, tip, cand str
 	}
 	if len(hits) > 0 {
 		return fmt.Sprintf("%s moved to %s, and its changes touch the Run's impact: %s; a follow-up Run starts from the new state", s.req.Target, short(tip), strings.Join(dedupe(hits), ", ")), nil
+	}
+	return "", nil
+}
+
+// compile says why a state does not compile, as `markitect check` reports
+// it, or "" when it compiles.
+func (e *Engine) compile(ctx context.Context, commit string) (string, error) {
+	p, err := project.Load(e.Git.State(ctx, commit))
+	if err != nil {
+		return "", err
+	}
+	if len(p.Errors) > 0 {
+		return fmt.Sprintf("does not compile: check finds %d compile errors at %s; the first: %s", len(p.Errors), short(commit), p.Errors.Sorted()[0].String()), nil
 	}
 	return "", nil
 }

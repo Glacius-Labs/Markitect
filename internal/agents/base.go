@@ -87,7 +87,8 @@ func (a *Agent) loadBase(ctx context.Context) (*project.Project, error) {
 }
 
 // submission reads the submission a checker in apply reviews: the tip of
-// the Manager's branch, its verdicts and its diff from the base.
+// the Manager's branch, its verdicts and its diff from the commit its work
+// started from (Git.Base).
 func (a *Agent) submission(ctx context.Context) (*harness.Submission, error) {
 	tip, t, err := a.tip(ctx)
 	if err != nil {

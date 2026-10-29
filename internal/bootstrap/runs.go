@@ -135,4 +135,8 @@ func (c containerRemote) Check(ctx context.Context, bundle io.Reader, commit str
 	return c.r.Check(ctx, bundle, commit)
 }
 
+func (c containerRemote) StartFrom(ctx context.Context, branch, commit string) error {
+	return c.r.StartFrom(ctx, branch, commit)
+}
+
 func (c containerRemote) Close(ctx context.Context) error { return c.r.Close(ctx) }

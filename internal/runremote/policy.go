@@ -36,6 +36,9 @@ type Repo interface {
 	// Tips lists the commits a branch has pointed to in this Run, oldest
 	// first; a branch of the Run without that record is an error.
 	Tips(branch string) ([]string, error)
+	// State is a commit's full state as a project repository, for the
+	// compiler.
+	State(commit string) project.Repository
 }
 
 // CheckResult is the outcome of one required check.
@@ -162,8 +165,8 @@ func (d *decider) decide(updates []Update) (Decision, error) {
 }
 
 // work decides a maker's push: its branch tip stays within the Manager's
-// area, and a submission at the tip has a complete checklist and passes the
-// required checks.
+// area, and a submission at the tip has a complete checklist, compiles and
+// passes the required checks.
 func (d *decider) work(u Update) (Decision, error) {
 	if problems, err := d.content(u.New); err != nil {
 		return Decision{}, err
@@ -180,6 +183,11 @@ func (d *decider) work(u Update) (Decision, error) {
 	}
 	if problem := d.checklist(t.Verdicts); problem != "" {
 		return refuse("submission %s: %s", short(u.New), problem), nil
+	}
+	if problem, err := d.compile(u.New); err != nil {
+		return Decision{}, err
+	} else if problem != "" {
+		return refuse("submission %s does not compile: %s", short(u.New), problem), nil
 	}
 	results, err := d.checks.Run(tip, d.plan.Checks)
 	if err != nil {
@@ -266,7 +274,12 @@ func (d *decider) review(u Update, fresh []string) (Decision, error) {
 }
 
 // verdicts decides a checker's push in verify: one commit without file
-// changes that gives every checklist item a verdict.
+// changes that gives every checklist item a verdict. Every such commit holds
+// the Run's starting commit's tree, so the required checks run once, on
+// Root's verdicts, as in every Run; Root always works. It needs no compile:
+// the host compiled that tree before the Run started. A failing check does
+// not refuse the push, since verify changes nothing and the checker cannot
+// fix it; the Result reports it.
 func (d *decider) verdicts(u Update, fresh []string) (Decision, error) {
 	next := "Next: write `git commit --allow-empty` on your branch tip with your verdicts and push only that commit."
 	if len(fresh) != 1 || fresh[0] != u.New {
@@ -293,7 +306,43 @@ func (d *decider) verdicts(u Update, fresh []string) (Decision, error) {
 	if problem := d.checklist(t.Verdicts); problem != "" {
 		return refuse("commit %s: %s", short(u.New), problem), nil
 	}
-	return Decision{Accepted: true, Kind: "verdicts"}, nil
+	dec := Decision{Accepted: true, Kind: "verdicts"}
+	if d.m.ID != model.RootPackage {
+		return dec, nil
+	}
+	results, err := d.checks.Run(c, d.plan.Checks)
+	if err != nil {
+		return refuse("the required checks could not run on %s: %v. Nothing was decided about your verdicts. Next: push again.", short(u.New), err), nil
+	}
+	dec.Checks = results
+	return dec, nil
+}
+
+// maxCompileErrors bounds the compile errors a refusal lists.
+const maxCompileErrors = 20
+
+// compile says why a commit's full state does not compile, as `markitect
+// check` reports it, or "" when it compiles.
+func (d *decider) compile(commit string) (string, error) {
+	p, err := project.Load(d.repo.State(commit))
+	if err != nil {
+		return "", err
+	}
+	if len(p.Errors) == 0 {
+		return "", nil
+	}
+	errs := p.Errors.Sorted()
+	var b strings.Builder
+	fmt.Fprintf(&b, "`markitect check` finds %d compile errors:", len(errs))
+	for i, e := range errs {
+		if i == maxCompileErrors {
+			fmt.Fprintf(&b, "\n- and %d more", len(errs)-i)
+			break
+		}
+		b.WriteString("\n- " + e.String())
+	}
+	b.WriteString("\nNext: fix them, run `markitect check` in your clone and submit again.")
+	return b.String(), nil
 }
 
 // checklist reports the first gap between the verdicts and the Manager's

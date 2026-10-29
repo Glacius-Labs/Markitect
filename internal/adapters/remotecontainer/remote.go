@@ -202,6 +202,12 @@ func (r *Remote) Check(ctx context.Context, bundle io.Reader, commit string) ([]
 	return results, nil
 }
 
+// StartFrom moves a Manager's branch, still at the base, to a state of its
+// parent's branch before the Manager starts.
+func (r *Remote) StartFrom(ctx context.Context, branch, commit string) error {
+	return r.engine.run(ctx, nil, nil, "exec", r.Container, program, "start", "--root", root, "--branch", branch, "--commit", commit)
+}
+
 // Log returns the remote's decision log, one JSON entry per push.
 func (r *Remote) Log(ctx context.Context) ([]byte, error) {
 	var out bytes.Buffer

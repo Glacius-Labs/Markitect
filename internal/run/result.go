@@ -22,9 +22,11 @@ const (
 	StateLanded = "landed"
 	// StateNothing: the change reaches no Manager; no agent started.
 	StateNothing = "nothing-to-do"
-	// StateVerified: verify found every item conforming.
+	// StateVerified: verify found every item conforming, and the required
+	// checks pass on the whole repository.
 	StateVerified = "verified"
-	// StateFindings: verify found items that do not conform.
+	// StateFindings: verify found items that do not conform, decisions for
+	// the owner, or required checks that do not pass.
 	StateFindings = "findings"
 	// StateCheckFailed: the initial gate failed; no agent started.
 	StateCheckFailed = "check-failed"
@@ -105,8 +107,9 @@ type NotParticipant struct {
 	Reason  string `json:"reason"`
 }
 
-// RequiredChecks says whether the required checks ran on the whole
-// repository state that lands, or would land.
+// RequiredChecks says whether the required checks ran and passed on the
+// whole repository state that lands or would land; in verify, on the Run's
+// starting commit.
 type RequiredChecks struct {
 	Ran             bool                    `json:"ran"`
 	WholeRepository bool                    `json:"wholeRepository"`

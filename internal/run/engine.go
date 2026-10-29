@@ -236,12 +236,29 @@ func (e *Engine) Run(ctx context.Context, req Request) (*Result, error) {
 		// deadline or no progress. Its work stays on the Run branch.
 		e.keep(ctx, r, s)
 	case req.Mode == agentport.Verify:
-		if len(r.Findings) > 0 || len(r.OwnerDecisions) > 0 {
+		var found []string
+		if n := len(r.Findings); n > 0 {
+			found = append(found, fmt.Sprintf("%d Findings", n))
+		}
+		if n := len(r.OwnerDecisions); n > 0 {
+			found = append(found, fmt.Sprintf("%d decisions for the owner", n))
+		}
+		switch rc := r.RequiredChecks; {
+		case len(s.plan.Checks) == 0 || rc.Ran:
+		case len(rc.Checks) > 0:
+			found = append(found, "required checks that did not pass on the whole repository")
+		default:
+			found = append(found, "required checks whose results could not be confirmed")
+		}
+		if len(found) > 0 {
 			r.State = StateFindings
-			r.Why = fmt.Sprintf("verify found %d Findings and %d decisions for the owner", len(r.Findings), len(r.OwnerDecisions))
+			r.Why = "verify found " + strings.Join(found, " and ")
 		} else {
 			r.State = StateVerified
-			r.Why = "every checklist item conforms"
+			r.Why = "every checklist item conforms and the required checks pass on the whole repository"
+			if len(s.plan.Checks) == 0 {
+				r.Why = "every checklist item conforms"
+			}
 		}
 		e.keep(ctx, r, s)
 	default:
@@ -315,9 +332,11 @@ func (e *Engine) credentials(plan *runremote.Plan, mode agentport.Mode) (map[str
 	return creds, nil
 }
 
-// collectChecks records where the required checks ran: on the push of
-// Root's approved submission, which the hooks checked on its full
-// repository state.
+// collectChecks records where the required checks ran on the whole
+// repository: in apply on the push of Root's approved submission, in verify
+// on the push of Root's verdicts, whose state is the Run's starting commit.
+// The hooks ran them on that commit's full repository state; landing on a
+// moved target runs them again on the merged state.
 func (e *Engine) collectChecks(ctx context.Context, remote Remote, s *schedule, r *Result) {
 	rc := &r.RequiredChecks
 	if len(s.plan.Checks) == 0 {
@@ -326,7 +345,10 @@ func (e *Engine) collectChecks(ctx context.Context, remote Remote, s *schedule, 
 	}
 	root := s.nodes[model.RootPackage]
 	if root == nil || root.approvedSubmission == "" {
-		rc.Note = "Root's work was not approved, so no state of the whole repository was checked for landing"
+		rc.Note = "Root's work was not approved, so the required checks ran on no state that would land"
+		if s.req.Mode == agentport.Verify {
+			rc.Note = "Root's checker pushed no verdicts, so the required checks did not run on the whole repository"
+		}
 		return
 	}
 	pushes, err := remote.Log(ctx)
@@ -338,12 +360,20 @@ func (e *Engine) collectChecks(ctx context.Context, remote Remote, s *schedule, 
 		for _, u := range p.Updates {
 			if p.Decision.Accepted && u.New == root.approvedSubmission && len(p.Decision.Checks) > 0 {
 				rc.Commit, rc.Checks = u.New, p.Decision.Checks
+				if s.req.Mode == agentport.Verify {
+					// The verdicts go with the remote; their tree is the start's.
+					rc.Commit = s.plan.Base
+				}
 				rc.Ran, rc.WholeRepository = allPassed(p.Decision.Checks) && len(p.Decision.Checks) == len(s.plan.Checks), true
 			}
 		}
 	}
 	if rc.Commit == "" {
-		rc.Note = "the decision log holds no checked push of Root's approved submission"
+		what := "approved submission"
+		if s.req.Mode == agentport.Verify {
+			what = "verdicts"
+		}
+		rc.Note = fmt.Sprintf("the decision log holds no checked push of Root's %s %s", what, short(root.approvedSubmission))
 	}
 }
 

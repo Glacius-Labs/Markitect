@@ -75,6 +75,9 @@ type Remote interface {
 	// Check runs the required checks on a commit the bundle holds, without
 	// changing any branch.
 	Check(ctx context.Context, bundle io.Reader, commit string) ([]runremote.CheckResult, error)
+	// StartFrom moves a Manager's branch, still at the base, to a state its
+	// parent's branch held, before the Manager starts.
+	StartFrom(ctx context.Context, branch, commit string) error
 	// Close removes the remote and everything it created.
 	Close(ctx context.Context) error
 }

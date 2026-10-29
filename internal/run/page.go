@@ -50,9 +50,11 @@ func Page(r *Result) []byte {
 	case rc.Ran && rc.WholeRepository:
 		fmt.Fprintf(&b, "Ran and passed on the whole repository at %s.\n", rc.Commit)
 	case len(rc.Checks) > 0:
-		fmt.Fprintf(&b, "Did not pass on the whole repository at %s.\n", rc.Commit)
+		fmt.Fprintf(&b, "Ran on the whole repository at %s and did not pass.\n", rc.Commit)
+	case r.Command == "verify":
+		b.WriteString("Did not run on the whole repository.\n")
 	default:
-		b.WriteString("Did not run on a state that lands.\n")
+		b.WriteString("Did not run on a state that would land.\n")
 	}
 	if rc.Note != "" {
 		fmt.Fprintf(&b, "\n%s.\n", capitalize(rc.Note))

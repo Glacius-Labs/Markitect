@@ -2,6 +2,7 @@ package run_test
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -203,29 +204,67 @@ func TestModelDefectEndsTheRunAtRoot(t *testing.T) {
 	}
 }
 
-// The Root rule changes, so every Manager works: loans under members, then
-// members, catalog and Root merge upward.
-func TestParentsMergeChildrenUpToRoot(t *testing.T) {
+// holding returns a Step that fails unless the start's clone holds every
+// file, then goes on with next.
+func (f *fixture) holding(files []string, next agentfake.Step) agentfake.Step {
+	return func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+		w, err := f.agents.Clone(ctx, s)
+		if err != nil {
+			return agentfake.Fail(err)
+		}
+		for _, file := range files {
+			if _, err := os.Stat(filepath.Join(w.Dir, filepath.FromSlash(file))); err != nil {
+				return agentfake.Fail(errorf("%s %s starts without %s from base %s", s.Manager.ID, s.Role, file, s.Git.Base))
+			}
+		}
+		return next(ctx, s, h)
+	}
+}
+
+// The Root rule changes, so every Manager has items and works parent first
+// (concept 2.0 §6.2): Root submits its own files, members and catalog start
+// from Root's approval, loans from members' approval, and the approved work
+// merges upward again.
+func TestParentsWorkFirstAndMergeChildrenUpToRoot(t *testing.T) {
 	f := newFixture(t)
 	base := f.tip("main")
 	f.write(map[string]string{m + "loan-limit.md": def("std/Rule", "Loan limit", "At most `3` open loans.")})
 	f.commit("limit 3")
 	a := f.agents
-	a.On("members/loans", maker, a.Submit(nil, map[string]string{"src/members/loans/loan.go": "package loans\n\nconst Limit = 3\n"}, word("changed")))
+	rootPage := table + "| README.md | [[project]] | Overview |\n| shared.txt | [[project]] | Shared |\n"
+	membersPage := "---\npaths: [src/members/**]\n---\n" + table + "| src/members/member.go | [[members/member]] | Type |\n| src/members/shared.txt | [[members/member]] | Shared |\n"
+	a.On(".", maker,
+		a.Submit(nil, map[string]string{"shared.txt": "limit 3\n", project.RootPage: rootPage}, word("changed")),
+		a.Submit([]string{"managers/members", "managers/catalog"}, nil, word("conforms")))
+	a.On(".", checker, a.Review(nil), a.Review(nil))
+	a.On("members", maker,
+		f.holding([]string{"shared.txt"}, a.Submit(nil, map[string]string{"src/members/shared.txt": "x\n", project.RegistryDir + "/members.md": membersPage}, word("conforms"))),
+		a.Submit([]string{"managers/members.loans"}, nil, word("conforms")))
+	a.On("members", checker, a.Review(nil), a.Review(nil))
+	a.On("members/loans", maker, f.holding([]string{"shared.txt", "src/members/shared.txt"},
+		a.Submit(nil, map[string]string{"src/members/loans/loan.go": "package loans\n\nconst Limit = 3\n"}, word("changed"))))
 	a.On("members/loans", checker, a.Review(nil))
-	a.On("members", maker, a.Submit([]string{"managers/members.loans"}, nil, word("conforms")))
-	a.On("members", checker, a.Review(nil))
-	a.On("catalog", maker, a.Submit(nil, nil, word("conforms")))
+	a.On("catalog", maker, f.holding([]string{"shared.txt"}, a.Submit(nil, nil, word("conforms"))))
 	a.On("catalog", checker, a.Review(nil))
-	a.On(".", maker, a.Submit([]string{"managers/members", "managers/catalog"}, nil, word("conforms")))
-	a.On(".", checker, a.Review(nil))
 
 	r := f.run(run.Request{Base: base})
 	if r.State != run.StateLanded {
 		t.Fatalf("%s: %s", r.State, r.Why)
 	}
-	if !strings.Contains(f.show("main", "src/members/loans/loan.go"), "Limit = 3") {
-		t.Fatal("the grandchild's work did not land")
+	if !strings.Contains(f.show("main", "src/members/loans/loan.go"), "Limit = 3") || !strings.Contains(f.show("main", "src/members/shared.txt"), "x") {
+		t.Fatal("the children's work did not land")
+	}
+	// No child started before its parent's first approval.
+	first := map[string]int{}
+	for i, st := range r.Starts {
+		if _, ok := first[st.Manager+" "+string(st.Role)]; !ok {
+			first[st.Manager+" "+string(st.Role)] = i
+		}
+	}
+	for _, pair := range [][2]string{{".", "members"}, {".", "catalog"}, {"members", "members/loans"}} {
+		if first[pair[0]+" checker"] > first[pair[1]+" maker"] {
+			t.Fatalf("%s started before %s's approval: %v", pair[1], pair[0], first)
+		}
 	}
 	want := map[string]bool{"members/loans:loan-limit": true, "members:loan-limit": true, "catalog:loan-limit": true, ".:loan-limit": true}
 	for _, it := range r.Items {
@@ -233,6 +272,36 @@ func TestParentsMergeChildrenUpToRoot(t *testing.T) {
 	}
 	if len(want) > 0 {
 		t.Fatalf("missing items %v in %s", want, items(r))
+	}
+}
+
+// Root has no items when only the book changes: it does not gate catalog,
+// which starts at once from the Run's start.
+func TestParentWithoutItemsDoesNotGate(t *testing.T) {
+	f := newFixture(t)
+	base, start := changeBook(f)
+	a := f.agents
+	a.On("catalog", maker, func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+		for _, st := range a.Starts() {
+			if st.Manager.ID == "." {
+				return agentfake.Fail(errorf("Root started before catalog"))
+			}
+		}
+		if s.Git.Base != start {
+			return agentfake.Fail(errorf("catalog starts from %s, not the Run's start %s", s.Git.Base, start))
+		}
+		return a.Submit(nil, map[string]string{"src/catalog/book.go": isbn}, word("changed"))(ctx, s, h)
+	})
+	a.On("catalog", checker, a.Review(nil))
+	a.On(".", maker, func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+		if len(s.Checklist) != 0 {
+			return agentfake.Fail(errorf("Root has items %v", s.Checklist))
+		}
+		return a.Submit([]string{"managers/catalog"}, nil, word("conforms"))(ctx, s, h)
+	})
+	a.On(".", checker, a.Review(nil))
+	if r := f.run(run.Request{Base: base}); r.State != run.StateLanded {
+		t.Fatalf("%s: %s", r.State, r.Why)
 	}
 }
 
@@ -336,6 +405,34 @@ func TestLandingRefusesAFailingMergedState(t *testing.T) {
 	}
 }
 
+// The host compiles the state it lands: a merge of two states that each
+// compile, but together give two Packages the same pattern, does not land.
+func TestLandingRefusesAMergedStateThatDoesNotCompile(t *testing.T) {
+	f := newFixture(t)
+	base, _ := changeBook(f)
+	a := f.agents
+	catalogPage := "---\npaths: [src/catalog/**, src/shared/**]\n---\n" + table + "| src/catalog/book.go | [[catalog/book]] | Type |\n"
+	a.On("catalog", maker, a.Submit(nil, map[string]string{
+		"src/catalog/book.go":               "package catalog\n\ntype Book struct{ ISBN string }\n",
+		project.RegistryDir + "/catalog.md": catalogPage,
+	}, word("changed")))
+	a.On("catalog", checker, a.Review(nil))
+	a.On(".", maker, a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
+	// The colleague's change compiles alone and is outside the impact.
+	a.On(".", checker, f.approveAfter(map[string]string{
+		"src/shared/x.go":                   "package shared\n",
+		project.RegistryDir + "/members.md": "---\npaths: [src/members/**, src/shared/**]\n---\n" + table + "| src/members/member.go | [[members/member]] | Type |\n| src/shared/x.go | [[members/member]] | Shared |\n",
+	}))
+
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateKept || !strings.Contains(r.Why, "the merged state does not compile") || !strings.Contains(r.Why, "src/shared/**") {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+	if strings.Contains(f.show("main", "src/catalog/book.go"), "ISBN") {
+		t.Fatal("the work landed")
+	}
+}
+
 func TestVerifyWithNoChangesStartsNothing(t *testing.T) {
 	f := newFixture(t)
 	start := f.tip("main")
@@ -367,6 +464,34 @@ func TestVerifyGivesVerdictsWithoutChanges(t *testing.T) {
 		if st.Role != checker {
 			t.Fatalf("verify started a %s", st.Role)
 		}
+	}
+	// The required checks ran on the whole repository, as in every Run.
+	if rc := r.RequiredChecks; !rc.Ran || !rc.WholeRepository || rc.Commit == "" || len(rc.Checks) != 1 {
+		t.Fatalf("required checks %+v", rc)
+	}
+}
+
+func TestVerifyReportsFailingRequiredChecks(t *testing.T) {
+	f := newFixture(t)
+	base := f.tip("main")
+	f.write(map[string]string{
+		m + "catalog/book.md":               def("std/Concept", "Book", "A book has a title and an `isbn`."),
+		"src/catalog/FAIL":                  "x\n",
+		project.RegistryDir + "/catalog.md": "---\npaths: [src/catalog/**]\n---\n" + table + "| src/catalog/book.go | [[catalog/book]] | Type |\n| src/catalog/FAIL | [[catalog/book]] | Marker |\n",
+	})
+	f.commit("book has an isbn, and the checks fail")
+	a := f.agents
+	a.On("catalog", checker, a.Verdicts(word("conforms")))
+	a.On(".", checker, a.Verdicts(word("conforms")))
+	r := f.run(run.Request{Mode: agentport.Verify, Base: base})
+	if r.State != run.StateFindings || !strings.Contains(r.Why, "required checks that did not pass") || len(r.Findings) != 0 {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+	if rc := r.RequiredChecks; rc.Ran || rc.Commit == "" || len(rc.Checks) != 1 || rc.Checks[0].Passed {
+		t.Fatalf("required checks %+v", rc)
+	}
+	if !strings.Contains(string(run.Page(r)), "and did not pass") {
+		t.Fatal("the Result page does not say the checks did not pass")
 	}
 }
 
@@ -488,9 +613,15 @@ func TestHostToolsRefuseOutsideTheTree(t *testing.T) {
 		if _, err := h.Ask(ctx, "may I?"); err == nil {
 			return agentfake.Fail(errorf("a checker asked"))
 		}
-		page, err := h.Notes(ctx, "")
-		if err != nil || len(page.Notes) != 1 {
-			return agentfake.Fail(errorf("notes %+v %v", page, err))
+		// A checker is fresh: it leaves Notes but does not read its maker's.
+		if len(s.Tools) != 1 || s.Tools[0] != agentport.ToolNote {
+			return agentfake.Fail(errorf("checker tools %v", s.Tools))
+		}
+		if page, err := h.Notes(ctx, ""); err == nil {
+			return agentfake.Fail(errorf("a checker read the Notes: %+v", page))
+		}
+		if _, err := h.Note(ctx, "book.go has no doc comment"); err != nil {
+			return agentfake.Fail(err)
 		}
 		return a.Review(nil)(ctx, s, h)
 	})
@@ -498,11 +629,14 @@ func TestHostToolsRefuseOutsideTheTree(t *testing.T) {
 		if _, err := h.Ask(ctx, "anyone?"); err == nil {
 			return agentfake.Fail(errorf("Root asked a parent"))
 		}
+		if page, err := h.Notes(ctx, ""); err != nil || len(page.Notes) != 2 {
+			return agentfake.Fail(errorf("notes %+v %v", page, err))
+		}
 		return a.Submit([]string{"managers/catalog"}, nil, word("conforms"))(ctx, s, h)
 	})
 	a.On(".", checker, a.Review(nil))
 	r := f.run(run.Request{Base: base})
-	if r.State != run.StateLanded || len(r.Notes) != 1 {
+	if r.State != run.StateLanded || len(r.Notes) != 2 {
 		t.Fatalf("%s with %d notes: %s", r.State, len(r.Notes), r.Why)
 	}
 }
