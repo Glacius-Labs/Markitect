@@ -107,7 +107,7 @@ All take `--repo DIR`; all but `init` and `lock` take `--json`. Exit 0 ok, 1 err
 
 ## Warnings (`lint`)
 
-`lint.coupling` (more than 5 dependencies), `lint.unstable_dependency` (depends on a less stable Package), `lint.definition_size` (over 1000 words), `lint.package_size` (over 25 Definitions), `lint.unused` (nothing links it, no file realizes it), `lint.reach` (a change would make more than half the Managers work), `lint.thin_package` (no Definitions and one child), `lint.stale`.
+`lint.coupling` (more than 5 dependencies), `lint.unstable_dependency` (depends on a less stable Package), `lint.definition_size` (over 1000 words), `lint.package_size` (over 25 Definitions), `lint.unused` (nothing links it, no file realizes it), `lint.reach` (a change would make more than half the Managers work), `lint.thin_package` (no Definitions and one child), `lint.no_paths` (a Package other than Root claims no path pattern, so it owns no file), `lint.stale`.
 
 ## Error codes
 

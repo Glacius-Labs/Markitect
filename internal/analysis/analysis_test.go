@@ -438,6 +438,22 @@ func TestLintThinPackageAndReach(t *testing.T) {
 	expectWarning(t, lintCodes(t, r), "lint.reach", "a change to members/member reaches 6 of 6 Managers")
 }
 
+func TestLintNoPaths(t *testing.T) {
+	r := library(t)
+	r[m+"orders/o.md"] = def("std/Rule", "O", "[[members/member]]")
+	// catalog's page names no paths, so Root owns its file.
+	r[project.RegistryDir+"/catalog.md"] = table
+	r[project.RootPage] += "| src/catalog/book.go | [[catalog/book]] [[catalog/shelf]] | Types |\n"
+	ds := lintCodes(t, r)
+	expectWarning(t, ds, "lint.no_paths", project.RegistryDir+"/orders.md: lint.no_paths: orders claims no path pattern")
+	expectWarning(t, ds, "lint.no_paths", project.RegistryDir+"/catalog.md: lint.no_paths: catalog claims no path pattern")
+	for _, d := range ds {
+		if d.Code == "lint.no_paths" && !strings.Contains(d.Message, "orders") && !strings.Contains(d.Message, "catalog") {
+			t.Fatalf("unexpected %v", d)
+		}
+	}
+}
+
 func TestLintStale(t *testing.T) {
 	r := library(t)
 	delete(r, m+"catalog/shelf.md")
