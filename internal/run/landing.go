@@ -107,10 +107,17 @@ func (e *Engine) land(ctx context.Context, r *Result, s *schedule, remote Remote
 		if tip != r.Start {
 			r.Why += fmt.Sprintf("; %s had moved to %s, and the clean merge passed the required checks", r.Target, short(tip))
 		}
-		// The landed page names no Run branch: it is deleted on landing.
+		// The landed page names no Run branch: it is deleted on landing,
+		// with the kept Run branches this landing covers.
 		r.Branch = ""
+		replaced, err := e.covered(ctx, r)
+		if err != nil {
+			replaced = nil
+			r.Cleanup = append(r.Cleanup, fmt.Sprintf("the kept Run branches could not be read, so none that this landing covers is deleted: %v", err))
+		}
+		r.Replaced = sortedKeys(replaced)
 		page := e.finish(r)
-		commit, err := e.Git.Write(ctx, state, map[string][]byte{ResultFile(r.Run): Page(page)}, fmt.Sprintf("Markitect Run %s: landed", r.Run))
+		commit, err := e.Git.Write(ctx, state, map[string][]byte{ResultFile(r.Run): Page(page)}, resultMessage(r, cand))
 		if err != nil {
 			e.keepOn(ctx, r, cand, pushed, StateIncomplete, "", err)
 			return
@@ -139,6 +146,11 @@ func (e *Engine) land(ctx context.Context, r *Result, s *schedule, remote Remote
 		if err := e.Git.Push(ctx, RunBranchPrefix+r.Run, "", pushed); err != nil {
 			r.Branch = RunBranchPrefix + r.Run
 			r.Cleanup = append(r.Cleanup, fmt.Sprintf("the landed Run's branch %s could not be deleted: %v", r.Branch, err))
+		}
+		for _, branch := range r.Replaced {
+			if err := e.Git.Push(ctx, branch, "", replaced[branch]); err != nil {
+				r.Cleanup = append(r.Cleanup, fmt.Sprintf("the covered Run branch %s could not be deleted: %v", branch, err))
+			}
 		}
 		return
 	}
@@ -182,7 +194,7 @@ func (e *Engine) keepOn(ctx context.Context, r *Result, commit, old, state, why 
 		r.State, r.Why = state, why
 	}
 	page := e.finish(r)
-	top, werr := e.Git.Write(ctx, commit, map[string][]byte{ResultFile(r.Run): Page(page)}, fmt.Sprintf("Markitect Run %s: %s", r.Run, r.State))
+	top, werr := e.Git.Write(ctx, commit, map[string][]byte{ResultFile(r.Run): Page(page)}, resultMessage(r, ""))
 	if werr == nil {
 		werr = e.Git.Push(ctx, r.Branch, top, old)
 	}
@@ -225,14 +237,8 @@ func (e *Engine) incoming(ctx context.Context, s *schedule, start, tip, cand str
 	}
 	inImp := analysis.ComputeImpact(analysis.ImpactInput{Base: s.cur, Current: next, Changed: files})
 	ours := map[string]bool{}
-	for _, it := range s.imp.Reached {
-		ours["def:"+it.Definition] = true
-	}
-	for _, c := range s.imp.Definitions {
-		ours["def:"+c.Path] = true
-	}
-	for _, f := range s.imp.ReachedFiles {
-		ours["file:"+f.File] = true
+	for _, k := range impactKeys(s.imp) {
+		ours[k] = true
 	}
 	mine, err := e.Git.Changed(ctx, start, cand)
 	if err != nil {

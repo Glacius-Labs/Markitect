@@ -45,6 +45,16 @@ type Git interface {
 	// LastLanded returns the newest commit reachable from tip that adds a
 	// landing Result, and false when there is none.
 	LastLanded(ctx context.Context, tip string) (string, bool, error)
+	// Branches lists the target repository's branches under a prefix with
+	// their tips, and makes their commits readable.
+	Branches(ctx context.Context, prefix string) (map[string]string, error)
+	// Lock reads the lock record of a branch of the target repository and
+	// its version; with no record, both are empty.
+	Lock(ctx context.Context, branch string) ([]byte, string, error)
+	// SetLock replaces the lock record of a branch if it is still at
+	// version; an empty version means there must be none, and nil data
+	// removes the record.
+	SetLock(ctx context.Context, branch string, data []byte, version string) error
 }
 
 // Commit is one commit of the host's repository.

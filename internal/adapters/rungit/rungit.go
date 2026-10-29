@@ -36,10 +36,15 @@ type Repo struct {
 var _ run.Git = (*Repo)(nil)
 
 const (
-	targetRefs = "refs/markitect/target/"
-	runRefs    = "refs/markitect/run/"
-	keepRefs   = "refs/markitect/keep/"
+	targetRefs   = "refs/markitect/target/"
+	runRefs      = "refs/markitect/run/"
+	keepRefs     = "refs/markitect/keep/"
+	branchRefs   = "refs/markitect/branches/"
+	lockReadRefs = "refs/markitect/lock-read/"
 )
+
+// LockRefs is where the target repository holds the lock of each branch.
+const LockRefs = "refs/markitect/lock/"
 
 // Open creates the private repository in dir, which must not exist or be
 // empty, for the target repository.
@@ -456,6 +461,76 @@ func (r *Repo) LastLanded(ctx context.Context, tip string) (string, bool, error)
 		return "", false, err
 	}
 	return id, id != "", nil
+}
+
+// Branches lists the target repository's branches under a prefix with their
+// tips, and fetches them so their commits are readable.
+func (r *Repo) Branches(ctx context.Context, prefix string) (map[string]string, error) {
+	prefix = strings.TrimSuffix(prefix, "/") + "/"
+	if _, err := r.git(ctx, nil, nil, "fetch", "-q", "--no-tags", "--prune", r.Target, "+refs/heads/"+prefix+"*:"+branchRefs+prefix+"*"); err != nil {
+		return nil, err
+	}
+	out, err := r.git(ctx, nil, nil, "for-each-ref", "--format=%(objectname) %(refname)", branchRefs+prefix)
+	if err != nil {
+		return nil, err
+	}
+	tips := map[string]string{}
+	for _, l := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+		if id, ref, ok := strings.Cut(l, " "); ok {
+			tips[strings.TrimPrefix(ref, branchRefs)] = id
+		}
+	}
+	return tips, nil
+}
+
+// lockFile is the one file of a lock commit.
+const lockFile = "lock.json"
+
+// Lock reads the lock record of a branch of the target repository: the
+// file of the commit at refs/markitect/lock/BRANCH there, a ref no clone
+// fetches by default. The version is that commit.
+func (r *Repo) Lock(ctx context.Context, branch string) ([]byte, string, error) {
+	if _, err := r.git(ctx, nil, nil, "fetch", "-q", "--no-tags", "--prune", r.Target, "+"+LockRefs+"*:"+lockReadRefs+"*"); err != nil {
+		return nil, "", err
+	}
+	id, err := r.line(ctx, "for-each-ref", "--format=%(objectname)", lockReadRefs+branch)
+	if err != nil || id == "" {
+		return nil, "", err
+	}
+	data, err := r.git(ctx, nil, nil, "cat-file", "blob", id+":"+lockFile)
+	if err != nil {
+		return nil, "", err
+	}
+	return data, id, nil
+}
+
+// SetLock replaces the lock record of a branch if its ref is still at
+// version: a new commit without parents that holds only the record, pushed
+// with a lease; nil data deletes the ref.
+func (r *Repo) SetLock(ctx context.Context, branch string, data []byte, version string) error {
+	ref := LockRefs + branch
+	spec := ":" + ref
+	if data != nil {
+		blob, err := r.git(ctx, bytes.NewReader(data), nil, "hash-object", "-w", "--stdin")
+		if err != nil {
+			return err
+		}
+		tree, err := r.git(ctx, strings.NewReader("100644 blob "+strings.TrimSpace(string(blob))+"\t"+lockFile+"\n"), nil, "mktree")
+		if err != nil {
+			return err
+		}
+		id, err := r.git(ctx, strings.NewReader("Markitect lock of "+branch+"\n"), identity, "commit-tree", strings.TrimSpace(string(tree)), "-F", "-")
+		if err != nil {
+			return err
+		}
+		commit := strings.TrimSpace(string(id))
+		if _, err := r.git(ctx, nil, nil, "update-ref", keepRefs+commit, commit); err != nil {
+			return err
+		}
+		spec = commit + ":" + ref
+	}
+	_, err := r.git(ctx, nil, nil, "push", "-q", "--no-verify", "--force-with-lease="+ref+":"+version, r.Target, spec)
+	return err
 }
 
 func split(out []byte) []string {
