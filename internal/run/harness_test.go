@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -34,14 +35,40 @@ func TestMain(m *testing.M) {
 	if os.Getenv("MARKITECT_REMOTE_TEST_HOOK") == "1" {
 		os.Exit(remoteserver.Main(context.Background(), os.Args[1:], os.Stdin, os.Stdout, os.Stderr))
 	}
+	gitToolsOnPath()
 	testkit.Main(m)
+}
+
+// gitToolsOnPath puts Git for Windows' POSIX tools on the PATH when no sh is
+// on it, as Git does for the hooks it starts, so the host's landing check,
+// which this process runs, finds sh as the hook's checks do. Started from
+// PowerShell, the PATH holds only Git's cmd folder.
+func gitToolsOnPath() {
+	if runtime.GOOS != "windows" {
+		return
+	}
+	if _, err := exec.LookPath("sh"); err == nil {
+		return
+	}
+	out, err := exec.Command("git", "--exec-path").Output()
+	if err != nil {
+		return
+	}
+	// The exec path is <root>/mingw64/libexec/git-core; the tools are in <root>/usr/bin.
+	tools := filepath.Join(filepath.Dir(filepath.Dir(filepath.Dir(strings.TrimSpace(string(out))))), "usr", "bin")
+	// Appended, so Windows' own tools of the same names keep their place.
+	if _, err := os.Stat(filepath.Join(tools, "sh.exe")); err == nil {
+		os.Setenv("PATH", os.Getenv("PATH")+string(os.PathListSeparator)+tools)
+	}
 }
 
 const (
 	m     = project.ModelDir + "/"
 	table = "| File | Realizes | Why |\n|---|---|---|\n"
-	// failCheck fails when the tree holds a file named FAIL.
-	failCheck = `! find . -name FAIL | grep -q .`
+	// failCheck fails when the tree holds a file named FAIL. It needs only
+	// Git and the shell's builtins, since on a Windows host find on the PATH
+	// may be Windows' own find.exe. The pathspec matches FAIL in every folder.
+	failCheck = `test -z "$(git ls-files -- ":(glob)**/FAIL")"`
 )
 
 func def(kind, title, body string) string {
