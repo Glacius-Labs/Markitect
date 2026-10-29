@@ -36,6 +36,16 @@ Root owns the rest: `realization/go.mod`, the README, the Library's `cmd/library
 
 The steps follow their sources one to one: Library `m1` is [testdata/library/m1](../../testdata/library/m1/model.yaml), `m2` its loan-limit edit and `m3` to `m5` the [Phase B overlays](../comparison/phase-b); Makerspace `w0` to `c9` are [makerspace-v2](../comparison/makerspace-v2/README.md) v2.1, `model/` and `c1/model/` to `c9/model/`.
 
+## Registry pages of the reference results
+
+A change task from a fixed reference start begins with a reference result: code that realizes the step before, written for the judges, in its own layout (the Library's `realization/internal/{calendar,library,protocol}`, the Makerspace's `realization/internal/ms` and `cmd/makerspace`), with no Markitect folder. `references/<step>/` holds the registry pages an owner adopting Markitect would write for the reference result of that step: `registry.md` for Root and `registry/<package>.md` for every Package. Library `m1` to `m4` and Makerspace `w0` to `c8` have them: every reference that serves as a fixed start or as a planted task's start.
+
+- **Rows:** every file of the reference, with the Definitions of that step it realizes as its responsibility (the operations it implements, the records it defines, the rules it enforces centrally, the behavior a test checks) and a short reason that says what the file holds. Links name what a file implements, not every shared rule it obeys.
+- **Owners:** a file belongs to the lowest common parent of the Packages whose Definitions it links, so a file that serves several Packages belongs to Root or their common parent; a Package owns its files by single-file path patterns, and a Package that owns no file has `paths: []`. In the Library reference, the domain code serves every Package, so Root owns every file. The Makerspace reference is one Go package that does not follow the architecture's module cut: the operations file of a single module belongs to that module (billing, bookings, equipment, materials, reporting; protocol has the entry point and the wire format), while the records, the shared mechanisms, the files that mix modules and most tests belong to Root.
+- **Use:** `series.py base` gives the step's model with these pages as a task's `base-model/`, and the 2.0 arm commits it before the change; the start itself, which every arm receives, holds no Markitect folder. The pages give ownership and links and nothing else: no reason judges the code or points at a later step.
+
+Every adopted start compiles with no error, every file accounted for (`markitect check`), and `markitect lint` finds no Definition without a realizing file, except where the reference has none: the Makerspace references have no README, so nothing realizes `documentation` ([test_series.py](../evaluation/test_series.py)).
+
 ## How the conversion reads the old models
 
 Both conversions keep every statement and rewrite only form. The equivalence records hold the independent reviews: [Library](../../docs/validation/t2-library-equivalence-20261028.md) and [Makerspace](../../docs/validation/t2-makerspace-equivalence-20261028.md).
