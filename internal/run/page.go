@@ -145,7 +145,7 @@ func Page(r *Result) []byte {
 			fmt.Fprintf(&b, "- %s\n", oneLine(c))
 		}
 		if r.State == StateLanded {
-			b.WriteString("- After landing, the host deletes this Run's branch and the replaced Run branches, removes the Run's remote and leaves the target's lock; this page is part of the landing, so what that leaves is reported only by the command (`afterLanding` in its JSON).\n")
+			b.WriteString("- After landing, the host deletes this Run's branch and the replaced Run branches, removes the Run's remote and leaves the target's lock; this page is part of the landing, so what that leaves is reported only by the command: on its standard error and as `afterLanding` in its JSON.\n")
 		}
 	}
 	return b.Bytes()
