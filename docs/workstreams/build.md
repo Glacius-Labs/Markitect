@@ -35,6 +35,8 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 
 - **Scoring the stops, 28 October 2026:** every arm is scored on planted tasks by one mechanical rule: a result equal to its start did not land. Every task ends with the same stop rule for every arm: if the requirements contradict each other or leave a boundary behavior open, change nothing and say why. The owner accepted Build's recommendation.
 
+- **Codex runs, 29 October 2026:** Codex has usage again. The counted series stays on Claude Sonnet 5.5, so that it stays comparable with the pilot and the suite's self-tests. A native 2.0 smoke on Codex (Library M1) runs now, beside the Claude work. After the counted series comes a smaller repeat with every arm on Codex Luna; Build proposes its size under the approved protocol. Models are never mixed within one series; Sol High runs only if the owner asks for a strong-model check.
+
 ## Questions for the owner
 
 None open.
