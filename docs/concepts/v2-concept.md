@@ -98,7 +98,7 @@ Layout conventions, such as where tests live, are Rules in Root.
 
 ### 6.1 Who works
 
-Impact decides, like an incremental build ([DEC-082](register.md#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager)). A model change reaches the Definitions it changes; through the registry the files that realize them; through links the Packages that depend on them; and their parents up to Root. Untouched areas do not start. Impact does not follow the code's own imports: the required checks always run on the whole repository and catch what a change breaks there, and an occasional full Run catches what impact missed.
+Impact decides, like an incremental build ([DEC-082](register.md#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager)). A model change reaches the Definitions it changes; through the registry the files that realize them; through links the Packages that depend on them; and their parents up to Root. Untouched areas do not start. Impact does not follow the code's own imports: the required checks always run on the whole repository and catch what a change breaks there, and a full check catches what impact missed: `verify --full`, at every milestone the owner names and once ten changes have landed since the last full check. Every Result says how many have landed since then, and from ten on that a full check is due; the host starts nothing by itself, and ten is a starting value to adjust with evidence.
 
 ### 6.2 One Run, maker and checker
 
@@ -210,9 +210,9 @@ No app for now ([DEC-085](register.md#dec-085-markdown-tools-are-the-cockpit-for
 9. **Results and leftovers: decided** 28 October: Results in the repository under `.markitect/results/`; Run branches cleaned up after landing; the working tree is never touched.
 10. **Acceptance: decided** 28 October (§15).
 
-**Decided after the first build steps** (29 October 2026, on an independent check of the code against this concept): landing compiles every submission and the state it lands; `verify` runs the required checks; the checker does not read the Shared Notes; impact does not follow the code's own imports (§6.1); how planted defects are scored (§15); after the first native Run, a parent submits its own files before its children start (§6.2); after the first suite runs, the owner sets a new Package's first path patterns, and pattern changes take effect from the next Run (§4).
+**Decided after the first build steps** (29 October 2026, on an independent check of the code against this concept): landing compiles every submission and the state it lands; `verify` runs the required checks; the checker does not read the Shared Notes; impact does not follow the code's own imports (§6.1); how planted defects are scored (§15); after the first native Run, a parent submits its own files before its children start (§6.2); after the first suite runs, the owner sets a new Package's first path patterns, and pattern changes take effect from the next Run (§4); after an independent assessment, the full check is `verify --full` at milestones and after ten landed changes (§6.1), and the counted series claims only what it measures (§15).
 
-**Details for the build:** the verdict trailer format; the harness and model of makers and checkers; when the full Run is due; the format of a mandate; the Result page's exact layout.
+**Details for the build:** the verdict trailer format; the harness and model of makers and checkers; the format of a mandate; the Result page's exact layout.
 
 **Parked:** the Windows test time ([question 33](../workstreams/topics.md#questions-for-the-owner)), to be judged again after the rebuild.
 
@@ -227,5 +227,7 @@ Concept 2.0 is achieved when the evaluation suite shows, on a small project (the
 3. **Nothing skipped:** in every Result, every checklist item has a verdict with evidence.
 4. **Stops right:** planted model defects end the Run without landing; harmless gaps do not. A result equal to its start counts as not landed, for every arm alike, and every arm gets the same instruction: when the requirements contradict each other or leave a boundary behavior open, change nothing and say why.
 5. **At least as trustworthy as today's practice:** on the same series, the results are at least as consistent as one strong agent with ordinary documentation ([DEC-002](register.md#dec-002-trust-is-measured-against-todays-practice)). Cost is reported, not judged.
+
+**What the series claims.** The counted series claims only what it measures: at least the baseline's quality, and fewer defects left for a person to repair per change, given comparable input. It does not show that a person saves time. That is measured apart, after the series: on the new project, the owner takes three changes per arm to acceptance, blinded, and records the minutes and the corrections. Until then less human attention stays a [promise](register.md#promises). If the effort for the requirements and the model was not recorded, the report names that as a limit.
 
 The same series runs natively on Windows and on Linux, on our own machine. The exact numbers, the change series and the planted defects belong to the evaluation design.
