@@ -178,6 +178,17 @@ class SuiteTest(unittest.TestCase):
         self.assertEqual((repo / "work.txt").read_text().split(), ["ok", "ok"])
         self.assertEqual((out / "state" / "seen.txt").read_text().split(), ["ok", "none", "ok"])
 
+    def test_a_chain_continues_an_earlier_one_with_its_state(self):
+        first = suite.chain([self.step("1", "ok")], None, 120, self.variant, self.tmp / "first", MODEL)
+        bundle = self.tmp / "first" / "step-01" / "run" / "variant" / "result.bundle"
+        with self.assertRaisesRegex(suite.SuiteError, "does not exist"):
+            suite.chain([self.step("2", "ok")], bundle, 120, self.variant, self.tmp / "bad", MODEL, state=self.tmp / "nowhere")
+        summary = suite.chain([self.step("3", "ok")], bundle, 120, self.variant, self.tmp / "second", MODEL, state=self.tmp / "first" / "state")
+        self.assertEqual(suite.read_task(self.tmp / "second" / "step-01" / "task")["start"]["commit"], first["steps"][0]["result"])
+        self.assertEqual((self.tmp / "first" / "state" / "seen.txt").read_text().split(), ["ok", "ok"])
+        self.assertFalse((self.tmp / "second" / "state").exists())
+        self.assertTrue(summary["steps"][0]["delivered"])
+
     def test_changed_task_invalidates_the_run_and_stops_the_chain(self):
         steps = [self.step("1", "tamper"), self.step("2", "ok")]
         summary = suite.chain(steps, None, 120, self.variant, self.tmp / "chain", MODEL)

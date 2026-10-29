@@ -30,7 +30,7 @@ python -I -B tools/evaluation/suite.py task --task-md TASK.md [--model MODEL_DIR
 python -I -B tools/evaluation/suite.py run --task TASK_DIR --model claude:claude-sonnet-5-5 --out RUN_DIR [--state STATE_DIR] \
     --sandbox IMAGE_ID --variant-code tools/evaluation [--login FILE] [--series FILE] [--lock FILE] \
     -- python3 -I -B /variant/claude_code.py
-python -I -B tools/evaluation/suite.py chain --step STEP_DIR [--step STEP_DIR ...] [--start BUNDLE] --deadline-seconds 2700 --model claude:claude-sonnet-5-5 --out CHAIN_DIR [SANDBOX OPTIONS] -- VARIANT...
+python -I -B tools/evaluation/suite.py chain --step STEP_DIR [--step STEP_DIR ...] [--start BUNDLE [--state STATE_DIR]] --deadline-seconds 2700 --model claude:claude-sonnet-5-5 --out CHAIN_DIR [SANDBOX OPTIONS] -- VARIANT...
 python -I -B tools/evaluation/suite.py judge --run RUN_DIR --judge JUDGE_DIR [--step STEP] --out JUDGMENT_DIR [--lock FILE]
 python -I -B tools/evaluation/suite.py judge-chain --chain CHAIN_DIR --judge JUDGE_DIR --steps W0,C1,... --out DIR [--lock FILE]
 python -I -B tools/evaluation/suite.py review --run RUN_DIR --judge JUDGE_DIR --out REVIEW_DIR --sandbox IMAGE_ID --variant-code tools/evaluation [--lock FILE]
@@ -45,7 +45,7 @@ The variant command receives `TASK_DIR OUT_DIR [STATE_DIR]`. It works on a copy 
 
 The suite writes `RUN_DIR/suite.json`. It holds the wall time, whether the variant timed out and its exit code. It also holds whether a result was delivered: its commit, tree and changed paths, or why there is none. It holds the variant's own report and whether the model in that report matches the evaluation's model. Finally, it holds the conditions (`sandbox` or `host`), the sandbox record and `validForCounting`. A result counts only when it is one branch tip that descends from the task's start; a result equal to the start counts as delivered with no changes. A `false` model match makes the run invalid in the report.
 
-In a chain, a step without a result is followed by a step that starts from that step's start. One state directory is handed to the variant at every step.
+In a chain, a step without a result is followed by a step that starts from that step's start. One state directory is handed to the variant at every step. `--state` continues an earlier chain, for example after a void step: the new chain gets the earlier chain's state directory, and `--start` its last delivered result.
 
 ## The sandbox
 

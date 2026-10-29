@@ -12,7 +12,7 @@ variant's business.
 
   python -I -B suite.py task --task-md FILE [--model DIR] [--start BUNDLE [--base-model DIR]] --deadline-seconds N --out NEW_DIR
   python -I -B suite.py run --task DIR --out NEW_DIR --model PROVIDER:MODEL_ID [--state DIR] [SANDBOX...] -- VARIANT...
-  python -I -B suite.py chain --step DIR [--step DIR ...] [--start BUNDLE] --deadline-seconds N --model PROVIDER:MODEL_ID \
+  python -I -B suite.py chain --step DIR [--step DIR ...] [--start BUNDLE [--state DIR]] --deadline-seconds N --model PROVIDER:MODEL_ID \
       --out NEW_DIR [SANDBOX...] -- VARIANT...
 
   python -I -B suite.py judge --run RUN_DIR --judge JUDGE_DIR [--step STEP] --out NEW_DIR [--engine BIN] [--lock FILE]
@@ -316,15 +316,21 @@ def chain_start(task_dir, step_record, out):
         git(tmp, "bundle", "create", str(pathlib.Path(out).resolve()), "refs/heads/start")
 
 
-def chain(steps, start, deadline, variant, out, model, sandbox=None):
+def chain(steps, start, deadline, variant, out, model, sandbox=None, state=None):
+    """Run the steps in order, each from the previous step's result. With `state`, the chain continues an earlier one,
+    for example after a void step: the variant gets that state directory, and `start` is the earlier chain's last
+    delivered result."""
     out = pathlib.Path(out)
     if out.exists():
         raise SuiteError(f"{out} exists")
     if not steps:
         raise SuiteError("a chain needs at least one step")
+    if state is not None and not pathlib.Path(state).is_dir():
+        raise SuiteError(f"the state directory {state} does not exist")
     out.mkdir(parents=True)
-    state = out / "state"
-    state.mkdir()
+    if state is None:
+        state = out / "state"
+        state.mkdir()
     records, error = [], None
     for i, step in enumerate(steps, 1):
         step = pathlib.Path(step)
@@ -505,6 +511,7 @@ def main(argv=None):
     c = sub.add_parser("chain")
     c.add_argument("--step", action="append", required=True)
     c.add_argument("--start")
+    c.add_argument("--state", help="continue an earlier chain: its state directory, handed to the variant at every step")
     c.add_argument("--deadline-seconds", type=int, required=True)
     c.add_argument("--out", required=True)
     c.add_argument("--model", required=True, help="the evaluation's model as PROVIDER:MODEL_ID")
@@ -573,7 +580,7 @@ def main(argv=None):
                     result = {k: record[k] for k in ("delivered", "timedOut", "exitCode", "wallSeconds", "resultError", "modelMatches",
                                                      "conditions", "validForCounting", "reported")}
                 else:
-                    result = chain(a.step, a.start, a.deadline_seconds, variant, a.out, a.model, box)
+                    result = chain(a.step, a.start, a.deadline_seconds, variant, a.out, a.model, box, a.state)
     except (SuiteError, sandboxing.SandboxError, judging.JudgeError, ValueError) as e:
         print(f"suite: {e}", file=sys.stderr)
         return 2
