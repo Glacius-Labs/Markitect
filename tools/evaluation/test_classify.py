@@ -139,6 +139,29 @@ class TokenParserTest(unittest.TestCase):
             count = tokens.count(tmp)
         self.assertEqual((count["responses"], count["inputTokens"], count["outputTokens"], count["unreadableLines"]), (1, 3, 12, 1))
 
+    def test_a_stream_only_session_counts_from_its_result_lines(self):
+        """The 2.0 arm's agents leave stream-json only, whose assistant lines carry the usage as it stood mid-response."""
+        def stream(session, output, thinking, cost):
+            usage = {"claude-sonnet-5-5": {"inputTokens": 2, "outputTokens": output, "cacheReadInputTokens": 100, "cacheCreationInputTokens": 50,
+                                           "thinkingTokens": thinking, "costUSD": cost}}
+            return "\n".join(json.dumps(x) for x in (
+                {"type": "assistant", "session_id": session, "message": {"id": session + "-1", "model": "claude-sonnet-5-5",
+                                                                         "usage": {"input_tokens": 2, "output_tokens": 7}}},
+                {"type": "system", "subtype": "thinking_tokens", "estimated_tokens": 50, "session_id": session},
+                {"type": "result", "session_id": session, "usage": {"output_tokens": output}, "modelUsage": usage})) + "\n"
+        with tempfile.TemporaryDirectory() as tmp:
+            (pathlib.Path(tmp) / "maker-1.jsonl").write_text(stream("a", 900, 300, 0.25))
+            (pathlib.Path(tmp) / "checker-1.jsonl").write_text(stream("b", 100, 20, 0.05))
+            # A session with a transcript of its own is still counted by its responses, as K's are.
+            (pathlib.Path(tmp) / "k.jsonl").write_text(json.dumps({"type": "assistant", "sessionId": "k", "message": {
+                "id": "k-1", "model": "claude-sonnet-5-5", "usage": {"input_tokens": 1, "output_tokens": 40}}}) + "\n")
+            (pathlib.Path(tmp) / "k-stream.jsonl").write_text(json.dumps({"type": "result", "session_id": "k", "modelUsage": {
+                "claude-sonnet-5-5": {"outputTokens": 999, "costUSD": 9.0}}}) + "\n")
+            count = tokens.count(tmp)
+        self.assertEqual((count["responses"], count["outputTokens"], count["thinkingTokens"], count["cacheReadTokens"]), (3, 1040, 320, 200))
+        self.assertEqual((count["streamResults"], count["costUsd"]), (2, 0.3))
+        self.assertEqual(count["byModel"]["claude-sonnet-5-5"]["responses"], 3)
+
 
 if __name__ == "__main__":
     unittest.main()

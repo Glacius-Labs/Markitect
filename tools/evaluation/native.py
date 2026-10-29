@@ -12,19 +12,23 @@ process with, besides EVALUATION_MODEL:
   EVALUATION_NETWORK    the internal network every container of the variant joins
   EVALUATION_HOSTS      HOST:ADDRESS pairs, comma-separated, for --add-host: the provider endpoints at the gateway
   EVALUATION_DNS        the resolver address that resolves nothing (--dns)
-  EVALUATION_LABEL      KEY=VALUE, a label the variant puts on its containers
+  EVALUATION_LABEL      KEY=VALUE, the run's ID, for the variant's container labels or names
   EVALUATION_ENGINE     the engine command, as a JSON list
 
 While the variant runs, the suite records the engine's events, and inspects
 every network created during the run as soon as its event arrives. Afterwards
 every container started during the run, other than the suite's own, must have
 joined only the internal network, internal networks the variant created itself
-during the run (such as a Run's own network between its remote and its agents;
-an internal network has no route out), or no network; one that joined any
-other network is an escape, and the run is not valid for counting. A network
-that could not be inspected counts as not internal. Containers and networks the
-variant left are residue: removed and counted. The engine lock keeps other
-runners' containers out of the record.
+during the run (such as a Run's own network between its remote and its agents),
+or no network; one that joined any other network is an escape, and the run is
+not valid for counting. Networks are told apart by ID; a network that could not
+be inspected counts as not internal, and a reader of the record that stopped
+fails the check. An internal network reaches no other network; unless its
+bridge's gateway mode is isolated, as the suite's own is, its containers can
+reach the engine's host at the bridge address, which the record shows
+(`armNetworks`). Containers, networks and volumes the variant left are residue:
+removed and counted. The engine lock keeps other runners' containers out of the
+record.
 
 Hidden material stays off the machine during runs: the series names where it
 would lie (`--hidden-absent PATH`), and the run refuses to start, and is not
@@ -58,7 +62,7 @@ class Events:
     address of the engine's host, as the suite's own internal network does (sandbox.open_egress)."""
 
     def __init__(self, argv, engine, since, internal, run_dir):
-        self.engine, self.internal, self.inspected, self.gateways = engine, internal, {}, {}
+        self.engine, self.internal, self.inspected, self.gateways, self.error = engine, internal, {}, {}, None
         self.file, self.err = open(run_dir / "engine-events.jsonl", "wb"), open(run_dir / "engine-events.stderr.log", "wb")
         self.proc = subprocess.Popen([*argv, "events", "--since", since, "--format", "{{json .}}"], stdout=subprocess.PIPE,
                                      stderr=self.err, stdin=subprocess.DEVNULL)
@@ -67,38 +71,48 @@ class Events:
 
     def read(self):
         begun = False
-        for line in self.proc.stdout:
-            self.file.write(line)
-            self.file.flush()
-            try:
-                event = json.loads(line)
-            except ValueError:
-                continue
-            actor = event.get("Actor") or {}
-            if event.get("Type") != "network" or event.get("Action") != "create":
-                continue
-            if not begun:
-                begun = (actor.get("Attributes") or {}).get("name") == self.internal
-                continue
-            ident = actor.get("ID") or event.get("id")
-            code, out = self.engine("network-internal", ["network", "inspect", "--format", "{{json .Internal}} {{json .Options}}", ident])
-            internal, _, options = out.strip().partition(" ")
-            self.inspected[ident] = None if code != 0 else internal == "true"
-            try:
-                self.gateways[ident] = (json.loads(options) or {}).get("com.docker.network.bridge.gateway_mode_ipv4") if code == 0 else None
-            except ValueError:
-                self.gateways[ident] = None
+        try:
+            for line in self.proc.stdout:
+                self.file.write(line)
+                self.file.flush()
+                try:
+                    event = json.loads(line)
+                except ValueError:
+                    continue
+                if not isinstance(event, dict) or event.get("Type") != "network" or event.get("Action") != "create":
+                    continue
+                actor = event.get("Actor") or {}
+                if not begun:
+                    begun = (actor.get("Attributes") or {}).get("name") == self.internal
+                    continue
+                ident = actor.get("ID") or event.get("id")
+                if not ident:
+                    continue  # nothing to inspect; account() finds no ID for it either
+                code, out = self.engine("network-internal", ["network", "inspect", "--format", "{{json .Internal}} {{json .Options}}", ident])
+                internal, _, options = out.strip().partition(" ")
+                self.inspected[ident] = None if code != 0 else internal == "true"
+                try:
+                    self.gateways[ident] = (json.loads(options) or {}).get("com.docker.network.bridge.gateway_mode_ipv4") if code == 0 else None
+                except (ValueError, AttributeError):
+                    self.gateways[ident] = None
+        except Exception as e:  # noqa: BLE001 - a reader that stops must fail the check, not end it silently
+            self.error = f"{type(e).__name__}: {e}"
 
     def stop(self):
+        """Ends the record; the error that makes the network check incomplete, if any."""
         self.proc.terminate()
         try:
             self.proc.wait(timeout=EVENTS_SECONDS)
         except subprocess.TimeoutExpired:
             self.proc.kill()
         self.thread.join(timeout=EVENTS_SECONDS)
-        self.proc.stdout.close()
+        if self.thread.is_alive():
+            self.error = self.error or "the event reader did not end"
+        else:
+            self.proc.stdout.close()
         self.file.close()
         self.err.close()
+        return self.error and f"the engine's event record stopped being read ({self.error}): the network check is incomplete"
 
 
 class Native:
@@ -173,7 +187,9 @@ class Native:
                     if events.proc.poll() is not None:
                         record.setdefault("error", f"the engine's event record ended early (exit {events.proc.returncode}): "
                                                    "the network check is incomplete")
-                    events.stop()
+                    stopped = events.stop()
+                    if stopped:
+                        record.setdefault("error", stopped)
                     self.account(engine, gateway_id, internal, run_dir / "engine-events.jsonl", record, timing["timedOut"], events.inspected,
                                  events.gateways)
                 sandboxing.close_egress(engine, run_id, label, run_dir, record, networks, containers)
@@ -188,39 +204,51 @@ class Native:
     def account(self, engine, gateway_id, internal, events_path, record, timed_out, inspected=None, gateways=None):
         """Every container the variant started and the networks it joined; remove what it left.
 
-        What it left after a normal end is residue; at the deadline the suite stops it, as it stops the sandbox.
-        A record that never shows the run's own network failed: the check fails closed. `inspected` says, per
-        network ID, whether a network created during the run was internal when it was inspected."""
+        What it left after a normal end is residue: containers, networks and volumes; at the deadline the suite
+        stops it, as it stops the sandbox. A record that never shows the run's own network failed: the check fails
+        closed. `inspected` says, per network ID, whether a network created during the run was internal when it was
+        inspected. Networks are told apart by ID, so a name reused by another network does not inherit the first's
+        standing."""
         inspected, gateways = inspected or {}, gateways or {}
-        started, joined, created_networks, begun = {}, {}, {}, False
+        started, joined, created_networks, volumes, begun, internal_id = {}, {}, {}, [], False, None
         for line in events_path.read_text(encoding="utf-8", errors="replace").splitlines():
             try:
                 event = json.loads(line)
             except ValueError:
                 continue
+            if not isinstance(event, dict):
+                continue
             attrs = (event.get("Actor") or {}).get("Attributes") or {}
             kind, action = event.get("Type"), event.get("Action")
+            # Current engines name the object in Actor.ID only; the top-level id is a deprecated copy.
+            ident = (event.get("Actor") or {}).get("ID") or event.get("id")
             # The record starts early, so that nothing is missed; what came before this run's network is not its.
             if not begun:
                 begun = kind == "network" and action == "create" and attrs.get("name") == internal
+                internal_id = ident if begun else None
                 continue
-            # Current engines name the object in Actor.ID only; the top-level id is a deprecated copy.
-            ident = (event.get("Actor") or {}).get("ID") or event.get("id")
             if kind == "container" and action == "start":
                 if ident == gateway_id:
                     continue  # the suite's own gateway, by its ID: a label the variant could copy
                 started[ident] = attrs.get("name")
             elif kind == "network" and action == "connect":
-                joined.setdefault(attrs.get("container"), set()).add(attrs.get("name"))
+                joined.setdefault(attrs.get("container"), set()).add((ident, attrs.get("name")))
             elif kind == "network" and action == "create" and attrs.get("name") != internal.removesuffix("-internal") + "-egress":
                 created_networks[ident] = attrs.get("name")
+            elif kind == "volume" and action == "create" and ident:
+                volumes.append(ident)
         if not begun:
             record.setdefault("error", "the engine's event record does not show the run's network: the network check did not run")
-        record["armContainers"] = [{"id": cid[:12], "name": name, "networks": sorted(joined.get(cid, []))} for cid, name in started.items()]
+        allowed = {internal_id} | {nid for nid in created_networks if inspected.get(nid) is True}
+        record["armContainers"], record["escapes"] = [], []
+        for cid, name in started.items():
+            nets = joined.get(cid, set())
+            entry = {"id": cid[:12], "name": name, "networks": sorted(n or "?" for _, n in nets)}
+            record["armContainers"].append(entry)
+            if not nets or any(nid not in allowed and n != ALLOWED_NONE for nid, n in nets):
+                record["escapes"].append(entry)
         record["armNetworks"] = [{"id": nid[:12], "name": name, "internal": inspected.get(nid), "gatewayMode": gateways.get(nid)}
                                  for nid, name in created_networks.items()]
-        allowed = {internal, ALLOWED_NONE} | {name for nid, name in created_networks.items() if inspected.get(nid) is True}
-        record["escapes"] = [c for c in record["armContainers"] if not c["networks"] or set(c["networks"]) - allowed]
         left = []
         for cid, name in started.items():
             if engine("arm-inspect", ["inspect", "--format", "{{.Id}}", cid])[0] == 0:
@@ -230,4 +258,8 @@ class Native:
             if engine("arm-network-inspect", ["network", "inspect", "--format", "{{.Id}}", nid])[0] == 0:
                 left.append(name or nid[:12])
                 engine("arm-network-remove", ["network", "rm", nid], sandboxing.KILL_SECONDS)
+        for vid in volumes:
+            if engine("arm-volume-inspect", ["volume", "inspect", "--format", "{{.Name}}", vid])[0] == 0:
+                left.append("volume " + vid)
+                engine("arm-volume-remove", ["volume", "rm", "-f", vid], sandboxing.KILL_SECONDS)
         record["armStoppedAtDeadline" if timed_out else "armResidue"] = left

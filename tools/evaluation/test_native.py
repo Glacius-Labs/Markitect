@@ -26,9 +26,14 @@ FAKE_ENGINE = textwrap.dedent(r'''
     import json, os, subprocess, sys, time
     args, d = sys.argv[1:], os.environ["FAKE_DIR"]
     path, log = os.path.join(d, "engine.json"), os.path.join(d, "events.jsonl")
-    state = json.load(open(path)) if os.path.exists(path) else {"containers": {}, "networks": {}}
+    state = json.load(open(path)) if os.path.exists(path) else {"containers": {}, "networks": {}, "volumes": {}, "seq": 0}
     def save():
         json.dump(state, open(path, "w"))
+    # Networks have IDs of their own, nNNN-NAME, so that a name used twice names two networks.
+    def netid(name):
+        return state["networks"][name]["id"] if name in state["networks"] else name
+    def network(ref):
+        return next((n for n, item in state["networks"].items() if ref in (n, item["id"])), None)
     def event(kind, action, ident, **attrs):
         with open(log, "a") as f:
             # As Docker 29 writes them: the object's ID in Actor.ID only.
@@ -51,7 +56,7 @@ FAKE_ENGINE = textwrap.dedent(r'''
     def make(name, net, label):
         state["containers"][name] = {"label": label or "", "network": net}; save()
         event("container", "create", name, name=name, **labels(name))
-        event("network", "connect", net, name=net, container=name)
+        event("network", "connect", netid(net), name=net, container=name)
     if args[:2] == ["image", "inspect"]:
         print(os.environ["FAKE_IMAGE"])
     elif args[0] == "ps":
@@ -60,20 +65,33 @@ FAKE_ENGINE = textwrap.dedent(r'''
         print("\n".join(labelled("networks", opt("--filter")[len("label="):])))
     elif args[:2] == ["network", "create"]:
         options = dict(o.partition("=")[::2] for o in (args[i + 1] for i, a in enumerate(args) if a == "--opt"))
-        state["networks"][args[-1]] = {"label": opt("--label", ""), "internal": "--internal" in args, "options": options}; save()
-        event("network", "create", args[-1], name=args[-1])
+        state["seq"] += 1
+        state["networks"][args[-1]] = {"label": opt("--label", ""), "internal": "--internal" in args, "options": options,
+                                       "id": f"n{state['seq']:03d}-{args[-1]}"}; save()
+        event("network", "create", netid(args[-1]), name=args[-1])
     elif args[:2] == ["network", "connect"]:
-        event("network", "connect", args[2], name=args[2], container=args[3])
+        event("network", "connect", netid(args[2]), name=args[2], container=args[3])
     elif args[:2] == ["network", "inspect"]:
-        if args[-1] not in state["networks"]:
+        name = network(args[-1])
+        if name is None:
             sys.exit(1)
         if "Internal" in (opt("--format") or ""):
-            net = state["networks"][args[-1]]
+            if os.environ.get("FAKE_UNINSPECTABLE") == name:
+                sys.exit("no such network")
+            net = state["networks"][name]
             print(json.dumps(net["internal"]), json.dumps(net["options"]))
     elif args[:2] == ["network", "rm"]:
-        if any(c["network"] == args[2] for c in state["containers"].values()):
+        name = network(args[2])
+        if any(c["network"] == name for c in state["containers"].values()):
             sys.exit("network has active endpoints")
-        state["networks"].pop(args[2], None); save()
+        state["networks"].pop(name, None); save()
+    elif args[:2] == ["volume", "create"]:
+        state["volumes"][args[-1]] = {}; save()
+        event("volume", "create", args[-1], driver="local")
+    elif args[:2] == ["volume", "inspect"]:
+        sys.exit(0 if args[-1] in state["volumes"] else 1)
+    elif args[:2] == ["volume", "rm"]:
+        state["volumes"].pop(args[-1], None); save()
     elif args[0] == "create":
         make(opt("--name"), opt("--network", "bridge"), opt("--label"))
     elif args[0] == "start":
@@ -145,6 +163,12 @@ OWN_NETWORK = textwrap.dedent('''
     import json, os, subprocess
     engine = json.loads(os.environ["EVALUATION_ENGINE"])
     e = lambda *a: subprocess.run([*engine, *a], check=True, capture_output=True)
+    if os.environ.get("ARM_RECREATE"):
+        # An internal network first, then another of the same name that is not.
+        e("network", "create", "--internal", "arm-run-net")
+        e("network", "rm", "arm-run-net")
+    if os.environ.get("ARM_VOLUME"):
+        e("volume", "create", "arm-left-volume")
     e("network", "create", *os.environ["ARM_NETWORK_FLAGS"].split(), "arm-run-net")
     e("create", "--name", "arm-agent", "--label", os.environ["EVALUATION_LABEL"], "--network", os.environ["EVALUATION_NETWORK"],
       os.environ["FAKE_IMAGE"])
@@ -239,6 +263,43 @@ class NativeTest(unittest.TestCase):
                 self.assertEqual(classify.classify(out)["class"], "result" if valid else "invalid")
                 if valid:
                     self.assertEqual(box["armNetworks"][0]["gatewayMode"], "isolated")
+
+    def test_a_network_is_judged_by_its_id_and_fails_closed(self):
+        (self.tmp / "own.py").write_text(OWN_NETWORK)
+        variant = [sys.executable, "-B", str(self.tmp / "own.py")]
+        os.environ["ARM_NETWORK_FLAGS"] = "--driver bridge"
+        os.environ["ARM_RECREATE"] = "1"
+        record, _ = self.run_mode("recreated", variant)
+        # The first may be gone before it is inspected (None); either way the second, of the same name, is its own network.
+        networks = record["sandbox"]["armNetworks"]
+        self.assertEqual(([n["name"] for n in networks], networks[0]["internal"] in (True, None), networks[1]["internal"]),
+                         (["arm-run-net", "arm-run-net"], True, False))
+        self.assertNotEqual(networks[0]["id"], networks[1]["id"])
+        self.assertEqual([c["name"] for c in record["sandbox"]["escapes"]], ["arm-agent"])
+        del os.environ["ARM_RECREATE"]
+        os.environ.update(ARM_NETWORK_FLAGS="--internal", FAKE_UNINSPECTABLE="arm-run-net")
+        record, out = self.run_mode("uninspectable", variant)
+        self.assertEqual([n["internal"] for n in record["sandbox"]["armNetworks"]], [None])
+        self.assertEqual(classify.classify(out)["class"], "invalid")
+
+    def test_a_volume_the_arm_leaves_is_residue(self):
+        (self.tmp / "own.py").write_text(OWN_NETWORK)
+        os.environ.update(ARM_NETWORK_FLAGS="--internal", ARM_VOLUME="1")
+        record, out = self.run_mode("volume", [sys.executable, "-B", str(self.tmp / "own.py")])
+        self.assertIn("volume arm-left-volume", record["sandbox"]["residue"])
+        self.assertEqual(json.loads((self.tmp / "engine.json").read_text())["volumes"], {})
+        self.assertEqual(classify.classify(out)["class"], "void")
+
+    def test_a_reader_that_stops_fails_the_network_check(self):
+        lines = [{"Type": "network", "Action": "create", "Actor": {"ID": "n1", "Attributes": {"name": "run-internal"}}},
+                 {"Type": "network", "Action": "create", "Actor": {"ID": "n2", "Attributes": {"name": "other"}}}]
+        script = "import json\nfor x in %r: print(json.dumps(x), flush=True)\nimport time\ntime.sleep(5)\n" % (lines,)
+
+        def broken(*_):
+            raise RuntimeError("the engine call broke")
+        events = native.Events([sys.executable, "-c", script], broken, "0", "run-internal", self.tmp)
+        time.sleep(2)
+        self.assertIn("the engine call broke", events.stop())
 
     def test_a_copied_gateway_label_does_not_hide_an_escape(self):
         (self.tmp / "copycat.py").write_text(textwrap.dedent('''

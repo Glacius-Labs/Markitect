@@ -67,7 +67,9 @@ def launch_facts(base, launch, signatures, tasks=None):
     reported = record.get("reported") or {}
     counted = tokens.count(run / "variant") if (run / "variant").is_dir() else None
     facts.update(delivered=bool(record.get("delivered")), timedOut=bool(record.get("timedOut")), wallSeconds=record.get("wallSeconds"),
-                 costUsd=(reported.get("usage") or {}).get("costUsd"), tokens=counted if counted and counted["responses"] else None,
+                 # The cost the CLI states: the variant's own report (K), else the stream results the token count read (the 2.0 arm).
+                 costUsd=(reported.get("usage") or {}).get("costUsd", (counted or {}).get("costUsd")),
+                 tokens=counted if counted and counted["responses"] else None,
                  landed=bool((record.get("result") or {}).get("changedPaths")), results=results.check_run(run))
     judgment = read(base / launch["judgment"] / "judgment.json") if launch.get("judgment") else None
     if facts["delivered"]:

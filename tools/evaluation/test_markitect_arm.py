@@ -26,7 +26,9 @@ MODEL = "claude:claude-sonnet-5-5"
 #   incomplete  a Run that stops without approved work; its makers' last starts finished
 #   provider    as incomplete, but the lending maker's last start failed on a rate limit
 #   recovered   as incomplete, with a rate limit followed by a finished start of the same maker
+#   gate        a Run whose initial gate failed: no agent started
 #   none        prints nothing and exits 2, as when the host cannot run
+# FAKE_CHECK=fail makes every `check` report a compile error.
 STANDIN = textwrap.dedent(r'''
     import json, os, pathlib, re, subprocess, sys
     args = sys.argv[1:]
@@ -43,6 +45,9 @@ STANDIN = textwrap.dedent(r'''
         return found
 
     if args[0] == "check":
+        if os.environ.get("FAKE_CHECK") == "fail":
+            print(json.dumps({"errors": [{"code": "link.unresolved", "file": ".markitect/model/project.md", "message": "no such Definition"}]}))
+            sys.exit(1)
         listed = {f for _, rows in pages().values() for f in rows}
         root = repo / ".markitect" / "registry.md"
         if root.exists():
@@ -64,8 +69,10 @@ STANDIN = textwrap.dedent(r'''
 
     d = pathlib.Path(os.environ["FAKE_DIR"])
     n = len(list(d.glob("apply-*.json"))) + 1
-    env = {k: v for k, v in os.environ.items() if k.startswith(("MARKITECT_", "ANTHROPIC_", "CLAUDE_", "GIT_CONFIG_GLOBAL"))}
+    env = {k: v for k, v in os.environ.items() if k.startswith(("MARKITECT_", "ANTHROPIC_", "CLAUDE_", "OPENAI_", "CODEX_", "GH_", "GITHUB_", "GIT_"))}
+    policy = repo / ".markitect" / "model" / "lending" / "loan-policy.md"
     (d / f"apply-{n}.json").write_text(json.dumps({"args": args, "env": env, "head": git("rev-parse", "HEAD"),
+                                                    "policy": git("show", "HEAD:.markitect/model/lending/loan-policy.md") if policy.exists() else None,
                                                     "model": sorted(p.relative_to(repo).as_posix() for p in (repo / ".markitect").rglob("*") if p.is_file())}))
     mode, run = os.environ.get("FAKE_APPLY", "land"), opt("--run")
     if mode == "none":
@@ -94,6 +101,8 @@ STANDIN = textwrap.dedent(r'''
         result.update(outcome="landed", state="landed", why="landed", landed=git("rev-parse", "HEAD", cwd=work))
     elif mode == "defect":
         result.update(outcome="not-landed", state="model-defect", why="a model defect ended the Run at Root", items=[])
+    elif mode == "gate":
+        result.update(outcome="not-landed", state="check-failed", why="the project does not compile", items=[], starts=[])
     else:
         result.update(outcome="not-landed", state="incomplete", why="Manager lending's maker made no progress in 3 starts in a row")
         if mode == "provider":
@@ -125,7 +134,8 @@ class ArmTest(unittest.TestCase):
         os.environ.update(FAKE_DIR=str(self.tmp / "fake"), EVALUATION_LOGIN=str(self.tmp / "login.json"), EVALUATION_NETWORK="eval-x-internal",
                           EVALUATION_HOSTS="api.anthropic.com:10.9.0.2", EVALUATION_DNS="192.0.2.1", EVALUATION_ENGINE=json.dumps(["docker"]),
                           EVALUATION_LABEL="markitect.evaluation.arm=eval-0123456789ab", ANTHROPIC_BASE_URL="http://127.0.0.1:9/leak",
-                          CLAUDE_CODE_ENTRYPOINT="desktop", MARKITECT_MODEL="claude-opus-leak")
+                          CLAUDE_CODE_ENTRYPOINT="desktop", MARKITECT_MODEL="claude-opus-leak", OPENAI_API_KEY="sk-leak", CODEX_HOME="leak",
+                          GH_TOKEN="leak", GITHUB_TOKEN="leak", GIT_LEAK_PROBE="leak")
         self.variant = [sys.executable, "-B", str(HERE / "markitect_arm.py"), "--markitect", str(self.markitect),
                         "--remote-binary", "markitect-remote", "--manager-image", "sha256:" + "a" * 64]
 
@@ -186,7 +196,7 @@ class ArmTest(unittest.TestCase):
         self.assertEqual((env["MARKITECT_PROVIDER"], env["MARKITECT_MODEL"], env["MARKITECT_LOGIN"]),
                          ("claude", "claude-sonnet-5-5", str(self.tmp / "login.json")))
         self.assertEqual(env["MARKITECT_TRANSCRIPTS"], str(out / "variant" / "transcripts"))
-        self.assertFalse([k for k in env if k.startswith(("ANTHROPIC_", "CLAUDE_"))], env)
+        self.assertFalse([k for k in env if k.startswith(("ANTHROPIC_", "CLAUDE_", "OPENAI_", "CODEX_", "GH_", "GITHUB_")) or k == "GIT_LEAK_PROBE"], env)
         # The owner's commit is the task's model, before the Run.
         self.assertIn(".markitect/registry/lending.md", apply["model"])
         self.assertTrue(record["modelMatches"])
@@ -253,10 +263,15 @@ class ArmTest(unittest.TestCase):
         subprocess.run(["git", "-C", str(start), "add", "-A"], check=True, env=env)
         subprocess.run(["git", "-C", str(start), "-c", "commit.gpgsign=false", "commit", "-q", "-m", "reference"], check=True, env=env)
         subprocess.run(["git", "-C", str(start), "bundle", "create", "-q", str(self.tmp / "reference.bundle"), "start"], check=True)
-        task = self.task("adopt", self.model("m2", "# Policy\n\nThe limit is 3.\n"), self.tmp / "reference.bundle", self.model("m1"))
+        # Both models' files have the same times and sizes, as a checkout leaves them: the change must still be committed.
+        models = [self.model("m2", "# Policy\n\nThe limit is 3.\n"), self.model("m1")]
+        for f in (f for m in models for f in m.rglob("*") if f.is_file()):
+            os.utime(f, (1_700_000_000, 1_700_000_000))
+        task = self.task("adopt", *models[:1], self.tmp / "reference.bundle", models[1])
         record, out = self.run_arm(task, "defect")
         self.assertEqual(record["exitCode"], 0, (out / "variant" / "run.json").read_text())
         apply = self.applies()[0]
+        self.assertIn("The limit is 3.", apply["policy"])
         adoption = record["reported"]["adoption"]
         self.assertEqual(apply["args"][apply["args"].index("--base") + 1], adoption["commit"])
         self.assertEqual(adoption["rows"], 3)
@@ -274,6 +289,42 @@ class ArmTest(unittest.TestCase):
         self.assertEqual(record["exitCode"], 2)
         self.assertEqual(record["reported"]["status"], "could-not-run")
         self.assertFalse((out / "variant" / "results" / "eval-0123456789ab.json").exists())
+
+    def test_what_is_not_the_arms_work_never_scores_as_a_stop(self):
+        # A gate that fails, with no agent started: nothing is delivered, so no unchanged start can count as a stop.
+        record, out = self.run_arm(self.task("gate", self.model("model-g")), "gate")
+        self.assertEqual((record["delivered"], record["exitCode"], record["reported"]["status"]), (False, 2, "check-failed"))
+        # The owner's input does not compile: apply never runs.
+        os.environ["FAKE_CHECK"] = "fail"
+        record, _ = self.run_arm(self.task("broken", self.model("model-b")))
+        self.assertEqual((record["delivered"], record["exitCode"]), (False, 2))
+        self.assertIn("the owner's input does not compile", record["reported"]["cause"])
+        self.assertEqual(len(self.applies()), 1)
+
+    def test_a_base_model_without_registry_pages_still_places_each_file_on_its_owners_page(self):
+        start = self.tmp / "reference"
+        subprocess.run(["git", "init", "-q", "-b", "start", str(start)], check=True)
+        (start / "realization" / "internal" / "lending").mkdir(parents=True)
+        (start / "realization" / "internal" / "lending" / "loans.go").write_text("package lending\n")
+        env = dict(os.environ, GIT_AUTHOR_NAME="r", GIT_AUTHOR_EMAIL="r@x", GIT_COMMITTER_NAME="r", GIT_COMMITTER_EMAIL="r@x")
+        subprocess.run(["git", "-C", str(start), "add", "-A"], check=True, env=env)
+        subprocess.run(["git", "-C", str(start), "-c", "commit.gpgsign=false", "commit", "-q", "-m", "reference"], check=True, env=env)
+        subprocess.run(["git", "-C", str(start), "bundle", "create", "-q", str(self.tmp / "reference.bundle"), "start"], check=True)
+        base = self.model("bare-base")
+        for page in (base / "registry").rglob("*.md"):
+            page.unlink()
+        record, out = self.run_arm(self.task("bare", self.model("m2"), self.tmp / "reference.bundle", base), "defect")
+        self.assertEqual(record["exitCode"], 0, (out / "variant" / "run.json").read_text())
+        self.assertEqual(self.applies()[0]["model"].count(".markitect/registry/lending.md"), 1)
+        self.assertNotIn(".markitect/registry.md", self.applies()[0]["model"])
+
+    def test_only_agents_that_ran_name_the_model(self):
+        import markitect_arm
+        starts = [{"agent": "claude:claude-sonnet-5-5", "reason": "failed"}, {"agent": "claude:claude-sonnet-5-5-20261001", "reason": "finished"}]
+        self.assertEqual(markitect_arm.reported_model({"starts": starts}, "claude", "claude-sonnet-5-5"), ("claude", "claude-sonnet-5-5-20261001"))
+        starts.append({"agent": "claude:claude-opus-5-5", "reason": "deadline"})
+        self.assertTrue(markitect_arm.reported_model({"starts": starts}, "claude", "x")[1].startswith("mixed"))
+        self.assertEqual(markitect_arm.reported_model({"starts": []}, "claude", "x"), ("claude", "x"))
 
     def test_the_arm_refuses_without_a_model_or_the_suites_login(self):
         os.environ.pop("EVALUATION_LOGIN")

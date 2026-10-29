@@ -37,8 +37,10 @@ CLAUDE_*, OPENAI_* and CODEX_* variable is cleared: the account login only,
 never an API key.
 
 Exit 0: the Run landed, found nothing to do or stopped on a model defect.
-Exit 1: it ended otherwise (incomplete, kept, its gate failed) and the start
-was delivered. Exit 2: it could not run, and nothing was delivered.
+Exit 1: it ended otherwise (incomplete, kept) and the start was delivered.
+Exit 2: it could not run, and nothing was delivered: the owner's input does
+not compile, the host could not start the Run, or its gate failed. None of
+these is the arm's work, and an unchanged start would score as a stop.
 """
 import argparse
 import json
@@ -58,7 +60,7 @@ STATE_FILE = "markitect-arm.json"
 MODEL_ENTRIES = ("manifest.yaml", "lock.yaml", "execution.yaml", "model")
 # Time kept back from the task's deadline for setting up and delivering.
 MARGIN_SECONDS = 180
-CLEARED = ("ANTHROPIC_", "CLAUDE_", "CLAUDECODE", "OPENAI_", "CODEX_", "MARKITECT_", "GIT_")
+CLEARED = ("ANTHROPIC_", "CLAUDE_", "CLAUDECODE", "OPENAI_", "CODEX_", "MARKITECT_", "GIT_", "GH_", "GITHUB_")
 PROVIDERS = ("claude", "codex")
 # How the Run ended: delivered and exit 0, or delivered with exit 1 (results.py and internal/run/result.go).
 DELIBERATE = ("landed", "nothing-to-do", "model-defect")
@@ -137,12 +139,19 @@ def copy_model(source, dot, keep_registry):
         elif target.exists():
             target.unlink()
         if (source / name).is_dir():
-            shutil.copytree(source / name, target)
+            # Fresh timestamps: a copy that kept its source's would look unchanged to Git's stat check when an equally
+            # long file of the same time was there before (Library M1 to M2 changes "5" to "3").
+            shutil.copytree(source / name, target, copy_function=shutil.copyfile)
         elif (source / name).is_file():
             shutil.copyfile(source / name, target)
+    add_pages(source, dot, replace=not keep_registry)
+
+
+def add_pages(source, dot, replace=False):
+    """The source's registry pages in .markitect/registry/; an existing page stays unless replace."""
     for page in sorted(p for p in (source / "registry").rglob("*.md") if p.is_file()) if (source / "registry").is_dir() else []:
         target = dot / "registry" / page.relative_to(source / "registry")
-        if keep_registry and target.exists():
+        if target.exists() and not replace:
             continue
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(page, target)
@@ -187,38 +196,64 @@ def commit(repo, message, env):
     return git(repo, "rev-parse", "HEAD", env=env)
 
 
+def compiles(a, repo, env, what):
+    report, code = check(a, repo, env)
+    if code != 0:
+        raise ArmError(f"{what} does not compile: " + json.dumps(report.get("errors"))[:2000])
+
+
 def owner_input(a, task, repo, start, landed, env):
-    """The owner's commits on the start, and how apply runs: (apply options, mode, adoption record)."""
+    """The owner's commits on the start, and how apply runs: (apply options, mode, adoption record).
+
+    Every owner commit must compile: a gate that fails on the owner's input is not the variant's work, so the arm
+    delivers nothing rather than an unchanged start that would score as a stop."""
     dot = repo / ".markitect"
     model, base_model = task / "model", task / "base-model"
     if not model.is_dir():
         raise ArmError("the task has no model/: the 2.0 arm works from the model")
     files = [p for p in git(repo, "ls-files", env=env).splitlines() if p]
+    adoption = None
     if dot.is_dir():
         copy_model(model, dot, keep_registry=True)
-        commit(repo, "Owner: the model of this task", env)
-        return ([] if start == landed else ["--full"]), ("change" if start == landed else "full"), None
-    if not files:
+        options, mode = ([], "change") if start == landed else (["--full"], "full")
+    elif not files:
         copy_model(model, dot, keep_registry=False)
-        commit(repo, "Owner: the model of this task", env)
-        return ["--full"], "fresh", None
-    copy_model(base_model if base_model.is_dir() else model, dot, keep_registry=False)
-    rows = adopt(a, repo, env)
-    report, code = check(a, repo, env)
-    if code != 0:
-        raise ArmError("the adopted start does not compile: " + json.dumps(report.get("errors"))[:2000])
-    adopted = commit(repo, "Owner: adopt the reference start", env)
-    record = {"commit": adopted, "rows": rows, "baseModel": base_model.is_dir()}
-    if not base_model.is_dir():
-        return ["--full"], "adopted", record
-    copy_model(model, dot, keep_registry=True)
+        options, mode = ["--full"], "fresh"
+    else:
+        copy_model(base_model if base_model.is_dir() else model, dot, keep_registry=False)
+        # Every Package's page is there before the rows are placed, so that each file lands on its final owner's page.
+        add_pages(model, dot)
+        rows = adopt(a, repo, env)
+        compiles(a, repo, env, "the adopted start")
+        adoption = {"commit": commit(repo, "Owner: adopt the reference start", env), "rows": rows, "baseModel": base_model.is_dir()}
+        if base_model.is_dir():
+            copy_model(model, dot, keep_registry=True)
+            options, mode = ["--base", adoption["commit"]], "adopted"
+        else:
+            options, mode = ["--full"], "adopted"
     commit(repo, "Owner: the model of this task", env)
-    return ["--base", adopted], "adopted", record
+    committed(repo, model, env)
+    compiles(a, repo, env, "the owner's input")
+    return options, mode, adoption
+
+
+def committed(repo, model, env):
+    """The owner's commit holds exactly the task's model files, byte for byte."""
+    want = {p.relative_to(model).as_posix(): p for name in MODEL_ENTRIES for p in ([model / name] if (model / name).is_file() else
+                                                                                    sorted((model / name).rglob("*")) if (model / name).is_dir() else [])
+            if p.is_file()}
+    have = {p[len(".markitect/"):] for name in MODEL_ENTRIES
+            for p in git(repo, "ls-tree", "-r", "--name-only", "HEAD", f".markitect/{name}", env=env).splitlines() if p}
+    wrong = sorted(set(want) ^ have) + sorted(rel for rel in set(want) & have
+                                              if subprocess.run(["git", "-C", str(repo), "show", f"HEAD:.markitect/{rel}"], capture_output=True,
+                                                                env=env).stdout != want[rel].read_bytes())
+    if wrong:
+        raise ArmError("the owner's commit differs from the task's model: " + ", ".join(wrong[:10]))
 
 
 def bundle(repo, commit_id, out, env):
     """One complete bundle with the one commit on refs/heads/result."""
-    with tempfile.TemporaryDirectory() as tmp:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         git(tmp, "init", "-q", "--bare", env=env)
         git(tmp, "fetch", "-q", str(pathlib.Path(repo).resolve()), f"+{commit_id}:refs/heads/result", env=env)
         git(tmp, "bundle", "create", "-q", str(pathlib.Path(out).resolve()), "refs/heads/result", env=env)
@@ -235,8 +270,10 @@ def read_state(state):
 
 
 def reported_model(result, provider, model):
-    """The model every agent reported, or the configured one when no agent started; 'mixed' when they differ."""
-    agents = {s.get("agent") for s in (result or {}).get("starts") or [] if s.get("agent")}
+    """The model every agent that ran reported, or the configured one when none ran; 'mixed' when they differ.
+
+    A failed start may carry the configured name before its CLI reported one, so failed starts do not count."""
+    agents = {s.get("agent") for s in (result or {}).get("starts") or [] if s.get("agent") and s.get("reason") != "failed"}
     if not agents:
         return provider, model
     if len(agents) > 1:
@@ -273,7 +310,7 @@ def main(argv=None):
         state = read_state(a.state)
         name = run_name()
         report["run"] = name
-        with tempfile.TemporaryDirectory(prefix="markitect-arm-") as tmp:
+        with tempfile.TemporaryDirectory(prefix="markitect-arm-", ignore_cleanup_errors=True) as tmp:
             tmp = pathlib.Path(tmp)
             (tmp / "hooks").mkdir()
             env = git_env(tmp / "hooks")
@@ -306,15 +343,27 @@ def main(argv=None):
                       if s.get("reason") == "failed"]
             report.update(status=result.get("state"), cause=result.get("why"), tokens=result.get("usage"),
                           starts=len(result.get("starts") or []), failedStarts=failed, cleanup=result.get("cleanup"))
+            if result.get("state") == "check-failed":
+                # The gate failed on the owner's input, which compiled above: no agent started, nothing is the arm's work.
+                return finish(2)
             landed = git(target, "rev-parse", "main", env=env) if result.get("outcome") == "landed" else None
             if landed and not (len(result.get("landed") or "") >= 7 and landed.startswith(result["landed"]) and descends(target, start, landed, env)):
                 raise ArmError(f"the target's main {landed} is not the Result's landed commit {result.get('landed')} on the start")
             bundle(target, landed or start, out / "result.bundle", env)
-            if landed and a.state:
-                (pathlib.Path(a.state) / STATE_FILE).write_text(json.dumps({"landed": landed, "run": name}, indent=2) + "\n", encoding="utf-8")
-            (out / "target.log").write_text(git(target, "log", "--all", "--format=%H %s", env=env) + "\n", encoding="utf-8")
-            return finish(0 if result.get("state") in DELIBERATE else 1, landed=landed)
+            code = 0 if result.get("state") in DELIBERATE else 1
+            report.update(landed=landed, exit=code)
+            # What follows the delivery is record-keeping: its failure must not turn a delivered run into one that could not run.
+            try:
+                if landed and a.state:
+                    (pathlib.Path(a.state) / STATE_FILE).write_text(json.dumps({"landed": landed, "run": name}, indent=2) + "\n", encoding="utf-8")
+                (out / "target.log").write_text(git(target, "log", "--all", "--format=%H %s", env=env) + "\n", encoding="utf-8")
+            except (ArmError, OSError) as e:
+                report["recordError"] = f"{type(e).__name__}: {e}"
+            return finish(code)
     except (ArmError, OSError, ValueError, KeyError) as e:
+        if (out / "result.bundle").exists():
+            report["recordError"] = f"{type(e).__name__}: {e}"
+            return finish(report.get("exit", 1))
         return finish(2, status="could-not-run", cause=f"{type(e).__name__}: {e}")
 
 
