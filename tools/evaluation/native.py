@@ -239,7 +239,9 @@ class Native:
                 volumes.append(ident)
         if not begun:
             record.setdefault("error", "the engine's event record does not show the run's network: the network check did not run")
-        allowed = {internal_id} | {nid for nid in created_networks if inspected.get(nid) is True}
+        elif not internal_id:
+            record.setdefault("error", "the engine's event record does not name the run's network by ID: the network check did not run")
+        allowed = ({internal_id} | {nid for nid in created_networks if inspected.get(nid) is True}) - {None}
         record["armContainers"], record["escapes"] = [], []
         for cid, name in started.items():
             nets = joined.get(cid, set())

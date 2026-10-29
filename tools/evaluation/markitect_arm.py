@@ -39,8 +39,11 @@ never an API key.
 Exit 0: the Run landed, found nothing to do or stopped on a model defect.
 Exit 1: it ended otherwise (incomplete, kept) and the start was delivered.
 Exit 2: it could not run, and nothing was delivered: the owner's input does
-not compile, the host could not start the Run, or its gate failed. None of
-these is the arm's work, and an unchanged start would score as a stop.
+not compile, the host could not start the Run, its gate failed, or the Run
+did not land and no agent completed a turn. None of these is the arm's work,
+and an unchanged start would score as a stop. The series protocol voids them
+with a variant runtime signature on `reported.status` or
+`reported.noAgentTurn` (classify.py).
 """
 import argparse
 import json
@@ -272,8 +275,8 @@ def read_state(state):
 def reported_model(result, provider, model):
     """The model every agent that ran reported, or the configured one when none ran; 'mixed' when they differ.
 
-    A failed start may carry the configured name before its CLI reported one, so failed starts do not count."""
-    agents = {s.get("agent") for s in (result or {}).get("starts") or [] if s.get("agent") and s.get("reason") != "failed"}
+    A start that did not finish may carry the configured name before its CLI reported one, so only finished starts count."""
+    agents = {s.get("agent") for s in (result or {}).get("starts") or [] if s.get("agent") and s.get("reason") == "finished"}
     if not agents:
         return provider, model
     if len(agents) > 1:
@@ -346,6 +349,9 @@ def main(argv=None):
             if result.get("state") == "check-failed":
                 # The gate failed on the owner's input, which compiled above: no agent started, nothing is the arm's work.
                 return finish(2)
+            if result.get("state") not in DELIBERATE and not any(s.get("reason") in ("finished", "deadline") for s in result.get("starts") or []):
+                # No agent completed a turn: the Run ended on its machinery, not on any agent's work.
+                return finish(2, noAgentTurn=True)
             landed = git(target, "rev-parse", "main", env=env) if result.get("outcome") == "landed" else None
             if landed and not (len(result.get("landed") or "") >= 7 and landed.startswith(result["landed"]) and descends(target, start, landed, env)):
                 raise ArmError(f"the target's main {landed} is not the Result's landed commit {result.get('landed')} on the start")

@@ -26,6 +26,7 @@ MODEL = "claude:claude-sonnet-5-5"
 #   incomplete  a Run that stops without approved work; its makers' last starts finished
 #   provider    as incomplete, but the lending maker's last start failed on a rate limit
 #   recovered   as incomplete, with a rate limit followed by a finished start of the same maker
+#   machinery   as incomplete, whose only start failed before any agent turn
 #   gate        a Run whose initial gate failed: no agent started
 #   none        prints nothing and exits 2, as when the host cannot run
 # FAKE_CHECK=fail makes every `check` report a compile error.
@@ -107,6 +108,8 @@ STANDIN = textwrap.dedent(r'''
         result.update(outcome="not-landed", state="incomplete", why="Manager lending's maker made no progress in 3 starts in a row")
         if mode == "provider":
             starts.append({"manager": "lending", "role": "maker", "round": 2, "reason": "failed", "class": "rate-limit", "detail": "429"})
+        elif mode == "machinery":
+            result["starts"] = [{"manager": ".", "role": "maker", "round": 1, "reason": "failed", "class": "other", "detail": "container start"}]
         elif mode == "recovered":
             starts.insert(1, {"manager": "lending", "role": "maker", "round": 0, "reason": "failed", "class": "rate-limit", "detail": "429"})
     print(json.dumps(result, indent=2))
@@ -300,6 +303,10 @@ class ArmTest(unittest.TestCase):
         self.assertEqual((record["delivered"], record["exitCode"]), (False, 2))
         self.assertIn("the owner's input does not compile", record["reported"]["cause"])
         self.assertEqual(len(self.applies()), 1)
+        # A Run that stopped before any agent completed a turn.
+        del os.environ["FAKE_CHECK"]
+        record, _ = self.run_arm(self.task("machinery", self.model("model-m")), "machinery")
+        self.assertEqual((record["delivered"], record["exitCode"], record["reported"]["noAgentTurn"]), (False, 2, True))
 
     def test_a_base_model_without_registry_pages_still_places_each_file_on_its_owners_page(self):
         start = self.tmp / "reference"
@@ -320,9 +327,10 @@ class ArmTest(unittest.TestCase):
 
     def test_only_agents_that_ran_name_the_model(self):
         import markitect_arm
-        starts = [{"agent": "claude:claude-sonnet-5-5", "reason": "failed"}, {"agent": "claude:claude-sonnet-5-5-20261001", "reason": "finished"}]
+        starts = [{"agent": "claude:claude-sonnet-5-5", "reason": "failed"}, {"agent": "claude:claude-sonnet-5-5", "reason": "deadline"},
+                  {"agent": "claude:claude-sonnet-5-5-20261001", "reason": "finished"}]
         self.assertEqual(markitect_arm.reported_model({"starts": starts}, "claude", "claude-sonnet-5-5"), ("claude", "claude-sonnet-5-5-20261001"))
-        starts.append({"agent": "claude:claude-opus-5-5", "reason": "deadline"})
+        starts.append({"agent": "claude:claude-opus-5-5", "reason": "finished"})
         self.assertTrue(markitect_arm.reported_model({"starts": starts}, "claude", "x")[1].startswith("mixed"))
         self.assertEqual(markitect_arm.reported_model({"starts": []}, "claude", "x"), ("claude", "x"))
 
