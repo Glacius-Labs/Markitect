@@ -35,7 +35,8 @@ FAKE_ENGINE = textwrap.dedent(r'''
             try:
                 nets = json.load(open(path)).get("networks", {})
             except (OSError, ValueError):
-                nets = {}
+                time.sleep(0.05)  # a state file the arm is still writing: read it again
+                continue
             if not any(args[-1] in (n, item.get("id")) for n, item in nets.items()):
                 break
             time.sleep(0.05)
