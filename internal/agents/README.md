@@ -49,7 +49,7 @@ The lower layer, `agents.Start` with a `Spec` and `Agent.Send`, is the same mach
 | `MARKITECT_HOSTS`, `MARKITECT_DNS` | Extra host entries (`name:address`) and name servers, comma-separated | none |
 | `MARKITECT_TRANSCRIPTS` | A folder for the agents' transcripts | none |
 
-Each container gets 1 CPU, 2 GiB of memory, 256 processes and 256 MiB of temporary space.
+Each container gets 1 CPU, 2 GiB of memory, 256 processes and 256 MiB of temporary space. The Run's [remote](../runremote/README.md#the-container) container gets 2 CPUs, 4 GiB of memory and 1,024 processes: besides serving Git it runs the required checks, a whole build and test run of the project, one push at a time, and a check that exceeds them fails as the hook's first victim.
 
 ## Failure classes
 
@@ -81,7 +81,7 @@ The tools reach the host over MCP through `markitect-agentd mcp`. Every answer, 
 
 | Tool | Who | Does |
 | --- | --- | --- |
-| `submit` | maker | Requires one verdict per checklist item (`conforms`, `changed`, `model-problem`) with evidence, commits the whole working tree with the [verdict trailers](../runremote/README.md#verdict-trailers) and pushes it to the Manager's branch. A push that does not go through returns Git's own words, for a refusal the hook's reason (paths, checks, trailers), and the commit is undone, so the work stays as it was. |
+| `submit` | maker | Requires one verdict per checklist item (`conforms`, `changed`, `model-problem`) with evidence, commits the whole working tree with the [verdict trailers](../runremote/README.md#verdict-trailers) and pushes it to the Manager's branch. A push that does not go through returns Git's own words, for a refusal the hook's reason (paths, checks, trailers), and the commit is undone, so the work stays as it was. An accepted push is a submission, not an approval: the reply says so, that the host gives it to a fresh checker once the start has ended (or says in a message what it lacks), and that a rejection comes back as a `review` message in a later start's Inbox. |
 | `submit` | verify checker | One verdict per item (`conforms`, `deviates`, `model-problem`) as a commit with the tip's tree on the tip, pushed. |
 | `review` | apply checker | Fetches the branch, requires its tip to be a submission, one answer per submitted verdict (`confirmed`, `disputed`) with evidence, and an outcome that matches them: approved only with no dispute, rejected only with one, except that a submission without verdicts, an integrating parent's, may be rejected without one, as the hook allows. Writes the review as a commit with the submission's tree on the submission (`git commit-tree`), so it changes no file whatever the working tree holds, and pushes it. |
 | `ask`, `escalate`, `answer`, `assign` | as the start allows | `Host.Ask`, `Escalate`, `Answer` (by the message ID from the Inbox) and `Assign` (to a working child). |

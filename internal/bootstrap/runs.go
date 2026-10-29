@@ -59,6 +59,11 @@ func (runs) Run(ctx context.Context, o cli.RunOptions) (*runengine.Result, error
 // CLI. MARKITECT_ENGINE names the CLI (default docker), MARKITECT_REMOTE_BINARY
 // the Linux markitect-remote program (default next to this executable) and
 // MARKITECT_REMOTE_IMAGE the image when execution.yaml names no checks.
+// remoteLimits bound the Run's remote container. It serves Git and runs the
+// required checks one push at a time, a whole build and test run of the
+// project, so it gets more than one Manager container.
+var remoteLimits = remotecontainer.Limits{CPUs: "2", Memory: "4g", Pids: 1024}
+
 type containerRemotes struct {
 	engine *remotecontainer.Engine
 	binary string
@@ -99,7 +104,7 @@ func (c *containerRemotes) Start(ctx context.Context, plan *runremote.Plan, bund
 	if image == "" {
 		return nil, errors.New("execution.yaml names no checks and so no image for the Run's remote; set MARKITECT_REMOTE_IMAGE to an image with Git and a shell")
 	}
-	r, err := remotecontainer.Start(ctx, c.engine, remotecontainer.Spec{Image: image, Binary: c.binary, Plan: plan}, bundle)
+	r, err := remotecontainer.Start(ctx, c.engine, remotecontainer.Spec{Image: image, Binary: c.binary, Plan: plan, Limits: remoteLimits}, bundle)
 	if err != nil {
 		return nil, err
 	}
