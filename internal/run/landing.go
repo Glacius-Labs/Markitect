@@ -27,7 +27,17 @@ func ResultFile(run string) string { return path.Join(project.ResultsDir, run+".
 // changes touch nothing in the Run's impact. The host compiles every state it
 // lands (§6.3). Otherwise the work stays on its Run branch and the Result
 // says why.
-func (e *Engine) land(ctx context.Context, r *Result, s *schedule, remote Remote) {
+func (e *Engine) land(ctx context.Context, r *Result, s *schedule, remote Remote, release func(*[]string)) {
+	// A Run that does not land releases its remote and its lock entry
+	// before it writes its page, so the page says what they left.
+	// What a landing attempt found about the kept Run branches it would
+	// replace goes with that attempt.
+	cleanup := r.Cleanup
+	keepOn := func(ctx context.Context, r *Result, commit, old, state, why string, err error) {
+		r.Replaced = nil
+		release(&r.Cleanup)
+		e.keepOn(ctx, r, commit, old, state, why, err)
+	}
 	root := s.nodes[model.RootPackage]
 	cand := root.approval
 	r.Branch = RunBranchPrefix + r.Run
@@ -39,22 +49,23 @@ func (e *Engine) land(ctx context.Context, r *Result, s *schedule, remote Remote
 	pushed := cand
 	for _, n := range s.order {
 		if ok, err := e.Git.Contains(ctx, cand, n.approval); err != nil || !ok {
-			e.keepOn(ctx, r, cand, pushed, StateKept, fmt.Sprintf("Root's approved work does not contain %s's approval %s", n.name, short(n.approval)), err)
+			keepOn(ctx, r, cand, pushed, StateKept, fmt.Sprintf("Root's approved work does not contain %s's approval %s", n.name, short(n.approval)), err)
 			return
 		}
 	}
 	if why, err := e.credentialScan(ctx, s, cand); err != nil || why != "" {
-		e.keepOn(ctx, r, cand, pushed, StateKept, why, err)
+		keepOn(ctx, r, cand, pushed, StateKept, why, err)
 		return
 	}
 	if why, err := e.compile(ctx, cand); err != nil || why != "" {
-		e.keepOn(ctx, r, cand, pushed, StateKept, "Root's approved work "+why, err)
+		keepOn(ctx, r, cand, pushed, StateKept, "Root's approved work "+why, err)
 		return
 	}
 	for attempt := 1; attempt <= landAttempts; attempt++ {
+		r.Cleanup, r.Replaced = append([]string{}, cleanup...), nil
 		tip, err := e.Git.Fetch(ctx, r.Target)
 		if err != nil {
-			e.keepOn(ctx, r, cand, pushed, StateIncomplete, "", fmt.Errorf("reading the target branch: %w", err))
+			keepOn(ctx, r, cand, pushed, StateIncomplete, "", fmt.Errorf("reading the target branch: %w", err))
 			return
 		}
 		state := cand
@@ -65,38 +76,38 @@ func (e *Engine) land(ctx context.Context, r *Result, s *schedule, remote Remote
 				r.RequiredChecks.Note = fmt.Sprintf("%s moved to %s, and no merged state was checked", r.Target, short(tip))
 			}
 			if ok, err := e.Git.Contains(ctx, tip, r.Start); err != nil || !ok {
-				e.keepOn(ctx, r, cand, pushed, StateKept, fmt.Sprintf("%s was rewritten to %s, which no longer holds the Run's start", r.Target, short(tip)), err)
+				keepOn(ctx, r, cand, pushed, StateKept, fmt.Sprintf("%s was rewritten to %s, which no longer holds the Run's start", r.Target, short(tip)), err)
 				return
 			}
 			why, err := e.incoming(ctx, s, r.Start, tip, cand)
 			if err != nil || why != "" {
-				e.keepOn(ctx, r, cand, pushed, StateKept, why, err)
+				keepOn(ctx, r, cand, pushed, StateKept, why, err)
 				return
 			}
 			merged, conflicts, err := e.Git.Merge(ctx, tip, cand, fmt.Sprintf("Markitect Run %s: merge onto %s", r.Run, r.Target))
 			if err != nil || len(conflicts) > 0 {
-				e.keepOn(ctx, r, cand, pushed, StateKept, fmt.Sprintf("%s moved to %s and the merge conflicts in %s", r.Target, short(tip), strings.Join(conflicts, ", ")), err)
+				keepOn(ctx, r, cand, pushed, StateKept, fmt.Sprintf("%s moved to %s and the merge conflicts in %s", r.Target, short(tip), strings.Join(conflicts, ", ")), err)
 				return
 			}
 			if why, err := e.compile(ctx, merged); err != nil || why != "" {
-				e.keepOn(ctx, r, cand, pushed, StateKept, fmt.Sprintf("%s moved to %s and the merged state %s", r.Target, short(tip), why), err)
+				keepOn(ctx, r, cand, pushed, StateKept, fmt.Sprintf("%s moved to %s and the merged state %s", r.Target, short(tip), why), err)
 				return
 			}
 			if len(s.plan.Checks) > 0 {
 				var b bytes.Buffer
 				if err := e.Git.Bundle(ctx, merged, &b); err != nil {
-					e.keepOn(ctx, r, cand, pushed, StateIncomplete, "", err)
+					keepOn(ctx, r, cand, pushed, StateIncomplete, "", err)
 					return
 				}
 				results, err := remote.Check(ctx, &b, merged)
 				r.RequiredChecks = RequiredChecks{Commit: merged, Checks: results, WholeRepository: true, Ran: err == nil && len(results) == len(s.plan.Checks) && allPassed(results)}
 				if err != nil {
 					r.RequiredChecks.Note = fmt.Sprintf("the checks on the merged state could not run: %v", err)
-					e.keepOn(ctx, r, cand, pushed, StateKept, "the required checks could not run on the merged state", nil)
+					keepOn(ctx, r, cand, pushed, StateKept, "the required checks could not run on the merged state", nil)
 					return
 				}
 				if !r.RequiredChecks.Ran {
-					e.keepOn(ctx, r, cand, pushed, StateKept, fmt.Sprintf("%s moved to %s and the required checks fail on the merged state", r.Target, short(tip)), nil)
+					keepOn(ctx, r, cand, pushed, StateKept, fmt.Sprintf("%s moved to %s and the required checks fail on the merged state", r.Target, short(tip)), nil)
 					return
 				}
 			}
@@ -116,45 +127,57 @@ func (e *Engine) land(ctx context.Context, r *Result, s *schedule, remote Remote
 			r.Cleanup = append(r.Cleanup, fmt.Sprintf("the kept Run branches could not be read, so none that this landing covers is deleted: %v", err))
 		}
 		r.Replaced = sortedKeys(replaced)
-		page := e.finish(r)
+		page := e.stamp(r)
 		commit, err := e.Git.Write(ctx, state, map[string][]byte{ResultFile(r.Run): Page(page)}, resultMessage(r, cand))
 		if err != nil {
-			e.keepOn(ctx, r, cand, pushed, StateIncomplete, "", err)
+			keepOn(ctx, r, cand, pushed, StateIncomplete, "", err)
 			return
 		}
 		if err := e.Git.Push(ctx, r.Target, commit, tip); err != nil {
 			// Whether the push took effect is read again, on a fresh
 			// deadline: a push can fail after the target took it.
+			// Others may have landed on top of it before it is read, so
+			// it landed when the new tip holds it.
 			cctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), e.cleanup())
 			now, ferr := e.Git.Fetch(cctx, r.Target)
+			holds := now == commit
+			var aerr error
+			if ferr == nil && !holds && now != tip {
+				holds, aerr = e.Git.Contains(cctx, now, commit)
+			}
 			cancel()
 			switch {
 			case ferr != nil:
-				e.keepOn(ctx, r, cand, pushed, StateIncomplete, fmt.Sprintf("the landing push failed (%v) and %s could not be read again, so whether it landed is uncertain", err, r.Target), ferr)
+				keepOn(ctx, r, cand, pushed, StateIncomplete, fmt.Sprintf("the landing push failed (%v) and %s could not be read again, so whether it landed is uncertain", err, r.Target), ferr)
 				return
-			case now == commit:
+			case aerr != nil:
+				keepOn(ctx, r, cand, pushed, StateIncomplete, fmt.Sprintf("the landing push failed (%v) and whether %s's new tip %s holds the landing could not be read, so whether it landed is uncertain", err, r.Target, short(now)), aerr)
+				return
+			case holds:
 				// It landed.
 			case now != tip:
 				// The target moved again while landing: start over.
 				continue
 			default:
-				e.keepOn(ctx, r, cand, pushed, StateKept, fmt.Sprintf("the target refused the landing push: %v", err), nil)
+				keepOn(ctx, r, cand, pushed, StateKept, fmt.Sprintf("the target refused the landing push: %v", err), nil)
 				return
 			}
 		}
-		r.Landed = commit
+		// The landed page cannot say what follows it; the returned Result
+		// does, under AfterLanding.
+		r.Landed, r.AfterLanding = commit, []string{}
 		if err := e.Git.Push(ctx, RunBranchPrefix+r.Run, "", pushed); err != nil {
-			r.Branch = RunBranchPrefix + r.Run
-			r.Cleanup = append(r.Cleanup, fmt.Sprintf("the landed Run's branch %s could not be deleted: %v", r.Branch, err))
+			r.AfterLanding = append(r.AfterLanding, fmt.Sprintf("the landed Run's branch %s could not be deleted: %v", RunBranchPrefix+r.Run, err))
 		}
 		for _, branch := range r.Replaced {
 			if err := e.Git.Push(ctx, branch, "", replaced[branch]); err != nil {
-				r.Cleanup = append(r.Cleanup, fmt.Sprintf("the covered Run branch %s could not be deleted: %v", branch, err))
+				r.AfterLanding = append(r.AfterLanding, fmt.Sprintf("the covered Run branch %s could not be deleted: %v", branch, err))
 			}
 		}
+		release(&r.AfterLanding)
 		return
 	}
-	e.keepOn(ctx, r, cand, pushed, StateKept, fmt.Sprintf("%s moved while landing, %d times in a row", r.Target, landAttempts), nil)
+	keepOn(ctx, r, cand, pushed, StateKept, fmt.Sprintf("%s moved while landing, %d times in a row", r.Target, landAttempts), nil)
 }
 
 // keep leaves a Run that does not land on its Run branch: the Result page on
@@ -193,7 +216,7 @@ func (e *Engine) keepOn(ctx context.Context, r *Result, commit, old, state, why 
 	if state != "" {
 		r.State, r.Why = state, why
 	}
-	page := e.finish(r)
+	page := e.stamp(r)
 	top, werr := e.Git.Write(ctx, commit, map[string][]byte{ResultFile(r.Run): Page(page)}, resultMessage(r, ""))
 	if werr == nil {
 		werr = e.Git.Push(ctx, r.Branch, top, old)

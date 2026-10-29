@@ -224,13 +224,16 @@ type remotes struct {
 	t       *testing.T
 	dir     string
 	started []*remote
+	// closeErr, when set, is what removing each remote reports.
+	closeErr error
 }
 
 type remote struct {
-	l    remoteserver.Layout
-	srv  *httptest.Server
-	plan *runremote.Plan
-	git  string
+	l        remoteserver.Layout
+	srv      *httptest.Server
+	plan     *runremote.Plan
+	git      string
+	closeErr error
 }
 
 func (rs *remotes) Start(ctx context.Context, plan *runremote.Plan, bundle io.Reader) (run.Remote, error) {
@@ -261,7 +264,7 @@ func (rs *remotes) Start(ctx context.Context, plan *runremote.Plan, bundle io.Re
 		return nil, err
 	}
 	srv := httptest.NewServer(&remoteserver.Server{Layout: l, Plan: loaded, Git: git, Env: []string{"MARKITECT_REMOTE_TEST_HOOK=1"}})
-	r := &remote{l: l, srv: srv, plan: loaded, git: git}
+	r := &remote{l: l, srv: srv, plan: loaded, git: git, closeErr: rs.closeErr}
 	rs.started = append(rs.started, r)
 	return r, nil
 }
@@ -306,7 +309,7 @@ func (r *remote) StartFrom(_ context.Context, branch, commit string) error {
 
 func (r *remote) Close(context.Context) error {
 	r.srv.Close()
-	return nil
+	return r.closeErr
 }
 
 func errorf(format string, args ...any) error { return fmt.Errorf(format, args...) }

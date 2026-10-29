@@ -84,10 +84,15 @@ type Result struct {
 	// branch does not hold.
 	Unkept []string `json:"unkept,omitempty"`
 	// Cleanup lists what may remain after the Run; empty means everything
-	// it created is gone.
-	Cleanup []string  `json:"cleanup"`
-	Began   time.Time `json:"began"`
-	Ended   time.Time `json:"ended"`
+	// it created is gone. It is what the stored Result page says.
+	Cleanup []string `json:"cleanup"`
+	// AfterLanding lists what a landed Run's cleanup after landing left:
+	// its branches, its remote and its lock entry. The landed page cannot
+	// say it, since it is part of the landing commit; empty when nothing
+	// remains, absent when the Run did not land.
+	AfterLanding []string  `json:"afterLanding,omitzero"`
+	Began        time.Time `json:"began"`
+	Ended        time.Time `json:"ended"`
 
 	// impact is what the Run's impact covers, for the lock and the trailers
 	// of its Result commit.

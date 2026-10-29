@@ -92,6 +92,11 @@ func (c CLI) runCommand(ctx context.Context, mode agentport.Mode, args []string)
 	} else {
 		c.Stdout.Write(run.Page(r))
 	}
+	// The landed page is part of the landing commit and cannot say what the
+	// cleanup after landing left, so the command says it.
+	for _, left := range r.AfterLanding {
+		fmt.Fprintf(c.Stderr, "markitect: after landing, %s\n", left)
+	}
 	switch r.State {
 	case run.StateLanded, run.StateVerified, run.StateNothing:
 		return OK, nil

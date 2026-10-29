@@ -167,3 +167,139 @@ func TestRequestsTheEngineRefuses(t *testing.T) {
 		}
 	}
 }
+
+// onTopGit lands the Run's commit, lets a colleague land on top of it and
+// then reports the push as failed, so the target's new tip is neither the
+// Run's commit nor the tip it pushed over.
+type onTopGit struct {
+	run.Git
+	landed string
+}
+
+func (g *onTopGit) Push(ctx context.Context, branch, commit, old string) error {
+	if branch != "main" {
+		return g.Git.Push(ctx, branch, commit, old)
+	}
+	if err := g.Git.Push(ctx, branch, commit, old); err != nil {
+		return err
+	}
+	next, err := g.Git.Write(ctx, commit, map[string][]byte{"README.md": []byte("# Library, as a colleague wrote it\n")}, "a colleague's change")
+	if err != nil {
+		return err
+	}
+	if err := g.Git.Push(ctx, branch, next, commit); err != nil {
+		return err
+	}
+	g.landed = commit
+	return errors.New("connection reset")
+}
+
+func TestLandingPushThatFailedUnderLaterWorkLanded(t *testing.T) {
+	f := newFixture(t)
+	base, _ := changeBook(f)
+	g := &onTopGit{Git: f.host}
+	f.engine.Git = g
+	scriptHappyPath(f, nil)
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateLanded || r.Outcome != run.Landed || r.Landed != g.landed {
+		t.Fatalf("%s/%s, landed %s, pushed %s: %s", r.Outcome, r.State, r.Landed, g.landed, r.Why)
+	}
+	if strings.TrimSpace(testkit.Git(t, f.target, "rev-parse", "main^")) != g.landed {
+		t.Fatal("the colleague's change is not on top of the landing")
+	}
+}
+
+// branchDeleteFails cannot delete Run branches.
+type branchDeleteFails struct{ run.Git }
+
+func (g branchDeleteFails) Push(ctx context.Context, branch, commit, old string) error {
+	if strings.HasPrefix(branch, run.RunBranchPrefix) && commit == "" {
+		return errors.New("branch deletion refused")
+	}
+	return g.Git.Push(ctx, branch, commit, old)
+}
+
+// runAll runs a Run that may leave cleanup behind.
+func (f *fixture) runAll(req run.Request) *run.Result {
+	f.t.Helper()
+	req.Target, req.Limits = "main", run.Limits{Deadline: time.Now().Add(5 * time.Minute), Starts: 40, Rounds: 4, Start: 2 * time.Minute}
+	r, err := f.engine.Run(context.Background(), req)
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	return r
+}
+
+// The landed page is part of the landing commit, so what the cleanup after
+// landing leaves is in the returned Result only, and the page says so; what
+// the page states agrees with the returned Result.
+func TestALandedPageAgreesWithTheResult(t *testing.T) {
+	f := newFixture(t)
+	base, _ := changeBook(f)
+	f.engine.Git = branchDeleteFails{f.host}
+	f.remote.closeErr = errors.New("remote removal refused")
+	scriptHappyPath(f, nil)
+	r := f.runAll(run.Request{Base: base, Mode: agentport.Apply})
+	if r.State != run.StateLanded {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+	stored := f.show(r.Landed, run.ResultFile(r.Run))
+	if page := strings.TrimSpace(string(run.Page(r))); stored != page {
+		t.Fatalf("the stored page differs from the returned Result's:\n%s\n---\n%s", stored, page)
+	}
+	if len(r.Cleanup) != 0 || len(r.AfterLanding) != 2 || !strings.Contains(r.AfterLanding[0], "branch deletion refused") || !strings.Contains(r.AfterLanding[1], "remote removal refused") {
+		t.Fatalf("cleanup %q, after landing %q", r.Cleanup, r.AfterLanding)
+	}
+	if !strings.Contains(stored, "`afterLanding`") {
+		t.Fatalf("the landed page does not say where the cleanup after landing is reported:\n%s", stored)
+	}
+}
+
+// A Run that keeps its work removes its remote and leaves the lock before it
+// writes its page, so the page says what they left.
+func TestAKeptPageAgreesWithTheResult(t *testing.T) {
+	f := newFixture(t)
+	base, _ := changeBook(f)
+	f.remote.closeErr = errors.New("remote removal refused")
+	a := f.agents
+	a.On("catalog", checker, a.Verdicts(word("conforms")))
+	a.On(".", checker, a.Verdicts(word("conforms")))
+	r := f.runAll(run.Request{Base: base, Mode: agentport.Verify})
+	if r.State != run.StateVerified || r.AfterLanding != nil {
+		t.Fatalf("%s: %s, after landing %q", r.State, r.Why, r.AfterLanding)
+	}
+	stored := f.show(run.RunBranchPrefix+r.Run, run.ResultFile(r.Run))
+	if page := strings.TrimSpace(string(run.Page(r))); stored != page {
+		t.Fatalf("the stored page differs from the returned Result's:\n%s\n---\n%s", stored, page)
+	}
+	if !strings.Contains(stored, "remote removal refused") {
+		t.Fatalf("the page omits the remote's cleanup:\n%s", stored)
+	}
+}
+
+// An apply that ends kept in landing leaves the lock and removes its remote
+// before its page is written, as every Run that does not land.
+func TestAKeptApplyPageAgreesWithTheResult(t *testing.T) {
+	f := newFixture(t)
+	base, _ := changeBook(f)
+	f.remote.closeErr = errors.New("remote removal refused")
+	scriptHappyPath(f, func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+		testkit.Git(t, f.src, "push", "-q", "--force", "origin", base+":main")
+		return f.agents.Review(nil)(ctx, s, h)
+	})
+	r := f.runAll(run.Request{Base: base, Mode: agentport.Apply})
+	if r.State != run.StateKept || r.AfterLanding != nil || len(r.Replaced) != 0 {
+		t.Fatalf("%s: %s, after landing %q, replaced %v", r.State, r.Why, r.AfterLanding, r.Replaced)
+	}
+	stored := f.show(run.RunBranchPrefix+r.Run, run.ResultFile(r.Run))
+	if page := strings.TrimSpace(string(run.Page(r))); stored != page {
+		t.Fatalf("the stored page differs from the returned Result's:\n%s\n---\n%s", stored, page)
+	}
+	if !strings.Contains(stored, "remote removal refused") || len(r.Cleanup) != 1 {
+		t.Fatalf("cleanup %q; page:\n%s", r.Cleanup, stored)
+	}
+	// The Run left the lock: a second Run of its name may enter.
+	if data, _, err := f.host.Lock(context.Background(), "main"); err != nil || strings.Contains(string(data), r.Run) {
+		t.Fatalf("lock record %s: %v", data, err)
+	}
+}
