@@ -1,11 +1,9 @@
 <h1>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/markitect-wordmark-dark.svg">
-    <img src="docs/assets/markitect-wordmark-light.svg" alt="Markitect" width="360">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/markitect-wordmark.svg">
+    <img src="docs/assets/markitect-wordmark-print.svg" alt="Markitect" width="280">
   </picture>
 </h1>
-
-**Don't chase the code. Let the code chase you.**
 
 **Model-first software engineering with a compiler-checked canonical model and AI teams derived from your architecture.**
 
@@ -23,13 +21,13 @@ AI can write code. Keeping **an entire project aligned with what it is supposed 
 
 A decision about behavior or architecture rarely lives in one place. Its consequences appear in source code, tests, documentation, configuration, dependencies, and sometimes the instructions given to coding agents. As those representations evolve, an agent can complete its immediate task while missing a rule elsewhere, introducing a contradiction, or leaving previously correct behavior broken.
 
-Markitect starts from a different premise:
+Markitect starts from one premise:
 
 > **Define the intended system once. Treat code, tests, configuration, documentation, and agent guidance as realizations of that intent.**
 
 You maintain a **canonical project model**. Markitect checks the model's structure, accounts for every repository file, derives a team of responsible Managers from the modeled architecture, and has them bring the repository into alignment. Independent checkers and deterministic checks stand between their work and the target branch.
 
-The goal is not to generate more documentation or orchestrate more agents. It is to make **long-lived consistency and trustworthy change** achievable without requiring a human to rediscover every obligation and inspect every routine diff.
+The goal is **long-lived consistency and trustworthy change**, without a person having to rediscover every obligation and inspect every routine diff.
 
 **Markitect = Markdown + Architect.** The name reflects its origins in engineering documentation, Rules, Skills, Workflows, and agent instructions. The model is **typed documentation**: Markdown files with a small front matter that names each one's Kind, which the compiler reads directly.
 
@@ -37,7 +35,7 @@ The goal is not to generate more documentation or orchestrate more agents. It is
 
 An `AGENTS.md` file can tell one agent how to behave. A linter can validate a known rule. **Neither alone establishes which project facts are authoritative, which artifacts realize them, who owns each area, or whether independently reviewed changes still conform after integration.**
 
-Markitect connects those responsibilities: **the canonical model defines intent; deterministic software checks explicit structure; model-derived AI Managers perform and review semantic work.** These layers complement ordinary agent tools rather than replacing them. The promise of greater reliability remains a hypothesis to test, not an automatic consequence of adding structure.
+Markitect connects those responsibilities: **the canonical model defines intent; deterministic software checks explicit structure; model-derived AI Managers perform and review semantic work.** These layers work alongside ordinary agent tools. Whether they make change more reliable is a hypothesis that steps T6 and T7 test.
 
 ## How it works
 
@@ -95,7 +93,7 @@ or above the limit, the member cannot borrow another copy. Returning a copy is
 always possible.
 ```
 
-Changing `5` to `3` is a change of **accepted intent**, not a request to edit a particular source file. A conforming realization must reflect the new boundary in behavior, tests, and relevant documentation **without** deleting existing loans or breaking returns. Already-correct artifacts should remain correct, not be rewritten merely because an agent prefers a different style.
+Changing `5` to `3` changes **accepted intent**; which files must follow is for the Managers to determine. A conforming realization must reflect the new boundary in behavior, tests, and relevant documentation **without** deleting existing loans or breaking returns. Artifacts that are already correct must stay as they are, whatever style an agent would prefer.
 
 The [Library model](testdata/library/README.md) is this example in full; it is still in V1's form until step T2 converts it. The [measurement guide](docs/guides/measurement.md) describes how Markitect is compared with ordinary agentic coding. A reliable preservation result across successive changes is **not yet established**.
 
@@ -114,7 +112,7 @@ A Markitect project keeps its model and its realization record under `.markitect
 └── ignore.md         # files that deliberately belong to no Package
 ```
 
-The model is **not a mirror of the file tree**. You choose the level of conceptual detail; the registry says how real files implement those concepts. The [model language guide](docs/guides/model-language.md) gives the exact format.
+The model is **independent of the file tree**. You choose the level of conceptual detail; the registry says how real files implement those concepts. The [model language guide](docs/guides/model-language.md) gives the exact format.
 
 <a id="run-the-current-source"></a>
 
@@ -137,7 +135,7 @@ These commands **do not launch agents**. `init` sets up `.markitect/` and instal
 
 ## Current status
 
-**Active development: source available, not a supported release.** Main is being rebuilt to concept 2.0 with no compatibility to V1 ([plan](docs/implementation-plan.md#concept-20-build)).
+**Active development: source available, no supported release yet.** Main is being rebuilt to concept 2.0 with no compatibility to V1 ([plan](docs/implementation-plan.md#concept-20-build)).
 
 | Capability | Current evidence and limits |
 | --- | --- |
@@ -148,13 +146,13 @@ These commands **do not launch agents**. `init` sets up `.markitect/` and instal
 | Provider support | None on Main until T4, which brings Claude Code and Codex with account login. |
 | Reliability across changes | **Not yet established.** Steps T6 and T7 measure it against one strong agent with ordinary documentation. |
 
-The compiler can reject malformed structure and missing declared relationships. **It cannot know whether the model omitted a real user need, whether an AI correctly understood prose, or whether green agent-written tests actually test the right thing.** Independent review, integration, project checks, and outside evaluation are intended to improve trust, not to turn agent work into a formal proof.
+The compiler can reject malformed structure and missing declared relationships. **It cannot know whether the model omitted a real user need, whether an AI correctly understood prose, or whether green agent-written tests actually test the right thing.** Independent review, integration, project checks, and outside evaluation are meant to raise trust in agent work; none of them is a formal proof.
 
 Read the [delivery plan](docs/implementation-plan.md) for up-to-date status and [Measurement](docs/guides/measurement.md) for how the method is compared with ordinary agentic coding. Fewer tokens, more agents, or one successful demonstration are not acceptance criteria by themselves.
 
 ## Direction
 
-Markitect first makes a project conform to its accepted model, change by change. After acceptance come further commands over the same mechanism, such as `improve`, `bughunt`, `security` and `cleanup`, and continuous change, in which issues and incidents become Findings or model proposals and autonomy grows in steps the owner decides. Those are **directions, not current CLI capabilities**.
+Markitect first makes a project conform to its accepted model, change by change. After acceptance come further commands over the same mechanism, such as `improve`, `bughunt`, `security` and `cleanup`, and continuous change, in which issues and incidents become Findings or model proposals and autonomy grows in steps the owner decides. Those are **directions**; none of them is in the CLI yet.
 
 The measure of success is whether projects remain consistent through real changes with **less routine human supervision**, while people retain responsibility for architecture, requirements, material exceptions, and acceptance.
 
