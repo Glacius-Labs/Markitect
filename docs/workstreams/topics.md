@@ -23,7 +23,7 @@ The design walk-through of 28 October, one part at a time: what was open and a r
 4. **Closed** 28 October: compile errors are structure, cycles, visibility and accounting; everything else is a warning (DEC-080).
 5. **Closed** 28 October: language and compiler rules change only by owner decision, as DEC-080 defines them.
 6. **Closed** 28 October: no Cockpit app ([DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now)).
-7. **The Cockpit** (30–32).
+7. **Closed** 28 October: the Cockpit questions 30–32, as part of DEC-085.
 
 ## Topics in short
 
@@ -31,7 +31,7 @@ The state since [concept 2.0](../concepts/v2-concept.md); what came before is in
 
 ### Platform
 
-The host runs natively on Windows, Linux and macOS with Docker only; each Run has its own remote container with the hooks and the required checks ([DEC-083](../concepts/register.md#dec-083-the-host-runs-natively-each-run-lives-in-containers)). Observed natively on Windows and on Linux (WSL Ubuntu with Docker Desktop) in T5; macOS not yet. The Linux runner is retired. The Go tests still take about 50 minutes on Windows (question 33, parked).
+The host runs natively on Windows, Linux and macOS with Docker only; each Run has its own remote container with the hooks and the required checks ([DEC-083](../concepts/register.md#dec-083-the-host-runs-natively-each-run-lives-in-containers)). Observed natively on Windows and on Linux (WSL Ubuntu with Docker Desktop) in T5; macOS not yet. The Linux runner is retired. Before the rebuild, on 28 October, the Go tests took about 50 minutes on Windows ([measurement](../validation/windows-test-time-20261028.md)); they are to be measured again after it (question 33, parked).
 
 ### Model language and compiler
 
@@ -51,7 +51,7 @@ Design only ([DEC-084](../concepts/register.md#dec-084-continuous-change-trigger
 
 ### Cockpit
 
-No Cockpit app for now; Markdown tools are the cockpit ([DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now)). Questions 30–32 stay open.
+No Cockpit app for now; Markdown tools are the cockpit ([DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now)), which also decides questions 30–32.
 
 ## Decided
 
