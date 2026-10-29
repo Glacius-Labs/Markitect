@@ -98,7 +98,14 @@ func (e *Engine) Run(ctx context.Context, req Request) (*Result, error) {
 		req.Limits = DefaultLimits(now)
 	}
 	if req.Run == "" {
-		req.Run = "r" + now.UTC().Format("20060102-150405")
+		// The name names the Run's branch, Result page, containers and
+		// lock entry, and Runs may start side by side in the same second,
+		// on one host or on several, so the time alone is not enough.
+		b := make([]byte, 3)
+		if _, err := rand.Read(b); err != nil {
+			return nil, err
+		}
+		req.Run = "r" + now.UTC().Format("20060102-150405") + "-" + hex.EncodeToString(b)
 	}
 	if req.Mode != agentport.Apply && req.Mode != agentport.Verify {
 		return nil, fmt.Errorf("%w: mode %q", ErrUsage, req.Mode)

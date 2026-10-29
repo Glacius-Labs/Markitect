@@ -171,10 +171,14 @@ func scriptLoan(a *agentfake.Agents) {
 
 // TestDisjointRunsWorkSideBySide runs a second apply whose impact does not
 // overlap the first's: it starts and lands while the first still works, and
-// the first then lands on the moved target.
+// the first then lands on the moved target. Both start in the same second
+// on two hosts and name no Run, so their default names must differ.
 func TestDisjointRunsWorkSideBySide(t *testing.T) {
 	f := newFixture(t)
 	f.engine.LockPoll = 20 * time.Millisecond
+	second := time.Now().Truncate(time.Second)
+	clock := func() time.Time { return second }
+	f.engine.Now = clock
 	base, bookStart := changeBook(f)
 	started, release := make(chan struct{}), make(chan struct{})
 	a := f.agents
@@ -182,14 +186,15 @@ func TestDisjointRunsWorkSideBySide(t *testing.T) {
 	a.On("catalog", checker, a.Review(nil))
 	a.On(".", maker, a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
 	a.On(".", checker, a.Review(nil))
-	first := runAsync(f.engine, run.Request{Mode: agentport.Apply, Run: "first", Target: "main", Base: base, Limits: limits()})
+	first := runAsync(f.engine, run.Request{Mode: agentport.Apply, Target: "main", Base: base, Limits: limits()})
 	<-started
 
 	changeLoan(f)
 	e2, b := f.second()
+	e2.Now = clock
 	scriptLoan(b)
 	// Its base is the first Run's start, so its impact is the loan alone.
-	r, err := e2.Run(context.Background(), run.Request{Mode: agentport.Apply, Run: "second", Target: "main", Base: bookStart, Limits: limits()})
+	r, err := e2.Run(context.Background(), run.Request{Mode: agentport.Apply, Target: "main", Base: bookStart, Limits: limits()})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -203,6 +208,10 @@ func TestDisjointRunsWorkSideBySide(t *testing.T) {
 	}
 	if o.r.State != run.StateLanded || !strings.Contains(o.r.Why, "moved") {
 		t.Fatalf("first: %s: %s", o.r.State, o.r.Why)
+	}
+	stamp := "r" + second.UTC().Format("20060102-150405") + "-"
+	if o.r.Run == r.Run || !strings.HasPrefix(o.r.Run, stamp) || !strings.HasPrefix(r.Run, stamp) {
+		t.Fatalf("Run names %q and %q", o.r.Run, r.Run)
 	}
 	if !strings.Contains(f.show("main", "src/members/loans/loan.go"), "21") || !strings.Contains(f.show("main", "src/catalog/book.go"), "ISBN") {
 		t.Fatal("both Runs' work is not on main")
