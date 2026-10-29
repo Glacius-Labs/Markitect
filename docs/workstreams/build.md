@@ -19,7 +19,7 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 
 1. **Product fixes:** the parent's commit that settles an escalation reaches the child's branch, so Runs like the fixed start above converge; the Run's network isolated like the suite's; limits for the Run's remote; a submit reply that says a push awaits its verdict. Then the fixed-start case runs once more without registry links, as the regression run, and the Library smoke once more.
 2. **Fixed starts:** the registry pages the decision below asks for.
-3. **T7, pilot:** after both, the Library and Makerspace series for the 2.0 arm and K, uncounted, then the protocol for the counted series, its independent review, and the counted series.
+3. **T7, pilot:** after both, the uncounted pilot in the owner's scope below, then the protocol for the counted series, its independent review, and the counted series.
 
 ## Decisions
 
@@ -42,7 +42,9 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 
 - **Counted series delegated, 29 October 2026:** the owner, going away, let Build run the build on its own: start, steer, merge and archive sessions without asking. The owner also delegated the counted acceptance series to Build, to start once Build judges it appropriate. Build approves the protocol only after the pilot, with an independent review of the protocol before the first counted run. The protocol and its review are recorded under `docs/validation/` before any counted run, and the owner reviews the results.
 
-- **Fixed starts, 29 October 2026:** a fixed reference start reaches the 2.0 arm with registry pages that link each file to the Definitions it realizes, written as an owner adopting Markitect would write them; K gets the same reference files without the pages. This holds for the pilot and the counted series, so the pilot tests what is counted. The case without pages ([record](../validation/t7-arm-smoke-20261029.md)) runs once, as the escalation fix's regression run. Build decided on the T7 session's finding.
+- **Fixed starts, 29 October 2026:** a fixed reference start reaches the 2.0 arm with registry pages that link each file to the Definitions it realizes, written as an owner adopting Markitect would write them; K gets the same reference files without the pages. This holds for every fixed start the pilot runs and for every fixed start of the counted series. The case without pages ([record](../validation/t7-arm-smoke-20261029.md)) runs once, as the escalation fix's regression run. Build decided on the T7 session's finding.
+
+- **Pilot scope, 29 October 2026:** the 2.0 arm runs fixed starts in the pilot on the Library only: its four fixed starts and two planted tasks, beside both chains and the three Makerspace planted tasks. K runs every task, the Makerspace fixed starts included. That is 57 launches, 24 for the 2.0 arm and 33 for K. The counted series runs every fixed start for both arms, with registry pages. The owner, in the T7 session: "Library only, as advised".
 
 ## Questions for the owner
 
