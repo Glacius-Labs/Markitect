@@ -51,11 +51,11 @@ Markitect moves the knowledge of what belongs together out of the agents' memory
 
 ```mermaid
 flowchart LR
-    Model["You change<br/>the model"] --> Check["check<br/>compile, account<br/>for every file"]
-    Check --> Impact["impact<br/>who works, and<br/>each checklist"]
-    Impact --> Run["Run<br/>a maker and a checker<br/>per Manager"]
+    Model["You change<br/>the model"] --> Check["check<br/>compile and<br/>account for files"]
+    Check --> Impact["impact<br/>who works and<br/>their checklists"]
+    Impact --> Run["Run<br/>maker and checker<br/>per Manager"]
     Run -->|"defects go back<br/>to the maker"| Run
-    Run --> Land["Land<br/>on the target branch,<br/>with a Result page"]
+    Run --> Land["land<br/>on the target branch<br/>with a Result page"]
 ```
 
 1. **You change the model,** by hand or with your coding agent through the modeling skill, which asks first when something is open. You read the Markdown diff and commit it.
