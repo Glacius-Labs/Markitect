@@ -153,6 +153,8 @@ kind: std/Rule
 ---
 # Loan policy
 
+…
+
 | Value | Setting | Meaning |
 | --- | --- | --- |
 | Loan limit | `5` | The maximum resulting count of currently open loans per member when admitting a new loan. … |
@@ -243,7 +245,7 @@ Markitect is being rebuilt to [concept 2.0](docs/concepts/v2-concept.md), its ac
 | Area | State |
 | --- | --- |
 | Model language and the commands `init`, `check`, `lock`, `refs`, `graph`, `impact` and `lint` | Available |
-| Runs with `apply` and `verify` | Available. The Library example lands and verifies natively on Windows and on Linux with Claude Code ([record](docs/validation/t5-native-host-20261029.md)); macOS is not yet observed. On the larger Makerspace project no Run has landed yet: a parent's first submission must pass checks that need its children's files. The next step lets the required checks gate merged states only ([plan](docs/implementation-plan.md#concept-20-build)) |
+| Runs with `apply` and `verify` | Available. The Library example lands and verifies natively on Windows and on Linux with Claude Code ([record](docs/validation/t5-native-host-20261029.md)); macOS is not yet observed. On the larger Makerspace project no step of the pilot's chain has landed: a parent's first submission must pass checks that need its children's files. The planned step lets the required checks gate merged states only ([plan](docs/implementation-plan.md#concept-20-build)) |
 | Codex | Wired in; its first native smoke did not land yet |
 | Evaluation against ordinary agentic coding | The pilot has run; its report and the counted series follow |
 | Release | None yet; install from source |
