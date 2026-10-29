@@ -253,6 +253,8 @@ func (s *schedule) waitingLocked() string {
 		switch {
 		case s.req.Mode == agentport.Verify && !n.done:
 			parts = append(parts, n.name+" has no verdicts")
+		case s.req.Mode == agentport.Apply && !n.released:
+			parts = append(parts, n.name+" waits for its parent's approved work")
 		case s.req.Mode == agentport.Apply && !n.approved:
 			parts = append(parts, fmt.Sprintf("%s is not approved (waits for %d answers)", n.name, len(n.waitFor)))
 		}
@@ -369,9 +371,10 @@ func (s *schedule) startLocked(ctx context.Context, n *node, role agentport.Role
 	}
 	s.starts++
 	n.rounds[role]++
-	if role == agentport.Maker && len(n.children) > 0 && s.childrenApproved(n) {
-		// The task names the children's approvals, so the maker has them.
-		n.told = s.approvals(n)
+	if role == agentport.Maker && len(n.children) > 0 && s.childrenApproved(n) && s.approvals(n) != n.told {
+		// The task names the children's approvals, so the maker has them;
+		// whatever started it, its own approval no longer holds.
+		n.told, n.approved = s.approvals(n), false
 	}
 	n.running, n.sent = true, false
 	inbox := n.inbox
@@ -520,11 +523,10 @@ func (s *schedule) afterMaker(ctx context.Context, n *node, tip string, moved bo
 		return true, nil
 	}
 	var missing []string
+	// A parent's own work comes first; its children start from its
+	// approval (concept 2.0 §6.2).
 	for _, ch := range n.children {
-		if !ch.released {
-			// The parent's own work comes first; its children start from
-			// its approval (concept 2.0 §6.2).
-			missing = nil
+		if s.ownFirst(n) {
 			break
 		}
 		if !ch.approved {
