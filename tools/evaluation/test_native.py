@@ -347,6 +347,15 @@ class NativeTest(unittest.TestCase):
         # A variant that reports no leftovers adds none.
         record, _ = self.run_mode("change")
         self.assertNotIn("reportedLeftovers", record["sandbox"])
+        # A text that holds the login is dropped; a value that is no list is no report.
+        for name, leftovers in (("secret", ["a token sk-ant-oat-native-secret was left"]), ("odd", "not a list")):
+            (self.tmp / f"{name}.py").write_text(textwrap.dedent(f'''
+                import json, pathlib, sys
+                pathlib.Path(sys.argv[2], "run.json").write_text(json.dumps({{"leftovers": {leftovers!r}}}))
+            '''))
+            record, _ = self.run_mode(name, [sys.executable, "-B", str(self.tmp / f"{name}.py")])
+            self.assertNotIn("reportedLeftovers", record["sandbox"])
+            self.assertNotIn("sk-ant-oat-native-secret", json.dumps(record))
 
     def test_a_volume_the_arm_leaves_is_residue(self):
         (self.tmp / "own.py").write_text(OWN_NETWORK)

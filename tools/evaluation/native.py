@@ -61,7 +61,7 @@ def reported_leftovers(out):
         return []
     try:
         value = json.loads(path.read_text(encoding="utf-8")).get("leftovers")
-    except (OSError, ValueError, AttributeError):
+    except (OSError, ValueError, AttributeError, RecursionError):
         return []
     return [str(x)[:300] for x in value[:20]] if isinstance(value, list) else []
 
@@ -213,7 +213,8 @@ class Native:
             record["hiddenPresent"] = present
         # What the variant's host says it left (run.json `leftovers`), such as a Run's remote or branch its cleanup could
         # not remove, is residue like what the engine shows: the run is not valid for counting.
-        left = reported_leftovers(out)
+        # A text that holds the login never reaches the record, which is written after the quarantine's search.
+        left = [x for x in reported_leftovers(out) if not any(s in x.encode() for s in secrets)]
         if left:
             record["reportedLeftovers"] = left
             record["residue"] = record.get("residue", []) + ["reported by the variant: " + x for x in left]

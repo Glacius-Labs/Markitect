@@ -107,8 +107,12 @@ STANDIN = textwrap.dedent(r'''
         # FAKE_AFTER: "left" reports a branch the cleanup after landing could not delete; "missing" is a host that
         # predates afterLanding; otherwise a clean landing.
         after = os.environ.get("FAKE_AFTER", "")
-        if after != "missing":
+        if after == "malformed":
+            result.update(afterLanding="not a list", cleanup="not a list either")
+        elif after != "missing":
             result["afterLanding"] = [f"the landed Run's branch markitect/runs/{run} could not be deleted: refused"] if after == "left" else []
+        if after == "left":
+            result["cleanup"] = ["the Run's remote may remain if its start failed half-way; Sweep removes it"]
     elif mode == "defect":
         result.update(outcome="not-landed", state="model-defect", why="a model defect ended the Run at Root", items=[])
     elif mode == "gate":
@@ -190,7 +194,9 @@ class ArmTest(unittest.TestCase):
         return suite.git(repo, "ls-tree", "-r", "--name-only", commit).splitlines()
 
     def test_what_the_host_left_after_landing_is_recorded_and_its_absence_is_not_clean(self):
-        for after, recorded, reported, leftovers in (("", [], True, 0), ("left", 1, True, 1), ("missing", None, False, 0)):
+        # Only afterLanding counts as leftovers: `cleanup` says what may remain, and the engine's census finds what does.
+        for after, recorded, reported, leftovers in (("", [], True, 0), ("left", 1, True, 1), ("missing", None, False, 0),
+                                                     ("malformed", None, False, 0)):
             with self.subTest(after=after):
                 os.environ["FAKE_AFTER"] = after
                 record, _ = self.run_arm(self.task("after-" + (after or "clean"), self.model("model-a-" + (after or "clean"))))
