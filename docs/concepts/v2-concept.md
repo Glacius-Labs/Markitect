@@ -73,20 +73,20 @@ One tool, `markitect`, written in Go, with no Python and no other runtime ([DEC-
 
 **Compile errors:** a Kind or link that does not resolve; a link to an internal Definition from outside its subtree; a cycle between Packages; a Library version that does not match the lock; a repository file that is neither registered nor ignored; two Packages claiming the same path pattern; a registry entry for a Git-ignored file. A stale registry entry, which links a Definition the owner deleted or names a file that no longer exists, is no compile error: `lint` warns, and the owning Manager gets it as a checklist item, so deleting a Definition never blocks the Run that removes its realization.
 
-**Lint warnings:** coupling and instability per Package; dependencies from stable to unstable Packages; size of Definitions and Packages; Definitions nothing links to and no file realizes; the reach of a change; a Package with no Definitions of its own and only one child; later, change hotspots from Git history.
+**Lint warnings:** coupling and instability per Package; dependencies from stable to unstable Packages; size of Definitions and Packages; Definitions nothing links to and no file realizes; the reach of a change; a Package with no Definitions of its own and only one child; a Package other than Root that claims no path pattern; later, change hotspots from Git history.
 
 ## 4. The realization record
 
 Next to the model, outside it ([DEC-081](register.md#dec-081-the-organization-knows-broad-at-the-top-and-deep-below)):
 
-- **Registry:** one Markdown page per Package. It names the path patterns the Package owns (several, for example `src/billing/**`, `tests/billing/**`, `docs/billing*.md`) and lists every file there with links to the Definitions it realizes and a short reason. The owning Manager maintains it; the compiler checks it. The most specific pattern wins, as in `CODEOWNERS`; Root owns every file no other Package claims, so every file has exactly one owner. Owning is not accounting: every file must still be listed on its owner's page or be ignored, so a file that enters silently, even inside an owned folder, is an error.
+- **Registry:** one Markdown page per Package. It names the path patterns the Package owns (several, for example `src/billing/**`, `tests/billing/**`, `docs/billing*.md`) and lists every file there with links to the Definitions it realizes and a short reason. When the owner adds a Package, the owner also writes its registry page with the first path patterns, just as the owner writes its Definitions. The owning Manager maintains the page from then on: it lists the files and may narrow or extend its patterns. A change that moves files between two Packages changes both pages, each by its own Manager, so it goes through their common parent ([DEC-060](register.md#dec-060-owners-realize-others-use-parents-settle-cross-area-matters)). A change to the patterns takes effect only from the next Run, because the hooks take each Manager's paths from the Run's base; so no Manager can take over a sibling's files within a Run. The compiler checks the page. The most specific pattern wins, as in `CODEOWNERS`; Root owns every file no other Package claims, so every file has exactly one owner. Owning is not accounting: every file must still be listed on its owner's page or be ignored, so a file that enters silently, even inside an owned folder, is an error.
 - **Shared files** such as the README, a CI pipeline or a compose file are owned by the lowest common parent of the Packages they serve, often Root, and their entry links every Definition they realize. A child that needs a change there asks its parent ([DEC-060](register.md#dec-060-owners-realize-others-use-parents-settle-cross-area-matters)).
 - **Ignore list:** files that deliberately belong to no Package.
 - **`execution.yaml`** holds only the required checks: name, command, directory, timeout and environment. They are the one proof in a Run that does not come from an agent.
 
 Layout conventions, such as where tests live, are Rules in Root.
 
-**Markitect's own files** under `.markitect/` (Definitions, registry pages, manifest, lock, `execution.yaml`) need no registry entry; the compiler accounts for them itself. The hooks enforce who changes them: the model's Definitions, the manifest, the lock and `execution.yaml` never change in a Run, only through the owner, `markitect init` or `markitect lock`; a registry page changes only through its own Package's Manager.
+**Markitect's own files** under `.markitect/` (Definitions, registry pages, manifest, lock, `execution.yaml`) need no registry entry; the compiler accounts for them itself. The hooks enforce who changes them: the model's Definitions, the manifest, the lock and `execution.yaml` never change in a Run, only through the owner, `markitect init` or `markitect lock`; in a Run, a registry page changes only through its own Package's Manager; a new Package's first page comes from the owner (§4).
 
 ## 5. The organization
 
@@ -210,7 +210,7 @@ No app for now ([DEC-085](register.md#dec-085-markdown-tools-are-the-cockpit-for
 9. **Results and leftovers: decided** 28 October: Results in the repository under `.markitect/results/`; Run branches cleaned up after landing; the working tree is never touched.
 10. **Acceptance: decided** 28 October (§15).
 
-**Decided after the first build steps** (29 October 2026, on an independent check of the code against this concept): landing compiles every submission and the state it lands; `verify` runs the required checks; the checker does not read the Shared Notes; impact does not follow the code's own imports (§6.1); how planted defects are scored (§15); after the first native Run, a parent submits its own files before its children start (§6.2).
+**Decided after the first build steps** (29 October 2026, on an independent check of the code against this concept): landing compiles every submission and the state it lands; `verify` runs the required checks; the checker does not read the Shared Notes; impact does not follow the code's own imports (§6.1); how planted defects are scored (§15); after the first native Run, a parent submits its own files before its children start (§6.2); after the first suite runs, the owner sets a new Package's first path patterns, and pattern changes take effect from the next Run (§4).
 
 **Details for the build:** the verdict trailer format; the harness and model of makers and checkers; when the full Run is due; the format of a mandate; the Result page's exact layout.
 
