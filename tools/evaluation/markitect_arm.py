@@ -351,6 +351,11 @@ def main(argv=None):
                       if s.get("reason") == "failed"]
             report.update(status=result.get("state"), cause=result.get("why"), tokens=result.get("usage"),
                           starts=len(result.get("starts") or []), failedStarts=failed, cleanup=result.get("cleanup"))
+            # What the host says it left: the Run's cleanup, and after a landing what the cleanup after landing left. A
+            # host that predates `afterLanding` says nothing about the latter: that is not reported, not clean.
+            after = result.get("afterLanding") if isinstance(result.get("afterLanding"), list) else None
+            report.update(afterLanding=after, afterLandingReported=result.get("outcome") != "landed" or after is not None,
+                          leftovers=[str(x) for x in (result.get("cleanup") or []) + (after or [])])
             if result.get("state") == "check-failed":
                 # The gate failed on the owner's input, which compiled above: no agent started, nothing is the arm's work.
                 return finish(2)

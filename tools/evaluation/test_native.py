@@ -331,6 +331,23 @@ class NativeTest(unittest.TestCase):
         self.assertEqual([c["name"] for c in record["sandbox"]["escapes"]], ["arm-agent"])
         self.assertEqual(classify.classify(out)["class"], "invalid")
 
+    def test_what_the_variants_host_reports_it_left_is_residue(self):
+        (self.tmp / "left.py").write_text(textwrap.dedent('''
+            import json, pathlib, sys
+            pathlib.Path(sys.argv[2], "run.json").write_text(json.dumps({"provider": "claude", "model": "claude-sonnet-5-5",
+                "leftovers": ["the landed Run's branch markitect/runs/r1 could not be deleted: refused"]}))
+        '''))
+        record, out = self.run_mode("left", [sys.executable, "-B", str(self.tmp / "left.py")])
+        box = record["sandbox"]
+        self.assertEqual(box["reportedLeftovers"], ["the landed Run's branch markitect/runs/r1 could not be deleted: refused"])
+        self.assertIn("reported by the variant: the landed Run's branch markitect/runs/r1 could not be deleted: refused", box["residue"])
+        self.assertFalse(record["validForCounting"])
+        verdict = classify.classify(out)
+        self.assertEqual((verdict["class"], verdict["kind"]), ("void", "infrastructure"))
+        # A variant that reports no leftovers adds none.
+        record, _ = self.run_mode("change")
+        self.assertNotIn("reportedLeftovers", record["sandbox"])
+
     def test_a_volume_the_arm_leaves_is_residue(self):
         (self.tmp / "own.py").write_text(OWN_NETWORK)
         os.environ.update(ARM_NETWORK_FLAGS="--internal", ARM_VOLUME="1")
