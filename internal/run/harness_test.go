@@ -56,8 +56,9 @@ func gitToolsOnPath() {
 	}
 	// The exec path is <root>/mingw64/libexec/git-core; the tools are in <root>/usr/bin.
 	tools := filepath.Join(filepath.Dir(filepath.Dir(filepath.Dir(strings.TrimSpace(string(out))))), "usr", "bin")
+	// Appended, so Windows' own tools of the same names keep their place.
 	if _, err := os.Stat(filepath.Join(tools, "sh.exe")); err == nil {
-		os.Setenv("PATH", tools+string(os.PathListSeparator)+os.Getenv("PATH"))
+		os.Setenv("PATH", os.Getenv("PATH")+string(os.PathListSeparator)+tools)
 	}
 }
 
@@ -66,8 +67,8 @@ const (
 	table = "| File | Realizes | Why |\n|---|---|---|\n"
 	// failCheck fails when the tree holds a file named FAIL. It needs only
 	// Git and the shell's builtins, since on a Windows host find on the PATH
-	// may be Windows' own find.exe; Git's pathspec * also matches across /.
-	failCheck = `test -z "$(git ls-files -- "*FAIL")"`
+	// may be Windows' own find.exe. The pathspec matches FAIL in every folder.
+	failCheck = `test -z "$(git ls-files -- ":(glob)**/FAIL")"`
 )
 
 func def(kind, title, body string) string {
