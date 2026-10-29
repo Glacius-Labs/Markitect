@@ -18,7 +18,7 @@ A start does, in order:
 
 1. Reads the login file and admits it through the provider: an API key, an expired access token and an access token that does not outlive the start's deadline by ten minutes are refused, since a CLI may try to refresh shortly before expiry and the access-only copy cannot.
 2. Creates two fresh volumes, `NAME-home` at `/home/agent` and `NAME-work` at `/work`. They and the container carry the label `markitect.run=RUN`, so the Run remote's sweep finds them.
-3. Starts the container from the Manager image: `markitect-agentd serve` as user `1000:1000`, read-only root, no capabilities, no new privileges, the configured CPU, memory, process and temporary-space limits. It joins the provider's network (`Config.Network`; `bridge` is the engine's default, the evaluation passes its egress-limited one) and the Run's internal network (`Start.Git.Network`); without a provider network it reaches the remote only. No folder of the user's is mounted.
+3. Starts the container from the Manager image: `markitect-agentd serve` as user `1000:1000`, read-only root, no capabilities, no new privileges, the configured CPU, memory, process and temporary-space limits. It joins the provider's network (`Config.Network`, a user-defined network: `markitect-provider` by default, the evaluation's egress-limited one in the evaluation) and the Run's internal network (`Start.Git.Network`); without a provider network it reaches the remote only. No folder of the user's is mounted.
 4. Stores the agent's remote user and token in Git's credential store in the private home and clones the remote into `/work` at the Manager's branch. The token is the agent's own identity at the remote; the remote holds only its hash.
 5. Loads the project at the Run's base commit from the clone (`git ls-tree` and `git archive` of `.markitect/`, as a commit holds only tracked files) and, for a checker in `apply`, the submission at the tip of the branch: its verdict trailers and its diff from the base. A project with compile errors starts no agent.
 6. Renders the harness and installs the private home through agentd: the access-only login copy and, for Claude Code, the two system prompt files.
@@ -44,8 +44,8 @@ The lower layer, `agents.Start` with a `Spec` and `Agent.Send`, is the same mach
 | `MARKITECT_ENGINE` | The Docker CLI | `docker` on `PATH` |
 | `MARKITECT_PROVIDER` | `claude` or `codex` | `claude` |
 | `MARKITECT_LOGIN` | The account login file | `~/.claude/.credentials.json` or `~/.codex/auth.json` |
-| `MARKITECT_MODEL`, `MARKITECT_EFFORT` | Model and effort of every maker and checker | `claude-sonnet-5-5` (Codex: `gpt-6-sol`), `high` |
-| `MARKITECT_NETWORK` | The network that reaches the provider | `bridge` |
+| `MARKITECT_MODEL`, `MARKITECT_EFFORT` | Model and effort of every maker and checker | `claude-sonnet-5-5` (Codex: `gpt-6-luna`), `high` |
+| `MARKITECT_NETWORK` | The network that reaches the provider | `markitect-provider`, a user-defined bridge network the host creates on first use and keeps. Every agent also joins the Run's network, and the Docker CLI on Linux refuses to combine the engine's default `bridge` with a user-defined network |
 | `MARKITECT_HOSTS`, `MARKITECT_DNS` | Extra host entries (`name:address`) and name servers, comma-separated | none |
 | `MARKITECT_TRANSCRIPTS` | A folder for the agents' transcripts | none |
 
@@ -112,9 +112,9 @@ Makers and checkers use the same model and effort, and the Run uses one model fo
 | Provider | Model | Effort |
 | --- | --- | --- |
 | Claude Code | `claude-sonnet-5-5` | `high` |
-| Codex | `gpt-6-sol` | `high` |
+| Codex | `gpt-6-luna` | `high` |
 
-Why: quality comes first, and the comparison with one strong agent is fair only on the same model, which the evaluation sets per series (`EVALUATION_MODEL`, today `claude:claude-sonnet-5-5`). Sonnet at `high` is the setting Claude Managers passed natively in K1b, and the owner's rule is to fix failures in the concept and the tools, not with stronger agents. A fresh checker on the same model is independent by its context, not by its model; a stronger checker is not used because it would change what the comparison measures. The engine passes the model and effort to every agent's `Spec`; the full model ID, not an alias, is used so that each `system/init` reports exactly it.
+Why: quality comes first, and the comparison with one strong agent is fair only on the same model, which the evaluation sets per series (`EVALUATION_MODEL`, today `claude:claude-sonnet-5-5`). Codex defaults to Luna because the owner's Codex series run on Luna and `gpt-6-sol` runs only when a dispatch names it with `MARKITECT_MODEL` ([owner, 27 October](../../docs/concepts/sources/owner-morning-decisions-20261027.md)); both defaults are chosen the same way, here. Claude Code reports its model in `system/init`; Codex's exec events name none, so a Codex start's outcome names the model it was launched with. Sonnet at `high` is the setting Claude Managers passed natively in K1b, and the owner's rule is to fix failures in the concept and the tools, not with stronger agents. A fresh checker on the same model is independent by its context, not by its model; a stronger checker is not used because it would change what the comparison measures. The engine passes the model and effort to every agent's `Spec`; the full model ID, not an alias, is used so that each `system/init` reports exactly it.
 
 ## The Manager image
 

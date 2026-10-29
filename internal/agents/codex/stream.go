@@ -11,11 +11,14 @@ import (
 
 // Reader returns the reader of one exec turn's JSON events.
 func (Provider) Reader(t agents.Turn) agents.Reader {
-	return &reader{thread: t.Conversation}
+	return &reader{thread: t.Conversation, model: t.Model}
 }
 
 type reader struct {
-	thread    string
+	thread string
+	// model is the model the turn was launched with: exec's events do not
+	// name it, unlike Claude Code's system/init.
+	model     string
 	completed bool
 	// failure is the error of a failed turn; lastError the latest error
 	// event, which may be a reconnect the turn recovered from.
@@ -72,7 +75,7 @@ func (r *reader) Line(raw []byte) error {
 }
 
 func (r *reader) Outcome() agents.Outcome {
-	out := agents.Outcome{Conversation: r.thread, Usage: r.usage}
+	out := agents.Outcome{Conversation: r.thread, Model: r.model, Usage: r.usage}
 	// A completed turn answered, whatever error events came before it.
 	switch {
 	case r.completed:

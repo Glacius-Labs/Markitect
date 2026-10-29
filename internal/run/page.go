@@ -87,6 +87,19 @@ func Page(r *Result) []byte {
 		fmt.Fprintf(&b, "- %s: %s\n", p.Package, p.Reason)
 	}
 
+	if len(r.Queue) > 0 {
+		b.WriteString("\n## Queue\n\n")
+		for _, q := range r.Queue {
+			fmt.Fprintf(&b, "- %s\n", oneLine(q))
+		}
+	}
+	if len(r.Replaced) > 0 {
+		b.WriteString("\n## Replaced Run branches\n\nThis landing covers the impact of these kept Runs, so their branches are deleted with it:\n\n")
+		for _, branch := range r.Replaced {
+			fmt.Fprintf(&b, "- %s\n", branch)
+		}
+	}
+
 	if len(r.Starts) > 0 {
 		b.WriteString("\n## Agent starts\n\n| Manager | Role | Round | Ended | Agent | Seconds | Detail |\n|---|---|---|---|---|---|---|\n")
 		for _, st := range r.Starts {

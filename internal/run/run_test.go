@@ -96,10 +96,10 @@ func TestApplyLandsOnUnmovedTarget(t *testing.T) {
 	if strings.Join(notTaking, " ") != "members members/loans" {
 		t.Fatalf("not taking part: %v", notTaking)
 	}
-	// The landed Result is the default base of the next Run, and nothing
+	// The landed work is the default base of the next Run, and nothing
 	// changed since.
 	again := f.run(run.Request{})
-	if again.State != run.StateNothing || again.Base != r.Landed {
+	if work := strings.TrimSpace(testkit.Git(t, f.target, "rev-parse", r.Landed+"^")); again.State != run.StateNothing || again.Base != work {
 		t.Fatalf("next Run %s from %s: %s", again.State, again.Base, again.Why)
 	}
 }

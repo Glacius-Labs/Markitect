@@ -144,7 +144,7 @@ These commands **do not launch agents**. `init` sets up `.markitect/` and instal
 | Model language, compiler, registry and file accounting | Built in step T1, with source tests and the architecture gate. |
 | `init`, `check`, `lock`, `refs`, `graph`, `impact`, `lint` | Implemented in the current CLI. |
 | Runs with makers and checkers; `apply` and `verify` | Being built (T3, T4). V1's Apply was removed with T1; its native evidence is in the [qualification record](docs/validation/v1-qualification-20261024.md) and applies only to the V1 source it names. |
-| Native host on Windows, Linux and macOS | Step T5. |
+| Native host on Windows, Linux and macOS | Built in T5, with the target branch's lock and the cleanup of Run branches. The Library smoke landed and verified natively on Windows and on Linux ([record](docs/validation/t5-native-host-20261029.md)); macOS is not yet observed. |
 | Provider support | None on Main until T4, which brings Claude Code and Codex with account login. |
 | Reliability across changes | **Not yet established.** Steps T6 and T7 measure it against one strong agent with ordinary documentation. |
 
