@@ -255,7 +255,9 @@ func TestAWaitingRunStartsAgainFromTheLanding(t *testing.T) {
 	if r.State != run.StateLanded || r.Start != o1.r.Landed || r.Start == start {
 		t.Fatalf("second: %s from %s (the first landed %s): %s", r.State, r.Start, o1.r.Landed, r.Why)
 	}
-	if len(r.Queue) != 2 || !strings.Contains(r.Queue[1], "started again") {
+	// Whether the second Run reached the lock before the first was
+	// released depends on the machine; that it started again does not.
+	if !strings.Contains(strings.Join(r.Queue, " "), "started again") {
 		t.Fatalf("queue %q", r.Queue)
 	}
 }

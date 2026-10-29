@@ -144,7 +144,7 @@ func (e *Engine) Run(ctx context.Context, req Request) (*Result, error) {
 		}
 	}
 	waitedOut := func() (*Result, error) {
-		r.State, r.Why = StateIncomplete, "the Run reached its deadline before it could start, while it waited for Runs whose impact overlaps its own"
+		r.State, r.Why = StateIncomplete, "the Run reached its deadline in the target branch's lock, before any agent started"
 		return e.finish(r), nil
 	}
 	for {
@@ -176,7 +176,11 @@ func (e *Engine) Run(ctx context.Context, req Request) (*Result, error) {
 		if err == nil && tip == start {
 			break
 		}
-		left()
+		// Its entry holds the impact of the old tip; it must be gone before
+		// the Run enters again with the new one.
+		if lerr := e.leave(ctx, req.Target, nonce); lerr != nil {
+			return nil, fmt.Errorf("leaving the lock of %s to start again from its new tip: %w; the Run's entry stays until %s", req.Target, lerr, until.UTC().Format(time.RFC3339))
+		}
 		switch {
 		case err != nil && ctx.Err() != nil:
 			return waitedOut()
