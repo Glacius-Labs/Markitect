@@ -26,6 +26,8 @@ These reports preserve the exact scope, inputs, source references and outcomes s
 
 - [T4b Claude Code adapter: native qualification in the 2.0 Manager container — 28 October 2026](t4b-claude-adapter-20261028.md): one real Claude maker and checker in the 2.0 Manager container against a real Run remote passed on 20716c7c: launch and login checks held, the submission passed the hook and its check, and the checker approved with an empty commit, in 31 s; no secret in the evidence, nothing left on the engine
 
+- [T4 native smoke: `markitect apply` on the Library with Claude Managers — 29 October 2026](t4-library-smoke-20261029.md): the first whole 2.0 Run on Main 2ce96daf landed in 11 minutes: 25 Claude starts for 5 Managers, every item with a verdict, evidence and approving checker, the required checks passing; the hidden M1 judge passed 19 of 19 cases on the landed commit and flags Root's registry page and the Result page as unrequested, a judge contract gap
+
 ## Modeling and platform
 
 - [Modeling skill change trial: Makerspace C5 — 27 October 2026](modeling-skill-change-trial-20261027.md): a fresh agent with only the modeling skill changed makerspace-v2.1 from C4 to C5; an independent review found it faithful, with no owner questions and no repair, at about 144 k tokens; the skill's size limit split one rule that reads better whole
