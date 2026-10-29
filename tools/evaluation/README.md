@@ -9,6 +9,7 @@ The suite runner, its judging and reporting, and the baseline variant of the [ev
 | [series.py](series.py) | The change series of the portfolio: each step's `task.md` and concept 2.0 model as a chain step (`steps --series library\|makerspace`) |
 | [native.py](native.py) | The native arm mode of `run --native` and `chain --native`: the variant's host on the machine, its own containers on the same egress-limited network, checked from the engine's events |
 | [native_standin.py](native_standin.py) | A scripted stand-in for a native arm: one Run container per run, which writes a change, changes nothing, leaves the network, leaves residue or runs the escape probe |
+| [markitect_arm.py](markitect_arm.py) | The concept 2.0 arm: the owner's model commit, one `markitect apply` with its agents on the suite's network, and the landed commit or the unchanged start as the result |
 | [sandbox/](sandbox/Dockerfile) | The sandbox image, its egress gateway (`egress.py`) and the default series configuration (`series.json`) |
 | [claude_code.py](claude_code.py) | The baseline variant: one headless Claude Code session with the task, in an isolated configuration |
 | [escape_probe.py](escape_probe.py) | A variant without a model that tries to leave the sandbox and reports each attempt |
@@ -20,12 +21,12 @@ The suite runner, its judging and reporting, and the baseline variant of the [ev
 | [results.py](results.py) | The Result contract and its check: every checklist item has a verdict with evidence |
 | [reading.py](reading.py) | The paired reading of a contrast: the 95 % interval of the paired difference |
 | [report.py](report.py), [acceptance.py](acceptance.py) | `suite.py report`: one table per area for a series ledger, then one per acceptance criterion of concept 2.0 §15 |
-| [test_suite.py](test_suite.py), [test_sandbox.py](test_sandbox.py), [test_judging.py](test_judging.py), [test_series.py](test_series.py), [test_native.py](test_native.py), [test_acceptance.py](test_acceptance.py), [test_reviewing.py](test_reviewing.py), [test_classify.py](test_classify.py) | Offline tests with real Git, fake variants, a fake `claude`, fake engines, and recorded runs and transcripts ([testdata/](testdata/README.md)) |
+| [test_suite.py](test_suite.py), [test_sandbox.py](test_sandbox.py), [test_judging.py](test_judging.py), [test_series.py](test_series.py), [test_native.py](test_native.py), [test_markitect_arm.py](test_markitect_arm.py), [test_acceptance.py](test_acceptance.py), [test_reviewing.py](test_reviewing.py), [test_classify.py](test_classify.py) | Offline tests with real Git, fake variants, a fake `claude`, a scripted `markitect`, fake engines, and recorded runs and transcripts ([testdata/](testdata/README.md)) |
 
 ## Use
 
 ```text
-python -I -B tools/evaluation/suite.py task --task-md TASK.md [--model MODEL_DIR] [--start BUNDLE] --deadline-seconds 2700 --out TASK_DIR
+python -I -B tools/evaluation/suite.py task --task-md TASK.md [--model MODEL_DIR] [--start BUNDLE [--base-model MODEL_DIR]] --deadline-seconds 2700 --out TASK_DIR
 python -I -B tools/evaluation/suite.py run --task TASK_DIR --model claude:claude-sonnet-5-5 --out RUN_DIR [--state STATE_DIR] \
     --sandbox IMAGE_ID --variant-code tools/evaluation [--login FILE] [--series FILE] [--lock FILE] \
     -- python3 -I -B /variant/claude_code.py
@@ -38,7 +39,7 @@ python -I -B tools/evaluation/suite.py run --task TASK_DIR --model claude:claude
     --native IMAGE_ID --hidden-absent PATH [--hidden-absent PATH ...] [--lock FILE] -- VARIANT...
 ```
 
-For `task`, `--model` is the canonical model directory. For `run` and `chain`, `--model` names the evaluation's model as `PROVIDER:MODEL_ID`; the suite gives it to the variant in `EVALUATION_MODEL`. A chain step directory holds `task.md` and an optional `model/`.
+For `task`, `--model` is the canonical model directory, and `--base-model` the model a fixed reference start realizes (the step before's), which the task carries as `base-model/` for a variant that works from a model; every variant receives it. For `run` and `chain`, `--model` names the evaluation's model as `PROVIDER:MODEL_ID`; the suite gives it to the variant in `EVALUATION_MODEL`. A chain step directory holds `task.md` and an optional `model/`.
 
 The variant command receives `TASK_DIR OUT_DIR [STATE_DIR]`. It works on a copy of the task and writes `OUT_DIR/result.bundle`, and optionally `OUT_DIR/run.json`.
 
@@ -79,9 +80,30 @@ The container has a read-only root, no capabilities, `no-new-privileges`, a non-
 
 With `--native IMAGE_ID` ([native.py](native.py)) the variant's host runs natively on the machine, outside the sandbox. It is for a variant whose host is trusted, reviewed code that runs its agents only in containers of its own: the concept 2.0 arm. The suite stands up the same internal network and egress gateway as for the sandbox (from the sandbox image `IMAGE_ID`) and starts the variant command as a host process with `EVALUATION_MODEL`, the access-only login copy in `EVALUATION_LOGIN`, and what its containers need to join the network: `EVALUATION_NETWORK`, `EVALUATION_HOSTS` (provider endpoints at the gateway, for `--add-host`), `EVALUATION_DNS` (a resolver that resolves nothing), `EVALUATION_LABEL` and `EVALUATION_ENGINE`.
 
-While the variant runs, the suite records the engine's events (`RUN_DIR/engine-events.jsonl`). Afterwards every container started during the run, other than the gateway, must have joined the internal network or no network; one that joined any other network is an **escape**, and the run is invalid. The gateway is known by its container ID, not by a label the variant could copy. The check fails closed: an event record that ends early or never shows the run's own network makes the run void. Containers and networks the variant left after a normal end are residue (the run is void); at the deadline the suite stops them, as it stops a sandbox. **Hidden material stays off the machine:** each `--hidden-absent PATH`, where the protocol says hidden material could lie, must not exist before or after the run. `suite.json` says `"conditions": "native"`.
+While the variant runs, the suite records the engine's events (`RUN_DIR/engine-events.jsonl`) and inspects every network created during the run as soon as its event arrives. Afterwards every container started during the run, other than the gateway, must have joined only the internal network, internal networks the variant created during the run (a 2.0 Run's own network between its remote and its agents; an internal network has no route out), or no network; one that joined any other network, or a network that could not be inspected, is an **escape**, and the run is invalid. `armNetworks` in the record lists the variant's networks with whether each was internal and its IPv4 gateway mode: only an `isolated` bridge, like the suite's own, carries no address of the engine's host. The gateway is known by its container ID, not by a label the variant could copy. The check fails closed: an event record that ends early or never shows the run's own network makes the run void. Containers and networks the variant left after a normal end are residue (the run is void); at the deadline the suite stops them, as it stops a sandbox. **Hidden material stays off the machine:** each `--hidden-absent PATH`, where the protocol says hidden material could lie, must not exist before or after the run. `suite.json` says `"conditions": "native"`.
 
-**The stand-in arm** ([native_standin.py](native_standin.py)) tests this the same way on Windows and on Linux before the 2.0 arm exists: `-- python -I -B tools/evaluation/native_standin.py --image IMAGE_ID [--probe]`. Its one Run container acts as the first line of `task.md` says (`change`, `nothing`, `escape`, `leave`); with `--probe` it runs the escape probe as an agent in a Run container.
+**The stand-in arm** ([native_standin.py](native_standin.py)) tests this the same way on Windows and on Linux without a provider: `-- python -I -B tools/evaluation/native_standin.py --image IMAGE_ID [--probe]`. Its one Run container acts as the first line of `task.md` says (`change`, `nothing`, `escape`, `leave`); with `--probe` it runs the escape probe as an agent in a Run container.
+
+## The concept 2.0 arm
+
+[markitect_arm.py](markitect_arm.py) runs the 2.0 implementation as a variant, natively:
+
+```text
+python -I -B tools/evaluation/suite.py run --task TASK_DIR --model claude:claude-sonnet-5-5 --out RUN_DIR \
+    --native SANDBOX_IMAGE_ID --hidden-absent PATH --lock FILE -- \
+    python -I -B tools/evaluation/markitect_arm.py --markitect BIN --remote-binary BIN --manager-image IMAGE_ID
+```
+
+`--markitect` is the `markitect` program of the frozen revision for the host, `--remote-binary` its `markitect-remote` built for Linux, and `--manager-image` the Manager image with the project's Go toolchain (`packaging/runtime` and its Go example), by image ID. The required checks run in the image `execution.yaml` names (`golang:1.27`), which must be on the engine. Per task the arm:
+
+1. **Commits the owner's input** in a private clone of the start, with the owner's identity, before the Run: the task's `model/` as `.markitect/` (manifest, lock, `execution.yaml`, `model/` and the project's registry pages). This commit is the task's input, not the arm's work; the judges see its model files as the task's model, and its registry pages as bookkeeping. A start that already holds a model keeps its registry pages, whose tables are its Managers'.
+2. **Adopts a fixed reference start**, which holds files but no model: one commit with the task's `base-model/` (without one, the task's model) and one registry row without links for each file, on the page `markitect check` names as its owner's; then the model change as a second commit. The rows carry no links to Definitions, so impact reaches the changed Definitions and their links, not the files that realize them; a Run on the arm's own result has the links its Managers wrote.
+3. **Runs `markitect apply`** against a private bare repository as the target: `--full` on a fresh build or an adopted start without a base model, `--base` the adoption commit after one, and the host's default impact, from the last landing, when the start is the arm's own last landing, which its state directory records across a chain. The Run is named after the suite's run ID (`EVALUATION_LABEL`), so its containers carry it in `markitect.run`; its deadline is the task's minus three minutes.
+4. **Delivers** the landed commit, or the start unchanged when the Run did not land, so that a stop scores as "did not land". The Result (`markitect apply --json`, the [Result contract](results.py)) goes to `OUT_DIR/results/RUN.json`, the agents' transcripts to `OUT_DIR/transcripts/`, the host's error output to `OUT_DIR/apply.stderr.log` and the arm's own record to `OUT_DIR/run.json`: the model the agents reported, the mode, the owner's and adoption commits, the Run's state and why, tokens, starts and failed starts.
+
+The host gets the suite's network (`MARKITECT_NETWORK`, `MARKITECT_HOSTS`, `MARKITECT_DNS` from `EVALUATION_NETWORK`, `EVALUATION_HOSTS`, `EVALUATION_DNS`), the access-only login (`MARKITECT_LOGIN`), the provider and model from `EVALUATION_MODEL`, the effort (`--effort`, default `high`) and the engine. Every `ANTHROPIC_*`, `CLAUDE_*`, `OPENAI_*`, `CODEX_*`, `MARKITECT_*` and `GIT_*` variable of the caller is cleared first: the account login only, never an API key. Its Manager containers join the evaluation network and the Run's own internal network, its remote only the latter; the host's own limits apply (each Manager 1 CPU, 2 GiB, 256 processes, 256 MiB temporary space; the remote none), not the series' safety limit.
+
+The arm exits 0 when the Run landed, found nothing to do or stopped on a model defect; 1 when it ended otherwise and the start was delivered; 2 when it could not run, with nothing delivered.
 
 ## Judging
 
@@ -93,9 +115,9 @@ A judge folder in this repository is a source. `judges.py export --source DIR --
 
 ## Change series
 
-The steps come from [series.py](series.py): `python -I -B tools/evaluation/series.py steps --series library|makerspace --out DIR` writes one step directory per step, named as the judges' steps (Library `M1` to `M5`, Makerspace `W0` to `C9`), each with `task.md` (the rendered single-agent document) and `model/` (the step's concept 2.0 `.markitect/` content from [tools/evaluation-tasks](../evaluation-tasks/README.md)). The **planted tasks** are records in [tools/evaluation-judges/plants](../evaluation-judges/plants/README.md); `judges.py plant` writes a planted step and its judge folder.
+The steps come from [series.py](series.py): `python -I -B tools/evaluation/series.py steps --series library|makerspace --out DIR` writes one step directory per step, named as the judges' steps (Library `M1` to `M5`, Makerspace `W0` to `C9`), each with `task.md` (the rendered single-agent document) and `model/` (the step's concept 2.0 `.markitect/` content from [tools/evaluation-tasks](../evaluation-tasks/README.md), with the project's registry pages, which give each Package its paths). The **planted tasks** are records in [tools/evaluation-judges/plants](../evaluation-judges/plants/README.md); `judges.py plant` writes a planted step and its judge folder.
 
-A change series runs two ways. **End to end**, `chain` runs every step from the variant's own previous result, and `judge-chain` judges each delivered step at its step. **From fixed reference starts**, each change runs as an independent task whose start is the reference result of the step before: `judges.py start --source DIR --step STEP --out START.bundle` writes it, `task --start START.bundle` makes the task, and `judge --step` judges the run.
+A change series runs two ways. **End to end**, `chain` runs every step from the variant's own previous result, and `judge-chain` judges each delivered step at its step. **From fixed reference starts**, each change runs as an independent task whose start is the reference result of the step before: `judges.py start --source DIR --step STEP --out START.bundle` writes it, `task --start START.bundle --base-model PREVIOUS_STEP/model` makes the task, and `judge --step` judges the run. The base model lets the 2.0 arm commit the start's model before the change, so that its Run works on the change, not on the whole model.
 
 A **series judge** names its `steps` in `judge.json`. The suite passes the step in `EVALUATION_STEP` and the judge answers cumulatively: every case of this step and of every earlier one, as this step renders them. Its `judge.json` adds `step`, `correctness.byStep` (planned, passed and failed per step that introduced the cases, for every step up to this one; the suite refuses a judgment that leaves one out) and `drift`:
 
@@ -120,7 +142,7 @@ Each session runs in the evaluation sandbox like a variant (`--sandbox IMAGE_ID 
 ## Failures, tokens and the report
 
 [classify.py](classify.py) sorts every launch with one rule for every variant:
-- **Void**, a technical failure that is recorded, relaunched and never counted. It covers the infrastructure: the sandbox did not stand up, its container never started, its gateway stopped, it left residue, the suite wrote no record, or the variant command could not start. A server name the gateway refused also stops the series. It covers the provider: a session's last response is an API error for capacity, a rate or usage limit, a server error or a refused login, and the run did not end normally. And it covers a variant runtime signature written into the series protocol before the series.
+- **Void**, a technical failure that is recorded, relaunched and never counted. It covers the infrastructure: the sandbox did not stand up, its container never started, its gateway stopped, it left residue, the suite wrote no record, or the variant command could not start. A server name the gateway refused also stops the series. It covers the provider: a session's last response is an API error for capacity, a rate or usage limit, a server error or a refused login, and the run did not end normally. A variant whose Results list its agent starts, the 2.0 arm, is read from them instead: a Manager's last start failed with the class `capacity`, `rate-limit`, `server-error` or `login`; a failed start that the same Manager followed with another one is its work, like an error a single session recovered from. And it covers a variant runtime signature written into the series protocol before the series.
 - **Invalid:** host mode, or a reported model other than the evaluation's.
 - **Result:** everything else, including a wrong or incomplete result, a timeout and a missing result.
 

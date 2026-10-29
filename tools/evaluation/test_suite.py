@@ -93,6 +93,19 @@ class SuiteTest(unittest.TestCase):
         with self.assertRaisesRegex(suite.SuiteError, "does not match"):
             suite.read_task(task)
 
+    def test_a_base_model_belongs_to_a_start_and_is_part_of_the_task(self):
+        s = self.step("based", "based", model=True)
+        with self.assertRaisesRegex(suite.SuiteError, "base model"):
+            suite.make_task(s / "task.md", s / "model", None, 120, self.tmp / "no-start", s / "model")
+        start = self.tmp / "start.bundle"
+        suite.empty_start(start)
+        task = self.tmp / "task-based"
+        suite.make_task(s / "task.md", s / "model", start, 120, task, s / "model")
+        self.assertTrue((task / "base-model" / "m.yaml").is_file())
+        (task / "base-model" / "m.yaml").write_text("kind: Changed\n")
+        with self.assertRaisesRegex(suite.SuiteError, "does not match"):
+            suite.read_task(task)
+
     def test_every_task_ends_with_the_same_stop_rule(self):
         task = self.task("ok")
         text = (task / "task.md").read_text(encoding="utf-8")

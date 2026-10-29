@@ -13,7 +13,13 @@ It sorts one run, from its suite.json and what the variant left in RUN_DIR, into
     started at all;
   - provider: a provider session's last response is an API error for capacity,
     a rate or usage limit, a server error or a refused login, and the run did
-    not end normally (no result, a non-zero exit or a timeout);
+    not end normally (no result, a non-zero exit or a timeout). A variant that
+    returns Results with its agent starts (results.py), such as the 2.0 arm, is
+    read from them instead of its transcripts: a Manager's last start failed
+    with one of these classes, as the host's agents classify it. An earlier
+    start that failed and was followed by another start of the same Manager is
+    part of the variant's work, as an error a single session recovered from
+    is;
   - variant runtime: a signature of the variant's own runtime machinery,
     written into the series protocol before the series, matches the run.
 - invalid: the run did not take place under the evaluation's conditions (host
@@ -43,6 +49,8 @@ import sys
 PROVIDER_ERRORS = {"rate_limit", "server_error", "overloaded", "overloaded_error", "api_error", "authentication_failed", "billing_error",
                    "unknown"}
 PROVIDER_STATUS = {401, 403, 429, 500, 502, 503, 504, 529}
+# The failure classes of a Result's agent start that a provider causes (internal/agents/README.md, Failure classes).
+PROVIDER_CLASSES = {"capacity", "rate-limit", "server-error", "login"}
 # The provider's own domains: a refused name under one of them is an endpoint its CLI needs and the series lacks.
 # Any other refused name, such as an agent trying GitHub, is the variant's work.
 PROVIDER_DOMAINS = {"claude": ("anthropic.com", "claude.ai", "claude.com"), "codex": ("openai.com", "chatgpt.com")}
@@ -99,6 +107,26 @@ def session_errors(root):
     return found
 
 
+def start_errors(results):
+    """The provider failures that ended a Manager's work, from the Results a run returned; None without agent starts.
+
+    Starts are listed in the order they ended; a Manager's last start decides, as a session's last response does."""
+    found, any_starts = [], False
+    for path in sorted(pathlib.Path(results).glob("*.json")) if pathlib.Path(results).is_dir() else []:
+        result = load(path) if path.is_file() and not path.is_symlink() else None
+        starts = (result or {}).get("starts")
+        if not isinstance(starts, list):
+            continue
+        any_starts = True
+        last = {}
+        for start in starts:
+            if isinstance(start, dict):
+                last[start.get("manager")] = start
+        found += [{"file": path.name, "manager": m, "role": s.get("role"), "error": s.get("class"), "detail": s.get("detail")}
+                  for m, s in last.items() if s.get("reason") == "failed" and s.get("class") in PROVIDER_CLASSES]
+    return found if any_starts else None
+
+
 def classify(run_dir, signatures=None, variant=None):
     """One run's class, kind, the evidence for it and whether the series must stop."""
     run_dir = pathlib.Path(run_dir)
@@ -134,7 +162,9 @@ def classify(run_dir, signatures=None, variant=None):
             return outcome("void", "infrastructure", "the variant command never ran: " + match.group(0))
     ended_normally = record.get("delivered") and record.get("exitCode") == 0 and not record.get("timedOut")
     if not ended_normally and variant_out.is_dir():
-        errors = session_errors(variant_out)
+        errors = start_errors(variant_out / "results")
+        if errors is None:
+            errors = session_errors(variant_out)
         if errors:
             return outcome("void", "provider", errors)
     for signature in ((signatures or {}).get("variants") or {}).get(variant) or []:

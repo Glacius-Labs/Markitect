@@ -14,7 +14,15 @@ Each step folder is the content of a target project's `.markitect/` folder, as t
   model/            the Root Package
 ```
 
-No step ships realization, so no step has registry pages: each Package's Manager writes its own page when it creates files.
+No step ships realization. Each project has one set of registry pages, `<project>/registry/`, the same for every step: the owner's organization, which gives every Package below Root the paths it owns, with empty tables. A Run reads ownership from its base ([Run remote](../../internal/runremote/README.md)), so without them Root would own every file of a fresh project and its children could write none. `series.py` puts them into each step's `model/registry/`; each Package's Manager fills its own table as it creates files.
+
+| Project | Package | Paths |
+|---|---|---|
+| `library` | `catalog`, `lending`, `lending/reminders`, `members` | `realization/internal/<package>/**`, as in the [T4 smoke](../../docs/validation/t4-library-smoke-20261029.md); the model leaves the layout open |
+| `makerspace` | each module but `protocol` | `realization/<module>/**`, as the [architecture](makerspace/w0/model/architecture.md) states it |
+| | `protocol` | `realization/protocol/**` and `realization/cmd/makerspace/**` |
+
+Root owns the rest: `realization/go.mod`, the README, the Library's `cmd/library` and the Makerspace's `policies`.
 
 | Project | Steps | Change |
 |---|---|---|
@@ -41,4 +49,4 @@ Both conversions keep every statement and rewrite only form. The equivalence rec
 
 ## Check
 
-Copy a step into a Git repository's `.markitect/` folder and run `markitect lock` and `markitect check` there. Every step compiles with no error.
+Copy a step into a Git repository's `.markitect/` folder and run `markitect lock` and `markitect check` there. Every step compiles with no error, also with its project's registry pages in `registry/` (as `series.py steps` writes it; checked on 29 October 2026).

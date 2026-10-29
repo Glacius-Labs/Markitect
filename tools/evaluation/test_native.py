@@ -59,12 +59,17 @@ FAKE_ENGINE = textwrap.dedent(r'''
     elif args[:2] == ["network", "ls"]:
         print("\n".join(labelled("networks", opt("--filter")[len("label="):])))
     elif args[:2] == ["network", "create"]:
-        state["networks"][args[-1]] = {"label": opt("--label", "")}; save()
+        options = dict(o.partition("=")[::2] for o in (args[i + 1] for i, a in enumerate(args) if a == "--opt"))
+        state["networks"][args[-1]] = {"label": opt("--label", ""), "internal": "--internal" in args, "options": options}; save()
         event("network", "create", args[-1], name=args[-1])
     elif args[:2] == ["network", "connect"]:
         event("network", "connect", args[2], name=args[2], container=args[3])
     elif args[:2] == ["network", "inspect"]:
-        sys.exit(0 if args[-1] in state["networks"] else 1)
+        if args[-1] not in state["networks"]:
+            sys.exit(1)
+        if "Internal" in (opt("--format") or ""):
+            net = state["networks"][args[-1]]
+            print(json.dumps(net["internal"]), json.dumps(net["options"]))
     elif args[:2] == ["network", "rm"]:
         if any(c["network"] == args[2] for c in state["containers"].values()):
             sys.exit("network has active endpoints")
@@ -131,6 +136,22 @@ SLEEPER = textwrap.dedent('''
                     os.environ["EVALUATION_NETWORK"], os.environ["FAKE_IMAGE"]], check=True)
     subprocess.run([*engine, "start", "slow-run"], check=True)
     time.sleep(60)
+''')
+
+
+# A native arm whose agent, like the 2.0 host's, joins the evaluation network and a network of the arm's own, created
+# with ARM_NETWORK_FLAGS, as a Run's remote and agents share one.
+OWN_NETWORK = textwrap.dedent('''
+    import json, os, subprocess
+    engine = json.loads(os.environ["EVALUATION_ENGINE"])
+    e = lambda *a: subprocess.run([*engine, *a], check=True, capture_output=True)
+    e("network", "create", *os.environ["ARM_NETWORK_FLAGS"].split(), "arm-run-net")
+    e("create", "--name", "arm-agent", "--label", os.environ["EVALUATION_LABEL"], "--network", os.environ["EVALUATION_NETWORK"],
+      os.environ["FAKE_IMAGE"])
+    e("network", "connect", "arm-run-net", "arm-agent")
+    e("start", "arm-agent")
+    e("rm", "-f", "arm-agent")
+    e("network", "rm", "arm-run-net")
 ''')
 
 
@@ -204,6 +225,20 @@ class NativeTest(unittest.TestCase):
         self.assertFalse(record["validForCounting"])
         self.assertIn("event record", record["sandbox"]["error"])
         self.assertEqual(classify.classify(out)["class"], "void")
+
+    def test_an_internal_network_of_the_arm_is_allowed_and_any_other_is_an_escape(self):
+        (self.tmp / "own.py").write_text(OWN_NETWORK)
+        for flags, valid in (("--internal --opt com.docker.network.bridge.gateway_mode_ipv4=isolated", True), ("--driver bridge", False)):
+            with self.subTest(flags=flags):
+                os.environ["ARM_NETWORK_FLAGS"] = flags
+                record, out = self.run_mode("own-" + str(valid), [sys.executable, "-B", str(self.tmp / "own.py")])
+                box = record["sandbox"]
+                self.assertEqual(record["validForCounting"], valid, box.get("escapes"))
+                self.assertEqual([(n["name"], n["internal"]) for n in box["armNetworks"]], [("arm-run-net", valid)])
+                self.assertEqual([c["networks"] for c in box["armContainers"]], [sorted([box["network"], "arm-run-net"])])
+                self.assertEqual(classify.classify(out)["class"], "result" if valid else "invalid")
+                if valid:
+                    self.assertEqual(box["armNetworks"][0]["gatewayMode"], "isolated")
 
     def test_a_copied_gateway_label_does_not_hide_an_escape(self):
         (self.tmp / "copycat.py").write_text(textwrap.dedent('''

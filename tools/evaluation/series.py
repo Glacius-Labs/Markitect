@@ -5,7 +5,9 @@
 A step directory holds what `suite.py task` and `suite.py chain --step` read:
 `task.md`, the ordinary documentation every variant receives, and `model/`,
 the same intent as a concept 2.0 model: the content of a target project's
-`.markitect/` folder (manifest, lock, execution configuration and `model/`).
+`.markitect/` folder (manifest, lock, execution configuration and `model/`),
+plus the project's registry pages, which give each Package the paths it owns
+(`registry/`, the same for every step of a project).
 
   library      M1 to M5   task.md: tools/comparison/packet/requirements-mN.md
                           model:   tools/evaluation-tasks/library/mN
@@ -49,7 +51,7 @@ def sources(series, step, repo=REPO):
 
 
 def write_step(series, step, out, repo=REPO):
-    """One step directory: task.md and model/."""
+    """One step directory: task.md and model/, with the project's registry pages in model/registry/."""
     out = pathlib.Path(out)
     if out.exists():
         raise SeriesError(f"{out} exists")
@@ -57,6 +59,10 @@ def write_step(series, step, out, repo=REPO):
     out.mkdir(parents=True)
     shutil.copyfile(task_md, out / "task.md")
     shutil.copytree(model, out / "model")
+    # The owner's organization: which paths each Package owns. A Run reads ownership from its base, so a fresh
+    # project needs these pages before its first Run (internal/runremote/README.md).
+    if (model.parent / "registry").is_dir():
+        shutil.copytree(model.parent / "registry", out / "model" / "registry")
     return out
 
 
