@@ -21,11 +21,12 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 ## Next
 
 1. **T7, pilot:** its report, with the organization's cost per Manager on the fixed starts, and the two reruns.
-2. **T8, checks on merged states:** the hook change of [DEC-087](../concepts/register.md#dec-087-required-checks-gate-merged-states-not-each-submission) in the T5 session, after the pilot, ending with a native Makerspace W0 that lands. Then, as its own change, a Result that also counts the tokens of an agent the Run ended: Root's cancelled maker in the pilot shows none.
-3. **Codex smoke:** the Library M1 on Codex with the submit reply's fix ([PR #874](https://github.com/Glacius-Labs/Markitect/pull/874)), after the pilot.
-4. **Counted series:** the protocol, its independent review recorded under `docs/validation/`, then the counted series on the Library, Makerspace and the new project, after T8.
-5. **Codex repeat:** the smaller repeat with every arm on Codex Luna, as the Codex decision below says.
-6. **The owner's time:** after the counted series, the owner's measurement below.
+2. **T8, checks on merged states:** the hook change of [DEC-087](../concepts/register.md#dec-087-required-checks-gate-merged-states-not-each-submission) by the session that built T5, after the pilot, ending with a native Makerspace W0 that lands.
+3. **Tokens of ended agents:** a Result counts no tokens for an agent the Run ends. In the pilot's Makerspace W0 for M, Root's maker worked 158 seconds and its usage reads zero. The Result should count them, as its own change after T8.
+4. **Codex smoke:** the Library M1 on Codex with the submit reply's fix ([PR #874](https://github.com/Glacius-Labs/Markitect/pull/874)), after the pilot.
+5. **Counted series:** the protocol, its independent review recorded under `docs/validation/`, then the counted series on the Library, Makerspace and the new project, after T8.
+6. **Codex repeat:** the smaller repeat with every arm on Codex Luna, as the Codex decision below says.
+7. **The owner's time:** after the counted series, the owner's measurement below.
 
 ## Decisions
 
@@ -56,7 +57,7 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 
 - **A new Package's first path patterns, 29 October 2026:** when the owner adds a Package, the owner also writes its registry page with the first path patterns. From then on its Manager maintains them, and a change takes effect from the next Run. `lint` warns about a Package other than Root that claims no pattern. The owner accepted Build's recommendation through the Topics session ([DEC-081](../concepts/register.md#dec-081-the-organization-knows-broad-at-the-top-and-deep-below), [PR #876](https://github.com/Glacius-Labs/Markitect/pull/876)).
 
-- **Required checks gate merges, 29 October 2026:** the required checks block only merged states: a parent's submission that holds its children's merged work, and the state that lands. Every other submission is still blocked by `markitect check`, path ownership and its checker, which sees the check results as evidence. A child's broken build is caught at its parent's merge. The owner accepted Build's recommendation in Build's session after the pilot's Makerspace chain, and the Topics session recorded it ([DEC-087](../concepts/register.md#dec-087-required-checks-gate-merged-states-not-each-submission), [PR #890](https://github.com/Glacius-Labs/Markitect/pull/890)).
+- **Required checks gate merged states, not each submission, 29 October 2026:** the required checks block only merged states: a parent's submission that holds its children's merged work, and the state that lands. Every other submission is still blocked by `markitect check`, path ownership and its checker, which sees the check results as evidence. A child's broken build is caught at its parent's merge. The owner accepted Build's recommendation in Build's session after the pilot's Makerspace chain, and the Topics session recorded it ([DEC-087](../concepts/register.md#dec-087-required-checks-gate-merged-states-not-each-submission), [PR #890](https://github.com/Glacius-Labs/Markitect/pull/890)).
 
 ## Questions for the owner
 
