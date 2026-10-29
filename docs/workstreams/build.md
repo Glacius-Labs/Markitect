@@ -46,6 +46,8 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 
 - **Pilot scope, 29 October 2026:** in the pilot, the 2.0 arm runs the chains M1–M5 and W0–C9, the Library's fixed starts M2–M5 and every planted task (two on the Library, three on Makerspace; a planted task also starts from a reference result, so it gets that result's registry pages). It skips the Makerspace fixed starts C1–C9; K runs them too. With one run per task and each chain step counted as one launch, that is 57 launches: 24 for the 2.0 arm and 33 for K. The counted series runs every fixed start for both arms. The T7 session advised this scope, and the owner chose it there: "Library only, as advised".
 
+- **A new Package's first path patterns, 29 October 2026:** when the owner adds a Package, the owner also writes its registry page with the first path patterns. From then on its Manager maintains them, and a change takes effect from the next Run. `lint` warns about a Package other than Root that claims no pattern. The owner accepted Build's recommendation through the Topics session ([DEC-081](../concepts/register.md#dec-081-the-organization-knows-broad-at-the-top-and-deep-below), [PR #876](https://github.com/Glacius-Labs/Markitect/pull/876)).
+
 ## Questions for the owner
 
-- **A new Package's first path patterns** (sent to the Topics session, 29 October): ownership comes from the Run's base registry, so a Package can write nothing until its path patterns are on the base. Build recommends that the owner sets a new Package's first patterns when adding the Package, as with its Definitions (no command creates a Package today), and that a claim never takes effect within the Run that makes it. Not blocking: the suite's tasks carry owner-written registry pages.
+None open.
