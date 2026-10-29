@@ -351,6 +351,12 @@ def main(argv=None):
                       if s.get("reason") == "failed"]
             report.update(status=result.get("state"), cause=result.get("why"), tokens=result.get("usage"),
                           starts=len(result.get("starts") or []), failedStarts=failed, cleanup=result.get("cleanup"))
+            # What a landed Run's cleanup after landing left: definite leftovers, which the suite counts as residue. A
+            # host that predates `afterLanding` says nothing: that is not reported, not clean. `cleanup` lists what may
+            # remain, recorded above but not counted: the engine's own census finds what really does.
+            after = result.get("afterLanding") if isinstance(result.get("afterLanding"), list) else None
+            report.update(afterLanding=after, afterLandingReported=result.get("outcome") != "landed" or after is not None,
+                          leftovers=[str(x) for x in after or []])
             if result.get("state") == "check-failed":
                 # The gate failed on the owner's input, which compiled above: no agent started, nothing is the arm's work.
                 return finish(2)
@@ -371,7 +377,7 @@ def main(argv=None):
             except (ArmError, OSError) as e:
                 report["recordError"] = f"{type(e).__name__}: {e}"
             return finish(code)
-    except (ArmError, OSError, ValueError, KeyError) as e:
+    except (ArmError, OSError, ValueError, KeyError, TypeError) as e:
         if (out / "result.bundle").exists():
             report["recordError"] = f"{type(e).__name__}: {e}"
             return finish(report.get("exit", 1))

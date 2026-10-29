@@ -104,6 +104,15 @@ STANDIN = textwrap.dedent(r'''
         git(*ident, "commit", "-q", "-m", "Run " + run, cwd=work)
         git("push", "-q", "origin", "HEAD:main", cwd=work)
         result.update(outcome="landed", state="landed", why="landed", landed=git("rev-parse", "HEAD", cwd=work))
+        # FAKE_AFTER: "left" reports a branch the cleanup after landing could not delete; "missing" is a host that
+        # predates afterLanding; otherwise a clean landing.
+        after = os.environ.get("FAKE_AFTER", "")
+        if after == "malformed":
+            result.update(afterLanding="not a list", cleanup="not a list either")
+        elif after != "missing":
+            result["afterLanding"] = [f"the landed Run's branch markitect/runs/{run} could not be deleted: refused"] if after == "left" else []
+        if after == "left":
+            result["cleanup"] = ["the Run's remote may remain if its start failed half-way; Sweep removes it"]
     elif mode == "defect":
         result.update(outcome="not-landed", state="model-defect", why="a model defect ended the Run at Root", items=[])
     elif mode == "gate":
@@ -183,6 +192,21 @@ class ArmTest(unittest.TestCase):
             subprocess.run(["git", "init", "-q", "--bare", str(repo)], check=True)
             subprocess.run(["git", "-C", str(repo), "fetch", "-q", str(bundle), "+refs/heads/*:refs/heads/*"], check=True, capture_output=True)
         return suite.git(repo, "ls-tree", "-r", "--name-only", commit).splitlines()
+
+    def test_what_the_host_left_after_landing_is_recorded_and_its_absence_is_not_clean(self):
+        # Only afterLanding counts as leftovers: `cleanup` says what may remain, and the engine's census finds what does.
+        for after, recorded, reported, leftovers in (("", [], True, 0), ("left", 1, True, 1), ("missing", None, False, 0),
+                                                     ("malformed", None, False, 0)):
+            with self.subTest(after=after):
+                os.environ["FAKE_AFTER"] = after
+                record, _ = self.run_arm(self.task("after-" + (after or "clean"), self.model("model-a-" + (after or "clean"))))
+                rep = record["reported"]
+                self.assertTrue(record["delivered"])
+                self.assertEqual(len(rep["afterLanding"]) if isinstance(recorded, int) else rep["afterLanding"], recorded)
+                self.assertEqual((rep["afterLandingReported"], len(rep["leftovers"])), (reported, leftovers))
+        # A Run that does not land has nothing after landing to report.
+        record, _ = self.run_arm(self.task("after-stop", self.model("model-a-stop")), "defect")
+        self.assertEqual((record["reported"]["afterLanding"], record["reported"]["afterLandingReported"]), (None, True))
 
     def test_a_fresh_build_lands_and_delivers_the_landing(self):
         state = self.tmp / "state"

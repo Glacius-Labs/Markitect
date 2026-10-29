@@ -27,7 +27,8 @@ fails the check. An internal network reaches no other network; unless its
 bridge's gateway mode is isolated, as the suite's own is, its containers can
 reach the engine's host at the bridge address, which the record shows
 (`armNetworks`). Containers, networks and volumes the variant left are residue:
-removed and counted. The engine lock keeps other runners' containers out of the
+removed and counted; so is what the variant's host reports it left (run.json
+`leftovers`), such as a Run branch or remote its cleanup could not remove. The engine lock keeps other runners' containers out of the
 record.
 
 Hidden material stays off the machine during runs: the series names where it
@@ -51,6 +52,18 @@ EVENTS_SECONDS = 10
 # came before the run's own network.
 EVENTS_MARGIN = 300
 ALLOWED_NONE = "none"
+
+
+def reported_leftovers(out):
+    """The leftovers the variant reports in OUT/run.json (`leftovers`, a list of texts); none when it reports none."""
+    path = pathlib.Path(out) / "run.json"
+    if path.is_symlink() or not path.is_file():
+        return []
+    try:
+        value = json.loads(path.read_text(encoding="utf-8")).get("leftovers")
+    except (OSError, ValueError, AttributeError, RecursionError):
+        return []
+    return [str(x)[:300] for x in value[:20]] if isinstance(value, list) else []
 
 
 class Events:
@@ -198,6 +211,13 @@ class Native:
         present = self.present()
         if present:
             record["hiddenPresent"] = present
+        # What the variant's host says it left (run.json `leftovers`), such as a Run's remote or branch its cleanup could
+        # not remove, is residue like what the engine shows: the run is not valid for counting.
+        # A text that holds the login never reaches the record, which is written after the quarantine's search.
+        left = [x for x in reported_leftovers(out) if not any(s in x.encode() for s in secrets)]
+        if left:
+            record["reportedLeftovers"] = left
+            record["residue"] = record.get("residue", []) + ["reported by the variant: " + x for x in left]
         sandboxing.quarantine(record, secrets, run_dir, state)
         return timing, record
 
