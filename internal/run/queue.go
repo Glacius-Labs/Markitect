@@ -272,9 +272,18 @@ func resultMessage(r *Result, work string) string {
 	fmt.Fprintf(&b, "Markitect Run %s: %s\n\n%s: %s\n", r.Run, r.State, trailerRun, r.Run)
 	if work != "" {
 		fmt.Fprintf(&b, "%s: %s\n", trailerWork, work)
+		switch {
+		case r.Full:
+			fmt.Fprintf(&b, "%s: true\n", trailerFull)
+		case r.FullCheck.Since != "":
+			fmt.Fprintf(&b, "%s: %s\n", trailerFullCheck, r.FullCheck.Since)
+		case r.FullCheck.Note == "":
+			// Known to know no full check; an unread count claims nothing.
+			fmt.Fprintf(&b, "%s: %s\n", trailerFullCheck, fullCheckNone)
+		}
 		return b.String()
 	}
-	fmt.Fprintf(&b, "%s: %s\n%s: %s\n", trailerTarget, r.Target, trailerStart, r.Start)
+	fmt.Fprintf(&b, "%s: %s\n%s: %s\n%s: %s\n%s: %s\n", trailerTarget, r.Target, trailerStart, r.Start, trailerCommand, r.Command, trailerState, r.State)
 	if r.Full {
 		fmt.Fprintf(&b, "%s: true\n", trailerFull)
 	}

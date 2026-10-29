@@ -33,8 +33,10 @@ func (e *Engine) land(ctx context.Context, r *Result, s *schedule, remote Remote
 	// What a landing attempt found about the kept Run branches it would
 	// replace goes with that attempt.
 	cleanup := r.Cleanup
+	// A Run that does not land keeps the count it read at its start.
+	counted := r.FullCheck
 	keepOn := func(ctx context.Context, r *Result, commit, old, state, why string, err error) {
-		r.Replaced = nil
+		r.Replaced, r.FullCheck = nil, counted
 		release(&r.Cleanup)
 		e.keepOn(ctx, r, commit, old, state, why, err)
 	}
@@ -127,6 +129,17 @@ func (e *Engine) land(ctx context.Context, r *Result, s *schedule, remote Remote
 			r.Cleanup = append(r.Cleanup, fmt.Sprintf("the kept Run branches could not be read, so none that this landing covers is deleted: %v", err))
 		}
 		r.Replaced = sortedKeys(replaced)
+		// The count includes this landing, read before this landing deletes
+		// a verify's Run branch it covers; a landed apply --full starts it
+		// again.
+		r.FullCheck = FullCheck{}
+		if !r.Full {
+			r.FullCheck = e.fullCheck(ctx, r.Target, state)
+			if r.FullCheck.Note == "" {
+				r.FullCheck.Landed++
+				r.FullCheck.Due = r.FullCheck.Landed >= FullCheckEvery
+			}
+		}
 		page := e.stamp(r)
 		commit, err := e.Git.Write(ctx, state, map[string][]byte{ResultFile(r.Run): Page(page)}, resultMessage(r, cand))
 		if err != nil {
@@ -223,6 +236,9 @@ func (e *Engine) keepOn(ctx context.Context, r *Result, commit, old, state, why 
 	}
 	if werr != nil {
 		r.Branch = ""
+		if isFullCheck(r) {
+			r.FullCheck = FullCheck{Note: "this full check's Result could not be kept, so later Runs cannot count from it"}
+		}
 		r.Cleanup = append(r.Cleanup, fmt.Sprintf("the Result could not be kept on %s%s: %v", RunBranchPrefix, r.Run, werr))
 	}
 }

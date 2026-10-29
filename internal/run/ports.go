@@ -45,6 +45,10 @@ type Git interface {
 	// LastLanded returns the newest commit reachable from tip that adds a
 	// landing Result, and false when there is none.
 	LastLanded(ctx context.Context, tip string) (string, bool, error)
+	// Landings returns the commits reachable from tip and not from since
+	// (with an empty since, every one) that add a landing Result, newest
+	// first.
+	Landings(ctx context.Context, tip, since string) ([]string, error)
 	// Branches lists the target repository's branches under a prefix with
 	// their tips, and makes their commits readable.
 	Branches(ctx context.Context, prefix string) (map[string]string, error)

@@ -80,6 +80,9 @@ type Result struct {
 	// Replaced lists the kept Run branches a landing covers; they are
 	// deleted with it.
 	Replaced []string `json:"replaced,omitempty"`
+	// FullCheck says how many changes have landed on the target since the
+	// last full check (concept 2.0 §6.1).
+	FullCheck FullCheck `json:"fullCheck"`
 	// Unkept lists approved work of a Run that does not land which its Run
 	// branch does not hold.
 	Unkept []string `json:"unkept,omitempty"`
@@ -97,6 +100,27 @@ type Result struct {
 	// impact is what the Run's impact covers, for the lock and the trailers
 	// of its Result commit.
 	impact []string
+}
+
+// FullCheckEvery is how many changes may land after a full check before
+// the next is due (concept 2.0 §6.1): a starting value, to adjust with
+// evidence.
+const FullCheckEvery = 10
+
+// FullCheck is how many changes have landed on the target since the last
+// full check: a `verify --full` that ended verified or with findings, or a
+// landed `apply --full`. The host starts nothing by itself.
+type FullCheck struct {
+	// Landed counts the landings after the commit the newest full check
+	// examined, or every landing when there was none.
+	Landed int `json:"landed"`
+	// Since is the commit the newest full check examined; empty when no
+	// full check is known.
+	Since string `json:"since,omitempty"`
+	// Due is set from FullCheckEvery landings on.
+	Due bool `json:"due"`
+	// Note says why the count could not be read; Landed is then 0.
+	Note string `json:"note,omitempty"`
 }
 
 // ResultItem is one checklist item with its verdict, evidence and the

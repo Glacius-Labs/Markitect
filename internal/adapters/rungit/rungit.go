@@ -463,6 +463,20 @@ func (r *Repo) LastLanded(ctx context.Context, tip string) (string, bool, error)
 	return id, id != "", nil
 }
 
+// Landings returns the commits reachable from tip and not from since that
+// add a Result page under the results folder, newest first.
+func (r *Repo) Landings(ctx context.Context, tip, since string) ([]string, error) {
+	args := []string{"log", "--format=%H", "--diff-filter=A", tip}
+	if since != "" {
+		args = append(args, "^"+since)
+	}
+	out, err := r.git(ctx, nil, nil, append(args, "--", project.ResultsDir+"/")...)
+	if err != nil {
+		return nil, err
+	}
+	return strings.Fields(string(out)), nil
+}
+
 // Branches lists the target repository's branches under a prefix with their
 // tips, and fetches them so their commits are readable.
 func (r *Repo) Branches(ctx context.Context, prefix string) (map[string]string, error) {
