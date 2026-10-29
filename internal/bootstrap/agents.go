@@ -35,6 +35,11 @@ func providerAgents(ctx context.Context) (agentport.Agents, error) {
 	if ref == "" {
 		return nil, errors.New("no Manager image: build one from packaging/runtime (with the project's toolchain) and set MARKITECT_MANAGER_IMAGE")
 	}
+	network := os.Getenv("MARKITECT_NETWORK")
+	switch network {
+	case "bridge", "host", "none", "default":
+		return nil, fmt.Errorf("MARKITECT_NETWORK %q is no user-defined network: the agents also join the Run's network, which the Docker CLI on Linux refuses to combine with the engine's own; leave it unset for %s or name a user-defined one", network, providerNetwork)
+	}
 	cliPath := os.Getenv("MARKITECT_ENGINE")
 	if cliPath == "" {
 		p, err := exec.LookPath("docker")
@@ -51,7 +56,6 @@ func providerAgents(ctx context.Context) (agentport.Agents, error) {
 	if err != nil {
 		return nil, fmt.Errorf("the Manager image %s: %w", ref, err)
 	}
-	network := os.Getenv("MARKITECT_NETWORK")
 	if network == "" {
 		// The agents also join the Run's network, and the Docker CLI on
 		// Linux refuses to combine the engine's default "bridge" with it.

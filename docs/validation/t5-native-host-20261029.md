@@ -72,6 +72,48 @@ The review fixes (`cc44e98d`) and the trailer fix (`4d63d305`) came after attemp
 - **The landed state holds up**: in a fresh clone, `markitect check` says `ok: 19 Definitions in 5 Packages, 21 files accounted`, and build, vet and test pass.
 - Cleanup: no container, volume or network of either Run remained, and the lock ref was gone. The secret scan of 141 evidence files found nothing.
 
+### Linux with Claude
+
+The host ran in WSL Ubuntu, after the owner turned on Docker Desktop's WSL integration, against the same Docker engine. `markitect` and `markitect-remote` were built in Ubuntu with Go 1.27.1 from a clone at the attempt's source, and the login is the Windows host's file, read through `/mnt/c`.
+
+**Attempt 1** (`t5-linux-1`, source `88788c05`, Go Manager image `sha256:817bc7d7c589…`), 02:28Z: **failed at every agent start**, a platform defect.
+
+- `apply` ended `incomplete` after 5 seconds, when Root's maker made no progress in 2 starts.
+- `verify` ended the same way after 3 seconds.
+- The cause: every agent container joins the provider network, by default the engine's `bridge`, and the Run's own network. The Docker CLI on Linux refuses that combination: "conflicting options: cannot attach both user-defined and non-user-defined network-modes".
+- The Windows CLI of the same version (29.9.2, API 1.56) accepts it, and the engine joins both networks. A probe with a throwaway network showed the difference directly.
+- Nothing remained on the engine, and the secret scan of 89 files found nothing.
+- **Fixed in `33d87c09`:** the default provider network is now `markitect-provider`, a user-defined bridge network the host creates on first use and keeps (`container.Engine.EnsureNetwork`, with tests). It refuses an internal or non-bridge network of that name. `MARKITECT_NETWORK` still names another.
+
+**Attempt 2** (`t5-linux-2`, source `33d87c09`, Go Manager image `sha256:5dbb6f1bf22d…`), 02:33–02:43Z: **passed** (Q4).
+
+- **`apply` landed** in 8 minutes 54 seconds, exit 0, with 14 starts, every one `finished`, and 5 messages.
+  - All 40 items have a verdict, evidence and an approving checker.
+  - The required checks passed on Root's approved commit (`build` 2.7 s, `test` 1.0 s).
+  - 1,688,121 input and 61,647 output tokens.
+  - Every agent container joined `markitect-provider` and the Run's internal network.
+- **Parents first**, the same shape as on Windows: Root's own-area submission was approved as `a8e7e32`, and `catalog`, `members` and `lending` start from it.
+- **`verify --full` verified** in 55 seconds, exit 0. Five checker starts gave all 40 items `conforms`, with no Findings and no decisions. The required checks ran once on the start commit `e7d02e2`, the landing, and passed (`build` 3.0 s, `test` 1.1 s).
+- **The landed state holds up**: in a fresh clone, `markitect check` says `ok: 19 Definitions in 5 Packages, 19 files accounted`, and build, vet and test pass.
+- **Cleanup:** the lock was held 02:33:11–02:43:02Z, and its ref was gone afterwards. No container, volume or network of either Run remained. The secret scan of 137 evidence files found nothing.
+
+### The suite's native round on Linux
+
+Q5. This is the round T6 ran on Windows ([T6 record](eval-t6-local-runs-20261028.md)), now in WSL Ubuntu.
+
+- **Setup:** source `33d87c09`, the E1 sandbox image `sha256:e0b20d8a8c88…`, under the engine lock.
+- **Hidden material:** each run names `EVAL\gridshare` and `EVAL\hidden` with `--hidden-absent`, and both are absent.
+- **Login:** the stand-in uses no model; the suite copies the host's Claude login access-only.
+
+| Run | Expected | Observed |
+|---|---|---|
+| `change` | delivered with `STANDIN.md`; its Run container on the internal network only; valid | delivered, `A STANDIN.md`, one arm container, no escape, no residue; valid |
+| `nothing` | delivered with no change; valid | delivered, no changed path; valid |
+| `escape` | the second container on the default network flagged; invalid | the container `standin-…-out` on `bridge` flagged as an escape; not valid |
+| `probe` | every escape blocked, the allowed endpoint reached | `contained`. Host files, GitHub, the engine and its host (`host.docker.internal`, `gateway.docker.internal`, `172.17.0.1` on 2375/2376) were all unreachable. `api.anthropic.com:443` was reached through the gateway with TLS 1.3. Valid, no result delivered |
+
+Afterwards no container or network with the evaluation's label remained.
+
 ### Windows with Codex
 
 **Attempt 1** (`t5-codex-1`, source `4d63d305`, the same Go Manager image), 01:52–02:17Z.

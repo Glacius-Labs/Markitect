@@ -204,7 +204,11 @@ func (e *Engine) EnsureNetwork(ctx context.Context, name string, labels map[stri
 		if err != nil {
 			return err
 		}
-		if strings.TrimSpace(string(out)) == name {
+		found := false
+		for _, l := range strings.Fields(string(out)) {
+			found = found || l == name
+		}
+		if found {
 			kind, err := e.output(ctx, "network", "inspect", "--format", "{{.Driver}} {{.Internal}}", name)
 			if err != nil {
 				return err
