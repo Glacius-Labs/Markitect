@@ -273,6 +273,10 @@ func (r *remote) Check(_ context.Context, bundle io.Reader, commit string) ([]ru
 	return remoteserver.LandingCheck(r.l, r.git, bundle, commit, io.Discard)
 }
 
+func (r *remote) StartFrom(_ context.Context, branch, commit string) error {
+	return remoteserver.StartFrom(r.l, r.git, branch, commit)
+}
+
 func (r *remote) Close(context.Context) error {
 	r.srv.Close()
 	return nil

@@ -59,6 +59,11 @@ func (e *Engine) land(ctx context.Context, r *Result, s *schedule, remote Remote
 		}
 		state := cand
 		if tip != r.Start {
+			// Until the merged state is checked, the checks named are those
+			// of Root's approved work, which is not what would land.
+			if len(s.plan.Checks) > 0 {
+				r.RequiredChecks.Note = fmt.Sprintf("%s moved to %s, and no merged state was checked", r.Target, short(tip))
+			}
 			if ok, err := e.Git.Contains(ctx, tip, r.Start); err != nil || !ok {
 				e.keepOn(ctx, r, cand, pushed, StateKept, fmt.Sprintf("%s was rewritten to %s, which no longer holds the Run's start", r.Target, short(tip)), err)
 				return

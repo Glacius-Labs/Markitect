@@ -108,7 +108,9 @@ type GitAccess struct {
 	Network string
 	// Branch is the Manager's branch; every agent reads every branch.
 	Branch string
-	// Base is the full commit the Run starts from.
+	// Base is the full commit the Manager's work starts from: the Run's
+	// start, or the state of its parent's branch it started from (concept
+	// 2.0 §6.2). A checker's diff is from Base.
 	Base  string
 	User  string
 	Token string

@@ -243,8 +243,12 @@ func (e *Engine) Run(ctx context.Context, req Request) (*Result, error) {
 		if n := len(r.OwnerDecisions); n > 0 {
 			found = append(found, fmt.Sprintf("%d decisions for the owner", n))
 		}
-		if len(s.plan.Checks) > 0 && !r.RequiredChecks.Ran {
+		switch rc := r.RequiredChecks; {
+		case len(s.plan.Checks) == 0 || rc.Ran:
+		case len(rc.Checks) > 0:
 			found = append(found, "required checks that did not pass on the whole repository")
+		default:
+			found = append(found, "required checks whose results could not be confirmed")
 		}
 		if len(found) > 0 {
 			r.State = StateFindings
@@ -356,6 +360,10 @@ func (e *Engine) collectChecks(ctx context.Context, remote Remote, s *schedule, 
 		for _, u := range p.Updates {
 			if p.Decision.Accepted && u.New == root.approvedSubmission && len(p.Decision.Checks) > 0 {
 				rc.Commit, rc.Checks = u.New, p.Decision.Checks
+				if s.req.Mode == agentport.Verify {
+					// The verdicts go with the remote; their tree is the start's.
+					rc.Commit = s.plan.Base
+				}
 				rc.Ran, rc.WholeRepository = allPassed(p.Decision.Checks) && len(p.Decision.Checks) == len(s.plan.Checks), true
 			}
 		}

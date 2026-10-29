@@ -11,7 +11,7 @@ import (
 
 func (s *schedule) makerTask(n *node) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "Realize the change for Manager %s on branch %s, starting from %s, and push one submission that gives each of your %d checklist items a verdict with evidence.", n.name, n.branch, short(s.plan.Base), len(n.items))
+	fmt.Fprintf(&b, "Realize the change for Manager %s on branch %s, starting from %s, and push one submission that gives each of your %d checklist items a verdict with evidence.", n.name, n.branch, short(n.from), len(n.items))
 	if len(n.children) > 0 && s.childrenApproved(n) {
 		fmt.Fprintf(&b, " Your working children's approved work: %s. Merge it, review it and integrate it before you submit.", s.approvals(n))
 	}
@@ -30,7 +30,7 @@ func (s *schedule) approvals(n *node) string {
 }
 
 func (s *schedule) reviewTask(n *node) string {
-	return fmt.Sprintf("Review submission %s of Manager %s on branch %s against the model and the diff from %s: confirm or dispute every verdict, then push your review as one commit without file changes on the submission.", n.submission, n.name, n.branch, short(s.plan.Base))
+	return fmt.Sprintf("Review submission %s of Manager %s on branch %s against the model and the diff from %s: confirm or dispute every verdict, then push your review as one commit without file changes on the submission.", n.submission, n.name, n.branch, short(n.from))
 }
 
 func (s *schedule) verifyTask(n *node) string {

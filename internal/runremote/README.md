@@ -7,7 +7,7 @@ Every Run of [concept 2.0](../../docs/concepts/v2-concept.md) has its own Git re
 | `internal/runremote` | The plan, the trailer format and `Decide`, the hook's decision over repository facts. It runs no Git and no process. |
 | `internal/adapters/remoteserver` | The program inside the container: Git smart HTTP with one credential per agent, the pre-receive hook, the required checks, seeding and export. |
 | `internal/adapters/remotecontainer` | The host side: starts and removes the container with the Docker CLI only, natively on Windows, Linux and macOS. |
-| `cmd/markitect-remote` | The container's entrypoint (`seed`, `serve`, `hook`, `ready`, `check`, `export`, `log`). |
+| `cmd/markitect-remote` | The container's entrypoint (`seed`, `serve`, `hook`, `ready`, `check`, `start`, `export`, `log`). |
 
 ## The plan
 
@@ -25,7 +25,7 @@ The host writes one plan per Run before it starts ([`plan.go`](plan.go)); it nev
 
 ## Branches
 
-The remote holds `base` (read-only, the starting commit), `root` for Root and `managers/<path>` for every other working Manager, with each `/` of the Package path written as `.` (`members/cards` → `managers/members.cards`), because Git cannot hold both `a` and `a/b` as branches; Package names hold no `.`, so no two Packages share a branch. Every branch starts at the base. Its maker and its checker push to it; everybody reads every branch.
+The remote holds `base` (read-only, the starting commit), `root` for Root and `managers/<path>` for every other working Manager, with each `/` of the Package path written as `.` (`members/cards` → `managers/members.cards`), because Git cannot hold both `a` and `a/b` as branches; Package names hold no `.`, so no two Packages share a branch. Every branch starts at the base. Before a Manager below Root starts, the host may move its branch, still at the base, to a state its parent's branch held, its parent's approval (`StartFrom`, `markitect-remote start`; [parent first](../run/README.md#schedule)); the decision log records it as user `host`, kind `start`. No agent can do that. Its maker and its checker push to it; everybody reads every branch.
 
 ## What the hooks refuse
 
@@ -48,7 +48,7 @@ The pre-receive hook decides every push and prints the reason and a next step fo
 6. **A submission that does not compile.** The hook compiles the tip's full repository state as `markitect check` does and refuses it with the compile errors, so a file that enters unregistered, even in the Manager's own area, never reaches a submission.
 7. **A failing submission.** The required checks then run on the tip's full repository state, in order, until one fails; a failure, a timeout or checks that cannot run refuse the push. Work commits without trailers are neither compiled nor checked. A parent's submission is its merged state, so the compiler and the checks run on that as well.
 8. **A review that is no review.** A checker pushes exactly one commit, whose only parent is the current tip, which must be a submission of this Run; the commit changes no file. An approval confirms every submitted verdict and disputes none; a rejection disputes at least one, unless the submission has no items. A checker never edits.
-9. **Verify that changes something.** In `verify` a checker pushes one commit on its tip with the base's tree and a complete set of verdicts. The required checks run on its full state, as in every Run, and the decision log keeps their results; a failing check does not refuse the push, since nothing changes and the checker cannot fix it, but checks that cannot run do. It is not compiled again: its tree is the base, which the host compiled before the Run started.
+9. **Verify that changes something.** In `verify` a checker pushes one commit on its tip with the base's tree and a complete set of verdicts. Since every such commit holds the same tree, the required checks run once, on Root's verdicts, as in every Run, and the decision log keeps their results; a failing check does not refuse the push, since nothing changes and the checker cannot fix it, but checks that cannot run do. It is not compiled again: its tree is the base, which the host compiled before the Run started.
 
 The bare repository's own settings hold as a second line: no deletes, no non-fast-forward updates, `fsck` on received objects, no push options, no automatic garbage collection.
 

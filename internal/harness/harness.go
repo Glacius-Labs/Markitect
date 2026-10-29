@@ -122,7 +122,7 @@ func (r renderer) base() string {
 	switch {
 	case s.Role == Maker:
 		b.WriteString("As maker you change the files of your area so that they conform, and give each checklist item a verdict with evidence. " +
-			"A fresh checker then re-checks every verdict; it sees the model, the repository at your submission and its diff, and nothing else you write, not even your Notes.\n\n")
+			"A fresh checker then re-checks every verdict; it sees the model, the repository at your submission and its diff, and nothing you write besides the commit, not even your Notes.\n\n")
 	case s.Mode == Apply:
 		b.WriteString("As checker you re-check a maker's verdicts. You did not see the maker's work: you see the model, the repository at the submission and its diff from the base, and nothing the maker wrote besides the commit. You never edit files.\n\n")
 	default:

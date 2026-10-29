@@ -83,6 +83,7 @@ func (f *fixture) source() (string, string) {
 		"src/members/member.go":                 "package members\n",
 		project.ManifestFile:                    "libraries:\n  std: " + libraries.Version + "\n",
 		project.LockFile:                        string(model.RenderLock([]model.LibrarySource{std})),
+		project.ChecksFile:                      "checks: []\n",
 		project.ModelDir + "/project.md":        "---\nkind: std/Project\n---\n# Library\n\nA library.\n",
 		project.ModelDir + "/members/member.md": "---\nkind: std/Concept\n---\n# Member\n\nA person.\n",
 		project.RootPage:                        table + "| README.md | [[project]] | Overview |\n| ci.sh | [[project]] | Required check |\n",

@@ -420,9 +420,16 @@ func TestVerifyTakesVerdictsWithoutFileChanges(t *testing.T) {
 	// A defect a verify checker finds is a deviation, which becomes a Finding.
 	c.commit("Verify\n\nMarkitect-Manager: members\nMarkitect-Verdict: members/member | deviates | member.go accepts an empty name\n")
 	c.mustPush()
-	// The required checks run on the whole repository, as in every Run.
+	// Every verdict commit holds the base's tree: the required checks run
+	// once, on Root's verdicts.
+	if e := r.log(); e[len(e)-1].Kind != "verdicts" || len(e[len(e)-1].Checks) != 0 {
+		t.Fatalf("last log entry %+v, want members' verdicts without checks", e[len(e)-1])
+	}
+	root := r.agent(".", checker)
+	root.commit(submission(".", "project"))
+	root.mustPush()
 	if e := r.log(); e[len(e)-1].Kind != "verdicts" || len(e[len(e)-1].Checks) != 1 || !e[len(e)-1].Checks[0].Passed {
-		t.Fatalf("last log entry %+v, want verdicts whose check passed", e[len(e)-1])
+		t.Fatalf("last log entry %+v, want Root's verdicts whose check passed", e[len(e)-1])
 	}
 	// One commit, on the tip alone.
 	c.commit("a")
@@ -441,8 +448,8 @@ func TestVerifyRecordsAFailingCheck(t *testing.T) {
 		verifyPlan(p)
 		p.Checks = []project.Check{{Name: "broken", Command: "exit 3", Timeout: time.Minute, Environment: "test-image"}}
 	})
-	c := r.agent("members", checker)
-	c.commit(submission("members", "members/member"))
+	c := r.agent(".", checker)
+	c.commit(submission(".", "project"))
 	c.mustPush()
 	if e := r.log(); !e[len(e)-1].Accepted || len(e[len(e)-1].Checks) != 1 || e[len(e)-1].Checks[0].Passed || e[len(e)-1].Checks[0].Exit != 3 {
 		t.Fatalf("last log entry %+v, want accepted verdicts with the failing check", e[len(e)-1])
@@ -560,6 +567,40 @@ func TestTheHostsLandingCheckChangesNoBranch(t *testing.T) {
 	if e := log[len(log)-2]; e.Kind != "landing-check" || e.Accepted || !strings.Contains(e.Reason, `"no-fail-marker" failed`) {
 		t.Fatalf("the failing landing check is logged as %+v", e)
 	}
+}
+
+// A parent with items submits first; the host then starts its child's branch
+// from the parent's approval, once, and the child works on top of it.
+func TestTheHostStartsAChildFromItsParentsState(t *testing.T) {
+	r := newRemote(t, nil)
+	root := r.agent(".", maker)
+	root.write("README.md", "# Library v2\n")
+	root.commit(submission(".", "project"))
+	root.mustPush()
+	approval := r.approve(".", "project")
+
+	if err := StartFrom(r.l, r.git, "managers/members", strings.Repeat("e", 40)); err == nil || !strings.Contains(err.Error(), "no state of the parent's branch") {
+		t.Fatalf("start from a foreign commit: %v", err)
+	}
+	if err := StartFrom(r.l, r.git, "root", approval); err == nil || !strings.Contains(err.Error(), "no branch of a working Manager below Root") {
+		t.Fatalf("start of Root: %v", err)
+	}
+	if err := StartFrom(r.l, r.git, "managers/members", approval); err != nil {
+		t.Fatal(err)
+	}
+	if e := r.log(); e[len(e)-1].User != "host" || e[len(e)-1].Kind != "start" || e[len(e)-1].Updates[0].New != approval {
+		t.Fatalf("last log entry %+v, want the host's start", e[len(e)-1])
+	}
+	if err := StartFrom(r.l, r.git, "managers/members", approval); err == nil || !strings.Contains(err.Error(), "has moved from the base") {
+		t.Fatalf("second start: %v", err)
+	}
+	m := r.agent("members", maker)
+	if got := m.git("show", "HEAD:README.md"); got != "# Library v2" {
+		t.Fatalf("members starts with README %q", got)
+	}
+	m.write("src/members/member.go", "package members // v2\n")
+	m.commit(submission("members", "members/member"))
+	m.mustPush()
 }
 
 func TestAFileTwoPackagesClaimEquallyIsRefused(t *testing.T) {

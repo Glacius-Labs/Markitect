@@ -274,11 +274,12 @@ func (d *decider) review(u Update, fresh []string) (Decision, error) {
 }
 
 // verdicts decides a checker's push in verify: one commit without file
-// changes that gives every checklist item a verdict. The required checks run
-// on its full state, as in every Run. It needs no compile: its tree is the
-// Run's starting commit, which the host compiled before the Run started. A
-// failing check does not refuse the push, since verify changes nothing and
-// the checker cannot fix it; the Result reports it.
+// changes that gives every checklist item a verdict. Every such commit holds
+// the Run's starting commit's tree, so the required checks run once, on
+// Root's verdicts, as in every Run; Root always works. It needs no compile:
+// the host compiled that tree before the Run started. A failing check does
+// not refuse the push, since verify changes nothing and the checker cannot
+// fix it; the Result reports it.
 func (d *decider) verdicts(u Update, fresh []string) (Decision, error) {
 	next := "Next: write `git commit --allow-empty` on your branch tip with your verdicts and push only that commit."
 	if len(fresh) != 1 || fresh[0] != u.New {
@@ -305,11 +306,16 @@ func (d *decider) verdicts(u Update, fresh []string) (Decision, error) {
 	if problem := d.checklist(t.Verdicts); problem != "" {
 		return refuse("commit %s: %s", short(u.New), problem), nil
 	}
+	dec := Decision{Accepted: true, Kind: "verdicts"}
+	if d.m.ID != model.RootPackage {
+		return dec, nil
+	}
 	results, err := d.checks.Run(c, d.plan.Checks)
 	if err != nil {
-		return refuse("the required checks could not run on %s: %v. Nothing was decided about your verdicts. Next: push again; if this repeats, report it to your parent.", short(u.New), err), nil
+		return refuse("the required checks could not run on %s: %v. Nothing was decided about your verdicts. Next: push again.", short(u.New), err), nil
 	}
-	return Decision{Accepted: true, Kind: "verdicts", Checks: results}, nil
+	dec.Checks = results
+	return dec, nil
 }
 
 // maxCompileErrors bounds the compile errors a refusal lists.
