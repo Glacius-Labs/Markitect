@@ -1,7 +1,7 @@
 <h1>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/markitect-wordmark.svg">
-    <img src="docs/assets/markitect-wordmark-print.svg" alt="Markitect" width="280">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/markitect-lockup.svg">
+    <img src="docs/assets/markitect-lockup-print.svg" alt="Markitect" width="360">
   </picture>
 </h1>
 
