@@ -1,6 +1,7 @@
 """The change series of the portfolio: each step's task.md and model, as chain steps.
 
   python -I -B series.py steps --series library|makerspace [--steps M1,M2,...] --out NEW_DIR
+  python -I -B series.py base --series library|makerspace --step STEP [--unlinked] --out NEW_DIR
 
 A step directory holds what `suite.py task` and `suite.py chain --step` read:
 `task.md`, the ordinary documentation every variant receives, and `model/`,
@@ -13,6 +14,14 @@ plus the project's registry pages, which give each Package the paths it owns
                           model:   tools/evaluation-tasks/library/mN
   makerspace   W0 to C9   task.md: tools/comparison/makerspace-v2/spec/requirements-STEP.md
                           model:   tools/evaluation-tasks/makerspace/STEP
+
+`base` writes the model a fixed reference start realizes, for
+`suite.py task --base-model`: the step's model with the registry pages an owner
+wrote for that step's reference result (tools/evaluation-tasks/PROJECT/
+references/STEP/), which name every file of the reference with its owner and the
+Definitions it realizes. The 2.0 arm adopts the start with them; K never reads
+the base model. `--unlinked` leaves the pages out on purpose: the arm then adopts
+every file with a row without links (a regression run of that fallback).
 
 The step names are the steps of the series judges in tools/evaluation-judges
 (`suite.py judge --step`, `judge-chain --steps`). Nothing here is hidden
@@ -66,6 +75,32 @@ def write_step(series, step, out, repo=REPO):
     return out
 
 
+def reference_pages(series, step, repo=REPO):
+    """The registry pages an owner wrote for STEP's reference result, or None: <project>/references/<step>/."""
+    _, model = sources(series, step, repo)
+    pages = model.parent / "references" / step.lower()
+    return pages if (pages / "registry.md").is_file() and (pages / "registry").is_dir() else None
+
+
+def write_base(series, step, out, repo=REPO, pages=True):
+    """The model a fixed reference start of STEP realizes, as `suite.py task --base-model` takes it: STEP's model with
+    the registry pages of STEP's reference result, which name each of its files with its owner and the Definitions it
+    realizes. Without such pages, or with pages=False (the unlinked fallback, chosen on purpose), the project's own
+    pages, and the 2.0 arm adopts the files without links."""
+    out = pathlib.Path(out)
+    if out.exists():
+        raise SeriesError(f"{out} exists")
+    _, model = sources(series, step, repo)
+    shutil.copytree(model, out)
+    pages = reference_pages(series, step, repo) if pages else None
+    if pages:
+        shutil.copytree(pages / "registry", out / "registry")
+        shutil.copyfile(pages / "registry.md", out / "registry.md")
+    elif (model.parent / "registry").is_dir():
+        shutil.copytree(model.parent / "registry", out / "registry")
+    return {"step": step, "base": str(out), "pages": str(pages) if pages else None}
+
+
 def write_steps(series, out, only=None):
     out = pathlib.Path(out)
     if out.exists():
@@ -84,9 +119,17 @@ def main(argv=None):
     s.add_argument("--series", required=True)
     s.add_argument("--steps", help="comma-separated steps (default: every step, in order)")
     s.add_argument("--out", required=True)
+    b = sub.add_parser("base")
+    b.add_argument("--series", required=True)
+    b.add_argument("--step", required=True, help="the step whose reference result is the start")
+    b.add_argument("--unlinked", action="store_true", help="leave out the reference's registry pages: the arm adopts without links")
+    b.add_argument("--out", required=True)
     a = p.parse_args(argv)
     try:
-        written = write_steps(a.series, a.out, [x.strip() for x in a.steps.split(",")] if a.steps else None)
+        if a.cmd == "base":
+            written = write_base(a.series, a.step, a.out, pages=not a.unlinked)
+        else:
+            written = write_steps(a.series, a.out, [x.strip() for x in a.steps.split(",")] if a.steps else None)
     except SeriesError as e:
         print(f"series: {e}", file=sys.stderr)
         return 2

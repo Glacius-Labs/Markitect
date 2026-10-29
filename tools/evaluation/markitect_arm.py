@@ -14,10 +14,12 @@ resolves nothing, a label and the engine. Per task it:
    model/ and the registry pages that give each Package its paths). A start
    that holds files but no model, a fixed reference start, is first adopted:
    the task's base-model/ (the model the start realizes; without one, the
-   task's model) and one registry row without links for every file, on the
-   page `markitect check` names as its owner's. The model then changes in a
-   second commit. A start that already holds a model keeps its registry pages,
-   whose tables are its Managers';
+   task's model) with its registry pages, which an owner wrote for that
+   reference: every file with its owner and the Definitions it realizes. Only
+   a file no page names gets a row without links, on the page `markitect
+   check` names as its owner's; the record says which was used. The model then
+   changes in a second commit. A start that already holds a model keeps its
+   registry pages, whose tables are its Managers';
 3. runs `markitect apply`: `--full` on a fresh build or an adopted start
    without a base model, `--base` the adoption commit after it, and the
    default impact, from the last landing, when the start is this arm's own
@@ -151,9 +153,10 @@ def copy_model(source, dot, keep_registry):
 
 
 def add_pages(source, dot, replace=False):
-    """The source's registry pages in .markitect/registry/; an existing page stays unless replace."""
-    for page in sorted(p for p in (source / "registry").rglob("*.md") if p.is_file()) if (source / "registry").is_dir() else []:
-        target = dot / "registry" / page.relative_to(source / "registry")
+    """The source's registry pages, Root's registry.md and those in registry/; an existing page stays unless replace."""
+    pages = sorted(p for p in (source / "registry").rglob("*.md") if p.is_file()) if (source / "registry").is_dir() else []
+    for page in ([source / "registry.md"] if (source / "registry.md").is_file() else []) + pages:
+        target = dot / page.relative_to(source)
         if target.exists() and not replace:
             continue
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -228,7 +231,9 @@ def owner_input(a, task, repo, start, landed, env):
         add_pages(model, dot)
         rows = adopt(a, repo, env)
         compiles(a, repo, env, "the adopted start")
-        adoption = {"commit": commit(repo, "Owner: adopt the reference start", env), "rows": rows, "baseModel": base_model.is_dir()}
+        listed = len(files) - rows
+        adoption = {"commit": commit(repo, "Owner: adopt the reference start", env), "pageRows": listed, "unlinkedRows": rows,
+                    "registry": "pages" if not rows else "unlinked" if not listed else "pages+unlinked", "baseModel": base_model.is_dir()}
         if base_model.is_dir():
             copy_model(model, dot, keep_registry=True)
             options, mode = ["--base", adoption["commit"]], "adopted"

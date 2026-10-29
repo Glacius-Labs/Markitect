@@ -42,7 +42,7 @@ STANDIN = textwrap.dedent(r'''
         found = {}
         for page in sorted((repo / ".markitect" / "registry").rglob("*.md")):
             text = page.read_text(encoding="utf-8")
-            found[page.relative_to(repo).as_posix()] = (re.findall(r"^  - (\S+)/\*\*$", text, re.M), re.findall(r"^\| `([^`]+)` \|", text, re.M))
+            found[page.relative_to(repo).as_posix()] = (re.findall(r"^  - (\S+)$", text, re.M), re.findall(r"^\| `([^`]+)` \|", text, re.M))
         return found
 
     if args[0] == "check":
@@ -60,7 +60,9 @@ STANDIN = textwrap.dedent(r'''
             owner, best = ".markitect/registry.md", ""
             for page, (paths, _) in pages().items():
                 for p in paths:
-                    if f.startswith(p + "/") and len(p) > len(best):
+                    # A trailing /** owns what lies below the folder; a pattern without wildcards names one file.
+                    hit = f.startswith(p[:-3] + "/") if p.endswith("/**") else f == p
+                    if hit and (len(p) > len(best) or not p.endswith("/**")):
                         owner, best = page, p
             name = "Root" if owner == ".markitect/registry.md" else owner[len(".markitect/registry/"):-3]
             errors.append({"code": "file.unregistered", "file": f,
@@ -74,6 +76,8 @@ STANDIN = textwrap.dedent(r'''
     policy = repo / ".markitect" / "model" / "lending" / "loan-policy.md"
     (d / f"apply-{n}.json").write_text(json.dumps({"args": args, "env": env, "head": git("rev-parse", "HEAD"),
                                                     "policy": git("show", "HEAD:.markitect/model/lending/loan-policy.md") if policy.exists() else None,
+                                                    "lendingPage": (repo / ".markitect" / "registry" / "lending.md").read_text(encoding="utf-8")
+                                                    if (repo / ".markitect" / "registry" / "lending.md").exists() else None,
                                                     "model": sorted(p.relative_to(repo).as_posix() for p in (repo / ".markitect").rglob("*") if p.is_file())}))
     mode, run = os.environ.get("FAKE_APPLY", "land"), opt("--run")
     if mode == "none":
@@ -277,7 +281,7 @@ class ArmTest(unittest.TestCase):
         self.assertIn("The limit is 3.", apply["policy"])
         adoption = record["reported"]["adoption"]
         self.assertEqual(apply["args"][apply["args"].index("--base") + 1], adoption["commit"])
-        self.assertEqual(adoption["rows"], 3)
+        self.assertEqual((adoption["unlinkedRows"], adoption["pageRows"], adoption["registry"]), (3, 0, "unlinked"))
         self.assertNotEqual(record["reported"]["ownerCommit"], adoption["commit"])
         # A stop delivers the reference start itself, without the owner's commits.
         self.assertEqual(record["result"]["commit"], json.loads((task / "task.json").read_text())["start"]["commit"])
@@ -307,6 +311,33 @@ class ArmTest(unittest.TestCase):
         del os.environ["FAKE_CHECK"]
         record, _ = self.run_arm(self.task("machinery", self.model("model-m")), "machinery")
         self.assertEqual((record["delivered"], record["exitCode"], record["reported"]["noAgentTurn"]), (False, 2, True))
+
+    def test_an_owners_pages_adopt_the_reference_start_with_links(self):
+        start = self.tmp / "reference"
+        subprocess.run(["git", "init", "-q", "-b", "start", str(start)], check=True)
+        for rel in ("realization/go.mod", "realization/internal/library/loans.go", "realization/internal/library/library.go"):
+            (start / rel).parent.mkdir(parents=True, exist_ok=True)
+            (start / rel).write_text(rel + "\n")
+        env = dict(os.environ, GIT_AUTHOR_NAME="r", GIT_AUTHOR_EMAIL="r@x", GIT_COMMITTER_NAME="r", GIT_COMMITTER_EMAIL="r@x")
+        subprocess.run(["git", "-C", str(start), "add", "-A"], check=True, env=env)
+        subprocess.run(["git", "-C", str(start), "-c", "commit.gpgsign=false", "commit", "-q", "-m", "reference"], check=True, env=env)
+        subprocess.run(["git", "-C", str(start), "bundle", "create", "-q", str(self.tmp / "reference.bundle"), "start"], check=True)
+        # The owner's pages for this reference: one file on lending's page by a single-file pattern, two on Root's.
+        base = self.model("paged-base")
+        (base / "registry" / "lending.md").write_text(
+            "---\npaths:\n  - realization/internal/library/loans.go\n---\n# Registry: lending\n\n| File | Realizes | Why |\n|---|---|---|\n"
+            "| `realization/internal/library/loans.go` | [[lending/loan-policy]] | Lending operations |\n")
+        (base / "registry.md").write_text("# Registry\n\n| File | Realizes | Why |\n|---|---|---|\n"
+                                          "| `realization/go.mod` | | The Go module |\n"
+                                          "| `realization/internal/library/library.go` | [[project]] | Records |\n")
+        record, out = self.run_arm(self.task("paged", self.model("m2"), self.tmp / "reference.bundle", base), "defect")
+        self.assertEqual(record["exitCode"], 0, (out / "variant" / "run.json").read_text())
+        adoption = record["reported"]["adoption"]
+        self.assertEqual((adoption["unlinkedRows"], adoption["pageRows"], adoption["registry"]), (0, 3, "pages"))
+        apply = self.applies()[0]
+        self.assertIn(".markitect/registry.md", apply["model"])
+        self.assertIn("[[lending/loan-policy]]", apply["lendingPage"])
+        self.assertNotIn("adopted by the owner", apply["lendingPage"])
 
     def test_a_base_model_without_registry_pages_still_places_each_file_on_its_owners_page(self):
         start = self.tmp / "reference"

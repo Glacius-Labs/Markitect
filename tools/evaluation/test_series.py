@@ -3,6 +3,8 @@ import datetime
 import json
 import os
 import pathlib
+import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -10,6 +12,7 @@ import textwrap
 import unittest
 
 HERE = pathlib.Path(__file__).resolve().parent
+REPO = HERE.parents[1]
 JUDGES = HERE.parent / "evaluation-judges"
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(JUDGES / "common"))
@@ -394,6 +397,130 @@ class SeriesSelfTest(Engine):
                 "protected-input", "unaccounted-files", "stale-expiry", "forgotten-rule", "family-P-TIME-HOURS", "family-P-MONEY-LOCKOUT"]
         summary = self.selftest(MAKERSPACE, only)
         self.assertEqual(len(summary["cases"]), len(only))
+
+
+# The reference results that serve as fixed starts (of the next step) and as plant starts: each has the registry
+# pages an owner wrote for it.
+STARTS = {"library": ["M1", "M2", "M3", "M4"], "makerspace": ["W0", "C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8"]}
+LINK = re.compile(r"\[\[([^\]|#]+)")
+# Definitions a reference has no file for, so no page can link them: the Makerspace references have no README.
+UNREALIZED = {"makerspace": {"documentation"}}
+
+
+def adopted(name, step, base):
+    """A repository that holds STEP's reference result and its base model with the owner's pages, as the arm adopts it."""
+    tree, at = judges.references(JUDGES / name)[step]
+    repo = base / "repo"
+    shutil.copytree(tree, repo / at if at else repo)
+    series.write_base(name, step, repo / ".markitect")
+    subprocess.run(["git", "init", "-q", str(repo)], check=True)
+    subprocess.run(["git", "-c", "core.autocrlf=false", "-C", str(repo), "add", "-A"], check=True)
+    return repo
+
+
+class ReferencePagesTest(unittest.TestCase):
+    """The registry pages of every reference start: they name every file, and link only the step's own Definitions."""
+
+    def test_every_start_has_pages_that_link_its_steps_definitions(self):
+        for name, steps in STARTS.items():
+            for step in steps:
+                with self.subTest(series=name, step=step), tempfile.TemporaryDirectory() as tmp:
+                    base = series.write_base(name, step, pathlib.Path(tmp) / "base")
+                    self.assertIsNotNone(base["pages"])
+                    model = pathlib.Path(tmp) / "base"
+                    defs = {p.relative_to(model / "model").as_posix()[:-3] for p in (model / "model").rglob("*.md")}
+                    pages = [model / "registry.md", *(model / "registry").rglob("*.md")]
+                    links = {d for page in pages for d in LINK.findall(page.read_text(encoding="utf-8"))}
+                    self.assertTrue(links)
+                    self.assertEqual(sorted(links - defs), [])
+                    # Every Package has its page, and no page is left over from the project's own paths.
+                    packages = {p.relative_to(model / "model").as_posix() for p in (model / "model").rglob("*") if p.is_dir()}
+                    self.assertEqual({p.relative_to(model / "registry").as_posix()[:-3] for p in (model / "registry").rglob("*.md")}, packages)
+                    self.assertNotIn("/**", "".join(p.read_text(encoding="utf-8") for p in pages))
+
+    def test_every_file_is_listed_once_on_the_page_of_its_owner(self):
+        """Every file of the reference exactly once, on the page of the lowest common parent of the Packages it links."""
+        row = re.compile(r"^\| `([^`]+)` \| ([^|]*) \|", re.M)
+        for name, steps in STARTS.items():
+            for step in steps:
+                with self.subTest(series=name, step=step), tempfile.TemporaryDirectory() as tmp:
+                    series.write_base(name, step, pathlib.Path(tmp) / "base")
+                    model = pathlib.Path(tmp) / "base"
+                    packages = {p.relative_to(model / "model").as_posix() for p in (model / "model").rglob("*") if p.is_dir()}
+                    listed = []
+                    for page in [model / "registry.md", *(model / "registry").rglob("*.md")]:
+                        owner = "" if page.name == "registry.md" and page.parent == model else page.relative_to(model / "registry").as_posix()[:-3]
+                        for path, cell in row.findall(page.read_text(encoding="utf-8")):
+                            listed.append(path)
+                            homes = []
+                            for link in LINK.findall(cell):
+                                parts = link.split("/")[:-1]
+                                while parts and "/".join(parts) not in packages:
+                                    parts.pop()
+                                homes.append(parts)
+                            common = homes[0] if homes else []
+                            for h in homes[1:]:
+                                n = 0
+                                while n < min(len(common), len(h)) and common[n] == h[n]:
+                                    n += 1
+                                common = common[:n]
+                            self.assertEqual("/".join(common), owner, path)
+                    tree, at = judges.references(JUDGES / name)[step]
+                    files = sorted(((at + "/") if at else "") + p.relative_to(tree).as_posix() for p in tree.rglob("*") if p.is_file())
+                    self.assertEqual(sorted(listed), files)
+
+    def test_no_planted_text_is_in_the_pages_of_a_plants_start(self):
+        """A planted task starts from the reference of the step before; its pages hold nothing the plant removes."""
+        before = {"M2": "M1", "C3": "C2", "C5": "C4", "C6": "C5"}
+        for plant in sorted((JUDGES / "plants").glob("*.json")):
+            record = json.loads(plant.read_text(encoding="utf-8"))
+            removed = list(record.get("absent", [])) + [e["old"] for e in record["model"]]
+            with self.subTest(plant=plant.stem), tempfile.TemporaryDirectory() as tmp:
+                series.write_base(record["series"], before[record["step"]], pathlib.Path(tmp) / "base")
+                model = pathlib.Path(tmp) / "base"
+                text = "".join(p.read_text(encoding="utf-8") for p in [model / "registry.md", *(model / "registry").rglob("*.md")])
+                self.assertEqual([s for s in removed if s in text], [])
+
+    def test_a_step_without_pages_gets_the_projects(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = series.write_base("library", "M5", pathlib.Path(tmp) / "base")
+            self.assertIsNone(base["pages"])
+            self.assertTrue((pathlib.Path(tmp) / "base" / "registry" / "lending.md").is_file())
+            self.assertFalse((pathlib.Path(tmp) / "base" / "registry.md").exists())
+            # The unlinked fallback, chosen on purpose for a step that has pages: the project's pages, as for M5.
+            self.assertEqual(series.main(["base", "--series", "library", "--step", "M1", "--unlinked", "--out", str(pathlib.Path(tmp) / "plain")]), 0)
+            self.assertFalse((pathlib.Path(tmp) / "plain" / "registry.md").exists())
+            self.assertIn("realization/internal/lending/**", (pathlib.Path(tmp) / "plain" / "registry" / "lending.md").read_text(encoding="utf-8"))
+
+
+@unittest.skipUnless(go_version() and go_version() >= 27, "needs Go 1.27 or later to build markitect")
+class AdoptedStartTest(unittest.TestCase):
+    """Every reference start, adopted with its owner's pages, compiles, accounts for every file and realizes every Definition."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls._tmp = tempfile.TemporaryDirectory()
+        cls.markitect = pathlib.Path(cls._tmp.name) / ("markitect.exe" if os.name == "nt" else "markitect")
+        subprocess.run(["go", "build", "-o", str(cls.markitect), "./cmd/markitect"], cwd=REPO, check=True)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._tmp.cleanup()
+
+    def test_every_adopted_start_compiles_with_every_file_accounted_and_every_definition_realized(self):
+        for name, steps in STARTS.items():
+            for step in steps:
+                with self.subTest(series=name, step=step), tempfile.TemporaryDirectory() as tmp:
+                    repo = adopted(name, step, pathlib.Path(tmp))
+                    check = subprocess.run([str(self.markitect), "check", "--repo", str(repo), "--json"], capture_output=True, text=True)
+                    self.assertEqual(check.returncode, 0, check.stdout[-2000:])
+                    files = subprocess.run(["git", "-C", str(repo), "ls-files"], capture_output=True, text=True, check=True).stdout.split()
+                    pages = "".join(p.read_text(encoding="utf-8") for p in (repo / ".markitect").rglob("registry*") if p.is_file())
+                    pages += "".join(p.read_text(encoding="utf-8") for p in (repo / ".markitect" / "registry").rglob("*.md"))
+                    self.assertEqual([f for f in files if not f.startswith(".markitect/") and f"`{f}`" not in pages], [])
+                    lint = subprocess.run([str(self.markitect), "lint", "--repo", str(repo)], capture_output=True, text=True)
+                    unused = {m.group(1) for m in re.finditer(r"lint\.unused: nothing links to (\S+) ", lint.stdout)}
+                    self.assertEqual(unused, UNREALIZED.get(name, set()))
 
 
 if __name__ == "__main__":
