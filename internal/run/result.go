@@ -74,6 +74,12 @@ type Result struct {
 	Starts           []AgentStart        `json:"starts"`
 	Messages         []agentport.Message `json:"messages"`
 	Usage            agentport.Usage     `json:"usage"`
+	// Queue says how long the Run waited for Runs whose impact overlaps its
+	// own before it started.
+	Queue []string `json:"queue,omitempty"`
+	// Replaced lists the kept Run branches a landing covers; they are
+	// deleted with it.
+	Replaced []string `json:"replaced,omitempty"`
 	// Unkept lists approved work of a Run that does not land which its Run
 	// branch does not hold.
 	Unkept []string `json:"unkept,omitempty"`
@@ -82,6 +88,10 @@ type Result struct {
 	Cleanup []string  `json:"cleanup"`
 	Began   time.Time `json:"began"`
 	Ended   time.Time `json:"ended"`
+
+	// impact is what the Run's impact covers, for the lock and the trailers
+	// of its Result commit.
+	impact []string
 }
 
 // ResultItem is one checklist item with its verdict, evidence and the

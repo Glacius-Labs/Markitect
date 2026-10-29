@@ -112,7 +112,9 @@ type Spec struct {
 	Labels map[string]string
 	Image  string
 	Limits Limits
-	// Network reaches the provider ("bridge" for the engine's default).
+	// Network reaches the provider. It must be a user-defined network: the
+	// Docker CLI on Linux refuses to combine the engine's default "bridge"
+	// with the Run's network.
 	// The container also joins the Run's network, Start.Git.Network; without
 	// a Network it reaches the remote only. Hosts and DNS are passed to the
 	// engine as they are.
