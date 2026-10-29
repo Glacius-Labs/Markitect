@@ -12,7 +12,9 @@ import (
 func (s *schedule) makerTask(n *node) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "Realize the change for Manager %s on branch %s, starting from %s, and push one submission that gives each of your %d checklist items a verdict with evidence.", n.name, n.branch, short(n.from), len(n.items))
-	if s.ownFirst(n) {
+	if held := s.held(n); held != "" {
+		fmt.Fprintf(&b, " %s escalated to you and continue from your approved submission when you settle the matter with a change of your own, so this one covers your own area: judge each item by your own files; their work comes when you integrate it.", held)
+	} else if s.ownFirst(n) {
 		b.WriteString(" Your working children start from your approved submission, so this one covers your own area: judge each item by your own files; the parts your children realize come when you integrate their work.")
 	} else if len(n.children) > 0 && s.childrenApproved(n) {
 		fmt.Fprintf(&b, " Your working children's approved work: %s. Merge it, review it and integrate it before you submit.", s.approvals(n))
@@ -33,10 +35,24 @@ func (s *schedule) approvals(n *node) string {
 
 func (s *schedule) reviewTask(n *node) string {
 	task := fmt.Sprintf("Review submission %s of Manager %s on branch %s against the model and the diff from %s: confirm or dispute every verdict, then push your review as one commit without file changes on the submission.", n.submission, n.name, n.branch, short(n.from))
-	if s.ownFirst(n) {
+	if held := s.held(n); held != "" {
+		task += " It covers the Manager's own area and settles an escalation of " + held + "; what they realize comes with a later submission."
+	} else if s.ownFirst(n) {
 		task += " It covers the Manager's own area before its working children start; what they realize comes with a later submission."
 	}
 	return task
+}
+
+// held names the working children that wait for the Manager to settle their
+// escalation.
+func (s *schedule) held(n *node) string {
+	var names []string
+	for _, c := range n.children {
+		if c.held {
+			names = append(names, c.name)
+		}
+	}
+	return strings.Join(names, ", ")
 }
 
 // ownFirst reports whether the Manager's working children wait for its

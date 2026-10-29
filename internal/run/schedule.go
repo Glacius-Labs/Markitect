@@ -76,6 +76,13 @@ type node struct {
 	// from, the base or a state of its parent's branch (concept 2.0 §6.2).
 	released bool
 	from     string
+	// held: the Manager escalated and waits until its parent settles the
+	// matter in a maker start after its heldAt-th one.
+	held       bool
+	heldAt     int
+	escalation string
+
+	submitRound int // the maker start of the newest submission
 
 	tip                string // the branch tip after the last start
 	submission         string // the newest submission at the tip, awaiting review
@@ -326,6 +333,9 @@ func (s *schedule) releaseLocked(ctx context.Context, n *node) bool {
 		n.released = true
 		return true
 	}
+	if n.held {
+		return false
+	}
 	if !p.released && !s.releaseLocked(ctx, p) {
 		return false
 	}
@@ -506,7 +516,9 @@ func (s *schedule) sync(ctx context.Context) (map[string]string, error) {
 func (s *schedule) afterMaker(ctx context.Context, n *node, tip string, moved bool) (bool, error) {
 	if !moved {
 		// An approved Manager started again, for example by an answer,
-		// that changed nothing stays approved.
+		// that changed nothing stays approved; an escalation it answered
+		// without a change is settled.
+		s.settle(n, n.rounds[agentport.Maker], "")
 		return n.approved, nil
 	}
 	n.approved = false
@@ -520,6 +532,14 @@ func (s *schedule) afterMaker(ctx context.Context, n *node, tip string, moved bo
 			return true, nil
 		}
 		s.hostMessage(n, fmt.Sprintf("Your branch %s ends at %s, which is no submission. Finish with a submission commit that gives every checklist item a verdict.", n.branch, short(tip)))
+		return true, nil
+	}
+	// The work continues from its parent's state, also one that settled
+	// its escalation after it started.
+	if ok, err := s.e.Git.Contains(ctx, tip, n.from); err != nil {
+		return false, err
+	} else if !ok && n.parent != nil {
+		s.hostMessage(n, fmt.Sprintf("Your submission %s does not contain %s, the state of %s your work continues from. Merge it and submit again.", short(tip), n.from, n.parent.branch))
 		return true, nil
 	}
 	var missing []string
@@ -546,7 +566,7 @@ func (s *schedule) afterMaker(ctx context.Context, n *node, tip string, moved bo
 		s.hostMessage(n, "Your submission "+short(tip)+" does not contain "+strings.Join(missing, ", ")+". Merge it and submit again.")
 		return true, nil
 	}
-	n.submission, n.lastSubmission, n.verdicts = tip, tip, t.Verdicts
+	n.submission, n.lastSubmission, n.verdicts, n.submitRound = tip, tip, t.Verdicts, n.rounds[agentport.Maker]
 	return true, nil
 }
 
@@ -597,9 +617,36 @@ func (s *schedule) afterChecker(ctx context.Context, n *node, tip string, moved 
 		n.approved = false
 		m := s.send(n, agentport.Escalation, n.parent.name, "", "My approved submission "+short(submission)+" names model problems I cannot settle within the model:\n"+strings.Join(problems, "\n"))
 		n.waitFor[m.ID] = true
+		s.hold(n, m.ID)
 		return true, nil
 	}
+	s.settle(n, n.submitRound, tip)
 	return true, nil
+}
+
+// hold keeps a Manager that escalated from starting until its parent settles
+// the matter (concept 2.0 §6.2), so it does not work on without the
+// settlement, and the parent's settling submission does not wait for its
+// approval.
+func (s *schedule) hold(n *node, escalation string) {
+	n.held, n.released, n.heldAt, n.escalation = true, false, n.parent.rounds[agentport.Maker], escalation
+}
+
+// settle lets the Managers that escalated to n start again once a maker start
+// of n's after their escalation ended: from n's approved work when it settled
+// the matter with a commit of its own, which they merge first, or from where
+// they were when it answered without a change.
+func (s *schedule) settle(n *node, round int, approval string) {
+	for _, c := range n.children {
+		if !c.held || round <= c.heldAt || (approval == "" && c.waitFor[c.escalation]) {
+			continue
+		}
+		c.held, c.released = false, true
+		if approval != "" {
+			c.from = approval
+			s.hostMessage(c, fmt.Sprintf("Your parent %s settled your escalation %s in its approved work %s on branch %s. Merge it: your work continues from it.", n.name, c.escalation, approval, n.branch))
+		}
+	}
 }
 
 // afterVerifier: one commit without file changes that holds the checker's

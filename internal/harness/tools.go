@@ -63,7 +63,9 @@ var makerSubmit = Tool{
 	Name: ToolSubmit,
 	Description: "Commit every change in /work, deletions included, as one submission with a verdict for each checklist item, " +
 		"and push it to your branch. The Run's remote then runs the required checks on the branch's full state and accepts " +
-		"or refuses the push; a refusal returns its reason and nothing is lost. Returns the submitted commit.",
+		"or refuses the push; a refusal returns its reason and nothing is lost. An accepted push is a submission, not an approval: " +
+		"once this start has ended, a fresh checker reviews it, and a rejection reaches you with the checker's evidence as a review " +
+		"message in a later start. Returns the submitted commit.",
 	Schema: json.RawMessage(`{"type":"object","additionalProperties":false,"required":["summary","verdicts"],"properties":{` +
 		`"summary":{"type":"string","description":"one line: what the submission does"},` +
 		`"verdicts":{"type":"array","description":"exactly one verdict per checklist item","items":` + verdictSchema(`["conforms","changed","model-problem"]`) + `}}}`),

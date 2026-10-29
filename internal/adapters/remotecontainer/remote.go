@@ -102,7 +102,10 @@ func Start(ctx context.Context, e *Engine, spec Spec, bundle io.Reader) (r *Remo
 		}
 	}()
 	label := RunLabel + "=" + run
-	if err := e.run(ctx, nil, nil, "network", "create", "--internal", "--label", label, r.Network); err != nil {
+	// Internal alone still gives the bridge a gateway address on the
+	// engine's host; isolated gateway mode removes it, so no container of
+	// the Run reaches the host.
+	if err := e.run(ctx, nil, nil, "network", "create", "--internal", "--opt", "com.docker.network.bridge.gateway_mode_ipv4=isolated", "--label", label, r.Network); err != nil {
 		return nil, err
 	}
 	args := []string{"create", "--name", r.Container, "--label", label, "--label", "markitect.role=remote",
