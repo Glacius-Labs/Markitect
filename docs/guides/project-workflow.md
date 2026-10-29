@@ -74,6 +74,7 @@ Every command except `init` and `lock` takes `--json`. Exit code 0 means success
 | `file.unregistered` | List the file on its owner's registry page, or on the ignore page with a reason. |
 | `lock.mismatch` after an upgrade of `markitect` | A standard Library changed. Run `markitect lock`, review the lock diff and commit it. |
 | `package.cycle` | Move the shared concept into a common parent, or invert the dependency ([links, scope and visibility](model-language.md#links-scope-and-visibility)). |
+| `lint.no_paths` | A Package owns no file, so its Manager can change only its registry page. Name its first path patterns on its registry page and commit them before the Run that needs them ([first patterns](model-language.md#registry-pages)). |
 | `lint.stale` | A registry page still names a removed Definition, file or Package. The page's Package cleans it up; `impact` puts it on that Manager's checklist. |
 | `impact` refuses to run | The project has compile errors; run `check` and fix them first. |
 | `apply` ends as `check-failed` | The start commit does not compile; no agent started. Fix the model, commit, push and run again. |
