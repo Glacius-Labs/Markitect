@@ -126,47 +126,60 @@ func (e *Engine) Run(ctx context.Context, req Request) (*Result, error) {
 		cur   *project.Project
 		imp   analysis.Impact
 	)
+	nonce, err := e.token()
+	if err != nil {
+		return nil, err
+	}
+	until := req.Limits.Deadline.Add(2 * e.cleanup())
+	left := func() {
+		if err := e.leave(ctx, req.Target, nonce); err != nil {
+			r.Cleanup = append(r.Cleanup, fmt.Sprintf("the Run's entry in the lock of %s stays until %s: %v", req.Target, until.UTC().Format(time.RFC3339), err))
+		}
+	}
+	waitedOut := func() (*Result, error) {
+		r.State, r.Why = StateIncomplete, "the Run reached its deadline before it could start, while it waited for Runs whose impact overlaps its own"
+		return e.finish(r), nil
+	}
 	for {
 		var err error
 		start, cur, imp, err = e.prepare(ctx, req, r)
-		if err != nil || r.State != "" {
+		switch {
+		case err != nil && ctx.Err() != nil && len(r.Queue) > 0:
+			return waitedOut()
+		case err != nil || r.State != "":
 			return e.done(r, err)
 		}
 		if req.Mode == agentport.Verify {
 			break
 		}
-		entry := lockEntry{Run: req.Run, Until: req.Limits.Deadline.Add(2 * e.cleanup()), Impact: r.impact}
-		waited, err := e.enter(ctx, req.Target, entry)
+		waited, err := e.enter(ctx, req.Target, lockEntry{Run: req.Run, Until: until, Nonce: nonce, Impact: r.impact})
 		r.Queue = append(r.Queue, waited...)
-		switch {
-		case errors.Is(err, errRunNameTaken):
-			return nil, fmt.Errorf("%w: %v", ErrUsage, err)
-		case err != nil && ctx.Err() != nil:
-			r.State, r.Why = StateIncomplete, "the Run waited for Runs whose impact overlaps its own until its deadline, so no agent started"
-			return e.finish(r), nil
-		case err != nil:
+		if err != nil {
+			// A write that reported a failure may have taken effect.
+			left()
+			switch {
+			case errors.Is(err, errRunNameTaken):
+				return nil, fmt.Errorf("%w: %v", ErrUsage, err)
+			case ctx.Err() != nil:
+				return waitedOut()
+			}
 			return nil, err
 		}
 		tip, err := e.Git.Fetch(ctx, req.Target)
 		if err == nil && tip == start {
 			break
 		}
-		if lerr := e.leave(context.WithoutCancel(ctx), req.Target, req.Run); lerr != nil {
-			return nil, fmt.Errorf("leaving the lock of %s: %w", req.Target, lerr)
-		}
-		if err != nil {
+		left()
+		switch {
+		case err != nil && ctx.Err() != nil:
+			return waitedOut()
+		case err != nil:
 			return nil, err
 		}
 		r.Queue = append(r.Queue, fmt.Sprintf("%s moved from %s to %s while the Run waited, so it started again from there", req.Target, short(start), short(tip)))
 	}
 	if req.Mode == agentport.Apply {
-		defer func() {
-			cctx, ccancel := context.WithTimeout(context.WithoutCancel(ctx), e.cleanup())
-			defer ccancel()
-			if err := e.leave(cctx, req.Target, req.Run); err != nil {
-				r.Cleanup = append(r.Cleanup, fmt.Sprintf("the Run's entry in the lock of %s stays until %s: %v", req.Target, req.Limits.Deadline.Add(2*e.cleanup()).UTC().Format(time.RFC3339), err))
-			}
-		}()
+		defer left()
 	}
 
 	mode := runremote.Apply

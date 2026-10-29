@@ -61,14 +61,30 @@ func runAsync(e *run.Engine, req run.Request) <-chan outcome {
 	return done
 }
 
+// keptBranch pushes markitect/runs/NAME: one commit on start that adds file,
+// with the trailers of a kept Result commit for target.
+func (f *fixture) keptBranch(name, target, start, file string) {
+	f.t.Helper()
+	testkit.Git(f.t, f.src, "checkout", "-q", "-b", "kept-"+name, start)
+	f.write(map[string]string{file: "# kept\n"})
+	testkit.Git(f.t, f.src, "add", "-A")
+	testkit.Git(f.t, f.src, "commit", "-q", "-m", "Markitect Run "+name+": kept", "-m",
+		"Markitect-Run: "+name+"\nMarkitect-Target: "+target+"\nMarkitect-Start: "+start+"\nMarkitect-Impact: def:catalog/book")
+	testkit.Git(f.t, f.src, "push", "-q", "origin", "HEAD:refs/heads/"+run.RunBranchPrefix+name)
+	testkit.Git(f.t, f.src, "checkout", "-q", "main")
+}
+
 // TestOverlappingRunsTakeTurns runs two applies on one target whose impact
 // overlaps: the second waits in the target's lock until the first has
 // ended, starts from what the first left, and its landing deletes the first
-// Run's kept branch, whose impact it covers.
+// Run's kept branch, whose impact it covers. It deletes no kept branch of
+// another target, and none whose tip is not a Result commit.
 func TestOverlappingRunsTakeTurns(t *testing.T) {
 	f := newFixture(t)
 	f.engine.LockPoll = 20 * time.Millisecond
-	base, _ := changeBook(f)
+	base, bookStart := changeBook(f)
+	f.keptBranch("release-run", "release", bookStart, ".markitect/results/release-run.md")
+	f.keptBranch("forged", "main", bookStart, "src/catalog/forged.go")
 	started, release := make(chan struct{}), make(chan struct{})
 	a := f.agents
 	a.On("catalog", maker, held(started, release, a.Submit(nil, map[string]string{"src/catalog/book.go": isbn}, word("changed"))))
@@ -121,6 +137,9 @@ func TestOverlappingRunsTakeTurns(t *testing.T) {
 	}
 	if strings.Join(r.Replaced, " ") != run.RunBranchPrefix+"first" || f.tip(run.RunBranchPrefix+"first") != "" {
 		t.Fatalf("the covered Run branch was not deleted: replaced %v", r.Replaced)
+	}
+	if f.tip(run.RunBranchPrefix+"release-run") == "" || f.tip(run.RunBranchPrefix+"forged") == "" {
+		t.Fatal("a kept branch of another target, or one whose tip is no Result commit, was deleted")
 	}
 	page := f.show("main", ".markitect/results/second.md")
 	if !strings.Contains(page, "## Queue") || !strings.Contains(page, "## Replaced Run branches") {
@@ -187,6 +206,48 @@ func TestDisjointRunsWorkSideBySide(t *testing.T) {
 	}
 	if !strings.Contains(f.show("main", "src/members/loans/loan.go"), "21") || !strings.Contains(f.show("main", "src/catalog/book.go"), "ISBN") {
 		t.Fatal("both Runs' work is not on main")
+	}
+}
+
+// TestAWaitingRunStartsAgainFromTheLanding lets the first of two
+// overlapping Runs land while the second waits: the second then starts
+// again from the landing, not from the tip it first read.
+func TestAWaitingRunStartsAgainFromTheLanding(t *testing.T) {
+	f := newFixture(t)
+	f.engine.LockPoll = 20 * time.Millisecond
+	base, start := changeBook(f)
+	started, release := make(chan struct{}), make(chan struct{})
+	a := f.agents
+	a.On("catalog", maker, held(started, release, a.Submit(nil, map[string]string{"src/catalog/book.go": isbn}, word("changed"))))
+	a.On("catalog", checker, a.Review(nil))
+	a.On(".", maker, a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
+	a.On(".", checker, a.Review(nil))
+	first := runAsync(f.engine, run.Request{Mode: agentport.Apply, Run: "first", Target: "main", Base: base, Limits: limits()})
+	<-started
+
+	e2, b := f.second()
+	b.On("catalog", maker, b.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\n// Book has an ISBN.\ntype Book struct{ ISBN string }\n"}, word("changed")))
+	b.On("catalog", checker, b.Review(nil))
+	b.On(".", maker, b.Submit([]string{"managers/catalog"}, nil, word("conforms")))
+	b.On(".", checker, b.Review(nil))
+	second := runAsync(e2, run.Request{Mode: agentport.Apply, Run: "second", Target: "main", Base: base, Limits: limits()})
+	time.Sleep(300 * time.Millisecond)
+	close(release)
+
+	o1 := <-first
+	if o1.err != nil || o1.r.State != run.StateLanded {
+		t.Fatalf("first: %+v %v", o1.r, o1.err)
+	}
+	o2 := <-second
+	if o2.err != nil {
+		t.Fatal(o2.err)
+	}
+	r := o2.r
+	if r.State != run.StateLanded || r.Start != o1.r.Landed || r.Start == start {
+		t.Fatalf("second: %s from %s (the first landed %s): %s", r.State, r.Start, o1.r.Landed, r.Why)
+	}
+	if len(r.Queue) != 2 || !strings.Contains(r.Queue[1], "started again") {
+		t.Fatalf("queue %q", r.Queue)
 	}
 }
 
@@ -286,7 +347,7 @@ func TestTheLock(t *testing.T) {
 
 	set(map[string]any{"run": "busy", "until": time.Now().Add(time.Hour), "impact": overlapping})
 	lim := limits()
-	lim.Deadline = time.Now().Add(time.Second)
+	lim.Deadline = time.Now().Add(4 * time.Second)
 	r, err := f.engine.Run(ctx, run.Request{Mode: agentport.Apply, Run: "waits", Target: "main", Base: base, Limits: lim})
 	if err != nil {
 		t.Fatal(err)

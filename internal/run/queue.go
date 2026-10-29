@@ -80,9 +80,12 @@ type lockRecord struct {
 }
 
 type lockEntry struct {
-	Run    string    `json:"run"`
-	Until  time.Time `json:"until"`
-	Impact []string  `json:"impact"`
+	Run   string    `json:"run"`
+	Until time.Time `json:"until"`
+	// Nonce tells a Run its own entry from another Run's of the same name,
+	// for example after a write that took effect but reported a failure.
+	Nonce  string   `json:"nonce"`
+	Impact []string `json:"impact"`
 }
 
 func readLock(data []byte, now time.Time) ([]lockEntry, error) {
@@ -115,15 +118,21 @@ var errRunNameTaken = errors.New("taken")
 // enter takes the Run's place in the target branch's lock: it waits while a
 // Run whose impact overlaps its own works on the branch, then enters its
 // entry with a compare-and-swap of the lock record. It returns what it
-// waited for. Runs whose impact does not overlap enter side by side.
+// waited for. Runs whose impact does not overlap enter side by side. After
+// an error the Run may still hold its entry; the caller leaves it.
 func (e *Engine) enter(ctx context.Context, target string, entry lockEntry) (waited []string, err error) {
 	since := e.now()
 	var blockers []string
+	note := func(suffix string) {
+		if len(blockers) > 0 {
+			waited = append(waited, fmt.Sprintf("waited %s for %s, whose impact overlaps%s", e.now().Sub(since).Round(time.Second), strings.Join(blockers, " and "), suffix))
+		}
+	}
 	defer func() {
 		// The deadline may end the wait in any Git call, not only between
 		// two reads.
-		if err != nil && ctx.Err() != nil && len(blockers) > 0 {
-			waited = append(waited, fmt.Sprintf("waited %s for %s, whose impact overlaps, until the deadline", e.now().Sub(since).Round(time.Second), strings.Join(blockers, " and ")))
+		if err != nil && ctx.Err() != nil {
+			note(", until the deadline")
 		}
 	}()
 	for {
@@ -137,7 +146,12 @@ func (e *Engine) enter(ctx context.Context, target string, entry lockEntry) (wai
 		}
 		var now []string
 		for _, l := range live {
-			if l.Run == entry.Run {
+			switch {
+			case l.Nonce == entry.Nonce:
+				// A write that reported a failure took effect.
+				note("")
+				return waited, nil
+			case l.Run == entry.Run:
 				return waited, fmt.Errorf("%w: a Run named %s works on %s until %s at the latest", errRunNameTaken, entry.Run, target, l.Until.UTC().Format(time.RFC3339))
 			}
 			if both := overlap(l.Impact, entry.Impact); len(both) > 0 {
@@ -145,20 +159,19 @@ func (e *Engine) enter(ctx context.Context, target string, entry lockEntry) (wai
 			}
 		}
 		if len(now) == 0 {
-			if len(blockers) > 0 {
-				waited = append(waited, fmt.Sprintf("waited %s for %s, whose impact overlaps", e.now().Sub(since).Round(time.Second), strings.Join(blockers, " and ")))
-			}
 			out, err := writeLock(append(live, entry))
 			if err != nil {
 				return waited, err
 			}
 			if err := e.Git.SetLock(ctx, target, out, version); err != nil {
-				// Another Run changed the lock meanwhile; read it again.
+				// Another Run changed the lock meanwhile, or the write took
+				// effect after all; read it again.
 				if _, again, rerr := e.Git.Lock(ctx, target); rerr != nil || again == version {
 					return waited, fmt.Errorf("writing the lock of %s: %w", target, err)
 				}
 				continue
 			}
+			note("")
 			return waited, nil
 		}
 		for _, b := range now {
@@ -174,9 +187,12 @@ func (e *Engine) enter(ctx context.Context, target string, entry lockEntry) (wai
 	}
 }
 
-// leave removes the Run's entry from the target branch's lock, and with it
-// entries whose time has passed.
-func (e *Engine) leave(ctx context.Context, target, run string) error {
+// leave removes the Run's entry, known by its nonce, from the target
+// branch's lock, and with it entries whose time has passed. It runs on its
+// own cleanup deadline.
+func (e *Engine) leave(ctx context.Context, target, nonce string) error {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), e.cleanup())
+	defer cancel()
 	for attempt := 0; attempt < 5; attempt++ {
 		data, version, err := e.Git.Lock(ctx, target)
 		if err != nil {
@@ -189,7 +205,7 @@ func (e *Engine) leave(ctx context.Context, target, run string) error {
 		var rest []lockEntry
 		found := false
 		for _, l := range live {
-			if l.Run == run {
+			if l.Nonce == nonce {
 				found = true
 			} else {
 				rest = append(rest, l)
@@ -240,6 +256,7 @@ func contains(list []string, v string) bool {
 // that Run.
 const (
 	trailerRun    = "Markitect-Run"
+	trailerTarget = "Markitect-Target"
 	trailerWork   = "Markitect-Work"
 	trailerStart  = "Markitect-Start"
 	trailerFull   = "Markitect-Full"
@@ -254,7 +271,7 @@ func resultMessage(r *Result, work string) string {
 		fmt.Fprintf(&b, "%s: %s\n", trailerWork, work)
 		return b.String()
 	}
-	fmt.Fprintf(&b, "%s: %s\n", trailerStart, r.Start)
+	fmt.Fprintf(&b, "%s: %s\n%s: %s\n", trailerTarget, r.Target, trailerStart, r.Start)
 	if r.Full {
 		fmt.Fprintf(&b, "%s: true\n", trailerFull)
 	}
@@ -299,14 +316,28 @@ func (e *Engine) lastBase(ctx context.Context, tip string) (string, bool, error)
 }
 
 // covered lists the kept Run branches this landing covers, with their tips
-// (concept 2.0 §6.5): a kept Run is covered when this Run started from a
-// state that holds its start and this Run's impact holds its impact, or
-// this Run covered everything. A Run branch whose tip is not the host's
-// Result commit, because someone pushed to it, is never covered.
+// (concept 2.0 §6.5): a kept Run of the same target branch is covered when
+// this Run started from a state that holds its start and this Run's impact
+// holds its impact, or this Run covered everything. Only a branch whose tip
+// is the host's Result commit counts: a commit that adds nothing but that
+// Run's Result page, which no agent can write. A Run that still holds an
+// entry in the lock is never covered.
 func (e *Engine) covered(ctx context.Context, r *Result) (map[string]string, error) {
 	tips, err := e.Git.Branches(ctx, RunBranchPrefix)
 	if err != nil {
 		return nil, err
+	}
+	data, _, err := e.Git.Lock(ctx, r.Target)
+	if err != nil {
+		return nil, err
+	}
+	live, err := readLock(data, e.now())
+	if err != nil {
+		return nil, err
+	}
+	running := map[string]bool{}
+	for _, l := range live {
+		running[l.Run] = true
 	}
 	ours := map[string]bool{}
 	for _, k := range r.impact {
@@ -315,7 +346,8 @@ func (e *Engine) covered(ctx context.Context, r *Result) (map[string]string, err
 	out := map[string]string{}
 	for _, branch := range sortedKeys(tips) {
 		tip := tips[branch]
-		if branch == RunBranchPrefix+r.Run {
+		name := strings.TrimPrefix(branch, RunBranchPrefix)
+		if name == r.Run || running[name] {
 			continue
 		}
 		c, err := e.Git.Commit(ctx, tip)
@@ -323,7 +355,15 @@ func (e *Engine) covered(ctx context.Context, r *Result) (map[string]string, err
 			return nil, err
 		}
 		t := trailers(c.Message)
-		if len(t[trailerRun]) != 1 || RunBranchPrefix+t[trailerRun][0] != branch || len(t[trailerStart]) != 1 {
+		if len(t[trailerRun]) != 1 || t[trailerRun][0] != name || len(t[trailerStart]) != 1 ||
+			len(t[trailerTarget]) != 1 || t[trailerTarget][0] != r.Target || len(c.Parents) != 1 {
+			continue
+		}
+		changed, err := e.Git.Changed(ctx, c.Parents[0], tip)
+		if err != nil {
+			return nil, err
+		}
+		if len(changed) != 1 || changed[0].Path != ResultFile(name) {
 			continue
 		}
 		if ok, err := e.Git.Contains(ctx, r.Start, t[trailerStart][0]); err != nil || !ok {
