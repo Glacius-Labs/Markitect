@@ -25,9 +25,20 @@ IMAGE = "sha256:" + "e" * 64
 FAKE_ENGINE = textwrap.dedent(r'''
     import json, os, subprocess, sys, time
     args, d = sys.argv[1:], os.environ["FAKE_DIR"]
-    if args[:2] == ["network", "inspect"] and os.environ.get("FAKE_INSPECT_DELAY"):
-        time.sleep(float(os.environ["FAKE_INSPECT_DELAY"]))  # a slow engine: the network may be gone by now
     path, log = os.path.join(d, "engine.json"), os.path.join(d, "events.jsonl")
+    if (args[:2] == ["network", "inspect"] and "Internal" in (args[3] if len(args) > 3 else "") and os.environ.get("FAKE_INSPECT_LATE")
+            and args[-1].endswith("-" + os.environ["FAKE_INSPECT_LATE"])):
+        # A slow engine: the suite's inspection of the variant's network named FAKE_INSPECT_LATE arrives only after the
+        # variant has removed it.
+        until = time.time() + 30
+        while time.time() < until:
+            try:
+                nets = json.load(open(path)).get("networks", {})
+            except (OSError, ValueError):
+                nets = {}
+            if not any(args[-1] in (n, item.get("id")) for n, item in nets.items()):
+                break
+            time.sleep(0.05)
     state = json.load(open(path)) if os.path.exists(path) else {"containers": {}, "networks": {}, "volumes": {}, "seq": 0}
     def save():
         json.dump(state, open(path, "w"))
@@ -167,18 +178,24 @@ OWN_NETWORK = textwrap.dedent('''
     e = lambda *a: subprocess.run([*engine, *a], check=True, capture_output=True)
     calls = os.path.join(os.environ["FAKE_DIR"], "calls.jsonl")
 
+    def inspections():
+        """The suite's inspections of networks named arm-run-net so far; the engine's call log is shared by every run."""
+        seen = []
+        for line in open(calls) if os.path.exists(calls) else []:
+            try:
+                seen.append(json.loads(line))
+            except ValueError:
+                pass  # a line the engine is still writing
+        return sum(c[:2] == ["network", "inspect"] and "Internal" in c[3] and c[-1].endswith("-arm-run-net") for c in seen)
+
+    before = inspections()
+
     def inspected(n):
-        """Wait until the suite has inspected n networks named arm-run-net, as a Run's network lives long enough to be;
+        """Wait until the suite has inspected n of this run's networks, as a Run's network lives long enough to be;
         with ARM_NO_WAIT, go on at once, as a variant that removes its network quickly does."""
         until = time.monotonic() + 30
         while not os.environ.get("ARM_NO_WAIT") and time.monotonic() < until:
-            seen = []
-            for line in open(calls) if os.path.exists(calls) else []:
-                try:
-                    seen.append(json.loads(line))
-                except ValueError:
-                    pass  # a line the engine is still writing
-            if sum(c[:2] == ["network", "inspect"] and "Internal" in c[3] and c[-1].endswith("-arm-run-net") for c in seen) >= n:
+            if inspections() >= before + n:
                 return
             time.sleep(0.05)
 
@@ -304,10 +321,10 @@ class NativeTest(unittest.TestCase):
 
     def test_a_network_gone_before_its_inspection_counts_as_not_internal(self):
         # The suite inspects a network when its create event arrives. A variant that removes it before then (here the
-        # engine is slow and the arm does not wait) leaves it uninspected: it counts as not internal, so the container
-        # that joined it is an escape, even though the network was internal.
+        # engine answers the inspection only once the network is gone, and the arm does not wait) leaves it uninspected:
+        # it counts as not internal, so the container that joined it is an escape, even though the network was internal.
         (self.tmp / "own.py").write_text(OWN_NETWORK)
-        os.environ.update(ARM_NETWORK_FLAGS="--internal", ARM_NO_WAIT="1", FAKE_INSPECT_DELAY="3")
+        os.environ.update(ARM_NETWORK_FLAGS="--internal", ARM_NO_WAIT="1", FAKE_INSPECT_LATE="arm-run-net")
         record, out = self.run_mode("gone", [sys.executable, "-B", str(self.tmp / "own.py")])
         self.assertEqual([(n["name"], n["internal"]) for n in record["sandbox"]["armNetworks"]], [("arm-run-net", None)])
         self.assertEqual([c["name"] for c in record["sandbox"]["escapes"]], ["arm-agent"])
