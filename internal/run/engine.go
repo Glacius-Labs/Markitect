@@ -189,9 +189,28 @@ func (e *Engine) Run(ctx context.Context, req Request) (*Result, error) {
 		}
 		r.Queue = append(r.Queue, fmt.Sprintf("%s moved from %s to %s while the Run waited, so it started again from there", req.Target, short(start), short(tip)))
 	}
-	if req.Mode == agentport.Apply {
-		defer left()
+	// The Run holds its lock entry and, once started, its remote until
+	// release, which a Run that keeps its work calls before it writes its
+	// page, so the page says what both left, and a landed Run after landing.
+	locked := req.Mode == agentport.Apply
+	var remote Remote
+	release := func(into *[]string) {
+		if remote != nil {
+			cctx, ccancel := context.WithTimeout(context.WithoutCancel(ctx), e.cleanup())
+			if err := remote.Close(cctx); err != nil {
+				*into = append(*into, fmt.Sprintf("the Run's remote: %v", err))
+			}
+			ccancel()
+			remote = nil
+		}
+		if locked {
+			locked = false
+			if err := e.leave(ctx, req.Target, nonce); err != nil {
+				*into = append(*into, fmt.Sprintf("the Run's entry in the lock of %s stays until %s: %v", req.Target, until.UTC().Format(time.RFC3339), err))
+			}
+		}
 	}
+	defer release(&r.Cleanup)
 
 	mode := runremote.Apply
 	if req.Mode == agentport.Verify {
@@ -213,22 +232,16 @@ func (e *Engine) Run(ctx context.Context, req Request) (*Result, error) {
 	if err := e.Git.Bundle(ctx, start, &bundle); err != nil {
 		return nil, err
 	}
-	remote, err := e.Remotes.Start(ctx, plan, &bundle)
+	started, err := e.Remotes.Start(ctx, plan, &bundle)
 	if err != nil {
 		r.State = StateIncomplete
 		r.Why = fmt.Sprintf("the Run's remote did not start: %v", err)
 		r.Cleanup = append(r.Cleanup, "the Run's remote may remain if its start failed half-way; Sweep removes it")
 		return e.finish(r), nil
 	}
-	defer func() {
-		cctx, ccancel := context.WithTimeout(context.WithoutCancel(ctx), e.cleanup())
-		defer ccancel()
-		if err := remote.Close(cctx); err != nil {
-			r.Cleanup = append(r.Cleanup, fmt.Sprintf("the Run's remote: %v", err))
-		}
-	}()
+	remote = started
 
-	s := newSchedule(e, req, plan, cur, imp, remote, creds)
+	s := newSchedule(e, req, plan, cur, imp, started, creds)
 	s.run(ctx)
 	s.report(r)
 	if r.State != "" {
@@ -243,12 +256,13 @@ func (e *Engine) Run(ctx context.Context, req Request) (*Result, error) {
 			r.Cleanup = append(r.Cleanup, fmt.Sprintf("the Run's remote could not be read after the stop, so the Run branch may miss its last pushes: %v", err))
 		}
 	}
-	e.collectChecks(ctx, remote, s, r)
+	e.collectChecks(ctx, started, s, r)
 
 	switch {
 	case r.State != "":
 		// The schedule stopped the Run: a model defect, a budget, a
 		// deadline or no progress. Its work stays on the Run branch.
+		release(&r.Cleanup)
 		e.keep(ctx, r, s)
 	case req.Mode == agentport.Verify:
 		var found []string
@@ -275,9 +289,10 @@ func (e *Engine) Run(ctx context.Context, req Request) (*Result, error) {
 				r.Why = "every checklist item conforms"
 			}
 		}
+		release(&r.Cleanup)
 		e.keep(ctx, r, s)
 	default:
-		e.land(ctx, r, s, remote)
+		e.land(ctx, r, s, started, release)
 	}
 	return e.finish(r), nil
 }
@@ -363,7 +378,18 @@ func (e *Engine) done(r *Result, err error) (*Result, error) {
 	return e.finish(r), nil
 }
 
+// finish completes the Result once the Run returns. A Run that wrote its
+// page keeps the end time stamped there, so the page and the Result agree.
 func (e *Engine) finish(r *Result) *Result {
+	if r.Ended.IsZero() {
+		return e.stamp(r)
+	}
+	return r
+}
+
+// stamp sets the Result's end time and usage, as the page it is about to
+// write states them.
+func (e *Engine) stamp(r *Result) *Result {
 	r.Ended = e.now()
 	r.Usage = agentport.Usage{}
 	for _, st := range r.Starts {
