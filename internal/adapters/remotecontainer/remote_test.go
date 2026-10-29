@@ -350,3 +350,11 @@ func TestAFailedStartLeavesNothing(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestTheRunNetworkNeedsDocker28(t *testing.T) {
+	for version, ok := range map[string]bool{"28.0.0": true, "29.9.2": true, "27.5.1": false, "26.0.0": false, "podman": false, "": false} {
+		if err := RequireIsolatedGateway(version); (err == nil) != ok {
+			t.Errorf("%q: %v", version, err)
+		}
+	}
+}

@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -143,6 +144,7 @@ func TestEscalationSettledByParent(t *testing.T) {
 	base, _ := changeBook(f)
 	a := f.agents
 	var question string
+	var rootEnded atomic.Bool
 	a.On("catalog", maker,
 		agentfake.Call(func(ctx context.Context, s agentport.Start, h agentport.Host) error {
 			m, err := h.Escalate(ctx, "Must an isbn be unique across copies?")
@@ -153,6 +155,11 @@ func TestEscalationSettledByParent(t *testing.T) {
 			if len(s.Inbox) != 1 || s.Inbox[0].Kind != agentport.Answer || s.Inbox[0].ReplyTo != question {
 				return agentfake.Fail(errorf("no answer: %+v", s.Inbox))
 			}
+			// The answer settles the matter only once Root's start has
+			// ended, which could still have changed Root's files.
+			if !rootEnded.Load() {
+				return agentfake.Fail(errorf("catalog started again while Root's answering start ran"))
+			}
 			return a.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ Title, ISBN string }\n"}, word("changed"))(ctx, s, h)
 		})
 	a.On("catalog", checker, a.Review(nil))
@@ -162,6 +169,8 @@ func TestEscalationSettledByParent(t *testing.T) {
 				return errorf("Root got %+v", s.Inbox)
 			}
 			_, err := h.Answer(ctx, s.Inbox[0].ID, "Per title, as the model says nothing more: realization freedom.")
+			time.Sleep(500 * time.Millisecond)
+			rootEnded.Store(true)
 			return err
 		}),
 		a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
@@ -245,11 +254,138 @@ func TestEscalationSettledByAParentsCommit(t *testing.T) {
 	}
 	// Root's settlement was approved before catalog started again, and
 	// catalog was approved before Root integrated it.
-	var order []string
-	for _, st := range r.Starts {
-		order = append(order, st.Manager+" "+string(st.Role))
+	if got := startOrder(a); got != "catalog maker, . maker, . checker, catalog maker, catalog maker, catalog checker, . maker, . checker" {
+		t.Fatalf("order: %s", got)
 	}
-	if got := strings.Join(order, ", "); got != "catalog maker, . maker, . checker, catalog maker, catalog maker, catalog checker, . maker, . checker" {
+}
+
+// startOrder lists the starts in the order they began.
+func startOrder(a *agentfake.Agents) string {
+	var order []string
+	for _, st := range a.Starts() {
+		order = append(order, st.Manager.ID+" "+string(st.Role))
+	}
+	return strings.Join(order, ", ")
+}
+
+// pushWork returns a maker Step that pushes a work commit, no submission.
+func pushWork(a *agentfake.Agents, files map[string]string) agentfake.Step {
+	return func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+		w, err := a.Clone(ctx, s)
+		if err != nil {
+			return agentfake.Fail(err)
+		}
+		for f, content := range files {
+			if err := w.Write(f, content); err != nil {
+				return agentfake.Fail(err)
+			}
+		}
+		if err := w.Commit("work in progress"); err != nil {
+			return agentfake.Fail(err)
+		}
+		if err := w.Push(); err != nil {
+			return agentfake.Fail(err)
+		}
+		return agentfake.Done()
+	}
+}
+
+// readmeReview approves only a submission whose README.md is readme.
+func readmeReview(a *agentfake.Agents, readme string) agentfake.Step {
+	return func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+		w, err := a.Clone(ctx, s)
+		if err != nil {
+			return agentfake.Fail(err)
+		}
+		if data, err := os.ReadFile(filepath.Join(w.Dir, "README.md")); err != nil || string(data) != readme {
+			return a.Review(map[string]string{"catalog/book": "README.md does not name the isbn"})(ctx, s, h)
+		}
+		return a.Review(nil)(ctx, s, h)
+	}
+}
+
+// A child that escalates and submits in the same start, and a parent that
+// answers and pushes only a work commit: the parent is still asked for a
+// submission, and the child's submission from before the settlement is never
+// reviewed.
+func TestASettlementOutlivesStaleWork(t *testing.T) {
+	f := newFixture(t)
+	base, _ := changeBook(f)
+	a := f.agents
+	readme := "# Library\n\nBooks carry an isbn.\n"
+	a.On("catalog", maker,
+		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+			if _, err := h.Escalate(ctx, "The isbn must be in README.md, which is Root's file."); err != nil {
+				return agentfake.Fail(err)
+			}
+			return a.Submit(nil, map[string]string{"src/catalog/book.go": isbn}, word("changed"))(ctx, s, h)
+		},
+		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+			if len(s.Inbox) != 2 || !strings.Contains(s.Inbox[1].Text, s.Git.Base) {
+				return agentfake.Fail(errorf("inbox %+v", s.Inbox))
+			}
+			return a.Submit([]string{"root"}, nil, word("changed"))(ctx, s, h)
+		})
+	a.On("catalog", checker, readmeReview(a, readme))
+	a.On(".", maker,
+		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+			if _, err := h.Answer(ctx, s.Inbox[0].ID, "README.md names the isbn now."); err != nil {
+				return agentfake.Fail(err)
+			}
+			return pushWork(a, map[string]string{"README.md": readme})(ctx, s, h)
+		},
+		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+			if len(s.Inbox) != 1 || !strings.Contains(s.Inbox[0].Text, "which is no submission") {
+				return agentfake.Fail(errorf("inbox %+v", s.Inbox))
+			}
+			return a.Submit(nil, nil, word("conforms"))(ctx, s, h)
+		},
+		a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
+	a.On(".", checker, a.Review(nil), a.Review(nil))
+
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateLanded {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+	if got := startOrder(a); got != "catalog maker, . maker, . maker, . checker, catalog maker, catalog checker, . maker, . checker" {
+		t.Fatalf("order: %s", got)
+	}
+}
+
+// An approved model-problem verdict escalates as the tool does: the parent's
+// settlement with a commit is checked first, and the child continues from it.
+func TestAModelProblemSettledByAParentsCommit(t *testing.T) {
+	f := newFixture(t)
+	base, _ := changeBook(f)
+	a := f.agents
+	readme := "# Library\n\nBooks carry an isbn.\n"
+	a.On("catalog", maker,
+		a.Submit(nil, nil, word("model-problem")),
+		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+			if len(s.Inbox) != 2 || !strings.Contains(s.Inbox[1].Text, s.Git.Base) {
+				return agentfake.Fail(errorf("inbox %+v", s.Inbox))
+			}
+			return a.Submit([]string{"root"}, map[string]string{"src/catalog/book.go": isbn}, word("changed"))(ctx, s, h)
+		})
+	a.On("catalog", checker, a.Review(nil), readmeReview(a, readme))
+	a.On(".", maker,
+		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+			if len(s.Inbox) != 1 || s.Inbox[0].Kind != agentport.Escalation {
+				return agentfake.Fail(errorf("Root got %+v", s.Inbox))
+			}
+			if _, err := h.Answer(ctx, s.Inbox[0].ID, "README.md names the isbn now."); err != nil {
+				return agentfake.Fail(err)
+			}
+			return a.Submit(nil, map[string]string{"README.md": readme}, word("conforms"))(ctx, s, h)
+		},
+		a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
+	a.On(".", checker, a.Review(nil), a.Review(nil))
+
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateLanded {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+	if got := startOrder(a); got != "catalog maker, catalog checker, . maker, . checker, catalog maker, catalog checker, . maker, . checker" {
 		t.Fatalf("order: %s", got)
 	}
 }

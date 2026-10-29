@@ -82,7 +82,8 @@ type node struct {
 	heldAt     int
 	escalation string
 
-	submitRound int // the maker start of the newest submission
+	submitRound   int // the maker start of the newest submission
+	approvedRound int // the maker start of the approved submission
 
 	tip                string // the branch tip after the last start
 	submission         string // the newest submission at the tip, awaiting review
@@ -518,7 +519,7 @@ func (s *schedule) afterMaker(ctx context.Context, n *node, tip string, moved bo
 		// An approved Manager started again, for example by an answer,
 		// that changed nothing stays approved; an escalation it answered
 		// without a change is settled.
-		s.settle(n, n.rounds[agentport.Maker], "")
+		s.settle(n, n.rounds[agentport.Maker], true)
 		return n.approved, nil
 	}
 	n.approved = false
@@ -528,7 +529,9 @@ func (s *schedule) afterMaker(ctx context.Context, n *node, tip string, moved bo
 	}
 	t, perr := runremote.ParseMessage(c.Message)
 	if perr != nil || t.Kind != runremote.Submission {
-		if n.sent {
+		// A parent whose children wait for its settlement is never left
+		// without a submission, even after it sent a message.
+		if n.sent && s.held(n) == "" {
 			return true, nil
 		}
 		s.hostMessage(n, fmt.Sprintf("Your branch %s ends at %s, which is no submission. Finish with a submission commit that gives every checklist item a verdict.", n.branch, short(tip)))
@@ -596,7 +599,7 @@ func (s *schedule) afterChecker(ctx context.Context, n *node, tip string, moved 
 		s.deliver(agentport.Message{Kind: agentport.Review, To: n.name, Text: fmt.Sprintf("Your checker rejected submission %s:\n%s", short(submission), strings.Join(lines, "\n"))})
 		return true, nil
 	}
-	n.approved, n.approval, n.approvedSubmission, n.approvedVerdicts, n.checks = true, tip, submission, n.verdicts, t.Checks
+	n.approved, n.approval, n.approvedSubmission, n.approvedVerdicts, n.checks, n.approvedRound = true, tip, submission, n.verdicts, t.Checks, n.submitRound
 	n.review = s.creds[n.id][agentport.Checker].user
 	var problems []string
 	for _, v := range n.verdicts {
@@ -620,7 +623,7 @@ func (s *schedule) afterChecker(ctx context.Context, n *node, tip string, moved 
 		s.hold(n, m.ID)
 		return true, nil
 	}
-	s.settle(n, n.submitRound, tip)
+	s.settle(n, n.submitRound, false)
 	return true, nil
 }
 
@@ -632,19 +635,22 @@ func (s *schedule) hold(n *node, escalation string) {
 	n.held, n.released, n.heldAt, n.escalation = true, false, n.parent.rounds[agentport.Maker], escalation
 }
 
-// settle lets the Managers that escalated to n start again once a maker start
-// of n's after their escalation ended: from n's approved work when it settled
-// the matter with a commit of its own, which they merge first, or from where
-// they were when it answered without a change.
-func (s *schedule) settle(n *node, round int, approval string) {
+// settle lets the Managers that escalated to n start again after a maker start
+// of n's that began after their escalation: when its submission is approved,
+// or, with answered, when it ended without a change and answered them. They
+// continue from n's newest approved work made since their escalation, which
+// they merge first, or from where they were when there is none.
+func (s *schedule) settle(n *node, round int, answered bool) {
 	for _, c := range n.children {
-		if !c.held || round <= c.heldAt || (approval == "" && c.waitFor[c.escalation]) {
+		if !c.held || round <= c.heldAt || (answered && c.waitFor[c.escalation]) {
 			continue
 		}
 		c.held, c.released = false, true
-		if approval != "" {
-			c.from = approval
-			s.hostMessage(c, fmt.Sprintf("Your parent %s settled your escalation %s in its approved work %s on branch %s. Merge it: your work continues from it.", n.name, c.escalation, approval, n.branch))
+		if n.approval != "" && n.approvedRound > c.heldAt {
+			// A submission made before the settlement is not reviewed;
+			// the maker merges and submits again.
+			c.from, c.submission = n.approval, ""
+			s.hostMessage(c, fmt.Sprintf("Your parent %s has approved work %s on branch %s since your escalation %s. Merge it: your work continues from it.", n.name, n.approval, n.branch, c.escalation))
 		}
 	}
 }

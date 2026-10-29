@@ -62,6 +62,21 @@ type Remote struct {
 
 var runID = regexp.MustCompile(`^[a-z0-9][a-z0-9_.-]{0,62}$`)
 
+// minIsolatedGatewayMajor is the first Docker server whose bridge networks
+// know the isolated gateway mode; an older one refuses or ignores it.
+const minIsolatedGatewayMajor = 28
+
+// RequireIsolatedGateway refuses a Docker server version too old for the
+// Run's isolated network, so a Run never starts on a network that reaches
+// the engine's host.
+func RequireIsolatedGateway(version string) error {
+	digits, _, _ := strings.Cut(version, ".")
+	if major, err := strconv.Atoi(digits); err != nil || major < minIsolatedGatewayMajor {
+		return fmt.Errorf("the container engine is Docker server %q; the Run's isolated network needs Docker %d or newer", version, minIsolatedGatewayMajor)
+	}
+	return nil
+}
+
 // Start creates the Run's internal network and its remote container, puts the
 // program and the plan in, starts it, seeds the bare repository from bundle
 // (which must hold the plan's base commit) and waits until it serves. On
@@ -102,6 +117,13 @@ func Start(ctx context.Context, e *Engine, spec Spec, bundle io.Reader) (r *Remo
 		}
 	}()
 	label := RunLabel + "=" + run
+	version, err := e.output(ctx, "version", "--format", "{{.Server.Version}}")
+	if err != nil {
+		return nil, err
+	}
+	if err := RequireIsolatedGateway(version); err != nil {
+		return nil, err
+	}
 	// Internal alone still gives the bridge a gateway address on the
 	// engine's host; isolated gateway mode removes it, so no container of
 	// the Run reaches the host.
