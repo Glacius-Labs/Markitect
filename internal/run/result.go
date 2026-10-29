@@ -90,7 +90,7 @@ type Result struct {
 	// its branches, its remote and its lock entry. The landed page cannot
 	// say it, since it is part of the landing commit; empty when nothing
 	// remains, absent when the Run did not land.
-	AfterLanding []string  `json:"afterLanding,omitempty"`
+	AfterLanding []string  `json:"afterLanding,omitzero"`
 	Began        time.Time `json:"began"`
 	Ended        time.Time `json:"ended"`
 

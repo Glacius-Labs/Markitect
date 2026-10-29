@@ -30,7 +30,11 @@ func ResultFile(run string) string { return path.Join(project.ResultsDir, run+".
 func (e *Engine) land(ctx context.Context, r *Result, s *schedule, remote Remote, release func(*[]string)) {
 	// A Run that does not land releases its remote and its lock entry
 	// before it writes its page, so the page says what they left.
+	// What a landing attempt found about the kept Run branches it would
+	// replace goes with that attempt.
+	cleanup := r.Cleanup
 	keepOn := func(ctx context.Context, r *Result, commit, old, state, why string, err error) {
+		r.Replaced = nil
 		release(&r.Cleanup)
 		e.keepOn(ctx, r, commit, old, state, why, err)
 	}
@@ -58,6 +62,7 @@ func (e *Engine) land(ctx context.Context, r *Result, s *schedule, remote Remote
 		return
 	}
 	for attempt := 1; attempt <= landAttempts; attempt++ {
+		r.Cleanup, r.Replaced = append([]string{}, cleanup...), nil
 		tip, err := e.Git.Fetch(ctx, r.Target)
 		if err != nil {
 			keepOn(ctx, r, cand, pushed, StateIncomplete, "", fmt.Errorf("reading the target branch: %w", err))
@@ -136,13 +141,17 @@ func (e *Engine) land(ctx context.Context, r *Result, s *schedule, remote Remote
 			cctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), e.cleanup())
 			now, ferr := e.Git.Fetch(cctx, r.Target)
 			holds := now == commit
+			var aerr error
 			if ferr == nil && !holds && now != tip {
-				holds, ferr = e.Git.Contains(cctx, now, commit)
+				holds, aerr = e.Git.Contains(cctx, now, commit)
 			}
 			cancel()
 			switch {
 			case ferr != nil:
 				keepOn(ctx, r, cand, pushed, StateIncomplete, fmt.Sprintf("the landing push failed (%v) and %s could not be read again, so whether it landed is uncertain", err, r.Target), ferr)
+				return
+			case aerr != nil:
+				keepOn(ctx, r, cand, pushed, StateIncomplete, fmt.Sprintf("the landing push failed (%v) and whether %s's new tip %s holds the landing could not be read, so whether it landed is uncertain", err, r.Target, short(now)), aerr)
 				return
 			case holds:
 				// It landed.

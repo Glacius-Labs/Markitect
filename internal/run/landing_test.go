@@ -276,3 +276,30 @@ func TestAKeptPageAgreesWithTheResult(t *testing.T) {
 		t.Fatalf("the page omits the remote's cleanup:\n%s", stored)
 	}
 }
+
+// An apply that ends kept in landing leaves the lock and removes its remote
+// before its page is written, as every Run that does not land.
+func TestAKeptApplyPageAgreesWithTheResult(t *testing.T) {
+	f := newFixture(t)
+	base, _ := changeBook(f)
+	f.remote.closeErr = errors.New("remote removal refused")
+	scriptHappyPath(f, func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+		testkit.Git(t, f.src, "push", "-q", "--force", "origin", base+":main")
+		return f.agents.Review(nil)(ctx, s, h)
+	})
+	r := f.runAll(run.Request{Base: base, Mode: agentport.Apply})
+	if r.State != run.StateKept || r.AfterLanding != nil || len(r.Replaced) != 0 {
+		t.Fatalf("%s: %s, after landing %q, replaced %v", r.State, r.Why, r.AfterLanding, r.Replaced)
+	}
+	stored := f.show(run.RunBranchPrefix+r.Run, run.ResultFile(r.Run))
+	if page := strings.TrimSpace(string(run.Page(r))); stored != page {
+		t.Fatalf("the stored page differs from the returned Result's:\n%s\n---\n%s", stored, page)
+	}
+	if !strings.Contains(stored, "remote removal refused") || len(r.Cleanup) != 1 {
+		t.Fatalf("cleanup %q; page:\n%s", r.Cleanup, stored)
+	}
+	// The Run left the lock: a second Run of its name may enter.
+	if data, _, err := f.host.Lock(context.Background(), "main"); err != nil || strings.Contains(string(data), r.Run) {
+		t.Fatalf("lock record %s: %v", data, err)
+	}
+}
