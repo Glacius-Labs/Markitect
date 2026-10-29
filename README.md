@@ -27,11 +27,11 @@
 </p>
 
 > [!IMPORTANT]
-> Markitect is in active development and runs from source; there is no release yet. Every command on this page exists on `main`. Whether its Runs keep a project at least as consistent as one strong agent with ordinary documentation, with fewer defects left for people to repair, is being measured now ([status](#status)).
+> Markitect is in active development and runs from source; there is no release yet. Every command on this page exists on `main`. Whether its Runs keep a project at least as consistent as one strong agent with ordinary documentation, with fewer defects left for people to repair, is the question its evaluation answers; a pilot has run, and the counted series follows ([status](#status)).
 
 ## Why Markitect
 
-When AI agents build most of a project, its design, rules, documentation, code, tests and configuration drift apart. A decision about behavior rarely lives in one file: its consequences reach the code, the tests, the documentation and the agents' own instructions. An agent finishes its task and misses a rule two folders away. Consistency passes take hours and find more each time, and a pull request that one AI wrote, another reviewed and a person approved almost blind carries the gap to `main`.
+When AI agents build most of a project, its design, rules, documentation, code, tests and configuration drift apart. A decision about behavior reaches the code, the tests, the documentation and the agents' own instructions. An agent finishes its task and misses a rule two folders away. Consistency passes take hours and find more each time, and a pull request that one AI wrote, another reviewed and a person approved on trust carries the gap to `main`.
 
 Markitect moves the knowledge of what belongs together out of the agents' memory and into one place you own: the canonical model. You describe the project once, as typed documentation in Markdown. Code, tests, configuration and documentation are its realizations. When intent changes, you change the model; Markitect works out what the change reaches, has the responsible agents bring the repository in line, checks every step independently and lands the result with a record of every verdict.
 
@@ -43,7 +43,7 @@ Markitect moves the knowledge of what belongs together out of the agents' memory
 - **Impact like an incremental build.** `markitect impact` shows which Definitions, files and Packages a change reaches and gives each responsible Manager its checklist. `markitect lint` measures the model like code: coupling, size, unused Definitions.
 - **An organization derived from the architecture.** Every Package is a Manager, and the Package tree is the Manager tree. There is no separate agent chart to keep in sync.
 - **A maker and a checker for every Manager.** The maker gives each checklist item a verdict with evidence. A fresh checker re-checks every verdict without the maker's notes and sends defects straight back.
-- **Guarantees in Git.** Each Run has its own Git remote. Server-side hooks refuse a push outside a Manager's paths, a submission that does not compile, a merged state that fails the required checks and a checklist with an item left open.
+- **Guarantees in Git.** Each Run has its own Git remote. Server-side hooks keep every Manager to its own branch and paths, compile every submission, run your required checks on it and refuse a checklist with an item left open. Nothing lands that fails the required checks.
 - **Lands like a merge queue.** Root's approved result lands on your target branch like a colleague's push, with a Result page under `.markitect/results/`. Markitect never touches your working tree.
 - **Native, with your own account.** The host runs on Windows, Linux and macOS with Docker. Every maker and checker runs Claude Code or Codex in its own container and logs in with your normal account; API keys are refused.
 
@@ -84,7 +84,7 @@ markitect init --name "Your project"
 markitect check
 ```
 
-`init` creates `.markitect/` with the manifest, the lock, the required checks, a project anchor and Root's registry page, and installs the modeling and Extract skills for Claude Code and Codex. It never changes an existing model file, so it is safe to run again after an upgrade.
+`init` creates `.markitect/` with the manifest, the lock, an empty list of required checks, a project anchor and Root's registry page, and installs the modeling and Extract skills for Claude Code and Codex. It never changes an existing model file, so it is safe to run again after an upgrade. List your build and tests in `.markitect/execution.yaml`; they are the one proof in a Run that does not come from an agent.
 
 In a repository that already has files, the first `check` fails by design, because every file must belong somewhere:
 
@@ -128,9 +128,13 @@ docker build -f packaging/runtime/examples/go/Dockerfile -t markitect-runtime-go
 export MARKITECT_MANAGER_IMAGE=markitect-runtime-go
 ```
 
-A Run starts from the pushed target branch and lands by pushing to it:
+In PowerShell, set it with `$env:MARKITECT_MANAGER_IMAGE = "markitect-runtime-go"`.
+
+A Run starts from the pushed target branch and lands by pushing to it, so commit and push the model first:
 
 ```bash
+git add -A
+git commit -m "Add the Markitect model"
 git push
 markitect apply --full     # the first Run realizes the whole model
 git pull                   # the result arrives like a colleague's push
@@ -141,7 +145,7 @@ Later Runs need no flag: `markitect apply` takes the last landing as its base an
 
 ## Example: one rule changes
 
-A small library allows each member five open loans. The limit lives in one Rule of the model (abridged from the [Library example](tools/evaluation-tasks/library/m1/model/lending/loan-policy.md)):
+A small library allows each member five open loans. The limit lives in one Rule of the model (excerpt from the [Library example](tools/evaluation-tasks/library/m1/model/lending/loan-policy.md)):
 
 ```markdown
 ---
@@ -151,13 +155,15 @@ kind: std/Rule
 
 | Value | Setting | Meaning |
 | --- | --- | --- |
-| Loan limit | `5` | The maximum count of open loans per member when admitting a new loan. |
-| Loan period | `14` days | The number of calendar days added to the borrowing date. |
+| Loan limit | `5` | The maximum resulting count of currently open loans per member when admitting a new loan. … |
+| Loan period | `14` days | The number of calendar days added to the borrowing date to determine a new loan's due date. … |
 
-For [[lending/borrow]], the resulting open-loan count of the member must not exceed
-the loan limit. Count every open [[lending/loan]], including overdue loans.
-[[lending/return]] remains possible regardless of the current limit: a lower limit
-neither deletes existing loans nor forces their return.
+For [[lending/borrow]], the resulting current open-loan count of the member must not exceed the loan limit.
+Count every open [[lending/loan]], including overdue loans, and exclude closed loans. …
+
+[[lending/return]] remains possible regardless of the current limit or overdue state. … a lower limit
+neither deletes existing loans nor forces their return; while at or above that limit, the member cannot
+start another loan.
 ```
 
 You change `5` to `3` and commit. `markitect impact` shows who works:
@@ -198,7 +204,7 @@ Inherited:
 
 With code in place, impact also lists the files that realize these Definitions and their owners. The `catalog` and `members` Packages do not start. `markitect apply` gives `lending` and `lending/reminders` a maker and a checker each, and Root reviews and integrates their work. A conforming result refuses a fourth open loan, updates the tests and the documentation, keeps every existing loan and every return working, and leaves the files that already conform untouched.
 
-The Library is the smallest project of the evaluation, with a [series of five changes](tools/evaluation-tasks/README.md).
+The Library is the smallest project of the evaluation: a fresh build and four changes ([change series](tools/evaluation-tasks/README.md)).
 
 ## Concepts
 
@@ -224,6 +230,7 @@ A project keeps all of it under `.markitect/`:
 ├── registry.md       # Root's registry page
 ├── registry/         # one registry page per Package
 ├── ignore.md         # files that deliberately belong to no Package
+├── libraries/        # Libraries that do not ship with markitect
 └── results/          # one Result page per Run
 ```
 
@@ -236,12 +243,12 @@ Markitect is being rebuilt to [concept 2.0](docs/concepts/v2-concept.md), its ac
 | Area | State |
 | --- | --- |
 | Model language and the commands `init`, `check`, `lock`, `refs`, `graph`, `impact` and `lint` | Available |
-| Runs with `apply` and `verify` | Available. The Library example lands and verifies natively on Windows and on Linux with Claude Code ([record](docs/validation/t5-native-host-20261029.md)); macOS is not yet observed |
+| Runs with `apply` and `verify` | Available. The Library example lands and verifies natively on Windows and on Linux with Claude Code ([record](docs/validation/t5-native-host-20261029.md)); macOS is not yet observed. On the larger Makerspace project no Run has landed yet: a parent's first submission must pass checks that need its children's files. The next step lets the required checks gate merged states only ([plan](docs/implementation-plan.md#concept-20-build)) |
 | Codex | Wired in; its first native smoke did not land yet |
-| Evaluation against ordinary agentic coding | The pilot runs; the counted series follows |
+| Evaluation against ordinary agentic coding | The pilot has run; its report and the counted series follow |
 | Release | None yet; install from source |
 
-Concept 2.0 counts as achieved when the [evaluation suite](docs/guides/evaluation-suite.md) shows, on a small and a larger project over a series of changes, that:
+Concept 2.0 counts as achieved ([§15](docs/concepts/v2-concept.md#15-acceptance)) when the [evaluation suite](docs/guides/evaluation-suite.md) shows, on a small and a larger project over a series of changes, that:
 
 1. every landed change passes hidden behavior tests that no agent saw;
 2. an independent `verify --full` after the series finds nothing left over;
@@ -249,7 +256,7 @@ Concept 2.0 counts as achieved when the [evaluation suite](docs/guides/evaluatio
 4. planted model defects stop the Run without landing, and harmless gaps do not;
 5. the results are at least as consistent as one strong agent with ordinary documentation.
 
-Cost is reported, not judged. Whether people save time is measured on its own, after the series.
+Time and token cost are reported with the results. Whether people save time is measured on its own, after the series.
 
 After acceptance come more commands over the same mechanism, `improve`, `bughunt`, `security` and `cleanup`, and continuous change, in which issues and incidents become Findings or model proposals.
 
@@ -258,7 +265,7 @@ After acceptance come more commands over the same mechanism, `improve`, `bughunt
 <details>
 <summary><b>Does the compiler prove that the code is correct?</b></summary>
 
-It checks structure: Kinds, links, visibility, cycles and file accounting. Agents judge meaning. Every reached item needs a verdict with evidence from its maker, a fresh checker re-checks it, parents review their children's work and the required checks run on every merged state. The bar is today's practice, one strong agent with ordinary documentation, and the evaluation measures Markitect against it.
+It checks structure: Kinds, links, visibility, cycles and file accounting. Agents judge meaning. Every reached item needs a verdict with evidence from its maker, a fresh checker re-checks it, parents review their children's work, and nothing lands that fails the required checks. The bar is today's practice, one strong agent with ordinary documentation, and the evaluation measures Markitect against it.
 
 </details>
 
@@ -279,7 +286,7 @@ A Run never changes the model: the hooks refuse any change to the model, the man
 <details>
 <summary><b>Can I adopt it on an existing code base?</b></summary>
 
-Yes. The `markitect-extract` skill drafts a model from the code with you; its binding part is the contract callers rely on. You accept it like any other model change. From then on, `markitect verify --full` reports where the code deviates, and its Findings go into `markitect apply --findings`.
+Yes. The `markitect-extract` skill drafts a model from the code with you; its binding part is the contract callers rely on. You accept it like any other model change. From then on, `markitect verify --full` reports where the code deviates, and its Findings go into `markitect apply --findings`. How good extracted models are in practice is part of the evaluation.
 
 </details>
 
@@ -293,7 +300,7 @@ Claude Code with Claude Sonnet 5.5 by default, or Codex with `MARKITECT_PROVIDER
 <details>
 <summary><b>Where does the name come from?</b></summary>
 
-Markitect = Markdown + Architect. The idea grew out of a project documented in Markdown rules, skills and agent instructions that drifted away from its code. Agent instructions are one kind of realization; Markitect governs the whole project.
+Markitect = Markdown + Architect. The idea grew out of a project documented in Markdown rules, skills and agent instructions that drifted away from its code. Markitect governs the whole project, and agent instructions are one of its realizations.
 
 </details>
 
