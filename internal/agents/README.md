@@ -45,7 +45,7 @@ The lower layer, `agents.Start` with a `Spec` and `Agent.Send`, is the same mach
 | `MARKITECT_PROVIDER` | `claude` or `codex` | `claude` |
 | `MARKITECT_LOGIN` | The account login file | `~/.claude/.credentials.json` or `~/.codex/auth.json` |
 | `MARKITECT_MODEL`, `MARKITECT_EFFORT` | Model and effort of every maker and checker | `claude-sonnet-5-5` (Codex: `gpt-6-luna`), `high` |
-| `MARKITECT_NETWORK` | The network that reaches the provider | `bridge` |
+| `MARKITECT_NETWORK` | The network that reaches the provider | `markitect-provider`, a user-defined bridge network the host creates on first use and keeps. Every agent also joins the Run's network, and the Docker CLI on Linux refuses to combine the engine's default `bridge` with a user-defined network |
 | `MARKITECT_HOSTS`, `MARKITECT_DNS` | Extra host entries (`name:address`) and name servers, comma-separated | none |
 | `MARKITECT_TRANSCRIPTS` | A folder for the agents' transcripts | none |
 

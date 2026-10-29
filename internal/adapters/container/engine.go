@@ -185,6 +185,46 @@ func (e *Engine) CreateVolume(ctx context.Context, name string, labels map[strin
 	return err
 }
 
+// EnsureNetwork makes sure a user-defined bridge network that reaches
+// outside the engine exists under name, creating it with the labels when it
+// does not. A network of that name that is internal or not a bridge is
+// refused. The Docker CLI on Linux refuses to join the engine's default
+// "bridge" together with a user-defined network, so containers that also
+// join a Run's network reach the outside through a network like this one.
+func (e *Engine) EnsureNetwork(ctx context.Context, name string, labels map[string]string) error {
+	if !namePattern.MatchString(name) || name == "bridge" || name == "host" || name == "none" {
+		return fmt.Errorf("network %q is not a plain user-defined engine name", name)
+	}
+	args, err := labelArgs(labels)
+	if err != nil {
+		return err
+	}
+	for attempt := 0; ; attempt++ {
+		out, err := e.output(ctx, "network", "ls", "--filter", "name=^"+name+"$", "--format", "{{.Name}}")
+		if err != nil {
+			return err
+		}
+		if strings.TrimSpace(string(out)) == name {
+			kind, err := e.output(ctx, "network", "inspect", "--format", "{{.Driver}} {{.Internal}}", name)
+			if err != nil {
+				return err
+			}
+			if got := strings.TrimSpace(string(kind)); got != "bridge false" {
+				return fmt.Errorf("network %s exists as %q, not as a bridge that reaches outside the engine; remove it or name another", name, got)
+			}
+			return nil
+		}
+		_, err = e.output(ctx, append(append([]string{"network", "create", "--driver", "bridge"}, args...), name)...)
+		if err == nil {
+			return nil
+		}
+		// Another host process may have created it meanwhile; look again once.
+		if attempt > 0 {
+			return err
+		}
+	}
+}
+
 // RemoveVolume deletes a named volume.
 func (e *Engine) RemoveVolume(ctx context.Context, name string) error {
 	if !namePattern.MatchString(name) {

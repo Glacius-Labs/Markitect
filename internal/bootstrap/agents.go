@@ -25,7 +25,8 @@ import (
 //	MARKITECT_LOGIN          the account login file (default the provider's own in the home folder)
 //	MARKITECT_MODEL          the model (default claude-sonnet-5-5, or gpt-6-luna for codex)
 //	MARKITECT_EFFORT         the effort (default high)
-//	MARKITECT_NETWORK        the network that reaches the provider (default bridge)
+//	MARKITECT_NETWORK        the network that reaches the provider (default markitect-provider,
+//	                         a bridge network the host creates on first use)
 //	MARKITECT_HOSTS          extra host entries, name:address, comma-separated
 //	MARKITECT_DNS            name servers, comma-separated
 //	MARKITECT_TRANSCRIPTS    a folder for the agents' transcripts (default none)
@@ -50,11 +51,20 @@ func providerAgents(ctx context.Context) (agentport.Agents, error) {
 	if err != nil {
 		return nil, fmt.Errorf("the Manager image %s: %w", ref, err)
 	}
+	network := os.Getenv("MARKITECT_NETWORK")
+	if network == "" {
+		// The agents also join the Run's network, and the Docker CLI on
+		// Linux refuses to combine the engine's default "bridge" with it.
+		network = providerNetwork
+		if err := engine.EnsureNetwork(ctx, network, map[string]string{"markitect.provider": "1"}); err != nil {
+			return nil, fmt.Errorf("the provider network: %w; or name one with MARKITECT_NETWORK", err)
+		}
+	}
 	home, _ := os.UserHomeDir()
 	cfg := agents.Config{
 		Runtime: agents.EngineRuntime(engine), Image: image,
 		Limits:  agents.Limits{CPUs: 1, MemoryBytes: 2 << 30, Pids: 256, TmpBytes: 256 << 20},
-		Network: env("MARKITECT_NETWORK", "bridge"), Hosts: list("MARKITECT_HOSTS"), DNS: list("MARKITECT_DNS"),
+		Network: network, Hosts: list("MARKITECT_HOSTS"), DNS: list("MARKITECT_DNS"),
 		Effort: env("MARKITECT_EFFORT", "high"), Transcripts: os.Getenv("MARKITECT_TRANSCRIPTS"),
 	}
 	switch provider := env("MARKITECT_PROVIDER", "claude"); provider {
@@ -72,6 +82,11 @@ func providerAgents(ctx context.Context) (agentport.Agents, error) {
 	}
 	return agents.New(cfg)
 }
+
+// providerNetwork is the user-defined bridge network the agents reach their
+// provider through unless MARKITECT_NETWORK names another. It stays on the
+// engine for later Runs, like an image.
+const providerNetwork = "markitect-provider"
 
 func env(name, fallback string) string {
 	if v := os.Getenv(name); v != "" {
