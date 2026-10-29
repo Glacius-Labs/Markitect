@@ -15,7 +15,7 @@ State page of the Topics session: the owner's single place to discuss Markitect'
 
 ## Next
 
-The design walk-through, one part at a time, as the owner asked on 28 October. Each part says how it works today, what is open and a recommendation.
+The design walk-through of 28 October, one part at a time: what was open and a recommendation.
 
 1. **Closed** 28 October: one Go tool in the CLI ([DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation)).
 2. **Closed** 28 October: the model tools start no agents ([DEC-082](../concepts/register.md#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager)).
@@ -23,46 +23,35 @@ The design walk-through, one part at a time, as the owner asked on 28 October. E
 4. **Closed** 28 October: compile errors are structure, cycles, visibility and accounting; everything else is a warning (DEC-080).
 5. **Closed** 28 October: language and compiler rules change only by owner decision, as DEC-080 defines them.
 6. **Closed** 28 October: no Cockpit app ([DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now)).
-7. **The Cockpit** (30–32).
+7. **Closed** 28 October: the Cockpit questions 30–32, as part of DEC-085.
 
 ## Topics in short
 
+The state since [concept 2.0](../concepts/v2-concept.md); what came before is in Git history.
+
 ### Platform
 
-Execution is Linux-first ([DEC-077](../concepts/register.md#dec-077-development-pace-and-linux-first-execution)). On Windows, Apply runs only through the [Linux runner](../design/linux-runner.md) on Docker Desktop, observed once with six Managers ([record](../validation/v1-l1-runner-qualification-20261027.md)). An Apply with the host on Linux has never run. The Go tests take about 50 minutes on Windows against 3 on Linux, almost all of it Git process starts ([record](../validation/windows-test-time-20261028.md)). Known runner problems P1–P9 are on the folded platform page. The Git variant ([DEC-078](../concepts/register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review), PR #795) may remove the mounts and the shared Run volume.
+The host runs natively on Windows, Linux and macOS with Docker only; each Run has its own remote container with the hooks and the required checks ([DEC-083](../concepts/register.md#dec-083-the-host-runs-natively-each-run-lives-in-containers)). Observed natively on Windows and on Linux (WSL Ubuntu with Docker Desktop) in T5; macOS not yet. The Linux runner is retired. Before the rebuild, on 28 October, the Go tests took about 50 minutes on Windows ([measurement](../validation/windows-test-time-20261028.md)); they are to be measured again after it (question 33, parked).
 
-### Model language
+### Model language and compiler
 
-The model is typed programming in prose: Core 1.2.0 with Kind interfaces ([DEC-075](../concepts/register.md#dec-075-kind-extension-and-one-core-120)) and five [standard Libraries](../design/standard-libraries.md). Since PR #806, `api` is 2.0.0 (refusals are an unordered list; a Rule states precedence when it matters) and `architecture` is 1.1.0 (an Interface can list `refusalCodes`). Invariants are not placed; an Invariant lives in the Package that owns its data. `makerspace-v2` keeps its frozen 1.0.0 copies as gate material. That is Main today. A redesign of the language and Libraries is decided and not built (see [Decided](#decided)).
+Markdown Definitions with front matter; Core is a single Kind, and Libraries supply common Kinds ([DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation), [model language](../guides/model-language.md)). `check` checks structure only ([DEC-003](../concepts/register.md#dec-003-the-compiler-is-a-borrowed-concept)); `init`, `lock`, `refs`, `graph`, `impact` and `lint` are in the product. The old language and V1's Libraries are replaced.
 
 ### Modeling skills
 
-The [modeling skill](https://github.com/Glacius-Labs/Markitect/blob/f23c2e12d9833efa61e5e65c90018016423abe74/packaging/skills/markitect-modeling/SKILL.md), the [modeling guide](../design/modeling-guide.md) and the [analysis tool](https://github.com/Glacius-Labs/Markitect/blob/f23c2e12d9833efa61e5e65c90018016423abe74/tools/model-analysis/README.md). A fresh agent with only the skill wrote a new model twice (PR #771) and changed an existing one faithfully once ([C5 trial](../validation/modeling-skill-change-trial-20261027.md)). Untested: renames (C7), architecture changes (C2), review and blocker repair. No everyday change workflow is written, and the skill reaches no user. The skill, the guide (v0.3) and the tool follow `api` 2.0.0 and `architecture` 1.1.0; the tool's tests run in CI. Since the owner said "We will be responsible for all of that", model language and modeling skills are one topic.
-
-### Compiler
-
-`markitect check` checks structure only, never meaning ([DEC-003](../concepts/register.md#dec-003-the-compiler-is-a-borrowed-concept)). `markitect tree` is on Main (PR #802). Gaps: a project cannot finish a model with the product alone (the lock and readable diagnostics need the Python tool, which ships nowhere); the dependency graph is computed twice, in Go and in Python; impact works offline only; spans are partial. Proposed features, smallest first: `lock`, readable `check` output, a Go analysis core, `lint`, dependency discovery, exact spans.
+The modeling skill proposes model changes in conversation and asks first when something is open; Extract is its own skill on top of it; `markitect init` installs them ([concept §8](../concepts/v2-concept.md#8-authoring)).
 
 ### Agentic commands
 
-The frame and names (Analysis, Gate, Required checks, Run, Run kind, Command, Workflow, Result, Authoring) and answers A1–A6 are on the [commands page](commands.md). The owner's last request there, "Lets talk about those too. Give me the questions and your recommendations", is answered by questions 2 and 18–24 below.
+`apply` and `verify` ([concept §7](../concepts/v2-concept.md#7-commands-that-start-agents)) are built; the other commands on the [commands page](commands.md) come after acceptance.
 
 ### Continuous change
 
-Triggers (issues, incidents, dependency updates, requests) become tasks; triage sends each to a repair (the model already states the behavior) or to a model change. Autonomy grows in owner-approved steps 0 → 1 → 2 (Government). The [outside Findings](../design/outside-findings.md) amendment is designed and not adopted. The rest of the sketch (trigger sources, safety and limits, undo, circuit breaker) is on the folded continuous-change page. The commission was design only; the [DEC-011](../concepts/register.md#dec-011-detailed-planning-of-future-ideas-waits) planning hold is not lifted for this axis.
+Design only ([DEC-084](../concepts/register.md#dec-084-continuous-change-triggers-become-findings-or-model-proposals-autonomy-grows-in-steps)): triggers become Findings or model proposals, and autonomy grows in owner-approved steps.
 
 ### Cockpit
 
-A desktop UI for understanding the model and its runs, outside V1. The old cockpit was removed on 23 October and survives on the archive branch. The first slice is a read-only [model explorer](../design/model-explorer.md) (`markitect explore`, slices E1–E5), designed and reviewed, not approved. Run views need records a UI can read: today the Run record is written at the end, with no event stream, and on Windows it sits in the Docker volume.
-
-### Links between the topics
-
-- **Model analysis** is one question raised in four places. Every topic lane recommended one Go implementation in the product, used by the skill, the explorer and the impact Command, and retiring the Python tool (question 1).
-- **Compiler, lint and Libraries.** The compiler stays Library-blind; lint may know the standard Libraries and only warns (questions 3, 4).
-- **Outside Findings.** `apply --findings RESULT` (A5) and continuous change's outside reports are the same channel (question 23).
-- **One Result** (A4) feeds the Cockpit's run views, the evaluation suite and all variants; the decision page and the "proof package" are one question (questions 20, 31).
-- **Risk per Package** joins the model-language idea, protected Packages in continuous change and deeper review for risky areas (question 10).
-- **Extract** is Authoring, not a Command (question 14).
+No Cockpit app for now; Markdown tools are the cockpit ([DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now)), which also decides questions 30–32.
 
 ## Decided
 
