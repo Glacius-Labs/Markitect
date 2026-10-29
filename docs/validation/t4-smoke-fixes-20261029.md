@@ -37,7 +37,7 @@ Native evidence for the four product fixes of PR #874: an escalating Manager con
 
 - A held parent that pushes a work commit and no submission is asked for one, even after it sent a message.
 - A child's submission from before its parent's settlement is not reviewed.
-- The child continues from its parent's newest approval since the escalation, also when the parent answered without a change; the host's message no longer claims the matter was settled.
+- The child continues from its parent's newest approval since the escalation, also when the parent answered without a change (tested after the review's second pass); the host's message no longer claims the matter was settled.
 - The Run's network needs Docker 28, and an older engine is refused before anything is created.
 - The submit tool's description matches its reply.
 - The docs say which waits exist.
@@ -45,6 +45,6 @@ Native evidence for the four product fixes of PR #874: an escalating Manager con
 ## Limits
 
 - Windows only; one launch per question.
-- Q1 ran before the review's fixes; Q2 ran on them, and only Q2's shape (an escalation settled by a commit of a parent without items) exercises them.
-- The no-change path and the `model-problem` path are covered by source tests only.
+- Q1 ran before the review's fixes and Q2 on them. Q2 exercised the hold, the review of a settling submission without the children's approvals, the release from the parent's approval with the neutral message, and the Docker 28 check. A parent's work commit without a submission, a child's submission from before the settlement, the no-change answer and the `model-problem` path did not occur; source tests cover them, each failing without its fix.
+- On the no-change path the child starts again once its parent's answering start has ended, not on the answer itself. No agent waits meanwhile. Concept 2.0 §6.3 says that children wait only for their parent's approved commit and does not name this wait; Build decides whether the concept's wording should.
 - The tool text's effect on Codex agents, who took an accepted push for an approval in T5, was not run here.

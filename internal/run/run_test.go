@@ -354,6 +354,69 @@ func TestASettlementOutlivesStaleWork(t *testing.T) {
 
 // An approved model-problem verdict escalates as the tool does: the parent's
 // settlement with a commit is checked first, and the child continues from it.
+// loans escalates to members, whose settling commit names a model problem and
+// so escalates to Root. Root and then members answer without a change; loans
+// still continues from members' approved settlement.
+func TestAnAnswerKeepsTheParentsSettlement(t *testing.T) {
+	f := newFixture(t)
+	base := f.tip("main")
+	f.write(map[string]string{
+		m + "members/member.md":     def("std/Concept", "Member", "A person with a card."),
+		m + "members/loans/loan.md": def("std/Concept", "Loan", "A [[members/member]] borrows with a card."),
+	})
+	f.commit("cards")
+	a := f.agents
+	var escalation string
+	a.On("members/loans", maker,
+		agentfake.Call(func(ctx context.Context, s agentport.Start, h agentport.Host) error {
+			m, err := h.Escalate(ctx, "The card type is in src/members/member.go, members' file.")
+			escalation = m.ID
+			return err
+		}),
+		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+			var told bool
+			for _, msg := range s.Inbox {
+				told = told || (strings.Contains(msg.Text, s.Git.Base) && strings.Contains(msg.Text, escalation))
+			}
+			if !told {
+				return agentfake.Fail(errorf("loans starts again from %s without members' settlement: %+v", s.Git.Base, s.Inbox))
+			}
+			return a.Submit([]string{"managers/members"}, map[string]string{"src/members/loans/loan.go": "package loans\n\nconst Card = true\n"}, word("changed"))(ctx, s, h)
+		})
+	a.On("members/loans", checker, a.Review(nil))
+	answer := func(ctx context.Context, s agentport.Start, h agentport.Host) error {
+		for _, msg := range s.Inbox {
+			if msg.Kind == agentport.Escalation {
+				_, err := h.Answer(ctx, msg.ID, "Realization freedom; nothing more to change.")
+				return err
+			}
+		}
+		return errorf("%s got %+v", s.Manager.ID, s.Inbox)
+	}
+	a.On("members", maker,
+		a.Submit(nil, nil, word("conforms")),
+		a.Submit(nil, map[string]string{"src/members/member.go": "package members\n\ntype Card string\n"}, word("model-problem")),
+		agentfake.Call(func(ctx context.Context, s agentport.Start, h agentport.Host) error {
+			if len(s.Inbox) != 1 || s.Inbox[0].Kind != agentport.Answer {
+				return errorf("members got %+v", s.Inbox)
+			}
+			_, err := h.Answer(ctx, escalation, "Realization freedom; nothing more to change.")
+			return err
+		}),
+		a.Submit([]string{"managers/members.loans"}, nil, word("conforms")))
+	a.On("members", checker, a.Review(nil), a.Review(nil), a.Review(nil))
+	a.On(".", maker, agentfake.Call(answer), a.Submit([]string{"managers/members"}, nil, word("conforms")))
+	a.On(".", checker, a.Review(nil))
+
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateLanded {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+	if !strings.Contains(f.show("main", "src/members/member.go"), "Card") || !strings.Contains(f.show("main", "src/members/loans/loan.go"), "Card") {
+		t.Fatal("the settlement or the child's work did not land")
+	}
+}
+
 func TestAModelProblemSettledByAParentsCommit(t *testing.T) {
 	f := newFixture(t)
 	base, _ := changeBook(f)
