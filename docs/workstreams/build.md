@@ -10,13 +10,13 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 - **Suite:** E1 and E2 of [evaluation suite v2](../design/evaluation-suite-v2.md) are on `main` in [`tools/evaluation`](../../tools/evaluation/README.md): one sandbox per run with an egress limit, `judge`, `review`, `report`, the failure classifier and the token parser. The [E1 smoke](../validation/eval-e1-sandbox-smoke-20261028.md) and the [E2 smoke](../validation/eval-e2-judge-smoke-20261028.md) passed: the sandbox held, the Library judge separates its reference from its mutants, and K's runs k-02 to k-04 pass all 19 hidden cases with no critical finding. K's capture fix is confirmed.
 - **New project:** authored in the private repository: a fresh build and seven changes, each with requirements, a model, a hidden judge that passes its reference and fails its six mutants, and an equivalence review. Build has not seen its content. Its models are converted to the 2.0 form with equivalence records, its judge image is pinned, and its judge self-test passed on Linux for all eight steps.
 - **Concept 1.0 arms:** stopped on 28 October with the shape decision: M (V1, removed from `main` by T1), P (`variant/plugin`) and G (`dev/g0-prototype`, the start of T3).
-- **Running:** T4b (agents, containers, harness, [PR #856](https://github.com/Glacius-Labs/Markitect/pull/856)), rebasing, then the first native Claude runs.
+- **T4 done:** the agents, containers and harness are on `main` ([PR #856](https://github.com/Glacius-Labs/Markitect/pull/856)), with the owner's concept-check fixes and the parent-first order ([PR #865](https://github.com/Glacius-Labs/Markitect/pull/865)). The first native Run on Claude landed the Library M1 in 11 minutes, and the hidden judge passed 19 of 19 ([record](../validation/t4-library-smoke-20261029.md)). The new project is wired into the suite in its private repository, and its series self-test passed 60 of 60 on Linux.
+- **Running:** nothing.
 
 ## Next
 
-1. **T4:** the native Claude smoke on the Library (running), and the three fixes from the owner's concept check of 29 October.
-2. **T5, native host:** the T4 smoke on Windows and on Linux; the suite's native round on Linux with it.
-3. **New project:** its tasks wired into the suite once T6 is on `main`.
+1. **T5, native host:** the target lock, the Run-branch cleanup, and the T4 smoke natively on Windows and on Linux, with the suite's native round on Linux. Linux needs a Docker engine there.
+2. **T7, pilot:** the Library and Makerspace series for the 2.0 arm and K, uncounted, then the protocol for the counted series.
 
 ## Decisions
 
