@@ -252,15 +252,18 @@ func contains(list []string, v string) bool {
 // approved work it lands, which is the default base of the next Run: what a
 // landing merged in from a moved target was not realized by the Run, so it
 // stays in the next Run's impact. A Result commit on a Run branch names the
-// Run's start and impact, from which a later landing reads whether it covers
-// that Run.
+// Run's target, start and impact, from which a later landing reads whether
+// it covers that Run. They are not Markitect trailers in the sense of
+// runremote: those belong to the agents' submissions and reviews, and every
+// Run starts from a landing commit that carries these.
 const (
-	trailerRun    = "Markitect-Run"
-	trailerTarget = "Markitect-Target"
-	trailerWork   = "Markitect-Work"
-	trailerStart  = "Markitect-Start"
-	trailerFull   = "Markitect-Full"
-	trailerImpact = "Markitect-Impact"
+	trailerPrefix = "Run-"
+	trailerRun    = "Run-Name"
+	trailerTarget = "Run-Target"
+	trailerWork   = "Run-Work"
+	trailerStart  = "Run-Start"
+	trailerFull   = "Run-Full"
+	trailerImpact = "Run-Impact"
 )
 
 // resultMessage is the message of a Result commit.
@@ -288,7 +291,7 @@ func trailers(message string) map[string][]string {
 	sc.Buffer(make([]byte, 64<<10), 16<<20)
 	for sc.Scan() {
 		k, v, ok := strings.Cut(sc.Text(), ": ")
-		if ok && strings.HasPrefix(k, "Markitect-") {
+		if ok && strings.HasPrefix(k, trailerPrefix) {
 			t[k] = append(t[k], strings.TrimSpace(v))
 		}
 	}

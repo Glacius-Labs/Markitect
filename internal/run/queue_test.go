@@ -69,7 +69,7 @@ func (f *fixture) keptBranch(name, target, start, file string) {
 	f.write(map[string]string{file: "# kept\n"})
 	testkit.Git(f.t, f.src, "add", "-A")
 	testkit.Git(f.t, f.src, "commit", "-q", "-m", "Markitect Run "+name+": kept", "-m",
-		"Markitect-Run: "+name+"\nMarkitect-Target: "+target+"\nMarkitect-Start: "+start+"\nMarkitect-Impact: def:catalog/book")
+		"Run-Name: "+name+"\nRun-Target: "+target+"\nRun-Start: "+start+"\nRun-Impact: def:catalog/book")
 	testkit.Git(f.t, f.src, "push", "-q", "origin", "HEAD:refs/heads/"+run.RunBranchPrefix+name)
 	testkit.Git(f.t, f.src, "checkout", "-q", "main")
 }
@@ -268,7 +268,7 @@ func TestLandingKeepsRunBranchesItDoesNotCover(t *testing.T) {
 		t.Fatalf("%s: %s", kept.State, kept.Why)
 	}
 	message := testkit.Git(t, f.target, "log", "-1", "--format=%B", run.RunBranchPrefix+"kept")
-	for _, want := range []string{"Markitect-Run: kept", "Markitect-Start: " + kept.Start, "Markitect-Impact: def:catalog/book", "Markitect-Impact: file:src/catalog/book.go"} {
+	for _, want := range []string{"Run-Name: kept", "Run-Target: main", "Run-Start: " + kept.Start, "Run-Impact: def:catalog/book", "Run-Impact: file:src/catalog/book.go"} {
 		if !strings.Contains(message, want) {
 			t.Fatalf("the kept Result commit lacks %q:\n%s", want, message)
 		}
