@@ -36,13 +36,14 @@ func Lint(p *project.Project) model.Diagnostics {
 			ds.Add("lint.thin_package", file, 0, "%s has no Definitions of its own and only one child, %s; its Manager only passes work through", n.Path, pkg.Children[0])
 		}
 		// The hooks take a Manager's paths from the Run's base, so a Package
-		// without patterns can change no file in its next Run.
-		if page := p.Registry.Pages[n.Path]; n.Path != model.RootPackage && (page == nil || len(page.Patterns) == 0) {
-			pageFile := project.RegistryDir + "/" + n.Path + ".md"
-			if page != nil {
-				pageFile = page.File
+		// without patterns owns no file in its next Run.
+		if page := p.Registry.Pages[n.Path]; n.Path != model.RootPackage {
+			switch {
+			case page == nil:
+				ds.Add("lint.no_paths", project.RegistryDir+"/"+n.Path+".md", 0, "%s has no registry page, so it owns no file; write the page with its first path patterns", n.Path)
+			case len(page.Patterns) == 0:
+				ds.Add("lint.no_paths", page.File, 0, "%s claims no path pattern, so it owns no file; name its first patterns under paths", n.Path)
 			}
-			ds.Add("lint.no_paths", pageFile, 0, "%s claims no path pattern, so it owns no file and its Manager can change none; name its first patterns under paths", n.Path)
 		}
 	}
 	for _, e := range g.Edges {

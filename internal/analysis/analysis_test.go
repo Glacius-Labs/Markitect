@@ -445,7 +445,7 @@ func TestLintNoPaths(t *testing.T) {
 	r[project.RegistryDir+"/catalog.md"] = table
 	r[project.RootPage] += "| src/catalog/book.go | [[catalog/book]] [[catalog/shelf]] | Types |\n"
 	ds := lintCodes(t, r)
-	expectWarning(t, ds, "lint.no_paths", project.RegistryDir+"/orders.md: lint.no_paths: orders claims no path pattern")
+	expectWarning(t, ds, "lint.no_paths", project.RegistryDir+"/orders.md: lint.no_paths: orders has no registry page")
 	expectWarning(t, ds, "lint.no_paths", project.RegistryDir+"/catalog.md: lint.no_paths: catalog claims no path pattern")
 	for _, d := range ds {
 		if d.Code == "lint.no_paths" && !strings.Contains(d.Message, "orders") && !strings.Contains(d.Message, "catalog") {
