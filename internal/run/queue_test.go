@@ -305,12 +305,12 @@ func TestDefaultBaseIsTheLandedWork(t *testing.T) {
 		changeLoan(f)
 		return a.Review(nil)(ctx, s, h)
 	})
-	r := f.run(run.Request{Base: base})
+	r := f.run(run.Request{Run: "first", Base: base})
 	if r.State != run.StateLanded || !strings.Contains(r.Why, "moved") {
 		t.Fatalf("%s: %s", r.State, r.Why)
 	}
 	scriptLoan(a)
-	next := f.run(run.Request{})
+	next := f.run(run.Request{Run: "next"})
 	if next.State != run.StateLanded {
 		t.Fatalf("the merged-in loan change did not reach the next Run: %s: %s", next.State, next.Why)
 	}
