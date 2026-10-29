@@ -4,7 +4,7 @@ This is the home of Markitect's long-term vision, product-level decisions, clari
 
 | Document | Content |
 |---|---|
-| [Concept 2.0](v2-concept.md) | The target, accepted on 28 October 2026 ([DEC-086](register.md#dec-086-concept-20-is-the-target)): the redesign of DEC-079 to DEC-085 in one readable order; being built in the [delivery plan](../implementation-plan.md#concept-20-build)'s steps T1 to T7 |
+| [Concept 2.0](v2-concept.md) | The target, accepted on 28 October 2026 ([DEC-086](register.md#dec-086-concept-20-is-the-target)): the redesign of DEC-079 to DEC-085 in one readable order; being built in the [delivery plan](../implementation-plan.md#concept-20-build)'s steps T1 to T8 |
 | [V1 concept 1.0](v1-concept.md) | What Main implemented until step T1, and the record of V1; the target until 28 October 2026: scope, principles, organization, Run, workflow, harness, acceptance and decisions D1–D18 ([DEC-068](register.md#dec-068-v1-concept-10)) |
 | [Register](register.md) | All entries with ID, status, origin and links, and the mapping of earlier collections |
 | [Origin and rationale](../vision.md#origin-and-rationale) | The owner's originating project, causal sequence, problems, concepts and assumptions, connected to the existing register; a section of the vision |
