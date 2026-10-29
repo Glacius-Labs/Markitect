@@ -33,7 +33,7 @@ An owner decision of 29 October 2026 (recorded in PR #868) adds one run: the sam
 | --- | --- |
 | Question | **Q6:** does the same `apply --full`, then `verify --full`, land and verify on Windows with Codex makers and checkers? |
 | Source, images, project | As above: the same binaries, the same Go Manager image, a fresh copy of the same project |
-| Provider | Codex `0.162.0` (`MARKITECT_PROVIDER=codex`) with the adapter's default model `gpt-6-sol`, the default the [adapter guide](../../internal/agents/README.md#composition) names, and effort `high` |
+| Provider | Codex `0.162.0` (`MARKITECT_PROVIDER=codex`) with the adapter's default model at the source, `gpt-6-sol`, and effort `high`. No model was named in the dispatch; see the results for why Luna is now the default |
 | Login | The host's Codex `auth.json` with ChatGPT tokens, never an API key; every `OPENAI_*` and `CODEX_*` variable is cleared. Each Manager gets the copy whose refresh token is `""`, as the pinned CLI needs; `codex login status` reports on standard error, which the adapter reads |
 | Limits, abort, lock, cleanup, evidence | As above: one attempt, a second only after a fix; `apply` 60 minutes, `verify` 30 minutes; the shared engine lock; nothing labelled with either Run may remain; the post-check scans all evidence for every token of the login |
 
@@ -74,4 +74,37 @@ The review fixes (`cc44e98d`) and the trailer fix (`4d63d305`) came after attemp
 
 ### Windows with Codex
 
-Pending.
+**Attempt 1** (`t5-codex-1`, source `4d63d305`, the same Go Manager image), 01:52–02:17Z.
+
+**Model.** It ran `gpt-6-sol`: the adapter's default at the time, which every provider event confirms. It did not run Luna. After this run, the Codex default became `gpt-6-luna`, in `internal/bootstrap` beside Claude's default, because the owner's Codex series run on Luna and Sol runs only when a dispatch names it with `MARKITECT_MODEL`. A Luna repeat of this smoke follows the counted series.
+
+**Q6, `apply`: did not land.** It ended `incomplete` after 24 minutes: "Manager lending used its 6 maker starts without approved work". Its Result stays on `markitect/runs/t5-codex-1-apply`.
+
+- **Scale:** 37 starts, 41 messages, 11,769,819 input and 146,265 output tokens, against 14 starts and 1.8 million for Claude.
+- **Failed starts:** two failed on provider capacity ("Selected model is at capacity"), one of them lending's first maker start. Two more were cancelled at the stop.
+- **Unapproved items:** 14 of 40, those of `lending/reminders` and Root.
+- **Parents first held:**
+  - Root's maker and checker ran first.
+  - Root's checker approved the own-area submission on its first review.
+  - The children started after that approval.
+- **What went wrong** is how the agents coordinated, not the host:
+  - The makers took "the remote accepted my push after the required checks" for "my checker approved it".
+  - `lending` merged child commits that had stopped being the child's latest approval after the child submitted again. The host told it so: "does not contain lending/reminders's approved work".
+  - Root merged `lending` states its checker had not approved, so the hooks refused Root's submissions: "remote still considers 6950f6b the approved lending snapshot".
+  - Only one review rejected content: lending's checker found that Root's executable did not use lending's policy yet.
+  - The submit tool's reply does not say plainly that an accepted push is not yet an approval. That is a tool-contract finding for T7, to be fixed in the tool's words and the host state, not with prompt text (concept 1.0 §3.7).
+
+**Q6, `verify --full`: correct outcome.** It ended `findings` in 55 seconds. With nothing landed, the target held the model only.
+
+- All five checkers pushed verdicts, so the trailer fix held for Codex too.
+- They gave all 40 items `deviates` with evidence, and their reviews were approved.
+- The required `build` check ran once on Root's verdicts and failed, as it must on a repository without code.
+- 556,887 input and 8,256 output tokens.
+
+**Login and cleanup.**
+
+- The login checks passed with the copy whose refresh token is `""`. No start failed on its login.
+- No container, volume or network of either Run remained.
+- The secret scan of 119 evidence files, for every token of the Codex login, found nothing.
+
+**Found in passing:** the Codex adapter left the outcome's `Model` empty. Claude Code reports its model in `system/init`; Codex's exec events name none, and only the turn metadata on MCP calls carries it. The outcome now names the model the turn was launched with, with a test.

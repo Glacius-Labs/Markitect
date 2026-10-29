@@ -44,7 +44,7 @@ The lower layer, `agents.Start` with a `Spec` and `Agent.Send`, is the same mach
 | `MARKITECT_ENGINE` | The Docker CLI | `docker` on `PATH` |
 | `MARKITECT_PROVIDER` | `claude` or `codex` | `claude` |
 | `MARKITECT_LOGIN` | The account login file | `~/.claude/.credentials.json` or `~/.codex/auth.json` |
-| `MARKITECT_MODEL`, `MARKITECT_EFFORT` | Model and effort of every maker and checker | `claude-sonnet-5-5` (Codex: `gpt-6-sol`), `high` |
+| `MARKITECT_MODEL`, `MARKITECT_EFFORT` | Model and effort of every maker and checker | `claude-sonnet-5-5` (Codex: `gpt-6-luna`), `high` |
 | `MARKITECT_NETWORK` | The network that reaches the provider | `bridge` |
 | `MARKITECT_HOSTS`, `MARKITECT_DNS` | Extra host entries (`name:address`) and name servers, comma-separated | none |
 | `MARKITECT_TRANSCRIPTS` | A folder for the agents' transcripts | none |
@@ -112,9 +112,9 @@ Makers and checkers use the same model and effort, and the Run uses one model fo
 | Provider | Model | Effort |
 | --- | --- | --- |
 | Claude Code | `claude-sonnet-5-5` | `high` |
-| Codex | `gpt-6-sol` | `high` |
+| Codex | `gpt-6-luna` | `high` |
 
-Why: quality comes first, and the comparison with one strong agent is fair only on the same model, which the evaluation sets per series (`EVALUATION_MODEL`, today `claude:claude-sonnet-5-5`). Sonnet at `high` is the setting Claude Managers passed natively in K1b, and the owner's rule is to fix failures in the concept and the tools, not with stronger agents. A fresh checker on the same model is independent by its context, not by its model; a stronger checker is not used because it would change what the comparison measures. The engine passes the model and effort to every agent's `Spec`; the full model ID, not an alias, is used so that each `system/init` reports exactly it.
+Why: quality comes first, and the comparison with one strong agent is fair only on the same model, which the evaluation sets per series (`EVALUATION_MODEL`, today `claude:claude-sonnet-5-5`). Codex defaults to Luna because the owner's Codex series run on Luna and `gpt-6-sol` runs only when a dispatch names it with `MARKITECT_MODEL` ([owner, 27 October](../../docs/concepts/sources/owner-morning-decisions-20261027.md)); both defaults are chosen the same way, here. Claude Code reports its model in `system/init`; Codex's exec events name none, so a Codex start's outcome names the model it was launched with. Sonnet at `high` is the setting Claude Managers passed natively in K1b, and the owner's rule is to fix failures in the concept and the tools, not with stronger agents. A fresh checker on the same model is independent by its context, not by its model; a stronger checker is not used because it would change what the comparison measures. The engine passes the model and effort to every agent's `Spec`; the full model ID, not an alias, is used so that each `system/init` reports exactly it.
 
 ## The Manager image
 

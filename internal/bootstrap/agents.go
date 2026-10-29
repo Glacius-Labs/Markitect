@@ -23,7 +23,7 @@ import (
 //	MARKITECT_MANAGER_IMAGE  the Manager image, a project image FROM packaging/runtime (required)
 //	MARKITECT_PROVIDER       claude (default) or codex
 //	MARKITECT_LOGIN          the account login file (default the provider's own in the home folder)
-//	MARKITECT_MODEL          the model (default claude-sonnet-5-5, or gpt-6-sol for codex)
+//	MARKITECT_MODEL          the model (default claude-sonnet-5-5, or gpt-6-luna for codex)
 //	MARKITECT_EFFORT         the effort (default high)
 //	MARKITECT_NETWORK        the network that reaches the provider (default bridge)
 //	MARKITECT_HOSTS          extra host entries, name:address, comma-separated
@@ -62,7 +62,7 @@ func providerAgents(ctx context.Context) (agentport.Agents, error) {
 		cfg.Provider, cfg.Model = claude.Provider{}, env("MARKITECT_MODEL", "claude-sonnet-5-5")
 		cfg.LoginFile = env("MARKITECT_LOGIN", filepath.Join(home, ".claude", ".credentials.json"))
 	case "codex":
-		cfg.Provider, cfg.Model = codex.Provider{}, env("MARKITECT_MODEL", "gpt-6-sol")
+		cfg.Provider, cfg.Model = codex.Provider{}, env("MARKITECT_MODEL", "gpt-6-luna")
 		cfg.LoginFile = env("MARKITECT_LOGIN", filepath.Join(home, ".codex", "auth.json"))
 	default:
 		return nil, fmt.Errorf("MARKITECT_PROVIDER %q is neither claude nor codex", provider)
