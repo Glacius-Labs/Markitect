@@ -44,7 +44,7 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 
 - **Fixed starts, 29 October 2026:** a fixed reference start reaches the 2.0 arm with registry pages that link each file to the Definitions it realizes, written as an owner adopting Markitect would write them; K gets the same reference files without the pages. This holds for every fixed start the pilot runs and for every fixed start of the counted series. The case without pages ([record](../validation/t7-arm-smoke-20261029.md)) runs once, as the escalation fix's regression run. Build decided on the T7 session's finding.
 
-- **Pilot scope, 29 October 2026:** the 2.0 arm runs fixed starts in the pilot on the Library only: its four fixed starts and two planted tasks, beside both chains and the three Makerspace planted tasks. K runs every task, the Makerspace fixed starts included. That is 57 launches, 24 for the 2.0 arm and 33 for K. The counted series runs every fixed start for both arms, with registry pages. The owner, in the T7 session: "Library only, as advised".
+- **Pilot scope, 29 October 2026:** in the pilot, the 2.0 arm runs the chains M1–M5 and W0–C9, the Library's fixed starts M2–M5 and every planted task (two on the Library, three on Makerspace; a planted task also starts from a reference result, so it gets that result's registry pages). It skips the Makerspace fixed starts C1–C9; K runs them too. With one run per task and each chain step counted as one launch, that is 57 launches: 24 for the 2.0 arm and 33 for K. The counted series runs every fixed start for both arms. The T7 session advised this scope, and the owner chose it there: "Library only, as advised".
 
 ## Questions for the owner
 
