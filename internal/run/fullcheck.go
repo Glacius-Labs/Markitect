@@ -14,6 +14,9 @@ const (
 	trailerCommand   = "Run-Command"
 	trailerState     = "Run-State"
 	trailerFullCheck = "Run-Full-Check"
+	// fullCheckNone is the Run-Full-Check of a landing that knows no full
+	// check.
+	fullCheckNone = "none"
 )
 
 // fullCheck counts the landings in tip's history after the commit the newest
@@ -42,12 +45,16 @@ func (e *Engine) countFullCheck(ctx context.Context, target, tip string) (FullCh
 			return FullCheck{}, err
 		}
 		t := trailers(c.Message)
-		if len(t[trailerFull]) > 0 {
+		if v := t[trailerFull]; len(v) == 1 && v[0] == "true" {
 			checks = append(checks, l)
 			break
 		}
+		// Every landing since this count exists names a check or none,
+		// so the walk ends at the newest one.
 		if v := t[trailerFullCheck]; len(v) == 1 {
-			checks = append(checks, v[0])
+			if v[0] != fullCheckNone {
+				checks = append(checks, v[0])
+			}
 			break
 		}
 	}
@@ -73,7 +80,9 @@ func (e *Engine) countFullCheck(ctx context.Context, target, tip string) (FullCh
 		seen[check] = true
 		// A full check of a history the target no longer holds says
 		// nothing about it.
-		if ok, err := e.Git.Contains(ctx, tip, check); err != nil || !ok {
+		if ok, err := e.Git.Contains(ctx, tip, check); err != nil {
+			return FullCheck{}, err
+		} else if !ok {
 			continue
 		}
 		since, err := e.Git.Landings(ctx, tip, check)

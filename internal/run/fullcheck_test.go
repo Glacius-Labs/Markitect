@@ -61,3 +61,19 @@ func TestTheFullCheckCountAcrossRuns(t *testing.T) {
 		t.Fatalf("third landing %s: %+v", third.State, fc)
 	}
 }
+
+// A Run whose landing push the target refuses keeps the count it read at its
+// start; it does not count a landing that did not happen.
+func TestARefusedLandingKeepsTheStartCount(t *testing.T) {
+	f := newFixture(t)
+	base, _ := changeBook(f)
+	f.engine.Git = &flakyGit{Git: f.host}
+	scriptHappyPath(f, nil)
+	r := f.run(run.Request{Base: base})
+	if fc := r.FullCheck; r.State != run.StateKept || fc.Landed != 0 || fc.Since != "" {
+		t.Fatalf("%s: %s, %+v", r.State, r.Why, fc)
+	}
+	if page := f.show(run.RunBranchPrefix+r.Run, run.ResultFile(r.Run)); !strings.Contains(page, "0 changes landed since the first landing") {
+		t.Fatalf("kept page:\n%s", page)
+	}
+}

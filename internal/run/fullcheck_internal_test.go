@@ -101,6 +101,20 @@ func TestTheFullCheckCount(t *testing.T) {
 	if fc := count(g, "l12"); fc.Landed != 6 || fc.Since != "l6" {
 		t.Fatalf("carried forward: %+v", fc)
 	}
+
+	// A newer landing that knew no full check ends the walk there; a carried
+	// check of a history the target no longer holds counts nothing; a
+	// Run-Full other than true is no full check.
+	g.messages["l11"] += "Run-Full-Check: none\n"
+	if fc := count(g, "l12"); fc.Landed != 12 || fc.Since != "" || !fc.Due {
+		t.Fatalf("after none: %+v", fc)
+	}
+	g = landingLine(12)
+	g.messages["l10"] += "Run-Full-Check: x3\n"
+	g.messages["l11"] += "Run-Full: false\n"
+	if fc := count(g, "l12"); fc.Landed != 12 || fc.Since != "" {
+		t.Fatalf("a rewritten check and Run-Full false: %+v", fc)
+	}
 }
 
 // A landing names the full check it carries forward, or that it is one.

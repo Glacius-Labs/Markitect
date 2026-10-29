@@ -277,6 +277,9 @@ func resultMessage(r *Result, work string) string {
 			fmt.Fprintf(&b, "%s: true\n", trailerFull)
 		case r.FullCheck.Since != "":
 			fmt.Fprintf(&b, "%s: %s\n", trailerFullCheck, r.FullCheck.Since)
+		case r.FullCheck.Note == "":
+			// Known to know no full check; an unread count claims nothing.
+			fmt.Fprintf(&b, "%s: %s\n", trailerFullCheck, fullCheckNone)
 		}
 		return b.String()
 	}
