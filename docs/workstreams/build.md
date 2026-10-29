@@ -11,12 +11,15 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 - **New project:** authored in the private repository: a fresh build and seven changes, each with requirements, a model, a hidden judge that passes its reference and fails its six mutants, and an equivalence review. Build has not seen its content. Its models are converted to the 2.0 form with equivalence records, its judge image is pinned, and its judge self-test passed on Linux for all eight steps.
 - **Concept 1.0 arms:** stopped on 28 October with the shape decision: M (V1, removed from `main` by T1), P (`variant/plugin`) and G (`dev/g0-prototype`, the start of T3).
 - **T4 done:** the agents, containers and harness are on `main` ([PR #856](https://github.com/Glacius-Labs/Markitect/pull/856)), with the owner's concept-check fixes and the parent-first order ([PR #865](https://github.com/Glacius-Labs/Markitect/pull/865)). The first native Run on Claude landed the Library M1 in 11 minutes, and the hidden judge passed 19 of 19 ([record](../validation/t4-library-smoke-20261029.md)). The new project is wired into the suite in its private repository, and its series self-test passed 60 of 60 on Linux.
-- **Running:** nothing.
+- **T5 done:** the native host is on `main` ([PR #869](https://github.com/Glacius-Labs/Markitect/pull/869)): a lock per target branch, the cleanup of covered Run branches, and the last landing as the next Run's default base. The Library smoke landed natively on Windows and on Linux, and `verify --full` found 40 of 40 items conforming on both; the suite's native round on Linux held ([record](../validation/t5-native-host-20261029.md)). A Codex smoke on Windows did not land: its agents took an accepted push for an approval.
+- **T7's arm done:** the 2.0 arm is in the suite ([PR #871](https://github.com/Glacius-Labs/Markitect/pull/871)). Two native Library M1 runs landed and passed 19 of 19 hidden cases. A fixed start, Library M2 from the M1 reference, did not land: its reference layout left Root owning every file, and Root and `lending` then waited on each other after an escalation until `lending` used its rounds ([record](../validation/t7-arm-smoke-20261029.md)).
+- **Running:** the product fixes from both smokes (the T5 session) and registry pages for the fixed starts (the T7 session).
 
 ## Next
 
-1. **T5, native host:** the target lock, the Run-branch cleanup, and the T4 smoke natively on Windows and on Linux, with the suite's native round on Linux. Linux needs a Docker engine there.
-2. **T7, pilot:** the Library and Makerspace series for the 2.0 arm and K, uncounted, then the protocol for the counted series.
+1. **Product fixes:** an escalation that the parent settles reaches the child, so Runs like the fixed start above converge; the Run's network isolated like the suite's; limits for the Run's remote; a submit reply that says a push awaits its verdict. With the fixed-start case rerun once, unlinked, and the Library smoke.
+2. **Fixed starts:** registry pages with links for every reference start the pilot uses.
+3. **T7, pilot:** after both, the Library and Makerspace series for the 2.0 arm and K, uncounted, then the protocol for the counted series, its independent review, and the counted series.
 
 ## Decisions
 
@@ -39,6 +42,8 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 
 - **Counted series delegated, 29 October 2026:** the owner, going away, let Build run the build on its own: start, steer, merge and archive sessions without asking. The owner also delegated the counted acceptance series to Build, to start once Build judges it appropriate. Build approves the protocol only after the pilot, with an independent review of the protocol before the first counted run. The protocol and its review are recorded under `docs/validation/` before any counted run, and the owner reviews the results.
 
+- **Fixed starts, 29 October 2026:** a fixed reference start reaches the 2.0 arm with registry pages that link each file to the Definitions it realizes, written as an owner adopting Markitect would write them; K gets the same start. This holds for the pilot and the counted series, so the pilot tests what is counted. Without pages, Root owns every file of a reference whose layout differs from the model's; that case runs once as the escalation fix's regression run, not in every unit. Build decided on the T7 session's finding.
+
 ## Questions for the owner
 
-None open.
+- **A new Package's first path patterns** (sent to the Topics session, 29 October): ownership comes from the Run's base registry, so a Package can write nothing until its path patterns are on the base. Build recommends that the owner, or `markitect init` when it creates a Package, sets the first patterns, and that a claim never takes effect within the Run that makes it. Not blocking: the suite's tasks carry owner-written registry pages.
