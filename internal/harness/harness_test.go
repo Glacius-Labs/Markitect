@@ -314,3 +314,38 @@ func TestFenceOutgrowsBackticksInTheText(t *testing.T) {
 		t.Fatalf("fence %q", got)
 	}
 }
+
+// Every maker and checker reads what a verdict covers (DEC-088): the model
+// in full for each item, with evidence for each example, and the code of its
+// own Package only; a parent integrates its children's work by using it.
+func TestEveryStartSaysWhatAVerdictCovers(t *testing.T) {
+	p := library(t)
+	sub := &Submission{Commit: "abc123", Verdicts: []Verdict{{Item: "members/member", Verdict: "changed", Evidence: "member.go"}}, Diff: "diff\n"}
+	model := []string{"## What a verdict covers", "its examples included, and the Definitions it links to", "the only right verdict is `model-problem`", "It is no review of the whole model"}
+
+	leaf := start(Apply, Maker, "catalog", nil, items("catalog/book"))
+	leaf.Task = "An engine task replaces the default text."
+	d := render(t, Input{Start: leaf, Project: p})
+	contains(t, d.Task, model...)
+	contains(t, d.Task, "For `conforms` and `changed`, the evidence names how each example", "Whether the rest of the program uses them yet is your parent's integration")
+	lacks(t, d.Task, "Your children's work", "accepts the submission only when the required checks pass")
+	contains(t, d.Task, "refuses a submission that merges your children's work and fails them")
+
+	d = render(t, Input{Start: start(Apply, Checker, "members", []string{"members/loans"}, items("members/member")), Project: p, Submission: sub})
+	contains(t, d.Task, model...)
+	contains(t, d.Task, "Re-check each example in the item's Definition yourself", "matches part of the Definition but not its example",
+		"it is no reason to dispute a verdict", "Dispute the submission when one of its own files builds a child's behavior a second time")
+
+	d = render(t, Input{Start: start(Apply, Maker, "members", []string{"members/loans"}, items("members/member")), Project: p})
+	contains(t, d.Task, "Integrate it by using it", "not by building a child's behavior a second time in your own files")
+
+	// A parent that only integrates still hears about its children's work.
+	d = render(t, Input{Start: start(Apply, Checker, ".", []string{"members"}, nil), Project: p, Submission: &Submission{Commit: "abc123", Diff: "diff\n"}})
+	contains(t, d.Task, "## What a verdict covers", "Dispute the submission when one of its own files builds a child's behavior a second time")
+	lacks(t, d.Task, "The model, in full")
+
+	d = render(t, Input{Start: start(Verify, Checker, "members", []string{"members/loans"}, items("members/member")), Project: p})
+	contains(t, d.Task, model...)
+	contains(t, d.Task, "For `conforms`, the evidence names how each example")
+	lacks(t, d.Task, "Your children's work", "`changed`")
+}

@@ -14,13 +14,13 @@ import (
 
 func (s *schedule) makerTask(n *node) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "Realize the change for Manager %s on branch %s, starting from %s, and push one submission that gives each of your %d checklist items a verdict with evidence.", n.name, n.branch, short(n.from), len(n.items))
+	fmt.Fprintf(&b, "Realize the change for Manager %s on branch %s, starting from %s, and push one submission that gives each of your %d checklist items a verdict with evidence. A verdict covers the item's whole Definition, its examples included, and the Definitions it links to; the evidence names how each example is met.", n.name, n.branch, short(n.from), len(n.items))
 	if held := s.held(n); held != "" {
 		fmt.Fprintf(&b, " %s escalated to you and continue from your approved submission when you settle the matter with a change of your own, so this one covers your own area: judge each item by your own files; their work comes when you integrate it.", held)
 	} else if s.ownFirst(n) {
 		b.WriteString(" Your working children start from your approved submission, so this one covers your own area: judge each item by your own files; the parts your children realize come when you integrate their work.")
 	} else if len(n.children) > 0 && s.childrenApproved(n) {
-		fmt.Fprintf(&b, " Your working children's approved work: %s. Merge it, review it and integrate it before you submit.", s.approvals(n))
+		fmt.Fprintf(&b, " Your working children's approved work: %s. Merge it, review it and integrate it before you submit: use it, and do not build a child's behavior a second time in your own files.", s.approvals(n))
 	}
 	if len(n.inbox) > 0 {
 		b.WriteString(" The messages delivered with this start need your action first.")
@@ -36,13 +36,29 @@ func (s *schedule) approvals(n *node) string {
 	return strings.Join(parts, ", ")
 }
 
+// childNames names the Manager's working children.
+func (s *schedule) childNames(n *node) string {
+	var names []string
+	for _, c := range n.children {
+		names = append(names, c.name)
+	}
+	return strings.Join(names, ", ")
+}
+
 func (s *schedule) reviewTask(n *node) string {
 	task := fmt.Sprintf("Review submission %s of Manager %s on branch %s against the model and the diff from %s: confirm or dispute every verdict, then push your review as one commit without file changes on the submission.", n.submission, n.name, n.branch, short(n.from))
 	if held := s.held(n); held != "" {
 		task += " It covers the Manager's own area and settles an escalation of " + held + "; what they realize comes with a later submission."
 	} else if s.ownFirst(n) {
 		task += " It covers the Manager's own area before its working children start; what they realize comes with a later submission."
+	} else if len(n.children) > 0 {
+		task += " It integrates the work of " + s.childNames(n) + ": dispute it when one of the Manager's own files builds a child's behavior a second time instead of using that work."
 	}
+	task += " Judge the Manager's own files against its items, and each item's whole Definition with its examples and the Definitions it links to"
+	if n.parent != nil {
+		task += "; whether the rest of the program uses those files yet is its parent's integration"
+	}
+	task += "."
 	if n.evidence != "" {
 		task += "\n\n" + n.evidence
 	}
@@ -125,5 +141,5 @@ func (s *schedule) ownFirst(n *node) bool {
 }
 
 func (s *schedule) verifyTask(n *node) string {
-	return fmt.Sprintf("Check the state at %s for Manager %s against each of your %d checklist items, and push your verdicts as one commit without file changes on branch %s.", short(s.plan.Base), n.name, len(n.items), n.branch)
+	return fmt.Sprintf("Check the state at %s for Manager %s against each of your %d checklist items, and push your verdicts as one commit without file changes on branch %s. A verdict covers the item's whole Definition, its examples included, and the Definitions it links to; the evidence for conforms names how each example is met.", short(s.plan.Base), n.name, len(n.items), n.branch)
 }
