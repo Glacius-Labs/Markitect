@@ -497,6 +497,7 @@ class Runner:
                 before = s["steps"][s["steps"].index(step) - 1]
                 start, base = prep / "starts" / f"{before}.bundle", prep / "bases" / before
                 if not start.exists():
+                    start.parent.mkdir(parents=True, exist_ok=True)
                     self.must(f"prep-start-{name}-{before}", [self.py, "-I", "-B", self.ev / "judges.py", "start", "--source", src / name,
                                                               "--step", before, "--out", start])
                 if not base.exists():
