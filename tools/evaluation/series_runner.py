@@ -595,6 +595,8 @@ class Runner:
         if len(arm) >= VOID_AFTER and voids / len(arm) > VOID_SHARE:
             raise Stop(f"arm {unit['arm']}: {voids} of {len(arm)} launches void, above one in four")
         if verdict["class"] == "void":
+            if self.c["protocol"] == "gate":
+                raise Stop(f"the stability gate has a technical failure, {self.rel(run)}: {verdict.get('evidence')}")
             return "again" if number <= self.c["relaunches"] else "done"
         if verdict["class"] == "invalid":
             if not foreign_used and foreign_escapes(run):

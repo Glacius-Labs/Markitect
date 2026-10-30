@@ -333,6 +333,12 @@ class SeriesTest(Fixture):
         self.assertEqual(len(self.ledger()["attempts"]), 8)
         self.assertIn("8 of 8 launches void", (self.work / "STOP").read_text())
 
+    def test_the_stability_gate_stops_at_its_first_technical_failure(self):
+        self.scenario({"a": ["could-not-run"], "b": ["result"]})
+        self.runner({**self.config([unit("a", "M"), unit("b", "K")]), "protocol": "gate"}).run()
+        self.assertEqual(len(self.ledger()["attempts"]), 1)
+        self.assertIn("stability gate", (self.work / "STOP").read_text())
+
     def test_a_credential_in_the_evidence_stops(self):
         self.scenario({"a": ["leak"], "b": ["result"]})
         self.runner(self.config([unit("a", "M"), unit("b", "K")])).run()
