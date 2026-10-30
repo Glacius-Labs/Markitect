@@ -242,6 +242,11 @@ func (e *Engine) Run(ctx context.Context, req Request) (*Result, error) {
 	remote = started
 
 	s := newSchedule(e, req, plan, cur, imp, started, creds)
+	if req.Mode == agentport.Verify && len(plan.Checks) > 0 {
+		// The checkers judge the start with the required checks' results
+		// as evidence, so the host runs them before the checkers start.
+		s.startChecks = e.checkStart(ctx, started, start)
+	}
 	s.run(ctx)
 	s.report(r)
 	if r.State != "" {
@@ -460,9 +465,30 @@ func (e *Engine) credentials(plan *runremote.Plan, mode agentport.Mode) (map[str
 	return creds, nil
 }
 
+// checkStart runs the required checks on the Run's start, a commit the
+// remote holds, as the host's check. Checks that could not run get one more
+// try, since a Run whose items all conform would otherwise end with
+// unconfirmed checks.
+func (e *Engine) checkStart(ctx context.Context, remote Remote, start string) *startChecks {
+	var sc *startChecks
+	for try := 0; try < 2 && (sc == nil || sc.err != nil) && ctx.Err() == nil; try++ {
+		var b bytes.Buffer
+		if err := e.Git.Bundle(ctx, start, &b); err != nil {
+			sc = &startChecks{err: err}
+			continue
+		}
+		results, err := remote.Check(ctx, &b, start)
+		sc = &startChecks{results: results, err: err}
+	}
+	if sc == nil {
+		sc = &startChecks{err: context.Cause(ctx)}
+	}
+	return sc
+}
+
 // collectChecks records where the required checks ran on the whole
 // repository: in apply on the push of Root's approved submission, in verify
-// on the push of Root's verdicts, whose state is the Run's starting commit.
+// on the Run's start, where the host ran them before the checkers started.
 // The hooks ran them on that commit's full repository state but refused only
 // a failing merged state, so landing refuses failing results on an unmoved
 // target and runs them again on the merged state of a moved one.
@@ -472,12 +498,21 @@ func (e *Engine) collectChecks(ctx context.Context, remote Remote, s *schedule, 
 		rc.Note = "execution.yaml names no required checks"
 		return
 	}
+	if s.req.Mode == agentport.Verify {
+		sc := s.startChecks
+		*rc = RequiredChecks{Commit: s.plan.Base, Checks: sc.results, WholeRepository: true,
+			Ran: sc.err == nil && len(sc.results) == len(s.plan.Checks) && allPassed(sc.results)}
+		if rc.Checks == nil {
+			rc.Checks = []runremote.CheckResult{}
+		}
+		if sc.err != nil {
+			rc.Note = fmt.Sprintf("the required checks could not run on the start: %v", sc.err)
+		}
+		return
+	}
 	root := s.nodes[model.RootPackage]
 	if root == nil || root.approvedSubmission == "" {
 		rc.Note = "Root's work was not approved, so the required checks ran on no state that would land"
-		if s.req.Mode == agentport.Verify {
-			rc.Note = "Root's checker pushed no verdicts, so the required checks did not run on the whole repository"
-		}
 		return
 	}
 	pushes, err := remote.Log(ctx)
@@ -489,20 +524,12 @@ func (e *Engine) collectChecks(ctx context.Context, remote Remote, s *schedule, 
 		for _, u := range p.Updates {
 			if p.Decision.Accepted && u.New == root.approvedSubmission && len(p.Decision.Checks) > 0 {
 				rc.Commit, rc.Checks = u.New, p.Decision.Checks
-				if s.req.Mode == agentport.Verify {
-					// The verdicts go with the remote; their tree is the start's.
-					rc.Commit = s.plan.Base
-				}
 				rc.Ran, rc.WholeRepository = allPassed(p.Decision.Checks) && len(p.Decision.Checks) == len(s.plan.Checks), true
 			}
 		}
 	}
 	if rc.Commit == "" {
-		what := "approved submission"
-		if s.req.Mode == agentport.Verify {
-			what = "verdicts"
-		}
-		rc.Note = fmt.Sprintf("the decision log holds no checked push of Root's %s %s", what, short(root.approvedSubmission))
+		rc.Note = fmt.Sprintf("the decision log holds no checked push of Root's approved submission %s", short(root.approvedSubmission))
 	}
 }
 
