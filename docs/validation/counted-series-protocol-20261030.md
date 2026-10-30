@@ -2,7 +2,7 @@
 
 The protocol of step T7's counted acceptance series ([delivery plan](../implementation-plan.md#concept-20-build)), as section D of the [suite design](../design/evaluation-suite-v2.md#d-counted-evaluations) asks for. It is built from the pilot's [proposal](t7-pilot-20261029.md#proposed-protocol-for-the-counted-series) and its [Q4](t7-pilot-20261029.md#q4-what-must-change-before-a-counted-series), updated for what has changed since. The owner delegated the counted series to Build, and Build approves this protocol after an [independent review](#independent-review), recorded below before any counted run ([build page](../workstreams/build.md), Decisions).
 
-**Status: proposed on 30 October 2026, not yet approved.** No gate or counted launch has run. The [stability gate](#stability-gate) runs only in a window that Build clears with the owner. The owner decided the [four points](#decided-by-the-owner) that were the owner's on 30 October 2026.
+**Status: approved by Build on 30 October 2026,** under the owner's delegation, after the [independent review](#independent-review) and its second round, on `main` at `6174d5da` (PRs [#908](https://github.com/Glacius-Labs/Markitect/pull/908), [#910](https://github.com/Glacius-Labs/Markitect/pull/910) and [#911](https://github.com/Glacius-Labs/Markitect/pull/911)). No gate or counted launch has run; the [preconditions](#preconditions) come first, and the amendment that names the frozen commit opens the gate. The [stability gate](#stability-gate) runs only in a window that Build clears with the owner. The owner decided the [four points](#decided-by-the-owner) that were the owner's on 30 October 2026.
 
 ## What changed since the pilot's proposal
 
@@ -23,7 +23,7 @@ The protocol of step T7's counted acceptance series ([delivery plan](../implemen
 
 ## Preconditions
 
-All of these hold before the first gate launch. The gate's frozen commit is the series' frozen commit.
+Preconditions 1 to 4, 6 and 7 hold before the first gate launch, and precondition 5 before the first counted launch. The gate's frozen commit is the series' frozen commit.
 
 1. **The runner:** PR #908 is on `main`.
 2. **Plants:** every plant has been checked for consequences of what it removes (Q4, item 5).
@@ -215,13 +215,13 @@ The same reviewer then checked the revision against this page and the code. It f
 
 **The reviewer then approved the protocol at `44890a66`, with the runner at `dd82a93d`. Nothing blocked it.** It confirmed each of these handlings in the code and the numbers again. It made two last points, which are now on the page: name the person who handles the new project's material in the amendment before the gate, and state as a limit that a unit invalid again after its relaunch counts under Unpaired.
 
-**Changes after the approval, at Build's request on 30 October 2026, not reviewed again:**
+**Changes after the reviewer's approval, at Build's request on 30 October 2026:**
 
 - [PR #907](https://github.com/Glacius-Labs/Markitect/pull/907) counts the tokens of ended agents, so that stated limit now says so.
 - [PR #909](https://github.com/Glacius-Labs/Markitect/pull/909) gives `verify` the required checks as evidence. So the series now proposes one `verify --full` per chain end for both arms, 8 launches per platform. This replaces the decision not to run one. [PR #911](https://github.com/Glacius-Labs/Markitect/pull/911) builds the arm's `verify` mode and the runner's verify launch (precondition 6). The gate gains two verify launches on the Makerspace chain and, after the second review below, two on the new project's start: 32 launches, bound 48.
 - The owner's questions followed Build's list, and the owner decided them the same day (see [Decided by the owner](#decided-by-the-owner)).
 - Who handles the new project's material is worded so that a fresh session that works on no arm qualifies.
-- A second independent review of these changes, which Build ran, found eight points. They are handled on this page:
+- A second independent review of these changes, which Build ran, found eight points. They are handled on this page, in seven handlings, since the recommendation history it named in two places was dropped from both:
   - the owner's section holds only the owner's words and Build's meanings;
   - a session that clones the private repository becomes hidden material, with its removal mid-series and before the Codex repeat;
   - who writes the inputs again after a new commit;
@@ -229,3 +229,5 @@ The same reviewer then checked the revision against this page and the code. It f
   - the gate verifies the new project's start for both arms (32 launches, bound 48, built in #911);
   - page and runner agree on when the verify launch runs and on an empty slot;
   - the history lines are marked.
+
+  Build checked these handlings against the reviewer's points and approved the protocol without a third review round.
