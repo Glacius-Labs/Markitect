@@ -228,6 +228,7 @@ A prepared series' author writes its inputs in the same layout, and `--prepared 
   A five-hour use of 85 % waits for that window's reset instead. The ledger keeps that wait, so a window that ends during it waits out the rest when the series goes on.
 - **Judging:** each delivered result is judged at its step, after the quota and evidence checks. A chain's counted steps are judged as one chain after its last step; the suite judges a chain's delivered steps only.
   - **Pending:** a judgment stays under `pending` in the ledger until it is valid. That covers a judge folder off the machine, a window that ends during a judgment, and a runner that does not live to finish one. Each window starts by making what is pending and whose judge is there. A judgment that is not valid is made once more, each time in a fresh folder.
+  - **A judge that keeps failing:** only the window that made the launch stops for its judge. An item whose judge failed twice is tried again only after the last unit and by `judge`, and it stays listed in `done.json`.
   - **A prepared series** whose judge folders are off the machine is judged later. `judge` judges and reviews what waited, once the folders are there, and writes the reports again.
   - **Failures:** every judgment, review or report that did not come out is listed under `failures` in the ledger and in `done.json`.
 
@@ -240,7 +241,7 @@ A prepared series' author writes its inputs in the same layout, and `--prepared 
 - **Freeze check:** the first window records the frozen tree, the binaries, a prepared series' launch inputs and the images. Each later window checks them. With `gateLedger` in the configuration, the first window also compares them with the gate's record.
 - **Hidden places:** a leading `~` in a hidden place is expanded.
 - **After each window:**
-  - **Reports:** one over every launch (`report/all`), and per series one over all its launches (`report/SERIES`), one over its fixed starts alone (`report/SERIES-fixed`, where the primary contrast is read) and one over its chains (`report/SERIES-chains`). A series judged later is left out of every report until `judge` has judged all of it, so that nothing of it is read while launches still run.
+  - **Reports:** one over every launch (`report/all`), and per series one over all its launches (`report/SERIES`), one over its fixed starts alone (`report/SERIES-fixed`, where the primary contrast is read) and one over its chains (`report/SERIES-chains`). A series judged later is left out of every report until all its units have run and `judge` has judged all of it, so that nothing of it is read while launches still run.
   - **Final check:** the runner scans every evidence file for the login's tokens and key shapes, and counts what is left labelled `markitect.run` or `markitect.evaluation`.
 - **After the last unit:** the runner also runs the reviews the protocol names, and writes `WORK/done.json`. The gate also writes its verdict, `WORK/gate.json`. In `counted`, the reviews cover every judged result of a fixed start in the first repetition and every chain's last judged step.
 

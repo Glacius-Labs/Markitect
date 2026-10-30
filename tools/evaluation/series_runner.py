@@ -344,12 +344,15 @@ class Login:
 
     @contextlib.contextmanager
     def engine_lock(self):
-        waited = False
+        waited, denied = False, 0
         while True:
             try:
                 fd = os.open(self.lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
                 break
-            except (FileExistsError, PermissionError):  # PermissionError: a lock file being removed on Windows
+            except (FileExistsError, PermissionError) as e:  # PermissionError: a lock file being removed on Windows
+                denied = denied + 1 if isinstance(e, PermissionError) else 0
+                if denied > 5:
+                    raise Stop(f"the engine lock cannot be created: {e}")
                 if self.halted():
                     raise Halt()
                 if not waited:
@@ -540,10 +543,16 @@ class Runner:
     def runner_lock(self):
         """One runner per work folder: a second one would take the first one's launch for an interrupted one."""
         self.work.mkdir(parents=True, exist_ok=True)
-        try:
-            fd = os.open(self.work / "runner.lock", os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-        except (FileExistsError, PermissionError):
-            raise SystemExit(f"{self.work / 'runner.lock'} exists: another runner runs here, or one ended without removing it")
+        for attempt in range(5):
+            try:
+                fd = os.open(self.work / "runner.lock", os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+                break
+            except PermissionError as e:  # a lock file being removed on Windows, or a folder the runner may not write
+                if attempt == 4:
+                    raise SystemExit(f"{self.work / 'runner.lock'} cannot be created: {e}")
+                time.sleep(1)
+            except FileExistsError:
+                raise SystemExit(f"{self.work / 'runner.lock'} exists: another runner runs here, or one ended without removing it")
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             json.dump({"pid": os.getpid(), "started": now()}, f)
         try:
@@ -802,7 +811,7 @@ class Runner:
         self.log(event="ran", unit=unit["id"], step=step, run=self.rel(out), exit=code, answer=attempt["answer"], **verdict)
         if record:
             try:
-                self.after(run)
+                self.after(run, wait=not stops)
             except Stop as e:
                 stops.append(e)
             if not stops and judge and verdict["class"] == "result" and record.get("delivered"):
@@ -810,7 +819,7 @@ class Runner:
         if stops:
             raise Stop("; ".join(str(s) for s in stops))
 
-    def after(self, run):
+    def after(self, run, wait=True):
         """The quota the launch's agents saw and a scan of its evidence for the login. A five-hour wait is kept in the
         ledger, so that a window that ends during it waits out the rest when the series goes on."""
         q = quota(run)
@@ -824,9 +833,10 @@ class Runner:
             self.ledger["quotaWaitUntil"] = q["fiveHourReset"] + 60
             self.save()
             self.log(event="quota-wait", seconds=round(self.ledger["quotaWaitUntil"] - time.time()))
-            self.nap(self.ledger["quotaWaitUntil"] - time.time())
-            self.ledger["quotaWaitUntil"] = None
-            self.save()
+            if wait:
+                self.nap(self.ledger["quotaWaitUntil"] - time.time())
+                self.ledger["quotaWaitUntil"] = None
+                self.save()
 
     def fresh(self, folder, name, mark):
         """The first of NAME, NAME-MARK2, NAME-MARK3 ... that does not exist yet: a judgment or review made again never
@@ -836,14 +846,22 @@ class Runner:
             n += 1
         return folder / (name if n == 1 else f"{name}-{mark}{n}")
 
+    def pending_of(self, item):
+        """The ledger's pending entry for item, found by its kind and ID, and added when there is none."""
+        def key(p):
+            return p["kind"], p["id"] if p["kind"] == "launch" else p["chain"]["id"]
+        for found in self.ledger["pending"]:
+            if key(found) == key(item):
+                return found
+        self.ledger["pending"].append(item)
+        self.save()
+        return item
+
     def judge_launch(self, entry, judge):
         """A delivered result's judgment, pending in the ledger until it is valid: while its judge is off the machine,
         when the window ends during it, or when the runner does not live to record it. A judgment that is not valid is
         made once more; a judge that fails twice in a row stops the series."""
-        item = {"kind": "launch", "id": entry["id"], "judge": str(judge)}
-        if item not in self.ledger["pending"]:
-            self.ledger["pending"].append(item)
-            self.save()
+        item = self.pending_of({"kind": "launch", "id": entry["id"], "judge": str(judge)})
         if not judge.exists():
             return
         for _ in (1, 2):
@@ -856,6 +874,8 @@ class Runner:
                 self.save()
                 return
             self.failure(f"judge-{out.name}", f"no valid judgment in {self.rel(out)}")
+        item["failed"] = True
+        self.save()
         raise Stop(f"the judge gave no valid judgment of {entry['id']} twice")
 
     def run_task(self, unit):
@@ -930,10 +950,7 @@ class Runner:
         """The chain's judgment, pending until it is valid like a launch's. The suite judges a chain's delivered steps
         only, so only those need a valid judgment. A judgment that is not valid is made once more; a judge that fails
         twice in a row stops the series."""
-        item = {"kind": "chain", "chain": chain, "series": series, "kept": kept}
-        if item not in self.ledger["pending"]:
-            self.ledger["pending"].append(item)
-            self.save()
+        item = self.pending_of({"kind": "chain", "chain": chain, "series": series, "kept": kept})
         if not self.series_judge(series).exists():
             return
         whole = self.work / "runs" / f"{chain['id']}-chain"
@@ -954,22 +971,31 @@ class Runner:
                 self.save()
                 return
             self.failure(f"judge-chain-{judged.name}", f"no valid chain judgment in {self.rel(judged)}")
+        item["failed"] = True
+        self.save()
         raise Stop(f"the judge gave no valid judgment of chain {chain['id']} twice")
 
     # --- the end of a window and of the series ---
-    def judge_pending(self):
+    def judge_pending(self, retry_failed=False):
         """Every judgment still pending whose judge folder is on the machine, and each plant's kind, which a prepared
-        series names only there (`plant.json`). A pending item leaves the ledger only once its judgment is valid."""
+        series names only there (`plant.json`). A pending item leaves the ledger only once its judgment is valid. A judge
+        that fails here is recorded and the rest go on: only the window that made a launch stops for its judge. An item
+        whose judge already failed twice is tried again only when `retry_failed` asks for it (at the end, and by `judge`)."""
         for unit in self.c["units"]:
             plant = classify.load(self.judge_dir(unit) / "plant.json") if unit["kind"] == "plant" else None
             if plant:
                 self.ledger["tasks"][self.task_name(unit)]["planted"] = plant["kind"]
         for item in list(self.ledger["pending"]):
-            if item["kind"] == "launch":
-                if pathlib.Path(item["judge"]).exists():
-                    self.judge_launch(next(e for e in self.ledger["launches"] if e["id"] == item["id"]), pathlib.Path(item["judge"]))
-            elif self.series_judge(item["series"]).exists():
-                self.judge_chain(item["chain"], item["series"], item["kept"])
+            if item.get("failed") and not retry_failed:
+                continue
+            try:
+                if item["kind"] == "launch":
+                    if pathlib.Path(item["judge"]).exists():
+                        self.judge_launch(next(e for e in self.ledger["launches"] if e["id"] == item["id"]), pathlib.Path(item["judge"]))
+                elif self.series_judge(item["series"]).exists():
+                    self.judge_chain(item["chain"], item["series"], item["kept"])
+            except Stop as e:
+                self.log(event="judge-still-failing", item=item.get("id") or item["chain"]["id"], reason=str(e))
         self.save()
 
     def reviews(self):
@@ -1066,11 +1092,11 @@ class Runner:
     def wrap_up(self, complete):
         """After every window: the report and the final check; after the last unit also the reviews, the gate's verdict
         and done.json."""
-        for step in ((self.judge_pending, self.reviews) if complete else ()) + (self.report,):
+        for step in ((lambda: self.judge_pending(retry_failed=True), self.reviews) if complete else ()) + (self.report,):
             try:
                 step()
             except Exception as e:  # noqa: BLE001 - recorded; the next one still runs
-                self.failure(step.__name__, f"{type(e).__name__}: {e}")
+                self.failure(getattr(step, "__name__", "judge_pending"), f"{type(e).__name__}: {e}")
         try:
             check = self.final_check()
         except Exception as e:  # noqa: BLE001
@@ -1080,7 +1106,7 @@ class Runner:
             if self.c["protocol"] == "gate":
                 self.gate_verdict(check)
             (self.work / "done.json").write_text(json.dumps({"ended": now(), "launches": len(self.ledger["attempts"]),
-                                                             "pending": len(self.ledger["pending"]), "failures": self.ledger["failures"],
+                                                             "pending": self.ledger["pending"], "failures": self.ledger["failures"],
                                                              **check}, indent=2) + "\n", encoding="utf-8")
 
     def run(self, prep_only=False):
@@ -1121,14 +1147,15 @@ class Runner:
         """Judge, review and report what waited for judge folders that were off the machine during launches."""
         with self.runner_lock():
             try:
-                self.judge_pending()
+                self.judge_pending(retry_failed=True)
                 self.reviews()
             except Stop as e:
                 self.failure("judge", str(e))
             waiting = {p["series"] if p["kind"] == "chain" else next(e["series"] for e in self.ledger["launches"] if e["id"] == p["id"])
                        for p in self.ledger["pending"]}
             for name, s in self.c["series"].items():
-                if s.get("judges") and name not in waiting:
+                ran = all(u["id"] in self.ledger["done"] for u in self.c["units"] if u["series"] == name)
+                if s.get("judges") and ran and name not in waiting:
                     self.ledger.setdefault("released", {})[name] = True
             self.save()
             self.report()

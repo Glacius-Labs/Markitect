@@ -80,8 +80,10 @@ FAKE_SUITE = textwrap.dedent(r'''
         invalid = d / "invalid-judgments"
         left = int(invalid.read_text()) if invalid.exists() else 0
         invalid.write_text(str(max(0, left - 1)))
+        always = (d / "invalid-for").read_text() if (d / "invalid-for").exists() else None  # a run its judge never judges
         pathlib.Path(opt("--out")).mkdir(parents=True)
-        (pathlib.Path(opt("--out")) / "judgment.json").write_text(json.dumps({"valid": left == 0}))
+        bad = left > 0 or bool(always and always in opt("--run").replace("\\", "/"))
+        (pathlib.Path(opt("--out")) / "judgment.json").write_text(json.dumps({"valid": not bad}))
     elif command == "judge-chain":
         out = pathlib.Path(opt("--out"))
         out.mkdir(parents=True)
@@ -331,6 +333,14 @@ class LoginTest(unittest.TestCase):
         self.assertTrue(self.lock.exists())
         self.assertFalse(self.calls.exists())
 
+    def test_a_lock_that_cannot_be_created_stops_after_a_few_tries(self):
+        from unittest import mock
+        login = self.login(60)
+        with mock.patch.object(series_runner.os, "open", side_effect=PermissionError("denied")):
+            with self.assertRaisesRegex(series_runner.Stop, "cannot be created"):
+                login.ensure(2700)
+        self.assertFalse(self.calls.exists())
+
     def test_a_failed_refresh_stops_and_puts_the_expiry_back(self):
         os.environ["FAKE_REFRESH"] = "fails"
         login = self.login(60)
@@ -479,6 +489,19 @@ class SeriesTest(Fixture):
         self.assertEqual([e.get("judgment") for e in self.ledger()["launches"]], ["judgments/a-a1-j3", "judgments/b-a1"])
         self.assertEqual(self.ledger()["pending"], [])
 
+    def test_a_judge_that_keeps_failing_stops_only_the_window_of_its_launch(self):
+        (self.fake / "invalid-for").write_text("runs/a/")
+        self.scenario({"a": ["result"], "b": ["result"]})
+        config = self.config([unit("a", "M"), unit("b", "K", step="C2")])
+        self.runner(config).run()
+        self.assertIn("no valid judgment of a-a1 twice", self.stop_reason())
+        (self.work / "STOP").unlink()
+        self.runner(config).run()  # the next window goes on; the end tries the judge once more
+        self.assertEqual(len(self.calls("run")), 2)
+        done = json.loads((self.work / "done.json").read_text())
+        self.assertEqual([(p["id"], p["failed"]) for p in done["pending"]], [("a-a1", True)])
+        self.assertEqual(sorted(p.name for p in (self.work / "judgments").iterdir()), ["a-a1", "a-a1-j2", "a-a1-j3", "a-a1-j4", "b-a1"])
+
     def test_a_judgment_the_runner_did_not_finish_stays_pending_and_is_made_in_the_next_window(self):
         self.scenario({"a": ["result"], "b": ["result"]})
         config = self.config([unit("a", "M"), unit("b", "K", step="C2")])
@@ -618,6 +641,16 @@ class SeriesTest(Fixture):
         self.assertEqual(ledger["released"], {"gs": True})
         self.assertEqual([self.arg(c, "--out").replace("\\", "/").split("/report/")[1] for c in self.calls("report")][1:],
                          ["all", "gs", "gs-fixed", "gs-chains"])
+
+    def test_a_series_judged_later_is_released_only_when_all_of_it_ran(self):
+        judges = self.tmp / "hidden-judges"
+        self.scenario({"a": ["stop-file"], "b": ["result"]})
+        config = self.config([unit("a", "M"), unit("b", "K", step="C2")], judges=str(judges))
+        self.runner(config).run()
+        (judges / "judge").mkdir(parents=True)
+        self.runner(config).judge()
+        self.assertEqual(self.ledger().get("released", {}), {})
+        self.assertEqual(self.ledger()["pending"], [])
 
     def test_a_plant_runs_from_its_task_and_is_judged_at_its_step(self):
         self.scenario({"p": ["result"]})
