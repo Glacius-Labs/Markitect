@@ -62,10 +62,10 @@ def expiry(token):
     try:
         if len(parts) != 3:
             raise ValueError("not three parts")
-        exp = json.loads(base64.urlsafe_b64decode(parts[1] + "=" * (-len(parts[1]) % 4)))["exp"]
+        exp = json.loads(base64.b64decode(parts[1] + "=" * (-len(parts[1]) % 4), altchars="-_", validate=True))["exp"]
     except (ValueError, KeyError, TypeError):
         raise baseline.VariantError("the Codex access token is no JWT with an expiry")
-    if not isinstance(exp, (int, float)) or isinstance(exp, bool) or exp <= 0:
+    if not isinstance(exp, int) or isinstance(exp, bool) or exp <= 0:
         raise baseline.VariantError("the Codex access token is no JWT with an expiry")
     return exp
 
@@ -106,6 +106,11 @@ def stream_facts(path):
         if not isinstance(event, dict):
             continue
         kind = event.get("type")
+        if kind == "error":
+            facts["lastError"] = event.get("message")
+            continue
+        if isinstance(kind, str) and kind.startswith(("thread.", "turn.", "item.")):
+            facts["lastError"] = None  # work after an error event recovered from it, as classify.py reads it
         if kind == "thread.started":
             facts["threadId"] = event.get("thread_id")
         elif kind == "turn.completed":
@@ -115,14 +120,12 @@ def stream_facts(path):
                     facts["usage"][key] = facts["usage"].get(key, 0) + value
         elif kind == "turn.failed" and isinstance(event.get("error"), dict):
             facts["failure"] = event["error"].get("message")
-        elif kind == "error":
-            facts["lastError"] = event.get("message")
     return facts
 
 
 def session_end(facts):
     """How the session ended: a completed turn answered, whatever error events came before it; else its failure or
-    last error, which the CLI reports after its own retries."""
+    the error it ended on, which the CLI reports after its own retries."""
     if facts["completed"]:
         return "completed", None
     error = facts["failure"] or facts["lastError"]
@@ -187,10 +190,16 @@ def main(argv=None):
             record.update(model=model if facts["threadId"] else None, sessionId=facts["threadId"], usage=usage(facts), sessionResult=ended)
             if error:
                 record["sessionError"] = error
+            # Without a thread the CLI failed before the model saw the task, on its configuration or its login: the
+            # variant's own machinery, which the status `error` marks, as for a failure of this code.
+            unstarted = not facts["threadId"] and not record["timedOut"]
+            if unstarted:
+                record["cause"] = f"the codex session started no thread (exit {record['exitCode']}); see session.stderr.log"
             if (codex_home / "sessions").is_dir():
                 shutil.copytree(codex_home / "sessions", out / "transcripts")
             record["resultCommit"], leaked = baseline.capture(repo, spec["start"]["commit"], out / "result.bundle", env, secrets)
-        record["status"] = "timed_out" if record["timedOut"] else ("completed" if record["exitCode"] == 0 else "failed")
+        record["status"] = ("timed_out" if record["timedOut"] else "error" if unstarted
+                            else "completed" if record["exitCode"] == 0 else "failed")
         if leaked or baseline.contains_secret(out, secrets):
             for p in (out / "transcripts", out / "session.stream.jsonl", out / "session.stderr.log", out / "result.bundle"):
                 if p.is_dir():

@@ -150,7 +150,7 @@ Each session runs in the evaluation sandbox like a variant (`--sandbox IMAGE_ID 
 ## Failures, tokens and the report
 
 [classify.py](classify.py) sorts every launch with one rule for every variant:
-- **Void**, a technical failure that is recorded, relaunched and never counted. It covers the infrastructure: the sandbox did not stand up, its container never started, its gateway stopped, it left residue, the suite wrote no record, or the variant command could not start. A server name the gateway refused also stops the series. It covers the provider: a session's last response is an API error for capacity, a rate or usage limit, a server error or a refused login, and the run did not end normally. A Codex exec session, `codex_cli.py`'s, is read from its event stream: it completed no turn, and its failed turn's error, else its last error, has such a class by the host Codex adapter's rule for the CLI's error text. A variant whose Results list its agent starts, the 2.0 arm, is read from them instead: a Manager's last start failed with the class `capacity`, `rate-limit`, `server-error` or `login`; a failed start that the same Manager followed with another one is its work, like an error a single session recovered from. And it covers a variant runtime signature written into the series protocol before the series.
+- **Void**, a technical failure that is recorded, relaunched and never counted. It covers the infrastructure: the sandbox did not stand up, its container never started, its gateway stopped, it left residue, the suite wrote no record, or the variant command could not start. A server name the gateway refused also stops the series. It covers the provider: a session's last response is an API error for capacity, a rate or usage limit, a server error or a refused login, and the run did not end normally. A Codex exec session, `codex_cli.py`'s, is read from its event stream: it completed no turn, and its failed turn's error, else an error event the stream ends on, has such a class by the host Codex adapter's rule for the CLI's error text. A variant whose Results list its agent starts, the 2.0 arm, is read from them instead: a Manager's last start failed with the class `capacity`, `rate-limit`, `server-error` or `login`; a failed start that the same Manager followed with another one is its work, like an error a single session recovered from. And it covers a variant runtime signature written into the series protocol before the series.
 - **Invalid:** host mode, or a reported model other than the evaluation's.
 - **Result:** everything else, including a wrong or incomplete result, a timeout and a missing result.
 
@@ -295,7 +295,8 @@ The switches are a Manager's Codex switches without the Manager tools:
 `run.json` keeps the Claude baseline's fields:
 - `sessionId` is the thread;
 - `usage` holds the completed turns' tokens, with the cached input apart;
-- `sessionResult` is `completed` or `failed`, and `sessionError` holds the failed turn's error text, which the classifier reads.
+- `sessionResult` is `completed` or `failed`, and `sessionError` holds the failed turn's error text, or the error event the session ended on. The classifier reads the same from the stream. An error event followed by more work is a recovery, such as a reconnect, and decides nothing.
+- A session that started no thread failed in the CLI before the model saw the task, on its configuration or its login. It gets the status `error`, as a failure of the variant's own code does, so K's runtime signature voids it.
 
 exec's events do not name the model, so `model` is the one the session was launched with, once a thread started, as the host's Codex adapter reports it. The session files under `CODEX_HOME/sessions` are kept as `transcripts/`.
 

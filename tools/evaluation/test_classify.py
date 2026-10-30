@@ -116,10 +116,19 @@ class ClassifierTest(unittest.TestCase):
                 result = classify.classify(self.codex_run({"type": "turn.failed", "error": {"message": message}}), None, "K")
                 self.assertEqual((result["class"], result["kind"]), ("void", "provider"))
                 self.assertEqual(result["evidence"][0]["error"], kind)
-        # Without a failed turn, the last error event decides.
+        # Without a failed turn, an error event the stream ends on decides.
         result = classify.classify(self.codex_run({"type": "error", "message": "Reconnecting... 2/5"},
                                                   {"type": "error", "message": "stream error: 503 Service Unavailable"}))
         self.assertEqual(result["evidence"][0]["error"], "server-error")
+        # The classes are matched in the host's order: capacity before a rate limit.
+        result = classify.classify(self.codex_run({"type": "turn.failed", "error": {"message": "429: the model is overloaded"}}))
+        self.assertEqual(result["evidence"][0]["error"], "capacity")
+
+    def test_a_codex_session_stopped_long_after_a_recovered_error_is_a_result(self):
+        # A reconnect notice early on, then work until the deadline stopped the session: a timeout, the variant's.
+        run = self.codex_run({"type": "error", "message": "stream disconnected before completion; reconnecting 1/5"},
+                             {"type": "item.completed", "item": {"type": "command_execution"}}, exit_code=None)
+        self.assertEqual(classify.classify(run)["class"], "result")
 
     def test_a_codex_session_that_completed_a_turn_or_failed_on_its_own_is_a_result(self):
         recovered = self.codex_run({"type": "error", "message": "stream error: 503"}, {"type": "turn.completed", "usage": {}})

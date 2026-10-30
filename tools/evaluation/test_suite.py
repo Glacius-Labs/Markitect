@@ -389,6 +389,9 @@ FAKE_CODEX = textwrap.dedent("""
     if mode == "leak":
         (cwd / "token.txt").write_text(tokens["access_token"])
     if mode == "sleep":
+        # A reconnect the session recovered from, then work until the deadline stops it.
+        print(json.dumps({"type": "error", "message": "stream disconnected before completion; reconnecting 1/5"}))
+        print(json.dumps({"type": "item.completed", "item": {"type": "command_execution"}}), flush=True)
         time.sleep(120)
     (home / "sessions" / "2026").mkdir(parents=True)
     (home / "sessions" / "2026" / "rollout-th-1.jsonl").write_text(json.dumps({"type": "session_meta", "model": model}) + "\\n")
@@ -469,13 +472,33 @@ class CodexCliTest(unittest.TestCase):
 
     def test_a_timed_out_session_still_delivers_its_work(self):
         record = self.run_mode("sleep", deadline=63)
-        self.assertEqual(record["reported"]["status"], "timed_out")
+        self.assertEqual((record["reported"]["status"], record["reported"]["sessionId"]), ("timed_out", "th-1"))
         self.assertTrue(record["delivered"], record["resultError"])
+        # The reconnect it recovered from is no error it ended on.
+        self.assertNotIn("sessionError", record["reported"])
+        self.assertEqual(classify.session_errors(self.tmp / "run-sleep" / "variant"), [])
 
-    def test_a_session_that_never_started_a_thread_reports_no_model(self):
+    def test_a_session_that_never_started_a_thread_is_the_variant_s_machinery(self):
         record = self.run_mode("silent")
-        self.assertEqual((record["reported"]["status"], record["reported"]["model"]), ("failed", None))
+        self.assertEqual((record["reported"]["status"], record["reported"]["model"]), ("error", None))
+        self.assertIn("started no thread", record["reported"]["cause"])
         self.assertIsNone(record["modelMatches"])
+        # K's signature for its own machinery voids it, as for a failure of claude_code.py's code.
+        signatures = {"variants": {"K": [{"id": "k-error", "path": "reported.status", "pattern": "^error$"}]}}
+        result = classify.classify(self.tmp / "run-silent", signatures, "K")
+        self.assertEqual((result["class"], result["kind"]), ("void", "variant runtime"))
+
+    def test_the_suite_and_the_variant_copy_a_codex_login_alike(self):
+        raw = self.credentials.read_bytes()
+        self.assertEqual(json.loads(codex_cli.session_login(raw, 600)[0]), json.loads(suite.sandboxing.access_login("codex", raw, 600)[0]))
+        self.assertEqual(codex_cli.session_login(raw, 600)[1], suite.sandboxing.access_login("codex", raw, 600)[1])
+        for bad in ('{"tokens": {"access_token": "a.e30.c", "id_token": "i"}}', '{"tokens": {"access_token": "a.!!.c", "id_token": "i"}}',
+                    '{"tokens": {"access_token": "a.eyJleHAiOiAxLjVlOX0.c", "id_token": "i"}}'):
+            with self.subTest(bad):
+                with self.assertRaisesRegex(codex_cli.baseline.VariantError, "no JWT"):
+                    codex_cli.session_login(bad.encode(), 600)
+                with self.assertRaisesRegex(suite.sandboxing.SandboxError, "no JWT"):
+                    suite.sandboxing.access_login("codex", bad.encode(), 600)
 
     def test_login_copy_has_an_empty_refresh_token_and_must_outlive_the_session(self):
         copy, secrets = codex_cli.session_login(self.credentials.read_bytes(), 600)

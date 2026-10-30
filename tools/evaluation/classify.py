@@ -15,7 +15,7 @@ It sorts one run, from its suite.json and what the variant left in RUN_DIR, into
     a rate or usage limit, a server error or a refused login, and the run did
     not end normally (no result, a non-zero exit or a timeout). A Codex exec
     session (codex_cli.py) is read from its event stream: it completed no turn,
-    and its failure, else its last error, has one of these classes, as the
+    and its failure, else an error it ended on, has one of these classes, as the
     host's Codex adapter classifies the CLI's error text. A variant that
     returns Results with its agent starts (results.py), such as the 2.0 arm, is
     read from them instead of its transcripts: a Manager's last start failed
@@ -101,8 +101,8 @@ def session_errors(root):
     A Claude Code session ends in an error when its last assistant message is an API error message, or when its
     stream-json result reports an API error status. Subagent transcripts do not count: the session that ran them
     decides. A Codex exec event stream (its `thread.started` or `turn.started` lines mark it) ends in an error when it
-    completed no turn and its failed turn's error, else its last error event, has a provider class: a completed turn
-    answered, whatever errors came before it.
+    completed no turn and its failed turn's error, else an error event it ends on, has a provider class: a completed
+    turn answered, whatever errors came before it.
     """
     found = []
     for path in sorted(pathlib.Path(root).rglob("*.jsonl")):
@@ -122,14 +122,16 @@ def session_errors(root):
                 last = entry
             elif kind == "result":
                 result = entry
-            elif kind in ("thread.started", "turn.started"):
-                codex["exec"] = True
-            elif kind == "turn.completed":
-                codex["completed"] = True
-            elif kind == "turn.failed" and isinstance(entry.get("error"), dict):
-                codex["failure"] = entry["error"].get("message")
             elif kind == "error":
                 codex["lastError"] = entry.get("message")
+            elif isinstance(kind, str) and kind.startswith(("thread.", "turn.", "item.")):
+                # Work after an error event, such as a reconnect notice, recovered from it: only an error the stream
+                # ends on can decide, so that a session stopped at its deadline long after one is not void.
+                codex["lastError"] = None
+                codex["exec"] = codex["exec"] or kind in ("thread.started", "turn.started")
+                codex["completed"] = codex["completed"] or kind == "turn.completed"
+                if kind == "turn.failed" and isinstance(entry.get("error"), dict):
+                    codex["failure"] = entry["error"].get("message")
         name = path.relative_to(root).as_posix()
         if last and last.get("isApiErrorMessage") and last.get("error") in PROVIDER_ERRORS:
             found.append({"file": name, "error": last["error"], "apiError": last.get("apiError")})

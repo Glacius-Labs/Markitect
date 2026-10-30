@@ -150,10 +150,10 @@ def jwt_expiry(token):
     try:
         if len(parts) != 3:
             raise ValueError("not three parts")
-        exp = json.loads(base64.urlsafe_b64decode(parts[1] + "=" * (-len(parts[1]) % 4)))["exp"]
+        exp = json.loads(base64.b64decode(parts[1] + "=" * (-len(parts[1]) % 4), altchars="-_", validate=True))["exp"]
     except (ValueError, KeyError, TypeError):
         raise SandboxError("the Codex access token is no JWT with an expiry")
-    if not isinstance(exp, (int, float)) or isinstance(exp, bool) or exp <= 0:
+    if not isinstance(exp, int) or isinstance(exp, bool) or exp <= 0:
         raise SandboxError("the Codex access token is no JWT with an expiry")
     return exp
 
