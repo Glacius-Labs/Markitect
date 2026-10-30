@@ -79,7 +79,7 @@ Before the gate, one more check covers places nobody listed. The author names a 
 
 The new project is judged and reviewed only after the last launch of the series on both platforms. Until then its judgments stay pending, and the runner leaves the new project out of every report, so that no count of it, not even what was delivered or timed out, is read while launches still run. Two more reasons: a review copies the rubric into the work folder, and a judgment holds the IDs of failed cases, so neither may exist while launches still run.
 
-**Who handles the new project's material:** Build never opens the new project's inputs or run evidence. When the last launch is done, someone who works on no arm clones the private repository and writes the judge phase with `suite_inputs.py --phase judge` into each platform's `judges/gridshare`. Then `series_runner.py judge` runs for each platform; on Linux, that is in WSL. That person also diagnoses a stop on one of the new project's launches and writes its inputs again after a new commit. Build reads the reports. The Library and Makerspace judges are public, so their launches are judged as they end.
+**Who handles the new project's material:** Build never opens the new project's inputs or run evidence. When the last launch is done, someone who works on no arm clones the private repository and writes the judge phase with `suite_inputs.py --phase judge` into each platform's `judges/gridshare`. Then `series_runner.py judge` runs for each platform; on Linux, that is in WSL. That person also diagnoses a stop on one of the new project's launches and writes its inputs again after a new commit. The amendment that names the frozen commit also names that person, since the authoring session will be gone by then. Build reads the reports. The Library and Makerspace judges are public, so their launches are judged as they end.
 
 ## Stability gate
 
@@ -133,6 +133,7 @@ Each stop leaves its reason in `STOP`. Build removes `STOP` and starts the runne
   - The reviewers may guess the arm; in the pilot they guessed it every time. Every reviewer is from the writers' model family.
   - Tokens of agents that a Run ends are counted only if that fix is on `main` at the freeze.
   - Human attention is measured by its stand-ins.
+  - A unit whose launch is invalid again after its one relaunch counts under Unpaired, not as a failure of its arm. The report shows it.
 - **What it claims:** only what it measures, as §15 says. It may show at least K's quality and fewer defects left for a person per change at comparable input. It does not show time saved.
 
 ## For the owner
@@ -178,3 +179,5 @@ The same reviewer then checked the revision against this page and the code. It f
 | More hidden places: the authoring session's temporary folder and other files, and the WSL folders of its Linux self-test; a literal `~` was never expanded | The temporary folder is listed. A bounded search for a marker file the author names covers the rest. The runner expands `~`, and the page asks for absolute paths |
 | `casesFailed`'s minimum of one case is a large share of a change's own cases | Stated under Reading, with §15.1's landed changes as the direct measure of wrong stops |
 | The freeze was checked within one work folder only, and the inputs had no digest | The freeze includes the new project's launch inputs, and the series checks them against the gate's record (`gateLedger`). Each platform's reading names its commit |
+
+**The reviewer then approved the protocol at `44890a66`, with the runner at `dd82a93d`. Nothing blocked it.** It confirmed each of these handlings in the code and the numbers again. It made two last points, which are now on the page: name the person who handles the new project's material in the amendment before the gate, and state as a limit that a unit invalid again after its relaunch counts under Unpaired.
