@@ -91,7 +91,13 @@ func TestTheModelManifestLockAndExecutionNeverChange(t *testing.T) {
 			".markitect/ignore.md", ".markitect/model/new.md", ".markitect/results/x.md", ".markitect/registry/nobody.md", ".markitect/libraries/x/k.md"} {
 			m.write(file, "changed\n")
 			m.commit("touch " + file)
-			m.mustRefuse("is protected")
+			want := "is protected"
+			if file == ".markitect/registry/nobody.md" {
+				// A page the plan names for no Package is a first page,
+				// the owner's.
+				want = "is no registry page at the Run's start"
+			}
+			m.mustRefuse(want)
 			m.git("reset", "-q", "--hard", "origin/"+m.branch)
 		}
 	}
