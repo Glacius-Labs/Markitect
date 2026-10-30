@@ -2,7 +2,7 @@
 
 The protocol of step T7's counted acceptance series ([delivery plan](../implementation-plan.md#concept-20-build)), as section D of the [suite design](../design/evaluation-suite-v2.md#d-counted-evaluations) asks for. It is built from the pilot's [proposal](t7-pilot-20261029.md#proposed-protocol-for-the-counted-series) and its [Q4](t7-pilot-20261029.md#q4-what-must-change-before-a-counted-series), updated for what has changed since. The owner delegated the counted series to Build, and Build approves this protocol after an [independent review](#independent-review), recorded below before any counted run ([build page](../workstreams/build.md), Decisions).
 
-**Status: proposed on 30 October 2026, not yet approved.** No gate or counted launch has run. The [stability gate](#stability-gate) runs only in a window that Build clears with the owner. The owner decided the [four points](#decided-by-the-owner) that were the owner's on 30 October 2026.
+**Status: approved by Build on 30 October 2026,** under the owner's delegation, after the [independent review](#independent-review) and its second round, on `main` at `6174d5da` (PRs [#908](https://github.com/Glacius-Labs/Markitect/pull/908), [#910](https://github.com/Glacius-Labs/Markitect/pull/910) and [#911](https://github.com/Glacius-Labs/Markitect/pull/911)). No gate or counted launch has run; the [preconditions](#preconditions) come first, and the amendment that names the frozen commit opens the gate. The [stability gate](#stability-gate) runs only in a window that Build clears with the owner. The owner decided the [four points](#decided-by-the-owner) that were the owner's on 30 October 2026.
 
 ## What changed since the pilot's proposal
 
