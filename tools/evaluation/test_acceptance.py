@@ -128,11 +128,15 @@ class AcceptanceReportTest(unittest.TestCase):
         (chain / "chain-judgment.json").write_text(json.dumps({
             "steps": [], "regressions": [{"case": "c1", "passedAt": "W0", "failsAt": "C2"}], "lastStepJudged": True,
             "finalDrift": {"step": "C9", "forgottenRules": ["c1"], "staleFiles": [{"path": "x.go"}], "unaccounted": []}}))
-        (self.tmp / "verify.json").write_text(json.dumps(result_page("not-landed", command="verify", findings=[{"definition": "d"}])))
+        (self.tmp / "verify.json").write_text(json.dumps(result_page("not-landed", command="verify", state="findings",
+                                                                     findings=[{"definition": "d"}])))
+        (self.tmp / "verify-incomplete.json").write_text(json.dumps(result_page("not-landed", command="verify", state="incomplete")))
         (self.tmp / "ledger.json").write_text(json.dumps({
             "format": 1, "series": "acceptance", "tasks": {"makerspace": {}, "plant-1": {"planted": "defect"}}, "launches": launches,
             "chains": [{"id": "chain-k", "variant": "K", "task": "makerspace", "judgment": "chain-k"},
-                       {"id": "chain-v", "variant": "2.0", "task": "makerspace", "judgment": "chain-k", "verifyFull": "verify.json"}],
+                       {"id": "chain-v", "variant": "2.0", "task": "makerspace", "judgment": "chain-k", "verifyFull": "verify.json"},
+                       {"id": "chain-i", "variant": "K", "task": "makerspace", "judgment": "chain-k",
+                        "verifyFull": "verify-incomplete.json"}],
             "contrasts": [{"variant": "2.0", "baseline": "K", "endpoint": "casesPassedShare", "minimumDifference": 0.05}]}))
         self.text, self.data = report.report(self.tmp / "ledger.json")
 
@@ -164,6 +168,8 @@ class AcceptanceReportTest(unittest.TestCase):
         self.assertEqual(self.row("§15.2 No drift", "chain-k"),
                          "| chain-k | K | makerspace | yes | C9 | 1 | 1 | 0 | 1 | no verify --full (slot empty) |")
         self.assertTrue(self.row("§15.2 No drift", "chain-v").endswith("| 1 findings |"))
+        # A verify that did not check every item is no clean bill: its state shows instead of "0 findings".
+        self.assertTrue(self.row("§15.2 No drift", "chain-i").endswith("| incomplete: no verdict |"))
 
     def test_the_contrast_pairs_by_task_step_and_repetition(self):
         contrast = self.data["contrasts"][0]

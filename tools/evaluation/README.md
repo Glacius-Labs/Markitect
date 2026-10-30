@@ -92,7 +92,7 @@ While the variant runs, the suite records the engine's events (`RUN_DIR/engine-e
 ```text
 python -I -B tools/evaluation/suite.py run --task TASK_DIR --model claude:claude-sonnet-5-5 --out RUN_DIR \
     --native SANDBOX_IMAGE_ID --hidden-absent PATH --lock FILE -- \
-    python -I -B tools/evaluation/markitect_arm.py --markitect BIN --remote-binary BIN --manager-image IMAGE_ID
+    python -I -B tools/evaluation/markitect_arm.py --markitect BIN --remote-binary BIN --manager-image IMAGE_ID [--verify]
 ```
 
 `--markitect` is the `markitect` program of the frozen revision for the host, `--remote-binary` its `markitect-remote` built for Linux, and `--manager-image` the Manager image with the project's Go toolchain (`packaging/runtime` and its Go example), by image ID. The required checks run in the image `execution.yaml` names (`golang:1.27`), which must be on the engine. Per task the arm:
@@ -105,6 +105,12 @@ python -I -B tools/evaluation/suite.py run --task TASK_DIR --model claude:claude
 The host gets the suite's network (`MARKITECT_NETWORK`, `MARKITECT_HOSTS`, `MARKITECT_DNS` from `EVALUATION_NETWORK`, `EVALUATION_HOSTS`, `EVALUATION_DNS`), the access-only login (`MARKITECT_LOGIN`), the provider and model from `EVALUATION_MODEL`, the effort (`--effort`, default `high`) and the engine. Every `ANTHROPIC_*`, `CLAUDE_*`, `OPENAI_*`, `CODEX_*`, `MARKITECT_*`, `GIT_*`, `GH_*` and `GITHUB_*` variable of the caller is cleared first: the account login only, never an API key. Its Manager containers join the evaluation network and the Run's own internal network, its remote only the latter; the host's own limits apply (each Manager 1 CPU, 2 GiB, 256 processes, 256 MiB temporary space; the remote none), not the series' safety limit. The Run's network is internal but not in isolated gateway mode, so its containers can reach the engine's host at its bridge address (on Docker Desktop, the engine's virtual machine); `armNetworks` records it.
 
 The arm exits 0 when the Run landed, found nothing to do or stopped on a model defect; 1 when it ended otherwise (incomplete, kept) and the start was delivered; 2 when it could not run, with nothing delivered: the owner's input does not compile, the host could not start the Run, its gate failed, or the Run did not land and no agent completed a turn (`noAgentTurn`). None of these is the arm's work, and an unchanged start would otherwise score as a stop on a planted defect; a series protocol voids them with a variant runtime signature on `reported.status` (`could-not-run`, `check-failed`) or `reported.noAgentTurn`. A Run that ended incomplete because of the infrastructure, with failed starts of class `other`, is a result unless a variant runtime signature of the series protocol matches it (`reported.failedStarts` in `suite.json`).
+
+**`--verify`** makes the arm check the task's start as it is, with `markitect verify --full` instead of `apply`. That is concept 2.0 §15.2's independent check of a chain's end state, whichever arm made it.
+
+- **The start:** a start that holds a model is checked against the task's model with its own registry pages. One that holds files but no model, such as K's end state, is first adopted: every file gets a row without links on the page of its owner. An empty start gets the model alone.
+- **The Result** goes to `OUT_DIR/results/RUN.json` as for `apply`. The start is delivered unchanged, since verify changes nothing. `run.json` records the mode (`verify`, `verify-adopted`, `verify-empty`), the adoption and the number of Findings.
+- **Exit codes:** 0 when verify ended `verified` or `findings`, 1 when it ended otherwise, and 2 as for `apply`.
 
 ## Judging
 
@@ -185,9 +191,9 @@ python -I -B WORK/src/tools/evaluation/series_runner.py judge CONFIG.json
   - The contrasts: the share of hidden cases passed, with a minimum meaningful difference of 0.05, and the failed hidden cases, with 1; both are read over each change's mean difference (`blockBy` `change`). Defects left for a person are a third contrast, with 1.
 - **`gate`:**
   - The Library's fixed starts M2, M3 and M4, and the Makerspace chain, once per arm.
-  - The first fixed start of each prepared series once per arm, so that both arms have run on its inputs.
+  - The first fixed start of each prepared series once per arm, so that both arms have run on its inputs, with a verify launch on each result, so that the verify launch has adopted each arm's result there.
 
-The launch bound is one and a half times the planned launches. `units` prints the order and its counts.
+In both plans, every chain ends with a verify launch (see Chains below), right after its last step. The launch bound is one and a half times the planned launches, verify launches included. `units` prints the order and its counts.
 
 **Inputs.** `run` runs from the frozen revision's `tools/`, extracted with `git archive` into `WORK/src`, and logs its own SHA-256. It prepares the Library's and Makerspace's inputs in `WORK/prep/SERIES`, as [change series](#change-series) describes, with the registry pages on every fixed start.
 
@@ -234,6 +240,13 @@ A prepared series' author writes its inputs in the same layout, and `--prepared 
 
 **Chains.** A chain runs one step at a time. Each step is a one-step `suite.py chain` from the step before's result, or from its start when it delivered none. Every launch of a step starts from the state folder as it was before the step. A step without a result after its relaunches, or invalid, ends the chain.
 
+**The verify launch.** Right after a chain's last step, the runner launches §15.2's independent `verify --full` on the chain's end state. A public chain is judged just before it; a prepared series' chain is judged later. The gate's verify launch on a fixed start follows that start.
+
+- **What it checks:** the end state is the result of the chain's last step that delivered one, checked against that step's model, as the series judge's final drift is, whichever arm made it.
+- **How it runs:** as a task of its own (`WORK/verify-tasks/UNIT`), through `suite.py run --native` with `markitect_arm.py --verify`.
+- **How it counts:** it is classed and relaunched like any launch, under the label `V` with the 2.0 arm's signatures, so its technical failures count toward neither arm's void share. It stays out of the report's launches. A verify launch that stays void leaves the slot empty, which is no failure of the arm.
+- **Its Result** fills the chain's `verifyFull` slot, which §15.2's table reads, whatever the verify found. A verify that did not check every item shows its state there, not "0 findings", and fails the gate's check. A chain whose steps delivered nothing has no end state, and so no verify launch.
+
 **Stop and resume.**
 
 - **Ending a window:** the runner ends one as soon as `WORK/STOP` exists, before the next launch or during any wait. Started again after `STOP` is removed, it goes on where it stopped, without launching again what counted. A launch, its records and its answer are saved together. A launch the runner did not live to record is recorded as it ended.
@@ -243,7 +256,7 @@ A prepared series' author writes its inputs in the same layout, and `--prepared 
 - **After each window:**
   - **Reports:** one over every launch (`report/all`), and per series one over all its launches (`report/SERIES`), one over its fixed starts alone (`report/SERIES-fixed`, where the primary contrast is read) and one over its chains (`report/SERIES-chains`). A series judged later is left out of every report until all its units have run and `judge` has judged all of it, so that nothing of it is read while launches still run.
   - **Final check:** the runner scans every evidence file for the login's tokens and key shapes, and counts what is left labelled `markitect.run` or `markitect.evaluation`.
-- **After the last unit:** the runner also runs the reviews the protocol names, and writes `WORK/done.json`. The gate also writes its verdict, `WORK/gate.json`. In `counted`, the reviews cover every judged result of a fixed start in the first repetition and every chain's last judged step.
+- **After the last unit:** the runner also runs the reviews the protocol names, and writes `WORK/done.json`. The gate also writes its verdict, `WORK/gate.json`, which includes a verify Result that ended `verified` or `findings` for every chain. In `counted`, the reviews cover every judged result of a fixed start in the first repetition and every chain's last judged step.
 
 Start the runner detached (`Win32_Process` on Windows, `setsid nohup` on Linux), without a shell's `ANTHROPIC_*` or `CLAUDE_*` variables. Stop it with `WORK/STOP`, not by ending its process.
 

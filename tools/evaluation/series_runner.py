@@ -52,10 +52,12 @@ sys.path.insert(0, str(HERE))
 import classify  # noqa: E402
 
 DEADLINES = {"library": 2700, "makerspace": 5400}
-# The 2.0 arm's variant runtime signatures (markitect_arm.py), written before any launch.
-SIGNATURES = {"variants": {"M": [
+# The 2.0 arm's variant runtime signatures (markitect_arm.py), written before any launch. V is the verify launch on a
+# chain's end state (markitect_arm.py --verify): M's host and machinery whichever arm made the end state.
+ARM_SIGNATURES = [
     {"id": "arm-could-not-run", "path": "reported.status", "pattern": "^(could-not-run|check-failed)$"},
-    {"id": "arm-no-agent-turn", "path": "reported.noAgentTurn", "pattern": "^true$"}]}}
+    {"id": "arm-no-agent-turn", "path": "reported.noAgentTurn", "pattern": "^true$"}]
+SIGNATURES = {"variants": {"M": ARM_SIGNATURES, "V": ARM_SIGNATURES}}
 REPETITIONS = {"public": {"fixed": 2, "plant": 2, "chain": 1}, "confirmatory": {"fixed": 5, "plant": 3, "chain": 2}}
 GATE_FIXED, GATE_CHAIN = ("library", ["M2", "M3", "M4"]), "makerspace"
 # The protocol's contrasts: the primary one first, each read over the changes' mean differences.
@@ -156,14 +158,15 @@ def counted_units(series):
     chains = [(name, r) for r in range(1, max(REPETITIONS[s["role"]]["chain"] for s in series.values()) + 1)
               for name, s in series.items() if REPETITIONS[s["role"]]["chain"] >= r]
     for j, (name, r) in enumerate(chains):
-        units += pair({"id": f"{name}-chain-r{r}", "kind": "chain", "series": name, "steps": series[name]["steps"], "repetition": r},
-                      "M" if j % 2 == 0 else "K")
+        units += pair({"id": f"{name}-chain-r{r}", "kind": "chain", "series": name, "steps": series[name]["steps"], "repetition": r,
+                       "verify": True}, "M" if j % 2 == 0 else "K")
     return units
 
 
 def gate_units(series):
     """The stability gate: per arm, three Library fixed starts in a row and the Makerspace chain, and the first fixed
-    start of each prepared series once, to show that both arms run on its inputs; the first arm alternates."""
+    start of each prepared series once, with a verify launch on its result, to show that both arms run on its inputs
+    and that the verify launch adopts each arm's result there; the first arm alternates."""
     name, steps = GATE_FIXED
     units = []
     for i, step in enumerate(steps):
@@ -171,14 +174,15 @@ def gate_units(series):
     for s_name, s in series.items():
         if s["role"] == "confirmatory":
             units += pair({"id": f"{s_name}-fixed-{s['fixed'][0]}-gate", "kind": "fixed", "series": s_name, "step": s["fixed"][0],
-                           "repetition": 1}, "K")
+                           "repetition": 1, "verify": True}, "K")
     units += pair({"id": f"{GATE_CHAIN}-chain-gate", "kind": "chain", "series": GATE_CHAIN, "steps": series[GATE_CHAIN]["steps"],
-                   "repetition": 1}, "K")
+                   "repetition": 1, "verify": True}, "K")
     return units
 
 
 def launches(units):
-    return sum(len(u["steps"]) if u["kind"] == "chain" else 1 for u in units)
+    """Planned launches: one per fixed start or plant, one per chain step, and a unit's verify launch."""
+    return sum((len(u["steps"]) if u["kind"] == "chain" else 1) + bool(u.get("verify")) for u in units)
 
 
 def plan(protocol, machine, prepared=()):
@@ -201,9 +205,11 @@ def summary(units):
     out = {"launches": launches(units), "byArm": {}, "bySeries": {}}
     for u in units:
         n = len(u["steps"]) if u["kind"] == "chain" else 1
-        out["byArm"][u["arm"]] = out["byArm"].get(u["arm"], 0) + n
+        out["byArm"][u["arm"]] = out["byArm"].get(u["arm"], 0) + n + bool(u.get("verify"))
         key = f"{u['series']} {u['kind']}"
         out["bySeries"][key] = out["bySeries"].get(key, 0) + n
+        if u.get("verify"):
+            out["bySeries"][f"{u['series']} verify"] = out["bySeries"].get(f"{u['series']} verify", 0) + 1
     return out
 
 
@@ -480,7 +486,8 @@ class Runner:
         self.ledger = json.loads(ledger.read_text(encoding="utf-8")) if ledger.exists() else {
             "format": 1, "series": f"{config['protocol']}-{config['rev'][:8]}", "signatures": "signatures.json", "tasks": {},
             "launches": [], "chains": [], "attempts": [], "done": [], "progress": {}, "pending": [], "waits": [], "windows": [],
-            "failures": [], "freeze": None, "contrasts": config["contrasts"]}
+            "failures": [], "freeze": None, "verifies": {}, "contrasts": config["contrasts"]}
+        self.ledger.setdefault("verifies", {})
 
     # --- bookkeeping ---
     def log(self, **event):
@@ -777,11 +784,11 @@ class Runner:
             raise Stop(f"an invalid launch, {self.rel(run)}: {verdict.get('evidence')}")
         return "done"
 
-    def launch(self, unit, out, run, args, step, judge=None, progress=None):
+    def launch(self, unit, out, run, args, step, judge=None, progress=None, report=True):
         """One launch into `out`, whose run folder is `run`: the suite command (none for a launch the runner did not live
         to record), its class with the arm's signatures, the protocol's answer and its records, saved together; then the
         quota and the evidence, and then its judgment, pending until it is valid. A chain's `progress` keeps a step
-        whose launch is a result."""
+        whose launch is a result. A launch with `report` false, a verify launch, stays out of the report's launches."""
         code, err = self.suite(f"{unit['id']}-{out.name}", args) if args else (None, "the runner stopped during this launch")
         record = classify.load(run / "suite.json")
         verdict = classify.classify(run, SIGNATURES, unit["arm"]) if record else {
@@ -798,7 +805,7 @@ class Runner:
             attempt["answer"] = "stop"
             stops.append(e)
         entry = None
-        if record:
+        if record and report:
             entry = {"id": f"{unit['id']}-{out.name}", "variant": unit["arm"], "task": self.task_name(unit), "series": unit["series"],
                      "repetition": unit.get("repetition", 1), "step": step, "run": self.rel(run), "class": verdict["class"]}
             self.ledger["launches"].append(entry)
@@ -879,12 +886,14 @@ class Runner:
         raise Stop(f"the judge gave no valid judgment of {entry['id']} twice")
 
     def run_task(self, unit):
-        """A fixed start or plant, launched until a launch counts, within the relaunch limits."""
+        """A fixed start or plant, launched until a launch counts, within the relaunch limits; then its verify launch,
+        where the plan asks for one."""
         flags, variant = self.arm_args(unit)
         base, step = self.work / "runs" / unit["id"], self.step_of(unit)
         while True:
             done = self.attempts_of(unit["id"], step)
             if self.resolved(done) == "done":
+                self.run_verify(unit)
                 return
             run = base / f"a{len(done) + 1}"
             if run.exists():  # launched before the runner ended and never recorded: recorded as it ended
@@ -914,6 +923,7 @@ class Runner:
                 if self.resolved(done) == "done":
                     self.log(event="chain-stopped", unit=unit["id"], at=step)
                     self.finish_chain(unit)
+                    self.run_verify(unit)
                     return
                 out = base / f"{step}-a{len(done) + 1}"
                 run = out / "step-01" / "run"
@@ -928,6 +938,59 @@ class Runner:
                                              "--deadline-seconds", deadline, "--model", self.c["model"], "--out", out, *flags, "--", *variant],
                             step, progress=progress)
         self.finish_chain(unit)
+        self.run_verify(unit)
+
+    def run_verify(self, unit):
+        """Section 15.2's independent `verify --full` on a unit's end state, whichever arm made it. For a chain that is the
+        result of its last step that delivered one, checked against that step's model, as the series judge's final
+        drift is; for a fixed start (the gate's), its counted result. A unit that delivered nothing has no end state
+        to check. One native launch of the 2.0 host (markitect_arm.py --verify), right after the unit, classed and
+        relaunched like any launch under the label V, so that its technical failures count toward neither arm; a void
+        that stays void leaves the slot empty. Its Result fills the chain's `verifyFull` slot, whatever it found; the
+        report shows a verify that did not check every item by its state."""
+        if not unit.get("verify") or unit["id"] in self.ledger["verifies"]:
+            return
+        if unit["kind"] == "chain":
+            ran = [(step, self.work / out / "step-01" / "run") for step, out in (self.ledger["progress"].get(unit["id"]) or {}).get("kept", [])]
+        else:
+            ran = [(self.step_of(unit), self.work / a["run"]) for a in self.attempts_of(unit["id"], self.step_of(unit)) if a["class"] == "result"]
+        delivered = [(step, run) for step, run in ran if (classify.load(run / "suite.json") or {}).get("delivered")]
+        if not delivered:
+            self.log(event="verify-skipped", unit=unit["id"], why="the unit delivered no result: there is no end state")
+            return
+        step, run = delivered[-1]
+        source = self.prepared(unit["series"]) / "steps" / step
+        task = self.work / "verify-tasks" / unit["id"]
+        if not task.exists():  # built aside and renamed, so that a runner ended half-way leaves no partial task behind
+            partial = task.with_name(task.name + ".partial")
+            if partial.exists():
+                shutil.rmtree(partial)
+            self.must(f"verify-task-{unit['id']}", [self.py, "-I", "-B", self.suite_py, "task", "--task-md", source / "task.md",
+                                                     "--model", source / "model", "--start", run / "variant" / "result.bundle",
+                                                     "--deadline-seconds", self.series(unit["series"])["deadlineSeconds"], "--out", partial])
+            os.replace(partial, task)
+        flags, variant = self.arm_args({"arm": "M"})
+        checker = {**unit, "arm": "V"}
+        base = self.work / "runs" / unit["id"]
+        while True:
+            done = self.attempts_of(unit["id"], "verify")
+            if self.resolved(done) == "done":
+                break
+            run = base / f"verify-a{len(done) + 1}"
+            if run.exists():
+                self.launch(checker, run, run, None, "verify", report=False)
+                continue
+            self.ready(self.series(unit["series"])["deadlineSeconds"])
+            self.launch(checker, run, run, ["run", "--task", task, "--model", self.c["model"], "--out", run, *flags, "--", *variant, "--verify"],
+                        "verify", report=False)
+        last_attempt = self.attempts_of(unit["id"], "verify")[-1]
+        results = sorted((self.work / last_attempt["run"] / "variant" / "results").glob("*.json"))
+        if last_attempt["class"] == "result" and results:
+            self.ledger["verifies"][unit["id"]] = self.rel(results[0])
+            for chain in self.ledger["chains"]:
+                if chain["id"] == unit["id"]:
+                    chain["verifyFull"] = self.ledger["verifies"][unit["id"]]
+            self.save()
 
     def finish_chain(self, unit):
         """The counted steps as one chain folder, judged by the series judge now, or later while it is off the machine."""
@@ -966,7 +1029,8 @@ class Runner:
                     for entry in self.ledger["launches"]:
                         if entry["run"] == f"{out}/step-01/run" and i in steps:
                             entry["judgment"] = self.rel(steps[i])
-                self.ledger["chains"].append({**chain, "judgment": self.rel(judged)})
+                verify = {"verifyFull": self.ledger["verifies"][chain["id"]]} if chain["id"] in self.ledger["verifies"] else {}
+                self.ledger["chains"].append({**chain, "judgment": self.rel(judged), **verify})
                 self.ledger["pending"].remove(item)
                 self.save()
                 return
@@ -1079,7 +1143,7 @@ class Runner:
 
     def gate_verdict(self, check):
         """The stability gate passes when every launch is a result, every public result and chain has a valid judgment,
-        the final check is clean, and M's Makerspace chain landed its first step."""
+        every chain its verify Result, the final check is clean, and M's Makerspace chain landed its first step."""
         public = [e for e in self.ledger["launches"] if self.series(e["series"])["role"] == "public"]
         delivered = [e for e in public if e["class"] == "result" and (classify.load(self.work / e["run"] / "suite.json") or {}).get("delivered")]
         m_chain = [e for e in public if e["variant"] == "M" and e["task"] == f"{GATE_CHAIN}-chain"]
@@ -1087,6 +1151,9 @@ class Runner:
         checks = {"everyLaunchAResult": all(a["class"] == "result" for a in self.ledger["attempts"]),
                   "everyResultJudged": all(e.get("judgment") and valid(self.work / e["judgment"] / "judgment.json") for e in delivered),
                   "everyChainJudged": len(self.ledger["chains"]) == sum(u["kind"] == "chain" for u in self.c["units"]),
+                  "everyChainVerified": all(u["id"] in self.ledger["verifies"] and (classify.load(self.work / self.ledger["verifies"][u["id"]])
+                                                                                     or {}).get("state") in ("verified", "findings")
+                                            for u in self.c["units"] if u.get("verify")),
                   "noCredential": not check["secretHits"], "nothingLeft": not any(check["leftovers"].values()) and not check["engineErrors"],
                   "mLandedTheFirstChainStep": bool(first and first.get("delivered") and ((first.get("result") or {}).get("changedPaths")))}
         verdict = {"passes": all(checks.values()), "checks": checks, "time": now()}

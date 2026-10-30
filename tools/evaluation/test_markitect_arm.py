@@ -90,6 +90,14 @@ STANDIN = textwrap.dedent(r'''
             "checker": "lending/checker", "approved": True}
     result = {"format": 1, "run": run, "command": "apply", "items": [item], "requiredChecks": {"ran": True, "wholeRepository": True},
               "notParticipating": [], "findings": [], "starts": starts, "usage": {"input": 1000, "output": 100}, "cleanup": []}
+    if args[0] == "verify":
+        # verify: FAKE_APPLY "verified" or "findings" checks every item; the other modes end as for apply.
+        result.update(command="verify", outcome="not-landed")
+        if mode in ("verified", "findings"):
+            result.update(state=mode, why=mode, findings=[] if mode == "verified" else [
+                {"definition": "lending/loan-policy", "observed": "no limit", "expected": "the limit is 5"}])
+            print(json.dumps(result, indent=2))
+            sys.exit(0 if mode == "verified" else 1)
     if mode == "land":
         work = d / f"land-{n}"
         git("clone", "-q", git("remote", "get-url", "origin"), str(work), cwd=d)
@@ -313,6 +321,50 @@ class ArmTest(unittest.TestCase):
         task = self.task("adopt-full", self.model("m2b"), self.tmp / "reference.bundle")
         self.run_arm(task, "defect")
         self.assertIn("--full", self.applies()[1]["args"])
+
+    def verify(self, task, mode):
+        os.environ["FAKE_APPLY"] = mode
+        out = self.tmp / ("verify-" + task.name + "-" + mode)
+        return suite.run(task, [*self.variant, "--verify"], out, MODEL, None), out
+
+    def test_verify_checks_an_end_state_with_its_model_and_delivers_it_unchanged(self):
+        record, out = self.run_arm(self.task("m-end", self.model("m-end-model")))
+        landed = out / "variant" / "result.bundle"
+        task = self.task("verify-m", self.model("m-end-model-2"), landed)
+        record, out = self.verify(task, "verified")
+        self.assertEqual(record["exitCode"], 0, (out / "variant" / "run.json").read_text())
+        self.assertTrue(record["delivered"])
+        self.assertEqual(record["result"]["changedPaths"], [])
+        call = self.applies()[-1]
+        self.assertEqual((call["args"][0], "--full" in call["args"], "--base" in call["args"]), ("verify", True, False))
+        rep = record["reported"]
+        self.assertEqual((rep["command"], rep["mode"], rep["adoption"], rep["findings"]), ("verify", "verify", None, 0))
+        self.assertEqual(results.check_run(out)["problems"], [])
+
+    def test_verify_adopts_an_end_state_without_a_model_first(self):
+        start = self.tmp / "k-end"
+        subprocess.run(["git", "init", "-q", "-b", "start", str(start)], check=True)
+        for rel in ("realization/go.mod", "realization/internal/lending/loans.go", "README.md"):
+            (start / rel).parent.mkdir(parents=True, exist_ok=True)
+            (start / rel).write_text(rel + "\n")
+        env = dict(os.environ, GIT_AUTHOR_NAME="k", GIT_AUTHOR_EMAIL="k@x", GIT_COMMITTER_NAME="k", GIT_COMMITTER_EMAIL="k@x")
+        subprocess.run(["git", "-C", str(start), "add", "-A"], check=True, env=env)
+        subprocess.run(["git", "-C", str(start), "-c", "commit.gpgsign=false", "commit", "-q", "-m", "K's end state"], check=True, env=env)
+        subprocess.run(["git", "-C", str(start), "bundle", "create", "-q", str(self.tmp / "k-end.bundle"), "start"], check=True)
+        task = self.task("verify-k", self.model("k-model"), self.tmp / "k-end.bundle")
+        record, out = self.verify(task, "findings")
+        self.assertEqual(record["exitCode"], 0, (out / "variant" / "run.json").read_text())
+        rep = record["reported"]
+        self.assertEqual((rep["mode"], rep["findings"], rep["status"]), ("verify-adopted", 1, "findings"))
+        self.assertEqual((rep["adoption"]["unlinkedRows"], rep["adoption"]["pageRows"]), (3, 0))
+        self.assertEqual(record["result"]["commit"], json.loads((task / "task.json").read_text())["start"]["commit"])
+        self.assertIn("realization/internal/lending/loans.go", self.applies()[-1]["lendingPage"])
+
+    def test_verify_that_does_not_check_every_item_is_no_verdict(self):
+        record, _ = self.verify(self.task("verify-empty", self.model("e-model")), "incomplete")
+        self.assertEqual((record["exitCode"], record["reported"]["mode"], record["reported"]["status"]), (1, "verify-empty", "incomplete"))
+        record, _ = self.verify(self.task("verify-machinery", self.model("v-model")), "machinery")
+        self.assertEqual((record["delivered"], record["exitCode"], record["reported"]["noAgentTurn"]), (False, 2, True))
 
     def test_a_host_that_cannot_run_delivers_nothing(self):
         record, out = self.run_arm(self.task("none", self.model("model-n")), "none")
