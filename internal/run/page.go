@@ -30,7 +30,7 @@ func Page(r *Result) []byte {
 	row("Ended", r.Ended.UTC().Format("2006-01-02 15:04:05 UTC"))
 	tokens := fmt.Sprintf("%d in, %d out", r.Usage.InputTokens, r.Usage.OutputTokens)
 	if r.Usage.Partial {
-		tokens = "at least " + tokens + ": a start the Run ended or that reached its deadline reported no total"
+		tokens = "at least " + tokens + ": a start reported no total, for example one the Run ended"
 	}
 	row("Tokens", tokens)
 	row("Full check", fullCheckLine(r))

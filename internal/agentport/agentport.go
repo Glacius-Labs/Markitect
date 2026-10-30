@@ -246,7 +246,8 @@ type End struct {
 type Usage struct {
 	InputTokens  int64 `json:"inputTokens"`
 	OutputTokens int64 `json:"outputTokens"`
-	// Partial: the provider reported no total for a start the Run ended or
-	// that reached its deadline, so the counts are a lower bound.
+	// Partial: the provider reported no total for the start, as for one the
+	// Run ended, that reached its deadline or that broke off, so the counts
+	// are a lower bound.
 	Partial bool `json:"partial,omitempty"`
 }

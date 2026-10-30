@@ -1,6 +1,7 @@
 package run
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -18,12 +19,15 @@ func TestTheResultCountsTheTokensOfEndedStarts(t *testing.T) {
 	if r.Usage != (agentport.Usage{InputTokens: 150, OutputTokens: 12, Partial: true}) {
 		t.Fatalf("usage %+v", r.Usage)
 	}
-	if page := string(Page(r)); !strings.Contains(page, "at least 150 in, 12 out: a start the Run ended or that reached its deadline reported no total") {
+	if page := string(Page(r)); !strings.Contains(page, "at least 150 in, 12 out: a start reported no total, for example one the Run ended") {
 		t.Fatalf("page:\n%s", page)
 	}
 	r.Starts = r.Starts[:1]
 	(&Engine{}).stamp(r)
 	if page := string(Page(r)); r.Usage.Partial || strings.Contains(page, "at least") || !strings.Contains(page, "100 in, 10 out") {
 		t.Fatalf("a complete total %+v:\n%s", r.Usage, page)
+	}
+	if b, _ := json.Marshal(r.Usage); string(b) != `{"inputTokens":100,"outputTokens":10}` {
+		t.Fatalf("a complete total's JSON: %s", b)
 	}
 }

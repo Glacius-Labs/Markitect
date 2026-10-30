@@ -114,8 +114,8 @@ type Outcome struct {
 type Usage struct {
 	Input, CacheCreation, CacheRead, Output int64
 	// Partial: the provider reported no total for the turn, as for a turn
-	// that was stopped, so the counts are what its output showed until then
-	// and a lower bound.
+	// that was stopped, crashed or failed before its end, so the counts are
+	// what its output showed until then and a lower bound.
 	Partial bool
 }
 

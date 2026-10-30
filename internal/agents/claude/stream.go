@@ -32,8 +32,8 @@ type reader struct {
 	lastError string
 	result    *line
 	usage     agents.Usage
-	// messages holds each assistant message's usage, the last line of
-	// each counting: a turn without a result reports no total.
+	// messages holds each assistant message's usage, the largest count of
+	// its lines: a turn without a result reports no total.
 	messages map[string]agents.Usage
 }
 
@@ -81,6 +81,12 @@ type usage struct {
 	Output        int64 `json:"output_tokens"`
 }
 
+// maxUsage keeps the larger count of each field: a message's later lines
+// repeat its input and stream more output.
+func maxUsage(a, b agents.Usage) agents.Usage {
+	return agents.Usage{Input: max(a.Input, b.Input), CacheCreation: max(a.CacheCreation, b.CacheCreation), CacheRead: max(a.CacheRead, b.CacheRead), Output: max(a.Output, b.Output)}
+}
+
 func (u usage) count() agents.Usage {
 	return agents.Usage{Input: u.Input, CacheCreation: u.CacheCreation, CacheRead: u.CacheRead, Output: u.Output}
 }
@@ -118,7 +124,7 @@ func (r *reader) Line(raw []byte) error {
 				if r.messages == nil {
 					r.messages = map[string]agents.Usage{}
 				}
-				r.messages[l.Message.ID] = l.Message.Usage.count()
+				r.messages[l.Message.ID] = maxUsage(r.messages[l.Message.ID], l.Message.Usage.count())
 			}
 		}
 	case l.Type == "result":
