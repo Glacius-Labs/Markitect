@@ -113,7 +113,7 @@ func (g *Agents) Run(ctx context.Context, s agentport.Start, host agentport.Host
 	if out.Model != "" {
 		end.Agent = cfg.Provider.Name() + ":" + out.Model
 	}
-	end.Usage = agentport.Usage{InputTokens: out.Usage.Input + out.Usage.CacheCreation + out.Usage.CacheRead, OutputTokens: out.Usage.Output}
+	end.Usage = agentport.Usage{InputTokens: out.Usage.Input + out.Usage.CacheCreation + out.Usage.CacheRead, OutputTokens: out.Usage.Output, Partial: out.Usage.Partial}
 	switch {
 	case sendErr != nil:
 		return failed(end, Other, errors.New(string(a.redact([]byte(sendErr.Error())))))

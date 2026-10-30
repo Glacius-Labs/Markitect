@@ -32,6 +32,9 @@ type reader struct {
 	lastError string
 	result    *line
 	usage     agents.Usage
+	// messages holds each assistant message's usage, the last line of
+	// each counting: a turn without a result reports no total.
+	messages map[string]agents.Usage
 }
 
 // line is the projection of one stream-json line this reader consumes.
@@ -56,19 +59,30 @@ type line struct {
 		Status string `json:"status"`
 	} `json:"mcp_servers"`
 	// assistant and user
-	Parent *string `json:"parent_tool_use_id"`
-	Error  string  `json:"error"`
+	Parent  *string `json:"parent_tool_use_id"`
+	Error   string  `json:"error"`
+	Message struct {
+		ID    string `json:"id"`
+		Usage usage  `json:"usage"`
+	} `json:"message"`
 	// result
 	IsError        bool     `json:"is_error"`
 	Result         string   `json:"result"`
 	Errors         []string `json:"errors"`
 	APIErrorStatus int      `json:"api_error_status"`
-	Usage          struct {
-		Input         int64 `json:"input_tokens"`
-		CacheCreation int64 `json:"cache_creation_input_tokens"`
-		CacheRead     int64 `json:"cache_read_input_tokens"`
-		Output        int64 `json:"output_tokens"`
-	} `json:"usage"`
+	Usage          usage    `json:"usage"`
+}
+
+// usage is the token count of a result or of one assistant message.
+type usage struct {
+	Input         int64 `json:"input_tokens"`
+	CacheCreation int64 `json:"cache_creation_input_tokens"`
+	CacheRead     int64 `json:"cache_read_input_tokens"`
+	Output        int64 `json:"output_tokens"`
+}
+
+func (u usage) count() agents.Usage {
+	return agents.Usage{Input: u.Input, CacheCreation: u.CacheCreation, CacheRead: u.CacheRead, Output: u.Output}
 }
 
 func (r *reader) Line(raw []byte) error {
@@ -100,10 +114,16 @@ func (r *reader) Line(raw []byte) error {
 		}
 		if l.Type == "assistant" {
 			r.lastError = l.Error
+			if l.Message.ID != "" {
+				if r.messages == nil {
+					r.messages = map[string]agents.Usage{}
+				}
+				r.messages[l.Message.ID] = l.Message.Usage.count()
+			}
 		}
 	case l.Type == "result":
 		r.result = &l
-		r.usage = r.usage.Add(agents.Usage{Input: l.Usage.Input, CacheCreation: l.Usage.CacheCreation, CacheRead: l.Usage.CacheRead, Output: l.Usage.Output})
+		r.usage = r.usage.Add(l.Usage.count())
 	case l.Type == "control_request":
 		return errors.New("claude: the CLI asked for a control answer, which this adapter never gives")
 	}
@@ -144,6 +164,14 @@ func (r *reader) checkInit(l line) error {
 
 func (r *reader) Outcome() agents.Outcome {
 	out := agents.Outcome{Conversation: r.session, Model: r.model, Usage: r.usage}
+	if r.result == nil {
+		// Without a result, the assistant messages tell the input exactly;
+		// their output counts are those streamed at each message's start.
+		out.Usage = agents.Usage{Partial: true}
+		for _, u := range r.messages {
+			out.Usage = out.Usage.Add(u)
+		}
+	}
 	switch {
 	case r.result == nil:
 		// The host reports a turn without a result.
