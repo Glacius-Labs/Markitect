@@ -23,7 +23,7 @@ The protocol of step T7's counted acceptance series ([delivery plan](../implemen
 
 ## Preconditions
 
-All of these hold before the first gate launch. The gate's frozen commit is the series' frozen commit.
+Preconditions 1 to 4, 6 and 7 hold before the first gate launch, and precondition 5 before the first counted launch. The gate's frozen commit is the series' frozen commit.
 
 1. **The runner:** PR #908 is on `main`.
 2. **Plants:** every plant has been checked for consequences of what it removes (Q4, item 5).
@@ -215,13 +215,13 @@ The same reviewer then checked the revision against this page and the code. It f
 
 **The reviewer then approved the protocol at `44890a66`, with the runner at `dd82a93d`. Nothing blocked it.** It confirmed each of these handlings in the code and the numbers again. It made two last points, which are now on the page: name the person who handles the new project's material in the amendment before the gate, and state as a limit that a unit invalid again after its relaunch counts under Unpaired.
 
-**Changes after the approval, at Build's request on 30 October 2026, not reviewed again:**
+**Changes after the reviewer's approval, at Build's request on 30 October 2026:**
 
 - [PR #907](https://github.com/Glacius-Labs/Markitect/pull/907) counts the tokens of ended agents, so that stated limit now says so.
 - [PR #909](https://github.com/Glacius-Labs/Markitect/pull/909) gives `verify` the required checks as evidence. So the series now proposes one `verify --full` per chain end for both arms, 8 launches per platform. This replaces the decision not to run one. [PR #911](https://github.com/Glacius-Labs/Markitect/pull/911) builds the arm's `verify` mode and the runner's verify launch (precondition 6). The gate gains two verify launches on the Makerspace chain and, after the second review below, two on the new project's start: 32 launches, bound 48.
 - The owner's questions followed Build's list, and the owner decided them the same day (see [Decided by the owner](#decided-by-the-owner)).
 - Who handles the new project's material is worded so that a fresh session that works on no arm qualifies.
-- A second independent review of these changes, which Build ran, found eight points. They are handled on this page:
+- A second independent review of these changes, which Build ran, found eight points. They are handled on this page, in seven handlings, since the recommendation history it named in two places was dropped from both:
   - the owner's section holds only the owner's words and Build's meanings;
   - a session that clones the private repository becomes hidden material, with its removal mid-series and before the Codex repeat;
   - who writes the inputs again after a new commit;
@@ -229,3 +229,5 @@ The same reviewer then checked the revision against this page and the code. It f
   - the gate verifies the new project's start for both arms (32 launches, bound 48, built in #911);
   - page and runner agree on when the verify launch runs and on an empty slot;
   - the history lines are marked.
+
+  Build checked these handlings against the reviewer's points and approved the protocol without a third review round.
