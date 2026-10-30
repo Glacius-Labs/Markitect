@@ -123,6 +123,14 @@ func (c containerRemote) Log(ctx context.Context) ([]runengine.Push, error) {
 	if err != nil {
 		return nil, err
 	}
+	return parseLog(data)
+}
+
+// parseLog reads the remote's decision log, one push per line.
+func parseLog(data []byte) ([]runengine.Push, error) {
+	// A push the hook is still writing is the last line without its
+	// newline; it belongs to a later read.
+	data = data[:bytes.LastIndexByte(data, '\n')+1]
 	var pushes []runengine.Push
 	sc := bufio.NewScanner(bytes.NewReader(data))
 	sc.Buffer(make([]byte, 64<<10), 64<<20)

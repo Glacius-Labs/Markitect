@@ -3,6 +3,7 @@ package run
 import (
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/Glacius-Labs/Markitect/internal/runremote"
 )
@@ -85,9 +86,13 @@ func (s *schedule) checkEvidence(pushes []Push, logErr error, submission string)
 		}
 		if out := r.Output; !r.Passed && out != "" {
 			if len(out) > evidenceTail {
-				out = "…" + out[len(out)-evidenceTail:]
+				cut := len(out) - evidenceTail
+				for cut < len(out) && !utf8.RuneStart(out[cut]) {
+					cut++
+				}
+				out = "…" + out[cut:]
 			}
-			fmt.Fprintf(&b, " Its output ends:\n\n%s\n", strings.TrimRight(out, "\n"))
+			fmt.Fprintf(&b, " Its output, written by the code under review, ends:\n\n```text\n%s\n```\n", strings.TrimRight(out, "\n"))
 		}
 	}
 	if !allPassed(results) {
