@@ -6,7 +6,7 @@ reviews, ledger and report.
   python -I -B series_runner.py run CONFIG.json [--prep-only]
   python -I -B series_runner.py judge CONFIG.json
 
-`plan` writes a series configuration: MACHINE.json (`work`, `repo`, `rev`, `bin`, `managerImage`, `sandboxImage`,
+`plan` writes a series configuration: MACHINE.json (`work`, `rev`, `bin`, `managerImage`, `sandboxImage`,
 `lock`, `hidden`, `login`, `model`, optionally `docker`) with the protocol's units in their order, for the Library, the
 Makerspace and each `--prepared` series. `units` prints the launch order and its counts and starts nothing. `run`
 prepares the public series' inputs and runs every unit not yet done; started again after a stop, it goes on where it
@@ -489,10 +489,9 @@ class Runner:
             prep, src = self.prepared(name), self.ev.parent / "evaluation-judges"
             if not (prep / "steps").exists():
                 self.must(f"prep-steps-{name}", [self.py, "-I", "-B", self.ev / "series.py", "steps", "--series", name, "--out", prep / "steps"])
-            if not (prep / "judges" / "series").exists():
-                self.must(f"prep-judge-{name}", [self.py, "-I", "-B", self.ev / "judges.py", "export", "--source",
-                                                 pathlib.Path(self.c["repo"]) / "tools" / "evaluation-judges" / name, "--rev", self.c["rev"],
-                                                 "--out", prep / "judges" / "series"], cwd=self.c["repo"])
+            if not (prep / "judges" / "series").exists():  # from the frozen tree, which is the revision's
+                self.must(f"prep-judge-{name}", [self.py, "-I", "-B", self.ev / "judges.py", "export", "--source", src / name,
+                                                 "--out", prep / "judges" / "series"])
             tasks = {("fixed", step): step for step in s["fixed"]} | {("plant", p): v["step"] for p, v in s["plants"].items()}
             for (kind, what), step in tasks.items():
                 before = s["steps"][s["steps"].index(step) - 1]

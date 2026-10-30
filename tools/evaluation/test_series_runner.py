@@ -139,7 +139,7 @@ class Fixture(unittest.TestCase):
     def config(self, units, **series):
         gs = {"role": "confirmatory", "deadlineSeconds": 60, "steps": ["W0", "C1", "C2"], "fixed": ["C1", "C2"],
               "plants": {"p1": {"step": "C1", "kind": "defect"}}, "prepared": str(self.prep), **series}
-        return {"work": str(self.work), "repo": str(self.tmp), "rev": "0" * 40, "bin": str(self.tmp), "managerImage": "sha256:m",
+        return {"work": str(self.work), "rev": "0" * 40, "bin": str(self.tmp), "managerImage": "sha256:m",
                 "sandboxImage": "sha256:s", "lock": str(self.lock), "hidden": [str(self.tmp / "absent")], "login": str(self.login),
                 "model": MODEL, "docker": "docker", "protocol": "counted", "series": {"gs": gs}, "relaunches": 2, "launchBound": 50,
                 "minimumDifference": 0.05, "reviews": {"repetition": 1, "chains": True}, "units": units}
