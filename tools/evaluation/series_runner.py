@@ -1121,8 +1121,9 @@ class Runner:
             for part, launches_, chains_ in ((name, mine, chains), (f"{name}-fixed", [e for e in mine if "-fixed-" in e["task"]], []),
                                              (f"{name}-chains", [e for e in mine if e["task"] == f"{name}-chain"], chains)):
                 ledger = self.work / f"ledger-{part}.json"
+                # The owner's rule for "at least as good" is defined on fixed starts only (acceptance.at_least_as_good).
                 ledger.write_text(json.dumps({**self.ledger, "series": f"{self.ledger['series']}-{part}", "launches": launches_,
-                                              "chains": chains_}, indent=2) + "\n", encoding="utf-8")
+                                              "chains": chains_, "ownerRule": part.endswith("-fixed")}, indent=2) + "\n", encoding="utf-8")
                 parts.append((part, ledger))
         for part, ledger in parts:
             code, err = self.suite(f"report-{part}", ["report", "--ledger", ledger, "--out", out / part])

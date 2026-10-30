@@ -279,14 +279,16 @@ class NotDoneTest(unittest.TestCase):
 
     def test_a_result_without_a_value_is_not_scored_as_not_done(self):
         # Defects left need a review: K's unreviewed result in repetition 4 has no value, but it is a result, not a unit
-        # without one, so the second reading leaves it out instead of scoring it as K's change not done.
+        # without one, so the second reading does not score it as K's change not done. The unit cannot be compared, and
+        # M's failure there must not drop out silently either: the verdict stays undecided.
         import acceptance
         facts = [self.fact(v, rep) for rep in (1, 2, 3) for v in ("M", "K")]
         unreviewed, nothing = self.fact("K", 4), self.fact("M", 4, delivered=False)
         unreviewed["attention"]["confirmedCriticals"] = None
         nothing["startScore"] = acceptance.start_scores(facts)[("g-fixed-C2", "C2")]
-        contrast, _ = self.contrast(facts + [unreviewed, nothing], endpoint="defectsLeft")
+        contrast, row = self.contrast(facts + [unreviewed, nothing], endpoint="defectsLeft")
         self.assertEqual((contrast["pairs"], contrast["unpaired"], contrast["notDone"]["pairs"]), (3, 1, 3))
+        self.assertEqual((contrast["atLeastAsGood"], row[-1]), (None, "undecided (1 unpaired)"))
 
 
 class OwnerRuleTest(unittest.TestCase):
@@ -338,9 +340,18 @@ class OwnerRuleTest(unittest.TestCase):
         facts = [self.fact(v, s) for s in list(self.OWN)[1:] for v in ("M", "K")]
         _, contrasts = acceptance.trustworthy(facts, self.CONTRASTS, lambda *a, **k: "")
         _, verdicts = acceptance.at_least_as_good(facts, contrasts, lambda *a, **k: "x")
-        # Identical results: both contrasts read zero difference with no spread, and the rates are equal.
+        # Identical results: both contrasts read zero difference with no spread, and the rates are equal. A harmless gap
+        # is meant to land, so plants stay out of the landed rate.
+        gap = {"variant": "K", "task": "plant-gap", "step": "C3", "repetition": 1, "class": "result", "delivered": True,
+               "landed": True, "plantKind": "gap"}
+        _, verdicts = acceptance.at_least_as_good(facts + [gap], contrasts, lambda *a, **k: "x")
         self.assertEqual((verdicts[0]["parts"], verdicts[0]["atLeastAsGood"]),
                          ({"casesPassedShare": True, "casesFailed": True, "landedRate": True}, True))
+        # The rule is defined on fixed starts only: the report reads it where the ledger asks (the runner's NAME-fixed).
+        table = lambda title, *rest: title
+        for asked in (True, False):
+            text, data = acceptance.tables({"contrasts": self.CONTRASTS, "ownerRule": asked}, ".", facts, table)
+            self.assertEqual(("At least as good, by the owner's rule" in text, len(data["verdicts"])), (asked, int(asked)))
         # M's result of C7 is void after its relaunches: the landed rate holds over the pairs, not with C7 as not landed.
         facts = [f for f in facts if (f["variant"], f["step"]) != ("M", "C7")]
         _, contrasts = acceptance.trustworthy(facts, self.CONTRASTS, lambda *a, **k: "")

@@ -607,6 +607,9 @@ class SeriesTest(Fixture):
                          ["all", "gs", "gs-fixed", "gs-chains"])
         self.assertEqual(json.loads((self.work / "ledger-gs-chains.json").read_text())["chains"][0]["id"], "ch")
         self.assertEqual(json.loads((self.work / "ledger-gs-fixed.json").read_text())["launches"], [])
+        # The owner's rule is read on the fixed starts' report only.
+        self.assertEqual([json.loads((self.work / f"ledger-{p}.json").read_text()).get("ownerRule") for p in ("gs", "gs-fixed", "gs-chains")],
+                         [False, True, False])
 
     def test_a_chains_end_state_is_verified_by_the_2_0_host_whichever_arm_made_it(self):
         self.scenario({"ch/W0": ["result"], "ch/C1": ["result"], "ch": ["could-not-run", "result"]})
