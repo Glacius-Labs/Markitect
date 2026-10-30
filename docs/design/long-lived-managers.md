@@ -32,5 +32,5 @@ So the cost lies in turns that each start from nothing and in turns spent on int
   - item 3's effect apart, on the tasks where a parent has no own items.
 
   These runs are evidence for the design, not counted data.
-- **Engine and quota:** under the owner's standing run approval with a written dispatch, with the counted series' quiet-engine guard and relaunch rule, after the counted series or in a slot the owner clears, since both share the seven-day quota.
+- **Engine and quota:** under the owner's standing run approval with a written dispatch, with the counted series' quiet-engine guard and relaunch rule, after the counted series or in a slot the owner clears, since both share the seven-day quota. The owner chose to run it before the series on 30 October 2026; its [dispatch](../validation/long-lived-managers-comparison-20261030.md) bounds it, and the branch is [draft PR #922](https://github.com/Glacius-Labs/Markitect/pull/922).
 - **Then** the owner decides; if adopted, the sections above change, and the counted series' report states which design it measured.
