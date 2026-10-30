@@ -348,8 +348,13 @@ func (r renderer) covers(b *strings.Builder) {
 	}
 	b.WriteString("## What a verdict covers\n\n")
 	if len(s.Checklist) > 0 {
-		b.WriteString("- **The model, in full.** A verdict covers the item's whole Definition, its examples included, and the Definitions it links to, as the model above shows them. " +
-			"Where they contradict each other, nothing can conform, and the only right verdict is `model-problem`. It is no review of the whole model: stay with each item and its links.\n")
+		b.WriteString("- **The model, in full.** A verdict covers the item's whole Definition, its examples included, and the Definitions it links to, as the model above shows them. ")
+		if maker || verify {
+			b.WriteString("Where they contradict each other, nothing can conform, and the only right verdict is `model-problem`. ")
+		} else {
+			b.WriteString("Where they contradict each other, nothing can conform: the maker's only right verdict is `model-problem`, so dispute a verdict that claims the item conforms. ")
+		}
+		b.WriteString("It is no review of the whole model: stay with each item and its links.\n")
 		switch {
 		case maker:
 			b.WriteString("- **Evidence.** For `conforms` and `changed`, the evidence names how each example in the item's Definition is met, for example by which test.\n")
@@ -359,9 +364,14 @@ func (r renderer) covers(b *strings.Builder) {
 			b.WriteString("- **Evidence.** Re-check each example in the item's Definition yourself. Dispute a `conforms` or `changed` verdict whose evidence does not show how each example is met, " +
 				"and one whose realization matches part of the Definition but not its example.\n")
 		}
-		if maker {
+		// Root has no parent, and verify integrates nothing: there the
+		// verdicts judge the Package's files and nothing is left to a parent.
+		switch {
+		case r.pkg == model.RootPackage || verify:
+			b.WriteString("- **The code, your own Package's.** The verdicts judge your Package's files against your items.\n")
+		case maker:
 			b.WriteString("- **The code, your own Package's.** Your verdicts judge your Package's files against your items. Whether the rest of the program uses them yet is your parent's integration.\n")
-		} else {
+		default:
 			b.WriteString("- **The code, your own Package's.** Judge your Package's files against your items. Whether the rest of the program uses them yet is your parent's integration, " +
 				"which its checker judges and the required checks gate on the merged state; it is no reason to dispute a verdict.\n")
 		}

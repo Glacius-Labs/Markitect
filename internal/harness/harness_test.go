@@ -321,7 +321,7 @@ func TestFenceOutgrowsBackticksInTheText(t *testing.T) {
 func TestEveryStartSaysWhatAVerdictCovers(t *testing.T) {
 	p := library(t)
 	sub := &Submission{Commit: "abc123", Verdicts: []Verdict{{Item: "members/member", Verdict: "changed", Evidence: "member.go"}}, Diff: "diff\n"}
-	model := []string{"## What a verdict covers", "its examples included, and the Definitions it links to", "the only right verdict is `model-problem`", "It is no review of the whole model"}
+	model := []string{"## What a verdict covers", "its examples included, and the Definitions it links to", "only right verdict is `model-problem`", "It is no review of the whole model"}
 
 	leaf := start(Apply, Maker, "catalog", nil, items("catalog/book"))
 	leaf.Task = "An engine task replaces the default text."
@@ -336,8 +336,17 @@ func TestEveryStartSaysWhatAVerdictCovers(t *testing.T) {
 	contains(t, d.Task, "Re-check each example in the item's Definition yourself", "matches part of the Definition but not its example",
 		"it is no reason to dispute a verdict", "Dispute the submission when one of its own files builds a child's behavior a second time")
 
+	contains(t, d.Task, "dispute a verdict that claims the item conforms")
+
 	d = render(t, Input{Start: start(Apply, Maker, "members", []string{"members/loans"}, items("members/member")), Project: p})
 	contains(t, d.Task, "Integrate it by using it", "not by building a child's behavior a second time in your own files")
+
+	// Root has no parent: nothing is left to one.
+	d = render(t, Input{Start: start(Apply, Maker, ".", []string{"members"}, items("project")), Project: p})
+	contains(t, d.Task, "The verdicts judge your Package's files against your items.", "Integrate it by using it")
+	lacks(t, d.Task, "parent's integration")
+	d = render(t, Input{Start: start(Apply, Checker, ".", []string{"members"}, items("project")), Project: p, Submission: &Submission{Commit: "abc123", Diff: "diff\n"}})
+	lacks(t, d.Task, "parent's integration", "no reason to dispute")
 
 	// A parent that only integrates still hears about its children's work.
 	d = render(t, Input{Start: start(Apply, Checker, ".", []string{"members"}, nil), Project: p, Submission: &Submission{Commit: "abc123", Diff: "diff\n"}})
@@ -346,6 +355,6 @@ func TestEveryStartSaysWhatAVerdictCovers(t *testing.T) {
 
 	d = render(t, Input{Start: start(Verify, Checker, "members", []string{"members/loans"}, items("members/member")), Project: p})
 	contains(t, d.Task, model...)
-	contains(t, d.Task, "For `conforms`, the evidence names how each example")
-	lacks(t, d.Task, "Your children's work", "`changed`")
+	contains(t, d.Task, "For `conforms`, the evidence names how each example", "The verdicts judge your Package's files against your items.")
+	lacks(t, d.Task, "Your children's work", "`changed`", "merged state", "parent's integration")
 }
