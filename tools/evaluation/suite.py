@@ -30,7 +30,7 @@ was none; one state directory is handed to the variant at every step.
 With --without-pages, the variant's copy of the task has no registry pages:
 registry.md and registry/ go from model/ and base-model/, and suite.json lists
 what went. The baseline K gets the same files as the 2.0 arm without the
-pages, which only the 2.0 arm works from (owner, 29 October 2026).
+pages, which only the 2.0 arm works from (Build, 29 October 2026).
 
 With --sandbox, the variant command runs inside one container per run
 (sandbox.py): it receives /task /out [/state], its code is at /variant and the

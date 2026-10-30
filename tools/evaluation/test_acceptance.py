@@ -277,6 +277,77 @@ class NotDoneTest(unittest.TestCase):
         contrast, row = self.contrast(paired)
         self.assertEqual((contrast["notDone"], row[-2], row[-1]), (None, "none unpaired", "yes"))
 
+    def test_a_result_without_a_value_is_not_scored_as_not_done(self):
+        # Defects left need a review: K's unreviewed result in repetition 4 has no value, but it is a result, not a unit
+        # without one, so the second reading leaves it out instead of scoring it as K's change not done.
+        import acceptance
+        facts = [self.fact(v, rep) for rep in (1, 2, 3) for v in ("M", "K")]
+        unreviewed, nothing = self.fact("K", 4), self.fact("M", 4, delivered=False)
+        unreviewed["attention"]["confirmedCriticals"] = None
+        nothing["startScore"] = acceptance.start_scores(facts)[("g-fixed-C2", "C2")]
+        contrast, _ = self.contrast(facts + [unreviewed, nothing], endpoint="defectsLeft")
+        self.assertEqual((contrast["pairs"], contrast["unpaired"], contrast["notDone"]["pairs"]), (3, 1, 3))
+
+
+class OwnerRuleTest(unittest.TestCase):
+    """The owner's rule (30 October 2026): at least as good only when both case contrasts and the landed rate hold."""
+
+    OWN = {"W0": 34, "C1": 3, "C2": 2, "C3": 4, "C4": 4, "C5": 2, "C6": 2, "C7": 1}
+    CONTRASTS = [{"variant": "M", "baseline": "K", "endpoint": "casesPassedShare", "minimumDifference": 0.05, "blockBy": "change"},
+                 {"variant": "M", "baseline": "K", "endpoint": "casesFailed", "minimumDifference": 1, "blockBy": "change"},
+                 {"variant": "M", "baseline": "K", "endpoint": "ownCasesPassedShare", "blockBy": "change"}]
+
+    def fact(self, variant, step, done=True, delivered=True):
+        steps = list(self.OWN)[:list(self.OWN).index(step) + 1]
+        by = {s: {"planned": self.OWN[s], "passed": self.OWN[s], "failed": 0} for s in steps}
+        if not done:
+            by[step] = {"planned": self.OWN[step], "passed": 0, "failed": self.OWN[step]}
+        failed, planned = by[step]["failed"], sum(s["planned"] for s in by.values())
+        f = {"variant": variant, "task": f"gridshare-fixed-{step}", "step": step, "repetition": 1, "class": "result",
+             "delivered": delivered, "landed": done}
+        if delivered:
+            f.update(areas={"correctness": {"planned": planned, "passed": planned - failed, "failed": failed, "byStep": by}},
+                     attention={"noResult": 0, "casesFailed": failed, "confirmedCriticals": 0})
+        return f
+
+    def test_topics_example_is_no_longer_at_least_as_good(self):
+        """K perfect; M does not land C2 (it delivers nothing), C5 and C6 (it delivers its start)."""
+        import acceptance
+        facts = [self.fact("K", s) for s in list(self.OWN)[1:]]
+        facts += [self.fact("M", s, done=s not in ("C2", "C5", "C6"), delivered=s != "C2") for s in list(self.OWN)[1:]]
+        starts = acceptance.start_scores(facts)
+        for f in facts:
+            if not f["delivered"]:
+                f["startScore"] = starts[(f["task"], f["step"])]
+        _, contrasts = acceptance.trustworthy(facts, self.CONTRASTS, lambda *a, **k: "")
+        share, failed, own = contrasts
+        # The share alone would say at least as good, with three of seven changes undone.
+        self.assertAlmostEqual(share["mean"], -0.019, places=3)
+        self.assertAlmostEqual(share["low"], -0.041, places=3)
+        self.assertTrue(share["atLeastAsGood"])
+        self.assertFalse(failed["atLeastAsGood"])
+        self.assertAlmostEqual(own["mean"], -3 / 7)
+        self.assertIsNone(own["atLeastAsGood"])
+        rows = []
+        _, verdicts = acceptance.at_least_as_good(facts, contrasts, lambda title, header, r, note=None: rows.extend(r))
+        self.assertEqual(rows, [["M vs K", "yes", "no", "4/7 against 7/7", "4/7 against 7/7", "no", "no"]])
+        self.assertFalse(verdicts[0]["atLeastAsGood"])
+
+    def test_all_three_must_hold(self):
+        import acceptance
+        facts = [self.fact(v, s) for s in list(self.OWN)[1:] for v in ("M", "K")]
+        _, contrasts = acceptance.trustworthy(facts, self.CONTRASTS, lambda *a, **k: "")
+        _, verdicts = acceptance.at_least_as_good(facts, contrasts, lambda *a, **k: "x")
+        # Identical results: both contrasts read zero difference with no spread, and the rates are equal.
+        self.assertEqual((verdicts[0]["parts"], verdicts[0]["atLeastAsGood"]),
+                         ({"casesPassedShare": True, "casesFailed": True, "landedRate": True}, True))
+        # M's result of C7 is void after its relaunches: the landed rate holds over the pairs, not with C7 as not landed.
+        facts = [f for f in facts if (f["variant"], f["step"]) != ("M", "C7")]
+        _, contrasts = acceptance.trustworthy(facts, self.CONTRASTS, lambda *a, **k: "")
+        _, verdicts = acceptance.at_least_as_good(facts, contrasts, lambda *a, **k: "x")
+        self.assertIsNone(verdicts[0]["parts"]["landedRate"])
+        self.assertEqual(verdicts[0]["landed"], [{"M": (6, 6), "K": (6, 6)}, {"M": (6, 7), "K": (7, 7)}])
+
 
 class ChainCountTest(unittest.TestCase):
     """A chain's steps share one task name: a step that delivered nothing is scored by its own step's counts."""

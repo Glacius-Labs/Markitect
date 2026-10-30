@@ -66,7 +66,9 @@ GATE_FIXED, GATE_CHAIN = ("library", ["M2", "M3", "M4"]), "makerspace"
 # The protocol's contrasts: the primary one first, each read over the changes' mean differences.
 CONTRASTS = [{"variant": "M", "baseline": "K", "endpoint": "casesPassedShare", "minimumDifference": 0.05, "blockBy": "change"},
              {"variant": "M", "baseline": "K", "endpoint": "casesFailed", "minimumDifference": 1, "blockBy": "change"},
-             {"variant": "M", "baseline": "K", "endpoint": "defectsLeft", "minimumDifference": 1}]
+             {"variant": "M", "baseline": "K", "endpoint": "defectsLeft", "minimumDifference": 1},
+             # Descriptive, no minimum meaningful difference: what the share of all cases dilutes.
+             {"variant": "M", "baseline": "K", "endpoint": "ownCasesPassedShare", "blockBy": "change"}]
 QUIET_SECONDS = 600
 LOGIN_MARGIN = 20 * 60
 REVIEW_SECONDS = 3600  # a review and its confirmations, each session up to reviewing.DEADLINE
@@ -703,7 +705,7 @@ class Runner:
             return (["--native", self.c["sandboxImage"], *hidden, "--login", self.c["login"], "--lock", self.c["lock"], "--engine", self.docker],
                     [self.py, "-I", "-B", self.ev / "markitect_arm.py", "--markitect", self.markitect,
                      "--remote-binary", pathlib.Path(self.c["bin"]) / "markitect-remote", "--manager-image", self.c["managerImage"]])
-        # K gets the same task as M without the registry pages, which only M works from (owner, 29 October 2026).
+        # K gets the same task as M without the registry pages, which only M works from (Build, 29 October 2026).
         return (["--sandbox", self.c["sandboxImage"], "--variant-code", self.ev, "--login", self.c["login"], "--lock", self.c["lock"],
                  "--engine", self.docker, "--without-pages"],
                 ["python3", "-I", "-B", "/variant/claude_code.py", "--effort", "high"])

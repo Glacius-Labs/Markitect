@@ -226,8 +226,9 @@ class PlanTest(unittest.TestCase):
         self.assertEqual(series_runner.summary(units)["byArm"], {"M": 115, "K": 115})
         self.assertEqual(config["launchBound"], 345)
         self.assertTrue(all(u.get("verify") for u in units if u["kind"] == "chain"))
-        self.assertEqual([(c["endpoint"], c["minimumDifference"], c.get("blockBy")) for c in config["contrasts"]],
-                         [("casesPassedShare", 0.05, "change"), ("casesFailed", 1, "change"), ("defectsLeft", 1, None)])
+        self.assertEqual([(c["endpoint"], c.get("minimumDifference"), c.get("blockBy")) for c in config["contrasts"]],
+                         [("casesPassedShare", 0.05, "change"), ("casesFailed", 1, "change"), ("defectsLeft", 1, None),
+                          ("ownCasesPassedShare", None, "change")])
         # Every fixed start and plant runs as often as its role says, for both arms; the chains come last.
         reps = {}
         for u in units:
