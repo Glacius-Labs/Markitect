@@ -349,7 +349,7 @@ class Login:
             try:
                 fd = os.open(self.lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
                 break
-            except FileExistsError:
+            except (FileExistsError, PermissionError):  # PermissionError: a lock file being removed on Windows
                 if self.halted():
                     raise Halt()
                 if not waited:
@@ -542,7 +542,7 @@ class Runner:
         self.work.mkdir(parents=True, exist_ok=True)
         try:
             fd = os.open(self.work / "runner.lock", os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-        except FileExistsError:
+        except (FileExistsError, PermissionError):
             raise SystemExit(f"{self.work / 'runner.lock'} exists: another runner runs here, or one ended without removing it")
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             json.dump({"pid": os.getpid(), "started": now()}, f)
@@ -565,7 +565,7 @@ class Runner:
 
     def hidden(self):
         """Every place hidden material could lie: the protocol's, and the judge folders of a series judged later."""
-        return [*self.c.get("hidden", []), *(s["judges"] for s in self.c["series"].values() if s.get("judges"))]
+        return [os.path.expanduser(h) for h in (*self.c.get("hidden", []), *(s["judges"] for s in self.c["series"].values() if s.get("judges")))]
 
     def task_name(self, unit):
         if unit["kind"] == "chain":
@@ -650,23 +650,32 @@ class Runner:
         self.save()
 
     def freeze(self):
-        """What must stay the same in every window: the frozen tree, the binaries and the images on the engine."""
+        """What must stay the same in every window, and as in the gate when the configuration names its ledger
+        (`gateLedger`): the frozen tree, the binaries, a prepared series' launch inputs and the images on the engine."""
         src = self.work / "src"
         found = {"src": tree_digest(src) if src.is_dir() else None,
                  "bin": {p.name: sha256(p) for p in sorted(pathlib.Path(self.c["bin"]).iterdir()) if p.is_file()},
+                 "inputs": {name: tree_digest(self.prepared(name)) for name, s in self.c["series"].items() if s.get("prepared")},
                  "images": {}}
         for image in (self.c["managerImage"], self.c["sandboxImage"]):
-            p = subprocess.run([*self.engine, "image", "inspect", "--format", "{{.Id}}", image], capture_output=True, text=True,
-                               stdin=subprocess.DEVNULL)
+            try:
+                p = subprocess.run([*self.engine, "image", "inspect", "--format", "{{.Id}}", image], capture_output=True, text=True,
+                                   stdin=subprocess.DEVNULL, timeout=120)
+            except (OSError, subprocess.TimeoutExpired) as e:
+                raise Stop(f"the engine does not answer: {type(e).__name__}")
             found["images"][image] = p.stdout.strip() == image
-        if not all(found["images"].values()):
-            raise Stop("an image of the frozen commit is not on the engine: " + ", ".join(i for i, ok in found["images"].items() if not ok))
+            if not found["images"][image]:
+                raise Stop(f"the image {image} is not on the engine, or the engine does not answer: {p.stderr.strip()[-200:]}")
+        reference = self.ledger["freeze"]
+        if reference is None and self.c.get("gateLedger"):
+            reference = {k: v for k, v in json.loads(pathlib.Path(self.c["gateLedger"]).read_text(encoding="utf-8"))["freeze"].items()}
+            reference["inputs"] = {k: v for k, v in reference.get("inputs", {}).items() if k in found["inputs"]}
+        if reference is not None and found != reference:
+            changed = [k for k in found if found[k] != reference.get(k)]
+            raise Stop("the frozen " + " and ".join(changed) + (" changed since the first window" if self.ledger["freeze"] else " differ from the gate's"))
         if self.ledger["freeze"] is None:
             self.ledger["freeze"] = found
             self.save()
-        elif found != self.ledger["freeze"]:
-            changed = [k for k in found if found[k] != self.ledger["freeze"][k]]
-            raise Stop("the frozen " + " and ".join(changed) + " changed since the first window")
 
     # --- conditions before a launch ---
     def arm_args(self, unit):
@@ -700,8 +709,8 @@ class Runner:
             self.nap(120)
 
     def ready(self, deadline):
-        """Before a launch: no STOP, the bound, no hidden material, a quiet engine, a login that covers the launch, and
-        the guard once more, since a login refresh can outlast its answer."""
+        """Before a launch: no STOP, the bound, no hidden material, the rest of a five-hour quota wait, a quiet engine, a
+        login that covers the launch, and the guard once more, since a login refresh can outlast its answer."""
         if self.halted():
             raise Halt()
         if len(self.ledger["attempts"]) >= self.c["launchBound"]:
@@ -709,6 +718,10 @@ class Runner:
         present = [h for h in self.hidden() if pathlib.Path(h).exists()]
         if present:
             raise Stop("hidden material is on the machine: " + ", ".join(present))
+        if self.ledger.get("quotaWaitUntil"):
+            self.nap(self.ledger["quotaWaitUntil"] - time.time())
+            self.ledger["quotaWaitUntil"] = None
+            self.save()
         self.quiet()
         self.login.ensure(deadline)
         self.quiet()
@@ -718,17 +731,22 @@ class Runner:
         return [a for a in self.ledger["attempts"] if a["unit"] == unit_id and a["step"] == step]
 
     def resolved(self, done):
-        """Where the recorded launches of a task or chain step leave it: None (none yet), "again" or "done". A launch
-        that stopped the series is done unless it was void with relaunches left: after the stop is cleared, the series
-        goes on with the next unit rather than repeat a launch that counted. In the gate only a result completes one."""
+        """Where the recorded launches of a task or chain step leave it: None (none yet), "again" or "done". After a stop
+        is cleared, a launch that stopped the series is launched again only if it was void with relaunches left, or the
+        first invalid one to stop it; otherwise the series goes on with the next unit rather than repeat a launch that
+        counted. In the gate only a result completes one."""
         if not done:
             return None
         last = done[-1]
         if self.c["protocol"] == "gate":
             return "done" if last["class"] == "result" else "again"
-        if last.get("answer") in (None, "again") or (last["answer"] == "stop" and last["class"] == "void"
-                                                     and len(done) <= self.c["relaunches"]):
+        if last.get("answer") in (None, "again"):
             return "again"
+        if last["answer"] == "stop":
+            if last["class"] == "void" and len(done) <= self.c["relaunches"]:
+                return "again"
+            if last["class"] == "invalid" and sum(a["class"] == "invalid" and a.get("answer") == "stop" for a in done) == 1:
+                return "again"
         return "done"
 
     def settle(self, unit, verdict, number, foreign_used, run):
@@ -752,8 +770,9 @@ class Runner:
 
     def launch(self, unit, out, run, args, step, judge=None, progress=None):
         """One launch into `out`, whose run folder is `run`: the suite command (none for a launch the runner did not live
-        to record), its class with the arm's signatures, the protocol's answer, its records and judgment, and then the
-        quota and the evidence. A chain's `progress` keeps a step whose launch is a result."""
+        to record), its class with the arm's signatures, the protocol's answer and its records, saved together; then the
+        quota and the evidence, and then its judgment, pending until it is valid. A chain's `progress` keeps a step
+        whose launch is a result."""
         code, err = self.suite(f"{unit['id']}-{out.name}", args) if args else (None, "the runner stopped during this launch")
         record = classify.load(run / "suite.json")
         verdict = classify.classify(run, SIGNATURES, unit["arm"]) if record else {
@@ -763,13 +782,13 @@ class Runner:
                    "kind": verdict.get("kind"), "foreign": verdict["class"] == "invalid" and foreign_escapes(run), "exit": code,
                    "time": now(), "answer": None}
         self.ledger["attempts"].append(attempt)
-        stop = None
+        stops = []
         try:
             attempt["answer"] = self.settle(unit, verdict, len(done) + 1, any(a["foreign"] for a in done), run)
         except Stop as e:
-            attempt["answer"], stop = "stop", e
-        self.save()
-        self.log(event="ran", unit=unit["id"], step=step, run=self.rel(out), exit=code, answer=attempt["answer"], **verdict)
+            attempt["answer"] = "stop"
+            stops.append(e)
+        entry = None
         if record:
             entry = {"id": f"{unit['id']}-{out.name}", "variant": unit["arm"], "task": self.task_name(unit), "series": unit["series"],
                      "repetition": unit.get("repetition", 1), "step": step, "run": self.rel(run), "class": verdict["class"]}
@@ -777,15 +796,23 @@ class Runner:
             if progress is not None and verdict["class"] == "result":
                 progress["kept"].append([step, self.rel(out)])
                 progress["start"] = self.rel(run / "variant" / "result.bundle" if record.get("delivered") else out / "step-01" / "task" / "start.bundle")
-            self.save()
             if judge and verdict["class"] == "result" and record.get("delivered"):
+                self.ledger["pending"].append({"kind": "launch", "id": entry["id"], "judge": str(judge)})
+        self.save()
+        self.log(event="ran", unit=unit["id"], step=step, run=self.rel(out), exit=code, answer=attempt["answer"], **verdict)
+        if record:
+            try:
+                self.after(run)
+            except Stop as e:
+                stops.append(e)
+            if not stops and judge and verdict["class"] == "result" and record.get("delivered"):
                 self.judge_launch(entry, judge)
-            self.after(run)
-        if stop:
-            raise stop
+        if stops:
+            raise Stop("; ".join(str(s) for s in stops))
 
     def after(self, run):
-        """The quota the launch's agents saw and a scan of its evidence for the login."""
+        """The quota the launch's agents saw and a scan of its evidence for the login. A five-hour wait is kept in the
+        ledger, so that a window that ends during it waits out the rest when the series goes on."""
         q = quota(run)
         self.log(event="quota", run=self.rel(run), **q)
         hits, _ = files_with_secrets(run, login_secrets(self.c["login"]))
@@ -794,34 +821,41 @@ class Runner:
         if q["refused"] or q["sevenDay"] >= QUOTA_STOP:
             raise Stop(f"quota: {json.dumps(q)}")
         if q["fiveHour"] >= QUOTA_WAIT and q["fiveHourReset"]:
-            wait = max(0, q["fiveHourReset"] - time.time()) + 60
-            self.log(event="quota-wait", seconds=round(wait))
-            self.nap(wait)
+            self.ledger["quotaWaitUntil"] = q["fiveHourReset"] + 60
+            self.save()
+            self.log(event="quota-wait", seconds=round(self.ledger["quotaWaitUntil"] - time.time()))
+            self.nap(self.ledger["quotaWaitUntil"] - time.time())
+            self.ledger["quotaWaitUntil"] = None
+            self.save()
+
+    def fresh(self, folder, name, mark):
+        """The first of NAME, NAME-MARK2, NAME-MARK3 ... that does not exist yet: a judgment or review made again never
+        reuses a folder."""
+        n = 1
+        while (folder / (name if n == 1 else f"{name}-{mark}{n}")).exists():
+            n += 1
+        return folder / (name if n == 1 else f"{name}-{mark}{n}")
 
     def judge_launch(self, entry, judge):
-        """A delivered result's judgment, judged again once if it is not valid; a judge that fails twice stops the series.
-        While the judge is off the machine, the judgment waits."""
-        if not judge.exists():
-            self.ledger["pending"].append({"kind": "launch", "id": entry["id"], "judge": str(judge)})
+        """A delivered result's judgment, pending in the ledger until it is valid: while its judge is off the machine,
+        when the window ends during it, or when the runner does not live to record it. A judgment that is not valid is
+        made once more; a judge that fails twice in a row stops the series."""
+        item = {"kind": "launch", "id": entry["id"], "judge": str(judge)}
+        if item not in self.ledger["pending"]:
+            self.ledger["pending"].append(item)
             self.save()
+        if not judge.exists():
             return
-        for n in (1, 2):
-            out = self.work / "judgments" / (entry["id"] + ("" if n == 1 else f"-j{n}"))
-            if not out.exists():
-                try:
-                    self.suite(f"judge-{out.name}", ["judge", "--run", self.work / entry["run"], "--judge", judge, "--step", entry["step"],
-                                                     "--out", out, "--lock", self.c["lock"], "--engine", self.docker])
-                except Halt:  # the window ended while another holder had the lock: judged in the next one, or by `judge`
-                    self.ledger["pending"].append({"kind": "launch", "id": entry["id"], "judge": str(judge)})
-                    self.save()
-                    raise
+        for _ in (1, 2):
+            out = self.fresh(self.work / "judgments", entry["id"], "j")
+            self.suite(f"judge-{out.name}", ["judge", "--run", self.work / entry["run"], "--judge", judge, "--step", entry["step"],
+                                             "--out", out, "--lock", self.c["lock"], "--engine", self.docker])
             if valid(out / "judgment.json"):
                 entry["judgment"] = self.rel(out)
+                self.ledger["pending"].remove(item)
                 self.save()
                 return
             self.failure(f"judge-{out.name}", f"no valid judgment in {self.rel(out)}")
-        self.ledger["pending"].append({"kind": "launch", "id": entry["id"], "judge": str(judge)})
-        self.save()
         raise Stop(f"the judge gave no valid judgment of {entry['id']} twice")
 
     def run_task(self, unit):
@@ -889,69 +923,59 @@ class Runner:
             rows.append({**row, "step": i})
         (whole / "chain.json").write_text(json.dumps({"format": 1, "model": self.c["model"], "steps": rows, "stopped": None,
                                                       "assembledFrom": [o for _, o in kept]}, indent=2) + "\n", encoding="utf-8")
-        chain = {"id": unit["id"], "variant": unit["arm"], "task": self.task_name(unit), "series": unit["series"],
-                 "repetition": unit.get("repetition", 1)}
-        if self.series_judge(unit["series"]).exists():
-            self.judge_chain(chain, unit["series"], kept)
-        else:
-            self.ledger["pending"].append({"kind": "chain", "chain": chain, "series": unit["series"], "kept": kept})
-            self.save()
+        self.judge_chain({"id": unit["id"], "variant": unit["arm"], "task": self.task_name(unit), "series": unit["series"],
+                          "repetition": unit.get("repetition", 1)}, unit["series"], kept)
 
     def judge_chain(self, chain, series, kept):
-        """The chain's judgment, judged again once if a step's judgment is not valid; a judge that fails twice stops it."""
+        """The chain's judgment, pending until it is valid like a launch's. The suite judges a chain's delivered steps
+        only, so only those need a valid judgment. A judgment that is not valid is made once more; a judge that fails
+        twice in a row stops the series."""
+        item = {"kind": "chain", "chain": chain, "series": series, "kept": kept}
+        if item not in self.ledger["pending"]:
+            self.ledger["pending"].append(item)
+            self.save()
+        if not self.series_judge(series).exists():
+            return
         whole = self.work / "runs" / f"{chain['id']}-chain"
-        for n in (1, 2):
-            judged = self.work / "judgments" / (f"{chain['id']}-chain" + ("" if n == 1 else f"-j{n}"))
-            if not judged.exists():
-                try:
-                    self.suite(f"judge-chain-{judged.name}", ["judge-chain", "--chain", whole, "--judge", self.series_judge(series),
-                                                              "--steps", ",".join(s for s, _ in kept), "--out", judged, "--lock",
-                                                              self.c["lock"], "--engine", self.docker])
-                except Halt:
-                    self.ledger["pending"].append({"kind": "chain", "chain": chain, "series": series, "kept": kept})
-                    self.save()
-                    raise
-            steps = [judged / f"step-{i:02d}" for i in range(1, len(kept) + 1)]
-            if (judged / "chain-judgment.json").exists() and all(valid(s / "judgment.json") for s in steps):
-                for (_, out), step in zip(kept, steps):
+        rows = json.loads((whole / "chain.json").read_text(encoding="utf-8"))["steps"]
+        for _ in (1, 2):
+            judged = self.fresh(self.work / "judgments", f"{chain['id']}-chain", "j")
+            self.suite(f"judge-chain-{judged.name}", ["judge-chain", "--chain", whole, "--judge", self.series_judge(series),
+                                                      "--steps", ",".join(s for s, _ in kept), "--out", judged, "--lock", self.c["lock"],
+                                                      "--engine", self.docker])
+            steps = {i: judged / f"step-{i:02d}" for i, row in enumerate(rows, 1) if row.get("delivered")}
+            if (judged / "chain-judgment.json").exists() and all(valid(s / "judgment.json") for s in steps.values()):
+                for i, (_, out) in enumerate(kept, 1):
                     for entry in self.ledger["launches"]:
-                        if entry["run"] == f"{out}/step-01/run":
-                            entry["judgment"] = self.rel(step)
+                        if entry["run"] == f"{out}/step-01/run" and i in steps:
+                            entry["judgment"] = self.rel(steps[i])
                 self.ledger["chains"].append({**chain, "judgment": self.rel(judged)})
+                self.ledger["pending"].remove(item)
                 self.save()
                 return
             self.failure(f"judge-chain-{judged.name}", f"no valid chain judgment in {self.rel(judged)}")
-        self.ledger["pending"].append({"kind": "chain", "chain": chain, "series": series, "kept": kept})
-        self.save()
         raise Stop(f"the judge gave no valid judgment of chain {chain['id']} twice")
 
     # --- the end of a window and of the series ---
     def judge_pending(self):
-        """Every judgment that waited for its judge folder, once that folder is on the machine, and each plant's kind,
-        which a prepared series names only there (`plant.json`)."""
+        """Every judgment still pending whose judge folder is on the machine, and each plant's kind, which a prepared
+        series names only there (`plant.json`). A pending item leaves the ledger only once its judgment is valid."""
         for unit in self.c["units"]:
             plant = classify.load(self.judge_dir(unit) / "plant.json") if unit["kind"] == "plant" else None
             if plant:
                 self.ledger["tasks"][self.task_name(unit)]["planted"] = plant["kind"]
-        waiting, self.ledger["pending"] = self.ledger["pending"], []
-        for i, item in enumerate(waiting):
-            try:
-                if item["kind"] == "launch":
-                    entry = next(e for e in self.ledger["launches"] if e["id"] == item["id"])
-                    self.judge_launch(entry, pathlib.Path(item["judge"]))
-                elif self.series_judge(item["series"]).exists():
-                    self.judge_chain(item["chain"], item["series"], item["kept"])
-                else:
-                    self.ledger["pending"].append(item)
-            except Stop:
-                self.ledger["pending"] += waiting[i + 1:]
-                raise
+        for item in list(self.ledger["pending"]):
+            if item["kind"] == "launch":
+                if pathlib.Path(item["judge"]).exists():
+                    self.judge_launch(next(e for e in self.ledger["launches"] if e["id"] == item["id"]), pathlib.Path(item["judge"]))
+            elif self.series_judge(item["series"]).exists():
+                self.judge_chain(item["chain"], item["series"], item["kept"])
         self.save()
 
     def reviews(self):
         """The code review of every judged result of the protocol's review repetition (fixed starts and every chain's last
-        judged step), blinded, in the sandbox, reviewed again once if the review is not valid. A review needs the judge
-        folder's rubric, so it waits for it like judging."""
+        judged step), blinded, in the sandbox, reviewed again once in a fresh folder if the review is not valid. A
+        review needs the judge folder's rubric, so it waits for it like judging."""
         wanted = self.c.get("reviews") or {}
         if not wanted:
             return
@@ -965,13 +989,12 @@ class Runner:
             judge = self.series_judge(entry["series"])
             if entry.get("review") or not judge.exists():
                 continue
-            for n in (1, 2):
-                out = self.work / "reviews" / (entry["id"] + ("" if n == 1 else f"-r{n}"))
-                if not out.exists():
-                    self.login.ensure(REVIEW_SECONDS)
-                    self.suite(f"review-{out.name}", ["review", "--run", self.work / entry["run"], "--judge", judge, "--out", out,
-                                                      "--sandbox", self.c["sandboxImage"], "--variant-code", self.ev, "--login", self.c["login"],
-                                                      "--lock", self.c["lock"], "--engine", self.docker])
+            for _ in (1, 2):
+                out = self.fresh(self.work / "reviews", entry["id"], "r")
+                self.login.ensure(REVIEW_SECONDS)
+                self.suite(f"review-{out.name}", ["review", "--run", self.work / entry["run"], "--judge", judge, "--out", out,
+                                                  "--sandbox", self.c["sandboxImage"], "--variant-code", self.ev, "--login", self.c["login"],
+                                                  "--lock", self.c["lock"], "--engine", self.docker])
                 if valid(out / "review.json"):
                     entry["review"] = self.rel(out)
                     self.save()
@@ -981,12 +1004,18 @@ class Runner:
     def report(self):
         """The report over every launch (`report/all`), and per series one over everything (`report/SERIES`), one over its
         fixed starts alone (`report/SERIES-fixed`, where the primary contrast is read) and one over its chains
-        (`report/SERIES-chains`), each from its own ledger beside the whole one."""
+        (`report/SERIES-chains`), each from its own ledger beside the whole one. A series judged later is withheld from
+        every report until `judge` has judged all of it, so that nothing of it is read while launches still run."""
         out = self.work / "report"
         if out.exists():
             shutil.rmtree(out)
-        parts = [("all", self.work / "ledger.json")]
-        for name in dict.fromkeys(u["series"] for u in self.c["units"]):
+        withheld = {name for name, s in self.c["series"].items() if s.get("judges") and not self.ledger.get("released", {}).get(name)}
+        whole = self.work / "ledger-all.json"
+        whole.write_text(json.dumps({**self.ledger, "launches": [e for e in self.ledger["launches"] if e["series"] not in withheld],
+                                     "chains": [c for c in self.ledger["chains"] if c["series"] not in withheld]}, indent=2) + "\n",
+                         encoding="utf-8")
+        parts = [("all", whole)]
+        for name in dict.fromkeys(u["series"] for u in self.c["units"] if u["series"] not in withheld):
             mine = [e for e in self.ledger["launches"] if e["series"] == name]
             chains = [c for c in self.ledger["chains"] if c["series"] == name]
             for part, launches_, chains_ in ((name, mine, chains), (f"{name}-fixed", [e for e in mine if "-fixed-" in e["task"]], []),
@@ -1069,6 +1098,7 @@ class Runner:
             complete = False
             try:
                 self.freeze()
+                self.judge_pending()  # what an earlier window left pending: a stop or the runner's end during a judgment
                 for unit in self.c["units"]:
                     if unit["id"] in self.ledger["done"]:
                         continue
@@ -1095,6 +1125,12 @@ class Runner:
                 self.reviews()
             except Stop as e:
                 self.failure("judge", str(e))
+            waiting = {p["series"] if p["kind"] == "chain" else next(e["series"] for e in self.ledger["launches"] if e["id"] == p["id"])
+                       for p in self.ledger["pending"]}
+            for name, s in self.c["series"].items():
+                if s.get("judges") and name not in waiting:
+                    self.ledger.setdefault("released", {})[name] = True
+            self.save()
             self.report()
             self.log(event="judged", pending=len(self.ledger["pending"]))
 

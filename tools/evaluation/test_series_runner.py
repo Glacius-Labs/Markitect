@@ -20,7 +20,7 @@ ACCESS, REFRESH = "sk-ant-oat01-" + "a" * 48, "sk-ant-ort01-" + "b" * 48
 # invalid while FAKE_DIR/invalid-judgments counts down. Every call goes to FAKE_DIR/calls.jsonl with whether the engine
 # lock existed. While the lock exists, a launch is refused as the suite refuses it.
 FAKE_SUITE = textwrap.dedent(r'''
-    import json, os, pathlib, sys
+    import json, os, pathlib, sys, time
     args, d = sys.argv[1:], pathlib.Path(os.environ["FAKE_DIR"])
     lock = pathlib.Path(os.environ["FAKE_LOCK"])
     opt = lambda name: args[args.index(name) + 1] if name in args else None
@@ -47,6 +47,11 @@ FAKE_SUITE = textwrap.dedent(r'''
         (run / "variant" / "run.json").write_text("{}")
         if outcome == "could-not-run":
             record.update(delivered=False, exitCode=2, reported={"status": "could-not-run"})
+        elif outcome == "undelivered":
+            record.update(delivered=False, exitCode=1)
+        elif outcome == "five-hour":
+            (run / "variant" / "stream.jsonl").write_text(json.dumps({"type": "rate_limit_event", "rate_limit_info": {
+                "status": "allowed", "unifiedWindows": {"five_hour": {"utilization": 0.9, "resetsAt": int(time.time()) + 300}}}}) + "\n")
         elif outcome == "foreign":
             record["sandbox"]["escapes"] = [{"name": "ryuk-1", "id": "c0ffee"}]
             (run / "engine-events.jsonl").write_text(json.dumps({"Type": "container", "Action": "start", "Actor": {
@@ -67,7 +72,7 @@ FAKE_SUITE = textwrap.dedent(r'''
             (out / "step-01" / "task").mkdir(parents=True)
             (out / "step-01" / "task" / "start.bundle").write_text("start")
             (run / "variant" / "result.bundle").write_text("result")
-            (out / "chain.json").write_text(json.dumps({"steps": [{"step": 1}]}))
+            (out / "chain.json").write_text(json.dumps({"steps": [{"step": 1, "delivered": record["delivered"]}]}))
             state = pathlib.Path(opt("--state"))
             with open(state / "log.txt", "a") as f:
                 f.write(out.name + "\n")
@@ -79,9 +84,12 @@ FAKE_SUITE = textwrap.dedent(r'''
         (pathlib.Path(opt("--out")) / "judgment.json").write_text(json.dumps({"valid": left == 0}))
     elif command == "judge-chain":
         out = pathlib.Path(opt("--out"))
-        for i, _ in enumerate(opt("--steps").split(","), 1):
-            (out / f"step-{i:02d}").mkdir(parents=True)
-            (out / f"step-{i:02d}" / "judgment.json").write_text(json.dumps({"valid": True}))
+        out.mkdir(parents=True)
+        rows = json.loads((pathlib.Path(opt("--chain")) / "chain.json").read_text())["steps"]
+        for i, row in enumerate(rows, 1):  # as the suite does: the delivered steps only
+            if row["delivered"]:
+                (out / f"step-{i:02d}").mkdir()
+                (out / f"step-{i:02d}" / "judgment.json").write_text(json.dumps({"valid": True}))
         (out / "chain-judgment.json").write_text("{}")
     elif command == "review":
         pathlib.Path(opt("--out")).mkdir(parents=True)
@@ -403,11 +411,18 @@ class SeriesTest(Fixture):
         self.assertIn("an invalid launch", self.stop_reason())
         self.assertFalse((self.work / "done.json").exists())
 
-    def test_any_other_invalid_launch_stops(self):
-        self.scenario({"a": ["own-escape"], "b": ["result"]})
-        self.runner(self.config([unit("a", "M"), unit("b", "K")])).run()
+    def test_any_other_invalid_launch_stops_and_is_launched_again_once_after(self):
+        self.scenario({"a": ["own-escape", "result"], "b": ["own-escape", "own-escape"], "c": ["result"]})
+        config = self.config([unit("a", "M"), unit("b", "K", step="C2"), unit("c", "M", step="C2")])
+        self.runner(config).run()
         self.assertEqual(len(self.ledger()["attempts"]), 1)
         self.assertIn("markitect-run-x", self.stop_reason())
+        for _ in range(3):  # Build looked each time and found no change needed
+            (self.work / "STOP").unlink()
+            self.runner(config).run()
+        self.assertEqual([(a["unit"], a["class"]) for a in self.ledger()["attempts"]],
+                         [("a", "invalid"), ("a", "result"), ("b", "invalid"), ("b", "invalid"), ("c", "result")])
+        self.assertTrue((self.work / "done.json").exists())
 
     def test_a_void_share_above_one_in_four_stops_and_its_launch_goes_on_after(self):
         self.scenario({"a": ["could-not-run"] * 3, "b": ["could-not-run"] * 3, "c": ["could-not-run", "could-not-run", "result"]})
@@ -459,6 +474,44 @@ class SeriesTest(Fixture):
         self.assertIn("no valid judgment of a-a1 twice", self.stop_reason())
         self.assertEqual([p["id"] for p in self.ledger()["pending"]], ["a-a1"])
         self.assertEqual(len(self.ledger()["failures"]), 2)
+        (self.work / "STOP").unlink()  # the judge was fixed: the next window judges it in a fresh folder first
+        self.runner(self.config([unit("a", "M"), unit("b", "K", step="C2")])).run()
+        self.assertEqual([e.get("judgment") for e in self.ledger()["launches"]], ["judgments/a-a1-j3", "judgments/b-a1"])
+        self.assertEqual(self.ledger()["pending"], [])
+
+    def test_a_judgment_the_runner_did_not_finish_stays_pending_and_is_made_in_the_next_window(self):
+        self.scenario({"a": ["result"], "b": ["result"]})
+        config = self.config([unit("a", "M"), unit("b", "K", step="C2")])
+        runner = self.runner(config)
+        plain = runner.suite
+
+        def killed_at_the_first_judgment(name, args):
+            if args[0] == "judge" and not self.calls("judge"):
+                raise RuntimeError("killed")
+            return plain(name, args)
+        runner.suite = killed_at_the_first_judgment
+        runner.run()
+        self.assertIn("the runner failed", self.stop_reason())
+        self.assertEqual([(e["id"], e.get("judgment")) for e in self.ledger()["launches"]], [("a-a1", None)])
+        self.assertEqual([p["id"] for p in self.ledger()["pending"]], ["a-a1"])
+        (self.work / "STOP").unlink()
+        self.runner(config).run()
+        self.assertEqual([e.get("judgment") for e in self.ledger()["launches"]], ["judgments/a-a1", "judgments/b-a1"])
+        self.assertEqual(self.ledger()["pending"], [])
+
+    def test_a_five_hour_wait_outlasts_a_stop(self):
+        self.scenario({"a": ["five-hour"], "b": ["result"]})
+        config = self.config([unit("a", "M"), unit("b", "K", step="C2")])
+
+        def sleep(seconds):
+            (self.work / "STOP").write_text("window ends\n")
+        self.runner(config, sleep=sleep).run()
+        self.assertGreater(self.ledger()["quotaWaitUntil"], time.time())
+        (self.work / "STOP").unlink()
+        self.runner(config).run()
+        self.assertGreater(sum(self.slept), 200)
+        self.assertIsNone(self.ledger()["quotaWaitUntil"])
+        self.assertEqual(len(self.calls("run")), 2)
 
     def test_resumes_after_a_stop_without_repeating_what_counted(self):
         self.scenario({"a": ["quota"], "b": ["stop-file"], "c": ["result"]})
@@ -517,6 +570,15 @@ class SeriesTest(Fixture):
         self.assertEqual(json.loads((self.work / "ledger-gs-chains.json").read_text())["chains"][0]["id"], "ch")
         self.assertEqual(json.loads((self.work / "ledger-gs-fixed.json").read_text())["launches"], [])
 
+    def test_a_chain_with_an_undelivered_step_is_judged_on_its_delivered_ones(self):
+        self.scenario({"ch/W0": ["undelivered"], "ch/C1": ["result"]})
+        self.runner(self.config([unit("ch", "K", kind="chain", steps=["W0", "C1"])])).run()
+        self.assertTrue(self.arg(self.calls("chain")[1], "--start").replace("\\", "/").endswith("ch/W0-a1/step-01/task/start.bundle"))
+        ledger = self.ledger()
+        self.assertEqual([c["id"] for c in ledger["chains"]], ["ch"])
+        self.assertEqual([e.get("judgment") for e in ledger["launches"]], [None, "judgments/ch-chain/step-02"])
+        self.assertTrue((self.work / "done.json").exists())
+
     def test_a_chain_resumes_at_its_next_step_and_ends_at_an_invalid_one(self):
         self.scenario({"ch/W0": ["stop-file"], "ch/C1": ["own-escape"]})
         config = self.config([unit("ch", "K", kind="chain", steps=["W0", "C1", "C2"])])
@@ -541,6 +603,9 @@ class SeriesTest(Fixture):
         self.assertEqual([p["kind"] for p in self.ledger()["pending"]], ["launch", "launch", "chain"])
         self.assertEqual(self.calls("judge") + self.calls("judge-chain"), [])
         self.assertNotIn("planted", self.ledger()["tasks"]["plant-p1"])
+        # Nothing of a series judged later is in a report while it waits: the whole report leaves it out.
+        self.assertEqual([self.arg(c, "--out").replace("\\", "/").split("/report/")[1] for c in self.calls("report")], ["all"])
+        self.assertEqual(json.loads((self.work / "ledger-all.json").read_text())["launches"], [])
         (judges / "judge").mkdir(parents=True)
         (judges / "plants" / "p1" / "judge").mkdir(parents=True)
         (judges / "plants" / "p1" / "judge" / "plant.json").write_text(json.dumps({"format": 1, "kind": "gap"}))
@@ -550,6 +615,9 @@ class SeriesTest(Fixture):
         self.assertEqual([bool(e.get("judgment")) for e in ledger["launches"]], [True, True, True])
         self.assertEqual(ledger["tasks"]["plant-p1"]["planted"], "gap")
         self.assertEqual(len(self.calls("review")), 2)
+        self.assertEqual(ledger["released"], {"gs": True})
+        self.assertEqual([self.arg(c, "--out").replace("\\", "/").split("/report/")[1] for c in self.calls("report")][1:],
+                         ["all", "gs", "gs-fixed", "gs-chains"])
 
     def test_a_plant_runs_from_its_task_and_is_judged_at_its_step(self):
         self.scenario({"p": ["result"]})

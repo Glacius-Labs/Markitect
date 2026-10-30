@@ -211,6 +211,7 @@ A prepared series' author writes its inputs in the same layout, and `--prepared 
 - **Classes:** each launch is classed with its arm's variant runtime signatures, as the report classes it. These are in `signatures.json`: for M, `reported.status` is `could-not-run` or `check-failed`, or `reported.noAgentTurn` is true.
   - A void launch is relaunched up to twice.
   - A launch invalid only because of other work's containers is relaunched once. Those are containers without a `markitect.*` label whose start the run's own engine events show. Any other invalid launch stops the series.
+  - **After a stop is cleared:** a launch that stopped the series is launched again only if it was void with relaunches left, or if it was the first invalid one to stop it. Otherwise the series goes on with the next unit.
   - In the gate, any launch that is not a result stops it, and only a result completes a unit.
 - **Stops:** the runner stops the series on any of these, and writes the reason to `WORK/STOP`:
   - a refused request, or a seven-day use of 90 %;
@@ -224,20 +225,22 @@ A prepared series' author writes its inputs in the same layout, and `--prepared 
   - a login that cannot be refreshed;
   - the runner's own failure.
 
-  A five-hour use of 85 % waits for that window's reset instead.
-- **Judging:** each delivered result is judged at its step, and a chain's counted steps as one chain after its last step. A judgment that is not valid is made once more.
-  - A prepared series whose judge folders are off the machine is judged later. `judge` judges and reviews what waited, once the folders are there, and writes the reports again.
-  - Every judgment, review or report that did not come out is listed under `failures` in the ledger and in `done.json`.
+  A five-hour use of 85 % waits for that window's reset instead. The ledger keeps that wait, so a window that ends during it waits out the rest when the series goes on.
+- **Judging:** each delivered result is judged at its step, after the quota and evidence checks. A chain's counted steps are judged as one chain after its last step; the suite judges a chain's delivered steps only.
+  - **Pending:** a judgment stays under `pending` in the ledger until it is valid. That covers a judge folder off the machine, a window that ends during a judgment, and a runner that does not live to finish one. Each window starts by making what is pending and whose judge is there. A judgment that is not valid is made once more, each time in a fresh folder.
+  - **A prepared series** whose judge folders are off the machine is judged later. `judge` judges and reviews what waited, once the folders are there, and writes the reports again.
+  - **Failures:** every judgment, review or report that did not come out is listed under `failures` in the ledger and in `done.json`.
 
 **Chains.** A chain runs one step at a time. Each step is a one-step `suite.py chain` from the step before's result, or from its start when it delivered none. Every launch of a step starts from the state folder as it was before the step. A step without a result after its relaunches, or invalid, ends the chain.
 
 **Stop and resume.**
 
-- **Ending a window:** the runner ends one as soon as `WORK/STOP` exists, before the next launch or during any wait. Started again after `STOP` is removed, it goes on where it stopped, without launching again what counted. A launch it did not live to record is recorded as it ended.
+- **Ending a window:** the runner ends one as soon as `WORK/STOP` exists, before the next launch or during any wait. Started again after `STOP` is removed, it goes on where it stopped, without launching again what counted. A launch, its records and its answer are saved together. A launch the runner did not live to record is recorded as it ended.
 - **Records:** the ledger records each window. `WORK/runner.lock` keeps a second runner out.
-- **Freeze check:** the first window records the frozen tree, the binaries and the images, and each later window checks them.
+- **Freeze check:** the first window records the frozen tree, the binaries, a prepared series' launch inputs and the images. Each later window checks them. With `gateLedger` in the configuration, the first window also compares them with the gate's record.
+- **Hidden places:** a leading `~` in a hidden place is expanded.
 - **After each window:**
-  - **Reports:** one over every launch (`report/all`), and per series one over all its launches (`report/SERIES`), one over its fixed starts alone (`report/SERIES-fixed`, where the primary contrast is read) and one over its chains (`report/SERIES-chains`).
+  - **Reports:** one over every launch (`report/all`), and per series one over all its launches (`report/SERIES`), one over its fixed starts alone (`report/SERIES-fixed`, where the primary contrast is read) and one over its chains (`report/SERIES-chains`). A series judged later is left out of every report until `judge` has judged all of it, so that nothing of it is read while launches still run.
   - **Final check:** the runner scans every evidence file for the login's tokens and key shapes, and counts what is left labelled `markitect.run` or `markitect.evaluation`.
 - **After the last unit:** the runner also runs the reviews the protocol names, and writes `WORK/done.json`. The gate also writes its verdict, `WORK/gate.json`. In `counted`, the reviews cover every judged result of a fixed start in the first repetition and every chain's last judged step.
 
