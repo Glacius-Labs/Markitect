@@ -191,9 +191,9 @@ python -I -B WORK/src/tools/evaluation/series_runner.py judge CONFIG.json
   - The contrasts: the share of hidden cases passed, with a minimum meaningful difference of 0.05, and the failed hidden cases, with 1; both are read over each change's mean difference (`blockBy` `change`). Defects left for a person are a third contrast, with 1.
 - **`gate`:**
   - The Library's fixed starts M2, M3 and M4, and the Makerspace chain, once per arm.
-  - The first fixed start of each prepared series once per arm, so that both arms have run on its inputs.
+  - The first fixed start of each prepared series once per arm, so that both arms have run on its inputs, with a verify launch on each result, so that the verify launch has adopted each arm's result there.
 
-In both plans, every chain ends with a verify launch (see Chains below). The launch bound is one and a half times the planned launches, verify launches included. `units` prints the order and its counts.
+In both plans, every chain ends with a verify launch (see Chains below), right after its last step. The launch bound is one and a half times the planned launches, verify launches included. `units` prints the order and its counts.
 
 **Inputs.** `run` runs from the frozen revision's `tools/`, extracted with `git archive` into `WORK/src`, and logs its own SHA-256. It prepares the Library's and Makerspace's inputs in `WORK/prep/SERIES`, as [change series](#change-series) describes, with the registry pages on every fixed start.
 
@@ -240,11 +240,11 @@ A prepared series' author writes its inputs in the same layout, and `--prepared 
 
 **Chains.** A chain runs one step at a time. Each step is a one-step `suite.py chain` from the step before's result, or from its start when it delivered none. Every launch of a step starts from the state folder as it was before the step. A step without a result after its relaunches, or invalid, ends the chain.
 
-**The verify launch.** After a chain's last step and its judgment, the runner launches §15.2's independent `verify --full` on the chain's end state.
+**The verify launch.** Right after a chain's last step, the runner launches §15.2's independent `verify --full` on the chain's end state. A public chain is judged just before it; a prepared series' chain is judged later. The gate's verify launch on a fixed start follows that start.
 
 - **What it checks:** the end state is the result of the chain's last step that delivered one, checked against that step's model, as the series judge's final drift is, whichever arm made it.
 - **How it runs:** as a task of its own (`WORK/verify-tasks/UNIT`), through `suite.py run --native` with `markitect_arm.py --verify`.
-- **How it counts:** it is classed and relaunched like any launch, under the label `V` with the 2.0 arm's signatures, so its technical failures count toward neither arm's void share. It stays out of the report's launches.
+- **How it counts:** it is classed and relaunched like any launch, under the label `V` with the 2.0 arm's signatures, so its technical failures count toward neither arm's void share. It stays out of the report's launches. A verify launch that stays void leaves the slot empty, which is no failure of the arm.
 - **Its Result** fills the chain's `verifyFull` slot, which §15.2's table reads, whatever the verify found. A verify that did not check every item shows its state there, not "0 findings", and fails the gate's check. A chain whose steps delivered nothing has no end state, and so no verify launch.
 
 **Stop and resume.**

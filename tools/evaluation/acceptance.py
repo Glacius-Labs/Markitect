@@ -76,8 +76,8 @@ def no_drift(base, chains, table):
             state = (page or {}).get("state")
             if checked["problems"]:
                 verify = "unreadable"
-            elif state and state not in ("verified", "findings"):
-                verify = f"{state}: no verdict"  # a verify that did not check every item is no clean bill
+            elif state not in ("verified", "findings"):
+                verify = f"{state or 'no state'}: no verdict"  # a verify that did not check every item is no clean bill
             else:
                 verify = f"{checked['findings']} findings"
         unaccounted = drift.get("unaccounted") if drift else None

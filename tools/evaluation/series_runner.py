@@ -165,7 +165,8 @@ def counted_units(series):
 
 def gate_units(series):
     """The stability gate: per arm, three Library fixed starts in a row and the Makerspace chain, and the first fixed
-    start of each prepared series once, to show that both arms run on its inputs; the first arm alternates."""
+    start of each prepared series once, with a verify launch on its result, to show that both arms run on its inputs
+    and that the verify launch adopts each arm's result there; the first arm alternates."""
     name, steps = GATE_FIXED
     units = []
     for i, step in enumerate(steps):
@@ -173,15 +174,15 @@ def gate_units(series):
     for s_name, s in series.items():
         if s["role"] == "confirmatory":
             units += pair({"id": f"{s_name}-fixed-{s['fixed'][0]}-gate", "kind": "fixed", "series": s_name, "step": s["fixed"][0],
-                           "repetition": 1}, "K")
+                           "repetition": 1, "verify": True}, "K")
     units += pair({"id": f"{GATE_CHAIN}-chain-gate", "kind": "chain", "series": GATE_CHAIN, "steps": series[GATE_CHAIN]["steps"],
                    "repetition": 1, "verify": True}, "K")
     return units
 
 
 def launches(units):
-    """Planned launches: one per fixed start or plant, one per chain step, and a chain's verify launch."""
-    return sum(len(u["steps"]) + bool(u.get("verify")) if u["kind"] == "chain" else 1 for u in units)
+    """Planned launches: one per fixed start or plant, one per chain step, and a unit's verify launch."""
+    return sum((len(u["steps"]) if u["kind"] == "chain" else 1) + bool(u.get("verify")) for u in units)
 
 
 def plan(protocol, machine, prepared=()):
@@ -885,12 +886,14 @@ class Runner:
         raise Stop(f"the judge gave no valid judgment of {entry['id']} twice")
 
     def run_task(self, unit):
-        """A fixed start or plant, launched until a launch counts, within the relaunch limits."""
+        """A fixed start or plant, launched until a launch counts, within the relaunch limits; then its verify launch,
+        where the plan asks for one."""
         flags, variant = self.arm_args(unit)
         base, step = self.work / "runs" / unit["id"], self.step_of(unit)
         while True:
             done = self.attempts_of(unit["id"], step)
             if self.resolved(done) == "done":
+                self.run_verify(unit)
                 return
             run = base / f"a{len(done) + 1}"
             if run.exists():  # launched before the runner ended and never recorded: recorded as it ended
@@ -938,21 +941,24 @@ class Runner:
         self.run_verify(unit)
 
     def run_verify(self, unit):
-        """Section 15.2's independent `verify --full` on the chain's end state, whichever arm made it: the result of its
-        last step that delivered, checked against that step's model, as the series judge's final drift is. A chain whose
-        steps delivered nothing has no end state to check. One native launch of the 2.0 host (markitect_arm.py
-        --verify), classed and relaunched like any launch under the label V, so that its technical failures count toward
-        neither arm. Its Result fills the chain's `verifyFull` slot, whatever it found; the report shows a verify that
-        did not check every item by its state."""
-        progress = self.ledger["progress"].get(unit["id"]) or {}
+        """Section 15.2's independent `verify --full` on a unit's end state, whichever arm made it. For a chain that is the
+        result of its last step that delivered one, checked against that step's model, as the series judge's final
+        drift is; for a fixed start (the gate's), its counted result. A unit that delivered nothing has no end state
+        to check. One native launch of the 2.0 host (markitect_arm.py --verify), right after the unit, classed and
+        relaunched like any launch under the label V, so that its technical failures count toward neither arm; a void
+        that stays void leaves the slot empty. Its Result fills the chain's `verifyFull` slot, whatever it found; the
+        report shows a verify that did not check every item by its state."""
         if not unit.get("verify") or unit["id"] in self.ledger["verifies"]:
             return
-        delivered = [(step, out) for step, out in progress.get("kept", [])
-                     if (classify.load(self.work / out / "step-01" / "run" / "suite.json") or {}).get("delivered")]
+        if unit["kind"] == "chain":
+            ran = [(step, self.work / out / "step-01" / "run") for step, out in (self.ledger["progress"].get(unit["id"]) or {}).get("kept", [])]
+        else:
+            ran = [(self.step_of(unit), self.work / a["run"]) for a in self.attempts_of(unit["id"], self.step_of(unit)) if a["class"] == "result"]
+        delivered = [(step, run) for step, run in ran if (classify.load(run / "suite.json") or {}).get("delivered")]
         if not delivered:
-            self.log(event="verify-skipped", unit=unit["id"], why="no step of the chain delivered a result: there is no end state")
+            self.log(event="verify-skipped", unit=unit["id"], why="the unit delivered no result: there is no end state")
             return
-        step, out = delivered[-1]
+        step, run = delivered[-1]
         source = self.prepared(unit["series"]) / "steps" / step
         task = self.work / "verify-tasks" / unit["id"]
         if not task.exists():  # built aside and renamed, so that a runner ended half-way leaves no partial task behind
@@ -960,8 +966,7 @@ class Runner:
             if partial.exists():
                 shutil.rmtree(partial)
             self.must(f"verify-task-{unit['id']}", [self.py, "-I", "-B", self.suite_py, "task", "--task-md", source / "task.md",
-                                                     "--model", source / "model", "--start",
-                                                     self.work / out / "step-01" / "run" / "variant" / "result.bundle",
+                                                     "--model", source / "model", "--start", run / "variant" / "result.bundle",
                                                      "--deadline-seconds", self.series(unit["series"])["deadlineSeconds"], "--out", partial])
             os.replace(partial, task)
         flags, variant = self.arm_args({"arm": "M"})

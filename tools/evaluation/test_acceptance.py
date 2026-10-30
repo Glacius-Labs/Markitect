@@ -128,7 +128,8 @@ class AcceptanceReportTest(unittest.TestCase):
         (chain / "chain-judgment.json").write_text(json.dumps({
             "steps": [], "regressions": [{"case": "c1", "passedAt": "W0", "failsAt": "C2"}], "lastStepJudged": True,
             "finalDrift": {"step": "C9", "forgottenRules": ["c1"], "staleFiles": [{"path": "x.go"}], "unaccounted": []}}))
-        (self.tmp / "verify.json").write_text(json.dumps(result_page("not-landed", command="verify", findings=[{"definition": "d"}])))
+        (self.tmp / "verify.json").write_text(json.dumps(result_page("not-landed", command="verify", state="findings",
+                                                                     findings=[{"definition": "d"}])))
         (self.tmp / "verify-incomplete.json").write_text(json.dumps(result_page("not-landed", command="verify", state="incomplete")))
         (self.tmp / "ledger.json").write_text(json.dumps({
             "format": 1, "series": "acceptance", "tasks": {"makerspace": {}, "plant-1": {"planted": "defect"}}, "launches": launches,

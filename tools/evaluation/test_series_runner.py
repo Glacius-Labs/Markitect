@@ -253,7 +253,7 @@ class PlanTest(unittest.TestCase):
         self.assertEqual([u["id"] for u in units][:6], ["library-fixed-M2-gate-M", "library-fixed-M2-gate-K", "library-fixed-M3-gate-K",
                                                         "library-fixed-M3-gate-M", "library-fixed-M4-gate-M", "library-fixed-M4-gate-K"])
         with_new = series_runner.plan("gate", {}, [self.prepared()])
-        self.assertEqual((series_runner.summary(with_new["units"])["launches"], with_new["launchBound"]), (30, 45))
+        self.assertEqual((series_runner.summary(with_new["units"])["launches"], with_new["launchBound"]), (32, 48))
         self.assertIn("new-fixed-C1-gate-K", [u["id"] for u in with_new["units"]])
 
 
@@ -617,6 +617,16 @@ class SeriesTest(Fixture):
         self.assertEqual(ledger["verifies"], {"ch": "runs/ch/verify-a2/variant/results/v.json"})
         self.assertEqual(ledger["chains"][0]["verifyFull"], "runs/ch/verify-a2/variant/results/v.json")
         self.assertNotIn("verify", [e["step"] for e in ledger["launches"]])  # not a launch of either arm in the report
+
+    def test_a_gate_start_of_the_new_project_is_verified_after_its_launch(self):
+        self.scenario({"k": ["result", "result"]})  # the launch, then its verify launch
+        self.runner(self.config([unit("k", "K", step="C2", verify=True)], protocol="gate")).run()
+        task = self.calls("task")[0]
+        self.assertTrue(self.arg(task, "--start").replace("\\", "/").endswith("runs/k/a1/variant/result.bundle"))
+        self.assertEqual(pathlib.Path(self.arg(task, "--model")), self.prep / "steps" / "C2" / "model")
+        self.assertEqual([c["args"][0] for c in self.calls() if c["args"][0] == "run"], ["run", "run"])
+        self.assertEqual(self.ledger()["verifies"], {"k": "runs/k/verify-a1/variant/results/v.json"})
+        self.assertTrue(json.loads((self.work / "gate.json").read_text())["checks"]["everyChainVerified"])
 
     def test_the_end_state_verified_is_the_last_delivered_steps_against_its_own_model(self):
         self.scenario({"ch/W0": ["result"], "ch/C1": ["undelivered"], "ch": ["result"]})
