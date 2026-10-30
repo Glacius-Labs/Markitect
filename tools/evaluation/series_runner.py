@@ -938,23 +938,32 @@ class Runner:
         self.run_verify(unit)
 
     def run_verify(self, unit):
-        """Section 15.2's independent `verify --full` on the chain's end state: its last delivered result, or its start
-        when it delivered none, checked against the model of its last counted step, whichever arm made it. One native
-        launch of the 2.0 host (markitect_arm.py --verify), classed and relaunched like any launch under the label V,
-        so that its technical failures count toward neither arm. Its Result fills the chain's `verifyFull` slot."""
+        """Section 15.2's independent `verify --full` on the chain's end state, whichever arm made it: the result of its
+        last step that delivered, checked against that step's model, as the series judge's final drift is. A chain whose
+        steps delivered nothing has no end state to check. One native launch of the 2.0 host (markitect_arm.py
+        --verify), classed and relaunched like any launch under the label V, so that its technical failures count toward
+        neither arm. Its Result fills the chain's `verifyFull` slot, whatever it found; the report shows a verify that
+        did not check every item by its state."""
         progress = self.ledger["progress"].get(unit["id"]) or {}
         if not unit.get("verify") or unit["id"] in self.ledger["verifies"]:
             return
-        if not progress.get("kept"):
-            self.log(event="verify-skipped", unit=unit["id"], why="no step of the chain counted: there is no end state")
+        delivered = [(step, out) for step, out in progress.get("kept", [])
+                     if (classify.load(self.work / out / "step-01" / "run" / "suite.json") or {}).get("delivered")]
+        if not delivered:
+            self.log(event="verify-skipped", unit=unit["id"], why="no step of the chain delivered a result: there is no end state")
             return
-        last = progress["kept"][-1][0]
-        source = self.prepared(unit["series"]) / "steps" / last
+        step, out = delivered[-1]
+        source = self.prepared(unit["series"]) / "steps" / step
         task = self.work / "verify-tasks" / unit["id"]
-        if not task.exists():
+        if not task.exists():  # built aside and renamed, so that a runner ended half-way leaves no partial task behind
+            partial = task.with_name(task.name + ".partial")
+            if partial.exists():
+                shutil.rmtree(partial)
             self.must(f"verify-task-{unit['id']}", [self.py, "-I", "-B", self.suite_py, "task", "--task-md", source / "task.md",
-                                                     "--model", source / "model", "--start", self.work / progress["start"],
-                                                     "--deadline-seconds", self.series(unit["series"])["deadlineSeconds"], "--out", task])
+                                                     "--model", source / "model", "--start",
+                                                     self.work / out / "step-01" / "run" / "variant" / "result.bundle",
+                                                     "--deadline-seconds", self.series(unit["series"])["deadlineSeconds"], "--out", partial])
+            os.replace(partial, task)
         flags, variant = self.arm_args({"arm": "M"})
         checker = {**unit, "arm": "V"}
         base = self.work / "runs" / unit["id"]
@@ -1137,7 +1146,9 @@ class Runner:
         checks = {"everyLaunchAResult": all(a["class"] == "result" for a in self.ledger["attempts"]),
                   "everyResultJudged": all(e.get("judgment") and valid(self.work / e["judgment"] / "judgment.json") for e in delivered),
                   "everyChainJudged": len(self.ledger["chains"]) == sum(u["kind"] == "chain" for u in self.c["units"]),
-                  "everyChainVerified": all(u["id"] in self.ledger["verifies"] for u in self.c["units"] if u.get("verify")),
+                  "everyChainVerified": all(u["id"] in self.ledger["verifies"] and (classify.load(self.work / self.ledger["verifies"][u["id"]])
+                                                                                     or {}).get("state") in ("verified", "findings")
+                                            for u in self.c["units"] if u.get("verify")),
                   "noCredential": not check["secretHits"], "nothingLeft": not any(check["leftovers"].values()) and not check["engineErrors"],
                   "mLandedTheFirstChainStep": bool(first and first.get("delivered") and ((first.get("result") or {}).get("changedPaths")))}
         verdict = {"passes": all(checks.values()), "checks": checks, "time": now()}

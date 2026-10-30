@@ -71,8 +71,15 @@ def no_drift(base, chains, table):
         drift = (record or {}).get("finalDrift")
         verify = None
         if chain.get("verifyFull"):
-            checked = results.check(results.read(base / chain["verifyFull"]))
-            verify = "unreadable" if checked["problems"] else f"{checked['findings']} findings"
+            page = results.read(base / chain["verifyFull"])
+            checked = results.check(page)
+            state = (page or {}).get("state")
+            if checked["problems"]:
+                verify = "unreadable"
+            elif state and state not in ("verified", "findings"):
+                verify = f"{state}: no verdict"  # a verify that did not check every item is no clean bill
+            else:
+                verify = f"{checked['findings']} findings"
         unaccounted = drift.get("unaccounted") if drift else None
         rows.append([chain["id"], chain["variant"], chain["task"], "yes" if (record or {}).get("lastStepJudged") else "no",
                      drift["step"] if drift else "n/a", len(drift["forgottenRules"]) if drift else "n/a",
@@ -82,7 +89,8 @@ def no_drift(base, chains, table):
                                     "Stale files", "Unaccounted files", "Regressions along the chain", "Own verify --full"], rows,
                  "After the series, the judge's drift checks of the chain's end result, the same for every variant: earlier steps' cases "
                  "that fail (forgotten rules), retired terms left in the source (stale files) and files nothing accounts for. "
-                 "The 2.0 arm's own independent verify --full goes in its slot; K has none.")
+                 "An independent verify --full of the chain's end state goes in its slot, for every variant whose chain has one; a "
+                 "verify that did not check every item shows its state.")
 
 
 def nothing_skipped(facts, variants, table):

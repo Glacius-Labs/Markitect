@@ -70,7 +70,8 @@ FAKE_SUITE = textwrap.dedent(r'''
         (run / "suite.json").write_text(json.dumps(record))
         if "--verify" in args:
             (run / "variant" / "results").mkdir()
-            (run / "variant" / "results" / "v.json").write_text(json.dumps({"format": 1, "command": "verify", "state": "verified"}))
+            state = "incomplete" if outcome == "incomplete-verify" else "verified"
+            (run / "variant" / "results" / "v.json").write_text(json.dumps({"format": 1, "command": "verify", "state": state}))
         if command == "chain":
             (out / "step-01" / "task").mkdir(parents=True)
             (out / "step-01" / "task" / "start.bundle").write_text("start")
@@ -616,6 +617,32 @@ class SeriesTest(Fixture):
         self.assertEqual(ledger["verifies"], {"ch": "runs/ch/verify-a2/variant/results/v.json"})
         self.assertEqual(ledger["chains"][0]["verifyFull"], "runs/ch/verify-a2/variant/results/v.json")
         self.assertNotIn("verify", [e["step"] for e in ledger["launches"]])  # not a launch of either arm in the report
+
+    def test_the_end_state_verified_is_the_last_delivered_steps_against_its_own_model(self):
+        self.scenario({"ch/W0": ["result"], "ch/C1": ["undelivered"], "ch": ["result"]})
+        self.runner(self.config([unit("ch", "M", kind="chain", steps=["W0", "C1"], verify=True)])).run()
+        task = self.calls("task")[0]
+        self.assertTrue(self.arg(task, "--start").replace("\\", "/").endswith("runs/ch/W0-a1/step-01/run/variant/result.bundle"))
+        self.assertEqual(pathlib.Path(self.arg(task, "--model")), self.prep / "steps" / "W0" / "model")
+        self.assertTrue((self.work / "verify-tasks" / "ch").is_dir())
+        self.assertFalse((self.work / "verify-tasks" / "ch.partial").exists())
+
+    def test_a_chain_that_delivered_nothing_has_no_end_state_to_verify(self):
+        self.scenario({"ch/W0": ["undelivered"]})
+        self.runner(self.config([unit("ch", "K", kind="chain", steps=["W0"], verify=True)])).run()
+        self.assertEqual(self.calls("task"), [])
+        self.assertEqual(self.ledger()["verifies"], {})
+        self.assertEqual(len(self.events("verify-skipped")), 1)
+
+    def test_a_verify_that_did_not_check_every_item_fails_the_gate(self):
+        self.scenario({"ch/W0": ["result"], "ch": ["incomplete-verify"]})
+        config = self.config([unit("ch", "M", kind="chain", steps=["W0"], verify=True)], protocol="gate")
+        config["series"]["gs"]["role"] = "public"
+        self.runner(config).run()
+        verdict = json.loads((self.work / "gate.json").read_text())
+        self.assertFalse(verdict["checks"]["everyChainVerified"])
+        self.assertFalse(verdict["passes"])
+        self.assertIn("ch", self.ledger()["verifies"])  # filed, and the report shows its state
 
     def test_a_chain_with_an_undelivered_step_is_judged_on_its_delivered_ones(self):
         self.scenario({"ch/W0": ["undelivered"], "ch/C1": ["result"]})

@@ -242,10 +242,10 @@ A prepared series' author writes its inputs in the same layout, and `--prepared 
 
 **The verify launch.** After a chain's last step and its judgment, the runner launches §15.2's independent `verify --full` on the chain's end state.
 
-- **What it checks:** the end state is the chain's last delivered result, or its start when the step delivered none. It is checked against the model of the chain's last counted step, whichever arm made it.
+- **What it checks:** the end state is the result of the chain's last step that delivered one, checked against that step's model, as the series judge's final drift is, whichever arm made it.
 - **How it runs:** as a task of its own (`WORK/verify-tasks/UNIT`), through `suite.py run --native` with `markitect_arm.py --verify`.
 - **How it counts:** it is classed and relaunched like any launch, under the label `V` with the 2.0 arm's signatures, so its technical failures count toward neither arm's void share. It stays out of the report's launches.
-- **Its Result** fills the chain's `verifyFull` slot, which §15.2's table reads. A chain with no counted step has no end state, and so no verify launch.
+- **Its Result** fills the chain's `verifyFull` slot, which §15.2's table reads, whatever the verify found. A verify that did not check every item shows its state there, not "0 findings", and fails the gate's check. A chain whose steps delivered nothing has no end state, and so no verify launch.
 
 **Stop and resume.**
 
@@ -256,7 +256,7 @@ A prepared series' author writes its inputs in the same layout, and `--prepared 
 - **After each window:**
   - **Reports:** one over every launch (`report/all`), and per series one over all its launches (`report/SERIES`), one over its fixed starts alone (`report/SERIES-fixed`, where the primary contrast is read) and one over its chains (`report/SERIES-chains`). A series judged later is left out of every report until all its units have run and `judge` has judged all of it, so that nothing of it is read while launches still run.
   - **Final check:** the runner scans every evidence file for the login's tokens and key shapes, and counts what is left labelled `markitect.run` or `markitect.evaluation`.
-- **After the last unit:** the runner also runs the reviews the protocol names, and writes `WORK/done.json`. The gate also writes its verdict, `WORK/gate.json`, which includes a verify Result for every chain. In `counted`, the reviews cover every judged result of a fixed start in the first repetition and every chain's last judged step.
+- **After the last unit:** the runner also runs the reviews the protocol names, and writes `WORK/done.json`. The gate also writes its verdict, `WORK/gate.json`, which includes a verify Result that ended `verified` or `findings` for every chain. In `counted`, the reviews cover every judged result of a fixed start in the first repetition and every chain's last judged step.
 
 Start the runner detached (`Win32_Process` on Windows, `setsid nohup` on Linux), without a shell's `ANTHROPIC_*` or `CLAUDE_*` variables. Stop it with `WORK/STOP`, not by ending its process.
 
