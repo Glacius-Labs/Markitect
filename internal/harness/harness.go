@@ -19,7 +19,7 @@ import (
 )
 
 // Version names the harness text. It changes whenever the rendered text does.
-const Version = 1
+const Version = 2
 
 // MaxInlineDiff bounds the diff a checker receives inline. A larger diff is
 // listed by file, and the checker reads it in its clone.
@@ -285,6 +285,7 @@ func (r renderer) task() string {
 		}
 		b.WriteString("\n")
 	}
+	r.covers(&b)
 	if s.Role == Checker && s.Mode == Apply {
 		s := in.Submission
 		b.WriteString("## Submitted verdicts\n\n| Item | Verdict | Evidence |\n|---|---|---|\n")
@@ -325,7 +326,8 @@ func (r renderer) task() string {
 			"- `changed`: you changed files so that it conforms.\n" +
 			"- `model-problem`: the model contradicts itself or leaves open behavior at the project boundary for this item, so it cannot be settled within the model; also `escalate` it.\n\n" +
 			"A gap without effect at the project boundary is yours to decide and document. Evidence names the files, tests or Definitions that show the verdict holds. " +
-			"The remote accepts the submission only when the required checks pass on your branch. Your checker's answer and every message for you arrive with a later start.\n")
+			"The remote runs the required checks on your branch's full state: it refuses a submission that merges your children's work and fails them, and your checker sees their results either way. " +
+			"Your checker's answer and every message for you arrive with a later start.\n")
 	case s.Mode == Apply:
 		b.WriteString("Call `review` with one answer per submitted verdict, `confirmed` or `disputed`, each with evidence: what you read or ran, and for a dispute what is wrong and where. " +
 			"The outcome is `approved` when you confirm every verdict and `rejected` when you dispute at least one.\n")
@@ -334,6 +336,53 @@ func (r renderer) task() string {
 			"or `model-problem`, when the model contradicts itself or leaves open behavior at the project boundary for this item.\n")
 	}
 	return b.String()
+}
+
+// covers states what a verdict covers (DEC-088): the model in full for each
+// item, the code of the Manager's own Package only, and integration by use.
+func (r renderer) covers(b *strings.Builder) {
+	s := r.s
+	maker, verify, parent := s.Role == Maker, s.Mode == Verify, len(s.Manager.Children) > 0
+	if len(s.Checklist) == 0 && (!parent || verify) {
+		return
+	}
+	b.WriteString("## What a verdict covers\n\n")
+	if len(s.Checklist) > 0 {
+		b.WriteString("- **The model, in full.** A verdict covers the item's whole Definition, its examples included, and the Definitions it links to, as the model above shows them. ")
+		if maker || verify {
+			b.WriteString("Where they contradict each other, nothing can conform, and the only right verdict is `model-problem`. ")
+		} else {
+			b.WriteString("Where they contradict each other, nothing can conform: the maker's only right verdict is `model-problem`, so dispute a verdict that claims the item conforms. ")
+		}
+		b.WriteString("It is no review of the whole model: stay with each item and its links.\n")
+		switch {
+		case maker:
+			b.WriteString("- **Evidence.** For `conforms` and `changed`, the evidence names how each example in the item's Definition is met, for example by which test.\n")
+		case verify:
+			b.WriteString("- **Evidence.** For `conforms`, the evidence names how each example in the item's Definition is met, for example by which test.\n")
+		default:
+			b.WriteString("- **Evidence.** Re-check each example in the item's Definition yourself. Dispute a `conforms` or `changed` verdict whose evidence does not show how each example is met, " +
+				"and one whose realization matches part of the Definition but not its example.\n")
+		}
+		// Root has no parent, and verify integrates nothing: there the
+		// verdicts judge the Package's files and nothing is left to a parent.
+		switch {
+		case r.pkg == model.RootPackage || verify:
+			b.WriteString("- **The code, your own Package's.** The verdicts judge your Package's files against your items.\n")
+		case maker:
+			b.WriteString("- **The code, your own Package's.** Your verdicts judge your Package's files against your items. Whether the rest of the program uses them yet is your parent's integration.\n")
+		default:
+			b.WriteString("- **The code, your own Package's.** Judge your Package's files against your items. Whether the rest of the program uses them yet is your parent's integration, " +
+				"which its checker judges and the required checks gate on the merged state; it is no reason to dispute a verdict.\n")
+		}
+	}
+	switch {
+	case parent && maker:
+		b.WriteString("- **Your children's work.** Integrate it by using it, for example by calling a child's code, not by building a child's behavior a second time in your own files.\n")
+	case parent && !verify:
+		b.WriteString("- **Your children's work.** The Manager integrates it by using it. Dispute the submission when one of its own files builds a child's behavior a second time instead.\n")
+	}
+	b.WriteString("\n")
 }
 
 func (r renderer) page(pkg string) string {

@@ -63,7 +63,7 @@ Verdicts and reviews are [Git trailers](https://git-scm.com/docs/git-interpret-t
 | `Markitect-Review` | `approved` or `rejected` | a review |
 | `Markitect-Check` | `ITEM \| confirmed\|disputed \| EVIDENCE` | a review |
 
-`ITEM` is a checklist item as above; it holds no `|`. `EVIDENCE` is required and may hold anything, `|` included. A submission is a commit with a `Markitect-Manager` line and its verdicts; a Manager without items submits with the `Markitect-Manager` line alone. A maker's submission:
+`ITEM` is a checklist item as above; it holds no `|`. `EVIDENCE` is required and may hold anything, `|` included. For `conforms` and `changed` it names how each example in the item's Definition is met ([DEC-088](../../docs/concepts/register.md#dec-088-a-checker-reads-the-model-in-full-and-judges-its-own-packages-files)); the hook cannot see examples, so the checker holds the maker to it. A submission is a commit with a `Markitect-Manager` line and its verdicts; a Manager without items submits with the `Markitect-Manager` line alone. A maker's submission:
 
 ```text
 Realize the loan limit
