@@ -19,7 +19,7 @@ Since 28 October 2026 the target is [concept 2.0](concepts/v2-concept.md). The o
 
 | Arm | What | Where |
 |---|---|---|
-| 2.0 | Markitect as concept 2.0 describes it, built in steps T1 to T5 | `main`, as it lands |
+| 2.0 | Markitect as concept 2.0 describes it, built in steps T1 to T9 | `main`, as it lands |
 | K | Baseline: classic agentic coding, one Claude Code session with the task | the suite on `main` |
 
 The concept 1.0 arms stay where they stopped, for reference only: M (V1 on `main` until 2.0 replaces it), P (`variant/plugin`) and G (`dev/g0-prototype`).
