@@ -12,7 +12,9 @@ voided ones included, with paths relative to the ledger:
 written before the series. Each launch is classified first; only results are
 counted in the areas, and the void rate shows the rest. A result without a
 delivered commit, or one that timed out, counts as a failure in Correctness
-and Delivery.
+and Delivery. A result without a delivered commit scores as its start, the
+change not done: it passes the earlier steps' cases and fails the step's own
+(acceptance.start_scores).
 
 Areas, each a table per variant:
   human attention (primary)  defects left for a person: failed cases, a failed build, failed tests,
@@ -89,19 +91,11 @@ def launch_facts(base, launch, signatures, tasks=None):
     return facts
 
 
-def planned_cases(facts):
-    """The planned case count per task, from its judgments: a run without a result fails every case."""
-    planned = {}
-    for f in facts:
-        if "areas" in f:
-            planned[f["task"]] = max(planned.get(f["task"], 0), f["areas"]["correctness"]["planned"])
-    return planned
-
-
-def attention(f, planned):
-    """The defects a person would still have to find and repair, per kind; None when the run is not judged."""
+def attention(f):
+    """The defects a person would still have to find and repair, per kind; None when the run is not judged. A run without
+    a result scores as its start (acceptance.start_scores): it fails the step's own new cases."""
     if not f["delivered"]:
-        return {"noResult": 1, "casesFailed": planned.get(f["task"]), "confirmedCriticals": 0}
+        return {"noResult": 1, "casesFailed": f["startScore"]["failed"] if f.get("startScore") else None, "confirmedCriticals": 0}
     if "areas" not in f:
         return None
     a = f["areas"]
@@ -143,14 +137,17 @@ def report(ledger_path):
     signatures = read(base / ledger["signatures"]) if ledger.get("signatures") else None
     tasks = ledger.get("tasks") or {}
     facts = [launch_facts(base, launch, signatures, tasks) for launch in ledger["launches"]]
-    planned = planned_cases(facts)
+    starts = acceptance.start_scores(facts)
     for f in facts:
         if f["class"] == "result" and not f["planted"]:
-            f["attention"] = attention(f, planned)
+            if not f["delivered"]:
+                f["startScore"] = starts.get((f["task"], f.get("step")))
+            f["attention"] = attention(f)
     variants = sorted({f["variant"] for f in facts})
     out = [f"# Series report: {ledger.get('series', ledger_path.stem)}", "",
            "One table per area; there is no overall score. Counted are the launches classified as results; "
            "a result without a delivered commit, or one that timed out, counts as a failure in Correctness and Delivery. "
+           "A result without a delivered commit scores as its start: it passes the earlier steps' cases and fails the step's own. "
            "Values are mean (min-max, n).", ""]
     # A planted defect's result is meant not to land: it is scored under Stops right only.
     by = {v: [f for f in facts if f["variant"] == v and f["class"] == "result" and not f["planted"]] for v in variants}
@@ -173,14 +170,15 @@ def report(ledger_path):
                                                      "Tests failed", "Unrequested paths", "Protected inputs touched",
                                                      "Confirmed critical findings", "Steps with no result"], rows,
                      "Defects a person would still have to find and repair, per run. A result that does not build fails every case; "
-                     "a step without a result fails every case and counts once more as a step with no result. The total covers runs "
+                     "a step without a result scores as its start, failing the step's own new cases, and counts once more as a step "
+                     "with no result. The total covers runs "
                      "with every count known. Input effort per task: " + effort + "."))
 
     rows = []
     for v in variants:
         judged = [f for f in by[v] if "areas" in f or not f["delivered"]]
-        passed = [f["areas"]["correctness"]["passed"] if "areas" in f else 0 for f in judged]
-        plan = [f["areas"]["correctness"]["planned"] if "areas" in f else planned.get(f["task"]) for f in judged]
+        scored = [f["areas"]["correctness"] if "areas" in f else f.get("startScore") or {} for f in judged]
+        passed, plan = [c.get("passed") for c in scored], [c.get("planned") for c in scored]
         clean = sum(1 for f in judged if "areas" in f and not f["areas"]["correctness"]["failed"] and not f["timedOut"])
         failed = sorted({c for f in judged if "areas" in f for c in f["areas"]["correctness"]["failedCases"]})
         rows.append([v, spread(passed), spread(plan), share(clean, len(judged)), ", ".join(failed) or "none"])

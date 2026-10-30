@@ -11,9 +11,9 @@ records what it measured itself in suite.json. How the variant works is the
 variant's business.
 
   python -I -B suite.py task --task-md FILE [--model DIR] [--start BUNDLE [--base-model DIR]] --deadline-seconds N --out NEW_DIR
-  python -I -B suite.py run --task DIR --out NEW_DIR --model PROVIDER:MODEL_ID [--state DIR] [SANDBOX...] -- VARIANT...
+  python -I -B suite.py run --task DIR --out NEW_DIR --model PROVIDER:MODEL_ID [--state DIR] [--without-pages] [SANDBOX...] -- VARIANT...
   python -I -B suite.py chain --step DIR [--step DIR ...] [--start BUNDLE [--state DIR]] --deadline-seconds N --model PROVIDER:MODEL_ID \
-      --out NEW_DIR [SANDBOX...] -- VARIANT...
+      --out NEW_DIR [--without-pages] [SANDBOX...] -- VARIANT...
 
   python -I -B suite.py judge --run RUN_DIR --judge JUDGE_DIR [--step STEP] --out NEW_DIR [--engine BIN] [--lock FILE]
   python -I -B suite.py judge-chain --chain CHAIN_DIR --judge JUDGE_DIR --steps STEP,STEP,... --out NEW_DIR [--engine BIN] [--lock FILE]
@@ -26,6 +26,11 @@ variant's business.
 A chain step directory holds task.md and an optional model/. Each step starts
 from the variant's own previous result, or from the previous start when there
 was none; one state directory is handed to the variant at every step.
+
+With --without-pages, the variant's copy of the task has no registry pages:
+registry.md and registry/ go from model/ and base-model/, and suite.json lists
+what went. The baseline K gets the same files as the 2.0 arm without the
+pages, which only the 2.0 arm works from (owner, 29 October 2026).
 
 With --sandbox, the variant command runs inside one container per run
 (sandbox.py): it receives /task /out [/state], its code is at /variant and the
@@ -107,6 +112,26 @@ def intent_digest(task_dir):
     for p in files:
         h.update(p.relative_to(root).as_posix().encode() + b"\0" + p.read_bytes() + b"\0")
     return h.hexdigest()
+
+
+# Registry pages, in a model's root: which paths each Package owns and which Definitions each file realizes.
+PAGES = ("registry.md", "registry")
+
+
+def withhold_pages(task_dir):
+    """Remove the registry pages from model/ and base-model/ of a variant's copy of a task; the paths removed."""
+    removed = []
+    for model in ("model", "base-model"):
+        for name in PAGES:
+            p = pathlib.Path(task_dir) / model / name
+            if p.is_dir():
+                shutil.rmtree(p)
+            elif p.is_file():
+                p.unlink()
+            else:
+                continue
+            removed.append(f"{model}/{name}")
+    return removed
 
 
 def empty_start(out):
@@ -254,8 +279,9 @@ def model_check(model, report):
     return f"{report['provider']}:{report['model']}" == model
 
 
-def run(task_dir, variant, out, model, state=None, sandbox=None):
-    """Run one variant on one task under the evaluation's model, in the sandbox when one is given.
+def run(task_dir, variant, out, model, state=None, sandbox=None, pages=True):
+    """Run one variant on one task under the evaluation's model, in the sandbox when one is given; without the
+    registry pages in its copy of the task when pages is false.
 
     Writes OUT/suite.json; the variant writes OUT/variant/."""
     task_dir, out = pathlib.Path(task_dir), pathlib.Path(out)
@@ -277,6 +303,8 @@ def run(task_dir, variant, out, model, state=None, sandbox=None):
         # The variant works on its own copy; the task stays untouched for the evaluation.
         copy = pathlib.Path(tmp) / "task"
         shutil.copytree(task_dir, copy)
+        if not pages:
+            record["pagesWithheld"] = withhold_pages(copy)
         if sandbox:
             timing, record["sandbox"] = sandbox.run(
                 copy, out / "variant", pathlib.Path(state).resolve() if state else None, variant, model, deadline, out,
@@ -316,7 +344,7 @@ def chain_start(task_dir, step_record, out):
         git(tmp, "bundle", "create", str(pathlib.Path(out).resolve()), "refs/heads/start")
 
 
-def chain(steps, start, deadline, variant, out, model, sandbox=None, state=None):
+def chain(steps, start, deadline, variant, out, model, sandbox=None, state=None, pages=True):
     """Run the steps in order, each from the previous step's result. With `state`, the chain continues an earlier one,
     for example after a void step: the variant gets that state directory, and `start` is the earlier chain's last
     delivered result."""
@@ -343,7 +371,7 @@ def chain(steps, start, deadline, variant, out, model, sandbox=None, state=None)
                     bundle = pathlib.Path(tmp) / "start.bundle"
                     chain_start(out / f"step-{i - 1:02d}" / "task", records[-1], bundle)
                     make_task(step / "task.md", step / "model" if (step / "model").is_dir() else None, bundle, deadline, task_dir)
-            record = run(task_dir, variant, run_dir, model, state, sandbox)
+            record = run(task_dir, variant, run_dir, model, state, sandbox, pages)
         except SuiteError as e:
             # The chain cannot go on, but every step that ran stays on record.
             error = {"step": i, "error": str(e)}
@@ -536,6 +564,7 @@ def main(argv=None):
     o.add_argument("--ledger", required=True)
     o.add_argument("--out", required=True)
     for p in (r, c):
+        p.add_argument("--without-pages", action="store_true", help="hand the variant the task without its registry pages")
         p.add_argument("--native", metavar="IMAGE_ID", help="run the variant's host natively; its containers join the egress-limited "
                                                             "network, whose gateway runs from this sandbox image")
         p.add_argument("--hidden-absent", action="append", metavar="PATH", help="a place hidden material could lie; must not exist")
@@ -576,11 +605,11 @@ def main(argv=None):
             box = sandbox_from(a)
             with sandboxing.engine_lock(a.lock, "evaluation suite", str(pathlib.Path(a.out).resolve())):
                 if a.cmd == "run":
-                    record = run(a.task, variant, a.out, a.model, a.state, box)
+                    record = run(a.task, variant, a.out, a.model, a.state, box, not a.without_pages)
                     result = {k: record[k] for k in ("delivered", "timedOut", "exitCode", "wallSeconds", "resultError", "modelMatches",
                                                      "conditions", "validForCounting", "reported")}
                 else:
-                    result = chain(a.step, a.start, a.deadline_seconds, variant, a.out, a.model, box, a.state)
+                    result = chain(a.step, a.start, a.deadline_seconds, variant, a.out, a.model, box, a.state, not a.without_pages)
     except (SuiteError, sandboxing.SandboxError, judging.JudgeError, ValueError) as e:
         print(f"suite: {e}", file=sys.stderr)
         return 2

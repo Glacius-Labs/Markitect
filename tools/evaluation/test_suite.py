@@ -33,6 +33,8 @@ FAKE = textwrap.dedent("""
     if state:
         with open(state / "seen.txt", "a") as f:
             f.write(mode + "\\n")
+    if mode == "pages":
+        (out / "task-files.txt").write_text("\\n".join(sorted(p.relative_to(task).as_posix() for p in task.rglob("*") if p.is_file())))
     if mode == "none":
         sys.exit(1)
     repo = out / "repo"
@@ -210,6 +212,29 @@ class SuiteTest(unittest.TestCase):
         summary = suite.chain([self.step("1", "ok"), self.step("2", "ok")], bundle, 120, self.variant, self.tmp / "chain", MODEL)
         self.assertEqual([s["delivered"] for s in summary["steps"]], [True, True])
         self.assertIsNone(summary["stopped"])
+
+    def test_without_pages_the_variant_gets_the_task_without_its_registry_pages(self):
+        s, base = self.step("pages", "pages", model=True), self.tmp / "base"
+        for root in (s / "model", base):
+            (root / "registry").mkdir(parents=True)
+            (root / "registry" / "p.md").write_text("# page\n")
+            (root / "registry.md").write_text("# root page\n")
+        (base / "m.yaml").write_text("kind: Base\n")
+        start, task = self.tmp / "start.bundle", self.tmp / "task-pages"
+        suite.empty_start(start)
+        suite.make_task(s / "task.md", s / "model", start, 120, task, base)
+        before = suite.intent_digest(task)
+        code = suite.main(["run", "--task", str(task), "--out", str(self.tmp / "k"), "--model", MODEL, "--without-pages", "--", *self.variant])
+        self.assertEqual(code, 0)
+        record = json.loads((self.tmp / "k" / "suite.json").read_text())
+        self.assertEqual(sorted(record["pagesWithheld"]), ["base-model/registry", "base-model/registry.md", "model/registry", "model/registry.md"])
+        seen = (self.tmp / "k" / "variant" / "task-files.txt").read_text().split()
+        self.assertEqual(([p for p in seen if "registry" in p], "model/m.yaml" in seen, "base-model/m.yaml" in seen), ([], True, True))
+        # The task keeps its pages, and a variant run without the option gets them.
+        self.assertEqual(suite.intent_digest(task), before)
+        record = suite.run(task, self.variant, self.tmp / "m", MODEL)
+        self.assertNotIn("pagesWithheld", record)
+        self.assertIn("base-model/registry/p.md", (self.tmp / "m" / "variant" / "task-files.txt").read_text().split())
 
     def test_cli_runs_a_task(self):
         task = self.task("ok")

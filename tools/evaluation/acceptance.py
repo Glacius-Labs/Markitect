@@ -16,7 +16,8 @@ The ledger (report.py) may carry, besides its launches:
                      regressions along it and the variant's own verify --full, where it has one
 3. Nothing skipped   every Result's items have a verdict with evidence (results.py)
 4. Stops right       planted defects do not land, harmless gaps do (judging.stops)
-5. Trustworthy       the paired reading of each contrast (reading.py)
+5. Trustworthy       the paired reading of each contrast (reading.py), read a second time with every
+                     unpaired unit scored as the change not done
 """
 import json
 import pathlib
@@ -37,12 +38,35 @@ def number(value):
     return "n/a" if value is None else (f"{value:.3f}".rstrip("0").rstrip(".") if isinstance(value, float) else str(value))
 
 
+def start_scores(facts):
+    """What each task and step's start scores, by the protocol's rule for a change not done: every earlier step's case
+    passed and the step's own new cases failed. From the byStep of any judged launch of that task and step, whose last
+    entry is the step itself (judging.checked_series)."""
+    out = {}
+    for f in facts:
+        by = (f.get("areas") or {}).get("correctness", {}).get("byStep")
+        if by:
+            planned, own = sum(s["planned"] for s in by.values()), list(by.values())[-1]["planned"]
+            out.setdefault((f["task"], f.get("step")), {"planned": planned, "passed": planned - own, "failed": own})
+    return out
+
+
+def not_done(name, start):
+    """An endpoint's value for a change not done, scored as its start (start_scores), which also counts once as a step
+    with no result; None when no judged launch of the task and step gives the counts."""
+    if not start:
+        return None
+    if name == "casesPassedShare":
+        return start["passed"] / start["planned"] if start["planned"] else None
+    return float(start["failed"] + (name == "defectsLeft"))
+
+
 def endpoint(f, name):
     if f.get("planted") or f["class"] != "result":
         return None
+    if not f["delivered"]:
+        return not_done(name, f.get("startScore"))
     if name == "casesPassedShare":
-        if not f["delivered"]:
-            return 0.0
         if "areas" not in f:
             return None
         c = f["areas"]["correctness"]
@@ -130,41 +154,68 @@ def stops_right(facts, variants, table):
                  "outcome and counts as wrong. The plants were recorded before the runs.")
 
 
+def paired_reading(values, contrast, higher):
+    """The paired reading of the units both variants have a value for; blockBy "change" reads it over each change's mean."""
+    diffs = [(key, (pair[contrast["variant"]] - pair[contrast["baseline"]]) * (1 if higher else -1))
+             for key, pair in sorted(values.items(), key=lambda kv: json.dumps(kv[0], default=str))
+             if contrast["variant"] in pair and contrast["baseline"] in pair]
+    if contrast.get("blockBy") == "change":
+        blocks = {}
+        for (task, step, _), diff in diffs:
+            blocks.setdefault((task, step), []).append(diff)
+        return {**reading.paired([statistics.fmean(b) for b in blocks.values()], float(contrast["minimumDifference"])),
+                "pairs": len(diffs), "blocks": len(blocks)}
+    return {**reading.paired([d for _, d in diffs], float(contrast["minimumDifference"])), "blocks": None}
+
+
+def interval(result):
+    return "n/a" if result["low"] is None else f"[{number(result['low'])}, {number(result['high'])}]"
+
+
 def trustworthy(facts, contrasts, table):
+    """Each contrast read twice when units are unpaired: over the pairs, and with every unpaired unit scored as the
+    change not done for the variant that has no result there, so that units which end without a result cannot decide the
+    verdict by dropping out. Yes only when both readings say yes, no only when both say no, otherwise undecided; so also
+    when an unpaired unit has no start score to fill it with."""
     rows, data = [], []
+    starts = start_scores(facts)
     for contrast in contrasts:
         name = contrast["endpoint"]
         if name not in ENDPOINTS:
             raise ValueError(f"unknown endpoint {name}; known: {', '.join(ENDPOINTS)}")
-        higher = ENDPOINTS[name][1]
+        higher, arms = ENDPOINTS[name][1], (contrast["variant"], contrast["baseline"])
         values = {}
         for f in facts:
-            if f["variant"] in (contrast["variant"], contrast["baseline"]) and f.get("repetition") is not None:
+            if f["variant"] in arms and f.get("repetition") is not None:
                 value = endpoint(f, name)
                 if value is not None:
                     values.setdefault((f["task"], f.get("step"), f["repetition"]), {})[f["variant"]] = value
-        diffs = [(key, (pair[contrast["variant"]] - pair[contrast["baseline"]]) * (1 if higher else -1))
-                 for key, pair in sorted(values.items(), key=lambda kv: json.dumps(kv[0], default=str))
-                 if contrast["variant"] in pair and contrast["baseline"] in pair]
-        if contrast.get("blockBy") == "change":
-            blocks = {}
-            for (task, step, _), diff in diffs:
-                blocks.setdefault((task, step), []).append(diff)
-            result = {**reading.paired([statistics.fmean(b) for b in blocks.values()], float(contrast["minimumDifference"])),
-                      "pairs": len(diffs), "blocks": len(blocks)}
-        else:
-            result = {**reading.paired([d for _, d in diffs], float(contrast["minimumDifference"])), "blocks": None}
+        result = paired_reading(values, contrast, higher)
         unpaired = sum(len(pair) == 1 for pair in values.values())
-        data.append({**contrast, **result, "unpaired": unpaired})
+        verdict, second = result["atLeastAsGood"], None
+        if unpaired:
+            filled = {}
+            for key, pair in values.items():
+                missing = not_done(name, starts.get(key[:2]))
+                filled[key] = {**({arm: missing for arm in arms} if missing is not None else {}), **pair}
+            second = paired_reading(filled, contrast, higher)
+            unfilled = any(len(pair) == 1 for pair in filled.values())
+            verdict = verdict if verdict == second["atLeastAsGood"] and not unfilled else None
+        data.append({**contrast, **result, "unpaired": unpaired, "notDone": second, "atLeastAsGood": verdict})
         rows.append([f"{contrast['variant']} vs {contrast['baseline']}", ENDPOINTS[name][0], number(contrast["minimumDifference"]),
                      result["pairs"] if result["blocks"] is None else f"{result['pairs']} in {result['blocks']} changes", unpaired,
-                     number(result["mean"]),
-                     "n/a" if result["low"] is None else f"[{number(result['low'])}, {number(result['high'])}]", result["reading"],
-                     {True: "yes", False: "no", None: "undecided"}[result["atLeastAsGood"]]])
+                     number(result["mean"]), interval(result), result["reading"],
+                     "none unpaired" if second is None else f"{second['reading']}, {interval(second)}",
+                     {True: "yes", False: "no"}.get(verdict, f"undecided ({unpaired} unpaired)" if unpaired else "undecided")])
     text = table("§15.5 At least as trustworthy as K", ["Contrast", "Endpoint", "Minimum meaningful difference", "Pairs", "Unpaired",
-                                                         "Mean difference", "95 % interval", "Reading", "At least as good"], rows,
+                                                         "Mean difference", "95 % interval", "Reading",
+                                                         "Reading with unpaired units as not done", "At least as good"], rows,
                  "Pairs are the two variants' launches of the same task, step and repetition; a positive difference favors the "
-                 "variant. Where pairs are counted in changes, the interval is read over each change's mean difference. At least as good: the interval's lower end lies above minus the minimum meaningful difference.")
+                 "variant. Where pairs are counted in changes, the interval is read over each change's mean difference. At least "
+                 "as good: the interval's lower end lies above minus the minimum meaningful difference. Where units are unpaired, "
+                 "the contrast is read a second time with each scored as the change not done for the variant without a result: "
+                 "its start, which passes the earlier steps' cases and fails the step's own. Yes or no only when both readings "
+                 "agree; otherwise undecided.")
     return text, data
 
 

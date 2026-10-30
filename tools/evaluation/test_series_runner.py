@@ -387,6 +387,11 @@ class SeriesTest(Fixture):
         self.assertTrue(self.arg(m, "--markitect").endswith("markitect.exe" if os.name == "nt" else "markitect"))
         self.assertEqual((self.arg(k, "--sandbox"), self.arg(k, "--login")), ("sha256:s", str(self.login)))
         self.assertEqual(k["args"][k["args"].index("--") + 1:], ["python3", "-I", "-B", "/variant/claude_code.py", "--effort", "high"])
+        # K gets the task without the registry pages; M works from them.
+        self.assertEqual(("--without-pages" in k["args"][:k["args"].index("--")], "--without-pages" in m["args"]), (True, False))
+        # K's own failure is void, as M's are.
+        signatures = json.loads((self.work / "signatures.json").read_text())["variants"]
+        self.assertEqual([s["pattern"] for s in signatures["K"]], ["^error$"])
 
     def test_a_busy_lock_is_waited_for_and_never_held_by_the_runner(self):
         self.scenario({"m": ["result"]})

@@ -30,7 +30,7 @@ A task is a directory the suite writes:
 | `task.md` | What to build or change, in ordinary language, with the delivery rules. `suite.py task` ends every `task.md` with the same stop rule: if the requirements contradict each other or leave open a behavior at the program's boundary, change nothing and say why in the final report (owner, 28 October 2026) |
 | `model/` | The same intent as a canonical model, for variants that work from one. `task.md` is rendered mechanically from `model/`, reviewed once for the same meaning and frozen. Every variant receives both |
 | `start.bundle` | The repository to start from, as a Git bundle. For a new project, one empty commit |
-| `base-model/` | Optional, with a fixed reference start: the model that start realizes, the step before's. Every variant receives it; a variant that works from a model commits it before the change |
+| `base-model/` | Optional, with a fixed reference start: the model that start realizes, the step before's. Every variant receives it; a variant that works from a model commits it before the change. The registry pages in `model/` and `base-model/` are only for a variant that works from them: in the counted series, K gets the task without them (`suite.py run --without-pages`; owner, 29 October 2026) |
 | `task.json` | The start commit, the deadline and a digest over the rest |
 
 A **chain** is a sequence of tasks on one project, such as a fresh build followed by nine changes. Each step starts from the variant's own previous result. After a step without a result, the next step starts from that step's start. Each counted evaluation states this rule before any run, because it can decide a chain.
@@ -88,7 +88,7 @@ The same for every variant, from frozen tools. Each task brings its hidden **jud
 | **Delivery** | Whether a result came back in time, step by step along a chain |
 | **Cost** (descriptive) | Wall time, measured by the suite, and tokens counted by the suite over every transcript of a run, subagents included, with the cost the CLI states. Reported, not optimized |
 
-A timeout or a missing result caused by the variant's work counts as a failure in Correctness and Delivery; a technical failure is void and relaunched.
+A timeout or a missing result caused by the variant's work counts as a failure in Correctness and Delivery; a technical failure is void and relaunched. A missing result scores as the start, the change not done: the earlier steps' hidden cases pass and the step's own fail.
 
 **Acceptance areas.** After these, the report has one table per criterion of [concept 2.0 §15](../concepts/v2-concept.md#15-acceptance), the same for every variant:
 
@@ -98,7 +98,7 @@ A timeout or a missing result caused by the variant's work counts as a failure i
 | **No drift** | After a chain, the series judge's drift checks of its end result: earlier steps' cases that fail (forgotten rules), terms a step retired still in the program's source (stale files), and files that neither the build, the documentation nor Markitect's bookkeeping account for. Next to them, the cases that passed at one step and fail at a later one, and the variant's own independent `verify --full`, where it has one |
 | **Nothing skipped** | Every Result a variant returns: each checklist item has a verdict, evidence and an approving checker, and the required checks ran on the whole repository. A variant with a checklist returns one Result per Run in the [Result contract](../../tools/evaluation/results.py); a variant without one, such as K, has nothing to check |
 | **Stops right** | A planted defect does not land, a harmless gap does. Scored the same way for every variant: a result equal to its start did not land. A launch without a result has no outcome and counts as wrong |
-| **At least as trustworthy as K** | Per contrast named in the protocol, the paired difference of one endpoint by task, step and repetition, its 95 % interval (over the pairs, or over each change's mean difference when the protocol blocks by change) and its reading (better, worse, a meaningful advantage is excluded, undecided), and whether the variant is at least as good: the interval's lower end lies above minus the minimum meaningful difference |
+| **At least as trustworthy as K** | Per contrast named in the protocol, the paired difference of one endpoint by task, step and repetition, its 95 % interval (over the pairs, or over each change's mean difference when the protocol blocks by change) and its reading (better, worse, a meaningful advantage is excluded, undecided), and whether the variant is at least as good: the interval's lower end lies above minus the minimum meaningful difference. Where a unit has a result for only one variant, the contrast is read a second time with the other scored as the change not done. The verdict is yes or no only when both readings agree, and otherwise undecided, so that units without a result cannot decide it by dropping out |
 
 A planted defect's launch counts under Stops right only.
 
