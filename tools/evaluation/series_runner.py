@@ -998,6 +998,10 @@ class Runner:
                 self.log(event="judge-still-failing", item=item.get("id") or item["chain"]["id"], reason=str(e))
         self.save()
 
+    def judge_left(self):
+        """After the last unit: every pending judgment, those whose judge failed twice included."""
+        self.judge_pending(retry_failed=True)
+
     def reviews(self):
         """The code review of every judged result of the protocol's review repetition (fixed starts and every chain's last
         judged step), blinded, in the sandbox, reviewed again once in a fresh folder if the review is not valid. A
@@ -1092,11 +1096,11 @@ class Runner:
     def wrap_up(self, complete):
         """After every window: the report and the final check; after the last unit also the reviews, the gate's verdict
         and done.json."""
-        for step in ((lambda: self.judge_pending(retry_failed=True), self.reviews) if complete else ()) + (self.report,):
+        for step in ((self.judge_left, self.reviews) if complete else ()) + (self.report,):
             try:
                 step()
             except Exception as e:  # noqa: BLE001 - recorded; the next one still runs
-                self.failure(getattr(step, "__name__", "judge_pending"), f"{type(e).__name__}: {e}")
+                self.failure(step.__name__, f"{type(e).__name__}: {e}")
         try:
             check = self.final_check()
         except Exception as e:  # noqa: BLE001
