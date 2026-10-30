@@ -2,7 +2,7 @@
 
 The protocol of step T7's counted acceptance series ([delivery plan](../implementation-plan.md#concept-20-build)), as section D of the [suite design](../design/evaluation-suite-v2.md#d-counted-evaluations) asks for. It is built from the pilot's [proposal](t7-pilot-20261029.md#proposed-protocol-for-the-counted-series) and its [Q4](t7-pilot-20261029.md#q4-what-must-change-before-a-counted-series), updated for what has changed since. The owner delegated the counted series to Build, and Build approves this protocol after an [independent review](#independent-review), recorded below before any counted run ([build page](../workstreams/build.md), Decisions).
 
-**Status: approved by Build on 30 October 2026,** under the owner's delegation, after the [independent review](#independent-review) and its second round, on `main` at `6174d5da` (PRs [#908](https://github.com/Glacius-Labs/Markitect/pull/908), [#910](https://github.com/Glacius-Labs/Markitect/pull/910) and [#911](https://github.com/Glacius-Labs/Markitect/pull/911)). No gate or counted launch has run; the [preconditions](#preconditions) come first, and the amendment that names the frozen commit opens the gate. The [stability gate](#stability-gate) runs only in a window that Build clears with the owner. The owner decided the [four points](#decided-by-the-owner) that were the owner's on 30 October 2026.
+**Status: approved by Build on 30 October 2026,** under the owner's delegation, after the [independent review](#independent-review) and its second round, on `main` at `6174d5da` (PRs [#908](https://github.com/Glacius-Labs/Markitect/pull/908), [#910](https://github.com/Glacius-Labs/Markitect/pull/910) and [#911](https://github.com/Glacius-Labs/Markitect/pull/911)). No gate or counted launch has run; the [preconditions](#preconditions) come first, and [Amendment 1](#amendment-1-30-october-2026-the-frozen-commit), which names the frozen commit, opens the gate. The [stability gate](#stability-gate) runs only in a window that Build clears with the owner. The owner decided the [four points](#decided-by-the-owner) that were the owner's on 30 October 2026.
 
 ## What changed since the pilot's proposal
 
@@ -182,6 +182,26 @@ Build approves this protocol under the owner's delegation. On 30 October 2026, B
 
 1. The owner's blinded acceptance of three changes per arm on the new project, with minutes and corrections (§15).
 2. The Codex Luna repeat on Windows ([build page](../workstreams/build.md), Codex runs), as its own amendment of this page. Three things come first: the suite's native mode must copy a Codex login, which today it does only for Claude ([Codex smoke](codex-library-smoke-20261030.md)); K needs its Codex command; and the judge session's records are removed, exported off the machine and deleted by the owner, since they hold the new project's hidden material. Its proposed size is the new project for both arms: two repetitions per change, one per plant and one chain per arm, which is 50 launches.
+
+## Amendments
+
+### Amendment 1, 30 October 2026: the frozen commit
+
+- **The frozen commit:** `main` at `a8a9234c2df1ef97cc83674964445b862c54e473`.
+  - It holds the runner ([#908](https://github.com/Glacius-Labs/Markitect/pull/908)), this protocol ([#910](https://github.com/Glacius-Labs/Markitect/pull/910)), the verify launch ([#911](https://github.com/Glacius-Labs/Markitect/pull/911)) and the approval ([#912](https://github.com/Glacius-Labs/Markitect/pull/912)). Its `tools/` is the same as at `6174d5da`, the commit the approval names.
+  - The gate and the series run from it on both platforms. The binaries and images are built from it under the lock, and the gate's record names them by image ID.
+- **Who handles the new project's material,** in Build's words: "a fresh session that works on no arm, started by Build after the last launch; mid-series, a session whose records the owner exports and deletes before the next launch". The author writes the first launch inputs from this commit before the authoring session is removed (preconditions 3 and 4).
+- **The folders,** with absolute paths:
+  - **Windows:** under `C:\Users\Consiliari\AppData\Local\markitect-counted\`: `inputs\gridshare` holds the new project's launch inputs, which the gate and the series share. `judges\gridshare` is written only after the last launch. The work folders are `gate-windows` and `windows`, and the runner's spec for the new project is `gridshare.json`.
+  - **Linux, in WSL:** under `/home/user/markitect-counted/` with the same names, with `gate-linux` and `linux` as the work folders.
+- **The spec for the runner** (`--prepared`):
+  - steps W0 to C7, fixed starts C1 to C7, and the plants `gridshare-plant-1`, `-2` and `-3` at C2, C6 and C7;
+  - 5400 s per step;
+  - `inputs` and `judges` as above.
+- **The organization's cost:** the pilot's `manager_costs.py`, SHA-256 prefix `ad8185aa1e67fa56`, in Build's notes folder `t7/`.
+- **The authoring session's records:** the session "Author the hidden energy-community evaluation project" (`local_807509a3`, worktree `markitect-v1-concept-review-e8323e`) keeps its transcript and file history under the ID `282a2d17-98a7-460b-a39d-73891191a40b`, as [Hidden material](#hidden-material) lists them.
+  - Checked on 30 October 2026: all four places exist, and the transcript's last write matches the session's last activity.
+  - The same project folder also holds an older transcript, `f5472f6f-76f1-4d2e-a7b4-192fe59c6edb`. Its session ended on 28 October, before the authoring session began. The marker search covers it.
 
 ## Independent review
 
