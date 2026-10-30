@@ -1,6 +1,6 @@
 """The concept 2.0 arm: one `markitect apply` per task, its host native, its agents in containers on the suite's network.
 
-  python -I -B markitect_arm.py --markitect BIN --remote-binary BIN --manager-image IMAGE [--effort LEVEL] TASK_DIR OUT_DIR [STATE_DIR]
+  python -I -B markitect_arm.py --markitect BIN --remote-binary BIN --manager-image IMAGE [--effort LEVEL] [--verify] TASK_DIR OUT_DIR [STATE_DIR]
 
 Run it only through `suite.py run --native` or `chain --native` (native.py),
 which hands it the evaluation's model, an access-only login, the network every
@@ -38,6 +38,16 @@ containers carry the suite's run ID in `markitect.run`. Every ANTHROPIC_*,
 CLAUDE_*, OPENAI_* and CODEX_* variable is cleared: the account login only,
 never an API key.
 
+With --verify the arm checks the task's start as it is instead: the independent
+`markitect verify --full` that concept 2.0 section 15.2 reads No drift from, on
+a chain's end state, whichever arm made it. A start that holds a model is
+checked against the task's model with its own registry pages; one that holds
+files but no model is first adopted, every file without links on its owner's
+page; an empty start gets the model alone. The Result goes to
+OUT_DIR/results/RUN.json as for apply, and the start is delivered unchanged:
+verify changes nothing. Exit 0: verify ended `verified` or `findings`; 1: it
+ended otherwise; 2 as below.
+
 Exit 0: the Run landed, found nothing to do or stopped on a model defect.
 Exit 1: it ended otherwise (incomplete, kept) and the start was delivered.
 Exit 2: it could not run, and nothing was delivered: the owner's input does
@@ -69,6 +79,8 @@ CLEARED = ("ANTHROPIC_", "CLAUDE_", "CLAUDECODE", "OPENAI_", "CODEX_", "MARKITEC
 PROVIDERS = ("claude", "codex")
 # How the Run ended: delivered and exit 0, or delivered with exit 1 (results.py and internal/run/result.go).
 DELIBERATE = ("landed", "nothing-to-do", "model-defect")
+# How a verify Run ended when it checked every item it had: every item conforms, or something does not.
+CHECKED = ("verified", "findings")
 UNREGISTERED = re.compile(r"list it on (\S+), the page of its owner")
 
 
@@ -245,6 +257,37 @@ def owner_input(a, task, repo, start, landed, env):
     return options, mode, adoption
 
 
+def verify_input(a, task, repo, env):
+    """The owner's input for an independent `verify --full` of the start as it is: (mode, adoption record).
+
+    A start that holds a model is checked against the task's model with its own registry pages. One that holds files
+    but no model, such as an end state of a variant that keeps none, is adopted first: every file gets a row without
+    links on the page of its owner. An empty start gets the model alone. Every owner commit must compile."""
+    dot, model = repo / ".markitect", task / "model"
+    if not model.is_dir():
+        raise ArmError("the task has no model/: verify checks the start against it")
+    files = [p for p in git(repo, "ls-files", env=env).splitlines() if p]
+    adoption = None
+    if dot.is_dir():
+        copy_model(model, dot, keep_registry=True)
+        mode = "verify"
+    elif not files:
+        copy_model(model, dot, keep_registry=False)
+        mode = "verify-empty"
+    else:
+        copy_model(model, dot, keep_registry=False)
+        rows = adopt(a, repo, env)
+        compiles(a, repo, env, "the adopted start")
+        listed = len(files) - rows
+        adoption = {"commit": commit(repo, "Owner: adopt the start to verify", env), "pageRows": listed, "unlinkedRows": rows,
+                    "registry": "pages" if not rows else "unlinked" if not listed else "pages+unlinked", "baseModel": False}
+        mode = "verify-adopted"
+    commit(repo, "Owner: the model of this task", env)
+    committed(repo, model, env)
+    compiles(a, repo, env, "the owner's input")
+    return mode, adoption
+
+
 def committed(repo, model, env):
     """The owner's commit holds exactly the task's model files, byte for byte."""
     want = {p.relative_to(model).as_posix(): p for name in MODEL_ENTRIES for p in ([model / name] if (model / name).is_file() else
@@ -296,6 +339,7 @@ def main(argv=None):
     p.add_argument("--remote-binary", required=True, help="markitect-remote built for Linux, put into each Run's remote")
     p.add_argument("--manager-image", required=True, help="the Manager image with the project's toolchain, by image ID")
     p.add_argument("--effort", default="high")
+    p.add_argument("--verify", action="store_true", help="run `markitect verify --full` on the task's start instead of apply")
     p.add_argument("task")
     p.add_argument("out")
     p.add_argument("state", nargs="?")
@@ -303,7 +347,7 @@ def main(argv=None):
     began = time.monotonic()
     task, out = pathlib.Path(a.task), pathlib.Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
-    report = {"arm": "markitect", "effort": a.effort}
+    report = {"arm": "markitect", "effort": a.effort, "command": "verify" if a.verify else "apply"}
 
     def finish(code, **facts):
         report.update(facts)
@@ -327,7 +371,10 @@ def main(argv=None):
             git(target, "fetch", "-q", str((task / "start.bundle").resolve()), f"+{start}:refs/heads/main", env=env)
             git(tmp, "clone", "-q", "-b", "main", str(target), str(repo), env=env)
             git(repo, "config", "core.autocrlf", "false", env=env)
-            options, mode, adoption = owner_input(a, task, repo, start, state.get("landed"), env)
+            if a.verify:
+                (mode, adoption), options = verify_input(a, task, repo, env), ["--full"]
+            else:
+                options, mode, adoption = owner_input(a, task, repo, start, state.get("landed"), env)
             report.update(mode=mode, adoption=adoption, ownerCommit=git(repo, "rev-parse", "HEAD", env=env))
             git(repo, "push", "-q", "origin", "main", env=env)
             seconds = int(deadline - (time.monotonic() - began) - MARGIN_SECONDS)
@@ -336,16 +383,17 @@ def main(argv=None):
             env_apply = host_env(a, provider, model, out / "transcripts", tmp / "hooks")
             (out / "results").mkdir(exist_ok=True)
             result_file = out / "results" / f"{name}.json"
-            argv = [a.markitect, "apply", "--repo", str(repo), "--run", name, "--deadline", f"{seconds}s", "--json", *options]
-            report["apply"] = argv[1:]
-            with open(result_file, "wb") as stdout, open(out / "apply.stderr.log", "wb") as stderr:
+            command = report["command"]
+            argv = [a.markitect, command, "--repo", str(repo), "--run", name, "--deadline", f"{seconds}s", "--json", *options]
+            report[command] = argv[1:]
+            with open(result_file, "wb") as stdout, open(out / f"{command}.stderr.log", "wb") as stderr:
                 code = subprocess.run(argv, stdout=stdout, stderr=stderr, stdin=subprocess.DEVNULL, env=env_apply).returncode
-            report["applyExit"] = code
+            report[f"{command}Exit"] = code
             try:
                 result = json.loads(result_file.read_text(encoding="utf-8"))
             except ValueError:
                 result_file.unlink()
-                return finish(2, status="could-not-run", cause="markitect apply returned no Result (see apply.stderr.log)")
+                return finish(2, status="could-not-run", cause=f"markitect {command} returned no Result (see {command}.stderr.log)")
             report["provider"], report["model"] = reported_model(result, provider, model)
             failed = [{k: s.get(k) for k in ("manager", "role", "round", "class", "detail")} for s in result.get("starts") or []
                       if s.get("reason") == "failed"]
@@ -360,9 +408,16 @@ def main(argv=None):
             if result.get("state") == "check-failed":
                 # The gate failed on the owner's input, which compiled above: no agent started, nothing is the arm's work.
                 return finish(2)
-            if result.get("state") not in DELIBERATE and not any(s.get("reason") in ("finished", "deadline") for s in result.get("starts") or []):
+            ended = CHECKED if a.verify else DELIBERATE
+            if result.get("state") not in ended and not any(s.get("reason") in ("finished", "deadline") for s in result.get("starts") or []):
                 # No agent completed a turn: the Run ended on its machinery, not on any agent's work.
                 return finish(2, noAgentTurn=True)
+            if a.verify:
+                # Verify changes nothing: the start is delivered as it was, and no landing is recorded.
+                bundle(target, start, out / "result.bundle", env)
+                code = 0 if result.get("state") in CHECKED else 1
+                report.update(findings=len(result.get("findings") or []), exit=code)
+                return finish(code)
             landed = git(target, "rev-parse", "main", env=env) if result.get("outcome") == "landed" else None
             if landed and not (len(result.get("landed") or "") >= 7 and landed.startswith(result["landed"]) and descends(target, start, landed, env)):
                 raise ArmError(f"the target's main {landed} is not the Result's landed commit {result.get('landed')} on the start")

@@ -68,6 +68,9 @@ FAKE_SUITE = textwrap.dedent(r'''
         elif outcome == "stop-file":
             (pathlib.Path(os.environ["FAKE_WORK"]) / "STOP").write_text("window ends\n")
         (run / "suite.json").write_text(json.dumps(record))
+        if "--verify" in args:
+            (run / "variant" / "results").mkdir()
+            (run / "variant" / "results" / "v.json").write_text(json.dumps({"format": 1, "command": "verify", "state": "verified"}))
         if command == "chain":
             (out / "step-01" / "task").mkdir(parents=True)
             (out / "step-01" / "task" / "start.bundle").write_text("start")
@@ -76,6 +79,9 @@ FAKE_SUITE = textwrap.dedent(r'''
             state = pathlib.Path(opt("--state"))
             with open(state / "log.txt", "a") as f:
                 f.write(out.name + "\n")
+    elif command == "task":
+        pathlib.Path(opt("--out")).mkdir(parents=True)
+        (pathlib.Path(opt("--out")) / "task.json").write_text(json.dumps({"start": opt("--start"), "model": opt("--model")}))
     elif command == "judge":
         invalid = d / "invalid-judgments"
         left = int(invalid.read_text()) if invalid.exists() else 0
@@ -214,9 +220,11 @@ class PlanTest(unittest.TestCase):
     def test_counted_series_per_platform(self):
         config = series_runner.plan("counted", {"work": "w"}, [self.prepared()])
         units = config["units"]
-        self.assertEqual(series_runner.summary(units)["launches"], 222)
-        self.assertEqual(series_runner.summary(units)["byArm"], {"M": 111, "K": 111})
-        self.assertEqual(config["launchBound"], 333)
+        # 222 launches and one verify launch per chain and arm, 8 in all.
+        self.assertEqual(series_runner.summary(units)["launches"], 230)
+        self.assertEqual(series_runner.summary(units)["byArm"], {"M": 115, "K": 115})
+        self.assertEqual(config["launchBound"], 345)
+        self.assertTrue(all(u.get("verify") for u in units if u["kind"] == "chain"))
         self.assertEqual([(c["endpoint"], c["minimumDifference"], c.get("blockBy")) for c in config["contrasts"]],
                          [("casesPassedShare", 0.05, "change"), ("casesFailed", 1, "change"), ("defectsLeft", 1, None)])
         # Every fixed start and plant runs as often as its role says, for both arms; the chains come last.
@@ -239,12 +247,12 @@ class PlanTest(unittest.TestCase):
 
     def test_stability_gate(self):
         units = series_runner.plan("gate", {})["units"]
-        self.assertEqual(series_runner.summary(units), {"launches": 26, "byArm": {"M": 13, "K": 13}, "bySeries": {
-            "library fixed": 6, "makerspace chain": 20}})
+        self.assertEqual(series_runner.summary(units), {"launches": 28, "byArm": {"M": 14, "K": 14}, "bySeries": {
+            "library fixed": 6, "makerspace chain": 20, "makerspace verify": 2}})
         self.assertEqual([u["id"] for u in units][:6], ["library-fixed-M2-gate-M", "library-fixed-M2-gate-K", "library-fixed-M3-gate-K",
                                                         "library-fixed-M3-gate-M", "library-fixed-M4-gate-M", "library-fixed-M4-gate-K"])
         with_new = series_runner.plan("gate", {}, [self.prepared()])
-        self.assertEqual((series_runner.summary(with_new["units"])["launches"], with_new["launchBound"]), (28, 42))
+        self.assertEqual((series_runner.summary(with_new["units"])["launches"], with_new["launchBound"]), (30, 45))
         self.assertIn("new-fixed-C1-gate-K", [u["id"] for u in with_new["units"]])
 
 
@@ -454,15 +462,15 @@ class SeriesTest(Fixture):
                 self.assertIn("stability gate", self.stop_reason())
 
     def test_the_stability_gate_writes_its_verdict(self):
-        self.scenario({"a": ["result"], "ch/W0": ["result"], "ch/C1": ["result"]})
-        config = self.config([unit("a", "M"), unit("ch", "M", kind="chain", steps=["W0", "C1"])], protocol="gate")
+        self.scenario({"a": ["result"], "ch/W0": ["result"], "ch/C1": ["result"], "ch": ["result"]})
+        config = self.config([unit("a", "M"), unit("ch", "M", kind="chain", steps=["W0", "C1"], verify=True)], protocol="gate")
         config["series"]["gs"]["role"] = "public"
         config["series"]["makerspace"] = config["series"]["gs"]
         config["units"][1]["series"] = "makerspace"
         self.runner(config).run()
         verdict = json.loads((self.work / "gate.json").read_text())
         self.assertEqual(verdict["checks"], {"everyLaunchAResult": True, "everyResultJudged": True, "everyChainJudged": True,
-                                             "noCredential": True, "nothingLeft": True, "mLandedTheFirstChainStep": True})
+                                             "everyChainVerified": True, "noCredential": True, "nothingLeft": True, "mLandedTheFirstChainStep": True})
         self.assertTrue(verdict["passes"])
 
     def test_a_credential_in_the_evidence_stops(self):
@@ -592,6 +600,22 @@ class SeriesTest(Fixture):
                          ["all", "gs", "gs-fixed", "gs-chains"])
         self.assertEqual(json.loads((self.work / "ledger-gs-chains.json").read_text())["chains"][0]["id"], "ch")
         self.assertEqual(json.loads((self.work / "ledger-gs-fixed.json").read_text())["launches"], [])
+
+    def test_a_chains_end_state_is_verified_by_the_2_0_host_whichever_arm_made_it(self):
+        self.scenario({"ch/W0": ["result"], "ch/C1": ["result"], "ch": ["could-not-run", "result"]})
+        self.runner(self.config([unit("ch", "K", kind="chain", steps=["W0", "C1"], verify=True)])).run()
+        task = self.calls("task")[0]
+        self.assertTrue(self.arg(task, "--start").replace("\\", "/").endswith("runs/ch/C1-a1/step-01/run/variant/result.bundle"))
+        self.assertEqual(pathlib.Path(self.arg(task, "--model")), self.prep / "steps" / "C1" / "model")
+        verify = [c for c in self.calls("run") if "--verify" in c["args"]]
+        self.assertEqual(len(verify), 2)  # the void one is relaunched
+        self.assertIn("--native", verify[0]["args"])
+        self.assertTrue(any(x.endswith("markitect_arm.py") for x in verify[0]["args"]))
+        ledger = self.ledger()
+        self.assertEqual([(a["arm"], a["class"]) for a in ledger["attempts"] if a["step"] == "verify"], [("V", "void"), ("V", "result")])
+        self.assertEqual(ledger["verifies"], {"ch": "runs/ch/verify-a2/variant/results/v.json"})
+        self.assertEqual(ledger["chains"][0]["verifyFull"], "runs/ch/verify-a2/variant/results/v.json")
+        self.assertNotIn("verify", [e["step"] for e in ledger["launches"]])  # not a launch of either arm in the report
 
     def test_a_chain_with_an_undelivered_step_is_judged_on_its_delivered_ones(self):
         self.scenario({"ch/W0": ["undelivered"], "ch/C1": ["result"]})
