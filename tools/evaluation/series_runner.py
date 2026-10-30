@@ -619,7 +619,7 @@ class Runner:
         self.ledger["attempts"].append(attempt)
         self.log(event="ran", unit=unit["id"], step=step, run=self.rel(out), exit=code, **verdict)
         if record:
-            entry = {"id": f"{unit['id']}-{out.name}", "variant": unit["arm"], "task": self.task_name(unit),
+            entry = {"id": f"{unit['id']}-{out.name}", "variant": unit["arm"], "task": self.task_name(unit), "series": unit["series"],
                      "repetition": unit.get("repetition", 1), "step": step, "run": self.rel(run)}
             self.ledger["launches"].append(entry)
             if judge and verdict["class"] == "result" and record.get("delivered"):
@@ -732,7 +732,8 @@ class Runner:
             rows.append({**row, "step": i})
         (whole / "chain.json").write_text(json.dumps({"format": 1, "model": self.c["model"], "steps": rows, "stopped": None,
                                                       "assembledFrom": [o for _, o in kept]}, indent=2) + "\n", encoding="utf-8")
-        chain = {"id": unit["id"], "variant": unit["arm"], "task": self.task_name(unit), "repetition": unit.get("repetition", 1)}
+        chain = {"id": unit["id"], "variant": unit["arm"], "task": self.task_name(unit), "series": unit["series"],
+                 "repetition": unit.get("repetition", 1)}
         if (self.judges(unit["series"]) / "series").exists():
             self.judge_chain(chain, unit["series"], kept)
         else:
@@ -796,10 +797,18 @@ class Runner:
                 self.save()
 
     def report(self):
+        """The report over every launch (`report/all`) and one per series (`report/SERIES`, from `ledger-SERIES.json`):
+        a contrast is read per series, the new project's being the primary one."""
         out = self.work / "report"
         if out.exists():
             shutil.rmtree(out)
-        self.suite("report", ["report", "--ledger", self.work / "ledger.json", "--out", out])
+        self.suite("report", ["report", "--ledger", self.work / "ledger.json", "--out", out / "all"])
+        for name in dict.fromkeys(u["series"] for u in self.c["units"]):
+            part = {**self.ledger, "series": f"{self.ledger['series']}-{name}",
+                    "launches": [e for e in self.ledger["launches"] if e["series"] == name],
+                    "chains": [c for c in self.ledger["chains"] if c["series"] == name]}
+            (self.work / f"ledger-{name}.json").write_text(json.dumps(part, indent=2) + "\n", encoding="utf-8")
+            self.suite(f"report-{name}", ["report", "--ledger", self.work / f"ledger-{name}.json", "--out", out / name])
 
     def final_check(self):
         """Every file of the evidence scanned for the login's tokens and key shapes, and what is left by label."""
