@@ -310,8 +310,15 @@ func (c *checkRunner) runOne(check project.Check, dir string, env []string, uid 
 	r := runremote.CheckResult{Name: check.Name, Exit: -1}
 	// A state may not hold the check's directory yet, such as a start with
 	// the model only: the check fails and says so.
-	if info, err := os.Stat(dir); err != nil || !info.IsDir() {
+	switch info, err := os.Stat(dir); {
+	case errors.Is(err, os.ErrNotExist):
 		r.Output = fmt.Sprintf("[the check's directory %s does not exist in this state]\n", check.Directory)
+		return r
+	case err != nil:
+		r.Output = fmt.Sprintf("[the check's directory %s cannot be read: %v]\n", check.Directory, err)
+		return r
+	case !info.IsDir():
+		r.Output = fmt.Sprintf("[the check's directory %s is a file in this state]\n", check.Directory)
 		return r
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), check.Timeout)

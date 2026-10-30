@@ -106,6 +106,11 @@ func checkResults(intro string, results []runremote.CheckResult) string {
 			fmt.Fprintf(&b, "\n- %q passed.", r.Name)
 		case r.TimedOut:
 			fmt.Fprintf(&b, "\n- %q ran out of time.", r.Name)
+		case r.Exit < 0:
+			// It never ran, such as in a directory the state does not hold;
+			// its output is the remote's own words.
+			fmt.Fprintf(&b, "\n- %q did not start: %s", r.Name, strings.TrimSpace(r.Output))
+			continue
 		default:
 			fmt.Fprintf(&b, "\n- %q exited with %d.", r.Name, r.Exit)
 		}

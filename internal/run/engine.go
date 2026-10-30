@@ -465,14 +465,24 @@ func (e *Engine) credentials(plan *runremote.Plan, mode agentport.Mode) (map[str
 }
 
 // checkStart runs the required checks on the Run's start, a commit the
-// remote holds, as the host's check.
+// remote holds, as the host's check. Checks that could not run get one more
+// try, since a Run whose items all conform would otherwise end with
+// unconfirmed checks.
 func (e *Engine) checkStart(ctx context.Context, remote Remote, start string) *startChecks {
-	var b bytes.Buffer
-	if err := e.Git.Bundle(ctx, start, &b); err != nil {
-		return &startChecks{err: err}
+	var sc *startChecks
+	for try := 0; try < 2 && (sc == nil || sc.err != nil) && ctx.Err() == nil; try++ {
+		var b bytes.Buffer
+		if err := e.Git.Bundle(ctx, start, &b); err != nil {
+			sc = &startChecks{err: err}
+			continue
+		}
+		results, err := remote.Check(ctx, &b, start)
+		sc = &startChecks{results: results, err: err}
 	}
-	results, err := remote.Check(ctx, &b, start)
-	return &startChecks{results: results, err: err}
+	if sc == nil {
+		sc = &startChecks{err: context.Cause(ctx)}
+	}
+	return sc
 }
 
 // collectChecks records where the required checks ran on the whole
