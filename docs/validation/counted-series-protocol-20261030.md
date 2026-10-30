@@ -36,7 +36,7 @@ All of these hold before the first gate launch. The gate's frozen commit is the 
    - On 30 October 2026, at public `main` `c575faa5` and private `c87aa81`, the author reported that every step and adopted start passes `markitect check` with no `lint.no_paths` warning, and that the launch and judge phases match the combined output digest for digest.
 4. **Hidden material is off the machine.** After the launch inputs are written, none of the places listed under [Hidden material](#hidden-material) exists. The authoring session's own records hold the whole material, and **only the owner can remove them**: by exporting the authoring session and then deleting it from the machine. Build asks the owner before the gate.
 5. **The stability gate** has passed on the frozen commit for the platform to be run.
-6. **The verify launch is built** and tested offline before the freeze, as [No drift](#reading) describes: a `verify` mode in `markitect_arm.py`, and the runner launching it once per chain and arm. Until then the series cannot start.
+6. **The verify launch is built,** as [No drift](#reading) describes: a `verify` mode in `markitect_arm.py`, and the runner launching it once per chain and arm ([PR #911](https://github.com/Glacius-Labs/Markitect/pull/911), tested offline). It is on `main` before the freeze.
 7. **The engine:** for each window, the owner has stopped all other Docker work at the process level. Build has checked that `docker ps` shows no container without a `markitect.*` label and that no Testcontainers or `dotnet` process runs.
 
 ## Protocol
@@ -96,8 +96,8 @@ Before each platform's series, on the frozen commit, uncounted ([suite design](.
 
 | Item | Value |
 | --- | --- |
-| Units | The runner's `gate` plan, in its own work folder. Per arm: the Library fixed starts M2, M3 and M4 in a row; the new project's C1 once, which shows that both arms run on its inputs, and stays pending and unjudged; then the Makerspace chain W0 to C9. The first arm alternates per task, and K starts the chain. 28 launches, launch bound 42 |
-| Passes when | The runner's verdict in `gate.json` holds every check: every launch classed a result; every delivered public result with a valid judgment; every chain with its chain judgment; no credential in the evidence; nothing left on the engine; and M's Makerspace chain landed its first step, W0. That last check shows that DEC-087 holds in a chain, and that M's later steps do not start from an empty start, as they did in the pilot |
+| Units | The runner's `gate` plan, in its own work folder. Per arm: the Library fixed starts M2, M3 and M4 in a row; the new project's C1 once, which shows that both arms run on its inputs, and stays pending and unjudged; then the Makerspace chain W0 to C9 and its verify launch. The first arm alternates per task, and K starts the chain. 30 launches, launch bound 45 |
+| Passes when | The runner's verdict in `gate.json` holds every check: every launch classed a result; every delivered public result with a valid judgment; every chain with its chain judgment and its verify Result; no credential in the evidence; nothing left on the engine; and M's Makerspace chain landed its first step, W0. That last check shows that DEC-087 holds in a chain, and that M's later steps do not start from an empty start, as they did in the pilot |
 | Fails | The runner stops the gate at its first launch that is not a result, or at a judge that fails twice. **A provider void**, such as capacity or a rate limit, needs no fix: the gate starts again on the same commit, in a new work folder. **Any other failure** is fixed in the arm, the suite, a judge or the runner, and is not counted. Then a new commit is frozen, this page is amended, and the gate starts again from its first launch. If M lands no W0, Build looks first |
 | Record | The gate's launches never count. Its verdict and its time per launch are recorded as an amendment here |
 
@@ -206,6 +206,6 @@ The same reviewer then checked the revision against this page and the code. It f
 **Changes after the approval, at Build's request on 30 October 2026, not reviewed again:**
 
 - [PR #907](https://github.com/Glacius-Labs/Markitect/pull/907) counts the tokens of ended agents, so that stated limit now says so.
-- [PR #909](https://github.com/Glacius-Labs/Markitect/pull/909) gives `verify` the required checks as evidence. So the series now proposes one `verify --full` per chain end for both arms, 8 launches per platform. This replaces the decision not to run one. It needs the arm's `verify` mode and the runner's verify launch (precondition 6).
+- [PR #909](https://github.com/Glacius-Labs/Markitect/pull/909) gives `verify` the required checks as evidence. So the series now proposes one `verify --full` per chain end for both arms, 8 launches per platform. This replaces the decision not to run one. [PR #911](https://github.com/Glacius-Labs/Markitect/pull/911) builds the arm's `verify` mode and the runner's verify launch (precondition 6). The gate gains the Makerspace chain's two verify launches: 30 launches, bound 45.
 - The owner's questions followed Build's list, and the owner decided them the same day (see [Decided by the owner](#decided-by-the-owner)). The page had recommended the failed-case count as primary; the owner kept the share.
 - Who handles the new project's material is worded so that a fresh session that works on no arm qualifies.
