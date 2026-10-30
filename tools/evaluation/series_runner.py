@@ -797,18 +797,21 @@ class Runner:
                 self.save()
 
     def report(self):
-        """The report over every launch (`report/all`) and one per series (`report/SERIES`, from `ledger-SERIES.json`):
-        a contrast is read per series, the new project's being the primary one."""
+        """The report over every launch (`report/all`), one per series (`report/SERIES`) and one per series without its
+        chains (`report/SERIES-fixed`), each from its own ledger beside the whole one: a protocol reads its contrasts per
+        series, the primary one on the fixed starts alone."""
         out = self.work / "report"
         if out.exists():
             shutil.rmtree(out)
         self.suite("report", ["report", "--ledger", self.work / "ledger.json", "--out", out / "all"])
         for name in dict.fromkeys(u["series"] for u in self.c["units"]):
-            part = {**self.ledger, "series": f"{self.ledger['series']}-{name}",
-                    "launches": [e for e in self.ledger["launches"] if e["series"] == name],
-                    "chains": [c for c in self.ledger["chains"] if c["series"] == name]}
-            (self.work / f"ledger-{name}.json").write_text(json.dumps(part, indent=2) + "\n", encoding="utf-8")
-            self.suite(f"report-{name}", ["report", "--ledger", self.work / f"ledger-{name}.json", "--out", out / name])
+            mine = [e for e in self.ledger["launches"] if e["series"] == name]
+            for part, launches, chains in ((name, mine, [c for c in self.ledger["chains"] if c["series"] == name]),
+                                           (f"{name}-fixed", [e for e in mine if e["task"] != f"{name}-chain"], [])):
+                ledger = self.work / f"ledger-{part}.json"
+                ledger.write_text(json.dumps({**self.ledger, "series": f"{self.ledger['series']}-{part}", "launches": launches,
+                                              "chains": chains}, indent=2) + "\n", encoding="utf-8")
+                self.suite(f"report-{part}", ["report", "--ledger", ledger, "--out", out / part])
 
     def final_check(self):
         """Every file of the evidence scanned for the login's tokens and key shapes, and what is left by label."""

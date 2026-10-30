@@ -376,8 +376,9 @@ class SeriesTest(Fixture):
         self.assertEqual([bool(e.get("judgment")) for e in ledger["launches"]], [True, False, True, True])
         self.assertEqual([bool(e.get("review")) for e in ledger["launches"]], [False, False, False, True])
         self.assertEqual([c["args"][c["args"].index("--out") + 1].replace("\\", "/").split("/report/")[1] for c in self.calls("report")],
-                         ["all", "gs"])
+                         ["all", "gs", "gs-fixed"])
         self.assertEqual(json.loads((self.work / "ledger-gs.json").read_text())["chains"][0]["id"], "ch")
+        self.assertEqual(json.loads((self.work / "ledger-gs-fixed.json").read_text())["launches"], [])
 
     def test_a_hidden_judge_waits_off_the_machine(self):
         judges = self.tmp / "hidden-judges"
