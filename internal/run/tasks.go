@@ -3,6 +3,8 @@ package run
 import (
 	"fmt"
 	"strings"
+
+	"github.com/Glacius-Labs/Markitect/internal/runremote"
 )
 
 // The tasks say what one start must achieve, in the host's words; how to
@@ -40,7 +42,58 @@ func (s *schedule) reviewTask(n *node) string {
 	} else if s.ownFirst(n) {
 		task += " It covers the Manager's own area before its working children start; what they realize comes with a later submission."
 	}
+	if n.evidence != "" {
+		task += "\n\n" + n.evidence
+	}
 	return task
+}
+
+// evidenceTail bounds the output of a failing check in a checker's task.
+const evidenceTail = 4 << 10
+
+// checkEvidence says what the required checks found on a submission, from
+// the push that brought it. They refuse only a merged state, so a partial
+// tree may fail them; its checker weighs the result (DEC-087).
+func (s *schedule) checkEvidence(pushes []Push, logErr error, submission string) string {
+	if len(s.plan.Checks) == 0 {
+		return ""
+	}
+	if logErr != nil {
+		return fmt.Sprintf("The host could not read the required checks' results on this submission: %v. Run them yourself if your verdicts depend on them.", logErr)
+	}
+	var results []runremote.CheckResult
+	for _, p := range pushes {
+		for _, u := range p.Updates {
+			if p.Decision.Accepted && u.New == submission {
+				results = p.Decision.Checks
+			}
+		}
+	}
+	if len(results) == 0 {
+		return "The decision log holds no required checks' results on this submission. Run them yourself if your verdicts depend on them."
+	}
+	var b strings.Builder
+	b.WriteString("The required checks on the branch's full state at this submission:")
+	for _, r := range results {
+		switch {
+		case r.Passed:
+			fmt.Fprintf(&b, "\n- %q passed.", r.Name)
+		case r.TimedOut:
+			fmt.Fprintf(&b, "\n- %q ran out of time.", r.Name)
+		default:
+			fmt.Fprintf(&b, "\n- %q exited with %d.", r.Name, r.Exit)
+		}
+		if out := r.Output; !r.Passed && out != "" {
+			if len(out) > evidenceTail {
+				out = "…" + out[len(out)-evidenceTail:]
+			}
+			fmt.Fprintf(&b, " Its output ends:\n\n%s\n", strings.TrimRight(out, "\n"))
+		}
+	}
+	if !allPassed(results) {
+		b.WriteString("\nA submission that holds no child's approved work is accepted even when a check fails, since its tree may be partial; the merged state must pass them. Judge whether the failure is a defect of this submission.")
+	}
+	return b.String()
 }
 
 // held names the working children that wait for the Manager to settle their

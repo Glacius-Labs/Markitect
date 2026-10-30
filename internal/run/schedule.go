@@ -87,6 +87,7 @@ type node struct {
 
 	tip                string // the branch tip after the last start
 	submission         string // the newest submission at the tip, awaiting review
+	evidence           string // the required checks' results on it, for its checker
 	approvedSubmission string
 	approval           string // the checker's approving commit
 	approved           bool
@@ -446,6 +447,13 @@ func tools(role agentport.Role, n *node) []agentport.Tool {
 // follows.
 func (s *schedule) onEnd(ctx context.Context, ev ended) {
 	tips, syncErr := s.sync(ctx)
+	// The decision log holds the required checks' results on a new
+	// submission, its checker's evidence.
+	var pushes []Push
+	var logErr error
+	if ev.role == agentport.Maker && syncErr == nil {
+		pushes, logErr = s.remote.Log(ctx)
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	n := ev.n
@@ -480,6 +488,9 @@ func (s *schedule) onEnd(ctx context.Context, ev ended) {
 		progress, err = s.afterVerifier(ctx, n, tip, moved)
 	case ev.role == agentport.Maker:
 		progress, err = s.afterMaker(ctx, n, tip, moved)
+		if n.submission == tip && moved {
+			n.evidence = s.checkEvidence(pushes, logErr, tip)
+		}
 	default:
 		progress, err = s.afterChecker(ctx, n, tip, moved)
 	}

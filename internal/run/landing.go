@@ -96,24 +96,29 @@ func (e *Engine) land(ctx context.Context, r *Result, s *schedule, remote Remote
 				return
 			}
 			if len(s.plan.Checks) > 0 {
-				var b bytes.Buffer
-				if err := e.Git.Bundle(ctx, merged, &b); err != nil {
-					keepOn(ctx, r, cand, pushed, StateIncomplete, "", err)
-					return
-				}
-				results, err := remote.Check(ctx, &b, merged)
-				r.RequiredChecks = RequiredChecks{Commit: merged, Checks: results, WholeRepository: true, Ran: err == nil && len(results) == len(s.plan.Checks) && allPassed(results)}
-				if err != nil {
-					r.RequiredChecks.Note = fmt.Sprintf("the checks on the merged state could not run: %v", err)
-					keepOn(ctx, r, cand, pushed, StateKept, "the required checks could not run on the merged state", nil)
-					return
-				}
-				if !r.RequiredChecks.Ran {
-					keepOn(ctx, r, cand, pushed, StateKept, fmt.Sprintf("%s moved to %s and the required checks fail on the merged state", r.Target, short(tip)), nil)
+				why, err := e.checkLanding(ctx, r, s, remote, merged, "the merged state", fmt.Sprintf("%s moved to %s and the required checks fail on the merged state", r.Target, short(tip)))
+				if err != nil || why != "" {
+					keepOn(ctx, r, cand, pushed, landingState(err), why, err)
 					return
 				}
 			}
 			state = merged
+		} else if rc := r.RequiredChecks; len(s.plan.Checks) > 0 && !rc.Ran {
+			// The hooks refuse only merged states, so Root's approved work
+			// may fail the checks when it integrates no child's work
+			// (DEC-087). Without a checked push of it, they run now.
+			why := "the required checks fail on the state that would land"
+			if len(rc.Checks) == 0 {
+				var err error
+				if why, err = e.checkLanding(ctx, r, s, remote, cand, "the state that would land", why); err != nil {
+					keepOn(ctx, r, cand, pushed, landingState(err), why, err)
+					return
+				}
+			}
+			if why != "" {
+				keepOn(ctx, r, cand, pushed, StateKept, why, nil)
+				return
+			}
 		}
 		r.Outcome, r.State = Landed, StateLanded
 		r.Why = "Root's checker approved the work"
@@ -306,6 +311,36 @@ func (e *Engine) incoming(ctx context.Context, s *schedule, start, tip, cand str
 		return fmt.Sprintf("%s moved to %s, and its changes touch the Run's impact: %s; a follow-up Run starts from the new state", s.req.Target, short(tip), strings.Join(dedupe(hits), ", ")), nil
 	}
 	return "", nil
+}
+
+// checkLanding runs the required checks on what, a state that would land
+// and only the host holds, and makes their results the Result's. It returns
+// failing when they fail and why when they could not run; an error means the
+// state could not be bundled.
+func (e *Engine) checkLanding(ctx context.Context, r *Result, s *schedule, remote Remote, state, what, failing string) (string, error) {
+	var b bytes.Buffer
+	if err := e.Git.Bundle(ctx, state, &b); err != nil {
+		return "", err
+	}
+	results, err := remote.Check(ctx, &b, state)
+	r.RequiredChecks = RequiredChecks{Commit: state, Checks: results, WholeRepository: true, Ran: err == nil && len(results) == len(s.plan.Checks) && allPassed(results)}
+	switch {
+	case err != nil:
+		r.RequiredChecks.Note = fmt.Sprintf("the checks on %s could not run: %v", what, err)
+		return "the required checks could not run on " + what, nil
+	case !r.RequiredChecks.Ran:
+		return failing, nil
+	}
+	return "", nil
+}
+
+// landingState is the state of a Run that does not land: incomplete when
+// the host failed, kept when the work may not land.
+func landingState(err error) string {
+	if err != nil {
+		return StateIncomplete
+	}
+	return StateKept
 }
 
 // compile says why a state does not compile, as `markitect check` reports

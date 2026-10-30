@@ -65,7 +65,10 @@ type Update struct{ Old, New, Ref string }
 type Decision struct {
 	Accepted bool `json:"accepted"`
 	// Reason says why a push was refused and what to do next.
-	Reason  string        `json:"reason,omitempty"`
+	Reason string `json:"reason,omitempty"`
+	// Note says what an accepted push should know, such as a required
+	// check that failed without refusing it.
+	Note    string        `json:"note,omitempty"`
 	Manager string        `json:"manager,omitempty"`
 	Role    Role          `json:"role,omitempty"`
 	Kind    string        `json:"kind,omitempty"` // work, submission, review or verdicts
@@ -165,10 +168,16 @@ func (d *decider) decide(updates []Update) (Decision, error) {
 }
 
 // work decides a maker's push: its branch tip stays within the Manager's
-// area, and a submission at the tip has a complete checklist, compiles and
-// passes the required checks.
+// area, and a submission at the tip has a complete checklist and compiles.
+// The required checks run on every submission; they refuse only a merged
+// state, one that holds a child's approved work (DEC-087). On any other
+// submission their results go to the checker as evidence.
 func (d *decider) work(u Update) (Decision, error) {
-	if problems, err := d.content(u.New); err != nil {
+	childRef, err := d.childApprovals(u.New)
+	if err != nil {
+		return Decision{}, err
+	}
+	if problems, err := d.content(u.New, childRef); err != nil {
 		return Decision{}, err
 	} else if len(problems) > 0 {
 		return refuse("%s", strings.Join(problems, "\n")), nil
@@ -193,20 +202,52 @@ func (d *decider) work(u Update) (Decision, error) {
 	if err != nil {
 		return refuse("the required checks could not run on %s: %v. Nothing was decided about your work. Next: push again; if this repeats, report it to your parent.", short(u.New), err), nil
 	}
+	merged := false
+	for _, ref := range childRef {
+		merged = merged || ref != d.plan.Base
+	}
 	dec := Decision{Accepted: true, Kind: "submission", Checks: results}
 	for _, r := range results {
-		if !r.Passed {
-			why := fmt.Sprintf("exited with %d", r.Exit)
-			if r.TimedOut {
-				why = "ran out of time"
-			}
-			dec.Accepted = false
-			dec.Reason = fmt.Sprintf("submission %s: the required check %q %s on the branch's full state. Next: fix it, run the check yourself and submit again.\n%s",
-				short(u.New), r.Name, why, r.Output)
-			break
+		if r.Passed {
+			continue
 		}
+		why := fmt.Sprintf("exited with %d", r.Exit)
+		if r.TimedOut {
+			why = "ran out of time"
+		}
+		if merged {
+			dec.Accepted = false
+			dec.Reason = fmt.Sprintf("submission %s holds your children's approved work, and the required check %q %s on its full state. Next: find the cause, fix it in your own area or tell the child whose work causes it, run the check yourself and submit again.\n%s",
+				short(u.New), r.Name, why, r.Output)
+		} else {
+			dec.Note = fmt.Sprintf("the required check %q %s on the branch's full state. This submission holds no child's approved work, so the check does not refuse it: your checker gets the result as evidence, and the merged state that integrates this work must pass it.",
+				r.Name, why)
+		}
+		break
 	}
 	return dec, nil
+}
+
+// childApprovals returns, for each child Manager, the newest approved commit
+// of its branch that tip contains, or the base when it contains none or the
+// child does not work.
+func (d *decider) childApprovals(tip string) (map[string]string, error) {
+	refs := map[string]string{}
+	for _, c := range d.plan.Managers {
+		if c.ID == model.RootPackage || model.ParentOf(c.ID) != d.m.ID {
+			continue
+		}
+		ref := d.plan.Base
+		if c.Working {
+			var err error
+			ref, err = d.newest(Branch(c.ID), tip, func(id string) (bool, error) { return d.approved(id, c.ID) })
+			if err != nil {
+				return nil, err
+			}
+		}
+		refs[c.ID] = ref
+	}
+	return refs, nil
 }
 
 // review decides a checker's push: one commit on the submission at the
@@ -384,7 +425,7 @@ func (d *decider) checklist(verdicts []Line) string {
 // belongs to its own Package; everything else below .markitect/ stays as at
 // the base. A file two Packages claim equally, or a path that differs from
 // another only in case, is refused.
-func (d *decider) content(tip string) ([]string, error) {
+func (d *decider) content(tip string, childRef map[string]string) ([]string, error) {
 	base := d.plan.Base
 	parentRef := base
 	if d.m.ID != model.RootPackage {
@@ -393,21 +434,6 @@ func (d *decider) content(tip string) ([]string, error) {
 			return nil, err
 		}
 		parentRef = ref
-	}
-	childRef := map[string]string{}
-	for _, c := range d.plan.Managers {
-		if c.ID == model.RootPackage || model.ParentOf(c.ID) != d.m.ID {
-			continue
-		}
-		ref := base
-		if c.Working {
-			var err error
-			ref, err = d.newest(Branch(c.ID), tip, func(id string) (bool, error) { return d.approved(id, c.ID) })
-			if err != nil {
-				return nil, err
-			}
-		}
-		childRef[c.ID] = ref
 	}
 	me, parent := Name(d.m.ID), Name(model.ParentOf(d.m.ID))
 	// required returns the commit whose content the file must keep, or ""

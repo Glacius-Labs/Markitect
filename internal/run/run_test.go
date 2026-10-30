@@ -682,6 +682,44 @@ func TestLandingRefusesAFailingMergedState(t *testing.T) {
 	}
 }
 
+// The state that lands passes the required checks also on an unmoved target
+// (DEC-087). Root's submission integrates no child's work, so the hooks
+// accept it although a check fails, and its checker gets the result as
+// evidence; its approval does not land.
+func TestLandingRefusesAFailingStateOnAnUnmovedTarget(t *testing.T) {
+	f := newFixture(t)
+	base := f.tip("main")
+	// A changed file of Root's reaches only Root's Definition.
+	f.write(map[string]string{"README.md": "# The library\n"})
+	start := f.commit("rename the library")
+	a := f.agents
+	a.On(".", maker, a.Submit(nil, map[string]string{
+		"FAIL":           "x\n",
+		project.RootPage: table + "| README.md | [[project]] | Overview |\n| FAIL | [[project]] | Marker |\n",
+	}, word("changed")))
+	a.On(".", checker, a.Review(nil))
+
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateKept || r.Why != "the required checks fail on the state that would land" {
+		t.Fatalf("%s: %s; items %+v", r.State, r.Why, r.Items)
+	}
+	if rc := r.RequiredChecks; rc.Ran || len(rc.Checks) != 1 || rc.Checks[0].Passed || !rc.WholeRepository {
+		t.Fatalf("required checks %+v", rc)
+	}
+	if f.tip("main") != start {
+		t.Fatal("the failing state landed")
+	}
+	var task string
+	for _, s := range a.Starts() {
+		if s.Role == checker {
+			task = s.Task
+		}
+	}
+	if !strings.Contains(task, `"no-fail" exited with 1.`) || !strings.Contains(task, "the merged state must pass them") {
+		t.Fatalf("the checker's task holds no check evidence:\n%s", task)
+	}
+}
+
 // The host compiles the state it lands: a merge of two states that each
 // compile, but together give two Packages the same pattern, does not land.
 func TestLandingRefusesAMergedStateThatDoesNotCompile(t *testing.T) {
