@@ -9,7 +9,7 @@ A record names its series and step, the expected outcome and why, and the same e
 | [library-m2-limit-contradiction](library-m2-limit-contradiction.json) | M2 | defect | no landing | The loan policy's table says 3, the rule below it five |
 | [library-m2-transition-gap](library-m2-transition-gap.json) | M2 | gap | landing | Nothing says what happens to a member above the lowered limit; with no persistence and an empty start, it never shows at the boundary |
 | [makerspace-c3-discount-contradiction](makerspace-c3-discount-contradiction.json) | C3 | defect | no landing | The bulk table gives 8 % for 10 to 24 units, its worked example 5 % |
-| [makerspace-c5-threshold-gap](makerspace-c5-threshold-gap.json) | C5 | defect | no landing | The account block applies to a "long overdue" invoice: the 30-day threshold, its minutes and its example are gone |
+| [makerspace-c5-threshold-gap](makerspace-c5-threshold-gap.json) | C5 | defect | no landing | The account block applies to a "long overdue" invoice: the 30-day threshold, its minutes, its example and the end-of-calendar consequence that pinned it are gone |
 | [makerspace-c6-test-gap](makerspace-c6-test-gap.json) | C6 | gap | landing | The test obligations no longer name the check for long-ago certifications; the behavior itself is still stated |
 
 Every planted model compiles with `markitect check`: a defect is in the meaning, not the structure.
