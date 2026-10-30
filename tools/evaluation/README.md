@@ -12,6 +12,7 @@ The suite runner, its judging and reporting, and the baseline variant of the [ev
 | [markitect_arm.py](markitect_arm.py) | The concept 2.0 arm: the owner's model commit, one `markitect apply` with its agents on the suite's network, and the landed commit or the unchanged start as the result |
 | [sandbox/](sandbox/Dockerfile) | The sandbox image, its egress gateway (`egress.py`) and the default series configuration (`series.json`) |
 | [claude_code.py](claude_code.py) | The baseline variant: one headless Claude Code session with the task, in an isolated configuration |
+| [codex_cli.py](codex_cli.py) | The baseline variant on Codex: one `codex exec` session with the task, in the same setting |
 | [escape_probe.py](escape_probe.py) | A variant without a model that tries to leave the sandbox and reports each attempt |
 | [judging.py](judging.py) | `suite.py judge`: runs a task's judge folder in one container without network and checks its `judge.json` |
 | [judges.py](judges.py) | Judge sources in [`tools/evaluation-judges`](../evaluation-judges/library-m1/README.md): `export` writes a judge folder from a frozen revision, `selftest` runs a judge on its references and seeded mutants, `start` writes a fixed reference start |
@@ -22,7 +23,7 @@ The suite runner, its judging and reporting, and the baseline variant of the [ev
 | [reading.py](reading.py) | The paired reading of a contrast: the 95 % interval of the paired difference |
 | [report.py](report.py), [acceptance.py](acceptance.py) | `suite.py report`: one table per area for a series ledger, then one per acceptance criterion of concept 2.0 §15 |
 | [series_runner.py](series_runner.py) | The [series runner](#the-series-runner): a counted series or its stability gate, one launch at a time, with its judging, reviews, ledger and report |
-| [test_suite.py](test_suite.py), [test_sandbox.py](test_sandbox.py), [test_judging.py](test_judging.py), [test_series.py](test_series.py), [test_native.py](test_native.py), [test_markitect_arm.py](test_markitect_arm.py), [test_acceptance.py](test_acceptance.py), [test_reviewing.py](test_reviewing.py), [test_classify.py](test_classify.py), [test_series_runner.py](test_series_runner.py) | Offline tests with real Git, fake variants, a fake `claude`, a scripted `markitect`, fake engines, a fake suite, and recorded runs and transcripts ([testdata/](testdata/README.md)) |
+| [test_suite.py](test_suite.py), [test_sandbox.py](test_sandbox.py), [test_judging.py](test_judging.py), [test_series.py](test_series.py), [test_native.py](test_native.py), [test_markitect_arm.py](test_markitect_arm.py), [test_acceptance.py](test_acceptance.py), [test_reviewing.py](test_reviewing.py), [test_classify.py](test_classify.py), [test_series_runner.py](test_series_runner.py) | Offline tests with real Git, fake variants, a fake `claude` and `codex`, a scripted `markitect`, fake engines, a fake suite, and recorded runs and transcripts ([testdata/](testdata/README.md)) |
 
 ## Use
 
@@ -67,11 +68,11 @@ Each run gets, and nothing else from the host:
 | `/out` | `RUN_DIR/variant` | writable |
 | `/state` | `--state`, or the chain's state directory | writable |
 | `/variant` | `--variant-code`, the variant's own code | read-only |
-| `/login/credentials.json` (`EVALUATION_LOGIN`) | an access-only copy of `--login` (default: the user's Claude login), without its refresh token, deleted after the run | read-only |
+| `/login/credentials.json` (`EVALUATION_LOGIN`) | an access-only copy of `--login` (default: the user's login of the evaluation's provider, `~/.claude/.credentials.json` or `~/.codex/auth.json`), deleted after the run: a Claude login without its refresh token, a Codex login with an empty one, as the host's Codex adapter copies it, and never an API key | read-only |
 
 The container has a read-only root, no capabilities, `no-new-privileges`, a non-root user (the host user on Linux, 1000 on Docker Desktop), `--init` and a private `/tmp` where `HOME` lives. The series configuration ([`sandbox/series.json`](sandbox/series.json) unless `--series` names another) sets one safety limit for every run of every variant: CPUs, memory without swap, processes and the `/tmp` size. It is a protection, not a budget; a run that exceeds it is a result. `suite.json` records it with the configuration's digest.
 
-**Network.** The run's sandbox joins an internal network, which has no route out and, in the bridge's isolated gateway mode, no address of the engine's host. A second container, the egress gateway, joins that network and an ordinary one. The sandbox's `/etc/hosts` maps each endpoint the series allows for the evaluation's provider (for Claude, `api.anthropic.com`) to the gateway, and its resolver forwards to an unroutable address, so no other name resolves. The gateway reads the server name of each TLS connection on port 443 and forwards only allowed names, unchanged, to the real host; TLS stays end to end. Every tool reaches the provider by itself, with no proxy setting. Everything else is meant to fail: the web, GitHub, the module proxy, the engine and the host; the escape probe checks that on each machine before a series. The gateway's log of every connection is kept as `RUN_DIR/egress.jsonl` and counted in `suite.json`. The engine socket is never mounted.
+**Network.** The run's sandbox joins an internal network, which has no route out and, in the bridge's isolated gateway mode, no address of the engine's host. A second container, the egress gateway, joins that network and an ordinary one. The sandbox's `/etc/hosts` maps each endpoint the series allows for the evaluation's provider (for Claude, `api.anthropic.com`; for Codex, `chatgpt.com`, where a ChatGPT account login reaches the model) to the gateway, and its resolver forwards to an unroutable address, so no other name resolves. The gateway reads the server name of each TLS connection on port 443 and forwards only allowed names, unchanged, to the real host; TLS stays end to end. Every tool reaches the provider by itself, with no proxy setting. Everything else is meant to fail: the web, GitHub, the module proxy, the engine and the host; the escape probe checks that on each machine before a series. The gateway's log of every connection is kept as `RUN_DIR/egress.jsonl` and counted in `suite.json`. The engine socket is never mounted.
 
 **Cleanup.** The suite records every engine call. At the deadline it stops the container before the engine CLI, so nothing written later counts. After the run it removes both containers and both networks and counts what is left by the run's label. The run is not valid for counting when its sandbox did not stand up, its container never started, the gateway stopped during the run, or something is left. A chain stops at such a step. A run refuses to start while containers or networks of another run exist. Afterwards the run directory and the state directory are searched for the login, Git bundles included; a file that contains it, and any link or special file the variant left, is deleted unread and listed under `quarantine`. `--lock` takes the shared engine lock for the run or the whole chain and refuses when another holder has it.
 
@@ -149,7 +150,7 @@ Each session runs in the evaluation sandbox like a variant (`--sandbox IMAGE_ID 
 ## Failures, tokens and the report
 
 [classify.py](classify.py) sorts every launch with one rule for every variant:
-- **Void**, a technical failure that is recorded, relaunched and never counted. It covers the infrastructure: the sandbox did not stand up, its container never started, its gateway stopped, it left residue, the suite wrote no record, or the variant command could not start. A server name the gateway refused also stops the series. It covers the provider: a session's last response is an API error for capacity, a rate or usage limit, a server error or a refused login, and the run did not end normally. A variant whose Results list its agent starts, the 2.0 arm, is read from them instead: a Manager's last start failed with the class `capacity`, `rate-limit`, `server-error` or `login`; a failed start that the same Manager followed with another one is its work, like an error a single session recovered from. And it covers a variant runtime signature written into the series protocol before the series.
+- **Void**, a technical failure that is recorded, relaunched and never counted. It covers the infrastructure: the sandbox did not stand up, its container never started, its gateway stopped, it left residue, the suite wrote no record, or the variant command could not start. A server name the gateway refused also stops the series. It covers the provider: a session's last response is an API error for capacity, a rate or usage limit, a server error or a refused login, and the run did not end normally. A Codex exec session, `codex_cli.py`'s, is read from its event stream: it completed no turn, and its failed turn's error, else an error event the stream ends on, has such a class by the host Codex adapter's rule for the CLI's error text. A variant whose Results list its agent starts, the 2.0 arm, is read from them instead: a Manager's last start failed with the class `capacity`, `rate-limit`, `server-error` or `login`; a failed start that the same Manager followed with another one is its work, like an error a single session recovered from. And it covers a variant runtime signature written into the series protocol before the series.
 - **Invalid:** host mode, or a reported model other than the evaluation's.
 - **Result:** everything else, including a wrong or incomplete result, a timeout and a missing result.
 
@@ -280,6 +281,26 @@ Limits:
 - On Windows in host mode, a background process that the session leaves behind after a normal exit is not stopped. On Linux and in the sandbox, the whole process group is stopped.
 
 A real run uses the owner's Claude subscription and needs an owner-approved bounded dispatch.
+
+### On Codex
+
+`codex_cli.py [--codex BIN] [--credentials FILE] [--effort LEVEL]` is the same baseline on Codex, for evaluations whose model is `codex:MODEL_ID`. It reuses `claude_code.py`'s prompt, Git setting, capture and login search, and takes the `codex` binary, the login file to copy (default: the suite's `EVALUATION_LOGIN`, else the user's `~/.codex/auth.json`) and an optional effort level. It runs one `codex exec --json` session with the prompt on standard input, the evaluation's model and a private `CODEX_HOME` that holds only the login copy, with an empty refresh token. Every `OPENAI_*` and `CODEX_*` variable is cleared, and an API key is refused.
+
+The switches are a Manager's Codex switches without the Manager tools:
+- no user configuration, rules, project documents, apps, memories, image generation, browser or computer use;
+- also no plugins and no web search (`web_search="disabled"`), as the Claude baseline has no plugins and is denied WebSearch and WebFetch;
+- Codex's own sandbox and approvals are off, as in a Manager's session, since the evaluation sandbox is the boundary;
+- Codex's native subagents stay available, as Claude Code's Agent tool does for the Claude baseline.
+
+`run.json` keeps the Claude baseline's fields:
+- `sessionId` is the thread;
+- `usage` holds the completed turns' tokens, with the cached input apart;
+- `sessionResult` is `completed` or `failed`, and `sessionError` holds the failed turn's error text, or the error event the session ended on. The classifier reads the same from the stream. An error event followed by more work is a recovery, such as a reconnect, and decides nothing.
+- A session that started no thread failed in the CLI before the model saw the task, on its configuration or its login. It gets the status `error`, as a failure of the variant's own code does, so K's runtime signature voids it.
+
+exec's events do not name the model, so `model` is the one the session was launched with, once a thread started, as the host's Codex adapter reports it. The session files under `CODEX_HOME/sessions` are kept as `transcripts/`.
+
+A real run uses the owner's ChatGPT subscription and needs an owner-approved bounded dispatch.
 
 ## Self-check
 

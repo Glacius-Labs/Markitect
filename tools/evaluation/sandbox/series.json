@@ -6,6 +6,7 @@
     "tmpBytes": 8589934592
   },
   "egress": {
-    "claude": ["api.anthropic.com"]
+    "claude": ["api.anthropic.com"],
+    "codex": ["chatgpt.com"]
   }
 }

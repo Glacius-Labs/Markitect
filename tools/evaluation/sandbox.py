@@ -21,6 +21,7 @@ Every engine call is recorded. Afterwards the containers and networks are
 removed and counted by label, the login copy is deleted, and the run's outputs
 are searched for the login; files that contain it are deleted.
 """
+import base64
 import datetime
 import hashlib
 import json
@@ -98,12 +99,18 @@ def container_user():
 
 def access_login(provider, raw, seconds):
     """The run's copy of the provider login: access only, valid beyond the run; and the secrets to search for."""
-    if provider != "claude":
+    copies = {"claude": claude_login, "codex": codex_login}
+    if provider not in copies:
         raise SandboxError(f"the sandbox has no login copy for {provider}")
     try:
         login = json.loads(raw)
     except ValueError:
         login = None
+    return copies[provider](login, seconds)
+
+
+def claude_login(login, seconds):
+    """A Claude login's OAuth access, without its refresh token."""
     oauth = login.get("claudeAiOauth") if isinstance(login, dict) else None
     if not isinstance(oauth, dict) or not oauth.get("accessToken") or not isinstance(oauth.get("expiresAt"), int):
         raise SandboxError("the login holds no Claude account login")
@@ -112,6 +119,43 @@ def access_login(provider, raw, seconds):
         raise SandboxError(f"the Claude login expires in {int(left)} s; use Claude once to refresh it, then start again")
     copy = {"claudeAiOauth": {k: v for k, v in oauth.items() if k not in ("refreshToken", "refreshTokenExpiresAt")}}
     return json.dumps(copy).encode(), [oauth[k].encode() for k in ("accessToken", "refreshToken") if oauth.get(k)]
+
+
+def codex_login(login, seconds):
+    """A Codex auth.json with a ChatGPT account login, copied as the host's Codex adapter copies it
+    (internal/agents/codex): the ID and access tokens and the account, and an empty refresh token, which the pinned
+    CLI requires but which lets it neither refresh nor rotate the login. An API key is refused."""
+    if not isinstance(login, dict):
+        raise SandboxError("the login is not a Codex auth.json")
+    if login.get("OPENAI_API_KEY"):
+        raise SandboxError("the login holds an OpenAI API key; only a ChatGPT account login is admitted")
+    tokens = login.get("tokens")
+    if not isinstance(tokens, dict) or not all(isinstance(tokens.get(k), str) and tokens[k] for k in ("access_token", "id_token")):
+        raise SandboxError("the login holds no ChatGPT account tokens")
+    left = jwt_expiry(tokens["access_token"]) - time.time()
+    if left < seconds + LOGIN_MARGIN:
+        raise SandboxError(f"the Codex login expires in {int(left)} s; run codex on the host to refresh it, then start again")
+    account = tokens.get("account_id")
+    copy = {"OPENAI_API_KEY": None,
+            "tokens": {"id_token": tokens["id_token"], "access_token": tokens["access_token"], "refresh_token": "",
+                       "account_id": account if isinstance(account, str) else ""},
+            "last_refresh": login.get("last_refresh")}
+    secrets = [tokens[k].encode() for k in ("access_token", "id_token", "refresh_token") if isinstance(tokens.get(k), str) and tokens[k]]
+    return json.dumps(copy).encode(), secrets
+
+
+def jwt_expiry(token):
+    """The exp claim of a JWT, in seconds since the epoch."""
+    parts = token.split(".")
+    try:
+        if len(parts) != 3:
+            raise ValueError("not three parts")
+        exp = json.loads(base64.b64decode(parts[1] + "=" * (-len(parts[1]) % 4), altchars="-_", validate=True))["exp"]
+    except (ValueError, KeyError, TypeError):
+        raise SandboxError("the Codex access token is no JWT with an expiry")
+    if not isinstance(exp, int) or isinstance(exp, bool) or exp <= 0:
+        raise SandboxError("the Codex access token is no JWT with an expiry")
+    return exp
 
 
 # --- Engine ----------------------------------------------------------------------

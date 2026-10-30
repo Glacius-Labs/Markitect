@@ -13,7 +13,10 @@ It sorts one run, from its suite.json and what the variant left in RUN_DIR, into
     started at all;
   - provider: a provider session's last response is an API error for capacity,
     a rate or usage limit, a server error or a refused login, and the run did
-    not end normally (no result, a non-zero exit or a timeout). A variant that
+    not end normally (no result, a non-zero exit or a timeout). A Codex exec
+    session (codex_cli.py) is read from its event stream: it completed no turn,
+    and its failure, else an error it ended on, has one of these classes, as the
+    host's Codex adapter classifies the CLI's error text. A variant that
     returns Results with its agent starts (results.py), such as the 2.0 arm, is
     read from them instead of its transcripts: a Manager's last start failed
     with one of these classes, as the host's agents classify it. An earlier
@@ -51,6 +54,15 @@ PROVIDER_ERRORS = {"rate_limit", "server_error", "overloaded", "overloaded_error
 PROVIDER_STATUS = {401, 403, 429, 500, 502, 503, 504, 529}
 # The failure classes of a Result's agent start that a provider causes (internal/agents/README.md, Failure classes).
 PROVIDER_CLASSES = {"capacity", "rate-limit", "server-error", "login"}
+# The same classes from the error text a Codex exec session reports after its CLI's own retries, matched in this order,
+# as the host's Codex adapter matches them (internal/agents/codex/stream.go); any other text is the variant's work.
+CODEX_CLASSES = [
+    ("capacity", re.compile(r"(?i)at capacity|overloaded|\b529\b|slow.?down")),
+    ("rate-limit", re.compile(r"(?i)rate.?limit|usage.?limit|too many requests|\b429\b")),
+    ("login", re.compile(r"(?i)\b401\b|\b403\b|unauthorized|forbidden|token.?expired|refresh.?token|log ?in again|not logged in")),
+    ("server-error", re.compile(r"(?i)\b50[0-4]\b|internal server error|bad gateway|service unavailable|gateway timeout|server.?error|"
+                                r"stream (error|disconnected)|connection (reset|refused|closed)")),
+]
 # The provider's own domains: a refused name under one of them is an endpoint its CLI needs and the series lacks.
 # Any other refused name, such as an agent trying GitHub, is the variant's work.
 PROVIDER_DOMAINS = {"claude": ("anthropic.com", "claude.ai", "claude.com"), "codex": ("openai.com", "chatgpt.com")}
@@ -78,17 +90,26 @@ def at(record, dotted):
     return value
 
 
-def session_errors(root):
-    """The provider error that ended each top-level Claude Code session below root, if any.
+def codex_class(message):
+    """The provider class of a Codex exec session's error text, or None for the variant's own failure."""
+    return next((name for name, pattern in CODEX_CLASSES if pattern.search(message)), None)
 
-    A session ends in an error when its last assistant message is an API error message, or when its stream-json
-    result reports an API error status. Subagent transcripts do not count: the session that ran them decides.
+
+def session_errors(root):
+    """The provider error that ended each top-level Claude Code session, or each Codex exec session, below root, if any.
+
+    A Claude Code session ends in an error when its last assistant message is an API error message, or when its
+    stream-json result reports an API error status. Subagent transcripts do not count: the session that ran them
+    decides. A Codex exec event stream (its `thread.started` or `turn.started` lines mark it) ends in an error when it
+    completed no turn and its failed turn's error, else an error event it ends on, has a provider class: a completed
+    turn answered, whatever errors came before it.
     """
     found = []
     for path in sorted(pathlib.Path(root).rglob("*.jsonl")):
         if path.is_symlink() or not path.is_file() or "subagents" in path.parts:
             continue
         last, result = None, None
+        codex = {"exec": False, "completed": False, "failure": None, "lastError": None}
         for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
             try:
                 entry = json.loads(raw)
@@ -96,14 +117,31 @@ def session_errors(root):
                 continue
             if not isinstance(entry, dict) or entry.get("isSidechain") or entry.get("parent_tool_use_id"):
                 continue
-            if entry.get("type") == "assistant":
+            kind = entry.get("type")
+            if kind == "assistant":
                 last = entry
-            elif entry.get("type") == "result":
+            elif kind == "result":
                 result = entry
+            elif kind == "error":
+                codex["lastError"] = entry.get("message")
+            elif isinstance(kind, str) and kind.startswith(("thread.", "turn.", "item.")):
+                # Work after an error event, such as a reconnect notice, recovered from it: only an error the stream
+                # ends on can decide, so that a session stopped at its deadline long after one is not void.
+                codex["lastError"] = None
+                codex["exec"] = codex["exec"] or kind in ("thread.started", "turn.started")
+                codex["completed"] = codex["completed"] or kind == "turn.completed"
+                if kind == "turn.failed" and isinstance(entry.get("error"), dict):
+                    codex["failure"] = entry["error"].get("message")
+        name = path.relative_to(root).as_posix()
         if last and last.get("isApiErrorMessage") and last.get("error") in PROVIDER_ERRORS:
-            found.append({"file": path.relative_to(root).as_posix(), "error": last["error"], "apiError": last.get("apiError")})
+            found.append({"file": name, "error": last["error"], "apiError": last.get("apiError")})
         elif result and result.get("is_error") and result.get("api_error_status") in PROVIDER_STATUS:
-            found.append({"file": path.relative_to(root).as_posix(), "error": f"status {result['api_error_status']}"})
+            found.append({"file": name, "error": f"status {result['api_error_status']}"})
+        elif codex["exec"] and not codex["completed"]:
+            message = str(codex["failure"] or codex["lastError"] or "")
+            kind = codex_class(message) if message else None
+            if kind:
+                found.append({"file": name, "error": kind, "message": message[:500]})
     return found
 
 
