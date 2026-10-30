@@ -244,9 +244,18 @@ Build approves this protocol under the owner's delegation. On 30 October 2026, B
   - **A secondary line** reads the share of each change's own new cases passed, descriptive.
   - **How the code reads it:** a contrast says yes or no only when both its readings agree. So a contrast whose two readings both say no reads "no", not "undecided".
   - **The landed rate has no tolerance,** as "not below" says: one change that M lands less often than K, out of 35, makes the rule say no. With an absent result counted as not landed, a launch of M that stays void after its relaunches does so too.
-- **The frozen commit** waits for T5's two host fixes in `internal/`: `verify` refuses `changed`, and a Manager may not create its own Package's first registry page. Both move the frozen commit.
-  - It is `main` after T5's PR and this one are merged: **[OPEN: the commit is named here, by full SHA, after T5's PR is merged.]**
-  - The binaries and images are then built again from it under the lock. The gate's record names the commit by full SHA and the images by ID.
+- **The frozen commit:** `main` at `4576beaa087205fb336d22ba56e30361ed469385`, which replaces `a8a9234c`.
+  - It holds this amendment's fixes ([#915](https://github.com/Glacius-Labs/Markitect/pull/915)) and T5's two host fixes in `internal/` ([#916](https://github.com/Glacius-Labs/Markitect/pull/916)): `verify` refuses `changed`, and a Manager may not create its own Package's first registry page. Its `tools/` differs from `a8a9234c` only by #915.
+  - The binaries and images were built from it under the lock on 30 October 2026. The gate's record names them by image ID:
+    - the Manager image `sha256:d9f84f6867eb5b2fb02e6f44826a1e060ca425aa865c8be9ab33999d7395a884`;
+    - the Go Manager image, which M's runs use, `sha256:7833b344d0697aaf2f314a8cac16166b2973dce7167da56d8687ae54b163a2ab`;
+    - the sandbox image `sha256:2216d76edb2c084ac3c875037b22a18fde4a4954a526fd2f38bfe872e64c52bf`.
+  - The gate's work folder `gate-windows` runs from its `tools/`. Build's `STOP` stays there until Build clears a window with the owner.
+  - The new project's launch inputs are kept, under precondition 3. Checked against this commit on 30 October 2026, by digest only:
+    - `inputs.json` keeps its SHA-256, and all 26 digests it records match the files;
+    - this commit's `suite.py task` rebuilds the tasks of C1 to C7 to the author's digests;
+    - the Windows and WSL copies are byte-identical, 3,915 files.
+  - The organization's cost stays the pilot's `manager_costs.py`, unchanged at SHA-256 prefix `ad8185aa1e67fa56`.
   - Everything else in Amendment 1 stands.
   - No step of the new project's launch inputs holds a Package without a registry page, so T5's second fix does not touch them (checked on 30 October 2026, paths only). Build checked the Library and the Makerspace.
 
