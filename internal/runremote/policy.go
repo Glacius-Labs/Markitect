@@ -432,9 +432,16 @@ func (d *decider) content(tip string, childRef map[string]string) ([]string, err
 		owner, page := d.plan.Pages[file]
 		what := "is the registry page of"
 		if !page {
-			if strings.HasPrefix(file, project.RegistryDir+"/") {
-				return base, "is no registry page at the Run's start: only the owner writes a Package's first page with its first patterns (DEC-081). " +
-					"Remove it; if your items cannot conform without files of your own, give them model-problem and escalate"
+			// The page of a live Package that has none at the Run's start
+			// is its first, the owner's (DEC-081); any other path stays
+			// protected below.
+			if rest, ok := strings.CutPrefix(file, project.RegistryDir+"/"); ok {
+				if id, ok := strings.CutSuffix(rest, ".md"); ok {
+					if _, live := d.plan.Manager(id); live && id != model.RootPackage {
+						return base, "is no registry page at the Run's start: only the owner writes a Package's first page with its first patterns (DEC-081). " +
+							"Remove it; if your items cannot conform without files of your own, give them model-problem and escalate"
+					}
+				}
 			}
 			if strings.HasPrefix(file, project.Dir+"/") {
 				return base, "is protected: the model, the manifest, the lock, execution.yaml and the rest of " + project.Dir + "/ change only through the owner, never in a Run"
