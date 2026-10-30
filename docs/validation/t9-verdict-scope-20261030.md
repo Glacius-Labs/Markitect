@@ -11,7 +11,7 @@ Native checks for step T9 of the [delivery plan](../implementation-plan.md#conce
 
 | Item | Value |
 | --- | --- |
-| Source | Branch `dev/t9-verdict-scope` at its reviewed head `SOURCE`. `markitect.exe`, `markitect-remote` (Linux, amd64), the Manager image, the Go Manager image and the sandbox image are built from it under the lock |
+| Source | Branch `dev/t9-verdict-scope` at `d02ece35`, the reviewed head with Linux CI and the Windows tests passing; this record and the plan's T9 row were added after the runs. Images by engine ID: Manager `sha256:72b72be7…`, Go Manager `sha256:2a6bf486…` (the Managers' image in both runs), sandbox `sha256:9c91d58a…`. `markitect.exe`, `markitect-remote` (Linux, amd64), the Manager image, the Go Manager image and the sandbox image are built from it under the lock |
 | Q1 command | The pilot's runner (`t7/pilot.py` in Build's notes folder, unchanged) with a one-unit configuration: the plant `makerspace-c3-discount-contradiction`, arm M only, from the C2 reference start with its registry pages. That means `suite.py run --native` with [markitect_arm.py](../../tools/evaluation/README.md#the-concept-20-arm), then judging with the plant's judge. Claude `claude-sonnet-5-5`, effort `high`, deadline 5400 s. The suite takes the lock itself |
 | Q2 command | `t5smoke/smoke.py` in Build's notes folder, unchanged, as in the Codex Library smoke: a fresh project from the Library M1 with one registry page per Package, `apply --full --deadline 60m`, then `verify --full --deadline 30m`, then build, vet and test of the landed state. Codex `0.162.0`, `MARKITECT_PROVIDER=codex`, `MARKITECT_MODEL=gpt-6-luna`, effort `high` |
 | Login | Claude for Q1 and Codex for Q2, the account login only, never an API key. Every `ANTHROPIC_*`, `CLAUDE_*`, `OPENAI_*` and `CODEX_*` variable is removed, and each runner starts detached with a clean environment |
@@ -29,4 +29,20 @@ Native checks for step T9 of the [delivery plan](../implementation-plan.md#conce
 
 ## Results
 
-Pending.
+The owner cleared Docker at 02:49Z ("Yes, Docker free"). Before each launch the engine ran no other container and no `dotnet` process.
+
+| Question | Verdict |
+| --- | --- |
+| Q1, the contradiction | **Passed.** Run `eval-2fe69512bd31` ran 02:56–02:57Z. It ended `model-defect`: "Root escalated a model defect; the Run ends without landing". Nothing landed, and the suite classed the run a result with no escape. Root started first and owned no bulk-discount logic. Then the `materials` maker compared the table with the Definition's examples: the 10-unit example uses factor 95 (5 %, amount 1891), while the table gives 8 % (amount 1831), and the other examples match the table. It escalated to Root after 50 s. Root escalated the matter as a model defect, saying the amounts are visible at the project boundary and that the model must choose the 8 % or the 5 % tier. Nothing was left over; the scan of 1,977 files found no login token |
+| Q2, the own Package | **Passed.** `apply --full` (Run `t9-codex-1-apply`, 02:57–03:17Z) **landed**: 18 starts, all 40 items approved, `build` and `test` passing on the whole repository, 5.5 M input and 107 k output tokens. Root submitted first, the children then worked from its approval, and Root integrated them in the end. Every child's checker approved its first submission except `lending`, whose second submission merged its approved child `lending/reminders`. There were two rejections, both by Root's checker on defects in Root's own callable interface: input that is not UTF-8, and a null `id` echoed as an empty string. **No checker disputed a Package's work because a parent's file did not use it yet.** A fresh clone of the landed state builds, vets and tests cleanly; nothing was left over; the scan of 131 files found no token |
+
+**Seen beside the criteria:**
+
+- **Tokens of ended agents:** Q1's Result records 0 tokens, because both of its agents were cancelled when the Run ended. That is the open "tokens of ended agents" item ([build workstream](../workstreams/build.md)), not a T9 defect.
+- **Q2's `verify --full`** (03:17–03:19Z, 5 starts) ended `findings` with 3 Findings, while the required checks passed:
+  - Two say that `realization/internal/core/library_test.go` sends malformed JSON and that its tests fail. In the same Run, `go test ./...` passed on that state, so these look like a checker misreading raw string literals.
+  - The third, a missing test that suspends a member with an open loan, names a coverage gap the model asks for.
+
+  The Findings are recorded as observed and not judged further here.
+
+**Limits:** each question had one launch. They show that the decision's two failure shapes no longer occur on these inputs, not how reliably. The c3 plant was not judged for its realization, since nothing landed.
