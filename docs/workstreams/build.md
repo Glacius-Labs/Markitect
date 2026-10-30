@@ -30,7 +30,7 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 
 ## Next
 
-1. **Counted series:** the stability gate has run on Windows since 19:11 UTC on 30 October, on `4576beaa`: 32 launches, after a Docker window cleared with the owner. Its verdict goes into the protocol as an amendment. Then come the counted series on Windows, and the gate and the series on Linux.
+1. **Counted series:** the stability gate has been running on Windows since 19:11 UTC on 30 October, on `4576beaa`: 32 launches, after a Docker window cleared with the owner. Its verdict goes into the protocol as an amendment. Then come the counted series on Windows, and the gate and the series on Linux.
 2. **The owner's time:** after the counted series, the owner's measurement below.
 3. **Codex repeat:** the smaller repeat with every arm on Codex Luna, as the Codex decision below says, after [what comes first](../validation/counted-series-protocol-20261030.md#after-the-series): the suite's native mode copies a Codex login, K gets its Codex command, and the owner removes the judge session's records.
 
