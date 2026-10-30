@@ -178,10 +178,10 @@ class AcceptanceReportTest(unittest.TestCase):
         self.assertEqual(contrast["reading"], "undecided")
         # Three pairs are too few: the interval reaches below minus the minimum meaningful difference.
         self.assertLess(contrast["low"], -0.05)
-        # The unpaired unit has no start score (these judgments have no byStep), so the verdict stays undecided.
+        # K's missing repetition 4 scored as not done: these judgments do not count by step, so its start fails all 19 cases.
         self.assertTrue(self.row("§15.5 At least as trustworthy as K", "2.0 vs K").endswith(
-            "| undecided | undecided, [-0.078, 0.183] | undecided (1 unpaired) |"))
-        self.assertIsNone(contrast["atLeastAsGood"])
+            "| undecided | undecided, [-0.467, 1.046] | no |"))
+        self.assertFalse(contrast["atLeastAsGood"])
 
     def test_an_unknown_endpoint_is_refused(self):
         ledger = json.loads((self.tmp / "ledger.json").read_text())
@@ -258,6 +258,10 @@ class NotDoneTest(unittest.TestCase):
         self.assertEqual([acceptance.endpoint(facts[1], e) for e in ("casesPassedShare", "casesFailed", "defectsLeft")], [35 / 39, 4.0, 5.0])
         facts[1]["startScore"] = None
         self.assertIsNone(acceptance.endpoint(facts[1], "casesPassedShare"))
+        # A judge that does not count by step has only the step's own cases: the start fails them all.
+        single = {"variant": "K", "task": "library-m1", "step": "M1", "class": "result", "delivered": True,
+                  "areas": {"correctness": {"planned": 19, "passed": 18, "failed": 1}}}
+        self.assertEqual(acceptance.start_scores([single]), {("library-m1", "M1"): {"planned": 19, "passed": 0, "failed": 19}})
 
     def test_units_without_a_result_cannot_decide_the_verdict_by_dropping_out(self):
         paired = [self.fact("M", 1), self.fact("K", 1, failed=1), self.fact("M", 2), self.fact("K", 2), self.fact("M", 3), self.fact("K", 3)]

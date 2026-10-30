@@ -41,12 +41,14 @@ def number(value):
 def start_scores(facts):
     """What each task and step's start scores, by the protocol's rule for a change not done: every earlier step's case
     passed and the step's own new cases failed. From the byStep of any judged launch of that task and step, whose last
-    entry is the step itself (judging.checked_series)."""
+    entry is the step itself (judging.checked_series). A judge that does not count by step has only the step's own
+    cases: its start fails them all."""
     out = {}
     for f in facts:
-        by = (f.get("areas") or {}).get("correctness", {}).get("byStep")
-        if by:
-            planned, own = sum(s["planned"] for s in by.values()), list(by.values())[-1]["planned"]
+        c = (f.get("areas") or {}).get("correctness")
+        if c:
+            by = c.get("byStep")
+            planned, own = (sum(s["planned"] for s in by.values()), list(by.values())[-1]["planned"]) if by else (c["planned"], c["planned"])
             out.setdefault((f["task"], f.get("step")), {"planned": planned, "passed": planned - own, "failed": own})
     return out
 
@@ -175,8 +177,8 @@ def interval(result):
 def trustworthy(facts, contrasts, table):
     """Each contrast read twice when units are unpaired: over the pairs, and with every unpaired unit scored as the
     change not done for the variant that has no result there, so that units which end without a result cannot decide the
-    verdict by dropping out. Yes only when both readings say yes, no only when both say no, otherwise undecided; so also
-    when an unpaired unit has no start score to fill it with."""
+    verdict by dropping out. Yes only when both readings say yes, no only when both say no, otherwise undecided. Every
+    unit with a value has a judged launch of its task and step, so start_scores can fill each unpaired one."""
     rows, data = [], []
     starts = start_scores(facts)
     for contrast in contrasts:
@@ -199,8 +201,7 @@ def trustworthy(facts, contrasts, table):
                 missing = not_done(name, starts.get(key[:2]))
                 filled[key] = {**({arm: missing for arm in arms} if missing is not None else {}), **pair}
             second = paired_reading(filled, contrast, higher)
-            unfilled = any(len(pair) == 1 for pair in filled.values())
-            verdict = verdict if verdict == second["atLeastAsGood"] and not unfilled else None
+            verdict = verdict if verdict == second["atLeastAsGood"] else None
         data.append({**contrast, **result, "unpaired": unpaired, "notDone": second, "atLeastAsGood": verdict})
         rows.append([f"{contrast['variant']} vs {contrast['baseline']}", ENDPOINTS[name][0], number(contrast["minimumDifference"]),
                      result["pairs"] if result["blocks"] is None else f"{result['pairs']} in {result['blocks']} changes", unpaired,

@@ -209,11 +209,11 @@ Build approves this protocol under the owner's delegation. On 30 October 2026, B
 
 - **Why:** before the gate, the owner asked for a full independent check of the evaluation. It found two scoring rules that let technical events, not quality, decide the primary contrast, and Build confirmed both against `a8a9234c`. No gate or counted launch had run. The gate was held, with `STOP` in its work folder.
 - **The fixes** ([#915](https://github.com/Glacius-Labs/Markitect/pull/915)):
-  1. **Units without a result no longer drop out of the verdict.** Before, the contrast paired only units that both arms finished, and "at least as good" ignored the unpaired ones. Now each contrast is read a second time with every unpaired unit scored as the change not done for the arm that has no result. The verdict is yes only when both readings say yes, and no only when both say no. Otherwise it is "undecided (N unpaired)", and also when an unpaired unit has no start score to fill it with ([Reading](#reading)).
+  1. **Units without a result no longer drop out of the verdict.** Before, the contrast paired only units that both arms finished, and "at least as good" ignored the unpaired ones. Now each contrast is read a second time with every unpaired unit scored as the change not done for the arm that has no result. The verdict is yes only when both readings say yes, and no only when both say no. Otherwise it is "undecided (N unpaired)" ([Reading](#reading)).
   2. **A launch that delivered nothing scores as its start,** for both arms and every endpoint. Before, it scored a share of 0 and failed every planned case. Now:
      - the share is the earlier steps' cases over all cases;
      - the failed cases are the step's own new cases;
-     - both come from `correctness.byStep` of a judged launch of the same task and step;
+     - both come from `correctness.byStep` of a judged launch of the same task and step; a judge that does not count by step, such as the Library's single-step M1 judge, has only the step's own cases, so the start fails them all, as before;
      - it still counts once more as a step with no result, under defects left.
   3. **K has a void signature for its own failures:** `reported.status` matching `^error$`, as M has three ([Protocol](#protocol), Technical failures). In the pilot no K launch had that status.
   4. **Chain reports** key a step's case counts by task and step, not by task alone. Before, a chain's step that delivered nothing got the chain's largest count.
