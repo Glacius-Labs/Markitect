@@ -808,6 +808,16 @@ func TestVerifyReportsFailingRequiredChecks(t *testing.T) {
 	if !strings.Contains(string(run.Page(r)), "and did not pass") {
 		t.Fatal("the Result page does not say the checks did not pass")
 	}
+	// The host ran the checks on the start before the checkers started, and
+	// every checker's task carries their results.
+	for _, s := range a.Starts() {
+		if !strings.Contains(s.Task, "The required checks on this state, run by the host before you started") || !strings.Contains(s.Task, `"no-fail" exited with 1.`) {
+			t.Fatalf("%s's task holds no check evidence:\n%s", s.Manager.ID, s.Task)
+		}
+	}
+	if rc := r.RequiredChecks; rc.Commit != r.Start {
+		t.Fatalf("the checks ran on %s, not the start %s", rc.Commit, r.Start)
+	}
 }
 
 func TestApplyWithFindings(t *testing.T) {

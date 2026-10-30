@@ -308,6 +308,12 @@ func checkEnv(image []string, home, tmp string) []string {
 
 func (c *checkRunner) runOne(check project.Check, dir string, env []string, uid int) runremote.CheckResult {
 	r := runremote.CheckResult{Name: check.Name, Exit: -1}
+	// A state may not hold the check's directory yet, such as a start with
+	// the model only: the check fails and says so.
+	if info, err := os.Stat(dir); err != nil || !info.IsDir() {
+		r.Output = fmt.Sprintf("[the check's directory %s does not exist in this state]\n", check.Directory)
+		return r
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), check.Timeout)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, shell(), "-c", check.Command)

@@ -89,8 +89,17 @@ func (s *schedule) checkEvidence(pushes []Push, logErr error, submission string)
 	if len(results) == 0 {
 		return "The decision log holds no required checks' results on this submission. Run them yourself if your verdicts depend on them."
 	}
+	text := checkResults("The required checks on the branch's full state at this submission:", results)
+	if !allPassed(results) {
+		text += "\nA submission that holds no child's approved work is accepted even when a check fails, since its tree may be partial; the merged state must pass them. Judge whether the failure is a defect of this submission."
+	}
+	return text
+}
+
+// checkResults lists check results, with the output tail of a failing one.
+func checkResults(intro string, results []runremote.CheckResult) string {
 	var b strings.Builder
-	b.WriteString("The required checks on the branch's full state at this submission:")
+	b.WriteString(intro)
 	for _, r := range results {
 		switch {
 		case r.Passed:
@@ -110,9 +119,6 @@ func (s *schedule) checkEvidence(pushes []Push, logErr error, submission string)
 			}
 			fmt.Fprintf(&b, " Its output, written by the code under review, ends:\n\n```text\n%s\n```\n", strings.TrimRight(out, "\n"))
 		}
-	}
-	if !allPassed(results) {
-		b.WriteString("\nA submission that holds no child's approved work is accepted even when a check fails, since its tree may be partial; the merged state must pass them. Judge whether the failure is a defect of this submission.")
 	}
 	return b.String()
 }
@@ -141,5 +147,22 @@ func (s *schedule) ownFirst(n *node) bool {
 }
 
 func (s *schedule) verifyTask(n *node) string {
-	return fmt.Sprintf("Check the state at %s for Manager %s against each of your %d checklist items, and push your verdicts as one commit without file changes on branch %s. A verdict covers the item's whole Definition, its examples included, and the Definitions it links to; the evidence for conforms names how each example is met.", short(s.plan.Base), n.name, len(n.items), n.branch)
+	task := fmt.Sprintf("Check the state at %s for Manager %s against each of your %d checklist items, and push your verdicts as one commit without file changes on branch %s. A verdict covers the item's whole Definition, its examples included, and the Definitions it links to; the evidence for conforms names how each example is met.", short(s.plan.Base), n.name, len(n.items), n.branch)
+	if e := s.startEvidence(); e != "" {
+		task += "\n\n" + e
+	}
+	return task
+}
+
+// startEvidence says what the required checks found on the Run's start,
+// which the host ran before the checkers started (verify).
+func (s *schedule) startEvidence() string {
+	sc := s.startChecks
+	switch {
+	case len(s.plan.Checks) == 0 || sc == nil:
+		return ""
+	case sc.err != nil:
+		return fmt.Sprintf("The required checks could not run on this state: %v. Run them yourself if your verdicts depend on them.", sc.err)
+	}
+	return checkResults(fmt.Sprintf("The required checks on this state, run by the host before you started (commit %s):", short(s.plan.Base)), sc.results)
 }

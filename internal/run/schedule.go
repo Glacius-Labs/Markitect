@@ -31,6 +31,9 @@ type schedule struct {
 	imp    analysis.Impact
 	remote Remote
 	creds  map[string]map[agentport.Role]credential
+	// startChecks: in verify, the required checks on the Run's start, which
+	// the host runs before the checkers start.
+	startChecks *startChecks
 
 	mu      sync.Mutex
 	nodes   map[string]*node
@@ -50,6 +53,12 @@ type schedule struct {
 	decisions []OwnerDecision
 	records   []AgentStart
 	leftovers []string
+}
+
+// startChecks is the outcome of the host's run of the required checks.
+type startChecks struct {
+	results []runremote.CheckResult
+	err     error
 }
 
 // node is one working Manager.
