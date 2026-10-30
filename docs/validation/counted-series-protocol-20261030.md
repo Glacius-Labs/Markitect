@@ -2,7 +2,7 @@
 
 The protocol of step T7's counted acceptance series ([delivery plan](../implementation-plan.md#concept-20-build)), as section D of the [suite design](../design/evaluation-suite-v2.md#d-counted-evaluations) asks for. It is built from the pilot's [proposal](t7-pilot-20261029.md#proposed-protocol-for-the-counted-series) and its [Q4](t7-pilot-20261029.md#q4-what-must-change-before-a-counted-series), updated for what has changed since. The owner delegated the counted series to Build, and Build approves this protocol after an [independent review](#independent-review), recorded below before any counted run ([build page](../workstreams/build.md), Decisions).
 
-**Status: proposed on 30 October 2026, not yet approved.** No gate or counted launch has run. The [stability gate](#stability-gate) runs only in a window that Build clears with the owner. [Four questions](#for-the-owner) belong to the owner.
+**Status: proposed on 30 October 2026, not yet approved.** No gate or counted launch has run. The [stability gate](#stability-gate) runs only in a window that Build clears with the owner. The owner decided the [four points](#decided-by-the-owner) that were the owner's on 30 October 2026.
 
 ## What changed since the pilot's proposal
 
@@ -19,7 +19,7 @@ The protocol of step T7's counted acceptance series ([delivery plan](../implemen
 - **The c5 plant** no longer leaks (Q4, item 5). Its record now also removes the line "An invoice whose `dueAt` is `2099-12-01T23:59Z` or later can never block", which pinned the removed 30 days, and it checks that the line is gone (PR #908).
 - **Tokens of ended agents** are counted ([PR #907](https://github.com/Glacius-Labs/Markitect/pull/907)): a Result now counts the tokens of agents a Run ends. For Claude that is the exact input and a lower bound of the output. A stopped Codex turn counts 0. Such a count is marked partial, and the page says "at least".
 - **`verify` gets the required checks as evidence** ([PR #909](https://github.com/Glacius-Labs/Markitect/pull/909)): it runs the required checks on its start before its checkers start, gives them the results, and names a missing check directory. With that, §15.2's independent `verify --full` joins the series ([No drift](#reading)).
-- **The minimum meaningful difference** is frozen at 0.05 before the first counted run, unless the owner sets another value by then.
+- **The minimum meaningful difference** is 0.05, as the owner decided on 30 October 2026, frozen before the first counted run.
 
 ## Preconditions
 
@@ -127,9 +127,9 @@ Each stop leaves its reason in `STOP`. Build removes `STOP` and starts the runne
   - **Pairs:** a change and a repetition, 35 per platform.
   - **The interval:** the 95 % interval of the mean paired difference, read over the 7 changes' mean differences (`blockBy` `change`), since a change's five repetitions are not independent. The interval is wide with only seven changes, and the result may well be undecided.
   - **Reading:** better, worse, "a meaningful advantage is excluded", or undecided. M is at least as good when the interval's lower end lies above minus the minimum meaningful difference.
-- **Minimum meaningful difference: 0.05** of the cases judged at a step. On the new project that is two to three of 37 to 52 cases. It is frozen at 0.05 before the first counted run unless the owner sets another value by then, so it is never chosen after seeing results. The pilot's report used it, and the pilot gave no spread to size it from.
+- **Minimum meaningful difference: 0.05** of the cases judged at a step. On the new project that is two to three of 37 to 52 cases. The owner decided it on 30 October 2026, before any counted run, so it is never chosen after seeing results. The pilot's report used it, and the pilot gave no spread to size it from.
   - **Limit:** because the endpoint counts the earlier steps' cases, a change adds only a few cases of its own (W0 34, then 3, 2, 4, 4, 2, 2 and 1). So a change that stops wrongly and delivers its start loses only its own new cases. At C7 that is 1 of 52, less than 0.05.
-  - **The second contrast** reads the failed hidden cases per change (`casesFailed`, with a minimum meaningful difference of 1 case), also over changes, and so shows what the share dilutes. A change adds 1 to 4 cases of its own, so one case is a quarter to all of a change's own cases, and one wrong stop at C7 equals it. §15.1 shows the wrong stops directly: each arm's landed changes per task. Which of the two contrasts is primary is the [owner's question](#for-the-owner).
+  - **The second contrast** reads the failed hidden cases per change (`casesFailed`, with a minimum meaningful difference of 1 case), also over changes, and so shows what the share dilutes. A change adds 1 to 4 cases of its own, so one case is a quarter to all of a change's own cases, and one wrong stop at C7 equals it. §15.1 shows the wrong stops directly: each arm's landed changes per task. The owner chose the share as primary, with this count beside it ([decided](#decided-by-the-owner)).
 - **Secondary:**
   - the same contrasts on the fixed starts of the Library (8 pairs, 4 changes) and the Makerspace (18 pairs, 9 changes), descriptive;
   - the chains' paired steps (`report/NAME-chains`), descriptive;
@@ -150,20 +150,19 @@ Each stop leaves its reason in `STOP`. Build removes `STOP` and starts the runne
   - A unit whose launch is invalid again after its one relaunch counts under Unpaired, not as a failure of its arm. The report shows it.
 - **What it claims:** only what it measures, as §15 says. It may show at least K's quality and fewer defects left for a person per change at comparable input. It does not show time saved.
 
-## For the owner
+## Decided by the owner
 
-Build approves this protocol under the owner's delegation. Four points are the owner's to decide, and Build asks the owner about them before the freeze:
+Build approves this protocol under the owner's delegation. On 30 October 2026, Build put four points to the owner in short form, and the owner decided them. The owner's words are quoted:
 
-1. **The primary endpoint and its minimum meaningful difference.**
-   - **Recommended:** make the failed hidden cases per change primary, with a minimum meaningful difference of 1 case, read over the 7 changes' mean differences. Keep the share of hidden cases passed, with 0.05, as the second contrast.
-   - **Why:** a wrong stop is M's typical failure. On the new project it costs 1 to 4 cases of the change's own, and as a share that falls below 0.05 at C7 and barely reaches it at C2 and C5. The failed-case count is the "defects left for a person" that §15 and section D name. One more failed case per change is a difference a person has to repair.
-   - **Today:** the share with 0.05 is primary, as the pilot and Build used it. It stays primary unless the owner chooses otherwise before the freeze.
-2. **The quota:** the series takes about 31 to 90 points of the owner's seven-day quota, over two or three weeks of windows.
-3. **Who handles the new project's material:**
-   - **The proposal:** a fresh session that works on no arm. It starts only after the last launch, writes the judge phase, and runs `series_runner.py judge` on each platform.
-   - **During the series:** when a new commit or a stop on one of the new project's launches needs its inputs written again or its evidence read, another fresh session that works on no arm does it, started for that purpose.
-   - Either way the owner does nothing by hand, and Build never opens the new project's material.
-4. **The authoring session's records:** they hold the whole hidden material. The owner exports and then deletes that session before the gate (precondition 4).
+1. **The primary endpoint: "Share passed, 0.05".**
+   - **Primary:** the share of hidden cases passed per change, with a minimum meaningful difference of 0.05.
+   - **Beside it:** the failed-case count, as the second contrast.
+   - **The page's recommendation was the failed-case count.** Its dilution on changes that add few cases stays a stated limit under [Reading](#reading).
+2. **The quota: "OK as planned".** The full series, Windows then Linux, under the protocol's quota stops.
+3. **The judge phase: "A fresh session".**
+   - **After the last launch:** a new session that works on no arm starts only then. It clones the private repository, writes the judge phase and runs the judging. Build only reads the reports.
+   - **During the series:** a stop on one of the new project's launches, or new inputs after a new commit, is handled the same way, by such a session started for that task.
+4. **The authoring records: "I export & delete it".** When Build says the gate is next, the owner exports the authoring session off the machine and deletes it here (precondition 4).
 
 **Information, no decision:** section D of the suite design said that the owner approves each protocol. This page brings that line in line with the delegation of 29 October 2026, under which Build approves it.
 
@@ -190,7 +189,7 @@ An independent reviewer reviewed the first draft of this page on 30 October 2026
 | The `defectsLeft` contrast was not named | Named as secondary |
 | The new project's deadline was the author's, and a timeout counts against the slower arm | Fixed at 5400 s at the freeze; the report shows timeouts per arm |
 | `verify --full` was left open, and T9's gave false Findings | Decided for this series: not run, a stated limit, and the owner's question |
-| For the owner: the endpoint and its difference, dropping `verify --full`, the quota, and section D's wording | Listed under [For the owner](#for-the-owner) |
+| For the owner: the endpoint and its difference, dropping `verify --full`, the quota, and section D's wording | Listed for the owner, and since decided ([Decided by the owner](#decided-by-the-owner)) |
 
 The same reviewer then checked the revision against this page and the code. It found that every handling above matches the code, and it checked the numbers by running `plan`: the gate has 28 launches with a bound of 42, the series 222 per platform with a bound of 333, the repetitions 56, 56, 20, 14 and 14 launches, and M runs first in 18 of the new project's 35 pairs. It would approve once its first two remaining findings were fixed:
 
@@ -208,5 +207,5 @@ The same reviewer then checked the revision against this page and the code. It f
 
 - [PR #907](https://github.com/Glacius-Labs/Markitect/pull/907) counts the tokens of ended agents, so that stated limit now says so.
 - [PR #909](https://github.com/Glacius-Labs/Markitect/pull/909) gives `verify` the required checks as evidence. So the series now proposes one `verify --full` per chain end for both arms, 8 launches per platform. This replaces the decision not to run one. It needs the arm's `verify` mode and the runner's verify launch (precondition 6).
-- The owner's questions now follow Build's list. The recommendation for the primary endpoint changed to the failed-case count, for the reasons given there.
+- The owner's questions followed Build's list, and the owner decided them the same day (see [Decided by the owner](#decided-by-the-owner)). The page had recommended the failed-case count as primary; the owner kept the share.
 - Who handles the new project's material is worded so that a fresh session that works on no arm qualifies.
