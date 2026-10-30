@@ -181,7 +181,7 @@ func TestMakerTaskInboxAndAnswerFormat(t *testing.T) {
 	d := render(t, Input{Start: s, Project: p})
 	contains(t, d.Task, "Make the repository conform", "| `members/member` | own | changed \\| renamed |", "| `loan-limit` | inherited | changed |",
 		"## Messages for you", "### `m-1`: review from `members`\n\nRejected: no test at the limit.", "### `m-2`: answer from `.`, answering `m-0`",
-		"Call `submit` with exactly one verdict per checklist item", "`model-problem`", "escalate", "arrive with a later start")
+		"Call `submit` with exactly one verdict per checklist item", "`model-problem`", "escalate", "arrive in a later turn")
 	lacks(t, d.Task, "Submitted verdicts")
 	s.Task = "Correct the submission your checker rejected."
 	d = render(t, Input{Start: s, Project: p})
@@ -203,6 +203,24 @@ func TestCheckerSeesSubmissionVerdictsAndDiff(t *testing.T) {
 	d = render(t, Input{Start: start(Apply, Checker, "members", nil, items("members/member")), Project: p, Submission: sub})
 	contains(t, d.Task, "`git diff base abc123`", "- M src/members/member.go")
 	lacks(t, d.Task, "xxxxxxxx")
+}
+
+// A checker keeps its conversation for the Run, so from its second turn on
+// its task says that its earlier reviews do not carry over; a maker's role
+// says that its checker keeps a conversation of its own.
+func TestALaterCheckerTurnRechecksEveryVerdictInFull(t *testing.T) {
+	p := library(t)
+	sub := &Submission{Commit: "def456", Verdicts: []Verdict{{Item: "members/member", Verdict: "changed", Evidence: "member.go"}}}
+	s := start(Apply, Checker, "members", nil, items("members/member"))
+	d := render(t, Input{Start: s, Project: p, Submission: sub})
+	contains(t, d.Base, "You keep this conversation for the Run: each new submission comes in a later turn.")
+	lacks(t, d.Task, "do not carry over")
+	s.Round = 2
+	d = render(t, Input{Start: s, Project: p, Submission: sub})
+	contains(t, d.Task, "Your earlier reviews in this Run do not carry over: re-check every verdict of this submission in full", "those you confirmed before included")
+	m := render(t, Input{Start: start(Apply, Maker, "members", nil, items("members/member")), Project: p})
+	contains(t, m.Base, "Your checker then re-checks every verdict in a conversation of its own", "You keep this conversation for the Run")
+	lacks(t, m.Base, "fresh checker")
 }
 
 func TestAParentWithAnEmptyChecklistIntegrates(t *testing.T) {

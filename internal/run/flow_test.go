@@ -18,9 +18,9 @@ const isbn = "package catalog\n\ntype Book struct{ ISBN string }\n"
 // noop is a start that does nothing and finishes.
 var noop = agentfake.Call(func(context.Context, agentport.Start, agentport.Host) error { return nil })
 
-// A child asks and submits in one start; Root answers and submits before the
+// A child asks and submits in one turn; Root answers and submits before the
 // child is approved. The early submission is not reviewed; once the child is
-// approved and its answer changed nothing, Root merges and submits again.
+// approved and its answer changed nothing, the host merges for Root.
 func TestAskAndSubmitWithoutWaiting(t *testing.T) {
 	f := newFixture(t)
 	base, _ := changeBook(f)
@@ -48,8 +48,7 @@ func TestAskAndSubmitWithoutWaiting(t *testing.T) {
 				return agentfake.Fail(err)
 			}
 			return a.Submit(nil, nil, word("conforms"))(ctx, s, h)
-		},
-		a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
+		})
 	a.On(".", checker, a.Review(nil))
 	if r := f.run(run.Request{Base: base}); r.State != run.StateLanded {
 		t.Fatalf("%s: %s", r.State, r.Why)
@@ -80,16 +79,16 @@ func TestUnansweredQuestionIsRemindedOnce(t *testing.T) {
 			}
 			_, err := h.Answer(ctx, question, "Required.")
 			return err
-		}),
-		a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
+		}))
 	a.On(".", checker, a.Review(nil))
 	if r := f.run(run.Request{Base: base}); r.State != run.StateLanded {
 		t.Fatalf("%s: %s", r.State, r.Why)
 	}
 }
 
-// A parent reviews its child's approved work and sends it back with assign;
-// the child's new approval reaches the parent again.
+// A parent's checker rejects the host's merge of its child's approved work;
+// the parent's maker sends it back with assign, and the child's new approval
+// reaches the parent again through the host.
 func TestParentAssignsACorrection(t *testing.T) {
 	f := newFixture(t)
 	base, _ := changeBook(f)
@@ -105,11 +104,14 @@ func TestParentAssignsACorrection(t *testing.T) {
 	a.On("catalog", checker, a.Review(nil), a.Review(nil))
 	a.On(".", maker,
 		agentfake.Call(func(ctx context.Context, s agentport.Start, h agentport.Host) error {
+			if len(s.Inbox) != 1 || s.Inbox[0].Kind != agentport.Review {
+				return errorf("inbox %+v", s.Inbox)
+			}
 			_, err := h.Assign(ctx, "catalog", "Name the field ISBN, as the project spells it.")
 			return err
-		}),
-		a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
-	a.On(".", checker, a.Review(nil))
+		}))
+	// A submission without verdicts may be rejected without a disputed item.
+	a.On(".", checker, a.Review(map[string]string{"-": "the field is spelled Isbn"}), a.Review(nil))
 	r := f.run(run.Request{Base: base})
 	if r.State != run.StateLanded || !strings.Contains(f.show("main", "src/catalog/book.go"), "ISBN") {
 		t.Fatalf("%s: %s", r.State, r.Why)
@@ -138,8 +140,7 @@ func TestApprovedModelProblemEscalates(t *testing.T) {
 			}
 			_, err := h.Answer(ctx, s.Inbox[0].ID, "The isbn is a plain string: realization freedom.")
 			return err
-		}),
-		a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
+		}))
 	a.On(".", checker, a.Review(nil))
 	if r := f.run(run.Request{Base: base}); r.State != run.StateLanded {
 		t.Fatalf("%s: %s", r.State, r.Why)
@@ -193,7 +194,6 @@ func TestCredentialInHistoryDoesNotLand(t *testing.T) {
 		return agentfake.Done()
 	})
 	a.On("catalog", checker, a.Review(nil))
-	a.On(".", maker, a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
 	a.On(".", checker, a.Review(nil))
 	r := f.run(run.Request{Base: base})
 	if r.State != run.StateKept || !strings.Contains(r.Why, "Git token") {
@@ -218,7 +218,6 @@ func TestUsageIsCountedOnce(t *testing.T) {
 	}
 	a.On("catalog", maker, used(a.Submit(nil, map[string]string{"src/catalog/book.go": isbn}, word("changed"))))
 	a.On("catalog", checker, used(a.Review(nil)))
-	a.On(".", maker, used(a.Submit([]string{"managers/catalog"}, nil, word("conforms"))))
 	a.On(".", checker, used(a.Review(nil)))
 	r := f.run(run.Request{Base: base})
 	var back run.Result
@@ -226,10 +225,10 @@ func TestUsageIsCountedOnce(t *testing.T) {
 	if err := json.Unmarshal(data, &back); err != nil {
 		t.Fatal(err)
 	}
-	if back.Usage.InputTokens != 400 || back.Usage.OutputTokens != 40 {
+	if back.Usage.InputTokens != 300 || back.Usage.OutputTokens != 30 {
 		t.Fatalf("usage %+v", back.Usage)
 	}
-	if !strings.Contains(f.show("main", run.ResultFile(r.Run)), "400 in, 40 out") {
+	if !strings.Contains(f.show("main", run.ResultFile(r.Run)), "300 in, 30 out") {
 		t.Fatal("the page counts other tokens")
 	}
 }
@@ -238,6 +237,9 @@ func TestUsageIsCountedOnce(t *testing.T) {
 // on its Run branch and lands nothing.
 func TestStoppedRunNamesApprovedWorkItDoesNotKeep(t *testing.T) {
 	f := newFixture(t)
+	// The hooks refuse the host's merge for Root, so Root's maker would
+	// have to merge, and the budget stops the Run first.
+	failMarker(f)
 	base, start := changeBook(f)
 	a := f.agents
 	a.On("catalog", maker, a.Submit(nil, map[string]string{"src/catalog/book.go": isbn}, word("changed")))

@@ -92,6 +92,10 @@ type Remote interface {
 	// StartFrom moves a Manager's branch, still at the base, to a state its
 	// parent's branch held, before the Manager starts.
 	StartFrom(ctx context.Context, branch, commit string) error
+	// Integrate pushes the host's integration of a parent's children, a
+	// commit the bundle holds, to the parent's branch through the hooks and
+	// returns their decision; a refusal is a decision, not an error.
+	Integrate(ctx context.Context, branch string, bundle io.Reader, commit string) (runremote.Decision, error)
 	// Close removes the remote and everything it created.
 	Close(ctx context.Context) error
 }

@@ -197,6 +197,10 @@ func (f *fixture) run(req run.Request) *run.Result {
 	if left := f.agents.Left(); len(left) > 0 {
 		f.t.Errorf("scripted steps not used: %v", left)
 	}
+	// The Run's agents live until it ends, and the engine closes them then.
+	if closed := f.agents.Closed(); len(r.Starts) > 0 && (len(closed) == 0 || closed[len(closed)-1] != r.Run) {
+		f.t.Errorf("the Run %s did not close its agents: %v", r.Run, closed)
+	}
 	if len(r.Cleanup) > 0 {
 		f.t.Errorf("cleanup: %v", r.Cleanup)
 	}
@@ -305,6 +309,12 @@ func (r *remote) Check(_ context.Context, bundle io.Reader, commit string) ([]ru
 
 func (r *remote) StartFrom(_ context.Context, branch, commit string) error {
 	return remoteserver.StartFrom(r.l, r.git, branch, commit)
+}
+
+// Integrate pushes the host's integration through the real hook, as the
+// container's remote does.
+func (r *remote) Integrate(_ context.Context, branch string, bundle io.Reader, commit string) (runremote.Decision, error) {
+	return remoteserver.Integrate(r.l, r.git, []string{"MARKITECT_REMOTE_TEST_HOOK=1"}, bundle, branch, commit)
 }
 
 func (r *remote) Close(context.Context) error {

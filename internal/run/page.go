@@ -106,13 +106,23 @@ func Page(r *Result) []byte {
 	}
 
 	if len(r.Starts) > 0 {
-		b.WriteString("\n## Agent starts\n\n| Manager | Role | Round | Ended | Agent | Seconds | Detail |\n|---|---|---|---|---|---|---|\n")
+		b.WriteString("\n## Agent turns\n\n| Manager | Role | Round | Agent's | Ended | Agent | Seconds | Detail |\n|---|---|---|---|---|---|---|---|\n")
 		for _, st := range r.Starts {
 			ended := string(st.Reason)
 			if st.Class != "" {
 				ended += " (" + string(st.Class) + ")"
 			}
-			fmt.Fprintf(&b, "| %s | %s | %d | %s | %s | %.0f | %s |\n", cell(st.Manager), st.Role, st.Round, ended, cell(st.Agent), st.Seconds, cell(st.Detail))
+			agent := "start"
+			if st.Continued {
+				agent = "continued"
+			}
+			fmt.Fprintf(&b, "| %s | %s | %d | %s | %s | %s | %.0f | %s |\n", cell(st.Manager), st.Role, st.Round, agent, ended, cell(st.Agent), st.Seconds, cell(st.Detail))
+		}
+	}
+	if len(r.Integrations) > 0 {
+		b.WriteString("\n## Host integrations\n\n| Manager | Children | Submission | Seconds | Why not |\n|---|---|---|---|---|\n")
+		for _, in := range r.Integrations {
+			fmt.Fprintf(&b, "| %s | %s | %s | %.0f | %s |\n", cell(in.Manager), cell(strings.Join(in.Children, ", ")), short(in.Submission), in.Seconds, cell(in.Why))
 		}
 	}
 	if len(r.Messages) > 0 {

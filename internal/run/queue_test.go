@@ -89,7 +89,6 @@ func TestOverlappingRunsTakeTurns(t *testing.T) {
 	a := f.agents
 	a.On("catalog", maker, held(started, release, a.Submit(nil, map[string]string{"src/catalog/book.go": isbn}, word("changed"))))
 	a.On("catalog", checker, a.Review(nil))
-	a.On(".", maker, a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
 	a.On(".", checker, a.Review(nil))
 	first := runAsync(f.engine, run.Request{Mode: agentport.Apply, Run: "first", Target: "main", Base: base, Limits: limits()})
 	<-started
@@ -100,7 +99,6 @@ func TestOverlappingRunsTakeTurns(t *testing.T) {
 	e2, b := f.second()
 	b.On("catalog", maker, b.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ ISBN string; Year int }\n"}, word("changed")))
 	b.On("catalog", checker, b.Review(nil))
-	b.On(".", maker, b.Submit([]string{"managers/catalog"}, nil, word("conforms")))
 	b.On(".", checker, b.Review(nil))
 	second := runAsync(e2, run.Request{Mode: agentport.Apply, Run: "second", Target: "main", Base: base, Limits: limits()})
 
@@ -160,12 +158,12 @@ func changeLoan(f *fixture) string {
 	return f.commit("a loan lasts 21 days")
 }
 
+// scriptLoan lets loans realize the loan change; members and Root have no
+// items, so the host merges for them, and their checkers approve.
 func scriptLoan(a *agentfake.Agents) {
 	a.On("members/loans", maker, a.Submit(nil, map[string]string{"src/members/loans/loan.go": "package loans\n\nconst Days = 21\n"}, word("changed")))
 	a.On("members/loans", checker, a.Review(nil))
-	a.On("members", maker, a.Submit([]string{"managers/members.loans"}, nil, word("conforms")))
 	a.On("members", checker, a.Review(nil))
-	a.On(".", maker, a.Submit([]string{"managers/members"}, nil, word("conforms")))
 	a.On(".", checker, a.Review(nil))
 }
 
@@ -184,7 +182,6 @@ func TestDisjointRunsWorkSideBySide(t *testing.T) {
 	a := f.agents
 	a.On("catalog", maker, held(started, release, a.Submit(nil, map[string]string{"src/catalog/book.go": isbn}, word("changed"))))
 	a.On("catalog", checker, a.Review(nil))
-	a.On(".", maker, a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
 	a.On(".", checker, a.Review(nil))
 	first := runAsync(f.engine, run.Request{Mode: agentport.Apply, Target: "main", Base: base, Limits: limits()})
 	<-started
@@ -229,7 +226,6 @@ func TestAWaitingRunStartsAgainFromTheLanding(t *testing.T) {
 	a := f.agents
 	a.On("catalog", maker, held(started, release, a.Submit(nil, map[string]string{"src/catalog/book.go": isbn}, word("changed"))))
 	a.On("catalog", checker, a.Review(nil))
-	a.On(".", maker, a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
 	a.On(".", checker, a.Review(nil))
 	first := runAsync(f.engine, run.Request{Mode: agentport.Apply, Run: "first", Target: "main", Base: base, Limits: limits()})
 	<-started
@@ -237,7 +233,6 @@ func TestAWaitingRunStartsAgainFromTheLanding(t *testing.T) {
 	e2, b := f.second()
 	b.On("catalog", maker, b.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\n// Book has an ISBN.\ntype Book struct{ ISBN string }\n"}, word("changed")))
 	b.On("catalog", checker, b.Review(nil))
-	b.On(".", maker, b.Submit([]string{"managers/catalog"}, nil, word("conforms")))
 	b.On(".", checker, b.Review(nil))
 	second := runAsync(e2, run.Request{Mode: agentport.Apply, Run: "second", Target: "main", Base: base, Limits: limits()})
 	time.Sleep(300 * time.Millisecond)
@@ -272,7 +267,6 @@ func TestLandingKeepsRunBranchesItDoesNotCover(t *testing.T) {
 	a := f.agents
 	a.On("catalog", maker, a.Submit(nil, map[string]string{"src/catalog/book.go": isbn}, word("changed")))
 	a.On("catalog", checker, a.Review(nil))
-	a.On(".", maker, a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
 	a.On(".", checker, f.approveAfter(map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ Name string }\n"}))
 	kept := f.run(run.Request{Run: "kept", Base: base})
 	if kept.State != run.StateKept {
@@ -309,7 +303,6 @@ func TestDefaultBaseIsTheLandedWork(t *testing.T) {
 	a := f.agents
 	a.On("catalog", maker, a.Submit(nil, map[string]string{"src/catalog/book.go": isbn}, word("changed")))
 	a.On("catalog", checker, a.Review(nil))
-	a.On(".", maker, a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
 	a.On(".", checker, func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
 		// The owner pushes a loan change while Root's checker works.
 		f.pull()

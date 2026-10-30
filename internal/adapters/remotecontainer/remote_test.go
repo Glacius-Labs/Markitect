@@ -331,6 +331,82 @@ git add ci.sh && git commit -q -m probe -m '`+trailers(runremote.Trailers{Manage
 	}
 }
 
+// The host integrates a parent without items: its merge of the child's
+// approval, which only the host holds, is pushed through the container's own
+// hook as user host and moves the parent's branch; one that adds a file of
+// the parent's own is refused and moves nothing.
+func TestTheHostIntegratesThroughTheContainersHook(t *testing.T) {
+	f := newFixture(t)
+	repo, base := f.source()
+	plan := f.plan(base)
+	plan.Managers[0].Checklist = nil
+	r, err := f.start(plan, repo, base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := f.manager(r, "members-maker")
+	mc := f.manager(r, "members-checker")
+	f.sh(m, `cd /tmp/w && git checkout -q -b w origin/managers/members && echo 'package members // v2' > src/members/member.go && git commit -qam work -m '`+
+		trailers(runremote.Trailers{Manager: "members", Verdicts: []runremote.Line{{Item: "members/member", Word: runremote.Changed, Evidence: "v2"}}})+`' && git push -q origin HEAD:refs/heads/managers/members`)
+	f.sh(mc, `cd /tmp/w && git fetch -q && git checkout -q -b w origin/managers/members && git commit -q --allow-empty -m approve -m '`+
+		trailers(runremote.Trailers{Manager: "members", Review: runremote.Approved, Checks: []runremote.Line{{Item: "members/member", Word: runremote.Confirmed, Evidence: "read"}}})+`' && git push -q origin HEAD:refs/heads/managers/members`)
+
+	exported := filepath.Join(t.TempDir(), "run.bundle")
+	out, err := os.Create(exported)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.Export(f.ctx, out); err != nil {
+		t.Fatal(err)
+	}
+	out.Close()
+	hostGit := func(args ...string) string {
+		out, err := exec.Command("git", append([]string{"-C", repo, "-c", "user.name=Host", "-c", "user.email=host@example"}, args...)...).CombinedOutput()
+		if err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, out)
+		}
+		return strings.TrimSpace(string(out))
+	}
+	hostGit("fetch", "-q", exported, "+refs/heads/*:refs/run/*")
+	integrate := func(extra string) (runremote.Decision, string) {
+		t.Helper()
+		hostGit("checkout", "-q", "-B", "integration", "refs/run/root")
+		hostGit("merge", "-q", "--no-ff", "--no-edit", "refs/run/managers/members")
+		if extra != "" {
+			if err := os.WriteFile(filepath.Join(repo, "README.md"), []byte(extra), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			hostGit("commit", "-qam", "more")
+		}
+		hostGit("commit", "-q", "--allow-empty", "-m", "Integrate", "-m", trailers(runremote.Trailers{Manager: "."}))
+		tip := hostGit("rev-parse", "HEAD")
+		var thin bytes.Buffer
+		cmd := exec.Command("git", "-C", repo, "bundle", "create", "-q", "-", "integration", "--not", "refs/run/root", "refs/run/managers/members")
+		cmd.Stdout = &thin
+		if err := cmd.Run(); err != nil {
+			t.Fatalf("bundle: %v", err)
+		}
+		dec, err := r.Integrate(f.ctx, "root", &thin, tip)
+		if err != nil {
+			t.Fatalf("integrate: %v", err)
+		}
+		return dec, tip
+	}
+	rootTip := func() string {
+		return strings.TrimSpace(f.sh(r.Container, `git --git-dir=/srv/markitect/run.git rev-parse refs/heads/root`))
+	}
+	if dec, _ := integrate("# Library by the host\n"); dec.Accepted || !strings.Contains(dec.Reason, "outside") || rootTip() != base {
+		t.Fatalf("an integration that changes Root's own file: %+v, root at %s", dec, rootTip())
+	}
+	dec, tip := integrate("")
+	if !dec.Accepted || dec.Kind != "integration" || len(dec.Checks) != 1 || !dec.Checks[0].Passed || rootTip() != tip {
+		t.Fatalf("integration: %+v, root at %s, want %s", dec, rootTip(), tip)
+	}
+	if err := Sweep(f.ctx, f.engine, f.run); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestAFailedStartLeavesNothing(t *testing.T) {
 	f := newFixture(t)
 	repo, base := f.source()

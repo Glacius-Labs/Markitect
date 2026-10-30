@@ -53,6 +53,8 @@ func (Provider) Home(l agents.Login, _ harness.Document) (frame.Initialize, erro
 	return frame.Initialize{CodexAuth: l.Copy}, nil
 }
 
+func (Provider) LoginFile() string { return codexHome + "/auth.json" }
+
 // AuthStatus runs `codex login status` with its standard error on standard
 // output: the pinned CLI prints its report on standard error (observed
 // offline in the pinned image).

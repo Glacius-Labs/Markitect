@@ -15,14 +15,14 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/runremote"
 )
 
-// idleLimit is how many starts in a row may leave nothing behind (no
+// idleLimit is how many turns in a row may leave nothing behind (no
 // submission, review or message) before the Run stops as making no progress.
 const idleLimit = 2
 
-// schedule runs the agents of one Run. One goroutine decides; agents run in
-// their own goroutines and report how they ended, and host tool calls only
-// record messages and wake the decider. Nobody waits for a message: an
-// answer starts its recipient again.
+// schedule runs the agents of one Run. One goroutine decides; agents' turns
+// and the host's integrations run in their own goroutines and report how
+// they ended, and host tool calls only record messages and wake the decider.
+// Nobody waits for a message: an answer gives its recipient a turn.
 type schedule struct {
 	e      *Engine
 	req    Request
@@ -48,11 +48,12 @@ type schedule struct {
 	why     string
 	cancel  context.CancelFunc
 
-	messages  []agentport.Message
-	notes     []agentport.Note
-	decisions []OwnerDecision
-	records   []AgentStart
-	leftovers []string
+	messages     []agentport.Message
+	notes        []agentport.Note
+	decisions    []OwnerDecision
+	records      []AgentStart
+	integrations []Integration
+	leftovers    []string
 }
 
 // startChecks is the outcome of the host's run of the required checks.
@@ -78,8 +79,10 @@ type node struct {
 	waitFor    map[string]bool
 	unanswered map[string]agentport.Message
 	reminded   map[string]bool
-	// told is the children's approvals the maker last got to merge.
-	told string
+	// told is the children's approvals the maker last got to merge, or the
+	// host last merged; integrated is those the host merged on the branch,
+	// in its submission integration.
+	told, integrated, integration string
 
 	// released: the Manager may start; from is the commit its work starts
 	// from, the base or a state of its parent's branch (concept 2.0 §6.2).
@@ -108,12 +111,27 @@ type node struct {
 	done               bool   // verify: verdicts pushed
 }
 
+// ended is an agent's turn that ended, or the host's integration.
 type ended struct {
-	n     *node
-	role  agentport.Role
-	end   agentport.End
-	began time.Time
-	round int
+	n           *node
+	role        agentport.Role
+	end         agentport.End
+	began       time.Time
+	round       int
+	integration *integration
+}
+
+// integration is the outcome of the host's merge of a parent's working
+// children's approved work.
+type integration struct {
+	children []string
+	told     string
+	// tip is the pushed submission; why says why there is none, a conflict
+	// or the hooks' refusal; err is a technical failure.
+	tip    string
+	why    string
+	checks []runremote.CheckResult
+	err    error
 }
 
 func newSchedule(e *Engine, req Request, plan *runremote.Plan, cur *project.Project, imp analysis.Impact, remote Remote, creds map[string]map[agentport.Role]credential) *schedule {
@@ -306,9 +324,16 @@ func (s *schedule) step(ctx context.Context) {
 			s.startLocked(ctx, n, agentport.Checker, s.reviewTask(n))
 		case len(n.inbox) > 0:
 			s.startLocked(ctx, n, agentport.Maker, s.makerTask(n))
-		case n.rounds[agentport.Maker] == 0 && len(n.waitFor) == 0 && (len(n.items) > 0 || s.childrenApproved(n)):
+		case len(n.items) == 0 && len(n.children) > 0 && s.childrenApproved(n) && s.approvals(n) != n.told:
+			// A parent without items of its own only merges: the host does
+			// that, and its maker works only when the merge conflicts or the
+			// hooks refuse it.
+			s.integrateLocked(ctx, n)
+		case n.rounds[agentport.Maker] == 0 && len(n.waitFor) == 0 && (len(n.items) > 0 || len(n.children) == 0):
 			// A parent with items of its own submits before its children
-			// start; one without waits for their approved work.
+			// start; one without works only on a message, since the host
+			// merges for it. A leaf works at once, also one the change
+			// reaches through a file of its own without an item.
 			s.startLocked(ctx, n, agentport.Maker, s.makerTask(n))
 		case n.rounds[agentport.Maker] > 0 && len(n.children) > 0 && s.childrenApproved(n) && s.approvals(n) != n.told:
 			// The children's approved work changed since the maker last
@@ -379,15 +404,100 @@ func (s *schedule) childrenApproved(n *node) bool {
 	return true
 }
 
-// startLocked starts one agent within the budget.
+// integrateLocked has the host merge a parent's working children's approved
+// work on its branch and push it as a submission without verdicts, which the
+// parent's checker reviews (long-lived Managers). It costs no agent turn.
+func (s *schedule) integrateLocked(ctx context.Context, n *node) {
+	n.told, n.approved = s.approvals(n), false
+	n.running = true
+	s.running++
+	var names, approvals []string
+	for _, c := range n.children {
+		names, approvals = append(names, c.name), append(approvals, c.approval)
+	}
+	from, told, began := n.tip, n.told, s.e.now()
+	deadline := s.req.Limits.Deadline
+	if d := began.Add(s.req.Limits.Start); s.req.Limits.Start > 0 && d.Before(deadline) {
+		deadline = d
+	}
+	go func() {
+		ictx, cancel := context.WithDeadline(ctx, deadline)
+		res := s.integrate(ictx, n, from, names, approvals)
+		cancel()
+		res.told = told
+		s.ended <- ended{n: n, began: began, integration: &res}
+	}()
+}
+
+// integrate merges each approval the branch does not hold yet, the last
+// merge as the submission, and pushes it through the hooks.
+func (s *schedule) integrate(ctx context.Context, n *node, from string, names, approvals []string) integration {
+	res := integration{children: names}
+	var todo []int
+	for i, a := range approvals {
+		ok, err := s.e.Git.Contains(ctx, from, a)
+		if err != nil {
+			res.err = err
+			return res
+		}
+		if !ok {
+			todo = append(todo, i)
+		}
+	}
+	submission := fmt.Sprintf("Integrate the approved work of %s\n\n%s", strings.Join(names, ", "), runremote.Trailers{Manager: n.name})
+	tip := from
+	for k, i := range todo {
+		message := fmt.Sprintf("Merge the approved work of %s\n", names[i])
+		if k == len(todo)-1 {
+			message = submission
+		}
+		merged, conflicts, err := s.e.Git.Merge(ctx, tip, approvals[i], message)
+		switch {
+		case err != nil:
+			res.err = err
+			return res
+		case len(conflicts) > 0:
+			res.why = fmt.Sprintf("merging %s's approved work %s conflicts in %s", names[i], short(approvals[i]), strings.Join(conflicts, ", "))
+			return res
+		}
+		tip = merged
+	}
+	if len(todo) == 0 {
+		// The branch holds every approval already; the submission adds none.
+		var err error
+		if tip, err = s.e.Git.Write(ctx, from, nil, submission); err != nil {
+			res.err = err
+			return res
+		}
+	}
+	var b bytes.Buffer
+	if err := s.e.Git.Bundle(ctx, tip, &b); err != nil {
+		res.err = err
+		return res
+	}
+	dec, err := s.remote.Integrate(ctx, n.branch, &b, tip)
+	if err != nil {
+		res.err = err
+		return res
+	}
+	res.checks = dec.Checks
+	if !dec.Accepted {
+		res.why = "the remote refused it: " + dec.Reason
+		return res
+	}
+	res.tip = tip
+	return res
+}
+
+// startLocked starts one agent's turn within the budget.
 func (s *schedule) startLocked(ctx context.Context, n *node, role agentport.Role, task string) {
 	lim := s.req.Limits
 	if s.starts >= lim.Starts {
-		s.stopLocked(StateIncomplete, fmt.Sprintf("the budget of %d agent starts is used up", lim.Starts))
+		s.stopLocked(StateIncomplete, fmt.Sprintf("the budget of %d agent turns is used up", lim.Starts))
 		return
 	}
 	if n.rounds[role] >= lim.Rounds {
-		s.stopLocked(StateIncomplete, fmt.Sprintf("Manager %s used its %d %s starts without approved work", n.name, lim.Rounds, role))
+		s.stopLocked(StateIncomplete, fmt.Sprintf("Manager %s used its %d %s turns without approved work", n.name, lim.Rounds, role))
 		return
 	}
 	s.starts++
@@ -452,8 +562,8 @@ func tools(role agentport.Role, n *node) []agentport.Tool {
 	return ts
 }
 
-// onEnd reads what an agent left on the Run's remote and decides what
-// follows.
+// onEnd reads what an agent's turn or the host's integration left on the
+// Run's remote and decides what follows.
 func (s *schedule) onEnd(ctx context.Context, ev ended) {
 	tips, syncErr := s.sync(ctx)
 	// The decision log holds the required checks' results on a new
@@ -468,8 +578,12 @@ func (s *schedule) onEnd(ctx context.Context, ev ended) {
 	n := ev.n
 	n.running = false
 	s.running--
+	if ev.integration != nil {
+		s.afterIntegration(ctx, n, ev, tips, syncErr)
+		return
+	}
 	s.records = append(s.records, AgentStart{Manager: n.name, Role: ev.role, Round: ev.round, Reason: ev.end.Reason, Detail: ev.end.Detail, Class: ev.end.Class,
-		Agent: ev.end.Agent, Usage: ev.end.Usage, Seconds: s.e.now().Sub(ev.began).Seconds()})
+		Agent: ev.end.Agent, Usage: ev.end.Usage, Continued: ev.end.Continued, Seconds: s.e.now().Sub(ev.began).Seconds()})
 	if ev.end.Cleanup != "" {
 		s.leftovers = append(s.leftovers, fmt.Sprintf("%s %s round %d: %s", n.name, ev.role, ev.round, ev.end.Cleanup))
 	}
@@ -513,14 +627,54 @@ func (s *schedule) onEnd(ctx context.Context, ev ended) {
 	}
 	n.idle++
 	if n.idle >= idleLimit {
-		s.stopLocked(StateIncomplete, fmt.Sprintf("Manager %s's %s made no progress in %d starts in a row (last: %s %s)", n.name, ev.role, n.idle, ev.end.Reason, ev.end.Detail))
+		s.stopLocked(StateIncomplete, fmt.Sprintf("Manager %s's %s made no progress in %d turns in a row (last: %s %s)", n.name, ev.role, n.idle, ev.end.Reason, ev.end.Detail))
 		return
 	}
 	if ev.role == agentport.Checker {
-		// A checker starts fresh again on the same submission.
+		// The checker takes another turn on the same submission.
 		return
 	}
-	s.hostMessage(n, fmt.Sprintf("Your last start ended (%s) without a submission on %s and without a message. Continue your task.", ev.end.Reason, n.branch))
+	s.hostMessage(n, fmt.Sprintf("Your last turn ended (%s) without a submission on %s and without a message. Continue your task.", ev.end.Reason, n.branch))
+}
+
+// afterIntegration: a pushed integration is the parent's submission, which
+// its checker reviews with the required checks' results; a conflict or a
+// refusal gives the parent's maker the merge instead.
+func (s *schedule) afterIntegration(ctx context.Context, n *node, ev ended, tips map[string]string, syncErr error) {
+	res := ev.integration
+	rec := Integration{Manager: n.name, Children: res.children, Submission: res.tip, Why: res.why, Seconds: s.e.now().Sub(ev.began).Seconds()}
+	if res.err != nil {
+		rec.Why = "the host could not integrate: " + res.err.Error()
+	}
+	s.integrations = append(s.integrations, rec)
+	switch {
+	case s.stopped:
+		return
+	case ctx.Err() != nil:
+		s.stopLocked(StateIncomplete, fmt.Sprintf("the Run's deadline passed or it was cancelled: %v", context.Cause(ctx)))
+		return
+	case res.err != nil:
+		s.stopLocked(StateIncomplete, fmt.Sprintf("the host could not integrate the approved work of %s's children: %v", n.name, res.err))
+		return
+	case syncErr != nil:
+		s.stopLocked(StateIncomplete, fmt.Sprintf("the Run's remote could not be read after the host's integration on %s: %v", n.branch, syncErr))
+		return
+	}
+	s.tips = tips
+	if res.why == "" && tips[n.branch] != res.tip {
+		res.why = fmt.Sprintf("the remote accepted it, but %s is at %s, not at the integration %s", n.branch, short(tips[n.branch]), short(res.tip))
+		s.integrations[len(s.integrations)-1].Submission, s.integrations[len(s.integrations)-1].Why = "", res.why
+	}
+	if res.why != "" {
+		s.hostMessage(n, fmt.Sprintf("The host could not merge your working children's approved work (%s) on %s: %s. Merge it yourself, make the merged state pass the required checks, and submit.", res.told, n.branch, res.why))
+		return
+	}
+	n.tip, n.integrated, n.integration = res.tip, res.told, res.tip
+	n.submission, n.lastSubmission, n.verdicts, n.submitRound = res.tip, res.tip, nil, n.rounds[agentport.Maker]
+	n.evidence = ""
+	if len(s.plan.Checks) > 0 {
+		n.evidence = checkResults("The host merged the children's approved work, and the required checks passed on the merged state:", res.checks)
+	}
 }
 
 // sync reads every branch of the Run's remote into the host's repository.
@@ -746,6 +900,7 @@ func (s *schedule) report(r *Result) {
 	defer s.mu.Unlock()
 	r.State, r.Why = s.state, s.why
 	r.Starts = append(r.Starts, s.records...)
+	r.Integrations = append(r.Integrations, s.integrations...)
 	r.Messages = append(r.Messages, s.messages...)
 	r.Notes = append(r.Notes, s.notes...)
 	r.OwnerDecisions = append(r.OwnerDecisions, s.decisions...)

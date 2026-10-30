@@ -216,9 +216,9 @@ func (a *Agent) submit(ctx context.Context, summary string, args []verdictArgs) 
 		return "", err
 	}
 	return fmt.Sprintf("submitted %s to %s: the remote accepted the push after the required checks. "+
-		"This is a submission, not an approval. When this start has ended, the host gives it to a fresh checker, or, when it lacks "+
-		"something the host requires, such as a working child's approved work, says so in a message instead. A rejection starts you "+
-		"again with the checker's evidence as a review message in your inbox; an approval needs nothing more from you.", commit, a.branch()), nil
+		"This is a submission, not an approval. When this turn has ended, the host gives it to your checker, or, when it lacks "+
+		"something the host requires, such as a working child's approved work, says so in a message instead. A rejection comes back "+
+		"in a later turn with the checker's evidence as a review message; an approval needs nothing more from you.", commit, a.branch()), nil
 }
 
 // review answers the submission at the tip of the maker's branch with a

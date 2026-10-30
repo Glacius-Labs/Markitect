@@ -22,6 +22,9 @@ type Provider interface {
 	// provider start: the login copy and, where the CLI takes them as files,
 	// the harness's system documents.
 	Home(Login, harness.Document) (frame.Initialize, error)
+	// LoginFile is where Home puts the login copy in the private home, so
+	// that a later turn can renew it.
+	LoginFile() string
 	// AuthStatus is the command that reports the login the CLI would use;
 	// CheckAuth reads its standard output and refuses anything but the
 	// account login.
@@ -108,6 +111,10 @@ type Outcome struct {
 	// Model is the model the provider reported.
 	Model string
 	Usage Usage
+	// Context is the input of the turn's last model request, cache reads
+	// included: the conversation's size when the turn ended. Zero when the
+	// provider does not tell it (Codex, which compacts its own thread).
+	Context int64
 }
 
 // Usage counts one turn's tokens as the provider reports them.

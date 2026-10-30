@@ -91,7 +91,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/agentport` | Package agentport is the boundary between the Run engine and the agents it starts (concept 2.0 §6.2, §12): the engine starts a maker or a checker for one Manager with its role, task, checklist, tools and deadline, and observes how it ends. | [internal/agentport/README.md](../../internal/agentport/README.md) |
+| `internal/agentport` | Package agentport is the boundary between the Run engine and the agents it starts (concept 2.0 §6.2, §12): every working Manager has one maker and one checker for the whole Run, and the engine gives each a turn with its role, task, checklist, tools and deadline, and observes how the turn ends. | [internal/agentport/README.md](../../internal/agentport/README.md) |
 
 ## Scripted agents
 

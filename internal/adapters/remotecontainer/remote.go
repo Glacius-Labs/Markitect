@@ -227,6 +227,21 @@ func (r *Remote) Check(ctx context.Context, bundle io.Reader, commit string) ([]
 	return results, nil
 }
 
+// Integrate pushes the host's integration of a parent without items of its
+// own, a commit the bundle holds, to the parent's branch through the hook,
+// and returns the hook's decision.
+func (r *Remote) Integrate(ctx context.Context, branch string, bundle io.Reader, commit string) (runremote.Decision, error) {
+	var out bytes.Buffer
+	if err := r.engine.run(ctx, bundle, &out, "exec", "-i", r.Container, program, "integrate", "--root", root, "--branch", branch, "--commit", commit); err != nil {
+		return runremote.Decision{}, err
+	}
+	var dec runremote.Decision
+	if err := json.Unmarshal(out.Bytes(), &dec); err != nil {
+		return runremote.Decision{}, fmt.Errorf("the remote's decision on the integration: %w", err)
+	}
+	return dec, nil
+}
+
 // StartFrom moves a Manager's branch, still at the base, to a state of its
 // parent's branch before the Manager starts.
 func (r *Remote) StartFrom(ctx context.Context, branch, commit string) error {

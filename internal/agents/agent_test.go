@@ -141,6 +141,10 @@ type fakeRuntime struct {
 	spec    container.ContainerSpec
 	session *fakeSession
 	census  []frame.Process
+	// starts counts the containers started; renewed holds the login copies
+	// a later turn wrote, by file.
+	starts  int
+	renewed map[string][]byte
 }
 
 func newRuntime(t *testing.T, bare string) *fakeRuntime {
@@ -161,16 +165,34 @@ func (r *fakeRuntime) RemoveVolume(_ context.Context, name string) error {
 		return fmt.Errorf("no volume %s", name)
 	}
 	delete(r.volumes, name)
+	if strings.HasSuffix(name, "-work") {
+		// A fresh volume holds no clone.
+		return os.RemoveAll(r.work)
+	}
 	return nil
 }
 
 func (r *fakeRuntime) Start(_ context.Context, spec container.ContainerSpec) (agents.Session, error) {
 	r.spec = spec
+	r.starts++
 	r.session = &fakeSession{rt: r, calls: make(chan frame.ToolCall), replies: make(chan frame.ToolReply)}
 	return r.session, nil
 }
 
 func (r *fakeRuntime) Exec(ctx context.Context, name, dir string, argv []string, stdin io.Reader, stdout io.Writer) error {
+	if name == r.spec.Name && len(argv) == 5 && argv[0] == "/bin/sh" && argv[3] == "renew" {
+		data, err := io.ReadAll(stdin)
+		if err != nil {
+			return err
+		}
+		r.mu.Lock()
+		defer r.mu.Unlock()
+		if r.renewed == nil {
+			r.renewed = map[string][]byte{}
+		}
+		r.renewed[argv[4]] = data
+		return nil
+	}
 	if name != r.spec.Name || argv[0] != "/usr/bin/git" {
 		return fmt.Errorf("unexpected exec %s %q", name, argv)
 	}
@@ -479,7 +501,7 @@ func TestMakerSubmitsWithTrailersAndTheTurnAnswers(t *testing.T) {
 	if !firstErr || !strings.Contains(first, `"members/member" has no verdict`) {
 		t.Fatalf("incomplete submission: %v %s", firstErr, first)
 	}
-	if secondErr || !strings.Contains(second, "submitted ") || !strings.Contains(second, "not an approval") || !strings.Contains(second, "review message in your inbox") {
+	if secondErr || !strings.Contains(second, "submitted ") || !strings.Contains(second, "not an approval") || !strings.Contains(second, "in a later turn with the checker's evidence as a review message") {
 		t.Fatalf("submission: %v %s", secondErr, second)
 	}
 	if out.End != agents.Answered || out.Conversation != "s-1" || out.Model != "claude-sonnet-5-5" || out.Usage.CacheRead != 30 {

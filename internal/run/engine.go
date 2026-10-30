@@ -46,16 +46,18 @@ type Request struct {
 }
 
 // Limits bound a Run (concept 1.0 §20): one budget that corrections share,
-// and deadlines that reach every blocking operation.
+// and deadlines that reach every blocking operation. Agents live for the
+// Run, so the budget counts their turns, as many as there were starts when
+// every turn was an agent of its own.
 type Limits struct {
 	// Deadline bounds the whole Run, landing and cleanup's start included.
 	Deadline time.Time
-	// Starts is the number of agent starts the Run may make.
+	// Starts is the number of agent turns the Run may make.
 	Starts int
-	// Rounds is the number of maker starts, and of checker starts, one
+	// Rounds is the number of maker turns, and of checker turns, one
 	// Manager may make.
 	Rounds int
-	// Start bounds one agent start.
+	// Start bounds one agent turn.
 	Start time.Duration
 }
 
@@ -120,7 +122,7 @@ func (e *Engine) Run(ctx context.Context, req Request) (*Result, error) {
 	defer cancel()
 	r := &Result{Format: ResultFormat, Run: req.Run, Command: string(req.Mode), Outcome: NotLanded, Target: req.Target, Full: req.Full, Began: now,
 		Items: []ResultItem{}, NotParticipating: []NotParticipant{}, OwnerDecisions: []OwnerDecision{}, Findings: []ResultFinding{},
-		Notes: []agentport.Note{}, Starts: []AgentStart{}, Messages: []agentport.Message{}, Cleanup: []string{},
+		Notes: []agentport.Note{}, Starts: []AgentStart{}, Integrations: []Integration{}, Messages: []agentport.Message{}, Cleanup: []string{},
 		RequiredChecks: RequiredChecks{Checks: []runremote.CheckResult{}}}
 
 	// In apply the Run takes its place in the target branch's lock: Runs
@@ -248,6 +250,10 @@ func (e *Engine) Run(ctx context.Context, req Request) (*Result, error) {
 		s.startChecks = e.checkStart(ctx, started, start)
 	}
 	s.run(ctx)
+	// Every agent lived for the Run; they end before the remote does.
+	cctx, ccancel := context.WithTimeout(context.WithoutCancel(ctx), e.cleanup())
+	r.Cleanup = append(r.Cleanup, e.Agents.Close(cctx, req.Run)...)
+	ccancel()
 	s.report(r)
 	if r.State != "" {
 		// A stopped Run still reports honestly, bounded on its own, with

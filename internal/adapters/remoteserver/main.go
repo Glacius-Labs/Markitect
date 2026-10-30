@@ -29,6 +29,8 @@ const usage = `usage: markitect-remote COMMAND [--root DIR]
            print the results as JSON (the host's landing check)
   start    move --branch, still at the base, to --commit of its parent's
            branch before its Manager starts
+  integrate push --commit from a bundle on stdin to --branch as the host,
+           through the hook; print the decision as JSON
   export   write a bundle of every branch to stdout
   log      write the decision log to stdout
 `
@@ -45,8 +47,8 @@ func Main(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io
 	root := fs.String("root", DefaultRoot, "the remote's directory")
 	listen := fs.String("listen", fmt.Sprintf(":%d", Port), "serve: listen address")
 	wait := fs.Duration("timeout", 30*time.Second, "ready: how long to wait")
-	commit := fs.String("commit", "", "check, start: the commit")
-	branch := fs.String("branch", "", "start: the Manager's branch")
+	commit := fs.String("commit", "", "check, start, integrate: the commit")
+	branch := fs.String("branch", "", "start, integrate: the Manager's branch")
 	if err := fs.Parse(args[1:]); err != nil {
 		return 2
 	}
@@ -78,6 +80,8 @@ func Main(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io
 				return err
 			}
 			return StartFrom(l, git, *branch, *commit)
+		case "integrate":
+			return integrate(l, *branch, *commit, stdin, stdout)
 		case "ready":
 			return ready(ctx, *listen, *wait)
 		case "export":

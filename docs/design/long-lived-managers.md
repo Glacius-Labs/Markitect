@@ -4,7 +4,7 @@ A proposal to change how a concept 2.0 Run starts its agents, built on a separat
 
 ## Why
 
-Today every start of a maker or checker gets a new container, a new clone and one provider turn, and ends; a rejection or a child's approval leads to a new start that knows only what Git holds ([agents](../../internal/agents/README.md#one-start)). In the [T7 pilot](../validation/t7-pilot-20261029.md)'s 2.0 runs:
+Today every start of a maker or checker gets a new container, a new clone and one provider turn, and ends; a rejection or a child's approval leads to a new start that knows only what Git holds ([agents](../../internal/agents/README.md#one-agent)). In the [T7 pilot](../validation/t7-pilot-20261029.md)'s 2.0 runs:
 
 - **Containers are cheap.** A Library fixed start used 13 to 14 agent containers, a Makerspace plant 22 to 44, each Run one remote. The required checks run inside the remote, so no helper container is created. From a container's start to its provider turn took 1 to 3 seconds, 2 to 5 % of the agent time.
 - **Turns in a row and reading are not.** On the Library M3, about ten turns of 30 to 90 seconds ran one after the other: Root's maker and checker, the three children and their checkers, `lending/reminders`, `lending`'s second round and Root's second round. Each start read 80 to 370 k input tokens, cache reads included, to write 1 to 8 k, 1.8 M for the change. On the nine Library pairs K averaged 62 seconds and 0.28 M input tokens per launch.
@@ -20,6 +20,18 @@ So the cost lies in turns that each start from nothing and in turns spent on int
 5. **Context and login have a fallback.** When an agent's conversation nears its context limit, the host ends it and starts that agent fresh from Git, as today. A container that lives for the Run gets its login copy renewed from the host before each turn.
 
 **What it changes, if adopted:** concept 2.0 §6.2 (a fresh checker; makers and checkers per start), §6.3 (the parent merges; only a Manager pushes, to its own branch), §9 (the host's own Git work), and [DEC-082](../concepts/register.md#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager) and [DEC-083](../concepts/register.md#dec-083-the-host-runs-natively-each-run-lives-in-containers). **Unchanged:** what the hooks refuse, parent-first, escalation and model defects, what a verdict covers ([DEC-088](../concepts/register.md#dec-088-a-checker-reads-the-model-in-full-and-judges-its-own-packages-files)), the Result page and landing. No team inside a Manager: the tree is the team, and sub-agents would work outside the hooks and the Result.
+
+## As built on the branch
+
+`dev/long-lived-managers` builds the five items on the `main` commit `2007156d`, whose code equals the counted series' frozen commit. The canonical pages there describe it: [agents](../../internal/agents/README.md#one-agent), [agent port](../../internal/agentport/README.md#a-turn), [Run engine](../../internal/run/README.md#schedule) and [Run remote](../../internal/runremote/README.md#what-the-hooks-refuse) (rule 10). The choices the proposal left open:
+
+1. **Turns.** The port's `Start` is one turn of an agent named by its Run, Manager and role; `Agents.Close` ends the Run's agents before the remote goes. The provider CLIs continue a conversation natively and already did so for a turn after the first: `claude --print --resume SESSION` and `codex exec resume THREAD`, each with the account login only. A later turn sends the new task alone. Before it, the host renews the login copy, fetches the remote into the clone, moves a maker's branch forward to its remote tip (where a review or the host's integration moved it) and resets a checker's working tree to the submission. An agent continues only after a turn that finished; after any other turn it ends, and its next turn starts fresh from Git as today.
+2. **The checker.** From its second turn, its task says that its earlier reviews do not carry over and that it re-checks every verdict in full. It still gets no Shared Notes and no message of its maker.
+3. **The host's integration.** For a parent without items whose working children are all approved, the host merges each approval with Git's text merge, the last merge as the parent's submission without verdicts, and pushes it as user `host` through the remote's own hook (`markitect-remote integrate`). The hook holds it to a parent's push and to nothing of the host's own. Agents' pushes and the host's take turns through one lock. A conflict or a refusal gives the parent's maker a host message. The Result lists every integration under `integrations`, which is how item 3 is read apart.
+4. **Limits.** `--starts`, `--rounds` and `--start-timeout` keep their names and values and count turns. Two turns in a row without progress stop the Run.
+5. **Fallbacks.** An agent ends after a turn whose last request read 150,000 input tokens or more, cache reads included. Claude Code reports that size; Codex does not and compacts its own thread. The login copy is renewed through the container's shell, so agentd and the Manager image stay as on `main`, and both arms of the comparison run on one image.
+
+The Result keeps the evaluation suite's contract: `starts` lists turns, each marked `continued` when it continued a living agent, so containers per launch are the starts not continued plus the remote.
 
 ## Comparison
 

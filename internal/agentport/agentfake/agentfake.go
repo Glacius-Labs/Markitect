@@ -17,15 +17,16 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/agentport"
 )
 
-// Step answers one start.
+// Step answers one turn.
 type Step func(ctx context.Context, s agentport.Start, host agentport.Host) agentport.End
 
-// Agents runs scripted Steps. A start with no Step left fails, so a test
-// sees every start it did not expect.
+// Agents runs scripted Steps. A turn with no Step left fails, so a test
+// sees every turn it did not expect.
 type Agents struct {
 	mu     sync.Mutex
 	steps  map[key][]Step
 	starts []agentport.Start
+	closed []string
 	// Dir holds the agents' working copies; New sets it to a fresh
 	// temporary directory.
 	Dir string
@@ -73,7 +74,23 @@ func (a *Agents) Left() map[string]int {
 	return left
 }
 
-// Run runs the next Step for the start's Manager and role.
+// Closed returns the Runs whose agents the engine closed, in order.
+func (a *Agents) Closed() []string {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return append([]string(nil), a.closed...)
+}
+
+// Close records that the engine ended the Run's agents; scripted Steps leave
+// nothing behind.
+func (a *Agents) Close(_ context.Context, run string) []string {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.closed = append(a.closed, run)
+	return nil
+}
+
+// Run runs the next Step for the turn's Manager and role.
 func (a *Agents) Run(ctx context.Context, s agentport.Start, host agentport.Host) agentport.End {
 	a.mu.Lock()
 	a.starts = append(a.starts, s)

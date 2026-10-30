@@ -30,8 +30,15 @@ func prepare(cmd *exec.Cmd, uid int, isolate bool) {
 
 // lockChecks makes check runs of the hook and of the host's landing check
 // take turns, so no two check users live at once.
-func lockChecks(l Layout) (func(), error) {
-	f, err := os.OpenFile(filepath.Join(l.Root, "check.lock"), os.O_RDWR|os.O_CREATE, 0o600)
+func lockChecks(l Layout) (func(), error) { return lockFile(filepath.Join(l.Root, "check.lock")) }
+
+// lockPushes makes the agents' pushes through the server and the host's
+// integration take turns, so the hook decides each against a repository no
+// other push changes.
+func lockPushes(l Layout) (func(), error) { return lockFile(filepath.Join(l.Root, "push.lock")) }
+
+func lockFile(name string) (func(), error) {
+	f, err := os.OpenFile(name, os.O_RDWR|os.O_CREATE, 0o600)
 	if err != nil {
 		return nil, err
 	}

@@ -25,6 +25,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
 	"github.com/Glacius-Labs/Markitect/internal/agentport"
 	"github.com/Glacius-Labs/Markitect/internal/harness"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/runremote"
 )
 
@@ -144,6 +145,9 @@ type Agent struct {
 	tools    []harness.Tool
 	secrets  [][]byte
 	volumes  []string
+	// project is the project at spec.Start.Git.Base, which the harness
+	// renders from.
+	project *project.Project
 
 	mu           sync.Mutex
 	conversation string
@@ -231,16 +235,10 @@ func (a *Agent) start(ctx context.Context, login Login) error {
 	if err := a.clone(ctx); err != nil {
 		return err
 	}
-	in := harness.Input{Start: s.Start}
-	if in.Project, err = a.loadBase(ctx); err != nil {
+	if a.project, err = a.loadBase(ctx); err != nil {
 		return err
 	}
-	if s.Start.Role == agentport.Checker && s.Start.Mode == agentport.Apply {
-		if in.Submission, err = a.submission(ctx); err != nil {
-			return err
-		}
-	}
-	if a.doc, err = harness.Render(in); err != nil {
+	if a.doc, err = a.render(ctx); err != nil {
 		return err
 	}
 	a.tools = harness.Tools(s.Start)
@@ -255,6 +253,19 @@ func (a *Agent) start(ctx context.Context, login Login) error {
 		return &StartError{Class: LoginFailed, Err: err}
 	}
 	return nil
+}
+
+// render writes the harness for the agent's current start from the project
+// at its base and, for a checker in apply, the submission at its branch's tip.
+func (a *Agent) render(ctx context.Context) (harness.Document, error) {
+	in := harness.Input{Start: a.spec.Start, Project: a.project}
+	if in.Start.Role == agentport.Checker && in.Start.Mode == agentport.Apply {
+		var err error
+		if in.Submission, err = a.submission(ctx); err != nil {
+			return harness.Document{}, err
+		}
+	}
+	return harness.Render(in)
 }
 
 // checkLogin runs the CLI's own login report before any inference.
@@ -350,9 +361,10 @@ func (a *Agent) git(ctx context.Context, argv []string, stdin string, stdout io.
 }
 
 // Send runs one turn: the message goes to the provider conversation, and the
-// turn ends when the provider ends it, at the start's deadline or when ctx
-// ends. Tool calls are served while it runs. The first turn's message is the
-// harness's task; message is then appended to it when not empty.
+// turn ends when the provider ends it, at the current start's deadline or
+// when ctx ends. Tool calls are served while it runs. The first turn's
+// message is the harness's task; message is then appended to it when not
+// empty. Continue runs a later turn for a new start.
 func (a *Agent) Send(ctx context.Context, message string) (Outcome, error) {
 	a.mu.Lock()
 	if a.closed {
