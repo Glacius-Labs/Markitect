@@ -2,7 +2,7 @@
 
 The protocol of step T7's counted acceptance series ([delivery plan](../implementation-plan.md#concept-20-build)), as section D of the [suite design](../design/evaluation-suite-v2.md#d-counted-evaluations) asks for. It is built from the pilot's [proposal](t7-pilot-20261029.md#proposed-protocol-for-the-counted-series) and its [Q4](t7-pilot-20261029.md#q4-what-must-change-before-a-counted-series), updated for what has changed since. The owner delegated the counted series to Build, and Build approves this protocol after an [independent review](#independent-review), recorded below before any counted run ([build page](../workstreams/build.md), Decisions).
 
-**Status: approved by Build on 30 October 2026,** under the owner's delegation, after the [independent review](#independent-review) and its second round, on `main` at `6174d5da` (PRs [#908](https://github.com/Glacius-Labs/Markitect/pull/908), [#910](https://github.com/Glacius-Labs/Markitect/pull/910) and [#911](https://github.com/Glacius-Labs/Markitect/pull/911)). No gate or counted launch has run; the [preconditions](#preconditions) come first, and [Amendment 1](#amendment-1-30-october-2026-the-frozen-commit) named the frozen commit. [Amendment 2](#amendment-2-30-october-2026-scoring-fixes-before-the-gate) fixes the scoring before the gate, records the owner's rule for "at least as good" and replaces that commit. The [stability gate](#stability-gate) runs only in a window that Build clears with the owner. The owner decided the [four points](#decided-by-the-owner) that were the owner's on 30 October 2026.
+**Status: approved by Build on 30 October 2026,** under the owner's delegation, after the [independent review](#independent-review) and its second round, on `main` at `6174d5da` (PRs [#908](https://github.com/Glacius-Labs/Markitect/pull/908), [#910](https://github.com/Glacius-Labs/Markitect/pull/910) and [#911](https://github.com/Glacius-Labs/Markitect/pull/911)). No counted launch has run; the [preconditions](#preconditions) come first, and [Amendment 1](#amendment-1-30-october-2026-the-frozen-commit) named the frozen commit. [Amendment 2](#amendment-2-30-october-2026-scoring-fixes-before-the-gate) fixes the scoring before the gate, records the owner's rule for "at least as good" and replaces that commit. The Windows gate ran on 30 October 2026 and did not pass, because M did not land the Makerspace W0 ([Amendment 3](#amendment-3-30-october-2026-the-windows-gate)). The [stability gate](#stability-gate) runs only in a window that Build clears with the owner. The owner decided the [four points](#decided-by-the-owner) that were the owner's on 30 October 2026.
 
 ## What changed since the pilot's proposal
 
@@ -258,6 +258,77 @@ Build approves this protocol under the owner's delegation. On 30 October 2026, B
   - The organization's cost stays the pilot's `manager_costs.py`, unchanged at SHA-256 prefix `ad8185aa1e67fa56`.
   - Everything else in Amendment 1 stands.
   - No step of the new project's launch inputs holds a Package without a registry page, so T5's second fix does not touch them (checked on 30 October 2026, paths only). Build checked the Library and the Makerspace.
+
+### Amendment 3, 30 October 2026: the Windows gate
+
+- **Verdict: the gate did not pass.** `gate-windows\gate.json` (22:24:08Z) holds every check but the last one.
+  - **Held:**
+    - All 32 launches were results, with no relaunch.
+    - Every delivered public result and both chains were judged.
+    - All four verify launches ended `findings`.
+    - No credential was found in the 13,459 evidence files scanned.
+    - Nothing was left on the engine, and the engine reported no error.
+  - **Failed: M did not land the Makerspace W0** (`mLandedTheFirstChainStep`).
+    - M's W0 Run (`eval-fc73c7a39292`) ran 1,393 s of its 5,400 s and ended `incomplete` with nothing landed. Its cause: "Manager . used its 6 maker starts without approved work", after 35 agent starts and about 11.5 million input tokens.
+    - M's C1 to C9 then started from W0's empty start. C1 to C8 landed, and C9 had nothing to do.
+  - **Why, as Build found it, looking first as the [gate's rules](#stability-gate) say:** M's own behavior, not a fault of the arm, the suite, a judge or the runner.
+    - Root integrated nine children and spent its maker starts on their events.
+    - It told `protocol` that modules were on Root's branch before they were (m6 and m8, against m7 and m10).
+    - Its checker rejected the README's example session while `protocol` was not wired.
+    - In T8, the same W0 landed once ([record](t8-makerspace-w0-20261030.md)).
+  - **What follows, as Build decided:**
+    - No relaunch, and no new gate now.
+    - The comparison of the long-lived Managers redesign runs first, with W0 twice per arm. The fix and a new freeze follow the owner's decision on it.
+    - Precondition 5 does not hold for Windows.
+- **The run:**
+  - **What ran:**
+    - the frozen commit `4576beaa`;
+    - the work folder `gate-windows`, from its own `tools/`;
+    - the runner's SHA-256 `2f32715b9a58675699b00d0e17fce809166ee453e8c7e95d051ac37e150fe03b`;
+    - the binaries, images and inputs that Amendment 2 names, recorded in the ledger's `freeze`.
+  - **The Docker window:**
+    - The owner answered "Yes, Docker free" to Build.
+    - At 19:10Z, Build found no container running, no `dotnet` process and the lock free, and removed `STOP`.
+  - **Timeline:**
+    - **Start:** the runner started detached at 19:11:16Z and began at 19:11:17Z.
+    - **One wait:** the engine's first ten minutes of watching, 19:12 to 19:22Z.
+    - **One login refresh:** at 19:22:07Z, from a file 13.6 h past its expiry. It worked.
+    - **Launches:** the first started at 19:22:14Z, and the last ended at 22:23:54Z.
+  - **Quota:** the seven-day use rose from 0.17 to 0.21, the five-hour use peaked at 0.24, and nothing was refused.
+- **Time per launch**, as the suite's wall time:
+
+  | Launches | M | K |
+  | --- | --- | --- |
+  | Library fixed starts M2 to M4 | 8.0 min on average (6.0 to 9.5) | 1.9 min (0.5 to 3.2) |
+  | The new project's C1 | 10.1 min | 1.1 min |
+  | Makerspace chain W0 to C9 | 9.3 min on average, 93 min in all (0.2 to 23.2) | 2.9 min on average, 29 min in all (1.3 to 13.7) |
+  | Verify launches: the new project's C1, then the Makerspace chain | 2.9 and 2.9 min | 2.7 and 3.4 min |
+
+  - **In all:** 2.9 h of launches in 3 h 13 min. A launch of M took 9.1 min on average (median 7.9), and one of K 2.6 min (median 1.6).
+  - **For the series:** at these averages, a platform's series of about 230 launches takes about 22 hours of launches. The [Protocol](#protocol) estimated 50 to 80.
+- **Preconditions 3 and 4 held before the first launch,** recorded by paths and outcomes only:
+  - **Precondition 4:**
+    - The owner exported the authoring session off the machine, and Build deleted it on 30 October 2026.
+    - Build verified that its transcript, subagent files, file history, session environment and temporary folder were gone, and that its worktree and branch were removed.
+    - The owner removed the exported archive and the Recycle Bin items.
+  - **The search under [Hidden material](#hidden-material):**
+    - The marker-file search found no marker file. It covered the user profile, `C:\WINDOWS\TEMP\claude` and the WSL home, with positive controls.
+    - The runner's hidden check found that none of the ten hidden places exists.
+    - Four temporary folders under `AppData\Local\Temp` could not be read. They were last written between 29 September and 6 October, before the authoring session.
+  - **Precondition 3:** the inputs written from `a8a9234c` are kept under Amendment 2. Their digests are unchanged against `4576beaa`, and the Windows and WSL copies are byte-identical.
+- **Verify against the judge,** for the Makerspace chains, as the gate's record asks:
+  - **No drift, by both:**
+    - The series judge found no drift at C9 for either chain: no forgotten rule, no stale file, no unaccounted file and no regression along the chain. Both chains passed 126 of 126 hidden cases there.
+    - Each `verify --full` found 303 of its 304 items conforming.
+  - **One Finding each, outside what the judge checks.** Neither is false, unlike two of T9's three:
+    - **K's chain** (`protocol/program`): the program is not deterministic.
+      - With several unexpected members, a request's reason text names whichever member a Go map iteration finds first, so it differs between runs.
+      - The model says "Given the same request lines, it produces the same response lines".
+      - The code confirms it: two loops over maps in `realization/protocol/request.go`.
+      - No hidden case sends several unexpected members.
+    - **M's chain** (`tests`): the tests spot-check the permission matrix instead of covering it, as `tests.md` asks.
+      - The checker changed `registerUser` or `issueCredit` from admin only to staff and admin in the specification, and either change still passed the tests.
+      - The judge runs the tests but does not measure what they cover.
 
 ## Independent review
 
