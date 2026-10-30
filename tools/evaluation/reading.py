@@ -67,7 +67,8 @@ def t_quantile(p, df):
 
 
 def paired(differences, minimum):
-    """The interval and the readings of paired differences (positive favors the variant)."""
+    """The interval and the readings of paired differences (positive favors the variant). Without a minimum meaningful
+    difference (None) the reading is descriptive: better, worse or undecided, and no claim of at least as good."""
     n = len(differences)
     if n < 2:
         return {"pairs": n, "mean": differences[0] if n else None, "low": None, "high": None,
@@ -79,8 +80,9 @@ def paired(differences, minimum):
         reading = "better"
     elif high < 0:
         reading = "worse"
-    elif high < minimum:
+    elif minimum is not None and high < minimum:
         reading = "a meaningful advantage is excluded"
     else:
         reading = "undecided"
-    return {"pairs": n, "mean": mean, "low": low, "high": high, "reading": reading, "atLeastAsGood": low > -minimum}
+    return {"pairs": n, "mean": mean, "low": low, "high": high, "reading": reading,
+            "atLeastAsGood": None if minimum is None else low > -minimum}

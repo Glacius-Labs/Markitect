@@ -226,8 +226,9 @@ class PlanTest(unittest.TestCase):
         self.assertEqual(series_runner.summary(units)["byArm"], {"M": 115, "K": 115})
         self.assertEqual(config["launchBound"], 345)
         self.assertTrue(all(u.get("verify") for u in units if u["kind"] == "chain"))
-        self.assertEqual([(c["endpoint"], c["minimumDifference"], c.get("blockBy")) for c in config["contrasts"]],
-                         [("casesPassedShare", 0.05, "change"), ("casesFailed", 1, "change"), ("defectsLeft", 1, None)])
+        self.assertEqual([(c["endpoint"], c.get("minimumDifference"), c.get("blockBy")) for c in config["contrasts"]],
+                         [("casesPassedShare", 0.05, "change"), ("casesFailed", 1, "change"), ("defectsLeft", 1, None),
+                          ("ownCasesPassedShare", None, "change")])
         # Every fixed start and plant runs as often as its role says, for both arms; the chains come last.
         reps = {}
         for u in units:
@@ -387,6 +388,11 @@ class SeriesTest(Fixture):
         self.assertTrue(self.arg(m, "--markitect").endswith("markitect.exe" if os.name == "nt" else "markitect"))
         self.assertEqual((self.arg(k, "--sandbox"), self.arg(k, "--login")), ("sha256:s", str(self.login)))
         self.assertEqual(k["args"][k["args"].index("--") + 1:], ["python3", "-I", "-B", "/variant/claude_code.py", "--effort", "high"])
+        # K gets the task without the registry pages; M works from them.
+        self.assertEqual(("--without-pages" in k["args"][:k["args"].index("--")], "--without-pages" in m["args"]), (True, False))
+        # K's own failure is void, as M's are.
+        signatures = json.loads((self.work / "signatures.json").read_text())["variants"]
+        self.assertEqual([s["pattern"] for s in signatures["K"]], ["^error$"])
 
     def test_a_busy_lock_is_waited_for_and_never_held_by_the_runner(self):
         self.scenario({"m": ["result"]})
@@ -601,6 +607,9 @@ class SeriesTest(Fixture):
                          ["all", "gs", "gs-fixed", "gs-chains"])
         self.assertEqual(json.loads((self.work / "ledger-gs-chains.json").read_text())["chains"][0]["id"], "ch")
         self.assertEqual(json.loads((self.work / "ledger-gs-fixed.json").read_text())["launches"], [])
+        # The owner's rule is read on the fixed starts' report only.
+        self.assertEqual([json.loads((self.work / f"ledger-{p}.json").read_text()).get("ownerRule") for p in ("gs", "gs-fixed", "gs-chains")],
+                         [False, True, False])
 
     def test_a_chains_end_state_is_verified_by_the_2_0_host_whichever_arm_made_it(self):
         self.scenario({"ch/W0": ["result"], "ch/C1": ["result"], "ch": ["could-not-run", "result"]})

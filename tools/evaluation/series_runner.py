@@ -22,9 +22,10 @@ during any wait.
 The runner holds the shared engine lock only for a login refresh, between launches, never while a suite command runs:
 suite.py takes the lock for each run, judgment and review, and a busy lock is waited for and not counted. Before each
 launch it waits until the engine is quiet (Guard) and the login outlives the launch's deadline by twenty minutes
-(Login). Each launch is classed with its arm's variant runtime signatures, as the report classes it. A void launch is
-relaunched up to `relaunches` times; a launch invalid only by containers of other work (no `markitect.*` label, as the
-run's own engine events show their start) is relaunched once; any other invalid launch stops the series. So do a
+(Login). K gets its task without the registry pages (suite.py --without-pages). Each launch is classed with its arm's
+variant runtime signatures, as the report classes it. A void launch is relaunched up to `relaunches` times; a launch
+invalid only by containers of other work (no `markitect.*` label, as the run's own engine events show their start) is
+relaunched once; any other invalid launch stops the series. So do a
 refused request or a seven-day use of 90 %, a credential in a run's evidence, a gateway refusal of a provider name,
 hidden material on the machine, a void share above one in four for an arm after its first eight launches, a judge that
 gives no valid judgment twice, a frozen file, binary or image that changed between windows, the launch bound, a login
@@ -52,18 +53,22 @@ sys.path.insert(0, str(HERE))
 import classify  # noqa: E402
 
 DEADLINES = {"library": 2700, "makerspace": 5400}
-# The 2.0 arm's variant runtime signatures (markitect_arm.py), written before any launch. V is the verify launch on a
-# chain's end state (markitect_arm.py --verify): M's host and machinery whichever arm made the end state.
+# The variants' runtime signatures, written before any launch: the 2.0 arm's (markitect_arm.py), and K's own failure
+# (claude_code.py writes the status "error" when its code fails, before or after the session). V is the verify launch on
+# a chain's end state (markitect_arm.py --verify): M's host and machinery whichever arm made the end state.
 ARM_SIGNATURES = [
     {"id": "arm-could-not-run", "path": "reported.status", "pattern": "^(could-not-run|check-failed)$"},
     {"id": "arm-no-agent-turn", "path": "reported.noAgentTurn", "pattern": "^true$"}]
-SIGNATURES = {"variants": {"M": ARM_SIGNATURES, "V": ARM_SIGNATURES}}
+K_SIGNATURES = [{"id": "k-error", "path": "reported.status", "pattern": "^error$"}]
+SIGNATURES = {"variants": {"M": ARM_SIGNATURES, "V": ARM_SIGNATURES, "K": K_SIGNATURES}}
 REPETITIONS = {"public": {"fixed": 2, "plant": 2, "chain": 1}, "confirmatory": {"fixed": 5, "plant": 3, "chain": 2}}
 GATE_FIXED, GATE_CHAIN = ("library", ["M2", "M3", "M4"]), "makerspace"
 # The protocol's contrasts: the primary one first, each read over the changes' mean differences.
 CONTRASTS = [{"variant": "M", "baseline": "K", "endpoint": "casesPassedShare", "minimumDifference": 0.05, "blockBy": "change"},
              {"variant": "M", "baseline": "K", "endpoint": "casesFailed", "minimumDifference": 1, "blockBy": "change"},
-             {"variant": "M", "baseline": "K", "endpoint": "defectsLeft", "minimumDifference": 1}]
+             {"variant": "M", "baseline": "K", "endpoint": "defectsLeft", "minimumDifference": 1},
+             # Descriptive, no minimum meaningful difference: what the share of all cases dilutes.
+             {"variant": "M", "baseline": "K", "endpoint": "ownCasesPassedShare", "blockBy": "change"}]
 QUIET_SECONDS = 600
 LOGIN_MARGIN = 20 * 60
 REVIEW_SECONDS = 3600  # a review and its confirmations, each session up to reviewing.DEADLINE
@@ -700,8 +705,9 @@ class Runner:
             return (["--native", self.c["sandboxImage"], *hidden, "--login", self.c["login"], "--lock", self.c["lock"], "--engine", self.docker],
                     [self.py, "-I", "-B", self.ev / "markitect_arm.py", "--markitect", self.markitect,
                      "--remote-binary", pathlib.Path(self.c["bin"]) / "markitect-remote", "--manager-image", self.c["managerImage"]])
+        # K gets the same task as M without the registry pages, which only M works from (Build, 29 October 2026).
         return (["--sandbox", self.c["sandboxImage"], "--variant-code", self.ev, "--login", self.c["login"], "--lock", self.c["lock"],
-                 "--engine", self.docker],
+                 "--engine", self.docker, "--without-pages"],
                 ["python3", "-I", "-B", "/variant/claude_code.py", "--effort", "high"])
 
     def quiet(self):
@@ -1115,8 +1121,9 @@ class Runner:
             for part, launches_, chains_ in ((name, mine, chains), (f"{name}-fixed", [e for e in mine if "-fixed-" in e["task"]], []),
                                              (f"{name}-chains", [e for e in mine if e["task"] == f"{name}-chain"], chains)):
                 ledger = self.work / f"ledger-{part}.json"
+                # The owner's rule for "at least as good" is defined on fixed starts only (acceptance.at_least_as_good).
                 ledger.write_text(json.dumps({**self.ledger, "series": f"{self.ledger['series']}-{part}", "launches": launches_,
-                                              "chains": chains_}, indent=2) + "\n", encoding="utf-8")
+                                              "chains": chains_, "ownerRule": part.endswith("-fixed")}, indent=2) + "\n", encoding="utf-8")
                 parts.append((part, ledger))
         for part, ledger in parts:
             code, err = self.suite(f"report-{part}", ["report", "--ledger", ledger, "--out", out / part])

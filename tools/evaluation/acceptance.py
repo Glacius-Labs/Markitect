@@ -8,7 +8,10 @@ The ledger (report.py) may carry, besides its launches:
   contrasts: [{"variant": "2.0", "baseline": "K", "endpoint": "casesPassedShare",
                "minimumDifference": 0.05, "blockBy": "change"}]
                blockBy "change" reads the interval over each change's mean difference (task and step,
-               over its repetitions), so that a change's repetitions do not count as independent pairs
+               over its repetitions), so that a change's repetitions do not count as independent pairs;
+               a contrast without minimumDifference is descriptive
+  ownerRule: true    read the owner's rule for at least as good, which is defined on fixed starts only
+                     (the series runner's NAME-fixed reports)
   tasks.NAME.planted: "defect" or "gap", for a planted task
 
 1. Correct           every landed change passes every hidden case
@@ -16,7 +19,9 @@ The ledger (report.py) may carry, besides its launches:
                      regressions along it and the variant's own verify --full, where it has one
 3. Nothing skipped   every Result's items have a verdict with evidence (results.py)
 4. Stops right       planted defects do not land, harmless gaps do (judging.stops)
-5. Trustworthy       the paired reading of each contrast (reading.py)
+5. Trustworthy       the paired reading of each contrast (reading.py), read a second time with every
+                     unpaired unit scored as the change not done; then the owner's rule for at least as
+                     good: both case contrasts and a landed-change rate not below the baseline's
 """
 import json
 import pathlib
@@ -30,22 +35,59 @@ ENDPOINTS = {
     "casesPassedShare": ("hidden cases passed, as a share of planted cases", True),
     "casesFailed": ("hidden cases failed, earlier steps' cases included", False),
     "defectsLeft": ("defects left for a person (human attention)", False),
+    "ownCasesPassedShare": ("the step's own new hidden cases passed, as a share of them", True),
 }
+# The owner's rule for "at least as good" (30 October 2026): both case contrasts hold, and the variant's landed-change
+# rate is not below the baseline's (landed).
+RULE = ("casesPassedShare", "casesFailed")
 
 
 def number(value):
     return "n/a" if value is None else (f"{value:.3f}".rstrip("0").rstrip(".") if isinstance(value, float) else str(value))
 
 
+def start_scores(facts):
+    """What each task and step's start scores, by the protocol's rule for a change not done: every earlier step's case
+    passed and the step's own new cases failed. From the byStep of any judged launch of that task and step, whose last
+    entry is the step itself (judging.checked_series). A judge that does not count by step has only the step's own
+    cases: its start fails them all."""
+    out = {}
+    for f in facts:
+        c = (f.get("areas") or {}).get("correctness")
+        if c:
+            own = own_cases(c)["planned"]
+            out.setdefault((f["task"], f.get("step")), {"planned": c["planned"], "passed": c["planned"] - own, "failed": own})
+    return out
+
+
+def own_cases(c):
+    """The step's own new cases of a judgment's correctness: byStep's last entry (its counts add up to the judgment's,
+    judging.checked_series), or every case for a judge that does not count by step."""
+    by = c.get("byStep")
+    return list(by.values())[-1] if by else c
+
+
+def not_done(name, start):
+    """An endpoint's value for a change not done, scored as its start (start_scores), which also counts once as a step
+    with no result; None when no judged launch of the task and step gives the counts."""
+    if not start:
+        return None
+    if name == "casesPassedShare":
+        return start["passed"] / start["planned"] if start["planned"] else None
+    if name == "ownCasesPassedShare":
+        return 0.0 if start["failed"] else None
+    return float(start["failed"] + (name == "defectsLeft"))
+
+
 def endpoint(f, name):
     if f.get("planted") or f["class"] != "result":
         return None
-    if name == "casesPassedShare":
-        if not f["delivered"]:
-            return 0.0
+    if not f["delivered"]:
+        return not_done(name, f.get("startScore"))
+    if name in ("casesPassedShare", "ownCasesPassedShare"):
         if "areas" not in f:
             return None
-        c = f["areas"]["correctness"]
+        c = f["areas"]["correctness"] if name == "casesPassedShare" else own_cases(f["areas"]["correctness"])
         return c["passed"] / c["planned"] if c["planned"] else None
     att = f.get("attention")
     if name == "casesFailed":
@@ -130,41 +172,125 @@ def stops_right(facts, variants, table):
                  "outcome and counts as wrong. The plants were recorded before the runs.")
 
 
+def paired_reading(values, contrast, higher):
+    """The paired reading of the units both variants have a value for; blockBy "change" reads it over each change's mean."""
+    diffs = [(key, (pair[contrast["variant"]] - pair[contrast["baseline"]]) * (1 if higher else -1))
+             for key, pair in sorted(values.items(), key=lambda kv: json.dumps(kv[0], default=str))
+             if contrast["variant"] in pair and contrast["baseline"] in pair]
+    if contrast.get("blockBy") == "change":
+        blocks = {}
+        for (task, step, _), diff in diffs:
+            blocks.setdefault((task, step), []).append(diff)
+        return {**reading.paired([statistics.fmean(b) for b in blocks.values()], margin(contrast)), "pairs": len(diffs), "blocks": len(blocks)}
+    return {**reading.paired([d for _, d in diffs], margin(contrast)), "blocks": None}
+
+
+def margin(contrast):
+    """The contrast's minimum meaningful difference, or None for a descriptive contrast."""
+    return None if contrast.get("minimumDifference") is None else float(contrast["minimumDifference"])
+
+
+def yes_no(value, otherwise="undecided"):
+    return {True: "yes", False: "no"}.get(value, otherwise)
+
+
+def interval(result):
+    return "n/a" if result["low"] is None else f"[{number(result['low'])}, {number(result['high'])}]"
+
+
 def trustworthy(facts, contrasts, table):
+    """Each contrast read twice when units are unpaired: over the pairs, and with every unpaired unit scored as the
+    change not done for the variant that has no result there, so that units which end without a result cannot decide the
+    verdict by dropping out. Only a variant with no result there is filled; a result without a value, unjudged or
+    unreviewed, cannot be compared, so a unit it leaves with one variant keeps the verdict undecided. Yes only when both
+    readings say yes, no only when both say no, otherwise undecided. Every unit with a value has a judged launch of its
+    task and step, so start_scores can fill it."""
     rows, data = [], []
+    starts = start_scores(facts)
     for contrast in contrasts:
         name = contrast["endpoint"]
         if name not in ENDPOINTS:
             raise ValueError(f"unknown endpoint {name}; known: {', '.join(ENDPOINTS)}")
-        higher = ENDPOINTS[name][1]
-        values = {}
+        higher, arms = ENDPOINTS[name][1], (contrast["variant"], contrast["baseline"])
+        values, present = {}, {}
         for f in facts:
-            if f["variant"] in (contrast["variant"], contrast["baseline"]) and f.get("repetition") is not None:
+            if f["variant"] in arms and f.get("repetition") is not None and f["class"] == "result" and not f.get("planted"):
+                key = (f["task"], f.get("step"), f["repetition"])
+                present.setdefault(key, set()).add(f["variant"])
                 value = endpoint(f, name)
                 if value is not None:
-                    values.setdefault((f["task"], f.get("step"), f["repetition"]), {})[f["variant"]] = value
-        diffs = [(key, (pair[contrast["variant"]] - pair[contrast["baseline"]]) * (1 if higher else -1))
-                 for key, pair in sorted(values.items(), key=lambda kv: json.dumps(kv[0], default=str))
-                 if contrast["variant"] in pair and contrast["baseline"] in pair]
-        if contrast.get("blockBy") == "change":
-            blocks = {}
-            for (task, step, _), diff in diffs:
-                blocks.setdefault((task, step), []).append(diff)
-            result = {**reading.paired([statistics.fmean(b) for b in blocks.values()], float(contrast["minimumDifference"])),
-                      "pairs": len(diffs), "blocks": len(blocks)}
-        else:
-            result = {**reading.paired([d for _, d in diffs], float(contrast["minimumDifference"])), "blocks": None}
+                    values.setdefault(key, {})[f["variant"]] = value
+        result = paired_reading(values, contrast, higher)
         unpaired = sum(len(pair) == 1 for pair in values.values())
-        data.append({**contrast, **result, "unpaired": unpaired})
-        rows.append([f"{contrast['variant']} vs {contrast['baseline']}", ENDPOINTS[name][0], number(contrast["minimumDifference"]),
+        verdict, second = result["atLeastAsGood"], None
+        if unpaired:
+            filled = {}
+            for key, pair in values.items():
+                missing = not_done(name, starts.get(key[:2]))
+                filled[key] = {**({arm: missing for arm in arms if arm not in present[key]} if missing is not None else {}), **pair}
+            second = paired_reading(filled, contrast, higher)
+            unresolved = any(len(pair) == 1 for pair in filled.values())
+            verdict = verdict if verdict == second["atLeastAsGood"] and not unresolved else None
+        data.append({**contrast, **result, "unpaired": unpaired, "notDone": second, "atLeastAsGood": verdict})
+        rows.append([f"{contrast['variant']} vs {contrast['baseline']}", ENDPOINTS[name][0], number(contrast.get("minimumDifference")),
                      result["pairs"] if result["blocks"] is None else f"{result['pairs']} in {result['blocks']} changes", unpaired,
-                     number(result["mean"]),
-                     "n/a" if result["low"] is None else f"[{number(result['low'])}, {number(result['high'])}]", result["reading"],
-                     {True: "yes", False: "no", None: "undecided"}[result["atLeastAsGood"]]])
+                     number(result["mean"]), interval(result), result["reading"],
+                     "none unpaired" if second is None else f"{second['reading']}, {interval(second)}",
+                     "descriptive" if margin(contrast) is None else yes_no(verdict, f"undecided ({unpaired} unpaired)" if unpaired else "undecided")])
     text = table("§15.5 At least as trustworthy as K", ["Contrast", "Endpoint", "Minimum meaningful difference", "Pairs", "Unpaired",
-                                                         "Mean difference", "95 % interval", "Reading", "At least as good"], rows,
+                                                         "Mean difference", "95 % interval", "Reading",
+                                                         "Reading with unpaired units as not done", "At least as good"], rows,
                  "Pairs are the two variants' launches of the same task, step and repetition; a positive difference favors the "
-                 "variant. Where pairs are counted in changes, the interval is read over each change's mean difference. At least as good: the interval's lower end lies above minus the minimum meaningful difference.")
+                 "variant. Where pairs are counted in changes, the interval is read over each change's mean difference. At least "
+                 "as good: the interval's lower end lies above minus the minimum meaningful difference. Where units are unpaired, "
+                 "the contrast is read a second time with each scored as the change not done for the variant without a result: "
+                 "its start, which passes the earlier steps' cases and fails the step's own. Yes or no only when both readings "
+                 "agree and no unit is left with one variant, as one is beside a result that has no value; otherwise undecided. "
+                 "A contrast without a minimum meaningful difference is descriptive and has no verdict.")
+    return text, data
+
+
+def landed(facts, variant, baseline):
+    """Each variant's landed changes over the units both have a result for, and over every unit either has one for,
+    an absent result counted as a change not landed; and whether the variant's rate is not below the baseline's in both
+    readings (None when they disagree or nothing is paired). Plants are left out: a harmless gap is meant to land."""
+    units = {}
+    for f in facts:
+        if f["variant"] in (variant, baseline) and f.get("repetition") is not None and f["class"] == "result" and not f.get("plantKind"):
+            units.setdefault((f["task"], f.get("step"), f["repetition"]), {})[f["variant"]] = bool(f.get("landed"))
+    readings = []
+    for keys in ([k for k, u in units.items() if len(u) == 2], list(units)):
+        readings.append({v: (sum(units[k].get(v, False) for k in keys), len(keys)) for v in (variant, baseline)})
+    holds = [None if not r[variant][1] else r[variant][0] >= r[baseline][0] for r in readings]
+    return readings, holds[0] if holds[0] == holds[1] else None
+
+
+def at_least_as_good(facts, contrasts, table):
+    """The owner's rule (30 October 2026): a variant is at least as good as its baseline only when, at once, the share
+    of hidden cases passed and the failed hidden cases are each at least as good (both readings, trustworthy), and its
+    landed-change rate is not below the baseline's (landed). Yes when all three hold, no when one does not, undecided
+    otherwise. The rule is defined on fixed starts only, so the report reads it where the ledger asks (ownerRule)."""
+    rows, data = [], []
+    for variant, baseline in sorted({(c["variant"], c["baseline"]) for c in contrasts}):
+        by = {c["endpoint"]: c for c in contrasts if (c["variant"], c["baseline"]) == (variant, baseline)}
+        if not all(e in by and margin(by[e]) is not None for e in RULE):
+            continue
+        rates, rate = landed(facts, variant, baseline)
+        parts = [by[e]["atLeastAsGood"] for e in RULE] + [rate]
+        verdict = True if all(p is True for p in parts) else False if False in parts else None
+        data.append({"variant": variant, "baseline": baseline, "parts": dict(zip((*RULE, "landedRate"), parts)), "landed": rates,
+                     "atLeastAsGood": verdict})
+        rows.append([f"{variant} vs {baseline}", yes_no(parts[0]), yes_no(parts[1]),
+                     *[f"{r[variant][0]}/{r[variant][1]} against {r[baseline][0]}/{r[baseline][1]}" for r in rates], yes_no(parts[2]),
+                     yes_no(verdict)])
+    if not rows:
+        return None, data
+    text = table("§15.5 At least as good, by the owner's rule", ["Contrast", "Hidden cases passed", "Hidden cases failed", "Changes landed, paired",
+                                                                "Changes landed, an absent result as not landed", "Landed rate not below",
+                                                                "At least as good"], rows,
+                 "The owner's rule (30 October 2026): at least as good only when, at once, both case contrasts above are at least "
+                 "as good and the variant lands changes at a rate not below the baseline's, over the paired units and with an "
+                 "absent result counted as not landed. Yes when all three hold, no when one does not, undecided otherwise.")
     return text, data
 
 
@@ -174,5 +300,6 @@ def tables(ledger, base, facts, table):
            correct(facts, variants, table), no_drift(pathlib.Path(base), ledger.get("chains") or [], table),
            nothing_skipped(facts, variants, table), stops_right(facts, variants, table)]
     text, contrasts = trustworthy(facts, ledger.get("contrasts") or [], table)
-    out.append(text)
-    return "\n".join(out), {"contrasts": contrasts}
+    rule, verdicts = at_least_as_good(facts, contrasts, table) if ledger.get("ownerRule") else (None, [])
+    out += [text] + ([rule] if rule else [])
+    return "\n".join(out), {"contrasts": contrasts, "verdicts": verdicts}
