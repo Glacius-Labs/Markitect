@@ -6,7 +6,9 @@ The ledger (report.py) may carry, besides its launches:
   chains: [{"id": "k-1", "variant": "K", "task": "makerspace", "repetition": 1,
             "judgment": "JUDGE_CHAIN_OUT_DIR", "verifyFull": "RESULT.json"}]
   contrasts: [{"variant": "2.0", "baseline": "K", "endpoint": "casesPassedShare",
-               "minimumDifference": 0.05}]
+               "minimumDifference": 0.05, "blockBy": "change"}]
+               blockBy "change" reads the interval over each change's mean difference (task and step,
+               over its repetitions), so that a change's repetitions do not count as independent pairs
   tasks.NAME.planted: "defect" or "gap", for a planted task
 
 1. Correct           every landed change passes every hidden case
@@ -18,6 +20,7 @@ The ledger (report.py) may carry, besides its launches:
 """
 import json
 import pathlib
+import statistics
 
 import reading
 import results
@@ -25,6 +28,7 @@ import results
 # Endpoints of a contrast: the value of one launch, and whether higher is better.
 ENDPOINTS = {
     "casesPassedShare": ("hidden cases passed, as a share of planted cases", True),
+    "casesFailed": ("hidden cases failed, earlier steps' cases included", False),
     "defectsLeft": ("defects left for a person (human attention)", False),
 }
 
@@ -44,6 +48,8 @@ def endpoint(f, name):
         c = f["areas"]["correctness"]
         return c["passed"] / c["planned"] if c["planned"] else None
     att = f.get("attention")
+    if name == "casesFailed":
+        return float(att["casesFailed"]) if att and att.get("casesFailed") is not None else None
     return float(sum(att.values())) if att and None not in att.values() else None
 
 
@@ -129,20 +135,28 @@ def trustworthy(facts, contrasts, table):
                 value = endpoint(f, name)
                 if value is not None:
                     values.setdefault((f["task"], f.get("step"), f["repetition"]), {})[f["variant"]] = value
-        diffs = [(pair[contrast["variant"]] - pair[contrast["baseline"]]) * (1 if higher else -1)
-                 for _, pair in sorted(values.items(), key=lambda kv: json.dumps(kv[0], default=str))
+        diffs = [(key, (pair[contrast["variant"]] - pair[contrast["baseline"]]) * (1 if higher else -1))
+                 for key, pair in sorted(values.items(), key=lambda kv: json.dumps(kv[0], default=str))
                  if contrast["variant"] in pair and contrast["baseline"] in pair]
-        result = reading.paired(diffs, float(contrast["minimumDifference"]))
+        if contrast.get("blockBy") == "change":
+            blocks = {}
+            for (task, step, _), diff in diffs:
+                blocks.setdefault((task, step), []).append(diff)
+            result = {**reading.paired([statistics.fmean(b) for b in blocks.values()], float(contrast["minimumDifference"])),
+                      "pairs": len(diffs), "blocks": len(blocks)}
+        else:
+            result = {**reading.paired([d for _, d in diffs], float(contrast["minimumDifference"])), "blocks": None}
         unpaired = sum(len(pair) == 1 for pair in values.values())
         data.append({**contrast, **result, "unpaired": unpaired})
         rows.append([f"{contrast['variant']} vs {contrast['baseline']}", ENDPOINTS[name][0], number(contrast["minimumDifference"]),
-                     result["pairs"], unpaired, number(result["mean"]),
+                     result["pairs"] if result["blocks"] is None else f"{result['pairs']} in {result['blocks']} changes", unpaired,
+                     number(result["mean"]),
                      "n/a" if result["low"] is None else f"[{number(result['low'])}, {number(result['high'])}]", result["reading"],
                      {True: "yes", False: "no", None: "undecided"}[result["atLeastAsGood"]]])
     text = table("§15.5 At least as trustworthy as K", ["Contrast", "Endpoint", "Minimum meaningful difference", "Pairs", "Unpaired",
                                                          "Mean difference", "95 % interval", "Reading", "At least as good"], rows,
                  "Pairs are the two variants' launches of the same task, step and repetition; a positive difference favors the "
-                 "variant. At least as good: the interval's lower end lies above minus the minimum meaningful difference.")
+                 "variant. Where pairs are counted in changes, the interval is read over each change's mean difference. At least as good: the interval's lower end lies above minus the minimum meaningful difference.")
     return text, data
 
 

@@ -159,7 +159,7 @@ Then come the acceptance areas ([acceptance.py](acceptance.py)), one table per c
 | No drift | Per chain: forgotten rules, stale files and unaccounted files after its last step, the regressions along it, and the variant's own `verify --full` where it has one |
 | Nothing skipped | Every Result a variant returns ([results.py](results.py)): items without verdict, without evidence, without an approving checker, and checks that did not run on the whole repository |
 | Stops right | Planted defects without landing, harmless gaps landed; a launch without result counts as wrong |
-| At least as trustworthy as K | Per contrast, the paired difference by task, step and repetition, its 95 % interval ([reading.py](reading.py)), the design's reading and whether the variant is at least as good |
+| At least as trustworthy as K | Per contrast, the paired difference by task, step and repetition of its endpoint (`casesPassedShare`, `casesFailed` or `defectsLeft`), its 95 % interval ([reading.py](reading.py)), read over the pairs or, with `blockBy` `change`, over each change's mean difference across its repetitions; the design's reading and whether the variant is at least as good |
 
 A planted defect's launch counts under Stops right only. **The Result contract:** a variant that keeps a checklist writes one Result per Run as `OUT_DIR/results/RUN.json` (format in [results.py](results.py)); `python -I -B tools/evaluation/results.py RUN_DIR` checks one run. **A planted task's** judge folder holds `plant.json` (kind, expected outcome, description, time recorded); `suite.py judge` scores the outcome itself ([judging.py](judging.py)).
 
