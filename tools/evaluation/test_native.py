@@ -14,6 +14,7 @@ import classify  # noqa: E402
 import native  # noqa: E402
 import sandbox  # noqa: E402
 import suite  # noqa: E402
+import test_sandbox  # noqa: E402
 
 MODEL = "claude:claude-sonnet-5-5"
 IMAGE = "sha256:" + "e" * 64
@@ -423,6 +424,20 @@ class NativeTest(unittest.TestCase):
         self.run_mode("peek", [sys.executable, "-B", str(self.tmp / "peek.py")])
         self.assertNotIn("refreshToken", seen.read_text())
         self.assertFalse(pathlib.Path((self.tmp / "login-path.txt").read_text()).exists())
+
+    def test_a_codex_login_is_copied_access_only_with_the_codex_endpoint(self):
+        seen = self.tmp / "seen.json"
+        (self.tmp / "peek.py").write_text(textwrap.dedent(f'''
+            import os, shutil
+            shutil.copyfile(os.environ["EVALUATION_LOGIN"], {str(seen)!r})
+        '''))
+        (self.tmp / "auth.json").write_text(test_sandbox.codex_auth(7200))
+        codex = native.Native(self.engine, IMAGE, sandbox.load_series(sandbox.DEFAULT_SERIES), self.tmp / "auth.json", "codex", [self.hidden])
+        record = suite.run(self.task("peek"), [sys.executable, "-B", str(self.tmp / "peek.py")], self.tmp / "run-codex", "codex:gpt-6-luna",
+                           sandbox=codex)
+        self.assertEqual(json.loads(seen.read_text())["tokens"]["refresh_token"], "")
+        self.assertEqual(record["sandbox"]["variantEnv"]["EVALUATION_HOSTS"], "chatgpt.com:10.9.0.2")
+        self.assertNotIn("rt-refresh-SECRET", (self.tmp / "calls.jsonl").read_text())
 
     def test_a_chain_runs_natively(self):
         steps = []

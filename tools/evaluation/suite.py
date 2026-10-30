@@ -77,6 +77,8 @@ FORMAT = 1
 START_IDENTITY = ("Evaluation Suite", "suite@markitect.invalid")
 START_DATE = "2026-10-28T00:00:00Z"
 KILL_SECONDS = 15
+# The provider login --login defaults to, below the user's home: the account login each CLI keeps.
+DEFAULT_LOGINS = {"claude": pathlib.Path(".claude", ".credentials.json"), "codex": pathlib.Path(".codex", "auth.json")}
 
 
 class SuiteError(Exception):
@@ -507,7 +509,7 @@ def sandbox_from(a):
     if native and (a.variant_code or not a.hidden_absent):
         raise SuiteError("--native takes no --variant-code and needs --hidden-absent for each place hidden material could lie")
     provider = a.model.partition(":")[0]
-    login = a.login or (str(pathlib.Path.home() / ".claude" / ".credentials.json") if provider == "claude" else None)
+    login = a.login or (str(pathlib.Path.home() / DEFAULT_LOGINS[provider]) if provider in DEFAULT_LOGINS else None)
     if not login:
         raise SuiteError(f"--sandbox and --native need --login for {provider}")
     series = sandboxing.load_series(a.series)
@@ -571,7 +573,7 @@ def main(argv=None):
     for p in (r, c, v):
         p.add_argument("--sandbox", metavar="IMAGE_ID", help="run the variant in the evaluation sandbox of this image")
         p.add_argument("--variant-code", help="the variant's code, mounted read-only at /variant")
-        p.add_argument("--login", help="the provider login to copy access-only (default: the user's Claude login)")
+        p.add_argument("--login", help="the provider login to copy access-only (default: the user's Claude or Codex login)")
         p.add_argument("--series", default=str(sandboxing.DEFAULT_SERIES), help="the series' safety limit and egress")
         p.add_argument("--engine", default=os.environ.get("MARKITECT_ENGINE") or shutil.which("docker") or "docker")
         p.add_argument("--lock", help="exclusive engine lock file shared with the other runners")

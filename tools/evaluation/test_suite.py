@@ -1,4 +1,4 @@
-"""Offline tests of the suite runner and the Claude Code baseline: real Git, fake variants, no provider."""
+"""Offline tests of the suite runner and the baselines on Claude Code and Codex: real Git, fake variants, no provider."""
 import json
 import os
 import pathlib
@@ -12,9 +12,13 @@ import unittest
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import claude_code  # noqa: E402
+import classify  # noqa: E402
+import codex_cli  # noqa: E402
 import suite  # noqa: E402
+import test_sandbox  # noqa: E402
 
 MODEL = "claude:claude-sonnet-5-5"
+CODEX = "codex:gpt-6-luna"
 
 # A fake variant: appends one line per step to work.txt, records its state, and writes result.bundle.
 # Its behavior is chosen by the first line of task.md: "ok", "none" (no result), "sleep",
@@ -356,6 +360,141 @@ class ClaudeCodeTest(unittest.TestCase):
         record = suite.run(self.task, self.variant, self.tmp / "run", "codex:gpt-6-luna")
         self.assertFalse(record["delivered"])
         self.assertIn("EVALUATION_MODEL", record["reported"]["cause"])
+
+
+# A fake `codex`: checks its isolation and switches, edits the repository and writes exec events. TASK.md's first line
+# chooses: "ok", "leak" (writes the access token), "sleep", "limit" (a failed turn on a usage limit) or "silent" (no
+# thread).
+FAKE_CODEX = textwrap.dedent("""
+    import json, os, pathlib, sys, time
+    cwd = pathlib.Path.cwd()
+    mode = (cwd / "TASK.md").read_text().splitlines()[0]
+    leaked = [k for k in os.environ if k.startswith(("ANTHROPIC", "EVALUATION_", "OPENAI_")) or (k.startswith("CODEX_") and k != "CODEX_HOME")]
+    assert not leaked, "leaked variable: " + ", ".join(leaked)
+    home = pathlib.Path(os.environ["CODEX_HOME"])
+    tokens = json.loads((home / "auth.json").read_text())["tokens"]
+    assert tokens["refresh_token"] == "", "refresh token reached the session"
+    argv = sys.argv[1:]
+    assert argv[:2] == ["exec", "--json"] and argv[-1] == "-", argv
+    for switch in ("--ignore-user-config", "--ignore-rules", "--dangerously-bypass-approvals-and-sandbox", 'web_search="disabled"',
+                   'model_reasoning_effort="high"'):
+        assert switch in argv, switch
+    model = argv[argv.index("-m") + 1]
+    assert sys.stdin.read().startswith("Read the documentation in TASK.md"), "prompt not on stdin"
+    if mode == "silent":
+        sys.exit(1)
+    print(json.dumps({"type": "thread.started", "thread_id": "th-1"}))
+    print(json.dumps({"type": "turn.started"}))
+    (cwd / "main.go").write_text("package main\\n")
+    if mode == "leak":
+        (cwd / "token.txt").write_text(tokens["access_token"])
+    if mode == "sleep":
+        time.sleep(120)
+    (home / "sessions" / "2026").mkdir(parents=True)
+    (home / "sessions" / "2026" / "rollout-th-1.jsonl").write_text(json.dumps({"type": "session_meta", "model": model}) + "\\n")
+    if mode == "limit":
+        print(json.dumps({"type": "turn.failed", "error": {"message": "You've hit your usage limit."}}))
+        sys.exit(1)
+    print(json.dumps({"type": "turn.completed", "usage": {"input_tokens": 30, "cached_input_tokens": 20, "output_tokens": 5,
+                                                          "reasoning_output_tokens": 2}}))
+""")
+
+
+class CodexCliTest(unittest.TestCase):
+    """The baseline on Codex through the suite, with a fake `codex`."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.tmp = pathlib.Path(self._tmp.name)
+        fake = self.tmp / "fake_codex.py"
+        fake.write_text(FAKE_CODEX)
+        if os.name == "nt":
+            self.codex = self.tmp / "codex.cmd"
+            self.codex.write_text(f'@"{sys.executable}" -B "{fake}" %*\n')
+        else:
+            self.codex = self.tmp / "codex"
+            self.codex.write_text(f'#!/bin/sh\nexec "{sys.executable}" -B "{fake}" "$@"\n')
+            self.codex.chmod(0o755)
+        self.credentials = self.tmp / "auth.json"
+        self.credentials.write_text(test_sandbox.codex_auth(7200))
+        self.variant = [sys.executable, "-B", str(HERE / "codex_cli.py"), "--codex", str(self.codex), "--credentials", str(self.credentials),
+                        "--effort", "high"]
+        self._env = dict(os.environ)
+        os.environ.update(OPENAI_API_KEY="sk-proj-host", CODEX_HOME=str(self.tmp / "host-codex"))
+
+    def tearDown(self):
+        os.environ.clear()
+        os.environ.update(self._env)
+        self._tmp.cleanup()
+
+    def run_mode(self, mode, deadline=600, model=CODEX):
+        (self.tmp / f"{mode}.md").write_text(mode + "\n")
+        suite.make_task(self.tmp / f"{mode}.md", None, None, deadline, self.tmp / f"task-{mode}")
+        return suite.run(self.tmp / f"task-{mode}", self.variant, self.tmp / f"run-{mode}", model)
+
+    def no_secret(self, out):
+        for p in out.rglob("*"):
+            if p.is_file():
+                self.assertNotIn(b"SECRET", p.read_bytes(), p)
+
+    def test_baseline_through_the_suite(self):
+        record = self.run_mode("ok")
+        out = self.tmp / "run-ok" / "variant"
+        self.assertTrue(record["delivered"], (record["resultError"], record["reported"], (out / "session.stderr.log").read_text()))
+        self.assertTrue(record["modelMatches"])
+        reported = record["reported"]
+        self.assertEqual((reported["provider"], reported["status"], reported["sessionResult"], reported["sessionId"]),
+                         ("codex", "completed", "completed", "th-1"))
+        self.assertEqual(reported["usage"], {"inputTokens": 10, "cacheReadTokens": 20, "cacheCreationTokens": None, "outputTokens": 5,
+                                             "reasoningTokens": 2, "turns": None, "costUsd": None})
+        self.assertEqual(record["result"]["changedPaths"], ["A\tmain.go"])
+        self.assertTrue((out / "transcripts" / "2026" / "rollout-th-1.jsonl").is_file())
+        self.no_secret(out)
+
+    def test_a_failed_turn_is_reported_for_the_classifier(self):
+        record = self.run_mode("limit")
+        reported = record["reported"]
+        self.assertEqual((reported["status"], reported["sessionResult"], reported["sessionError"]),
+                         ("failed", "failed", "You've hit your usage limit."))
+        # The session's work is still delivered; the classifier decides whether the run is void.
+        self.assertTrue(record["delivered"])
+        errors = classify.session_errors(self.tmp / "run-limit" / "variant")
+        self.assertEqual([e["error"] for e in errors], ["rate-limit"])
+
+    def test_a_committed_login_is_never_delivered(self):
+        record = self.run_mode("leak")
+        self.assertFalse(record["delivered"])
+        self.assertEqual(record["reported"]["status"], "quarantined")
+        self.no_secret(self.tmp / "run-leak" / "variant")
+
+    def test_a_timed_out_session_still_delivers_its_work(self):
+        record = self.run_mode("sleep", deadline=63)
+        self.assertEqual(record["reported"]["status"], "timed_out")
+        self.assertTrue(record["delivered"], record["resultError"])
+
+    def test_a_session_that_never_started_a_thread_reports_no_model(self):
+        record = self.run_mode("silent")
+        self.assertEqual((record["reported"]["status"], record["reported"]["model"]), ("failed", None))
+        self.assertIsNone(record["modelMatches"])
+
+    def test_login_copy_has_an_empty_refresh_token_and_must_outlive_the_session(self):
+        copy, secrets = codex_cli.session_login(self.credentials.read_bytes(), 600)
+        self.assertEqual(json.loads(copy)["tokens"]["refresh_token"], "")
+        self.assertEqual(len(secrets), 3)
+        with self.assertRaisesRegex(codex_cli.baseline.VariantError, "expires"):
+            codex_cli.session_login(self.credentials.read_bytes(), 10 * 3600)
+        with self.assertRaisesRegex(codex_cli.baseline.VariantError, "API key"):
+            codex_cli.session_login(test_sandbox.codex_auth(7200, api_key="sk-proj-x").encode(), 600)
+
+    def test_baseline_refuses_another_provider(self):
+        record = self.run_mode("ok", model=MODEL)
+        self.assertFalse(record["delivered"])
+        self.assertIn("EVALUATION_MODEL", record["reported"]["cause"])
+
+    def test_the_suite_copies_the_codex_login_by_default(self):
+        a = suite.argparse.Namespace(native=None, sandbox="sha256:" + "a" * 64, variant_code=str(HERE), login=None, lock=None,
+                                     hidden_absent=None, model=CODEX, series=str(suite.sandboxing.DEFAULT_SERIES), engine="docker")
+        self.assertEqual(suite.sandbox_from(a).login, pathlib.Path.home() / ".codex" / "auth.json")
 
 
 if __name__ == "__main__":

@@ -99,6 +99,40 @@ class ClassifierTest(unittest.TestCase):
         run = self.edited("result-k03", lambda r: r.update(timedOut=True, exitCode=None))
         self.assertEqual(classify.classify(run)["class"], "result")
 
+    def codex_run(self, *events, exit_code=1):
+        """A run of the Codex baseline that ended with the given exec events in its stream."""
+        run = self.edited("result-k03", lambda r: r.update(model="codex:gpt-6-luna", exitCode=exit_code, delivered=exit_code == 0))
+        lines = [{"type": "thread.started", "thread_id": "t1"}, {"type": "turn.started"}, *events]
+        (run / "variant" / "session.stream.jsonl").write_text("".join(json.dumps(e) + "\n" for e in lines), encoding="utf-8")
+        return run
+
+    def test_a_codex_session_s_provider_failure_is_void_as_the_host_classes_it(self):
+        for message, kind in (("exceeded retry limit, last status: 429 Too Many Requests", "rate-limit"),
+                              ("You've hit your usage limit.", "rate-limit"),
+                              ("stream disconnected before completion", "server-error"),
+                              ("unexpected status 401 Unauthorized", "login"),
+                              ("Our servers are currently overloaded", "capacity")):
+            with self.subTest(message):
+                result = classify.classify(self.codex_run({"type": "turn.failed", "error": {"message": message}}), None, "K")
+                self.assertEqual((result["class"], result["kind"]), ("void", "provider"))
+                self.assertEqual(result["evidence"][0]["error"], kind)
+        # Without a failed turn, the last error event decides.
+        result = classify.classify(self.codex_run({"type": "error", "message": "Reconnecting... 2/5"},
+                                                  {"type": "error", "message": "stream error: 503 Service Unavailable"}))
+        self.assertEqual(result["evidence"][0]["error"], "server-error")
+
+    def test_a_codex_session_that_completed_a_turn_or_failed_on_its_own_is_a_result(self):
+        recovered = self.codex_run({"type": "error", "message": "stream error: 503"}, {"type": "turn.completed", "usage": {}})
+        self.assertEqual(classify.classify(recovered)["class"], "result")
+        own = self.codex_run({"type": "turn.failed", "error": {"message": "the agent stopped: no progress"}})
+        self.assertEqual(classify.classify(own)["class"], "result")
+        normal = self.codex_run({"type": "turn.failed", "error": {"message": "429 Too Many Requests"}}, exit_code=0)
+        self.assertEqual(classify.classify(normal)["class"], "result")
+        # Lines without the exec stream's thread or turn markers are no Codex session.
+        run = self.copy("result-k03")
+        (run / "variant" / "other.jsonl").write_text(json.dumps({"type": "error", "message": "429"}) + "\n", encoding="utf-8")
+        self.assertEqual(classify.session_errors(run / "variant"), [])
+
 
 class TokenParserTest(unittest.TestCase):
     """A recorded Claude Code session with 22 workflow subagents, reduced to structure and usage (testdata/README.md)."""

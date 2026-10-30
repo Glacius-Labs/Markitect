@@ -1,4 +1,5 @@
 """Offline tests of the evaluation sandbox: a fake engine, the egress gateway on loopback and the escape probe's checks."""
+import base64
 import json
 import os
 import pathlib
@@ -140,6 +141,16 @@ FAKE_VARIANT = textwrap.dedent('''
 
 def calls(tmp):
     return [json.loads(line) for line in (tmp / "calls.jsonl").read_text().splitlines()]
+
+
+def codex_auth(seconds, api_key=None):
+    """A Codex auth.json with a ChatGPT account login whose access token, a JWT, expires in SECONDS."""
+    def part(value):
+        return base64.urlsafe_b64encode(json.dumps(value).encode()).rstrip(b"=").decode()
+    access = part({"alg": "RS256"}) + "." + part({"exp": int(time.time() + seconds)}) + ".sig-access-SECRET"
+    return json.dumps({"OPENAI_API_KEY": api_key, "tokens": {"id_token": "id-token-SECRET", "access_token": access,
+                                                             "refresh_token": "rt-refresh-SECRET", "account_id": "account-1"},
+                       "last_refresh": "2026-10-30T00:00:00Z"})
 
 
 class SandboxRunTest(unittest.TestCase):
@@ -363,7 +374,7 @@ class SandboxRunTest(unittest.TestCase):
         with self.assertRaisesRegex(sandbox.SandboxError, "image ID"):
             sandbox.Sandbox(["docker"], "markitect-eval-sandbox:latest", self.series, self.code, self.login, "claude")
         with self.assertRaisesRegex(sandbox.SandboxError, "no egress for codex"):
-            sandbox.Sandbox(["docker"], IMAGE, self.series, self.code, self.login, "codex")
+            sandbox.Sandbox(["docker"], IMAGE, dict(self.series, egress={"claude": ["api.anthropic.com"]}), self.code, self.login, "codex")
         bad = self.tmp / "series.json"
         for limits, message in (({"cpus": "8", "memoryBytes": 1024, "pids": 10, "tmpBytes": 2048}, "cannot exceed"),
                                 ({"cpus": "0", "memoryBytes": 1024, "pids": 10, "tmpBytes": 512}, "positive")):
@@ -384,6 +395,36 @@ class SandboxRunTest(unittest.TestCase):
             self.assertEqual(sandbox.host_path(r"C:\Users\x"), "C:/Users/x")
             with self.assertRaisesRegex(sandbox.SandboxError, "drive"):
                 sandbox.host_path(r"\\server\share\x")
+
+    def test_a_codex_login_is_copied_access_only_as_the_host_copies_it(self):
+        raw = codex_auth(7200).encode()
+        copy, secrets = sandbox.access_login("codex", raw, 600)
+        login = json.loads(copy)
+        self.assertEqual(login["tokens"], {"id_token": "id-token-SECRET", "access_token": json.loads(raw)["tokens"]["access_token"],
+                                           "refresh_token": "", "account_id": "account-1"})
+        self.assertEqual((login["OPENAI_API_KEY"], login["last_refresh"]), (None, "2026-10-30T00:00:00Z"))
+        self.assertEqual(sorted(secrets), sorted(json.loads(raw)["tokens"][k].encode() for k in ("access_token", "id_token", "refresh_token")))
+        for bad, message in ((codex_auth(7200, api_key="sk-proj-x"), "API key"), (codex_auth(600), "expires"),
+                             (json.dumps({"tokens": {"access_token": "not-a-jwt", "id_token": "i"}}), "no JWT"),
+                             (json.dumps({"claudeAiOauth": {"accessToken": "a"}}), "no ChatGPT"), ("[]", "not a Codex")):
+            with self.subTest(message):
+                with self.assertRaisesRegex(sandbox.SandboxError, message):
+                    sandbox.access_login("codex", bad.encode(), 600)
+
+    def test_a_codex_run_gets_the_access_only_copy_and_the_codex_endpoint(self):
+        (self.code / "peek.py").write_text(textwrap.dedent('''
+            import json, os, pathlib, sys
+            tokens = json.loads(pathlib.Path(os.environ["EVALUATION_LOGIN"]).read_text())["tokens"]
+            (pathlib.Path(sys.argv[2]) / "shape.json").write_text(json.dumps({"refresh": tokens["refresh_token"], "keys": sorted(tokens)}))
+        '''))
+        self.login.write_text(codex_auth(7200))
+        box = sandbox.Sandbox([sys.executable, "-I", str(self.engine)], IMAGE, self.series, self.code, self.login, "codex")
+        suite.run(self.task("ok"), [sys.executable, "-B", "/variant/peek.py"], self.tmp / "run", "codex:gpt-6-luna", sandbox=box)
+        shape = json.loads((self.tmp / "run" / "variant" / "shape.json").read_text())
+        self.assertEqual(shape, {"refresh": "", "keys": ["access_token", "account_id", "id_token", "refresh_token"]})
+        run = next(c for c in calls(self.tmp) if c[0] == "run" and "/variant/peek.py" in c)
+        self.assertIn("--add-host=chatgpt.com:" + GATEWAY_IP, run)
+        self.assertNotIn("rt-refresh-SECRET", (self.tmp / "calls.jsonl").read_text())
 
 
 def client_hello(name):
