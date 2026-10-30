@@ -400,6 +400,7 @@ func (e *Engine) stamp(r *Result) *Result {
 	for _, st := range r.Starts {
 		r.Usage.InputTokens += st.Usage.InputTokens
 		r.Usage.OutputTokens += st.Usage.OutputTokens
+		r.Usage.Partial = r.Usage.Partial || st.Usage.Partial
 	}
 	return r
 }

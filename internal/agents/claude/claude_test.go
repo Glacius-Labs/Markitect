@@ -2,6 +2,7 @@ package claude
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -193,4 +194,35 @@ func TestReaderClassifiesProviderFailures(t *testing.T) {
 func jsonInt(i int) string {
 	raw, _ := json.Marshal(i)
 	return string(raw)
+}
+
+// A turn the Run stops writes no result: its usage is what the assistant
+// messages showed, each message counted once by its last line, and partial,
+// since their output counts are those streamed at each message's start.
+func TestReaderCountsAStoppedTurnFromItsMessages(t *testing.T) {
+	msg := func(id string, in, created, read, output int) string {
+		return fmt.Sprintf(`{"type":"assistant","parent_tool_use_id":null,"message":{"id":%q,"role":"assistant","content":[],"usage":{"input_tokens":%d,"cache_creation_input_tokens":%d,"cache_read_input_tokens":%d,"output_tokens":%d}},"session_id":"s-1"}`,
+			id, in, created, read, output)
+	}
+	out, err := read(t, agents.Turn{Tools: []string{"submit"}}, initOK,
+		msg("m1", 2, 100, 50, 10), msg("m1", 2, 100, 50, 12), msg("m2", 3, 20, 150, 5))
+	if err != nil || out.End != "" || out.Usage != (agents.Usage{Input: 5, CacheCreation: 120, CacheRead: 200, Output: 17, Partial: true}) {
+		t.Fatalf("outcome %+v %v", out, err)
+	}
+	// A turn without any message reports no total either.
+	if out, err := read(t, agents.Turn{Tools: []string{"submit"}}, initOK); err != nil || out.Usage != (agents.Usage{Partial: true}) {
+		t.Fatalf("a turn without messages: %+v %v", out, err)
+	}
+	// A failed turn with an error result reports its total.
+	out, err = read(t, agents.Turn{Tools: []string{"submit"}}, initOK, msg("m1", 2, 100, 50, 10),
+		`{"type":"result","subtype":"success","is_error":true,"result":"API Error: 529","session_id":"s-1","usage":{"input_tokens":2,"cache_creation_input_tokens":100,"cache_read_input_tokens":50,"output_tokens":30}}`)
+	if err != nil || out.Usage != (agents.Usage{Input: 2, CacheCreation: 100, CacheRead: 50, Output: 30}) {
+		t.Fatalf("an error result: %+v %v", out, err)
+	}
+	// A turn that answered counts its result, not its messages.
+	out, err = read(t, agents.Turn{Tools: []string{"submit"}}, initOK, msg("m1", 2, 100, 50, 10),
+		`{"type":"result","subtype":"success","is_error":false,"result":"done","session_id":"s-1","usage":{"input_tokens":2,"cache_creation_input_tokens":100,"cache_read_input_tokens":50,"output_tokens":400}}`)
+	if err != nil || out.Usage != (agents.Usage{Input: 2, CacheCreation: 100, CacheRead: 50, Output: 400}) {
+		t.Fatalf("outcome %+v %v", out, err)
+	}
 }
