@@ -476,16 +476,16 @@ func TestVerifyTakesVerdictsWithoutFileChanges(t *testing.T) {
 	// A defect a verify checker finds is a deviation, which becomes a Finding.
 	c.commit("Verify\n\nMarkitect-Manager: members\nMarkitect-Verdict: members/member | deviates | member.go accepts an empty name\n")
 	c.mustPush()
-	// Every verdict commit holds the base's tree: the required checks run
-	// once, on Root's verdicts.
+	// Every verdict commit holds the base's tree, on which the host ran
+	// the required checks before the checkers started: the hook runs none.
 	if e := r.log(); e[len(e)-1].Kind != "verdicts" || len(e[len(e)-1].Checks) != 0 {
 		t.Fatalf("last log entry %+v, want members' verdicts without checks", e[len(e)-1])
 	}
 	root := r.agent(".", checker)
 	root.commit(submission(".", "project"))
 	root.mustPush()
-	if e := r.log(); e[len(e)-1].Kind != "verdicts" || len(e[len(e)-1].Checks) != 1 || !e[len(e)-1].Checks[0].Passed {
-		t.Fatalf("last log entry %+v, want Root's verdicts whose check passed", e[len(e)-1])
+	if e := r.log(); e[len(e)-1].Kind != "verdicts" || len(e[len(e)-1].Checks) != 0 {
+		t.Fatalf("last log entry %+v, want Root's verdicts without checks", e[len(e)-1])
 	}
 	// One commit, on the tip alone.
 	c.commit("a")
@@ -497,18 +497,18 @@ func TestVerifyTakesVerdictsWithoutFileChanges(t *testing.T) {
 	c.mustRefuse("as its only parent")
 }
 
-// In verify a failing check is a result, not a refusal: the checker cannot
-// fix it, and the Result reports it.
-func TestVerifyRecordsAFailingCheck(t *testing.T) {
+// A check whose directory the state does not hold yet, as on a start with
+// the model only, fails and says so.
+func TestACheckInAMissingDirectorySaysSo(t *testing.T) {
 	r := newRemote(t, func(p *runremote.Plan) {
-		verifyPlan(p)
-		p.Checks = []project.Check{{Name: "broken", Command: "exit 3", Timeout: time.Minute, Environment: "test-image"}}
+		p.Checks = []project.Check{{Name: "build", Command: "true", Directory: "realization", Timeout: time.Minute, Environment: "test-image"}}
 	})
-	c := r.agent(".", checker)
-	c.commit(submission(".", "project"))
-	c.mustPush()
-	if e := r.log(); !e[len(e)-1].Accepted || len(e[len(e)-1].Checks) != 1 || e[len(e)-1].Checks[0].Passed || e[len(e)-1].Checks[0].Exit != 3 {
-		t.Fatalf("last log entry %+v, want accepted verdicts with the failing check", e[len(e)-1])
+	m := r.agent("members", maker)
+	m.commit(submission("members", "members/member"))
+	m.mustPush()
+	e := r.log()
+	if c := e[len(e)-1].Checks; len(c) != 1 || c[0].Passed || !strings.Contains(c[0].Output, "the check's directory realization does not exist in this state") {
+		t.Fatalf("last log entry %+v", e[len(e)-1])
 	}
 }
 
