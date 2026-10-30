@@ -56,7 +56,6 @@ func TestApplyLandsOnUnmovedTarget(t *testing.T) {
 	a := f.agents
 	a.On("catalog", maker, a.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ Title, ISBN string }\n"}, word("changed")))
 	a.On("catalog", checker, a.Review(nil))
-	a.On(".", maker, a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
 	a.On(".", checker, a.Review(nil))
 
 	r := f.run(run.Request{Base: base})
@@ -118,7 +117,6 @@ func TestCheckerRejectsAndMakerFixes(t *testing.T) {
 			return a.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ Title, ISBN string }\n"}, word("changed"))(ctx, s, h)
 		})
 	a.On("catalog", checker, a.Review(map[string]string{"catalog/book": "no isbn"}), a.Review(nil))
-	a.On(".", maker, a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
 	a.On(".", checker, a.Review(nil))
 
 	r := f.run(run.Request{Base: base})
@@ -172,8 +170,7 @@ func TestEscalationSettledByParent(t *testing.T) {
 			time.Sleep(500 * time.Millisecond)
 			rootEnded.Store(true)
 			return err
-		}),
-		a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
+		}))
 	a.On(".", checker, a.Review(nil))
 
 	r := f.run(run.Request{Base: base})
@@ -241,8 +238,7 @@ func TestEscalationSettledByAParentsCommit(t *testing.T) {
 				return agentfake.Fail(err)
 			}
 			return a.Submit(nil, map[string]string{"README.md": readme}, word("conforms"))(ctx, s, h)
-		},
-		a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
+		})
 	a.On(".", checker, a.Review(nil), a.Review(nil))
 
 	r := f.run(run.Request{Base: base})
@@ -253,8 +249,8 @@ func TestEscalationSettledByAParentsCommit(t *testing.T) {
 		t.Fatal("the settlement or the child's work did not land")
 	}
 	// Root's settlement was approved before catalog started again, and
-	// catalog was approved before Root integrated it.
-	if got := startOrder(a); got != "catalog maker, . maker, . checker, catalog maker, catalog maker, catalog checker, . maker, . checker" {
+	// catalog was approved before the host integrated it for Root.
+	if got := startOrder(a); got != "catalog maker, . maker, . checker, catalog maker, catalog maker, catalog checker, . checker" {
 		t.Fatalf("order: %s", got)
 	}
 }
@@ -339,15 +335,14 @@ func TestASettlementOutlivesStaleWork(t *testing.T) {
 				return agentfake.Fail(errorf("inbox %+v", s.Inbox))
 			}
 			return a.Submit(nil, nil, word("conforms"))(ctx, s, h)
-		},
-		a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
+		})
 	a.On(".", checker, a.Review(nil), a.Review(nil))
 
 	r := f.run(run.Request{Base: base})
 	if r.State != run.StateLanded {
 		t.Fatalf("%s: %s", r.State, r.Why)
 	}
-	if got := startOrder(a); got != "catalog maker, . maker, . maker, . checker, catalog maker, catalog checker, . maker, . checker" {
+	if got := startOrder(a); got != "catalog maker, . maker, . maker, . checker, catalog maker, catalog checker, . checker" {
 		t.Fatalf("order: %s", got)
 	}
 }
@@ -405,7 +400,7 @@ func TestAnAnswerKeepsTheParentsSettlement(t *testing.T) {
 		}),
 		a.Submit([]string{"managers/members.loans"}, nil, word("conforms")))
 	a.On("members", checker, a.Review(nil), a.Review(nil), a.Review(nil))
-	a.On(".", maker, agentfake.Call(answer), a.Submit([]string{"managers/members"}, nil, word("conforms")))
+	a.On(".", maker, agentfake.Call(answer))
 	a.On(".", checker, a.Review(nil))
 
 	r := f.run(run.Request{Base: base})
@@ -440,15 +435,14 @@ func TestAModelProblemSettledByAParentsCommit(t *testing.T) {
 				return agentfake.Fail(err)
 			}
 			return a.Submit(nil, map[string]string{"README.md": readme}, word("conforms"))(ctx, s, h)
-		},
-		a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
+		})
 	a.On(".", checker, a.Review(nil), a.Review(nil))
 
 	r := f.run(run.Request{Base: base})
 	if r.State != run.StateLanded {
 		t.Fatalf("%s: %s", r.State, r.Why)
 	}
-	if got := startOrder(a); got != "catalog maker, catalog checker, . maker, . checker, catalog maker, catalog checker, . maker, . checker" {
+	if got := startOrder(a); got != "catalog maker, catalog checker, . maker, . checker, catalog maker, catalog checker, . checker" {
 		t.Fatalf("order: %s", got)
 	}
 }
@@ -570,35 +564,68 @@ func TestParentWithoutItemsDoesNotGate(t *testing.T) {
 		return a.Submit(nil, map[string]string{"src/catalog/book.go": isbn}, word("changed"))(ctx, s, h)
 	})
 	a.On("catalog", checker, a.Review(nil))
-	a.On(".", maker, func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
-		if len(s.Checklist) != 0 {
-			return agentfake.Fail(errorf("Root has items %v", s.Checklist))
+	// Root has no items, so the host merges catalog's approved work for it,
+	// and Root's maker takes no turn; its checker reviews the merged state.
+	a.On(".", checker, func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+		if len(s.Checklist) != 0 || !strings.Contains(s.Task, "The host made it") || !strings.Contains(s.Task, "required checks passed on the merged state") {
+			return agentfake.Fail(errorf("Root's checker: items %v, task %q", s.Checklist, s.Task))
 		}
-		return a.Submit([]string{"managers/catalog"}, nil, word("conforms"))(ctx, s, h)
+		return a.Review(nil)(ctx, s, h)
 	})
-	a.On(".", checker, a.Review(nil))
-	if r := f.run(run.Request{Base: base}); r.State != run.StateLanded {
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateLanded {
 		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+	if len(r.Integrations) != 1 || r.Integrations[0].Manager != "." || r.Integrations[0].Submission == "" || r.Integrations[0].Why != "" ||
+		strings.Join(r.Integrations[0].Children, ",") != "catalog" {
+		t.Fatalf("integrations %+v", r.Integrations)
+	}
+	if !strings.Contains(f.show("main", "src/catalog/book.go"), "ISBN") || !strings.Contains(f.show("main", run.ResultFile(r.Run)), "## Host integrations") {
+		t.Fatal("the integrated work or its record did not land")
 	}
 }
 
-func TestParentMustMergeChildApproval(t *testing.T) {
+// failMarker commits a file of Root's own that the required check refuses, so
+// every merged state fails until Root's maker removes it, and returns Root's
+// registry page without it.
+func failMarker(f *fixture) string {
+	rootPage := table + "| README.md | [[project]] | Overview |\n"
+	f.write(map[string]string{"FAIL": "x\n", project.RootPage: rootPage + "| FAIL | [[project]] | Marker |\n"})
+	f.commit("a marker the required check refuses")
+	return rootPage
+}
+
+// When the hooks refuse the host's integration, here because the merged state
+// fails the required check on a file of Root's own, Root's maker gets the
+// merge with the reason. A submission that forgets the child's approval is
+// answered with a host message, and the merge Root's maker makes then lands.
+func TestARefusedIntegrationGoesToTheParentsMaker(t *testing.T) {
 	f := newFixture(t)
+	rootPage := failMarker(f)
 	base, _ := changeBook(f)
 	a := f.agents
 	a.On("catalog", maker, a.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ ISBN string }\n"}, word("changed")))
 	a.On("catalog", checker, a.Review(nil))
 	a.On(".", maker,
-		a.Submit(nil, nil, word("conforms")),
+		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+			if len(s.Inbox) != 1 || !strings.Contains(s.Inbox[0].Text, "could not merge") || !strings.Contains(s.Inbox[0].Text, `"no-fail" exited with 1`) {
+				return agentfake.Fail(errorf("inbox %+v", s.Inbox))
+			}
+			return a.Submit(nil, nil, word("conforms"))(ctx, s, h)
+		},
 		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
 			if len(s.Inbox) != 1 || !strings.Contains(s.Inbox[0].Text, "does not contain catalog's approved work") {
 				return agentfake.Fail(errorf("inbox %+v", s.Inbox))
 			}
-			return a.Submit([]string{"managers/catalog"}, nil, word("conforms"))(ctx, s, h)
+			return a.Submit([]string{"managers/catalog"}, map[string]string{"FAIL": "", project.RootPage: rootPage}, word("conforms"))(ctx, s, h)
 		})
 	a.On(".", checker, a.Review(nil))
-	if r := f.run(run.Request{Base: base}); r.State != run.StateLanded {
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateLanded {
 		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+	if len(r.Integrations) != 1 || r.Integrations[0].Submission != "" || !strings.Contains(r.Integrations[0].Why, "the remote refused it") {
+		t.Fatalf("integrations %+v", r.Integrations)
 	}
 }
 
@@ -619,7 +646,6 @@ func TestLandingMergesAMovedTarget(t *testing.T) {
 	a := f.agents
 	a.On("catalog", maker, a.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ ISBN string }\n"}, word("changed")))
 	a.On("catalog", checker, a.Review(nil))
-	a.On(".", maker, a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
 	a.On(".", checker, f.approveAfter(map[string]string{"src/members/member.go": "package members\n\n// Member is a person.\n"}))
 
 	r := f.run(run.Request{Base: base})
@@ -643,7 +669,6 @@ func TestLandingRefusesAMovedTargetThatTouchesTheImpact(t *testing.T) {
 	a := f.agents
 	a.On("catalog", maker, a.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ ISBN string }\n"}, word("changed")))
 	a.On("catalog", checker, a.Review(nil))
-	a.On(".", maker, a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
 	a.On(".", checker, f.approveAfter(map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ Name string }\n"}))
 
 	r := f.run(run.Request{Base: base})
@@ -668,7 +693,6 @@ func TestLandingRefusesAFailingMergedState(t *testing.T) {
 	a := f.agents
 	a.On("catalog", maker, a.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ ISBN string }\n"}, word("changed")))
 	a.On("catalog", checker, a.Review(nil))
-	a.On(".", maker, a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
 	// The colleague's change is registered and outside the impact, but it
 	// breaks the required check.
 	a.On(".", checker, f.approveAfter(map[string]string{
@@ -732,7 +756,6 @@ func TestLandingRefusesAMergedStateThatDoesNotCompile(t *testing.T) {
 		project.RegistryDir + "/catalog.md": catalogPage,
 	}, word("changed")))
 	a.On("catalog", checker, a.Review(nil))
-	a.On(".", maker, a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
 	// The colleague's change compiles alone and is outside the impact.
 	a.On(".", checker, f.approveAfter(map[string]string{
 		"src/shared/x.go":                   "package shared\n",
@@ -835,7 +858,6 @@ func TestApplyWithFindings(t *testing.T) {
 		return a.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ Title string }\n"}, word("changed"))(ctx, s, h)
 	})
 	a.On("catalog", checker, a.Review(nil))
-	a.On(".", maker, a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
 	a.On(".", checker, a.Review(nil))
 	r := f.run(run.Request{Base: start, Findings: findings})
 	if r.State != run.StateLanded {
@@ -917,6 +939,8 @@ func TestDefaultBaseNeedsALandedRun(t *testing.T) {
 
 func TestHostToolsRefuseOutsideTheTree(t *testing.T) {
 	f := newFixture(t)
+	// Root's maker gets a turn only when the host cannot merge for it.
+	rootPage := failMarker(f)
 	base, _ := changeBook(f)
 	a := f.agents
 	a.On("catalog", maker, func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
@@ -957,7 +981,7 @@ func TestHostToolsRefuseOutsideTheTree(t *testing.T) {
 		if page, err := h.Notes(ctx, ""); err != nil || len(page.Notes) != 2 {
 			return agentfake.Fail(errorf("notes %+v %v", page, err))
 		}
-		return a.Submit([]string{"managers/catalog"}, nil, word("conforms"))(ctx, s, h)
+		return a.Submit([]string{"managers/catalog"}, map[string]string{"FAIL": "", project.RootPage: rootPage}, word("conforms"))(ctx, s, h)
 	})
 	a.On(".", checker, a.Review(nil))
 	r := f.run(run.Request{Base: base})
@@ -982,7 +1006,6 @@ func TestLandingNeverTouchesAWorkingTree(t *testing.T) {
 	a := f.agents
 	a.On("catalog", maker, a.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ ISBN string }\n"}, word("changed")))
 	a.On("catalog", checker, a.Review(nil))
-	a.On(".", maker, a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
 	a.On(".", checker, a.Review(nil))
 	r := f.run(run.Request{Base: base})
 	if r.State != run.StateKept || !strings.Contains(r.Why, "refused") {

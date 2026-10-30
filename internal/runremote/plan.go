@@ -305,6 +305,9 @@ func (p *Plan) Validate() error {
 		if a.User == "" || strings.ContainsAny(a.User, ":@/ \t\r\n") {
 			report("agent %q: user must be non-empty without ':', '@', '/' or white space", a.User)
 		}
+		if a.User == HostUser {
+			report("agent %q: the name is the host's", a.User)
+		}
 		if users[a.User] {
 			report("agent %q: duplicate", a.User)
 		}

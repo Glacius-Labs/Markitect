@@ -9,7 +9,9 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/agentport"
@@ -37,97 +39,203 @@ type Config struct {
 	Model     string
 	Effort    string
 	// Transcripts, when set, is a directory that receives one transcript
-	// per start, RUN/MANAGER-ROLE-ROUND.jsonl.
+	// per turn, RUN/MANAGER-ROLE-ROUND.jsonl.
 	Transcripts string
+	// ContextLimit is the conversation size, in input tokens of a turn's
+	// last model request, from which an agent ends after its turn and its
+	// next turn starts it fresh from the Run's remote; zero is
+	// DefaultContextLimit.
+	ContextLimit int64
 	// Now is the clock; nil is time.Now.
 	Now func() time.Time
 }
 
+// DefaultContextLimit leaves room below a 200,000-token context window, the
+// smallest of the default models', for the next turn's task and work.
+const DefaultContextLimit = 150_000
+
 // Agents implements the engine's agent port with one container and one
-// provider conversation per start.
-type Agents struct{ cfg Config }
+// provider conversation per agent, which live for the Run while its turns
+// finish.
+type Agents struct {
+	cfg Config
+
+	mu   sync.Mutex
+	live map[agentKey]*Agent
+}
+
+// agentKey names one agent: a Run's Manager and role.
+type agentKey struct {
+	run, manager string
+	role         agentport.Role
+}
 
 var _ agentport.Agents = (*Agents)(nil)
 
 // New checks the configuration.
 func New(cfg Config) (*Agents, error) {
-	if cfg.Runtime == nil || cfg.Provider == nil || cfg.Image == "" || cfg.LoginFile == "" || cfg.Model == "" || cfg.Effort == "" {
+	if cfg.Runtime == nil || cfg.Provider == nil || cfg.Image == "" || cfg.LoginFile == "" || cfg.Model == "" || cfg.Effort == "" || cfg.ContextLimit < 0 {
 		return nil, errors.New("agents: the configuration needs a runtime, a provider, an image, a login file, a model and an effort")
 	}
-	return &Agents{cfg: cfg}, nil
+	if cfg.ContextLimit == 0 {
+		cfg.ContextLimit = DefaultContextLimit
+	}
+	return &Agents{cfg: cfg, live: map[agentKey]*Agent{}}, nil
 }
 
-// Run starts one agent for s, runs its turn and ends it. It returns only
-// after the agent's container, login and volumes are gone, or with what may
-// remain in End.Cleanup.
+// Run runs one turn of the agent s names. The agent's first turn starts it
+// in its own container with a fresh clone; a later one continues its
+// conversation there. After a turn that did not finish, or whose
+// conversation reached the context limit, the agent ends, and its next turn
+// starts it again from the Run's remote. Run returns once no process of the
+// turn runs, with what an ended agent may have left in End.Cleanup.
 func (g *Agents) Run(ctx context.Context, s agentport.Start, host agentport.Host) agentport.End {
 	cfg := g.cfg
 	end := agentport.End{Agent: cfg.Provider.Name() + ":" + cfg.Model}
+	key := agentKey{s.Run, s.Manager.ID, s.Role}
+	g.mu.Lock()
+	a := g.live[key]
+	delete(g.live, key)
+	g.mu.Unlock()
 	login, err := os.ReadFile(cfg.LoginFile)
 	if err != nil {
-		return failed(end, LoginFailed, fmt.Errorf("read the %s login: %w", cfg.Provider.Name(), err))
+		end = failed(end, LoginFailed, fmt.Errorf("read the %s login: %w", cfg.Provider.Name(), err))
+		return retire(ctx, a, end)
 	}
 	var transcript io.Writer
 	if cfg.Transcripts != "" {
 		f, err := createTranscript(cfg.Transcripts, s)
 		if err != nil {
-			return failed(end, Other, err)
+			return retire(ctx, a, failed(end, Other, err))
 		}
 		defer f.Close()
 		transcript = f
 	}
-	spec := Spec{
-		Name: containerName(s), Labels: map[string]string{RunLabel: s.Run}, Image: cfg.Image, Limits: cfg.Limits,
-		Network: cfg.Network, Hosts: cfg.Hosts, DNS: cfg.DNS, Start: s, Host: host,
-		Login: login, Model: cfg.Model, Effort: cfg.Effort, Transcript: transcript, Now: cfg.Now,
-	}
-	// The deadline bounds the start too: the clone, the base and the login
-	// check.
-	startCtx, cancel := context.WithDeadline(ctx, s.Deadline)
-	defer cancel()
-	a, err := Start(startCtx, cfg.Runtime, cfg.Provider, spec)
-	if err != nil {
-		class := Other
-		var se *StartError
-		if errors.As(err, &se) {
-			class = se.Class
+	var out Outcome
+	var turnErr error
+	if a != nil {
+		end.Continued = true
+		out, turnErr = a.Continue(ctx, s, host, login, transcript)
+	} else {
+		spec := Spec{
+			Name: containerName(s), Labels: map[string]string{RunLabel: s.Run}, Image: cfg.Image, Limits: cfg.Limits,
+			Network: cfg.Network, Hosts: cfg.Hosts, DNS: cfg.DNS, Start: s, Host: host,
+			Login: login, Model: cfg.Model, Effort: cfg.Effort, Transcript: transcript, Now: cfg.Now,
 		}
-		end = failed(end, class, err)
-		switch {
-		case ctx.Err() != nil:
-			end.Reason, end.Class = agentport.Cancelled, ""
-		case startCtx.Err() != nil:
-			// The deadline, not the step it cut off, ended the start.
-			end.Reason, end.Class, end.Detail = agentport.DeadlineReached, "", "the start's deadline passed before the agent's turn: "+end.Detail
+		if a, err = start(ctx, cfg, spec); err != nil {
+			return startFailed(ctx, s, end, err)
 		}
-		if errors.Is(err, errCleanup) {
-			end.Cleanup = err.Error()
-		}
-		return end
-	}
-	out, sendErr := a.Send(ctx, "")
-	closeErr := a.Close(context.WithoutCancel(ctx))
-	if closeErr != nil {
-		end.Cleanup = "the agent's container or volumes may remain: " + closeErr.Error()
+		out, turnErr = a.Send(ctx, "")
 	}
 	if out.Model != "" {
 		end.Agent = cfg.Provider.Name() + ":" + out.Model
 	}
 	// A turn that broke off reports no total; what it showed is a lower bound.
-	end.Usage = agentport.Usage{InputTokens: out.Usage.Input + out.Usage.CacheCreation + out.Usage.CacheRead, OutputTokens: out.Usage.Output, Partial: out.Usage.Partial || sendErr != nil}
+	end.Usage = agentport.Usage{InputTokens: out.Usage.Input + out.Usage.CacheCreation + out.Usage.CacheRead, OutputTokens: out.Usage.Output, Partial: out.Usage.Partial || turnErr != nil}
 	switch {
-	case sendErr != nil:
-		return failed(end, Other, errors.New(string(a.redact([]byte(sendErr.Error())))))
+	case turnErr != nil:
+		class := Other
+		var se *StartError
+		if errors.As(turnErr, &se) {
+			class = se.Class
+		}
+		end = failed(end, class, errors.New(string(a.redact([]byte(turnErr.Error())))))
+		switch {
+		case ctx.Err() != nil:
+			end.Reason, end.Class = agentport.Cancelled, ""
+		case !time.Now().Before(s.Deadline):
+			// The deadline, not the step it cut off, ended the turn.
+			end.Reason, end.Class, end.Detail = agentport.DeadlineReached, "", "the turn's deadline passed: "+end.Detail
+		}
 	case out.End == Answered:
 		end.Reason = agentport.Finished
 	case out.End == Deadline:
-		end.Reason, end.Detail = agentport.DeadlineReached, "the start's deadline passed and the agent was stopped"
+		end.Reason, end.Detail = agentport.DeadlineReached, "the turn's deadline passed and the agent was stopped"
 	case out.End == Stopped:
 		end.Reason, end.Detail = agentport.Cancelled, "the Run ended the agent"
 	default:
-		return failed(end, out.Class, errors.New(out.Detail))
+		end = failed(end, out.Class, errors.New(out.Detail))
+	}
+	if end.Reason == agentport.Finished && out.Context < cfg.ContextLimit {
+		g.mu.Lock()
+		g.live[key] = a
+		g.mu.Unlock()
+		return end
+	}
+	return retire(ctx, a, end)
+}
+
+// start starts an agent within the turn's deadline, which bounds the clone,
+// the base and the login check too.
+func start(ctx context.Context, cfg Config, spec Spec) (*Agent, error) {
+	startCtx, cancel := context.WithDeadline(ctx, spec.Start.Deadline)
+	defer cancel()
+	a, err := Start(startCtx, cfg.Runtime, cfg.Provider, spec)
+	if err != nil && startCtx.Err() != nil && ctx.Err() == nil {
+		return nil, &deadlineError{err}
+	}
+	return a, err
+}
+
+// deadlineError is a start the turn's deadline cut off.
+type deadlineError struct{ error }
+
+func (e *deadlineError) Unwrap() error { return e.error }
+
+func startFailed(ctx context.Context, s agentport.Start, end agentport.End, err error) agentport.End {
+	class := Other
+	var se *StartError
+	if errors.As(err, &se) {
+		class = se.Class
+	}
+	end = failed(end, class, err)
+	var de *deadlineError
+	switch {
+	case ctx.Err() != nil:
+		end.Reason, end.Class = agentport.Cancelled, ""
+	case errors.As(err, &de):
+		// The deadline, not the step it cut off, ended the start.
+		end.Reason, end.Class, end.Detail = agentport.DeadlineReached, "", "the turn's deadline passed before the agent's turn began: "+end.Detail
+	}
+	if errors.Is(err, errCleanup) {
+		end.Cleanup = err.Error()
 	}
 	return end
+}
+
+// retire ends an agent after its turn, or before it when the turn could not
+// begin, and says in the End what may remain.
+func retire(ctx context.Context, a *Agent, end agentport.End) agentport.End {
+	if a == nil {
+		return end
+	}
+	if err := a.Close(context.WithoutCancel(ctx)); err != nil {
+		end.Cleanup = "the agent's container or volumes may remain: " + err.Error()
+	}
+	return end
+}
+
+// Close ends every living agent of the Run.
+func (g *Agents) Close(ctx context.Context, run string) []string {
+	g.mu.Lock()
+	var ended []*Agent
+	var names []string
+	for k, a := range g.live {
+		if k.run == run {
+			ended = append(ended, a)
+			names = append(names, fmt.Sprintf("%s %s", k.manager, k.role))
+			delete(g.live, k)
+		}
+	}
+	g.mu.Unlock()
+	var left []string
+	for i, a := range ended {
+		if err := a.Close(ctx); err != nil {
+			left = append(left, fmt.Sprintf("%s: the agent's container or volumes may remain: %v", names[i], err))
+		}
+	}
+	sort.Strings(left)
+	return left
 }
 
 // failed ends a start as failed with its failure class, so the evaluation

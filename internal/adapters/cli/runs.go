@@ -43,9 +43,9 @@ func (c CLI) runCommand(ctx context.Context, mode agentport.Mode, args []string)
 	fs.StringVar(&opt.Branch, "branch", "", "the target branch (default: the upstream's branch, else the current one)")
 	fs.StringVar(&opt.Request.Run, "run", "", "the Run's name (default: from the time)")
 	fs.DurationVar(&deadline, "deadline", 4*time.Hour, "how long the whole Run may take")
-	fs.IntVar(&lim.Starts, "starts", lim.Starts, "how many agent starts the Run may make")
-	fs.IntVar(&lim.Rounds, "rounds", lim.Rounds, "how many maker or checker starts one Manager may make")
-	fs.DurationVar(&lim.Start, "start-timeout", lim.Start, "how long one agent start may take")
+	fs.IntVar(&lim.Starts, "starts", lim.Starts, "how many agent turns the Run may make")
+	fs.IntVar(&lim.Rounds, "rounds", lim.Rounds, "how many maker or checker turns one Manager may make")
+	fs.DurationVar(&lim.Start, "start-timeout", lim.Start, "how long one agent turn may take")
 	if mode == agentport.Apply {
 		fs.StringVar(&findings, "findings", "", "a Findings page whose Findings become checklist items")
 	} else {

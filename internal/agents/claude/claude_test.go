@@ -209,6 +209,10 @@ func TestReaderCountsAStoppedTurnFromItsMessages(t *testing.T) {
 	if err != nil || out.End != "" || out.Usage != (agents.Usage{Input: 5, CacheCreation: 120, CacheRead: 200, Output: 17, Partial: true}) {
 		t.Fatalf("outcome %+v %v", out, err)
 	}
+	// The conversation's size is the input of its last request.
+	if out.Context != 3+20+150 {
+		t.Fatalf("context %d", out.Context)
+	}
 	// A turn without any message reports no total either.
 	if out, err := read(t, agents.Turn{Tools: []string{"submit"}}, initOK); err != nil || out.Usage != (agents.Usage{Partial: true}) {
 		t.Fatalf("a turn without messages: %+v %v", out, err)

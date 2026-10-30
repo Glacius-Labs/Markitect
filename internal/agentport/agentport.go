@@ -1,12 +1,13 @@
 // Package agentport is the boundary between the Run engine and the agents it
-// starts (concept 2.0 §6.2, §12): the engine starts a maker or a checker for
-// one Manager with its role, task, checklist, tools and deadline, and observes
-// how it ends. Provider adapters implement Agents; the engine implements Host,
-// the tools an agent may call while it runs.
+// starts (concept 2.0 §6.2, §12): every working Manager has one maker and one
+// checker for the whole Run, and the engine gives each a turn with its role,
+// task, checklist, tools and deadline, and observes how the turn ends.
+// Provider adapters implement Agents; the engine implements Host, the tools
+// an agent may call during a turn.
 //
 // An agent's work reaches the engine only through Git: its submission, its
 // checker's review and a parent's merge are commits on the Run's remote, which
-// the engine reads after the agent ends. The tools carry messages along the
+// the engine reads after the turn ends. The tools carry messages along the
 // tree and Shared Notes, never work. No call blocks on another agent.
 package agentport
 
@@ -34,36 +35,42 @@ const (
 	Checker Role = "checker"
 )
 
-// Agents starts agents. Run starts one agent for s and returns once it has
-// ended: it finished, failed, reached s.Deadline or ctx ended. It never
+// Agents runs agents. A Run's Manager and Role name one agent, which lives
+// for the whole Run. Run gives that agent one turn for s: the first turn
+// starts it, a later one continues its conversation, and an agent that had to
+// end meanwhile starts again from the Run's remote. Run returns once the turn
+// has ended: it finished, failed, reached s.Deadline or ctx ended. It never
 // returns while the agent may still change anything. Run is called
-// concurrently for different Managers.
+// concurrently for different Managers, never for one agent twice at once.
 type Agents interface {
 	Run(ctx context.Context, s Start, host Host) End
+	// Close ends every agent of the Run that still lives and removes what
+	// they created. It returns what may remain; nothing when all is gone.
+	Close(ctx context.Context, run string) []string
 }
 
-// Start is everything one agent start needs.
+// Start is everything one turn of an agent needs.
 type Start struct {
 	Run  string
 	Mode Mode
 	Role Role
 	// Manager is the Package the agent works for.
 	Manager Manager
-	// Round counts the starts of this role for this Manager in this Run,
-	// from 1. A later start follows a rejection, an answer or a parent's
-	// assignment, which Inbox carries.
+	// Round counts the turns of this role for this Manager in this Run,
+	// from 1. A later turn follows a rejection, an answer, a parent's
+	// assignment or a new submission, which Inbox and Task carry.
 	Round int
-	// Task says in the host's words what this start must achieve.
+	// Task says in the host's words what this turn must achieve.
 	Task string
 	// Checklist holds every item the Manager's verdicts must cover.
 	Checklist []Item
-	// Inbox holds the messages delivered with this start, oldest first.
+	// Inbox holds the messages delivered with this turn, oldest first.
 	Inbox []Message
 	// Git is how the agent reaches the Run's remote.
 	Git GitAccess
-	// Tools are the host tools this start may call; Host refuses others.
+	// Tools are the host tools this turn may call; Host refuses others.
 	Tools []Tool
-	// Deadline bounds the start; the agent must have ended by then.
+	// Deadline bounds the turn; it must have ended by then.
 	Deadline time.Time
 }
 
@@ -139,7 +146,7 @@ const (
 
 // Host is what an agent may call while it runs, for its own Manager. A call
 // returns at once and never waits for another agent; an answer arrives with a
-// later start. An error is a refusal meant for the agent: it says why and
+// later turn. An error is a refusal meant for the agent: it says why and
 // what to do next.
 type Host interface {
 	// Ask sends the parent a question.
@@ -223,7 +230,7 @@ const (
 	Other       FailureClass = "other"
 )
 
-// End is how an agent ended. Finished says nothing about the quality of the
+// End is how a turn ended. Finished says nothing about the quality of the
 // work; the engine reads that from the Run's remote.
 type End struct {
 	Reason Reason
@@ -236,17 +243,21 @@ type End struct {
 	// Agent names the provider and model that ran, as observed.
 	Agent string
 	Usage Usage
-	// Cleanup is empty when everything the start created is gone, and
-	// otherwise says what may remain. An uncertain cleanup is never empty.
+	// Continued: the turn continued a living agent's conversation in its
+	// container; otherwise it started the agent, in a new container.
+	Continued bool
+	// Cleanup is empty when everything an agent ended after this turn
+	// created is gone, and otherwise says what may remain. An uncertain
+	// cleanup is never empty.
 	Cleanup string
 }
 
-// Usage is what the provider reported for one start; zero when it reported
+// Usage is what the provider reported for one turn; zero when it reported
 // nothing.
 type Usage struct {
 	InputTokens  int64 `json:"inputTokens"`
 	OutputTokens int64 `json:"outputTokens"`
-	// Partial: the provider reported no total for the start, as for one the
+	// Partial: the provider reported no total for the turn, as for one the
 	// Run ended, that reached its deadline or that broke off, so the counts
 	// are a lower bound.
 	Partial bool `json:"partial,omitempty"`

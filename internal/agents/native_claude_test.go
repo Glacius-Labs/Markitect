@@ -34,8 +34,8 @@ func TestNativeClaudeMakerAndChecker(t *testing.T) {
 		project.ModelDir + "/members/member.md": def("std/Concept", "Member",
 			"A person who borrows. A `Member` has a `Name`, the member's full name as text, and an `ID`, a positive whole number that no other member has."),
 	})
-	cfg := agents.Config{Provider: claude.Provider{}, Limits: agents.Limits{CPUs: 1, MemoryBytes: 2 << 30, Pids: 256, TmpBytes: 256 << 20},
-		Network: "bridge", LoginFile: login, Model: "claude-sonnet-5-5", Effort: "high", Transcripts: filepath.Join(evidence, "transcripts")}
+	g := r.agents(t, agents.Config{Provider: claude.Provider{}, Limits: agents.Limits{CPUs: 1, MemoryBytes: 2 << 30, Pids: 256, TmpBytes: 256 << 20},
+		Network: "bridge", LoginFile: login, Model: "claude-sonnet-5-5", Effort: "high", Transcripts: filepath.Join(evidence, "transcripts")})
 	record := func(name string, v any) {
 		raw, _ := json.MarshalIndent(v, "", "  ")
 		if err := os.WriteFile(filepath.Join(evidence, name), raw, 0o600); err != nil {
@@ -43,7 +43,7 @@ func TestNativeClaudeMakerAndChecker(t *testing.T) {
 		}
 	}
 	record("run.json", map[string]any{"run": r.run, "base": r.base, "image": r.imageID})
-	maker := r.start(t, cfg, agentport.Maker, 15*time.Minute)
+	maker := r.turn(g, agentport.Maker, 1, 15*time.Minute)
 	record("maker-end.json", maker)
 	t.Logf("maker: %+v", maker)
 	branch := func() string {
@@ -54,7 +54,7 @@ func TestNativeClaudeMakerAndChecker(t *testing.T) {
 	if maker.Reason != agentport.Finished || maker.Cleanup != "" {
 		t.Fatalf("maker end %+v\nbranch:\n%s", maker, branch())
 	}
-	checker := r.start(t, cfg, agentport.Checker, 15*time.Minute)
+	checker := r.turn(g, agentport.Checker, 1, 15*time.Minute)
 	record("checker-end.json", checker)
 	t.Logf("checker: %+v", checker)
 	log := branch()

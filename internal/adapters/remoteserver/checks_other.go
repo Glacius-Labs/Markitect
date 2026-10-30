@@ -15,6 +15,10 @@ func finished(*exec.Cmd) {}
 
 func lockChecks(Layout) (func(), error) { return func() {}, nil }
 
+// lockPushes leaves the server's own lock alone; tests elsewhere push from
+// one process.
+func lockPushes(Layout) (func(), error) { return func() {}, nil }
+
 func protect() error { return nil }
 
 func victim() error { return nil }

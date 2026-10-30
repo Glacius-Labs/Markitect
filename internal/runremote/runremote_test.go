@@ -267,6 +267,7 @@ func TestPlanValidation(t *testing.T) {
 		"does not work in this Run":      func(p *Plan) { p.Agents[0].Manager = "nobody" },
 		"holds '|' or a line break":      func(p *Plan) { p.Managers[1].Checklist = []string{"a | b"} },
 		"tokenSha256 must be 64":         func(p *Plan) { p.Agents[0].TokenSHA256 = "secret" },
+		"the name is the host's":         func(p *Plan) { p.Agents[0].User = HostUser },
 		"not a registry page":            func(p *Plan) { p.Pages[".markitect/model/a.md"] = "a" },
 		"Package \"b\" is not a Manager": func(p *Plan) { p.Pages[project.RegistryDir+"/b.md"] = "b" },
 		"pattern \"src/[ab]/**\"":        func(p *Plan) { p.Managers[1].Patterns = []string{"src/[ab]/**"} },

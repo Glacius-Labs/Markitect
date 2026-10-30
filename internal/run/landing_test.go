@@ -9,6 +9,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/agentport"
 	"github.com/Glacius-Labs/Markitect/internal/agentport/agentfake"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
@@ -18,7 +19,6 @@ func scriptHappyPath(f *fixture, rootChecker agentfake.Step) {
 	a := f.agents
 	a.On("catalog", maker, a.Submit(nil, map[string]string{"src/catalog/book.go": isbn}, word("changed")))
 	a.On("catalog", checker, a.Review(nil))
-	a.On(".", maker, a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
 	if rootChecker == nil {
 		rootChecker = a.Review(nil)
 	}
@@ -95,9 +95,11 @@ func TestLandingRefusesARewrittenTarget(t *testing.T) {
 }
 
 // A login file that a parent's merge commit adds is in the history that
-// landing pushes, so the work does not land.
+// landing pushes, so the work does not land. The hooks refuse the host's
+// merge for Root, so Root's maker merges.
 func TestLoginFileInAMergeDoesNotLand(t *testing.T) {
 	f := newFixture(t)
+	rootPage := failMarker(f)
 	base, start := changeBook(f)
 	a := f.agents
 	a.On("catalog", maker, a.Submit(nil, map[string]string{"src/catalog/book.go": isbn}, word("changed")))
@@ -114,6 +116,8 @@ func TestLoginFileInAMergeDoesNotLand(t *testing.T) {
 			func() error { _, err := w.Git("add", "-A"); return err },
 			func() error { _, err := w.Git("commit", "-q", "-m", "merge catalog"); return err },
 			func() error { return w.Remove(".credentials.json") },
+			func() error { return w.Remove("FAIL") },
+			func() error { return w.Write(project.RootPage, rootPage) },
 			func() error { return w.Commit(agentfake.SubmissionMessage(".", "Submit", word("conforms")(s))) },
 			w.Push,
 		} {

@@ -35,6 +35,9 @@ type reader struct {
 	// messages holds each assistant message's usage, the largest count of
 	// its lines: a turn without a result reports no total.
 	messages map[string]agents.Usage
+	// last is the latest assistant message, whose input is the
+	// conversation's size.
+	last string
 }
 
 // line is the projection of one stream-json line this reader consumes.
@@ -125,6 +128,7 @@ func (r *reader) Line(raw []byte) error {
 					r.messages = map[string]agents.Usage{}
 				}
 				r.messages[l.Message.ID] = maxUsage(r.messages[l.Message.ID], l.Message.Usage.count())
+				r.last = l.Message.ID
 			}
 		}
 	case l.Type == "result":
@@ -170,6 +174,9 @@ func (r *reader) checkInit(l line) error {
 
 func (r *reader) Outcome() agents.Outcome {
 	out := agents.Outcome{Conversation: r.session, Model: r.model, Usage: r.usage}
+	if u, ok := r.messages[r.last]; ok {
+		out.Context = u.Input + u.CacheCreation + u.CacheRead
+	}
 	if r.result == nil {
 		// Without a result, the assistant messages tell the input exactly;
 		// their output counts are those streamed at each message's start.

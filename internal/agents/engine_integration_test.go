@@ -79,6 +79,7 @@ func (*scripted) Login([]byte, time.Time) (agents.Login, error) {
 func (*scripted) Home(l agents.Login, _ harness.Document) (frame.Initialize, error) {
 	return frame.Initialize{CodexAuth: l.Copy}, nil
 }
+func (*scripted) LoginFile() string                { return "/home/agent/.codex/auth.json" }
 func (*scripted) AuthStatus() ([]string, []string) { return []string{"/bin/sh", "-c", "echo ok"}, nil }
 func (*scripted) CheckAuth(out []byte) error {
 	if strings.TrimSpace(string(out)) != "ok" {
@@ -236,16 +237,27 @@ func newRealRun(t *testing.T, changes map[string]string) *realRun {
 	return r
 }
 
-// start runs one start of members' maker or checker through the port.
-func (r *realRun) start(t *testing.T, cfg agents.Config, role agentport.Role, deadline time.Duration) agentport.End {
+// agents returns the Run's agents. They are closed when the test ends, and
+// nothing of theirs may remain.
+func (r *realRun) agents(t *testing.T, cfg agents.Config) *agents.Agents {
 	t.Helper()
 	cfg.Runtime, cfg.Image = agents.EngineRuntime(r.engine), r.imageID
 	g, err := agents.New(cfg)
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Cleanup(func() {
+		if left := g.Close(context.Background(), r.run); len(left) > 0 {
+			t.Errorf("closing the agents left %q", left)
+		}
+	})
+	return g
+}
+
+// turn runs one turn of members' maker or checker through the port.
+func (r *realRun) turn(g *agents.Agents, role agentport.Role, round int, deadline time.Duration) agentport.End {
 	user := "members-" + string(role)
-	return g.Run(r.ctx, agentport.Start{Run: r.run, Mode: agentport.Apply, Role: role, Round: 1,
+	return g.Run(r.ctx, agentport.Start{Run: r.run, Mode: agentport.Apply, Role: role, Round: round,
 		Manager:   agentport.Manager{ID: "members", Parent: "."},
 		Checklist: []agentport.Item{{Key: "members/member", Part: agentport.Own, Definition: "members/member", Why: "changed"}},
 		Git:       agentport.GitAccess{URL: r.remote.URL, Network: r.remote.Network, Branch: "managers/members", Base: r.base, User: user, Token: r.token(user)},
@@ -257,7 +269,10 @@ func (r *realRun) start(t *testing.T, cfg agents.Config, role agentport.Role, de
 // scripted turns call the Manager tools over agentd's MCP bridge: a maker's
 // push outside its area is refused and its work kept, its submission passes
 // the hook and the required check, and its checker approves it with an
-// empty commit. Nothing of the Run remains.
+// empty commit. Each agent then takes a second turn in its own container,
+// with its login copy renewed: the maker's clone follows its branch past the
+// review and submits again, and the checker reviews the new submission.
+// Closing the agents leaves nothing of the Run.
 //
 //	MARKITECT_TEST_ENGINE         absolute path of the Docker CLI
 //	MARKITECT_TEST_MANAGER_IMAGE  the Manager image (packaging/runtime)
@@ -268,39 +283,42 @@ func TestRealEngineManagersWorkThroughTheRunRemote(t *testing.T) {
 		t.Fatal(err)
 	}
 	transcripts := t.TempDir()
-	cfg := func(p *scripted) agents.Config {
-		return agents.Config{Provider: p, Limits: agents.Limits{CPUs: 1, MemoryBytes: 1 << 30, Pids: 256, TmpBytes: 128 << 20},
-			LoginFile: loginFile, Model: "scripted", Effort: "high", Transcripts: transcripts}
-	}
 	verdict := []map[string]string{{"item": "members/member", "verdict": "changed", "evidence": "type Member in src/members/member.go"}}
-	maker := &scripted{steps: [][]step{{
+	approve := []step{{"call": "review", "args": map[string]any{"outcome": "approved", "checks": []map[string]string{{"item": "members/member", "answer": "confirmed", "evidence": "read src/members/member.go"}}}}}
+	p := &scripted{steps: [][]step{{
 		{"write": "README.md", "text": "# Changed by members\n"},
 		{"call": "submit", "args": map[string]any{"summary": "Outside the area", "verdicts": verdict}},
 		{"write": "README.md", "text": "# Library\n"},
 		{"write": "src/members/member.go", "text": "package members\n\ntype Member struct{}\n"},
 		{"call": "submit", "args": map[string]any{"summary": "Realize the member", "verdicts": verdict}},
-	}}}
-	if end := r.start(t, cfg(maker), agentport.Maker, 5*time.Minute); end.Reason != agentport.Finished || end.Cleanup != "" || end.Agent != "scripted:scripted" {
-		t.Fatalf("maker end %+v", end)
+	}, approve, {
+		{"write": "src/members/member.go", "text": "package members\n\ntype Member struct{ Name string }\n"},
+		{"call": "submit", "args": map[string]any{"summary": "Name the member", "verdicts": verdict}},
+	}, approve}}
+	g := r.agents(t, agents.Config{Provider: p, Limits: agents.Limits{CPUs: 1, MemoryBytes: 1 << 30, Pids: 256, TmpBytes: 128 << 20},
+		LoginFile: loginFile, Model: "scripted", Effort: "high", Transcripts: transcripts})
+	for i, want := range []struct {
+		role      agentport.Role
+		round     int
+		continued bool
+	}{{agentport.Maker, 1, false}, {agentport.Checker, 1, false}, {agentport.Maker, 2, true}, {agentport.Checker, 2, true}} {
+		if end := r.turn(g, want.role, want.round, 5*time.Minute); end.Reason != agentport.Finished || end.Cleanup != "" || end.Agent != "scripted:scripted" || end.Continued != want.continued {
+			t.Fatalf("turn %d (%s %d) end %+v", i+1, want.role, want.round, end)
+		}
 	}
-	if len(maker.results) != 2 || !strings.HasPrefix(maker.results[0], "refused: the push to managers/members did not go through") ||
-		!strings.Contains(maker.results[0], "README.md") || !strings.HasPrefix(maker.results[1], "ok: submitted ") {
-		t.Fatalf("maker results %q", maker.results)
+	if len(p.results) != 5 || !strings.HasPrefix(p.results[0], "refused: the push to managers/members did not go through") ||
+		!strings.Contains(p.results[0], "README.md") || !strings.HasPrefix(p.results[1], "ok: submitted ") || !strings.HasPrefix(p.results[2], "ok: approved ") ||
+		!strings.HasPrefix(p.results[3], "ok: submitted ") || !strings.HasPrefix(p.results[4], "ok: approved ") {
+		t.Fatalf("results %q", p.results)
 	}
-	checker := &scripted{steps: [][]step{{
-		{"call": "review", "args": map[string]any{"outcome": "approved", "checks": []map[string]string{{"item": "members/member", "answer": "confirmed", "evidence": "read src/members/member.go"}}}},
-	}}}
-	if end := r.start(t, cfg(checker), agentport.Checker, 5*time.Minute); end.Reason != agentport.Finished || end.Cleanup != "" {
-		t.Fatalf("checker end %+v", end)
-	}
-	if len(checker.results) != 1 || !strings.HasPrefix(checker.results[0], "ok: approved ") {
-		t.Fatalf("checker results %q", checker.results)
-	}
-	for _, name := range []string{"members-maker-1.jsonl", "members-checker-1.jsonl"} {
+	for _, name := range []string{"members-maker-1.jsonl", "members-checker-1.jsonl", "members-maker-2.jsonl", "members-checker-2.jsonl"} {
 		data, err := os.ReadFile(filepath.Join(transcripts, r.run, name))
 		if err != nil || !bytes.Contains(data, []byte(`"kind":"tool-call"`)) || bytes.Contains(data, []byte(r.token("members-maker"))) {
 			t.Fatalf("transcript %s: %v", name, err)
 		}
+	}
+	if left := g.Close(r.ctx, r.run); len(left) > 0 {
+		t.Fatalf("closing the agents left %q", left)
 	}
 }
 

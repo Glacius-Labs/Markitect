@@ -56,6 +56,8 @@ func (Provider) Home(l agents.Login, d harness.Document) (frame.Initialize, erro
 	return frame.Initialize{Claude: home}, nil
 }
 
+func (Provider) LoginFile() string { return configDir + "/.credentials.json" }
+
 func (Provider) AuthStatus() ([]string, []string) {
 	return []string{executable, "auth", "status"}, environment()
 }

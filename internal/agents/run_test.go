@@ -46,8 +46,12 @@ func TestRunEndsFinishedWithUsageTranscriptAndNothingLeft(t *testing.T) {
 	if !strings.HasPrefix(f.rt.spec.Name, "markitect-run-r1-members-maker-1-") || f.rt.spec.Labels[agents.RunLabel] != "r1" || f.rt.spec.Network != "bridge" || f.rt.spec.MoreNetworks[0] != "markitect-run-r1" {
 		t.Fatalf("container %+v", f.rt.spec)
 	}
-	if len(f.rt.volumes) != 0 || !f.rt.session.closed || !f.rt.session.cleared {
-		t.Fatal("the start left its container, login or volumes")
+	// The agent lives for the Run; closing the Run's agents removes it.
+	if len(f.rt.volumes) != 2 || f.rt.session.closed {
+		t.Fatal("the agent ended after a finished turn")
+	}
+	if left := g.Close(context.Background(), "r1"); len(left) != 0 || len(f.rt.volumes) != 0 || !f.rt.session.closed || !f.rt.session.cleared {
+		t.Fatalf("closing the Run's agents left %q, its container, login or volumes", left)
 	}
 	data, err := os.ReadFile(filepath.Join(transcripts, "r1", "members-maker-1.jsonl"))
 	if err != nil || !strings.Contains(string(data), `"subtype":"init"`) || strings.Contains(string(data), "SECRET") {

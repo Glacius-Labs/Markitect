@@ -64,16 +64,19 @@ type Result struct {
 	Branch string `json:"branch,omitempty"`
 	Full   bool   `json:"full"`
 
-	Items            []ResultItem        `json:"items"`
-	NotParticipating []NotParticipant    `json:"notParticipating"`
-	RequiredChecks   RequiredChecks      `json:"requiredChecks"`
-	OwnerDecisions   []OwnerDecision     `json:"ownerDecisions"`
-	Findings         []ResultFinding     `json:"findings"`
-	Notes            []agentport.Note    `json:"notes"`
-	ImpactNotes      []string            `json:"impactNotes,omitempty"`
-	Starts           []AgentStart        `json:"starts"`
-	Messages         []agentport.Message `json:"messages"`
-	Usage            agentport.Usage     `json:"usage"`
+	Items            []ResultItem     `json:"items"`
+	NotParticipating []NotParticipant `json:"notParticipating"`
+	RequiredChecks   RequiredChecks   `json:"requiredChecks"`
+	OwnerDecisions   []OwnerDecision  `json:"ownerDecisions"`
+	Findings         []ResultFinding  `json:"findings"`
+	Notes            []agentport.Note `json:"notes"`
+	ImpactNotes      []string         `json:"impactNotes,omitempty"`
+	Starts           []AgentStart     `json:"starts"`
+	// Integrations are the host's merges of children's approved work on a
+	// parent without items of its own.
+	Integrations []Integration       `json:"integrations"`
+	Messages     []agentport.Message `json:"messages"`
+	Usage        agentport.Usage     `json:"usage"`
 	// Queue says how long the Run waited for Runs whose impact overlaps its
 	// own before it started.
 	Queue []string `json:"queue,omitempty"`
@@ -174,16 +177,32 @@ type ResultFinding struct {
 	Manager    string `json:"manager"`
 }
 
-// AgentStart is one agent start and how it ended.
+// AgentStart is one turn of an agent and how it ended. The name keeps the
+// evaluation suite's Result contract.
 type AgentStart struct {
 	Manager string           `json:"manager"`
 	Role    agentport.Role   `json:"role"`
 	Round   int              `json:"round"`
 	Reason  agentport.Reason `json:"reason"`
 	Detail  string           `json:"detail,omitempty"`
-	// Class is the provider's failure class of a failed start.
-	Class   agentport.FailureClass `json:"class,omitempty"`
-	Agent   string                 `json:"agent,omitempty"`
-	Usage   agentport.Usage        `json:"usage"`
-	Seconds float64                `json:"seconds"`
+	// Class is the provider's failure class of a failed turn.
+	Class agentport.FailureClass `json:"class,omitempty"`
+	Agent string                 `json:"agent,omitempty"`
+	Usage agentport.Usage        `json:"usage"`
+	// Continued: the turn continued a living agent in its container; else
+	// it started the agent in a new one.
+	Continued bool    `json:"continued,omitempty"`
+	Seconds   float64 `json:"seconds"`
+}
+
+// Integration is one merge the host made of a parent's working children's
+// approved work (concept 2.0 §6.3, long-lived Managers): Submission is the
+// commit its checker reviews; otherwise Why says why the parent's maker got
+// the merge instead, a conflict or the hooks' refusal.
+type Integration struct {
+	Manager    string   `json:"manager"`
+	Children   []string `json:"children"`
+	Submission string   `json:"submission,omitempty"`
+	Why        string   `json:"why,omitempty"`
+	Seconds    float64  `json:"seconds"`
 }

@@ -152,4 +152,8 @@ func (c containerRemote) StartFrom(ctx context.Context, branch, commit string) e
 	return c.r.StartFrom(ctx, branch, commit)
 }
 
+func (c containerRemote) Integrate(ctx context.Context, branch string, bundle io.Reader, commit string) (runremote.Decision, error) {
+	return c.r.Integrate(ctx, branch, bundle, commit)
+}
+
 func (c containerRemote) Close(ctx context.Context) error { return c.r.Close(ctx) }

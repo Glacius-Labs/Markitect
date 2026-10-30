@@ -75,9 +75,18 @@ type Decision struct {
 	Checks  []CheckResult `json:"checks,omitempty"`
 }
 
+// HostUser is the host's own user at the remote. It moves a Manager's branch
+// before the Manager starts (StartFrom) and pushes its integration of a
+// parent's children (Decide). No agent can be it: the server authenticates
+// only the plan's agents, and the plan refuses an agent of that name.
+const HostUser = "host"
+
 // Decide is the server-side hook: it accepts or refuses one push by user. The
 // guarantees of concept 2.0 §6.3 hold for every branch tip it accepts.
 func Decide(plan *Plan, own Ownership, repo Repo, checks CheckRunner, user string, updates []Update) Decision {
+	if user == HostUser {
+		return decideHost(plan, own, repo, checks, updates)
+	}
 	agent, ok := plan.Agent(user)
 	if !ok {
 		return refuse("%q is no agent of this Run. Next: push with the credentials the Run gave you.", user)

@@ -73,6 +73,13 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/"+repoName+"/git-receive-pack" {
 			s.push.Lock()
 			defer s.push.Unlock()
+			// The host's integration pushes from another process.
+			unlock, err := lockPushes(s.Layout)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			defer unlock()
 		}
 	}
 	h := &cgi.Handler{

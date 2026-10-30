@@ -8,7 +8,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/runremote"
 )
 
-// The tasks say what one start must achieve, in the host's words; how to
+// The tasks say what one turn must achieve, in the host's words; how to
 // work, the tools and the trailer format are the harness's (concept 1.0
 // §3.7: tasks, not process).
 
@@ -19,11 +19,13 @@ func (s *schedule) makerTask(n *node) string {
 		fmt.Fprintf(&b, " %s escalated to you and continue from your approved submission when you settle the matter with a change of your own, so this one covers your own area: judge each item by your own files; their work comes when you integrate it.", held)
 	} else if s.ownFirst(n) {
 		b.WriteString(" Your working children start from your approved submission, so this one covers your own area: judge each item by your own files; the parts your children realize come when you integrate their work.")
+	} else if len(n.children) > 0 && s.childrenApproved(n) && n.integrated == s.approvals(n) {
+		fmt.Fprintf(&b, " The host merged your working children's approved work (%s) on your branch. Review it and integrate it before you submit: use it, and do not build a child's behavior a second time in your own files.", s.approvals(n))
 	} else if len(n.children) > 0 && s.childrenApproved(n) {
 		fmt.Fprintf(&b, " Your working children's approved work: %s. Merge it, review it and integrate it before you submit: use it, and do not build a child's behavior a second time in your own files.", s.approvals(n))
 	}
 	if len(n.inbox) > 0 {
-		b.WriteString(" The messages delivered with this start need your action first.")
+		b.WriteString(" The messages delivered with this turn need your action first.")
 	}
 	return b.String()
 }
@@ -51,6 +53,8 @@ func (s *schedule) reviewTask(n *node) string {
 		task += " It covers the Manager's own area and settles an escalation of " + held + "; what they realize comes with a later submission."
 	} else if s.ownFirst(n) {
 		task += " It covers the Manager's own area before its working children start; what they realize comes with a later submission."
+	} else if n.submission == n.integration {
+		task += " The host made it: it merges the approved work of " + s.childNames(n) + " and adds nothing of its own. Judge whether the merged state integrates that work as the model asks."
 	} else if len(n.children) > 0 {
 		task += " It integrates the work of " + s.childNames(n) + ": dispute it when one of the Manager's own files builds a child's behavior a second time instead of using that work."
 	}

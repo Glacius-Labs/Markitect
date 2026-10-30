@@ -19,7 +19,7 @@ import (
 )
 
 // Version names the harness text. It changes whenever the rendered text does.
-const Version = 3
+const Version = 4
 
 // MaxInlineDiff bounds the diff a checker receives inline. A larger diff is
 // listed by file, and the checker reads it in its clone.
@@ -122,9 +122,11 @@ func (r renderer) base() string {
 	switch {
 	case s.Role == Maker:
 		b.WriteString("As maker you change the files of your area so that they conform, and give each checklist item a verdict with evidence. " +
-			"A fresh checker then re-checks every verdict; it sees the model, the repository at your submission and its diff, and nothing you write besides the commit, not even your Notes.\n\n")
+			"Your checker then re-checks every verdict in a conversation of its own; it sees the model, the repository at your submission and its diff, and nothing you write besides the commit, not even your Notes. " +
+			"You keep this conversation for the Run: a later turn brings your checker's answer, a message or your children's approved work.\n\n")
 	case s.Mode == Apply:
-		b.WriteString("As checker you re-check a maker's verdicts. You did not see the maker's work: you see the model, the repository at the submission and its diff from the commit your Manager's work started from, and nothing the maker wrote besides the commit. You never edit files.\n\n")
+		b.WriteString("As checker you re-check a maker's verdicts. You did not see the maker's work: you see the model, the repository at the submission and its diff from the commit your Manager's work started from, and nothing the maker wrote besides the commit. You never edit files. " +
+			"You keep this conversation for the Run: each new submission comes in a later turn.\n\n")
 	default:
 		b.WriteString("As checker you judge whether the repository at the Run's base conforms to each checklist item. You never edit files.\n\n")
 	}
@@ -282,6 +284,10 @@ func (r renderer) task() string {
 	default:
 		b.WriteString("Judge whether the repository at the Run's base conforms to every item on your checklist and to the Rules above it.\n\n")
 	}
+	if s.Role == Checker && s.Mode == Apply && s.Round > 1 {
+		b.WriteString("Your earlier reviews in this Run do not carry over: re-check every verdict of this submission in full against the model and the repository at its commit, " +
+			"those you confirmed before included, as for a submission you see for the first time.\n\n")
+	}
 	if len(s.Checklist) > 0 {
 		b.WriteString("## Checklist\n\n| Item | Part | Why |\n|---|---|---|\n")
 		for _, it := range s.Checklist {
@@ -331,7 +337,7 @@ func (r renderer) task() string {
 			"- `model-problem`: the model contradicts itself or leaves open behavior at the project boundary for this item, so it cannot be settled within the model; also `escalate` it.\n\n" +
 			"A gap without effect at the project boundary is yours to decide and document. Evidence names the files, tests or Definitions that show the verdict holds. " +
 			"The remote runs the required checks on your branch's full state: it refuses a submission that merges your children's work and fails them, and your checker sees their results either way. " +
-			"Your checker's answer and every message for you arrive with a later start.\n")
+			"Your checker's answer and every message for you arrive in a later turn.\n")
 	case s.Mode == Apply:
 		b.WriteString("Call `review` with one answer per submitted verdict, `confirmed` or `disputed`, each with evidence: what you read or ran, and for a dispute what is wrong and where. " +
 			"The outcome is `approved` when you confirm every verdict and `rejected` when you dispute at least one.\n")
