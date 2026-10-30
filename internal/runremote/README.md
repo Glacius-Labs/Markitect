@@ -15,7 +15,7 @@ The host writes one plan per Run before it starts ([`plan.go`](plan.go)); it nev
 
 - `base`: the commit the Run starts from.
 - `managers`: every Package (Root's ID is `""`) with its path patterns at the base; a working Manager, one impact names, also with its checklist.
-- `pages`: the registry pages a Run may change, each with the Package whose Manager changes it: a live Package's page, whether it exists yet or not, and the page of a Package that no longer exists, which Root cleans up.
+- `pages`: the registry pages a Run may change, each with the Package whose Manager changes it: a live Package's page that exists at the Run's base (Root's in any case), and the page of a Package that no longer exists, which Root cleans up. A Package's first page, with its first patterns, is the owner's ([DEC-081](../../docs/concepts/register.md#dec-081-the-organization-knows-broad-at-the-top-and-deep-below)), so `pages` never names one, and a Manager that pushes one is refused (rule 3).
 - `agents`: added by the host; one maker and one checker per working Manager (checkers only in `verify`), each with a user name and the SHA-256 of its token. The remote never holds a token.
 - `checks`: the required checks of `execution.yaml`.
 
@@ -37,14 +37,14 @@ The pre-receive hook decides every push and prints the reason and a next step fo
    - a file the Manager owns is free;
    - a file owned by a Package below it must be exactly as in the newest approved commit of the child toward that Package that the tip contains, or as at the base when it contains none; so a parent can neither alter a child's approved work nor slip edits into a child's area, and a child's later unapproved work cannot reach the parent's tip;
    - a file outside its subtree must be exactly as in the newest state of its parent's branch that the tip contains, or as at the base; so siblings meet only through their parent, and a child cannot undo a parent's change that would reach the parent at its merge;
-   - a registry page belongs to the Package `pages` names;
+   - a registry page belongs to the Package `pages` names; a page it does not name, such as a Package's first, is refused, and the refusal tells the Manager to give items that cannot conform without files of its own `model-problem` and escalate;
    - everything else below `.markitect/` stays as at the base, for every Manager, Root included: the model, the manifest, the lock, `execution.yaml`, the ignore page, Libraries and Results;
    - a file that two Packages claim with equally specific patterns, which the compiler refuses, is refused;
    - a changed path that differs from another path of the tip only in case is refused, because a checkout on Windows or macOS holds both as one file. Unicode normalization is not compared.
 
    "Owns" uses the base's registry with the compiler's own pattern rules (`realization.Pattern`): the most specific pattern wins, Root owns what no pattern claims. The rule compares content with the newest approval the tip contains, not commit identities. The parent's states and the children's approvals come from the remote's reflog, which Git writes in the same transaction as every update and which no agent can reach; the repository uses the files ref format, and a missing reflog fails the push.
 4. **Trailers in the wrong hands.** Review lines from anyone but the branch's checker, verdict lines from a checker in `apply`, and trailers that name another Manager are refused in every new commit.
-5. **An incomplete submission.** A maker's tip that is a submission must give every checklist item exactly one verdict and nothing else.
+5. **An incomplete submission.** A maker's tip that is a submission must give every checklist item exactly one verdict and nothing else. In `apply` no verdict is `deviates`; in `verify` none is `changed`, since verify changes nothing and a `changed` would end the Run verified.
 6. **A submission that does not compile.** The hook compiles the tip's full repository state as `markitect check` does and refuses it with the compile errors, so a file that enters unregistered, even in the Manager's own area, never reaches a submission.
 7. **A failing merged state.** The required checks then run on the tip's full repository state, in order, until one fails. They refuse only a merged state ([DEC-087](../../docs/concepts/register.md#dec-087-required-checks-gate-merged-states-not-each-submission)): a submission that contains an approval of one of the Manager's children, as rule 3 finds them. A failure or a timeout there refuses the push. Any other submission, a child's or a parent's first one, is a partial tree that a check of the whole repository may fail when the build needs a child's files: it is accepted, the pusher sees the failure as a note, and the decision log keeps the results, which the engine gives its checker as evidence ([Run engine](../run/README.md#the-result)). Checks that cannot run refuse every submission. Work commits without trailers are neither compiled nor checked. The state that lands is checked by the host, not the hook (`Check` below).
 8. **A review that is no review.** A checker pushes exactly one commit, whose only parent is the current tip, which must be a submission of this Run; the commit changes no file. An approval confirms every submitted verdict and disputes none; a rejection disputes at least one, unless the submission has no items. A checker never edits.
@@ -84,7 +84,7 @@ Markitect-Check: members/loans/loan | disputed | loan_test.go never tests a memb
 Markitect-Check: loan-limit | confirmed | read src/loans
 ```
 
-In `verify` the checker writes the `Markitect-Verdict` lines itself, without a maker, and `deviates` says that the realization does not conform to the item, with the defect as evidence; the engine turns it into a Finding. In `apply` a maker never writes `deviates`: it makes the realization conform, or reports `model-problem`. [`trailers.go`](trailers.go) parses and writes the format.
+In `verify` the checker writes the `Markitect-Verdict` lines itself, without a maker, and `deviates` says that the realization does not conform to the item, with the defect as evidence; the engine turns it into a Finding. `changed` is no verify verdict (rule 5). In `apply` a maker never writes `deviates`: it makes the realization conform, or reports `model-problem`. [`trailers.go`](trailers.go) parses and writes the format.
 
 ## Required checks
 

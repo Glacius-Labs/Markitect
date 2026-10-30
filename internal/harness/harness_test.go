@@ -216,7 +216,8 @@ func TestVerifyCheckerSubmitsVerdictsOnTheBase(t *testing.T) {
 	p := library(t)
 	d := render(t, Input{Start: start(Verify, Checker, "members", nil, items("members/member")), Project: p})
 	contains(t, d.Task, "at the Run's base conforms", "Call `submit`", "`deviates`")
-	lacks(t, d.Task, "`changed`")
+	contains(t, d.Task, "`changed` is no answer here: verify changes nothing.")
+	lacks(t, d.Task, "`changed`: you changed")
 	if _, err := Render(Input{Start: start(Verify, Maker, "members", nil, items("members/member")), Project: p}); err == nil {
 		t.Error("verify has no makers")
 	}
@@ -356,5 +357,5 @@ func TestEveryStartSaysWhatAVerdictCovers(t *testing.T) {
 	d = render(t, Input{Start: start(Verify, Checker, "members", []string{"members/loans"}, items("members/member")), Project: p})
 	contains(t, d.Task, model...)
 	contains(t, d.Task, "For `conforms`, the evidence names how each example", "The verdicts judge your Package's files against your items.")
-	lacks(t, d.Task, "Your children's work", "`changed`", "merged state", "parent's integration")
+	lacks(t, d.Task, "Your children's work", "For `conforms` and `changed`", "merged state", "parent's integration")
 }

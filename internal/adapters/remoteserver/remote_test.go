@@ -473,6 +473,10 @@ func TestVerifyTakesVerdictsWithoutFileChanges(t *testing.T) {
 	c.commit(review("members", runremote.Approved, map[string]string{"members/member": runremote.Confirmed}))
 	c.mustRefuse("in verify a checker gives its own verdicts")
 	c.git("reset", "-q", "--hard", "origin/"+c.branch)
+	// changed is no verify answer: it would end the Run verified.
+	c.commit("Verify\n\nMarkitect-Manager: members\nMarkitect-Verdict: members/member | changed | member.go names the member\n")
+	c.mustRefuse(`"members/member" is changed, but verify changes nothing`)
+	c.git("reset", "-q", "--hard", "origin/"+c.branch)
 	// A defect a verify checker finds is a deviation, which becomes a Finding.
 	c.commit("Verify\n\nMarkitect-Manager: members\nMarkitect-Verdict: members/member | deviates | member.go accepts an empty name\n")
 	c.mustPush()
@@ -482,7 +486,7 @@ func TestVerifyTakesVerdictsWithoutFileChanges(t *testing.T) {
 		t.Fatalf("last log entry %+v, want members' verdicts without checks", e[len(e)-1])
 	}
 	root := r.agent(".", checker)
-	root.commit(submission(".", "project"))
+	root.commit("Verify\n\nMarkitect-Manager: .\nMarkitect-Verdict: project | conforms | README.md names the library\n")
 	root.mustPush()
 	if e := r.log(); e[len(e)-1].Kind != "verdicts" || len(e[len(e)-1].Checks) != 0 {
 		t.Fatalf("last log entry %+v, want Root's verdicts without checks", e[len(e)-1])
@@ -657,6 +661,28 @@ func TestTheHostStartsAChildFromItsParentsState(t *testing.T) {
 	m.write("src/members/member.go", "package members // v2\n")
 	m.commit(submission("members", "members/member"))
 	m.mustPush()
+}
+
+// A Package without a registry page at the Run's start gets none in the plan
+// (PlanFor): its first page and patterns are the owner's (DEC-081), so its
+// Manager cannot write one, and the refusal names the way out.
+func TestAManagerCannotWriteItsPackagesFirstPage(t *testing.T) {
+	page := ".markitect/registry/members/cards.md"
+	r := newRemote(t, func(p *runremote.Plan) {
+		delete(p.Pages, page)
+		for i := range p.Managers {
+			if p.Managers[i].ID == "members/cards" {
+				p.Managers[i].Patterns = nil
+			}
+		}
+	})
+	c := r.agent("members/cards", maker)
+	c.write(page, "---\npaths: [src/members/cards/**, src/cards/**]\n---\n"+registryTable+"| src/members/cards/card.go | [[members/cards/card]] | Type |\n")
+	c.commit("my first page")
+	out := c.mustRefuse("is no registry page at the Run's start: only the owner writes a Package's first page")
+	if !strings.Contains(out, "give them model-problem and escalate") {
+		t.Fatalf("the refusal names no way out:\n%s", out)
+	}
 }
 
 func TestAFileTwoPackagesClaimEquallyIsRefused(t *testing.T) {
