@@ -90,16 +90,19 @@ func TestRunAtTheDeadlineAndOnCancellation(t *testing.T) {
 	if end := g.Run(context.Background(), f.spec.Start, f.host); end.Reason != agentport.DeadlineReached || end.Cleanup != "" {
 		t.Fatalf("end %+v", end)
 	}
+	// A start the Run ends wrote no result; it counts what its messages
+	// showed, as a lower bound.
 	f = setup(t, agentport.Maker, "members", "members/member")
 	f.rt.script = func(s *fakeSession, argv []string, stdin []byte) int {
 		s.line(initLine(makerTools...))
+		s.line(`{"type":"assistant","parent_tool_use_id":null,"message":{"id":"m1","role":"assistant","content":[],"usage":{"input_tokens":2,"cache_creation_input_tokens":300,"cache_read_input_tokens":700,"output_tokens":9}},"session_id":"s-1"}`)
 		<-s.stop
 		return -1
 	}
 	g, _ = newAgents(t, f, f.spec.Login)
 	ctx, cancel := context.WithCancel(context.Background())
 	time.AfterFunc(1500*time.Millisecond, cancel)
-	if end := g.Run(ctx, f.spec.Start, f.host); end.Reason != agentport.Cancelled {
+	if end := g.Run(ctx, f.spec.Start, f.host); end.Reason != agentport.Cancelled || end.Usage != (agentport.Usage{InputTokens: 1002, OutputTokens: 9, Partial: true}) {
 		t.Fatalf("end %+v", end)
 	}
 }

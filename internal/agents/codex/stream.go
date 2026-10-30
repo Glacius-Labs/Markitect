@@ -76,6 +76,8 @@ func (r *reader) Line(raw []byte) error {
 
 func (r *reader) Outcome() agents.Outcome {
 	out := agents.Outcome{Conversation: r.thread, Model: r.model, Usage: r.usage}
+	// Codex reports usage only when a turn completes.
+	out.Usage.Partial = !r.completed
 	// A completed turn answered, whatever error events came before it.
 	switch {
 	case r.completed:

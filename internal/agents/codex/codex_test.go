@@ -138,8 +138,10 @@ func TestReaderAnswersWithTheThreadAndUsage(t *testing.T) {
 	if out, _ := read(t, agents.Turn{}, `{"type":"error","message":"Reconnecting... 1/5 (stream error: 503)"}`, `{"type":"turn.completed","usage":{}}`); out.End != agents.Answered {
 		t.Fatalf("a turn that recovered from a reconnect failed: %+v", out)
 	}
-	if out, _ := read(t, agents.Turn{}, `{"type":"thread.started","thread_id":"th-1"}`); out.End != "" {
-		t.Fatalf("a turn without its end answered: %+v", out)
+	// Codex reports usage only when a turn completes, so a turn without
+	// its end reports a partial count.
+	if out, _ := read(t, agents.Turn{}, `{"type":"thread.started","thread_id":"th-1"}`); out.End != "" || !out.Usage.Partial {
+		t.Fatalf("a turn without its end: %+v", out)
 	}
 }
 

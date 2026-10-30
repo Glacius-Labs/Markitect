@@ -113,9 +113,13 @@ type Outcome struct {
 // Usage counts one turn's tokens as the provider reports them.
 type Usage struct {
 	Input, CacheCreation, CacheRead, Output int64
+	// Partial: the provider reported no total for the turn, as for a turn
+	// that was stopped, crashed or failed before its end, so the counts are
+	// what its output showed until then and a lower bound.
+	Partial bool
 }
 
 // Add sums two counts.
 func (u Usage) Add(v Usage) Usage {
-	return Usage{u.Input + v.Input, u.CacheCreation + v.CacheCreation, u.CacheRead + v.CacheRead, u.Output + v.Output}
+	return Usage{u.Input + v.Input, u.CacheCreation + v.CacheCreation, u.CacheRead + v.CacheRead, u.Output + v.Output, u.Partial || v.Partial}
 }
