@@ -43,7 +43,7 @@ Markitect moves the knowledge of what belongs together out of the agents' memory
 - **Impact like an incremental build.** `markitect impact` shows which Definitions, files and Packages a change reaches and gives each responsible Manager its checklist. `markitect lint` measures the model like code: coupling, size, unused Definitions.
 - **An organization derived from the architecture.** Every Package is a Manager, and the Package tree is the Manager tree. There is no separate agent chart to keep in sync.
 - **A maker and a checker for every Manager.** The maker gives each checklist item a verdict with evidence. A fresh checker re-checks every verdict without the maker's notes and sends defects straight back.
-- **Guarantees in Git.** Each Run has its own Git remote. Server-side hooks keep every Manager to its own branch and paths, compile every submission, run your required checks on it and refuse a checklist with an item left open. Nothing lands that fails the required checks.
+- **Guarantees in Git.** Each Run has its own Git remote. Server-side hooks keep every Manager to its own branch and paths, compile every submission, run your required checks on it, refuse a merged state that fails them and refuse a checklist with an item left open. Nothing lands that fails the required checks.
 - **Lands like a merge queue.** Root's approved result lands on your target branch like a colleague's push, with a Result page under `.markitect/results/`. Markitect never touches your working tree.
 - **Native, with your own account.** The host runs on Windows, Linux and macOS with Docker. Every maker and checker runs Claude Code or Codex in its own container and logs in with your normal account; API keys are refused.
 

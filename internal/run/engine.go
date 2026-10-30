@@ -462,8 +462,9 @@ func (e *Engine) credentials(plan *runremote.Plan, mode agentport.Mode) (map[str
 // collectChecks records where the required checks ran on the whole
 // repository: in apply on the push of Root's approved submission, in verify
 // on the push of Root's verdicts, whose state is the Run's starting commit.
-// The hooks ran them on that commit's full repository state; landing on a
-// moved target runs them again on the merged state.
+// The hooks ran them on that commit's full repository state but refused only
+// a failing merged state, so landing refuses failing results on an unmoved
+// target and runs them again on the merged state of a moved one.
 func (e *Engine) collectChecks(ctx context.Context, remote Remote, s *schedule, r *Result) {
 	rc := &r.RequiredChecks
 	if len(s.plan.Checks) == 0 {

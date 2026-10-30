@@ -138,20 +138,71 @@ func TestASubmissionNeedsAVerdictForEveryChecklistItem(t *testing.T) {
 	}
 }
 
-func TestASubmissionPassesTheRequiredChecksOnTheBranchState(t *testing.T) {
+// A submission that holds no child's approved work, a child's or a parent's
+// first, is a partial tree: the required checks run on the branch's full
+// state, but a failure does not refuse it; the decision log keeps the result
+// for its checker (DEC-087).
+func TestAFirstSubmissionThatFailsACheckIsAcceptedWithTheResult(t *testing.T) {
 	r := newRemote(t, nil)
 	m := r.agent("members", maker)
 	m.write("src/members/FAIL", "x\n")
 	m.write(".markitect/registry/members.md", membersPage("src/members/FAIL"))
 	m.commit("work in progress")
 	m.mustPush() // work without verdicts runs no check
+	if e := r.log(); len(e[len(e)-1].Checks) != 0 {
+		t.Fatalf("work was checked: %+v", e[len(e)-1])
+	}
 	m.commit(submission("members", "members/member"))
-	out := m.mustRefuse(`the required check "no-fail-marker" exited with 1`)
+	out, ok := m.push()
+	if !ok || !strings.Contains(out, "check no-fail-marker failed") || !strings.Contains(out, `Note: the required check "no-fail-marker" exited with 1`) {
+		t.Fatalf("a child's failing submission, accepted %v:\n%s", ok, out)
+	}
+	if e := r.log(); !e[len(e)-1].Accepted || e[len(e)-1].Kind != "submission" || len(e[len(e)-1].Checks) != 1 || e[len(e)-1].Checks[0].Passed {
+		t.Fatalf("the log does not keep the failing result: %+v", e[len(e)-1])
+	}
+
+	root := r.agent(".", maker)
+	root.write("FAIL", "x\n")
+	root.write(project.RootPage, registryTable+"| README.md | [[project]] | Overview |\n| go.work | [[project]] | Workspace |\n| FAIL | [[project]] | Marker |\n")
+	root.commit(submission(".", "project"))
+	if out, ok := root.push(); !ok || !strings.Contains(out, "Note: the required check") {
+		t.Fatalf("a parent's first failing submission, accepted %v:\n%s", ok, out)
+	}
+}
+
+// A merged state, a parent's submission that holds a child's approved work,
+// is refused when it fails a required check (DEC-087).
+func TestAMergedStateThatFailsACheckIsRefused(t *testing.T) {
+	r := newRemote(t, nil)
+	cardsPage := func(extra string) string {
+		return "---\npaths: [src/members/cards/**]\n---\n" + registryTable + "| src/members/cards/card.go | [[members/cards/card]] | Type |\n" + extra
+	}
+	cards := r.agent("members/cards", maker)
+	cards.write("src/members/cards/FAIL", "x\n")
+	cards.write(".markitect/registry/members/cards.md", cardsPage("| src/members/cards/FAIL | [[members/cards/card]] | Marker |\n"))
+	cards.commit(submission("members/cards", "members/cards/card"))
+	cards.mustPush()
+	r.approve("members/cards", "members/cards/card")
+
+	m := r.agent("members", maker)
+	m.sync()
+	m.git("merge", "-q", "--no-edit", "origin/managers/members.cards")
+	m.commit(submission("members", "members/member"))
+	out := m.mustRefuse(`holds your children's approved work, and the required check "no-fail-marker" exited with 1`)
 	if !strings.Contains(out, "check no-fail-marker failed") {
 		t.Fatalf("the pusher does not see the check result:\n%s", out)
 	}
-	m.git("rm", "-q", "src/members/FAIL")
-	m.write(".markitect/registry/members.md", membersPage())
+
+	cards.sync()
+	cards.git("merge", "-q", "--ff-only", "origin/"+cards.branch)
+	cards.git("rm", "-q", "src/members/cards/FAIL")
+	cards.write(".markitect/registry/members/cards.md", cardsPage(""))
+	cards.commit(submission("members/cards", "members/cards/card"))
+	cards.mustPush()
+	r.approve("members/cards", "members/cards/card")
+	m.git("reset", "-q", "--hard", "origin/managers/members")
+	m.sync()
+	m.git("merge", "-q", "--no-edit", "origin/managers/members.cards")
 	m.commit(submission("members", "members/member"))
 	m.mustPush()
 }
@@ -183,7 +234,12 @@ func TestACheckThatRunsOutOfTimeFails(t *testing.T) {
 	})
 	m := r.agent("members", maker)
 	m.commit(submission("members", "members/member"))
-	m.mustRefuse(`the required check "slow" ran out of time`)
+	if out, ok := m.push(); !ok || !strings.Contains(out, `the required check "slow" ran out of time`) {
+		t.Fatalf("accepted %v:\n%s", ok, out)
+	}
+	if e := r.log(); len(e[len(e)-1].Checks) != 2 || !e[len(e)-1].Checks[1].TimedOut {
+		t.Fatalf("log entry %+v", e[len(e)-1])
+	}
 }
 
 func TestTheChecksSeeTheBranchsFullStateInTheImagesEnvironment(t *testing.T) {

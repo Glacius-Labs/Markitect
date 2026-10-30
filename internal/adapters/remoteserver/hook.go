@@ -63,6 +63,9 @@ func Hook(l Layout, stdin io.Reader, stderr io.Writer) int {
 		return 1
 	}
 	fmt.Fprintf(stderr, "Markitect accepted this push (%s).\n", dec.Kind)
+	if dec.Note != "" {
+		fmt.Fprintf(stderr, "Note: %s\n", dec.Note)
+	}
 	return 0
 }
 
