@@ -269,9 +269,17 @@ Build approves this protocol under the owner's delegation. On 30 October 2026, B
     - No credential was found in the 13,459 evidence files scanned.
     - Nothing was left on the engine, and the engine reported no error.
   - **Failed: M did not land the Makerspace W0** (`mLandedTheFirstChainStep`).
-    - M's W0 ran 1,393 s of its 5,400 s and ended `incomplete` with nothing landed. Its cause: "Manager . used its 6 maker starts without approved work", after 35 agent starts and about 11.5 million input tokens.
-    - M's C1 to C9 then started from W0's start. C1 to C8 landed, and C9 had nothing to do.
-  - **What follows:** Build looks first, as the [gate's rules](#stability-gate) say for a W0 that M does not land. This is a result of the arm, not a provider void, so the gate does not just start again on this commit. Precondition 5 does not hold for Windows.
+    - M's W0 Run (`eval-fc73c7a39292`) ran 1,393 s of its 5,400 s and ended `incomplete` with nothing landed. Its cause: "Manager . used its 6 maker starts without approved work", after 35 agent starts and about 11.5 million input tokens.
+    - M's C1 to C9 then started from W0's empty start. C1 to C8 landed, and C9 had nothing to do.
+  - **Why, as Build found it, looking first as the [gate's rules](#stability-gate) say:** M's own behavior, not a fault of the arm, the suite, a judge or the runner.
+    - Root integrated nine children and spent its maker starts on their events.
+    - It told `protocol` that modules were on Root's branch before they were (m6 and m8, against m7 and m10).
+    - Its checker rejected the README's example session while `protocol` was not wired.
+    - In T8, the same W0 landed once ([record](t8-makerspace-w0-20261030.md)).
+  - **What follows, as Build decided:**
+    - No relaunch, and no new gate now.
+    - The comparison of the long-lived Managers redesign runs first, with W0 twice per arm. The fix and a new freeze follow the owner's decision on it.
+    - Precondition 5 does not hold for Windows.
 - **The run:**
   - **What ran:**
     - the frozen commit `4576beaa`;
@@ -308,7 +316,19 @@ Build approves this protocol under the owner's delegation. On 30 October 2026, B
     - The runner's hidden check found that none of the ten hidden places exists.
     - Four temporary folders under `AppData\Local\Temp` could not be read. They were last written between 29 September and 6 October, before the authoring session.
   - **Precondition 3:** the inputs written from `a8a9234c` are kept under Amendment 2. Their digests are unchanged against `4576beaa`, and the Windows and WSL copies are byte-identical.
-- **Still open:** Build compares the Makerspace chains' verify Findings with the series judge's drift checks of the same chains, as the gate's record asks.
+- **Verify against the judge,** for the Makerspace chains, as the gate's record asks:
+  - **No drift, by both:**
+    - The series judge found no drift at C9 for either chain: no forgotten rule, no stale file, no unaccounted file and no regression along the chain. Both chains passed 126 of 126 hidden cases there.
+    - Each `verify --full` found 303 of its 304 items conforming.
+  - **One Finding each, outside what the judge checks.** Neither is false, unlike two of T9's three:
+    - **K's chain** (`protocol/program`): the program is not deterministic.
+      - With several unexpected members, a request's reason text names whichever member a Go map iteration finds first, so it differs between runs.
+      - The model says "Given the same request lines, it produces the same response lines".
+      - The code confirms it: two loops over maps in `realization/protocol/request.go`.
+      - No hidden case sends several unexpected members.
+    - **M's chain** (`tests`): the tests spot-check the permission matrix instead of covering it, as `tests.md` asks.
+      - The checker changed `registerUser` or `issueCredit` from admin only to staff and admin in the specification, and either change still passed the tests.
+      - The judge runs the tests but does not measure what they cover.
 
 ## Independent review
 
