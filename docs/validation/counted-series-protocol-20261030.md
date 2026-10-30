@@ -17,6 +17,8 @@ The protocol of step T7's counted acceptance series ([delivery plan](../implemen
 
   It also holds this protocol's order, repetitions, contrasts, relaunch and stop rules, the stability gate and its verdict.
 - **The c5 plant** no longer leaks (Q4, item 5). Its record now also removes the line "An invoice whose `dueAt` is `2099-12-01T23:59Z` or later can never block", which pinned the removed 30 days, and it checks that the line is gone (PR #908).
+- **Tokens of ended agents** are counted ([PR #907](https://github.com/Glacius-Labs/Markitect/pull/907)): a Result now counts the tokens of agents a Run ends. For Claude that is the exact input and a lower bound of the output. A stopped Codex turn counts 0. Such a count is marked partial, and the page says "at least".
+- **`verify` gets the required checks as evidence** ([PR #909](https://github.com/Glacius-Labs/Markitect/pull/909)): it runs the required checks on its start before its checkers start, gives them the results, and names a missing check directory. With that, §15.2's independent `verify --full` joins the series ([No drift](#reading)).
 - **The minimum meaningful difference** is frozen at 0.05 before the first counted run, unless the owner sets another value by then.
 
 ## Preconditions
@@ -34,7 +36,8 @@ All of these hold before the first gate launch. The gate's frozen commit is the 
    - On 30 October 2026, at public `main` `c575faa5` and private `c87aa81`, the author reported that every step and adopted start passes `markitect check` with no `lint.no_paths` warning, and that the launch and judge phases match the combined output digest for digest.
 4. **Hidden material is off the machine.** After the launch inputs are written, none of the places listed under [Hidden material](#hidden-material) exists. The authoring session's own records hold the whole material, and **only the owner can remove them**: by exporting the authoring session and then deleting it from the machine. Build asks the owner before the gate.
 5. **The stability gate** has passed on the frozen commit for the platform to be run.
-6. **The engine:** for each window, the owner has stopped all other Docker work at the process level. Build has checked that `docker ps` shows no container without a `markitect.*` label and that no Testcontainers or `dotnet` process runs.
+6. **The verify launch is built** and tested offline before the freeze, as [No drift](#reading) describes: a `verify` mode in `markitect_arm.py`, and the runner launching it once per chain and arm. Until then the series cannot start.
+7. **The engine:** for each window, the owner has stopped all other Docker work at the process level. Build has checked that `docker ps` shows no container without a `markitect.*` label and that no Testcontainers or `dotnet` process runs.
 
 ## Protocol
 
@@ -48,8 +51,8 @@ All of these hold before the first gate launch. The gate's frozen commit is the 
 | Run order | By repetition, from the first to the fifth. Each repetition runs every fixed start and plant whose count reaches it. The two arms of a task run one after the other. The first arm alternates per task and per repetition; M runs first in 18 of the new project's 35 change pairs. The task order is rotated per repetition. Repetitions 1 and 2 have 56 launches each, repetition 3 has 20, repetitions 4 and 5 have 14 each. Then the chains run, by repetition, with the first arm alternating per chain: the Library, the Makerspace, the new project, then the new project again. That makes 62 chain launches |
 | Platforms | Windows first, natively. Then Linux, natively in WSL Ubuntu against the same engine, as §15 asks. Each platform has its own gate, work folder, ledger and reports, and its contrasts are read separately |
 | Deadlines | Per step: 2700 s for the Library and 5400 s for the Makerspace, as in the pilot; 5400 s for the new project, as its author set it, fixed at the freeze. The new project's tasks are 182 to 241 KB each, its plants 189 to 240 KB. A timeout is a result. The report's Delivery area shows timeouts per arm |
-| Budget | Per arm and platform: the Library 17 launches (4 fixed starts and 2 plants twice each, plus a 5-step chain), the Makerspace 34 (9 fixed starts and 3 plants twice each, plus a 10-step chain), the new project 60 (7 changes five times, 3 plants three times, and an 8-step chain twice). That is 222 launches per platform and 444 in all. The launch bound is 333 per platform, one and a half times the planned launches; relaunches count against it |
-| Quota and time | In the pilot, 57 launches used 4 points of the seven-day quota. At that rate the series needs about 31 points; if M now lands its Makerspace and new-project steps, two to three times that. A seven-day use of 90 % ends a window, and the next one starts after the reset. So the series may span two or three seven-day windows, and the owner's own use shares that quota. By the pilot's times and T8's W0 (24 minutes for M), one platform takes about 50 to 80 hours of launches. The gate gives a better figure |
+| Budget | Per arm and platform: the Library 17 launches (4 fixed starts and 2 plants twice each, plus a 5-step chain), the Makerspace 34 (9 fixed starts and 3 plants twice each, plus a 10-step chain), the new project 60 (7 changes five times, 3 plants three times, and an 8-step chain twice). That is 222 launches per platform and 444 in all. On top come the verify launches, one per chain and arm: 8 per platform and 16 in all. So the series has 230 launches per platform and 460 in all. The launch bound is 345 per platform, one and a half times the planned launches; relaunches count against it |
+| Quota and time | In the pilot, 57 launches used 4 points of the seven-day quota. At that rate the series needs about 31 points; if M now lands its Makerspace and new-project steps, two to three times that. A seven-day use of 90 % ends a window, and the next one starts after the reset. So the series may span two or three seven-day windows, and the owner's own use shares that quota. By the pilot's times and T8's W0 (24 minutes for M), one platform takes about 50 to 80 hours of launches. The gate gives a better figure. The verify launches add little. In T5 a Library `verify --full` took about a minute with five checker starts. The Makerspace and the new project have more Packages, so their verify launches likely take several minutes each. That is under an hour per platform and under a point of quota |
 | Windows | Build clears each window with the owner. `WORK/STOP` ends a window before the next launch or during any wait, also within a chain, between its steps. When the runner is started again, it continues where it stopped and does not launch again a launch that counted. The ledger records each window. Build stops the runner only through `STOP`, never by ending its process |
 | Before each launch | The runner checks, in order: no `STOP` file, the launch bound, and no hidden material on the machine. Then it waits for a quiet engine and for a login that outlives the deadline by 20 minutes, and checks the engine again. **Quiet** means no container without a `markitect.*` label runs, and none started in the last ten minutes, as a `docker events` stream kept open for the whole window shows. **The refresh** happens under the engine lock. It sets the access token's expiry to now and changes no token, then lets `claude -p` refresh the login, as the CLI does near expiry. The runner replaces the login file only if no other process changed it in between, and it puts the expiry back if the CLI did not refresh it |
 | Lock | `NATIVE-RUN.lock` in Build's notes folder. `suite.py` takes it for each run, judgment and review. The runner holds it only for a login refresh. A busy lock is waited for and not counted |
@@ -79,7 +82,13 @@ Before the gate, one more check covers places nobody listed. The author names a 
 
 The new project is judged and reviewed only after the last launch of the series on both platforms. Until then its judgments stay pending, and the runner leaves the new project out of every report, so that no count of it, not even what was delivered or timed out, is read while launches still run. Two more reasons: a review copies the rubric into the work folder, and a judgment holds the IDs of failed cases, so neither may exist while launches still run.
 
-**Who handles the new project's material:** Build never opens the new project's inputs or run evidence. When the last launch is done, someone who works on no arm clones the private repository and writes the judge phase with `suite_inputs.py --phase judge` into each platform's `judges/gridshare`. Then `series_runner.py judge` runs for each platform; on Linux, that is in WSL. That person also diagnoses a stop on one of the new project's launches and writes its inputs again after a new commit. The amendment that names the frozen commit also names that person, since the authoring session will be gone by then. Build reads the reports. The Library and Makerspace judges are public, so their launches are judged as they end.
+**Who handles the new project's material:** Build never opens the new project's inputs or run evidence. A session or person who works on no arm handles them. A fresh session started for the task qualifies, and so does the owner.
+
+- **After the last launch:** a fresh session that works on no arm starts only then. It clones the private repository and writes the judge phase with `suite_inputs.py --phase judge` into each platform's `judges/gridshare`. Then it runs `series_runner.py judge` for each platform; on Linux, that is in WSL.
+- **During the series:** if a stop on one of the new project's launches has to be diagnosed, or its inputs written again after a new commit, another such session is started for that task alone.
+- **Before the gate:** the amendment that names the frozen commit names who writes the first launch inputs, since the authoring session will be gone by then.
+
+Build reads the reports. The Library and Makerspace judges are public, so their launches are judged as they end.
 
 ## Stability gate
 
@@ -128,10 +137,15 @@ Each stop leaves its reason in `STOP`. Build removes `STOP` and starts the runne
   - §15.1 to §15.4 per arm and series, with planted tasks under Stops right only;
   - the chains' drift and regressions;
   - cost, and the organization's cost per 2.0 Run, described. The organization's cost comes from the pilot's `manager_costs.py`, frozen by hash in the amendment.
-- **No drift without M's own `verify --full`:** §15.2 reads No drift from an independent `verify --full` after the series. This series does not run one. T9's `verify --full` gave two false Findings out of three, and `verify`'s checkers do not get the required checks' results yet ([build page](../workstreams/build.md), Next). So No drift rests on the series judge's drift checks: forgotten rules, stale files, unaccounted files and regressions along each chain. The report shows the verify slot as empty. Whether that is enough is the [owner's question](#for-the-owner).
+- **No drift, with one independent `verify --full` per chain end:** §15.2 reads No drift from an independent `verify --full` after the series. The series runs one `markitect verify --full` on each chain's end state, for both arms. That makes 8 verify launches per platform: the Library chain, the Makerspace chain and the new project's two chains, per arm.
+  - **The end state** is the chain's last delivered result, or its start when no step delivered.
+  - **The launch:** a native launch like M's, after the chain's last step and judgment, with the chain's deadline per step. Its arm is `markitect_arm.py --verify`. It commits the chain's last step model as the owner's input where the end state holds none. That is K's case, since K's repository is like M's but carries no `.markitect/`. Files no registry page names get rows without links, as at an adopted start. Then it runs `markitect verify --full` with Claude checkers, and the Result goes into the chain's `verifyFull` slot of the report.
+  - **The check is the same for both arms**, since `markitect` checks each end state whoever made it. Since #909 its checkers get the required checks' results as evidence.
+  - **Classes and stops:** a verify launch is classed, relaunched and stopped like any other. Its Findings are reported per chain and arm, beside the series judge's drift checks: forgotten rules, stale files, unaccounted files and regressions along the chain.
+  - **Limit:** K's end state is checked after an adoption without file links, M's with its own registry pages. A Finding about a missing link is therefore read as bookkeeping, not as drift.
 - **Stated limits:**
   - The reviewers may guess the arm; in the pilot they guessed it every time. Every reviewer is from the writers' model family.
-  - Tokens of agents that a Run ends are counted only if that fix is on `main` at the freeze.
+  - Tokens of agents that a Run ends are counted since #907: the exact input and at least the output for Claude, and 0 for a stopped Codex turn. Such a count is marked partial and read as "at least".
   - Human attention is measured by its stand-ins.
   - A unit whose launch is invalid again after its one relaunch counts under Unpaired, not as a failure of its arm. The report shows it.
 - **What it claims:** only what it measures, as §15 says. It may show at least K's quality and fewer defects left for a person per change at comparable input. It does not show time saved.
@@ -140,10 +154,18 @@ Each stop leaves its reason in `STOP`. Build removes `STOP` and starts the runne
 
 Build approves this protocol under the owner's delegation. Four points are the owner's to decide, and Build asks the owner about them before the freeze:
 
-1. **The primary endpoint and its minimum meaningful difference.** Recommended: keep the share of hidden cases passed with 0.05, as decided, and read the failed-case count beside it. The alternative is to make the failed-case count primary, with a minimum meaningful difference of 1 case, because it does not dilute on changes that add few cases.
-2. **No drift without M's own `verify --full`**, as above.
-3. **The quota:** the series takes about 31 to 90 points of the owner's seven-day quota, over two or three weeks of windows.
-4. **Section D of the suite design** said that the owner approves each protocol. This page brings that line in line with the delegation of 29 October 2026.
+1. **The primary endpoint and its minimum meaningful difference.**
+   - **Recommended:** make the failed hidden cases per change primary, with a minimum meaningful difference of 1 case, read over the 7 changes' mean differences. Keep the share of hidden cases passed, with 0.05, as the second contrast.
+   - **Why:** a wrong stop is M's typical failure. On the new project it costs 1 to 4 cases of the change's own, and as a share that falls below 0.05 at C7 and barely reaches it at C2 and C5. The failed-case count is the "defects left for a person" that §15 and section D name. One more failed case per change is a difference a person has to repair.
+   - **Today:** the share with 0.05 is primary, as the pilot and Build used it. It stays primary unless the owner chooses otherwise before the freeze.
+2. **The quota:** the series takes about 31 to 90 points of the owner's seven-day quota, over two or three weeks of windows.
+3. **Who handles the new project's material:**
+   - **The proposal:** a fresh session that works on no arm. It starts only after the last launch, writes the judge phase, and runs `series_runner.py judge` on each platform.
+   - **During the series:** when a new commit or a stop on one of the new project's launches needs its inputs written again or its evidence read, another fresh session that works on no arm does it, started for that purpose.
+   - Either way the owner does nothing by hand, and Build never opens the new project's material.
+4. **The authoring session's records:** they hold the whole hidden material. The owner exports and then deletes that session before the gate (precondition 4).
+
+**Information, no decision:** section D of the suite design said that the owner approves each protocol. This page brings that line in line with the delegation of 29 October 2026, under which Build approves it.
 
 ## After the series
 
@@ -181,3 +203,10 @@ The same reviewer then checked the revision against this page and the code. It f
 | The freeze was checked within one work folder only, and the inputs had no digest | The freeze includes the new project's launch inputs, and the series checks them against the gate's record (`gateLedger`). Each platform's reading names its commit |
 
 **The reviewer then approved the protocol at `44890a66`, with the runner at `dd82a93d`. Nothing blocked it.** It confirmed each of these handlings in the code and the numbers again. It made two last points, which are now on the page: name the person who handles the new project's material in the amendment before the gate, and state as a limit that a unit invalid again after its relaunch counts under Unpaired.
+
+**Changes after the approval, at Build's request on 30 October 2026, not reviewed again:**
+
+- [PR #907](https://github.com/Glacius-Labs/Markitect/pull/907) counts the tokens of ended agents, so that stated limit now says so.
+- [PR #909](https://github.com/Glacius-Labs/Markitect/pull/909) gives `verify` the required checks as evidence. So the series now proposes one `verify --full` per chain end for both arms, 8 launches per platform. This replaces the decision not to run one. It needs the arm's `verify` mode and the runner's verify launch (precondition 6).
+- The owner's questions now follow Build's list. The recommendation for the primary endpoint changed to the failed-case count, for the reasons given there.
+- Who handles the new project's material is worded so that a fresh session that works on no arm qualifies.
