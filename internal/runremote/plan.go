@@ -53,11 +53,13 @@ type Plan struct {
 	// Managers lists every Package of the model, working or not.
 	Managers []Manager `json:"managers"`
 	// Pages maps every registry page a Run may change to the Package whose
-	// Manager changes it: a live Package's page, whether or not it exists
-	// yet, to that Package, and the page of a Package that no longer exists
-	// to Root, which cleans it up. Everything else below .markitect/ is
-	// protected: the model, the manifest, the lock, execution.yaml, the
-	// ignore page, Libraries and Results.
+	// Manager changes it: a live Package's page that exists at the base, and
+	// Root's in any case, to that Package, and the page of a Package that no
+	// longer exists to Root, which cleans it up. A Package's first page, with
+	// its first patterns, is the owner's (DEC-081), so no Manager creates
+	// one. Everything else below .markitect/ is protected: the model, the
+	// manifest, the lock, execution.yaml, the ignore page, Libraries and
+	// Results.
 	Pages  map[string]string `json:"pages"`
 	Agents []Agent           `json:"agents"`
 	// Checks are the required checks of execution.yaml, run in order.
@@ -162,7 +164,8 @@ func PlanFor(run string, mode Mode, base string, p *project.Project, imp analysi
 	}
 	for _, id := range p.Model.SortedPackages() {
 		m := Manager{ID: id, Working: working[id]}
-		if page, ok := p.Registry.Pages[id]; ok {
+		page, ok := p.Registry.Pages[id]
+		if ok {
 			for _, pattern := range page.Patterns {
 				m.Patterns = append(m.Patterns, pattern.Text)
 			}
@@ -171,7 +174,9 @@ func PlanFor(run string, mode Mode, base string, p *project.Project, imp analysi
 			m.Checklist = Items(lists[id])
 		}
 		plan.Managers = append(plan.Managers, m)
-		plan.Pages[PageFile(id)] = id
+		if ok || id == model.RootPackage {
+			plan.Pages[PageFile(id)] = id
+		}
 	}
 	for _, page := range p.Registry.Pages {
 		if page.Orphaned {

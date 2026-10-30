@@ -168,6 +168,7 @@ func TestPlanForAProjectAndItsImpact(t *testing.T) {
 		m + "project.md":                    def("std/Project", "Library", "Parts: [[members]], [[catalog]]."),
 		m + "members/member.md":             def("std/Concept", "Member", "A person."),
 		m + "catalog/book.md":               def("std/Concept", "Book", "A book."),
+		m + "shelf/shelf.md":                def("std/Concept", "Shelf", "Holds books."),
 		project.RootPage:                    table + "| README.md | [[project]] | Overview |\n",
 		project.RegistryDir + "/members.md": "---\npaths: [src/members/**]\n---\n" + table + "| src/members/member.go | [[members/member]] | Type |\n",
 		project.RegistryDir + "/catalog.md": "---\npaths: [src/catalog/**]\n---\n" + table + "| src/catalog/book.go | [[catalog/book]] | Type |\n",
@@ -198,6 +199,14 @@ func TestPlanForAProjectAndItsImpact(t *testing.T) {
 	}
 	if plan.Pages[project.RootPage] != model.RootPackage || plan.Pages[project.RegistryDir+"/catalog.md"] != "catalog" {
 		t.Fatalf("pages %v", plan.Pages)
+	}
+	// A Package without a page at the base gets none: its first page and
+	// patterns are the owner's (DEC-081).
+	if _, ok := plan.Manager("shelf"); !ok {
+		t.Fatal("no Manager for shelf")
+	}
+	if owner, ok := plan.Pages[project.RegistryDir+"/shelf.md"]; ok {
+		t.Fatalf("shelf's missing page is mapped to %q", owner)
 	}
 	if plan.Image() != "golang:1.27" || plan.Checks[0].Timeout != 5*time.Minute {
 		t.Fatalf("checks %+v", plan.Checks)

@@ -19,7 +19,7 @@ import (
 )
 
 // Version names the harness text. It changes whenever the rendered text does.
-const Version = 2
+const Version = 3
 
 // MaxInlineDiff bounds the diff a checker receives inline. A larger diff is
 // listed by file, and the checker reads it in its clone.
@@ -131,10 +131,14 @@ func (r renderer) base() string {
 	b.WriteString("# Repository\n\n")
 	branch := runremote.Branch(r.pkg)
 	fmt.Fprintf(&b, "- `/work` is your clone of the Run's remote (`origin`), on your Manager's branch `%s`. The branch `%s` is the Run's starting commit.\n", branch, runremote.BaseBranch)
-	if page := r.page(r.pkg); page != "" {
+	switch page := r.page(r.pkg); {
+	case page != "":
 		fmt.Fprintf(&b, "- Your Package's registry page is `%s`.", page)
-	} else {
+	case r.pkg == "":
 		fmt.Fprintf(&b, "- Your Package has no registry page yet; it belongs at `%s`.", runremote.PageFile(r.pkg))
+	default:
+		fmt.Fprintf(&b, "- Your Package has no registry page at the Run's start, and only the owner writes its first one (it would be `%s`): "+
+			"items that cannot conform without files of your own get `model-problem`.", runremote.PageFile(r.pkg))
 	}
 	if pats := r.patterns(r.pkg); len(pats) > 0 {
 		fmt.Fprintf(&b, " Your area is the paths it claims: %s", code(pats))
@@ -333,7 +337,8 @@ func (r renderer) task() string {
 			"The outcome is `approved` when you confirm every verdict and `rejected` when you dispute at least one.\n")
 	default:
 		b.WriteString("Call `submit` with exactly one verdict per checklist item, each with evidence: `conforms`; `deviates`, when the repository does not conform, with what you observed and what the model expects; " +
-			"or `model-problem`, when the model contradicts itself or leaves open behavior at the project boundary for this item.\n")
+			"or `model-problem`, when the model contradicts itself or leaves open behavior at the project boundary for this item. " +
+			"`changed` is no answer here: verify changes nothing.\n")
 	}
 	return b.String()
 }

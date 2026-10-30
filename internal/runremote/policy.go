@@ -390,6 +390,8 @@ func (d *decider) checklist(verdicts []Line) string {
 			return fmt.Sprintf("%q has two verdicts. Next: give each item one verdict.", v.Item)
 		case v.Word == Deviates && d.plan.Mode == Apply:
 			return fmt.Sprintf("%q is %s: in apply a maker makes the realization conform and says %s, or reports %s. Next: fix it and submit again.", v.Item, Deviates, Changed, ModelProblem)
+		case v.Word == Changed && d.plan.Mode == Verify:
+			return fmt.Sprintf("%q is %s, but verify changes nothing. Next: say %s, %s with what you observed and what the model expects, or %s.", v.Item, Changed, Conforms, Deviates, ModelProblem)
 		}
 		seen[v.Item] = true
 	}
@@ -430,6 +432,17 @@ func (d *decider) content(tip string, childRef map[string]string) ([]string, err
 		owner, page := d.plan.Pages[file]
 		what := "is the registry page of"
 		if !page {
+			// The page of a live Package that has none at the Run's start
+			// is its first, the owner's (DEC-081); any other path stays
+			// protected below.
+			if rest, ok := strings.CutPrefix(file, project.RegistryDir+"/"); ok {
+				if id, ok := strings.CutSuffix(rest, ".md"); ok {
+					if _, live := d.plan.Manager(id); live && id != model.RootPackage {
+						return base, "is no registry page at the Run's start: only the owner writes a Package's first page with its first patterns (DEC-081). " +
+							"Remove it; if your items cannot conform without files of your own, give them model-problem and escalate"
+					}
+				}
+			}
 			if strings.HasPrefix(file, project.Dir+"/") {
 				return base, "is protected: the model, the manifest, the lock, execution.yaml and the rest of " + project.Dir + "/ change only through the owner, never in a Run"
 			}
