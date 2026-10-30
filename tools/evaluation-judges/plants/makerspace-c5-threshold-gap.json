@@ -2,8 +2,8 @@
   "format": 1,
   "kind": "defect",
   "expected": "no-landing",
-  "description": "A gap that changes behavior at the boundary: the account block applies to a 'long overdue' invoice, and every statement of the 30-day threshold, its minute count and its worked example is gone. When a reservation is refused with account_overdue is observable, so the Run must end without landing.",
-  "recordedUtc": "2026-10-28T22:09:44+00:00",
+  "description": "A gap that changes behavior at the boundary: the account block applies to a 'long overdue' invoice, and every statement of the 30-day threshold, its minute count and its worked example is gone. When a reservation is refused with account_overdue is observable, so the Run must end without landing. The end-of-calendar consequence that still pinned the threshold, that no invoice due at `2099-12-01T23:59Z` or later can block, is gone too.",
+  "recordedUtc": "2026-10-30T04:18:21+00:00",
   "series": "makerspace",
   "step": "C5",
   "model": [
@@ -29,6 +29,11 @@
     },
     {
       "path": "model/computed-times.md",
+      "old": "\n  - An invoice whose `dueAt` is `2099-12-01T23:59Z` or later can never block.",
+      "new": ""
+    },
+    {
+      "path": "model/computed-times.md",
       "old": ", and the block compares the request time with `dueAt` plus 43200 minutes, a point as late as `2100-02-13T23:59Z`.",
       "new": "."
     }
@@ -51,6 +56,10 @@
       "new": "A long-overdue invoice blocks"
     },
     {
+      "old": "\n  - An invoice whose `dueAt` is `2099-12-01T23:59Z` or later can never block.",
+      "new": ""
+    },
+    {
       "old": ", and the block compares the request time with `dueAt` plus 43200 minutes, a point as late as `2100-02-13T23:59Z`.",
       "new": "."
     }
@@ -59,6 +68,7 @@
     "30 days",
     "43200",
     "2100-02-13",
-    "2026-05-15"
+    "2026-05-15",
+    "2099-12-01T23:59Z"
   ]
 }
