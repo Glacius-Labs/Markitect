@@ -128,9 +128,10 @@ class Fixture(unittest.TestCase):
         self.login = self.tmp / "credentials.json"
         self.login.write_text(json.dumps({"claudeAiOauth": {"accessToken": ACCESS, "refreshToken": REFRESH,
                                                             "expiresAt": int((time.time() + 8 * 3600) * 1000)}}))
-        for folder in ("tasks/fixed-C1", "tasks/fixed-C2", "tasks/plant-p1", "steps/W0", "steps/C1", "steps/C2", "judges/series",
-                       "judges/plant-p1"):
+        for folder in ("tasks/C1", "tasks/C2", "plants/p1/task", "steps/W0", "steps/C1", "steps/C2", "judges/judge",
+                       "judges/plants/p1/judge"):
             (self.prep / folder).mkdir(parents=True)
+        (self.prep / "judges" / "plants" / "p1" / "judge" / "plant.json").write_text(json.dumps({"format": 1, "kind": "defect"}))
         env = {"FAKE_DIR": str(self.fake), "FAKE_LOCK": str(self.lock), "FAKE_TOKEN": ACCESS, "FAKE_WORK": str(self.work)}
         self.addCleanup(lambda: [os.environ.pop(k, None) for k in env])
         os.environ.update(env)
@@ -138,7 +139,7 @@ class Fixture(unittest.TestCase):
 
     def config(self, units, **series):
         gs = {"role": "confirmatory", "deadlineSeconds": 60, "steps": ["W0", "C1", "C2"], "fixed": ["C1", "C2"],
-              "plants": {"p1": {"step": "C1", "kind": "defect"}}, "prepared": str(self.prep), **series}
+              "plants": {"p1": {"step": "C1"}}, "prepared": str(self.prep), **series}
         return {"work": str(self.work), "rev": "0" * 40, "bin": str(self.tmp), "managerImage": "sha256:m",
                 "sandboxImage": "sha256:s", "lock": str(self.lock), "hidden": [str(self.tmp / "absent")], "login": str(self.login),
                 "model": MODEL, "docker": "docker", "protocol": "counted", "series": {"gs": gs}, "relaunches": 2, "launchBound": 50,
@@ -165,11 +166,12 @@ class Fixture(unittest.TestCase):
 
 class PlanTest(unittest.TestCase):
     def prepared(self):
-        folder = pathlib.Path(tempfile.mkdtemp())
-        (folder / "series.json").write_text(json.dumps({
+        spec = pathlib.Path(tempfile.mkdtemp()) / "new.json"
+        spec.write_text(json.dumps({
             "name": "new", "deadlineSeconds": 3600, "steps": ["W0"] + [f"C{i}" for i in range(1, 8)], "fixed": [f"C{i}" for i in range(1, 8)],
-            "plants": {f"p{i}": {"step": f"C{i + 1}", "kind": "defect"} for i in range(1, 4)}, "judges": str(folder / "judges")}))
-        return folder
+            "plants": {f"p{i}": {"step": f"C{i + 1}"} for i in range(1, 4)}, "inputs": str(spec.parent / "inputs"),
+            "judges": str(spec.parent / "judges")}))
+        return spec
 
     def test_counted_series_per_platform(self):
         config = series_runner.plan("counted", {"work": "w"}, [self.prepared()])
@@ -390,12 +392,22 @@ class SeriesTest(Fixture):
         self.assertIn(str(judges), [arm[i + 1] for i, x in enumerate(arm) if x == "--hidden-absent"])
         self.assertEqual([p["kind"] for p in self.ledger()["pending"]], ["launch", "chain"])
         self.assertEqual(self.calls("judge") + self.calls("judge-chain"), [])
-        (judges / "series").mkdir(parents=True)
+        (judges / "judge").mkdir(parents=True)
         self.runner(config).judge()
         ledger = self.ledger()
         self.assertEqual(ledger["pending"], [])
         self.assertEqual([bool(e.get("judgment")) for e in ledger["launches"]], [True, True])
         self.assertEqual(len(self.calls("review")), 2)
+
+    def test_a_plant_runs_from_its_task_and_its_kind_comes_from_its_judge(self):
+        self.scenario({"p": ["result"]})
+        self.runner(self.config([{"id": "p", "arm": "K", "kind": "plant", "series": "gs", "plant": "p1", "repetition": 1}])).run()
+        run = self.calls("run")[0]["args"]
+        self.assertEqual(pathlib.Path(run[run.index("--task") + 1]), self.prep / "plants" / "p1" / "task")
+        judge = self.calls("judge")[0]["args"]
+        self.assertEqual((pathlib.Path(judge[judge.index("--judge") + 1]), judge[judge.index("--step") + 1]),
+                         (self.prep / "judges" / "plants" / "p1" / "judge", "C1"))
+        self.assertEqual(self.ledger()["tasks"]["plant-p1"]["planted"], "defect")
 
     def test_hidden_material_on_the_machine_stops_before_a_launch(self):
         (self.tmp / "absent").mkdir()

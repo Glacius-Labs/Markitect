@@ -1,7 +1,7 @@
 """The series runner: a counted series or its stability gate, one launch at a time through suite.py, with its judging,
 reviews, ledger and report.
 
-  python -I -B series_runner.py plan --protocol counted|gate --machine MACHINE.json [--prepared DIR ...] --out CONFIG.json
+  python -I -B series_runner.py plan --protocol counted|gate --machine MACHINE.json [--prepared SPEC.json ...] --out CONFIG.json
   python -I -B series_runner.py units CONFIG.json
   python -I -B series_runner.py run CONFIG.json [--prep-only]
   python -I -B series_runner.py judge CONFIG.json
@@ -88,13 +88,15 @@ def public_series(name, tools=HERE.parent):
     return {"role": "public", "deadlineSeconds": DEADLINES[name], "steps": steps, "fixed": steps[1:], "plants": plants}
 
 
-def prepared_series(folder):
-    """A series whose inputs another session prepared (the new project's author): FOLDER/series.json names its steps,
-    fixed starts, plants with their step and kind, its deadline, and where its judge folders lie when it is judged."""
-    spec = json.loads((pathlib.Path(folder) / "series.json").read_text(encoding="utf-8"))
+def prepared_series(spec):
+    """A series whose author prepares its inputs, the new project's. The JSON file SPEC names its steps, fixed starts,
+    plants with their step (not their kind, which only the judge folders hold), its deadline, the folder of its launch
+    inputs (`inputs`) and the folder its judge folders are written to when it is judged (`judges`), both in the runner's
+    layout (Runner.task_dir, Runner.judge_dir)."""
+    spec = json.loads(pathlib.Path(spec).read_text(encoding="utf-8"))
     return spec["name"], {"role": "confirmatory", "deadlineSeconds": spec["deadlineSeconds"], "steps": spec["steps"],
-                          "fixed": spec["fixed"], "plants": spec["plants"], "prepared": str(folder), "judges": spec["judges"],
-                          "inputEffort": spec.get("inputEffort") or {}}
+                          "fixed": spec["fixed"], "plants": {name: {"step": p["step"]} for name, p in spec["plants"].items()},
+                          "prepared": spec["inputs"], "judges": spec["judges"], "inputEffort": spec.get("inputEffort") or {}}
 
 
 def pair(unit, first):
@@ -146,8 +148,8 @@ def launches(units):
 def plan(protocol, machine, prepared=()):
     series = {name: public_series(name) for name in ("library", "makerspace")}
     if protocol == "counted":
-        for folder in prepared:
-            name, spec = prepared_series(folder)
+        for path in prepared:
+            name, spec = prepared_series(path)
             series[name] = spec
         units = counted_units(series)
     elif protocol == "gate":
@@ -471,29 +473,45 @@ class Runner:
         return self.series(unit["series"])["plants"][unit["plant"]]["step"] if unit["kind"] == "plant" else unit["step"]
 
     def task_dir(self, unit):
-        what = f"plant-{unit['plant']}" if unit["kind"] == "plant" else f"fixed-{unit['step']}"
-        return self.prepared(unit["series"]) / "tasks" / what
+        """A fixed start's task, `tasks/STEP/`, or a plant's, `plants/NAME/task/`, in the series' inputs; a chain's steps
+        are `steps/STEP/` there."""
+        if unit["kind"] == "plant":
+            return self.prepared(unit["series"]) / "plants" / unit["plant"] / "task"
+        return self.prepared(unit["series"]) / "tasks" / unit["step"]
+
+    def series_judge(self, name):
+        return self.judges(name) / "judge"
 
     def judge_dir(self, unit):
-        return self.judges(unit["series"]) / (f"plant-{unit['plant']}" if unit["kind"] == "plant" else "series")
+        """The series judge, `judge/`, or a plant's judge with its `plant.json`, `plants/NAME/judge/`, in the series'
+        judge folders."""
+        if unit["kind"] == "plant":
+            return self.judges(unit["series"]) / "plants" / unit["plant"] / "judge"
+        return self.series_judge(unit["series"])
 
     def prep(self):
-        """The public series' inputs from the frozen revision: steps, the series judge, fixed reference starts with the
-        registry pages their owner wrote, planted steps and their judges, and a task per fixed start and plant."""
+        """The public series' inputs from the frozen revision, in the layout a prepared series brings: the steps, the series
+        judge, fixed reference starts with the registry pages their owner wrote, planted steps and their judges, and a
+        task per fixed start and plant. A prepared series must have every input its units launch."""
         for name, s in self.c["series"].items():
+            units = [u for u in self.c["units"] if u["series"] == name]
             if s.get("prepared"):
-                for unit in self.c["units"]:
-                    if unit["series"] == name and not (self.task_dir(unit) if unit["kind"] != "chain" else self.prepared(name) / "steps").is_dir():
-                        raise SystemExit(f"the prepared series {name} lacks {self.task_dir(unit)}")
+                needed = [self.task_dir(u) for u in units if u["kind"] != "chain"]
+                needed += [self.prepared(name) / "steps" / step for u in units if u["kind"] == "chain" for step in u["steps"]]
+                missing = [str(p) for p in needed if not p.is_dir()]
+                if missing:
+                    raise SystemExit(f"the prepared series {name} lacks " + ", ".join(sorted(set(missing))))
                 continue
             prep, src = self.prepared(name), self.ev.parent / "evaluation-judges"
             if not (prep / "steps").exists():
                 self.must(f"prep-steps-{name}", [self.py, "-I", "-B", self.ev / "series.py", "steps", "--series", name, "--out", prep / "steps"])
-            if not (prep / "judges" / "series").exists():  # from the frozen tree, which is the revision's
+            if not self.series_judge(name).exists():  # from the frozen tree, which is the revision's
                 self.must(f"prep-judge-{name}", [self.py, "-I", "-B", self.ev / "judges.py", "export", "--source", src / name,
-                                                 "--out", prep / "judges" / "series"])
-            tasks = {("fixed", step): step for step in s["fixed"]} | {("plant", p): v["step"] for p, v in s["plants"].items()}
-            for (kind, what), step in tasks.items():
+                                                 "--out", self.series_judge(name)])
+            tasks = [{"kind": "fixed", "series": name, "step": step} for step in s["fixed"]]
+            tasks += [{"kind": "plant", "series": name, "plant": plant} for plant in s["plants"]]
+            for task in tasks:
+                step = self.step_of(task)
                 before = s["steps"][s["steps"].index(step) - 1]
                 start, base = prep / "starts" / f"{before}.bundle", prep / "bases" / before
                 if not start.exists():
@@ -504,23 +522,22 @@ class Runner:
                     self.must(f"prep-base-{name}-{before}", [self.py, "-I", "-B", self.ev / "series.py", "base", "--series", name,
                                                              "--step", before, "--out", base])
                 source = prep / "steps" / step
-                if kind == "plant":
-                    source = prep / "plant-steps" / what
+                if task["kind"] == "plant":
+                    source = prep / "plants" / task["plant"] / "step"
                     if not source.exists():
-                        self.must(f"prep-plant-{what}", [self.py, "-I", "-B", self.ev / "judges.py", "plant", "--plant", src / "plants" / f"{what}.json",
-                                                         "--step-out", source, "--judge", prep / "judges" / "series",
-                                                         "--judge-out", prep / "judges" / f"plant-{what}"])
-                task = prep / "tasks" / f"{kind}-{what}"
-                if not task.exists():
-                    self.must(f"prep-task-{name}-{kind}-{what}", [self.py, "-I", "-B", self.suite_py, "task", "--task-md", source / "task.md",
-                                                                   "--model", source / "model", "--start", start, "--base-model", base,
-                                                                   "--deadline-seconds", s["deadlineSeconds"], "--out", task])
+                        self.must(f"prep-plant-{task['plant']}", [self.py, "-I", "-B", self.ev / "judges.py", "plant", "--plant",
+                                                                  src / "plants" / f"{task['plant']}.json", "--step-out", source,
+                                                                  "--judge", self.series_judge(name), "--judge-out", self.judge_dir(task)])
+                if not self.task_dir(task).exists():
+                    self.must(f"prep-task-{name}-{self.task_dir(task).parent.name}-{self.task_dir(task).name}",
+                              [self.py, "-I", "-B", self.suite_py, "task", "--task-md", source / "task.md", "--model", source / "model",
+                               "--start", start, "--base-model", base, "--deadline-seconds", s["deadlineSeconds"], "--out", self.task_dir(task)])
         for unit in self.c["units"]:
             entry = self.ledger["tasks"].setdefault(self.task_name(unit), {"inputEffort": None, "note": "task.md is rendered from the model"})
             s = self.series(unit["series"])
             if s["role"] == "confirmatory":
                 entry.update(inputEffort=s.get("inputEffort", {}).get(self.task_name(unit)), note="task.md written by the author")
-            if unit["kind"] == "plant":
+            if unit["kind"] == "plant" and s["plants"][unit["plant"]].get("kind"):
                 entry["planted"] = s["plants"][unit["plant"]]["kind"]
         (self.work / "signatures.json").write_text(json.dumps(SIGNATURES, indent=2) + "\n", encoding="utf-8")
         self.save()
@@ -734,7 +751,7 @@ class Runner:
                                                       "assembledFrom": [o for _, o in kept]}, indent=2) + "\n", encoding="utf-8")
         chain = {"id": unit["id"], "variant": unit["arm"], "task": self.task_name(unit), "series": unit["series"],
                  "repetition": unit.get("repetition", 1)}
-        if (self.judges(unit["series"]) / "series").exists():
+        if self.series_judge(unit["series"]).exists():
             self.judge_chain(chain, unit["series"], kept)
         else:
             self.ledger["pending"].append({"kind": "chain", "chain": chain, "series": unit["series"], "kept": kept})
@@ -742,7 +759,7 @@ class Runner:
 
     def judge_chain(self, chain, series, kept):
         whole, judged = self.work / "runs" / f"{chain['id']}-chain", self.work / "judgments" / f"{chain['id']}-chain"
-        self.suite(f"judge-chain-{chain['id']}", ["judge-chain", "--chain", whole, "--judge", self.judges(series) / "series",
+        self.suite(f"judge-chain-{chain['id']}", ["judge-chain", "--chain", whole, "--judge", self.series_judge(series),
                                                   "--steps", ",".join(s for s, _ in kept), "--out", judged, "--lock", self.c["lock"],
                                                   "--engine", self.engine[0]])
         for i, (_, out) in enumerate(kept, 1):
@@ -756,7 +773,12 @@ class Runner:
 
     # --- the end of a window and of the series ---
     def judge_pending(self):
-        """Every judgment that waited for its judge folder, once that folder is on the machine."""
+        """Every judgment that waited for its judge folder, once that folder is on the machine, and each plant's kind,
+        which a prepared series names only there (`plant.json`)."""
+        for unit in self.c["units"]:
+            plant = classify.load(self.judge_dir(unit) / "plant.json") if unit["kind"] == "plant" else None
+            if plant:
+                self.ledger["tasks"][self.task_name(unit)]["planted"] = plant["kind"]
         left = []
         for item in self.ledger["pending"]:
             if item["kind"] == "launch":
@@ -765,7 +787,7 @@ class Runner:
                     self.judge_launch(entry, pathlib.Path(item["judge"]))
                 judged = bool(entry.get("judgment"))
             else:
-                judged = (self.judges(item["series"]) / "series").exists() and self.judge_chain(item["chain"], item["series"], item["kept"])
+                judged = self.series_judge(item["series"]).exists() and self.judge_chain(item["chain"], item["series"], item["kept"])
             if not judged:
                 left.append(item)
         self.ledger["pending"] = left
@@ -785,7 +807,7 @@ class Runner:
                 picks += steps[-1:]
         for entry in picks:
             series = next(u["series"] for u in self.c["units"] if self.task_name(u) == entry["task"])
-            judge = self.judges(series) / "series"
+            judge = self.series_judge(series)
             out = self.work / "reviews" / entry["id"]
             if entry.get("review") or not judge.exists():
                 continue
