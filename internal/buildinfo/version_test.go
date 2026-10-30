@@ -26,6 +26,7 @@ func TestBuildAddsTheSourceRevision(t *testing.T) {
 		{"pseudo-version with build metadata", pseudo + "+dirty", nil, "", "1.2.3+903467c2d394"},
 		{"embedded revision wins over the pseudo-version", pseudo, []debug.BuildSetting{{Key: "vcs.revision", Value: "abc"}}, "", "1.2.3+abc"},
 		{"pseudo-version wins over injected", pseudo, nil, "def", "1.2.3+903467c2d394"},
+		{"pseudo-version ignores modified without revision", pseudo, []debug.BuildSetting{{Key: "vcs.modified", Value: "true"}}, "", "1.2.3+903467c2d394"},
 		{"tagged module version adds nothing", "v1.2.3", nil, "", "1.2.3"},
 		{"devel module version adds nothing", "(devel)", nil, "", "1.2.3"},
 	} {

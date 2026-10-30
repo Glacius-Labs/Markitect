@@ -49,7 +49,7 @@ func build(version, module string, settings []debug.BuildSetting, injected strin
 		}
 	}
 	if revision == "" {
-		modified = ""
+		modified = "" // a modified tree without its revision names nothing
 		if m := pseudoVersion.FindStringSubmatch(module); m != nil {
 			revision = m[1]
 		} else {
