@@ -21,7 +21,8 @@ The suite runner, its judging and reporting, and the baseline variant of the [ev
 | [results.py](results.py) | The Result contract and its check: every checklist item has a verdict with evidence |
 | [reading.py](reading.py) | The paired reading of a contrast: the 95 % interval of the paired difference |
 | [report.py](report.py), [acceptance.py](acceptance.py) | `suite.py report`: one table per area for a series ledger, then one per acceptance criterion of concept 2.0 §15 |
-| [test_suite.py](test_suite.py), [test_sandbox.py](test_sandbox.py), [test_judging.py](test_judging.py), [test_series.py](test_series.py), [test_native.py](test_native.py), [test_markitect_arm.py](test_markitect_arm.py), [test_acceptance.py](test_acceptance.py), [test_reviewing.py](test_reviewing.py), [test_classify.py](test_classify.py) | Offline tests with real Git, fake variants, a fake `claude`, a scripted `markitect`, fake engines, and recorded runs and transcripts ([testdata/](testdata/README.md)) |
+| [series_runner.py](series_runner.py) | The [series runner](#the-series-runner): a counted series or its stability gate, one launch at a time, with its judging, reviews, ledger and report |
+| [test_suite.py](test_suite.py), [test_sandbox.py](test_sandbox.py), [test_judging.py](test_judging.py), [test_series.py](test_series.py), [test_native.py](test_native.py), [test_markitect_arm.py](test_markitect_arm.py), [test_acceptance.py](test_acceptance.py), [test_reviewing.py](test_reviewing.py), [test_classify.py](test_classify.py), [test_series_runner.py](test_series_runner.py) | Offline tests with real Git, fake variants, a fake `claude`, a scripted `markitect`, fake engines, a fake suite, and recorded runs and transcripts ([testdata/](testdata/README.md)) |
 
 ## Use
 
@@ -158,9 +159,93 @@ Then come the acceptance areas ([acceptance.py](acceptance.py)), one table per c
 | No drift | Per chain: forgotten rules, stale files and unaccounted files after its last step, the regressions along it, and the variant's own `verify --full` where it has one |
 | Nothing skipped | Every Result a variant returns ([results.py](results.py)): items without verdict, without evidence, without an approving checker, and checks that did not run on the whole repository |
 | Stops right | Planted defects without landing, harmless gaps landed; a launch without result counts as wrong |
-| At least as trustworthy as K | Per contrast, the paired difference by task, step and repetition, its 95 % interval ([reading.py](reading.py)), the design's reading and whether the variant is at least as good |
+| At least as trustworthy as K | Per contrast, the paired difference by task, step and repetition of its endpoint (`casesPassedShare`, `casesFailed` or `defectsLeft`), its 95 % interval ([reading.py](reading.py)), read over the pairs or, with `blockBy` `change`, over each change's mean difference across its repetitions; the design's reading and whether the variant is at least as good |
 
 A planted defect's launch counts under Stops right only. **The Result contract:** a variant that keeps a checklist writes one Result per Run as `OUT_DIR/results/RUN.json` (format in [results.py](results.py)); `python -I -B tools/evaluation/results.py RUN_DIR` checks one run. **A planted task's** judge folder holds `plant.json` (kind, expected outcome, description, time recorded); `suite.py judge` scores the outcome itself ([judging.py](judging.py)).
+
+## The series runner
+
+[series_runner.py](series_runner.py) runs a counted series or its stability gate as its protocol says, one launch at a time, through `suite.py`:
+
+```text
+python -I -B tools/evaluation/series_runner.py plan --protocol counted|gate --machine MACHINE.json [--prepared SPEC.json ...] --out CONFIG.json
+python -I -B WORK/src/tools/evaluation/series_runner.py units CONFIG.json
+python -I -B WORK/src/tools/evaluation/series_runner.py run CONFIG.json [--prep-only]
+python -I -B WORK/src/tools/evaluation/series_runner.py judge CONFIG.json
+```
+
+`MACHINE.json` names the work folder, the frozen revision, the folder of the binaries built from it, the images built from it, the engine lock, the places hidden material could lie, the login file and the model.
+
+**Plans.** `plan` adds the protocol's units in their order and its contrasts:
+
+- **`counted`:**
+  - The Library and the Makerspace: every fixed start and plant twice per arm, and each chain once.
+  - Each `--prepared` series (the new project): its fixed starts five times, its plants three times and its chain twice.
+  - The order is by repetition. The first arm alternates per task and per repetition, the task order is turned per repetition, and the chains come last.
+  - The contrasts: the share of hidden cases passed, with a minimum meaningful difference of 0.05, and the failed hidden cases, with 1; both are read over each change's mean difference (`blockBy` `change`). Defects left for a person are a third contrast, with 1.
+- **`gate`:**
+  - The Library's fixed starts M2, M3 and M4, and the Makerspace chain, once per arm.
+  - The first fixed start of each prepared series once per arm, so that both arms have run on its inputs.
+
+The launch bound is one and a half times the planned launches. `units` prints the order and its counts.
+
+**Inputs.** `run` runs from the frozen revision's `tools/`, extracted with `git archive` into `WORK/src`, and logs its own SHA-256. It prepares the Library's and Makerspace's inputs in `WORK/prep/SERIES`, as [change series](#change-series) describes, with the registry pages on every fixed start.
+
+A prepared series' author writes its inputs in the same layout, and `--prepared SPEC.json` names them:
+
+- **The spec:** `name`, `steps`, `fixed`, `plants` with each plant's `step` (its kind stays in its judge folder), `deadlineSeconds`, `inputs`, `judges`, and optionally `inputEffort` per task.
+- **Launch inputs (`inputs`):** `steps/STEP/` for a chain, `tasks/STEP/` for a fixed start and `plants/NAME/task/` for a plant.
+- **Judge folders (`judges`):** `judge/`, the series judge, and `plants/NAME/judge/` with its `plant.json`. For a prepared series they are there only while it is judged.
+
+**Each launch:**
+
+- **Before it:**
+  - no `WORK/STOP`;
+  - the launch bound not reached;
+  - no hidden material on the machine (the configuration's places and every prepared series' `judges`);
+  - a quiet engine, then a login that covers the launch, then a quiet engine again.
+
+  The engine is quiet when no container without a `markitect.*` label runs and none started in the last ten minutes, as a `docker events` stream kept open for the whole window shows. The stream is needed because the engine keeps only its last 256 events, fewer than most native runs write. Engine waits go into the log and into the ledger's `waits`.
+- **The login:** it must outlive the launch's deadline, or a review's hour, by twenty minutes. Otherwise the runner takes the engine lock and sets the login's expiry to now, with no token changed. Then `claude -p` refreshes it, as the CLI does near expiry. The runner replaces the file only if no other process changed it in between, and it puts the expiry back if the CLI did not refresh it. An expired refresh token stops the series.
+- **The engine lock:** the runner holds it only for that refresh, between launches, never while a suite command runs. `suite.py` takes it for each run, judgment and review. While another holder has it, the runner waits and does not count the launch.
+- **Classes:** each launch is classed with its arm's variant runtime signatures, as the report classes it. These are in `signatures.json`: for M, `reported.status` is `could-not-run` or `check-failed`, or `reported.noAgentTurn` is true.
+  - A void launch is relaunched up to twice.
+  - A launch invalid only because of other work's containers is relaunched once. Those are containers without a `markitect.*` label whose start the run's own engine events show. Any other invalid launch stops the series.
+  - **After a stop is cleared:** a launch that stopped the series is launched again only if it was void with relaunches left, or if it was the first invalid one to stop it. Otherwise the series goes on with the next unit.
+  - In the gate, any launch that is not a result stops it, and only a result completes a unit.
+- **Stops:** the runner stops the series on any of these, and writes the reason to `WORK/STOP`:
+  - a refused request, or a seven-day use of 90 %;
+  - a credential of the login in a run's evidence;
+  - a gateway refusal of a provider name;
+  - hidden material on the machine;
+  - a void share above one in four for an arm after its first eight launches;
+  - a judge that gives no valid judgment twice;
+  - a frozen file, binary or image that changed since the first window;
+  - the launch bound;
+  - a login that cannot be refreshed;
+  - the runner's own failure.
+
+  A five-hour use of 85 % waits for that window's reset instead. The ledger keeps that wait, so a window that ends during it waits out the rest when the series goes on.
+- **Judging:** each delivered result is judged at its step, after the quota and evidence checks. A chain's counted steps are judged as one chain after its last step; the suite judges a chain's delivered steps only.
+  - **Pending:** a judgment stays under `pending` in the ledger until it is valid. That covers a judge folder off the machine, a window that ends during a judgment, and a runner that does not live to finish one. Each window starts by making what is pending and whose judge is there. A judgment that is not valid is made once more, each time in a fresh folder.
+  - **A judge that keeps failing:** only the window that made the launch stops for its judge. An item whose judge failed twice is tried again only after the last unit and by `judge`, and it stays listed in `done.json`.
+  - **A prepared series** whose judge folders are off the machine is judged later. `judge` judges and reviews what waited, once the folders are there, and writes the reports again.
+  - **Failures:** every judgment, review or report that did not come out is listed under `failures` in the ledger and in `done.json`.
+
+**Chains.** A chain runs one step at a time. Each step is a one-step `suite.py chain` from the step before's result, or from its start when it delivered none. Every launch of a step starts from the state folder as it was before the step. A step without a result after its relaunches, or invalid, ends the chain.
+
+**Stop and resume.**
+
+- **Ending a window:** the runner ends one as soon as `WORK/STOP` exists, before the next launch or during any wait. Started again after `STOP` is removed, it goes on where it stopped, without launching again what counted. A launch, its records and its answer are saved together. A launch the runner did not live to record is recorded as it ended.
+- **Records:** the ledger records each window. `WORK/runner.lock` keeps a second runner out.
+- **Freeze check:** the first window records the frozen tree, the binaries, a prepared series' launch inputs and the images. Each later window checks them. With `gateLedger` in the configuration, the first window also compares them with the gate's record.
+- **Hidden places:** a leading `~` in a hidden place is expanded.
+- **After each window:**
+  - **Reports:** one over every launch (`report/all`), and per series one over all its launches (`report/SERIES`), one over its fixed starts alone (`report/SERIES-fixed`, where the primary contrast is read) and one over its chains (`report/SERIES-chains`). A series judged later is left out of every report until all its units have run and `judge` has judged all of it, so that nothing of it is read while launches still run.
+  - **Final check:** the runner scans every evidence file for the login's tokens and key shapes, and counts what is left labelled `markitect.run` or `markitect.evaluation`.
+- **After the last unit:** the runner also runs the reviews the protocol names, and writes `WORK/done.json`. The gate also writes its verdict, `WORK/gate.json`. In `counted`, the reviews cover every judged result of a fixed start in the first repetition and every chain's last judged step.
+
+Start the runner detached (`Win32_Process` on Windows, `setsid nohup` on Linux), without a shell's `ANTHROPIC_*` or `CLAUDE_*` variables. Stop it with `WORK/STOP`, not by ending its process.
 
 ## The escape probe
 

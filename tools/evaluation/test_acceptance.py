@@ -182,5 +182,40 @@ class AcceptanceReportTest(unittest.TestCase):
             report.report(self.tmp / "ledger.json")
 
 
+class BlockedContrastTest(unittest.TestCase):
+    """A change's repetitions are not independent: with blockBy "change" the interval is read over each change's mean."""
+
+    def facts(self):
+        out = []
+        for task, cases in (("a-fixed-C1", ((10, 9), (10, 10))), ("a-fixed-C2", ((8, 8), (7, 8)))):
+            for rep, (m, k) in enumerate(cases, 1):
+                for variant, passed in (("M", m), ("K", k)):
+                    out.append({"variant": variant, "task": task, "step": task[-2:], "repetition": rep, "class": "result", "delivered": True,
+                                "areas": {"correctness": {"passed": passed, "planned": 10, "failed": 10 - passed}},
+                                "attention": {"noResult": 0, "casesFailed": 10 - passed, "confirmedCriticals": None}})
+        return out
+
+    def contrast(self, **extra):
+        import acceptance
+        _, data = acceptance.trustworthy(self.facts(), [{"variant": "M", "baseline": "K", "minimumDifference": 1, **extra}],
+                                         lambda *a: "")
+        return data[0]
+
+    def test_pairs_or_changes(self):
+        free = self.contrast(endpoint="casesFailed")
+        self.assertEqual((free["pairs"], free["blocks"]), (4, None))
+        self.assertAlmostEqual(free["mean"], 0.0)
+        blocked = self.contrast(endpoint="casesFailed", blockBy="change")
+        self.assertEqual((blocked["pairs"], blocked["blocks"]), (4, 2))
+        # C1: M fails 0 and 0 against K's 1 and 0 (mean +0.5 for M); C2: M fails 2 and 3 against 2 and 2 (mean -0.5).
+        self.assertAlmostEqual(blocked["mean"], 0.0)
+        self.assertGreater(blocked["high"] - blocked["low"], free["high"] - free["low"])
+
+    def test_cases_failed_counts_lower_as_better(self):
+        facts = self.facts()
+        self.assertEqual([f["attention"]["casesFailed"] for f in facts if f["variant"] == "M"], [0, 0, 2, 3])
+        self.assertAlmostEqual(self.contrast(endpoint="casesPassedShare")["mean"], 0.0)
+
+
 if __name__ == "__main__":
     unittest.main()

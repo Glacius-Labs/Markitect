@@ -98,7 +98,7 @@ A timeout or a missing result caused by the variant's work counts as a failure i
 | **No drift** | After a chain, the series judge's drift checks of its end result: earlier steps' cases that fail (forgotten rules), terms a step retired still in the program's source (stale files), and files that neither the build, the documentation nor Markitect's bookkeeping account for. Next to them, the cases that passed at one step and fail at a later one, and the variant's own independent `verify --full`, where it has one |
 | **Nothing skipped** | Every Result a variant returns: each checklist item has a verdict, evidence and an approving checker, and the required checks ran on the whole repository. A variant with a checklist returns one Result per Run in the [Result contract](../../tools/evaluation/results.py); a variant without one, such as K, has nothing to check |
 | **Stops right** | A planted defect does not land, a harmless gap does. Scored the same way for every variant: a result equal to its start did not land. A launch without a result has no outcome and counts as wrong |
-| **At least as trustworthy as K** | Per contrast named in the protocol, the paired difference of one endpoint by task, step and repetition, its 95 % interval and its reading (better, worse, a meaningful advantage is excluded, undecided), and whether the variant is at least as good: the interval's lower end lies above minus the minimum meaningful difference |
+| **At least as trustworthy as K** | Per contrast named in the protocol, the paired difference of one endpoint by task, step and repetition, its 95 % interval (over the pairs, or over each change's mean difference when the protocol blocks by change) and its reading (better, worse, a meaningful advantage is excluded, undecided), and whether the variant is at least as good: the interval's lower end lies above minus the minimum meaningful difference |
 
 A planted defect's launch counts under Stops right only.
 
@@ -112,6 +112,8 @@ A planted defect's launch counts under Stops right only.
 - the model;
 - the decision rule and the test per area;
 - the frozen tool revisions.
+
+The [series runner](../../tools/evaluation/README.md#the-series-runner) runs a counted series and its stability gate one launch at a time: on a quiet engine, with the login refreshed before a launch it cannot cover, each launch classed with its variant's signatures, and the protocol's relaunch and stop rules.
 
 ## Limits
 
