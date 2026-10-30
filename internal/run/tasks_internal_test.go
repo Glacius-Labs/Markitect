@@ -77,3 +77,24 @@ func TestTheTasksSayWhatAVerdictCovers(t *testing.T) {
 		t.Errorf("verify task:\n%s", v)
 	}
 }
+
+// A verify checker gets the required checks the host ran on the start: one
+// that did not start says why in the remote's words, and checks that could
+// not run say so.
+func TestTheStartEvidenceOfVerify(t *testing.T) {
+	s := &schedule{plan: &runremote.Plan{Base: "base0000000000", Checks: []project.Check{{Name: "build"}}}}
+	if got := s.startEvidence(); got != "" {
+		t.Fatalf("before the run: %q", got)
+	}
+	s.startChecks = &startChecks{results: []runremote.CheckResult{{Name: "build", Exit: -1, Output: "[the check's directory realization does not exist in this state]\n"}}}
+	got := s.startEvidence()
+	if !strings.Contains(got, "run by the host before you started (commit base00000000)") ||
+		!strings.Contains(got, `"build" did not start: [the check's directory realization does not exist in this state]`) ||
+		strings.Contains(got, "written by the code under review") || strings.Contains(got, "exited with -1") {
+		t.Fatalf("a check that did not start:\n%s", got)
+	}
+	s.startChecks = &startChecks{err: errors.New("the remote is gone")}
+	if got := s.startEvidence(); !strings.Contains(got, "could not run on this state: the remote is gone") {
+		t.Fatalf("checks that could not run: %s", got)
+	}
+}
