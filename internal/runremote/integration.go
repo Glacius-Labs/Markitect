@@ -94,7 +94,7 @@ func (d *decider) integration(u Update, children []string) (Decision, error) {
 	if err != nil {
 		return Decision{}, err
 	}
-	if t, _ := ParseMessage(tip.Message); t.Kind != Submission {
+	if t, _ := ParseMessage(tip.Message); t.Kind != Submission || t.Manager != Name(d.m.ID) || len(t.Verdicts) > 0 {
 		return refuse("the tip %s is no submission of %q; the host's integration ends with one, for the parent's checker.", short(u.New), Name(d.m.ID)), nil
 	}
 	childRef, err := d.childApprovals(u.New)

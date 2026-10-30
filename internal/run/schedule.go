@@ -329,10 +329,11 @@ func (s *schedule) step(ctx context.Context) {
 			// that, and its maker works only when the merge conflicts or the
 			// hooks refuse it.
 			s.integrateLocked(ctx, n)
-		case n.rounds[agentport.Maker] == 0 && len(n.waitFor) == 0 && len(n.items) > 0:
+		case n.rounds[agentport.Maker] == 0 && len(n.waitFor) == 0 && (len(n.items) > 0 || len(n.children) == 0):
 			// A parent with items of its own submits before its children
 			// start; one without works only on a message, since the host
-			// merges for it.
+			// merges for it. A leaf works at once, also one the change
+			// reaches through a file of its own without an item.
 			s.startLocked(ctx, n, agentport.Maker, s.makerTask(n))
 		case n.rounds[agentport.Maker] > 0 && len(n.children) > 0 && s.childrenApproved(n) && s.approvals(n) != n.told:
 			// The children's approved work changed since the maker last
@@ -660,6 +661,10 @@ func (s *schedule) afterIntegration(ctx context.Context, n *node, ev ended, tips
 		return
 	}
 	s.tips = tips
+	if res.why == "" && tips[n.branch] != res.tip {
+		res.why = fmt.Sprintf("the remote accepted it, but %s is at %s, not at the integration %s", n.branch, short(tips[n.branch]), short(res.tip))
+		s.integrations[len(s.integrations)-1].Submission, s.integrations[len(s.integrations)-1].Why = "", res.why
+	}
 	if res.why != "" {
 		s.hostMessage(n, fmt.Sprintf("The host could not merge your working children's approved work (%s) on %s: %s. Merge it yourself, make the merged state pass the required checks, and submit.", res.told, n.branch, res.why))
 		return

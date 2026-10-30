@@ -585,6 +585,32 @@ func TestParentWithoutItemsDoesNotGate(t *testing.T) {
 	}
 }
 
+// A working leaf without items of its own, which the change reaches through
+// a file of its own that realizes catalog's Definition, takes its maker turn
+// at once: only a parent without items leaves its merge to the host.
+func TestALeafWithoutItemsWorks(t *testing.T) {
+	f := newFixture(t)
+	f.write(map[string]string{
+		"src/members/shelf.go":              "package members\n",
+		project.RegistryDir + "/members.md": "---\npaths: [src/members/**]\n---\n" + table + "| src/members/member.go | [[members/member]] | Type |\n| src/members/shelf.go | [[catalog/book]] | Shelf |\n",
+	})
+	f.commit("members shelves books")
+	base, _ := changeBook(f)
+	a := f.agents
+	a.On("catalog", maker, a.Submit(nil, map[string]string{"src/catalog/book.go": isbn}, word("changed")))
+	a.On("catalog", checker, a.Review(nil))
+	a.On("members", maker, a.Submit(nil, nil, word("conforms")))
+	a.On("members", checker, a.Review(nil))
+	a.On(".", checker, a.Review(nil))
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateLanded {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+	if len(r.Integrations) != 1 || len(r.Integrations[0].Children) != 2 || r.Integrations[0].Submission == "" {
+		t.Fatalf("integrations %+v", r.Integrations)
+	}
+}
+
 // failMarker commits a file of Root's own that the required check refuses, so
 // every merged state fails until Root's maker removes it, and returns Root's
 // registry page without it.

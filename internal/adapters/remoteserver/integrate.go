@@ -72,22 +72,34 @@ func Integrate(l Layout, git string, env []string, bundle io.Reader, branch, com
 	}
 	// A local push runs the repository's receive-pack and its hook, which
 	// read the pusher from REMOTE_USER as behind the server.
-	diagnostics, pushErr := g([]string{"REMOTE_USER=" + runremote.HostUser}, "push", "--quiet", "--no-verify", filepath.ToSlash(l.Repo()), commit+":refs/heads/"+branch)
+	ref := "refs/heads/" + branch
+	diagnostics, pushErr := g([]string{"REMOTE_USER=" + runremote.HostUser}, "push", "--quiet", "--no-verify", filepath.ToSlash(l.Repo()), commit+":"+ref)
 	entries, err := logEntries(l)
 	if err != nil {
 		return runremote.Decision{}, err
 	}
-	if len(entries) > before {
-		if e := entries[len(entries)-1]; e.User == runremote.HostUser {
-			return e.Decision, nil
+	// The hook's entry for this push: the host's update of the branch to
+	// the commit. Other entries may land meanwhile, such as the host's start
+	// of another branch or a landing check.
+	var found *runremote.Decision
+	for i := len(entries) - 1; i >= before; i-- {
+		e := entries[i]
+		if e.User == runremote.HostUser && len(e.Updates) == 1 && e.Updates[0].Ref == ref && e.Updates[0].New == commit {
+			found = &e.Decision
+			break
 		}
 	}
-	if pushErr != nil {
-		// Git refused before the hook decided, for example a branch that
-		// moved meanwhile.
-		return runremote.Decision{Reason: "the push did not reach the hook: " + diagnostics}, nil
+	switch {
+	case pushErr != nil && found != nil && !found.Accepted:
+		return *found, nil
+	case pushErr != nil:
+		// Git refused before the hook decided, such as for a branch that
+		// moved meanwhile, or after it accepted, so the branch did not move.
+		return runremote.Decision{Reason: "the push did not go through: " + diagnostics}, nil
+	case found == nil || !found.Accepted:
+		return runremote.Decision{}, fmt.Errorf("the push of %s left no accepting decision in the log", commit)
 	}
-	return runremote.Decision{}, fmt.Errorf("the push of %s left no decision in the log", commit)
+	return *found, nil
 }
 
 func logLength(l Layout) (int, error) {

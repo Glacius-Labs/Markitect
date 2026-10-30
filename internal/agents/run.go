@@ -215,25 +215,41 @@ func retire(ctx context.Context, a *Agent, end agentport.End) agentport.End {
 	return end
 }
 
-// Close ends every living agent of the Run.
+// closeAtOnce bounds how many agents Close ends at the same time: each takes
+// a few engine calls, and a large Run has two agents per working Manager.
+const closeAtOnce = 8
+
+// Close ends every living agent of the Run, several at once.
 func (g *Agents) Close(ctx context.Context, run string) []string {
 	g.mu.Lock()
-	var ended []*Agent
-	var names []string
+	ended := map[string]*Agent{}
 	for k, a := range g.live {
 		if k.run == run {
-			ended = append(ended, a)
-			names = append(names, fmt.Sprintf("%s %s", k.manager, k.role))
+			ended[fmt.Sprintf("%s %s", k.manager, k.role)] = a
 			delete(g.live, k)
 		}
 	}
 	g.mu.Unlock()
-	var left []string
-	for i, a := range ended {
-		if err := a.Close(ctx); err != nil {
-			left = append(left, fmt.Sprintf("%s: the agent's container or volumes may remain: %v", names[i], err))
-		}
+	var (
+		mu   sync.Mutex
+		left []string
+		wg   sync.WaitGroup
+		slot = make(chan struct{}, closeAtOnce)
+	)
+	for name, a := range ended {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			slot <- struct{}{}
+			defer func() { <-slot }()
+			if err := a.Close(ctx); err != nil {
+				mu.Lock()
+				left = append(left, fmt.Sprintf("%s: the agent's container or volumes may remain: %v", name, err))
+				mu.Unlock()
+			}
+		}()
 	}
+	wg.Wait()
 	sort.Strings(left)
 	return left
 }
