@@ -113,6 +113,8 @@ A planted defect's launch counts under Stops right only.
 - the decision rule and the test per area;
 - the frozen tool revisions.
 
+The [series runner](../../tools/evaluation/README.md#the-series-runner) runs a counted series and its stability gate one launch at a time: on a quiet engine, with the login refreshed before a launch it cannot cover, each launch classed with its variant's signatures, and the protocol's relaunch and stop rules.
+
 ## Limits
 
 - **Isolation.** The sandbox keeps a variant away from the host's files, the web and the engine. A variant's own code is mounted, so judge sources (references, mutants, oracles) never sit in a folder that is mounted as variant code: the judges live in `tools/evaluation-judges`, apart from `tools/evaluation`. The Library and Makerspace oracles are still public, in this repository and on GitHub; a transcript audit checks that no agent quoted them. The new project's oracle stays off the machine during runs ([design](../design/evaluation-suite-v2.md#a-equal-conditions-one-sandbox)).
