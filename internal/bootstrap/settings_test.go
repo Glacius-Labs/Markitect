@@ -63,4 +63,8 @@ func TestDesktopSettingsReadTheAgentsAndTheLogins(t *testing.T) {
 	if s.Agents.Model != "gpt-6-luna" || !s.Logins[1].Used {
 		t.Errorf("codex used: %+v", s)
 	}
+	// The used provider's missing login is a reason no agent starts.
+	if p := s.Agents.Problems; len(p) != 2 || !strings.Contains(p[1], "codex login") {
+		t.Errorf("problems %v", p)
+	}
 }

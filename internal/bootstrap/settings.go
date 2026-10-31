@@ -25,6 +25,10 @@ func desktopSettings(context.Context) desktop.AppSettings {
 	} else {
 		a.Problems = append(a.Problems, "MARKITECT_PROVIDER names "+name+", which is neither claude nor codex.")
 	}
+	switch a.Network {
+	case "bridge", "host", "none", "default":
+		a.Problems = append(a.Problems, "MARKITECT_NETWORK names "+a.Network+", the engine's own network; leave it unset or name a user-defined one.")
+	}
 	if a.Image == "" {
 		a.Problems = append(a.Problems, "No Manager image: build one from packaging/runtime with the project's toolchain, and set MARKITECT_MANAGER_IMAGE before you start Markitect.")
 	}
@@ -67,6 +71,9 @@ func desktopSettings(context.Context) desktop.AppSettings {
 				expires := login.Expires
 				l.Expires = &expires
 			}
+		}
+		if l.Used && l.State != "ok" {
+			out.Agents.Problems = append(out.Agents.Problems, "The login of "+n+", the provider the agents use, is not usable: log in again with "+p.command+".")
 		}
 		out.Logins = append(out.Logins, l)
 	}

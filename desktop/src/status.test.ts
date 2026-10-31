@@ -40,5 +40,7 @@ describe("a required check's time limit", () => {
     expect(duration(10 * 60e9)).toBe('10m');
     expect(duration(2 * 3600e9)).toBe('2h');
     expect(duration(90e9)).toBe('90s');
+    expect(duration(1500e6)).toBe('1500ms');
+    expect(duration(0)).toBe('0ms');
   });
 });

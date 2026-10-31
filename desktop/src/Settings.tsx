@@ -55,7 +55,7 @@ export function Settings({ id }: { id: string }) {
         {checks && !checks.initialized ? (
           <p className="muted">Markitect is not set up in this project yet.</p>
         ) : checks && checks.checks.length === 0 ? (
-          <p className="muted">No required checks yet.</p>
+          !checks.problem && <p className="muted">No required checks yet.</p>
         ) : (
           checks && (
             <div className="gl-table-wrap">
@@ -98,7 +98,7 @@ export function Settings({ id }: { id: string }) {
           ))}
           <dl className="settings">
             <Setting name="Provider" value={providerName[app.agents.provider] ?? app.agents.provider} />
-            <Setting name="Model" value={`${app.agents.model}, effort ${app.agents.effort}`} />
+            <Setting name="Model" value={app.agents.model ? `${app.agents.model}, effort ${app.agents.effort}` : 'not set'} />
             <Setting name="Manager image" value={app.agents.image || 'not set'} mono />
             <Setting name="Provider network" value={app.agents.network} mono />
             <Setting name="Docker" value={app.agents.engine || 'not found'} mono />
@@ -152,11 +152,14 @@ function Login({ l }: { l: LoginState }) {
 // duration writes a Go duration, given in nanoseconds, the way execution.yaml
 // does.
 export function duration(ns: number): string {
-  const s = Math.round(ns / 1e9);
-  if (s % 3600 === 0 && s > 0) {
+  if (ns % 1e9 !== 0 || ns === 0) {
+    return ns % 1e6 === 0 ? `${ns / 1e6}ms` : `${ns / 1e9}s`;
+  }
+  const s = ns / 1e9;
+  if (s % 3600 === 0) {
     return `${s / 3600}h`;
   }
-  if (s % 60 === 0 && s > 0) {
+  if (s % 60 === 0) {
     return `${s / 60}m`;
   }
   return `${s}s`;

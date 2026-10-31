@@ -102,7 +102,7 @@ The chat is the main way to change the model ([design](../../../docs/design/mark
 The hub's fourth area, entered with the digit 4, shows two things and changes neither yet:
 
 - **This project:** the required checks of `.markitect/execution.yaml`, or why they cannot be read. The form that edits them comes with the Runs.
-- **This Markitect:** the provider, model, effort, Manager image, provider network and Docker command that chats and Runs start their agents with, read from the environment Markitect was started in (`MARKITECT_*`, as `markitect apply` reads them) without asking the container engine, and why no agent can start yet, such as a missing Manager image. Each provider's account login shows whether it is usable and until when, as an agent would admit it; nothing of a login but its expiry leaves the composition. It names the provider's own command to log in again.
+- **This Markitect:** the provider, model, effort, Manager image, provider network and Docker command that chats and Runs start their agents with, read from the environment Markitect was started in (`MARKITECT_*`, as `markitect apply` reads them) without asking the container engine, and why no agent can start yet as far as that shows without the engine: a missing Manager image or Docker command, the engine's own network, or an unusable login of the provider in use. Each provider's account login shows whether it is usable and until when, as an agent would admit it; of a login's content, only its expiry leaves the composition. It names the provider's own command to log in again.
 
 ## The native app
 
