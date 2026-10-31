@@ -65,7 +65,7 @@ The adapter imports no other adapter. `internal/bootstrap` supplies Git (open, `
 - **Quitting** cancels the service and removes its record without waiting for requests in flight, which may wait for the window loop that quits.
 - **Data:** WebView2 keeps its data in `WebView` in the config folder above.
 
-It builds only with the `native` tag, so that `go build ./...`, `go vet ./...` and `go test ./...` stay free of C toolchains and GTK. On Windows it needs no C compiler; it is linked as a GUI program, so it opens no terminal. macOS needs the Xcode command line tools, and Linux needs cgo with GTK 4 and WebKitGTK 6 (`libgtk-4-dev libwebkitgtk-6.0-dev` on Ubuntu 24.04).
+It builds only with the `native` tag, so that `go build ./...`, `go vet ./...` and `go test ./...` stay free of C toolchains and GTK. On Windows it needs no C compiler; it is linked as a GUI program, so it opens no terminal. macOS needs the Xcode command line tools, and Linux needs cgo with GTK 4 and WebKitGTK 6 (`libgtk-4-dev libwebkitgtk-6.0-dev` on Ubuntu 24.04). WebKitGTK sandboxes its web process with bubblewrap, which needs unprivileged user namespaces; Ubuntu desktops allow them, GitHub's Ubuntu runners do not, so CI allows them before it starts the app.
 
 ```text
 go build -tags native -ldflags=-H=windowsgui ./cmd/markitect-desktop   # Windows

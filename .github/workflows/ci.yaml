@@ -207,6 +207,10 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends libgtk-4-dev libwebkitgtk-6.0-dev xvfb x11-utils dbus-x11
+          # WebKitGTK sandboxes its web process with bubblewrap, which needs
+          # unprivileged user namespaces. Ubuntu desktops allow them for
+          # bubblewrap through AppArmor; the runner forbids them outright.
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 
       - name: Build the native app and the command line
         shell: bash
