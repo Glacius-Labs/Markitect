@@ -15,6 +15,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 )
 
 // memRepo is a repository's working tree in memory.
@@ -102,15 +103,19 @@ func (c fakeCommands) Init(_ context.Context, dir string, out io.Writer) (bool, 
 }
 
 const (
-	testToken = "0123456789abcdef"
-	testPort  = "7340"
+	testSecret = "0123456789abcdef"
+	testPort   = "7340"
 )
 
 func testServer(t *testing.T, roots ...string) (*server, *fakeRepos) {
 	t.Helper()
 	repos := newFakeRepos(roots...)
 	store := &Store{File: filepath.Join(t.TempDir(), projectsFile)}
-	return newServer(testToken, testPort, store, repos, fakeCommands{repos}), repos
+	s, err := newServer(testSecret, testPort, store, repos, fakeCommands{repos})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return s, repos
 }
 
 // call sends a request as the app's own window does: to the loopback host,
@@ -122,7 +127,7 @@ func call(s *server, method, path, body string, edit ...func(*http.Request)) *ht
 	}
 	req := httptest.NewRequest(method, path, r)
 	req.Host = "127.0.0.1:" + testPort
-	req.AddCookie(&http.Cookie{Name: cookieName, Value: testToken})
+	req.AddCookie(&http.Cookie{Name: cookieName, Value: s.session})
 	if body != "" {
 		req.Header.Set("Content-Type", "application/json")
 	}
@@ -146,39 +151,99 @@ func decode(t *testing.T, w *httptest.ResponseRecorder) map[string]any {
 func TestServerAnswersOnlyItsLoopbackNames(t *testing.T) {
 	s, _ := testServer(t)
 	for _, host := range []string{"127.0.0.1:" + testPort, "localhost:" + testPort, "[::1]:" + testPort} {
-		if w := call(s, "GET", "/api/ping", "", func(r *http.Request) { r.Host = host }); w.Code != http.StatusOK {
+		if w := call(s, "GET", "/api/app", "", func(r *http.Request) { r.Host = host }); w.Code != http.StatusOK {
 			t.Errorf("%s: %d", host, w.Code)
 		}
 	}
 	// A page of another site whose name resolves to 127.0.0.1 sends its name.
 	for _, host := range []string{"evil.example:" + testPort, "127.0.0.1:9999", "127.0.0.1"} {
-		if w := call(s, "GET", "/api/ping", "", func(r *http.Request) { r.Host = host }); w.Code != http.StatusMisdirectedRequest {
+		if w := call(s, "GET", "/api/app", "", func(r *http.Request) { r.Host = host }); w.Code != http.StatusMisdirectedRequest {
 			t.Errorf("%s: %d", host, w.Code)
 		}
 	}
 }
 
-func TestTheTokenExchangeSetsTheSessionCookie(t *testing.T) {
+func TestALaunchCodeWorksOnceAndBriefly(t *testing.T) {
 	s, _ := testServer(t)
 	noCookie := func(r *http.Request) { r.Header.Del("Cookie") }
-	w := call(s, "GET", "/?t="+testToken, "", noCookie)
+	code := s.launch()
+	w := call(s, "GET", "/?t="+code, "", noCookie)
 	if w.Code != http.StatusSeeOther || w.Header().Get("Location") != "/" {
 		t.Fatalf("exchange: %d %q", w.Code, w.Header().Get("Location"))
 	}
 	c := w.Result().Cookies()
-	if len(c) != 1 || c[0].Value != testToken || !c[0].HttpOnly || c[0].SameSite != http.SameSiteStrictMode {
+	if len(c) != 1 || c[0].Value != s.session || !c[0].HttpOnly || c[0].SameSite != http.SameSiteStrictMode {
 		t.Fatalf("cookie: %+v", c)
 	}
+	if s.session == testSecret || s.session == code {
+		t.Fatal("the session reuses another secret")
+	}
+	if w := call(s, "GET", "/?t="+code, "", noCookie); w.Code != http.StatusForbidden {
+		t.Errorf("second use: %d", w.Code)
+	}
+	late := s.launch()
+	s.now = func() time.Time { return time.Now().Add(launchLife + time.Second) }
+	if w := call(s, "GET", "/?t="+late, "", noCookie); w.Code != http.StatusForbidden {
+		t.Errorf("expired code: %d", w.Code)
+	}
 	if w := call(s, "GET", "/?t=wrong", "", noCookie); w.Code != http.StatusForbidden {
-		t.Errorf("wrong token: %d", w.Code)
+		t.Errorf("wrong code: %d", w.Code)
 	}
 	for _, path := range []string{"/", "/api/projects"} {
 		if w := call(s, "GET", path, "", noCookie); w.Code != http.StatusUnauthorized {
 			t.Errorf("%s without cookie: %d", path, w.Code)
 		}
-		if w := call(s, "GET", path, "", noCookie, func(r *http.Request) { r.AddCookie(&http.Cookie{Name: cookieName, Value: "wrong"}) }); w.Code != http.StatusUnauthorized {
-			t.Errorf("%s with a wrong cookie: %d", path, w.Code)
+		for _, value := range []string{"wrong", testSecret, code} {
+			if w := call(s, "GET", path, "", noCookie, func(r *http.Request) { r.AddCookie(&http.Cookie{Name: cookieName, Value: value}) }); w.Code != http.StatusUnauthorized {
+				t.Errorf("%s with cookie %q: %d", path, value, w.Code)
+			}
 		}
+	}
+}
+
+func TestALaterStartProvesItselfWithTheRecordsSecret(t *testing.T) {
+	s, _ := testServer(t)
+	noCookie := func(r *http.Request) { r.Header.Del("Cookie") }
+	w := call(s, "GET", "/api/hello?c=challenge", "", noCookie)
+	if w.Code != http.StatusOK || decode(t, w)["proof"] != proof(testSecret, "challenge") {
+		t.Fatalf("hello: %d %s", w.Code, w.Body)
+	}
+	if strings.Contains(w.Body.String(), testSecret) {
+		t.Fatal("hello reveals the secret")
+	}
+	bearer := func(secret string) func(*http.Request) {
+		return func(r *http.Request) { r.Header.Set("Authorization", "Bearer "+secret) }
+	}
+	w = call(s, "POST", "/api/launch", "{}", noCookie, bearer(testSecret))
+	if w.Code != http.StatusOK {
+		t.Fatalf("launch: %d %s", w.Code, w.Body)
+	}
+	if code, _ := decode(t, w)["code"].(string); !s.redeem(code) {
+		t.Error("the launch code does not work")
+	}
+	for _, edit := range []func(*http.Request){bearer("wrong"), func(*http.Request) {}} {
+		if w := call(s, "POST", "/api/launch", "{}", noCookie, edit); w.Code != http.StatusUnauthorized {
+			t.Errorf("launch without the secret: %d", w.Code)
+		}
+	}
+	if w := call(s, "POST", "/api/launch", "{}", noCookie, bearer(testSecret), func(r *http.Request) { r.Header.Set("Origin", "http://evil.example") }); w.Code != http.StatusForbidden {
+		t.Errorf("launch from another page: %d", w.Code)
+	}
+}
+
+func TestANewProjectsParentIsSuggestedNext(t *testing.T) {
+	s, _ := testServer(t)
+	home, _ := os.UserHomeDir()
+	if got := decode(t, call(s, "GET", "/api/app", ""))["parent"]; got != home {
+		t.Errorf("first suggestion %v, want the home folder %s", got, home)
+	}
+	parent := t.TempDir()
+	data, _ := json.Marshal(map[string]string{"action": "create", "parent": parent, "name": "library"})
+	if w := call(s, "POST", "/api/projects", string(data)); w.Code != http.StatusOK {
+		t.Fatalf("create: %d %s", w.Code, w.Body)
+	}
+	if got := decode(t, call(s, "GET", "/api/app", ""))["parent"]; got != parent {
+		t.Errorf("suggestion %v, want %s", got, parent)
 	}
 }
 
@@ -284,7 +349,7 @@ func TestCreatingAProjectMakesARepositoryAndRunsInit(t *testing.T) {
 	if info, err := os.Stat(filepath.Join(parent, "library")); err != nil || !info.IsDir() {
 		t.Errorf("folder: %v", err)
 	}
-	for _, name := range []string{"library", "", ".", "..", "a/b", `a\b`, "x:", " lead", "trail."} {
+	for _, name := range []string{"library", "", ".", "..", "a/b", `a\b`, "x:", " lead", "trail.", ".git", ".markitect", "CON", "con.txt", "nul", "Lpt9", "a\x01b"} {
 		if w := create(name); w.Code != http.StatusBadRequest {
 			t.Errorf("name %q: %d", name, w.Code)
 		}

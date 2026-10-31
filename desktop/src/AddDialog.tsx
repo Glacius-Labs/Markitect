@@ -10,29 +10,13 @@ const titles: Record<Mode, string> = {
   clone: 'Clone a repository',
 };
 
-const parentKey = 'markitect.parent';
-
-function rememberedParent(info: AppInfo | null): string {
-  try {
-    return localStorage.getItem(parentKey) ?? info?.home ?? '';
-  } catch {
-    return info?.home ?? '';
-  }
-}
-
-function rememberParent(parent: string) {
-  try {
-    localStorage.setItem(parentKey, parent);
-  } catch {
-    // Remembering the folder is a convenience only.
-  }
-}
-
-// AddDialog brings a project into the list in one of the three ways.
+// AddDialog brings a project into the list in one of the three ways. The
+// service suggests the parent folder: the one that received the last new
+// project, else the home folder.
 export function AddDialog(props: { mode: Mode; info: AppInfo | null; onClose: () => void; onAdded: (r: Result) => void }) {
   const { mode } = props;
   const [path, setPath] = useState('');
-  const [parent, setParent] = useState(() => rememberedParent(props.info));
+  const [parent, setParent] = useState(props.info?.parent ?? '');
   const [name, setName] = useState('');
   const [url, setUrl] = useState('');
   const [busy, setBusy] = useState(false);
@@ -49,11 +33,7 @@ export function AddDialog(props: { mode: Mode; info: AppInfo | null; onClose: ()
           : mode === 'create'
             ? { action: 'create' as const, parent: parent.trim(), name: name.trim() }
             : { action: 'clone' as const, url: url.trim(), parent: parent.trim(), name: name.trim() || undefined };
-      const result = await api.add(req);
-      if (mode !== 'open') {
-        rememberParent(parent.trim());
-      }
-      props.onAdded(result);
+      props.onAdded(await api.add(req));
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
       setBusy(false);

@@ -11,12 +11,18 @@ const areas = [
   { key: '4', icon: 'settings', title: 'Settings', body: 'Required checks, agents and logins.' },
 ];
 
+// InitRun is how a markitect init ended, with its output.
+export interface InitRun {
+  ok: boolean;
+  output: string;
+}
+
 // Hub is a project's home: its state, the one next step, and the areas.
-export function Hub(props: { id: string; output?: string; onGone: () => void }) {
+export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
   const [project, setProject] = useState<Project | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [output, setOutput] = useState(props.output ?? '');
+  const [ran, setRan] = useState<InitRun | null>(props.init ?? null);
   const [removing, setRemoving] = useState(false);
 
   const { id, onGone } = props;
@@ -47,7 +53,7 @@ export function Hub(props: { id: string; output?: string; onGone: () => void }) 
     try {
       const r = await api.init(project.id);
       setProject(r.project);
-      setOutput(r.output);
+      setRan({ ok: r.ok, output: r.output });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -56,8 +62,15 @@ export function Hub(props: { id: string; output?: string; onGone: () => void }) 
   };
 
   const remove = async () => {
-    await api.remove(project.id);
-    props.onGone();
+    setBusy(true);
+    try {
+      await api.remove(project.id);
+      onGone();
+    } catch (e) {
+      setRemoving(false);
+      setError(e instanceof Error ? e.message : String(e));
+      setBusy(false);
+    }
   };
 
   const step = nextStep(project.status);
@@ -89,6 +102,7 @@ export function Hub(props: { id: string; output?: string; onGone: () => void }) 
         </div>
       </header>
       {error && <Alert tone="danger" title="That did not work" body={error} />}
+      {ran && !ran.ok && <Alert tone="danger" title="markitect init did not finish" body="Its output below says why." />}
       <Alert tone={step.tone} title={step.title} body={step.body}>
         {step.action === 'init' && (
           <button className="gl-button" data-variant="primary" data-size="sm" aria-busy={busy || undefined} disabled={busy} onClick={init}>
@@ -111,11 +125,11 @@ export function Hub(props: { id: string; output?: string; onGone: () => void }) 
           <Stat label="Files accounted for" value={check.files} />
         </div>
       )}
-      {output && (
-        <details className="output">
+      {ran && ran.output && (
+        <details className="output" open={!ran.ok}>
           <summary>Output of markitect init</summary>
           <div className="gl-codeblock">
-            <pre>{output}</pre>
+            <pre>{ran.output}</pre>
           </div>
         </details>
       )}
@@ -125,7 +139,7 @@ export function Hub(props: { id: string; output?: string; onGone: () => void }) 
         </h2>
         <div className="gl-cards">
           {areas.map((a) => (
-            <div key={a.key} className="gl-card area" aria-disabled="true">
+            <div key={a.key} className="gl-card area">
               <span className="gl-card__icon">
                 <Icon name={a.icon} />
               </span>
@@ -150,7 +164,7 @@ export function Hub(props: { id: string; output?: string; onGone: () => void }) 
               <button className="gl-button" onClick={() => setRemoving(false)}>
                 Cancel
               </button>
-              <button className="gl-button" data-variant="primary" onClick={remove}>
+              <button className="gl-button" data-variant="primary" aria-busy={busy || undefined} disabled={busy} onClick={remove}>
                 Remove from list
               </button>
             </>

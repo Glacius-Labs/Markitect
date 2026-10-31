@@ -39,8 +39,27 @@ func TestTheStoreKeepsEachRepositoryOnceByName(t *testing.T) {
 
 func TestProjectIDsFollowTheFileSystemsCase(t *testing.T) {
 	a, b := projectID(`C:\Work\Library`), projectID(`c:\work\library`)
-	if (a == b) != (runtime.GOOS == "windows") {
+	if (a == b) != (runtime.GOOS == "windows" || runtime.GOOS == "darwin") {
 		t.Errorf("ids %s and %s on %s", a, b, runtime.GOOS)
+	}
+}
+
+func TestTheStoreRemembersTheLastParentBesideTheProjects(t *testing.T) {
+	s := &Store{File: filepath.Join(t.TempDir(), projectsFile)}
+	if parent, err := s.Parent(); err != nil || parent != "" {
+		t.Fatalf("empty store: %q %v", parent, err)
+	}
+	if _, err := s.Add("/work/library"); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.SetParent("/work"); err != nil {
+		t.Fatal(err)
+	}
+	if parent, _ := s.Parent(); parent != "/work" {
+		t.Errorf("parent %q", parent)
+	}
+	if list, _ := s.List(); len(list) != 1 {
+		t.Errorf("the parent cost a project: %v", list)
 	}
 }
 

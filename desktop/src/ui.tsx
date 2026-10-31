@@ -32,15 +32,17 @@ export function Badge({ tone, children }: { tone: Tone; children: ReactNode }) {
 // Dialog is a native modal dialog, open while it is rendered: removing it
 // from the page also takes it off the top layer. showModal focuses the first
 // focusable element, the close button, so the first field takes the focus
-// back.
+// back; when the dialog goes, the focus returns to what opened it.
 export function Dialog(props: { title: string; onClose: () => void; children: ReactNode; footer: ReactNode }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const d = ref.current;
     if (d && !d.open) {
       d.showModal();
       d.querySelector<HTMLElement>('input, textarea, select')?.focus();
     }
+    return () => opener?.focus();
   }, []);
   return (
     <dialog ref={ref} className="gl-dialog" aria-labelledby="dialog-title" onClose={props.onClose}>

@@ -25,8 +25,8 @@ export interface Project {
 
 export interface AppInfo {
   version: string;
-  home: string;
-  separator: string;
+  // The folder that received the last new project, else the home folder.
+  parent: string;
 }
 
 export interface Result {

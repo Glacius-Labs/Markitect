@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError, type AppInfo } from './api';
-import { Hub, useEscapeTo } from './Hub';
+import { Hub, useEscapeTo, type InitRun } from './Hub';
 import { Projects } from './Projects';
 
 // The address after # is the place in the app, so back and forward work.
@@ -13,15 +13,23 @@ export function App() {
   const [info, setInfo] = useState<AppInfo | null>(null);
   const [closed, setClosed] = useState(false);
   const [where, setWhere] = useState(place);
-  // The output of the init that created a project, shown once on its hub.
-  const [output, setOutput] = useState<{ id: string; text: string } | null>(null);
+  // The init that created a project, shown on its hub until the owner leaves.
+  const [created, setCreated] = useState<{ id: string; init: InitRun } | null>(null);
+
+  const loadInfo = useCallback(() => {
+    api.app().then(setInfo, (e: Error) => setClosed(e instanceof ApiError && e.status === 401));
+  }, []);
 
   useEffect(() => {
-    api.app().then(setInfo, (e: Error) => setClosed(e instanceof ApiError && e.status === 401));
-    const onHash = () => setWhere(place());
+    loadInfo();
+    const onHash = () => {
+      const next = place();
+      setWhere(next);
+      setCreated((c) => (c && c.id === next.project ? c : null));
+    };
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
-  }, []);
+  }, [loadInfo]);
 
   const home = useCallback(() => {
     window.location.hash = '#/';
@@ -44,12 +52,13 @@ export function App() {
             <p className="gl-empty__body">Markitect was started again. Open it with markitect desktop.</p>
           </div>
         ) : where.project ? (
-          <Hub key={where.project} id={where.project} output={output?.id === where.project ? output.text : undefined} onGone={home} />
+          <Hub key={where.project} id={where.project} init={created?.id === where.project ? created.init : undefined} onGone={home} />
         ) : (
           <Projects
             info={info}
             onAdded={(r) => {
-              setOutput(r.output ? { id: r.project.id, text: r.output } : null);
+              setCreated(r.output ? { id: r.project.id, init: { ok: r.ok, output: r.output } } : null);
+              loadInfo();
               window.location.hash = `#/p/${r.project.id}`;
             }}
           />

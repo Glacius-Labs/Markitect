@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/analysis"
 	"github.com/Glacius-Labs/Markitect/internal/project"
@@ -32,14 +33,23 @@ func Init(ctx context.Context, dir string) error {
 	return err
 }
 
-// Clone clones url into dir, which must not exist yet. Git asks for no
-// credentials on a terminal, which nobody would see.
+// cloneLimit bounds a clone, so that a stalled one ends.
+const cloneLimit = 30 * time.Minute
+
+// Clone clones url into dir, which must not exist yet. Nobody sees a
+// terminal, so neither Git nor SSH may ask on one; the ext transport, which
+// runs a command, stays off.
 func Clone(ctx context.Context, url, dir string) error {
 	if strings.HasPrefix(url, "-") {
 		return fmt.Errorf("%q is no repository URL", url)
 	}
-	cmd := exec.CommandContext(ctx, "git", "clone", "--quiet", "--", url, dir)
+	ctx, cancel := context.WithTimeout(ctx, cloneLimit)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "git", "-c", "protocol.ext.allow=never", "clone", "--quiet", "--", url, dir)
 	cmd.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
+	if os.Getenv("GIT_SSH_COMMAND") == "" {
+		cmd.Env = append(cmd.Env, "GIT_SSH_COMMAND=ssh -o BatchMode=yes")
+	}
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
