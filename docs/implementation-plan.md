@@ -34,7 +34,7 @@ T1 comes first and is the only writer in the model and compiler packages. T3 sta
 
 ## Markitect Desktop (owner decision 31 October 2026)
 
-Beside the concept 2.0 build, the owner decided on Markitect Desktop, the app over the CLI that users know as Markitect ([DEC-089](concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli)). Its [design](design/markitect-desktop.md#delivery) owns the slices D1 to D7, and the [Desktop session](workstreams/desktop.md) builds them in its own scope: `desktop/`, `internal/adapters/desktop` and `cmd/markitect-desktop`. The engine's event port for the live view (D5) lies in `internal/run` and is built with the Build and evaluation session. Nothing here changes T7's counted series, which runs on its frozen head.
+Beside the concept 2.0 build, the owner decided on Markitect Desktop, the app over the CLI that users know as Markitect ([DEC-089](concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli)). Its [design](design/markitect-desktop.md#delivery) owns the slices D1 to D7, and the [Desktop session](workstreams/desktop.md) builds them in its own scope: `desktop/`, `internal/adapters/desktop` and `cmd/markitect-desktop`. Shared files, such as `internal/bootstrap`, the CLI's `desktop` verb, the [architecture rule table](../internal/tooling/architecture/rules.go) with the code map, the source packager and CI, change one writer at a time. The engine's event port for the live view (D5) lies in `internal/run` and is built with the Build and evaluation session. Nothing here changes T7's counted series, which runs on its frozen head.
 
 ## Known deviations from concept 1.0
 

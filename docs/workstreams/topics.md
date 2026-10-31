@@ -22,8 +22,8 @@ The design walk-through of 28 October, one part at a time: what was open and a r
 3. **Closed** 28 October: the lint knows no special Kinds; it measures the link graph (DEC-080).
 4. **Closed** 28 October: compile errors are structure, cycles, visibility and accounting; everything else is a warning (DEC-080).
 5. **Closed** 28 October: language and compiler rules change only by owner decision, as DEC-080 defines them.
-6. **Closed** 28 October: no Cockpit app ([DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now)).
-7. **Closed** 28 October: the Cockpit questions 30–32, as part of DEC-085.
+6. **Closed** 28 October: no Cockpit app ([DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now)); superseded on 31 October by [DEC-089](../concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli).
+7. **Closed** 28 October: the Cockpit questions 30–32, as part of DEC-085; superseded on 31 October by DEC-089.
 
 ## Topics in short
 
@@ -103,7 +103,7 @@ What is decided and lives nowhere else; decisions with their own page are linked
 3. **Closed** 28 October: the lint knows no special Kinds; it measures the link graph (DEC-080).
 4. **Closed** 28 October: compile errors are structure, cycles, visibility and accounting; everything else is a warning (DEC-080).
 5. **Closed** 28 October: language and compiler rules change only by owner decision, as DEC-080 defines them.
-6. **Closed** 28 October: no Cockpit app ([DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now)).
+6. **Closed** 28 October: no Cockpit app ([DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now)); superseded on 31 October by [DEC-089](../concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli).
 7. **Closed** 28 October: the standard Libraries ship inside the binary; others are committed under `.markitect/libraries/`; no `--dependency` flags (DEC-080).
 
 ### B. Language
@@ -142,9 +142,9 @@ What is decided and lives nowhere else; decisions with their own page are linked
 
 ### F. Cockpit
 
-30. **Decided** 28 October as part of [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now).
-31. **Decided** 28 October as part of [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now).
-32. **Decided** 28 October as part of [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now).
+30. **Decided** 28 October as part of [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now); superseded on 31 October by [DEC-089](../concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli).
+31. **Decided** 28 October as part of [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now); superseded on 31 October by [DEC-089](../concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli).
+32. **Decided** 28 October as part of [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now); superseded on 31 October by [DEC-089](../concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli).
 
 ### G. Platform
 
