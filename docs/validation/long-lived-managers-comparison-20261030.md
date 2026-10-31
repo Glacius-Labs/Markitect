@@ -186,3 +186,12 @@ Root has 21 items in W0, so the host does not integrate there. The table comes f
 - `tokens.py` counts a resumed Claude session's earlier turns again. A series with an arm that resumes sessions needs the fix first. The counted series' M does not resume.
 - A work folder that holds the binaries trips the final scan, so keep them outside it, as the gate did.
 - On the branch: when the host integrates a parent, drop the parent's pending merge messages.
+
+### Amendment 2, 31 October 2026: the wasted turn, corrected
+
+Amendment 1 says that in `library-m2-transition-gap` r2 a host message telling Root to merge lending's approved work reached Root's maker after the host had integrated it. It names dropping pending merge messages as the fix. The run's records say otherwise:
+
+- Root's maker got the message in its third turn, at 01:08:30 UTC, and merged lending's approval then. The host integrated at 01:09:51.
+- When the host sent the message, lending was approved for its own files, but its child `lending/reminders` was still working. Lending's next approval, after it merged its child's work, replaced the one Root had merged, and the host's integration merged that one.
+
+So the message was wrong when it was sent, not stale when it arrived. The branch's fix counts a child as approved for its parent only when its whole subtree is ([re-measure](long-lived-managers-remeasure-20261031.md#what-changed-on-l)). The rest of Amendment 1 stands.
