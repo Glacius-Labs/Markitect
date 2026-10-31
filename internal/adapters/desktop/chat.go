@@ -414,8 +414,10 @@ func title(text string) string {
 // runs.
 var errBusy = errors.New("the chat is still at work; wait for it to finish")
 
-// claim marks the conversation as at work, or refuses when it is.
-func (c *chatService) claim(p Project, id string) error {
+// claim marks the conversation as at work, or refuses when it is. A claim
+// for a turn also counts the turn, under the same lock as the check that the
+// app is not quitting, so that quitting waits for it.
+func (c *chatService) claim(p Project, id string, turn bool) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.closed {
@@ -430,6 +432,9 @@ func (c *chatService) claim(p Project, id string) error {
 		return errBusy
 	}
 	l.working = true
+	if turn {
+		c.turns.Add(1)
+	}
 	return nil
 }
 
@@ -451,7 +456,7 @@ func (c *chatService) create(p Project, conv *conversation, text string) error {
 
 // begin records the owner's message and runs the turn in the background.
 func (c *chatService) begin(p Project, id, text string) error {
-	if err := c.claim(p, id); err != nil {
+	if err := c.claim(p, id, true); err != nil {
 		return err
 	}
 	err := c.change(p, id, func(conv *conversation) error {
@@ -460,9 +465,9 @@ func (c *chatService) begin(p Project, id, text string) error {
 	})
 	if err != nil {
 		c.done(p, id)
+		c.turns.Done()
 		return err
 	}
-	c.turns.Add(1)
 	go c.turn(p, id, text)
 	return nil
 }
@@ -528,12 +533,17 @@ func (c *chatService) drop(p Project, id string) {
 // none.
 func (c *chatService) agent(ctx context.Context, p Project, id string) (ChatAgent, error) {
 	c.mu.Lock()
-	l := c.live[key(p, id)]
+	var running ChatAgent
+	if l := c.live[key(p, id)]; l != nil {
+		running = l.agent
+	}
 	conv, err := c.get(p, id)
 	var skill string
 	var earlier strings.Builder
 	var pending []ChatFile
+	before := map[string]string{}
 	if err == nil {
+		maps.Copy(before, conv.Start)
 		skill = conv.Skill
 		// Earlier turns reach a fresh agent as text; the owner's message of
 		// this turn is not among them.
@@ -550,8 +560,8 @@ func (c *chatService) agent(ctx context.Context, p Project, id string) (ChatAgen
 	if err != nil {
 		return nil, err
 	}
-	if l != nil && l.agent != nil {
-		return l.agent, nil
+	if running != nil {
+		return running, nil
 	}
 	if c.chats == nil {
 		return nil, errors.New("this Markitect has no chat agents")
@@ -574,6 +584,22 @@ func (c *chatService) agent(ctx context.Context, p Project, id string) (ChatAgen
 			start[f] = digest(data)
 		}
 	}
+	// A file of the open proposal that the owner changed since the
+	// proposal's start is not taken over: the agent sees the owner's
+	// version, and an accept cannot write over it unseen.
+	var kept []ChatFile
+	var changed []string
+	for _, f := range pending {
+		if start[f.Path] == before[f.Path] {
+			kept = append(kept, f)
+		} else {
+			changed = append(changed, f.Path)
+		}
+	}
+	pending = kept
+	if len(changed) > 0 {
+		c.say(p, id, "app", "Changed in the working tree since the proposal, so the chat now starts from your version: "+strings.Join(changed, ", ")+".")
+	}
 	agent, err := c.chats.Start(ctx, ChatStart{Name: "markitect-chat-" + id, Tree: listed{ws, files}, Files: files, Pending: pending, Skill: skill, Earlier: earlier.String()})
 	if err != nil {
 		return nil, err
@@ -587,7 +613,8 @@ func (c *chatService) agent(ctx context.Context, p Project, id string) (ChatAgen
 		_ = agent.Close(stop)
 		return nil, errClosed
 	}
-	if l = c.live[key(p, id)]; l == nil {
+	l := c.live[key(p, id)]
+	if l == nil {
 		l = &liveChat{working: true}
 		c.live[key(p, id)] = l
 	}
@@ -685,9 +712,15 @@ func (c *chatService) accept(ctx context.Context, p Project, id string) error {
 	if err != nil {
 		return err
 	}
-	// A hand edit does not run between the check and the write.
+	// A hand edit does not run between the check and the write; the agent
+	// is told only after the lock is let go.
 	c.edits.Lock()
-	defer c.edits.Unlock()
+	locked := true
+	defer func() {
+		if locked {
+			c.edits.Unlock()
+		}
+	}()
 	var conflicts []string
 	for _, f := range files {
 		now := ""
@@ -712,6 +745,8 @@ func (c *chatService) accept(ctx context.Context, p Project, id string) error {
 		}); err != nil {
 			return err
 		}
+		c.edits.Unlock()
+		locked = false
 		c.drop(p, id)
 		return errConflict
 	}
@@ -742,6 +777,8 @@ func (c *chatService) accept(ctx context.Context, p Project, id string) error {
 		conv.Messages = append(conv.Messages, message{From: "app", Text: fmt.Sprintf("Accepted: %d %s written into the working tree. Commit them as usual.", len(files), plural(len(files), "file", "files")), At: time.Now().UTC()})
 		return nil
 	})
+	c.edits.Unlock()
+	locked = false
 	c.settle(ctx, p, id, true)
 	return err
 }
@@ -1008,7 +1045,7 @@ func (s *server) decide(w http.ResponseWriter, r *http.Request, accept bool) {
 	if !ok {
 		return
 	}
-	if err := s.chat.claim(p, id); err != nil {
+	if err := s.chat.claim(p, id, false); err != nil {
 		chatFail(w, err)
 		return
 	}

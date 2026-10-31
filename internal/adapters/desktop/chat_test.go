@@ -404,20 +404,20 @@ func TestAConflictLetsTheNextTurnStartFreshWithTheProposal(t *testing.T) {
 		t.Fatalf("message: %d %s", w.Code, w.Body)
 	}
 	v := chatState(t, s, id, chat)
-	if len(chats.started) != 2 || len(chats.started[1].Pending) != 2 {
+	// The fresh agent starts from the working tree as it is: it takes over
+	// the proposal's new Rule, but sees the owner's version of the edited
+	// policy instead of the proposal's.
+	if len(chats.started) != 2 || len(chats.started[1].Pending) != 1 || chats.started[1].Pending[0].Path != ".markitect/model/fee.md" {
 		t.Fatalf("the fresh agent got %+v", chats.started)
 	}
-	// The fresh agent starts from the working tree as it is, so its proposal
-	// now overwrites the hand edit visibly, and accepting it no longer
-	// conflicts.
-	if open := v.open(); open == nil || len(open.Files) != 2 || open.N != 2 {
+	if open := v.open(); open == nil || len(open.Files) != 1 || open.N != 2 {
 		t.Fatalf("proposal after the fresh start %+v", v.Proposals)
 	}
 	if w := call(s, "POST", "/api/projects/"+id+"/chats/"+chat+"/accept", "{}"); w.Code != http.StatusOK {
 		t.Fatalf("accept after the fresh start: %d %s", w.Code, w.Body)
 	}
-	if files[".markitect/model/fee.md"] != fee {
-		t.Error("the proposal was not written")
+	if files[".markitect/model/fee.md"] != fee || !strings.Contains(files[".markitect/model/policy.md"], "Changed by hand.") {
+		t.Error("the accept did not keep the hand edit and write the Rule")
 	}
 }
 
