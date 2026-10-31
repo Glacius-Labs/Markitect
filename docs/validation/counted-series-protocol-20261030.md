@@ -2,7 +2,7 @@
 
 The protocol of step T7's counted acceptance series ([delivery plan](../implementation-plan.md#concept-20-build)), as section D of the [suite design](../design/evaluation-suite-v2.md#d-counted-evaluations) asks for. It is built from the pilot's [proposal](t7-pilot-20261029.md#proposed-protocol-for-the-counted-series) and its [Q4](t7-pilot-20261029.md#q4-what-must-change-before-a-counted-series), updated for what has changed since. The owner delegated the counted series to Build, and Build approves this protocol after an [independent review](#independent-review), recorded below before any counted run ([build page](../workstreams/build.md), Decisions).
 
-**Status: approved by Build on 30 October 2026,** under the owner's delegation, after the [independent review](#independent-review) and its second round, on `main` at `6174d5da` (PRs [#908](https://github.com/Glacius-Labs/Markitect/pull/908), [#910](https://github.com/Glacius-Labs/Markitect/pull/910) and [#911](https://github.com/Glacius-Labs/Markitect/pull/911)). No counted launch has run; the [preconditions](#preconditions) come first, and [Amendment 1](#amendment-1-30-october-2026-the-frozen-commit) named the frozen commit. [Amendment 2](#amendment-2-30-october-2026-scoring-fixes-before-the-gate) fixes the scoring before the gate, records the owner's rule for "at least as good" and replaces that commit. The Windows gate ran on 30 October 2026 and did not pass, because M did not land the Makerspace W0 ([Amendment 3](#amendment-3-30-october-2026-the-windows-gate)). The [stability gate](#stability-gate) runs only in a window that Build clears with the owner. The owner decided the [four points](#decided-by-the-owner) that were the owner's on 30 October 2026.
+**Status: approved by Build on 30 October 2026,** under the owner's delegation, after the [independent review](#independent-review) and its second round, on `main` at `6174d5da` (PRs [#908](https://github.com/Glacius-Labs/Markitect/pull/908), [#910](https://github.com/Glacius-Labs/Markitect/pull/910) and [#911](https://github.com/Glacius-Labs/Markitect/pull/911)). No counted launch has run; the [preconditions](#preconditions) come first, and [Amendment 1](#amendment-1-30-october-2026-the-frozen-commit) named the frozen commit. [Amendment 2](#amendment-2-30-october-2026-scoring-fixes-before-the-gate) fixes the scoring before the gate, records the owner's rule for "at least as good" and replaces that commit. The Windows gate ran on 30 October 2026 and did not pass, because M did not land the Makerspace W0 ([Amendment 3](#amendment-3-30-october-2026-the-windows-gate)). [Amendment 4](#amendment-4-31-october-2026-a-new-freeze-for-the-second-gate) freezes `955683de`, which holds the fix, for a second Windows gate. The [stability gate](#stability-gate) runs only in a window that Build clears with the owner. The owner decided the [four points](#decided-by-the-owner) that were the owner's on 30 October 2026.
 
 ## What changed since the pilot's proposal
 
@@ -329,6 +329,40 @@ Build approves this protocol under the owner's delegation. On 30 October 2026, B
     - **M's chain** (`tests`): the tests spot-check the permission matrix instead of covering it, as `tests.md` asks.
       - The checker changed `registerUser` or `issueCredit` from admin only to staff and admin in the specification, and either change still passed the tests.
       - The judge runs the tests but does not measure what they cover.
+
+### Amendment 4, 31 October 2026: a new freeze for the second gate
+
+- **Why:**
+  - The owner kept the current design after the long-lived Managers comparison, in these words to Build: "Then continue the evaluation runs as planned with the current version for now" ([reading](long-lived-managers-comparison-20261030.md#amendment-1-31-october-2026-the-reading)).
+  - The Windows gate failed because Root's maker starts went to its children's events ([Amendment 3](#amendment-3-30-october-2026-the-windows-gate)). [#927](https://github.com/Glacius-Labs/Markitect/pull/927) fixes that: `Rounds` now counts only a Manager's own attempts, which are its first maker start and each start after its work was refused. Starts that its children or the host cause stay bounded by `Starts`, the idle rule and the deadlines.
+- **The frozen commit:** `main` at `955683deda0eb31f0cfec7d802f746876bf976b7`, which replaces `4576beaa`.
+  - Its code differs from `4576beaa` by two PRs: [#921](https://github.com/Glacius-Labs/Markitect/pull/921) in `tools/`, and #927 in `internal/run` and `internal/adapters/cli`.
+  - CI passed on #927's head ([run 41165929423](https://github.com/Glacius-Labs/Markitect/actions/runs/41165929423)). That head differs from this commit only in documentation.
+  - The binaries and images were built from it under the lock on 31 October 2026, from 04:01 to 04:03Z. The gate's record names them:
+    - the Manager image `sha256:a8ebfe2df3e60e3b5d36122fd0a2ac2431fb4ad7b8a98fff447da1251735cfcb`;
+    - the Go Manager image, which M's runs use, `sha256:4f664eb8815d1ba5a01e47b4db380e0d9529bf1c744512735b952f35535c05d9`;
+    - the sandbox image `sha256:67e2cb76d76c27fd20b183e8d209e6407c49f758c35a454168b5b37cc2e24ce8`;
+    - `markitect.exe` with SHA-256 `305ebbe9ec8645ab30b0000bec80a52777dd611087eee9ae7737710717dc478e`, and `markitect-remote` with `bfd052f76ae8ab65e629451fb7050633220dd0d8d5f7ed318159f6529f21c3e8`.
+  - The Manager images differ from `4576beaa`'s in the layers that hold the host's code, which #927 changes. The sandbox image's build files did not change, and it has the same 13 layers as `4576beaa`'s. Only its ID differs, as it does with every build.
+- **Precondition 3: the new project's launch inputs are kept.** Checked against this commit on 31 October 2026, by digest only, and without cloning the private repository:
+  - `inputs.json` keeps its SHA-256 `42216d1439ac0c0c9de75e9f95c06cd90445eec6a7b81e8877a99d749072af1e`, and all 26 digests it records match the files.
+  - This commit's `suite.py task` rebuilds the tasks of C1 to C7 to the author's digests, as `4576beaa`'s does.
+  - So nobody writes the inputs again, and nobody handles the new project's material before the judge phase.
+- **`tools/` since `4576beaa`: on Claude, nothing changes for either arm.** The only change is #921: `classify.py`, `suite.py`, `sandbox.py`, `sandbox/series.json` and the new `codex_cli.py`. Checked against `4576beaa`'s `tools/`:
+  - **K's command:** `claude_code.py` is unchanged, and so are `series_runner.py`, `native.py`, `results.py`, `judging.py`, `series.py` and `judges.py`. The runner keeps its SHA-256 `2f32715b…`. The new gate's configuration differs from the first gate's only in the commit, the work folder, the binaries and the images.
+  - **M's arm:** `markitect_arm.py` is unchanged. M changes only through #927, in the host.
+  - **The Claude login copy:** #921 moved it into its own function in `sandbox.py`. For five synthetic logins, old and new give the same copy, the same secrets to search for and the same refusals. `--login` still defaults to `~/.claude/.credentials.json` for Claude.
+  - **The void classes:**
+    - `classify.py` reads a session as a Codex exec stream only when it has a `thread.started` or `turn.started` line, which Claude transcripts do not have.
+    - Old and new classify all 52 run records of the first gate the same, with its signatures for M and K. They also read the same session and start errors from those runs, even where `classify` does not use them.
+    - #921 added Codex tests and changed none of the existing ones.
+  - **The egress for Claude:** still `api.anthropic.com` only, and the limits are unchanged. `series.json` only gained a `codex` entry. Its SHA-256, which each sandbox and native run records as `seriesSha256`, changes from `8667891c…` to `c488a4c2…`.
+- **The second gate's work folder:** `C:\Users\Consiliari\AppData\Local\markitect-counted\gate-windows-2`.
+  - `STOP` was written first. It stays until Build gives the go, after the owner clears a Docker window.
+  - Its `src\tools` is extracted from this commit, and `plan` wrote its configuration: 32 launches with a bound of 48, as for the first gate.
+  - The runner's hidden check finds none of the hidden places.
+  - If this gate passes, the series' configuration names its ledger as `gateLedger`.
+- Everything else in Amendments 1 to 3 stands. Precondition 5 holds for Windows only once this gate has passed.
 
 ## Independent review
 
