@@ -202,7 +202,8 @@ func TestAnAgentEndsAtTheContextLimitOrAfterAFailedTurn(t *testing.T) {
 	turn := 0
 	f.rt.script = func(s *fakeSession, argv []string, stdin []byte) int {
 		turn++
-		if msg := text(t, stdin); !strings.HasPrefix(msg, "# Task") || !strings.Contains(msg, "## Checklist") || slices.Contains(argv, "--resume") {
+		if msg := text(t, stdin); !strings.HasPrefix(msg, "# Task\n\nRealize the change for Manager members.") || !strings.Contains(msg, "## Checklist") ||
+			strings.Contains(msg, "# Turn") || slices.Contains(argv, "--resume") {
 			t.Errorf("turn %d is no fresh start with the whole task:\n%s", turn, msg)
 		}
 		s.line(initLine(makerTools...))
@@ -218,6 +219,8 @@ func TestAnAgentEndsAtTheContextLimitOrAfterAFailedTurn(t *testing.T) {
 	for i, want := range []agentport.Reason{agentport.Finished, agentport.Failed, agentport.Finished} {
 		s := f.spec.Start
 		s.Round, s.Deadline = i+1, time.Now().Add(time.Hour)
+		// A fresh start gets the whole task even when the turn has an event.
+		s.Task, s.Event = "Realize the change for Manager members.", "The messages delivered with this turn need your action first."
 		end := g.Run(context.Background(), s, f.host)
 		if end.Reason != want || end.Continued || end.Cleanup != "" || len(f.rt.volumes) != 0 || !f.rt.session.closed {
 			t.Fatalf("turn %d: %+v, volumes %v", i+1, end, f.rt.volumes)

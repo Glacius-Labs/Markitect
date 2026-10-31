@@ -98,12 +98,19 @@ func TestALaterTurnsEventLeavesOutTheFirstTurnsTask(t *testing.T) {
 		t.Errorf("maker task:\n%s", maker.task)
 	}
 	review := s.reviewTask(root)
-	if !strings.HasPrefix(review.event, "Review submission sub of Manager . on branch root") || !strings.Contains(review.event, "It integrates the work of materials") ||
-		!strings.HasSuffix(review.event, `"build" passed.`) || strings.Contains(review.event, "Judge the Manager's own files") {
+	// The continued checker's diff starts from its previous submission, so
+	// the event names no start of the diff.
+	if !strings.HasPrefix(review.event, "Review submission sub of Manager . on branch root: confirm or dispute every verdict") || !strings.Contains(review.event, "It integrates the work of materials") ||
+		!strings.HasSuffix(review.event, `"build" passed.`) || strings.Contains(review.event, "Judge the Manager's own files") || strings.Contains(review.event, "diff from") {
 		t.Errorf("review event:\n%s", review.event)
 	}
-	if !strings.Contains(review.task, "Judge the Manager's own files") || !strings.HasSuffix(review.task, `"build" passed.`) {
+	if !strings.HasPrefix(review.task, "Review submission sub of Manager . on branch root against the model and the diff from base00000000: confirm") ||
+		!strings.Contains(review.task, "Judge the Manager's own files") || !strings.HasSuffix(review.task, `"build" passed.`) {
 		t.Errorf("review task:\n%s", review.task)
+	}
+	child.released = false
+	if own := s.makerTask(root).event; !strings.HasPrefix(own, "Your working children start from your approved submission, so your next submission covers your own area") {
+		t.Errorf("own-first event: %s", own)
 	}
 	if v := s.verifyTask(child); v.event != "Your last turn pushed no verdicts on branch managers/materials. Push them as one commit without file changes." {
 		t.Errorf("verify event: %s", v.event)

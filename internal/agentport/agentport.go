@@ -66,7 +66,7 @@ type Start struct {
 	// such as a new submission with the required checks' results on it, or
 	// the children's approved work; the review, the answer or the
 	// settlement are messages in Inbox. A turn that continues an agent gets
-	// Event and Inbox instead of Task and the checklist, which its
+	// Event and Inbox instead of Task, whose text and checklist its
 	// conversation holds already; a turn that starts it gets Task. Empty
 	// when Task has nothing to shorten.
 	Event string

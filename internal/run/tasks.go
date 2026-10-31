@@ -20,9 +20,9 @@ type turn struct{ task, event string }
 func (s *schedule) makerTask(n *node) turn {
 	var b strings.Builder
 	if held := s.held(n); held != "" {
-		fmt.Fprintf(&b, " %s escalated to you and continue from your approved submission when you settle the matter with a change of your own, so this one covers your own area: judge each item by your own files; their work comes when you integrate it.", held)
+		fmt.Fprintf(&b, " %s escalated to you and continue from your approved submission when you settle the matter with a change of your own, so your next submission covers your own area: judge each item by your own files; their work comes when you integrate it.", held)
 	} else if s.ownFirst(n) {
-		b.WriteString(" Your working children start from your approved submission, so this one covers your own area: judge each item by your own files; the parts your children realize come when you integrate their work.")
+		b.WriteString(" Your working children start from your approved submission, so your next submission covers your own area: judge each item by your own files; the parts your children realize come when you integrate their work.")
 	} else if len(n.children) > 0 && s.childrenApproved(n) && n.integrated == s.approvals(n) {
 		fmt.Fprintf(&b, " The host merged your working children's approved work (%s) on your branch. Review it and integrate it before you submit: use it, and do not build a child's behavior a second time in your own files.", s.approvals(n))
 	} else if len(n.children) > 0 && s.childrenApproved(n) {
@@ -53,17 +53,23 @@ func (s *schedule) childNames(n *node) string {
 }
 
 func (s *schedule) reviewTask(n *node) turn {
-	event := fmt.Sprintf("Review submission %s of Manager %s on branch %s against the model and the diff from %s: confirm or dispute every verdict, then push your review as one commit without file changes on the submission.", n.submission, n.name, n.branch, short(n.from))
+	// A continued checker's diff starts from the submission its previous
+	// turn received, so only the whole task names where it starts.
+	head := fmt.Sprintf("Review submission %s of Manager %s on branch %s", n.submission, n.name, n.branch)
+	answer := ": confirm or dispute every verdict, then push your review as one commit without file changes on the submission."
+	var b strings.Builder
 	if held := s.held(n); held != "" {
-		event += " It covers the Manager's own area and settles an escalation of " + held + "; what they realize comes with a later submission."
+		b.WriteString(" It covers the Manager's own area and settles an escalation of " + held + "; what they realize comes with a later submission.")
 	} else if s.ownFirst(n) {
-		event += " It covers the Manager's own area before its working children start; what they realize comes with a later submission."
+		b.WriteString(" It covers the Manager's own area before its working children start; what they realize comes with a later submission.")
 	} else if n.submission == n.integration {
-		event += " The host made it: it merges the approved work of " + s.childNames(n) + " and adds nothing of its own. Judge whether the merged state integrates that work as the model asks."
+		b.WriteString(" The host made it: it merges the approved work of " + s.childNames(n) + " and adds nothing of its own. Judge whether the merged state integrates that work as the model asks.")
 	} else if len(n.children) > 0 {
-		event += " It integrates the work of " + s.childNames(n) + ": dispute it when one of the Manager's own files builds a child's behavior a second time instead of using that work."
+		b.WriteString(" It integrates the work of " + s.childNames(n) + ": dispute it when one of the Manager's own files builds a child's behavior a second time instead of using that work.")
 	}
-	task := event + " Judge the Manager's own files against its items, and each item's whole Definition with its examples and the Definitions it links to"
+	event := head + answer + b.String()
+	task := head + " against the model and the diff from " + short(n.from) + answer + b.String() +
+		" Judge the Manager's own files against its items, and each item's whole Definition with its examples and the Definitions it links to"
 	if n.parent != nil {
 		task += "; whether the rest of the program uses those files yet is its parent's integration"
 	}
