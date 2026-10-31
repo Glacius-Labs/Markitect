@@ -103,24 +103,47 @@ func (desktopRepos) LastLanded(ctx context.Context, root, tip string) (string, b
 type desktopTree struct{ repo.WorkingTree }
 
 // Write writes a file of the working tree, as a hand edit in the Reader
-// does. It refuses a path that runs through a symbolic link, which could lead
-// out of the repository.
+// does. It refuses a path that runs through a symbolic link or a Windows
+// junction, either of which could lead out of the repository, and replaces
+// the file in one step, so the views never read half of it.
 func (t desktopTree) Write(file string, data []byte) error {
-	p := t.Dir
+	walked := t.Dir
 	for _, part := range strings.Split(file, "/") {
-		p = filepath.Join(p, part)
-		info, err := os.Lstat(p)
+		walked = filepath.Join(walked, part)
+		info, err := os.Lstat(walked)
 		if errors.Is(err, fs.ErrNotExist) {
 			break
 		}
 		if err != nil {
 			return err
 		}
-		if info.Mode()&fs.ModeSymlink != 0 {
+		if info.Mode()&(fs.ModeSymlink|fs.ModeIrregular) != 0 {
 			return fmt.Errorf("%s runs through a symbolic link; Markitect writes no file there", file)
 		}
 	}
-	return t.WorkingTree.Write(file, data)
+	full := filepath.Join(t.Dir, filepath.FromSlash(file))
+	if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+		return err
+	}
+	tmp, err := os.CreateTemp(filepath.Dir(full), ".markitect-edit-*")
+	if err != nil {
+		return err
+	}
+	_, werr := tmp.Write(data)
+	cerr := tmp.Close()
+	if err := errors.Join(werr, cerr); err != nil {
+		os.Remove(tmp.Name())
+		return err
+	}
+	if err := os.Chmod(tmp.Name(), 0o644); err != nil {
+		os.Remove(tmp.Name())
+		return err
+	}
+	if err := os.Rename(tmp.Name(), full); err != nil {
+		os.Remove(tmp.Name())
+		return err
+	}
+	return nil
 }
 
 func (t desktopTree) Stamp(file string) string {

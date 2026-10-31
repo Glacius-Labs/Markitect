@@ -29,7 +29,7 @@ Either way:
   - **The session** is an `HttpOnly`, `SameSite=Strict` cookie, named after the service's port, that the launch code sets. Every request of the page needs it.
   - **The record's secret** stays in `desktop.json`, readable by the user only. A later start asks the service to prove it holds the secret (`/api/hello`, an HMAC over a fresh challenge), so a program that took over the port after a crash learns nothing; only then does the start send the secret, to have the service open a window (`/api/window`) or to get a window's link (`/api/launch`).
 - A write that names an origin must name the service's own, and a `POST` or `PUT` must be JSON; a form or page of another site can send neither.
-- A hand edit writes only a Definition's file below `.markitect/model/`, named by the model language's names that also mean the same on every platform, and never through a symbolic link, which could lead out of the repository.
+- A hand edit writes only a Definition's file below `.markitect/model/`, named by the model language's names that also mean the same on every platform, and never through a symbolic link or a Windows junction, which could lead out of the repository. One edit checks and writes at a time, and a file is replaced in one step.
 - Every response carries a content security policy that lets the page load only its own files; the page loads nothing from elsewhere.
 - A new project's folder name must mean the same on Windows, Linux and macOS: no separator, reserved character, control character, leading dot or device name such as `CON`. A clone runs with no terminal prompt, SSH in batch mode unless the user configured an SSH command, the `ext` transport off and a 30-minute limit; a clone that fails leaves no folder behind.
 
@@ -75,7 +75,7 @@ The digits 1 to 4 switch the views; Escape goes back to the hub.
 
 Beside the chat, the owner changes the model by hand. A Definition's **Edit** opens its text, front matter included, in an editor that writes the file straight into the working tree: **Save** or Ctrl+S, and the views show it with what `check` and `lint` say, at once. **New Definition** on a Package's page writes a Definition with its Kind and title there and opens it. Deleting or moving a Definition stays with the owner's own editor or the chat.
 
-- The editor names the digest of the text it started from. When another editor saved the file meanwhile, nothing is written: the owner keeps their text, which then replaces the other, or takes the other and drops theirs.
+- The editor names the digest of the text it started from, and a draft keeps it. When another editor saved the file meanwhile, nothing is written: the owner keeps their text, which then replaces the other, or takes the other and drops theirs.
 - A file keeps its line ends; Markitect reads both as LF.
 - A draft survives moving around the app in the same window, and is gone when the window closes.
 

@@ -110,4 +110,7 @@ func TestAHandEditWritesOnlyDefinitionsOfTheModel(t *testing.T) {
 	if w.Code != http.StatusUnsupportedMediaType {
 		t.Errorf("a form's write: %d", w.Code)
 	}
+	if code, _ := save(s, id, "x", strings.Repeat("x", maxDefinition), ""); code != http.StatusRequestEntityTooLarge {
+		t.Errorf("an oversized text: %d", code)
+	}
 }

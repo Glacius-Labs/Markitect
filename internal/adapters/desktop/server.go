@@ -55,6 +55,7 @@ type server struct {
 	openWindow   func(url string) error
 	chooseFolder func(ctx context.Context, start string) (string, error)
 	dialog       sync.Mutex // held while a folder dialog is open
+	edits        sync.Mutex // held while a hand edit checks and writes its file
 
 	mu       sync.Mutex
 	launches map[string]time.Time // launch code → when it expires

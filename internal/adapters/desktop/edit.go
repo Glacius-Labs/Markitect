@@ -79,7 +79,11 @@ func (s *server) saveDefinition(w http.ResponseWriter, r *http.Request) {
 	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, maxDefinition))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(&req); err != nil {
-		fail(w, http.StatusBadRequest, err)
+		code := http.StatusBadRequest
+		if tooLarge := (*http.MaxBytesError)(nil); errors.As(err, &tooLarge) {
+			code = http.StatusRequestEntityTooLarge
+		}
+		fail(w, code, err)
 		return
 	}
 	ws, err := s.repos.Open(r.Context(), p.Path)
@@ -87,6 +91,10 @@ func (s *server) saveDefinition(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusUnprocessableEntity, err)
 		return
 	}
+	// The check and the write are one step: two saves from the same text
+	// cannot both pass it.
+	s.edits.Lock()
+	defer s.edits.Unlock()
 	file := project.ModelDir + "/" + id + ".md"
 	current, err := ws.Read(file)
 	exists := err == nil

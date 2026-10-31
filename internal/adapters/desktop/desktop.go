@@ -36,7 +36,8 @@ type Workspace interface {
 	// Stamp is a cheap mark of one file, such as its size and modification
 	// time, that changes when the file does.
 	Stamp(file string) string
-	// Write writes a file of the working tree, creating its folders.
+	// Write writes a file of the working tree, creating its folders; a
+	// reader sees the old file or the new one, never a part.
 	Write(file string, data []byte) error
 }
 
