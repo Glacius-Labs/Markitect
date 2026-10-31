@@ -2,7 +2,7 @@
 
 The bounded dispatch of the re-measure the owner asked for after the [comparison](long-lived-managers-comparison-20261030.md) of the [long-lived Managers](../design/long-lived-managers.md) redesign (**L**) with `main` (**M**). On a continued turn, L's host sent the agent its whole first-turn brief again. The owner, through the Topics session on 31 October 2026: "Yes, fix and re-measure", and on the order: "Yes, before the series". The order and the scope are the owner's [decision](../workstreams/build.md#decisions), relayed by Topics and recorded on the build page: only L runs, on 10 launches, read against the comparison's M rows, after the second Windows gate, with fresh M launches only if the decision hangs on wall time. It runs under the owner's standing run approval of 28 October 2026 ([build workstream, Decisions](../workstreams/build.md)). **These runs are evidence for the design, never counted data.** The owner decides on adoption after the reading.
 
-**Status: approved by Build on 31 October 2026; ran on 31 October from 15:02 to 16:56 UTC, all 10 launches; read in [Amendment 1](#amendment-1-31-october-2026-the-reading).** It ran in the Docker window Build opened with its explicit go, after the second Windows gate and before the counted series.
+**Status: approved by Build on 31 October 2026; ran on 31 October from 15:02 to 16:56 UTC, all 10 launches; read in [Amendment 1](#amendment-1-31-october-2026-the-reading).** It ran in the owner's Docker window, after Build's explicit go, after the second Windows gate and before the counted series.
 
 ## Question
 
@@ -69,7 +69,7 @@ Only if the decision hangs on wall time, as the owner decided. Build judges that
 
 ### Amendment 1, 31 October 2026: the reading
 
-**The answer is no.** The fix took effect: on the Library tasks a continued turn's message fell by about four fifths. But L's input did not fall. Against the comparison's M rows, input with cache reads rose by 98 % over the five tasks, and by 24 % without C3, where the bar asks for −25 %. Quality held by the suite's measures.
+**The answer is no.** The fix took effect: on the Library tasks a continued turn's message fell by about four fifths. But L's input did not fall. Against the comparison's M rows, input with cache reads rose by 98 % over the five tasks, and by 24 % without C3, where the bar asks for −25 %. Quality held by the suite's measures, but in one of the two defect launches Root settled the contradiction itself instead of reporting a model defect ([below](#quality)).
 
 **The run:**
 
