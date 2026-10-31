@@ -17,11 +17,11 @@ markitect desktop [--listen 127.0.0.1:0] [--no-open]
 - The service listens on a loopback address only, and answers only requests addressed to `127.0.0.1`, `localhost` or `[::1]` at its port, so a page of another site that resolves its own name to 127.0.0.1 gets nothing.
 - Three secrets, each with one use:
   - **The launch code** in a window's link (`/?t=CODE`) works once and for two minutes. It may show up on the browser's command line, so it buys nothing more than one session.
-  - **The session** is an `HttpOnly`, `SameSite=Strict` cookie that the launch code sets. Every request of the page needs it.
+  - **The session** is an `HttpOnly`, `SameSite=Strict` cookie, named after the service's port, that the launch code sets. Every request of the page needs it.
   - **The record's secret** stays in `desktop.json`, readable by the user only. A later start asks the service to prove it holds the secret (`/api/hello`, an HMAC over a fresh challenge), so a program that took over the port after a crash learns nothing; only then does the start send the secret to get a launch code for its window (`/api/launch`).
 - A write that names an origin must name the service's own, and a `POST` must be JSON; a form or page of another site can send neither.
 - Every response carries a content security policy that lets the page load only its own files; the page loads nothing from elsewhere.
-- A new project's folder name must mean the same on Windows, Linux and macOS: no separator, reserved character, control character, leading dot or device name such as `CON`. A clone runs with no terminal prompt, SSH in batch mode, the `ext` transport off and a 30-minute limit.
+- A new project's folder name must mean the same on Windows, Linux and macOS: no separator, reserved character, control character, leading dot or device name such as `CON`. A clone runs with no terminal prompt, SSH in batch mode unless the user configured an SSH command, the `ext` transport off and a 30-minute limit; a clone that fails leaves no folder behind.
 
 ## Routes
 

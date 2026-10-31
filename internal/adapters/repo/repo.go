@@ -43,16 +43,24 @@ func Clone(ctx context.Context, url, dir string) error {
 	if strings.HasPrefix(url, "-") {
 		return fmt.Errorf("%q is no repository URL", url)
 	}
+	if _, err := os.Lstat(dir); err == nil {
+		return fmt.Errorf("%s already exists", dir)
+	}
 	ctx, cancel := context.WithTimeout(ctx, cloneLimit)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "git", "-c", "protocol.ext.allow=never", "clone", "--quiet", "--", url, dir)
 	cmd.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
-	if os.Getenv("GIT_SSH_COMMAND") == "" {
-		cmd.Env = append(cmd.Env, "GIT_SSH_COMMAND=ssh -o BatchMode=yes")
+	// SSH in batch mode, unless the user chose an SSH command, which wins.
+	if os.Getenv("GIT_SSH_COMMAND") == "" && os.Getenv("GIT_SSH") == "" {
+		if _, err := git(ctx, filepath.Dir(dir), "config", "--get", "core.sshCommand"); err != nil {
+			cmd.Env = append(cmd.Env, "GIT_SSH_COMMAND=ssh -o BatchMode=yes")
+		}
 	}
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
+		// A clone that was stopped leaves half a folder behind.
+		os.RemoveAll(dir)
 		msg := strings.TrimSpace(stderr.String())
 		if msg == "" {
 			msg = err.Error()

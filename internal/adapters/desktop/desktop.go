@@ -239,8 +239,10 @@ func readRecord(dir string) (record, []byte, bool) {
 }
 
 // publishRecord writes the record only if none exists: through a temporary
-// file and a link, so that a reader never sees half of it.
+// file and a link, so that a reader never sees half of it. Where the file
+// system has no hard links, it creates the record exclusively instead.
 func publishRecord(dir string, data []byte) error {
+	file := filepath.Join(dir, recordFile)
 	tmp, err := os.CreateTemp(dir, recordFile+".*")
 	if err != nil {
 		return err
@@ -253,14 +255,35 @@ func publishRecord(dir string, data []byte) error {
 	if err := tmp.Close(); err != nil {
 		return err
 	}
-	return os.Link(tmp.Name(), filepath.Join(dir, recordFile))
+	if err := os.Link(tmp.Name(), file); err == nil || errors.Is(err, fs.ErrExist) {
+		return err
+	}
+	f, err := os.OpenFile(file, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
+	if err != nil {
+		return err
+	}
+	if _, err := f.Write(data); err != nil {
+		f.Close()
+		os.Remove(file)
+		return err
+	}
+	return f.Close()
 }
 
 // removeIfUnchanged removes the record if it still holds data, so that a
-// record another service published meanwhile stays.
+// record another service published meanwhile stays. On Windows a reader's
+// open handle refuses the removal for a moment, so it tries a few times.
 func removeIfUnchanged(dir string, data []byte) {
-	if _, current, found := readRecord(dir); found && bytes.Equal(current, data) {
-		os.Remove(filepath.Join(dir, recordFile))
+	file := filepath.Join(dir, recordFile)
+	for range 5 {
+		_, current, found := readRecord(dir)
+		if !found || !bytes.Equal(current, data) {
+			return
+		}
+		if err := os.Remove(file); err == nil || errors.Is(err, fs.ErrNotExist) {
+			return
+		}
+		time.Sleep(20 * time.Millisecond)
 	}
 }
 

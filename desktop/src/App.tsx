@@ -57,7 +57,7 @@ export function App() {
           <Projects
             info={info}
             onAdded={(r) => {
-              setCreated(r.output ? { id: r.project.id, init: { ok: r.ok, output: r.output } } : null);
+              setCreated(r.output || !r.ok ? { id: r.project.id, init: { ok: r.ok, output: r.output } } : null);
               loadInfo();
               window.location.hash = `#/p/${r.project.id}`;
             }}

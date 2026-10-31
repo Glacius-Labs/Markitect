@@ -57,6 +57,16 @@ func TestTheDesktopWorksOnRealRepositories(t *testing.T) {
 	if err := (desktopRepos{}).Clone(ctx, "--upload-pack=x", filepath.Join(testkit.TempDir(t), "x")); err == nil {
 		t.Error("an option passed as the URL")
 	}
+	failed := filepath.Join(testkit.TempDir(t), "failed")
+	if err := (desktopRepos{}).Clone(ctx, filepath.Join(testkit.TempDir(t), "missing"), failed); err == nil {
+		t.Error("cloned a repository that does not exist")
+	}
+	if _, err := os.Stat(failed); !os.IsNotExist(err) {
+		t.Errorf("a failed clone left %s: %v", failed, err)
+	}
+	if err := (desktopRepos{}).Clone(ctx, source.Dir, clone); err == nil || !strings.Contains(err.Error(), "already exists") {
+		t.Errorf("clone into an existing folder: %v", err)
+	}
 }
 
 func mustEval(t *testing.T, path string) string {

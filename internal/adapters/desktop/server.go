@@ -25,8 +25,6 @@ import (
 //go:embed all:ui
 var ui embed.FS
 
-const cookieName = "markitect"
-
 // csp lets the page load only its own files. Inline style attributes stay
 // blocked; styles set through the DOM, as React sets them, are not affected.
 const csp = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
@@ -41,6 +39,7 @@ const launchLife = 2 * time.Minute
 type server struct {
 	secret   string
 	session  string
+	cookie   string // the session cookie's name; a browser keeps cookies per host, not per port
 	port     string
 	store    *Store
 	repos    Repos
@@ -57,7 +56,7 @@ func newServer(secret, port string, store *Store, repos Repos, commands Commands
 	if err != nil {
 		return nil, err
 	}
-	s := &server{secret: secret, session: session, port: port, store: store, repos: repos, commands: commands,
+	s := &server{secret: secret, session: session, cookie: "markitect_" + port, port: port, store: store, repos: repos, commands: commands,
 		mux: http.NewServeMux(), now: time.Now, launches: map[string]time.Time{}}
 	files, err := fs.Sub(ui, "ui")
 	if err != nil {
@@ -105,7 +104,7 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "This link is no longer valid. Start Markitect again with markitect desktop.", http.StatusForbidden)
 			return
 		}
-		http.SetCookie(w, &http.Cookie{Name: cookieName, Value: s.session, Path: "/", HttpOnly: true, SameSite: http.SameSiteStrictMode})
+		http.SetCookie(w, &http.Cookie{Name: s.cookie, Value: s.session, Path: "/", HttpOnly: true, SameSite: http.SameSiteStrictMode})
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	case r.Method == http.MethodGet && r.URL.Path == "/api/hello":
@@ -121,7 +120,7 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		reply(w, map[string]string{"code": s.launch()})
 		return
 	}
-	if c, err := r.Cookie(cookieName); err != nil || !equal(c.Value, s.session) {
+	if c, err := r.Cookie(s.cookie); err != nil || !equal(c.Value, s.session) {
 		http.Error(w, "Open Markitect with markitect desktop.", http.StatusUnauthorized)
 		return
 	}
@@ -343,7 +342,7 @@ func newFolder(parent, name string) (string, error) {
 		return "", fmt.Errorf("%s is no folder", parent)
 	}
 	if !plainName(name) {
-		return "", fmt.Errorf("%q is no plain folder name: use letters, digits and - or _, with no leading dot", name)
+		return "", fmt.Errorf("%q is no plain folder name: no separator, reserved character, leading dot, trailing dot or space, or device name such as CON", name)
 	}
 	target := filepath.Join(parent, name)
 	if _, err := os.Lstat(target); err == nil {

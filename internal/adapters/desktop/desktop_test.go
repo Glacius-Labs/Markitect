@@ -63,7 +63,7 @@ func session(t *testing.T, url string) *http.Cookie {
 	}
 	resp.Body.Close()
 	for _, c := range resp.Cookies() {
-		if c.Name == cookieName {
+		if strings.HasPrefix(c.Name, "markitect_") {
 			return c
 		}
 	}

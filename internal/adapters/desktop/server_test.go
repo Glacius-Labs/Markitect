@@ -127,7 +127,7 @@ func call(s *server, method, path, body string, edit ...func(*http.Request)) *ht
 	}
 	req := httptest.NewRequest(method, path, r)
 	req.Host = "127.0.0.1:" + testPort
-	req.AddCookie(&http.Cookie{Name: cookieName, Value: s.session})
+	req.AddCookie(&http.Cookie{Name: s.cookie, Value: s.session})
 	if body != "" {
 		req.Header.Set("Content-Type", "application/json")
 	}
@@ -194,7 +194,7 @@ func TestALaunchCodeWorksOnceAndBriefly(t *testing.T) {
 			t.Errorf("%s without cookie: %d", path, w.Code)
 		}
 		for _, value := range []string{"wrong", testSecret, code} {
-			if w := call(s, "GET", path, "", noCookie, func(r *http.Request) { r.AddCookie(&http.Cookie{Name: cookieName, Value: value}) }); w.Code != http.StatusUnauthorized {
+			if w := call(s, "GET", path, "", noCookie, func(r *http.Request) { r.AddCookie(&http.Cookie{Name: s.cookie, Value: value}) }); w.Code != http.StatusUnauthorized {
 				t.Errorf("%s with cookie %q: %d", path, value, w.Code)
 			}
 		}

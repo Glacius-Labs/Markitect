@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { api, type AppInfo, type Result } from './api';
 import { Alert, Dialog, Field } from './ui';
 
@@ -17,6 +17,13 @@ export function AddDialog(props: { mode: Mode; info: AppInfo | null; onClose: ()
   const { mode } = props;
   const [path, setPath] = useState('');
   const [parent, setParent] = useState(props.info?.parent ?? '');
+  // The suggestion may arrive after the dialog opened.
+  const suggested = props.info?.parent;
+  useEffect(() => {
+    if (suggested) {
+      setParent((p) => p || suggested);
+    }
+  }, [suggested]);
   const [name, setName] = useState('');
   const [url, setUrl] = useState('');
   const [busy, setBusy] = useState(false);
