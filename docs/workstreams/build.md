@@ -31,7 +31,7 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
   - 32 launches, all of them results, judged and verified. No credential was found and nothing was left behind.
   - M did not land the Makerspace W0. Root integrated nine children and spent its six maker starts on their events.
   - Precondition 5 does not hold for Windows.
-- **Long-lived Managers compared, 31 October** ([dispatch](../validation/long-lived-managers-comparison-20261030.md), [PR #923](https://github.com/Glacius-Labs/Markitect/pull/923); branch in draft [PR #922](https://github.com/Glacius-Labs/Markitect/pull/922)):
+- **Long-lived Managers compared, 31 October** ([reading](../validation/long-lived-managers-comparison-20261030.md#amendment-1-31-october-2026-the-reading), [PR #925](https://github.com/Glacius-Labs/Markitect/pull/925); branch in draft [PR #922](https://github.com/Glacius-Labs/Markitect/pull/922)):
   - 40 launches on Windows, all results.
   - Quality was not worse. Both arms stopped 6 of 6 planted defects. Of the gap launches, the redesign landed 4 of 4 and M 2 of 4; one of M's misses ended with Root out of maker starts, as in the gate.
   - The cost missed the bar of a quarter. As the mean over the tasks, wall time fell about 11 % and input tokens with cache reads rose about 9 %. On W0 the redesign took 19 % longer and used 40 % more input tokens.
