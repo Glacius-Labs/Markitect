@@ -29,8 +29,13 @@ export function parse(hash: string): Place {
       place.view = m[3] as View;
     }
     if (m[4] !== undefined) {
-      const item = decodeURIComponent(m[4]);
-      place.item = item === '.' ? '' : item;
+      // An address typed by hand may hold a broken escape; it names no item.
+      try {
+        const item = decodeURIComponent(m[4]);
+        place.item = item === '.' ? '' : item;
+      } catch {
+        // no item
+      }
     }
   }
   return place;

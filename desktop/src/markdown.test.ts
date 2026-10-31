@@ -59,6 +59,14 @@ describe('the line diff', () => {
     ]);
   });
 
+  it('shows a text too long for the table as replaced whole', () => {
+    const long = Array.from({ length: 2100 }, (_, i) => `line ${i}`).join('\n');
+    const lines = diffLines(long, `${long}\nmore`);
+    expect(lines).toHaveLength(4201);
+    expect(lines[0].op).toBe('del');
+    expect(lines[4200]).toEqual({ op: 'add', text: 'more' });
+  });
+
   it('shows a new text as added and a removed one as deleted', () => {
     expect(diffLines('', 'a\n')).toEqual([{ op: 'add', text: 'a' }]);
     expect(diffLines('a\r\nb\r\n', '')).toEqual([

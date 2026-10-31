@@ -41,10 +41,10 @@ export function Quality({ ix, pid, item, diff }: Props) {
           ) : (
             <ul className="findings">
               {added.map((d, i) => (
-                <Finding key={`a${i}`} pid={pid} d={d} badge={<Badge tone="warning">New</Badge>} />
+                <Finding ix={ix} key={`a${i}`} pid={pid} d={d} badge={<Badge tone="warning">New</Badge>} />
               ))}
               {gone.map((d, i) => (
-                <Finding key={`g${i}`} pid={pid} d={d} badge={<Badge tone="success">Gone</Badge>} />
+                <Finding ix={ix} key={`g${i}`} pid={pid} d={d} badge={<Badge tone="success">Gone</Badge>} />
               ))}
             </ul>
           )}
@@ -89,7 +89,7 @@ export function Quality({ ix, pid, item, diff }: Props) {
           <h2 className="h3">Compile errors{selected !== undefined && ` in ${packageName(selected)}`}</h2>
           <ul className="findings">
             {show(m.errors).map((d, i) => (
-              <Finding key={i} pid={pid} d={d} badge={<Badge tone="danger">{d.code}</Badge>} />
+              <Finding ix={ix} key={i} pid={pid} d={d} badge={<Badge tone="danger">{d.code}</Badge>} />
             ))}
           </ul>
         </section>
@@ -106,7 +106,7 @@ export function Quality({ ix, pid, item, diff }: Props) {
               </h3>
               <ul className="findings">
                 {ds.map((d, i) => (
-                  <Finding key={i} pid={pid} d={d} />
+                  <Finding ix={ix} key={i} pid={pid} d={d} />
                 ))}
               </ul>
             </div>
@@ -126,12 +126,15 @@ function groups(ds: Diagnostic[]): [string, Diagnostic[]][] {
   return [...out.entries()].sort((a, b) => a[0].localeCompare(b[0]));
 }
 
-function Finding({ pid, d, badge }: { pid: string; d: Diagnostic; badge?: ReactNode }) {
+function Finding({ ix, pid, d, badge }: { ix: Index; pid: string; d: Diagnostic; badge?: ReactNode }) {
+  // A warning that is gone may name what the working tree no longer has.
+  const target = d.definition ?? d.package;
+  const label = d.definition ?? packageName(d.package);
   return (
     <li>
       {badge} {d.message}{' '}
       <span className="muted small">
-        {d.definition ? <a href={modelHref(pid, 'reader', d.definition)}>{d.definition}</a> : <a href={modelHref(pid, 'reader', d.package)}>{packageName(d.package)}</a>}
+        {ix.defs.has(target) || ix.pkgs.has(target) ? <a href={modelHref(pid, 'reader', target)}>{label}</a> : label}
         {d.file && (
           <>
             {' '}

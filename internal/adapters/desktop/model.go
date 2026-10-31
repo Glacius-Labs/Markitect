@@ -197,7 +197,11 @@ func buildModelView(cur *project.Project, b *baseState, bs bases, chosen *base, 
 		v.Lint = append(v.Lint, where(d))
 	}
 
-	v.Diff = diffModels(bm, m, blint, lint, where)
+	whereBase := where
+	if b != nil {
+		whereBase = placer(b.project)
+	}
+	v.Diff = diffModels(bm, m, blint, lint, where, whereBase)
 	changes := map[string]string{}
 	for _, c := range v.Diff.Definitions {
 		changes[c.ID] = c.Change
@@ -338,6 +342,8 @@ func placer(p *project.Project) func(model.Diagnostic) diagnostic {
 // internal/harness renders it): its own Package's Definitions, everything its
 // parents define, the Definitions these link to, the Kinds of all of them,
 // and the public Definitions below each child by title and first sentence.
+// A Definition a Manager knows in full is listed once, in full, although the
+// harness also names it in the child's table of contents.
 func whoSees(m *model.Model) map[string]*seenBy {
 	out := map[string]*seenBy{}
 	entry := func(id string) *seenBy {
@@ -399,7 +405,7 @@ func whoSees(m *model.Model) map[string]*seenBy {
 
 // diffModels compares the model at the base, nil when there is none, with
 // the working tree's.
-func diffModels(base, cur *model.Model, baseLint, curLint model.Diagnostics, where func(model.Diagnostic) diagnostic) diffView {
+func diffModels(base, cur *model.Model, baseLint, curLint model.Diagnostics, where, whereBase func(model.Diagnostic) diagnostic) diffView {
 	v := diffView{Definitions: []definitionChange{}, Packages: []analysis.Change{}, Edges: []edgeChange{}, Lint: []lintChange{}}
 	before := func(id string) *model.Definition {
 		if base == nil {
@@ -493,9 +499,8 @@ func diffModels(base, cur *model.Model, baseLint, curLint model.Diagnostics, whe
 	}
 	for _, d := range baseLint {
 		if !has[key(d)] {
-			// A warning that is gone has no place in the working tree; it
-			// keeps the Package its file names, if that still exists.
-			v.Lint = append(v.Lint, lintChange{diagnostic: where(d), Change: analysis.Removed})
+			// A warning that is gone is placed where it was, at the base.
+			v.Lint = append(v.Lint, lintChange{diagnostic: whereBase(d), Change: analysis.Removed})
 		}
 	}
 	return v
@@ -516,8 +521,12 @@ type cachedView struct {
 	body []byte
 }
 
-// maxBases bounds the cached base projects.
-const maxBases = 8
+// maxBases bounds the cached base projects, across all projects; maxViews
+// the cached documents and landings, which start over when full.
+const (
+	maxBases = 8
+	maxViews = 64
+)
 
 func newModels() *models {
 	return &models{views: map[string]cachedView{}, bases: map[string]*baseState{}, landings: map[string]string{}}
@@ -550,6 +559,9 @@ func (c *models) view(ctx context.Context, repos Repos, p Project, choice string
 	var bs bases
 	// An unborn HEAD, in a repository with no commit yet, is no error.
 	head, err := repos.Commit(ctx, root, "HEAD")
+	if ctx.Err() != nil {
+		return nil, "", ctx.Err()
+	}
 	if err == nil {
 		bs.Commit = head.ID()
 		if bs.Landing, err = c.landing(ctx, repos, root, bs.Commit); err != nil {
@@ -585,7 +597,7 @@ func (c *models) view(ctx context.Context, repos Repos, p Project, choice string
 					return nil, "", err
 				}
 			}
-			if b, err = c.base(root, commit); err != nil {
+			if b, err = c.base(ctx, root, commit); err != nil {
 				return nil, "", err
 			}
 			if changed, err = commit.Changed(); err != nil {
@@ -594,11 +606,19 @@ func (c *models) view(ctx context.Context, repos Repos, p Project, choice string
 		}
 		v = buildModelView(cur, b, bs, chosen, changed)
 	}
+	// A request that ended meanwhile may have read files only in part: the
+	// loader records a failed read as a diagnostic. Its document is not kept.
+	if ctx.Err() != nil {
+		return nil, "", ctx.Err()
+	}
 	body, err := json.Marshal(v)
 	if err != nil {
 		return nil, "", err
 	}
 	c.mu.Lock()
+	if len(c.views) >= maxViews {
+		clear(c.views)
+	}
 	c.views[key] = cachedView{etag: etag, body: body}
 	c.mu.Unlock()
 	return body, etag, nil
@@ -630,12 +650,15 @@ func (c *models) landing(ctx context.Context, repos Repos, root, tip string) (st
 		return "", err
 	}
 	c.mu.Lock()
+	if len(c.landings) >= maxViews {
+		clear(c.landings)
+	}
 	c.landings[key] = id
 	c.mu.Unlock()
 	return id, nil
 }
 
-func (c *models) base(root string, commit Commit) (*baseState, error) {
+func (c *models) base(ctx context.Context, root string, commit Commit) (*baseState, error) {
 	key := root + "\x00" + commit.ID()
 	c.mu.Lock()
 	b := c.bases[key]
@@ -646,6 +669,10 @@ func (c *models) base(root string, commit Commit) (*baseState, error) {
 	p, err := project.Load(commit)
 	if err != nil {
 		return nil, err
+	}
+	// A commit never changes, so a base read in part would stay wrong.
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
 	}
 	b = &baseState{project: p, lint: analysis.Lint(p)}
 	c.mu.Lock()
@@ -677,8 +704,8 @@ func (s *server) modelRoute(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusUnprocessableEntity, err)
 		return
 	}
+	// The window sends the last ETag itself; nothing is kept on disk.
 	w.Header().Set("ETag", etag)
-	w.Header().Set("Cache-Control", "no-cache")
 	if r.Header.Get("If-None-Match") == etag {
 		w.WriteHeader(http.StatusNotModified)
 		return

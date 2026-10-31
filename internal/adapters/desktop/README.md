@@ -67,7 +67,7 @@ The digits 1 to 4 switch the views; Escape goes back to the hub.
 
 **The change and the diff.** The change is measured from a base: the last landing, the commit `apply` starts from when no base is named, or, when no Run has landed or the owner asks for it, the last commit, so that what is not committed yet shows. With nothing committed, the whole model is the change, as with `--full`. The Organization's checklists are `impact` from that base. A switch turns the diff on in every view: the Reader marks new, changed and removed Definitions and shows a changed one's text line by line against the base, the Map marks new and gone edges and Packages, the Organization dims the Managers the change does not reach, and Quality lists the warnings that came and went.
 
-**Following the folder.** A visible window asks for the document every two seconds. The service answers `304` unless a file Git sees, the last commit or the last landing changed, so an edit made in another editor shows within seconds without reading the model again in between. The service keeps the last document per project and base, and up to eight projects at their base commits, which are slow to read through Git and rarely change.
+**Following the folder.** A visible window asks for the document every two seconds. The service answers `304` unless a file Git sees, the last commit or the last landing changed, so an edit made in another editor shows within seconds without reading the model again in between. The service keeps the last document per project and base, and the projects at up to eight base commits in all, which are slow to read through Git and never change. A document read while its request ended is not kept, since a read cut short would stay wrong.
 
 ## The native app
 

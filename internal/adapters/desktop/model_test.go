@@ -1,6 +1,7 @@
 package desktop
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"path/filepath"
@@ -278,6 +279,26 @@ func TestTheModelViewMarksCyclesAndPlacesErrors(t *testing.T) {
 	}
 	if v.Impact != nil || !strings.Contains(v.ImpactNote, "compiles") {
 		t.Errorf("impact over compile errors: %+v %q", v.Impact, v.ImpactNote)
+	}
+}
+
+func TestADocumentOfAnEndedRequestIsNotKept(t *testing.T) {
+	s, repos, root, id := modelServer(t, library(t))
+	repos.commit(root, "c1", false)
+	p, _, err := s.store.Get(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if _, _, err := s.models.view(ctx, s.repos, p, ""); err == nil {
+		t.Fatal("an ended request got a document")
+	}
+	if len(s.models.views) != 0 || len(s.models.bases) != 0 {
+		t.Fatal("the ended request's reads were kept")
+	}
+	if _, res := getModel(t, s, id, ""); res.code != http.StatusOK {
+		t.Fatalf("the next request: %d", res.code)
 	}
 }
 

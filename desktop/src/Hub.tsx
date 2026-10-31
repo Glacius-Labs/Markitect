@@ -218,11 +218,11 @@ function Stat({ label, value }: { label: string; value: number }) {
 }
 
 // useEscapeTo goes one level up with Escape, unless a dialog is open, which
-// Escape closes instead.
+// Escape closes instead, or a field has the focus, whose Escape is its own.
 export function useEscapeTo(target: () => void) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !document.querySelector('dialog[open]')) {
+      if (e.key === 'Escape' && !typing(e) && !document.querySelector('dialog[open]')) {
         target();
       }
     };

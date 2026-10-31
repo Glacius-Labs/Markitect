@@ -6,11 +6,17 @@ export interface Line {
   text: string;
 }
 
+// A text too long for the table shows as removed and added whole.
+const maxCells = 4_000_000;
+
 export function diffLines(before: string, after: string): Line[] {
   const a = split(before);
   const b = split(after);
   const n = a.length;
   const m = b.length;
+  if (n * m > maxCells) {
+    return [...a.map((text) => ({ op: 'del' as const, text })), ...b.map((text) => ({ op: 'add' as const, text }))];
+  }
   // lcs[i][j] is the length of the common subsequence of a[i:] and b[j:].
   const lcs: number[][] = Array.from({ length: n + 1 }, () => new Array<number>(m + 1).fill(0));
   for (let i = n - 1; i >= 0; i--) {

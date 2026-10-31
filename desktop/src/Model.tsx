@@ -168,7 +168,7 @@ export function ModelArea(props: { id: string; view: View; item?: string }) {
           )}
         </div>
       </div>
-      {diff && m && <p className="small muted">{compared(m)}</p>}
+      {diff && m?.initialized && <p className="small muted">{compared(m)}</p>}
       {error && <Alert tone="danger" title="The model cannot be read" body={error} />}
       {m && !m.initialized && (
         <Alert tone="info" title="Markitect is not set up in this project" body="Set it up from the project's page; then the model shows here.">

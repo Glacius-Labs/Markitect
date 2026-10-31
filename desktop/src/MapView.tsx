@@ -47,7 +47,17 @@ export function MapView({ ix, pid, item, diff }: Props) {
 
   return (
     <div className="map">
-      <div className="map__canvas gl-card" onClick={(e) => e.target === e.currentTarget && (window.location.hash = modelHref(pid, 'map'))}>
+      <div
+        className="map__canvas gl-card"
+        onClick={(e) => {
+          // A click beside the Packages, on the card or the drawing's ground,
+          // lets go of the selection.
+          const t = e.target as Element;
+          if (t === e.currentTarget || t.tagName.toLowerCase() === 'svg') {
+            window.location.hash = modelHref(pid, 'map');
+          }
+        }}
+      >
         <svg width={drawing.width} height={drawing.height} viewBox={`0 0 ${drawing.width} ${drawing.height}`} role="group" aria-label="The Package graph">
           <defs>
             {['plain', 'active', 'cycle', 'added', 'removed'].map((k) => (
