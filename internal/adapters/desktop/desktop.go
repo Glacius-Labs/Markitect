@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
@@ -57,8 +58,25 @@ type Config struct {
 	Repos    Repos
 	Commands Commands
 	Stdout   io.Writer
-	// OpenWindow opens a URL in a window; nil opens it with OpenWindow.
+	// OpenWindow opens a URL in a window; nil opens it with OpenWindow. The
+	// service calls it for every window, also for those a later start asks
+	// for, so the windows are always the first start's kind.
 	OpenWindow func(url string) error
+	// ChooseFolder asks the user for a folder in the window's own dialog,
+	// starting at start, and returns "" when the user cancels. Nil means the
+	// window has no such dialog, and the user types the path.
+	ChooseFolder func(ctx context.Context, start string) (string, error)
+}
+
+// Service is this user's running desktop service. It answers from the moment
+// Listen returns it, so that a later start finds it alive.
+type Service struct {
+	cfg    Config
+	record []byte
+	srv    *server
+	http   *http.Server
+	done   chan error // the HTTP server's end
+	closed sync.Once
 }
 
 // record is the running service as its file names it, so that a later start
@@ -75,117 +93,164 @@ const recordFile = "desktop.json"
 // Start runs the desktop service until ctx ends, or, when a service of this
 // user already runs, opens a window on it and returns.
 func Start(ctx context.Context, cfg Config) error {
+	s, err := Listen(ctx, cfg)
+	if s == nil {
+		return err
+	}
+	return s.Serve(ctx)
+}
+
+// Listen claims this user's desktop service. When one already runs, it asks
+// that one for a window, or prints a window's link, and returns nil.
+// Otherwise it starts a new service, publishes its record and returns it;
+// Serve then opens the first window. A native shell starts its window loop
+// in between.
+func Listen(ctx context.Context, cfg Config) (*Service, error) {
 	if cfg.OpenWindow == nil {
 		cfg.OpenWindow = OpenWindow
 	}
 	host, _, err := net.SplitHostPort(cfg.Listen)
 	if err != nil {
-		return fmt.Errorf("--listen %q: %w", cfg.Listen, err)
+		return nil, fmt.Errorf("--listen %q: %w", cfg.Listen, err)
 	}
 	if ip := net.ParseIP(host); host != "localhost" && (ip == nil || !ip.IsLoopback()) {
-		return fmt.Errorf("--listen %q: Markitect serves only on a loopback address", cfg.Listen)
+		return nil, fmt.Errorf("--listen %q: Markitect serves only on a loopback address", cfg.Listen)
 	}
 	if err := os.MkdirAll(cfg.Dir, 0o700); err != nil {
-		return err
+		return nil, err
 	}
 	// Two starts at once both find no service; publishing the record is
 	// exclusive, so the later one finds the earlier one's service instead.
 	for range 3 {
 		if r, data, found := readRecord(cfg.Dir); found {
 			if alive(ctx, r) {
-				return openOn(ctx, cfg, r)
+				return nil, openOn(ctx, cfg, r)
 			}
 			removeIfUnchanged(cfg.Dir, data)
 		}
-		if err := serve(ctx, cfg); !errors.Is(err, fs.ErrExist) {
-			return err
+		if s, err := listen(cfg); !errors.Is(err, fs.ErrExist) {
+			return s, err
 		}
 	}
-	return errors.New("another Markitect keeps starting at the same time; try again")
+	return nil, errors.New("another Markitect keeps starting at the same time; try again")
 }
 
-// serve listens, publishes the record and serves until ctx ends. It returns
+// listen listens, publishes the record and starts answering. It returns
 // fs.ErrExist when another service published its record first.
-func serve(ctx context.Context, cfg Config) error {
+func listen(cfg Config) (_ *Service, err error) {
 	ln, err := net.Listen("tcp", cfg.Listen)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defer ln.Close()
+	defer func() {
+		if err != nil {
+			ln.Close()
+		}
+	}()
 	secret, err := newToken()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	r := record{Address: ln.Addr().String(), Secret: secret, PID: os.Getpid()}
 	data, err := json.Marshal(r)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if err := publishRecord(cfg.Dir, data); err != nil {
-		return err
-	}
-	defer removeIfUnchanged(cfg.Dir, data)
-	_, port, _ := net.SplitHostPort(r.Address)
-	s, err := newServer(secret, port, &Store{File: filepath.Join(cfg.Dir, projectsFile)}, cfg.Repos, cfg.Commands)
+	srv, err := newServer(secret, r.Address, &Store{File: filepath.Join(cfg.Dir, projectsFile)}, cfg.Repos, cfg.Commands)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	srv := &http.Server{Handler: s, ReadHeaderTimeout: 10 * time.Second}
-	done := make(chan error, 1)
-	go func() { done <- srv.Serve(ln) }()
-	fmt.Fprintf(cfg.Stdout, "Markitect %s runs at http://%s/\n", buildinfo.Build(), r.Address)
-	if err := show(cfg, r.Address, s.launch()); err != nil {
-		fmt.Fprintln(cfg.Stdout, err)
+	srv.openWindow, srv.chooseFolder = cfg.OpenWindow, cfg.ChooseFolder
+	if err := publishRecord(cfg.Dir, data); err != nil {
+		return nil, err
+	}
+	s := &Service{cfg: cfg, record: data, srv: srv, done: make(chan error, 1),
+		http: &http.Server{Handler: srv, ReadHeaderTimeout: 10 * time.Second}}
+	go func() { s.done <- s.http.Serve(ln) }()
+	return s, nil
+}
+
+// Serve opens the first window, or prints its link, and serves until ctx
+// ends; then it closes the service.
+func (s *Service) Serve(ctx context.Context) error {
+	defer s.Close()
+	fmt.Fprintf(s.cfg.Stdout, "Markitect %s runs at http://%s/\n", buildinfo.Build(), s.srv.address)
+	if !s.cfg.Open {
+		printLink(s.cfg, s.srv.address, s.srv.launch())
+	} else if err := s.Window(); err != nil {
+		fmt.Fprintln(s.cfg.Stdout, err)
 	}
 	select {
 	case <-ctx.Done():
-	case err := <-done:
+		return nil
+	case err := <-s.done:
+		if errors.Is(err, http.ErrServerClosed) {
+			return nil // closed by its shell
+		}
 		return err
 	}
-	stop, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if srv.Shutdown(stop) != nil {
-		// A connection a client opened ahead and never used counts as busy
-		// for its first seconds; after the grace period, close what is left.
-		return srv.Close()
-	}
-	return nil
 }
 
-// openOn opens a window on the running service with a fresh launch code.
+// Window opens another window on the service, as the tray of a native shell
+// asks for one.
+func (s *Service) Window() error { return s.srv.window() }
+
+// Close stops the service and removes its record. Serve closes the service
+// when it ends; a shell that never serves closes it itself.
+func (s *Service) Close() {
+	s.closed.Do(func() {
+		removeIfUnchanged(s.cfg.Dir, s.record)
+		stop, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if s.http.Shutdown(stop) != nil {
+			// A connection a client opened ahead and never used counts as busy
+			// for its first seconds; after the grace period, close what is left.
+			_ = s.http.Close()
+		}
+	})
+}
+
+// openOn asks the running service for a window, or, without one, prints the
+// link of a fresh launch code. The service opens the window itself, so a
+// native shell's windows stay its own.
 func openOn(ctx context.Context, cfg Config, r record) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://"+r.Address+"/api/launch", bytes.NewReader([]byte("{}")))
+	path := "/api/launch"
+	if cfg.Open {
+		path = "/api/window"
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://"+r.Address+path, bytes.NewReader([]byte("{}")))
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+r.Secret)
+	allowForeground(r.PID)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 	var v struct {
-		Code string `json:"code"`
+		Code  string `json:"code"`
+		Error string `json:"error"`
 	}
-	if resp.StatusCode != http.StatusOK || json.NewDecoder(resp.Body).Decode(&v) != nil || v.Code == "" {
+	_ = json.NewDecoder(io.LimitReader(resp.Body, 64<<10)).Decode(&v)
+	switch {
+	case resp.StatusCode != http.StatusOK && v.Error != "":
+		return fmt.Errorf("the running Markitect at %s: %s", r.Address, v.Error)
+	case resp.StatusCode != http.StatusOK || !cfg.Open && v.Code == "":
 		return fmt.Errorf("the running Markitect at %s refused a window (%s)", r.Address, resp.Status)
 	}
 	fmt.Fprintf(cfg.Stdout, "Markitect is already running at http://%s/\n", r.Address)
-	return show(cfg, r.Address, v.Code)
-}
-
-// show opens a window with a launch code, or prints its link.
-func show(cfg Config, address, code string) error {
-	url := "http://" + address + "/?t=" + code
 	if !cfg.Open {
-		fmt.Fprintf(cfg.Stdout, "open %s within %s; the link works once\n", url, launchLife)
-		return nil
-	}
-	if err := cfg.OpenWindow(url); err != nil {
-		return fmt.Errorf("no window opened (%v); open %s within %s", err, url, launchLife)
+		printLink(cfg, r.Address, v.Code)
 	}
 	return nil
+}
+
+// printLink prints a window's link with its launch code.
+func printLink(cfg Config, address, code string) {
+	fmt.Fprintf(cfg.Stdout, "open http://%s/?t=%s within %s; the link works once\n", address, code, launchLife)
 }
 
 // alive asks the recorded service to prove that it holds the record's

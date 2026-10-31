@@ -29,6 +29,8 @@ func rootLayoutFixture(t *testing.T) string {
 		"internal/adapters/desktop/desktop.go":        "package desktop\n",
 		"internal/adapters/desktop/ui/index.html":     "<!doctype html>\n",
 		"internal/adapters/desktop/ui/assets/app.js":  "export {}\n",
+		"cmd/markitect-desktop/main.go":               "//go:build native\n\npackage main\n",
+		"cmd/markitect-desktop/icon.png":              "\x89PNG\r\n\x1a\n",
 		"internal/tooling/release/install.go":         "package release\n",
 		"internal/testkit/testdata/hostile.gitconfig": "[core]\n hooksPath=blocked\n",
 	} {
@@ -38,12 +40,13 @@ func rootLayoutFixture(t *testing.T) string {
 }
 
 func TestEmbeddedFilesSurviveLiveAndFixedPackaging(t *testing.T) {
-	// The standard Libraries, the skills and the desktop's UI are built into
-	// the binary, so a packaged source must carry them; other text below those
-	// packages stays out.
+	// The standard Libraries, the skills, the desktop's UI and the native
+	// app's icons are built into the binaries, so a packaged source must carry
+	// them; other files below those packages stay out.
 	root := rootLayoutFixture(t)
 	writeLayoutFile(t, root, "internal/libraries/notes.txt", "do not package\n")
 	writeLayoutFile(t, root, "internal/adapters/desktop/notes.txt", "do not package\n")
+	writeLayoutFile(t, root, "cmd/markitect-desktop/notes.txt", "do not package\n")
 	live, _, err := Package(root, "1.2.3")
 	if err != nil {
 		t.Fatal(err)
@@ -62,12 +65,12 @@ func TestEmbeddedFilesSurviveLiveAndFixedPackaging(t *testing.T) {
 	}
 	for _, archive := range [][]byte{live, fixed} {
 		contents := archiveContents(t, archive)
-		for _, name := range []string{"internal/libraries/std/Rule.md", "internal/skills/markitect-modeling/SKILL.md", "internal/adapters/desktop/ui/index.html", "internal/adapters/desktop/ui/assets/app.js"} {
+		for _, name := range []string{"internal/libraries/std/Rule.md", "internal/skills/markitect-modeling/SKILL.md", "internal/adapters/desktop/ui/index.html", "internal/adapters/desktop/ui/assets/app.js", "cmd/markitect-desktop/icon.png"} {
 			if _, ok := contents[name]; !ok {
 				t.Errorf("embedded file omitted: %s", name)
 			}
 		}
-		for _, name := range []string{"internal/libraries/notes.txt", "internal/adapters/desktop/notes.txt"} {
+		for _, name := range []string{"internal/libraries/notes.txt", "internal/adapters/desktop/notes.txt", "cmd/markitect-desktop/notes.txt"} {
 			if _, found := contents[name]; found {
 				t.Errorf("packaged unrelated text %s", name)
 			}

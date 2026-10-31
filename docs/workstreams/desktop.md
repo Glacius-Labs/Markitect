@@ -9,12 +9,12 @@ The Desktop session designs and builds Markitect Desktop, the app over the CLI t
 - **The old cockpit is gone:** its code left Main with [PR #637](https://github.com/Glacius-Labs/Markitect/pull/637) on 23 October. The postponed model explorer was folded into the design, and the leftover acceptance cockpit folder in WSL was removed on 31 October.
 - **Docker stays free:** while the evaluations run, this session starts no container, builds no image and runs no test that reaches the container engine (owner, 31 October 2026). The chat's container work in D4 is built against a fake and runs for real only once Docker is free.
 - **Built:** D1, projects and hub ([Markitect Desktop](../../internal/adapters/desktop/README.md)): `markitect desktop` opens the app in a browser window; the project list; opening, creating and cloning projects; `init`; and the hub with the model check. Tried on Windows in the browser pane at 1440 and 390 pixels wide. The areas are shown but not built.
+- **Built:** D2, the native app `markitect-desktop` ([the native app](../../internal/adapters/desktop/README.md#the-native-app)). The probe chose Wails v3 over Tauri 2 ([reasons](../design/markitect-desktop.md#the-native-shell)): no terminal, windows titled Markitect with the app's icon, a tray, the platform's folder dialog for the project dialogs, and one service per user whichever way Markitect starts. Tried on Windows; CI builds and starts it on Windows, macOS and Linux when asked. Not yet: an executable icon on Windows, a macOS `.app` bundle and a Linux `.desktop` entry, which come with packaging.
 
 ## Next
 
-1. D2, the native shell, with a probe of Wails v3 and Tauri 2 on Windows, Linux and macOS.
-2. D3, the four Model views and hand edits.
-3. With D4, the Extract skill gains its stop at the Package cut. The skill is a shared file, changed one writer at a time with Build.
+1. D3, the four Model views and hand edits.
+2. With D4, the Extract skill gains its stop at the Package cut. The skill is a shared file, changed one writer at a time with Build.
 
 ## Questions for the owner
 

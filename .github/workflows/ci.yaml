@@ -3,7 +3,14 @@ name: CI
 on:
   # Development policy: full validation is explicitly requested, not a merge wait.
   # CI is Linux only (owner decision of 27 October 2026); no job waits for Windows.
+  # Only the native input adds Markitect Desktop's native app on Windows, macOS
+  # and Linux, for work on that app.
   workflow_dispatch:
+    inputs:
+      native:
+        description: Also build and start Markitect Desktop's native app on Windows, macOS and Linux
+        type: boolean
+        default: false
   workflow_call:
 
 permissions:
@@ -56,6 +63,15 @@ jobs:
 
       - name: Build
         run: go build ./...
+
+      - name: Build Markitect Desktop's native app for Windows
+        # The native app builds only with the native tag. For Windows it needs
+        # no C toolchain, so every run checks that it still compiles.
+        env:
+          GOOS: windows
+        run: |
+          go vet -tags native ./cmd/markitect-desktop
+          go build -tags native -ldflags=-H=windowsgui -o /dev/null ./cmd/markitect-desktop
 
       - name: Verify modules
         run: go mod verify
@@ -162,6 +178,52 @@ jobs:
             ${{ runner.temp }}/go-test-report.txt
           if-no-files-found: warn
           retention-days: 14
+
+  desktop-native:
+    # Markitect Desktop's native app, built and started on each platform. It
+    # runs only when the native input asks for it, so default runs stay Linux
+    # only.
+    name: Desktop native app (${{ matrix.os }})
+    if: ${{ inputs.native }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-latest, macos-latest]
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Install GTK 4, WebKitGTK 6 and an X server
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libgtk-4-dev libwebkitgtk-6.0-dev xvfb x11-utils dbus-x11
+
+      - name: Build the native app and the command line
+        shell: bash
+        run: |
+          ext=""; ldflags=""
+          if [ "$RUNNER_OS" = Windows ]; then ext=".exe"; ldflags="-H=windowsgui"; fi
+          go vet -tags native ./cmd/markitect-desktop
+          go build -tags native -ldflags="$ldflags" -o "$RUNNER_TEMP/bin/markitect-desktop$ext" ./cmd/markitect-desktop
+          go build -o "$RUNNER_TEMP/bin/markitect$ext" ./cmd/markitect
+          ls -l "$RUNNER_TEMP/bin"
+
+      - name: Start the native app
+        shell: bash
+        run: |
+          ext=""
+          if [ "$RUNNER_OS" = Windows ]; then ext=".exe"; fi
+          bash scripts/desktop-native-smoke.sh "$RUNNER_TEMP/bin/markitect-desktop$ext" "$RUNNER_TEMP/bin/markitect$ext" "$RUNNER_TEMP/desktop-smoke"
 
   publish-source-artifact:
     name: Publish main source artifact

@@ -5,6 +5,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -66,6 +67,54 @@ func TestTheDesktopWorksOnRealRepositories(t *testing.T) {
 	}
 	if err := (desktopRepos{}).Clone(ctx, source.Dir, clone); err == nil || !strings.Contains(err.Error(), "already exists") {
 		t.Errorf("clone into an existing folder: %v", err)
+	}
+}
+
+// The native shell starts the same per-user service: a second start has the
+// running one open its window instead of starting another.
+func TestTheNativeShellSharesOneServicePerUser(t *testing.T) {
+	config := testkit.TempDir(t)
+	t.Setenv("APPDATA", config)
+	t.Setenv("XDG_CONFIG_HOME", config)
+	if runtime.GOOS == "darwin" {
+		t.Setenv("HOME", config)
+	}
+	dir, err := DesktopFolder()
+	if err != nil || !strings.HasPrefix(dir, config) {
+		t.Fatalf("desktop folder %q: %v", dir, err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	windows := make(chan string, 2)
+	svc, err := ListenDesktop(ctx, DesktopWindows{Open: func(url string) error { windows <- url; return nil }})
+	if err != nil || svc == nil {
+		t.Fatalf("first start: %v %v", svc, err)
+	}
+	served := make(chan error, 1)
+	go func() { served <- svc.Serve(ctx) }()
+	first := <-windows
+	again, err := ListenDesktop(ctx, DesktopWindows{Open: func(string) error {
+		t.Error("the second start opened a window of its own")
+		return nil
+	}})
+	if again != nil || err != nil {
+		t.Fatalf("second start: %v %v", again, err)
+	}
+	second := <-windows
+	firstBase, _, _ := strings.Cut(first, "/?t=")
+	secondBase, _, _ := strings.Cut(second, "/?t=")
+	if !strings.HasPrefix(firstBase, "http://127.0.0.1:") || secondBase != firstBase || second == first {
+		t.Errorf("windows %q and %q", first, second)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "desktop.json")); err != nil {
+		t.Errorf("record: %v", err)
+	}
+	cancel()
+	if err := <-served; err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "desktop.json")); !os.IsNotExist(err) {
+		t.Errorf("record left behind: %v", err)
 	}
 }
 

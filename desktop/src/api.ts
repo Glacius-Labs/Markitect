@@ -27,6 +27,9 @@ export interface AppInfo {
   version: string;
   // The folder that received the last new project, else the home folder.
   parent: string;
+  // Whether the window has a folder dialog of its own: the native app has,
+  // a browser window has not.
+  folderDialog: boolean;
 }
 
 export interface Result {
@@ -78,4 +81,6 @@ export const api = {
   add: (req: AddRequest) => call<Result>('POST', '/api/projects', req),
   init: (id: string) => call<Result>('POST', `${project(id)}/init`, {}),
   remove: (id: string) => call<void>('DELETE', project(id)),
+  // The folder the user chose in the window's dialog, or '' when cancelled.
+  chooseFolder: (start: string) => call<{ path: string }>('POST', '/api/folder', { start }).then((r) => r.path),
 };

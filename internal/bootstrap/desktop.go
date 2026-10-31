@@ -16,17 +16,61 @@ import (
 type desktopApp struct{ stdout io.Writer }
 
 func (d desktopApp) Run(ctx context.Context, o cli.DesktopOptions) error {
-	dir, err := os.UserConfigDir()
+	dir, err := DesktopFolder()
 	if err != nil {
 		return err
 	}
 	return desktop.Start(ctx, desktop.Config{
-		Dir:      filepath.Join(dir, "Markitect"),
+		Dir:      dir,
 		Listen:   o.Listen,
 		Open:     o.Open,
 		Repos:    desktopRepos{},
 		Commands: desktopCommands{},
 		Stdout:   d.stdout,
+	})
+}
+
+// DesktopFolder is the user's config folder for Markitect Desktop: its
+// record, its project list and the native window's web view data.
+func DesktopFolder() (string, error) {
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, "Markitect"), nil
+}
+
+// DesktopService is Markitect Desktop's running service as its native shell
+// holds it.
+type DesktopService = desktop.Service
+
+// DesktopWindows is what the native shell gives the service: its windows and
+// its folder dialog.
+type DesktopWindows struct {
+	// Open opens a window on url.
+	Open func(url string) error
+	// ChooseFolder asks for a folder, starting at start; "" means cancelled.
+	ChooseFolder func(ctx context.Context, start string) (string, error)
+}
+
+// ListenDesktop starts Markitect Desktop for its native shell, on a free
+// loopback port. When this user's service already runs, that one opens the
+// window and ListenDesktop returns nil. Otherwise it returns the new service,
+// which opens its first window once Serve runs.
+func ListenDesktop(ctx context.Context, w DesktopWindows) (*DesktopService, error) {
+	dir, err := DesktopFolder()
+	if err != nil {
+		return nil, err
+	}
+	return desktop.Listen(ctx, desktop.Config{
+		Dir:          dir,
+		Listen:       "127.0.0.1:0",
+		Open:         true,
+		Repos:        desktopRepos{},
+		Commands:     desktopCommands{},
+		Stdout:       io.Discard,
+		OpenWindow:   w.Open,
+		ChooseFolder: w.ChooseFolder,
 	})
 }
 

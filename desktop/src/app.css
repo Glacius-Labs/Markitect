@@ -129,3 +129,14 @@ body {
     padding: var(--space-6) var(--space-4);
   }
 }
+
+/* An input with a control beside it, such as the folder dialog's button. */
+.field-row {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.field-row > .gl-input {
+  flex: 1;
+  min-width: 0;
+}
