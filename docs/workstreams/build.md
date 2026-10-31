@@ -49,7 +49,7 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
   - In one of its two C3 launches, the redesign's Root settled the model's contradiction itself instead of reporting a model defect.
 - **Counted Windows series started, 31 October** ([Amendment 6](../validation/counted-series-protocol-20261030.md#amendment-6-31-october-2026-the-windows-series-started)):
   - It started at 16:58 UTC on the frozen commit `955683de`, in the Docker window the owner cleared until about 02:00 UTC on 2 November, and plans about 230 launches.
-  - Build has set the runner to stop at 00:15 UTC on 2 November, so that its last launch, with its judging and cleanup, ends within the window. The series should end before then.
+  - Build has set the runner to stop at 00:15 UTC on 2 November, so that its last launch, with its judging and cleanup, ends within the window. At about ten minutes per launch, the series covers about 185 of its launches by then, if the seven-day quota stop does not come first. The rest resumes in a later window ([Amendment 7](../validation/counted-series-protocol-20261030.md#amendment-7-31-october-2026-no-five-hour-window-and-the-pace)).
 
 ## Next
 
