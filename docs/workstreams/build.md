@@ -27,12 +27,26 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
   - Both are fixed ([PR #915](https://github.com/Glacius-Labs/Markitect/pull/915)), together with a void signature for K's own failures, chain case counts by step, K's task copy without the registry pages, and the owner's reading rule (below).
   - Two host fixes from the Topics session joined them ([PR #916](https://github.com/Glacius-Labs/Markitect/pull/916)): `verify` refuses `changed`, and a Manager cannot create its Package's first registry page.
   - The frozen commit is `4576beaa` ([Amendment 2](../validation/counted-series-protocol-20261030.md#amendment-2-30-october-2026-scoring-fixes-before-the-gate), [PR #918](https://github.com/Glacius-Labs/Markitect/pull/918)). The new project's launch inputs are kept, checked by digest only.
+- **Windows gate failed, 30 October** ([Amendment 3](../validation/counted-series-protocol-20261030.md#amendment-3-30-october-2026-the-windows-gate), [PR #924](https://github.com/Glacius-Labs/Markitect/pull/924)):
+  - 32 launches, all of them results, judged and verified. No credential was found and nothing was left behind.
+  - M did not land the Makerspace W0. Root integrated nine children and used its six maker starts, four of them on its children's events rather than on rejections.
+  - Precondition 5 does not hold for Windows.
+- **Long-lived Managers compared, 31 October** ([dispatch](../validation/long-lived-managers-comparison-20261030.md), [PR #923](https://github.com/Glacius-Labs/Markitect/pull/923); branch in draft [PR #922](https://github.com/Glacius-Labs/Markitect/pull/922)):
+  - 40 launches on Windows, all results.
+  - Quality was not worse. Both arms stopped every planted defect, and the redesign landed more of the planted gaps.
+  - The cost missed the bar of a quarter: about −11 % wall time and +9 % input tokens as the mean over the tasks, with W0 slower and dearer.
+  - M missed one gap once the same way the gate failed, with Root out of maker starts.
+  - Not adopted (below).
+- **Codex in the suite** ([PR #921](https://github.com/Glacius-Labs/Markitect/pull/921)): the native mode copies a Codex login with an empty refresh token and refuses an API key, and K has its Codex command, with its subagents on.
 
 ## Next
 
-1. **Counted series:** the stability gate has been running on Windows since 19:11 UTC on 30 October, on `4576beaa`: 32 launches, after a Docker window cleared with the owner. Its verdict goes into the protocol as an amendment. Then come the counted series on Windows, and the gate and the series on Linux.
+1. **Counted series:**
+   - The host's per-Manager maker limit is fixed so that it counts corrections, not a parent's children's events.
+   - Then come a new frozen commit and a new Windows gate, each with an amendment, after a Docker window cleared with the owner.
+   - Then the counted series on Windows, and the gate and the series on Linux.
 2. **The owner's time:** after the counted series, the owner's measurement below.
-3. **Codex repeat:** the smaller repeat with every arm on Codex Luna, as the Codex decision below says, after [what comes first](../validation/counted-series-protocol-20261030.md#after-the-series): the suite's native mode copies a Codex login, K gets its Codex command, and the owner removes the judge session's records.
+3. **Codex repeat:** the smaller repeat with every arm on Codex Luna, as the Codex decision below says, after [what comes first](../validation/counted-series-protocol-20261030.md#after-the-series). The Codex login and K's Codex command are done (above). Still open are the runner's Codex quota events and token counting, and the owner's removal of the judge session's records.
 
 ## Decisions
 
@@ -73,6 +87,11 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
   - its landed-change rate is not below K's.
 
   The owner first answered the independent check's finding "Yes, require both", for the two case contrasts. The owner then accepted the Topics session's stricter recommendation with "Yes, hand it to Build". Build reads "not below" with no tolerance ([Amendment 2](../validation/counted-series-protocol-20261030.md#amendment-2-30-october-2026-scoring-fixes-before-the-gate), [PR #915](https://github.com/Glacius-Labs/Markitect/pull/915)).
+
+- **Long-lived Managers, 30 and 31 October 2026:**
+  - Through the Topics session, the owner asked for the [redesign](../design/long-lived-managers.md) on its own branch and a comparison with `main`. The owner chose to run it "Before the series".
+  - After the comparison missed its cost bar, the owner kept today's design: "Then continue the evaluation runs as planned with the current version for now".
+  - The branch stays a draft and unmerged. The counted series measures the current design.
 
 ## Questions for the owner
 
