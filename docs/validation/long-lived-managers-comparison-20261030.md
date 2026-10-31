@@ -2,7 +2,7 @@
 
 The bounded dispatch of the comparison the [long-lived Managers](../design/long-lived-managers.md) page asks for: the concept 2.0 arm built from a pinned `main` commit (**M**) against the same arm built from the branch `dev/long-lived-managers` (**L**), on Claude Sonnet 5.5. The owner asked for the redesign and its comparison on 30 October 2026 ("Can we redesign it to that in a separate branch and then compare?") and chose to run it before the counted series ("Before the series"), so that the series measures the design the owner keeps. It runs under the owner's standing run approval of 28 October 2026 ([build workstream, Decisions](../workstreams/build.md)). **These runs are evidence for the design, never counted data.** The owner decides on adoption after the reading.
 
-**Status: approved by Build on 30 October 2026; ran from 30 October 22:27 to 31 October 03:12 UTC, all 40 launches; read in [Amendment 1](#amendment-1-31-october-2026-the-reading).** Nothing runs before Build gives the explicit go for a Docker window, which lies after the counted series' stability gate and before its first counted launch.
+**Status: approved by Build on 30 October 2026; ran from 30 October 22:27 to 31 October 03:12 UTC, all 40 launches; read in [Amendment 1](#amendment-1-31-october-2026-the-reading); not adopted for now, by the owner's decision of 31 October 2026.** Nothing runs before Build gives the explicit go for a Docker window, which lies after the counted series' stability gate and before its first counted launch.
 
 ## Question
 
@@ -50,7 +50,9 @@ Build writes the reading as an amendment here and reports it; the owner decides 
 
 ### Amendment 1, 31 October 2026: the reading
 
-**The answer is no.** L keeps M's quality, and on the gap `makerspace-c6-test-gap` it does better. It cuts wall time by 11 % and containers by a quarter. But neither wall time nor input tokens with cache reads falls by a quarter; input with cache reads rises by 9 %. The owner decides on adoption.
+**The answer is no.** L keeps M's quality, and on the gap `makerspace-c6-test-gap` it does better. It cuts wall time by 11 % and containers by a quarter. But neither wall time nor input tokens with cache reads falls by a quarter; input with cache reads rises by 9 %.
+
+**The owner's decision,** on 31 October 2026, to Build: "Then continue the evaluation runs as planned with the current version for now". The redesign is not adopted for now. The counted series runs the design on `main`. [Draft PR #922](https://github.com/Glacius-Labs/Markitect/pull/922) stays a draft and is not merged.
 
 **The run:**
 
@@ -62,7 +64,7 @@ Build writes the reading as an amendment here and reports it; the owner decides 
   - The scan's key shape `sk-ant-[A-Za-z0-9_-]{20,}` matches across them.
   - No file holds a token of the login. The gate kept its binaries outside its work folder, so its scan never saw them.
 
-**A correction to the Reading.** Its first item listed `makerspace-c6-test-gap` as a defect and `makerspace-c5-threshold-gap` as a gap. The plants' records, written before any run, say the opposite:
+**An error of this page, corrected.** As approved, the Reading's first item listed `makerspace-c6-test-gap` as a defect and `makerspace-c5-threshold-gap` as a gap. The page had the two swapped. The plants' records, written before any run, say the opposite:
 
 - C5 removes the 30-day threshold: a defect, which must not land.
 - C6 removes a test obligation while the behavior stays stated: a gap, which lands.
