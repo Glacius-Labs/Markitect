@@ -2,7 +2,7 @@
 
 The bounded dispatch of the comparison the [long-lived Managers](../design/long-lived-managers.md) page asks for: the concept 2.0 arm built from a pinned `main` commit (**M**) against the same arm built from the branch `dev/long-lived-managers` (**L**), on Claude Sonnet 5.5. The owner asked for the redesign and its comparison on 30 October 2026 ("Can we redesign it to that in a separate branch and then compare?") and chose to run it before the counted series ("Before the series"), so that the series measures the design the owner keeps. It runs under the owner's standing run approval of 28 October 2026 ([build workstream, Decisions](../workstreams/build.md)). **These runs are evidence for the design, never counted data.** The owner decides on adoption after the reading.
 
-**Status: approved by Build on 30 October 2026; ran from 30 October 22:27 to 31 October 03:12 UTC, all 40 launches; read in [Amendment 1](#amendment-1-31-october-2026-the-reading); not adopted for now, by the owner's decision of 31 October 2026.** Nothing runs before Build gives the explicit go for a Docker window, which lies after the counted series' stability gate and before its first counted launch.
+**Status: approved by Build on 30 October 2026; ran from 30 October 22:27 to 31 October 03:12 UTC, all 40 launches; read in [Amendment 1](#amendment-1-31-october-2026-the-reading); not adopted for now, by the owner's decision of 31 October 2026.** It ran in the Docker window Build opened with its explicit go, after the counted series' stability gate and before its first counted launch.
 
 ## Question
 
@@ -58,7 +58,7 @@ Build writes the reading as an amendment here and reports it; the owner decides 
 
 - **Launches:** 40 of 40, 20 per arm, from 30 October 22:27:41 to 31 October 03:12:07 UTC. None was void or relaunched, and there was no stop.
 - **Waits:** the quiet-engine guard waited once, at the start, for its first ten minutes of watching. The runner refreshed the login once, at 01:46 UTC.
-- **Before the first launch:** the counted series' gate ended at 22:24:45 UTC. The branch's Docker-based tests then passed on Windows and on Linux in WSL, and left nothing behind. `quotaStop` was 0.33: the gate's last seven-day use, 0.21, plus 12 points. The seven-day use rose to 0.25.
+- **Before the first launch:** the counted series' gate ended at 22:24:08 UTC, by its `end` event. The branch's Docker-based tests then passed on Windows and on Linux in WSL, and left nothing behind. `quotaStop` was 0.33: the gate's last seven-day use, 0.21, plus 12 points. The seven-day use rose to 0.25.
 - **Final check:** nothing was left on the engine. It flagged `bin/markitect.exe` and `binL/markitect.exe`, a false positive:
   - Go's string table puts the constant `sk-ant-api` next to `rate-limit`, `account_id` and `markitect`. The constant is the API-key prefix the Claude adapter refuses, in `internal/agents/claude/login.go`.
   - The scan's key shape `sk-ant-[A-Za-z0-9_-]{20,}` matches across them.
