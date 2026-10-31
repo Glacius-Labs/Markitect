@@ -21,8 +21,11 @@ export function Reader({ ix, pid, item, diff }: Props) {
   const def = defs.get(target);
   const pkg = def ? undefined : pkgs.get(target);
   const removed = m.diff.definitions.find((d) => d.id === target && d.change === 'removed');
-  // Another Definition opens at its top.
-  useEffect(() => window.scrollTo({ top: 0 }), [target]);
+  // Another Definition opens at its top. The block keeps scrollTo's result,
+  // a promise in newer browsers, from being taken for a cleanup.
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [target]);
   return (
     <div className="reader">
       <ReaderNav ix={ix} pid={pid} selected={target} diff={diff} />
