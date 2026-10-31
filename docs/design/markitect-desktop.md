@@ -1,6 +1,6 @@
 # Markitect Desktop
 
-Status: design proposal of 31 October 2026, following the owner's decision [DEC-089](../concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli). It replaces the postponed [model explorer](https://github.com/Glacius-Labs/Markitect/blob/0f8cbb1baca0174dcf0472cf964b91f835d2cc4e/docs/design/model-explorer.md), whose four model views the Model area takes up. Open questions and the current slice are on the [Desktop state page](../workstreams/desktop.md).
+Status: design of 31 October 2026, following the owner's decision [DEC-089](../concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli). The owner answered each area's main question the same day: the ways into a project, Extract's stops, how modeling works, the four views, the Run view and its start, Statistics, Settings, the chat and the build order. The details around those answers, such as layout, conflict handling and option placement, are this session's proposal. It replaces the postponed [model explorer](https://github.com/Glacius-Labs/Markitect/blob/0f8cbb1baca0174dcf0472cf964b91f835d2cc4e/docs/design/model-explorer.md), whose views the Model area takes up. Open questions and the current slice are on the [Desktop state page](../workstreams/desktop.md).
 
 ## Name
 
@@ -24,7 +24,7 @@ The start screen.
   - creating a project: a new folder with Git and `markitect init`;
   - cloning one from a Git URL.
 
-  Creating a repository on GitHub comes later. A project needs no remote: a Run lands on the branch's upstream if there is one, otherwise in the local repository.
+  Creating a repository on GitHub comes later. Modeling needs no remote, but landing does: without one, a Run keeps its work on its Run branch, because the host never pushes to a checked-out branch ([host Git](../../internal/run/README.md#host-git)). How a project created in the app gets a remote is a question for the Runs phase.
 - `init` on an opened repository that has no `.markitect/` yet.
 - Extract, which draws a model from existing code through the [chat](#chat) with the Extract skill. It asks in the chat where the code and its documentation leave something open, and it stops at two checkpoints:
   1. the Package cut, shown on the map with the folders each Package claims, which the owner confirms or changes before any Definition is written, because the cut is the project's architecture;
@@ -90,7 +90,7 @@ Today the host takes its agent settings from environment variables; the app sets
   - the default provider, model and effort;
   - light or dark, and notifications.
 
-Everything except `execution.yaml` stays in the user's config folder, outside the repository.
+Everything except `execution.yaml` stays in the user's config folder, outside the repository. So that the app and the CLI start the same agents, the CLI reads the same settings, with its environment variables still overriding them; that comes with the Runs phase, since the agent settings serve the Runs.
 
 ### Chat
 
@@ -116,7 +116,7 @@ markitect desktop  (one Go process per user)
 - **One service per user.** The first start runs the service and opens a window, and every later start opens another window on it. Closing the window stops nothing: Runs and chats go on, and a reopened window reconnects to the stream. A lock file in the user's config folder names the port.
 - **Same functions as the CLI.** The desktop is an adapter beside `internal/adapters/cli`. Like the CLI, it reaches the services through `internal/bootstrap`, and it parses no command output.
 - **Live events.** Today the engine writes the Result when a Run ends. The agent adapters read each agent's output stream (Claude Code's stream-json, Codex's events) and can write it as transcripts ([Manager agents](../../internal/agents/README.md)). The live view needs both as events while the Run works. That means a port in `internal/run` through which the engine reports its schedule, starts, pushes, verdicts and messages, plus each agent's output lines. The CLI can print the same events. This is `internal/run`'s scope, so it is built together with the [Build and evaluation session](../workstreams/build.md), once the way Runs execute is settled ([Delivery](#delivery)).
-- **Chat agents.** A chat is an agent in a container, but no Run: it depends on the container client and the provider's CLI, not on the Run engine. It runs with the provider's account login, on a copy of the project as it is in the working tree, uncommitted changes included. No folder of the user's is mounted ([concept 2.0 §9](../concepts/v2-concept.md#9-platform)). Its changes are a proposal, which the chat shows as a diff while the conversation goes on. When the owner accepts, the app writes the proposal into the working tree as a patch, and the owner commits it as usual. If a file the patch touches changed since the copy, the app writes nothing and shows the conflict.
+- **Chat agents.** A chat is an agent in a container, but no Run: it depends on the container client and the provider's CLI, not on the Run engine. It runs with the provider's account login, on a copy of the project as it is in the working tree, uncommitted changes included. No folder of the user's is mounted ([concept 2.0 §9](../concepts/v2-concept.md#9-platform)). Its changes are a proposal, which the views show as the proposed model, with its diff one click away, while the conversation goes on. When the owner accepts, the app writes the proposal into the working tree as a patch, and the owner commits it as usual. If a file the patch touches changed since the copy, the app writes nothing and shows the conflict.
 - **Safety.** The server listens on loopback only and refuses requests addressed to any other host (against DNS rebinding). Every route requires the launch token, and every response carries a strict content security policy. The page loads no external resource.
 - **Window.**
   - First, Edge or Chrome in app mode, using the launcher of the retired cockpit ([`window.go`](https://github.com/Glacius-Labs/Markitect/blob/447ac3b152de79b52de80513e14dc94349a060bd/internal/adapters/cockpit/window.go) at the archive point).
@@ -139,7 +139,7 @@ markitect desktop  (one Go process per user)
 
 Each slice is one PR with its tests and is useful on its own. The app is built against what is stable first. How Runs execute may still change fundamentally with the evaluations that are running: Manager containers that live for the whole Run or for one start, Git handoffs or one shared checkout, or no containers at all. So the Runs area waits until that is settled, and its sections above, which describe today's engine, are revised then.
 
-**The model first:**
+**The model first,** with the native shell early, as DEC-089 says, so that the first version used day to day already behaves like a desktop app:
 
 1. **D1, Projects and hub.** `markitect desktop`, the service, the browser window, the project list, opening, creating and cloning projects, `init`, and the hub with the model check.
 2. **D2, Native shell.** The probe and the shell, no terminal window, the app icon and the title Markitect.
