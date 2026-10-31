@@ -32,6 +32,10 @@ The owner, 28 October 2026, handed this to the Build and evaluation session thro
 
 T1 comes first and is the only writer in the model and compiler packages. T3 starts beside it with fixtures and finishes once T1's registry, impact and checklist land; T6's suite work (tasks, judges, planted defects) also runs beside T1. T4 waits for T1, the Library's T2 and T3. T8 changes T3's hooks after the pilot, and T9 the makers' and checkers' tasks after T8; both land before T7's counted series. With this shape, the steps the [evaluation suite v2](design/evaluation-suite-v2.md) design did not reach (E3 to E6) are replaced by T6 and T7; its sandbox, judges, review and report (E1, E2) carry over. After acceptance come `improve`, `bughunt`, `security` and `cleanup` (§7), continuous change ([DEC-084](concepts/register.md#dec-084-continuous-change-triggers-become-findings-or-model-proposals-autonomy-grows-in-steps)) and `explain`. The build details §14 lists (the trailer format, the makers' and checkers' harness and model, the Result page's layout) are settled in the step that needs them; a detail that changes behavior the concept states goes to the Topics session.
 
+## Markitect Desktop (owner decision 31 October 2026)
+
+Beside the concept 2.0 build, the owner decided on Markitect Desktop, the app over the CLI that users know as Markitect ([DEC-089](concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli)). Its [design](design/markitect-desktop.md#delivery) owns the slices D1 to D7, and the [Desktop session](workstreams/desktop.md) builds them in its own scope: `desktop/`, `internal/adapters/desktop` and `cmd/markitect-desktop`. The engine's event port for the live view (D5) lies in `internal/run` and is built with the Build and evaluation session. Nothing here changes T7's counted series, which runs on its frozen head.
+
 ## Known deviations from concept 1.0
 
 | Concept | Current source | Step |

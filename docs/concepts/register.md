@@ -16,7 +16,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 | ID | Type | Title | Status |
 |---|---|---|---|
-| [VIS-001](#vis-001-cockpit-personal-ai-and-autonomous-project-organization) | Vision | Cockpit, personal AI and autonomous project organization | Owner statement; scoped cockpit concept and Claude handoff commissioned 20 October 2026; working through the cockpit adopted ([DEC-065](#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration)); cockpit as desktop app that starts and stops Apply adopted ([DEC-066](#dec-066-the-cockpit-is-markitects-desktop-app-and-starts-and-stops-apply)); broader extensions deferred |
+| [VIS-001](#vis-001-cockpit-personal-ai-and-autonomous-project-organization) | Vision | Cockpit, personal AI and autonomous project organization | Owner statement; scoped cockpit concept and Claude handoff commissioned 20 October 2026; working through the cockpit adopted ([DEC-065](#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration)); cockpit as desktop app that starts and stops Apply adopted ([DEC-066](#dec-066-the-cockpit-is-markitects-desktop-app-and-starts-and-stops-apply)); broader extensions deferred; for concept 2.0, Markitect Desktop adopted ([DEC-089](#dec-089-markitect-desktop-the-app-over-the-cli)) |
 | [DEC-001](#dec-001-delegated-realization-is-central-to-the-product) | Decision | Delegated realization is central to the product | Accepted |
 | [DEC-002](#dec-002-trust-is-measured-against-todays-practice) | Decision | Trust is measured against today's practice | Accepted |
 | [DEC-003](#dec-003-the-compiler-is-a-borrowed-concept) | Decision | The compiler is a borrowed concept | Accepted |
@@ -101,10 +101,11 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-082](#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager) | Decision | One Run per change: impact decides who works, maker and checker per Manager | Accepted; being built |
 | [DEC-083](#dec-083-the-host-runs-natively-each-run-lives-in-containers) | Decision | The host runs natively; each Run lives in containers | Accepted; built in T5 |
 | [DEC-084](#dec-084-continuous-change-triggers-become-findings-or-model-proposals-autonomy-grows-in-steps) | Decision | Continuous change: triggers become Findings or model proposals, autonomy grows in steps | Accepted direction; design only |
-| [DEC-085](#dec-085-markdown-tools-are-the-cockpit-for-now) | Decision | Markdown tools are the cockpit for now | Accepted |
+| [DEC-085](#dec-085-markdown-tools-are-the-cockpit-for-now) | Decision | Markdown tools are the cockpit for now | Superseded by DEC-089 |
 | [DEC-086](#dec-086-concept-20-is-the-target) | Decision | Concept 2.0 is the target | Accepted; being built |
 | [DEC-087](#dec-087-required-checks-gate-merged-states-not-each-submission) | Decision | Required checks gate merged states, not each submission | Accepted; built in T8 |
 | [DEC-088](#dec-088-a-checker-reads-the-model-in-full-and-judges-its-own-packages-files) | Decision | A checker reads the model in full and judges its own Package's files | Accepted; built in T9 |
+| [DEC-089](#dec-089-markitect-desktop-the-app-over-the-cli) | Decision | Markitect Desktop: the app over the CLI | Accepted; design proposal, not built |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -132,7 +133,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [IDEA-012](#idea-012-visualize-the-governed-realm) | Idea | Visualize the governed realm | Owner idea; parked |
 | [IDEA-013](#idea-013-gamification) | Idea | Gamification | Owner idea; parked |
 | [IDEA-014](#idea-014-shared-evidence-bound-events) | Idea | Shared evidence-bound events | Proposed by the product chat; parked |
-| [IDEA-015](#idea-015-cockpit-with-a-conversational-personal-agent) | Idea | Cockpit with a conversational personal agent | Owner idea; model adjustment through the cockpit adopted in bounded form ([DEC-065](#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration)); the rest parked |
+| [IDEA-015](#idea-015-cockpit-with-a-conversational-personal-agent) | Idea | Cockpit with a conversational personal agent | Owner idea; model adjustment through the cockpit adopted in bounded form ([DEC-065](#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration)), for concept 2.0 as the project chat of Markitect Desktop ([DEC-089](#dec-089-markitect-desktop-the-app-over-the-cli)); the rest parked |
 | [IDEA-016](#idea-016-optional-offline-claim-and-evidence-classifier) | Idea | Optional offline claim and evidence classifier | Proposed (research R01) |
 | [IDEA-017](#idea-017-operational-check-through-the-managers) | Idea | Operational check through the Managers | Owner idea; deferred |
 
@@ -261,7 +262,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-011 Detailed planning of future ideas waits
 
-- **Status:** Accepted, owner, 9 October 2026 ([planning boundary](sources/concepts-chat-20261009/discussion-boundaries-20261009.md)). For Government, [DEC-019](#dec-019-government-code-starts-after-wave-2) supersedes these conditions. For working through the cockpit, [DEC-065](#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration) lifts the hold in bounded form, and [DEC-074](#dec-074-canonical-model-track-parallel-to-v1) does so for the canonical model track. The owner's design commissions of 27 October 2026 for continuous change ([outside Findings](../design/outside-findings.md): "Still build nothing.") and for the Cockpit's [model explorer](../design/model-explorer.md) ("build nothing yet") are design only and do not lift the hold; the [topics page](../workstreams/topics.md) tracks them. The owner's wording is in `USER-20261009-01`. The product chat restated the hold in the notes it attached to `-02`, `-03`, `-04` and `-06`.
+- **Status:** Accepted, owner, 9 October 2026 ([planning boundary](sources/concepts-chat-20261009/discussion-boundaries-20261009.md)). For Government, [DEC-019](#dec-019-government-code-starts-after-wave-2) supersedes these conditions. For working through the cockpit, [DEC-065](#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration) lifts the hold in bounded form, and [DEC-074](#dec-074-canonical-model-track-parallel-to-v1) does so for the canonical model track. The owner's design commissions of 27 October 2026 for continuous change ([outside Findings](../design/outside-findings.md): "Still build nothing.") and for the Cockpit's [model explorer](https://github.com/Glacius-Labs/Markitect/blob/0f8cbb1baca0174dcf0472cf964b91f835d2cc4e/docs/design/model-explorer.md) ("build nothing yet") are design only and do not lift the hold; the [topics page](../workstreams/topics.md) tracks them. The owner's wording is in `USER-20261009-01`. The product chat restated the hold in the notes it attached to `-02`, `-03`, `-04` and `-06`.
 - **Statement:**
   - The owner wants to discuss Markitect as if it were finished. Topics:
     - how it can be used;
@@ -1109,8 +1110,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-085 Markdown tools are the cockpit for now
 
-- **Status:** Accepted by the owner, 28 October 2026, in the Topics session's design walk-through ([topics page](../workstreams/topics.md#decided)).
-- **Decision:** no Cockpit app for now. Markitect writes everything it produces as Markdown (the model per [DEC-080](#dec-080-the-model-is-typed-documentation), the registry pages, the Result of every Run, and `lint`, `impact` and `graph` output), so ordinary Markdown tools are the cockpit: Obsidian or an editor to explore the model and its links, GitHub to read Results. The [model explorer](../design/model-explorer.md) stays a proposal, to be picked up if real use shows something those tools cannot show, such as impact on the graph or a live view of a running Run. The personal agent of [IDEA-015](#idea-015-cockpit-with-a-conversational-personal-agent) stays parked.
+- **Status:** Accepted by the owner, 28 October 2026, in the Topics session's design walk-through ([topics page](../workstreams/topics.md#decided)). Superseded by [DEC-089](#dec-089-markitect-desktop-the-app-over-the-cli) on 31 October 2026.
+- **Decision:** no Cockpit app for now. Markitect writes everything it produces as Markdown (the model per [DEC-080](#dec-080-the-model-is-typed-documentation), the registry pages, the Result of every Run, and `lint`, `impact` and `graph` output), so ordinary Markdown tools are the cockpit: Obsidian or an editor to explore the model and its links, GitHub to read Results. The [model explorer](https://github.com/Glacius-Labs/Markitect/blob/0f8cbb1baca0174dcf0472cf964b91f835d2cc4e/docs/design/model-explorer.md) stays a proposal, to be picked up if real use shows something those tools cannot show, such as impact on the graph or a live view of a running Run. The personal agent of [IDEA-015](#idea-015-cockpit-with-a-conversational-personal-agent) stays parked.
 
 ### DEC-086 Concept 2.0 is the target
 
@@ -1142,6 +1143,18 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Clarified, 30 October 2026,** on Build's question from T9: the example evidence holds for changed as for conforms, since changed also claims that the item conforms after the maker's change; otherwise a maker could skip the examples by answering changed.
 - **Evaluation:** the pilot's c3 result stays a stop failure for the 2.0 arm; the counted series measures this rule.
 - **Unchanged:** the checklist and what the checker sees ([concept 2.0, §6.2](v2-concept.md#62-one-run-maker-and-checker)); Root's checker is the final check before landing.
+
+### DEC-089 Markitect Desktop: the app over the CLI
+
+- **Status:** Accepted by the owner, 31 October 2026, in the session started to work beside the evaluations ([Desktop state page](../workstreams/desktop.md)). The technology follows that session's proposal, which the owner accepted. It supersedes [DEC-085](#dec-085-markdown-tools-are-the-cockpit-for-now) and takes up the cockpit of [VIS-001](#vis-001-cockpit-personal-ai-and-autonomous-project-organization) and the chat of [IDEA-015](#idea-015-cockpit-with-a-conversational-personal-agent) in bounded form. Design proposal; nothing built.
+- **Decision:**
+  - **What.** Markitect gets a desktop app that wraps the CLI. With it the owner creates and selects projects; runs `init` and Extract; models through a chat with an agent, in the style of Claude Code Desktop or the ChatGPT app; sees the model in several views with its quality signals and starts the command that proposes model improvements (`improve`); edits the configuration; follows commands and Runs, with what each agent did at any time and a live view; and reads statistics.
+  - **Name.** Inside the project it is Markitect Desktop. To users it is just Markitect, as Claude and ChatGPT name their apps.
+  - **Technology.** One Go program serves an embedded TypeScript and React UI on a loopback address, with JSON routes and a live event stream over the same functions as the CLI. Its window is first the installed Edge or Chrome in app mode, then early a native shell, so that Markitect starts without a terminal and behaves like a desktop app. The Glacius Labs design system sets the look.
+  - **The old cockpit stays gone.** Its code left Main with [PR #637](https://github.com/Glacius-Labs/Markitect/pull/637); the postponed model explorer is folded into the new design.
+- **Reason:** the owner wants to work on a project in one place, rather than across a terminal, an editor and GitHub. The live view of a running Run, which DEC-085 named as the gap that would bring an app back, is part of it.
+- **Unchanged:** the CLI stays complete, and the app does nothing the CLI cannot. Agents run only in containers with account login ([concept 2.0 §9](v2-concept.md#9-platform)), the owner accepts every model change (§8), and a Run never touches the user's working tree (§6.5).
+- **Behavior owner:** the [Markitect Desktop design](../design/markitect-desktop.md); its open questions are on the [Desktop state page](../workstreams/desktop.md#questions-for-the-owner).
 
 ## Promises
 
@@ -1438,7 +1451,7 @@ The ideas below come from the owner's contributions of 9 October 2026. The produ
 
 ### IDEA-015 Cockpit with a conversational personal agent
 
-- **Status:** Owner idea (Ideas `IDEA-20261009-018`; Concepts C34). Part of [VIS-001](#vis-001-cockpit-personal-ai-and-autonomous-project-organization). Its model adjustment through a cockpit chat is adopted in bounded form by [DEC-065](#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration) (20 October 2026); search, a personal agent and showing the user directly what interests them remain parked.
+- **Status:** Owner idea (Ideas `IDEA-20261009-018`; Concepts C34). Part of [VIS-001](#vis-001-cockpit-personal-ai-and-autonomous-project-organization). Its model adjustment through a cockpit chat is adopted in bounded form by [DEC-065](#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration) (20 October 2026) and, for concept 2.0, as the project chat of Markitect Desktop ([DEC-089](#dec-089-markitect-desktop-the-app-over-the-cli), 31 October 2026); search, a personal agent and showing the user directly what interests them remain parked.
 - **Idea:** A cockpit with a chat interface, connected to an AI agent. The agent can search the system for the user, adjust the model, or show the user directly what interests them in the cockpit.
 - **Provisional boundary (attribution unclear; treat as a proposal until the owner confirms it):**
   - Chat and cockpit refer to the same model, decisions and evidence.
