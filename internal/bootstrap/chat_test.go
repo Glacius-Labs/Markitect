@@ -2,10 +2,14 @@ package bootstrap
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/desktop"
+	"github.com/Glacius-Labs/Markitect/internal/adapters/repo"
+	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
 // sweptEngine records what a sweep removes.
@@ -50,6 +54,41 @@ func TestAChatStartSweepsWhatAnEarlierAgentOfItsConversationLeft(t *testing.T) {
 		t.Errorf("removed %s", got)
 	}
 }
+
+// A chat's copy holds regular files only: a symbolic link could lead out of
+// the repository.
+func TestAChatCopiesOnlyRegularFiles(t *testing.T) {
+	dir := testkit.TempDir(t)
+	if err := os.WriteFile(filepath.Join(dir, "a.md"), []byte("a\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	read, err := regularFiles(repo.WorkingTree{Dir: dir, Ctx: context.Background()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if data, err := read("a.md"); err != nil || string(data) != "a\n" {
+		t.Fatalf("a regular file: %q %v", data, err)
+	}
+	if _, err := regularFiles(memTree{}); err == nil {
+		t.Error("a tree without a root was read")
+	}
+	outside := filepath.Join(testkit.TempDir(t), "secret")
+	os.WriteFile(outside, []byte("secret\n"), 0o600)
+	if err := os.Symlink(outside, filepath.Join(dir, "link.md")); err != nil {
+		t.Logf("no symbolic link here (%v); the refusal is not checked", err)
+		return
+	}
+	if data, err := read("link.md"); err == nil {
+		t.Errorf("a symbolic link was followed: %q", data)
+	}
+}
+
+// memTree is a repository state with no root.
+type memTree struct{}
+
+func (memTree) Files() ([]string, error)    { return nil, nil }
+func (memTree) Read(string) ([]byte, error) { return nil, os.ErrNotExist }
+func (memTree) GitIgnored(string) bool      { return false }
 
 func TestAChatNeedsTheAgentsSettings(t *testing.T) {
 	t.Setenv("MARKITECT_MANAGER_IMAGE", "")

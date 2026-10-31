@@ -3,6 +3,7 @@ package agents_test
 import (
 	"context"
 	"errors"
+	"maps"
 	"os"
 	"path/filepath"
 	"sort"
@@ -132,11 +133,12 @@ func TestAChatCopiesTheWorkingTreeAndProposesItsChanges(t *testing.T) {
 		t.Errorf("outside %v", outside)
 	}
 
-	// An accept makes the copy's state the start; a reject puts it back.
+	// An accept makes the copy's model its start, while the change outside
+	// stays a change; a reject puts the copy back.
 	if err := chat.Settle(context.Background(), true); err != nil {
 		t.Fatal(err)
 	}
-	if model, outside, err := chat.Changes(context.Background()); err != nil || len(model)+len(outside) != 0 {
+	if model, outside, err := chat.Changes(context.Background()); err != nil || len(model) != 0 || strings.Join(outside, ",") != "src/a.go" {
 		t.Fatalf("after the accept: %v %v %v", model, outside, err)
 	}
 	os.WriteFile(filepath.Join(rt.work, ".markitect", "model", "loan.md"), []byte("changed again\n"), 0o644)
@@ -149,6 +151,40 @@ func TestAChatCopiesTheWorkingTreeAndProposesItsChanges(t *testing.T) {
 	}
 	if got := readWork(t, rt, ".markitect/model/loan.md"); !strings.Contains(got, "# Loan") {
 		t.Errorf("the reject left %q", got)
+	}
+}
+
+// The copy is compared as it is on disk: the project's line-end attributes
+// make no unchanged file look changed, and a nested repository is left out.
+func TestAChatComparesTheCopyAsItIsOnDisk(t *testing.T) {
+	saved := maps.Clone(chatTree)
+	t.Cleanup(func() { chatTree = saved })
+	chatTree[".gitattributes"] = "* text eol=lf\n"
+	chatTree[".markitect/model/windows.md"] = "---\r\nkind: std/Concept\r\n---\r\n# Windows\r\n"
+	rt := newRuntime(t, t.TempDir())
+	chat, err := agents.StartChat(context.Background(), rt, claude.Provider{}, chatSpec(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = chat.Close(context.Background()) })
+	if model, outside, err := chat.Changes(context.Background()); err != nil || len(model)+len(outside) != 0 {
+		t.Fatalf("an untouched copy changed: %v %v %v", model, outside, err)
+	}
+	nested := filepath.Join(rt.work, ".markitect", "model", "nested")
+	git(t, filepath.Dir(nested), "init", "--quiet", nested)
+	os.WriteFile(filepath.Join(nested, "x.md"), []byte("x\n"), 0o644)
+	if model, _, err := chat.Changes(context.Background()); err != nil {
+		t.Fatalf("a nested repository: %v %v", model, err)
+	}
+
+	// The answer never carries a secret of the login copy.
+	rt.script = func(s *fakeSession, argv []string, stdin []byte) int {
+		s.line(initLine())
+		s.line(strings.Replace(resultLine, `"result":"done"`, `"result":"Your token is sk-ant-oat01-ACCESS-SECRET."`, 1))
+		return 0
+	}
+	if out, err := chat.Send(context.Background(), "Tell me a secret."); err != nil || strings.Contains(out.Text, "SECRET") {
+		t.Fatalf("the answer %q %v", out.Text, err)
 	}
 }
 

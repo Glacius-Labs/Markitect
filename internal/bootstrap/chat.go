@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/desktop"
 	"github.com/Glacius-Labs/Markitect/internal/agents"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
 // chatLabel marks a chat agent's container and volumes with its name.
@@ -37,6 +39,10 @@ func (desktopChats) Start(ctx context.Context, s desktop.ChatStart) (desktop.Cha
 	if err := sweepChat(ctx, engine, s.Name); err != nil {
 		return nil, fmt.Errorf("an earlier chat agent of this conversation: %w", err)
 	}
+	read, err := regularFiles(s.Tree)
+	if err != nil {
+		return nil, err
+	}
 	pending := make([]agents.ChatFile, len(s.Pending))
 	for i, f := range s.Pending {
 		pending[i] = agents.ChatFile{Path: f.Path, Data: f.Data, Removed: f.Removed}
@@ -44,7 +50,7 @@ func (desktopChats) Start(ctx context.Context, s desktop.ChatStart) (desktop.Cha
 	chat, err := agents.StartChat(ctx, cfg.Runtime, cfg.Provider, agents.ChatSpec{
 		Name: s.Name, Labels: map[string]string{chatLabel: s.Name}, Image: cfg.Image, Limits: cfg.Limits,
 		Network: cfg.Network, Hosts: cfg.Hosts, DNS: cfg.DNS, Login: login, Model: cfg.Model, Effort: cfg.Effort,
-		Skill: s.Skill, Earlier: s.Earlier, Files: s.Files, Read: s.Tree.Read, Pending: pending, Turn: chatTurn,
+		Skill: s.Skill, Earlier: s.Earlier, Files: s.Files, Read: read, Pending: pending, Turn: chatTurn,
 	})
 	if err != nil {
 		return nil, err
@@ -52,7 +58,31 @@ func (desktopChats) Start(ctx context.Context, s desktop.ChatStart) (desktop.Cha
 	return desktopChat{chat}, nil
 }
 
+// regularFiles reads the working tree's files for a chat's copy, but only
+// regular files: a symbolic link could lead to a file outside the
+// repository, which would reach the container.
+func regularFiles(tree project.Repository) (func(string) ([]byte, error), error) {
+	rooted, ok := tree.(interface{ Root() string })
+	if !ok {
+		return nil, errors.New("the chat's working tree names no root")
+	}
+	root := rooted.Root()
+	return func(file string) ([]byte, error) {
+		full := filepath.Join(root, filepath.FromSlash(file))
+		info, err := os.Lstat(full)
+		if err != nil {
+			return nil, err
+		}
+		if !info.Mode().IsRegular() {
+			return nil, fmt.Errorf("%s is no regular file; the chat's copy leaves it out", file)
+		}
+		return tree.Read(file)
+	}, nil
+}
+
 // sweepChat removes the containers and volumes of a chat agent by its name.
+// There is one Markitect per user, so no other app runs an agent of this
+// conversation.
 func sweepChat(ctx context.Context, engine interface {
 	Containers(ctx context.Context, key, value string) ([]string, error)
 	Volumes(ctx context.Context, key, value string) ([]string, error)

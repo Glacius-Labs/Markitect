@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"maps"
+	"sort"
 	"strings"
 	"time"
 
@@ -58,7 +59,8 @@ type ChatSpec struct {
 	Now        func() time.Time
 }
 
-// Chat is one running chat agent.
+// Chat is one running chat agent. It takes one call at a time, as a
+// conversation does.
 type Chat struct {
 	a       *Agent
 	turn    time.Duration
@@ -259,10 +261,14 @@ func (c *Chat) gitStream(ctx context.Context, argv []string, stdin io.Reader) er
 	argv = append([]string{argv[0], "-c", "core.hooksPath=/dev/null", "-c", "core.fsmonitor=false", "--no-replace-objects"}, argv[1:]...)
 	err := c.a.rt.Exec(ctx, c.a.spec.Name, workDir, argv, stdin, io.Discard)
 	var exit *container.ExecError
-	if errors.As(err, &exit) {
+	switch {
+	case err == nil:
+		return nil
+	case errors.As(err, &exit):
 		return &container.ExecError{Code: exit.Code, Diagnostics: string(c.a.redact([]byte(exit.Diagnostics)))}
+	default:
+		return errors.New(string(c.a.redact([]byte(err.Error()))))
 	}
-	return err
 }
 
 // Send runs one turn of the conversation. A turn whose login copy would
@@ -272,42 +278,149 @@ func (c *Chat) Send(ctx context.Context, message string) (Outcome, error) {
 		return Outcome{End: Failed, Class: LoginFailed, Detail: err.Error()}, nil
 	}
 	c.a.spec.Start.Deadline = c.now().Add(c.turn)
-	return c.a.Send(ctx, message)
+	out, err := c.a.Send(ctx, message)
+	// The answer is shown and kept; a secret the agent could read in its
+	// home never reaches it.
+	out.Text = string(c.a.redact([]byte(out.Text)))
+	return out, err
 }
 
-// Changes lists what the conversation changed since its start: the files
-// below Markitect's folder with their content, and the other paths.
-func (c *Chat) Changes(ctx context.Context) (model []ChatFile, outside []string, err error) {
+// snapshot hashes every file the copy holds as it is on disk, without the
+// project's Git filters or line-end attributes, so that a file nobody
+// changed never looks changed; the blobs are written, so that their content
+// can be read back. A nested repository and a path Git cannot take on one
+// line are left out.
+func (c *Chat) snapshot(ctx context.Context) (map[string]string, error) {
 	a := c.a
-	if err := a.git(ctx, []string{gitPath, "-C", workDir, "add", "--all"}, "", io.Discard); err != nil {
+	var staged, others, deleted bytes.Buffer
+	for _, step := range []struct {
+		argv []string
+		out  *bytes.Buffer
+	}{
+		{[]string{gitPath, "-C", workDir, "ls-files", "-z", "--stage"}, &staged},
+		{[]string{gitPath, "-C", workDir, "ls-files", "-z", "--others", "--exclude-standard"}, &others},
+		{[]string{gitPath, "-C", workDir, "ls-files", "-z", "--deleted"}, &deleted},
+	} {
+		if err := a.git(ctx, step.argv, "", step.out); err != nil {
+			return nil, err
+		}
+	}
+	gone := map[string]bool{}
+	for _, p := range nulSplit(deleted.Bytes()) {
+		gone[p] = true
+	}
+	present := map[string]bool{}
+	for _, entry := range nulSplit(staged.Bytes()) {
+		// mode SP object SP stage TAB path
+		meta, p, ok := strings.Cut(entry, "\t")
+		if ok && !strings.HasPrefix(meta, "160000 ") && !gone[p] {
+			present[p] = true
+		}
+	}
+	for _, p := range nulSplit(others.Bytes()) {
+		if !strings.HasSuffix(p, "/") {
+			present[p] = true
+		}
+	}
+	var paths []string
+	for p := range present {
+		if !strings.ContainsAny(p, "\n\r") {
+			paths = append(paths, p)
+		}
+	}
+	sort.Strings(paths)
+	if len(paths) == 0 {
+		return map[string]string{}, nil
+	}
+	var ids bytes.Buffer
+	if err := a.git(ctx, []string{gitPath, "-C", workDir, "hash-object", "-w", "--no-filters", "--stdin-paths"}, strings.Join(paths, "\n")+"\n", &ids); err != nil {
+		return nil, err
+	}
+	lines := strings.Fields(ids.String())
+	if len(lines) != len(paths) {
+		return nil, fmt.Errorf("agents: hashed %d of %d files of the chat's copy", len(lines), len(paths))
+	}
+	out := make(map[string]string, len(paths))
+	for i, p := range paths {
+		out[p] = lines[i]
+	}
+	return out, nil
+}
+
+// startTree lists the start's files with their blobs.
+func (c *Chat) startTree(ctx context.Context) (map[string]string, error) {
+	var tree bytes.Buffer
+	if err := c.a.git(ctx, []string{gitPath, "-C", workDir, "ls-tree", "-r", "-z", "--full-tree", harness.ChatStart}, "", &tree); err != nil {
+		return nil, err
+	}
+	out := map[string]string{}
+	for _, entry := range nulSplit(tree.Bytes()) {
+		// mode SP type SP object TAB path
+		meta, p, ok := strings.Cut(entry, "\t")
+		if f := strings.Fields(meta); ok && len(f) == 3 && f[1] == "blob" {
+			out[p] = f[2]
+		}
+	}
+	return out, nil
+}
+
+func nulSplit(b []byte) []string {
+	var out []string
+	for _, part := range bytes.Split(b, []byte{0}) {
+		if len(part) > 0 {
+			out = append(out, string(part))
+		}
+	}
+	return out
+}
+
+// Changes lists what the conversation changed since its start, comparing
+// the files as they are on disk: the files below Markitect's folder with
+// their content, and the other paths.
+func (c *Chat) Changes(ctx context.Context) (model []ChatFile, outside []string, err error) {
+	start, err := c.startTree(ctx)
+	if err != nil {
 		return nil, nil, err
 	}
-	var out bytes.Buffer
-	if err := a.git(ctx, []string{gitPath, "-C", workDir, "diff", "--cached", "--no-renames", "--name-status", "-z", harness.ChatStart, "--"}, "", &out); err != nil {
+	now, err := c.snapshot(ctx)
+	if err != nil {
 		return nil, nil, err
 	}
-	fields := bytes.Split(bytes.TrimRight(out.Bytes(), "\x00"), []byte{0})
-	for i := 0; i+1 < len(fields); i += 2 {
-		status, path := string(fields[i]), string(fields[i+1])
-		if !strings.HasPrefix(path, ".markitect/") {
-			outside = append(outside, path)
+	var changed []string
+	for p, id := range now {
+		if start[p] != id {
+			changed = append(changed, p)
+		}
+	}
+	for p := range start {
+		if _, ok := now[p]; !ok {
+			changed = append(changed, p)
+		}
+	}
+	sort.Strings(changed)
+	for _, p := range changed {
+		if !strings.HasPrefix(p, ".markitect/") {
+			outside = append(outside, p)
 			continue
 		}
-		if status == "D" {
-			model = append(model, ChatFile{Path: path, Removed: true})
+		id, ok := now[p]
+		if !ok {
+			model = append(model, ChatFile{Path: p, Removed: true})
 			continue
 		}
 		var data bytes.Buffer
-		if err := a.git(ctx, []string{gitPath, "-C", workDir, "cat-file", "blob", ":" + path}, "", &data); err != nil {
+		if err := c.a.git(ctx, []string{gitPath, "-C", workDir, "cat-file", "blob", id}, "", &data); err != nil {
 			return nil, nil, err
 		}
-		model = append(model, ChatFile{Path: path, Data: data.Bytes()})
+		model = append(model, ChatFile{Path: p, Data: data.Bytes()})
 	}
 	return model, outside, nil
 }
 
-// Settle makes the copy's current state its start after an accept (keep),
-// or puts the start back after a reject.
+// Settle moves the start after an accept (keep): the start takes the
+// copy's files below Markitect's folder, which the owner accepted, while
+// changes elsewhere stay changes. After a reject it puts the copy back at
+// the start.
 func (c *Chat) Settle(ctx context.Context, keep bool) error {
 	a := c.a
 	if !keep {
@@ -321,12 +434,38 @@ func (c *Chat) Settle(ctx context.Context, keep bool) error {
 		}
 		return nil
 	}
-	if err := a.git(ctx, []string{gitPath, "-C", workDir, "add", "--all"}, "", io.Discard); err != nil {
+	start, err := c.startTree(ctx)
+	if err != nil {
 		return err
 	}
-	var tree, commit bytes.Buffer
-	if err := a.git(ctx, []string{gitPath, "-C", workDir, "write-tree"}, "", &tree); err != nil {
+	now, err := c.snapshot(ctx)
+	if err != nil {
 		return err
+	}
+	var info strings.Builder
+	for p, id := range now {
+		if strings.HasPrefix(p, ".markitect/") && start[p] != id {
+			fmt.Fprintf(&info, "100644 %s\t%s\n", id, importPath(p))
+		}
+	}
+	for p := range start {
+		if _, ok := now[p]; !ok && strings.HasPrefix(p, ".markitect/") {
+			fmt.Fprintf(&info, "0 %s\t%s\n", strings.Repeat("0", 40), importPath(p))
+		}
+	}
+	var tree, commit bytes.Buffer
+	for _, step := range []struct {
+		argv  []string
+		stdin string
+		out   io.Writer
+	}{
+		{[]string{gitPath, "-C", workDir, "read-tree", harness.ChatStart}, "", io.Discard},
+		{[]string{gitPath, "-C", workDir, "update-index", "--index-info"}, info.String(), io.Discard},
+		{[]string{gitPath, "-C", workDir, "write-tree"}, "", &tree},
+	} {
+		if err := a.git(ctx, step.argv, step.stdin, step.out); err != nil {
+			return err
+		}
 	}
 	if err := a.git(ctx, []string{gitPath, "-C", workDir, "commit-tree", strings.TrimSpace(tree.String()), "-p", harness.ChatStart, "-m", "The accepted proposal"}, "", &commit); err != nil {
 		return err
