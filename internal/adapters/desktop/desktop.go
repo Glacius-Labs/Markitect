@@ -210,6 +210,10 @@ func (s *Service) Close() {
 	})
 }
 
+// laterStartWait bounds how long a later start waits for the running service
+// to open its window or hand out a link.
+var laterStartWait = 15 * time.Second
+
 // openOn asks the running service for a window, or, without one, prints the
 // link of a fresh launch code. The service opens the window itself, so a
 // native shell's windows stay its own.
@@ -218,6 +222,8 @@ func openOn(ctx context.Context, cfg Config, r record) error {
 	if cfg.Open {
 		path = "/api/window"
 	}
+	ctx, cancel := context.WithTimeout(ctx, laterStartWait)
+	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://"+r.Address+path, bytes.NewReader([]byte("{}")))
 	if err != nil {
 		return err
@@ -227,7 +233,7 @@ func openOn(ctx context.Context, cfg Config, r record) error {
 	allowForeground(r.PID)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("the running Markitect at %s did not answer: %w", r.Address, err)
 	}
 	defer resp.Body.Close()
 	var v struct {
@@ -238,6 +244,10 @@ func openOn(ctx context.Context, cfg Config, r record) error {
 	switch {
 	case resp.StatusCode != http.StatusOK && v.Error != "":
 		return fmt.Errorf("the running Markitect at %s: %s", r.Address, v.Error)
+	case resp.StatusCode == http.StatusUnauthorized:
+		// It proved the record's secret, yet does not know the route: a
+		// service of an earlier build.
+		return fmt.Errorf("the running Markitect at %s is an earlier version; quit it and start Markitect again", r.Address)
 	case resp.StatusCode != http.StatusOK || !cfg.Open && v.Code == "":
 		return fmt.Errorf("the running Markitect at %s refused a window (%s)", r.Address, resp.Status)
 	}

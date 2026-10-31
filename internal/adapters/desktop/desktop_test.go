@@ -177,11 +177,67 @@ func TestAWindowThatFailsHandsTheLinkToTheSecondStart(t *testing.T) {
 	if err != nil || s == nil {
 		t.Fatalf("listen: %v %v", s, err)
 	}
-	go s.Serve(ctx)
+	served := make(chan error, 1)
+	go func() { served <- s.Serve(ctx) }()
 	second := testConfig(dir, make(chan string, 1))
 	err = Start(ctx, second)
 	if err == nil || !strings.Contains(err.Error(), "no display") || !strings.Contains(err.Error(), "/?t=") {
-		t.Fatalf("second start: %v", err)
+		t.Errorf("second start: %v", err)
+	}
+	cancel()
+	if err := <-served; err != nil {
+		t.Fatal(err)
+	}
+}
+
+// recordedService publishes a record for a program that proves the record's
+// secret, as only this user's Markitect can, and answers its other routes
+// with answer.
+func recordedService(t *testing.T, dir string, answer http.HandlerFunc) {
+	t.Helper()
+	const secret = "the-secret"
+	svc := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/hello" {
+			_ = json.NewEncoder(w).Encode(map[string]string{"proof": proof(secret, r.URL.Query().Get("c"))})
+			return
+		}
+		answer(w, r)
+	}))
+	t.Cleanup(svc.Close)
+	address := strings.TrimPrefix(svc.URL, "http://")
+	if err := publishRecord(dir, []byte(`{"address":"`+address+`","secret":"`+secret+`","pid":1}`)); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestALaterStartNamesAServiceOfAnEarlierVersion(t *testing.T) {
+	dir := t.TempDir()
+	// A service before /api/window asked for its session cookie instead.
+	recordedService(t, dir, func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "Open Markitect with markitect desktop.", http.StatusUnauthorized)
+	})
+	err := Start(context.Background(), testConfig(dir, make(chan string, 1)))
+	if err == nil || !strings.Contains(err.Error(), "earlier version") {
+		t.Fatalf("later start: %v", err)
+	}
+}
+
+func TestALaterStartStopsWaitingForAServiceThatDoesNotAnswer(t *testing.T) {
+	dir := t.TempDir()
+	release := make(chan struct{})
+	defer close(release)
+	recordedService(t, dir, func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-release:
+		case <-r.Context().Done():
+		}
+	})
+	wait := laterStartWait
+	laterStartWait = 200 * time.Millisecond
+	defer func() { laterStartWait = wait }()
+	err := Start(context.Background(), testConfig(dir, make(chan string, 1)))
+	if err == nil || !strings.Contains(err.Error(), "did not answer") {
+		t.Fatalf("later start: %v", err)
 	}
 }
 

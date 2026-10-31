@@ -55,13 +55,14 @@ The adapter imports no other adapter. `internal/bootstrap` supplies Git (open, `
 
 ## The native app
 
-[`cmd/markitect-desktop`](../../../cmd/markitect-desktop/main.go) is the same service in a native shell, [Wails v3](https://wails.io/) inside the Go process, chosen by the [D2 probe](../../../docs/design/markitect-desktop.md#the-native-shell). It shows the service's pages in the platform's own web view (WebView2 on Windows, WKWebView on macOS, WebKitGTK on Linux), loaded from the loopback address with a launch code like a browser window, so the safety above holds unchanged. The page talks only to the service; the shell binds no Go function to it.
+[`cmd/markitect-desktop`](../../../cmd/markitect-desktop/main.go) is the same service in a native shell, [Wails v3](https://wails.io/) inside the Go process, chosen by the [D2 probe](../../../docs/design/markitect-desktop.md#the-native-shell). It shows the service's pages in the platform's own web view (WebView2 on Windows, WKWebView on macOS, WebKitGTK on Linux), loaded from the loopback address with a launch code like a browser window, so the safety above holds unchanged. The page talks only to the service: the shell binds no Go function to it, and the web view's own message channel moves and resizes the window and nothing else.
 
 - **Windows:** titled Markitect, with the app's icon, the design system's dark background while the page loads, at least 390 pixels wide.
 - **Tray:** a click brings a window to the front, or opens one when none is open; its menu opens Markitect, opens a new window or quits Markitect. On macOS the menu bar icon is a template, and a click on the Dock icon with no window open opens one.
 - **Closing the last window** keeps Markitect running in the tray; quitting from the tray, or from the app menu on macOS, stops the service and removes its record. On a desktop without a tray, such as GNOME without an extension, starting Markitect again opens a window.
 - **Folder dialog:** the platform's own, over the window in front, for the folder fields of the project dialogs.
-- **Errors** at start or while serving show in a dialog, since the app has no terminal.
+- **Errors** at start or while serving show in a dialog, since the app has no terminal. A failure that leaves no window, such as a missing web view, is appended to `desktop-error.log` in the config folder.
+- **Quitting** cancels the service and removes its record without waiting for requests in flight, which may wait for the window loop that quits.
 - **Data:** WebView2 keeps its data in `WebView` in the config folder above.
 
 It builds only with the `native` tag, so that `go build ./...`, `go vet ./...` and `go test ./...` stay free of C toolchains and GTK. On Windows it needs no C compiler; it is linked as a GUI program, so it opens no terminal. macOS needs the Xcode command line tools, and Linux needs cgo with GTK 4 and WebKitGTK 6 (`libgtk-4-dev libwebkitgtk-6.0-dev` on Ubuntu 24.04).
@@ -89,8 +90,8 @@ For work on the UI, start `markitect desktop --no-open --listen 127.0.0.1:7340` 
 ## Tests
 
 - `server_test.go`: the host check; launch codes that work once and briefly; the session; the proof, the window and the launch for a later start; the folder dialog, one at a time and only where the window has one; the content security policy and that the built page loads nothing from elsewhere; the write rules; opening, creating, cloning, initializing and removing projects against fake Git, with the folder names refused; the suggested parent.
-- `desktop_test.go`: a service serves the window it opened and removes its record, which never holds a launch code; a second start has the running service open the window, or prints a link with `--no-open`; a window that fails hands its link to the start that asked; a service answers from `Listen` on and leaves no record when closed; a stale record is replaced; a program on the recorded port learns no secret; two starts at once share one service; only loopback addresses are served.
+- `desktop_test.go`: a service serves the window it opened and removes its record, which never holds a launch code; a second start has the running service open the window, or prints a link with `--no-open`; a window that fails hands its link to the start that asked; a later start names a service of an earlier version and stops waiting for one that does not answer; a service answers from `Listen` on and leaves no record when closed; a stale record is replaced; a program on the recorded port learns no secret; two starts at once share one service; only loopback addresses are served.
 - `store_test.go` and `window_test.go`: the project list and the choice of window per platform.
-- `internal/bootstrap/desktop_test.go`: creating, opening and cloning real repositories; that `markitect check` passes after the app's init; and that the native shell's starts share one service per user.
+- `internal/bootstrap/desktop_test.go`: creating, opening and cloning real repositories; that `markitect check` passes after the app's init; and that `ListenDesktop`, which the native app calls, shares one service per user.
 - The native app has no unit tests; CI builds it on request on Windows, macOS and Linux and starts it ([CONTRIBUTING](../../../CONTRIBUTING.md#verify-a-change)).
 - `desktop/src/*.test.ts`: the hub's next step and the project badges.

@@ -125,19 +125,21 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// secret; the answer does not reveal it.
 		reply(w, map[string]string{"proof": proof(s.secret, r.URL.Query().Get("c"))})
 		return
-	case r.Method == http.MethodPost && (r.URL.Path == "/api/launch" || r.URL.Path == "/api/window"):
-		// A later start, which holds the record's secret, gets a window's
-		// link or has the service open the window.
-		if !equal(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "), s.secret) {
-			fail(w, http.StatusUnauthorized, errors.New("not this user's Markitect"))
-			return
+	case r.Method == http.MethodPost && r.URL.Path == "/api/window":
+		// A later start, which holds the record's secret, has the service
+		// open its window.
+		if s.laterStart(w, r) {
+			if err := s.window(); err != nil {
+				fail(w, http.StatusInternalServerError, err)
+			} else {
+				reply(w, map[string]bool{"opened": true})
+			}
 		}
-		if r.URL.Path == "/api/launch" {
+		return
+	case r.Method == http.MethodPost && r.URL.Path == "/api/launch":
+		// A later start without a window gets a window's link.
+		if s.laterStart(w, r) {
 			reply(w, map[string]string{"code": s.launch()})
-		} else if err := s.window(); err != nil {
-			fail(w, http.StatusInternalServerError, err)
-		} else {
-			reply(w, map[string]bool{"opened": true})
 		}
 		return
 	}
@@ -164,6 +166,16 @@ func (s *server) launch() string {
 	}
 	s.launches[code] = now.Add(launchLife)
 	return code
+}
+
+// laterStart reports whether the request carries the record's secret, and
+// refuses it otherwise.
+func (s *server) laterStart(w http.ResponseWriter, r *http.Request) bool {
+	if !equal(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "), s.secret) {
+		fail(w, http.StatusUnauthorized, errors.New("not this user's Markitect"))
+		return false
+	}
+	return true
 }
 
 // window opens a window with a fresh launch code. When none opens, the error

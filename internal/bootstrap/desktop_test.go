@@ -70,9 +70,10 @@ func TestTheDesktopWorksOnRealRepositories(t *testing.T) {
 	}
 }
 
-// The native shell starts the same per-user service: a second start has the
-// running one open its window instead of starting another.
-func TestTheNativeShellSharesOneServicePerUser(t *testing.T) {
+// ListenDesktop, which the native app calls, starts the same per-user
+// service: a second call has the running one open its window instead of
+// starting another. The native app itself is started only by CI.
+func TestListenDesktopSharesOneServicePerUser(t *testing.T) {
 	config := testkit.TempDir(t)
 	t.Setenv("APPDATA", config)
 	t.Setenv("XDG_CONFIG_HOME", config)

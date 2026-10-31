@@ -31,11 +31,26 @@ fail() {
   exit 1
 }
 
+# Whatever this run started ends with it, also when a check fails.
+started=()
+cleanup() {
+  for p in "${started[@]}"; do
+    if [ "$os" = windows ]; then taskkill //F //PID "$p" >/dev/null 2>&1 || true; else kill "$p" 2>/dev/null || true; fi
+  done
+}
+trap cleanup EXIT
+
 if [ "$os" = linux ]; then
   export DISPLAY=:99
   Xvfb :99 -screen 0 1600x1000x24 >"$work/xvfb.log" 2>&1 &
-  sleep 2
+  started+=("$!")
+  for _ in $(seq 1 30); do
+    xdpyinfo >/dev/null 2>&1 && break
+    sleep 1
+  done
+  xdpyinfo >/dev/null 2>&1 || fail "the X server did not start"
   eval "$(dbus-launch --sh-syntax)"
+  started+=("$DBUS_SESSION_BUS_PID")
   # WebKitGTK renders without a GPU under Xvfb.
   export WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 LIBGL_ALWAYS_SOFTWARE=1
 fi
@@ -48,6 +63,7 @@ for _ in $(seq 1 60); do
 done
 [ -s "$record" ] || { cat "$work/app.log"; fail "no record after 60 s"; }
 pid="$(sed -E 's/.*"pid":([0-9]+).*/\1/' "$record")"
+started+=("$pid")
 echo "the app runs as process $pid"
 
 alive() {
@@ -93,9 +109,9 @@ echo "windows: $first"
 [ "${first:-0}" -ge 1 ] || { cat "$work/app.log"; fail "the app shows no window"; }
 
 # A later start of the app itself has the running one open a window and ends.
-started=$(date +%s)
+began=$(date +%s)
 "$app" >"$work/second.log" 2>&1 || fail "the second start failed: $(cat "$work/second.log")"
-echo "the second start ended after $(( $(date +%s) - started )) s"
+echo "the second start ended after $(( $(date +%s) - began )) s"
 alive "$pid" || fail "the first app ended with the second start"
 sleep 3
 if [ "$os" != windows ]; then
