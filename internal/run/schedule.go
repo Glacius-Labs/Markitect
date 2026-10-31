@@ -70,8 +70,19 @@ type node struct {
 	items    []agentport.Item
 	branch   string
 
-	running    bool
-	rounds     map[agentport.Role]int
+	running bool
+	// rounds numbers every start per role; attempts counts the maker's
+	// starts at its own work, which Limits.Rounds bounds: the first and
+	// each one after refused is set.
+	rounds   map[agentport.Role]int
+	attempts int
+	refused  bool
+	// What the running maker start's task named: the state its work
+	// continues from and, with named, the children's approvals (told). A
+	// submission that lacks one is the maker's own error only when it did
+	// not change during the start.
+	startFrom  string
+	named      bool
 	idle       int
 	inbox      []agentport.Message
 	sent       bool // the running start sent a message
@@ -386,16 +397,25 @@ func (s *schedule) startLocked(ctx context.Context, n *node, role agentport.Role
 		s.stopLocked(StateIncomplete, fmt.Sprintf("the budget of %d agent starts is used up", lim.Starts))
 		return
 	}
-	if n.rounds[role] >= lim.Rounds {
-		s.stopLocked(StateIncomplete, fmt.Sprintf("Manager %s used its %d %s starts without approved work", n.name, lim.Rounds, role))
+	// Only the maker's attempts at its own work count against Rounds (see
+	// Limits.Rounds).
+	attempt := role == agentport.Maker && (n.rounds[role] == 0 || n.refused)
+	if attempt && n.attempts >= lim.Rounds {
+		s.stopLocked(StateIncomplete, fmt.Sprintf("Manager %s used its %d maker attempts without approved work: its checker or the host refused its work after each", n.name, lim.Rounds))
 		return
 	}
 	s.starts++
 	n.rounds[role]++
+	if attempt {
+		n.attempts, n.refused = n.attempts+1, false
+	}
 	if role == agentport.Maker && len(n.children) > 0 && s.childrenApproved(n) && s.approvals(n) != n.told {
 		// The task names the children's approvals, so the maker has them;
 		// whatever started it, its own approval no longer holds.
 		n.told, n.approved = s.approvals(n), false
+	}
+	if role == agentport.Maker {
+		n.startFrom, n.named = n.from, s.childrenApproved(n)
 	}
 	n.running, n.sent = true, false
 	inbox := n.inbox
@@ -554,6 +574,7 @@ func (s *schedule) afterMaker(ctx context.Context, n *node, tip string, moved bo
 		if n.sent && s.held(n) == "" {
 			return true, nil
 		}
+		n.refused = true
 		s.hostMessage(n, fmt.Sprintf("Your branch %s ends at %s, which is no submission. Finish with a submission commit that gives every checklist item a verdict.", n.branch, short(tip)))
 		return true, nil
 	}
@@ -562,6 +583,7 @@ func (s *schedule) afterMaker(ctx context.Context, n *node, tip string, moved bo
 	if ok, err := s.e.Git.Contains(ctx, tip, n.from); err != nil {
 		return false, err
 	} else if !ok && n.parent != nil {
+		n.refused = n.startFrom == n.from
 		s.hostMessage(n, fmt.Sprintf("Your submission %s does not contain %s, the state of %s your work continues from. Merge it and submit again.", short(tip), n.from, n.parent.branch))
 		return true, nil
 	}
@@ -586,6 +608,7 @@ func (s *schedule) afterMaker(ctx context.Context, n *node, tip string, moved bo
 		}
 	}
 	if len(missing) > 0 {
+		n.refused = n.named && n.told == s.approvals(n)
 		s.hostMessage(n, "Your submission "+short(tip)+" does not contain "+strings.Join(missing, ", ")+". Merge it and submit again.")
 		return true, nil
 	}
@@ -610,6 +633,7 @@ func (s *schedule) afterChecker(ctx context.Context, n *node, tip string, moved 
 	submission := n.submission
 	n.submission = ""
 	if t.Review == runremote.Rejected {
+		n.refused = true
 		var lines []string
 		for _, l := range t.Checks {
 			if l.Word == runremote.Disputed {
