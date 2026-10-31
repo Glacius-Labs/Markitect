@@ -223,6 +223,86 @@ func TestALaterCheckerTurnRechecksEveryVerdictInFull(t *testing.T) {
 	lacks(t, m.Base, "fresh checker")
 }
 
+// A maker's later turn in its conversation gets the host's event and the
+// messages delivered with it; the role, the model, the checklist and what a
+// verdict covers are in the conversation already.
+func TestALaterMakerTurnGetsOnlyTheEventAndItsMessages(t *testing.T) {
+	s := start(Apply, Maker, "members", nil, items("members/member"))
+	s.Round, s.Task, s.Event = 3, "Realize the change for Manager members. The messages delivered with this turn need your action first.", "The messages delivered with this turn need your action first."
+	s.Inbox = []agentport.Message{{ID: "m-4", Kind: agentport.Review, To: "members", Text: "Your checker rejected submission abc:\n- members/member: no test at the limit."}}
+	msg, err := Turn(Input{Start: s}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "# Turn 3\n\nThe messages delivered with this turn need your action first.\n\n## Messages for you\n\n" +
+		"### `m-4`: review from the host\n\nYour checker rejected submission abc:\n- members/member: no test at the limit.\n\n" +
+		"# Answer\n\nAnswer as your first turn says: a submission calls `submit` with exactly one verdict per checklist item.\n"
+	if msg != want {
+		t.Fatalf("message:\n%s", msg)
+	}
+	s.Event = ""
+	msg, _ = Turn(Input{Start: s}, nil)
+	contains(t, msg, "# Turn 3\n\nRealize the change for Manager members.")
+}
+
+// A checker's later turn gets the new submission: each checklist item's
+// verdict and how it changed since the submission its previous turn
+// received, and the diff from that one, not the whole diff again.
+func TestALaterCheckerTurnGetsTheChecklistAndTheDiffSinceLast(t *testing.T) {
+	s := start(Apply, Checker, "members", nil, items("members/member", "members/loans/loan", "loan-limit", "catalog/book"))
+	s.Round, s.Event = 2, "Review submission def456 of Manager members.\n\nThe required checks passed."
+	s.Git.Base = "0123456789012345678901234567890123456789"
+	last := &Submission{Commit: "abc1234567890abc", Verdicts: []Verdict{
+		{Item: "members/member", Verdict: "changed", Evidence: "member.go"},
+		{Item: "members/loans/loan", Verdict: "conforms", Evidence: "loan.go"},
+		{Item: "loan-limit", Verdict: "conforms", Evidence: "untested"},
+	}}
+	sub := &Submission{Commit: "def4567890def456", From: last.Commit, Verdicts: []Verdict{
+		{Item: "members/member", Verdict: "changed", Evidence: "member.go"},
+		{Item: "members/loans/loan", Verdict: "changed", Evidence: "loan.go | limit"},
+		{Item: "loan-limit", Verdict: "conforms", Evidence: "limit_test.go"},
+		{Item: "catalog/book", Verdict: "conforms", Evidence: "book.go"},
+	}, Diff: "diff --git a/src/members/limit_test.go b/src/members/limit_test.go\n+func TestLimit(t *testing.T) {}\n"}
+	msg, err := Turn(Input{Start: s, Submission: sub}, last)
+	if err != nil {
+		t.Fatal(err)
+	}
+	contains(t, msg, "# Turn 2\n\nReview submission def456 of Manager members.\n\nThe required checks passed.\n\n",
+		"Your earlier reviews in this Run do not carry over",
+		"| Item | Verdict | Since `abc123456789` | Evidence |",
+		"| `members/member` | changed | unchanged | member.go |",
+		"| `members/loans/loan` | changed | was `conforms` | loan.go \\| limit |",
+		"| `loan-limit` | conforms | new evidence | limit_test.go |",
+		"| `catalog/book` | conforms | new | book.go |",
+		"Below is the diff from `abc1234567890abc`, the submission your previous turn received; `git diff 0123456789012345678901234567890123456789 def4567890def456` in `/work` shows the whole diff",
+		"## Diff from `abc1234567890abc` to `def4567890def456`\n\n```diff\ndiff --git a/src/members/limit_test.go",
+		"Answer as your first turn says: call `review` with one answer per submitted verdict.")
+	lacks(t, msg, "# Role", "# Model", "## What a verdict covers", "## Messages for you")
+
+	// The same submission again, after a turn that pushed no review.
+	again := &Submission{Commit: last.Commit, From: last.Commit, Verdicts: last.Verdicts}
+	msg, _ = Turn(Input{Start: s, Submission: again}, last)
+	contains(t, msg, "Submission `abc1234567890abc` is the one your previous turn received; its diff is in this conversation", "| `catalog/book` | none | none |  |")
+	lacks(t, msg, "## Diff from")
+
+	sub.Diff, sub.Files = strings.Repeat("x", MaxInlineDiff+1), []string{"A src/members/limit_test.go"}
+	msg, _ = Turn(Input{Start: s, Submission: sub}, last)
+	contains(t, msg, "`git diff abc1234567890abc def4567890def456`", "- A src/members/limit_test.go")
+	lacks(t, msg, "xxxxxxxx")
+
+	for name, in := range map[string]Input{
+		"no submission":      {Start: s},
+		"diff from the base": {Start: s, Submission: &Submission{Commit: sub.Commit}},
+	} {
+		if _, err := Turn(in, last); err == nil {
+			t.Errorf("%s: rendered", name)
+		}
+	}
+	if _, err := Turn(Input{Start: s, Submission: sub}, nil); err == nil {
+		t.Error("rendered without the previous submission")
+	}
+}
+
 func TestAParentWithAnEmptyChecklistIntegrates(t *testing.T) {
 	p := library(t)
 	d := render(t, Input{Start: start(Apply, Maker, ".", []string{"members"}, nil), Project: p})
@@ -250,9 +330,12 @@ func TestRenderRefusesWhatNoAgentCanWorkFrom(t *testing.T) {
 		"root as empty":     func(in *Input) { in.Start.Manager.ID = "" },
 		"pipe in key":       func(in *Input) { in.Start.Checklist = []agentport.Item{{Key: "a|b"}} },
 		"checker no commit": func(in *Input) { in.Start.Role = Checker },
-		"unknown mode":      func(in *Input) { in.Start.Mode = "improve" },
-		"not a child":       func(in *Input) { in.Start.Manager.Children = []string{"catalog"} },
-		"compile errors":    func(in *Input) { q := *p; q.Errors = model.Diagnostics{{Code: "x"}}; in.Project = &q },
+		"checker diff not from the start": func(in *Input) {
+			in.Start.Role, in.Submission = Checker, &Submission{Commit: "def456", From: "abc123"}
+		},
+		"unknown mode":   func(in *Input) { in.Start.Mode = "improve" },
+		"not a child":    func(in *Input) { in.Start.Manager.Children = []string{"catalog"} },
+		"compile errors": func(in *Input) { q := *p; q.Errors = model.Diagnostics{{Code: "x"}}; in.Project = &q },
 	}
 	for name, mutate := range cases {
 		in := ok

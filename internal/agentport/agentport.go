@@ -62,6 +62,14 @@ type Start struct {
 	Round int
 	// Task says in the host's words what this turn must achieve.
 	Task string
+	// Event says in the host's words only what brought a later turn about,
+	// such as a new submission with the required checks' results on it, or
+	// the children's approved work; the review, the answer or the
+	// settlement are messages in Inbox. A turn that continues an agent gets
+	// Event and Inbox instead of Task and the checklist, which its
+	// conversation holds already; a turn that starts it gets Task. Empty
+	// when Task has nothing to shorten.
+	Event string
 	// Checklist holds every item the Manager's verdicts must cover.
 	Checklist []Item
 	// Inbox holds the messages delivered with this turn, oldest first.

@@ -53,14 +53,14 @@ func TestTheTasksSayWhatAVerdictCovers(t *testing.T) {
 		released: true, approved: true, approval: "appr"}
 	root.children = []*node{child}
 
-	maker := s.makerTask(root)
+	maker := s.makerTask(root).task
 	for _, want := range []string{"A verdict covers the item's whole Definition, its examples included, and the Definitions it links to", "names how each example is met",
 		"Merge it, review it and integrate it before you submit: use it, and do not build a child's behavior a second time in your own files."} {
 		if !strings.Contains(maker, want) {
 			t.Errorf("maker task lacks %q:\n%s", want, maker)
 		}
 	}
-	review := s.reviewTask(root)
+	review := s.reviewTask(root).task
 	for _, want := range []string{"It integrates the work of materials: dispute it when one of the Manager's own files builds a child's behavior a second time",
 		"Judge the Manager's own files against its items, and each item's whole Definition with its examples and the Definitions it links to."} {
 		if !strings.Contains(review, want) {
@@ -70,11 +70,43 @@ func TestTheTasksSayWhatAVerdictCovers(t *testing.T) {
 	if strings.Contains(review, "parent's integration") {
 		t.Errorf("Root has no parent:\n%s", review)
 	}
-	if review := s.reviewTask(child); !strings.Contains(review, "whether the rest of the program uses those files yet is its parent's integration.") || strings.Contains(review, "It integrates") {
+	if review := s.reviewTask(child).task; !strings.Contains(review, "whether the rest of the program uses those files yet is its parent's integration.") || strings.Contains(review, "It integrates") {
 		t.Errorf("the child's review task:\n%s", review)
 	}
-	if v := s.verifyTask(child); !strings.Contains(v, "the evidence for conforms names how each example is met") {
+	if v := s.verifyTask(child).task; !strings.Contains(v, "the evidence for conforms names how each example is met") {
 		t.Errorf("verify task:\n%s", v)
+	}
+}
+
+// A turn that continues an agent gets only what brought it about: a maker
+// the children's approved work and its messages, a checker the new
+// submission with the checks' results on it; the task its first turn
+// received stays out.
+func TestALaterTurnsEventLeavesOutTheFirstTurnsTask(t *testing.T) {
+	s := &schedule{plan: &runremote.Plan{Base: "base0000000000"}}
+	root := &node{name: ".", branch: "root", from: "base0000000000", submission: "sub", items: make([]agentport.Item, 1),
+		evidence: "The required checks on the branch's full state at this submission:\n- \"build\" passed.",
+		inbox:    []agentport.Message{{ID: "m1", Kind: agentport.Review, To: ".", Text: "Your checker rejected submission sub."}}}
+	child := &node{name: "materials", branch: "managers/materials", from: "base0000000000", parent: root, released: true, approved: true, approval: "appr"}
+	root.children = []*node{child}
+
+	maker := s.makerTask(root)
+	if maker.event != "Your working children's approved work: materials at appr (branch managers/materials). Merge it, review it and integrate it before you submit: use it, and do not build a child's behavior a second time in your own files. The messages delivered with this turn need your action first." {
+		t.Errorf("maker event:\n%s", maker.event)
+	}
+	if !strings.HasPrefix(maker.task, "Realize the change for Manager .") || !strings.HasSuffix(maker.task, maker.event) {
+		t.Errorf("maker task:\n%s", maker.task)
+	}
+	review := s.reviewTask(root)
+	if !strings.HasPrefix(review.event, "Review submission sub of Manager . on branch root") || !strings.Contains(review.event, "It integrates the work of materials") ||
+		!strings.HasSuffix(review.event, `"build" passed.`) || strings.Contains(review.event, "Judge the Manager's own files") {
+		t.Errorf("review event:\n%s", review.event)
+	}
+	if !strings.Contains(review.task, "Judge the Manager's own files") || !strings.HasSuffix(review.task, `"build" passed.`) {
+		t.Errorf("review task:\n%s", review.task)
+	}
+	if v := s.verifyTask(child); v.event != "Your last turn pushed no verdicts on branch managers/materials. Push them as one commit without file changes." {
+		t.Errorf("verify event: %s", v.event)
 	}
 }
 

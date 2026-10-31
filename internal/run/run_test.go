@@ -114,9 +114,19 @@ func TestCheckerRejectsAndMakerFixes(t *testing.T) {
 			if len(s.Inbox) != 1 || s.Inbox[0].Kind != agentport.Review || !strings.Contains(s.Inbox[0].Text, "no isbn") {
 				return agentfake.Fail(errorf("the second start has no rejection: %+v", s.Inbox))
 			}
+			// A turn that continues the maker gets the event alone.
+			if s.Event != "The messages delivered with this turn need your action first." || !strings.HasPrefix(s.Task, "Realize the change") {
+				return agentfake.Fail(errorf("the second turn's event %q, task %q", s.Event, s.Task))
+			}
 			return a.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ Title, ISBN string }\n"}, word("changed"))(ctx, s, h)
 		})
-	a.On("catalog", checker, a.Review(map[string]string{"catalog/book": "no isbn"}), a.Review(nil))
+	a.On("catalog", checker, a.Review(map[string]string{"catalog/book": "no isbn"}),
+		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+			if !strings.HasPrefix(s.Event, "Review submission") || !strings.Contains(s.Event, `"no-fail" passed.`) || strings.Contains(s.Event, "Judge the Manager's own files") {
+				return agentfake.Fail(errorf("the second review's event %q", s.Event))
+			}
+			return a.Review(nil)(ctx, s, h)
+		})
 	a.On(".", checker, a.Review(nil))
 
 	r := f.run(run.Request{Base: base})

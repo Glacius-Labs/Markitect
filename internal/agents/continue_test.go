@@ -2,6 +2,7 @@ package agents_test
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"slices"
@@ -39,6 +40,20 @@ func review(t *testing.T, bare, branch, outcome string) string {
 	return commit
 }
 
+// text is the message a Claude turn's stream input carries.
+func text(t *testing.T, stdin []byte) string {
+	t.Helper()
+	var line struct {
+		Message struct {
+			Content []struct{ Text string }
+		}
+	}
+	if err := json.Unmarshal(stdin, &line); err != nil || len(line.Message.Content) != 1 {
+		t.Fatalf("no turn message in %s: %v", stdin, err)
+	}
+	return line.Message.Content[0].Text
+}
+
 func agentsWith(t *testing.T, f *fixture, limit int64) (*agents.Agents, string) {
 	t.Helper()
 	file := filepath.Join(t.TempDir(), "credentials.json")
@@ -55,14 +70,14 @@ func agentsWith(t *testing.T, f *fixture, limit int64) (*agents.Agents, string) 
 
 // A maker's later turn continues its conversation in the same container: the
 // login copy is renewed from the host's login as it is now, the clone follows
-// its branch past the checker's review, and the turn's message is the new
-// task alone, which resumes the session.
+// its branch past the checker's review, and the turn's message, which
+// resumes the session, is the host's event with the messages alone.
 func TestALaterMakerTurnContinuesInTheSameContainer(t *testing.T) {
 	f := setup(t, agentport.Maker, "members", "members/member")
 	var tasks []string
 	var resumed []bool
 	f.rt.script = func(s *fakeSession, argv []string, stdin []byte) int {
-		tasks, resumed = append(tasks, string(stdin)), append(resumed, slices.Contains(argv, "--resume") && slices.Contains(argv, "s-1"))
+		tasks, resumed = append(tasks, text(t, stdin)), append(resumed, slices.Contains(argv, "--resume") && slices.Contains(argv, "s-1"))
 		s.line(initLine(makerTools...))
 		if len(tasks) == 1 {
 			os.WriteFile(filepath.Join(s.rt.work, "src", "members", "member.go"), []byte("package members\n\ntype Member struct{}\n"), 0o644)
@@ -88,6 +103,7 @@ func TestALaterMakerTurnContinuesInTheSameContainer(t *testing.T) {
 	}
 	second := f.spec.Start
 	second.Round, second.Deadline = 2, time.Now().Add(time.Hour)
+	second.Task, second.Event = "Realize the change for Manager members. The messages delivered with this turn need your action first.", "The messages delivered with this turn need your action first."
 	second.Inbox = []agentport.Message{{ID: "m-3", Kind: agentport.Review, To: "members", Text: "Your checker rejected it: no test."}}
 	end := g.Run(context.Background(), second, f.host)
 	if end.Reason != agentport.Finished || !end.Continued || end.Cleanup != "" {
@@ -96,8 +112,14 @@ func TestALaterMakerTurnContinuesInTheSameContainer(t *testing.T) {
 	if f.rt.starts != 1 || len(resumed) != 2 || resumed[0] || !resumed[1] {
 		t.Fatalf("containers %d, resumed %v", f.rt.starts, resumed)
 	}
-	if !strings.Contains(tasks[1], "Your checker rejected it: no test.") || strings.Contains(tasks[1], "# Role") || strings.Contains(tasks[1], "# Model") {
-		t.Fatalf("second task: %s", tasks[1])
+	if !strings.Contains(tasks[0], "## Checklist") || !strings.HasPrefix(tasks[1], "# Turn 2\n\nThe messages delivered with this turn need your action first.") ||
+		!strings.Contains(tasks[1], "Your checker rejected it: no test.") {
+		t.Fatalf("first task:\n%s\nsecond task:\n%s", tasks[0], tasks[1])
+	}
+	for _, unwanted := range []string{"# Role", "# Model", "# Task", "## Checklist", "## What a verdict covers", "Realize the change"} {
+		if strings.Contains(tasks[1], unwanted) {
+			t.Fatalf("the second task holds %q:\n%s", unwanted, tasks[1])
+		}
 	}
 	if got := git(t, f.rt.work, "rev-parse", "HEAD"); got != rejection {
 		t.Fatalf("the clone is at %s, not at the review %s", got, rejection)
@@ -113,16 +135,18 @@ func TestALaterMakerTurnContinuesInTheSameContainer(t *testing.T) {
 
 // A checker's later turn reviews the new submission in its checkout: the
 // working tree becomes the submission, without what a build of the earlier
-// one left untracked, and the task asks for every verdict again in full.
+// one left untracked. The message asks for every verdict again in full and
+// holds the checklist's verdicts and the diff since the submission the
+// previous turn received, not the whole diff again.
 func TestALaterCheckerTurnReviewsTheNewSubmissionInFull(t *testing.T) {
 	f := setup(t, agentport.Checker, "members", "members/member")
 	f.spec.Start.Tools = []agentport.Tool{agentport.ToolNote}
 	verdict := "\n\nMarkitect-Manager: members\nMarkitect-Verdict: members/member | changed | type Member"
-	push(t, f.bare, "managers/members", "src/members/member.go", "package members\n\ntype Member struct{}\n", "Member"+verdict)
+	first := push(t, f.bare, "managers/members", "src/members/member.go", "package members\n\ntype Member struct{}\n", "Member"+verdict)
 	var tasks, files []string
 	var leftover bool
 	f.rt.script = func(s *fakeSession, argv []string, stdin []byte) int {
-		tasks = append(tasks, string(stdin))
+		tasks = append(tasks, text(t, stdin))
 		data, _ := os.ReadFile(filepath.Join(s.rt.work, "src", "members", "member.go"))
 		files = append(files, string(data))
 		_, err := os.Stat(filepath.Join(s.rt.work, "build.out"))
@@ -152,8 +176,17 @@ func TestALaterCheckerTurnReviewsTheNewSubmissionInFull(t *testing.T) {
 	if f.rt.starts != 1 || !strings.Contains(files[1], "Name string") || leftover {
 		t.Fatalf("containers %d, the checkout holds %q, a build's leftover stayed: %v", f.rt.starts, files[1], leftover)
 	}
-	if strings.Contains(tasks[0], "do not carry over") || !strings.Contains(tasks[1], "do not carry over") || !strings.Contains(tasks[1], "submission `"+second+"`") {
-		t.Fatalf("second task: %s", tasks[1])
+	if strings.Contains(tasks[0], "do not carry over") || !strings.Contains(tasks[0], "+type Member struct{}\n") {
+		t.Fatalf("first task: %s", tasks[0])
+	}
+	for _, want := range []string{"# Turn 2\n\nRe-check every verdict of submission `" + second + "`", "do not carry over", "| `members/member` | changed | unchanged | type Member |",
+		"## Diff from `" + first + "` to `" + second + "`", "-type Member struct{}\n+type Member struct{ Name string }"} {
+		if !strings.Contains(tasks[1], want) {
+			t.Fatalf("the second task lacks %q:\n%s", want, tasks[1])
+		}
+	}
+	if strings.Contains(tasks[1], "+type Member struct{}\n") || strings.Contains(tasks[1], "## What a verdict covers") {
+		t.Fatalf("the second task repeats the first:\n%s", tasks[1])
 	}
 	if tr := git(t, f.bare, "log", "-1", "--format=%B", "managers/members"); !strings.Contains(tr, "Markitect-Review: approved") {
 		t.Fatalf("the second review is not on the branch: %s", tr)
@@ -162,12 +195,16 @@ func TestALaterCheckerTurnReviewsTheNewSubmissionInFull(t *testing.T) {
 }
 
 // An agent whose conversation reached the context limit, or whose turn did
-// not finish, ends after it; its next turn starts it fresh from the remote.
+// not finish, ends after it; its next turn starts it fresh from the remote,
+// with the whole task and the checklist again.
 func TestAnAgentEndsAtTheContextLimitOrAfterAFailedTurn(t *testing.T) {
 	f := setup(t, agentport.Maker, "members", "members/member")
 	turn := 0
 	f.rt.script = func(s *fakeSession, argv []string, stdin []byte) int {
 		turn++
+		if msg := text(t, stdin); !strings.HasPrefix(msg, "# Task") || !strings.Contains(msg, "## Checklist") || slices.Contains(argv, "--resume") {
+			t.Errorf("turn %d is no fresh start with the whole task:\n%s", turn, msg)
+		}
 		s.line(initLine(makerTools...))
 		if turn == 2 {
 			s.line(`{"type":"result","subtype":"success","is_error":true,"result":"API Error: 500","session_id":"s-1","usage":{}}`)

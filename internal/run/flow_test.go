@@ -55,6 +55,61 @@ func TestAskAndSubmitWithoutWaiting(t *testing.T) {
 	}
 }
 
+// The shape of the comparison's transition-gap launch: Root, without items,
+// answers a question of members with a submission while members is approved
+// for its own files and its child loans still works. Root is not told to
+// merge members' approval, which members' next one replaces once it merges
+// loans' work; the host merges for Root when all of it is approved.
+func TestAParentDoesNotMergeWorkAGrandchildStillChanges(t *testing.T) {
+	f := newFixture(t)
+	base := f.tip("main")
+	f.write(map[string]string{m + "members/member.md": def("std/Concept", "Member", "A person with a card.")})
+	f.commit("members carry a card")
+	a := f.agents
+	loansWork, rootDone := make(chan struct{}), make(chan struct{})
+	a.On("members", maker,
+		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+			if _, err := h.Ask(ctx, "Who issues the card?"); err != nil {
+				return agentfake.Fail(err)
+			}
+			return a.Submit(nil, map[string]string{"src/members/member.go": "package members\n\ntype Member struct{ Card string }\n"}, word("changed"))(ctx, s, h)
+		},
+		noop,
+		a.Submit([]string{"managers/members.loans"}, nil, word("changed")))
+	a.On("members", checker, a.Review(nil), a.Review(nil))
+	a.On("members/loans", maker, func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+		close(loansWork)
+		<-rootDone
+		return a.Submit(nil, map[string]string{"src/members/loans/loan.go": "package loans\n\n// A Member with a card borrows.\n"}, word("changed"))(ctx, s, h)
+	})
+	a.On("members/loans", checker, a.Review(nil))
+	a.On(".", maker, func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+		defer close(rootDone)
+		<-loansWork
+		if _, err := h.Answer(ctx, s.Inbox[0].ID, "The library issues it."); err != nil {
+			return agentfake.Fail(err)
+		}
+		return a.Submit(nil, map[string]string{"README.md": "# Library\n\nThe library issues member cards.\n"}, word("conforms"))(ctx, s, h)
+	})
+	a.On(".", checker, a.Review(nil))
+
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateLanded {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+	for _, msg := range r.Messages {
+		if msg.To == "." && strings.Contains(msg.Text, "does not contain") {
+			t.Fatalf("Root was told to merge: %s", msg.Text)
+		}
+	}
+	if len(r.Integrations) != 1 || r.Integrations[0].Submission == "" {
+		t.Fatalf("integrations %+v", r.Integrations)
+	}
+	if !strings.Contains(f.show("main", "src/members/loans/loan.go"), "with a card") || !strings.Contains(f.show("main", "README.md"), "issues member cards") {
+		t.Fatal("the work did not land")
+	}
+}
+
 // A parent that does not answer is reminded, once; the child waits without
 // blocking anyone.
 func TestUnansweredQuestionIsRemindedOnce(t *testing.T) {

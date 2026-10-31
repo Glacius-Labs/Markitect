@@ -13,6 +13,7 @@
 | `Manager` | the Package ID (`.` for Root), its parent and its working children |
 | `Round` | the count of this role's turns for this Manager, from 1 |
 | `Task` | what this turn must achieve, in the host's words |
+| `Event` | only what brought a later turn about, such as a new submission with its checks' results or the children's approved work; a turn that continues an agent gets it with `Inbox` instead of `Task` and the checklist |
 | `Checklist` | every item the verdicts must cover: key, part (own, inherited, finding, stale), Definition and why |
 | `Inbox` | the messages delivered with this turn: assignments, answers, a checker's rejection |
 | `Git` | the remote's URL and network, the Manager's branch, the base commit, and the agent's user and token |

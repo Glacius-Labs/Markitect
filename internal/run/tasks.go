@@ -12,9 +12,13 @@ import (
 // work, the tools and the trailer format are the harness's (concept 1.0
 // §3.7: tasks, not process).
 
-func (s *schedule) makerTask(n *node) string {
+// turn is what the host says to one turn: the whole task, which a turn that
+// starts the agent gets, and the event alone, which a turn that continues
+// it gets instead, since its conversation holds the rest.
+type turn struct{ task, event string }
+
+func (s *schedule) makerTask(n *node) turn {
 	var b strings.Builder
-	fmt.Fprintf(&b, "Realize the change for Manager %s on branch %s, starting from %s, and push one submission that gives each of your %d checklist items a verdict with evidence. A verdict covers the item's whole Definition, its examples included, and the Definitions it links to; the evidence names how each example is met.", n.name, n.branch, short(n.from), len(n.items))
 	if held := s.held(n); held != "" {
 		fmt.Fprintf(&b, " %s escalated to you and continue from your approved submission when you settle the matter with a change of your own, so this one covers your own area: judge each item by your own files; their work comes when you integrate it.", held)
 	} else if s.ownFirst(n) {
@@ -27,7 +31,8 @@ func (s *schedule) makerTask(n *node) string {
 	if len(n.inbox) > 0 {
 		b.WriteString(" The messages delivered with this turn need your action first.")
 	}
-	return b.String()
+	task := fmt.Sprintf("Realize the change for Manager %s on branch %s, starting from %s, and push one submission that gives each of your %d checklist items a verdict with evidence. A verdict covers the item's whole Definition, its examples included, and the Definitions it links to; the evidence names how each example is met.", n.name, n.branch, short(n.from), len(n.items))
+	return turn{task: task + b.String(), event: strings.TrimSpace(b.String())}
 }
 
 func (s *schedule) approvals(n *node) string {
@@ -47,26 +52,27 @@ func (s *schedule) childNames(n *node) string {
 	return strings.Join(names, ", ")
 }
 
-func (s *schedule) reviewTask(n *node) string {
-	task := fmt.Sprintf("Review submission %s of Manager %s on branch %s against the model and the diff from %s: confirm or dispute every verdict, then push your review as one commit without file changes on the submission.", n.submission, n.name, n.branch, short(n.from))
+func (s *schedule) reviewTask(n *node) turn {
+	event := fmt.Sprintf("Review submission %s of Manager %s on branch %s against the model and the diff from %s: confirm or dispute every verdict, then push your review as one commit without file changes on the submission.", n.submission, n.name, n.branch, short(n.from))
 	if held := s.held(n); held != "" {
-		task += " It covers the Manager's own area and settles an escalation of " + held + "; what they realize comes with a later submission."
+		event += " It covers the Manager's own area and settles an escalation of " + held + "; what they realize comes with a later submission."
 	} else if s.ownFirst(n) {
-		task += " It covers the Manager's own area before its working children start; what they realize comes with a later submission."
+		event += " It covers the Manager's own area before its working children start; what they realize comes with a later submission."
 	} else if n.submission == n.integration {
-		task += " The host made it: it merges the approved work of " + s.childNames(n) + " and adds nothing of its own. Judge whether the merged state integrates that work as the model asks."
+		event += " The host made it: it merges the approved work of " + s.childNames(n) + " and adds nothing of its own. Judge whether the merged state integrates that work as the model asks."
 	} else if len(n.children) > 0 {
-		task += " It integrates the work of " + s.childNames(n) + ": dispute it when one of the Manager's own files builds a child's behavior a second time instead of using that work."
+		event += " It integrates the work of " + s.childNames(n) + ": dispute it when one of the Manager's own files builds a child's behavior a second time instead of using that work."
 	}
-	task += " Judge the Manager's own files against its items, and each item's whole Definition with its examples and the Definitions it links to"
+	task := event + " Judge the Manager's own files against its items, and each item's whole Definition with its examples and the Definitions it links to"
 	if n.parent != nil {
 		task += "; whether the rest of the program uses those files yet is its parent's integration"
 	}
 	task += "."
 	if n.evidence != "" {
 		task += "\n\n" + n.evidence
+		event += "\n\n" + n.evidence
 	}
-	return task
+	return turn{task: task, event: event}
 }
 
 // evidenceTail bounds the output of a failing check in a checker's task.
@@ -155,12 +161,13 @@ func (s *schedule) ownFirst(n *node) bool {
 	return false
 }
 
-func (s *schedule) verifyTask(n *node) string {
+func (s *schedule) verifyTask(n *node) turn {
 	task := fmt.Sprintf("Check the state at %s for Manager %s against each of your %d checklist items, and push your verdicts as one commit without file changes on branch %s. A verdict covers the item's whole Definition, its examples included, and the Definitions it links to; the evidence for conforms names how each example is met.", short(s.plan.Base), n.name, len(n.items), n.branch)
 	if e := s.startEvidence(); e != "" {
 		task += "\n\n" + e
 	}
-	return task
+	// A later turn follows one that pushed no verdicts.
+	return turn{task: task, event: fmt.Sprintf("Your last turn pushed no verdicts on branch %s. Push them as one commit without file changes.", n.branch)}
 }
 
 // startEvidence says what the required checks found on the Run's start,

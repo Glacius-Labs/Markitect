@@ -145,9 +145,9 @@ type Agent struct {
 	tools    []harness.Tool
 	secrets  [][]byte
 	volumes  []string
-	// project is the project at spec.Start.Git.Base, which the harness
-	// renders from.
-	project *project.Project
+	// received is the submission a checker in apply received last, which
+	// its next turn's diff starts from.
+	received *harness.Submission
 
 	mu           sync.Mutex
 	conversation string
@@ -235,10 +235,11 @@ func (a *Agent) start(ctx context.Context, login Login) error {
 	if err := a.clone(ctx); err != nil {
 		return err
 	}
-	if a.project, err = a.loadBase(ctx); err != nil {
+	p, err := a.loadBase(ctx)
+	if err != nil {
 		return err
 	}
-	if a.doc, err = a.render(ctx); err != nil {
+	if a.doc, err = a.render(ctx, p); err != nil {
 		return err
 	}
 	a.tools = harness.Tools(s.Start)
@@ -255,17 +256,44 @@ func (a *Agent) start(ctx context.Context, login Login) error {
 	return nil
 }
 
-// render writes the harness for the agent's current start from the project
-// at its base and, for a checker in apply, the submission at its branch's tip.
-func (a *Agent) render(ctx context.Context) (harness.Document, error) {
-	in := harness.Input{Start: a.spec.Start, Project: a.project}
+// render writes the harness for the agent's first turn from the project at
+// its base and, for a checker in apply, the submission at its branch's tip
+// with its diff from the commit the Manager's work started from.
+func (a *Agent) render(ctx context.Context, p *project.Project) (harness.Document, error) {
+	in := harness.Input{Start: a.spec.Start, Project: p}
 	if in.Start.Role == agentport.Checker && in.Start.Mode == agentport.Apply {
 		var err error
-		if in.Submission, err = a.submission(ctx); err != nil {
+		if in.Submission, err = a.submission(ctx, ""); err != nil {
 			return harness.Document{}, err
 		}
 	}
-	return harness.Render(in)
+	doc, err := harness.Render(in)
+	if err == nil {
+		a.received = in.Submission
+	}
+	return doc, err
+}
+
+// turn writes the message of a later turn: the host's event and messages
+// and, for a checker in apply, the new submission with its diff from the one
+// its previous turn received.
+func (a *Agent) turn(ctx context.Context) (string, error) {
+	in := harness.Input{Start: a.spec.Start}
+	last := a.received
+	if in.Start.Role == agentport.Checker && in.Start.Mode == agentport.Apply {
+		if last == nil {
+			return "", errors.New("agents: the checker received no submission before")
+		}
+		var err error
+		if in.Submission, err = a.submission(ctx, last.Commit); err != nil {
+			return "", err
+		}
+	}
+	message, err := harness.Turn(in, last)
+	if err == nil && in.Submission != nil {
+		a.received = in.Submission
+	}
+	return message, err
 }
 
 // checkLogin runs the CLI's own login report before any inference.

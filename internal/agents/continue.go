@@ -20,11 +20,11 @@ const shell = "/bin/sh"
 // Continue runs a later turn of a living agent for a new start of the same
 // Manager and role (concept 2.0 §6.2, long-lived Managers): it renews the
 // login copy from the operator's login, fetches the Run's remote into the
-// clone instead of cloning again, renders the turn's task and sends it to
-// the conversation. A maker's branch moves to its tip on the remote when it
-// can, so a review or the host's integration on it is the maker's too; a
-// checker's working tree becomes the submission it reviews. Nothing the
-// agent did not commit reaches a checker or the Result.
+// clone instead of cloning again, and sends the conversation only what
+// brought the turn about. A maker's branch moves to its tip on the remote
+// when it can, so a review or the host's integration on it is the maker's
+// too; a checker's working tree becomes the submission it reviews. Nothing
+// the agent did not commit reaches a checker or the Result.
 func (a *Agent) Continue(ctx context.Context, s agentport.Start, host agentport.Host, login []byte, transcript io.Writer) (Outcome, error) {
 	prev := a.spec.Start
 	switch {
@@ -51,19 +51,14 @@ func (a *Agent) Continue(ctx context.Context, s agentport.Start, host agentport.
 	if err != nil {
 		return Outcome{}, err
 	}
-	if s.Git.Base != prev.Git.Base {
-		if a.project, err = a.loadBase(turnCtx); err != nil {
-			return Outcome{}, err
-		}
-	}
-	doc, err := a.render(turnCtx)
+	// The conversation holds the system documents, the first turn's task and
+	// the checklist, which do not change within a Run; agentd verifies the
+	// installed system documents before every provider start.
+	message, err := a.turn(turnCtx)
 	if err != nil {
 		return Outcome{}, err
 	}
-	// The system documents stay as installed: agentd verifies them before
-	// every provider start, and nothing they say changes within a Run.
-	a.doc.Task, a.tools = doc.Task, harness.Tools(s)
-	message := doc.Task
+	a.tools = harness.Tools(s)
 	if note != "" {
 		message += "\n\n" + note
 	}

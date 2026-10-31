@@ -404,6 +404,19 @@ func (s *schedule) childrenApproved(n *node) bool {
 	return true
 }
 
+// subtreeApproved: every working Manager below n is approved. Unlike
+// childrenApproved it ignores running turns and pending messages, which may
+// leave an approval as it is; an approval that changes is a new commit, so
+// the parent hears of it again.
+func (s *schedule) subtreeApproved(n *node) bool {
+	for _, c := range n.children {
+		if !c.approved || !s.subtreeApproved(c) {
+			return false
+		}
+	}
+	return true
+}
+
 // integrateLocked has the host merge a parent's working children's approved
 // work on its branch and push it as a submission without verdicts, which the
 // parent's checker reviews (long-lived Managers). It costs no agent turn.
@@ -490,7 +503,7 @@ func (s *schedule) integrate(ctx context.Context, n *node, from string, names, a
 }
 
 // startLocked starts one agent's turn within the budget.
-func (s *schedule) startLocked(ctx context.Context, n *node, role agentport.Role, task string) {
+func (s *schedule) startLocked(ctx context.Context, n *node, role agentport.Role, t turn) {
 	lim := s.req.Limits
 	if s.starts >= lim.Starts {
 		s.stopLocked(StateIncomplete, fmt.Sprintf("the budget of %d agent turns is used up", lim.Starts))
@@ -516,7 +529,7 @@ func (s *schedule) startLocked(ctx context.Context, n *node, role agentport.Role
 	if d := s.e.now().Add(lim.Start); lim.Start > 0 && d.Before(deadline) {
 		deadline = d
 	}
-	st := agentport.Start{Run: s.plan.Run, Mode: s.req.Mode, Role: role, Round: n.rounds[role], Task: task,
+	st := agentport.Start{Run: s.plan.Run, Mode: s.req.Mode, Role: role, Round: n.rounds[role], Task: t.task, Event: t.event,
 		Manager: agentport.Manager{ID: n.name, Parent: parentName(n)}, Checklist: n.items, Inbox: inbox, Deadline: deadline,
 		Tools: tools(role, n)}
 	for _, c := range n.children {
@@ -722,21 +735,22 @@ func (s *schedule) afterMaker(ctx context.Context, n *node, tip string, moved bo
 	var missing []string
 	// A parent's own work comes first; its children start from its
 	// approval (concept 2.0 §6.2).
-	for _, ch := range n.children {
-		if s.ownFirst(n) {
-			break
-		}
-		if !ch.approved {
-			// The child is still working; its approval brings a host
-			// message and a new start.
+	if !s.ownFirst(n) {
+		if !s.subtreeApproved(n) {
+			// A child, or a Manager below it, is still working. The approval
+			// that holds their work brings a host message or the host's
+			// integration; merging a child's approval now would merge work
+			// its next approval replaces.
 			return true, nil
 		}
-		ok, err := s.e.Git.Contains(ctx, tip, ch.approval)
-		if err != nil {
-			return false, err
-		}
-		if !ok {
-			missing = append(missing, fmt.Sprintf("%s's approved work %s (branch %s)", ch.name, ch.approval, ch.branch))
+		for _, ch := range n.children {
+			ok, err := s.e.Git.Contains(ctx, tip, ch.approval)
+			if err != nil {
+				return false, err
+			}
+			if !ok {
+				missing = append(missing, fmt.Sprintf("%s's approved work %s (branch %s)", ch.name, ch.approval, ch.branch))
+			}
 		}
 	}
 	if len(missing) > 0 {

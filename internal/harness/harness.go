@@ -19,7 +19,7 @@ import (
 )
 
 // Version names the harness text. It changes whenever the rendered text does.
-const Version = 4
+const Version = 5
 
 // MaxInlineDiff bounds the diff a checker receives inline. A larger diff is
 // listed by file, and the checker reads it in its clone.
@@ -45,11 +45,15 @@ func Package(id string) string {
 }
 
 // Submission is one maker submission as its checker sees it: the commit, its
-// verdicts and the diff from the Run's base.
+// verdicts and its diff.
 type Submission struct {
 	Commit   string
 	Verdicts []Verdict
-	// Diff is `git diff base COMMIT`; Files lists the changed files with
+	// From is the commit the diff starts from: empty for the commit the
+	// Manager's work started from, which Render shows; for Turn, the
+	// submission the checker's previous turn received.
+	From string
+	// Diff is `git diff FROM COMMIT`; Files lists the changed files with
 	// their change, for a diff above MaxInlineDiff.
 	Diff  string
 	Files []string
@@ -88,8 +92,8 @@ func Render(in Input) (Document, error) {
 		return Document{}, fmt.Errorf("harness: unknown role %q", s.Role)
 	case s.Mode == Verify && s.Role == Maker:
 		return Document{}, fmt.Errorf("harness: verify has no makers")
-	case s.Mode == Apply && s.Role == Checker && in.Submission == nil:
-		return Document{}, fmt.Errorf("harness: a checker in apply needs the submission it reviews")
+	case s.Mode == Apply && s.Role == Checker && (in.Submission == nil || in.Submission.From != ""):
+		return Document{}, fmt.Errorf("harness: a checker in apply needs the submission it reviews, with its diff from its Manager's start")
 	}
 	for _, it := range s.Checklist {
 		if it.Key == "" || strings.ContainsAny(it.Key, "|\r\n") {
@@ -285,8 +289,7 @@ func (r renderer) task() string {
 		b.WriteString("Judge whether the repository at the Run's base conforms to every item on your checklist and to the Rules above it.\n\n")
 	}
 	if s.Role == Checker && s.Mode == Apply && s.Round > 1 {
-		b.WriteString("Your earlier reviews in this Run do not carry over: re-check every verdict of this submission in full against the model and the repository at its commit, " +
-			"those you confirmed before included, as for a submission you see for the first time.\n\n")
+		b.WriteString(recheck)
 	}
 	if len(s.Checklist) > 0 {
 		b.WriteString("## Checklist\n\n| Item | Part | Why |\n|---|---|---|\n")
@@ -302,32 +305,10 @@ func (r renderer) task() string {
 		for _, v := range s.Verdicts {
 			fmt.Fprintf(&b, "| `%s` | %s | %s |\n", v.Item, v.Verdict, cell(v.Evidence))
 		}
-		fmt.Fprintf(&b, "\n## Diff from `%s` to `%s`\n\n", runremote.BaseBranch, s.Commit)
-		if len(s.Diff) <= MaxInlineDiff {
-			fence := fenceFor([]byte(s.Diff))
-			fmt.Fprintf(&b, "%sdiff\n%s\n%s\n\n", fence, strings.TrimRight(s.Diff, "\n"), fence)
-		} else {
-			fmt.Fprintf(&b, "The diff is larger than %d KiB, more than is shown here; `git diff %s %s` in `/work` shows it. Changed files:\n\n", MaxInlineDiff>>10, runremote.BaseBranch, s.Commit)
-			for _, f := range s.Files {
-				fmt.Fprintf(&b, "- %s\n", f)
-			}
-			b.WriteString("\n")
-		}
+		b.WriteString("\n")
+		diff(&b, runremote.BaseBranch, s)
 	}
-	if len(s.Inbox) > 0 {
-		b.WriteString("## Messages for you\n\n")
-		for _, m := range s.Inbox {
-			from := "the host"
-			if m.From != "" {
-				from = "`" + m.From + "`"
-			}
-			fmt.Fprintf(&b, "### `%s`: %s from %s", m.ID, m.Kind, from)
-			if m.ReplyTo != "" {
-				fmt.Fprintf(&b, ", answering `%s`", m.ReplyTo)
-			}
-			fmt.Fprintf(&b, "\n\n%s\n\n", strings.TrimSpace(m.Text))
-		}
-	}
+	messages(&b, s.Inbox)
 	b.WriteString("# Answer\n\n")
 	switch {
 	case s.Role == Maker:
@@ -347,6 +328,130 @@ func (r renderer) task() string {
 			"`changed` is no answer here: verify changes nothing.\n")
 	}
 	return b.String()
+}
+
+// recheck tells a checker after its first turn that it reviews afresh.
+const recheck = "Your earlier reviews in this Run do not carry over: re-check every verdict of this submission in full against the model and the repository at its commit, " +
+	"those you confirmed before included, as for a submission you see for the first time.\n\n"
+
+// Turn writes the message of a later turn of an agent that continues its
+// conversation (long-lived Managers): only what brought the turn about,
+// since the conversation holds the role, the model, the checklist and the
+// answer format. A maker gets the host's event and the messages delivered
+// with the turn. A checker in apply gets the new submission: each checklist
+// item's verdict and how it changed since last, the submission its previous
+// turn received, and the diff from last, which in.Submission.From names.
+func Turn(in Input, last *Submission) (string, error) {
+	s := in.Start
+	switch {
+	case s.Role != Maker && s.Role != Checker:
+		return "", fmt.Errorf("harness: unknown role %q", s.Role)
+	case s.Mode == Apply && s.Role == Checker && (in.Submission == nil || last == nil || in.Submission.From != last.Commit):
+		return "", fmt.Errorf("harness: a checker's later turn needs the new submission with its diff from the one its previous turn received")
+	}
+	var b strings.Builder
+	fmt.Fprintf(&b, "# Turn %d\n\n", s.Round)
+	event := s.Event
+	if event == "" {
+		event = s.Task
+	}
+	if event == "" && s.Role == Checker && s.Mode == Apply {
+		event = fmt.Sprintf("Re-check every verdict of submission `%s` on branch `%s` against the model and the repository at that commit.", in.Submission.Commit, s.Git.Branch)
+	}
+	if event = strings.TrimSpace(event); event != "" {
+		b.WriteString(event + "\n\n")
+	}
+	if s.Role == Checker && s.Mode == Apply {
+		sub := in.Submission
+		b.WriteString(recheck)
+		if len(s.Checklist) > 0 {
+			verdicts := func(sub *Submission) map[string]Verdict {
+				m := map[string]Verdict{}
+				for _, v := range sub.Verdicts {
+					m[v.Item] = v
+				}
+				return m
+			}
+			now, before := verdicts(sub), verdicts(last)
+			fmt.Fprintf(&b, "## Checklist\n\n| Item | Verdict | Since `%s` | Evidence |\n|---|---|---|---|\n", short(last.Commit))
+			for _, it := range s.Checklist {
+				v, ok := now[it.Key]
+				w, had := before[it.Key]
+				verdict, since := v.Verdict, "unchanged"
+				switch {
+				case !ok:
+					verdict, since = "none", "none"
+				case !had:
+					since = "new"
+				case v.Verdict != w.Verdict:
+					since = "was `" + w.Verdict + "`"
+				case v.Evidence != w.Evidence:
+					since = "new evidence"
+				}
+				fmt.Fprintf(&b, "| `%s` | %s | %s | %s |\n", it.Key, verdict, since, cell(v.Evidence))
+			}
+			b.WriteString("\n")
+		}
+		if sub.Commit == last.Commit {
+			fmt.Fprintf(&b, "Submission `%s` is the one your previous turn received; its diff is in this conversation, and `git diff %s %s` in `/work` shows it again.\n\n", sub.Commit, s.Git.Base, sub.Commit)
+		} else {
+			fmt.Fprintf(&b, "Below is the diff from `%s`, the submission your previous turn received; `git diff %s %s` in `/work` shows the whole diff from the commit the Manager's work started from.\n\n", last.Commit, s.Git.Base, sub.Commit)
+			diff(&b, last.Commit, sub)
+		}
+	}
+	messages(&b, s.Inbox)
+	b.WriteString("# Answer\n\n")
+	switch {
+	case s.Role == Maker:
+		b.WriteString("Answer as your first turn says: a submission calls `submit` with exactly one verdict per checklist item.\n")
+	case s.Mode == Apply:
+		b.WriteString("Answer as your first turn says: call `review` with one answer per submitted verdict.\n")
+	default:
+		b.WriteString("Answer as your first turn says: call `submit` with exactly one verdict per checklist item.\n")
+	}
+	return b.String(), nil
+}
+
+// diff writes a submission's diff from the commit from, or lists the
+// changed files when the diff is larger than is shown.
+func diff(b *strings.Builder, from string, s *Submission) {
+	fmt.Fprintf(b, "## Diff from `%s` to `%s`\n\n", from, s.Commit)
+	if len(s.Diff) <= MaxInlineDiff {
+		fence := fenceFor([]byte(s.Diff))
+		fmt.Fprintf(b, "%sdiff\n%s\n%s\n\n", fence, strings.TrimRight(s.Diff, "\n"), fence)
+		return
+	}
+	fmt.Fprintf(b, "The diff is larger than %d KiB, more than is shown here; `git diff %s %s` in `/work` shows it. Changed files:\n\n", MaxInlineDiff>>10, from, s.Commit)
+	for _, f := range s.Files {
+		fmt.Fprintf(b, "- %s\n", f)
+	}
+	b.WriteString("\n")
+}
+
+// messages writes the messages delivered with a turn.
+func messages(b *strings.Builder, inbox []agentport.Message) {
+	if len(inbox) == 0 {
+		return
+	}
+	b.WriteString("## Messages for you\n\n")
+	for _, m := range inbox {
+		from := "the host"
+		if m.From != "" {
+			from = "`" + m.From + "`"
+		}
+		fmt.Fprintf(b, "### `%s`: %s from %s", m.ID, m.Kind, from)
+		if m.ReplyTo != "" {
+			fmt.Fprintf(b, ", answering `%s`", m.ReplyTo)
+		}
+		fmt.Fprintf(b, "\n\n%s\n\n", strings.TrimSpace(m.Text))
+	}
+}
+
+func short(commit string) string {
+	if len(commit) > 12 {
+		return commit[:12]
+	}
+	return commit
 }
 
 // covers states what a verdict covers (DEC-088): the model in full for each
