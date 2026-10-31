@@ -70,7 +70,11 @@ export function useModel(id: string, base: BaseKind | undefined): { view?: Model
 // typing reports whether a key goes to a field rather than to the app.
 export function typing(e: KeyboardEvent): boolean {
   const t = e.target;
-  return t instanceof HTMLElement && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName));
+  if (t instanceof HTMLInputElement) {
+    // A switch or a button takes no text, so the keys stay the app's.
+    return !['checkbox', 'radio', 'button', 'submit', 'reset', 'range', 'color'].includes(t.type);
+  }
+  return t instanceof HTMLElement && (t.isContentEditable || ['TEXTAREA', 'SELECT'].includes(t.tagName));
 }
 
 // ModelArea is the Model area: the four views over the working tree's model,

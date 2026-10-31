@@ -25,6 +25,8 @@ import (
 type memRepo struct {
 	root  string
 	files map[string]string
+	// onRead, if set, sees every file read, as a test's way to act midway.
+	onRead func(file string)
 }
 
 func (m memRepo) Root() string { return m.root }
@@ -39,6 +41,9 @@ func (m memRepo) Files() ([]string, error) {
 }
 
 func (m memRepo) Read(file string) ([]byte, error) {
+	if m.onRead != nil {
+		m.onRead(file)
+	}
 	data, ok := m.files[file]
 	if !ok {
 		return nil, fs.ErrNotExist

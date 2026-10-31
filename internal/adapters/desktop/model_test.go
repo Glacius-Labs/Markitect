@@ -283,22 +283,34 @@ func TestTheModelViewMarksCyclesAndPlacesErrors(t *testing.T) {
 }
 
 func TestADocumentOfAnEndedRequestIsNotKept(t *testing.T) {
-	s, repos, root, id := modelServer(t, library(t))
-	repos.commit(root, "c1", false)
-	p, _, err := s.store.Get(id)
-	if err != nil {
-		t.Fatal(err)
-	}
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-	if _, _, err := s.models.view(ctx, s.repos, p, ""); err == nil {
-		t.Fatal("an ended request got a document")
-	}
-	if len(s.models.views) != 0 || len(s.models.bases) != 0 {
-		t.Fatal("the ended request's reads were kept")
-	}
-	if _, res := getModel(t, s, id, ""); res.code != http.StatusOK {
-		t.Fatalf("the next request: %d", res.code)
+	// The request ends while the working tree is read: with a commit, the
+	// base read after it is refused; without one, the document is.
+	for _, committed := range []bool{true, false} {
+		s, repos, root, id := modelServer(t, library(t))
+		if committed {
+			repos.commit(root, "c1", false)
+		}
+		p, _, err := s.store.Get(id)
+		if err != nil {
+			t.Fatal(err)
+		}
+		ctx, cancel := context.WithCancel(context.Background())
+		tree := repos.repos[root]
+		tree.onRead = func(file string) {
+			if file == ".markitect/model/policy.md" {
+				cancel()
+			}
+		}
+		repos.repos[root] = tree
+		if _, _, err := s.models.view(ctx, s.repos, p, ""); err == nil {
+			t.Fatalf("committed %v: an ended request got a document", committed)
+		}
+		if len(s.models.views) != 0 || len(s.models.bases) != 0 {
+			t.Fatalf("committed %v: the ended request's reads were kept", committed)
+		}
+		if _, res := getModel(t, s, id, ""); res.code != http.StatusOK {
+			t.Fatalf("committed %v: the next request: %d", committed, res.code)
+		}
 	}
 }
 
