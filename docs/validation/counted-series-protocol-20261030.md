@@ -2,7 +2,7 @@
 
 The protocol of step T7's counted acceptance series ([delivery plan](../implementation-plan.md#concept-20-build)), as section D of the [suite design](../design/evaluation-suite-v2.md#d-counted-evaluations) asks for. It is built from the pilot's [proposal](t7-pilot-20261029.md#proposed-protocol-for-the-counted-series) and its [Q4](t7-pilot-20261029.md#q4-what-must-change-before-a-counted-series), updated for what has changed since. The owner delegated the counted series to Build, and Build approves this protocol after an [independent review](#independent-review), recorded below before any counted run ([build page](../workstreams/build.md), Decisions).
 
-**Status: approved by Build on 30 October 2026,** under the owner's delegation, after the [independent review](#independent-review) and its second round, on `main` at `6174d5da` (PRs [#908](https://github.com/Glacius-Labs/Markitect/pull/908), [#910](https://github.com/Glacius-Labs/Markitect/pull/910) and [#911](https://github.com/Glacius-Labs/Markitect/pull/911)). No counted launch has run; the [preconditions](#preconditions) come first, and [Amendment 1](#amendment-1-30-october-2026-the-frozen-commit) named the frozen commit. [Amendment 2](#amendment-2-30-october-2026-scoring-fixes-before-the-gate) fixes the scoring before the gate, records the owner's rule for "at least as good" and replaces that commit. The Windows gate ran on 30 October 2026 and did not pass, because M did not land the Makerspace W0 ([Amendment 3](#amendment-3-30-october-2026-the-windows-gate)). [Amendment 4](#amendment-4-31-october-2026-a-new-freeze-for-the-second-gate) freezes `955683de`, which holds the fix, for a second Windows gate. That gate passed on 31 October 2026 ([Amendment 5](#amendment-5-31-october-2026-the-second-windows-gate-passed)), so precondition 5 holds for Windows. The [stability gate](#stability-gate) runs only in a window that Build clears with the owner. The owner decided the [four points](#decided-by-the-owner) that were the owner's on 30 October 2026.
+**Status: approved by Build on 30 October 2026,** under the owner's delegation, after the [independent review](#independent-review) and its second round, on `main` at `6174d5da` (PRs [#908](https://github.com/Glacius-Labs/Markitect/pull/908), [#910](https://github.com/Glacius-Labs/Markitect/pull/910) and [#911](https://github.com/Glacius-Labs/Markitect/pull/911)). The [preconditions](#preconditions) came first, and [Amendment 1](#amendment-1-30-october-2026-the-frozen-commit) named the frozen commit. [Amendment 2](#amendment-2-30-october-2026-scoring-fixes-before-the-gate) fixes the scoring before the gate, records the owner's rule for "at least as good" and replaces that commit. The Windows gate ran on 30 October 2026 and did not pass, because M did not land the Makerspace W0 ([Amendment 3](#amendment-3-30-october-2026-the-windows-gate)). [Amendment 4](#amendment-4-31-october-2026-a-new-freeze-for-the-second-gate) freezes `955683de`, which holds the fix, for a second Windows gate. That gate passed on 31 October 2026 ([Amendment 5](#amendment-5-31-october-2026-the-second-windows-gate-passed)), so precondition 5 holds for Windows. The Windows series started the same day ([Amendment 6](#amendment-6-31-october-2026-the-windows-series-started)). The [stability gate](#stability-gate) runs only in a window that Build clears with the owner. The owner decided the [four points](#decided-by-the-owner) that were the owner's on 30 October 2026.
 
 ## What changed since the pilot's proposal
 
@@ -433,6 +433,27 @@ Build approves this protocol under the owner's delegation. On 30 October 2026, B
     - This is true: the end state's tree has no `TASK.md`.
   - The new project's two verify launches both ended `findings`. Their content was not read.
 - Everything else in Amendments 1 to 4 stands. The series and the Linux gate wait for Build's go.
+
+### Amendment 6, 31 October 2026: the Windows series started
+
+- **The re-measure came first.** The owner put the [long-lived Managers re-measure](long-lived-managers-remeasure-20261031.md) between this gate and the series. It ended at 16:56:22Z and missed its cost bar ([its reading](long-lived-managers-remeasure-20261031.md#amendment-1-31-october-2026-the-reading)), so the series measures the frozen commit `955683de` as planned.
+- **The Docker window:** the owner wrote to Build at 13:59Z: "Your are the only one using docker for the next 36 hours", so until about 01:59Z on 2 November. At 16:57Z, Build found that:
+  - no container was running;
+  - no `markitect`, `dotnet` or `python` process was running;
+  - the three frozen images of Amendment 4 were present by digest;
+  - the lock was free.
+- **Start:**
+  - Build removed `windows\STOP` at 16:58:17Z.
+  - It started the runner detached by `Win32_Process` `Create`, without the shell's `ANTHROPIC_*` and `CLAUDE_*` variables, as for the gate.
+- **What runs:**
+  - the configuration `windows\config.json`, SHA-256 `e5a6c167…`, on `955683de`: 168 units, about 230 launches, bound 345, with `gateLedger` naming the second gate's ledger;
+  - the runner's SHA-256 `2f32715b…`, the gate's.
+  - The first launch started at 17:08:46Z, after the engine's first ten minutes of watching.
+- **The end of the window:**
+  - A launch runs at most 90 minutes, and its judging and cleanup follow. So a detached waiter of Build's writes `STOP` at 00:15Z on 2 November, if the runner is still running then.
+  - At the five minutes per launch that Amendment 5 estimates, the series needs about 19 hours. Its first 13 launches took about six minutes each, which gives about 23. Either way it should end before then.
+  - If `STOP` halts it, the rest resumes on the same commit in a later window, as [After a stop](#after-a-stop) says.
+- Everything else in Amendments 1 to 5 stands. The Linux gate waits for Build's go.
 
 ## Independent review
 

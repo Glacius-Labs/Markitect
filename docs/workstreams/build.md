@@ -45,9 +45,11 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
   - M landed the Makerspace W0 in about 19 minutes and the chain steps C1 to C8. C9 has nothing to do by design.
 - **Long-lived Managers re-measured, 31 October** ([reading](../validation/long-lived-managers-remeasure-20261031.md#amendment-1-31-october-2026-the-reading), [PR #936](https://github.com/Glacius-Labs/Markitect/pull/936); dispatch [PR #933](https://github.com/Glacius-Labs/Markitect/pull/933)):
   - 10 launches of the redesign with the re-sent brief fixed, all of them results, against the comparison's M rows.
-  - Input tokens with cache reads rose on all five tasks, by about 98 % as the mean and 24 % without the defect task C3. The cost misses the bar again, and the redesign stays a draft.
+  - Input tokens with cache reads rose on all five tasks, by about 98 % as the mean and 24 % without the defect task C3. The cost misses the bar again, so the redesign stays a draft (Decisions below).
   - In one of its two C3 launches, the redesign's Root settled the model's contradiction itself instead of reporting a model defect.
-- **Counted Windows series started, 31 October:** at 16:58 UTC, on the frozen commit `955683de`, in the Docker window the owner cleared until about 02:00 UTC on 2 November. It plans 230 launches. Build has set the runner to stop at 00:30 UTC on 2 November, so that its last launch ends within the window.
+- **Counted Windows series started, 31 October** ([Amendment 6](../validation/counted-series-protocol-20261030.md#amendment-6-31-october-2026-the-windows-series-started)):
+  - It started at 16:58 UTC on the frozen commit `955683de`, in the Docker window the owner cleared until about 02:00 UTC on 2 November, and plans about 230 launches.
+  - Build has set the runner to stop at 00:15 UTC on 2 November, so that its last launch, with its judging and cleanup, ends within the window. The series should end before then.
 
 ## Next
 
@@ -101,7 +103,7 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
   - The branch stays a draft and unmerged. The counted series measures the current design.
   - On a continued turn the redesign's host sends the full first-turn brief again. Through the Topics session, the owner asked for that to be fixed on the branch and its cost measured again: "Yes, fix and re-measure". The re-measure runs only the redesign, on 10 launches, and compares them with the comparison's M rows. The bar is unchanged: a fall of at least a quarter in wall time or in input tokens with cache reads. Fresh M launches are added only if the decision hangs on wall time.
   - The owner set the order: "Yes, before the series", and "But dont interrupt what was already running. So we dont loose the progress on the evaluation". The re-measure starts only after the second gate has ended, its results are written, Build has reviewed Amendment 5 and the engine is free. The counted series waits for it.
-  - The owner gave Build the Docker engine for 36 hours from 31 October, 13:59 UTC: "Your are the only one using docker for the next 36 hours". Build told the owner that if the re-measure missed the bar, Build would start the counted Windows series in that window without asking again. It missed (above), and the series started.
+  - The owner gave Build the Docker engine for 36 hours from 31 October, 13:59 UTC: "Your are the only one using docker for the next 36 hours". Build told the owner that if the re-measure missed the bar, Build would start the counted Windows series in that window without asking again. It missed (above), and the series started. Build keeps the owner's earlier decision that the series measures the current design, and does not ask again. The owner can reopen adoption at any time.
 
 ## Questions for the owner
 
