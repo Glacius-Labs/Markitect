@@ -2,6 +2,7 @@ package run_test
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -862,6 +863,128 @@ func TestBudgetStopsTheRun(t *testing.T) {
 		if it.Approved {
 			t.Fatalf("an incomplete Run reports %s approved", it.Item)
 		}
+	}
+}
+
+// withRounds gives each Manager n attempts and a budget that does not stop first.
+func withRounds(n int) run.Limits {
+	return run.Limits{Deadline: time.Now().Add(5 * time.Minute), Starts: 40, Rounds: n, Start: 2 * time.Minute}
+}
+
+func startsOf(r *run.Result, manager string, role agentport.Role) int {
+	n := 0
+	for _, st := range r.Starts {
+		if st.Manager == manager && st.Role == role {
+			n++
+		}
+	}
+	return n
+}
+
+// Rounds bounds a Manager's attempts at its own work, not the starts its
+// child's question and changed approvals cause: with one attempt, Root
+// answers, sends a correction and merges, its child starts on the answer and
+// the correction, and the child's checker reviews twice.
+func TestRoundsCountOnlyAttempts(t *testing.T) {
+	f := newFixture(t)
+	base, _ := changeBook(f)
+	a := f.agents
+	a.On("catalog", maker,
+		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
+			if _, err := h.Ask(ctx, "Is the isbn optional?"); err != nil {
+				return agentfake.Fail(err)
+			}
+			return a.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ Isbn string }\n"}, word("changed"))(ctx, s, h)
+		},
+		// Root's answer starts it again; it changes nothing.
+		noop,
+		a.Submit(nil, map[string]string{"src/catalog/book.go": isbn}, word("changed")))
+	a.On("catalog", checker, a.Review(nil), a.Review(nil))
+	a.On(".", maker,
+		agentfake.Call(func(ctx context.Context, s agentport.Start, h agentport.Host) error {
+			if len(s.Inbox) != 1 {
+				return errorf("inbox %+v", s.Inbox)
+			}
+			_, err := h.Answer(ctx, s.Inbox[0].ID, "No, it is required.")
+			return err
+		}),
+		agentfake.Call(func(ctx context.Context, s agentport.Start, h agentport.Host) error {
+			_, err := h.Assign(ctx, "catalog", "Name the field ISBN, as the project spells it.")
+			return err
+		}),
+		a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
+	a.On(".", checker, a.Review(nil))
+	r := f.run(run.Request{Base: base, Limits: withRounds(1)})
+	if r.State != run.StateLanded || !strings.Contains(f.show("main", "src/catalog/book.go"), "ISBN") {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+	if got := startsOf(r, ".", maker); got != 3 {
+		t.Fatalf("Root's maker started %d times", got)
+	}
+	if got := startsOf(r, "catalog", checker); got != 2 {
+		t.Fatalf("catalog's checker started %d times", got)
+	}
+}
+
+// A Manager whose checker rejects its work Rounds times stops the Run.
+func TestRejectionsUseUpTheRounds(t *testing.T) {
+	f := newFixture(t)
+	base, start := changeBook(f)
+	a := f.agents
+	work := a.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ Title string }\n"}, word("changed"))
+	no := a.Review(map[string]string{"catalog/book": "no isbn"})
+	a.On("catalog", maker, work, work)
+	a.On("catalog", checker, no, no)
+	r := f.run(run.Request{Base: base, Limits: withRounds(2)})
+	if r.State != run.StateIncomplete || !strings.Contains(r.Why, "Manager catalog used its 2 maker attempts") {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+	if got := startsOf(r, "catalog", maker); got != 2 {
+		t.Fatalf("catalog's maker started %d times", got)
+	}
+	if f.tip("main") != start {
+		t.Fatal("an incomplete Run changed the target")
+	}
+}
+
+// A push that is no submission is refused by the host, which uses an attempt
+// as a rejection does.
+func TestNoSubmissionUsesAnAttempt(t *testing.T) {
+	f := newFixture(t)
+	base, _ := changeBook(f)
+	a := f.agents
+	work := agentfake.Call(func(ctx context.Context, s agentport.Start, _ agentport.Host) error {
+		w, err := a.Clone(ctx, s)
+		if err != nil {
+			return err
+		}
+		if err := w.Write("src/catalog/book.go", isbn); err != nil {
+			return err
+		}
+		if err := w.Commit(fmt.Sprintf("work %d", s.Round)); err != nil {
+			return err
+		}
+		return w.Push()
+	})
+	a.On("catalog", maker, work, work)
+	r := f.run(run.Request{Base: base, Limits: withRounds(2)})
+	if r.State != run.StateIncomplete || !strings.Contains(r.Why, "Manager catalog used its 2 maker attempts") {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+}
+
+// A parent whose task named its child's approved work and whose submission
+// leaves it out is refused by the host, which uses an attempt.
+func TestLeavingOutNamedWorkUsesAnAttempt(t *testing.T) {
+	f := newFixture(t)
+	base, _ := changeBook(f)
+	a := f.agents
+	a.On("catalog", maker, a.Submit(nil, map[string]string{"src/catalog/book.go": isbn}, word("changed")))
+	a.On("catalog", checker, a.Review(nil))
+	a.On(".", maker, a.Submit(nil, nil, word("conforms")))
+	r := f.run(run.Request{Base: base, Limits: withRounds(1)})
+	if r.State != run.StateIncomplete || !strings.Contains(r.Why, "Manager . used its 1 maker attempts") {
+		t.Fatalf("%s: %s", r.State, r.Why)
 	}
 }
 

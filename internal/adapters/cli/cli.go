@@ -61,11 +61,11 @@ Usage:
   markitect impact [--repo DIR] [--json] --base COMMIT [--full] [--findings FILE]
                                                   what a change reaches, and each Manager's checklist
   markitect lint   [--repo DIR] [--json]          measure the model like code: warnings only
-  markitect apply  [--repo DIR] [--json] [--base COMMIT] [--full] [--findings FILE] [RUN OPTIONS]
+  markitect apply  [--repo DIR] [--json] [--base COMMIT] [--full] [--findings FILE] [--rounds N] [RUN OPTIONS]
                                                   realize the change with a Run and land it
   markitect verify [--repo DIR] [--json] [--base COMMIT] [--full] [--findings-out FILE] [RUN OPTIONS]
                                                   check the change with checkers only; changes nothing
-        RUN OPTIONS: --remote NAME --branch NAME --run NAME --deadline D --starts N --rounds N --start-timeout D
+        RUN OPTIONS: --remote NAME --branch NAME --run NAME --deadline D --starts N --start-timeout D
   markitect version
   markitect licenses
 `
