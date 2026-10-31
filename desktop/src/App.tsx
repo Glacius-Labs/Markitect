@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError, type AppInfo } from './api';
 import { Hub, useEscapeTo, type InitRun } from './Hub';
+import { ModelArea } from './Model';
 import { Projects } from './Projects';
+import { hub, parse } from './route';
 
-// The address after # is the place in the app, so back and forward work.
-function place(): { project?: string } {
-  const m = /^#\/p\/([0-9a-f]+)$/.exec(window.location.hash);
-  return m ? { project: m[1] } : {};
-}
+const place = () => parse(window.location.hash);
 
 export function App() {
   const [info, setInfo] = useState<AppInfo | null>(null);
@@ -34,7 +32,12 @@ export function App() {
   const home = useCallback(() => {
     window.location.hash = '#/';
   }, []);
-  useEscapeTo(home);
+  // Escape goes up one level: from an area to its project, from a project to
+  // the list.
+  const up = useCallback(() => {
+    window.location.hash = where.area && where.project ? hub(where.project) : '#/';
+  }, [where]);
+  useEscapeTo(up);
 
   return (
     <div className="app">
@@ -51,6 +54,8 @@ export function App() {
             <h3 className="gl-empty__title">This window lost its connection</h3>
             <p className="gl-empty__body">Markitect was started again. Open it with markitect desktop.</p>
           </div>
+        ) : where.project && where.area === 'model' ? (
+          <ModelArea key={where.project} id={where.project} view={where.view ?? 'reader'} item={where.item} />
         ) : where.project ? (
           <Hub key={where.project} id={where.project} init={created?.id === where.project ? created.init : undefined} onGone={home} />
         ) : (

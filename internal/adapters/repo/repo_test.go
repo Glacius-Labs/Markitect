@@ -77,3 +77,21 @@ func TestWorkingTreeAndCommit(t *testing.T) {
 		t.Fatal("a folder outside Git has a top level")
 	}
 }
+
+func TestLastLandedIsTheNewestCommitThatAddsAResult(t *testing.T) {
+	ctx := context.Background()
+	r := testkit.NewRepo(t)
+	r.Write("a.txt", "a\n")
+	first := r.Commit("first")
+	if _, ok, err := LastLanded(ctx, r.Dir, first); err != nil || ok {
+		t.Fatalf("before any landing: %v %v", ok, err)
+	}
+	r.Write(".markitect/results/run-1.md", "# Result\n")
+	landed := r.Commit("land run 1")
+	r.Write(".markitect/results/run-1.md", "# Result, edited\n")
+	r.Write("a.txt", "b\n")
+	tip := r.Commit("later")
+	if id, ok, err := LastLanded(ctx, r.Dir, tip); err != nil || !ok || id != landed {
+		t.Fatalf("LastLanded = %s %v %v, want %s", id, ok, err, landed)
+	}
+}

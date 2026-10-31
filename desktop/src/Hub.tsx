@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError, type Project } from './api';
 import { useRefreshOnFocus } from './focus';
+import { typing } from './Model';
+import { modelHref } from './route';
 import { nextStep, plural } from './status';
 import { Alert, Badge, Dialog, Icon } from './ui';
 
@@ -43,6 +45,17 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
   }, [id, onGone]);
   useEffect(load, [load]);
   useRefreshOnFocus(load);
+
+  // The digits enter the areas that are built.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === '1' && !e.altKey && !e.ctrlKey && !e.metaKey && !typing(e) && !document.querySelector('dialog[open]') && project?.status.check) {
+        window.location.hash = modelHref(id, 'reader');
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [id, project]);
 
   if (!project) {
     return error ? <Alert tone="danger" title="This project cannot be read" body={error} /> : null;
@@ -138,21 +151,39 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
           Areas
         </h2>
         <div className="gl-cards">
-          {areas.map((a) => (
-            <div key={a.key} className="gl-card area">
-              <span className="gl-card__icon">
-                <Icon name={a.icon} />
-              </span>
-              <h3 className="gl-card__title">
-                <span className="key">{a.key}</span>
-                {a.title}
-              </h3>
-              <p className="gl-card__body">{a.body}</p>
-              <div className="gl-card__footer">
-                <Badge tone="neutral">Not built yet</Badge>
+          {areas.map((a) => {
+            const live = a.key === '1' && check;
+            const inner = (
+              <>
+                <span className="gl-card__icon">
+                  <Icon name={a.icon} />
+                </span>
+                <h3 className="gl-card__title">
+                  <span className="key">{a.key}</span>
+                  {a.title}
+                </h3>
+                <p className="gl-card__body">{a.body}</p>
+                <div className="gl-card__footer">
+                  {live ? (
+                    <Badge tone={check.warnings > 0 ? 'warning' : 'neutral'}>
+                      {plural(check.definitions, 'Definition')}, {plural(check.warnings, 'warning')}
+                    </Badge>
+                  ) : (
+                    <Badge tone="neutral">{a.key === '1' ? 'Set up Markitect first' : 'Not built yet'}</Badge>
+                  )}
+                </div>
+              </>
+            );
+            return live ? (
+              <a key={a.key} className="gl-card area area--live" href={modelHref(project.id, 'reader')}>
+                {inner}
+              </a>
+            ) : (
+              <div key={a.key} className="gl-card area">
+                {inner}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
       {removing && (
@@ -187,11 +218,11 @@ function Stat({ label, value }: { label: string; value: number }) {
 }
 
 // useEscapeTo goes one level up with Escape, unless a dialog is open, which
-// Escape closes instead.
+// Escape closes instead, or a field has the focus, whose Escape is its own.
 export function useEscapeTo(target: () => void) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !document.querySelector('dialog[open]')) {
+      if (e.key === 'Escape' && !typing(e) && !document.querySelector('dialog[open]')) {
         target();
       }
     };

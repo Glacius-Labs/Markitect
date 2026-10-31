@@ -24,6 +24,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/analysis"
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 )
@@ -32,12 +33,30 @@ import (
 type Workspace interface {
 	project.Repository
 	Root() string
+	// Stamp is a cheap mark of one file, such as its size and modification
+	// time, that changes when the file does.
+	Stamp(file string) string
+}
+
+// Commit is one commit of a project's repository.
+type Commit interface {
+	project.Repository
+	ID() string
+	// Changed lists the repository files that differ between the commit and
+	// the working tree, outside Markitect's folder.
+	Changed() ([]analysis.Change, error)
 }
 
 // Repos opens, creates and clones Git repositories.
 type Repos interface {
 	// Open opens the working tree of the repository that contains dir.
 	Open(ctx context.Context, dir string) (Workspace, error)
+	// Commit resolves a revision, such as HEAD, of the repository at root.
+	Commit(ctx context.Context, root, rev string) (Commit, error)
+	// LastLanded returns the newest commit reachable from tip that adds a
+	// Run's Result page, the base apply starts from; ok is false when no Run
+	// has landed.
+	LastLanded(ctx context.Context, root, tip string) (id string, ok bool, err error)
 	// Init makes the existing, empty folder dir a Git repository.
 	Init(ctx context.Context, dir string) error
 	// Clone clones url into dir, which does not exist yet.

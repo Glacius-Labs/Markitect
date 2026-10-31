@@ -148,6 +148,17 @@ The D2 probe on 31 October 2026 chose **Wails v3**, pinned at v3.0.0.
 - **The same safety.** A native window loads the service's page from the loopback address with a launch code, exactly like a browser window, and the shell binds no Go function to the page. The folder dialog is a route of the service that the native app answers.
 - **The service opens every window.** A later start asks the running service for a window instead of opening one itself, so the native app's windows stay native, whichever way Markitect is started again.
 
+### The Model area
+
+Details settled while building D3 on 31 October 2026, under the owner's go-ahead to decide them; [Markitect Desktop](../../internal/adapters/desktop/README.md#the-model-area) describes what is built.
+
+- **One document, four views.** One route computes the model with `check`, `refs`, `graph`, `impact` and `lint` and serves it to all four views, so the views never disagree about the model.
+- **The base of the change** is the last landing, which is the base `apply` takes, so the Organization's checklists are what a Run would start from. Where no Run has landed, or when the owner switches to it, the base is the last commit, which shows what is not committed yet. With nothing committed, the whole model is the change.
+- **Following the folder** is a poll every two seconds that the service answers with "nothing changed" unless a file, the last commit or the last landing did. The event stream comes with the Runs phase. While nothing changes, a poll costs one `git ls-files`, a stat of each file Git sees and one `git rev-parse`; on a very large repository a watcher may replace it.
+- **Seen by** follows a Manager's starting context as the harness renders it: its own Package, its parents' Definitions, the Definitions they link to and their Kinds in full, and a child's public Definitions by title.
+- **Markdown** is rendered with markdown-it with raw HTML off. A link of the model leads on in the Reader; links to other sites show their address and do not open, since the native window is no browser and binds nothing.
+- **The Map's layout** is the app's own small layered drawing, a Package above what it depends on, instead of a graph library.
+
 ## Delivery
 
 Each slice is one PR with its tests and is useful on its own. The app is built against what is stable first. How Runs execute may still change fundamentally with the evaluations that are running: Manager containers that live for the whole Run or for one start, Git handoffs or one shared checkout, or no containers at all. So the Runs area waits until that is settled, and its sections above, which describe today's engine, are revised then.
@@ -156,7 +167,7 @@ Each slice is one PR with its tests and is useful on its own. The app is built a
 
 1. **D1, Projects and hub.** `markitect desktop`, the service, the browser window, the project list, opening, creating and cloning projects, `init`, and the hub with the model check. Built.
 2. **D2, Native shell.** The probe and the shell, no terminal window, the app icon and the title Markitect. Built: Wails v3 ([above](#the-native-shell)), with a tray and the folder dialog.
-3. **D3, Model.** Reader, Map, Organization and Quality, the diff toggle and hand edits.
+3. **D3, Model.** Reader, Map, Organization and Quality, the diff toggle and hand edits. The views and the diff are built ([below](#the-model-area)); hand edits come next.
 4. **D4, Chat and Extract.** Chat agents in containers, proposals in the views, Extract with its two stops, and the app settings for the logins.
 
 **Surroundings, when the model work is blocked:** the model part of Statistics, the rest of the app settings, notifications and packaging.

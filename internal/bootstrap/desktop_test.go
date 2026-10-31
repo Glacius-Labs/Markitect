@@ -70,6 +70,40 @@ func TestTheDesktopWorksOnRealRepositories(t *testing.T) {
 	}
 }
 
+// The Model area reads the last commit and the last landing with the host's
+// Git, and follows the working tree by its files' stamps.
+func TestTheDesktopReadsCommitsLandingsAndStamps(t *testing.T) {
+	ctx := context.Background()
+	r := testkit.NewRepo(t)
+	r.Write("README.md", "# Library\n")
+	r.Commit("start")
+	r.Write(".markitect/results/run-1.md", "# Result\n")
+	landed := r.Commit("land")
+	r.Write("README.md", "# Library, renamed\n")
+	head := r.Commit("later")
+
+	repos := desktopRepos{}
+	ws, err := repos.Open(ctx, r.Dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, err := repos.Commit(ctx, ws.Root(), "HEAD")
+	if err != nil || c.ID() != head {
+		t.Fatalf("HEAD = %v %v, want %s", c, err, head)
+	}
+	if id, ok, err := repos.LastLanded(ctx, ws.Root(), c.ID()); err != nil || !ok || id != landed {
+		t.Fatalf("last landing = %s %v %v, want %s", id, ok, err, landed)
+	}
+	before := ws.Stamp("README.md")
+	if before == "" || ws.Stamp("missing.md") != "" {
+		t.Fatalf("stamps %q and %q", before, ws.Stamp("missing.md"))
+	}
+	r.Write("README.md", "# Library, renamed once more\n")
+	if ws.Stamp("README.md") == before {
+		t.Error("the stamp did not change with the file")
+	}
+}
+
 // ListenDesktop, which the native app calls, starts the same per-user
 // service: a second call has the running one open its window instead of
 // starting another. The native app itself is started only by CI.

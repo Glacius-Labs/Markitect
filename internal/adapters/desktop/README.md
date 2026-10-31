@@ -1,6 +1,6 @@
 # Markitect Desktop
 
-`internal/adapters/desktop` is Markitect Desktop, the app over the command line that users know as Markitect ([DEC-089](../../../docs/concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli), [design](../../../docs/design/markitect-desktop.md)). This page is the canonical description of what is built: slice D1, projects and hub, and slice D2, the native app ([`cmd/markitect-desktop`](../../../cmd/markitect-desktop/main.go)).
+`internal/adapters/desktop` is Markitect Desktop, the app over the command line that users know as Markitect ([DEC-089](../../../docs/concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli), [design](../../../docs/design/markitect-desktop.md)). This page is the canonical description of what is built: slice D1, projects and hub; slice D2, the native app ([`cmd/markitect-desktop`](../../../cmd/markitect-desktop/main.go)); and of slice D3 the [Model area](#the-model-area)'s four views with their diff.
 
 ## Starting it
 
@@ -45,13 +45,29 @@ Either way:
 | `POST /api/projects` | Brings a project in: `open` a folder inside a repository, `create` a new folder with Git and `markitect init`, or `clone` a URL into a new folder |
 | `GET /api/projects/{id}` | One project with its status |
 | `POST /api/projects/{id}/init` | Runs `markitect init` in the project |
+| `GET /api/projects/{id}/model?base=landing\|commit` | The Model area's document ([below](#the-model-area)); with the `ETag` of the last answer in `If-None-Match`, `304` when nothing changed |
 | `DELETE /api/projects/{id}` | Takes the project off the list; its folder stays |
 
 A project's status is what `markitect check` finds in its working tree: whether `.markitect/` is set up, the compile errors, and the counts of Definitions, Packages and accounted files; the list reads up to four projects at once. The list and the last parent folder live in `projects.json` in the config folder. On Windows and macOS, whose file systems ignore case, two spellings of one path are one project.
 
 ## Ports
 
-The adapter imports no other adapter. `internal/bootstrap` supplies Git (open, `git init`, `git clone`) through the repo adapter, and `markitect init` by running the command line's own `init`, so the app's init is the same command with the same output. The window is the caller's: `Config.OpenWindow` opens one on a link, and `Config.ChooseFolder`, if set, asks for a folder. `Listen` claims the service and starts answering, `Serve` opens the first window and serves until its context ends, and `Window` opens another; `Start` does all three for the command line.
+The adapter imports no other adapter. `internal/bootstrap` supplies Git (open, `git init`, `git clone`, a commit and the last landing) through the repo adapter, with a stamp per file (size and modification time) that the Model area follows the working tree by, and `markitect init` by running the command line's own `init`, so the app's init is the same command with the same output. The window is the caller's: `Config.OpenWindow` opens one on a link, and `Config.ChooseFolder`, if set, asks for a folder. `Listen` claims the service and starts answering, `Serve` opens the first window and serves until its context ends, and `Window` opens another; `Start` does all three for the command line.
+
+## The Model area
+
+The hub's first area shows the project's model as the working tree has it, in four views over one document that `GET /api/projects/{id}/model` computes with the same functions as the model commands: the compile errors of `check`, `refs` for each Definition, the Package graph of `graph`, `impact` with every working Manager's checklist, and `lint`.
+
+- **Reader:** the model as documentation, Package by Package. A Definition shows its Markdown, with its links leading on through the Reader and a link that resolves to nothing marked; its Kind and Package; the Definitions that link to it or are of it; the files whose registry entries realize it; and the Managers that see it, in full or by title in a child's table of contents, as a Manager's starting context holds it (concept 2.0 §5). A Package shows what it owns, its children and its Definitions. Raw HTML stays text, and links to other sites show their address but do not open, since a window of the app is no browser.
+- **Map:** the Package graph, each Package above the Packages it depends on, with the links behind every edge, cycles and Packages with compile errors marked. Links up the tree are free and not drawn.
+- **Organization:** the Manager tree as an organization chart: per Manager its Definitions, the paths it owns, and its checklist for the change, with the reasons and the files the change reaches.
+- **Quality:** the lint warnings by code and Package, the compile errors, the cycles, the coupling table and the unused Definitions.
+
+The digits 1 to 4 switch the views; Escape goes back to the hub.
+
+**The change and the diff.** The change is measured from a base: the last landing, the commit `apply` starts from when no base is named, or, when no Run has landed or the owner asks for it, the last commit, so that what is not committed yet shows. With nothing committed, the whole model is the change, as with `--full`. The Organization's checklists are `impact` from that base. A switch turns the diff on in every view: the Reader marks new, changed and removed Definitions and shows a changed one's text line by line against the base, the Map marks new and gone edges and Packages, the Organization dims the Managers the change does not reach, and Quality lists the warnings that came and went.
+
+**Following the folder.** A visible window asks for the document every two seconds. The service answers `304` unless a file Git sees, the last commit or the last landing changed, so an edit made in another editor shows within seconds without reading the model again in between. The service keeps the last document per project and base, and the projects at up to eight base commits in all, which are slow to read through Git and never change. A document read while its request ended is not kept, since a read cut short would stay wrong.
 
 ## The native app
 
@@ -90,8 +106,9 @@ For work on the UI, start `markitect desktop --no-open --listen 127.0.0.1:7340` 
 ## Tests
 
 - `server_test.go`: the host check; launch codes that work once and briefly; the session; the proof, the window and the launch for a later start; the folder dialog, one at a time and only where the window has one; the content security policy and that the built page loads nothing from elsewhere; the write rules; opening, creating, cloning, initializing and removing projects against fake Git, with the folder names refused; the suggested parent.
+- `model_test.go`: the Model area's document against a project in memory: Definitions with their references, realizing files and who sees them; Packages, edges and cycles; impact from the last commit or the last landing, and the whole model with nothing committed; the diff with the warnings that came and went; compile errors placed by Package and Definition; `304` until a file or a commit changes.
 - `desktop_test.go`: a service serves the window it opened and removes its record, which never holds a launch code; a second start has the running service open the window, or prints a link with `--no-open`; a window that fails hands its link to the start that asked; a later start names a service of an earlier version and stops waiting for one that does not answer; a service answers from `Listen` on and leaves no record when closed; a stale record is replaced; a program on the recorded port learns no secret; two starts at once share one service; only loopback addresses are served.
 - `store_test.go` and `window_test.go`: the project list and the choice of window per platform.
-- `internal/bootstrap/desktop_test.go`: creating, opening and cloning real repositories; that `markitect check` passes after the app's init; and that `ListenDesktop`, which the native app calls, shares one service per user.
+- `internal/bootstrap/desktop_test.go`: creating, opening and cloning real repositories; reading the last commit, the last landing and the file stamps; that `markitect check` passes after the app's init; and that `ListenDesktop`, which the native app calls, shares one service per user.
 - The native app has no unit tests; CI builds it on request on Windows, macOS and Linux and starts it ([CONTRIBUTING](../../../CONTRIBUTING.md#verify-a-change)).
-- `desktop/src/*.test.ts`: the hub's next step and the project badges.
+- `desktop/src/*.test.ts`: the hub's next step and the project badges; the Reader's Markdown with its links; the line diff; the Map's layout; the places in the app.

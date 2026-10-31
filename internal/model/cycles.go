@@ -25,10 +25,7 @@ func (m *Model) Successors(p string) []string {
 // checkCycles reports every strongly connected set of Packages as one cycle,
 // with one concrete path through it.
 func (c *compiler) checkCycles() {
-	for _, scc := range c.m.components() {
-		if len(scc) < 2 {
-			continue
-		}
+	for _, scc := range c.m.Cycles() {
 		in := map[string]bool{}
 		for _, p := range scc {
 			in[p] = true
@@ -40,6 +37,19 @@ func (c *compiler) checkCycles() {
 		}
 		c.diags.Add("package.cycle", file, line, "the Packages %s depend on each other in a cycle: %s. Move the shared concept into a common parent, or invert one dependency", strings.Join(names, ", "), strings.Join(steps, "; "))
 	}
+}
+
+// Cycles returns each set of Packages that depend on each other in a cycle,
+// sorted, in a stable order: the sets package.cycle reports. A cycle may run
+// through the implicit edge from a Package to its parent.
+func (m *Model) Cycles() [][]string {
+	var out [][]string
+	for _, scc := range m.components() {
+		if len(scc) > 1 {
+			out = append(out, scc)
+		}
+	}
+	return out
 }
 
 // components returns the strongly connected components of the Package graph
