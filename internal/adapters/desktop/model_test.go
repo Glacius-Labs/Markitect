@@ -302,7 +302,7 @@ func TestADocumentOfAnEndedRequestIsNotKept(t *testing.T) {
 			}
 		}
 		repos.repos[root] = tree
-		if _, _, err := s.models.view(ctx, s.repos, p, ""); err == nil {
+		if _, _, err := s.models.view(ctx, s.repos, p, "", nil); err == nil {
 			t.Fatalf("committed %v: an ended request got a document", committed)
 		}
 		if len(s.models.views) != 0 || len(s.models.bases) != 0 {

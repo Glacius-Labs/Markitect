@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"path"
@@ -29,7 +30,15 @@ import (
 const (
 	baseLanding = "landing" // the last commit a Run landed: the base apply takes
 	baseCommit  = "commit"  // the last commit: what is not committed yet
+	baseTree    = "tree"    // the working tree, under a chat's proposal
 )
+
+// shownProposal is a chat's open proposal, which the views show on top of
+// the working tree.
+type shownProposal struct {
+	chat     string
+	proposal *proposal
+}
 
 // modelView is the Model area's document.
 type modelView struct {
@@ -544,7 +553,7 @@ func (l listed) Files() ([]string, error) { return slices.Clone(l.files), nil }
 
 // view returns the document for a project and base choice, with an ETag that
 // changes whenever the document does.
-func (c *models) view(ctx context.Context, repos Repos, p Project, choice string) ([]byte, string, error) {
+func (c *models) view(ctx context.Context, repos Repos, p Project, choice string, shown *shownProposal) ([]byte, string, error) {
 	ws, err := repos.Open(ctx, p.Path)
 	if err != nil {
 		return nil, "", err
@@ -571,9 +580,16 @@ func (c *models) view(ctx context.Context, repos Repos, p Project, choice string
 		}
 	}
 	chosen := chooseBase(bs, choice)
+	key := p.ID + "\x00" + choice
+	if shown != nil {
+		// The proposal's change is measured from the working tree it would
+		// be written into.
+		chosen = &base{Kind: baseTree}
+		key = p.ID + "\x00chat\x00" + shown.chat
+		fmt.Fprintf(h, "chat\x00%s\x00%d\x00", shown.chat, shown.proposal.N)
+	}
 	fmt.Fprintf(h, "%s\x00%s\x00%s\x00%v", root, bs.Commit, bs.Landing, chosen)
 	etag := `"` + hex.EncodeToString(h.Sum(nil))[:32] + `"`
-	key := p.ID + "\x00" + choice
 	c.mu.Lock()
 	cached, ok := c.views[key]
 	c.mu.Unlock()
@@ -589,7 +605,15 @@ func (c *models) view(ctx context.Context, repos Repos, p Project, choice string
 		Initialized bool  `json:"initialized"`
 		Bases       bases `json:"bases"`
 	}{false, bs}
-	if slices.Contains(cur.Files, project.ManifestFile) {
+	switch {
+	case !slices.Contains(cur.Files, project.ManifestFile):
+	case shown != nil:
+		tree := cur
+		if cur, err = project.Load(newOverlay(ws, files, shown.proposal)); err != nil {
+			return nil, "", err
+		}
+		v = buildModelView(cur, &baseState{project: tree, lint: analysis.Lint(tree)}, bs, chosen, nil)
+	default:
 		var b *baseState
 		var changed []analysis.Change
 		if chosen != nil {
@@ -701,7 +725,24 @@ func (s *server) modelRoute(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, fmt.Errorf("unknown base %q: landing or commit", choice))
 		return
 	}
-	body, etag, err := s.models.view(r.Context(), s.repos, p, choice)
+	var shown *shownProposal
+	if id := r.URL.Query().Get("chat"); id != "" {
+		if !chatID(id) {
+			fail(w, http.StatusNotFound, errors.New("no such chat"))
+			return
+		}
+		open, err := s.chat.openProposal(p, id)
+		if err != nil {
+			fail(w, http.StatusNotFound, errors.New("no such chat"))
+			return
+		}
+		if open == nil {
+			fail(w, http.StatusNotFound, errors.New("the chat has no proposal waiting"))
+			return
+		}
+		shown = &shownProposal{chat: id, proposal: open}
+	}
+	body, etag, err := s.models.view(r.Context(), s.repos, p, choice, shown)
 	if err != nil {
 		fail(w, http.StatusUnprocessableEntity, err)
 		return

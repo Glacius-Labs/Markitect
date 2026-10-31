@@ -26,7 +26,7 @@ export function Organization({ ix, pid, item, diff }: Props) {
         {im
           ? im.full
             ? m.impactNote
-            : `${plural(im.packages?.length ?? 0, 'Manager')} would work on the change${diff || !m.base ? '' : ` since the ${m.base.kind === 'landing' ? 'last landing' : 'last commit'}, ${short(m.base.commit)}`}.`
+            : `${plural(im.packages?.length ?? 0, 'Manager')} would work on the change${diff || !m.base || m.base.kind === 'tree' ? '' : ` since the ${m.base.kind === 'landing' ? 'last landing' : 'last commit'}, ${short(m.base.commit ?? '')}`}.`
           : m.impactNote}
       </p>
       <div className="org">

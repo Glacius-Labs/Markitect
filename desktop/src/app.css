@@ -9,16 +9,24 @@ body {
 }
 
 .app {
+  --topbar: 3.5rem;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
+/* The top bar stays in view, so the chat panel below it can fill the rest. */
 .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  box-sizing: border-box;
+  height: var(--topbar);
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-3) var(--space-6);
+  padding: 0 var(--space-6);
+  background: var(--bg);
   border-bottom: var(--border-1) solid var(--border);
 }
 
@@ -122,7 +130,7 @@ body {
 
 @media (max-width: 600px) {
   .topbar {
-    padding: var(--space-3) var(--space-4);
+    padding: 0 var(--space-4);
   }
 
   .page {

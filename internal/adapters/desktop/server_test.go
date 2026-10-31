@@ -58,6 +58,14 @@ func (m memRepo) Write(file string, data []byte) error {
 	return nil
 }
 
+func (m memRepo) Remove(file string) error {
+	if _, ok := m.files[file]; !ok {
+		return fs.ErrNotExist
+	}
+	delete(m.files, file)
+	return nil
+}
+
 func (m memRepo) Stamp(file string) string {
 	data, ok := m.files[file]
 	if !ok {

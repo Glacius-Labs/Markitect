@@ -3,7 +3,7 @@ import type { Definition, Package } from './api';
 import { diffLines } from './diff';
 import { Editor, NewDefinition, startsEditing } from './Editor';
 import { render } from './markdown';
-import { changeLabel, changeTone, depth, firstSentence, packageName, type Index } from './modeldata';
+import { changeLabel, changeTone, depth, firstSentence, packageName, since, type Index } from './modeldata';
 import { modelHref } from './route';
 import { Alert, Badge } from './ui';
 
@@ -13,11 +13,14 @@ interface Props {
   item?: string;
   diff: boolean;
   refresh: () => void;
+  // The views show a chat's proposal, which is not in the working tree to
+  // edit.
+  editable: boolean;
 }
 
 // Reader shows the model as documentation: every Definition with its links,
 // who refers to it, which files realize it and which Managers see it.
-export function Reader({ ix, pid, item, diff, refresh }: Props) {
+export function Reader({ ix, pid, item, diff, refresh, editable }: Props) {
   const { m, defs, pkgs } = ix;
   const target = item ?? (defs.has('project') ? 'project' : '');
   const def = defs.get(target);
@@ -33,9 +36,9 @@ export function Reader({ ix, pid, item, diff, refresh }: Props) {
       <ReaderNav ix={ix} pid={pid} selected={target} diff={diff} />
       <article className="reader__page" aria-live="polite">
         {def ? (
-          <DefinitionPage key={def.id} ix={ix} pid={pid} def={def} diff={diff} refresh={refresh} />
+          <DefinitionPage key={def.id} ix={ix} pid={pid} def={def} diff={diff} refresh={refresh} editable={editable} />
         ) : pkg ? (
-          <PackagePage ix={ix} pid={pid} pkg={pkg} diff={diff} refresh={refresh} />
+          <PackagePage ix={ix} pid={pid} pkg={pkg} diff={diff} refresh={refresh} editable={editable} />
         ) : removed ? (
           <>
             <Alert tone="warning" title={`${removed.title} was removed`} body={`${removed.id} is in the base but no longer in the working tree.`} />
@@ -83,7 +86,7 @@ function ReaderNav({ ix, pid, selected, diff }: { ix: Index; pid: string; select
         })}
         {removed.length > 0 && (
           <div className="reader__group">
-            <span className="gl-nav__group">Removed since the base</span>
+            <span className="gl-nav__group">Removed {since(ix.m)}</span>
             {removed.map((d) => item(d))}
           </div>
         )}
@@ -98,8 +101,9 @@ function ReaderNav({ ix, pid, selected, diff }: { ix: Index; pid: string; select
   );
 }
 
-function DefinitionPage({ ix, pid, def, diff, refresh }: { ix: Index; pid: string; def: Definition; diff: boolean; refresh: () => void }) {
-  const [editing, setEditing] = useState(() => !def.library && startsEditing(pid, def.id));
+function DefinitionPage({ ix, pid, def, diff, refresh, editable }: { ix: Index; pid: string; def: Definition; diff: boolean; refresh: () => void; editable: boolean }) {
+  const [opened, setEditing] = useState(() => !def.library && startsEditing(pid, def.id));
+  const editing = opened && editable;
   const resolved = useMemo(() => new Map(def.links.map((l) => [l.raw, { target: l.target, package: l.package }])), [def]);
   const html = useMemo(() => render(def.text, { resolve: (raw) => resolved.get(raw), href: (t) => modelHref(pid, 'reader', t) }), [def, resolved, pid]);
   const errors = ix.m.errors.filter((e) => e.definition === def.id);
@@ -125,9 +129,13 @@ function DefinitionPage({ ix, pid, def, diff, refresh }: { ix: Index; pid: strin
         )}
         {def.library ? <span className="muted">Library {def.library}</span> : <span className="muted">in {pkgLink(def.package)}</span>}
         {def.internal && <Badge tone="info">internal</Badge>}
-        {diff && change && <Badge tone={changeTone[change.change]}>{changeLabel[change.change]} since the base</Badge>}
+        {diff && change && (
+          <Badge tone={changeTone[change.change]}>
+            {changeLabel[change.change]} {since(ix.m)}
+          </Badge>
+        )}
         {def.file && <span className="path small def__file">{def.file}</span>}
-        {!def.library && !editing && (
+        {!def.library && editable && !editing && (
           <button className="gl-button" data-size="sm" onClick={() => setEditing(true)}>
             Edit
           </button>
@@ -191,7 +199,7 @@ function DefinitionPage({ ix, pid, def, diff, refresh }: { ix: Index; pid: strin
   );
 }
 
-function PackagePage({ ix, pid, pkg, diff, refresh }: { ix: Index; pid: string; pkg: Package; diff: boolean; refresh: () => void }) {
+function PackagePage({ ix, pid, pkg, diff, refresh, editable }: { ix: Index; pid: string; pkg: Package; diff: boolean; refresh: () => void; editable: boolean }) {
   const [creating, setCreating] = useState(false);
   const errors = ix.m.errors.filter((e) => e.package === pkg.path && !e.definition);
   const warnings = ix.m.lint.filter((e) => e.package === pkg.path && !e.definition);
@@ -204,12 +212,18 @@ function PackagePage({ ix, pid, pkg, diff, refresh }: { ix: Index; pid: string; 
             inside <a href={modelHref(pid, 'reader', pkg.parent)}>{packageName(pkg.parent)}</a>
           </span>
         )}
-        {diff && pkg.change && <Badge tone={changeTone[pkg.change]}>{changeLabel[pkg.change]} since the base</Badge>}
+        {diff && pkg.change && (
+          <Badge tone={changeTone[pkg.change]}>
+            {changeLabel[pkg.change]} {since(ix.m)}
+          </Badge>
+        )}
         <a href={modelHref(pid, 'map', pkg.path)}>On the Map</a>
         <a href={modelHref(pid, 'organization', pkg.path)}>Its Manager</a>
-        <button className="gl-button def__file" data-size="sm" onClick={() => setCreating(true)}>
-          New Definition
-        </button>
+        {editable && (
+          <button className="gl-button def__file" data-size="sm" onClick={() => setCreating(true)}>
+            New Definition
+          </button>
+        )}
       </div>
       {creating && <NewDefinition ix={ix} pid={pid} pkg={pkg.path} onClose={() => setCreating(false)} refresh={refresh} />}
       <h1 className="h2 reader__heading">{packageName(pkg.path)}</h1>

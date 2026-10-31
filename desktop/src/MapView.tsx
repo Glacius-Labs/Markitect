@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { Edge } from './api';
 import { layout } from './layout';
-import { changeLabel, changeTone, packageName, type Index } from './modeldata';
+import { changeLabel, changeTone, packageName, since, type Index } from './modeldata';
 import { modelHref } from './route';
 import { Alert, Badge } from './ui';
 
@@ -107,13 +107,13 @@ function Overview({ ix, pid, diff }: { ix: Index; pid: string; diff: boolean }) 
       <ul className="gl-legend">
         <li className="legend--plain">depends on</li>
         <li className="legend--cycle">in a cycle</li>
-        {diff && <li className="legend--added">new since the base</li>}
-        {diff && <li className="legend--removed">gone since the base</li>}
+        {diff && <li className="legend--added">new {since(m)}</li>}
+        {diff && <li className="legend--removed">gone {since(m)}</li>}
       </ul>
       {m.cycles.map((c) => (
         <Alert key={c.join()} tone="danger" title="A cycle" body={`${c.map(packageName).join(', ')} depend on each other. Move the shared concept into a common parent, or invert one dependency.`} />
       ))}
-      {gonePackages.length > 0 && <Alert tone="warning" title="Packages removed since the base" body={gonePackages.map((p) => p.path).join(', ')} />}
+      {gonePackages.length > 0 && <Alert tone="warning" title={`Packages removed ${since(m)}`} body={gonePackages.map((p) => p.path).join(', ')} />}
       <section className="section">
         <h2 className="h3">Dependencies</h2>
         {m.edges.length === 0 ? (
@@ -172,7 +172,11 @@ function PackagePanel({ ix, pid, path, diff }: { ix: Index; pid: string; path: s
     <>
       <div className="def__meta">
         <Badge tone="neutral">Package</Badge>
-        {diff && p.change && <Badge tone={changeTone[p.change]}>{changeLabel[p.change]} since the base</Badge>}
+        {diff && p.change && (
+          <Badge tone={changeTone[p.change]}>
+            {changeLabel[p.change]} {since(m)}
+          </Badge>
+        )}
         <a href={modelHref(pid, 'reader', path)}>Read it</a>
         <a href={modelHref(pid, 'organization', path)}>Its Manager</a>
       </div>
