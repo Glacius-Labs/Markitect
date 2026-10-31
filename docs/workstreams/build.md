@@ -44,11 +44,11 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 
 ## Next
 
-1. **Counted series:**
-   - The second Windows gate (above).
-   - If it passes, the counted series on Windows, and the gate and the series on Linux.
-2. **The owner's time:** after the counted series, the owner's measurement below.
-3. **Codex repeat:** the smaller repeat with every arm on Codex Luna, as the Codex decision below says, after [what comes first](../validation/counted-series-protocol-20261030.md#after-the-series). Of the three things that come first there, the Codex login and K's Codex command are done (above). The owner's removal of the judge session's records remains.
+1. **Second Windows gate:** running (above). Its result will be Amendment 5.
+2. **Long-lived Managers re-measure:** under its own dispatch, as the Decision below says. If the redesign clears the bar, the owner decides whether to adopt it.
+3. **Counted series:** if the gate passed, the series on Windows, then the gate and the series on Linux. An adopted redesign would first need a new frozen commit and gate, as the protocol says [after a stop](../validation/counted-series-protocol-20261030.md#after-a-stop).
+4. **The owner's time:** after the counted series, the owner's measurement below.
+5. **Codex repeat:** the smaller repeat with every arm on Codex Luna, as the Codex decision below says, after [what comes first](../validation/counted-series-protocol-20261030.md#after-the-series). Of the three things that come first there, the Codex login and K's Codex command are done (above). The owner's removal of the judge session's records remains.
 
 ## Decisions
 
@@ -94,6 +94,8 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
   - Through the Topics session, the owner asked for the [redesign](../design/long-lived-managers.md) on its own branch and a comparison with `main`. The owner chose to run it "Before the series".
   - After the comparison missed its cost bar, the owner kept today's design: "Then continue the evaluation runs as planned with the current version for now".
   - The branch stays a draft and unmerged. The counted series measures the current design.
+  - On a continued turn the redesign's host sends the full first-turn brief again. Through the Topics session, the owner asked for that to be fixed on the branch and its cost measured again: "Yes, fix and re-measure". The re-measure runs only the redesign, on 10 launches, and compares them with the comparison's M rows. The bar is unchanged: a fall of at least a quarter in wall time or in input tokens with cache reads. Fresh M launches are added only if the decision hangs on wall time.
+  - The owner set the order: "Yes, before the series", and "But dont interrupt what was already running. So we dont loose the progress on the evaluation". The re-measure starts only after the second gate has ended, its results are written, Build has reviewed Amendment 5 and the engine is free. The counted series waits for it.
 
 ## Questions for the owner
 
