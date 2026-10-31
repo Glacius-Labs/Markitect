@@ -70,11 +70,11 @@ a.gl-tab {
 
 .reader__nav {
   position: sticky;
-  top: var(--space-4);
+  top: calc(var(--topbar) + var(--space-4));
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  max-height: calc(100vh - var(--space-8));
+  max-height: calc(100vh - var(--topbar) - var(--space-8));
   min-width: 0;
 }
 

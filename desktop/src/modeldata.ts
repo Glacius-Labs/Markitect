@@ -43,6 +43,11 @@ export function leaf(path: string): string {
   return path === '' ? 'Root' : path.slice(path.lastIndexOf('/') + 1);
 }
 
+// since names what a change is measured from, in words.
+export function since(m: ModelView): string {
+  return m.base?.kind === 'tree' ? 'by the proposal' : 'since the base';
+}
+
 export const changeTone: Record<Change, Tone> = { added: 'success', modified: 'warning', removed: 'danger' };
 export const changeLabel: Record<Change, string> = { added: 'New', modified: 'Changed', removed: 'Removed' };
 

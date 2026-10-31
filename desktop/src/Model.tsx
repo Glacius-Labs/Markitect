@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { api, type BaseKind, type ModelView, type Project } from './api';
+import { api, ApiError, type BaseKind, type ModelView, type Project } from './api';
+import { ShownProposal } from './Chat';
+import { showChat, useShownChat } from './shown';
 import { MapView } from './MapView';
 import { index } from './modeldata';
 import { Organization } from './Organization';
@@ -17,8 +19,8 @@ const followEvery = 2000;
 // useModel follows a project's model. A visible window asks again every two
 // seconds; the service answers "nothing changed" unless a file, the last
 // commit or the last landing did, so edits made in another editor show up.
-export function useModel(id: string, base: BaseKind | undefined): { view?: ModelView; error?: string; refresh: () => void } {
-  const [state, setState] = useState<{ view?: ModelView; error?: string }>({});
+export function useModel(id: string, base: BaseKind | undefined, chat?: string | null): { view?: ModelView; error?: string; gone?: boolean; refresh: () => void } {
+  const [state, setState] = useState<{ view?: ModelView; error?: string; gone?: boolean }>({});
   // refresh asks again at once, as after a save.
   const [asked, setAsked] = useState(0);
   const refresh = useCallback(() => setAsked((n) => n + 1), []);
@@ -35,7 +37,7 @@ export function useModel(id: string, base: BaseKind | undefined): { view?: Model
       busy = true;
       try {
         if (document.visibilityState === 'visible') {
-          const r = await api.model(id, base, etag);
+          const r = await api.model(id, base, etag, chat ?? undefined);
           if (!stopped) {
             if (r) {
               etag = r.etag;
@@ -47,7 +49,9 @@ export function useModel(id: string, base: BaseKind | undefined): { view?: Model
         }
       } catch (e) {
         if (!stopped) {
-          setState((s) => ({ view: s.view, error: e instanceof Error ? e.message : String(e) }));
+          // A chat's proposal that was accepted or rejected meanwhile is gone.
+          const gone = chat && e instanceof ApiError && e.status === 404;
+          setState((s) => ({ view: s.view, error: gone ? undefined : e instanceof Error ? e.message : String(e), gone: !!gone }));
         }
       } finally {
         busy = false;
@@ -66,7 +70,7 @@ export function useModel(id: string, base: BaseKind | undefined): { view?: Model
       document.removeEventListener('visibilitychange', wake);
       window.removeEventListener('focus', wake);
     };
-  }, [id, base, asked]);
+  }, [id, base, chat, asked]);
   return { ...state, refresh };
 }
 
@@ -87,7 +91,13 @@ export function ModelArea(props: { id: string; view: View; item?: string }) {
   const [project, setProject] = useState<Project | null>(null);
   const [diff, setDiff] = useState(false);
   const [base, setBase] = useState<BaseKind | undefined>();
-  const { view: m, error, refresh } = useModel(id, base);
+  const chat = useShownChat(id);
+  const { view: m, error, gone, refresh } = useModel(id, base, chat);
+  useEffect(() => {
+    if (gone) {
+      showChat(id, null);
+    }
+  }, [gone, id]);
   const ix = useMemo(() => (m && m.initialized ? index(m) : null), [m]);
 
   useEffect(() => {
@@ -148,7 +158,7 @@ export function ModelArea(props: { id: string; view: View; item?: string }) {
             <input type="checkbox" role="switch" className="gl-switch" checked={diff} onChange={(e) => setDiff(e.target.checked)} />
             Diff
           </label>
-          {diff && m?.base && (
+          {diff && m?.base && m.base.kind !== 'tree' && (
             <div className="gl-segmented" role="radiogroup" aria-label="Compare with">
               <button
                 type="button"
@@ -176,6 +186,7 @@ export function ModelArea(props: { id: string; view: View; item?: string }) {
         </div>
       </div>
       {diff && m?.initialized && <p className="small muted">{compared(m)}</p>}
+      {chat && <ShownProposal pid={id} chat={chat} refresh={refresh} />}
       {error && <Alert tone="danger" title="The model cannot be read" body={error} />}
       {m && !m.initialized && (
         <Alert tone="info" title="Markitect is not set up in this project" body="Set it up from the project's page; then the model shows here.">
@@ -191,7 +202,7 @@ export function ModelArea(props: { id: string; view: View; item?: string }) {
           </a>
         </Alert>
       )}
-      {ix && view === 'reader' && <Reader ix={ix} pid={id} item={item} diff={diff} refresh={refresh} />}
+      {ix && view === 'reader' && <Reader ix={ix} pid={id} item={item} diff={diff} refresh={refresh} editable={!chat} />}
       {ix && view === 'map' && <MapView ix={ix} pid={id} item={item} diff={diff} />}
       {ix && view === 'organization' && <Organization ix={ix} pid={id} item={item} diff={diff} />}
       {ix && view === 'quality' && <Quality ix={ix} pid={id} item={item} diff={diff} />}
@@ -208,9 +219,12 @@ function compared(m: ModelView): string {
   if (!m.base) {
     return 'Nothing is committed yet, so the whole model is new.';
   }
+  if (m.base.kind === 'tree') {
+    return 'Compared with the working tree: what accepting the proposal would write.';
+  }
   if (m.base.kind === 'landing') {
-    return `Compared with the last landing, ${short(m.base.commit)}: what apply would realize.`;
+    return `Compared with the last landing, ${short(m.base.commit ?? '')}: what apply would realize.`;
   }
   const none = m.bases.landing ? '' : ' No Run has landed yet.';
-  return `Compared with the last commit, ${short(m.base.commit)}: what is not committed yet.${none}`;
+  return `Compared with the last commit, ${short(m.base.commit ?? '')}: what is not committed yet.${none}`;
 }

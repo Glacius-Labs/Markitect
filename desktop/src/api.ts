@@ -78,6 +78,8 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<T>
 
 export type Change = 'added' | 'modified' | 'removed';
 export type BaseKind = 'landing' | 'commit';
+// tree: the working tree, under a chat's proposal.
+export type ShownBase = BaseKind | 'tree';
 
 export interface Diagnostic {
   code: string;
@@ -173,7 +175,7 @@ export interface ModelDiff {
 export interface ModelView {
   initialized: boolean;
   bases: { commit?: string; landing?: string };
-  base: { kind: BaseKind; commit: string } | null;
+  base: { kind: ShownBase; commit?: string } | null;
   errors: Diagnostic[];
   lint: Diagnostic[];
   definitions: Definition[];
@@ -187,6 +189,42 @@ export interface ModelView {
 
 const project = (id: string) => `/api/projects/${encodeURIComponent(id)}`;
 
+// The chat: conversations with an agent that works on a copy of the project
+// and proposes model changes, which the owner accepts into the working tree.
+
+export type Skill = 'modeling' | 'extract';
+
+export interface ChatSummary {
+  id: string;
+  title: string;
+  skill: Skill;
+  updated: string;
+  working: boolean;
+  proposal: boolean;
+}
+
+export interface Proposal {
+  n: number;
+  at: string;
+  state: 'open' | 'accepted' | 'rejected' | 'superseded' | 'withdrawn';
+  files: { path: string; change: Change; text?: string }[];
+  outside?: string[];
+  conflicts?: string[];
+}
+
+export interface Conversation {
+  id: string;
+  title: string;
+  skill: Skill;
+  created: string;
+  updated: string;
+  messages: { from: 'owner' | 'agent' | 'app'; text: string; at: string }[];
+  proposals: Proposal[];
+  working: boolean;
+  // Why the conversation's last change is only in memory.
+  unsaved?: string;
+}
+
 // Conflict is the service's answer to a hand edit whose file changed since
 // the editor opened it: the text as it is now, and its digest, empty when the
 // file is gone.
@@ -194,6 +232,18 @@ export interface Conflict {
   error: string;
   text: string;
   digest: string;
+}
+
+// decide accepts or rejects a chat's open proposal. An accept that found the
+// working tree changed returns the conversation, whose open proposal names
+// the files.
+async function decide(id: string, chat: string, what: 'accept' | 'reject'): Promise<Conversation> {
+  const res = await fetch(`${project(id)}/chats/${chat}/${what}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+  const data = (await res.json().catch(() => undefined)) as (Conversation & { error?: string }) | undefined;
+  if (res.ok || (res.status === 409 && data?.id)) {
+    return data as Conversation;
+  }
+  throw new ApiError(data?.error ?? res.statusText, res.status);
 }
 
 // saveDefinition writes a Definition's text into the working tree. base is
@@ -216,8 +266,9 @@ async function saveDefinition(id: string, def: string, text: string, base: strin
 
 // model asks for the Model area's document. With the ETag of the last answer
 // it returns null when nothing changed since.
-async function model(id: string, base: BaseKind | undefined, etag: string): Promise<{ view: ModelView; etag: string } | null> {
-  const res = await fetch(`${project(id)}/model${base ? `?base=${base}` : ''}`, { headers: etag ? { 'If-None-Match': etag } : undefined });
+async function model(id: string, base: BaseKind | undefined, etag: string, chat?: string): Promise<{ view: ModelView; etag: string } | null> {
+  const query = chat ? `?chat=${encodeURIComponent(chat)}` : base ? `?base=${base}` : '';
+  const res = await fetch(`${project(id)}/model${query}`, { headers: etag ? { 'If-None-Match': etag } : undefined });
   if (res.status === 304) {
     return null;
   }
@@ -243,6 +294,12 @@ export const api = {
   remove: (id: string) => call<void>('DELETE', project(id)),
   model,
   saveDefinition,
+  chats: (id: string) => call<{ chats: ChatSummary[]; available: boolean }>('GET', `${project(id)}/chats`),
+  newChat: (id: string, text: string, skill: Skill) => call<Conversation>('POST', `${project(id)}/chats`, { text, skill }),
+  chat: (id: string, chat: string) => call<Conversation>('GET', `${project(id)}/chats/${chat}`),
+  say: (id: string, chat: string, text: string) => call<Conversation>('POST', `${project(id)}/chats/${chat}/messages`, { text }),
+  decide,
+  deleteChat: (id: string, chat: string) => call<void>('DELETE', `${project(id)}/chats/${chat}`),
   // The folder the user chose in the window's dialog, or '' when cancelled.
   chooseFolder: (start: string) => call<{ path: string }>('POST', '/api/folder', { start }).then((r) => r.path),
 };

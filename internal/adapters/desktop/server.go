@@ -47,6 +47,7 @@ type server struct {
 	repos    Repos
 	commands Commands
 	models   *models
+	chat     *chatService
 	mux      *http.ServeMux
 	now      func() time.Time
 
@@ -72,6 +73,7 @@ func newServer(secret, address string, store *Store, repos Repos, commands Comma
 	}
 	s := &server{secret: secret, session: session, cookie: "markitect_" + port, address: address, port: port, store: store, repos: repos, commands: commands,
 		models: newModels(), mux: http.NewServeMux(), now: time.Now, launches: map[string]time.Time{}}
+	s.chat = newChatService(filepath.Join(filepath.Dir(store.File), "chats"), nil, repos, &s.edits)
 	files, err := fs.Sub(ui, "ui")
 	if err != nil {
 		return nil, err
@@ -85,6 +87,7 @@ func newServer(secret, address string, store *Store, repos Repos, commands Comma
 	s.mux.HandleFunc("POST /api/projects/{id}/init", s.initProject)
 	s.mux.HandleFunc("GET /api/projects/{id}/model", s.modelRoute)
 	s.mux.HandleFunc("PUT /api/projects/{id}/definitions/{path...}", s.saveDefinition)
+	s.chatRoutes()
 	s.mux.Handle("GET /", http.FileServerFS(files))
 	return s, nil
 }

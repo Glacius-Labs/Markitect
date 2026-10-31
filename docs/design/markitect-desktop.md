@@ -160,6 +160,20 @@ Details settled while building D3 on 31 October 2026, under the owner's go-ahead
 - **The Map's layout** is the app's own small layered drawing, a Package above what it depends on, instead of a graph library.
 - **Hand edits** use a plain text editor over the whole file, front matter included, rather than a rich Markdown editor: the file is the model, and the Reader shows how it reads. A save names the text it started from, so a file another editor changed is never overwritten unseen. New Definitions start from a Package's page; deleting and moving stay with the owner's editor or the chat.
 
+### The chat
+
+Details settled on 31 October 2026, under the owner's go-ahead to decide them, before D4 is built. While the evaluations keep Docker, the chat is built and tested against the agent runtime's scripted stand-in and runs for real once Docker is free.
+
+- **One agent per conversation, beside the Managers.** A chat agent is a new kind of agent in `internal/agents`, added beside the Manager agent without changing it: the same Manager image, limits, provider network, account login copy and provider adapters, but no Run. Its `/work` is filled from the project's working tree as Git sees it, uncommitted changes included, sent into the container as an archive; no folder of the user's is mounted. Inside, that state is committed as the conversation's start.
+- **What it knows.** The chat's system text says what it is for and carries the modeling skill, or the Extract skill for an extraction. It names the one rule the app enforces: only files below `.markitect/` are proposed. The agent reads the model in `/work` with the `markitect` commands of the image. It gets no Manager tools.
+- **Turns.** Each message of the owner is one turn of the same provider conversation. The container lives while the app runs and the conversation is open. A conversation reopened after the app restarted starts a fresh agent, whose first message carries the conversation so far.
+- **The proposal** is what the turn changed below `.markitect/` against the conversation's start, read from the container after every turn. Changes elsewhere are named but not proposed. The Model views show the working tree with the proposal on top, and the diff against the working tree is one click away.
+- **Accept and reject.** Accepting writes the proposal into the working tree, but only if no file it touches changed there since the conversation's start; otherwise nothing is written and the app names the files. After an accept, the container's start moves to the accepted state; after a reject, the container drops the proposal. The owner commits as usual.
+- **Conversations** are kept per project in the user's config folder: messages, each proposal and whether it was accepted. The panel lists them, newest first, beside any area.
+- **While a turn runs,** the window asks for the conversation every second and shows the agent's messages as they arrive, a message at a time; the event stream comes with the Runs.
+- **Extract** is a conversation that starts with the Extract skill and its task. Its first stop, the Package cut, is a proposal of the registry pages with their path patterns and one anchor Definition per Package, shown on the Map before any other Definition is written. Its second is the whole model as one proposal. The skill gains the first stop as a change of its own, made one writer at a time with Build.
+- **Logins** live in Settings, at app level: whether the Claude and Codex logins exist, whose account they are and when they expire, read from the provider's own login file, and how to log in with the provider's own CLI.
+
 ## Delivery
 
 Each slice is one PR with its tests and is useful on its own. The app is built against what is stable first. How Runs execute may still change fundamentally with the evaluations that are running: Manager containers that live for the whole Run or for one start, Git handoffs or one shared checkout, or no containers at all. So the Runs area waits until that is settled, and its sections above, which describe today's engine, are revised then.
@@ -169,7 +183,7 @@ Each slice is one PR with its tests and is useful on its own. The app is built a
 1. **D1, Projects and hub.** `markitect desktop`, the service, the browser window, the project list, opening, creating and cloning projects, `init`, and the hub with the model check. Built.
 2. **D2, Native shell.** The probe and the shell, no terminal window, the app icon and the title Markitect. Built: Wails v3 ([above](#the-native-shell)), with a tray and the folder dialog.
 3. **D3, Model.** Reader, Map, Organization and Quality, the diff toggle and hand edits. Built ([below](#the-model-area)).
-4. **D4, Chat and Extract.** Chat agents in containers, proposals in the views, Extract with its two stops, and the app settings for the logins.
+4. **D4, Chat and Extract.** Chat agents in containers, proposals in the views, Extract with its two stops, and the app settings for the logins ([above](#the-chat)). In three parts: the conversations, proposals and panel in the app over a port; the chat agent in its container; Extract and the logins.
 
 **Surroundings, when the model work is blocked:** the model part of Statistics, the rest of the app settings, notifications and packaging.
 

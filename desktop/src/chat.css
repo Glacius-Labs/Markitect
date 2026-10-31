@@ -1,0 +1,152 @@
+/* The chat panel beside any area of a project. Every value is a design
+   system token. */
+
+.workspace {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.workspace > .page {
+  flex: 1;
+  min-width: 0;
+}
+
+.chat {
+  position: sticky;
+  top: var(--topbar);
+  align-self: flex-start;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: 26rem;
+  flex-shrink: 0;
+  height: calc(100vh - var(--topbar));
+  background: var(--bg);
+  border-left: var(--border-1) solid var(--border);
+}
+
+.chat__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border-1) solid var(--border);
+}
+
+.chat__pick {
+  flex: 1;
+  min-width: 0;
+}
+
+.chat__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+
+.chat__start {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.chat__start p {
+  margin: 0;
+}
+
+.chat__messages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.chat__owner {
+  align-self: flex-end;
+  max-width: 85%;
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--accent-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.chat__agent {
+  max-width: none;
+  font-size: 0.9375rem;
+}
+
+.chat__agent > :last-child {
+  margin-bottom: 0;
+}
+
+.chat__agent h1 {
+  font-size: 1.25rem;
+}
+
+.chat__note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.chat__proposal {
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.chat__files {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+
+.chat__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.chat__actions a.gl-button {
+  text-decoration: none;
+}
+
+.chat__compose {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-top: var(--border-1) solid var(--border);
+}
+
+.chat__input {
+  flex: 1;
+  min-width: 0;
+  min-height: 3rem;
+  max-height: 12rem;
+}
+
+/* A narrow window shows the chat over the page. */
+@media (max-width: 900px) {
+  .chat {
+    position: fixed;
+    inset: var(--topbar) 0 0;
+    z-index: 10;
+    width: auto;
+    height: auto;
+    border-left: 0;
+  }
+}

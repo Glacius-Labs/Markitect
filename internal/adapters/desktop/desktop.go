@@ -39,6 +39,8 @@ type Workspace interface {
 	// Write writes a file of the working tree, creating its folders; a
 	// reader sees the old file or the new one, never a part.
 	Write(file string, data []byte) error
+	// Remove removes a file of the working tree.
+	Remove(file string) error
 }
 
 // Commit is one commit of a project's repository.
@@ -88,6 +90,8 @@ type Config struct {
 	// starting at start, and returns "" when the user cancels. Nil means the
 	// window has no such dialog, and the user types the path.
 	ChooseFolder func(ctx context.Context, start string) (string, error)
+	// Chats starts the chat agents; nil means the app has no chat.
+	Chats Chats
 }
 
 // Service is this user's running desktop service. It answers from the moment
@@ -182,6 +186,7 @@ func listen(cfg Config) (_ *Service, err error) {
 	if err != nil {
 		return nil, err
 	}
+	srv.chat.chats = cfg.Chats
 	srv.openWindow, srv.chooseFolder = cfg.OpenWindow, cfg.ChooseFolder
 	if err := publishRecord(cfg.Dir, data); err != nil {
 		return nil, err
@@ -229,6 +234,9 @@ func (s *Service) Close() {
 			// for its first seconds; after the grace period, close what is left.
 			_ = s.http.Close()
 		}
+		// No request starts a chat agent any more; the turns end and the
+		// agents with them.
+		s.srv.chat.close()
 	})
 }
 
