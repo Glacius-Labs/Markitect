@@ -2,10 +2,13 @@ package bootstrap
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/cli"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/desktop"
@@ -98,6 +101,27 @@ func (desktopRepos) LastLanded(ctx context.Context, root, tip string) (string, b
 // desktopTree is the working tree with the stamp the app's views follow it
 // by.
 type desktopTree struct{ repo.WorkingTree }
+
+// Write writes a file of the working tree, as a hand edit in the Reader
+// does. It refuses a path that runs through a symbolic link, which could lead
+// out of the repository.
+func (t desktopTree) Write(file string, data []byte) error {
+	p := t.Dir
+	for _, part := range strings.Split(file, "/") {
+		p = filepath.Join(p, part)
+		info, err := os.Lstat(p)
+		if errors.Is(err, fs.ErrNotExist) {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		if info.Mode()&fs.ModeSymlink != 0 {
+			return fmt.Errorf("%s runs through a symbolic link; Markitect writes no file there", file)
+		}
+	}
+	return t.WorkingTree.Write(file, data)
+}
 
 func (t desktopTree) Stamp(file string) string {
 	info, err := os.Lstat(filepath.Join(t.Dir, filepath.FromSlash(file)))

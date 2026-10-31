@@ -53,6 +53,11 @@ func (m memRepo) Read(file string) ([]byte, error) {
 
 func (memRepo) GitIgnored(string) bool { return false }
 
+func (m memRepo) Write(file string, data []byte) error {
+	m.files[file] = string(data)
+	return nil
+}
+
 func (m memRepo) Stamp(file string) string {
 	data, ok := m.files[file]
 	if !ok {

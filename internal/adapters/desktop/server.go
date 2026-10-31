@@ -83,6 +83,7 @@ func newServer(secret, address string, store *Store, repos Repos, commands Comma
 	s.mux.HandleFunc("DELETE /api/projects/{id}", s.removeProject)
 	s.mux.HandleFunc("POST /api/projects/{id}/init", s.initProject)
 	s.mux.HandleFunc("GET /api/projects/{id}/model", s.modelRoute)
+	s.mux.HandleFunc("PUT /api/projects/{id}/definitions/{path...}", s.saveDefinition)
 	s.mux.Handle("GET /", http.FileServerFS(files))
 	return s, nil
 }
@@ -102,13 +103,13 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.Set("Cache-Control", "no-store")
 	}
 	// A write that names an origin must name the service's own, and a POST
-	// must be JSON, which a form of another page cannot send.
+	// or PUT must be JSON, which a form of another page cannot send.
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
 		if o := r.Header.Get("Origin"); o != "" && o != "http://"+r.Host {
 			http.Error(w, "foreign origin", http.StatusForbidden)
 			return
 		}
-		if r.Method == http.MethodPost && !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
+		if (r.Method == http.MethodPost || r.Method == http.MethodPut) && !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
 			http.Error(w, "JSON only", http.StatusUnsupportedMediaType)
 			return
 		}

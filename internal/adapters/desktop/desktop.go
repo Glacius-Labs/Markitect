@@ -36,6 +36,8 @@ type Workspace interface {
 	// Stamp is a cheap mark of one file, such as its size and modification
 	// time, that changes when the file does.
 	Stamp(file string) string
+	// Write writes a file of the working tree, creating its folders.
+	Write(file string, data []byte) error
 }
 
 // Commit is one commit of a project's repository.

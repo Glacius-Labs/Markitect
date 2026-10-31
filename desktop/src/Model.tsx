@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api, type BaseKind, type ModelView, type Project } from './api';
 import { MapView } from './MapView';
 import { index } from './modeldata';
@@ -17,8 +17,11 @@ const followEvery = 2000;
 // useModel follows a project's model. A visible window asks again every two
 // seconds; the service answers "nothing changed" unless a file, the last
 // commit or the last landing did, so edits made in another editor show up.
-export function useModel(id: string, base: BaseKind | undefined): { view?: ModelView; error?: string } {
+export function useModel(id: string, base: BaseKind | undefined): { view?: ModelView; error?: string; refresh: () => void } {
   const [state, setState] = useState<{ view?: ModelView; error?: string }>({});
+  // refresh asks again at once, as after a save.
+  const [asked, setAsked] = useState(0);
+  const refresh = useCallback(() => setAsked((n) => n + 1), []);
   useEffect(() => {
     let etag = '';
     let stopped = false;
@@ -63,8 +66,8 @@ export function useModel(id: string, base: BaseKind | undefined): { view?: Model
       document.removeEventListener('visibilitychange', wake);
       window.removeEventListener('focus', wake);
     };
-  }, [id, base]);
-  return state;
+  }, [id, base, asked]);
+  return { ...state, refresh };
 }
 
 // typing reports whether a key goes to a field rather than to the app.
@@ -84,7 +87,7 @@ export function ModelArea(props: { id: string; view: View; item?: string }) {
   const [project, setProject] = useState<Project | null>(null);
   const [diff, setDiff] = useState(false);
   const [base, setBase] = useState<BaseKind | undefined>();
-  const { view: m, error } = useModel(id, base);
+  const { view: m, error, refresh } = useModel(id, base);
   const ix = useMemo(() => (m && m.initialized ? index(m) : null), [m]);
 
   useEffect(() => {
@@ -188,7 +191,7 @@ export function ModelArea(props: { id: string; view: View; item?: string }) {
           </a>
         </Alert>
       )}
-      {ix && view === 'reader' && <Reader ix={ix} pid={id} item={item} diff={diff} />}
+      {ix && view === 'reader' && <Reader ix={ix} pid={id} item={item} diff={diff} refresh={refresh} />}
       {ix && view === 'map' && <MapView ix={ix} pid={id} item={item} diff={diff} />}
       {ix && view === 'organization' && <Organization ix={ix} pid={id} item={item} diff={diff} />}
       {ix && view === 'quality' && <Quality ix={ix} pid={id} item={item} diff={diff} />}

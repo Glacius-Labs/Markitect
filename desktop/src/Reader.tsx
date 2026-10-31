@@ -1,6 +1,7 @@
 import { Children, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Definition, Package } from './api';
 import { diffLines } from './diff';
+import { Editor, NewDefinition, startsEditing } from './Editor';
 import { render } from './markdown';
 import { changeLabel, changeTone, depth, firstSentence, packageName, type Index } from './modeldata';
 import { modelHref } from './route';
@@ -11,11 +12,12 @@ interface Props {
   pid: string;
   item?: string;
   diff: boolean;
+  refresh: () => void;
 }
 
 // Reader shows the model as documentation: every Definition with its links,
 // who refers to it, which files realize it and which Managers see it.
-export function Reader({ ix, pid, item, diff }: Props) {
+export function Reader({ ix, pid, item, diff, refresh }: Props) {
   const { m, defs, pkgs } = ix;
   const target = item ?? (defs.has('project') ? 'project' : '');
   const def = defs.get(target);
@@ -31,9 +33,9 @@ export function Reader({ ix, pid, item, diff }: Props) {
       <ReaderNav ix={ix} pid={pid} selected={target} diff={diff} />
       <article className="reader__page" aria-live="polite">
         {def ? (
-          <DefinitionPage ix={ix} pid={pid} def={def} diff={diff} />
+          <DefinitionPage key={def.id} ix={ix} pid={pid} def={def} diff={diff} refresh={refresh} />
         ) : pkg ? (
-          <PackagePage ix={ix} pid={pid} pkg={pkg} diff={diff} />
+          <PackagePage ix={ix} pid={pid} pkg={pkg} diff={diff} refresh={refresh} />
         ) : removed ? (
           <>
             <Alert tone="warning" title={`${removed.title} was removed`} body={`${removed.id} is in the base but no longer in the working tree.`} />
@@ -96,7 +98,8 @@ function ReaderNav({ ix, pid, selected, diff }: { ix: Index; pid: string; select
   );
 }
 
-function DefinitionPage({ ix, pid, def, diff }: { ix: Index; pid: string; def: Definition; diff: boolean }) {
+function DefinitionPage({ ix, pid, def, diff, refresh }: { ix: Index; pid: string; def: Definition; diff: boolean; refresh: () => void }) {
+  const [editing, setEditing] = useState(() => !def.library && startsEditing(pid, def.id));
   const resolved = useMemo(() => new Map(def.links.map((l) => [l.raw, { target: l.target, package: l.package }])), [def]);
   const html = useMemo(() => render(def.text, { resolve: (raw) => resolved.get(raw), href: (t) => modelHref(pid, 'reader', t) }), [def, resolved, pid]);
   const errors = ix.m.errors.filter((e) => e.definition === def.id);
@@ -124,6 +127,11 @@ function DefinitionPage({ ix, pid, def, diff }: { ix: Index; pid: string; def: D
         {def.internal && <Badge tone="info">internal</Badge>}
         {diff && change && <Badge tone={changeTone[change.change]}>{changeLabel[change.change]} since the base</Badge>}
         {def.file && <span className="path small def__file">{def.file}</span>}
+        {!def.library && !editing && (
+          <button className="gl-button" data-size="sm" onClick={() => setEditing(true)}>
+            Edit
+          </button>
+        )}
       </div>
       {errors.map((e, i) => (
         <Alert key={`e${i}`} tone="danger" title={e.code} body={`${e.line ? `Line ${e.line}: ` : ''}${e.message}`} />
@@ -131,7 +139,13 @@ function DefinitionPage({ ix, pid, def, diff }: { ix: Index; pid: string; def: D
       {warnings.map((e, i) => (
         <Alert key={`w${i}`} tone="warning" title={e.code} body={e.message} />
       ))}
-      {diff && change ? <TextDiff before={change.baseText ?? ''} after={def.text} /> : <div className="prose" dangerouslySetInnerHTML={{ __html: html }} />}
+      {editing ? (
+        <Editor pid={pid} def={def} onClose={() => setEditing(false)} refresh={refresh} />
+      ) : diff && change ? (
+        <TextDiff before={change.baseText ?? ''} after={def.text} />
+      ) : (
+        <div className="prose" dangerouslySetInnerHTML={{ __html: html }} />
+      )}
       <div className="facts">
         {!def.library && (
           <Fact title="Links to" empty="No links">
@@ -177,7 +191,8 @@ function DefinitionPage({ ix, pid, def, diff }: { ix: Index; pid: string; def: D
   );
 }
 
-function PackagePage({ ix, pid, pkg, diff }: { ix: Index; pid: string; pkg: Package; diff: boolean }) {
+function PackagePage({ ix, pid, pkg, diff, refresh }: { ix: Index; pid: string; pkg: Package; diff: boolean; refresh: () => void }) {
+  const [creating, setCreating] = useState(false);
   const errors = ix.m.errors.filter((e) => e.package === pkg.path && !e.definition);
   const warnings = ix.m.lint.filter((e) => e.package === pkg.path && !e.definition);
   return (
@@ -192,7 +207,11 @@ function PackagePage({ ix, pid, pkg, diff }: { ix: Index; pid: string; pkg: Pack
         {diff && pkg.change && <Badge tone={changeTone[pkg.change]}>{changeLabel[pkg.change]} since the base</Badge>}
         <a href={modelHref(pid, 'map', pkg.path)}>On the Map</a>
         <a href={modelHref(pid, 'organization', pkg.path)}>Its Manager</a>
+        <button className="gl-button def__file" data-size="sm" onClick={() => setCreating(true)}>
+          New Definition
+        </button>
       </div>
+      {creating && <NewDefinition ix={ix} pid={pid} pkg={pkg.path} onClose={() => setCreating(false)} refresh={refresh} />}
       <h1 className="h2 reader__heading">{packageName(pkg.path)}</h1>
       {errors.map((e, i) => (
         <Alert key={`e${i}`} tone="danger" title={e.code} body={e.message} />

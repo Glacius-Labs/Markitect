@@ -158,6 +158,7 @@ Details settled while building D3 on 31 October 2026, under the owner's go-ahead
 - **Seen by** follows a Manager's starting context as the harness renders it: its own Package, its parents' Definitions, the Definitions they link to and their Kinds in full, and a child's public Definitions by title.
 - **Markdown** is rendered with markdown-it with raw HTML off. A link of the model leads on in the Reader; links to other sites show their address and do not open, since the native window is no browser and binds nothing.
 - **The Map's layout** is the app's own small layered drawing, a Package above what it depends on, instead of a graph library.
+- **Hand edits** use a plain text editor over the whole file, front matter included, rather than a rich Markdown editor: the file is the model, and the Reader shows how it reads. A save names the text it started from, so a file another editor changed is never overwritten unseen. New Definitions start from a Package's page; deleting and moving stay with the owner's editor or the chat.
 
 ## Delivery
 
@@ -167,7 +168,7 @@ Each slice is one PR with its tests and is useful on its own. The app is built a
 
 1. **D1, Projects and hub.** `markitect desktop`, the service, the browser window, the project list, opening, creating and cloning projects, `init`, and the hub with the model check. Built.
 2. **D2, Native shell.** The probe and the shell, no terminal window, the app icon and the title Markitect. Built: Wails v3 ([above](#the-native-shell)), with a tray and the folder dialog.
-3. **D3, Model.** Reader, Map, Organization and Quality, the diff toggle and hand edits. The views and the diff are built ([below](#the-model-area)); hand edits come next.
+3. **D3, Model.** Reader, Map, Organization and Quality, the diff toggle and hand edits. Built ([below](#the-model-area)).
 4. **D4, Chat and Extract.** Chat agents in containers, proposals in the views, Extract with its two stops, and the app settings for the logins.
 
 **Surroundings, when the model work is blocked:** the model part of Statistics, the rest of the app settings, notifications and packaging.

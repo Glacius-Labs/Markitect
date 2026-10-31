@@ -312,6 +312,28 @@ a.gl-tab {
   color: var(--text-muted);
 }
 
+/* The hand editor. */
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.editor__text {
+  min-height: 24rem;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  tab-size: 2;
+}
+
+.editor__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
 /* A Definition's line diff. */
 .textdiff pre {
   white-space: pre-wrap;

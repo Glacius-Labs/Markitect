@@ -105,6 +105,8 @@ export interface Definition {
   internal?: boolean;
   words: number;
   text: string;
+  // Marks the text, for a hand edit to name what it started from.
+  digest: string;
   links: { raw: string; target: string; package?: boolean; kind?: boolean; line: number }[];
   referencedBy: Ref[];
   realizedBy: { file: string; reason: string; page: string; line: number }[];
@@ -185,6 +187,33 @@ export interface ModelView {
 
 const project = (id: string) => `/api/projects/${encodeURIComponent(id)}`;
 
+// Conflict is the service's answer to a hand edit whose file changed since
+// the editor opened it: the text as it is now, and its digest, empty when the
+// file is gone.
+export interface Conflict {
+  error: string;
+  text: string;
+  digest: string;
+}
+
+// saveDefinition writes a Definition's text into the working tree. base is
+// the digest of the text the editor started from, '' for a new Definition.
+async function saveDefinition(id: string, def: string, text: string, base: string): Promise<{ ok: true; digest: string } | { ok: false; conflict: Conflict }> {
+  const res = await fetch(`${project(id)}/definitions/${def.split('/').map(encodeURIComponent).join('/')}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, base }),
+  });
+  const data = (await res.json().catch(() => undefined)) as { error?: string; digest?: string } | undefined;
+  if (res.status === 409) {
+    return { ok: false, conflict: data as Conflict };
+  }
+  if (!res.ok) {
+    throw new ApiError(data?.error ?? res.statusText, res.status);
+  }
+  return { ok: true, digest: data?.digest ?? '' };
+}
+
 // model asks for the Model area's document. With the ETag of the last answer
 // it returns null when nothing changed since.
 async function model(id: string, base: BaseKind | undefined, etag: string): Promise<{ view: ModelView; etag: string } | null> {
@@ -213,6 +242,7 @@ export const api = {
   init: (id: string) => call<Result>('POST', `${project(id)}/init`, {}),
   remove: (id: string) => call<void>('DELETE', project(id)),
   model,
+  saveDefinition,
   // The folder the user chose in the window's dialog, or '' when cancelled.
   chooseFolder: (start: string) => call<{ path: string }>('POST', '/api/folder', { start }).then((r) => r.path),
 };

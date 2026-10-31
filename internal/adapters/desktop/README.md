@@ -1,6 +1,6 @@
 # Markitect Desktop
 
-`internal/adapters/desktop` is Markitect Desktop, the app over the command line that users know as Markitect ([DEC-089](../../../docs/concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli), [design](../../../docs/design/markitect-desktop.md)). This page is the canonical description of what is built: slice D1, projects and hub; slice D2, the native app ([`cmd/markitect-desktop`](../../../cmd/markitect-desktop/main.go)); and of slice D3 the [Model area](#the-model-area)'s four views with their diff.
+`internal/adapters/desktop` is Markitect Desktop, the app over the command line that users know as Markitect ([DEC-089](../../../docs/concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli), [design](../../../docs/design/markitect-desktop.md)). This page is the canonical description of what is built: slice D1, projects and hub; slice D2, the native app ([`cmd/markitect-desktop`](../../../cmd/markitect-desktop/main.go)); and slice D3, the [Model area](#the-model-area) with its four views, the diff and hand edits.
 
 ## Starting it
 
@@ -28,7 +28,8 @@ Either way:
   - **The launch code** in a window's link (`/?t=CODE`) works once and for two minutes. It may show up on the browser's command line, so it buys nothing more than one session.
   - **The session** is an `HttpOnly`, `SameSite=Strict` cookie, named after the service's port, that the launch code sets. Every request of the page needs it.
   - **The record's secret** stays in `desktop.json`, readable by the user only. A later start asks the service to prove it holds the secret (`/api/hello`, an HMAC over a fresh challenge), so a program that took over the port after a crash learns nothing; only then does the start send the secret, to have the service open a window (`/api/window`) or to get a window's link (`/api/launch`).
-- A write that names an origin must name the service's own, and a `POST` must be JSON; a form or page of another site can send neither.
+- A write that names an origin must name the service's own, and a `POST` or `PUT` must be JSON; a form or page of another site can send neither.
+- A hand edit writes only a Definition's file below `.markitect/model/`, named by the model language's names that also mean the same on every platform, and never through a symbolic link, which could lead out of the repository.
 - Every response carries a content security policy that lets the page load only its own files; the page loads nothing from elsewhere.
 - A new project's folder name must mean the same on Windows, Linux and macOS: no separator, reserved character, control character, leading dot or device name such as `CON`. A clone runs with no terminal prompt, SSH in batch mode unless the user configured an SSH command, the `ext` transport off and a 30-minute limit; a clone that fails leaves no folder behind.
 
@@ -45,6 +46,7 @@ Either way:
 | `POST /api/projects` | Brings a project in: `open` a folder inside a repository, `create` a new folder with Git and `markitect init`, or `clone` a URL into a new folder |
 | `GET /api/projects/{id}` | One project with its status |
 | `POST /api/projects/{id}/init` | Runs `markitect init` in the project |
+| `PUT /api/projects/{id}/definitions/{definition}` | Writes a Definition's text into the working tree, given the digest of the text the editor started from, or none for a new Definition; `409` with the file's text as it is now when it changed meanwhile ([hand edits](#hand-edits)) |
 | `GET /api/projects/{id}/model?base=landing\|commit` | The Model area's document ([below](#the-model-area)); with the `ETag` of the last answer in `If-None-Match`, `304` when nothing changed |
 | `DELETE /api/projects/{id}` | Takes the project off the list; its folder stays |
 
@@ -68,6 +70,14 @@ The digits 1 to 4 switch the views; Escape goes back to the hub.
 **The change and the diff.** The change is measured from a base: the last landing, the commit `apply` starts from when no base is named, or, when no Run has landed or the owner asks for it, the last commit, so that what is not committed yet shows. With nothing committed, the whole model is the change, as with `--full`. The Organization's checklists are `impact` from that base. A switch turns the diff on in every view: the Reader marks new, changed and removed Definitions and shows a changed one's text line by line against the base, the Map marks new and gone edges and Packages, the Organization dims the Managers the change does not reach, and Quality lists the warnings that came and went.
 
 **Following the folder.** A visible window asks for the document every two seconds. The service answers `304` unless a file Git sees, the last commit or the last landing changed, so an edit made in another editor shows within seconds without reading the model again in between. The service keeps the last document per project and base, and the projects at up to eight base commits in all, which are slow to read through Git and never change. A document read while its request ended is not kept, since a read cut short would stay wrong.
+
+### Hand edits
+
+Beside the chat, the owner changes the model by hand. A Definition's **Edit** opens its text, front matter included, in an editor that writes the file straight into the working tree: **Save** or Ctrl+S, and the views show it with what `check` and `lint` say, at once. **New Definition** on a Package's page writes a Definition with its Kind and title there and opens it. Deleting or moving a Definition stays with the owner's own editor or the chat.
+
+- The editor names the digest of the text it started from. When another editor saved the file meanwhile, nothing is written: the owner keeps their text, which then replaces the other, or takes the other and drops theirs.
+- A file keeps its line ends; Markitect reads both as LF.
+- A draft survives moving around the app in the same window, and is gone when the window closes.
 
 ## The native app
 
@@ -106,9 +116,10 @@ For work on the UI, start `markitect desktop --no-open --listen 127.0.0.1:7340` 
 ## Tests
 
 - `server_test.go`: the host check; launch codes that work once and briefly; the session; the proof, the window and the launch for a later start; the folder dialog, one at a time and only where the window has one; the content security policy and that the built page loads nothing from elsewhere; the write rules; opening, creating, cloning, initializing and removing projects against fake Git, with the folder names refused; the suggested parent.
+- `edit_test.go`: a hand edit writes the file, and the views show it; a new Definition is created only where none is; an edit of a file that changed or was removed meanwhile writes nothing and returns the file as it is; a file keeps its CRLF line ends; only Definition IDs of the model language are written, and only as JSON.
 - `model_test.go`: the Model area's document against a project in memory: Definitions with their references, realizing files and who sees them; Packages, edges and cycles; impact from the last commit or the last landing, and the whole model with nothing committed; the diff with the warnings that came and went; compile errors placed by Package and Definition; `304` until a file or a commit changes.
 - `desktop_test.go`: a service serves the window it opened and removes its record, which never holds a launch code; a second start has the running service open the window, or prints a link with `--no-open`; a window that fails hands its link to the start that asked; a later start names a service of an earlier version and stops waiting for one that does not answer; a service answers from `Listen` on and leaves no record when closed; a stale record is replaced; a program on the recorded port learns no secret; two starts at once share one service; only loopback addresses are served.
 - `store_test.go` and `window_test.go`: the project list and the choice of window per platform.
-- `internal/bootstrap/desktop_test.go`: creating, opening and cloning real repositories; reading the last commit, the last landing and the file stamps; that `markitect check` passes after the app's init; and that `ListenDesktop`, which the native app calls, shares one service per user.
+- `internal/bootstrap/desktop_test.go`: creating, opening and cloning real repositories; reading the last commit, the last landing and the file stamps; writing into the working tree but not through a symbolic link; that `markitect check` passes after the app's init; and that `ListenDesktop`, which the native app calls, shares one service per user.
 - The native app has no unit tests; CI builds it on request on Windows, macOS and Linux and starts it ([CONTRIBUTING](../../../CONTRIBUTING.md#verify-a-change)).
 - `desktop/src/*.test.ts`: the hub's next step and the project badges; the Reader's Markdown with its links; the line diff; the Map's layout; the places in the app.
