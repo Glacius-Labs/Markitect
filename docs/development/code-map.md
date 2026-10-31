@@ -32,6 +32,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `adapter` | Concrete Git, command-line, desktop and Run remote adapters; no adapter imports another. | `model`, `assets`, `domain`, `project`, `service`, `remote`, `agent-port`, `run`, `build` | 6 |
 | `composition` | Constructs the command line with its adapters. | `model`, `project`, `service`, `remote`, `agent-port`, `container`, `agents`, `run`, `adapter` | 1 |
 | `command` | Thin entrypoints to product composition. | `composition` | 1 |
+| `desktop-command` | Markitect Desktop's native shell over the composition: windows, tray and folder dialogs; built only with the native tag. | `composition` | 1 |
 | `remote-command` | Thin entrypoint of a Run's remote container. | `adapter` | 1 |
 | `agent` | Runs inside each Agent container: provider process, MCP bridge and stdio framing. | `protocol` | 1 |
 | `agent-command` | Thin entrypoint of the session helper. | `agent` | 1 |
@@ -165,6 +166,12 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | Package | Summary | Owning document |
 |---|---|---|
 | `cmd/markitect` | Command markitect is the Markitect command line: init, check, lock, refs, graph, impact, lint, version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
+
+## Desktop app
+
+| Package | Summary | Owning document |
+|---|---|---|
+| `cmd/markitect-desktop` | Command markitect-desktop is Markitect Desktop as a native app: the service of internal/bootstrap shown in windows of the platform's own web view, with a tray icon and the platform's folder dialog. | [internal/adapters/desktop/README.md#the-native-app](../../internal/adapters/desktop/README.md#the-native-app) |
 
 ## Run remote command
 

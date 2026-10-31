@@ -22,6 +22,12 @@ The full pipeline runs Linux quality checks and the race detector in about five 
 gh workflow run ci.yaml --ref BRANCH
 ```
 
+Markitect Desktop's native app builds only with the `native` tag ([Markitect Desktop](internal/adapters/desktop/README.md#the-native-app)). Every CI run type-checks it by building it for Windows. A change to the app's shell or to how it starts also asks CI to build and start it on Windows, macOS and Linux:
+
+```text
+gh workflow run ci.yaml --ref BRANCH -f native=true
+```
+
 Manual CI is optional for ordinary development merges. When explicitly required for an assignment, assess its result on the exact reviewed head and resolve relevant failures before integration. The Flake report is also manual. Release-owned calls retain their full validation. The commands below remain available for local or full validation:
 
 ```text

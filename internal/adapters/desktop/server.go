@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -40,6 +41,7 @@ type server struct {
 	secret   string
 	session  string
 	cookie   string // the session cookie's name; a browser keeps cookies per host, not per port
+	address  string // the address the service listens on, as a window's link names it
 	port     string
 	store    *Store
 	repos    Repos
@@ -47,22 +49,33 @@ type server struct {
 	mux      *http.ServeMux
 	now      func() time.Time
 
+	// openWindow and chooseFolder are the window's, as Config describes
+	// them; chooseFolder may be nil.
+	openWindow   func(url string) error
+	chooseFolder func(ctx context.Context, start string) (string, error)
+	dialog       sync.Mutex // held while a folder dialog is open
+
 	mu       sync.Mutex
 	launches map[string]time.Time // launch code → when it expires
 }
 
-func newServer(secret, port string, store *Store, repos Repos, commands Commands) (*server, error) {
+func newServer(secret, address string, store *Store, repos Repos, commands Commands) (*server, error) {
+	_, port, err := net.SplitHostPort(address)
+	if err != nil {
+		return nil, err
+	}
 	session, err := newToken()
 	if err != nil {
 		return nil, err
 	}
-	s := &server{secret: secret, session: session, cookie: "markitect_" + port, port: port, store: store, repos: repos, commands: commands,
+	s := &server{secret: secret, session: session, cookie: "markitect_" + port, address: address, port: port, store: store, repos: repos, commands: commands,
 		mux: http.NewServeMux(), now: time.Now, launches: map[string]time.Time{}}
 	files, err := fs.Sub(ui, "ui")
 	if err != nil {
 		return nil, err
 	}
 	s.mux.HandleFunc("GET /api/app", s.app)
+	s.mux.HandleFunc("POST /api/folder", s.folderDialog)
 	s.mux.HandleFunc("GET /api/projects", s.listProjects)
 	s.mux.HandleFunc("POST /api/projects", s.addProject)
 	s.mux.HandleFunc("GET /api/projects/{id}", s.getProject)
@@ -112,12 +125,22 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// secret; the answer does not reveal it.
 		reply(w, map[string]string{"proof": proof(s.secret, r.URL.Query().Get("c"))})
 		return
-	case r.Method == http.MethodPost && r.URL.Path == "/api/launch":
-		if !equal(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "), s.secret) {
-			fail(w, http.StatusUnauthorized, errors.New("not this user's Markitect"))
-			return
+	case r.Method == http.MethodPost && r.URL.Path == "/api/window":
+		// A later start, which holds the record's secret, has the service
+		// open its window.
+		if s.laterStart(w, r) {
+			if err := s.window(); err != nil {
+				fail(w, http.StatusInternalServerError, err)
+			} else {
+				reply(w, map[string]bool{"opened": true})
+			}
 		}
-		reply(w, map[string]string{"code": s.launch()})
+		return
+	case r.Method == http.MethodPost && r.URL.Path == "/api/launch":
+		// A later start without a window gets a window's link.
+		if s.laterStart(w, r) {
+			reply(w, map[string]string{"code": s.launch()})
+		}
 		return
 	}
 	if c, err := r.Cookie(s.cookie); err != nil || !equal(c.Value, s.session) {
@@ -143,6 +166,26 @@ func (s *server) launch() string {
 	}
 	s.launches[code] = now.Add(launchLife)
 	return code
+}
+
+// laterStart reports whether the request carries the record's secret, and
+// refuses it otherwise.
+func (s *server) laterStart(w http.ResponseWriter, r *http.Request) bool {
+	if !equal(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "), s.secret) {
+		fail(w, http.StatusUnauthorized, errors.New("not this user's Markitect"))
+		return false
+	}
+	return true
+}
+
+// window opens a window with a fresh launch code. When none opens, the error
+// carries the link, so that whoever asked can open it.
+func (s *server) window() error {
+	url := "http://" + s.address + "/?t=" + s.launch()
+	if err := s.openWindow(url); err != nil {
+		return fmt.Errorf("no window opened (%v); open %s within %s", err, url, launchLife)
+	}
+	return nil
 }
 
 // redeem uses a launch code up; it works once and only before it expires.
@@ -177,7 +220,39 @@ func (s *server) app(w http.ResponseWriter, r *http.Request) {
 	if parent == "" {
 		parent, _ = os.UserHomeDir()
 	}
-	reply(w, map[string]string{"version": buildinfo.Build(), "parent": parent})
+	reply(w, map[string]any{"version": buildinfo.Build(), "parent": parent, "folderDialog": s.chooseFolder != nil})
+}
+
+// folderDialog asks the user for a folder in the window's own dialog, one
+// dialog at a time. The answer is the folder, or "" when the user cancelled.
+func (s *server) folderDialog(w http.ResponseWriter, r *http.Request) {
+	if s.chooseFolder == nil {
+		fail(w, http.StatusNotImplemented, errors.New("this window has no folder dialog; type the folder's path"))
+		return
+	}
+	var req struct {
+		Start string `json:"start"` // the folder to start in, if it is a full path
+	}
+	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, 64<<10))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&req); err != nil {
+		fail(w, http.StatusBadRequest, err)
+		return
+	}
+	if !filepath.IsAbs(req.Start) {
+		req.Start = ""
+	}
+	if !s.dialog.TryLock() {
+		fail(w, http.StatusConflict, errors.New("a folder dialog is already open"))
+		return
+	}
+	defer s.dialog.Unlock()
+	path, err := s.chooseFolder(r.Context(), req.Start)
+	if err != nil {
+		fail(w, http.StatusInternalServerError, err)
+		return
+	}
+	reply(w, map[string]string{"path": path})
 }
 
 // statusReaders bounds how many projects are read at once.

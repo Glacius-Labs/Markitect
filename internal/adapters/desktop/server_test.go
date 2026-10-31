@@ -111,7 +111,7 @@ func testServer(t *testing.T, roots ...string) (*server, *fakeRepos) {
 	t.Helper()
 	repos := newFakeRepos(roots...)
 	store := &Store{File: filepath.Join(t.TempDir(), projectsFile)}
-	s, err := newServer(testSecret, testPort, store, repos, fakeCommands{repos})
+	s, err := newServer(testSecret, "127.0.0.1:"+testPort, store, repos, fakeCommands{repos})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -228,6 +228,77 @@ func TestALaterStartProvesItselfWithTheRecordsSecret(t *testing.T) {
 	}
 	if w := call(s, "POST", "/api/launch", "{}", noCookie, bearer(testSecret), func(r *http.Request) { r.Header.Set("Origin", "http://evil.example") }); w.Code != http.StatusForbidden {
 		t.Errorf("launch from another page: %d", w.Code)
+	}
+}
+
+func TestALaterStartHasTheServiceOpenItsWindow(t *testing.T) {
+	s, _ := testServer(t)
+	var opened []string
+	s.openWindow = func(url string) error { opened = append(opened, url); return nil }
+	noCookie := func(r *http.Request) { r.Header.Del("Cookie") }
+	bearer := func(r *http.Request) { r.Header.Set("Authorization", "Bearer "+testSecret) }
+	if w := call(s, "POST", "/api/window", "{}", noCookie); w.Code != http.StatusUnauthorized || len(opened) != 0 {
+		t.Fatalf("window without the secret: %d, opened %v", w.Code, opened)
+	}
+	if w := call(s, "POST", "/api/window", "{}", noCookie, bearer); w.Code != http.StatusOK || len(opened) != 1 {
+		t.Fatalf("window: %d %s, opened %v", w.Code, w.Body, opened)
+	}
+	base, code, _ := strings.Cut(opened[0], "/?t=")
+	if base != "http://127.0.0.1:"+testPort || !s.redeem(code) {
+		t.Errorf("window link %q", opened[0])
+	}
+	s.openWindow = func(string) error { return errors.New("no display") }
+	w := call(s, "POST", "/api/window", "{}", noCookie, bearer)
+	msg, _ := decode(t, w)["error"].(string)
+	_, code, _ = strings.Cut(msg, "/?t=")
+	code, _, _ = strings.Cut(code, " ")
+	if w.Code != http.StatusInternalServerError || !strings.Contains(msg, "no display") || !s.redeem(code) {
+		t.Errorf("a window that fails: %d %q", w.Code, msg)
+	}
+}
+
+func TestTheFolderDialogIsTheWindowsAndOpensOneAtATime(t *testing.T) {
+	s, _ := testServer(t)
+	if v := decode(t, call(s, "GET", "/api/app", "")); v["folderDialog"] != false {
+		t.Errorf("a browser window offers a folder dialog: %v", v)
+	}
+	if w := call(s, "POST", "/api/folder", "{}"); w.Code != http.StatusNotImplemented {
+		t.Errorf("folder without a dialog: %d", w.Code)
+	}
+	starts := make(chan string, 2)
+	release := make(chan string)
+	s.chooseFolder = func(_ context.Context, start string) (string, error) {
+		starts <- start
+		return <-release, nil
+	}
+	if v := decode(t, call(s, "GET", "/api/app", "")); v["folderDialog"] != true {
+		t.Errorf("a native window offers no folder dialog: %v", v)
+	}
+	start := t.TempDir()
+	data, _ := json.Marshal(map[string]string{"start": start})
+	first := make(chan *httptest.ResponseRecorder)
+	go func() { first <- call(s, "POST", "/api/folder", string(data)) }()
+	if got := <-starts; got != start {
+		t.Errorf("dialog starts at %q, want %q", got, start)
+	}
+	if w := call(s, "POST", "/api/folder", "{}"); w.Code != http.StatusConflict {
+		t.Errorf("a second dialog at once: %d", w.Code)
+	}
+	if w := call(s, "POST", "/api/folder", "{}", func(r *http.Request) { r.Header.Set("Origin", "http://evil.example") }); w.Code != http.StatusForbidden {
+		t.Errorf("a dialog for another page: %d", w.Code)
+	}
+	chosen := filepath.Join(start, "library")
+	release <- chosen
+	if got := decode(t, <-first)["path"]; got != chosen {
+		t.Errorf("chosen %v, want %s", got, chosen)
+	}
+	go func() { release <- "" }()
+	w := call(s, "POST", "/api/folder", `{"start":"relative"}`)
+	if got := <-starts; got != "" {
+		t.Errorf("a relative start reached the dialog: %q", got)
+	}
+	if got := decode(t, w)["path"]; got != "" {
+		t.Errorf("cancelled: %v", got)
 	}
 }
 

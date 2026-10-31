@@ -60,21 +60,41 @@ export function Dialog(props: { title: string; onClose: () => void; children: Re
   );
 }
 
-export function Field(props: { id: string; label: string; hint?: string; optional?: boolean; value: string; onChange: (v: string) => void; mono?: boolean }) {
+export function Field(props: {
+  id: string;
+  label: string;
+  hint?: string;
+  optional?: boolean;
+  value: string;
+  onChange: (v: string) => void;
+  mono?: boolean;
+  // A control beside the input, such as a button that fills it.
+  action?: ReactNode;
+}) {
+  const input = (
+    <input
+      className={props.mono ? 'gl-input mono' : 'gl-input'}
+      id={props.id}
+      value={props.value}
+      onChange={(e) => props.onChange(e.target.value)}
+      aria-describedby={props.hint ? `${props.id}-hint` : undefined}
+      spellCheck={false}
+      autoComplete="off"
+    />
+  );
   return (
     <div className="gl-field">
       <label className="gl-field__label" htmlFor={props.id}>
         {props.label} {props.optional && <span data-optional>(optional)</span>}
       </label>
-      <input
-        className={props.mono ? 'gl-input mono' : 'gl-input'}
-        id={props.id}
-        value={props.value}
-        onChange={(e) => props.onChange(e.target.value)}
-        aria-describedby={props.hint ? `${props.id}-hint` : undefined}
-        spellCheck={false}
-        autoComplete="off"
-      />
+      {props.action ? (
+        <div className="field-row">
+          {input}
+          {props.action}
+        </div>
+      ) : (
+        input
+      )}
       {props.hint && (
         <p className="gl-field__hint" id={`${props.id}-hint`}>
           {props.hint}

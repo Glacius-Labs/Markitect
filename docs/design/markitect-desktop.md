@@ -112,7 +112,7 @@ markitect desktop  (one Go process per user)
 │   ├─ JSON routes: projects, model views, settings, commands
 │   └─ one event stream (server-sent events): Runs, agents, chat
 ├─ the same functions as the CLI: project, analysis, run, agents
-└─ the window: Edge or Chrome in app mode, later a native shell
+└─ the window: the native shell (markitect-desktop), or Edge or Chrome in app mode (markitect desktop)
 ```
 
 - **One service per user.** The first start runs the service and opens a window, and every later start opens another window on it. Closing the window stops nothing: Runs and chats go on, and a reopened window reconnects to the stream. A lock file in the user's config folder names the port.
@@ -121,9 +121,9 @@ markitect desktop  (one Go process per user)
 - **Chat agents.** A chat is an agent in a container, but no Run: it depends on the container client and the provider's CLI, not on the Run engine. It runs with the provider's account login, on a copy of the project as it is in the working tree, uncommitted changes included. No folder of the user's is mounted ([concept 2.0 §9](../concepts/v2-concept.md#9-platform)). Its changes are a proposal, which the views show as the proposed model, with its diff one click away, while the conversation goes on. When the owner accepts, the app writes the proposal into the working tree as a patch, and the owner commits it as usual. If a file the patch touches changed since the copy, the app writes nothing and shows the conflict.
 - **Safety.** The server listens on loopback only and refuses requests addressed to any other host (against DNS rebinding). Every route requires the launch token, and every response carries a strict content security policy. The page loads no external resource.
 - **Window.**
-  - First, Edge or Chrome in app mode, using the launcher of the retired cockpit ([`window.go`](https://github.com/Glacius-Labs/Markitect/blob/447ac3b152de79b52de80513e14dc94349a060bd/internal/adapters/cockpit/window.go) at the archive point).
-  - Then a native shell, so that Markitect starts without a terminal and has its own title bar, taskbar icon, tray and notifications. Wails v3 runs the same UI inside the Go process but is still in beta. Tauri 2 is stable but adds Rust and a second process. The shell slice decides between them after a probe on Windows, Linux and macOS.
-- **No terminal window.** On Windows the app's entry point is built as a GUI program (`-H windowsgui`) while `markitect` stays a console program, so `cmd/markitect-desktop` sits beside `cmd/markitect`. macOS gets an `.app` bundle and Linux a `.desktop` entry.
+  - First, Edge or Chrome in app mode, using the launcher of the retired cockpit ([`window.go`](https://github.com/Glacius-Labs/Markitect/blob/447ac3b152de79b52de80513e14dc94349a060bd/internal/adapters/cockpit/window.go) at the archive point). `markitect desktop` keeps it, for work on the app and for a machine without the native app.
+  - Then a native shell, so that Markitect starts without a terminal and has its own title bar, taskbar icon, tray and notifications: Wails v3, chosen by the probe of slice D2 ([below](#the-native-shell)).
+- **No terminal window.** On Windows the app's entry point is built as a GUI program (`-H windowsgui`) while `markitect` stays a console program, so `cmd/markitect-desktop` sits beside `cmd/markitect`. macOS gets an `.app` bundle and Linux a `.desktop` entry with packaging.
 - **UI.** TypeScript with React, built by Vite, with its source in `desktop/`. The built files are committed under `internal/adapters/desktop/ui/` and embedded, so `go build` needs no Node. CI rebuilds them and fails on a difference, as it does for the code map. The source packager learns the UI folder.
 - **Look.** The Glacius Labs design system, the private package `@glacius-labs/design-system`, which Markitect ships under the design system's own notice ([DEC-089](../concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli)): its CSS, tokens, fonts and icons, with React components that follow its `spec.json`.
 
@@ -133,9 +133,20 @@ markitect desktop  (one Go process per user)
 | `internal/bootstrap` | Builds the desktop over the same services as the CLI |
 | `internal/adapters/cli` | Gains the `desktop` verb |
 | `internal/tooling/architecture`, `internal/tooling/release`, CI | The new packages' rows and the code map, the packager's UI folder, the UI build check |
-| `cmd/markitect-desktop` (new) | The GUI entry point, later the native shell |
+| `cmd/markitect-desktop` (new) | The native app: the service in Wails windows, with tray and folder dialog |
 | `internal/run` | Later gains the event feed for the live view, built with Build once Run execution is settled |
 | `desktop/` (new, not Go) | The UI source |
+
+### The native shell
+
+The D2 probe on 31 October 2026 chose **Wails v3**, pinned at v3.0.0.
+
+- **One process, one language.** Wails runs the platform's own web view inside the Go process, so the app stays one Go program as DEC-089 says. Tauri 2 would put the window in a Rust process with the Go service as a second, sidecar process, and the build would need Rust and Node beside Go. Tauri was not built; its cost is in its structure, not in what a probe measures.
+- **Stable now.** The design named Wails' beta as its risk; Wails v3.0.0 was released stable on 26 October 2026. It is new, so the version is pinned and the shell stays thin: windows, tray and folder dialog, about 200 lines, cheap to replace.
+- **The probe on Windows** passed with a small program before the shell was built: a native window on the loopback service with its session cookie and the content security policy in force, a second window opened from an HTTP request, the platform's folder dialog asked for over HTTP, and all windows closed with the app running on in the tray. No C compiler is needed on Windows; the app is about 22 MB.
+- **Linux and macOS** need cgo, with GTK 4 and WebKitGTK 6 on Linux. The app therefore builds only with the `native` tag, so that the rest of the repository keeps building, vetting and testing without them. CI type-checks the shell on every run by building it for Windows, and builds and starts it on all three platforms when asked ([Markitect Desktop](../../internal/adapters/desktop/README.md#the-native-app)).
+- **The same safety.** A native window loads the service's page from the loopback address with a launch code, exactly like a browser window, and the shell binds no Go function to the page. The folder dialog is a route of the service that the native app answers.
+- **The service opens every window.** A later start asks the running service for a window instead of opening one itself, so the native app's windows stay native, whichever way Markitect is started again.
 
 ## Delivery
 
@@ -143,8 +154,8 @@ Each slice is one PR with its tests and is useful on its own. The app is built a
 
 **The model first,** with the native shell early, as DEC-089 says, so that the first version used day to day already behaves like a desktop app:
 
-1. **D1, Projects and hub.** `markitect desktop`, the service, the browser window, the project list, opening, creating and cloning projects, `init`, and the hub with the model check.
-2. **D2, Native shell.** The probe and the shell, no terminal window, the app icon and the title Markitect.
+1. **D1, Projects and hub.** `markitect desktop`, the service, the browser window, the project list, opening, creating and cloning projects, `init`, and the hub with the model check. Built.
+2. **D2, Native shell.** The probe and the shell, no terminal window, the app icon and the title Markitect. Built: Wails v3 ([above](#the-native-shell)), with a tray and the folder dialog.
 3. **D3, Model.** Reader, Map, Organization and Quality, the diff toggle and hand edits.
 4. **D4, Chat and Extract.** Chat agents in containers, proposals in the views, Extract with its two stops, and the app settings for the logins.
 
