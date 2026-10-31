@@ -19,10 +19,18 @@ The structure the owner asked for on 21 October 2026 still holds: a hub, a few a
 The start screen.
 
 - A per-user list of projects.
-- Opening a folder, with or without `.markitect/`.
-- Creating a project: a new folder with Git and `markitect init`.
-- `init` on an existing repository.
-- Extract, which draws a model from existing code through the [chat](#chat) with the Extract skill.
+- Three ways in:
+  - opening a folder that is a Git repository, with or without `.markitect/`;
+  - creating a project: a new folder with Git and `markitect init`;
+  - cloning one from a Git URL.
+
+  Creating a repository on GitHub comes later. A project needs no remote: a Run lands on the branch's upstream if there is one, otherwise in the local repository.
+- `init` on an opened repository that has no `.markitect/` yet.
+- Extract, which draws a model from existing code through the [chat](#chat) with the Extract skill. It asks in the chat where the code and its documentation leave something open, and it stops at two checkpoints:
+  1. the Package cut, shown on the map with the folders each Package claims, which the owner confirms or changes before any Definition is written, because the cut is the project's architecture;
+  2. the whole model as one proposal, reviewed in the Model views before it is accepted.
+
+  The Extract skill gains the first stop, which today it makes only when the code allows two cuts.
 
 Choosing a project opens its hub.
 
@@ -32,41 +40,66 @@ The project's state: whether the model passes `check`, the last Result, any Run 
 
 ### 1. Model
 
-- **Views.**
-  - Read: each Definition with its links, Referenced by, Realized by and Seen by.
-  - Map: the Package graph with cycles and layers.
-  - Organization: the Manager tree, with each Manager's checklist for a change.
-  - Changes: what a change touches between two model states (`impact`).
-- **Quality.** The `lint` signals and metrics per Package, shown on the map and in the reader.
-- **Improve.** Starts `improve` once it is built ([concept 2.0 §7](../concepts/v2-concept.md#7-commands-that-start-agents)). Each Manager looks at its area, and the Run ends with a model proposal that the owner reads as a diff and accepts or rejects.
+- **Modeling.** The chat is the main way to change the model. A hand edit is the second: each Definition in the reader opens in a Markdown editor that saves straight into the working tree, and `check` runs again on save. The views follow the folder live, so edits made in Obsidian or an editor show up too.
+- **The model as it looks.** While the owner models, the views show the model as it is, or as it will be with the chat's proposal, never mainly as a change. The diff is one click away. Bringing the code in line with the model is the job of `apply`, so after an accepted change the hub's next step offers it.
+- **Four views.**
+  1. Reader: the model as documentation. Each Definition with its links, Referenced by, Realized by and Seen by. Hand edits start here.
+  2. Map: the Package graph, with cycles and broken rules marked.
+  3. Organization: the Manager tree as an organization chart, with what each Manager is responsible for and its checklist for the current change (`impact`).
+  4. Quality: how good the model is. The `lint` signals, cycles, coupling between Packages and Definitions nothing uses, per Package. `improve` starts here once it is built ([concept 2.0 §7](../concepts/v2-concept.md#7-commands-that-start-agents)): each Manager looks at its area, and the Run ends with a model proposal, shown like a chat's proposal.
+- **Diff.** A toggle in every view, not a view of its own.
 
 ### 2. Runs
 
-- Starting `apply` and `verify` with their options, later the other commands of §7, and stopping a Run.
+- Starting `apply` and `verify`, later the other commands of §7, and stopping a Run. A start shows a preview first: the base it starts from, which Managers will work, shown on the Organization tree, and each one's checklist (`impact`), with the usual limits. Then Start runs it. `--full`, a Findings file and the limits sit under "More options".
 - The project's Runs with their Results.
-- A Run's live view:
-  - the Manager tree, who works now and who waits for whom;
-  - each maker's and checker's activity as it happens: turns, tool calls, pushes, verdicts and messages;
-  - the timeline.
+- A Run's live view opens on the Manager tree:
+  - one card per Manager with its maker and checker and their state: working, waiting and for whom, approved, rejected or escalated;
+  - the current activity of each in one line;
+  - a click on a card opens that agent's live transcript: its messages, tool calls, pushes and verdicts;
+  - a timeline under the tree shows the Run so far.
 
   A closed Run plays back the same way.
+- Messages and work on the tree. Messages travel only along the tree: `ask` and `escalate` up to the parent, `answer` and `assign` down to a child. Work moves as commits: a child's approved work up when its parent merges it, a parent's approved commit down when its children start from it. Both are drawn on the tree's edges, in two styles, animated as they happen and in playback.
+  - An open question stays as a marker on the asker's card and its edge until it is answered; a click opens the thread.
+  - Shared Notes, which go to no one in particular, sit in a notes panel beside the tree.
+  - Root's escalation is a model defect: the Run ends without landing, and the hub shows the owner's decision with its recommendation.
 
 ### 3. Statistics
 
-Over the project's Runs: duration, agent starts and tokens, landed and not landed, rejections and escalations, per command, per Manager and over time. The numbers come from the Results.
+Three parts, each over time and per command:
+
+1. Runs: landed or not and why, duration, agent starts and tokens.
+2. Where the work struggles: rejections, escalations and attempts per Manager. They point at Packages whose model may be unclear.
+3. The model: Definitions, Packages and `lint` warnings, so its quality shows as a trend.
+
+Usage is counted in tokens, not money, since providers run on account login. The Run numbers come from the Results, the model numbers from the model at each landed commit.
 
 ### 4. Settings
 
-- The project's `execution.yaml` with its required checks.
-- The providers and their login state.
-- Docker and the Manager image.
-- Default limits.
+Today the host takes its agent settings from environment variables; the app sets them in two levels.
 
-App settings are kept apart from project settings.
+- **Project settings:**
+  - the required checks of `execution.yaml` as a form, which writes into the repository;
+  - the Manager image with the project's toolchain, with a button that builds it;
+  - the provider, model and effort, when the project differs from the app's default;
+  - the default limits of a Run.
+- **App settings:**
+  - the Claude and Codex logins, with their state and a button that runs the provider's own login;
+  - Docker's state;
+  - the default provider, model and effort;
+  - light or dark, and notifications.
+
+Everything except `execution.yaml` stays in the user's config folder, outside the repository.
 
 ### Chat
 
-A chat with an agent on the open project, reachable from every area, as in Claude Code Desktop or the ChatGPT app. It explains the model, proposes model changes through the modeling skill and runs Extract. A model change it proposes reaches the owner as a diff to accept, as [concept 2.0 §8](../concepts/v2-concept.md#8-authoring) requires. It can offer to start a command, and the owner confirms.
+Chats with an agent on the open project, as in Claude Code Desktop or the ChatGPT app. A chat explains the model, proposes model changes through the modeling skill and runs Extract.
+
+- **Several conversations per project,** each kept with its history, its proposals and whether they were accepted.
+- **A panel beside any area,** so the model stays in view while the owner talks. The Reader follows the Definitions the chat is discussing.
+- **Proposals.** A model change reaches the owner as the proposed model in the views, with its diff one click away, to accept or reject as [concept 2.0 §8](../concepts/v2-concept.md#8-authoring) requires.
+- **Commands.** A chat can offer one, such as `apply` after an accepted change. The offer opens the same preview as the Runs area, and the owner starts it there.
 
 ## Architecture
 
@@ -82,15 +115,15 @@ markitect desktop  (one Go process per user)
 
 - **One service per user.** The first start runs the service and opens a window, and every later start opens another window on it. Closing the window stops nothing: Runs and chats go on, and a reopened window reconnects to the stream. A lock file in the user's config folder names the port.
 - **Same functions as the CLI.** The desktop is an adapter beside `internal/adapters/cli`. Like the CLI, it reaches the services through `internal/bootstrap`, and it parses no command output.
-- **Live events.** Today the engine writes the Result when a Run ends. The agent adapters read each agent's output stream (Claude Code's stream-json, Codex's events) and can write it as transcripts ([Manager agents](../../internal/agents/README.md)). The live view needs both as events while the Run works. That means a port in `internal/run` through which the engine reports its schedule, starts, pushes, verdicts and messages, plus each agent's output lines. The CLI can print the same events. This is `internal/run`'s scope, so it is built together with the [Build and evaluation session](../workstreams/build.md).
-- **Chat agents** (the recommendation for [question 2](../workstreams/desktop.md#questions-for-the-owner)). A chat is an agent like a Manager. It runs in a container with the provider's account login, works on a clone of the project at a commit, and has no folder of the user's mounted ([concept 2.0 §9](../concepts/v2-concept.md#9-platform)). It pushes its proposal to a branch. Accepting the proposal lands it on the target branch like a Run's result, and the user pulls it ([§6.5](../concepts/v2-concept.md#65-landing)).
+- **Live events.** Today the engine writes the Result when a Run ends. The agent adapters read each agent's output stream (Claude Code's stream-json, Codex's events) and can write it as transcripts ([Manager agents](../../internal/agents/README.md)). The live view needs both as events while the Run works. That means a port in `internal/run` through which the engine reports its schedule, starts, pushes, verdicts and messages, plus each agent's output lines. The CLI can print the same events. This is `internal/run`'s scope, so it is built together with the [Build and evaluation session](../workstreams/build.md), once the way Runs execute is settled ([Delivery](#delivery)).
+- **Chat agents.** A chat is an agent in a container, but no Run: it depends on the container client and the provider's CLI, not on the Run engine. It runs with the provider's account login, on a copy of the project as it is in the working tree, uncommitted changes included. No folder of the user's is mounted ([concept 2.0 §9](../concepts/v2-concept.md#9-platform)). Its changes are a proposal, which the chat shows as a diff while the conversation goes on. When the owner accepts, the app writes the proposal into the working tree as a patch, and the owner commits it as usual. If a file the patch touches changed since the copy, the app writes nothing and shows the conflict.
 - **Safety.** The server listens on loopback only and refuses requests addressed to any other host (against DNS rebinding). Every route requires the launch token, and every response carries a strict content security policy. The page loads no external resource.
 - **Window.**
   - First, Edge or Chrome in app mode, using the launcher of the retired cockpit ([`window.go`](https://github.com/Glacius-Labs/Markitect/blob/447ac3b152de79b52de80513e14dc94349a060bd/internal/adapters/cockpit/window.go) at the archive point).
   - Then a native shell, so that Markitect starts without a terminal and has its own title bar, taskbar icon, tray and notifications. Wails v3 runs the same UI inside the Go process but is still in beta. Tauri 2 is stable but adds Rust and a second process. The shell slice decides between them after a probe on Windows, Linux and macOS.
 - **No terminal window.** On Windows the app's entry point is built as a GUI program (`-H windowsgui`) while `markitect` stays a console program, so `cmd/markitect-desktop` sits beside `cmd/markitect`. macOS gets an `.app` bundle and Linux a `.desktop` entry.
 - **UI.** TypeScript with React, built by Vite, with its source in `desktop/`. The built files are committed under `internal/adapters/desktop/ui/` and embedded, so `go build` needs no Node. CI rebuilds them and fails on a difference, as it does for the code map. The source packager learns the UI folder.
-- **Look.** The Glacius Labs design system, the private package `@glacius-labs/design-system`, whose shipping is [question 1](../workstreams/desktop.md#questions-for-the-owner): its CSS, tokens, fonts and icons, with React components that follow its `spec.json`.
+- **Look.** The Glacius Labs design system, the private package `@glacius-labs/design-system`, which Markitect ships under the design system's own notice ([DEC-089](../concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli)): its CSS, tokens, fonts and icons, with React components that follow its `spec.json`.
 
 | Package | Role |
 |---|---|
@@ -99,20 +132,23 @@ markitect desktop  (one Go process per user)
 | `internal/adapters/cli` | Gains the `desktop` verb |
 | `internal/tooling/architecture`, `internal/tooling/release`, CI | The new packages' rows and the code map, the packager's UI folder, the UI build check |
 | `cmd/markitect-desktop` (new) | The GUI entry point, later the native shell |
-| `internal/run` | Gains the event port, built with Build |
+| `internal/run` | Later gains the event feed for the live view, built with Build once Run execution is settled |
 | `desktop/` (new, not Go) | The UI source |
 
 ## Delivery
 
-Each slice is one PR with its tests and is useful on its own.
+Each slice is one PR with its tests and is useful on its own. The app is built against what is stable first. How Runs execute may still change fundamentally with the evaluations that are running: Manager containers that live for the whole Run or for one start, Git handoffs or one shared checkout, or no containers at all. So the Runs area waits until that is settled, and its sections above, which describe today's engine, are revised then.
 
-1. **D1, Projects and hub.** `markitect desktop`, the service, the browser window, the project list, creating and opening projects, `init`, and the hub with the model check.
+**The model first:**
+
+1. **D1, Projects and hub.** `markitect desktop`, the service, the browser window, the project list, opening, creating and cloning projects, `init`, and the hub with the model check.
 2. **D2, Native shell.** The probe and the shell, no terminal window, the app icon and the title Markitect.
-3. **D3, Model.** Read, Map, Organization, Changes and the lint signals.
-4. **D4, Runs.** Starting and stopping `apply` and `verify`, and the Runs with their Results.
-5. **D5, Live view.** The engine's event port, built with Build, then the live view and playback.
-6. **D6, Chat.** Chat agents in containers, proposals as diffs, and Extract.
-7. **D7, Statistics and Settings.**
+3. **D3, Model.** Reader, Map, Organization and Quality, the diff toggle and hand edits.
+4. **D4, Chat and Extract.** Chat agents in containers, proposals in the views, Extract with its two stops, and the app settings for the logins.
+
+**Surroundings, when the model work is blocked:** the model part of Statistics, the rest of the app settings, notifications and packaging.
+
+**Runs, once their execution is settled:** starting Runs with their preview and Results, with the project settings for agents; the live view with its event feed from the engine, built with Build; the Run parts of Statistics.
 
 `improve` and the other commands join as they are built; installers and updates come with the first release.
 
