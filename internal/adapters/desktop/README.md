@@ -1,6 +1,6 @@
 # Markitect Desktop
 
-`internal/adapters/desktop` is Markitect Desktop, the app over the command line that users know as Markitect ([DEC-089](../../../docs/concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli), [design](../../../docs/design/markitect-desktop.md)). This page is the canonical description of what is built: slice D1, projects and hub; slice D2, the native app ([`cmd/markitect-desktop`](../../../cmd/markitect-desktop/main.go)); slice D3, the [Model area](#the-model-area) with its four views, the diff and hand edits; and of slice D4 the app's side of [the chat](#the-chat).
+`internal/adapters/desktop` is Markitect Desktop, the app over the command line that users know as Markitect ([DEC-089](../../../docs/concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli), [design](../../../docs/design/markitect-desktop.md)). This page is the canonical description of what is built: slice D1, projects and hub; slice D2, the native app ([`cmd/markitect-desktop`](../../../cmd/markitect-desktop/main.go)); slice D3, the [Model area](#the-model-area) with its four views, the diff and hand edits; and of slice D4 [the chat](#the-chat) and [Settings](#settings).
 
 ## Starting it
 
@@ -47,6 +47,8 @@ Either way:
 | `GET /api/projects/{id}` | One project with its status |
 | `POST /api/projects/{id}/init` | Runs `markitect init` in the project |
 | `PUT /api/projects/{id}/definitions/{definition}` | Writes a Definition's text into the working tree, given the digest of the text the editor started from, or none for a new Definition; `409` with the file's text as it is now when it changed meanwhile ([hand edits](#hand-edits)) |
+| `GET /api/settings` | How this Markitect runs its agents and the state of each provider's account login ([Settings](#settings)) |
+| `GET /api/projects/{id}/settings` | The project's required checks from `execution.yaml` |
 | `GET /api/projects/{id}/chats` | The project's conversations, newest first, and whether this Markitect has chat agents |
 | `POST /api/projects/{id}/chats` | Starts a conversation with its first message and its skill, `modeling` or `extract`; the turn runs in the background |
 | `GET /api/projects/{id}/chats/{chat}` | One conversation: its messages, its proposals and whether a turn runs |
@@ -60,7 +62,7 @@ A project's status is what `markitect check` finds in its working tree: whether 
 
 ## Ports
 
-The adapter imports no other adapter. `internal/bootstrap` supplies Git (open, `git init`, `git clone`, a commit and the last landing) through the repo adapter, with a stamp per file (size and modification time) that the Model area follows the working tree by, and `markitect init` by running the command line's own `init`, so the app's init is the same command with the same output. The window is the caller's: `Config.OpenWindow` opens one on a link, and `Config.ChooseFolder`, if set, asks for a folder. `Config.Chats`, if set, starts the chat agents; without it the chat says so. `Listen` claims the service and starts answering, `Serve` opens the first window and serves until its context ends, and `Window` opens another; `Start` does all three for the command line.
+The adapter imports no other adapter. `internal/bootstrap` supplies Git (open, `git init`, `git clone`, a commit and the last landing) through the repo adapter, with a stamp per file (size and modification time) that the Model area follows the working tree by, and `markitect init` by running the command line's own `init`, so the app's init is the same command with the same output. The window is the caller's: `Config.OpenWindow` opens one on a link, and `Config.ChooseFolder`, if set, asks for a folder. `Config.Chats`, if set, starts the chat agents; without it the chat says so. `Config.Settings`, if set, reads what Settings shows of the agents and logins. `Listen` claims the service and starts answering, `Serve` opens the first window and serves until its context ends, and `Window` opens another; `Start` does all three for the command line.
 
 ## The Model area
 
@@ -94,6 +96,13 @@ The chat is the main way to change the model ([design](../../../docs/design/mark
 - **Only files below `.markitect/`** with plain names are proposed, whatever the agent reports; anything else is named and not written.
 - **Accept** writes the proposal into the working tree, as one step against hand edits, unless a file it touches changed there since the agent's start; then nothing is written, the proposal names the files, and the next turn starts a fresh agent from the working tree as it is, with the rest of the proposal on top. A file that already holds what the proposal writes counts as written, so an accept cut off midway completes when repeated. After an accept the agent's start moves to the accepted state; after a reject the agent drops its changes. The owner commits as usual.
 - **Conversations** live in `chats/<project>/` in the config folder, one JSON file each, and in memory while the app runs, so a window never reads a file a turn is writing; a conversation that cannot be saved stays in memory, and the panel says so. A closed proposal keeps its files but not their texts. Quitting stops the turns and ends every agent, each with up to ten seconds; an agent that finishes starting after that is ended at once.
+
+## Settings
+
+The hub's fourth area, entered with the digit 4, shows two things and changes neither yet:
+
+- **This project:** the required checks of `.markitect/execution.yaml`, or why they cannot be read. The form that edits them comes with the Runs.
+- **This Markitect:** the provider, model, effort, Manager image, provider network and Docker command that chats and Runs start their agents with, read from the environment Markitect was started in (`MARKITECT_*`, as `markitect apply` reads them) without asking the container engine, and why no agent can start yet, such as a missing Manager image. Each provider's account login shows whether it is usable and until when, as an agent would admit it; nothing of a login but its expiry leaves the composition. It names the provider's own command to log in again.
 
 ## The native app
 
@@ -133,10 +142,12 @@ For work on the UI, start `markitect desktop --no-open --listen 127.0.0.1:7340` 
 
 - `server_test.go`: the host check; launch codes that work once and briefly; the session; the proof, the window and the launch for a later start; the folder dialog, one at a time and only where the window has one; the content security policy and that the built page loads nothing from elsewhere; the write rules; opening, creating, cloning, initializing and removing projects against fake Git, with the folder names refused; the suggested parent.
 - `chat_test.go`: conversations over scripted agents: a proposal shown on top of the working tree and accepted into it exactly, outside changes left out; an accept over a changed working tree that writes nothing, then a reject; a later turn's proposal replacing the earlier; one message at a time; a conversation reopened after a restart starting a fresh agent with the conversation so far; an agent that cannot start, and an app without agents.
+- `settings_test.go`: Settings show the agents and logins the composition reads, and the project's required checks, a broken `execution.yaml` and a project without Markitect.
 - `edit_test.go`: a hand edit writes the file, and the views show it; a new Definition is created only where none is; an edit of a file that changed or was removed meanwhile writes nothing and returns the file as it is; a file keeps its CRLF line ends; only Definition IDs of the model language are written, and only as JSON.
 - `model_test.go`: the Model area's document against a project in memory: Definitions with their references, realizing files and who sees them; Packages, edges and cycles; impact from the last commit or the last landing, and the whole model with nothing committed; the diff with the warnings that came and went; compile errors placed by Package and Definition; `304` until a file or a commit changes.
 - `desktop_test.go`: a service serves the window it opened and removes its record, which never holds a launch code; a second start has the running service open the window, or prints a link with `--no-open`; a window that fails hands its link to the start that asked; a later start names a service of an earlier version and stops waiting for one that does not answer; a service answers from `Listen` on and leaves no record when closed; a stale record is replaced; a program on the recorded port learns no secret; two starts at once share one service; only loopback addresses are served.
 - `store_test.go` and `window_test.go`: the project list and the choice of window per platform.
+- `internal/bootstrap/settings_test.go`: the agents' settings from the environment, a usable login with its expiry, a missing one and a refused API key, with no token in what Settings shows.
 - `internal/bootstrap/desktop_test.go`: creating, opening and cloning real repositories; reading the last commit, the last landing and the file stamps; writing into the working tree but not through a symbolic link; that `markitect check` passes after the app's init; and that `ListenDesktop`, which the native app calls, shares one service per user.
 - The native app has no unit tests; CI builds it on request on Windows, macOS and Linux and starts it ([CONTRIBUTING](../../../CONTRIBUTING.md#verify-a-change)).
 - `desktop/src/*.test.ts`: the hub's next step and the project badges; the Reader's Markdown with its links; the line diff; the Map's layout; the places in the app.

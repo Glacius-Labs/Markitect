@@ -28,6 +28,10 @@ describe('the places in the app', () => {
     expect(parse('#/p/ab12/model/nowhere')).toMatchObject({ view: 'reader' });
   });
 
+  it('reads Settings', () => {
+    expect(parse('#/p/ab12/settings')).toEqual({ project: 'ab12', area: 'settings' });
+  });
+
   it('reads a broken escape as no item', () => {
     expect(parse('#/p/ab12/model/reader/%')).toEqual({ project: 'ab12', area: 'model', view: 'reader' });
   });

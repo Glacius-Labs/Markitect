@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError, type Project } from './api';
 import { useRefreshOnFocus } from './focus';
 import { typing } from './Model';
-import { modelHref } from './route';
+import { modelHref, settingsHref } from './route';
 import { nextStep, plural } from './status';
 import { Alert, Badge, Dialog, Icon } from './ui';
 
@@ -49,8 +49,13 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
   // The digits enter the areas that are built.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === '1' && !e.altKey && !e.ctrlKey && !e.metaKey && !typing(e) && !document.querySelector('dialog[open]') && project?.status.check) {
+      if (e.altKey || e.ctrlKey || e.metaKey || typing(e) || document.querySelector('dialog[open]')) {
+        return;
+      }
+      if (e.key === '1' && project?.status.check) {
         window.location.hash = modelHref(id, 'reader');
+      } else if (e.key === '4') {
+        window.location.hash = settingsHref(id);
       }
     };
     window.addEventListener('keydown', onKey);
@@ -152,7 +157,7 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
         </h2>
         <div className="gl-cards">
           {areas.map((a) => {
-            const live = a.key === '1' && check;
+            const live = (a.key === '1' && check) || a.key === '4';
             const inner = (
               <>
                 <span className="gl-card__icon">
@@ -164,7 +169,9 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
                 </h3>
                 <p className="gl-card__body">{a.body}</p>
                 <div className="gl-card__footer">
-                  {live ? (
+                  {a.key === '4' ? (
+                    <Badge tone="neutral">Logins, agents and checks</Badge>
+                  ) : live && check ? (
                     <Badge tone={check.warnings > 0 ? 'warning' : 'neutral'}>
                       {plural(check.definitions, 'Definition')}, {plural(check.warnings, 'warning')}
                     </Badge>
@@ -175,7 +182,7 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
               </>
             );
             return live ? (
-              <a key={a.key} className="gl-card area area--live" href={modelHref(project.id, 'reader')}>
+              <a key={a.key} className="gl-card area area--live" href={a.key === '4' ? settingsHref(project.id) : modelHref(project.id, 'reader')}>
                 {inner}
               </a>
             ) : (

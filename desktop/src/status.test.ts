@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { duration } from './Settings';
 import { badge, nextStep, plural } from './status';
 
 const check = { ok: true, errorCount: 0, errors: [], definitions: 12, packages: 3, files: 40, warnings: 0 };
@@ -31,5 +32,13 @@ describe('the project state', () => {
     const s = { initialized: true, check };
     expect(badge(s).label).toBe('Model compiles');
     expect(nextStep(s).body).toBe('12 Definitions in 3 Packages, 40 files accounted for.');
+  });
+});
+
+describe("a required check's time limit", () => {
+  it('reads like execution.yaml', () => {
+    expect(duration(10 * 60e9)).toBe('10m');
+    expect(duration(2 * 3600e9)).toBe('2h');
+    expect(duration(90e9)).toBe('90s');
   });
 });

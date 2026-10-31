@@ -75,27 +75,40 @@ func agentConfig(ctx context.Context) (agents.Config, *container.Engine, error) 
 			return agents.Config{}, nil, fmt.Errorf("the provider network: %w; or name one with MARKITECT_NETWORK", err)
 		}
 	}
-	home, _ := os.UserHomeDir()
 	cfg := agents.Config{
 		Runtime: agents.EngineRuntime(engine), Image: image,
 		Limits:  agents.Limits{CPUs: 1, MemoryBytes: 2 << 30, Pids: 256, TmpBytes: 256 << 20},
 		Network: network, Hosts: list("MARKITECT_HOSTS"), DNS: list("MARKITECT_DNS"),
 		Effort: env("MARKITECT_EFFORT", "high"), Transcripts: os.Getenv("MARKITECT_TRANSCRIPTS"),
 	}
-	switch provider := env("MARKITECT_PROVIDER", "claude"); provider {
-	case "claude":
-		cfg.Provider, cfg.Model = claude.Provider{}, env("MARKITECT_MODEL", "claude-sonnet-5-5")
-		cfg.LoginFile = env("MARKITECT_LOGIN", filepath.Join(home, ".claude", ".credentials.json"))
-	case "codex":
-		cfg.Provider, cfg.Model = codex.Provider{}, env("MARKITECT_MODEL", "gpt-6-luna")
-		cfg.LoginFile = env("MARKITECT_LOGIN", filepath.Join(home, ".codex", "auth.json"))
-	default:
-		return agents.Config{}, nil, fmt.Errorf("MARKITECT_PROVIDER %q is neither claude nor codex", provider)
+	p, ok := providers[env("MARKITECT_PROVIDER", "claude")]
+	if !ok {
+		return agents.Config{}, nil, fmt.Errorf("MARKITECT_PROVIDER %q is neither claude nor codex", os.Getenv("MARKITECT_PROVIDER"))
 	}
+	cfg.Provider, cfg.Model, cfg.LoginFile = p.provider, env("MARKITECT_MODEL", p.model), env("MARKITECT_LOGIN", p.loginFile())
 	if _, err := os.Stat(cfg.LoginFile); err != nil {
 		return agents.Config{}, nil, fmt.Errorf("the %s login %s: %w; log in with the provider's CLI on this host or set MARKITECT_LOGIN", cfg.Provider.Name(), cfg.LoginFile, err)
 	}
 	return cfg, engine, nil
+}
+
+// providerDefaults are one provider's adapter, default model, account login
+// file in the home folder, and the command that logs in.
+type providerDefaults struct {
+	provider agents.Provider
+	model    string
+	login    []string // the login file below the home folder
+	command  string
+}
+
+func (p providerDefaults) loginFile() string {
+	home, _ := os.UserHomeDir()
+	return filepath.Join(append([]string{home}, p.login...)...)
+}
+
+var providers = map[string]providerDefaults{
+	"claude": {claude.Provider{}, "claude-sonnet-5-5", []string{".claude", ".credentials.json"}, "claude"},
+	"codex":  {codex.Provider{}, "gpt-6-luna", []string{".codex", "auth.json"}, "codex login"},
 }
 
 // providerNetwork is the user-defined bridge network the agents reach their

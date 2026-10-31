@@ -92,6 +92,9 @@ type Config struct {
 	ChooseFolder func(ctx context.Context, start string) (string, error)
 	// Chats starts the chat agents; nil means the app has no chat.
 	Chats Chats
+	// Settings reads how this Markitect runs its agents, for Settings; nil
+	// shows none.
+	Settings func(ctx context.Context) AppSettings
 }
 
 // Service is this user's running desktop service. It answers from the moment
@@ -187,6 +190,7 @@ func listen(cfg Config) (_ *Service, err error) {
 		return nil, err
 	}
 	srv.chat.chats = cfg.Chats
+	srv.settings = cfg.Settings
 	srv.openWindow, srv.chooseFolder = cfg.OpenWindow, cfg.ChooseFolder
 	if err := publishRecord(cfg.Dir, data); err != nil {
 		return nil, err

@@ -189,6 +189,32 @@ export interface ModelView {
 
 const project = (id: string) => `/api/projects/${encodeURIComponent(id)}`;
 
+// Settings: how this Markitect runs its agents, read from the environment it
+// was started in, and the project's required checks.
+
+export interface LoginState {
+  provider: string;
+  file: string;
+  state: 'ok' | 'missing' | 'refused';
+  detail?: string;
+  expires?: string;
+  command: string;
+  used: boolean;
+}
+
+export interface AppSettings {
+  agents: { provider: string; model: string; effort: string; image: string; network: string; engine: string; problems: string[] | null };
+  logins: LoginState[];
+}
+
+export interface RequiredCheck {
+  name: string;
+  command: string;
+  directory: string;
+  timeout: number; // nanoseconds
+  environment: string;
+}
+
 // The chat: conversations with an agent that works on a copy of the project
 // and proposes model changes, which the owner accepts into the working tree.
 
@@ -299,6 +325,8 @@ export const api = {
   chat: (id: string, chat: string) => call<Conversation>('GET', `${project(id)}/chats/${chat}`),
   say: (id: string, chat: string, text: string) => call<Conversation>('POST', `${project(id)}/chats/${chat}/messages`, { text }),
   decide,
+  settings: () => call<AppSettings>('GET', '/api/settings'),
+  projectSettings: (id: string) => call<{ initialized: boolean; checks: RequiredCheck[]; problem?: string }>('GET', `${project(id)}/settings`),
   deleteChat: (id: string, chat: string) => call<void>('DELETE', `${project(id)}/chats/${chat}`),
   // The folder the user chose in the window's dialog, or '' when cancelled.
   chooseFolder: (start: string) => call<{ path: string }>('POST', '/api/folder', { start }).then((r) => r.path),
