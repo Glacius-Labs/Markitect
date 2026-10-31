@@ -40,15 +40,22 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
 - **Maker limit fixed, 31 October** ([PR #927](https://github.com/Glacius-Labs/Markitect/pull/927)): `Rounds` counts only a Manager's own attempts, which are its first maker start and each start after its work was refused. Its children's events no longer use them up.
 - **Second freeze and gate, 31 October** ([Amendment 4](../validation/counted-series-protocol-20261030.md#amendment-4-31-october-2026-a-new-freeze-for-the-second-gate), [PR #928](https://github.com/Glacius-Labs/Markitect/pull/928)):
   - The frozen commit is `955683de`, with new Manager images. The new project's launch inputs are kept, checked by digest only.
-  - The second Windows gate started at 11:33 UTC on 31 October, in a Docker window cleared with the owner, with 32 launches. Its result will be Amendment 5.
+- **Second Windows gate passed, 31 October** ([Amendment 5](../validation/counted-series-protocol-20261030.md#amendment-5-31-october-2026-the-second-windows-gate-passed), [PR #932](https://github.com/Glacius-Labs/Markitect/pull/932)):
+  - 32 launches, all of them results, judged and verified, from 11:43 to 14:30 UTC. Every check of the gate held.
+  - M landed the Makerspace W0 in about 19 minutes and the chain steps C1 to C8. C9 has nothing to do by design.
+- **Long-lived Managers re-measured, 31 October** ([reading](../validation/long-lived-managers-remeasure-20261031.md#amendment-1-31-october-2026-the-reading), [PR #936](https://github.com/Glacius-Labs/Markitect/pull/936); dispatch [PR #933](https://github.com/Glacius-Labs/Markitect/pull/933)):
+  - 10 launches of the redesign with the re-sent brief fixed, all of them results, against the comparison's M rows.
+  - Input tokens with cache reads rose on all five tasks, by about 98 % as the mean and 24 % without the defect task C3. The cost misses the bar again, so the redesign stays a draft (Decisions below).
+  - In one of its two C3 launches, the redesign's Root settled the model's contradiction itself instead of reporting a model defect.
+- **Counted Windows series started, 31 October** ([Amendment 6](../validation/counted-series-protocol-20261030.md#amendment-6-31-october-2026-the-windows-series-started)):
+  - It started at 16:58 UTC on the frozen commit `955683de`, in the Docker window the owner cleared until about 02:00 UTC on 2 November, and plans about 230 launches.
+  - Build has set the runner to stop at 00:15 UTC on 2 November, so that its last launch, with its judging and cleanup, ends within the window. The series should end before then.
 
 ## Next
 
-1. **Second Windows gate:** running (above). Its result will be Amendment 5.
-2. **Long-lived Managers re-measure:** under its own dispatch, as the Decision below says. If the redesign clears the bar, the owner decides whether to adopt it.
-3. **Counted series:** if the gate passed, the series on Windows, then the gate and the series on Linux. An adopted redesign would first need a new frozen commit and gate, as the protocol says [after a stop](../validation/counted-series-protocol-20261030.md#after-a-stop).
-4. **The owner's time:** after the counted series, the owner's measurement below.
-5. **Codex repeat:** the smaller repeat with every arm on Codex Luna, as the Codex decision below says, after [what comes first](../validation/counted-series-protocol-20261030.md#after-the-series). Of the three things that come first there, the Codex login and K's Codex command are done (above). The owner's removal of the judge session's records remains.
+1. **Counted series:** the series on Windows is running (above); then the gate and the series on Linux.
+2. **The owner's time:** after the counted series, the owner's measurement below.
+3. **Codex repeat:** the smaller repeat with every arm on Codex Luna, as the Codex decision below says, after [what comes first](../validation/counted-series-protocol-20261030.md#after-the-series). Of the three things that come first there, the Codex login and K's Codex command are done (above). The owner's removal of the judge session's records remains.
 
 ## Decisions
 
@@ -96,6 +103,7 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
   - The branch stays a draft and unmerged. The counted series measures the current design.
   - On a continued turn the redesign's host sends the full first-turn brief again. Through the Topics session, the owner asked for that to be fixed on the branch and its cost measured again: "Yes, fix and re-measure". The re-measure runs only the redesign, on 10 launches, and compares them with the comparison's M rows. The bar is unchanged: a fall of at least a quarter in wall time or in input tokens with cache reads. Fresh M launches are added only if the decision hangs on wall time.
   - The owner set the order: "Yes, before the series", and "But dont interrupt what was already running. So we dont loose the progress on the evaluation". The re-measure starts only after the second gate has ended, its results are written, Build has reviewed Amendment 5 and the engine is free. The counted series waits for it.
+  - The owner gave Build the Docker engine for 36 hours from 31 October, 13:59 UTC: "Your are the only one using docker for the next 36 hours". Build told the owner that if the re-measure missed the bar, Build would start the counted Windows series in that window without asking again. It missed (above), and the series started. Build keeps the owner's earlier decision that the series measures the current design, and does not ask again. The owner can reopen adoption at any time.
 
 ## Questions for the owner
 
