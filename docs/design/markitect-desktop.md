@@ -88,7 +88,9 @@ Today the host takes its agent settings from environment variables; the app sets
   - the Claude and Codex logins, with their state and a button that runs the provider's own login;
   - Docker's state;
   - the default provider, model and effort;
-  - light or dark, and notifications.
+  - notifications.
+
+  The app has no light theme: the design system uses dark themes only on screen.
 
 Everything except `execution.yaml` stays in the user's config folder, outside the repository. So that the app and the CLI start the same agents, the CLI reads the same settings, with its environment variables still overriding them; that comes with the Runs phase, since the agent settings serve the Runs.
 

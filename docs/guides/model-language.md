@@ -173,6 +173,8 @@ All commands take `--repo DIR`, a folder inside the project's Git repository (de
 
 `refs`, `graph` and `lint` also run over a project with compile errors and say so on standard error.
 
+`markitect desktop [--listen ADDR] [--no-open]` opens Markitect, the app over these commands; [Markitect Desktop](../../internal/adapters/desktop/README.md) describes it.
+
 ### Impact and checklists
 
 `impact` compares the model and the repository files at the base commit with the working tree:
