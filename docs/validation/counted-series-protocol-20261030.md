@@ -2,7 +2,7 @@
 
 The protocol of step T7's counted acceptance series ([delivery plan](../implementation-plan.md#concept-20-build)), as section D of the [suite design](../design/evaluation-suite-v2.md#d-counted-evaluations) asks for. It is built from the pilot's [proposal](t7-pilot-20261029.md#proposed-protocol-for-the-counted-series) and its [Q4](t7-pilot-20261029.md#q4-what-must-change-before-a-counted-series), updated for what has changed since. The owner delegated the counted series to Build, and Build approves this protocol after an [independent review](#independent-review), recorded below before any counted run ([build page](../workstreams/build.md), Decisions).
 
-**Status: approved by Build on 30 October 2026,** under the owner's delegation, after the [independent review](#independent-review) and its second round, on `main` at `6174d5da` (PRs [#908](https://github.com/Glacius-Labs/Markitect/pull/908), [#910](https://github.com/Glacius-Labs/Markitect/pull/910) and [#911](https://github.com/Glacius-Labs/Markitect/pull/911)). No counted launch has run; the [preconditions](#preconditions) come first, and [Amendment 1](#amendment-1-30-october-2026-the-frozen-commit) named the frozen commit. [Amendment 2](#amendment-2-30-october-2026-scoring-fixes-before-the-gate) fixes the scoring before the gate, records the owner's rule for "at least as good" and replaces that commit. The Windows gate ran on 30 October 2026 and did not pass, because M did not land the Makerspace W0 ([Amendment 3](#amendment-3-30-october-2026-the-windows-gate)). [Amendment 4](#amendment-4-31-october-2026-a-new-freeze-for-the-second-gate) freezes `955683de`, which holds the fix, for a second Windows gate. The [stability gate](#stability-gate) runs only in a window that Build clears with the owner. The owner decided the [four points](#decided-by-the-owner) that were the owner's on 30 October 2026.
+**Status: approved by Build on 30 October 2026,** under the owner's delegation, after the [independent review](#independent-review) and its second round, on `main` at `6174d5da` (PRs [#908](https://github.com/Glacius-Labs/Markitect/pull/908), [#910](https://github.com/Glacius-Labs/Markitect/pull/910) and [#911](https://github.com/Glacius-Labs/Markitect/pull/911)). No counted launch has run; the [preconditions](#preconditions) come first, and [Amendment 1](#amendment-1-30-october-2026-the-frozen-commit) named the frozen commit. [Amendment 2](#amendment-2-30-october-2026-scoring-fixes-before-the-gate) fixes the scoring before the gate, records the owner's rule for "at least as good" and replaces that commit. The Windows gate ran on 30 October 2026 and did not pass, because M did not land the Makerspace W0 ([Amendment 3](#amendment-3-30-october-2026-the-windows-gate)). [Amendment 4](#amendment-4-31-october-2026-a-new-freeze-for-the-second-gate) freezes `955683de`, which holds the fix, for a second Windows gate. That gate passed on 31 October 2026 ([Amendment 5](#amendment-5-31-october-2026-the-second-windows-gate-passed)), so precondition 5 holds for Windows. The [stability gate](#stability-gate) runs only in a window that Build clears with the owner. The owner decided the [four points](#decided-by-the-owner) that were the owner's on 30 October 2026.
 
 ## What changed since the pilot's proposal
 
@@ -363,6 +363,76 @@ Build approves this protocol under the owner's delegation. On 30 October 2026, B
   - The runner's hidden check finds none of the hidden places.
   - If this gate passes, the series' configuration names its ledger as `gateLedger`.
 - Everything else in Amendments 1 to 3 stands. Precondition 5 holds for Windows only once this gate has passed.
+
+### Amendment 5, 31 October 2026: the second Windows gate passed
+
+- **Verdict: passed.** The runner wrote `gate.json` at 14:30:52Z, with all seven checks true:
+  - **Every launch a result:** all 32 launches. None was void, none was relaunched, and nothing failed.
+  - **Judged and verified:**
+    - every delivered public result has a valid judgment;
+    - both chains have their chain judgment;
+    - each chain and each new-project start has a verify Result that ended `verified` or `findings`.
+  - **No credential and nothing left:**
+    - the final check scanned 13,425 files and found no credential;
+    - nothing was left on the engine, and the engine reported no error.
+  - **M landed the Makerspace W0:** 162 changed paths in 18.7 minutes. M then landed C1 to C8.
+  - **So precondition 5 holds for Windows.** As Amendment 4 says, the series' configuration names this gate's ledger as `gateLedger`.
+- **The run:**
+  - **What ran:**
+    - the frozen commit `955683de`;
+    - the work folder `gate-windows-2`, from its own `tools/`;
+    - the runner's SHA-256 `2f32715b…`;
+    - the binaries and images that Amendment 4 names. The ledger's `freeze` records them, and they did not change during the run.
+  - **The Docker window:**
+    - The owner answered "Go" to Build.
+    - At 11:31Z, Build found no container running, no `markitect`, `dotnet` or `python` process, and the Docker MCP Toolkit not connected. Build removed `STOP` at 11:31:48Z.
+    - Before the launch, the engine still had no container and no `docker-mcp` container, none of those processes ran, and the lock was free.
+  - **Timeline:**
+    - **Start:** the runner was started detached at 11:33:08Z by `Win32_Process` `Create`, without the shell's `ANTHROPIC_*` and `CLAUDE_*` variables. The suite took the lock for each launch itself.
+    - **One wait:** the engine's first ten minutes of watching, 11:33:47 to 11:43:47Z.
+    - **One login refresh:** at 11:43:53Z, from a file 2.0 h past its expiry. It worked.
+    - **Launches:** the first started at 11:43:53Z, and the last ended at 14:30:34Z. The verdict followed at 14:30:52Z, and the runner exited 0.
+  - **Quota:** the seven-day use rose from 0.25 to 0.29, the five-hour use peaked at 0.21, and nothing was refused. One reading is zero; see M's C9 below.
+- **Time per launch**, as the suite's wall time:
+
+  | Launches | M | K |
+  | --- | --- | --- |
+  | Library fixed starts M2 to M4 | 7.1 min on average (4.6 to 8.9) | 1.1 min (0.4 to 1.6) |
+  | The new project's C1 | 6.9 min | 1.2 min |
+  | Makerspace chain W0 to C9 | 8.6 min on average, 86 min in all (0.2 to 18.7) | 2.8 min on average, 28 min in all (1.2 to 13.6) |
+  | Verify launches: the new project's C1, then the Makerspace chain | 2.6 and 2.6 min | 2.5 and 5.0 min |
+
+  - **In all:** 2.7 h of launches in 2 h 47 min. A launch of M took 8.1 min on average (median 6.9), and one of K 2.3 min (median 1.4).
+  - **For the series:** at 5.0 min per launch, a platform's series of about 230 launches takes about 19 hours of launches.
+- **M's C9 had nothing to do, as the task intends:**
+  - C9 changes no model content: its model equals C8's ([evaluation tasks](../../tools/evaluation-tasks/README.md)). So the right answer is no change.
+  - M's host found that no change reached a Manager. It started no agent and ended `nothing-to-do` in 13 seconds, delivering its start unchanged. The suite counts that as a result with no changes. K also changed nothing at C9, in 1.2 minutes.
+  - The gate reads it correctly:
+    - the chain's end state is C8's landed result;
+    - the series judge judged C9 valid, with 126 of 126 cases passed, including the census of what must not change;
+    - the verify launch verified that end state;
+    - `mLandedTheFirstChainStep` reads W0, not C9.
+  - M's C9 ended the same way in the first gate.
+- **The zero quota reading after M's C9 is a launch without a request, not a failed read:**
+  - **Where it comes from:** the runner's `quota()` takes the highest five-hour and seven-day use from the `rate_limit_event` lines in the launch's own transcripts. It starts at zero, with no reset time. M's C9 started no agent, so it has no such line, and its reading stays zero with no reset time.
+  - **How the runner treats it:** as zero, not as unknown. The readings are kept only in `series.jsonl`, not in the ledger or the report.
+  - **The quota stops are not blind to it:**
+    - Each check reads only the launch it follows, and a launch without a request used no quota.
+    - A five-hour wait is kept in the ledger when it is set, so a later zero cannot clear it.
+    - The next launch with requests reads the use again: M's verify read 0.29 and 0.21 right after.
+    - In both gates, the only reading without a reset time is M's C9, the only launch without an agent.
+  - **No fix before the series.** A field that marks a launch without readings would change only the log, and it would need a new freeze. Whoever reads `series.jsonl` treats a reading without `fiveHourReset` as no reading.
+  - On Codex, `quota()` finds no such lines at all, so the Codex quota events that Build listed come before the Codex repeat.
+- **Verify against the judge,** for the Makerspace chains:
+  - **No drift, by both:**
+    - The series judge found no drift at C9 for either chain, and no regression. Both chains passed every case at every step, 126 of 126 at C9.
+    - M's `verify --full` found all 304 items conforming. K's found 303 of 304.
+  - **K's one Finding, outside what the judge checks:**
+    - K's README and a comment in `protocol/policy_test.go` point to a `TASK.md` for the program's arguments, results and permissions.
+    - No such file is in K's end state, and the model names none. K got its task as a document that the repository does not hold.
+    - This is true: the end state's tree has no `TASK.md`.
+  - The new project's two verify launches both ended `findings`. Their content was not read.
+- Everything else in Amendments 1 to 4 stands. The series and the Linux gate wait for Build's go.
 
 ## Independent review
 
