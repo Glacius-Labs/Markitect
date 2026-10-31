@@ -2,10 +2,13 @@ package bootstrap
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/cli"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/desktop"
@@ -95,9 +98,67 @@ func (desktopRepos) LastLanded(ctx context.Context, root, tip string) (string, b
 	return repo.LastLanded(ctx, root, tip)
 }
 
+// editTemp names the temporary file of a hand edit, next to its target.
+const editTemp = ".markitect-edit-*"
+
 // desktopTree is the working tree with the stamp the app's views follow it
 // by.
 type desktopTree struct{ repo.WorkingTree }
+
+// Write writes a file of the working tree, as a hand edit in the Reader
+// does. It refuses a path that runs through a symbolic link or a Windows
+// junction, either of which could lead out of the repository, and replaces
+// the file in one step, so the views never read half of it.
+func (t desktopTree) Write(file string, data []byte) error {
+	walked := t.Dir
+	for _, part := range strings.Split(file, "/") {
+		walked = filepath.Join(walked, part)
+		info, err := os.Lstat(walked)
+		if errors.Is(err, fs.ErrNotExist) {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		if info.Mode()&(fs.ModeSymlink|fs.ModeIrregular) != 0 {
+			return fmt.Errorf("%s runs through a symbolic link; Markitect writes no file there", file)
+		}
+	}
+	full := filepath.Join(t.Dir, filepath.FromSlash(file))
+	dir := filepath.Dir(full)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return err
+	}
+	// A write cut off before its rename left its temporary file; it goes now.
+	if left, err := filepath.Glob(filepath.Join(dir, editTemp)); err == nil {
+		for _, f := range left {
+			os.Remove(f)
+		}
+	}
+	mode := fs.FileMode(0o644)
+	if info, err := os.Stat(full); err == nil {
+		mode = info.Mode().Perm()
+	}
+	tmp, err := os.CreateTemp(dir, editTemp)
+	if err != nil {
+		return err
+	}
+	_, werr := tmp.Write(data)
+	cerr := tmp.Close()
+	if err := errors.Join(werr, cerr); err != nil {
+		os.Remove(tmp.Name())
+		return err
+	}
+	if err := os.Chmod(tmp.Name(), mode); err != nil {
+		os.Remove(tmp.Name())
+		return err
+	}
+	if err := os.Rename(tmp.Name(), full); err != nil {
+		os.Remove(tmp.Name())
+		return err
+	}
+	return nil
+}
 
 func (t desktopTree) Stamp(file string) string {
 	info, err := os.Lstat(filepath.Join(t.Dir, filepath.FromSlash(file)))

@@ -11,11 +11,11 @@ The Desktop session designs and builds Markitect Desktop, the app over the CLI t
 - **Built:** D1, projects and hub ([Markitect Desktop](../../internal/adapters/desktop/README.md)): `markitect desktop` opens the app in a browser window; the project list; opening, creating and cloning projects; `init`; and the hub with the model check. Tried on Windows in the browser pane at 1440 and 390 pixels wide. The areas are shown but not built.
 - **Built:** D2, the native app `markitect-desktop` ([the native app](../../internal/adapters/desktop/README.md#the-native-app)). The probe chose Wails v3 over Tauri 2 ([reasons](../design/markitect-desktop.md#the-native-shell)): no terminal, windows titled Markitect with the app's icon, a tray, the platform's folder dialog for the project dialogs, and one service per user whichever way Markitect starts. Tried on Windows; CI builds and starts it on Windows, macOS and Linux when asked. Not yet: an executable icon on Windows, a macOS `.app` bundle and a Linux `.desktop` entry, which come with packaging.
 
-- **Built:** of D3, the Model area's four views, Reader, Map, Organization and Quality, with the diff from the last landing or the last commit and the views following the folder ([the Model area](../../internal/adapters/desktop/README.md#the-model-area)). Tried on Windows in the browser pane at 1440 and 390 pixels wide. The design details settled while building are on the [design page](../design/markitect-desktop.md#the-model-area).
+- **Built:** D3, the Model area: its four views, Reader, Map, Organization and Quality, with the diff from the last landing or the last commit, the views following the folder, and hand edits from the Reader ([the Model area](../../internal/adapters/desktop/README.md#the-model-area)). Tried on Windows in the browser pane at 1440 and 390 pixels wide. The design details settled while building are on the [design page](../design/markitect-desktop.md#the-model-area).
 
 ## Next
 
-1. The rest of D3: hand edits, a Definition opened in an editor from the Reader that saves into the working tree.
+1. D4, the chat and Extract. The chat's agent runs in a container, so while the evaluations keep Docker it is built against a fake and runs for real only once Docker is free.
 2. With D4, the Extract skill gains its stop at the Package cut. The skill is a shared file, changed one writer at a time with Build.
 
 ## Questions for the owner

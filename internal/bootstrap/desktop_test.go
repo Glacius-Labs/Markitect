@@ -102,6 +102,26 @@ func TestTheDesktopReadsCommitsLandingsAndStamps(t *testing.T) {
 	if ws.Stamp("README.md") == before {
 		t.Error("the stamp did not change with the file")
 	}
+
+	// A hand edit writes into the working tree, never through a link out of
+	// it.
+	if err := ws.Write(".markitect/model/members/member.md", []byte("# Member\n")); err != nil {
+		t.Fatal(err)
+	}
+	if data, err := os.ReadFile(filepath.Join(r.Dir, ".markitect", "model", "members", "member.md")); err != nil || string(data) != "# Member\n" {
+		t.Fatalf("written %q %v", data, err)
+	}
+	outside := testkit.TempDir(t)
+	if err := os.Symlink(outside, filepath.Join(r.Dir, ".markitect", "model", "away")); err != nil {
+		t.Logf("no symbolic link here (%v); the refusal is not checked", err)
+		return
+	}
+	if err := ws.Write(".markitect/model/away/x.md", []byte("x\n")); err == nil || !strings.Contains(err.Error(), "symbolic link") {
+		t.Errorf("a write through a link: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(outside, "x.md")); !os.IsNotExist(err) {
+		t.Errorf("the write left the repository: %v", err)
+	}
 }
 
 // ListenDesktop, which the native app calls, starts the same per-user

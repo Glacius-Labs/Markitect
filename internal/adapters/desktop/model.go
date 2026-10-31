@@ -79,7 +79,9 @@ type definitionView struct {
 	Internal bool   `json:"internal,omitempty"`
 	Words    int    `json:"words"`
 	Text     string `json:"text"`
-	Links    []link `json:"links"`
+	// Digest marks the text, for a hand edit to name what it started from.
+	Digest string `json:"digest"`
+	Links  []link `json:"links"`
 	// ReferencedBy are the Definitions that link to it or are of it, as
 	// markitect refs lists them; RealizedBy the files whose registry entries
 	// name it.
@@ -215,7 +217,7 @@ func buildModelView(cur *project.Project, b *baseState, bs bases, chosen *base, 
 	for _, id := range ids {
 		d := m.Definitions[id]
 		dv := definitionView{ID: id, Title: d.Title, Kind: d.Kind, Package: d.Package, File: d.File, Internal: d.Internal, Words: d.Words,
-			Text: string(d.Data), Links: []link{}, ReferencedBy: []analysis.Ref{}, RealizedBy: []realizedBy{}, SeenBy: seen[id], Change: changes[id]}
+			Text: string(d.Data), Digest: digest(d.Data), Links: []link{}, ReferencedBy: []analysis.Ref{}, RealizedBy: []realizedBy{}, SeenBy: seen[id], Change: changes[id]}
 		if !d.InModel() {
 			dv.Library, dv.Package = d.Library, ""
 		}
