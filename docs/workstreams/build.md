@@ -29,24 +29,23 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
   - The frozen commit is `4576beaa` ([Amendment 2](../validation/counted-series-protocol-20261030.md#amendment-2-30-october-2026-scoring-fixes-before-the-gate), [PR #918](https://github.com/Glacius-Labs/Markitect/pull/918)). The new project's launch inputs are kept, checked by digest only.
 - **Windows gate failed, 30 October** ([Amendment 3](../validation/counted-series-protocol-20261030.md#amendment-3-30-october-2026-the-windows-gate), [PR #924](https://github.com/Glacius-Labs/Markitect/pull/924)):
   - 32 launches, all of them results, judged and verified. No credential was found and nothing was left behind.
-  - M did not land the Makerspace W0. Root integrated nine children and used its six maker starts, four of them on its children's events rather than on rejections.
+  - M did not land the Makerspace W0. Root integrated nine children and spent its six maker starts on their events.
   - Precondition 5 does not hold for Windows.
 - **Long-lived Managers compared, 31 October** ([dispatch](../validation/long-lived-managers-comparison-20261030.md), [PR #923](https://github.com/Glacius-Labs/Markitect/pull/923); branch in draft [PR #922](https://github.com/Glacius-Labs/Markitect/pull/922)):
   - 40 launches on Windows, all results.
-  - Quality was not worse. Both arms stopped every planted defect, and the redesign landed more of the planted gaps.
-  - The cost missed the bar of a quarter: about −11 % wall time and +9 % input tokens as the mean over the tasks, with W0 slower and dearer.
-  - M missed one gap once the same way the gate failed, with Root out of maker starts.
+  - Quality was not worse. Both arms stopped 6 of 6 planted defects. Of the gap launches, the redesign landed 4 of 4 and M 2 of 4; one of M's misses ended with Root out of maker starts, as in the gate.
+  - The cost missed the bar of a quarter. As the mean over the tasks, wall time fell about 11 % and input tokens with cache reads rose about 9 %. On W0 the redesign took 19 % longer and used 40 % more input tokens.
   - Not adopted (below).
 - **Codex in the suite** ([PR #921](https://github.com/Glacius-Labs/Markitect/pull/921)): the native mode copies a Codex login with an empty refresh token and refuses an API key, and K has its Codex command, with its subagents on.
 
 ## Next
 
 1. **Counted series:**
-   - The host's per-Manager maker limit is fixed so that it counts corrections, not a parent's children's events.
+   - Fix the host's per-Manager maker limit so that it counts corrections, not a parent's children's events.
    - Then come a new frozen commit and a new Windows gate, each with an amendment, after a Docker window cleared with the owner.
    - Then the counted series on Windows, and the gate and the series on Linux.
 2. **The owner's time:** after the counted series, the owner's measurement below.
-3. **Codex repeat:** the smaller repeat with every arm on Codex Luna, as the Codex decision below says, after [what comes first](../validation/counted-series-protocol-20261030.md#after-the-series). The Codex login and K's Codex command are done (above). Still open are the runner's Codex quota events and token counting, and the owner's removal of the judge session's records.
+3. **Codex repeat:** the smaller repeat with every arm on Codex Luna, as the Codex decision below says, after [what comes first](../validation/counted-series-protocol-20261030.md#after-the-series). Of the three things that come first there, the Codex login and K's Codex command are done (above). The owner's removal of the judge session's records remains.
 
 ## Decisions
 
