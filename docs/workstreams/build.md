@@ -37,13 +37,16 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
   - The cost missed the bar of a quarter. As the mean over the tasks, wall time fell about 11 % and input tokens with cache reads rose about 9 %. On W0 the redesign took 19 % longer and used 40 % more input tokens.
   - Not adopted (below).
 - **Codex in the suite** ([PR #921](https://github.com/Glacius-Labs/Markitect/pull/921)): the native mode copies a Codex login with an empty refresh token and refuses an API key, and K has its Codex command, with its subagents on.
+- **Maker limit fixed, 31 October** ([PR #927](https://github.com/Glacius-Labs/Markitect/pull/927)): `Rounds` counts only a Manager's own attempts, which are its first maker start and each start after its work was refused. Its children's events no longer use them up.
+- **Second freeze and gate, 31 October** ([Amendment 4](../validation/counted-series-protocol-20261030.md#amendment-4-31-october-2026-a-new-freeze-for-the-second-gate), [PR #928](https://github.com/Glacius-Labs/Markitect/pull/928)):
+  - The frozen commit is `955683de`, with new Manager images. The new project's launch inputs are kept, checked by digest only.
+  - The second Windows gate started at 11:33 UTC on 31 October, in a Docker window cleared with the owner, with 32 launches. Its result will be Amendment 5.
 
 ## Next
 
 1. **Counted series:**
-   - Fix the host's per-Manager maker limit so that it counts corrections, not a parent's children's events.
-   - Then come a new frozen commit and a new Windows gate, each with an amendment, after a Docker window cleared with the owner.
-   - Then the counted series on Windows, and the gate and the series on Linux.
+   - The second Windows gate (above).
+   - If it passes, the counted series on Windows, and the gate and the series on Linux.
 2. **The owner's time:** after the counted series, the owner's measurement below.
 3. **Codex repeat:** the smaller repeat with every arm on Codex Luna, as the Codex decision below says, after [what comes first](../validation/counted-series-protocol-20261030.md#after-the-series). Of the three things that come first there, the Codex login and K's Codex command are done (above). The owner's removal of the judge session's records remains.
 
