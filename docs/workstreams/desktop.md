@@ -18,4 +18,4 @@ The Desktop session designs and builds Markitect Desktop, the app over the CLI t
 
 ## Questions for the owner
 
-None open now. For the Runs phase: how a project created in the app gets the remote that landing needs, since a Run without one keeps its work on its Run branch.
+None open now. For the Runs phase: how a project created in the app gets the remote that landing needs, since a Run without one keeps its work on its Run branch. Recommendation, to confirm then: creating a project also creates its remote, a bare repository in the app's data folder until GitHub repositories can be created, and the project pulls from it like from any remote.
