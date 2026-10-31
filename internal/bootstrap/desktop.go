@@ -98,6 +98,9 @@ func (desktopRepos) LastLanded(ctx context.Context, root, tip string) (string, b
 	return repo.LastLanded(ctx, root, tip)
 }
 
+// editTemp names the temporary file of a hand edit, next to its target.
+const editTemp = ".markitect-edit-*"
+
 // desktopTree is the working tree with the stamp the app's views follow it
 // by.
 type desktopTree struct{ repo.WorkingTree }
@@ -122,10 +125,21 @@ func (t desktopTree) Write(file string, data []byte) error {
 		}
 	}
 	full := filepath.Join(t.Dir, filepath.FromSlash(file))
-	if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+	dir := filepath.Dir(full)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
-	tmp, err := os.CreateTemp(filepath.Dir(full), ".markitect-edit-*")
+	// A write cut off before its rename left its temporary file; it goes now.
+	if left, err := filepath.Glob(filepath.Join(dir, editTemp)); err == nil {
+		for _, f := range left {
+			os.Remove(f)
+		}
+	}
+	mode := fs.FileMode(0o644)
+	if info, err := os.Stat(full); err == nil {
+		mode = info.Mode().Perm()
+	}
+	tmp, err := os.CreateTemp(dir, editTemp)
 	if err != nil {
 		return err
 	}
@@ -135,7 +149,7 @@ func (t desktopTree) Write(file string, data []byte) error {
 		os.Remove(tmp.Name())
 		return err
 	}
-	if err := os.Chmod(tmp.Name(), 0o644); err != nil {
+	if err := os.Chmod(tmp.Name(), mode); err != nil {
 		os.Remove(tmp.Name())
 		return err
 	}

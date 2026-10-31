@@ -103,6 +103,7 @@ export function Editor(props: { pid: string; def: Definition; onClose: () => voi
         write(key, null);
         setOpened(text);
         setSaved(r.digest);
+        setBusy(false);
         refresh();
         return;
       }
