@@ -2,7 +2,7 @@
 
 The bounded dispatch of the re-measure the owner asked for after the [comparison](long-lived-managers-comparison-20261030.md) of the [long-lived Managers](../design/long-lived-managers.md) redesign (**L**) with `main` (**M**). On a continued turn, L's host sent the agent its whole first-turn brief again. The owner, through the Topics session on 31 October 2026: "Yes, fix and re-measure", and on the order: "Yes, before the series". The order and the scope are the owner's [decision](../workstreams/build.md#decisions), relayed by Topics and recorded on the build page: only L runs, on 10 launches, read against the comparison's M rows, after the second Windows gate, with fresh M launches only if the decision hangs on wall time. It runs under the owner's standing run approval of 28 October 2026 ([build workstream, Decisions](../workstreams/build.md)). **These runs are evidence for the design, never counted data.** The owner decides on adoption after the reading.
 
-**Status: approved by Build on 31 October 2026.** Nothing runs before the second Windows gate has ended, its results are written, Build has reviewed its Amendment 5 and gives the explicit go for a Docker window. The counted series waits for this re-measure.
+**Status: approved by Build on 31 October 2026; ran on 31 October from 15:02 to 16:56 UTC, all 10 launches; read in [Amendment 1](#amendment-1-31-october-2026-the-reading).** It ran in the owner's Docker window, after Build's explicit go, after the second Windows gate and before the counted series.
 
 ## Question
 
@@ -64,3 +64,65 @@ Only if the decision hangs on wall time, as the owner decided. Build judges that
 - **Work folder:** a second one, `markitect-long-lived\remeasure-m`, since a finished series refuses another run. Its `also` names the first part's folder, so its `cost` reads both.
 - **Reading:** each task's fresh M launches are paired with its L launches from the first part, on the same machine and engine, close in time. Both bars are then read, wall time and input with cache reads.
 - **Everything else:** as for the first part, under this page. The quota cap is set again before the window.
+
+## Amendments
+
+### Amendment 1, 31 October 2026: the reading
+
+**The answer is no.** The fix took effect: on the Library tasks a continued turn's message fell by about four fifths. But L's input did not fall. Against the comparison's M rows, input with cache reads rose by 98 % over the five tasks, and by 24 % without C3, where the bar asks for −25 %. Quality held by the suite's measures, but in one of the two defect launches Root settled the contradiction itself instead of reporting a model defect ([below](#quality)).
+
+**The run:**
+
+- **Launches:** 10 of 10, all results, none void or relaunched. The runner started at 15:02:17 UTC; the quiet-engine guard watched for its first ten minutes, and the launches ran from 15:12 to 16:56.
+- **Before the first launch:** the branch's Docker tests passed at `633544ef` on Windows (15:00 to 15:01) and on Linux in WSL (15:01 to 15:02), and left nothing behind.
+- **Quota:** `quotaStop` was 0.35, the 0.29 of the second gate's last reading plus 6 points. The seven-day use rose to 0.30.
+- **Final check:** no secret hits and nothing left on the engine. The binaries lay outside the work folder. The counted series' three frozen images and `markitect-counted\` were not touched.
+
+#### Quality
+
+Each cell gives the hidden cases passed out of those planned.
+
+| Task | L r1 | L r2 | M in the comparison |
+| --- | --- | --- | --- |
+| Library M3 | landed, 22/22 | landed, 22/22 | landed both times, 22/22 |
+| Library M4 | landed, 28/28 | landed, 28/28 | landed both times, 28/28 |
+| Library M5 | landed, 27/27 | landed, 27/27 | landed both times, 27/27 |
+| Makerspace W0 | landed, 54/54 | landed, 54/54 | landed both times, 54/54 |
+| Defect `makerspace-c3-discount-contradiction` | stopped: model defect after 4 turns | not landed: incomplete after 22 turns | stopped: model defect after 2 and 4 turns |
+
+- **Hidden cases and landing:** equal to M on every launch. §15.4 counts both C3 launches as stopped, since neither landed.
+- **C3 r2 did not stop right.** The child `materials` escalated the contradiction between its table and its example. Root's long-lived maker settled it itself ("the table governs") instead of escalating it as a model defect. Each later approved submission of `materials` carried the `model-problem` verdict and escalated again. Root answered each time that the matter was settled, until `materials` had used its six maker turns. M's Root, fresh in each turn, escalated at once in both repetitions. The comparison's C3 r1 on L showed the same pattern for 9 turns before Root escalated. With two repetitions per arm this does not tell whether the fix made it worse.
+
+#### Whether the fix took effect
+
+The mean size of a launch's continued-turn messages, from the host's records in the transcripts:
+
+- **Library:** 1,516 to 2,688 characters per launch, against 8,325 to 11,876 before the fix. Root's second checker turn in M3 r1 fell from 26,030 to 2,348 characters.
+- **W0: it grew,** to 29,107 and 38,015 characters, against 7,164 and 17,485 before. A checker's diff since its previous submission is shown inline up to 256 KiB. `protocol`'s third checker turn received 252,818 characters of diff in r1. Before the fix, the whole diff from the base was above the bound there, so only its files were listed.
+- **Across all ten launches** the mean is 8,169 characters, against 9,061 before.
+
+#### Cost
+
+Change of L against M's comparison rows per task, with the corrected counter (negative is less). The last column is L before the fix, from the comparison.
+
+| Task | Wall (shown, not read) | Input without cache reads | Cache reads | Input with cache reads | Weighted input | Output | Turns | Containers | Input with cache reads before the fix |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Library M3 | −21 % | −20 % | +5 % | +2 % | −11 % | −13 % | 0 % | −27 % | +3 % |
+| Library M4 | −6 % | −11 % | +15 % | +11 % | −1 % | −7 % | 0 % | −27 % | +6 % |
+| Library M5 | +3 % | −10 % | +48 % | +41 % | +14 % | +17 % | +25 % | −27 % | +22 % |
+| Makerspace W0 | +32 % | +19 % | +45 % | +42 % | +30 % | +20 % | +24 % | −14 % | +40 % |
+| `makerspace-c3-discount-contradiction` | +248 % | +76 % | +462 % | +392 % | +196 % | +641 % | +333 % | +12 % | +68 % |
+| **Mean over the tasks** | **+51 %** | **+11 %** | **+115 %** | **+98 %** | **+46 %** | **+132 %** | **+76 %** | **−16 %** | **+28 %** |
+| Mean without C3 | +2 % | −6 % | +28 % | +24 % | +8 % | +4 % | +12 % | −23 % | +18 % |
+
+- **Weighted input** counts input without cache reads and cache writes at 1 and cache reads at 0.1.
+- **The re-sent brief was not what made L's input grow.** At equal turns, L's input with cache reads per launch barely moved with the fix: M3 1.84 M and 1.76 M against 1.84 M and 1.80 M before, M4 1.98 M and 2.02 M against 1.91 M and 1.92 M. A continued turn re-reads its whole conversation on every request, and the brief was a small part of it.
+- **Where L cost more:** M5 took 17 and 18 turns against 14. W0 took 30 and 32 against 25, and its checkers read the large inline diffs. C3 r2 looped for 22 turns.
+- **Wall time** is shown but not read, since these launches were not paired with M's. Even read as it is, its mean without C3 is +2 %. So the decision does not hang on wall time, and the optional M part would not change the answer.
+
+**Evidence:** `C:\Users\Consiliari\AppData\Local\markitect-long-lived\remeasure`, with the runs, judgments, ledger, log, reports, `cost.json`, `cost.md` and the final check. The Docker tests' logs are `dockertests-remeasure.txt` and `dockertests-remeasure-wsl.txt` beside it.
+
+**On the branch, if it goes on:**
+
+- Inline a continued checker's diff only up to a small bound, and list the files above it.
+- End the loop of C3 r2 in host state: a parent's answer that leaves a child's `model-problem` verdict standing cannot settle it, so the next escalation of the same matter should reach the owner as a model defect.
