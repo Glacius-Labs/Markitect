@@ -6,6 +6,8 @@ import (
 	"errors"
 	"maps"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -21,6 +23,8 @@ type fakeChats struct {
 	agents  []*fakeAgent
 	fail    error
 	turn    func(copy map[string]string, message string) string
+	// hold, when set, keeps Start from returning until it is closed.
+	hold chan struct{}
 }
 
 func (f *fakeChats) Start(_ context.Context, s ChatStart) (ChatAgent, error) {
@@ -39,7 +43,19 @@ func (f *fakeChats) Start(_ context.Context, s ChatStart) (ChatAgent, error) {
 		files[file] = string(data)
 	}
 	a := &fakeAgent{chats: f, start: files, copy: maps.Clone(files)}
+	for _, p := range s.Pending {
+		if p.Removed {
+			delete(a.copy, p.Path)
+		} else {
+			a.copy[p.Path] = string(p.Data)
+		}
+	}
 	f.agents = append(f.agents, a)
+	if f.hold != nil {
+		f.mu.Unlock()
+		<-f.hold
+		f.mu.Lock()
+	}
 	return a, nil
 }
 
@@ -225,8 +241,9 @@ func TestAnAcceptWritesNothingOverAChangedWorkingTree(t *testing.T) {
 	if v = chatState(t, s, id, chat); v.Proposals[0].State != proposalRejected {
 		t.Errorf("after the reject: %+v", v.Proposals)
 	}
-	if a := chats.agents[0]; len(a.settled) != 1 || a.settled[0] {
-		t.Errorf("the agent settled %v", a.settled)
+	// The conflict dropped the agent, so there is none to settle.
+	if a := chats.agents[0]; len(a.settled) != 0 || !a.closed {
+		t.Errorf("the agent settled %v, closed %v", a.settled, a.closed)
 	}
 	if w := call(s, "POST", "/api/projects/"+id+"/chats/"+chat+"/accept", "{}"); w.Code != http.StatusConflict {
 		t.Errorf("accepting with no proposal: %d", w.Code)
@@ -291,7 +308,7 @@ func TestAReopenedChatStartsAFreshAgentWithTheConversation(t *testing.T) {
 	chatState(t, s, id, chat)
 	// The app restarts: the conversation stays, its agent does not.
 	s.chat.close()
-	s.chat = newChatService(s.chat.dir, chats, s.repos)
+	s.chat = newChatService(s.chat.dir, chats, s.repos, &s.edits)
 	if w := call(s, "POST", "/api/projects/"+id+"/chats/"+chat+"/messages", `{"text":"And renew them once."}`); w.Code != http.StatusOK {
 		t.Fatalf("message after the restart: %d %s", w.Code, w.Body)
 	}
@@ -337,5 +354,140 @@ func TestAChatThatCannotStartSaysWhy(t *testing.T) {
 	}
 	if w := call(s, "GET", "/api/projects/"+id+"/chats/../x", ""); w.Code == http.StatusOK {
 		t.Error("a chat outside the folder")
+	}
+}
+
+func TestAChatProposesOnlyFilesBelowMarkitectsFolder(t *testing.T) {
+	s, _, files, id := chatServer(t, func(copy map[string]string, message string) string {
+		copy[".markitect/model/fee.md"] = fee
+		copy[".markitect/../src/escape.go"] = "package escape\n"
+		copy["../outside.md"] = "outside\n"
+		copy[".markitect/model/CON.md"] = "device\n"
+		copy[".markitect/model/./policy.md"] = "unclean\n"
+		return "done"
+	})
+	chat := startChat(t, s, id, `{"text":"Write a few files."}`)
+	v := chatState(t, s, id, chat)
+	open := v.open()
+	if open == nil || len(open.Files) != 1 || open.Files[0].Path != ".markitect/model/fee.md" || len(open.Outside) != 4 {
+		t.Fatalf("proposal %+v", open)
+	}
+	if w := call(s, "POST", "/api/projects/"+id+"/chats/"+chat+"/accept", "{}"); w.Code != http.StatusOK {
+		t.Fatalf("accept: %d %s", w.Code, w.Body)
+	}
+	for f := range files {
+		if strings.Contains(f, "..") || strings.Contains(f, "CON") || strings.Contains(f, "/./") || strings.Contains(f, "escape") {
+			t.Errorf("accept wrote %s", f)
+		}
+	}
+}
+
+func TestAConflictLetsTheNextTurnStartFreshWithTheProposal(t *testing.T) {
+	turns := 0
+	s, chats, files, id := chatServer(t, func(copy map[string]string, message string) string {
+		turns++
+		if turns == 1 {
+			return feeChat(copy, message)
+		}
+		return "I took your edit into account."
+	})
+	chat := startChat(t, s, id, `{"text":"Add a late fee."}`)
+	chatState(t, s, id, chat)
+	files[".markitect/model/policy.md"] = "---\nkind: std/Rule\n---\n# Loan limit\n\nChanged by hand.\n"
+	if w := call(s, "POST", "/api/projects/"+id+"/chats/"+chat+"/accept", "{}"); w.Code != http.StatusConflict {
+		t.Fatalf("accept: %d", w.Code)
+	}
+	if !chats.agents[0].closed {
+		t.Error("the agent outlived the conflict")
+	}
+	if w := call(s, "POST", "/api/projects/"+id+"/chats/"+chat+"/messages", `{"text":"I changed the limit by hand."}`); w.Code != http.StatusOK {
+		t.Fatalf("message: %d %s", w.Code, w.Body)
+	}
+	v := chatState(t, s, id, chat)
+	if len(chats.started) != 2 || len(chats.started[1].Pending) != 2 {
+		t.Fatalf("the fresh agent got %+v", chats.started)
+	}
+	// The fresh agent starts from the working tree as it is, so its proposal
+	// now overwrites the hand edit visibly, and accepting it no longer
+	// conflicts.
+	if open := v.open(); open == nil || len(open.Files) != 2 || open.N != 2 {
+		t.Fatalf("proposal after the fresh start %+v", v.Proposals)
+	}
+	if w := call(s, "POST", "/api/projects/"+id+"/chats/"+chat+"/accept", "{}"); w.Code != http.StatusOK {
+		t.Fatalf("accept after the fresh start: %d %s", w.Code, w.Body)
+	}
+	if files[".markitect/model/fee.md"] != fee {
+		t.Error("the proposal was not written")
+	}
+}
+
+func TestAnAcceptCutOffMidwayCompletesWhenRepeated(t *testing.T) {
+	s, _, files, id := chatServer(t, feeChat)
+	chat := startChat(t, s, id, `{"text":"Add a late fee."}`)
+	v := chatState(t, s, id, chat)
+	// The first file of the proposal reached the working tree already.
+	files[".markitect/model/fee.md"] = v.open().Files[0].Text
+	if w := call(s, "POST", "/api/projects/"+id+"/chats/"+chat+"/accept", "{}"); w.Code != http.StatusOK {
+		t.Fatalf("accept: %d %s", w.Code, w.Body)
+	}
+	if !strings.Contains(files[".markitect/model/policy.md"], "`5`") {
+		t.Error("the rest of the proposal was not written")
+	}
+	if v = chatState(t, s, id, chat); v.Proposals[0].Files[0].Text != "" {
+		t.Error("an accepted proposal keeps its texts")
+	}
+}
+
+func TestQuittingWhileAnAgentStartsLeavesNoAgent(t *testing.T) {
+	s, chats, _, id := chatServer(t, feeChat)
+	chats.hold = make(chan struct{})
+	startChat(t, s, id, `{"text":"Hello"}`)
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		chats.mu.Lock()
+		n := len(chats.agents)
+		chats.mu.Unlock()
+		if n == 1 {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("the agent did not start")
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	closed := make(chan struct{})
+	go func() {
+		s.chat.close()
+		close(closed)
+	}()
+	time.Sleep(20 * time.Millisecond)
+	close(chats.hold)
+	<-closed
+	if a := chats.agents[0]; !a.closed {
+		t.Error("an agent that started while the app quit was left running")
+	}
+	if w := call(s, "POST", "/api/projects/"+id+"/chats", `{"text":"Again"}`); w.Code != http.StatusServiceUnavailable {
+		t.Errorf("a chat after quitting: %d", w.Code)
+	}
+}
+
+func TestAnUnreadableConversationLeavesTheOthersListed(t *testing.T) {
+	s, _, _, id := chatServer(t, feeChat)
+	chat := startChat(t, s, id, `{"text":"Add a late fee."}`)
+	chatState(t, s, id, chat)
+	if err := os.WriteFile(filepath.Join(s.chat.dir, id, "0123456789abcdef.json"), []byte("{broken"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	list := decode(t, call(s, "GET", "/api/projects/"+id+"/chats", ""))
+	if chats := list["chats"].([]any); len(chats) != 1 {
+		t.Errorf("list %v", list)
+	}
+	// Another project's route does not reach the conversation.
+	other := filepath.Join(t.TempDir(), "other")
+	s.repos.(*fakeRepos).repos[other] = memRepo{root: other, files: library(t)}
+	w := call(s, "POST", "/api/projects", `{"action":"open","path":`+jsonString(other)+`}`)
+	otherID := decode(t, w)["project"].(map[string]any)["id"].(string)
+	if w := call(s, "GET", "/api/projects/"+otherID+"/chats/"+chat, ""); w.Code != http.StatusNotFound {
+		t.Errorf("another project's chat: %d", w.Code)
 	}
 }

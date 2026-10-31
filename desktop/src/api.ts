@@ -221,6 +221,8 @@ export interface Conversation {
   messages: { from: 'owner' | 'agent' | 'app'; text: string; at: string }[];
   proposals: Proposal[];
   working: boolean;
+  // Why the conversation's last change is only in memory.
+  unsaved?: string;
 }
 
 // Conflict is the service's answer to a hand edit whose file changed since

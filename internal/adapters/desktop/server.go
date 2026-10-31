@@ -72,7 +72,8 @@ func newServer(secret, address string, store *Store, repos Repos, commands Comma
 		return nil, err
 	}
 	s := &server{secret: secret, session: session, cookie: "markitect_" + port, address: address, port: port, store: store, repos: repos, commands: commands,
-		models: newModels(), chat: newChatService(filepath.Join(filepath.Dir(store.File), "chats"), nil, repos), mux: http.NewServeMux(), now: time.Now, launches: map[string]time.Time{}}
+		models: newModels(), mux: http.NewServeMux(), now: time.Now, launches: map[string]time.Time{}}
+	s.chat = newChatService(filepath.Join(filepath.Dir(store.File), "chats"), nil, repos, &s.edits)
 	files, err := fs.Sub(ui, "ui")
 	if err != nil {
 		return nil, err

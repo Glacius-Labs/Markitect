@@ -227,7 +227,6 @@ func (s *Service) Window() error { return s.srv.window() }
 func (s *Service) Close() {
 	s.closed.Do(func() {
 		removeIfUnchanged(s.cfg.Dir, s.record)
-		s.srv.chat.close()
 		stop, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		if s.http.Shutdown(stop) != nil {
@@ -235,6 +234,9 @@ func (s *Service) Close() {
 			// for its first seconds; after the grace period, close what is left.
 			_ = s.http.Close()
 		}
+		// No request starts a chat agent any more; the turns end and the
+		// agents with them.
+		s.srv.chat.close()
 	})
 }
 

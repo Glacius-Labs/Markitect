@@ -89,3 +89,9 @@ export function body(text: string): string {
 export function render(text: string, env: RenderEnv): string {
   return md.render(body(text), env as unknown as Env);
 }
+
+// renderMessage turns a chat message into HTML; a message has no front
+// matter to leave out.
+export function renderMessage(text: string, env: RenderEnv): string {
+  return md.render(text, env as unknown as Env);
+}

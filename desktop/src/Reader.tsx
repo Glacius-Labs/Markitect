@@ -225,7 +225,7 @@ function PackagePage({ ix, pid, pkg, diff, refresh, editable }: { ix: Index; pid
           </button>
         )}
       </div>
-      {creating && <NewDefinition ix={ix} pid={pid} pkg={pkg.path} onClose={() => setCreating(false)} refresh={refresh} />}
+      {creating && editable && <NewDefinition ix={ix} pid={pid} pkg={pkg.path} onClose={() => setCreating(false)} refresh={refresh} />}
       <h1 className="h2 reader__heading">{packageName(pkg.path)}</h1>
       {errors.map((e, i) => (
         <Alert key={`e${i}`} tone="danger" title={e.code} body={e.message} />

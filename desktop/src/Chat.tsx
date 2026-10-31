@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { api, ApiError, type ChatSummary, type Conversation, type Proposal, type Skill } from './api';
-import { render } from './markdown';
+import { renderMessage } from './markdown';
 import { changeLabel, changeTone } from './modeldata';
 import { modelHref } from './route';
 import { chatChanged, showChat, useChatChanged, useShownChat } from './shown';
@@ -52,7 +52,7 @@ const skills: { skill: Skill; title: string; body: string; placeholder: string }
 ];
 
 export function ChatPanel(props: { pid: string; onClose: () => void }) {
-  const { pid } = props;
+  const { pid, onClose } = props;
   const [list, setList] = useState<{ chats: ChatSummary[]; available: boolean } | null>(null);
   const [current, setCurrent] = useState<string | null>(() => readCurrent(pid));
   const [conv, setConv] = useState<Conversation | null>(null);
@@ -60,6 +60,11 @@ export function ChatPanel(props: { pid: string; onClose: () => void }) {
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  // The conversation a request was sent for, so that an answer arriving
+  // after the owner switched does not replace the one in view.
+  const currentRef = useRef(current);
+  currentRef.current = current;
 
   const loadList = useCallback(() => {
     api.chats(pid).then(setList, (e: Error) => setError(e.message));
@@ -72,6 +77,7 @@ export function ChatPanel(props: { pid: string; onClose: () => void }) {
       setCurrent(id);
       setConv(null);
       setError('');
+      setDeleting(false);
     },
     [pid],
   );
@@ -87,6 +93,7 @@ export function ChatPanel(props: { pid: string; onClose: () => void }) {
     }
     let stopped = false;
     let timer = 0;
+    let wasWorking = false;
     const load = async () => {
       try {
         const c = await api.chat(pid, current);
@@ -94,19 +101,28 @@ export function ChatPanel(props: { pid: string; onClose: () => void }) {
           return;
         }
         setConv(c);
+        setError('');
         if (c.working) {
+          wasWorking = true;
           timer = window.setTimeout(load, followEvery);
         } else {
           loadList();
-        }
-      } catch (e) {
-        if (!stopped) {
-          if (e instanceof ApiError && e.status === 404) {
-            choose(null);
-          } else {
-            setError(e instanceof Error ? e.message : String(e));
+          if (wasWorking) {
+            // The turn's proposal may have changed what the views show.
+            chatChanged();
           }
         }
+      } catch (e) {
+        if (stopped) {
+          return;
+        }
+        if (e instanceof ApiError && e.status === 404) {
+          choose(null);
+          return;
+        }
+        // A read that failed is tried again a little later.
+        setError(e instanceof Error ? e.message : String(e));
+        timer = window.setTimeout(load, 2 * followEvery);
       }
     };
     void load();
@@ -124,13 +140,16 @@ export function ChatPanel(props: { pid: string; onClose: () => void }) {
     setBusy(true);
     setError('');
     try {
+      const sentFor = current;
       const c = current ? await api.say(pid, current, text) : await api.newChat(pid, text, skill);
       setDraft('');
-      if (!current) {
-        writeCurrent(pid, c.id);
-        setCurrent(c.id);
+      if (currentRef.current === sentFor) {
+        if (!sentFor) {
+          writeCurrent(pid, c.id);
+          setCurrent(c.id);
+        }
+        setConv(c);
       }
-      setConv(c);
       loadList();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -169,12 +188,22 @@ export function ChatPanel(props: { pid: string; onClose: () => void }) {
             </option>
           ))}
         </select>
-        {current && (
-          <button className="gl-button" data-variant="ghost" data-size="sm" disabled={busy || working} onClick={remove} title="Delete this conversation">
-            Delete
-          </button>
-        )}
-        <button className="gl-button" data-variant="ghost" data-size="sm" data-icon-only aria-label="Close the chat" onClick={props.onClose}>
+        {current &&
+          (deleting ? (
+            <>
+              <button className="gl-button" data-variant="danger" data-size="sm" disabled={busy || working} onClick={remove}>
+                Delete it
+              </button>
+              <button className="gl-button" data-variant="ghost" data-size="sm" onClick={() => setDeleting(false)}>
+                Keep
+              </button>
+            </>
+          ) : (
+            <button className="gl-button" data-variant="ghost" data-size="sm" disabled={busy || working} onClick={() => setDeleting(true)} title="Delete this conversation">
+              Delete
+            </button>
+          ))}
+        <button className="gl-button" data-variant="ghost" data-size="sm" data-icon-only aria-label="Close the chat" onClick={onClose}>
           <Icon name="x" />
         </button>
       </div>
@@ -194,8 +223,9 @@ export function ChatPanel(props: { pid: string; onClose: () => void }) {
             <p className="small muted">{chosen.body} Nothing reaches your working tree until you accept it.</p>
           </div>
         ) : (
-          conv && <Messages pid={pid} conv={conv} onChanged={setConv} />
+          conv && <Messages pid={pid} conv={conv} onChanged={setConv} onShow={onClose} />
         )}
+        {conv?.unsaved && <Alert tone="warning" title="Not saved" body={`This conversation stays only while Markitect runs: ${conv.unsaved}`} />}
         {error && <Alert tone="danger" title="That did not work" body={error} />}
       </div>
       <div className="chat__compose">
@@ -207,7 +237,7 @@ export function ChatPanel(props: { pid: string; onClose: () => void }) {
           disabled={!list?.available}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e: ReactKeyboardEvent) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
+            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
               e.preventDefault();
               void send();
             }
@@ -221,7 +251,7 @@ export function ChatPanel(props: { pid: string; onClose: () => void }) {
   );
 }
 
-function Messages({ pid, conv, onChanged }: { pid: string; conv: Conversation; onChanged: (c: Conversation) => void }) {
+function Messages({ pid, conv, onChanged, onShow }: { pid: string; conv: Conversation; onChanged: (c: Conversation) => void; onShow: () => void }) {
   const end = useRef<HTMLDivElement>(null);
   const count = conv.messages.length;
   useEffect(() => {
@@ -242,7 +272,7 @@ function Messages({ pid, conv, onChanged }: { pid: string; conv: Conversation; o
           <span className="gl-spinner" aria-hidden="true" /> The chat is at work.
         </p>
       )}
-      {open && !conv.working && <ProposalCard pid={pid} chat={conv.id} proposal={open} onChanged={onChanged} />}
+      {open && !conv.working && <ProposalCard pid={pid} chat={conv.id} proposal={open} onChanged={onChanged} onShow={onShow} />}
       <div ref={end} />
     </div>
   );
@@ -250,11 +280,11 @@ function Messages({ pid, conv, onChanged }: { pid: string; conv: Conversation; o
 
 function AgentText({ pid, text }: { pid: string; text: string }) {
   // A link of the model in the chat's words leads into the Reader.
-  const html = useMemo(() => render(text, { resolve: (raw) => ({ target: raw }), href: (t) => modelHref(pid, 'reader', t) }), [pid, text]);
+  const html = useMemo(() => renderMessage(text, { resolve: (raw) => ({ target: raw }), href: (t) => modelHref(pid, 'reader', t) }), [pid, text]);
   return <div className="chat__agent prose" dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
-function ProposalCard({ pid, chat, proposal, onChanged }: { pid: string; chat: string; proposal: Proposal; onChanged: (c: Conversation) => void }) {
+function ProposalCard({ pid, chat, proposal, onChanged, onShow }: { pid: string; chat: string; proposal: Proposal; onChanged: (c: Conversation) => void; onShow: () => void }) {
   const shown = useShownChat(pid);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -286,7 +316,7 @@ function ProposalCard({ pid, chat, proposal, onChanged }: { pid: string; chat: s
       </ul>
       {proposal.outside && proposal.outside.length > 0 && <p className="small muted">Also changed outside the model, and not proposed: {proposal.outside.join(', ')}</p>}
       {proposal.conflicts && proposal.conflicts.length > 0 && (
-        <Alert tone="danger" title="Nothing was written" body={`These files changed in the working tree since the chat started: ${proposal.conflicts.join(', ')}. Ask the chat to take the change into account, or reject the proposal.`} />
+        <Alert tone="danger" title="Nothing was written" body={`These files changed in the working tree since the chat started: ${proposal.conflicts.join(', ')}. The chat's next turn starts from the working tree as it is; ask it to take the change into account, or reject the proposal.`} />
       )}
       {error && <Alert tone="danger" title="That did not work" body={error} />}
       <div className="chat__actions">
@@ -299,7 +329,13 @@ function ProposalCard({ pid, chat, proposal, onChanged }: { pid: string; chat: s
             className="gl-button"
             data-size="sm"
             href={modelHref(pid, 'reader')}
-            onClick={() => showChat(pid, chat)}
+            onClick={() => {
+              showChat(pid, chat);
+              // In a narrow window the panel covers the views; it steps aside.
+              if (window.matchMedia('(max-width: 900px)').matches) {
+                onShow();
+              }
+            }}
           >
             Show in the views
           </a>
@@ -320,9 +356,43 @@ export function ShownProposal({ pid, chat, refresh }: { pid: string; chat: strin
   const [conv, setConv] = useState<Conversation | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // The banner follows the conversation: a later turn may replace its
+  // proposal, and the panel may accept or reject it.
+  const [asked, setAsked] = useState(0);
+  useChatChanged(useCallback(() => setAsked((n) => n + 1), []));
   useEffect(() => {
-    api.chat(pid, chat).then(setConv, () => showChat(pid, null));
-  }, [pid, chat]);
+    let stopped = false;
+    let timer = 0;
+    const load = () =>
+      api.chat(pid, chat).then(
+        (c) => {
+          if (stopped) {
+            return;
+          }
+          setConv(c);
+          if (c.proposals.at(-1)?.state !== 'open' && !c.working) {
+            showChat(pid, null);
+            return;
+          }
+          timer = window.setTimeout(load, 2 * followEvery);
+        },
+        (e: unknown) => {
+          if (stopped) {
+            return;
+          }
+          if (e instanceof ApiError && e.status === 404) {
+            showChat(pid, null);
+          } else {
+            timer = window.setTimeout(load, 2 * followEvery);
+          }
+        },
+      );
+    void load();
+    return () => {
+      stopped = true;
+      window.clearTimeout(timer);
+    };
+  }, [pid, chat, asked]);
   const open = conv?.proposals.at(-1);
   const decide = async (what: 'accept' | 'reject') => {
     setBusy(true);
@@ -342,17 +412,18 @@ export function ShownProposal({ pid, chat, refresh }: { pid: string; chat: strin
     }
   };
   const conflicts = open?.state === 'open' ? (open.conflicts ?? []) : [];
+  const closed = busy || !conv || conv.working || open?.state !== 'open';
   return (
     <>
       <Alert
         tone="info"
         title={`The views show the proposal of “${conv?.title ?? 'a chat'}”`}
-        body={open ? `${plural(open.files.length, 'file')} on top of the working tree. Turn the diff on to see what it changes.` : undefined}
+        body={conv?.working ? 'The chat is at work; its next proposal replaces this one.' : open ? `${plural(open.files.length, 'file')} on top of the working tree. Turn the diff on to see what it changes.` : undefined}
       >
-        <button className="gl-button" data-variant="primary" data-size="sm" aria-busy={busy || undefined} disabled={busy || open?.state !== 'open'} onClick={() => void decide('accept')}>
+        <button className="gl-button" data-variant="primary" data-size="sm" aria-busy={busy || undefined} disabled={closed} onClick={() => void decide('accept')}>
           Accept
         </button>
-        <button className="gl-button" data-size="sm" disabled={busy || open?.state !== 'open'} onClick={() => void decide('reject')}>
+        <button className="gl-button" data-size="sm" disabled={closed} onClick={() => void decide('reject')}>
           Reject
         </button>
         <button className="gl-button" data-variant="ghost" data-size="sm" onClick={() => showChat(pid, null)}>
