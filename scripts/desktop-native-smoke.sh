@@ -34,7 +34,9 @@ fail() {
 # Whatever this run started ends with it, also when a check fails.
 started=()
 cleanup() {
-  for p in "${started[@]}"; do
+  # The guarded expansion keeps an empty list working under set -u in the
+  # bash 3.2 of macOS.
+  for p in ${started[@]+"${started[@]}"}; do
     if [ "$os" = windows ]; then taskkill //F //PID "$p" >/dev/null 2>&1 || true; else kill "$p" 2>/dev/null || true; fi
   done
 }
@@ -56,6 +58,9 @@ if [ "$os" = linux ]; then
 fi
 
 "$app" >"$work/app.log" 2>&1 &
+# On Windows $! is the shell's own number for it, which taskkill does not
+# know; there the record's process number below is used.
+if [ "$os" != windows ]; then started+=("$!"); fi
 
 for _ in $(seq 1 60); do
   [ -s "$record" ] && break
