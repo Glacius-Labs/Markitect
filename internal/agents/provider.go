@@ -108,6 +108,9 @@ type Outcome struct {
 	// Model is the model the provider reported.
 	Model string
 	Usage Usage
+	// Text is the provider's last answer of an answered turn, which a chat
+	// shows; a Manager answers through its tools instead.
+	Text string
 }
 
 // Usage counts one turn's tokens as the provider reports them.

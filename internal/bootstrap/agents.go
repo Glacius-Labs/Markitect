@@ -31,37 +31,48 @@ import (
 //	MARKITECT_DNS            name servers, comma-separated
 //	MARKITECT_TRANSCRIPTS    a folder for the agents' transcripts (default none)
 func providerAgents(ctx context.Context) (agentport.Agents, error) {
+	cfg, _, err := agentConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return agents.New(cfg)
+}
+
+// agentConfig reads the agents' settings from the environment, as
+// providerAgents describes them, and returns the engine they run on. The
+// app's chat agents run with the same settings.
+func agentConfig(ctx context.Context) (agents.Config, *container.Engine, error) {
 	ref := os.Getenv("MARKITECT_MANAGER_IMAGE")
 	if ref == "" {
-		return nil, errors.New("no Manager image: build one from packaging/runtime (with the project's toolchain) and set MARKITECT_MANAGER_IMAGE")
+		return agents.Config{}, nil, errors.New("no Manager image: build one from packaging/runtime (with the project's toolchain) and set MARKITECT_MANAGER_IMAGE")
 	}
 	network := os.Getenv("MARKITECT_NETWORK")
 	switch network {
 	case "bridge", "host", "none", "default":
-		return nil, fmt.Errorf("MARKITECT_NETWORK %q is no user-defined network: the agents also join the Run's network, which the Docker CLI on Linux refuses to combine with the engine's own; leave it unset for %s or name a user-defined one", network, providerNetwork)
+		return agents.Config{}, nil, fmt.Errorf("MARKITECT_NETWORK %q is no user-defined network: the agents also join the Run's network, which the Docker CLI on Linux refuses to combine with the engine's own; leave it unset for %s or name a user-defined one", network, providerNetwork)
 	}
 	cliPath := os.Getenv("MARKITECT_ENGINE")
 	if cliPath == "" {
 		p, err := exec.LookPath("docker")
 		if err != nil {
-			return nil, errors.New("no container engine: install Docker or set MARKITECT_ENGINE")
+			return agents.Config{}, nil, errors.New("no container engine: install Docker or set MARKITECT_ENGINE")
 		}
 		cliPath = p
 	}
 	engine, err := container.NewEngine(cliPath)
 	if err != nil {
-		return nil, err
+		return agents.Config{}, nil, err
 	}
 	image, err := engine.ImageID(ctx, ref)
 	if err != nil {
-		return nil, fmt.Errorf("the Manager image %s: %w", ref, err)
+		return agents.Config{}, nil, fmt.Errorf("the Manager image %s: %w", ref, err)
 	}
 	if network == "" {
 		// The agents also join the Run's network, and the Docker CLI on
 		// Linux refuses to combine the engine's default "bridge" with it.
 		network = providerNetwork
 		if err := engine.EnsureNetwork(ctx, network, map[string]string{"markitect.provider": "1"}); err != nil {
-			return nil, fmt.Errorf("the provider network: %w; or name one with MARKITECT_NETWORK", err)
+			return agents.Config{}, nil, fmt.Errorf("the provider network: %w; or name one with MARKITECT_NETWORK", err)
 		}
 	}
 	home, _ := os.UserHomeDir()
@@ -79,12 +90,12 @@ func providerAgents(ctx context.Context) (agentport.Agents, error) {
 		cfg.Provider, cfg.Model = codex.Provider{}, env("MARKITECT_MODEL", "gpt-6-luna")
 		cfg.LoginFile = env("MARKITECT_LOGIN", filepath.Join(home, ".codex", "auth.json"))
 	default:
-		return nil, fmt.Errorf("MARKITECT_PROVIDER %q is neither claude nor codex", provider)
+		return agents.Config{}, nil, fmt.Errorf("MARKITECT_PROVIDER %q is neither claude nor codex", provider)
 	}
 	if _, err := os.Stat(cfg.LoginFile); err != nil {
-		return nil, fmt.Errorf("the %s login %s: %w; log in with the provider's CLI on this host or set MARKITECT_LOGIN", cfg.Provider.Name(), cfg.LoginFile, err)
+		return agents.Config{}, nil, fmt.Errorf("the %s login %s: %w; log in with the provider's CLI on this host or set MARKITECT_LOGIN", cfg.Provider.Name(), cfg.LoginFile, err)
 	}
-	return agents.New(cfg)
+	return cfg, engine, nil
 }
 
 // providerNetwork is the user-defined bridge network the agents reach their

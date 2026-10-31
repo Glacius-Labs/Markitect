@@ -5,7 +5,7 @@ Every working Manager of a [concept 2.0](../../docs/concepts/v2-concept.md) Run 
 | Package | Role |
 | --- | --- |
 | `internal/harness` | Pure: renders what a maker or checker receives from the engine's start, the project at the Run's base and the submission, and the tool contract. |
-| `internal/agents` | Implements `agentport.Agents`: one agent per start in its container, with login check, clone, provider turn, Manager tools and cleanup. Knows no provider. |
+| `internal/agents` | Implements `agentport.Agents`: one agent per start in its container, with login check, clone, provider turn, Manager tools and cleanup. Knows no provider. Also runs Markitect Desktop's [chat agents](#chat-agents). |
 | `internal/agents/claude` | The Claude Code adapter: launch contract, access-only login copy, stream-json reader, failure classes. |
 | `internal/agents/codex` | The Codex adapter: the same for `codex exec`. |
 | `packaging/runtime` | The Manager image. |
@@ -32,7 +32,7 @@ The `End` maps the turn: `finished`, `deadline`, `cancelled` or `failed`. `Agent
 
 With `Config.Transcripts` set, every start writes `RUN/MANAGER-ROLE-ROUND.jsonl` there: the provider's output lines as they came, so the evaluation's classifier reads them like a provider's own transcript, and the host's records (the turn, tool calls and replies, the outcome) as lines of type `markitect`. Every secret, the login's tokens and the remote token, is redacted before it is written, and from tool results, errors and the `End`.
 
-The lower layer, `agents.Start` with a `Spec` and `Agent.Send`, is the same machinery for one agent; a conversation can take further turns, which resume it.
+The lower layer, `agents.Start` with a `Spec` and `Agent.Send`, is the same machinery for one agent; a conversation can take further turns, which resume it. An answered turn's `Outcome.Text` is the provider's last answer (Claude Code's result, Codex's last agent message), which a chat shows; a Manager answers through its tools.
 
 ## Composition
 
@@ -120,9 +120,22 @@ Why: quality comes first, and the comparison with one strong agent is fair only 
 
 `packaging/runtime/Dockerfile` builds the image every agent runs in: Node 22 on Debian bookworm with Git, Python 3 and CA certificates, the pinned Codex and Claude Code CLIs, `markitect-agentd` and `markitect` built from the same source. `/home/agent` and `/work` belong to user `1000:1000`, so fresh volumes mounted there are writable. The build fails when a CLI is not the pinned version or lacks a flag its adapter passes, and `/opt/markitect/runtime.env` records both CLIs, `agentd` and `markitect`. A project builds its own image FROM it with its toolchain ([Go](../../packaging/runtime/examples/go/Dockerfile), [Python](../../packaging/runtime/examples/python/Dockerfile)). The image must not set `ANTHROPIC_*` or `CLAUDE_CODE_*` variables or ship `/home/agent/.claude` or `/etc/claude-code`.
 
+## Chat agents
+
+A chat agent is one conversation of [Markitect Desktop's chat](../adapters/desktop/README.md#the-chat) (concept 2.0 §8): the container, image, limits, provider network, login copy and provider adapter of a Manager, but no Run, no remote and no Manager tools. `agents.StartChat` with a `ChatSpec` starts it, and the Manager agent's own turn, login check and cleanup run it; the Manager agent itself is unchanged.
+
+- **The copy.** `/work` becomes a repository of the owner's working tree as Git sees it, uncommitted changes included, sent in through `git fast-import`, so binary files and any file name arrive as they are; no folder of the user's is mounted. Its ref `refs/markitect/start` holds that state. The open proposal of a conversation the agent takes over goes on top, uncommitted.
+- **What it knows.** `harness.Chat` renders its system text: what the chat is for, the rules the app enforces (only files below `.markitect/` are proposed; no commits; ask when something is open) and the modeling skill, or the Extract skill with the modeling skill. For an agent that takes over a conversation, the conversation so far precedes the owner's first message.
+- **Turns.** Each message is one turn of the same provider conversation, bounded by the chat's turn limit (30 minutes in the app). A turn whose login copy would expire on the way is refused as a login failure, so that a fresh agent with a fresh copy takes over.
+- **The proposal.** `Changes` reads what the copy changed against `refs/markitect/start`: the files below `.markitect/` with their content, and the other paths. `Settle` moves the start to the copy's state after an accept, or puts the copy back after a reject.
+
+`internal/bootstrap` runs the app's chat agents with the settings of `apply` and `verify` above, read at every start; a start first removes what an earlier agent of the same conversation left (label `markitect.chat`).
+
 ## Tests and evidence
 
 `internal/harness` tests render Root, a parent with children, a leaf, a maker with an Inbox and an engine task, what a verdict covers for each role, a checker with an inline and an oversized diff, verify, and an integrating parent over an in-memory project, key every checklist part, and offer the tools of each start. The provider packages test the launch arguments and environment, the login copies and refusals, the login reports (Codex's on standard error), and the readers over authored stream lines: answers with usage, the partial usage of a turn without its end, every launch-contract breach and every failure class. `internal/agents` drives scripted provider processes through the real agent runtime with the host's Git standing in for the container's: the clone, the base project and the submission read from it, a submission with trailers, an incomplete submission, a refused push that leaves the work in place, reviews that the contract refuses and one it pushes as an empty commit, verify verdicts, an integrating parent and its checker's rejection, the host tools and their refusals, a tool the start does not offer, the deadline and cancellation, the deadline during a running tool call, a start past its deadline, launch-contract breaches, a provider failure's class, a process that outlives its turn, `Agents.Run`'s ends with usage, class and transcript, and that no secret reaches a transcript.
+
+The chat agent's tests drive the same scripted runtime: the copy with a binary file, names with spaces and umlauts and the pending proposal on top; the chat's documents with no Manager tools and the conversation so far; a turn's answer text; the changes inside and outside `.markitect/`; settling after an accept and a reject; and a login that would expire within a turn, at start and later. A chat agent has not run against a real container yet: the engine stays free while the evaluations run.
 
 `TestRealEngineManagersWorkThroughTheRunRemote` runs with `MARKITECT_TEST_ENGINE` (the Docker CLI's absolute path) and `MARKITECT_TEST_MANAGER_IMAGE` (an image built from `packaging/runtime`). It starts a real Run remote with its hooks and two starts through `Agents.Run` in real Manager containers, whose provider is a scripted MCP client of agentd in the image: the maker's push outside its area is refused by the hook and its work kept, its submission passes the hook and the required check, the checker's approval is accepted, the transcripts hold the tool calls and no token, and nothing of the Run remains. It passed natively on Windows with Docker Desktop on 28 October 2026.
 

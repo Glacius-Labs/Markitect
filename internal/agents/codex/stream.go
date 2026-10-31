@@ -24,6 +24,8 @@ type reader struct {
 	// event, which may be a reconnect the turn recovered from.
 	failure, lastError string
 	usage              agents.Usage
+	// text is the latest agent message.
+	text string
 }
 
 type event struct {
@@ -35,6 +37,7 @@ type event struct {
 	} `json:"error"`
 	Item *struct {
 		Type string `json:"type"`
+		Text string `json:"text"`
 	} `json:"item"`
 	Usage *struct {
 		Input       int64 `json:"input_tokens"`
@@ -57,6 +60,9 @@ func (r *reader) Line(raw []byte) error {
 	case "item.started", "item.updated", "item.completed":
 		if e.Item != nil && strings.HasPrefix(e.Item.Type, "collab") {
 			return errors.New("codex: the output holds native multi-agent work; delegation runs only through the Manager tree")
+		}
+		if e.Type == "item.completed" && e.Item != nil && e.Item.Type == "agent_message" {
+			r.text = e.Item.Text
 		}
 	case "turn.completed":
 		r.completed = true
@@ -81,7 +87,7 @@ func (r *reader) Outcome() agents.Outcome {
 	// A completed turn answered, whatever error events came before it.
 	switch {
 	case r.completed:
-		out.End = agents.Answered
+		out.End, out.Text = agents.Answered, r.text
 	case r.failure != "":
 		out.End, out.Class, out.Detail = agents.Failed, classify(r.failure), r.failure
 	case r.lastError != "":

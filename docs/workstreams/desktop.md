@@ -15,7 +15,7 @@ The Desktop session designs and builds Markitect Desktop, the app over the CLI t
 
 ## Next
 
-1. D4, the chat and Extract, designed on the [design page](../design/markitect-desktop.md#the-chat). Its first part, the app's side over a port, is built: conversations, the panel, proposals in the views, accept and reject. Next is the chat agent in its container beside the Manager agent; while the evaluations keep Docker it is built against the agent runtime's scripted stand-in and runs for real once Docker is free.
+1. D4, the chat and Extract, designed on the [design page](../design/markitect-desktop.md#the-chat). Built: the app's side (conversations, the panel, proposals in the views, accept and reject) and the [chat agent](../../internal/agents/README.md#chat-agents) in its container beside the Manager agent, tested against the agent runtime's scripted stand-in. Not yet: a chat against a real container and provider, which waits until the evaluations free Docker; then Extract's first stop and the logins in Settings.
 2. With D4, the Extract skill gains its stop at the Package cut. The skill is a shared file, changed one writer at a time with Build.
 
 ## Questions for the owner
