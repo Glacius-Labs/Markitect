@@ -75,6 +75,26 @@ jobs:
       - name: Test repository scripts
         run: python -B -m unittest discover -s scripts -p 'test_*.py'
 
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - name: Test and rebuild Markitect Desktop's UI
+        shell: bash
+        working-directory: desktop
+        run: |
+          npm ci --no-audit --no-fund
+          npm test
+          npm run build
+          if ! git diff --quiet -- ../internal/adapters/desktop/ui || [ -n "$(git status --porcelain -- ../internal/adapters/desktop/ui)" ]; then
+            echo "The committed UI build differs from desktop/; run npm run build in desktop/ and commit internal/adapters/desktop/ui."
+            git status --short -- ../internal/adapters/desktop/ui
+            exit 1
+          fi
+
       - name: Check maintained documentation links
         run: python -B scripts/check-docs.py
 

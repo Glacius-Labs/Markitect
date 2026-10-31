@@ -13,7 +13,7 @@ import (
 
 // Run runs the markitect command line and returns its exit code.
 func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
-	return cli.CLI{Git: git{}, Runs: runs{}, Stdout: stdout, Stderr: stderr}.Run(ctx, args)
+	return cli.CLI{Git: git{}, Runs: runs{}, Desktop: desktopApp{stdout}, Stdout: stdout, Stderr: stderr}.Run(ctx, args)
 }
 
 // git opens repository states through the repo adapter.

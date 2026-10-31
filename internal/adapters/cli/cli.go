@@ -1,6 +1,6 @@
 // Package cli is the markitect command line: init, check, lock, refs, graph,
 // impact and lint, which start no agent; apply and verify, which start a Run;
-// version and licenses.
+// desktop, which opens the app over these commands; version and licenses.
 package cli
 
 import (
@@ -45,6 +45,17 @@ type Git interface {
 	Base(ctx context.Context, ws Workspace, rev string) (Base, error)
 }
 
+// Desktop runs Markitect Desktop, the app over these commands.
+type Desktop interface {
+	Run(ctx context.Context, o DesktopOptions) error
+}
+
+// DesktopOptions are the flags of markitect desktop.
+type DesktopOptions struct {
+	Listen string // the loopback address to serve on
+	Open   bool   // open a window on it
+}
+
 // Exit codes.
 const (
 	OK       = 0
@@ -66,6 +77,7 @@ Usage:
   markitect verify [--repo DIR] [--json] [--base COMMIT] [--full] [--findings-out FILE] [RUN OPTIONS]
                                                   check the change with checkers only; changes nothing
         RUN OPTIONS: --remote NAME --branch NAME --run NAME --deadline D --starts N --start-timeout D
+  markitect desktop [--listen ADDR] [--no-open]  open Markitect, the app over these commands
   markitect version
   markitect licenses
 `
@@ -73,10 +85,11 @@ Usage:
 
 // CLI runs one command.
 type CLI struct {
-	Git    Git
-	Runs   Runs
-	Stdout io.Writer
-	Stderr io.Writer
+	Git     Git
+	Runs    Runs
+	Desktop Desktop
+	Stdout  io.Writer
+	Stderr  io.Writer
 }
 
 // Run runs the command line args and returns the exit code.
@@ -107,6 +120,8 @@ func (c CLI) Run(ctx context.Context, args []string) int {
 		code, err = c.runCommand(ctx, agentport.Apply, rest)
 	case "verify":
 		code, err = c.runCommand(ctx, agentport.Verify, rest)
+	case "desktop":
+		code, err = c.desktop(ctx, rest)
 	case "version":
 		fmt.Fprintln(c.Stdout, "markitect", buildinfo.Build())
 	case "licenses":
@@ -164,6 +179,26 @@ func (c CLI) printJSON(v any) error {
 	enc := json.NewEncoder(c.Stdout)
 	enc.SetIndent("", "  ")
 	return enc.Encode(v)
+}
+
+func (c CLI) desktop(ctx context.Context, args []string) (int, error) {
+	fs := flag.NewFlagSet("markitect desktop", flag.ContinueOnError)
+	fs.SetOutput(c.Stderr)
+	var o DesktopOptions
+	var noOpen bool
+	fs.StringVar(&o.Listen, "listen", "127.0.0.1:0", "the loopback address to serve on; port 0 picks a free one")
+	fs.BoolVar(&noOpen, "no-open", false, "print the address instead of opening a window")
+	if err := fs.Parse(args); err != nil {
+		return Misused, err
+	}
+	if fs.NArg() != 0 {
+		return Misused, fmt.Errorf("takes no arguments")
+	}
+	if c.Desktop == nil {
+		return Misused, errors.New("this build has no desktop")
+	}
+	o.Open = !noOpen
+	return OK, c.Desktop.Run(ctx, o)
 }
 
 func (c CLI) check(ctx context.Context, args []string) (int, error) {

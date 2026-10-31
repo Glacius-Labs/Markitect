@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/analysis"
 	"github.com/Glacius-Labs/Markitect/internal/project"
@@ -24,6 +25,49 @@ func Toplevel(ctx context.Context, dir string) (string, error) {
 		return "", fmt.Errorf("%s is not inside a Git repository: %w", dir, err)
 	}
 	return filepath.FromSlash(strings.TrimSpace(string(out))), nil
+}
+
+// Init makes the existing folder dir a Git repository.
+func Init(ctx context.Context, dir string) error {
+	_, err := git(ctx, dir, "init", "--quiet")
+	return err
+}
+
+// cloneLimit bounds a clone, so that a stalled one ends.
+const cloneLimit = 30 * time.Minute
+
+// Clone clones url into dir, which must not exist yet. Nobody sees a
+// terminal, so neither Git nor SSH may ask on one; the ext transport, which
+// runs a command, stays off.
+func Clone(ctx context.Context, url, dir string) error {
+	if strings.HasPrefix(url, "-") {
+		return fmt.Errorf("%q is no repository URL", url)
+	}
+	if _, err := os.Lstat(dir); err == nil {
+		return fmt.Errorf("%s already exists", dir)
+	}
+	ctx, cancel := context.WithTimeout(ctx, cloneLimit)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "git", "-c", "protocol.ext.allow=never", "clone", "--quiet", "--", url, dir)
+	cmd.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
+	// SSH in batch mode, unless the user chose an SSH command, which wins.
+	if os.Getenv("GIT_SSH_COMMAND") == "" && os.Getenv("GIT_SSH") == "" {
+		if _, err := git(ctx, filepath.Dir(dir), "config", "--get", "core.sshCommand"); err != nil {
+			cmd.Env = append(cmd.Env, "GIT_SSH_COMMAND=ssh -o BatchMode=yes")
+		}
+	}
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		// A clone that was stopped leaves half a folder behind.
+		os.RemoveAll(dir)
+		msg := strings.TrimSpace(stderr.String())
+		if msg == "" {
+			msg = err.Error()
+		}
+		return fmt.Errorf("git clone: %s", msg)
+	}
+	return nil
 }
 
 // WorkingTree is the working tree of a repository, as Git sees it.

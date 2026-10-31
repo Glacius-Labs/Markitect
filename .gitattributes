@@ -7,3 +7,8 @@
 /docs/concepts/sources/v1-concept-v018-20261024-en.md whitespace=-blank-at-eof,-blank-at-eol
 
 /docs/concepts/sources/v1-scope-clarification-20261023.md -text
+
+# The UI build is generated from desktop/ by npm run build; CI rebuilds and compares it.
+/internal/adapters/desktop/ui/** linguist-generated=true -diff
+# The design system is vendored as released, under its own notice.
+/desktop/vendor/** linguist-vendored=true -diff

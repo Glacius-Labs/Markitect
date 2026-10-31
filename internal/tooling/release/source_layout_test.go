@@ -26,6 +26,9 @@ func rootLayoutFixture(t *testing.T) string {
 		"internal/libraries/std/Rule.md":              "---\nkind: Kind\n---\n# Rule\n",
 		"internal/skills/skills.go":                   "package skills\n",
 		"internal/skills/markitect-modeling/SKILL.md": "# Modeling\n",
+		"internal/adapters/desktop/desktop.go":        "package desktop\n",
+		"internal/adapters/desktop/ui/index.html":     "<!doctype html>\n",
+		"internal/adapters/desktop/ui/assets/app.js":  "export {}\n",
 		"internal/tooling/release/install.go":         "package release\n",
 		"internal/testkit/testdata/hostile.gitconfig": "[core]\n hooksPath=blocked\n",
 	} {
@@ -35,10 +38,12 @@ func rootLayoutFixture(t *testing.T) string {
 }
 
 func TestEmbeddedFilesSurviveLiveAndFixedPackaging(t *testing.T) {
-	// The standard Libraries and the skills are built into the binary, so a
-	// packaged source must carry them; other text below those packages stays out.
+	// The standard Libraries, the skills and the desktop's UI are built into
+	// the binary, so a packaged source must carry them; other text below those
+	// packages stays out.
 	root := rootLayoutFixture(t)
 	writeLayoutFile(t, root, "internal/libraries/notes.txt", "do not package\n")
+	writeLayoutFile(t, root, "internal/adapters/desktop/notes.txt", "do not package\n")
 	live, _, err := Package(root, "1.2.3")
 	if err != nil {
 		t.Fatal(err)
@@ -57,13 +62,15 @@ func TestEmbeddedFilesSurviveLiveAndFixedPackaging(t *testing.T) {
 	}
 	for _, archive := range [][]byte{live, fixed} {
 		contents := archiveContents(t, archive)
-		for _, name := range []string{"internal/libraries/std/Rule.md", "internal/skills/markitect-modeling/SKILL.md"} {
+		for _, name := range []string{"internal/libraries/std/Rule.md", "internal/skills/markitect-modeling/SKILL.md", "internal/adapters/desktop/ui/index.html", "internal/adapters/desktop/ui/assets/app.js"} {
 			if _, ok := contents[name]; !ok {
 				t.Errorf("embedded file omitted: %s", name)
 			}
 		}
-		if _, found := contents["internal/libraries/notes.txt"]; found {
-			t.Error("packaged unrelated text")
+		for _, name := range []string{"internal/libraries/notes.txt", "internal/adapters/desktop/notes.txt"} {
+			if _, found := contents[name]; found {
+				t.Errorf("packaged unrelated text %s", name)
+			}
 		}
 	}
 }
