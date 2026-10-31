@@ -2,6 +2,7 @@ package desktop
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -16,6 +17,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/Glacius-Labs/Markitect/internal/analysis"
 )
 
 // memRepo is a repository's working tree in memory.
@@ -45,14 +48,99 @@ func (m memRepo) Read(file string) ([]byte, error) {
 
 func (memRepo) GitIgnored(string) bool { return false }
 
-// fakeRepos knows the repositories by root; Init and Clone add one.
+func (m memRepo) Stamp(file string) string {
+	data, ok := m.files[file]
+	if !ok {
+		return ""
+	}
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(data)))
+}
+
+// memCommit is a commit in memory; Changed compares it with the working tree.
+type memCommit struct {
+	memRepo
+	id   string
+	tree memRepo
+}
+
+func (c memCommit) ID() string { return c.id }
+
+func (c memCommit) Changed() ([]analysis.Change, error) {
+	var out []analysis.Change
+	for f, data := range c.tree.files {
+		if old, ok := c.files[f]; !ok {
+			out = append(out, analysis.Change{Path: f, Change: analysis.Added})
+		} else if old != data {
+			out = append(out, analysis.Change{Path: f, Change: analysis.Modified})
+		}
+	}
+	for f := range c.files {
+		if _, ok := c.tree.files[f]; !ok {
+			out = append(out, analysis.Change{Path: f, Change: analysis.Removed})
+		}
+	}
+	var kept []analysis.Change
+	for _, ch := range out {
+		if !strings.HasPrefix(ch.Path, ".markitect/") {
+			kept = append(kept, ch)
+		}
+	}
+	sort.Slice(kept, func(i, j int) bool { return kept[i].Path < kept[j].Path })
+	return kept, nil
+}
+
+// fakeRepos knows the repositories by root; Init and Clone add one. Each
+// repository may have commits, the last of them HEAD, and a last landing.
 type fakeRepos struct {
-	mu    sync.Mutex
-	repos map[string]memRepo
+	mu      sync.Mutex
+	repos   map[string]memRepo
+	commits map[string]map[string]map[string]string // root → commit → files
+	heads   map[string]string
+	landed  map[string]string
+}
+
+// commit records the working tree of root as a new commit and makes it HEAD;
+// a landed commit becomes the last landing.
+func (f *fakeRepos) commit(root, id string, landed bool) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	files := map[string]string{}
+	for k, v := range f.repos[root].files {
+		files[k] = v
+	}
+	if f.commits[root] == nil {
+		f.commits[root] = map[string]map[string]string{}
+	}
+	f.commits[root][id] = files
+	f.heads[root] = id
+	if landed {
+		f.landed[root] = id
+	}
+}
+
+func (f *fakeRepos) Commit(_ context.Context, root, rev string) (Commit, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	id := rev
+	if rev == "HEAD" {
+		id = f.heads[root]
+	}
+	files, ok := f.commits[root][id]
+	if !ok {
+		return nil, fmt.Errorf("%q is not a commit of this repository", rev)
+	}
+	return memCommit{memRepo: memRepo{root: root, files: files}, id: id, tree: f.repos[root]}, nil
+}
+
+func (f *fakeRepos) LastLanded(_ context.Context, root, _ string) (string, bool, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	id := f.landed[root]
+	return id, id != "", nil
 }
 
 func newFakeRepos(roots ...string) *fakeRepos {
-	f := &fakeRepos{repos: map[string]memRepo{}}
+	f := &fakeRepos{repos: map[string]memRepo{}, commits: map[string]map[string]map[string]string{}, heads: map[string]string{}, landed: map[string]string{}}
 	for _, r := range roots {
 		f.repos[r] = memRepo{root: r, files: map[string]string{"README.md": "# x\n"}}
 	}

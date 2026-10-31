@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -79,11 +80,31 @@ func ListenDesktop(ctx context.Context, w DesktopWindows) (*DesktopService, erro
 type desktopRepos struct{}
 
 func (desktopRepos) Open(ctx context.Context, dir string) (desktop.Workspace, error) {
-	ws, err := git{}.Open(ctx, dir)
+	root, err := repo.Toplevel(ctx, dir)
 	if err != nil {
 		return nil, err
 	}
-	return ws, nil
+	return desktopTree{repo.WorkingTree{Dir: root, Ctx: ctx}}, nil
+}
+
+func (desktopRepos) Commit(ctx context.Context, root, rev string) (desktop.Commit, error) {
+	return repo.ResolveCommit(ctx, root, rev)
+}
+
+func (desktopRepos) LastLanded(ctx context.Context, root, tip string) (string, bool, error) {
+	return repo.LastLanded(ctx, root, tip)
+}
+
+// desktopTree is the working tree with the stamp the app's views follow it
+// by.
+type desktopTree struct{ repo.WorkingTree }
+
+func (t desktopTree) Stamp(file string) string {
+	info, err := os.Lstat(filepath.Join(t.Dir, filepath.FromSlash(file)))
+	if err != nil {
+		return ""
+	}
+	return fmt.Sprintf("%d %d", info.Size(), info.ModTime().UnixNano())
 }
 
 func (desktopRepos) Init(ctx context.Context, dir string) error { return repo.Init(ctx, dir) }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { badge, nextStep, plural } from './status';
 
-const check = { ok: true, errorCount: 0, errors: [], definitions: 12, packages: 3, files: 40 };
+const check = { ok: true, errorCount: 0, errors: [], definitions: 12, packages: 3, files: 40, warnings: 0 };
 
 describe('the project state', () => {
   it('counts in words', () => {

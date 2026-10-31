@@ -46,6 +46,7 @@ type server struct {
 	store    *Store
 	repos    Repos
 	commands Commands
+	models   *models
 	mux      *http.ServeMux
 	now      func() time.Time
 
@@ -69,7 +70,7 @@ func newServer(secret, address string, store *Store, repos Repos, commands Comma
 		return nil, err
 	}
 	s := &server{secret: secret, session: session, cookie: "markitect_" + port, address: address, port: port, store: store, repos: repos, commands: commands,
-		mux: http.NewServeMux(), now: time.Now, launches: map[string]time.Time{}}
+		models: newModels(), mux: http.NewServeMux(), now: time.Now, launches: map[string]time.Time{}}
 	files, err := fs.Sub(ui, "ui")
 	if err != nil {
 		return nil, err
@@ -81,6 +82,7 @@ func newServer(secret, address string, store *Store, repos Repos, commands Comma
 	s.mux.HandleFunc("GET /api/projects/{id}", s.getProject)
 	s.mux.HandleFunc("DELETE /api/projects/{id}", s.removeProject)
 	s.mux.HandleFunc("POST /api/projects/{id}/init", s.initProject)
+	s.mux.HandleFunc("GET /api/projects/{id}/model", s.modelRoute)
 	s.mux.Handle("GET /", http.FileServerFS(files))
 	return s, nil
 }

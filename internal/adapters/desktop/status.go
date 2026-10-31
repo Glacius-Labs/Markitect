@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 
+	"github.com/Glacius-Labs/Markitect/internal/analysis"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
@@ -25,6 +26,7 @@ type Check struct {
 	Definitions int      `json:"definitions"`
 	Packages    int      `json:"packages"`
 	Files       int      `json:"files"`
+	Warnings    int      `json:"warnings"` // what markitect lint warns about
 }
 
 const maxErrors = 20
@@ -51,6 +53,7 @@ func readStatus(ctx context.Context, repos Repos, p Project) Status {
 	if pr.Model != nil {
 		c.Definitions = len(pr.Model.ModelDefinitions())
 		c.Packages = len(pr.Model.Packages)
+		c.Warnings = len(analysis.Lint(pr))
 	}
 	if pr.Registry != nil {
 		c.Files = len(pr.Registry.Owner)
