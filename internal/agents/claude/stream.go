@@ -182,7 +182,7 @@ func (r *reader) Outcome() agents.Outcome {
 	case r.result == nil:
 		// The host reports a turn without a result.
 	case !r.result.IsError:
-		out.End = agents.Answered
+		out.End, out.Text = agents.Answered, r.result.Result
 	default:
 		out.End = agents.Failed
 		out.Class = classify(r.lastError, r.result.APIErrorStatus)

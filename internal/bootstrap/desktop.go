@@ -31,6 +31,7 @@ func (d desktopApp) Run(ctx context.Context, o cli.DesktopOptions) error {
 		Repos:    desktopRepos{},
 		Commands: desktopCommands{},
 		Stdout:   d.stdout,
+		Chats:    desktopChats{},
 	})
 }
 
@@ -75,6 +76,7 @@ func ListenDesktop(ctx context.Context, w DesktopWindows) (*DesktopService, erro
 		Stdout:       io.Discard,
 		OpenWindow:   w.Open,
 		ChooseFolder: w.ChooseFolder,
+		Chats:        desktopChats{},
 	})
 }
 

@@ -134,7 +134,7 @@ func TestReaderAnswersAndCountsUsage(t *testing.T) {
 		`{"type":"assistant","parent_tool_use_id":null,"message":{"role":"assistant","content":[{"type":"text","text":"ok"}]},"session_id":"s-1"}`,
 		`{"type":"tool_progress","parent_tool_use_id":"toolu_1"}`,
 		`{"type":"result","subtype":"success","is_error":false,"result":"done","session_id":"s-1","usage":{"input_tokens":1,"cache_creation_input_tokens":2,"cache_read_input_tokens":3,"output_tokens":4}}`)
-	if err != nil || out.End != agents.Answered || out.Conversation != "s-1" || out.Model != "claude-sonnet-5-5" || out.Usage != (agents.Usage{Input: 1, CacheCreation: 2, CacheRead: 3, Output: 4}) {
+	if err != nil || out.End != agents.Answered || out.Conversation != "s-1" || out.Model != "claude-sonnet-5-5" || out.Usage != (agents.Usage{Input: 1, CacheCreation: 2, CacheRead: 3, Output: 4}) || out.Text != "done" {
 		t.Fatalf("outcome %+v %v", out, err)
 	}
 }

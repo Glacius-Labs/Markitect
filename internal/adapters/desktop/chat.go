@@ -57,8 +57,7 @@ type ChatStart struct {
 
 // ChatAgent is one running chat agent.
 type ChatAgent interface {
-	// Send runs one turn; each message the agent writes reaches say as it
-	// arrives.
+	// Send runs one turn; the agent's answer reaches say.
 	Send(ctx context.Context, message string, say func(text string)) (ChatEnd, error)
 	// Changes lists what the conversation changed since its start: the
 	// files below Markitect's folder with their new content, and the other

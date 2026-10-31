@@ -8,3 +8,6 @@ func SetSettle(d time.Duration) func() {
 	settle = d
 	return func() { settle = old }
 }
+
+// ImportPath is importPath, for its test.
+var ImportPath = importPath

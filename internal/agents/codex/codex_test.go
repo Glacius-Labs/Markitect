@@ -122,11 +122,13 @@ func read(t *testing.T, turn agents.Turn, lines ...string) (agents.Outcome, erro
 
 func TestReaderAnswersWithTheThreadAndUsage(t *testing.T) {
 	out, err := read(t, agents.Turn{Model: "gpt-6-luna"}, `{"type":"thread.started","thread_id":"th-1"}`, `{"type":"turn.started"}`,
-		`{"type":"item.completed","item":{"id":"item_0","type":"mcp_tool_call","server":"markitect","tool":"submit"}}`,
+		`{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Let me look."}}`,
+		`{"type":"item.completed","item":{"id":"item_1","type":"mcp_tool_call","server":"markitect","tool":"submit"}}`,
+		`{"type":"item.completed","item":{"id":"item_2","type":"agent_message","text":"Submitted."}}`,
 		`{"type":"turn.completed","usage":{"input_tokens":100,"cached_input_tokens":60,"output_tokens":7}}`)
 	// exec's events name no model; the outcome names the one the turn was
 	// launched with, as Claude Code's names the one it reports.
-	if err != nil || out.End != agents.Answered || out.Conversation != "th-1" || out.Model != "gpt-6-luna" || out.Usage != (agents.Usage{Input: 40, CacheRead: 60, Output: 7}) {
+	if err != nil || out.End != agents.Answered || out.Conversation != "th-1" || out.Model != "gpt-6-luna" || out.Usage != (agents.Usage{Input: 40, CacheRead: 60, Output: 7}) || out.Text != "Submitted." {
 		t.Fatalf("outcome %+v %v", out, err)
 	}
 	if _, err := read(t, agents.Turn{Conversation: "th-1"}, `{"type":"thread.started","thread_id":"th-2"}`); err == nil {
