@@ -1,6 +1,6 @@
 # Design topics
 
-State page of the Topics session: the owner's single place to discuss Markitect's design topics. They are platform, model language, modeling skills, compiler, agentic commands, continuous change and the Cockpit. On 28 October 2026 the owner replaced the seven topic lanes (5 to 11) with this one session, because "The topics touch too strongly to be discussed independently." The Build and evaluation session is the only place that builds; it owns the evaluation suite and the variants.
+State page of the Topics session: the owner's single place to discuss Markitect's design topics. They are platform, model language, modeling skills, compiler, agentic commands and continuous change; the Cockpit moved to the [Desktop session](desktop.md) on 31 October 2026. On 28 October 2026 the owner replaced the seven topic lanes (5 to 11) with this one session, because "The topics touch too strongly to be discussed independently." The Build and evaluation session builds everything except Markitect Desktop's own scope; it owns the evaluation suite and the variants.
 
 | | |
 |---|---|
@@ -22,8 +22,8 @@ The design walk-through of 28 October, one part at a time: what was open and a r
 3. **Closed** 28 October: the lint knows no special Kinds; it measures the link graph (DEC-080).
 4. **Closed** 28 October: compile errors are structure, cycles, visibility and accounting; everything else is a warning (DEC-080).
 5. **Closed** 28 October: language and compiler rules change only by owner decision, as DEC-080 defines them.
-6. **Closed** 28 October: no Cockpit app ([DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now)).
-7. **Closed** 28 October: the Cockpit questions 30–32, as part of DEC-085.
+6. **Closed** 28 October: no Cockpit app ([DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now)); superseded on 31 October by [DEC-089](../concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli).
+7. **Closed** 28 October: the Cockpit questions 30–32, as part of DEC-085; superseded on 31 October by DEC-089.
 
 ## Topics in short
 
@@ -51,7 +51,7 @@ Design only ([DEC-084](../concepts/register.md#dec-084-continuous-change-trigger
 
 ### Cockpit
 
-No Cockpit app for now; Markdown tools are the cockpit ([DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now)), which also decides questions 30–32.
+Markitect Desktop, the app over the CLI that users know as Markitect ([DEC-089](../concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli)), replaced [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now) on 31 October 2026. The [Desktop session](desktop.md) designs and builds it.
 
 ## Decided
 
@@ -80,7 +80,7 @@ What is decided and lives nowhere else; decisions with their own page are linked
 - **Compiler and analysis** (28 October): one tool, in the product, in Go, in the `markitect` CLI: `check` (errors), `lock`, `refs`, `graph`, `impact --base <commit>`, `lint` (warnings). No Python; the tool under `tools/model-analysis/` is retired. This answers question 1 in direction.
 - **Modeling skills** (27 October): the change-task trial first; it ran as C5 and passed ([record](../validation/modeling-skill-change-trial-20261027.md)).
 - **Commands** (27–28 October): the frame, the names and A1–A6 ([commands page](commands.md)).
-- **Cockpit** (28 October; [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now)): no Cockpit app for now; Markitect writes everything as Markdown, so Markdown tools are the cockpit; the model explorer stays a proposal; the personal agent stays parked.
+- **Cockpit** (28 October; [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now)): no Cockpit app for now; Markitect writes everything as Markdown, so Markdown tools are the cockpit; the model explorer stays a proposal; the personal agent stays parked. Superseded on 31 October by [DEC-089](../concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli).
 - **Organization of this work** (28 October): one Topics session for all design topics and one Build and evaluation session; the topic lanes are folded into this page. The owner restated what Markitect is ([source](../concepts/sources/model-explicitness-20261028.md#1-what-markitect-is-restated)).
 - **Build conformance** (29 October; [DEC-082](../concepts/register.md#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager), [DEC-086](../concepts/register.md#dec-086-concept-20-is-the-target)): an independent check found T1 to T4a and #856 true to concept 2.0 except one gap, landing without compiling, and four points for the owner. Decided: landing compiles every submission and the state it lands; `verify` runs the required checks; the checker sees the model, the repository at the submission and its diff, but not the Shared Notes; impact does not follow the code's own imports; on planted defects a result equal to its start counts as not landed, with the same instruction for every arm. A lock so that overlapping Runs take turns, and deleting old Run branches, go to T5. After the first native Run (Library M1, 19 of 19): a parent with own items submits its own files first and its children start from that approved commit, on every level, enforced by the host; the required checks on every submission stay unchanged (changed later the same day, below).
 - **Required checks gate merges** (29 October; [DEC-087](../concepts/register.md#dec-087-required-checks-gate-merged-states-not-each-submission)), on Build's question after the T7 pilot, where Root's first submission on the Makerspace could not pass the build check because the build needs a child's files: the required checks block only merged states, a parent's submission that holds its children's merged work and the state that lands. Any other submission is still blocked by `markitect check`, path ownership and its checker, which sees the check results as evidence. A child's broken build is caught at its parent's merge. Build builds it after the pilot.
@@ -103,7 +103,7 @@ What is decided and lives nowhere else; decisions with their own page are linked
 3. **Closed** 28 October: the lint knows no special Kinds; it measures the link graph (DEC-080).
 4. **Closed** 28 October: compile errors are structure, cycles, visibility and accounting; everything else is a warning (DEC-080).
 5. **Closed** 28 October: language and compiler rules change only by owner decision, as DEC-080 defines them.
-6. **Closed** 28 October: no Cockpit app ([DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now)).
+6. **Closed** 28 October: no Cockpit app ([DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now)); superseded on 31 October by [DEC-089](../concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli).
 7. **Closed** 28 October: the standard Libraries ship inside the binary; others are committed under `.markitect/libraries/`; no `--dependency` flags (DEC-080).
 
 ### B. Language
@@ -142,9 +142,9 @@ What is decided and lives nowhere else; decisions with their own page are linked
 
 ### F. Cockpit
 
-30. **Decided** 28 October as part of [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now).
-31. **Decided** 28 October as part of [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now).
-32. **Decided** 28 October as part of [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now).
+30. **Decided** 28 October as part of [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now); superseded on 31 October by [DEC-089](../concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli).
+31. **Decided** 28 October as part of [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now); superseded on 31 October by [DEC-089](../concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli).
+32. **Decided** 28 October as part of [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now); superseded on 31 October by [DEC-089](../concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli).
 
 ### G. Platform
 

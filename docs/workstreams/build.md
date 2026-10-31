@@ -1,6 +1,6 @@
 # Build and evaluation
 
-The Build and evaluation session builds concept 2.0 and the evaluation suite that measures it, and it is the only session that builds ([workstreams](../workstreams.md)). It owns the suite with its arms, K and the concept 2.0 arm; the concept 2.0 host on `main` (the engine, the agents, the harness and the native host); the records under `docs/validation/`; and the [delivery plan](../implementation-plan.md), which owns the concept 2.0 build steps as well as V1's steps and known deviations. This page holds only the session's state.
+The Build and evaluation session builds concept 2.0 and the evaluation suite that measures it, and it builds everything except Markitect Desktop's own scope ([workstreams](../workstreams.md)). It owns the suite with its arms, K and the concept 2.0 arm; the concept 2.0 host on `main` (the engine, the agents, the harness and the native host); the records under `docs/validation/`; and the [delivery plan](../implementation-plan.md), which owns the concept 2.0 build steps as well as V1's steps and known deviations. This page holds only the session's state.
 
 The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doing. Can you bring it to main and then we will start discussing and managing the evaluation suite and the three execution variants from here?"
 

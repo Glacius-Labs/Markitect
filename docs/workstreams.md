@@ -1,6 +1,6 @@
 # Workstreams
 
-Since 28 October 2026, Markitect work runs in two sessions. The owner replaced the eleven lanes of 27 October: "instead of all those parallel session we need one session which is responsible to coordinate and discuss the evaluation suite and the three variants. We need one session for discussion of the various topics."
+Since 28 October 2026, Markitect work runs in a few sessions. The owner replaced the eleven lanes of 27 October: "instead of all those parallel session we need one session which is responsible to coordinate and discuss the evaluation suite and the three variants. We need one session for discussion of the various topics." On 31 October 2026 the owner started a third session, Desktop, to build Markitect Desktop while the evaluations run ([DEC-089](concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli)).
 
 This page lists the sessions, the arms and where each keeps its state. It holds no status itself.
 
@@ -8,10 +8,11 @@ This page lists the sessions, the arms and where each keeps its state. It holds 
 
 | Session | Does | Builds | State page |
 |---|---|---|---|
-| Build and evaluation | Builds concept 2.0 and the evaluation suite that measures it, runs their dispatches and integrates their PRs | yes, the only session that builds | [build.md](workstreams/build.md) |
-| Topics | Discusses the product topics with the owner (model language and skills, compiler, commands, continuous change, platform, Cockpit) and records the decisions | no; it writes docs only | [topics.md](workstreams/topics.md) |
+| Build and evaluation | Builds concept 2.0 and the evaluation suite that measures it, runs their dispatches and integrates their PRs | yes, everything except Desktop's scope | [build.md](workstreams/build.md) |
+| Topics | Discusses the product topics with the owner (model language and skills, compiler, commands, continuous change, platform) and records the decisions | no; it writes docs only | [topics.md](workstreams/topics.md) |
+| Desktop | Designs and builds Markitect Desktop with the owner | yes, `desktop/`, `internal/adapters/desktop` and `cmd/markitect-desktop`; shared files one writer at a time with Build, Run engine changes through Build | [desktop.md](workstreams/desktop.md) |
 
-Both sessions sit in the sidebar folder "Markitect". Lane 1 handed the host variant over to Build on 28 October 2026, and its page folded into the build page. The other lane sessions end once the owner agrees. the suite's contract is the [evaluation suite guide](guides/evaluation-suite.md). The topic lane pages were folded into the topics page on 28 October 2026; the [commands page](workstreams/commands.md) stays as the canonical page for the commands frame.
+The sessions sit in the sidebar folder "Markitect". Lane 1 handed the host variant over to Build on 28 October 2026, and its page folded into the build page. The other lane sessions end once the owner agrees. The suite's contract is the [evaluation suite guide](guides/evaluation-suite.md). The topic lane pages were folded into the topics page on 28 October 2026; the [commands page](workstreams/commands.md) stays as the canonical page for the commands frame.
 
 ## Arms
 

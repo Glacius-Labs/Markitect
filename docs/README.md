@@ -26,7 +26,7 @@ This is the one owner table; other pages link here instead of keeping their own.
 | Product decisions, promises, assumptions, long-term vision, agreed but unscheduled directions, ideas and open questions, with their origin | [Concept record](concepts/README.md) |
 | The model language, the `.markitect/` layout and the model commands | [Model language](guides/model-language.md) |
 | Technical behavior, product boundaries, package contracts and invariants | [Architecture](architecture.md), the package READMEs and the guides above |
-| Workstreams: the Build and evaluation and Topics sessions, the variants, their branches and state pages | [Workstreams](workstreams.md) |
+| Workstreams: the Build and evaluation, Topics and Desktop sessions, the variants, their branches and state pages | [Workstreams](workstreams.md) |
 | Work-package scope, dependencies and reservations, current source and release status and planned implementation | [Delivery plan](implementation-plan.md); actual candidates and checks live in chats and PRs |
 | Evaluation procedure, staged readiness and how benefits are tested | [Measurement](guides/measurement.md) and the [evaluation suite](guides/evaluation-suite.md), which runs every variant on the same task and judges the results the same way |
 | Source, native, adoption and method evidence | [Qualification record](validation/v1-qualification-20261024.md), the [validation map](validation/README.md) and the individual report, read at their recorded scope and source |

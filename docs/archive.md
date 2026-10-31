@@ -149,6 +149,14 @@ These pages were folded into a current page. Their pre-merge text stays at the a
 | `docs/development/README.md` | [Documentation map](README.md#development) | [At the archive point](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/development/README.md) | none |
 | `docs/concepts/origin-and-rationale.md` | [Vision](vision.md#origin-and-rationale) | [At the archive point](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/concepts/origin-and-rationale.md) | CPT-001 and the register index |
 
+## Folded into Markitect Desktop
+
+[DEC-089](concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli) replaced the postponed read-only explorer with Markitect Desktop on 31 October 2026.
+
+| Former page | Now in | Text before the fold | Register |
+|---|---|---|---|
+| `docs/design/model-explorer.md` | [Markitect Desktop](design/markitect-desktop.md), whose Model area takes up its four views | [At Main before the fold](https://github.com/Glacius-Labs/Markitect/blob/0f8cbb1baca0174dcf0472cf964b91f835d2cc4e/docs/design/model-explorer.md) | DEC-085, DEC-089 |
+
 ## Removed by T1
 
 Step T1 of the [concept 2.0 build](implementation-plan.md#concept-20-build) replaced V1's language and removed V1's Run host, with no compatibility kept ([DEC-032](concepts/register.md#dec-032-quality-simplicity-and-stability-over-effort-and-compatibility)). Everything it removed stays at [Main before T1](https://github.com/Glacius-Labs/Markitect/tree/f23c2e12d9833efa61e5e65c90018016423abe74). The [model language guide](guides/model-language.md) describes what replaced the language; T4 builds the new Run engine and T5 the native host.
