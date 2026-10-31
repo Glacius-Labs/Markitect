@@ -288,8 +288,8 @@ func (c *Chat) Send(ctx context.Context, message string) (Outcome, error) {
 // snapshot hashes every file the copy holds as it is on disk, without the
 // project's Git filters or line-end attributes, so that a file nobody
 // changed never looks changed; the blobs are written, so that their content
-// can be read back. A nested repository and a path Git cannot take on one
-// line are left out.
+// can be read back. A nested repository is left out. Every file of the copy
+// is read each time, which a very large repository will feel.
 func (c *Chat) snapshot(ctx context.Context) (map[string]string, error) {
 	a := c.a
 	var staged, others, deleted bytes.Buffer
@@ -324,16 +324,19 @@ func (c *Chat) snapshot(ctx context.Context) (map[string]string, error) {
 	}
 	var paths []string
 	for p := range present {
-		if !strings.ContainsAny(p, "\n\r") {
-			paths = append(paths, p)
-		}
+		paths = append(paths, p)
 	}
 	sort.Strings(paths)
 	if len(paths) == 0 {
 		return map[string]string{}, nil
 	}
+	// --stdin-paths reads a quoted path C-style, so any name passes.
+	var list strings.Builder
+	for _, p := range paths {
+		list.WriteString(importPath(p) + "\n")
+	}
 	var ids bytes.Buffer
-	if err := a.git(ctx, []string{gitPath, "-C", workDir, "hash-object", "-w", "--no-filters", "--stdin-paths"}, strings.Join(paths, "\n")+"\n", &ids); err != nil {
+	if err := a.git(ctx, []string{gitPath, "-C", workDir, "hash-object", "-w", "--no-filters", "--stdin-paths"}, list.String(), &ids); err != nil {
 		return nil, err
 	}
 	lines := strings.Fields(ids.String())
