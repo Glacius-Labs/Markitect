@@ -26,6 +26,32 @@ func Toplevel(ctx context.Context, dir string) (string, error) {
 	return filepath.FromSlash(strings.TrimSpace(string(out))), nil
 }
 
+// Init makes the existing folder dir a Git repository.
+func Init(ctx context.Context, dir string) error {
+	_, err := git(ctx, dir, "init", "--quiet")
+	return err
+}
+
+// Clone clones url into dir, which must not exist yet. Git asks for no
+// credentials on a terminal, which nobody would see.
+func Clone(ctx context.Context, url, dir string) error {
+	if strings.HasPrefix(url, "-") {
+		return fmt.Errorf("%q is no repository URL", url)
+	}
+	cmd := exec.CommandContext(ctx, "git", "clone", "--quiet", "--", url, dir)
+	cmd.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		msg := strings.TrimSpace(stderr.String())
+		if msg == "" {
+			msg = err.Error()
+		}
+		return fmt.Errorf("git clone: %s", msg)
+	}
+	return nil
+}
+
 // WorkingTree is the working tree of a repository, as Git sees it.
 type WorkingTree struct {
 	Dir string // the repository root

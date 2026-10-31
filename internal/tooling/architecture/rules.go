@@ -97,6 +97,7 @@ var Table = Rules{
 		{"internal/guardedwrite", "guardedwrite", "docs/architecture.md#distribution"},
 		{"internal/buildinfo", "build", "docs/architecture.md#distribution"},
 		{"internal/adapters/cli", "adapter", "docs/guides/model-language.md#commands"},
+		{"internal/adapters/desktop", "adapter", "internal/adapters/desktop/README.md"},
 		{"internal/adapters/remotecontainer", "adapter", "internal/runremote/README.md#the-container"},
 		{"internal/adapters/remoteserver", "adapter", "internal/runremote/README.md"},
 		{"internal/adapters/repo", "adapter", "docs/guides/model-language.md#the-projects-markitect-folder"},
