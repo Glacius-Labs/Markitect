@@ -2,7 +2,7 @@
 
 The protocol of step T7's counted acceptance series ([delivery plan](../implementation-plan.md#concept-20-build)), as section D of the [suite design](../design/evaluation-suite-v2.md#d-counted-evaluations) asks for. It is built from the pilot's [proposal](t7-pilot-20261029.md#proposed-protocol-for-the-counted-series) and its [Q4](t7-pilot-20261029.md#q4-what-must-change-before-a-counted-series), updated for what has changed since. The owner delegated the counted series to Build, and Build approves this protocol after an [independent review](#independent-review), recorded below before any counted run ([build page](../workstreams/build.md), Decisions).
 
-**Status: approved by Build on 30 October 2026,** under the owner's delegation, after the [independent review](#independent-review) and its second round, on `main` at `6174d5da` (PRs [#908](https://github.com/Glacius-Labs/Markitect/pull/908), [#910](https://github.com/Glacius-Labs/Markitect/pull/910) and [#911](https://github.com/Glacius-Labs/Markitect/pull/911)). The [preconditions](#preconditions) came first, and [Amendment 1](#amendment-1-30-october-2026-the-frozen-commit) named the frozen commit. [Amendment 2](#amendment-2-30-october-2026-scoring-fixes-before-the-gate) fixes the scoring before the gate, records the owner's rule for "at least as good" and replaces that commit. The Windows gate ran on 30 October 2026 and did not pass, because M did not land the Makerspace W0 ([Amendment 3](#amendment-3-30-october-2026-the-windows-gate)). [Amendment 4](#amendment-4-31-october-2026-a-new-freeze-for-the-second-gate) freezes `955683de`, which holds the fix, for a second Windows gate. That gate passed on 31 October 2026 ([Amendment 5](#amendment-5-31-october-2026-the-second-windows-gate-passed)), so precondition 5 holds for Windows. The Windows series started the same day ([Amendment 6](#amendment-6-31-october-2026-the-windows-series-started)). The [stability gate](#stability-gate) runs only in a window that Build clears with the owner. The owner decided the [four points](#decided-by-the-owner) that were the owner's on 30 October 2026.
+**Status: approved by Build on 30 October 2026,** under the owner's delegation, after the [independent review](#independent-review) and its second round, on `main` at `6174d5da` (PRs [#908](https://github.com/Glacius-Labs/Markitect/pull/908), [#910](https://github.com/Glacius-Labs/Markitect/pull/910) and [#911](https://github.com/Glacius-Labs/Markitect/pull/911)). The [preconditions](#preconditions) came first, and [Amendment 1](#amendment-1-30-october-2026-the-frozen-commit) named the frozen commit. [Amendment 2](#amendment-2-30-october-2026-scoring-fixes-before-the-gate) fixes the scoring before the gate, records the owner's rule for "at least as good" and replaces that commit. The Windows gate ran on 30 October 2026 and did not pass, because M did not land the Makerspace W0 ([Amendment 3](#amendment-3-30-october-2026-the-windows-gate)). [Amendment 4](#amendment-4-31-october-2026-a-new-freeze-for-the-second-gate) freezes `955683de`, which holds the fix, for a second Windows gate. That gate passed on 31 October 2026 ([Amendment 5](#amendment-5-31-october-2026-the-second-windows-gate-passed)), so precondition 5 holds for Windows. The Windows series started the same day ([Amendment 6](#amendment-6-31-october-2026-the-windows-series-started)). [Amendment 7](#amendment-7-31-october-2026-no-five-hour-window-and-the-pace) records that no five-hour window is reported any more and that the series runs slower than expected. The [stability gate](#stability-gate) runs only in a window that Build clears with the owner. The owner decided the [four points](#decided-by-the-owner) that were the owner's on 30 October 2026.
 
 ## What changed since the pilot's proposal
 
@@ -454,6 +454,26 @@ Build approves this protocol under the owner's delegation. On 30 October 2026, B
   - At the five minutes per launch that Amendment 5 estimates, the series needs about 19 hours. Its first 13 launches took about six minutes each, which gives about 23. Either way it should end before then.
   - If `STOP` halts it, the rest resumes on the same commit in a later window, as [After a stop](#after-a-stop) says.
 - Everything else in Amendments 1 to 5 stands. The Linux gate waits for Build's go.
+
+### Amendment 7, 31 October 2026: no five-hour window, and the pace
+
+An independent re-check found the first point; Build confirmed both at 21:35Z.
+
+- **No five-hour window is reported.**
+  - The second gate's `rate_limit_event` lines held a `five_hour` and a `seven_day` window. That five-hour window reset at 16:40Z.
+  - Every such line of the series' first 26 launches, from 17:08Z, holds only `seven_day`, with its reset at 12:00Z on 2 November. So the runner reads a five-hour use of zero with no reset time, and the 85 % wait cannot fire.
+  - The app's usage card for the account showed no five-hour window either at 21:33Z, only weekly ones. Its weekly use for all models was 46 %, with a reset at 08:59Z on 4 November: a different window from the CLI's, which the runner does not read.
+- **What still guards the launches:**
+  - `quota()` reads `five_hour` from each launch's own lines, so the wait works again unchanged if the window comes back.
+  - A refused request and a seven-day use of 90 % still stop the series after the launch. Build reads any launch with a refusal in the results amendment.
+  - A runner that treats a missing five-hour window as unknown needs a new freeze, so it waits until after the series. Until then Build checks the account's usage card while the series runs.
+- **The pace is about ten minutes per launch:**
+  - The first 26 launches took 4 hours 17 minutes. Amendment 6's 5 minutes came from the gate, and its 6 minutes from the series' first 13 launches.
+  - At this pace the window up to 00:15Z on 2 November covers about 185 of the about 230 launches. So the series will not end before the stop, as Amendment 6 expected. The rest resumes on the same commit in a later window, as [After a stop](#after-a-stop) says.
+  - All 230 launches make about 38 hours. That is twice Amendment 6's 19 to 23 hours, and under this protocol's estimate of 50 to 80 hours per platform (Quota and time, under [Protocol](#protocol)).
+- **The seven-day use** rose from 0.31 at about 17:50Z to 0.38 at 21:26Z, in steps of 0.01 to 0.02, so the rate is rough. At that rate it reaches about 0.9 by 00:15Z on 2 November, so the 90 % stop may come first. Other use of the account brings it closer. Either stop leaves the rest for a later window.
+- Which of the two weekly limits would refuse requests is not known.
+- Everything else in Amendments 1 to 6 stands.
 
 ## Independent review
 
