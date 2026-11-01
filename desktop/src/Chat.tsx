@@ -269,7 +269,7 @@ function Messages({ pid, conv, onChanged, onShow }: { pid: string; conv: Convers
       )}
       {conv.working && (
         <p className="chat__note small" role="status">
-          <span className="gl-spinner" aria-hidden="true" /> The chat is at work.
+          <span className="gl-spinner" aria-hidden="true" /> <span className="chat__doing">{conv.doing || 'The chat is at work.'}</span>
         </p>
       )}
       {open && !conv.working && <ProposalCard pid={pid} chat={conv.id} proposal={open} onChanged={onChanged} onShow={onShow} />}

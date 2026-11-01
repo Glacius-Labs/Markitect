@@ -99,6 +99,11 @@
   text-align: center;
 }
 
+.chat__doing {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .chat__proposal {
   gap: var(--space-3);
   padding: var(--space-4);

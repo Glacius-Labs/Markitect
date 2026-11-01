@@ -168,6 +168,57 @@ func (r *reader) checkInit(l line) error {
 	return refuse("no connected markitect tool server")
 }
 
+// Progress reads an assistant message: its text, and the tool it calls. An
+// API error reaches the owner through the turn's end, not as a message.
+func (r *reader) Progress(raw []byte) agents.Progress {
+	var l struct {
+		Type    string `json:"type"`
+		Error   string `json:"error"`
+		Message struct {
+			Content []struct {
+				Type  string `json:"type"`
+				Text  string `json:"text"`
+				Name  string `json:"name"`
+				Input struct {
+					File    string `json:"file_path"`
+					Command string `json:"command"`
+					Pattern string `json:"pattern"`
+				} `json:"input"`
+			} `json:"content"`
+		} `json:"message"`
+	}
+	if json.Unmarshal(raw, &l) != nil || l.Type != "assistant" || l.Error != "" {
+		return agents.Progress{}
+	}
+	var p agents.Progress
+	var texts []string
+	for _, c := range l.Message.Content {
+		switch c.Type {
+		case "text":
+			if t := strings.TrimSpace(c.Text); t != "" {
+				texts = append(texts, t)
+			}
+		case "tool_use":
+			switch c.Name {
+			case "Read":
+				p.Doing = agents.Doing("Reading", c.Input.File)
+			case "Edit":
+				p.Doing = agents.Doing("Editing", c.Input.File)
+			case "Write":
+				p.Doing = agents.Doing("Writing", c.Input.File)
+			case "Bash":
+				p.Doing = agents.Doing("Running", c.Input.Command)
+			case "Glob", "Grep":
+				p.Doing = agents.Doing("Searching for", c.Input.Pattern)
+			default:
+				p.Doing = agents.Doing("Using", c.Name)
+			}
+		}
+	}
+	p.Text = strings.Join(texts, "\n\n")
+	return p
+}
+
 func (r *reader) Outcome() agents.Outcome {
 	out := agents.Outcome{Conversation: r.session, Model: r.model, Usage: r.usage}
 	if r.result == nil {

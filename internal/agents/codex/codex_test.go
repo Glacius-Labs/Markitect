@@ -120,6 +120,23 @@ func read(t *testing.T, turn agents.Turn, lines ...string) (agents.Outcome, erro
 	return r.Outcome(), nil
 }
 
+func TestReaderTellsATurnsProgress(t *testing.T) {
+	r := Provider{}.Reader(agents.Turn{}).(agents.ProgressReader)
+	for raw, want := range map[string]agents.Progress{
+		`{"type":"item.completed","item":{"type":"agent_message","text":"I will look."}}`:                                            {Text: "I will look."},
+		`{"type":"item.started","item":{"type":"agent_message","text":"I wi"}}`:                                                      {},
+		`{"type":"item.started","item":{"type":"command_execution","command":"markitect check"}}`:                                    {Doing: "Running markitect check"},
+		`{"type":"item.completed","item":{"type":"command_execution","command":"markitect check"}}`:                                  {},
+		`{"type":"item.completed","item":{"type":"file_change","changes":[{"path":"/work/.markitect/model/x.md","kind":"update"}]}}`: {Doing: "Editing .markitect/model/x.md"},
+		`{"type":"turn.completed","usage":{}}`:                                                                                       {},
+		`not json`:                                                                                                                   {},
+	} {
+		if got := r.Progress([]byte(raw)); got != want {
+			t.Errorf("%s: %+v, want %+v", raw, got, want)
+		}
+	}
+}
+
 func TestReaderAnswersWithTheThreadAndUsage(t *testing.T) {
 	out, err := read(t, agents.Turn{Model: "gpt-6-luna"}, `{"type":"thread.started","thread_id":"th-1"}`, `{"type":"turn.started"}`,
 		`{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"Let me look."}}`,
