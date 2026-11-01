@@ -40,18 +40,26 @@ type statPoint struct {
 	Errors      int       `json:"errors"`
 }
 
-// statsCache keeps each commit's numbers: a commit never changes.
+// statsCache keeps each commit's numbers: a commit never changes. One commit
+// is read at a time, so that several windows wait for the numbers instead of
+// reading the same commits side by side.
 type statsCache struct {
-	mu     sync.Mutex
-	points map[string]statPoint // by repository root and commit
+	reading sync.Mutex
+	mu      sync.Mutex
+	points  map[string]statPoint // by repository root and commit
 }
 
 // maxStats bounds the cached commits, across all projects; the cache starts
 // over when full.
 const maxStats = 5000
 
+// count measures a project; one without Markitect has nothing to count, also
+// not the errors that say so.
 func count(p *project.Project) statPoint {
-	pt := statPoint{Initialized: slices.Contains(p.Files, project.ManifestFile), Errors: len(p.Errors)}
+	if !slices.Contains(p.Files, project.ManifestFile) {
+		return statPoint{}
+	}
+	pt := statPoint{Initialized: true, Errors: len(p.Errors)}
 	if p.Model != nil {
 		pt.Definitions = len(p.Model.ModelDefinitions())
 		pt.Packages = len(p.Model.Packages)
@@ -63,9 +71,18 @@ func count(p *project.Project) statPoint {
 // at returns the numbers of one commit.
 func (c *statsCache) at(ctx context.Context, repos Repos, root string, mc ModelCommit) (statPoint, error) {
 	key := root + "\x00" + mc.ID
-	c.mu.Lock()
-	pt, ok := c.points[key]
-	c.mu.Unlock()
+	lookup := func() (statPoint, bool) {
+		c.mu.Lock()
+		defer c.mu.Unlock()
+		pt, ok := c.points[key]
+		return pt, ok
+	}
+	pt, ok := lookup()
+	if !ok {
+		c.reading.Lock()
+		defer c.reading.Unlock()
+		pt, ok = lookup()
+	}
 	if !ok {
 		snap, err := repos.Snapshot(ctx, root, mc.ID)
 		if err != nil {

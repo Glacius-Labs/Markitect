@@ -1,6 +1,7 @@
 package desktop
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"testing"
@@ -43,6 +44,34 @@ func TestStatisticsFollowTheModelThroughItsCommits(t *testing.T) {
 	get()
 	if repos.reads != reads {
 		t.Errorf("the commits were read again: %d → %d", reads, repos.reads)
+	}
+}
+
+func TestStatisticsKeepNothingFromARequestThatEnded(t *testing.T) {
+	files := library(t)
+	s, repos, root, _ := modelServer(t, files)
+	repos.commit(root, "c1", false)
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if _, err := s.stats.at(ctx, repos, root, ModelCommit{ID: "c1"}); err == nil {
+		t.Fatal("a request that ended got numbers")
+	}
+	if len(s.stats.points) != 0 {
+		t.Fatal("its numbers were kept")
+	}
+	if pt, err := s.stats.at(context.Background(), repos, root, ModelCommit{ID: "c1"}); err != nil || pt.Definitions != 5 {
+		t.Fatalf("the next request: %+v %v", pt, err)
+	}
+}
+
+func TestStatisticsOfAProjectWithoutMarkitectCountNothing(t *testing.T) {
+	s, _, _, id := modelServer(t, map[string]string{"README.md": "# x\n"})
+	w := call(s, "GET", "/api/projects/"+id+"/statistics", "")
+	var v struct {
+		Model []statPoint `json:"model"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &v); err != nil || len(v.Model) != 1 || v.Model[0].Initialized || v.Model[0].Errors != 0 {
+		t.Fatalf("%d %s", w.Code, w.Body)
 	}
 }
 

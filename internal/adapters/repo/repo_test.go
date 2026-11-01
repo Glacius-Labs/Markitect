@@ -138,3 +138,44 @@ func TestModelHistoryAndSnapshotsOfItsCommits(t *testing.T) {
 		t.Error("a file outside Markitect's folder was read")
 	}
 }
+
+func TestASnapshotReadsOnlyWhatALoadReads(t *testing.T) {
+	ctx := context.Background()
+	r := testkit.NewRepo(t)
+	r.Write(".markitect/manifest.yaml", "libraries:\n  std: 1.0.0\n")
+	r.Write(".markitect/model/with space.md", "# Spaces\n")
+	r.Write(".markitect/registry/a.md", "# Registry\n")
+	r.Write(".markitect/libraries/own/Kind.md", "# Kind\n")
+	r.Write(".markitect/tool/source.zip", "a whole archive\n")
+	r.Write(".markitect/results/run-1.md", "# Result\n")
+	head := r.Commit("the model")
+	// A submodule below the model has no content to read.
+	r.Git("update-index", "--add", "--cacheinfo", "160000,"+head+",.markitect/model/sub")
+	r.Git("commit", "-m", "a submodule")
+	id := strings.TrimSpace(r.Git("rev-parse", "HEAD"))
+
+	s, err := Snapshot(ctx, r.Dir, id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range []string{".markitect/manifest.yaml", ".markitect/model/with space.md", ".markitect/registry/a.md", ".markitect/libraries/own/Kind.md"} {
+		if _, err := s.Read(f); err != nil {
+			t.Errorf("%s: %v", f, err)
+		}
+	}
+	for _, f := range []string{".markitect/tool/source.zip", ".markitect/results/run-1.md", ".markitect/model/sub"} {
+		if _, err := s.Read(f); err == nil {
+			t.Errorf("%s was read", f)
+		}
+	}
+	files, _ := s.Files()
+	if !strings.Contains(strings.Join(files, ","), ".markitect/tool/source.zip") {
+		t.Errorf("a file left unread is not listed: %v", files)
+	}
+
+	cancelled, cancel := context.WithCancel(ctx)
+	cancel()
+	if _, err := ModelHistory(cancelled, r.Dir, 10); err == nil {
+		t.Error("a request that ended read the history as empty")
+	}
+}

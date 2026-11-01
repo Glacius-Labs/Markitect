@@ -100,7 +100,7 @@ The chat is the main way to change the model ([design](../../../docs/design/mark
 
 ## Statistics
 
-The hub's third area, entered with the digit 3, shows how the model develops: its Definitions and Packages, and what `lint` and `check` find in it, at each of the last 60 commits that changed `.markitect/` and in the working tree now, as two small charts and a table. A commit a Run landed stands out. The service loads the project at each commit as `check` would, reading only `.markitect/` from Git, and keeps each commit's numbers, since a commit never changes. How Runs go and where the work struggles come with the Runs.
+The hub's third area, entered with the digit 3, shows how the model develops: its Definitions and Packages, and what `lint` and `check` find in it, at each of the last 60 commits that changed `.markitect/` and in the working tree now, as two small charts and a table. A commit a Run landed stands out. The service loads the project at each commit as `check` would, reading from Git only the files that load needs, and keeps each commit's numbers, since a commit never changes; several windows wait for those numbers instead of reading the same commits side by side. A project without Markitect has nothing to show. How Runs go and where the work struggles come with the Runs.
 
 ## Settings
 

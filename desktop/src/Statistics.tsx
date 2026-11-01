@@ -57,7 +57,8 @@ export function Statistics({ id }: { id: string }) {
           <span className="gl-spinner" aria-hidden="true" /> Reading the model at its commits; the first time takes a moment.
         </p>
       )}
-      {points && (
+      {points?.length === 1 && !points[0].initialized && <p className="muted">Markitect is not set up in this project yet.</p>}
+      {points && (points.length > 1 || points[0].initialized) && (
         <>
           <p className="small muted">
             {commits === 0
@@ -137,7 +138,7 @@ export function Chart({ title, points, series }: { title: string; points: StatPo
   const max = Math.max(1, ...points.flatMap((p) => series.map((s) => p[s.key])));
   const x = (i: number) => pad.left + (points.length === 1 ? (width - pad.left - pad.right) / 2 : (i * (width - pad.left - pad.right)) / (points.length - 1));
   const y = (v: number) => pad.top + (height - pad.top - pad.bottom) * (1 - v / max);
-  const ticks = [0, Math.round(max / 2), max];
+  const ticks = [...new Set([0, Math.round(max / 2), max])];
   return (
     <figure className="gl-chart stats-chart">
       <figcaption className="title">{title}</figcaption>

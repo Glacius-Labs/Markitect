@@ -28,13 +28,16 @@ type ModelCommit struct {
 // Markitect's folder, newest first. A repository without a commit has none.
 func ModelHistory(ctx context.Context, root string, limit int) ([]ModelCommit, error) {
 	if _, err := git(ctx, root, "rev-parse", "--verify", "--quiet", "HEAD^{commit}"); err != nil {
-		return nil, nil
+		return nil, ctx.Err()
 	}
-	out, err := git(ctx, root, "log", "-n", strconv.Itoa(limit), "--format=%H%x00%ct%x00%s", "HEAD", "--", project.Dir+"/")
+	n := strconv.Itoa(limit)
+	out, err := git(ctx, root, "log", "-n", n, "--format=%H%x00%ct%x00%s", "HEAD", "--", project.Dir+"/")
 	if err != nil {
 		return nil, err
 	}
-	landed, err := git(ctx, root, "log", "--format=%H", "--diff-filter=A", "HEAD", "--", project.ResultsDir+"/")
+	// A landing changes Markitect's folder, so the last limit landings hold
+	// every landing among the commits above.
+	landed, err := git(ctx, root, "log", "-n", n, "--format=%H", "--diff-filter=A", "HEAD", "--", project.ResultsDir+"/")
 	if err != nil {
 		return nil, err
 	}
@@ -57,9 +60,24 @@ func ModelHistory(ctx context.Context, root string, limit int) ([]ModelCommit, e
 	return commits, nil
 }
 
+// loaded reports whether a project's load reads a file. It leaves out
+// Markitect's other files, such as the installed tool's source archive and
+// the Results, which may be large.
+func loaded(f string) bool {
+	switch f {
+	case project.ManifestFile, project.LockFile, project.ChecksFile, project.IgnoreFile, project.RootPage:
+		return true
+	}
+	for _, dir := range []string{project.ModelDir, project.RegistryDir, project.LibraryDir} {
+		if strings.HasPrefix(f, dir+"/") {
+			return true
+		}
+	}
+	return false
+}
+
 // Snapshot reads a commit as a repository state in two Git processes: its
-// file list, and the content of every file below Markitect's folder, which
-// is all a project's load reads.
+// file list, and the content of the files a project's load reads.
 func Snapshot(ctx context.Context, root, rev string) (project.Repository, error) {
 	out, err := git(ctx, root, "ls-tree", "-r", "-z", "--name-only", "--full-tree", rev)
 	if err != nil {
@@ -69,7 +87,7 @@ func Snapshot(ctx context.Context, root, rev string) (project.Repository, error)
 	var wanted []string
 	for _, f := range split(out) {
 		s.files = append(s.files, f)
-		if strings.HasPrefix(f, project.Dir+"/") && !strings.ContainsAny(f, "\n\r") {
+		if loaded(f) && !strings.ContainsAny(f, "\n\r") {
 			wanted = append(wanted, f)
 		}
 	}
@@ -94,10 +112,12 @@ func Snapshot(ctx context.Context, root, rev string) (project.Repository, error)
 		if err != nil {
 			return nil, fmt.Errorf("git cat-file: %w", err)
 		}
-		if strings.HasSuffix(strings.TrimSpace(header), " missing") {
+		// A missing object ("NAME missing") and a submodule ("ID submodule")
+		// have no content; the load then reports the file it cannot read.
+		fields := strings.Fields(header)
+		if len(fields) < 3 || fields[len(fields)-1] == "missing" {
 			continue
 		}
-		fields := strings.Fields(header)
 		if len(fields) != 3 {
 			return nil, fmt.Errorf("git cat-file: %q", header)
 		}
