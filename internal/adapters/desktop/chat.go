@@ -102,8 +102,8 @@ type conversation struct {
 	// last may be open.
 	Proposals []proposal `json:"proposals"`
 	// Start holds the digest of each file below Markitect's folder as the
-	// working tree had it when the agent started or last settled; a file
-	// that did not exist has none.
+	// working tree had it when the agent whose changes were last read started
+	// or last settled; a file that did not exist has none.
 	Start map[string]string `json:"start,omitempty"`
 }
 
@@ -320,6 +320,8 @@ type chatView struct {
 	Working bool `json:"working"`
 	// Doing says what a running turn is doing now, in one line.
 	Doing string `json:"doing,omitempty"`
+	// Stoppable says that the work is a turn, not an accept or a reject.
+	Stoppable bool `json:"stoppable,omitempty"`
 	// Unsaved says why the conversation's last change is only in memory.
 	Unsaved string `json:"unsaved,omitempty"`
 }
@@ -334,7 +336,7 @@ func (c *chatService) view(p Project, id string) ([]byte, error) {
 	}
 	v := chatView{conversation: *conv, Unsaved: c.unsaved[key(p, id)]}
 	if l := c.live[key(p, id)]; l != nil {
-		v.Working, v.Doing = l.working, l.doing
+		v.Working, v.Doing, v.Stoppable = l.working, l.doing, l.stop != nil
 	}
 	return json.Marshal(v)
 }
@@ -519,7 +521,7 @@ func (c *chatService) begin(p Project, id, text string) error {
 func (c *chatService) turn(ctx context.Context, p Project, id, text string) {
 	defer c.turns.Done()
 	defer c.done(p, id)
-	agent, err := c.agent(ctx, p, id)
+	agent, start, err := c.agent(ctx, p, id)
 	if c.interrupted(ctx, p, id) {
 		return
 	}
@@ -556,6 +558,9 @@ func (c *chatService) turn(ctx context.Context, p Project, id, text string) {
 		return
 	}
 	_ = c.change(p, id, func(conv *conversation) error {
+		if start != nil {
+			conv.Start = start
+		}
 		propose(conv, model, outside)
 		return nil
 	})
@@ -569,7 +574,7 @@ func (c *chatService) interrupted(ctx context.Context, p Project, id string) boo
 		return false
 	}
 	if c.ctx.Err() == nil {
-		c.say(p, id, "app", "You stopped this turn. Its unfinished changes are gone; your next message starts a fresh agent that knows this conversation.")
+		c.say(p, id, "app", "You stopped this turn, so nothing it changed is kept. Your next message starts a fresh agent that knows this conversation.")
 		c.drop(p, id)
 	}
 	return true
@@ -593,8 +598,10 @@ func (c *chatService) drop(p Project, id string) {
 
 // agent returns the conversation's running agent, starting one on the
 // working tree as it is now, with the open proposal on top, when there is
-// none.
-func (c *chatService) agent(ctx context.Context, p Project, id string) (ChatAgent, error) {
+// none. Then it also returns that start, which the turn keeps once it has read
+// the agent's changes: until then the open proposal is still the one made from
+// the earlier start, and an accept must check it against that.
+func (c *chatService) agent(ctx context.Context, p Project, id string) (ChatAgent, map[string]string, error) {
 	c.mu.Lock()
 	var running ChatAgent
 	if l := c.live[key(p, id)]; l != nil {
@@ -621,29 +628,29 @@ func (c *chatService) agent(ctx context.Context, p Project, id string) (ChatAgen
 	}
 	c.mu.Unlock()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if running != nil {
-		return running, nil
+		return running, nil, nil
 	}
 	if c.chats == nil {
-		return nil, errors.New("this Markitect has no chat agents")
+		return nil, nil, errors.New("this Markitect has no chat agents")
 	}
 	c.busyWith(ctx, p, id, "Starting the chat's agent")
 	ws, err := c.repos.Open(ctx, p.Path)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	files, err := ws.Files()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	start := map[string]string{}
 	for _, f := range files {
 		if strings.HasPrefix(f, project.Dir+"/") {
 			data, err := ws.Read(f)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			start[f] = digest(data)
 		}
@@ -666,7 +673,7 @@ func (c *chatService) agent(ctx context.Context, p Project, id string) (ChatAgen
 	}
 	agent, err := c.chats.Start(ctx, ChatStart{Name: "markitect-chat-" + id, Tree: listed{ws, files}, Files: files, Pending: pending, Skill: skill, Earlier: earlier.String()})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	c.mu.Lock()
 	if c.closed {
@@ -675,7 +682,7 @@ func (c *chatService) agent(ctx context.Context, p Project, id string) (ChatAgen
 		stop, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		_ = agent.Close(stop)
-		return nil, errClosed
+		return nil, nil, errClosed
 	}
 	l := c.live[key(p, id)]
 	if l == nil {
@@ -684,11 +691,7 @@ func (c *chatService) agent(ctx context.Context, p Project, id string) (ChatAgen
 	}
 	l.agent = agent
 	c.mu.Unlock()
-	err = c.change(p, id, func(conv *conversation) error {
-		conv.Start = start
-		return nil
-	})
-	return agent, err
+	return agent, start, nil
 }
 
 // propose turns the conversation's changes into its open proposal. The

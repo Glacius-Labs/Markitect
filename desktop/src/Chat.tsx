@@ -286,15 +286,15 @@ export function ChatPanel(props: { pid: string; onClose: () => void }) {
             }
           }}
         />
-        {working ? (
+        {/* Beside Send, not in its place, so a double click on Send cannot stop what it started. */}
+        {conv?.stoppable && (
           <button className="gl-button" onClick={() => void stop()} title="Stop this turn">
             Stop
           </button>
-        ) : (
-          <button className="gl-button" data-variant="primary" aria-busy={busy || undefined} disabled={busy || !draft.trim() || !list?.available} onClick={() => void send()}>
-            Send
-          </button>
         )}
+        <button className="gl-button" data-variant="primary" aria-busy={busy || undefined} disabled={busy || working || !draft.trim() || !list?.available} onClick={() => void send()}>
+          Send
+        </button>
       </div>
     </aside>
   );

@@ -568,8 +568,8 @@ func TestStoppingATurnEndsItAndTheNextStartsFresh(t *testing.T) {
 		if err := json.Unmarshal(call(s, "GET", route+chat, "").Body.Bytes(), &v); err != nil {
 			t.Fatal(err)
 		}
-		if !v.Working || v.Doing != "Stopping the turn" {
-			t.Fatalf("while it stops: working %v, %q", v.Working, v.Doing)
+		if !v.Working || !v.Stoppable || v.Doing != "Stopping the turn" {
+			t.Fatalf("while it stops: %+v", v)
 		}
 		time.Sleep(20 * time.Millisecond)
 	}
@@ -596,6 +596,48 @@ func TestStoppingATurnEndsItAndTheNextStartsFresh(t *testing.T) {
 	chatState(t, s, id, chat)
 	if len(chats.started) != 2 || len(chats.started[1].Pending) == 0 || !strings.Contains(chats.started[1].Earlier, "You stopped this turn") {
 		t.Fatalf("the fresh agent got %+v", chats.started)
+	}
+}
+
+func TestAStoppedTakeOverLeavesTheOwnersEditSafeFromAnAccept(t *testing.T) {
+	s, chats, files, id := chatServer(t, feeChat)
+	route := "/api/projects/" + id + "/chats/"
+	chat := startChat(t, s, id, `{"text":"Add a late fee and raise the loan limit to five."}`)
+	chatState(t, s, id, chat)
+	stopATurn := func() {
+		t.Helper()
+		reached := make(chan struct{})
+		chats.block = func(ctx context.Context, _ func(string)) {
+			close(reached)
+			<-ctx.Done()
+		}
+		if r := call(s, "POST", route+chat+"/messages", `{"text":"Go on."}`); r.Code != http.StatusOK {
+			t.Fatalf("message: %d %s", r.Code, r.Body)
+		}
+		<-reached
+		if r := call(s, "POST", route+chat+"/stop", "{}"); r.Code != http.StatusOK {
+			t.Fatalf("stop: %d %s", r.Code, r.Body)
+		}
+		chatState(t, s, id, chat)
+		chats.block = nil
+	}
+	// With its agent gone, the owner edits a file of the open proposal. A
+	// fresh agent starts from that edit, and it too is stopped, so the
+	// proposal is still the one made before the edit.
+	stopATurn()
+	const policy = ".markitect/model/policy.md"
+	mine := "---\nkind: std/Rule\n---\n# Loan limit\n\nChanged by hand.\n"
+	files[policy] = mine
+	stopATurn()
+
+	w := call(s, "POST", route+chat+"/accept", "{}")
+	var v chatView
+	_ = json.Unmarshal(w.Body.Bytes(), &v)
+	if w.Code != http.StatusConflict || v.open() == nil || strings.Join(v.open().Conflicts, ",") != policy {
+		t.Fatalf("accept: %d %s", w.Code, w.Body)
+	}
+	if files[policy] != mine {
+		t.Fatalf("the accept wrote over the owner's edit: %s", files[policy])
 	}
 }
 
@@ -635,8 +677,8 @@ func TestStoppingOnlyStopsARunningTurn(t *testing.T) {
 	if r := call(s, "POST", route+chat+"/stop", "{}"); r.Code != http.StatusOK {
 		t.Fatalf("stop: %d %s", r.Code, r.Body)
 	}
-	if v := chatState(t, s, id, chat); len(v.Messages) != len(before.Messages) || v.open() == nil {
-		t.Fatalf("a stop with no turn changed the conversation: %+v", v.Messages)
+	if v := chatState(t, s, id, chat); len(v.Messages) != len(before.Messages) || v.open() == nil || v.Stoppable {
+		t.Fatalf("a stop with no turn changed the conversation: %+v", v)
 	}
 	if r := call(s, "POST", route+"0123456789abcdef/stop", "{}"); r.Code != http.StatusNotFound {
 		t.Fatalf("a stop of no chat: %d", r.Code)
