@@ -13,6 +13,8 @@ The Desktop session designs and builds Markitect Desktop, the app over the CLI t
 
 - **Built:** D3, the Model area: its four views, Reader, Map, Organization and Quality, with the diff from the last landing or the last commit, the views following the folder, and hand edits from the Reader ([the Model area](../../internal/adapters/desktop/README.md#the-model-area)). Tried on Windows in the browser pane at 1440 and 390 pixels wide. The design details settled while building are on the [design page](../design/markitect-desktop.md#the-model-area).
 
+- **Built:** the hub's next step: a proposal that waits, the commit a Run needs, the first Run or the next one as a command for the terminal, until Runs are in the app ([routes](../../internal/adapters/desktop/README.md#routes)).
+
 ## Next
 
 1. D4, the chat and Extract, designed on the [design page](../design/markitect-desktop.md#the-chat). Built: the app's side (conversations, the panel, proposals in the views, accept and reject) and the [chat agent](../../internal/agents/README.md#chat-agents) in its container beside the Manager agent, tested against the agent runtime's scripted stand-in. Settings show the required checks, the agents' settings and each login's state and expiry ([Settings](../../internal/adapters/desktop/README.md#settings)), read-only for now. Statistics show the model over its commits ([Statistics](../../internal/adapters/desktop/README.md#statistics)); the Runs' part comes with the Runs. Not yet: a chat against a real container and provider, which waits until the evaluations free Docker; and Extract's first stop, a change of the shared Extract skill, which waits for the Build session's go-ahead.

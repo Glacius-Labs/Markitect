@@ -299,6 +299,34 @@ func TestAnAcceptWritesNothingOverAChangedWorkingTree(t *testing.T) {
 	}
 }
 
+func TestTheHubNamesAProposalOnceTheOwnerCanDecideIt(t *testing.T) {
+	s, chats, _, id := chatServer(t, feeChat)
+	step := make(chan struct{})
+	chats.progress = func(say, doing func(string)) {
+		step <- struct{}{}
+		<-step
+	}
+	chat := startChat(t, s, id, `{"text":"Add a late fee."}`)
+	<-step
+	if w := waitingNow(t, s, id); w.Proposal != nil {
+		t.Fatalf("during the turn: %+v", w.Proposal)
+	}
+	step <- struct{}{}
+	chatState(t, s, id, chat)
+	w := waitingNow(t, s, id)
+	if w.Proposal == nil || w.Proposal.Chat != chat || w.Proposal.Title != "Add a late fee." {
+		t.Fatalf("after the turn: %+v", w.Proposal)
+	}
+	before := w.Uncommitted
+	if r := call(s, "POST", "/api/projects/"+id+"/chats/"+chat+"/accept", "{}"); r.Code != http.StatusOK {
+		t.Fatalf("accept: %d %s", r.Code, r.Body)
+	}
+	// Accepted, it waits for a commit.
+	if w := waitingNow(t, s, id); w.Proposal != nil || w.Uncommitted <= before {
+		t.Fatalf("after the accept: %+v, %d before", w, before)
+	}
+}
+
 func TestALaterTurnReplacesTheProposal(t *testing.T) {
 	turns := 0
 	s, _, _, id := chatServer(t, func(copy map[string]string, message string) string {

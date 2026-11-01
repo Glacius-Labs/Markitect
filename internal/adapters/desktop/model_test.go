@@ -3,6 +3,7 @@ package desktop
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"path/filepath"
 	"slices"
@@ -236,6 +237,82 @@ func TestTheModelViewMeasuresFromTheLastLandingUnlessAskedForTheLastCommit(t *te
 	}
 	if _, res := getModel(t, s, id, "?base=yesterday"); res.code != http.StatusBadRequest {
 		t.Fatalf("an unknown base: %d", res.code)
+	}
+}
+
+// waitingNow is what the hub says waits for the owner.
+func waitingNow(t *testing.T, s *server, id string) Waiting {
+	t.Helper()
+	w := call(s, "GET", "/api/projects/"+id, "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("project: %d %s", w.Code, w.Body)
+	}
+	var out struct {
+		Project projectView `json:"project"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &out); err != nil {
+		t.Fatal(err)
+	}
+	if out.Project.Waiting == nil {
+		t.Fatalf("nothing about what waits: %s", w.Body)
+	}
+	return *out.Project.Waiting
+}
+
+func TestTheHubSaysWhatWaitsForTheOwner(t *testing.T) {
+	files := library(t)
+	s, repos, root, id := modelServer(t, files)
+	member := ".markitect/model/members/member.md"
+
+	// Nothing is committed: every file of the folder is uncommitted.
+	if w := waitingNow(t, s, id); w.Uncommitted == 0 || w.Landed || w.Proposal != nil {
+		t.Fatalf("before a commit: %+v", w)
+	}
+	repos.commit(root, "first", false)
+	if w := waitingNow(t, s, id); w.Uncommitted != 0 || w.Landed {
+		t.Fatalf("committed, never landed: %+v", w)
+	}
+	repos.commit(root, "landed", true)
+	if w := waitingNow(t, s, id); w.Uncommitted != 0 || !w.Landed || w.Unlanded != 0 {
+		t.Fatalf("landed: %+v", w)
+	}
+	// A hand edit waits for a commit, then for a Run.
+	files[member] = "---\nkind: std/Concept\n---\n# Member\n\nSomeone with a card.\n"
+	if w := waitingNow(t, s, id); w.Uncommitted != 1 {
+		t.Fatalf("edited: %+v", w)
+	}
+	repos.commit(root, "later", false)
+	if w := waitingNow(t, s, id); w.Uncommitted != 0 || !w.Landed || w.Unlanded != 1 {
+		t.Fatalf("committed since the landing: %+v", w)
+	}
+}
+
+func TestTheHubAsksNothingOfAModelThatDoesNotCompile(t *testing.T) {
+	files := library(t)
+	files[".markitect/model/members/member.md"] = "no front matter\n"
+	s, _, _, id := modelServer(t, files)
+	var out struct {
+		Project projectView `json:"project"`
+	}
+	if err := json.Unmarshal(call(s, "GET", "/api/projects/"+id, "").Body.Bytes(), &out); err != nil {
+		t.Fatal(err)
+	}
+	if out.Project.Waiting != nil || out.Project.Status.Check == nil || out.Project.Status.Check.OK {
+		t.Fatalf("%+v", out.Project)
+	}
+}
+
+func TestAProblemReadingWhatWaitsIsTheProjectsProblem(t *testing.T) {
+	s, repos, _, id := modelServer(t, library(t))
+	repos.uncommitted = errors.New("git status: no")
+	var out struct {
+		Project projectView `json:"project"`
+	}
+	if err := json.Unmarshal(call(s, "GET", "/api/projects/"+id, "").Body.Bytes(), &out); err != nil {
+		t.Fatal(err)
+	}
+	if out.Project.Waiting != nil || out.Project.Status.Problem != "git status: no" {
+		t.Fatalf("%+v", out.Project)
 	}
 }
 

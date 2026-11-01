@@ -62,6 +62,10 @@ type Repos interface {
 	// Run's Result page, the base apply starts from; ok is false when no Run
 	// has landed.
 	LastLanded(ctx context.Context, root, tip string) (id string, ok bool, err error)
+	// Uncommitted lists the files of Markitect's folder that differ between
+	// the last commit and the working tree, every one when nothing is
+	// committed.
+	Uncommitted(ctx context.Context, root string) ([]string, error)
 	// History returns up to limit commits of the repository at root that
 	// changed Markitect's folder, newest first; none without a commit.
 	History(ctx context.Context, root string, limit int) ([]ModelCommit, error)

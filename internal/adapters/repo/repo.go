@@ -250,6 +250,22 @@ func (c Commit) Changed() ([]analysis.Change, error) {
 	return list, nil
 }
 
+// Uncommitted lists the files of Markitect's folder that differ between the
+// last commit and the working tree, every one of them when nothing is
+// committed. It takes no lock, so a commit made at the same moment does not
+// fail over it.
+func Uncommitted(ctx context.Context, root string) ([]string, error) {
+	out, err := git(ctx, root, "--no-optional-locks", "status", "--porcelain", "-z", "--no-renames", "--untracked-files=all", "--", project.Dir)
+	if err != nil {
+		return nil, err
+	}
+	var files []string
+	for _, entry := range split(out) {
+		files = append(files, entry[3:]) // after the two status letters and a space
+	}
+	return files, nil
+}
+
 func split(out []byte) []string {
 	var parts []string
 	for _, p := range bytes.Split(out, []byte{0}) {

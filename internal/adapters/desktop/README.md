@@ -44,7 +44,7 @@ Either way:
 | `POST /api/folder` | Asks the user for a folder in the window's own dialog, one dialog at a time, starting at a given full path; the answer is the folder, or empty when the user cancelled. A browser window has no dialog (501), and the user types the path |
 | `GET /api/projects` | The project list, each with its status |
 | `POST /api/projects` | Brings a project in: `open` a folder inside a repository, `create` a new folder with Git and `markitect init`, or `clone` a URL into a new folder |
-| `GET /api/projects/{id}` | One project with its status |
+| `GET /api/projects/{id}` | One project with its status and, once its model compiles, what waits for the owner |
 | `POST /api/projects/{id}/init` | Runs `markitect init` in the project |
 | `PUT /api/projects/{id}/definitions/{definition}` | Writes a Definition's text into the working tree, given the digest of the text the editor started from, or none for a new Definition; `409` with the file's text as it is now when it changed meanwhile ([hand edits](#hand-edits)) |
 | `GET /api/projects/{id}/statistics` | The model's size and findings at each of its last 60 commits, oldest first, and in the working tree ([Statistics](#statistics)) |
@@ -60,6 +60,8 @@ Either way:
 | `DELETE /api/projects/{id}` | Takes the project off the list; its folder stays |
 
 A project's status is what `markitect check` finds in its working tree: whether `.markitect/` is set up, the compile errors, and the counts of Definitions, Packages and accounted files; the list reads up to four projects at once. The list and the last parent folder live in `projects.json` in the config folder. On Windows and macOS, whose file systems ignore case, two spellings of one path are one project.
+
+The hub turns this into one next step, the first that applies: the project cannot be read; Markitect is not set up; the model does not compile; a chat's proposal waits, unless that chat is at work; files of `.markitect/` differ from the last commit; no Run has landed; Definitions changed since the last landing; otherwise nothing waits. The two about Runs give the `markitect apply` command to start in a terminal until Runs are in the app. A problem while reading what waits shows as the project's problem.
 
 ## Ports
 
@@ -157,4 +159,4 @@ For work on the UI, start `markitect desktop --no-open --listen 127.0.0.1:7340` 
 - `internal/bootstrap/settings_test.go`: the agents' settings from the environment, a usable login with its expiry, a missing one and a refused API key, with no token in what Settings shows.
 - `internal/bootstrap/desktop_test.go`: creating, opening and cloning real repositories; reading the last commit, the last landing and the file stamps; writing into the working tree but not through a symbolic link; that `markitect check` passes after the app's init; and that `ListenDesktop`, which the native app calls, shares one service per user.
 - CI builds the native app on request on Windows, macOS and Linux and starts it ([CONTRIBUTING](../../../CONTRIBUTING.md#verify-a-change)). On Windows, `console_windows_test.go` also checks, as a GUI program, that a console program shows a window before the app joins its hidden console (only in CI) and none after.
-- `desktop/src/*.test.ts`: the hub's next step and the project badges; the Reader's Markdown with its links; the line diff; the Map's layout; the places in the app.
+- `desktop/src/*.test.ts`: the hub's next step in its order and the project badges; the Reader's Markdown with its links; the line diff; the Map's layout; the places in the app.

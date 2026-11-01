@@ -216,11 +216,27 @@ func equal(a, b string) bool {
 // projectView is a project with its current status.
 type projectView struct {
 	Project
-	Status Status `json:"status"`
+	Status  Status   `json:"status"`
+	Waiting *Waiting `json:"waiting,omitempty"`
 }
 
 func (s *server) view(ctx context.Context, p Project) projectView {
 	return projectView{Project: p, Status: readStatus(ctx, s.repos, p)}
+}
+
+// hubView is a project as its hub shows it: also what waits for the owner,
+// once the model compiles.
+func (s *server) hubView(ctx context.Context, p Project) projectView {
+	v := s.view(ctx, p)
+	if c := v.Status.Check; c != nil && c.OK {
+		waiting, err := s.waiting(ctx, p)
+		if err != nil {
+			v.Status.Problem = err.Error()
+			return v
+		}
+		v.Waiting = waiting
+	}
+	return v
 }
 
 func (s *server) app(w http.ResponseWriter, r *http.Request) {
@@ -294,7 +310,7 @@ func (s *server) listProjects(w http.ResponseWriter, r *http.Request) {
 func (s *server) getProject(w http.ResponseWriter, r *http.Request) {
 	p, ok := s.find(w, r)
 	if ok {
-		reply(w, map[string]any{"project": s.view(r.Context(), p)})
+		reply(w, map[string]any{"project": s.hubView(r.Context(), p)})
 	}
 }
 
@@ -319,7 +335,7 @@ func (s *server) initProject(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusInternalServerError, err)
 		return
 	}
-	reply(w, map[string]any{"project": s.view(r.Context(), p), "ok": done, "output": out.String()})
+	reply(w, map[string]any{"project": s.hubView(r.Context(), p), "ok": done, "output": out.String()})
 }
 
 func (s *server) find(w http.ResponseWriter, r *http.Request) (Project, bool) {
