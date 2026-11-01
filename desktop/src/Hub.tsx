@@ -85,6 +85,8 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
     setBusy(true);
     try {
       const r = await api.init(project.id);
+      // A reload asked before this answer knows less than it does.
+      latest.current++;
       setProject(r.project);
       setRan({ ok: r.ok, output: r.output });
     } catch (e) {
