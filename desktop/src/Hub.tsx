@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError, type Project } from './api';
 import { useRefreshOnFocus } from './focus';
 import { typing } from './Model';
-import { modelHref, settingsHref } from './route';
+import { modelHref, settingsHref, statisticsHref } from './route';
 import { nextStep, plural } from './status';
 import { Alert, Badge, Dialog, Icon } from './ui';
 
@@ -54,6 +54,8 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
       }
       if (e.key === '1' && project?.status.check) {
         window.location.hash = modelHref(id, 'reader');
+      } else if (e.key === '3') {
+        window.location.hash = statisticsHref(id);
       } else if (e.key === '4') {
         window.location.hash = settingsHref(id);
       }
@@ -157,7 +159,7 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
         </h2>
         <div className="gl-cards">
           {areas.map((a) => {
-            const live = (a.key === '1' && check) || a.key === '4';
+            const live = (a.key === '1' && check) || a.key === '3' || a.key === '4';
             const inner = (
               <>
                 <span className="gl-card__icon">
@@ -169,7 +171,9 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
                 </h3>
                 <p className="gl-card__body">{a.body}</p>
                 <div className="gl-card__footer">
-                  {a.key === '4' ? (
+                  {a.key === '3' ? (
+                    <Badge tone="neutral">The model over time</Badge>
+                  ) : a.key === '4' ? (
                     <Badge tone="neutral">Logins, agents and checks</Badge>
                   ) : live && check ? (
                     <Badge tone={check.warnings > 0 ? 'warning' : 'neutral'}>
@@ -182,7 +186,7 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
               </>
             );
             return live ? (
-              <a key={a.key} className="gl-card area area--live" href={a.key === '4' ? settingsHref(project.id) : modelHref(project.id, 'reader')}>
+              <a key={a.key} className="gl-card area area--live" href={a.key === '4' ? settingsHref(project.id) : a.key === '3' ? statisticsHref(project.id) : modelHref(project.id, 'reader')}>
                 {inner}
               </a>
             ) : (

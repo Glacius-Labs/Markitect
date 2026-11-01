@@ -207,6 +207,20 @@ export interface AppSettings {
   logins: LoginState[];
 }
 
+// StatPoint is the model at one commit that changed it, or in the working
+// tree, which has no commit.
+export interface StatPoint {
+  commit?: string;
+  when: string;
+  subject?: string;
+  landed?: boolean;
+  initialized: boolean;
+  definitions: number;
+  packages: number;
+  warnings: number;
+  errors: number;
+}
+
 export interface RequiredCheck {
   name: string;
   command: string;
@@ -326,6 +340,7 @@ export const api = {
   say: (id: string, chat: string, text: string) => call<Conversation>('POST', `${project(id)}/chats/${chat}/messages`, { text }),
   decide,
   settings: () => call<AppSettings>('GET', '/api/settings'),
+  statistics: (id: string) => call<{ model: StatPoint[]; limit: number }>('GET', `${project(id)}/statistics`),
   projectSettings: (id: string) => call<{ initialized: boolean; checks: RequiredCheck[]; problem?: string }>('GET', `${project(id)}/settings`),
   deleteChat: (id: string, chat: string) => call<void>('DELETE', `${project(id)}/chats/${chat}`),
   // The folder the user chose in the window's dialog, or '' when cancelled.

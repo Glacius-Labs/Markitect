@@ -178,3 +178,22 @@ body {
   margin: 0;
   overflow-wrap: anywhere;
 }
+
+/* Statistics: the charts side by side, one above the other when narrow. */
+.stats-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  gap: var(--space-6);
+}
+
+.stats-chart {
+  margin: 0;
+}
+
+.stats-chart figcaption {
+  margin: 0;
+}
+
+.stats-chart .stats-dot {
+  opacity: 0.6;
+}

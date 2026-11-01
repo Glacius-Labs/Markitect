@@ -62,6 +62,12 @@ type Repos interface {
 	// Run's Result page, the base apply starts from; ok is false when no Run
 	// has landed.
 	LastLanded(ctx context.Context, root, tip string) (id string, ok bool, err error)
+	// History returns up to limit commits of the repository at root that
+	// changed Markitect's folder, newest first; none without a commit.
+	History(ctx context.Context, root string, limit int) ([]ModelCommit, error)
+	// Snapshot reads a commit as a repository state, enough for a
+	// project's load.
+	Snapshot(ctx context.Context, root, rev string) (project.Repository, error)
 	// Init makes the existing, empty folder dir a Git repository.
 	Init(ctx context.Context, dir string) error
 	// Clone clones url into dir, which does not exist yet.

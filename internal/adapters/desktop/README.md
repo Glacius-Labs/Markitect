@@ -1,6 +1,6 @@
 # Markitect Desktop
 
-`internal/adapters/desktop` is Markitect Desktop, the app over the command line that users know as Markitect ([DEC-089](../../../docs/concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli), [design](../../../docs/design/markitect-desktop.md)). This page is the canonical description of what is built: slice D1, projects and hub; slice D2, the native app ([`cmd/markitect-desktop`](../../../cmd/markitect-desktop/main.go)); slice D3, the [Model area](#the-model-area) with its four views, the diff and hand edits; and of slice D4 [the chat](#the-chat) and [Settings](#settings).
+`internal/adapters/desktop` is Markitect Desktop, the app over the command line that users know as Markitect ([DEC-089](../../../docs/concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli), [design](../../../docs/design/markitect-desktop.md)). This page is the canonical description of what is built: slice D1, projects and hub; slice D2, the native app ([`cmd/markitect-desktop`](../../../cmd/markitect-desktop/main.go)); slice D3, the [Model area](#the-model-area) with its four views, the diff and hand edits; of slice D4 [the chat](#the-chat) and [Settings](#settings); and the model's part of [Statistics](#statistics).
 
 ## Starting it
 
@@ -47,6 +47,7 @@ Either way:
 | `GET /api/projects/{id}` | One project with its status |
 | `POST /api/projects/{id}/init` | Runs `markitect init` in the project |
 | `PUT /api/projects/{id}/definitions/{definition}` | Writes a Definition's text into the working tree, given the digest of the text the editor started from, or none for a new Definition; `409` with the file's text as it is now when it changed meanwhile ([hand edits](#hand-edits)) |
+| `GET /api/projects/{id}/statistics` | The model's size and findings at each of its last 60 commits, oldest first, and in the working tree ([Statistics](#statistics)) |
 | `GET /api/settings` | How this Markitect runs its agents and the state of each provider's account login ([Settings](#settings)) |
 | `GET /api/projects/{id}/settings` | The project's required checks from `execution.yaml` |
 | `GET /api/projects/{id}/chats` | The project's conversations, newest first, and whether this Markitect has chat agents |
@@ -97,6 +98,10 @@ The chat is the main way to change the model ([design](../../../docs/design/mark
 - **Accept** writes the proposal into the working tree, as one step against hand edits, unless a file it touches changed there since the agent's start; then nothing is written, the proposal names the files, and the next turn starts a fresh agent from the working tree as it is, with the rest of the proposal on top. A file that already holds what the proposal writes counts as written, so an accept cut off midway completes when repeated. After an accept the agent's start moves to the accepted state; after a reject the agent drops its changes. The owner commits as usual.
 - **Conversations** live in `chats/<project>/` in the config folder, one JSON file each, and in memory while the app runs, so a window never reads a file a turn is writing; a conversation that cannot be saved stays in memory, and the panel says so. A closed proposal keeps its files but not their texts. Quitting stops the turns and ends every agent, each with up to ten seconds; an agent that finishes starting after that is ended at once.
 
+## Statistics
+
+The hub's third area, entered with the digit 3, shows how the model develops: its Definitions and Packages, and what `lint` and `check` find in it, at each of the last 60 commits that changed `.markitect/` and in the working tree now, as two small charts and a table. A commit a Run landed stands out. The service loads the project at each commit as `check` would, reading from Git only the files that load needs, and keeps each commit's numbers, since a commit never changes; several windows wait for those numbers instead of reading the same commits side by side. A project without Markitect has nothing to show. How Runs go and where the work struggles come with the Runs.
+
 ## Settings
 
 The hub's fourth area, entered with the digit 4, shows two things and changes neither yet:
@@ -142,6 +147,7 @@ For work on the UI, start `markitect desktop --no-open --listen 127.0.0.1:7340` 
 
 - `server_test.go`: the host check; launch codes that work once and briefly; the session; the proof, the window and the launch for a later start; the folder dialog, one at a time and only where the window has one; the content security policy and that the built page loads nothing from elsewhere; the write rules; opening, creating, cloning, initializing and removing projects against fake Git, with the folder names refused; the suggested parent.
 - `chat_test.go`: conversations over scripted agents: a proposal shown on top of the working tree and accepted into it exactly, outside changes left out; an accept over a changed working tree that writes nothing, then a reject; a later turn's proposal replacing the earlier; one message at a time; a conversation reopened after a restart starting a fresh agent with the conversation so far; an agent that cannot start, and an app without agents.
+- `statistics_test.go`: the numbers at each commit and in the working tree, the landed commit marked, a commit's numbers read once, and a project without commits.
 - `settings_test.go`: Settings show the agents and logins the composition reads, and the project's required checks, a broken `execution.yaml` and a project without Markitect.
 - `edit_test.go`: a hand edit writes the file, and the views show it; a new Definition is created only where none is; an edit of a file that changed or was removed meanwhile writes nothing and returns the file as it is; a file keeps its CRLF line ends; only Definition IDs of the model language are written, and only as JSON.
 - `model_test.go`: the Model area's document against a project in memory: Definitions with their references, realizing files and who sees them; Packages, edges and cycles; impact from the last commit or the last landing, and the whole model with nothing committed; the diff with the warnings that came and went; compile errors placed by Package and Definition; `304` until a file or a commit changes.

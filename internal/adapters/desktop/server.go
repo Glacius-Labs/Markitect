@@ -49,6 +49,7 @@ type server struct {
 	models   *models
 	chat     *chatService
 	settings settingsFunc // nil when the composition shows none
+	stats    *statsCache
 	mux      *http.ServeMux
 	now      func() time.Time
 
@@ -73,7 +74,7 @@ func newServer(secret, address string, store *Store, repos Repos, commands Comma
 		return nil, err
 	}
 	s := &server{secret: secret, session: session, cookie: "markitect_" + port, address: address, port: port, store: store, repos: repos, commands: commands,
-		models: newModels(), mux: http.NewServeMux(), now: time.Now, launches: map[string]time.Time{}}
+		models: newModels(), stats: &statsCache{points: map[string]statPoint{}}, mux: http.NewServeMux(), now: time.Now, launches: map[string]time.Time{}}
 	s.chat = newChatService(filepath.Join(filepath.Dir(store.File), "chats"), nil, repos, &s.edits)
 	files, err := fs.Sub(ui, "ui")
 	if err != nil {
@@ -90,6 +91,7 @@ func newServer(secret, address string, store *Store, repos Repos, commands Comma
 	s.mux.HandleFunc("PUT /api/projects/{id}/definitions/{path...}", s.saveDefinition)
 	s.chatRoutes()
 	s.mux.HandleFunc("GET /api/settings", s.appSettings)
+	s.mux.HandleFunc("GET /api/projects/{id}/statistics", s.statisticsRoute)
 	s.mux.HandleFunc("GET /api/projects/{id}/settings", s.projectSettings)
 	s.mux.Handle("GET /", http.FileServerFS(files))
 	return s, nil
