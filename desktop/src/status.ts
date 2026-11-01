@@ -31,10 +31,10 @@ export interface Step {
   command?: string;
 }
 
-const inATerminal = 'Start the Run from a terminal, as Runs are not in the app yet. It works from the tip of the branch, so push first.';
+const inATerminal = "Start the Run from a terminal in the project's folder, as Runs are not in the app yet. It starts from the branch's tip on its remote, so pull and push first.";
 
 // nextStep is the one thing the hub asks of the owner now.
-export function nextStep(s: Status, w?: Waiting, path = ''): Step {
+export function nextStep(s: Status, w?: Waiting): Step {
   if (s.problem) {
     return { tone: 'danger', title: 'Markitect cannot read this project', body: s.problem };
   }
@@ -69,13 +69,12 @@ export function nextStep(s: Status, w?: Waiting, path = ''): Step {
       body: `${plural(w.uncommitted, 'file')} in .markitect ${w.uncommitted === 1 ? 'differs' : 'differ'} from the last commit. A Run starts from the tip of the branch, never from the working tree, so commit and push first.`,
     };
   }
-  const apply = `markitect apply --repo "${path}"`;
   if (w && !w.landed) {
     return {
       tone: 'info',
       title: 'Start the first Run',
       body: `No Run has landed here, so the first one says where to start: --full has every Manager work, and --base COMMIT takes what changed since that commit. ${inATerminal}`,
-      command: `${apply} --full`,
+      command: 'markitect apply --full',
     };
   }
   if (w && w.unlanded > 0) {
@@ -83,7 +82,7 @@ export function nextStep(s: Status, w?: Waiting, path = ''): Step {
       tone: 'info',
       title: 'Bring the code in line with the model',
       body: `${plural(w.unlanded, 'Definition')} changed since the last landing. ${inATerminal}`,
-      command: apply,
+      command: 'markitect apply',
     };
   }
   const size = `${plural(c.definitions, 'Definition')} in ${plural(c.packages, 'Package')}, ${plural(c.files, 'file')} accounted for.`;

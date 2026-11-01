@@ -82,9 +82,9 @@ describe('what waits for the owner', () => {
 
   it('asks for one thing at a time, the nearest first', () => {
     const all = { proposal, uncommitted: 2, landed: true, unlanded: 3 };
-    expect(nextStep(s, all, 'C:/lib')).toMatchObject({ title: 'A proposal waits: Add a late fee', proposal: 'c1' });
-    expect(nextStep(s, { ...all, proposal: undefined }, 'C:/lib').title).toBe('Commit the model change');
-    expect(nextStep(s, { ...all, proposal: undefined, uncommitted: 0 }, 'C:/lib').title).toBe('Bring the code in line with the model');
+    expect(nextStep(s, all)).toMatchObject({ title: 'A proposal waits: Add a late fee', proposal: 'c1' });
+    expect(nextStep(s, { ...all, proposal: undefined }).title).toBe('Commit the model change');
+    expect(nextStep(s, { ...all, proposal: undefined, uncommitted: 0 }).title).toBe('Bring the code in line with the model');
   });
 
   it('puts what stops the model before what waits', () => {
@@ -98,13 +98,13 @@ describe('what waits for the owner', () => {
     expect(nextStep(s, { ...quiet, uncommitted: 2 }).body).toContain('2 files in .markitect differ');
   });
 
-  it('gives the command of a Run, with the path in quotes', () => {
-    const later = nextStep(s, { ...quiet, unlanded: 1 }, 'C:/my lib');
+  it('gives the command of a Run', () => {
+    const later = nextStep(s, { ...quiet, unlanded: 1 });
     expect(later.body).toContain('1 Definition changed since the last landing');
-    expect(later.command).toBe('markitect apply --repo "C:/my lib"');
-    const first = nextStep(s, { ...quiet, landed: false }, 'C:/my lib');
+    expect(later.command).toBe('markitect apply');
+    const first = nextStep(s, { ...quiet, landed: false });
     expect(first.title).toBe('Start the first Run');
-    expect(first.command).toBe('markitect apply --repo "C:/my lib" --full');
+    expect(first.command).toBe('markitect apply --full');
   });
 
   it('says when nothing waits', () => {

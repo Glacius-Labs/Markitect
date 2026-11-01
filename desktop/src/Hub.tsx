@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError, type Project } from './api';
 import { openChat } from './Chat';
 import { useRefreshOnFocus } from './focus';
@@ -30,13 +30,22 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
   const [removing, setRemoving] = useState(false);
 
   const { id, onGone } = props;
+  // Only the last reload counts, whichever answer comes first.
+  const latest = useRef(0);
   const load = useCallback(() => {
+    const asked = ++latest.current;
     api.project(id).then(
       (p) => {
+        if (asked !== latest.current) {
+          return;
+        }
         setProject(p);
         setError('');
       },
       (e: Error) => {
+        if (asked !== latest.current) {
+          return;
+        }
         if (e instanceof ApiError && e.status === 404) {
           onGone();
           return;
@@ -97,7 +106,7 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
     }
   };
 
-  const step = nextStep(project.status, project.waiting, project.path);
+  const step = nextStep(project.status, project.waiting);
   const waitingChat = step.proposal;
   const check = project.status.check;
   return (

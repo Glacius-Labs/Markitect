@@ -309,13 +309,26 @@ func TestTheHubNamesAProposalOnceTheOwnerCanDecideIt(t *testing.T) {
 	chat := startChat(t, s, id, `{"text":"Add a late fee."}`)
 	<-step
 	if w := waitingNow(t, s, id); w.Proposal != nil {
-		t.Fatalf("during the turn: %+v", w.Proposal)
+		t.Fatalf("during the first turn: %+v", w.Proposal)
+	}
+	step <- struct{}{}
+	chatState(t, s, id, chat)
+	if w := waitingNow(t, s, id); w.Proposal == nil || w.Proposal.Chat != chat || w.Proposal.Title != "Add a late fee." {
+		t.Fatalf("after the turn: %+v", w.Proposal)
+	}
+	// A later turn may change the proposal, so it is not offered meanwhile.
+	if r := call(s, "POST", "/api/projects/"+id+"/chats/"+chat+"/messages", `{"text":"And once more."}`); r.Code != http.StatusOK {
+		t.Fatalf("message: %d %s", r.Code, r.Body)
+	}
+	<-step
+	if w := waitingNow(t, s, id); w.Proposal != nil {
+		t.Fatalf("during a later turn: %+v", w.Proposal)
 	}
 	step <- struct{}{}
 	chatState(t, s, id, chat)
 	w := waitingNow(t, s, id)
-	if w.Proposal == nil || w.Proposal.Chat != chat || w.Proposal.Title != "Add a late fee." {
-		t.Fatalf("after the turn: %+v", w.Proposal)
+	if w.Proposal == nil {
+		t.Fatal("after the later turn: no proposal")
 	}
 	before := w.Uncommitted
 	if r := call(s, "POST", "/api/projects/"+id+"/chats/"+chat+"/accept", "{}"); r.Code != http.StatusOK {
