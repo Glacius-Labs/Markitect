@@ -284,7 +284,7 @@ func (c *Chat) Send(ctx context.Context, message string, on func(Progress)) (Out
 	last := ""
 	c.a.progress = func(p Progress) {
 		p.Text = string(c.a.redact([]byte(p.Text)))
-		p.Doing = string(c.a.redact([]byte(p.Doing)))
+		p.Doing = shorten(string(c.a.redact([]byte(p.Doing))))
 		if p.Text != "" {
 			last = strings.TrimSpace(p.Text)
 		}
@@ -391,6 +391,16 @@ func nulSplit(b []byte) []string {
 		}
 	}
 	return out
+}
+
+// maxDoing bounds the activity a chat shows.
+const maxDoing = 110
+
+func shorten(s string) string {
+	if r := []rune(s); len(r) > maxDoing {
+		return string(r[:maxDoing-1]) + "…"
+	}
+	return s
 }
 
 // Changes lists what the conversation changed since its start, comparing

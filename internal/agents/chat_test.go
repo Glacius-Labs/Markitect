@@ -198,6 +198,24 @@ func TestAChatComparesTheCopyAsItIsOnDisk(t *testing.T) {
 		t.Fatalf("the turn %+v, heard %+v, %v", out, heard, err)
 	}
 
+	// An activity is shortened only after its secret is gone, and a long one
+	// stays one short line.
+	secret := "sk-ant-oat01-ACCESS-SECRET"
+	rt.script = func(s *fakeSession, argv []string, stdin []byte) int {
+		s.line(initLine())
+		long := strings.Repeat("x", 100) + " " + secret + " " + strings.Repeat("y", 100)
+		s.line(`{"type":"assistant","parent_tool_use_id":null,"message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"` + long + `"}}]},"session_id":"s-1"}`)
+		s.line(strings.Replace(resultLine, `"result":"done"`, `"result":""`, 1))
+		return 0
+	}
+	heard = nil
+	if _, err := chat.Send(context.Background(), "A long one.", func(p agents.Progress) { heard = append(heard, p) }); err != nil || len(heard) != 1 {
+		t.Fatalf("heard %+v, %v", heard, err)
+	}
+	if d := heard[0].Doing; strings.Contains(d, "sk-ant") || strings.Contains(d, "ACCESS") || len([]rune(d)) > 110 || !strings.HasPrefix(d, "Running xxx") {
+		t.Errorf("the activity %q", d)
+	}
+
 	// A provider that reports none of its messages along the way still has
 	// its final answer heard, redacted.
 	rt.script = func(s *fakeSession, argv []string, stdin []byte) int {

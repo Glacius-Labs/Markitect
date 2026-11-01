@@ -254,12 +254,27 @@ export function ChatPanel(props: { pid: string; onClose: () => void }) {
 function Messages({ pid, conv, onChanged, onShow }: { pid: string; conv: Conversation; onChanged: (c: Conversation) => void; onShow: () => void }) {
   const end = useRef<HTMLDivElement>(null);
   const count = conv.messages.length;
+  // New messages keep the end in view, unless the owner scrolled up to read.
+  const following = useRef(true);
   useEffect(() => {
-    end.current?.scrollIntoView({ block: 'end' });
+    const box = end.current?.closest('.chat__body');
+    if (!box) {
+      return;
+    }
+    const onScroll = () => {
+      following.current = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+    };
+    box.addEventListener('scroll', onScroll);
+    return () => box.removeEventListener('scroll', onScroll);
+  }, []);
+  useEffect(() => {
+    if (following.current) {
+      end.current?.scrollIntoView({ block: 'end' });
+    }
   }, [count, conv.working]);
   const open = conv.proposals.at(-1)?.state === 'open' ? conv.proposals.at(-1) : undefined;
   return (
-    <div className="chat__messages">
+    <div className="chat__messages" aria-live="polite">
       {conv.messages.map((m, i) =>
         m.from === 'agent' ? <AgentText key={i} pid={pid} text={m.text} /> : (
           <p key={i} className={m.from === 'owner' ? 'chat__owner' : 'chat__note small'}>
@@ -268,8 +283,9 @@ function Messages({ pid, conv, onChanged, onShow }: { pid: string; conv: Convers
         ),
       )}
       {conv.working && (
-        <p className="chat__note small" role="status">
-          <span className="gl-spinner" aria-hidden="true" /> <span className="chat__doing">{conv.doing || 'The chat is at work.'}</span>
+        <p className="chat__note small">
+          {/* Announced once a second it would drown the messages. */}
+          <span className="gl-spinner" aria-hidden="true" /> <span className="chat__doing" aria-live="off">{conv.doing || 'The chat is at work.'}</span>
         </p>
       )}
       {open && !conv.working && <ProposalCard pid={pid} chat={conv.id} proposal={open} onChanged={onChanged} onShow={onShow} />}

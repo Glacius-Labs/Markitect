@@ -176,14 +176,10 @@ func (r *reader) Progress(raw []byte) agents.Progress {
 		Error   string `json:"error"`
 		Message struct {
 			Content []struct {
-				Type  string `json:"type"`
-				Text  string `json:"text"`
-				Name  string `json:"name"`
-				Input struct {
-					File    string `json:"file_path"`
-					Command string `json:"command"`
-					Pattern string `json:"pattern"`
-				} `json:"input"`
+				Type  string          `json:"type"`
+				Text  string          `json:"text"`
+				Name  string          `json:"name"`
+				Input json.RawMessage `json:"input"`
 			} `json:"content"`
 		} `json:"message"`
 	}
@@ -199,17 +195,24 @@ func (r *reader) Progress(raw []byte) agents.Progress {
 				texts = append(texts, t)
 			}
 		case "tool_use":
+			// A field of another shape only leaves the activity shorter.
+			var in struct {
+				File    string `json:"file_path"`
+				Command string `json:"command"`
+				Pattern string `json:"pattern"`
+			}
+			_ = json.Unmarshal(c.Input, &in)
 			switch c.Name {
 			case "Read":
-				p.Doing = agents.Doing("Reading", c.Input.File)
+				p.Doing = agents.Doing("Reading", in.File)
 			case "Edit":
-				p.Doing = agents.Doing("Editing", c.Input.File)
+				p.Doing = agents.Doing("Editing", in.File)
 			case "Write":
-				p.Doing = agents.Doing("Writing", c.Input.File)
+				p.Doing = agents.Doing("Writing", in.File)
 			case "Bash":
-				p.Doing = agents.Doing("Running", c.Input.Command)
+				p.Doing = agents.Doing("Running", in.Command)
 			case "Glob", "Grep":
-				p.Doing = agents.Doing("Searching for", c.Input.Pattern)
+				p.Doing = agents.Doing("Searching for", in.Pattern)
 			default:
 				p.Doing = agents.Doing("Using", c.Name)
 			}

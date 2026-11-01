@@ -82,17 +82,12 @@ type ProgressReader interface {
 	Progress(raw []byte) Progress
 }
 
-// maxDoing bounds the target of one activity.
-const maxDoing = 100
-
 // Doing words one activity for the owner: a verb and what it works on, a path
-// relative to the copy, on one short line.
+// relative to the copy, on one line. Whoever shows it shortens it, after any
+// redaction: a secret cut in half is no longer recognized.
 func Doing(verb, target string) string {
 	target = strings.Join(strings.Fields(target), " ")
 	target = strings.ReplaceAll(target, workDir+"/", "")
-	if r := []rune(target); len(r) > maxDoing {
-		target = string(r[:maxDoing-1]) + "…"
-	}
 	return strings.TrimSpace(verb + " " + target)
 }
 
