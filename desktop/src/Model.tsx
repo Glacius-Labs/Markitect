@@ -63,12 +63,10 @@ export function useModel(id: string, base: BaseKind | undefined, chat?: string |
     void tick();
     const wake = () => void tick();
     document.addEventListener('visibilitychange', wake);
-    window.addEventListener('focus', wake);
     return () => {
       stopped = true;
       window.clearTimeout(timer);
       document.removeEventListener('visibilitychange', wake);
-      window.removeEventListener('focus', wake);
     };
   }, [id, base, chat, asked]);
   return { ...state, refresh };
