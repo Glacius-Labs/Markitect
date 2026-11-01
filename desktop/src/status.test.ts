@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { duration } from './Settings';
 import { atMostEvery } from './focus';
 import { badge, nextStep, plural } from './status';
@@ -6,22 +6,41 @@ import { badge, nextStep, plural } from './status';
 const check = { ok: true, errorCount: 0, errors: [], definitions: 12, packages: 3, files: 40, warnings: 0 };
 
 describe('a refresh on focus', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('runs at most every few seconds, however often the focus comes back', () => {
-    let t = 0;
     let runs = 0;
-    const onFocus = atMostEvery(
-      5000,
-      () => runs++,
-      () => t,
-    );
-    onFocus();
-    onFocus();
-    t = 4999;
-    onFocus();
+    const refresh = atMostEvery(5000, () => runs++);
+    refresh.call();
+    refresh.call();
+    vi.advanceTimersByTime(4999);
+    expect(runs).toBe(0);
+    vi.advanceTimersByTime(1);
     expect(runs).toBe(1);
-    t = 5000;
-    onFocus();
+    refresh.call();
+    refresh.call();
+    vi.advanceTimersByTime(4999);
+    expect(runs).toBe(1);
+    vi.advanceTimersByTime(1);
     expect(runs).toBe(2);
+  });
+
+  it('runs at once after a quiet time, and not after it stopped', () => {
+    let runs = 0;
+    const refresh = atMostEvery(5000, () => runs++);
+    vi.advanceTimersByTime(60000);
+    refresh.call();
+    vi.advanceTimersByTime(0);
+    expect(runs).toBe(1);
+    refresh.call();
+    refresh.stop();
+    vi.advanceTimersByTime(60000);
+    expect(runs).toBe(1);
   });
 });
 

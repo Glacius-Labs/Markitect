@@ -31,23 +31,23 @@ func consoleVisible(t *testing.T) bool {
 	return false
 }
 
-// Run it as the app is built, a GUI program, or it has a console already:
-//
-//	go test -tags native -ldflags=-H=windowsgui ./cmd/markitect-desktop
 func TestAProgramTheAppStartsShowsNoWindow(t *testing.T) {
-	// Without the hidden console a child shows a window, so the probe can see
-	// the fault. Only CI shows it; on a person's screen it is one more flash.
-	if os.Getenv("CI") != "" {
-		t.Logf("before the hidden console, a child's window is visible: %v", consoleVisible(t))
+	if hasConsole() {
+		t.Fatal("run this as the app is built, as a GUI program: go test -tags native -ldflags=-H=windowsgui ./cmd/markitect-desktop")
+	}
+	// Without the hidden console a child shows a window, which proves that the
+	// probe can see the fault. Only CI shows it: on a person's screen it is one
+	// more flash, and under Windows Terminal the probe sees no window at all.
+	if os.Getenv("CI") != "" && !consoleVisible(t) {
+		t.Fatal("before the hidden console, the probe sees no window; it cannot see the fault here")
 	}
 	if err := hideChildConsoles(); err != nil {
 		t.Fatal(err)
 	}
+	if !hasConsole() {
+		t.Fatal("the app has not joined the hidden console")
+	}
 	if consoleVisible(t) {
 		t.Fatal("a program the app starts shows a console window")
-	}
-	// The shell that made the console has ended, and the console lives on.
-	if consoleVisible(t) {
-		t.Fatal("a later program shows a console window")
 	}
 }

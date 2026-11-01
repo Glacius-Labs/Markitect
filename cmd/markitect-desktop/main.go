@@ -55,10 +55,11 @@ func main() {
 		s.failStart(dirErr)
 		os.Exit(1)
 	}
-	// Before the service starts its first program. The app still works
-	// without it, with a console window flashing at every Git call.
+	// Before the service starts its first program. Without it every Git call
+	// would flash a console window over the app, so the app does not start.
 	if err := hideChildConsoles(); err != nil {
-		s.record(err)
+		s.failStart(err)
+		os.Exit(1)
 	}
 	svc, err := bootstrap.ListenDesktop(ctx, bootstrap.DesktopWindows{Open: s.open, ChooseFolder: s.chooseFolder})
 	switch {
