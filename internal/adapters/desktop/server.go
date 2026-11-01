@@ -48,6 +48,7 @@ type server struct {
 	commands Commands
 	models   *models
 	chat     *chatService
+	settings settingsFunc // nil when the composition shows none
 	mux      *http.ServeMux
 	now      func() time.Time
 
@@ -88,6 +89,8 @@ func newServer(secret, address string, store *Store, repos Repos, commands Comma
 	s.mux.HandleFunc("GET /api/projects/{id}/model", s.modelRoute)
 	s.mux.HandleFunc("PUT /api/projects/{id}/definitions/{path...}", s.saveDefinition)
 	s.chatRoutes()
+	s.mux.HandleFunc("GET /api/settings", s.appSettings)
+	s.mux.HandleFunc("GET /api/projects/{id}/settings", s.projectSettings)
 	s.mux.Handle("GET /", http.FileServerFS(files))
 	return s, nil
 }
