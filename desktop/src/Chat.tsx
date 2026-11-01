@@ -267,6 +267,11 @@ function Messages({ pid, conv, onChanged, onShow }: { pid: string; conv: Convers
     box.addEventListener('scroll', onScroll);
     return () => box.removeEventListener('scroll', onScroll);
   }, []);
+  // What the owner sends brings them back to the end, to see the answer come.
+  const sent = conv.messages.filter((m) => m.from === 'owner').length;
+  useEffect(() => {
+    following.current = true;
+  }, [sent]);
   useEffect(() => {
     if (following.current) {
       end.current?.scrollIntoView({ block: 'end' });
