@@ -36,8 +36,12 @@ type event struct {
 		Message string `json:"message"`
 	} `json:"error"`
 	Item *struct {
-		Type string `json:"type"`
-		Text string `json:"text"`
+		Type    string `json:"type"`
+		Text    string `json:"text"`
+		Command string `json:"command"`
+		Changes []struct {
+			Path string `json:"path"`
+		} `json:"changes"`
 	} `json:"item"`
 	Usage *struct {
 		Input       int64 `json:"input_tokens"`
@@ -78,6 +82,24 @@ func (r *reader) Line(raw []byte) error {
 		r.lastError = e.Message
 	}
 	return nil
+}
+
+// Progress reads an item: an agent message when it is complete, and a command
+// or a file change as it comes.
+func (r *reader) Progress(raw []byte) agents.Progress {
+	var e event
+	if json.Unmarshal(raw, &e) != nil || e.Item == nil {
+		return agents.Progress{}
+	}
+	switch {
+	case e.Item.Type == "agent_message" && e.Type == "item.completed":
+		return agents.Progress{Text: strings.TrimSpace(e.Item.Text)}
+	case e.Item.Type == "command_execution" && e.Type == "item.started":
+		return agents.Progress{Doing: agents.Doing("Running", e.Item.Command)}
+	case e.Item.Type == "file_change" && len(e.Item.Changes) > 0:
+		return agents.Progress{Doing: agents.Doing("Editing", e.Item.Changes[0].Path)}
+	}
+	return agents.Progress{}
 }
 
 func (r *reader) Outcome() agents.Outcome {

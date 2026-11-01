@@ -127,6 +127,24 @@ func read(t *testing.T, turn agents.Turn, lines ...string) (agents.Outcome, erro
 	return r.Outcome(), nil
 }
 
+func TestReaderTellsATurnsProgress(t *testing.T) {
+	r := Provider{}.Reader(agents.Turn{}).(agents.ProgressReader)
+	for raw, want := range map[string]agents.Progress{
+		`{"type":"assistant","message":{"content":[{"type":"text","text":" I will look. "}]}}`:                                                    {Text: "I will look."},
+		`{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Read","input":{"file_path":"/work/.markitect/model/x.md"}}]}}`:      {Doing: "Reading .markitect/model/x.md"},
+		`{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"markitect  check\n--repo /work/a"}}]}}`:   {Doing: "Running markitect check --repo a"},
+		`{"type":"assistant","message":{"content":[{"type":"text","text":"Now."},{"type":"tool_use","name":"Grep","input":{"pattern":"loan"}}]}}`: {Text: "Now.", Doing: "Searching for loan"},
+		`{"type":"assistant","error":"overloaded","message":{"content":[{"type":"text","text":"API Error: 529"}]}}`:                               {},
+		`{"type":"user","message":{"content":[{"type":"text","text":"tool output"}]}}`:                                                            {},
+		`{"type":"result","result":"done"}`: {},
+		`not json`:                          {},
+	} {
+		if got := r.Progress([]byte(raw)); got != want {
+			t.Errorf("%s: %+v, want %+v", raw, got, want)
+		}
+	}
+}
+
 func TestReaderAnswersAndCountsUsage(t *testing.T) {
 	out, err := read(t, agents.Turn{Tools: []string{"submit"}}, initOK,
 		`{"type":"rate_limit_event","rate_limit_info":{"status":"allowed"}}`,

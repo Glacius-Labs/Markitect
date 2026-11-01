@@ -25,6 +25,8 @@ type fakeChats struct {
 	turn    func(copy map[string]string, message string) string
 	// hold, when set, keeps Start from returning until it is closed.
 	hold chan struct{}
+	// progress, when set, runs at the start of a turn with its say and doing.
+	progress func(say, doing func(string))
 }
 
 func (f *fakeChats) Start(_ context.Context, s ChatStart) (ChatAgent, error) {
@@ -67,7 +69,10 @@ type fakeAgent struct {
 	closed      bool
 }
 
-func (a *fakeAgent) Send(_ context.Context, message string, say func(string)) (ChatEnd, error) {
+func (a *fakeAgent) Send(_ context.Context, message string, say, doing func(string)) (ChatEnd, error) {
+	if a.chats.progress != nil {
+		a.chats.progress(say, doing)
+	}
 	a.mu.Lock()
 	answer := a.chats.turn(a.copy, message)
 	a.mu.Unlock()
@@ -167,6 +172,50 @@ func startChat(t *testing.T, s *server, id, body string) string {
 		t.Fatalf("new chat: %d %s", w.Code, w.Body)
 	}
 	return decode(t, w)["id"].(string)
+}
+
+func TestAChatShowsItsMessagesAndWorkWhileTheTurnRuns(t *testing.T) {
+	s, chats, _, id := chatServer(t, func(copy map[string]string, message string) string { return "Done." })
+	step := make(chan struct{})
+	chats.progress = func(say, doing func(string)) {
+		doing("Reading model/policy.md")
+		step <- struct{}{}
+		<-step
+		say("I read the policy.")
+		step <- struct{}{}
+		<-step
+		doing("Running markitect check")
+		step <- struct{}{}
+		<-step
+	}
+	chat := startChat(t, s, id, `{"text":"Look at the policy."}`)
+	current := func() chatView {
+		var v chatView
+		if err := json.Unmarshal(call(s, "GET", "/api/projects/"+id+"/chats/"+chat, "").Body.Bytes(), &v); err != nil {
+			t.Fatal(err)
+		}
+		return v
+	}
+	<-step
+	if v := current(); !v.Working || v.Doing != "Reading model/policy.md" || len(v.Messages) != 1 {
+		t.Fatalf("while it reads: %+v", v)
+	}
+	step <- struct{}{}
+	<-step
+	// A message arrives during the turn, and what it did before is over.
+	if v := current(); !v.Working || v.Doing != "" || len(v.Messages) != 2 || v.Messages[1].Text != "I read the policy." {
+		t.Fatalf("after its message: %+v", v)
+	}
+	step <- struct{}{}
+	<-step
+	if v := current(); v.Doing != "Running markitect check" {
+		t.Fatalf("while it runs: %+v", v)
+	}
+	step <- struct{}{}
+	v := chatState(t, s, id, chat)
+	if v.Doing != "" || len(v.Messages) != 3 || v.Messages[2].Text != "Done." {
+		t.Fatalf("after the turn: %+v", v)
+	}
 }
 
 func TestAChatProposesAndTheOwnerAccepts(t *testing.T) {

@@ -271,17 +271,33 @@ func (c *Chat) gitStream(ctx context.Context, argv []string, stdin io.Reader) er
 	}
 }
 
-// Send runs one turn of the conversation. A turn whose login copy would
-// expire on the way is refused, so that a fresh agent takes over.
-func (c *Chat) Send(ctx context.Context, message string) (Outcome, error) {
+// Send runs one turn of the conversation; on hears each message the agent
+// writes and what it is doing, as they come. Everything on hears is shown and
+// kept, so a secret the agent could read in its home is redacted first. A
+// turn whose login copy would expire on the way is refused, so that a fresh
+// agent takes over.
+func (c *Chat) Send(ctx context.Context, message string, on func(Progress)) (Outcome, error) {
 	if err := c.fresh(); err != nil {
 		return Outcome{End: Failed, Class: LoginFailed, Detail: err.Error()}, nil
 	}
 	c.a.spec.Start.Deadline = c.now().Add(c.turn)
+	last := ""
+	c.a.progress = func(p Progress) {
+		p.Text = string(c.a.redact([]byte(p.Text)))
+		p.Doing = shorten(string(c.a.redact([]byte(p.Doing))))
+		if p.Text != "" {
+			last = strings.TrimSpace(p.Text)
+		}
+		on(p)
+	}
 	out, err := c.a.Send(ctx, message)
-	// The answer is shown and kept; a secret the agent could read in its
-	// home never reaches it.
+	c.a.progress = nil
 	out.Text = string(c.a.redact([]byte(out.Text)))
+	// The provider's final answer repeats its last message; a provider that
+	// reported none of its messages along the way says it here.
+	if answer := strings.TrimSpace(out.Text); answer != "" && (last == "" || !strings.HasSuffix(answer, last)) {
+		on(Progress{Text: out.Text})
+	}
 	return out, err
 }
 
@@ -375,6 +391,16 @@ func nulSplit(b []byte) []string {
 		}
 	}
 	return out
+}
+
+// maxDoing bounds the activity a chat shows.
+const maxDoing = 110
+
+func shorten(s string) string {
+	if r := []rune(s); len(r) > maxDoing {
+		return string(r[:maxDoing-1]) + "…"
+	}
+	return s
 }
 
 // Changes lists what the conversation changed since its start, comparing

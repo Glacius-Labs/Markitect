@@ -1,6 +1,7 @@
 package agents
 
 import (
+	"strings"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
@@ -66,6 +67,28 @@ type Reader interface {
 	// Outcome is the turn's end as the output reports it, read after the
 	// process exited.
 	Outcome() Outcome
+}
+
+// Progress is what one output line of a turn says while it runs: a message
+// the provider wrote, and what it is doing now, in one line.
+type Progress struct {
+	Text, Doing string
+}
+
+// ProgressReader is a Reader that can also read a turn's progress, which a
+// chat shows while the turn runs. A Manager's turn does not ask for it.
+type ProgressReader interface {
+	Reader
+	Progress(raw []byte) Progress
+}
+
+// Doing words one activity for the owner: a verb and what it works on, a path
+// relative to the copy, on one line. Whoever shows it shortens it, after any
+// redaction: a secret cut in half is no longer recognized.
+func Doing(verb, target string) string {
+	target = strings.Join(strings.Fields(target), " ")
+	target = strings.ReplaceAll(target, workDir+"/", "")
+	return strings.TrimSpace(verb + " " + target)
 }
 
 // End says how a turn ended.

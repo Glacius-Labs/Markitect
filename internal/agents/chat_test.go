@@ -104,9 +104,13 @@ func TestAChatCopiesTheWorkingTreeAndProposesItsChanges(t *testing.T) {
 		s.line(strings.Replace(resultLine, `"result":"done"`, `"result":"I added the Loan."`, 1))
 		return 0
 	}
-	out, err := chat.Send(context.Background(), "Add the loan.")
+	var heard []agents.Progress
+	out, err := chat.Send(context.Background(), "Add the loan.", func(p agents.Progress) { heard = append(heard, p) })
 	if err != nil || out.End != agents.Answered || out.Text != "I added the Loan." {
 		t.Fatalf("turn %+v %v", out, err)
+	}
+	if len(heard) != 1 || heard[0].Text != "I added the Loan." {
+		t.Errorf("the final answer was heard as %+v", heard)
 	}
 	if in := rt.session.stdin.String(); !strings.Contains(in, "The conversation so far") || !strings.Contains(in, "Members borrow books.") || !strings.Contains(in, "Add the loan.") {
 		t.Errorf("first message %s", in)
@@ -177,14 +181,52 @@ func TestAChatComparesTheCopyAsItIsOnDisk(t *testing.T) {
 		t.Fatalf("a nested repository: %v %v", model, err)
 	}
 
-	// The answer never carries a secret of the login copy.
+	// A turn is heard as it runs: its messages and what it does, the final
+	// answer once though it repeats the last message, and never a secret of
+	// the login copy.
+	rt.script = func(s *fakeSession, argv []string, stdin []byte) int {
+		s.line(initLine())
+		s.line(`{"type":"assistant","parent_tool_use_id":null,"message":{"content":[{"type":"text","text":"Your token is sk-ant-oat01-ACCESS-SECRET."}]},"session_id":"s-1"}`)
+		s.line(`{"type":"assistant","parent_tool_use_id":null,"message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"echo sk-ant-oat01-ACCESS-SECRET"}}]},"session_id":"s-1"}`)
+		s.line(`{"type":"assistant","parent_tool_use_id":null,"message":{"content":[{"type":"text","text":"Done."}]},"session_id":"s-1"}`)
+		s.line(strings.Replace(resultLine, `"result":"done"`, `"result":"Done."`, 1))
+		return 0
+	}
+	var heard []agents.Progress
+	out, err := chat.Send(context.Background(), "Tell me a secret.", func(p agents.Progress) { heard = append(heard, p) })
+	if err != nil || out.Text != "Done." || len(heard) != 3 || heard[0].Text != "Your token is [redacted]." || heard[1].Doing != "Running echo [redacted]" || heard[2].Text != "Done." {
+		t.Fatalf("the turn %+v, heard %+v, %v", out, heard, err)
+	}
+
+	// An activity is shortened only after its secret is gone, and a long one
+	// stays one short line. The limit falls inside the secret, which would be
+	// no longer recognized if it were cut first.
+	secret := "sk-ant-oat01-ACCESS-SECRET"
+	rt.script = func(s *fakeSession, argv []string, stdin []byte) int {
+		s.line(initLine())
+		long := strings.Repeat("x", 90) + " " + secret + " " + strings.Repeat("y", 100)
+		s.line(`{"type":"assistant","parent_tool_use_id":null,"message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"` + long + `"}}]},"session_id":"s-1"}`)
+		s.line(strings.Replace(resultLine, `"result":"done"`, `"result":""`, 1))
+		return 0
+	}
+	heard = nil
+	if _, err := chat.Send(context.Background(), "A long one.", func(p agents.Progress) { heard = append(heard, p) }); err != nil || len(heard) != 1 {
+		t.Fatalf("heard %+v, %v", heard, err)
+	}
+	if d := heard[0].Doing; strings.Contains(d, "sk-ant") || !strings.Contains(d, "[redacted]") || len([]rune(d)) > 110 || !strings.HasPrefix(d, "Running xxx") {
+		t.Errorf("the activity %q", d)
+	}
+
+	// A provider that reports none of its messages along the way still has
+	// its final answer heard, redacted.
 	rt.script = func(s *fakeSession, argv []string, stdin []byte) int {
 		s.line(initLine())
 		s.line(strings.Replace(resultLine, `"result":"done"`, `"result":"Your token is sk-ant-oat01-ACCESS-SECRET."`, 1))
 		return 0
 	}
-	if out, err := chat.Send(context.Background(), "Tell me a secret."); err != nil || strings.Contains(out.Text, "SECRET") {
-		t.Fatalf("the answer %q %v", out.Text, err)
+	heard = nil
+	if out, err := chat.Send(context.Background(), "Again.", func(p agents.Progress) { heard = append(heard, p) }); err != nil || strings.Contains(out.Text, "SECRET") || len(heard) != 1 || strings.Contains(heard[0].Text, "SECRET") {
+		t.Fatalf("the answer %q, heard %+v, %v", out.Text, heard, err)
 	}
 }
 
@@ -208,7 +250,7 @@ func TestAChatRefusesALoginThatExpiresWithinATurn(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = chat.Close(context.Background()) })
 	now = now.Add(90 * time.Minute)
-	if out, err := chat.Send(context.Background(), "Hello"); err != nil || out.End != agents.Failed || out.Class != agents.LoginFailed {
+	if out, err := chat.Send(context.Background(), "Hello", func(agents.Progress) {}); err != nil || out.End != agents.Failed || out.Class != agents.LoginFailed {
 		t.Fatalf("a turn past the login: %+v %v", out, err)
 	}
 }

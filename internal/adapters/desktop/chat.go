@@ -57,8 +57,9 @@ type ChatStart struct {
 
 // ChatAgent is one running chat agent.
 type ChatAgent interface {
-	// Send runs one turn; the agent's answer reaches say.
-	Send(ctx context.Context, message string, say func(text string)) (ChatEnd, error)
+	// Send runs one turn; each message the agent writes reaches say as it
+	// comes, and what it is doing now, in one line, reaches doing.
+	Send(ctx context.Context, message string, say, doing func(text string)) (ChatEnd, error)
 	// Changes lists what the conversation changed since its start: the
 	// files below Markitect's folder with their new content, and the other
 	// paths it changed, which are not proposed.
@@ -184,7 +185,8 @@ type chatService struct {
 
 type liveChat struct {
 	agent   ChatAgent
-	working bool // a turn, an accept or a reject runs
+	working bool   // a turn, an accept or a reject runs
+	doing   string // what the turn is doing now, in one line
 }
 
 // key names a conversation of a project; another project's routes do not
@@ -315,6 +317,8 @@ type chatSummary struct {
 type chatView struct {
 	conversation
 	Working bool `json:"working"`
+	// Doing says what a running turn is doing now, in one line.
+	Doing string `json:"doing,omitempty"`
 	// Unsaved says why the conversation's last change is only in memory.
 	Unsaved string `json:"unsaved,omitempty"`
 }
@@ -327,8 +331,11 @@ func (c *chatService) view(p Project, id string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	l := c.live[key(p, id)]
-	return json.Marshal(chatView{conversation: *conv, Working: l != nil && l.working, Unsaved: c.unsaved[key(p, id)]})
+	v := chatView{conversation: *conv, Unsaved: c.unsaved[key(p, id)]}
+	if l := c.live[key(p, id)]; l != nil {
+		v.Working, v.Doing = l.working, l.doing
+	}
+	return json.Marshal(v)
 }
 
 // openProposal returns a copy of the conversation's open proposal, or nil.
@@ -441,7 +448,16 @@ func (c *chatService) done(p Project, id string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if l := c.live[key(p, id)]; l != nil {
-		l.working = false
+		l.working, l.doing = false, ""
+	}
+}
+
+// busyWith says what the conversation's running turn is doing now.
+func (c *chatService) busyWith(p Project, id, doing string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if l := c.live[key(p, id)]; l != nil {
+		l.doing = doing
 	}
 }
 
@@ -484,7 +500,11 @@ func (c *chatService) turn(p Project, id, text string) {
 		c.say(p, id, "app", "The chat could not start: "+err.Error())
 		return
 	}
-	end, err := agent.Send(ctx, text, func(s string) { c.say(p, id, "agent", s) })
+	c.busyWith(p, id, "")
+	end, err := agent.Send(ctx, text, func(s string) {
+		c.busyWith(p, id, "")
+		c.say(p, id, "agent", s)
+	}, func(s string) { c.busyWith(p, id, s) })
 	switch {
 	case ctx.Err() != nil:
 		return
@@ -497,6 +517,7 @@ func (c *chatService) turn(p Project, id, text string) {
 		c.drop(p, id)
 		return
 	}
+	c.busyWith(p, id, "Reading what changed")
 	model, outside, err := agent.Changes(ctx)
 	if err != nil {
 		if ctx.Err() == nil {
@@ -565,6 +586,7 @@ func (c *chatService) agent(ctx context.Context, p Project, id string) (ChatAgen
 	if c.chats == nil {
 		return nil, errors.New("this Markitect has no chat agents")
 	}
+	c.busyWith(p, id, "Starting the chat's agent")
 	ws, err := c.repos.Open(ctx, p.Path)
 	if err != nil {
 		return nil, err

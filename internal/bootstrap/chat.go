@@ -110,13 +110,17 @@ func sweepChat(ctx context.Context, engine interface {
 // desktopChat is one chat agent as the desktop holds it.
 type desktopChat struct{ c *agents.Chat }
 
-func (d desktopChat) Send(ctx context.Context, message string, say func(string)) (desktop.ChatEnd, error) {
-	out, err := d.c.Send(ctx, message)
+func (d desktopChat) Send(ctx context.Context, message string, say, doing func(string)) (desktop.ChatEnd, error) {
+	out, err := d.c.Send(ctx, message, func(p agents.Progress) {
+		if p.Text != "" {
+			say(p.Text)
+		}
+		if p.Doing != "" {
+			doing(p.Doing)
+		}
+	})
 	if err != nil {
 		return desktop.ChatEnd{}, err
-	}
-	if out.Text != "" {
-		say(out.Text)
 	}
 	detail := out.Detail
 	if out.Class != "" {

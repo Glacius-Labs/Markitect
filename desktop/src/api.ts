@@ -261,6 +261,8 @@ export interface Conversation {
   messages: { from: 'owner' | 'agent' | 'app'; text: string; at: string }[];
   proposals: Proposal[];
   working: boolean;
+  // What a running turn is doing now, in one line.
+  doing?: string;
   // Why the conversation's last change is only in memory.
   unsaved?: string;
 }

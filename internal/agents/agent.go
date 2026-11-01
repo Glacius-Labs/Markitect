@@ -149,6 +149,10 @@ type Agent struct {
 	conversation string
 	turns        int
 	closed       bool
+
+	// progress, when set, hears each line's progress while a turn runs, if
+	// the provider's reader can tell it.
+	progress func(Progress)
 }
 
 var namePattern = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$`)
@@ -456,6 +460,11 @@ func (a *Agent) read(r Reader) error {
 		if err := r.Line(line); err != nil {
 			go io.Copy(io.Discard, a.session.Stdout())
 			return err
+		}
+		if pr, ok := r.(ProgressReader); ok && a.progress != nil {
+			if p := pr.Progress(line); p != (Progress{}) {
+				a.progress(p)
+			}
 		}
 	}
 	return scanner.Err()
