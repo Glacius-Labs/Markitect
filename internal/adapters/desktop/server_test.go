@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/analysis"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
 // memRepo is a repository's working tree in memory.
@@ -113,8 +114,11 @@ type fakeRepos struct {
 	mu      sync.Mutex
 	repos   map[string]memRepo
 	commits map[string]map[string]map[string]string // root → commit → files
+	order   map[string][]string                     // root → commits, oldest first
 	heads   map[string]string
 	landed  map[string]string
+	lands   map[string]bool // every landing commit
+	reads   int             // snapshots read
 }
 
 // commit records the working tree of root as a new commit and makes it HEAD;
@@ -130,10 +134,34 @@ func (f *fakeRepos) commit(root, id string, landed bool) {
 		f.commits[root] = map[string]map[string]string{}
 	}
 	f.commits[root][id] = files
+	f.order[root] = append(f.order[root], id)
 	f.heads[root] = id
 	if landed {
 		f.landed[root] = id
+		f.lands[id] = true
 	}
+}
+
+func (f *fakeRepos) History(_ context.Context, root string, limit int) ([]ModelCommit, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	var out []ModelCommit
+	ids := f.order[root]
+	for i := len(ids) - 1; i >= 0 && len(out) < limit; i-- {
+		out = append(out, ModelCommit{ID: ids[i], When: time.Date(2026, 10, 1+i, 12, 0, 0, 0, time.UTC), Subject: "commit " + ids[i], Landed: f.lands[ids[i]]})
+	}
+	return out, nil
+}
+
+func (f *fakeRepos) Snapshot(_ context.Context, root, rev string) (project.Repository, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	files, ok := f.commits[root][rev]
+	if !ok {
+		return nil, fmt.Errorf("%q is not a commit", rev)
+	}
+	f.reads++
+	return memRepo{root: root, files: files}, nil
 }
 
 func (f *fakeRepos) Commit(_ context.Context, root, rev string) (Commit, error) {
@@ -158,7 +186,7 @@ func (f *fakeRepos) LastLanded(_ context.Context, root, _ string) (string, bool,
 }
 
 func newFakeRepos(roots ...string) *fakeRepos {
-	f := &fakeRepos{repos: map[string]memRepo{}, commits: map[string]map[string]map[string]string{}, heads: map[string]string{}, landed: map[string]string{}}
+	f := &fakeRepos{repos: map[string]memRepo{}, commits: map[string]map[string]map[string]string{}, order: map[string][]string{}, heads: map[string]string{}, landed: map[string]string{}, lands: map[string]bool{}}
 	for _, r := range roots {
 		f.repos[r] = memRepo{root: r, files: map[string]string{"README.md": "# x\n"}}
 	}

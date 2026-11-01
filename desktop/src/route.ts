@@ -3,6 +3,7 @@
 //   #/                                  the projects
 //   #/p/<project>                       a project's hub
 //   #/p/<project>/model[/<view>[/<item>]]  the Model area
+//   #/p/<project>/statistics            Statistics
 //   #/p/<project>/settings              Settings
 //
 // The item is a Definition ID or a Package path, Root written as '.'.
@@ -12,15 +13,15 @@ export type View = (typeof views)[number];
 
 export interface Place {
   project?: string;
-  area?: 'model' | 'settings';
+  area?: 'model' | 'statistics' | 'settings';
   view?: View;
   item?: string; // a Definition ID or a Package path; '' is Root
 }
 
 export function parse(hash: string): Place {
-  const settings = /^#\/p\/([0-9a-f]+)\/settings$/.exec(hash);
-  if (settings) {
-    return { project: settings[1], area: 'settings' };
+  const other = /^#\/p\/([0-9a-f]+)\/(statistics|settings)$/.exec(hash);
+  if (other) {
+    return { project: other[1], area: other[2] as 'statistics' | 'settings' };
   }
   const m = /^#\/p\/([0-9a-f]+)(?:\/(model)(?:\/([a-z]+)(?:\/(.+))?)?)?$/.exec(hash);
   if (!m) {
@@ -52,6 +53,10 @@ export function hub(project: string): string {
 
 export function settingsHref(project: string): string {
   return `#/p/${project}/settings`;
+}
+
+export function statisticsHref(project: string): string {
+  return `#/p/${project}/statistics`;
 }
 
 export function modelHref(project: string, view: View, item?: string): string {

@@ -28,8 +28,9 @@ describe('the places in the app', () => {
     expect(parse('#/p/ab12/model/nowhere')).toMatchObject({ view: 'reader' });
   });
 
-  it('reads Settings', () => {
+  it('reads Settings and Statistics', () => {
     expect(parse('#/p/ab12/settings')).toEqual({ project: 'ab12', area: 'settings' });
+    expect(parse('#/p/ab12/statistics')).toEqual({ project: 'ab12', area: 'statistics' });
   });
 
   it('reads a broken escape as no item', () => {

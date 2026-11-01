@@ -185,7 +185,7 @@ Each slice is one PR with its tests and is useful on its own. The app is built a
 3. **D3, Model.** Reader, Map, Organization and Quality, the diff toggle and hand edits. Built ([below](#the-model-area)).
 4. **D4, Chat and Extract.** Chat agents in containers, proposals in the views, Extract with its two stops, and the app settings for the logins ([above](#the-chat)). In three parts: the conversations, proposals and panel in the app over a port; the chat agent in its container; Extract and the logins.
 
-**Surroundings, when the model work is blocked:** the model part of Statistics, the rest of the app settings, notifications and packaging.
+**Surroundings, when the model work is blocked:** the model part of Statistics and a read-only Settings, both built; the rest of the app settings, notifications and packaging.
 
 **Runs, once their execution is settled:** starting Runs with their preview and Results, with the project settings for agents; the live view with its event feed from the engine, built with Build; the Run parts of Statistics.
 

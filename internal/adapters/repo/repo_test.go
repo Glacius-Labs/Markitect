@@ -95,3 +95,46 @@ func TestLastLandedIsTheNewestCommitThatAddsAResult(t *testing.T) {
 		t.Fatalf("LastLanded = %s %v %v, want %s", id, ok, err, landed)
 	}
 }
+
+func TestModelHistoryAndSnapshotsOfItsCommits(t *testing.T) {
+	ctx := context.Background()
+	r := testkit.NewRepo(t)
+	if commits, err := ModelHistory(ctx, r.Dir, 10); err != nil || len(commits) != 0 {
+		t.Fatalf("a repository without a commit: %v %v", commits, err)
+	}
+	r.Write("README.md", "# x\n")
+	r.Commit("readme")
+	r.Write(".markitect/model/x.md", "# X\n\nTwo\nlines.\n")
+	r.Write(".markitect/model/bin.md", string([]byte{0, 1, '\n', 2}))
+	model := r.Commit("the model")
+	r.Write(".markitect/results/run-1.md", "# Result\n")
+	landed := r.Commit("land run 1")
+	r.Write("src/a.go", "package a\n")
+	r.Commit("code only")
+
+	commits, err := ModelHistory(ctx, r.Dir, 10)
+	if err != nil || len(commits) != 2 || commits[0].ID != landed || !commits[0].Landed || commits[1].ID != model || commits[1].Landed || commits[1].Subject != "the model" || commits[1].When.IsZero() {
+		t.Fatalf("history %+v %v", commits, err)
+	}
+	if limited, _ := ModelHistory(ctx, r.Dir, 1); len(limited) != 1 {
+		t.Errorf("the limit gave %d", len(limited))
+	}
+
+	s, err := Snapshot(ctx, r.Dir, model)
+	if err != nil {
+		t.Fatal(err)
+	}
+	files, _ := s.Files()
+	if strings.Join(files, ",") != ".markitect/model/bin.md,.markitect/model/x.md,README.md" {
+		t.Errorf("files %v", files)
+	}
+	if data, err := s.Read(".markitect/model/x.md"); err != nil || string(data) != "# X\n\nTwo\nlines.\n" {
+		t.Errorf("x.md %q %v", data, err)
+	}
+	if data, err := s.Read(".markitect/model/bin.md"); err != nil || string(data) != string([]byte{0, 1, '\n', 2}) {
+		t.Errorf("bin.md %q %v", data, err)
+	}
+	if _, err := s.Read("README.md"); err == nil {
+		t.Error("a file outside Markitect's folder was read")
+	}
+}

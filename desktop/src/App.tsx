@@ -6,6 +6,7 @@ import { ModelArea } from './Model';
 import { Projects } from './Projects';
 import { hub, parse } from './route';
 import { Settings } from './Settings';
+import { Statistics } from './Statistics';
 
 const place = () => parse(window.location.hash);
 
@@ -85,6 +86,8 @@ export function App() {
               <h3 className="gl-empty__title">This window lost its connection</h3>
               <p className="gl-empty__body">Markitect was started again. Open it with markitect desktop.</p>
             </div>
+          ) : where.project && where.area === 'statistics' ? (
+            <Statistics key={where.project} id={where.project} />
           ) : where.project && where.area === 'settings' ? (
             <Settings key={where.project} id={where.project} />
           ) : where.project && where.area === 'model' ? (

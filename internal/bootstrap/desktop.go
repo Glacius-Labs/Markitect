@@ -13,6 +13,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/adapters/cli"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/desktop"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/repo"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
 // desktopApp runs Markitect Desktop over the same Git and the same commands
@@ -100,6 +101,22 @@ func (desktopRepos) Commit(ctx context.Context, root, rev string) (desktop.Commi
 
 func (desktopRepos) LastLanded(ctx context.Context, root, tip string) (string, bool, error) {
 	return repo.LastLanded(ctx, root, tip)
+}
+
+func (desktopRepos) History(ctx context.Context, root string, limit int) ([]desktop.ModelCommit, error) {
+	commits, err := repo.ModelHistory(ctx, root, limit)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]desktop.ModelCommit, len(commits))
+	for i, c := range commits {
+		out[i] = desktop.ModelCommit{ID: c.ID, When: c.When, Subject: c.Subject, Landed: c.Landed}
+	}
+	return out, nil
+}
+
+func (desktopRepos) Snapshot(ctx context.Context, root, rev string) (project.Repository, error) {
+	return repo.Snapshot(ctx, root, rev)
 }
 
 // editTemp names the temporary file of a hand edit, next to its target.
