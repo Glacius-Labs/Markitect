@@ -27,6 +27,8 @@ type fakeChats struct {
 	hold chan struct{}
 	// progress, when set, runs at the start of a turn with its say and doing.
 	progress func(say, doing func(string))
+	// block, when set, runs next; a turn whose context ended by then stops.
+	block func(ctx context.Context, doing func(string))
 }
 
 func (f *fakeChats) Start(_ context.Context, s ChatStart) (ChatAgent, error) {
@@ -69,9 +71,15 @@ type fakeAgent struct {
 	closed      bool
 }
 
-func (a *fakeAgent) Send(_ context.Context, message string, say, doing func(string)) (ChatEnd, error) {
+func (a *fakeAgent) Send(ctx context.Context, message string, say, doing func(string)) (ChatEnd, error) {
 	if a.chats.progress != nil {
 		a.chats.progress(say, doing)
+	}
+	if a.chats.block != nil {
+		a.chats.block(ctx, doing)
+		if ctx.Err() != nil {
+			return ChatEnd{End: "stopped"}, nil
+		}
 	}
 	a.mu.Lock()
 	answer := a.chats.turn(a.copy, message)
@@ -525,6 +533,113 @@ func TestAnAcceptCutOffMidwayCompletesWhenRepeated(t *testing.T) {
 	}
 	if v = chatState(t, s, id, chat); v.Proposals[0].Files[0].Text != "" {
 		t.Error("an accepted proposal keeps its texts")
+	}
+}
+
+func TestStoppingATurnEndsItAndTheNextStartsFresh(t *testing.T) {
+	s, chats, _, id := chatServer(t, feeChat)
+	route := "/api/projects/" + id + "/chats/"
+	chat := startChat(t, s, id, `{"text":"Add a late fee."}`)
+	first := chatState(t, s, id, chat)
+	before := first.open()
+	if before == nil {
+		t.Fatal("no proposal to keep")
+	}
+
+	reached, release := make(chan struct{}), make(chan struct{})
+	chats.block = func(ctx context.Context, doing func(string)) {
+		close(reached)
+		<-ctx.Done()
+		doing("Reading a file")
+		<-release
+	}
+	if r := call(s, "POST", route+chat+"/messages", `{"text":"And raise the limit."}`); r.Code != http.StatusOK {
+		t.Fatalf("message: %d %s", r.Code, r.Body)
+	}
+	<-reached
+	r := call(s, "POST", route+chat+"/stop", "{}")
+	if r.Code != http.StatusOK {
+		t.Fatalf("stop: %d %s", r.Code, r.Body)
+	}
+	// It says so until the turn has ended, whatever the turn still reports,
+	// and nothing else starts meanwhile.
+	for range 2 {
+		var v chatView
+		if err := json.Unmarshal(call(s, "GET", route+chat, "").Body.Bytes(), &v); err != nil {
+			t.Fatal(err)
+		}
+		if !v.Working || v.Doing != "Stopping the turn" {
+			t.Fatalf("while it stops: working %v, %q", v.Working, v.Doing)
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	if r := call(s, "POST", route+chat+"/messages", `{"text":"Too soon."}`); r.Code != http.StatusConflict {
+		t.Fatalf("a message while it stops: %d", r.Code)
+	}
+	close(release)
+	v := chatState(t, s, id, chat)
+	chats.block = nil
+	last := v.Messages[len(v.Messages)-1]
+	if last.From != "app" || !strings.Contains(last.Text, "You stopped this turn") {
+		t.Fatalf("last message %+v", last)
+	}
+	if open := v.open(); open == nil || open.N != before.N {
+		t.Fatalf("the open proposal did not stay: %+v", v.Proposals)
+	}
+	if !chats.agents[0].closed {
+		t.Error("the stopped turn's agent is still running")
+	}
+
+	if r := call(s, "POST", route+chat+"/messages", `{"text":"Go on."}`); r.Code != http.StatusOK {
+		t.Fatalf("the next message: %d %s", r.Code, r.Body)
+	}
+	chatState(t, s, id, chat)
+	if len(chats.started) != 2 || len(chats.started[1].Pending) == 0 || !strings.Contains(chats.started[1].Earlier, "You stopped this turn") {
+		t.Fatalf("the fresh agent got %+v", chats.started)
+	}
+}
+
+func TestStoppingWhileTheAgentStartsLeavesNoAgent(t *testing.T) {
+	s, chats, _, id := chatServer(t, feeChat)
+	chats.hold = make(chan struct{})
+	chat := startChat(t, s, id, `{"text":"Hello"}`)
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		chats.mu.Lock()
+		n := len(chats.agents)
+		chats.mu.Unlock()
+		if n == 1 {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("the agent did not start")
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	if r := call(s, "POST", "/api/projects/"+id+"/chats/"+chat+"/stop", "{}"); r.Code != http.StatusOK {
+		t.Fatalf("stop: %d %s", r.Code, r.Body)
+	}
+	close(chats.hold)
+	v := chatState(t, s, id, chat)
+	last := v.Messages[len(v.Messages)-1]
+	if !strings.Contains(last.Text, "You stopped this turn") || len(v.Proposals) != 0 || !chats.agents[0].closed {
+		t.Fatalf("last message %+v, proposals %+v, closed %v", last, v.Proposals, chats.agents[0].closed)
+	}
+}
+
+func TestStoppingOnlyStopsARunningTurn(t *testing.T) {
+	s, _, _, id := chatServer(t, feeChat)
+	route := "/api/projects/" + id + "/chats/"
+	chat := startChat(t, s, id, `{"text":"Add a late fee."}`)
+	before := chatState(t, s, id, chat)
+	if r := call(s, "POST", route+chat+"/stop", "{}"); r.Code != http.StatusOK {
+		t.Fatalf("stop: %d %s", r.Code, r.Body)
+	}
+	if v := chatState(t, s, id, chat); len(v.Messages) != len(before.Messages) || v.open() == nil {
+		t.Fatalf("a stop with no turn changed the conversation: %+v", v.Messages)
+	}
+	if r := call(s, "POST", route+"0123456789abcdef/stop", "{}"); r.Code != http.StatusNotFound {
+		t.Fatalf("a stop of no chat: %d", r.Code)
 	}
 }
 

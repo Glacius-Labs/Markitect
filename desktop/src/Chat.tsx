@@ -184,6 +184,23 @@ export function ChatPanel(props: { pid: string; onClose: () => void }) {
     }
   };
 
+  const stop = async () => {
+    if (!current) {
+      return;
+    }
+    const stoppedIn = current;
+    setError('');
+    try {
+      const c = await api.stopChat(pid, stoppedIn);
+      // A turn that has ended is left to the reading above, which tells the views.
+      if (c.working && currentRef.current === stoppedIn) {
+        setConv(c);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  };
+
   const remove = async () => {
     if (!current) {
       return;
@@ -269,9 +286,15 @@ export function ChatPanel(props: { pid: string; onClose: () => void }) {
             }
           }}
         />
-        <button className="gl-button" data-variant="primary" aria-busy={busy || undefined} disabled={busy || working || !draft.trim() || !list?.available} onClick={() => void send()}>
-          Send
-        </button>
+        {working ? (
+          <button className="gl-button" onClick={() => void stop()} title="Stop this turn">
+            Stop
+          </button>
+        ) : (
+          <button className="gl-button" data-variant="primary" aria-busy={busy || undefined} disabled={busy || !draft.trim() || !list?.available} onClick={() => void send()}>
+            Send
+          </button>
+        )}
       </div>
     </aside>
   );

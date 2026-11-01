@@ -185,8 +185,9 @@ type chatService struct {
 
 type liveChat struct {
 	agent   ChatAgent
-	working bool   // a turn, an accept or a reject runs
-	doing   string // what the turn is doing now, in one line
+	working bool               // a turn, an accept or a reject runs
+	doing   string             // what the turn is doing now, in one line
+	stop    context.CancelFunc // ends the running turn; nil when none runs
 }
 
 // key names a conversation of a project; another project's routes do not
@@ -421,9 +422,10 @@ func title(text string) string {
 var errBusy = errors.New("the chat is still at work; wait for it to finish")
 
 // claim marks the conversation as at work, or refuses when it is. A claim
-// for a turn also counts the turn, under the same lock as the check that the
-// app is not quitting, so that quitting waits for it.
-func (c *chatService) claim(p Project, id string, turn bool) error {
+// for a turn names how to stop it and also counts the turn, under the same
+// lock as the check that the app is not quitting, so that quitting waits for
+// it.
+func (c *chatService) claim(p Project, id string, stop context.CancelFunc) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.closed {
@@ -437,8 +439,8 @@ func (c *chatService) claim(p Project, id string, turn bool) error {
 	if l.working {
 		return errBusy
 	}
-	l.working = true
-	if turn {
+	l.working, l.stop = true, stop
+	if stop != nil {
 		c.turns.Add(1)
 	}
 	return nil
@@ -449,16 +451,36 @@ func (c *chatService) done(p Project, id string) {
 	defer c.mu.Unlock()
 	if l := c.live[key(p, id)]; l != nil {
 		l.working, l.doing = false, ""
+		if l.stop != nil {
+			l.stop()
+			l.stop = nil
+		}
 	}
 }
 
-// busyWith says what the conversation's running turn is doing now.
-func (c *chatService) busyWith(p Project, id, doing string) {
+// busyWith says what the conversation's running turn is doing now, unless it
+// is being stopped.
+func (c *chatService) busyWith(ctx context.Context, p Project, id, doing string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if l := c.live[key(p, id)]; l != nil {
+	if l := c.live[key(p, id)]; l != nil && ctx.Err() == nil {
 		l.doing = doing
 	}
+}
+
+// stop ends the conversation's running turn, if one runs; an accept or a
+// reject runs to its end. The turn then ends by itself, a little later.
+func (c *chatService) stop(p Project, id string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if _, err := c.get(p, id); err != nil {
+		return err
+	}
+	if l := c.live[key(p, id)]; l != nil && l.stop != nil {
+		l.stop()
+		l.doing = "Stopping the turn"
+	}
+	return nil
 }
 
 // create keeps a new conversation and starts its first turn.
@@ -471,7 +493,9 @@ func (c *chatService) create(p Project, conv *conversation, text string) error {
 
 // begin records the owner's message and runs the turn in the background.
 func (c *chatService) begin(p Project, id, text string) error {
-	if err := c.claim(p, id, true); err != nil {
+	ctx, stop := context.WithCancel(c.ctx)
+	if err := c.claim(p, id, stop); err != nil {
+		stop()
 		return err
 	}
 	err := c.change(p, id, func(conv *conversation) error {
@@ -483,31 +507,35 @@ func (c *chatService) begin(p Project, id, text string) error {
 		c.turns.Done()
 		return err
 	}
-	go c.turn(p, id, text)
+	go c.turn(ctx, p, id, text)
 	return nil
 }
 
 // turn runs one turn: it starts the agent if the conversation has none,
 // sends the message, keeps each answer as it comes and reads the proposal.
-// A turn that does not answer leaves its agent: the next turn starts a fresh
-// one, which takes over the conversation and its open proposal.
-func (c *chatService) turn(p Project, id, text string) {
+// A turn that does not answer, or that the owner stops, leaves its agent: the
+// next turn starts a fresh one, which takes over the conversation and its open
+// proposal. What the stopped turn changed on its copy goes with the agent.
+func (c *chatService) turn(ctx context.Context, p Project, id, text string) {
 	defer c.turns.Done()
 	defer c.done(p, id)
-	ctx := c.ctx
 	agent, err := c.agent(ctx, p, id)
+	if c.interrupted(ctx, p, id) {
+		return
+	}
 	if err != nil {
 		c.say(p, id, "app", "The chat could not start: "+err.Error())
 		return
 	}
-	c.busyWith(p, id, "")
+	c.busyWith(ctx, p, id, "")
 	end, err := agent.Send(ctx, text, func(s string) {
-		c.busyWith(p, id, "")
+		c.busyWith(ctx, p, id, "")
 		c.say(p, id, "agent", s)
-	}, func(s string) { c.busyWith(p, id, s) })
-	switch {
-	case ctx.Err() != nil:
+	}, func(s string) { c.busyWith(ctx, p, id, s) })
+	if c.interrupted(ctx, p, id) {
 		return
+	}
+	switch {
 	case err != nil:
 		c.say(p, id, "app", "The turn broke off: "+err.Error())
 		c.drop(p, id)
@@ -517,19 +545,34 @@ func (c *chatService) turn(p Project, id, text string) {
 		c.drop(p, id)
 		return
 	}
-	c.busyWith(p, id, "Reading what changed")
+	c.busyWith(ctx, p, id, "Reading what changed")
 	model, outside, err := agent.Changes(ctx)
+	if c.interrupted(ctx, p, id) {
+		return
+	}
 	if err != nil {
-		if ctx.Err() == nil {
-			c.say(p, id, "app", "The chat's changes could not be read: "+err.Error())
-			c.drop(p, id)
-		}
+		c.say(p, id, "app", "The chat's changes could not be read: "+err.Error())
+		c.drop(p, id)
 		return
 	}
 	_ = c.change(p, id, func(conv *conversation) error {
 		propose(conv, model, outside)
 		return nil
 	})
+}
+
+// interrupted says whether the turn's context ended. When the owner stopped
+// the turn, not when the app quits, whose close ends the agents, it also says
+// so in the conversation and ends the agent.
+func (c *chatService) interrupted(ctx context.Context, p Project, id string) bool {
+	if ctx.Err() == nil {
+		return false
+	}
+	if c.ctx.Err() == nil {
+		c.say(p, id, "app", "You stopped this turn. Its unfinished changes are gone; your next message starts a fresh agent that knows this conversation.")
+		c.drop(p, id)
+	}
+	return true
 }
 
 // drop ends the conversation's agent; its next turn starts a fresh one.
@@ -586,7 +629,7 @@ func (c *chatService) agent(ctx context.Context, p Project, id string) (ChatAgen
 	if c.chats == nil {
 		return nil, errors.New("this Markitect has no chat agents")
 	}
-	c.busyWith(p, id, "Starting the chat's agent")
+	c.busyWith(ctx, p, id, "Starting the chat's agent")
 	ws, err := c.repos.Open(ctx, p.Path)
 	if err != nil {
 		return nil, err
@@ -919,6 +962,7 @@ func (s *server) chatRoutes() {
 	s.mux.HandleFunc("GET /api/projects/{id}/chats/{chat}", s.getChat)
 	s.mux.HandleFunc("DELETE /api/projects/{id}/chats/{chat}", s.deleteChat)
 	s.mux.HandleFunc("POST /api/projects/{id}/chats/{chat}/messages", s.sendChat)
+	s.mux.HandleFunc("POST /api/projects/{id}/chats/{chat}/stop", s.stopChat)
 	s.mux.HandleFunc("POST /api/projects/{id}/chats/{chat}/accept", s.acceptChat)
 	s.mux.HandleFunc("POST /api/projects/{id}/chats/{chat}/reject", s.rejectChat)
 }
@@ -1045,6 +1089,18 @@ func (s *server) sendChat(w http.ResponseWriter, r *http.Request) {
 	s.sendView(w, p, id, http.StatusOK)
 }
 
+func (s *server) stopChat(w http.ResponseWriter, r *http.Request) {
+	p, id, ok := s.findChat(w, r)
+	if !ok {
+		return
+	}
+	if err := s.chat.stop(p, id); err != nil {
+		chatFail(w, err)
+		return
+	}
+	s.sendView(w, p, id, http.StatusOK)
+}
+
 func chatFail(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, errClosed):
@@ -1066,7 +1122,7 @@ func (s *server) decide(w http.ResponseWriter, r *http.Request, accept bool) {
 	if !ok {
 		return
 	}
-	if err := s.chat.claim(p, id, false); err != nil {
+	if err := s.chat.claim(p, id, nil); err != nil {
 		chatFail(w, err)
 		return
 	}

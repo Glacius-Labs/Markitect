@@ -350,6 +350,7 @@ export const api = {
   chat: (id: string, chat: string) => call<Conversation>('GET', `${project(id)}/chats/${chat}`),
   say: (id: string, chat: string, text: string) => call<Conversation>('POST', `${project(id)}/chats/${chat}/messages`, { text }),
   decide,
+  stopChat: (id: string, chat: string) => call<Conversation>('POST', `${project(id)}/chats/${chat}/stop`, {}),
   settings: () => call<AppSettings>('GET', '/api/settings'),
   statistics: (id: string) => call<{ model: StatPoint[]; limit: number }>('GET', `${project(id)}/statistics`),
   projectSettings: (id: string) => call<{ initialized: boolean; checks: RequiredCheck[]; problem?: string }>('GET', `${project(id)}/settings`),
