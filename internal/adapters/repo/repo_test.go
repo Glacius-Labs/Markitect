@@ -96,6 +96,30 @@ func TestLastLandedIsTheNewestCommitThatAddsAResult(t *testing.T) {
 	}
 }
 
+func TestUncommittedListsOnlyMarkitectsFolder(t *testing.T) {
+	ctx := context.Background()
+	r := testkit.NewRepo(t)
+	r.Write(".gitignore", ".markitect/cache/\n")
+	r.Write(".markitect/manifest.yaml", "a\n")
+	r.Write("a.txt", "a\n")
+	// With nothing committed, every file counts.
+	if files, err := Uncommitted(ctx, r.Dir); err != nil || len(files) != 1 || files[0] != ".markitect/manifest.yaml" {
+		t.Fatalf("before the first commit: %v %v", files, err)
+	}
+	r.Commit("first")
+	if files, err := Uncommitted(ctx, r.Dir); err != nil || len(files) != 0 {
+		t.Fatalf("after the commit: %v %v", files, err)
+	}
+	r.Write(".markitect/manifest.yaml", "b\n")
+	r.Write(".markitect/model/a b.md", "new\n")
+	r.Write(".markitect/cache/x", "ignored\n")
+	r.Write("a.txt", "b\n")
+	files, err := Uncommitted(ctx, r.Dir)
+	if err != nil || strings.Join(files, "|") != ".markitect/manifest.yaml|.markitect/model/a b.md" {
+		t.Fatalf("after changes: %q %v", files, err)
+	}
+}
+
 func TestModelHistoryAndSnapshotsOfItsCommits(t *testing.T) {
 	ctx := context.Background()
 	r := testkit.NewRepo(t)

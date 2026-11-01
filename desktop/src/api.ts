@@ -17,11 +17,20 @@ export interface Status {
   problem?: string;
 }
 
+// Waiting is what the hub's next step looks at once the model compiles.
+export interface Waiting {
+  proposal?: { chat: string; title: string };
+  uncommitted: number;
+  landed: boolean;
+  unlanded: number;
+}
+
 export interface Project {
   id: string;
   name: string;
   path: string;
   status: Status;
+  waiting?: Waiting;
 }
 
 export interface AppInfo {

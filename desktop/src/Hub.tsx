@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError, type Project } from './api';
+import { openChat } from './Chat';
 import { useRefreshOnFocus } from './focus';
 import { typing } from './Model';
 import { modelHref, settingsHref, statisticsHref } from './route';
+import { showChat, useChatChanged } from './shown';
 import { nextStep, plural } from './status';
 import { Alert, Badge, Dialog, Icon } from './ui';
 
@@ -28,13 +30,22 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
   const [removing, setRemoving] = useState(false);
 
   const { id, onGone } = props;
+  // Only the last reload counts, whichever answer comes first.
+  const latest = useRef(0);
   const load = useCallback(() => {
+    const asked = ++latest.current;
     api.project(id).then(
       (p) => {
+        if (asked !== latest.current) {
+          return;
+        }
         setProject(p);
         setError('');
       },
       (e: Error) => {
+        if (asked !== latest.current) {
+          return;
+        }
         if (e instanceof ApiError && e.status === 404) {
           onGone();
           return;
@@ -45,6 +56,8 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
   }, [id, onGone]);
   useEffect(load, [load]);
   useRefreshOnFocus(load);
+  // A proposal that came or was decided changes the next step.
+  useChatChanged(load);
 
   // The digits enter the areas that are built.
   useEffect(() => {
@@ -72,6 +85,8 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
     setBusy(true);
     try {
       const r = await api.init(project.id);
+      // A reload asked before this answer knows less than it does.
+      latest.current++;
       setProject(r.project);
       setRan({ ok: r.ok, output: r.output });
     } catch (e) {
@@ -93,7 +108,8 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
     }
   };
 
-  const step = nextStep(project.status);
+  const step = nextStep(project.status, project.waiting);
+  const waitingChat = step.proposal;
   const check = project.status.check;
   return (
     <>
@@ -129,7 +145,30 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
             Set up Markitect
           </button>
         )}
+        {waitingChat && (
+          <>
+            <button
+              className="gl-button"
+              data-variant="primary"
+              data-size="sm"
+              onClick={() => {
+                showChat(project.id, waitingChat);
+                window.location.hash = modelHref(project.id, 'reader');
+              }}
+            >
+              Show in the views
+            </button>
+            <button className="gl-button" data-size="sm" onClick={() => openChat(project.id, waitingChat)}>
+              Open the chat
+            </button>
+          </>
+        )}
       </Alert>
+      {step.command && (
+        <div className="gl-codeblock">
+          <pre>{step.command}</pre>
+        </div>
+      )}
       {check && !check.ok && (
         <ul className="errors">
           {check.errors.map((e, i) => (

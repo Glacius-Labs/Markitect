@@ -41,7 +41,7 @@ The project's state: whether the model passes `check`, the last Result, any Run 
 ### 1. Model
 
 - **Modeling.** The chat is the main way to change the model. A hand edit is the second: each Definition in the reader opens in a Markdown editor that saves straight into the working tree, and `check` runs again on save. The views follow the folder live, so edits made in Obsidian or an editor show up too.
-- **The model as it looks.** While the owner models, the views show the model as it is, or as it will be with the chat's proposal, never mainly as a change. The diff is one click away. Bringing the code in line with the model is the job of `apply`, so after an accepted change the hub's next step offers it.
+- **The model as it looks.** While the owner models, the views show the model as it is, or as it will be with the chat's proposal, never mainly as a change. The diff is one click away. Bringing the code in line with the model is the job of `apply`, so after an accepted change the hub's next step offers it: first the commit a Run needs, then the Run, as a command for the terminal until Runs are in the app.
 - **Four views.**
   1. Reader: the model as documentation. Each Definition with its links, Referenced by, Realized by and Seen by. Hand edits start here.
   2. Map: the Package graph, with cycles and broken rules marked.

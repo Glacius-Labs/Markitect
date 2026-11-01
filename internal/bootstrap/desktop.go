@@ -103,6 +103,10 @@ func (desktopRepos) LastLanded(ctx context.Context, root, tip string) (string, b
 	return repo.LastLanded(ctx, root, tip)
 }
 
+func (desktopRepos) Uncommitted(ctx context.Context, root string) ([]string, error) {
+	return repo.Uncommitted(ctx, root)
+}
+
 func (desktopRepos) History(ctx context.Context, root string, limit int) ([]desktop.ModelCommit, error) {
 	commits, err := repo.ModelHistory(ctx, root, limit)
 	if err != nil {

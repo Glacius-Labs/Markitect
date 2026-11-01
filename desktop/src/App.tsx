@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError, type AppInfo } from './api';
-import { ChatPanel } from './Chat';
+import { ChatPanel, useChatOpened } from './Chat';
 import { Hub, useEscapeTo, type InitRun } from './Hub';
 import { ModelArea } from './Model';
 import { Projects } from './Projects';
@@ -36,6 +36,16 @@ export function App() {
       return !open;
     });
   }, []);
+  useChatOpened(
+    useCallback(() => {
+      try {
+        sessionStorage.setItem(chatKey, '1');
+      } catch {
+        // No storage: the panel stays open until the window closes.
+      }
+      setChat(true);
+    }, []),
+  );
   // The init that created a project, shown on its hub until the owner leaves.
   const [created, setCreated] = useState<{ id: string; init: InitRun } | null>(null);
 

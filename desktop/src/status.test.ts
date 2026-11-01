@@ -75,6 +75,46 @@ describe('the project state', () => {
   });
 });
 
+describe('what waits for the owner', () => {
+  const s = { initialized: true, check };
+  const quiet = { uncommitted: 0, landed: true, unlanded: 0 };
+  const proposal = { chat: 'c1', title: 'Add a late fee' };
+
+  it('asks for one thing at a time, the nearest first', () => {
+    const all = { proposal, uncommitted: 2, landed: true, unlanded: 3 };
+    expect(nextStep(s, all)).toMatchObject({ title: 'A proposal waits: Add a late fee', proposal: 'c1' });
+    expect(nextStep(s, { ...all, proposal: undefined }).title).toBe('Commit the model change');
+    expect(nextStep(s, { ...all, proposal: undefined, uncommitted: 0 }).title).toBe('Bring the code in line with the model');
+  });
+
+  it('puts what stops the model before what waits', () => {
+    const broken = { initialized: true, check: { ...check, ok: false, errorCount: 1 } };
+    expect(nextStep(broken, { ...quiet, proposal }).tone).toBe('danger');
+    expect(nextStep({ initialized: true, check, problem: 'gone' }, { ...quiet, proposal }).title).toBe('Markitect cannot read this project');
+  });
+
+  it('names the files that differ from the last commit', () => {
+    expect(nextStep(s, { ...quiet, uncommitted: 1 }).body).toContain('1 file in .markitect differs');
+    expect(nextStep(s, { ...quiet, uncommitted: 2 }).body).toContain('2 files in .markitect differ');
+  });
+
+  it('gives the command of a Run', () => {
+    const later = nextStep(s, { ...quiet, unlanded: 1 });
+    expect(later.body).toContain('1 Definition changed since the last landing');
+    expect(later.command).toBe('markitect apply');
+    const first = nextStep(s, { ...quiet, landed: false });
+    expect(first.title).toBe('Start the first Run');
+    expect(first.command).toBe('markitect apply --full');
+  });
+
+  it('says when nothing waits', () => {
+    const fine = nextStep(s, quiet);
+    expect(fine).toMatchObject({ tone: 'success', title: 'The model compiles' });
+    expect(fine.body).toContain('No Definition changed since the last landing.');
+    expect(fine.command).toBeUndefined();
+  });
+});
+
 describe("a required check's time limit", () => {
   it('reads like execution.yaml', () => {
     expect(duration(10 * 60e9)).toBe('10m');

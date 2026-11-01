@@ -13,6 +13,22 @@ import { Alert, Badge, Icon } from './ui';
 
 const currentKey = (pid: string) => `markitect.chat.current.${pid}`;
 
+// openChat opens the panel on a conversation, from anywhere in the window.
+const opened = 'markitect-chat-opened';
+
+export function openChat(pid: string, id: string) {
+  writeCurrent(pid, id);
+  window.dispatchEvent(new CustomEvent<string>(opened, { detail: id }));
+}
+
+export function useChatOpened(react: (id: string) => void) {
+  useEffect(() => {
+    const listen = (e: Event) => react((e as CustomEvent<string>).detail);
+    window.addEventListener(opened, listen);
+    return () => window.removeEventListener(opened, listen);
+  }, [react]);
+}
+
 function readCurrent(pid: string): string | null {
   try {
     return sessionStorage.getItem(currentKey(pid));
@@ -80,6 +96,16 @@ export function ChatPanel(props: { pid: string; onClose: () => void }) {
       setDeleting(false);
     },
     [pid],
+  );
+  useChatOpened(
+    useCallback(
+      (id: string) => {
+        if (id !== currentRef.current) {
+          choose(id);
+        }
+      },
+      [choose],
+    ),
   );
 
   // The conversation, followed while its turn runs, and read again when it

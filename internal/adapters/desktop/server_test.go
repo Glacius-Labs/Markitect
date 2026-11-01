@@ -119,6 +119,8 @@ type fakeRepos struct {
 	landed  map[string]string
 	lands   map[string]bool // every landing commit
 	reads   int             // snapshots read
+	// uncommitted is what asking for the uncommitted files fails with.
+	uncommitted error
 }
 
 // commit records the working tree of root as a new commit and makes it HEAD;
@@ -176,6 +178,27 @@ func (f *fakeRepos) Commit(_ context.Context, root, rev string) (Commit, error) 
 		return nil, fmt.Errorf("%q is not a commit of this repository", rev)
 	}
 	return memCommit{memRepo: memRepo{root: root, files: files}, id: id, tree: f.repos[root]}, nil
+}
+
+func (f *fakeRepos) Uncommitted(_ context.Context, root string) ([]string, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.uncommitted != nil {
+		return nil, f.uncommitted
+	}
+	head := f.commits[root][f.heads[root]]
+	var out []string
+	for file, data := range f.repos[root].files {
+		if old, ok := head[file]; strings.HasPrefix(file, ".markitect/") && (!ok || old != data) {
+			out = append(out, file)
+		}
+	}
+	for file := range head {
+		if _, ok := f.repos[root].files[file]; strings.HasPrefix(file, ".markitect/") && !ok {
+			out = append(out, file)
+		}
+	}
+	return out, nil
 }
 
 func (f *fakeRepos) LastLanded(_ context.Context, root, _ string) (string, bool, error) {
