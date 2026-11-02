@@ -49,11 +49,17 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
   - In one of its two C3 launches, the redesign's Root settled the model's contradiction itself instead of reporting a model defect.
 - **Counted Windows series started, 31 October** ([Amendment 6](../validation/counted-series-protocol-20261030.md#amendment-6-31-october-2026-the-windows-series-started)):
   - It started at 16:58 UTC on the frozen commit `955683de`, in the Docker window the owner cleared until about 02:00 UTC on 2 November, and plans about 230 launches.
-  - A Windows crash at about 23:12 UTC on 31 October stopped it after 40 launches, all results, and cost about 21 hours. Build restarted it at 20:37 UTC on 1 November on the same commit. The owner then let it keep Docker past 02:00 UTC, so no stop is set before it ends, which should be early on 3 November ([Amendment 8](../validation/counted-series-protocol-20261030.md#amendment-8-1-november-2026-a-machine-crash-the-restart-and-a-longer-window)).
+  - A Windows crash at about 23:12 UTC on 31 October stopped it after 40 launches, all results, and cost about 21 hours. Build restarted it at 20:37 UTC on 1 November on the same commit. The owner then let it keep Docker past 02:00 UTC ([Amendment 8](../validation/counted-series-protocol-20261030.md#amendment-8-1-november-2026-a-machine-crash-the-restart-and-a-longer-window)).
+- **Counted Windows series ended, 2 November** ([Amendment 9](../validation/counted-series-protocol-20261030.md#amendment-9-2-november-2026-the-windows-series-ended-and-linux-is-held)):
+  - All 168 units are done, with 231 launches and only the crash's launch void. The new project stays sealed, so the primary contrast is still open.
+  - On the Library and the chains M and K do not differ on hidden cases. M's landed changes all pass (34 of 34; K 41 of 43).
+  - M landed only 9 of the 18 Makerspace fixed starts, against K's 18, so §15.5 reads "no" on the public projects. Two of those 9 are C9, where M saw no change. The other 7 have one main cause: when the arm adopts a start, it drops the module paths that the task's model pages hold, so the Managers cannot write the module packages. By [DEC-081](../concepts/register.md#dec-081-the-organization-knows-broad-at-the-top-and-deep-below), a Manager's own claim takes effect only from the next Run.
+  - None of M's 18 Makerspace fixed-start results holds its Managers' module packages, its 9 landed ones included. All 18 of K's do. The hidden cases do not see this.
+  - Build holds Linux on this commit, with the owner's "Yes, diagnose first".
 
 ## Next
 
-1. **Counted series:** the series on Windows is running (above); then the gate and the series on Linux.
+1. **Counted series:** Linux is held on `955683de` (above). A fix would mean a new freeze, the gate again and both platforms from their first launch, which needs the owner.
 2. **The owner's time:** after the counted series, the owner's measurement below.
 3. **Codex repeat:** the smaller repeat with every arm on Codex Luna, as the Codex decision below says, after [what comes first](../validation/counted-series-protocol-20261030.md#after-the-series). Of the three things that come first there, the Codex login and K's Codex command are done (above). The owner's removal of the judge session's records remains.
 
