@@ -106,6 +106,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-087](#dec-087-required-checks-gate-merged-states-not-each-submission) | Decision | Required checks gate merged states, not each submission | Accepted; built in T8 |
 | [DEC-088](#dec-088-a-checker-reads-the-model-in-full-and-judges-its-own-packages-files) | Decision | A checker reads the model in full and judges its own Package's files | Accepted; built in T9 |
 | [DEC-089](#dec-089-markitect-desktop-the-app-over-the-cli) | Decision | Markitect Desktop: the app over the CLI | Accepted; design proposal, not built |
+| [DEC-090](#dec-090-a-refusal-counts-only-when-nothing-moved) | Decision | A refusal counts only when nothing moved | Accepted; built |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -1157,6 +1158,18 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Clarified, 31 October 2026:** the owner allows Markitect to ship the Glacius Labs design system's built package in its repository and binary, under the design system's own proprietary notice and kept apart from Markitect's Apache 2.0 license. Its fonts and icons keep their open licenses.
 - **Clarified, 31 October 2026:** the chat's agent works in a container on a copy of the project as it is in the working tree, uncommitted changes included, with no folder of the user's mounted. Its changes are a proposal, and the app writes them into the working tree only when the owner accepts. Unlike a Run, which never touches the working tree, the chat's accepted change is written there by the app, and the owner commits it as usual.
 - **Behavior owner:** the [Markitect Desktop design](../design/markitect-desktop.md); its open questions are on the [Desktop state page](../workstreams/desktop.md#questions-for-the-owner).
+
+### DEC-090 A refusal counts only when nothing moved
+
+- **Status:** Accepted by the owner, 2 November 2026, in the Build and evaluation session: "We should definately fix the attempt limit issue and not count those." "Those" are the refusals of work that goes on in stages. Which refusals these are, below, is Build's reading of it. Built with this entry.
+- **Decision:**
+  - A maker's attempts bound how often it may be refused in a row while nothing moves around it. New approved work of its children or its parent since its last attempt starts the count again, and so does its own approval.
+  - The limit stays what it was, 6 by default (`--rounds`), and still stops a Manager that is stuck.
+  - What counts as moved is what the host knows for certain: approved work with different content. An approval of the same work again moves nothing. The maker's own changes do not count, nor does a checker's wording or number of disputes, since a stuck maker also changes things.
+  - The Run's starts and deadlines still bound the whole Run, so a Run that keeps moving without finishing still ends.
+- **Reason:** in the [fixed-starts re-measure](../validation/fixed-starts-remeasure-20261102.md), Root moved a program into new packages in stages, and its checker rightly rejected each unfinished state, since the old package still served requests. Each rejection used one attempt, although children's new approved work came between them. The Run stopped when only one package and the final wiring were left.
+- **Cost:** a Manager with busy children can be refused more often before the Run stops, up to the Run's starts. A stuck Manager whose child keeps delivering real but useless changes is not caught by this limit, only by the Run's starts and deadline. For an earlier form of the same idea, see [DEC-054](#dec-054-a-rejection-that-finds-fewer-gaps-does-not-count), which belongs to V1's process and counted gaps instead.
+- **Behavior owner:** the [Run engine's limits](../../internal/run/README.md#limits-and-honest-stops).
 
 ## Promises
 

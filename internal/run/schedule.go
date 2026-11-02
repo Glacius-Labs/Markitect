@@ -72,11 +72,13 @@ type node struct {
 
 	running bool
 	// rounds numbers every start per role; attempts counts the maker's
-	// starts at its own work, which Limits.Rounds bounds: the first and
-	// each one after refused is set.
+	// starts at its own work in a row, which Limits.Rounds bounds: the first
+	// and each one after refused is set, since its last approval or since
+	// around, the approved work around it at its last attempt, changed.
 	rounds   map[agentport.Role]int
 	attempts int
 	refused  bool
+	around   string
 	// What the running maker start's task named: the state its work
 	// continues from and, with named, the children's approvals (told). A
 	// submission that lacks one is the maker's own error only when it did
@@ -110,6 +112,7 @@ type node struct {
 	evidence           string // the required checks' results on it, for its checker
 	approvedSubmission string
 	approval           string // the checker's approving commit
+	approvedTree       string // what it approved: each approval is a new commit, the same work the same tree
 	approved           bool
 	verdicts           []runremote.Line // of the newest submission
 	lastSubmission     string
@@ -400,9 +403,14 @@ func (s *schedule) startLocked(ctx context.Context, n *node, role agentport.Role
 	// Only the maker's attempts at its own work count against Rounds (see
 	// Limits.Rounds).
 	attempt := role == agentport.Maker && (n.rounds[role] == 0 || n.refused)
-	if attempt && n.attempts >= lim.Rounds {
-		s.stopLocked(StateIncomplete, fmt.Sprintf("Manager %s used its %d maker attempts without approved work: its checker or the host refused its work after each", n.name, lim.Rounds))
-		return
+	if attempt {
+		if now := s.around(n); now != n.around {
+			n.attempts, n.around = 0, now
+		}
+		if n.attempts >= lim.Rounds {
+			s.stopLocked(StateIncomplete, fmt.Sprintf("Manager %s used its %d maker attempts in a row: its checker or the host refused its work after each, with no approval of its own and no new approved work of its children or its parent between them", n.name, lim.Rounds))
+			return
+		}
 	}
 	s.starts++
 	n.rounds[role]++
@@ -644,6 +652,7 @@ func (s *schedule) afterChecker(ctx context.Context, n *node, tip string, moved 
 		return true, nil
 	}
 	n.approved, n.approval, n.approvedSubmission, n.approvedVerdicts, n.checks, n.approvedRound = true, tip, submission, n.verdicts, t.Checks, n.submitRound
+	n.approvedTree, n.attempts = c.Tree, 0
 	n.review = s.creds[n.id][agentport.Checker].user
 	var problems []string
 	for _, v := range n.verdicts {
