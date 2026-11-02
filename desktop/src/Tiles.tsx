@@ -18,10 +18,11 @@ interface Live {
 function useLive(project: Project): Live {
   const [live, setLive] = useState<Live>({});
   // The hub reloads its project often, every few seconds while a chat draws the
-  // model, and only a change in what it reports is worth asking again.
+  // model, and only a change in what it reports is worth asking again. Opening
+  // the hub asks anew, which covers a change no number shows.
   const { id, status, waiting } = project;
   const c = status.check;
-  const asked = [id, status.initialized, c?.notDrawn, c?.definitions, c?.packages, c?.warnings, c?.errorCount, waiting?.uncommitted, waiting?.unlanded].join();
+  const asked = [id, status.initialized, c?.notDrawn, c?.definitions, c?.packages, c?.files, c?.warnings, c?.errorCount, waiting?.uncommitted, waiting?.landed, waiting?.unlanded].join();
   useEffect(() => {
     let stopped = false;
     const put = (part: Live) => {
@@ -41,7 +42,6 @@ function useLive(project: Project): Live {
     return () => {
       stopped = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [asked]);
   return live;
 }
