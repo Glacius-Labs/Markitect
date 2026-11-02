@@ -58,7 +58,7 @@ export function Projects(props: { info: AppInfo | null; onAdded: (r: Result) => 
         </div>
       )}
       {projects && projects.length > 0 && (
-        <div className="gl-cards">
+        <div className="gl-cards project-cards">
           {projects.map((p) => {
             const b = badge(p.status);
             return (

@@ -40,10 +40,10 @@ export function Reader({ ix, pid, item, diff, refresh, editable }: Props) {
         ) : pkg ? (
           <PackagePage ix={ix} pid={pid} pkg={pkg} diff={diff} refresh={refresh} editable={editable} />
         ) : removed ? (
-          <>
+          <div className="reader__main">
             <Alert tone="warning" title={`${removed.title} was removed`} body={`${removed.id} is in the base but no longer in the working tree.`} />
             <TextDiff before={removed.baseText ?? ''} after="" />
-          </>
+          </div>
         ) : (
           <Alert tone="info" title="Not in the model" body={`${target} is neither a Definition nor a Package of the working tree.`} />
         )}
@@ -119,6 +119,7 @@ function DefinitionPage({ ix, pid, def, diff, refresh, editable }: { ix: Index; 
   );
   return (
     <>
+      <div className="reader__main">
       <div className="def__meta">
         {kind ? (
           <a className="gl-badge" href={modelHref(pid, 'reader', def.kind)} title="Its Kind">
@@ -154,6 +155,7 @@ function DefinitionPage({ ix, pid, def, diff, refresh, editable }: { ix: Index; 
       ) : (
         <div className="prose" dangerouslySetInnerHTML={{ __html: html }} />
       )}
+      </div>
       <div className="facts">
         {!def.library && (
           <Fact title="Links to" empty="No links">
@@ -205,6 +207,7 @@ function PackagePage({ ix, pid, pkg, diff, refresh, editable }: { ix: Index; pid
   const warnings = ix.m.lint.filter((e) => e.package === pkg.path && !e.definition);
   return (
     <>
+      <div className="reader__main">
       <div className="def__meta">
         <Badge tone="neutral">Package</Badge>
         {pkg.path !== '' && (
@@ -233,23 +236,6 @@ function PackagePage({ ix, pid, pkg, diff, refresh, editable }: { ix: Index; pid
       {warnings.map((e, i) => (
         <Alert key={`w${i}`} tone="warning" title={e.code} body={e.message} />
       ))}
-      <div className="facts">
-        <Fact title="Owns" empty={pkg.path === '' ? 'Every file no other Package claims' : 'No path pattern yet'}>
-          {pkg.patterns.map((p) => (
-            <li key={p} className="path">
-              {p}
-            </li>
-          ))}
-          {pkg.files > 0 && <li className="muted small">{pkg.files} files accounted for</li>}
-        </Fact>
-        <Fact title="Packages inside" empty="None">
-          {pkg.children.map((c) => (
-            <li key={c}>
-              <a href={modelHref(pid, 'reader', c)}>{c}</a>
-            </li>
-          ))}
-        </Fact>
-      </div>
       <section className="section">
         <h2 className="h3">Definitions</h2>
         {pkg.own.length === 0 ? (
@@ -269,6 +255,24 @@ function PackagePage({ ix, pid, pkg, diff, refresh, editable }: { ix: Index; pid
           </ul>
         )}
       </section>
+      </div>
+      <div className="facts">
+        <Fact title="Owns" empty={pkg.path === '' ? 'Every file no other Package claims' : 'No path pattern yet'}>
+          {pkg.patterns.map((p) => (
+            <li key={p} className="path">
+              {p}
+            </li>
+          ))}
+          {pkg.files > 0 && <li className="muted small">{pkg.files} files accounted for</li>}
+        </Fact>
+        <Fact title="Packages inside" empty="None">
+          {pkg.children.map((c) => (
+            <li key={c}>
+              <a href={modelHref(pid, 'reader', c)}>{c}</a>
+            </li>
+          ))}
+        </Fact>
+      </div>
     </>
   );
 }

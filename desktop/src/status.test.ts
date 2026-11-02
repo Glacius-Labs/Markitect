@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { duration } from './Settings';
 import { atMostEvery } from './focus';
-import { badge, nextStep, plural } from './status';
+import { badge, nextStep, plural, runsLine } from './status';
 
 const check = { ok: true, errorCount: 0, errors: [], definitions: 12, packages: 3, files: 40, warnings: 0 };
 
@@ -89,6 +89,18 @@ describe('the project state', () => {
     const s = { initialized: true, check };
     expect(badge(s).label).toBe('Model compiles');
     expect(nextStep(s).body).toBe('12 Definitions in 3 Packages, 40 files accounted for.');
+  });
+});
+
+describe('where the Runs stand', () => {
+  const w = { uncommitted: 0, landed: true, unlanded: 0 };
+  it('says nothing where it knows nothing', () => {
+    expect(runsLine()).toBe('');
+  });
+  it('counts what changed since the last landing', () => {
+    expect(runsLine({ ...w, landed: false })).toBe('No Run has landed yet.');
+    expect(runsLine(w)).toBe('Nothing changed since the last landing.');
+    expect(runsLine({ ...w, unlanded: 2 })).toBe('2 Definitions changed since the last landing.');
   });
 });
 

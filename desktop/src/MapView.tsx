@@ -58,7 +58,7 @@ export function MapView({ ix, pid, item, diff }: Props) {
           }
         }}
       >
-        <svg width={drawing.width} height={drawing.height} viewBox={`0 0 ${drawing.width} ${drawing.height}`} role="group" aria-label="The Package graph">
+        <svg viewBox={`0 0 ${drawing.width} ${drawing.height}`} style={{ minWidth: drawing.width, minHeight: drawing.height, maxWidth: drawing.width * 1.8, maxHeight: drawing.height * 1.8 }} role="group" aria-label="The Package graph">
           <defs>
             {['plain', 'active', 'cycle', 'added', 'removed'].map((k) => (
               <marker key={k} id={`arrow-${k}`} className={`map__arrow map__arrow--${k}`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
