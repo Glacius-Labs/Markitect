@@ -36,6 +36,21 @@ func (s *schedule) approvals(n *node) string {
 	return strings.Join(parts, ", ")
 }
 
+// around names the approved work a Manager's own work depends on, its
+// children's and its parent's, by content: an approval of the same work again
+// moves nothing. A refusal after it changed is no sign of a stuck maker: the
+// work is on its way, in stages (DEC-090).
+func (s *schedule) around(n *node) string {
+	var parts []string
+	for _, c := range n.children {
+		parts = append(parts, c.approvedTree)
+	}
+	if n.parent != nil {
+		parts = append(parts, n.parent.approvedTree)
+	}
+	return strings.Join(parts, " ")
+}
+
 // childNames names the Manager's working children.
 func (s *schedule) childNames(n *node) string {
 	var names []string

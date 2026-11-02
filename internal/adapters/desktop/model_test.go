@@ -302,6 +302,107 @@ func TestTheHubAsksNothingOfAModelThatDoesNotCompile(t *testing.T) {
 	}
 }
 
+func hubOf(t *testing.T, s *server, id string) projectView {
+	t.Helper()
+	var out struct {
+		Project projectView `json:"project"`
+	}
+	if err := json.Unmarshal(call(s, "GET", "/api/projects/"+id, "").Body.Bytes(), &out); err != nil {
+		t.Fatal(err)
+	}
+	return out.Project
+}
+
+// adopted is an existing project right after markitect init: code with no place
+// in a model yet, and the first page.
+func adopted(t *testing.T) map[string]string {
+	return map[string]string{
+		"go.mod":                      "module shop\n",
+		"cmd/shop/main.go":            "package main\n",
+		".markitect/manifest.yaml":    "libraries:\n  std: 1.0.0\n",
+		".markitect/lock.yaml":        stdLock(t),
+		".markitect/execution.yaml":   "checks: []\n",
+		".markitect/registry.md":      "| File | Realizes | Why |\n|---|---|---|\n",
+		".markitect/ignore.md":        "| Path | Why |\n|---|---|\n",
+		".markitect/model/project.md": "---\nkind: std/Project\n---\n# Shop\n\nWhat this project is.\n",
+	}
+}
+
+func TestAProjectRightAfterInitHasNoModelYetAndNoErrorsToFix(t *testing.T) {
+	s, _, _, id := modelServer(t, adopted(t))
+	chats := &fakeChats{turn: feeChat}
+	s.chat.chats = chats
+	t.Cleanup(s.chat.close)
+	p := hubOf(t, s, id)
+	c := p.Status.Check
+	if c == nil || c.OK || !c.NotDrawn || c.ErrorCount != 2 || c.Definitions != 1 {
+		t.Fatalf("right after init: %+v", c)
+	}
+	if p.Waiting == nil || p.Waiting.Extract != nil || p.Waiting.Proposal != nil {
+		t.Fatalf("nothing waits yet: %+v", p.Waiting)
+	}
+
+	// The conversation that draws it is named, and so is its proposal.
+	chat := startChat(t, s, id, `{"text":"Draw the model.","skill":"extract"}`)
+	chatState(t, s, id, chat)
+	if len(chats.started) != 1 || chats.started[0].Skill != skillExtract {
+		t.Fatalf("starts %+v", chats.started)
+	}
+	p = hubOf(t, s, id)
+	if p.Waiting == nil || p.Waiting.Extract == nil || p.Waiting.Extract.Chat != chat || p.Waiting.Extract.Working {
+		t.Fatalf("while it draws: %+v", p.Waiting)
+	}
+	if p.Waiting.Proposal == nil || p.Waiting.Proposal.Chat != chat {
+		t.Fatalf("its proposal: %+v", p.Waiting)
+	}
+}
+
+func TestTheModelAreaKnowsNoModelIsDrawnYet(t *testing.T) {
+	s, _, _, id := modelServer(t, adopted(t))
+	if m, res := getModel(t, s, id, ""); res.code != http.StatusOK || !m.NotDrawn || len(m.Errors) != 2 {
+		t.Fatalf("right after init: %d %+v", res.code, m.Errors)
+	}
+	s, _, _, id = modelServer(t, library(t))
+	if m, _ := getModel(t, s, id, ""); m.NotDrawn {
+		t.Error("a drawn model counts as not drawn")
+	}
+}
+
+func TestASmallModelWithItsFilesPlacedIsDrawn(t *testing.T) {
+	files := adopted(t)
+	files[".markitect/registry.md"] = "| File | Realizes | Why |\n|---|---|---|\n| go.mod | [[project]] | The module |\n"
+	s, _, _, id := modelServer(t, files)
+	p := hubOf(t, s, id)
+	if c := p.Status.Check; c == nil || c.OK || c.NotDrawn || c.ErrorCount != 1 || c.Definitions != 1 {
+		t.Fatalf("one Definition, one file placed and one new: %+v", c)
+	}
+	if p.Waiting != nil {
+		t.Errorf("what waits: %+v", p.Waiting)
+	}
+}
+
+func TestOtherErrorsAreErrorsEvenWithNoModelYet(t *testing.T) {
+	files := adopted(t)
+	files[".markitect/model/project.md"] = "no front matter\n"
+	s, _, _, id := modelServer(t, files)
+	if c := hubOf(t, s, id).Status.Check; c == nil || c.OK || c.NotDrawn {
+		t.Fatalf("a broken first page: %+v", c)
+	}
+}
+
+func TestUnplacedFilesAreErrorsOnceAModelIsDrawn(t *testing.T) {
+	files := library(t)
+	files["cmd/new/main.go"] = "package main\n"
+	s, _, _, id := modelServer(t, files)
+	p := hubOf(t, s, id)
+	if c := p.Status.Check; c == nil || c.OK || c.NotDrawn {
+		t.Fatalf("a drawn model with a new file: %+v", c)
+	}
+	if p.Waiting != nil {
+		t.Errorf("what waits: %+v", p.Waiting)
+	}
+}
+
 func TestAProblemReadingWhatWaitsIsTheProjectsProblem(t *testing.T) {
 	s, repos, _, id := modelServer(t, library(t))
 	repos.uncommitted = errors.New("git status: no")

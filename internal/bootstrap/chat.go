@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/desktop"
 	"github.com/Glacius-Labs/Markitect/internal/agents"
 	"github.com/Glacius-Labs/Markitect/internal/project"
@@ -22,11 +23,18 @@ const chatTurn = 30 * time.Minute
 // desktopChats starts Markitect Desktop's chat agents with the engine,
 // Manager image, provider, login, model and effort of apply and verify
 // (agentConfig), read at every start, so a login refreshed on the host
-// reaches the next agent.
-type desktopChats struct{}
+// reaches the next agent. The native app also has an image of its own, for when
+// no Manager image is set.
+type desktopChats struct{ image *chatImage }
 
-func (desktopChats) Start(ctx context.Context, s desktop.ChatStart) (desktop.ChatAgent, error) {
-	cfg, engine, err := agentConfig(ctx)
+func (c desktopChats) Start(ctx context.Context, s desktop.ChatStart) (desktop.ChatAgent, error) {
+	var build func(context.Context, *container.Engine) (string, error)
+	if c.image != nil {
+		build = func(ctx context.Context, engine *container.Engine) (string, error) {
+			return c.image.ensure(ctx, engine, s.Doing)
+		}
+	}
+	cfg, engine, err := agentConfigWith(ctx, build)
 	if err != nil {
 		return nil, err
 	}

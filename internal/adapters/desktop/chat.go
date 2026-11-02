@@ -53,6 +53,9 @@ type ChatStart struct {
 	// Earlier is the conversation so far, for an agent that takes over a
 	// conversation; empty for a new one.
 	Earlier string
+	// Doing says what the start is doing when it is more than starting the
+	// agent, in one line.
+	Doing func(string)
 }
 
 // ChatAgent is one running chat agent.
@@ -704,7 +707,8 @@ func (c *chatService) agent(ctx context.Context, p Project, id string) (ChatAgen
 		c.say(p, id, "app", note)
 		fmt.Fprintf(&earlier, "app: %s\n\n", note)
 	}
-	agent, err := c.chats.Start(ctx, ChatStart{Name: "markitect-chat-" + id, Tree: listed{ws, files}, Files: files, Pending: pending, Skill: skill, Earlier: earlier.String()})
+	agent, err := c.chats.Start(ctx, ChatStart{Name: "markitect-chat-" + id, Tree: listed{ws, files}, Files: files, Pending: pending, Skill: skill, Earlier: earlier.String(),
+		Doing: func(s string) { c.busyWith(ctx, p, id, s) }})
 	if err != nil {
 		return nil, nil, err
 	}

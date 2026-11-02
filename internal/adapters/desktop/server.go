@@ -228,14 +228,20 @@ func (s *server) view(ctx context.Context, p Project) projectView {
 // once the model compiles.
 func (s *server) hubView(ctx context.Context, p Project) projectView {
 	v := s.view(ctx, p)
-	if c := v.Status.Check; c != nil && c.OK {
-		waiting, err := s.waiting(ctx, p)
-		if err != nil {
-			v.Status.Problem = err.Error()
-			return v
-		}
-		v.Waiting = waiting
+	c := v.Status.Check
+	var waiting *Waiting
+	var err error
+	switch {
+	case c != nil && c.OK:
+		waiting, err = s.waiting(ctx, p)
+	case c != nil && c.NotDrawn:
+		waiting, err = s.waitingChats(p)
 	}
+	if err != nil {
+		v.Status.Problem = err.Error()
+		return v
+	}
+	v.Waiting = waiting
 	return v
 }
 

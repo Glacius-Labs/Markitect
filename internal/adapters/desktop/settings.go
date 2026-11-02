@@ -28,8 +28,10 @@ type AgentSettings struct {
 	Model    string `json:"model"`
 	Effort   string `json:"effort"`
 	// Image is the Manager image as set, empty when none is.
-	Image   string `json:"image"`
-	Network string `json:"network"`
+	Image string `json:"image"`
+	// ImageBuilt is the image the app builds for its chats when none is set.
+	ImageBuilt string `json:"imageBuilt,omitempty"`
+	Network    string `json:"network"`
 	// Engine is the Docker CLI the agents use, empty when none is found.
 	Engine string `json:"engine"`
 	// Problems say why no agent can start yet.

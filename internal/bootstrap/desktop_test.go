@@ -141,14 +141,14 @@ func TestListenDesktopSharesOneServicePerUser(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	windows := make(chan string, 2)
-	svc, err := ListenDesktop(ctx, DesktopWindows{Open: func(url string) error { windows <- url; return nil }})
+	svc, err := ListenDesktop(ctx, DesktopShell{Open: func(url string) error { windows <- url; return nil }})
 	if err != nil || svc == nil {
 		t.Fatalf("first start: %v %v", svc, err)
 	}
 	served := make(chan error, 1)
 	go func() { served <- svc.Serve(ctx) }()
 	first := <-windows
-	again, err := ListenDesktop(ctx, DesktopWindows{Open: func(string) error {
+	again, err := ListenDesktop(ctx, DesktopShell{Open: func(string) error {
 		t.Error("the second start opened a window of its own")
 		return nil
 	}})

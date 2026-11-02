@@ -74,6 +74,10 @@ func TestLayerDirections(t *testing.T) {
 		{"internal/realization", "internal/model", both},
 		{"internal/project", "internal/realization", both},
 		{"internal/project", "internal/libraries", both},
+		{"cmd/markitect-desktop", ".", both},
+		{"cmd/markitect", ".", none},
+		{"internal/bootstrap", ".", testOnly},
+		{"internal/project", ".", none},
 		{"internal/analysis", "internal/project", both},
 		{"internal/adapters/cli", "internal/analysis", both},
 		{"internal/adapters/cli", "internal/skills", both},
@@ -174,6 +178,19 @@ func TestForbiddenLayerImportFailsInEveryFile(t *testing.T) {
 	got, err := fixtureRules(t, "internal/adapters/repo", "internal/adapters/cli").CheckRepository(root)
 	if err != nil || len(got) != 1 || got[0].Rule != "layer adapter may not import layer adapter" {
 		t.Fatalf("adapter imported a sibling adapter: %v %v", got, err)
+	}
+}
+
+func TestAnImportOfTheModuleRootIsAnEdge(t *testing.T) {
+	root := t.TempDir()
+	writeFixture(t, root, map[string]string{
+		"README.md":           "# Owner\n",
+		"source.go":           "package markitect\n",
+		"internal/model/m.go": "package model\nimport _ \"" + strings.TrimSuffix(ModulePath, "/") + "\"\n",
+	})
+	got, err := fixtureRules(t, "internal/model", ".").CheckRepository(root)
+	if err != nil || len(got) != 1 || got[0].Edge.To != "." || got[0].Rule != "layer model may not import layer image-source" {
+		t.Fatalf("%v %v", got, err)
 	}
 }
 
