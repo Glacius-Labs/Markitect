@@ -39,11 +39,16 @@ func providerAgents(ctx context.Context) (agentport.Agents, error) {
 }
 
 // agentConfig reads the agents' settings from the environment, as
-// providerAgents describes them, and returns the engine they run on. The
-// app's chat agents run with the same settings.
+// providerAgents describes them, and returns the engine they run on.
 func agentConfig(ctx context.Context) (agents.Config, *container.Engine, error) {
+	return agentConfigWith(ctx, nil)
+}
+
+// agentConfigWith is agentConfig for the app's chat agents, whose image build
+// makes when none is set. Without build, none set is an error.
+func agentConfigWith(ctx context.Context, build func(context.Context, *container.Engine) (string, error)) (agents.Config, *container.Engine, error) {
 	ref := os.Getenv("MARKITECT_MANAGER_IMAGE")
-	if ref == "" {
+	if ref == "" && build == nil {
 		return agents.Config{}, nil, errors.New("no Manager image: build one from packaging/runtime (with the project's toolchain) and set MARKITECT_MANAGER_IMAGE")
 	}
 	network := os.Getenv("MARKITECT_NETWORK")
@@ -63,22 +68,10 @@ func agentConfig(ctx context.Context) (agents.Config, *container.Engine, error) 
 	if err != nil {
 		return agents.Config{}, nil, err
 	}
-	image, err := engine.ImageID(ctx, ref)
-	if err != nil {
-		return agents.Config{}, nil, fmt.Errorf("the Manager image %s: %w", ref, err)
-	}
-	if network == "" {
-		// The agents also join the Run's network, and the Docker CLI on
-		// Linux refuses to combine the engine's default "bridge" with it.
-		network = providerNetwork
-		if err := engine.EnsureNetwork(ctx, network, map[string]string{"markitect.provider": "1"}); err != nil {
-			return agents.Config{}, nil, fmt.Errorf("the provider network: %w; or name one with MARKITECT_NETWORK", err)
-		}
-	}
 	cfg := agents.Config{
-		Runtime: agents.EngineRuntime(engine), Image: image,
+		Runtime: agents.EngineRuntime(engine),
 		Limits:  agents.Limits{CPUs: 1, MemoryBytes: 2 << 30, Pids: 256, TmpBytes: 256 << 20},
-		Network: network, Hosts: list("MARKITECT_HOSTS"), DNS: list("MARKITECT_DNS"),
+		Hosts:   list("MARKITECT_HOSTS"), DNS: list("MARKITECT_DNS"),
 		Effort: env("MARKITECT_EFFORT", "high"), Transcripts: os.Getenv("MARKITECT_TRANSCRIPTS"),
 	}
 	p, ok := providers[env("MARKITECT_PROVIDER", "claude")]
@@ -89,6 +82,24 @@ func agentConfig(ctx context.Context) (agents.Config, *container.Engine, error) 
 	if _, err := os.Stat(cfg.LoginFile); err != nil {
 		return agents.Config{}, nil, fmt.Errorf("the %s login %s: %w; log in with the provider's CLI on this host or set MARKITECT_LOGIN", cfg.Provider.Name(), cfg.LoginFile, err)
 	}
+	// Last, since a build takes minutes and the settings above can still fail.
+	var image string
+	if ref != "" {
+		if image, err = engine.ImageID(ctx, ref); err != nil {
+			return agents.Config{}, nil, fmt.Errorf("the Manager image %s: %w", ref, err)
+		}
+	} else if image, err = build(ctx, engine); err != nil {
+		return agents.Config{}, nil, err
+	}
+	if network == "" {
+		// The agents also join the Run's network, and the Docker CLI on
+		// Linux refuses to combine the engine's default "bridge" with it.
+		network = providerNetwork
+		if err := engine.EnsureNetwork(ctx, network, map[string]string{"markitect.provider": "1"}); err != nil {
+			return agents.Config{}, nil, fmt.Errorf("the provider network: %w; or name one with MARKITECT_NETWORK", err)
+		}
+	}
+	cfg.Image, cfg.Network = image, network
 	return cfg, engine, nil
 }
 

@@ -62,7 +62,7 @@ const skills: { skill: Skill; title: string; body: string; placeholder: string }
   {
     skill: 'extract',
     title: 'Extract from the code',
-    body: 'Draw a first model from the existing code. The chat proposes the Packages first, then the whole model.',
+    body: 'Draw a first model from the existing code. The chat asks what the code leaves open, then proposes the whole model.',
     placeholder: 'Anything the chat should know about the code first?',
   },
 ];
