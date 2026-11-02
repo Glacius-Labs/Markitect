@@ -81,7 +81,7 @@ describe('the project state', () => {
     const s = { initialized: true, check: { ...check, ok: false, errorCount: 4, definitions: 1, notDrawn: true } };
     const w = { uncommitted: 0, landed: false, unlanded: 0 };
     expect(nextStep(s, { ...w, extract: { chat: 'c1', working: true } })).toMatchObject({ title: 'The model is being drawn', chat: 'c1' });
-    expect(nextStep(s, { ...w, extract: { chat: 'c1', working: false } })).toMatchObject({ title: 'The chat that draws the model waits for you', chat: 'c1' });
+    expect(nextStep(s, { ...w, extract: { chat: 'c1', working: false } })).toMatchObject({ title: 'The chat that draws the model waits for you', chat: 'c1', action: 'draw' });
     expect(nextStep(s, { ...w, extract: { chat: 'c1', working: false }, proposal: { chat: 'c1', title: 'Draw' } })).toMatchObject({ title: 'A proposal waits: Draw', proposal: 'c1' });
   });
 

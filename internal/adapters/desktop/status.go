@@ -28,17 +28,27 @@ type Check struct {
 	Packages    int      `json:"packages"`
 	Files       int      `json:"files"`
 	Warnings    int      `json:"warnings"` // what markitect lint warns about
-	// NotDrawn says that no model is drawn yet: Markitect is set up, its only
-	// Definition is the first page, and the only errors are files with no place
-	// in a model. On an existing project that is the state right after init,
-	// and the next step is to draw the model, not to fix errors.
+	// NotDrawn is the state of an existing project right after init (notDrawn).
 	NotDrawn bool `json:"notDrawn,omitempty"`
 }
 
 const maxErrors = 20
 
-// fileUnregistered is the error of a file with no place in the model.
-const fileUnregistered = "file.unregistered"
+// notDrawn says that no model is drawn yet: Markitect is set up, its only
+// Definition is the first page, no file is registered, and the only errors are
+// files with no place in a model. The next step is to draw the model, not to fix
+// errors. A model that has its files placed is drawn, however small it is.
+func notDrawn(pr *project.Project) bool {
+	if len(pr.Errors) == 0 || pr.Model == nil || len(pr.Model.ModelDefinitions()) > 1 || pr.Registry == nil || len(pr.Registry.Entries) > 0 {
+		return false
+	}
+	for _, d := range pr.Errors {
+		if d.Code != "file.unregistered" {
+			return false
+		}
+	}
+	return true
+}
 
 // Waiting is what the hub's next step looks at once the model compiles. Only
 // the hub asks for it; the project list has no use for it.
@@ -135,14 +145,11 @@ func readStatus(ctx context.Context, repos Repos, p Project) Status {
 		return Status{}
 	}
 	c := &Check{OK: len(pr.Errors) == 0, ErrorCount: len(pr.Errors), Errors: []string{}}
-	unplaced := 0
 	for _, d := range pr.Errors {
-		if d.Code == fileUnregistered {
-			unplaced++
+		if len(c.Errors) == maxErrors {
+			break
 		}
-		if len(c.Errors) < maxErrors {
-			c.Errors = append(c.Errors, d.String())
-		}
+		c.Errors = append(c.Errors, d.String())
 	}
 	if pr.Model != nil {
 		c.Definitions = len(pr.Model.ModelDefinitions())
@@ -152,6 +159,6 @@ func readStatus(ctx context.Context, repos Repos, p Project) Status {
 	if pr.Registry != nil {
 		c.Files = len(pr.Registry.Owner)
 	}
-	c.NotDrawn = !c.OK && unplaced == c.ErrorCount && c.Definitions <= 1
+	c.NotDrawn = notDrawn(pr)
 	return Status{Initialized: true, Check: c}
 }

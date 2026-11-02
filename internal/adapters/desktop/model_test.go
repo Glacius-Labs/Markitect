@@ -357,6 +357,30 @@ func TestAProjectRightAfterInitHasNoModelYetAndNoErrorsToFix(t *testing.T) {
 	}
 }
 
+func TestTheModelAreaKnowsNoModelIsDrawnYet(t *testing.T) {
+	s, _, _, id := modelServer(t, adopted(t))
+	if m, res := getModel(t, s, id, ""); res.code != http.StatusOK || !m.NotDrawn || len(m.Errors) != 2 {
+		t.Fatalf("right after init: %d %+v", res.code, m.Errors)
+	}
+	s, _, _, id = modelServer(t, library(t))
+	if m, _ := getModel(t, s, id, ""); m.NotDrawn {
+		t.Error("a drawn model counts as not drawn")
+	}
+}
+
+func TestASmallModelWithItsFilesPlacedIsDrawn(t *testing.T) {
+	files := adopted(t)
+	files[".markitect/registry.md"] = "| File | Realizes | Why |\n|---|---|---|\n| go.mod | [[project]] | The module |\n"
+	s, _, _, id := modelServer(t, files)
+	p := hubOf(t, s, id)
+	if c := p.Status.Check; c == nil || c.OK || c.NotDrawn || c.ErrorCount != 1 || c.Definitions != 1 {
+		t.Fatalf("one Definition, one file placed and one new: %+v", c)
+	}
+	if p.Waiting != nil {
+		t.Errorf("what waits: %+v", p.Waiting)
+	}
+}
+
 func TestOtherErrorsAreErrorsEvenWithNoModelYet(t *testing.T) {
 	files := adopted(t)
 	files[".markitect/model/project.md"] = "no front matter\n"

@@ -37,7 +37,7 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
   const latest = useRef(0);
   const load = useCallback(() => {
     const asked = ++latest.current;
-    api.project(id).then(
+    return api.project(id).then(
       (p) => {
         if (asked !== latest.current) {
           return;
@@ -57,10 +57,22 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
       },
     );
   }, [id, onGone]);
-  useEffect(load, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
   useRefreshOnFocus(load);
   // A proposal that came or was decided changes the next step.
   useChatChanged(load);
+
+  // While a chat draws the model the hub follows it, with the panel closed too.
+  const drawing = project?.waiting?.extract?.working;
+  useEffect(() => {
+    if (!drawing) {
+      return;
+    }
+    const timer = window.setInterval(() => void load(), 3000);
+    return () => window.clearInterval(timer);
+  }, [drawing, load]);
 
   // The digits enter the areas that are built.
   useEffect(() => {
@@ -161,14 +173,14 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
             Set up Markitect
           </button>
         )}
-        {step.action === 'draw' && (
-          <button className="gl-button" data-variant="primary" data-size="sm" aria-busy={busy || undefined} disabled={busy} onClick={() => void draw()}>
-            Draw the model
-          </button>
-        )}
         {step.chat && (
           <button className="gl-button" data-variant="primary" data-size="sm" onClick={() => openChat(project.id, step.chat!)}>
             Open the chat
+          </button>
+        )}
+        {step.action === 'draw' && (
+          <button className="gl-button" data-variant={step.chat ? undefined : 'primary'} data-size="sm" aria-busy={busy || undefined} disabled={busy} onClick={() => void draw()}>
+            {step.chat ? 'Start again' : 'Draw the model'}
           </button>
         )}
         {waitingChat && (
