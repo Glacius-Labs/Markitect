@@ -35,14 +35,19 @@ func TestRealEngineBuildsTheChatImage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// A run that crashed may have left the image, and then nothing would build.
+	_ = engine.RemoveImage(ctx, tag)
 	t.Cleanup(func() { _ = engine.RemoveImage(context.Background(), tag) })
 
 	// Stop during the build: it ends soon, and no tag appears afterwards.
 	stopped, stop := context.WithCancel(ctx)
 	defer stop()
 	var at time.Time
+	seen := false
 	_, err = image.ensure(stopped, engine, func(s string) {
 		if strings.HasPrefix(s, chatImagePreparing+": ") && at.IsZero() {
+			// While it runs the build must show, or its absence proves nothing.
+			seen = buildRuns(t, tag)
 			at = time.Now()
 			stop()
 		}
@@ -62,8 +67,11 @@ func TestRealEngineBuildsTheChatImage(t *testing.T) {
 	// takes longer than this wait. Windows ends the command differently, which
 	// this does not show.
 	if runtime.GOOS == "linux" {
-		if out, err := exec.Command("pgrep", "-af", "--tag "+tag).CombinedOutput(); err == nil {
-			t.Errorf("a stopped build still runs: %s", out)
+		if !seen {
+			t.Error("the check saw no build while one ran, so it shows nothing")
+		}
+		if buildRuns(t, tag) {
+			t.Error("a stopped build still runs")
 		}
 	}
 
@@ -96,4 +104,24 @@ func TestRealEngineBuildsTheChatImage(t *testing.T) {
 	if _, err := image.ensure(ctx, engine, func(s string) { said = append(said, s) }); err != nil || len(said) != 0 {
 		t.Errorf("a later chat: %v, said %q", err, said)
 	}
+}
+
+// buildRuns says whether a process builds the tag. pgrep is on Linux only, and
+// exits 1 when nothing matches; anything else is a failed check.
+func buildRuns(t *testing.T, tag string) bool {
+	t.Helper()
+	if runtime.GOOS != "linux" {
+		return false
+	}
+	out, err := exec.Command("pgrep", "-af", "--", "--tag "+tag).CombinedOutput()
+	var exit *exec.ExitError
+	switch {
+	case err == nil:
+		t.Logf("building: %s", out)
+		return true
+	case errors.As(err, &exit) && exit.ExitCode() == 1:
+		return false
+	}
+	t.Errorf("pgrep: %v\n%s", err, out)
+	return false
 }
