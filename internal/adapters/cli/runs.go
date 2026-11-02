@@ -47,7 +47,7 @@ func (c CLI) runCommand(ctx context.Context, mode agentport.Mode, args []string)
 	fs.DurationVar(&lim.Start, "start-timeout", lim.Start, "how long one agent start may take")
 	if mode == agentport.Apply {
 		// verify has no makers, so it has no attempts to bound.
-		fs.IntVar(&lim.Rounds, "rounds", lim.Rounds, "how many attempts one Manager's maker may make at its own work: its first start and one after each refusal of its work")
+		fs.IntVar(&lim.Rounds, "rounds", lim.Rounds, "how many attempts in a row one Manager's maker may make at its own work while nothing moves around it: its first start and one after each refusal of its work")
 		fs.StringVar(&findings, "findings", "", "a Findings page whose Findings become checklist items")
 	} else {
 		fs.StringVar(&findingsOut, "findings-out", "", "write the Findings as a Findings page, the input of apply --findings")

@@ -988,6 +988,117 @@ func TestLeavingOutNamedWorkUsesAnAttempt(t *testing.T) {
 	}
 }
 
+// limitChange changes a Rule at Root, so Root and every Package below it work.
+// Root's first submission is approved and the children finish; those are the
+// steps the tests of a Root in stages share.
+func limitChange(f *fixture) string {
+	base := f.tip("main")
+	f.write(map[string]string{m + "loan-limit.md": def("std/Rule", "Loan limit", "At most `3` open loans.")})
+	f.commit("limit 3")
+	a := f.agents
+	a.On("members", maker, a.Submit(nil, nil, word("conforms")), a.Submit([]string{"managers/members.loans"}, nil, word("conforms")))
+	a.On("members", checker, a.Review(nil), a.Review(nil))
+	a.On("members/loans", maker, a.Submit(nil, nil, word("conforms")))
+	a.On("members/loans", checker, a.Review(nil))
+	return base
+}
+
+// Root in stages: each of its rejections after the first is followed by new
+// approved work of a child, so none is a stuck maker, and one attempt is enough.
+func TestARefusalCountsOnlyWhenNothingMoved(t *testing.T) {
+	f := newFixture(t)
+	base := limitChange(f)
+	a := f.agents
+	again := agentfake.Call(func(ctx context.Context, s agentport.Start, h agentport.Host) error {
+		_, err := h.Assign(ctx, "catalog", "Do the next stage.")
+		return err
+	})
+	notYet := a.Review(map[string]string{"loan-limit": "not all stages are in"})
+	merge := a.Submit([]string{"managers/members", "managers/catalog"}, nil, word("conforms"))
+	stage := func(n int) agentfake.Step {
+		return a.Submit(nil, map[string]string{"src/catalog/book.go": fmt.Sprintf("package catalog\n\n// stage %d\ntype Book struct{ Title string }\n", n)}, word("conforms"))
+	}
+	a.On(".", maker, a.Submit(nil, nil, word("conforms")), merge, again, merge, again, merge)
+	a.On(".", checker, a.Review(nil), notYet, notYet, a.Review(nil))
+	a.On("catalog", maker, stage(1), stage(2), stage(3))
+	a.On("catalog", checker, a.Review(nil), a.Review(nil), a.Review(nil))
+	r := f.run(run.Request{Base: base, Limits: withRounds(1)})
+	if r.State != run.StateLanded {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+	if got := startsOf(r, ".", maker); got != 6 {
+		t.Fatalf("Root's maker started %d times", got)
+	}
+}
+
+// A child approved again for the same work moves nothing: a stuck Root cannot
+// keep its count down by giving its child an empty task.
+func TestAnApprovalOfTheSameWorkMovesNothing(t *testing.T) {
+	f := newFixture(t)
+	base := limitChange(f)
+	a := f.agents
+	again := agentfake.Call(func(ctx context.Context, s agentport.Start, h agentport.Host) error {
+		_, err := h.Assign(ctx, "catalog", "Look at it again.")
+		return err
+	})
+	notYet := a.Review(map[string]string{"loan-limit": "still wrong"})
+	merge := a.Submit([]string{"managers/members", "managers/catalog"}, nil, word("conforms"))
+	same := a.Submit(nil, nil, word("conforms"))
+	a.On(".", maker, a.Submit(nil, nil, word("conforms")), merge, again, merge)
+	a.On(".", checker, a.Review(nil), notYet, notYet)
+	a.On("catalog", maker, same, same)
+	a.On("catalog", checker, a.Review(nil), a.Review(nil))
+	r := f.run(run.Request{Base: base, Limits: withRounds(1)})
+	if r.State != run.StateIncomplete || !strings.Contains(r.Why, "Manager . used its 1 maker attempts") {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+	if got := startsOf(r, ".", maker); got != 4 {
+		t.Fatalf("Root's maker started %d times", got)
+	}
+}
+
+// The same Root with nothing moving between its rejections is stuck.
+func TestRefusalsInARowWithNothingMovingStopTheRun(t *testing.T) {
+	f := newFixture(t)
+	base := limitChange(f)
+	a := f.agents
+	merge := a.Submit([]string{"managers/members", "managers/catalog"}, nil, word("conforms"))
+	no := a.Review(map[string]string{"loan-limit": "still wrong"})
+	a.On(".", maker, a.Submit(nil, nil, word("conforms")), merge, merge, merge)
+	a.On(".", checker, a.Review(nil), no, no, no)
+	a.On("catalog", maker, a.Submit(nil, nil, word("conforms")))
+	a.On("catalog", checker, a.Review(nil))
+	r := f.run(run.Request{Base: base, Limits: withRounds(2)})
+	if r.State != run.StateIncomplete || !strings.Contains(r.Why, "Manager . used its 2 maker attempts") || !strings.Contains(r.Why, "no new approved work") {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+	if got := startsOf(r, ".", maker); got != 4 {
+		t.Fatalf("Root's maker started %d times", got)
+	}
+}
+
+// A Manager's approval starts its count again, so a rejection of later work
+// has its attempts.
+func TestAnApprovalStartsTheCountAgain(t *testing.T) {
+	f := newFixture(t)
+	base, _ := changeBook(f)
+	a := f.agents
+	work := a.Submit(nil, map[string]string{"src/catalog/book.go": isbn}, word("changed"))
+	a.On("catalog", maker, work, a.Submit(nil, nil, word("changed")), a.Submit(nil, nil, word("changed")))
+	a.On("catalog", checker, a.Review(nil), a.Review(map[string]string{"catalog/book": "no isbn"}), a.Review(nil))
+	a.On(".", maker,
+		agentfake.Call(func(ctx context.Context, s agentport.Start, h agentport.Host) error {
+			_, err := h.Assign(ctx, "catalog", "Check the field again.")
+			return err
+		}),
+		a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
+	a.On(".", checker, a.Review(nil))
+	r := f.run(run.Request{Base: base, Limits: withRounds(1)})
+	if r.State != run.StateLanded {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+}
+
 func TestDeadlineReachesTheAgent(t *testing.T) {
 	f := newFixture(t)
 	base, start := changeBook(f)
