@@ -54,7 +54,7 @@ FAKE_CLAUDE = textwrap.dedent(r"""
     os.close(fd)
     os.unlink(lock)
     cwd = pathlib.Path.cwd()
-    answer = re.search(r"to `([^`]+)`, outside the repository", prompt).group(1)
+    answer = re.search(r"to `([^`]+)`, which the host reads", prompt).group(1)
     items = re.findall(r"^\| `([^`]+)` \|", prompt.split("## Submitted verdicts")[0], re.M)
     if role == "maker":
         (cwd / "realization").mkdir(exist_ok=True)
@@ -301,6 +301,26 @@ class OneAgentArmTest(unittest.TestCase):
         record, out = self.run_arm("no-review")
         self.assertEqual(record["reported"]["status"], "incomplete")
         self.assertIn("no complete review", record["reported"]["cause"])
+        self.assertIn("left out these items", self.prompt("checker-1-2"))
+
+    def test_a_review_that_left_items_out_is_completed_on_the_second_try(self):
+        self.script({"checker-1-1": ["junk"], "checker-1-2": ["approve"]})
+        record, out = self.run_arm("partial")
+        self.assertEqual(record["reported"]["status"], "landed", (out / "variant" / "run.json").read_text())
+        self.assertEqual(self.names(out), [(".", "maker"), (".", "checker"), (".", "checker")])
+
+    def test_the_cost_and_a_check_in_a_missing_folder_are_reported(self):
+        fail = "checks:\n  - name: build\n    command: go build\n    directory: not-there\n    timeout: 1m\n"
+        record, out = self.run_arm("missing-folder", "--rounds", "1", checks=fail)
+        self.assertEqual(record["reported"]["status"], "incomplete")
+        self.assertIn("the check could not run", json.dumps(self.result(out)["requiredChecks"]))
+        record, out = self.run_arm("cost")
+        self.assertEqual(record["reported"]["usage"]["costUsd"], 0.2)
+        # The answers stay out of Git.
+        repo = self.tmp / "look-cost"
+        subprocess.run(["git", "init", "-q", "--bare", str(repo)], check=True)
+        subprocess.run(["git", "-C", str(repo), "fetch", "-q", str(out / "variant" / "result.bundle"), "+refs/heads/*:refs/heads/*"], check=True, capture_output=True)
+        self.assertFalse([f for f in suite.git(repo, "ls-tree", "-r", "--name-only", "result").splitlines() if f.startswith(".arm")])
 
     def test_small_readers(self):
         with tempfile.TemporaryDirectory() as t:
@@ -331,11 +351,12 @@ class OneAgentArmTest(unittest.TestCase):
             self.assertEqual(len(arm.read_verdicts(path, {"a"})[1]), 1)
             items = [{"item": "a", "package": "", "why": ""}]
             path.write_text(json.dumps({"reviews": [{"item": "a", "answer": "confirmed"}]}))
-            self.assertEqual(arm.read_reviews(path, items)["a"]["answer"], "confirmed")
-            path.write_text(json.dumps({"reviews": [{"item": "a", "answer": "fine"}]}))
-            self.assertIsNone(arm.read_reviews(path, items))
-            path.write_text(json.dumps({"reviews": []}))
-            self.assertIsNone(arm.read_reviews(path, items))
+            self.assertEqual(arm.read_reviews(path, items)[0]["a"]["answer"], "confirmed")
+            self.assertEqual(arm.read_reviews(path, items)[1], [])
+            path.write_text(json.dumps({"reviews": [{"item": "a", "answer": "fine"}, {"item": "extra", "answer": "confirmed"}]}))
+            self.assertEqual(arm.read_reviews(path, items), ({}, ["a"]))
+            path.write_text("not json")
+            self.assertEqual(arm.read_reviews(path, items), ({}, ["a"]))
         listed, inherited = arm.checklist({"checklists": [
             {"package": "", "own": [{"definition": "project", "reasons": ["modified", "linked"]}], "inherited": [], "findings": [],
              "stale": [{"code": "stale.file", "package": "", "pageFile": ".markitect/registry.md", "file": "gone.go"}]},

@@ -9,7 +9,7 @@ Run it through the suite's sandbox, as K: the suite's one container per launch w
 
 The host, out of the agents' reach, holds impact and the generated prompts; the gate after make has ended (the model
 untouched, a verdict per item, compile, required checks); starting the checker; the loop's limit; all Git; and the
-landing. An agent edits files and writes its answer to a file outside the repository, which never lands.
+landing. An agent edits files and writes its answer to a file in `.arm/`, which Git excludes, so it never lands.
 
 - S (`single`): make is one session with the whole checklist and its context.
 - F (`federal`): make is one prompt per working Package with its bounded context, in parallel in one folder, and after
@@ -61,7 +61,7 @@ REPOSITORY = """## The repository
 """
 ANSWER = """# Answer
 
-Write your verdicts to `{file}`, outside the repository, as JSON:
+Write your verdicts to `{file}`, which the host reads and never commits, as JSON:
 
 {{"verdicts": [{{"item": "ITEM", "verdict": "conforms", "evidence": "..."}}]}}
 
@@ -167,14 +167,16 @@ class Host:
         self.a, self.tmp, self.repo, self.out, self.env, self.session_env = a, tmp, repo, out, env, session_env
         self.login, self.model, self.deadline, self.secrets = login, model, deadline, secrets
         self.starts, self.notes = [], []
-        self.answers = tmp / "answers"
+        self.answers = repo / ".arm"
         self.answers.mkdir()
+        with open(repo / ".git" / "info" / "exclude", "a", encoding="utf-8") as f:
+            f.write("\n/.arm/\n")
 
     def left(self):
         return self.deadline - time.monotonic() - MARGIN
 
-    def session(self, name, manager, role, attempt, prompt):
-        """One headless session: its record goes into the Result's starts, in the order they ended."""
+    def session(self, name, manager, role, attempt, prompt, seconds=None):
+        """One headless session, up to the time left or `seconds`: its record goes into the Result's starts, in the order they ended."""
         if self.left() <= 0:
             self.starts.append({"manager": manager or ".", "role": role, "round": attempt, "reason": "deadline", "agent": f"claude:{self.model}"})
             return "deadline"
@@ -191,7 +193,7 @@ class Host:
             argv += ["--effort", self.a.effort]
         try:
             record = run_session(argv, path, self.repo, dict(self.session_env, CLAUDE_CONFIG_DIR=str(config)), folder / "session.stream.jsonl",
-                                 folder / "session.stderr.log", self.left())
+                                 folder / "session.stderr.log", min(self.left(), seconds or self.left()))
         finally:
             (config / ".credentials.json").unlink(missing_ok=True)
         facts = cc.stream_facts(folder / "session.stream.jsonl")
@@ -239,6 +241,9 @@ class Host:
                     passed, output = p.returncode == 0, (p.stdout + p.stderr)[-2000:]
                 except subprocess.TimeoutExpired:
                     passed, output = False, "the check timed out"
+                except OSError as e:
+                    # Its directory may not exist yet: that is the work's state, not the host's failure.
+                    passed, output = False, f"the check could not run: {e}"
                 results.append({"name": c.get("name"), "passed": passed, "seconds": round(time.monotonic() - started, 1), "output": output})
         finally:
             self.git("worktree", "remove", "--force", str(checkout), check=False)
@@ -313,7 +318,7 @@ def checker_prompt(host, items, verdicts, checks, base, commit, file):
     ran = "".join(f"- {c['name']}: {'passed' if c['passed'] else 'failed'}\n" for c in checks) or "- none\n"
     return f"""# Task
 
-Re-check every verdict of the submission `{commit}` against the model and the repository, which holds that commit. Change no file. Dispute a `conforms` or `changed` verdict whose evidence does not show how each example in the item's Definition is met, and one whose realization matches part of the Definition but not its example. Where the Definition and what it links to contradict each other, nothing can conform: the maker's only right verdict is `model-problem`, so dispute a verdict that claims the item conforms.
+Re-check every verdict of the submission `{commit}` against the model and the repository, which holds that commit. Change no file. Dispute a `conforms` or `changed` verdict whose evidence does not show how each example in the item's Definition is met, and one whose realization matches part of the Definition but not its example. Where the Definition and what it links to contradict each other, nothing can conform: the maker's only right verdict is `model-problem`, so dispute a verdict that claims the item conforms. Confirm a `model-problem` verdict only if the model really contradicts itself or leaves open behavior at the project boundary for this item; otherwise dispute it.
 
 {table(items)}
 ## Submitted verdicts
@@ -332,7 +337,7 @@ Re-check every verdict of the submission `{commit}` against the model and the re
 {model_text(host.repo, [i['item'] for i in items])}
 # Answer
 
-Write your review to `{file}`, outside the repository, as JSON:
+Write your review to `{file}`, which the host reads and never commits, as JSON:
 
 {{"reviews": [{{"item": "ITEM", "answer": "confirmed", "evidence": "..."}}]}}
 
@@ -341,16 +346,15 @@ One entry per verdict, `confirmed` or `disputed`, each with evidence: what you r
 
 
 def read_reviews(path, items):
-    """A checker's answer: {item: (answer, evidence)}, or None when it is no complete review."""
+    """A checker's answer: ({item: its answer and evidence} for the checklist's items, the items it left out)."""
+    wanted = [i["item"] for i in items]
     try:
         entries = json.loads(pathlib.Path(path).read_text(encoding="utf-8"))["reviews"]
-        found = {e["item"]: {"answer": e["answer"], "evidence": e.get("evidence") or ""} for e in entries}
+        found = {e["item"]: {"answer": e["answer"], "evidence": e.get("evidence") or ""} for e in entries
+                 if isinstance(e, dict) and e.get("item") in wanted and e.get("answer") in ("confirmed", "disputed")}
     except (OSError, ValueError, KeyError, TypeError):
-        return None
-    wanted = {i["item"] for i in items}
-    if set(found) != wanted or any(r["answer"] not in ("confirmed", "disputed") for r in found.values()):
-        return None
-    return found
+        found = {}
+    return found, [item for item in wanted if item not in found]
 
 
 def fan_out(host, items, inherited, attempt):
@@ -368,7 +372,8 @@ def fan_out(host, items, inherited, attempt):
         if rules:
             scope += " These changed Rules above you bind your code too; the integrator answers for them: " + ", ".join(f"`{r}`" for r in rules) + "."
         file = host.answers / f"{name}-{attempt}.json"
-        host.session(name, package, "maker", attempt, maker_prompt(host, mine, scope, [i["item"] for i in mine] + rules, file))
+        # The integrator after them needs time too.
+        host.session(name, package, "maker", attempt, maker_prompt(host, mine, scope, [i["item"] for i in mine] + rules, file), host.left() * 0.55)
         return file
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=max(len(packages), 1)) as pool:
@@ -424,19 +429,23 @@ def graph(host, shape, items, inherited, owner, rounds):
             refusals.append({"attempt": attempt, "by": "gate", "reasons": refused})
             defects = "\n".join(f"- {r}" for r in refused)
         else:
-            review, tries = None, 0
-            while review is None and tries < 2:
+            review, missing, tries = {}, True, 0
+            while missing and tries < 2:
                 tries += 1
                 path = host.answers / f"checker-{attempt}-{tries}.json"
                 prompt = checker_prompt(host, items, verdicts, checks, owner, commit, path)
+                if tries > 1:
+                    prompt += "\nThe last review left out these items, and an entry for each is needed: " + ", ".join(f"`{m}`" for m in missing) + ".\n"
                 reason = host.session(f"checker-{attempt}-{tries}", ROOT, "checker", attempt, prompt)
                 host.tidy()
                 if reason == "deadline":
                     return "incomplete", "the deadline passed during the check", verdicts, checks, commit, refusals
                 if reason == "failed" and host.starts[-1].get("class"):
                     return "incomplete", "a provider failure ended the checker: " + host.starts[-1].get("detail", ""), verdicts, checks, commit, refusals
-                review = read_reviews(path, items)
-            if review is None:
+                found, _ = read_reviews(path, items)
+                review.update(found)
+                missing = [i["item"] for i in items if i["item"] not in review]
+            if missing:
                 return "incomplete", "the checker left no complete review twice in a row", verdicts, checks, commit, refusals
             disputed = {item: r["evidence"] for item, r in review.items() if r["answer"] == "disputed"}
             if not disputed:
@@ -529,6 +538,8 @@ def main(argv=None):
             (out / "results" / f"{name}.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
             report["provider"], report["model"] = arm.reported_model(result, provider, model)
             failed = [{k: s.get(k) for k in ("manager", "role", "round", "class", "detail")} for s in host.starts if s.get("reason") == "failed"]
+            costs = [(s.get("usage") or {}).get("costUsd") for s in host.starts]
+            report["usage"] = {"costUsd": round(sum(c for c in costs if c), 6) if any(costs) else None, "sessions": len(host.starts)}
             report.update(status=status, cause=why, starts=len(host.starts), failedStarts=failed, refusals=len(refusals), landed=landed, leftovers=[],
                           afterLanding=[], afterLandingReported=True, cleanup=[])
             if status not in arm.DELIBERATE and not any(s.get("reason") in ("finished", "deadline") for s in host.starts):
