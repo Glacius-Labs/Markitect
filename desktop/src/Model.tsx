@@ -191,7 +191,14 @@ export function ModelArea(props: { id: string; view: View; item?: string }) {
           </a>
         </Alert>
       )}
-      {ix && ix.m.errors.length > 0 && (
+      {ix && ix.m.notDrawn && (
+        <Alert tone="info" title="No model is drawn yet" body="Markitect is set up, and the project's files have no place in a model yet. Draw the model from the project's page.">
+          <a className="gl-button" data-size="sm" href={hub(id)}>
+            Go to the project
+          </a>
+        </Alert>
+      )}
+      {ix && !ix.m.notDrawn && ix.m.errors.length > 0 && (
         <Alert tone="danger" title={`The model has ${plural(ix.m.errors.length, 'compile error')}`} body="The views show what compiles. The Quality view lists every error.">
           <a className="gl-button" data-size="sm" href={modelHref(id, 'quality')}>
             Show the errors

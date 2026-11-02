@@ -261,8 +261,12 @@ body {
     gap: var(--space-6);
   }
 
-  .tile__text {
+  .tile__inner:has(.tile__live) .tile__text {
     flex: 0 0 min(45%, 22rem);
+  }
+
+  .tile__text {
+    flex: 1;
   }
 }
 

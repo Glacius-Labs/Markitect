@@ -29,7 +29,7 @@ export function Quality({ ix, pid, item, diff }: Props) {
     <>
       <div className="gl-stats">
         <Stat label="Lint warnings" value={m.lint.length} />
-        <Stat label="Compile errors" value={m.errors.length} />
+        <Stat label={m.notDrawn ? 'Files with no place yet' : 'Compile errors'} value={m.errors.length} />
         <Stat label="Cycles" value={m.cycles.length} />
         <Stat label="Unused Definitions" value={unused} />
       </div>
@@ -88,10 +88,10 @@ export function Quality({ ix, pid, item, diff }: Props) {
       </section>
       {show(m.errors).length > 0 && (
         <section className="section">
-          <h2 className="h3">Compile errors{selected !== undefined && ` in ${packageName(selected)}`}</h2>
+          <h2 className="h3">{m.notDrawn ? 'Files with no place in a model yet' : 'Compile errors'}{selected !== undefined && ` in ${packageName(selected)}`}</h2>
           <ul className="findings">
             {show(m.errors).map((d, i) => (
-              <Finding ix={ix} key={i} pid={pid} d={d} badge={<Badge tone="danger">{d.code}</Badge>} />
+              <Finding ix={ix} key={i} pid={pid} d={d} badge={<Badge tone={m.notDrawn ? 'neutral' : 'danger'}>{d.code}</Badge>} />
             ))}
           </ul>
         </section>

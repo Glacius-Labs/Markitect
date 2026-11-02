@@ -59,8 +59,9 @@ export function nextStep(s: Status, w?: Waiting): Step {
         title: w.extract.working ? 'The model is being drawn' : 'The chat that draws the model waits for you',
         body: w.extract.working
           ? 'An agent is reading the code. Follow it in the chat, where it asks about what the code leaves open.'
-          : 'Answer it in the chat, or ask it to go on. Nothing reaches your files until you accept its proposal.',
+          : 'See where it stands in the chat: it may have a question, or it may not have started. Nothing reaches your files until you accept its proposal.',
         chat: w.extract.chat,
+        action: w.extract.working ? undefined : 'draw',
       };
     }
     return {

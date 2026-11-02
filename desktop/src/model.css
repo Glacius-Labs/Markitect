@@ -182,8 +182,8 @@ a.gl-tab {
     overflow: auto;
   }
 
-  .prose {
-    max-width: calc(var(--measure) * 1.25);
+  .reader__page .prose {
+    max-width: calc(var(--measure) * 4 / 3);
   }
 
   .quality {
