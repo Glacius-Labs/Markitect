@@ -65,6 +65,8 @@ Complexity first, then results, in one short table per arm against M and K, with
 
 ### Amendment 2, 2 November 2026: the reading
 
+**Corrected the same evening.** The Topics session read the checkers' answers, and Build checked what it found against the evidence. The first version of this reading said S "did everything right" and that F's checkers disputed mostly evidence, and it proposed only narrowing the re-check. The points below now say what the answers show.
+
 **How it ended.** F's W0 used its 6 attempts and did not land, which meets the stop rule. The runner had just started F's C1 from the same empty start, which would have rebuilt the program and not tested C1's change, so Build wrote `STOP` and killed that launch's sandbox after about a minute. Its record is no result of F. F's C2 did not run. The final check found no leftovers, no credential and no engine error. Seven-day use went from 6 % to 8 %.
 
 **Complexity**
@@ -91,12 +93,18 @@ Worked around to make it run: a process group per session, since K's stop would 
 
 Builds and tests failing during make: S 2 of 75, F 0 of 53. Subagent calls: S 5, all on W0; F 0. Checker rejections: S 0, F 7; the gate refused S once, for a stray binary.
 
+Go delivered on W0, as code lines, test lines and test functions: S 2,465, 6,942 and 228; K 2,471, 1,528 and 38; M 4,163, 3,834 and 112. The hidden cases do not see tests. That they explain much of S's cost over K is an inference, not measured.
+
 **What it shows:**
 
-- **S did everything right, and more simply than M.** It matched M's results on every case here, at about 0.2 to 0.8 of its cost.
-- **F's fan-out worked. Its checker loop did not.** On W0 the nine Packages ran side by side with no failed build, the longest for 11 minutes, and Root's integration took 1 minute. That is a little over half of S's 21-minute make, at a cost of $5.00 against $6.04. Then six fresh checkers cost $9.17 and disputed different items each time, mostly on missing test evidence, for 1 to 3 of 108 items, while the build and tests passed. Since a stopped Run delivers nothing, F's 54 failed cases are the empty start, and its code has no hidden score.
+- **S got every hidden case right, and more simply than M.** It matched M's results on every case here, at about 0.2 to 0.8 of its cost. That holds for the hidden cases and its own checker only, as the next points show.
+- **F's fan-out worked. Its checker loop did not.** On W0 the nine Packages ran side by side with no failed build, the longest for 11 minutes, and Root's integration took 1 minute. That is a little over half of S's 21-minute make, at a cost of $5.00 against $6.04. Then six fresh checkers cost $9.17 and disputed 1 to 3 of 108 items each, 11 in all, while the build and tests passed. Since a stopped Run delivers nothing, F's 54 failed cases are the empty start, and its code has no hidden score.
+- **No F checker named wrong behavior.** 8 of the 11 disputes are evidence or test gaps, and in 6 of those the checker itself says the code looks right or probably right. The other 3 are one rule read two ways: the `Interface` Kind says other modules use nothing else of a module, and the maker was told breach or an open model (round 1), no model problem and fine (round 2), then breach again (round 4). Rounds 3, 5 and 6 did not dispute it. 4 of the 8 gaps are behavior across modules, which no Package prompt owns, so that part is F's own.
+- **S's clean pass is partly one reader's ruling.** S's code has the same kind of exports, such as `billing.InvoicesOfMonth` and `members.Members`. Its checker saw them and let them through: "the model gives no other way to get them, so I do not hold it against the realization." F's round 4 checker held the opposite, that the reports could be built from what the interfaces list. The interface pages name the records other modules may use and not always how to get them, so the model may be unclear here. A checker settled that on its own authority, where a model defect should escalate ([DEC-063](../concepts/register.md#dec-063-the-model-is-authoritative-defects-escalate)), and the arm's result records no finding of it.
 - **That loop is S's too.** S's checker approved W0 the first time, on one repetition. A fresh checker that re-reads everything each round can keep finding something, so S may meet the same stop on another launch.
-- **The checker's worth stays open.** It caught nothing in S's five launches. In F it rightly refused model-problem verdicts on items a contradiction did not reach, and the rest of its disputes were about evidence.
+- **The checker's worth stays open.** It caught nothing in S's five launches, and on F's W0 it named no wrong behavior. On F's contradiction plant it rightly refused model-problem verdicts on items the contradiction did not reach.
 - **K had the same hidden results on all five, at about 0.2 to 1.0 of S's cost.** It was about level on C1 and under half on the rest. This pilot does not show that S is better than K. What S adds is a verdict with evidence for each reached Definition, a current registry and a second reader.
 
-**Build's view:** S is worth pursuing, and F is a small option to keep for a project too large for one session, which this pilot cannot test. Before more launches, fix the loop, for example by having a later round re-check only the disputed items and what changed. Concept 2.0 stays as it is until the owner decides.
+**Build's view:** S is worth pursuing, and F is a small option to keep for a project too large for one session, which this pilot cannot test. If F stays, its Root prompt should own the behavior across modules and its tests.
+
+Before more launches, fix the loop, and not by narrowing it alone. On paper, re-checking only the disputed items and what changed lands F at round 3. So does the contract Topics proposes to the owner: a checker answers `wrong` or `not-shown`, only `wrong` refuses, and `not-shown` lands as a recorded finding. Both land there because round 3's checker accepted a rule that round 4's refused, so neither settles a rule read two ways. Build would do both, and have whatever a checker waives land as a recorded finding too, so that a person sees the ruling. That changes the checker's answer and not only its prompt, and nothing has tested it on the plants. Concept 2.0 stays as it is until the owner decides.
