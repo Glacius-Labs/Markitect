@@ -15,9 +15,13 @@ landing. An agent edits files and writes its answer to a file in `.arm/`, which 
 - F (`federal`): make is one prompt per working Package with its bounded context, in parallel in one folder, and after
   they have all ended one Root prompt that integrates. A rejection goes back to Root alone.
 
-The checker is a fresh session the host starts, never a subagent of the maker. Agents may use subagents, as K may. A
-`model-problem` verdict the checker confirms ends the Run without landing. Exit codes and the record are the 2.0 arm's
-(markitect_arm.py), so the suite classes and reads these arms as it does that one.
+The checker is a fresh session the host starts, never a subagent of the maker. Agents may use subagents, as K may. It
+answers each verdict `confirmed`, `wrong`, `not-shown` or `waived`. Only `wrong` refuses the work; `not-shown` and
+`waived` land and are recorded as findings, so that a person sees them. A ruling stands for the Run: a later round
+re-checks only what was refused and the verdicts the maker changed since, and a later checker reopens another item only
+if the diff since the last review breaks it. A `model-problem` verdict the checker confirms ends the Run without landing,
+and any other answer to one refuses it, since nothing was made for that item. Exit codes and the record are the 2.0
+arm's (markitect_arm.py), so the suite classes and reads these arms as it does that one.
 """
 import argparse
 import concurrent.futures
@@ -47,6 +51,8 @@ EDITABLE = re.compile(r"^\.markitect/(registry\.md$|registry/)")
 PROVIDER_CLASS = {"rate_limit": "rate-limit", "overloaded": "capacity", "overloaded_error": "capacity", "server_error": "server-error",
                   "api_error": "server-error", "authentication_failed": "login", "billing_error": "login",
                   "status 429": "rate-limit", "status 529": "capacity", "status 401": "login", "status 403": "login"}
+ANSWERS = ("confirmed", "wrong", "not-shown", "waived")
+RECORDED = ("not-shown", "waived")
 
 COVERS = """## What a verdict covers
 
@@ -167,6 +173,7 @@ class Host:
         self.a, self.tmp, self.repo, self.out, self.env, self.session_env = a, tmp, repo, out, env, session_env
         self.login, self.model, self.deadline, self.secrets = login, model, deadline, secrets
         self.starts, self.notes = [], []
+        self.rulings = {}
         self.answers = repo / ".arm"
         self.answers.mkdir()
         with open(repo / ".git" / "info" / "exclude", "a", encoding="utf-8") as f:
@@ -306,7 +313,8 @@ def maker_prompt(host, items, scope, focus, file, defects=None, reports=None):
     return "\n".join(parts)
 
 
-def checker_prompt(host, items, verdicts, checks, base, commit, file):
+def checker_prompt(host, items, verdicts, checks, base, commit, file, owner=None, refused=None):
+    """The checker's prompt for these items. `base` is what an earlier review saw, and then `owner` and what it refused are named too."""
     diff = host.git("diff", base, commit)
     if len(diff) <= MAX_INLINE_DIFF:
         marks = fence(diff)
@@ -316,9 +324,25 @@ def checker_prompt(host, items, verdicts, checks, base, commit, file):
         shown = f"The diff is larger than {MAX_INLINE_DIFF >> 10} KiB. `git diff {base} {commit}` shows it. Changed files:\n\n{names}\n"
     rows = "".join(f"| `{i['item']}` | {verdicts[i['item']]['verdict']} | {str(verdicts[i['item']]['evidence']).replace('|', ' ')} |\n" for i in items)
     ran = "".join(f"- {c['name']}: {'passed' if c['passed'] else 'failed'}\n" for c in checks) or "- none\n"
+    earlier = ""
+    if owner:
+        named = {i["item"] for i in items}
+        others = ", ".join(f"`{item}`" for item in verdicts if item not in named) or "none"
+        earlier = ("## What an earlier review ruled\n\nAn earlier review of this Run ruled on the other items, and those rulings stand. Re-check the items above: those it refused and "
+                   "those whose verdict the maker has changed since. If the diff below breaks another item, add an entry for that item too. "
+                   f"`git diff {owner} {commit}` shows the whole work.\n\nThe other items: {others}.\n\n")
+        if refused:
+            earlier += "It refused these:\n\n" + "".join(f"- `{item}`: {evidence}\n" for item, evidence in refused.items()) + "\n"
     return f"""# Task
 
-Re-check every verdict of the submission `{commit}` against the model and the repository, which holds that commit. Change no file. Dispute a `conforms` or `changed` verdict whose evidence does not show how each example in the item's Definition is met, and one whose realization matches part of the Definition but not its example. Where the Definition and what it links to contradict each other, nothing can conform: the maker's only right verdict is `model-problem`, so dispute a verdict that claims the item conforms. Confirm a `model-problem` verdict only if the model really contradicts itself or leaves open behavior at the project boundary for this item; otherwise dispute it.
+Re-check each verdict below of the submission `{commit}` against the model and the repository, which holds that commit. Change no file. The question is whether the realization does what the Definition says, examples included, so read the code and run what you need; the maker's evidence is only where you start. Answer each verdict with one of these:
+
+- `confirmed`: what you read or ran shows that it holds.
+- `wrong`: it does not hold. The realization does something the Definition forbids, leaves out something the Definition says, or matches part of the Definition but not its example. Say what and where. This is the only answer that refuses the work.
+- `not-shown`: neither the evidence nor what you read or ran shows it either way. The work lands, and this is recorded for a person to see.
+- `waived`: the realization departs from the letter of the Definition, or the Definition can be read two ways and the realization takes one, and you do not hold it against the work. Say what and why. The work lands, and this is recorded for a person to see.
+
+Where the Definition and what it links to contradict each other, nothing can conform: the maker's only right verdict is `model-problem`, so answer `wrong` to a verdict that claims the item conforms, and never `waived`. Answer a `model-problem` verdict `confirmed` only if the model really contradicts itself or leaves open behavior at the project boundary for this item, and otherwise `wrong`.
 
 {table(items)}
 ## Submitted verdicts
@@ -326,7 +350,7 @@ Re-check every verdict of the submission `{commit}` against the model and the re
 | Item | Verdict | Evidence |
 |---|---|---|
 {rows}
-## Required checks on the whole repository
+{earlier}## Required checks on the whole repository
 
 {ran}
 ## Diff from `{base}` to `{commit}`
@@ -341,20 +365,24 @@ Write your review to `{file}`, which the host reads and never commits, as JSON:
 
 {{"reviews": [{{"item": "ITEM", "answer": "confirmed", "evidence": "..."}}]}}
 
-One entry per verdict, `confirmed` or `disputed`, each with evidence: what you read or ran, and for a dispute what is wrong and where.
+One entry per verdict, each with evidence: what you read or ran, and for any answer but `confirmed` what you found and where.
 """
 
 
-def read_reviews(path, items):
-    """A checker's answer: ({item: its answer and evidence} for the checklist's items, the items it left out)."""
-    wanted = [i["item"] for i in items]
+def read_reviews(path, items, known):
+    """A checker's answer: ({item: its answer and evidence} for any item of the checklist, the items of `items` it left out)."""
     try:
         entries = json.loads(pathlib.Path(path).read_text(encoding="utf-8"))["reviews"]
         found = {e["item"]: {"answer": e["answer"], "evidence": e.get("evidence") or ""} for e in entries
-                 if isinstance(e, dict) and e.get("item") in wanted and e.get("answer") in ("confirmed", "disputed")}
+                 if isinstance(e, dict) and e.get("item") in known and e.get("answer") in ANSWERS}
     except (OSError, ValueError, KeyError, TypeError):
         found = {}
-    return found, [item for item in wanted if item not in found]
+    return found, [i["item"] for i in items if i["item"] not in found]
+
+
+def findings_of(rulings):
+    """What lands for a person to see: the rulings that are neither a confirmation nor a refusal."""
+    return [{"definition": item, "answer": r["answer"], "observed": r["evidence"]} for item, r in rulings.items() if r["answer"] in RECORDED]
 
 
 def fan_out(host, items, inherited, attempt):
@@ -384,6 +412,7 @@ def graph(host, shape, items, inherited, owner, rounds):
     """make -> gate -> check, looping on a refusal: (state, why, verdicts, checks, the last commit, the refusals)."""
     known = {i["item"] for i in items}
     verdicts, refusals, defects, reports, attempts, attempt, commit, checks = {}, [], None, None, 0, 0, None, []
+    reviewed, last_refused = None, None
     while True:
         attempt += 1
         attempts += 1
@@ -429,11 +458,12 @@ def graph(host, shape, items, inherited, owner, rounds):
             refusals.append({"attempt": attempt, "by": "gate", "reasons": refused})
             defects = "\n".join(f"- {r}" for r in refused)
         else:
+            listed = [i for i in items if (host.rulings.get(i["item"]) or {}).get("verdict") != verdicts[i["item"]]]
             review, missing, tries = {}, True, 0
             while missing and tries < 2:
                 tries += 1
                 path = host.answers / f"checker-{attempt}-{tries}.json"
-                prompt = checker_prompt(host, items, verdicts, checks, owner, commit, path)
+                prompt = checker_prompt(host, listed, verdicts, checks, reviewed or owner, commit, path, owner if reviewed else None, last_refused)
                 if tries > 1:
                     prompt += "\nThe last review left out these items, and an entry for each is needed: " + ", ".join(f"`{m}`" for m in missing) + ".\n"
                 reason = host.session(f"checker-{attempt}-{tries}", ROOT, "checker", attempt, prompt)
@@ -442,21 +472,27 @@ def graph(host, shape, items, inherited, owner, rounds):
                     return "incomplete", "the deadline passed during the check", verdicts, checks, commit, refusals
                 if reason == "failed" and host.starts[-1].get("class"):
                     return "incomplete", "a provider failure ended the checker: " + host.starts[-1].get("detail", ""), verdicts, checks, commit, refusals
-                found, _ = read_reviews(path, items)
+                found, _ = read_reviews(path, listed, known)
                 review.update(found)
-                missing = [i["item"] for i in items if i["item"] not in review]
+                missing = [i["item"] for i in listed if i["item"] not in review]
             if missing:
                 return "incomplete", "the checker left no complete review twice in a row", verdicts, checks, commit, refusals
-            disputed = {item: r["evidence"] for item, r in review.items() if r["answer"] == "disputed"}
-            if not disputed:
+            reviewed = commit
+            for item, r in review.items():
+                host.rulings[item] = {**r, "verdict": verdicts[item]}
+            # Nothing was made for a model-problem item, so only a confirmation of it can end anything.
+            last_refused = {item: r["evidence"] for item, r in review.items()
+                            if r["answer"] == "wrong" or (verdicts[item]["verdict"] == "model-problem" and r["answer"] != "confirmed")}
+            if not last_refused:
                 problems = [item for item, v in verdicts.items() if v["verdict"] == "model-problem"]
                 if problems:
                     return "model-defect", "the checker confirmed a model problem: " + ", ".join(sorted(problems)) + "; the Run ends without landing", verdicts, checks, commit, refusals
-                return "landed", "the checker approved the work", verdicts, checks, commit, refusals
-            refusals.append({"attempt": attempt, "by": "checker", "items": disputed})
-            defects = "\n".join(f"- `{item}`: {evidence}" for item, evidence in disputed.items())
-            for item in disputed:
+                return "landed", "the checker refused nothing", verdicts, checks, commit, refusals
+            refusals.append({"attempt": attempt, "by": "checker", "items": last_refused})
+            defects = "\n".join(f"- `{item}`: {evidence}" for item, evidence in last_refused.items())
+            for item in last_refused:
                 verdicts.pop(item, None)
+                host.rulings.pop(item, None)
         reports = None
         if attempts >= rounds:
             return "incomplete", f"the maker used its {rounds} attempts: the checker or the gate refused its work after each", verdicts, checks, commit, refusals
@@ -532,16 +568,17 @@ def main(argv=None):
             result = {"format": 1, "run": name, "command": "apply", "outcome": "landed" if landed else "not-landed", "state": status, "why": why, "shape": a.shape,
                       "base": base, "start": owner, "landed": landed, "requiredChecks": {"ran": commit is not None, "wholeRepository": commit is not None, "checks": checks},
                       "items": [{"manager": i["package"] or ".", "item": i["item"], "part": "own", "verdict": (verdicts.get(i["item"]) or {}).get("verdict"),
-                                 "evidence": (verdicts.get(i["item"]) or {}).get("evidence"), "checker": "checker", "approved": status in ("landed", "model-defect")} for i in items],
-                      "notParticipating": [], "findings": [], "refusals": refusals, "starts": host.starts}
+                                 "evidence": (verdicts.get(i["item"]) or {}).get("evidence"), "checker": "checker", "approved": status in ("landed", "model-defect"),
+                                 "review": (host.rulings.get(i["item"]) or {}).get("answer")} for i in items],
+                      "notParticipating": [], "findings": findings_of(host.rulings) if status == "landed" else [], "refusals": refusals, "starts": host.starts}
             (out / "results").mkdir(exist_ok=True)
             (out / "results" / f"{name}.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
             report["provider"], report["model"] = arm.reported_model(result, provider, model)
             failed = [{k: s.get(k) for k in ("manager", "role", "round", "class", "detail")} for s in host.starts if s.get("reason") == "failed"]
             costs = [(s.get("usage") or {}).get("costUsd") for s in host.starts]
             report["usage"] = {"costUsd": round(sum(c for c in costs if c), 6) if any(costs) else None, "sessions": len(host.starts)}
-            report.update(status=status, cause=why, starts=len(host.starts), failedStarts=failed, refusals=len(refusals), landed=landed, leftovers=[],
-                          afterLanding=[], afterLandingReported=True, cleanup=[])
+            report.update(status=status, cause=why, starts=len(host.starts), failedStarts=failed, refusals=len(refusals), findings=len(result["findings"]), landed=landed,
+                          leftovers=[], afterLanding=[], afterLandingReported=True, cleanup=[])
             if status not in arm.DELIBERATE and not any(s.get("reason") in ("finished", "deadline") for s in host.starts):
                 return finish(2, noAgentTurn=True)
             history = arm.git(repo, "log", "-p", "--format=%H%n%B", f"{start}..{landed or start}", env=env)

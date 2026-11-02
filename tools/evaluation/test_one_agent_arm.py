@@ -24,8 +24,12 @@ MODEL = "claude:claude-sonnet-5-5"
 #   none          writes realization/NAME.txt and no verdict file
 #   model         also edits the model
 #   problem       gives every item the verdict model-problem
+#   rewrite       gives every item new evidence
 #   approve       confirms every verdict
-#   dispute       disputes the first verdict
+#   dispute       answers the first verdict `wrong`
+#   recorded      answers the first verdict `not-shown`, the second `waived`
+#   all-waived    answers every verdict `waived`
+#   reopen:ITEM   confirms every verdict and answers ITEM, which is not on its list, `wrong`
 #   junk          writes no review
 #   rate-limit    ends on a provider error
 FAKE_CLAUDE = textwrap.dedent(r"""
@@ -63,11 +67,20 @@ FAKE_CLAUDE = textwrap.dedent(r"""
             (cwd / ".markitect" / "model" / "project.md").write_text("# Changed by the agent\n")
         if step not in ("none", "rate-limit"):
             word = "model-problem" if step == "problem" else "changed"
-            pathlib.Path(answer).write_text(json.dumps({"verdicts": [{"item": i, "verdict": word, "evidence": "checked " + i} for i in items]}))
-    elif step in ("approve", "dispute"):
+            said = "again " if step == "rewrite" else "checked "
+            pathlib.Path(answer).write_text(json.dumps({"verdicts": [{"item": i, "verdict": word, "evidence": said + i} for i in items]}))
+    elif step != "junk":
         reviews = [{"item": i, "answer": "confirmed", "evidence": "read it"} for i in items]
         if step == "dispute":
-            reviews[0].update(answer="disputed", evidence="no test shows the example")
+            reviews[0].update(answer="wrong", evidence="the limit is 6, the Definition says 5")
+        elif step == "recorded":
+            reviews[0].update(answer="not-shown", evidence="no test, and I could not run it")
+            reviews[1].update(answer="waived", evidence="read two ways, this one is fair")
+        elif step == "all-waived":
+            for r in reviews:
+                r.update(answer="waived", evidence="fair enough")
+        elif step.startswith("reopen:"):
+            reviews.append({"item": step.split(":", 1)[1], "answer": "wrong", "evidence": "the last change broke it"})
         pathlib.Path(answer).write_text(json.dumps({"reviews": reviews}))
     if os.environ.get("FAKE_SLOW"):
         time.sleep(float(os.environ["FAKE_SLOW"]))
@@ -205,9 +218,85 @@ class OneAgentArmTest(unittest.TestCase):
         record, out = self.run_arm("rejected")
         self.assertEqual(record["reported"]["status"], "landed")
         self.assertEqual(self.names(out), [(".", "maker"), (".", "checker"), (".", "maker"), (".", "checker")])
-        self.assertIn("no test shows the example", self.prompt("maker-2"))
+        self.assertIn("the limit is 6", self.prompt("maker-2"))
         refusals = self.result(out)["refusals"]
         self.assertEqual([(r["attempt"], r["by"], list(r["items"])) for r in refusals], [(1, "checker", ["project"])])
+
+    def test_only_wrong_refuses_and_the_rest_land_as_findings(self):
+        self.script({"checker": ["recorded"]})
+        record, out = self.run_arm("recorded")
+        self.assertEqual(record["reported"]["status"], "landed", (out / "variant" / "run.json").read_text())
+        self.assertEqual(self.names(out), [(".", "maker"), (".", "checker")])
+        result = self.result(out)
+        self.assertEqual(result["refusals"], [])
+        self.assertEqual(result["findings"], [{"definition": "project", "answer": "not-shown", "observed": "no test, and I could not run it"},
+                                              {"definition": "lending/loan-policy", "answer": "waived", "observed": "read two ways, this one is fair"}])
+        self.assertEqual([i["review"] for i in result["items"]], ["not-shown", "waived"])
+        self.assertEqual(record["reported"]["findings"], 2)
+        self.assertTrue(results.check_run(out)["complete"], results.check_run(out))
+        self.assertIn("only answer that refuses", self.prompt("checker-1-1"))
+        self.assertNotIn("What an earlier review ruled", self.prompt("checker-1-1"))
+
+    def test_a_later_round_rechecks_only_what_was_refused(self):
+        self.script({"checker": ["dispute", "approve"]})
+        record, out = self.run_arm("narrow")
+        self.assertEqual(record["reported"]["status"], "landed")
+        later = self.prompt("checker-2-1")
+        self.assertIn("| `project` |", later)
+        self.assertNotIn("| `lending/loan-policy` |", later)
+        self.assertIn("The other items: `lending/loan-policy`.", later)
+        # It gets the reason, and the diff since the last review with the way to see the whole work.
+        self.assertIn("the limit is 6", later)
+        self.assertIn("realization/maker-2.txt", later)
+        self.assertNotIn("realization/maker-1.txt", later)
+        result = self.result(out)
+        self.assertEqual([i["review"] for i in result["items"]], ["confirmed", "confirmed"])
+        self.assertEqual(result["findings"], [])
+
+    def test_a_verdict_the_maker_changed_is_checked_again(self):
+        self.script({"maker": ["work", "rewrite"], "checker": ["dispute", "approve"]})
+        record, out = self.run_arm("rewritten")
+        self.assertEqual(record["reported"]["status"], "landed")
+        later = self.prompt("checker-2-1")
+        self.assertIn("| `project` |", later)
+        self.assertIn("| `lending/loan-policy` |", later)
+
+    def test_a_later_review_reopens_an_item_the_diff_broke(self):
+        self.script({"checker": ["dispute", "reopen:lending/loan-policy", "approve"]})
+        record, out = self.run_arm("reopened")
+        self.assertEqual(record["reported"]["status"], "landed", (out / "variant" / "run.json").read_text())
+        self.assertEqual([list(r["items"]) for r in self.result(out)["refusals"]], [["project"], ["lending/loan-policy"]])
+        last = self.prompt("checker-3-1")
+        self.assertIn("| `lending/loan-policy` |", last)
+        self.assertNotIn("| `project` |", last)
+        self.assertIn("the last change broke it", self.prompt("maker-3"))
+
+    def test_an_answer_outside_the_checklist_is_ignored(self):
+        self.script({"checker": ["reopen:not/on-the-list"]})
+        record, out = self.run_arm("outside")
+        self.assertEqual(record["reported"]["status"], "landed")
+        self.assertEqual(self.result(out)["refusals"], [])
+
+    def test_a_refusal_by_the_gate_keeps_the_rulings(self):
+        self.script({"maker": ["work", "none", "work"], "checker": ["dispute", "approve"]})
+        record, out = self.run_arm("gate-between")
+        self.assertEqual(record["reported"]["status"], "landed", (out / "variant" / "run.json").read_text())
+        self.assertEqual(self.names(out), [(".", "maker"), (".", "checker"), (".", "maker"), (".", "maker"), (".", "checker")])
+        later = self.prompt("checker-3-1")
+        self.assertIn("| `project` |", later)
+        self.assertNotIn("| `lending/loan-policy` |", later)
+        self.assertIn("the limit is 6", later)
+        self.assertIn("realization/maker-2.txt", later)
+        self.assertNotIn("realization/maker-1.txt", later)
+
+    def test_any_other_answer_to_a_model_problem_refuses_it(self):
+        self.script({"maker": ["problem", "problem"], "checker": ["all-waived", "approve"]})
+        record, out = self.run_arm("waived-problem")
+        self.assertEqual((record["reported"]["status"], record["exitCode"]), ("model-defect", 0))
+        self.assertEqual(record["result"]["changedPaths"], [])
+        result = self.result(out)
+        self.assertEqual([(r["by"], sorted(r["items"])) for r in result["refusals"]], [("checker", ["lending/loan-policy", "project"])])
+        self.assertEqual(result["findings"], [])
 
     def test_the_gate_refuses_work_on_the_model_a_missing_verdict_and_a_failing_check(self):
         self.script({"maker": ["model", "work"]})
@@ -271,7 +360,7 @@ class OneAgentArmTest(unittest.TestCase):
         self.assertIn("What the Packages reported", self.prompt("maker-1"))
         self.assertIn("checked lending/loan-policy", self.prompt("maker-1"))
         self.assertEqual([s["manager"] for s in self.result(out)["starts"] if s["role"] == "maker"][-2:], [".", "."])
-        self.assertIn("no test shows the example", self.prompt("maker-2"))
+        self.assertIn("the limit is 6", self.prompt("maker-2"))
         self.assertFalse(any((self.fake / f"prompt-maker-{p}-2.txt").exists() for p in ("lending", "members")))
 
     def test_a_chain_step_compares_with_the_last_landing(self):
@@ -351,12 +440,17 @@ class OneAgentArmTest(unittest.TestCase):
             self.assertEqual(len(arm.read_verdicts(path, {"a"})[1]), 1)
             items = [{"item": "a", "package": "", "why": ""}]
             path.write_text(json.dumps({"reviews": [{"item": "a", "answer": "confirmed"}]}))
-            self.assertEqual(arm.read_reviews(path, items)[0]["a"]["answer"], "confirmed")
-            self.assertEqual(arm.read_reviews(path, items)[1], [])
-            path.write_text(json.dumps({"reviews": [{"item": "a", "answer": "fine"}, {"item": "extra", "answer": "confirmed"}]}))
-            self.assertEqual(arm.read_reviews(path, items), ({}, ["a"]))
+            self.assertEqual(arm.read_reviews(path, items, {"a"})[0]["a"]["answer"], "confirmed")
+            self.assertEqual(arm.read_reviews(path, items, {"a"})[1], [])
+            path.write_text(json.dumps({"reviews": [{"item": "a", "answer": "disputed"}, {"item": "extra", "answer": "confirmed"}]}))
+            self.assertEqual(arm.read_reviews(path, items, {"a"}), ({}, ["a"]))
+            # An item of the checklist that is not on this round's list counts, and leaves the listed one missing.
+            found, missing = arm.read_reviews(path, items, {"a", "extra"})
+            self.assertEqual((list(found), missing), (["extra"], ["a"]))
             path.write_text("not json")
-            self.assertEqual(arm.read_reviews(path, items), ({}, ["a"]))
+            self.assertEqual(arm.read_reviews(path, items, {"a"}), ({}, ["a"]))
+            self.assertEqual(arm.findings_of({"a": {"answer": "confirmed", "evidence": "x"}, "b": {"answer": "waived", "evidence": "y", "verdict": {}}}),
+                             [{"definition": "b", "answer": "waived", "observed": "y"}])
         listed, inherited = arm.checklist({"checklists": [
             {"package": "", "own": [{"definition": "project", "reasons": ["modified", "linked"]}], "inherited": [], "findings": [],
              "stale": [{"code": "stale.file", "package": "", "pageFile": ".markitect/registry.md", "file": "gone.go"}]},
