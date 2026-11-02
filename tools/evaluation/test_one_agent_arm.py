@@ -288,6 +288,11 @@ class OneAgentArmTest(unittest.TestCase):
         self.assertEqual((record["reported"]["status"], record["exitCode"]), ("model-defect", 0))
         self.assertEqual(record["result"]["changedPaths"], [])
         self.assertEqual(self.names(out), [(".", "maker"), (".", "checker")])
+        # What that same review refused is on the record, and not approved.
+        result = self.result(out)
+        self.assertEqual([list(r["items"]) for r in result["refusals"]], [["lending/loan-policy"]])
+        self.assertEqual([(i["item"], i["approved"], i["review"]) for i in result["items"]],
+                         [("project", True, "confirmed"), ("lending/loan-policy", False, None)])
 
     def test_a_retry_keeps_the_first_answers_and_asks_only_for_the_rest(self):
         self.script({"checker-1-1": ["first-only"], "checker-1-2": ["approve"], "checker-2-1": ["approve"]})

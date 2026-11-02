@@ -482,18 +482,21 @@ def graph(host, shape, items, inherited, owner, rounds):
             reviewed = commit
             for item, r in review.items():
                 host.rulings[item] = {**r, "verdict": verdicts[item]["verdict"]}
+            # Nothing was made for a model-problem item, so any answer but a confirmation refuses it.
+            last_refused = {item: r["evidence"] for item, r in review.items()
+                            if r["answer"] == "wrong" or (verdicts[item]["verdict"] == "model-problem" and r["answer"] != "confirmed")}
+            for item in last_refused:
+                host.rulings.pop(item)
+            if last_refused:
+                refusals.append({"attempt": attempt, "by": "checker", "items": last_refused})
             problems = [item for item, r in review.items() if r["answer"] == "confirmed" and verdicts[item]["verdict"] == "model-problem"]
             if problems:
                 return "model-defect", "the checker confirmed a model problem: " + ", ".join(sorted(problems)) + "; the Run ends without landing", verdicts, checks, commit, refusals
-            # Nothing was made for a model-problem item, so it cannot land on any answer.
-            last_refused = {item: r["evidence"] for item, r in review.items() if r["answer"] == "wrong" or verdicts[item]["verdict"] == "model-problem"}
             if not last_refused:
                 return "landed", "the checker refused nothing", verdicts, checks, commit, refusals
-            refusals.append({"attempt": attempt, "by": "checker", "items": last_refused})
             defects = "\n".join(f"- `{item}`: {evidence}" for item, evidence in last_refused.items())
             for item in last_refused:
                 verdicts.pop(item, None)
-                host.rulings.pop(item, None)
         reports = None
         if attempts >= rounds:
             return "incomplete", f"the maker used its {rounds} attempts: the checker or the gate refused its work after each", verdicts, checks, commit, refusals
@@ -569,7 +572,8 @@ def main(argv=None):
             result = {"format": 1, "run": name, "command": "apply", "outcome": "landed" if landed else "not-landed", "state": status, "why": why, "shape": a.shape,
                       "base": base, "start": owner, "landed": landed, "requiredChecks": {"ran": commit is not None, "wholeRepository": commit is not None, "checks": checks},
                       "items": [{"manager": i["package"] or ".", "item": i["item"], "part": "own", "verdict": (verdicts.get(i["item"]) or {}).get("verdict"),
-                                 "evidence": (verdicts.get(i["item"]) or {}).get("evidence"), "checker": "checker", "approved": status in ("landed", "model-defect"),
+                                 "evidence": (verdicts.get(i["item"]) or {}).get("evidence"), "checker": "checker",
+                                 "approved": status in ("landed", "model-defect") and i["item"] in host.rulings,
                                  "review": (host.rulings.get(i["item"]) or {}).get("answer")} for i in items],
                       "notParticipating": [], "findings": findings_of(host.rulings) if status == "landed" else [], "refusals": refusals, "starts": host.starts}
             (out / "results").mkdir(exist_ok=True)
