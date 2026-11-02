@@ -6,14 +6,8 @@ import { typing } from './Model';
 import { modelHref, settingsHref, statisticsHref } from './route';
 import { showChat, useChatChanged } from './shown';
 import { nextStep, plural } from './status';
-import { Alert, Badge, Dialog, Icon } from './ui';
-
-const areas = [
-  { key: '1', icon: 'layers', title: 'Model', body: 'Read the model, see its Packages and Managers, and judge its quality.' },
-  { key: '2', icon: 'activity', title: 'Runs', body: 'Start apply and verify, and follow every agent while it works.' },
-  { key: '3', icon: 'layout-dashboard', title: 'Statistics', body: 'How Runs go, where the work struggles, how the model develops.' },
-  { key: '4', icon: 'settings', title: 'Settings', body: 'Required checks, agents and logins.' },
-];
+import { Tiles } from './Tiles';
+import { Alert, Dialog } from './ui';
 
 // What the Draw the model button says to the chat that it starts.
 const drawMessage = "Draw the model from this project's code.";
@@ -214,13 +208,6 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
           </ul>
         </details>
       )}
-      {check && !check.notDrawn && (
-        <div className="gl-stats">
-          <Stat label="Definitions" value={check.definitions} />
-          <Stat label="Packages" value={check.packages} />
-          <Stat label="Files accounted for" value={check.files} />
-        </div>
-      )}
       {ran && ran.output && (
         <details className="output" open={!ran.ok}>
           <summary>Output of markitect init</summary>
@@ -229,51 +216,11 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
           </div>
         </details>
       )}
-      <section className="section" aria-labelledby="areas">
-        <h2 className="h3" id="areas">
+      <section className="section tiles-section" aria-labelledby="areas">
+        <h2 className="gl-sr-only" id="areas">
           Areas
         </h2>
-        <div className="gl-cards">
-          {areas.map((a) => {
-            const live = (a.key === '1' && check) || a.key === '3' || a.key === '4';
-            const inner = (
-              <>
-                <span className="gl-card__icon">
-                  <Icon name={a.icon} />
-                </span>
-                <h3 className="gl-card__title">
-                  <span className="key">{a.key}</span>
-                  {a.title}
-                </h3>
-                <p className="gl-card__body">{a.body}</p>
-                <div className="gl-card__footer">
-                  {a.key === '3' ? (
-                    <Badge tone="neutral">The model over time</Badge>
-                  ) : a.key === '4' ? (
-                    <Badge tone="neutral">Logins, agents and checks</Badge>
-                  ) : check?.notDrawn && a.key === '1' ? (
-                    <Badge tone="neutral">No model yet</Badge>
-                  ) : live && check ? (
-                    <Badge tone={check.warnings > 0 ? 'warning' : 'neutral'}>
-                      {plural(check.definitions, 'Definition')}, {plural(check.warnings, 'warning')}
-                    </Badge>
-                  ) : (
-                    <Badge tone="neutral">{a.key === '1' ? 'Set up Markitect first' : 'Not built yet'}</Badge>
-                  )}
-                </div>
-              </>
-            );
-            return live ? (
-              <a key={a.key} className="gl-card area area--live" href={a.key === '4' ? settingsHref(project.id) : a.key === '3' ? statisticsHref(project.id) : modelHref(project.id, 'reader')}>
-                {inner}
-              </a>
-            ) : (
-              <div key={a.key} className="gl-card area">
-                {inner}
-              </div>
-            );
-          })}
-        </div>
+        <Tiles project={project} />
       </section>
       {removing && (
         <Dialog
@@ -294,15 +241,6 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
         </Dialog>
       )}
     </>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="gl-stat">
-      <span className="gl-stat__label">{label}</span>
-      <span className="gl-stat__value">{value}</span>
-    </div>
   );
 }
 

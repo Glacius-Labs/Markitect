@@ -50,6 +50,8 @@ export function Quality({ ix, pid, item, diff }: Props) {
           )}
         </section>
       )}
+      <div className="quality">
+      <div className="quality__col">
       <section className="section">
         <h2 className="h3">Packages</h2>
         <div className="gl-table-wrap">
@@ -94,6 +96,8 @@ export function Quality({ ix, pid, item, diff }: Props) {
           </ul>
         </section>
       )}
+      </div>
+      <div className="quality__col">
       <section className="section">
         <h2 className="h3">Lint warnings{selected !== undefined && ` in ${packageName(selected)}`}</h2>
         {show(m.lint).length === 0 ? (
@@ -113,6 +117,8 @@ export function Quality({ ix, pid, item, diff }: Props) {
           ))
         )}
       </section>
+      </div>
+      </div>
       <p className="small muted">improve, which has each Manager look at its area and propose a better model, starts here once it is built.</p>
     </>
   );

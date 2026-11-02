@@ -19,7 +19,7 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  width: 26rem;
+  width: clamp(26rem, 24vw, 34rem);
   flex-shrink: 0;
   height: calc(100vh - var(--topbar));
   background: var(--bg);

@@ -121,26 +121,24 @@ export function ModelArea(props: { id: string; view: View; item?: string }) {
   const landing = m?.bases.landing;
   return (
     <>
-      <nav aria-label="Breadcrumb">
-        <ol className="gl-breadcrumb">
-          <li>
-            <a href="#/">Projects</a>
-          </li>
-          <li>
-            <a href={hub(id)}>{name}</a>
-          </li>
-          <li>
-            <span aria-current="page">Model</span>
-          </li>
-        </ol>
-      </nav>
-      <header className="gl-page-header">
-        <div className="gl-page-header__text">
-          <h1 className="gl-page-header__title">Model</h1>
-          <p className="gl-page-header__description">
-            {ix ? `${plural(ix.m.definitions.filter((d) => !d.library).length, 'Definition')} in ${plural(ix.m.packages.length, 'Package')}, as the working tree has it now` : 'The model as the working tree has it now'}
-          </p>
-        </div>
+      <header className="area-head">
+        <nav aria-label="Breadcrumb">
+          <ol className="gl-breadcrumb">
+            <li>
+              <a href="#/">Projects</a>
+            </li>
+            <li>
+              <a href={hub(id)}>{name}</a>
+            </li>
+            <li>
+              <span aria-current="page">Model</span>
+            </li>
+          </ol>
+        </nav>
+        <h1 className="gl-sr-only">Model</h1>
+        <p className="small muted">
+          {ix ? `${plural(ix.m.definitions.filter((d) => !d.library).length, 'Definition')} in ${plural(ix.m.packages.length, 'Package')}, as the working tree has it now` : 'The model as the working tree has it now'}
+        </p>
       </header>
       <div className="model-bar">
         <div className="gl-tabs" role="tablist" aria-label="Views">
