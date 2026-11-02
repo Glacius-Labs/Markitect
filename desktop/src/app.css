@@ -164,6 +164,12 @@ body {
   width: 100%;
 }
 
+.home .gl-alert {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 60rem;
+}
+
 .home__cards .gl-card {
   box-sizing: border-box;
   width: min(100%, 26rem);
@@ -335,16 +341,23 @@ body {
     grid-template-columns: minmax(0, 1fr);
     grid-auto-rows: auto;
   }
+
+  /* One tile above the other: the map gets its height here, not from the row. */
+  .tile__live:has(.tile__map) {
+    min-height: 14rem;
+  }
 }
 
-.stats-body {
+.stats-body,
+.settings-body {
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
 }
 
 /* A very wide page, such as a 32:9 monitor's: the project and its next step
-   beside the tiles, and Statistics' commits beside its charts. */
+   beside the tiles, Statistics' commits beside its charts, and Settings' two
+   parts side by side. */
 @container page (min-width: 150rem) {
   .hub {
     display: grid;
@@ -360,6 +373,13 @@ body {
   .stats-body {
     display: grid;
     grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap: var(--space-8);
+    align-items: start;
+  }
+
+  .settings-body {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-8);
     align-items: start;
   }

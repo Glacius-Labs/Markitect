@@ -46,6 +46,7 @@ export function Settings({ id }: { id: string }) {
       </header>
       {error && <Alert tone="danger" title="Settings cannot be read" body={error} />}
 
+      <div className="settings-body">
       <section className="section">
         <h2 className="h3">This project</h2>
         <p className="small muted">
@@ -117,6 +118,7 @@ export function Settings({ id }: { id: string }) {
           </div>
         </section>
       )}
+      </div>
     </>
   );
 }
