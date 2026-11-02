@@ -589,7 +589,7 @@ func (c *chatService) withNews(p Project, id, text string) string {
 		return text
 	}
 	var b strings.Builder
-	b.WriteString("Since your last answer:\n\n")
+	b.WriteString("Since your last answer, the app told the owner:\n\n")
 	for _, m := range earlier[first:] {
 		fmt.Fprintf(&b, "%s: %s\n\n", m.From, m.Text)
 	}
