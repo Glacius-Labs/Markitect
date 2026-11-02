@@ -336,15 +336,17 @@ body {
   }
 }
 
+/* A narrow tile has it below the text, where the map gets its height from here. */
+@container tile (max-width: 30rem) {
+  .tile__live:has(.tile__map) {
+    min-height: 14rem;
+  }
+}
+
 @container page (max-width: 44rem) {
   .tiles {
     grid-template-columns: minmax(0, 1fr);
     grid-auto-rows: auto;
-  }
-
-  /* One tile above the other: the map gets its height here, not from the row. */
-  .tile__live:has(.tile__map) {
-    min-height: 14rem;
   }
 }
 
