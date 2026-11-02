@@ -162,7 +162,7 @@ Details settled while building D3 on 31 October 2026, under the owner's go-ahead
 
 ### The chat
 
-Details settled on 31 October 2026, under the owner's go-ahead to decide them, before D4 is built. While the evaluations keep Docker, the chat is built and tested against the agent runtime's scripted stand-in and runs for real once Docker is free.
+Details settled on 31 October 2026, under the owner's go-ahead to decide them, before D4 is built. While the evaluations keep Docker, the chat is built and tested against the agent runtime's scripted stand-in and runs for real once Docker is free. It [first did](../validation/desktop-first-real-chat-20261102.md) on 2 November 2026.
 
 - **One agent per conversation, beside the Managers.** A chat agent is a new kind of agent in `internal/agents`, added beside the Manager agent without changing it: the same Manager image, limits, provider network, account login copy and provider adapters, but no Run. Its `/work` is filled from the project's working tree as Git sees it, uncommitted changes included, sent into the container as an archive; no folder of the user's is mounted. Inside, that state is committed as the conversation's start.
 - **What it knows.** The chat's system text says what it is for and carries the modeling skill, or the Extract skill for an extraction. It names the one rule the app enforces: only files below `.markitect/` are proposed. The agent reads the model in `/work` with the `markitect` commands of the image. It gets no Manager tools.
