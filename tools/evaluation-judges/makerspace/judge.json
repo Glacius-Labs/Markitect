@@ -18,6 +18,18 @@
     "C8": {"tree": "tools/makerspace-reference/c8", "at": "realization"},
     "C9": {"tree": "tools/makerspace-reference/c9", "at": "realization"}
   },
+  "starts": {
+    "W0": {"tree": "tools/makerspace-reference-modules/w0", "at": "realization"},
+    "C1": {"tree": "tools/makerspace-reference-modules/c1", "at": "realization"},
+    "C2": {"tree": "tools/makerspace-reference-modules/c2", "at": "realization"},
+    "C3": {"tree": "tools/makerspace-reference-modules/c3", "at": "realization"},
+    "C4": {"tree": "tools/makerspace-reference-modules/c4", "at": "realization"},
+    "C5": {"tree": "tools/makerspace-reference-modules/c5", "at": "realization"},
+    "C6": {"tree": "tools/makerspace-reference-modules/c6", "at": "realization"},
+    "C7": {"tree": "tools/makerspace-reference-modules/c7", "at": "realization"},
+    "C8": {"tree": "tools/makerspace-reference-modules/c8", "at": "realization"},
+    "C9": {"tree": "tools/makerspace-reference-modules/c9", "at": "realization"}
+  },
   "patchMutants": "tools/makerspace-reference/mutants",
   "include": {
     "judge.py": "tools/evaluation-judges/makerspace/judge.py",

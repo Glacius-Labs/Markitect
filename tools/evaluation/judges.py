@@ -2,7 +2,7 @@
 
   python -I -B judges.py export --source DIR [--rev REV] --out NEW_DIR
   python -I -B judges.py selftest --source DIR --judge JUDGE_DIR [--task TASK_DIR] --out NEW_DIR [--case NAME ...] [--engine BIN] [--lock FILE]
-  python -I -B judges.py start --source DIR --step STEP [--base BUNDLE] --out NEW_BUNDLE
+  python -I -B judges.py start --source DIR --step STEP [--base BUNDLE] [--reference] --out NEW_BUNDLE
   python -I -B judges.py plant --plant FILE --step-out NEW_DIR [--judge JUDGE_DIR] [--judge-out NEW_DIR]
 
 A judge source (for example tools/evaluation-judges/library-m1/) holds the judge's
@@ -17,11 +17,14 @@ judge names its `steps` and, per step, its reference result: `references`
 maps each step to {"tree": REPO_PATH, "at": PREFIX}, a tree placed at PREFIX
 in the result. It may name `patchMutants`, a folder of one subfolder per
 oracle family with `STEP` and `mutant.patch` (a patch of that step's tree);
-each such mutant must fail at least one case of its family.
+each such mutant must fail at least one case of its family. It may name
+`starts`, mapped like `references`: the trees its fixed starts come from, where
+the references that calibrate the oracle have another layout than the model's.
 
 A judge is tested on results built on a task's start: the reference must pass
 every area (for a series judge, every step's reference at its step, with no
-drift), and each mutant must fail where it is seeded. A mutant is a JSON file:
+drift), so must each of its `starts`, and each mutant must fail where it is
+seeded. A mutant is a JSON file:
 an optional `step`, `replace` edits of the reference ({"path", "old", "new"},
 each old text found exactly once), `write` files ({path: content}) and
 `expect`, any of "correctnessFails": true, "buildFails": true,
@@ -30,10 +33,10 @@ each old text found exactly once), `write` files ({path: content}) and
 judge is tested on `--task`; a series judge builds one task per step, each
 from a fixed reference start: the reference result of the step before.
 
-`start` writes such a fixed reference start: the reference result of STEP as
-one commit on BASE (default: the suite's empty start), in a one-branch bundle.
-It is the start of the step after STEP when that step runs as an independent
-task.
+`start` writes such a fixed reference start: the judge's start of STEP, its
+reference result where it names no `starts` or with `--reference`, as one commit
+on BASE (default: the suite's empty start), in a one-branch bundle. It is the
+start of the step after STEP when that step runs as an independent task.
 
 `plant` writes a planted task (tools/evaluation-judges/plants/NAME.json): the
 series step (series.py) with the plant's edits applied, each exactly once, to
@@ -62,7 +65,7 @@ REPO = pathlib.Path(__file__).resolve().parents[2]
 IDENTITY = ("Judge Self-Test", "judge@markitect.invalid")
 DATE = "2026-10-28T00:00:00Z"
 # Keys of a judge source that describe its tests, not the judge the suite runs.
-SOURCE_ONLY = ("include", "references", "patchMutants")
+SOURCE_ONLY = ("include", "references", "starts", "patchMutants")
 
 
 def source_config(source):
@@ -108,6 +111,12 @@ def references(source, repo=REPO):
     if set(refs) != set(config["steps"]):
         raise judging.JudgeError(f"{source}/judge.json needs one reference per step")
     return {step: (repo / refs[step]["tree"], refs[step].get("at", "")) for step in config["steps"]}
+
+
+def start_trees(source, repo=REPO):
+    """Each step's fixed start where the judge names `starts`, which differ from its references: {step: (tree, prefix)}."""
+    named = source_config(source).get("starts") or {}
+    return {step: (repo / s["tree"], s.get("at", "")) for step, s in named.items()}
 
 
 def mutants(source, repo=REPO):
@@ -165,10 +174,11 @@ def mutate(repo, mutant, at):
             raise judging.JudgeError(f"{mutant['patch']} does not apply: {p.stderr.decode(errors='replace').strip()}")
 
 
-def materialize(source, mutant, task_dir, bundle, step=None):
-    """The step's reference result, with the mutant's edits, as one commit on the task's start in a one-branch bundle."""
+def materialize(source, mutant, task_dir, bundle, step=None, trees=None):
+    """The step's reference result, or its tree of `trees`, with the mutant's edits, as one commit on the task's start in a
+    one-branch bundle."""
     task = suite.read_task(task_dir)
-    tree, at = references(source)[step]
+    tree, at = (trees or references(source))[step]
     return commit_tree(pathlib.Path(task_dir) / "start.bundle", task["start"]["commit"], tree, at, mutant, bundle, "Judge self-test result")
 
 
@@ -187,12 +197,13 @@ def commit_tree(start_bundle, start, tree, at, mutant, bundle, message):
     return commit
 
 
-def start(source, step, out, base=None):
-    """The reference result of STEP as one commit on BASE (default: the suite's empty start): a fixed reference start."""
+def start(source, step, out, base=None, reference=False):
+    """The judge's start of STEP, or with `reference` or no `starts` its reference result, as one commit on BASE (default:
+    the suite's empty start): a fixed reference start."""
     out = pathlib.Path(out)
     if out.exists():
         raise judging.JudgeError(f"{out} exists")
-    refs = references(source)
+    refs = {**references(source), **({} if reference else start_trees(source))}
     if step not in refs:
         raise judging.JudgeError(f"{step} is not a step of {source}")
     tree, at = refs[step]
@@ -271,19 +282,21 @@ def selftest(source, judge_dir, task_dir, out, engine, only=None):
     if not steps and not task_dir:
         raise judging.JudgeError("a single-step judge is tested on --task")
     out.mkdir(parents=True)
-    cases = [(f"reference-{s}" if s else "reference", None, s) for s in (steps or [None])]
-    cases += [(name, m, m.get("step") or (steps[-1] if steps else None)) for name, m in mutants(source)]
+    trees = start_trees(source)
+    cases = [(f"reference-{s}" if s else "reference", None, s, None) for s in (steps or [None])]
+    cases += [(f"start-{s}", None, s, trees) for s in trees]
+    cases += [(name, m, m.get("step") or (steps[-1] if steps else None), None) for name, m in mutants(source)]
     if only:
-        unknown = set(only) - {name for name, _, _ in cases}
+        unknown = set(only) - {c[0] for c in cases}
         if unknown:
             raise judging.JudgeError("no such self-test case: " + ", ".join(sorted(unknown)))
         cases = [c for c in cases if c[0] in only]
     tasks = series_tasks(source, out) if steps else {None: pathlib.Path(task_dir)}
     summary = {"format": judging.FORMAT, "judge": str(pathlib.Path(judge_dir).resolve()), "judgeSha256": judging.folder_digest(judge_dir),
                "tasks": {str(k): str(v.resolve()) for k, v in tasks.items()}, "cases": []}
-    for name, mutant, step in cases:
+    for name, mutant, step, step_trees in cases:
         (out / name).mkdir()
-        commit = materialize(source, mutant, tasks[step], out / name / "result.bundle", step)
+        commit = materialize(source, mutant, tasks[step], out / name / "result.bundle", step, step_trees)
         record = judging.run_judge(engine, judge_dir, tasks[step], out / name / "result.bundle", commit, step)
         (out / name / "judgment.json").write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
         wrong = verdict(record, mutant, bool(steps))
@@ -359,6 +372,7 @@ def main(argv=None):
     t.add_argument("--source", required=True)
     t.add_argument("--step", required=True)
     t.add_argument("--base", help="the bundle to build on (default: the suite's empty start)")
+    t.add_argument("--reference", action="store_true", help="the step's reference result, also where the judge names other starts")
     t.add_argument("--out", required=True)
     n = sub.add_parser("plant")
     n.add_argument("--plant", required=True, help="a planted task record (tools/evaluation-judges/plants/NAME.json)")
@@ -372,7 +386,7 @@ def main(argv=None):
         elif a.cmd == "plant":
             result = plant(a.plant, a.step_out, a.judge, a.judge_out)
         elif a.cmd == "start":
-            result = start(a.source, a.step, a.out, a.base)
+            result = start(a.source, a.step, a.out, a.base, a.reference)
         else:
             with sandboxing.engine_lock(a.lock, "judge self-test", str(pathlib.Path(a.out).resolve())):
                 result = selftest(a.source, a.judge, a.task, a.out, [a.engine], a.case)

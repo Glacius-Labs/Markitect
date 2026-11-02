@@ -221,10 +221,10 @@ class PlanTest(unittest.TestCase):
     def test_counted_series_per_platform(self):
         config = series_runner.plan("counted", {"work": "w"}, [self.prepared()])
         units = config["units"]
-        # 222 launches and one verify launch per chain and arm, 8 in all.
-        self.assertEqual(series_runner.summary(units)["launches"], 230)
-        self.assertEqual(series_runner.summary(units)["byArm"], {"M": 115, "K": 115})
-        self.assertEqual(config["launchBound"], 345)
+        # 238 launches, 16 of them the layout case, and one verify launch per chain and arm, 8 in all.
+        self.assertEqual(series_runner.summary(units)["launches"], 246)
+        self.assertEqual(series_runner.summary(units)["byArm"], {"M": 123, "K": 123})
+        self.assertEqual(config["launchBound"], 369)
         self.assertTrue(all(u.get("verify") for u in units if u["kind"] == "chain"))
         self.assertEqual([(c["endpoint"], c.get("minimumDifference"), c.get("blockBy")) for c in config["contrasts"]],
                          [("casesPassedShare", 0.05, "change"), ("casesFailed", 1, "change"), ("defectsLeft", 1, None),
@@ -237,6 +237,10 @@ class PlanTest(unittest.TestCase):
         self.assertEqual(len(reps[("new", "plant", "p1")]), 6)
         self.assertEqual(len(reps[("library", "fixed", "M2")]), 4)
         self.assertEqual(len(reps[("makerspace", "plant", "makerspace-c5-threshold-gap")]), 4)
+        # The layout case: both arms on its own steps, with no plants or chains.
+        layout = {key[2]: runs for key, runs in reps.items() if key[0] == "makerspace-layout"}
+        self.assertEqual({step: len(runs) for step, runs in layout.items()}, {"C1": 4, "C2": 4, "C4": 4, "C6": 4})
+        self.assertEqual({key[1] for key in reps if key[0] == "makerspace-layout"}, {"fixed"})
         kinds = [u["kind"] for u in units]
         self.assertEqual(kinds.index("chain"), len(kinds) - 8)
         self.assertEqual([u["id"] for u in units if u["kind"] == "chain"],
@@ -246,6 +250,12 @@ class PlanTest(unittest.TestCase):
         self.assertEqual([arm for r, arm in reps[("new", "fixed", "C1")][::2]], ["M", "K", "M", "K", "M"])
         self.assertEqual([arm for r, arm in reps[("new", "fixed", "C2")][::2]], ["K", "M", "K", "M", "K"])
         self.assertNotEqual(units[0]["id"].rsplit("-", 2)[0], [u for u in units if u["repetition"] == 2][0]["id"].rsplit("-", 2)[0])
+
+    def test_the_layout_case_keeps_its_own_inputs_and_the_gate_leaves_it_out(self):
+        case = series_runner.plan("counted", {"work": "w"})["series"]["makerspace-layout"]
+        self.assertEqual((case["role"], case["judgeSource"], case["fixed"], case["plants"]), ("layout", "makerspace", ["C1", "C2", "C4", "C6"], {}))
+        self.assertEqual(case["steps"][:2], ["W0", "C1"])
+        self.assertNotIn("makerspace-layout", series_runner.plan("gate", {})["series"])
 
     def test_stability_gate(self):
         units = series_runner.plan("gate", {})["units"]

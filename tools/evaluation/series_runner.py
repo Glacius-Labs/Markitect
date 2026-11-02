@@ -52,7 +52,11 @@ HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import classify  # noqa: E402
 
-DEADLINES = {"library": 2700, "makerspace": 5400}
+DEADLINES = {"library": 2700, "makerspace": 5400, "makerspace-layout": 5400}
+# The case of a start whose module layout differs from the model's: the Makerspace's old references at steps that reach
+# the layout in different ways. It has its own report and stays out of `report/all`, whose contrasts are about small
+# changes on a start that matches its model.
+LAYOUT_CASE = {"makerspace-layout": {"judgeSource": "makerspace", "fixed": ["C1", "C2", "C4", "C6"]}}
 # The variants' runtime signatures, written before any launch: the 2.0 arm's (markitect_arm.py), and K's own failure
 # (claude_code.py writes the status "error" when its code fails, before or after the session). V is the verify launch on
 # a chain's end state (markitect_arm.py --verify): M's host and machinery whichever arm made the end state.
@@ -61,7 +65,8 @@ ARM_SIGNATURES = [
     {"id": "arm-no-agent-turn", "path": "reported.noAgentTurn", "pattern": "^true$"}]
 K_SIGNATURES = [{"id": "k-error", "path": "reported.status", "pattern": "^error$"}]
 SIGNATURES = {"variants": {"M": ARM_SIGNATURES, "V": ARM_SIGNATURES, "K": K_SIGNATURES}}
-REPETITIONS = {"public": {"fixed": 2, "plant": 2, "chain": 1}, "confirmatory": {"fixed": 5, "plant": 3, "chain": 2}}
+REPETITIONS = {"public": {"fixed": 2, "plant": 2, "chain": 1}, "confirmatory": {"fixed": 5, "plant": 3, "chain": 2},
+               "layout": {"fixed": 2, "plant": 0, "chain": 0}}
 GATE_FIXED, GATE_CHAIN = ("library", ["M2", "M3", "M4"]), "makerspace"
 # The protocol's contrasts: the primary one first, each read over the changes' mean differences.
 CONTRASTS = [{"variant": "M", "baseline": "K", "endpoint": "casesPassedShare", "minimumDifference": 0.05, "blockBy": "change"},
@@ -124,6 +129,12 @@ def public_series(name, tools=HERE.parent):
         if record.get("series") == name:
             plants[path.stem] = {"step": record["step"], "kind": record["kind"]}
     return {"role": "public", "deadlineSeconds": DEADLINES[name], "steps": steps, "fixed": steps[1:], "plants": plants}
+
+
+def layout_case(name):
+    """A case of its own: fixed starts from a judge's references, whose layout differs from the model's, and no plants."""
+    import series
+    return {"role": "layout", "deadlineSeconds": DEADLINES[name], "steps": series.steps(name), "plants": {}, **LAYOUT_CASE[name]}
 
 
 def prepared_series(spec):
@@ -192,6 +203,7 @@ def launches(units):
 
 def plan(protocol, machine, prepared=()):
     series = {name: public_series(name) for name in ("library", "makerspace")}
+    series.update({name: layout_case(name) for name in LAYOUT_CASE} if protocol == "counted" else {})
     for path in prepared:
         name, spec = prepared_series(path)
         series[name] = spec
@@ -631,10 +643,11 @@ class Runner:
             if not units:
                 continue
             prep, src = self.prepared(name), self.ev.parent / "evaluation-judges"
+            judge_source = src / s.get("judgeSource", name)
             if not (prep / "steps").exists():
                 self.must(f"prep-steps-{name}", [self.py, "-I", "-B", self.ev / "series.py", "steps", "--series", name, "--out", prep / "steps"])
             if not self.series_judge(name).exists():  # from the frozen tree, which is the revision's
-                self.must(f"prep-judge-{name}", [self.py, "-I", "-B", self.ev / "judges.py", "export", "--source", src / name,
+                self.must(f"prep-judge-{name}", [self.py, "-I", "-B", self.ev / "judges.py", "export", "--source", judge_source,
                                                  "--out", self.series_judge(name)])
             tasks = [{"kind": "fixed", "series": name, "step": step} for step in s["fixed"]]
             tasks += [{"kind": "plant", "series": name, "plant": plant} for plant in s["plants"]]
@@ -644,8 +657,8 @@ class Runner:
                 start, base = prep / "starts" / f"{before}.bundle", prep / "bases" / before
                 if not start.exists():
                     start.parent.mkdir(parents=True, exist_ok=True)
-                    self.must(f"prep-start-{name}-{before}", [self.py, "-I", "-B", self.ev / "judges.py", "start", "--source", src / name,
-                                                              "--step", before, "--out", start])
+                    self.must(f"prep-start-{name}-{before}", [self.py, "-I", "-B", self.ev / "judges.py", "start", "--source", judge_source,
+                                                              "--step", before, "--out", start, *(["--reference"] if s["role"] == "layout" else [])])
                 if not base.exists():
                     self.must(f"prep-base-{name}-{before}", [self.py, "-I", "-B", self.ev / "series.py", "base", "--series", name,
                                                              "--step", before, "--out", base])
@@ -1105,14 +1118,16 @@ class Runner:
         """The report over every launch (`report/all`), and per series one over everything (`report/SERIES`), one over its
         fixed starts alone (`report/SERIES-fixed`, where the primary contrast is read) and one over its chains
         (`report/SERIES-chains`), each from its own ledger beside the whole one. A series judged later is withheld from
-        every report until `judge` has judged all of it, so that nothing of it is read while launches still run."""
+        every report until `judge` has judged all of it, so that nothing of it is read while launches still run. A layout
+        case has its own reports only: `report/all` is about small changes on a start that matches its model."""
         out = self.work / "report"
         if out.exists():
             shutil.rmtree(out)
         withheld = {name for name, s in self.c["series"].items() if s.get("judges") and not self.ledger.get("released", {}).get(name)}
+        apart = withheld | {name for name, s in self.c["series"].items() if s["role"] == "layout"}
         whole = self.work / "ledger-all.json"
-        whole.write_text(json.dumps({**self.ledger, "launches": [e for e in self.ledger["launches"] if e["series"] not in withheld],
-                                     "chains": [c for c in self.ledger["chains"] if c["series"] not in withheld]}, indent=2) + "\n",
+        whole.write_text(json.dumps({**self.ledger, "launches": [e for e in self.ledger["launches"] if e["series"] not in apart],
+                                     "chains": [c for c in self.ledger["chains"] if c["series"] not in apart]}, indent=2) + "\n",
                          encoding="utf-8")
         parts = [("all", whole)]
         for name in dict.fromkeys(u["series"] for u in self.c["units"] if u["series"] not in withheld):

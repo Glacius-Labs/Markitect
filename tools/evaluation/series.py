@@ -14,11 +14,14 @@ plus the project's registry pages, which give each Package the paths it owns
                           model:   tools/evaluation-tasks/library/mN
   makerspace   W0 to C9   task.md: tools/comparison/makerspace-v2/spec/requirements-STEP.md
                           model:   tools/evaluation-tasks/makerspace/STEP
+  makerspace-layout       the same steps, tasks and models, as a case of its own:
+                          its starts keep a layout that differs from the model's
 
 `base` writes the model a fixed reference start realizes, for
 `suite.py task --base-model`: the step's model with the registry pages an owner
 wrote for that step's reference result (tools/evaluation-tasks/PROJECT/
-references/STEP/), which name every file of the reference with its owner and the
+references/STEP/, or references-modules/STEP/ for the Makerspace's starts in the
+model's layout), which name every file of the reference with its owner and the
 Definitions it realizes. The 2.0 arm adopts the start with them; K never reads
 the base model. `--unlinked` leaves the pages out on purpose: the arm then adopts
 every file with a row without links (a regression run of that fallback).
@@ -39,6 +42,9 @@ SERIES = {
     "makerspace": [(s, f"tools/comparison/makerspace-v2/spec/requirements-{s.lower()}.md", f"tools/evaluation-tasks/makerspace/{s.lower()}")
                    for s in ("W0", "C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9")],
 }
+SERIES["makerspace-layout"] = SERIES["makerspace"]
+# Where a series' reference pages lie, below its project's folder in tools/evaluation-tasks.
+REFERENCE_PAGES = {"makerspace": "references-modules"}
 
 
 class SeriesError(Exception):
@@ -76,9 +82,10 @@ def write_step(series, step, out, repo=REPO):
 
 
 def reference_pages(series, step, repo=REPO):
-    """The registry pages an owner wrote for STEP's reference result, or None: <project>/references/<step>/."""
+    """The registry pages an owner wrote for STEP's reference result, or None: <project>/references/<step>/, or the
+    series' own folder for them."""
     _, model = sources(series, step, repo)
-    pages = model.parent / "references" / step.lower()
+    pages = model.parent / REFERENCE_PAGES.get(series, "references") / step.lower()
     return pages if (pages / "registry.md").is_file() and (pages / "registry").is_dir() else None
 
 
