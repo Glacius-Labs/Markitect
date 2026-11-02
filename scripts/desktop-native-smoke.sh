@@ -109,7 +109,12 @@ SWIFT
 fi
 sleep 5
 alive "$pid" || { cat "$work/app.log"; fail "the app ended after it opened its window"; }
-first="$(windows)"
+# On a slow machine the window comes only once its web view is up.
+for _ in $(seq 1 30); do
+  first="$(windows)"
+  [ "${first:-0}" -ge 1 ] && break
+  sleep 1
+done
 echo "windows: $first"
 [ "${first:-0}" -ge 1 ] || { cat "$work/app.log"; fail "the app shows no window"; }
 

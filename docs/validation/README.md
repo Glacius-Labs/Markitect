@@ -38,6 +38,10 @@ These reports preserve the exact scope, inputs, source references and outcomes s
 - [Evaluation suite E1: sandbox smoke — 28 October 2026](eval-e1-sandbox-smoke-20261028.md): the escape probe and three baseline runs on the Library inside the sandbox; passed, with a K capture defect found, fixed and confirmed by a fourth run
 - [Evaluation suite: first smoke, baseline K on the Library — 28 October 2026](eval-k-library-smoke-20261028.md): dispatch for three baseline runs through the suite on Claude Sonnet 5.5; superseded by the sandbox smoke of evaluation suite v2, never run
 
+## Markitect Desktop
+
+- [The first real chat — 2 November 2026](desktop-first-real-chat-20261102.md): a chat against a real container and Claude, in the browser and the native window; seven questions passed after two fixes the run found
+
 ## Release evidence
 
 - [Distribution retirement — 17 October 2026](distribution-retirement-20261017.md) with the machine-readable [retired release mapping](retired-releases-20261017.json), which lists the 18 retired release versions and the commits behind their former tags

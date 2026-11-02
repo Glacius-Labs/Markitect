@@ -94,7 +94,7 @@ func TestAChatCopiesTheWorkingTreeAndProposesItsChanges(t *testing.T) {
 
 	// The chat's documents: its role and skill, no Manager tools, and the
 	// conversation so far before the owner's first message.
-	if home := rt.session.initialized.Claude; home == nil || !strings.Contains(home.SystemPrompt, "# Markitect chat") || !strings.Contains(home.SystemPrompt, "markitect-modeling/SKILL.md") {
+	if home := rt.session.initialized.Claude; home == nil || !strings.Contains(home.SystemPrompt, "# Markitect chat") || !strings.Contains(home.AppendSystemPrompt, "markitect-modeling/SKILL.md") {
 		t.Fatalf("the chat's home %+v", rt.session.initialized)
 	}
 	rt.script = func(s *fakeSession, argv []string, stdin []byte) int {

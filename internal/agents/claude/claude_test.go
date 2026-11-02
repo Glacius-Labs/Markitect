@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
 	"github.com/Glacius-Labs/Markitect/internal/agents"
 	"github.com/Glacius-Labs/Markitect/internal/harness"
 )
@@ -111,6 +112,22 @@ func TestHomeCarriesTheHarnessAsSystemPrompts(t *testing.T) {
 	}
 	if _, err := (Provider{}).Home(agents.Login{Copy: []byte("{}")}, harness.Document{Base: "b", Context: strings.Repeat("x", 2<<20)}); err == nil {
 		t.Fatal("an oversized harness was installed")
+	}
+}
+
+func TestAChatsDocumentsPassAgentdsSetupCheck(t *testing.T) {
+	for _, skill := range []string{harness.ChatModeling, harness.ChatExtract} {
+		doc, err := harness.Chat(harness.ChatInput{Skill: skill})
+		if err != nil {
+			t.Fatal(err)
+		}
+		i, err := Provider{}.Home(agents.Login{Copy: []byte("{}")}, doc)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := frame.EncodeControl(frame.ControlMessage{Type: frame.TypeInitialize, Initialize: &i}); err != nil {
+			t.Errorf("%s: %v", skill, err)
+		}
 	}
 }
 

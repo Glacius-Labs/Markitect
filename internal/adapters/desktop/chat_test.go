@@ -275,6 +275,51 @@ func TestAChatProposesAndTheOwnerAccepts(t *testing.T) {
 	}
 }
 
+func TestARunningAgentHearsAnAcceptOrAReject(t *testing.T) {
+	var heard []string
+	s, chats, _, id := chatServer(t, func(copy map[string]string, message string) string {
+		heard = append(heard, message)
+		return feeChat(copy, "")
+	})
+	route := "/api/projects/" + id + "/chats/"
+	chat := startChat(t, s, id, `{"text":"Add a late fee."}`)
+	chatState(t, s, id, chat)
+	act := func(action string) {
+		t.Helper()
+		if w := call(s, "POST", route+chat+"/"+action, "{}"); w.Code != http.StatusOK {
+			t.Fatalf("%s: %d %s", action, w.Code, w.Body)
+		}
+	}
+	send := func(text string) string {
+		t.Helper()
+		if w := call(s, "POST", route+chat+"/messages", `{"text":"`+text+`"}`); w.Code != http.StatusOK {
+			t.Fatalf("message: %d %s", w.Code, w.Body)
+		}
+		chatState(t, s, id, chat)
+		return heard[len(heard)-1]
+	}
+	act("reject")
+	if got := send("Is it in the model?"); !strings.Contains(got, "app: Rejected:") || !strings.HasSuffix(got, "The owner's next message:\n\nIs it in the model?") {
+		t.Errorf("after a reject the agent heard %q", got)
+	}
+	act("accept")
+	if got := send("And now?"); !strings.Contains(got, "app: Accepted:") || strings.Contains(got, "Rejected") || !strings.HasSuffix(got, "And now?") {
+		t.Errorf("after an accept the agent heard %q", got)
+	}
+	if got := send("Once more?"); got != "Once more?" {
+		t.Errorf("with no news the agent heard %q", got)
+	}
+	v := chatState(t, s, id, chat)
+	for _, m := range v.Messages {
+		if m.From == "owner" && strings.Contains(m.Text, "next message") {
+			t.Errorf("the owner's message reads %q", m.Text)
+		}
+	}
+	if len(chats.started) != 1 {
+		t.Errorf("%d agents started; the running one should have heard it", len(chats.started))
+	}
+}
+
 func TestAnAcceptWritesNothingOverAChangedWorkingTree(t *testing.T) {
 	s, chats, files, id := chatServer(t, feeChat)
 	chat := startChat(t, s, id, `{"text":"Add a late fee."}`)
@@ -629,6 +674,9 @@ func TestAStoppedTakeOverLeavesTheOwnersEditSafeFromAnAccept(t *testing.T) {
 	mine := "---\nkind: std/Rule\n---\n# Loan limit\n\nChanged by hand.\n"
 	files[policy] = mine
 	stopATurn()
+	if earlier := chats.started[len(chats.started)-1].Earlier; !strings.Contains(earlier, "starts from your version: "+policy) {
+		t.Errorf("the fresh agent was not told it starts from the owner's edit: %q", earlier)
+	}
 
 	w := call(s, "POST", route+chat+"/accept", "{}")
 	var v chatView
