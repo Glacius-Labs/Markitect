@@ -10,12 +10,17 @@ func TestAChatCarriesItsRulesAndSkill(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"# Markitect chat", "Change only files below .markitect/", ChatStart, "markitect-modeling/SKILL.md", "markitect-modeling/reference.md", "markitect-modeling/examples.md"} {
+	for _, want := range []string{"# Markitect chat", "Change only files below .markitect/", ChatStart} {
 		if !strings.Contains(doc.Base, want) {
-			t.Errorf("the modeling chat lacks %q", want)
+			t.Errorf("the modeling chat's rules lack %q", want)
 		}
 	}
-	if strings.Contains(doc.Base, "markitect-extract/SKILL.md") || doc.Task != "" || doc.Context != "" {
+	for _, want := range []string{"markitect-modeling/SKILL.md", "markitect-modeling/reference.md", "markitect-modeling/examples.md"} {
+		if !strings.Contains(doc.Context, want) {
+			t.Errorf("the modeling chat's skill lacks %q", want)
+		}
+	}
+	if strings.Contains(doc.Context, "markitect-extract/SKILL.md") || doc.Task != "" {
 		t.Errorf("the modeling chat carries more than it should: %q", doc.Task)
 	}
 
@@ -23,7 +28,7 @@ func TestAChatCarriesItsRulesAndSkill(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(doc.Base, "markitect-extract/SKILL.md") || !strings.Contains(doc.Base, "markitect-modeling/SKILL.md") {
+	if !strings.Contains(doc.Context, "markitect-extract/SKILL.md") || !strings.Contains(doc.Context, "markitect-modeling/SKILL.md") {
 		t.Error("the Extract chat lacks a skill")
 	}
 	if !strings.Contains(doc.Task, "agent: Which folders?") || !strings.HasSuffix(doc.Task, "The owner's next message:") {

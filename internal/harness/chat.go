@@ -32,11 +32,11 @@ var chatSkills = map[string][]string{
 	ChatExtract:  {"markitect-extract/SKILL.md", "markitect-modeling/SKILL.md", "markitect-modeling/reference.md", "markitect-modeling/examples.md"},
 }
 
-// Chat renders a chat agent's documents (concept 2.0 §8): Base holds its role,
-// the rules the app enforces and its skill; Task holds the conversation so
-// far, which precedes the owner's first message to this agent. A chat agent
-// has no Manager tools; it changes files in its copy, and the app proposes
-// what it changed.
+// Chat renders a chat agent's documents (concept 2.0 §8): Base holds its role
+// and the rules the app enforces; Context holds its skill; Task holds the
+// conversation so far, which precedes the owner's first message to this agent.
+// A chat agent has no Manager tools; it changes files in its copy, and the app
+// proposes what it changed.
 func Chat(in ChatInput) (Document, error) {
 	paths, ok := chatSkills[in.Skill]
 	if !ok {
@@ -46,8 +46,7 @@ func Chat(in ChatInput) (Document, error) {
 	for _, f := range skills.Files() {
 		text[f.Path] = f.Data
 	}
-	var b strings.Builder
-	b.WriteString(`# Markitect chat
+	doc := Document{Base: `# Markitect chat
 
 You talk with the owner of a project about its Markitect model and change the model with them. /work is a copy of the owner's working tree, with their uncommitted changes. What you change there reaches the owner as one proposal, which they read in Markitect's views and accept into their working tree or reject. Nothing reaches their files before they accept.
 
@@ -56,12 +55,12 @@ You talk with the owner of a project about its Markitect model and change the mo
 - Ask the owner when something is open, and write that part only after their answer. Your answer ends your turn; the owner's next message starts the next one.
 - Read the model with markitect check, refs, graph and lint, and see what your change reaches with markitect impact --base ` + ChatStart + `.
 - Keep each answer short: what you changed and why, or the one question you need answered.
-
-`)
+`}
+	var b strings.Builder
 	for _, p := range paths {
 		fmt.Fprintf(&b, "## Skill file %s\n\n%s\n\n", p, strings.TrimSpace(string(text[p])))
 	}
-	doc := Document{Base: b.String()}
+	doc.Context = strings.TrimSpace(b.String())
 	if in.Earlier != "" {
 		doc.Task = "The conversation so far, with an earlier agent:\n\n" + strings.TrimSpace(in.Earlier) + "\n\nThe owner's next message:"
 	}

@@ -217,9 +217,11 @@ type fakeSession struct {
 	closed      bool
 }
 
+// Initialize refuses what agentd refuses.
 func (s *fakeSession) Initialize(_ context.Context, i frame.Initialize) error {
 	s.initialized = i
-	return nil
+	_, err := frame.EncodeControl(frame.ControlMessage{Type: frame.TypeInitialize, Initialize: &i})
+	return err
 }
 func (s *fakeSession) ClearPrivateHome(context.Context) error { s.cleared = true; return nil }
 func (s *fakeSession) StartProvider(_ context.Context, req frame.Start) (frame.Started, error) {
