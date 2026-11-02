@@ -76,6 +76,7 @@ STANDIN = textwrap.dedent(r'''
     policy = repo / ".markitect" / "model" / "lending" / "loan-policy.md"
     (d / f"apply-{n}.json").write_text(json.dumps({"args": args, "env": env, "head": git("rev-parse", "HEAD"),
                                                     "policy": git("show", "HEAD:.markitect/model/lending/loan-policy.md") if policy.exists() else None,
+                                                    "sinceBase": git("diff", "--name-only", opt("--base"), "HEAD").splitlines() if opt("--base") else None,
                                                     "lendingPage": (repo / ".markitect" / "registry" / "lending.md").read_text(encoding="utf-8")
                                                     if (repo / ".markitect" / "registry" / "lending.md").exists() else None,
                                                     "model": sorted(p.relative_to(repo).as_posix() for p in (repo / ".markitect").rglob("*") if p.is_file())}))
@@ -414,6 +415,103 @@ class ArmTest(unittest.TestCase):
         self.assertIn(".markitect/registry.md", apply["model"])
         self.assertIn("[[lending/loan-policy]]", apply["lendingPage"])
         self.assertNotIn("adopted by the owner", apply["lendingPage"])
+
+    def test_an_adopted_start_gets_the_models_new_paths_and_its_files_keep_their_owners(self):
+        start = self.tmp / "reference"
+        subprocess.run(["git", "init", "-q", "-b", "start", str(start)], check=True)
+        for rel in ("realization/cmd/main.go", "realization/internal/ms/loans.go", "realization/internal/ms/library.go"):
+            (start / rel).parent.mkdir(parents=True, exist_ok=True)
+            (start / rel).write_text(rel + "\n")
+        env = dict(os.environ, GIT_AUTHOR_NAME="r", GIT_AUTHOR_EMAIL="r@x", GIT_COMMITTER_NAME="r", GIT_COMMITTER_EMAIL="r@x")
+        subprocess.run(["git", "-C", str(start), "add", "-A"], check=True, env=env)
+        subprocess.run(["git", "-C", str(start), "-c", "commit.gpgsign=false", "commit", "-q", "-m", "reference"], check=True, env=env)
+        subprocess.run(["git", "-C", str(start), "bundle", "create", "-q", str(self.tmp / "reference.bundle"), "start"], check=True)
+        # The reference is one package: the owner's pages name its files, Root keeps library.go, and the model wants modules.
+        base = self.model("split-base")
+        (base / "registry" / "lending.md").write_text(
+            "---\npaths:\n  - realization/internal/ms/loans.go\n  - realization/cmd/main.go\n---\n# Registry: lending\n\n"
+            "| File | Realizes | Why |\n|---|---|---|\n"
+            "| `realization/internal/ms/loans.go` | [[lending/loan-policy]] | Lending operations |\n"
+            "| `realization/cmd/main.go` | [[lending/loan-policy]] | The program |\n")
+        (base / "registry.md").write_text("# Registry\n\n| File | Realizes | Why |\n|---|---|---|\n"
+                                          "| `realization/internal/ms/library.go` | [[project]] | Records |\n")
+        model = self.model("split")
+        (model / "registry" / "lending.md").write_text(
+            "---\npaths:\n  - realization/lending/**\n  - realization/cmd/**\n  - realization/internal/ms/**\n---\n# Registry: lending\n\n"
+            "| File | Realizes | Why |\n|---|---|---|\n")
+        record, out = self.run_arm(self.task("split-task", model, self.tmp / "reference.bundle", base), "defect")
+        self.assertEqual(record["exitCode"], 0, (out / "variant" / "run.json").read_text())
+        page = self.applies()[0]["lendingPage"]
+        # A new folder, and a folder that holds only the page's own file, are added to what the page had.
+        for pattern in ("realization/internal/ms/loans.go", "realization/cmd/main.go", "realization/lending/**", "realization/cmd/**"):
+            self.assertIn(f"  - {pattern}\n", page)
+        # This one would take library.go from Root.
+        self.assertNotIn("realization/internal/ms/**", page)
+        self.assertIn("[[lending/loan-policy]]", page)
+        adoption = record["reported"]["adoption"]
+        self.assertEqual((adoption["newPaths"], adoption["newPathsLeftOut"], adoption["unlinkedRows"], adoption["pageRows"]), (2, 1, 0, 3))
+        # The patterns are part of the adoption, so the base holds them and the Run's impact is the model's change alone.
+        args = self.applies()[0]["args"]
+        self.assertEqual(args[args.index("--base") + 1], adoption["commit"])
+        self.assertFalse([f for f in self.applies()[0]["sinceBase"] if "registry" in f])
+
+    def test_the_arm_reads_patterns_as_the_registry_does(self):
+        import markitect_arm
+        hit = markitect_arm.pattern_matches
+        self.assertTrue(hit("a/**", "a/b/c.go"))
+        self.assertFalse(hit("a/**", "a"))
+        self.assertTrue(hit("a/*.go", "a/b.go"))
+        self.assertFalse(hit("a/*.go", "a/b/c.go"))
+        self.assertTrue(hit("**/c.go", "c.go"))
+        self.assertTrue(hit("a/**/c.go", "a/b/d/c.go"))
+        self.assertTrue(hit("a/?.go", "a/b.go"))
+        self.assertFalse(hit("a/b.go", "a/b.go/c"))
+        self.assertEqual(markitect_arm.page_patterns("---\npaths: []\n---\n# x\n\n- not/a/pattern\n"), [])
+        self.assertEqual(markitect_arm.page_patterns("# No front matter\n\n  - not/a/pattern\n"), [])
+        self.assertEqual(markitect_arm.page_patterns("---\npaths:\n  - a/**\n  - b.go\n---\n  - not/a/pattern\n"), ["a/**", "b.go"])
+        for other in ("---\npaths: [a, b]\n---\n", "---\npaths:\n- a\n---\n", "---\npaths:\n  - a # why\n---\n", "﻿---\npaths: []\n---\n"):
+            self.assertIsNone(markitect_arm.page_patterns(other), other)
+        self.assertEqual(markitect_arm.pattern_specificity("a/b.go"), 1 << 30)
+        self.assertEqual(markitect_arm.pattern_specificity("a/b/**"), 2)
+        pages = {"x": ["src/**"], "y": ["src/b/**"]}
+        self.assertEqual([markitect_arm.file_owner(f, pages) for f in ("src/a.go", "src/b/c.go", "docs/d.md")], ["x", "y", None])
+
+    def paged(self, name, **pages):
+        """A folder of registry pages, each given as its front matter."""
+        folder = self.tmp / name
+        (folder / "registry").mkdir(parents=True)
+        for page, front in pages.items():
+            (folder / "registry" / (page + ".md")).write_text(front + "# Registry: " + page + "\n", encoding="utf-8")
+        return folder
+
+    def test_new_paths_never_move_a_file_or_repeat_a_pattern(self):
+        import markitect_arm
+        block = lambda *patterns: "---\npaths:\n" + "".join(f"  - {p}\n" for p in patterns) + "---\n"
+        read = lambda folder, page: markitect_arm.page_patterns((folder / "registry" / (page + ".md")).read_text(encoding="utf-8"))
+        # Another page already has the pattern, and no file matches it: adding it would be a compile error.
+        dot = self.paged("dup-dot", a=block("x/**"), b="---\npaths: []\n---\n")
+        self.assertEqual(markitect_arm.add_new_paths(self.paged("dup-model", b=block("x/**")), dot, []), (0, 1))
+        self.assertEqual(read(dot, "b"), [])
+        # The new pattern is more specific than the page holding the file, and would take it from there.
+        dot = self.paged("move-dot", a=block("src/**"), b=block("src/b/**"))
+        files = ["src/b/x/y.go"]
+        self.assertEqual(markitect_arm.add_new_paths(self.paged("move-model", a=block("src/b/x/**")), dot, files), (0, 1))
+        self.assertEqual(read(dot, "a"), ["src/**"])
+        # The same for a file Root owns, and for a folder the page's own file is in, which it may take.
+        dot = self.paged("root-dot", a=block("cmd/main.go"))
+        files = ["cmd/main.go", "lib/root.go"]
+        self.assertEqual(markitect_arm.add_new_paths(self.paged("root-model", a=block("cmd/**", "lib/**", "new/**")), dot, files), (2, 1))
+        self.assertEqual(read(dot, "a"), ["cmd/main.go", "cmd/**", "new/**"])
+        # A pattern the page already has is neither added nor left out; the first page to claim a new one keeps it.
+        dot = self.paged("keep-dot", a=block("a/**"), b="---\npaths: []\n---\n")
+        model = self.paged("keep-model", a=block("a/**", "shared/**"), b=block("shared/**", "b/**"))
+        self.assertEqual(markitect_arm.add_new_paths(model, dot, []), (2, 1))
+        self.assertEqual((read(dot, "a"), read(dot, "b")), (["a/**", "shared/**"], ["b/**"]))
+        self.assertIn("# Registry: b\n", (dot / "registry" / "b.md").read_text(encoding="utf-8"))
+        # A page in another form cannot be read, so its owners are unknown and nothing changes.
+        dot = self.paged("odd-dot", a="---\npaths: [x/**]\n---\n", b="---\npaths: []\n---\n")
+        self.assertEqual(markitect_arm.add_new_paths(self.paged("odd-model", b=block("y/**")), dot, []), (0, 0))
+        self.assertEqual(read(dot, "b"), [])
 
     def test_a_base_model_without_registry_pages_still_places_each_file_on_its_owners_page(self):
         start = self.tmp / "reference"

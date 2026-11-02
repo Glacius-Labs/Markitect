@@ -56,10 +56,11 @@ The owner, 28 October 2026, on lane 1's handover: "Lane 1 finished what its doin
   - M landed only 9 of the 18 Makerspace fixed starts, against K's 18, so §15.5 reads "no" on the public projects. Two of those 9 are C9, where M saw no change. The other 7 have one main cause: when the arm adopts a start, it drops the module paths that the task's model pages hold, so the Managers cannot write the module packages. By [DEC-081](../concepts/register.md#dec-081-the-organization-knows-broad-at-the-top-and-deep-below), a Manager's own claim takes effect only from the next Run.
   - None of M's 18 Makerspace fixed-start results holds its Managers' module packages, its 9 landed ones included. All 18 of K's do. The hidden cases do not see this.
   - Build holds Linux on this commit, with the owner's "Yes, diagnose first".
+- **Fix for adopted starts, 2 November** ([dispatch](../validation/fixed-starts-remeasure-20261102.md)): the owner's "Yes, fix and re-measure". On an adopted start, the owner's commit now adds the task's model's patterns for new paths, and the remote's refusal says that a claim counts only from the next Run. A re-measure runs M alone on the Makerspace's fixed starts and two Library starts: 15 launches, on `955683de` plus the fix, never counted.
 
 ## Next
 
-1. **Counted series:** Linux is held on `955683de` (above). A fix would mean a new freeze, the gate again and both platforms from their first launch, which needs the owner.
+1. **Counted series:** Linux is held on `955683de` (above). After the [re-measure](../validation/fixed-starts-remeasure-20261102.md), a new series would mean a new freeze, the gate again and both platforms from their first launch, which needs the owner.
 2. **The owner's time:** after the counted series, the owner's measurement below.
 3. **Codex repeat:** the smaller repeat with every arm on Codex Luna, as the Codex decision below says, after [what comes first](../validation/counted-series-protocol-20261030.md#after-the-series). Of the three things that come first there, the Codex login and K's Codex command are done (above). The owner's removal of the judge session's records remains.
 
