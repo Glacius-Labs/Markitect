@@ -73,6 +73,9 @@ func TestAPushStaysInTheManagersArea(t *testing.T) {
 		if !strings.Contains(out, "git checkout") {
 			t.Fatalf("refusal names no next step:\n%s", out)
 		}
+		if strings.Contains(want, "outside your area") && !strings.Contains(out, "counts only from the next Run") {
+			t.Fatalf("refusal does not say that a claim cannot open the path in this Run:\n%s", out)
+		}
 		m.git("reset", "-q", "--hard", "origin/"+m.branch)
 	}
 	// Its own files and its own registry page are free.
