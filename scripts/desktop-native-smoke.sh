@@ -57,6 +57,17 @@ if [ "$os" = linux ]; then
   export WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 LIBGL_ALWAYS_SOFTWARE=1
 fi
 
+if [ "$os" = windows ]; then
+  # Some runner images hold WebView2's files cold: a read of them takes up to
+  # 33 ms where Edge's own files on the same disk take 0.2 ms. That kept the
+  # first window back for up to a minute, which is also where Wails gives up on
+  # WebView2. Once they are read, the same image shows the window in two to
+  # three seconds.
+  began=$(date +%s)
+  find "/c/Program Files (x86)/Microsoft/EdgeWebView/Application" -type f -exec cat {} + >/dev/null || echo "some of WebView2's files could not be read"
+  echo "WebView2's files were read in $(( $(date +%s) - began )) s"
+fi
+
 "$app" >"$work/app.log" 2>&1 &
 # On Windows $! is the shell's own number for it, which taskkill does not
 # know; there the record's process number below is used.
@@ -109,7 +120,8 @@ SWIFT
 fi
 sleep 5
 alive "$pid" || { cat "$work/app.log"; fail "the app ended after it opened its window"; }
-# On a slow machine the window comes only once its web view is up.
+# The window stays hidden until its first page has loaded, and until then
+# Windows reports no title for it.
 for _ in $(seq 1 30); do
   first="$(windows)"
   [ "${first:-0}" -ge 1 ] && break
