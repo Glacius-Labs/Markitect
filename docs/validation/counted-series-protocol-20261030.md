@@ -539,6 +539,7 @@ An independent re-check found the first point; Build confirmed both at 21:35Z.
 - **Linux is held.** Build does not clear the Linux gate on this commit.
   - A fix changes the frozen commit, and [any such change restarts the platform](#after-a-stop): a new commit would be frozen, the gate would pass again and both platforms would start from their first launch, with these launches reported apart and not counted. That spends more quota than the owner's "OK as planned", so it needs the owner.
   - The new project stays sealed and no judge session starts, so it can still measure a fix blind.
+  - The owner then answered "Yes, fix and re-measure" to a fix of the arm and a bounded re-measure of M alone, outside this series ([dispatch](fixed-starts-remeasure-20261102.md)).
 - **A slip in the blinding.** Build's status checks read the `pending` list in `ledger.json` and `done.json`. Its size implies that all 88 of the new project's results delivered, a count [Hidden material](#hidden-material) keeps from being read while launches still run. Build's summaries also printed that project's launches per arm and one mean time between launches. The commit is frozen, so none of this can change these launches. In a new series, Build reads progress from the runner's log, which gives each launch's class and time, and not from that list.
 - Amendment 7's pace and Amendment 8's end early on 3 November no longer apply. Everything else in Amendments 1 to 8 stands.
 
