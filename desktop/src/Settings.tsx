@@ -99,10 +99,15 @@ export function Settings({ id }: { id: string }) {
           <dl className="settings">
             <Setting name="Provider" value={providerName[app.agents.provider] ?? app.agents.provider} />
             <Setting name="Model" value={app.agents.model ? `${app.agents.model}, effort ${app.agents.effort}` : 'not set'} />
-            <Setting name="Manager image" value={app.agents.image || 'not set'} mono />
+            <Setting name="Manager image" value={app.agents.image || app.agents.imageBuilt || 'not set'} mono />
             <Setting name="Provider network" value={app.agents.network} mono />
             <Setting name="Docker" value={app.agents.engine || 'not found'} mono />
           </dl>
+          {!app.agents.image && app.agents.imageBuilt && (
+            <p className="small muted">
+              Markitect builds this image itself on the first chat that needs it. Chats need nothing more. markitect apply and verify in a terminal still need MARKITECT_MANAGER_IMAGE, with the project's toolchain.
+            </p>
+          )}
           <h3 className="title">Logins</h3>
           <p className="small muted">Agents use your account login, never an API key. A login copy cannot refresh itself, so log in again on this computer when one runs out.</p>
           <div className="gl-cards logins">

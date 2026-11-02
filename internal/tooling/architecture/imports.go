@@ -120,8 +120,12 @@ func Inspect(root string) ([]Edge, error) {
 			}
 			// Only imports between Markitect packages are edges; third-party
 			// libraries are not restricted in any layer (DEC-020).
-			if strings.HasPrefix(imported, ModulePath) {
-				edges = append(edges, Edge{rel, fset.Position(imp.Pos()).Line, packagePath, strings.TrimPrefix(imported, ModulePath), strings.HasSuffix(rel, "_test.go")})
+			to, local := strings.CutPrefix(imported, ModulePath)
+			if imported == strings.TrimSuffix(ModulePath, "/") {
+				to, local = ".", true
+			}
+			if local {
+				edges = append(edges, Edge{rel, fset.Position(imp.Pos()).Line, packagePath, to, strings.HasSuffix(rel, "_test.go")})
 			}
 		}
 		return nil
