@@ -165,7 +165,7 @@ function Spark({ points }: { points: StatPoint[] }) {
         </svg>
       )}
       <figcaption className="small muted">
-        {plural(last.definitions, 'Definition')} now, over {plural(commits, 'commit')} that changed the model.
+        {plural(last.definitions, 'Definition')} now{commits > 0 ? `, over ${plural(commits, 'commit')} that changed the model` : '; no commit has changed the model yet'}.
       </figcaption>
     </figure>
   );
