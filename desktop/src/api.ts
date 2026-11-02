@@ -9,6 +9,8 @@ export interface Check {
   packages: number;
   files: number;
   warnings: number;
+  // No model is drawn yet: the state of an existing project right after init.
+  notDrawn?: boolean;
 }
 
 export interface Status {
@@ -23,6 +25,7 @@ export interface Waiting {
   uncommitted: number;
   landed: boolean;
   unlanded: number;
+  extract?: { chat: string; working: boolean };
 }
 
 export interface Project {

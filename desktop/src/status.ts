@@ -17,6 +17,9 @@ export function badge(s: Status): { tone: Tone; label: string } {
   if (s.check.ok) {
     return { tone: 'success', label: 'Model compiles' };
   }
+  if (s.check.notDrawn) {
+    return { tone: 'neutral', label: 'No model yet' };
+  }
   return { tone: 'danger', label: plural(s.check.errorCount, 'error') };
 }
 
@@ -24,9 +27,11 @@ export interface Step {
   tone: Exclude<Tone, 'neutral'>;
   title: string;
   body: string;
-  action?: 'init';
+  action?: 'init' | 'draw';
   // The chat whose proposal waits.
   proposal?: string;
+  // The chat that draws the model.
+  chat?: string;
   // What to start in a terminal, until Runs are in the app.
   command?: string;
 }
@@ -42,12 +47,30 @@ export function nextStep(s: Status, w?: Waiting): Step {
     return {
       tone: 'info',
       title: 'Set up Markitect here',
-      body: 'markitect init adds the .markitect folder with a first model page and installs the modeling skills. Its output lists every file it writes.',
+      body: 'markitect init adds the .markitect folder with a first model page and installs the modeling skills. If the project has code, an agent can then draw the model from it. Its output lists every file it writes.',
       action: 'init',
     };
   }
   const c = s.check;
-  if (!c.ok) {
+  if (c.notDrawn && !w?.proposal) {
+    if (w?.extract) {
+      return {
+        tone: 'info',
+        title: w.extract.working ? 'The model is being drawn' : 'The chat that draws the model waits for you',
+        body: w.extract.working
+          ? 'An agent is reading the code. Follow it in the chat, where it asks about what the code leaves open.'
+          : 'Answer it in the chat, or ask it to go on. Nothing reaches your files until you accept its proposal.',
+        chat: w.extract.chat,
+      };
+    }
+    return {
+      tone: 'info',
+      title: 'Draw the model from the code',
+      body: `Markitect is set up, and ${plural(c.errorCount, 'file')} of this project ${c.errorCount === 1 ? 'has' : 'have'} no place in a model yet. An agent reads the code in a container of its own, asks you what the code leaves open, and proposes a model. Nothing reaches your files until you accept it.`,
+      action: 'draw',
+    };
+  }
+  if (!c.ok && !c.notDrawn) {
     return {
       tone: 'danger',
       title: `The model has ${plural(c.errorCount, 'compile error')}`,

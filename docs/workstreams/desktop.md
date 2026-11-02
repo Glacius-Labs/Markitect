@@ -15,6 +15,8 @@ The Desktop session designs and builds Markitect Desktop, the app over the CLI t
 
 - **Built:** the hub's next step: a proposal that waits, the commit a Run needs, the first Run or the next one as a command for the terminal, until Runs are in the app ([routes](../../internal/adapters/desktop/README.md#routes)).
 
+- **Built:** `init` on an existing project leads into Extract: the hub offers to draw the model instead of listing every file as a compile error, then follows that conversation to its proposal ([the hub](../../internal/adapters/desktop/README.md#routes)). Walked through with a scripted agent. A real Extract waits until the evaluations free Docker, and its first stop, the Package cut, for the Build session's go-ahead.
+
 - **Run for real:** the chat, against a real container and Claude, in the browser and the native window, on 2 November 2026 ([record](../validation/desktop-first-real-chat-20261102.md)). The run found two defects no scripted agent could show, both fixed.
 
 ## Next

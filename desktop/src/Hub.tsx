@@ -15,6 +15,9 @@ const areas = [
   { key: '4', icon: 'settings', title: 'Settings', body: 'Required checks, agents and logins.' },
 ];
 
+// What the Draw the model button says to the chat that it starts.
+const drawMessage = "Draw the model from this project's code.";
+
 // InitRun is how a markitect init ended, with its output.
 export interface InitRun {
   ok: boolean;
@@ -96,6 +99,19 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
     }
   };
 
+  const draw = async () => {
+    setBusy(true);
+    try {
+      const c = await api.newChat(project.id, drawMessage, 'extract');
+      openChat(project.id, c.id);
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const remove = async () => {
     setBusy(true);
     try {
@@ -145,6 +161,16 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
             Set up Markitect
           </button>
         )}
+        {step.action === 'draw' && (
+          <button className="gl-button" data-variant="primary" data-size="sm" aria-busy={busy || undefined} disabled={busy} onClick={() => void draw()}>
+            Draw the model
+          </button>
+        )}
+        {step.chat && (
+          <button className="gl-button" data-variant="primary" data-size="sm" onClick={() => openChat(project.id, step.chat!)}>
+            Open the chat
+          </button>
+        )}
         {waitingChat && (
           <>
             <button
@@ -169,7 +195,7 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
           <pre>{step.command}</pre>
         </div>
       )}
-      {check && !check.ok && (
+      {check && !check.ok && !check.notDrawn && (
         <ul className="errors">
           {check.errors.map((e, i) => (
             <li key={i}>{e}</li>
@@ -177,7 +203,18 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
           {check.errorCount > check.errors.length && <li className="muted">and {plural(check.errorCount - check.errors.length, 'more error')}; markitect check lists them all</li>}
         </ul>
       )}
-      {check && (
+      {check?.notDrawn && (
+        <details className="output">
+          <summary>The {plural(check.errorCount, 'file')} with no place in a model yet</summary>
+          <ul className="errors">
+            {check.errors.map((e, i) => (
+              <li key={i}>{e}</li>
+            ))}
+            {check.errorCount > check.errors.length && <li className="muted">and {plural(check.errorCount - check.errors.length, 'more file')}</li>}
+          </ul>
+        </details>
+      )}
+      {check && !check.notDrawn && (
         <div className="gl-stats">
           <Stat label="Definitions" value={check.definitions} />
           <Stat label="Packages" value={check.packages} />
@@ -214,6 +251,8 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
                     <Badge tone="neutral">The model over time</Badge>
                   ) : a.key === '4' ? (
                     <Badge tone="neutral">Logins, agents and checks</Badge>
+                  ) : check?.notDrawn && a.key === '1' ? (
+                    <Badge tone="neutral">No model yet</Badge>
                   ) : live && check ? (
                     <Badge tone={check.warnings > 0 ? 'warning' : 'neutral'}>
                       {plural(check.definitions, 'Definition')}, {plural(check.warnings, 'warning')}
