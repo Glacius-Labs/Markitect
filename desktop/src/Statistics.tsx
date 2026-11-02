@@ -65,6 +65,7 @@ export function Statistics({ id }: { id: string }) {
               ? 'No commit changed the model yet; the numbers are the working tree’s.'
               : `The last ${commits === limit ? `${limit} commits` : commits === 1 ? 'commit' : `${commits} commits`} that changed .markitect/, and the working tree now. A larger dot is a commit a Run landed.`}
           </p>
+          <div className="stats-body">
           <div className="stats-charts">
             <Chart
               title="Size"
@@ -120,6 +121,7 @@ export function Statistics({ id }: { id: string }) {
               </table>
             </div>
           </section>
+          </div>
         </>
       )}
     </>

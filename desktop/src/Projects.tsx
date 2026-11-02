@@ -39,12 +39,11 @@ export function Projects(props: { info: AppInfo | null; onAdded: (r: Result) => 
 
   return (
     <>
-      <header className="gl-page-header">
-        <div className="gl-page-header__text">
-          <h1 className="gl-page-header__title">Projects</h1>
-          {projects && projects.length > 0 && <p className="gl-page-header__description">{plural(projects.length, 'project')}.</p>}
-        </div>
-        {projects && projects.length > 0 && <div className="gl-page-header__actions">{actions}</div>}
+      <div className="home">
+      <header className="home__head">
+        <h1 className="gl-page-header__title">Projects</h1>
+        {projects && projects.length > 0 && <p className="gl-page-header__description">{plural(projects.length, 'project')}.</p>}
+        {projects && projects.length > 0 && <div className="home__actions">{actions}</div>}
       </header>
       {error && <Alert tone="danger" title="The project list cannot be read" body={error} />}
       {projects?.length === 0 && (
@@ -58,7 +57,7 @@ export function Projects(props: { info: AppInfo | null; onAdded: (r: Result) => 
         </div>
       )}
       {projects && projects.length > 0 && (
-        <div className="gl-cards project-cards">
+        <div className="home__cards">
           {projects.map((p) => {
             const b = badge(p.status);
             return (
@@ -76,6 +75,7 @@ export function Projects(props: { info: AppInfo | null; onAdded: (r: Result) => 
           })}
         </div>
       )}
+      </div>
       {dialog && (
         <AddDialog
           mode={dialog}

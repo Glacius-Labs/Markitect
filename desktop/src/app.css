@@ -10,9 +10,6 @@ body {
 
 .app {
   --topbar: 3.5rem;
-  /* The app is a tool on a monitor: it fills the window far beyond the design
-     system's reading width. Prose keeps its own measure. */
-  --page-max: calc(var(--content-max) * 5 / 3);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -60,9 +57,9 @@ body {
 .page {
   box-sizing: border-box;
   width: 100%;
-  max-width: var(--page-max);
-  margin: 0 auto;
-  padding: var(--space-6) clamp(var(--space-6), 3vw, var(--space-12));
+  /* The app is a tool on a monitor, as wide as the monitor is: each area decides
+     how to use the width, and prose keeps its own measure. */
+  padding: var(--space-6) clamp(var(--space-6), 3vw, var(--space-16));
   container: page / inline-size;
   display: flex;
   flex-direction: column;
@@ -132,6 +129,65 @@ body {
   color: var(--text-muted);
 }
 
+/* The list of projects is a home screen, in the middle of any window. */
+.home {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8);
+  width: 100%;
+  margin: auto 0;
+  padding-bottom: var(--space-12);
+}
+
+.home__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  text-align: center;
+}
+
+.home__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.home__cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+.home .gl-alert {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 60rem;
+}
+
+.home__cards .gl-card {
+  box-sizing: border-box;
+  width: min(100%, 26rem);
+}
+
+/* The hub. */
+.hub,
+.hub__side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
+.hub {
+  flex: 1;
+}
+
 /* The hub's tiles take the room the page has left. */
 .tiles-section {
   flex: 1;
@@ -173,9 +229,10 @@ body {
 }
 
 .tile__live {
+  position: relative;
   flex: 1;
   min-width: 0;
-  min-height: 8rem;
+  min-height: 10rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -210,12 +267,14 @@ body {
   color: var(--text);
 }
 
-/* The whole tile is the link, so its Packages do not react on their own. */
+/* The whole tile is the link, so its Packages do not react on their own. The
+   map fits the room the tile has, and gives the tile no height of its own. */
 .tile__map {
+  position: absolute;
+  inset: 0;
   pointer-events: none;
   width: 100%;
   height: 100%;
-  max-height: 22rem;
 }
 
 .tile__spark {
@@ -277,6 +336,13 @@ body {
   }
 }
 
+/* A narrow tile has it below the text, where the map gets its height from here. */
+@container tile (max-width: 30rem) {
+  .tile__live:has(.tile__map) {
+    min-height: 14rem;
+  }
+}
+
 @container page (max-width: 44rem) {
   .tiles {
     grid-template-columns: minmax(0, 1fr);
@@ -284,8 +350,41 @@ body {
   }
 }
 
-.project-cards {
-  --_min: 22rem;
+.stats-body,
+.settings-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* A very wide page, such as a 32:9 monitor's: the project and its next step
+   beside the tiles, Statistics' commits beside its charts, and Settings' two
+   parts side by side. */
+@container page (min-width: 150rem) {
+  .hub {
+    display: grid;
+    grid-template-columns: minmax(24rem, 32rem) minmax(0, 1fr);
+    gap: var(--space-8);
+    align-items: stretch;
+  }
+
+  .hub__side .gl-alert {
+    flex-wrap: wrap;
+  }
+
+  .stats-body {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap: var(--space-8);
+    align-items: start;
+  }
+
+  .settings-body {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-8);
+    align-items: start;
+  }
 }
 
 @media (max-width: 600px) {

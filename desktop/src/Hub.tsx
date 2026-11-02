@@ -134,7 +134,8 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
   const waitingChat = step.proposal;
   const check = project.status.check;
   return (
-    <>
+    <div className="hub">
+      <div className="hub__side">
       <nav aria-label="Breadcrumb">
         <ol className="gl-breadcrumb">
           <li>
@@ -228,6 +229,7 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
           </div>
         </details>
       )}
+      </div>
       <section className="section tiles-section" aria-labelledby="areas">
         <h2 className="gl-sr-only" id="areas">
           Areas
@@ -252,7 +254,7 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
           <p>The folder stays as it is. You can open it again at any time.</p>
         </Dialog>
       )}
-    </>
+    </div>
   );
 }
 
