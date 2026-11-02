@@ -73,6 +73,9 @@ func newChatImage(source fs.FS) *chatImage {
 // ensure returns the image's ID, building the image first when the engine does
 // not have it. doing says what is happening, for the chat that waits.
 func (i *chatImage) ensure(ctx context.Context, engine imageEngine, doing func(string)) (string, error) {
+	if doing == nil {
+		doing = func(string) {}
+	}
 	tag, err := i.tag()
 	if err != nil {
 		return "", fmt.Errorf("the agent image: %w", err)
@@ -88,6 +91,7 @@ func (i *chatImage) ensure(ctx context.Context, engine imageEngine, doing func(s
 			}
 			return "", fmt.Errorf("the agent image: %w", err)
 		}
+		doing("Starting the chat's agent")
 	}
 	return engine.ImageID(ctx, tag)
 }
@@ -126,18 +130,20 @@ func (i *chatImage) build(ctx context.Context, engine imageEngine, tag string, d
 		return err
 	}
 	// An image a running agent still uses stays until a later build; agents
-	// run by image ID, so nothing depends on these names.
+	// run by image ID, so nothing depends on these names. A chat stopped now
+	// does not keep the old image.
+	remove, done := context.WithTimeout(context.WithoutCancel(ctx), 30*time.Second)
+	defer done()
 	for _, old := range built {
-		_ = engine.RemoveImage(ctx, old)
+		_ = engine.RemoveImage(remove, old)
 	}
-	doing("Starting the chat's agent")
 	return nil
 }
 
 func shortStep(step string) string {
 	step = strings.Join(strings.Fields(step), " ")
 	if len(step) > chatImageStepWidth {
-		return step[:chatImageStepWidth] + "…"
+		return strings.ToValidUTF8(step[:chatImageStepWidth], "") + "…"
 	}
 	return step
 }

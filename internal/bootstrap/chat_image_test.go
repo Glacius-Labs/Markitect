@@ -172,7 +172,7 @@ func TestStoppingEndsTheBuild(t *testing.T) {
 		cancel()
 		<-ctx.Done()
 	}}
-	_, err := newChatImage(imageSource("FROM scratch\n")).ensure(ctx, engine, func(string) {})
+	_, err := newChatImage(imageSource("FROM scratch\n")).ensure(ctx, engine, nil)
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("error %v", err)
 	}

@@ -15,7 +15,8 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | Layer | Meaning | May import | Packages |
 |---|---|---|---|
 | `model` | The model language over supplied bytes: Definitions, Kinds, links, visibility, cycles, manifest and lock. | nothing | 1 |
-| `assets` | Files built into the binary: the standard Libraries, the skills and the source of the chats' image. | nothing | 3 |
+| `assets` | Files built into the binary: the standard Libraries and the skills. | nothing | 2 |
+| `image-source` | The source of the image the native app's chats run in; only the native app carries it. | nothing | 1 |
 | `domain` | Registry pages, ownership and file accounting over a compiled model. | `model` | 1 |
 | `project` | Loads and checks a project's Markitect folder from a repository state. | `model`, `assets`, `domain` | 1 |
 | `service` | Questions about a loaded project: references, graph, impact with checklists, and lint. | `model`, `assets`, `domain`, `project` | 1 |
@@ -32,7 +33,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `adapter` | Concrete Git, command-line, desktop and Run remote adapters; no adapter imports another. | `model`, `assets`, `domain`, `project`, `service`, `remote`, `agent-port`, `run`, `build` | 6 |
 | `composition` | Constructs the command line with its adapters. | `model`, `project`, `service`, `remote`, `agent-port`, `container`, `agents`, `run`, `adapter` | 1 |
 | `command` | Thin entrypoints to product composition. | `composition` | 1 |
-| `desktop-command` | Markitect Desktop's native shell over the composition: windows, tray and folder dialogs; built only with the native tag. | `composition`, `assets` | 1 |
+| `desktop-command` | Markitect Desktop's native shell over the composition: windows, tray and folder dialogs; built only with the native tag. | `composition`, `image-source` | 1 |
 | `remote-command` | Thin entrypoint of a Run's remote container. | `adapter` | 1 |
 | `agent` | Runs inside each Agent container: provider process, MCP bridge and stdio framing. | `protocol` | 1 |
 | `agent-command` | Thin entrypoint of the session helper. | `agent` | 1 |
@@ -61,9 +62,14 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `.` | Package markitect carries the source of the image the native app's chats run in, so that the app can build that image on a machine with Docker and no checkout. | [internal/adapters/desktop/README.md#the-chat](../../internal/adapters/desktop/README.md#the-chat) |
 | `internal/libraries` | Package libraries holds the standard Libraries that ship inside the markitect binary: std, rest and cli, each a folder of Kind Definitions. | [docs/guides/model-language.md#kinds-and-libraries](../guides/model-language.md#kinds-and-libraries) |
 | `internal/skills` | Package skills holds the agent skills that ship inside the markitect binary: the modeling skill and the Extract skill built on it. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
+
+## Image source
+
+| Package | Summary | Owning document |
+|---|---|---|
+| `.` | Package markitect carries the source of the image the native app's chats run in, so that the app can build that image on a machine with Docker and no checkout. | [internal/adapters/desktop/README.md#the-native-app](../../internal/adapters/desktop/README.md#the-native-app) |
 
 ## Realization record
 

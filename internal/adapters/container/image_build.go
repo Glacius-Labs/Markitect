@@ -3,6 +3,7 @@ package container
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os/exec"
@@ -10,8 +11,12 @@ import (
 	"time"
 )
 
-// buildTailLines bounds the lines of a failed build that its error repeats.
-const buildTailLines = 12
+const (
+	// buildTailLines bounds the lines of a failed build that its error repeats.
+	buildTailLines = 12
+	// buildTailWidth bounds each of them.
+	buildTailWidth = 400
+)
 
 // ImageBuild is one image build from a tar build context.
 type ImageBuild struct {
@@ -43,7 +48,8 @@ func (e *Engine) BuildImage(ctx context.Context, b ImageBuild) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
-	if err != nil {
+	// A build that succeeded may leave its plugin holding the pipes for longer.
+	if err != nil && !errors.Is(err, exec.ErrWaitDelay) {
 		return fmt.Errorf("container engine build: %w: %s", err, strings.Join(lines.tail, "\n"))
 	}
 	return nil
@@ -112,7 +118,7 @@ func (l *buildLines) line(s string) {
 	if l.progress != nil {
 		l.progress(s)
 	}
-	l.tail = append(l.tail, s)
+	l.tail = append(l.tail, s[:min(len(s), buildTailWidth)])
 	if len(l.tail) > buildTailLines {
 		l.tail = l.tail[1:]
 	}
