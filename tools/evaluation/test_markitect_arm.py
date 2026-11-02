@@ -76,6 +76,7 @@ STANDIN = textwrap.dedent(r'''
     policy = repo / ".markitect" / "model" / "lending" / "loan-policy.md"
     (d / f"apply-{n}.json").write_text(json.dumps({"args": args, "env": env, "head": git("rev-parse", "HEAD"),
                                                     "policy": git("show", "HEAD:.markitect/model/lending/loan-policy.md") if policy.exists() else None,
+                                                    "sinceBase": git("diff", "--name-only", opt("--base"), "HEAD").splitlines() if opt("--base") else None,
                                                     "lendingPage": (repo / ".markitect" / "registry" / "lending.md").read_text(encoding="utf-8")
                                                     if (repo / ".markitect" / "registry" / "lending.md").exists() else None,
                                                     "model": sorted(p.relative_to(repo).as_posix() for p in (repo / ".markitect").rglob("*") if p.is_file())}))
@@ -414,6 +415,60 @@ class ArmTest(unittest.TestCase):
         self.assertIn(".markitect/registry.md", apply["model"])
         self.assertIn("[[lending/loan-policy]]", apply["lendingPage"])
         self.assertNotIn("adopted by the owner", apply["lendingPage"])
+
+    def test_an_adopted_start_gets_the_models_new_paths_and_its_files_keep_their_owners(self):
+        start = self.tmp / "reference"
+        subprocess.run(["git", "init", "-q", "-b", "start", str(start)], check=True)
+        for rel in ("realization/cmd/main.go", "realization/internal/ms/loans.go", "realization/internal/ms/library.go"):
+            (start / rel).parent.mkdir(parents=True, exist_ok=True)
+            (start / rel).write_text(rel + "\n")
+        env = dict(os.environ, GIT_AUTHOR_NAME="r", GIT_AUTHOR_EMAIL="r@x", GIT_COMMITTER_NAME="r", GIT_COMMITTER_EMAIL="r@x")
+        subprocess.run(["git", "-C", str(start), "add", "-A"], check=True, env=env)
+        subprocess.run(["git", "-C", str(start), "-c", "commit.gpgsign=false", "commit", "-q", "-m", "reference"], check=True, env=env)
+        subprocess.run(["git", "-C", str(start), "bundle", "create", "-q", str(self.tmp / "reference.bundle"), "start"], check=True)
+        # The reference is one package: the owner's pages name its files, Root keeps library.go, and the model wants modules.
+        base = self.model("split-base")
+        (base / "registry" / "lending.md").write_text(
+            "---\npaths:\n  - realization/internal/ms/loans.go\n  - realization/cmd/main.go\n---\n# Registry: lending\n\n"
+            "| File | Realizes | Why |\n|---|---|---|\n"
+            "| `realization/internal/ms/loans.go` | [[lending/loan-policy]] | Lending operations |\n"
+            "| `realization/cmd/main.go` | [[lending/loan-policy]] | The program |\n")
+        (base / "registry.md").write_text("# Registry\n\n| File | Realizes | Why |\n|---|---|---|\n"
+                                          "| `realization/internal/ms/library.go` | [[project]] | Records |\n")
+        model = self.model("split")
+        (model / "registry" / "lending.md").write_text(
+            "---\npaths:\n  - realization/lending/**\n  - realization/cmd/**\n  - realization/internal/ms/**\n---\n# Registry: lending\n\n"
+            "| File | Realizes | Why |\n|---|---|---|\n")
+        record, out = self.run_arm(self.task("split-task", model, self.tmp / "reference.bundle", base), "defect")
+        self.assertEqual(record["exitCode"], 0, (out / "variant" / "run.json").read_text())
+        page = self.applies()[0]["lendingPage"]
+        # A new folder, and a folder that holds only the page's own file, are added to what the page had.
+        for pattern in ("realization/internal/ms/loans.go", "realization/cmd/main.go", "realization/lending/**", "realization/cmd/**"):
+            self.assertIn(f"  - {pattern}\n", page)
+        # This one would take library.go from Root.
+        self.assertNotIn("realization/internal/ms/**", page)
+        self.assertIn("[[lending/loan-policy]]", page)
+        adoption = record["reported"]["adoption"]
+        self.assertEqual((adoption["newPaths"], adoption["unlinkedRows"], adoption["pageRows"]), (2, 0, 3))
+        # The patterns are part of the adoption, so the base holds them and the Run's impact is the model's change alone.
+        args = self.applies()[0]["args"]
+        self.assertEqual(args[args.index("--base") + 1], adoption["commit"])
+        self.assertFalse([f for f in self.applies()[0]["sinceBase"] if "registry" in f])
+
+    def test_the_arm_reads_patterns_as_the_registry_does(self):
+        import markitect_arm
+        hit = lambda pattern, name: markitect_arm.pattern_matches(pattern.split("/"), name.split("/"))
+        self.assertTrue(hit("a/**", "a/b/c.go"))
+        self.assertFalse(hit("a/**", "a"))
+        self.assertTrue(hit("a/*.go", "a/b.go"))
+        self.assertFalse(hit("a/*.go", "a/b/c.go"))
+        self.assertTrue(hit("**/c.go", "c.go"))
+        self.assertTrue(hit("a/**/c.go", "a/b/d/c.go"))
+        self.assertTrue(hit("a/?.go", "a/b.go"))
+        self.assertFalse(hit("a/b.go", "a/b.go/c"))
+        self.assertEqual(markitect_arm.page_patterns("---\npaths: []\n---\n# x\n\n- not/a/pattern\n"), [])
+        self.assertEqual(markitect_arm.page_patterns("# No front matter\n\n  - not/a/pattern\n"), [])
+        self.assertEqual(markitect_arm.page_patterns("---\npaths:\n  - a/**\n  - b.go\n---\n  - not/a/pattern\n"), ["a/**", "b.go"])
 
     def test_a_base_model_without_registry_pages_still_places_each_file_on_its_owners_page(self):
         start = self.tmp / "reference"
