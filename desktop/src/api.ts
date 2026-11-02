@@ -9,6 +9,8 @@ export interface Check {
   packages: number;
   files: number;
   warnings: number;
+  // No model is drawn yet: the state of an existing project right after init.
+  notDrawn?: boolean;
 }
 
 export interface Status {
@@ -23,6 +25,7 @@ export interface Waiting {
   uncommitted: number;
   landed: boolean;
   unlanded: number;
+  extract?: { chat: string; working: boolean };
 }
 
 export interface Project {
@@ -183,6 +186,8 @@ export interface ModelDiff {
 
 export interface ModelView {
   initialized: boolean;
+  // No model is drawn yet: the state of an existing project right after init.
+  notDrawn?: boolean;
   bases: { commit?: string; landing?: string };
   base: { kind: ShownBase; commit?: string } | null;
   errors: Diagnostic[];

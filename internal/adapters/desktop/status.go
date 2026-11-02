@@ -28,9 +28,27 @@ type Check struct {
 	Packages    int      `json:"packages"`
 	Files       int      `json:"files"`
 	Warnings    int      `json:"warnings"` // what markitect lint warns about
+	// NotDrawn is the state of an existing project right after init (notDrawn).
+	NotDrawn bool `json:"notDrawn,omitempty"`
 }
 
 const maxErrors = 20
+
+// notDrawn says that no model is drawn yet: Markitect is set up, its only
+// Definition is the first page, no file is registered, and the only errors are
+// files with no place in a model. The next step is to draw the model, not to fix
+// errors. A model that has its files placed is drawn, however small it is.
+func notDrawn(pr *project.Project) bool {
+	if len(pr.Errors) == 0 || pr.Model == nil || len(pr.Model.ModelDefinitions()) > 1 || pr.Registry == nil || len(pr.Registry.Entries) > 0 {
+		return false
+	}
+	for _, d := range pr.Errors {
+		if d.Code != "file.unregistered" {
+			return false
+		}
+	}
+	return true
+}
 
 // Waiting is what the hub's next step looks at once the model compiles. Only
 // the hub asks for it; the project list has no use for it.
@@ -45,6 +63,15 @@ type Waiting struct {
 	// the Libraries' too, that differ from its landing, as impact does.
 	Landed   bool `json:"landed"`
 	Unlanded int  `json:"unlanded"`
+	// Extract is the newest conversation that draws the model, which the hub
+	// names while no model is drawn.
+	Extract *WaitingExtract `json:"extract,omitempty"`
+}
+
+// WaitingExtract names the conversation that draws the model.
+type WaitingExtract struct {
+	Chat    string `json:"chat"`
+	Working bool   `json:"working"`
 }
 
 // WaitingProposal names the conversation a proposal waits in.
@@ -53,17 +80,28 @@ type WaitingProposal struct {
 	Title string `json:"title"`
 }
 
-func (s *server) waiting(ctx context.Context, p Project) (*Waiting, error) {
+// waitingChats is what the conversations hold for the owner.
+func (s *server) waitingChats(p Project) (*Waiting, error) {
 	w := &Waiting{}
 	chats, err := s.chat.list(p)
 	if err != nil {
 		return nil, err
 	}
 	for _, c := range chats {
-		if c.Proposal && !c.Working {
+		if c.Proposal && !c.Working && w.Proposal == nil {
 			w.Proposal = &WaitingProposal{Chat: c.ID, Title: c.Title}
-			break
 		}
+		if c.Skill == skillExtract && w.Extract == nil {
+			w.Extract = &WaitingExtract{Chat: c.ID, Working: c.Working}
+		}
+	}
+	return w, nil
+}
+
+func (s *server) waiting(ctx context.Context, p Project) (*Waiting, error) {
+	w, err := s.waitingChats(p)
+	if err != nil {
+		return nil, err
 	}
 	ws, err := s.repos.Open(ctx, p.Path)
 	if err != nil {
@@ -121,5 +159,6 @@ func readStatus(ctx context.Context, repos Repos, p Project) Status {
 	if pr.Registry != nil {
 		c.Files = len(pr.Registry.Owner)
 	}
+	c.NotDrawn = notDrawn(pr)
 	return Status{Initialized: true, Check: c}
 }

@@ -32,6 +32,8 @@ The start screen.
 
   The Extract skill gains the first stop, which today it makes only when the code allows two cuts.
 
+  Right after `init` on an existing project every file is still unregistered. The hub treats that as no model drawn yet, not as compile errors, and offers to draw it, as the owner asked on 2 November 2026 after `init` led to a red screen.
+
 Choosing a project opens its hub.
 
 ### Hub
