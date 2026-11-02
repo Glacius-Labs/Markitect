@@ -76,7 +76,7 @@ func TestLayerDirections(t *testing.T) {
 		{"internal/project", "internal/libraries", both},
 		{"cmd/markitect-desktop", ".", both},
 		{"cmd/markitect", ".", none},
-		{"internal/bootstrap", ".", none},
+		{"internal/bootstrap", ".", testOnly},
 		{"internal/project", ".", none},
 		{"internal/analysis", "internal/project", both},
 		{"internal/adapters/cli", "internal/analysis", both},

@@ -40,7 +40,7 @@ These reports preserve the exact scope, inputs, source references and outcomes s
 
 ## Markitect Desktop
 
-- [The app builds its chats' image — 2 November 2026](desktop-chat-image-20261102.md): dispatch for the first build through the native app; waits for a free engine
+- [The app builds its chats' image — 2 November 2026](desktop-chat-image-20261102.md): the first build through the native app: built in CI on GitHub's Linux engine, and on the owner's Windows engine not yet
 - [The first real chat — 2 November 2026](desktop-first-real-chat-20261102.md): a chat against a real container and Claude, in the browser and the native window; seven questions passed after two fixes the run found
 
 ## Release evidence

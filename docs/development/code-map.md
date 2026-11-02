@@ -48,6 +48,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 |---|---|---|---|
 | `internal/tooling/release` | `internal/tooling/architecture` | all | The packager takes its source roots from this table. |
 | `internal/agents` | `internal/adapters/remotecontainer` | tests only | The real-engine test starts real Managers against a real Run remote. |
+| `internal/bootstrap` | `.` | tests only | The real-engine test builds the chats' image from the source the native app carries. |
 | `internal/run` | `internal/adapters/remoteserver` | tests only | The engine's scripted Runs push through the Run remote's real hooks. |
 | `internal/run` | `internal/adapters/rungit` | tests only | The engine's scripted Runs use the host's real Git. |
 | `internal/tooling/release` | `internal/buildinfo` | tests only | Tests compare the packaged notices with the embedded ones. |

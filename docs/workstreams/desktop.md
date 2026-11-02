@@ -15,7 +15,7 @@ The Desktop session designs and builds Markitect Desktop, the app over the CLI t
 
 - **Built:** the hub's next step: a proposal that waits, the commit a Run needs, the first Run or the next one as a command for the terminal, until Runs are in the app ([routes](../../internal/adapters/desktop/README.md#routes)).
 
-- **Built:** the native app builds its chats' image itself on the first chat that needs it, as the owner chose on 2 November 2026 ([design](../design/markitect-desktop.md#the-chat)). Compiled from what it carries and tested against a scripted engine. Its [real run](../validation/desktop-chat-image-20261102.md) waits until the evaluations free Docker.
+- **Built:** the native app builds its chats' image itself on the first chat that needs it, as the owner chose on 2 November 2026 ([design](../design/markitect-desktop.md#the-chat)). CI's native job builds the image on GitHub's Linux engine from what the app carries, Stop included. Its [run on Windows](../validation/desktop-chat-image-20261102.md) waits until the evaluations free Docker.
 
 - **Run for real:** the chat, against a real container and Claude, in the browser and the native window, on 2 November 2026 ([record](../validation/desktop-first-real-chat-20261102.md)). The run found two defects no scripted agent could show, both fixed.
 
