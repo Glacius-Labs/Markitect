@@ -77,7 +77,7 @@ STATE_FILE = "markitect-arm.json"
 # The owner's model files: everything under .markitect/ but the registry pages, the ignore page and the Results.
 MODEL_ENTRIES = ("manifest.yaml", "lock.yaml", "execution.yaml", "model")
 # A registry page's front matter.
-PAGE_FRONT = re.compile(r"\A---\n.*?^---\n", re.S | re.M)
+PAGE_FRONT = re.compile(r"\A---\npaths:(?: \[\]\n|\n((?:  - \S+\n)+))---\n")
 # Time kept back from the task's deadline for setting up and delivering.
 MARGIN_SECONDS = 180
 CLEARED = ("ANTHROPIC_", "CLAUDE_", "CLAUDECODE", "OPENAI_", "CODEX_", "MARKITECT_", "GIT_", "GH_", "GITHUB_")
@@ -181,44 +181,70 @@ def add_pages(source, dot, replace=False):
 
 
 def page_patterns(text):
-    """The path patterns in a registry page's front matter."""
+    """The path patterns of a registry page; None when its front matter is not in the form pages are written in."""
     front = PAGE_FRONT.match(text)
-    return re.findall(r"^\s+- (\S+)\s*$", front.group(0), re.M) if front else []
+    if front:
+        return (front.group(1) or "").replace("  - ", "").split()
+    return None if text.startswith(("---", "﻿")) else []
 
 
-def pattern_matches(pattern, name):
-    """The registry's rule (internal/realization/pattern.go), both as path segments: * and ? stay within a segment, and
-    ** spans segments, a trailing one at least one."""
-    if not pattern:
-        return not name
-    if pattern[0] == "**":
-        if len(pattern) == 1:
-            return bool(name)
-        return any(pattern_matches(pattern[1:], name[i:]) for i in range(len(name) + 1))
-    return bool(name) and fnmatch.fnmatchcase(name[0], pattern[0]) and pattern_matches(pattern[1:], name[1:])
+def pattern_matches(pattern, file):
+    """The registry's rule (internal/realization/pattern.go): * and ? stay within a path segment, and ** spans segments,
+    a trailing one at least one."""
+    def match(pattern, name):
+        if not pattern:
+            return not name
+        if pattern[0] == "**":
+            if len(pattern) == 1:
+                return bool(name)
+            return any(match(pattern[1:], name[i:]) for i in range(len(name) + 1))
+        return bool(name) and fnmatch.fnmatchcase(name[0], pattern[0]) and match(pattern[1:], name[1:])
+    return match(pattern.split("/"), file.split("/"))
+
+
+def pattern_specificity(pattern):
+    """The registry's order among patterns that match a file: an exact path wins, then more literal characters."""
+    return 1 << 30 if not set(pattern) & set("*?") else sum(c not in "*?/" for c in pattern)
+
+
+def file_owner(file, pages):
+    """The page whose pattern owns a file; None for Root, which owns what no pattern claims."""
+    found = [(pattern_specificity(p), page) for page, patterns in pages.items() for p in patterns if pattern_matches(p, file)]
+    return max(found)[1] if found else None
 
 
 def add_new_paths(source, dot, files):
-    """The source's patterns for new paths on the pages at `dot`; returns how many it added.
+    """The source's patterns for new paths on the pages at `dot`: (how many it added, how many it left out).
 
     An adopted start's pages name only its files, and a Manager's own claim counts only from the next Run (DEC-081), so
-    without the owner's patterns no Manager could write where the task's model wants new files. A pattern that would
-    take a file of the start from its page stays out: that file keeps its owner."""
-    added = 0
-    for page in sorted((source / "registry").rglob("*.md")) if (source / "registry").is_dir() else []:
-        target = dot / page.relative_to(source)
-        text = target.read_text(encoding="utf-8")
-        have = page_patterns(text)
-        hits = lambda pattern, name: pattern_matches(pattern.split("/"), name.split("/"))
-        own = [f for f in files if any(hits(p, f) for p in have)]
-        foreign = [f for f in files if f not in own]
-        new = [p for p in page_patterns(page.read_text(encoding="utf-8")) if p not in have and not any(hits(p, f) for f in foreign)]
+    without the owner's patterns no Manager could write where the task's model wants new files. A pattern stays out if
+    a page already has it, since two Packages claiming one is a compile error, or if it matches a file of the start that
+    another page or Root owns: every file keeps its owner. A page in another form leaves the pages as they are, since
+    the owners cannot be read."""
+    registry = dot / "registry"
+    targets = {p.relative_to(dot).as_posix(): p for p in registry.rglob("*.md")} if registry.is_dir() else {}
+    pages = {name: page_patterns(path.read_text(encoding="utf-8")) for name, path in targets.items()}
+    if None in pages.values():
+        return 0, 0
+    added = left_out = 0
+    for name in sorted(targets):
+        page = source / name
+        new = []
+        for pattern in (page_patterns(page.read_text(encoding="utf-8")) or []) if page.is_file() else []:
+            if pattern in pages[name]:
+                continue
+            if any(pattern in patterns for patterns in pages.values()) or any(
+                    pattern_matches(pattern, f) and file_owner(f, pages) != name for f in files):
+                left_out += 1
+                continue
+            pages[name].append(pattern)
+            new.append(pattern)
         if new:
-            body = PAGE_FRONT.sub("", text, count=1)
-            front = "---\npaths:\n" + "".join(f"  - {p}\n" for p in have + new) + "---\n"
-            target.write_text(front + body, encoding="utf-8", newline="\n")
+            front = "---\npaths:\n" + "".join(f"  - {p}\n" for p in pages[name]) + "---\n"
+            text = targets[name].read_text(encoding="utf-8")
+            targets[name].write_text(front + PAGE_FRONT.sub("", text, count=1), encoding="utf-8", newline="\n")
             added += len(new)
-    return added
+    return added, left_out
 
 
 def check(a, repo, env):
@@ -287,13 +313,13 @@ def owner_input(a, task, repo, start, landed, env):
         copy_model(base_model if base_model.is_dir() else model, dot, keep_registry=False)
         # Every Package's page is there before the rows are placed, so that each file lands on its final owner's page.
         add_pages(model, dot)
-        new_paths = add_new_paths(model, dot, files)
+        new_paths, left_out = add_new_paths(model, dot, files)
         rows = adopt(a, repo, env)
         compiles(a, repo, env, "the adopted start")
         listed = len(files) - rows
         adoption = {"commit": commit(repo, "Owner: adopt the reference start", env), "pageRows": listed, "unlinkedRows": rows,
                     "registry": "pages" if not rows else "unlinked" if not listed else "pages+unlinked", "baseModel": base_model.is_dir(),
-                    "newPaths": new_paths}
+                    "newPaths": new_paths, "newPathsLeftOut": left_out}
         if base_model.is_dir():
             copy_model(model, dot, keep_registry=True)
             options, mode = ["--base", adoption["commit"]], "adopted"
