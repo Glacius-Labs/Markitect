@@ -222,7 +222,7 @@ jobs:
           go build -o "$RUNNER_TEMP/bin/markitect$ext" ./cmd/markitect
           ls -l "$RUNNER_TEMP/bin"
 
-      - name: Check that a program the native app starts shows no window
+      - name: Test the native app's shell
         if: runner.os == 'Windows'
         shell: bash
         run: go test -count=1 -v -tags native -ldflags=-H=windowsgui ./cmd/markitect-desktop
