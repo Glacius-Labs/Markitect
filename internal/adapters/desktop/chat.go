@@ -530,6 +530,9 @@ func (c *chatService) turn(ctx context.Context, p Project, id, text string) {
 		return
 	}
 	c.busyWith(ctx, p, id, "")
+	if start == nil {
+		text = c.withNews(p, id, text)
+	}
 	end, err := agent.Send(ctx, text, func(s string) {
 		c.busyWith(ctx, p, id, "")
 		c.say(p, id, "agent", s)
@@ -564,6 +567,34 @@ func (c *chatService) turn(ctx context.Context, p Project, id, text string) {
 		propose(conv, model, outside)
 		return nil
 	})
+}
+
+// withNews puts what the app said since the agent's last answer in front of the
+// owner's message. A running agent hears only what it is sent, and an accept or
+// a reject moves its copy under it; a fresh agent has this in the conversation
+// so far.
+func (c *chatService) withNews(p Project, id, text string) string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	conv, err := c.get(p, id)
+	if err != nil {
+		return text
+	}
+	earlier := conv.Messages[:max(len(conv.Messages)-1, 0)]
+	first := len(earlier)
+	for first > 0 && earlier[first-1].From == "app" {
+		first--
+	}
+	if first == len(earlier) {
+		return text
+	}
+	var b strings.Builder
+	b.WriteString("Since your last answer:\n\n")
+	for _, m := range earlier[first:] {
+		fmt.Fprintf(&b, "%s: %s\n\n", m.From, m.Text)
+	}
+	b.WriteString("The owner's next message:\n\n" + text)
+	return b.String()
 }
 
 // interrupted says whether the turn's context ended. When the owner stopped
@@ -669,7 +700,9 @@ func (c *chatService) agent(ctx context.Context, p Project, id string) (ChatAgen
 	}
 	pending = kept
 	if len(changed) > 0 {
-		c.say(p, id, "app", "Changed in the working tree since the proposal, so the chat now starts from your version: "+strings.Join(changed, ", ")+".")
+		note := "Changed in the working tree since the proposal, so the chat now starts from your version: " + strings.Join(changed, ", ") + "."
+		c.say(p, id, "app", note)
+		fmt.Fprintf(&earlier, "app: %s\n\n", note)
 	}
 	agent, err := c.chats.Start(ctx, ChatStart{Name: "markitect-chat-" + id, Tree: listed{ws, files}, Files: files, Pending: pending, Skill: skill, Earlier: earlier.String()})
 	if err != nil {
