@@ -2,7 +2,7 @@
 
 A small pilot of two simpler ways to apply a model change, against the Manager tree (M) and plain Claude Code (K): one where no agent touches Git, and one where agents work in parallel. It is kept small on purpose, to learn how complex each approach turns out to be and which of them is worth pursuing. It runs under the standing run approval of 28 October 2026 ([build workstream, Decisions](../workstreams/build.md#decisions)). **These runs are not counted, and they pick an approach to pursue; they prove nothing.** The new project stays sealed.
 
-**Status: approved by Build on 2 November 2026.** It started at 19:44 UTC the same day ([Amendment 1](#amendment-1-2-november-2026-the-source-and-the-start)). Build stopped it at 21:44 UTC under the dispatch's stop rule, with S's five launches done and F's first three ([Amendment 2](#amendment-2-2-november-2026-the-reading)).
+**Status: approved by Build on 2 November 2026.** It started at 19:44 UTC the same day ([Amendment 1](#amendment-1-2-november-2026-the-source-and-the-start)). Build stopped it at 21:44 UTC under the dispatch's stop rule, with S's five launches done and F's first three ([Amendment 2](#amendment-2-2-november-2026-the-reading)). After a change to the checker, a second set of 9 launches ran that night ([Amendment 3](#amendment-3-2-november-2026-the-checker-change-and-a-second-set-of-launches), [Amendment 4](#amendment-4-3-november-2026-the-reading-of-the-second-set)).
 
 ## Question
 
@@ -147,3 +147,31 @@ An independent review before the first launch found four defects, all fixed befo
 - **Source:** `5c5692b6cd0cb549065e65f90a6a13a6023e2836` on `dev/arms-s-f-pilot`, whose `tools/` tree is in the work folder's `src/`. Against the first set's tree, only `one_agent_arm.py` and its test differ. A fifth defect from the review's second pass is fixed in it: a model defect's Result showed what its review refused as approved.
 - **Inputs:** all 2,004 prepared files are byte for byte the first set's.
 - **Runner:** `pilot.py` in `arms-pilot-2/`, SHA-256 prefix `d4561e34223961f2`. The series runner's SHA-256 is the series' own, `2f32715b…`.
+
+### Amendment 4, 3 November 2026: the reading of the second set
+
+**How it ended.** All 9 launches gave results, with no relaunch. The runner started at 22:40 UTC on 2 November, waited out its ten quiet minutes and ended at 23:50 UTC, well under the 2 hours guessed. The final check found no leftovers, no credential and no engine error. Seven-day use went from 8 % to 9 %.
+
+**Behavior, one repetition each.** "First" and "second" are this pilot's two sets; M and K are as in [Amendment 2](#amendment-2-2-november-2026-the-reading). Failed counts hidden cases, and a dash means it did not run.
+
+| Case | S, first | S, second | F, first | F, second | M | K |
+|---|---|---|---|---|---|---|
+| Plant, contradiction: must stop | Stopped, 2 min, $0.39 | Stopped, 1 min, $0.35 | Stopped, 3 min, $0.69 | Stopped, 1 min, $0.45 | Stopped, 1 min (r1); 5 min, $0.62 (r2) | Stopped, under 1 min, $0.07 |
+| Plant, gap: must land | 0 of 19, 1 min, $0.30 | 0 of 19, 1 min, $0.31 | 0 of 19, 2 min, $0.59 | 0 of 19, 2 min, $0.65 | 0 of 19, 4 min, $0.70 | 0 of 19, under 1 min, $0.15 |
+| W0 | 0 of 54, 27 min, $7.21 | 0 of 54, 18 min, $3.69 | **Not landed**, 56 min, $16.24 | 0 of 54, 13 min, $6.08 | 0 of 54, 26 min, $9.41 | 0 of 54, 12 min, $2.08 |
+| C1 | 0 of 55, 2.5 min, $0.58 | 0 of 55, 2.5 min, $0.66 | — | 0 of 55, 4 min, $2.63 | 0 of 55, 8 min, $3.24 | 0 of 55, 2 min, $0.56 |
+| C2, layout differs from the model | 0 of 57, 14 min, $3.27 | — | — | 0 of 57, 15 min, $7.71 | Series: not landed. With the path fix: 0 of 57, 54 min, $16.37 | 0 of 57, 8 min, $1.49 |
+
+Every landing holds the 9 module packages on the Makerspace cases. Agent starts in the second set: S 2 or 3, F 4 to 12. Go on W0, as code lines, test lines and test functions: S 2,640, 1,625 and 40; F 3,920, 2,698 and 84.
+
+**What it shows:**
+
+- **The change did what it was for.** F's W0 went from six refusals and no landing to one review and a landing, and its checkers from $9.17 to $1.38. F's C1 and C2, which it had never reached, landed with every hidden case passing. Both contradiction plants still stopped and both gap plants still landed.
+- **It does not explain S's cheaper W0.** S's checker refused nothing in either set, and its maker's first prompt did not change. The same prompt cost $6.04 with 228 test functions and $2.78 with 40. That is the spread of one repetition, and it supports the inference that test volume drives much of S's cost.
+- **Parallel works, and at this size it does not pay.** No conflict in the one folder and no failed integration. F was faster than S on W0, by 5 minutes, and slower or level on the rest, at 1.6 to 4 times S's cost. Its code is also about half as large again. What it might buy, a project too large for one session, this pilot still cannot test.
+- **F has one small flaw of its own.** On C1 and C2 the Package makers answered for inherited Rules outside the checklist, and the gate refused them for it, which cost one more round. It is cheap to fix, and was not, since the launches were frozen.
+- **A recorded waiver helps only when a checker makes one.** F's checkers landed two findings. One is the extra billing exports. The other is a real small departure: the model's layout names `realization/policies/` and a README that the C2 start lacks, with the note that a person may want to see this. But S's second checker read code with the same kind of exports, `billing.InvoicesOfMonth` and others used by `reporting`, and answered `confirmed` on all 108 items. So the same facts gave a refusal, a waiver and a silent pass across these launches. Only a clearer model settles that rule.
+- **The checker's worth is still not shown.** On the Makerspace cases no checker answered `wrong` at all, and no maker's work failed a hidden case, so nothing here tested whether a checker catches a wrong realization. Its only refusals were `model-problem` verdicts on items a planted contradiction did not reach. A checker that never refuses and a checker with nothing to refuse look the same in these results.
+- **S against the others.** S matched M on every case at about 0.2 to 0.45 of its cost, in the second set and C2 of the first. K matched S on every hidden case at about 0.2 to 0.85 of S's cost, so this still does not show that S is better than K.
+
+**Build's view:** S stays the one to pursue, and F stays a small option for a project too large for one session. Before relying on the new checker, test it on work known to be wrong: hand a checker a landed submission with planted bugs and see whether it answers `wrong`. That costs about a dollar per review and starts no maker. It answers whether this contract is too lenient and part of what S adds over K. Concept 2.0 stays as it is until the owner decides.
