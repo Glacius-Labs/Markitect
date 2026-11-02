@@ -152,7 +152,10 @@ func endingMessage(dir string, err error) string {
 		message = "WebView2 did not start within 60 seconds, so Markitect has to close.\n\n" +
 			"Start Markitect again. The first start after a reboot is the slowest."
 	default:
-		message = "Markitect has to close: " + reason + "\n\nStart Markitect again."
+		// Its first line: a panic's error goes on with the whole stack, which
+		// the log keeps.
+		first, _, _ := strings.Cut(reason, "\n")
+		message = "Markitect has to close: " + first + "\n\nStart Markitect again."
 	}
 	if dir == "" {
 		return message // nothing is recorded without a config folder

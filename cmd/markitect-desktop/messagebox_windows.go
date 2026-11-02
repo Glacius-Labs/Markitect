@@ -7,16 +7,11 @@ import (
 	"unsafe"
 )
 
-// messageBoxStyle is an error icon and an OK button, in front of other windows:
-// a user who waited up to 60 seconds may be working elsewhere by now, and
-// Windows may refuse the foreground.
-const messageBoxStyle = mbIconError | mbSetForeground | mbTopmost
-
-const (
-	mbIconError     = 0x00000010
-	mbSetForeground = 0x00010000
-	mbTopmost       = 0x00040000
-)
+// messageBoxStyle is MB_ICONERROR | MB_TOPMOST: an error icon and an OK button,
+// on top of other windows. A user who waited up to 60 seconds may be working
+// elsewhere by now, so it does not ask for the foreground, where a key meant
+// for another window would dismiss it unread.
+const messageBoxStyle = 0x00000010 | 0x00040000
 
 var messageBoxW = syscall.NewLazyDLL("user32.dll").NewProc("MessageBoxW")
 

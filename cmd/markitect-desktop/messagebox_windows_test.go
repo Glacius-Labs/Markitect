@@ -32,12 +32,12 @@ var (
 	postMessage        = user32.NewProc("PostMessageW")
 )
 
-func utf16Arg(s string) uintptr {
+func utf16Ptr(s string) *uint16 {
 	p, err := syscall.UTF16PtrFromString(s)
 	if err != nil {
 		panic(err)
 	}
-	return uintptr(unsafe.Pointer(p))
+	return p
 }
 
 // hiddenDesktop makes a desktop that no screen shows, and returns its name and
@@ -45,7 +45,7 @@ func utf16Arg(s string) uintptr {
 func hiddenDesktop(t *testing.T) (string, uintptr) {
 	t.Helper()
 	name := fmt.Sprintf("markitect-test-%d", os.Getpid())
-	desktop, _, err := createDesktop.Call(utf16Arg(name), 0, 0, 0, genericAll, 0)
+	desktop, _, err := createDesktop.Call(uintptr(unsafe.Pointer(utf16Ptr(name))), 0, 0, 0, genericAll, 0)
 	if desktop == 0 {
 		t.Fatalf("no hidden desktop: %v", err)
 	}
@@ -59,7 +59,7 @@ func showOnDesktop(name string) func(string) {
 	return func(text string) {
 		// Never unlocked: the thread on that desktop ends with this goroutine.
 		runtime.LockOSThread()
-		desktop, _, err := openDesktop.Call(utf16Arg(name), 0, 0, genericAll)
+		desktop, _, err := openDesktop.Call(uintptr(unsafe.Pointer(utf16Ptr(name))), 0, 0, genericAll)
 		if desktop == 0 {
 			fmt.Fprintln(os.Stderr, "no hidden desktop:", err)
 			os.Exit(3)

@@ -59,6 +59,12 @@ func TestEndingMessageSaysWhatToDo(t *testing.T) {
 			"unable to create window",
 			[]string{"Markitect has to close: unable to create window", "Start Markitect again"},
 		},
+		{
+			// As Wails words a panic; the log keeps the stack.
+			"a panic",
+			"panic error: boom\ngoroutine 1 [running]:\nmain.main()",
+			[]string{"Markitect has to close: panic error: boom\n", "Start Markitect again"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -67,6 +73,9 @@ func TestEndingMessageSaysWhatToDo(t *testing.T) {
 				if !strings.Contains(message, want) {
 					t.Errorf("the message says %q, want it to hold %q", message, want)
 				}
+			}
+			if strings.Contains(message, "goroutine") {
+				t.Errorf("the message holds the stack: %q", message)
 			}
 			// Without a config folder nothing is recorded, so it names no log.
 			if message := endingMessage("", errors.New(tt.reason)); strings.Contains(message, "desktop-error.log") {
