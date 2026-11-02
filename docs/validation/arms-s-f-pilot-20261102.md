@@ -1,6 +1,6 @@
 # Arms S and F: pilot dispatch — 2 November 2026
 
-A small pilot of two simpler ways to apply a model change, against the Manager tree (M) and plain Claude Code (K). The owner, through the Topics session: "Yes lets take this one as the third arm", "No commiting, pulling, pushing and so on", "I think we should definately strive to get them to work in parallel", and on its size: "Lets make it smaller. We just want to get the idea how complex each of those approaches turns out to be and which of them is worth pursuing." It runs under the owner's standing run approval of 28 October 2026 ([build workstream, Decisions](../workstreams/build.md#decisions)). **These runs are not counted, and they pick an approach to pursue; they prove nothing.** The new project stays sealed.
+A small pilot of two simpler ways to apply a model change, against the Manager tree (M) and plain Claude Code (K): one where no agent touches Git, and one where agents work in parallel. It is kept small on purpose, to learn how complex each approach turns out to be and which of them is worth pursuing. It runs under the standing run approval of 28 October 2026 ([build workstream, Decisions](../workstreams/build.md#decisions)). **These runs are not counted, and they pick an approach to pursue; they prove nothing.** The new project stays sealed.
 
 **Status: approved by Build on 2 November 2026.** It started at 19:44 UTC the same day ([Amendment 1](#amendment-1-2-november-2026-the-source-and-the-start)). Build stopped it at 21:44 UTC under the dispatch's stop rule, with S's five launches done and F's first three ([Amendment 2](#amendment-2-2-november-2026-the-reading)).
 
@@ -108,3 +108,36 @@ Go delivered on W0, as code lines, test lines and test functions: S 2,465, 6,942
 **Build's view:** S is worth pursuing, and F is a small option to keep for a project too large for one session, which this pilot cannot test. If F stays, its Root prompt should own the behavior across modules and its tests.
 
 Before more launches, fix the loop, and not by narrowing it alone. On paper, re-checking only the disputed items and what changed lands F at round 3. So does the contract Topics proposes to the owner: a checker answers `wrong` or `not-shown`, only `wrong` refuses, and `not-shown` lands as a recorded finding. Both land there because round 3's checker accepted a rule that round 4's refused, so neither settles a rule read two ways. Build would do both, and have whatever a checker waives land as a recorded finding too, so that a person sees the ruling. That changes the checker's answer and not only its prompt, and nothing has tested it on the plants. Concept 2.0 stays as it is until the owner decides.
+
+### Amendment 3, 2 November 2026: the checker change and a second set of launches
+
+The owner approved that change and a new W0 for both arms on 2 November 2026. These launches are as descriptive as the first ones, and they are not counted.
+
+**The change** in [`one_agent_arm.py`](../../tools/evaluation/one_agent_arm.py), about 40 lines more:
+
+- **The answers.** A checker answers each verdict `confirmed`, `wrong`, `not-shown` or `waived`. Only `wrong` refuses. `not-shown` and `waived` land, and the Result lists them under `findings`, so that a person sees them.
+- **The rounds.** A ruling stands for the Run. A later round re-checks what was refused and the items whose verdict the maker changed since, sees the diff since the last review, and reopens another item only if that diff breaks it.
+- **A model problem.** A `model-problem` verdict the checker confirms ends the Run at once, so that no later maker can take it back. Any other answer refuses it, since nothing was made for that item. A checker is told never to waive a contradiction in the model.
+
+An independent review before the first launch found four defects, all fixed before the source below, and they count as complexity: a confirmed model problem could be taken back and the contradiction land; S's later makers were told to answer every item again, which undid the narrowing; a gate refusal dropped the checker's reason from the next maker's prompt; and the prompt misstated what refuses a `model-problem` verdict.
+
+| Item | Value |
+| --- | --- |
+| Source | The head of branch `dev/arms-s-f-pilot`, named below before the first launch. Only Python has changed since the first set, so the programs are that set's copies |
+| Images | As in the first set |
+| Cases | Both arms: the two Library plants and the Makerspace chain W0 and C1. F also: the fixed start C2, which it never reached. S's C2 does not run again, since its checker refused nothing there and the new one can refuse only less |
+| Launches | 9, launch bound 13, relaunches 2, as the runner counts them |
+| Beside them | The first set's rows, the series' M and K rows and M's C2 from the [re-measure](fixed-starts-remeasure-20261102.md), read only. No new M or K launch |
+| Model and effort | As in the first set |
+| Quota | The runner's own stops. A guess of 2 to 3 points |
+| Runner | `pilot.py` in Build's notes folder `arms-pilot-2/`, whose SHA-256 is named below. Started detached, without a shell's `ANTHROPIC_*` or `CLAUDE_*` variables |
+| Guard, lock, login | As in the first set. No API key |
+| Deadline | As in the first set |
+| Stop | The runner's own stops, or the owner's word. Build stops at once if the contradiction plant lands or the gap plant does not, since the change would then be unsafe. Build stops an arm if W0 or C1 does not land, or if W0's cases regress at C1, and tells the owner |
+| Cleanup | The runner's final check, by the suite's labels. **No** `docker image prune`, `docker system prune` or `docker rmi`. **Nothing** under `markitect-counted\`, `markitect-fixed-starts\` or `markitect-arms-pilot\` is written |
+| The new project | Not touched. Build opens none of its material |
+| Evidence | Outside the repository: `C:\Users\Consiliari\AppData\Local\markitect-arms-pilot-2\work` |
+| Platform | Windows, natively, on Docker Desktop's engine. Build checks the engine and the process list before the start |
+| Time | About 2 hours |
+
+**The reading** adds, per launch, the findings it landed and whether any of them shows in the hidden cases. That is the price of this change: what it lets through.

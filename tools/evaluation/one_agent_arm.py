@@ -18,10 +18,10 @@ landing. An agent edits files and writes its answer to a file in `.arm/`, which 
 The checker is a fresh session the host starts, never a subagent of the maker. Agents may use subagents, as K may. It
 answers each verdict `confirmed`, `wrong`, `not-shown` or `waived`. Only `wrong` refuses the work; `not-shown` and
 `waived` land and are recorded as findings, so that a person sees them. A ruling stands for the Run: a later round
-re-checks only what was refused and the verdicts the maker changed since, and a later checker reopens another item only
-if the diff since the last review breaks it. A `model-problem` verdict the checker confirms ends the Run without landing,
-and any other answer to one refuses it, since nothing was made for that item. Exit codes and the record are the 2.0
-arm's (markitect_arm.py), so the suite classes and reads these arms as it does that one.
+re-checks only what was refused and the items whose verdict the maker changed since, and a later checker reopens another
+item only if the diff since the last review breaks it. A `model-problem` verdict the checker confirms ends the Run at once
+without landing, and any other answer to one refuses it, since nothing was made for that item. Exit codes and the record
+are the 2.0 arm's (markitect_arm.py), so the suite classes and reads these arms as it does that one.
 """
 import argparse
 import concurrent.futures
@@ -329,7 +329,7 @@ def checker_prompt(host, items, verdicts, checks, base, commit, file, owner=None
         named = {i["item"] for i in items}
         others = ", ".join(f"`{item}`" for item in verdicts if item not in named) or "none"
         earlier = ("## What an earlier review ruled\n\nAn earlier review of this Run ruled on the other items, and those rulings stand. Re-check the items above: those it refused and "
-                   "those whose verdict the maker has changed since. If the diff below breaks another item, add an entry for that item too. "
+                   "those whose verdict the maker has changed since. If the diff below breaks another item, add an entry for that item too; `.markitect/model/` holds its Definition. "
                    f"`git diff {owner} {commit}` shows the whole work.\n\nThe other items: {others}.\n\n")
         if refused:
             earlier += "It refused these:\n\n" + "".join(f"- `{item}`: {evidence}\n" for item, evidence in refused.items()) + "\n"
@@ -338,11 +338,11 @@ def checker_prompt(host, items, verdicts, checks, base, commit, file, owner=None
 Re-check each verdict below of the submission `{commit}` against the model and the repository, which holds that commit. Change no file. The question is whether the realization does what the Definition says, examples included, so read the code and run what you need; the maker's evidence is only where you start. Answer each verdict with one of these:
 
 - `confirmed`: what you read or ran shows that it holds.
-- `wrong`: it does not hold. The realization does something the Definition forbids, leaves out something the Definition says, or matches part of the Definition but not its example. Say what and where. This is the only answer that refuses the work.
+- `wrong`: it does not hold. The realization does something the Definition forbids, leaves out something the Definition says, or matches part of the Definition but not its example. Say what and where. On a `conforms` or `changed` verdict, this is the only answer that refuses the work.
 - `not-shown`: neither the evidence nor what you read or ran shows it either way. The work lands, and this is recorded for a person to see.
 - `waived`: the realization departs from the letter of the Definition, or the Definition can be read two ways and the realization takes one, and you do not hold it against the work. Say what and why. The work lands, and this is recorded for a person to see.
 
-Where the Definition and what it links to contradict each other, nothing can conform: the maker's only right verdict is `model-problem`, so answer `wrong` to a verdict that claims the item conforms, and never `waived`. Answer a `model-problem` verdict `confirmed` only if the model really contradicts itself or leaves open behavior at the project boundary for this item, and otherwise `wrong`.
+Where the Definition and what it links to contradict each other, nothing can conform: the maker's only right verdict is `model-problem`, so answer `wrong` to a verdict that claims the item conforms, and never `waived`. Answer a `model-problem` verdict `confirmed` only if the model really contradicts itself or leaves open behavior at the project boundary for this item, and that ends the Run without landing. Otherwise answer it `wrong`: any answer but `confirmed` refuses a `model-problem` verdict, since nothing was made for that item.
 
 {table(items)}
 ## Submitted verdicts
@@ -434,7 +434,7 @@ def graph(host, shape, items, inherited, owner, rounds):
                      "program build and work as the model says, and the required checks pass, using the Packages' code, not building it a second time. You may change any file "
                      "but the model. Give a verdict for each item below, and for any item of a Package whose verdict no longer holds.")
             focus = [i["item"] for i in items]
-        elif shape == "federal":
+        elif attempt > 1:
             root, scope, focus = items, "The work so far did not pass. Fix what is named below, in any file but the model.", [i["item"] for i in items]
         else:
             root = items
@@ -456,37 +456,38 @@ def graph(host, shape, items, inherited, owner, rounds):
         commit, checks, refused = gate(host, items, verdicts, owner, problems)
         if refused:
             refusals.append({"attempt": attempt, "by": "gate", "reasons": refused})
-            defects = "\n".join(f"- {r}" for r in refused)
+            # What the last review refused is not fixed yet, whatever the gate says on top of it.
+            defects = "\n".join([f"- {r}" for r in refused] + [f"- `{item}`: {evidence}" for item, evidence in (last_refused or {}).items()])
         else:
-            listed = [i for i in items if (host.rulings.get(i["item"]) or {}).get("verdict") != verdicts[i["item"]]]
-            review, missing, tries = {}, True, 0
+            listed = [i for i in items if (host.rulings.get(i["item"]) or {}).get("verdict") != verdicts[i["item"]]["verdict"]]
+            review, missing, tries = {}, listed, 0
             while missing and tries < 2:
                 tries += 1
                 path = host.answers / f"checker-{attempt}-{tries}.json"
-                prompt = checker_prompt(host, listed, verdicts, checks, reviewed or owner, commit, path, owner if reviewed else None, last_refused)
+                prompt = checker_prompt(host, missing, verdicts, checks, reviewed or owner, commit, path, owner if reviewed else None, last_refused)
                 if tries > 1:
-                    prompt += "\nThe last review left out these items, and an entry for each is needed: " + ", ".join(f"`{m}`" for m in missing) + ".\n"
+                    prompt += "\nThe last review left out these items, and an entry for each is needed: " + ", ".join(f"`{m['item']}`" for m in missing) + ".\n"
                 reason = host.session(f"checker-{attempt}-{tries}", ROOT, "checker", attempt, prompt)
                 host.tidy()
                 if reason == "deadline":
                     return "incomplete", "the deadline passed during the check", verdicts, checks, commit, refusals
                 if reason == "failed" and host.starts[-1].get("class"):
                     return "incomplete", "a provider failure ended the checker: " + host.starts[-1].get("detail", ""), verdicts, checks, commit, refusals
-                found, _ = read_reviews(path, listed, known)
-                review.update(found)
-                missing = [i["item"] for i in listed if i["item"] not in review]
+                found, _ = read_reviews(path, missing, known)
+                # The first answer to an item stands: a second session is here only for what the first left out.
+                review = {**found, **review}
+                missing = [i for i in listed if i["item"] not in review]
             if missing:
                 return "incomplete", "the checker left no complete review twice in a row", verdicts, checks, commit, refusals
             reviewed = commit
             for item, r in review.items():
-                host.rulings[item] = {**r, "verdict": verdicts[item]}
-            # Nothing was made for a model-problem item, so only a confirmation of it can end anything.
-            last_refused = {item: r["evidence"] for item, r in review.items()
-                            if r["answer"] == "wrong" or (verdicts[item]["verdict"] == "model-problem" and r["answer"] != "confirmed")}
+                host.rulings[item] = {**r, "verdict": verdicts[item]["verdict"]}
+            problems = [item for item, r in review.items() if r["answer"] == "confirmed" and verdicts[item]["verdict"] == "model-problem"]
+            if problems:
+                return "model-defect", "the checker confirmed a model problem: " + ", ".join(sorted(problems)) + "; the Run ends without landing", verdicts, checks, commit, refusals
+            # Nothing was made for a model-problem item, so it cannot land on any answer.
+            last_refused = {item: r["evidence"] for item, r in review.items() if r["answer"] == "wrong" or verdicts[item]["verdict"] == "model-problem"}
             if not last_refused:
-                problems = [item for item, v in verdicts.items() if v["verdict"] == "model-problem"]
-                if problems:
-                    return "model-defect", "the checker confirmed a model problem: " + ", ".join(sorted(problems)) + "; the Run ends without landing", verdicts, checks, commit, refusals
                 return "landed", "the checker refused nothing", verdicts, checks, commit, refusals
             refusals.append({"attempt": attempt, "by": "checker", "items": last_refused})
             defects = "\n".join(f"- `{item}`: {evidence}" for item, evidence in last_refused.items())

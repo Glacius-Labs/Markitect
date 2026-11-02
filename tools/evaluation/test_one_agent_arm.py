@@ -24,9 +24,13 @@ MODEL = "claude:claude-sonnet-5-5"
 #   none          writes realization/NAME.txt and no verdict file
 #   model         also edits the model
 #   problem       gives every item the verdict model-problem
-#   rewrite       gives every item new evidence
+#   problem-first gives the first item the verdict model-problem
+#   reword        gives every item the same verdict with new evidence
+#   conforms      gives every item the verdict conforms
 #   approve       confirms every verdict
 #   dispute       answers the first verdict `wrong`
+#   dispute-last  answers the last verdict `wrong`
+#   first-only    answers the first verdict `wrong` and leaves out the rest
 #   recorded      answers the first verdict `not-shown`, the second `waived`
 #   all-waived    answers every verdict `waived`
 #   reopen:ITEM   confirms every verdict and answers ITEM, which is not on its list, `wrong`
@@ -66,13 +70,19 @@ FAKE_CLAUDE = textwrap.dedent(r"""
         if step == "model":
             (cwd / ".markitect" / "model" / "project.md").write_text("# Changed by the agent\n")
         if step not in ("none", "rate-limit"):
-            word = "model-problem" if step == "problem" else "changed"
-            said = "again " if step == "rewrite" else "checked "
-            pathlib.Path(answer).write_text(json.dumps({"verdicts": [{"item": i, "verdict": word, "evidence": said + i} for i in items]}))
+            word = {"problem": "model-problem", "conforms": "conforms"}.get(step, "changed")
+            said = "again " if step == "reword" else "checked "
+            verdicts = [{"item": i, "verdict": word, "evidence": said + i} for i in items]
+            if step == "problem-first":
+                verdicts[0]["verdict"] = "model-problem"
+            pathlib.Path(answer).write_text(json.dumps({"verdicts": verdicts}))
     elif step != "junk":
         reviews = [{"item": i, "answer": "confirmed", "evidence": "read it"} for i in items]
-        if step == "dispute":
+        if step in ("dispute", "first-only"):
             reviews[0].update(answer="wrong", evidence="the limit is 6, the Definition says 5")
+            reviews = reviews[:1] if step == "first-only" else reviews
+        elif step == "dispute-last":
+            reviews[-1].update(answer="wrong", evidence="the limit is 6, the Definition says 5")
         elif step == "recorded":
             reviews[0].update(answer="not-shown", evidence="no test, and I could not run it")
             reviews[1].update(answer="waived", evidence="read two ways, this one is fair")
@@ -219,6 +229,8 @@ class OneAgentArmTest(unittest.TestCase):
         self.assertEqual(record["reported"]["status"], "landed")
         self.assertEqual(self.names(out), [(".", "maker"), (".", "checker"), (".", "maker"), (".", "checker")])
         self.assertIn("the limit is 6", self.prompt("maker-2"))
+        self.assertIn("Fix what is named below", self.prompt("maker-2"))
+        self.assertNotIn("give each item a verdict", self.prompt("maker-2"))
         refusals = self.result(out)["refusals"]
         self.assertEqual([(r["attempt"], r["by"], list(r["items"])) for r in refusals], [(1, "checker", ["project"])])
 
@@ -254,12 +266,37 @@ class OneAgentArmTest(unittest.TestCase):
         self.assertEqual(result["findings"], [])
 
     def test_a_verdict_the_maker_changed_is_checked_again(self):
-        self.script({"maker": ["work", "rewrite"], "checker": ["dispute", "approve"]})
+        self.script({"maker": ["work", "conforms"], "checker": ["dispute", "approve"]})
         record, out = self.run_arm("rewritten")
         self.assertEqual(record["reported"]["status"], "landed")
         later = self.prompt("checker-2-1")
         self.assertIn("| `project` |", later)
         self.assertIn("| `lending/loan-policy` |", later)
+
+    def test_new_evidence_alone_does_not_reopen_an_item(self):
+        self.script({"maker": ["work", "reword"], "checker": ["dispute", "approve"]})
+        record, out = self.run_arm("reworded")
+        self.assertEqual(record["reported"]["status"], "landed")
+        later = self.prompt("checker-2-1")
+        self.assertIn("| `project` |", later)
+        self.assertNotIn("| `lending/loan-policy` |", later)
+
+    def test_a_confirmed_model_problem_ends_the_run_at_once(self):
+        # Round 1 confirms the problem and refuses another item. No second round may take the problem back and land.
+        self.script({"maker": ["problem-first", "work"], "checker": ["dispute-last", "approve"]})
+        record, out = self.run_arm("final-problem")
+        self.assertEqual((record["reported"]["status"], record["exitCode"]), ("model-defect", 0))
+        self.assertEqual(record["result"]["changedPaths"], [])
+        self.assertEqual(self.names(out), [(".", "maker"), (".", "checker")])
+
+    def test_a_retry_keeps_the_first_answers_and_asks_only_for_the_rest(self):
+        self.script({"checker-1-1": ["first-only"], "checker-1-2": ["approve"], "checker-2-1": ["approve"]})
+        record, out = self.run_arm("retry-keeps")
+        self.assertEqual(record["reported"]["status"], "landed", (out / "variant" / "run.json").read_text())
+        retry = self.prompt("checker-1-2")
+        self.assertIn("| `lending/loan-policy` |", retry)
+        self.assertNotIn("| `project` |", retry)
+        self.assertEqual([list(r["items"]) for r in self.result(out)["refusals"]], [["project"]])
 
     def test_a_later_review_reopens_an_item_the_diff_broke(self):
         self.script({"checker": ["dispute", "reopen:lending/loan-policy", "approve"]})
@@ -288,6 +325,9 @@ class OneAgentArmTest(unittest.TestCase):
         self.assertIn("the limit is 6", later)
         self.assertIn("realization/maker-2.txt", later)
         self.assertNotIn("realization/maker-1.txt", later)
+        # The maker after the gate's refusal still has the checker's reason.
+        self.assertIn("project has no verdict", self.prompt("maker-3"))
+        self.assertIn("the limit is 6", self.prompt("maker-3"))
 
     def test_any_other_answer_to_a_model_problem_refuses_it(self):
         self.script({"maker": ["problem", "problem"], "checker": ["all-waived", "approve"]})
