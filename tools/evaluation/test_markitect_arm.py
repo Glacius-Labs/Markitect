@@ -449,7 +449,7 @@ class ArmTest(unittest.TestCase):
         self.assertNotIn("realization/internal/ms/**", page)
         self.assertIn("[[lending/loan-policy]]", page)
         adoption = record["reported"]["adoption"]
-        self.assertEqual((adoption["newPaths"], adoption["unlinkedRows"], adoption["pageRows"]), (2, 0, 3))
+        self.assertEqual((adoption["newPaths"], adoption["newPathsLeftOut"], adoption["unlinkedRows"], adoption["pageRows"]), (2, 1, 0, 3))
         # The patterns are part of the adoption, so the base holds them and the Run's impact is the model's change alone.
         args = self.applies()[0]["args"]
         self.assertEqual(args[args.index("--base") + 1], adoption["commit"])
@@ -457,7 +457,7 @@ class ArmTest(unittest.TestCase):
 
     def test_the_arm_reads_patterns_as_the_registry_does(self):
         import markitect_arm
-        hit = lambda pattern, name: markitect_arm.pattern_matches(pattern.split("/"), name.split("/"))
+        hit = markitect_arm.pattern_matches
         self.assertTrue(hit("a/**", "a/b/c.go"))
         self.assertFalse(hit("a/**", "a"))
         self.assertTrue(hit("a/*.go", "a/b.go"))
@@ -469,6 +469,49 @@ class ArmTest(unittest.TestCase):
         self.assertEqual(markitect_arm.page_patterns("---\npaths: []\n---\n# x\n\n- not/a/pattern\n"), [])
         self.assertEqual(markitect_arm.page_patterns("# No front matter\n\n  - not/a/pattern\n"), [])
         self.assertEqual(markitect_arm.page_patterns("---\npaths:\n  - a/**\n  - b.go\n---\n  - not/a/pattern\n"), ["a/**", "b.go"])
+        for other in ("---\npaths: [a, b]\n---\n", "---\npaths:\n- a\n---\n", "---\npaths:\n  - a # why\n---\n", "﻿---\npaths: []\n---\n"):
+            self.assertIsNone(markitect_arm.page_patterns(other), other)
+        self.assertEqual(markitect_arm.pattern_specificity("a/b.go"), 1 << 30)
+        self.assertEqual(markitect_arm.pattern_specificity("a/b/**"), 2)
+        pages = {"x": ["src/**"], "y": ["src/b/**"]}
+        self.assertEqual([markitect_arm.file_owner(f, pages) for f in ("src/a.go", "src/b/c.go", "docs/d.md")], ["x", "y", None])
+
+    def paged(self, name, **pages):
+        """A folder of registry pages, each given as its front matter."""
+        folder = self.tmp / name
+        (folder / "registry").mkdir(parents=True)
+        for page, front in pages.items():
+            (folder / "registry" / (page + ".md")).write_text(front + "# Registry: " + page + "\n", encoding="utf-8")
+        return folder
+
+    def test_new_paths_never_move_a_file_or_repeat_a_pattern(self):
+        import markitect_arm
+        block = lambda *patterns: "---\npaths:\n" + "".join(f"  - {p}\n" for p in patterns) + "---\n"
+        read = lambda folder, page: markitect_arm.page_patterns((folder / "registry" / (page + ".md")).read_text(encoding="utf-8"))
+        # Another page already has the pattern, and no file matches it: adding it would be a compile error.
+        dot = self.paged("dup-dot", a=block("x/**"), b="---\npaths: []\n---\n")
+        self.assertEqual(markitect_arm.add_new_paths(self.paged("dup-model", b=block("x/**")), dot, []), (0, 1))
+        self.assertEqual(read(dot, "b"), [])
+        # The new pattern is more specific than the page holding the file, and would take it from there.
+        dot = self.paged("move-dot", a=block("src/**"), b=block("src/b/**"))
+        files = ["src/b/x/y.go"]
+        self.assertEqual(markitect_arm.add_new_paths(self.paged("move-model", a=block("src/b/x/**")), dot, files), (0, 1))
+        self.assertEqual(read(dot, "a"), ["src/**"])
+        # The same for a file Root owns, and for a folder the page's own file is in, which it may take.
+        dot = self.paged("root-dot", a=block("cmd/main.go"))
+        files = ["cmd/main.go", "lib/root.go"]
+        self.assertEqual(markitect_arm.add_new_paths(self.paged("root-model", a=block("cmd/**", "lib/**", "new/**")), dot, files), (2, 1))
+        self.assertEqual(read(dot, "a"), ["cmd/main.go", "cmd/**", "new/**"])
+        # A pattern the page already has is neither added nor left out; the first page to claim a new one keeps it.
+        dot = self.paged("keep-dot", a=block("a/**"), b="---\npaths: []\n---\n")
+        model = self.paged("keep-model", a=block("a/**", "shared/**"), b=block("shared/**", "b/**"))
+        self.assertEqual(markitect_arm.add_new_paths(model, dot, []), (2, 1))
+        self.assertEqual((read(dot, "a"), read(dot, "b")), (["a/**", "shared/**"], ["b/**"]))
+        self.assertIn("# Registry: b\n", (dot / "registry" / "b.md").read_text(encoding="utf-8"))
+        # A page in another form cannot be read, so its owners are unknown and nothing changes.
+        dot = self.paged("odd-dot", a="---\npaths: [x/**]\n---\n", b="---\npaths: []\n---\n")
+        self.assertEqual(markitect_arm.add_new_paths(self.paged("odd-model", b=block("y/**")), dot, []), (0, 0))
+        self.assertEqual(read(dot, "b"), [])
 
     def test_a_base_model_without_registry_pages_still_places_each_file_on_its_owners_page(self):
         start = self.tmp / "reference"

@@ -352,7 +352,7 @@ const maxCompileErrors = 20
 
 // areasFixed tells a Manager that a claim cannot open a path in this Run, which
 // Managers otherwise keep trying until their attempts run out (DEC-081).
-const areasFixed = "Areas are fixed for the whole Run: a path added to a registry page counts only from the next Run, even once your parent has merged it, so your parent cannot hand you this one"
+const areasFixed = "it cannot give you the path, since areas are fixed for the whole Run: a path added to a registry page counts only from the next Run, even once your parent has merged it"
 
 // compile says why a commit's full state does not compile, as `markitect
 // check` reports it, or "" when it compiles.
@@ -468,9 +468,9 @@ func (d *decider) content(tip string, childRef map[string]string) ([]string, err
 			}
 			return ref, fmt.Sprintf("%s %q below you; it must be exactly as in %q's approved commit %s that you merged", what, Name(owner), child, short(ref))
 		case parentRef == base:
-			return base, fmt.Sprintf("%s %q outside your area; it must stay as at the base. Ask your parent %q to make a change there. %s", what, Name(owner), parent, areasFixed)
+			return base, fmt.Sprintf("%s %q outside your area; it must stay as at the base. Ask your parent %q to make that change itself; %s", what, Name(owner), parent, areasFixed)
 		default:
-			return parentRef, fmt.Sprintf("%s %q outside your area; it must be exactly as in your parent's state %s that you merged. Ask your parent %q to make a change there. %s", what, Name(owner), short(parentRef), parent, areasFixed)
+			return parentRef, fmt.Sprintf("%s %q outside your area; it must be exactly as in your parent's state %s that you merged. Ask your parent %q to make that change itself; %s", what, Name(owner), short(parentRef), parent, areasFixed)
 		}
 	}
 	refs := map[string]bool{base: true, parentRef: true}
