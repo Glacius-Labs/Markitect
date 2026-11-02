@@ -1015,15 +1015,44 @@ func TestARefusalCountsOnlyWhenNothingMoved(t *testing.T) {
 	})
 	notYet := a.Review(map[string]string{"loan-limit": "not all stages are in"})
 	merge := a.Submit([]string{"managers/members", "managers/catalog"}, nil, word("conforms"))
+	stage := func(n int) agentfake.Step {
+		return a.Submit(nil, map[string]string{"src/catalog/book.go": fmt.Sprintf("package catalog\n\n// stage %d\ntype Book struct{ Title string }\n", n)}, word("conforms"))
+	}
 	a.On(".", maker, a.Submit(nil, nil, word("conforms")), merge, again, merge, again, merge)
 	a.On(".", checker, a.Review(nil), notYet, notYet, a.Review(nil))
-	a.On("catalog", maker, a.Submit(nil, nil, word("conforms")), a.Submit(nil, nil, word("conforms")), a.Submit(nil, nil, word("conforms")))
+	a.On("catalog", maker, stage(1), stage(2), stage(3))
 	a.On("catalog", checker, a.Review(nil), a.Review(nil), a.Review(nil))
 	r := f.run(run.Request{Base: base, Limits: withRounds(1)})
 	if r.State != run.StateLanded {
 		t.Fatalf("%s: %s", r.State, r.Why)
 	}
 	if got := startsOf(r, ".", maker); got != 6 {
+		t.Fatalf("Root's maker started %d times", got)
+	}
+}
+
+// A child approved again for the same work moves nothing: a stuck Root cannot
+// keep its count down by giving its child an empty task.
+func TestAnApprovalOfTheSameWorkMovesNothing(t *testing.T) {
+	f := newFixture(t)
+	base := limitChange(f)
+	a := f.agents
+	again := agentfake.Call(func(ctx context.Context, s agentport.Start, h agentport.Host) error {
+		_, err := h.Assign(ctx, "catalog", "Look at it again.")
+		return err
+	})
+	notYet := a.Review(map[string]string{"loan-limit": "still wrong"})
+	merge := a.Submit([]string{"managers/members", "managers/catalog"}, nil, word("conforms"))
+	same := a.Submit(nil, nil, word("conforms"))
+	a.On(".", maker, a.Submit(nil, nil, word("conforms")), merge, again, merge)
+	a.On(".", checker, a.Review(nil), notYet, notYet)
+	a.On("catalog", maker, same, same)
+	a.On("catalog", checker, a.Review(nil), a.Review(nil))
+	r := f.run(run.Request{Base: base, Limits: withRounds(1)})
+	if r.State != run.StateIncomplete || !strings.Contains(r.Why, "Manager . used its 1 maker attempts") {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+	if got := startsOf(r, ".", maker); got != 4 {
 		t.Fatalf("Root's maker started %d times", got)
 	}
 }

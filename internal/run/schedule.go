@@ -112,6 +112,7 @@ type node struct {
 	evidence           string // the required checks' results on it, for its checker
 	approvedSubmission string
 	approval           string // the checker's approving commit
+	approvedTree       string // what it approved: each approval is a new commit, the same work the same tree
 	approved           bool
 	verdicts           []runremote.Line // of the newest submission
 	lastSubmission     string
@@ -407,7 +408,7 @@ func (s *schedule) startLocked(ctx context.Context, n *node, role agentport.Role
 			n.attempts, n.around = 0, now
 		}
 		if n.attempts >= lim.Rounds {
-			s.stopLocked(StateIncomplete, fmt.Sprintf("Manager %s used its %d maker attempts without approved work: its checker or the host refused its work after each, and no new approved work of its children or its parent came between", n.name, lim.Rounds))
+			s.stopLocked(StateIncomplete, fmt.Sprintf("Manager %s used its %d maker attempts in a row: its checker or the host refused its work after each, with no approval of its own and no new approved work of its children or its parent between them", n.name, lim.Rounds))
 			return
 		}
 	}
@@ -651,7 +652,7 @@ func (s *schedule) afterChecker(ctx context.Context, n *node, tip string, moved 
 		return true, nil
 	}
 	n.approved, n.approval, n.approvedSubmission, n.approvedVerdicts, n.checks, n.approvedRound = true, tip, submission, n.verdicts, t.Checks, n.submitRound
-	n.attempts = 0
+	n.approvedTree, n.attempts = c.Tree, 0
 	n.review = s.creds[n.id][agentport.Checker].user
 	var problems []string
 	for _, v := range n.verdicts {

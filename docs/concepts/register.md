@@ -1165,10 +1165,10 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Decision:**
   - A maker's attempts bound how often it may be refused in a row while nothing moves around it. New approved work of its children or its parent since its last attempt starts the count again, and so does its own approval.
   - The limit stays what it was, 6 by default (`--rounds`), and still stops a Manager that is stuck.
-  - What counts as moved is what the host knows for certain: approved work. The maker's own changes do not count, nor does a checker's wording or number of disputes, since a stuck maker also changes things.
+  - What counts as moved is what the host knows for certain: approved work with different content. An approval of the same work again moves nothing. The maker's own changes do not count, nor does a checker's wording or number of disputes, since a stuck maker also changes things.
   - The Run's starts and deadlines still bound the whole Run, so a Run that keeps moving without finishing still ends.
 - **Reason:** in the [fixed-starts re-measure](../validation/fixed-starts-remeasure-20261102.md), Root moved a program into new packages in stages, and its checker rightly rejected each unfinished state, since the old package still served requests. Each rejection used one attempt, although children's new approved work came between them. The Run stopped when only one package and the final wiring were left.
-- **Cost:** a Manager with busy children can be refused more often before the Run stops, up to the Run's starts. For an earlier form of the same idea, see [DEC-054](#dec-054-a-rejection-that-finds-fewer-gaps-does-not-count), which belongs to V1's process and counted gaps instead.
+- **Cost:** a Manager with busy children can be refused more often before the Run stops, up to the Run's starts. A stuck Manager whose child keeps delivering real but useless changes is not caught by this limit, only by the Run's starts and deadline. For an earlier form of the same idea, see [DEC-054](#dec-054-a-rejection-that-finds-fewer-gaps-does-not-count), which belongs to V1's process and counted gaps instead.
 - **Behavior owner:** the [Run engine's limits](../../internal/run/README.md#limits-and-honest-stops).
 
 ## Promises

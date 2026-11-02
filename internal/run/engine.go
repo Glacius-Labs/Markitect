@@ -56,9 +56,10 @@ type Limits struct {
 	// at its own work while nothing moves around it: its first start and each
 	// start after its work was refused, by its checker's rejection or by the
 	// host because what it pushed was no submission or lacked work its task
-	// named. New approved work of its children or its parent starts the count
-	// again, and so does its own approval (DEC-090): work that goes on in
-	// stages is refused until the last stage, and that is no stuck maker.
+	// named. Approved work of its children or its parent that differs from
+	// what its last attempt saw starts the count again, and so does its own
+	// approval (DEC-090): work that goes on in stages is refused until the
+	// last stage, and that is no stuck maker.
 	// Starts that other Managers or the host cause (a message in its inbox, a
 	// reminder of unanswered children, its children's changed approved work)
 	// are no attempts; Starts, the idle rule and the deadlines bound them.
