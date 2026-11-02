@@ -40,10 +40,10 @@ export function Reader({ ix, pid, item, diff, refresh, editable }: Props) {
         ) : pkg ? (
           <PackagePage ix={ix} pid={pid} pkg={pkg} diff={diff} refresh={refresh} editable={editable} />
         ) : removed ? (
-          <>
+          <div className="reader__main">
             <Alert tone="warning" title={`${removed.title} was removed`} body={`${removed.id} is in the base but no longer in the working tree.`} />
             <TextDiff before={removed.baseText ?? ''} after="" />
-          </>
+          </div>
         ) : (
           <Alert tone="info" title="Not in the model" body={`${target} is neither a Definition nor a Package of the working tree.`} />
         )}

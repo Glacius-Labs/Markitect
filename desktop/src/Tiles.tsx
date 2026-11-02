@@ -17,6 +17,11 @@ interface Live {
 
 function useLive(project: Project): Live {
   const [live, setLive] = useState<Live>({});
+  // The hub reloads its project often, every few seconds while a chat draws the
+  // model, and only a change in what it reports is worth asking again.
+  const { id, status, waiting } = project;
+  const c = status.check;
+  const asked = [id, status.initialized, c?.notDrawn, c?.definitions, c?.packages, c?.warnings, c?.errorCount, waiting?.uncommitted, waiting?.unlanded].join();
   useEffect(() => {
     let stopped = false;
     const put = (part: Live) => {
@@ -25,19 +30,19 @@ function useLive(project: Project): Live {
       }
     };
     const none = () => {};
-    const { id, status } = project;
     api.settings().then((settings) => put({ settings }), none);
     if (status.initialized) {
       api.projectSettings(id).then((s) => put({ checks: s.checks }), none);
       api.statistics(id).then((s) => put({ points: s.model }), none);
     }
-    if (status.check && !status.check.notDrawn) {
+    if (c && !c.notDrawn) {
       api.model(id, undefined, '').then((r) => r && put({ model: r.view }), none);
     }
     return () => {
       stopped = true;
     };
-  }, [project]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [asked]);
   return live;
 }
 
@@ -48,7 +53,8 @@ export function Tiles({ project }: { project: Project }) {
   const { id } = project;
   const check = project.status.check;
   const drawn = check && !check.notDrawn;
-  const runs = runsLine(project.waiting);
+  // Only a model that compiles has its Runs measured.
+  const runs = check?.ok ? runsLine(project.waiting) : '';
   return (
     <div className="tiles">
       <Tile
@@ -111,8 +117,8 @@ function Tile(props: { n: string; icon: string; title: string; body: string; hre
 function Number({ label, value }: { label: string; value: number }) {
   return (
     <div>
-      <dd>{value}</dd>
       <dt>{label}</dt>
+      <dd>{value}</dd>
     </div>
   );
 }

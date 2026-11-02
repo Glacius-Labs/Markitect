@@ -165,8 +165,9 @@ a.gl-tab {
   min-width: 0;
 }
 
-/* A wide page has a Definition's facts beside it, in view while it is read. */
-@container page (min-width: 78rem) {
+/* A wide page has a Definition's facts beside it, in view while it is read:
+   wide enough that the text keeps its reading measure beside the navigation. */
+@container page (min-width: 86rem) {
   .reader__page {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
@@ -185,7 +186,9 @@ a.gl-tab {
   .reader__page .prose {
     max-width: calc(var(--measure) * 4 / 3);
   }
+}
 
+@container page (min-width: 78rem) {
   .quality {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
