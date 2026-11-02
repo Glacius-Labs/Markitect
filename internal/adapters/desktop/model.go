@@ -46,7 +46,9 @@ type modelView struct {
 	Bases       bases `json:"bases"`
 	// Base is the base the change is measured from; nil when nothing is
 	// committed, so the whole model is the change.
-	Base        *base            `json:"base"`
+	Base *base `json:"base"`
+	// NotDrawn is the state of an existing project right after init (notDrawn).
+	NotDrawn    bool             `json:"notDrawn,omitempty"`
 	Errors      []diagnostic     `json:"errors"`
 	Lint        []diagnostic     `json:"lint"`
 	Definitions []definitionView `json:"definitions"`
@@ -200,6 +202,7 @@ func buildModelView(cur *project.Project, b *baseState, bs bases, chosen *base, 
 		bm, blint = b.project.Model, b.lint
 	}
 	where := placer(cur)
+	v.NotDrawn = notDrawn(cur)
 	for _, d := range cur.Errors {
 		v.Errors = append(v.Errors, where(d))
 	}

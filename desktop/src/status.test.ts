@@ -68,6 +68,23 @@ describe('the project state', () => {
     expect(nextStep(s).action).toBeUndefined();
   });
 
+  it('asks to draw the model where none is drawn, not to fix errors', () => {
+    const s = { initialized: true, check: { ...check, ok: false, errorCount: 4, definitions: 1, packages: 1, notDrawn: true } };
+    expect(badge(s)).toEqual({ tone: 'neutral', label: 'No model yet' });
+    expect(nextStep(s)).toMatchObject({ tone: 'info', title: 'Draw the model from the code', action: 'draw' });
+    expect(nextStep(s).body).toContain('4 files of this project have no place');
+    const one = { initialized: true, check: { ...s.check, errorCount: 1 } };
+    expect(nextStep(one).body).toContain('1 file of this project has no place');
+  });
+
+  it('follows the conversation that draws the model to its proposal', () => {
+    const s = { initialized: true, check: { ...check, ok: false, errorCount: 4, definitions: 1, notDrawn: true } };
+    const w = { uncommitted: 0, landed: false, unlanded: 0 };
+    expect(nextStep(s, { ...w, extract: { chat: 'c1', working: true } })).toMatchObject({ title: 'The model is being drawn', chat: 'c1' });
+    expect(nextStep(s, { ...w, extract: { chat: 'c1', working: false } })).toMatchObject({ title: 'The chat that draws the model waits for you', chat: 'c1', action: 'draw' });
+    expect(nextStep(s, { ...w, extract: { chat: 'c1', working: false }, proposal: { chat: 'c1', title: 'Draw' } })).toMatchObject({ title: 'A proposal waits: Draw', proposal: 'c1' });
+  });
+
   it('reports a compiling model with its size', () => {
     const s = { initialized: true, check };
     expect(badge(s).label).toBe('Model compiles');
