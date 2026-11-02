@@ -35,30 +35,6 @@ func TestRecordKeepsOneLinePerError(t *testing.T) {
 	}
 }
 
-func TestRecordStartsOverPastTheLimit(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "desktop-error.log")
-	full := strings.Repeat("x", errorLogLimit)
-	if err := os.WriteFile(path, []byte(full), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	record(dir, errors.New("the latest"))
-	log, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.HasSuffix(string(log), " the latest\n") || len(log) > 100 {
-		t.Errorf("the log did not start over with the latest error: %d bytes", len(log))
-	}
-	old, err := os.ReadFile(path + ".old")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if string(old) != full {
-		t.Errorf("the earlier log was not kept: %d bytes", len(old))
-	}
-}
-
 func TestRecordWithNothingToWrite(t *testing.T) {
 	dir := t.TempDir()
 	record(dir, nil)

@@ -42,7 +42,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	dir, dirErr := bootstrap.DesktopFolder()
-	app := application.New(options(dir))
+	app := application.New(setUpWails(dir))
 	s := &shell{app: app, dir: dir, started: make(chan struct{})}
 	if dirErr != nil {
 		s.failStart(dirErr)
@@ -69,9 +69,9 @@ func main() {
 	// Otherwise this user's Markitect already runs and opened the window.
 }
 
-// options are the app's Wails options, with dir the config folder, and has
-// every failure Wails reports recorded there.
-func options(dir string) application.Options {
+// setUpWails has the errors Wails reports recorded in dir, the config folder,
+// and returns the app's Wails options.
+func setUpWails(dir string) application.Options {
 	log.SetOutput(stdLog{dir})
 	return application.Options{
 		Name:        "Markitect",
@@ -100,9 +100,9 @@ func withoutBanner(err error) error {
 	return err
 }
 
-// webViewError marks a failure of WebView2 during a window's start in the
+// webViewErrorMark marks a failure of WebView2 during a window's start in the
 // standard log.
-const webViewError = "[WebView2 Error] "
+const webViewErrorMark = "[WebView2 Error] "
 
 // stdLog is the standard log's output, the only place that hears a failure of
 // WebView2 during a window's start, such as a missing web view or the 60
@@ -112,7 +112,7 @@ const webViewError = "[WebView2 Error] "
 type stdLog struct{ dir string }
 
 func (l stdLog) Write(line []byte) (int, error) {
-	if _, failure, ok := strings.Cut(string(line), webViewError); ok {
+	if _, failure, ok := strings.Cut(string(line), webViewErrorMark); ok {
 		record(l.dir, errors.New(failure))
 		return len(line), nil
 	}
@@ -260,25 +260,17 @@ func (s *shell) failStart(err error) {
 	}
 }
 
-// errorLogLimit is the size at which desktop-error.log starts over. Wails
-// reports some errors per request, and a visible window asks every two
-// seconds, so one that lasts would otherwise fill the disk.
-const errorLogLimit = 1 << 20
-
 // record appends err as one line to desktop-error.log in dir, the config
 // folder, since a failure no window can show has no other place: the app has
-// no terminal. It also goes to stderr, for a start from a terminal or in CI.
+// no terminal. It also goes to stderr, which CI can read and, outside Windows,
+// a terminal.
 func record(dir string, err error) {
 	if err == nil {
 		return
 	}
 	line := time.Now().Format(time.RFC3339) + " " + strings.Join(strings.Fields(err.Error()), " ") + "\n"
 	if dir != "" && os.MkdirAll(dir, 0o700) == nil {
-		path := filepath.Join(dir, "desktop-error.log")
-		if info, statErr := os.Stat(path); statErr == nil && info.Size() >= errorLogLimit {
-			_ = os.Rename(path, path+".old")
-		}
-		if f, openErr := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600); openErr == nil {
+		if f, openErr := os.OpenFile(filepath.Join(dir, "desktop-error.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600); openErr == nil {
 			_, _ = f.WriteString(line)
 			_ = f.Close()
 		}

@@ -32,12 +32,13 @@ func TestMain(m *testing.M) {
 // failInWails has Wails, under the app's own options, report a failure. Nobody
 // sees it: there is no tray, and the window is hidden and never gets to show.
 func failInWails(failure, dir string) {
-	opts := options(dir)
+	opts := setUpWails(dir)
 	switch failure {
 	case "no web view":
 		// The folder holds no web view, so WebView2 fails as on a machine
-		// without it, in the same step that gives up after 60 seconds. This
-		// also holds the line a later Wails might change: stdLog looks for it.
+		// without it, and Wails ends the app the way it does when the 60
+		// seconds run out. This also holds the line a later Wails might change:
+		// stdLog looks for it.
 		opts.Windows.WebviewBrowserPath = dir
 		app := application.New(opts)
 		app.Window.NewWithOptions(application.WebviewWindowOptions{Hidden: true})
