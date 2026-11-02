@@ -141,3 +141,9 @@ An independent review before the first launch found four defects, all fixed befo
 | Time | About 2 hours |
 
 **The reading** adds, per launch, the findings it landed and whether any of them shows in the hidden cases. That is the price of this change: what it lets through.
+
+**Named before the first launch:**
+
+- **Source:** `5c5692b6cd0cb549065e65f90a6a13a6023e2836` on `dev/arms-s-f-pilot`, whose `tools/` tree is in the work folder's `src/`. Against the first set's tree, only `one_agent_arm.py` and its test differ. A fifth defect from the review's second pass is fixed in it: a model defect's Result showed what its review refused as approved.
+- **Inputs:** all 2,004 prepared files are byte for byte the first set's.
+- **Runner:** `pilot.py` in `arms-pilot-2/`, SHA-256 prefix `d4561e34223961f2`. The series runner's SHA-256 is the series' own, `2f32715b…`.
