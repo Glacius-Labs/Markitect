@@ -34,6 +34,10 @@ fail() {
 # Whatever this run started ends with it, also when a check fails.
 started=()
 cleanup() {
+  if [ -s "$config/desktop-error.log" ]; then
+    echo "desktop-error.log:"
+    cat "$config/desktop-error.log"
+  fi
   # The guarded expansion keeps an empty list working under set -u in the
   # bash 3.2 of macOS.
   for p in ${started[@]+"${started[@]}"}; do

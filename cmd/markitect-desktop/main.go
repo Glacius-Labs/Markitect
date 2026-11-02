@@ -13,9 +13,12 @@ import (
 	"context"
 	_ "embed"
 	"errors"
+	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -39,17 +42,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	dir, dirErr := bootstrap.DesktopFolder()
-	app := application.New(application.Options{
-		Name:        "Markitect",
-		Description: "Model-first development with delegated realization",
-		Icon:        icon,
-		// Closing the last window stops nothing; the tray opens another.
-		Windows: application.WindowsOptions{
-			DisableQuitOnLastWindowClosed: true,
-			WebviewUserDataPath:           filepath.Join(dir, "WebView"),
-		},
-		Linux: application.LinuxOptions{DisableQuitOnLastWindowClosed: true},
-	})
+	app := application.New(options(dir))
 	s := &shell{app: app, dir: dir, started: make(chan struct{})}
 	if dirErr != nil {
 		s.failStart(dirErr)
@@ -69,11 +62,61 @@ func main() {
 	case svc != nil:
 		if err := s.run(ctx, cancel, svc); err != nil {
 			svc.Close()
-			s.record(err)
+			record(dir, err)
 			os.Exit(1)
 		}
 	}
 	// Otherwise this user's Markitect already runs and opened the window.
+}
+
+// options are the app's Wails options, with dir the config folder, and has
+// every failure Wails reports recorded there.
+func options(dir string) application.Options {
+	log.SetOutput(stdLog{dir})
+	return application.Options{
+		Name:        "Markitect",
+		Description: "Model-first development with delegated realization",
+		Icon:        icon,
+		// Closing the last window stops nothing; the tray opens another.
+		Windows: application.WindowsOptions{
+			DisableQuitOnLastWindowClosed: true,
+			WebviewUserDataPath:           filepath.Join(dir, "WebView"),
+		},
+		Linux: application.LinuxOptions{DisableQuitOnLastWindowClosed: true},
+		// Wails calls this for errors it lives through and for those it ends
+		// the app over, once this returns. Every one is recorded, since one it
+		// lives through can be the cause of the fatal one after it, and none
+		// ends or interrupts anything here.
+		ErrorHandler: func(err error) { record(dir, withoutBanner(err)) },
+	}
+}
+
+// withoutBanner is err without the banner Wails puts around a fatal error.
+func withoutBanner(err error) error {
+	var fatal *application.FatalError
+	if errors.As(err, &fatal) {
+		return fatal.Unwrap()
+	}
+	return err
+}
+
+// webViewError marks a failure of WebView2 during a window's start in the
+// standard log.
+const webViewError = "[WebView2 Error] "
+
+// stdLog is the standard log's output, the only place that hears a failure of
+// WebView2 during a window's start, such as a missing web view or the 60
+// seconds running out. Wails then ends the app without calling ErrorHandler: by
+// that point the failed WebView2 instance has put back Wails' default handler,
+// which only logs. The rest of the log goes where it always went.
+type stdLog struct{ dir string }
+
+func (l stdLog) Write(line []byte) (int, error) {
+	if _, failure, ok := strings.Cut(string(line), webViewError); ok {
+		record(l.dir, errors.New(failure))
+		return len(line), nil
+	}
+	return os.Stderr.Write(line)
 }
 
 // shell is the native app around the service: its windows, tray and
@@ -213,20 +256,32 @@ func (s *shell) failStart(err error) {
 		go s.fail(err)
 	})
 	if runErr := s.app.Run(); runErr != nil {
-		s.record(errors.Join(err, runErr))
+		record(s.dir, errors.Join(err, runErr))
 	}
 }
 
-// record writes a failure that no window can show, such as a missing web
-// view, to desktop-error.log in the config folder, since the app has no
-// terminal.
-func (s *shell) record(err error) {
-	if s.dir == "" || os.MkdirAll(s.dir, 0o700) != nil {
+// errorLogLimit is the size at which desktop-error.log starts over. Wails
+// reports some errors per request, and a visible window asks every two
+// seconds, so one that lasts would otherwise fill the disk.
+const errorLogLimit = 1 << 20
+
+// record appends err as one line to desktop-error.log in dir, the config
+// folder, since a failure no window can show has no other place: the app has
+// no terminal. It also goes to stderr, for a start from a terminal or in CI.
+func record(dir string, err error) {
+	if err == nil {
 		return
 	}
-	line := time.Now().Format(time.RFC3339) + " " + err.Error() + "\n"
-	if f, openErr := os.OpenFile(filepath.Join(s.dir, "desktop-error.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600); openErr == nil {
-		_, _ = f.WriteString(line)
-		_ = f.Close()
+	line := time.Now().Format(time.RFC3339) + " " + strings.Join(strings.Fields(err.Error()), " ") + "\n"
+	if dir != "" && os.MkdirAll(dir, 0o700) == nil {
+		path := filepath.Join(dir, "desktop-error.log")
+		if info, statErr := os.Stat(path); statErr == nil && info.Size() >= errorLogLimit {
+			_ = os.Rename(path, path+".old")
+		}
+		if f, openErr := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600); openErr == nil {
+			_, _ = f.WriteString(line)
+			_ = f.Close()
+		}
 	}
+	_, _ = fmt.Fprint(os.Stderr, line)
 }
