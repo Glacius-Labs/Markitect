@@ -51,7 +51,9 @@ type imageEngine interface {
 // and removes the old one.
 type chatImage struct {
 	source fs.FS
-	tag    func() (string, error)
+	// name is the image's repository.
+	name string
+	tag  func() (string, error)
 	// turn lets one build run at a time; a chat that waits for it can stop.
 	turn chan struct{}
 }
@@ -60,14 +62,16 @@ func newChatImage(source fs.FS) *chatImage {
 	if source == nil {
 		return nil
 	}
-	return &chatImage{source: source, turn: make(chan struct{}, 1), tag: sync.OnceValues(func() (string, error) {
+	i := &chatImage{source: source, name: chatImageName, turn: make(chan struct{}, 1)}
+	i.tag = sync.OnceValues(func() (string, error) {
 		context, err := imageContext(source)
 		if err != nil {
 			return "", err
 		}
 		sum := sha256.Sum256(context)
-		return chatImageName + ":app-" + hex.EncodeToString(sum[:8]), nil
-	})}
+		return i.name + ":app-" + hex.EncodeToString(sum[:8]), nil
+	})
+	return i
 }
 
 // ensure returns the image's ID, building the image first when the engine does
@@ -80,7 +84,7 @@ func (i *chatImage) ensure(ctx context.Context, engine imageEngine, doing func(s
 	if err != nil {
 		return "", fmt.Errorf("the agent image: %w", err)
 	}
-	built, err := engine.Images(ctx, chatImageName+":app-*")
+	built, err := engine.Images(ctx, i.name+":app-*")
 	if err != nil {
 		return "", fmt.Errorf("the agent image: %w", err)
 	}
@@ -105,7 +109,7 @@ func (i *chatImage) build(ctx context.Context, engine imageEngine, tag string, d
 		return ctx.Err()
 	}
 	// Another chat may have built it while this one waited.
-	built, err := engine.Images(ctx, chatImageName+":app-*")
+	built, err := engine.Images(ctx, i.name+":app-*")
 	if err != nil {
 		return err
 	}

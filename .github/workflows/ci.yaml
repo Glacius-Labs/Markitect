@@ -232,7 +232,7 @@ jobs:
         shell: bash
         run: |
           engine="$(command -v docker)"
-          MARKITECT_TEST_ENGINE="$engine" go test -count=1 -v -timeout 25m -run 'TestRealEngineBuilds' ./internal/adapters/container ./internal/bootstrap
+          MARKITECT_TEST_ENGINE="$engine" go test -count=1 -v -timeout 15m -run 'TestRealEngineBuilds' ./internal/adapters/container ./internal/bootstrap
 
       - name: Start the native app
         shell: bash

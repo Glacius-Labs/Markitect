@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -15,7 +16,8 @@ import (
 
 // TestRealEngineBuildsTheChatImage builds the image the native app builds, from
 // the source it carries, on a real engine. It runs with MARKITECT_TEST_ENGINE,
-// as CI's native job does on Linux, and needs the network and a few minutes.
+// as CI's native job does on Linux, and needs the network and a few minutes. It
+// builds under a name of its own, so the images of a developer's app stay.
 func TestRealEngineBuildsTheChatImage(t *testing.T) {
 	path := os.Getenv("MARKITECT_TEST_ENGINE")
 	if path == "" {
@@ -25,9 +27,10 @@ func TestRealEngineBuildsTheChatImage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 12*time.Minute)
 	defer cancel()
 	image := newChatImage(markitect.ImageSource)
+	image.name = "markitect-chat-image-test"
 	tag, err := image.tag()
 	if err != nil {
 		t.Fatal(err)
@@ -55,6 +58,14 @@ func TestRealEngineBuildsTheChatImage(t *testing.T) {
 	if found, err := engine.Images(ctx, tag); err != nil || len(found) != 0 {
 		t.Fatalf("a stopped build left %q %v", found, err)
 	}
+	// The tag alone would not show a build that goes on, since a whole build
+	// takes longer than this wait. Windows ends the command differently, which
+	// this does not show.
+	if runtime.GOOS == "linux" {
+		if out, err := exec.Command("pgrep", "-af", "--tag "+tag).CombinedOutput(); err == nil {
+			t.Errorf("a stopped build still runs: %s", out)
+		}
+	}
 
 	var said []string
 	began := time.Now()
@@ -76,7 +87,7 @@ func TestRealEngineBuildsTheChatImage(t *testing.T) {
 
 	// The image holds what an agent needs.
 	out, err := exec.CommandContext(ctx, path, "run", "--rm", "--entrypoint", "/bin/sh", id, "-c",
-		"test -x /usr/local/bin/markitect-agentd && markitect 2>&1 | head -1; HOME=/tmp claude --version; HOME=/tmp codex --version").CombinedOutput()
+		"set -e; test -x /usr/local/bin/markitect-agentd; markitect | grep -q 'markitect impact'; export HOME=/tmp; claude --version; codex --version").CombinedOutput()
 	if err != nil || !strings.Contains(string(out), "Claude Code") || !strings.Contains(string(out), "codex-cli") {
 		t.Errorf("the image: %v\n%s", err, out)
 	}
