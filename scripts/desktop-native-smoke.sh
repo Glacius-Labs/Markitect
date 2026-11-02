@@ -120,8 +120,8 @@ SWIFT
 fi
 sleep 5
 alive "$pid" || { cat "$work/app.log"; fail "the app ended after it opened its window"; }
-# The window stays hidden until its first page has loaded, and until then
-# Windows reports no title for it.
+# On Windows the window stays hidden until its first page has loaded, and until
+# then the system reports no title for it.
 for _ in $(seq 1 30); do
   first="$(windows)"
   [ "${first:-0}" -ge 1 ] && break
