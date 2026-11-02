@@ -36,6 +36,17 @@ export interface Step {
   command?: string;
 }
 
+// runsLine says where the Runs stand, as far as the hub knows.
+export function runsLine(w?: Waiting): string {
+  if (!w) {
+    return '';
+  }
+  if (!w.landed) {
+    return 'No Run has landed yet.';
+  }
+  return w.unlanded > 0 ? `${plural(w.unlanded, 'Definition')} changed since the last landing.` : 'Nothing changed since the last landing.';
+}
+
 const inATerminal = "Start the Run from a terminal in the project's folder, as Runs are not in the app yet. It starts from the branch's tip on its remote, so pull and push first.";
 
 // nextStep is the one thing the hub asks of the owner now.

@@ -343,6 +343,11 @@ body {
   margin: 0;
 }
 
+/* A chart's text grows with its drawing, so a wide page must not stretch it. */
+.stats-chart svg {
+  max-height: 20rem;
+}
+
 .stats-chart figcaption {
   margin: 0;
 }

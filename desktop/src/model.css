@@ -454,8 +454,10 @@ a.gl-tab {
   margin: auto;
 }
 
+/* The Organization has a line above its chart. */
 .org__chart {
   display: flex;
+  height: calc(100vh - var(--topbar) - 15rem);
 }
 
 .org__chart .org__tree {

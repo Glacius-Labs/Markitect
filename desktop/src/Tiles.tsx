@@ -3,7 +3,7 @@ import { api, type AppSettings, type ModelView, type Project, type RequiredCheck
 import { layout } from './layout';
 import { packageName } from './modeldata';
 import { modelHref, settingsHref, statisticsHref } from './route';
-import { plural } from './status';
+import { plural, runsLine } from './status';
 import { Badge, Icon } from './ui';
 
 // What the tiles show beyond the hub's own answer. Each part comes on its own,
@@ -45,10 +45,10 @@ function useLive(project: Project): Live {
 // showing what is in its area now.
 export function Tiles({ project }: { project: Project }) {
   const live = useLive(project);
-  const { id, waiting } = project;
+  const { id } = project;
   const check = project.status.check;
   const drawn = check && !check.notDrawn;
-  const runs = !waiting ? '' : !waiting.landed ? 'No Run has landed yet.' : waiting.unlanded > 0 ? `${plural(waiting.unlanded, 'Definition')} changed since the last landing.` : 'Nothing changed since the last landing.';
+  const runs = runsLine(project.waiting);
   return (
     <div className="tiles">
       <Tile
