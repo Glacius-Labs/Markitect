@@ -52,7 +52,7 @@ type Rules struct {
 var Table = Rules{
 	Layers: []Layer{
 		{Name: "model", Title: "Canonical model", Meaning: "The model language over supplied bytes: Definitions, Kinds, links, visibility, cycles, manifest and lock."},
-		{Name: "assets", Title: "Built-in files", Meaning: "Files built into the binary: the standard Libraries and the skills."},
+		{Name: "assets", Title: "Built-in files", Meaning: "Files built into the binary: the standard Libraries, the skills and the source of the chats' image."},
 		{Name: "domain", Title: "Realization record", Meaning: "Registry pages, ownership and file accounting over a compiled model.", Imports: []string{"model"}},
 		{Name: "project", Title: "Project", Meaning: "Loads and checks a project's Markitect folder from a repository state.", Imports: []string{"model", "assets", "domain"}},
 		{Name: "service", Title: "Analysis", Meaning: "Questions about a loaded project: references, graph, impact with checklists, and lint.", Imports: []string{"model", "assets", "domain", "project"}},
@@ -69,7 +69,7 @@ var Table = Rules{
 		{Name: "adapter", Title: "Adapters", Meaning: "Concrete Git, command-line, desktop and Run remote adapters; no adapter imports another.", Imports: []string{"model", "assets", "domain", "project", "service", "remote", "agent-port", "run", "build"}},
 		{Name: "composition", Title: "Composition", Meaning: "Constructs the command line with its adapters.", Imports: []string{"model", "project", "service", "remote", "agent-port", "container", "agents", "run", "adapter"}},
 		{Name: "command", Title: "Product commands", Meaning: "Thin entrypoints to product composition.", Imports: []string{"composition"}},
-		{Name: "desktop-command", Title: "Desktop app", Meaning: "Markitect Desktop's native shell over the composition: windows, tray and folder dialogs; built only with the native tag.", Imports: []string{"composition"}},
+		{Name: "desktop-command", Title: "Desktop app", Meaning: "Markitect Desktop's native shell over the composition: windows, tray and folder dialogs; built only with the native tag.", Imports: []string{"composition", "assets"}},
 		{Name: "remote-command", Title: "Run remote command", Meaning: "Thin entrypoint of a Run's remote container.", Imports: []string{"adapter"}},
 		{Name: "agent", Title: "Session helper", Meaning: "Runs inside each Agent container: provider process, MCP bridge and stdio framing.", Imports: []string{"protocol"}},
 		{Name: "agent-command", Title: "Session helper command", Meaning: "Thin entrypoint of the session helper.", Imports: []string{"agent"}},
@@ -80,6 +80,7 @@ var Table = Rules{
 	},
 	Packages: []Package{
 		{"internal/model", "model", "docs/guides/model-language.md#definitions"},
+		{".", "assets", "internal/adapters/desktop/README.md#the-chat"},
 		{"internal/libraries", "assets", "docs/guides/model-language.md#kinds-and-libraries"},
 		{"internal/skills", "assets", "docs/guides/model-language.md#commands"},
 		{"internal/realization", "domain", "docs/guides/model-language.md#the-realization-record"},

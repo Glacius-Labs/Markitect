@@ -51,24 +51,28 @@ func DesktopFolder() (string, error) {
 // holds it.
 type DesktopService = desktop.Service
 
-// DesktopWindows is what the native shell gives the service: its windows and
-// its folder dialog.
-type DesktopWindows struct {
+// DesktopShell is what the native shell gives the service: its windows, its
+// folder dialog and the source of its chats' image.
+type DesktopShell struct {
 	// Open opens a window on url.
 	Open func(url string) error
 	// ChooseFolder asks for a folder, starting at start; "" means cancelled.
 	ChooseFolder func(ctx context.Context, start string) (string, error)
+	// ImageSource is the build context of the image the chats run in when no
+	// Manager image is set.
+	ImageSource fs.FS
 }
 
 // ListenDesktop starts Markitect Desktop for its native shell, on a free
 // loopback port. When this user's service already runs, that one opens the
 // window and ListenDesktop returns nil. Otherwise it returns the new service,
 // which opens its first window once Serve runs.
-func ListenDesktop(ctx context.Context, w DesktopWindows) (*DesktopService, error) {
+func ListenDesktop(ctx context.Context, w DesktopShell) (*DesktopService, error) {
 	dir, err := DesktopFolder()
 	if err != nil {
 		return nil, err
 	}
+	image := newChatImage(w.ImageSource)
 	return desktop.Listen(ctx, desktop.Config{
 		Dir:          dir,
 		Listen:       "127.0.0.1:0",
@@ -78,8 +82,8 @@ func ListenDesktop(ctx context.Context, w DesktopWindows) (*DesktopService, erro
 		Stdout:       io.Discard,
 		OpenWindow:   w.Open,
 		ChooseFolder: w.ChooseFolder,
-		Chats:        desktopChats{},
-		Settings:     desktopSettings,
+		Chats:        desktopChats{image},
+		Settings:     func(context.Context) desktop.AppSettings { return appSettings(image) },
 	})
 }
 

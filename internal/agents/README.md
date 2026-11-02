@@ -129,7 +129,7 @@ A chat agent is one conversation of [Markitect Desktop's chat](../adapters/deskt
 - **Turns.** Each message is one turn of the same provider conversation, bounded by the chat's turn limit (30 minutes in the app). While it runs, the provider's reader tells the chat each message the agent writes and what it is doing, in one line (`ProgressReader`), redacted like everything else that leaves the container; a Manager's turn does not ask for this. A turn whose login copy would expire on the way is refused as a login failure, so that a fresh agent with a fresh copy takes over.
 - **The proposal.** `Changes` compares the copy's files as they are on disk, without the project's Git filters or line-end attributes, with `refs/markitect/start`: the files below `.markitect/` with their content, and the other paths; a nested repository is left out. `Settle` moves the start's files below `.markitect/` to the copy's after an accept, so that changes elsewhere stay changes, or puts the copy back after a reject. The answer of a turn is redacted like everything else that leaves the container.
 
-`internal/bootstrap` runs the app's chat agents with the settings of `apply` and `verify` above, read at every start; a start first removes what an earlier agent of the same conversation left (label `markitect.chat`).
+`internal/bootstrap` runs the app's chat agents with the settings of `apply` and `verify` above, read at every start, except that the native app [builds an image of its own](../adapters/desktop/README.md#the-native-app) when none is set; a start first removes what an earlier agent of the same conversation left (label `markitect.chat`).
 
 ## Tests and evidence
 

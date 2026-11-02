@@ -29,9 +29,14 @@ type fakeChats struct {
 	progress func(say, doing func(string))
 	// block, when set, runs next; a turn whose context ended by then stops.
 	block func(ctx context.Context, doing func(string))
+	// starting, when set, runs at the start of Start with its Doing.
+	starting func(doing func(string))
 }
 
 func (f *fakeChats) Start(_ context.Context, s ChatStart) (ChatAgent, error) {
+	if f.starting != nil {
+		f.starting(s.Doing)
+	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.started = append(f.started, s)
@@ -223,6 +228,29 @@ func TestAChatShowsItsMessagesAndWorkWhileTheTurnRuns(t *testing.T) {
 	v := chatState(t, s, id, chat)
 	if v.Doing != "" || len(v.Messages) != 3 || v.Messages[2].Text != "Done." {
 		t.Fatalf("after the turn: %+v", v)
+	}
+}
+
+func TestAChatShowsWhatItsStartIsDoing(t *testing.T) {
+	s, chats, _, id := chatServer(t, func(copy map[string]string, message string) string { return "Done." })
+	said, finish := make(chan struct{}), make(chan struct{})
+	chats.starting = func(doing func(string)) {
+		doing("Preparing the agent image")
+		close(said)
+		<-finish
+	}
+	chat := startChat(t, s, id, `{"text":"Look at the policy."}`)
+	<-said
+	var v chatView
+	if err := json.Unmarshal(call(s, "GET", "/api/projects/"+id+"/chats/"+chat, "").Body.Bytes(), &v); err != nil {
+		t.Fatal(err)
+	}
+	if !v.Working || !v.Stoppable || v.Doing != "Preparing the agent image" {
+		t.Errorf("while it starts: %+v", v)
+	}
+	close(finish)
+	if v := chatState(t, s, id, chat); len(v.Messages) != 2 {
+		t.Errorf("after the start: %+v", v.Messages)
 	}
 }
 

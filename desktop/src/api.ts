@@ -212,7 +212,7 @@ export interface LoginState {
 }
 
 export interface AppSettings {
-  agents: { provider: string; model: string; effort: string; image: string; network: string; engine: string; problems: string[] | null };
+  agents: { provider: string; model: string; effort: string; image: string; imageBuilt?: string; network: string; engine: string; problems: string[] | null };
   logins: LoginState[];
 }
 

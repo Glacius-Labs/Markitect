@@ -10,6 +10,8 @@ docker build -f packaging/runtime/Dockerfile -t markitect-runtime .
 
 The [Dockerfile ignore file](Dockerfile.dockerignore) bounds the build context to the Go module, `internal/` and the two commands. The host selects the image by its immutable engine image ID (`sha256:...`); a tag or a source checkout alone is not that identity. The build fails when a CLI is not the pinned version or lacks a launch flag its adapter passes, and `/opt/markitect/runtime.env` records `claude`, `codex`, `agentd` and `markitect`.
 
+The native app builds this image for its chats by itself, from a copy of this recipe and its source that it carries ([`source.go`](../../source.go)). Tests check that the copy holds everything the recipe copies and this ignore file admits, and that it compiles.
+
 ## Container and ownership
 
 The entrypoint is `/usr/local/bin/markitect-agentd serve`; its framed standard streams connect the host to the provider process and the MCP bridge that carries the Manager tools. Containers run as numeric user `1000:1000` with a read-only root filesystem. `/home/agent` and `/work` belong to that user, so the fresh volumes the agent runtime mounts there, the private home and the clone, are writable for it. `/tmp` is executable because toolchains run build products there.
