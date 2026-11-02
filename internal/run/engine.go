@@ -52,15 +52,18 @@ type Limits struct {
 	Deadline time.Time
 	// Starts is the number of agent starts the Run may make.
 	Starts int
-	// Rounds is the number of attempts one Manager's maker may make at its
-	// own work: its first start and each start after its work was refused,
-	// by its checker's rejection or by the host because what it pushed was
-	// no submission or lacked work its task named. Starts that other
-	// Managers or the host cause (a message in its inbox, a reminder of
-	// unanswered children, its children's changed approved work) are no
-	// attempts; Starts, the idle rule and the deadlines bound them. Checker
-	// starts are not counted: each reviews one submission, and the idle rule
-	// stops a checker that leaves no review twice in a row.
+	// Rounds is the number of attempts in a row one Manager's maker may make
+	// at its own work while nothing moves around it: its first start and each
+	// start after its work was refused, by its checker's rejection or by the
+	// host because what it pushed was no submission or lacked work its task
+	// named. New approved work of its children or its parent starts the count
+	// again, and so does its own approval (DEC-090): work that goes on in
+	// stages is refused until the last stage, and that is no stuck maker.
+	// Starts that other Managers or the host cause (a message in its inbox, a
+	// reminder of unanswered children, its children's changed approved work)
+	// are no attempts; Starts, the idle rule and the deadlines bound them.
+	// Checker starts are not counted: each reviews one submission, and the
+	// idle rule stops a checker that leaves no review twice in a row.
 	Rounds int
 	// Start bounds one agent start.
 	Start time.Duration
