@@ -21,6 +21,7 @@ import (
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
 
+	"github.com/Glacius-Labs/Markitect"
 	"github.com/Glacius-Labs/Markitect/internal/bootstrap"
 )
 
@@ -61,7 +62,7 @@ func main() {
 		s.failStart(err)
 		os.Exit(1)
 	}
-	svc, err := bootstrap.ListenDesktop(ctx, bootstrap.DesktopWindows{Open: s.open, ChooseFolder: s.chooseFolder})
+	svc, err := bootstrap.ListenDesktop(ctx, bootstrap.DesktopShell{Open: s.open, ChooseFolder: s.chooseFolder, ImageSource: markitect.ImageSource})
 	switch {
 	case err != nil:
 		s.failStart(err)
