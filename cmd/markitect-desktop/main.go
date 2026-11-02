@@ -42,7 +42,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	dir, dirErr := bootstrap.DesktopFolder()
-	app := application.New(setUpWails(dir))
+	app := application.New(setUpWails(dir, messageBox))
 	s := &shell{app: app, dir: dir, started: make(chan struct{})}
 	if dirErr != nil {
 		s.failStart(dirErr)
@@ -70,9 +70,24 @@ func main() {
 }
 
 // setUpWails has the errors Wails reports recorded in dir, the config folder,
-// and returns the app's Wails options.
-func setUpWails(dir string) application.Options {
-	log.SetOutput(stdLog{dir})
+// has show tell the user about those it ends the app over, and returns the
+// app's Wails options.
+func setUpWails(dir string, show func(text string)) application.Options {
+	ending := func(err error) {
+		record(dir, err)
+		// A message box handles its thread's messages until it is dismissed. On
+		// the UI thread those would include what Wails has queued, such as a
+		// window a later start asked for, and a failure of that window would
+		// wait for the standard log's lock, which stdLog holds. A goroutine is
+		// on another thread, since Wails locks the UI thread to its own.
+		shown := make(chan struct{})
+		go func() {
+			defer close(shown)
+			show(endingMessage(dir, err))
+		}()
+		<-shown
+	}
+	log.SetOutput(stdLog{ending})
 	return application.Options{
 		Name:        "Markitect",
 		Description: "Model-first development with delegated realization",
@@ -85,19 +100,18 @@ func setUpWails(dir string) application.Options {
 		Linux: application.LinuxOptions{DisableQuitOnLastWindowClosed: true},
 		// Wails calls this for errors it lives through and for those it ends
 		// the app over, once this returns. Every one is recorded, since one it
-		// lives through can be the cause of the fatal one after it, and none
-		// ends or interrupts anything here.
-		ErrorHandler: func(err error) { record(dir, withoutBanner(err)) },
+		// lives through can be the cause of the fatal one after it, and only
+		// the fatal one interrupts anything. Its cause comes without the banner
+		// Wails puts around it.
+		ErrorHandler: func(err error) {
+			var fatal *application.FatalError
+			if errors.As(err, &fatal) {
+				ending(fatal.Unwrap())
+				return
+			}
+			record(dir, err)
+		},
 	}
-}
-
-// withoutBanner is err without the banner Wails puts around a fatal error.
-func withoutBanner(err error) error {
-	var fatal *application.FatalError
-	if errors.As(err, &fatal) {
-		return fatal.Unwrap()
-	}
-	return err
 }
 
 // webViewErrorMark marks a failure of WebView2 during a window's start in the
@@ -109,14 +123,41 @@ const webViewErrorMark = "[WebView2 Error] "
 // seconds running out. Wails then ends the app without calling ErrorHandler: by
 // that point the failed WebView2 instance has put back Wails' default handler,
 // which only logs. The rest of the log goes where it always went.
-type stdLog struct{ dir string }
+type stdLog struct{ ending func(error) }
 
 func (l stdLog) Write(line []byte) (int, error) {
 	if _, failure, ok := strings.Cut(string(line), webViewErrorMark); ok {
-		record(l.dir, errors.New(failure))
+		l.ending(errors.New(strings.TrimSpace(failure)))
 		return len(line), nil
 	}
 	return os.Stderr.Write(line)
+}
+
+// How Wails words the two failures of WebView2 a user can do something about.
+// Another wording reads as any other failure.
+const (
+	webViewMissing = "no webview2 found"
+	webViewTooSlow = "did not complete initialisation"
+)
+
+// endingMessage tells the user why the app ends over err and what to do, and
+// where the error is recorded, with dir the config folder.
+func endingMessage(dir string, err error) string {
+	var message string
+	switch reason := err.Error(); {
+	case strings.Contains(reason, webViewMissing):
+		message = "Markitect needs the Microsoft Edge WebView2 Runtime, and this computer does not have it.\n\n" +
+			"Install it from https://developer.microsoft.com/microsoft-edge/webview2/, then start Markitect again."
+	case strings.Contains(reason, webViewTooSlow):
+		message = "WebView2 did not start within 60 seconds, so Markitect has to close.\n\n" +
+			"Start Markitect again. The first start after a reboot is the slowest."
+	default:
+		message = "Markitect has to close: " + reason + "\n\nStart Markitect again."
+	}
+	if dir == "" {
+		return message // nothing is recorded without a config folder
+	}
+	return message + "\n\nError log: " + filepath.Join(dir, errorLog)
 }
 
 // shell is the native app around the service: its windows, tray and
@@ -260,17 +301,20 @@ func (s *shell) failStart(err error) {
 	}
 }
 
-// record appends err as one line to desktop-error.log in dir, the config
-// folder, since a failure no window can show has no other place: the app has
-// no terminal. It also goes to stderr, which CI can read and, outside Windows,
-// a terminal.
+// errorLog is the error log's name in the config folder.
+const errorLog = "desktop-error.log"
+
+// record appends err as one line to the error log in dir, the config folder,
+// since a failure no window can show has no other place: the app has no
+// terminal. It also goes to stderr, which CI can read and, outside Windows, a
+// terminal.
 func record(dir string, err error) {
 	if err == nil {
 		return
 	}
 	line := time.Now().Format(time.RFC3339) + " " + strings.Join(strings.Fields(err.Error()), " ") + "\n"
 	if dir != "" && os.MkdirAll(dir, 0o700) == nil {
-		if f, openErr := os.OpenFile(filepath.Join(dir, "desktop-error.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600); openErr == nil {
+		if f, openErr := os.OpenFile(filepath.Join(dir, errorLog), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600); openErr == nil {
 			_, _ = f.WriteString(line)
 			_ = f.Close()
 		}
