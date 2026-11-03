@@ -12,6 +12,15 @@ func validate(spec policies.ArgSpec, raw json.RawMessage, present bool) (policie
 	if !present {
 		return policies.Value{}, false
 	}
+	if spec.Kind == policies.KindFlag {
+		switch string(raw) {
+		case "true":
+			return policies.Value{S: "true", N: 1}, true
+		case "false":
+			return policies.Value{S: "false"}, true
+		}
+		return policies.Value{}, false
+	}
 	if spec.Kind == policies.KindInteger {
 		lit := string(raw)
 		if len(lit) == 0 || lit[0] == '-' || len(lit) > 18 {

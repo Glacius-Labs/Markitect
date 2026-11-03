@@ -75,3 +75,6 @@ func (m *Module) ScheduledWindows(machineID string, from, to int) []*Window {
 	}
 	return out
 }
+
+// FamilyIDs lists the identifiers of all families in ascending order.
+func (m *Module) FamilyIDs() []string { return policies.SortedKeys(m.families) }

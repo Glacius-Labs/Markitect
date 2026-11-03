@@ -5,10 +5,18 @@ package bookings
 
 import (
 	"makerspace/billing"
+	"makerspace/consumables"
 	"makerspace/equipment"
+	"makerspace/guardians"
+	"makerspace/inspections"
+	"makerspace/lockouts"
 	"makerspace/members"
+	"makerspace/passes"
 	"makerspace/policies"
+	"makerspace/ppe"
+	"makerspace/staffing"
 	"makerspace/training"
+	"makerspace/waivers"
 )
 
 type reservation struct {
@@ -38,24 +46,52 @@ func (r *reservation) active(at int) bool {
 // Session is the metered interval of a completed reservation.
 type Session struct{ CheckedInAt, CheckedOutAt int }
 
+// Needs is what bookings asks of the program without depending on the module
+// that knows the answer: the protocol module supplies it from access.
+type Needs struct {
+	// BadgeOutside reports whether the member has an active badge that is not
+	// inside (premises gate).
+	BadgeOutside func(memberID string) bool
+}
+
 // Module is the bookings module: it owns every reservation.
 type Module struct {
+	needs        Needs
 	members      *members.Module
 	training     *training.Module
 	equipment    *equipment.Module
 	billing      *billing.Module
+	guardians    *guardians.Module
+	waivers      *waivers.Module
+	ppe          *ppe.Module
+	lockouts     *lockouts.Module
+	inspections  *inspections.Module
+	staffing     *staffing.Module
+	passes       *passes.Module
+	consumables  *consumables.Module
 	ids          policies.IDs
 	reservations map[string]*reservation
 	resList      []*reservation
 }
 
 // New returns the module in the initial state.
-func New(mem *members.Module, tr *training.Module, eq *equipment.Module, bill *billing.Module) *Module {
+func New(needs Needs, mem *members.Module, tr *training.Module, eq *equipment.Module, bill *billing.Module,
+	gd *guardians.Module, wv *waivers.Module, pp *ppe.Module, lk *lockouts.Module, ins *inspections.Module,
+	stf *staffing.Module, pas *passes.Module, cons *consumables.Module) *Module {
 	return &Module{
+		needs:        needs,
 		members:      mem,
 		training:     tr,
 		equipment:    eq,
 		billing:      bill,
+		guardians:    gd,
+		waivers:      wv,
+		ppe:          pp,
+		lockouts:     lk,
+		inspections:  ins,
+		staffing:     stf,
+		passes:       pas,
+		consumables:  cons,
 		reservations: map[string]*reservation{},
 	}
 }

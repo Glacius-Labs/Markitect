@@ -24,8 +24,12 @@ func (b *Module) runGenerateInvoices(c *policies.Call) (policies.Rec, string, *p
 		}
 		inv := &Invoice{ID: b.ids.Next("inv"), MemberID: mid, Month: idx, IssuedAt: c.At, DueAt: c.At + 14*policies.MinPerDay}
 		fee := members.TierFee(m.Tier)
+		discount := 0
+		if _, group, ok := b.households.OfMember(mid); ok && len(group) >= 3 {
+			discount = 10
+		}
 		inv.Lines = append(inv.Lines, Charge{MemberID: mid, Kind: "membership", Ref: m.Tier, Quantity: 1,
-			Unit: fee, Amount: policies.ChargeAmount(1, fee, 0), At: c.At})
+			Unit: fee, Discount: discount, Amount: policies.ChargeAmount(1, fee, discount), At: c.At})
 		var due []*Charge
 		for _, ch := range b.memberCharges(mid) {
 			if !ch.Billed && policies.MonthOf(ch.At) == idx {
@@ -45,8 +49,20 @@ func (b *Module) runGenerateInvoices(c *policies.Call) (policies.Rec, string, *p
 		inv.Balance = inv.Total - inv.CreditApplied - inv.Paid
 		b.invoices[inv.ID] = inv
 		b.invoiceList = append(b.invoiceList, inv)
+		for _, l := range inv.Lines {
+			b.ledger.Post("receivable", revenueAccount[l.Kind], l.Amount, inv.ID, c.At)
+		}
+		b.ledger.Post("creditLiability", "receivable", inv.CreditApplied, inv.ID, c.At)
 		out = append(out, invoiceView(inv, c.At))
 	}
 	b.invoiced[idx] = true
 	return policies.Rec{"month": policies.FormatMonth(idx), "invoices": out}, policies.FormatMonth(idx), nil
+}
+
+// revenueAccount is the ledger account an invoice line of a kind is credited to.
+var revenueAccount = map[string]string{
+	"membership": "revenueMembership", "usage": "revenueUsage", "material": "revenueMaterial",
+	"course": "revenueCourse", "deposit": "depositLiability", "pass": "revenuePasses",
+	"locker": "revenueLockers", "guest": "revenueGuests", "lateFee": "revenueLateFees",
+	"event": "revenueEvents",
 }

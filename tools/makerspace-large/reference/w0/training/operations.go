@@ -26,26 +26,12 @@ func (t *Module) Operations() []*policies.Operation {
 			Args: []policies.ArgSpec{policies.IDRef("courseId", t.CourseExists), policies.MemberRef(t.members.Exists)},
 			Run: func(c *policies.Call) (policies.Rec, string, *policies.Refusal) {
 				co := t.courses[c.Str("courseId")]
-				m := t.members.Member(c.Str("memberId"))
-				if m.Standing != "good" {
-					return nil, "", policies.Refuse("member_suspended", "The member is suspended.")
+				mid := c.Str("memberId")
+				e, ref := t.enroll(co.id, mid, c.At)
+				if ref != nil {
+					return nil, "", ref
 				}
-				key := enrollmentKey(co.id, m.User.ID)
-				e := t.enrollments[key]
-				if e != nil && e.status == "enrolled" {
-					return nil, "", policies.Refuse("already_enrolled", "The member is already enrolled.")
-				}
-				if t.courseView(co)["enrolledCount"].(int) >= co.capacity {
-					return nil, "", policies.Refuse("course_full", "The course has no free place.")
-				}
-				if e == nil {
-					e = &enrollment{courseID: co.id, memberID: m.User.ID}
-					t.enrollments[key] = e
-				}
-				e.status, e.enrolledAt, e.completedAt = "enrolled", c.At, nil
-				t.billing.AddCharge(m.User.ID, "course", co.id, 1, co.fee, 0, c.At)
-				return policies.Rec{"enrollment": enrollmentView(e), "course": t.courseView(co)},
-					co.id + "/" + m.User.ID, nil
+				return policies.Rec{"enrollment": enrollmentView(e), "course": t.courseView(co)}, co.id + "/" + mid, nil
 			}},
 		{Name: "completeCourse", Mutation: true, Perms: "naa",
 			Args: []policies.ArgSpec{policies.IDRef("courseId", t.CourseExists), policies.MemberRef(t.members.Exists)},
@@ -55,6 +41,12 @@ func (t *Module) Operations() []*policies.Operation {
 				e := t.enrollments[enrollmentKey(co.id, m.User.ID)]
 				if e == nil || e.status != "enrolled" {
 					return nil, "", policies.Refuse("not_enrolled", "The member is not enrolled in the course.")
+				}
+				if t.needs.AttendanceOwed(co.id, m.User.ID, e.enrolledAt, c.At) {
+					return nil, "", policies.Refuse("attendance_missing", "The member did not attend a class of the course.")
+				}
+				if !t.needs.AssessmentMet(co.id, m.User.ID) {
+					return nil, "", policies.Refuse("assessment_not_passed", "The member has not passed the assessment of the course.")
 				}
 				at := c.At
 				e.status, e.completedAt = "completed", &at

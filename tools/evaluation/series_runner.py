@@ -52,7 +52,7 @@ HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import classify  # noqa: E402
 
-DEADLINES = {"library": 2700, "makerspace": 5400}
+DEADLINES = {"library": 2700, "makerspace": 5400, "makerspace-large": 14400}
 # The variants' runtime signatures, written before any launch: the 2.0 arm's (markitect_arm.py), and K's own failure
 # (claude_code.py writes the status "error" when its code fails, before or after the session). V is the verify launch on
 # a chain's end state (markitect_arm.py --verify): M's host and machinery whichever arm made the end state.

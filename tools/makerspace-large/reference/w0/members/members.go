@@ -45,3 +45,17 @@ func (m *Module) Exists(id string) bool {
 
 // SortedIDs lists the identifiers of all members in ascending order.
 func (m *Module) SortedIDs() []string { return policies.SortedKeys(m.members) }
+
+// InGoodStanding reports whether the member is in good standing.
+func (m *Module) InGoodStanding(id string) bool {
+	mem := m.members[id]
+	return mem != nil && mem.Standing == "good"
+}
+
+// SetStanding sets the standing of a member to good or suspended. It writes no
+// audit entry: the operation that calls it is the one that is audited.
+func (m *Module) SetStanding(id, standing string) {
+	if mem := m.members[id]; mem != nil {
+		mem.Standing = standing
+	}
+}

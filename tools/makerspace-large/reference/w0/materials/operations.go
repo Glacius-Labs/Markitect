@@ -20,6 +20,9 @@ func (s *Module) Operations() []*policies.Operation {
 			Args: []policies.ArgSpec{policies.IDRef("materialId", s.MaterialExists), policies.Integer("quantity", 1, 100000)},
 			Run: func(c *policies.Call) (policies.Rec, string, *policies.Refusal) {
 				m := s.materials[c.Str("materialId")]
+				if s.needs.Counted(m.id) {
+					return nil, "", policies.Refuse("stocktake_open", "The material has a count in an open stocktake.")
+				}
 				m.stock += c.Num("quantity")
 				return policies.Rec{"material": materialView(m)}, m.id, nil
 			}},
@@ -33,14 +36,29 @@ func (s *Module) Operations() []*policies.Operation {
 				if mem.Standing != "good" {
 					return nil, "", policies.Refuse("member_suspended", "The member is suspended.")
 				}
+				if code := s.needs.HazardRefusal(mem.User.ID, mat.id, qty, c.At); code != "" {
+					return nil, "", policies.Refuse(code, "The hazard gate refuses the purchase.")
+				}
+				if s.needs.Counted(mat.id) {
+					return nil, "", policies.Refuse("stocktake_open", "The material has a count in an open stocktake.")
+				}
 				if mat.stock < qty {
 					return nil, "", policies.Refuse("insufficient_stock", "The stock is lower than the quantity.")
 				}
 				mat.stock -= qty
+				discount := 0
+				red := s.promotions.OldestUnused(mem.User.ID, "material")
+				if red != nil {
+					discount = red.Percent
+				}
 				p := &purchase{id: s.ids.Next("pur"), memberID: mem.User.ID, materialID: mat.id,
-					quantity: qty, unit: mat.unit, discount: 0, at: c.At}
+					quantity: qty, unit: mat.unit, discount: discount, at: c.At}
 				p.amount = policies.ChargeAmount(p.quantity, p.unit, p.discount)
+				if red != nil {
+					s.promotions.Use(red, p.id, c.At)
+				}
 				s.purchases = append(s.purchases, p)
+				s.byID[p.id] = p
 				s.billing.AddCharge(mem.User.ID, "material", p.id, p.quantity, p.unit, p.discount, c.At)
 				return policies.Rec{"purchase": purchaseView(p), "material": materialView(mat)}, p.id, nil
 			}},

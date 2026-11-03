@@ -14,6 +14,7 @@ const (
 	KindDate
 	KindMonth
 	KindEnum
+	KindFlag
 )
 
 // ArgSpec describes one argument of an operation. Exists, when set, tells
@@ -49,6 +50,9 @@ func (c *Call) Str(name string) string { return c.Vals[name].S }
 // Num is the integer value of an argument.
 func (c *Call) Num(name string) int { return c.Vals[name].N }
 
+// Flag is the value of a flag argument.
+func (c *Call) Flag(name string) bool { return c.Vals[name].N == 1 }
+
 // Operation is one row of the operation index: how a caller reaches the
 // operation and what it does. Perms has one letter per role, a(ll), o(wn) or
 // n(one), in the order of RoleIndex. Run gives the result, the audit target
@@ -81,6 +85,12 @@ func MemberRef(exists func(key string) bool) ArgSpec {
 	return ArgSpec{Name: "memberId", Kind: KindIdentifier, Exists: exists, Owner: func(key string) string { return key }}
 }
 
+// GuardianRef is the guardianId argument: it must name an existing member, and
+// the record concerned belongs to that member (the actor is the guardian).
+func GuardianRef(exists func(key string) bool) ArgSpec {
+	return ArgSpec{Name: "guardianId", Kind: KindIdentifier, Exists: exists, Owner: func(key string) string { return key }}
+}
+
 // Text is a text argument.
 func Text(name string) ArgSpec { return ArgSpec{Name: name, Kind: KindText} }
 
@@ -102,3 +112,6 @@ func Month(name string) ArgSpec { return ArgSpec{Name: name, Kind: KindMonth} }
 func Enum(name string, values ...string) ArgSpec {
 	return ArgSpec{Name: name, Kind: KindEnum, Enum: values}
 }
+
+// Flag is a flag argument: a JSON true or false.
+func Flag(name string) ArgSpec { return ArgSpec{Name: name, Kind: KindFlag} }

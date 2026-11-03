@@ -23,3 +23,6 @@ func TierDiscount(tier string) int {
 	}
 	return 25
 }
+
+// Tiers lists the tiers in ascending order.
+func Tiers() []string { return append([]string(nil), tiers...) }

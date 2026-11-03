@@ -44,6 +44,8 @@ func (b *Module) Operations() []*policies.Operation {
 				inv.Balance -= applied
 				b.credit[inv.MemberID] += p.Credit
 				b.payments = append(b.payments, p)
+				b.ledger.Post("cash", "receivable", p.Applied, p.ID, c.At)
+				b.ledger.Post("cash", "creditLiability", p.Credit, p.ID, c.At)
 				return policies.Rec{"payment": paymentView(p), "invoice": invoiceView(inv, c.At),
 					"creditBalanceCents": b.credit[inv.MemberID]}, p.ID, nil
 			}},
@@ -59,25 +61,9 @@ func (b *Module) Operations() []*policies.Operation {
 			Args: []policies.ArgSpec{policies.MemberRef(b.members.Exists)},
 			Run: func(c *policies.Call) (policies.Rec, string, *policies.Refusal) {
 				mid := c.Str("memberId")
-				open, overdue, unbilled := 0, 0, 0
-				for _, i := range b.invoiceList {
-					if i.MemberID != mid {
-						continue
-					}
-					if i.Status() == "open" {
-						open += i.Balance
-					}
-					if i.Overdue(c.At) {
-						overdue += i.Balance
-					}
-				}
-				for _, ch := range b.memberCharges(mid) {
-					if !ch.Billed {
-						unbilled += ch.Amount
-					}
-				}
-				return policies.Rec{"account": policies.Rec{"memberId": mid, "creditBalanceCents": b.credit[mid],
-					"openBalanceCents": open, "overdueBalanceCents": overdue, "unbilledCents": unbilled}}, "", nil
+				a := b.AccountOf(mid, c.At)
+				return policies.Rec{"account": policies.Rec{"memberId": mid, "creditBalanceCents": a.Credit,
+					"openBalanceCents": a.Open, "overdueBalanceCents": a.Overdue, "unbilledCents": a.Unbilled}}, "", nil
 			}},
 	}
 }

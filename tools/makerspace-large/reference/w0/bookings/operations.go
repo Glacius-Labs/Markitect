@@ -20,10 +20,9 @@ func (b *Module) Operations() []*policies.Operation {
 			Args: []policies.ArgSpec{policies.OwnedIDRef("reservationId", b.ReservationExists, b.ReservationOwner)},
 			Run: func(c *policies.Call) (policies.Rec, string, *policies.Refusal) {
 				r := b.reservations[c.Str("reservationId")]
-				if r.reportedStatus(c.At) != "reserved" {
+				if !b.CancelReserved(r.id, c.At) {
 					return nil, "", policies.Refuse("invalid_state", "The reservation is not in state reserved.")
 				}
-				r.status = "cancelled"
 				return policies.Rec{"reservation": reservationView(r, c.At)}, r.id, nil
 			}},
 		{Name: "checkIn", Mutation: true, Perms: "oaa",
@@ -41,8 +40,23 @@ func (b *Module) Operations() []*policies.Operation {
 					return nil, "", policies.Refuse("member_suspended", "The member is suspended.")
 				}
 				mach := b.equipment.Machine(r.machineID)
+				if b.guardians.ConsentMissing(m.User.ID, mach.FamilyID, policies.DayOf(c.At)) {
+					return nil, "", policies.Refuse("guardian_consent_missing", "The member is a minor without consent for the family.")
+				}
 				if !b.training.Certified(m.User.ID, mach.FamilyID, policies.DayOf(c.At)) {
 					return nil, "", policies.Refuse("not_certified", "The member is not certified for the machine.")
+				}
+				if b.waivers.Missing(m.User.ID, mach.FamilyID) {
+					return nil, "", policies.Refuse("waiver_missing", "The member has not signed the current waiver of the family.")
+				}
+				if b.ppe.Missing(m.User.ID, mach.FamilyID) {
+					return nil, "", policies.Refuse("ppe_missing", "The member does not hold every item the family requires.")
+				}
+				if b.lockouts.LockedOut(mach.ID) {
+					return nil, "", policies.Refuse("machine_locked_out", "The machine is locked out.")
+				}
+				if b.needs.BadgeOutside(m.User.ID) {
+					return nil, "", policies.Refuse("not_on_premises", "The member has an active badge that is not inside.")
 				}
 				at, rate := c.At, mach.Rate
 				r.status, r.checkedInAt, r.rate = "checkedIn", &at, &rate
@@ -57,7 +71,9 @@ func (b *Module) Operations() []*policies.Operation {
 				}
 				m := b.members.Member(r.memberID)
 				metered := c.At - *r.checkedInAt
-				ch := b.billing.AddCharge(m.User.ID, "usage", r.id, metered, *r.rate, members.TierDiscount(m.Tier), c.At)
+				billable := metered - b.passes.Draw(m.User.ID, metered, c.At)
+				ch := b.billing.AddCharge(m.User.ID, "usage", r.id, billable, *r.rate, members.TierDiscount(m.Tier), c.At)
+				b.consumables.Draw(r.id, m.User.ID, r.machineID, metered, c.At)
 				at, amount := c.At, ch.Amount
 				r.status, r.checkedOutAt, r.metered, r.amount = "completed", &at, &metered, &amount
 				return policies.Rec{"reservation": reservationView(r, c.At), "charge": billing.ChargeView(ch)}, r.id, nil
@@ -104,11 +120,26 @@ func (b *Module) runCreateReservation(c *policies.Call) (policies.Rec, string, *
 	if m.Standing != "good" {
 		return nil, "", policies.Refuse("member_suspended", "The member is suspended.")
 	}
+	if b.guardians.ConsentMissing(m.User.ID, mach.FamilyID, policies.DayOf(start)) {
+		return nil, "", policies.Refuse("guardian_consent_missing", "The member is a minor without consent for the family.")
+	}
 	if !b.training.Certified(m.User.ID, mach.FamilyID, policies.DayOf(start)) {
 		return nil, "", policies.Refuse("not_certified", "The member is not certified for the machine.")
 	}
+	if b.waivers.Missing(m.User.ID, mach.FamilyID) {
+		return nil, "", policies.Refuse("waiver_missing", "The member has not signed the current waiver of the family.")
+	}
+	if b.lockouts.LockedOut(mach.ID) {
+		return nil, "", policies.Refuse("machine_locked_out", "The machine is locked out.")
+	}
+	if b.inspections.DueOn(mach.ID, policies.DayOf(start)) {
+		return nil, "", policies.Refuse("inspection_due", "The machine is due for inspection on the date of the slot.")
+	}
 	if len(b.equipment.ScheduledWindows(mach.ID, start, end)) > 0 {
 		return nil, "", policies.Refuse("machine_in_maintenance", "A maintenance window overlaps the slot.")
+	}
+	if b.staffing.SupervisorMissing(mach.FamilyID, start, end) {
+		return nil, "", policies.Refuse("supervisor_required", "The slot is not covered by scheduled shifts.")
 	}
 	if b.ActiveReservationOverlaps(mach.ID, start, end, c.At) {
 		return nil, "", policies.Refuse("machine_booked", "The machine is booked in the slot.")

@@ -12,6 +12,7 @@ the program. The kit keeps the expected audit log, so a case can compare it at a
 """
 from __future__ import annotations
 
+import copy
 import json
 import pathlib
 import re
@@ -84,7 +85,7 @@ class Case:
         self._guard(at, False)
         rid = self._rid()
         step: dict[str, Any] = {"request": {"id": rid, "op": op, "args": {"actor": actor, "at": at, **args}},
-                                "expect": {"id": rid, "status": "ok", "result": ANY if result is None else result}}
+                                "expect": {"id": rid, "status": "ok", "result": ANY if result is None else copy.deepcopy(result)}}
         if capture:
             step["capture"] = capture
         self.steps.append(step)
