@@ -31,6 +31,7 @@ MODEL = "claude:claude-sonnet-5-5"
 #   dispute       answers the first verdict `wrong`
 #   dispute-last  answers the last verdict `wrong`
 #   first-only    answers the first verdict `wrong` and leaves out the rest
+#   old-dispute   answers the first verdict `disputed`, the old answer set's refusal
 #   recorded      answers the first verdict `not-shown`, the second `waived`
 #   all-waived    answers every verdict `waived`
 #   reopen:ITEM   confirms every verdict and answers ITEM, which is not on its list, `wrong`
@@ -83,6 +84,8 @@ FAKE_CLAUDE = textwrap.dedent(r"""
             reviews = reviews[:1] if step == "first-only" else reviews
         elif step == "dispute-last":
             reviews[-1].update(answer="wrong", evidence="the limit is 6, the Definition says 5")
+        elif step == "old-dispute":
+            reviews[0].update(answer="disputed", evidence="the limit is 6, the Definition says 5")
         elif step == "recorded":
             reviews[0].update(answer="not-shown", evidence="no test, and I could not run it")
             reviews[1].update(answer="waived", evidence="read two ways, this one is fair")
