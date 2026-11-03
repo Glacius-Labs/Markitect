@@ -114,6 +114,7 @@ Wall time follows the same order. On W0, KC's maker costs what K costs (0.92 to 
 
 - **Impact, the gate and a checker on K carry nearly everything S's safety showed here:** C9, c3, c5 and the bugs, at less than S's cost on a whole build.
 - **S's item-by-item maker buys cheaper small work and earlier stops,** not more safety: about a third of KC's cost on c6 and a quarter on c3. It costs more on W0 and for nothing there that the hidden cases see.
+- **Part of that saving may not be the verdicts.** On c6, S's maker costs 0.24 to 0.26 and peaks at 81,000 to 85,000 tokens of context; KC's costs 0.72 to 0.73 and peaks at 152,000 to 156,000. KC's maker gets the whole 81 KB product document with no note of what changed, and S's gets impact's 17 items, so part of this may simply be being told what changed, which a person using K would do too. S's checker, at 0.11 and 57,000, against KC's, at 0.41 to 0.49 and 135,000, has the same 17 items, so that part does look like the maker's claims. This is one case, not measured apart.
 - **So the choice depends on the mix of work.** KC is cheaper for building from nothing, S for changing what exists, and most real work is likely the second. Two launches per case do not settle that.
 - **The checker's worth is still thin on real work.** Over all real launches so far it has caught one real fault, a wrong sentence in a README. It stops contradictions and catches planted bugs, and whether makers make bugs worth catching is what the large project can show.
 
