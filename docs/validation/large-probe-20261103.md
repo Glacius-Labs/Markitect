@@ -17,7 +17,7 @@ Whether F and M should follow depends on the answers: only if K or S strains.
 
 | Field | Value |
 |---|---|
-| Source | Commit `45ead2dbc4247058b647a942935603b364bab186`, runner `pilot.py` in Build's notes folder, SHA-256 prefix `68860116cc1494c2` |
+| Source | Commit `45ead2dbc4247058b647a942935603b364bab186`, runner `pilot.py` in Build's notes folder, SHA-256 prefix `24c2920df83eda97` |
 | Provider | `claude-sonnet-5-5`, effort high, the owner's subscription login through the CLI, never an API key |
 | Launches | K, then S, on `makerspace-large` W0, 1 launch each, in the suite's sandbox. Relaunches 2, bound 4, the runner's rules. The runner holds S until a `GO-S` file exists in the work folder, which Build writes only once the owner has seen K's price |
 | Deadline | 14,400 s per launch, against Makerspace's 5,400 s |
