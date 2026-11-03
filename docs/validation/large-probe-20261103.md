@@ -65,3 +65,17 @@ An amendment to this page, for the owner.
 **The card may not count these runs at all.** The runner's login says Max 20x and the card says Ultra, and the two readings have different resets. That points to two separate quota pools, but it does not prove it. If they are separate, the stop on the card guarded nothing here and the runner's own stop at 90 % of its reading did. K's relative cost is the price to trust.
 
 **Limits:** as above. One launch is a look, and K's W0 on Makerspace has itself varied.
+
+### Amendment 2: the blind reviews and S are approved, 3 November 2026
+
+The owner has seen K's price and agreed to the blind reviews of K's result, and then S.
+
+| Field | Value |
+|---|---|
+| Reviews | 3 launches of `review_arm.py --answers blind` over K's result merged onto the owner's commit, one at a time. Relaunches 2, bound 4, deadline 3,600 s each |
+| Checklist | The 413 items that impact gives for W0 |
+| Source | The same commit `45ead2dbc4247058b647a942935603b364bab186`, in its own work folder `%LOCALAPPDATA%\markitect-large-reviews\work`, so that the probe's frozen folder stays as it is |
+| Runner | `reviews.py` in Build's notes folder, SHA-256 prefix `8f8934c38742acfb`; the task comes from `k_w0.py`, prefix `0eeeb27e8f932e2f` |
+| Size | About half of K's build per review, by the ratio on Makerspace |
+| S | Started after the reviews have been read, by writing `GO-S` in the probe's folder and running its runner again. Its size: about 2 to 3.5 of K's build here, by the ratios on Makerspace, within the deadline of 14,400 s |
+| Stops | As in the dispatch: the runner's own, a `STOP` file before the next launch, the stop on the card at 75 %, or the owner's word |
