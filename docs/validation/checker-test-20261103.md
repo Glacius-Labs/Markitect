@@ -132,17 +132,17 @@ Lowering the bar for `confirmed`, the concern in [the pilot's reading](arms-s-f-
 
 | Answers | Planted, mean | Clean, mean |
 |---|---|---|
-| New | 199 s, 0.47 K | 239 s, 0.50 K |
-| Old | 319 s, 0.58 K | 515 s, 0.90 K |
+| New | 199 s, 0.47 × K's W0 | 239 s, 0.50 × K's W0 |
+| Old | 319 s, 0.58 × K's W0 | 515 s, 0.90 × K's W0 |
 
-**S on the cases K got wrong.** M and K are the counted series' rows on the same inputs.
+**S on the cases K got wrong.** M and K are the counted series' rows on the same inputs. The multiples in S's column are S's use over K's on that same case, a much smaller unit than K's whole W0 in the table above: S's c5 is 2.4 times K's c5 and about 0.4 of K's W0.
 
 | Case | S | K | M |
 |---|---|---|---|
 | C9, a change that reaches nothing | No agent, 3 s, 0 of 126 failed, both | Changed code, 5 min, 3 of 126 failed, both | No agent, 0 of 126 failed, both |
-| c3, contradiction, must stop | Stopped both, 1.0 and 1.5 min, 0.53 and 0.35 K | Stopped r1, **landed r2** | Stopped both, 1.6 and 11 min |
-| c5, undefined threshold, must stop | Stopped both, 2.7 and 3.0 min, 2.4 and 2.2 K | Stopped both, 0.5 and 0.6 min | Stopped both, 1.2 and 0.9 min |
-| c6, harmless test gap, must land | Landed both, 0 of 62 failed, 2.5 min each, 0.50 and 0.62 K | Landed both, 0 of 62 failed, 6.0 and 5.2 min | Landed r2; r1 failed 11 of 62 after 53 min |
+| c3, contradiction, must stop | Stopped both, 1.0 and 1.5 min, 0.53 and 0.35 × K's c3 | Stopped r1, **landed r2** | Stopped both, 1.6 and 11 min |
+| c5, undefined threshold, must stop | Stopped both, 2.7 and 3.0 min, 2.4 and 2.2 × K's c5 | Stopped both, 0.5 and 0.6 min | Stopped both, 1.2 and 0.9 min |
+| c6, harmless test gap, must land | Landed both, 0 of 62 failed, 2.5 min each, 0.50 and 0.62 × K's c6 | Landed both, 0 of 62 failed, 6.0 and 5.2 min | Landed r2; r1 failed 11 of 62 after 53 min |
 
 S's c3 r2 needed a second start after the gate refused an unregistered file, `realization/makerspace`, and its checker on c5 r2 refused model-problem verdicts on items the gap does not touch, then confirmed the rest. Both c6 launches landed one waived finding: the adopted start keeps all code in one package, against the model's layout, and this change did not cause that.
 
