@@ -146,3 +146,26 @@ The owner approved three launches of K on Haiku on this project, after S, as the
 **The two weekly readings parted further.** The card read 60 % before S and 60 % after, while the runner's reading went from 13 % to 16 %. That is the strongest sign so far that they are separate pools, though it is still not proof. On the runner's reading S's 44 relative cost 3 points, which fits the rough 15 to 20 relative per point used so far.
 
 **Limits:** as above. One launch of each arm is a look, and S's W0 on Makerspace has itself varied by nearly two to one.
+
+### Amendment 7: the first launch on Haiku ran on Opus, so later launches are forced onto Haiku, 3 November 2026
+
+**What happened.** The first launch of Amendment 4 ran from 20:24 to 21:53 UTC and landed, with 0 of 327 failed. But it did not test Haiku. Its lead wrote the shared framework and then started 68 subagents, each naming Opus. Opus took 42.48 of the 43.47 relative cost, and Haiku's own share was 0.98. In multiples of K's W0 on Sonnet on this project, that is 4.70 in cost and 2.39 in time. The runner's reading went from 16 % to 19 %. The launch stays recorded as what it was: a Haiku lead over Opus workers. It says nothing about whether Haiku can build this project.
+
+**Why the suite did not see it.** `--model` binds the lead alone, and the suite compared only the model the session started on, so it called this a match.
+
+**The other launches.** The second launch was already running when this was found. Its first subagents name no model, so they inherit Haiku, and it is left to run and watched. A `STOP` file holds the third. So the choice of model varies from launch to launch, and a launch cannot be relied on without a binding.
+
+**The fix,** commit `d800b7c27dab5008785215aabfb4ffd3583289a4`. K, S, F and the reviewers start with every subagent forced onto the session's model, through `CLAUDE_CODE_SUBAGENT_MODEL` and `CLAUDE_CODE_SUBAGENT_MODEL_FORCE`. Each session reports every model that answered in it, and a second model makes the launch invalid. The Manager arm is unchanged and reports no such list.
+
+**Earlier evidence.** Build read the final result line of 237 session streams from this probe, the reviews, the arms pilot, the checker test and the KC test. No Sonnet launch among them used a second model. The counted series was not part of this scan.
+
+**The launches.** These keep to what the owner approved in Amendment 4: three launches of K on Haiku, on the same task and hidden cases. If the second launch stays on Haiku alone it counts as one of the three, and two more follow. If it does not, three follow.
+
+| Field | Value |
+|---|---|
+| Launches | K on `makerspace-large` W0, one after another, once the second launch has ended. Relaunches 2, bound 4 |
+| Provider | `claude-haiku-5-5`, subagents forced onto it, the owner's subscription login through the CLI, never an API key |
+| Source | Commit `d800b7c27dab5008785215aabfb4ffd3583289a4`, in its own work folder `%LOCALAPPDATA%\markitect-large-haiku-bound\work`. It differs from the source of Amendment 4 only in `tools/evaluation` |
+| Runner | `haiku_bound.py` in Build's notes folder, SHA-256 prefix `03c5306e4d43e118`, over the probe's `pilot.py` |
+| Stops | The runner's own, a `STOP` file before the next launch, or the owner's word. Build also watches each session's stream and stops a launch that a second model answers |
+| Reading | As in Amendment 4, and each launch's models as reported |
