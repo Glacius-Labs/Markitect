@@ -36,6 +36,8 @@ MODEL = "claude:claude-sonnet-5-5"
 #   all-waived    answers every verdict `waived`
 #   reopen:ITEM   confirms every verdict and answers ITEM, which is not on its list, `wrong`
 #   name-problem  answers the first item `model-problem`, without any maker's claim
+#   problem-wrong answers the first item `model-problem` and the last `wrong`
+#   no-evidence   confirms every item, the first without evidence
 #   junk          writes no review
 #   rate-limit    ends on a provider error
 FAKE_CLAUDE = textwrap.dedent(r"""
@@ -98,6 +100,11 @@ FAKE_CLAUDE = textwrap.dedent(r"""
                 r.update(answer="waived", evidence="fair enough")
         elif step == "name-problem":
             reviews[0].update(answer="model-problem", evidence="its two sentences contradict each other")
+        elif step == "problem-wrong":
+            reviews[0].update(answer="model-problem", evidence="its two sentences contradict each other")
+            reviews[-1].update(answer="wrong", evidence="the limit is 6")
+        elif step == "no-evidence":
+            reviews[0].update(evidence=" ")
         elif step.startswith("reopen:"):
             reviews.append({"item": step.split(":", 1)[1], "answer": "wrong", "evidence": "the last change broke it"})
         pathlib.Path(answer).write_text(json.dumps({"reviews": reviews}))
@@ -501,6 +508,24 @@ class OneAgentArmTest(unittest.TestCase):
         self.assertEqual(result["items"][0]["verdict"], "model-problem")
         self.assertIn("contradict", result["items"][0]["evidence"])
         self.assertEqual(record["result"]["changedPaths"], [])
+
+    def test_plain_a_model_problem_beside_a_wrong_answer_approves_no_wrong_item(self):
+        self.script({"checker": ["problem-wrong"]})
+        record, out = self.run_arm("plain-both", "--shape", "plain")
+        self.assertEqual(record["reported"]["status"], "model-defect")
+        result = self.result(out)
+        wrong = next(i for i in result["items"] if i["item"] == "lending/loan-policy")
+        self.assertFalse(wrong["approved"])
+        self.assertIsNone(wrong["verdict"])
+        self.assertEqual(result["refusals"][0]["by"], "checker")
+
+    def test_an_answer_without_evidence_is_asked_for_again(self):
+        self.script({"checker": ["no-evidence", "approve"]})
+        record, out = self.run_arm("plain-blank", "--shape", "plain")
+        self.assertEqual(record["reported"]["status"], "landed")
+        self.assertIn("| `project` |", self.prompt("checker-1-2"))
+        self.assertNotIn("| `lending/loan-policy` |", self.prompt("checker-1-2"))
+        self.assertEqual(results.check_run(out)["problems"], [])
 
     def test_plain_wrong_goes_back_to_the_same_folder_and_only_that_item_is_reviewed_again(self):
         self.script({"checker": ["dispute", "approve"]})

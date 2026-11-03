@@ -425,7 +425,7 @@ def read_reviews(path, items, known, answers=ANSWERS):
     try:
         entries = json.loads(pathlib.Path(path).read_text(encoding="utf-8"))["reviews"]
         found = {e["item"]: {"answer": e["answer"], "evidence": e.get("evidence") or ""} for e in entries
-                 if isinstance(e, dict) and e.get("item") in known and e.get("answer") in answers}
+                 if isinstance(e, dict) and e.get("item") in known and e.get("answer") in answers and str(e.get("evidence") or "").strip()}
     except (OSError, ValueError, KeyError, TypeError):
         found = {}
     return found, [i["item"] for i in items if i["item"] not in found]
@@ -608,12 +608,14 @@ def plain_graph(host, items, owner, maker, rounds):
             return "incomplete", "the checker left no complete review twice in a row", checks, commit, refusals
         reviewed = commit
         host.rulings.update(review)
-        problems = sorted(item for item, r in review.items() if r["answer"] == "model-problem")
-        if problems:
-            return "model-defect", "the checker named a model problem: " + ", ".join(problems) + "; the Run ends without landing", checks, commit, refusals
         last_refused = {item: r["evidence"] for item, r in review.items() if r["answer"] == "wrong"}
         for item in last_refused:
             host.rulings.pop(item)
+        problems = sorted(item for item, r in review.items() if r["answer"] == "model-problem")
+        if problems:
+            if last_refused:
+                refusals.append({"attempt": attempt, "by": "checker", "items": last_refused})
+            return "model-defect", "the checker named a model problem: " + ", ".join(problems) + "; the Run ends without landing", checks, commit, refusals
         if not last_refused:
             return "landed", "the checker refused nothing", checks, commit, refusals
         refusals.append({"attempt": attempt, "by": "checker", "items": last_refused})

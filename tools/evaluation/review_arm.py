@@ -125,7 +125,9 @@ def main(argv=None):
             local.chmod(0o755)
             a.markitect = str(local)
             session_env = cc.base_env(tmp / "home", tmp / "hooks")
-            session_env["PATH"] = str(tmp / "bin") + os.pathsep + session_env.get("PATH", "")
+            # As arm KC's checker: it is not given the program.
+            if a.answers != "blind":
+                session_env["PATH"] = str(tmp / "bin") + os.pathsep + session_env.get("PATH", "")
             repo = tmp / "work"
             arm.git(tmp, "clone", "-q", "--no-checkout", str((task / "start.bundle").resolve()), str(repo), env=env)
             arm.git(repo, "config", "core.autocrlf", "false", env=env)
