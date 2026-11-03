@@ -97,3 +97,21 @@ The owner approved three launches of K on Haiku on this project, after S, as the
 | Deadline, judge | As for K on Sonnet: 14,400 s, the same task and the same 327 hidden cases |
 | Size | By list prices at most about a quarter of K's Sonnet build per launch, though whether quota follows those prices is what this measures |
 | Reading | As in the rule above, for each launch, with cost and time as multiples of K's W0 on Sonnet on this project (9.25 relative, 37 minutes), and whether the three agree. Three launches are a first look at reliability, not a measure of it |
+
+### Amendment 5: the blind reviews of K's result, 3 November 2026
+
+**How they ran.** Three launches, each a result on its first try, from 17:32 to 18:04 UTC. The final check found no secret and no leftover, and no review read `/variant`. Build read every answer other than `confirmed`, and also measured how deep each review went. Multiples are of K's W0 on Sonnet on this project (9.25 relative, 37 minutes).
+
+| Review | Answers over 413 items | Time | Cost | Largest context | Go files read | Evidence per item, median |
+|---|---|---|---|---|---|---|
+| r1 | 413 confirmed | 14 min | 0.53 | 467,847 | 63 | 459 characters |
+| r2 | 412 confirmed, 1 waived | 5 min | 0.29 | 317,559 | 10 | 222 characters |
+| r3 | 413 confirmed | 13 min | 0.55 | 480,780 | 63 | 462 characters |
+
+**No review found a fault in K's behaviour, which agrees with the 327 hidden cases.** The one departure any review named is small and real: K's README says the requirements are in `../TASK.md`, a file that is not in the repository. Only r2 noticed it, and it waived it.
+
+**The reviews are not all worth the same.** r1 and r3 read all of the code, drove the program with their own scenarios and wrote evidence specific to each item. r2 read 10 of K's Go files and repeated one sentence of evidence over many items, claiming to have exercised items it could not have reached that way. So a review's answers alone do not show how much checking stands behind them.
+
+**This does not yet show that a checker still catches bugs at this size.** All three reviews found the work clean, and the work may well be clean, so they had nothing to catch. On Makerspace blind reviews caught 17 of 18 planted bugs. At this size no review has met a known bug. Real work with real failures would test that, and K's launches on Haiku may provide it.
+
+**The card** read 59 % before the reviews and 60 % after, and the runner's reading went from 12 % to 13 %. This session's own work also counts on the card, so that does not settle whether the two are separate pools.
