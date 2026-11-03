@@ -83,3 +83,17 @@ The owner has seen K's price and agreed to the blind reviews of K's result, and 
 ### Amendment 3: the stop on the card is lifted, 3 November 2026
 
 The owner lifted the stop at 75 % on the card, for the reviews and S: they may use what they need, and reaching the limit is acceptable. The runner's own stops stay, among them its stop at 90 % of its seven-day reading, since they are part of the frozen tools. A run that hits the limit is recorded as what it is, a launch stopped by quota, and says nothing about the arm.
+
+### Amendment 4: K on Haiku after S, 3 November 2026
+
+The owner approved three launches of K on Haiku on this project, after S, as the first look at whether the method holds on a far cheaper model. The reviews and S stay on Sonnet, so that K and S are compared on one model.
+
+| Field | Value |
+|---|---|
+| Launches | K on `makerspace-large` W0, 3 launches one after another, in the suite's sandbox, effort high as K on Sonnet. Relaunches 2, bound 6 |
+| Provider | `claude-haiku-5-5`, the owner's subscription login through the CLI, never an API key |
+| Source | The same commit `45ead2dbc4247058b647a942935603b364bab186`, in its own work folder `%LOCALAPPDATA%\markitect-large-haiku\work` |
+| Runner | `haiku.py` in Build's notes folder, SHA-256 prefix `c1454f9c8634f6ae`, over the probe's `pilot.py` |
+| Deadline, judge | As for K on Sonnet: 14,400 s, the same task and the same 327 hidden cases |
+| Size | By list prices at most about a quarter of K's Sonnet build per launch, though whether quota follows those prices is what this measures |
+| Reading | As in the rule above, for each launch, with cost and time as multiples of K's W0 on Sonnet on this project (9.25 relative, 37 minutes), and whether the three agree. Three launches are a first look at reliability, not a measure of it |
