@@ -42,3 +42,26 @@ A failed case is read before it is believed: the cases were written by people to
 An amendment to this page, for the owner.
 
 ## Amendments
+
+### Amendment 1: K's reading, 3 November 2026
+
+**How it ran.** One launch, a result on its first try, from 15:41 to 16:18 UTC. The final check found no secret and no leftover. The judgment is valid: it took 13.8 s, against 11.3 s for the reference in the self-test. The session read only `TASK.md`, and nothing escaped the sandbox.
+
+**K built the whole project in one session, with no hidden case failed.** Multiples are of K's W0 on Makerspace (12 minutes, 2.0755 relative).
+
+| Question | K |
+|---|---|
+| 1. Can one session build it? | Landed. Failed 0 of 327: Makerspace's own 0 of 54, generated 0 of 151, by hand 0 of 90, across modules 0 of 32. No unrequested change, no stale file, build and tests pass |
+| 2. Does size strain it? | Not yet. Largest context 554,435 of 1,000,000 tokens, no compaction, 98 turns. Of 66 builds and test runs, 2 failed |
+| 3. Do makers make bugs a checker could catch? | None that a hidden case sees. The blind reviews would show anything else |
+| 4. What does it cost? | 37 minutes and 9.25 relative, so 3.1 times the wall time and 4.46 times the cost of K's W0 on Makerspace. Neither weekly reading moved: the card read 59 % before and after, the runner 12 % before and after |
+
+**Reading.**
+
+- **K's cost grew with the size and no faster.** The project has 5.3 times the modules and 5.1 times the operations, at 4.46 times the cost.
+- **This size does not strain a session.** On this one launch, the window would be reached at about nine times Makerspace rather than five.
+- **Zero failures does not mean the cases are blind.** They caught all 89 seeded bugs, though one author chose those bugs. A more likely reason is the task: a document of 53,000 words that states every rule, built from nothing. K's failures on Makerspace came on changes, and this project has no change steps yet.
+
+**The card may not count these runs at all.** The runner's login says Max 20x and the card says Ultra, and the two readings have different resets. That points to two separate quota pools, but it does not prove it. If they are separate, the stop on the card guarded nothing here and the runner's own stop at 90 % of its reading did. K's relative cost is the price to trust.
+
+**Limits:** as above. One launch is a look, and K's W0 on Makerspace has itself varied.
