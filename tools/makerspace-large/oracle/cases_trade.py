@@ -1246,8 +1246,33 @@ def x_trade_6() -> Case:
     return c
 
 
+def b_projects_3():
+    c = Case("B-projects-3", "B-projects", "projects: each share of the cost is the share of the member whose record it is, not the owner's")
+    t = world(c)
+    c.ok("enrollInCourse", "sam", t, {"courseId": "laser-101", "memberId": "bob"})
+    c.ok("completeCourse", "sam", t, {"courseId": "laser-101", "memberId": "bob"})
+    c.ok("createProject", "ada", t, {"projectId": "p1", "ownerId": "ada", "title": "Frame"})
+    c.ok("addCollaborator", "ada", t, {"projectId": "p1", "memberId": "bob"})
+    start, end = "2026-03-03T10:00Z", "2026-03-03T10:30Z"
+    c.ok("createReservation", "bob", t, {"memberId": "bob", "machineId": "L1", "start": start, "end": end}, new="res-1")
+    c.ok("checkIn", "bob", start, {"reservationId": "res-1"})
+    c.ok("checkOut", "bob", end, {"reservationId": "res-1"})
+    # bob, a collaborator, on tier basic: 30 minutes at 45 with no discount is 1350
+    c.ok("attachReservation", "ada", end, {"projectId": "p1", "reservationId": "res-1"})
+    c.ok("getProjectCost", "ada", end, {"projectId": "p1"},
+         {"projectId": "p1", "usageCents": 1350, "materialCents": 0, "totalCents": 1350, "byMember": [{"memberId": "bob", "usageCents": 1350, "materialCents": 0}]})
+    # 2 of ply at 150 is 300, ada's own
+    c.ok("purchaseMaterial", "ada", end, {"memberId": "ada", "materialId": "ply", "quantity": 2}, new="pur-1")
+    c.ok("attachPurchase", "ada", end, {"projectId": "p1", "purchaseId": "pur-1"})
+    c.ok("getProjectCost", "ada", end, {"projectId": "p1"},
+         {"projectId": "p1", "usageCents": 1350, "materialCents": 300, "totalCents": 1650,
+          "byMember": [{"memberId": "ada", "usageCents": 0, "materialCents": 300}, {"memberId": "bob", "usageCents": 1350, "materialCents": 0}]})
+    c.audit_log(end)
+    return c
+
+
 def build_cases() -> list:
     makers = [b_hazmat_1, b_hazmat_2, b_hazmat_3, b_materials_1, b_materials_2, b_purchasing_1, b_purchasing_2, b_purchasing_3,
-              b_stocktake_1, b_stocktake_2, b_projects_1, b_projects_2, b_quotes_1, b_quotes_2, b_jobs_1, b_jobs_2,
+              b_stocktake_1, b_stocktake_2, b_projects_1, b_projects_2, b_projects_3, b_quotes_1, b_quotes_2, b_jobs_1, b_jobs_2,
               x_trade_1, x_trade_2, x_trade_3, x_trade_4, x_trade_5, x_trade_6]
     return [make().build() for make in makers]
