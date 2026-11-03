@@ -115,3 +115,34 @@ The owner approved three launches of K on Haiku on this project, after S, as the
 **This does not yet show that a checker still catches bugs at this size.** All three reviews found the work clean, and the work may well be clean, so they had nothing to catch. On Makerspace blind reviews caught 17 of 18 planted bugs. At this size no review has met a known bug. Real work with real failures would test that, and K's launches on Haiku may provide it.
 
 **The card** read 59 % before the reviews and 60 % after, and the runner's reading went from 12 % to 13 %. This session's own work also counts on the card, so that does not settle whether the two are separate pools.
+
+### Amendment 6: S's reading, 3 November 2026
+
+**How it ran.** One launch, landed with three starts, from 18:15 to 20:12 UTC. The final check found no secret and no leftover. The launch is valid for counting and its judgment is valid. No hidden case failed, so there was none to read by hand. Multiples are of K's W0 on Sonnet on this project (9.25 relative, 37 minutes).
+
+**S built the project too, with no hidden case failed, at 4.76 times K's cost.** Failed 0 of 327: Makerspace's own 0 of 54, generated 0 of 151, by hand 0 of 90, across modules 0 of 32. It took 116 minutes, 3.1 times K's time.
+
+| Start | Time | Cost | Largest context | What it did |
+|---|---|---|---|---|
+| Maker, round 1 | 102 min | 3.54 | 431,884 | Built the project through 21 subagents, then started 6 more to review it. 258 builds and test runs, 2 failed |
+| Maker, round 2 | 1 min | 0.10 | 204,421 | Removed the one file the gate refused |
+| Checker | 21 min | 1.12 | 308,447 | Split the review over 4 subagents, about 265 shell commands, drove the built program. 413 confirmed, no findings |
+
+| Result | S | K |
+|---|---|---|
+| Go files | 205 | 74 |
+| Go lines | 34,869 | 13,204 |
+| Of which test lines | 22,886 | 4,087 |
+| Test functions | 659 | 101 |
+
+**Reading.**
+
+- **At this size S costs far more than K and shows nothing for it on the hidden cases.** The 4.76 is above the 2 to 3.5 that Amendment 2 expected from Makerspace, where S's W0 was 1.8 to 2.9 times K's. The gap widened with the size, on one launch of each.
+- **Most of the difference is how the maker chose to work.** K and S's maker may both use subagents. K used none, and S's maker used 27. Whether its five times as many test lines pay off can only show on changes, and this project has no change steps yet.
+- **Ten review passes found no fault.** The maker's six reviewers fixed no bug, and the checker's four found nothing. As with K, the work may simply be clean, so this does not show that a checker catches bugs at this size.
+- **The gate's one refusal was right, and it shows a small gap in the setup.** The maker wrote `.markitect/ignore.md` because `markitect check` reports the program that `go build ./cmd/makerspace` leaves in the tree. The gate refused the file and a second start removed it, at 0.10. The model has no entry for that program, and only the owner can add one, so the maker's only other way is to delete the program after each build, as it did.
+- **The checker's record does not show its checking.** It wrote one evidence text by script onto all 413 items, and the maker's second round did the same. In its closing words it named one gap: no pass could read a scholarship fund's `spentCents` directly, so the course-discount rule was checked only through which discount wins. Every item still says `confirmed`, so the result does not show that gap and only the transcript does. This is the same weakness as r2 in Amendment 5: the answer does not say what was done for the item, and the host cannot tell.
+
+**The two weekly readings parted further.** The card read 60 % before S and 60 % after, while the runner's reading went from 13 % to 16 %. That is the strongest sign so far that they are separate pools, though it is still not proof. On the runner's reading S's 44 relative cost 3 points, which fits the rough 15 to 20 relative per point used so far.
+
+**Limits:** as above. One launch of each arm is a look, and S's W0 on Makerspace has itself varied by nearly two to one.
