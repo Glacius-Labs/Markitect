@@ -582,10 +582,10 @@ class OneAgentArmTest(unittest.TestCase):
             path.write_text("not json")
             self.assertEqual(len(arm.read_verdicts(path, {"a"})[1]), 1)
             items = [{"item": "a", "package": "", "why": ""}]
-            path.write_text(json.dumps({"reviews": [{"item": "a", "answer": "confirmed"}]}))
+            path.write_text(json.dumps({"reviews": [{"item": "a", "answer": "confirmed", "evidence": "read it"}]}))
             self.assertEqual(arm.read_reviews(path, items, {"a"})[0]["a"]["answer"], "confirmed")
             self.assertEqual(arm.read_reviews(path, items, {"a"})[1], [])
-            path.write_text(json.dumps({"reviews": [{"item": "a", "answer": "disputed"}, {"item": "extra", "answer": "confirmed"}]}))
+            path.write_text(json.dumps({"reviews": [{"item": "a", "answer": "disputed", "evidence": "x"}, {"item": "extra", "answer": "confirmed", "evidence": "read it"}]}))
             self.assertEqual(arm.read_reviews(path, items, {"a"}), ({}, ["a"]))
             # An item of the checklist that is not on this round's list counts, and leaves the listed one missing.
             found, missing = arm.read_reviews(path, items, {"a", "extra"})
