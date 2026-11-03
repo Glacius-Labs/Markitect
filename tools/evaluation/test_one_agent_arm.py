@@ -35,6 +35,7 @@ MODEL = "claude:claude-sonnet-5-5"
 #   recorded      answers the first verdict `not-shown`, the second `waived`
 #   all-waived    answers every verdict `waived`
 #   reopen:ITEM   confirms every verdict and answers ITEM, which is not on its list, `wrong`
+#   name-problem  answers the first item `model-problem`, without any maker's claim
 #   junk          writes no review
 #   rate-limit    ends on a provider error
 FAKE_CLAUDE = textwrap.dedent(r"""
@@ -63,14 +64,17 @@ FAKE_CLAUDE = textwrap.dedent(r"""
     os.close(fd)
     os.unlink(lock)
     cwd = pathlib.Path.cwd()
-    answer = re.search(r"to `([^`]+)`, which the host reads", prompt).group(1)
+    # K's prompt, in the plain shape, names no answer file.
+    named = re.search(r"to `([^`]+)`, which the host reads", prompt)
+    answer = named.group(1) if named else None
+    (d / f"folder-{name}.txt").write_text(json.dumps({"model": (cwd / ".markitect").exists(), "task": (cwd / "TASK.md").exists()}))
     items = re.findall(r"^\| `([^`]+)` \|", prompt.split("## Submitted verdicts")[0], re.M)
     if role == "maker":
         (cwd / "realization").mkdir(exist_ok=True)
         (cwd / "realization" / (name + ".txt")).write_text(name + "\n")
         if step == "model":
             (cwd / ".markitect" / "model" / "project.md").write_text("# Changed by the agent\n")
-        if step not in ("none", "rate-limit"):
+        if answer and step not in ("none", "rate-limit"):
             word = {"problem": "model-problem", "conforms": "conforms"}.get(step, "changed")
             said = "again " if step == "reword" else "checked "
             verdicts = [{"item": i, "verdict": word, "evidence": said + i} for i in items]
@@ -92,6 +96,8 @@ FAKE_CLAUDE = textwrap.dedent(r"""
         elif step == "all-waived":
             for r in reviews:
                 r.update(answer="waived", evidence="fair enough")
+        elif step == "name-problem":
+            reviews[0].update(answer="model-problem", evidence="its two sentences contradict each other")
         elif step.startswith("reopen:"):
             reviews.append({"item": step.split(":", 1)[1], "answer": "wrong", "evidence": "the last change broke it"})
         pathlib.Path(answer).write_text(json.dumps({"reviews": reviews}))
@@ -458,6 +464,70 @@ class OneAgentArmTest(unittest.TestCase):
         subprocess.run(["git", "init", "-q", "--bare", str(repo)], check=True)
         subprocess.run(["git", "-C", str(repo), "fetch", "-q", str(out / "variant" / "result.bundle"), "+refs/heads/*:refs/heads/*"], check=True, capture_output=True)
         self.assertFalse([f for f in suite.git(repo, "ls-tree", "-r", "--name-only", "result").splitlines() if f.startswith(".arm")])
+
+    def test_plain_runs_ks_session_without_the_model_and_a_checker_that_sees_no_claims(self):
+        record, out = self.run_arm("plain", "--shape", "plain")
+        self.assertEqual(record["reported"]["status"], "landed", (out / "variant" / "run.json").read_text())
+        self.assertEqual(self.names(out), [(".", "maker"), (".", "checker")])
+        # The maker is K: K's prompt word for word, TASK.md, and no model in its folder. The checker has the model.
+        self.assertEqual(json.loads((self.fake / "folder-maker-1.txt").read_text()), {"model": False, "task": True})
+        self.assertEqual(json.loads((self.fake / "folder-checker-1-1.txt").read_text()), {"model": True, "task": False})
+        self.assertEqual(self.prompt("maker-1").strip(), arm.cc.PROMPT.strip())
+        checker = self.prompt("checker-1-1")
+        self.assertIn("it makes no claims", checker)
+        self.assertNotIn("Submitted verdicts", checker)
+        self.assertIn("The limit is 5.", checker)
+        self.assertIn("realization/maker-1.txt", checker)
+        # The Result holds the checker's word on each item, so it passes the Result check as the other shapes do.
+        result = self.result(out)
+        self.assertTrue(all(i["approved"] and i["verdict"] == "conforms" and i["evidence"] for i in result["items"]))
+        self.assertEqual(results.check_run(out)["problems"], [])
+        repo = self.tmp / "look-plain"
+        subprocess.run(["git", "init", "-q", "--bare", str(repo)], check=True)
+        subprocess.run(["git", "-C", str(repo), "fetch", "-q", str(out / "variant" / "result.bundle"), "+refs/heads/*:refs/heads/*"], check=True, capture_output=True)
+        tree = suite.git(repo, "ls-tree", "-r", "--name-only", "result").splitlines()
+        self.assertIn("realization/maker-1.txt", tree)
+        self.assertIn(".markitect/model/project.md", tree)
+        self.assertNotIn("TASK.md", tree)
+
+    def test_plain_a_model_problem_the_checker_names_ends_the_run(self):
+        self.script({"checker": ["name-problem"]})
+        record, out = self.run_arm("plain-problem", "--shape", "plain")
+        self.assertEqual(record["reported"]["status"], "model-defect")
+        self.assertEqual(record["exitCode"], 0)
+        result = self.result(out)
+        self.assertIsNone(result["landed"])
+        self.assertEqual(self.names(out), [(".", "maker"), (".", "checker")])
+        self.assertEqual(result["items"][0]["verdict"], "model-problem")
+        self.assertIn("contradict", result["items"][0]["evidence"])
+        self.assertEqual(record["result"]["changedPaths"], [])
+
+    def test_plain_wrong_goes_back_to_the_same_folder_and_only_that_item_is_reviewed_again(self):
+        self.script({"checker": ["dispute", "approve"]})
+        record, out = self.run_arm("plain-wrong", "--shape", "plain")
+        self.assertEqual(record["reported"]["status"], "landed")
+        self.assertEqual(self.names(out), [(".", "maker"), (".", "checker"), (".", "maker"), (".", "checker")])
+        self.assertIn("the limit is 6", self.prompt("maker-2"))
+        self.assertTrue(self.prompt("maker-2").startswith(arm.cc.PROMPT))
+        second = self.prompt("checker-2-1")
+        self.assertIn("An earlier review of this Run", second)
+        self.assertIn("| `project` |", second)
+        self.assertNotIn("| `lending/loan-policy` |", second)
+        self.assertEqual(self.result(out)["refusals"][0]["by"], "checker")
+
+    def test_plain_the_gate_is_the_required_checks_and_needs_no_registry_row(self):
+        (self.fake / "gate").write_text("")
+        checks = "checks:\n  - name: tests\n    command: python -c \"import sys; sys.exit(0)\"\n    directory: .\n"
+        record, out = self.run_arm("plain-gate", "--shape", "plain", checks=checks)
+        self.assertEqual(record["reported"]["status"], "landed", (out / "variant" / "run.json").read_text())
+        self.assertEqual([c["passed"] for c in self.result(out)["requiredChecks"]["checks"]], [True])
+
+    def test_plain_a_failing_check_goes_back_to_the_maker_before_any_checker(self):
+        checks = "checks:\n  - name: tests\n    command: python -c \"import os,sys; sys.exit(0 if os.path.exists('realization/maker-2.txt') else 1)\"\n    directory: .\n"
+        record, out = self.run_arm("plain-failing", "--shape", "plain", checks=checks)
+        self.assertEqual(record["reported"]["status"], "landed", (out / "variant" / "run.json").read_text())
+        self.assertEqual(self.names(out), [(".", "maker"), (".", "maker"), (".", "checker")])
+        self.assertIn("the required check tests failed", self.prompt("maker-2"))
 
     def test_small_readers(self):
         with tempfile.TemporaryDirectory() as t:

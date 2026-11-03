@@ -14,6 +14,9 @@ landing. An agent edits files and writes its answer to a file in `.arm/`, which 
 - S (`single`): make is one session with the whole checklist and its context.
 - F (`federal`): make is one prompt per working Package with its bounded context, in parallel in one folder, and after
   they have all ended one Root prompt that integrates. A rejection goes back to Root alone.
+- KC (`plain`): make is K's session with K's prompt, in a checkout without the model, so it says nothing per item. The
+  gate is the required checks and the model untouched. The checker has no claims to re-check: it reviews each reached
+  item itself, and may answer `model-problem`, which ends the Run without landing.
 
 The checker is a fresh session the host starts, never a subagent of the maker. Agents may use subagents, as K may. It
 answers each verdict `confirmed`, `wrong`, `not-shown` or `waived`. Only `wrong` refuses the work; `not-shown` and
@@ -53,6 +56,7 @@ PROVIDER_CLASS = {"rate_limit": "rate-limit", "overloaded": "capacity", "overloa
                   "status 429": "rate-limit", "status 529": "capacity", "status 401": "login", "status 403": "login"}
 ANSWERS = ("confirmed", "wrong", "not-shown", "waived")
 RECORDED = ("not-shown", "waived")
+BLIND_ANSWERS = (*ANSWERS, "model-problem")
 
 COVERS = """## What a verdict covers
 
@@ -182,8 +186,8 @@ class Host:
     def left(self):
         return self.deadline - time.monotonic() - MARGIN
 
-    def session(self, name, manager, role, attempt, prompt, seconds=None):
-        """One headless session, up to the time left or `seconds`: its record goes into the Result's starts, in the order they ended."""
+    def session(self, name, manager, role, attempt, prompt, seconds=None, cwd=None):
+        """One headless session, up to the time left or `seconds`, in the repository or `cwd`: its record goes into the Result's starts, in the order they ended."""
         if self.left() <= 0:
             self.starts.append({"manager": manager or ".", "role": role, "round": attempt, "reason": "deadline", "agent": f"claude:{self.model}"})
             return "deadline"
@@ -199,7 +203,7 @@ class Host:
         if self.a.effort:
             argv += ["--effort", self.a.effort]
         try:
-            record = run_session(argv, path, self.repo, dict(self.session_env, CLAUDE_CONFIG_DIR=str(config)), folder / "session.stream.jsonl",
+            record = run_session(argv, path, cwd or self.repo, dict(self.session_env, CLAUDE_CONFIG_DIR=str(config)), folder / "session.stream.jsonl",
                                  folder / "session.stderr.log", min(self.left(), seconds or self.left()))
         finally:
             (config / ".credentials.json").unlink(missing_ok=True)
@@ -218,16 +222,18 @@ class Host:
     def git(self, *args, check=True):
         return arm.git(self.repo, *args, env=self.env, check=check)
 
-    def commit_work(self, message):
+    def commit_work(self, message, repo=None):
         """Commit what the agents left, as the baseline's capture does: their .gitignore stands, except for sources it would drop."""
-        (self.repo / ".git" / "index.lock").unlink(missing_ok=True)
-        self.git("add", "-A")
-        ignored = self.git("ls-files", "-z", "-o", "-i", "--exclude-standard").split("\0")
-        kept = [p for p in ignored if cc.KEPT_IGNORED.search(p)]
+        repo = repo or self.repo
+        git = lambda *args: arm.git(repo, *args, env=self.env)  # noqa: E731
+        (repo / ".git" / "index.lock").unlink(missing_ok=True)
+        git("add", "-A")
+        ignored = git("ls-files", "-z", "-o", "-i", "--exclude-standard").split("\0")
+        kept = [p for p in ignored if cc.KEPT_IGNORED.search(p) and p != "TASK.md"]
         if kept:
-            self.git("add", "-f", "--", *kept)
-        self.git("commit", "-q", "--allow-empty", "--no-verify", "-m", message)
-        return self.git("rev-parse", "HEAD")
+            git("add", "-f", "--", *kept)
+        git("commit", "-q", "--allow-empty", "--no-verify", "-m", message)
+        return git("rev-parse", "HEAD")
 
     def tidy(self):
         """Back to the commit: a checker changes nothing, and what its checks left is gone."""
@@ -313,15 +319,60 @@ def maker_prompt(host, items, scope, focus, file, defects=None, reports=None):
     return "\n".join(parts)
 
 
-def checker_prompt(host, items, verdicts, checks, base, commit, file, owner=None, refused=None):
-    """The checker's prompt for these items. `base` is what an earlier review saw, and then `owner` and what it refused are named too."""
+def shown_diff(host, base, commit):
+    """The diff as a prompt shows it, or the names of the changed files when it is too large."""
     diff = host.git("diff", base, commit)
     if len(diff) <= MAX_INLINE_DIFF:
         marks = fence(diff)
-        shown = f"{marks}diff\n{diff}\n{marks}\n"
-    else:
-        names = "\n".join(f"- {p}" for p in host.git("diff", "--name-only", base, commit).splitlines())
-        shown = f"The diff is larger than {MAX_INLINE_DIFF >> 10} KiB. `git diff {base} {commit}` shows it. Changed files:\n\n{names}\n"
+        return f"{marks}diff\n{diff}\n{marks}\n"
+    names = "\n".join(f"- {p}" for p in host.git("diff", "--name-only", base, commit).splitlines())
+    return f"The diff is larger than {MAX_INLINE_DIFF >> 10} KiB. `git diff {base} {commit}` shows it. Changed files:\n\n{names}\n"
+
+
+def blind_prompt(host, items, checks, base, commit, file, owner=None, refused=None):
+    """The checker's prompt when the maker says nothing per item: it reviews each item itself and can name a model problem."""
+    ran = "".join(f"- {c['name']}: {'passed' if c['passed'] else 'failed'}\n" for c in checks) or "- none\n"
+    earlier = ""
+    if owner:
+        earlier = ("## What an earlier review ruled\n\nAn earlier review of this Run ruled on the other items, and those rulings stand. Review the items above. If the diff below "
+                   f"breaks another item, add an entry for that item too; `.markitect/model/` holds its Definition. `git diff {owner} {commit}` shows the whole work.\n\n")
+        if refused:
+            earlier += "It refused these:\n\n" + "".join(f"- `{item}`: {evidence}\n" for item, evidence in refused.items()) + "\n"
+    return f"""# Task
+
+A coding agent has realized this project: the submission `{commit}`, which the repository holds. It worked from ordinary documentation of the same intent, not from the model, and it makes no claims about the items below. Review each item against the model and the repository. Change no file. The question is whether the realization does what the item's Definition says, examples included, so read the code and run what you need. Answer each item with one of these:
+
+- `confirmed`: what you read or ran shows that it holds.
+- `wrong`: it does not hold. The realization does something the Definition forbids, leaves out something the Definition says, or matches part of the Definition but not its example. Say what and where. This sends the work back to the agent.
+- `not-shown`: nothing you read or ran shows it either way. The work lands, and this is recorded for a person to see.
+- `waived`: the realization departs from the letter of the Definition, or the Definition can be read two ways and the realization takes one, and you do not hold it against the work. Say what and why. The work lands, and this is recorded for a person to see.
+- `model-problem`: the item's Definition and what it links to contradict each other, or they leave open behavior at the project boundary that this item needs, so that no realization can be right by them. Say which sentences. One such answer ends the Run without landing, whatever the realization does.
+
+A realization that takes one side of a contradiction is not right by that: answer `model-problem`, not `confirmed` or `waived`. A gap with no effect at the project boundary is no model problem: the agent may decide it. This is no review of the whole model: stay with each item and its links.
+
+{table(items)}
+{earlier}## Required checks on the whole repository
+
+{ran}
+## Diff from `{base}` to `{commit}`
+
+{shown_diff(host, base, commit)}
+# Model
+
+{model_text(host.repo, [i['item'] for i in items])}
+# Answer
+
+Write your review to `{file}`, which the host reads and never commits, as JSON:
+
+{{"reviews": [{{"item": "ITEM", "answer": "confirmed", "evidence": "..."}}]}}
+
+One entry per item, each with evidence: what you read or ran, and for any answer but `confirmed` what you found and where.
+"""
+
+
+def checker_prompt(host, items, verdicts, checks, base, commit, file, owner=None, refused=None):
+    """The checker's prompt for these items. `base` is what an earlier review saw, and then `owner` and what it refused are named too."""
+    shown = shown_diff(host, base, commit)
     rows = "".join(f"| `{i['item']}` | {verdicts[i['item']]['verdict']} | {str(verdicts[i['item']]['evidence']).replace('|', ' ')} |\n" for i in items)
     ran = "".join(f"- {c['name']}: {'passed' if c['passed'] else 'failed'}\n" for c in checks) or "- none\n"
     earlier = ""
@@ -369,12 +420,12 @@ One entry per verdict, each with evidence: what you read or ran, and for any ans
 """
 
 
-def read_reviews(path, items, known):
+def read_reviews(path, items, known, answers=ANSWERS):
     """A checker's answer: ({item: its answer and evidence} for any item of the checklist, the items of `items` it left out)."""
     try:
         entries = json.loads(pathlib.Path(path).read_text(encoding="utf-8"))["reviews"]
         found = {e["item"]: {"answer": e["answer"], "evidence": e.get("evidence") or ""} for e in entries
-                 if isinstance(e, dict) and e.get("item") in known and e.get("answer") in ANSWERS}
+                 if isinstance(e, dict) and e.get("item") in known and e.get("answer") in answers}
     except (OSError, ValueError, KeyError, TypeError):
         found = {}
     return found, [i["item"] for i in items if i["item"] not in found]
@@ -502,10 +553,78 @@ def graph(host, shape, items, inherited, owner, rounds):
             return "incomplete", f"the maker used its {rounds} attempts: the checker or the gate refused its work after each", verdicts, checks, commit, refusals
 
 
+def plain_checkout(host, task, start):
+    """The maker's folder: K's start and K's TASK.md, and nothing of the model."""
+    maker = host.tmp / "maker"
+    arm.git(host.tmp, "clone", "-q", "--no-checkout", str((task / "start.bundle").resolve()), str(maker), env=host.env)
+    arm.git(maker, "config", "core.autocrlf", "false", env=host.env)
+    arm.git(maker, "checkout", "-q", "-B", "work", start, env=host.env)
+    shutil.copyfile(task / "task.md", maker / "TASK.md")
+    with open(maker / ".git" / "info" / "exclude", "a", encoding="utf-8") as f:
+        f.write("\n/TASK.md\n")
+    return maker
+
+
+def plain_graph(host, items, owner, maker, rounds):
+    """K's session -> gate -> a checker that reviews each item itself, looping on a refusal: (state, why, checks, the last commit, the refusals)."""
+    known = {i["item"] for i in items}
+    refusals, defects, reviewed, last_refused, commit, checks = [], None, None, None, None, []
+    for attempt in range(1, rounds + 1):
+        prompt = cc.PROMPT if not defects else f"{cc.PROMPT}\n\nThe work so far is in this repository, and it did not pass. Fix these:\n\n{defects}\n"
+        reason = host.session(f"maker-{attempt}", ROOT, "maker", attempt, prompt, cwd=maker)
+        if reason == "deadline":
+            return "incomplete", "the deadline passed during make", checks, commit, refusals
+        if reason == "failed" and host.starts[-1].get("class"):
+            return "incomplete", "a provider failure ended the maker: " + host.starts[-1].get("detail", ""), checks, commit, refusals
+        host.commit_work(f"Work of attempt {attempt}", maker)
+        host.git("fetch", "-q", str(maker), "HEAD")
+        host.git("merge", "-q", "--no-edit", "--no-ff", "FETCH_HEAD")
+        commit = host.git("rev-parse", "HEAD")
+        wrong = [f"{p} is protected: the rest of .markitect/ changes only through the owner"
+                 for p in host.git("diff", "--name-only", owner, commit).splitlines() if p.startswith(".markitect/")]
+        checks = host.run_checks(commit)
+        wrong += [f"the required check {c['name']} failed:\n{c['output']}" for c in checks if not c["passed"]]
+        if wrong:
+            refusals.append({"attempt": attempt, "by": "gate", "reasons": wrong})
+            defects = "\n".join([f"- {r}" for r in wrong] + [f"- {evidence}" for evidence in (last_refused or {}).values()])
+            continue
+        listed = [i for i in items if i["item"] not in host.rulings]
+        review, missing, tries = {}, listed, 0
+        while missing and tries < 2:
+            tries += 1
+            path = host.answers / f"checker-{attempt}-{tries}.json"
+            prompt = blind_prompt(host, missing, checks, reviewed or owner, commit, path, owner if reviewed else None, last_refused)
+            if tries > 1:
+                prompt += "\nThe last review left out these items, and an entry for each is needed: " + ", ".join(f"`{m['item']}`" for m in missing) + ".\n"
+            reason = host.session(f"checker-{attempt}-{tries}", ROOT, "checker", attempt, prompt)
+            host.tidy()
+            if reason == "deadline":
+                return "incomplete", "the deadline passed during the check", checks, commit, refusals
+            if reason == "failed" and host.starts[-1].get("class"):
+                return "incomplete", "a provider failure ended the checker: " + host.starts[-1].get("detail", ""), checks, commit, refusals
+            review = {**read_reviews(path, missing, known, BLIND_ANSWERS)[0], **review}
+            missing = [i for i in listed if i["item"] not in review]
+        if missing:
+            return "incomplete", "the checker left no complete review twice in a row", checks, commit, refusals
+        reviewed = commit
+        host.rulings.update(review)
+        problems = sorted(item for item, r in review.items() if r["answer"] == "model-problem")
+        if problems:
+            return "model-defect", "the checker named a model problem: " + ", ".join(problems) + "; the Run ends without landing", checks, commit, refusals
+        last_refused = {item: r["evidence"] for item, r in review.items() if r["answer"] == "wrong"}
+        for item in last_refused:
+            host.rulings.pop(item)
+        if not last_refused:
+            return "landed", "the checker refused nothing", checks, commit, refusals
+        refusals.append({"attempt": attempt, "by": "checker", "items": last_refused})
+        defects = "\n".join(f"- {evidence}" for evidence in last_refused.values())
+    return "incomplete", f"the maker used its {rounds} attempts: the checker or the gate refused its work after each", checks, commit, refusals
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--markitect", required=True, help="the markitect program for this platform, for check and impact only")
-    p.add_argument("--shape", choices=("single", "federal"), default="single")
+    p.add_argument("--shape", choices=("single", "federal", "plain"), default="single")
     p.add_argument("--claude", default=shutil.which("claude") or "claude")
     p.add_argument("--credentials", default=os.environ.get("EVALUATION_LOGIN") or str(pathlib.Path.home() / ".claude" / ".credentials.json"))
     p.add_argument("--effort", default="high")
@@ -547,7 +666,9 @@ def main(argv=None):
             local.chmod(0o755)
             a.markitect = str(local)
             session_env = cc.base_env(tmp / "home", tmp / "hooks")
-            session_env["PATH"] = str(tmp / "bin") + os.pathsep + session_env.get("PATH", "")
+            # K's session does not know this program, so the plain shape keeps it out of reach.
+            if a.shape != "plain":
+                session_env["PATH"] = str(tmp / "bin") + os.pathsep + session_env.get("PATH", "")
             repo = tmp / "work"
             arm.git(tmp, "clone", "-q", "--no-checkout", str((task / "start.bundle").resolve()), str(repo), env=env)
             arm.git(repo, "config", "core.autocrlf", "false", env=env)
@@ -566,6 +687,12 @@ def main(argv=None):
             commit, checks, refusals, verdicts = None, [], [], {}
             if not items:
                 status, why = "nothing-to-do", "nothing the change reaches: no agent starts"
+            elif a.shape == "plain":
+                if state.get("landed"):
+                    raise ArmError("this shape runs one step: its maker starts from K's start")
+                status, why, checks, commit, refusals = plain_graph(host, items, owner, plain_checkout(host, task, start), a.rounds)
+                # The maker says nothing per item, so what the Result's items hold is the checker's word on each.
+                verdicts = {item: {"verdict": "model-problem" if r["answer"] == "model-problem" else "conforms", "evidence": r["evidence"]} for item, r in host.rulings.items()}
             else:
                 status, why, verdicts, checks, commit, refusals = graph(host, a.shape, items, inherited, owner, a.rounds)
             landed = commit if status == "landed" else None

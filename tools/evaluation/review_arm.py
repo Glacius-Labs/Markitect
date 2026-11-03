@@ -1,14 +1,15 @@
 """One fresh checker over a submission that is already made: the planted-bug test of the arms' checker.
 
-  python3 -I -B review_arm.py --markitect BIN --answers new|old --submission FILE [--claude BIN] [--credentials FILE] [--effort LEVEL] TASK_DIR OUT_DIR
+  python3 -I -B review_arm.py --markitect BIN --answers new|old|blind --submission FILE [--claude BIN] [--credentials FILE] [--effort LEVEL] TASK_DIR OUT_DIR
 
 Run it through the suite's sandbox, as one_agent_arm.py. The task's start is the submission, and FILE holds its checklist
 and the maker's verdicts. No maker starts and nothing lands: the Result delivers the start unchanged.
 
 The host runs the gate's checks first (`markitect check` and the required checks). A submission that does not pass them
 starts no agent, since the test measures the checker and not the gate. Then one checker session reviews the submission
-as the arm's checker does, with the answers as launched (`new`) or as they were before that change (`old`). The Result
-holds every answer with its evidence, under `reviews`.
+as the arm's checker does, with the answers as launched (`new`) or as they were before that change (`old`). With `blind`
+it reviews as arm KC's checker does: it is shown no verdicts, the gate is the required checks alone, since K's work has no
+registry rows, and it may answer `model-problem`. The Result holds every answer with its evidence, under `reviews`.
 """
 import argparse
 import json
@@ -26,6 +27,7 @@ import one_agent_arm as one  # noqa: E402
 
 OLD_ANSWERS = ("confirmed", "disputed")
 REFUSING = ("wrong", "disputed")
+SETS = {"new": one.ANSWERS, "old": OLD_ANSWERS, "blind": one.BLIND_ANSWERS}
 
 
 def old_prompt(host, items, verdicts, checks, base, commit, file):
@@ -81,7 +83,7 @@ def read_answers(path, known, answers):
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--markitect", required=True, help="the markitect program for this platform, for check only")
-    p.add_argument("--answers", choices=("new", "old"), required=True)
+    p.add_argument("--answers", choices=tuple(SETS), required=True)
     p.add_argument("--submission", required=True, help="a JSON file with the submission's owner commit, checklist and verdicts")
     p.add_argument("--claude", default=shutil.which("claude") or "claude")
     p.add_argument("--credentials", default=os.environ.get("EVALUATION_LOGIN") or str(pathlib.Path.home() / ".claude" / ".credentials.json"))
@@ -109,7 +111,7 @@ def main(argv=None):
         name = arm.run_name()
         report["run"] = name
         submission = json.loads(pathlib.Path(a.submission).read_text(encoding="utf-8"))
-        items, verdicts, owner = submission["items"], submission["verdicts"], submission["owner"]
+        items, verdicts, owner = submission["items"], submission.get("verdicts") or {}, submission["owner"]
         known = {i["item"] for i in items}
         login, secrets = cc.session_login(pathlib.Path(a.credentials).read_bytes(), spec["deadlineSeconds"])
         with tempfile.TemporaryDirectory(prefix="review-arm-", ignore_cleanup_errors=True) as tmp:
@@ -129,7 +131,7 @@ def main(argv=None):
             arm.git(repo, "config", "core.autocrlf", "false", env=env)
             arm.git(repo, "checkout", "-q", "-B", "main", commit, env=env)
             host = one.Host(a, tmp, repo, out, env, session_env, login, model, deadline, secrets)
-            compiled, code = arm.check(a, repo, env)
+            code = 0 if a.answers == "blind" else arm.check(a, repo, env)[1]
             checks = host.run_checks(commit)
             if code != 0 or not all(c["passed"] for c in checks):
                 raise one.ArmError(f"the submission does not pass the gate: check exit {code}, checks {[(c['name'], c['passed']) for c in checks]}")
@@ -139,6 +141,8 @@ def main(argv=None):
                 path = host.answers / f"checker-1-{tries}.json"
                 if a.answers == "new":
                     prompt = one.checker_prompt(host, missing, verdicts, checks, owner, commit, path)
+                elif a.answers == "blind":
+                    prompt = one.blind_prompt(host, missing, checks, owner, commit, path)
                 else:
                     prompt = old_prompt(host, missing, verdicts, checks, owner, commit, path)
                 if tries > 1:
@@ -151,13 +155,13 @@ def main(argv=None):
                 if reason == "failed" and host.starts[-1].get("class"):
                     status, why = "incomplete", "a provider failure ended the checker: " + host.starts[-1].get("detail", "")
                     break
-                review = {**read_answers(path, known, one.ANSWERS if a.answers == "new" else OLD_ANSWERS), **review}
+                review = {**read_answers(path, known, SETS[a.answers]), **review}
                 missing = [i for i in items if i["item"] not in review]
             if status == "reviewed" and missing:
                 status, why = "incomplete", "the checker left no complete review twice in a row"
             result = {"format": 1, "run": name, "command": "review", "outcome": "not-landed", "state": status, "why": why, "answers": a.answers, "submission": commit,
                       "base": owner, "start": commit, "landed": None, "requiredChecks": {"ran": True, "wholeRepository": True, "checks": checks}, "items": [],
-                      "reviews": review, "refused": sorted(item for item, r in review.items() if r["answer"] in REFUSING), "notParticipating": [], "findings": [], "starts": host.starts}
+                      "reviews": review, "refused": sorted(item for item, r in review.items() if r["answer"] in REFUSING), "problems": sorted(item for item, r in review.items() if r["answer"] == "model-problem"), "notParticipating": [], "findings": [], "starts": host.starts}
             (out / "results").mkdir(exist_ok=True)
             (out / "results" / f"{name}.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
             report["provider"], report["model"] = arm.reported_model(result, provider, model)

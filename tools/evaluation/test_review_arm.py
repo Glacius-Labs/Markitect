@@ -104,6 +104,23 @@ class ReviewArmTest(unittest.TestCase):
         self.assertIn("realization/code.txt", prompt)
         self.assertFalse([p for p in out.rglob("*") if p.is_file() and b"sk-ant-oat-arm-secret" in p.read_bytes()])
 
+    def test_blind_shows_no_verdicts_and_can_name_a_model_problem(self):
+        self.script({"checker": ["name-problem"]})
+        record, out = self.run_arm("blind", "blind")
+        self.assertEqual((record["exitCode"], record["reported"]["status"]), (0, "reviewed"), (out / "variant" / "run.json").read_text())
+        result = self.result(out)
+        self.assertEqual(result["problems"], ["project"])
+        self.assertEqual(result["refused"], [])
+        prompt = self.prompt("checker-1-1")
+        self.assertIn("it makes no claims", prompt)
+        self.assertNotIn("the maker says it holds", prompt)
+        self.assertIn("realization/code.txt", prompt)
+
+    def test_blind_needs_no_registry_rows(self):
+        # The scripted `markitect check` fails on realization/BAD; K's work has no rows, so the blind gate does not ask it.
+        record, out = self.run_arm("blind-norows", "blind", bad=True)
+        self.assertEqual(record["reported"]["status"], "reviewed", (out / "variant" / "run.json").read_text())
+
     def test_the_old_answers_use_the_old_prompt_and_count_a_dispute(self):
         self.script({"checker": ["old-dispute"]})
         record, out = self.run_arm("old", "old")
