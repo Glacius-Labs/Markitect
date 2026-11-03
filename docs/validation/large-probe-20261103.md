@@ -79,3 +79,7 @@ The owner has seen K's price and agreed to the blind reviews of K's result, and 
 | Size | About half of K's build per review, by the ratio on Makerspace |
 | S | Started after the reviews have been read, by writing `GO-S` in the probe's folder and running its runner again. Its size: about 2 to 3.5 of K's build here, by the ratios on Makerspace, within the deadline of 14,400 s |
 | Stops | As in the dispatch: the runner's own, a `STOP` file before the next launch, the stop on the card at 75 %, or the owner's word |
+
+### Amendment 3: the stop on the card is lifted, 3 November 2026
+
+The owner lifted the stop at 75 % on the card, for the reviews and S: they may use what they need, and reaching the limit is acceptable. The runner's own stops stay, among them its stop at 90 % of its seven-day reading, since they are part of the frozen tools. A run that hits the limit is recorded as what it is, a launch stopped by quota, and says nothing about the arm.
