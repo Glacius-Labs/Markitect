@@ -83,12 +83,12 @@ def main(argv=None):
                 (config / ".credentials.json").write_bytes(login)
                 argv = [a.claude, "-p", "--model", model, "--output-format", "stream-json", "--verbose",
                         "--strict-mcp-config", "--setting-sources", "project", "--allowedTools", *TOOLS, "--disallowedTools", *DENIED]
-                record.update(claude_code.run_session(argv, tmp / "prompt.txt", work, dict(env, CLAUDE_CONFIG_DIR=str(config)),
+                record.update(claude_code.run_session(argv, tmp / "prompt.txt", work, dict(claude_code.one_model(env, model), CLAUDE_CONFIG_DIR=str(config)),
                                                       out / "session.stream.jsonl", out / "session.stderr.log", seconds))
             finally:
                 (config / ".credentials.json").unlink(missing_ok=True)
             facts = claude_code.stream_facts(out / "session.stream.jsonl")
-            record.update(model=facts["model"], sessionId=facts["sessionId"], usage=claude_code.usage(facts["result"]),
+            record.update(model=facts["model"], modelsUsed=claude_code.models_used(facts["result"]), sessionId=facts["sessionId"], usage=claude_code.usage(facts["result"]),
                           sessionResult=(facts["result"] or {}).get("subtype"))
             if (config / "projects").is_dir():
                 shutil.copytree(config / "projects", out / "transcripts")

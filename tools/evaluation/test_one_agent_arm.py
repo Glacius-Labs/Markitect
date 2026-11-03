@@ -116,7 +116,8 @@ FAKE_CLAUDE = textwrap.dedent(r"""
     if step == "rate-limit":
         print(json.dumps({"type": "assistant", "isApiErrorMessage": True, "error": "rate_limit", "apiError": "429"}))
         sys.exit(1)
-    print(json.dumps({"type": "result", "subtype": "success", "num_turns": 1, "total_cost_usd": 0.1, "usage": {"input_tokens": 10, "output_tokens": 5}}))
+    assert os.environ.get("CLAUDE_CODE_SUBAGENT_MODEL") == "claude-sonnet-5-5" and os.environ.get("CLAUDE_CODE_SUBAGENT_MODEL_FORCE") == "1", "subagents not bound to the model"
+    print(json.dumps({"type": "result", "subtype": "success", "num_turns": 1, "total_cost_usd": 0.1, "modelUsage": {"claude-sonnet-5-5": {}}, "usage": {"input_tokens": 10, "output_tokens": 5}}))
 """)
 # A scripted `markitect`: `check` fails while realization/BAD exists; `impact` prints FAKE_DIR/impact.json and records its arguments.
 FAKE_MARKITECT = textwrap.dedent(r"""
@@ -215,6 +216,7 @@ class OneAgentArmTest(unittest.TestCase):
         self.assertEqual(record["exitCode"], 0, (out / "variant" / "run.json").read_text())
         self.assertEqual(record["reported"]["status"], "landed")
         self.assertTrue(record["modelMatches"])
+        self.assertEqual(record["reported"]["modelsUsed"], ["claude-sonnet-5-5"])
         result = self.result(out)
         self.assertEqual((result["outcome"], result["state"]), ("landed", "landed"))
         self.assertEqual(self.names(out), [(".", "maker"), (".", "checker")])

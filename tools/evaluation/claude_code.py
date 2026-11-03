@@ -142,6 +142,16 @@ def stream_facts(path):
     return facts
 
 
+def one_model(env, model):
+    """The session's variables with every subagent on the session's model: `--model` binds the lead alone, which may name another for a subagent."""
+    return dict(env, CLAUDE_CODE_SUBAGENT_MODEL=model, CLAUDE_CODE_SUBAGENT_MODEL_FORCE="1")
+
+
+def models_used(result):
+    """Every model that answered in the session, its subagents included."""
+    return sorted((result or {}).get("modelUsage") or {})
+
+
 def usage(result):
     u = (result or {}).get("usage") or {}
     return {"inputTokens": u.get("input_tokens"), "cacheReadTokens": u.get("cache_read_input_tokens"),
@@ -224,13 +234,13 @@ def main(argv=None):
                         "--allowedTools", *TOOLS, "--disallowedTools", *DENIED]
                 if a.effort:
                     argv += ["--effort", a.effort]
-                record.update(run_session(argv, tmp / "prompt.txt", repo, dict(env, CLAUDE_CONFIG_DIR=str(config)),
+                record.update(run_session(argv, tmp / "prompt.txt", repo, dict(one_model(env, model), CLAUDE_CONFIG_DIR=str(config)),
                                           out / "session.stream.jsonl", out / "session.stderr.log", seconds))
             finally:
                 # The login copy goes first, whatever happened.
                 (config / ".credentials.json").unlink(missing_ok=True)
             facts = stream_facts(out / "session.stream.jsonl")
-            record.update(model=facts["model"], sessionId=facts["sessionId"], usage=usage(facts["result"]),
+            record.update(model=facts["model"], modelsUsed=models_used(facts["result"]), sessionId=facts["sessionId"], usage=usage(facts["result"]),
                           sessionResult=(facts["result"] or {}).get("subtype"))
             if (config / "projects").is_dir():
                 shutil.copytree(config / "projects", out / "transcripts")

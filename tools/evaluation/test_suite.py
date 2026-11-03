@@ -261,6 +261,7 @@ FAKE_CLAUDE = textwrap.dedent("""
     argv = sys.argv[1:]
     model = argv[argv.index("--model") + 1]
     assert sys.stdin.read().startswith("Read the documentation in TASK.md"), "prompt not on stdin"
+    assert os.environ.get("CLAUDE_CODE_SUBAGENT_MODEL") == model and os.environ.get("CLAUDE_CODE_SUBAGENT_MODEL_FORCE") == "1", "subagents not bound to the model"
     (cwd / "main.go").write_text("package main\\n")
     if mode == "leak":
         (cwd / "token.txt").write_text(login["accessToken"])
@@ -276,7 +277,8 @@ FAKE_CLAUDE = textwrap.dedent("""
     (config / "projects" / "p").mkdir(parents=True)
     (config / "projects" / "p" / "s.jsonl").write_text("{}\\n")
     print(json.dumps({"type": "system", "subtype": "init", "model": model, "session_id": "s1"}))
-    print(json.dumps({"type": "result", "subtype": "success", "num_turns": 3, "total_cost_usd": 0.1,
+    answered = {model: {}, "claude-opus-5-5": {}} if mode == "second-model" else {model: {}}
+    print(json.dumps({"type": "result", "subtype": "success", "num_turns": 3, "total_cost_usd": 0.1, "modelUsage": answered,
                       "usage": {"input_tokens": 10, "output_tokens": 5, "cache_read_input_tokens": 7}}))
 """)
 
@@ -335,6 +337,14 @@ class ClaudeCodeTest(unittest.TestCase):
                          ["A\t.gitignore", "A\tcmd/library/main.go", "A\tinternal/library/README.md",
                           "A\tinternal/library/library.go", "A\tmain.go"])
 
+    def test_a_second_model_answering_is_flagged(self):
+        # The lead on the evaluation's model, its subagents on another: the session's start alone does not show it.
+        record = suite.run(self.make("second-model", 600), self.variant, self.tmp / "run", MODEL)
+        self.assertTrue(record["delivered"], record["resultError"])
+        self.assertEqual(record["reported"]["model"], MODEL.partition(":")[2])
+        self.assertEqual(record["reported"]["modelsUsed"], ["claude-opus-5-5", MODEL.partition(":")[2]])
+        self.assertIs(record["modelMatches"], False)
+
     def test_login_copy_has_no_refresh_token_and_must_outlive_the_session(self):
         copy, secrets = claude_code.session_login(self.credentials.read_bytes(), 600)
         self.assertNotIn(b"refresh", copy)
@@ -347,6 +357,7 @@ class ClaudeCodeTest(unittest.TestCase):
         self.assertTrue(record["delivered"], (record["resultError"], record["reported"]))
         self.assertTrue(record["modelMatches"], (record["reported"], (self.tmp / "run" / "variant" / "session.stderr.log").read_text()))
         self.assertEqual(record["reported"]["status"], "completed")
+        self.assertEqual(record["reported"]["modelsUsed"], [MODEL.partition(":")[2]])
         self.assertEqual(record["reported"]["usage"]["cacheReadTokens"], 7)
         self.assertIsNone(record["reported"]["usage"]["reasoningTokens"])
         self.assertEqual(record["result"]["changedPaths"], ["A\tmain.go"])

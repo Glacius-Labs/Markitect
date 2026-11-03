@@ -275,10 +275,10 @@ def reported(path):
 
 
 def model_check(model, report):
-    """Whether the variant reports the evaluation's model; None when it reports none."""
+    """Whether the variant reports the evaluation's model and no other; None when it reports none."""
     if not report or not report.get("provider") or not report.get("model"):
         return None
-    return f"{report['provider']}:{report['model']}" == model
+    return all(f"{report['provider']}:{m}" == model for m in (report["model"], *(report.get("modelsUsed") or [])))
 
 
 def run(task_dir, variant, out, model, state=None, sandbox=None, pages=True):

@@ -124,7 +124,7 @@ def main(argv=None):
             shutil.copyfile(program, local)
             local.chmod(0o755)
             a.markitect = str(local)
-            session_env = cc.base_env(tmp / "home", tmp / "hooks")
+            session_env = cc.one_model(cc.base_env(tmp / "home", tmp / "hooks"), model)
             # As arm KC's checker: it is not given the program.
             if a.answers != "blind":
                 session_env["PATH"] = str(tmp / "bin") + os.pathsep + session_env.get("PATH", "")
@@ -167,6 +167,7 @@ def main(argv=None):
             (out / "results").mkdir(exist_ok=True)
             (out / "results" / f"{name}.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
             report["provider"], report["model"] = arm.reported_model(result, provider, model)
+            report["modelsUsed"] = sorted(host.models)
             failed = [{k: s.get(k) for k in ("manager", "role", "round", "class", "detail")} for s in host.starts if s.get("reason") == "failed"]
             costs = [(s.get("usage") or {}).get("costUsd") for s in host.starts]
             report["usage"] = {"costUsd": round(sum(c for c in costs if c), 6) if any(costs) else None, "sessions": len(host.starts)}
