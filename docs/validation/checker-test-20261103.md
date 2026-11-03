@@ -2,7 +2,7 @@
 
 Two small tests, asked for on 2 and 3 November 2026 after the [arms pilot](arms-s-f-pilot-20261102.md), under one dispatch and the standing run approval of 28 October 2026 ([build workstream, Decisions](../workstreams/build.md#decisions)). They show which parts of arm S earn their place: impact, stopping on a model defect, landing despite a harmless gap, and the checker on wrong code. **These runs are not counted and prove nothing on their own.** The new project stays sealed, and concept 2.0 stays as it is.
 
-**Status: approved by Build on 3 November 2026, before the first review.** Nothing has been reviewed yet.
+**Status: approved by Build on 3 November 2026, before the first review, and run the same night.** The reading is [Amendment 1](#amendment-1-the-reading-3-november-2026).
 
 ## Part 1: the checker on wrong work
 
@@ -95,3 +95,61 @@ An amendment to this page, for the owner: per bug and answer set, the three answ
 - Two repetitions per task in Part 2.
 
 ## Amendments
+
+### Amendment 1: the reading, 3 November 2026
+
+**How it ran.** All 20 launches gave a result on their first try, between 01:17 and 02:36 UTC. The final check found no secret and no leftover. Seven-day use rose from 9 % to 10 %, inside the size named above. No review read `/variant`. Build read every refusing and recorded answer by hand; a word search over the same answers agreed.
+
+**The checker caught all six bugs in all six reviews of the planted submission, with both answer sets.** That is 18 of 18 with the new answers and 18 of 18 with the old ones, on bugs S's own 40 test functions did not catch and the gate let through.
+
+| Bug | New answers, r1 r2 r3 | Old answers, r1 r2 r3 |
+|---|---|---|
+| `year-0000` (control) | caught, caught, caught | caught, caught, caught |
+| `stale-readme` (control) | caught, caught, caught | caught, caught, caught |
+| `audit-target-cap` | caught, caught, caught | caught, caught, caught |
+| `invoices-in-creation-order` | caught, caught, caught | caught, caught, caught |
+| `reservation-starting-now` | caught, caught, caught | caught, caught, caught |
+| `purchase-quantity-range` | caught, caught, caught | caught, caught, caught |
+
+Nothing was noticed without a catch, refused for something else, or missed. Every refusing answer on the planted submission names a planted bug. Most evidence reports a run of the built program with the input that shows the bug, so running it, not reading alone, carries much of the catch.
+
+Two things limit this beyond the limits above. A catch holds at the level of the review, not of each item: new r3 refused the quantity range under `Operation` and `argument-values` and confirmed `materials/purchase-material` itself, which one refusal is enough to stop in a real Run. And most `confirmed` answers are one stock sentence, so a single `confirmed` shows little. Some bugs may also have been easy to see: the comment on `ListInvoices` still says it orders by month, and `y > 0 &&` looks odd to a reader.
+
+**False alarms on the clean submission: none with the new answers, three with the old.**
+
+| Answers | r1 | r2 | r3 |
+|---|---|---|---|
+| New | 0 refused, 4 waived | 0 refused, 3 waived | 0 refused, 2 waived |
+| Old | 0 refused | 1 refused | 2 refused |
+
+- Old r2, `values`, disputes the evidence and not the code: "The verdict does not show how each example is met."
+- Old r3, `Interface` and `billing/billing-interface`, refuses the departure below: "The code does not match the Definition, and the model's interface and the revenue-report need disagree."
+- All nine waived answers name that same departure. `reporting` and `billing` call exports that no Interface page lists, and the model's operations cannot be built from the listed ones. It is a gap in the model's Interface pages, not wrong behavior, and no hidden case fails on it. A maker cannot fix it without touching the model, so a refusal here would cost rounds for nothing.
+
+Lowering the bar for `confirmed`, the concern in [the pilot's reading](arms-s-f-pilot-20261102.md), cost no catch here, so nothing in this test asks for rewording it.
+
+**Time and use of one review of all 108 items**, in multiples of K's whole W0 build (12 minutes):
+
+| Answers | Planted, mean | Clean, mean |
+|---|---|---|
+| New | 199 s, 0.47 K | 239 s, 0.50 K |
+| Old | 319 s, 0.58 K | 515 s, 0.90 K |
+
+**S on the cases K got wrong.** M and K are the counted series' rows on the same inputs.
+
+| Case | S | K | M |
+|---|---|---|---|
+| C9, a change that reaches nothing | No agent, 3 s, 0 of 126 failed, both | Changed code, 5 min, 3 of 126 failed, both | No agent, 0 of 126 failed, both |
+| c3, contradiction, must stop | Stopped both, 1.0 and 1.5 min, 0.53 and 0.35 K | Stopped r1, **landed r2** | Stopped both, 1.6 and 11 min |
+| c5, undefined threshold, must stop | Stopped both, 2.7 and 3.0 min, 2.4 and 2.2 K | Stopped both, 0.5 and 0.6 min | Stopped both, 1.2 and 0.9 min |
+| c6, harmless test gap, must land | Landed both, 0 of 62 failed, 2.5 min each, 0.50 and 0.62 K | Landed both, 0 of 62 failed, 6.0 and 5.2 min | Landed r2; r1 failed 11 of 62 after 53 min |
+
+S's c3 r2 needed a second start after the gate refused an unregistered file, `realization/makerspace`, and its checker on c5 r2 refused model-problem verdicts on items the gap does not touch, then confirmed the rest. Both c6 launches landed one waived finding: the adopted start keeps all code in one package, against the model's layout, and this change did not cause that.
+
+**Which part of S earns its place, on this evidence:**
+
+- **Impact: yes, at almost no cost.** It is the host's comparison of the model, which M has too, and neither S's maker nor its checker plays a part. K has no such step: it changed code that needed no change and broke 3 of 126 cases, twice.
+- **Stopping on a contradiction: yes, on thin evidence.** S stopped twice where K stopped once and landed once, at less than K's use. That is one launch of difference.
+- **Stopping on a gap: no gain over K.** All three stopped, and S took about five times K's time.
+- **Landing despite a harmless gap: S beats M here, not K.** K landed too; S took about half K's time and use, which two launches of a small change do not establish.
+- **The checker on wrong code: able, not yet shown to be needed.** It catches these bugs reliably, for about half a K build per full review. But on every real Makerspace launch so far S's work has failed no hidden case, so no maker bug has yet been there for it to catch. Whether makers make such bugs at larger size is what a bigger project could show.
