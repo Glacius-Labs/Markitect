@@ -102,6 +102,16 @@ class Store(unittest.TestCase):
             f.write(b"x")
         self.assertEqual(kept.check(self.store), ["demo: repo.bundle changed"])
 
+    def test_a_commands_cost_is_the_sum_of_its_sessions(self):
+        lines = [json.dumps({"type": "assistant", "message": {"model": "claude-sonnet-5-5"}}), json.dumps({"type": "result", "total_cost_usd": 1.25})]
+        run, _ = self.run_dir(transcript="\n".join(lines) + "\n")
+        (run / "variant" / "run.json").write_text(json.dumps({"model": "claude-sonnet-5-5", "tokens": {"inputTokens": 5}}), encoding="utf-8")
+        r = kept.add(self.store, "command", "p", "W0", "D", run)
+        # The subagent's transcript does not count twice.
+        self.assertEqual(r["relativeCost"], 1.25)
+        self.assertEqual(r["requestedModel"], "claude-sonnet-5-5")
+        self.assertEqual(r["usage"], {"inputTokens": 5})
+
     def test_a_changed_record_and_a_deleted_launch_show(self):
         run, _ = self.run_dir()
         kept.add(self.store, "one", "p", "W0", "K", run)
