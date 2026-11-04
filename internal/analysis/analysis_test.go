@@ -530,3 +530,33 @@ func TestImpactARowThatDropsItsLinkStillReaches(t *testing.T) {
 		t.Fatalf("reached %s", ids(im.Reached))
 	}
 }
+
+// Rows that reach one Definition give their reasons in one order, so that the
+// same change gives the same impact and the same prompt.
+func TestImpactGivesARowsReasonsInOrder(t *testing.T) {
+	base := library(t)
+	page := project.RegistryDir + "/catalog.md"
+	head := "---\npaths: [src/catalog/**]\n---\n" + table
+	var before, after strings.Builder
+	var want []string
+	for _, name := range strings.Split("a b book c d e f g", " ") {
+		file := "src/catalog/" + name + ".go"
+		base[file] = "package catalog\n"
+		before.WriteString("| " + file + " |  | Type |\n")
+		after.WriteString("| " + file + " | [[catalog/book]] | Type |\n")
+		want = append(want, "the registry row of "+file+" now links it")
+	}
+	base[page] = head + before.String()
+	cur := base.clone()
+	cur[page] = head + after.String()
+	im := impact(t, base, cur, nil, nil, false)
+	for _, item := range im.Reached {
+		if item.Definition == "catalog/book" {
+			if got := strings.Join(item.Reasons, "\n"); got != strings.Join(want, "\n") {
+				t.Fatalf("reasons:\n%s", got)
+			}
+			return
+		}
+	}
+	t.Fatalf("reached %s", ids(im.Reached))
+}

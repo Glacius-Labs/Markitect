@@ -180,7 +180,7 @@ All commands take `--repo DIR`, a folder inside the project's Git repository (de
 `impact` compares the model and the repository files at the base commit with the working tree:
 
 - **Changed Definitions** are the model's and the Libraries' Definitions that were added, modified or removed.
-- **Reached Definitions** are the model Definitions that changed (distance 0), that link to or are of a Definition that changed (distance 1), or that a changed file realizes (distance 0, through the registry; a removed file through the base's registry). Each comes with its reasons.
+- **Reached Definitions** are the model Definitions that changed (distance 0), that link to or are of a Definition that changed (distance 1), that a changed file realizes in the base's or the current registry (distance 0), or that a registry row gained or lost, whether or not its file changed (distance 0). Each comes with its reasons.
 - **Further Definitions** link to a reached Definition at more steps. Each comes with its distance and reason, and they are on no checklist: the default strategy stops at one step.
 - **Reached files** are the changed files and the files that realize a reached Definition, each with its owner.
 

@@ -426,6 +426,11 @@ func leavesTree(file, to string) bool {
 	if path.IsAbs(to) || strings.Contains(to, `\`) {
 		return true
 	}
+	// A drive letter leaves the tree in a Windows checkout, where Git makes the
+	// link as it stands.
+	if len(to) > 1 && to[1] == ':' {
+		return true
+	}
 	// A ".." after another part can pass through a link, where the text says
 	// nothing about the way.
 	inner := false

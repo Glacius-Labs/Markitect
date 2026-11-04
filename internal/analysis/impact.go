@@ -96,9 +96,10 @@ type ImpactInput struct {
 // Full every Definition is reached and every Manager works.
 //
 // Reach follows one step: a Definition is reached when it changed, when it
-// links to (or is of) a Definition that changed, or when a file the change
-// touches realizes it. What lies further is reported, with distance and reason,
-// and is on no checklist. Inherited items are only the Definitions above a
+// links to (or is of) a Definition that changed, when a file the change touches
+// realizes it in either registry, or when a registry row gained or lost it. What
+// lies further is reported, with distance and reason, and is on no checklist.
+// Inherited items are only the Definitions above a
 // Package that the change itself changed, so a changed Rule at Root becomes an
 // item for every Manager below it, while a Root Definition reached only
 // through a file or a link stays Root's own item.
@@ -154,8 +155,8 @@ func ComputeImpact(in ImpactInput) Impact {
 	if in.Base.Registry != nil {
 		// A row's change reaches what it gained or lost, whether or not its file
 		// changed.
-		for file, e := range in.Current.Registry.Entries {
-			old := in.Base.Registry.Entries[file]
+		for _, file := range sortedKeys(in.Current.Registry.Entries) {
+			e, old := in.Current.Registry.Entries[file], in.Base.Registry.Entries[file]
 			if old == nil {
 				continue
 			}
