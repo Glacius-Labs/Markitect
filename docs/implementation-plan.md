@@ -26,7 +26,7 @@ Assigned to the Build and evaluation session, which estimates the steps before s
 
 U1 and U2 may share one change. U5's removal can come before U4 if nothing there still needs the tree; the suite's arm M then stays at its recorded commits. After U4 comes the owner's real use on a real project.
 
-**Login, in U1:** the user signs in inside the container through the provider's own flow, and the login stays in a Docker volume ([DEC-092](concepts/register.md#dec-092-a-command-uses-the-users-own-sign-in)). Markitect stops reading the host's credentials file. The image pins the CLI version, and sessions start from one place per provider.
+**Login, in U1:** the user makes a token with `claude setup-token`, and the Command gives it only to each session's environment ([DEC-093](concepts/register.md#dec-093-a-command-passes-the-users-own-token)). Runs stop reading the host's credentials file. The image pins the CLI version, and sessions start from one place per provider. By Build's reading Codex has no such token, so its route stays open and U1 lands on Claude first.
 
 **Test 2 runs on Sonnet.**
 
