@@ -15,6 +15,7 @@ The suite runner, its judging and reporting, and the baseline variant of the [ev
 | [codex_cli.py](codex_cli.py) | The baseline variant on Codex: one `codex exec` session with the task, in the same setting |
 | [escape_probe.py](escape_probe.py) | A variant without a model that tries to leave the sandbox and reports each attempt |
 | [judging.py](judging.py) | `suite.py judge`: runs a task's judge folder in one container without network and checks its `judge.json` |
+| [one_agent_arm.py](one_agent_arm.py) | The pilot's arms S and F: no Manager agents, no agent Git, no containers of its own ([dispatch](../../docs/validation/arms-s-f-pilot-20261102.md)) |
 | [judges.py](judges.py) | Judge sources in [`tools/evaluation-judges`](../evaluation-judges/library-m1/README.md): `export` writes a judge folder from a frozen revision, `selftest` runs a judge on its references and seeded mutants, `start` writes a fixed reference start |
 | [reviewing.py](reviewing.py), [reviewer.py](reviewer.py) | `suite.py review`: the blinded copy, the reviewer and confirmation sessions in the sandbox, the citation check and the variant guess |
 | [classify.py](classify.py) | The failure classifier: void (provider, infrastructure, signed variant runtime), invalid or result |
