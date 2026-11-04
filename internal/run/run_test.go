@@ -559,6 +559,57 @@ func TestRepairRounds(t *testing.T) {
 	}
 }
 
+// An implementer that reads the reviewer's report and repairs before calling
+// submit again uses a round all the same, and the next review asks only about what
+// the repair touched. That is what a real session did.
+func TestARepairBeforeSubmitCountsAsARound(t *testing.T) {
+	f := newFixture(t)
+	s, wt := f.applyFull()
+	f.submit(wt)
+	wrong := map[string]string{"loan-limit": "wrong src/members/loans/loan.go:3 -- still says 5"}
+	f.answer(wt, s.Run, wrong)
+
+	write(t, wt, "src/members/loans/loan.go", "package loans\n\nconst Limit = 3\n")
+	has(t, f.submit(wt).Text, "markitect-reviewer")
+	st := f.state(s.Run)
+	if st.Repairs != 1 || len(st.SentBack) != 1 {
+		t.Fatalf("repairs %d, sent back %v", st.Repairs, st.SentBack)
+	}
+	for _, it := range st.Review.Items {
+		if it.Key == "catalog/book" {
+			t.Fatal("a repair review asks about what the repair did not touch")
+		}
+	}
+
+	// A third such round closes the run.
+	f.answer(wt, s.Run, wrong)
+	write(t, wt, "src/members/loans/loan.go", "package loans\n\nconst Limit = 4\n")
+	has(t, f.submit(wt).Text, "markitect-reviewer")
+	f.answer(wt, s.Run, wrong)
+	write(t, wt, "src/members/loans/loan.go", "package loans\n\nconst Limit = 6\n")
+	if v := f.submit(wt); !v.Done {
+		t.Fatalf("not closed: %s", v.Text)
+	}
+	if st := f.state(s.Run); st.State != run.StateRefused {
+		t.Fatalf("%+v", st)
+	}
+}
+
+// A spec problem in a finished review stands, even if the implementer carries on.
+func TestASpecProblemStandsThroughARepair(t *testing.T) {
+	f := newFixture(t)
+	s, wt := f.applyFull()
+	f.submit(wt)
+	f.answer(wt, s.Run, map[string]string{"loan-limit": "spec problem -- the limit contradicts the loan page"})
+	write(t, wt, "src/members/loans/loan.go", "package loans\n\nconst Limit = 3\n")
+	if v := f.submit(wt); !v.Done {
+		t.Fatalf("not closed: %s", v.Text)
+	}
+	if st := f.state(s.Run); st.State != run.StateSpecProblem {
+		t.Fatalf("%+v", st)
+	}
+}
+
 // Row 7: a spec problem ends the run, ahead of any wrong answer, with no round.
 func TestASpecProblemEndsTheRun(t *testing.T) {
 	f := newFixture(t)

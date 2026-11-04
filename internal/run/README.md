@@ -1,119 +1,82 @@
-# The Command engine
+# The process of a Run
 
-`internal/run` runs one Command, `markitect apply` or `markitect verify` ([concept 3.0](../../docs/concepts/v3-concept.md) §6 to §10, §12). One implementer and one fresh reviewer work in one container; the Command commits their work, runs a gate no agent can talk past, checks the reviewer's answers, writes the Result and lands it. This page is the canonical description of a Command, its gate, its landing and its Result page. The delivery plan owns the [steps](../../docs/implementation-plan.md#concept-30-build).
+`internal/run` holds the process of a Run in the tool, per [draft concept 4.0](../../docs/concepts/v4-concept.md). `markitect apply` and `markitect verify` start a background session and end. The session only calls `markitect`, and `markitect submit` is the one door: it says what is next each time and decides whether the work counts. Nothing here drives a session, so forgetting a step can't land and compaction can't lose the process.
 
 | Package | Role |
 | --- | --- |
-| `internal/run` | The engine: checklist, gate, repair rounds, answer checks, Result and landing. It starts no process itself; its ports do. |
-| `internal/adapters/sandbox` | The Command's one container ([below](#the-sandbox)). |
-| `internal/adapters/rungit` | The Command's own Git work ([below](#host-git)). |
-| `internal/agentport` | How the engine starts sessions; [`internal/agents`](../agents/README.md) implements it. |
-| `internal/bootstrap` | Builds the engine for the command line from the [environment](../agents/README.md#composition). |
+| `internal/run` | The process: `apply`, `verify`, the checklist, the answers, `submit`, the hooks, the Result and landing. It starts no process itself; its ports do. |
+| `internal/adapters/rungit` | Git work in the user's own repository ([below](#git)). |
+| `internal/adapters/hostcheck` | The required checks on the user's machine ([below](#required-checks)). |
+| `internal/adapters/claude` | The provider's background sessions ([below](#the-session)). |
+| `internal/bootstrap` | Builds the engine for the command line. |
 
-## A Command
+## A Run
 
-1. **Start and base.** The Command starts from the tip of the target branch. The base is `--base`, or by default the work Markitect last landed there: the newest landing commit names it in its `Run-Work` trailer. A landing on a moved target merges in commits the Command did not realize, so the base is the realized work, and those commits stay in the next impact. With no landing yet, `--base` or `--full` is needed.
-2. **Check.** The project at the start commit is compiled. A real compile error ends the Command as `check-failed` before any container starts. A file a hand edit left unlisted is no error here: it becomes a checklist item.
-3. **Checklist.** Impact from the base to the start gives one list ([impact and checklists](../../docs/guides/model-language.md#impact-and-checklists)). Each item is a reached Definition, a deleted Definition, a Finding, a stale registry entry or an unlisted file, with the files the registry names for it. An empty list ends the Command as `nothing-to-do`.
-4. **Sandbox.** The start commit goes into the Command's container as a Git bundle.
-5. **Implementer.** One session in a clean copy of the start commit, with the checklist as its to-do list. It uses no Git and fills in no form. To stop, it writes a note outside the copy; the Command reads it after the session and ends as `spec-problem`, with the note as a decision for the owner. An empty diff without a note is no failure.
-6. **Commit.** The Command ends the implementer's processes, commits the copy's files on top of the start and brings the commit to the host. Whatever Git does not take is not there. The checklist is rebuilt from this commit and its registry, so a file outside the first impact adds its Definitions.
-7. **Gate** (below).
-8. **Reviewer.** A fresh session in a new clean copy of the commit answers every item ([the answers](#the-reviewers-answers)). Nothing it changes counts: its copy is never collected.
-9. **Repair.** A gate refusal or a `wrong` answer goes back to the implementer, who resumes its session; the Command then continues at step 6. At most two repair rounds; the third refusal ends the Command as `refused`. The next review answers only the items without an answer, the items still `wrong`, and the items whose locations or pointers the new diff touched, and is told what the last review found; the other answers stand.
-10. **Landing** ([below](#landing)) and the Result.
+1. **`apply`** refuses a detached HEAD and a change outside `.markitect/` that is not committed, since it would be silently left out. It compiles the spec, and an error in the spec stops it with no agent. It commits the spec on the owner's branch and works out the base and the list ([impact and checklists](../../docs/guides/model-language.md#impact-and-checklists)). Nothing affected ends it.
+2. **The session** starts in a worktree of its own, on that commit, and `apply` returns. The owner keeps modeling. An open Run on the branch means a new `apply` starts nothing: one that is working is left alone, and one whose session has ended is resumed where it stopped, with its repair count.
+3. **`checklist`**, on its first call, tries the required checks on the start. A check that cannot start ends the Run before the work is spent. One that fails is told to the implementer and the Result as failing before the work. It prints the task again each time, so compaction can't lose it.
+4. **`submit`** is below. It tells the implementer when to start the `markitect-reviewer` agent, which answers with `markitect answer`.
 
-`verify` skips steps 5 to 7 and 9: it runs the required checks once on the start commit, then one reviewer, or with `--full` one reviewer per Package, answers the list on a clean copy of that commit. It ends as `verified`, or as `findings` with a Finding for each `wrong`, the owner's decisions for each `spec problem`, or required checks that did not pass. Its Result stays on `markitect/runs/<run>`. `verify --findings-out FILE` writes the Findings as a Findings page, the input of `apply --findings`.
+`markitect stop WHY` ends a Run without landing. From the session it records a question for the owner; from the owner it ends the session first. Every other command tells the owner in one line about a Run that closed or stopped working (`Notice`).
 
-With `--full` every Definition is reached. The reviewers are one per Package, up to eight at a time, each in a clean copy of its own with only its own items and its own answer file. `--one-reviewer` gives the whole list to one reviewer instead, so that [test 1](../../docs/concepts/v3-concept.md#13-how-we-know-it-works) can compare the two.
+The next `apply` removes the worktrees of closed Runs. The provider locks a worktree while its session runs, so `submit` cannot.
 
-## The gate
+## The one door
 
-The gate runs after every commit of the implementer's work, with no agent. It refuses when:
+`submit` looks at the current state and does the first thing that applies:
 
-- anything under `.markitect/` changed except the registry pages, so the spec, manifest, lock, `execution.yaml` and earlier Results stay as the owner left them;
-- `check` reports a compile error, an unlisted file included;
-- the registry holds a stale entry;
-- a required check fails.
+| | It finds | It does | It tells the agent |
+|---|---|---|---|
+| 1 | Anything under `.markitect/` changed except the registry pages, anything in the harness, or a link that leaves the repository | Refuses | Put these back, or `markitect stop` |
+| 2 | A reviewed state, and the only difference from it is new files not listed | Refuses | List them if they are the work, otherwise remove them |
+| 3 | An error from `check`, in the spec or the realization | Refuses | The errors |
+| 4 | A required check that cannot start | Closes the Run as `incomplete` | Stop |
+| 5 | A required check that fails | Refuses | The check and its output |
+| 6 | No complete review for this state | Commits the state on the Run's branch | Start the reviewer, with the items |
+| 7 | A `spec problem` | Closes the Run as `spec-problem` | The Result holds the question |
+| 8 | A `wrong` answer | Counts one repair round per reviewed state; the third closes the Run as `refused` | The items and what is wrong |
+| 9 | Nothing left | Writes the Result, commits and brings the branch up | Landed, or kept and why |
 
-The three comparisons run on the host, on the commit itself, so nothing left in the container can affect them. The required checks run in the container, as a user of their own that is given no token, in a clean copy of the commit, in the order of `execution.yaml` and up to the first failure. The Command ends their processes afterwards and throws the copy away. A check that cannot start (no program, no service) is the environment's failure: the Command ends as `incomplete` and uses no repair round.
+A review that finished on an earlier state still counts when the implementer repaired before calling `submit` again. A repair review asks only about what has no answer, is open, or lies in a file the new diff touched; other answers stand.
 
-## The sandbox
+**Limits.** At most two repair rounds, 30 calls of `submit` and, by default, 6 hours. A second `submit` during a slow one answers "still running" and does not count. The lock names its process, so a `submit` that was killed can be run again.
 
-`internal/adapters/sandbox` starts one container per Command from the project's image, natively on Windows, Linux and macOS with only the Docker CLI. It is read-only, drops every capability, forbids new privileges, carries limits for CPU, memory, processes and temporary space, and joins the provider's network. The Command sets the container up with two volumes, `/work` and `/home`, and removes both with it. Nothing of the user's is mounted. The container's own process is the tools' user.
+## The answers
 
-Code enters and leaves only as a Git commit. The start commit arrives as a bundle into a bare repository that belongs to the tools' user. Each copy is made from that repository by the user it is for, with Git set not to convert line endings or filters, so a file's bytes stay what the commit holds. The implementer's work leaves as a tar stream of its copy, which the tools' user commits in a place of its own. The commit comes back to the host as a bundle.
+A reviewer answers one line per item on standard input: `KEY: ANSWER POINTERS -- EXPLANATION`. The words are `ok`, `wrong`, `not shown` and `spec problem`; all but `ok` need an explanation after `--`, and `ok` needs a pointer. `answer` refuses what it cannot accept at once and stores nothing from that call: a line it cannot read, an item not on the list, a location or test that does not exist in the commit under review. It says what is still missing. How much a reviewer really read is not measured, and the Result says so.
 
-The Linux users, made in the image ([`packaging/runtime/Dockerfile`](../../packaging/runtime/Dockerfile)), each with a home and a work folder only they can enter:
+## The hooks
 
-| User | Does | Gets the token |
-| --- | --- | --- |
-| `implementer` | The implementer's session | Yes |
-| `reviewer-1` to `reviewer-8` | One reviewer's session each, side by side with `--full` | Yes |
-| `checks` | The required checks | No |
-| `tools` | The Command's Git work in the container | No |
+They are in the settings a session starts with, so a modeling session gets none of them. `markitect hook` does nothing unless the Run is open.
 
-The programs belong to root. Each user can end only its own processes. The Command ends a user's processes when a session is cut off, before it reads that user's note, before it commits the implementer's folder, and before and after the required checks. Before each new copy it clears that user's home, its folder and what it left in `/tmp` and `/dev/shm`, so nothing a session leaves outside the commit reaches another.
-
-The commit itself is another matter. Code a reviewer runs, such as a test in the commit under review, can change that reviewer's answers and read the token while its session runs, and ending its processes only stops changes made after that point. Reviewers keep their shell until test 1 decides ([concept §7](../../docs/concepts/v3-concept.md#7-what-the-agents-are-told)).
-
-## The reviewer's answers
-
-The reviewer answers every item in one line, with pointers instead of free text:
-
-```text
-loans/limit: ok  src/loans.go:42, tests/loans_test.go:88 (TestLimit)
-loans/renewal: wrong  src/loans.go:70 -- allows a fourth renewal; the Definition says three
-```
-
-The words are `ok`, `wrong`, `not shown` and `spec problem`; all but `ok` need an explanation after `--`. `ok` means the item conforms and the Rules above it hold, and needs a pointer, except for a deleted Definition's item. The reviewer reads the whole Definition, its examples and the Definitions it links to; where they contradict each other the answer is `spec problem` ([DEC-088](../../docs/concepts/register.md#dec-088-a-checker-reads-the-model-in-full-and-judges-its-own-packages-files)).
-
-The Command checks that every item has exactly one answer, that every line is readable and names an item on the list, that every pointed file exists in the commit, that a line number lies inside it, that a named test occurs in that file, and that the session's transcript shows the file read. Where shell commands or subagents ran, or the provider's transcript shows no reads, a pointer is marked `not measured` instead of refused. A pointer the registry does not list for its item is reported as a possible missing link and refuses nothing. A pointer shows that someone looked, not that they judged correctly.
-
-What the Command cannot accept goes back to the reviewer once, in the same session. If the answers are still not acceptable, the Command ends as `incomplete`.
+| Hook | Does |
+|---|---|
+| `Stop` | Sends the session back while the Run is open and no reviewer or `submit` is running. After five blocks since the last `submit` it closes the Run and lets the session end |
+| `StopFailure` | Records the cause when a turn ends on an API error, such as a usage limit |
+| `PreToolUse` | Past the deadline it stops the session and closes the Run. On the shell it refuses `markitect answer` unless the agent is the reviewer |
 
 ## Landing
 
-What may land: no `wrong` answer left, every item answered, every pointer accepted, the gate passed. `not shown` lands and the Result lists it. A `spec problem` from an implementer or a reviewer, or a third refusal, lands nothing.
+`submit` builds what will land off to the side: the work if the owner's branch has not moved, otherwise a merge, which must be clean and pass `check --spec` and the required checks. The landing commit's `Run-Work` trailer names the work, which is the next Run's base, so later commits stay in the next `impact`. It then moves the branch, only if it is still where it was: `merge --ff-only` where it is checked out, so uncommitted edits stay, or a ref update where it is not.
 
-Landing treats the user's repository only as a Git remote. Nothing leaves the host before a scan: the work must not hold the token or touch a provider login file (a path ending in `/.credentials.json` or `/.codex/auth.json`) anywhere in its history, since landing pushes every commit. If it does, the Command ends as `kept` and only its Result goes out, on the start commit. Otherwise the work is pushed to `markitect/runs/<run>` first, so nothing is lost if landing fails halfway.
+If that fails after three tries, the Run closes as `kept` on `markitect/runs/<run>`, and the next `apply` tries once more. If that fails too it starts fresh. The base has not moved, so nothing is lost. Nothing is ever pushed.
 
-- **The target has not moved.** The Result commit goes on top of the work and lands as a fast-forward.
-- **It has moved.** It must still hold the start commit. The incoming changes must not touch the Command's impact: no changed or reached Definition, no file it changed or reached, no change to the manifest, the lock, the required checks or a registry page the work changed, and the target must still compile. The merge must be clean, and the gate runs on the merged state with the required checks. Then the Result commit goes on top of the merge. Otherwise the work and its Result stay on `markitect/runs/<run>` as `kept`, and the Result says why.
+## Git
 
-Every push names the tip it expects. If the target moves again, landing starts over, at most three times. A push that failed is checked by reading the target again: the Command counts as landed when the new tip holds its Result commit. There is no lock on the target branch: the rule above handles a branch that moved, and two Commands may work side by side.
+`internal/adapters/rungit` works in the repository's common Git directory, which every worktree shares. `Candidate` makes a commit of every file Git would take through a temporary index, so a worktree, its index and HEAD stay as they are. The tool's commits run no hooks of the project. Only the spec commit in `apply` and what `init` writes use the user's identity and hooks. Run state lives in `<git dir>/markitect/runs/`.
 
-A landing deletes its own Run branch and every kept Run branch it covers: one of the same target, whose tip is a Result commit that adds nothing but its page, whose start the landing's start holds and whose impact the landing's impact holds (or the landing was `--full`). The landed Result lists them. What the cleanup after landing leaves cannot be on the landed page; the command prints it on standard error and the JSON holds it as `afterLanding`.
+## Required checks
 
-Result commits carry trailers the Command reads back: `Run-Work` on a landing (the next default base), `Run-Full-Check` or `Run-Full: true`, and on a Run branch `Run-Name`, `Run-Target`, `Run-Start`, `Run-Command`, `Run-State` and one `Run-Impact` line per entry of the impact.
+`internal/adapters/hostcheck` runs each check with `sh -c` in a clean export of the state, stopping at the first failure, with the variables of a session and of Git taken out. A pass is kept per state; a failure runs again. Exit 126 or 127 of a program outside the repository counts as "could not start", which is the environment's failure. A folder the work has not made yet is the work's.
 
-## Host Git
+## The session
 
-`internal/adapters/rungit` is the Command's own Git work outside the container. It works in a private bare repository: it reads the target branch, makes the start bundle, imports the bundle the sandbox hands out, compares commits, reads the files of a commit for `check`, merges with `git merge-tree`, writes the Result commit through a private index and pushes. The user's repository is only a Git remote to it, so Markitect never touches the user's working tree. The target is `--remote` and `--branch`: by default the current branch's upstream remote and branch, else `origin`, else the repository itself. The adapter never pushes to a branch checked out in a working tree of a local target, so with no remote a Command keeps its work on its Run branch. `apply` refuses to start when the spec has uncommitted changes, since a Command starts from a commit and would leave them out. Merges use Git's own text merge, whatever merge drivers attributes or configuration name.
-
-## Limits and honest stops
-
-`--deadline` bounds the whole Command (default 6 hours) and `--session-timeout` one session (3 hours). The deadline reaches every session and every Git and container operation. Removing the container and keeping a Result that does not land have their own two minutes after the deadline has passed. A session that ends as anything but finished ends the Command as `incomplete`, and the Result names the provider's failure class ([agents](../agents/README.md#failure-classes)).
+`internal/adapters/claude` starts `claude --bg --worktree <run>` on the user's stored login. The session runs in `dontAsk`, with file edits and any shell command allowed and a deny rule on `git push` and `gh`. Its settings are generated per Run under the run state: `worktree.baseRef` set to `head`, auto memory off, the user's own `CLAUDE.md` excluded, subagents forced onto the session's model and a long shell time limit. Only a session the provider reports as working counts as working. The model and effort come from `execution.yaml`, with `sonnet` and `high` as the defaults.
 
 ## The Result
 
-The Command writes the Result from what happened, never an agent. `markitect apply --json` prints it as JSON, the evaluation suite's Result contract; otherwise it prints the Result page, which is also committed under `.markitect/results/<run>.md`.
-
-| State | Outcome | Means |
-| --- | --- | --- |
-| `landed` | landed | the work is on the target branch |
-| `nothing-to-do` | not-landed | nothing affected; no agent started |
-| `check-failed` | not-landed | the spec has a real error; no agent started |
-| `verified`, `findings` | not-landed | `verify` found every item conforming and the required checks passing, or Findings, owner decisions or failing checks |
-| `spec-problem` | not-landed | a session or reviewer found the spec contradicting itself or leaving open something that changes behaviour at the boundary |
-| `refused` | not-landed | the repair rounds ran out |
-| `kept` | not-landed | the work passed but cannot land; it stays on its Run branch |
-| `incomplete` | not-landed | a deadline, a provider failure, a check that could not run, answers the Command could not accept or a technical failure |
-
-The page holds, in this order: the state and why; the command, outcome, target, base, start, work commit, Run branch, repair rounds, times, tokens (the sum over all sessions, "at least" when a session reported no total) and the full-check count; the owner's decisions with recommendations; the checklist with each item's latest answer, pointers and explanation; how much checking really happened (files opened, commands run, subagents started, pointers shown opened or not measured, answers that repeat another's words), measured by the Command from the transcripts; what could not be tested, from `not shown` answers and the reviewer's closing words; the required checks, with the commit they ran on and each result; Findings; possible missing links; side observations from impact; replaced Run branches; every session with its role, round, end, agent and seconds; and what cleanup left.
-
-**The full-check count.** Impact does not follow the code's own imports, so a full check now and then catches what it missed. Every Result says how many changes have landed on the target since the last full check, or since the first landing, and from ten on that a full check is due: `markitect verify --full`. The Command starts nothing by itself. A full check is a `verify --full` that ended `verified` or `findings`, which counts from the commit it examined, and a landed `apply --full`. The count is read from the target: the landing commits and their trailers, and the Result commits on Run branches. Each landing carries the newest full check it knows in `Run-Full-Check`, so a reset survives the deletion of a verify's Run branch. When a verify's branch is deleted before a landing carried it forward, the count errs toward due. When the count cannot be read, the Result says why.
+The tool writes the Result from what happened, never an agent. A landing's Result is part of its commit, under `.markitect/results/`. Any other stays on `markitect/runs/<run>`, where `verify`'s Findings are too. **The full-check count** says how many changes have landed since the last full check; from 10 on, the Result says one is due.
 
 ## Tests
 
-`run_test.go` runs whole Commands with scripted sessions and a scripted sandbox over the host's real Git: landing on an unmoved and a moved target, every gate refusal, repair rounds, the answer checks, a stop by the implementer, a spec problem, `verify`, `--full`, the full-check count and the deletion of covered Run branches. They are source evidence, not provider, container or native evidence.
+`run_test.go` runs whole Runs over real Git, with a provider that makes the worktree and a test that plays the agent: every row of `submit`, repair rounds, landing on a moved branch, conflicts, uncommitted edits, the hooks, the limits and `verify`.

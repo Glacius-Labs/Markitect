@@ -123,7 +123,7 @@ paths:
 
 ### Stale realization
 
-When the owner deletes a Definition, a file or a Package, the registry still names it. That is stale realization, not a compile error, so the initial check does not block the Command that cleans it up:
+When the owner deletes a Definition, a file or a Package, the registry still names it. That is stale realization, an error that says spec and code do not match yet, so `markitect apply` does not stop on it and `submit` refuses until it is settled:
 
 | Code | What |
 |---|---|
@@ -131,7 +131,7 @@ When the owner deletes a Definition, a file or a Package, the registry still nam
 | `stale.file` | an entry for a file that no longer exists |
 | `stale.page` | the page of a Package that no longer exists, and each file still listed only there |
 
-`check` passes and `lint` warns (`lint.stale`). A Command puts each stale entry on its checklist, and its gate refuses work that leaves one.
+`check` fails on each, in its group of errors in the realization, as it does on a file the registry does not list and on a Definition nothing links to and no file realizes (`definition.unused`). `check --spec` looks only at the spec itself.
 
 ### Ignore page
 
@@ -146,7 +146,7 @@ When the owner deletes a Definition, a file or a Package, the registry still nam
 
 ### Required checks
 
-`.markitect/execution.yaml` holds only the required checks, the one proof in a Command that does not come from an agent (`execution.syntax`, `execution.missing`):
+`.markitect/execution.yaml` holds the required checks, the one proof in a Run that does not come from an agent, and optionally the `model` and `effort` of a Run's sessions (default `sonnet` and `high`) (`execution.syntax`, `execution.missing`):
 
 ```yaml
 checks:
@@ -154,7 +154,6 @@ checks:
     command: go test ./...      # run with sh -c
     directory: .                # repository-relative; default .
     timeout: 10m                # a Go duration, required
-    environment: golang:1.27    # the container image the check runs in
 ```
 
 ## Commands
@@ -164,16 +163,17 @@ All commands take `--repo DIR`, a folder inside the project's Git repository (de
 | Command | Does |
 |---|---|
 | `markitect init [--name TITLE]` | Writes what is missing: the manifest with `std`, `execution.yaml` with no checks, the project anchor `model/project.md` if the model folder is empty, Root's registry page, the ignore page and the lock. Installs or updates the skills in `.claude/skills/` and `.agents/skills/` and lists them on the ignore page. Never changes an existing model file. |
-| `markitect check` | Compiles the project and prints every compile error, one per line as `file:line: code: message`. Errors only; exit 1 when there is one. |
+| `markitect check [--spec]` | Compiles the project and prints every error, one per line as `file:line: code: message`, the spec's apart from the realization's. Errors only; exit 1 when there is one. `--spec` looks only at the spec. |
 | `markitect lock` | Writes the lock from the manifest and the Libraries it names. |
 | `markitect refs TARGET` | Who links to a Definition or Package: Definitions by link or as their Kind, and the registry entries that realize it. |
 | `markitect graph` | The Package dependency graph as a Mermaid diagram, with each Package's coupling and the links behind each edge. |
-| `markitect impact --base COMMIT [--full] [--findings FILE]` | What the change from the base commit to the working tree reaches: Definitions with distance and reason, files with their owners. Refuses a project with compile errors. |
+| `markitect impact [--base COMMIT] [--full] [--findings FILE]` | What the change from the base commit, by default the work of the last landing, to the working tree reaches: Definitions with distance and reason, files with their owners. Refuses a spec with errors. |
 | `markitect lint` | Warnings only, and the coupling table. |
 
-`refs`, `graph` and `lint` also run over a project with compile errors and say so on standard error.
+`refs`, `graph` and `lint` also run over a spec with errors and say so on standard error.
 
-`markitect desktop [--listen ADDR] [--no-open]` opens Markitect, the app over these commands; [Markitect Desktop](../../internal/adapters/desktop/README.md) describes it.
+`markitect apply`, `verify`, `status` and `stop`, and what a session calls, are in the [project workflow](project-workflow.md#7-apply-and-verify) and [the process of a Run](../../internal/run/README.md).
+
 
 ### Impact and checklists
 
@@ -184,7 +184,7 @@ All commands take `--repo DIR`, a folder inside the project's Git repository (de
 - **Further Definitions** link to a reached Definition at more steps. Each comes with its distance and reason, and they are on no checklist: the default strategy stops at one step.
 - **Reached files** are the changed files and the files that realize a reached Definition, each with its owner.
 
-A Command makes one checklist from this ([the Command](../../internal/run/README.md#a-command)): every reached Definition once, every deleted Definition, every Finding, every stale registry entry and every file the registry does not list, each with the files the registry names for it. With `--full` every model Definition is reached.
+A Run makes one checklist from this ([a Run](../../internal/run/README.md#a-run)): every reached Definition once, every deleted Definition, every Finding, every stale registry entry, every unused Definition and every file the registry does not list, each with the files the registry names for it. With `--full` every model Definition is reached.
 
 `impact` also prints the Packages with a checklist item or a reached file, and their parents up to Root, with a list for each: its own Definitions, the inherited ones (Definitions of the Packages above it that the change itself changed), the Findings whose Definition it holds and its stale entries. A Command does not use this split.
 
@@ -214,11 +214,9 @@ A Finding whose Definition no longer exists becomes a side note of the impact.
 | `lint.unstable_dependency` | a Package depends on a less stable one: instability Ce / (Ca + Ce) of the target is higher |
 | `lint.definition_size` | a Definition's body has more than 1000 words |
 | `lint.package_size` | a Package has more than 25 Definitions of its own |
-| `lint.unused` | nothing links to a Definition (by link or as its Kind) and no file realizes it |
 | `lint.reach` | a change to a Definition outside Root would give more than half of the Packages a checklist item or a reached file, in a model of at least 6 Packages |
 | `lint.thin_package` | a Package has no Definitions of its own and only one child |
 | `lint.no_paths` | a Package other than Root claims no path pattern, as above |
-| `lint.stale` | stale realization, as above |
 
 Change hotspots from Git history come later. Coupling counts explicit edges only, not the implicit edge to the parent.
 
@@ -230,8 +228,7 @@ Details the concept leaves open, settled while building T1:
 - **Library links.** A path whose first name is a Library is a Library link, so no top-level model name may equal a Library's name.
 - **Local Library versions.** A local Library carries no version file; the manifest names its version and the lock pins its digest.
 - **Specificity.** An exact path beats every pattern; otherwise more literal characters win; a tie between Packages is an error.
-- **Stale realization** is reported, not refused (above): a registry link to a deleted Definition or an entry for a missing file does not block the Command that cleans it up. A repository file without any entry stays a compile error. Confirmed by the owner on 28 October 2026 (concept §3).
+- **Stale realization** and unused Definitions are errors of the realization: they stop `check` and `submit`, not `apply` ([draft concept 4.0](../concepts/v4-concept.md#what-check-refuses)). A repository file without any entry is the same. The owner's earlier confirmation of 28 October 2026 is overturned on this branch.
 - **Inherited items** in the per-Package lists are only Definitions above that the change itself changed, not those reached through a file or a link; otherwise a README edit at Root would put an item on every Package's list. Confirmed by the owner on 28 October 2026.
 - **How far impact follows.** The checklist takes one step of links, and the registry in both directions; Definitions at more steps are reported with their distance. The code's own imports are not followed yet; a later step that knows the realization's languages can widen reach.
-- **The required check's environment** names the container image it runs in, and the parser requires it. A Command runs every check in its one container, from the project's image ([the sandbox](../../internal/run/README.md#the-sandbox)), so it does not select another image.
-- **Skills** are installed into `.claude/skills/` (Claude Code) and `.agents/skills/` (the Agent Skills folder that Codex and other agents read).
+- **Skills** are installed into `.claude/skills/` (Claude Code) and `.agents/skills/` (the Agent Skills folder that Codex and other agents read). The harness of a Run, the apply and verify skills and the reviewer agent, goes into `.claude/` only.

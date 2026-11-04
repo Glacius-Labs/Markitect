@@ -64,7 +64,7 @@ func TestCommandsEndToEnd(t *testing.T) {
 
 	r.Write(".markitect/model/loan-limit.md", "---\nkind: std/Rule\n---\n# Loan limit\n\nAt most `5` open loans, for [[members]].\n")
 	r.Write(".markitect/model/members/member.md", "---\nkind: std/Concept\n---\n# Member\n\nA person who borrows.\n")
-	r.Write(".markitect/registry.md", read(t, r.Dir, ".markitect/registry.md")+"| `README.md` | [[project]] | Overview |\n")
+	r.Write(".markitect/registry.md", read(t, r.Dir, ".markitect/registry.md")+"| `README.md` | [[project]], [[loan-limit]] | Overview |\n")
 	r.Write(".markitect/registry/members.md", "---\npaths: [src/members/**]\n---\n# Registry: members\n\n| File | Realizes | Why |\n|---|---|---|\n| `src/members/member.go` | [[members/member]] | The type |\n")
 	if out := mustRun(t, r.Dir, "check"); !strings.HasPrefix(out, "ok: 3 Definitions in 2 Packages") {
 		t.Fatalf("check = %s", out)
@@ -123,19 +123,67 @@ func TestCommandsEndToEnd(t *testing.T) {
 	if out := mustRun(t, r.Dir, "graph"); !strings.Contains(out, "```mermaid") {
 		t.Fatalf("graph:\n%s", out)
 	}
-	if out := mustRun(t, r.Dir, "lint"); !strings.Contains(out, "lint.unused") || !strings.Contains(out, "loan-limit") {
-		t.Fatalf("lint:\n%s", out)
-	}
+	mustRun(t, r.Dir, "lint")
 
 	// impact refuses a model that does not compile, before reading the base.
 	r.Write(".markitect/model/broken.md", "no front matter\n")
 	code, _, errOut := run(t, r.Dir, "impact", "--base", base)
-	if code != 1 || !strings.Contains(errOut, "impact needs a model that compiles") {
+	if code != 1 || !strings.Contains(errOut, "impact needs a spec that compiles") {
 		t.Fatalf("impact on errors: %d %s", code, errOut)
 	}
 	code, _, errOut = run(t, r.Dir, "lint")
-	if code != 0 || !strings.Contains(errOut, "compile errors") {
+	if code != 0 || !strings.Contains(errOut, "the spec has") {
 		t.Fatalf("lint on errors: %d %s", code, errOut)
+	}
+}
+
+// check tells the spec from the realization, and --spec looks only at the spec.
+func TestCheckGroupsItsErrors(t *testing.T) {
+	r := testkit.NewRepo(t)
+	mustRun(t, r.Dir, "init", "--name", "Demo")
+	code, out, _ := run(t, r.Dir, "check")
+	if code != 1 || !strings.Contains(out, "In the realization") || !strings.Contains(out, "definition.unused") {
+		t.Fatalf("check on a new project: %d\n%s", code, out)
+	}
+	if out := mustRun(t, r.Dir, "check", "--spec"); !strings.HasPrefix(out, "ok:") {
+		t.Fatalf("check --spec: %s", out)
+	}
+	r.Write(".markitect/model/broken.md", "no front matter\n")
+	code, out, _ = run(t, r.Dir, "check", "--spec")
+	if code != 1 || !strings.Contains(out, "In the spec") {
+		t.Fatalf("check --spec on a broken spec: %d\n%s", code, out)
+	}
+}
+
+// init installs the harness, keeps the worktrees out of Git and commits what it
+// wrote, so that the first apply finds a clean folder.
+func TestInitInstallsTheHarness(t *testing.T) {
+	r := testkit.NewRepo(t)
+	r.Git("config", "user.name", "Owner")
+	r.Git("config", "user.email", "owner@example.invalid")
+	out := mustRun(t, r.Dir, "init", "--name", "Demo")
+	if !strings.Contains(out, "installed the harness") || !strings.Contains(out, "committed what init wrote") {
+		t.Fatalf("init: %s", out)
+	}
+	for _, file := range []string{".claude/skills/markitect-apply/SKILL.md", ".claude/skills/markitect-verify/SKILL.md", ".claude/agents/markitect-reviewer.md"} {
+		if read(t, r.Dir, file) == "" {
+			t.Fatalf("%s is empty", file)
+		}
+	}
+	if !strings.Contains(read(t, r.Dir, ".gitignore"), ".claude/worktrees/") {
+		t.Fatal("the worktrees are not ignored")
+	}
+	if status := r.Git("status", "--porcelain"); status != "" {
+		t.Fatalf("init left the folder dirty: %s", status)
+	}
+	code, checked, _ := run(t, r.Dir, "check")
+	if code != 1 || strings.Contains(checked, "file.unregistered") {
+		t.Fatalf("the harness needs no registry entry: %s", checked)
+	}
+	// Run again it changes nothing.
+	mustRun(t, r.Dir, "init", "--name", "Demo")
+	if status := r.Git("status", "--porcelain"); status != "" {
+		t.Fatalf("a second init left: %s", status)
 	}
 }
 
@@ -163,26 +211,13 @@ func TestUsageAndRefusals(t *testing.T) {
 	if Run(context.Background(), []string{"bughunt"}, &out, &errOut) != 2 || !strings.Contains(errOut.String(), `unknown command "bughunt"`) {
 		t.Fatalf("unknown command: %s", errOut.String())
 	}
-	// Without an image apply starts nothing.
-	t.Setenv("MARKITECT_MANAGER_IMAGE", "")
-	errOut.Reset()
-	if Run(context.Background(), []string{"apply"}, &out, &errOut) != 2 || !strings.Contains(errOut.String(), "no image: build one from packaging/runtime") {
-		t.Fatalf("apply without adapters: %s", errOut.String())
-	}
-	// The engine's own networks are refused before any engine call.
-	t.Setenv("MARKITECT_MANAGER_IMAGE", "sha256:none")
-	t.Setenv("MARKITECT_NETWORK", "bridge")
-	errOut.Reset()
-	if Run(context.Background(), []string{"apply"}, &out, &errOut) != 2 || !strings.Contains(errOut.String(), "no user-defined network") {
-		t.Fatalf("apply on the engine's bridge: %s", errOut.String())
-	}
 	dir := testkit.TempDir(t)
 	if code, _, errOut := run(t, dir, "check"); code != 2 || !strings.Contains(errOut, "not inside a Git repository") {
 		t.Fatalf("check outside Git: %d %s", code, errOut)
 	}
 	r := testkit.NewRepo(t)
-	if code, _, errOut := run(t, r.Dir, "impact"); code != 2 || !strings.Contains(errOut, "needs --base") {
-		t.Fatalf("impact without base: %d %s", code, errOut)
+	if code, _, errOut := run(t, r.Dir, "impact"); code != 1 || !strings.Contains(errOut, "needs a spec that compiles") {
+		t.Fatalf("impact without a project: %d %s", code, errOut)
 	}
 	if code, out, _ := run(t, r.Dir, "check"); code != 1 || !strings.Contains(out, "manifest.missing") {
 		t.Fatalf("check without init: %d %s", code, out)

@@ -27,6 +27,8 @@
 </p>
 
 > [!IMPORTANT]
+> This branch builds [draft concept 4.0](docs/concepts/v4-concept.md): `apply` starts a background session on your own login, with no Docker or token. The [project workflow](docs/guides/project-workflow.md#7-apply-and-verify) is current; the parts of this page about Managers, containers and images describe an earlier version.
+>
 > Markitect is in active development and runs from source; there is no release yet. Every command on this page exists on `main`. Whether its Runs keep a project at least as consistent as one strong agent with ordinary documentation, with fewer defects left for people to repair, is the question its evaluation answers; a pilot has run, and the counted series follows ([status](#status)).
 
 ## Why Markitect

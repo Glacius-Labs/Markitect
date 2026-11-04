@@ -168,19 +168,6 @@ func TestForbiddenLayerImportFailsInEveryFile(t *testing.T) {
 	}
 }
 
-func TestAnImportOfTheModuleRootIsAnEdge(t *testing.T) {
-	root := t.TempDir()
-	writeFixture(t, root, map[string]string{
-		"README.md":           "# Owner\n",
-		"source.go":           "package markitect\n",
-		"internal/model/m.go": "package model\nimport _ \"" + strings.TrimSuffix(ModulePath, "/") + "\"\n",
-	})
-	got, err := fixtureRules(t, "internal/model", ".").CheckRepository(root)
-	if err != nil || len(got) != 1 || got[0].Edge.To != "." || got[0].Rule != "layer model may not import layer image-source" {
-		t.Fatalf("%v %v", got, err)
-	}
-}
-
 func TestTestkitOnlyInTests(t *testing.T) {
 	for _, tc := range []struct {
 		file, content string

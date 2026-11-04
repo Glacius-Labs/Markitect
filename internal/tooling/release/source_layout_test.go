@@ -18,19 +18,12 @@ func rootLayoutFixture(t *testing.T) string {
 		"internal/realization/registry.go":            "package realization\n",
 		"internal/analysis/impact.go":                 "package analysis\n",
 		"internal/adapters/repo/git.go":               "package repo\n",
-		"cmd/markitect-agentd/main.go":                "package main\n",
-		"internal/agentd/agentd.go":                   "package agentd\n",
 		"internal/project/testdata/fixture.json":      "literal historical fixture\n",
 		"internal/adapters/cli/cli.go":                "package cli\n",
 		"internal/libraries/libraries.go":             "package libraries\n",
 		"internal/libraries/std/Rule.md":              "---\nkind: Kind\n---\n# Rule\n",
 		"internal/skills/skills.go":                   "package skills\n",
 		"internal/skills/markitect-modeling/SKILL.md": "# Modeling\n",
-		"internal/adapters/desktop/desktop.go":        "package desktop\n",
-		"internal/adapters/desktop/ui/index.html":     "<!doctype html>\n",
-		"internal/adapters/desktop/ui/assets/app.js":  "export {}\n",
-		"cmd/markitect-desktop/main.go":               "//go:build native\n\npackage main\n",
-		"cmd/markitect-desktop/icon.png":              "\x89PNG\r\n\x1a\n",
 		"internal/tooling/release/install.go":         "package release\n",
 		"internal/testkit/testdata/hostile.gitconfig": "[core]\n hooksPath=blocked\n",
 	} {
@@ -40,13 +33,10 @@ func rootLayoutFixture(t *testing.T) string {
 }
 
 func TestEmbeddedFilesSurviveLiveAndFixedPackaging(t *testing.T) {
-	// The standard Libraries, the skills, the desktop's UI and the native
-	// app's icons are built into the binaries, so a packaged source must carry
-	// them; other files below those packages stay out.
+	// The standard Libraries and the skills are built into the binaries, so a
+	// packaged source must carry them; other files below those packages stay out.
 	root := rootLayoutFixture(t)
 	writeLayoutFile(t, root, "internal/libraries/notes.txt", "do not package\n")
-	writeLayoutFile(t, root, "internal/adapters/desktop/notes.txt", "do not package\n")
-	writeLayoutFile(t, root, "cmd/markitect-desktop/notes.txt", "do not package\n")
 	live, _, err := Package(root, "1.2.3")
 	if err != nil {
 		t.Fatal(err)
@@ -65,12 +55,12 @@ func TestEmbeddedFilesSurviveLiveAndFixedPackaging(t *testing.T) {
 	}
 	for _, archive := range [][]byte{live, fixed} {
 		contents := archiveContents(t, archive)
-		for _, name := range []string{"internal/libraries/std/Rule.md", "internal/skills/markitect-modeling/SKILL.md", "internal/adapters/desktop/ui/index.html", "internal/adapters/desktop/ui/assets/app.js", "cmd/markitect-desktop/icon.png"} {
+		for _, name := range []string{"internal/libraries/std/Rule.md", "internal/skills/markitect-modeling/SKILL.md"} {
 			if _, ok := contents[name]; !ok {
 				t.Errorf("embedded file omitted: %s", name)
 			}
 		}
-		for _, name := range []string{"internal/libraries/notes.txt", "internal/adapters/desktop/notes.txt", "cmd/markitect-desktop/notes.txt"} {
+		for _, name := range []string{"internal/libraries/notes.txt"} {
 			if _, found := contents[name]; found {
 				t.Errorf("packaged unrelated text %s", name)
 			}
@@ -104,7 +94,7 @@ func TestRootLayoutLiveAndFixedMatch(t *testing.T) {
 		t.Fatal("live and fixed root selections differ")
 	}
 	contents := archiveContents(t, live)
-	for _, name := range []string{"cmd/markitect/main.go", "internal/model/vendor.go", "internal/project/prepared.go", "internal/realization/registry.go", "internal/analysis/impact.go", "internal/adapters/repo/git.go", "cmd/markitect-agentd/main.go", "internal/agentd/agentd.go", "internal/project/testdata/fixture.json", "internal/adapters/cli/cli.go", "internal/libraries/std/Rule.md", "internal/skills/markitect-modeling/SKILL.md", "internal/tooling/release/install.go", "internal/testkit/testdata/hostile.gitconfig"} {
+	for _, name := range []string{"cmd/markitect/main.go", "internal/model/vendor.go", "internal/project/prepared.go", "internal/realization/registry.go", "internal/analysis/impact.go", "internal/adapters/repo/git.go", "internal/project/testdata/fixture.json", "internal/adapters/cli/cli.go", "internal/libraries/std/Rule.md", "internal/skills/markitect-modeling/SKILL.md", "internal/tooling/release/install.go", "internal/testkit/testdata/hostile.gitconfig"} {
 		if _, ok := contents[name]; !ok {
 			t.Errorf("omitted %s", name)
 		}

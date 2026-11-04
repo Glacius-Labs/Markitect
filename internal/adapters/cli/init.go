@@ -221,7 +221,11 @@ func (c CLI) ensureIgnored(ws Workspace, created func(string)) error {
 			rows = append(rows, fmt.Sprintf("| `%s` | Skills installed by markitect init |\n", pattern))
 		}
 	}
-	for pattern, why := range map[string]string{".claude/agents/markitect-*": "The reviewer agent installed by markitect init", ".gitignore": "Git's own"} {
+	own := map[string]string{".claude/agents/markitect-*": "The reviewer agent installed by markitect init"}
+	if !registered(ws, ".gitignore") {
+		own[".gitignore"] = "Git's own"
+	}
+	for pattern, why := range own {
 		if !bytes.Contains(current, []byte("`"+pattern+"`")) {
 			rows = append(rows, fmt.Sprintf("| `%s` | %s |\n", pattern, why))
 		}
@@ -251,6 +255,23 @@ func (c CLI) ensureIgnored(ws Workspace, created func(string)) error {
 		fmt.Fprintf(c.Stdout, "added the skill folders to %s\n", project.IgnoreFile)
 	}
 	return nil
+}
+
+// registered says whether a registry page lists a file.
+func registered(ws Workspace, file string) bool {
+	pages, err := ws.List(project.RegistryDir)
+	if err != nil {
+		pages = nil
+	}
+	for _, page := range append(pages, project.RootPage) {
+		if !ws.Exists(page) {
+			continue
+		}
+		if data, err := ws.Read(page); err == nil && bytes.Contains(data, []byte(file)) {
+			return true
+		}
+	}
+	return false
 }
 
 func (c CLI) lock(ctx context.Context, args []string) (int, error) {

@@ -12,11 +12,14 @@ import (
 func TestLockAndCheckReadTheSameLibraryFiles(t *testing.T) {
 	r := testkit.NewRepo(t)
 	mustRun(t, r.Dir, "init")
-	r.Write(".gitignore", "*.swp\n")
+	if err := os.WriteFile(filepath.Join(r.Dir, ".gitignore"), []byte(read(t, r.Dir, ".gitignore")+"*.swp\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	r.Write("README.md", "# Project\n")
 	r.Write(".markitect/manifest.yaml", "libraries:\n  std: 1.0.0\n  web: 0.1.0\n")
 	r.Write(".markitect/libraries/web/Page.md", "---\nkind: Kind\n---\n# Page\n")
 	r.Write(".markitect/libraries/web/Page.md.swp", "editor swap file\n")
-	r.Write(".markitect/registry.md", read(t, r.Dir, ".markitect/registry.md")+"| `.gitignore` | [[project]] | Git settings |\n")
+	r.Write(".markitect/registry.md", read(t, r.Dir, ".markitect/registry.md")+"| `README.md` | [[project]] | Overview |\n")
 	mustRun(t, r.Dir, "lock")
 	if code, out, _ := run(t, r.Dir, "check"); code != 0 {
 		t.Fatalf("check after lock: %d\n%s", code, out)

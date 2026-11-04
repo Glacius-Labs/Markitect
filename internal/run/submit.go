@@ -121,8 +121,26 @@ func (e *Engine) submitApply(ctx context.Context, st *RunState, root string) (Ve
 		}
 		st.Passed[commit.Tree] = true
 	}
-	// Row 6: no complete review for this state.
+	// Row 6: no complete review for this state. A review that finished on an
+	// earlier state still counts: an implementer that reads its report and repairs
+	// before calling submit has used a round like any other, and what the review
+	// settled stands.
 	if st.Review == nil || st.Review.Tree != commit.Tree {
+		if prev := st.Review; prev != nil && prev.Complete() {
+			st.Reviewed = prev.Commit
+			wrong, decisions := e.verdicts(st)
+			if len(decisions) > 0 {
+				return e.closeVerdict(ctx, st, StateSpecProblem, "a reviewer found a spec problem: the spec needs the owner", decisions)
+			}
+			if len(wrong) > 0 && !prev.Counted {
+				if st.Repairs == repairRounds {
+					return e.closeVerdict(ctx, st, StateRefused, "the repair rounds ran out, and these stay open: "+strings.Join(wrong, "; "), nil)
+				}
+				prev.Counted = true
+				st.Repairs++
+				st.SentBack = append(st.SentBack, strings.Join(wrong, "; "))
+			}
+		}
 		if err := e.Git.Adopt(ctx, root, cand); err != nil {
 			return Verdict{}, err
 		}
@@ -144,16 +162,7 @@ func (e *Engine) submitApply(ctx context.Context, st *RunState, root string) (Ve
 		return Verdict{Text: fmt.Sprintf("The review is not complete: %d items have no answer. Start the %s agent again with the message \"Review run %s.\"\n", len(missing), ReviewerAgent, st.Run)}, nil
 	}
 	st.Reviewed = rev.Commit
-	var wrong []string
-	var decisions []OwnerDecision
-	for _, it := range st.Items {
-		switch a := st.Answers[it.Key]; a.Word {
-		case AnswerSpecProblem:
-			decisions = append(decisions, OwnerDecision{Matter: fmt.Sprintf("%s: %s", it.Key, a.Explanation), Recommendation: "Settle it in the spec and run apply again."})
-		case AnswerWrong:
-			wrong = append(wrong, fmt.Sprintf("%s: %s %s", it.Key, a.Explanation, pointers(a.Pointers)))
-		}
-	}
+	wrong, decisions := e.verdicts(st)
 	// Row 7: a spec problem ends the Run before a round is counted.
 	if len(decisions) > 0 {
 		return e.closeVerdict(ctx, st, StateSpecProblem, "a reviewer found a spec problem: the spec needs the owner", decisions)
@@ -172,6 +181,22 @@ func (e *Engine) submitApply(ctx context.Context, st *RunState, root string) (Ve
 	}
 	// Row 9: nothing left.
 	return e.land(ctx, st, cand, commit.Tree)
+}
+
+// verdicts reads what the latest answers say: what is wrong, and what only the
+// owner can settle.
+func (e *Engine) verdicts(st *RunState) ([]string, []OwnerDecision) {
+	var wrong []string
+	var decisions []OwnerDecision
+	for _, it := range st.Items {
+		switch a := st.Answers[it.Key]; a.Word {
+		case AnswerSpecProblem:
+			decisions = append(decisions, OwnerDecision{Matter: fmt.Sprintf("%s: %s", it.Key, a.Explanation), Recommendation: "Settle it in the spec and run apply again."})
+		case AnswerWrong:
+			wrong = append(wrong, fmt.Sprintf("%s: %s %s", it.Key, a.Explanation, pointers(a.Pointers)))
+		}
+	}
+	return wrong, decisions
 }
 
 // protected says what changed that a Run may not change: the owner's part of

@@ -84,8 +84,8 @@ func loadRepo(t *testing.T, r memRepo) *project.Project {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(p.Errors) != 0 {
-		t.Fatalf("fixture does not compile:\n%v", p.Errors)
+	if errs := p.SpecErrors(); len(errs) != 0 {
+		t.Fatalf("fixture does not compile:\n%v", errs)
 	}
 	return p
 }
@@ -378,13 +378,6 @@ func expectWarning(t *testing.T, ds model.Diagnostics, code, fragment string) {
 	t.Fatalf("no %s containing %q in:\n%v", code, fragment, ds)
 }
 
-func TestLintCleanFixtureWarnsOnlyUnused(t *testing.T) {
-	ds := lintCodes(t, library(t))
-	if len(ds) != 1 || ds[0].Code != "lint.unused" || !strings.Contains(ds[0].Message, "loan-limit") {
-		t.Fatalf("lint = %v", ds)
-	}
-}
-
 func TestLintCoupling(t *testing.T) {
 	r := library(t)
 	var links []string
@@ -452,18 +445,6 @@ func TestLintNoPaths(t *testing.T) {
 			t.Fatalf("unexpected %v", d)
 		}
 	}
-}
-
-func TestLintStale(t *testing.T) {
-	r := library(t)
-	delete(r, m+"catalog/shelf.md")
-	delete(r, "src/members/loans/loan.go")
-	delete(r, m+"members/loans/loan.md")
-	r[project.RegistryDir+"/gone.md"] = table + "| src/gone.go | [[gone/g]] | old |\n"
-	ds := lintCodes(t, r)
-	expectWarning(t, ds, "lint.stale", "src/catalog/book.go links [[catalog/shelf]], which no longer exists; catalog must realign")
-	expectWarning(t, ds, "lint.stale", "the Package of this page no longer exists")
-	expectWarning(t, ds, "lint.stale", "src/members/loans/loan.go no longer exists")
 }
 
 func TestParseFindings(t *testing.T) {

@@ -164,7 +164,7 @@ func TestLoadLocalLibraryAndLock(t *testing.T) {
 	}
 	r.files[LockFile] = string(model.RenderLock([]model.LibrarySource{std, web}))
 	p := load(t, r)
-	for _, d := range p.Errors {
+	for _, d := range p.SpecErrors() {
 		t.Errorf("unexpected: %v", d)
 	}
 	if p.Model.Definitions["home"].Kind != "web/Page" {
@@ -206,4 +206,32 @@ other: 1
 	expect(t, ds, "execution.syntax", "checks must be a list")
 	_, ds = ParseExecution("execution.yaml", []byte("checks: [\n"))
 	expect(t, ds, "execution.syntax", "not valid YAML")
+}
+
+// Spec and code that do not match are errors, apart from errors in the spec: a
+// deleted Definition's entry and a Definition nothing uses stop check, not a Run.
+func TestRealizationErrors(t *testing.T) {
+	r := valid(t)
+	r.files[ModelDir+"/unused.md"] = "---\nkind: std/Concept\n---\n# Unused\n"
+	r.files[RegistryDir+"/members.md"] = "---\npaths: [src/**]\n---\n| File | Realizes | Why |\n|---|---|---|\n| src/member.go | [[members/member]] | Member |\n| src/gone.go | [[members/member]] | Gone |\n"
+	p := load(t, r)
+	if len(p.SpecErrors()) != 0 {
+		t.Fatalf("spec errors: %v", p.SpecErrors())
+	}
+	got := map[string]bool{}
+	for _, d := range p.RealizationErrors() {
+		got[d.Code] = true
+	}
+	for _, code := range []string{CodeUnused, "stale.file"} {
+		if !got[code] {
+			t.Errorf("no %s in %v", code, p.RealizationErrors())
+		}
+	}
+}
+
+func TestExecutionHoldsModelAndEffort(t *testing.T) {
+	exec, ds := ParseExecution("execution.yaml", []byte("model: opus\neffort: max\nchecks: []\n"))
+	if len(ds) != 0 || exec.Model != "opus" || exec.Effort != "max" {
+		t.Fatalf("%+v %v", exec, ds)
+	}
 }
