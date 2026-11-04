@@ -14,8 +14,9 @@ plus the project's registry pages, which give each Package the paths it owns
                           model:   tools/evaluation-tasks/library/mN
   makerspace   W0 to C9   task.md: tools/comparison/makerspace-v2/spec/requirements-STEP.md
                           model:   tools/evaluation-tasks/makerspace/STEP
-  makerspace-large  W0    task.md: tools/makerspace-large/spec/requirements-w0.md
-                          model:   tools/evaluation-tasks/makerspace-large/w0
+  makerspace-large  W0 to C8   task.md: tools/makerspace-large/spec/requirements-w0.md, then spec/request-cN.md, the
+                               change request alone, since a later step's variant has the repository
+                          model:   tools/evaluation-tasks/makerspace-large/STEP, with its registry pages in it from C1 on
 
 `base` writes the model a fixed reference start realizes, for
 `suite.py task --base-model`: the step's model with the registry pages an owner
@@ -40,7 +41,8 @@ SERIES = {
     "library": [(f"M{i}", f"tools/comparison/packet/requirements-m{i}.md", f"tools/evaluation-tasks/library/m{i}") for i in range(1, 6)],
     "makerspace": [(s, f"tools/comparison/makerspace-v2/spec/requirements-{s.lower()}.md", f"tools/evaluation-tasks/makerspace/{s.lower()}")
                    for s in ("W0", "C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9")],
-    "makerspace-large": [("W0", "tools/makerspace-large/spec/requirements-w0.md", "tools/evaluation-tasks/makerspace-large/w0")],
+    "makerspace-large": [("W0", "tools/makerspace-large/spec/requirements-w0.md", "tools/evaluation-tasks/makerspace-large/w0")]
+    + [(f"C{i}", f"tools/makerspace-large/spec/request-c{i}.md", f"tools/evaluation-tasks/makerspace-large/c{i}") for i in range(1, 9)],
 }
 
 
@@ -72,8 +74,8 @@ def write_step(series, step, out, repo=REPO):
     shutil.copyfile(task_md, out / "task.md")
     shutil.copytree(model, out / "model")
     # The owner's organization: which paths each Package owns. A Run reads ownership from its base, so a fresh
-    # project needs these pages before its first Run (internal/runremote/README.md).
-    if (model.parent / "registry").is_dir():
+    # project needs these pages before its first Run. A step with pages of its own has changed the Packages.
+    if (model.parent / "registry").is_dir() and not (out / "model" / "registry").is_dir():
         shutil.copytree(model.parent / "registry", out / "model" / "registry")
     return out
 

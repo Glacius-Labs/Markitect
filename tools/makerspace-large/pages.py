@@ -20,8 +20,8 @@ SHARED_FIRST = ("order-of-checks", "argument-values", "values", "refusal-codes",
                 "computed-times", "money", "list-order", "identifier-limits", "integer-limits", "request-limits", "list-audit-entries")
 # The order of the module sections: the design's build order.
 MODULES = ("protocol", "members", "equipment", "ledger", "notices", "households", "guardians", "waivers", "ppe", "lockouts", "inspections",
-           "staffing", "parts", "rooms", "billing", "deposits", "passes", "promotions", "scholarships", "refunds", "dunning", "lockers", "guests",
-           "volunteering", "training", "materials", "consumables", "bookings", "safety", "reporting", "access", "instructors", "classes",
+           "staffing", "parts", "rooms", "billing", "deposits", "passes", "packs", "promotions", "scholarships", "refunds", "dunning", "lockers", "guests",
+           "volunteering", "training", "loans", "materials", "consumables", "bookings", "safety", "reporting", "access", "instructors", "classes",
            "assessments", "waitlists", "payouts", "events", "hazmat", "purchasing", "stocktake", "workorders", "escalations", "projects",
            "quotes", "jobs", "compliance", "finance")
 

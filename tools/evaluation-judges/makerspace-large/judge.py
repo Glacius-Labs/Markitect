@@ -5,13 +5,14 @@
 `suite.py judge --step STEP` runs it in the judge container without network, with the task, the start bundle and the
 result bundle read-only, and reads OUT_DIR/judge.json. Inside one container it judges:
 
-- Correctness: the hidden cases of tools/makerspace-large/oracle at W0, which hold Makerspace's own 54 cases unchanged,
-  one generated case per new operation and the cases written by hand, against the result's own `go build ./cmd/makerspace`;
+- Correctness: the hidden cases of tools/makerspace-large/oracle at the step, which hold Makerspace's own 54 cases unless a
+  step retired them, one generated case per new operation and the cases written by hand, against the result's own
+  `go build ./cmd/makerspace`;
 - Build and tests: the result's `go build ./cmd/makerspace` and `go test ./...` in `realization/`;
 - Scope: every changed path against the start. The task asks for `realization/` only; Markitect's registry pages and
   Results are its bookkeeping; any other `.markitect/` file, `task.md` and `TASK.md` are protected inputs, unless a changed
   file is a copy of the task's own model file;
-- Drift (judgekit): the retired terms of drift.json, of which there are none yet, and files nothing accounts for.
+- Drift (judgekit): the retired terms of drift.json from their step on, and files nothing accounts for.
 
 The result's code runs as the judge's user; with --contained the judge stops every other process in the container before
 it writes judge.json, only when the suite's container says so in EVALUATION_JUDGE_CONTAINER.
@@ -34,7 +35,7 @@ import judgekit  # noqa: E402
 NAME = "makerspace-large"
 PROGRAM = "makerspace"
 REQUESTED = "realization/"
-STEPS = ["W0"]
+STEPS = list(catalog.STEPS)
 # A program five times the size may have five times the tests, and they run on this limit.
 BUILD_SECONDS, TEST_SECONDS = 300, 900
 WORKERS = 4
@@ -44,8 +45,8 @@ def retired():
     return json.loads((HERE / "drift.json").read_text(encoding="utf-8"))["retired"]
 
 
-def oracle_cases(program, cwd):
-    report = catalog.assess([str(program)], str(cwd), workers=WORKERS)
+def oracle_cases(step, program, cwd):
+    report = catalog.assess([str(program)], str(cwd), workers=WORKERS, step=step)
     cases = [{"id": c["id"], "passed": c["passed"], "families": c["families"], "errors": c["errors"][:3]} for c in report["cases"]]
     return cases, {"failedFamilies": report["failed_families"], "casesSha256": report["cases_sha256"]}
 
@@ -68,8 +69,8 @@ def judge(task, start_bundle, result_bundle, tmp):
     judgekit.checkout(repo, commit, candidate)
     module = candidate / REQUESTED.rstrip("/")
     env = judgekit.go_env(tmp)
-    planned = [c["id"] for c in catalog.old_cases() + catalog.new_cases()]
-    first = judgekit.introduced({"W0": planned}, STEPS)
+    first = judgekit.introduced({s: [c["id"] for c in catalog.build_cases(s)] for s in STEPS}, STEPS)
+    planned = [c["id"] for c in catalog.build_cases(step)]
     details = {}
     if not (module / "go.mod").is_file():
         missing = {"exit": None, "timedOut": False, "passed": False, "log": "no realization/go.mod"}
@@ -81,7 +82,7 @@ def judge(task, start_bundle, result_bundle, tmp):
         if build_record["passed"] and program.is_file():
             cwd = tmp / "assess" / "realization"
             shutil.copytree(module, cwd)
-            cases, details = oracle_cases(program, cwd)
+            cases, details = oracle_cases(step, program, cwd)
         else:
             cases = [{"id": c, "passed": False, "errors": ["not built"]} for c in planned]
     record["correctness"] = judgekit.correctness(cases, step, STEPS, first, planned)
