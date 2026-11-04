@@ -44,3 +44,5 @@ The series judge on each step's reference and on its seeded mutants, in its cont
 | Lock | `NATIVE-RUN.lock` in the shared notes folder, through the tool's `--lock`. Other Docker work is checked first and stays off |
 | Cleanup | The judge removes its containers; afterwards nothing labelled with the evaluation may remain |
 | Evidence | Outside the repository, in `%LOCALAPPDATA%/markitect-large-steps/selftest/`, and the result here |
+
+**Result.** Two runs, about three and a half minutes each, in the judge's Linux container. The first passed 11 of its 13 cases: the judge flagged retired terms at C7 and C8 because the self-test's own tool kept a folder that a step had deleted. With [that fixed](../../tools/evaluation/judges.py), the second passed all 13: every step's reference, from 327 cases at W0 to 472 at C8, and the four seeded mutants. Nothing labelled with the evaluation remained.
