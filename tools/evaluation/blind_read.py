@@ -12,7 +12,8 @@ session sees, and a person should not read it before the reads are through.
 Grep only, no memory, on one model. The same prompt goes to all. The reader sees one result and the requirements, and
 never hears that there are others, so that what it says is about this program and not about a comparison. Each attempt
 lands in `reads/LABEL/aN/`, whatever became of the session. Running it again starts only the labels without a valid read.
-It stops before the next session once the weekly reading has risen by --stop-after-points, or when a request is refused.
+It stops before the next session once the weekly reading has risen by --stop-after-points from the first one of the
+series, which `reads/baseline.json` keeps across starts, when a request is refused, or when a session did no work at all.
 
 A score here says where to look. The difference between two results is for the owner and the session to go through.
 """
@@ -121,16 +122,15 @@ def run(material_root, model, box, deadline=DEADLINE, stop_after=None):
     root = pathlib.Path(material_root)
     key = json.loads((root / "key.json").read_text(encoding="utf-8"))
     results = {}
-    first_reading = 0
+    baseline = root / "reads" / "baseline.json"
     for label in sorted(key):
         reads = root / "reads" / label
-        earlier = sorted(reads.glob("a*/read.json"))
-        done = [json.loads(p.read_text(encoding="utf-8")) for p in earlier]
+        done = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(reads.glob("a*/read.json"))]
         if any(r["valid"] for r in done):
             results[label] = next(r for r in done if r["valid"])
             continue
-        # A failed attempt stays where it is, and a later `run` adds another.
-        out = reads / f"a{len(earlier) + 1}"
+        # A failed attempt stays where it is, killed or not, and a later `run` adds another.
+        out = reads / f"a{len(list(reads.glob('a*'))) + 1}"
         out.mkdir(parents=True)
         token = key[label]["token"]
         session = reviewing.session("read", PROMPT, token, root / "material" / label, out, model, box, reviewing.REVIEWER, deadline)
@@ -142,9 +142,13 @@ def run(material_root, model, box, deadline=DEADLINE, stop_after=None):
                 "wallSeconds": session.get("wallSeconds"), "weeklyReading": reading or None}
         (out / "read.json").write_text(json.dumps(read, indent=2) + "\n", encoding="utf-8")
         results[label] = read
-        first_reading = first_reading or reading
+        if reading and not baseline.exists():
+            baseline.write_text(json.dumps({"weekly": reading}) + "\n", encoding="utf-8")
+        first_reading = json.loads(baseline.read_text(encoding="utf-8"))["weekly"] if baseline.exists() else reading
         if quota["refused"]:
             raise ReadError("a request was refused: the reads stop here")
+        if not ((session["reported"] or {}).get("usage") or {}).get("turns"):
+            raise ReadError(f"the session for {label} did no work, as with a refused login: the reads stop here")
         if stop_after is not None and reading and reading - first_reading >= stop_after:
             raise ReadError(f"the weekly reading rose from {first_reading} to {reading}: the reads stop here")
     return results

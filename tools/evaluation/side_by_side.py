@@ -45,14 +45,13 @@ def launch_rows(labels, launches, reference):
         ("Wall time", get(lambda r: f"{r['wallSeconds'] / 60:.0f} min")),
         ("Cost, multiples of the reference", get(lambda r: f"{r['relativeCost'] / base:.2f} ×" if r.get("relativeCost") is not None else "not recorded")),
         ("Weekly reading, before and after", get(weekly)),
-        ("Subagents", get(lambda r: r.get("subagents", 0))),
-        ("Commits", get(lambda r: r.get("commits", "?"))),
     ]
 
 
 def measured_rows(labels, measures):
     get = lambda f: [f(measures[label]) for label in labels]
     return [
+        ("Builds", get(lambda m: "yes" if m["linters"]["builds"] else "no")),
         ("Program lines", get(lambda m: m["lines"]["program"])),
         ("Test lines", get(lambda m: m["lines"]["tests"])),
         ("Share of lines in tests", get(lambda m: percent(m["lines"]["testShare"]))),
@@ -119,6 +118,7 @@ def read_of(blind, label):
 def reads_section(labels, reads):
     rows = [(title, [reads[label]["answer"][name]["score"] if reads[label] else "no read" for label in labels]) for name, title in QUESTIONS]
     rows.append(("Would maintain it", [reads[label]["answer"]["takingOver"].get("wouldMaintain", "?") if reads[label] else "no read" for label in labels]))
+    rows.append(("Files the reader says it opened", [reads[label]["answer"].get("filesOpened", "?") if reads[label] else "no read" for label in labels]))
     out = [table(labels, rows)]
     for label in labels:
         read = reads[label]
@@ -156,8 +156,10 @@ def page(title, labels, launches, measures, reads, key, reference, notes=None):
     out.append(reads_section(labels, reads))
     out.append("## The key\n")
     out.append("Read this last.\n")
-    rows = "".join(f"| {label} | `{key[label]['name']}` | {launches[label].get('note') or ''} | {', '.join(sorted(launches[label].get('modelsAnswered') or {}))} |\n" for label in labels)
-    out.append("| Label | Kept launch | What it is | Models that answered |\n|---|---|---|---|\n" + rows)
+    # Subagents and commits go here too: above the key they would tell the arms apart.
+    rows = "".join(f"| {label} | `{key[label]['name']}` | {launches[label].get('note') or ''} | {', '.join(sorted(launches[label].get('modelsAnswered') or {}))} | "
+                   f"{launches[label].get('subagents', 0)} | {launches[label].get('commits', '?')} |\n" for label in labels)
+    out.append("| Label | Kept launch | What it is | Models that answered | Subagents | Commits |\n|---|---|---|---|---|---|\n" + rows)
     return "\n".join(out)
 
 

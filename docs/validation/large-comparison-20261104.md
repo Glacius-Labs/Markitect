@@ -9,7 +9,7 @@ Blind reads of the six kept builds, one fresh session each. The measuring runs n
 | Item | Value |
 |---|---|
 | Source | Branch `dev/u3-large-project`: [`blind_read.py`](../../tools/evaluation/blind_read.py) and [`reviewer.py`](../../tools/evaluation/reviewer.py) at the commit that adds this page |
-| Material | The six launches in the [lasting store](../../tools/evaluation/kept.py): K on Sonnet, arm S on Sonnet, K with a Haiku lead and Opus workers, and K on Haiku alone three times. Each as a copy of its program with a random label, without its history and without the files that name how it was made. The code stays as it is, comments included, so a comment can still show how a build was made, though the reader is not told what that means |
+| Material | The six launches in the [lasting store](../../tools/evaluation/kept.py): K on Sonnet, arm S on Sonnet, K with a Haiku lead and Opus workers, and K on Haiku alone three times. Each as a copy of its program with a random label, without its history and without the files that name how it was made. The code stays as it is, comments included, so a comment or a test that names the model can still show how a build was made, though the reader is not told what that means |
 | Readers | One session per build, with the requirements and the same questions. Read, Glob and Grep only. It does not know of the others |
 | Provider | `claude-opus-5-5` for all six, its subagents forced onto it. Judging architecture is the one thing a session here is asked for |
 | Login | The owner's subscription login, as an access-only copy in the suite's sandbox. Every other `ANTHROPIC_*` and `CLAUDE_*` variable is cleared |

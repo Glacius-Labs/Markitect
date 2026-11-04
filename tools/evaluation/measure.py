@@ -53,7 +53,9 @@ TEST_FUNCTION = re.compile(r"^func\s+(?:Test|Fuzz|Example)\w*\(")
 STRING = re.compile(r'"(?:[^"\\]|\\.)*"|`[^`]*`|\'(?:[^\'\\]|\\.)*\'')
 NUMBER = re.compile(r"\b\d[\w.]*\b")
 NAME = re.compile(r"\b[A-Za-z_]\w*\b")
+MODULE_TABLE = re.compile(r"^\|\s*Module\s*\|\s*Model\s*\|\s*May depend on\s*\|\s*$")
 MODULE_ROW = re.compile(r"^\|\s*`([a-z0-9_-]+)`\s*\|[^|]*\|\s*(.*?)\s*\|\s*$")
+UNREACHABLE = re.compile(r"^(.*?):\d+:\d+: unreachable func: (.+)$")
 QUOTED = re.compile(r"`([a-z0-9_-]+)`")
 
 
@@ -255,7 +257,7 @@ def structure(root, env):
     fan_out = {v: len(t) for v, t in edges.items()}
     top = lambda d: [{"package": k, "count": n} for k, n in sorted(d.items(), key=lambda kv: (-kv[1], kv[0]))[:TOP]]
     return {
-        "module": module, "packages": len(edges), "linesPerPackage": spread(list(lines.values())),
+        "module": module, "packages": len(edges), "linesPerPackage": spread([n for n in lines.values() if n]),
         "largestPackages": [{"package": k, "lines": n} for k, n in sorted(lines.items(), key=lambda kv: (-kv[1], kv[0]))[:TOP]],
         "imports": sum(fan_out.values()), "fanOut": top(fan_out), "fanIn": top(fan_in),
         "longestChain": longest_chain(edges), "cycles": cycles(edges), "errors": errors,
@@ -271,7 +273,8 @@ def linters(root, env, tools):
     code, out, err = tool([str(pathlib.Path(goroot.strip(), "bin", "gofmt")), "-l", "."], root, env)
     result["gofmt"] = len([s for s in out.splitlines() if not any(part in SKIP_DIRS for part in pathlib.PurePath(s).parts)])
     result["staticcheck"] = result["deadcode"] = None
-    if not tools:
+    # A program that does not build gives these tools nothing to say about it.
+    if not tools or not result["builds"]:
         return result
     suffix = ".exe" if os.name == "nt" else ""
     check, dead = pathlib.Path(tools, "staticcheck" + suffix), pathlib.Path(tools, "deadcode" + suffix)
@@ -288,7 +291,9 @@ def linters(root, env, tools):
     if dead.is_file():
         def unreachable(*flags):
             _, out, _ = tool([str(dead), *flags, "./..."], root, env)
-            return {s.partition(": unreachable func: ")[2] or s for s in out.splitlines() if "unreachable func" in s}
+            found = (UNREACHABLE.match(s) for s in out.splitlines())
+            # With the file: two helpers of one name in two packages are two functions.
+            return {f"{pathlib.PurePath(m.group(1)).as_posix()}: {m.group(2)}" for m in found if m}
         with_tests, from_main = unreachable("-test"), unreachable()
         result["deadcode"] = {"dead": len(with_tests), "onlyTests": len(from_main - with_tests), "examples": sorted(with_tests)[:TOP]}
     return result
@@ -297,11 +302,19 @@ def linters(root, env, tools):
 def read_table(page):
     """The module table of the spec's architecture page: module -> the modules it may depend on, or None for any."""
     table = {}
+    within = False
     for line in pathlib.Path(page).read_text(encoding="utf-8").splitlines():
-        m = MODULE_ROW.match(line)
-        if m:
-            cell = m.group(2)
-            table[m.group(1)] = [] if cell == "nothing" else QUOTED.findall(cell)
+        if MODULE_TABLE.match(line):
+            within = True
+        elif within and not line.startswith("|"):
+            break
+        elif within:
+            m = MODULE_ROW.match(line)
+            if m:
+                if m.group(1) in table:
+                    raise MeasureError(f"{page} lists the module {m.group(1)} twice")
+                cell = m.group(2)
+                table[m.group(1)] = [] if cell == "nothing" else QUOTED.findall(cell)
     if not table:
         raise MeasureError(f"{page} has no module table")
     return table

@@ -7,7 +7,8 @@
 
 Hidden tests cannot tell two results apart when both pass, so what a launch made has to outlast the work folder it ran
 in. A kept launch never changes: `add` refuses a name it already holds, and `check` compares every file with the hash
-it had when it was kept.
+it had when it was kept. `index.jsonl` holds each launch's name and the hash of its `launch.json`, so a changed record or a
+deleted launch shows too.
 
   NAME/launch.json       who, what, on which model, how long and at what cost, and every file's hash
   NAME/repo.bundle       the final repository with its whole history
@@ -33,6 +34,7 @@ FORMAT = 1
 TOKEN_VARIABLE = "MARKITECT_CLAUDE_TOKEN"
 KEY_SHAPE = re.compile(rb"sk-ant-[A-Za-z0-9_-]{20,}")
 SAFE_NAME = re.compile(r"^[a-z0-9][a-z0-9._-]*$")
+INDEX = "index.jsonl"
 
 
 class KeptError(Exception):
@@ -152,6 +154,8 @@ def add(store, name, project, step, arm, run_dir, judgment=None, weekly=None, no
         }
         (temporary / "launch.json").write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
         os.replace(temporary, dest)
+        with open(store / INDEX, "a", encoding="utf-8", newline="\n") as f:
+            f.write(json.dumps({"name": name, "launchSha256": digest(dest / "launch.json")}) + "\n")
     except BaseException:
         shutil.rmtree(temporary, ignore_errors=True)
         raise
@@ -163,8 +167,21 @@ def launches(store):
 
 
 def check(store):
-    """What no longer matches its hash, per launch."""
+    """What no longer matches its hash, per launch, and any launch deleted or added behind the index's back."""
     problems = []
+    indexed = {}
+    if pathlib.Path(store, INDEX).is_file():
+        for line in pathlib.Path(store, INDEX).read_text(encoding="utf-8").splitlines():
+            entry = json.loads(line)
+            indexed[entry["name"]] = entry["launchSha256"]
+    held_launches = {folder.name for folder in launches(store)}
+    for name in sorted(set(indexed) - held_launches):
+        problems.append(f"{name}: the launch is gone")
+    for name in sorted(held_launches - set(indexed)):
+        problems.append(f"{name}: not in the index")
+    for name in sorted(held_launches & set(indexed)):
+        if digest(pathlib.Path(store, name, "launch.json")) != indexed[name]:
+            problems.append(f"{name}: launch.json changed")
     for folder in launches(store):
         record = read_json(folder / "launch.json")
         held = {p.relative_to(folder).as_posix() for p in files_of(folder)} - {"launch.json"}

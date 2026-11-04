@@ -37,12 +37,24 @@ PROGRAM = {
     ".markitect/manifest.yaml": "libraries: {}\n",
     "CLAUDE.md": "notes\n",
 }
-TABLE = """| Module | Model | May depend on |
+TABLE = """An earlier table does not count:
+
+| Code | Why | What |
+| --- | --- | --- |
+| `early` | no | `x` |
+
+| Module | Model | May depend on |
 | --- | --- | --- |
 | `a` | [[a]] | `b` |
 | `b` | [[b]] | nothing |
 | `c` | [[c]] | nothing |
 | `d` | [[d]] | nothing |
+
+Nor does a later one:
+
+| Code | Why | What |
+| --- | --- | --- |
+| `b` | no | `x` |
 """
 
 
@@ -89,6 +101,15 @@ class Store(unittest.TestCase):
         with open(self.store / "demo" / "repo.bundle", "ab") as f:
             f.write(b"x")
         self.assertEqual(kept.check(self.store), ["demo: repo.bundle changed"])
+
+    def test_a_changed_record_and_a_deleted_launch_show(self):
+        run, _ = self.run_dir()
+        kept.add(self.store, "one", "p", "W0", "K", run)
+        kept.add(self.store, "two", "p", "W0", "K", run)
+        with open(self.store / "one" / "launch.json", "a", encoding="utf-8") as f:
+            f.write(" ")
+        shutil.rmtree(self.store / "two")
+        self.assertEqual(kept.check(self.store), ["two: the launch is gone", "one: launch.json changed"])
 
     def test_a_credential_in_the_evidence_keeps_nothing(self):
         run, _ = self.run_dir(transcript="sk-ant-" + "a" * 30 + "\n")
@@ -151,7 +172,7 @@ class Store(unittest.TestCase):
             event = {"type": "rate_limit_event", "rate_limit_info": {"status": "allowed", "unifiedWindows": {"seven_day": {"utilization": next(readings)}}}}
             (out / "sessions" / "s.jsonl").write_text(json.dumps(event) + "\n", encoding="utf-8")
             answer = answers.pop(0)
-            return {"valid": answer is not None, "answer": answer, "reported": {}, "wallSeconds": 5}
+            return {"valid": answer is not None, "answer": answer, "reported": {"usage": {"turns": 0 if answer == "no work" else 3}}, "wallSeconds": 5}
 
         original = reviewing.session
         reviewing.session = session
@@ -174,6 +195,30 @@ class Store(unittest.TestCase):
         self.assertTrue((root / "reads" / "A" / "a1" / "read.json").is_file())
         self.assertTrue((root / "reads" / "A" / "a2" / "read.json").is_file())
         self.assertEqual(results["A"]["weeklyReading"], 20.0)
+
+    def test_a_killed_attempt_does_not_wedge_the_next_start(self):
+        root = self.read_material()
+        (root / "reads" / "A" / "a1").mkdir(parents=True)
+        started = self.fake_session([self.good_answer(), self.good_answer()])
+        results = blind_read.run(root, "claude:m", None)
+        self.assertEqual(len(started), 2)
+        self.assertTrue(results["A"]["valid"])
+        self.assertTrue((root / "reads" / "A" / "a2" / "read.json").is_file())
+
+    def test_a_session_that_did_no_work_stops_the_reads(self):
+        root = self.read_material()
+        started = self.fake_session(["no work", self.good_answer()])
+        with self.assertRaisesRegex(blind_read.ReadError, "did no work"):
+            blind_read.run(root, "claude:m", None)
+        self.assertEqual(len(started), 1)
+
+    def test_the_weekly_limit_counts_from_the_first_start(self):
+        root = self.read_material()
+        started = self.fake_session([None, self.good_answer(), self.good_answer()], weekly=[0.2, 0.25, 0.3])
+        self.assertFalse(blind_read.run(root, "claude:m", None, stop_after=8)["A"]["valid"])
+        with self.assertRaisesRegex(blind_read.ReadError, "rose from 20.0 to 30.0"):
+            blind_read.run(root, "claude:m", None, stop_after=8)
+        self.assertEqual(len(started), 3)
 
     def test_the_reads_stop_at_the_weekly_limit(self):
         root = self.read_material()
@@ -231,6 +276,9 @@ class Store(unittest.TestCase):
         page.write_text(TABLE, encoding="utf-8")
         table = measure.read_table(page)
         self.assertEqual(table, {"a": ["b"], "b": [], "c": [], "d": []})
+        page.write_text(TABLE.replace("| `d` | [[d]] | nothing |", "| `a` | [[d]] | nothing |"), encoding="utf-8")
+        with self.assertRaisesRegex(measure.MeasureError, "twice"):
+            measure.read_table(page)
         edges = {"cmd/demo": ["a"], "a": ["b"], "b": ["c"], "c": [], "helpers": []}
         spec = measure.against_spec(table, edges, {"c": ["a"]}, {k: 1 for k in edges})
         self.assertEqual(spec["found"], 3)
@@ -256,6 +304,7 @@ class Store(unittest.TestCase):
         self.assertEqual(m["testFunctions"], 1)
         self.assertTrue(m["linters"]["builds"])
         self.assertIsNone(m["linters"]["staticcheck"])
+        self.assertEqual(m["structure"]["linesPerPackage"]["count"], 4)
         self.assertEqual(m["againstSpec"]["missing"], ["d"])
         self.assertEqual(m["againstSpec"]["forbiddenImports"], [{"from": "b", "to": "c"}])
 
@@ -264,7 +313,7 @@ class Store(unittest.TestCase):
                                   "files": {"count": 1, "over": 0, "max": 9}, "functions": {"count": 1, "over": 0, "max": 9},
                                   "structure": {"packages": 1, "largestPackages": [{"package": "a", "lines": 9}], "imports": 0, "fanOut": [], "longestChain": 1, "cycles": []},
                                   "duplication": {"exact": 0.1, "renamed": 0.2, "testsExact": 0.0},
-                                  "linters": {"deadcode": None, "staticcheck": {"findings": 3}, "vet": 0, "gofmt": 0},
+                                  "linters": {"builds": True, "deadcode": None, "staticcheck": {"findings": 3}, "vet": 0, "gofmt": 0},
                                   "againstSpec": {"modules": 2, "found": 1, "missing": ["d"], "notAtTheirPath": [], "extraPackages": [], "forbiddenImports": [{"from": "b", "to": "c"}], "forbiddenImportsInTests": 0}}
         launch = lambda cost, note: {"wallSeconds": 600, "relativeCost": cost, "hiddenCases": {"planned": 5, "passed": 5}, "weekly": {"before": 1, "after": 2}, "subagents": 0,
                                      "note": note, "modelsAnswered": {"claude-haiku-5-5": 1}}
@@ -279,7 +328,9 @@ class Store(unittest.TestCase):
         self.assertIn("No valid read.", before)
         self.assertIn("forbidden `b` to `c`", before)
         self.assertIn("not run", before)
-        for hidden in ("secret-arm", "K on Haiku", "claude-haiku"):
+        self.assertNotIn("Subagents", before)
+        self.assertIn("Builds", before)
+        for hidden in ("secret-arm", "K on Haiku", "claude-haiku", "Subagents"):
             self.assertNotIn(hidden, before)
             self.assertIn(hidden, after)
         self.assertNotIn("$", text)
