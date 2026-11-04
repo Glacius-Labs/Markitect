@@ -35,6 +35,7 @@ All on Windows, on the owner's stored login, in a throwaway repository with a lo
 | Library 3 | `/markitect-apply` in a Manual-mode session | M2, loan limit 5 to 3 | 3 minutes | landed | 1 |
 | Verify | `markitect verify --full` | None | a few minutes | verified, 19 items | - |
 | Library 4 | `markitect apply` from a linked worktree | M3, short-loan copies | 4 minutes | landed on the owner's branch | 0 |
+| Library 5 | `markitect apply` from a linked worktree, after the review's fixes | M4, one renewal per loan | 3 minutes | landed on the owner's branch | 0 |
 
 **Library 1 failed on a bug in the tool:** a required check's folder that does not exist yet, as in a new project, counted as a broken environment. It stopped within seconds and landed nothing, as it should have.
 
