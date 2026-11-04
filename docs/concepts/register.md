@@ -1088,7 +1088,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-082 One Run per change: impact decides who works, maker and checker per Manager
 
-**Superseded in part on 4 November 2026 by [DEC-091](#dec-091-concept-30-is-the-target):** One implementer and one reviewer replace a pair per Manager. Impact, the checklist, the full check, the Result, Findings and landing stay.
+**Superseded in part on 4 November 2026 by [DEC-091](#dec-091-concept-30-is-the-target):** One implementer and one reviewer replace a pair per Manager. Impact, the checklist, the full check, the Result, Findings and landing stay, though Runs no longer take turns on a branch.
 
 - **Status:** Accepted by the owner as the direction of the Run redesign, 28 October 2026, in the Topics session's design walk-through ([topics page](../workstreams/topics.md#decided)); details decided with concept 2.0 ([DEC-086](#dec-086-concept-20-is-the-target)) and on 29 October 2026 (below); being built.
 - **Priority:** consistency of the artifacts with the canonical model and their quality come first, so that the owner does not need to review, nothing drifts and the process can be trusted. Time and token cost come second.
@@ -1212,6 +1212,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Decision:** [concept 3.0](v3-concept.md) is Markitect's target: the spec as the project's documentation and authority, one implementer and one reviewer per Command in one container, code in and out only as a Git commit, a gate in the CLI that runs after the session ends, and interchangeable strategies. It includes the details its review added and the answers to its nine questions ([§14](v3-concept.md#14-decided-on-acceptance)). A tenth question there, whether a Command may start sessions on an account login, was decided the same day ([DEC-092](#dec-092-a-command-uses-the-users-own-sign-in)).
 - **Supersedes:** the entries in [§15](v3-concept.md#15-what-this-overturns), each marked with what goes and what stays. The new evidence and its limits are in [OQ-011](#open-questions). Concept 2.0 stays the record of what Main implements until the rebuild.
 - **Evaluation:** comparing variants stops. Three bounded tests and the owner's real use follow, and every result is kept and compared, including structure, architecture, quality and cleanliness ([§13](v3-concept.md#13-how-we-know-it-works)).
+- **Changed, 4 November 2026,** after Build's read of the concept: required checks run inside the container as a third Linux user, the rename follows test 3 or is done by the sealed project's author, and a Command takes no lock per branch ([§6](v3-concept.md#6-what-apply-does), [§14](v3-concept.md#14-decided-on-acceptance)).
 - **Next:** the [delivery plan](../implementation-plan.md#concept-30-build) owns the steps.
 
 ### DEC-092 A Command uses the user's own sign-in
@@ -1233,7 +1234,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Decision:**
   - The user makes a token with `claude setup-token`, through the provider's own browser flow, and keeps it in a variable of Markitect's own. The Command gives it only to each session's environment. It is not written to disk, the image or a bundle, and required checks never get it.
   - So Markitect does read the token and pass it on, which the sign-in in a volume would have avoided. Whether that counts as intermediating it goes in the owner's question to Anthropic ([DEC-092](#dec-092-a-command-uses-the-users-own-sign-in)).
-- **Costs, as far as known:** an agent can read the token from its environment, and it lasts a year. By Build's reading Codex has no such token, so its route stays open.
+- **Costs, as far as known:** an agent can read the token from its environment, and it lasts a year, with no documented way to revoke it. Codex has access tokens for Enterprise; whether a personal plan gets one is not stated, so its route stays open.
 - **Reasoning:** [concept 3.0 §9](v3-concept.md#9-the-sandbox) and [§14](v3-concept.md#14-decided-on-acceptance), question 10. Nothing is shared between the implementer and the reviewer, so a sign-in's shared folder, scrub and turn-taking fall away.
 
 ## Promises
