@@ -118,7 +118,7 @@ def read_of(blind, label):
 
 def said(values):
     """A reader's sentences as plain text: code it quotes must not read as a link."""
-    return " ".join(values or []).replace("[", "\\[")
+    return " ".join(values or []).replace("](", "] (")
 
 
 def reads_section(labels, reads):
