@@ -139,6 +139,8 @@ Project rules are in the spec, so the prompt covers only Markitect and the role.
 
 Weakened tests, persuasive comments and shallow reviews cannot be enforced this way. They fall to the reviewer, to the depth the Result shows (§10) and to planted-bug tests (§13).
 
+Neither can a reviewer's answers be protected while it has a shell: code it runs, such as a planted test, can change its answers and read its token, and ending its processes before the answers are read only stops changes made after that point. Reviewers keep the shell until test 1 (§13), since all the evidence on reviewers comes from reviewers with one and so far only ordinary mistakes have been seen, not hostile code.
+
 ## 8. The checklist
 
 The Command generates it: `impact` or `--full` gives the items, the registry gives where to look.
@@ -217,7 +219,7 @@ The Desktop app stays the app over the CLI ([DEC-089](register.md#dec-089-markit
 
 | Test | Question | What it would change |
 |---|---|---|
-| **1. Planted bugs on the 5× project** | Does a reviewer still catch known bugs at that size, and is one per Package better than one overall? | How `--full` works; if neither catches them, reviewing is rethought |
+| **1. Planted bugs on the 5× project** | Does a reviewer still catch known bugs at that size, is one per Package better than one overall, and does a reviewer without a shell catch as many as one with it? | How `--full` works and whether reviewers keep their shell (§7); if none of them catches the bugs, reviewing is rethought |
 | **2. A series of changes on the 5× project**, some crossing modules | Does the default miss less than one strong agent given only the change request and the repository, keeping its own docs? | **The decisive one.** If it doesn't miss less, the apply side adds little, and Markitect narrows to the spec and its tools |
 | **3. The sealed project, once** | Does the result hold on a project nobody tuned for? | If it falls apart, we have been fitting to Makerspace |
 

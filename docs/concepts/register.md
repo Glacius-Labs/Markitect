@@ -1213,6 +1213,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Supersedes:** the entries in [§15](v3-concept.md#15-what-this-overturns), each marked with what goes and what stays. The new evidence and its limits are in [OQ-011](#open-questions). Concept 2.0 stays the record of what Main implements until the rebuild.
 - **Evaluation:** comparing variants stops. Three bounded tests and the owner's real use follow, and every result is kept and compared, including structure, architecture, quality and cleanliness ([§13](v3-concept.md#13-how-we-know-it-works)).
 - **Changed, 4 November 2026,** after Build's read of the concept: required checks run inside the container as a third Linux user, the rename follows test 3 or is done by the sealed project's author, and a Command takes no lock per branch ([§6](v3-concept.md#6-what-apply-does), [§14](v3-concept.md#14-decided-on-acceptance)).
+- **Decided, 4 November 2026,** after the review of U1: reviewers keep their shell until test 1, which runs with and without one. Until then, code a reviewer runs can change its answers and read its token ([§7](v3-concept.md#7-what-the-agents-are-told), [§13](v3-concept.md#13-how-we-know-it-works)).
 - **Next:** the [delivery plan](../implementation-plan.md#concept-30-build) owns the steps.
 
 ### DEC-092 A Command uses the user's own sign-in
