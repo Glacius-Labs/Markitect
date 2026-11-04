@@ -1,7 +1,7 @@
 """The change series of the portfolio: each step's task.md and model, as chain steps.
 
-  python -I -B series.py steps --series library|makerspace [--steps M1,M2,...] --out NEW_DIR
-  python -I -B series.py base --series library|makerspace --step STEP [--unlinked] --out NEW_DIR
+  python -I -B series.py steps --series library|makerspace|makerspace-large [--steps M1,M2,...] --out NEW_DIR
+  python -I -B series.py base --series library|makerspace|makerspace-large --step STEP [--unlinked] --out NEW_DIR
 
 A step directory holds what `suite.py task` and `suite.py chain --step` read:
 `task.md`, the ordinary documentation every variant receives, and `model/`,

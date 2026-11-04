@@ -1,3 +1,14 @@
 {
-  "retired": []
+  "retired": [
+    {
+      "step": "C7",
+      "pattern": "addPassProduct|sellPass|listMemberPasses|revenuePasses|passId",
+      "cite": "request-c7.md: the old names are gone, and there are no aliases."
+    },
+    {
+      "step": "C8",
+      "pattern": "addShift|cancelShift|listShifts|setSupervision|supervisor_required|approver_not_on_shift|shift_needed|shift_overlap|shift_too_long|not_staff",
+      "cite": "request-c8.md: the operations and refusal codes are gone."
+    }
+  ]
 }
