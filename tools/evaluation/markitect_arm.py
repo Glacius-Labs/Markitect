@@ -1,6 +1,6 @@
 """The concept 3.0 arm: one `markitect apply` per task, its host native, its agents in the Command's container on the suite's network.
 
-  python -I -B markitect_arm.py --markitect BIN --image IMAGE_ID [--effort LEVEL] [--reviewer-shell on|off] [--verify] TASK_DIR OUT_DIR [STATE_DIR]
+  python -I -B markitect_arm.py --markitect BIN --image IMAGE_ID [--effort LEVEL] [--reviewer-shell on|off] [--verify [--one-reviewer]] TASK_DIR OUT_DIR [STATE_DIR]
 
 Run it only through `suite.py run --native` or `chain --native` (native.py),
 which hands it the evaluation's model, the network every container joins, the
@@ -450,6 +450,7 @@ def main(argv=None):
     p.add_argument("--markitect", required=True, help="the markitect program of the frozen revision")
     p.add_argument("--image", required=True, help="the image with the project's toolchain, by image ID, built FROM packaging/runtime")
     p.add_argument("--effort", default="high")
+    p.add_argument("--one-reviewer", action="store_true", help="with --verify, one reviewer for the whole list, for test 1 of concept 3.0's section 13")
     p.add_argument("--reviewer-shell", choices=("on", "off"), default="on", help="off starts reviewers without a shell, for test 1 of concept 3.0's section 13")
     p.add_argument("--verify", action="store_true", help="run `markitect verify --full` on the task's start instead of apply")
     p.add_argument("task")
@@ -485,7 +486,7 @@ def main(argv=None):
             git(tmp, "clone", "-q", "-b", "main", str(target), str(repo), env=env)
             git(repo, "config", "core.autocrlf", "false", env=env)
             if a.verify:
-                (mode, adoption), options = verify_input(a, task, repo, env), ["--full"]
+                (mode, adoption), options = verify_input(a, task, repo, env), ["--full", *(["--one-reviewer"] if a.one_reviewer else [])]
             else:
                 options, mode, adoption = owner_input(a, task, repo, start, state.get("landed"), env)
             report.update(mode=mode, adoption=adoption, ownerCommit=git(repo, "rev-parse", "HEAD", env=env))

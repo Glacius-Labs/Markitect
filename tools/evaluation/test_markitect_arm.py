@@ -391,6 +391,17 @@ class ArmTest(unittest.TestCase):
         rep = record["reported"]
         self.assertEqual((rep["command"], rep["mode"], rep["adoption"], rep["findings"]), ("verify", "verify", None, 0))
 
+    def test_verify_passes_the_one_reviewer_setting_and_only_with_verify(self):
+        record, out = self.run_arm(self.task("one-end", self.model("one-end-model")))
+        task = self.task("verify-one", self.model("one-end-model-2"), out / "variant" / "result.bundle")
+        os.environ["FAKE_APPLY"] = "verified"
+        record = suite.run(task, [*self.variant, "--verify", "--one-reviewer"], self.tmp / "verify-one-out", MODEL, None)
+        self.assertEqual(record["exitCode"], 0)
+        call = self.applies()[-1]
+        self.assertEqual((call["args"][0], "--full" in call["args"], "--one-reviewer" in call["args"]), ("verify", True, True))
+        self.verify(task, "verified")
+        self.assertNotIn("--one-reviewer", self.applies()[-1]["args"])
+
     def test_verify_adopts_an_end_state_without_a_model_first(self):
         start = self.tmp / "k-end"
         subprocess.run(["git", "init", "-q", "-b", "start", str(start)], check=True)

@@ -12,7 +12,8 @@ deleted launch shows too.
 
   NAME/launch.json       who, what, on which model, how long and at what cost, and every file's hash
   NAME/repo.bundle       the final repository with its whole history
-  NAME/records/          the run's own records: suite.json, run.json, judgment.json
+  NAME/records/          the run's own records: suite.json, run.json, judgment.json, and a Command's Result under results/,
+                         since a verify lands nothing and its Result has no other home
   NAME/transcripts/      the session's stream and every transcript, subagents included
 
 `add` refuses a bundle that is not complete, and any kept text that holds an Anthropic key's shape or the value of
@@ -90,6 +91,29 @@ def models_in(folder):
     return models, subagents
 
 
+def cost_in(folder):
+    """What each session's closing records report, for a Command, whose Result counts tokens only. None without any.
+
+    A resumed session reports a running total, so each session counts once, at its highest. The provider's figure, kept only
+    as a relative measure against another launch."""
+    highest = {}
+    for p in files_of(folder):
+        if p.suffix != ".jsonl" or p.name == "session.stream.jsonl" or "subagents" in p.parts:
+            continue
+        with open(p, encoding="utf-8", errors="replace") as f:
+            for line in f:
+                if '"total_cost_usd"' not in line:
+                    continue
+                try:
+                    record = json.loads(line)
+                except ValueError:
+                    continue
+                if isinstance(record, dict) and record.get("type") == "result" and isinstance(record.get("total_cost_usd"), (int, float)):
+                    session = record.get("session_id") or str(p)
+                    highest[session] = max(highest.get(session, 0.0), record["total_cost_usd"])
+    return round(sum(highest.values()), 4) if highest else None
+
+
 def read_json(path):
     return json.loads(pathlib.Path(path).read_text(encoding="utf-8"))
 
@@ -124,6 +148,8 @@ def add(store, name, project, step, arm, run_dir, judgment=None, weekly=None, no
         for source, kept in ((run_dir / "suite.json", "suite.json"), (variant / "run.json", "run.json")):
             if source.is_file():
                 shutil.copyfile(source, temporary / "records" / kept)
+        if (variant / "results").is_dir():
+            shutil.copytree(variant / "results", temporary / "records" / "results")
         if judgment:
             shutil.copyfile(pathlib.Path(judgment) / "judgment.json", temporary / "records" / "judgment.json")
         if (variant / "transcripts").is_dir():
@@ -135,8 +161,11 @@ def add(store, name, project, step, arm, run_dir, judgment=None, weekly=None, no
             # The name of the file only: the value never reaches a log.
             raise KeptError(f"{leak.relative_to(temporary)} holds a credential, so this launch is not kept")
         run = read_json(variant / "run.json") if (variant / "run.json").is_file() else {}
-        usage = dict(run.get("usage") or {})
+        # The arm's record names the Command's total `tokens`; a session's names `usage`.
+        usage = dict(run.get("usage") or run.get("tokens") or {})
         relative = usage.pop("costUsd", None)
+        if relative is None:
+            relative = cost_in(temporary / "transcripts")
         models, subagents = models_in(temporary / "transcripts")
         correctness = None
         if judgment:
@@ -145,7 +174,7 @@ def add(store, name, project, step, arm, run_dir, judgment=None, weekly=None, no
             correctness = {k: c.get(k) for k in ("planned", "passed", "failed")}
         record = {
             "format": FORMAT, "name": name, "project": project, "step": step, "arm": arm,
-            "requestedModel": run.get("requestedModel"), "modelsAnswered": models, "subagents": subagents,
+            "requestedModel": run.get("requestedModel") or run.get("model"), "modelsAnswered": models, "subagents": subagents,
             "commit": commit, "startedUtc": suite.get("startedUtc"), "endedUtc": suite.get("endedUtc"),
             "wallSeconds": suite.get("wallSeconds"), "usage": usage, "relativeCost": relative,
             "weekly": {"before": weekly[0], "after": weekly[1]} if weekly else None,

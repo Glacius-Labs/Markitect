@@ -1,6 +1,6 @@
 # The default through the suite, and its first build at 5×, 4 November 2026
 
-Step U4 of the [delivery plan](../implementation-plan.md#concept-30-build) starts here: the default of [concept 3.0](../concepts/v3-concept.md) run as the suite's [arm](../../tools/evaluation/README.md#the-concept-30-arm), on real sessions, with the hidden cases judging the result. Test 1 and test 2 both start from the default's own W0 of the [large Makerspace](../../tools/makerspace-large/README.md), so that build comes first. No result is recorded yet.
+Step U4 of the [delivery plan](../implementation-plan.md#concept-30-build) starts here: the default of [concept 3.0](../concepts/v3-concept.md) run as the suite's [arm](../../tools/evaluation/README.md#the-concept-30-arm), on real sessions, with the hidden cases judging the result. Test 1 and test 2 both start from the default's own W0 of the [large Makerspace](../../tools/makerspace-large/README.md), so that build comes first. The default built the 5× project on its first launch and passed all 327 hidden cases. This is one launch, not a rate.
 
 ## Questions
 
@@ -32,3 +32,32 @@ For both:
 | Lock | `NATIVE-RUN.lock` in the shared notes folder, taken by the suite. Other Docker work is checked first and stays off |
 | Cleanup | The Command removes its container and volumes and the suite its network and gateway; afterwards nothing labelled with the evaluation may remain |
 | Evidence | Outside the repository, in `%LOCALAPPDATA%/markitect-default/`: the runner's work folder. Part B's launch also goes into the [lasting store](../../tools/evaluation/kept.py) |
+
+## Results
+
+All from the frozen source `4db73a3bef0c`, on `claude-sonnet-5-5` at effort `high`. Each launch was valid for the suite: no escape, nothing left behind, nothing quarantined, and no credential in the evidence. Only Sonnet answered in any session.
+
+| Launch | Time | State | Hidden cases | Repair rounds | Sessions |
+|---|---|---|---|---|---|
+| Library M1, `apply --full` | 231 seconds | landed | 19 of 19 | 0 | 1 implementer, 6 reviewers |
+| Library M2, `apply` | 215 seconds | landed | 19 of 19 | 0 | 1 implementer, 1 reviewer |
+| Large Makerspace W0, `apply --full` | 58 minutes | landed | 327 of 327 | 1 | 2 implementer, 51 reviewers |
+
+**Failed starts.** The Library's runner stopped once before any session, on a path mistyped in its configuration. It was fixed and restarted.
+
+**Q1 to Q3: yes, on these launches.** The arm drove the Command through the suite on real sessions.
+
+**Q3, the cost.** 3.43 times K's W0 on Sonnet, in the provider's own relative figure, and 58 minutes against K's 37. The implementer cost 1.88 times K and the 51 reviewers 1.56 times. S's W0 cost 4.76 times K. The weekly reading rose from 0 to 2. That window is the token's, which resets on 11 November at 09:00, and it is not the window of the runner's login that the earlier launches report, so the 2 cannot be set beside their figures. The implementer took 43 minutes, and the 51 reviewers spent 69 session-minutes, 8 at a time.
+
+**A correction.** This page first said 5.32 times K. That sum counted a resumed session's running total a second time: a repair continues the implementer's session, and its closing record repeats everything before it. A review of test 1's tools found this. The kept launch's record still says 49.21, since a kept launch never changes; [`kept.py`](../../tools/evaluation/kept.py) now counts each session once, and the [page builder](../../tools/evaluation/side_by_side.py) counts a kept Command's cost again from its transcripts. S's and K's figures are unchanged: none of their sessions resumes.
+
+**Q4, what the Result shows.**
+
+- **A reviewer found a real bug.** The `protocol` reviewer ran the program and saw that trimming a request line before checking it accepted a line with a form feed or a non-breaking space around it, where the requirements say a line that is not valid JSON is invalid. It went back, and the 16-second repair passed the review of what changed. Whether a hidden case holds that line was not checked, so this says the reviewer found a real departure from the requirements, not that the cases would have missed it.
+- **A reviewer said what no test shows.** `consumables/consumption` is `not shown`: the reviewer took out the code that rounds up, in a copy, and the program's whole test suite still passed. It landed and is on the Result, as the rule says.
+- **How much checking the transcripts show.** The reviewers ran 749 commands and opened 28 files through `Read`. Of their 1,351 pointers, the Command counted 1,326 as opened, 25 as not measured, and none as repeated answers. A command that names a file need not have read it.
+- **Registry.** The Result lists 366 missing links: a reviewer's pointer names a file that the registry does not list for that item, mostly a test file. They don't refuse a landing. Whether they matter shows in the later steps' impact.
+
+**How it compares,** with [the first page](large-comparison-20261104.md)'s method, not yet on a page of its own: 8,713 program lines, the smallest of the seven builds, and 11,519 lines of tests with 317 test functions, between K's 101 and the others' 590 to 686. Renamed repeats are 3.1 %, near K's 2.0 %. All 48 modules are at their paths, and no import breaks the spec's table, in the program or its tests. It is in the lasting store as `large-w0-default-sonnet`.
+
+**What this does not show.** This is one launch. Whether the default holds up when changes come is test 2, and whether its reviewers catch known bugs at this size is test 1.

@@ -48,10 +48,13 @@ type Request struct {
 	Target string
 	// Base is the commit impact is computed from; empty means the last work
 	// Markitect landed on the target.
-	Base     string
-	Full     bool
-	Findings []analysis.Finding
-	Limits   Limits
+	Base string
+	Full bool
+	// OneReviewer gives a full check's whole list to one reviewer, so that test 1
+	// of concept 3.0 §13 can compare it with one per Package.
+	OneReviewer bool
+	Findings    []analysis.Finding
+	Limits      Limits
 }
 
 // Limits bound a Command: finite budgets, and deadlines that reach every
@@ -547,7 +550,7 @@ func (c *command) toReview(ctx context.Context, reviewed string) ([]Item, []stri
 // items (concept 3.0 §8). It returns why the answers cannot stand, or "".
 func (c *command) answer(ctx context.Context, state project.Repository, items []Item, prompt func(repo, note string, group []Item) string) string {
 	groups := [][]Item{items}
-	if c.req.Full {
+	if c.req.Full && !c.req.OneReviewer {
 		groups = c.byPackage(items)
 	}
 	failures := make([]string, len(groups))
