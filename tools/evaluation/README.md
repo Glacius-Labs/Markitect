@@ -22,8 +22,12 @@ The suite runner, its judging and reporting, and the baseline variant of the [ev
 | [results.py](results.py) | The Result contract and its check: every checklist item has a verdict with evidence |
 | [reading.py](reading.py) | The paired reading of a contrast: the 95 % interval of the paired difference |
 | [report.py](report.py), [acceptance.py](acceptance.py) | `suite.py report`: one table per area for a series ledger, then one per acceptance criterion of concept 2.0 §15 |
+| [kept.py](kept.py) | The lasting store: one folder per launch, with its final repository, transcripts, Result and cost, and a check that nothing changed since |
+| [measure.py](measure.py) | The same figures for every kept result, with one Go toolchain, and whether it follows the spec's modules and dependencies |
+| [blind_read.py](blind_read.py) | Blind reads of kept results: neutral labels, a fresh session per result, the same questions |
+| [side_by_side.py](side_by_side.py) | One page per test from the three above, with the key last and no overall score |
 | [series_runner.py](series_runner.py) | The [series runner](#the-series-runner): a counted series or its stability gate, one launch at a time, with its judging, reviews, ledger and report |
-| [test_suite.py](test_suite.py), [test_sandbox.py](test_sandbox.py), [test_judging.py](test_judging.py), [test_series.py](test_series.py), [test_native.py](test_native.py), [test_markitect_arm.py](test_markitect_arm.py), [test_acceptance.py](test_acceptance.py), [test_reviewing.py](test_reviewing.py), [test_classify.py](test_classify.py), [test_series_runner.py](test_series_runner.py) | Offline tests with real Git, fake variants, a fake `claude` and `codex`, a scripted `markitect`, fake engines, a fake suite, and recorded runs and transcripts ([testdata/](testdata/README.md)) |
+| [test_suite.py](test_suite.py), [test_sandbox.py](test_sandbox.py), [test_judging.py](test_judging.py), [test_kept.py](test_kept.py), [test_series.py](test_series.py), [test_native.py](test_native.py), [test_markitect_arm.py](test_markitect_arm.py), [test_acceptance.py](test_acceptance.py), [test_reviewing.py](test_reviewing.py), [test_classify.py](test_classify.py), [test_series_runner.py](test_series_runner.py) | Offline tests with real Git, fake variants, a fake `claude` and `codex`, a scripted `markitect`, fake engines, a fake suite, and recorded runs and transcripts ([testdata/](testdata/README.md)) |
 
 ## Use
 
