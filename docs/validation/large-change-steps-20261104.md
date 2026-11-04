@@ -23,6 +23,8 @@ Then three authors per step, all fresh sessions on Sonnet: one wrote the model f
 
 All three failures were mistakes in a case's own setup or helper, and the reference was right each time. A case that also passes on the program before holds something that must stay: in C1 the off-grid slots, in C7 what must not be renamed, and in C8 the 8 cases that only had a shift taken out of their setup.
 
+The model authors checked their pages with the project's own page tool, which does not look for cycles between Packages. Compiling every step with `markitect check` afterwards found two, from C4 and from C5: a page linked back against the one-way dependencies. Both links became plain words, which changed no operation. [`compile_steps.py`](../../tools/makerspace-large/compile_steps.py) now checks every step.
+
 So a careful author working from the whole model missed nothing here, even where the request does not say it. That says these changes can be done right from a complete model. It says nothing yet about how a strong agent does from the repository alone, which is test 2.
 
 ## What this does not show

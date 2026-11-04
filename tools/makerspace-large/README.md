@@ -61,7 +61,10 @@ Each step had three authors. One wrote the model from the request and its list o
 python -I -B tools/makerspace-large/oracle/meet.py --step C3
 python -I -B tools/makerspace-large/oracle/catalog.py cases --step C3
 python -I -B tools/makerspace-large/oracle/catalog.py run --step C3 --program PATH --cwd DIR
+python -I -B tools/makerspace-large/compile_steps.py --markitect BIN
 ```
+
+The last one compiles every step's model with Markitect's own compiler, which also finds what the page form doesn't, such as Packages that depend on each other in a cycle.
 
 ## Limits
 
