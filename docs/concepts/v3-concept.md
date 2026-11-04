@@ -174,7 +174,7 @@ The answers are `ok`, `wrong`, `not shown` and `spec problem`. Only the last thr
 
 **What it costs.** Each project needs an image with its tools, which `init` can set up. The account token has to reach the container, so the sandbox protects the machine but not that token.
 
-**The login.** The user makes a token with `claude setup-token`, through the provider's own browser flow, and keeps it in a variable of Markitect's own. The Command gives it only to each session's environment. It is not written to disk, the image or a bundle, and required checks never get it. It should not be set for the whole machine, where it would outrank the login of the user's other sessions. It stays an account login, never an API key, and the CLI runs unmodified. The image pins the CLI version, so a change of the provider's defaults arrives only with a tested upgrade, and sessions start from one place per provider. An agent can read the token from its environment, and it lasts a year, so the user revokes it if it may have leaked. Codex has no such token, so its route is still open ([DEC-093](register.md#dec-093-a-command-passes-the-users-own-token)).
+**The login.** The user makes a token with `claude setup-token`, through the provider's own browser flow, and keeps it in a variable of Markitect's own. The Command gives it only to each session's environment. It is not written to disk, the image or a bundle, and required checks never get it. It should not be set for the whole machine, where it would outrank the login of the user's other sessions. It stays an account login, never an API key, and the CLI runs unmodified. The image pins the CLI version, so a change of the provider's defaults arrives only with a tested upgrade, and sessions start from one place per provider. An agent can read the token from its environment, and it lasts a year. By Build's reading Codex has no such token, so its route is still open ([DEC-093](register.md#dec-093-a-command-passes-the-users-own-token)).
 
 **Working on the host** runs the same steps and is added only when a real project cannot build on Linux.
 
@@ -243,7 +243,7 @@ The aims of [concept 2.0 §15](v2-concept.md#15-acceptance) stay: correct, no dr
 - This exact default has not run. The evidence comes from close shapes: KC's writer read a plain document instead of the spec, and S's filled in verdicts.
 - No project has lived with a spec for months.
 - No reviewer has met a known bug at the larger size, and only one real implementer fault has been caught on Makerspace.
-- K built the 5× project in about 13,000 lines of Go (S in 34,869, one Haiku launch in 36,916), so a project too big for one agent has not been seen. If a change really is too big, or a cheap model needs small slices, a split per Package stays available as a strategy. The K launches on Haiku bear on that.
+- K built the 5× project in about 13,000 lines of Go (S in 34,869), so a project too big for one agent has not been seen. If a change really is too big, or a cheap model needs small slices, a split per Package stays available as a strategy. The K launches on Haiku bear on that.
 
 ## 14. Decided on acceptance
 

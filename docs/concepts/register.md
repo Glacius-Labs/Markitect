@@ -1216,7 +1216,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-092 A Command uses the user's own sign-in
 
-**Superseded in part the same day by [DEC-093](#dec-093-a-command-passes-the-users-own-token):** a token replaces the sign-in in a Docker volume. The unmodified, pinned CLI, one place per provider, the question to Anthropic and the unbuilt fallback stay.
+**Superseded in part the same day by [DEC-093](#dec-093-a-command-passes-the-users-own-token):** a token replaces the sign-in in a Docker volume, so Markitect does read the token and pass it on, and "never reads, copies or stores" no longer holds. The unmodified, pinned CLI, one place per provider, the question to Anthropic and the unbuilt fallback stay.
 
 - **Status:** Accepted by the owner, 4 November 2026, on a question from the Topics session and a recommendation from a reading of Anthropic's pages that day.
 - **Decision:**
@@ -1233,7 +1233,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Decision:**
   - The user makes a token with `claude setup-token`, through the provider's own browser flow, and keeps it in a variable of Markitect's own. The Command gives it only to each session's environment. It is not written to disk, the image or a bundle, and required checks never get it.
   - So Markitect does read the token and pass it on, which the sign-in in a volume would have avoided. Whether that counts as intermediating it goes in the owner's question to Anthropic ([DEC-092](#dec-092-a-command-uses-the-users-own-sign-in)).
-- **Costs accepted:** an agent can read the token from its environment, and it lasts a year. Codex has no such token, so its route stays open and the first build lands on Claude only.
+- **Costs, as far as known:** an agent can read the token from its environment, and it lasts a year. By Build's reading Codex has no such token, so its route stays open.
 - **Reasoning:** [concept 3.0 §9](v3-concept.md#9-the-sandbox) and [§14](v3-concept.md#14-decided-on-acceptance), question 10. Nothing is shared between the implementer and the reviewer, so a sign-in's shared folder, scrub and turn-taking fall away.
 
 ## Promises
