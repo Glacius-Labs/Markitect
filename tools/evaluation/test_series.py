@@ -523,5 +523,31 @@ class AdoptedStartTest(unittest.TestCase):
                     self.assertEqual(unused, UNREALIZED.get(name, set()))
 
 
+class LargeSeries(unittest.TestCase):
+    def setUp(self):
+        self.tmp = pathlib.Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+
+    def test_a_change_step_gets_the_request_alone_and_its_own_registry(self):
+        step = series.write_step("makerspace-large", "C8", self.tmp / "C8")
+        self.assertIn("Change request", (pathlib.Path(step) / "task.md").read_text(encoding="utf-8"))
+        pages = {p.name for p in (pathlib.Path(step) / "model" / "registry").iterdir()}
+        self.assertIn("loans.md", pages)
+        self.assertIn("packs.md", pages)
+        self.assertNotIn("staffing.md", pages)
+        self.assertNotIn("passes.md", pages)
+
+    def test_a_change_steps_base_uses_its_own_registry(self):
+        for pages in (True, False):
+            out = self.tmp / f"base-{pages}"
+            series.write_base("makerspace-large", "C5", out, pages=pages)
+            self.assertTrue((out / "registry" / "loans.md").is_file())
+
+    def test_w0_still_takes_the_projects_registry(self):
+        step = series.write_step("makerspace-large", "W0", self.tmp / "W0")
+        self.assertTrue((pathlib.Path(step) / "model" / "registry" / "staffing.md").is_file())
+        self.assertFalse((pathlib.Path(step) / "model" / "registry" / "loans.md").exists())
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -99,9 +99,11 @@ def write_base(series, step, out, repo=REPO, pages=True):
     shutil.copytree(model, out)
     pages = reference_pages(series, step, repo) if pages else None
     if pages:
+        # A step with pages of its own holds them in its model; the reference's replace them.
+        shutil.rmtree(out / "registry", ignore_errors=True)
         shutil.copytree(pages / "registry", out / "registry")
         shutil.copyfile(pages / "registry.md", out / "registry.md")
-    elif (model.parent / "registry").is_dir():
+    elif (model.parent / "registry").is_dir() and not (out / "registry").is_dir():
         shutil.copytree(model.parent / "registry", out / "registry")
     return {"step": step, "base": str(out), "pages": str(pages) if pages else None}
 
