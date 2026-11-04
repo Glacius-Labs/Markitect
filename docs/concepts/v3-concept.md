@@ -1,15 +1,15 @@
-# Markitect concept 3.0 (draft)
+# Markitect concept 3.0
 
 **The spec is the project's documentation and its authority; a Command realizes it through one implementer and one fresh reviewer, and a tool that no agent can talk past decides whether it lands.**
 
 | | |
 |---|---|
-| **Version** | 3.0 – draft for the owner's review |
+| **Version** | 3.0 – accepted target |
 | **Date** | 4 November 2026 |
-| **Basis** | The owner's discussion of 3 and 4 November 2026, which judged Markitect's ideas against six problems and other options, and an independent review of this draft. |
-| **State** | **Not accepted.** [Concept 2.0](v2-concept.md) stays the target ([DEC-086](register.md#dec-086-concept-20-is-the-target)) until the owner accepts this page. Nothing here is built in this form. The register holds only an open question about it ([OQ-011](register.md#open-questions)). |
+| **Basis** | The owner's discussion of 3 and 4 November 2026, which judged Markitect's ideas against six problems and other options, and an independent review. |
+| **State** | Accepted by the owner as Markitect's target on 4 November 2026 ([DEC-091](register.md#dec-091-concept-30-is-the-target)). Not built yet: Main still implements concept 2.0 until the steps of the [delivery plan](../implementation-plan.md#concept-30-build) replace it. |
 
-This page uses the new words: spec, implementer, reviewer. Code and other documents still say model, maker and checker; [§14](#14-open-for-the-owner) asks when they change. Details the owner has not discussed, most of them from the review, are marked **(proposal)**.
+This page uses the new words: spec, implementer, reviewer. Code and other documents still say model, maker and checker until the rename ([§14](#14-decided-on-acceptance)).
 
 ## 1. What Markitect is for
 
@@ -89,18 +89,18 @@ What changes: the implementer maintains every registry page, since no agent owns
 
 Before it, the owner changes the spec and commits it.
 
-1. **Check the spec.** `markitect check`. A real spec error stops here, and no agent starts. **(Proposal)** A file a hand edit left unlisted does not stop the Command: it becomes a checklist item, and the gate requires it to be settled by the end.
+1. **Check the spec.** `markitect check`. A real spec error stops here, and no agent starts. A file a hand edit left unlisted does not stop the Command: it becomes a checklist item, and the gate requires it to be settled by the end.
 2. **Work out what is affected.** `impact` against the last landed commit, and from it the checklist. Nothing affected means "nothing to do", and it ends. The base must be the work a Run realized, so that commits landing beside it stay unrealized for the next `impact`; the current build records this in the landing commit.
 3. **Prepare the sandbox.** Start one container and put the starting commit in (§9).
-4. **Implementer Run.** One session, one prompt, working in its own folder. It uses no Git and fills in no form. **(Proposal)** To stop, it writes a note to a set place outside the project folder, so the Command can tell a stop from a finish. An empty diff with no stop is not a failure: the work goes on to review.
-5. **Commit.** The Command commits the implementer's folder and checks that commit out into a new, clean folder. Whatever was not committed is not there. **(Proposal)** It ends the implementer's processes first, and then rebuilds the checklist from this commit and its registry, so files touched outside the impact add their Definitions and new files appear under "look at".
-6. **Gate.** With no agent: the spec and the required checks are unchanged from the start, `markitect check` passes, and the required checks pass in the clean folder. **(Proposal)** The rule covers everything under `.markitect/` except registry pages, and no stale registry entry may be left. These checks and `check` run outside the container, on the commit itself, so nothing left inside can affect them. A required check that could not run, for lack of a service or network, stops the Command as an environment failure and uses no repair round.
+4. **Implementer Run.** One session, one prompt, working in its own folder. It uses no Git and fills in no form. To stop, it writes a note to a set place outside the project folder, so the Command can tell a stop from a finish. An empty diff with no stop is not a failure: the work goes on to review.
+5. **Commit.** The Command commits the implementer's folder and checks that commit out into a new, clean folder. Whatever was not committed is not there. It ends the implementer's processes first, and then rebuilds the checklist from this commit and its registry, so files touched outside the impact add their Definitions and new files appear under "look at".
+6. **Gate.** With no agent: the spec and the required checks are unchanged from the start, `markitect check` passes, and the required checks pass in the clean folder. The rule covers everything under `.markitect/` except registry pages, and no stale registry entry may be left. These checks and `check` run outside the container, on the commit itself, so nothing left inside can affect them. A required check that could not run, for lack of a service or network, stops the Command as an environment failure and uses no repair round.
 7. **Reviewer Run.** A fresh session with its own config works in the clean folder, and answers every checklist item (§8). Its folder is thrown away, so nothing it changes can land.
-8. **Repair.** A failed gate or a `wrong` answer goes back to the implementer, who resumes its session and continues from step 5. At most two repair rounds. **(Proposal)** The next review gets the findings, the new diff and the items whose locations that diff touched; other answers stand. The Result holds each item's latest answer.
+8. **Repair.** A failed gate or a `wrong` answer goes back to the implementer, who resumes its session and continues from step 5. At most two repair rounds. The next review gets the findings, the new diff and the items whose locations that diff touched; other answers stand. The Result holds each item's latest answer.
 9. **Result and landing.** The Command writes the Result (§10) into the commit it lands. As in the current build, it treats the user's repository only as a Git remote and never touches the working tree. If the target branch has not moved, the commit lands. If it moved, it lands only when the merge is clean, the gate passes on the merged state and the incoming changes touch nothing in the impact; "unchanged" in the gate then means this Run's own changes. Otherwise the work and its Result stay on a branch of its own, `markitect/runs/<run>`, and the Result says why. Landing needs no review by the owner.
 10. **End.** The container goes away, and the owner pulls the change like a colleague's push.
 
-**What may land.** **(Proposal)** No open `wrong`, no missing answer and no failed pointer check after one request to correct it. `not shown` lands, and the Result lists it. [§14](#14-open-for-the-owner) asks whether that is right.
+**What may land.** No open `wrong`, no missing answer and no failed pointer check after one request to correct it. `not shown` lands, and the Result lists it.
 
 **Stopping early.** If the spec contradicts itself or leaves open something that changes behaviour at the project's boundary, a Run stops and reports it, and nothing lands. A gap with no such effect is the agents' to decide. If the repair rounds run out, nothing lands either. Either way the Result says what is open, as a question where it concerns the spec.
 
@@ -134,7 +134,7 @@ Project rules are in the spec, so the prompt covers only Markitect and the role.
 |---|---|
 | The spec, required checks and other control files stay unchanged | The gate compares them with the start and refuses |
 | No unaccounted file, no stale entry | `check` and the stale check in the gate refuse |
-| The implementer doesn't influence the reviewer | The reviewer starts fresh on a clean copy with its own config, and the Command writes the commit message. **(Proposal)** Implementer and reviewer run as different Linux users, and the tools belong to neither, so nothing left in the container reaches the reviewer |
+| The implementer doesn't influence the reviewer | The reviewer starts fresh on a clean copy with its own config, and the Command writes the commit message. Implementer and reviewer run as different Linux users, and the tools belong to neither, so nothing left in the container reaches the reviewer |
 | The reviewer doesn't change the work | Its folder is thrown away |
 
 Weakened tests, persuasive comments and shallow reviews cannot be enforced this way. They fall to the reviewer, to the depth the Result shows (§10) and to planted-bug tests (§13).
@@ -162,7 +162,7 @@ The answers are `ok`, `wrong`, `not shown` and `spec problem`. Only the last thr
 
 **What the Command checks.** That every item has an answer, that each location exists, that the transcript shows the file was opened, and that a named test exists. Where a provider's transcript cannot show a read, as with some subagents and shell commands, the Result says "not measured". A location the registry doesn't list for that item is reported as a possible missing link. A pointer shows that someone looked, not that they judged correctly.
 
-**Items with no location.** A Rule that applies everywhere has none to list: the reviewer names where it checked, or better, the Rule also becomes a required check. **(Proposal)** A deleted Definition becomes an item of its own, "this is gone: its files are removed or have a new basis", and needs no pointer to a file that no longer exists.
+**Items with no location.** A Rule that applies everywhere has none to list: the reviewer names where it checked, or better, the Rule also becomes a required check. A deleted Definition becomes an item of its own, "this is gone: its files are removed or have a new basis", and needs no pointer to a file that no longer exists.
 
 **Size.** One reviewer goes through a small change's whole list. With `--full`, the starting point is one reviewer per Package, side by side, each in its own clean folder with only its own items. They don't coordinate and nothing they change counts. Test 1 in §13 decides whether this split stays. There is no agent per item, whose cost would be hundreds of starts for a full check.
 
@@ -188,7 +188,7 @@ Results live under `.markitect/results/<run>.md`. A landing Result is part of th
 
 **Unattended Runs** get a prompt and settings, and by default nothing else. Whatever a Run must know goes in its prompt, because skills are optional reading: in Vercel's test agents left the skill unused in 56 % of cases. The Command generates the provider's files in the container at the start, so nothing lands in the repository.
 
-**Settings** fix the AI model, force subagents onto that same model and leave the agent free inside the container. Agents may use the provider's own subagents, unlike in concept 2.0. One launch on Haiku started 68 subagents on Opus and spent almost everything there, so a harness must bind them. A budget limit belongs here too **(proposal)**.
+**Settings** fix the AI model, force subagents onto that same model and leave the agent free inside the container. Agents may use the provider's own subagents, unlike in concept 2.0. One launch on Haiku started 68 subagents on Opus and spent almost everything there, so a harness must bind them. A budget limit belongs here too.
 
 **A strategy may change** the Runs, prompts and settings. **It may not change** the spec check, the gate, landing or the Result. Built-in strategies ship inside `markitect`, `init` records which one a project uses, and custom ones live under `.markitect/`, where the gate protects them from a Run. A provider needs only a way to start a session, resume it, pass settings and give a transcript.
 
@@ -201,7 +201,7 @@ Every Command is a short declaration over the same steps:
 | `apply` | Implementer, then reviewer, with repair | `impact` | Artifacts, by landing |
 | `apply --findings FILE` | The same | The Findings, from any source | Artifacts, by landing |
 | `verify`, with `--full` for everything | Reviewer only, on a clean checkout of the commit | `impact`, or all Definitions | Nothing; ends with Findings |
-| `improve` | Reviewer over the spec with `lint`, `graph` and `refs` | The spec | Nothing that lands; its spec proposal reaches the owner, as a diff in the Result **(proposal)** |
+| `improve` | Reviewer over the spec with `lint`, `graph` and `refs` | The spec | Nothing that lands; its spec proposal reaches the owner, as a diff in the Result |
 | `bughunt`, `security` | Reviewer with that focus | The whole tree, or `--package` | Nothing; Findings or spec proposals |
 | `cleanup` | Implementer and reviewer on the unchanged spec | The whole tree, or `--package` | Artifacts, by landing |
 
@@ -243,25 +243,25 @@ The aims of [concept 2.0 §15](v2-concept.md#15-acceptance) stay: correct, no dr
 - No reviewer has met a known bug at the larger size, and only one real implementer fault has been caught on Makerspace.
 - The 5× project is only about 13,000 lines of Go, so a project too big for one agent has not been seen. If a change really is too big, or a cheap model needs small slices, a split per Package stays available as a strategy. The K launches on Haiku bear on that.
 
-## 14. Open for the owner
+## 14. Decided on acceptance
 
-1. **When do the names change?** Code and docs say model, maker and checker, and the folder is `.markitect/model/`. Recommendation: rename everything in one step during the build, with no compatibility kept.
-2. **What starts a full check?** Today nothing does: the Result only says one is due. Recommendation: a scheduled job or CI running `verify --full`, documented with the Command, ahead of the continuous-change loop.
-3. **How far does `impact` reach?** It finds everything changed and follows related links one step. One step reached 33 of the 36 existing files that changed on Makerspace, by [one measurement](../validation/impact-reach-20261103.md). Recommendation: it reports everything with distance and reason, the strategy picks the depth, and step 5 of §6 rebuilds the list after the work.
-4. **A new Package's first registry page.** Concept 2.0 has the owner write it, because hooks took paths from the Run's start. Recommendation: without hooks the implementer writes it, and the gate still requires every file to be accounted for.
-5. **Does the no-Python rule cover test tools?** The product is Go. `tools/evaluation`, the oracles and some scripts are Python. Recommendation: leave them for now, since they are not shipped.
-6. **Which small additions come now?** Raised in the discussion and not decided:
-   - a "how to see this change" line or a demo in the Result, for trying the result;
-   - a view of what changed since you last looked, across Runs;
-   - comparing the spec's dependencies with the code's imports, with no agent.
-7. **An uncommitted spec.** A Run starts from a commit, so a spec change that isn't committed would be silently left out. Recommendation: refuse to start, and say why.
-8. **May `not shown` land?** Recommendation: yes, listed in the Result, since disputes over evidence gaps were most of past refusals and rarely real faults. The cost is that a review could say `not shown` everywhere, which the Result would then show plainly.
-9. **Required checks that need a service or network.** Today's `execution.yaml` has no place for them. Recommendation: the project's image starts what it needs, and a later version adds it to `execution.yaml` if real projects ask for it.
+1. **Names.** Spec, implementer and reviewer replace model, maker and checker everywhere, including `.markitect/model/`, in one step during the build, with no compatibility kept.
+2. **What starts a full check.** A scheduled job or CI runs `verify --full`, documented with the Command, ahead of the continuous-change loop.
+3. **How far `impact` reaches.** It reports everything with distance and reason, the strategy picks the depth, and step 5 of §6 rebuilds the list after the work. Today it follows related links one step, which reached 33 of the 36 existing files that changed on Makerspace, by [one measurement](../validation/impact-reach-20261103.md).
+4. **A new Package's first registry page.** The implementer writes it, and the gate still requires every file to be accounted for.
+5. **Python in test tools.** `tools/evaluation`, the oracles and some scripts stay Python for now, since they are not shipped. The product is Go.
+6. **Small additions.** None now: a "how to see this change" line or demo in the Result, a view of what changed since you last looked, and comparing the spec's dependencies with the code's imports wait for the default, its tests and real use. The comparison of imports is the first candidate, since it needs no agent and feeds the analysis in §13.
+7. **An uncommitted spec.** `apply` refuses to start and says why, since a Run starts from a commit and the change would be silently left out.
+8. **`not shown`.** It may land, listed in the Result. A review could say it everywhere, which the Result would then show plainly.
+9. **Required checks that need a service or network.** The project's image starts what it needs. `execution.yaml` gets a place for them only if real projects ask.
+
+**Still open for the owner.** This question came from the Topics session after the nine were answered.
+
 10. **May a Command start sessions on an account login?** A Command starts every session itself on the user's normal login, never an API key (§9), and two things in Claude Code's documentation, read on 3 November 2026, bear on that. [Bare mode](https://code.claude.com/docs/en/headless) reads no subscription login, needs an API key or a cloud provider's credentials and is announced to become the default for `claude -p`. The [Agent SDK page](https://code.claude.com/docs/en/agent-sdk/overview) says third parties may not offer claude.ai login in their products without approval, and points them to API keys. Neither page settles a tool that a person runs on their own account. But the first page presents `claude -p` as the SDK's command-line form, so that rule may reach a Command, above all once others run Markitect. A provider can also change either page. Recommendation: check the terms and the `--bare` default before the build, and start sessions through one place per provider. If that route closes, the fallback is a skill in the user's own session that calls the same checks, with a Stop hook that keeps the agent working, and the gate repeated at push or in CI, because a hook can be skipped. That would change §6, §9 and §11, and give up unattended Runs and a fresh reviewer that the Command starts.
 
-## 15. What this overturns, on acceptance
+## 15. What this overturns
 
-Under the record's rules, each entry below is marked Superseded or amended with a link to its successor, and the entry itself stays. New entries say what changes.
+Each register entry below is marked there with a link to [DEC-091](register.md#dec-091-concept-30-is-the-target), and the entry itself stays.
 
 | Entry | Becomes | What stays from it |
 |---|---|---|

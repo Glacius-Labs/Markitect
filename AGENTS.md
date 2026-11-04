@@ -1,8 +1,8 @@
 # Markitect agent entrypoint
 
-Markitect is model-first development with delegated realization. People maintain a canonical model; a Manager hierarchy derived from it realizes, reviews and integrates the artifacts, and the host keeps a few clear technical guarantees.
+Markitect is spec-first development with delegated realization. People maintain one spec, the project's documentation and authority (code and older documents say canonical model); a Command has it realized by one implementer and one fresh reviewer, and the tool keeps a few clear technical guarantees.
 
-**Current target:** [concept 2.0](docs/concepts/v2-concept.md) ([DEC-086](docs/concepts/register.md#dec-086-concept-20-is-the-target)), accepted on 28 October 2026: the model as typed documentation in Markdown, one Run per change with a maker and a checker per Manager, Git handoffs with server-side hooks, a native host. Main is being rebuilt to it in steps T1 to T9, with no compatibility kept. T1 built the model language and the commands `init`, `check`, `lock`, `refs`, `graph`, `impact` and `lint` ([model language](docs/guides/model-language.md)) and removed V1's Run host; T4 brought `apply` and `verify`, and T5 the native host: it runs on Windows, Linux and macOS with Docker only and mounts no folder of the user's into a container. [V1 concept 1.0](docs/concepts/v1-concept.md) ([DEC-068](docs/concepts/register.md#dec-068-v1-concept-10)) and its code before T1 remain the record of V1. The [delivery plan](docs/implementation-plan.md) owns the current steps, the way from Main to concept 2.0 and the known deviations of the code.
+**Current target:** [concept 3.0](docs/concepts/v3-concept.md) ([DEC-091](docs/concepts/register.md#dec-091-concept-30-is-the-target)), accepted on 4 November 2026: the spec as typed documentation in Markdown, one implementer and one reviewer per Command in one container, code in and out only as a Git commit, and a gate in the CLI after the session ends. It is not built yet. Main still implements [concept 2.0](docs/concepts/v2-concept.md) (steps T1 to T9), with its Manager tree, Run remote and hooks, and is being rebuilt with no compatibility kept. [V1 concept 1.0](docs/concepts/v1-concept.md) remains the record of V1. The [delivery plan](docs/implementation-plan.md) owns the current steps and the way from Main to concept 3.0.
 
 Before assessing product direction, read [Markitect in brief](docs/vision.md#markitect-in-brief), [Founding intent](docs/vision.md#founding-intent), [Common misreadings](docs/vision.md#common-misreadings) and the [concept register](docs/concepts/register.md). Do not reopen an accepted entry without new evidence. The canonical model is meant as a typed language in prose: projects define their own Kinds, Libraries supply common ones, the compiler checks structure only, and a model is judged like code.
 
@@ -25,7 +25,8 @@ Markitect itself is developed as an ordinary software project: agentic coding, t
 
 ## Where things are
 
-- [Concept 2.0](docs/concepts/v2-concept.md): the target.
+- [Concept 3.0](docs/concepts/v3-concept.md): the target.
+- [Concept 2.0](docs/concepts/v2-concept.md): what Main implements until the rebuild.
 - [V1 concept 1.0](docs/concepts/v1-concept.md): the record of V1, which Main implemented until T1.
 - [Model language](docs/guides/model-language.md): the 2.0 model language, the `.markitect/` layout and the model commands.
 - [Delivery plan](docs/implementation-plan.md): current steps, work streams, known deviations and integration rules.
