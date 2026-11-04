@@ -30,3 +30,17 @@ So a careful author working from the whole model missed nothing here, even where
 - **The model was written with the answers in hand.** Each step's model author had the list of what the step reaches. A person keeping a spec has only the request and their own reading, and the list exists because such a reading can miss things. Test 2 asks whether the default misses less than one strong agent; if the default gets these models, it gets part of the answer. This is for the owner to decide before test 2.
 - **How strong the cases are.** W0's cases were measured with 89 seeded bugs. These were measured only by failing on the program before the change, which shows that a case can tell the change, not that it would catch every wrong version of it.
 - **The authors met only once per step.** Nobody reviewed the cases one by one.
+
+## Dispatch: the judge's self-test
+
+The series judge on each step's reference and on its seeded mutants, in its container. It starts no agent and uses no provider.
+
+| Item | Value |
+|---|---|
+| Source | Branch `dev/u3-change-steps` at the commit that adds this dispatch, exported with `judges.py export` |
+| Image | The judge's `golang@sha256:69a7b9788769bec032d238959b61854e9ae87f57be9029ec04e9885fabf99195`, without network |
+| Limits | The judge's own: 3,600 seconds per run, with the limits in `judge.json`. One self-test, and a second only after a fix of a defect the first shows |
+| Abort | The engine busy, or a run past its limit |
+| Lock | `NATIVE-RUN.lock` in the shared notes folder, through the tool's `--lock`. Other Docker work is checked first and stays off |
+| Cleanup | The judge removes its containers; afterwards nothing labelled with the evaluation may remain |
+| Evidence | Outside the repository, in `%LOCALAPPDATA%/markitect-large-steps/selftest/`, and the result here |
