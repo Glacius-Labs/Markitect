@@ -1,7 +1,7 @@
-# Markitect Manager image: the session helper markitect-agentd, the markitect
-# command for reading the model, Git, and the pinned Claude Code and Codex
-# CLIs. Every maker and checker of a Run runs in a container of this image or
-# of a project image built FROM it. Build it from the repository root:
+# Markitect runtime image: the session helper markitect-agentd, the markitect
+# command for reading the spec, Git, and the pinned Claude Code and Codex CLIs. A
+# Command's one container and the app's chats run this image or a project image
+# built FROM it. Build it from the repository root:
 #
 #   docker build -f packaging/runtime/Dockerfile -t markitect-runtime .
 #
@@ -34,6 +34,21 @@ COPY --from=build /out/markitect /usr/local/bin/markitect
 # Fresh named volumes mounted at these paths take over their ownership, so
 # the non-root session user can write its private home and its clone.
 RUN mkdir -p /home/agent /work && chown 1000:1000 /home/agent /work
+
+# A Command's users (concept 3.0 §7): the implementer, the reviewers side by side,
+# the required checks and the Command's tools each have a home and a work folder
+# only they can enter, so nothing one leaves reaches another. The programs belong
+# to root and to none of them.
+RUN set -eu; \
+    for entry in implementer:1001 checks:1003 tools:1004 reviewer-1:1011 reviewer-2:1012 reviewer-3:1013 reviewer-4:1014 \
+        reviewer-5:1015 reviewer-6:1016 reviewer-7:1017 reviewer-8:1018; do \
+      name=${entry%%:*}; id=${entry##*:}; \
+      groupadd --gid "$id" "$name"; \
+      useradd --uid "$id" --gid "$id" --no-create-home --home-dir "/home/$name" --shell /bin/sh "$name"; \
+      mkdir -p "/home/$name/.tmp" "/home/$name/notes" "/work/$name"; \
+      chown -R "$id:$id" "/home/$name" "/work/$name"; \
+      chmod 700 "/home/$name" "/work/$name"; \
+    done
 
 # Record the pinned CLIs and the builds. The checks use a throwaway home, so
 # no CLI state lands in the image, and fail the build when a CLI is not the

@@ -151,6 +151,13 @@ func renderImpact(base string, im analysis.Impact) string {
 			b.WriteString("\n")
 		}
 	}
+	if len(im.Further) > 0 {
+		b.WriteString("## Further\n\nThese link to what is reached, at more steps, and are on no checklist:\n\n| Definition | Distance | Why |\n|---|---|---|\n")
+		for _, it := range im.Further {
+			fmt.Fprintf(&b, "| [[%s]] | %d | %s |\n", it.Definition, it.Distance, strings.Join(it.Reasons, "; "))
+		}
+		b.WriteString("\n")
+	}
 	if len(im.Notes) > 0 {
 		b.WriteString("## Side notes\n\n")
 		for _, n := range im.Notes {

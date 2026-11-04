@@ -1,7 +1,7 @@
-// Package codex is the Codex adapter of the agent runtime: the launch
-// contract of the pinned Codex CLI's exec mode in a Manager container, the
-// access-only copy of the ChatGPT account login, and the reader of its JSON
-// events with the failure classes the evaluation voids.
+// Package codex is the Codex adapter of the agent runtime: the launch contract
+// of the pinned Codex CLI's exec mode and the reader of its JSON events with the
+// failure classes the evaluation voids. It has no login route yet, so no session
+// starts on it (DEC-093).
 package codex
 
 import (
@@ -47,16 +47,30 @@ type Provider struct{}
 
 func (Provider) Name() string { return "codex" }
 
-// Home installs only the login; Codex receives the harness with the first
-// message.
-func (Provider) Home(l agents.Login, _ harness.Document) (frame.Initialize, error) {
-	return frame.Initialize{CodexAuth: l.Copy}, nil
+// TokenVariable is empty: Markitect has no token route for Codex yet. OpenAI's
+// access tokens are described for ChatGPT Enterprise, and whether a personal
+// plan gets one is not stated, so a Codex session cannot start (DEC-093).
+func (Provider) TokenVariable() string { return "" }
+
+// Home holds nothing to install without a login route.
+func (Provider) Home(harness.Document) (frame.Initialize, error) {
+	return frame.Initialize{}, errNoRoute
 }
+
+// Launch refuses: see TokenVariable.
+func (Provider) Launch(agents.Launch) ([]string, []string, []byte, error) {
+	return nil, nil, nil, errNoRoute
+}
+
+// SessionReader has nothing to read: see TokenVariable.
+func (Provider) SessionReader(agents.Launch) agents.SessionReader { return nil }
+
+var errNoRoute = errors.New("codex: Markitect has no login route for Codex yet")
 
 // AuthStatus runs `codex login status` with its standard error on standard
 // output: the pinned CLI prints its report on standard error (observed
 // offline in the pinned image).
-func (Provider) AuthStatus() ([]string, []string) {
+func (Provider) AuthStatus(string) ([]string, []string) {
 	return []string{"/bin/sh", "-c", "exec " + executable + ` -c cli_auth_credentials_store='"file"' login status 2>&1`}, environment()
 }
 
@@ -115,55 +129,6 @@ func toolTimeout(deadline, now time.Time) time.Duration {
 		return 10 * time.Minute
 	}
 	return max(deadline.Sub(now), 0) + time.Minute
-}
-
-// Login admits a Codex auth.json with a ChatGPT account login. The
-// Manager's copy keeps the ID token, access token and account, and an empty
-// refresh token: the pinned CLI requires the field but the Manager can then
-// neither refresh nor rotate the login. An API key is refused, and so is an
-// access token past its expiry.
-func (Provider) Login(source []byte, now time.Time) (agents.Login, error) {
-	var file struct {
-		APIKey *string `json:"OPENAI_API_KEY"`
-		Tokens *struct {
-			ID      string `json:"id_token"`
-			Access  string `json:"access_token"`
-			Refresh string `json:"refresh_token"`
-			Account string `json:"account_id"`
-		} `json:"tokens"`
-		LastRefresh *string `json:"last_refresh"`
-	}
-	if len(source) == 0 || len(source) > frame.MaxPrivateAuthBytes || json.Unmarshal(source, &file) != nil {
-		return agents.Login{}, errors.New("codex: the login is not a Codex auth.json")
-	}
-	if file.APIKey != nil && *file.APIKey != "" {
-		return agents.Login{}, errors.New("codex: the login holds an OpenAI API key; only a ChatGPT account login is admitted")
-	}
-	t := file.Tokens
-	if t == nil || t.Access == "" || t.ID == "" {
-		return agents.Login{}, errors.New("codex: the login holds no ChatGPT account tokens")
-	}
-	expires, err := expiry(t.Access)
-	if err != nil {
-		return agents.Login{}, err
-	}
-	if !now.Before(expires) {
-		return agents.Login{}, errors.New("codex: the login's access token has expired; run codex on the host to refresh it")
-	}
-	login := agents.Login{Expires: expires, Secrets: [][]byte{[]byte(t.Access), []byte(t.ID)}}
-	if t.Refresh != "" {
-		login.Secrets = append(login.Secrets, []byte(t.Refresh))
-	}
-	copied, err := json.Marshal(map[string]any{
-		"OPENAI_API_KEY": nil,
-		"tokens":         map[string]string{"id_token": t.ID, "access_token": t.Access, "refresh_token": "", "account_id": t.Account},
-		"last_refresh":   file.LastRefresh,
-	})
-	if err != nil {
-		return agents.Login{}, err
-	}
-	login.Copy = copied
-	return login, nil
 }
 
 // expiry reads the exp claim of a JWT access token.

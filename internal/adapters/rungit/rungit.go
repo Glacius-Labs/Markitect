@@ -1,7 +1,7 @@
-// Package rungit is the host's own Git work for a Run (concept 2.0 §9): a
-// private bare repository that reads the target branch, makes the start
-// bundle, imports what the Run's remote holds, merges and writes the Result
-// commit, and pushes to the target repository. It never touches a working
+// Package rungit is a Command's own Git work outside its container (concept 3.0
+// §6, §9): a private bare repository that reads the target branch, makes the start
+// bundle, imports what the sandbox hands out, merges and writes the Result commit,
+// and pushes to the target repository. It never touches a working
 // tree: the user's repository is only a Git remote to it.
 package rungit
 
@@ -17,6 +17,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/analysis"
 	"github.com/Glacius-Labs/Markitect/internal/project"
@@ -29,22 +30,19 @@ type Repo struct {
 	Dir string
 	// Target is the target repository: a URL or a path Git can push to.
 	Target string
-	// Git is the git program; empty means git on the PATH.
-	Git string
 }
 
 var _ run.Git = (*Repo)(nil)
 
-const (
-	targetRefs   = "refs/markitect/target/"
-	runRefs      = "refs/markitect/run/"
-	keepRefs     = "refs/markitect/keep/"
-	branchRefs   = "refs/markitect/branches/"
-	lockReadRefs = "refs/markitect/lock-read/"
-)
+// waitDelay bounds how long a git command may hold on after its context ended.
+const waitDelay = 5 * time.Second
 
-// LockRefs is where the target repository holds the lock of each branch.
-const LockRefs = "refs/markitect/lock/"
+const (
+	targetRefs = "refs/markitect/target/"
+	runRefs    = "refs/markitect/run/"
+	keepRefs   = "refs/markitect/keep/"
+	branchRefs = "refs/markitect/branches/"
+)
 
 // Open creates the private repository in dir, which must not exist or be
 // empty, for the target repository.
@@ -120,6 +118,24 @@ func Target(ctx context.Context, repoDir, remote, branch string) (url, name stri
 	}
 }
 
+// UncommittedSpec lists what the working tree of the repository at repoDir has
+// not committed under Markitect's folder.
+func UncommittedSpec(ctx context.Context, repoDir string) ([]string, error) {
+	cmd := exec.CommandContext(ctx, "git", "-C", repoDir, "status", "--porcelain", "--untracked-files=all", "--", ":/"+project.Dir)
+	cmd.Env = cleanEnv()
+	out, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("%s is not inside a Git repository: %w", repoDir, err)
+	}
+	var dirty []string
+	for _, l := range strings.Split(strings.TrimRight(string(out), "\n"), "\n") {
+		if len(l) > 3 {
+			dirty = append(dirty, l[3:])
+		}
+	}
+	return dirty, nil
+}
+
 // cleanEnv is the environment without Git variables that would point git at
 // another repository or index.
 func cleanEnv() []string {
@@ -136,16 +152,16 @@ func cleanEnv() []string {
 }
 
 func (r *Repo) git(ctx context.Context, stdin io.Reader, env []string, args ...string) ([]byte, error) {
-	bin := r.Git
-	if bin == "" {
-		bin = "git"
-	}
-	cmd := exec.CommandContext(ctx, bin, append([]string{"--git-dir=" + r.Dir}, args...)...)
+	cmd := exec.CommandContext(ctx, "git", append([]string{"--git-dir=" + r.Dir}, args...)...)
 	cmd.Env = append(cleanEnv(), env...)
 	cmd.Stdin = stdin
+	// A deadline ends git even when a helper it started holds its output open.
+	cmd.WaitDelay = waitDelay
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
-	if err := cmd.Run(); err != nil {
+	// A helper may hold the output open after a git that succeeded, as a shared
+	// SSH connection does.
+	if err := cmd.Run(); err != nil && !errors.Is(err, exec.ErrWaitDelay) {
 		return stdout.Bytes(), fmt.Errorf("git %s: %w: %s", args[0], err, strings.TrimSpace(stderr.String()))
 	}
 	return stdout.Bytes(), nil
@@ -170,19 +186,22 @@ func (r *Repo) Bundle(ctx context.Context, commit string, w io.Writer) error {
 	if _, err := r.git(ctx, nil, nil, "update-ref", ref, commit); err != nil {
 		return err
 	}
-	out, err := r.git(ctx, nil, nil, "bundle", "create", "-q", "-", ref)
-	if err != nil {
-		return err
+	// Streamed: a repository can be larger than the host's memory.
+	cmd := exec.CommandContext(ctx, "git", "--git-dir="+r.Dir, "bundle", "create", "-q", "-", ref)
+	cmd.Env = cleanEnv()
+	var stderr bytes.Buffer
+	cmd.Stdout, cmd.Stderr = w, &stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("git bundle: %w: %s", err, strings.TrimSpace(stderr.String()))
 	}
-	_, err = w.Write(out)
-	return err
+	return nil
 }
 
-// Import reads a bundle of the Run's remote and returns its branches' tips.
-func (r *Repo) Import(ctx context.Context, bundle io.Reader) (map[string]string, error) {
+// Import reads a bundle the sandbox wrote.
+func (r *Repo) Import(ctx context.Context, bundle io.Reader) error {
 	f, err := os.CreateTemp(r.Dir, "import-*.bundle")
 	if err != nil {
-		return nil, err
+		return err
 	}
 	name := f.Name()
 	defer os.Remove(name)
@@ -191,22 +210,10 @@ func (r *Repo) Import(ctx context.Context, bundle io.Reader) (map[string]string,
 		err = cerr
 	}
 	if err != nil {
-		return nil, err
+		return err
 	}
-	if _, err := r.git(ctx, nil, nil, "fetch", "-q", "--no-tags", "--prune", name, "+refs/heads/*:"+runRefs+"*"); err != nil {
-		return nil, err
-	}
-	out, err := r.git(ctx, nil, nil, "for-each-ref", "--format=%(objectname) %(refname)", runRefs)
-	if err != nil {
-		return nil, err
-	}
-	tips := map[string]string{}
-	for _, l := range strings.Split(strings.TrimSpace(string(out)), "\n") {
-		if id, ref, ok := strings.Cut(l, " "); ok {
-			tips[strings.TrimPrefix(ref, runRefs)] = id
-		}
-	}
-	return tips, nil
+	_, err = r.git(ctx, nil, nil, "fetch", "-q", "--no-tags", name, "+refs/heads/*:"+runRefs+"*")
+	return err
 }
 
 // Commit returns one commit.
@@ -224,12 +231,9 @@ func (r *Repo) Commit(ctx context.Context, id string) (run.Commit, error) {
 
 // Contains reports whether commit is tip or one of its ancestors.
 func (r *Repo) Contains(ctx context.Context, tip, commit string) (bool, error) {
-	bin := r.Git
-	if bin == "" {
-		bin = "git"
-	}
-	cmd := exec.CommandContext(ctx, bin, "--git-dir="+r.Dir, "merge-base", "--is-ancestor", commit, tip)
+	cmd := exec.CommandContext(ctx, "git", "--git-dir="+r.Dir, "merge-base", "--is-ancestor", commit, tip)
 	cmd.Env = cleanEnv()
+	cmd.WaitDelay = waitDelay
 	err := cmd.Run()
 	var exit *exec.ExitError
 	switch {
@@ -262,6 +266,34 @@ func (r *Repo) Changed(ctx context.Context, from, to string) ([]analysis.Change,
 	}
 	sort.Slice(list, func(i, j int) bool { return list[i].Path < list[j].Path })
 	return list, nil
+}
+
+// Links returns the symbolic links of a commit, with where they point.
+func (r *Repo) Links(ctx context.Context, commit string) (map[string]string, error) {
+	out, err := r.git(ctx, nil, nil, "ls-tree", "-r", "-z", commit)
+	if err != nil {
+		return nil, err
+	}
+	links := map[string]string{}
+	for _, row := range split(out) {
+		meta, file, ok := strings.Cut(row, "\t")
+		f := strings.Fields(meta)
+		if !ok || len(f) != 3 || f[0] != "120000" {
+			continue
+		}
+		target, err := r.git(ctx, nil, nil, "cat-file", "blob", f[2])
+		if err != nil {
+			return nil, err
+		}
+		links[file] = string(target)
+	}
+	return links, nil
+}
+
+// Diff is the text of the changes between two commits.
+func (r *Repo) Diff(ctx context.Context, from, to string) (string, error) {
+	out, err := r.git(ctx, nil, nil, "diff", "--no-color", "--no-ext-diff", from, to, "--")
+	return string(out), err
 }
 
 // History returns every line any commit between two commits adds, with
@@ -495,56 +527,6 @@ func (r *Repo) Branches(ctx context.Context, prefix string) (map[string]string, 
 		}
 	}
 	return tips, nil
-}
-
-// lockFile is the one file of a lock commit.
-const lockFile = "lock.json"
-
-// Lock reads the lock record of a branch of the target repository: the
-// file of the commit at refs/markitect/lock/BRANCH there, a ref no clone
-// fetches by default. The version is that commit.
-func (r *Repo) Lock(ctx context.Context, branch string) ([]byte, string, error) {
-	if _, err := r.git(ctx, nil, nil, "fetch", "-q", "--no-tags", "--prune", r.Target, "+"+LockRefs+"*:"+lockReadRefs+"*"); err != nil {
-		return nil, "", err
-	}
-	id, err := r.line(ctx, "for-each-ref", "--format=%(objectname)", lockReadRefs+branch)
-	if err != nil || id == "" {
-		return nil, "", err
-	}
-	data, err := r.git(ctx, nil, nil, "cat-file", "blob", id+":"+lockFile)
-	if err != nil {
-		return nil, "", err
-	}
-	return data, id, nil
-}
-
-// SetLock replaces the lock record of a branch if its ref is still at
-// version: a new commit without parents that holds only the record, pushed
-// with a lease; nil data deletes the ref.
-func (r *Repo) SetLock(ctx context.Context, branch string, data []byte, version string) error {
-	ref := LockRefs + branch
-	spec := ":" + ref
-	if data != nil {
-		blob, err := r.git(ctx, bytes.NewReader(data), nil, "hash-object", "-w", "--stdin")
-		if err != nil {
-			return err
-		}
-		tree, err := r.git(ctx, strings.NewReader("100644 blob "+strings.TrimSpace(string(blob))+"\t"+lockFile+"\n"), nil, "mktree")
-		if err != nil {
-			return err
-		}
-		id, err := r.git(ctx, strings.NewReader("Markitect lock of "+branch+"\n"), identity, "commit-tree", strings.TrimSpace(string(tree)), "-F", "-")
-		if err != nil {
-			return err
-		}
-		commit := strings.TrimSpace(string(id))
-		if _, err := r.git(ctx, nil, nil, "update-ref", keepRefs+commit, commit); err != nil {
-			return err
-		}
-		spec = commit + ":" + ref
-	}
-	_, err := r.git(ctx, nil, nil, "push", "-q", "--no-verify", "--force-with-lease="+ref+":"+version, r.Target, spec)
-	return err
 }
 
 func split(out []byte) []string {

@@ -38,10 +38,11 @@ type AgentSettings struct {
 	Problems []string `json:"problems"`
 }
 
-// LoginState is one provider's account login on this host.
+// LoginState is one provider's account token on this host.
 type LoginState struct {
 	Provider string `json:"provider"`
-	File     string `json:"file"`
+	// File names the variable that holds the token.
+	File string `json:"file"`
 	// State is ok, missing or refused; Detail says why it was refused.
 	State   string     `json:"state"`
 	Detail  string     `json:"detail,omitempty"`
@@ -101,3 +102,11 @@ func (s *server) projectSettings(w http.ResponseWriter, r *http.Request) {
 
 // settingsFunc reads this Markitect's settings.
 type settingsFunc func(ctx context.Context) AppSettings
+
+// Hint says what to do about a token that is not usable.
+func (l LoginState) Hint() string {
+	if l.File == "" {
+		return l.Detail
+	}
+	return "run " + l.Command + " and keep the token in " + l.File + "."
+}

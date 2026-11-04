@@ -2,12 +2,9 @@ package bootstrap
 
 import (
 	"context"
-	"errors"
-	"io/fs"
 	"os"
 	"os/exec"
 	"sort"
-	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/desktop"
 )
@@ -17,8 +14,8 @@ import (
 func desktopSettings(context.Context) desktop.AppSettings { return appSettings(nil) }
 
 // appSettings reads the agents' settings from the environment, as agentConfig
-// reads them but without asking the container engine, and each provider's
-// account login. With no Manager image set, chats run in the app's own image.
+// reads them but without asking the container engine, and whether each provider
+// has its account token. The token's value goes nowhere from here. With no Manager image set, chats run in the app's own image.
 func appSettings(image *chatImage) desktop.AppSettings {
 	name := env("MARKITECT_PROVIDER", "claude")
 	a := desktop.AgentSettings{Provider: name, Effort: env("MARKITECT_EFFORT", "high"), Image: os.Getenv("MARKITECT_MANAGER_IMAGE"),
@@ -55,35 +52,19 @@ func appSettings(image *chatImage) desktop.AppSettings {
 		names = append(names, n)
 	}
 	sort.Strings(names)
-	now := time.Now()
 	for _, n := range names {
 		p := providers[n]
-		l := desktop.LoginState{Provider: n, File: p.loginFile(), Command: p.command, Used: n == name}
-		if l.Used {
-			l.File = env("MARKITECT_LOGIN", l.File)
-		}
-		data, err := os.ReadFile(l.File)
+		l := desktop.LoginState{Provider: n, File: p.variable, Command: p.command, Used: n == name}
 		switch {
-		case errors.Is(err, fs.ErrNotExist):
+		case p.variable == "":
+			l.State, l.Detail = "refused", "Markitect has no account token route for "+n+" yet."
+		case os.Getenv(p.variable) == "":
 			l.State = "missing"
-		case err != nil:
-			l.State, l.Detail = "refused", err.Error()
 		default:
-			// The provider admits the login as an agent would; nothing of
-			// the login leaves this function but its expiry.
-			login, err := p.provider.Login(data, now)
-			if err != nil {
-				l.State, l.Detail = "refused", err.Error()
-				break
-			}
 			l.State = "ok"
-			if !login.Expires.IsZero() {
-				expires := login.Expires
-				l.Expires = &expires
-			}
 		}
 		if l.Used && l.State != "ok" {
-			out.Agents.Problems = append(out.Agents.Problems, "The login of "+n+", the provider the agents use, is not usable: log in again with "+p.command+".")
+			out.Agents.Problems = append(out.Agents.Problems, "The account of "+n+", the provider the agents use, is not usable: "+l.Hint())
 		}
 		out.Logins = append(out.Logins, l)
 	}

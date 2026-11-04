@@ -50,11 +50,15 @@ func privateFiles(req frame.Initialize) []privateFile {
 	if req.Claude == nil {
 		return []privateFile{{".codex", "auth.json", req.CodexAuth}}
 	}
-	return []privateFile{
+	files := []privateFile{
 		{".markitect", "system-prompt.md", []byte(req.Claude.SystemPrompt)},
 		{".markitect", "append-system-prompt.md", []byte(req.Claude.AppendSystemPrompt)},
-		{".claude", ".credentials.json", req.Claude.Credentials},
 	}
+	// A chat on the user's token has no login file to install.
+	if len(req.Claude.Credentials) > 0 {
+		files = append(files, privateFile{".claude", ".credentials.json", req.Claude.Credentials})
+	}
+	return files
 }
 
 // errClaudeConfigNotEmpty refuses a fresh home whose .claude already holds

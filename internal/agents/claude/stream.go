@@ -13,9 +13,6 @@ import (
 // Reader returns the reader of one turn's stream-json output.
 func (Provider) Reader(t agents.Turn) agents.Reader {
 	tools := strings.Split(builtinToolNames, ",")
-	for _, name := range t.Tools {
-		tools = append(tools, "mcp__markitect__"+name)
-	}
 	slices.Sort(tools)
 	return &reader{tools: tools, resume: t.Conversation}
 }

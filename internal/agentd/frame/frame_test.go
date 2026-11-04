@@ -91,7 +91,8 @@ func TestControlMessagesNeedExactlyTheirBody(t *testing.T) {
 		{Type: frame.TypeInitialize, Initialize: &frame.Initialize{CodexAuth: make([]byte, frame.MaxPrivateAuthBytes+1)}},
 		{Type: frame.TypeInitialize, Initialize: &frame.Initialize{CodexAuth: []byte("a"), Claude: &frame.ClaudeHome{Credentials: []byte("login"), SystemPrompt: "b", AppendSystemPrompt: "d"}}},
 		{Type: frame.TypeInitialize, Initialize: &frame.Initialize{Claude: &frame.ClaudeHome{Credentials: []byte("login"), SystemPrompt: "b"}}},
-		{Type: frame.TypeInitialize, Initialize: &frame.Initialize{Claude: &frame.ClaudeHome{SystemPrompt: "b", AppendSystemPrompt: "d"}}},
+		{Type: frame.TypeInitialize, Initialize: &frame.Initialize{Claude: &frame.ClaudeHome{AppendSystemPrompt: "d"}}},
+		{Type: frame.TypeInitialize, Initialize: &frame.Initialize{Claude: &frame.ClaudeHome{SystemPrompt: "b"}}},
 		{Type: frame.TypeInitialize, Initialize: &frame.Initialize{Claude: &frame.ClaudeHome{SystemPrompt: "\xff", AppendSystemPrompt: "d"}}},
 		{Type: frame.TypeInitialize, Initialize: &frame.Initialize{Claude: &frame.ClaudeHome{Credentials: make([]byte, frame.MaxPrivateAuthBytes+1), SystemPrompt: "b", AppendSystemPrompt: "d"}}},
 		{Type: frame.TypeInitialized, Initialized: &frame.Initialized{}, Start: &frame.Start{}},
@@ -106,6 +107,12 @@ func TestControlMessagesNeedExactlyTheirBody(t *testing.T) {
 		if _, err := frame.EncodeControl(c); err == nil {
 			t.Fatalf("invalid control message encoded: %+v", c)
 		}
+	}
+	// The user's token travels in a session's environment, so a Claude home
+	// holds no credentials file and is still one setup.
+	tokenHome := frame.ControlMessage{Type: frame.TypeInitialize, Initialize: &frame.Initialize{Claude: &frame.ClaudeHome{SystemPrompt: "b", AppendSystemPrompt: "d"}}}
+	if _, err := frame.EncodeControl(tokenHome); err != nil {
+		t.Fatalf("a Claude home without credentials: %v", err)
 	}
 	for _, raw := range []string{
 		`{"type":"hello","hello":{"protocol":1,"version":"x"},"extra":1}`,

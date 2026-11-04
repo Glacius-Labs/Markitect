@@ -9,124 +9,95 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/analysis"
-	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
-	"github.com/Glacius-Labs/Markitect/internal/runremote"
 )
 
 // landAttempts bounds how often landing starts again when the target branch
-// moves while the Run lands, as a merge queue does.
+// moves while the Command lands, as a merge queue does.
 const landAttempts = 3
+
+// credentialFiles are the path endings of provider login files, which no landing
+// may carry whatever is in them.
+var credentialFiles = []string{"/.credentials.json", "/.codex/auth.json"}
 
 // ResultFile is where a Run's Result page lives in the repository.
 func ResultFile(run string) string { return path.Join(project.ResultsDir, run+".md") }
 
-// land lands Root's approved work as in a merge queue (concept 2.0 §6.5):
-// unchanged target, fast-forward; moved target, merge, but only when the
-// merge is clean, compiles, passes the required checks and the incoming
-// changes touch nothing in the Run's impact. The host compiles every state it
-// lands (§6.3). Otherwise the work stays on its Run branch and the Result
-// says why.
-func (e *Engine) land(ctx context.Context, r *Result, s *schedule, remote Remote, release func(*[]string)) {
-	// A Run that does not land releases its remote and its lock entry
-	// before it writes its page, so the page says what they left.
-	// What a landing attempt found about the kept Run branches it would
-	// replace goes with that attempt.
+// land lands the work (concept 3.0 §6, step 9). It treats the user's repository
+// only as a Git remote. Unchanged target: the commit lands. Moved target: it
+// lands only when the merge is clean, the gate passes on the merged state and
+// the incoming changes touch nothing in the impact. Otherwise the work and its
+// Result stay on the Run's own branch, and the Result says why.
+func (c *command) land(ctx context.Context) {
+	e, r, cand := c.e, c.r, c.work
+	// A Command that does not land releases its container before it writes its
+	// page, so the page says what that left.
 	cleanup := r.Cleanup
-	// A Run that does not land keeps the count it read at its start.
+	// It keeps the count it read at its start.
 	counted := r.FullCheck
-	keepOn := func(ctx context.Context, r *Result, commit, old, state, why string, err error) {
+	keepOn := func(ctx context.Context, commit, old, state, why string, err error) {
 		r.Replaced, r.FullCheck = nil, counted
-		release(&r.Cleanup)
+		c.release(&r.Cleanup)
 		e.keepOn(ctx, r, commit, old, state, why, err)
 	}
-	root := s.nodes[model.RootPackage]
-	cand := root.approval
+	// Nothing leaves the host before the scan: keepOn scans too, and keeps only
+	// the Result when the work holds a credential.
+	if why, err := e.credentialScan(ctx, r.Start, cand); err != nil || why != "" {
+		keepOn(ctx, cand, "", StateKept, why, err)
+		return
+	}
 	r.Branch = RunBranchPrefix + r.Run
-	// The approved work is safe on its Run branch before landing starts.
+	// The work is safe on its Run branch before landing starts.
 	if err := e.Git.Push(ctx, r.Branch, cand, ""); err != nil {
-		r.State, r.Why = StateIncomplete, fmt.Sprintf("the approved work could not be pushed to %s: %v", r.Branch, err)
+		r.State, r.Why, r.Branch = StateIncomplete, fmt.Sprintf("the work could not be pushed to %s: %v", r.Branch, err), ""
+		c.release(&r.Cleanup)
 		return
 	}
 	pushed := cand
-	for _, n := range s.order {
-		if ok, err := e.Git.Contains(ctx, cand, n.approval); err != nil || !ok {
-			keepOn(ctx, r, cand, pushed, StateKept, fmt.Sprintf("Root's approved work does not contain %s's approval %s", n.name, short(n.approval)), err)
-			return
-		}
-	}
-	if why, err := e.credentialScan(ctx, s, cand); err != nil || why != "" {
-		keepOn(ctx, r, cand, pushed, StateKept, why, err)
-		return
-	}
-	if why, err := e.compile(ctx, cand); err != nil || why != "" {
-		keepOn(ctx, r, cand, pushed, StateKept, "Root's approved work "+why, err)
-		return
-	}
 	for attempt := 1; attempt <= landAttempts; attempt++ {
 		r.Cleanup, r.Replaced = append([]string{}, cleanup...), nil
 		tip, err := e.Git.Fetch(ctx, r.Target)
 		if err != nil {
-			keepOn(ctx, r, cand, pushed, StateIncomplete, "", fmt.Errorf("reading the target branch: %w", err))
+			keepOn(ctx, cand, pushed, StateIncomplete, "", fmt.Errorf("reading the target branch: %w", err))
 			return
 		}
 		state := cand
 		if tip != r.Start {
-			// Until the merged state is checked, the checks named are those
-			// of Root's approved work, which is not what would land.
-			if len(s.plan.Checks) > 0 {
+			if len(c.cur.Checks) > 0 {
 				r.RequiredChecks.Note = fmt.Sprintf("%s moved to %s, and no merged state was checked", r.Target, short(tip))
 			}
 			if ok, err := e.Git.Contains(ctx, tip, r.Start); err != nil || !ok {
-				keepOn(ctx, r, cand, pushed, StateKept, fmt.Sprintf("%s was rewritten to %s, which no longer holds the Run's start", r.Target, short(tip)), err)
+				keepOn(ctx, cand, pushed, StateKept, fmt.Sprintf("%s was rewritten to %s, which no longer holds the Run's start", r.Target, short(tip)), err)
 				return
 			}
-			why, err := e.incoming(ctx, s, r.Start, tip, cand)
+			why, err := c.incoming(ctx, tip, cand)
 			if err != nil || why != "" {
-				keepOn(ctx, r, cand, pushed, StateKept, why, err)
+				keepOn(ctx, cand, pushed, StateKept, why, err)
 				return
 			}
 			merged, conflicts, err := e.Git.Merge(ctx, tip, cand, fmt.Sprintf("Markitect Run %s: merge onto %s", r.Run, r.Target))
 			if err != nil || len(conflicts) > 0 {
-				keepOn(ctx, r, cand, pushed, StateKept, fmt.Sprintf("%s moved to %s and the merge conflicts in %s", r.Target, short(tip), strings.Join(conflicts, ", ")), err)
+				keepOn(ctx, cand, pushed, StateKept, fmt.Sprintf("%s moved to %s and the merge conflicts in %s", r.Target, short(tip), strings.Join(conflicts, ", ")), err)
 				return
 			}
-			if why, err := e.compile(ctx, merged); err != nil || why != "" {
-				keepOn(ctx, r, cand, pushed, StateKept, fmt.Sprintf("%s moved to %s and the merged state %s", r.Target, short(tip), why), err)
+			refusals, err := c.gate(ctx, tip, merged, true)
+			if err != nil {
+				keepOn(ctx, cand, pushed, StateIncomplete, fmt.Sprintf("%s moved to %s and the gate could not run on the merged state", r.Target, short(tip)), err)
 				return
 			}
-			if len(s.plan.Checks) > 0 {
-				why, err := e.checkLanding(ctx, r, s, remote, merged, "the merged state", fmt.Sprintf("%s moved to %s and the required checks fail on the merged state", r.Target, short(tip)))
-				if err != nil || why != "" {
-					keepOn(ctx, r, cand, pushed, landingState(err), why, err)
-					return
-				}
+			if len(refusals) > 0 {
+				keepOn(ctx, cand, pushed, StateKept, fmt.Sprintf("%s moved to %s and the gate refuses the merged state: %s", r.Target, short(tip), strings.Join(refusals, "; ")), nil)
+				return
 			}
 			state = merged
-		} else if rc := r.RequiredChecks; len(s.plan.Checks) > 0 && !rc.Ran {
-			// The hooks refuse only merged states, so Root's approved work
-			// may fail the checks when it integrates no child's work
-			// (DEC-087). Without a checked push of it, they run now.
-			why := "the required checks fail on the state that would land"
-			if len(rc.Checks) == 0 {
-				var err error
-				if why, err = e.checkLanding(ctx, r, s, remote, cand, "the state that would land", why); err != nil {
-					keepOn(ctx, r, cand, pushed, landingState(err), why, err)
-					return
-				}
-			}
-			if why != "" {
-				keepOn(ctx, r, cand, pushed, StateKept, why, nil)
-				return
-			}
 		}
 		r.Outcome, r.State = Landed, StateLanded
-		r.Why = "Root's checker approved the work"
+		r.Why = "the gate passed and the reviewer found nothing wrong"
 		if tip != r.Start {
-			r.Why += fmt.Sprintf("; %s had moved to %s, and the clean merge passed the required checks", r.Target, short(tip))
+			r.Why += fmt.Sprintf("; %s had moved to %s, and the clean merge passed the gate", r.Target, short(tip))
 		}
-		// The landed page names no Run branch: it is deleted on landing,
-		// with the kept Run branches this landing covers.
+		// The landed page names no Run branch: it is deleted on landing, with
+		// the kept Run branches this landing covers.
 		r.Branch = ""
 		replaced, err := e.covered(ctx, r)
 		if err != nil {
@@ -134,9 +105,8 @@ func (e *Engine) land(ctx context.Context, r *Result, s *schedule, remote Remote
 			r.Cleanup = append(r.Cleanup, fmt.Sprintf("the kept Run branches could not be read, so none that this landing covers is deleted: %v", err))
 		}
 		r.Replaced = sortedKeys(replaced)
-		// The count includes this landing, read before this landing deletes
-		// a verify's Run branch it covers; a landed apply --full starts it
-		// again.
+		// The count includes this landing, read before this landing deletes a
+		// verify's Run branch it covers; a landed apply --full starts it again.
 		r.FullCheck = FullCheck{}
 		if !r.Full {
 			r.FullCheck = e.fullCheck(ctx, r.Target, state)
@@ -148,14 +118,14 @@ func (e *Engine) land(ctx context.Context, r *Result, s *schedule, remote Remote
 		page := e.stamp(r)
 		commit, err := e.Git.Write(ctx, state, map[string][]byte{ResultFile(r.Run): Page(page)}, resultMessage(r, cand))
 		if err != nil {
-			keepOn(ctx, r, cand, pushed, StateIncomplete, "", err)
+			keepOn(ctx, cand, pushed, StateIncomplete, "", err)
 			return
 		}
 		if err := e.Git.Push(ctx, r.Target, commit, tip); err != nil {
-			// Whether the push took effect is read again, on a fresh
-			// deadline: a push can fail after the target took it.
-			// Others may have landed on top of it before it is read, so
-			// it landed when the new tip holds it.
+			// Whether the push took effect is read again, on a fresh deadline:
+			// a push can fail after the target took it. Others may have landed
+			// on top of it before it is read, so it landed when the new tip
+			// holds it.
 			cctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), e.cleanup())
 			now, ferr := e.Git.Fetch(cctx, r.Target)
 			holds := now == commit
@@ -166,10 +136,10 @@ func (e *Engine) land(ctx context.Context, r *Result, s *schedule, remote Remote
 			cancel()
 			switch {
 			case ferr != nil:
-				keepOn(ctx, r, cand, pushed, StateIncomplete, fmt.Sprintf("the landing push failed (%v) and %s could not be read again, so whether it landed is uncertain", err, r.Target), ferr)
+				keepOn(ctx, cand, pushed, StateIncomplete, fmt.Sprintf("the landing push failed (%v) and %s could not be read again, so whether it landed is uncertain", err, r.Target), ferr)
 				return
 			case aerr != nil:
-				keepOn(ctx, r, cand, pushed, StateIncomplete, fmt.Sprintf("the landing push failed (%v) and whether %s's new tip %s holds the landing could not be read, so whether it landed is uncertain", err, r.Target, short(now)), aerr)
+				keepOn(ctx, cand, pushed, StateIncomplete, fmt.Sprintf("the landing push failed (%v) and whether %s's new tip %s holds the landing could not be read, so whether it landed is uncertain", err, r.Target, short(now)), aerr)
 				return
 			case holds:
 				// It landed.
@@ -177,12 +147,12 @@ func (e *Engine) land(ctx context.Context, r *Result, s *schedule, remote Remote
 				// The target moved again while landing: start over.
 				continue
 			default:
-				keepOn(ctx, r, cand, pushed, StateKept, fmt.Sprintf("the target refused the landing push: %v", err), nil)
+				keepOn(ctx, cand, pushed, StateKept, fmt.Sprintf("the target refused the landing push: %v", err), nil)
 				return
 			}
 		}
-		// The landed page cannot say what follows it; the returned Result
-		// does, under AfterLanding.
+		// The landed page cannot say what follows it; the returned Result does,
+		// under AfterLanding.
 		r.Landed, r.AfterLanding = commit, []string{}
 		if err := e.Git.Push(ctx, RunBranchPrefix+r.Run, "", pushed); err != nil {
 			r.AfterLanding = append(r.AfterLanding, fmt.Sprintf("the landed Run's branch %s could not be deleted: %v", RunBranchPrefix+r.Run, err))
@@ -192,39 +162,18 @@ func (e *Engine) land(ctx context.Context, r *Result, s *schedule, remote Remote
 				r.AfterLanding = append(r.AfterLanding, fmt.Sprintf("the covered Run branch %s could not be deleted: %v", branch, err))
 			}
 		}
-		release(&r.AfterLanding)
+		c.release(&r.AfterLanding)
 		return
 	}
-	keepOn(ctx, r, cand, pushed, StateKept, fmt.Sprintf("%s moved while landing, %d times in a row", r.Target, landAttempts), nil)
-}
-
-// keep leaves a Run that does not land on its Run branch: the Result page on
-// top of Root's newest state, or of the starting commit.
-func (e *Engine) keep(ctx context.Context, r *Result, s *schedule) {
-	r.Branch = RunBranchPrefix + r.Run
-	top := r.Start
-	if tip := s.tips[runremote.RootBranch]; tip != "" && r.Command == "apply" {
-		top = tip
-	}
-	if r.Command == "apply" {
-		for _, n := range s.order {
-			if n.approval == "" {
-				continue
-			}
-			if ok, err := e.Git.Contains(ctx, top, n.approval); err != nil || !ok {
-				r.Unkept = append(r.Unkept, fmt.Sprintf("%s's approved work %s goes with the Run's remote; the Run branch does not hold it", n.name, n.approval))
-			}
-		}
-	}
-	e.keepOn(ctx, r, top, "", "", "", nil)
+	keepOn(ctx, cand, pushed, StateKept, fmt.Sprintf("%s moved while landing, %d times in a row", r.Target, landAttempts), nil)
 }
 
 // keepOn writes the Result page on top of commit and pushes it to the Run
-// branch, which is at old (empty when it does not exist yet). A non-empty
-// state and why replace the Result's.
+// branch, which is at old (empty when it does not exist yet). A non-empty state
+// and why replace the Result's.
 func (e *Engine) keepOn(ctx context.Context, r *Result, commit, old, state, why string, err error) {
-	// Keeping the Result is cleanup: it still runs, bounded on its own,
-	// when the Run's deadline has passed.
+	// Keeping the Result is cleanup: it still runs, bounded on its own, when
+	// the Command's deadline has passed.
 	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), e.cleanup())
 	defer cancel()
 	r.Outcome, r.Branch = NotLanded, RunBranchPrefix+r.Run
@@ -233,6 +182,18 @@ func (e *Engine) keepOn(ctx context.Context, r *Result, commit, old, state, why 
 	}
 	if state != "" {
 		r.State, r.Why = state, why
+	}
+	// Whatever the way here, a commit that holds a credential stays on the host:
+	// the Result alone goes out, on the start.
+	if commit != r.Start && old == "" {
+		leak, serr := e.credentialScan(ctx, r.Start, commit)
+		if leak != "" || serr != nil {
+			if serr != nil {
+				leak = fmt.Sprintf("the work's history could not be scanned for credentials (%v)", serr)
+			}
+			r.Why = strings.TrimSpace(r.Why + "; " + leak + "; only this Result is kept")
+			r.Work, commit = "", r.Start
+		}
 	}
 	page := e.stamp(r)
 	top, werr := e.Git.Write(ctx, commit, map[string][]byte{ResultFile(r.Run): Page(page)}, resultMessage(r, ""))
@@ -248,10 +209,11 @@ func (e *Engine) keepOn(ctx context.Context, r *Result, commit, old, state, why 
 	}
 }
 
-// incoming says why changes that reached the target after the Run started
-// touch the Run's impact, or "" when they do not.
-func (e *Engine) incoming(ctx context.Context, s *schedule, start, tip, cand string) (string, error) {
-	in, err := e.Git.Changed(ctx, start, tip)
+// incoming says why changes that reached the target after the Command started
+// touch its impact, or "" when they do not.
+func (c *command) incoming(ctx context.Context, tip, cand string) (string, error) {
+	e, r := c.e, c.r
+	in, err := e.Git.Changed(ctx, r.Start, tip)
 	if err != nil {
 		return "", err
 	}
@@ -260,41 +222,41 @@ func (e *Engine) incoming(ctx context.Context, s *schedule, start, tip, cand str
 		return "", err
 	}
 	if len(next.Errors) > 0 {
-		return fmt.Sprintf("%s moved to %s, which has %d compile errors", s.req.Target, short(tip), len(next.Errors)), nil
+		return fmt.Sprintf("%s moved to %s, which has %d compile errors", r.Target, short(tip), len(next.Errors)), nil
 	}
-	if !reflect.DeepEqual(next.Checks, s.cur.Checks) {
-		return fmt.Sprintf("%s moved to %s, which changes the required checks", s.req.Target, short(tip)), nil
+	if !reflect.DeepEqual(next.Checks, c.cur.Checks) {
+		return fmt.Sprintf("%s moved to %s, which changes the required checks", r.Target, short(tip)), nil
 	}
-	var files []analysis.Change
-	for _, c := range in {
-		switch {
-		case strings.HasPrefix(c.Path, project.ResultsDir+"/"):
-		case c.Path == project.ManifestFile || c.Path == project.LockFile:
-			return fmt.Sprintf("%s moved to %s, which changes %s", s.req.Target, short(tip), c.Path), nil
-		case strings.HasPrefix(c.Path, project.Dir+"/"):
-			if pkg, ok := s.plan.Pages[c.Path]; ok && s.nodes[pkg] != nil {
-				return fmt.Sprintf("%s moved to %s, which changes the registry page %s of a working Manager", s.req.Target, short(tip), c.Path), nil
-			}
-		default:
-			files = append(files, c)
-		}
-	}
-	inImp := analysis.ComputeImpact(analysis.ImpactInput{Base: s.cur, Current: next, Changed: files})
-	ours := map[string]bool{}
-	for _, k := range impactKeys(s.imp) {
-		ours[k] = true
-	}
-	mine, err := e.Git.Changed(ctx, start, cand)
+	mine, err := e.Git.Changed(ctx, r.Start, cand)
 	if err != nil {
 		return "", err
 	}
-	for _, c := range mine {
-		ours["file:"+c.Path] = true
+	ours := map[string]bool{}
+	for _, k := range r.impact {
+		ours[k] = true
 	}
+	for _, m := range mine {
+		ours["file:"+m.Path] = true
+	}
+	var files []analysis.Change
+	for _, f := range in {
+		switch {
+		case strings.HasPrefix(f.Path, project.ResultsDir+"/"):
+		case f.Path == project.ManifestFile || f.Path == project.LockFile:
+			return fmt.Sprintf("%s moved to %s, which changes %s", r.Target, short(tip), f.Path), nil
+		case strings.HasPrefix(f.Path, project.Dir+"/"):
+			if ours["file:"+f.Path] {
+				return fmt.Sprintf("%s moved to %s, which changes the registry page %s this work changed too", r.Target, short(tip), f.Path), nil
+			}
+		default:
+			files = append(files, f)
+		}
+	}
+	inImp := analysis.ComputeImpact(analysis.ImpactInput{Base: c.cur, Current: next, Changed: files})
 	var hits []string
-	for _, c := range inImp.Definitions {
-		if ours["def:"+c.Path] {
-			hits = append(hits, "[["+c.Path+"]]")
+	for _, d := range inImp.Definitions {
+		if ours["def:"+d.Path] {
+			hits = append(hits, "[["+d.Path+"]]")
 		}
 	}
 	for _, it := range inImp.Reached {
@@ -308,76 +270,28 @@ func (e *Engine) incoming(ctx context.Context, s *schedule, start, tip, cand str
 		}
 	}
 	if len(hits) > 0 {
-		return fmt.Sprintf("%s moved to %s, and its changes touch the Run's impact: %s; a follow-up Run starts from the new state", s.req.Target, short(tip), strings.Join(dedupe(hits), ", ")), nil
+		return fmt.Sprintf("%s moved to %s, and its changes touch the Run's impact: %s; a follow-up Run starts from the new state", r.Target, short(tip), strings.Join(dedupe(hits), ", ")), nil
 	}
 	return "", nil
 }
 
-// checkLanding runs the required checks on what, a state that would land
-// and only the host holds, and makes their results the Result's. It returns
-// failing when they fail and why when they could not run; an error means the
-// state could not be bundled.
-func (e *Engine) checkLanding(ctx context.Context, r *Result, s *schedule, remote Remote, state, what, failing string) (string, error) {
-	var b bytes.Buffer
-	if err := e.Git.Bundle(ctx, state, &b); err != nil {
-		return "", err
-	}
-	results, err := remote.Check(ctx, &b, state)
-	r.RequiredChecks = RequiredChecks{Commit: state, Checks: results, WholeRepository: true, Ran: err == nil && len(results) == len(s.plan.Checks) && allPassed(results)}
-	switch {
-	case err != nil:
-		r.RequiredChecks.Note = fmt.Sprintf("the checks on %s could not run: %v", what, err)
-		return "the required checks could not run on " + what, nil
-	case !r.RequiredChecks.Ran:
-		return failing, nil
-	}
-	return "", nil
-}
-
-// landingState is the state of a Run that does not land: incomplete when
-// the host failed, kept when the work may not land.
-func landingState(err error) string {
-	if err != nil {
-		return StateIncomplete
-	}
-	return StateKept
-}
-
-// compile says why a state does not compile, as `markitect check` reports
-// it, or "" when it compiles.
-func (e *Engine) compile(ctx context.Context, commit string) (string, error) {
-	p, err := project.Load(e.Git.State(ctx, commit))
+// credentialScan refuses landing work that holds one of the values no landing
+// may carry, or a provider login file, anywhere in its history, since landing
+// pushes every commit.
+func (e *Engine) credentialScan(ctx context.Context, start, cand string) (string, error) {
+	added, paths, err := e.Git.History(ctx, start, cand)
 	if err != nil {
 		return "", err
 	}
-	if len(p.Errors) > 0 {
-		return fmt.Sprintf("does not compile: check finds %d compile errors at %s; the first: %s", len(p.Errors), short(commit), p.Errors.Sorted()[0].String()), nil
-	}
-	return "", nil
-}
-
-// credentialFiles are file names that hold a provider account's login.
-var credentialFiles = []string{".credentials.json", "auth.json"}
-
-// credentialScan refuses landing work that holds one of the Run's own Git
-// tokens or a provider login file anywhere in its history, since landing
-// pushes every commit; the hooks look for neither.
-func (e *Engine) credentialScan(ctx context.Context, s *schedule, cand string) (string, error) {
-	added, paths, err := e.Git.History(ctx, s.plan.Base, cand)
-	if err != nil {
-		return "", err
-	}
-	for _, roles := range s.creds {
-		for _, c := range roles {
-			if strings.Contains(added, c.token) {
-				return fmt.Sprintf("the approved work holds the Git token of agent %s; it does not land", c.user), nil
-			}
+	for _, s := range e.Secrets {
+		if len(s) > 0 && bytes.Contains([]byte(added), s) {
+			return "the work holds the account token; it does not land", nil
 		}
 	}
 	for _, p := range paths {
 		for _, name := range credentialFiles {
-			if path.Base(p) == name {
-				return fmt.Sprintf("the approved work's history touches %s, which looks like a provider login; it does not land", p), nil
+			if strings.HasSuffix("/"+p, name) {
+				return fmt.Sprintf("the work's history touches %s, which looks like a provider login; it does not land", p), nil
 			}
 		}
 	}

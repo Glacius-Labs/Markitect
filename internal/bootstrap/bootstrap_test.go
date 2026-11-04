@@ -163,14 +163,13 @@ func TestUsageAndRefusals(t *testing.T) {
 	if Run(context.Background(), []string{"bughunt"}, &out, &errOut) != 2 || !strings.Contains(errOut.String(), `unknown command "bughunt"`) {
 		t.Fatalf("unknown command: %s", errOut.String())
 	}
-	// Without a Manager image apply starts nothing, not even a remote.
+	// Without an image apply starts nothing.
 	t.Setenv("MARKITECT_MANAGER_IMAGE", "")
 	errOut.Reset()
-	if Run(context.Background(), []string{"apply"}, &out, &errOut) != 2 || !strings.Contains(errOut.String(), "no Manager image") {
+	if Run(context.Background(), []string{"apply"}, &out, &errOut) != 2 || !strings.Contains(errOut.String(), "no image: build one from packaging/runtime") {
 		t.Fatalf("apply without adapters: %s", errOut.String())
 	}
-	// The engine's own networks cannot be combined with the Run's network
-	// on Linux, so they are refused before any engine call.
+	// The engine's own networks are refused before any engine call.
 	t.Setenv("MARKITECT_MANAGER_IMAGE", "sha256:none")
 	t.Setenv("MARKITECT_NETWORK", "bridge")
 	errOut.Reset()

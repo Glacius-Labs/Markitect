@@ -5,29 +5,34 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
+	"github.com/Glacius-Labs/Markitect/internal/agentport"
 	"github.com/Glacius-Labs/Markitect/internal/harness"
 )
 
-// Provider is one agent CLI's launch contract: how its login is copied into
-// the private home, how a turn is started, and how its output is read. The
-// Claude Code and Codex adapters implement it; the agent runtime knows no
-// provider.
+// Provider is one agent CLI's launch contract: which variable takes the user's
+// token, how a session or turn is started, and how its output is read. This is
+// the one place per provider sessions start from (DEC-092). The Claude Code and
+// Codex adapters implement it; the agent runtime knows no provider.
 type Provider interface {
 	// Name is the provider's name as the evaluation names it: claude or codex.
 	Name() string
-	// Login admits the operator's login file and makes the Manager's copy:
-	// account login only, never an API key, and without refresh authority.
-	// An expired access token is refused.
-	Login(source []byte, now time.Time) (Login, error)
-	// Home is the private initialization agentd installs before the first
-	// provider start: the login copy and, where the CLI takes them as files,
-	// the harness's system documents.
-	Home(Login, harness.Document) (frame.Initialize, error)
-	// AuthStatus is the command that reports the login the CLI would use;
-	// CheckAuth reads its standard output and refuses anything but the
-	// account login.
-	AuthStatus() (argv, env []string)
+	// TokenVariable is the variable the CLI reads the user's account token
+	// from; empty when this provider has no such route yet.
+	TokenVariable() string
+	// Home is the private initialization agentd installs before a chat's first
+	// provider start: the harness's system documents, where the CLI takes them
+	// as files.
+	Home(harness.Document) (frame.Initialize, error)
+	// AuthStatus is the command that reports the login the CLI would use with
+	// its home at home; CheckAuth reads its standard output and refuses
+	// anything but the account login.
+	AuthStatus(home string) (argv, env []string)
 	CheckAuth(stdout []byte) error
+	// Launch starts one unattended session of a Command: its arguments,
+	// environment additions and standard input.
+	Launch(Launch) (argv, env []string, stdin []byte, err error)
+	// SessionReader reads the standard output of one session.
+	SessionReader(Launch) SessionReader
 	// Turn starts one turn: its arguments, environment additions and
 	// standard input.
 	Turn(Turn) (argv, env []string, stdin []byte, err error)
@@ -35,12 +40,26 @@ type Provider interface {
 	Reader(Turn) Reader
 }
 
-// Login is a Manager's copy of the account login. Secrets are the values
-// that never appear in a transcript or an error.
-type Login struct {
-	Copy    []byte
-	Secrets [][]byte
-	Expires time.Time
+// Launch is one unattended session of a Command.
+type Launch struct {
+	// Home is the session user's home; the provider's own files go below it.
+	Home string
+	// Conversation names the session to continue; empty starts a fresh one.
+	Conversation string
+	Prompt       string
+	Model        string
+	Effort       string
+	// Budget is the most the session may spend; zero sets no limit.
+	Budget float64
+}
+
+// SessionReader reads one session's output and tells what it shows.
+type SessionReader interface {
+	Reader
+	// Seen tells what the transcript shows the session did, subagents included.
+	Seen() agentport.Seen
+	// Models lists every model that answered, subagents included.
+	Models() []string
 }
 
 // Turn is one provider turn: one message to the conversation and the
@@ -54,9 +73,7 @@ type Turn struct {
 	Document     harness.Document
 	Model        string
 	Effort       string
-	// Tools are the Manager tools the turn must offer, by name.
-	Tools    []string
-	Deadline time.Time
+	Deadline     time.Time
 }
 
 // Reader reads one turn's output, line by line. Line returns an error for a
@@ -76,7 +93,7 @@ type Progress struct {
 }
 
 // ProgressReader is a Reader that can also read a turn's progress, which a
-// chat shows while the turn runs. A Manager's turn does not ask for it.
+// chat shows while the turn runs.
 type ProgressReader interface {
 	Reader
 	Progress(raw []byte) Progress
@@ -131,8 +148,7 @@ type Outcome struct {
 	// Model is the model the provider reported.
 	Model string
 	Usage Usage
-	// Text is the provider's last answer of an answered turn, which a chat
-	// shows; a Manager answers through its tools instead.
+	// Text is the provider's last answer of an answered turn.
 	Text string
 }
 

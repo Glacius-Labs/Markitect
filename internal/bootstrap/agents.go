@@ -6,125 +6,134 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
-	"github.com/Glacius-Labs/Markitect/internal/agentport"
 	"github.com/Glacius-Labs/Markitect/internal/agents"
 	"github.com/Glacius-Labs/Markitect/internal/agents/claude"
 	"github.com/Glacius-Labs/Markitect/internal/agents/codex"
 )
 
-// providerAgents builds the Manager agents from the environment
-// (internal/agents/README.md#composition):
+// TokenVariable is Markitect's own variable for the user's Claude account token,
+// made with `claude setup-token` (DEC-093). It is Markitect's own so that it
+// does not outrank the login of the user's other Claude sessions, as the CLI's
+// variable set for the whole machine would.
+const TokenVariable = "MARKITECT_CLAUDE_TOKEN"
+
+// agentConfig is what a Command's sessions and a chat start with, read from the
+// environment (internal/agents/README.md#composition):
 //
 //	MARKITECT_ENGINE         the Docker CLI (default docker on PATH)
-//	MARKITECT_MANAGER_IMAGE  the Manager image, a project image FROM packaging/runtime (required)
-//	MARKITECT_PROVIDER       claude (default) or codex
-//	MARKITECT_LOGIN          the account login file (default the provider's own in the home folder)
-//	MARKITECT_MODEL          the model (default claude-sonnet-5-5, or gpt-6-luna for codex)
+//	MARKITECT_MANAGER_IMAGE  the project's image, FROM packaging/runtime (required)
+//	MARKITECT_PROVIDER       claude (default); codex has no token route yet
+//	MARKITECT_CLAUDE_TOKEN   the user's token from `claude setup-token`
+//	MARKITECT_MODEL          the model (default claude-sonnet-5-5)
 //	MARKITECT_EFFORT         the effort (default high)
-//	MARKITECT_NETWORK        the network that reaches the provider (default markitect-provider,
-//	                         a bridge network the host creates on first use)
+//	MARKITECT_NETWORK        the network that reaches the provider (default
+//	                         markitect-provider, a bridge network the host creates
+//	                         on first use)
 //	MARKITECT_HOSTS          extra host entries, name:address, comma-separated
 //	MARKITECT_DNS            name servers, comma-separated
-//	MARKITECT_TRANSCRIPTS    a folder for the agents' transcripts (default none)
-func providerAgents(ctx context.Context) (agentport.Agents, error) {
-	cfg, _, err := agentConfig(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return agents.New(cfg)
+//	MARKITECT_TRANSCRIPTS    a folder for the sessions' transcripts (default none)
+//	MARKITECT_SESSION_BUDGET the most one session may spend, in the provider's own
+//	                         estimate (default no limit)
+type agentConfig struct {
+	Runtime     agents.Runtime
+	Provider    agents.Provider
+	CLI         string
+	Image       string
+	Network     string
+	Hosts, DNS  []string
+	Limits      agents.Limits
+	Model       string
+	Effort      string
+	Token       string
+	Transcripts string
 }
 
-// agentConfig reads the agents' settings from the environment, as
-// providerAgents describes them, and returns the engine they run on.
-func agentConfig(ctx context.Context) (agents.Config, *container.Engine, error) {
-	return agentConfigWith(ctx, nil)
+// readAgentConfig reads the settings, as agentConfig describes them, and returns
+// the engine they run on.
+func readAgentConfig(ctx context.Context) (agentConfig, *container.Engine, error) {
+	return readAgentConfigWith(ctx, nil)
 }
 
-// agentConfigWith is agentConfig for the app's chat agents, whose image build
-// makes when none is set. Without build, none set is an error.
-func agentConfigWith(ctx context.Context, build func(context.Context, *container.Engine) (string, error)) (agents.Config, *container.Engine, error) {
+// readAgentConfigWith is readAgentConfig for the app's chat agents, whose image
+// build makes when none is set. Without build, none set is an error.
+func readAgentConfigWith(ctx context.Context, build func(context.Context, *container.Engine) (string, error)) (agentConfig, *container.Engine, error) {
 	ref := os.Getenv("MARKITECT_MANAGER_IMAGE")
 	if ref == "" && build == nil {
-		return agents.Config{}, nil, errors.New("no Manager image: build one from packaging/runtime (with the project's toolchain) and set MARKITECT_MANAGER_IMAGE")
+		return agentConfig{}, nil, errors.New("no image: build one from packaging/runtime (with the project's toolchain) and set MARKITECT_MANAGER_IMAGE")
 	}
 	network := os.Getenv("MARKITECT_NETWORK")
 	switch network {
 	case "bridge", "host", "none", "default":
-		return agents.Config{}, nil, fmt.Errorf("MARKITECT_NETWORK %q is no user-defined network: the agents also join the Run's network, which the Docker CLI on Linux refuses to combine with the engine's own; leave it unset for %s or name a user-defined one", network, providerNetwork)
+		return agentConfig{}, nil, fmt.Errorf("MARKITECT_NETWORK %q is no user-defined network; leave it unset for %s or name a user-defined one", network, providerNetwork)
 	}
 	cliPath := os.Getenv("MARKITECT_ENGINE")
 	if cliPath == "" {
 		p, err := exec.LookPath("docker")
 		if err != nil {
-			return agents.Config{}, nil, errors.New("no container engine: install Docker or set MARKITECT_ENGINE")
+			return agentConfig{}, nil, errors.New("no container engine: install Docker or set MARKITECT_ENGINE")
 		}
 		cliPath = p
 	}
 	engine, err := container.NewEngine(cliPath)
 	if err != nil {
-		return agents.Config{}, nil, err
+		return agentConfig{}, nil, err
 	}
-	cfg := agents.Config{
-		Runtime: agents.EngineRuntime(engine),
-		Limits:  agents.Limits{CPUs: 1, MemoryBytes: 2 << 30, Pids: 256, TmpBytes: 256 << 20},
-		Hosts:   list("MARKITECT_HOSTS"), DNS: list("MARKITECT_DNS"),
+	cfg := agentConfig{
+		Runtime: agents.EngineRuntime(engine), CLI: cliPath,
+		Limits: agents.Limits{CPUs: 1, MemoryBytes: 2 << 30, Pids: 256, TmpBytes: 256 << 20},
+		Hosts:  list("MARKITECT_HOSTS"), DNS: list("MARKITECT_DNS"),
 		Effort: env("MARKITECT_EFFORT", "high"), Transcripts: os.Getenv("MARKITECT_TRANSCRIPTS"),
 	}
 	p, ok := providers[env("MARKITECT_PROVIDER", "claude")]
 	if !ok {
-		return agents.Config{}, nil, fmt.Errorf("MARKITECT_PROVIDER %q is neither claude nor codex", os.Getenv("MARKITECT_PROVIDER"))
+		return agentConfig{}, nil, fmt.Errorf("MARKITECT_PROVIDER %q is neither claude nor codex", os.Getenv("MARKITECT_PROVIDER"))
 	}
-	cfg.Provider, cfg.Model, cfg.LoginFile = p.provider, env("MARKITECT_MODEL", p.model), env("MARKITECT_LOGIN", p.loginFile())
-	if _, err := os.Stat(cfg.LoginFile); err != nil {
-		return agents.Config{}, nil, fmt.Errorf("the %s login %s: %w; log in with the provider's CLI on this host or set MARKITECT_LOGIN", cfg.Provider.Name(), cfg.LoginFile, err)
+	if p.provider.TokenVariable() == "" {
+		return agentConfig{}, nil, fmt.Errorf("%s has no account token route yet; use claude", p.provider.Name())
+	}
+	cfg.Provider, cfg.Model, cfg.Token = p.provider, env("MARKITECT_MODEL", p.model), os.Getenv(p.variable)
+	if cfg.Token == "" {
+		return agentConfig{}, nil, fmt.Errorf("no account token: run `%s`, keep the token in %s, and never set it for the whole machine under the CLI's own name", p.command, p.variable)
 	}
 	// Last, since a build takes minutes and the settings above can still fail.
 	var image string
 	if ref != "" {
 		if image, err = engine.ImageID(ctx, ref); err != nil {
-			return agents.Config{}, nil, fmt.Errorf("the Manager image %s: %w", ref, err)
+			return agentConfig{}, nil, fmt.Errorf("the image %s: %w", ref, err)
 		}
 	} else if image, err = build(ctx, engine); err != nil {
-		return agents.Config{}, nil, err
+		return agentConfig{}, nil, err
 	}
 	if network == "" {
-		// The agents also join the Run's network, and the Docker CLI on
-		// Linux refuses to combine the engine's default "bridge" with it.
 		network = providerNetwork
 		if err := engine.EnsureNetwork(ctx, network, map[string]string{"markitect.provider": "1"}); err != nil {
-			return agents.Config{}, nil, fmt.Errorf("the provider network: %w; or name one with MARKITECT_NETWORK", err)
+			return agentConfig{}, nil, fmt.Errorf("the provider network: %w; or name one with MARKITECT_NETWORK", err)
 		}
 	}
 	cfg.Image, cfg.Network = image, network
 	return cfg, engine, nil
 }
 
-// providerDefaults are one provider's adapter, default model, account login
-// file in the home folder, and the command that logs in.
+// providerDefaults are one provider's adapter, default model, the variable that
+// holds the user's token, and the command that makes one.
 type providerDefaults struct {
 	provider agents.Provider
 	model    string
-	login    []string // the login file below the home folder
+	variable string
 	command  string
 }
 
-func (p providerDefaults) loginFile() string {
-	home, _ := os.UserHomeDir()
-	return filepath.Join(append([]string{home}, p.login...)...)
-}
-
 var providers = map[string]providerDefaults{
-	"claude": {claude.Provider{}, "claude-sonnet-5-5", []string{".claude", ".credentials.json"}, "claude"},
-	"codex":  {codex.Provider{}, "gpt-6-luna", []string{".codex", "auth.json"}, "codex login"},
+	"claude": {claude.Provider{}, "claude-sonnet-5-5", TokenVariable, "claude setup-token"},
+	"codex":  {codex.Provider{}, "gpt-6-luna", "", ""},
 }
 
-// providerNetwork is the user-defined bridge network the agents reach their
+// providerNetwork is the user-defined bridge network the sessions reach their
 // provider through unless MARKITECT_NETWORK names another. It stays on the
-// engine for later Runs, like an image.
+// engine for later Commands, like an image.
 const providerNetwork = "markitect-provider"
 
 func env(name, fallback string) string {
