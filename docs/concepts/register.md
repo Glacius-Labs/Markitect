@@ -108,6 +108,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-089](#dec-089-markitect-desktop-the-app-over-the-cli) | Decision | Markitect Desktop: the app over the CLI | Accepted; design proposal, not built |
 | [DEC-090](#dec-090-a-refusal-counts-only-when-nothing-moved) | Decision | A refusal counts only when nothing moved | Accepted; built; superseded by [DEC-091](#dec-091-concept-30-is-the-target) |
 | [DEC-091](#dec-091-concept-30-is-the-target) | Decision | Concept 3.0 is the target | Accepted; not built |
+| [DEC-092](#dec-092-a-command-uses-the-users-own-sign-in) | Decision | A Command uses the user's own sign-in | Accepted; not built |
 | [PRM-001 to PRM-009](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
@@ -1207,10 +1208,21 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 ### DEC-091 Concept 3.0 is the target
 
 - **Status:** Accepted by the owner, 4 November 2026, after a discussion that judged Markitect's ideas against six problems and other options.
-- **Decision:** [concept 3.0](v3-concept.md) is Markitect's target: the spec as the project's documentation and authority, one implementer and one reviewer per Command in one container, code in and out only as a Git commit, a gate in the CLI that runs after the session ends, and interchangeable strategies. It includes the details its review added and the answers to its nine questions ([§14](v3-concept.md#14-decided-on-acceptance)). A tenth question there, whether a Command may start sessions on an account login, stays open.
+- **Decision:** [concept 3.0](v3-concept.md) is Markitect's target: the spec as the project's documentation and authority, one implementer and one reviewer per Command in one container, code in and out only as a Git commit, a gate in the CLI that runs after the session ends, and interchangeable strategies. It includes the details its review added and the answers to its nine questions ([§14](v3-concept.md#14-decided-on-acceptance)). A tenth question there, whether a Command may start sessions on an account login, was decided the same day ([DEC-092](#dec-092-a-command-uses-the-users-own-sign-in)).
 - **Supersedes:** the entries in [§15](v3-concept.md#15-what-this-overturns), each marked with what goes and what stays. The new evidence and its limits are in [OQ-011](#open-questions). Concept 2.0 stays the record of what Main implements until the rebuild.
 - **Evaluation:** comparing variants stops. Three bounded tests and the owner's real use follow, and every result is kept and compared, including structure, architecture, quality and cleanliness ([§13](v3-concept.md#13-how-we-know-it-works)).
 - **Next:** the [delivery plan](../implementation-plan.md#concept-30-build) owns the steps.
+
+### DEC-092 A Command uses the user's own sign-in
+
+- **Status:** Accepted by the owner, 4 November 2026, on a question from the Topics session and a recommendation from a reading of Anthropic's pages that day.
+- **Decision:**
+  - A Command starts sessions on the user's own account login. The user signs in once inside the container through the provider's own flow, and the login stays in a Docker volume. Markitect never reads, copies or stores the credentials, and it runs the provider's CLI unmodified.
+  - The image pins the CLI version, and sessions start from one place per provider.
+  - Before anyone else runs Markitect, the owner asks Anthropic in writing whether this route holds for other users. If it does not, API keys for others are a separate decision for the owner.
+  - The skill-and-hook fallback is not built. It comes up only if Anthropic says no or `claude -p` loses subscription login with no replacement.
+- **Changes:** today's build reads the host's credentials file and passes its access token into the containers (`internal/agents/run.go`, with `claude/login.go` and `codex/codex.go`). That goes in the [concept 3.0 build](../implementation-plan.md#concept-30-build). The account-only rule stays.
+- **Reasoning:** [concept 3.0 §14](v3-concept.md#14-decided-on-acceptance), question 10.
 
 ## Promises
 

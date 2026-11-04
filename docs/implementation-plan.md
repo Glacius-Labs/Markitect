@@ -26,9 +26,11 @@ Assigned to the Build and evaluation session, which estimates the steps before s
 
 U1 and U2 may share one change. U5's removal can come before U4 if nothing there still needs the tree; the suite's arm M then stays at its recorded commits. After U4 comes the owner's real use on a real project.
 
-**Before U1:** the login question ([§14](concepts/v3-concept.md#14-decided-on-acceptance), question 10) is open with the owner, and its answer can change U1.
+**Login, in U1:** the user signs in inside the container through the provider's own flow, and the login stays in a Docker volume ([DEC-092](concepts/register.md#dec-092-a-command-uses-the-users-own-sign-in)). Markitect stops reading the host's credentials file. The image pins the CLI version, and sessions start from one place per provider.
 
-Open for the owner, with no effect on U1 to U3: whether test 2 also runs on Haiku.
+**Test 2 runs on Sonnet.**
+
+**Before anyone else runs Markitect:** the owner asks Anthropic in writing whether the login route holds for other users.
 
 ## Concept 2.0 build
 
