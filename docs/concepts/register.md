@@ -108,7 +108,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-089](#dec-089-markitect-desktop-the-app-over-the-cli) | Decision | Markitect Desktop: the app over the CLI | Accepted; design proposal, not built |
 | [DEC-090](#dec-090-a-refusal-counts-only-when-nothing-moved) | Decision | A refusal counts only when nothing moved | Accepted; built; superseded by [DEC-091](#dec-091-concept-30-is-the-target) |
 | [DEC-091](#dec-091-concept-30-is-the-target) | Decision | Concept 3.0 is the target | Accepted; not built |
-| [DEC-092](#dec-092-a-command-uses-the-users-own-sign-in) | Decision | A Command uses the user's own sign-in | Accepted; not built |
+| [DEC-092](#dec-092-a-command-uses-the-users-own-sign-in) | Decision | A Command uses the user's own sign-in | Accepted; not built; superseded in part by [DEC-093](#dec-093-a-command-passes-the-users-own-token) |
+| [DEC-093](#dec-093-a-command-passes-the-users-own-token) | Decision | A Command passes the user's own token | Accepted; being built |
 | [PRM-001 to PRM-009](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
@@ -1215,6 +1216,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-092 A Command uses the user's own sign-in
 
+**Superseded in part the same day by [DEC-093](#dec-093-a-command-passes-the-users-own-token):** a token replaces the sign-in in a Docker volume. The unmodified, pinned CLI, one place per provider, the question to Anthropic and the unbuilt fallback stay.
+
 - **Status:** Accepted by the owner, 4 November 2026, on a question from the Topics session and a recommendation from a reading of Anthropic's pages that day.
 - **Decision:**
   - A Command starts sessions on the user's own account login. The user signs in once inside the container through the provider's own flow, and the login stays in a Docker volume. Markitect never reads, copies or stores the credentials, and it runs the provider's CLI unmodified.
@@ -1223,6 +1226,15 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - The skill-and-hook fallback is not built. It comes up only if Anthropic says no or `claude -p` loses subscription login with no replacement.
 - **Changes:** today's build reads the host's credentials file and passes its access token into the containers (`internal/agents/run.go`, with `claude/login.go` and `codex/codex.go`). That goes in the [concept 3.0 build](../implementation-plan.md#concept-30-build). The account-only rule stays.
 - **Reasoning:** [concept 3.0 §14](v3-concept.md#14-decided-on-acceptance), question 10.
+
+### DEC-093 A Command passes the user's own token
+
+- **Status:** Accepted by the owner, 4 November 2026, in the Build and evaluation session, after working out what a sign-in in a volume would take.
+- **Decision:**
+  - The user makes a token with `claude setup-token`, through the provider's own browser flow, and keeps it in a variable of Markitect's own. The Command gives it only to each session's environment. It is not written to disk, the image or a bundle, and required checks never get it.
+  - So Markitect does read the token and pass it on, which the sign-in in a volume would have avoided. Whether that counts as intermediating it goes in the owner's question to Anthropic ([DEC-092](#dec-092-a-command-uses-the-users-own-sign-in)).
+- **Costs accepted:** an agent can read the token from its environment, and it lasts a year. Codex has no such token, so its route stays open and the first build lands on Claude only.
+- **Reasoning:** [concept 3.0 §9](v3-concept.md#9-the-sandbox) and [§14](v3-concept.md#14-decided-on-acceptance), question 10. Nothing is shared between the implementer and the reviewer, so a sign-in's shared folder, scrub and turn-taking fall away.
 
 ## Promises
 
