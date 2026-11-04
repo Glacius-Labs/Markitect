@@ -1,6 +1,6 @@
 # Model language and model commands
 
-This guide is the canonical description of the model language of [concept 2.0](../concepts/v2-concept.md) (§2–§4, [DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation), [DEC-081](../concepts/register.md#dec-081-the-organization-knows-broad-at-the-top-and-deep-below)) as `markitect` implements it, and of the model commands `init`, `check`, `lock`, `refs`, `graph`, `impact` and `lint`. None of them starts an agent. Where the concept leaves a detail open, the [build decisions](#build-decisions) at the end record what was chosen.
+This guide is the canonical description of the model language of [concept 2.0](../concepts/v2-concept.md) (§2–§4, [DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation), [DEC-081](../concepts/register.md#dec-081-the-organization-knows-broad-at-the-top-and-deep-below)) as `markitect` implements it, and of the model commands `init`, `check`, `lock`, `refs`, `graph`, `impact` and `lint`. None of them starts an agent. How agents realize a model is being redesigned ([DEC-094](../concepts/register.md#dec-094-a-fresh-start-for-realization)); there is no `apply` or `verify` today. Where the concept leaves a detail open, the [build decisions](#build-decisions) at the end record what was chosen.
 
 ## The project's Markitect folder
 
@@ -19,7 +19,7 @@ This guide is the canonical description of the model language of [concept 2.0](.
     members/loans.md   the registry page of Package members/loans
   ignore.md            files that deliberately belong to no Package
   libraries/<name>/    a Library that does not ship with markitect
-  results/             Results (written by Commands, not by these commands)
+  results/             Results of an earlier realization version; none of these commands writes it
 ```
 
 Every file below `.markitect/` is accounted for by the compiler itself and needs no registry entry. A file there that has no place in this layout is an error (`project.file`), and so is a file in the registry folder that is not a Markdown page (`registry.page`) or a file Git lists but the compiler cannot read (`project.read`). The installed tool, `.markitect/tool/` and `.markitect/bootstrap/`, is also Markitect's own. Text files under `.markitect/` are read with LF line ends, so a Windows checkout with CRLF compiles, locks and compares like the commit it came from.
@@ -123,7 +123,7 @@ paths:
 
 ### Stale realization
 
-When the owner deletes a Definition, a file or a Package, the registry still names it. That is stale realization, not a compile error, so the initial check does not block the Command that cleans it up:
+When the owner deletes a Definition, a file or a Package, the registry still names it. That is stale realization, not a compile error, so `check` does not block the work that cleans it up:
 
 | Code | What |
 |---|---|
@@ -131,7 +131,7 @@ When the owner deletes a Definition, a file or a Package, the registry still nam
 | `stale.file` | an entry for a file that no longer exists |
 | `stale.page` | the page of a Package that no longer exists, and each file still listed only there |
 
-`check` passes and `lint` warns (`lint.stale`). A Command puts each stale entry on its checklist, and its gate refuses work that leaves one.
+`check` passes and `lint` warns (`lint.stale`). `impact` puts each stale entry on a checklist.
 
 ### Ignore page
 
@@ -146,7 +146,7 @@ When the owner deletes a Definition, a file or a Package, the registry still nam
 
 ### Required checks
 
-`.markitect/execution.yaml` holds only the required checks, the one proof in a Command that does not come from an agent (`execution.syntax`, `execution.missing`):
+`.markitect/execution.yaml` holds only the required checks, the one proof that does not come from an agent (`execution.syntax`, `execution.missing`). The compiler reads and validates the file; no command runs the checks today.
 
 ```yaml
 checks:
@@ -184,9 +184,9 @@ All commands take `--repo DIR`, a folder inside the project's Git repository (de
 - **Further Definitions** link to a reached Definition at more steps. Each comes with its distance and reason, and they are on no checklist: the default strategy stops at one step.
 - **Reached files** are the changed files and the files that realize a reached Definition, each with its owner.
 
-A Command makes one checklist from this ([the Command](../../internal/run/README.md#a-command)): every reached Definition once, every deleted Definition, every Finding, every stale registry entry and every file the registry does not list, each with the files the registry names for it. With `--full` every model Definition is reached.
+The checklist is made from this: every reached Definition once, every deleted Definition, every Finding, every stale registry entry and every file the registry does not list, each with the files the registry names for it. With `--full` every model Definition is reached.
 
-`impact` also prints the Packages with a checklist item or a reached file, and their parents up to Root, with a list for each: its own Definitions, the inherited ones (Definitions of the Packages above it that the change itself changed), the Findings whose Definition it holds and its stale entries. A Command does not use this split.
+`impact` also prints the Packages with a checklist item or a reached file, and their parents up to Root, with a list for each: its own Definitions, the inherited ones (Definitions of the Packages above it that the change itself changed), the Findings whose Definition it holds and its stale entries.
 
 ### Findings
 
@@ -230,8 +230,8 @@ Details the concept leaves open, settled while building T1:
 - **Library links.** A path whose first name is a Library is a Library link, so no top-level model name may equal a Library's name.
 - **Local Library versions.** A local Library carries no version file; the manifest names its version and the lock pins its digest.
 - **Specificity.** An exact path beats every pattern; otherwise more literal characters win; a tie between Packages is an error.
-- **Stale realization** is reported, not refused (above): a registry link to a deleted Definition or an entry for a missing file does not block the Command that cleans it up. A repository file without any entry stays a compile error. Confirmed by the owner on 28 October 2026 (concept §3).
+- **Stale realization** is reported, not refused (above): a registry link to a deleted Definition or an entry for a missing file does not block the work that cleans it up. A repository file without any entry stays a compile error. Confirmed by the owner on 28 October 2026 (concept §3).
 - **Inherited items** in the per-Package lists are only Definitions above that the change itself changed, not those reached through a file or a link; otherwise a README edit at Root would put an item on every Package's list. Confirmed by the owner on 28 October 2026.
 - **How far impact follows.** The checklist takes one step of links, and the registry in both directions; Definitions at more steps are reported with their distance. The code's own imports are not followed yet; a later step that knows the realization's languages can widen reach.
-- **The required check's environment** names the container image it runs in, and the parser requires it. A Command runs every check in its one container, from the project's image ([the sandbox](../../internal/run/README.md#the-sandbox)), so it does not select another image.
+- **The required check's environment** names the container image it runs in, and the parser requires it.
 - **Skills** are installed into `.claude/skills/` (Claude Code) and `.agents/skills/` (the Agent Skills folder that Codex and other agents read).

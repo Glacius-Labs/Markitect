@@ -20,8 +20,7 @@ import (
 // variable set for the whole machine would.
 const TokenVariable = "MARKITECT_CLAUDE_TOKEN"
 
-// agentConfig is what a Command's sessions and a chat start with, read from the
-// environment (internal/agents/README.md#composition):
+// agentConfig is what a chat starts with, read from the environment (internal/agents/README.md#composition):
 //
 //	MARKITECT_ENGINE         the Docker CLI (default docker on PATH)
 //	MARKITECT_MANAGER_IMAGE  the project's image, FROM packaging/runtime (required)
@@ -34,34 +33,23 @@ const TokenVariable = "MARKITECT_CLAUDE_TOKEN"
 //	                         on first use)
 //	MARKITECT_HOSTS          extra host entries, name:address, comma-separated
 //	MARKITECT_DNS            name servers, comma-separated
-//	MARKITECT_TRANSCRIPTS    a folder for the sessions' transcripts (default none)
-//	MARKITECT_SESSION_BUDGET the most one session may spend, in the provider's own
-//	                         estimate (default no limit)
-//	MARKITECT_REVIEWER_SHELL off starts reviewers without a shell, for test 1 of
-//	                         concept 3.0 §13 (default on)
 type agentConfig struct {
-	Runtime     agents.Runtime
-	Provider    agents.Provider
-	CLI         string
-	Image       string
-	Network     string
-	Hosts, DNS  []string
-	Limits      agents.Limits
-	Model       string
-	Effort      string
-	Token       string
-	Transcripts string
+	Runtime    agents.Runtime
+	Provider   agents.Provider
+	CLI        string
+	Image      string
+	Network    string
+	Hosts, DNS []string
+	Limits     agents.Limits
+	Model      string
+	Effort     string
+	Token      string
 }
 
 // readAgentConfig reads the settings, as agentConfig describes them, and returns
-// the engine they run on.
-func readAgentConfig(ctx context.Context) (agentConfig, *container.Engine, error) {
-	return readAgentConfigWith(ctx, nil)
-}
-
-// readAgentConfigWith is readAgentConfig for the app's chat agents, whose image
-// build makes when none is set. Without build, none set is an error.
-func readAgentConfigWith(ctx context.Context, build func(context.Context, *container.Engine) (string, error)) (agentConfig, *container.Engine, error) {
+// the engine they run on. build makes the image when none is set; without build,
+// none set is an error.
+func readAgentConfig(ctx context.Context, build func(context.Context, *container.Engine) (string, error)) (agentConfig, *container.Engine, error) {
 	ref := os.Getenv("MARKITECT_MANAGER_IMAGE")
 	if ref == "" && build == nil {
 		return agentConfig{}, nil, errors.New("no image: build one from packaging/runtime (with the project's toolchain) and set MARKITECT_MANAGER_IMAGE")
@@ -87,7 +75,7 @@ func readAgentConfigWith(ctx context.Context, build func(context.Context, *conta
 		Runtime: agents.EngineRuntime(engine), CLI: cliPath,
 		Limits: agents.Limits{CPUs: 1, MemoryBytes: 2 << 30, Pids: 256, TmpBytes: 256 << 20},
 		Hosts:  list("MARKITECT_HOSTS"), DNS: list("MARKITECT_DNS"),
-		Effort: env("MARKITECT_EFFORT", "high"), Transcripts: os.Getenv("MARKITECT_TRANSCRIPTS"),
+		Effort: env("MARKITECT_EFFORT", "high"),
 	}
 	p, ok := providers[env("MARKITECT_PROVIDER", "claude")]
 	if !ok {
@@ -135,7 +123,7 @@ var providers = map[string]providerDefaults{
 
 // providerNetwork is the user-defined bridge network the sessions reach their
 // provider through unless MARKITECT_NETWORK names another. It stays on the
-// engine for later Commands, like an image.
+// engine for later chats, like an image.
 const providerNetwork = "markitect-provider"
 
 func env(name, fallback string) string {

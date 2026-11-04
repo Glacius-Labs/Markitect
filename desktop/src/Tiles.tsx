@@ -3,7 +3,7 @@ import { api, type AppSettings, type ModelView, type Project, type RequiredCheck
 import { layout } from './layout';
 import { packageName } from './modeldata';
 import { modelHref, settingsHref, statisticsHref } from './route';
-import { plural, runsLine } from './status';
+import { plural } from './status';
 import { Badge, Icon } from './ui';
 
 // What the tiles show beyond the hub's own answer. Each part comes on its own,
@@ -53,8 +53,6 @@ export function Tiles({ project }: { project: Project }) {
   const { id } = project;
   const check = project.status.check;
   const drawn = check && !check.notDrawn;
-  // Only a model that compiles has its Runs measured.
-  const runs = check?.ok ? runsLine(project.waiting) : '';
   return (
     <div className="tiles">
       <Tile
@@ -76,7 +74,7 @@ export function Tiles({ project }: { project: Project }) {
       >
         {drawn && live.model && <MiniMap m={live.model} />}
       </Tile>
-      <Tile n="2" icon="activity" title="Runs" body="Start apply and verify, and follow every agent while it works." badge={<Badge tone="neutral">Not built yet</Badge>} facts={runs && <p className="tile__fact">{runs}</p>} />
+      <Tile n="2" icon="activity" title="Runs" body="How agents realize the model. Being redesigned." badge={<Badge tone="neutral">Not built yet</Badge>} />
       <Tile n="3" icon="layout-dashboard" title="Statistics" body="How Runs go, where the work struggles, how the model develops." href={statisticsHref(id)} badge={<Badge tone="neutral">The model over time</Badge>}>
         {live.points && <Spark points={live.points} />}
       </Tile>

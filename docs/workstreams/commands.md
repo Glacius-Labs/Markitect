@@ -1,14 +1,14 @@
 # Agentic commands
 
-**Redesign decided, being built:** [DEC-082](../concepts/register.md#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager) replaces the three Run kinds with one Run per change, makers and checkers, and the Commands `apply` and `verify`. This page records the frame as agreed on 27 and 28 October 2026 and describes Main today.
+**Removed:** the current realization version, with `apply` and `verify`, left Main on 4 November 2026 ([DEC-094](../concepts/register.md#dec-094-a-fresh-start-for-realization)); a new design comes later. This page keeps the frame as agreed on 27 and 28 October 2026 and the contracts of V1's commands as a record. Main has no agentic command today.
 
-Canonical page of the commands topic, one of the topics on the [topics page](topics.md). It describes the agentic commands Markitect runs through the model-derived Manager hierarchy as **contracts**: what a command takes, what it returns and what it guarantees. How a variant realizes them belongs to the variants: the host variant (today's V1), the Claude Code plugin variant and the Git variant ([DEC-078](../concepts/register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review)). The [workstreams](../workstreams.md) page lists the sessions and variants.
+Canonical page of the commands topic, one of the topics on the [topics page](topics.md). It describes the agentic commands Markitect runs through the model-derived Manager hierarchy as **contracts**: what a command takes, what it returns and what it guarantees. How a variant realized them belonged to the variants: the host variant (V1), the Claude Code plugin variant and the Git variant ([DEC-078](../concepts/register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review)); they stopped. The [workstreams](../workstreams.md) page lists the sessions.
 
 | | |
 |---|---|
-| **Status** | The frame below and answers A1–A6 are agreed with the owner (27 and 28 October 2026). `apply` and `verify` are built as part of [concept 2.0](../concepts/v2-concept.md#7-commands-that-start-agents); the others come after its acceptance. The open questions are on the [topics page](topics.md#d-commands-and-the-result). |
+| **Status** | The frame below and answers A1–A6 are agreed with the owner (27 and 28 October 2026). `apply` and `verify` were built as part of [concept 2.0](../concepts/v2-concept.md#7-commands-that-start-agents) and removed with it; the others never started. The open questions are on the [topics page](topics.md#d-commands-and-the-result). |
 | **Scope** | Command contracts: purpose, inputs, outputs, guarantees, status; candidate commands; open questions. |
-| **Not in scope** | How a variant realizes a command; the evaluation suite; model language, modeling and Authoring, and the compiler; continuous triggers; the Cockpit. The variants and the evaluation suite belong to the [Build and evaluation session](build.md), the Cockpit to the [Desktop session](desktop.md); the rest are other topics on the [topics page](topics.md). |
+| **Not in scope** | How a variant realizes a command; model language, modeling and Authoring, and the compiler; continuous triggers; the Cockpit. The Cockpit belongs to the [Desktop session](desktop.md); the rest are other topics on the [topics page](topics.md). |
 | **Sources** | [V1 concept 1.0](../concepts/v1-concept.md) (§4, §7, §9–§12, §18–§21), the [concept register](../concepts/register.md), the [architecture](../architecture.md). This page links to them and does not change them. |
 
 ## Frame and names
@@ -57,7 +57,9 @@ These rules come from V1 Apply. Since no Command changes the model (frame above)
 9. **Checks at fixed points.** The same deterministic check runs before the workflow, at child handoffs, at Root completion and before publication ([§12](../concepts/v1-concept.md#12-checking-strategy-and-four-checkpoints)).
 10. **Only verified content is published.** Publication takes exactly the candidate a fresh Verify approved ([§21.1](../concepts/v1-concept.md#211-approval-of-the-exact-candidate); DEC-078 keeps this while it changes how publication works).
 
-## Current commands
+## Commands of V1 (removed)
+
+These are the contracts of V1's commands, kept as a record. No command of Main runs them.
 
 ### Apply (Model → Artifacts)
 
@@ -68,7 +70,7 @@ These rules come from V1 Apply. Since no Command changes the model (frame above)
 | **Workflow** | Initial check → Assessment → Implement → Verify; a Verify Reject starts a fresh Implement and a fresh Verify with the bound Findings, under the same budget; final checks → publication. |
 | **Outputs** | The published, verified change (today written into the working tree, or returned as a new branch through the Linux runner) and a report naming the stored evidence. Or no change, with the reason: invalid input, Assessment Reject, model blocker, budget stop, technical failure, or a conflict with user changes. |
 | **Guarantees** | Rules 1–10. No owner commit today; DEC-078 moves publication to a target branch (Git variant). |
-| **Status** | V1, implemented, natively qualified with Codex ([qualification record](../validation/v1-qualification-20261024.md), [technical acceptance](../validation/v1-technical-acceptance-20261026.md)), pending owner acceptance ([project workflow](../guides/project-workflow.md)). |
+| **Status** | V1; removed with V1's Run host. Its qualification and acceptance records are at the [archive point](../archive.md#removed-by-the-fresh-start). |
 
 ### Assessment (mandate)
 
@@ -78,7 +80,7 @@ These rules come from V1 Apply. Since no Command changes the model (frame above)
 | **Inputs** | Checked model and project binding, fixed input candidate. |
 | **Outputs** | Approve, or Reject / model blocker with Findings. Changes nothing; helper files stay private. |
 | **Guarantees** | Missing or outdated artifacts are work for Implement, not a reason to reject. Approve does not mean the product is correct. |
-| **Status** | V1, implemented. Runs only inside Apply today. |
+| **Status** | V1; removed. It ran only inside Apply. |
 
 ### Implement (mandate)
 
@@ -88,7 +90,7 @@ These rules come from V1 Apply. Since no Command changes the model (frame above)
 | **Inputs** | Checked model, input candidate, optional Initial Findings (each names a current Definition). |
 | **Outputs** | One fixed, integrated candidate, submitted, never self-approved. The unchanged candidate is a valid result. |
 | **Guarantees** | Changes stay within each Manager's area and the model's necessary consequences; no change only to show a diff ([§3.5](../concepts/v1-concept.md#35-focus-and-preservation)). Invalid child candidates reach the parent with their diagnostic and cannot be integrated ([D11](../concepts/v1-concept.md#84-faulty-handoffs-are-the-parents-responsibility-d11)). |
-| **Status** | V1, implemented. Runs only inside Apply today. |
+| **Status** | V1; removed. It ran only inside Apply. |
 
 ### Verify (mandate)
 
@@ -98,7 +100,7 @@ These rules come from V1 Apply. Since no Command changes the model (frame above)
 | **Inputs** | Checked model, the candidate, the diff against the command's bound input and, when it holds, the host fact that this input was already verified ([DEC-073](../concepts/register.md#dec-073-change-minimality-on-an-unchanged-model)). No Implement conversations. |
 | **Outputs** | Approve; Reject with realization Findings; or model blocker. Changes nothing. |
 | **Guarantees** | Independence from the implementers ([§19.4](../concepts/v1-concept.md#194-independence-of-verify)); unjustified changes against the bound input are rejected. |
-| **Status** | V1, implemented. Runs only inside Apply today. |
+| **Status** | V1; removed. It ran only inside Apply. |
 
 ### Model tools (not agentic)
 

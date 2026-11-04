@@ -1,37 +1,22 @@
 # Workstreams
 
-Since 28 October 2026, Markitect work runs in a few sessions. The owner replaced the eleven lanes of 27 October: "instead of all those parallel session we need one session which is responsible to coordinate and discuss the evaluation suite and the three variants. We need one session for discussion of the various topics." On 31 October 2026 the owner started a third session, Desktop, to build Markitect Desktop while the evaluations run ([DEC-089](concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli)).
+Since 28 October 2026, Markitect work runs in a few sessions. The owner replaced the eleven lanes of 27 October with one session for the build and one for the product topics. On 31 October 2026 the owner started a third session, Desktop, to build Markitect Desktop ([DEC-089](concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli)). On 4 November 2026 the evaluation suite and the variants were removed ([DEC-094](concepts/register.md#dec-094-a-fresh-start-for-realization)).
 
-This page lists the sessions, the arms and where each keeps its state. It holds no status itself.
+This page lists the sessions and where each keeps its state. It holds no status itself.
 
 ## Sessions
 
 | Session | Does | Builds | State page |
 |---|---|---|---|
-| Build and evaluation | Builds concept 2.0 and the evaluation suite that measures it, runs their dispatches and integrates their PRs | yes, everything except Desktop's scope | [build.md](workstreams/build.md) |
+| Build | Builds the product's code and integrates its PRs | yes, everything except Desktop's scope | none; the build page left with the evaluation suite |
 | Topics | Discusses the product topics with the owner (model language and skills, compiler, commands, continuous change, platform) and records the decisions | no; it writes docs only | [topics.md](workstreams/topics.md) |
-| Desktop | Designs and builds Markitect Desktop with the owner | yes, `desktop/`, `internal/adapters/desktop` and `cmd/markitect-desktop`; shared files one writer at a time with Build, Run engine changes through Build | [desktop.md](workstreams/desktop.md) |
+| Desktop | Designs and builds Markitect Desktop with the owner | yes, `desktop/`, `internal/adapters/desktop` and `cmd/markitect-desktop`; shared files one writer at a time with Build | [desktop.md](workstreams/desktop.md) |
 
-The sessions sit in the sidebar folder "Markitect". Lane 1 handed the host variant over to Build on 28 October 2026, and its page folded into the build page. The other lane sessions end once the owner agrees. The suite's contract is the [evaluation suite guide](guides/evaluation-suite.md). The topic lane pages were folded into the topics page on 28 October 2026; the [commands page](workstreams/commands.md) stays as the canonical page for the commands frame.
-
-## Arms
-
-Since 4 November 2026 the target is [concept 3.0](concepts/v3-concept.md) ([build steps](implementation-plan.md#concept-30-build)). From 28 October the target was [concept 2.0](concepts/v2-concept.md). The owner chose one implementation of it, compared with the baseline, the same day; the plugin variant and V1's open steps stopped, and the Git variant's prototype became the start of the 2.0 Run remote ([build steps](implementation-plan.md#concept-20-build)). The evaluation suite treats each arm as a black box with the same task in and the same judging out.
-
-| Arm | What | Where |
-|---|---|---|
-| 2.0 | Markitect as concept 2.0 describes it, built in steps T1 to T9 | `main`, as it lands |
-| K | Baseline: classic agentic coding, one Claude Code session with the task | the suite on `main` |
-
-The concept 1.0 arms stay where they stopped, for reference only: M (V1 on `main` until 2.0 replaces it), P (`variant/plugin`) and G (`dev/g0-prototype`).
-
-## Priority
-
-Concept 2.0's acceptance (§15) is the yardstick: correct against hidden tests, no drift after a change series, nothing skipped, stops right on model defects, and at least as trustworthy as one strong agent. Consistency with the model and quality come first; time and token cost second.
+The sessions sit in the sidebar folder "Markitect". The topic lane pages were folded into the topics page on 28 October 2026; the [commands page](workstreams/commands.md) stays as the canonical page for the commands frame.
 
 ## Rules
 
-- **One state page per session.** It keeps three short parts, updated whenever a step ends: **Now**, **Next** and **Questions for the owner**, each question with a recommendation. Chats, messages and dashboards are not state.
+- **One state page per session that holds state.** It keeps three short parts, updated whenever a step ends: **Now**, **Next** and **Questions for the owner**, each question with a recommendation. Chats, messages and dashboards are not state.
 - **Few sessions at once.** At most five sessions work at the same time (owner, 28 October 2026; earlier about three). Build starts short sub-sessions for concrete jobs, one job and one PR each, and ends each one when its PR is merged.
 - **Topics hands work to Build.** When an owner decision needs code, Topics sends Build one clear task.
-- **The usual rules still apply.** [AGENTS.md](../AGENTS.md), the [working method](development/working-method.md) and the [integration policy](implementation-plan.md#integration) govern every session. Each real container, provider or Apply run needs a bounded dispatch the owner approves, one at a time on the shared engine.
+- **The usual rules still apply.** [AGENTS.md](../AGENTS.md), the [working method](development/working-method.md) and the [integration policy](implementation-plan.md#integration) govern every session. Each real container or provider run needs a bounded dispatch the owner approves, one at a time on the shared engine.

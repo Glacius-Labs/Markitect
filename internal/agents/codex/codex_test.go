@@ -17,12 +17,6 @@ func TestCodexHasNoTokenRouteYet(t *testing.T) {
 	if _, err := (Provider{}).Home(harness.Document{Base: "base", Context: "context"}); err == nil {
 		t.Error("a Codex home was installed without a login route")
 	}
-	if _, _, _, err := (Provider{}).Launch(agents.Launch{Home: "/home/implementer", Prompt: "do it", Model: "gpt-6-sol", Effort: "high"}); err == nil {
-		t.Error("a Codex session was launched without a login route")
-	}
-	if r := (Provider{}).SessionReader(agents.Launch{}); r != nil {
-		t.Errorf("a session reader for a session that cannot start: %v", r)
-	}
 }
 
 func TestCheckAuth(t *testing.T) {

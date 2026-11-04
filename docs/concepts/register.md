@@ -1,6 +1,6 @@
 # Concept register
 
-**Current target, 4 November 2026:** [Concept 3.0](v3-concept.md) ([DEC-091](#dec-091-concept-30-is-the-target)), not built yet ([delivery plan](../implementation-plan.md#concept-30-build)). [Concept 2.0](v2-concept.md) ([DEC-086](#dec-086-concept-20-is-the-target)) stays the record of what Main implements until then.
+**Current state, 4 November 2026:** no concept is the target for realization. The Command engine and the evaluation suite are removed, and a new concept for `apply` comes next ([DEC-094](#dec-094-a-fresh-start-for-realization), [delivery plan](../implementation-plan.md)). [Concept 3.0](v3-concept.md) and [concept 2.0](v2-concept.md) stay as the record of earlier targets.
 
 **Current V1 concept, 24 October 2026:** [Concept 1.0](v1-concept.md) consolidates the owner's concept v0.18 and the accepted decisions D10–D18 ([DEC-068](#dec-068-v1-concept-10)). It supersedes conflicting statements in the earlier [V1 scope clarification](sources/v1-scope-clarification-20261023.md), the [source implementation approval](sources/v1-source-implementation-approval-20261023.md) and older entries; their original text stays. The [delivery plan](../implementation-plan.md) governs implementation and tracks known deviations of the code.
 
@@ -107,9 +107,10 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-088](#dec-088-a-checker-reads-the-model-in-full-and-judges-its-own-packages-files) | Decision | A checker reads the model in full and judges its own Package's files | Accepted; built in T9; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
 | [DEC-089](#dec-089-markitect-desktop-the-app-over-the-cli) | Decision | Markitect Desktop: the app over the CLI | Accepted; design proposal, not built |
 | [DEC-090](#dec-090-a-refusal-counts-only-when-nothing-moved) | Decision | A refusal counts only when nothing moved | Accepted; built; superseded by [DEC-091](#dec-091-concept-30-is-the-target) |
-| [DEC-091](#dec-091-concept-30-is-the-target) | Decision | Concept 3.0 is the target | Accepted; not built |
+| [DEC-091](#dec-091-concept-30-is-the-target) | Decision | Concept 3.0 is the target | Accepted; superseded as the target by [DEC-094](#dec-094-a-fresh-start-for-realization) |
 | [DEC-092](#dec-092-a-command-uses-the-users-own-sign-in) | Decision | A Command uses the user's own sign-in | Accepted; not built; superseded in part by [DEC-093](#dec-093-a-command-passes-the-users-own-token) |
 | [DEC-093](#dec-093-a-command-passes-the-users-own-token) | Decision | A Command passes the user's own token | Accepted; being built |
+| [DEC-094](#dec-094-a-fresh-start-for-realization) | Decision | A fresh start for realization | Accepted |
 | [PRM-001 to PRM-009](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
@@ -1208,7 +1209,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-091 Concept 3.0 is the target
 
-- **Status:** Accepted by the owner, 4 November 2026, after a discussion that judged Markitect's ideas against six problems and other options.
+- **Status:** Accepted by the owner, 4 November 2026, after a discussion that judged Markitect's ideas against six problems and other options. Superseded as the target the same day by [DEC-094](#dec-094-a-fresh-start-for-realization).
 - **Decision:** [concept 3.0](v3-concept.md) is Markitect's target: the spec as the project's documentation and authority, one implementer and one reviewer per Command in one container, code in and out only as a Git commit, a gate in the CLI that runs after the session ends, and interchangeable strategies. It includes the details its review added and the answers to its nine questions ([§14](v3-concept.md#14-decided-on-acceptance)). A tenth question there, whether a Command may start sessions on an account login, was decided the same day ([DEC-092](#dec-092-a-command-uses-the-users-own-sign-in)).
 - **Supersedes:** the entries in [§15](v3-concept.md#15-what-this-overturns), each marked with what goes and what stays. The new evidence and its limits are in [OQ-011](#open-questions). Concept 2.0 stays the record of what Main implements until the rebuild.
 - **Evaluation:** comparing variants stops. Three bounded tests and the owner's real use follow, and every result is kept and compared, including structure, architecture, quality and cleanliness ([§13](v3-concept.md#13-how-we-know-it-works)).
@@ -1237,6 +1238,15 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - So Markitect does read the token and pass it on, which the sign-in in a volume would have avoided. Whether that counts as intermediating it goes in the owner's question to Anthropic ([DEC-092](#dec-092-a-command-uses-the-users-own-sign-in)).
 - **Costs, as far as known:** an agent, and any code it runs, can read the token from its environment, and it lasts a year, with no documented way to revoke it. Codex has access tokens for Enterprise; whether a personal plan gets one is not stated, so its route stays open.
 - **Reasoning:** [concept 3.0 §9](v3-concept.md#9-the-sandbox) and [§14](v3-concept.md#14-decided-on-acceptance), question 10. Nothing is shared between the implementer and the reviewer, so a sign-in's shared folder, scrub and turn-taking fall away.
+
+### DEC-094 A fresh start for realization
+
+- **Status:** Accepted by the owner, 4 November 2026 ([statements](sources/fresh-start-20261104.md)).
+- **Decision:** the aim is no longer to prove that one version is better, but to make one clean and simple version work reliably on Sonnet. The Command engine (`apply` and `verify` with their container and Git handling) and the evaluation suite (tasks, judges, oracles and references) are removed from Main. They stay at the archive point `archive/main-pre-native-20261104` ([archive index](../archive.md)).
+- **What stays:** the model language and its compiler, the model commands, `impact` and the checklist, the skills, and Markitect Desktop with its chats, whose containers are the only Docker use left.
+- **Order of work:** the removal; then a talk with the owner on how `apply` should work, a concept for it and its implementation; then a talk on a much simpler evaluation. The owner wants to try a native version: a harness of skills and rules set up per provider, with the agent following the process. That is the starting point of the talk, not yet a decided design.
+- **Supersedes:** [DEC-091](#dec-091-concept-30-is-the-target) as the target, and with it the delivery steps U3 to U5 and tests 1 to 3. [DEC-092](#dec-092-a-command-uses-the-users-own-sign-in) and [DEC-093](#dec-093-a-command-passes-the-users-own-token) lose their Command; the token variable stays for the app's chats. Until a new concept is accepted, there is no target for realization. [Concept 3.0](v3-concept.md) and its evidence stay as the record.
+- **New evidence:** a Claude workflow without Docker or a token landed one real Makerspace change unattended on 4 November, and its reviewer caught a planted bug once; one small change, no comparison. Its evidence is outside the repository, in `C:\Users\Consiliari\wf-trial\evidence`. Test 1 ended unfinished, with 9 of 12 launches run and no answer read.
 
 ## Promises
 

@@ -1,9 +1,0 @@
-imports:
-  - {package: markitect/core, as: Core}
-id: RefusalCode
-kind: Core.Kind
-body: >-
-  A refusal the program returns instead of a result. Its code is the exact
-  wire value; its body says what it means.
-spec:
-  properties: [code]

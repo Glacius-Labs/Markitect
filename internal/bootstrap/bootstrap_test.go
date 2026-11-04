@@ -163,19 +163,6 @@ func TestUsageAndRefusals(t *testing.T) {
 	if Run(context.Background(), []string{"bughunt"}, &out, &errOut) != 2 || !strings.Contains(errOut.String(), `unknown command "bughunt"`) {
 		t.Fatalf("unknown command: %s", errOut.String())
 	}
-	// Without an image apply starts nothing.
-	t.Setenv("MARKITECT_MANAGER_IMAGE", "")
-	errOut.Reset()
-	if Run(context.Background(), []string{"apply"}, &out, &errOut) != 2 || !strings.Contains(errOut.String(), "no image: build one from packaging/runtime") {
-		t.Fatalf("apply without adapters: %s", errOut.String())
-	}
-	// The engine's own networks are refused before any engine call.
-	t.Setenv("MARKITECT_MANAGER_IMAGE", "sha256:none")
-	t.Setenv("MARKITECT_NETWORK", "bridge")
-	errOut.Reset()
-	if Run(context.Background(), []string{"apply"}, &out, &errOut) != 2 || !strings.Contains(errOut.String(), "no user-defined network") {
-		t.Fatalf("apply on the engine's bridge: %s", errOut.String())
-	}
 	dir := testkit.TempDir(t)
 	if code, _, errOut := run(t, dir, "check"); code != 2 || !strings.Contains(errOut, "not inside a Git repository") {
 		t.Fatalf("check outside Git: %d %s", code, errOut)

@@ -180,8 +180,7 @@ func ResolveCommit(ctx context.Context, root, rev string) (Commit, error) {
 }
 
 // LastLanded returns the newest commit reachable from tip that adds a Run's
-// Result page: the base apply and verify start from when none is named
-// (internal/run). ok is false when no Run has landed.
+// Result page. ok is false when no Run has landed.
 func LastLanded(ctx context.Context, root, tip string) (id string, ok bool, err error) {
 	out, err := git(ctx, root, "log", "-1", "--format=%H", "--diff-filter=A", "--end-of-options", tip, "--", project.ResultsDir+"/")
 	if err != nil {

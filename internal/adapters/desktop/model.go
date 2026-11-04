@@ -28,7 +28,7 @@ import (
 
 // The bases a change is measured from.
 const (
-	baseLanding = "landing" // the last commit a Run landed: the base apply takes
+	baseLanding = "landing" // the last commit a Run landed
 	baseCommit  = "commit"  // the last commit: what is not committed yet
 	baseTree    = "tree"    // the working tree, under a chat's proposal
 )

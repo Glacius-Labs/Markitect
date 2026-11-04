@@ -1,9 +1,0 @@
-imports:
-  - {package: markitect/core, as: Core}
-id: Invariant
-kind: Core.Kind
-body: >-
-  A condition that always holds for the records of the listed Entities; the
-  body states the condition.
-spec:
-  properties: [entities]

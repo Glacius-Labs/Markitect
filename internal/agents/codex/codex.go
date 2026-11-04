@@ -1,6 +1,6 @@
 // Package codex is the Codex adapter of the agent runtime: the launch contract
 // of the pinned Codex CLI's exec mode and the reader of its JSON events with the
-// failure classes the evaluation voids. It has no login route yet, so no session
+// failure classes. It has no login route yet, so no session
 // starts on it (DEC-093).
 package codex
 
@@ -56,14 +56,6 @@ func (Provider) TokenVariable() string { return "" }
 func (Provider) Home(harness.Document) (frame.Initialize, error) {
 	return frame.Initialize{}, errNoRoute
 }
-
-// Launch refuses: see TokenVariable.
-func (Provider) Launch(agents.Launch) ([]string, []string, []byte, error) {
-	return nil, nil, nil, errNoRoute
-}
-
-// SessionReader has nothing to read: see TokenVariable.
-func (Provider) SessionReader(agents.Launch) agents.SessionReader { return nil }
 
 var errNoRoute = errors.New("codex: Markitect has no login route for Codex yet")
 

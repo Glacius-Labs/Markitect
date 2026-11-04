@@ -8,13 +8,28 @@ Links to archived files use the full commit SHA, never a branch or tag name, bec
 
 | Archive point | Commit | What it holds |
 |---|---|---|
+| Branch `archive/main-pre-native-20261104` | [`10b074e4fe82c70c8219fb2fa5a0bacee4986ee1`](https://github.com/Glacius-Labs/Markitect/tree/10b074e4fe82c70c8219fb2fa5a0bacee4986ee1) (tree `58d17b8802ae14bc47bceb0bc797cca4da30fefc`) | Main on 4 November 2026, immediately before the removal of the Command engine and the evaluation suite ([DEC-094](concepts/register.md#dec-094-a-fresh-start-for-realization)); see [its bundle](#bundle-of-the-pre-native-archive-point). Contains everything listed [below](#removed-by-the-fresh-start), and is in Main's ancestry |
 | Branch `archive/main-pre-r3c-20261027` | [`e6d9b94a64c2083ee1487414a728a520a87def03`](https://github.com/Glacius-Labs/Markitect/tree/e6d9b94a64c2083ee1487414a728a520a87def03) (tree `0fbc1d063bdada18dfe826e9641a47a3732122cf`) | Main on 27 October 2026, immediately before the documentation steps of the cleanup (R3c). Contains every page removed or merged by R3c, and is in Main's ancestry |
 | Branch `archive/main-pre-r2-20261024` | [`2389e252a85e3896da91f5f4649a3394b9222b2c`](https://github.com/Glacius-Labs/Markitect/tree/2389e252a85e3896da91f5f4649a3394b9222b2c) (tree `fec8e0c2fc16413e2e206cfb220059791338dfc1`) | Main on 24 October 2026, immediately before the repository restructuring (R2). Contains every file removed or moved by R2, and is in Main's ancestry |
 | Branch `archive/v1-pre-cutover-20261023` | [`447ac3b152de79b52de80513e14dc94349a060bd`](https://github.com/Glacius-Labs/Markitect/tree/447ac3b152de79b52de80513e14dc94349a060bd) (tree `6bd59e02d929dc94fe82f799cefc0da18ff7984c`) | The source snapshot of 23 October 2026 before the Extract, Cockpit, authoring and Setup retirement; see [its bundle](#bundle-of-the-pre-cutover-archive-point) |
 | Main before T1 | [`f23c2e12d9833efa61e5e65c90018016423abe74`](https://github.com/Glacius-Labs/Markitect/tree/f23c2e12d9833efa61e5e65c90018016423abe74) | Main on 28 October 2026, immediately before step T1 of the concept 2.0 build. Contains V1's language, Run host, adapters and guides that T1 removed ([below](#removed-by-t1)), and is in Main's ancestry; no separate archive ref or bundle |
 | Pre-reset commits | Six, below | History before the reset of 23 October 2026, which Main's history does not contain |
 
-The refs under `archive/` are protected against deletion and force-push by the ruleset "Protect archive refs". The three Main-derived points also exist as Git bundles outside the repository, so a second history reset cannot remove them. Restore an archive point into a new empty destination outside existing checkouts; never reset or overwrite an active implementation checkout to restore history. An archive point holds committed source only, not local credentials, operator state, provider histories or uncommitted planning documents.
+The refs under `archive/` are protected against deletion and force-push by the ruleset "Protect archive refs". The Main-derived points also exist as Git bundles outside the repository, so a second history reset cannot remove them. Restore an archive point into a new empty destination outside existing checkouts; never reset or overwrite an active implementation checkout to restore history. An archive point holds committed source only, not local credentials, operator state, provider histories or uncommitted planning documents.
+
+### Bundle of the pre-native archive point
+
+- File: `C:\Users\Consiliari\Glacius Labs\Markitect-archives\main-pre-native-20261104\markitect-10b074e4.bundle`
+- SHA-256: `d09a5007da45874941f2e2c3fa9666afc37f8764bf359d55c170cb98bb008a09`.
+
+Restore from the named reference or, if it is unavailable, from the bundle after verifying its hash:
+
+```text
+git clone --branch archive/main-pre-native-20261104 https://github.com/Glacius-Labs/Markitect.git NEW_EMPTY_DESTINATION
+git clone --branch archive/main-pre-native-20261104 PATH_TO_BUNDLE NEW_EMPTY_DESTINATION
+```
+
+Require commit `10b074e4fe82c70c8219fb2fa5a0bacee4986ee1`, tree `58d17b8802ae14bc47bceb0bc797cca4da30fefc` and an empty status.
 
 ### Bundle of the R3c archive point
 
@@ -79,7 +94,7 @@ The history reset of 23 October 2026 removed these commits from every branch. Ea
 | `archive/pre-reset-3ebe3c6e` | [`3ebe3c6e6d283b998020350334e24a7303b089b7`](https://github.com/Glacius-Labs/Markitect/tree/3ebe3c6e6d283b998020350334e24a7303b089b7) | 16 Oct 2026 | The evening rules and the consistency review of the working-day reflection | [Reflections](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/concepts/reflections/README.md), [working-day discussion](concepts/sources/working-day-discussion-20261016.md) |
 | `archive/pre-reset-bc4b49e7` | [`bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310`](https://github.com/Glacius-Labs/Markitect/tree/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310) | 16 Oct 2026 | Main with the work-item backlog (`docs/work-items/backlog.yaml`) | [Concept register](concepts/register.md) |
 | `archive/pre-reset-5ff32069` | [`5ff3206917fa3b7482d9daedb903d57a919f56b8`](https://github.com/Glacius-Labs/Markitect/tree/5ff3206917fa3b7482d9daedb903d57a919f56b8) | 17 Oct 2026 | The removed product generation before the Apply rebuild | [Architecture](architecture.md), [Vision](vision.md) |
-| `archive/pre-reset-1f4a1ede` | [`1f4a1ede214d05fd2fee615b3905207df7702426`](https://github.com/Glacius-Labs/Markitect/tree/1f4a1ede214d05fd2fee615b3905207df7702426) | 17 Oct 2026 | The complete pre-retirement tree, the basis of the [retirement record](validation/distribution-retirement-20261017.md) | [Measurement](guides/measurement.md), [packaging guide](../packaging/README.md), [examples](https://github.com/Glacius-Labs/Markitect/blob/f23c2e12d9833efa61e5e65c90018016423abe74/examples/README.md) |
+| `archive/pre-reset-1f4a1ede` | [`1f4a1ede214d05fd2fee615b3905207df7702426`](https://github.com/Glacius-Labs/Markitect/tree/1f4a1ede214d05fd2fee615b3905207df7702426) | 17 Oct 2026 | The complete pre-retirement tree, the basis of the [retirement record](validation/distribution-retirement-20261017.md) | [Measurement](https://github.com/Glacius-Labs/Markitect/blob/10b074e4fe82c70c8219fb2fa5a0bacee4986ee1/docs/guides/measurement.md), [packaging guide](../packaging/README.md), [examples](https://github.com/Glacius-Labs/Markitect/blob/f23c2e12d9833efa61e5e65c90018016423abe74/examples/README.md) |
 | `archive/pre-reset-0c28097c` | [`0c28097c030bc5d031b501002bc85634cd66a4c8`](https://github.com/Glacius-Labs/Markitect/tree/0c28097c030bc5d031b501002bc85634cd66a4c8) | 20 Oct 2026 | Main when the Apply workflow terminology was recorded | [Apply workflow conversation](concepts/sources/terminology-and-file-accounting-20261020.md) |
 
 The 18 retired release versions `v0.1.0` to `v0.14.1` no longer exist as Git tags. The mapping from each former tag to its commit is [retired-releases-20261017.json](validation/retired-releases-20261017.json); only the commit of `v0.14.1` is pinned.
@@ -118,7 +133,7 @@ These designs are accepted as later directions but have no V1 consumer. They sta
 
 ## Removed and merged by R3c
 
-R3c consolidated the remaining documentation after the owner decided to develop Markitect as a regular software project ([DEC-076](concepts/register.md#dec-076-markitect-is-developed-as-a-regular-software-project); [cleanup inventory](development/cleanup-inventory-20261027.md)). The pages below left Main at the R3c archive point. Both tables list the register entries that cite a page, for orientation.
+R3c consolidated the remaining documentation after the owner decided to develop Markitect as a regular software project ([DEC-076](concepts/register.md#dec-076-markitect-is-developed-as-a-regular-software-project); [cleanup inventory](https://github.com/Glacius-Labs/Markitect/blob/10b074e4fe82c70c8219fb2fa5a0bacee4986ee1/docs/development/cleanup-inventory-20261027.md)). The pages below left Main at the R3c archive point. Both tables list the register entries that cite a page, for orientation.
 
 ### Archived pages
 
@@ -157,6 +172,16 @@ These pages were folded into a current page. Their pre-merge text stays at the a
 |---|---|---|---|
 | `docs/design/model-explorer.md` | [Markitect Desktop](design/markitect-desktop.md), whose Model area takes up its four views | [At Main before the fold](https://github.com/Glacius-Labs/Markitect/blob/0f8cbb1baca0174dcf0472cf964b91f835d2cc4e/docs/design/model-explorer.md) | DEC-085, DEC-089 |
 
+## Removed by the fresh start
+
+On 4 November 2026 the current realization version and the evaluation suite were removed from Main ([DEC-094](concepts/register.md#dec-094-a-fresh-start-for-realization)). All of it is at the [pre-native archive point](https://github.com/Glacius-Labs/Markitect/tree/10b074e4fe82c70c8219fb2fa5a0bacee4986ee1):
+
+- The Command engine and its adapters: `internal/run`, `internal/adapters/sandbox`, `internal/adapters/rungit`, `internal/agentport`, the `apply` and `verify` commands and the agents' Command sessions.
+- The evaluation suite and its tasks, judges, oracles and references, including the 5x Makerspace: `tools/comparison`, `tools/evaluation`, `tools/evaluation-judges`, `tools/evaluation-tasks`, `tools/library-oracle`, `tools/makerspace-large`, `tools/makerspace-oracle`, `tools/makerspace-reference`, and the Library fixture `testdata/library`.
+- The pages removed with them: [`docs/validation/`](https://github.com/Glacius-Labs/Markitect/tree/10b074e4fe82c70c8219fb2fa5a0bacee4986ee1/docs/validation) except the eight that stay, the guides `evaluation-suite.md` and `measurement.md`, the design pages `evaluation-suite-v2.md`, `long-lived-managers.md`, `manager-context.md` and `linux-runner.md`, the workstream pages `build.md` and `plugin-variant.md`, and `docs/development/cleanup-inventory-20261027.md`.
+
+Test 1 (planted bugs, [`docs/validation/planted-bugs-20261104.md`](https://github.com/Glacius-Labs/Markitect/blob/10b074e4fe82c70c8219fb2fa5a0bacee4986ee1/docs/validation/planted-bugs-20261104.md) at the archive point) was never finished: 9 of 12 launches ran, the machine went down during the tenth, and its answers were never read. Its evidence stays in `%LOCALAPPDATA%\markitect-test1`.
+
 ## Removed by T1
 
 Step T1 of the [concept 2.0 build](implementation-plan.md#concept-20-build) replaced V1's language and removed V1's Run host, with no compatibility kept ([DEC-032](concepts/register.md#dec-032-quality-simplicity-and-stability-over-effort-and-compatibility)). Everything it removed stays at [Main before T1](https://github.com/Glacius-Labs/Markitect/tree/f23c2e12d9833efa61e5e65c90018016423abe74). The [model language guide](guides/model-language.md) describes what replaced the language; T4 builds the new Run engine and T5 the native host.
@@ -166,7 +191,7 @@ Step T1 of the [concept 2.0 build](implementation-plan.md#concept-20-build) repl
 | V1 language and its Libraries | [`internal/model`](https://github.com/Glacius-Labs/Markitect/tree/f23c2e12d9833efa61e5e65c90018016423abe74/internal/model), [`testdata/core`](https://github.com/Glacius-Labs/Markitect/tree/f23c2e12d9833efa61e5e65c90018016423abe74/testdata/core) (Core 1.2.0), [`libraries/`](https://github.com/Glacius-Labs/Markitect/tree/f23c2e12d9833efa61e5e65c90018016423abe74/libraries) (`values`, `data`, `api`, `practice`, `architecture`) | Typed YAML Definitions, the v1 compiler, the Core and the standard Libraries; the [language contract](design/language-contract.md) specifies them |
 | V1 Run host | [`internal/`](https://github.com/Glacius-Labs/Markitect/tree/f23c2e12d9833efa61e5e65c90018016423abe74/internal): `organization`, `harness`, `modeldocs`, `run`, `runtimeconfig`, `apply`, `snapshot`, and the old `realization`, `project` and `bootstrap` | Manager topology and context, the harness, the Run executor, Apply and publication, runtime profiles, snapshot values and the generated model view |
 | V1 adapters | [`internal/adapters/`](https://github.com/Glacius-Labs/Markitect/tree/f23c2e12d9833efa61e5e65c90018016423abe74/internal/adapters): `checks`, `claudecode`, `codexappserver`, `documents`, `gitrepo`, `runner`, `runstore`, and the old `cli` | Container checks, the Claude and Codex Session adapters, the document writer, Run Git and publication, the Linux runner launcher, the Run store and the V1 command line |
-| Linux runner | [`cmd/markitect-runner`](https://github.com/Glacius-Labs/Markitect/tree/f23c2e12d9833efa61e5e65c90018016423abe74/cmd/markitect-runner), [`packaging/runner`](https://github.com/Glacius-Labs/Markitect/tree/f23c2e12d9833efa61e5e65c90018016423abe74/packaging/runner) | The runner entrypoint and image; the [runner design](design/linux-runner.md) records it |
+| Linux runner | [`cmd/markitect-runner`](https://github.com/Glacius-Labs/Markitect/tree/f23c2e12d9833efa61e5e65c90018016423abe74/cmd/markitect-runner), [`packaging/runner`](https://github.com/Glacius-Labs/Markitect/tree/f23c2e12d9833efa61e5e65c90018016423abe74/packaging/runner) | The runner entrypoint and image; the [runner design](https://github.com/Glacius-Labs/Markitect/blob/10b074e4fe82c70c8219fb2fa5a0bacee4986ee1/docs/design/linux-runner.md) records it |
 | Configuration examples | [`examples/`](https://github.com/Glacius-Labs/Markitect/tree/f23c2e12d9833efa61e5e65c90018016423abe74/examples) | The runtime-profile and run-configuration examples of V1's Apply |
 | Python analysis tool | [`tools/model-analysis`](https://github.com/Glacius-Labs/Markitect/tree/f23c2e12d9833efa61e5e65c90018016423abe74/tools/model-analysis) | Lint signals for v1 models, replaced by `markitect lint` |
 | Provider guide | [`docs/guides/provider-adapters.md`](https://github.com/Glacius-Labs/Markitect/blob/f23c2e12d9833efa61e5e65c90018016423abe74/docs/guides/provider-adapters.md) | Runtime profiles, native Sessions, account login and the Claude adapter |
@@ -185,7 +210,7 @@ These files are still on Main under new paths; their content is unchanged apart 
 | `docs/design/canonical-model/sources/` | [`docs/concepts/sources/`](concepts/sources/) |
 | `docs/history/distribution-retirement-20261017.md`, `retired-releases-20261017.json`, `distribution/production-assessment.md` | [`docs/validation/`](validation/) |
 | `docs/design/canonical-model/minimal-language/exchange-example/dependencies/core/` | `testdata/core/`, removed by T1 ([before T1](https://github.com/Glacius-Labs/Markitect/tree/f23c2e12d9833efa61e5e65c90018016423abe74/testdata/core)) |
-| `docs/design/canonical-model/library-example/` (model M1, vocabulary, business rules) | [`testdata/library/`](../testdata/library/) |
-| `docs/design/canonical-model/library-example/evaluation-contract.md`, `experiments/library-playground/` | [`tools/library-oracle/`](../tools/library-oracle/) |
-| `experiments/runtime-baseline/assess.py`, `run_oracle.py` | [`tools/library-oracle/container/`](../tools/library-oracle/container/) |
+| `docs/design/canonical-model/library-example/` (model M1, vocabulary, business rules) | [`testdata/library/`](https://github.com/Glacius-Labs/Markitect/tree/10b074e4fe82c70c8219fb2fa5a0bacee4986ee1/testdata/library), removed by the [fresh start](#removed-by-the-fresh-start) |
+| `docs/design/canonical-model/library-example/evaluation-contract.md`, `experiments/library-playground/` | [`tools/library-oracle/`](https://github.com/Glacius-Labs/Markitect/tree/10b074e4fe82c70c8219fb2fa5a0bacee4986ee1/tools/library-oracle), removed by the [fresh start](#removed-by-the-fresh-start) |
+| `experiments/runtime-baseline/assess.py`, `run_oracle.py` | [`tools/library-oracle/container/`](https://github.com/Glacius-Labs/Markitect/tree/10b074e4fe82c70c8219fb2fa5a0bacee4986ee1/tools/library-oracle/container), removed by the [fresh start](#removed-by-the-fresh-start) |
 | `integration/README.md`, `run-markitect.go`, `run-markitect_test.go` | [`packaging/README.md`](../packaging/README.md), [`packaging/bootstrap/`](../packaging/bootstrap/) |

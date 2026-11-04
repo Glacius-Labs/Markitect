@@ -35,7 +35,6 @@ DEFAULT_DOCUMENTS = (
     "docs/development/repository-layout.md",
     "docs/implementation-plan.md",
     "docs/vision.md",
-    "docs/guides/measurement.md",
     "docs/archive.md",
     "docs/development/documentation.md",
     "docs/design/README.md",
@@ -44,7 +43,6 @@ DEFAULT_DOCUMENTS = (
     "docs/concepts/register.md",
     "docs/concepts/sources/README.md",
     "packaging/README.md",
-    "tools/library-oracle/README.md",
 )
 
 

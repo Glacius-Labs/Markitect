@@ -197,11 +197,6 @@ export function Hub(props: { id: string; init?: InitRun; onGone: () => void }) {
           </>
         )}
       </Alert>
-      {step.command && (
-        <div className="gl-codeblock">
-          <pre>{step.command}</pre>
-        </div>
-      )}
       {check && !check.ok && !check.notDrawn && (
         <ul className="errors">
           {check.errors.map((e, i) => (

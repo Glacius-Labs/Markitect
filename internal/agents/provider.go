@@ -5,16 +5,15 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
-	"github.com/Glacius-Labs/Markitect/internal/agentport"
 	"github.com/Glacius-Labs/Markitect/internal/harness"
 )
 
 // Provider is one agent CLI's launch contract: which variable takes the user's
-// token, how a session or turn is started, and how its output is read. This is
-// the one place per provider sessions start from (DEC-092). The Claude Code and
+// token, how a turn is started, and how its output is read. This is the one
+// place per provider chats start from. The Claude Code and
 // Codex adapters implement it; the agent runtime knows no provider.
 type Provider interface {
-	// Name is the provider's name as the evaluation names it: claude or codex.
+	// Name is the provider's name: claude or codex.
 	Name() string
 	// TokenVariable is the variable the CLI reads the user's account token
 	// from; empty when this provider has no such route yet.
@@ -28,41 +27,11 @@ type Provider interface {
 	// anything but the account login.
 	AuthStatus(home string) (argv, env []string)
 	CheckAuth(stdout []byte) error
-	// Launch starts one unattended session of a Command: its arguments,
-	// environment additions and standard input.
-	Launch(Launch) (argv, env []string, stdin []byte, err error)
-	// SessionReader reads the standard output of one session.
-	SessionReader(Launch) SessionReader
 	// Turn starts one turn: its arguments, environment additions and
 	// standard input.
 	Turn(Turn) (argv, env []string, stdin []byte, err error)
 	// Reader reads the standard output of one turn.
 	Reader(Turn) Reader
-}
-
-// Launch is one unattended session of a Command.
-type Launch struct {
-	// Home is the session user's home; the provider's own files go below it.
-	Home string
-	// Conversation names the session to continue; empty starts a fresh one.
-	Conversation string
-	Prompt       string
-	Model        string
-	Effort       string
-	// Budget is the most the session may spend; zero sets no limit.
-	Budget float64
-	// NoShell starts the session without a tool that runs commands, subagents
-	// included.
-	NoShell bool
-}
-
-// SessionReader reads one session's output and tells what it shows.
-type SessionReader interface {
-	Reader
-	// Seen tells what the transcript shows the session did, subagents included.
-	Seen() agentport.Seen
-	// Models lists every model that answered, subagents included.
-	Models() []string
 }
 
 // Turn is one provider turn: one message to the conversation and the
@@ -125,9 +94,8 @@ const (
 	Stopped End = "stopped"
 )
 
-// Class sorts a failed turn so that the evaluation can void provider
-// failures (capacity, rate or usage limit, server error, refused login) and
-// count everything else.
+// Class sorts a failed turn: provider failures (capacity, rate or usage limit,
+// server error, refused login) and everything else.
 type Class string
 
 const (
@@ -136,7 +104,7 @@ const (
 	ServerError Class = "server-error"
 	LoginFailed Class = "login"
 	// Other is every failure that is not the provider's: the launch
-	// contract, a crash, a protocol error. It is never voided.
+	// contract, a crash, a protocol error.
 	Other Class = "other"
 )
 

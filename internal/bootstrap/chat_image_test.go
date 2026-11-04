@@ -241,22 +241,28 @@ func TestAgentConfigNeedsTheUsersTokenAndAProviderWithARoute(t *testing.T) {
 
 	t.Setenv("MARKITECT_PROVIDER", "")
 	t.Setenv(TokenVariable, "")
-	if _, _, err := readAgentConfigWith(context.Background(), built); err == nil || !strings.Contains(err.Error(), "claude setup-token") || !strings.Contains(err.Error(), TokenVariable) {
+	if _, _, err := readAgentConfig(context.Background(), built); err == nil || !strings.Contains(err.Error(), "claude setup-token") || !strings.Contains(err.Error(), TokenVariable) {
 		t.Errorf("without a token: %v", err)
 	}
 	t.Setenv(TokenVariable, secretToken)
 	t.Setenv("MARKITECT_PROVIDER", "codex")
-	if _, _, err := readAgentConfigWith(context.Background(), built); err == nil || !strings.Contains(err.Error(), "no account token route") {
+	if _, _, err := readAgentConfig(context.Background(), built); err == nil || !strings.Contains(err.Error(), "no account token route") {
 		t.Errorf("on Codex: %v", err)
 	}
 	t.Setenv("MARKITECT_PROVIDER", "gemini")
-	if _, _, err := readAgentConfigWith(context.Background(), built); err == nil || !strings.Contains(err.Error(), "gemini") {
+	if _, _, err := readAgentConfig(context.Background(), built); err == nil || !strings.Contains(err.Error(), "gemini") {
 		t.Errorf("on an unknown provider: %v", err)
 	}
+	// The engine's own networks are refused before any engine call.
+	t.Setenv("MARKITECT_NETWORK", "bridge")
+	if _, _, err := readAgentConfig(context.Background(), built); err == nil || !strings.Contains(err.Error(), "no user-defined network") {
+		t.Errorf("on the engine's bridge: %v", err)
+	}
+	t.Setenv("MARKITECT_NETWORK", "chosen")
 	// The token's value is in no error.
 	t.Setenv("MARKITECT_PROVIDER", "")
 	t.Setenv("MARKITECT_MANAGER_IMAGE", "mine:1")
-	if _, _, err := readAgentConfigWith(context.Background(), built); err == nil || strings.Contains(err.Error(), secretToken) {
+	if _, _, err := readAgentConfig(context.Background(), built); err == nil || strings.Contains(err.Error(), secretToken) {
 		t.Errorf("with a token: %v", err)
 	}
 }
@@ -272,7 +278,7 @@ func TestASetManagerImageWinsOverBuilding(t *testing.T) {
 	t.Setenv(TokenVariable, secretToken)
 	t.Setenv("MARKITECT_NETWORK", "chosen")
 	t.Setenv("MARKITECT_MANAGER_IMAGE", "mine:1")
-	_, _, err = readAgentConfigWith(context.Background(), func(context.Context, *container.Engine) (string, error) {
+	_, _, err = readAgentConfig(context.Background(), func(context.Context, *container.Engine) (string, error) {
 		t.Error("it built although an image is set")
 		return "", nil
 	})

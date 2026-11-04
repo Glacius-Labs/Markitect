@@ -1,6 +1,6 @@
 // Package cli is the markitect command line: init, check, lock, refs, graph,
-// impact and lint, which start no agent; apply and verify, which start a Run;
-// desktop, which opens the app over these commands; version and licenses.
+// impact and lint, which start no agent; desktop, which opens the app over
+// these commands; version and licenses.
 package cli
 
 import (
@@ -13,7 +13,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/internal/agentport"
 	"github.com/Glacius-Labs/Markitect/internal/analysis"
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
 	"github.com/Glacius-Labs/Markitect/internal/model"
@@ -61,7 +60,7 @@ const (
 	OK       = 0
 	Failed   = 1 // the command ran and found errors
 	Misused  = 2 // the command could not run
-	usageTop = `markitect is the canonical model tool of Markitect. Only apply and verify start agents.
+	usageTop = `markitect is the canonical model tool of Markitect. It starts no agent.
 
 Usage:
   markitect init   [--repo DIR] [--name TITLE]   set up a project and install the skills
@@ -72,11 +71,6 @@ Usage:
   markitect impact [--repo DIR] [--json] --base COMMIT [--full] [--findings FILE]
                                                   what a change reaches, with distance and reason
   markitect lint   [--repo DIR] [--json]          measure the model like code: warnings only
-  markitect apply  [--repo DIR] [--json] [--base COMMIT] [--full] [--findings FILE] [RUN OPTIONS]
-                                                  realize the change with an implementer and a reviewer, and land it
-  markitect verify [--repo DIR] [--json] [--base COMMIT] [--full] [--findings-out FILE] [RUN OPTIONS]
-                                                  check the change with a reviewer only; changes nothing
-        RUN OPTIONS: --remote NAME --branch NAME --run NAME --deadline D --session-timeout D
   markitect desktop [--listen ADDR] [--no-open]  open Markitect, the app over these commands
   markitect version
   markitect licenses
@@ -86,7 +80,6 @@ Usage:
 // CLI runs one command.
 type CLI struct {
 	Git     Git
-	Runs    Runs
 	Desktop Desktop
 	Stdout  io.Writer
 	Stderr  io.Writer
@@ -116,10 +109,6 @@ func (c CLI) Run(ctx context.Context, args []string) int {
 		code, err = c.impact(ctx, rest)
 	case "lint":
 		code, err = c.lint(ctx, rest)
-	case "apply":
-		code, err = c.runCommand(ctx, agentport.Apply, rest)
-	case "verify":
-		code, err = c.runCommand(ctx, agentport.Verify, rest)
 	case "desktop":
 		code, err = c.desktop(ctx, rest)
 	case "version":

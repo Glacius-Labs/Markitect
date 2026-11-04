@@ -162,7 +162,7 @@ export function ModelArea(props: { id: string; view: View; item?: string }) {
                 role="radio"
                 aria-checked={m.base.kind === 'landing'}
                 disabled={!landing}
-                title={landing ? `The last commit a Run landed, ${short(landing)}: the base apply takes` : 'No Run has landed yet'}
+                title={landing ? `The last commit a Run landed, ${short(landing)}` : 'No Run has landed yet'}
                 onClick={() => setBase('landing')}
               >
                 Last landing
@@ -226,7 +226,7 @@ function compared(m: ModelView): string {
     return 'Compared with the working tree: what accepting the proposal would write.';
   }
   if (m.base.kind === 'landing') {
-    return `Compared with the last landing, ${short(m.base.commit ?? '')}: what apply would realize.`;
+    return `Compared with the last landing, ${short(m.base.commit ?? '')}: what changed since.`;
   }
   const none = m.bases.landing ? '' : ' No Run has landed yet.';
   return `Compared with the last commit, ${short(m.base.commit ?? '')}: what is not committed yet.${none}`;

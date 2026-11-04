@@ -1,6 +1,6 @@
 // Package claude is the Claude Code adapter of the agent runtime: the launch
 // contract of the pinned CLI on the user's token, and the reader of its
-// stream-json output with the failure classes the evaluation voids. Its launch
+// stream-json output with its failure classes. Its launch
 // lessons come from the first native qualification of V1's Claude adapter (K1b).
 package claude
 
@@ -39,6 +39,13 @@ const launchSettings = `{"enabledPlugins":{"cc-plugin-agents-md@builtin":false,"
 // mcpConfig names the session helper as a chat's only MCP server.
 const mcpConfig = `{"mcpServers":{"markitect":{"type":"stdio","command":"/usr/local/bin/markitect-agentd","args":["mcp"]}}}`
 
+const (
+	// tokenVariable is where the CLI reads a `claude setup-token` token from.
+	tokenVariable = "CLAUDE_CODE_OAUTH_TOKEN"
+	// tokenAuthMethod is how `claude auth status` names a login by that token.
+	tokenAuthMethod = "oauth_token"
+)
+
 // Provider is the Claude Code adapter.
 type Provider struct{}
 
@@ -58,7 +65,7 @@ func (Provider) Home(d harness.Document) (frame.Initialize, error) {
 }
 
 func (Provider) AuthStatus(home string) ([]string, []string) {
-	return []string{executable, "auth", "status"}, sessionEnvironment(home)
+	return []string{executable, "auth", "status"}, statusEnvironment(home)
 }
 
 // CheckAuth requires the account login, through the token or a sign-in, and
@@ -120,6 +127,23 @@ func environment() []string {
 		"CLAUDE_CODE_DISABLE_AUTO_MEMORY=1",
 		"CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1",
 		"CLAUDE_AGENT_SDK_DISABLE_BUILTIN_AGENTS=1",
+		"CLAUDE_CODE_DISABLE_FILE_CHECKPOINTING=1",
+		"CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1",
+		"DISABLE_AUTOUPDATER=1",
+		"ENABLE_TOOL_SEARCH=false",
+	}
+}
+
+// statusEnvironment pins the user's own configuration folder and switches off
+// CLAUDE.md and memory, checkpoints, tool deferral, updates and nonessential
+// traffic. It carries no credential.
+func statusEnvironment(home string) []string {
+	return []string{
+		"HOME=" + home,
+		"NODE_OPTIONS=",
+		"CLAUDE_CONFIG_DIR=" + home + "/.claude",
+		"CLAUDE_CODE_DISABLE_CLAUDE_MDS=1",
+		"CLAUDE_CODE_DISABLE_AUTO_MEMORY=1",
 		"CLAUDE_CODE_DISABLE_FILE_CHECKPOINTING=1",
 		"CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1",
 		"DISABLE_AUTOUPDATER=1",

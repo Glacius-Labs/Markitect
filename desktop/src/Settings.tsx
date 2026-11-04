@@ -6,8 +6,8 @@ import { Alert, Badge } from './ui';
 
 // Settings shows the project's required checks and how this Markitect runs
 // its agents: the provider, model and Manager image, and the account logins.
-// Until the Runs, Markitect reads them from the environment it was started
-// in, as markitect apply does, and changes none of them.
+// Markitect reads them from the environment it was started in, and changes none
+// of them.
 
 export function Settings({ id }: { id: string }) {
   const [project, setProject] = useState<Project | null>(null);
@@ -91,8 +91,7 @@ export function Settings({ id }: { id: string }) {
         <section className="section">
           <h2 className="h3">This Markitect</h2>
           <p className="small muted">
-            Chats and Runs start their agents with these settings, read from the environment Markitect was started in, the variables <span className="path">MARKITECT_*</span> that
-            markitect apply reads too. Markitect sets them itself later.
+            Chats start their agents with these settings, read from the environment Markitect was started in, the variables <span className="path">MARKITECT_*</span>. Markitect sets them itself later.
           </p>
           {(app.agents.problems ?? []).map((p) => (
             <Alert key={p} tone="warning" title="No agent can start yet" body={p} />
@@ -106,7 +105,7 @@ export function Settings({ id }: { id: string }) {
           </dl>
           {!app.agents.image && app.agents.imageBuilt && (
             <p className="small muted">
-              Markitect builds this image itself on the first chat that needs it. Chats need nothing more. markitect apply and verify in a terminal still need MARKITECT_MANAGER_IMAGE, with the project's toolchain.
+              Markitect builds this image itself on the first chat that needs it. Chats need nothing more.
             </p>
           )}
           <h3 className="title">Logins</h3>

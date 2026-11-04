@@ -20,16 +20,14 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `domain` | Registry pages, ownership and file accounting over a compiled model. | `model` | 1 |
 | `project` | Loads and checks a project's Markitect folder from a repository state. | `model`, `assets`, `domain` | 1 |
 | `service` | Questions about a loaded project: references, graph, impact with checklists, and lint. | `model`, `assets`, `domain`, `project` | 1 |
-| `agent-port` | How a Command starts a session as implementer or reviewer and observes how it ended. | nothing | 1 |
-| `run` | apply and verify over one container: the checklist, the gate, the sessions, the answers, the Result and landing. | `model`, `assets`, `domain`, `project`, `service`, `agent-port` | 1 |
 | `protocol` | Frame protocol between the Orchestrator and the session helper. | nothing | 1 |
 | `container` | The container engine client that the adapters running containers share. | `protocol` | 1 |
-| `harness` | What a chat agent starts with: its role, its skill and the conversation so far. | `model`, `assets`, `domain`, `project`, `service`, `agent-port` | 1 |
-| `agents` | A Command's sessions and the app's chats on the user's token, with the Claude Code and Codex adapters. | `model`, `assets`, `domain`, `project`, `agent-port`, `protocol`, `container`, `harness`, `agents` | 3 |
+| `harness` | What a chat agent starts with: its role, its skill and the conversation so far. | `model`, `assets`, `domain`, `project`, `service` | 1 |
+| `agents` | The app's chats on the user's token, with the Claude Code and Codex adapters. | `model`, `assets`, `domain`, `project`, `protocol`, `container`, `harness`, `agents` | 3 |
 | `guardedwrite` | Guarded working-tree writes for bundle installation, with the Git and path helpers they share with source snapshots. | nothing | 1 |
 | `build` | Version identity and embedded license notices. | nothing | 1 |
-| `adapter` | Concrete Git, command-line, desktop and sandbox adapters; no adapter imports another. | `model`, `assets`, `domain`, `project`, `service`, `agent-port`, `run`, `build` | 5 |
-| `composition` | Constructs the command line with its adapters. | `model`, `project`, `service`, `agent-port`, `container`, `agents`, `run`, `adapter` | 1 |
+| `adapter` | Concrete Git, command-line and desktop adapters; no adapter imports another. | `model`, `assets`, `domain`, `project`, `service`, `build` | 3 |
+| `composition` | Constructs the command line with its adapters. | `model`, `project`, `service`, `container`, `agents`, `adapter` | 1 |
 | `command` | Thin entrypoints to product composition. | `composition` | 1 |
 | `desktop-command` | Markitect Desktop's native shell over the composition: windows, tray and folder dialogs; built only with the native tag. | `composition`, `image-source` | 1 |
 | `agent` | Runs inside each Agent container: provider process, MCP bridge and stdio framing. | `protocol` | 1 |
@@ -44,9 +42,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | From | To | Files | Reason |
 |---|---|---|---|
 | `internal/tooling/release` | `internal/tooling/architecture` | all | The packager takes its source roots from this table. |
-| `internal/adapters/sandbox` | `internal/adapters/rungit` | tests only | The real-engine test runs a whole Command on the host's real Git. |
 | `internal/bootstrap` | `.` | tests only | The real-engine test builds the chats' image from the source the native app carries. |
-| `internal/run` | `internal/adapters/rungit` | tests only | The engine's scripted Runs use the host's real Git. |
 | `internal/tooling/release` | `internal/buildinfo` | tests only | Tests compare the packaged notices with the embedded ones. |
 
 ## Canonical model
@@ -86,18 +82,6 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 |---|---|---|
 | `internal/analysis` | Package analysis answers questions about a loaded project without starting agents: who links to a Definition, the Package dependency graph, what a change reaches and each Manager's checklist, and the lint warnings that measure the model like code. | [docs/guides/model-language.md#impact-and-checklists](../guides/model-language.md#impact-and-checklists) |
 
-## Agent port
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `internal/agentport` | Package agentport is how a Command starts sessions (concept 3.0 §6, §11): one session with one prompt, as an implementer or a reviewer, in the Command's one container, and how it ended. | [internal/agentport/README.md](../../internal/agentport/README.md) |
-
-## Command engine
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `internal/run` | Package run is the Command engine of concept 3.0 (§6 to §10): `apply` and `verify` over one container. | [internal/run/README.md](../../internal/run/README.md) |
-
 ## Agent protocol
 
 | Package | Summary | Owning document |
@@ -116,13 +100,13 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 |---|---|---|
 | `internal/harness` | Package harness renders what a chat agent of Markitect Desktop starts with: its role, its skill and the conversation so far. | [internal/agents/README.md#harness](../../internal/agents/README.md#harness) |
 
-## Provider sessions
+## Provider chats
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/agents` | Package agents starts provider sessions on the user's own token: a Command's unattended sessions through the agent port (Sessions), and Markitect Desktop's chats, each in a hardened container of its own (Chat). | [internal/agents/README.md](../../internal/agents/README.md) |
-| `internal/agents/claude` | Package claude is the Claude Code adapter of the agent runtime: the launch contract of the pinned CLI on the user's token, and the reader of its stream-json output with the failure classes the evaluation voids. | [internal/agents/README.md#claude-code](../../internal/agents/README.md#claude-code) |
-| `internal/agents/codex` | Package codex is the Codex adapter of the agent runtime: the launch contract of the pinned Codex CLI's exec mode and the reader of its JSON events with the failure classes the evaluation voids. | [internal/agents/README.md#codex](../../internal/agents/README.md#codex) |
+| `internal/agents` | Package agents starts Markitect Desktop's chats on the user's own token, each in a hardened container of its own (Chat). | [internal/agents/README.md](../../internal/agents/README.md) |
+| `internal/agents/claude` | Package claude is the Claude Code adapter of the agent runtime: the launch contract of the pinned CLI on the user's token, and the reader of its stream-json output with its failure classes. | [internal/agents/README.md#claude-code](../../internal/agents/README.md#claude-code) |
+| `internal/agents/codex` | Package codex is the Codex adapter of the agent runtime: the launch contract of the pinned Codex CLI's exec mode and the reader of its JSON events with the failure classes. | [internal/agents/README.md#codex](../../internal/agents/README.md#codex) |
 
 ## Guarded write
 
@@ -140,17 +124,15 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/adapters/cli` | Package cli is the markitect command line: init, check, lock, refs, graph, impact and lint, which start no agent; apply and verify, which start a Run; desktop, which opens the app over these commands; version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
+| `internal/adapters/cli` | Package cli is the markitect command line: init, check, lock, refs, graph, impact and lint, which start no agent; desktop, which opens the app over these commands; version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
 | `internal/adapters/desktop` | Package desktop is Markitect Desktop, the app over the command line that users know as Markitect: one service per user that serves the embedded UI and its JSON routes on a loopback address, and the window that shows it. | [internal/adapters/desktop/README.md](../../internal/adapters/desktop/README.md) |
 | `internal/adapters/repo` | Package repo reads a project's repository through Git: the working tree as Git sees it, a base commit, and the files changed between them. | [docs/guides/model-language.md#the-projects-markitect-folder](../guides/model-language.md#the-projects-markitect-folder) |
-| `internal/adapters/rungit` | Package rungit is a Command's own Git work outside its container (concept 3.0 §6, §9): a private bare repository that reads the target branch, makes the start bundle, imports what the sandbox hands out, merges and writes the Result commit, and pushes to the target repository. | [internal/run/README.md#host-git](../../internal/run/README.md#host-git) |
-| `internal/adapters/sandbox` | Package sandbox runs a Command's one container (concept 3.0 §9), natively on Windows, Linux and macOS with only the Docker CLI. | [internal/run/README.md#the-sandbox](../../internal/run/README.md#the-sandbox) |
 
 ## Composition
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/bootstrap` | Package bootstrap constructs the command line with its adapters: Git for the model commands, and for apply and verify the Run engine with the host's Git, the Run remote in a container and the provider adapters. | [docs/architecture.md#product-flow](../architecture.md#product-flow) |
+| `internal/bootstrap` | Package bootstrap constructs the command line with its adapters: Git for the model commands, and for the app's chats the container engine and the provider adapters. | [docs/architecture.md#product-flow](../architecture.md#product-flow) |
 
 ## Product commands
 

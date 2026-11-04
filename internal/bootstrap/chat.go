@@ -21,7 +21,7 @@ const chatLabel = "markitect.chat"
 const chatTurn = 30 * time.Minute
 
 // desktopChats starts Markitect Desktop's chat agents with the engine, image,
-// provider, token, model and effort of apply and verify (agentConfig), read at
+// provider, token, model and effort (agentConfig), read at
 // every start. The native app also has an image of its own, for when no image is
 // set.
 type desktopChats struct{ image *chatImage }
@@ -33,7 +33,7 @@ func (c desktopChats) Start(ctx context.Context, s desktop.ChatStart) (desktop.C
 			return c.image.ensure(ctx, engine, s.Doing)
 		}
 	}
-	cfg, engine, err := readAgentConfigWith(ctx, build)
+	cfg, engine, err := readAgentConfig(ctx, build)
 	if err != nil {
 		return nil, err
 	}

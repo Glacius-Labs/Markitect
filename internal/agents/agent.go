@@ -1,7 +1,6 @@
-// Package agents starts provider sessions on the user's own token: a Command's
-// unattended sessions through the agent port (Sessions), and Markitect Desktop's
-// chats, each in a hardened container of its own (Chat). It knows no provider;
-// the Claude Code and Codex adapters supply the launch contract.
+// Package agents starts Markitect Desktop's chats on the user's own token, each
+// in a hardened container of its own (Chat). It knows no provider; the Claude
+// Code and Codex adapters supply the launch contract.
 package agents
 
 import (
@@ -140,7 +139,7 @@ type Agent struct {
 
 var namePattern = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$`)
 
-// StartError is a start that failed in a way the evaluation sorts: a refused
+// StartError is a start that failed in a way worth telling apart: a refused
 // or expired login is the provider's, everything else is Other.
 type StartError struct {
 	Class Class

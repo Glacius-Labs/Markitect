@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Version** | 3.0 – accepted target |
+| **Version** | 3.0 – accepted on 4 November 2026, no longer the target ([DEC-094](register.md#dec-094-a-fresh-start-for-realization)); kept as the record |
 | **Date** | 4 November 2026 |
 | **Basis** | The owner's discussion of 3 and 4 November 2026, which judged Markitect's ideas against six problems and other options, and an independent review. |
 | **State** | Accepted by the owner as Markitect's target on 4 November 2026 ([DEC-091](register.md#dec-091-concept-30-is-the-target)). Not built yet: Main still implements concept 2.0 until the steps of the [delivery plan](../implementation-plan.md#concept-30-build) replace it. |

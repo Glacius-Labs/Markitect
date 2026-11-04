@@ -32,22 +32,7 @@ export interface Step {
   proposal?: string;
   // The chat that draws the model.
   chat?: string;
-  // What to start in a terminal, until Runs are in the app.
-  command?: string;
 }
-
-// runsLine says where the Runs stand, as far as the hub knows.
-export function runsLine(w?: Waiting): string {
-  if (!w) {
-    return '';
-  }
-  if (!w.landed) {
-    return 'No Run has landed yet.';
-  }
-  return w.unlanded > 0 ? `${plural(w.unlanded, 'Definition')} changed since the last landing.` : 'Nothing changed since the last landing.';
-}
-
-const inATerminal = "Start the Run from a terminal in the project's folder, as Runs are not in the app yet. It starts from the branch's tip on its remote, so pull and push first.";
 
 // nextStep is the one thing the hub asks of the owner now.
 export function nextStep(s: Status, w?: Waiting): Step {
@@ -101,29 +86,13 @@ export function nextStep(s: Status, w?: Waiting): Step {
     return {
       tone: 'info',
       title: 'Commit the model change',
-      body: `${plural(w.uncommitted, 'file')} in .markitect ${w.uncommitted === 1 ? 'differs' : 'differ'} from the last commit. A Run starts from the tip of the branch, never from the working tree, so commit and push first.`,
-    };
-  }
-  if (w && !w.landed) {
-    return {
-      tone: 'info',
-      title: 'Start the first Run',
-      body: `No Run has landed here, so the first one says where to start: --full has every Manager work, and --base COMMIT takes what changed since that commit. ${inATerminal}`,
-      command: 'markitect apply --full',
-    };
-  }
-  if (w && w.unlanded > 0) {
-    return {
-      tone: 'info',
-      title: 'Bring the code in line with the model',
-      body: `${plural(w.unlanded, 'Definition')} changed since the last landing. ${inATerminal}`,
-      command: 'markitect apply',
+      body: `${plural(w.uncommitted, 'file')} in .markitect ${w.uncommitted === 1 ? 'differs' : 'differ'} from the last commit. Commit it so that it has a history.`,
     };
   }
   const size = `${plural(c.definitions, 'Definition')} in ${plural(c.packages, 'Package')}, ${plural(c.files, 'file')} accounted for.`;
   return {
     tone: 'success',
     title: 'The model compiles',
-    body: w ? `${size} No Definition changed since the last landing.` : size,
+    body: size,
   };
 }

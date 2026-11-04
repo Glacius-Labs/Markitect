@@ -59,7 +59,7 @@ type Repos interface {
 	// Commit resolves a revision, such as HEAD, of the repository at root.
 	Commit(ctx context.Context, root, rev string) (Commit, error)
 	// LastLanded returns the newest commit reachable from tip that adds a
-	// Run's Result page, the base apply starts from; ok is false when no Run
+	// Run's Result page; ok is false when no Run
 	// has landed.
 	LastLanded(ctx context.Context, root, tip string) (id string, ok bool, err error)
 	// Uncommitted lists the files of Markitect's folder that differ between

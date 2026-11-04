@@ -1,8 +1,0 @@
-formatVersion: 1
-models:
-  markitect-core:
-    version: 1.2.0
-    digest: sha256:b338a1d686be91495e893f085d85013cc91f8f740bef8725210adc2e276f000a
-  software-basics:
-    version: 0.3.0
-    digest: sha256:85a70962ee71e8bb7d3ecb136255fc8a94ad393d32335a9f345f1eff6625acaa

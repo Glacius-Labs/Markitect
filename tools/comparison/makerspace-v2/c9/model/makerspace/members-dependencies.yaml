@@ -1,9 +1,0 @@
-imports:
-  - {package: markitect/architecture, as: Architecture}
-id: members-dependencies
-kind: Architecture.DependencyRule
-body: |-
-  The members module depends only on policies.
-spec:
-  appliesTo: [makerspace/members]
-  mayDependOn: [makerspace/policies]

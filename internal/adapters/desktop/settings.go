@@ -11,9 +11,8 @@ import (
 )
 
 // Settings shows how this Markitect runs its agents and the project's
-// required checks. Until the Runs phase, the app reads the agents' settings
-// from the environment it was started in, as markitect apply does, and
-// shows them; it changes none.
+// required checks. The app reads the agents' settings from the environment it
+// was started in and shows them; it changes none.
 
 // AppSettings is what Settings shows of this Markitect, as the composition
 // reads it, without asking the container engine.
@@ -22,7 +21,7 @@ type AppSettings struct {
 	Logins []LoginState  `json:"logins"`
 }
 
-// AgentSettings are the settings every chat and Run agent starts with.
+// AgentSettings are the settings every chat agent starts with.
 type AgentSettings struct {
 	Provider string `json:"provider"`
 	Model    string `json:"model"`
