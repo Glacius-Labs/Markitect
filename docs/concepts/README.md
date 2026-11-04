@@ -4,6 +4,7 @@ This is the home of Markitect's long-term vision, product-level decisions, clari
 
 | Document | Content |
 |---|---|
+| [Draft concept 4.0](v4-concept.md) | A draft, not accepted ([OQ-012](register.md#open-questions)): the spec, the tools and a native harness of skills and hooks, with one final check in the tool and no container |
 | [Concept 3.0](v3-concept.md) | The target, accepted on 4 November 2026 ([DEC-091](register.md#dec-091-concept-30-is-the-target)): six problems, the spec, and one implementer and one reviewer per Command with no Manager tree; not built yet ([delivery plan](../implementation-plan.md#concept-30-build)) |
 | [Concept 2.0](v2-concept.md) | What Main implements until the rebuild, and the target from 28 October until 4 November 2026 ([DEC-086](register.md#dec-086-concept-20-is-the-target)) |
 | [V1 concept 1.0](v1-concept.md) | What Main implemented until step T1, and the record of V1; the target until 28 October 2026: scope, principles, organization, Run, workflow, harness, acceptance and decisions D1–D18 ([DEC-068](register.md#dec-068-v1-concept-10)) |
