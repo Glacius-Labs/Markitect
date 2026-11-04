@@ -1191,10 +1191,7 @@ func TestABranchMovedBackIsNotBroughtForward(t *testing.T) {
 func TestALandingThatWasKilledFinishes(t *testing.T) {
 	f := newFixture(t)
 	s, wt := f.apply()
-	write(t, wt, "src/members/loans/loan.go", "package loans
-
-const Limit = 3
-")
+	write(t, wt, "src/members/loans/loan.go", "package loans\n\nconst Limit = 3\n")
 	f.submit(wt)
 	f.answer(wt, s.Run, nil)
 	st := f.state(s.Run)
