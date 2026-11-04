@@ -14,7 +14,7 @@ Each step folder is the content of a target project's `.markitect/` folder, as t
   model/            the Root Package
 ```
 
-No step ships realization. Each project has one set of registry pages, `<project>/registry/`, the same for every step: the owner's organization, which gives every Package below Root the paths it owns, with empty tables. A Run reads ownership from its base ([Run remote](../../internal/runremote/README.md)), so without them Root would own every file of a fresh project and its children could write none. `series.py` puts them into each step's `model/registry/`; each Package's Manager fills its own table as it creates files.
+No step ships realization. Each project has one set of registry pages, `<project>/registry/`, the same for every step: the owner's organization, which gives every Package below Root the paths it owns, with empty tables. A Command reads ownership from the registry at its start commit ([the Command engine](../../internal/run/README.md)), so without them Root would own every file of a fresh project and no Package would own the paths its model gives it. `series.py` puts them into each step's `model/registry/`; the implementer fills the tables as it creates files.
 
 | Project | Package | Paths |
 |---|---|---|

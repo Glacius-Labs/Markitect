@@ -37,12 +37,37 @@ import sys
 FORMAT = 1
 VERDICTS = ("conforms", "changed", "model-problem")
 OUTCOMES = ("landed", "not-landed")
+# Concept 3.0's Command (internal/run/result.go): a reviewer answers each item, and a reviewer's answer is its approval.
+COMMAND_FORMAT = 2
+ANSWERS = ("ok", "wrong", "not shown", "spec problem")
+
+
+def check_command(result):
+    """A concept 3.0 Result: an item is skipped without an answer, unsupported with neither pointers nor an explanation."""
+    problems = []
+    if result.get("outcome") not in OUTCOMES:
+        problems.append("outcome must be landed or not-landed")
+    items = result.get("items")
+    if not isinstance(items, list) or not all(isinstance(i, dict) for i in items):
+        problems.append("items must be a list of objects")
+        items = []
+    elif not items and result.get("outcome") == "landed":
+        problems.append("a landed Result has no checklist items")
+    findings = result.get("findings")
+    answered = [i for i in items if i.get("answer") in ANSWERS]
+    return {"run": result.get("run"), "command": result.get("command"), "outcome": result.get("outcome"), "items": len(items),
+            "skipped": [i.get("item") for i in items if i.get("answer") not in ANSWERS],
+            "unsupported": [i.get("item") for i in answered if not i.get("pointers") and not str(i.get("explanation") or "").strip()],
+            "unapproved": [], "checksIncomplete": (result.get("requiredChecks") or {}).get("ran") is not True,
+            "findings": len(findings) if isinstance(findings, list) else 0, "problems": problems}
 
 
 def check(result):
     """One Result's skipped, unsupported and unapproved items, and its format problems."""
+    if isinstance(result, dict) and result.get("format") == COMMAND_FORMAT:
+        return check_command(result)
     if not isinstance(result, dict) or result.get("format") != FORMAT:
-        return {"problems": [f"not a Result of format {FORMAT}"]}
+        return {"problems": [f"not a Result of format {FORMAT} or {COMMAND_FORMAT}"]}
     problems = []
     if result.get("outcome") not in OUTCOMES:
         problems.append("outcome must be landed or not-landed")

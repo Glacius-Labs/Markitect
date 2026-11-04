@@ -38,6 +38,13 @@ func (runs) Run(ctx context.Context, o cli.RunOptions) (*runengine.Result, error
 	if err != nil {
 		return nil, err
 	}
+	switch v := os.Getenv("MARKITECT_REVIEWER_SHELL"); v {
+	case "", "on":
+	case "off":
+		sessions.ReviewerWithoutShell = true
+	default:
+		return nil, fmt.Errorf("MARKITECT_REVIEWER_SHELL %q is neither on nor off", v)
+	}
 	engine, err := sandbox.NewEngine(cfg.CLI)
 	if err != nil {
 		return nil, err

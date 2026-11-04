@@ -54,6 +54,27 @@ class ClassifierTest(unittest.TestCase):
         run = self.edited("provider-overloaded", lambda r: r.update(exitCode=0))
         self.assertEqual(classify.classify(run)["class"], "result")
 
+    def test_a_variants_results_list_the_provider_failures_in_starts_or_sessions(self):
+        def errors(result):
+            folder = self.tmp / f"results-{len(list(self.tmp.iterdir()))}"
+            folder.mkdir()
+            (folder / "r.json").write_text(json.dumps(result), encoding="utf-8")
+            return classify.start_errors(folder)
+        failed = {"role": "maker", "round": 2, "reason": "failed", "class": "rate-limit", "detail": "429"}
+        # A concept 2.0 Result: a Manager's last start decides, and a start the same Manager followed with another is its work.
+        old = errors({"starts": [{"manager": "lending", "role": "maker", "round": 1, "reason": "finished"}, {"manager": "lending", **failed}]})
+        self.assertEqual(old, [{"file": "r.json", "manager": "lending", "role": "maker", "error": "rate-limit", "detail": "429"}])
+        self.assertEqual(errors({"starts": [{"manager": "lending", **failed}, {"manager": "lending", "role": "maker", "round": 3, "reason": "finished"}]}), [])
+        self.assertEqual(errors({"starts": [{"manager": "lending", "role": "maker", "round": 1, "reason": "failed", "class": "other"}]}), [])
+        # A concept 3.0 Result lists sessions with no Manager, and a Command ends at the first one that fails.
+        new = errors({"sessions": [{"role": "implementer", "round": 1, "reason": "finished"}, {**failed, "role": "reviewer", "round": 1}]})
+        self.assertEqual(new, [{"file": "r.json", "role": "reviewer", "round": 1, "error": "rate-limit", "detail": "429"}])
+        self.assertEqual(errors({"sessions": [{"role": "reviewer", "round": 1, "reason": "failed", "class": "other"}]}), [])
+        self.assertEqual(errors({"sessions": [{"role": "implementer", "round": 1, "reason": "finished"}]}), [])
+        # A Result with neither says nothing about agents.
+        self.assertIsNone(errors({"format": 2}))
+        self.assertIsNone(classify.start_errors(self.tmp / "no-results"))
+
     def test_a_variant_command_that_never_ran_is_void(self):
         # E1 probe-01: Git Bash rewrote the variant's path; the sandbox itself was fine.
         result = classify.classify(FAILURES / "infrastructure-not-started")
