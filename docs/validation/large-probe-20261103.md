@@ -169,3 +169,25 @@ The owner approved three launches of K on Haiku on this project, after S, as the
 | Runner | `haiku_bound.py` in Build's notes folder, SHA-256 prefix `03c5306e4d43e118`, over the probe's `pilot.py` |
 | Stops | The runner's own, a `STOP` file before the next launch, or the owner's word. Build also watches each session's stream and stops a launch that a second model answers |
 | Reading | As in Amendment 4, and each launch's models as reported |
+
+## Amendment 8: Haiku alone built the large Makerspace three times
+
+All three launches that ran on Haiku alone landed, and none failed a hidden case. K on Sonnet on the same project, from Amendment 1, is the measure: 37 minutes and 9.25 relative. Weekly figures are the runner's reading.
+
+| Launch | Forcing | Hidden cases | Time | Cost, multiples of K on Sonnet | Weekly | Subagents | Largest context | Go files | Go lines, tests included | Test functions |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Second of Amendment 4 | No | 327 of 327 | 78 min, 2.11 × K | 6.74 relative, 0.73 × K | 19 to 19 | 25 | 383,963 | 156 | 36,916 | 619 |
+| First forced | Yes | 327 of 327 | 105 min, 2.85 × K | 8.44 relative, 0.91 × K | 19 to 20 | 35 | 474,452 | 205 | 41,838 | 686 |
+| Second forced, relaunched | Yes | 327 of 327 | 27 min, 0.74 × K | 7.03 relative, 0.76 × K | 20 to 21 | 7 | 389,614 | 111 | 30,874 | 590 |
+
+The owner's usage card read 62 % after the last of them, against 60 % after the first.
+
+**The void attempt.** A restart of the machine from the Start menu at 02:53:24 UTC on 4 November ended the second forced launch after about 105 minutes, near its end. It has no result and counts for nothing. Build started Docker Desktop again, removed what that launch left, removed the two stale locks and started the same runner at 03:02:24 UTC. The runner recorded the attempt as void and relaunched it, the third launch of the bound of 4.
+
+**What this shows.** K on Haiku alone can build this project to the hidden cases, three times of three, for a little less than K on Sonnet. The time varied by a factor of four, between 27 and 105 minutes, with the number of subagents the lead chose.
+
+**What it does not show.**
+- These are first builds only. No change step has run on this project on any model.
+- No blind reviewer has read Haiku's code, and the hidden cases cannot rank these builds, since K, S and Haiku all pass them, though they caught all 89 planted bugs in calibration.
+- Only K ran on Haiku, not S. The owner chose Sonnet for test 2 of concept 3.0.
+- The forcing itself is still untested: no subagent named a model in any of these launches, so there was nothing to override. Each forced launch did report Haiku as the only model that answered.
