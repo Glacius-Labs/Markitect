@@ -3,33 +3,21 @@ package bootstrap
 import (
 	"context"
 	"encoding/json"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
-	"time"
-
-	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
-// Settings read the agents' settings from the environment and admit each
-// login as an agent would, and show no part of it but its expiry.
-func TestDesktopSettingsReadTheAgentsAndTheLogins(t *testing.T) {
-	home := testkit.TempDir(t)
-	t.Setenv("HOME", home)
-	t.Setenv("USERPROFILE", home)
-	for _, v := range []string{"MARKITECT_PROVIDER", "MARKITECT_MODEL", "MARKITECT_LOGIN", "MARKITECT_MANAGER_IMAGE", "MARKITECT_NETWORK"} {
+// secretToken stands for the user's token from `claude setup-token`.
+const secretToken = "sk-ant-oat01-SECRET-VALUE-1234"
+
+// Settings read the agents' settings from the environment and say whether each
+// provider has its account token, and show no part of the token.
+func TestDesktopSettingsReadTheAgentsAndTheTokens(t *testing.T) {
+	for _, v := range []string{"MARKITECT_PROVIDER", "MARKITECT_MODEL", "MARKITECT_EFFORT", "MARKITECT_MANAGER_IMAGE", "MARKITECT_NETWORK"} {
 		t.Setenv(v, "")
 	}
 	t.Setenv("MARKITECT_ENGINE", "/usr/bin/docker")
-	expires := time.Now().Add(3 * time.Hour).Truncate(time.Millisecond)
-	raw, _ := json.Marshal(map[string]any{"claudeAiOauth": map[string]any{"accessToken": "sk-ant-oat01-SECRET", "refreshToken": "sk-ant-ort01-SECRET", "expiresAt": expires.UnixMilli()}})
-	if err := os.MkdirAll(filepath.Join(home, ".claude"), 0o700); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(home, ".claude", ".credentials.json"), raw, 0o600); err != nil {
-		t.Fatal(err)
-	}
+	t.Setenv(TokenVariable, secretToken)
 
 	s := desktopSettings(context.Background())
 	if s.Agents.Provider != "claude" || s.Agents.Model != "claude-sonnet-5-5" || s.Agents.Effort != "high" || s.Agents.Network != providerNetwork || s.Agents.Engine != "/usr/bin/docker" {
@@ -42,29 +30,64 @@ func TestDesktopSettingsReadTheAgentsAndTheLogins(t *testing.T) {
 		t.Fatalf("logins %+v", s.Logins)
 	}
 	claude, codex := s.Logins[0], s.Logins[1]
-	if claude.Provider != "claude" || claude.State != "ok" || !claude.Used || claude.Expires == nil || !claude.Expires.Equal(expires) {
+	if claude.Provider != "claude" || claude.State != "ok" || !claude.Used || claude.File != TokenVariable || claude.Command != "claude setup-token" || claude.Expires != nil {
 		t.Errorf("claude %+v", claude)
 	}
-	if codex.Provider != "codex" || codex.State != "missing" || codex.Used || codex.Command != "codex login" {
+	// Codex has no token route, so it is refused whatever the environment holds.
+	if codex.Provider != "codex" || codex.State != "refused" || codex.Used || !strings.Contains(codex.Detail, "no account token route") {
 		t.Errorf("codex %+v", codex)
 	}
-	if out, _ := json.Marshal(s); strings.Contains(string(out), "SECRET") {
-		t.Fatal("a token reached the settings")
+	if out, _ := json.Marshal(s); strings.Contains(string(out), secretToken) || strings.Contains(string(out), "SECRET") {
+		t.Fatalf("the token reached the settings: %s", out)
 	}
+}
 
-	// An API key is refused, with the provider's reason.
-	raw, _ = json.Marshal(map[string]any{"claudeAiOauth": map[string]any{"accessToken": "sk-ant-api03-KEY"}})
-	os.WriteFile(filepath.Join(home, ".claude", ".credentials.json"), raw, 0o600)
-	t.Setenv("MARKITECT_PROVIDER", "codex")
-	s = desktopSettings(context.Background())
-	if c := s.Logins[0]; c.State != "refused" || !strings.Contains(c.Detail, "API key") || c.Used {
-		t.Errorf("an API key %+v", c)
+func TestDesktopSettingsNameAMissingTokenAsAReasonNoAgentStarts(t *testing.T) {
+	for _, v := range []string{"MARKITECT_PROVIDER", "MARKITECT_MODEL", "MARKITECT_EFFORT", "MARKITECT_MANAGER_IMAGE", "MARKITECT_NETWORK"} {
+		t.Setenv(v, "")
 	}
-	if s.Agents.Model != "gpt-6-luna" || !s.Logins[1].Used {
+	t.Setenv("MARKITECT_ENGINE", "/usr/bin/docker")
+	t.Setenv(TokenVariable, "")
+
+	s := desktopSettings(context.Background())
+	if c := s.Logins[0]; c.State != "missing" || !c.Used {
+		t.Errorf("claude without a token %+v", c)
+	}
+	if p := s.Agents.Problems; len(p) != 2 || !strings.Contains(p[1], "claude setup-token") || !strings.Contains(p[1], TokenVariable) {
+		t.Errorf("problems %v", p)
+	}
+}
+
+func TestDesktopSettingsRefuseCodexAsTheUsedProvider(t *testing.T) {
+	for _, v := range []string{"MARKITECT_MODEL", "MARKITECT_EFFORT", "MARKITECT_MANAGER_IMAGE", "MARKITECT_NETWORK"} {
+		t.Setenv(v, "")
+	}
+	t.Setenv("MARKITECT_ENGINE", "/usr/bin/docker")
+	t.Setenv(TokenVariable, secretToken)
+	t.Setenv("MARKITECT_PROVIDER", "codex")
+
+	s := desktopSettings(context.Background())
+	if s.Agents.Model != "gpt-6-luna" || !s.Logins[1].Used || s.Logins[1].State != "refused" || s.Logins[0].Used {
 		t.Errorf("codex used: %+v", s)
 	}
-	// The used provider's missing login is a reason no agent starts.
-	if p := s.Agents.Problems; len(p) != 2 || !strings.Contains(p[1], "codex login") {
+	// The used provider's refusal is a reason no agent starts.
+	if p := s.Agents.Problems; len(p) != 2 || !strings.Contains(p[1], "codex") || !strings.Contains(p[1], "no account token route") {
 		t.Errorf("problems %v", p)
+	}
+	if out, _ := json.Marshal(s); strings.Contains(string(out), secretToken) {
+		t.Fatalf("the token reached the settings: %s", out)
+	}
+}
+
+func TestDesktopSettingsRefuseAnUnknownProvider(t *testing.T) {
+	t.Setenv("MARKITECT_PROVIDER", "gemini")
+	t.Setenv("MARKITECT_ENGINE", "/usr/bin/docker")
+	s := desktopSettings(context.Background())
+	found := false
+	for _, p := range s.Agents.Problems {
+		found = found || strings.Contains(p, "gemini")
+	}
+	if !found {
+		t.Errorf("problems %v", s.Agents.Problems)
 	}
 }

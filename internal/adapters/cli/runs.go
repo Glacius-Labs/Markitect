@@ -27,9 +27,9 @@ type RunOptions struct {
 	Request        run.Request
 }
 
-// runCommand runs apply or verify. Exit 0 means landed (apply), every item
-// conforms (verify) or nothing to do; 1 that the Run ran and did not land or
-// found something; 2 that it could not run.
+// runCommand runs apply or verify. Exit 0 means landed (apply), no Finding
+// (verify) or nothing to do; 1 that the Command ran and did not land or found
+// something; 2 that it could not run.
 func (c CLI) runCommand(ctx context.Context, mode agentport.Mode, args []string) (int, error) {
 	var o options
 	var opt RunOptions
@@ -38,16 +38,13 @@ func (c CLI) runCommand(ctx context.Context, mode agentport.Mode, args []string)
 	lim := run.DefaultLimits(time.Now())
 	fs := c.flags(string(mode), &o)
 	fs.StringVar(&opt.Request.Base, "base", "", "the commit impact is computed from (default: the last commit Markitect landed)")
-	fs.BoolVar(&opt.Request.Full, "full", false, "every Definition is reached and every Manager works")
+	fs.BoolVar(&opt.Request.Full, "full", false, "every Definition is reached, with one reviewer per Package")
 	fs.StringVar(&opt.Remote, "remote", "", "the remote to start from and land on (default: the current branch's upstream, else origin, else this repository)")
 	fs.StringVar(&opt.Branch, "branch", "", "the target branch (default: the upstream's branch, else the current one)")
 	fs.StringVar(&opt.Request.Run, "run", "", "the Run's name (default: from the time)")
-	fs.DurationVar(&deadline, "deadline", 4*time.Hour, "how long the whole Run may take")
-	fs.IntVar(&lim.Starts, "starts", lim.Starts, "how many agent starts the Run may make")
-	fs.DurationVar(&lim.Start, "start-timeout", lim.Start, "how long one agent start may take")
+	fs.DurationVar(&deadline, "deadline", 6*time.Hour, "how long the whole Command may take")
+	fs.DurationVar(&lim.Session, "session-timeout", lim.Session, "how long one session may take")
 	if mode == agentport.Apply {
-		// verify has no makers, so it has no attempts to bound.
-		fs.IntVar(&lim.Rounds, "rounds", lim.Rounds, "how many attempts in a row one Manager's maker may make at its own work while nothing moves around it: its first start and one after each refusal of its work")
 		fs.StringVar(&findings, "findings", "", "a Findings page whose Findings become checklist items")
 	} else {
 		fs.StringVar(&findingsOut, "findings-out", "", "write the Findings as a Findings page, the input of apply --findings")

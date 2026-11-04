@@ -1,8 +1,7 @@
-// Package claude is the Claude Code adapter of the agent runtime: the
-// launch contract of the pinned CLI in a Manager container, the access-only
-// copy of the account login, and the reader of its stream-json output with
-// the failure classes the evaluation voids. Its launch lessons come from the
-// first native qualification of V1's Claude adapter (K1b).
+// Package claude is the Claude Code adapter of the agent runtime: the launch
+// contract of the pinned CLI on the user's token, and the reader of its
+// stream-json output with the failure classes the evaluation voids. Its launch
+// lessons come from the first native qualification of V1's Claude adapter (K1b).
 package claude
 
 import (
@@ -37,8 +36,7 @@ const (
 // offline launch otherwise loaded two of them (K1b).
 const launchSettings = `{"enabledPlugins":{"cc-plugin-agents-md@builtin":false,"cc-plugin-claude-test@builtin":false,"cc-plugin-diff@builtin":false,"cc-plugin-easel@builtin":false,"cc-plugin-mermaid@builtin":false,"cc-plugin-mods-guide@builtin":false,"cc-plugin-plugin-authoring@builtin":false,"cc-plugin-responsive-mode@builtin":false,"cc-plugin-sec-default@builtin":false,"cc-plugin-telemetry@builtin":false,"cc-plugin-tips@builtin":false,"cc-plugin-you-should-know@builtin":false}}`
 
-// mcpConfig names the session helper as the only MCP server; it carries the
-// Manager tools to the host.
+// mcpConfig names the session helper as a chat's only MCP server.
 const mcpConfig = `{"mcpServers":{"markitect":{"type":"stdio","command":"/usr/local/bin/markitect-agentd","args":["mcp"]}}}`
 
 // Provider is the Claude Code adapter.
@@ -46,21 +44,25 @@ type Provider struct{}
 
 func (Provider) Name() string { return "claude" }
 
-// Home installs the access-only login and the harness: Base replaces Claude
-// Code's system prompt and Context is appended to it.
-func (Provider) Home(l agents.Login, d harness.Document) (frame.Initialize, error) {
-	home := &frame.ClaudeHome{Credentials: l.Copy, SystemPrompt: d.Base, AppendSystemPrompt: d.Context}
-	if len(d.Base)+len(d.Context)+2*len(l.Copy) > frame.MaxPayload-(64<<10) {
-		return frame.Initialize{}, fmt.Errorf("claude: the harness and login exceed one private setup frame (%d bytes); the Manager's context is too large", frame.MaxPayload)
+// TokenVariable is the variable the CLI reads a `claude setup-token` token from.
+func (Provider) TokenVariable() string { return tokenVariable }
+
+// Home installs the harness: Base replaces Claude Code's system prompt and
+// Context is appended to it.
+func (Provider) Home(d harness.Document) (frame.Initialize, error) {
+	home := &frame.ClaudeHome{SystemPrompt: d.Base, AppendSystemPrompt: d.Context}
+	if len(d.Base)+len(d.Context) > frame.MaxPayload-(64<<10) {
+		return frame.Initialize{}, fmt.Errorf("claude: the harness exceeds one private setup frame (%d bytes); the chat's context is too large", frame.MaxPayload)
 	}
 	return frame.Initialize{Claude: home}, nil
 }
 
-func (Provider) AuthStatus() ([]string, []string) {
-	return []string{executable, "auth", "status"}, environment()
+func (Provider) AuthStatus(home string) ([]string, []string) {
+	return []string{executable, "auth", "status"}, sessionEnvironment(home)
 }
 
-// CheckAuth requires the claude.ai account login.
+// CheckAuth requires the account login, through the token or a sign-in, and
+// never an API key.
 func (Provider) CheckAuth(stdout []byte) error {
 	var status struct {
 		LoggedIn   bool   `json:"loggedIn"`
@@ -69,8 +71,8 @@ func (Provider) CheckAuth(stdout []byte) error {
 	if err := json.Unmarshal(bytes.TrimSpace(stdout), &status); err != nil {
 		return errors.New("claude auth status printed no readable status")
 	}
-	if !status.LoggedIn || status.AuthMethod != "claude.ai" {
-		return fmt.Errorf("claude auth status reports the method %q; only the claude.ai account login is admitted", status.AuthMethod)
+	if !status.LoggedIn || (status.AuthMethod != "claude.ai" && status.AuthMethod != tokenAuthMethod) {
+		return fmt.Errorf("claude auth status reports the method %q; only the account login is admitted", status.AuthMethod)
 	}
 	return nil
 }

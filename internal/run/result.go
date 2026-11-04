@@ -4,118 +4,123 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/agentport"
-	"github.com/Glacius-Labs/Markitect/internal/runremote"
 )
 
 // ResultFormat is the version of the Result's JSON form.
-const ResultFormat = 1
+const ResultFormat = 2
 
-// Outcomes of a Run: only a landed Run changed the target branch.
+// Outcomes of a Command: only a landed one changed the target branch.
 const (
 	Landed    = "landed"
 	NotLanded = "not-landed"
 )
 
-// States say how a Run ended, more precisely than its outcome.
+// States say how a Command ended, more precisely than its outcome.
 const (
 	// StateLanded: the result is on the target branch.
 	StateLanded = "landed"
-	// StateNothing: the change reaches no Manager; no agent started.
+	// StateNothing: nothing is affected; no agent started.
 	StateNothing = "nothing-to-do"
 	// StateVerified: verify found every item conforming, and the required
-	// checks pass on the whole repository.
+	// checks pass.
 	StateVerified = "verified"
-	// StateFindings: verify found items that do not conform, decisions for
-	// the owner, or required checks that do not pass.
+	// StateFindings: verify found items that do not conform, decisions for the
+	// owner, or required checks that do not pass.
 	StateFindings = "findings"
-	// StateCheckFailed: the initial gate failed; no agent started.
+	// StateCheckFailed: the spec has a real error; no agent started.
 	StateCheckFailed = "check-failed"
-	// StateModelDefect: a real model defect ended the Run at Root.
-	StateModelDefect = "model-defect"
-	// StateKept: the Run's work was approved but cannot land; it stays on
-	// its Run branch.
+	// StateSpecProblem: a session stopped because the spec contradicts itself
+	// or leaves open something that changes behaviour at the project's
+	// boundary. Nothing landed.
+	StateSpecProblem = "spec-problem"
+	// StateRefused: the repair rounds ran out with the gate or the reviewer
+	// still refusing. Nothing landed.
+	StateRefused = "refused"
+	// StateKept: the work passed but cannot land; it stays on its own branch.
 	StateKept = "kept"
-	// StateIncomplete: the Run stopped before its work was approved: a
-	// budget, a deadline, an agent that made no progress, or a technical
+	// StateIncomplete: a deadline, a provider's failure, a required check that
+	// could not run, a review the Command could not accept or a technical
 	// failure. Nothing it did is reported as success.
 	StateIncomplete = "incomplete"
 )
 
-// Result is what a Run returns and what its Result page shows (concept 2.0
-// §6.4). The host writes it from commits, verdicts and checks, never an
-// agent. Its JSON form is the evaluation suite's Result contract.
+// Result is what a Command returns and what its Result page shows (concept 3.0
+// §10). The Command writes it from what happened, never an agent. Its JSON form
+// is the evaluation suite's Result contract.
 type Result struct {
 	Format  int    `json:"format"`
 	Run     string `json:"run"`
 	Command string `json:"command"`
 	Outcome string `json:"outcome"`
 	State   string `json:"state"`
-	// Why says in one line why the Run ended as it did.
+	// Why says in one line why the Command ended as it did.
 	Why string `json:"why"`
-	// Base is the commit impact was computed from, Start the commit the Run
-	// started from and Landed the commit that holds the result on the
-	// target branch.
+	// Base is the commit impact was computed from, Start the commit the
+	// Command started from, Work the commit its session work ended in and
+	// Landed the commit that holds the result on the target branch.
 	Base   string `json:"base,omitempty"`
 	Start  string `json:"start,omitempty"`
+	Work   string `json:"work,omitempty"`
 	Landed string `json:"landed,omitempty"`
-	// Target is the branch the Run lands on; Branch the Run branch a
-	// result that does not land stays on.
+	// Target is the branch it lands on; Branch the branch a Result that does
+	// not land stays on.
 	Target string `json:"target"`
 	Branch string `json:"branch,omitempty"`
 	Full   bool   `json:"full"`
 
-	Items            []ResultItem        `json:"items"`
-	NotParticipating []NotParticipant    `json:"notParticipating"`
-	RequiredChecks   RequiredChecks      `json:"requiredChecks"`
-	OwnerDecisions   []OwnerDecision     `json:"ownerDecisions"`
-	Findings         []ResultFinding     `json:"findings"`
-	Notes            []agentport.Note    `json:"notes"`
-	ImpactNotes      []string            `json:"impactNotes,omitempty"`
-	Starts           []AgentStart        `json:"starts"`
-	Messages         []agentport.Message `json:"messages"`
-	Usage            agentport.Usage     `json:"usage"`
-	// Queue says how long the Run waited for Runs whose impact overlaps its
-	// own before it started.
-	Queue []string `json:"queue,omitempty"`
-	// Replaced lists the kept Run branches a landing covers; they are
-	// deleted with it.
+	// Items holds each item's latest answer.
+	Items []ResultItem `json:"items"`
+	// Depth says how much checking really happened.
+	Depth Depth `json:"depth"`
+	// NotTested holds what the reviewer's closing words say it could not test.
+	NotTested      string          `json:"notTested,omitempty"`
+	RequiredChecks RequiredChecks  `json:"requiredChecks"`
+	OwnerDecisions []OwnerDecision `json:"ownerDecisions"`
+	Findings       []ResultFinding `json:"findings"`
+	// MissingLinks lists locations a reviewer named that the registry does not
+	// list for that item.
+	MissingLinks []string `json:"missingLinks,omitempty"`
+	ImpactNotes  []string `json:"impactNotes,omitempty"`
+	// Repairs counts the repair rounds the work took, and SentBack says what each
+	// round went back for.
+	Repairs  int             `json:"repairs"`
+	SentBack []string        `json:"sentBack,omitempty"`
+	Sessions []SessionRecord `json:"sessions"`
+	Usage    agentport.Usage `json:"usage"`
+	// Replaced lists the kept Run branches a landing covers; they are deleted
+	// with it.
 	Replaced []string `json:"replaced,omitempty"`
-	// FullCheck says how many changes have landed on the target since the
-	// last full check (concept 2.0 §6.1).
+	// FullCheck says how many changes have landed on the target since the last
+	// full check.
 	FullCheck FullCheck `json:"fullCheck"`
-	// Unkept lists approved work of a Run that does not land which its Run
-	// branch does not hold.
-	Unkept []string `json:"unkept,omitempty"`
-	// Cleanup lists what may remain after the Run; empty means everything
+	// Cleanup lists what may remain after the Command; empty means everything
 	// it created is gone. It is what the stored Result page says.
 	Cleanup []string `json:"cleanup"`
-	// AfterLanding lists what a landed Run's cleanup after landing left:
-	// its branches, its remote and its lock entry. The landed page cannot
-	// say it, since it is part of the landing commit; empty when nothing
-	// remains, absent when the Run did not land.
+	// AfterLanding lists what a landed Command's cleanup after landing left. The
+	// landed page cannot say it, since it is part of the landing commit; empty
+	// when nothing remains, absent when it did not land.
 	AfterLanding []string  `json:"afterLanding,omitzero"`
 	Began        time.Time `json:"began"`
 	Ended        time.Time `json:"ended"`
 
-	// impact is what the Run's impact covers, for the lock and the trailers
-	// of its Result commit.
+	// impact is what the Command's impact covers, for the trailers of its
+	// Result commit.
 	impact []string
 }
 
-// FullCheckEvery is how many changes may land after a full check before
-// the next is due (concept 2.0 §6.1): a starting value, to adjust with
-// evidence.
+// FullCheckEvery is how many changes may land after a full check before the
+// next is due: a starting value, to adjust with evidence.
 const FullCheckEvery = 10
 
-// FullCheck is how many changes have landed on the target since the last
-// full check: a `verify --full` that ended verified or with findings, or a
-// landed `apply --full`. The host starts nothing by itself.
+// FullCheck is how many changes have landed on the target since the last full
+// check: a `verify --full` that ended verified or with findings, or a landed
+// `apply --full`. The Command starts nothing by itself.
 type FullCheck struct {
 	// Landed counts the landings after the commit the newest full check
 	// examined, or every landing when there was none.
 	Landed int `json:"landed"`
-	// Since is the commit the newest full check examined; empty when no
-	// full check is known.
+	// Since is the commit the newest full check examined; empty when no full
+	// check is known.
 	Since string `json:"since,omitempty"`
 	// Due is set from FullCheckEvery landings on.
 	Due bool `json:"due"`
@@ -123,67 +128,72 @@ type FullCheck struct {
 	Note string `json:"note,omitempty"`
 }
 
-// ResultItem is one checklist item with its verdict, evidence and the
-// checker that approved it.
+// ResultItem is one checklist item with its latest answer.
 type ResultItem struct {
-	Manager    string `json:"manager"`
-	Item       string `json:"item"`
-	Part       string `json:"part"`
-	Definition string `json:"definition,omitempty"`
-	Verdict    string `json:"verdict,omitempty"`
-	Evidence   string `json:"evidence,omitempty"`
-	// Submission is the commit that holds the verdict.
-	Submission string `json:"submission,omitempty"`
-	Checker    string `json:"checker,omitempty"`
-	Approved   bool   `json:"approved"`
-	// Check is the checker's own evidence for the item.
-	Check string `json:"check,omitempty"`
+	Item       string   `json:"item"`
+	Kind       string   `json:"kind"`
+	Definition string   `json:"definition,omitempty"`
+	Look       []string `json:"look,omitempty"`
+	// Answer is empty when no review answered it.
+	Answer      string    `json:"answer,omitempty"`
+	Pointers    []Pointer `json:"pointers,omitempty"`
+	Explanation string    `json:"explanation,omitempty"`
 }
 
-// NotParticipant is a Package that did not work, and why.
-type NotParticipant struct {
-	Package string `json:"package"`
-	Reason  string `json:"reason"`
+// Depth is how much checking really happened, as the Command measured it from
+// the reviewers' transcripts (concept 3.0 §10). A pointer shows that someone
+// looked, not that they judged correctly.
+type Depth struct {
+	// Measured: the provider's transcript shows reads at all.
+	Measured bool `json:"measured"`
+	// FilesOpened counts the files the transcripts show being read.
+	FilesOpened int `json:"filesOpened"`
+	// Commands counts the shell commands, Subagents the subagents.
+	Commands  int `json:"commands"`
+	Subagents int `json:"subagents"`
+	// Pointers counts the answers' locations, of which the transcript shows
+	// PointersOpened read and cannot tell for PointersNotMeasured.
+	Pointers            int `json:"pointers"`
+	PointersOpened      int `json:"pointersOpened"`
+	PointersNotMeasured int `json:"pointersNotMeasured"`
+	// RepeatedAnswers counts the answers that repeat another's words and
+	// pointers.
+	RepeatedAnswers int `json:"repeatedAnswers"`
 }
 
-// RequiredChecks says whether the required checks ran and passed on the
-// whole repository state that lands or would land; in verify, on the Run's
-// starting commit.
+// RequiredChecks says what the required checks ran on and whether they passed.
 type RequiredChecks struct {
-	Ran             bool                    `json:"ran"`
-	WholeRepository bool                    `json:"wholeRepository"`
-	Commit          string                  `json:"commit,omitempty"`
-	Checks          []runremote.CheckResult `json:"checks"`
-	Note            string                  `json:"note,omitempty"`
+	Ran bool `json:"ran"`
+	// Commit is the commit they ran on last.
+	Commit string        `json:"commit,omitempty"`
+	Checks []CheckResult `json:"checks"`
+	Note   string        `json:"note,omitempty"`
 }
 
-// OwnerDecision is a decision only the owner can make, with a
-// recommendation.
+// OwnerDecision is a decision only the owner can make, with a recommendation.
 type OwnerDecision struct {
-	Manager        string `json:"manager"`
 	Matter         string `json:"matter"`
 	Recommendation string `json:"recommendation"`
 }
 
-// ResultFinding is one Finding of verify: a Definition, what was observed
-// and what is expected. It is the input of apply --findings.
+// ResultFinding is one Finding of verify: a Definition, what was observed and
+// what is expected. It is the input of apply --findings.
 type ResultFinding struct {
 	Definition string `json:"definition"`
 	Observed   string `json:"observed"`
 	Expected   string `json:"expected"`
-	Manager    string `json:"manager"`
 }
 
-// AgentStart is one agent start and how it ended.
-type AgentStart struct {
-	Manager string           `json:"manager"`
-	Role    agentport.Role   `json:"role"`
-	Round   int              `json:"round"`
-	Reason  agentport.Reason `json:"reason"`
-	Detail  string           `json:"detail,omitempty"`
-	// Class is the provider's failure class of a failed start.
+// SessionRecord is one session and how it ended.
+type SessionRecord struct {
+	Role   agentport.Role   `json:"role"`
+	Round  int              `json:"round"`
+	Reason agentport.Reason `json:"reason"`
+	Detail string           `json:"detail,omitempty"`
+	// Class is the provider's failure class of a failed session.
 	Class   agentport.FailureClass `json:"class,omitempty"`
 	Agent   string                 `json:"agent,omitempty"`
+	Models  []string               `json:"models,omitempty"`
 	Usage   agentport.Usage        `json:"usage"`
 	Seconds float64                `json:"seconds"`
 }

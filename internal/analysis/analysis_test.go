@@ -480,3 +480,53 @@ func TestParseFindings(t *testing.T) {
 	expectWarning(t, ds, "findings.syntax", "f.md:7")
 	expectWarning(t, ds, "findings.syntax", "the Finding for c needs")
 }
+
+// A change reports everything it could reach, with distance and reason, and only
+// the first step is on a checklist.
+func TestImpactReportsDistanceAndReason(t *testing.T) {
+	base := library(t)
+	base[m+"members/loans/chain-a.md"] = def("std/Concept", "Chain A", "Links [[members/loans/loan]].")
+	base[m+"members/loans/chain-b.md"] = def("std/Concept", "Chain B", "Links [[members/loans/chain-a]].")
+	base[m+"members/loans/chain-c.md"] = def("std/Concept", "Chain C", "Links [[members/loans/chain-b]].")
+	cur := base.clone()
+	cur[m+"members/member.md"] = def("std/Concept", "Member", "A person with a card.")
+	im := impact(t, base, cur, nil, nil, false)
+	at := func(items []Item, id string) (Item, bool) {
+		for _, it := range items {
+			if it.Definition == id {
+				return it, true
+			}
+		}
+		return Item{}, false
+	}
+	if it, ok := at(im.Reached, "members/member"); !ok || it.Distance != 0 {
+		t.Fatalf("the changed Definition: %+v, %v", it, ok)
+	}
+	if it, ok := at(im.Reached, "members/loans/loan"); !ok || it.Distance != 1 {
+		t.Fatalf("its linker: %+v, %v", it, ok)
+	}
+	for id, want := range map[string]int{"members/loans/chain-a": 2, "members/loans/chain-b": 3, "members/loans/chain-c": 4} {
+		it, ok := at(im.Further, id)
+		if !ok || it.Distance != want || len(it.Reasons) == 0 {
+			t.Fatalf("%s: %+v, %v", id, it, ok)
+		}
+		if _, onList := at(im.Reached, id); onList {
+			t.Fatalf("%s is on the list at distance %d", id, want)
+		}
+	}
+}
+
+// A registry row that drops a link still reaches the Definition it dropped, on a
+// changed file and on an unchanged one.
+func TestImpactARowThatDropsItsLinkStillReaches(t *testing.T) {
+	base := library(t)
+	page := project.RegistryDir + "/catalog.md"
+	base[page] = "---\npaths: [src/catalog/**]\n---\n" + table + "| src/catalog/book.go | [[catalog/book]] | Type |\n"
+	base["src/catalog/book.go"] = "package catalog\n"
+	cur := base.clone()
+	cur[page] = "---\npaths: [src/catalog/**]\n---\n" + table + "| src/catalog/book.go |  | Type |\n"
+	im := impact(t, base, cur, nil, nil, false)
+	if !strings.Contains(ids(im.Reached), "catalog/book") {
+		t.Fatalf("reached %s", ids(im.Reached))
+	}
+}

@@ -1,7 +1,6 @@
 package codex
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -11,54 +10,18 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/harness"
 )
 
-var now = time.Date(2026, 10, 28, 12, 0, 0, 0, time.UTC)
-
-func jwt(exp time.Time) string {
-	part := func(v any) string {
-		raw, _ := json.Marshal(v)
-		return base64.RawURLEncoding.EncodeToString(raw)
+func TestCodexHasNoTokenRouteYet(t *testing.T) {
+	if v := (Provider{}).TokenVariable(); v != "" {
+		t.Errorf("the token variable is %q; Codex has no token route yet", v)
 	}
-	return part(map[string]string{"alg": "RS256"}) + "." + part(map[string]any{"exp": exp.Unix(), "https://api.openai.com/auth": map[string]string{"chatgpt_plan_type": "pro"}}) + ".sig"
-}
-
-func auth(apiKey any, access string) []byte {
-	raw, _ := json.Marshal(map[string]any{"OPENAI_API_KEY": apiKey, "tokens": map[string]string{"id_token": jwt(now.Add(time.Hour)), "access_token": access, "refresh_token": "rt-secret", "account_id": "acc"}, "last_refresh": "2026-10-28T00:00:00Z"})
-	return raw
-}
-
-func TestLoginKeepsAnEmptyRefreshTokenForThePinnedCLI(t *testing.T) {
-	l, err := Provider{}.Login(auth(nil, jwt(now.Add(time.Hour))), now)
-	if err != nil {
-		t.Fatal(err)
+	if _, err := (Provider{}).Home(harness.Document{Base: "base", Context: "context"}); err == nil {
+		t.Error("a Codex home was installed without a login route")
 	}
-	var copy struct {
-		APIKey *string            `json:"OPENAI_API_KEY"`
-		Tokens map[string]*string `json:"tokens"`
+	if _, _, _, err := (Provider{}).Launch(agents.Launch{Home: "/home/implementer", Prompt: "do it", Model: "gpt-6-sol", Effort: "high"}); err == nil {
+		t.Error("a Codex session was launched without a login route")
 	}
-	if err := json.Unmarshal(l.Copy, &copy); err != nil {
-		t.Fatal(err)
-	}
-	// Codex 0.162.0 refuses a login without the refresh_token field and
-	// reports "Logged in using ChatGPT" with an empty one (probed offline).
-	if copy.APIKey != nil || copy.Tokens["refresh_token"] == nil || *copy.Tokens["refresh_token"] != "" || *copy.Tokens["account_id"] != "acc" {
-		t.Fatalf("copy %s", l.Copy)
-	}
-	if strings.Contains(string(l.Copy), "rt-secret") || !l.Expires.Equal(now.Add(time.Hour)) || len(l.Secrets) != 3 {
-		t.Fatalf("login %+v", l)
-	}
-}
-
-func TestLoginRefusesAPIKeysAndExpiredTokens(t *testing.T) {
-	for name, source := range map[string][]byte{
-		"api key":   auth("sk-proj-x", jwt(now.Add(time.Hour))),
-		"expired":   auth(nil, jwt(now.Add(-time.Minute))),
-		"no jwt":    auth(nil, "opaque"),
-		"no tokens": []byte(`{"OPENAI_API_KEY":null}`),
-		"not json":  []byte("x"),
-	} {
-		if _, err := (Provider{}).Login(source, now); err == nil {
-			t.Errorf("%s: admitted", name)
-		}
+	if r := (Provider{}).SessionReader(agents.Launch{}); r != nil {
+		t.Errorf("a session reader for a session that cannot start: %v", r)
 	}
 }
 
@@ -67,7 +30,7 @@ func TestCheckAuth(t *testing.T) {
 		t.Fatal(err)
 	}
 	// The pinned CLI reports on standard error, after any warning.
-	argv, _ := Provider{}.AuthStatus()
+	argv, _ := Provider{}.AuthStatus("/home/agent")
 	if argv[0] != "/bin/sh" || !strings.HasSuffix(argv[2], "login status 2>&1") {
 		t.Fatalf("auth status %q", argv)
 	}

@@ -1,6 +1,6 @@
 # Manager image
 
-This directory defines the Linux image every maker and checker of a [concept 2.0](../../docs/concepts/v2-concept.md) Run runs in (§9). It contains `markitect-agentd`, `markitect`, Git, Python 3, CA certificates, and the pinned Claude Code `2.1.308` and Codex `0.162.0` CLIs. The [Manager agents guide](../../internal/agents/README.md#the-manager-image) owns its contract: how a container of it is started, logged in and cloned from the Run's remote, and which launch flags the adapters pass. Installed CLI binaries do not establish provider qualification.
+This directory defines the Linux image every maker and checker of a [concept 2.0](../../docs/concepts/v2-concept.md) Run runs in (§9). It contains `markitect-agentd`, `markitect`, Git, Python 3, CA certificates, and the pinned Claude Code `2.1.308` and Codex `0.162.0` CLIs. The [Manager agents guide](../../internal/agents/README.md#the-image) owns its contract: how a container of it is started, logged in and cloned from the Run's remote, and which launch flags the adapters pass. Installed CLI binaries do not establish provider qualification.
 
 Build it from the repository root:
 
@@ -22,7 +22,7 @@ A project's checks and its Managers need the project's toolchain. A project buil
 
 ## Login
 
-Providers log in with a normal account, never with an API key or a long-lived token. The agent runtime installs an access-only copy of the host's account login into the private home through agentd and removes it after the provider's exit; the Manager can read it but cannot refresh or rotate it. The [login sections](../../internal/agents/README.md#claude-code) of the guide give each provider's form.
+A session uses the user's own token from `claude setup-token`, which reaches it only through its environment ([DEC-093](../../docs/concepts/register.md#dec-093-a-command-passes-the-users-own-token)). The image holds no login, and never an API key. The image pins the CLI, so a change of the provider's defaults arrives only with a tested upgrade.
 
 ## Evidence
 

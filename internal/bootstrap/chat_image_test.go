@@ -6,7 +6,6 @@ import (
 	"context"
 	"errors"
 	"io"
-	"os"
 	"os/exec"
 	"strings"
 	"sync"
@@ -225,25 +224,59 @@ func TestTwoChatsBuildOnceAndAWaitingOneCanStop(t *testing.T) {
 	}
 }
 
+// The agents start on the user's token and on a provider that has a route for
+// it, and neither is checked after a build that takes minutes.
+func TestAgentConfigNeedsTheUsersTokenAndAProviderWithARoute(t *testing.T) {
+	git, err := exec.LookPath("git")
+	if err != nil {
+		t.Skip(err)
+	}
+	t.Setenv("MARKITECT_ENGINE", git)
+	t.Setenv("MARKITECT_NETWORK", "chosen")
+	t.Setenv("MARKITECT_MANAGER_IMAGE", "")
+	built := func(context.Context, *container.Engine) (string, error) {
+		t.Error("it built although the settings were wrong")
+		return "", nil
+	}
+
+	t.Setenv("MARKITECT_PROVIDER", "")
+	t.Setenv(TokenVariable, "")
+	if _, _, err := readAgentConfigWith(context.Background(), built); err == nil || !strings.Contains(err.Error(), "claude setup-token") || !strings.Contains(err.Error(), TokenVariable) {
+		t.Errorf("without a token: %v", err)
+	}
+	t.Setenv(TokenVariable, secretToken)
+	t.Setenv("MARKITECT_PROVIDER", "codex")
+	if _, _, err := readAgentConfigWith(context.Background(), built); err == nil || !strings.Contains(err.Error(), "no account token route") {
+		t.Errorf("on Codex: %v", err)
+	}
+	t.Setenv("MARKITECT_PROVIDER", "gemini")
+	if _, _, err := readAgentConfigWith(context.Background(), built); err == nil || !strings.Contains(err.Error(), "gemini") {
+		t.Errorf("on an unknown provider: %v", err)
+	}
+	// The token's value is in no error.
+	t.Setenv("MARKITECT_PROVIDER", "")
+	t.Setenv("MARKITECT_MANAGER_IMAGE", "mine:1")
+	if _, _, err := readAgentConfigWith(context.Background(), built); err == nil || strings.Contains(err.Error(), secretToken) {
+		t.Errorf("with a token: %v", err)
+	}
+}
+
 func TestASetManagerImageWinsOverBuilding(t *testing.T) {
 	// Any executable serves: the engine call fails, and no build may follow.
 	git, err := exec.LookPath("git")
 	if err != nil {
 		t.Skip(err)
 	}
-	login := t.TempDir() + string(os.PathSeparator) + "login.json"
-	if err := os.WriteFile(login, []byte("{}"), 0o600); err != nil {
-		t.Fatal(err)
-	}
 	t.Setenv("MARKITECT_ENGINE", git)
-	t.Setenv("MARKITECT_LOGIN", login)
+	t.Setenv("MARKITECT_PROVIDER", "")
+	t.Setenv(TokenVariable, secretToken)
 	t.Setenv("MARKITECT_NETWORK", "chosen")
 	t.Setenv("MARKITECT_MANAGER_IMAGE", "mine:1")
-	_, _, err = agentConfigWith(context.Background(), func(context.Context, *container.Engine) (string, error) {
+	_, _, err = readAgentConfigWith(context.Background(), func(context.Context, *container.Engine) (string, error) {
 		t.Error("it built although an image is set")
 		return "", nil
 	})
-	if err == nil || !strings.Contains(err.Error(), "the Manager image mine:1") {
+	if err == nil || !strings.Contains(err.Error(), "the image mine:1") {
 		t.Fatalf("error %v", err)
 	}
 }

@@ -1,38 +1,23 @@
 # The agent port
 
-`internal/agentport` is the boundary between the Run engine and the agents it starts ([concept 2.0](../../docs/concepts/v2-concept.md) §6.2, §12). The engine starts a maker or a checker for one Manager and waits until it ends; provider adapters implement `Agents`, and the engine implements `Host`, the tools an agent may call while it runs.
+`internal/agentport` is the boundary between the [Command engine](../run/README.md) and the sessions it starts ([concept 3.0](../../docs/concepts/v3-concept.md) §6, §11). The engine starts one session with one prompt, as an implementer or a reviewer, in the Command's one container and waits until it ends. [`internal/agents`](../agents/README.md) implements `Agents`; the [sandbox](../run/README.md#the-sandbox) implements `Shell`, the only way a session reaches the container.
 
-## A start
+## A session
 
-`Agents.Run(ctx, Start, Host)` starts one agent and returns its `End` once it has ended. It never returns while the agent may still change anything, and it is called concurrently for different Managers. A `Start` holds:
+`Agents.Run(ctx, shell, Session)` runs one session and returns its `End` once it has ended. A `Session` holds:
 
 | Field | Holds |
 |---|---|
-| `Run`, `Mode` | the Run and whether it applies or verifies |
-| `Role` | maker or checker |
-| `Manager` | the Package ID (`.` for Root), its parent and its working children |
-| `Round` | the count of this role's starts for this Manager, from 1 |
-| `Task` | what this start must achieve, in the host's words |
-| `Checklist` | every item the verdicts must cover: key, part (own, inherited, finding, stale), Definition and why |
-| `Inbox` | the messages delivered with this start: assignments, answers, a checker's rejection |
-| `Git` | the remote's URL and network, the Manager's branch, the base commit, and the agent's user and token |
-| `Tools` | the host tools this start may call |
-| `Deadline` | when the agent must have ended |
+| `Run`, `Role`, `User`, `Round` | the Command, the part (`implementer` or `reviewer`), the Linux user it runs as (one per reviewer) and the count of this role's sessions, from 1 |
+| `Dir` | the folder the session starts in |
+| `Prompt` | the whole of what the session is told |
+| `Conversation` | an earlier session of this role to continue; empty starts a fresh one |
+| `Deadline` | when the session must have ended |
 
-An agent's work reaches the engine only through Git: submissions, reviews and merges are commits on the Run's remote, in the trailer format of the Run remote. `End.Reason` says only how the agent ended (finished, failed, deadline, cancelled), and `End.Class` sorts a failed end by its cause at the provider (capacity, rate-limit, server-error, login, other), so that provider failures can be told apart; the engine reads what it did from the remote. `End.Cleanup` is empty only when everything the start created is gone.
+A session's work reaches the Command only through what it leaves in its folder and in the notes the Command reads after the session has ended. Nothing else it says counts.
 
-## Host tools
+`End.Reason` says only how the session ended: `finished`, `failed`, `deadline` or `cancelled`. `Finished` says nothing about the work. `End.Class` sorts a failed end by its cause at the provider (`capacity`, `rate-limit`, `server-error`, `login`, `other`) so that provider failures can be told apart. `End` also carries the conversation to resume, `provider:model` and every model that answered, `Usage` (`Partial` when the session reported no total), the session's closing words in `Text`, and `Seen`: what the transcript shows the session did, subagents included (files read, shell commands, subagents started, and whether the provider shows reads at all). A transcript shows some of it and never why, so `Seen` can only limit what a reviewer claims.
 
-The tools carry messages along the tree and Shared Notes, never work, and no call waits for another agent: an answer arrives with a later start. A refused call returns an error for the agent that says why and what to do next.
+## The shell
 
-| Tool | Does |
-|---|---|
-| `ask` | asks the parent a question |
-| `escalate` | hands the parent a matter the Manager cannot settle within the model; at Root it ends the Run as a model defect |
-| `answer` | answers a child's question or escalation |
-| `assign` | sends a working child a task |
-| `note`, `notes` | records a Shared Note; reads the Run's Notes in pages |
-
-## Scripted agents
-
-`internal/agentport/agentfake` implements `Agents` with scripted Steps per Manager and role, for tests. Its Steps clone the Run's remote with real Git, commit with verdict or review trailers, merge other branches, push and call the host's tools; a start without a Step fails, so a test sees every start it did not expect.
+`Shell.Exec` runs one command in the container as a named user, in a directory, with an environment and standard streams. `Secrets` are `NAME=value` additions whose value never appears on a command line. `Argv[0]` is an absolute path and the command runs without a shell. When the context ends, `Exec` first ends every process of that user.

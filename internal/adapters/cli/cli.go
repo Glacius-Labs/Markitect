@@ -70,13 +70,13 @@ Usage:
   markitect refs   [--repo DIR] [--json] TARGET   who links to a Definition or Package
   markitect graph  [--repo DIR] [--json]          the Package dependency graph
   markitect impact [--repo DIR] [--json] --base COMMIT [--full] [--findings FILE]
-                                                  what a change reaches, and each Manager's checklist
+                                                  what a change reaches, with distance and reason
   markitect lint   [--repo DIR] [--json]          measure the model like code: warnings only
-  markitect apply  [--repo DIR] [--json] [--base COMMIT] [--full] [--findings FILE] [--rounds N] [RUN OPTIONS]
-                                                  realize the change with a Run and land it
+  markitect apply  [--repo DIR] [--json] [--base COMMIT] [--full] [--findings FILE] [RUN OPTIONS]
+                                                  realize the change with an implementer and a reviewer, and land it
   markitect verify [--repo DIR] [--json] [--base COMMIT] [--full] [--findings-out FILE] [RUN OPTIONS]
-                                                  check the change with checkers only; changes nothing
-        RUN OPTIONS: --remote NAME --branch NAME --run NAME --deadline D --starts N --start-timeout D
+                                                  check the change with a reviewer only; changes nothing
+        RUN OPTIONS: --remote NAME --branch NAME --run NAME --deadline D --session-timeout D
   markitect desktop [--listen ADDR] [--no-open]  open Markitect, the app over these commands
   markitect version
   markitect licenses

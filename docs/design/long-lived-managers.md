@@ -4,7 +4,7 @@ A proposal to change how a concept 2.0 Run starts its agents, built on a separat
 
 ## Why
 
-Today every start of a maker or checker gets a new container, a new clone and one provider turn, and ends; a rejection or a child's approval leads to a new start that knows only what Git holds ([agents](../../internal/agents/README.md#one-start)). In the [T7 pilot](../validation/t7-pilot-20261029.md)'s 2.0 runs:
+Today every start of a maker or checker gets a new container, a new clone and one provider turn, and ends; a rejection or a child's approval leads to a new start that knows only what Git holds ([agents](../../internal/agents/README.md)). In the [T7 pilot](../validation/t7-pilot-20261029.md)'s 2.0 runs:
 
 - **Containers are cheap.** A Library fixed start used 13 to 14 agent containers, a Makerspace plant 22 to 44, each Run one remote. The required checks run inside the remote, so no helper container is created. From a container's start to its provider turn took 1 to 3 seconds, 2 to 5 % of the agent time.
 - **Turns in a row and reading are not.** On the Library M3, about ten turns of 30 to 90 seconds ran one after the other: Root's maker and checker, the three children and their checkers, `lending/reminders`, `lending`'s second round and Root's second round. Each start read 80 to 370 k input tokens, cache reads included, to write 1 to 8 k, 1.8 M for the change. On the nine Library pairs K averaged 62 seconds and 0.28 M input tokens per launch.

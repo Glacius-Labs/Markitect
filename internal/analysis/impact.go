@@ -30,8 +30,14 @@ type Impact struct {
 	Full        bool     `json:"full"`
 	Definitions []Change `json:"changedDefinitions"` // model and Library Definitions
 	Files       []Change `json:"changedFiles"`       // repository files outside Markitect's folder
-	// Reached are the model Definitions the change reaches, each with why.
+	// Reached are the model Definitions the change reaches, each with why and
+	// how far: one step from what changed.
 	Reached []Item `json:"reached"`
+	// Further are the Definitions that link to a reached Definition at more
+	// steps, with distance and reason. They are on no checklist: how deep to go
+	// is the strategy's to pick (concept 3.0 §14), and the default stops at one
+	// step.
+	Further []Item `json:"further,omitempty"`
 	// ReachedFiles are the files the change touches or that realize a reached
 	// Definition, with their owners.
 	ReachedFiles []ReachedFile `json:"reachedFiles"`
@@ -43,10 +49,13 @@ type Impact struct {
 	Notes []string `json:"notes,omitempty"`
 }
 
-// Item is one Definition with the reasons it is reached.
+// Item is one Definition with the reasons it is reached. Distance counts the
+// links between it and what changed: 0 for a Definition that changed or a file of
+// it that changed, 1 for one that links to a Definition that changed.
 type Item struct {
 	Definition string   `json:"definition"`
 	Reasons    []string `json:"reasons"`
+	Distance   int      `json:"distance"`
 }
 
 // ReachedFile is one reached repository file.
@@ -88,7 +97,8 @@ type ImpactInput struct {
 //
 // Reach follows one step: a Definition is reached when it changed, when it
 // links to (or is of) a Definition that changed, or when a file the change
-// touches realizes it. Inherited items are only the Definitions above a
+// touches realizes it. What lies further is reported, with distance and reason,
+// and is on no checklist. Inherited items are only the Definitions above a
 // Package that the change itself changed, so a changed Rule at Root becomes an
 // item for every Manager below it, while a Root Definition reached only
 // through a file or a link stays Root's own item.
@@ -98,11 +108,16 @@ func ComputeImpact(in ImpactInput) Impact {
 	im.Definitions = changedDefinitions(in.Base, in.Current)
 
 	reasons := map[string][]string{}
-	reach := func(id, why string) {
+	distance := map[string]int{}
+	reachAt := func(id, why string, at int) {
 		if d := cur.Definitions[id]; d != nil && d.InModel() {
 			reasons[id] = append(reasons[id], why)
+			if old, ok := distance[id]; !ok || at < old {
+				distance[id] = at
+			}
 		}
 	}
+	reach := func(id, why string) { reachAt(id, why, 0) }
 	changed := map[string]bool{}
 	for _, c := range im.Definitions {
 		changed[c.Path] = true
@@ -117,14 +132,15 @@ func ComputeImpact(in ImpactInput) Impact {
 				if l.Kind {
 					verb = "is of Kind [[%s]], which changed"
 				}
-				reach(id, fmt.Sprintf(verb, l.Target))
+				reachAt(id, fmt.Sprintf(verb, l.Target), 1)
 			}
 		}
 	}
 	for _, f := range in.Changed {
+		// The base's entry too: a change can take the link off a file's own row.
 		entries := []*realization.Entry{in.Current.Registry.Entries[f.Path]}
-		if f.Change == Removed && in.Base.Registry != nil {
-			entries = []*realization.Entry{in.Base.Registry.Entries[f.Path]}
+		if in.Base.Registry != nil {
+			entries = append(entries, in.Base.Registry.Entries[f.Path])
 		}
 		for _, e := range entries {
 			if e == nil {
@@ -135,14 +151,31 @@ func ComputeImpact(in ImpactInput) Impact {
 			}
 		}
 	}
+	if in.Base.Registry != nil {
+		// A row's change reaches what it gained or lost, whether or not its file
+		// changed.
+		for file, e := range in.Current.Registry.Entries {
+			old := in.Base.Registry.Entries[file]
+			if old == nil {
+				continue
+			}
+			for _, id := range difference(old.Realizes, e.Realizes) {
+				reach(id, fmt.Sprintf("the registry row of %s no longer links it", file))
+			}
+			for _, id := range difference(e.Realizes, old.Realizes) {
+				reach(id, fmt.Sprintf("the registry row of %s now links it", file))
+			}
+		}
+	}
 	if in.Full {
 		for _, id := range cur.ModelDefinitions() {
 			reach(id, "full")
 		}
 	}
 	for _, id := range sortedKeys(reasons) {
-		im.Reached = append(im.Reached, Item{Definition: id, Reasons: dedupe(reasons[id])})
+		im.Reached = append(im.Reached, Item{Definition: id, Reasons: dedupe(reasons[id]), Distance: distance[id]})
 	}
+	im.Further = further(cur, distance)
 
 	im.ReachedFiles = reachedFiles(in, reasons)
 
@@ -208,6 +241,67 @@ func ComputeImpact(in ImpactInput) Impact {
 		im.Checklists = append(im.Checklists, *list(pkg))
 	}
 	return im
+}
+
+// difference lists what a holds and b does not.
+func difference(a, b []string) []string {
+	var out []string
+	for _, v := range a {
+		found := false
+		for _, w := range b {
+			found = found || v == w
+		}
+		if !found {
+			out = append(out, v)
+		}
+	}
+	return out
+}
+
+// further walks the links back from what is reached: each Definition beyond it,
+// once, at its shortest distance, with the link that brought it in.
+func further(cur *model.Model, reached map[string]int) []Item {
+	linkers := map[string][]string{}
+	for _, id := range cur.ModelDefinitions() {
+		for _, l := range cur.Definitions[id].Links {
+			if l.Target != "" {
+				linkers[l.Target] = append(linkers[l.Target], id)
+			}
+		}
+	}
+	dist := map[string]int{}
+	deepest := 0
+	for id, at := range reached {
+		dist[id] = at
+		deepest = max(deepest, at)
+	}
+	var out []Item
+	for at := 0; at <= deepest; at++ {
+		var level []string
+		for id, d := range dist {
+			if d == at {
+				level = append(level, id)
+			}
+		}
+		sort.Strings(level)
+		for _, target := range level {
+			for _, id := range linkers[target] {
+				if _, known := dist[id]; known {
+					continue
+				}
+				dist[id] = at + 1
+				deepest = max(deepest, at+1)
+				out = append(out, Item{Definition: id, Reasons: []string{fmt.Sprintf("links [[%s]], at distance %d", target, at)}, Distance: at + 1})
+			}
+		}
+	}
+	sort.SliceStable(out, func(i, j int) bool {
+		if out[i].Distance != out[j].Distance {
+			return out[i].Distance < out[j].Distance
+		}
+		return out[i].Definition < out[j].Definition
+	})
+	return out
 }
 
 func reachedFiles(in ImpactInput, reasons map[string][]string) []ReachedFile {

@@ -20,21 +20,18 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `domain` | Registry pages, ownership and file accounting over a compiled model. | `model` | 1 |
 | `project` | Loads and checks a project's Markitect folder from a repository state. | `model`, `assets`, `domain` | 1 |
 | `service` | Questions about a loaded project: references, graph, impact with checklists, and lint. | `model`, `assets`, `domain`, `project` | 1 |
-| `remote` | A Run's plan, its verdict trailers and the decision of the remote's hooks. | `model`, `assets`, `domain`, `project`, `service` | 1 |
-| `agent-port` | How the Run engine starts a maker or checker for a Manager and observes how it ends. | nothing | 1 |
-| `agent-fake` | Scripted makers and checkers that work on a Run's remote with real Git, for tests. Only test files may import it. | `agent-port` | 1 |
-| `run` | One Run per change: who works, makers and checkers along the tree, the Result and landing. | `model`, `assets`, `domain`, `project`, `service`, `remote`, `agent-port` | 1 |
+| `agent-port` | How a Command starts a session as implementer or reviewer and observes how it ended. | nothing | 1 |
+| `run` | apply and verify over one container: the checklist, the gate, the sessions, the answers, the Result and landing. | `model`, `assets`, `domain`, `project`, `service`, `agent-port` | 1 |
 | `protocol` | Frame protocol between the Orchestrator and the session helper. | nothing | 1 |
 | `container` | The container engine client that the adapters running containers share. | `protocol` | 1 |
-| `harness` | What a maker or checker receives: its role, the model it knows, its task and the tool contract. | `model`, `assets`, `domain`, `project`, `service`, `remote`, `agent-port` | 1 |
-| `agents` | One maker or checker in its container: login, clone, provider turns and the Manager tools, with the Claude Code and Codex adapters. | `model`, `assets`, `domain`, `project`, `remote`, `agent-port`, `protocol`, `container`, `harness`, `agents` | 3 |
+| `harness` | What a chat agent starts with: its role, its skill and the conversation so far. | `model`, `assets`, `domain`, `project`, `service`, `agent-port` | 1 |
+| `agents` | A Command's sessions and the app's chats on the user's token, with the Claude Code and Codex adapters. | `model`, `assets`, `domain`, `project`, `agent-port`, `protocol`, `container`, `harness`, `agents` | 3 |
 | `guardedwrite` | Guarded working-tree writes for bundle installation, with the Git and path helpers they share with source snapshots. | nothing | 1 |
 | `build` | Version identity and embedded license notices. | nothing | 1 |
-| `adapter` | Concrete Git, command-line, desktop and Run remote adapters; no adapter imports another. | `model`, `assets`, `domain`, `project`, `service`, `remote`, `agent-port`, `run`, `build` | 6 |
-| `composition` | Constructs the command line with its adapters. | `model`, `project`, `service`, `remote`, `agent-port`, `container`, `agents`, `run`, `adapter` | 1 |
+| `adapter` | Concrete Git, command-line, desktop and sandbox adapters; no adapter imports another. | `model`, `assets`, `domain`, `project`, `service`, `agent-port`, `run`, `build` | 5 |
+| `composition` | Constructs the command line with its adapters. | `model`, `project`, `service`, `agent-port`, `container`, `agents`, `run`, `adapter` | 1 |
 | `command` | Thin entrypoints to product composition. | `composition` | 1 |
 | `desktop-command` | Markitect Desktop's native shell over the composition: windows, tray and folder dialogs; built only with the native tag. | `composition`, `image-source` | 1 |
-| `remote-command` | Thin entrypoint of a Run's remote container. | `adapter` | 1 |
 | `agent` | Runs inside each Agent container: provider process, MCP bridge and stdio framing. | `protocol` | 1 |
 | `agent-command` | Thin entrypoint of the session helper. | `agent` | 1 |
 | `maintenance` | The import gate and release packaging, separate from product execution. | `guardedwrite` | 2 |
@@ -47,9 +44,8 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | From | To | Files | Reason |
 |---|---|---|---|
 | `internal/tooling/release` | `internal/tooling/architecture` | all | The packager takes its source roots from this table. |
-| `internal/agents` | `internal/adapters/remotecontainer` | tests only | The real-engine test starts real Managers against a real Run remote. |
+| `internal/adapters/sandbox` | `internal/adapters/rungit` | tests only | The real-engine test runs a whole Command on the host's real Git. |
 | `internal/bootstrap` | `.` | tests only | The real-engine test builds the chats' image from the source the native app carries. |
-| `internal/run` | `internal/adapters/remoteserver` | tests only | The engine's scripted Runs push through the Run remote's real hooks. |
 | `internal/run` | `internal/adapters/rungit` | tests only | The engine's scripted Runs use the host's real Git. |
 | `internal/tooling/release` | `internal/buildinfo` | tests only | Tests compare the packaged notices with the embedded ones. |
 
@@ -90,29 +86,17 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 |---|---|---|
 | `internal/analysis` | Package analysis answers questions about a loaded project without starting agents: who links to a Definition, the Package dependency graph, what a change reaches and each Manager's checklist, and the lint warnings that measure the model like code. | [docs/guides/model-language.md#impact-and-checklists](../guides/model-language.md#impact-and-checklists) |
 
-## Run remote rules
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `internal/runremote` | Package runremote holds the rules of a Run's Git remote (concept 2.0 §6.3): the Run's plan, the commit trailers that carry verdicts and reviews, and the decision the server-side hook makes on every push. | [internal/runremote/README.md](../../internal/runremote/README.md) |
-
 ## Agent port
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/agentport` | Package agentport is the boundary between the Run engine and the agents it starts (concept 2.0 §6.2, §12): the engine starts a maker or a checker for one Manager with its role, task, checklist, tools and deadline, and observes how it ends. | [internal/agentport/README.md](../../internal/agentport/README.md) |
+| `internal/agentport` | Package agentport is how a Command starts sessions (concept 3.0 §6, §11): one session with one prompt, as an implementer or a reviewer, in the Command's one container, and how it ended. | [internal/agentport/README.md](../../internal/agentport/README.md) |
 
-## Scripted agents
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `internal/agentport/agentfake` | Package agentfake is a scripted implementation of agentport.Agents for tests: every start of a Manager's maker or checker runs the next scripted Step, which works on the Run's remote with real Git and calls the host's tools as an agent would. | [internal/agentport/README.md](../../internal/agentport/README.md) |
-
-## Run engine
+## Command engine
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/run` | Package run is the Run engine of concept 2.0 (§6, §7): one Run per change. | [internal/run/README.md](../../internal/run/README.md) |
+| `internal/run` | Package run is the Command engine of concept 3.0 (§6 to §10): `apply` and `verify` over one container. | [internal/run/README.md](../../internal/run/README.md) |
 
 ## Agent protocol
 
@@ -126,19 +110,19 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 |---|---|---|
 | `internal/adapters/container` | Package container is the Orchestrator's client of the container engine. | [internal/adapters/container/README.md](../../internal/adapters/container/README.md) |
 
-## Manager harness
+## Chat harness
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/harness` | Package harness renders what one maker or checker of a Manager receives (concept 2.0 §5, §6.2): its role and repository, the model it knows, its task with the checklist, and the answer format, together with the tools it answers through. | [internal/agents/README.md#harness](../../internal/agents/README.md#harness) |
+| `internal/harness` | Package harness renders what a chat agent of Markitect Desktop starts with: its role, its skill and the conversation so far. | [internal/agents/README.md#harness](../../internal/agents/README.md#harness) |
 
-## Manager agents
+## Provider sessions
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/agents` | Package agents starts and drives one agent of a Manager (concept 2.0 §6.2, §9): a maker or a checker, each in its own hardened Linux container that clones the Run's remote, with a provider CLI logged in through an access-only copy of the account login. | [internal/agents/README.md](../../internal/agents/README.md) |
-| `internal/agents/claude` | Package claude is the Claude Code adapter of the agent runtime: the launch contract of the pinned CLI in a Manager container, the access-only copy of the account login, and the reader of its stream-json output with the failure classes the evaluation voids. | [internal/agents/README.md#claude-code](../../internal/agents/README.md#claude-code) |
-| `internal/agents/codex` | Package codex is the Codex adapter of the agent runtime: the launch contract of the pinned Codex CLI's exec mode in a Manager container, the access-only copy of the ChatGPT account login, and the reader of its JSON events with the failure classes the evaluation voids. | [internal/agents/README.md#codex](../../internal/agents/README.md#codex) |
+| `internal/agents` | Package agents starts provider sessions on the user's own token: a Command's unattended sessions through the agent port (Sessions), and Markitect Desktop's chats, each in a hardened container of its own (Chat). | [internal/agents/README.md](../../internal/agents/README.md) |
+| `internal/agents/claude` | Package claude is the Claude Code adapter of the agent runtime: the launch contract of the pinned CLI on the user's token, and the reader of its stream-json output with the failure classes the evaluation voids. | [internal/agents/README.md#claude-code](../../internal/agents/README.md#claude-code) |
+| `internal/agents/codex` | Package codex is the Codex adapter of the agent runtime: the launch contract of the pinned Codex CLI's exec mode and the reader of its JSON events with the failure classes the evaluation voids. | [internal/agents/README.md#codex](../../internal/agents/README.md#codex) |
 
 ## Guarded write
 
@@ -158,10 +142,9 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 |---|---|---|
 | `internal/adapters/cli` | Package cli is the markitect command line: init, check, lock, refs, graph, impact and lint, which start no agent; apply and verify, which start a Run; desktop, which opens the app over these commands; version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
 | `internal/adapters/desktop` | Package desktop is Markitect Desktop, the app over the command line that users know as Markitect: one service per user that serves the embedded UI and its JSON routes on a loopback address, and the window that shows it. | [internal/adapters/desktop/README.md](../../internal/adapters/desktop/README.md) |
-| `internal/adapters/remotecontainer` | Package remotecontainer starts and removes a Run's remote container from the host, natively on Windows, Linux and macOS with only the Docker CLI. | [internal/runremote/README.md#the-container](../../internal/runremote/README.md#the-container) |
-| `internal/adapters/remoteserver` | Package remoteserver is the Run remote inside its container: the Git smart HTTP server with one credential per agent, the pre-receive hook that applies the rules of internal/runremote, the required checks under a throwaway user, and seeding and exporting the bare repository. | [internal/runremote/README.md](../../internal/runremote/README.md) |
 | `internal/adapters/repo` | Package repo reads a project's repository through Git: the working tree as Git sees it, a base commit, and the files changed between them. | [docs/guides/model-language.md#the-projects-markitect-folder](../guides/model-language.md#the-projects-markitect-folder) |
-| `internal/adapters/rungit` | Package rungit is the host's own Git work for a Run (concept 2.0 §9): a private bare repository that reads the target branch, makes the start bundle, imports what the Run's remote holds, merges and writes the Result commit, and pushes to the target repository. | [internal/run/README.md#host-git](../../internal/run/README.md#host-git) |
+| `internal/adapters/rungit` | Package rungit is a Command's own Git work outside its container (concept 3.0 §6, §9): a private bare repository that reads the target branch, makes the start bundle, imports what the sandbox hands out, merges and writes the Result commit, and pushes to the target repository. | [internal/run/README.md#host-git](../../internal/run/README.md#host-git) |
+| `internal/adapters/sandbox` | Package sandbox runs a Command's one container (concept 3.0 §9), natively on Windows, Linux and macOS with only the Docker CLI. | [internal/run/README.md#the-sandbox](../../internal/run/README.md#the-sandbox) |
 
 ## Composition
 
@@ -180,12 +163,6 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | Package | Summary | Owning document |
 |---|---|---|
 | `cmd/markitect-desktop` | Command markitect-desktop is Markitect Desktop as a native app: the service of internal/bootstrap shown in windows of the platform's own web view, with a tray icon and the platform's folder dialog. | [internal/adapters/desktop/README.md#the-native-app](../../internal/adapters/desktop/README.md#the-native-app) |
-
-## Run remote command
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `cmd/markitect-remote` | Command markitect-remote is the program of a Run's remote container (internal/runremote/README.md): it seeds the bare repository, serves it to the Managers, decides every push as its pre-receive hook and exports the result. | [internal/runremote/README.md](../../internal/runremote/README.md) |
 
 ## Session helper
 

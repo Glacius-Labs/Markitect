@@ -19,7 +19,7 @@ This guide is the canonical description of the model language of [concept 2.0](.
     members/loans.md   the registry page of Package members/loans
   ignore.md            files that deliberately belong to no Package
   libraries/<name>/    a Library that does not ship with markitect
-  results/             Run Results (written by Runs, not by these commands)
+  results/             Results (written by Commands, not by these commands)
 ```
 
 Every file below `.markitect/` is accounted for by the compiler itself and needs no registry entry. A file there that has no place in this layout is an error (`project.file`), and so is a file in the registry folder that is not a Markdown page (`registry.page`) or a file Git lists but the compiler cannot read (`project.read`). The installed tool, `.markitect/tool/` and `.markitect/bootstrap/`, is also Markitect's own. Text files under `.markitect/` are read with LF line ends, so a Windows checkout with CRLF compiles, locks and compares like the commit it came from.
@@ -83,7 +83,7 @@ A link names its target by path: `[[members/member]]` inside the model, `[[std/R
 
 **Scope is location.** Everything a Package defines reaches its whole subtree: a Rule at Root binds the whole project.
 
-**Visibility as in Go.** A Definition is public unless its front matter says `internal: true`. Only its own Package and the Packages below it may link to an internal Definition, or use it as a Kind (`link.internal`). Visibility binds links, not reading: Managers above and checkers may read internal Definitions, and registry entries may link any Definition they realize.
+**Visibility as in Go.** A Definition is public unless its front matter says `internal: true`. Only its own Package and the Packages below it may link to an internal Definition, or use it as a Kind (`link.internal`). Visibility binds links, not reading: Packages above and reviewers may read internal Definitions, and registry entries may link any Definition they realize.
 
 **Dependencies as in Go.** A link from a Definition in Package A to a Definition in another Package B, or to the Package B itself, is an edge A → B. Using a Kind is an edge too. Every Package also has an implicit edge to its parent, because its parent's Definitions reach it. So:
 
@@ -116,22 +116,22 @@ paths:
 
 - **Patterns** are repository-relative paths. `*` and `?` match within one name; a whole segment `**` matches any number of folders. A trailing `**` matches what lies inside the folder, not the folder itself. A pattern without wildcards names one file. `[ ]` and `{ }` are not allowed (`registry.pattern`).
 - **Ownership:** the most specific matching pattern owns a file. A pattern without wildcards beats every pattern with one; otherwise the pattern with more literal characters (other than `*`, `?` and `/`) wins. Root owns every file no other Package claims and names no patterns. Two Packages claiming the same pattern is an error (`registry.duplicate_pattern`), and so are two equally specific patterns of different Packages that match the same file (`registry.ambiguous_owner`).
-- **First patterns:** a Package other than Root with no patterns, or no page, compiles but owns no file (`lint.no_paths`). When the owner adds a Package, the owner writes its registry page with its first patterns, as with its Definitions; a Manager cannot create that page, since the hooks refuse a page that does not exist at the Run's start, but it may extend an existing page that names no patterns (`paths: []`). A Package without a page gives the items it cannot realize `model-problem` and escalates them; its parent settles them within the model if it can, and otherwise the Run ends with a model defect for the owner. Its Manager maintains them from then on, and files move between two Packages through their common parent. The hooks read each Manager's paths from the Run's base, so a pattern change takes effect from the next Run.
+- **First patterns:** a Package other than Root with no patterns, or no page, compiles but owns no file (`lint.no_paths`). The owner writes a new Package's Definitions; the implementer writes its registry page with its first patterns, and the gate still requires every file to be accounted for. The implementer maintains every registry page. Patterns say who owns a file; they do not limit what an agent may touch.
 - **Accounting:** owning is not accounting. Every repository file outside `.markitect/` must be listed on its owner's page or be ignored (`file.unregistered`). A file listed on another Package's page (`registry.wrong_owner`), listed twice (`registry.duplicate_entry`), listed and ignored (`registry.ignored_file`), ignored by Git (`registry.git_ignored`) or below `.markitect/` (`registry.own_file`) is an error.
 - **Rows** are the rows of every table whose first header is `File`, with three cells: the file (in backticks or plain), the links to the Definitions it realizes (none is allowed), and a short reason (`registry.table`). A link in the Realizes cell must name a model Definition, not a Package or a Library Kind (`registry.link`). A link label inside a table needs its bar escaped, `[[members/member\|member]]`; an unescaped bar splits the row and is an error (`registry.table`). Other text on the page is free. The front matter holds only `paths` (`registry.front_matter`).
 - **Shared files** such as the README, a CI pipeline or a compose file are owned by the lowest common parent of the Packages they serve, often Root, and their entry links every Definition they realize.
 
 ### Stale realization
 
-When the owner deletes a Definition, a file or a Package, the registry still names it. That is stale realization, not a compile error, so the initial gate does not block the Run that cleans it up:
+When the owner deletes a Definition, a file or a Package, the registry still names it. That is stale realization, not a compile error, so the initial check does not block the Command that cleans it up:
 
-| Code | What | Who cleans it up |
-|---|---|---|
-| `stale.definition` | a registry link to a Definition that no longer exists | the page's Package |
-| `stale.file` | an entry for a file that no longer exists | the page's Package |
-| `stale.page` | the page of a Package that no longer exists, and each file still listed only there | Root for the page; the file's current owner for each file |
+| Code | What |
+|---|---|
+| `stale.definition` | a registry link to a Definition that no longer exists |
+| `stale.file` | an entry for a file that no longer exists |
+| `stale.page` | the page of a Package that no longer exists, and each file still listed only there |
 
-`check` passes, `lint` warns (`lint.stale`), and `impact` puts each item on the checklist of the Manager that must clean it up.
+`check` passes and `lint` warns (`lint.stale`). A Command puts each stale entry on its checklist, and its gate refuses work that leaves one.
 
 ### Ignore page
 
@@ -146,7 +146,7 @@ When the owner deletes a Definition, a file or a Package, the registry still nam
 
 ### Required checks
 
-`.markitect/execution.yaml` holds only the required checks, the one proof in a Run that does not come from an agent (`execution.syntax`, `execution.missing`):
+`.markitect/execution.yaml` holds only the required checks, the one proof in a Command that does not come from an agent (`execution.syntax`, `execution.missing`):
 
 ```yaml
 checks:
@@ -168,7 +168,7 @@ All commands take `--repo DIR`, a folder inside the project's Git repository (de
 | `markitect lock` | Writes the lock from the manifest and the Libraries it names. |
 | `markitect refs TARGET` | Who links to a Definition or Package: Definitions by link or as their Kind, and the registry entries that realize it. |
 | `markitect graph` | The Package dependency graph as a Mermaid diagram, with each Package's coupling and the links behind each edge. |
-| `markitect impact --base COMMIT [--full] [--findings FILE]` | What the change from the base commit to the working tree reaches, and each working Manager's checklist. Refuses a project with compile errors. |
+| `markitect impact --base COMMIT [--full] [--findings FILE]` | What the change from the base commit to the working tree reaches: Definitions with distance and reason, files with their owners. Refuses a project with compile errors. |
 | `markitect lint` | Warnings only, and the coupling table. |
 
 `refs`, `graph` and `lint` also run over a project with compile errors and say so on standard error.
@@ -180,20 +180,13 @@ All commands take `--repo DIR`, a folder inside the project's Git repository (de
 `impact` compares the model and the repository files at the base commit with the working tree:
 
 - **Changed Definitions** are the model's and the Libraries' Definitions that were added, modified or removed.
-- **Reached Definitions** are the model Definitions that changed, that link to or are of a Definition that changed, or that a changed file realizes (through the registry; a removed file through the base's registry). Reach follows one step of links.
+- **Reached Definitions** are the model Definitions that changed (distance 0), that link to or are of a Definition that changed (distance 1), or that a changed file realizes (distance 0, through the registry; a removed file through the base's registry). Each comes with its reasons.
+- **Further Definitions** link to a reached Definition at more steps. Each comes with its distance and reason, and they are on no checklist: the default strategy stops at one step.
 - **Reached files** are the changed files and the files that realize a reached Definition, each with its owner.
-- **Working Managers** are the Packages with a checklist item or a reached file, and their parents up to Root, which review and integrate.
 
-Each working Manager's checklist (concept §6.2) has these parts:
+A Command makes one checklist from this ([the Command](../../internal/run/README.md#a-command)): every reached Definition once, every deleted Definition, every Finding, every stale registry entry and every file the registry does not list, each with the files the registry names for it. With `--full` every model Definition is reached.
 
-| Part | Holds |
-|---|---|
-| Own | its own Definitions the change reaches, each with why |
-| Inherited | the Definitions of the Packages above it that the change changed; a changed Rule at Root is an item for every Manager below it |
-| Findings | every Finding whose Definition is in its Package |
-| Stale | the stale realization it must clean up |
-
-With `--full` every model Definition is reached, every Manager works, and the checklist holds all own and all inherited Definitions.
+`impact` also prints the Packages with a checklist item or a reached file, and their parents up to Root, with a list for each: its own Definitions, the inherited ones (Definitions of the Packages above it that the change itself changed), the Findings whose Definition it holds and its stale entries. A Command does not use this split.
 
 ### Findings
 
@@ -222,7 +215,7 @@ A Finding whose Definition no longer exists becomes a side note of the impact.
 | `lint.definition_size` | a Definition's body has more than 1000 words |
 | `lint.package_size` | a Package has more than 25 Definitions of its own |
 | `lint.unused` | nothing links to a Definition (by link or as its Kind) and no file realizes it |
-| `lint.reach` | a change to a Definition outside Root would give more than half of the Managers a checklist item or a reached file, in a model of at least 6 Packages |
+| `lint.reach` | a change to a Definition outside Root would give more than half of the Packages a checklist item or a reached file, in a model of at least 6 Packages |
 | `lint.thin_package` | a Package has no Definitions of its own and only one child |
 | `lint.no_paths` | a Package other than Root claims no path pattern, as above |
 | `lint.stale` | stale realization, as above |
@@ -237,8 +230,8 @@ Details the concept leaves open, settled while building T1:
 - **Library links.** A path whose first name is a Library is a Library link, so no top-level model name may equal a Library's name.
 - **Local Library versions.** A local Library carries no version file; the manifest names its version and the lock pins its digest.
 - **Specificity.** An exact path beats every pattern; otherwise more literal characters win; a tie between Packages is an error.
-- **Stale realization** is reported, not refused (above): a registry link to a deleted Definition or an entry for a missing file does not block the Run that cleans it up. A repository file without any entry stays a compile error. Confirmed by the owner on 28 October 2026 (concept §3).
-- **Inherited items** are only Definitions above that the change itself changed, not those reached through a file or a link; otherwise a README edit at Root would make every Manager work. Confirmed by the owner on 28 October 2026 (concept §6.2).
-- **How far impact follows.** One step of links, and the registry in both directions. The code's own imports are not followed yet; a later step that knows the realization's languages can widen reach.
-- **The required check's environment** is the container image it runs in. The Run's remote runs every check in that one image, so all checks of a project name the same image ([Run remote](../../internal/runremote/README.md#required-checks)).
+- **Stale realization** is reported, not refused (above): a registry link to a deleted Definition or an entry for a missing file does not block the Command that cleans it up. A repository file without any entry stays a compile error. Confirmed by the owner on 28 October 2026 (concept §3).
+- **Inherited items** in the per-Package lists are only Definitions above that the change itself changed, not those reached through a file or a link; otherwise a README edit at Root would put an item on every Package's list. Confirmed by the owner on 28 October 2026.
+- **How far impact follows.** The checklist takes one step of links, and the registry in both directions; Definitions at more steps are reported with their distance. The code's own imports are not followed yet; a later step that knows the realization's languages can widen reach.
+- **The required check's environment** names the container image it runs in, and the parser requires it. A Command runs every check in its one container, from the project's image ([the sandbox](../../internal/run/README.md#the-sandbox)), so it does not select another image.
 - **Skills** are installed into `.claude/skills/` (Claude Code) and `.agents/skills/` (the Agent Skills folder that Codex and other agents read).
