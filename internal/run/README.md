@@ -13,11 +13,11 @@
 ## A Run
 
 1. **`apply`** refuses a detached HEAD and a change outside `.markitect/` that is not committed, since it would be silently left out. It compiles the spec, and an error in the spec stops it with no agent. It commits the spec on the owner's branch and works out the base and the list ([impact and checklists](../../docs/guides/model-language.md#impact-and-checklists)). Nothing affected ends it.
-2. **The session** starts in a worktree of its own, on that commit, and `apply` returns. The owner keeps modeling. An open Run on the branch means a new `apply` starts nothing: one that is working is left alone, and one whose session has ended is resumed where it stopped, with its repair count.
+2. **The session** starts in a worktree of its own, on that commit, and `apply` returns. The owner keeps modeling. An open Run on the branch means a new `apply` starts nothing: one that is working is left alone, and one whose session has ended is resumed in its own worktree, with its repair count and a new deadline. `verify` does the same with an open verify. What a session calls works only in a Run's worktree.
 3. **`checklist`**, on its first call, tries the required checks on the start. A check that cannot start ends the Run before the work is spent. One that fails is told to the implementer and the Result as failing before the work. It prints the task again each time, so compaction can't lose it.
 4. **`submit`** is below. It tells the implementer when to start the `markitect-reviewer` agent, which answers with `markitect answer`.
 
-`markitect stop WHY` ends a Run without landing. From the session it records a question for the owner; from the owner it ends the session first. Every other command tells the owner in one line about a Run that closed or stopped working (`Notice`).
+`markitect stop WHY` ends a Run without landing, and waits for a `submit` that is running, which may be landing. From the session it records a question for the owner, or with `--environment` says the machine lacks something; from the owner it ends the session first. Every other command tells the owner in one line about a Run that closed or stopped working (`Notice`).
 
 The next `apply` removes the worktrees of closed Runs. The provider locks a worktree while its session runs, so `submit` cannot.
 
@@ -57,7 +57,7 @@ They are in the settings a session starts with, so a modeling session gets none 
 
 ## Landing
 
-`submit` builds what will land off to the side: the work if the owner's branch has not moved, otherwise a merge, which must be clean and pass `check --spec` and the required checks. The landing commit's `Run-Work` trailer names the work, which is the next Run's base, so later commits stay in the next `impact`. It then moves the branch, only if it is still where it was: `merge --ff-only` where it is checked out, so uncommitted edits stay, or a ref update where it is not.
+`submit` builds what will land off to the side: the work if the owner's branch has not moved, otherwise a merge, which must be clean and pass `check --spec` and the required checks. The landing commit's `Run-Work` trailer names the work, which is the next Run's base, so later commits stay in the next `impact`. A Result that did not land says so in its trailers, so merging such a branch by hand does not make it realized work. A branch the owner moved back keeps the Run from landing. It then moves the branch, only if it is still where it was: `merge --ff-only` where it is checked out, so uncommitted edits stay, or a ref update where it is not.
 
 If that fails after three tries, the Run closes as `kept` on `markitect/runs/<run>`, and the next `apply` tries once more. If that fails too it starts fresh. The base has not moved, so nothing is lost. Nothing is ever pushed.
 
@@ -67,7 +67,7 @@ If that fails after three tries, the Run closes as `kept` on `markitect/runs/<ru
 
 ## Required checks
 
-`internal/adapters/hostcheck` runs each check with `sh -c` in a clean export of the state, stopping at the first failure, with the variables of a session and of Git taken out. A pass is kept per state; a failure runs again. Exit 126 or 127 of a program outside the repository counts as "could not start", which is the environment's failure. A folder the work has not made yet is the work's.
+`internal/adapters/hostcheck` runs each check with `sh -c` in a clean export of the state, stopping at the first failure, with the variables of a session and of Git taken out. A pass is kept per state; a failure runs again. Exit 126 or 127 counts as "could not start", the environment's failure, only when the shell does not know the command's first word and it is no path into the repository; a program a script calls is the work's, and so is a folder the work has not made yet. A check that exits and leaves a child holding its output has passed.
 
 ## The session
 
@@ -75,7 +75,7 @@ If that fails after three tries, the Run closes as `kept` on `markitect/runs/<ru
 
 ## The Result
 
-The tool writes the Result from what happened, never an agent. A landing's Result is part of its commit, under `.markitect/results/`. Any other stays on `markitect/runs/<run>`, where `verify`'s Findings are too. **The full-check count** says how many changes have landed since the last full check; from 10 on, the Result says one is due.
+The tool writes the Result from what happened, never an agent. A landing's Result is part of its commit, under `.markitect/results/`. Any other stays on `markitect/runs/<run>`, with `verify`'s Findings page next to it. A landing does not delete a verify's branch. **The full-check count** says how many changes have landed since the last full check; from 10 on, the Result says one is due.
 
 ## Tests
 

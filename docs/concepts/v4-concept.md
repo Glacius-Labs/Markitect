@@ -7,7 +7,7 @@
 | **Version** | 4.0 – draft, not accepted |
 | **Date** | 4 November 2026 |
 | **Basis** | The [owner's statements](sources/fresh-start-20261104.md) of 4 November 2026, concept 3.0, a workflow trial on one real change, the Claude Code documentation and the help of version 2.1.318 as read that day, and independent reviews of this draft and an earlier one. |
-| **State** | A draft for the owner ([OQ-012](register.md#open-questions)). [Concept 3.0](v3-concept.md) stays the target until this one is accepted. Nothing here is built, and this shape has not run. |
+| **State** | A draft for the owner ([OQ-012](register.md#open-questions)). [Concept 3.0](v3-concept.md) stays the target until this one is accepted. It is built on the branch `dev/native-apply` for the owner to try by using it ([what real sessions showed](../validation/native-version-20261104.md)). |
 
 It uses the words of [concept 3.0](v3-concept.md#2-words): spec, implementer, reviewer. Code and older documents still say model, maker and checker.
 
@@ -165,7 +165,7 @@ The owner models until the spec looks right, then uses `/markitect-apply`, from 
 
    It waits until the provider reports the session working, records its ID and returns. If the session doesn't start, it closes the run and says why.
 4. **Try the checks.** The run's first `markitect checklist` runs the required checks once on that commit, so that slow checks don't hold up the skill. A check that cannot start ends the run before the work is spent. One that fails is told to the implementer and the Result, as failing before the work. A missing service can only show this way, since it looks like any other failure.
-5. **Implement.** The implementer takes the list from `markitect checklist` and makes the project match the spec, keeping the registry current. It does not change the spec. If the spec contradicts itself or leaves open something that changes behaviour at the project's boundary, it runs `markitect stop` with why. A gap with no such effect is its own to decide.
+5. **Implement.** The implementer takes the list from `markitect checklist` and makes the project match the spec, keeping the registry current. It does not change the spec. If the spec contradicts itself or leaves open something that changes behaviour at the project's boundary, it runs `markitect stop` with why. A gap with no such effect is its own to decide. If the machine lacks something, such as a program or a service, it says so with `markitect stop --environment`, which asks the owner nothing about the spec.
 6. **Submit.** When it thinks it is done, it calls `markitect submit`, and follows what that says ([§6](#6-the-one-door-submit)).
 7. **Review.** `submit` tells it to start the `markitect-reviewer` agent. The reviewer starts with fresh context, has no tool to edit files and cannot start further agents. It takes the list from `markitect checklist`, reads the Definitions and the code, and stores one line per item with `markitect answer` ([concept 3.0 §8](v3-concept.md#8-the-checklist)).
 8. **Repair.** A `wrong` answer goes back to the implementer, which fixes it and calls `submit` again. The next reviewer gets the findings, the new diff and the items whose locations that diff touched; other answers stand. At most two repair rounds.
@@ -191,7 +191,7 @@ A forked subagent of the owner's own session would look more native, and was the
 
 **It asks nothing.** Agents can't ask the owner a question, and they run in the `dontAsk` permission mode, which refuses what is not allowed instead of waiting. That matters more in the background, where a prompt would stop the session until someone came back. Auto mode doesn't fit: after 3 blocks in a row or 20 in total it goes back to prompting. So the session may edit files and use any shell command, and [§16](#16-questions-for-the-owner) puts that to the owner. A short list of commands won't do: Makerspace c6 deletes a test file, and `dontAsk` would refuse `rm`. The provider's protected paths, such as `.git`, `.husky` or `.vscode`, stay refused for the edit tools.
 
-**After a reboot or a crash.** The work is in the run's worktree, not in the owner's folder, and the run is still open. Only a session the provider reports as working counts as in progress: a finished session's process lives on for about an hour, and that doesn't count. So `apply` ends such a process, resumes the conversation in the background with the same settings, and records the ID that comes back, since the provider may start a copy. The repair count stands. `markitect stop` ends the run instead. Only `submit` and `stop` close a run. A run stays open until someone acts, unless a schedule resumes it.
+**After a reboot or a crash.** The work is in the run's worktree, not in the owner's folder, and the run is still open. Only a session the provider reports as working counts as in progress: a finished session's process lives on for about an hour, and that doesn't count. So `apply` ends such a process, resumes the conversation in the background in the run's own worktree with the same settings, and records the ID that comes back, since the provider may start a copy. The repair count stands, and the deadline starts again. A run whose worktree is gone is not resumed. `markitect stop` ends the run instead. Only `submit` and `stop` close a run. A run stays open until someone acts, unless a schedule resumes it.
 
 **Cleaning up.** The provider holds a lock on a worktree while its session runs, so `submit` can't remove it. The next `apply` stops the sessions of closed runs and removes their worktrees.
 
@@ -253,14 +253,14 @@ The tool can't stop a determined agent that runs as the user on the user's machi
 
 Every Command is one short declaration over the same tools: which agent starts, where its items come from, and whether it lands. The table in [concept 3.0 §12](v3-concept.md#12-other-commands) stands. A skill for a Command is one line that calls it, so the same Command runs from a chat, a terminal or a schedule.
 
-**`verify`** changes nothing the owner has. It starts the reviewer as the main agent of a background session, in a worktree of the last commit, with no edit tools. It doesn't commit on the owner's branch, doesn't switch anything and doesn't mind a dirty folder; the Result says that uncommitted work was not looked at. With no Result yet, it is `--full`. It never holds the branch, so a scheduled `verify` doesn't block an `apply`.
+**`verify`** changes nothing the owner has. It starts the reviewer as the main agent of a background session, in a worktree of the last commit, with no edit tools. A second `verify` resumes one that stopped working, and `markitect stop` ends it. It doesn't commit on the owner's branch, doesn't switch anything and doesn't mind a dirty folder; the Result says that uncommitted work was not looked at. With no Result yet, it is `--full`. It never holds the branch, so a scheduled `verify` doesn't block an `apply`.
 
 `submit` works differently for it:
 
 | It finds | It does |
 |---|---|
 | Items without an answer | Lists them, under the same ceiling and deadline |
-| Otherwise | Runs the required checks once and `check`. A failure or an error becomes a Finding, and a check that cannot start is noted. It writes the Findings and the Result on `markitect/runs/<run>` and closes the run |
+| Otherwise | Runs the required checks once and `check`. A wrong answer becomes a Finding, and what names no Definition, such as a failing check or an error from `check`, is listed in the Result. It writes the Result and a Findings page on `markitect/runs/<run>` and closes the run |
 
 `apply --findings` and the count of changes since the last full check read them there.
 
@@ -289,13 +289,13 @@ For Claude Code, `markitect init` writes these project files, so they are versio
 - a longer time limit for shell calls;
 - the hooks below.
 
-`--setting-sources project` and `--strict-mcp-config` are meant to keep the personal settings, plugins and MCP servers of whoever runs it out of the run. The workflow trial used them from its first attempt, so it doesn't show what happens without them.
+`--setting-sources project` and `--strict-mcp-config` keep the personal settings, plugins and MCP servers of whoever runs it out of the run. They do not keep the user's own `CLAUDE.md` out of a background session, so the settings also exclude it with `claudeMdExcludes`.
 
 **The hooks,** all `markitect hook`, which does nothing unless a run is open:
 
 | Hook | Does |
 |---|---|
-| Stop | Sends the session back while the run is open and no reviewer is running. The input lists background tasks, so the wait for a reviewer passes. After five blocks since the last `submit` it closes the run and lets the session end, since the provider's own count of eight starts again at any tool call. While `submit` holds its lock, it only waits |
+| Stop | Sends the session back while the run is open and no reviewer is running. The input lists background tasks, so the wait for a reviewer passes. After five blocks since the last `submit` it closes the run and lets the session end, since the provider's own count of eight starts again at any tool call. While `submit` holds its lock, it lets the turn end |
 | StopFailure | Records the cause when a turn ends on an API error, such as a usage limit |
 | PreToolUse | On every tool call, past the deadline, stops the session and closes the run. On the shell, refuses `markitect answer` unless the input's `agent_type` is the reviewer's |
 
@@ -341,7 +341,9 @@ Concept 3.0's tests 2 and 3 fall away, since the aim is no longer to show that t
 
 ## 14. What is not yet shown
 
-**This shape has not run.** The mechanisms below are read from the documentation and the CLI's help. The probe has to show, on Windows, that:
+**Tried on Windows on small changes ([record](../validation/native-version-20261104.md)),** so the list below is what the probe set out to show. These hold: the skill's injected command starts a session from Manual mode and from a linked worktree, `baseRef`, the flags and settings together, the reviewer with its narrowed tools, the Stop hook, no push, landing from inside the worktree, and personal rules staying out once `claudeMdExcludes` is set. Writes to protected paths are refused, also through the shell. A resume, the deadline's `continue: false` and a real usage limit are tested only without a provider.
+
+What the probe set out to show:
 
 - the skill's injected command can start `claude --bg` from inside a session, in Manual mode as well as auto, and from a session already in a linked worktree. If not, the owner types `markitect apply` in a terminal, or the fallback is a forked subagent with `background: true` and `isolation: worktree`;
 - `--worktree` with `baseRef` set to `head` starts from the spec commit. The workflow trial's first attempt failed on worktree isolation, on a temp path's spelling;
