@@ -12,7 +12,8 @@ deleted launch shows too.
 
   NAME/launch.json       who, what, on which model, how long and at what cost, and every file's hash
   NAME/repo.bundle       the final repository with its whole history
-  NAME/records/          the run's own records: suite.json, run.json, judgment.json
+  NAME/records/          the run's own records: suite.json, run.json, judgment.json, and a Command's Result under results/,
+                         since a verify lands nothing and its Result has no other home
   NAME/transcripts/      the session's stream and every transcript, subagents included
 
 `add` refuses a bundle that is not complete, and any kept text that holds an Anthropic key's shape or the value of
@@ -146,6 +147,8 @@ def add(store, name, project, step, arm, run_dir, judgment=None, weekly=None, no
         for source, kept in ((run_dir / "suite.json", "suite.json"), (variant / "run.json", "run.json")):
             if source.is_file():
                 shutil.copyfile(source, temporary / "records" / kept)
+        if (variant / "results").is_dir():
+            shutil.copytree(variant / "results", temporary / "records" / "results")
         if judgment:
             shutil.copyfile(pathlib.Path(judgment) / "judgment.json", temporary / "records" / "judgment.json")
         if (variant / "transcripts").is_dir():

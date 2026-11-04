@@ -102,6 +102,13 @@ class Store(unittest.TestCase):
             f.write(b"x")
         self.assertEqual(kept.check(self.store), ["demo: repo.bundle changed"])
 
+    def test_a_commands_result_is_kept(self):
+        run, _ = self.run_dir()
+        (run / "variant" / "results").mkdir()
+        (run / "variant" / "results" / "r.json").write_text('{"state": "findings"}', encoding="utf-8")
+        kept.add(self.store, "demo", "p", "W0", "default", run)
+        self.assertEqual(json.loads((self.store / "demo" / "records" / "results" / "r.json").read_text(encoding="utf-8"))["state"], "findings")
+
     def test_a_commands_cost_is_the_sum_of_its_sessions(self):
         lines = [json.dumps({"type": "assistant", "message": {"model": "claude-sonnet-5-5"}}), json.dumps({"type": "result", "total_cost_usd": 1.25})]
         run, _ = self.run_dir(transcript="\n".join(lines) + "\n")
