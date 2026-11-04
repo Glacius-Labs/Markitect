@@ -1,0 +1,15 @@
+{
+  "description": "A failing build: the entry point calls NewServer with an argument it does not take.",
+  "step": "W0",
+  "replace": [
+    {
+      "path": "realization/cmd/makerspace/main.go",
+      "old": "protocol.NewServer()",
+      "new": "protocol.NewServer(1)"
+    }
+  ],
+  "expect": {
+    "buildFails": true,
+    "correctnessFails": true
+  }
+}
