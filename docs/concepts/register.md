@@ -1,6 +1,6 @@
 # Concept register
 
-**Current target, 28 October 2026:** [Concept 2.0](v2-concept.md) ([DEC-086](#dec-086-concept-20-is-the-target)), being built ([delivery plan](../implementation-plan.md#concept-20-build)).
+**Current target, 4 November 2026:** [Concept 3.0](v3-concept.md) ([DEC-091](#dec-091-concept-30-is-the-target)), not built yet ([delivery plan](../implementation-plan.md#concept-30-build)). [Concept 2.0](v2-concept.md) ([DEC-086](#dec-086-concept-20-is-the-target)) stays the record of what Main implements until then.
 
 **Current V1 concept, 24 October 2026:** [Concept 1.0](v1-concept.md) consolidates the owner's concept v0.18 and the accepted decisions D10–D18 ([DEC-068](#dec-068-v1-concept-10)). It supersedes conflicting statements in the earlier [V1 scope clarification](sources/v1-scope-clarification-20261023.md), the [source implementation approval](sources/v1-source-implementation-approval-20261023.md) and older entries; their original text stays. The [delivery plan](../implementation-plan.md) governs implementation and tracks known deviations of the code.
 
@@ -20,7 +20,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-001](#dec-001-delegated-realization-is-central-to-the-product) | Decision | Delegated realization is central to the product | Accepted |
 | [DEC-002](#dec-002-trust-is-measured-against-todays-practice) | Decision | Trust is measured against today's practice | Accepted |
 | [DEC-003](#dec-003-the-compiler-is-a-borrowed-concept) | Decision | The compiler is a borrowed concept | Accepted |
-| [DEC-004](#dec-004-the-manager-hierarchy-is-core-government-belongs-to-a-later-axis) | Clarification | The Manager hierarchy is core; Government belongs to a later axis | Clarified |
+| [DEC-004](#dec-004-the-manager-hierarchy-is-core-government-belongs-to-a-later-axis) | Clarification | The Manager hierarchy is core; Government belongs to a later axis | Clarified; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
 | [DEC-005](#dec-005-model-granularity-is-the-authors-responsibility) | Decision | Model granularity is the author's responsibility | Accepted |
 | [DEC-006](#dec-006-every-file-is-covered-or-explicitly-ignored) | Decision | Every file is covered or explicitly ignored | Accepted |
 | [DEC-007](#dec-007-more-economical-models-means-capable-mid-tier-models) | Clarification | "More economical models" means capable mid-tier models | Clarified |
@@ -41,7 +41,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-022](#dec-022-decisions-are-visible-and-route-through-their-subject) | Decision | Decisions are visible and route through their subject | Accepted |
 | [DEC-023](#dec-023-impact-marks-change-and-context-without-dropping-either) | Decision | Impact marks change and context without dropping either | Accepted |
 | [DEC-024](#dec-024-first-reliable-apply-rebuild-and-coordinated-start) | Endorsed direction | First reliable Apply rebuild and coordinated start | Endorsed; implementation commissioned |
-| [DEC-025](#dec-025-package-managers-organize-realization) | Decision | Package Managers organize realization | Accepted |
+| [DEC-025](#dec-025-package-managers-organize-realization) | Decision | Package Managers organize realization | Accepted; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
 | [DEC-026](#dec-026-apply-comes-first-and-changes-only-artifacts) | Decision | Apply comes first and changes only artifacts | Accepted |
 | [DEC-027](#dec-027-strict-links-with-an-optional-optimizer) | Decision | Strict links with an optional Optimizer | Accepted |
 | [DEC-028](#dec-028-context-follows-need-to-know-and-starts-simple) | Decision | Context follows need to know and starts simple | Accepted |
@@ -55,12 +55,12 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-036](#dec-036-adopted-design-refinements-for-the-first-apply) | Decision | Adopted design refinements for the first Apply | Accepted |
 | [DEC-037](#dec-037-agent-sessions-and-checks-run-in-linux-containers) | Decision | Agent sessions and checks run in Linux containers | Accepted |
 | [DEC-038](#dec-038-learn-through-complete-workflows) | Decision | Learn through complete workflows | Accepted |
-| [DEC-039](#dec-039-deterministic-manager-process) | Decision | Deterministic Manager process | Accepted |
+| [DEC-039](#dec-039-deterministic-manager-process) | Decision | Deterministic Manager process | Accepted; superseded by [DEC-091](#dec-091-concept-30-is-the-target) |
 | [DEC-040](#dec-040-concept-freeze-until-the-core-runs) | Decision | Concept freeze until the core runs | Accepted |
 | [DEC-041](#dec-041-core-protocol-choices) | Decision | Core protocol choices | Accepted |
 | [DEC-042](#dec-042-orchestrator-names-the-deterministic-coordination-component) | Decision | Orchestrator names the deterministic coordination component | Accepted |
 | [DEC-043](#dec-043-project-teams-review-arbitration-and-product-defaults) | Decision | Project teams, review arbitration and product defaults | Accepted; implementation pending |
-| [DEC-044](#dec-044-commands-reuse-the-manager-organization) | Decision | Commands reuse the Manager organization | Accepted direction; Apply and a first Extract implemented |
+| [DEC-044](#dec-044-commands-reuse-the-manager-organization) | Decision | Commands reuse the Manager organization | Accepted direction; Apply and a first Extract implemented; superseded by [DEC-091](#dec-091-concept-30-is-the-target) |
 | [DEC-045](#dec-045-managers-and-reviewers-derive-technical-risks) | Clarification | Managers and reviewers derive technical risks | Accepted |
 | [DEC-046](#dec-046-a-withheld-pass-keeps-its-recorded-expectations) | Decision | A withheld pass keeps its recorded expectations | Accepted |
 | [DEC-047](#dec-047-recorded-review-cases-stand-until-their-inputs-change) | Decision | Recorded review cases stand until their inputs change | Accepted |
@@ -72,18 +72,18 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-053](#dec-053-owner-decisions-bind-the-whole-run) | Decision | Owner decisions bind the whole run | Superseded by closed Runs (owner, 21 October 2026); removed from the implementation |
 | [DEC-054](#dec-054-a-rejection-that-finds-fewer-gaps-does-not-count) | Decision | A rejection that finds fewer gaps does not count | Accepted |
 | [DEC-055](#dec-055-a-submission-must-pass-its-required-checks) | Decision | A submission must pass its required checks | Accepted |
-| [DEC-056](#dec-056-recursive-reconciliation-with-a-shared-workspace) | Decision | Recursive reconciliation with a shared workspace | Accepted; implemented (PR #463) |
+| [DEC-056](#dec-056-recursive-reconciliation-with-a-shared-workspace) | Decision | Recursive reconciliation with a shared workspace | Accepted; implemented (PR #463); superseded by [DEC-091](#dec-091-concept-30-is-the-target) |
 | [DEC-057](#dec-057-three-fundamental-starting-situations) | Clarification | Three starting situations, two processes: Apply and Extract | Accepted high-level direction; first Extract implemented |
 | [DEC-058](#dec-058-apply-always-executes-before-independent-verify) | Decision | Apply always executes before independent Verify | Accepted; implemented (PR #472) |
 | [DEC-059](#dec-059-enforced-responsibilities-build-start-and-an-outside-oracle) | Decision | Enforced responsibilities, build start and an outside oracle | Accepted; implemented (PR #472) |
-| [DEC-060](#dec-060-owners-realize-others-use-parents-settle-cross-area-matters) | Decision | Owners realize, others use; parents settle cross-area matters | Accepted; implemented |
+| [DEC-060](#dec-060-owners-realize-others-use-parents-settle-cross-area-matters) | Decision | Owners realize, others use; parents settle cross-area matters | Accepted; implemented; superseded by [DEC-091](#dec-091-concept-30-is-the-target) |
 | [DEC-061](#dec-061-what-an-extracted-model-contains) | Decision | What an extracted model contains | Accepted; implemented |
 | [DEC-062](#dec-062-start-stand-drift-is-the-owners-first-work) | Decision | Start-stand drift is the owner's first work | Superseded by DEC-064; removed from the implementation |
 | [DEC-063](#dec-063-the-model-is-authoritative-defects-escalate) | Decision | The model is authoritative; defects escalate | Amended by DEC-064; model authority retained |
-| [DEC-064](#dec-064-checked-recursive-apply-passes-and-manager-teams) | Decision | Checked recursive Apply passes and Manager teams | Base integrated; evidence-driven hardening adopted, implementation and new evidence pending |
+| [DEC-064](#dec-064-checked-recursive-apply-passes-and-manager-teams) | Decision | Checked recursive Apply passes and Manager teams | Base integrated; evidence-driven hardening adopted, implementation and new evidence pending; superseded by [DEC-091](#dec-091-concept-30-is-the-target) |
 | [DEC-065](#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration) | Decision | Work through the cockpit: agent-proposed model changes and configuration | Accepted by the owner; implementation started; retired with V1's cockpit ([PR #637](https://github.com/Glacius-Labs/Markitect/pull/637)), for concept 2.0 see DEC-089 |
 | [DEC-066](#dec-066-the-cockpit-is-markitects-desktop-app-and-starts-and-stops-apply) | Decision | The cockpit is Markitect's desktop app and starts and stops Apply | Accepted by the owner; implemented; first real acceptance recorded; retired with V1's cockpit ([PR #637](https://github.com/Glacius-Labs/Markitect/pull/637)), for concept 2.0 see DEC-089 |
-| [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs) | Decision | Agent workspaces and reviewed handoffs | Accepted; partially superseded by the V1 scope clarification and [DEC-068](#dec-068-v1-concept-10); no-push rule and handoff transport superseded by DEC-078 |
+| [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs) | Decision | Agent workspaces and reviewed handoffs | Accepted; partially superseded by the V1 scope clarification and [DEC-068](#dec-068-v1-concept-10); no-push rule and handoff transport superseded by DEC-078; superseded by [DEC-091](#dec-091-concept-30-is-the-target) |
 | [DEC-068](#dec-068-v1-concept-10) | Decision | V1 concept 1.0 | Accepted; implemented on Main; superseded as the target by DEC-086 |
 | [DEC-069](#dec-069-documentation-is-written-in-english) | Decision | Documentation is written in English | Accepted; canonical-model documents translated (#679), historical records archived (#688), core vocabulary translated (#690) |
 | [DEC-070](#dec-070-parallel-writers-where-useful) | Decision | Parallel writers where useful | Accepted |
@@ -94,22 +94,23 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-075](#dec-075-kind-extension-and-one-core-120) | Decision | Kind interfaces and one Core 1.2.0 | Accepted; implemented ([PR #757](https://github.com/Glacius-Labs/Markitect/pull/757)) |
 | [DEC-076](#dec-076-markitect-is-developed-as-a-regular-software-project) | Decision | Markitect is developed as a regular software project | Accepted; self-model retired (#756), cleanup tracked in the delivery plan |
 | [DEC-077](#dec-077-development-pace-and-linux-first-execution) | Decision | Development pace and Linux-first execution | Accepted; Linux-only CI, Linux Docker way tracked in the delivery plan; the runner's checkout mount and branch hand-back superseded by DEC-078 |
-| [DEC-078](#dec-078-agents-collaborate-through-a-git-remote-without-owner-review) | Decision | Agents collaborate through a Git remote, without owner review | Accepted direction; design open, tracked in the delivery plan |
+| [DEC-078](#dec-078-agents-collaborate-through-a-git-remote-without-owner-review) | Decision | Agents collaborate through a Git remote, without owner review | Accepted direction; design open, tracked in the delivery plan; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
 | [DEC-079](#dec-079-the-model-is-as-explicit-as-good-documentation) | Decision | The model is as explicit as good documentation | Accepted |
 | [DEC-080](#dec-080-the-model-is-typed-documentation) | Decision | The model is typed documentation | Accepted design; not built |
-| [DEC-081](#dec-081-the-organization-knows-broad-at-the-top-and-deep-below) | Decision | The organization knows broad at the top and deep below | Accepted design; not built |
-| [DEC-082](#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager) | Decision | One Run per change: impact decides who works, maker and checker per Manager | Accepted; being built |
-| [DEC-083](#dec-083-the-host-runs-natively-each-run-lives-in-containers) | Decision | The host runs natively; each Run lives in containers | Accepted; built in T5 |
+| [DEC-081](#dec-081-the-organization-knows-broad-at-the-top-and-deep-below) | Decision | The organization knows broad at the top and deep below | Accepted design; not built; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
+| [DEC-082](#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager) | Decision | One Run per change: impact decides who works, maker and checker per Manager | Accepted; being built; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
+| [DEC-083](#dec-083-the-host-runs-natively-each-run-lives-in-containers) | Decision | The host runs natively; each Run lives in containers | Accepted; built in T5; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
 | [DEC-084](#dec-084-continuous-change-triggers-become-findings-or-model-proposals-autonomy-grows-in-steps) | Decision | Continuous change: triggers become Findings or model proposals, autonomy grows in steps | Accepted direction; design only |
 | [DEC-085](#dec-085-markdown-tools-are-the-cockpit-for-now) | Decision | Markdown tools are the cockpit for now | Superseded by DEC-089 |
-| [DEC-086](#dec-086-concept-20-is-the-target) | Decision | Concept 2.0 is the target | Accepted; being built |
-| [DEC-087](#dec-087-required-checks-gate-merged-states-not-each-submission) | Decision | Required checks gate merged states, not each submission | Accepted; built in T8 |
-| [DEC-088](#dec-088-a-checker-reads-the-model-in-full-and-judges-its-own-packages-files) | Decision | A checker reads the model in full and judges its own Package's files | Accepted; built in T9 |
+| [DEC-086](#dec-086-concept-20-is-the-target) | Decision | Concept 2.0 is the target | Accepted; being built; superseded by [DEC-091](#dec-091-concept-30-is-the-target) |
+| [DEC-087](#dec-087-required-checks-gate-merged-states-not-each-submission) | Decision | Required checks gate merged states, not each submission | Accepted; built in T8; superseded by [DEC-091](#dec-091-concept-30-is-the-target) |
+| [DEC-088](#dec-088-a-checker-reads-the-model-in-full-and-judges-its-own-packages-files) | Decision | A checker reads the model in full and judges its own Package's files | Accepted; built in T9; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
 | [DEC-089](#dec-089-markitect-desktop-the-app-over-the-cli) | Decision | Markitect Desktop: the app over the CLI | Accepted; design proposal, not built |
-| [DEC-090](#dec-090-a-refusal-counts-only-when-nothing-moved) | Decision | A refusal counts only when nothing moved | Accepted; built |
-| [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
+| [DEC-090](#dec-090-a-refusal-counts-only-when-nothing-moved) | Decision | A refusal counts only when nothing moved | Accepted; built; superseded by [DEC-091](#dec-091-concept-30-is-the-target) |
+| [DEC-091](#dec-091-concept-30-is-the-target) | Decision | Concept 3.0 is the target | Accepted; not built |
+| [PRM-001 to PRM-009](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
-| [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
+| [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
 | [CPT-002](#cpt-002-tests-are-realizations-too) | Concept | Tests are realizations too | Accepted |
 | [CPT-003](#cpt-003-two-parts-of-the-promise) | Concept | Two parts of the promise | Clarified |
 | [CPT-004](#cpt-004-the-specification-stays-effective) | Concept | The specification stays effective | Clarified; mechanism proposed |
@@ -199,6 +200,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Founding intent:** the owner's [founding intent](sources/founding-intent-20261026.md) (26 October 2026) restates the typed-language analogy for the compiler: it checks structure, never meaning. This entry already matches it and stays unchanged ([DEC-074](#dec-074-canonical-model-track-parallel-to-v1), D2).
 
 ### DEC-004 The Manager hierarchy is core; Government belongs to a later axis
+
+**Superseded in part on 4 November 2026 by [DEC-091](#dec-091-concept-30-is-the-target):** The Manager hierarchy is no longer core. Independent review, verification and guarded landing stay.
 
 - **Status:** Clarified. On 10 October 2026 the owner confirmed the review's corrected reading, which separates the Government experiment from the Manager hierarchy ([confirmed message](sources/idea-review-20261010.md#summary-confirmed-by-the-owner)). Consistent with the [main-line design for operation scopes](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/project-world/operation-scopes-and-model-briefings.md) and the [work-item comparison decision](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/work-item-comparison-20261009.md) of 9 October 2026.
 - **Statement:**
@@ -426,6 +429,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-025 Package Managers organize realization
 
+**Superseded in part on 4 November 2026 by [DEC-091](#dec-091-concept-30-is-the-target):** One Manager per Package goes. A customizable strategy stays.
+
 - **Status:** Accepted, owner, 16 October 2026 ([strategy](sources/manager-realization-20261016.md#management-and-a-customizable-strategy), [teams and registry](sources/manager-realization-20261016.md#teams-integration-and-artifact-registration), [root Manager](sources/manager-realization-20261016.md#root-manager-and-naming)).
 - **Statement:**
   - One Manager per Package forms the hierarchy that realizes the model. Each level is an integration layer with less detail and more overview than the one below.
@@ -548,6 +553,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-039 Deterministic Manager process
 
+**Superseded on 4 November 2026 by [DEC-091](#dec-091-concept-30-is-the-target):** no tree and no Manager process. The entry stays as a record.
+
 **Target update, 22 October 2026:** [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs) supersedes the conflicting process/enforcement mechanics below. This entry retains its original decision and evidence; the executable migration is pending.
 
 **Updated by [DEC-041](#dec-041-core-protocol-choices):** cross-area requests are forwarded by the Orchestrator instead of dispatched hop by hop. Warm retention and quiescent basis advances are deferred beyond the first Apply. The statement below records the decision as accepted.
@@ -616,6 +623,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Owners:** [Configuration](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/history/apply-design-before-dec-056/manager-apply-configuration.md), [review/execution](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/history/apply-design-before-dec-056/manager-apply-execution.md#review-conflicts-and-arbitration), [core](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/history/apply-design-before-dec-056/manager-apply-core.md#manager-tasks), [ports](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/history/apply-design-before-dec-056/manager-apply-port-contracts.md#configured-review-team-bindings) and [journal](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/history/apply-design-before-dec-056/manager-apply-journal.md#review-team-and-arbitration-records). No runtime, comparison or study authority is granted.
 
 ### DEC-044 Commands reuse the Manager organization
+
+**Superseded on 4 November 2026 by [DEC-091](#dec-091-concept-30-is-the-target):** Commands stay one mechanism, with no Manager tree under them. The entry stays as a record.
 
 - **Status:** Accepted direction, owner, 17 October 2026 ([command examples](sources/commands-extract-optimize-20261017.md#owner-command-examples), [Verify clarification](sources/commands-extract-optimize-20261017.md#owner-clarification-of-verify), [Extract clarification](sources/commands-extract-optimize-20261017.md#extract-describes-the-existing-stand), [Main publication and Optimize request](sources/commands-extract-optimize-20261017.md#publication-request-and-optimize)).
 - **Confirmed model-migration refinement:** The owner accepted meaning-preserving Package moves and merges, explicit v1 identity/reference migration, future Manager-tree derivation without changing the active organization, and jointly reviewed registry/configuration adjustments while retaining realization artifacts ([source and Main instruction](sources/model-migrations-20261017.md#owner-acceptance-and-main-publication), [owning workflow](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/commands.md#model-restructuring-as-an-explicit-migration)). Existing identity rules, scope, authority and historical evidence remain; publication/staging support is not implemented by this documentation. This resolves the earlier structural-Optimize scope question and adds no implementation assignment.
@@ -732,6 +741,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-056 Recursive reconciliation with a shared workspace
 
+**Superseded on 4 November 2026 by [DEC-091](#dec-091-concept-30-is-the-target):** no tree and no shared workspace. The entry stays as a record.
+
 **Target update, 22 October 2026:** [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs) supersedes the conflicting process/enforcement mechanics below. This entry retains its original decision and evidence; the executable migration is pending.
 
 **Current disposition, 20 October 2026:** DEC-058 removed initial Verify; DEC-064 now specifies the accepted common Pass mechanism and Execute decomposition. Read the current workflow before implementing this dated entry.
@@ -783,6 +794,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-060 Owners realize, others use; parents settle cross-area matters
 
+**Superseded on 4 November 2026 by [DEC-091](#dec-091-concept-30-is-the-target):** no owner agents and no parents. The entry stays as a record.
+
 **Current disposition, 20 October 2026:** DEC-064 preserves owner realization and parent coordination; its concrete Plan Pass replaces the planning-only-as-fallback choice below.
 
 - **Status:** Accepted, owner, 19 October 2026, after the [three repeated demonstrations](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/validation/recursive-apply-repetitions-20261019.md) ([verbatim owner source](sources/owner-realizes-others-use-20261019.md)). Implemented in the Briefs, the Verify guidance and the self-model, together with the first Extract.
@@ -821,6 +834,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Amends:** Owner questions of [DEC-056](#dec-056-recursive-reconciliation-with-a-shared-workspace) and run-wide owner decisions of [DEC-053](#dec-053-owner-decisions-bind-the-whole-run). Bound owner decisions remain for decisions within the model and no longer settle a contradiction or a boundary gap of the model. Mid-run owner questions no longer exist in Apply.
 
 ### DEC-064 Checked recursive Apply passes and Manager teams
+
+**Superseded on 4 November 2026 by [DEC-091](#dec-091-concept-30-is-the-target):** no recursive passes and no Manager teams. The entry stays as a record.
 
 **Target update, 22 October 2026:** [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs) supersedes the conflicting process/enforcement mechanics below. This entry retains its original decision and evidence; the executable migration is pending.
 
@@ -870,6 +885,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Behavior owner:** the [cockpit concept](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/cockpit.md#the-cockpit-as-desktop-app). Related: [VIS-001](#vis-001-cockpit-personal-ai-and-autonomous-project-organization), [DEC-037](#dec-037-agent-sessions-and-checks-run-in-linux-containers).
 
 ### DEC-067 Agent workspaces and reviewed handoffs
+
+**Superseded on 4 November 2026 by [DEC-091](#dec-091-concept-30-is-the-target):** no agent workspaces and no agent handoffs. The entry stays as a record.
 
 - **V1 concept 1.0, 24 October 2026:** [DEC-068](#dec-068-v1-concept-10) consolidates the current V1 target. Where this entry or its V1 clarification differ, DEC-068 governs.
 - **V1 clarification, 23 October 2026:** the [owner scope](sources/v1-scope-clarification-20261023.md) requires the full model-derived Manager hierarchy for Assessment, Implement and Verify through one executor. Each Run has fresh Manager environments and one Git Workspace Service; Verify rejection starts a new Implement Run with shared command budget. Durable candidates, closed results including cleanup, persistent noncanonical Notes, four checks and complete native harness integration are required. Runtime code/API/package boundaries may be replaced. Extract/UI/authoring migration and preservation obligations do not constrain the core. After counter-review, the owner [approved coordinated source implementation](sources/v1-source-implementation-approval-20261023.md), with separate native execution authority still required. Original decision text below is historical where incompatible, not conflicting active authority. See the [counter-review](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/development/v1-architecture-audit-20261023.md), [proposed architecture](../architecture.md) and [current plan](../implementation-plan.md).
@@ -989,6 +1006,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-078 Agents collaborate through a Git remote, without owner review
 
+**Superseded in part on 4 November 2026 by [DEC-091](#dec-091-concept-30-is-the-target):** Agents no longer collaborate through a Git remote. Landing without owner review and no mounted Git directory stay.
+
 - **Status:** Accepted by the owner as a direction, 27 October 2026, with answers to three questions the same afternoon ([verbatim source](sources/git-remote-collaboration-20261027.md)). The mechanics are open design work, to be designed and discussed with the owner before anything is built, in the [delivery plan](../implementation-plan.md#git-remote-collaboration-owner-direction-27-october). Until that work lands, the implementation keeps the current mount, hand-back and working-tree publication.
 - **Decision (recorded meaning, as in the source):**
   - Agents collaborate through a Git remote, like engineers and their managers in a company. Before a run, a run branch is created from the target branch. Each agent pulls, commits and pushes, and Managers integrate their children's work the same way. No Git directory is mounted into a container.
@@ -1052,6 +1071,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-081 The organization knows broad at the top and deep below
 
+**Superseded in part on 4 November 2026 by [DEC-091](#dec-091-concept-30-is-the-target):** No knowledge by position in a tree. The registry, shared files, the ignore list and `execution.yaml` stay.
+
 - **Status:** Accepted by the owner as the design of the Manager organization and the realization record, 28 October 2026, in the Topics session's design walk-through ([topics page](../workstreams/topics.md#decided)). Not built. It builds on [DEC-080](#dec-080-the-model-is-typed-documentation).
 - **Decision:**
   - One Package, one Manager, always, also for a Package that only groups others. The lint warns about a Package with no Definitions of its own and only one child.
@@ -1064,6 +1085,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Open:** how Managers collaborate in a Run (delegation, review, integration), which the owner is redesigning together with the Runs.
 
 ### DEC-082 One Run per change: impact decides who works, maker and checker per Manager
+
+**Superseded in part on 4 November 2026 by [DEC-091](#dec-091-concept-30-is-the-target):** One implementer and one reviewer replace a pair per Manager. Impact, the checklist, the full check, the Result, Findings and landing stay.
 
 - **Status:** Accepted by the owner as the direction of the Run redesign, 28 October 2026, in the Topics session's design walk-through ([topics page](../workstreams/topics.md#decided)); details decided with concept 2.0 ([DEC-086](#dec-086-concept-20-is-the-target)) and on 29 October 2026 (below); being built.
 - **Priority:** consistency of the artifacts with the canonical model and their quality come first, so that the owner does not need to review, nothing drifts and the process can be trusted. Time and token cost come second.
@@ -1087,6 +1110,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Changes, once built:** impact narrows participation, unlike [DEC-039](#dec-039-deterministic-manager-process); Assessment, Implement and Verify as separate Runs ([concept 1.0 §10.4, §11](v1-concept.md#104-apply-flow), [DEC-058](#dec-058-apply-always-executes-before-independent-verify)) become one Run with makers and checkers.
 
 ### DEC-083 The host runs natively; each Run lives in containers
+
+**Superseded in part on 4 November 2026 by [DEC-091](#dec-091-concept-30-is-the-target):** One container per Command replaces one per agent and the Run remote. No mounted folder of the user's stays.
 
 - **Status:** Accepted by the owner as the platform design, 28 October 2026, in the Topics session's design walk-through ([topics page](../workstreams/topics.md#decided)). Built in step T5 of the [delivery plan](../implementation-plan.md#concept-20-build); the [native smoke](../validation/t5-native-host-20261029.md) passed on Windows and on Linux (WSL Ubuntu); macOS is not yet observed. It follows from [DEC-082](#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager).
 - **Decision:**
@@ -1116,6 +1141,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-086 Concept 2.0 is the target
 
+**Superseded on 4 November 2026 by [DEC-091](#dec-091-concept-30-is-the-target):** concept 3.0 is the target, and concept 2.0 stays as a record. The entry stays as a record.
+
 - **Status:** Accepted by the owner, 28 October 2026.
 - **Decision:** [concept 2.0](v2-concept.md) is Markitect's target. It brings together [DEC-079](#dec-079-the-model-is-as-explicit-as-good-documentation) to [DEC-085](#dec-085-markdown-tools-are-the-cockpit-for-now), the confirmed reading of [DEC-061](#dec-061-what-an-extracted-model-contains) and the answers to the ten questions its review raised, with its acceptance in §15.
 - **Supersedes:** [concept 1.0](v1-concept.md) as the target ([DEC-068](#dec-068-v1-concept-10)). Concept 1.0 stays the record of V1; concept 2.0's first build step replaced V1's language and Run host on Main.
@@ -1125,6 +1152,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-087 Required checks gate merged states, not each submission
 
+**Superseded on 4 November 2026 by [DEC-091](#dec-091-concept-30-is-the-target):** there is one tree, so the gate runs on the state that lands. The entry stays as a record.
+
 - **Status:** Accepted by the owner, 29 October 2026, on a question from the Build and evaluation session after the T7 pilot ([topics page](../workstreams/topics.md#decided)). Built in step T8 of the [delivery plan](../implementation-plan.md#concept-20-build) ([PR #899](https://github.com/Glacius-Labs/Markitect/pull/899)); the [native Makerspace W0](../validation/t8-makerspace-w0-20261030.md) that no Run landed in the pilot landed. It changes [DEC-081](#dec-081-the-organization-knows-broad-at-the-top-and-deep-below), [DEC-082](#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager) and concept 2.0 §6.2, §6.3, §6.5 and §14 question 6.
 - **Decision:** the required checks block only merged states: a parent's submission that holds its children's merged work, and the state that lands, whether or not the target branch moved. Every other submission, a child's or a parent's first one, is still blocked by `markitect check`, by path ownership and by its checker. The required checks still run on it, on the branch's full repository state, and their results go to its checker as evidence, but a failure does not refuse the push.
 - **Reason:** in the [T7 pilot](../validation/t7-pilot-20261029.md), the 2.0 arm landed nothing on the Makerspace chain: every step ended with Root's model-defect escalation. Root's first submission could not pass the required `build` check, because the directory it builds belongs to a child Package, which Root may not add, and that child starts only from Root's approved submission. A parent's first submission is a partial tree, so a check of the whole repository cannot pass there whenever the build needs a child's files. The Library passed only because its checks pass on a partial tree. The review of the G0 prototype had found the same on 28 October 2026 (check placement).
@@ -1132,6 +1161,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Unchanged:** a parent with items of its own submits its own files first, and its children start from that approved commit ([DEC-082](#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager)); the host compiles every submission and the state it lands; landing after a moved target branch is as before.
 
 ### DEC-088 A checker reads the model in full and judges its own Package's files
+
+**Superseded in part on 4 November 2026 by [DEC-091](#dec-091-concept-30-is-the-target):** Amended: no Package limit on a reviewer's code. A verdict still covers the whole Definition, its examples and its links, and contradictions are spec problems.
 
 - **Status:** Accepted by the owner, 30 October 2026, on two questions from the Build and evaluation session, one from the T7 pilot and one from the Codex Library smoke ([topics page](../workstreams/topics.md#decided)). Built in step T9 of the [delivery plan](../implementation-plan.md#concept-20-build) ([PR #904](https://github.com/Glacius-Labs/Markitect/pull/904)): the makers' and checkers' tasks and harness state what a verdict covers; [natively](../validation/t9-verdict-scope-20261030.md), the pilot's c3 plant stopped and the Codex Library M1 landed, one launch each. It clarifies [DEC-082](#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager) and concept 2.0 §6.2.
 - **Decision:**
@@ -1161,6 +1192,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-090 A refusal counts only when nothing moved
 
+**Superseded on 4 November 2026 by [DEC-091](#dec-091-concept-30-is-the-target):** two repair rounds replace the attempt limit. The entry stays as a record.
+
 - **Status:** Accepted by the owner, 2 November 2026, in the Build and evaluation session: "We should definately fix the attempt limit issue and not count those." "Those" are the refusals of work that goes on in stages. Which refusals these are, below, is Build's reading of it. Built with this entry.
 - **Decision:**
   - A maker's attempts bound how often it may be refused in a row while nothing moves around it. New approved work of its children or its parent since its last attempt starts the count again, and so does its own approval.
@@ -1171,19 +1204,29 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Cost:** a Manager with busy children can be refused more often before the Run stops, up to the Run's starts. A stuck Manager whose child keeps delivering real but useless changes is not caught by this limit, only by the Run's starts and deadline. For an earlier form of the same idea, see [DEC-054](#dec-054-a-rejection-that-finds-fewer-gaps-does-not-count), which belongs to V1's process and counted gaps instead.
 - **Behavior owner:** the [Run engine's limits](../../internal/run/README.md#limits-and-honest-stops).
 
+### DEC-091 Concept 3.0 is the target
+
+- **Status:** Accepted by the owner, 4 November 2026, after a discussion that judged Markitect's ideas against six problems and other options.
+- **Decision:** [concept 3.0](v3-concept.md) is Markitect's target: the spec as the project's documentation and authority, one implementer and one reviewer per Command in one container, code in and out only as a Git commit, a gate in the CLI that runs after the session ends, and interchangeable strategies. It includes the details its review added and the answers to its nine questions ([§14](v3-concept.md#14-decided-on-acceptance)).
+- **Supersedes:** the entries in [§15](v3-concept.md#15-what-this-overturns), each marked with what goes and what stays. The new evidence and its limits are in [OQ-011](#open-questions). Concept 2.0 stays the record of what Main implements until the rebuild.
+- **Evaluation:** comparing variants stops. Three bounded tests and the owner's real use follow, and every result is kept and compared, including structure, architecture, quality and cleanliness ([§13](v3-concept.md#13-how-we-know-it-works)).
+- **Next:** the [delivery plan](../implementation-plan.md#concept-30-build) owns the steps.
+
 ## Promises
 
 These are the target outcomes Markitect is built to deliver. Each has the status **Target**: it is to be validated under [DEC-009](#dec-009-the-central-evaluation-question), and none is an established result. Sources are the [owner description](sources/owner-product-description-20261009.md) and the [confirmed summary](sources/idea-review-20261010.md#summary-confirmed-by-the-owner).
 
 | ID | Promise |
 |---|---|
-| PRM-001 | Nothing in the modeled scope is silently forgotten. Affected obligations, files and responsible Managers come from the model, not from an agent's memory, and unknown impact remains visible. This covers declared relationships; dependencies in code are a known gap ([ENH-001](#enh-001-observed-code-dependencies-widen-impact)). |
-| PRM-002 | Rules and policies are applied where they matter. They are compiled into the responsible Manager's context and checked by independent reviewers, so they are not overlooked when nothing forces the agent to see them. |
+| PRM-001 | Superseded by PRM-008. Nothing in the modeled scope is silently forgotten. Affected obligations, files and responsible Managers come from the model, not from an agent's memory, and unknown impact remains visible. This covers declared relationships; dependencies in code are a known gap ([ENH-001](#enh-001-observed-code-dependencies-widen-impact)). |
+| PRM-002 | Superseded by PRM-009. Rules and policies are applied where they matter. They are compiled into the responsible Manager's context and checked by independent reviewers, so they are not overlooked when nothing forces the agent to see them. |
 | PRM-003 | The repository stays contradiction-free, consistent, uniform and clean through many changes, so cleanups and refactorings become dependable. |
 | PRM-004 | People concentrate on deciding and modeling. Human review moves from code diffs to model changes and escalated decisions while the code reliably reflects the model. The owner [restated the end goal](sources/foundations-and-trust-20261017.md#owner-statement) on 17 October 2026: routine human code review becomes unnecessary because the realization can be trusted. Independent Agent review remains part of the method; reduced human intervention is a target to validate, with the project's acceptance policy retained. |
 | PRM-005 | Capable mid-tier models can do most of the delegated work, so routine delegation does not depend on the most expensive models. Lower total cost is a possible secondary benefit, not the primary purpose ([DEC-007](#dec-007-more-economical-models-means-capable-mid-tier-models), [ASM-003](#assumptions-and-hypotheses)). |
 | PRM-006 | Software becomes understandable: the model states what the system does and should do, and people can reason over it. |
 | PRM-007 | Order pays off: structure and careful definition are rewarded instead of turning into an endless cleanup. |
+| PRM-008 | Replaces PRM-001 ([DEC-091](#dec-091-concept-30-is-the-target)). Nothing in the spec's scope is silently forgotten. Affected obligations and files come from the spec, not from an agent's memory, and unknown impact remains visible. This covers declared relationships; dependencies in code are a known gap ([ENH-001](#enh-001-observed-code-dependencies-widen-impact)). |
+| PRM-009 | Replaces PRM-002 ([DEC-091](#dec-091-concept-30-is-the-target)). Rules and policies are applied where they matter. They reach the implementer through the spec and the checklist and are checked by an independent reviewer, so they are not overlooked when nothing forces the agent to see them. |
 
 ## Assumptions and hypotheses
 
@@ -1199,6 +1242,8 @@ These are the target outcomes Markitect is built to deliver. Each has the status
 ## Concepts
 
 ### CPT-001 Federalism
+
+**Superseded in part on 4 November 2026 by [DEC-091](#dec-091-concept-30-is-the-target):** No Manager per area and no parents integrating. Four eyes, clear responsibility, need to know and the global check stay, as properties of the spec and the tools.
 
 - **Status:** Accepted. The term is the owner's ([point 1](sources/idea-review-20261010.md#owner-response-to-the-five-points)); the structure comes from the [owner description](sources/owner-product-description-20261009.md).
 - **Statement:**
@@ -1338,7 +1383,7 @@ These entries record agreed or endorsed direction. Recording an enhancement does
 | OQ-008 | Should the Manager organization become the application's entry point, with the canonical model as its foundation, and would that better support a later Government axis? Owner framing, 16 October 2026: „Eventuell wäre das sogar die bessere Betrachtungsweise“ ([source](sources/manager-realization-20261016.md#apply-first-and-delegation-from-the-root)). The north star keeps it with the [later extensions](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/manager-realization-north-star.md#later-operations-and-extensions). | [DEC-004](#dec-004-the-manager-hierarchy-is-core-government-belongs-to-a-later-axis), [DEC-026](#dec-026-apply-comes-first-and-changes-only-artifacts) |
 | OQ-009 | How do DEC-018 and DEC-021 to DEC-023, written for the earlier Project model, map to language v1 and the registry once computed scope is built? | [DEC-018](#dec-018-the-knowledge-graph-explains-impact), [computed scope](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/manager-apply-concept.md#toward-computed-scope) |
 | OQ-010 | How can a Codex subscription login, rather than an API key, serve several concurrent session containers without racing on refresh-token rotation? A candidate is Orchestrator-owned tokens through the App Server's external token refresh; a smoke with concurrent sessions decides. | [DEC-037](#dec-037-agent-sessions-and-checks-run-in-linux-containers) |
-| OQ-011 | Should [draft concept 3.0](v3-concept.md) replace concept 2.0: one implementer and one reviewer per Command, one container per Command, with no Manager tree or agent Git? New evidence, with its limits: on the public cases of the counted series, the hierarchy cost about 5 to 8 times one strong agent and differed on hidden cases only where a step had nothing to do, with an arm fault behind most of its Makerspace misses and Gridshare unjudged. On that step and on a planted contradiction, where one strong agent went wrong, `impact` and the checker also gave arms S and KC the right result, with no tree, though they never ran beside it in the same launches. None of the six problems in the draft needs a tree. A project too big for one agent, the hierarchy's actual reason, is untested. The entries stay unchanged until the owner decides. | [CPT-001](#cpt-001-federalism), [DEC-004](#dec-004-the-manager-hierarchy-is-core-government-belongs-to-a-later-axis), [DEC-082](#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager), [DEC-086](#dec-086-concept-20-is-the-target) |
+| OQ-011 | **Decided 4 November 2026: yes, [DEC-091](#dec-091-concept-30-is-the-target).** Should [concept 3.0](v3-concept.md) replace concept 2.0: one implementer and one reviewer per Command, one container per Command, with no Manager tree or agent Git? New evidence, with its limits: on the public cases of the counted series, the hierarchy cost about 5 to 8 times one strong agent and differed on hidden cases only where a step had nothing to do, with an arm fault behind most of its Makerspace misses and Gridshare unjudged. On that step and on a planted contradiction, where one strong agent went wrong, `impact` and the checker also gave arms S and KC the right result, with no tree, though they never ran beside it in the same launches. None of the six problems in the draft needs a tree. A project too big for one agent, the hierarchy's actual reason, is untested. | [CPT-001](#cpt-001-federalism), [DEC-004](#dec-004-the-manager-hierarchy-is-core-government-belongs-to-a-later-axis), [DEC-082](#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager), [DEC-086](#dec-086-concept-20-is-the-target) |
 
 ## Ideas
 

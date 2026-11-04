@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| **Version** | 2.0 – accepted target |
+| **Version** | 2.0 – superseded as the target by [concept 3.0](v3-concept.md) |
 | **Date** | 28 October 2026 |
 | **Basis** | The owner's decisions of 28 October 2026 in the Topics session's design walk-through: [DEC-079](register.md#dec-079-the-model-is-as-explicit-as-good-documentation) to [DEC-085](register.md#dec-085-markdown-tools-are-the-cockpit-for-now), and [DEC-061](register.md#dec-061-what-an-extracted-model-contains) as confirmed that day. The register entries govern; this page puts them in one readable order. |
-| **State** | Accepted by the owner as Markitect's target on 28 October 2026 ([DEC-086](register.md#dec-086-concept-20-is-the-target)). Being built in the steps of the [delivery plan](../implementation-plan.md#concept-20-build). |
+| **State** | Accepted as the target on 28 October 2026 ([DEC-086](register.md#dec-086-concept-20-is-the-target)), superseded on 4 November 2026 ([DEC-091](register.md#dec-091-concept-30-is-the-target)). It stays the record of what Main implements until the [concept 3.0 build](../implementation-plan.md#concept-30-build) replaces it. |
 
 ## 1. What Markitect is for
 

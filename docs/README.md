@@ -6,7 +6,7 @@ Use this map to find the document that owns a decision, a guide or a piece of ev
 
 | If you want to… | Start here |
 |---|---|
-| Implement Markitect | [Concept 2.0](concepts/v2-concept.md) (the target), the [delivery plan](implementation-plan.md) and its [concept 2.0 build](implementation-plan.md#concept-20-build), [architecture](architecture.md) and [code map](development/code-map.md); [V1 concept 1.0](concepts/v1-concept.md) and the [qualification record](validation/v1-qualification-20261024.md) record V1 |
+| Implement Markitect | [Concept 3.0](concepts/v3-concept.md) (the target), [concept 2.0](concepts/v2-concept.md) (what Main implements until the rebuild), the [delivery plan](implementation-plan.md) and its [concept 3.0 build](implementation-plan.md#concept-30-build), [architecture](architecture.md) and [code map](development/code-map.md); [V1 concept 1.0](concepts/v1-concept.md) and the [qualification record](validation/v1-qualification-20261024.md) record V1 |
 | Understand what Markitect is for, before assessing or redirecting it | [Markitect in brief](vision.md#markitect-in-brief), [Common misreadings](vision.md#common-misreadings) and the [concept register](concepts/register.md) |
 | Understand where the idea came from and why its mechanisms might help | [Origin and rationale](vision.md#origin-and-rationale) and the [owner's original account](concepts/sources/owner-origin-20261015.md); the archived product reflections are listed in the [archive index](archive.md#archived-pages) |
 | Use Markitect on a project: set it up, write and register the model, check, lint and impact | [Project workflow](guides/project-workflow.md), the one user guide |

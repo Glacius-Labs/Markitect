@@ -240,7 +240,7 @@ The [model language guide](docs/guides/model-language.md) gives the exact format
 
 ## Status
 
-Markitect is being rebuilt to [concept 2.0](docs/concepts/v2-concept.md), its accepted target design, without compatibility to its first version. The [delivery plan](docs/implementation-plan.md#concept-20-build) holds the current step.
+Markitect's accepted target is [concept 3.0](docs/concepts/v3-concept.md), not built yet. Main implements [concept 2.0](docs/concepts/v2-concept.md), and is being rebuilt with no compatibility kept. The [delivery plan](docs/implementation-plan.md#concept-30-build) holds the current step, and the table below describes Main.
 
 | Area | State |
 | --- | --- |
@@ -250,7 +250,7 @@ Markitect is being rebuilt to [concept 2.0](docs/concepts/v2-concept.md), its ac
 | Evaluation against ordinary agentic coding | The pilot has run; its report and the counted series follow |
 | Release | None yet; install from source |
 
-Concept 2.0 counts as achieved ([§15](docs/concepts/v2-concept.md#15-acceptance)) when the [evaluation suite](docs/guides/evaluation-suite.md) shows, on a small and a larger project over a series of changes, that:
+Concept 3.0 keeps the aims of [concept 2.0 §15](docs/concepts/v2-concept.md#15-acceptance) and tests them as its [§13](docs/concepts/v3-concept.md#13-how-we-know-it-works) says. They ask, on a small and a larger project over a series of changes:
 
 1. every landed change passes hidden behavior tests that no agent saw;
 2. an independent `verify --full` after the series finds nothing left over;
@@ -312,7 +312,8 @@ Markitect = Markdown + Architect. The idea grew out of a project documented in M
 | --- | --- |
 | [Project workflow](docs/guides/project-workflow.md) | Using Markitect on a project, command by command, with troubleshooting |
 | [Model language](docs/guides/model-language.md) | Definitions, Kinds, Libraries, links, the registry and every diagnostic |
-| [Concept 2.0](docs/concepts/v2-concept.md) | The target design: model, organization, Runs and acceptance |
+| [Concept 3.0](docs/concepts/v3-concept.md) | The target design: spec, Commands, Runs and how we know it works |
+| [Concept 2.0](docs/concepts/v2-concept.md) | What Main implements until the rebuild |
 | [Vision](docs/vision.md) | Why Markitect exists, what it promises and what it leaves to people |
 | [Architecture](docs/architecture.md) | Packages, layers and the product flow |
 | [Evaluation suite](docs/guides/evaluation-suite.md) | How Markitect is measured against ordinary agentic coding |
