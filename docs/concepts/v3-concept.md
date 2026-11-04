@@ -247,13 +247,17 @@ The aims of [concept 2.0 §15](v2-concept.md#15-acceptance) stay: correct, no dr
 
 1. **Names.** Spec, implementer and reviewer replace model, maker and checker everywhere, including `.markitect/model/`, in one step during the build, with no compatibility kept.
 2. **What starts a full check.** A scheduled job or CI runs `verify --full`, documented with the Command, ahead of the continuous-change loop.
-3. **How far `impact` reaches.** It reports everything with distance and reason, the strategy picks the depth, and step 5 of §6 rebuilds the list after the work. Today it follows related links one step, which reached 38 of 41 changed files on Makerspace, by one measurement.
+3. **How far `impact` reaches.** It reports everything with distance and reason, the strategy picks the depth, and step 5 of §6 rebuilds the list after the work. Today it follows related links one step, which reached 33 of the 36 existing files that changed on Makerspace, by [one measurement](../validation/impact-reach-20261103.md).
 4. **A new Package's first registry page.** The implementer writes it, and the gate still requires every file to be accounted for.
 5. **Python in test tools.** `tools/evaluation`, the oracles and some scripts stay Python for now, since they are not shipped. The product is Go.
 6. **Small additions.** None now: a "how to see this change" line or demo in the Result, a view of what changed since you last looked, and comparing the spec's dependencies with the code's imports wait for the default, its tests and real use. The comparison of imports is the first candidate, since it needs no agent and feeds the analysis in §13.
 7. **An uncommitted spec.** `apply` refuses to start and says why, since a Run starts from a commit and the change would be silently left out.
 8. **`not shown`.** It may land, listed in the Result. A review could say it everywhere, which the Result would then show plainly.
 9. **Required checks that need a service or network.** The project's image starts what it needs. `execution.yaml` gets a place for them only if real projects ask.
+
+**Still open for the owner.** This question came from the Topics session after the nine were answered.
+
+10. **May a Command start sessions on an account login?** A Command starts every session itself on the user's normal login, never an API key (§9), and two things in Claude Code's documentation, read on 3 November 2026, bear on that. [Bare mode](https://code.claude.com/docs/en/headless) reads no subscription login, needs an API key or a cloud provider's credentials and is announced to become the default for `claude -p`. The [Agent SDK page](https://code.claude.com/docs/en/agent-sdk/overview) says third parties may not offer claude.ai login in their products without approval, and points them to API keys. Neither page settles a tool that a person runs on their own account. But the first page presents `claude -p` as the SDK's command-line form, so that rule may reach a Command, above all once others run Markitect. A provider can also change either page. Recommendation: check the terms and the `--bare` default before the build, and start sessions through one place per provider. If that route closes, the fallback is a skill in the user's own session that calls the same checks, with a Stop hook that keeps the agent working, and the gate repeated at push or in CI, because a hook can be skipped. That would change §6, §9 and §11, and give up unattended Runs and a fresh reviewer that the Command starts.
 
 ## 15. What this overturns
 
