@@ -1213,6 +1213,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Supersedes:** the entries in [§15](v3-concept.md#15-what-this-overturns), each marked with what goes and what stays. The new evidence and its limits are in [OQ-011](#open-questions). Concept 2.0 stays the record of what Main implements until the rebuild.
 - **Evaluation:** comparing variants stops. Three bounded tests and the owner's real use follow, and every result is kept and compared, including structure, architecture, quality and cleanliness ([§13](v3-concept.md#13-how-we-know-it-works)).
 - **Changed, 4 November 2026,** after Build's read of the concept: required checks run inside the container as a third Linux user, the rename follows test 3 or is done by the sealed project's author, and a Command takes no lock per branch ([§6](v3-concept.md#6-what-apply-does), [§14](v3-concept.md#14-decided-on-acceptance)).
+- **Decided, 4 November 2026,** after the review of U1: reviewers keep their shell until test 1 decides, which runs with and without one. As long as a reviewer has one, code it runs can change its answers and read the token ([§7](v3-concept.md#7-what-the-agents-are-told), [§13](v3-concept.md#13-how-we-know-it-works)).
 - **Next:** the [delivery plan](../implementation-plan.md#concept-30-build) owns the steps.
 
 ### DEC-092 A Command uses the user's own sign-in
@@ -1234,7 +1235,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Decision:**
   - The user makes a token with `claude setup-token`, through the provider's own browser flow, and keeps it in a variable of Markitect's own. The Command gives it only to each session's environment. It is not written to disk, the image or a bundle, and required checks never get it.
   - So Markitect does read the token and pass it on, which the sign-in in a volume would have avoided. Whether that counts as intermediating it goes in the owner's question to Anthropic ([DEC-092](#dec-092-a-command-uses-the-users-own-sign-in)).
-- **Costs, as far as known:** an agent can read the token from its environment, and it lasts a year, with no documented way to revoke it. Codex has access tokens for Enterprise; whether a personal plan gets one is not stated, so its route stays open.
+- **Costs, as far as known:** an agent, and any code it runs, can read the token from its environment, and it lasts a year, with no documented way to revoke it. Codex has access tokens for Enterprise; whether a personal plan gets one is not stated, so its route stays open.
 - **Reasoning:** [concept 3.0 §9](v3-concept.md#9-the-sandbox) and [§14](v3-concept.md#14-decided-on-acceptance), question 10. Nothing is shared between the implementer and the reviewer, so a sign-in's shared folder, scrub and turn-taking fall away.
 
 ## Promises
