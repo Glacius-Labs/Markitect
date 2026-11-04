@@ -2,7 +2,7 @@
 
   python -I -B blind_read.py prepare --store DIR --names NAME,NAME,... --requirements FILE --out NEW_DIR
   python -I -B blind_read.py run --material DIR --sandbox IMAGE_ID --variant-code tools/evaluation [--login FILE] [--series FILE]
-                                 [--model claude:MODEL_ID] [--deadline-seconds N] [--lock FILE]
+                                 [--model claude:MODEL_ID] [--deadline-seconds N] [--stop-after-points N] [--lock FILE]
 
 `prepare` gives each result a random label and a copy of its program without anything that names how it was made: no
 history, no `.markitect/`, no agent notes and no compiled files. The key stays in `key.json` beside the material, which no
@@ -12,6 +12,7 @@ session sees, and a person should not read it before the reads are through.
 Grep only, no memory, on one model. The same prompt goes to all. The reader sees one result and the requirements, and
 never hears that there are others, so that what it says is about this program and not about a comparison. Each attempt
 lands in `reads/LABEL/aN/`, whatever became of the session. Running it again starts only the labels without a valid read.
+It stops before the next session once the weekly reading has risen by --stop-after-points, or when a request is refused.
 
 A score here says where to look. The difference between two results is for the owner and the session to go through.
 """
@@ -112,13 +113,15 @@ def valid_answer(answer):
     return None
 
 
-def run(material_root, model, box, deadline=DEADLINE):
+def run(material_root, model, box, deadline=DEADLINE, stop_after=None):
     """One session per label, one at a time. A failed session is recorded and does not stop the others."""
     import reviewing  # the suite's modules, only needed here
+    import series_runner
 
     root = pathlib.Path(material_root)
     key = json.loads((root / "key.json").read_text(encoding="utf-8"))
     results = {}
+    first_reading = 0
     for label in sorted(key):
         reads = root / "reads" / label
         earlier = sorted(reads.glob("a*/read.json"))
@@ -132,9 +135,18 @@ def run(material_root, model, box, deadline=DEADLINE):
         token = key[label]["token"]
         session = reviewing.session("read", PROMPT, token, root / "material" / label, out, model, box, reviewing.REVIEWER, deadline)
         problem = valid_answer(session["answer"]) if session["valid"] else "the session gave no valid answer"
-        read = {"label": label, "valid": problem is None, "problem": problem, "answer": session["answer"], "reported": session["reported"]}
+        quota = series_runner.quota(out)
+        # In points; a session the provider sent no weekly figure to reads 0 and says nothing.
+        reading = round(quota["sevenDay"] * 100, 1)
+        read = {"label": label, "valid": problem is None, "problem": problem, "answer": session["answer"], "reported": session["reported"],
+                "wallSeconds": session.get("wallSeconds"), "weeklyReading": reading or None}
         (out / "read.json").write_text(json.dumps(read, indent=2) + "\n", encoding="utf-8")
         results[label] = read
+        first_reading = first_reading or reading
+        if quota["refused"]:
+            raise ReadError("a request was refused: the reads stop here")
+        if stop_after is not None and reading and reading - first_reading >= stop_after:
+            raise ReadError(f"the weekly reading rose from {first_reading} to {reading}: the reads stop here")
     return results
 
 
@@ -155,6 +167,7 @@ def main(argv=None):
     r.add_argument("--engine", default="docker")
     r.add_argument("--model", default="claude:claude-opus-5-5")
     r.add_argument("--deadline-seconds", type=int, default=DEADLINE)
+    r.add_argument("--stop-after-points", type=float)
     r.add_argument("--lock")
     a = parser.parse_args(argv)
     try:
@@ -167,7 +180,7 @@ def main(argv=None):
         provider = a.model.partition(":")[0]
         box = sandboxing.Sandbox([a.engine], a.sandbox, sandboxing.load_series(a.series), a.variant_code, login, provider)
         with sandboxing.engine_lock(a.lock, "evaluation blind read", str(pathlib.Path(a.material).resolve())):
-            results = run(a.material, a.model, box, a.deadline_seconds)
+            results = run(a.material, a.model, box, a.deadline_seconds, a.stop_after_points)
         print(json.dumps({label: {"valid": r["valid"], "problem": r["problem"]} for label, r in results.items()}, indent=2))
         return 0 if all(r["valid"] for r in results.values()) else 1
     except (ReadError, kept.KeptError, OSError, ValueError, KeyError) as e:
