@@ -12,48 +12,14 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/harness"
 )
 
-var now = time.Date(2026, 10, 28, 12, 0, 0, 0, time.UTC)
-
-func credentials(oauth map[string]any) []byte {
-	raw, _ := json.Marshal(map[string]any{"claudeAiOauth": oauth, "mcpOAuth": map[string]any{"server": "other-secret"}})
-	return raw
-}
-
-func TestLoginCopiesTheAccountLoginWithoutRefreshAuthority(t *testing.T) {
-	l, err := Provider{}.Login(credentials(map[string]any{"accessToken": "sk-ant-oat01-a", "refreshToken": "sk-ant-ort01-r", "expiresAt": now.Add(time.Hour).UnixMilli(), "scopes": []string{"user:inference"}}), now)
-	if err != nil {
-		t.Fatal(err)
-	}
-	copy := string(l.Copy)
-	if strings.Contains(copy, "ort01") || strings.Contains(copy, "refreshToken") || strings.Contains(copy, "mcpOAuth") || !strings.Contains(copy, "sk-ant-oat01-a") || !strings.Contains(copy, "scopes") {
-		t.Fatalf("copy %s", copy)
-	}
-	if len(l.Secrets) != 2 || !l.Expires.Equal(now.Add(time.Hour)) {
-		t.Fatalf("login %+v", l)
-	}
-}
-
-func TestLoginRefusesAPIKeysExpiredAndForeignFiles(t *testing.T) {
-	for name, source := range map[string][]byte{
-		"api key":    credentials(map[string]any{"accessToken": "sk-ant-api03-k"}),
-		"expired":    credentials(map[string]any{"accessToken": "sk-ant-oat01-a", "expiresAt": now.Add(-time.Second).UnixMilli()}),
-		"no oauth":   []byte(`{"other":{}}`),
-		"no token":   credentials(map[string]any{"refreshToken": "r"}),
-		"not json":   []byte("token"),
-		"empty":      nil,
-		"bad expiry": credentials(map[string]any{"accessToken": "a", "expiresAt": "soon"}),
-	} {
-		if _, err := (Provider{}).Login(source, now); err == nil {
-			t.Errorf("%s: admitted", name)
+func TestCheckAuthAdmitsOnlyTheAccountLogin(t *testing.T) {
+	// The account login is a sign-in or the token of `claude setup-token`.
+	for _, out := range []string{`{"loggedIn":true,"authMethod":"claude.ai","apiProvider":"firstParty"}` + "\n", `{"loggedIn":true,"authMethod":"oauth_token"}`} {
+		if err := (Provider{}).CheckAuth([]byte(out)); err != nil {
+			t.Errorf("refused %s: %v", out, err)
 		}
 	}
-}
-
-func TestCheckAuthAdmitsOnlyTheClaudeAILogin(t *testing.T) {
-	if err := (Provider{}).CheckAuth([]byte(`{"loggedIn":true,"authMethod":"claude.ai","apiProvider":"firstParty"}` + "\n")); err != nil {
-		t.Fatal(err)
-	}
-	for _, out := range []string{`{"loggedIn":false,"authMethod":"none"}`, `{"loggedIn":true,"authMethod":"api_key"}`, `not json`} {
+	for _, out := range []string{`{"loggedIn":false,"authMethod":"none"}`, `{"loggedIn":false,"authMethod":"oauth_token"}`, `{"loggedIn":true,"authMethod":"api_key"}`, `{"loggedIn":true,"authMethod":"ANTHROPIC_API_KEY"}`, `{"loggedIn":true}`, `not json`} {
 		if (Provider{}).CheckAuth([]byte(out)) == nil {
 			t.Errorf("admitted %s", out)
 		}
@@ -82,7 +48,7 @@ func TestTurnLaunchesThePinnedContract(t *testing.T) {
 			t.Errorf("env lacks %q", want)
 		}
 	}
-	if strings.Contains(envs, "SUBPROCESS_ENV_SCRUB") || strings.Contains(envs, "ANTHROPIC") {
+	if strings.Contains(envs, "SUBPROCESS_ENV_SCRUB") || strings.Contains(envs, "ANTHROPIC") || strings.Contains(envs, "OAUTH_TOKEN") {
 		t.Error("env carries a variable the launch must not")
 	}
 	var msg struct {
@@ -106,11 +72,11 @@ func TestTurnLaunchesThePinnedContract(t *testing.T) {
 }
 
 func TestHomeCarriesTheHarnessAsSystemPrompts(t *testing.T) {
-	i, err := Provider{}.Home(agents.Login{Copy: []byte("{}")}, harness.Document{Base: "base", Context: "context", Task: "task"})
+	i, err := Provider{}.Home(harness.Document{Base: "base", Context: "context", Task: "task"})
 	if err != nil || i.Claude == nil || i.Claude.SystemPrompt != "base" || i.Claude.AppendSystemPrompt != "context" || i.CodexAuth != nil {
 		t.Fatalf("home %+v %v", i, err)
 	}
-	if _, err := (Provider{}).Home(agents.Login{Copy: []byte("{}")}, harness.Document{Base: "b", Context: strings.Repeat("x", 2<<20)}); err == nil {
+	if _, err := (Provider{}).Home(harness.Document{Base: "b", Context: strings.Repeat("x", 2<<20)}); err == nil {
 		t.Fatal("an oversized harness was installed")
 	}
 }
@@ -121,7 +87,7 @@ func TestAChatsDocumentsPassAgentdsSetupCheck(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		i, err := Provider{}.Home(agents.Login{Copy: []byte("{}")}, doc)
+		i, err := Provider{}.Home(doc)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -131,7 +97,7 @@ func TestAChatsDocumentsPassAgentdsSetupCheck(t *testing.T) {
 	}
 }
 
-const initOK = `{"type":"system","subtype":"init","session_id":"s-1","model":"claude-sonnet-5-5","claude_code_version":"2.1.308","apiKeySource":"none","permissionMode":"bypassPermissions","tools":["Bash","Edit","Glob","Grep","Read","Write","mcp__markitect__submit"],"agents":[],"skills":[],"plugins":[],"slash_commands":[],"mcp_servers":[{"name":"markitect","status":"pending"}]}`
+const initOK = `{"type":"system","subtype":"init","session_id":"s-1","model":"claude-sonnet-5-5","claude_code_version":"2.1.308","apiKeySource":"none","permissionMode":"bypassPermissions","tools":["Bash","Edit","Glob","Grep","Read","Write"],"agents":[],"skills":[],"plugins":[],"slash_commands":[],"mcp_servers":[{"name":"markitect","status":"pending"}]}`
 
 func read(t *testing.T, turn agents.Turn, lines ...string) (agents.Outcome, error) {
 	t.Helper()
@@ -163,7 +129,7 @@ func TestReaderTellsATurnsProgress(t *testing.T) {
 }
 
 func TestReaderAnswersAndCountsUsage(t *testing.T) {
-	out, err := read(t, agents.Turn{Tools: []string{"submit"}}, initOK,
+	out, err := read(t, agents.Turn{}, initOK,
 		`{"type":"rate_limit_event","rate_limit_info":{"status":"allowed"}}`,
 		`{"type":"system","subtype":"thinking_tokens"}`,
 		`{"type":"assistant","parent_tool_use_id":null,"message":{"role":"assistant","content":[{"type":"text","text":"ok"}]},"session_id":"s-1"}`,
@@ -175,7 +141,7 @@ func TestReaderAnswersAndCountsUsage(t *testing.T) {
 }
 
 func TestReaderRefusesWhatTheLaunchMustNotBe(t *testing.T) {
-	turn := agents.Turn{Tools: []string{"submit"}}
+	turn := agents.Turn{}
 	for name, lines := range map[string][]string{
 		"api key":       {strings.Replace(initOK, `"apiKeySource":"none"`, `"apiKeySource":"ANTHROPIC_API_KEY"`, 1)},
 		"version":       {strings.Replace(initOK, "2.1.308", "2.2.0", 1)},
@@ -194,7 +160,7 @@ func TestReaderRefusesWhatTheLaunchMustNotBe(t *testing.T) {
 			t.Errorf("%s: accepted", name)
 		}
 	}
-	if _, err := read(t, agents.Turn{Tools: []string{"submit"}, Conversation: "s-0"}, initOK); err == nil {
+	if _, err := read(t, agents.Turn{Conversation: "s-0"}, initOK); err == nil {
 		t.Error("a resumed turn accepted another session")
 	}
 }
@@ -219,7 +185,7 @@ func TestReaderClassifiesProviderFailures(t *testing.T) {
 		// A request that failed and then recovered is no failure of the turn.
 		{[]string{`{"type":"system","subtype":"api_retry","attempt":1,"error":"overloaded"}`, `{"type":"assistant","parent_tool_use_id":null,"message":{}}`, failed("", 0)}, agents.Other},
 	} {
-		out, err := read(t, agents.Turn{Tools: []string{"submit"}}, append([]string{initOK}, c.lines...)...)
+		out, err := read(t, agents.Turn{}, append([]string{initOK}, c.lines...)...)
 		if err != nil || out.End != agents.Failed || out.Class != c.want {
 			t.Errorf("%v: outcome %+v %v, want %s", c.lines, out, err, c.want)
 		}
@@ -239,23 +205,23 @@ func TestReaderCountsAStoppedTurnFromItsMessages(t *testing.T) {
 		return fmt.Sprintf(`{"type":"assistant","parent_tool_use_id":null,"message":{"id":%q,"role":"assistant","content":[],"usage":{"input_tokens":%d,"cache_creation_input_tokens":%d,"cache_read_input_tokens":%d,"output_tokens":%d}},"session_id":"s-1"}`,
 			id, in, created, read, output)
 	}
-	out, err := read(t, agents.Turn{Tools: []string{"submit"}}, initOK,
+	out, err := read(t, agents.Turn{}, initOK,
 		msg("m1", 2, 100, 50, 10), msg("m1", 2, 100, 50, 12), msg("m2", 3, 20, 150, 5))
 	if err != nil || out.End != "" || out.Usage != (agents.Usage{Input: 5, CacheCreation: 120, CacheRead: 200, Output: 17, Partial: true}) {
 		t.Fatalf("outcome %+v %v", out, err)
 	}
 	// A turn without any message reports no total either.
-	if out, err := read(t, agents.Turn{Tools: []string{"submit"}}, initOK); err != nil || out.Usage != (agents.Usage{Partial: true}) {
+	if out, err := read(t, agents.Turn{}, initOK); err != nil || out.Usage != (agents.Usage{Partial: true}) {
 		t.Fatalf("a turn without messages: %+v %v", out, err)
 	}
 	// A failed turn with an error result reports its total.
-	out, err = read(t, agents.Turn{Tools: []string{"submit"}}, initOK, msg("m1", 2, 100, 50, 10),
+	out, err = read(t, agents.Turn{}, initOK, msg("m1", 2, 100, 50, 10),
 		`{"type":"result","subtype":"success","is_error":true,"result":"API Error: 529","session_id":"s-1","usage":{"input_tokens":2,"cache_creation_input_tokens":100,"cache_read_input_tokens":50,"output_tokens":30}}`)
 	if err != nil || out.Usage != (agents.Usage{Input: 2, CacheCreation: 100, CacheRead: 50, Output: 30}) {
 		t.Fatalf("an error result: %+v %v", out, err)
 	}
 	// A turn that answered counts its result, not its messages.
-	out, err = read(t, agents.Turn{Tools: []string{"submit"}}, initOK, msg("m1", 2, 100, 50, 10),
+	out, err = read(t, agents.Turn{}, initOK, msg("m1", 2, 100, 50, 10),
 		`{"type":"result","subtype":"success","is_error":false,"result":"done","session_id":"s-1","usage":{"input_tokens":2,"cache_creation_input_tokens":100,"cache_read_input_tokens":50,"output_tokens":400}}`)
 	if err != nil || out.Usage != (agents.Usage{Input: 2, CacheCreation: 100, CacheRead: 50, Output: 400}) {
 		t.Fatalf("outcome %+v %v", out, err)

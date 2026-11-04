@@ -20,11 +20,10 @@ const chatLabel = "markitect.chat"
 // chatTurn bounds one turn of a chat.
 const chatTurn = 30 * time.Minute
 
-// desktopChats starts Markitect Desktop's chat agents with the engine,
-// Manager image, provider, login, model and effort of apply and verify
-// (agentConfig), read at every start, so a login refreshed on the host
-// reaches the next agent. The native app also has an image of its own, for when
-// no Manager image is set.
+// desktopChats starts Markitect Desktop's chat agents with the engine, image,
+// provider, token, model and effort of apply and verify (agentConfig), read at
+// every start. The native app also has an image of its own, for when no image is
+// set.
 type desktopChats struct{ image *chatImage }
 
 func (c desktopChats) Start(ctx context.Context, s desktop.ChatStart) (desktop.ChatAgent, error) {
@@ -34,13 +33,9 @@ func (c desktopChats) Start(ctx context.Context, s desktop.ChatStart) (desktop.C
 			return c.image.ensure(ctx, engine, s.Doing)
 		}
 	}
-	cfg, engine, err := agentConfigWith(ctx, build)
+	cfg, engine, err := readAgentConfigWith(ctx, build)
 	if err != nil {
 		return nil, err
-	}
-	login, err := os.ReadFile(cfg.LoginFile)
-	if err != nil {
-		return nil, fmt.Errorf("the %s login: %w", cfg.Provider.Name(), err)
 	}
 	// A chat agent of an earlier app that ended without cleaning up holds
 	// this conversation's container name; it goes first.
@@ -57,7 +52,7 @@ func (c desktopChats) Start(ctx context.Context, s desktop.ChatStart) (desktop.C
 	}
 	chat, err := agents.StartChat(ctx, cfg.Runtime, cfg.Provider, agents.ChatSpec{
 		Name: s.Name, Labels: map[string]string{chatLabel: s.Name}, Image: cfg.Image, Limits: cfg.Limits,
-		Network: cfg.Network, Hosts: cfg.Hosts, DNS: cfg.DNS, Login: login, Model: cfg.Model, Effort: cfg.Effort,
+		Network: cfg.Network, Hosts: cfg.Hosts, DNS: cfg.DNS, Token: cfg.Token, Model: cfg.Model, Effort: cfg.Effort,
 		Skill: s.Skill, Earlier: s.Earlier, Files: s.Files, Read: read, Pending: pending, Turn: chatTurn,
 	})
 	if err != nil {

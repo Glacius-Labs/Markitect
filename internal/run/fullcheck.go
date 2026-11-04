@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// Trailers of the full-check count (concept 2.0 §6.1). A Result commit on
+// Trailers of the full-check count (concept 3.0 §10). A Result commit on
 // a Run branch names its command and state, so a `verify --full` that
 // ended verified or with findings is a full check while its branch exists.
 // A landing carries the newest full check it knows forward, so that check

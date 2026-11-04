@@ -77,7 +77,7 @@ type ClaudeHome struct {
 }
 
 func (h *ClaudeHome) valid() bool {
-	return h != nil && len(h.Credentials) > 0 && len(h.Credentials) <= MaxPrivateAuthBytes && h.SystemPrompt != "" && h.AppendSystemPrompt != "" && utf8.ValidString(h.SystemPrompt) && utf8.ValidString(h.AppendSystemPrompt)
+	return h != nil && len(h.Credentials) <= MaxPrivateAuthBytes && h.SystemPrompt != "" && h.AppendSystemPrompt != "" && utf8.ValidString(h.SystemPrompt) && utf8.ValidString(h.AppendSystemPrompt)
 }
 
 type Initialized struct{}

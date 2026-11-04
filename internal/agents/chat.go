@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
-	"github.com/Glacius-Labs/Markitect/internal/agentport"
 	"github.com/Glacius-Labs/Markitect/internal/harness"
 )
 
@@ -40,8 +39,8 @@ type ChatSpec struct {
 	// Network reaches the provider; a chat joins no other network.
 	Network    string
 	Hosts, DNS []string
-	// Login is the operator's login file for the provider.
-	Login  []byte
+	// Token is the user's account token.
+	Token  string
 	Model  string
 	Effort string
 	// Skill and Earlier render the chat's documents (harness.Chat).
@@ -62,10 +61,9 @@ type ChatSpec struct {
 // Chat is one running chat agent. It takes one call at a time, as a
 // conversation does.
 type Chat struct {
-	a       *Agent
-	turn    time.Duration
-	now     func() time.Time
-	expires time.Time
+	a    *Agent
+	turn time.Duration
+	now  func() time.Time
 }
 
 // chatBranch is the branch of a chat's copy.
@@ -87,21 +85,17 @@ func StartChat(ctx context.Context, rt Runtime, p Provider, spec ChatSpec) (*Cha
 	if err != nil {
 		return nil, err
 	}
-	login, err := p.Login(spec.Login, now())
-	if err != nil {
-		return nil, &StartError{Class: LoginFailed, Err: err}
+	if p.TokenVariable() == "" || spec.Token == "" {
+		return nil, &StartError{Class: LoginFailed, Err: fmt.Errorf("%s has no account token to start a chat with", p.Name())}
 	}
-	c := &Chat{turn: spec.Turn, now: now, expires: login.Expires}
-	if err := c.fresh(); err != nil {
-		return nil, &StartError{Class: LoginFailed, Err: err}
-	}
+	c := &Chat{turn: spec.Turn, now: now}
 	c.a = &Agent{
 		spec: Spec{Name: spec.Name, Labels: spec.Labels, Image: spec.Image, Limits: spec.Limits, Network: spec.Network, Hosts: spec.Hosts, DNS: spec.DNS,
-			Login: spec.Login, Model: spec.Model, Effort: spec.Effort, Transcript: spec.Transcript, Now: spec.Now,
-			Start: agentport.Start{Deadline: now().Add(spec.Turn)}},
-		provider: p, rt: rt, doc: doc, secrets: login.Secrets,
+			Token: spec.Token, Model: spec.Model, Effort: spec.Effort, Transcript: spec.Transcript, Now: spec.Now,
+			Deadline: now().Add(spec.Turn)},
+		provider: p, rt: rt, doc: doc, secrets: [][]byte{[]byte(spec.Token)},
 	}
-	if err := c.start(ctx, login, spec); err != nil {
+	if err := c.start(ctx, spec); err != nil {
 		if cerr := c.a.Close(context.WithoutCancel(ctx)); cerr != nil {
 			err = errors.Join(err, fmt.Errorf("%w: %v", errCleanup, cerr))
 		}
@@ -110,16 +104,7 @@ func StartChat(ctx context.Context, rt Runtime, p Provider, spec ChatSpec) (*Cha
 	return c, nil
 }
 
-// fresh refuses a login copy that would expire during the next turn: the
-// copy cannot refresh itself, so a fresh agent takes a fresh copy.
-func (c *Chat) fresh() error {
-	if !c.expires.IsZero() && !c.expires.After(c.now().Add(c.turn+loginMargin)) {
-		return fmt.Errorf("the login's access token expires at %s, within the next turn; refresh the login on the host first", c.expires.UTC().Format(time.RFC3339))
-	}
-	return nil
-}
-
-func (c *Chat) start(ctx context.Context, login Login, spec ChatSpec) error {
+func (c *Chat) start(ctx context.Context, spec ChatSpec) error {
 	a := c.a
 	for _, v := range []string{spec.Name + "-home", spec.Name + "-work"} {
 		if err := a.rt.CreateVolume(ctx, v, spec.Labels); err != nil {
@@ -140,7 +125,7 @@ func (c *Chat) start(ctx context.Context, login Login, spec ChatSpec) error {
 	if err := c.copyIn(ctx, spec); err != nil {
 		return fmt.Errorf("copy the project into the chat: %w", err)
 	}
-	home, err := a.provider.Home(login, a.doc)
+	home, err := a.provider.Home(a.doc)
 	if err != nil {
 		return err
 	}
@@ -277,10 +262,7 @@ func (c *Chat) gitStream(ctx context.Context, argv []string, stdin io.Reader) er
 // turn whose login copy would expire on the way is refused, so that a fresh
 // agent takes over.
 func (c *Chat) Send(ctx context.Context, message string, on func(Progress)) (Outcome, error) {
-	if err := c.fresh(); err != nil {
-		return Outcome{End: Failed, Class: LoginFailed, Detail: err.Error()}, nil
-	}
-	c.a.spec.Start.Deadline = c.now().Add(c.turn)
+	c.a.spec.Deadline = c.now().Add(c.turn)
 	last := ""
 	c.a.progress = func(p Progress) {
 		p.Text = string(c.a.redact([]byte(p.Text)))

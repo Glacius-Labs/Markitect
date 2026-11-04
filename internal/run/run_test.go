@@ -1,18 +1,12 @@
 package run_test
 
 import (
-	"context"
-	"fmt"
 	"os"
-	"path/filepath"
+	"path"
 	"strings"
-	"sync/atomic"
 	"testing"
-	"time"
 
-	"github.com/Glacius-Labs/Markitect/internal/adapters/rungit"
 	"github.com/Glacius-Labs/Markitect/internal/agentport"
-	"github.com/Glacius-Labs/Markitect/internal/agentport/agentfake"
 	"github.com/Glacius-Labs/Markitect/internal/analysis"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
@@ -20,1235 +14,690 @@ import (
 )
 
 const (
-	maker   = agentport.Maker
-	checker = agentport.Checker
+	implementer = agentport.Implementer
+	reviewer    = agentport.Reviewer
+	bookFile    = "src/catalog/book.go"
+	bookFixed   = "package catalog\n\ntype Book struct{ Title, ISBN string }\n"
 )
 
-// word gives every item the same verdict.
-func word(w string) func(agentport.Start) []agentfake.Verdict {
-	return func(s agentport.Start) []agentfake.Verdict {
-		var vs []agentfake.Verdict
-		for _, it := range s.Checklist {
-			vs = append(vs, agentfake.Verdict{Item: it.Key, Word: w, Evidence: "checked " + it.Key})
-		}
-		return vs
-	}
-}
-
-// changeBook changes the catalog's book Definition, so catalog and Root
-// work and members does not.
-func changeBook(f *fixture) (base, start string) {
-	base = f.tip("main")
-	f.write(map[string]string{m + "catalog/book.md": def("std/Concept", "Book", "A book has a title and an `isbn`.")})
-	return base, f.commit("book has an isbn")
-}
-
-func items(r *run.Result) string {
-	var parts []string
+func answerOf(r *run.Result, item string) string {
 	for _, it := range r.Items {
-		parts = append(parts, it.Manager+":"+it.Item+"="+it.Verdict)
+		if it.Item == item {
+			return it.Answer
+		}
 	}
-	return strings.Join(parts, " ")
+	return "absent"
 }
 
-func TestApplyLandsOnUnmovedTarget(t *testing.T) {
+func TestApplyLandsAndTheWorkIsTheNextBase(t *testing.T) {
 	f := newFixture(t)
 	base, start := changeBook(f)
-	a := f.agents
-	a.On("catalog", maker, a.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ Title, ISBN string }\n"}, word("changed")))
-	a.On("catalog", checker, a.Review(nil))
-	a.On(".", maker, a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
-	a.On(".", checker, a.Review(nil))
+	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
+	f.agents.on(reviewer, f.answer(nil, "I could not test the printing."))
 
 	r := f.run(run.Request{Base: base})
 	if r.Outcome != run.Landed || r.State != run.StateLanded {
-		t.Fatalf("outcome %s/%s: %s", r.Outcome, r.State, r.Why)
+		t.Fatalf("%s/%s: %s", r.Outcome, r.State, r.Why)
 	}
 	if got := f.tip("main"); got != r.Landed {
 		t.Fatalf("main is at %s, the Result says it landed %s", got, r.Landed)
 	}
-	if !strings.Contains(f.show("main", "src/catalog/book.go"), "ISBN") {
-		t.Fatal("the approved change did not land")
+	if !strings.Contains(f.show("main", bookFile), "ISBN") {
+		t.Fatal("the work did not land")
 	}
 	page := f.show("main", project.ResultsDir+"/"+r.Run+".md")
-	if !strings.Contains(page, "catalog/book") || !strings.Contains(page, "# Run "+r.Run+": landed") {
-		t.Fatalf("Result page:\n%s", page)
-	}
-	if r.Start != start || r.Base != base {
-		t.Fatalf("base %s start %s", r.Base, r.Start)
-	}
-	if items(r) != "catalog:catalog/book=changed" {
-		t.Fatalf("items %s", items(r))
-	}
-	for _, it := range r.Items {
-		if !it.Approved || it.Checker == "" || it.Evidence == "" {
-			t.Fatalf("item %+v", it)
+	for _, want := range []string{"# Run " + r.Run + ": landed", "catalog/book", "README.md:1", "How much checking happened", "I could not test the printing"} {
+		if !strings.Contains(page, want) {
+			t.Fatalf("the Result page lacks %q:\n%s", want, page)
 		}
 	}
-	if !r.RequiredChecks.Ran || !r.RequiredChecks.WholeRepository {
+	if r.Start != start || r.Base != base || r.Work == "" {
+		t.Fatalf("base %s start %s work %s", r.Base, r.Start, r.Work)
+	}
+	if got := answerOf(r, "catalog/book"); got != run.AnswerOK {
+		t.Fatalf("catalog/book: %s", got)
+	}
+	if !r.RequiredChecks.Ran || r.RequiredChecks.Commit != r.Work {
 		t.Fatalf("required checks %+v", r.RequiredChecks)
 	}
 	if f.tip(run.RunBranchPrefix+r.Run) != "" || r.Branch != "" {
 		t.Fatal("the landed Run's branch was not deleted")
 	}
-	var notTaking []string
-	for _, p := range r.NotParticipating {
-		notTaking = append(notTaking, p.Package)
+	if r.Depth.FilesOpened != 1 || r.Depth.PointersOpened != 1 {
+		t.Fatalf("depth %+v", r.Depth)
 	}
-	if strings.Join(notTaking, " ") != "members members/loans" {
-		t.Fatalf("not taking part: %v", notTaking)
-	}
-	// The landed work is the default base of the next Run, and nothing
+	// The landed work is the default base of the next Command, and nothing
 	// changed since.
 	again := f.run(run.Request{})
 	if work := strings.TrimSpace(testkit.Git(t, f.target, "rev-parse", r.Landed+"^")); again.State != run.StateNothing || again.Base != work {
-		t.Fatalf("next Run %s from %s: %s", again.State, again.Base, again.Why)
+		t.Fatalf("next Command %s from %s: %s", again.State, again.Base, again.Why)
+	}
+	// Commits that land beside it stay unrealized for the next impact.
+	f.pull()
+	f.write(map[string]string{m + "members/member.md": def("std/Concept", "Member", "A person with a card.")})
+	f.commit("member has a card")
+	f.agents.on(implementer, f.edit(map[string]string{"src/members/member.go": "package members\n\ntype Member struct{ Card string }\n"}))
+	f.agents.on(reviewer, f.ok())
+	if next := f.run(run.Request{}); next.State != run.StateLanded || answerOf(next, "members/member") != run.AnswerOK {
+		t.Fatalf("the next change: %s: %s; items %+v", next.State, next.Why, next.Items)
 	}
 }
 
-func TestCheckerRejectsAndMakerFixes(t *testing.T) {
+// The prompt carries the fixed part and the list; the reviewer starts outside
+// its clean copy, so nothing the work committed there is discovered from where
+// it starts, and that copy holds only what was committed.
+func TestSessionsGetAPromptAndAReviewerStartsOutsideItsCopy(t *testing.T) {
 	f := newFixture(t)
 	base, _ := changeBook(f)
-	a := f.agents
-	a.On("catalog", maker,
-		a.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ Title string }\n"}, word("changed")),
-		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
-			if len(s.Inbox) != 1 || s.Inbox[0].Kind != agentport.Review || !strings.Contains(s.Inbox[0].Text, "no isbn") {
-				return agentfake.Fail(errorf("the second start has no rejection: %+v", s.Inbox))
-			}
-			return a.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ Title, ISBN string }\n"}, word("changed"))(ctx, s, h)
-		})
-	a.On("catalog", checker, a.Review(map[string]string{"catalog/book": "no isbn"}), a.Review(nil))
-	a.On(".", maker, a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
-	a.On(".", checker, a.Review(nil))
-
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateLanded {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-	if !strings.Contains(f.show("main", "src/catalog/book.go"), "ISBN") {
-		t.Fatal("the fixed work did not land")
-	}
-	rounds := 0
-	for _, st := range r.Starts {
-		if st.Manager == "catalog" && st.Role == maker {
-			rounds++
+	f.write(map[string]string{".gitignore": "build/\n", project.RootPage: table + "| README.md | [[project]] | Overview |\n| .gitignore | [[project]] | Build outputs |\n"})
+	f.commit("ignore build outputs")
+	var copied string
+	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed, "build/output.bin": "left behind", ".claude/settings.json": `{"hooks":{}}`,
+		project.RootPage: table + "| README.md | [[project]] | Overview |\n| .gitignore | [[project]] | Build outputs |\n| .claude/settings.json | [[project]] | Tools |\n"}))
+	review := f.ok()
+	f.agents.on(reviewer, func(s agentport.Session, repo string) agentport.End {
+		copied = repo
+		if s.Dir == repo || !strings.HasPrefix(repo, s.Dir+"/") {
+			t.Errorf("the reviewer starts in %s, its copy is %s", s.Dir, repo)
 		}
-	}
-	if rounds != 2 {
-		t.Fatalf("catalog's maker started %d times", rounds)
-	}
-}
-
-func TestEscalationSettledByParent(t *testing.T) {
-	f := newFixture(t)
-	base, _ := changeBook(f)
-	a := f.agents
-	var question string
-	var rootEnded atomic.Bool
-	a.On("catalog", maker,
-		agentfake.Call(func(ctx context.Context, s agentport.Start, h agentport.Host) error {
-			m, err := h.Escalate(ctx, "Must an isbn be unique across copies?")
-			question = m.ID
-			return err
-		}),
-		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
-			if len(s.Inbox) != 1 || s.Inbox[0].Kind != agentport.Answer || s.Inbox[0].ReplyTo != question {
-				return agentfake.Fail(errorf("no answer: %+v", s.Inbox))
-			}
-			// The answer settles the matter only once Root's start has
-			// ended, which could still have changed Root's files.
-			if !rootEnded.Load() {
-				return agentfake.Fail(errorf("catalog started again while Root's answering start ran"))
-			}
-			return a.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ Title, ISBN string }\n"}, word("changed"))(ctx, s, h)
-		})
-	a.On("catalog", checker, a.Review(nil))
-	a.On(".", maker,
-		agentfake.Call(func(ctx context.Context, s agentport.Start, h agentport.Host) error {
-			if len(s.Inbox) != 1 || s.Inbox[0].Kind != agentport.Escalation {
-				return errorf("Root got %+v", s.Inbox)
-			}
-			_, err := h.Answer(ctx, s.Inbox[0].ID, "Per title, as the model says nothing more: realization freedom.")
-			time.Sleep(500 * time.Millisecond)
-			rootEnded.Store(true)
-			return err
-		}),
-		a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
-	a.On(".", checker, a.Review(nil))
-
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateLanded {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-	if len(r.Messages) < 2 || r.Messages[0].Kind != agentport.Escalation {
-		t.Fatalf("messages %+v", r.Messages)
-	}
-}
-
-// The shape of the T7 smoke's launch 3: Root has no items, so catalog starts
-// at once; the change needs a file of Root's, so catalog escalates and Root
-// settles it with a commit of its own. Root's settlement is checked before
-// its child is approved, catalog continues from that approval, and only then
-// does Root integrate catalog's approved work. Before, catalog restarted on
-// the answer without Root's fix and Root's submission waited for catalog's
-// approval, so neither could converge.
-func TestEscalationSettledByAParentsCommit(t *testing.T) {
-	f := newFixture(t)
-	base, _ := changeBook(f)
-	a := f.agents
-	readme := "# Library\n\nBooks carry an isbn.\n"
-	var escalation string
-	a.On("catalog", maker,
-		agentfake.Call(func(ctx context.Context, s agentport.Start, h agentport.Host) error {
-			m, err := h.Escalate(ctx, "The isbn must be in README.md, which is Root's file.")
-			escalation = m.ID
-			return err
-		}),
-		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
-			var answered, told bool
-			for _, msg := range s.Inbox {
-				answered = answered || (msg.Kind == agentport.Answer && msg.ReplyTo == escalation)
-				told = told || strings.Contains(msg.Text, s.Git.Base)
-			}
-			if !answered || !told {
-				return agentfake.Fail(errorf("catalog starts again without the answer and its parent's approval %s: %+v", s.Git.Base, s.Inbox))
-			}
-			// A submission must hold the commit its work continues from.
-			return a.Submit(nil, map[string]string{"src/catalog/book.go": isbn}, word("changed"))(ctx, s, h)
-		},
-		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
-			if len(s.Inbox) != 1 || !strings.Contains(s.Inbox[0].Text, "does not contain "+s.Git.Base) {
-				return agentfake.Fail(errorf("inbox %+v", s.Inbox))
-			}
-			return a.Submit([]string{"root"}, nil, word("changed"))(ctx, s, h)
-		})
-	a.On("catalog", checker, func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
-		w, err := a.Clone(ctx, s)
-		if err != nil {
-			return agentfake.Fail(err)
+		if strings.Contains(s.Prompt, "left behind") {
+			t.Error("the prompt holds what Git did not take")
 		}
-		if data, err := os.ReadFile(filepath.Join(w.Dir, "README.md")); err != nil || string(data) != readme {
-			return a.Review(map[string]string{"catalog/book": "README.md does not name the isbn"})(ctx, s, h)
-		}
-		return a.Review(nil)(ctx, s, h)
+		return review(s, repo)
 	})
-	a.On(".", maker,
-		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
-			if len(s.Inbox) != 1 || s.Inbox[0].Kind != agentport.Escalation || !strings.Contains(s.Task, "catalog") {
-				return agentfake.Fail(errorf("Root got %+v, task %q", s.Inbox, s.Task))
-			}
-			if _, err := h.Answer(ctx, s.Inbox[0].ID, "README.md names the isbn now; continue from my approved work."); err != nil {
-				return agentfake.Fail(err)
-			}
-			return a.Submit(nil, map[string]string{"README.md": readme}, word("conforms"))(ctx, s, h)
-		},
-		a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
-	a.On(".", checker, a.Review(nil), a.Review(nil))
-
 	r := f.run(run.Request{Base: base})
 	if r.State != run.StateLanded {
 		t.Fatalf("%s: %s", r.State, r.Why)
 	}
-	if f.show("main", "README.md") != strings.TrimSpace(readme) || !strings.Contains(f.show("main", "src/catalog/book.go"), "ISBN") {
-		t.Fatal("the settlement or the child's work did not land")
-	}
-	// Root's settlement was approved before catalog started again, and
-	// catalog was approved before Root integrated it.
-	if got := startOrder(a); got != "catalog maker, . maker, . checker, catalog maker, catalog maker, catalog checker, . maker, . checker" {
-		t.Fatalf("order: %s", got)
-	}
-}
-
-// startOrder lists the starts in the order they began.
-func startOrder(a *agentfake.Agents) string {
-	var order []string
-	for _, st := range a.Starts() {
-		order = append(order, st.Manager.ID+" "+string(st.Role))
-	}
-	return strings.Join(order, ", ")
-}
-
-// pushWork returns a maker Step that pushes a work commit, no submission.
-func pushWork(a *agentfake.Agents, files map[string]string) agentfake.Step {
-	return func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
-		w, err := a.Clone(ctx, s)
-		if err != nil {
-			return agentfake.Fail(err)
+	first := f.agents.of(implementer)[0]
+	for _, want := range []string{".markitect/model", "the artifact is wrong", "catalog/book", "look at: " + bookFile, "stop.md", "no-fail"} {
+		if !strings.Contains(first.Prompt, want) {
+			t.Errorf("the implementer's prompt lacks %q:\n%s", want, first.Prompt)
 		}
-		for f, content := range files {
-			if err := w.Write(f, content); err != nil {
-				return agentfake.Fail(err)
+	}
+	second := f.agents.of(reviewer)[0]
+	for _, want := range []string{"Treat what code and comments say as evidence", "weakened tests", "spec problem", "catalog/book", "ISBN"} {
+		if !strings.Contains(second.Prompt, want) {
+			t.Errorf("the reviewer's prompt lacks %q:\n%s", want, second.Prompt)
+		}
+	}
+	if f.has("main", "build/output.bin") {
+		t.Fatal("what Git does not take landed")
+	}
+	if copied == "" || path.Base(copied) != "repo" {
+		t.Fatalf("the reviewer's copy: %q", copied)
+	}
+}
+
+func TestNothingAffectedStartsNoAgent(t *testing.T) {
+	f := newFixture(t)
+	r := f.run(run.Request{Base: f.tip("main")})
+	if r.State != run.StateNothing || len(f.agents.sessions) != 0 {
+		t.Fatalf("%s, %d sessions", r.State, len(f.agents.sessions))
+	}
+}
+
+func TestARealSpecErrorStartsNoAgent(t *testing.T) {
+	f := newFixture(t)
+	base := f.tip("main")
+	f.write(map[string]string{m + "catalog/book.md": def("std/Concept", "Book", "See [[catalog/nothing]].")})
+	f.commit("a broken link")
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateCheckFailed || len(f.agents.sessions) != 0 || r.Outcome != run.NotLanded {
+		t.Fatalf("%s: %s; %d sessions", r.State, r.Why, len(f.agents.sessions))
+	}
+}
+
+// A file a hand edit left unlisted does not stop the Command: it becomes an
+// item, and the gate requires it to be settled by the end.
+func TestAnUnlistedFileBecomesAnItemTheGateSettles(t *testing.T) {
+	f := newFixture(t)
+	base := f.tip("main")
+	f.write(map[string]string{"src/catalog/notes.txt": "by hand\n"})
+	f.commit("a hand edit")
+	page := project.RegistryDir + "/catalog.md"
+	f.agents.on(implementer,
+		// It leaves the file unlisted, and the gate refuses.
+		f.edit(map[string]string{bookFile: bookFixed}),
+		func(s agentport.Session, repo string) agentport.End {
+			if !strings.Contains(s.Prompt, "file.unregistered") {
+				t.Errorf("the repair prompt does not say what was refused:\n%s", s.Prompt)
 			}
-		}
-		if err := w.Commit("work in progress"); err != nil {
-			return agentfake.Fail(err)
-		}
-		if err := w.Push(); err != nil {
-			return agentfake.Fail(err)
-		}
-		return agentfake.Done()
+			writeFile(t, repo, page, "---\npaths: [src/catalog/**]\n---\n"+table+"| src/catalog/book.go | [[catalog/book]] | Type |\n| src/catalog/notes.txt | [[catalog/book]] | Notes |\n")
+			return agentport.End{}
+		})
+	f.agents.on(reviewer, f.ok())
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateLanded || r.Repairs != 1 {
+		t.Fatalf("%s after %d repairs: %s", r.State, r.Repairs, r.Why)
+	}
+	if !strings.Contains(f.agents.of(implementer)[0].Prompt, "unlisted src/catalog/notes.txt") {
+		t.Fatalf("the list lacks the unlisted file:\n%s", f.agents.of(implementer)[0].Prompt)
 	}
 }
 
-// readmeReview approves only a submission whose README.md is readme.
-func readmeReview(a *agentfake.Agents, readme string) agentfake.Step {
-	return func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
-		w, err := a.Clone(ctx, s)
-		if err != nil {
-			return agentfake.Fail(err)
-		}
-		if data, err := os.ReadFile(filepath.Join(w.Dir, "README.md")); err != nil || string(data) != readme {
-			return a.Review(map[string]string{"catalog/book": "README.md does not name the isbn"})(ctx, s, h)
-		}
-		return a.Review(nil)(ctx, s, h)
+// The gate's planted refusals (concept 3.0 §6, step 6): each holds whatever the
+// agents say, and two repair rounds end the Command with nothing landed.
+func TestTheGateRefuses(t *testing.T) {
+	cases := map[string]struct {
+		files map[string]string
+		want  string
+	}{
+		"the spec":         {map[string]string{m + "catalog/book.md": def("std/Concept", "Book", "Anything goes.")}, "is the owner's"},
+		"a required check": {map[string]string{project.ChecksFile: "checks: []\n"}, "execution.yaml changed"},
+		"the manifest":     {map[string]string{project.ManifestFile: "libraries:\n  std: 1.0.0\n# mine\n"}, "manifest.yaml changed"},
+		"a Result page":    {map[string]string{project.ResultsDir + "/forged.md": "# Run forged: landed\n"}, "forged.md changed"},
+		"an unlisted file": {map[string]string{"src/catalog/extra.go": "package catalog\n"}, "file.unregistered"},
+		"a stale entry":    {map[string]string{bookFile: ""}, "stale"},
+		"a failing check":  {map[string]string{"FAIL": "x\n", "README.md": "# Library\n", project.RootPage: table + "| README.md | [[project]] | Overview |\n| FAIL | [[project]] | Planted |\n"}, "the required check no-fail failed"},
+	}
+	for name, c := range cases {
+		t.Run(name, func(t *testing.T) {
+			f := newFixture(t)
+			base, _ := changeBook(f)
+			mark := c.files
+			f.agents.on(implementer, f.edit(mark),
+				func(s agentport.Session, repo string) agentport.End {
+					if s.Conversation == "" || !strings.Contains(s.Prompt, c.want) {
+						t.Errorf("the repair: conversation %q, prompt:\n%s", s.Conversation, s.Prompt)
+					}
+					return agentport.End{}
+				},
+				func(s agentport.Session, repo string) agentport.End { return agentport.End{} })
+			before := f.tip("main")
+			r := f.run(run.Request{Base: base})
+			if r.State != run.StateRefused || r.Repairs != 2 || r.Outcome != run.NotLanded {
+				t.Fatalf("%s after %d repairs: %s", r.State, r.Repairs, r.Why)
+			}
+			if !strings.Contains(r.Why, c.want) {
+				t.Fatalf("the Result does not say why: %s", r.Why)
+			}
+			if f.tip("main") != before {
+				t.Fatal("refused work landed")
+			}
+			if len(f.agents.of(reviewer)) != 0 {
+				t.Fatal("a reviewer ran on work the gate refused")
+			}
+			if f.tip(run.RunBranchPrefix+r.Run) == "" || !f.has(run.RunBranchPrefix+r.Run, run.ResultFile(r.Run)) {
+				t.Fatal("the work and its Result are not on the Run's branch")
+			}
+		})
 	}
 }
 
-// A child that escalates and submits in the same start, and a parent that
-// answers and pushes only a work commit: the parent is still asked for a
-// submission, and the child's submission from before the settlement is never
-// reviewed.
-func TestASettlementOutlivesStaleWork(t *testing.T) {
+// A required check that could not start stops the Command as an environment
+// failure and uses no repair round.
+func TestACheckThatCannotRunIsTheEnvironments(t *testing.T) {
 	f := newFixture(t)
 	base, _ := changeBook(f)
-	a := f.agents
-	readme := "# Library\n\nBooks carry an isbn.\n"
-	a.On("catalog", maker,
-		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
-			if _, err := h.Escalate(ctx, "The isbn must be in README.md, which is Root's file."); err != nil {
-				return agentfake.Fail(err)
-			}
-			return a.Submit(nil, map[string]string{"src/catalog/book.go": isbn}, word("changed"))(ctx, s, h)
-		},
-		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
-			if len(s.Inbox) != 2 || !strings.Contains(s.Inbox[1].Text, s.Git.Base) {
-				return agentfake.Fail(errorf("inbox %+v", s.Inbox))
-			}
-			return a.Submit([]string{"root"}, nil, word("changed"))(ctx, s, h)
-		})
-	a.On("catalog", checker, readmeReview(a, readme))
-	a.On(".", maker,
-		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
-			if _, err := h.Answer(ctx, s.Inbox[0].ID, "README.md names the isbn now."); err != nil {
-				return agentfake.Fail(err)
-			}
-			return pushWork(a, map[string]string{"README.md": readme})(ctx, s, h)
-		},
-		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
-			if len(s.Inbox) != 1 || !strings.Contains(s.Inbox[0].Text, "which is no submission") {
-				return agentfake.Fail(errorf("inbox %+v", s.Inbox))
-			}
-			return a.Submit(nil, nil, word("conforms"))(ctx, s, h)
-		},
-		a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
-	a.On(".", checker, a.Review(nil), a.Review(nil))
-
+	f.box.notRun = true
+	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
 	r := f.run(run.Request{Base: base})
-	if r.State != run.StateLanded {
-		t.Fatalf("%s: %s", r.State, r.Why)
+	if r.State != run.StateIncomplete || r.Repairs != 0 || !strings.Contains(r.Why, "could not start") {
+		t.Fatalf("%s after %d repairs: %s", r.State, r.Repairs, r.Why)
 	}
-	if got := startOrder(a); got != "catalog maker, . maker, . maker, . checker, catalog maker, catalog checker, . maker, . checker" {
-		t.Fatalf("order: %s", got)
+	if len(f.agents.of(implementer)) != 1 {
+		t.Fatal("an environment failure went back to the implementer")
 	}
 }
 
-// An approved model-problem verdict escalates as the tool does: the parent's
-// settlement with a commit is checked first, and the child continues from it.
-// loans escalates to members, whose settling commit names a model problem and
-// so escalates to Root. Root and then members answer without a change; loans
-// still continues from members' approved settlement.
-func TestAnAnswerKeepsTheParentsSettlement(t *testing.T) {
+// A wrong answer goes back to the implementer, who continues its session; the
+// next review answers what is open and what the diff touched, and other answers
+// stand.
+func TestWrongGoesBackAndOtherAnswersStand(t *testing.T) {
 	f := newFixture(t)
 	base := f.tip("main")
 	f.write(map[string]string{
-		m + "members/member.md":     def("std/Concept", "Member", "A person with a card."),
-		m + "members/loans/loan.md": def("std/Concept", "Loan", "A [[members/member]] borrows with a card."),
+		m + "catalog/book.md":   def("std/Concept", "Book", "A book has a title and an `isbn`."),
+		m + "members/member.md": def("std/Concept", "Member", "A person with a card."),
 	})
-	f.commit("cards")
-	a := f.agents
-	var escalation string
-	a.On("members/loans", maker,
-		agentfake.Call(func(ctx context.Context, s agentport.Start, h agentport.Host) error {
-			m, err := h.Escalate(ctx, "The card type is in src/members/member.go, members' file.")
-			escalation = m.ID
-			return err
-		}),
-		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
-			var told bool
-			for _, msg := range s.Inbox {
-				told = told || (strings.Contains(msg.Text, s.Git.Base) && strings.Contains(msg.Text, escalation))
+	f.commit("two changes")
+	f.agents.on(implementer,
+		f.edit(map[string]string{bookFile: "package catalog\n\ntype Book struct{ Title string }\n", "src/members/member.go": "package members\n\ntype Member struct{ Card string }\n"}),
+		func(s agentport.Session, repo string) agentport.End {
+			if s.Conversation != "implementer-1" || !strings.Contains(s.Prompt, "no isbn") {
+				t.Errorf("the repair: conversation %q, prompt:\n%s", s.Conversation, s.Prompt)
 			}
-			if !told {
-				return agentfake.Fail(errorf("loans starts again from %s without members' settlement: %+v", s.Git.Base, s.Inbox))
-			}
-			return a.Submit([]string{"managers/members"}, map[string]string{"src/members/loans/loan.go": "package loans\n\nconst Card = true\n"}, word("changed"))(ctx, s, h)
+			writeFile(t, repo, bookFile, bookFixed)
+			return agentport.End{}
 		})
-	a.On("members/loans", checker, a.Review(nil))
-	answer := func(ctx context.Context, s agentport.Start, h agentport.Host) error {
-		for _, msg := range s.Inbox {
-			if msg.Kind == agentport.Escalation {
-				_, err := h.Answer(ctx, msg.ID, "Realization freedom; nothing more to change.")
-				return err
-			}
-		}
-		return errorf("%s got %+v", s.Manager.ID, s.Inbox)
-	}
-	a.On("members", maker,
-		a.Submit(nil, nil, word("conforms")),
-		a.Submit(nil, map[string]string{"src/members/member.go": "package members\n\ntype Card string\n"}, word("model-problem")),
-		agentfake.Call(func(ctx context.Context, s agentport.Start, h agentport.Host) error {
-			if len(s.Inbox) != 1 || s.Inbox[0].Kind != agentport.Answer {
-				return errorf("members got %+v", s.Inbox)
-			}
-			_, err := h.Answer(ctx, escalation, "Realization freedom; nothing more to change.")
-			return err
-		}),
-		a.Submit([]string{"managers/members.loans"}, nil, word("conforms")))
-	a.On("members", checker, a.Review(nil), a.Review(nil), a.Review(nil))
-	a.On(".", maker, agentfake.Call(answer), a.Submit([]string{"managers/members"}, nil, word("conforms")))
-	a.On(".", checker, a.Review(nil))
-
+	f.agents.on(reviewer,
+		f.answer(map[string]string{"catalog/book": "wrong  README.md:1 -- no isbn"}, ""),
+		f.ok())
 	r := f.run(run.Request{Base: base})
-	if r.State != run.StateLanded {
-		t.Fatalf("%s: %s", r.State, r.Why)
+	if r.State != run.StateLanded || r.Repairs != 1 {
+		t.Fatalf("%s after %d repairs: %s", r.State, r.Repairs, r.Why)
 	}
-	if !strings.Contains(f.show("main", "src/members/member.go"), "Card") || !strings.Contains(f.show("main", "src/members/loans/loan.go"), "Card") {
-		t.Fatal("the settlement or the child's work did not land")
+	second := f.agents.of(reviewer)[1]
+	if got := listed(second.Prompt); len(got) != 1 || got[0] != "catalog/book" {
+		t.Fatalf("the second review answers %v", got)
 	}
-}
-
-func TestAModelProblemSettledByAParentsCommit(t *testing.T) {
-	f := newFixture(t)
-	base, _ := changeBook(f)
-	a := f.agents
-	readme := "# Library\n\nBooks carry an isbn.\n"
-	a.On("catalog", maker,
-		a.Submit(nil, nil, word("model-problem")),
-		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
-			if len(s.Inbox) != 2 || !strings.Contains(s.Inbox[1].Text, s.Git.Base) {
-				return agentfake.Fail(errorf("inbox %+v", s.Inbox))
-			}
-			return a.Submit([]string{"root"}, map[string]string{"src/catalog/book.go": isbn}, word("changed"))(ctx, s, h)
-		})
-	a.On("catalog", checker, a.Review(nil), readmeReview(a, readme))
-	a.On(".", maker,
-		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
-			if len(s.Inbox) != 1 || s.Inbox[0].Kind != agentport.Escalation {
-				return agentfake.Fail(errorf("Root got %+v", s.Inbox))
-			}
-			if _, err := h.Answer(ctx, s.Inbox[0].ID, "README.md names the isbn now."); err != nil {
-				return agentfake.Fail(err)
-			}
-			return a.Submit(nil, map[string]string{"README.md": readme}, word("conforms"))(ctx, s, h)
-		},
-		a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
-	a.On(".", checker, a.Review(nil), a.Review(nil))
-
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateLanded {
-		t.Fatalf("%s: %s", r.State, r.Why)
+	if !strings.Contains(second.Prompt, "no isbn") {
+		t.Fatalf("the second review does not get the finding:\n%s", second.Prompt)
 	}
-	if got := startOrder(a); got != "catalog maker, catalog checker, . maker, . checker, catalog maker, catalog checker, . maker, . checker" {
-		t.Fatalf("order: %s", got)
-	}
-}
-
-func TestModelDefectEndsTheRunAtRoot(t *testing.T) {
-	f := newFixture(t)
-	base, start := changeBook(f)
-	a := f.agents
-	a.On("catalog", maker, agentfake.Call(func(ctx context.Context, s agentport.Start, h agentport.Host) error {
-		_, err := h.Escalate(ctx, "book contradicts the loan limit")
-		return err
-	}))
-	a.On(".", maker, agentfake.Call(func(ctx context.Context, s agentport.Start, h agentport.Host) error {
-		_, err := h.Escalate(ctx, "The model contradicts itself on books. Recommendation: say which rule wins.")
-		return err
-	}))
-
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateModelDefect || r.Outcome != run.NotLanded {
-		t.Fatalf("%s/%s: %s", r.Outcome, r.State, r.Why)
-	}
-	if f.tip("main") != start {
-		t.Fatal("a model defect changed the target")
-	}
-	if len(r.OwnerDecisions) != 1 || r.OwnerDecisions[0].Recommendation != "say which rule wins." {
-		t.Fatalf("decisions %+v", r.OwnerDecisions)
-	}
-	if kept := f.tip(run.RunBranchPrefix + r.Run); kept == "" || !strings.Contains(f.show(kept, run.ResultFile(r.Run)), "model-defect") {
-		t.Fatal("the Result is not kept on the Run branch")
-	}
-}
-
-// holding returns a Step that fails unless the start's clone holds every
-// file, then goes on with next.
-func (f *fixture) holding(files []string, next agentfake.Step) agentfake.Step {
-	return func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
-		w, err := f.agents.Clone(ctx, s)
-		if err != nil {
-			return agentfake.Fail(err)
-		}
-		for _, file := range files {
-			if _, err := os.Stat(filepath.Join(w.Dir, filepath.FromSlash(file))); err != nil {
-				return agentfake.Fail(errorf("%s %s starts without %s from base %s", s.Manager.ID, s.Role, file, s.Git.Base))
-			}
-		}
-		return next(ctx, s, h)
-	}
-}
-
-// The Root rule changes, so every Manager has items and works parent first
-// (concept 2.0 §6.2): Root submits its own files, members and catalog start
-// from Root's approval, loans from members' approval, and the approved work
-// merges upward again.
-func TestParentsWorkFirstAndMergeChildrenUpToRoot(t *testing.T) {
-	f := newFixture(t)
-	base := f.tip("main")
-	f.write(map[string]string{m + "loan-limit.md": def("std/Rule", "Loan limit", "At most `3` open loans.")})
-	f.commit("limit 3")
-	a := f.agents
-	rootPage := table + "| README.md | [[project]] | Overview |\n| shared.txt | [[project]] | Shared |\n"
-	membersPage := "---\npaths: [src/members/**]\n---\n" + table + "| src/members/member.go | [[members/member]] | Type |\n| src/members/shared.txt | [[members/member]] | Shared |\n"
-	a.On(".", maker,
-		a.Submit(nil, map[string]string{"shared.txt": "limit 3\n", project.RootPage: rootPage}, word("changed")),
-		a.Submit([]string{"managers/members", "managers/catalog"}, nil, word("conforms")))
-	a.On(".", checker, a.Review(nil), a.Review(nil))
-	a.On("members", maker,
-		f.holding([]string{"shared.txt"}, a.Submit(nil, map[string]string{"src/members/shared.txt": "x\n", project.RegistryDir + "/members.md": membersPage}, word("conforms"))),
-		a.Submit([]string{"managers/members.loans"}, nil, word("conforms")))
-	a.On("members", checker, a.Review(nil), a.Review(nil))
-	a.On("members/loans", maker, f.holding([]string{"shared.txt", "src/members/shared.txt"},
-		a.Submit(nil, map[string]string{"src/members/loans/loan.go": "package loans\n\nconst Limit = 3\n"}, word("changed"))))
-	a.On("members/loans", checker, a.Review(nil))
-	a.On("catalog", maker, f.holding([]string{"shared.txt"}, a.Submit(nil, nil, word("conforms"))))
-	a.On("catalog", checker, a.Review(nil))
-
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateLanded {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-	if !strings.Contains(f.show("main", "src/members/loans/loan.go"), "Limit = 3") || !strings.Contains(f.show("main", "src/members/shared.txt"), "x") {
-		t.Fatal("the children's work did not land")
-	}
-	// No child started before its parent's first approval.
-	first := map[string]int{}
-	for i, st := range r.Starts {
-		if _, ok := first[st.Manager+" "+string(st.Role)]; !ok {
-			first[st.Manager+" "+string(st.Role)] = i
-		}
-	}
-	for _, pair := range [][2]string{{".", "members"}, {".", "catalog"}, {"members", "members/loans"}} {
-		if first[pair[0]+" checker"] > first[pair[1]+" maker"] {
-			t.Fatalf("%s started before %s's approval: %v", pair[1], pair[0], first)
-		}
-	}
-	want := map[string]bool{"members/loans:loan-limit": true, "members:loan-limit": true, "catalog:loan-limit": true, ".:loan-limit": true}
-	for _, it := range r.Items {
-		delete(want, it.Manager+":"+it.Item)
-	}
-	if len(want) > 0 {
-		t.Fatalf("missing items %v in %s", want, items(r))
-	}
-}
-
-// Root has no items when only the book changes: it does not gate catalog,
-// which starts at once from the Run's start.
-func TestParentWithoutItemsDoesNotGate(t *testing.T) {
-	f := newFixture(t)
-	base, start := changeBook(f)
-	a := f.agents
-	a.On("catalog", maker, func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
-		for _, st := range a.Starts() {
-			if st.Manager.ID == "." {
-				return agentfake.Fail(errorf("Root started before catalog"))
-			}
-		}
-		if s.Git.Base != start {
-			return agentfake.Fail(errorf("catalog starts from %s, not the Run's start %s", s.Git.Base, start))
-		}
-		return a.Submit(nil, map[string]string{"src/catalog/book.go": isbn}, word("changed"))(ctx, s, h)
-	})
-	a.On("catalog", checker, a.Review(nil))
-	a.On(".", maker, func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
-		if len(s.Checklist) != 0 {
-			return agentfake.Fail(errorf("Root has items %v", s.Checklist))
-		}
-		return a.Submit([]string{"managers/catalog"}, nil, word("conforms"))(ctx, s, h)
-	})
-	a.On(".", checker, a.Review(nil))
-	if r := f.run(run.Request{Base: base}); r.State != run.StateLanded {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-}
-
-func TestParentMustMergeChildApproval(t *testing.T) {
-	f := newFixture(t)
-	base, _ := changeBook(f)
-	a := f.agents
-	a.On("catalog", maker, a.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ ISBN string }\n"}, word("changed")))
-	a.On("catalog", checker, a.Review(nil))
-	a.On(".", maker,
-		a.Submit(nil, nil, word("conforms")),
-		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
-			if len(s.Inbox) != 1 || !strings.Contains(s.Inbox[0].Text, "does not contain catalog's approved work") {
-				return agentfake.Fail(errorf("inbox %+v", s.Inbox))
-			}
-			return a.Submit([]string{"managers/catalog"}, nil, word("conforms"))(ctx, s, h)
-		})
-	a.On(".", checker, a.Review(nil))
-	if r := f.run(run.Request{Base: base}); r.State != run.StateLanded {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-}
-
-// moveDuring returns a Step that pushes a commit to the target before it
-// approves, as a colleague would while the Run works.
-func (f *fixture) approveAfter(move map[string]string) agentfake.Step {
-	return func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
-		f.pull()
-		f.write(move)
-		f.commit("a colleague's change")
-		return f.agents.Review(nil)(ctx, s, h)
-	}
-}
-
-func TestLandingMergesAMovedTarget(t *testing.T) {
-	f := newFixture(t)
-	base, start := changeBook(f)
-	a := f.agents
-	a.On("catalog", maker, a.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ ISBN string }\n"}, word("changed")))
-	a.On("catalog", checker, a.Review(nil))
-	a.On(".", maker, a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
-	a.On(".", checker, f.approveAfter(map[string]string{"src/members/member.go": "package members\n\n// Member is a person.\n"}))
-
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateLanded {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-	if !strings.Contains(f.show("main", "src/members/member.go"), "a person") || !strings.Contains(f.show("main", "src/catalog/book.go"), "ISBN") {
-		t.Fatal("the merged state did not land")
-	}
-	if r.RequiredChecks.Commit == "" || !r.RequiredChecks.Ran {
-		t.Fatalf("checks on the merged state %+v", r.RequiredChecks)
-	}
-	if r.Start != start || !strings.Contains(r.Why, "moved") {
-		t.Fatalf("why %q", r.Why)
-	}
-}
-
-func TestLandingRefusesAMovedTargetThatTouchesTheImpact(t *testing.T) {
-	f := newFixture(t)
-	base, _ := changeBook(f)
-	a := f.agents
-	a.On("catalog", maker, a.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ ISBN string }\n"}, word("changed")))
-	a.On("catalog", checker, a.Review(nil))
-	a.On(".", maker, a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
-	a.On(".", checker, f.approveAfter(map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ Name string }\n"}))
-
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateKept || r.Outcome != run.NotLanded {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-	if !strings.Contains(r.Why, "src/catalog/book.go") {
-		t.Fatalf("why %q", r.Why)
-	}
-	kept := f.tip(run.RunBranchPrefix + r.Run)
-	if kept == "" || !strings.Contains(f.show(kept, "src/catalog/book.go"), "ISBN") {
-		t.Fatal("the approved work is not kept on the Run branch")
-	}
-	if strings.Contains(f.show("main", "src/catalog/book.go"), "ISBN") {
-		t.Fatal("the work landed")
-	}
-}
-
-func TestLandingRefusesAFailingMergedState(t *testing.T) {
-	f := newFixture(t)
-	base, _ := changeBook(f)
-	a := f.agents
-	a.On("catalog", maker, a.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ ISBN string }\n"}, word("changed")))
-	a.On("catalog", checker, a.Review(nil))
-	a.On(".", maker, a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
-	// The colleague's change is registered and outside the impact, but it
-	// breaks the required check.
-	a.On(".", checker, f.approveAfter(map[string]string{
-		"src/members/FAIL":                  "x\n",
-		project.RegistryDir + "/members.md": "---\npaths: [src/members/**]\n---\n" + table + "| src/members/member.go | [[members/member]] | Type |\n| src/members/FAIL | [[members/member]] | Marker |\n",
-	}))
-
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateKept || !strings.Contains(r.Why, "required checks fail") {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-}
-
-// The state that lands passes the required checks also on an unmoved target
-// (DEC-087). Root's submission integrates no child's work, so the hooks
-// accept it although a check fails, and its checker gets the result as
-// evidence; its approval does not land.
-func TestLandingRefusesAFailingStateOnAnUnmovedTarget(t *testing.T) {
-	f := newFixture(t)
-	base := f.tip("main")
-	// A changed file of Root's reaches only Root's Definition.
-	f.write(map[string]string{"README.md": "# The library\n"})
-	start := f.commit("rename the library")
-	a := f.agents
-	a.On(".", maker, a.Submit(nil, map[string]string{
-		"FAIL":           "x\n",
-		project.RootPage: table + "| README.md | [[project]] | Overview |\n| FAIL | [[project]] | Marker |\n",
-	}, word("changed")))
-	a.On(".", checker, a.Review(nil))
-
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateKept || r.Why != "the required checks fail on the state that would land" {
-		t.Fatalf("%s: %s; items %+v", r.State, r.Why, r.Items)
-	}
-	if rc := r.RequiredChecks; rc.Ran || len(rc.Checks) != 1 || rc.Checks[0].Passed || !rc.WholeRepository {
-		t.Fatalf("required checks %+v", rc)
-	}
-	if f.tip("main") != start {
-		t.Fatal("the failing state landed")
-	}
-	var task string
-	for _, s := range a.Starts() {
-		if s.Role == checker {
-			task = s.Task
-		}
-	}
-	if !strings.Contains(task, `"no-fail" exited with 1.`) || !strings.Contains(task, "the merged state must pass them") {
-		t.Fatalf("the checker's task holds no check evidence:\n%s", task)
-	}
-}
-
-// The host compiles the state it lands: a merge of two states that each
-// compile, but together give two Packages the same pattern, does not land.
-func TestLandingRefusesAMergedStateThatDoesNotCompile(t *testing.T) {
-	f := newFixture(t)
-	base, _ := changeBook(f)
-	a := f.agents
-	catalogPage := "---\npaths: [src/catalog/**, src/shared/**]\n---\n" + table + "| src/catalog/book.go | [[catalog/book]] | Type |\n"
-	a.On("catalog", maker, a.Submit(nil, map[string]string{
-		"src/catalog/book.go":               "package catalog\n\ntype Book struct{ ISBN string }\n",
-		project.RegistryDir + "/catalog.md": catalogPage,
-	}, word("changed")))
-	a.On("catalog", checker, a.Review(nil))
-	a.On(".", maker, a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
-	// The colleague's change compiles alone and is outside the impact.
-	a.On(".", checker, f.approveAfter(map[string]string{
-		"src/shared/x.go":                   "package shared\n",
-		project.RegistryDir + "/members.md": "---\npaths: [src/members/**, src/shared/**]\n---\n" + table + "| src/members/member.go | [[members/member]] | Type |\n| src/shared/x.go | [[members/member]] | Shared |\n",
-	}))
-
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateKept || !strings.Contains(r.Why, "the merged state does not compile") || !strings.Contains(r.Why, "src/shared/**") {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-	if strings.Contains(f.show("main", "src/catalog/book.go"), "ISBN") {
-		t.Fatal("the work landed")
-	}
-}
-
-func TestVerifyWithNoChangesStartsNothing(t *testing.T) {
-	f := newFixture(t)
-	start := f.tip("main")
-	r := f.run(run.Request{Mode: agentport.Verify, Base: start})
-	if r.State != run.StateNothing || len(r.Starts) != 0 {
-		t.Fatalf("%s with %d starts", r.State, len(r.Starts))
-	}
-}
-
-func TestVerifyGivesVerdictsWithoutChanges(t *testing.T) {
-	f := newFixture(t)
-	base, start := changeBook(f)
-	a := f.agents
-	a.On("catalog", checker, a.Verdicts(word("conforms")))
-	a.On(".", checker, a.Verdicts(word("conforms")))
-	r := f.run(run.Request{Mode: agentport.Verify, Base: base})
-	if r.State != run.StateVerified || r.Outcome != run.NotLanded {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-	if f.tip("main") != start {
-		t.Fatal("verify changed the target")
-	}
-	for _, it := range r.Items {
-		if !it.Approved || it.Verdict != "conforms" {
-			t.Fatalf("item %+v", it)
-		}
-	}
-	for _, st := range r.Starts {
-		if st.Role != checker {
-			t.Fatalf("verify started a %s", st.Role)
-		}
-	}
-	// The required checks ran on the whole repository, as in every Run.
-	if rc := r.RequiredChecks; !rc.Ran || !rc.WholeRepository || rc.Commit == "" || len(rc.Checks) != 1 {
-		t.Fatalf("required checks %+v", rc)
-	}
-}
-
-func TestVerifyReportsFailingRequiredChecks(t *testing.T) {
-	f := newFixture(t)
-	base := f.tip("main")
-	f.write(map[string]string{
-		m + "catalog/book.md":               def("std/Concept", "Book", "A book has a title and an `isbn`."),
-		"src/catalog/FAIL":                  "x\n",
-		project.RegistryDir + "/catalog.md": "---\npaths: [src/catalog/**]\n---\n" + table + "| src/catalog/book.go | [[catalog/book]] | Type |\n| src/catalog/FAIL | [[catalog/book]] | Marker |\n",
-	})
-	f.commit("book has an isbn, and the checks fail")
-	a := f.agents
-	a.On("catalog", checker, a.Verdicts(word("conforms")))
-	a.On(".", checker, a.Verdicts(word("conforms")))
-	r := f.run(run.Request{Mode: agentport.Verify, Base: base})
-	if r.State != run.StateFindings || !strings.Contains(r.Why, "required checks that did not pass") || len(r.Findings) != 0 {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-	if rc := r.RequiredChecks; rc.Ran || rc.Commit == "" || len(rc.Checks) != 1 || rc.Checks[0].Passed {
-		t.Fatalf("required checks %+v", rc)
-	}
-	if !strings.Contains(string(run.Page(r)), "and did not pass") {
-		t.Fatal("the Result page does not say the checks did not pass")
-	}
-	// The host ran the checks on the start before the checkers started, and
-	// every checker's task carries their results.
-	for _, s := range a.Starts() {
-		if !strings.Contains(s.Task, "The required checks on this state, run by the host before you started") || !strings.Contains(s.Task, `"no-fail" exited with 1.`) {
-			t.Fatalf("%s's task holds no check evidence:\n%s", s.Manager.ID, s.Task)
-		}
-	}
-	if rc := r.RequiredChecks; rc.Commit != r.Start {
-		t.Fatalf("the checks ran on %s, not the start %s", rc.Commit, r.Start)
-	}
-}
-
-func TestApplyWithFindings(t *testing.T) {
-	f := newFixture(t)
-	start := f.tip("main")
-	findings, ds := analysis.ParseFindings("findings.md", []byte("# Findings\n\n## [[catalog/book]]\n\nObserved: no title field.\n\nExpected: a title.\n"))
-	if len(ds) > 0 {
-		t.Fatal(ds)
-	}
-	a := f.agents
-	a.On("catalog", maker, func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
-		if len(s.Checklist) != 1 || s.Checklist[0].Part != agentport.Finding || !strings.Contains(s.Checklist[0].Why, "no title field") {
-			return agentfake.Fail(errorf("checklist %+v", s.Checklist))
-		}
-		return a.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ Title string }\n"}, word("changed"))(ctx, s, h)
-	})
-	a.On("catalog", checker, a.Review(nil))
-	a.On(".", maker, a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
-	a.On(".", checker, a.Review(nil))
-	r := f.run(run.Request{Base: start, Findings: findings})
-	if r.State != run.StateLanded {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-	if len(r.Items) != 1 || r.Items[0].Part != agentport.Finding {
+	if answerOf(r, "members/member") != run.AnswerOK || answerOf(r, "catalog/book") != run.AnswerOK {
 		t.Fatalf("items %+v", r.Items)
 	}
+	if page := f.show("main", run.ResultFile(r.Run)); !strings.Contains(page, "## Repair rounds") || !strings.Contains(page, "no isbn") {
+		t.Fatalf("the page does not say what went back:\n%s", page)
+	}
 }
 
-func TestBudgetStopsTheRun(t *testing.T) {
+func TestWrongThatStaysEndsTheCommandUnlanded(t *testing.T) {
 	f := newFixture(t)
-	base, start := changeBook(f)
-	a := f.agents
-	a.On("catalog", maker, a.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ ISBN string }\n"}, word("changed")))
-	r := f.run(run.Request{Base: base, Limits: run.Limits{Deadline: time.Now().Add(time.Minute), Starts: 1, Rounds: 4, Start: time.Minute}})
-	if r.State != run.StateIncomplete || !strings.Contains(r.Why, "budget") {
+	base, _ := changeBook(f)
+	still := f.answer(map[string]string{"catalog/book": "wrong  README.md:1 -- still no isbn"}, "")
+	f.agents.on(implementer, f.edit(map[string]string{bookFile: "package catalog\n\n// a\n"}), f.edit(map[string]string{bookFile: "package catalog\n\n// b\n"}), f.edit(map[string]string{bookFile: "package catalog\n\n// c\n"}))
+	f.agents.on(reviewer, still, still, still)
+	before := f.tip("main")
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateRefused || f.tip("main") != before || answerOf(r, "catalog/book") != run.AnswerWrong {
 		t.Fatalf("%s: %s", r.State, r.Why)
 	}
-	if f.tip("main") != start {
-		t.Fatal("an incomplete Run changed the target")
+}
+
+// An implementer may stop: the note says why, nothing lands, and the Result puts
+// the matter to the owner.
+func TestAnImplementerStopPutsTheSpecToTheOwner(t *testing.T) {
+	f := newFixture(t)
+	base, _ := changeBook(f)
+	f.agents.on(implementer, func(s agentport.Session, repo string) agentport.End {
+		writeAbsolute(t, noteIn(t, s.Prompt), "The limit says 3 and its example 5.\n")
+		return agentport.End{}
+	})
+	before := f.tip("main")
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateSpecProblem || f.tip("main") != before || len(f.agents.of(reviewer)) != 0 {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+	if len(r.OwnerDecisions) != 1 || !strings.Contains(r.OwnerDecisions[0].Matter, "says 3") {
+		t.Fatalf("decisions %+v", r.OwnerDecisions)
+	}
+}
+
+func TestASpecProblemAnswerEndsTheCommand(t *testing.T) {
+	f := newFixture(t)
+	base, _ := changeBook(f)
+	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
+	f.agents.on(reviewer, f.answer(map[string]string{"catalog/book": "spec problem -- the title rule contradicts its example"}, ""))
+	before := f.tip("main")
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateSpecProblem || f.tip("main") != before || len(r.OwnerDecisions) != 1 {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+}
+
+// An empty diff with no stop is not a failure: the work goes on to review.
+func TestAnEmptyDiffGoesToReview(t *testing.T) {
+	f := newFixture(t)
+	base, start := changeBook(f)
+	f.agents.on(implementer, f.edit(nil))
+	f.agents.on(reviewer, f.ok())
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateLanded || r.Work != start {
+		t.Fatalf("%s, work %s: %s", r.State, r.Work, r.Why)
+	}
+}
+
+// not shown lands, and the Result lists it.
+func TestNotShownLandsAndIsListed(t *testing.T) {
+	f := newFixture(t)
+	base, _ := changeBook(f)
+	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
+	f.agents.on(reviewer, f.answer(map[string]string{"catalog/book": "not shown -- nothing exercises the isbn"}, ""))
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateLanded {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+	page := f.show("main", run.ResultFile(r.Run))
+	if !strings.Contains(page, "catalog/book: nothing exercises the isbn") {
+		t.Fatalf("the Result does not list it:\n%s", page)
+	}
+}
+
+// Every check of the answers refuses a planted bad answer, once corrected it
+// passes, and uncorrected nothing lands (U2).
+func TestTheCommandChecksTheAnswers(t *testing.T) {
+	cases := map[string]struct {
+		line string
+		want string
+	}{
+		"no answer":         {"", "has no answer"},
+		"no pointer":        {"ok", "ok needs a pointer"},
+		"a missing file":    {"ok  src/nothing.go:1", "does not exist in this commit"},
+		"a missing line":    {"ok  README.md:99", "has no line 99"},
+		"a missing test":    {"ok  README.md:1 (TestNothing)", "names no test TestNothing"},
+		"a file not opened": {"ok  src/catalog/book.go:1", "the transcript shows no read of src/catalog/book.go"},
+		"no explanation":    {"wrong  README.md:1", "needs an explanation"},
+	}
+	for name, c := range cases {
+		t.Run(name+" corrected", func(t *testing.T) {
+			f := newFixture(t)
+			base, _ := changeBook(f)
+			f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
+			first := f.answer(map[string]string{"catalog/book": c.line}, "")
+			f.agents.on(reviewer, first, func(s agentport.Session, repo string) agentport.End {
+				if s.Conversation == "" || !strings.Contains(s.Prompt, c.want) {
+					t.Errorf("the correction: conversation %q, prompt:\n%s", s.Conversation, s.Prompt)
+				}
+				writeAbsolute(t, f.box.last.NotePath(agentport.ReviewerUser(1), "answers.md"), "catalog/book: ok  README.md:1\n")
+				return agentport.End{Seen: agentport.Seen{Measured: true, Opened: []string{"README.md"}}}
+			})
+			r := f.run(run.Request{Base: base})
+			if r.State != run.StateLanded {
+				t.Fatalf("%s: %s", r.State, r.Why)
+			}
+		})
+		t.Run(name+" uncorrected", func(t *testing.T) {
+			f := newFixture(t)
+			base, _ := changeBook(f)
+			f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
+			f.agents.on(reviewer, f.answer(map[string]string{"catalog/book": c.line}, ""), func(agentport.Session, string) agentport.End { return agentport.End{} })
+			before := f.tip("main")
+			r := f.run(run.Request{Base: base})
+			if r.State != run.StateIncomplete || f.tip("main") != before || !strings.Contains(r.Why, c.want) {
+				t.Fatalf("%s: %s", r.State, r.Why)
+			}
+			if len(f.agents.of(reviewer)) != 2 {
+				t.Fatalf("%d reviewer sessions: one request to correct it", len(f.agents.of(reviewer)))
+			}
+		})
+	}
+}
+
+// A reviewer's remark in brackets is no test's name, and a range is a location.
+func TestAPointerMayHoldARemarkOrARange(t *testing.T) {
+	f := newFixture(t)
+	base, _ := changeBook(f)
+	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
+	f.agents.on(reviewer, f.answer(map[string]string{"catalog/book": "ok  README.md:1-1 (the title, and more), README.md:1"}, ""))
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateLanded {
+		t.Fatalf("%s: %s", r.State, r.Why)
 	}
 	for _, it := range r.Items {
-		if it.Approved {
-			t.Fatalf("an incomplete Run reports %s approved", it.Item)
+		if it.Item == "catalog/book" && (len(it.Pointers) != 2 || len(it.Pointers[0].Tests) != 0 || it.Pointers[0].Line != 1) {
+			t.Fatalf("pointers %+v", it.Pointers)
 		}
 	}
 }
 
-// withRounds gives each Manager n attempts and a budget that does not stop first.
-func withRounds(n int) run.Limits {
-	return run.Limits{Deadline: time.Now().Add(5 * time.Minute), Starts: 40, Rounds: n, Start: 2 * time.Minute}
-}
-
-func startsOf(r *run.Result, manager string, role agentport.Role) int {
-	n := 0
-	for _, st := range r.Starts {
-		if st.Manager == manager && st.Role == role {
-			n++
-		}
-	}
-	return n
-}
-
-// Rounds bounds a Manager's attempts at its own work, not the starts its
-// child's question and changed approvals cause: with one attempt, Root
-// answers, sends a correction and merges, its child starts on the answer and
-// the correction, and the child's checker reviews twice.
-func TestRoundsCountOnlyAttempts(t *testing.T) {
+// A transcript that cannot show a read says "not measured", and refuses nothing.
+func TestAReadAShellCommandHidesIsNotMeasured(t *testing.T) {
 	f := newFixture(t)
 	base, _ := changeBook(f)
-	a := f.agents
-	a.On("catalog", maker,
-		func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
-			if _, err := h.Ask(ctx, "Is the isbn optional?"); err != nil {
-				return agentfake.Fail(err)
+	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
+	answer := f.answer(map[string]string{"catalog/book": "ok  " + bookFile + ":1"}, "")
+	f.agents.on(reviewer, func(s agentport.Session, repo string) agentport.End {
+		end := answer(s, repo)
+		end.Seen = agentport.Seen{Measured: true, Commands: []string{"cat src/catalog/*.go"}}
+		return end
+	})
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateLanded || r.Depth.PointersNotMeasured != 1 || r.Depth.Commands != 1 {
+		t.Fatalf("%s, depth %+v: %s", r.State, r.Depth, r.Why)
+	}
+}
+
+// A location the registry does not list for the item is reported, and refuses
+// nothing.
+func TestAPointerOutsideTheRegistryIsAPossibleMissingLink(t *testing.T) {
+	f := newFixture(t)
+	base, _ := changeBook(f)
+	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
+	f.agents.on(reviewer, f.ok())
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateLanded || len(r.MissingLinks) != 1 || !strings.Contains(r.MissingLinks[0], "README.md") {
+		t.Fatalf("%s, links %v", r.State, r.MissingLinks)
+	}
+}
+
+func TestProviderFailureEndsTheCommand(t *testing.T) {
+	f := newFixture(t)
+	base, _ := changeBook(f)
+	f.agents.on(implementer, func(agentport.Session, string) agentport.End {
+		return agentport.End{Reason: agentport.Failed, Class: agentport.RateLimit, Detail: "429"}
+	})
+	before := f.tip("main")
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateIncomplete || f.tip("main") != before || r.Sessions[0].Class != agentport.RateLimit {
+		t.Fatalf("%s: %s; %+v", r.State, r.Why, r.Sessions)
+	}
+}
+
+// Moved target, nothing in the impact touched: the clean merge passes the gate
+// and lands, and the next impact still holds what merged in.
+func TestAMovedTargetLandsACleanMerge(t *testing.T) {
+	f := newFixture(t)
+	base, _ := changeBook(f)
+	review := f.ok()
+	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
+	f.agents.on(reviewer, func(s agentport.Session, repo string) agentport.End {
+		f.pull()
+		f.write(map[string]string{"README.md": "# Library, moved\n"})
+		f.commit("beside the Run")
+		return review(s, repo)
+	})
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateLanded || !strings.Contains(r.Why, "clean merge") {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+	if !strings.Contains(f.show("main", bookFile), "ISBN") || !strings.Contains(f.show("main", "README.md"), "moved") {
+		t.Fatal("the merge lost a side")
+	}
+	if r.RequiredChecks.Commit == r.Work {
+		t.Fatal("the required checks did not run on the merged state")
+	}
+	f.agents.on(implementer, f.edit(nil))
+	f.agents.on(reviewer, f.ok())
+	if next := f.run(run.Request{}); answerOf(next, "project") == "absent" {
+		t.Fatalf("what merged in dropped out of the next impact: %s %+v", next.State, next.Items)
+	}
+}
+
+// Moved target that touches the impact: the work stays on its branch.
+func TestAMovedTargetThatTouchesTheImpactKeepsTheWork(t *testing.T) {
+	f := newFixture(t)
+	base, _ := changeBook(f)
+	review := f.ok()
+	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
+	f.agents.on(reviewer, func(s agentport.Session, repo string) agentport.End {
+		f.pull()
+		f.write(map[string]string{m + "catalog/book.md": def("std/Concept", "Book", "A book has a title and an `ean`.")})
+		f.commit("the same Definition, beside the Run")
+		return review(s, repo)
+	})
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateKept || r.Outcome != run.NotLanded || f.tip(run.RunBranchPrefix+r.Run) == "" {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+	if !strings.Contains(f.show(run.RunBranchPrefix+r.Run, run.ResultFile(r.Run)), "impact") {
+		t.Fatal("the Result does not say why")
+	}
+}
+
+// Moved target whose merge fails a required check: the gate on the merged state
+// refuses it.
+func TestTheGateRunsOnTheMergedState(t *testing.T) {
+	f := newFixture(t)
+	base, _ := changeBook(f)
+	review := f.ok()
+	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
+	f.agents.on(reviewer, func(s agentport.Session, repo string) agentport.End {
+		f.pull()
+		f.write(map[string]string{"FAIL": "x\n", project.RootPage: table + "| README.md | [[project]] | Overview |\n| FAIL | [[project]] | Planted |\n"})
+		f.commit("breaks the check, beside the Run")
+		return review(s, repo)
+	})
+	r := f.run(run.Request{Base: base})
+	if r.State != run.StateKept || !strings.Contains(r.Why, "merged state") {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+}
+
+func TestLandingRefusesTheTokenAndALoginFile(t *testing.T) {
+	for name, files := range map[string]map[string]string{
+		"the token":    {bookFile: "package catalog\n\n// sk-ant-oat01-planted\n"},
+		"a login file": {".credentials.json": "{}\n", project.RootPage: table + "| README.md | [[project]] | Overview |\n| .credentials.json | [[project]] | Planted |\n"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			f := newFixture(t)
+			f.engine.Secrets = [][]byte{[]byte("sk-ant-oat01-planted")}
+			base, _ := changeBook(f)
+			f.agents.on(implementer, f.edit(files))
+			f.agents.on(reviewer, f.ok())
+			before := f.tip("main")
+			r := f.run(run.Request{Base: base})
+			if r.State != run.StateKept || f.tip("main") != before {
+				t.Fatalf("%s: %s", r.State, r.Why)
 			}
-			return a.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ Isbn string }\n"}, word("changed"))(ctx, s, h)
-		},
-		// Root's answer starts it again; it changes nothing.
-		noop,
-		a.Submit(nil, map[string]string{"src/catalog/book.go": isbn}, word("changed")))
-	a.On("catalog", checker, a.Review(nil), a.Review(nil))
-	a.On(".", maker,
-		agentfake.Call(func(ctx context.Context, s agentport.Start, h agentport.Host) error {
-			if len(s.Inbox) != 1 {
-				return errorf("inbox %+v", s.Inbox)
-			}
-			_, err := h.Answer(ctx, s.Inbox[0].ID, "No, it is required.")
-			return err
-		}),
-		agentfake.Call(func(ctx context.Context, s agentport.Start, h agentport.Host) error {
-			_, err := h.Assign(ctx, "catalog", "Name the field ISBN, as the project spells it.")
-			return err
-		}),
-		a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
-	a.On(".", checker, a.Review(nil))
-	r := f.run(run.Request{Base: base, Limits: withRounds(1)})
-	if r.State != run.StateLanded || !strings.Contains(f.show("main", "src/catalog/book.go"), "ISBN") {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-	if got := startsOf(r, ".", maker); got != 3 {
-		t.Fatalf("Root's maker started %d times", got)
-	}
-	if got := startsOf(r, "catalog", checker); got != 2 {
-		t.Fatalf("catalog's checker started %d times", got)
+		})
 	}
 }
 
-// A Manager whose checker rejects its work Rounds times stops the Run.
-func TestRejectionsUseUpTheRounds(t *testing.T) {
+func TestVerifyChangesNothingAndEndsWithFindings(t *testing.T) {
 	f := newFixture(t)
 	base, start := changeBook(f)
-	a := f.agents
-	work := a.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ Title string }\n"}, word("changed"))
-	no := a.Review(map[string]string{"catalog/book": "no isbn"})
-	a.On("catalog", maker, work, work)
-	a.On("catalog", checker, no, no)
-	r := f.run(run.Request{Base: base, Limits: withRounds(2)})
-	if r.State != run.StateIncomplete || !strings.Contains(r.Why, "Manager catalog used its 2 maker attempts") {
+	f.agents.on(reviewer, f.answer(map[string]string{"catalog/book": "wrong  README.md:1 -- the book has no isbn"}, ""))
+	r := f.run(run.Request{Mode: agentport.Verify, Base: base})
+	if r.State != run.StateFindings || f.tip("main") != start || len(f.agents.of(implementer)) != 0 {
 		t.Fatalf("%s: %s", r.State, r.Why)
 	}
-	if got := startsOf(r, "catalog", maker); got != 2 {
-		t.Fatalf("catalog's maker started %d times", got)
+	if len(r.Findings) != 1 || r.Findings[0].Definition != "catalog/book" || !strings.Contains(r.Findings[0].Observed, "no isbn") {
+		t.Fatalf("findings %+v", r.Findings)
 	}
-	if f.tip("main") != start {
-		t.Fatal("an incomplete Run changed the target")
+	if !r.RequiredChecks.Ran {
+		t.Fatalf("required checks %+v", r.RequiredChecks)
+	}
+	if !f.has(run.RunBranchPrefix+r.Run, run.ResultFile(r.Run)) {
+		t.Fatal("verify's Result is not on its branch")
+	}
+	list, errs := analysis.ParseFindings("f.md", run.FindingsPage(r))
+	if len(errs) > 0 || len(list) != 1 {
+		t.Fatalf("the Findings page reads back as %+v, %v", list, errs)
+	}
+	// Those Findings are apply's items.
+	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
+	f.agents.on(reviewer, f.ok())
+	fixed := f.run(run.Request{Base: start, Findings: list})
+	if fixed.State != run.StateLanded || answerOf(fixed, "finding 1 catalog/book") != run.AnswerOK {
+		t.Fatalf("%s: %+v", fixed.State, fixed.Items)
 	}
 }
 
-// A push that is no submission is refused by the host, which uses an attempt
-// as a rejection does.
-func TestNoSubmissionUsesAnAttempt(t *testing.T) {
+// With --full, one reviewer per Package, side by side, each with its own copy
+// and only its own items; the count of changes starts again.
+func TestAFullCheckIsOneReviewerPerPackage(t *testing.T) {
+	f := newFixture(t)
+	f.agents.on(reviewer, f.ok(), f.ok(), f.ok(), f.ok())
+	r := f.run(run.Request{Mode: agentport.Verify, Full: true})
+	if r.State != run.StateVerified {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+	sessions := f.agents.of(reviewer)
+	if len(sessions) != 4 {
+		t.Fatalf("%d reviewers for 4 Packages", len(sessions))
+	}
+	dirs, seen := map[string]bool{}, map[string]int{}
+	for _, s := range sessions {
+		dirs[s.Dir] = true
+		for _, k := range listed(s.Prompt) {
+			seen[k]++
+		}
+	}
+	if len(dirs) != 4 {
+		t.Fatalf("the reviewers share copies: %v", dirs)
+	}
+	for k, n := range seen {
+		if n != 1 {
+			t.Fatalf("%s is on %d lists", k, n)
+		}
+	}
+	if len(r.Items) != len(seen) || r.FullCheck.Since != r.Start || r.FullCheck.Landed != 0 {
+		t.Fatalf("items %d of %d; full check %+v", len(r.Items), len(seen), r.FullCheck)
+	}
+}
+
+// The count of changes across Commands, from the target's landing commits and
+// Run branches: a landing counts, a verify --full starts the count again at the
+// commit it examined, and the next landing carries that forward.
+func TestTheFullCheckCountAcrossCommands(t *testing.T) {
 	f := newFixture(t)
 	base, _ := changeBook(f)
-	a := f.agents
-	work := agentfake.Call(func(ctx context.Context, s agentport.Start, _ agentport.Host) error {
-		w, err := a.Clone(ctx, s)
-		if err != nil {
-			return err
-		}
-		if err := w.Write("src/catalog/book.go", isbn); err != nil {
-			return err
-		}
-		if err := w.Commit(fmt.Sprintf("work %d", s.Round)); err != nil {
-			return err
-		}
-		return w.Push()
-	})
-	a.On("catalog", maker, work, work)
-	r := f.run(run.Request{Base: base, Limits: withRounds(2)})
-	if r.State != run.StateIncomplete || !strings.Contains(r.Why, "Manager catalog used its 2 maker attempts") {
-		t.Fatalf("%s: %s", r.State, r.Why)
+	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
+	f.agents.on(reviewer, f.ok())
+	first := f.run(run.Request{Base: base})
+	if fc := first.FullCheck; first.State != run.StateLanded || fc.Landed != 1 || fc.Since != "" || fc.Due {
+		t.Fatalf("first landing %s: %+v", first.State, fc)
+	}
+	if page := f.show("main", run.ResultFile(first.Run)); !strings.Contains(page, "1 change landed since the first landing") {
+		t.Fatalf("first page:\n%s", page)
+	}
+	f.agents.on(reviewer, f.ok(), f.ok(), f.ok(), f.ok())
+	check := f.run(run.Request{Mode: agentport.Verify, Full: true})
+	if fc := check.FullCheck; check.State != run.StateVerified || fc.Landed != 0 || fc.Since != check.Start {
+		t.Fatalf("verify --full %s: %+v", check.State, fc)
+	}
+	f.pull()
+	f.write(map[string]string{m + "catalog/book.md": def("std/Concept", "Book", "A book has a title, an `isbn` and an author.")})
+	f.commit("an author")
+	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed + "\n// author\n"}))
+	f.agents.on(reviewer, f.ok())
+	second := f.run(run.Request{})
+	if fc := second.FullCheck; second.State != run.StateLanded || fc.Landed != 1 || fc.Since != check.Start {
+		t.Fatalf("second landing %s: %+v", second.State, fc)
 	}
 }
 
-// A parent whose task named its child's approved work and whose submission
-// leaves it out is refused by the host, which uses an attempt.
-func TestLeavingOutNamedWorkUsesAnAttempt(t *testing.T) {
+// A later landing that covers a kept Run's impact deletes its branch.
+func TestALandingDeletesTheKeptRunBranchItCovers(t *testing.T) {
 	f := newFixture(t)
 	base, _ := changeBook(f)
-	a := f.agents
-	a.On("catalog", maker, a.Submit(nil, map[string]string{"src/catalog/book.go": isbn}, word("changed")))
-	a.On("catalog", checker, a.Review(nil))
-	a.On(".", maker, a.Submit(nil, nil, word("conforms")))
-	r := f.run(run.Request{Base: base, Limits: withRounds(1)})
-	if r.State != run.StateIncomplete || !strings.Contains(r.Why, "Manager . used its 1 maker attempts") {
-		t.Fatalf("%s: %s", r.State, r.Why)
+	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
+	f.agents.on(reviewer, f.answer(map[string]string{"catalog/book": "spec problem -- it needs the owner"}, ""))
+	kept := f.run(run.Request{Base: base})
+	if kept.State != run.StateSpecProblem || f.tip(run.RunBranchPrefix+kept.Run) == "" {
+		t.Fatalf("%s: %s", kept.State, kept.Why)
+	}
+	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
+	f.agents.on(reviewer, f.ok())
+	landed := f.run(run.Request{Base: base})
+	if landed.State != run.StateLanded || len(landed.Replaced) != 1 || f.tip(run.RunBranchPrefix+kept.Run) != "" {
+		t.Fatalf("%s, replaced %v", landed.State, landed.Replaced)
 	}
 }
 
-// limitChange changes a Rule at Root, so Root and every Package below it work.
-// Root's first submission is approved and the children finish; those are the
-// steps the tests of a Root in stages share.
-func limitChange(f *fixture) string {
-	base := f.tip("main")
-	f.write(map[string]string{m + "loan-limit.md": def("std/Rule", "Loan limit", "At most `3` open loans.")})
-	f.commit("limit 3")
-	a := f.agents
-	a.On("members", maker, a.Submit(nil, nil, word("conforms")), a.Submit([]string{"managers/members.loans"}, nil, word("conforms")))
-	a.On("members", checker, a.Review(nil), a.Review(nil))
-	a.On("members/loans", maker, a.Submit(nil, nil, word("conforms")))
-	a.On("members/loans", checker, a.Review(nil))
-	return base
-}
-
-// Root in stages: each of its rejections after the first is followed by new
-// approved work of a child, so none is a stuck maker, and one attempt is enough.
-func TestARefusalCountsOnlyWhenNothingMoved(t *testing.T) {
+func TestARequestTheEngineCannotRun(t *testing.T) {
 	f := newFixture(t)
-	base := limitChange(f)
-	a := f.agents
-	again := agentfake.Call(func(ctx context.Context, s agentport.Start, h agentport.Host) error {
-		_, err := h.Assign(ctx, "catalog", "Do the next stage.")
-		return err
-	})
-	notYet := a.Review(map[string]string{"loan-limit": "not all stages are in"})
-	merge := a.Submit([]string{"managers/members", "managers/catalog"}, nil, word("conforms"))
-	stage := func(n int) agentfake.Step {
-		return a.Submit(nil, map[string]string{"src/catalog/book.go": fmt.Sprintf("package catalog\n\n// stage %d\ntype Book struct{ Title string }\n", n)}, word("conforms"))
+	if _, err := f.engine.Run(t.Context(), run.Request{Mode: agentport.Apply, Target: "main", Base: "no-such-commit"}); err == nil {
+		t.Fatal("an unknown base ran")
 	}
-	a.On(".", maker, a.Submit(nil, nil, word("conforms")), merge, again, merge, again, merge)
-	a.On(".", checker, a.Review(nil), notYet, notYet, a.Review(nil))
-	a.On("catalog", maker, stage(1), stage(2), stage(3))
-	a.On("catalog", checker, a.Review(nil), a.Review(nil), a.Review(nil))
-	r := f.run(run.Request{Base: base, Limits: withRounds(1)})
-	if r.State != run.StateLanded {
-		t.Fatalf("%s: %s", r.State, r.Why)
+	if _, err := f.engine.Run(t.Context(), run.Request{Mode: agentport.Apply, Target: "main"}); err == nil {
+		t.Fatal("no base and no landing ran")
 	}
-	if got := startsOf(r, ".", maker); got != 6 {
-		t.Fatalf("Root's maker started %d times", got)
+	if _, err := f.engine.Run(t.Context(), run.Request{Mode: agentport.Apply, Target: "main", Run: "Not A Name"}); err == nil {
+		t.Fatal("a bad name ran")
 	}
 }
 
-// A child approved again for the same work moves nothing: a stuck Root cannot
-// keep its count down by giving its child an empty task.
-func TestAnApprovalOfTheSameWorkMovesNothing(t *testing.T) {
-	f := newFixture(t)
-	base := limitChange(f)
-	a := f.agents
-	again := agentfake.Call(func(ctx context.Context, s agentport.Start, h agentport.Host) error {
-		_, err := h.Assign(ctx, "catalog", "Look at it again.")
-		return err
-	})
-	notYet := a.Review(map[string]string{"loan-limit": "still wrong"})
-	merge := a.Submit([]string{"managers/members", "managers/catalog"}, nil, word("conforms"))
-	same := a.Submit(nil, nil, word("conforms"))
-	a.On(".", maker, a.Submit(nil, nil, word("conforms")), merge, again, merge)
-	a.On(".", checker, a.Review(nil), notYet, notYet)
-	a.On("catalog", maker, same, same)
-	a.On("catalog", checker, a.Review(nil), a.Review(nil))
-	r := f.run(run.Request{Base: base, Limits: withRounds(1)})
-	if r.State != run.StateIncomplete || !strings.Contains(r.Why, "Manager . used its 1 maker attempts") {
-		t.Fatalf("%s: %s", r.State, r.Why)
+// noteIn reads the path of the stop note out of a prompt.
+func noteIn(t *testing.T, prompt string) string {
+	t.Helper()
+	const mark = "stop: write why to "
+	i := strings.Index(prompt, mark)
+	if i < 0 {
+		t.Fatalf("the prompt names no stop note:\n%s", prompt)
 	}
-	if got := startsOf(r, ".", maker); got != 4 {
-		t.Fatalf("Root's maker started %d times", got)
-	}
+	rest := prompt[i+len(mark):]
+	return rest[:strings.Index(rest, " and end")]
 }
 
-// The same Root with nothing moving between its rejections is stuck.
-func TestRefusalsInARowWithNothingMovingStopTheRun(t *testing.T) {
-	f := newFixture(t)
-	base := limitChange(f)
-	a := f.agents
-	merge := a.Submit([]string{"managers/members", "managers/catalog"}, nil, word("conforms"))
-	no := a.Review(map[string]string{"loan-limit": "still wrong"})
-	a.On(".", maker, a.Submit(nil, nil, word("conforms")), merge, merge, merge)
-	a.On(".", checker, a.Review(nil), no, no, no)
-	a.On("catalog", maker, a.Submit(nil, nil, word("conforms")))
-	a.On("catalog", checker, a.Review(nil))
-	r := f.run(run.Request{Base: base, Limits: withRounds(2)})
-	if r.State != run.StateIncomplete || !strings.Contains(r.Why, "Manager . used its 2 maker attempts") || !strings.Contains(r.Why, "no new approved work") {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-	if got := startsOf(r, ".", maker); got != 4 {
-		t.Fatalf("Root's maker started %d times", got)
-	}
-}
-
-// A Manager's approval starts its count again, so a rejection of later work
-// has its attempts.
-func TestAnApprovalStartsTheCountAgain(t *testing.T) {
-	f := newFixture(t)
-	base, _ := changeBook(f)
-	a := f.agents
-	work := a.Submit(nil, map[string]string{"src/catalog/book.go": isbn}, word("changed"))
-	a.On("catalog", maker, work, a.Submit(nil, nil, word("changed")), a.Submit(nil, nil, word("changed")))
-	a.On("catalog", checker, a.Review(nil), a.Review(map[string]string{"catalog/book": "no isbn"}), a.Review(nil))
-	a.On(".", maker,
-		agentfake.Call(func(ctx context.Context, s agentport.Start, h agentport.Host) error {
-			_, err := h.Assign(ctx, "catalog", "Check the field again.")
-			return err
-		}),
-		a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
-	a.On(".", checker, a.Review(nil))
-	r := f.run(run.Request{Base: base, Limits: withRounds(1)})
-	if r.State != run.StateLanded {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-}
-
-func TestDeadlineReachesTheAgent(t *testing.T) {
-	f := newFixture(t)
-	base, start := changeBook(f)
-	f.agents.On("catalog", maker, agentfake.Hang())
-	began := time.Now()
-	r := f.run(run.Request{Base: base, Limits: run.Limits{Deadline: time.Now().Add(3 * time.Second), Starts: 10, Rounds: 4, Start: time.Minute}})
-	if r.State != run.StateIncomplete || !strings.Contains(r.Why, "deadline") {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-	if time.Since(began) > time.Minute {
-		t.Fatal("the deadline did not stop the agent")
-	}
-	if len(r.Starts) != 1 || r.Starts[0].Reason != agentport.DeadlineReached {
-		t.Fatalf("starts %+v", r.Starts)
-	}
-	if f.tip("main") != start {
-		t.Fatal("the target changed")
-	}
-}
-
-func TestNoProgressStops(t *testing.T) {
-	f := newFixture(t)
-	base, _ := changeBook(f)
-	idle := agentfake.Call(func(context.Context, agentport.Start, agentport.Host) error { return nil })
-	f.agents.On("catalog", maker, idle, idle)
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateIncomplete || !strings.Contains(r.Why, "no progress") {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-}
-
-func TestInitialGate(t *testing.T) {
-	f := newFixture(t)
-	base := f.tip("main")
-	f.write(map[string]string{"unregistered.txt": "x\n"})
-	f.commit("an unregistered file")
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateCheckFailed || len(r.Starts) != 0 || len(f.remote.started) != 0 {
-		t.Fatalf("%s with %d starts: %s", r.State, len(r.Starts), r.Why)
-	}
-}
-
-func TestDefaultBaseNeedsALandedRun(t *testing.T) {
-	f := newFixture(t)
-	_, err := f.engine.Run(context.Background(), run.Request{Mode: agentport.Apply, Target: "main"})
-	if err == nil || !strings.Contains(err.Error(), "--base") {
-		t.Fatalf("err %v", err)
-	}
-}
-
-func TestHostToolsRefuseOutsideTheTree(t *testing.T) {
-	f := newFixture(t)
-	base, _ := changeBook(f)
-	a := f.agents
-	a.On("catalog", maker, func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
-		if _, err := h.Assign(ctx, "members", "work"); err == nil {
-			return agentfake.Fail(errorf("a leaf assigned work"))
-		}
-		if _, err := h.Answer(ctx, "m99", "x"); err == nil {
-			return agentfake.Fail(errorf("an answer to nothing was taken"))
-		}
-		if _, err := h.Note(ctx, strings.Repeat("x", run.MaxNoteText+1)); err == nil {
-			return agentfake.Fail(errorf("an oversized Note was taken"))
-		}
-		if _, err := h.Note(ctx, "the book file has no tests"); err != nil {
-			return agentfake.Fail(err)
-		}
-		return a.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ ISBN string }\n"}, word("changed"))(ctx, s, h)
-	})
-	a.On("catalog", checker, func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
-		if _, err := h.Ask(ctx, "may I?"); err == nil {
-			return agentfake.Fail(errorf("a checker asked"))
-		}
-		// A checker is fresh: it leaves Notes but does not read its maker's.
-		if len(s.Tools) != 1 || s.Tools[0] != agentport.ToolNote {
-			return agentfake.Fail(errorf("checker tools %v", s.Tools))
-		}
-		if page, err := h.Notes(ctx, ""); err == nil {
-			return agentfake.Fail(errorf("a checker read the Notes: %+v", page))
-		}
-		if _, err := h.Note(ctx, "book.go has no doc comment"); err != nil {
-			return agentfake.Fail(err)
-		}
-		return a.Review(nil)(ctx, s, h)
-	})
-	a.On(".", maker, func(ctx context.Context, s agentport.Start, h agentport.Host) agentport.End {
-		if _, err := h.Ask(ctx, "anyone?"); err == nil {
-			return agentfake.Fail(errorf("Root asked a parent"))
-		}
-		if page, err := h.Notes(ctx, ""); err != nil || len(page.Notes) != 2 {
-			return agentfake.Fail(errorf("notes %+v %v", page, err))
-		}
-		return a.Submit([]string{"managers/catalog"}, nil, word("conforms"))(ctx, s, h)
-	})
-	a.On(".", checker, a.Review(nil))
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateLanded || len(r.Notes) != 2 {
-		t.Fatalf("%s with %d notes: %s", r.State, len(r.Notes), r.Why)
-	}
-}
-
-// A target branch checked out in a working tree is never updated: Git
-// refuses the push, and the work stays on its Run branch.
-func TestLandingNeverTouchesAWorkingTree(t *testing.T) {
-	f := newFixture(t)
-	base, start := changeBook(f)
-	host, err := rungit.Open(context.Background(), filepath.Join(testkit.TempDir(t), "host"), f.src)
-	if err != nil {
+func writeAbsolute(t *testing.T, file, content string) {
+	t.Helper()
+	if err := os.MkdirAll(path.Dir(file), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	f.engine.Git = host
-	// Even where Git would update the working tree itself, the host does
-	// not push to a checked-out branch.
-	testkit.Git(t, f.src, "config", "receive.denyCurrentBranch", "updateInstead")
-	a := f.agents
-	a.On("catalog", maker, a.Submit(nil, map[string]string{"src/catalog/book.go": "package catalog\n\ntype Book struct{ ISBN string }\n"}, word("changed")))
-	a.On("catalog", checker, a.Review(nil))
-	a.On(".", maker, a.Submit([]string{"managers/catalog"}, nil, word("conforms")))
-	a.On(".", checker, a.Review(nil))
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateKept || !strings.Contains(r.Why, "refused") {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-	if head := testkit.Git(t, f.src, "rev-parse", "HEAD"); head != start {
-		t.Fatalf("HEAD moved to %s", head)
-	}
-	if status := testkit.Git(t, f.src, "status", "--porcelain"); status != "" {
-		t.Fatalf("the working tree changed:\n%s", status)
-	}
-	if testkit.Git(t, f.src, "rev-parse", "--verify", "--quiet", "refs/heads/"+run.RunBranchPrefix+r.Run) == "" {
-		t.Fatal("the work is not on its Run branch")
-	}
-}
-
-// A verify checker's deviates verdict becomes a Finding, and the Findings
-// page it writes is the input of apply --findings.
-func TestVerifyFindingsFeedApply(t *testing.T) {
-	f := newFixture(t)
-	base, _ := changeBook(f)
-	a := f.agents
-	a.On("catalog", checker, a.Verdicts(func(s agentport.Start) []agentfake.Verdict {
-		return []agentfake.Verdict{{Item: "catalog/book", Word: "deviates", Evidence: "Observed: book.go has no isbn. Expected: a book has an `isbn`."}}
-	}))
-	a.On(".", checker, a.Verdicts(word("conforms")))
-	r := f.run(run.Request{Mode: agentport.Verify, Base: base})
-	if r.State != run.StateFindings || len(r.Findings) != 1 {
-		t.Fatalf("%s with %+v: %s", r.State, r.Findings, r.Why)
-	}
-	got, ds := analysis.ParseFindings("findings.md", run.FindingsPage(r))
-	if len(ds) > 0 || len(got) != 1 || got[0].Definition != "catalog/book" || got[0].Observed != "book.go has no isbn." || !strings.Contains(got[0].Expected, "isbn") {
-		t.Fatalf("Findings page parsed as %+v %v", got, ds)
+	if err := os.WriteFile(file, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
 	}
 }
