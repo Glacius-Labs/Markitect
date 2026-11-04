@@ -247,7 +247,7 @@ Markitect's accepted target is [concept 3.0](docs/concepts/v3-concept.md), not b
 | Model language and the commands `init`, `check`, `lock`, `refs`, `graph`, `impact` and `lint` | Available |
 | Runs with `apply` and `verify` | Available. The Library example lands and verifies natively on Windows and on Linux with Claude Code ([record](docs/validation/t5-native-host-20261029.md)); macOS is not yet observed. On the larger Makerspace project no step of the pilot's chain has landed: a parent's first submission must pass checks that need its children's files. The planned step lets the required checks gate merged states only ([plan](docs/implementation-plan.md#concept-20-build)) |
 | Codex | Wired in; its first native smoke did not land yet |
-| Evaluation against ordinary agentic coding | The pilot has run; its report and the counted series follow |
+| Evaluation against ordinary agentic coding | The pilot and the Windows counted series have run. Further comparison of variants has stopped, and concept 3.0's tests follow its build |
 | Release | None yet; install from source |
 
 Concept 3.0 keeps the aims of [concept 2.0 §15](docs/concepts/v2-concept.md#15-acceptance) and tests them as its [§13](docs/concepts/v3-concept.md#13-how-we-know-it-works) says. They ask, on a small and a larger project over a series of changes:

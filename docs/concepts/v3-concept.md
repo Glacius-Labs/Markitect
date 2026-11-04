@@ -261,7 +261,7 @@ The aims of [concept 2.0 §15](v2-concept.md#15-acceptance) stay: correct, no dr
 
 ## 15. What this overturns
 
-Each entry below is marked in the register with a link to [DEC-091](register.md#dec-091-concept-30-is-the-target), and the entry itself stays.
+Each register entry below is marked there with a link to [DEC-091](register.md#dec-091-concept-30-is-the-target), and the entry itself stays.
 
 | Entry | Becomes | What stays from it |
 |---|---|---|
