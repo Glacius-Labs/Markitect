@@ -38,8 +38,6 @@ const (
 	defaultDeadline = 6 * time.Hour
 	// maxRefusals bounds how many errors one refusal lists.
 	maxRefusals = 30
-	// startWait bounds how long a Command waits for its session to come up.
-	startWait = 60 * time.Second
 )
 
 // RunBranchPrefix is where work and a Result that do not land stay.
@@ -136,6 +134,9 @@ func (e *Engine) Apply(ctx context.Context, req Request) (Started, error) {
 	if err != nil {
 		return Started{}, err
 	}
+	if !e.hasHarness(ctx, start) {
+		return Started{State: StateCheckFailed, Text: noHarness}, nil
+	}
 	landedOne := e.retryLandings(ctx, runs, branch, start)
 	if landedOne != "" {
 		start = landedOne
@@ -177,6 +178,9 @@ func (e *Engine) Verify(ctx context.Context, req Request) (Started, error) {
 	if errs := cur.SpecErrors(); len(errs) > 0 {
 		return Started{State: StateCheckFailed, Text: "The spec has errors at the last commit, so no agent starts:\n\n" + listErrors(errs)}, nil
 	}
+	if !e.hasHarness(ctx, start) {
+		return Started{State: StateCheckFailed, Text: noHarness}, nil
+	}
 	st, err := e.newRun(ctx, "verify", req, root, branch, start)
 	if err != nil {
 		return Started{}, err
@@ -195,6 +199,16 @@ func (e *Engine) Verify(ctx context.Context, req Request) (Started, error) {
 		dirtyNote = " Uncommitted work is not looked at."
 	}
 	return e.launch(ctx, st, fmt.Sprintf("Run %s started: a reviewer checks %d items at %s in the background. It changes nothing you have; `markitect status` says how it stands.%s\n", st.Run, len(st.Items), short(start), dirtyNote))
+}
+
+// reviewerFile is the harness's reviewer agent, without which no Run can finish.
+const reviewerFile = ".claude/agents/" + ReviewerAgent + ".md"
+
+const noHarness = "The harness is not in this project's last commit, so a run could not start its reviewer. Run markitect init, which commits what it writes, and try again.\n"
+
+func (e *Engine) hasHarness(ctx context.Context, commit string) bool {
+	_, err := e.Git.State(ctx, commit).Read(reviewerFile)
+	return err == nil
 }
 
 // newRun works out the base and the list. A Run with an empty list is not saved.

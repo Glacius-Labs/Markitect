@@ -45,6 +45,9 @@ var backgrounded = regexp.MustCompile(`backgrounded\W+([0-9a-f]{6,})`)
 // Start starts a background session in a new worktree and returns its ID once
 // the provider lists it.
 func (c CLI) Start(ctx context.Context, spec run.SessionSpec) (string, error) {
+	if _, err := exec.LookPath("markitect"); err != nil {
+		return "", errors.New("markitect is not on the path, and the session calls it by name; put its folder on the path")
+	}
 	settings, err := c.writeSettings(spec)
 	if err != nil {
 		return "", err

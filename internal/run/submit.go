@@ -441,7 +441,7 @@ func (e *Engine) close(ctx context.Context, st *RunState, state, why string, dec
 	if st.Reviewed != "" {
 		work = st.Reviewed
 	}
-	if root, err := e.worktreeOf(ctx, st); err == nil && root != "" {
+	if root, err := e.Git.WorktreeOf(ctx, worktreeBranch(st.Run)); err == nil && root != "" {
 		if cand, err := e.Git.Candidate(ctx, root, fmt.Sprintf("Markitect run %s: the work when it ended", st.Run)); err == nil {
 			work = cand
 		}
@@ -465,19 +465,6 @@ func (e *Engine) close(ctx context.Context, st *RunState, state, why string, dec
 
 func (e *Engine) markClosed(st *RunState, state, why string) {
 	st.Open, st.State, st.Why, st.Closed = false, state, why, e.now()
-}
-
-// worktreeOf finds the Run's worktree folder from the provider's layout.
-func (e *Engine) worktreeOf(ctx context.Context, st *RunState) (string, error) {
-	root := path.Join(filepath.ToSlash(st.Repo), ".claude", "worktrees", st.Run)
-	got, err := e.Git.Root(ctx, root)
-	if err != nil {
-		return "", err
-	}
-	if !strings.EqualFold(path.Base(filepath.ToSlash(got)), st.Run) {
-		return "", nil
-	}
-	return got, nil
 }
 
 func registryPage(file string) bool {

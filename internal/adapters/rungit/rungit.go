@@ -104,14 +104,27 @@ func (r *Repo) Head(ctx context.Context, dir string) (string, error) {
 	return lineAt(ctx, dir, "rev-parse", "--verify", "HEAD^{commit}")
 }
 
-// notTheWork are the paths a Run's commit check does not count: Markitect's own
-// folder, which apply commits, and the provider's local files.
-var notTheWork = []string{":(exclude,top).markitect", ":(exclude,top).claude/worktrees", ":(exclude,top).claude/settings.local.json"}
+// providerFiles are the provider's local files, which are never part of the work:
+// a worktree of a Run would otherwise become a link in the tree of its own commit
+// in a repository that does not ignore them.
+var providerFiles = []string{":(exclude,top).claude/worktrees", ":(exclude,top).claude/settings.local.json"}
+
+// notIgnored is the exclude patterns of the provider's files Git does not ignore
+// anyway: git add refuses to be told to leave out a path it ignores.
+func notIgnored(ctx context.Context, dir string) []string {
+	var out []string
+	for path, pattern := range map[string]string{".claude/worktrees/x": providerFiles[0], ".claude/settings.local.json": providerFiles[1]} {
+		if _, err := command(ctx, dir, nil, nil, "check-ignore", "-q", "--", path); err != nil {
+			out = append(out, pattern)
+		}
+	}
+	return out
+}
 
 // Uncommitted lists what differs from the last commit at dir, outside
 // Markitect's folder and the provider's local files.
 func (r *Repo) Uncommitted(ctx context.Context, dir string) ([]string, error) {
-	args := append([]string{"--no-optional-locks", "status", "--porcelain", "-z", "--no-renames", "--untracked-files=all", "--", ":/"}, notTheWork...)
+	args := append([]string{"--no-optional-locks", "status", "--porcelain", "-z", "--no-renames", "--untracked-files=all", "--", ":/", ":(exclude,top).markitect"}, providerFiles...)
 	out, err := command(ctx, dir, nil, nil, args...)
 	if err != nil {
 		return nil, err
@@ -163,7 +176,7 @@ func (r *Repo) Candidate(ctx context.Context, dir, message string) (string, erro
 	if _, err := command(ctx, dir, nil, env, "read-tree", head); err != nil {
 		return "", err
 	}
-	if _, err := command(ctx, dir, nil, env, "add", "-A", "--", ":/"); err != nil {
+	if _, err := command(ctx, dir, nil, env, append([]string{"add", "-A", "--", ":/"}, notIgnored(ctx, dir)...)...); err != nil {
 		return "", err
 	}
 	tree, err := command(ctx, dir, nil, env, "write-tree")
@@ -457,6 +470,11 @@ func (r *Repo) RemoveWorktree(ctx context.Context, branch string) error {
 		return err
 	}
 	return nil
+}
+
+// WorktreeOf returns the working tree that has a branch checked out, or "".
+func (r *Repo) WorktreeOf(ctx context.Context, branch string) (string, error) {
+	return r.checkedOutAt(ctx, branch)
 }
 
 // checkedOutAt returns the working tree that has a branch checked out, or "".

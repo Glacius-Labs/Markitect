@@ -58,6 +58,8 @@ type Git interface {
 	DeleteBranch(ctx context.Context, branch string) error
 	// Branches lists the branches under a prefix with their tips.
 	Branches(ctx context.Context, prefix string) (map[string]string, error)
+	// WorktreeOf returns the working tree that has a branch checked out, or "".
+	WorktreeOf(ctx context.Context, branch string) (string, error)
 	// RemoveWorktree removes the worktree that has a branch checked out, if there
 	// is one.
 	RemoveWorktree(ctx context.Context, branch string) error

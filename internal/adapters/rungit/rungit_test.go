@@ -135,6 +135,27 @@ func TestCandidateChangesNothing(t *testing.T) {
 	}
 }
 
+// A worktree of a Run is never part of the work, even if nothing ignores it.
+func TestCandidateLeavesWorktreesOut(t *testing.T) {
+	host, r := open(t)
+	r.Write(".gitignore", "build/\n")
+	r.Commit("worktrees not ignored")
+	wt := filepath.Join(r.Dir, ".claude", "worktrees", "r1")
+	r.Git("worktree", "add", "-q", "-b", "worktree-r1", wt, "HEAD")
+	r.Write("new.txt", "new\n")
+	cand, err := host.Candidate(context.Background(), r.Dir, "m")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if files := r.Git("ls-tree", "-r", "--name-only", cand); strings.Contains(files, "worktrees") || !strings.Contains(files, "new.txt") {
+		t.Fatalf("the candidate holds: %s", files)
+	}
+	got, err := host.WorktreeOf(context.Background(), "worktree-r1")
+	if err != nil || !strings.EqualFold(filepath.Base(got), "r1") {
+		t.Fatalf("%q %v", got, err)
+	}
+}
+
 // Export writes the files of a commit and nothing of Git's.
 func TestExport(t *testing.T) {
 	host, r := open(t)

@@ -42,7 +42,8 @@ func library() map[string]string {
 		project.ManifestFile:                      "libraries:\n  std: 1.0.0\n",
 		project.LockFile:                          string(model.RenderLock([]model.LibrarySource{std})),
 		project.ChecksFile:                        "checks:\n  - name: test\n    command: go test ./...\n    timeout: 1m\n",
-		project.IgnoreFile:                        "| Path | Why |\n|---|---|\n| `.gitignore` | Git's own |\n",
+		project.IgnoreFile:                        "| Path | Why |\n|---|---|\n| `.gitignore` | Git's own |\n| `.claude/agents/markitect-*` | The harness |\n",
+		".claude/agents/markitect-reviewer.md":    "---\nname: markitect-reviewer\n---\nReview.\n",
 		m + "project.md":                          def("std/Project", "Library", "Parts: [[members]], [[catalog]]."),
 		m + "loan-limit.md":                       def("std/Rule", "Loan limit", "At most `5` open loans."),
 		m + "members/member.md":                   def("std/Concept", "Member", "A person."),
@@ -236,6 +237,59 @@ func (f *fixture) answer(wt string, name string, except map[string]string) strin
 	return text
 }
 
+// The owner may work in a linked worktree of their own, as the desktop app does.
+// The run lands on their branch there, and an early end keeps its work.
+func TestFromALinkedWorktree(t *testing.T) {
+	t.Run("lands on the owner's branch", func(t *testing.T) {
+		f := newFixture(t)
+		owner := filepath.Join(testkit.TempDir(t), "owner")
+		f.repo.Git("worktree", "add", "-q", "-b", "owner-branch", owner, "HEAD")
+		write(t, owner, m+"loan-limit.md", def("std/Rule", "Loan limit", "At most `3` open loans."))
+		s, err := f.engine.Apply(context.Background(), run.Request{Dir: owner, Base: f.first})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if s.Run == "" {
+			t.Fatalf("%+v", s)
+		}
+		st := f.state(s.Run)
+		if st.Branch != "owner-branch" {
+			t.Fatalf("branch %q", st.Branch)
+		}
+		wt := filepath.Join(f.repo.Dir, ".claude", "worktrees", s.Run)
+		// The fixture's provider branches from the main checkout; the real one from
+		// the owner's HEAD.
+		testkit.Git(t, wt, "reset", "-q", "--hard", st.Start)
+		f.submit(wt)
+		f.answer(wt, s.Run, nil)
+		if v := f.submit(wt); !v.Done || f.state(s.Run).State != run.StateLanded {
+			t.Fatalf("%s", v.Text)
+		}
+		if head := testkit.Git(t, owner, "rev-parse", "HEAD"); head != f.state(s.Run).Landed {
+			t.Fatalf("the owner's worktree is at %s", head)
+		}
+		if data, err := os.ReadFile(filepath.Join(owner, ".markitect", "results", s.Run+".md")); err != nil || len(data) == 0 {
+			t.Fatalf("the Result did not reach the owner's folder: %v", err)
+		}
+	})
+	t.Run("an early end keeps the work", func(t *testing.T) {
+		f := newFixture(t)
+		owner := filepath.Join(testkit.TempDir(t), "owner")
+		f.repo.Git("worktree", "add", "-q", "-b", "owner-branch", owner, "HEAD")
+		write(t, owner, m+"loan-limit.md", def("std/Rule", "Loan limit", "At most `3` open loans."))
+		s, err := f.engine.Apply(context.Background(), run.Request{Dir: owner, Base: f.first})
+		if err != nil {
+			t.Fatal(err)
+		}
+		wt := filepath.Join(f.repo.Dir, ".claude", "worktrees", s.Run)
+		write(t, wt, "src/members/loans/loan.go", "package loans\n\nconst Limit = 3\n")
+		if _, err := f.engine.Stop(context.Background(), owner, "changed my mind"); err != nil {
+			t.Fatal(err)
+		}
+		has(t, f.repo.Git("show", f.state(s.Run).Kept+":src/members/loans/loan.go"), "Limit = 3")
+	})
+}
+
 // A change lands through the door with nobody driving: the checks, the review,
 // and the owner's branch moved forward, with the Result in the landing commit.
 func TestAChangeLands(t *testing.T) {
@@ -344,6 +398,20 @@ func TestApplyStopsBeforeAnyAgent(t *testing.T) {
 		if s.State != run.StateNothing || len(f.sessions.started) != 0 {
 			t.Fatalf("%+v", s)
 		}
+	})
+	t.Run("no harness", func(t *testing.T) {
+		f := newFixture(t)
+		f.repo.Git("rm", "-q", ".claude/agents/markitect-reviewer.md")
+		f.repo.Commit("no harness")
+		f.repo.Write(m+"loan-limit.md", def("std/Rule", "Loan limit", "At most `3` open loans."))
+		s, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir, Base: f.first})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if s.State != run.StateCheckFailed || len(f.sessions.started) != 0 {
+			t.Fatalf("%+v", s)
+		}
+		has(t, s.Text, "markitect init")
 	})
 	t.Run("detached HEAD", func(t *testing.T) {
 		f := newFixture(t)
