@@ -130,8 +130,12 @@ def commit_env():
 
 
 def place(repo, tree, at):
-    """Put the reference tree at its prefix; what it replaces goes first, so files a step deleted are gone."""
+    """Put the reference tree at its prefix; what it replaces goes first, so files a step deleted are gone. A prefix holds the
+    whole result, so a folder a step deleted goes too; at the root, only what the tree names, since the start's other files
+    are not the reference's."""
     target = repo / at if at else repo
+    if at and target.is_dir():
+        shutil.rmtree(target)
     for top in sorted(p.name for p in tree.iterdir()):
         old = target / top
         if old.is_dir():

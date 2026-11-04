@@ -1,6 +1,6 @@
 """How strong the hidden cases are: plausible bugs seeded in the reference, one at a time, each of which should fail a case.
 
-  python -I -B calibrate.py MUTANTS.json [--only NAME] [--out REPORT.json]
+  python -I -B calibrate.py MUTANTS.json [--step STEP] [--only NAME] [--out REPORT.json]
 
 MUTANTS.json is a list of {"name", "module", "file", "old", "new", "why"}: `file` relative to the reference tree, `old` found
 exactly once. Each mutant is copied to a scratch tree, built and run against every hidden case. It starts no container and
@@ -19,13 +19,12 @@ HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import catalog  # noqa: E402
 
-REFERENCE = HERE.parent / "reference" / "w0"
 
 
-def run_mutant(mutant, env):
+def run_mutant(mutant, env, step="W0"):
     with tempfile.TemporaryDirectory(prefix="ms-mutant-", ignore_cleanup_errors=True) as tmp:
         tree = pathlib.Path(tmp) / "tree"
-        shutil.copytree(REFERENCE, tree)
+        shutil.copytree(HERE.parent / "reference" / step.lower(), tree)
         path = tree / mutant["file"]
         text = path.read_bytes().decode("utf-8")
         if text.count(mutant["old"]) != 1:
@@ -35,7 +34,7 @@ def run_mutant(mutant, env):
         built = subprocess.run(["go", "build", "-o", str(program), "./cmd/makerspace"], cwd=tree, env=env, capture_output=True, text=True, errors="replace")
         if built.returncode != 0:
             return {"name": mutant["name"], "state": "bad-mutant", "detail": built.stderr[-300:]}
-        report = catalog.assess([str(program)], tmp, workers=8)
+        report = catalog.assess([str(program)], tmp, workers=8, step=step)
         failed = [c["id"] for c in report["cases"] if not c["passed"]]
         return {"name": mutant["name"], "module": mutant.get("module"), "state": "caught" if failed else "survived", "failed": failed[:12], "failedCount": len(failed)}
 
@@ -43,12 +42,13 @@ def run_mutant(mutant, env):
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     p.add_argument("mutants")
+    p.add_argument("--step", default="W0", choices=catalog.STEPS)
     p.add_argument("--only")
     p.add_argument("--out")
     a = p.parse_args(argv)
     env = dict(os.environ)
     mutants = json.loads(pathlib.Path(a.mutants).read_text(encoding="utf-8"))
-    rows = [run_mutant(m, env) for m in mutants if not a.only or m["name"] == a.only]
+    rows = [run_mutant(m, env, a.step) for m in mutants if not a.only or m["name"] == a.only]
     for row in rows:
         if row["state"] != "caught":
             print(row["state"], row["name"], row.get("detail", ""))
