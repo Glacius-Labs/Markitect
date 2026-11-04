@@ -4,6 +4,7 @@ Sources preserve where the [register](../register.md) entries come from. Owner s
 
 | Source | Origin | Content |
 |---|---|---|
+| [A fresh start](fresh-start-20261104.md) | Direct owner statements, 4 November 2026; verbatim (English) | The aim becomes one simple version that works reliably on Sonnet; the native version; how `apply` should run; the commands; own worktree. The basis of draft concept 4.0 |
 | [Founding intent](founding-intent-20261026.md) | Direct owner statements, 26 October 2026; verbatim (English) | The canonical model as a typed language in prose: project Kinds plus standard Libraries, a structure-only compiler, AI-written models through skills and tooling, the Apply organization after Conway's law and Clean Architecture, and the request that every agent knows this |
 | [Git remote collaboration](git-remote-collaboration-20261027.md) | Direct owner directions, 27 October 2026; verbatim (English) | Agents work through a Git remote like engineers in a company, with no Git mounts; a verified result lands on the target branch without owner review |
 | [Library questions](library-questions-20261028.md) | Direct owner decisions, 27 and 28 October 2026; verbatim (English) | Refusal lists have no order (`api` 2.0.0); an Interface exposes refusal codes (`architecture` 1.1.0); invariants are not placed; no envelope Kind and no alias-only imports yet |
