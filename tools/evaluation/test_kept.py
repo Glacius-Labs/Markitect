@@ -208,7 +208,7 @@ class Store(unittest.TestCase):
     def test_a_session_that_did_no_work_stops_the_reads(self):
         root = self.read_material()
         started = self.fake_session(["no work", self.good_answer()])
-        with self.assertRaisesRegex(blind_read.ReadError, "did no work"):
+        with self.assertRaisesRegex(blind_read.ReadError, "reports no turns"):
             blind_read.run(root, "claude:m", None)
         self.assertEqual(len(started), 1)
 

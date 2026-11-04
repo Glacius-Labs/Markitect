@@ -14,7 +14,8 @@ verdict.
 - **Duplication:** the share of a program's lines inside a repeated run of lines. Blank lines, comments and lone
   brackets do not count. `exact` looks for 6 lines in a row that are the same after trimming; `renamed` for 12 that are
   the same once every name, string and number is the same, which also finds a copy with other names.
-- **Dead code:** `deadcode`, from the program's main and its tests. `onlyTests` are the functions only tests reach.
+- **Dead code:** `deadcode`, from the program's main and its tests, told apart into the program's own and test helpers.
+  `onlyTests` are the program's functions only tests reach.
 - **Linters:** `go vet`, `gofmt -l` and `staticcheck`.
 
 `--architecture` names the spec's page with the module table (`| module | model | may depend on |`), and adds the part
@@ -295,7 +296,9 @@ def linters(root, env, tools):
             # With the file: two helpers of one name in two packages are two functions.
             return {f"{pathlib.PurePath(m.group(1)).as_posix()}: {m.group(2)}" for m in found if m}
         with_tests, from_main = unreachable("-test"), unreachable()
-        result["deadcode"] = {"dead": len(with_tests), "onlyTests": len(from_main - with_tests), "examples": sorted(with_tests)[:TOP]}
+        in_tests = {s for s in with_tests if s.partition(": ")[0].endswith("_test.go")}
+        result["deadcode"] = {"dead": len(with_tests - in_tests), "deadInTests": len(in_tests),
+                              "onlyTests": len(from_main - with_tests), "examples": sorted(with_tests)[:TOP]}
     return result
 
 

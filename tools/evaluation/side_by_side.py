@@ -73,6 +73,7 @@ def measured_rows(labels, measures):
         ("Repeated lines, renamed", get(lambda m: percent(m["duplication"]["renamed"]))),
         ("Repeated test lines, exact", get(lambda m: percent(m["duplication"]["testsExact"]))),
         ("Dead functions (`deadcode`)", get(lambda m: linter(m["linters"]["deadcode"], lambda d: d["dead"]))),
+        ("Dead test helpers", get(lambda m: linter(m["linters"]["deadcode"], lambda d: d["deadInTests"]))),
         ("Functions only tests reach", get(lambda m: linter(m["linters"]["deadcode"], lambda d: d["onlyTests"]))),
         ("`staticcheck` findings", get(lambda m: linter(m["linters"]["staticcheck"], lambda d: d["findings"]))),
         ("`go vet` findings", get(lambda m: m["linters"]["vet"])),

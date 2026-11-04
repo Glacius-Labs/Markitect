@@ -148,7 +148,7 @@ def run(material_root, model, box, deadline=DEADLINE, stop_after=None):
         if quota["refused"]:
             raise ReadError("a request was refused: the reads stop here")
         if not ((session["reported"] or {}).get("usage") or {}).get("turns"):
-            raise ReadError(f"the session for {label} did no work, as with a refused login: the reads stop here")
+            raise ReadError(f"the session for {label} reports no turns, as a refused login would: the reads stop here")
         if stop_after is not None and reading and reading - first_reading >= stop_after:
             raise ReadError(f"the weekly reading rose from {first_reading} to {reading}: the reads stop here")
     return results

@@ -10,12 +10,12 @@ All six passed all 327 hidden cases, and all six have the spec's 48 modules at t
 
 - **Size and repetition.** A is the smallest, with 9,117 program lines against 11,510 to 17,319, and repeats the least: 2.0 % of its lines in renamed copies, against 6.5 to 19.5 %.
 - **Tests.** A has 101 test functions, and the others have 590 to 686. A's reader still gave its tests 4 of 5. Only F got 5.
-- **One enormous function.** A and B each hold their operation table in a single function, of 619 and 1,010 lines. The others stay at 217 lines or fewer.
+- **Enormous functions.** The longest function in A has 619 lines and in B 1,010, each a part of its operation table. The others' longest have 217 lines or fewer.
 - **Tests that cross module lines.** In C, D and E the tests import between modules 124 to 143 times where the program itself may not. A, B and F have none.
-- **The same weakness in most reads.** The readers of A, B, E and F name it without knowing of each other: the list of gates for a machine is written out separately for reserving, for checking in and for the compliance view, so a new gate means editing each by hand. Test 2's changes should reach it.
+- **The same weakness in most reads.** The readers name it without knowing of each other: the list of gates for a machine is written out separately for reserving, for checking in and for the compliance view in A, B and E, and in two of those places in F. A new gate means editing each by hand. Test 2's changes should reach it.
 - **The readers barely differ.** Every architecture score is 4, and D and F alone get a plain yes on taking over. The reasons say more than the scores.
 
-**Limits.** Each result has one read, and a reader opened 19 to 29 files of 76 to 207, in one and a half to three minutes, so a read is a sample and not an audit. Scores from one reader are not comparable to another's to the point. Blinding removes files, not words in the code, and F's code and tests name the model it was made from, so its read shows how it was made. The measured figures say nothing about whether the code is right, which the hidden cases say for these six.
+**Limits.** Each result has one read, and a reader opened 19 to 29 files of 76 to 207, in a minute and a quarter to three minutes, so a read is a sample and not an audit. Scores from one reader are not comparable to another's to the point. Blinding removes files, not words in the code, and F's tests and README name the model it was made from, so its read shows how it was made. The measured figures say nothing about whether the code is right, which the hidden cases say for these six.
 
 ## Measured
 
@@ -43,7 +43,8 @@ The same script for every result, from a clean checkout, with one Go toolchain. 
 | Repeated lines, exact | 0.6 % | 1.7 % | 1.7 % | 2.2 % | 5.0 % | 0.8 % |
 | Repeated lines, renamed | 2.0 % | 19.5 % | 13.0 % | 8.0 % | 15.9 % | 6.5 % |
 | Repeated test lines, exact | 0.0 % | 3.0 % | 19.2 % | 15.2 % | 14.1 % | 0.5 % |
-| Dead functions (`deadcode`) | 1 | 1 | 1 | 0 | 2 | 5 |
+| Dead functions (`deadcode`) | 1 | 1 | 0 | 0 | 2 | 1 |
+| Dead test helpers | 0 | 0 | 1 | 0 | 0 | 4 |
 | Functions only tests reach | 0 | 1 | 1 | 23 | 1 | 0 |
 | `staticcheck` findings | 4 | 1 | 1 | 1 | 1 | 6 |
 | `go vet` findings | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -184,7 +185,7 @@ Read this last.
 
 **Measured.** [`measure.py`](../../tools/evaluation/measure.py) ran on each kept repository with Go 1.27.1, `staticcheck` v0.8.2 and `deadcode` from x/tools v0.52.0.
 
-**Read.** Six sessions of [`blind_read.py`](../../tools/evaluation/blind_read.py), one attempt each, all with valid answers and only `claude-opus-5-5` answering. They took 77 to 179 seconds each and left the runner's weekly reading at 22, against an expected 3 to 6 points. No credential shape is in the evidence, and nothing labelled with the evaluation remained.
+**Read.** Six sessions of [`blind_read.py`](../../tools/evaluation/blind_read.py), one attempt each, all with valid answers and only `claude-opus-5-5` answering. They took 77 to 179 seconds each. The runner's weekly reading was 22 after each of them and 21 after the last launch before them, so together they used about a point at most, against an expected 3 to 6. No session reports a reading from before its start, so nothing closer can be said. No credential shape is in the evidence, and nothing labelled with the evaluation remained.
 
 **Failed starts.** Before the first session, the wrapper started twice and failed: the tool read a missing default for the suite's series, and then the frozen source lacked `tools/library-oracle`, which the suite's reader imports. No session ran in either. Both are fixed: the default in the tool, the second by freezing the whole `tools/` folder.
 
@@ -203,7 +204,7 @@ Blind reads of the six kept builds, one fresh session each. The measuring runs n
 | Login | The owner's subscription login, as an access-only copy in the suite's sandbox. Every other `ANTHROPIC_*` and `CLAUDE_*` variable is cleared |
 | Image | The suite's sandbox `sha256:67e2cb76d76c27fd20b183e8d209e6407c49f758c35a454168b5b37cc2e24ce8`, which K's launches used |
 | Limits | 50 minutes per session, one at a time, and one more attempt for a label whose session fails, so at most 12 sessions. Expected use is 3 to 6 points on the runner's weekly reading; above 8 points the series stops after the current session |
-| Abort | A refused login, the engine busy, or a second failed attempt on a label, which the page then shows as no read |
+| Abort | A refused login, the engine busy, or a second failed attempt on a label, which the page then shows as no read. The frozen source stopped on a refused request and at the weekly limit; its stop on a session that did no work came with the later fixes. Nothing triggered any of them |
 | Lock | `NATIVE-RUN.lock` in the shared notes folder, through the tool's `--lock`. Other Docker work is checked first and stays off |
 | Cleanup | The sandbox removes its container and network after each session; afterwards nothing labelled with the evaluation may remain |
 | Evidence | Outside the repository, in `%LOCALAPPDATA%/markitect-kept/pages/large-w0/`: the figures, the material, the key and every attempt |
