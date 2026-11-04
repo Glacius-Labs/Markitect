@@ -1,6 +1,6 @@
 """The concept 3.0 arm: one `markitect apply` per task, its host native, its agents in the Command's container on the suite's network.
 
-  python -I -B markitect_arm.py --markitect BIN --image IMAGE_ID [--effort LEVEL] [--verify] TASK_DIR OUT_DIR [STATE_DIR]
+  python -I -B markitect_arm.py --markitect BIN --image IMAGE_ID [--effort LEVEL] [--reviewer-shell on|off] [--verify] TASK_DIR OUT_DIR [STATE_DIR]
 
 Run it only through `suite.py run --native` or `chain --native` (native.py),
 which hands it the evaluation's model, the network every container joins, the
@@ -156,7 +156,7 @@ def host_env(a, provider, model, transcripts, hooks, token):
     for k in ("GIT_AUTHOR_NAME", "GIT_AUTHOR_EMAIL", "GIT_COMMITTER_NAME", "GIT_COMMITTER_EMAIL"):
         env.pop(k)
     env.update(MARKITECT_MANAGER_IMAGE=a.image, MARKITECT_ENGINE=engine[0], MARKITECT_PROVIDER=provider, MARKITECT_MODEL=model,
-               MARKITECT_EFFORT=a.effort, MARKITECT_TRANSCRIPTS=str(transcripts), **{TOKEN_VARIABLE: token})
+               MARKITECT_EFFORT=a.effort, MARKITECT_TRANSCRIPTS=str(transcripts), MARKITECT_REVIEWER_SHELL=a.reviewer_shell, **{TOKEN_VARIABLE: token})
     for name in ("NETWORK", "HOSTS", "DNS"):
         if os.environ.get("EVALUATION_" + name):
             env["MARKITECT_" + name] = os.environ["EVALUATION_" + name]
@@ -437,6 +437,7 @@ def main(argv=None):
     p.add_argument("--markitect", required=True, help="the markitect program of the frozen revision")
     p.add_argument("--image", required=True, help="the image with the project's toolchain, by image ID, built FROM packaging/runtime")
     p.add_argument("--effort", default="high")
+    p.add_argument("--reviewer-shell", choices=("on", "off"), default="on", help="off starts reviewers without a shell, for test 1 of concept 3.0's section 13")
     p.add_argument("--verify", action="store_true", help="run `markitect verify --full` on the task's start instead of apply")
     p.add_argument("task")
     p.add_argument("out")
@@ -445,7 +446,7 @@ def main(argv=None):
     began = time.monotonic()
     task, out = pathlib.Path(a.task), pathlib.Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
-    report = {"arm": "markitect", "effort": a.effort, "command": "verify" if a.verify else "apply"}
+    report = {"arm": "markitect", "effort": a.effort, "reviewerShell": a.reviewer_shell, "command": "verify" if a.verify else "apply"}
 
     def finish(code, **facts):
         report.update(facts)

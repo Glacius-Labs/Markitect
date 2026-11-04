@@ -253,6 +253,7 @@ class ArmTest(unittest.TestCase):
         env = apply["env"]
         self.assertEqual((env["MARKITECT_NETWORK"], env["MARKITECT_HOSTS"], env["MARKITECT_DNS"], env["MARKITECT_ENGINE"]),
                          ("eval-x-internal", "api.anthropic.com:10.9.0.2", "192.0.2.1", "docker"))
+        self.assertEqual(env["MARKITECT_REVIEWER_SHELL"], "on")
         self.assertEqual((env["MARKITECT_PROVIDER"], env["MARKITECT_MODEL"], env["MARKITECT_MANAGER_IMAGE"]),
                          ("claude", "claude-sonnet-5-5", "sha256:" + "a" * 64))
         self.assertEqual(env["MARKITECT_TRANSCRIPTS"], str(out / "variant" / "transcripts"))
