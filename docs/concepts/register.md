@@ -1221,7 +1221,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - The image pins the CLI version, and sessions start from one place per provider.
   - Before anyone else runs Markitect, the owner asks Anthropic in writing whether this route holds for other users. If it does not, API keys for others are a separate decision for the owner.
   - The skill-and-hook fallback is not built. It comes up only if Anthropic says no or `claude -p` loses subscription login with no replacement.
-- **Changes:** today's build reads the host's credentials file and passes its access token into the containers (`internal/agents/claude/login.go`, and its Codex counterpart). That goes in the [concept 3.0 build](../implementation-plan.md#concept-30-build). The account-only rule stays.
+- **Changes:** today's build reads the host's credentials file and passes its access token into the containers (`internal/agents/run.go`, with `claude/login.go` and `codex/codex.go`). That goes in the [concept 3.0 build](../implementation-plan.md#concept-30-build). The account-only rule stays.
 - **Reasoning:** [concept 3.0 §14](v3-concept.md#14-decided-on-acceptance), question 10.
 
 ## Promises
