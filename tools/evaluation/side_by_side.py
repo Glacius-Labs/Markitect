@@ -1,13 +1,14 @@
 """One side-by-side page per test, with no overall score (concept 3.0 §13).
 
-  python -I -B side_by_side.py --store DIR --measures DIR --blind DIR --reference NAME --title TEXT [--notes FILE] --out FILE
+  python -I -B side_by_side.py --store DIR --measures DIR --blind DIR --reference NAME --title TEXT [--notes FILE] [--appendix FILE] --out FILE
 
-It lays out what the other tools found, per neutral label from `blind_read.py`: the hidden cases, time and cost from the
-kept launch; the figures of `measure.py`, one JSON file per kept name in --measures; the reader's answers in the blind
-reads; and the key, last, so that a reader can stop before it. Nothing above the key names a model or an arm. Cost is in
-multiples of --reference, which never appears as a dollar amount.
+It lays out what the other tools found, per neutral label from `blind_read.py`: the figures of `measure.py`, one JSON file
+per kept name in --measures; the reader's answers in the blind reads; the hidden cases, time and cost from the kept launch,
+after the reads, since a cost can tell a reader which result is which; and the key, so that a reader can stop before it.
+Nothing above the key names a model or an arm. Cost is in multiples of --reference, never a dollar amount.
 
---notes puts a person's or a session's words at the top of the page. No figure here adds up to a verdict.
+--notes puts a person's or a session's words at the top of the page, and --appendix after the key. No figure here adds up
+to a verdict.
 """
 import argparse
 import json
@@ -115,6 +116,11 @@ def read_of(blind, label):
     return None
 
 
+def said(values):
+    """A reader's sentences as plain text: code it quotes must not read as a link."""
+    return " ".join(values or []).replace("[", "\\[")
+
+
 def reads_section(labels, reads):
     rows = [(title, [reads[label]["answer"][name]["score"] if reads[label] else "no read" for label in labels]) for name, title in QUESTIONS]
     rows.append(("Would maintain it", [reads[label]["answer"]["takingOver"].get("wouldMaintain", "?") if reads[label] else "no read" for label in labels]))
@@ -129,19 +135,17 @@ def reads_section(labels, reads):
         answer = read["answer"]
         for name, title in QUESTIONS:
             part = answer[name]
-            out.append(f"**{title} ({part['score']} of 5).** Good: " + (" ".join(part.get("good") or []) or "nothing named.") + " Weak: " + (" ".join(part.get("weak") or []) or "nothing named.") + "\n")
+            out.append(f"**{title} ({part['score']} of 5).** Good: " + (said(part.get("good")) or "nothing named.") + " Weak: " + (said(part.get("weak")) or "nothing named.") + "\n")
         taking = answer["takingOver"]
-        out.append(f"**Taking it over: {taking.get('wouldMaintain', '?')}.** {taking.get('why', '')} First: " + " ".join(taking.get("changeFirst") or []) + "\n")
+        out.append(f"**Taking it over: {taking.get('wouldMaintain', '?')}.** {said([taking.get('why', '')])} First: " + said(taking.get("changeFirst")) + "\n")
     return "\n".join(out)
 
 
-def page(title, labels, launches, measures, reads, key, reference, notes=None):
+def page(title, labels, launches, measures, reads, key, reference, notes=None, appendix=None):
     out = [f"# {title}\n"]
-    out.append("Each result has a neutral label until the key at the end. There is no overall score: the figures point at what is worth looking at, and the conclusion is the owner's.\n")
+    out.append("Each result has a neutral label until the key. There is no overall score: the figures point at what is worth looking at, and the conclusion is the owner's.\n")
     if notes:
         out.append(notes.rstrip() + "\n")
-    out.append("## Hidden cases, time and cost\n")
-    out.append(table(labels, launch_rows(labels, launches, reference)))
     out.append("## Measured\n")
     out.append("The same script for every result, from a clean checkout, with one Go toolchain. A repeated line sits inside a run of 6 identical lines, or of 12 that differ only in names and values.\n")
     out.append(table(labels, measured_rows(labels, measures)))
@@ -154,16 +158,20 @@ def page(title, labels, launches, measures, reads, key, reference, notes=None):
     out.append("## Blind reads\n")
     out.append("One fresh session per result, which saw that result and the requirements and did not know of the others. A score says where to look.\n")
     out.append(reads_section(labels, reads))
+    out.append("## Hidden cases, time and cost\n")
+    out.append(table(labels, launch_rows(labels, launches, reference)))
     out.append("## The key\n")
     out.append("Read this last.\n")
     # Subagents and commits go here too: above the key they would tell the arms apart.
     rows = "".join(f"| {label} | `{key[label]['name']}` | {launches[label].get('note') or ''} | {', '.join(sorted(launches[label].get('modelsAnswered') or {}))} | "
                    f"{launches[label].get('subagents', 0)} | {launches[label].get('commits', '?')} |\n" for label in labels)
     out.append("| Label | Kept launch | What it is | Models that answered | Subagents | Commits |\n|---|---|---|---|---|---|\n" + rows)
+    if appendix:
+        out.append(appendix.rstrip() + "\n")
     return "\n".join(out)
 
 
-def build(store, measures_dir, blind, reference, title, notes=None):
+def build(store, measures_dir, blind, reference, title, notes=None, appendix=None):
     key = json.loads(pathlib.Path(blind, "key.json").read_text(encoding="utf-8"))
     labels = sorted(key)
     launches, measures, reads = {}, {}, {}
@@ -176,7 +184,7 @@ def build(store, measures_dir, blind, reference, title, notes=None):
     found = [label for label in labels if key[label]["name"] == reference]
     if not found:
         raise ValueError(f"the reference {reference} is not among the results")
-    return page(title, labels, launches, measures, reads, key, found[0], notes)
+    return page(title, labels, launches, measures, reads, key, found[0], notes, appendix)
 
 
 def main(argv=None):
@@ -184,14 +192,16 @@ def main(argv=None):
     for name in ("store", "measures", "blind", "reference", "title", "out"):
         parser.add_argument("--" + name, required=True)
     parser.add_argument("--notes")
+    parser.add_argument("--appendix")
     a = parser.parse_args(argv)
     try:
         notes = pathlib.Path(a.notes).read_text(encoding="utf-8") if a.notes else None
-        text = build(a.store, a.measures, a.blind, a.reference, a.title, notes)
+        appendix = pathlib.Path(a.appendix).read_text(encoding="utf-8") if a.appendix else None
+        text = build(a.store, a.measures, a.blind, a.reference, a.title, notes, appendix)
     except (OSError, ValueError, KeyError) as e:
         print(f"side_by_side: {type(e).__name__}: {e}", file=sys.stderr)
         return 2
-    pathlib.Path(a.out).write_text(text, encoding="utf-8")
+    pathlib.Path(a.out).write_text(text, encoding="utf-8", newline="\n")
     return 0
 
 
