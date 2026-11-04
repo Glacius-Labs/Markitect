@@ -90,7 +90,7 @@ What changes: the implementer maintains every registry page, since no agent owns
 Before it, the owner changes the spec and commits it.
 
 1. **Check the spec.** `markitect check`. A real spec error stops here, and no agent starts. **(Proposal)** A file a hand edit left unlisted does not stop the Command: it becomes a checklist item, and the gate requires it to be settled by the end.
-2. **Work out what is affected.** `impact` against the last landed commit, and from it the checklist. Nothing affected means "nothing to do", and it ends. **(Proposal)** A Result records any commits that landed beside its Run without being realized, and the next `impact` counts what those commits changed as well.
+2. **Work out what is affected.** `impact` against the last landed commit, and from it the checklist. Nothing affected means "nothing to do", and it ends. The base must be the work a Run realized, so that commits landing beside it stay unrealized for the next `impact`; the current build records this in the landing commit.
 3. **Prepare the sandbox.** Start one container and put the starting commit in (§9).
 4. **Implementer Run.** One session, one prompt, working in its own folder. It uses no Git and fills in no form. **(Proposal)** To stop, it writes a note to a set place outside the project folder, so the Command can tell a stop from a finish. An empty diff with no stop is not a failure: the work goes on to review.
 5. **Commit.** The Command commits the implementer's folder and checks that commit out into a new, clean folder. Whatever was not committed is not there. **(Proposal)** It ends the implementer's processes first, and then rebuilds the checklist from this commit and its registry, so files touched outside the impact add their Definitions and new files appear under "look at".
@@ -180,7 +180,7 @@ The answers are `ok`, `wrong`, `not shown` and `spec problem`. Only the last thr
 
 One page, written by the Command from what happened and never by an agent: the outcome; each item's answer and pointers; **how much checking really happened**, as measured by the Command (files opened, commands run, answers repeated across items); what could not be tested, including the reviewer's closing words on it; what the required checks ran on; and decisions only the owner can make, each with a recommendation. It also says how many changes have landed since the last full check.
 
-Results live under `.markitect/results/<run>.md`. A landing Result is part of the landing commit. Any other Result, `verify`'s included, stays on `markitect/runs/<run>`. Such a branch stays until a later Run lands over the same impact or the owner deletes it. **(Proposal)** The commit of the last full check is kept in a Git ref of its own, so the count of changes since then survives that clean-up.
+Results live under `.markitect/results/<run>.md`. A landing Result is part of the landing commit. Any other Result, `verify`'s included, stays on `markitect/runs/<run>`. Such a branch stays until a later Run lands over the same impact or the owner deletes it. The count of changes since the last full check comes from a record in the landing commits, as in the current build.
 
 ## 11. Strategies, harnesses and skills
 
