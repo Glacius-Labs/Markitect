@@ -53,7 +53,9 @@ The Linux users, made in the image ([`packaging/runtime/Dockerfile`](../../packa
 | `checks` | The required checks | No |
 | `tools` | The Command's Git work in the container | No |
 
-The programs belong to root. Each user can end only its own processes. The Command ends a user's processes when a session is cut off, before it reads that user's note, before it commits the implementer's folder, and before and after the required checks. Before each new copy it clears that user's home, its folder and what it left in `/tmp` and `/dev/shm`, so nothing one session leaves reaches another.
+The programs belong to root. Each user can end only its own processes. The Command ends a user's processes when a session is cut off, before it reads that user's note, before it commits the implementer's folder, and before and after the required checks. Before each new copy it clears that user's home, its folder and what it left in `/tmp` and `/dev/shm`, so nothing a session leaves outside the commit reaches another.
+
+The commit itself is another matter. Code a reviewer runs, such as a test in the commit under review, can change that reviewer's answers and read the token while its session runs, and ending its processes only stops changes made after that point. Reviewers keep their shell until test 1 decides ([concept §7](../../docs/concepts/v3-concept.md#7-what-the-agents-are-told)).
 
 ## The reviewer's answers
 
