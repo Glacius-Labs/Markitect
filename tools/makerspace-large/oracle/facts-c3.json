@@ -1,0 +1,5473 @@
+{
+ "acknowledgeNotice": {
+  "args": [
+   {
+    "name": "noticeId",
+    "ref": "notices/notice",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`noticeId`",
+  "mutation": true,
+  "page": "notices/acknowledge-notice",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state"
+  ],
+  "result": [
+   "notice"
+  ],
+  "title": "Acknowledge notice",
+  "wire": "acknowledgeNotice"
+ },
+ "addCollaborator": {
+  "args": [
+   {
+    "name": "projectId",
+    "ref": "projects/project",
+    "type": "identifier"
+   },
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`projectId/memberId`",
+  "mutation": true,
+  "page": "projects/add-collaborator",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "project_closed",
+   "already_collaborator"
+  ],
+  "result": [
+   "project"
+  ],
+  "title": "Add collaborator",
+  "wire": "addCollaborator"
+ },
+ "addCourse": {
+  "args": [
+   {
+    "name": "courseId",
+    "type": "identifier"
+   },
+   {
+    "name": "familyId",
+    "ref": "equipment/family",
+    "type": "identifier"
+   },
+   {
+    "name": "title",
+    "type": "text"
+   },
+   {
+    "max": 1000000,
+    "min": 0,
+    "name": "feeCents",
+    "type": "integer"
+   },
+   {
+    "max": 1000,
+    "min": 1,
+    "name": "capacity",
+    "type": "integer"
+   }
+  ],
+  "audit": "`courseId`",
+  "mutation": true,
+  "page": "training/add-course",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "already_exists"
+  ],
+  "result": [
+   "course"
+  ],
+  "title": "Add course",
+  "wire": "addCourse"
+ },
+ "addCustomer": {
+  "args": [
+   {
+    "name": "customerId",
+    "type": "identifier"
+   },
+   {
+    "name": "name",
+    "type": "text"
+   }
+  ],
+  "audit": "`customerId`",
+  "mutation": true,
+  "page": "quotes/add-customer",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "already_exists"
+  ],
+  "result": [
+   "customer"
+  ],
+  "title": "Add customer",
+  "wire": "addCustomer"
+ },
+ "addFamily": {
+  "args": [
+   {
+    "name": "familyId",
+    "type": "identifier"
+   },
+   {
+    "name": "name",
+    "type": "text"
+   }
+  ],
+  "audit": "`familyId`",
+  "mutation": true,
+  "page": "equipment/add-family",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [
+   "already_exists"
+  ],
+  "result": [
+   "family"
+  ],
+  "title": "Add family",
+  "wire": "addFamily"
+ },
+ "addFund": {
+  "args": [
+   {
+    "name": "fundId",
+    "type": "identifier"
+   },
+   {
+    "max": 100000000,
+    "min": 1,
+    "name": "budgetCents",
+    "type": "integer"
+   }
+  ],
+  "audit": "`fundId`",
+  "mutation": true,
+  "page": "scholarships/add-fund",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [
+   "already_exists"
+  ],
+  "result": [
+   "fund"
+  ],
+  "title": "Add fund",
+  "wire": "addFund"
+ },
+ "addHouseholdMember": {
+  "args": [
+   {
+    "name": "householdId",
+    "ref": "households/household",
+    "type": "identifier"
+   },
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`householdId/memberId`",
+  "mutation": true,
+  "page": "households/add-household-member",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "already_in_household",
+   "household_full"
+  ],
+  "result": [
+   "household"
+  ],
+  "title": "Add household member",
+  "wire": "addHouseholdMember"
+ },
+ "addLocker": {
+  "args": [
+   {
+    "name": "lockerId",
+    "type": "identifier"
+   },
+   {
+    "max": 1000000,
+    "min": 1,
+    "name": "monthlyCents",
+    "type": "integer"
+   }
+  ],
+  "audit": "`lockerId`",
+  "mutation": true,
+  "page": "lockers/add-locker",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [
+   "already_exists"
+  ],
+  "result": [
+   "locker"
+  ],
+  "title": "Add locker",
+  "wire": "addLocker"
+ },
+ "addMachine": {
+  "args": [
+   {
+    "name": "machineId",
+    "type": "identifier"
+   },
+   {
+    "name": "name",
+    "type": "text"
+   },
+   {
+    "name": "familyId",
+    "ref": "equipment/family",
+    "type": "identifier"
+   },
+   {
+    "max": 10000,
+    "min": 1,
+    "name": "rateCentsPerMinute",
+    "type": "integer"
+   }
+  ],
+  "audit": "`machineId`",
+  "mutation": true,
+  "page": "equipment/add-machine",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [
+   "already_exists"
+  ],
+  "result": [
+   "machine"
+  ],
+  "title": "Add machine",
+  "wire": "addMachine"
+ },
+ "addMaterial": {
+  "args": [
+   {
+    "name": "materialId",
+    "type": "identifier"
+   },
+   {
+    "name": "name",
+    "type": "text"
+   },
+   {
+    "max": 1000000,
+    "min": 1,
+    "name": "unitPriceCents",
+    "type": "integer"
+   }
+  ],
+  "audit": "`materialId`",
+  "mutation": true,
+  "page": "materials/add-material",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "already_exists"
+  ],
+  "result": [
+   "material"
+  ],
+  "title": "Add material",
+  "wire": "addMaterial"
+ },
+ "addOrderLine": {
+  "args": [
+   {
+    "name": "orderId",
+    "ref": "purchasing/order",
+    "type": "identifier"
+   },
+   {
+    "name": "materialId",
+    "ref": "materials/material",
+    "type": "identifier"
+   },
+   {
+    "max": 100000,
+    "min": 1,
+    "name": "quantity",
+    "type": "integer"
+   },
+   {
+    "max": 1000000,
+    "min": 1,
+    "name": "unitCostCents",
+    "type": "integer"
+   }
+  ],
+  "audit": "`orderId`",
+  "mutation": true,
+  "page": "purchasing/add-order-line",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state",
+   "duplicate_line"
+  ],
+  "result": [
+   "order"
+  ],
+  "title": "Add order line",
+  "wire": "addOrderLine"
+ },
+ "addPart": {
+  "args": [
+   {
+    "name": "partId",
+    "type": "identifier"
+   },
+   {
+    "name": "name",
+    "type": "text"
+   },
+   {
+    "max": 1000000,
+    "min": 1,
+    "name": "unitCostCents",
+    "type": "integer"
+   },
+   {
+    "name": "familyId",
+    "ref": "equipment/family",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`partId`",
+  "mutation": true,
+  "page": "parts/add-part",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "already_exists"
+  ],
+  "result": [
+   "part"
+  ],
+  "title": "Add part",
+  "wire": "addPart"
+ },
+ "addPassProduct": {
+  "args": [
+   {
+    "name": "productId",
+    "type": "identifier"
+   },
+   {
+    "name": "name",
+    "type": "text"
+   },
+   {
+    "max": 100000,
+    "min": 1,
+    "name": "minutes",
+    "type": "integer"
+   },
+   {
+    "max": 100000000,
+    "min": 1,
+    "name": "priceCents",
+    "type": "integer"
+   },
+   {
+    "max": 3650,
+    "min": 1,
+    "name": "validDays",
+    "type": "integer"
+   }
+  ],
+  "audit": "`productId`",
+  "mutation": true,
+  "page": "passes/add-pass-product",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [
+   "already_exists"
+  ],
+  "result": [
+   "product"
+  ],
+  "title": "Add pass product",
+  "wire": "addPassProduct"
+ },
+ "addPpeItem": {
+  "args": [
+   {
+    "name": "itemId",
+    "type": "identifier"
+   },
+   {
+    "name": "name",
+    "type": "text"
+   },
+   {
+    "max": 100000,
+    "min": 0,
+    "name": "stock",
+    "type": "integer"
+   }
+  ],
+  "audit": "`itemId`",
+  "mutation": true,
+  "page": "ppe/add-ppe-item",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "already_exists"
+  ],
+  "result": [
+   "item"
+  ],
+  "title": "Add PPE item",
+  "wire": "addPpeItem"
+ },
+ "addPromotion": {
+  "args": [
+   {
+    "name": "code",
+    "type": "identifier"
+   },
+   {
+    "max": 100,
+    "min": 1,
+    "name": "percent",
+    "type": "integer"
+   },
+   {
+    "name": "scope",
+    "type": "enum",
+    "values": [
+     "course",
+     "material",
+     "both"
+    ]
+   },
+   {
+    "max": 100000,
+    "min": 1,
+    "name": "maxRedemptions",
+    "type": "integer"
+   },
+   {
+    "name": "validUntil",
+    "type": "date"
+   }
+  ],
+  "audit": "`code`",
+  "mutation": true,
+  "page": "promotions/add-promotion",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [
+   "already_exists"
+  ],
+  "result": [
+   "promotion"
+  ],
+  "title": "Add promotion",
+  "wire": "addPromotion"
+ },
+ "addQuoteLine": {
+  "args": [
+   {
+    "name": "quoteId",
+    "ref": "quotes/quote",
+    "type": "identifier"
+   },
+   {
+    "name": "lineKind",
+    "type": "enum",
+    "values": [
+     "machine",
+     "material"
+    ]
+   },
+   {
+    "name": "ref",
+    "type": "identifier"
+   },
+   {
+    "max": 100000,
+    "min": 1,
+    "name": "quantity",
+    "type": "integer"
+   }
+  ],
+  "audit": "`quoteId`",
+  "mutation": true,
+  "page": "quotes/add-quote-line",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state",
+   "unknown_line_ref"
+  ],
+  "result": [
+   "quote"
+  ],
+  "title": "Add quote line",
+  "wire": "addQuoteLine"
+ },
+ "addRoom": {
+  "args": [
+   {
+    "name": "roomId",
+    "type": "identifier"
+   },
+   {
+    "name": "name",
+    "type": "text"
+   },
+   {
+    "max": 1000,
+    "min": 1,
+    "name": "capacity",
+    "type": "integer"
+   }
+  ],
+  "audit": "`roomId`",
+  "mutation": true,
+  "page": "rooms/add-room",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [
+   "already_exists"
+  ],
+  "result": [
+   "room"
+  ],
+  "title": "Add room",
+  "wire": "addRoom"
+ },
+ "addShift": {
+  "args": [
+   {
+    "name": "userId",
+    "ref": "members/user",
+    "type": "identifier"
+   },
+   {
+    "name": "start",
+    "type": "timestamp"
+   },
+   {
+    "name": "end",
+    "type": "timestamp"
+   }
+  ],
+  "audit": "the new `shiftId`",
+  "mutation": true,
+  "page": "staffing/add-shift",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "not_staff",
+   "invalid_interval",
+   "starts_in_past",
+   "shift_too_long",
+   "shift_overlap"
+  ],
+  "result": [
+   "shift"
+  ],
+  "title": "Add shift",
+  "wire": "addShift"
+ },
+ "addSupplier": {
+  "args": [
+   {
+    "name": "supplierId",
+    "type": "identifier"
+   },
+   {
+    "name": "name",
+    "type": "text"
+   }
+  ],
+  "audit": "`supplierId`",
+  "mutation": true,
+  "page": "purchasing/add-supplier",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "already_exists"
+  ],
+  "result": [
+   "supplier"
+  ],
+  "title": "Add supplier",
+  "wire": "addSupplier"
+ },
+ "admitGuest": {
+  "args": [
+   {
+    "name": "guestPassId",
+    "ref": "guests/guest-pass",
+    "type": "identifier"
+   },
+   {
+    "name": "badgeId",
+    "ref": "access/badge",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`guestPassId`",
+  "mutation": true,
+  "page": "access/admit-guest",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state",
+   "pass_not_today",
+   "pass_of_another_member",
+   "sponsor_not_inside",
+   "guest_already_admitted"
+  ],
+  "result": [
+   "event"
+  ],
+  "title": "Admit guest",
+  "wire": "admitGuest"
+ },
+ "agedReceivables": {
+  "args": [
+   {
+    "name": "date",
+    "type": "date"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "finance/aged-receivables",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "date",
+   "rows",
+   "currentCents",
+   "days1to30Cents",
+   "days31to60Cents",
+   "over60Cents"
+  ],
+  "title": "Aged receivables",
+  "wire": "agedReceivables"
+ },
+ "applyLockout": {
+  "args": [
+   {
+    "name": "machineId",
+    "ref": "equipment/machine",
+    "type": "identifier"
+   },
+   {
+    "name": "reason",
+    "type": "text"
+   }
+  ],
+  "audit": "the new `lockoutId`",
+  "mutation": true,
+  "page": "lockouts/apply-lockout",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "lockout"
+  ],
+  "title": "Apply lockout",
+  "wire": "applyLockout"
+ },
+ "approveOrder": {
+  "args": [
+   {
+    "name": "orderId",
+    "ref": "purchasing/order",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`orderId`",
+  "mutation": true,
+  "page": "purchasing/approve-order",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state",
+   "self_approval",
+   "approval_requires_admin",
+   "supplier_blocked"
+  ],
+  "result": [
+   "order"
+  ],
+  "title": "Approve order",
+  "wire": "approveOrder"
+ },
+ "attachPurchase": {
+  "args": [
+   {
+    "name": "projectId",
+    "ref": "projects/project",
+    "type": "identifier"
+   },
+   {
+    "name": "purchaseId",
+    "ref": "materials/purchase",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`projectId/purchaseId`",
+  "mutation": true,
+  "page": "projects/attach-purchase",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "project_closed",
+   "not_project_member",
+   "already_attached"
+  ],
+  "result": [
+   "project"
+  ],
+  "title": "Attach purchase",
+  "wire": "attachPurchase"
+ },
+ "attachReservation": {
+  "args": [
+   {
+    "name": "projectId",
+    "ref": "projects/project",
+    "type": "identifier"
+   },
+   {
+    "name": "reservationId",
+    "ref": "bookings/reservation",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`projectId/reservationId`",
+  "mutation": true,
+  "page": "projects/attach-reservation",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "project_closed",
+   "not_project_member",
+   "already_attached"
+  ],
+  "result": [
+   "project"
+  ],
+  "title": "Attach reservation",
+  "wire": "attachReservation"
+ },
+ "awardScholarship": {
+  "args": [
+   {
+    "name": "fundId",
+    "ref": "scholarships/fund",
+    "type": "identifier"
+   },
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   },
+   {
+    "max": 100,
+    "min": 1,
+    "name": "percent",
+    "type": "integer"
+   }
+  ],
+  "audit": "the new `awardId`",
+  "mutation": true,
+  "page": "scholarships/award-scholarship",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [
+   "already_awarded"
+  ],
+  "result": [
+   "award"
+  ],
+  "title": "Award scholarship",
+  "wire": "awardScholarship"
+ },
+ "billLockers": {
+  "args": [
+   {
+    "name": "month",
+    "type": "month"
+   }
+  ],
+  "audit": "`month`",
+  "mutation": true,
+  "page": "lockers/bill-lockers",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "not_current_month",
+   "already_billed"
+  ],
+  "result": [
+   "month",
+   "charges"
+  ],
+  "title": "Bill lockers",
+  "wire": "billLockers"
+ },
+ "cancelClass": {
+  "args": [
+   {
+    "name": "classId",
+    "ref": "classes/class",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`classId`",
+  "mutation": true,
+  "page": "classes/cancel-class",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state"
+  ],
+  "result": [
+   "class"
+  ],
+  "title": "Cancel class",
+  "wire": "cancelClass"
+ },
+ "cancelEvent": {
+  "args": [
+   {
+    "name": "eventId",
+    "ref": "events/event",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`eventId`",
+  "mutation": true,
+  "page": "events/cancel-event",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state"
+  ],
+  "result": [
+   "event",
+   "tickets"
+  ],
+  "title": "Cancel event",
+  "wire": "cancelEvent"
+ },
+ "cancelMaintenance": {
+  "args": [
+   {
+    "name": "windowId",
+    "ref": "equipment/maintenance-window",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`windowId`",
+  "mutation": true,
+  "page": "equipment/cancel-maintenance",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state"
+  ],
+  "result": [
+   "window"
+  ],
+  "title": "Cancel maintenance",
+  "wire": "cancelMaintenance"
+ },
+ "cancelReservation": {
+  "args": [
+   {
+    "name": "reservationId",
+    "ref": "bookings/reservation",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`reservationId`",
+  "mutation": true,
+  "page": "bookings/cancel-reservation",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state"
+  ],
+  "result": [
+   "reservation"
+  ],
+  "title": "Cancel reservation",
+  "wire": "cancelReservation"
+ },
+ "cancelShift": {
+  "args": [
+   {
+    "name": "shiftId",
+    "ref": "staffing/shift",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`shiftId`",
+  "mutation": true,
+  "page": "staffing/cancel-shift",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state",
+   "shift_needed"
+  ],
+  "result": [
+   "shift"
+  ],
+  "title": "Cancel shift",
+  "wire": "cancelShift"
+ },
+ "cancelTicket": {
+  "args": [
+   {
+    "name": "ticketId",
+    "ref": "events/ticket",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`ticketId`",
+  "mutation": true,
+  "page": "events/cancel-ticket",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state",
+   "too_late"
+  ],
+  "result": [
+   "ticket",
+   "event"
+  ],
+  "title": "Cancel ticket",
+  "wire": "cancelTicket"
+ },
+ "changeTier": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   },
+   {
+    "name": "tier",
+    "type": "enum",
+    "values": [
+     "basic",
+     "plus",
+     "pro"
+    ]
+   }
+  ],
+  "audit": "`memberId`",
+  "mutation": true,
+  "page": "members/change-tier",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "member"
+  ],
+  "title": "Change tier",
+  "wire": "changeTier"
+ },
+ "chargeNoShows": {
+  "args": [],
+  "audit": "the fixed string `noShows`",
+  "mutation": true,
+  "page": "bookings/charge-no-shows",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "charges"
+  ],
+  "title": "Charge no-shows",
+  "wire": "chargeNoShows"
+ },
+ "chargesByKind": {
+  "args": [
+   {
+    "name": "month",
+    "type": "month"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "finance/charges-by-kind",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "month",
+   "rows",
+   "totalCents"
+  ],
+  "title": "Charges by kind",
+  "wire": "chargesByKind"
+ },
+ "checkEligibility": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   },
+   {
+    "name": "machineId",
+    "ref": "equipment/machine",
+    "type": "identifier"
+   },
+   {
+    "name": "date",
+    "type": "date"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "compliance/check-eligibility",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "memberId",
+   "machineId",
+   "date",
+   "eligible",
+   "blockers"
+  ],
+  "title": "Check eligibility",
+  "wire": "checkEligibility"
+ },
+ "checkIn": {
+  "args": [
+   {
+    "name": "reservationId",
+    "ref": "bookings/reservation",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`reservationId`",
+  "mutation": true,
+  "page": "bookings/check-in",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state",
+   "check_in_too_early",
+   "member_suspended",
+   "guardian_consent_missing",
+   "not_certified",
+   "waiver_missing",
+   "ppe_missing",
+   "machine_locked_out",
+   "not_on_premises"
+  ],
+  "result": [
+   "reservation"
+  ],
+  "title": "Check in",
+  "wire": "checkIn"
+ },
+ "checkOut": {
+  "args": [
+   {
+    "name": "reservationId",
+    "ref": "bookings/reservation",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`reservationId`",
+  "mutation": true,
+  "page": "bookings/check-out",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state"
+  ],
+  "result": [
+   "reservation",
+   "charge"
+  ],
+  "title": "Check out",
+  "wire": "checkOut"
+ },
+ "classifyHazard": {
+  "args": [
+   {
+    "name": "materialId",
+    "ref": "materials/material",
+    "type": "identifier"
+   },
+   {
+    "name": "familyId",
+    "ref": "equipment/family",
+    "type": "identifier"
+   },
+   {
+    "max": 10000,
+    "min": 1,
+    "name": "monthlyLimit",
+    "type": "integer"
+   }
+  ],
+  "audit": "`materialId`",
+  "mutation": true,
+  "page": "hazmat/classify-hazard",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [],
+  "result": [
+   "classification"
+  ],
+  "title": "Classify hazard",
+  "wire": "classifyHazard"
+ },
+ "clearConsumption": {
+  "args": [
+   {
+    "name": "machineId",
+    "ref": "equipment/machine",
+    "type": "identifier"
+   },
+   {
+    "name": "materialId",
+    "ref": "materials/material",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`machineId/materialId`",
+  "mutation": true,
+  "page": "consumables/clear-consumption",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "no_consumption"
+  ],
+  "result": [
+   "machineId",
+   "materialId"
+  ],
+  "title": "Clear consumption",
+  "wire": "clearConsumption"
+ },
+ "closeProject": {
+  "args": [
+   {
+    "name": "projectId",
+    "ref": "projects/project",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`projectId`",
+  "mutation": true,
+  "page": "projects/close-project",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state"
+  ],
+  "result": [
+   "project"
+  ],
+  "title": "Close project",
+  "wire": "closeProject"
+ },
+ "closeStocktake": {
+  "args": [
+   {
+    "name": "stocktakeId",
+    "ref": "stocktake/stocktake",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`stocktakeId`",
+  "mutation": true,
+  "page": "stocktake/close-stocktake",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state",
+   "nothing_counted"
+  ],
+  "result": [
+   "stocktake"
+  ],
+  "title": "Close stocktake",
+  "wire": "closeStocktake"
+ },
+ "closeWorkOrder": {
+  "args": [
+   {
+    "name": "workOrderId",
+    "ref": "workorders/work-order",
+    "type": "identifier"
+   },
+   {
+    "name": "note",
+    "type": "text"
+   }
+  ],
+  "audit": "`workOrderId`",
+  "mutation": true,
+  "page": "workorders/close-work-order",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state",
+   "incident_open"
+  ],
+  "result": [
+   "workOrder"
+  ],
+  "title": "Close work order",
+  "wire": "closeWorkOrder"
+ },
+ "completeCourse": {
+  "args": [
+   {
+    "name": "courseId",
+    "ref": "training/course",
+    "type": "identifier"
+   },
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`courseId/memberId`",
+  "mutation": true,
+  "page": "training/complete-course",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "not_enrolled",
+   "attendance_missing",
+   "assessment_not_passed"
+  ],
+  "result": [
+   "enrollment",
+   "certification"
+  ],
+  "title": "Complete course",
+  "wire": "completeCourse"
+ },
+ "completeJob": {
+  "args": [
+   {
+    "name": "jobId",
+    "ref": "jobs/job",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`jobId`",
+  "mutation": true,
+  "page": "jobs/complete-job",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state"
+  ],
+  "result": [
+   "job"
+  ],
+  "title": "Complete job",
+  "wire": "completeJob"
+ },
+ "complianceSummary": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "compliance/compliance-summary",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "memberId",
+   "standing",
+   "minor",
+   "families"
+  ],
+  "title": "Compliance summary",
+  "wire": "complianceSummary"
+ },
+ "createEvent": {
+  "args": [
+   {
+    "name": "eventId",
+    "type": "identifier"
+   },
+   {
+    "name": "title",
+    "type": "text"
+   },
+   {
+    "name": "roomId",
+    "ref": "rooms/room",
+    "type": "identifier"
+   },
+   {
+    "name": "start",
+    "type": "timestamp"
+   },
+   {
+    "name": "end",
+    "type": "timestamp"
+   },
+   {
+    "max": 1000,
+    "min": 1,
+    "name": "capacity",
+    "type": "integer"
+   },
+   {
+    "max": 1000000,
+    "min": 0,
+    "name": "priceCents",
+    "type": "integer"
+   }
+  ],
+  "audit": "`eventId`",
+  "mutation": true,
+  "page": "events/create-event",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "already_exists",
+   "invalid_interval",
+   "starts_in_past",
+   "capacity_too_large",
+   "room_taken"
+  ],
+  "result": [
+   "event"
+  ],
+  "title": "Create event",
+  "wire": "createEvent"
+ },
+ "createHousehold": {
+  "args": [
+   {
+    "name": "householdId",
+    "type": "identifier"
+   },
+   {
+    "name": "name",
+    "type": "text"
+   },
+   {
+    "name": "payerId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`householdId`",
+  "mutation": true,
+  "page": "households/create-household",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "already_exists",
+   "already_in_household"
+  ],
+  "result": [
+   "household"
+  ],
+  "title": "Create household",
+  "wire": "createHousehold"
+ },
+ "createOrder": {
+  "args": [
+   {
+    "name": "supplierId",
+    "ref": "purchasing/supplier",
+    "type": "identifier"
+   }
+  ],
+  "audit": "the new `orderId`",
+  "mutation": true,
+  "page": "purchasing/create-order",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "supplier_blocked"
+  ],
+  "result": [
+   "order"
+  ],
+  "title": "Create order",
+  "wire": "createOrder"
+ },
+ "createProject": {
+  "args": [
+   {
+    "name": "projectId",
+    "type": "identifier"
+   },
+   {
+    "name": "ownerId",
+    "ref": "members/member",
+    "type": "identifier"
+   },
+   {
+    "name": "title",
+    "type": "text"
+   }
+  ],
+  "audit": "`projectId`",
+  "mutation": true,
+  "page": "projects/create-project",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "already_exists"
+  ],
+  "result": [
+   "project"
+  ],
+  "title": "Create project",
+  "wire": "createProject"
+ },
+ "createQuote": {
+  "args": [
+   {
+    "name": "customerId",
+    "ref": "quotes/customer",
+    "type": "identifier"
+   },
+   {
+    "name": "title",
+    "type": "text"
+   }
+  ],
+  "audit": "the new `quoteId`",
+  "mutation": true,
+  "page": "quotes/create-quote",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "quote"
+  ],
+  "title": "Create quote",
+  "wire": "createQuote"
+ },
+ "createReservation": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   },
+   {
+    "name": "machineId",
+    "ref": "equipment/machine",
+    "type": "identifier"
+   },
+   {
+    "name": "start",
+    "type": "timestamp"
+   },
+   {
+    "name": "end",
+    "type": "timestamp"
+   }
+  ],
+  "audit": "the new `reservationId`",
+  "mutation": true,
+  "page": "bookings/create-reservation",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_interval",
+   "invalid_slot",
+   "starts_in_past",
+   "outside_opening_hours",
+   "member_suspended",
+   "guardian_consent_missing",
+   "not_certified",
+   "waiver_missing",
+   "machine_locked_out",
+   "inspection_due",
+   "machine_in_maintenance",
+   "supervisor_required",
+   "machine_booked",
+   "member_double_booked"
+  ],
+  "result": [
+   "reservation"
+  ],
+  "title": "Create reservation",
+  "wire": "createReservation"
+ },
+ "decideQuote": {
+  "args": [
+   {
+    "name": "quoteId",
+    "ref": "quotes/quote",
+    "type": "identifier"
+   },
+   {
+    "name": "decision",
+    "type": "enum",
+    "values": [
+     "accepted",
+     "rejected"
+    ]
+   }
+  ],
+  "audit": "`quoteId`",
+  "mutation": true,
+  "page": "quotes/decide-quote",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state",
+   "quote_expired"
+  ],
+  "result": [
+   "quote"
+  ],
+  "title": "Decide quote",
+  "wire": "decideQuote"
+ },
+ "decideVolunteerTime": {
+  "args": [
+   {
+    "name": "entryId",
+    "ref": "volunteering/volunteer-entry",
+    "type": "identifier"
+   },
+   {
+    "name": "decision",
+    "type": "enum",
+    "values": [
+     "approved",
+     "rejected"
+    ]
+   }
+  ],
+  "audit": "`entryId`",
+  "mutation": true,
+  "page": "volunteering/decide-volunteer-time",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state",
+   "approver_not_on_shift",
+   "volunteer_cap_reached"
+  ],
+  "result": [
+   "entry"
+  ],
+  "title": "Decide volunteer time",
+  "wire": "decideVolunteerTime"
+ },
+ "declareMinor": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   },
+   {
+    "name": "birthDate",
+    "type": "date"
+   },
+   {
+    "name": "guardianId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`memberId`",
+  "mutation": true,
+  "page": "guardians/declare-minor",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "already_exists",
+   "not_a_minor",
+   "invalid_guardian"
+  ],
+  "result": [
+   "guardianship"
+  ],
+  "title": "Declare minor",
+  "wire": "declareMinor"
+ },
+ "declassifyHazard": {
+  "args": [
+   {
+    "name": "materialId",
+    "ref": "materials/material",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`materialId`",
+  "mutation": true,
+  "page": "hazmat/declassify-hazard",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [
+   "not_hazardous"
+  ],
+  "result": [
+   "classification"
+  ],
+  "title": "Declassify hazard",
+  "wire": "declassifyHazard"
+ },
+ "defineAssessment": {
+  "args": [
+   {
+    "name": "courseId",
+    "ref": "training/course",
+    "type": "identifier"
+   },
+   {
+    "max": 100,
+    "min": 0,
+    "name": "passMark",
+    "type": "integer"
+   },
+   {
+    "max": 10,
+    "min": 1,
+    "name": "maxAttempts",
+    "type": "integer"
+   }
+  ],
+  "audit": "`courseId`",
+  "mutation": true,
+  "page": "assessments/define-assessment",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "already_exists"
+  ],
+  "result": [
+   "assessment"
+  ],
+  "title": "Define assessment",
+  "wire": "defineAssessment"
+ },
+ "endLockerRental": {
+  "args": [
+   {
+    "name": "rentalId",
+    "ref": "lockers/rental",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`rentalId`",
+  "mutation": true,
+  "page": "lockers/end-locker-rental",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state"
+  ],
+  "result": [
+   "rental"
+  ],
+  "title": "End locker rental",
+  "wire": "endLockerRental"
+ },
+ "endPromotion": {
+  "args": [
+   {
+    "name": "code",
+    "ref": "promotions/promotion",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`code`",
+  "mutation": true,
+  "page": "promotions/end-promotion",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [
+   "invalid_state"
+  ],
+  "result": [
+   "promotion"
+  ],
+  "title": "End promotion",
+  "wire": "endPromotion"
+ },
+ "enrollInCourse": {
+  "args": [
+   {
+    "name": "courseId",
+    "ref": "training/course",
+    "type": "identifier"
+   },
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`courseId/memberId`",
+  "mutation": true,
+  "page": "training/enroll-in-course",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "member_suspended",
+   "guardian_consent_missing",
+   "already_enrolled",
+   "course_full"
+  ],
+  "result": [
+   "enrollment",
+   "course"
+  ],
+  "title": "Enroll in course",
+  "wire": "enrollInCourse"
+ },
+ "enterDoor": {
+  "args": [
+   {
+    "name": "badgeId",
+    "ref": "access/badge",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`badgeId`",
+  "mutation": true,
+  "page": "access/enter-door",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state",
+   "already_inside",
+   "member_suspended",
+   "outside_opening_hours",
+   "account_overdue"
+  ],
+  "result": [
+   "badge",
+   "event"
+  ],
+  "title": "Enter door",
+  "wire": "enterDoor"
+ },
+ "escalateIncident": {
+  "args": [
+   {
+    "name": "incidentId",
+    "ref": "safety/incident",
+    "type": "identifier"
+   }
+  ],
+  "audit": "the new `escalationId`",
+  "mutation": true,
+  "page": "escalations/escalate-incident",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state",
+   "already_escalated",
+   "no_policy",
+   "below_policy"
+  ],
+  "result": [
+   "escalation"
+  ],
+  "title": "Escalate incident",
+  "wire": "escalateIncident"
+ },
+ "financeSummary": {
+  "args": [
+   {
+    "name": "month",
+    "type": "month"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "finance/finance-summary",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [],
+  "result": [
+   "month",
+   "invoicedCents",
+   "refundedCents",
+   "paymentsCents",
+   "creditsIssuedCents",
+   "journalEntries",
+   "trialBalanced"
+  ],
+  "title": "Finance summary",
+  "wire": "financeSummary"
+ },
+ "forfeitDeposit": {
+  "args": [
+   {
+    "name": "depositId",
+    "ref": "deposits/deposit",
+    "type": "identifier"
+   },
+   {
+    "name": "reason",
+    "type": "text"
+   }
+  ],
+  "audit": "`depositId`",
+  "mutation": true,
+  "page": "deposits/forfeit-deposit",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [
+   "invalid_state",
+   "deposit_unpaid"
+  ],
+  "result": [
+   "deposit"
+  ],
+  "title": "Forfeit deposit",
+  "wire": "forfeitDeposit"
+ },
+ "generateInvoices": {
+  "args": [
+   {
+    "name": "month",
+    "type": "month"
+   }
+  ],
+  "audit": "`month`",
+  "mutation": true,
+  "page": "billing/generate-invoices",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "month_not_ended",
+   "already_invoiced"
+  ],
+  "result": [
+   "month",
+   "invoices"
+  ],
+  "title": "Generate invoices",
+  "wire": "generateInvoices"
+ },
+ "generatePayouts": {
+  "args": [
+   {
+    "name": "month",
+    "type": "month"
+   }
+  ],
+  "audit": "`month`",
+  "mutation": true,
+  "page": "payouts/generate-payouts",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [
+   "month_not_ended",
+   "already_generated"
+  ],
+  "result": [
+   "month",
+   "payouts"
+  ],
+  "title": "Generate payouts",
+  "wire": "generatePayouts"
+ },
+ "getAccount": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "billing/get-account",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "account"
+  ],
+  "title": "Get account",
+  "wire": "getAccount"
+ },
+ "getGuardianship": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "guardians/get-guardianship",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "not_a_declared_minor"
+  ],
+  "result": [
+   "guardianship"
+  ],
+  "title": "Get guardianship",
+  "wire": "getGuardianship"
+ },
+ "getHousehold": {
+  "args": [
+   {
+    "name": "householdId",
+    "ref": "households/household",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "households/get-household",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "household"
+  ],
+  "title": "Get household",
+  "wire": "getHousehold"
+ },
+ "getInspectionStatus": {
+  "args": [
+   {
+    "name": "machineId",
+    "ref": "equipment/machine",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "inspections/get-inspection-status",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "no_plan"
+  ],
+  "result": [
+   "plan",
+   "due"
+  ],
+  "title": "Get inspection status",
+  "wire": "getInspectionStatus"
+ },
+ "getMachineSchedule": {
+  "args": [
+   {
+    "name": "machineId",
+    "ref": "equipment/machine",
+    "type": "identifier"
+   },
+   {
+    "name": "date",
+    "type": "date"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "bookings/get-machine-schedule",
+  "permissions": {
+   "admin": "all",
+   "member": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "machineId",
+   "date",
+   "openingHours",
+   "reservations",
+   "maintenance"
+  ],
+  "title": "Get machine schedule",
+  "wire": "getMachineSchedule"
+ },
+ "getMember": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "members/get-member",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "member"
+  ],
+  "title": "Get member",
+  "wire": "getMember"
+ },
+ "getProjectCost": {
+  "args": [
+   {
+    "name": "projectId",
+    "ref": "projects/project",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "projects/get-project-cost",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "projectId",
+   "usageCents",
+   "materialCents",
+   "totalCents",
+   "byMember"
+  ],
+  "title": "Get project cost",
+  "wire": "getProjectCost"
+ },
+ "getQuote": {
+  "args": [
+   {
+    "name": "quoteId",
+    "ref": "quotes/quote",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "quotes/get-quote",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "quote"
+  ],
+  "title": "Get quote",
+  "wire": "getQuote"
+ },
+ "getRoomSchedule": {
+  "args": [
+   {
+    "name": "roomId",
+    "ref": "rooms/room",
+    "type": "identifier"
+   },
+   {
+    "name": "date",
+    "type": "date"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "rooms/get-room-schedule",
+  "permissions": {
+   "admin": "all",
+   "member": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "roomId",
+   "date",
+   "holds"
+  ],
+  "title": "Get room schedule",
+  "wire": "getRoomSchedule"
+ },
+ "getStocktake": {
+  "args": [
+   {
+    "name": "stocktakeId",
+    "ref": "stocktake/stocktake",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "stocktake/get-stocktake",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "stocktake"
+  ],
+  "title": "Get stocktake",
+  "wire": "getStocktake"
+ },
+ "getTrialBalance": {
+  "args": [],
+  "audit": null,
+  "mutation": false,
+  "page": "ledger/get-trial-balance",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [],
+  "result": [
+   "rows",
+   "totalDebitCents",
+   "totalCreditCents"
+  ],
+  "title": "Get trial balance",
+  "wire": "getTrialBalance"
+ },
+ "getWaiver": {
+  "args": [
+   {
+    "name": "familyId",
+    "ref": "equipment/family",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "waivers/get-waiver",
+  "permissions": {
+   "admin": "all",
+   "member": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "no_waiver"
+  ],
+  "result": [
+   "waiver"
+  ],
+  "title": "Get waiver",
+  "wire": "getWaiver"
+ },
+ "grantConsent": {
+  "args": [
+   {
+    "name": "guardianId",
+    "ref": "members/member",
+    "type": "identifier"
+   },
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   },
+   {
+    "name": "familyId",
+    "ref": "equipment/family",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`memberId/familyId`",
+  "mutation": true,
+  "page": "guardians/grant-consent",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "not_guardian"
+  ],
+  "result": [
+   "guardianship"
+  ],
+  "title": "Grant consent",
+  "wire": "grantConsent"
+ },
+ "holdRoom": {
+  "args": [
+   {
+    "name": "roomId",
+    "ref": "rooms/room",
+    "type": "identifier"
+   },
+   {
+    "name": "start",
+    "type": "timestamp"
+   },
+   {
+    "name": "end",
+    "type": "timestamp"
+   },
+   {
+    "name": "purpose",
+    "type": "text"
+   }
+  ],
+  "audit": "the new `holdId`",
+  "mutation": true,
+  "page": "rooms/hold-room",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_interval",
+   "starts_in_past",
+   "room_taken"
+  ],
+  "result": [
+   "hold"
+  ],
+  "title": "Hold room",
+  "wire": "holdRoom"
+ },
+ "householdStatement": {
+  "args": [
+   {
+    "name": "householdId",
+    "ref": "households/household",
+    "type": "identifier"
+   },
+   {
+    "name": "month",
+    "type": "month"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "finance/household-statement",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "householdId",
+   "month",
+   "rows",
+   "totalCents",
+   "balanceCents"
+  ],
+  "title": "Household statement",
+  "wire": "householdStatement"
+ },
+ "issueBadge": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": "the new `badgeId`",
+  "mutation": true,
+  "page": "access/issue-badge",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "badge_active"
+  ],
+  "result": [
+   "badge"
+  ],
+  "title": "Issue badge",
+  "wire": "issueBadge"
+ },
+ "issueCredit": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   },
+   {
+    "max": 100000000,
+    "min": 1,
+    "name": "amountCents",
+    "type": "integer"
+   },
+   {
+    "name": "reason",
+    "type": "text"
+   }
+  ],
+  "audit": "`memberId`",
+  "mutation": true,
+  "page": "billing/issue-credit",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [],
+  "result": [
+   "memberId",
+   "amountCents",
+   "creditBalanceCents"
+  ],
+  "title": "Issue credit",
+  "wire": "issueCredit"
+ },
+ "issueGuestPass": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   },
+   {
+    "name": "guestName",
+    "type": "text"
+   },
+   {
+    "name": "date",
+    "type": "date"
+   }
+  ],
+  "audit": "the new `guestPassId`",
+  "mutation": true,
+  "page": "guests/issue-guest-pass",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "member_suspended",
+   "date_in_past",
+   "guests_not_allowed"
+  ],
+  "result": [
+   "guestPass"
+  ],
+  "title": "Issue guest pass",
+  "wire": "issueGuestPass"
+ },
+ "issuePpe": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   },
+   {
+    "name": "itemId",
+    "ref": "ppe/ppe-item",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`memberId/itemId`",
+  "mutation": true,
+  "page": "ppe/issue-ppe",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "member_suspended",
+   "already_issued",
+   "out_of_stock"
+  ],
+  "result": [
+   "item"
+  ],
+  "title": "Issue PPE",
+  "wire": "issuePpe"
+ },
+ "issueRefund": {
+  "args": [
+   {
+    "name": "invoiceId",
+    "ref": "billing/invoice",
+    "type": "identifier"
+   },
+   {
+    "max": 1000,
+    "min": 1,
+    "name": "lineNumber",
+    "type": "integer"
+   },
+   {
+    "max": 100000000,
+    "min": 1,
+    "name": "amountCents",
+    "type": "integer"
+   },
+   {
+    "name": "reason",
+    "type": "text"
+   }
+  ],
+  "audit": "the new `refundId`",
+  "mutation": true,
+  "page": "refunds/issue-refund",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [
+   "invoice_not_paid",
+   "invalid_line",
+   "refund_too_large"
+  ],
+  "result": [
+   "refund",
+   "creditBalanceCents"
+  ],
+  "title": "Issue refund",
+  "wire": "issueRefund"
+ },
+ "joinWaitlist": {
+  "args": [
+   {
+    "name": "courseId",
+    "ref": "training/course",
+    "type": "identifier"
+   },
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`courseId/memberId`",
+  "mutation": true,
+  "page": "waitlists/join-waitlist",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "member_suspended",
+   "already_enrolled",
+   "course_not_full",
+   "already_waiting"
+  ],
+  "result": [
+   "entry"
+  ],
+  "title": "Join waitlist",
+  "wire": "joinWaitlist"
+ },
+ "leaveDoor": {
+  "args": [
+   {
+    "name": "badgeId",
+    "ref": "access/badge",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`badgeId`",
+  "mutation": true,
+  "page": "access/leave-door",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state",
+   "not_inside"
+  ],
+  "result": [
+   "badge",
+   "event"
+  ],
+  "title": "Leave door",
+  "wire": "leaveDoor"
+ },
+ "leaveWaitlist": {
+  "args": [
+   {
+    "name": "courseId",
+    "ref": "training/course",
+    "type": "identifier"
+   },
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`courseId/memberId`",
+  "mutation": true,
+  "page": "waitlists/leave-waitlist",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "not_waiting"
+  ],
+  "result": [
+   "entry"
+  ],
+  "title": "Leave waitlist",
+  "wire": "leaveWaitlist"
+ },
+ "linkIncident": {
+  "args": [
+   {
+    "name": "workOrderId",
+    "ref": "workorders/work-order",
+    "type": "identifier"
+   },
+   {
+    "name": "incidentId",
+    "ref": "safety/incident",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`workOrderId`",
+  "mutation": true,
+  "page": "workorders/link-incident",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state",
+   "incident_other_machine",
+   "already_linked"
+  ],
+  "result": [
+   "workOrder"
+  ],
+  "title": "Link incident",
+  "wire": "linkIncident"
+ },
+ "listAttempts": {
+  "args": [
+   {
+    "name": "courseId",
+    "ref": "training/course",
+    "type": "identifier"
+   },
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "assessments/list-attempts",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "courseId",
+   "memberId",
+   "attempts"
+  ],
+  "title": "List attempts",
+  "wire": "listAttempts"
+ },
+ "listAuditEntries": {
+  "args": [],
+  "audit": null,
+  "mutation": false,
+  "page": "list-audit-entries",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [],
+  "result": [
+   "entries"
+  ],
+  "title": "List audit entries",
+  "wire": "listAuditEntries"
+ },
+ "listAwards": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "scholarships/list-awards",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "memberId",
+   "awards"
+  ],
+  "title": "List awards",
+  "wire": "listAwards"
+ },
+ "listCertifications": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "training/list-certifications",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "memberId",
+   "certifications"
+  ],
+  "title": "List certifications",
+  "wire": "listCertifications"
+ },
+ "listClassAttendance": {
+  "args": [
+   {
+    "name": "classId",
+    "ref": "classes/class",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "classes/list-class-attendance",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "classId",
+   "attendance"
+  ],
+  "title": "List class attendance",
+  "wire": "listClassAttendance"
+ },
+ "listConsumption": {
+  "args": [
+   {
+    "name": "machineId",
+    "ref": "equipment/machine",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "consumables/list-consumption",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "machineId",
+   "rows"
+  ],
+  "title": "List consumption",
+  "wire": "listConsumption"
+ },
+ "listCourseClasses": {
+  "args": [
+   {
+    "name": "courseId",
+    "ref": "training/course",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "classes/list-course-classes",
+  "permissions": {
+   "admin": "all",
+   "member": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "courseId",
+   "classes"
+  ],
+  "title": "List course classes",
+  "wire": "listCourseClasses"
+ },
+ "listDeposits": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "deposits/list-deposits",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "memberId",
+   "deposits"
+  ],
+  "title": "List deposits",
+  "wire": "listDeposits"
+ },
+ "listDoorEvents": {
+  "args": [
+   {
+    "name": "date",
+    "type": "date"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "access/list-door-events",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "date",
+   "events"
+  ],
+  "title": "List door events",
+  "wire": "listDoorEvents"
+ },
+ "listDunningCases": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "dunning/list-dunning-cases",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "memberId",
+   "cases"
+  ],
+  "title": "List dunning cases",
+  "wire": "listDunningCases"
+ },
+ "listEscalations": {
+  "args": [],
+  "audit": null,
+  "mutation": false,
+  "page": "escalations/list-escalations",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "escalations"
+  ],
+  "title": "List escalations",
+  "wire": "listEscalations"
+ },
+ "listEventTickets": {
+  "args": [
+   {
+    "name": "eventId",
+    "ref": "events/event",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "events/list-event-tickets",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "eventId",
+   "tickets"
+  ],
+  "title": "List event tickets",
+  "wire": "listEventTickets"
+ },
+ "listGuestPasses": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "guests/list-guest-passes",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "memberId",
+   "guestPasses"
+  ],
+  "title": "List guest passes",
+  "wire": "listGuestPasses"
+ },
+ "listHazards": {
+  "args": [],
+  "audit": null,
+  "mutation": false,
+  "page": "hazmat/list-hazards",
+  "permissions": {
+   "admin": "all",
+   "member": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "hazards"
+  ],
+  "title": "List hazards",
+  "wire": "listHazards"
+ },
+ "listIncidents": {
+  "args": [],
+  "audit": null,
+  "mutation": false,
+  "page": "safety/list-incidents",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "incidents"
+  ],
+  "title": "List incidents",
+  "wire": "listIncidents"
+ },
+ "listInspectionsDue": {
+  "args": [
+   {
+    "name": "date",
+    "type": "date"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "inspections/list-inspections-due",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "date",
+   "plans"
+  ],
+  "title": "List inspections due",
+  "wire": "listInspectionsDue"
+ },
+ "listInstructors": {
+  "args": [
+   {
+    "name": "familyId",
+    "ref": "equipment/family",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "instructors/list-instructors",
+  "permissions": {
+   "admin": "all",
+   "member": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "familyId",
+   "instructors"
+  ],
+  "title": "List instructors",
+  "wire": "listInstructors"
+ },
+ "listInvoices": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "billing/list-invoices",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "memberId",
+   "invoices"
+  ],
+  "title": "List invoices",
+  "wire": "listInvoices"
+ },
+ "listJobs": {
+  "args": [
+   {
+    "name": "customerId",
+    "ref": "quotes/customer",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "jobs/list-jobs",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "customerId",
+   "jobs"
+  ],
+  "title": "List jobs",
+  "wire": "listJobs"
+ },
+ "listJournalEntries": {
+  "args": [
+   {
+    "name": "month",
+    "type": "month"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "ledger/list-journal-entries",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [],
+  "result": [
+   "month",
+   "entries"
+  ],
+  "title": "List journal entries",
+  "wire": "listJournalEntries"
+ },
+ "listLockouts": {
+  "args": [
+   {
+    "name": "machineId",
+    "ref": "equipment/machine",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "lockouts/list-lockouts",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "machineId",
+   "lockouts"
+  ],
+  "title": "List lockouts",
+  "wire": "listLockouts"
+ },
+ "listMachines": {
+  "args": [],
+  "audit": null,
+  "mutation": false,
+  "page": "equipment/list-machines",
+  "permissions": {
+   "admin": "all",
+   "member": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "machines"
+  ],
+  "title": "List machines",
+  "wire": "listMachines"
+ },
+ "listMaterials": {
+  "args": [],
+  "audit": null,
+  "mutation": false,
+  "page": "materials/list-materials",
+  "permissions": {
+   "admin": "all",
+   "member": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "materials"
+  ],
+  "title": "List materials",
+  "wire": "listMaterials"
+ },
+ "listMemberPasses": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "passes/list-member-passes",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "memberId",
+   "passes"
+  ],
+  "title": "List member passes",
+  "wire": "listMemberPasses"
+ },
+ "listMemberPpe": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "ppe/list-member-ppe",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "memberId",
+   "items"
+  ],
+  "title": "List member PPE",
+  "wire": "listMemberPpe"
+ },
+ "listMemberPromotions": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "promotions/list-member-promotions",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "memberId",
+   "redemptions"
+  ],
+  "title": "List member promotions",
+  "wire": "listMemberPromotions"
+ },
+ "listMemberReservations": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "bookings/list-member-reservations",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "memberId",
+   "reservations"
+  ],
+  "title": "List member reservations",
+  "wire": "listMemberReservations"
+ },
+ "listMemberWaivers": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "waivers/list-member-waivers",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "memberId",
+   "signatures"
+  ],
+  "title": "List member waivers",
+  "wire": "listMemberWaivers"
+ },
+ "listNotices": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "notices/list-notices",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "memberId",
+   "notices"
+  ],
+  "title": "List notices",
+  "wire": "listNotices"
+ },
+ "listOrders": {
+  "args": [
+   {
+    "name": "supplierId",
+    "ref": "purchasing/supplier",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "purchasing/list-orders",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "supplierId",
+   "orders"
+  ],
+  "title": "List orders",
+  "wire": "listOrders"
+ },
+ "listParts": {
+  "args": [],
+  "audit": null,
+  "mutation": false,
+  "page": "parts/list-parts",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "parts"
+  ],
+  "title": "List parts",
+  "wire": "listParts"
+ },
+ "listPayouts": {
+  "args": [
+   {
+    "name": "userId",
+    "ref": "members/user",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "payouts/list-payouts",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "userId",
+   "payouts"
+  ],
+  "title": "List payouts",
+  "wire": "listPayouts"
+ },
+ "listRefunds": {
+  "args": [
+   {
+    "name": "invoiceId",
+    "ref": "billing/invoice",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "refunds/list-refunds",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "invoiceId",
+   "refunds"
+  ],
+  "title": "List refunds",
+  "wire": "listRefunds"
+ },
+ "listShifts": {
+  "args": [
+   {
+    "name": "date",
+    "type": "date"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "staffing/list-shifts",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "date",
+   "shifts"
+  ],
+  "title": "List shifts",
+  "wire": "listShifts"
+ },
+ "listVolunteerTime": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "volunteering/list-volunteer-time",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "memberId",
+   "entries"
+  ],
+  "title": "List volunteer time",
+  "wire": "listVolunteerTime"
+ },
+ "listWaitlist": {
+  "args": [
+   {
+    "name": "courseId",
+    "ref": "training/course",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "waitlists/list-waitlist",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "courseId",
+   "entries"
+  ],
+  "title": "List waitlist",
+  "wire": "listWaitlist"
+ },
+ "listWorkOrders": {
+  "args": [
+   {
+    "name": "machineId",
+    "ref": "equipment/machine",
+    "type": "identifier"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "workorders/list-work-orders",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "machineId",
+   "workOrders"
+  ],
+  "title": "List work orders",
+  "wire": "listWorkOrders"
+ },
+ "logVolunteerTime": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   },
+   {
+    "name": "date",
+    "type": "date"
+   },
+   {
+    "max": 720,
+    "min": 1,
+    "name": "minutes",
+    "type": "integer"
+   },
+   {
+    "name": "note",
+    "type": "text"
+   }
+  ],
+  "audit": "the new `entryId`",
+  "mutation": true,
+  "page": "volunteering/log-volunteer-time",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "date_in_future"
+  ],
+  "result": [
+   "entry"
+  ],
+  "title": "Log volunteer time",
+  "wire": "logVolunteerTime"
+ },
+ "markAttendance": {
+  "args": [
+   {
+    "name": "classId",
+    "ref": "classes/class",
+    "type": "identifier"
+   },
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   },
+   {
+    "name": "present",
+    "type": "flag"
+   }
+  ],
+  "audit": "`classId/memberId`",
+  "mutation": true,
+  "page": "classes/mark-attendance",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state",
+   "class_not_started",
+   "not_enrolled"
+  ],
+  "result": [
+   "attendance"
+  ],
+  "title": "Mark attendance",
+  "wire": "markAttendance"
+ },
+ "openWorkOrder": {
+  "args": [
+   {
+    "name": "machineId",
+    "ref": "equipment/machine",
+    "type": "identifier"
+   },
+   {
+    "name": "summary",
+    "type": "text"
+   }
+  ],
+  "audit": "the new `workOrderId`",
+  "mutation": true,
+  "page": "workorders/open-work-order",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "workOrder"
+  ],
+  "title": "Open work order",
+  "wire": "openWorkOrder"
+ },
+ "postAdjustment": {
+  "args": [
+   {
+    "name": "debitAccount",
+    "type": "enum",
+    "values": [
+     "cash",
+     "creditLiability",
+     "depositLiability",
+     "expenseGoodwill",
+     "expenseMaker",
+     "expensePayout",
+     "expenseVolunteer",
+     "expenseWriteOff",
+     "inventory",
+     "payable",
+     "receivable",
+     "revenueCourse",
+     "revenueDeposits",
+     "revenueEvents",
+     "revenueGuests",
+     "revenueJobs",
+     "revenueLateFees",
+     "revenueLockers",
+     "revenueMaterial",
+     "revenueMembership",
+     "revenueNoShows",
+     "revenuePasses",
+     "revenueRefunds",
+     "revenueUsage"
+    ]
+   },
+   {
+    "name": "creditAccount",
+    "type": "enum",
+    "values": [
+     "cash",
+     "creditLiability",
+     "depositLiability",
+     "expenseGoodwill",
+     "expenseMaker",
+     "expensePayout",
+     "expenseVolunteer",
+     "expenseWriteOff",
+     "inventory",
+     "payable",
+     "receivable",
+     "revenueCourse",
+     "revenueDeposits",
+     "revenueEvents",
+     "revenueGuests",
+     "revenueJobs",
+     "revenueLateFees",
+     "revenueLockers",
+     "revenueMaterial",
+     "revenueMembership",
+     "revenueNoShows",
+     "revenuePasses",
+     "revenueRefunds",
+     "revenueUsage"
+    ]
+   },
+   {
+    "max": 100000000,
+    "min": 1,
+    "name": "amountCents",
+    "type": "integer"
+   },
+   {
+    "name": "memo",
+    "type": "text"
+   }
+  ],
+  "audit": "the new `entryId`",
+  "mutation": true,
+  "page": "ledger/post-adjustment",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [
+   "same_account"
+  ],
+  "result": [
+   "entry"
+  ],
+  "title": "Post adjustment",
+  "wire": "postAdjustment"
+ },
+ "postNotice": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   },
+   {
+    "name": "subject",
+    "type": "text"
+   }
+  ],
+  "audit": "the new `noticeId`",
+  "mutation": true,
+  "page": "notices/post-notice",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "notice"
+  ],
+  "title": "Post notice",
+  "wire": "postNotice"
+ },
+ "promoteWaitlist": {
+  "args": [
+   {
+    "name": "courseId",
+    "ref": "training/course",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`courseId`",
+  "mutation": true,
+  "page": "waitlists/promote-waitlist",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "courseId",
+   "enrollments",
+   "skipped"
+  ],
+  "title": "Promote waitlist",
+  "wire": "promoteWaitlist"
+ },
+ "publishWaiver": {
+  "args": [
+   {
+    "name": "familyId",
+    "ref": "equipment/family",
+    "type": "identifier"
+   },
+   {
+    "name": "text",
+    "type": "text"
+   }
+  ],
+  "audit": "`familyId`",
+  "mutation": true,
+  "page": "waivers/publish-waiver",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [],
+  "result": [
+   "waiver"
+  ],
+  "title": "Publish waiver",
+  "wire": "publishWaiver"
+ },
+ "purchaseMaterial": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   },
+   {
+    "name": "materialId",
+    "ref": "materials/material",
+    "type": "identifier"
+   },
+   {
+    "max": 10000,
+    "min": 1,
+    "name": "quantity",
+    "type": "integer"
+   }
+  ],
+  "audit": "the new `purchaseId`",
+  "mutation": true,
+  "page": "materials/purchase-material",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "member_suspended",
+   "hazard_not_certified",
+   "hazard_limit_exceeded",
+   "stocktake_open",
+   "insufficient_stock"
+  ],
+  "result": [
+   "purchase",
+   "material"
+  ],
+  "title": "Purchase material",
+  "wire": "purchaseMaterial"
+ },
+ "qualifyInstructor": {
+  "args": [
+   {
+    "name": "userId",
+    "ref": "members/user",
+    "type": "identifier"
+   },
+   {
+    "name": "familyId",
+    "ref": "equipment/family",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`userId/familyId`",
+  "mutation": true,
+  "page": "instructors/qualify-instructor",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [
+   "not_eligible",
+   "already_exists"
+  ],
+  "result": [
+   "qualification"
+  ],
+  "title": "Qualify instructor",
+  "wire": "qualifyInstructor"
+ },
+ "receiveOrder": {
+  "args": [
+   {
+    "name": "orderId",
+    "ref": "purchasing/order",
+    "type": "identifier"
+   },
+   {
+    "name": "materialId",
+    "ref": "materials/material",
+    "type": "identifier"
+   },
+   {
+    "max": 100000,
+    "min": 1,
+    "name": "quantity",
+    "type": "integer"
+   }
+  ],
+  "audit": "`orderId`",
+  "mutation": true,
+  "page": "purchasing/receive-order",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state",
+   "not_on_order",
+   "over_receipt",
+   "stocktake_open"
+  ],
+  "result": [
+   "order"
+  ],
+  "title": "Receive order",
+  "wire": "receiveOrder"
+ },
+ "recordAttempt": {
+  "args": [
+   {
+    "name": "courseId",
+    "ref": "training/course",
+    "type": "identifier"
+   },
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   },
+   {
+    "max": 100,
+    "min": 0,
+    "name": "score",
+    "type": "integer"
+   }
+  ],
+  "audit": "`courseId/memberId`",
+  "mutation": true,
+  "page": "assessments/record-attempt",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "no_assessment",
+   "not_enrolled",
+   "attempts_exhausted"
+  ],
+  "result": [
+   "attempt"
+  ],
+  "title": "Record attempt",
+  "wire": "recordAttempt"
+ },
+ "recordCount": {
+  "args": [
+   {
+    "name": "stocktakeId",
+    "ref": "stocktake/stocktake",
+    "type": "identifier"
+   },
+   {
+    "name": "materialId",
+    "ref": "materials/material",
+    "type": "identifier"
+   },
+   {
+    "max": 100000000,
+    "min": 0,
+    "name": "counted",
+    "type": "integer"
+   }
+  ],
+  "audit": "`stocktakeId/materialId`",
+  "mutation": true,
+  "page": "stocktake/record-count",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state"
+  ],
+  "result": [
+   "stocktake"
+  ],
+  "title": "Record count",
+  "wire": "recordCount"
+ },
+ "recordInspection": {
+  "args": [
+   {
+    "name": "machineId",
+    "ref": "equipment/machine",
+    "type": "identifier"
+   },
+   {
+    "name": "outcome",
+    "type": "enum",
+    "values": [
+     "passed",
+     "failed"
+    ]
+   },
+   {
+    "name": "note",
+    "type": "text"
+   }
+  ],
+  "audit": "`machineId`",
+  "mutation": true,
+  "page": "inspections/record-inspection",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "no_plan"
+  ],
+  "result": [
+   "plan"
+  ],
+  "title": "Record inspection",
+  "wire": "recordInspection"
+ },
+ "recordJobPayment": {
+  "args": [
+   {
+    "name": "jobId",
+    "ref": "jobs/job",
+    "type": "identifier"
+   },
+   {
+    "max": 100000000,
+    "min": 1,
+    "name": "amountCents",
+    "type": "integer"
+   }
+  ],
+  "audit": "`jobId`",
+  "mutation": true,
+  "page": "jobs/record-job-payment",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "job_not_completed",
+   "overpayment"
+  ],
+  "result": [
+   "job"
+  ],
+  "title": "Record job payment",
+  "wire": "recordJobPayment"
+ },
+ "recordPayment": {
+  "args": [
+   {
+    "name": "invoiceId",
+    "ref": "billing/invoice",
+    "type": "identifier"
+   },
+   {
+    "max": 100000000,
+    "min": 1,
+    "name": "amountCents",
+    "type": "integer"
+   }
+  ],
+  "audit": "the new `paymentId`",
+  "mutation": true,
+  "page": "billing/record-payment",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "invoice_paid"
+  ],
+  "result": [
+   "payment",
+   "invoice",
+   "creditBalanceCents"
+  ],
+  "title": "Record payment",
+  "wire": "recordPayment"
+ },
+ "redeemPromotion": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   },
+   {
+    "name": "code",
+    "ref": "promotions/promotion",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`memberId/code`",
+  "mutation": true,
+  "page": "promotions/redeem-promotion",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "member_suspended",
+   "promotion_ended",
+   "promotion_expired",
+   "promotion_exhausted",
+   "already_redeemed"
+  ],
+  "result": [
+   "redemption",
+   "promotion"
+  ],
+  "title": "Redeem promotion",
+  "wire": "redeemPromotion"
+ },
+ "registerMember": {
+  "args": [
+   {
+    "name": "memberId",
+    "type": "identifier"
+   },
+   {
+    "name": "name",
+    "type": "text"
+   },
+   {
+    "name": "tier",
+    "type": "enum",
+    "values": [
+     "basic",
+     "plus",
+     "pro"
+    ]
+   }
+  ],
+  "audit": "`memberId`",
+  "mutation": true,
+  "page": "members/register-member",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "already_exists"
+  ],
+  "result": [
+   "member"
+  ],
+  "title": "Register member",
+  "wire": "registerMember"
+ },
+ "registerUser": {
+  "args": [
+   {
+    "name": "userId",
+    "type": "identifier"
+   },
+   {
+    "name": "name",
+    "type": "text"
+   },
+   {
+    "name": "role",
+    "type": "enum",
+    "values": [
+     "staff",
+     "admin"
+    ]
+   }
+  ],
+  "audit": "`userId`",
+  "mutation": true,
+  "page": "members/register-user",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [
+   "already_exists"
+  ],
+  "result": [
+   "user"
+  ],
+  "title": "Register user",
+  "wire": "registerUser"
+ },
+ "releaseDeposit": {
+  "args": [
+   {
+    "name": "depositId",
+    "ref": "deposits/deposit",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`depositId`",
+  "mutation": true,
+  "page": "deposits/release-deposit",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state",
+   "deposit_unpaid"
+  ],
+  "result": [
+   "deposit",
+   "creditBalanceCents"
+  ],
+  "title": "Release deposit",
+  "wire": "releaseDeposit"
+ },
+ "releaseLockout": {
+  "args": [
+   {
+    "name": "lockoutId",
+    "ref": "lockouts/lockout",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`lockoutId`",
+  "mutation": true,
+  "page": "lockouts/release-lockout",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state",
+   "lockout_not_manual",
+   "not_lockout_holder"
+  ],
+  "result": [
+   "lockout"
+  ],
+  "title": "Release lockout",
+  "wire": "releaseLockout"
+ },
+ "releaseRoomHold": {
+  "args": [
+   {
+    "name": "holdId",
+    "ref": "rooms/hold",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`holdId`",
+  "mutation": true,
+  "page": "rooms/release-room-hold",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state",
+   "hold_not_direct"
+  ],
+  "result": [
+   "hold"
+  ],
+  "title": "Release room hold",
+  "wire": "releaseRoomHold"
+ },
+ "removeHouseholdMember": {
+  "args": [
+   {
+    "name": "householdId",
+    "ref": "households/household",
+    "type": "identifier"
+   },
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`householdId/memberId`",
+  "mutation": true,
+  "page": "households/remove-household-member",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "not_in_household",
+   "payer_cannot_leave"
+  ],
+  "result": [
+   "household"
+  ],
+  "title": "Remove household member",
+  "wire": "removeHouseholdMember"
+ },
+ "rentLocker": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   },
+   {
+    "name": "lockerId",
+    "ref": "lockers/locker",
+    "type": "identifier"
+   }
+  ],
+  "audit": "the new `rentalId`",
+  "mutation": true,
+  "page": "lockers/rent-locker",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "member_suspended",
+   "locker_taken",
+   "rental_limit"
+  ],
+  "result": [
+   "rental"
+  ],
+  "title": "Rent locker",
+  "wire": "rentLocker"
+ },
+ "reportIncident": {
+  "args": [
+   {
+    "name": "machineId",
+    "ref": "equipment/machine",
+    "type": "identifier"
+   },
+   {
+    "name": "severity",
+    "type": "enum",
+    "values": [
+     "low",
+     "medium",
+     "high"
+    ]
+   },
+   {
+    "name": "description",
+    "type": "text"
+   }
+  ],
+  "audit": "the new `incidentId`",
+  "mutation": true,
+  "page": "safety/report-incident",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "incident"
+  ],
+  "title": "Report incident",
+  "wire": "reportIncident"
+ },
+ "requirePpe": {
+  "args": [
+   {
+    "name": "familyId",
+    "ref": "equipment/family",
+    "type": "identifier"
+   },
+   {
+    "name": "itemId",
+    "ref": "ppe/ppe-item",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`familyId/itemId`",
+  "mutation": true,
+  "page": "ppe/require-ppe",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [],
+  "result": [
+   "requirement"
+  ],
+  "title": "Require PPE",
+  "wire": "requirePpe"
+ },
+ "resolveIncident": {
+  "args": [
+   {
+    "name": "incidentId",
+    "ref": "safety/incident",
+    "type": "identifier"
+   },
+   {
+    "name": "resolution",
+    "type": "text"
+   }
+  ],
+  "audit": "`incidentId`",
+  "mutation": true,
+  "page": "safety/resolve-incident",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state"
+  ],
+  "result": [
+   "incident"
+  ],
+  "title": "Resolve incident",
+  "wire": "resolveIncident"
+ },
+ "restockMaterial": {
+  "args": [
+   {
+    "name": "materialId",
+    "ref": "materials/material",
+    "type": "identifier"
+   },
+   {
+    "max": 100000,
+    "min": 1,
+    "name": "quantity",
+    "type": "integer"
+   }
+  ],
+  "audit": "`materialId`",
+  "mutation": true,
+  "page": "materials/restock-material",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "stocktake_open"
+  ],
+  "result": [
+   "material"
+  ],
+  "title": "Restock material",
+  "wire": "restockMaterial"
+ },
+ "restockPart": {
+  "args": [
+   {
+    "name": "partId",
+    "ref": "parts/part",
+    "type": "identifier"
+   },
+   {
+    "max": 100000,
+    "min": 1,
+    "name": "quantity",
+    "type": "integer"
+   }
+  ],
+  "audit": "`partId`",
+  "mutation": true,
+  "page": "parts/restock-part",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "part"
+  ],
+  "title": "Restock part",
+  "wire": "restockPart"
+ },
+ "returnPpe": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   },
+   {
+    "name": "itemId",
+    "ref": "ppe/ppe-item",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`memberId/itemId`",
+  "mutation": true,
+  "page": "ppe/return-ppe",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "not_issued"
+  ],
+  "result": [
+   "item"
+  ],
+  "title": "Return PPE",
+  "wire": "returnPpe"
+ },
+ "revenueReport": {
+  "args": [
+   {
+    "name": "month",
+    "type": "month"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "reporting/revenue-report",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "month",
+   "invoicesGenerated",
+   "invoiceCount",
+   "membershipCents",
+   "usageCents",
+   "materialCents",
+   "courseCents",
+   "invoicedCents",
+   "creditAppliedCents",
+   "outstandingCents",
+   "paymentsCents",
+   "creditsIssuedCents"
+  ],
+  "title": "Revenue report",
+  "wire": "revenueReport"
+ },
+ "revokeBadge": {
+  "args": [
+   {
+    "name": "badgeId",
+    "ref": "access/badge",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`badgeId`",
+  "mutation": true,
+  "page": "access/revoke-badge",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state"
+  ],
+  "result": [
+   "badge"
+  ],
+  "title": "Revoke badge",
+  "wire": "revokeBadge"
+ },
+ "revokeCertification": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   },
+   {
+    "name": "familyId",
+    "ref": "equipment/family",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`memberId/familyId`",
+  "mutation": true,
+  "page": "training/revoke-certification",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "not_certified"
+  ],
+  "result": [
+   "certification"
+  ],
+  "title": "Revoke certification",
+  "wire": "revokeCertification"
+ },
+ "revokeGuestPass": {
+  "args": [
+   {
+    "name": "guestPassId",
+    "ref": "guests/guest-pass",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`guestPassId`",
+  "mutation": true,
+  "page": "guests/revoke-guest-pass",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state"
+  ],
+  "result": [
+   "guestPass"
+  ],
+  "title": "Revoke guest pass",
+  "wire": "revokeGuestPass"
+ },
+ "revokeScholarship": {
+  "args": [
+   {
+    "name": "awardId",
+    "ref": "scholarships/award",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`awardId`",
+  "mutation": true,
+  "page": "scholarships/revoke-scholarship",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [
+   "invalid_state"
+  ],
+  "result": [
+   "award"
+  ],
+  "title": "Revoke scholarship",
+  "wire": "revokeScholarship"
+ },
+ "runDunning": {
+  "args": [],
+  "audit": "the fixed string `dunning`",
+  "mutation": true,
+  "page": "dunning/run-dunning",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "no_ladder"
+  ],
+  "result": [
+   "actions"
+  ],
+  "title": "Run dunning",
+  "wire": "runDunning"
+ },
+ "scheduleClass": {
+  "args": [
+   {
+    "name": "courseId",
+    "ref": "training/course",
+    "type": "identifier"
+   },
+   {
+    "name": "instructorId",
+    "ref": "members/user",
+    "type": "identifier"
+   },
+   {
+    "name": "roomId",
+    "ref": "rooms/room",
+    "type": "identifier"
+   },
+   {
+    "name": "start",
+    "type": "timestamp"
+   },
+   {
+    "name": "end",
+    "type": "timestamp"
+   }
+  ],
+  "audit": "the new `classId`",
+  "mutation": true,
+  "page": "classes/schedule-class",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_interval",
+   "starts_in_past",
+   "not_instructor",
+   "room_taken",
+   "instructor_busy"
+  ],
+  "result": [
+   "class"
+  ],
+  "title": "Schedule class",
+  "wire": "scheduleClass"
+ },
+ "scheduleMaintenance": {
+  "args": [
+   {
+    "name": "machineId",
+    "ref": "equipment/machine",
+    "type": "identifier"
+   },
+   {
+    "name": "start",
+    "type": "timestamp"
+   },
+   {
+    "name": "end",
+    "type": "timestamp"
+   },
+   {
+    "name": "reason",
+    "type": "text"
+   }
+  ],
+  "audit": "the new `windowId`",
+  "mutation": true,
+  "page": "equipment/schedule-maintenance",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_interval",
+   "starts_in_past",
+   "reservation_conflict"
+  ],
+  "result": [
+   "window"
+  ],
+  "title": "Schedule maintenance",
+  "wire": "scheduleMaintenance"
+ },
+ "sellPass": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   },
+   {
+    "name": "productId",
+    "ref": "passes/pass-product",
+    "type": "identifier"
+   }
+  ],
+  "audit": "the new `passId`",
+  "mutation": true,
+  "page": "passes/sell-pass",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "member_suspended"
+  ],
+  "result": [
+   "pass",
+   "charge"
+  ],
+  "title": "Sell pass",
+  "wire": "sellPass"
+ },
+ "sellTicket": {
+  "args": [
+   {
+    "name": "eventId",
+    "ref": "events/event",
+    "type": "identifier"
+   },
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": "the new `ticketId`",
+  "mutation": true,
+  "page": "events/sell-ticket",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "member_suspended",
+   "event_closed",
+   "already_ticketed",
+   "event_sold_out"
+  ],
+  "result": [
+   "ticket",
+   "event"
+  ],
+  "title": "Sell ticket",
+  "wire": "sellTicket"
+ },
+ "sendQuote": {
+  "args": [
+   {
+    "name": "quoteId",
+    "ref": "quotes/quote",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`quoteId`",
+  "mutation": true,
+  "page": "quotes/send-quote",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state",
+   "empty_quote"
+  ],
+  "result": [
+   "quote"
+  ],
+  "title": "Send quote",
+  "wire": "sendQuote"
+ },
+ "setConsumption": {
+  "args": [
+   {
+    "name": "machineId",
+    "ref": "equipment/machine",
+    "type": "identifier"
+   },
+   {
+    "name": "materialId",
+    "ref": "materials/material",
+    "type": "identifier"
+   },
+   {
+    "max": 1000,
+    "min": 1,
+    "name": "unitsPerHour",
+    "type": "integer"
+   }
+  ],
+  "audit": "`machineId/materialId`",
+  "mutation": true,
+  "page": "consumables/set-consumption",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "row"
+  ],
+  "title": "Set consumption",
+  "wire": "setConsumption"
+ },
+ "setDunningLadder": {
+  "args": [
+   {
+    "max": 3650,
+    "min": 1,
+    "name": "noticeDays",
+    "type": "integer"
+   },
+   {
+    "max": 3650,
+    "min": 1,
+    "name": "feeDays",
+    "type": "integer"
+   },
+   {
+    "max": 1000000,
+    "min": 1,
+    "name": "feeCents",
+    "type": "integer"
+   },
+   {
+    "max": 3650,
+    "min": 1,
+    "name": "suspendDays",
+    "type": "integer"
+   }
+  ],
+  "audit": "the fixed string `ladder`",
+  "mutation": true,
+  "page": "dunning/set-dunning-ladder",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [
+   "invalid_ladder"
+  ],
+  "result": [
+   "ladder"
+  ],
+  "title": "Set dunning ladder",
+  "wire": "setDunningLadder"
+ },
+ "setEscalationPolicy": {
+  "args": [
+   {
+    "name": "familyId",
+    "ref": "equipment/family",
+    "type": "identifier"
+   },
+   {
+    "name": "minSeverity",
+    "type": "enum",
+    "values": [
+     "low",
+     "medium",
+     "high"
+    ]
+   }
+  ],
+  "audit": "`familyId`",
+  "mutation": true,
+  "page": "escalations/set-escalation-policy",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [],
+  "result": [
+   "policy"
+  ],
+  "title": "Set escalation policy",
+  "wire": "setEscalationPolicy"
+ },
+ "setGuestAllowance": {
+  "args": [
+   {
+    "name": "tier",
+    "type": "enum",
+    "values": [
+     "basic",
+     "plus",
+     "pro"
+    ]
+   },
+   {
+    "max": 100,
+    "min": 0,
+    "name": "perMonth",
+    "type": "integer"
+   },
+   {
+    "max": 1000000,
+    "min": 0,
+    "name": "feeCents",
+    "type": "integer"
+   }
+  ],
+  "audit": "`tier`",
+  "mutation": true,
+  "page": "guests/set-guest-allowance",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [],
+  "result": [
+   "allowance"
+  ],
+  "title": "Set guest allowance",
+  "wire": "setGuestAllowance"
+ },
+ "setInspectionPlan": {
+  "args": [
+   {
+    "name": "machineId",
+    "ref": "equipment/machine",
+    "type": "identifier"
+   },
+   {
+    "max": 3650,
+    "min": 1,
+    "name": "intervalDays",
+    "type": "integer"
+   }
+  ],
+  "audit": "`machineId`",
+  "mutation": true,
+  "page": "inspections/set-inspection-plan",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "plan"
+  ],
+  "title": "Set inspection plan",
+  "wire": "setInspectionPlan"
+ },
+ "setInstructorRate": {
+  "args": [
+   {
+    "name": "userId",
+    "ref": "members/user",
+    "type": "identifier"
+   },
+   {
+    "max": 1000000,
+    "min": 1,
+    "name": "centsPerHour",
+    "type": "integer"
+   }
+  ],
+  "audit": "`userId`",
+  "mutation": true,
+  "page": "payouts/set-instructor-rate",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [
+   "not_instructor"
+  ],
+  "result": [
+   "rate"
+  ],
+  "title": "Set instructor rate",
+  "wire": "setInstructorRate"
+ },
+ "setMachineRate": {
+  "args": [
+   {
+    "name": "machineId",
+    "ref": "equipment/machine",
+    "type": "identifier"
+   },
+   {
+    "max": 10000,
+    "min": 1,
+    "name": "rateCentsPerMinute",
+    "type": "integer"
+   }
+  ],
+  "audit": "`machineId`",
+  "mutation": true,
+  "page": "equipment/set-machine-rate",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [],
+  "result": [
+   "machine"
+  ],
+  "title": "Set machine rate",
+  "wire": "setMachineRate"
+ },
+ "setMemberStanding": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   },
+   {
+    "name": "standing",
+    "type": "enum",
+    "values": [
+     "good",
+     "suspended"
+    ]
+   }
+  ],
+  "audit": "`memberId`",
+  "mutation": true,
+  "page": "members/set-member-standing",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [],
+  "result": [
+   "member"
+  ],
+  "title": "Set member standing",
+  "wire": "setMemberStanding"
+ },
+ "setSupervision": {
+  "args": [
+   {
+    "name": "familyId",
+    "ref": "equipment/family",
+    "type": "identifier"
+   },
+   {
+    "name": "required",
+    "type": "flag"
+   }
+  ],
+  "audit": "`familyId`",
+  "mutation": true,
+  "page": "staffing/set-supervision",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [],
+  "result": [
+   "supervision"
+  ],
+  "title": "Set supervision",
+  "wire": "setSupervision"
+ },
+ "setSupplierStatus": {
+  "args": [
+   {
+    "name": "supplierId",
+    "ref": "purchasing/supplier",
+    "type": "identifier"
+   },
+   {
+    "name": "status",
+    "type": "enum",
+    "values": [
+     "active",
+     "blocked"
+    ]
+   }
+  ],
+  "audit": "`supplierId`",
+  "mutation": true,
+  "page": "purchasing/set-supplier-status",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [],
+  "result": [
+   "supplier"
+  ],
+  "title": "Set supplier status",
+  "wire": "setSupplierStatus"
+ },
+ "setVolunteerRate": {
+  "args": [
+   {
+    "max": 100000,
+    "min": 0,
+    "name": "centsPerHour",
+    "type": "integer"
+   }
+  ],
+  "audit": "the fixed string `rate`",
+  "mutation": true,
+  "page": "volunteering/set-volunteer-rate",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [],
+  "result": [
+   "centsPerHour"
+  ],
+  "title": "Set volunteer rate",
+  "wire": "setVolunteerRate"
+ },
+ "settlePayout": {
+  "args": [
+   {
+    "name": "payoutId",
+    "ref": "payouts/payout",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`payoutId`",
+  "mutation": true,
+  "page": "payouts/settle-payout",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [
+   "invalid_state"
+  ],
+  "result": [
+   "payout"
+  ],
+  "title": "Settle payout",
+  "wire": "settlePayout"
+ },
+ "signWaiver": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   },
+   {
+    "name": "familyId",
+    "ref": "equipment/family",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`memberId/familyId`",
+  "mutation": true,
+  "page": "waivers/sign-waiver",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "no_waiver",
+   "already_signed",
+   "guardian_required"
+  ],
+  "result": [
+   "signature"
+  ],
+  "title": "Sign waiver",
+  "wire": "signWaiver"
+ },
+ "startJob": {
+  "args": [
+   {
+    "name": "quoteId",
+    "ref": "quotes/quote",
+    "type": "identifier"
+   },
+   {
+    "name": "makerId",
+    "ref": "members/member",
+    "type": "identifier"
+   }
+  ],
+  "audit": "the new `jobId`",
+  "mutation": true,
+  "page": "jobs/start-job",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "quote_not_accepted",
+   "already_started",
+   "member_suspended",
+   "maker_not_certified"
+  ],
+  "result": [
+   "job"
+  ],
+  "title": "Start job",
+  "wire": "startJob"
+ },
+ "startStocktake": {
+  "args": [],
+  "audit": "the new `stocktakeId`",
+  "mutation": true,
+  "page": "stocktake/start-stocktake",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "stocktake_running"
+  ],
+  "result": [
+   "stocktake"
+  ],
+  "title": "Start stocktake",
+  "wire": "startStocktake"
+ },
+ "submitOrder": {
+  "args": [
+   {
+    "name": "orderId",
+    "ref": "purchasing/order",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`orderId`",
+  "mutation": true,
+  "page": "purchasing/submit-order",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state",
+   "empty_order"
+  ],
+  "result": [
+   "order"
+  ],
+  "title": "Submit order",
+  "wire": "submitOrder"
+ },
+ "takeDeposit": {
+  "args": [
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   },
+   {
+    "name": "purpose",
+    "type": "text"
+   },
+   {
+    "max": 100000000,
+    "min": 1,
+    "name": "amountCents",
+    "type": "integer"
+   }
+  ],
+  "audit": "the new `depositId`",
+  "mutation": true,
+  "page": "deposits/take-deposit",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "member_suspended"
+  ],
+  "result": [
+   "deposit",
+   "charge"
+  ],
+  "title": "Take deposit",
+  "wire": "takeDeposit"
+ },
+ "useParts": {
+  "args": [
+   {
+    "name": "workOrderId",
+    "ref": "workorders/work-order",
+    "type": "identifier"
+   },
+   {
+    "name": "partId",
+    "ref": "parts/part",
+    "type": "identifier"
+   },
+   {
+    "max": 1000,
+    "min": 1,
+    "name": "quantity",
+    "type": "integer"
+   }
+  ],
+  "audit": "`workOrderId`",
+  "mutation": true,
+  "page": "workorders/use-parts",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_state",
+   "part_wrong_family",
+   "insufficient_parts"
+  ],
+  "result": [
+   "workOrder",
+   "part"
+  ],
+  "title": "Use parts",
+  "wire": "useParts"
+ },
+ "utilizationReport": {
+  "args": [
+   {
+    "name": "from",
+    "type": "date"
+   },
+   {
+    "name": "to",
+    "type": "date"
+   }
+  ],
+  "audit": null,
+  "mutation": false,
+  "page": "reporting/utilization-report",
+  "permissions": {
+   "admin": "all",
+   "staff": "all"
+  },
+  "refusals": [
+   "invalid_interval"
+  ],
+  "result": [
+   "from",
+   "to",
+   "machines",
+   "totals"
+  ],
+  "title": "Utilization report",
+  "wire": "utilizationReport"
+ },
+ "withdrawConsent": {
+  "args": [
+   {
+    "name": "guardianId",
+    "ref": "members/member",
+    "type": "identifier"
+   },
+   {
+    "name": "memberId",
+    "ref": "members/member",
+    "type": "identifier"
+   },
+   {
+    "name": "familyId",
+    "ref": "equipment/family",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`memberId/familyId`",
+  "mutation": true,
+  "page": "guardians/withdraw-consent",
+  "permissions": {
+   "admin": "all",
+   "member": "own",
+   "staff": "all"
+  },
+  "refusals": [
+   "not_guardian",
+   "no_consent"
+  ],
+  "result": [
+   "guardianship"
+  ],
+  "title": "Withdraw consent",
+  "wire": "withdrawConsent"
+ },
+ "withdrawInstructor": {
+  "args": [
+   {
+    "name": "userId",
+    "ref": "members/user",
+    "type": "identifier"
+   },
+   {
+    "name": "familyId",
+    "ref": "equipment/family",
+    "type": "identifier"
+   }
+  ],
+  "audit": "`userId/familyId`",
+  "mutation": true,
+  "page": "instructors/withdraw-instructor",
+  "permissions": {
+   "admin": "all"
+  },
+  "refusals": [
+   "not_instructor",
+   "instructor_has_classes"
+  ],
+  "result": [
+   "qualification"
+  ],
+  "title": "Withdraw instructor",
+  "wire": "withdrawInstructor"
+ }
+}

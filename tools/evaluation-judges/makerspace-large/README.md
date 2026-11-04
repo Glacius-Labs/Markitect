@@ -1,12 +1,12 @@
 # Large Makerspace judge
 
-The hidden series judge of the [large Makerspace](../../makerspace-large/README.md), a source for [`judges.py export`](../../evaluation/judges.py). It has the areas of the [Makerspace judge](../makerspace/README.md), for step W0 alone.
+The hidden series judge of the [large Makerspace](../../makerspace-large/README.md), a source for [`judges.py export`](../../evaluation/judges.py). It has the areas of the [Makerspace judge](../makerspace/README.md), for step W0 and the [change steps](../../makerspace-large/CHANGES.md) C1 to C8.
 
 | Path | Content |
 | --- | --- |
-| [judge.json](judge.json) | The image, the command, the limits, the one step, the reference, and the `include` map of the exported folder |
+| [judge.json](judge.json) | The image, the command, the limits, the steps, each step's reference, and the `include` map of the exported folder |
 | [judge.py](judge.py) | The judge, run in its container |
-| [drift.json](drift.json) | The terms a step retired: none yet |
+| [drift.json](drift.json) | The terms C7 and C8 retired |
 | [mutants/](mutants) | Seeded mutants of the reference, each with the area where the judge must fail it |
 
 - **Correctness:** the [hidden cases](../../makerspace-large/README.md#the-hidden-cases) against the result's own `go build ./cmd/makerspace`.

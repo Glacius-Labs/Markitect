@@ -279,5 +279,39 @@ class LibraryJudgeTest(Engine):
         self.assertTrue(judges.verdict({**good, "valid": False, "problems": ["x"]}, None))
 
 
+class ReferencePlacing(unittest.TestCase):
+    def test_a_folder_a_step_deleted_goes_when_the_reference_has_a_prefix(self):
+        import judges
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = pathlib.Path(tmp)
+            repo, tree = tmp / "repo", tmp / "tree"
+            for path in ("realization/passes/old.go", "realization/kept/old.go", "other.md"):
+                (repo / path).parent.mkdir(parents=True, exist_ok=True)
+                (repo / path).write_text("old\n", encoding="utf-8")
+            (tree / "kept").mkdir(parents=True)
+            (tree / "kept" / "new.go").write_text("new\n", encoding="utf-8")
+            judges.place(repo, tree, "realization")
+            self.assertFalse((repo / "realization" / "passes").exists())
+            self.assertFalse((repo / "realization" / "kept" / "old.go").exists())
+            self.assertTrue((repo / "realization" / "kept" / "new.go").is_file())
+            self.assertTrue((repo / "other.md").is_file())
+
+    def test_at_the_root_only_what_the_tree_names_goes(self):
+        import judges
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = pathlib.Path(tmp)
+            repo, tree = tmp / "repo", tmp / "tree"
+            (repo / "keep").mkdir(parents=True)
+            (repo / "keep" / "a").write_text("a\n", encoding="utf-8")
+            (repo / "swap").mkdir()
+            (repo / "swap" / "old").write_text("old\n", encoding="utf-8")
+            (tree / "swap").mkdir(parents=True)
+            (tree / "swap" / "new").write_text("new\n", encoding="utf-8")
+            judges.place(repo, tree, "")
+            self.assertTrue((repo / "keep" / "a").is_file())
+            self.assertFalse((repo / "swap" / "old").exists())
+            self.assertTrue((repo / "swap" / "new").is_file())
+
+
 if __name__ == "__main__":
     unittest.main()

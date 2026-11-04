@@ -8,10 +8,12 @@ Old behavior stays: every one of Makerspace's 37 operations answers as it did un
 | --- | --- |
 | [DESIGN.md](DESIGN.md) | The design every author worked from |
 | [`tools/evaluation-tasks/makerspace-large`](../evaluation-tasks/makerspace-large) | The model and the registry pages: what a variant working from a model receives |
-| [spec/requirements-w0.md](spec/requirements-w0.md) | The requirements document, rendered from the model: what every variant receives as `task.md` |
+| [spec/requirements-w0.md](spec/requirements-w0.md) | The requirements document, rendered from the model: what every variant receives as `task.md` at W0 |
+| [CHANGES.md](CHANGES.md) | The eight change steps and what each reaches: assessor material |
+| [spec/request-c1.md](spec/request-c1.md) to `request-c8.md` | Each step's change request: all a variant working from the repository receives |
 | [pages.py](pages.py) | Parses the pages, checks their form, renders the requirements document and writes the facts |
-| [reference/w0](reference/w0) | The reference program, hidden from the variants |
-| [oracle/](oracle) | The hidden cases and their kit, hidden from the variants |
+| [reference/w0](reference/w0) to `reference/c8` | The reference program at each step, hidden from the variants |
+| [oracle/](oracle) | The hidden cases and their kit, per step, hidden from the variants |
 | [notes/](notes) | What the authors chose where the design was silent |
 | [`tools/evaluation-judges/makerspace-large`](../evaluation-judges/makerspace-large/README.md) | The judge |
 
@@ -42,8 +44,31 @@ python -I -B tools/makerspace-large/oracle/catalog.py run --program PATH --cwd D
 python -I -B tools/makerspace-large/oracle/calibrate.py tools/makerspace-large/oracle/mutants.json
 ```
 
+## The change steps
+
+Eight steps build on W0, each one on the step before, as [CHANGES.md](CHANGES.md) lists them. Per step:
+
+| Path | Content |
+| --- | --- |
+| `tools/evaluation-tasks/makerspace-large/cN/` | The whole model after the step, with its registry pages |
+| `reference/cN/` | The whole reference program after the step |
+| `oracle/step_cN.py` | The cases the step retires, changes and adds |
+| `oracle/facts-cN.json` | The step's operations, from which its generated cases come |
+
+Each step had three authors. One wrote the model from the request and its list of what it reaches. Then one wrote the reference from the model, and another wrote the cases from the model and the list, neither seeing the other's work until they met:
+
+```text
+python -I -B tools/makerspace-large/oracle/meet.py --step C3
+python -I -B tools/makerspace-large/oracle/catalog.py cases --step C3
+python -I -B tools/makerspace-large/oracle/catalog.py run --step C3 --program PATH --cwd DIR
+python -I -B tools/makerspace-large/compile_steps.py --markitect BIN
+```
+
+The last one compiles every step's model with Markitect's own compiler, which also finds what the page form doesn't, such as Packages that depend on each other in a cycle.
+
 ## Limits
 
-- W0 only so far: no change steps, no plants, no fixed start. The reference's registry pages, which a fixed start would need, are not written.
+- No plants and no fixed start. The reference's registry pages, which a fixed start would need, are not written.
+- The model at each step was written with the step's list of what it reaches in hand, so it holds consequences a person writing from the request alone might miss. [The record](../../docs/validation/large-change-steps-20261104.md) says what that means for test 2.
 - The reference has only the tests it inherited; its hand-checked operations are not covered by tests of its own, though the hidden cases cover them.
 - The hand-written cases were not reviewed one by one. Their strength is measured by the seeded bugs, which are bugs one author chose.

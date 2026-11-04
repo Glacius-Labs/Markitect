@@ -33,6 +33,13 @@ FIXED = re.compile(r"the fixed string `([^`]+)`")
 ARGS = re.compile(r"`([^`]+)`")
 
 
+def use_step(step: str) -> None:
+    """Read the operations as they stand at a step. OPS stays one object, since the case files import it by name."""
+    path = FACTS_FILE if step == "W0" else HERE / f"facts-{step.lower()}.json"
+    OPS.clear()
+    OPS.update(json.loads(path.read_text(encoding="utf-8")))
+
+
 def has(**members: Any) -> dict[str, Any]:
     """An object with at least these members, compared exactly."""
     return {"$has": members}
