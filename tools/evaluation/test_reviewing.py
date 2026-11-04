@@ -71,7 +71,8 @@ FAKE_CLAUDE = textwrap.dedent('''
         answer["R1c"] = ["run"]
     text = "no answer" if mode == "garbage" else "```json\\n" + json.dumps(answer) + "\\n```"
     print(json.dumps({"type": "system", "subtype": "init", "model": argv[argv.index("--model") + 1], "session_id": "s1"}))
-    print(json.dumps({"type": "result", "subtype": "success", "result": text, "num_turns": 2, "usage": {"input_tokens": 5, "output_tokens": 7}}))
+    assert os.environ.get("CLAUDE_CODE_SUBAGENT_MODEL_FORCE") == "1", "subagents not bound to the model"
+    print(json.dumps({"type": "result", "subtype": "success", "result": text, "num_turns": 2, "modelUsage": {argv[argv.index("--model") + 1]: {}}, "usage": {"input_tokens": 5, "output_tokens": 7}}))
 ''')
 
 
