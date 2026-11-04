@@ -32,6 +32,7 @@ These reports preserve the exact scope, inputs, source references and outcomes s
 
 ## Modeling and platform
 
+- [How far `impact` reaches: one measurement — 3 November 2026](impact-reach-20261103.md): on Makerspace's public change steps, with no agents, of the 36 existing files that truly changed, one step of links reached 33; two steps and every link each reached 35, and every link took in at least 85 % of the spec on four of eight changes. One reference and one big package
 - [Modeling skill change trial: Makerspace C5 — 27 October 2026](modeling-skill-change-trial-20261027.md): a fresh agent with only the modeling skill changed makerspace-v2.1 from C4 to C5; an independent review found it faithful, with no owner questions and no repair, at about 144 k tokens; the skill's size limit split one rule that reads better whole
 - [Why the Go tests are slow on Windows — 28 October 2026](windows-test-time-20261028.md): about 50 minutes on Windows against 3 on Linux CI, almost all of it about 90,000 Git process starts at 23–55 ms each; four fix options, none built
 - [Evaluation suite E2: judge smoke — 28 October 2026](eval-e2-judge-smoke-20261028.md): dispatch for the Library judge's self-test in its container, judging, review and a per-area report of the E1 baseline runs, and one K run confirming the capture fix; passed: the judge separates its reference from four mutants, and k-02 to k-04 pass all 19 cases with no critical finding
