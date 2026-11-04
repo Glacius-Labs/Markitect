@@ -134,7 +134,7 @@ func (e *Engine) Apply(ctx context.Context, req Request) (Started, error) {
 	if err != nil {
 		return Started{}, err
 	}
-	if !e.hasHarness(ctx, start) {
+	if !e.hasHarness(ctx, start, root) {
 		return Started{State: StateCheckFailed, Text: noHarness}, nil
 	}
 	landedOne := e.retryLandings(ctx, runs, branch, start)
@@ -167,6 +167,16 @@ func (e *Engine) Verify(ctx context.Context, req Request) (Started, error) {
 	if err != nil {
 		return Started{}, err
 	}
+	e.cleanUp(ctx)
+	runs, err := e.Store.All()
+	if err != nil {
+		return Started{}, err
+	}
+	for _, st := range runs {
+		if st.Open && st.Command == "verify" && st.Branch == branch {
+			return e.continueOpen(ctx, st)
+		}
+	}
 	start, err := e.Git.Head(ctx, root)
 	if err != nil {
 		return Started{}, err
@@ -178,7 +188,7 @@ func (e *Engine) Verify(ctx context.Context, req Request) (Started, error) {
 	if errs := cur.SpecErrors(); len(errs) > 0 {
 		return Started{State: StateCheckFailed, Text: "The spec has errors at the last commit, so no agent starts:\n\n" + listErrors(errs)}, nil
 	}
-	if !e.hasHarness(ctx, start) {
+	if !e.hasHarness(ctx, start, root) {
 		return Started{State: StateCheckFailed, Text: noHarness}, nil
 	}
 	st, err := e.newRun(ctx, "verify", req, root, branch, start)
@@ -206,8 +216,13 @@ const reviewerFile = ".claude/agents/" + ReviewerAgent + ".md"
 
 const noHarness = "The harness is not in this project's last commit, so a run could not start its reviewer. Run markitect init, which commits what it writes, and try again.\n"
 
-func (e *Engine) hasHarness(ctx context.Context, commit string) bool {
-	_, err := e.Git.State(ctx, commit).Read(reviewerFile)
+// hasHarness looks in the commit and on disk: the provider reads agents that are
+// not tracked through from the main checkout.
+func (e *Engine) hasHarness(ctx context.Context, commit, root string) bool {
+	if _, err := e.Git.State(ctx, commit).Read(reviewerFile); err == nil {
+		return true
+	}
+	_, err := os.Stat(filepath.Join(root, filepath.FromSlash(reviewerFile)))
 	return err == nil
 }
 
@@ -259,7 +274,7 @@ func (e *Engine) newRun(ctx context.Context, command string, req Request, root, 
 	}
 	return &RunState{Run: name, Command: command, Branch: branch, Repo: root, Base: base, Start: start, Full: full, Findings: req.Findings,
 		Items: items, Answers: map[string]Answer{}, Impact: impactKeys(imp, items), Notes: imp.Notes, Passed: map[string]bool{},
-		Began: now, Deadline: now.Add(limit), Open: true}, nil
+		Began: now, Deadline: now.Add(limit), Limit: limit, Open: true}, nil
 }
 
 func (e *Engine) runName(now time.Time) (string, error) {
@@ -283,8 +298,11 @@ func (e *Engine) launch(ctx context.Context, st *RunState, text string) (Started
 		}
 		return Started{State: StateIncomplete, Run: st.Run, Text: "The session did not start: " + err.Error() + "\n"}, nil
 	}
-	st.Session = id
-	if err := e.Store.Save(st); err != nil {
+	// A quick session may already have written to the state.
+	if err := e.Store.Update(st.Run, func(s *RunState) error {
+		s.Session = id
+		return nil
+	}); err != nil {
 		return Started{}, err
 	}
 	return Started{Run: st.Run, Text: text}, nil
@@ -303,15 +321,28 @@ func (e *Engine) continueOpen(ctx context.Context, st *RunState) (Started, error
 	if state == SessionWorking {
 		return Started{State: "open", Run: st.Run, Text: fmt.Sprintf("Run %s is still working on %s, so no new one starts. `markitect status` says how it stands, and `markitect stop WHY` ends it. You can keep modeling; the next apply takes what you have.\n", st.Run, st.Branch)}, nil
 	}
+	// It resumes in its own worktree, or not at all: the provider would otherwise
+	// carry on in the owner's folder without isolation.
+	wt, err := e.Git.WorktreeOf(ctx, worktreeBranch(st.Run))
+	if err != nil {
+		return Started{}, err
+	}
+	if wt == "" {
+		return Started{}, fmt.Errorf("run %s could not be resumed, since its worktree is gone; `markitect stop WHY` ends it", st.Run)
+	}
 	if st.Session != "" {
 		_ = e.Sessions.Stop(ctx, st.Session)
 	}
-	id, err := e.Sessions.Resume(ctx, st.Session, st.Spec)
+	spec := st.Spec
+	spec.Dir = wt
+	id, err := e.Sessions.Resume(ctx, st.Session, spec)
 	if err != nil {
 		return Started{}, fmt.Errorf("run %s could not be resumed; `markitect stop WHY` ends it: %w", st.Run, err)
 	}
 	if err := e.Store.Update(st.Run, func(s *RunState) error {
 		s.Session, s.Failure, s.Blocks = id, "", 0
+		// A usage limit or a night's sleep must not end it at its first tool call.
+		s.Deadline = e.now().Add(s.Limit)
 		return nil
 	}); err != nil {
 		return Started{}, err
@@ -319,17 +350,33 @@ func (e *Engine) continueOpen(ctx context.Context, st *RunState) (Started, error
 	return Started{State: "open", Run: st.Run, Text: fmt.Sprintf("Run %s had stopped working and is resumed where it was, with its repair count. The last apply's changes stay for the next one.\n", st.Run)}, nil
 }
 
-// Current is the Run a folder belongs to: the one whose worktree holds it, else
-// the open apply on the owner's branch.
+// Current is the Run whose worktree holds a folder. What a session calls works
+// only there: a session that ended up in the owner's folder must not be told to go
+// on working.
 func (e *Engine) Current(ctx context.Context, dir string) (*RunState, error) {
 	root, err := e.Git.Root(ctx, dir)
 	if err != nil {
 		return nil, err
 	}
-	if st, found, err := e.Store.Load(filepath.Base(root)); err != nil {
+	st, found, err := e.Store.Load(filepath.Base(root))
+	if err != nil {
 		return nil, err
-	} else if found && runName.MatchString(st.Run) {
+	}
+	if !found {
+		return nil, fmt.Errorf("%w: this is not the worktree of a run", ErrUsage)
+	}
+	return st, nil
+}
+
+// currentOrOpen is the Run a folder belongs to, else the open Run on its branch:
+// an apply first, since only one can be open.
+func (e *Engine) currentOrOpen(ctx context.Context, dir string) (*RunState, error) {
+	if st, err := e.Current(ctx, dir); err == nil {
 		return st, nil
+	}
+	root, err := e.Git.Root(ctx, dir)
+	if err != nil {
+		return nil, err
 	}
 	branch, err := e.Git.Branch(ctx, root)
 	if err != nil {
@@ -339,12 +386,16 @@ func (e *Engine) Current(ctx context.Context, dir string) (*RunState, error) {
 	if err != nil {
 		return nil, err
 	}
+	var open *RunState
 	for _, st := range runs {
-		if st.Open && st.Command == "apply" && st.Branch == branch {
-			return st, nil
+		if st.Open && st.Branch == branch && (open == nil || st.Command == "apply") {
+			open = st
 		}
 	}
-	return nil, fmt.Errorf("%w: no run is open here", ErrUsage)
+	if open == nil {
+		return nil, fmt.Errorf("%w: no run is open here", ErrUsage)
+	}
+	return open, nil
 }
 
 // Checklist prints the implementer's task and to-do list, rebuilt from the
@@ -458,7 +509,7 @@ func (e *Engine) tryChecks(ctx context.Context, st *RunState) (string, bool, err
 	}
 	st.Tried, st.Failing = true, failing
 	if len(failing) > 0 {
-		return fmt.Sprintf("\nThese required checks already fail before any work: %s. If the cause is a missing service or tool, say so with markitect stop. Otherwise they must pass by the end.\n", strings.Join(failing, ", ")), false, nil
+		return fmt.Sprintf("\nThese required checks already fail before any work: %s. If the cause is a missing service or tool, say so with: markitect stop --environment \"why\". Otherwise they must pass by the end.\n", strings.Join(failing, ", ")), false, nil
 	}
 	return "", false, nil
 }
@@ -528,15 +579,31 @@ func (e *Engine) Answer(ctx context.Context, dir string, raw []byte) (string, bo
 	return "Stored: every item has an answer. You are done; report in one line and end.\n", true, nil
 }
 
-// Stop ends a Run without landing. The session is ended first when someone else
-// stops it, so that nothing changes the work afterwards.
-func (e *Engine) Stop(ctx context.Context, dir, why string) (string, error) {
+// Stop ends a Run without landing. Someone else's stop ends the session first, so
+// that nothing changes the work afterwards, and a submit that is running is left to
+// finish, since it may be landing. With environment, the session says the machine
+// lacks something, which is no question about the spec.
+func (e *Engine) Stop(ctx context.Context, dir, why string, environment bool) (string, error) {
 	root, err := e.Git.Root(ctx, dir)
 	if err != nil {
 		return "", err
 	}
-	st, err := e.Current(ctx, dir)
+	st, err := e.currentOrOpen(ctx, dir)
 	if err != nil {
+		return "", err
+	}
+	if !st.Open {
+		return fmt.Sprintf("Run %s is already closed: %s.\n", st.Run, st.State), nil
+	}
+	release, err := e.Store.TrySubmitLock(st.Run)
+	if errors.Is(err, ErrBusy) {
+		return fmt.Sprintf("A markitect submit of run %s is running and may be landing, so the run is not stopped. Try again when it has finished.\n", st.Run), nil
+	}
+	if err != nil {
+		return "", err
+	}
+	defer release()
+	if st, _, err = e.Store.Load(st.Run); err != nil {
 		return "", err
 	}
 	if !st.Open {
@@ -546,10 +613,12 @@ func (e *Engine) Stop(ctx context.Context, dir, why string) (string, error) {
 	if !fromSession && st.Session != "" {
 		_ = e.Sessions.Stop(ctx, st.Session)
 	}
-	decisions := []OwnerDecision{{Matter: why, Recommendation: "Settle it in the spec and run apply again."}}
-	state := StateSpecProblem
-	if !fromSession {
+	state, decisions := StateSpecProblem, []OwnerDecision{{Matter: why, Recommendation: "Settle it in the spec and run apply again."}}
+	switch {
+	case !fromSession:
 		state, decisions = StateStopped, nil
+	case environment:
+		state, decisions = StateIncomplete, nil
 	}
 	if err := e.close(ctx, st, state, "stopped: "+why, decisions); err != nil {
 		return "", err
@@ -592,8 +661,12 @@ func (e *Engine) Status(ctx context.Context, dir string) (string, error) {
 	}
 	if branch != "" {
 		if tip, err := e.Git.Head(ctx, root); err == nil {
-			if landed, ok, err := e.lastBase(ctx, tip); err == nil && ok {
-				fmt.Fprintf(&b, "\nThe last work landed here is %s.\n", short(landed))
+			if landing, work, ok, err := e.lastLanding(ctx, tip); err == nil && ok {
+				fmt.Fprintf(&b, "\nThe last work landed here is %s", short(work))
+				if n, err := e.Git.CountCommits(ctx, landing, tip); err == nil {
+					fmt.Fprintf(&b, ", with %d %s since its Result", n, plural(n, "commit", "commits"))
+				}
+				b.WriteString(".\n")
 			}
 		}
 	}

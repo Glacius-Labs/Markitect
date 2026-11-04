@@ -36,7 +36,7 @@ func (e *Engine) land(ctx context.Context, st *RunState, cand, tree string) (Ver
 		if landed != "" {
 			st.Landed = landed
 			e.markClosed(st, StateLanded, e.landedWhy(st))
-			if err := e.Store.Save(st); err != nil {
+			if err := e.Store.Settle(st); err != nil {
 				return Verdict{}, err
 			}
 			return Verdict{Done: true, Text: fmt.Sprintf("Landed on %s as %s. Nothing is left to do: end now.\n", st.Branch, short(landed))}, nil
@@ -65,17 +65,28 @@ func (e *Engine) landOnce(ctx context.Context, st *RunState, cand string) (strin
 	if tip == "" {
 		return "", fmt.Sprintf("the branch %s no longer exists", st.Branch), nil
 	}
+	// A branch the owner moved back must not get what they dropped back by landing.
+	if ok, err := e.Git.Contains(ctx, tip, st.Start); err != nil {
+		return "", "", err
+	} else if !ok {
+		return "", fmt.Sprintf("%s was rewritten to %s, which no longer holds the run's start", st.Branch, short(tip)), nil
+	}
+	// A landing that was killed after it moved the branch has nothing left to do.
+	// Work that changed nothing is on the branch from the start, and still lands
+	// its Result.
+	if cand != st.Start {
+		if ok, err := e.Git.Contains(ctx, tip, cand); err != nil {
+			return "", "", err
+		} else if ok {
+			return tip, "", nil
+		}
+	}
 	state := cand
 	moved := false
 	if ok, err := e.Git.Contains(ctx, cand, tip); err != nil {
 		return "", "", err
 	} else if !ok {
 		moved = true
-		if ok, err := e.Git.Contains(ctx, tip, st.Start); err != nil {
-			return "", "", err
-		} else if !ok {
-			return "", fmt.Sprintf("%s was rewritten to %s, which no longer holds the run's start", st.Branch, short(tip)), nil
-		}
 		merged, conflicts, err := e.Git.Merge(ctx, tip, cand, fmt.Sprintf("Markitect run %s: merge onto %s", st.Run, st.Branch))
 		if err != nil {
 			return "", "", err
@@ -161,7 +172,7 @@ func (e *Engine) closeOn(ctx context.Context, st *RunState, cand, state, why str
 		return err
 	}
 	e.markClosed(st, state, why)
-	return e.Store.Save(st)
+	return e.Store.Settle(st)
 }
 
 // retryLandings tries once more to land the kept work of this branch, and returns

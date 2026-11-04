@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"path"
-	"path/filepath"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/analysis"
@@ -37,9 +36,6 @@ func (e *Engine) Submit(ctx context.Context, dir string) (Verdict, error) {
 	}
 	if !st.Open {
 		return Verdict{Done: true, Text: fmt.Sprintf("Run %s is closed: %s. %s. End now.\n", st.Run, st.State, capitalize(st.Why))}, nil
-	}
-	if filepath.Base(root) != st.Run {
-		return Verdict{}, fmt.Errorf("%w: submit runs in the worktree of run %s", ErrUsage, st.Run)
 	}
 	release, err := e.Store.TrySubmitLock(st.Run)
 	if errors.Is(err, ErrBusy) {
@@ -148,7 +144,7 @@ func (e *Engine) submitApply(ctx context.Context, st *RunState, root string) (Ve
 			return Verdict{}, err
 		}
 		if len(st.Review.Items) > 0 {
-			if err := e.Store.Save(st); err != nil {
+			if err := e.Store.Settle(st); err != nil {
 				return Verdict{}, err
 			}
 			return Verdict{Text: reviewerStep(st)}, nil
@@ -156,7 +152,7 @@ func (e *Engine) submitApply(ctx context.Context, st *RunState, root string) (Ve
 	}
 	rev := st.Review
 	if missing := rev.Missing(); len(missing) > 0 {
-		if err := e.Store.Save(st); err != nil {
+		if err := e.Store.Settle(st); err != nil {
 			return Verdict{}, err
 		}
 		return Verdict{Text: fmt.Sprintf("The review is not complete: %d items have no answer. Start the %s agent again with the message \"Review run %s.\"\n", len(missing), ReviewerAgent, st.Run)}, nil
@@ -322,7 +318,7 @@ func (e *Engine) submitVerify(ctx context.Context, st *RunState) (Verdict, error
 		return Verdict{}, fmt.Errorf("%w: run %s has nothing to review", ErrUsage, st.Run)
 	}
 	if missing := rev.Missing(); len(missing) > 0 {
-		if err := e.Store.Save(st); err != nil {
+		if err := e.Store.Settle(st); err != nil {
 			return Verdict{}, err
 		}
 		return Verdict{Text: fmt.Sprintf("%d items have no answer yet:\n\n- %s\n", len(missing), strings.Join(missing, "\n- "))}, nil
@@ -338,6 +334,8 @@ func (e *Engine) submitVerify(ctx context.Context, st *RunState) (Verdict, error
 	st.Checks, st.ChecksOn = results, st.Start
 	var findings []ResultFinding
 	var decisions []OwnerDecision
+	// What does not hold and names no Definition stays in the Result, not in the
+	// Findings, which each name one.
 	var unsettled []string
 	for _, it := range st.Items {
 		a := st.Answers[it.Key]
@@ -377,16 +375,24 @@ func (e *Engine) submitVerify(ctx context.Context, st *RunState) (Verdict, error
 	if len(found) > 0 {
 		state, why = StateFindings, "verify found "+strings.Join(found, " and ")
 	}
-	return e.closeVerify(ctx, st, state, why, findings, decisions)
+	return e.closeVerify(ctx, st, state, why, findings, decisions, unsettled)
 }
 
-func (e *Engine) closeVerify(ctx context.Context, st *RunState, state, why string, findings []ResultFinding, decisions []OwnerDecision) (Verdict, error) {
+// FindingsFile is where a verify's Findings page lives on its branch, the input of
+// apply --findings.
+func FindingsFile(run string) string { return path.Join(project.ResultsDir, run+"-findings.md") }
+
+func (e *Engine) closeVerify(ctx context.Context, st *RunState, state, why string, findings []ResultFinding, decisions []OwnerDecision, unsettled []string) (Verdict, error) {
 	r := e.result(ctx, st, state, why, decisions)
-	r.Findings = findings
+	r.Findings, r.Unsettled = findings, unsettled
 	if isFullCheck(r) {
 		r.FullCheck = FullCheck{Since: r.Start}
 	}
-	top, err := e.Git.Write(ctx, st.Start, map[string][]byte{ResultFile(st.Run): Page(r)}, resultMessage(r, ""))
+	files := map[string][]byte{ResultFile(st.Run): Page(r)}
+	if len(findings) > 0 {
+		files[FindingsFile(st.Run)] = FindingsPage(r)
+	}
+	top, err := e.Git.Write(ctx, st.Start, files, resultMessage(r, ""))
 	if err != nil {
 		return Verdict{}, err
 	}
@@ -395,7 +401,7 @@ func (e *Engine) closeVerify(ctx context.Context, st *RunState, state, why strin
 		return Verdict{}, err
 	}
 	e.markClosed(st, state, why)
-	if err := e.Store.Save(st); err != nil {
+	if err := e.Store.Settle(st); err != nil {
 		return Verdict{}, err
 	}
 	return Verdict{Done: true, Text: fmt.Sprintf("Run %s closed: %s. Its Result is on %s. End now.\n", st.Run, state, st.Kept)}, nil
@@ -403,7 +409,7 @@ func (e *Engine) closeVerify(ctx context.Context, st *RunState, state, why strin
 
 // refuse saves the Run and gives the agent its next step.
 func (e *Engine) refuse(st *RunState, head string, lines []string) (Verdict, error) {
-	if err := e.Store.Save(st); err != nil {
+	if err := e.Store.Settle(st); err != nil {
 		return Verdict{}, err
 	}
 	var b strings.Builder
@@ -460,7 +466,7 @@ func (e *Engine) close(ctx context.Context, st *RunState, state, why string, dec
 		return err
 	}
 	e.markClosed(st, state, why)
-	return e.Store.Save(st)
+	return e.Store.Settle(st)
 }
 
 func (e *Engine) markClosed(st *RunState, state, why string) {

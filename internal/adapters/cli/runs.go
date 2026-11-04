@@ -189,9 +189,11 @@ func (c CLI) submit(ctx context.Context, args []string) (int, error) {
 
 func (c CLI) stop(ctx context.Context, args []string) (int, error) {
 	var o options
+	var environment bool
 	fs := flag.NewFlagSet("markitect stop", flag.ContinueOnError)
 	fs.SetOutput(c.Stderr)
 	fs.StringVar(&o.repo, "repo", ".", "a folder of the repository")
+	fs.BoolVar(&environment, "environment", false, "from a session: the machine lacks something, which is no question about the spec")
 	if err := fs.Parse(args); err != nil {
 		return Misused, err
 	}
@@ -203,7 +205,7 @@ func (c CLI) stop(ctx context.Context, args []string) (int, error) {
 	if err != nil {
 		return Misused, err
 	}
-	text, err := e.Stop(ctx, o.repo, why)
+	text, err := e.Stop(ctx, o.repo, why, environment)
 	if err != nil {
 		return Misused, err
 	}

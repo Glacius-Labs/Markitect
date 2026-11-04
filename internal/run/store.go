@@ -69,6 +69,8 @@ type RunState struct {
 	// Began and Deadline bound the Run.
 	Began    time.Time `json:"began"`
 	Deadline time.Time `json:"deadline"`
+	// Limit is how long the Run may work, from its start and from each resume.
+	Limit time.Duration `json:"limit"`
 
 	// Open is true until submit or stop closes the Run.
 	Open bool `json:"open"`
@@ -172,6 +174,11 @@ func (s Store) Save(st *RunState) error {
 		tmp.Close()
 		return err
 	}
+	// A crash must not leave an empty state behind the rename.
+	if err := tmp.Sync(); err != nil {
+		tmp.Close()
+		return err
+	}
 	if err := tmp.Close(); err != nil {
 		return err
 	}
@@ -196,14 +203,11 @@ func (s Store) All() ([]*RunState, error) {
 	var out []*RunState
 	for _, e := range entries {
 		name, ok := strings.CutSuffix(e.Name(), ".json")
-		if !ok {
+		if !ok || strings.HasSuffix(name, ".settings") {
 			continue
 		}
-		st, found, err := s.Load(name)
-		if err != nil {
-			return nil, err
-		}
-		if found {
+		// One unreadable Run must not block every command.
+		if st, found, err := s.Load(name); err == nil && found {
 			out = append(out, st)
 		}
 	}
@@ -231,6 +235,27 @@ func (s Store) Update(run string, change func(*RunState) error) error {
 	return s.Save(st)
 }
 
+// Settle writes a Run a long command has held a copy of. That command never writes
+// answers, a session or a failure, so what others wrote meanwhile stands.
+func (s Store) Settle(st *RunState) error {
+	release, err := s.lock(st.Run+".state", lockWait)
+	if err != nil {
+		return err
+	}
+	defer release()
+	fresh, found, err := s.Load(st.Run)
+	if err != nil {
+		return err
+	}
+	if found {
+		st.Answers, st.MissingFor, st.Session, st.Failure = fresh.Answers, fresh.MissingFor, fresh.Session, fresh.Failure
+		if st.Review != nil && fresh.Review != nil && st.Review.Commit == fresh.Review.Commit {
+			st.Review.Answered = fresh.Review.Answered
+		}
+	}
+	return s.Save(st)
+}
+
 // ErrBusy says another process holds a Run's lock.
 var ErrBusy = errors.New("busy")
 
@@ -241,9 +266,20 @@ func (s Store) TrySubmitLock(run string) (func(), error) {
 
 // SubmitRunning says a submit holds the Run's lock.
 func (s Store) SubmitRunning(run string) bool {
-	data, err := os.ReadFile(filepath.Join(s.Dir, "runs", run+".submit.lock"))
-	return err == nil && !staleLock(data)
+	file := filepath.Join(s.Dir, "runs", run+".submit.lock")
+	if _, err := os.Stat(file); err != nil {
+		return false
+	}
+	return !staleLock(file)
 }
+
+// lockLifetime is the longest a lock can be real: a shell call is bounded by two
+// hours, so an older one names a process ID that has been used again.
+const lockLifetime = 2*time.Hour + 10*time.Minute
+
+// lockSettling is how long a lock file may stay empty between being made and
+// being written.
+const lockSettling = 5 * time.Second
 
 // lock takes a lock file that holds this process's ID. A lock whose process has
 // gone is taken over, so that a command that was killed can be run again.
@@ -260,7 +296,7 @@ func (s Store) lock(name string, wait time.Duration) (func(), error) {
 			f.Close()
 			return func() { os.Remove(file) }, nil
 		}
-		if data, rerr := os.ReadFile(file); rerr == nil && staleLock(data) {
+		if staleLock(file) {
 			os.Remove(file)
 			continue
 		}
@@ -271,12 +307,24 @@ func (s Store) lock(name string, wait time.Duration) (func(), error) {
 	}
 }
 
-// staleLock says the process a lock names has gone.
-func staleLock(data []byte) bool {
+// staleLock says a lock can no longer be real: it is too old, empty for longer
+// than it takes to write, or its process has gone.
+func staleLock(file string) bool {
+	info, err := os.Stat(file)
+	if err != nil {
+		return false
+	}
+	age := time.Since(info.ModTime())
+	if age > lockLifetime {
+		return true
+	}
+	data, err := os.ReadFile(file)
+	if err != nil {
+		return false
+	}
 	pid, err := strconv.Atoi(strings.TrimSpace(string(data)))
 	if err != nil {
-		// The moment between creating the file and writing to it.
-		return false
+		return age > lockSettling
 	}
 	p, err := os.FindProcess(pid)
 	if err != nil {

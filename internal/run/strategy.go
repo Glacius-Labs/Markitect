@@ -42,7 +42,7 @@ Do not change the spec, the manifest, the lock, execution.yaml or anything else 
 
 The tool handles Git for you: do not commit, push or open a pull request.
 
-If the spec contradicts itself or leaves open something that changes behaviour at the project's boundary, run: markitect stop "why". Nothing lands then, and the owner decides. A gap with no such effect is yours to decide. Nobody can answer a question during this run.
+If the spec contradicts itself or leaves open something that changes behaviour at the project's boundary, run: markitect stop "why". Nothing lands then, and the owner decides. A gap with no such effect is yours to decide. If something the project needs is missing from this machine, such as a program or a service, run: markitect stop --environment "why". Nobody can answer a question during this run.
 `, run)
 }
 

@@ -29,10 +29,12 @@ func (c CLI) init(ctx context.Context, args []string) (int, error) {
 	if fs.NArg() != 0 {
 		return Misused, fmt.Errorf("takes no arguments")
 	}
-	ws, err := c.Git.Open(ctx, o.repo)
+	opened, err := c.Git.Open(ctx, o.repo)
 	if err != nil {
 		return Misused, err
 	}
+	rec := &recorder{Workspace: opened}
+	var ws Workspace = rec
 	if name == "" {
 		name = filepath.Base(ws.Root())
 	}
@@ -85,9 +87,9 @@ func (c CLI) init(ctx context.Context, args []string) (int, error) {
 	if err := ensureGitignored(ws); err != nil {
 		return Misused, err
 	}
-	switch committed, err := ws.CommitOwn(initMessage); {
+	switch committed, err := ws.CommitOwn(rec.files, initMessage); {
 	case err != nil:
-		fmt.Fprintf(c.Stdout, "could not commit what init wrote, so commit it yourself before the first apply: %v\n", err)
+		fmt.Fprintf(c.Stdout, "could not commit what init wrote, so commit it yourself before the first apply; if Git ignores .claude/, the harness stays on disk and that is enough: %v\n", err)
 	case committed:
 		fmt.Fprintln(c.Stdout, "committed what init wrote")
 	}
@@ -96,6 +98,22 @@ func (c CLI) init(ctx context.Context, args []string) (int, error) {
 }
 
 const initMessage = "Set up Markitect"
+
+// recorder notes what init writes, so that it commits that and nothing else.
+type recorder struct {
+	Workspace
+	files []string
+}
+
+func (r *recorder) Write(file string, data []byte) error {
+	r.files = append(r.files, file)
+	return r.Workspace.Write(file, data)
+}
+
+func (r *recorder) Remove(file string) error {
+	r.files = append(r.files, file)
+	return r.Workspace.Remove(file)
+}
 
 // installHarness writes the harness of a Run for Claude Code and removes every
 // other file of it the binary no longer ships.

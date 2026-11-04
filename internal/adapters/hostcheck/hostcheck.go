@@ -69,16 +69,18 @@ func one(ctx context.Context, sh, dir string, c project.Check) run.CheckResult {
 	res.TimedOut = errors.Is(checkCtx.Err(), context.DeadlineExceeded) && ctx.Err() == nil
 	var exit *exec.ExitError
 	switch {
-	case err == nil:
+	// A check that exits but leaves a child holding its output, as a build server
+	// does, has passed.
+	case err == nil, errors.Is(err, exec.ErrWaitDelay):
 		res.Exit, res.Passed = 0, true
 	case res.TimedOut:
 		res.Output += "\n[the check timed out]\n"
 	case errors.As(err, &exit):
 		res.Exit = exit.ExitCode()
-		// 126 and 127 are the shell's: a program that cannot run or is not there,
-		// which is the environment's failure, unless the check names a program in
-		// the repository, which is the work's.
-		res.NotRun = (res.Exit == 126 || res.Exit == 127) && !inRepository(c.Command)
+		// 126 and 127 are the shell's: a program that cannot run or is not there.
+		// That is the environment's failure only when the check's own first word is
+		// missing; a program in the repository, or one a script calls, is the work's.
+		res.NotRun = (res.Exit == 126 || res.Exit == 127) && !inRepository(c.Command) && !available(sh, cmd.Dir, c.Command)
 	default:
 		res.NotRun = true
 		res.Output += "\n[the check did not start: " + err.Error() + "]\n"
@@ -132,6 +134,18 @@ func shell() (string, error) {
 		}
 	}
 	return "", fmt.Errorf("no sh found to run the required checks; install Git for Windows or put sh on the path")
+}
+
+// available says whether the shell knows the first word of a command.
+func available(sh, dir, command string) bool {
+	fields := strings.Fields(command)
+	if len(fields) == 0 {
+		return false
+	}
+	probe := exec.Command(sh, "-c", `command -v "$0"`, fields[0])
+	probe.Dir = dir
+	probe.Env = environment()
+	return probe.Run() == nil
 }
 
 // inRepository says whether a check's command starts with a program given by a

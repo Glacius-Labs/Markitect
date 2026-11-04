@@ -39,6 +39,9 @@ func TestPassFailAndWhatCannotStart(t *testing.T) {
 	if passed, notRun, _ := run(check("./bin/no-such-script")); passed || notRun {
 		t.Fatalf("a missing program of the repository is the work's failure: %v %v", passed, notRun)
 	}
+	if passed, notRun, _ := run(check("sh -c 'no-such-program-at-all'")); passed || notRun {
+		t.Fatalf("a program a script calls is the work's failure: %v %v", passed, notRun)
+	}
 }
 
 // A folder the work has not made yet is a failure of the work, as in a new
@@ -69,6 +72,15 @@ func TestTimeoutIsAFailure(t *testing.T) {
 	}
 	if took := time.Since(start); took > 20*time.Second {
 		t.Fatalf("took %s", took)
+	}
+}
+
+// A check that exits and leaves a child holding its output, as a build server does,
+// has passed.
+func TestALingeringChildIsAPass(t *testing.T) {
+	res := hostcheck.Runner{}.Run(context.Background(), t.TempDir(), []project.Check{check("sleep 8 & exit 0")})
+	if len(res) != 1 || !res[0].Passed || res[0].NotRun {
+		t.Fatalf("%+v", res)
 	}
 }
 

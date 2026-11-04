@@ -27,9 +27,9 @@ type Workspace interface {
 	Exists(file string) bool
 	List(dir string) ([]string, error)
 	Remove(file string) error
-	// CommitOwn commits what init wrote with the user's identity, and says whether
-	// there was anything to commit.
-	CommitOwn(message string) (bool, error)
+	// CommitOwn commits the files init wrote with the user's identity, and nothing
+	// else, and says whether there was anything to commit.
+	CommitOwn(files []string, message string) (bool, error)
 }
 
 // Base is the state of the repository at a base commit.

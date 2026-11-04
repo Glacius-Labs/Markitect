@@ -213,6 +213,25 @@ func TestAdvance(t *testing.T) {
 	}
 }
 
+// Tip names one branch, also when others share its folder, and nothing for one that
+// does not exist.
+func TestTip(t *testing.T) {
+	host, r := open(t)
+	ctx := context.Background()
+	head := r.Git("rev-parse", "HEAD")
+	r.Git("branch", "feature/a")
+	r.Git("branch", "feature/b")
+	if got, err := host.Tip(ctx, "feature/a"); err != nil || got != head {
+		t.Fatalf("%q %v", got, err)
+	}
+	if got, err := host.Tip(ctx, "feature"); err != nil || got != "" {
+		t.Fatalf("a folder of branches: %q %v", got, err)
+	}
+	if got, err := host.CountCommits(ctx, head, head); err != nil || got != 0 {
+		t.Fatalf("%d %v", got, err)
+	}
+}
+
 // RemoveWorktree removes a worktree the provider left locked.
 func TestRemoveWorktree(t *testing.T) {
 	host, r := open(t)

@@ -68,6 +68,9 @@ type Result struct {
 	RequiredChecks RequiredChecks  `json:"requiredChecks"`
 	OwnerDecisions []OwnerDecision `json:"ownerDecisions"`
 	Findings       []ResultFinding `json:"findings"`
+	// Unsettled lists what verify found that names no Definition: a required check
+	// that fails, an error from check.
+	Unsettled []string `json:"unsettled,omitempty"`
 	// MissingLinks lists locations a reviewer named that the registry does not
 	// list for that item.
 	MissingLinks []string `json:"missingLinks,omitempty"`

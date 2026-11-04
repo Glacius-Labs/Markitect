@@ -180,10 +180,16 @@ func TestInitInstallsTheHarness(t *testing.T) {
 	if code != 1 || strings.Contains(checked, "file.unregistered") {
 		t.Fatalf("the harness needs no registry entry: %s", checked)
 	}
-	// Run again it changes nothing.
+	// Run again it changes nothing, and commits nothing it did not write.
+	r.Write(".markitect/model/project.md", "---\nkind: std/Project\n---\n# Demo\n\nBeing edited.\n")
+	r.Write(".claude/agents/mine.md", "private\n")
+	before := r.Git("rev-parse", "HEAD")
 	mustRun(t, r.Dir, "init", "--name", "Demo")
-	if status := r.Git("status", "--porcelain"); status != "" {
-		t.Fatalf("a second init left: %s", status)
+	if got := r.Git("rev-parse", "HEAD"); got != before {
+		t.Fatalf("a second init committed: %s", r.Git("show", "--stat", "HEAD"))
+	}
+	if status := r.Git("status", "--porcelain"); !strings.Contains(status, "project.md") || !strings.Contains(status, "mine.md") {
+		t.Fatalf("what the owner is editing changed: %s", status)
 	}
 }
 

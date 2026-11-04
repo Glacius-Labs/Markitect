@@ -64,12 +64,13 @@ func library() map[string]string {
 // sessions is the provider without a model: it makes the worktree the provider
 // would make, and the test plays the agent.
 type sessions struct {
-	t       *testing.T
-	repo    *testkit.Repo
-	started []run.SessionSpec
-	state   run.SessionState
-	stopped []string
-	resumed int
+	t         *testing.T
+	repo      *testkit.Repo
+	started   []run.SessionSpec
+	state     run.SessionState
+	stopped   []string
+	resumed   int
+	resumedIn string
 }
 
 func (s *sessions) Start(_ context.Context, spec run.SessionSpec) (string, error) {
@@ -78,8 +79,9 @@ func (s *sessions) Start(_ context.Context, spec run.SessionSpec) (string, error
 	return fmt.Sprintf("s%d", len(s.started)), nil
 }
 
-func (s *sessions) Resume(_ context.Context, id string, _ run.SessionSpec) (string, error) {
+func (s *sessions) Resume(_ context.Context, id string, spec run.SessionSpec) (string, error) {
 	s.resumed++
+	s.resumedIn = spec.Dir
 	return id + "r", nil
 }
 
@@ -283,7 +285,7 @@ func TestFromALinkedWorktree(t *testing.T) {
 		}
 		wt := filepath.Join(f.repo.Dir, ".claude", "worktrees", s.Run)
 		write(t, wt, "src/members/loans/loan.go", "package loans\n\nconst Limit = 3\n")
-		if _, err := f.engine.Stop(context.Background(), owner, "changed my mind"); err != nil {
+		if _, err := f.engine.Stop(context.Background(), owner, "changed my mind", false); err != nil {
 			t.Fatal(err)
 		}
 		has(t, f.repo.Git("show", f.state(s.Run).Kept+":src/members/loans/loan.go"), "Limit = 3")
@@ -825,7 +827,7 @@ func TestStop(t *testing.T) {
 		f := newFixture(t)
 		s, wt := f.apply()
 		write(t, wt, "src/members/loans/loan.go", "package loans\n\nconst Limit = 3\n")
-		text, err := f.engine.Stop(context.Background(), f.repo.Dir, "changed my mind")
+		text, err := f.engine.Stop(context.Background(), f.repo.Dir, "changed my mind", false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -842,7 +844,7 @@ func TestStop(t *testing.T) {
 	t.Run("by the session is a question for the owner", func(t *testing.T) {
 		f := newFixture(t)
 		s, wt := f.apply()
-		if _, err := f.engine.Stop(context.Background(), wt, "the limit contradicts the loan page"); err != nil {
+		if _, err := f.engine.Stop(context.Background(), wt, "the limit contradicts the loan page", false); err != nil {
 			t.Fatal(err)
 		}
 		st := f.state(s.Run)
@@ -1111,4 +1113,269 @@ func TestFullWhenNothingHasLanded(t *testing.T) {
 	if !st.Full || len(st.Items) < 5 {
 		t.Fatalf("%+v", st)
 	}
+}
+
+// A stop does not cut across a submit that may be landing.
+func TestStopWaitsForASubmit(t *testing.T) {
+	f := newFixture(t)
+	s, _ := f.apply()
+	release, err := f.engine.Store.TrySubmitLock(s.Run)
+	if err != nil {
+		t.Fatal(err)
+	}
+	text, err := f.engine.Stop(context.Background(), f.repo.Dir, "changed my mind", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	has(t, text, "is running", "not stopped")
+	if !f.state(s.Run).Open || len(f.sessions.stopped) != 0 {
+		t.Fatalf("stopped anyway: %+v", f.state(s.Run))
+	}
+	release()
+	if _, err := f.engine.Stop(context.Background(), f.repo.Dir, "changed my mind", false); err != nil {
+		t.Fatal(err)
+	}
+	if f.state(s.Run).Open {
+		t.Fatal("still open")
+	}
+}
+
+// Answers stored while a submit holds its copy of the state stand.
+func TestAnswersDuringASubmitStand(t *testing.T) {
+	f := newFixture(t)
+	s, wt := f.applyFull()
+	f.submit(wt)
+	held := f.state(s.Run)
+	has(t, f.answer(wt, s.Run, nil), "every item has an answer")
+	if err := f.engine.Store.Settle(held); err != nil {
+		t.Fatal(err)
+	}
+	if st := f.state(s.Run); !st.Review.Complete() || len(st.Answers) == 0 {
+		t.Fatalf("the answers are gone: %+v", st.Review)
+	}
+}
+
+// A kept branch merged by hand is not realized work: it stays in the next impact.
+func TestAKeptRunMergedByHandStaysToBeReviewed(t *testing.T) {
+	f := newFixture(t)
+	s, wt := f.apply()
+	write(t, wt, "src/members/loans/loan.go", "package loans\n\nconst Limit = 3\n")
+	if _, err := f.engine.Stop(context.Background(), f.repo.Dir, "changed my mind", false); err != nil {
+		t.Fatal(err)
+	}
+	f.repo.Git("merge", "-q", "--ff-only", f.state(s.Run).Kept)
+	if _, ok, err := f.engine.LastBase(context.Background(), f.repo.Dir); err != nil || ok {
+		t.Fatalf("the merge counts as a landing: %v %v", ok, err)
+	}
+}
+
+// A branch the owner moved back does not get what they dropped back by landing.
+func TestABranchMovedBackIsNotBroughtForward(t *testing.T) {
+	f := newFixture(t)
+	s, wt := f.apply()
+	f.submit(wt)
+	f.answer(wt, s.Run, nil)
+	dropped := f.repo.Git("rev-parse", "HEAD")
+	f.repo.Git("reset", "-q", "--hard", "HEAD~1")
+	v := f.submit(wt)
+	has(t, v.Text, "rewritten")
+	if st := f.state(s.Run); st.State != run.StateKept {
+		t.Fatalf("%+v", st)
+	}
+	if f.repo.Git("rev-parse", "HEAD") == dropped {
+		t.Fatal("the dropped commit came back")
+	}
+}
+
+// A landing that was killed after moving the branch finishes on a second call.
+func TestALandingThatWasKilledFinishes(t *testing.T) {
+	f := newFixture(t)
+	s, wt := f.apply()
+	write(t, wt, "src/members/loans/loan.go", "package loans
+
+const Limit = 3
+")
+	f.submit(wt)
+	f.answer(wt, s.Run, nil)
+	st := f.state(s.Run)
+	f.repo.Git("merge", "-q", "--ff-only", st.Review.Commit)
+	before := f.repo.Git("rev-parse", "HEAD")
+	if v := f.submit(wt); !v.Done {
+		t.Fatalf("%s", v.Text)
+	}
+	if st := f.state(s.Run); st.State != run.StateLanded || f.repo.Git("rev-parse", "HEAD") != before {
+		t.Fatalf("%+v", st)
+	}
+}
+
+// A landing does not delete a verify's Findings.
+func TestALandingKeepsAVerifysFindings(t *testing.T) {
+	f := newFixture(t)
+	v, err := f.engine.Verify(context.Background(), run.Request{Dir: f.repo.Dir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	wt := filepath.Join(f.repo.Dir, ".claude", "worktrees", v.Run)
+	f.answer(wt, v.Run, map[string]string{"loan-limit": "wrong src/members/loans/loan.go:3 -- says 5"})
+	f.submit(wt)
+	kept := f.state(v.Run).Kept
+	has(t, f.repo.Git("show", kept+":.markitect/results/"+v.Run+"-findings.md"), "[[loan-limit]]", "says 5")
+
+	s, wtApply := f.apply()
+	f.submit(wtApply)
+	f.answer(wtApply, s.Run, nil)
+	if got := f.submit(wtApply); !got.Done {
+		t.Fatalf("%s", got.Text)
+	}
+	if f.repo.Git("rev-parse", kept) == "" {
+		t.Fatal("the Findings are gone")
+	}
+}
+
+// A session is resumed in its own worktree, with a new deadline, and what a session
+// calls works only there.
+func TestResume(t *testing.T) {
+	f := newFixture(t)
+	s, wt := f.apply()
+	if _, err := f.engine.Checklist(context.Background(), f.repo.Dir, false); err == nil {
+		t.Fatal("the owner's folder was told to work")
+	}
+	if _, err := f.engine.Submit(context.Background(), f.repo.Dir); err == nil {
+		t.Fatal("submit ran in the owner's folder")
+	}
+	f.sessions.state = run.SessionEnded
+	f.now = f.now.Add(7 * time.Hour)
+	if _, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir}); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.EqualFold(filepath.Base(f.sessions.resumedIn), s.Run) {
+		t.Fatalf("resumed in %s", f.sessions.resumedIn)
+	}
+	if st := f.state(s.Run); !st.Deadline.After(f.now) {
+		t.Fatalf("the deadline stayed behind: %v", st.Deadline)
+	}
+	if out := f.engine.Hook(context.Background(), run.HookPreTool, s.Run, hookInput(t, map[string]any{"tool_name": "Bash"})); len(out) != 0 {
+		t.Fatalf("stopped at its first tool call: %s", out)
+	}
+	_ = wt
+}
+
+// A run whose worktree is gone is not resumed in the owner's folder.
+func TestResumeWithoutAWorktree(t *testing.T) {
+	f := newFixture(t)
+	s, wt := f.apply()
+	f.repo.Git("worktree", "remove", "--force", wt)
+	f.sessions.state = run.SessionEnded
+	_, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir})
+	if err == nil || !strings.Contains(err.Error(), "worktree is gone") || f.sessions.resumed != 0 {
+		t.Fatalf("%v %d", err, f.sessions.resumed)
+	}
+	_ = s
+}
+
+func TestStaleLocksAndStrayFiles(t *testing.T) {
+	store := run.Store{Dir: testkit.TempDir(t)}
+	dir := filepath.Join(store.Dir, "runs")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	old := time.Now().Add(-time.Hour)
+	empty := filepath.Join(dir, "r1.submit.lock")
+	if err := os.WriteFile(empty, nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chtimes(empty, old, old); err != nil {
+		t.Fatal(err)
+	}
+	if store.SubmitRunning("r1") {
+		t.Fatal("an old empty lock counts as running")
+	}
+	release, err := store.TrySubmitLock("r1")
+	if err != nil {
+		t.Fatalf("an old empty lock was not taken over: %v", err)
+	}
+	release()
+	// A lock of a live process counts until it is older than any shell call can be.
+	live := filepath.Join(dir, "r2.submit.lock")
+	if err := os.WriteFile(live, []byte(fmt.Sprintf("%d\n", os.Getpid())), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if !store.SubmitRunning("r2") {
+		t.Fatal("a live lock does not count")
+	}
+	ancient := time.Now().Add(-3 * time.Hour)
+	if err := os.Chtimes(live, ancient, ancient); err != nil {
+		t.Fatal(err)
+	}
+	if store.SubmitRunning("r2") {
+		t.Fatal("a process ID used again keeps a lock for ever")
+	}
+	// Neither a settings file nor a broken state stops every command.
+	if err := os.WriteFile(filepath.Join(dir, "r3.settings.json"), []byte("{}"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "r4.json"), []byte("{broken"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	all, err := store.All()
+	if err != nil || len(all) != 0 {
+		t.Fatalf("%+v %v", all, err)
+	}
+}
+
+// A stalled verify can be resumed and stopped from the owner's folder.
+func TestAStalledVerify(t *testing.T) {
+	f := newFixture(t)
+	v, err := f.engine.Verify(context.Background(), run.Request{Dir: f.repo.Dir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.sessions.state = run.SessionEnded
+	again, err := f.engine.Verify(context.Background(), run.Request{Dir: f.repo.Dir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if again.Run != v.Run || f.sessions.resumed != 1 || len(f.sessions.started) != 1 {
+		t.Fatalf("%+v resumed %d started %d", again, f.sessions.resumed, len(f.sessions.started))
+	}
+	if _, err := f.engine.Stop(context.Background(), f.repo.Dir, "enough", false); err != nil {
+		t.Fatal(err)
+	}
+	if st := f.state(v.Run); st.Open || st.State != run.StateStopped {
+		t.Fatalf("%+v", st)
+	}
+}
+
+// A session that says the machine lacks something asks the owner nothing about
+// the spec.
+func TestStopForTheEnvironment(t *testing.T) {
+	f := newFixture(t)
+	s, wt := f.apply()
+	if _, err := f.engine.Stop(context.Background(), wt, "the database is not running", true); err != nil {
+		t.Fatal(err)
+	}
+	st := f.state(s.Run)
+	if st.State != run.StateIncomplete {
+		t.Fatalf("%+v", st)
+	}
+	page := f.repo.Git("show", st.Kept+":.markitect/results/"+s.Run+".md")
+	if strings.Contains(page, "Decisions for the owner") {
+		t.Fatalf("a question about the spec: %s", page)
+	}
+	has(t, page, "the database is not running")
+}
+
+func TestStatusCountsCommitsSinceTheResult(t *testing.T) {
+	f := newFixture(t)
+	s, wt := f.apply()
+	f.submit(wt)
+	f.answer(wt, s.Run, nil)
+	f.submit(wt)
+	f.repo.Write("README.md", "# By hand\n")
+	f.repo.Commit("a hand fix")
+	text, err := f.engine.Status(context.Background(), f.repo.Dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	has(t, text, "1 commit since its Result")
 }

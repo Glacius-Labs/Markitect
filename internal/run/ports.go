@@ -63,12 +63,11 @@ type Git interface {
 	// RemoveWorktree removes the worktree that has a branch checked out, if there
 	// is one.
 	RemoveWorktree(ctx context.Context, branch string) error
-	// LastLanded returns the newest commit reachable from tip that adds a landing
-	// Result, and false when there is none.
-	LastLanded(ctx context.Context, tip string) (string, bool, error)
 	// Landings returns the commits reachable from tip and not from since (with an
-	// empty since, every one) that add a landing Result, newest first.
+	// empty since, every one) that add a Result page, newest first.
 	Landings(ctx context.Context, tip, since string) ([]string, error)
+	// CountCommits says how many commits tip has that from does not.
+	CountCommits(ctx context.Context, from, tip string) (int, error)
 }
 
 // Commit is one commit of the repository.

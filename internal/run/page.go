@@ -102,6 +102,12 @@ func Page(r *Result) []byte {
 			fmt.Fprintf(&b, "- [[%s]]: observed %s; expected %s\n", f.Definition, oneLine(f.Observed), oneLine(f.Expected))
 		}
 	}
+	if len(r.Unsettled) > 0 {
+		b.WriteString("\n## What does not hold\n\n")
+		for _, u := range r.Unsettled {
+			fmt.Fprintf(&b, "- %s\n", oneLine(u))
+		}
+	}
 	if len(r.MissingLinks) > 0 {
 		b.WriteString("\n## Possible missing links\n\nA reviewer named these, and the registry does not list them for that item:\n\n")
 		for _, l := range r.MissingLinks {

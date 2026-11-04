@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -36,11 +37,31 @@ const waitDelay = 5 * time.Second
 
 // Open finds the repository that holds dir.
 func Open(ctx context.Context, dir string) (*Repo, error) {
+	if err := checkVersion(ctx, dir); err != nil {
+		return nil, err
+	}
 	out, err := command(ctx, dir, nil, nil, "rev-parse", "--path-format=absolute", "--git-common-dir")
 	if err != nil {
 		return nil, fmt.Errorf("%s is not inside a Git repository", dir)
 	}
 	return &Repo{Dir: strings.TrimSpace(string(out))}, nil
+}
+
+// checkVersion refuses a Git without what a Run needs: merge-tree --write-tree
+// came with 2.38.
+func checkVersion(ctx context.Context, dir string) error {
+	out, err := command(ctx, dir, nil, nil, "version")
+	if err != nil {
+		return err
+	}
+	var major, minor int
+	if _, err := fmt.Sscanf(strings.TrimSpace(string(out)), "git version %d.%d", &major, &minor); err != nil {
+		return nil // An unknown form is no reason to refuse.
+	}
+	if major < 2 || (major == 2 && minor < 38) {
+		return fmt.Errorf("markitect needs Git 2.38 or newer, and this is %s", strings.TrimSpace(string(out)))
+	}
+	return nil
 }
 
 // cleanEnv is the environment without Git variables that would point git at
@@ -395,9 +416,10 @@ func (r *Repo) Write(ctx context.Context, parent string, files map[string][]byte
 
 // Tip reads the tip of a branch, "" when it does not exist.
 func (r *Repo) Tip(ctx context.Context, branch string) (string, error) {
-	out, err := r.line(ctx, "for-each-ref", "--format=%(objectname)", "refs/heads/"+branch)
+	out, err := r.line(ctx, "rev-parse", "--verify", "--quiet", "refs/heads/"+branch+"^{commit}")
 	if err != nil {
-		return "", err
+		// --verify --quiet fails without a word on a branch that does not exist.
+		return "", nil
 	}
 	return out, nil
 }
@@ -496,16 +518,6 @@ func (r *Repo) checkedOutAt(ctx context.Context, branch string) (string, error) 
 	return "", nil
 }
 
-// LastLanded returns the newest commit reachable from tip that adds a Result page
-// under the results folder.
-func (r *Repo) LastLanded(ctx context.Context, tip string) (string, bool, error) {
-	id, err := r.line(ctx, "log", "-1", "--format=%H", "--diff-filter=A", tip, "--", project.ResultsDir+"/")
-	if err != nil {
-		return "", false, err
-	}
-	return id, id != "", nil
-}
-
 // Landings returns the commits reachable from tip and not from since that add a
 // Result page under the results folder, newest first.
 func (r *Repo) Landings(ctx context.Context, tip, since string) ([]string, error) {
@@ -518,6 +530,15 @@ func (r *Repo) Landings(ctx context.Context, tip, since string) ([]string, error
 		return nil, err
 	}
 	return strings.Fields(string(out)), nil
+}
+
+// CountCommits says how many commits tip has that from does not.
+func (r *Repo) CountCommits(ctx context.Context, from, tip string) (int, error) {
+	out, err := r.line(ctx, "rev-list", "--count", from+".."+tip)
+	if err != nil {
+		return 0, err
+	}
+	return strconv.Atoi(out)
 }
 
 func split(out []byte) []string {
