@@ -156,6 +156,8 @@ def unit(uid, arm, kind="fixed", step="C1", **extra):
 
 class Fixture(unittest.TestCase):
     def setUp(self):
+        self.addCleanup(os.environ.pop, series_runner.TOKEN_VARIABLE, None)
+        os.environ[series_runner.TOKEN_VARIABLE] = "a-token-for-the-arm"
         self.tmp = pathlib.Path(tempfile.mkdtemp())
         self.work, self.prep, self.fake, self.bin = self.tmp / "work", self.tmp / "prepared", self.tmp / "fake", self.tmp / "bin"
         for folder in (self.fake, self.bin):

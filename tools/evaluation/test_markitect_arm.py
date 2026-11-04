@@ -137,7 +137,16 @@ STANDIN = textwrap.dedent(r'''
                       ownerDecisions=[{"matter": "the limit is 5 and 3", "recommendation": "Settle it in the spec."}])
     elif mode == "nothing":
         result.update(state="nothing-to-do", why="nothing changed that reaches the spec; no agent starts", items=[], sessions=[])
+    elif mode == "host":
+        result.update(state="incomplete", why="the gate could not run: the engine went away", sessions=sessions[:1])
     elif mode == "refused":
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            kept = pathlib.Path(d) / "kept"
+            git("clone", "-q", git("remote", "get-url", "origin"), str(kept), cwd=d)
+            ident = ["-c", "user.name=Markitect", "-c", "user.email=markitect@markitect.invalid"]
+            git(*ident, "commit", "-q", "--allow-empty", "-m", "the refused work", cwd=kept)
+            git("push", "-q", "origin", "HEAD:refs/heads/markitect/runs/" + run, cwd=kept)
         result.update(state="refused", why="the repair rounds ran out, and these stay open: the required check go test fails", repairs=2,
                       requiredChecks={"ran": False, "checks": [{"name": "go test", "passed": False}]})
     elif mode == "kept":
@@ -295,6 +304,19 @@ class ArmTest(unittest.TestCase):
         subprocess.run(["git", "-C", str(repo), "fetch", "-q", str(bundle), "+refs/heads/*:refs/heads/*"], check=True, capture_output=True)
         page = suite.git(repo, "show", record["result"]["commit"] + ":.markitect/registry/lending.md")
         self.assertEqual(page.count("made by the stand-in"), 2)
+
+    def test_a_failed_host_step_is_not_the_agents_work(self):
+        record, out = self.run_arm(self.task("host", self.model("model-host")), "host")
+        self.assertFalse(record["delivered"], record)
+        self.assertEqual(record["exitCode"], 2)
+        self.assertEqual(record["reported"]["status"], "could-not-run")
+        self.assertTrue(record["reported"]["machinery"])
+
+    def test_refused_work_stays_with_the_run(self):
+        record, out = self.run_arm(self.task("kept-work", self.model("model-kept-work")), "refused")
+        self.assertEqual(record["exitCode"], 1)
+        self.assertEqual(record["reported"]["workBundle"], ["refs/heads/markitect/runs/eval-0123456789ab"])
+        self.assertTrue((out / "variant" / "work.bundle").is_file())
 
     def test_a_run_that_does_not_land_delivers_its_start(self):
         # The states a Command ends on purpose exit 0; the others are the agents' work and exit 1, both with the start delivered.
@@ -653,6 +675,31 @@ class ArmTest(unittest.TestCase):
         self.assertTrue((dot / "registry" / "gone.md").is_file())
         self.assertTrue((dot / "registry" / "fresh.md").is_file())
         self.assertTrue((dot / "model" / "lending" / "loan-policy.md").is_file())
+
+
+class CommandResults(unittest.TestCase):
+    def result(self, **fields):
+        return {"format": 2, "run": "r1", "command": "apply", "outcome": "landed", "requiredChecks": {"ran": True},
+                "items": [{"item": "a/b", "kind": "definition", "answer": "ok", "pointers": [{"file": "x.go"}]}], "findings": [], **fields}
+
+    def test_a_commands_result_is_read_by_its_answers(self):
+        import results
+        checked = results.check(self.result())
+        self.assertEqual((checked["problems"], checked["skipped"], checked["unsupported"], checked["checksIncomplete"]), ([], [], [], False))
+
+    def test_an_unanswered_or_unsupported_item_shows(self):
+        import results
+        checked = results.check(self.result(items=[{"item": "a/b"}, {"item": "a/c", "answer": "ok"}, {"item": "a/d", "answer": "not shown", "explanation": "no test reaches it"}]))
+        self.assertEqual(checked["skipped"], ["a/b"])
+        self.assertEqual(checked["unsupported"], ["a/c"])
+
+    def test_required_checks_that_did_not_run_show(self):
+        import results
+        self.assertTrue(results.check(self.result(requiredChecks={"ran": False}))["checksIncomplete"])
+
+    def test_an_old_result_is_read_as_it_was(self):
+        import results
+        self.assertEqual(results.check({"format": 3})["problems"], ["not a Result of format 1 or 2"])
 
 
 if __name__ == "__main__":

@@ -94,6 +94,8 @@ DELIBERATE = ("landed", "nothing-to-do", "spec-problem")
 # How a verify Command ended when it checked every item it had: every item conforms, or something does not.
 CHECKED = ("verified", "findings")
 UNREGISTERED = re.compile(r"list it on (\S+), the page of its owner")
+# How a Command says the machinery failed: a host step, whatever the agents did (internal/run/engine.go).
+MACHINERY = re.compile(r"could not (be (made|committed|read|pushed)|run|start)")
 
 
 class ArmError(Exception):
@@ -396,6 +398,17 @@ def bundle(repo, commit_id, out, env):
         git(tmp, "bundle", "create", "-q", str(pathlib.Path(out).resolve()), "refs/heads/result", env=env)
 
 
+def keep_work(target, out, env, report):
+    """What a Command that did not land left on its Run branch, which goes with the temporary target otherwise."""
+    try:
+        refs = [r for r in git(target, "for-each-ref", "--format=%(refname)", "refs/heads/markitect/runs/", env=env).splitlines() if r]
+        if refs:
+            git(target, "bundle", "create", "-q", str((out / "work.bundle").resolve()), *refs, env=env)
+            report["workBundle"] = refs
+    except (ArmError, OSError) as e:
+        report["recordError"] = f"{type(e).__name__}: {e}"
+
+
 def read_state(state):
     if not state:
         return {}
@@ -512,6 +525,13 @@ def main(argv=None):
                 # The host found a compile error in the start, which compiled above: no agent started, nothing is the arm's work.
                 # Required checks that still fail after the repair rounds end a Command as `refused`, which is the agents' work.
                 return finish(2)
+            depth = result.get("depth") if isinstance(result.get("depth"), dict) else {}
+            report.update(depth=depth)
+            if a.reviewer_shell == "off" and depth.get("commands"):
+                report["reviewerRanCommands"] = depth["commands"]
+            if result.get("state") == "incomplete" and MACHINERY.search(result.get("why") or ""):
+                # A host step failed, not the agents' work, and an unchanged start would score as a stop.
+                return finish(2, status="could-not-run", machinery=True)
             ended = CHECKED if a.verify else DELIBERATE
             if result.get("state") not in ended and not ran:
                 # No session finished: the Command ended on its machinery, not on any agent's work.
@@ -526,6 +546,8 @@ def main(argv=None):
             if landed and not (len(result.get("landed") or "") >= 7 and landed.startswith(result["landed"]) and descends(target, start, landed, env)):
                 raise ArmError(f"the target's main {landed} is not the Result's landed commit {result.get('landed')} on the start")
             bundle(target, landed or start, out / "result.bundle", env)
+            if not landed:
+                keep_work(target, out, env, report)
             code = 0 if result.get("state") in DELIBERATE else 1
             report.update(landed=landed, exit=code)
             # What follows the delivery is record-keeping: its failure must not turn a delivered run into one that could not run.

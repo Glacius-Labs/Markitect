@@ -63,7 +63,7 @@ class ResultCheckTest(unittest.TestCase):
         self.assertIn("no Result landed", results.check_run(self.run_with(result_page("not-landed")))["problems"][0])
         self.assertIn("no change", results.check_run(self.run_with(result_page(), changed=False))["problems"][0])
         self.assertTrue(results.check_run(self.run_with(result_page("not-landed"), changed=False))["complete"])
-        self.assertIn("not a Result", results.check_run(self.run_with({"format": 2}))["problems"][0])
+        self.assertIn("not a Result", results.check_run(self.run_with({"format": 3}))["problems"][0])
         self.assertIn("no checklist items", results.check_run(self.run_with(result_page(items=[])))["problems"][0])
 
     def test_a_run_without_results_has_nothing_to_check(self):

@@ -66,6 +66,8 @@ def reported_leftovers(out):
     return [str(x)[:300] for x in value[:20]] if isinstance(value, list) else []
 
 
+TOKEN_VARIABLE = "MARKITECT_CLAUDE_TOKEN"
+
 class Events:
     """The engine's event record of one run, written to RUN_DIR/engine-events.jsonl as it comes.
 
@@ -171,6 +173,9 @@ class Native:
                 if present:
                     raise sandboxing.SandboxError("hidden material is on the machine: " + ", ".join(present))
                 login, secrets = sandboxing.access_login(self.provider, self.login.read_bytes(), deadline)
+                # The Command's sessions run on the owner's token, which the record and the evidence must not hold either.
+                if os.environ.get(TOKEN_VARIABLE):
+                    secrets = [*secrets, os.environ[TOKEN_VARIABLE].encode()]
                 login_file.write_bytes(login)
                 os.chmod(login_file, 0o600)
                 del login

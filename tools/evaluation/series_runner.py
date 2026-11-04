@@ -75,6 +75,7 @@ REVIEW_SECONDS = 3600  # a review and its confirmations, each session up to revi
 QUOTA_STOP, QUOTA_WAIT = 0.90, 0.85
 VOID_SHARE, VOID_AFTER = 0.25, 8
 LEFTOVER_LABELS = ("markitect.run", "markitect.evaluation")
+TOKEN_VARIABLE = "MARKITECT_CLAUDE_TOKEN"
 KEY_SHAPES = [re.compile(rb"sk-ant-[A-Za-z0-9_-]{20,}"), re.compile(rb"eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}")]
 
 
@@ -462,7 +463,7 @@ def login_secrets(path):
 def files_with_secrets(root, secrets, skip=()):
     """The files under root that hold one of the secrets, a key shape, or the owner's token (MARKITECT_CLAUDE_TOKEN) when it
     is set in this process; and how many files were scanned."""
-    token = os.environ.get("MARKITECT_CLAUDE_TOKEN", "").strip().encode()
+    token = os.environ.get(TOKEN_VARIABLE, "").strip().encode()
     secrets = [*secrets, token] if token else list(secrets)
     hits, scanned = [], 0
     for f in pathlib.Path(root).rglob("*"):
@@ -677,6 +678,9 @@ class Runner:
     def freeze(self):
         """What must stay the same in every window, and as in the gate when the configuration names its ledger
         (`gateLedger`): the frozen tree, the binaries, a prepared series' launch inputs and the images on the engine."""
+        # Without the token every launch of the arm would be void, and the series would stop only after several.
+        if any(u.get("arm") in ("M", "V") for u in self.c["units"]) and not os.environ.get(TOKEN_VARIABLE):
+            raise Stop(f"no {TOKEN_VARIABLE}: the arm's Command cannot start its sessions")
         src = self.work / "src"
         found = {"src": tree_digest(src) if src.is_dir() else None,
                  "bin": {p.name: sha256(p) for p in sorted(pathlib.Path(self.c["bin"]).iterdir()) if p.is_file()},
