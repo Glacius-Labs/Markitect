@@ -1,12 +1,11 @@
-// Package rungit is a Command's own Git work outside its container (concept 3.0
-// §6, §9): a private bare repository that reads the target branch, makes the start
-// bundle, imports what the sandbox hands out, merges and writes the Result commit,
-// and pushes to the target repository. It never touches a working
-// tree: the user's repository is only a Git remote to it.
+// Package rungit is a Run's Git work in the user's own repository (draft concept
+// 4.0): it reads commits from anywhere in the repository, makes commits of a
+// worktree's files without running the project's hooks, and brings the owner's
+// branch up. It works in the repository's common Git directory, which every
+// worktree shares.
 package rungit
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"errors"
@@ -24,12 +23,10 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
-// Repo is the host's private repository for one Run.
+// Repo is the repository of one command.
 type Repo struct {
-	// Dir is the bare repository.
+	// Dir is the common Git directory.
 	Dir string
-	// Target is the target repository: a URL or a path Git can push to.
-	Target string
 }
 
 var _ run.Git = (*Repo)(nil)
@@ -37,103 +34,13 @@ var _ run.Git = (*Repo)(nil)
 // waitDelay bounds how long a git command may hold on after its context ended.
 const waitDelay = 5 * time.Second
 
-const (
-	targetRefs = "refs/markitect/target/"
-	runRefs    = "refs/markitect/run/"
-	keepRefs   = "refs/markitect/keep/"
-	branchRefs = "refs/markitect/branches/"
-)
-
-// Open creates the private repository in dir, which must not exist or be
-// empty, for the target repository.
-func Open(ctx context.Context, dir, target string) (*Repo, error) {
-	r := &Repo{Dir: dir, Target: target}
-	if err := os.MkdirAll(dir, 0o700); err != nil {
-		return nil, err
-	}
-	cmd := exec.CommandContext(ctx, "git", "init", "-q", "--bare", dir)
-	cmd.Env = cleanEnv()
-	if out, err := cmd.CombinedOutput(); err != nil {
-		return nil, fmt.Errorf("git init: %w: %s", err, strings.TrimSpace(string(out)))
-	}
-	for _, kv := range [][2]string{{"core.autocrlf", "false"}, {"gc.auto", "0"}, {"maintenance.auto", "false"}, {"core.longpaths", "true"}} {
-		if _, err := r.git(ctx, nil, nil, "config", kv[0], kv[1]); err != nil {
-			return nil, err
-		}
-	}
-	// Merges use Git's own text merge, whatever drivers the repository's
-	// attributes or the user's configuration name.
-	if err := os.WriteFile(filepath.Join(dir, "info", "attributes"), []byte("* merge=text -filter -text\n"), 0o644); err != nil {
-		return nil, err
-	}
-	return r, nil
-}
-
-// Target resolves where a Run starts from and lands: the remote's URL and
-// the branch. An empty remote is the current branch's upstream remote, else
-// origin, else the repository itself; an empty branch is the upstream's
-// branch, else the current branch.
-func Target(ctx context.Context, repoDir, remote, branch string) (url, name string, err error) {
-	g := func(args ...string) (string, error) {
-		cmd := exec.CommandContext(ctx, "git", append([]string{"-C", repoDir}, args...)...)
-		cmd.Env = cleanEnv()
-		out, err := cmd.Output()
-		return strings.TrimSpace(string(out)), err
-	}
-	top, err := g("rev-parse", "--show-toplevel")
+// Open finds the repository that holds dir.
+func Open(ctx context.Context, dir string) (*Repo, error) {
+	out, err := command(ctx, dir, nil, nil, "rev-parse", "--path-format=absolute", "--git-common-dir")
 	if err != nil {
-		return "", "", fmt.Errorf("%s is not inside a Git repository", repoDir)
+		return nil, fmt.Errorf("%s is not inside a Git repository", dir)
 	}
-	current, _ := g("symbolic-ref", "--quiet", "--short", "HEAD")
-	if remote == "" && current != "" {
-		remote, _ = g("config", "branch."+current+".remote")
-		if remote != "" && branch == "" {
-			if merge, _ := g("config", "branch."+current+".merge"); merge != "" {
-				branch = strings.TrimPrefix(merge, "refs/heads/")
-			}
-		}
-	}
-	if remote == "" {
-		if _, err := g("remote", "get-url", "origin"); err == nil {
-			remote = "origin"
-		}
-	}
-	if branch == "" {
-		branch = current
-	}
-	if branch == "" {
-		return "", "", errors.New("HEAD is detached; name the target branch with --branch")
-	}
-	switch {
-	case remote == "" || remote == ".":
-		return top, branch, nil
-	default:
-		if u, err := g("remote", "get-url", remote); err == nil {
-			remote = u
-		}
-		if !strings.Contains(remote, "://") && !strings.Contains(remote, "@") && !filepath.IsAbs(remote) {
-			remote = filepath.Join(top, remote)
-		}
-		return remote, branch, nil
-	}
-}
-
-// UncommittedSpec lists what the working tree of the repository at repoDir has
-// not committed under Markitect's folder.
-func UncommittedSpec(ctx context.Context, repoDir string) ([]string, error) {
-	cmd := exec.CommandContext(ctx, "git", "-C", repoDir, "status", "--porcelain", "--untracked-files=all", "--", ":/"+project.Dir)
-	cmd.Env = cleanEnv()
-	out, err := cmd.Output()
-	if err != nil {
-		return nil, fmt.Errorf("%s is not inside a Git repository: %w", repoDir, err)
-	}
-	var dirty []string
-	for _, l := range strings.Split(strings.TrimRight(string(out), "\n"), "\n") {
-		if len(l) > 3 {
-			dirty = append(dirty, l[3:])
-		}
-	}
-	return dirty, nil
+	return &Repo{Dir: strings.TrimSpace(string(out))}, nil
 }
 
 // cleanEnv is the environment without Git variables that would point git at
@@ -151,20 +58,24 @@ func cleanEnv() []string {
 	return append(env, "GIT_TERMINAL_PROMPT=0")
 }
 
-func (r *Repo) git(ctx context.Context, stdin io.Reader, env []string, args ...string) ([]byte, error) {
-	cmd := exec.CommandContext(ctx, "git", append([]string{"--git-dir=" + r.Dir}, args...)...)
+// command runs git in a folder.
+func command(ctx context.Context, dir string, stdin io.Reader, env []string, args ...string) ([]byte, error) {
+	cmd := exec.CommandContext(ctx, "git", args...)
+	cmd.Dir = dir
 	cmd.Env = append(cleanEnv(), env...)
 	cmd.Stdin = stdin
 	// A deadline ends git even when a helper it started holds its output open.
 	cmd.WaitDelay = waitDelay
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
-	// A helper may hold the output open after a git that succeeded, as a shared
-	// SSH connection does.
 	if err := cmd.Run(); err != nil && !errors.Is(err, exec.ErrWaitDelay) {
 		return stdout.Bytes(), fmt.Errorf("git %s: %w: %s", args[0], err, strings.TrimSpace(stderr.String()))
 	}
 	return stdout.Bytes(), nil
+}
+
+func (r *Repo) git(ctx context.Context, stdin io.Reader, env []string, args ...string) ([]byte, error) {
+	return command(ctx, r.Dir, stdin, env, append([]string{"--git-dir=" + r.Dir}, args...)...)
 }
 
 func (r *Repo) line(ctx context.Context, args ...string) (string, error) {
@@ -172,47 +83,127 @@ func (r *Repo) line(ctx context.Context, args ...string) (string, error) {
 	return strings.TrimSpace(string(out)), err
 }
 
-// Fetch reads the tip of a branch of the target repository.
-func (r *Repo) Fetch(ctx context.Context, branch string) (string, error) {
-	if _, err := r.git(ctx, nil, nil, "fetch", "-q", "--no-tags", r.Target, "+refs/heads/"+branch+":"+targetRefs+branch); err != nil {
+func lineAt(ctx context.Context, dir string, args ...string) (string, error) {
+	out, err := command(ctx, dir, nil, nil, args...)
+	return strings.TrimSpace(string(out)), err
+}
+
+// Root is the top of the working tree that holds dir.
+func (r *Repo) Root(ctx context.Context, dir string) (string, error) {
+	return lineAt(ctx, dir, "rev-parse", "--show-toplevel")
+}
+
+// Branch is the branch checked out at dir, "" when HEAD is detached.
+func (r *Repo) Branch(ctx context.Context, dir string) (string, error) {
+	out, err := lineAt(ctx, dir, "branch", "--show-current")
+	return out, err
+}
+
+// Head is the commit checked out at dir.
+func (r *Repo) Head(ctx context.Context, dir string) (string, error) {
+	return lineAt(ctx, dir, "rev-parse", "--verify", "HEAD^{commit}")
+}
+
+// notTheWork are the paths a Run's commit check does not count: Markitect's own
+// folder, which apply commits, and the provider's local files.
+var notTheWork = []string{":(exclude,top).markitect", ":(exclude,top).claude/worktrees", ":(exclude,top).claude/settings.local.json"}
+
+// Uncommitted lists what differs from the last commit at dir, outside
+// Markitect's folder and the provider's local files.
+func (r *Repo) Uncommitted(ctx context.Context, dir string) ([]string, error) {
+	args := append([]string{"--no-optional-locks", "status", "--porcelain", "-z", "--no-renames", "--untracked-files=all", "--", ":/"}, notTheWork...)
+	out, err := command(ctx, dir, nil, nil, args...)
+	if err != nil {
+		return nil, err
+	}
+	var files []string
+	for _, entry := range split(out) {
+		if len(entry) > 3 {
+			files = append(files, entry[3:])
+		}
+	}
+	return files, nil
+}
+
+// CommitSpec commits Markitect's folder at dir with the user's identity. The
+// project's hooks run, as they would for the user's own commit.
+func (r *Repo) CommitSpec(ctx context.Context, dir, message string) (string, error) {
+	out, err := command(ctx, dir, nil, nil, "--no-optional-locks", "status", "--porcelain", "--", ":/"+project.Dir)
+	if err != nil {
 		return "", err
 	}
-	return r.line(ctx, "rev-parse", "--verify", targetRefs+branch+"^{commit}")
+	if strings.TrimSpace(string(out)) != "" {
+		if _, err := command(ctx, dir, nil, nil, "add", "-A", "--", ":/"+project.Dir); err != nil {
+			return "", err
+		}
+		if _, err := command(ctx, dir, nil, nil, "commit", "-q", "-m", message, "--", ":/"+project.Dir); err != nil {
+			return "", err
+		}
+	}
+	return r.Head(ctx, dir)
 }
 
-// Bundle writes a bundle that holds the commit.
-func (r *Repo) Bundle(ctx context.Context, commit string, w io.Writer) error {
-	ref := keepRefs + commit
-	if _, err := r.git(ctx, nil, nil, "update-ref", ref, commit); err != nil {
-		return err
-	}
-	// Streamed: a repository can be larger than the host's memory.
-	cmd := exec.CommandContext(ctx, "git", "--git-dir="+r.Dir, "bundle", "create", "-q", "-", ref)
-	cmd.Env = cleanEnv()
-	var stderr bytes.Buffer
-	cmd.Stdout, cmd.Stderr = w, &stderr
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("git bundle: %w: %s", err, strings.TrimSpace(stderr.String()))
-	}
-	return nil
-}
+// identity is the author and committer of the tool's commits.
+var identity = []string{"GIT_AUTHOR_NAME=Markitect", "GIT_AUTHOR_EMAIL=markitect@markitect.invalid", "GIT_COMMITTER_NAME=Markitect", "GIT_COMMITTER_EMAIL=markitect@markitect.invalid"}
 
-// Import reads a bundle the sandbox wrote.
-func (r *Repo) Import(ctx context.Context, bundle io.Reader) error {
-	f, err := os.CreateTemp(r.Dir, "import-*.bundle")
+// Candidate makes a commit of every file Git would take in the worktree at dir,
+// through a temporary index, so that the worktree, its index and HEAD stay as they
+// are. With nothing changed it returns HEAD.
+func (r *Repo) Candidate(ctx context.Context, dir, message string) (string, error) {
+	head, err := r.Head(ctx, dir)
 	if err != nil {
-		return err
+		return "", err
+	}
+	index, cleanup, err := r.tempIndex()
+	if err != nil {
+		return "", err
+	}
+	defer cleanup()
+	env := []string{"GIT_INDEX_FILE=" + index}
+	if _, err := command(ctx, dir, nil, env, "read-tree", head); err != nil {
+		return "", err
+	}
+	if _, err := command(ctx, dir, nil, env, "add", "-A", "--", ":/"); err != nil {
+		return "", err
+	}
+	tree, err := command(ctx, dir, nil, env, "write-tree")
+	if err != nil {
+		return "", err
+	}
+	want := strings.TrimSpace(string(tree))
+	c, err := r.Commit(ctx, head)
+	if err != nil {
+		return "", err
+	}
+	if c.Tree == want {
+		return head, nil
+	}
+	id, err := r.git(ctx, strings.NewReader(message+"\n"), identity, "commit-tree", want, "-p", head)
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(id)), nil
+}
+
+func (r *Repo) tempIndex() (string, func(), error) {
+	f, err := os.CreateTemp(r.Dir, "markitect-index-*")
+	if err != nil {
+		return "", nil, err
 	}
 	name := f.Name()
-	defer os.Remove(name)
-	_, err = io.Copy(f, bundle)
-	if cerr := f.Close(); err == nil {
-		err = cerr
-	}
-	if err != nil {
+	f.Close()
+	// Git makes the index itself; an empty file is no index to it.
+	os.Remove(name)
+	return name, func() { os.Remove(name); os.Remove(name + ".lock") }, nil
+}
+
+// Adopt moves the worktree at dir to a commit made from its own files.
+func (r *Repo) Adopt(ctx context.Context, dir, commit string) error {
+	head, err := r.Head(ctx, dir)
+	if err != nil || head == commit {
 		return err
 	}
-	_, err = r.git(ctx, nil, nil, "fetch", "-q", "--no-tags", name, "+refs/heads/*:"+runRefs+"*")
+	_, err = command(ctx, dir, nil, nil, "reset", "-q", "--mixed", commit)
 	return err
 }
 
@@ -290,53 +281,6 @@ func (r *Repo) Links(ctx context.Context, commit string) (map[string]string, err
 	return links, nil
 }
 
-// Diff is the text of the changes between two commits.
-func (r *Repo) Diff(ctx context.Context, from, to string) (string, error) {
-	out, err := r.git(ctx, nil, nil, "diff", "--no-color", "--no-ext-diff", from, to, "--")
-	return string(out), err
-}
-
-// History returns every line any commit between two commits adds, with
-// every commit message, and every path those commits touch.
-func (r *Repo) History(ctx context.Context, from, to string) (string, []string, error) {
-	span := from + ".." + to
-	messages, err := r.git(ctx, nil, nil, "log", "--format=%B", span, "--")
-	if err != nil {
-		return "", nil, err
-	}
-	// A merge commit shows its changes against its first parent, so what a
-	// merge resolution adds is read too.
-	patches, err := r.git(ctx, nil, nil, "log", "-p", "--diff-merges=first-parent", "--format=", "--no-renames", "--no-color", "--unified=0", "--text", span, "--")
-	if err != nil {
-		return "", nil, err
-	}
-	names, err := r.git(ctx, nil, nil, "log", "--name-only", "--diff-merges=first-parent", "-z", "--format=", "--no-renames", span, "--")
-	if err != nil {
-		return "", nil, err
-	}
-	var b strings.Builder
-	b.Write(messages)
-	sc := bufio.NewScanner(bytes.NewReader(patches))
-	sc.Buffer(make([]byte, 64<<10), 64<<20)
-	header := false
-	for sc.Scan() {
-		l := sc.Text()
-		switch {
-		case header && strings.HasPrefix(l, "+++ "):
-			// The file header after "--- ", not an added line.
-		case strings.HasPrefix(l, "+"):
-			b.WriteString(l[1:])
-			b.WriteByte('\n')
-		}
-		header = strings.HasPrefix(l, "--- ")
-	}
-	var paths []string
-	for _, p := range split(names) {
-		paths = append(paths, strings.TrimSpace(p))
-	}
-	return b.String(), paths, sc.Err()
-}
-
 // State is one commit as a project repository state.
 func (r *Repo) State(ctx context.Context, commit string) project.Repository {
 	return state{r: r, ctx: ctx, commit: commit}
@@ -364,8 +308,20 @@ func (s state) Read(file string) ([]byte, error) {
 
 func (s state) GitIgnored(string) bool { return false }
 
-// identity is the author and committer of the host's commits.
-var identity = []string{"GIT_AUTHOR_NAME=Markitect", "GIT_AUTHOR_EMAIL=markitect@markitect.invalid", "GIT_COMMITTER_NAME=Markitect", "GIT_COMMITTER_EMAIL=markitect@markitect.invalid"}
+// Export writes the files of a commit into an empty folder, as a checkout would.
+func (r *Repo) Export(ctx context.Context, commit, dir string) error {
+	index, cleanup, err := r.tempIndex()
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+	env := []string{"GIT_INDEX_FILE=" + index, "GIT_WORK_TREE=" + dir}
+	if _, err := r.git(ctx, nil, env, "read-tree", commit); err != nil {
+		return err
+	}
+	_, err = r.git(ctx, nil, env, "checkout-index", "-a", "-f")
+	return err
+}
 
 // Merge merges theirs into ours as a new merge commit.
 func (r *Repo) Merge(ctx context.Context, ours, theirs, message string) (string, []string, error) {
@@ -388,29 +344,24 @@ func (r *Repo) Merge(ctx context.Context, ours, theirs, message string) (string,
 	return strings.TrimSpace(string(id)), nil, nil
 }
 
-// Write commits files on top of parent; nil content removes a file.
+// Write commits files on top of parent.
 func (r *Repo) Write(ctx context.Context, parent string, files map[string][]byte, message string) (string, error) {
-	index, err := os.CreateTemp(r.Dir, "index-*")
+	index, cleanup, err := r.tempIndex()
 	if err != nil {
 		return "", err
 	}
-	name := index.Name()
-	index.Close()
-	os.Remove(name)
-	defer os.Remove(name)
-	env := []string{"GIT_INDEX_FILE=" + name}
+	defer cleanup()
+	env := []string{"GIT_INDEX_FILE=" + index}
 	if _, err := r.git(ctx, nil, env, "read-tree", parent); err != nil {
 		return "", err
 	}
-	for _, file := range sortedFiles(files) {
-		data := files[file]
-		if data == nil {
-			if _, err := r.git(ctx, nil, env, "update-index", "--force-remove", "--", file); err != nil {
-				return "", err
-			}
-			continue
-		}
-		blob, err := r.git(ctx, bytes.NewReader(data), nil, "hash-object", "-w", "--stdin")
+	var names []string
+	for f := range files {
+		names = append(names, f)
+	}
+	sort.Strings(names)
+	for _, file := range names {
+		blob, err := r.git(ctx, bytes.NewReader(files[file]), nil, "hash-object", "-w", "--stdin")
 		if err != nil {
 			return "", err
 		}
@@ -429,64 +380,106 @@ func (r *Repo) Write(ctx context.Context, parent string, files map[string][]byte
 	return strings.TrimSpace(string(id)), nil
 }
 
-func sortedFiles(files map[string][]byte) []string {
-	var names []string
-	for f := range files {
-		names = append(names, f)
+// Tip reads the tip of a branch, "" when it does not exist.
+func (r *Repo) Tip(ctx context.Context, branch string) (string, error) {
+	out, err := r.line(ctx, "for-each-ref", "--format=%(objectname)", "refs/heads/"+branch)
+	if err != nil {
+		return "", err
 	}
-	sort.Strings(names)
-	return names
+	return out, nil
 }
 
-// Push sets a branch of the target repository to commit if it is still at
-// old; an empty old means the branch must not exist yet, and an empty commit
-// deletes the branch.
-func (r *Repo) Push(ctx context.Context, branch, commit, old string) error {
-	ref := "refs/heads/" + branch
-	if out, err := r.checkedOut(ctx, ref); err != nil {
-		return err
-	} else if out != "" {
-		return fmt.Errorf("%s is checked out in the working tree %s, which Markitect never changes; land through a remote you pull from", branch, out)
-	}
-	spec := commit + ":" + ref
-	if commit == "" {
-		spec = ":" + ref
-	} else if _, err := r.git(ctx, nil, nil, "update-ref", keepRefs+commit, commit); err != nil {
+// Advance moves a branch from old to commit, only if it is still at old.
+func (r *Repo) Advance(ctx context.Context, branch, commit, old string) error {
+	tree, err := r.checkedOutAt(ctx, branch)
+	if err != nil {
 		return err
 	}
-	_, err := r.git(ctx, nil, nil, "push", "-q", "--no-verify", "--force-with-lease="+ref+":"+old, r.Target, spec)
+	if tree == "" {
+		_, err := r.git(ctx, nil, nil, "update-ref", "refs/heads/"+branch, commit, old)
+		return err
+	}
+	head, err := r.Head(ctx, tree)
+	if err != nil {
+		return err
+	}
+	if head != old {
+		return fmt.Errorf("%s moved while landing", branch)
+	}
+	if _, err := command(ctx, tree, nil, nil, "merge", "-q", "--ff-only", commit); err != nil {
+		return fmt.Errorf("%s could not be brought up in %s, probably because of uncommitted edits there: %w", branch, tree, err)
+	}
+	return nil
+}
+
+// SetBranch points a branch at a commit.
+func (r *Repo) SetBranch(ctx context.Context, branch, commit string) error {
+	_, err := r.git(ctx, nil, nil, "update-ref", "refs/heads/"+branch, commit)
 	return err
 }
 
-// checkedOut returns the working tree of a local target that has ref
-// checked out, or "" when none does or the target is not a local folder.
-// Git's own refusal of such a push depends on receive.denyCurrentBranch, so
-// it is checked here.
-func (r *Repo) checkedOut(ctx context.Context, ref string) (string, error) {
-	if info, err := os.Stat(r.Target); err != nil || !info.IsDir() {
-		return "", nil
+// DeleteBranch removes a branch, if it exists.
+func (r *Repo) DeleteBranch(ctx context.Context, branch string) error {
+	tip, err := r.Tip(ctx, branch)
+	if err != nil || tip == "" {
+		return err
 	}
-	cmd := exec.CommandContext(ctx, "git", "-C", r.Target, "worktree", "list", "--porcelain")
-	cmd.Env = cleanEnv()
-	out, err := cmd.Output()
+	_, err = r.git(ctx, nil, nil, "update-ref", "-d", "refs/heads/"+branch)
+	return err
+}
+
+// Branches lists the branches under a prefix with their tips.
+func (r *Repo) Branches(ctx context.Context, prefix string) (map[string]string, error) {
+	prefix = strings.TrimSuffix(prefix, "/") + "/"
+	out, err := r.git(ctx, nil, nil, "for-each-ref", "--format=%(objectname) %(refname)", "refs/heads/"+prefix)
 	if err != nil {
-		return "", fmt.Errorf("git worktree list in %s: %w", r.Target, err)
+		return nil, err
+	}
+	tips := map[string]string{}
+	for _, l := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+		if id, ref, ok := strings.Cut(l, " "); ok {
+			tips[strings.TrimPrefix(ref, "refs/heads/")] = id
+		}
+	}
+	return tips, nil
+}
+
+// RemoveWorktree removes the worktree that has a branch checked out, if there is
+// one. The provider holds a lock on it while its session runs, and a session that
+// has ended leaves that lock until its next sweep.
+func (r *Repo) RemoveWorktree(ctx context.Context, branch string) error {
+	tree, err := r.checkedOutAt(ctx, branch)
+	if err != nil || tree == "" {
+		return err
+	}
+	_, _ = r.git(ctx, nil, nil, "worktree", "unlock", tree)
+	if _, err := r.git(ctx, nil, nil, "worktree", "remove", "--force", tree); err != nil {
+		return err
+	}
+	return nil
+}
+
+// checkedOutAt returns the working tree that has a branch checked out, or "".
+func (r *Repo) checkedOutAt(ctx context.Context, branch string) (string, error) {
+	out, err := r.git(ctx, nil, nil, "worktree", "list", "--porcelain")
+	if err != nil {
+		return "", err
 	}
 	tree := ""
 	for _, l := range strings.Split(string(out), "\n") {
 		l = strings.TrimSpace(l)
 		if p, ok := strings.CutPrefix(l, "worktree "); ok {
-			tree = p
+			tree = filepath.FromSlash(p)
 		}
-		if l == "branch "+ref {
+		if l == "branch refs/heads/"+branch {
 			return tree, nil
 		}
 	}
 	return "", nil
 }
 
-// LastLanded returns the newest commit reachable from tip that adds a
-// Result page under the results folder.
+// LastLanded returns the newest commit reachable from tip that adds a Result page
+// under the results folder.
 func (r *Repo) LastLanded(ctx context.Context, tip string) (string, bool, error) {
 	id, err := r.line(ctx, "log", "-1", "--format=%H", "--diff-filter=A", tip, "--", project.ResultsDir+"/")
 	if err != nil {
@@ -495,8 +488,8 @@ func (r *Repo) LastLanded(ctx context.Context, tip string) (string, bool, error)
 	return id, id != "", nil
 }
 
-// Landings returns the commits reachable from tip and not from since that
-// add a Result page under the results folder, newest first.
+// Landings returns the commits reachable from tip and not from since that add a
+// Result page under the results folder, newest first.
 func (r *Repo) Landings(ctx context.Context, tip, since string) ([]string, error) {
 	args := []string{"log", "--format=%H", "--diff-filter=A", tip}
 	if since != "" {
@@ -507,26 +500,6 @@ func (r *Repo) Landings(ctx context.Context, tip, since string) ([]string, error
 		return nil, err
 	}
 	return strings.Fields(string(out)), nil
-}
-
-// Branches lists the target repository's branches under a prefix with their
-// tips, and fetches them so their commits are readable.
-func (r *Repo) Branches(ctx context.Context, prefix string) (map[string]string, error) {
-	prefix = strings.TrimSuffix(prefix, "/") + "/"
-	if _, err := r.git(ctx, nil, nil, "fetch", "-q", "--no-tags", "--prune", r.Target, "+refs/heads/"+prefix+"*:"+branchRefs+prefix+"*"); err != nil {
-		return nil, err
-	}
-	out, err := r.git(ctx, nil, nil, "for-each-ref", "--format=%(objectname) %(refname)", branchRefs+prefix)
-	if err != nil {
-		return nil, err
-	}
-	tips := map[string]string{}
-	for _, l := range strings.Split(strings.TrimSpace(string(out)), "\n") {
-		if id, ref, ok := strings.Cut(l, " "); ok {
-			tips[strings.TrimPrefix(ref, branchRefs)] = id
-		}
-	}
-	return tips, nil
 }
 
 func split(out []byte) []string {

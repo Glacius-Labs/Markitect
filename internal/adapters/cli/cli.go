@@ -1,6 +1,6 @@
 // Package cli is the markitect command line: init, check, lock, refs, graph,
-// impact and lint, which start no agent; apply and verify, which start a Run;
-// desktop, which opens the app over these commands; version and licenses.
+// impact and lint, which start no agent; apply and verify, which start a Run in a
+// background session; the commands of a Run; version and licenses.
 package cli
 
 import (
@@ -13,7 +13,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/internal/agentport"
 	"github.com/Glacius-Labs/Markitect/internal/analysis"
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
 	"github.com/Glacius-Labs/Markitect/internal/model"
@@ -28,6 +27,9 @@ type Workspace interface {
 	Exists(file string) bool
 	List(dir string) ([]string, error)
 	Remove(file string) error
+	// CommitOwn commits what init wrote with the user's identity, and says whether
+	// there was anything to commit.
+	CommitOwn(message string) (bool, error)
 }
 
 // Base is the state of the repository at a base commit.
@@ -45,51 +47,45 @@ type Git interface {
 	Base(ctx context.Context, ws Workspace, rev string) (Base, error)
 }
 
-// Desktop runs Markitect Desktop, the app over these commands.
-type Desktop interface {
-	Run(ctx context.Context, o DesktopOptions) error
-}
-
-// DesktopOptions are the flags of markitect desktop.
-type DesktopOptions struct {
-	Listen string // the loopback address to serve on
-	Open   bool   // open a window on it
-}
-
 // Exit codes.
 const (
 	OK       = 0
 	Failed   = 1 // the command ran and found errors
 	Misused  = 2 // the command could not run
-	usageTop = `markitect is the canonical model tool of Markitect. Only apply and verify start agents.
+	usageTop = `markitect is the tool of a Markitect project. Only apply and verify start agents.
 
 Usage:
-  markitect init   [--repo DIR] [--name TITLE]   set up a project and install the skills
-  markitect check  [--repo DIR] [--json]          compile the model: errors only
+  markitect init   [--repo DIR] [--name TITLE]   set up a project and install the harness
+  markitect check  [--repo DIR] [--json] [--spec] compile the project; --spec looks only at the spec
   markitect lock   [--repo DIR]                   write the lock from the manifest
   markitect refs   [--repo DIR] [--json] TARGET   who links to a Definition or Package
   markitect graph  [--repo DIR] [--json]          the Package dependency graph
-  markitect impact [--repo DIR] [--json] --base COMMIT [--full] [--findings FILE]
+  markitect impact [--repo DIR] [--json] [--base COMMIT] [--full] [--findings FILE]
                                                   what a change reaches, with distance and reason
-  markitect lint   [--repo DIR] [--json]          measure the model like code: warnings only
-  markitect apply  [--repo DIR] [--json] [--base COMMIT] [--full] [--findings FILE] [RUN OPTIONS]
-                                                  realize the change with an implementer and a reviewer, and land it
-  markitect verify [--repo DIR] [--json] [--base COMMIT] [--full] [--findings-out FILE] [RUN OPTIONS]
-                                                  check the change with a reviewer only; changes nothing
-        RUN OPTIONS: --remote NAME --branch NAME --run NAME --deadline D --session-timeout D
-  markitect desktop [--listen ADDR] [--no-open]  open Markitect, the app over these commands
+  markitect lint   [--repo DIR] [--json]          measure the spec like code: warnings only
+  markitect apply  [--repo DIR] [--base COMMIT] [--full] [--findings FILE] [--deadline D]
+                                                  start a background session that makes the project match the spec and lands the work
+  markitect verify [--repo DIR] [--base COMMIT] [--full] [--deadline D]
+                                                  start a reviewer's background session; changes nothing you have
+  markitect status [--repo DIR]                   how the runs of this branch stand
+  markitect stop   [--repo DIR] WHY               end a run without landing
   markitect version
   markitect licenses
+
+Called from inside a run:
+  markitect checklist [--review]                  the task and the list
+  markitect answer [FILE]                         store a reviewer's answers
+  markitect submit                                the one door: says what is next, and lands the work
 `
 )
 
 // CLI runs one command.
 type CLI struct {
-	Git     Git
-	Runs    Runs
-	Desktop Desktop
-	Stdout  io.Writer
-	Stderr  io.Writer
+	Git    Git
+	Runs   Runs
+	Stdin  io.Reader
+	Stdout io.Writer
+	Stderr io.Writer
 }
 
 // Run runs the command line args and returns the exit code.
@@ -117,11 +113,21 @@ func (c CLI) Run(ctx context.Context, args []string) int {
 	case "lint":
 		code, err = c.lint(ctx, rest)
 	case "apply":
-		code, err = c.runCommand(ctx, agentport.Apply, rest)
+		code, err = c.start(ctx, "apply", rest)
 	case "verify":
-		code, err = c.runCommand(ctx, agentport.Verify, rest)
-	case "desktop":
-		code, err = c.desktop(ctx, rest)
+		code, err = c.start(ctx, "verify", rest)
+	case "checklist":
+		code, err = c.checklist(ctx, rest)
+	case "answer":
+		code, err = c.answer(ctx, rest)
+	case "submit":
+		code, err = c.submit(ctx, rest)
+	case "stop":
+		code, err = c.stop(ctx, rest)
+	case "status":
+		code, err = c.status(ctx, rest)
+	case "hook":
+		code, err = c.hook(ctx, rest)
 	case "version":
 		fmt.Fprintln(c.Stdout, "markitect", buildinfo.Build())
 	case "licenses":
@@ -135,6 +141,10 @@ func (c CLI) Run(ctx context.Context, args []string) int {
 			fmt.Fprintf(c.Stderr, "markitect %s: %v\n", cmd, err)
 		}
 		return Misused
+	}
+	switch cmd {
+	case "init", "check", "lock", "refs", "graph", "impact", "lint", "apply", "verify":
+		c.notice(ctx, rest)
 	}
 	return code
 }
@@ -168,10 +178,10 @@ func (c CLI) load(ctx context.Context, o options) (Workspace, *project.Project, 
 	return ws, p, nil
 }
 
-// warnErrors tells the user that an analysis ran over a model with errors.
+// warnErrors tells the user that an analysis ran over a spec with errors.
 func (c CLI) warnErrors(p *project.Project) {
-	if n := len(p.Errors); n > 0 {
-		fmt.Fprintf(c.Stderr, "markitect: the project has %d compile errors; run markitect check. The result below may be incomplete.\n", n)
+	if n := len(p.SpecErrors()); n > 0 {
+		fmt.Fprintf(c.Stderr, "markitect: the spec has %d errors; run markitect check. The result below may be incomplete.\n", n)
 	}
 }
 
@@ -181,29 +191,11 @@ func (c CLI) printJSON(v any) error {
 	return enc.Encode(v)
 }
 
-func (c CLI) desktop(ctx context.Context, args []string) (int, error) {
-	fs := flag.NewFlagSet("markitect desktop", flag.ContinueOnError)
-	fs.SetOutput(c.Stderr)
-	var o DesktopOptions
-	var noOpen bool
-	fs.StringVar(&o.Listen, "listen", "127.0.0.1:0", "the loopback address to serve on; port 0 picks a free one")
-	fs.BoolVar(&noOpen, "no-open", false, "print the address instead of opening a window")
-	if err := fs.Parse(args); err != nil {
-		return Misused, err
-	}
-	if fs.NArg() != 0 {
-		return Misused, fmt.Errorf("takes no arguments")
-	}
-	if c.Desktop == nil {
-		return Misused, errors.New("this build has no desktop")
-	}
-	o.Open = !noOpen
-	return OK, c.Desktop.Run(ctx, o)
-}
-
 func (c CLI) check(ctx context.Context, args []string) (int, error) {
 	var o options
+	var specOnly bool
 	fs := c.flags("check", &o)
+	fs.BoolVar(&specOnly, "spec", false, "look only at the spec itself, not at whether the work matches it")
 	if err := fs.Parse(args); err != nil {
 		return Misused, err
 	}
@@ -214,25 +206,36 @@ func (c CLI) check(ctx context.Context, args []string) (int, error) {
 	if err != nil {
 		return Misused, err
 	}
+	spec, realization := p.SpecErrors(), p.RealizationErrors()
+	if specOnly {
+		realization = nil
+	}
+	total := len(spec) + len(realization)
 	if o.json {
-		errs := p.Errors
-		if errs == nil {
-			errs = model.Diagnostics{}
-		}
-		if err := c.printJSON(map[string]any{"ok": len(p.Errors) == 0, "errors": errs}); err != nil {
+		list := append(append(model.Diagnostics{}, spec...), realization...)
+		if err := c.printJSON(map[string]any{"ok": total == 0, "errors": list, "specErrors": len(spec), "realizationErrors": len(realization)}); err != nil {
 			return Misused, err
 		}
 	} else {
-		for _, d := range p.Errors {
-			fmt.Fprintln(c.Stdout, d.String())
+		if len(spec) > 0 {
+			fmt.Fprintf(c.Stdout, "In the spec, for the owner to settle:\n")
+			for _, d := range spec {
+				fmt.Fprintln(c.Stdout, d.String())
+			}
 		}
-		if len(p.Errors) == 0 {
+		if len(realization) > 0 {
+			fmt.Fprintf(c.Stdout, "In the realization, so spec and code do not match yet; markitect apply settles these:\n")
+			for _, d := range realization {
+				fmt.Fprintln(c.Stdout, d.String())
+			}
+		}
+		if total == 0 {
 			fmt.Fprintf(c.Stdout, "ok: %d Definitions in %d Packages, %d files accounted\n", len(p.Model.ModelDefinitions()), len(p.Model.Packages), len(p.Registry.Owner))
 		} else {
-			fmt.Fprintf(c.Stdout, "%d errors\n", len(p.Errors))
+			fmt.Fprintf(c.Stdout, "%d errors\n", total)
 		}
 	}
-	if len(p.Errors) > 0 {
+	if total > 0 {
 		return Failed, nil
 	}
 	return OK, nil
@@ -320,25 +323,39 @@ func (c CLI) impact(ctx context.Context, args []string) (int, error) {
 	var base, findings string
 	var full bool
 	fs := c.flags("impact", &o)
-	fs.StringVar(&base, "base", "", "the commit to compare the working tree with (required)")
+	fs.StringVar(&base, "base", "", "the commit to compare the working tree with (default: the work of the last landing)")
 	fs.BoolVar(&full, "full", false, "every Definition is reached and every Manager works")
 	fs.StringVar(&findings, "findings", "", "a Findings page whose Findings become checklist items")
 	if err := fs.Parse(args); err != nil {
 		return Misused, err
 	}
-	if fs.NArg() != 0 || base == "" {
-		return Misused, fmt.Errorf("needs --base COMMIT and takes no arguments")
+	if fs.NArg() != 0 {
+		return Misused, fmt.Errorf("takes no arguments")
 	}
 	ws, p, err := c.load(ctx, o)
 	if err != nil {
 		return Misused, err
 	}
-	if len(p.Errors) > 0 {
-		for _, d := range p.Errors {
+	if errs := p.SpecErrors(); len(errs) > 0 {
+		for _, d := range errs {
 			fmt.Fprintln(c.Stderr, d.String())
 		}
-		fmt.Fprintf(c.Stderr, "markitect impact: the project has %d compile errors; impact needs a model that compiles\n", len(p.Errors))
+		fmt.Fprintf(c.Stderr, "markitect impact: the spec has %d errors; impact needs a spec that compiles\n", len(errs))
 		return Failed, nil
+	}
+	if base == "" {
+		e, err := c.engine(ctx, o.repo)
+		if err != nil {
+			return Misused, err
+		}
+		landed, ok, err := e.LastBase(ctx, o.repo)
+		if err != nil {
+			return Misused, err
+		}
+		if !ok {
+			return Misused, fmt.Errorf("nothing has landed yet, so there is no default base; name one with --base")
+		}
+		base = landed
 	}
 	b, err := c.Git.Base(ctx, ws, base)
 	if err != nil {

@@ -22,11 +22,9 @@ const (
 	ItemStale = "stale"
 	// ItemUnlisted is a file a hand edit left out of the registry.
 	ItemUnlisted = "unlisted"
+	// ItemUnused is a Definition nothing links to and no file realizes.
+	ItemUnused = "unused"
 )
-
-// codeUnregistered is the compile error of a file the registry does not list:
-// at the start of a Command it is an item to settle, at the gate a refusal.
-const codeUnregistered = "file.unregistered"
 
 // Item is one checklist item with where to look. Its Key is what an answer
 // names; it holds no line break.
@@ -81,8 +79,11 @@ func checklist(imp analysis.Impact, before, cur *project.Project, findings []ana
 		items = append(items, Item{Key: "stale " + subject, Kind: ItemStale, Why: []string{fmt.Sprintf("%s on %s", s.Code, s.PageFile)}, Look: at})
 	}
 	for _, d := range cur.Errors {
-		if d.Code == codeUnregistered {
+		switch d.Code {
+		case project.CodeUnregistered:
 			items = append(items, Item{Key: "unlisted " + d.File, Kind: ItemUnlisted, Why: []string{"neither registered nor ignored"}, Look: []string{d.File}})
+		case project.CodeUnused:
+			items = append(items, Item{Key: "unused " + d.File, Kind: ItemUnused, Why: []string{d.Message}, Look: []string{d.File}})
 		}
 	}
 	return items
@@ -121,9 +122,9 @@ func mergeItems(earlier, rebuilt []Item) []Item {
 			out[i].Look = dedupe(append(out[i].Look, it.Look...))
 			continue
 		}
-		// An unlisted file or stale entry the work settled is gone from the
-		// project, and the gate has seen to it.
-		if it.Kind != ItemUnlisted && it.Kind != ItemStale {
+		// An unlisted file, stale entry or unused Definition the work settled is
+		// gone from the project, and check has seen to it.
+		if it.Kind != ItemUnlisted && it.Kind != ItemStale && it.Kind != ItemUnused {
 			out = append(out, it)
 		}
 	}

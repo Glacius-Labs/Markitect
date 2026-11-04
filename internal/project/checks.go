@@ -12,56 +12,68 @@ import (
 // Check is one required check of execution.yaml: the one proof in a Run that
 // does not come from an agent.
 type Check struct {
-	Name        string        `json:"name"`
-	Command     string        `json:"command"`     // run by sh -c
-	Directory   string        `json:"directory"`   // repository-relative, "." by default
-	Timeout     time.Duration `json:"timeout"`     // greater than zero
-	Environment string        `json:"environment"` // the container image the check runs in
+	Name      string        `json:"name"`
+	Command   string        `json:"command"`   // run by sh -c
+	Directory string        `json:"directory"` // repository-relative, "." by default
+	Timeout   time.Duration `json:"timeout"`   // greater than zero
 }
 
-// ParseChecks reads execution.yaml. It holds only the required checks.
-func ParseChecks(file string, data []byte) ([]Check, model.Diagnostics) {
+// Execution is what execution.yaml holds: the required checks, and the AI model
+// and effort a Run's sessions use, empty for the tool's default.
+type Execution struct {
+	Checks []Check
+	Model  string
+	Effort string
+}
+
+// ParseExecution reads execution.yaml.
+func ParseExecution(file string, data []byte) (Execution, model.Diagnostics) {
 	var ds model.Diagnostics
+	var out Execution
 	top, err := model.Mapping(data)
 	if err != nil {
 		ds.Add("execution.syntax", file, 0, "%v", err)
-		return nil, ds
+		return out, ds
 	}
 	for key, node := range top {
-		if key != "checks" {
-			ds.Add("execution.syntax", file, node.Line, "unknown key %q: execution.yaml holds only checks", key)
+		switch key {
+		case "checks":
+		case "model":
+			out.Model = strings.TrimSpace(node.Value)
+		case "effort":
+			out.Effort = strings.TrimSpace(node.Value)
+		default:
+			ds.Add("execution.syntax", file, node.Line, "unknown key %q: execution.yaml holds only checks, model and effort", key)
 		}
 	}
 	list := top["checks"]
 	if list == nil {
-		return nil, ds
+		return out, ds
 	}
 	if list.Kind != yaml.SequenceNode {
 		ds.Add("execution.syntax", file, list.Line, "checks must be a list")
-		return nil, ds
+		return out, ds
 	}
-	var checks []Check
 	names := map[string]bool{}
 	for _, item := range list.Content {
 		var raw struct {
-			Name        string `yaml:"name"`
-			Command     string `yaml:"command"`
-			Directory   string `yaml:"directory"`
-			Timeout     string `yaml:"timeout"`
-			Environment string `yaml:"environment"`
+			Name      string `yaml:"name"`
+			Command   string `yaml:"command"`
+			Directory string `yaml:"directory"`
+			Timeout   string `yaml:"timeout"`
 		}
 		if err := item.Decode(&raw); err != nil || item.Kind != yaml.MappingNode {
-			ds.Add("execution.syntax", file, item.Line, "each check is a mapping of name, command, directory, timeout and environment")
+			ds.Add("execution.syntax", file, item.Line, "each check is a mapping of name, command, directory and timeout")
 			continue
 		}
 		for i := 0; i+1 < len(item.Content); i += 2 {
 			switch k := item.Content[i]; k.Value {
-			case "name", "command", "directory", "timeout", "environment":
+			case "name", "command", "directory", "timeout":
 			default:
 				ds.Add("execution.syntax", file, k.Line, "unknown check key %q", k.Value)
 			}
 		}
-		c := Check{Name: raw.Name, Command: strings.TrimSpace(raw.Command), Directory: raw.Directory, Environment: strings.TrimSpace(raw.Environment)}
+		c := Check{Name: raw.Name, Command: strings.TrimSpace(raw.Command), Directory: raw.Directory}
 		if c.Directory == "" {
 			c.Directory = "."
 		}
@@ -77,13 +89,11 @@ func ParseChecks(file string, data []byte) ([]Check, model.Diagnostics) {
 			ds.Add("execution.syntax", file, item.Line, "check %s: directory must be repository-relative", c.Name)
 		case err != nil || timeout <= 0:
 			ds.Add("execution.syntax", file, item.Line, "check %s needs a timeout such as 10m", c.Name)
-		case c.Environment == "":
-			ds.Add("execution.syntax", file, item.Line, "check %s needs an environment: the container image it runs in", c.Name)
 		default:
 			c.Timeout = timeout
 			names[c.Name] = true
-			checks = append(checks, c)
+			out.Checks = append(out.Checks, c)
 		}
 	}
-	return checks, ds
+	return out, ds
 }

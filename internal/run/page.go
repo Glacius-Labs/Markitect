@@ -6,8 +6,7 @@ import (
 	"strings"
 )
 
-// Page renders the Result page (concept 3.0 §10) as Markdown: the one page a
-// Command writes at the end.
+// Page renders the Result page as Markdown: the one page a Run ends with.
 func Page(r *Result) []byte {
 	var b bytes.Buffer
 	fmt.Fprintf(&b, "# Run %s: %s\n\n", r.Run, r.State)
@@ -33,12 +32,8 @@ func Page(r *Result) []byte {
 	}
 	row("Began", r.Began.UTC().Format("2006-01-02 15:04:05 UTC"))
 	row("Ended", r.Ended.UTC().Format("2006-01-02 15:04:05 UTC"))
-	tokens := fmt.Sprintf("%d in, %d out", r.Usage.InputTokens, r.Usage.OutputTokens)
-	if r.Usage.Partial {
-		tokens = "at least " + tokens + ": a session reported no total, for example one the Command ended"
-	}
-	row("Tokens", tokens)
 	row("Full check", fullCheckLine(r))
+	row("Session failure", r.Failure)
 
 	if len(r.OwnerDecisions) > 0 {
 		b.WriteString("\n## Decisions for the owner\n\n")
@@ -61,9 +56,6 @@ func Page(r *Result) []byte {
 		}
 	}
 
-	b.WriteString("\n## How much checking happened\n\n")
-	writeDepth(&b, r)
-
 	b.WriteString("\n## What could not be tested\n\n")
 	notShown := 0
 	for _, it := range r.Items {
@@ -72,28 +64,24 @@ func Page(r *Result) []byte {
 			notShown++
 		}
 	}
-	switch {
-	case r.NotTested != "":
-		if notShown > 0 {
-			b.WriteString("\n")
-		}
-		fmt.Fprintf(&b, "The reviewer's closing words: %s\n", oneLine(r.NotTested))
-	case notShown == 0:
-		b.WriteString("No reviewer named anything.\n")
+	if notShown == 0 {
+		b.WriteString("No reviewer named anything. How much the reviewer really read is not measured.\n")
+	} else {
+		b.WriteString("\nHow much the reviewer really read is not measured.\n")
 	}
 
 	b.WriteString("\n## Required checks\n\n")
 	rc := r.RequiredChecks
 	switch {
 	case rc.Ran:
-		fmt.Fprintf(&b, "Ran and passed on the clean state of %s.\n", rc.Commit)
+		fmt.Fprintf(&b, "Ran and passed on a clean copy of %s.\n", rc.Commit)
 	case len(rc.Checks) > 0:
-		fmt.Fprintf(&b, "Ran on the clean state of %s and did not pass.\n", rc.Commit)
+		fmt.Fprintf(&b, "Ran on a clean copy of %s and did not pass.\n", rc.Commit)
 	default:
-		b.WriteString("Did not run.\n")
+		b.WriteString("None ran.\n")
 	}
-	if rc.Note != "" {
-		fmt.Fprintf(&b, "\n%s.\n", capitalize(rc.Note))
+	if len(r.FailingBefore) > 0 {
+		fmt.Fprintf(&b, "\nThese already failed before any work: %s.\n", strings.Join(r.FailingBefore, ", "))
 	}
 	if len(rc.Checks) > 0 {
 		b.WriteString("\n| Check | Passed | Exit | Seconds |\n|---|---|---|---|\n")
@@ -132,48 +120,7 @@ func Page(r *Result) []byte {
 			fmt.Fprintf(&b, "- %s\n", branch)
 		}
 	}
-	if len(r.Sessions) > 0 {
-		b.WriteString("\n## Sessions\n\n| Role | Round | Ended | Agent | Seconds | Detail |\n|---|---|---|---|---|---|\n")
-		for _, s := range r.Sessions {
-			ended := string(s.Reason)
-			if s.Class != "" {
-				ended += " (" + string(s.Class) + ")"
-			}
-			agent := s.Agent
-			if len(s.Models) > 1 {
-				agent += " (" + strings.Join(s.Models, ", ") + ")"
-			}
-			fmt.Fprintf(&b, "| %s | %d | %s | %s | %.0f | %s |\n", s.Role, s.Round, ended, cell(agent), s.Seconds, cell(s.Detail))
-		}
-	}
-	if len(r.Cleanup) > 0 || r.State == StateLanded {
-		b.WriteString("\n## Cleanup\n\n")
-		for _, c := range r.Cleanup {
-			fmt.Fprintf(&b, "- %s\n", oneLine(c))
-		}
-		if r.State == StateLanded {
-			b.WriteString("- After landing, the Command deletes this Run's branch and the replaced Run branches and removes its container; this page is part of the landing, so what that leaves is reported only by the command: on its standard error and as `afterLanding` in its JSON.\n")
-		}
-	}
 	return b.Bytes()
-}
-
-func writeDepth(b *bytes.Buffer, r *Result) {
-	d := r.Depth
-	if d.Pointers == 0 && d.FilesOpened == 0 && d.Commands == 0 {
-		b.WriteString("No review ran.\n")
-		return
-	}
-	if d.Measured {
-		fmt.Fprintf(b, "The transcripts show %d files opened, %d commands run and %d subagents started.", d.FilesOpened, d.Commands, d.Subagents)
-	} else {
-		b.WriteString("This provider's transcript shows no reads: not measured.")
-	}
-	fmt.Fprintf(b, " The answers name %d locations: %d shown opened, %d not measured.", d.Pointers, d.PointersOpened, d.PointersNotMeasured)
-	if d.RepeatedAnswers > 0 {
-		fmt.Fprintf(b, " %d answers repeat another's words and pointers.", d.RepeatedAnswers)
-	}
-	b.WriteString("\n")
 }
 
 func pointers(ps []Pointer) string {

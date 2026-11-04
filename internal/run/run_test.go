@@ -1,719 +1,995 @@
 package run_test
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
 	"os"
-	"path"
+	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
+	"time"
 
-	"github.com/Glacius-Labs/Markitect/internal/agentport"
-	"github.com/Glacius-Labs/Markitect/internal/analysis"
+	"github.com/Glacius-Labs/Markitect/internal/adapters/rungit"
+	"github.com/Glacius-Labs/Markitect/internal/libraries"
+	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
+func TestMain(m *testing.M) { testkit.Main(m) }
+
 const (
-	implementer = agentport.Implementer
-	reviewer    = agentport.Reviewer
-	bookFile    = "src/catalog/book.go"
-	bookFixed   = "package catalog\n\ntype Book struct{ Title, ISBN string }\n"
+	m     = project.ModelDir + "/"
+	table = "| File | Realizes | Why |\n|---|---|---|\n"
 )
 
-func answerOf(r *run.Result, item string) string {
-	for _, it := range r.Items {
-		if it.Item == item {
-			return it.Answer
+func def(kind, title, body string) string {
+	return "---\nkind: " + kind + "\n---\n# " + title + "\n\n" + body + "\n"
+}
+
+// library is the fixture project: Root with a Rule, members with a sub-Package
+// loans, and catalog, with every file accounted for.
+func library() map[string]string {
+	files, _ := libraries.Files("std")
+	std := model.LibrarySource{Name: "std", Version: libraries.Version}
+	for _, f := range files {
+		std.Files = append(std.Files, model.File{Path: f.Path, Data: f.Data})
+	}
+	return map[string]string{
+		project.ManifestFile:                      "libraries:\n  std: 1.0.0\n",
+		project.LockFile:                          string(model.RenderLock([]model.LibrarySource{std})),
+		project.ChecksFile:                        "checks:\n  - name: test\n    command: go test ./...\n    timeout: 1m\n",
+		project.IgnoreFile:                        "| Path | Why |\n|---|---|\n| `.gitignore` | Git's own |\n",
+		m + "project.md":                          def("std/Project", "Library", "Parts: [[members]], [[catalog]]."),
+		m + "loan-limit.md":                       def("std/Rule", "Loan limit", "At most `5` open loans."),
+		m + "members/member.md":                   def("std/Concept", "Member", "A person."),
+		m + "members/loans/loan.md":               def("std/Concept", "Loan", "A [[members/member]] borrows."),
+		m + "catalog/book.md":                     def("std/Concept", "Book", "A book has a title."),
+		project.RootPage:                          table + "| README.md | [[project]] | Overview |\n",
+		project.RegistryDir + "/members.md":       "---\npaths: [src/members/**]\n---\n" + table + "| src/members/member.go | [[members/member]] | Member |\n",
+		project.RegistryDir + "/members/loans.md": "---\npaths: [src/members/loans/**]\n---\n" + table + "| src/members/loans/loan.go | [[members/loans/loan]], [[loan-limit]] | Loans |\n",
+		project.RegistryDir + "/catalog.md":       "---\npaths: [src/catalog/**]\n---\n" + table + "| src/catalog/book.go | [[catalog/book]] | Book |\n",
+		"README.md":                               "# Library\n",
+		"src/members/member.go":                   "package members\n",
+		"src/members/loans/loan.go":               "package loans\n\nconst Limit = 5\n",
+		"src/catalog/book.go":                     "package catalog\n",
+		".gitignore":                              ".claude/worktrees/\n",
+	}
+}
+
+// sessions is the provider without a model: it makes the worktree the provider
+// would make, and the test plays the agent.
+type sessions struct {
+	t       *testing.T
+	repo    *testkit.Repo
+	started []run.SessionSpec
+	state   run.SessionState
+	stopped []string
+	resumed int
+}
+
+func (s *sessions) Start(_ context.Context, spec run.SessionSpec) (string, error) {
+	s.started = append(s.started, spec)
+	s.repo.Git("worktree", "add", "-q", "-b", "worktree-"+spec.Run, filepath.Join(s.repo.Dir, ".claude", "worktrees", spec.Run), "HEAD")
+	return fmt.Sprintf("s%d", len(s.started)), nil
+}
+
+func (s *sessions) Resume(_ context.Context, id string, _ run.SessionSpec) (string, error) {
+	s.resumed++
+	return id + "r", nil
+}
+
+func (s *sessions) State(context.Context, string) (run.SessionState, error) { return s.state, nil }
+
+func (s *sessions) Stop(_ context.Context, id string) error {
+	s.stopped = append(s.stopped, id)
+	return nil
+}
+
+func (s *sessions) Remove(context.Context, string) error { return nil }
+
+// checks fails or cannot start on demand, and counts its runs.
+type checks struct {
+	fail, notRun bool
+	runs         int
+	seen         []string
+}
+
+func (c *checks) Run(_ context.Context, dir string, list []project.Check) []run.CheckResult {
+	c.runs++
+	files, _ := filepath.Glob(filepath.Join(dir, "*"))
+	for _, f := range files {
+		c.seen = append(c.seen, filepath.Base(f))
+	}
+	var out []run.CheckResult
+	for _, ch := range list {
+		switch {
+		case c.notRun:
+			out = append(out, run.CheckResult{Name: ch.Name, NotRun: true, Exit: 127, Output: "no such program"})
+		case c.fail:
+			out = append(out, run.CheckResult{Name: ch.Name, Exit: 1, Output: "FAIL something"})
+		default:
+			out = append(out, run.CheckResult{Name: ch.Name, Passed: true})
 		}
+		break
 	}
-	return "absent"
+	return out
 }
 
-func TestApplyLandsAndTheWorkIsTheNextBase(t *testing.T) {
-	f := newFixture(t)
-	base, start := changeBook(f)
-	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
-	f.agents.on(reviewer, f.answer(nil, "I could not test the printing."))
-
-	r := f.run(run.Request{Base: base})
-	if r.Outcome != run.Landed || r.State != run.StateLanded {
-		t.Fatalf("%s/%s: %s", r.Outcome, r.State, r.Why)
-	}
-	if got := f.tip("main"); got != r.Landed {
-		t.Fatalf("main is at %s, the Result says it landed %s", got, r.Landed)
-	}
-	if !strings.Contains(f.show("main", bookFile), "ISBN") {
-		t.Fatal("the work did not land")
-	}
-	page := f.show("main", project.ResultsDir+"/"+r.Run+".md")
-	for _, want := range []string{"# Run " + r.Run + ": landed", "catalog/book", "README.md:1", "How much checking happened", "I could not test the printing"} {
-		if !strings.Contains(page, want) {
-			t.Fatalf("the Result page lacks %q:\n%s", want, page)
-		}
-	}
-	if r.Start != start || r.Base != base || r.Work == "" {
-		t.Fatalf("base %s start %s work %s", r.Base, r.Start, r.Work)
-	}
-	if got := answerOf(r, "catalog/book"); got != run.AnswerOK {
-		t.Fatalf("catalog/book: %s", got)
-	}
-	if !r.RequiredChecks.Ran || r.RequiredChecks.Commit != r.Work {
-		t.Fatalf("required checks %+v", r.RequiredChecks)
-	}
-	if f.tip(run.RunBranchPrefix+r.Run) != "" || r.Branch != "" {
-		t.Fatal("the landed Run's branch was not deleted")
-	}
-	if r.Depth.FilesOpened != 1 || r.Depth.PointersOpened != 1 {
-		t.Fatalf("depth %+v", r.Depth)
-	}
-	// The landed work is the default base of the next Command, and nothing
-	// changed since.
-	again := f.run(run.Request{})
-	if work := strings.TrimSpace(testkit.Git(t, f.target, "rev-parse", r.Landed+"^")); again.State != run.StateNothing || again.Base != work {
-		t.Fatalf("next Command %s from %s: %s", again.State, again.Base, again.Why)
-	}
-	// Commits that land beside it stay unrealized for the next impact.
-	f.pull()
-	f.write(map[string]string{m + "members/member.md": def("std/Concept", "Member", "A person with a card.")})
-	f.commit("member has a card")
-	f.agents.on(implementer, f.edit(map[string]string{"src/members/member.go": "package members\n\ntype Member struct{ Card string }\n"}))
-	f.agents.on(reviewer, f.ok())
-	if next := f.run(run.Request{}); next.State != run.StateLanded || answerOf(next, "members/member") != run.AnswerOK {
-		t.Fatalf("the next change: %s: %s; items %+v", next.State, next.Why, next.Items)
-	}
+type fixture struct {
+	t        *testing.T
+	repo     *testkit.Repo
+	first    string
+	engine   *run.Engine
+	sessions *sessions
+	checks   *checks
+	now      time.Time
 }
 
-// The prompt carries the fixed part and the list; the reviewer starts outside
-// its clean copy, so nothing the work committed there is discovered from where
-// it starts, and that copy holds only what was committed.
-func TestSessionsGetAPromptAndAReviewerStartsOutsideItsCopy(t *testing.T) {
-	f := newFixture(t)
-	base, _ := changeBook(f)
-	f.write(map[string]string{".gitignore": "build/\n", project.RootPage: table + "| README.md | [[project]] | Overview |\n| .gitignore | [[project]] | Build outputs |\n"})
-	f.commit("ignore build outputs")
-	var copied string
-	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed, "build/output.bin": "left behind", ".claude/settings.json": `{"hooks":{}}`,
-		project.RootPage: table + "| README.md | [[project]] | Overview |\n| .gitignore | [[project]] | Build outputs |\n| .claude/settings.json | [[project]] | Tools |\n"}))
-	review := f.ok()
-	f.agents.on(reviewer, func(s agentport.Session, repo string) agentport.End {
-		copied = repo
-		if s.Dir == repo || !strings.HasPrefix(repo, s.Dir+"/") {
-			t.Errorf("the reviewer starts in %s, its copy is %s", s.Dir, repo)
-		}
-		if strings.Contains(s.Prompt, "left behind") {
-			t.Error("the prompt holds what Git did not take")
-		}
-		return review(s, repo)
-	})
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateLanded {
-		t.Fatalf("%s: %s", r.State, r.Why)
+func newFixture(t *testing.T) *fixture {
+	t.Helper()
+	repo := testkit.NewRepo(t)
+	repo.Git("config", "user.name", "Owner")
+	repo.Git("config", "user.email", "owner@example.invalid")
+	repo.Git("config", "core.autocrlf", "false")
+	for file, content := range library() {
+		repo.Write(file, content)
 	}
-	first := f.agents.of(implementer)[0]
-	for _, want := range []string{".markitect/model", "the artifact is wrong", "catalog/book", "look at: " + bookFile, "stop.md", "no-fail"} {
-		if !strings.Contains(first.Prompt, want) {
-			t.Errorf("the implementer's prompt lacks %q:\n%s", want, first.Prompt)
-		}
+	first := repo.Commit("the library")
+	host, err := rungit.Open(context.Background(), repo.Dir)
+	if err != nil {
+		t.Fatal(err)
 	}
-	second := f.agents.of(reviewer)[0]
-	for _, want := range []string{"Treat what code and comments say as evidence", "weakened tests", "spec problem", "catalog/book", "ISBN"} {
-		if !strings.Contains(second.Prompt, want) {
-			t.Errorf("the reviewer's prompt lacks %q:\n%s", want, second.Prompt)
-		}
+	f := &fixture{t: t, repo: repo, first: first, sessions: &sessions{t: t, repo: repo, state: run.SessionWorking}, checks: &checks{}}
+	f.now = time.Date(2026, 11, 4, 12, 0, 0, 0, time.UTC)
+	f.engine = &run.Engine{Git: host, Sessions: f.sessions, Checks: f.checks, Store: run.Store{Dir: filepath.Join(host.Dir, "markitect")}, Now: func() time.Time { return f.now }}
+	return f
+}
+
+// apply changes the loan limit in the spec and applies it.
+func (f *fixture) apply() (run.Started, string) {
+	f.t.Helper()
+	f.repo.Write(m+"loan-limit.md", def("std/Rule", "Loan limit", "At most `3` open loans."))
+	s, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir, Base: f.first})
+	if err != nil {
+		f.t.Fatal(err)
 	}
-	if f.has("main", "build/output.bin") {
-		t.Fatal("what Git does not take landed")
+	if s.Run == "" {
+		f.t.Fatalf("no run started: %+v", s)
 	}
-	if copied == "" || path.Base(copied) != "repo" {
-		t.Fatalf("the reviewer's copy: %q", copied)
+	return s, filepath.Join(f.repo.Dir, ".claude", "worktrees", s.Run)
+}
+
+// applyFull is the same with nothing landed yet, so that every Definition is on
+// the list.
+func (f *fixture) applyFull() (run.Started, string) {
+	f.t.Helper()
+	f.repo.Write(m+"loan-limit.md", def("std/Rule", "Loan limit", "At most `3` open loans."))
+	s, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir})
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	if s.Run == "" {
+		f.t.Fatalf("no run started: %+v", s)
+	}
+	return s, filepath.Join(f.repo.Dir, ".claude", "worktrees", s.Run)
+}
+
+func (f *fixture) state(name string) *run.RunState {
+	f.t.Helper()
+	st, ok, err := f.engine.Store.Load(name)
+	if err != nil || !ok {
+		f.t.Fatalf("run %s: %v %v", name, ok, err)
+	}
+	return st
+}
+
+func write(t *testing.T, dir, file, content string) {
+	t.Helper()
+	p := filepath.Join(dir, filepath.FromSlash(file))
+	if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(p, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
 	}
 }
 
-func TestNothingAffectedStartsNoAgent(t *testing.T) {
-	f := newFixture(t)
-	r := f.run(run.Request{Base: f.tip("main")})
-	if r.State != run.StateNothing || len(f.agents.sessions) != 0 {
-		t.Fatalf("%s, %d sessions", r.State, len(f.agents.sessions))
+func (f *fixture) submit(wt string) run.Verdict {
+	f.t.Helper()
+	v, err := f.engine.Submit(context.Background(), wt)
+	if err != nil {
+		f.t.Fatal(err)
 	}
+	return v
 }
 
-func TestARealSpecErrorStartsNoAgent(t *testing.T) {
-	f := newFixture(t)
-	base := f.tip("main")
-	f.write(map[string]string{m + "catalog/book.md": def("std/Concept", "Book", "See [[catalog/nothing]].")})
-	f.commit("a broken link")
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateCheckFailed || len(f.agents.sessions) != 0 || r.Outcome != run.NotLanded {
-		t.Fatalf("%s: %s; %d sessions", r.State, r.Why, len(f.agents.sessions))
-	}
-}
-
-// A file a hand edit left unlisted does not stop the Command: it becomes an
-// item, and the gate requires it to be settled by the end.
-func TestAnUnlistedFileBecomesAnItemTheGateSettles(t *testing.T) {
-	f := newFixture(t)
-	base := f.tip("main")
-	f.write(map[string]string{"src/catalog/notes.txt": "by hand\n"})
-	f.commit("a hand edit")
-	page := project.RegistryDir + "/catalog.md"
-	f.agents.on(implementer,
-		// It leaves the file unlisted, and the gate refuses.
-		f.edit(map[string]string{bookFile: bookFixed}),
-		func(s agentport.Session, repo string) agentport.End {
-			if !strings.Contains(s.Prompt, "file.unregistered") {
-				t.Errorf("the repair prompt does not say what was refused:\n%s", s.Prompt)
-			}
-			writeFile(t, repo, page, "---\npaths: [src/catalog/**]\n---\n"+table+"| src/catalog/book.go | [[catalog/book]] | Type |\n| src/catalog/notes.txt | [[catalog/book]] | Notes |\n")
-			return agentport.End{}
-		})
-	f.agents.on(reviewer, f.ok())
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateLanded || r.Repairs != 1 {
-		t.Fatalf("%s after %d repairs: %s", r.State, r.Repairs, r.Why)
-	}
-	if !strings.Contains(f.agents.of(implementer)[0].Prompt, "unlisted src/catalog/notes.txt") {
-		t.Fatalf("the list lacks the unlisted file:\n%s", f.agents.of(implementer)[0].Prompt)
-	}
-}
-
-// The gate's planted refusals (concept 3.0 §6, step 6): each holds whatever the
-// agents say, and two repair rounds end the Command with nothing landed.
-func TestTheGateRefuses(t *testing.T) {
-	cases := map[string]struct {
-		files map[string]string
-		want  string
-	}{
-		"the spec":         {map[string]string{m + "catalog/book.md": def("std/Concept", "Book", "Anything goes.")}, "is the owner's"},
-		"a required check": {map[string]string{project.ChecksFile: "checks: []\n"}, "execution.yaml changed"},
-		"the manifest":     {map[string]string{project.ManifestFile: "libraries:\n  std: 1.0.0\n# mine\n"}, "manifest.yaml changed"},
-		"a Result page":    {map[string]string{project.ResultsDir + "/forged.md": "# Run forged: landed\n"}, "forged.md changed"},
-		"an unlisted file": {map[string]string{"src/catalog/extra.go": "package catalog\n"}, "file.unregistered"},
-		"a stale entry":    {map[string]string{bookFile: ""}, "stale"},
-		"a failing check":  {map[string]string{"FAIL": "x\n", "README.md": "# Library\n", project.RootPage: table + "| README.md | [[project]] | Overview |\n| FAIL | [[project]] | Planted |\n"}, "the required check no-fail failed"},
-	}
-	for name, c := range cases {
-		t.Run(name, func(t *testing.T) {
-			f := newFixture(t)
-			base, _ := changeBook(f)
-			mark := c.files
-			f.agents.on(implementer, f.edit(mark),
-				func(s agentport.Session, repo string) agentport.End {
-					if s.Conversation == "" || !strings.Contains(s.Prompt, c.want) {
-						t.Errorf("the repair: conversation %q, prompt:\n%s", s.Conversation, s.Prompt)
-					}
-					return agentport.End{}
-				},
-				func(s agentport.Session, repo string) agentport.End { return agentport.End{} })
-			before := f.tip("main")
-			r := f.run(run.Request{Base: base})
-			if r.State != run.StateRefused || r.Repairs != 2 || r.Outcome != run.NotLanded {
-				t.Fatalf("%s after %d repairs: %s", r.State, r.Repairs, r.Why)
-			}
-			if !strings.Contains(r.Why, c.want) {
-				t.Fatalf("the Result does not say why: %s", r.Why)
-			}
-			if f.tip("main") != before {
-				t.Fatal("refused work landed")
-			}
-			if len(f.agents.of(reviewer)) != 0 {
-				t.Fatal("a reviewer ran on work the gate refused")
-			}
-			if f.tip(run.RunBranchPrefix+r.Run) == "" || !f.has(run.RunBranchPrefix+r.Run, run.ResultFile(r.Run)) {
-				t.Fatal("the work and its Result are not on the Run's branch")
-			}
-		})
-	}
-}
-
-// A required check that could not start stops the Command as an environment
-// failure and uses no repair round.
-func TestACheckThatCannotRunIsTheEnvironments(t *testing.T) {
-	f := newFixture(t)
-	base, _ := changeBook(f)
-	f.box.notRun = true
-	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateIncomplete || r.Repairs != 0 || !strings.Contains(r.Why, "could not start") {
-		t.Fatalf("%s after %d repairs: %s", r.State, r.Repairs, r.Why)
-	}
-	if len(f.agents.of(implementer)) != 1 {
-		t.Fatal("an environment failure went back to the implementer")
-	}
-}
-
-// A wrong answer goes back to the implementer, who continues its session; the
-// next review answers what is open and what the diff touched, and other answers
-// stand.
-func TestWrongGoesBackAndOtherAnswersStand(t *testing.T) {
-	f := newFixture(t)
-	base := f.tip("main")
-	f.write(map[string]string{
-		m + "catalog/book.md":   def("std/Concept", "Book", "A book has a title and an `isbn`."),
-		m + "members/member.md": def("std/Concept", "Member", "A person with a card."),
-	})
-	f.commit("two changes")
-	f.agents.on(implementer,
-		f.edit(map[string]string{bookFile: "package catalog\n\ntype Book struct{ Title string }\n", "src/members/member.go": "package members\n\ntype Member struct{ Card string }\n"}),
-		func(s agentport.Session, repo string) agentport.End {
-			if s.Conversation != "implementer-1" || !strings.Contains(s.Prompt, "no isbn") {
-				t.Errorf("the repair: conversation %q, prompt:\n%s", s.Conversation, s.Prompt)
-			}
-			writeFile(t, repo, bookFile, bookFixed)
-			return agentport.End{}
-		})
-	f.agents.on(reviewer,
-		f.answer(map[string]string{"catalog/book": "wrong  README.md:1 -- no isbn"}, ""),
-		f.ok())
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateLanded || r.Repairs != 1 {
-		t.Fatalf("%s after %d repairs: %s", r.State, r.Repairs, r.Why)
-	}
-	second := f.agents.of(reviewer)[1]
-	if got := listed(second.Prompt); len(got) != 1 || got[0] != "catalog/book" {
-		t.Fatalf("the second review answers %v", got)
-	}
-	if !strings.Contains(second.Prompt, "no isbn") {
-		t.Fatalf("the second review does not get the finding:\n%s", second.Prompt)
-	}
-	if answerOf(r, "members/member") != run.AnswerOK || answerOf(r, "catalog/book") != run.AnswerOK {
-		t.Fatalf("items %+v", r.Items)
-	}
-	if page := f.show("main", run.ResultFile(r.Run)); !strings.Contains(page, "## Repair rounds") || !strings.Contains(page, "no isbn") {
-		t.Fatalf("the page does not say what went back:\n%s", page)
-	}
-}
-
-func TestWrongThatStaysEndsTheCommandUnlanded(t *testing.T) {
-	f := newFixture(t)
-	base, _ := changeBook(f)
-	still := f.answer(map[string]string{"catalog/book": "wrong  README.md:1 -- still no isbn"}, "")
-	f.agents.on(implementer, f.edit(map[string]string{bookFile: "package catalog\n\n// a\n"}), f.edit(map[string]string{bookFile: "package catalog\n\n// b\n"}), f.edit(map[string]string{bookFile: "package catalog\n\n// c\n"}))
-	f.agents.on(reviewer, still, still, still)
-	before := f.tip("main")
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateRefused || f.tip("main") != before || answerOf(r, "catalog/book") != run.AnswerWrong {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-}
-
-// An implementer may stop: the note says why, nothing lands, and the Result puts
-// the matter to the owner.
-func TestAnImplementerStopPutsTheSpecToTheOwner(t *testing.T) {
-	f := newFixture(t)
-	base, _ := changeBook(f)
-	f.agents.on(implementer, func(s agentport.Session, repo string) agentport.End {
-		writeAbsolute(t, noteIn(t, s.Prompt), "The limit says 3 and its example 5.\n")
-		return agentport.End{}
-	})
-	before := f.tip("main")
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateSpecProblem || f.tip("main") != before || len(f.agents.of(reviewer)) != 0 {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-	if len(r.OwnerDecisions) != 1 || !strings.Contains(r.OwnerDecisions[0].Matter, "says 3") {
-		t.Fatalf("decisions %+v", r.OwnerDecisions)
-	}
-}
-
-func TestASpecProblemAnswerEndsTheCommand(t *testing.T) {
-	f := newFixture(t)
-	base, _ := changeBook(f)
-	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
-	f.agents.on(reviewer, f.answer(map[string]string{"catalog/book": "spec problem -- the title rule contradicts its example"}, ""))
-	before := f.tip("main")
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateSpecProblem || f.tip("main") != before || len(r.OwnerDecisions) != 1 {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-}
-
-// An empty diff with no stop is not a failure: the work goes on to review.
-func TestAnEmptyDiffGoesToReview(t *testing.T) {
-	f := newFixture(t)
-	base, start := changeBook(f)
-	f.agents.on(implementer, f.edit(nil))
-	f.agents.on(reviewer, f.ok())
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateLanded || r.Work != start {
-		t.Fatalf("%s, work %s: %s", r.State, r.Work, r.Why)
-	}
-}
-
-// not shown lands, and the Result lists it.
-func TestNotShownLandsAndIsListed(t *testing.T) {
-	f := newFixture(t)
-	base, _ := changeBook(f)
-	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
-	f.agents.on(reviewer, f.answer(map[string]string{"catalog/book": "not shown -- nothing exercises the isbn"}, ""))
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateLanded {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-	page := f.show("main", run.ResultFile(r.Run))
-	if !strings.Contains(page, "catalog/book: nothing exercises the isbn") {
-		t.Fatalf("the Result does not list it:\n%s", page)
-	}
-}
-
-// Every check of the answers refuses a planted bad answer, once corrected it
-// passes, and uncorrected nothing lands (U2).
-func TestTheCommandChecksTheAnswers(t *testing.T) {
-	cases := map[string]struct {
-		line string
-		want string
-	}{
-		"no answer":         {"", "has no answer"},
-		"no pointer":        {"ok", "ok needs a pointer"},
-		"a missing file":    {"ok  src/nothing.go:1", "does not exist in this commit"},
-		"a missing line":    {"ok  README.md:99", "has no line 99"},
-		"a missing test":    {"ok  README.md:1 (TestNothing)", "names no test TestNothing"},
-		"a file not opened": {"ok  src/catalog/book.go:1", "the transcript shows no read of src/catalog/book.go"},
-		"no explanation":    {"wrong  README.md:1", "needs an explanation"},
-	}
-	for name, c := range cases {
-		t.Run(name+" corrected", func(t *testing.T) {
-			f := newFixture(t)
-			base, _ := changeBook(f)
-			f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
-			first := f.answer(map[string]string{"catalog/book": c.line}, "")
-			f.agents.on(reviewer, first, func(s agentport.Session, repo string) agentport.End {
-				if s.Conversation == "" || !strings.Contains(s.Prompt, c.want) {
-					t.Errorf("the correction: conversation %q, prompt:\n%s", s.Conversation, s.Prompt)
-				}
-				writeAbsolute(t, f.box.last.NotePath(agentport.ReviewerUser(1), "answers.md"), "catalog/book: ok  README.md:1\n")
-				return agentport.End{Seen: agentport.Seen{Measured: true, Opened: []string{"README.md"}}}
-			})
-			r := f.run(run.Request{Base: base})
-			if r.State != run.StateLanded {
-				t.Fatalf("%s: %s", r.State, r.Why)
-			}
-		})
-		t.Run(name+" uncorrected", func(t *testing.T) {
-			f := newFixture(t)
-			base, _ := changeBook(f)
-			f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
-			f.agents.on(reviewer, f.answer(map[string]string{"catalog/book": c.line}, ""), func(agentport.Session, string) agentport.End { return agentport.End{} })
-			before := f.tip("main")
-			r := f.run(run.Request{Base: base})
-			if r.State != run.StateIncomplete || f.tip("main") != before || !strings.Contains(r.Why, c.want) {
-				t.Fatalf("%s: %s", r.State, r.Why)
-			}
-			if len(f.agents.of(reviewer)) != 2 {
-				t.Fatalf("%d reviewer sessions: one request to correct it", len(f.agents.of(reviewer)))
-			}
-		})
-	}
-}
-
-// A reviewer's remark in brackets is no test's name, and a range is a location.
-func TestAPointerMayHoldARemarkOrARange(t *testing.T) {
-	f := newFixture(t)
-	base, _ := changeBook(f)
-	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
-	f.agents.on(reviewer, f.answer(map[string]string{"catalog/book": "ok  README.md:1-1 (the title, and more), README.md:1"}, ""))
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateLanded {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-	for _, it := range r.Items {
-		if it.Item == "catalog/book" && (len(it.Pointers) != 2 || len(it.Pointers[0].Tests) != 0 || it.Pointers[0].Line != 1) {
-			t.Fatalf("pointers %+v", it.Pointers)
+func has(t *testing.T, text string, wants ...string) {
+	t.Helper()
+	for _, w := range wants {
+		if !strings.Contains(text, w) {
+			t.Fatalf("%q not in:\n%s", w, text)
 		}
 	}
 }
 
-// A transcript that cannot show a read says "not measured", and refuses nothing.
-func TestAReadAShellCommandHidesIsNotMeasured(t *testing.T) {
+// answer answers every item of the review with a word, except where words says
+// otherwise, the way a reviewer does.
+func (f *fixture) answer(wt string, name string, except map[string]string) string {
+	f.t.Helper()
+	st := f.state(name)
+	var lines []string
+	for _, it := range st.Review.Items {
+		line, ok := except[it.Key]
+		if !ok {
+			line = "ok README.md:1"
+		}
+		lines = append(lines, it.Key+": "+line)
+	}
+	text, _, err := f.engine.Answer(context.Background(), wt, []byte(strings.Join(lines, "\n")))
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	return text
+}
+
+// A change lands through the door with nobody driving: the checks, the review,
+// and the owner's branch moved forward, with the Result in the landing commit.
+func TestAChangeLands(t *testing.T) {
 	f := newFixture(t)
-	base, _ := changeBook(f)
-	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
-	answer := f.answer(map[string]string{"catalog/book": "ok  " + bookFile + ":1"}, "")
-	f.agents.on(reviewer, func(s agentport.Session, repo string) agentport.End {
-		end := answer(s, repo)
-		end.Seen = agentport.Seen{Measured: true, Commands: []string{"cat src/catalog/*.go"}}
-		return end
+	s, wt := f.apply()
+	has(t, s.Text, s.Run, "keep modeling")
+	if got := f.repo.Git("log", "-1", "--format=%s"); !strings.Contains(got, "as markitect apply found it") {
+		t.Fatalf("the spec was not committed: %s", got)
+	}
+	if status := f.repo.Git("status", "--porcelain"); status != "" {
+		t.Fatalf("the owner's folder is not clean: %s", status)
+	}
+
+	list, err := f.engine.Checklist(context.Background(), wt, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	has(t, list, "Make this project match the spec", "loan-limit", "src/members/loans/loan.go", "do not commit")
+
+	write(t, wt, "src/members/loans/loan.go", "package loans\n\nconst Limit = 3\n")
+	v := f.submit(wt)
+	has(t, v.Text, "markitect-reviewer", "Review run "+s.Run)
+	if v.Done {
+		t.Fatal("submit closed the run before a review")
+	}
+	if status := testkit.Git(t, wt, "status", "--porcelain"); status != "" {
+		t.Fatalf("submit left the worktree dirty: %s", status)
+	}
+	review, err := f.engine.Checklist(context.Background(), wt, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	has(t, review, "owe it no benefit of the doubt", "markitect answer", "loan-limit")
+
+	has(t, f.answer(wt, s.Run, nil), "every item has an answer")
+	v = f.submit(wt)
+	if !v.Done {
+		t.Fatalf("did not land: %s", v.Text)
+	}
+	has(t, v.Text, "Landed on")
+
+	st := f.state(s.Run)
+	if st.Open || st.State != run.StateLanded || st.Landed == "" {
+		t.Fatalf("state: %+v", st)
+	}
+	if head := f.repo.Git("rev-parse", "HEAD"); head != st.Landed {
+		t.Fatalf("the owner's branch is at %s, not %s", head, st.Landed)
+	}
+	data, err := os.ReadFile(filepath.Join(f.repo.Dir, ".markitect", "results", s.Run+".md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	has(t, string(data), "landed", "not measured")
+	got, err := os.ReadFile(filepath.Join(f.repo.Dir, "src", "members", "loans", "loan.go"))
+	if err != nil || !strings.Contains(string(got), "Limit = 3") {
+		t.Fatalf("the work is not in the owner's folder: %s %v", got, err)
+	}
+
+	// The next apply has nothing to do, and removes the worktree.
+	next, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if next.State != run.StateNothing {
+		t.Fatalf("next apply: %+v", next)
+	}
+	if _, err := os.Stat(wt); !os.IsNotExist(err) {
+		t.Fatalf("the worktree remains: %v", err)
+	}
+	if len(f.sessions.started) != 1 {
+		t.Fatalf("sessions: %+v", f.sessions.started)
+	}
+}
+
+func TestApplyStopsBeforeAnyAgent(t *testing.T) {
+	t.Run("an error in the spec", func(t *testing.T) {
+		f := newFixture(t)
+		f.repo.Write(m+"loan-limit.md", def("std/Rule", "Loan limit", "See [[nothing/here]]."))
+		s, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir, Base: f.first})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if s.State != run.StateCheckFailed || len(f.sessions.started) != 0 {
+			t.Fatalf("%+v %+v", s, f.sessions.started)
+		}
+		has(t, s.Text, "errors", "nothing/here")
 	})
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateLanded || r.Depth.PointersNotMeasured != 1 || r.Depth.Commands != 1 {
-		t.Fatalf("%s, depth %+v: %s", r.State, r.Depth, r.Why)
-	}
-}
-
-// A location the registry does not list for the item is reported, and refuses
-// nothing.
-func TestAPointerOutsideTheRegistryIsAPossibleMissingLink(t *testing.T) {
-	f := newFixture(t)
-	base, _ := changeBook(f)
-	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
-	f.agents.on(reviewer, f.ok())
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateLanded || len(r.MissingLinks) != 1 || !strings.Contains(r.MissingLinks[0], "README.md") {
-		t.Fatalf("%s, links %v", r.State, r.MissingLinks)
-	}
-}
-
-func TestProviderFailureEndsTheCommand(t *testing.T) {
-	f := newFixture(t)
-	base, _ := changeBook(f)
-	f.agents.on(implementer, func(agentport.Session, string) agentport.End {
-		return agentport.End{Reason: agentport.Failed, Class: agentport.RateLimit, Detail: "429"}
+	t.Run("a change outside the spec", func(t *testing.T) {
+		f := newFixture(t)
+		f.repo.Write("README.md", "# Changed by hand\n")
+		s, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir, Base: f.first})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if s.State != run.StateCheckFailed || len(f.sessions.started) != 0 {
+			t.Fatalf("%+v", s)
+		}
+		has(t, s.Text, "README.md", "not committed")
 	})
-	before := f.tip("main")
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateIncomplete || f.tip("main") != before || r.Sessions[0].Class != agentport.RateLimit {
-		t.Fatalf("%s: %s; %+v", r.State, r.Why, r.Sessions)
-	}
-}
-
-// Moved target, nothing in the impact touched: the clean merge passes the gate
-// and lands, and the next impact still holds what merged in.
-func TestAMovedTargetLandsACleanMerge(t *testing.T) {
-	f := newFixture(t)
-	base, _ := changeBook(f)
-	review := f.ok()
-	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
-	f.agents.on(reviewer, func(s agentport.Session, repo string) agentport.End {
-		f.pull()
-		f.write(map[string]string{"README.md": "# Library, moved\n"})
-		f.commit("beside the Run")
-		return review(s, repo)
+	t.Run("nothing to do", func(t *testing.T) {
+		f := newFixture(t)
+		s, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir, Base: f.first})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if s.State != run.StateNothing || len(f.sessions.started) != 0 {
+			t.Fatalf("%+v", s)
+		}
 	})
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateLanded || !strings.Contains(r.Why, "clean merge") {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-	if !strings.Contains(f.show("main", bookFile), "ISBN") || !strings.Contains(f.show("main", "README.md"), "moved") {
-		t.Fatal("the merge lost a side")
-	}
-	if r.RequiredChecks.Commit == r.Work {
-		t.Fatal("the required checks did not run on the merged state")
-	}
-	f.agents.on(implementer, f.edit(nil))
-	f.agents.on(reviewer, f.ok())
-	if next := f.run(run.Request{}); answerOf(next, "project") == "absent" {
-		t.Fatalf("what merged in dropped out of the next impact: %s %+v", next.State, next.Items)
-	}
-}
-
-// Moved target that touches the impact: the work stays on its branch.
-func TestAMovedTargetThatTouchesTheImpactKeepsTheWork(t *testing.T) {
-	f := newFixture(t)
-	base, _ := changeBook(f)
-	review := f.ok()
-	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
-	f.agents.on(reviewer, func(s agentport.Session, repo string) agentport.End {
-		f.pull()
-		f.write(map[string]string{m + "catalog/book.md": def("std/Concept", "Book", "A book has a title and an `ean`.")})
-		f.commit("the same Definition, beside the Run")
-		return review(s, repo)
+	t.Run("detached HEAD", func(t *testing.T) {
+		f := newFixture(t)
+		f.repo.Git("checkout", "-q", "--detach")
+		if _, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir, Base: f.first}); err == nil {
+			t.Fatal("apply ran on a detached HEAD")
+		}
 	})
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateKept || r.Outcome != run.NotLanded || f.tip(run.RunBranchPrefix+r.Run) == "" {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-	if !strings.Contains(f.show(run.RunBranchPrefix+r.Run, run.ResultFile(r.Run)), "impact") {
-		t.Fatal("the Result does not say why")
-	}
 }
 
-// Moved target whose merge fails a required check: the gate on the merged state
-// refuses it.
-func TestTheGateRunsOnTheMergedState(t *testing.T) {
-	f := newFixture(t)
-	base, _ := changeBook(f)
-	review := f.ok()
-	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
-	f.agents.on(reviewer, func(s agentport.Session, repo string) agentport.End {
-		f.pull()
-		f.write(map[string]string{"FAIL": "x\n", project.RootPage: table + "| README.md | [[project]] | Overview |\n| FAIL | [[project]] | Planted |\n"})
-		f.commit("breaks the check, beside the Run")
-		return review(s, repo)
-	})
-	r := f.run(run.Request{Base: base})
-	if r.State != run.StateKept || !strings.Contains(r.Why, "merged state") {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-}
-
-func TestLandingRefusesTheTokenAndALoginFile(t *testing.T) {
-	for name, files := range map[string]map[string]string{
-		"the token":    {bookFile: "package catalog\n\n// sk-ant-oat01-planted\n"},
-		"a login file": {".credentials.json": "{}\n", project.RootPage: table + "| README.md | [[project]] | Overview |\n| .credentials.json | [[project]] | Planted |\n"},
+// Row 1 of submit: what a Run may not change.
+func TestSubmitRefusesProtectedFiles(t *testing.T) {
+	for file, want := range map[string]string{
+		m + "loan-limit.md":                    "is the owner's",
+		project.ChecksFile:                     "is the owner's",
+		".claude/skills/markitect-apply/x.md":  "harness",
+		".claude/agents/markitect-reviewer.md": "harness",
 	} {
-		t.Run(name, func(t *testing.T) {
+		t.Run(file, func(t *testing.T) {
 			f := newFixture(t)
-			f.engine.Secrets = [][]byte{[]byte("sk-ant-oat01-planted")}
-			base, _ := changeBook(f)
-			f.agents.on(implementer, f.edit(files))
-			f.agents.on(reviewer, f.ok())
-			before := f.tip("main")
-			r := f.run(run.Request{Base: base})
-			if r.State != run.StateKept || f.tip("main") != before {
-				t.Fatalf("%s: %s", r.State, r.Why)
+			s, wt := f.apply()
+			write(t, wt, file, "changed\n")
+			v := f.submit(wt)
+			has(t, v.Text, want)
+			if v.Done || f.state(s.Run).Review != nil {
+				t.Fatalf("not refused: %s", v.Text)
 			}
 		})
 	}
 }
 
-func TestVerifyChangesNothingAndEndsWithFindings(t *testing.T) {
+// Row 3: check, of the spec and the realization.
+func TestSubmitRefusesWhatCheckRefuses(t *testing.T) {
 	f := newFixture(t)
-	base, start := changeBook(f)
-	f.agents.on(reviewer, f.answer(map[string]string{"catalog/book": "wrong  README.md:1 -- the book has no isbn"}, ""))
-	r := f.run(run.Request{Mode: agentport.Verify, Base: base})
-	if r.State != run.StateFindings || f.tip("main") != start || len(f.agents.of(implementer)) != 0 {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-	if len(r.Findings) != 1 || r.Findings[0].Definition != "catalog/book" || !strings.Contains(r.Findings[0].Observed, "no isbn") {
-		t.Fatalf("findings %+v", r.Findings)
-	}
-	if !r.RequiredChecks.Ran {
-		t.Fatalf("required checks %+v", r.RequiredChecks)
-	}
-	if !f.has(run.RunBranchPrefix+r.Run, run.ResultFile(r.Run)) {
-		t.Fatal("verify's Result is not on its branch")
-	}
-	list, errs := analysis.ParseFindings("f.md", run.FindingsPage(r))
-	if len(errs) > 0 || len(list) != 1 {
-		t.Fatalf("the Findings page reads back as %+v, %v", list, errs)
-	}
-	// Those Findings are apply's items.
-	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
-	f.agents.on(reviewer, f.ok())
-	fixed := f.run(run.Request{Base: start, Findings: list})
-	if fixed.State != run.StateLanded || answerOf(fixed, "finding 1 catalog/book") != run.AnswerOK {
-		t.Fatalf("%s: %+v", fixed.State, fixed.Items)
-	}
-}
+	_, wt := f.apply()
+	write(t, wt, "src/members/stray.go", "package members\n")
+	has(t, f.submit(wt).Text, "markitect check fails", "src/members/stray.go")
 
-// With --full, one reviewer per Package, side by side, each with its own copy
-// and only its own items; the count of changes starts again.
-func TestAFullCheckIsOneReviewerPerPackage(t *testing.T) {
-	f := newFixture(t)
-	f.agents.on(reviewer, f.ok(), f.ok(), f.ok(), f.ok())
-	r := f.run(run.Request{Mode: agentport.Verify, Full: true})
-	if r.State != run.StateVerified {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-	sessions := f.agents.of(reviewer)
-	if len(sessions) != 4 {
-		t.Fatalf("%d reviewers for 4 Packages", len(sessions))
-	}
-	dirs, seen := map[string]bool{}, map[string]int{}
-	for _, s := range sessions {
-		dirs[s.Dir] = true
-		for _, k := range listed(s.Prompt) {
-			seen[k]++
-		}
-	}
-	if len(dirs) != 4 {
-		t.Fatalf("the reviewers share copies: %v", dirs)
-	}
-	for k, n := range seen {
-		if n != 1 {
-			t.Fatalf("%s is on %d lists", k, n)
-		}
-	}
-	if len(r.Items) != len(seen) || r.FullCheck.Since != r.Start || r.FullCheck.Landed != 0 {
-		t.Fatalf("items %d of %d; full check %+v", len(r.Items), len(seen), r.FullCheck)
-	}
-}
-
-func TestOneReviewerGetsAFullChecksWholeList(t *testing.T) {
-	f := newFixture(t)
-	f.agents.on(reviewer, f.ok())
-	r := f.run(run.Request{Mode: agentport.Verify, Full: true, OneReviewer: true})
-	if r.State != run.StateVerified {
-		t.Fatalf("%s: %s", r.State, r.Why)
-	}
-	sessions := f.agents.of(reviewer)
-	if len(sessions) != 1 {
-		t.Fatalf("%d reviewers", len(sessions))
-	}
-	if n := len(listed(sessions[0].Prompt)); n != len(r.Items) || n == 0 {
-		t.Fatalf("%d items on the list of %d", n, len(r.Items))
-	}
-}
-
-// The count of changes across Commands, from the target's landing commits and
-// Run branches: a landing counts, a verify --full starts the count again at the
-// commit it examined, and the next landing carries that forward.
-func TestTheFullCheckCountAcrossCommands(t *testing.T) {
-	f := newFixture(t)
-	base, _ := changeBook(f)
-	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
-	f.agents.on(reviewer, f.ok())
-	first := f.run(run.Request{Base: base})
-	if fc := first.FullCheck; first.State != run.StateLanded || fc.Landed != 1 || fc.Since != "" || fc.Due {
-		t.Fatalf("first landing %s: %+v", first.State, fc)
-	}
-	if page := f.show("main", run.ResultFile(first.Run)); !strings.Contains(page, "1 change landed since the first landing") {
-		t.Fatalf("first page:\n%s", page)
-	}
-	f.agents.on(reviewer, f.ok(), f.ok(), f.ok(), f.ok())
-	check := f.run(run.Request{Mode: agentport.Verify, Full: true})
-	if fc := check.FullCheck; check.State != run.StateVerified || fc.Landed != 0 || fc.Since != check.Start {
-		t.Fatalf("verify --full %s: %+v", check.State, fc)
-	}
-	f.pull()
-	f.write(map[string]string{m + "catalog/book.md": def("std/Concept", "Book", "A book has a title, an `isbn` and an author.")})
-	f.commit("an author")
-	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed + "\n// author\n"}))
-	f.agents.on(reviewer, f.ok())
-	second := f.run(run.Request{})
-	if fc := second.FullCheck; second.State != run.StateLanded || fc.Landed != 1 || fc.Since != check.Start {
-		t.Fatalf("second landing %s: %+v", second.State, fc)
-	}
-}
-
-// A later landing that covers a kept Run's impact deletes its branch.
-func TestALandingDeletesTheKeptRunBranchItCovers(t *testing.T) {
-	f := newFixture(t)
-	base, _ := changeBook(f)
-	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
-	f.agents.on(reviewer, f.answer(map[string]string{"catalog/book": "spec problem -- it needs the owner"}, ""))
-	kept := f.run(run.Request{Base: base})
-	if kept.State != run.StateSpecProblem || f.tip(run.RunBranchPrefix+kept.Run) == "" {
-		t.Fatalf("%s: %s", kept.State, kept.Why)
-	}
-	f.agents.on(implementer, f.edit(map[string]string{bookFile: bookFixed}))
-	f.agents.on(reviewer, f.ok())
-	landed := f.run(run.Request{Base: base})
-	if landed.State != run.StateLanded || len(landed.Replaced) != 1 || f.tip(run.RunBranchPrefix+kept.Run) != "" {
-		t.Fatalf("%s, replaced %v", landed.State, landed.Replaced)
-	}
-}
-
-func TestARequestTheEngineCannotRun(t *testing.T) {
-	f := newFixture(t)
-	if _, err := f.engine.Run(t.Context(), run.Request{Mode: agentport.Apply, Target: "main", Base: "no-such-commit"}); err == nil {
-		t.Fatal("an unknown base ran")
-	}
-	if _, err := f.engine.Run(t.Context(), run.Request{Mode: agentport.Apply, Target: "main"}); err == nil {
-		t.Fatal("no base and no landing ran")
-	}
-	if _, err := f.engine.Run(t.Context(), run.Request{Mode: agentport.Apply, Target: "main", Run: "Not A Name"}); err == nil {
-		t.Fatal("a bad name ran")
-	}
-}
-
-// noteIn reads the path of the stop note out of a prompt.
-func noteIn(t *testing.T, prompt string) string {
-	t.Helper()
-	const mark = "stop: write why to "
-	i := strings.Index(prompt, mark)
-	if i < 0 {
-		t.Fatalf("the prompt names no stop note:\n%s", prompt)
-	}
-	rest := prompt[i+len(mark):]
-	return rest[:strings.Index(rest, " and end")]
-}
-
-func writeAbsolute(t *testing.T, file, content string) {
-	t.Helper()
-	if err := os.MkdirAll(path.Dir(file), 0o755); err != nil {
+	if err := os.Remove(filepath.Join(wt, "src", "members", "stray.go")); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(file, []byte(content), 0o644); err != nil {
+	if err := os.Remove(filepath.Join(wt, "src", "catalog", "book.go")); err != nil {
 		t.Fatal(err)
+	}
+	has(t, f.submit(wt).Text, "markitect check fails", "stale.file", "src/catalog/book.go")
+}
+
+// Rows 4 and 5: required checks, once per state when they pass.
+func TestSubmitRunsRequiredChecks(t *testing.T) {
+	f := newFixture(t)
+	s, wt := f.apply()
+	f.checks.fail = true
+	has(t, f.submit(wt).Text, "required check test failed", "FAIL something")
+	// A failure runs again, since it may be flaky.
+	before := f.checks.runs
+	has(t, f.submit(wt).Text, "required check test failed")
+	if f.checks.runs != before+1 {
+		t.Fatalf("a failing check did not run again: %d", f.checks.runs)
+	}
+	f.checks.fail = false
+	has(t, f.submit(wt).Text, "markitect-reviewer")
+	// A pass is kept for the state.
+	before = f.checks.runs
+	has(t, f.submit(wt).Text, "items have no answer")
+	if f.checks.runs != before {
+		t.Fatalf("a passing check ran again: %d", f.checks.runs)
+	}
+	if f.state(s.Run).Open != true {
+		t.Fatal("closed")
+	}
+}
+
+func TestACheckThatCannotStartEndsTheRun(t *testing.T) {
+	t.Run("before the work", func(t *testing.T) {
+		f := newFixture(t)
+		s, wt := f.apply()
+		f.checks.notRun = true
+		list, err := f.engine.Checklist(context.Background(), wt, false)
+		if err != nil {
+			t.Fatal(err)
+		}
+		has(t, list, "could not start", "Nothing lands")
+		st := f.state(s.Run)
+		if st.Open || st.State != run.StateIncomplete || st.Kept == "" {
+			t.Fatalf("%+v", st)
+		}
+	})
+	t.Run("at submit", func(t *testing.T) {
+		f := newFixture(t)
+		s, wt := f.apply()
+		f.checks.notRun = true
+		v := f.submit(wt)
+		if !v.Done || f.state(s.Run).Repairs != 0 {
+			t.Fatalf("%+v", v)
+		}
+		has(t, v.Text, "could not start")
+	})
+	t.Run("a check that fails before the work only says so", func(t *testing.T) {
+		f := newFixture(t)
+		s, wt := f.apply()
+		f.checks.fail = true
+		list, err := f.engine.Checklist(context.Background(), wt, false)
+		if err != nil {
+			t.Fatal(err)
+		}
+		has(t, list, "already fail before any work: test")
+		f.checks.fail = false
+		f.submit(wt)
+		f.answer(wt, s.Run, nil)
+		f.submit(wt)
+		data, err := os.ReadFile(filepath.Join(f.repo.Dir, ".markitect", "results", s.Run+".md"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		has(t, string(data), "already failed before any work: test")
+	})
+}
+
+// The answers: a bad one is refused at once, and nothing of that call is stored.
+func TestAnswerRefusesWhatItCannotAccept(t *testing.T) {
+	f := newFixture(t)
+	s, wt := f.applyFull()
+	f.submit(wt)
+	has(t, f.answer(wt, s.Run, map[string]string{"loan-limit": "ok nosuch/file.go:1"}), "not accepted", "does not exist")
+	if got := f.state(s.Run).Review.Answered; len(got) != 0 {
+		t.Fatalf("stored: %+v", got)
+	}
+	has(t, f.answer(wt, s.Run, map[string]string{"loan-limit": "ok README.md:99"}), "has no line 99")
+	has(t, f.answer(wt, s.Run, map[string]string{"loan-limit": "wrong README.md:1"}), "needs an explanation")
+	text, complete, err := f.engine.Answer(context.Background(), wt, []byte("project: ok README.md:1\n"))
+	if err != nil || complete {
+		t.Fatalf("%v %v", complete, err)
+	}
+	has(t, text, "still have no answer")
+}
+
+// Row 2: a reviewer's leftover is not new work, and listing it as the work is the
+// implementer's call.
+func TestLeftoversDoNotInvalidateAReview(t *testing.T) {
+	f := newFixture(t)
+	s, wt := f.apply()
+	f.submit(wt)
+	f.answer(wt, s.Run, nil)
+	write(t, wt, "out.log", "left by a test run\n")
+	v := f.submit(wt)
+	has(t, v.Text, "out.log", "List them on the registry if they are the work, otherwise remove them")
+	if v.Done {
+		t.Fatal("landed with a leftover")
+	}
+	if err := os.Remove(filepath.Join(wt, "out.log")); err != nil {
+		t.Fatal(err)
+	}
+	if v := f.submit(wt); !v.Done {
+		t.Fatalf("did not land after the leftover went: %s", v.Text)
+	}
+	if st := f.state(s.Run); st.State != run.StateLanded {
+		t.Fatalf("%+v", st)
+	}
+}
+
+// Row 8: wrong answers go back, one round per reviewed state, and a repair
+// review asks only about what its diff touched.
+func TestRepairRounds(t *testing.T) {
+	f := newFixture(t)
+	s, wt := f.applyFull()
+	f.submit(wt)
+	wrong := map[string]string{"loan-limit": "wrong src/members/loans/loan.go:3 -- still says 5"}
+	f.answer(wt, s.Run, wrong)
+	v := f.submit(wt)
+	has(t, v.Text, "repair round 1 of 2", "still says 5")
+	// Calling again without a change uses no further round.
+	has(t, f.submit(wt).Text, "repair round 1 of 2")
+	if got := f.state(s.Run).Repairs; got != 1 {
+		t.Fatalf("repairs %d", got)
+	}
+
+	write(t, wt, "src/members/loans/loan.go", "package loans\n\nconst Limit = 3\n")
+	has(t, f.submit(wt).Text, "markitect-reviewer")
+	st := f.state(s.Run)
+	var keys []string
+	for _, it := range st.Review.Items {
+		keys = append(keys, it.Key)
+	}
+	sort.Strings(keys)
+	if got := strings.Join(keys, ","); !strings.Contains(got, "loan-limit") || strings.Contains(got, "catalog/book") {
+		t.Fatalf("a repair review asks about %s", got)
+	}
+	review, err := f.engine.Checklist(context.Background(), wt, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	has(t, review, "An earlier review", "still says 5")
+
+	// Second round, then the third wrong answer closes the run.
+	f.answer(wt, s.Run, wrong)
+	has(t, f.submit(wt).Text, "repair round 2 of 2")
+	write(t, wt, "src/members/loans/loan.go", "package loans\n\nconst Limit = 4\n")
+	has(t, f.submit(wt).Text, "markitect-reviewer")
+	f.answer(wt, s.Run, wrong)
+	v = f.submit(wt)
+	if !v.Done {
+		t.Fatalf("not closed: %s", v.Text)
+	}
+	st = f.state(s.Run)
+	if st.Open || st.State != run.StateRefused || st.Kept == "" {
+		t.Fatalf("%+v", st)
+	}
+	if tip := f.repo.Git("rev-parse", st.Kept); tip == "" {
+		t.Fatal("the work is not kept")
+	}
+	if f.repo.Git("rev-parse", "HEAD") == f.repo.Git("rev-parse", st.Kept) {
+		t.Fatal("the owner's branch moved")
+	}
+}
+
+// Row 7: a spec problem ends the run, ahead of any wrong answer, with no round.
+func TestASpecProblemEndsTheRun(t *testing.T) {
+	f := newFixture(t)
+	s, wt := f.applyFull()
+	f.submit(wt)
+	f.answer(wt, s.Run, map[string]string{
+		"loan-limit": "spec problem -- the limit contradicts the loan page",
+		"project":    "wrong README.md:1 -- says nothing",
+	})
+	v := f.submit(wt)
+	if !v.Done {
+		t.Fatalf("%s", v.Text)
+	}
+	st := f.state(s.Run)
+	if st.State != run.StateSpecProblem || st.Repairs != 0 {
+		t.Fatalf("%+v", st)
+	}
+	page := f.repo.Git("show", st.Kept+":.markitect/results/"+s.Run+".md")
+	has(t, page, "Decisions for the owner", "contradicts")
+}
+
+func TestOwnerBranchMoved(t *testing.T) {
+	ready := func(f *fixture) (string, string) {
+		s, wt := f.apply()
+		write(t, wt, "src/members/loans/loan.go", "package loans\n\nconst Limit = 3\n")
+		f.submit(wt)
+		f.answer(wt, s.Run, nil)
+		return s.Run, wt
+	}
+	t.Run("a clean merge lands", func(t *testing.T) {
+		f := newFixture(t)
+		name, wt := ready(f)
+		f.repo.Write("README.md", "# Library, by hand\n")
+		f.repo.Commit("a hand change beside the run")
+		v := f.submit(wt)
+		if !v.Done {
+			t.Fatalf("%s", v.Text)
+		}
+		st := f.state(name)
+		if st.State != run.StateLanded {
+			t.Fatalf("%+v", st)
+		}
+		if parents := strings.Fields(f.repo.Git("log", "-1", "--format=%P", "HEAD~1")); len(parents) != 2 {
+			t.Fatalf("no merge below the Result: %v", parents)
+		}
+		// The hand change stays unrealized for the next impact.
+		base, ok, err := f.engine.LastBase(context.Background(), f.repo.Dir)
+		if err != nil || !ok {
+			t.Fatal(err, ok)
+		}
+		changed := f.repo.Git("diff", "--name-only", base, "HEAD")
+		has(t, changed, "README.md")
+	})
+	t.Run("a conflict keeps the work, and the next apply tries once more", func(t *testing.T) {
+		f := newFixture(t)
+		name, wt := ready(f)
+		f.repo.Write("src/members/loans/loan.go", "package loans\n\nconst Limit = 9\n")
+		f.repo.Commit("a hand change that conflicts")
+		v := f.submit(wt)
+		if !v.Done {
+			t.Fatalf("%s", v.Text)
+		}
+		has(t, v.Text, "conflicts", "next apply")
+		st := f.state(name)
+		if st.State != run.StateKept || !st.RetryLanding {
+			t.Fatalf("%+v", st)
+		}
+		// The conflict is still there, so a fresh run starts and the flag is spent.
+		f.repo.Write(m+"loan-limit.md", def("std/Rule", "Loan limit", "At most `2` open loans."))
+		s2, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir, Base: f.first})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if s2.Run == "" || f.state(name).RetryLanding {
+			t.Fatalf("%+v %+v", s2, f.state(name))
+		}
+		if f.repo.Git("rev-parse", st.Kept) == "" {
+			t.Fatal("the kept work is gone")
+		}
+	})
+	t.Run("uncommitted edits that overlap keep the work", func(t *testing.T) {
+		f := newFixture(t)
+		name, wt := ready(f)
+		f.repo.Write("src/members/loans/loan.go", "package loans\n\n// being edited\n")
+		v := f.submit(wt)
+		if !v.Done {
+			t.Fatalf("%s", v.Text)
+		}
+		has(t, v.Text, "uncommitted edits")
+		if st := f.state(name); st.State != run.StateKept {
+			t.Fatalf("%+v", st)
+		}
+		got, err := os.ReadFile(filepath.Join(f.repo.Dir, "src", "members", "loans", "loan.go"))
+		if err != nil || !strings.Contains(string(got), "being edited") {
+			t.Fatalf("the owner's edit is gone: %s %v", got, err)
+		}
+	})
+	t.Run("uncommitted edits elsewhere stay and the work lands", func(t *testing.T) {
+		f := newFixture(t)
+		name, wt := ready(f)
+		f.repo.Write(m+"members/member.md", def("std/Concept", "Member", "A person, being modeled."))
+		v := f.submit(wt)
+		if !v.Done {
+			t.Fatalf("%s", v.Text)
+		}
+		if st := f.state(name); st.State != run.StateLanded {
+			t.Fatalf("%+v", st)
+		}
+		got, err := os.ReadFile(filepath.Join(f.repo.Dir, ".markitect", "model", "members", "member.md"))
+		if err != nil || !strings.Contains(string(got), "being modeled") {
+			t.Fatalf("the owner's edit is gone: %s %v", got, err)
+		}
+	})
+}
+
+func TestOneRunPerBranch(t *testing.T) {
+	f := newFixture(t)
+	s, _ := f.apply()
+	again, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if again.State != "open" || again.Run != s.Run || len(f.sessions.started) != 1 {
+		t.Fatalf("%+v", again)
+	}
+	has(t, again.Text, "still working")
+}
+
+func TestApplyResumesADeadRun(t *testing.T) {
+	f := newFixture(t)
+	s, _ := f.apply()
+	f.sessions.state = run.SessionEnded
+	again, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if again.Run != s.Run || f.sessions.resumed != 1 || f.state(s.Run).Session != "s1r" {
+		t.Fatalf("%+v %d %s", again, f.sessions.resumed, f.state(s.Run).Session)
+	}
+	has(t, again.Text, "resumed")
+}
+
+func TestStop(t *testing.T) {
+	t.Run("by the owner ends the session first and keeps the work", func(t *testing.T) {
+		f := newFixture(t)
+		s, wt := f.apply()
+		write(t, wt, "src/members/loans/loan.go", "package loans\n\nconst Limit = 3\n")
+		text, err := f.engine.Stop(context.Background(), f.repo.Dir, "changed my mind")
+		if err != nil {
+			t.Fatal(err)
+		}
+		has(t, text, "without landing")
+		if len(f.sessions.stopped) != 1 {
+			t.Fatalf("session not stopped: %v", f.sessions.stopped)
+		}
+		st := f.state(s.Run)
+		if st.Open || st.State != run.StateStopped {
+			t.Fatalf("%+v", st)
+		}
+		has(t, f.repo.Git("show", st.Kept+":src/members/loans/loan.go"), "Limit = 3")
+	})
+	t.Run("by the session is a question for the owner", func(t *testing.T) {
+		f := newFixture(t)
+		s, wt := f.apply()
+		if _, err := f.engine.Stop(context.Background(), wt, "the limit contradicts the loan page"); err != nil {
+			t.Fatal(err)
+		}
+		st := f.state(s.Run)
+		if st.State != run.StateSpecProblem || len(f.sessions.stopped) != 0 {
+			t.Fatalf("%+v %v", st, f.sessions.stopped)
+		}
+		has(t, f.repo.Git("show", st.Kept+":.markitect/results/"+s.Run+".md"), "Decisions for the owner", "contradicts the loan page")
+		has(t, f.submit(wt).Text, "closed")
+	})
+}
+
+func hookInput(t *testing.T, v map[string]any) []byte {
+	t.Helper()
+	data, err := json.Marshal(v)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return data
+}
+
+func TestStopHook(t *testing.T) {
+	f := newFixture(t)
+	s, _ := f.apply()
+	ctx := context.Background()
+	out := f.engine.Hook(ctx, run.HookStop, s.Run, hookInput(t, map[string]any{}))
+	has(t, string(out), `"decision":"block"`, "markitect submit")
+	// Waiting for a reviewer is no reason to send it back.
+	if out := f.engine.Hook(ctx, run.HookStop, s.Run, hookInput(t, map[string]any{"background_tasks": []map[string]any{{"id": "a"}}})); len(out) != 0 {
+		t.Fatalf("blocked a wait: %s", out)
+	}
+	for i := 0; i < 4; i++ {
+		if out := f.engine.Hook(ctx, run.HookStop, s.Run, hookInput(t, map[string]any{})); len(out) == 0 {
+			t.Fatalf("block %d let it end", i)
+		}
+	}
+	// The sixth closes the run, and lets the session end.
+	if out := f.engine.Hook(ctx, run.HookStop, s.Run, hookInput(t, map[string]any{})); len(out) != 0 {
+		t.Fatalf("not let go: %s", out)
+	}
+	st := f.state(s.Run)
+	if st.Open || st.State != run.StateIncomplete {
+		t.Fatalf("%+v", st)
+	}
+	// A closed run lets everything through.
+	if out := f.engine.Hook(ctx, run.HookStop, s.Run, hookInput(t, map[string]any{})); len(out) != 0 {
+		t.Fatalf("%s", out)
+	}
+}
+
+func TestStopHookCountStartsAgainAtSubmit(t *testing.T) {
+	f := newFixture(t)
+	s, wt := f.apply()
+	ctx := context.Background()
+	for round := 0; round < 3; round++ {
+		for i := 0; i < 5; i++ {
+			if out := f.engine.Hook(ctx, run.HookStop, s.Run, hookInput(t, map[string]any{})); len(out) == 0 {
+				t.Fatalf("round %d block %d let it end", round, i)
+			}
+		}
+		f.submit(wt)
+	}
+	if !f.state(s.Run).Open {
+		t.Fatal("closed")
+	}
+}
+
+func TestPreToolHook(t *testing.T) {
+	f := newFixture(t)
+	s, _ := f.apply()
+	ctx := context.Background()
+	call := func(agent, command string) string {
+		return string(f.engine.Hook(ctx, run.HookPreTool, s.Run, hookInput(t, map[string]any{
+			"agent_type": agent, "tool_name": "Bash", "tool_input": map[string]any{"command": command},
+		})))
+	}
+	has(t, call("", "markitect answer <<'EOF'\nx\nEOF"), `"permissionDecision":"deny"`, run.ReviewerAgent)
+	has(t, call("general-purpose", "cd . && markitect answer f.txt"), `"permissionDecision":"deny"`)
+	if out := call(run.ReviewerAgent, "markitect answer f.txt"); out != "" {
+		t.Fatalf("refused the reviewer: %s", out)
+	}
+	if out := call("", "go test ./..."); out != "" {
+		t.Fatalf("%s", out)
+	}
+	// Past the deadline the session is stopped and the run closes.
+	f.now = f.now.Add(7 * time.Hour)
+	has(t, call("", "go test ./..."), `"continue":false`)
+	if st := f.state(s.Run); st.Open || st.State != run.StateIncomplete {
+		t.Fatalf("%+v", st)
+	}
+}
+
+func TestStopFailureHookIsRecorded(t *testing.T) {
+	f := newFixture(t)
+	s, _ := f.apply()
+	f.engine.Hook(context.Background(), run.HookStopFailure, s.Run, hookInput(t, map[string]any{"error": "rate_limit"}))
+	st := f.state(s.Run)
+	if st.Failure != "rate_limit" || !st.Open {
+		t.Fatalf("%+v", st)
+	}
+	f.sessions.state = run.SessionEnded
+	has(t, f.engine.Notice(context.Background(), f.repo.Dir), "stopped working", "rate_limit")
+	status, err := f.engine.Status(context.Background(), f.repo.Dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	has(t, status, "rate_limit", "resumes it")
+}
+
+func TestSubmitCeiling(t *testing.T) {
+	f := newFixture(t)
+	s, wt := f.apply()
+	f.checks.fail = true
+	var last run.Verdict
+	for i := 0; i < 31; i++ {
+		last = f.submit(wt)
+	}
+	if !last.Done {
+		t.Fatalf("not closed: %s", last.Text)
+	}
+	if st := f.state(s.Run); st.State != run.StateRefused {
+		t.Fatalf("%+v", st)
+	}
+}
+
+func TestDeadlineAtSubmit(t *testing.T) {
+	f := newFixture(t)
+	s, wt := f.apply()
+	f.now = f.now.Add(7 * time.Hour)
+	if v := f.submit(wt); !v.Done {
+		t.Fatalf("%s", v.Text)
+	}
+	if st := f.state(s.Run); st.State != run.StateIncomplete {
+		t.Fatalf("%+v", st)
+	}
+}
+
+func TestNoticeTellsOnce(t *testing.T) {
+	f := newFixture(t)
+	s, wt := f.apply()
+	f.submit(wt)
+	f.answer(wt, s.Run, nil)
+	f.submit(wt)
+	ctx := context.Background()
+	has(t, f.engine.Notice(ctx, f.repo.Dir), s.Run, "landed")
+	if again := f.engine.Notice(ctx, f.repo.Dir); again != "" {
+		t.Fatalf("told twice: %s", again)
+	}
+	if inside := f.engine.Notice(ctx, wt); inside != "" {
+		t.Fatalf("told inside the run: %s", inside)
+	}
+}
+
+func TestVerify(t *testing.T) {
+	start := func(t *testing.T) (*fixture, string, string) {
+		f := newFixture(t)
+		s, err := f.engine.Verify(context.Background(), run.Request{Dir: f.repo.Dir})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if s.Run == "" {
+			t.Fatalf("%+v", s)
+		}
+		if got := f.sessions.started[0].Agent; got != run.ReviewerAgent {
+			t.Fatalf("agent %q", got)
+		}
+		return f, s.Run, filepath.Join(f.repo.Dir, ".claude", "worktrees", s.Run)
+	}
+	t.Run("clean", func(t *testing.T) {
+		f, name, wt := start(t)
+		before := f.repo.Git("rev-parse", "HEAD")
+		has(t, f.submit(wt).Text, "no answer yet")
+		has(t, f.answer(wt, name, nil), "markitect submit")
+		v := f.submit(wt)
+		if !v.Done {
+			t.Fatalf("%s", v.Text)
+		}
+		st := f.state(name)
+		if st.State != run.StateVerified || st.Kept == "" {
+			t.Fatalf("%+v", st)
+		}
+		if f.repo.Git("rev-parse", "HEAD") != before || f.repo.Git("status", "--porcelain") != "" {
+			t.Fatal("verify changed what the owner has")
+		}
+		has(t, f.repo.Git("log", "-1", "--format=%B", st.Kept), "Run-Command: verify", "Run-Full: true")
+	})
+	t.Run("findings and failing checks", func(t *testing.T) {
+		f, name, wt := start(t)
+		f.answer(wt, name, map[string]string{"loan-limit": "wrong src/members/loans/loan.go:3 -- says 5"})
+		f.checks.fail = true
+		v := f.submit(wt)
+		if !v.Done {
+			t.Fatalf("%s", v.Text)
+		}
+		st := f.state(name)
+		if st.State != run.StateFindings {
+			t.Fatalf("%+v", st)
+		}
+		page := f.repo.Git("show", st.Kept+":.markitect/results/"+name+".md")
+		has(t, page, "Findings", "[[loan-limit]]", "says 5")
+		has(t, st.Why, "required check test failed")
+	})
+	t.Run("a check that cannot start is only noted", func(t *testing.T) {
+		f, name, wt := start(t)
+		f.answer(wt, name, nil)
+		f.checks.notRun = true
+		if v := f.submit(wt); !v.Done {
+			t.Fatalf("%s", v.Text)
+		}
+		st := f.state(name)
+		if st.State != run.StateFindings {
+			t.Fatalf("%+v", st)
+		}
+		has(t, st.Why, "could not start")
+	})
+	t.Run("does not hold the branch", func(t *testing.T) {
+		f, _, _ := start(t)
+		f.repo.Write(m+"loan-limit.md", def("std/Rule", "Loan limit", "At most `3` open loans."))
+		s, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir, Base: f.first})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if s.State != "" || s.Run == "" {
+			t.Fatalf("%+v", s)
+		}
+	})
+}
+
+func TestStoreLockIsTakenOverWhenItsProcessHasGone(t *testing.T) {
+	store := run.Store{Dir: testkit.TempDir(t)}
+	release, err := store.TrySubmitLock("r1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.TrySubmitLock("r1"); err != run.ErrBusy {
+		t.Fatalf("a held lock was taken: %v", err)
+	}
+	if !store.SubmitRunning("r1") {
+		t.Fatal("a held lock does not show")
+	}
+	release()
+	if store.SubmitRunning("r1") {
+		t.Fatal("a released lock shows")
+	}
+	// A lock left by a process that no longer exists.
+	if err := os.MkdirAll(filepath.Join(store.Dir, "runs"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(store.Dir, "runs", "r2.submit.lock"), []byte("999999999\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	release, err = store.TrySubmitLock("r2")
+	if err != nil {
+		t.Fatalf("the stale lock was not taken over: %v", err)
+	}
+	release()
+}
+
+func TestFullWhenNothingHasLanded(t *testing.T) {
+	f := newFixture(t)
+	f.repo.Write(m+"loan-limit.md", def("std/Rule", "Loan limit", "At most `3` open loans."))
+	s, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	st := f.state(s.Run)
+	if !st.Full || len(st.Items) < 5 {
+		t.Fatalf("%+v", st)
 	}
 }

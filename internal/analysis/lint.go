@@ -53,46 +53,15 @@ func Lint(p *project.Project) model.Diagnostics {
 			ds.Add("lint.unstable_dependency", u.File, u.Line, "%s (instability %.2f) depends on the less stable %s (instability %.2f); dependencies should point towards stability", model.PackageName(e.From), from.Instability, model.PackageName(e.To), to.Instability)
 		}
 	}
-	incoming := map[string]bool{}
-	for _, d := range m.Definitions {
-		for _, l := range d.Links {
-			if l.Target != d.ID {
-				incoming[l.Target] = true
-			}
-		}
-	}
-	realized := map[string]bool{}
-	for _, e := range p.Registry.Entries {
-		for _, id := range e.Realizes {
-			realized[id] = true
-		}
-	}
 	total := len(m.Packages)
 	for _, id := range m.ModelDefinitions() {
 		d := m.Definitions[id]
 		if d.Words > MaxDefinitionWords {
 			ds.Add("lint.definition_size", d.File, 0, "%d words (more than %d); split it or move detail the model does not need to the realization", d.Words, MaxDefinitionWords)
 		}
-		if !incoming[id] && !realized[id] {
-			ds.Add("lint.unused", d.File, 0, "nothing links to %s and no file realizes it", id)
-		}
 		if d.Package != model.RootPackage && total >= MinPackagesForReach {
 			if n := len(reachOf(p, id)); float64(n) > MaxReachShare*float64(total) {
 				ds.Add("lint.reach", d.File, 0, "a change to %s reaches %d of %d Managers; it is a broad dependency for its place", id, n, total)
-			}
-		}
-	}
-	for _, s := range p.Registry.Stale {
-		switch s.Code {
-		case "stale.definition":
-			ds.Add("lint.stale", s.PageFile, s.Line, "%s links [[%s]], which no longer exists; %s must realign or remove it", s.File, s.Target, model.PackageName(s.Package))
-		case "stale.file":
-			ds.Add("lint.stale", s.PageFile, s.Line, "%s no longer exists; %s must remove its entry", s.File, model.PackageName(s.Package))
-		case "stale.page":
-			if s.File == "" {
-				ds.Add("lint.stale", s.PageFile, 0, "the Package of this page no longer exists; Root must remove the page")
-			} else {
-				ds.Add("lint.stale", s.PageFile, s.Line, "%s is listed only on the page of a removed Package; its owner %s must register or remove it", s.File, model.PackageName(s.Package))
 			}
 		}
 	}

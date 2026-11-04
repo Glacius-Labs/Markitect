@@ -1,841 +1,67 @@
-// Package run is the Command engine of concept 3.0 (§6 to §10): `apply` and
-// `verify` over one container. Impact gives the checklist; an implementer
-// changes a folder; the Command commits it and runs a gate no agent can talk
-// past; a fresh reviewer answers every item in a clean copy; a refusal goes back
-// for at most two repair rounds; and the Command writes the Result and lands it.
-// Sessions start through the agent port, the container through Sandboxes, and
-// the Command's own Git work goes through Git.
+// Package run is the process of a Run, in the tool (draft concept 4.0): apply
+// and verify start a background session and end; the session calls the tool,
+// and submit is the one door: it says what is next each time and decides whether
+// the work counts. Nothing here drives a session. Sessions start through
+// Sessions, the required checks run through Checks, Git work goes through Git,
+// and what a Run knows between commands lives in a Store.
 //
-// The engine is described in internal/run/README.md.
+// The process is described in internal/run/README.md.
 package run
 
 import (
-	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"path"
+	"os"
+	"path/filepath"
 	"regexp"
-	"sort"
 	"strings"
-	"sync"
 	"time"
 
-	"github.com/Glacius-Labs/Markitect/internal/agentport"
 	"github.com/Glacius-Labs/Markitect/internal/analysis"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
 const (
-	// repairRounds bounds how often a refusal goes back to the implementer.
+	// repairRounds bounds how often a review's wrong answers go back.
 	repairRounds = 2
-	// maxRefusals bounds how many compile errors one refusal lists.
+	// maxSubmits bounds the calls of submit in one Run, which keeps a stuck Run
+	// finite: a provisional number.
+	maxSubmits = 30
+	// maxBlocks bounds how often the Stop hook sends a session back since its
+	// last submit.
+	maxBlocks = 5
+	// defaultDeadline bounds a Run.
+	defaultDeadline = 6 * time.Hour
+	// maxRefusals bounds how many errors one refusal lists.
 	maxRefusals = 30
+	// startWait bounds how long a Command waits for its session to come up.
+	startWait = 60 * time.Second
 )
 
-// Request is one apply or verify.
-type Request struct {
-	Mode agentport.Mode
-	// Run names the Run; empty makes one from the time.
-	Run string
-	// Target is the branch of the target repository the Command starts from
-	// and lands on.
-	Target string
-	// Base is the commit impact is computed from; empty means the last work
-	// Markitect landed on the target.
-	Base string
-	Full bool
-	// OneReviewer gives a full check's whole list to one reviewer, so that test 1
-	// of concept 3.0 §13 can compare it with one per Package.
-	OneReviewer bool
-	Findings    []analysis.Finding
-	Limits      Limits
-}
-
-// Limits bound a Command: finite budgets, and deadlines that reach every
-// blocking operation.
-type Limits struct {
-	// Deadline bounds the whole Command, landing and cleanup's start included.
-	Deadline time.Time
-	// Session bounds one session.
-	Session time.Duration
-}
-
-// DefaultLimits are the limits of a Command that names none.
-func DefaultLimits(now time.Time) Limits {
-	return Limits{Deadline: now.Add(6 * time.Hour), Session: 3 * time.Hour}
-}
-
-// Engine runs Commands.
-type Engine struct {
-	Git       Git
-	Sandboxes Sandboxes
-	Agents    agentport.Agents
-	// Secrets are values no landing may carry: the user's token.
-	Secrets [][]byte
-	// Now defaults to the clock.
-	Now func() time.Time
-	// Cleanup bounds the removal of the container after the Command ends.
-	Cleanup time.Duration
-}
-
-// ErrUsage marks a request the engine cannot run, such as an unknown base.
-var ErrUsage = errors.New("cannot run")
-
-// runName is what a Run may be called: it names a branch, a container and its
-// volumes.
-var runName = regexp.MustCompile(`^[a-z0-9][a-z0-9_.-]{0,62}$`)
-
-// RunBranchPrefix is where a Result that does not land stays.
+// RunBranchPrefix is where work and a Result that do not land stay.
 const RunBranchPrefix = "markitect/runs/"
 
-// command is one running Command.
-type command struct {
-	e   *Engine
-	req Request
-	r   *Result
-	cur *project.Project
-	imp analysis.Impact
-	box Sandbox
-	// before is the project at the base.
-	before *project.Project
-	// items is the list as it stands; answers holds each item's latest answer.
-	items   []Item
-	answers map[string]Answer
-	// work is the commit the work stands at.
-	work string
+// worktreeBranch is the branch the provider makes for a session's worktree.
+func worktreeBranch(run string) string { return "worktree-" + run }
 
-	mu     sync.Mutex
-	rounds map[agentport.Role]int
-	seen   []agentport.Seen
-}
+// runName is what a Run may be called: it names a branch and a folder.
+var runName = regexp.MustCompile(`^[a-z0-9][a-z0-9_.-]{0,62}$`)
 
-// Run runs one Command and returns its Result. An error means it could not
-// start; once it started, every way it ends is a Result, and only a landed
-// Result changed the target branch.
-func (e *Engine) Run(ctx context.Context, req Request) (*Result, error) {
-	now := e.now()
-	if req.Limits == (Limits{}) {
-		req.Limits = DefaultLimits(now)
-	}
-	if req.Run == "" {
-		// The name names the Run's branch, Result page and container, and
-		// Commands may start side by side in the same second, so the time alone
-		// is not enough.
-		b := make([]byte, 3)
-		if _, err := rand.Read(b); err != nil {
-			return nil, err
-		}
-		req.Run = "r" + now.UTC().Format("20060102-150405") + "-" + hex.EncodeToString(b)
-	}
-	if req.Mode != agentport.Apply && req.Mode != agentport.Verify {
-		return nil, fmt.Errorf("%w: mode %q", ErrUsage, req.Mode)
-	}
-	if !runName.MatchString(req.Run) {
-		return nil, fmt.Errorf("%w: run %q: use lower-case letters, digits, '.', '_' or '-', starting with a letter or digit", ErrUsage, req.Run)
-	}
-	if lim := req.Limits; lim.Session <= 0 || !lim.Deadline.After(now) {
-		return nil, fmt.Errorf("%w: the limits need a session limit and a deadline in the future", ErrUsage)
-	}
-	ctx, cancel := context.WithDeadline(ctx, req.Limits.Deadline)
-	defer cancel()
-	r := &Result{Format: ResultFormat, Run: req.Run, Command: string(req.Mode), Outcome: NotLanded, Target: req.Target, Full: req.Full, Began: now,
-		Items: []ResultItem{}, OwnerDecisions: []OwnerDecision{}, Findings: []ResultFinding{}, Sessions: []SessionRecord{}, Cleanup: []string{},
-		RequiredChecks: RequiredChecks{Checks: []CheckResult{}}}
-	c := &command{e: e, req: req, r: r, answers: map[string]Answer{}, rounds: map[agentport.Role]int{}}
-	if err := c.prepare(ctx); err != nil || r.State != "" {
-		return e.done(r, err)
-	}
-	read, write := io.Pipe()
-	go func() { write.CloseWithError(e.Git.Bundle(ctx, r.Start, write)) }()
-	box, err := e.Sandboxes.Start(ctx, req.Run, r.Start, read)
-	read.Close()
-	if err != nil {
-		r.State = StateIncomplete
-		r.Why = fmt.Sprintf("the Command's container did not start: %v", err)
-		r.Cleanup = append(r.Cleanup, "the Command's container may remain if its start failed half-way")
-		return e.finish(r), nil
-	}
-	c.box = box
-	defer c.release(&r.Cleanup)
-	c.work = r.Start
-	if req.Mode == agentport.Verify {
-		c.verify(ctx)
-	} else {
-		c.apply(ctx)
-	}
-	return e.finish(r), nil
-}
+// ErrUsage marks a request the tool cannot run, such as an unknown base.
+var ErrUsage = errors.New("cannot run")
 
-// prepare reads the tip of the target, the base and the checklist into the
-// Result (concept 3.0 §6, steps 1 and 2). A real spec error, or nothing
-// affected, sets the Result's state, and no agent starts. A file a hand edit
-// left unlisted does not stop the Command: it becomes an item.
-func (c *command) prepare(ctx context.Context) error {
-	e, r, req := c.e, c.r, c.req
-	start, err := e.Git.Fetch(ctx, req.Target)
-	if err != nil {
-		return fmt.Errorf("%w: the target branch %q: %v", ErrUsage, req.Target, err)
-	}
-	base := req.Base
-	if base == "" {
-		landed, ok, err := e.lastBase(ctx, start)
-		switch {
-		case err != nil:
-			return err
-		case ok:
-			base = landed
-		case req.Full || len(req.Findings) > 0:
-			// Their items do not depend on what changed since a landing.
-			base = start
-		default:
-			return fmt.Errorf("%w: no Run has landed on %s yet, so there is no default base; name one with --base, or cover everything with --full", ErrUsage, req.Target)
-		}
-	}
-	bc, err := e.Git.Commit(ctx, base)
-	if err != nil {
-		return fmt.Errorf("%w: base %q is no commit: %v", ErrUsage, base, err)
-	}
-	base = bc.ID
-	branches, err := e.Git.Branches(ctx, RunBranchPrefix)
-	if err != nil {
-		return err
-	}
-	if _, taken := branches[RunBranchPrefix+req.Run]; taken {
-		return fmt.Errorf("%w: run %q already has its branch %s%s; name another or delete it", ErrUsage, req.Run, RunBranchPrefix, req.Run)
-	}
-	r.Base, r.Start = base, start
-	r.FullCheck = e.fullCheck(ctx, req.Target, start)
-
-	if c.cur, err = project.Load(e.Git.State(ctx, start)); err != nil {
-		return err
-	}
-	if real := realErrors(c.cur.Errors); len(real) > 0 {
-		r.State = StateCheckFailed
-		r.Why = fmt.Sprintf("check fails at %s with %d compile errors, so no agent starts; the first: %s", short(start), len(real), real[0].String())
-		return nil
-	}
-	if c.before, err = project.Load(e.Git.State(ctx, base)); err != nil {
-		return err
-	}
-	if c.imp, err = c.impact(ctx, c.cur, start); err != nil {
-		return err
-	}
-	c.items = checklist(c.imp, c.before, c.cur, req.Findings)
-	r.ImpactNotes, r.impact = c.imp.Notes, impactKeys(c.imp, c.items)
-	if len(c.items) == 0 {
-		r.State = StateNothing
-		r.Why = fmt.Sprintf("nothing changed between %s and %s that reaches the spec; no agent starts", short(base), short(start))
-	}
-	return nil
-}
-
-// impact is what the change from the base to a commit reaches, with that
-// commit's registry.
-func (c *command) impact(ctx context.Context, cur *project.Project, commit string) (analysis.Impact, error) {
-	all, err := c.e.Git.Changed(ctx, c.r.Base, commit)
-	if err != nil {
-		return analysis.Impact{}, err
-	}
-	var changed []analysis.Change
-	for _, f := range all {
-		if !strings.HasPrefix(f.Path, project.Dir+"/") {
-			changed = append(changed, f)
-		}
-	}
-	return analysis.ComputeImpact(analysis.ImpactInput{Base: c.before, Current: cur, Changed: changed, Findings: c.req.Findings, Full: c.req.Full}), nil
-}
-
-// realErrors leaves out what a hand edit can leave behind without the spec
-// being wrong: the items a Command settles.
-func realErrors(ds model.Diagnostics) model.Diagnostics {
-	var out model.Diagnostics
-	for _, d := range ds {
-		if d.Code != codeUnregistered {
-			out = append(out, d)
-		}
-	}
-	return out
-}
-
-// apply is concept 3.0 §6, steps 4 to 9.
-func (c *command) apply(ctx context.Context) {
-	r := c.r
-	repo, err := c.box.Deliver(ctx, agentport.ImplementerUser, r.Start)
-	if err != nil {
-		c.stop(ctx, StateIncomplete, fmt.Sprintf("the implementer's folder could not be made: %v", err))
-		return
-	}
-	note := c.box.NotePath(agentport.ImplementerUser, stopNote)
-	prompt := implementerPrompt(repo, r.Base, note, c.items, c.cur.Checks)
-	conversation, reviewed := "", r.Start
-	for {
-		end := c.session(ctx, agentport.Implementer, agentport.ImplementerUser, repo, prompt, conversation)
-		if end.Reason != agentport.Finished {
-			c.stop(ctx, StateIncomplete, sessionFailure(agentport.Implementer, end))
-			return
-		}
-		conversation = end.Conversation
-		if err := c.collect(ctx, r.Repairs); err != nil {
-			c.stop(ctx, StateIncomplete, fmt.Sprintf("the work could not be committed: %v", err))
-			return
-		}
-		r.Work = c.work
-		if text, ok, err := c.box.Note(ctx, agentport.ImplementerUser, stopNote); err != nil {
-			c.stop(ctx, StateIncomplete, fmt.Sprintf("the implementer's note could not be read: %v", err))
-			return
-		} else if ok {
-			r.OwnerDecisions = append(r.OwnerDecisions, OwnerDecision{Matter: string(text), Recommendation: "Settle it in the spec and run the Command again."})
-			c.stop(ctx, StateSpecProblem, "the implementer stopped: the spec needs the owner")
-			return
-		}
-		refusals, err := c.gate(ctx, r.Start, c.work, false)
-		if err != nil {
-			// An environment failure uses no repair round.
-			c.stop(ctx, StateIncomplete, fmt.Sprintf("the gate could not run: %v", err))
-			return
-		}
-		if len(refusals) == 0 {
-			var done bool
-			if refusals, done = c.review(ctx, reviewed); done {
-				return
-			}
-			reviewed = c.work
-		}
-		if len(refusals) == 0 {
-			c.fillItems()
-			c.land(ctx)
-			return
-		}
-		if r.Repairs == repairRounds {
-			c.stop(ctx, StateRefused, fmt.Sprintf("the repair rounds ran out, and these stay open: %s", strings.Join(refusals, "; ")))
-			return
-		}
-		r.Repairs++
-		r.SentBack = append(r.SentBack, strings.Join(refusals, "; "))
-		prompt = repairPrompt(note, refusals)
-	}
-}
-
-// collect commits the implementer's folder and brings the commit to the host.
-func (c *command) collect(ctx context.Context, round int) error {
-	message := fmt.Sprintf("Markitect Run %s: the implementer's work, round %d\n", c.r.Run, round+1)
-	commit, bundle, err := c.box.Collect(ctx, c.work, message)
-	if err != nil {
-		return err
-	}
-	if bundle != nil {
-		defer bundle.Close()
-		if err := c.e.Git.Import(ctx, bundle); err != nil {
-			return err
-		}
-	}
-	c.work = commit
-	return nil
-}
-
-// gate is concept 3.0 §6, step 6: fixed checks with no agent. The comparisons
-// and `check` run outside the container on the commit itself, so nothing left
-// inside can affect them. The required checks run inside, in a clean copy, as a
-// user that holds nothing of the sessions'. from is the state the commit's own
-// changes are measured from. It returns why the work is refused; an error means
-// the gate could not run, which is the environment's failure and no refusal.
-func (c *command) gate(ctx context.Context, from, commit string, bring bool) ([]string, error) {
-	e := c.e
-	changed, err := e.Git.Changed(ctx, from, commit)
-	if err != nil {
-		return nil, err
-	}
-	links, err := e.Git.Links(ctx, commit)
-	if err != nil {
-		return nil, err
-	}
-	var refusals []string
-	for _, f := range changed {
-		// Without regard to case: a variant of the folder's name is the same
-		// folder in a Windows or macOS checkout.
-		if strings.HasPrefix(strings.ToLower(f.Path), project.Dir+"/") && !registryPage(f.Path) {
-			refusals = append(refusals, fmt.Sprintf("%s changed: everything under %s/ except the registry pages is the owner's", f.Path, project.Dir))
-		}
-		if to, ok := links[f.Path]; ok && leavesTree(f.Path, to) {
-			refusals = append(refusals, fmt.Sprintf("%s is a link that leaves the repository, to %s", f.Path, to))
-		}
-	}
-	p, err := project.Load(e.Git.State(ctx, commit))
-	if err != nil {
-		return nil, err
-	}
-	for i, d := range p.Errors {
-		if i == maxRefusals {
-			refusals = append(refusals, fmt.Sprintf("and %d more compile errors", len(p.Errors)-maxRefusals))
-			break
-		}
-		refusals = append(refusals, "markitect check: "+d.String())
-	}
-	for _, s := range p.Registry.Stale {
-		refusals = append(refusals, fmt.Sprintf("a stale registry entry on %s: %s %s%s", s.PageFile, s.Code, s.File, s.Target))
-	}
-	if len(refusals) > 0 {
-		return refusals, nil
-	}
-	return c.requiredChecks(ctx, commit, p.Checks, bring)
-}
-
-// requiredChecks runs the required checks on a commit and makes their results
-// the Result's. A check that could not start, for lack of a program or service,
-// is an error; one that failed is a refusal.
-func (c *command) requiredChecks(ctx context.Context, commit string, checks []project.Check, bring bool) ([]string, error) {
-	r := c.r
-	if len(checks) == 0 {
-		return nil, nil
-	}
-	var bundle io.Reader
-	if bring {
-		read, write := io.Pipe()
-		go func() { write.CloseWithError(c.e.Git.Bundle(ctx, commit, write)) }()
-		defer read.Close()
-		bundle = read
-	}
-	results, err := c.box.Check(ctx, bundle, commit, checks)
-	r.RequiredChecks = RequiredChecks{Commit: commit, Checks: results}
-	if results == nil {
-		r.RequiredChecks.Checks = []CheckResult{}
-	}
-	if err != nil {
-		r.RequiredChecks.Note = fmt.Sprintf("the checks could not run: %v", err)
-		return nil, err
-	}
-	var refusals []string
-	for _, res := range results {
-		if res.NotRun {
-			r.RequiredChecks.Note = fmt.Sprintf("the check %s could not start", res.Name)
-			return nil, fmt.Errorf("the required check %s could not start (exit %d): %s", res.Name, res.Exit, res.Output)
-		}
-		if !res.Passed {
-			refusals = append(refusals, fmt.Sprintf("the required check %s failed:\n%s", res.Name, res.Output))
-		}
-	}
-	r.RequiredChecks.Ran = len(refusals) == 0 && len(results) == len(checks)
-	return refusals, nil
-}
-
-// leavesTree says whether a symbolic link at file points outside the repository.
-func leavesTree(file, to string) bool {
-	if path.IsAbs(to) || strings.Contains(to, `\`) {
-		return true
-	}
-	// A drive letter leaves the tree in a Windows checkout, where Git makes the
-	// link as it stands.
-	if len(to) > 1 && to[1] == ':' {
-		return true
-	}
-	// A ".." after another part can pass through a link, where the text says
-	// nothing about the way.
-	inner := false
-	for _, part := range strings.Split(to, "/") {
-		switch {
-		case part == ".." && inner:
-			return true
-		case part != ".." && part != "" && part != ".":
-			inner = true
-		}
-	}
-	target := path.Join(path.Dir(file), to)
-	return target == ".." || strings.HasPrefix(target, "../")
-}
-
-func registryPage(file string) bool {
-	return file == project.RootPage || strings.HasPrefix(file, project.RegistryDir+"/")
-}
-
-// review rebuilds the list from the work and has fresh reviewers answer it
-// (concept 3.0 §6, steps 5, 7 and 8). A later round asks only about what the new
-// diff touched and what is still open; other answers stand. It returns why the
-// work goes back, and true when the Command has ended.
-func (c *command) review(ctx context.Context, reviewed string) ([]string, bool) {
-	r := c.r
-	state := c.e.Git.State(ctx, c.work)
-	after, err := project.Load(state)
-	if err != nil {
-		c.stop(ctx, StateIncomplete, fmt.Sprintf("the work could not be read: %v", err))
-		return nil, true
-	}
-	imp, err := c.impact(ctx, after, c.work)
-	if err != nil {
-		c.stop(ctx, StateIncomplete, fmt.Sprintf("the work's impact could not be read: %v", err))
-		return nil, true
-	}
-	c.items = mergeItems(c.items, checklist(imp, c.before, after, c.req.Findings))
-	r.impact = dedupe(append(r.impact, impactKeys(imp, c.items)...))
-	diff, err := c.e.Git.Diff(ctx, reviewed, c.work)
-	if err != nil {
-		c.stop(ctx, StateIncomplete, fmt.Sprintf("the work's diff could not be read: %v", err))
-		return nil, true
-	}
-	items, earlier, err := c.toReview(ctx, reviewed)
-	if err != nil {
-		c.stop(ctx, StateIncomplete, fmt.Sprintf("the work's changes could not be read: %v", err))
-		return nil, true
-	}
-	if len(items) == 0 {
-		return nil, false
-	}
-	if failure := c.answer(ctx, state, items, func(repo, note string, group []Item) string {
-		return reviewerPrompt(reviewInput{repo: repo, note: note, base: reviewed, commit: c.work, items: group, diff: diff, checks: r.RequiredChecks.Checks, earlier: earlier})
-	}); failure != "" {
-		c.stop(ctx, StateIncomplete, failure)
-		return nil, true
-	}
-	r.Depth = measure(c.answers, c.seen)
-	var refusals []string
-	for _, it := range c.items {
-		switch a := c.answers[it.Key]; a.Word {
-		case AnswerSpecProblem:
-			r.OwnerDecisions = append(r.OwnerDecisions, OwnerDecision{Matter: fmt.Sprintf("%s: %s", it.Key, a.Explanation), Recommendation: "Settle it in the spec and run the Command again."})
-		case AnswerWrong:
-			refusals = append(refusals, fmt.Sprintf("%s: %s %s", it.Key, a.Explanation, pointers(a.Pointers)))
-		}
-	}
-	if len(r.OwnerDecisions) > 0 {
-		c.stop(ctx, StateSpecProblem, "a reviewer found a spec problem: the spec needs the owner")
-		return nil, true
-	}
-	return refusals, false
-}
-
-// toReview is what a review of the work must answer: everything on the first
-// review; later, what has no answer or is open, and whatever the new diff
-// touched. It also returns what the earlier reviews sent back.
-func (c *command) toReview(ctx context.Context, reviewed string) ([]Item, []string, error) {
-	if len(c.answers) == 0 {
-		return c.items, nil, nil
-	}
-	changed, err := c.e.Git.Changed(ctx, reviewed, c.work)
-	if err != nil {
-		return nil, nil, err
-	}
-	touched := map[string]bool{}
-	for _, f := range changed {
-		touched[f.Path] = true
-	}
-	var items []Item
-	var earlier []string
-	for _, it := range c.items {
-		a, answered := c.answers[it.Key]
-		again := !answered || a.Word == AnswerWrong
-		for _, f := range it.Look {
-			again = again || touched[f]
-		}
-		for _, p := range a.Pointers {
-			again = again || touched[p.File]
-		}
-		if a.Word == AnswerWrong {
-			earlier = append(earlier, fmt.Sprintf("%s: %s", it.Key, a.Explanation))
-		}
-		if again {
-			items = append(items, it)
-		}
-	}
-	return items, earlier, nil
-}
-
-// answer runs the reviewers over items and takes their answers: one reviewer
-// over a change's list; with --full, the starting point of one reviewer per
-// Package, side by side, each in a clean copy of its own with only its own
-// items (concept 3.0 §8). It returns why the answers cannot stand, or "".
-func (c *command) answer(ctx context.Context, state project.Repository, items []Item, prompt func(repo, note string, group []Item) string) string {
-	groups := [][]Item{items}
-	if c.req.Full && !c.req.OneReviewer {
-		groups = c.byPackage(items)
-	}
-	failures := make([]string, len(groups))
-	var wg sync.WaitGroup
-	users := make(chan string, agentport.ReviewerUsers)
-	for n := 1; n <= agentport.ReviewerUsers; n++ {
-		users <- agentport.ReviewerUser(n)
-	}
-	for i, group := range groups {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			user := <-users
-			defer func() { users <- user }()
-			failures[i] = c.answerGroup(ctx, state, user, group, prompt)
-		}()
-	}
-	wg.Wait()
-	for _, f := range failures {
-		if f != "" {
-			return f
-		}
-	}
-	return ""
-}
-
-// byPackage splits a list by the Package of each item's Definition; an item
-// with none goes with Root's.
-func (c *command) byPackage(items []Item) [][]Item {
-	by := map[string][]Item{}
-	for _, it := range items {
-		pkg := model.RootPackage
-		if d := c.cur.Model.Definitions[it.Definition]; d != nil {
-			pkg = d.Package
-		}
-		by[pkg] = append(by[pkg], it)
-	}
-	var groups [][]Item
-	for _, pkg := range sortedKeys(by) {
-		groups = append(groups, by[pkg])
-	}
-	return groups
-}
-
-// answerGroup is one fresh reviewer in a clean copy of its own. What the Command
-// cannot accept of its answers goes back to it once.
-func (c *command) answerGroup(ctx context.Context, state project.Repository, user string, items []Item, prompt func(repo, note string, group []Item) string) string {
-	repo, err := c.box.Deliver(ctx, user, c.work)
-	if err != nil {
-		return fmt.Sprintf("the reviewer's copy could not be made: %v", err)
-	}
-	note := c.box.NotePath(user, answersNote)
-	// The reviewer starts outside the copy, so nothing the work committed there
-	// is discovered from where it starts.
-	dir := path.Dir(repo)
-	end := c.session(ctx, agentport.Reviewer, user, dir, prompt(repo, note, items), "")
-	if end.Reason != agentport.Finished {
-		return sessionFailure(agentport.Reviewer, end)
-	}
-	seen := end.Seen
-	answers, problems, links, err := c.readAnswers(ctx, state, repo, user, items, seen)
-	if err != nil {
-		return fmt.Sprintf("the reviewer's answers could not be read: %v", err)
-	}
-	if len(problems) > 0 {
-		end = c.session(ctx, agentport.Reviewer, user, dir, correctionPrompt(note, problems), end.Conversation)
-		if end.Reason != agentport.Finished {
-			return sessionFailure(agentport.Reviewer, end)
-		}
-		// The second look at the files counts with the first.
-		seen.Opened = append(seen.Opened, end.Seen.Opened...)
-		seen.Commands = append(seen.Commands, end.Seen.Commands...)
-		seen.Subagents += end.Seen.Subagents
-		answers, problems, links, err = c.readAnswers(ctx, state, repo, user, items, seen)
-		if err != nil {
-			return fmt.Sprintf("the reviewer's answers could not be read: %v", err)
-		}
-		if len(problems) > 0 {
-			return "the review could not be accepted after one request to correct it: " + strings.Join(problems, "; ")
-		}
-	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	for k, a := range answers {
-		c.answers[k] = a
-	}
-	c.seen = append(c.seen, seen)
-	c.r.MissingLinks = dedupe(append(c.r.MissingLinks, links...))
-	if text := strings.TrimSpace(end.Text); text != "" {
-		if c.r.NotTested != "" {
-			text = c.r.NotTested + " " + text
-		}
-		c.r.NotTested = text
-	}
-	return ""
-}
-
-func (c *command) readAnswers(ctx context.Context, state project.Repository, repo, user string, items []Item, seen agentport.Seen) (map[string]Answer, []string, []string, error) {
-	raw, ok, err := c.box.Note(ctx, user, answersNote)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	if !ok {
-		return nil, []string{"you wrote no answers to " + c.box.NotePath(user, answersNote)}, nil, nil
-	}
-	answers, problems := parseAnswers(raw, items)
-	checked, links := checkAnswers(state, repo, items, answers, seen)
-	return answers, append(problems, checked...), links, nil
-}
-
-// verify is the reviewer alone on a clean checkout of the commit (concept 3.0
-// §12): it changes nothing and ends with Findings.
-func (c *command) verify(ctx context.Context) {
-	r := c.r
-	if _, err := c.requiredChecks(ctx, r.Start, c.cur.Checks, false); err != nil {
-		c.stop(ctx, StateIncomplete, fmt.Sprintf("the required checks could not run: %v", err))
-		return
-	}
-	state := c.e.Git.State(ctx, r.Start)
-	if failure := c.answer(ctx, state, c.items, func(repo, note string, group []Item) string {
-		return reviewerPrompt(reviewInput{repo: repo, note: note, base: r.Base, commit: r.Start, items: group, checks: r.RequiredChecks.Checks, verify: true})
-	}); failure != "" {
-		c.stop(ctx, StateIncomplete, failure)
-		return
-	}
-	r.Depth = measure(c.answers, c.seen)
-	unsettled := 0
-	for _, it := range c.items {
-		a := c.answers[it.Key]
-		// A file the registry does not account for fails `check` whatever a
-		// reviewer says of it.
-		if it.Kind == ItemUnlisted || it.Kind == ItemStale {
-			unsettled++
-		}
-		switch a.Word {
-		case AnswerWrong:
-			if it.Definition != "" {
-				r.Findings = append(r.Findings, ResultFinding{Definition: it.Definition, Observed: strings.TrimSpace(a.Explanation + " " + pointers(a.Pointers)), Expected: "what the Definition says"})
-			} else if it.Kind != ItemUnlisted && it.Kind != ItemStale {
-				unsettled++
-			}
-		case AnswerSpecProblem:
-			r.OwnerDecisions = append(r.OwnerDecisions, OwnerDecision{Matter: fmt.Sprintf("%s: %s", it.Key, a.Explanation), Recommendation: "Settle it in the spec."})
-		}
-	}
-	var found []string
-	if n := len(r.Findings); n > 0 {
-		found = append(found, fmt.Sprintf("%d Findings", n))
-	}
-	if n := len(r.OwnerDecisions); n > 0 {
-		found = append(found, fmt.Sprintf("%d decisions for the owner", n))
-	}
-	if unsettled > 0 {
-		found = append(found, fmt.Sprintf("%d items the registry or a reviewer does not settle", unsettled))
-	}
-	if len(c.cur.Checks) > 0 && !r.RequiredChecks.Ran {
-		found = append(found, "required checks that did not pass")
-	}
-	if len(found) > 0 {
-		r.State, r.Why = StateFindings, "verify found "+strings.Join(found, " and ")
-	} else {
-		r.State, r.Why = StateVerified, "every item answered without a Finding"
-	}
-	if isFullCheck(r) {
-		// This Run is the full check: it examined its start.
-		r.FullCheck = FullCheck{Since: r.Start}
-	}
-	c.fillItems()
-	c.release(&r.Cleanup)
-	c.e.keepOn(ctx, r, r.Start, "", "", "", nil)
-}
-
-// session runs one session and records how it ended.
-func (c *command) session(ctx context.Context, role agentport.Role, user, dir, prompt, conversation string) agentport.End {
-	e, lim := c.e, c.req.Limits
-	began := e.now()
-	deadline := began.Add(lim.Session)
-	if lim.Deadline.Before(deadline) {
-		deadline = lim.Deadline
-	}
-	c.mu.Lock()
-	c.rounds[role]++
-	round := c.rounds[role]
-	c.mu.Unlock()
-	end := e.Agents.Run(ctx, c.box, agentport.Session{Run: c.req.Run, Role: role, User: user, Round: round, Dir: dir, Prompt: prompt, Conversation: conversation, Deadline: deadline})
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.r.Sessions = append(c.r.Sessions, SessionRecord{Role: role, Round: round, Reason: end.Reason, Detail: end.Detail, Class: end.Class, Agent: end.Agent, Models: end.Models, Usage: end.Usage, Seconds: e.now().Sub(began).Seconds()})
-	c.r.Usage = c.r.Usage.Add(end.Usage)
-	return end
-}
-
-// stop ends a Command that does not land: its work and Result stay on the Run's
-// own branch, and the Result says what is open.
-func (c *command) stop(ctx context.Context, state, why string) {
-	r := c.r
-	c.fillItems()
-	r.Depth = measure(c.answers, c.seen)
-	c.release(&r.Cleanup)
-	c.e.keepOn(ctx, r, c.work, "", state, why, nil)
-}
-
-// fillItems writes each item's latest answer into the Result.
-func (c *command) fillItems() {
-	items := make([]ResultItem, 0, len(c.items))
-	for _, it := range c.items {
-		a := c.answers[it.Key]
-		items = append(items, ResultItem{Item: it.Key, Kind: it.Kind, Definition: it.Definition, Look: it.Look, Answer: a.Word, Pointers: a.Pointers, Explanation: a.Explanation})
-	}
-	sort.SliceStable(items, func(i, j int) bool { return items[i].Item < items[j].Item })
-	c.r.Items = items
-}
-
-// release ends the container once; into collects what that left.
-func (c *command) release(into *[]string) {
-	if c.box == nil {
-		return
-	}
-	box := c.box
-	c.box = nil
-	cctx, cancel := context.WithTimeout(context.Background(), c.e.cleanup())
-	defer cancel()
-	if err := box.Close(cctx); err != nil {
-		*into = append(*into, fmt.Sprintf("the Command's container: %v", err))
-	}
-}
-
-// sessionFailure says how a session ended in a Result's words.
-func sessionFailure(role agentport.Role, end agentport.End) string {
-	why := fmt.Sprintf("the %s's session ended as %s", role, end.Reason)
-	if end.Class != "" {
-		why += " (" + string(end.Class) + ")"
-	}
-	if end.Detail != "" {
-		why += ": " + end.Detail
-	}
-	return why
-}
-
-// done ends a Command that started no container: with an error when it could
-// not run, else with its Result.
-func (e *Engine) done(r *Result, err error) (*Result, error) {
-	if err != nil {
-		return nil, err
-	}
-	return e.finish(r), nil
-}
-
-// finish completes the Result once the Command returns. One that wrote its page
-// keeps the end time stamped there, so the page and the Result agree.
-func (e *Engine) finish(r *Result) *Result {
-	if r.Ended.IsZero() {
-		return e.stamp(r)
-	}
-	return r
-}
-
-// stamp sets the Result's end time, as the page it is about to write states it,
-// and takes the secrets out of everything a session said in it.
-func (e *Engine) stamp(r *Result) *Result {
-	r.Ended = e.now()
-	e.scrub(r)
-	return r
-}
-
-// scrub replaces every secret in the Result's words, in one place: stop notes,
-// answers, closing words and check output all come from code under review.
-func (e *Engine) scrub(r *Result) {
-	data, err := json.Marshal(r)
-	if err != nil {
-		return
-	}
-	found := false
-	for _, s := range e.Secrets {
-		if len(s) > 0 && bytes.Contains(data, s) {
-			data, found = bytes.ReplaceAll(data, s, []byte("[redacted]")), true
-		}
-	}
-	if found {
-		// An error here leaves the Result as it was, and the page says less.
-		if err := json.Unmarshal(data, r); err != nil {
-			r.OwnerDecisions, r.Findings, r.NotTested = nil, nil, ""
-			r.Why = "the Result held the account token and could not be cleaned"
-		}
-	}
+// Engine runs the commands of a Run in one repository.
+type Engine struct {
+	Git      Git
+	Sessions Sessions
+	Checks   Checks
+	Store    Store
+	// Now defaults to the clock.
+	Now func() time.Time
 }
 
 func (e *Engine) now() time.Time {
@@ -845,11 +71,673 @@ func (e *Engine) now() time.Time {
 	return time.Now()
 }
 
-func (e *Engine) cleanup() time.Duration {
-	if e.Cleanup > 0 {
-		return e.Cleanup
+// Request is one apply or verify.
+type Request struct {
+	// Dir is a folder of the owner's working tree.
+	Dir string
+	// Base is the commit impact is computed from; empty means the work of the
+	// last landing.
+	Base     string
+	Full     bool
+	Findings []analysis.Finding
+	// Deadline bounds the Run; zero is the default.
+	Deadline time.Duration
+}
+
+// Started says what apply or verify did. Text is what the owner reads.
+type Started struct {
+	// State is empty for a Run that started; otherwise StateCheckFailed or
+	// StateNothing, or "open" for a Run that was already running.
+	State string
+	Run   string
+	Text  string
+}
+
+// Apply starts the session that makes the project match the spec, and returns
+// as soon as it is up. The spec stays as the owner left it: an error in it stops
+// here, a change to it is committed here, and the Run works on that commit.
+func (e *Engine) Apply(ctx context.Context, req Request) (Started, error) {
+	root, err := e.Git.Root(ctx, req.Dir)
+	if err != nil {
+		return Started{}, err
 	}
-	return 2 * time.Minute
+	branch, err := e.Git.Branch(ctx, root)
+	if err != nil {
+		return Started{}, err
+	}
+	if branch == "" {
+		return Started{}, fmt.Errorf("%w: HEAD is detached, and a Run lands on a branch; check one out first", ErrUsage)
+	}
+	e.cleanUp(ctx)
+	runs, err := e.Store.All()
+	if err != nil {
+		return Started{}, err
+	}
+	for _, st := range runs {
+		if st.Open && st.Command == "apply" && st.Branch == branch {
+			return e.continueOpen(ctx, st)
+		}
+	}
+	dirty, err := e.Git.Uncommitted(ctx, root)
+	if err != nil {
+		return Started{}, err
+	}
+	if len(dirty) > 0 {
+		return Started{State: StateCheckFailed, Text: "Changes outside the spec are not committed, and a run would silently leave them out. Commit or remove them first:\n\n- " + strings.Join(dirty, "\n- ") + "\n"}, nil
+	}
+	cur, err := e.loadWorking(ctx, root)
+	if err != nil {
+		return Started{}, err
+	}
+	if errs := cur.SpecErrors(); len(errs) > 0 {
+		return Started{State: StateCheckFailed, Text: "The spec has errors, so no agent starts. Fix them in the spec:\n\n" + listErrors(errs)}, nil
+	}
+	start, err := e.Git.CommitSpec(ctx, root, "The spec, as markitect apply found it")
+	if err != nil {
+		return Started{}, err
+	}
+	landedOne := e.retryLandings(ctx, runs, branch, start)
+	if landedOne != "" {
+		start = landedOne
+	}
+	st, err := e.newRun(ctx, "apply", req, root, branch, start)
+	if err != nil {
+		return Started{}, err
+	}
+	if len(st.Items) == 0 {
+		return Started{State: StateNothing, Text: fmt.Sprintf("Nothing to do: nothing changed between %s and %s that reaches the spec.\n", short(st.Base), short(start))}, nil
+	}
+	p, err := project.Load(e.Git.State(ctx, start))
+	if err != nil {
+		return Started{}, err
+	}
+	st.Spec = SessionSpec{Run: st.Run, Dir: root, Model: p.SessionModel, Effort: p.SessionEffort, Prompt: implementerTask(st.Run), Store: e.Store.Dir}
+	return e.launch(ctx, st, fmt.Sprintf("Run %s started on %s: %d items, base %s. It works in the background in a worktree of its own, and you can keep modeling. Its result lands on %s by itself; `markitect status` says how it stands.\n", st.Run, branch, len(st.Items), short(st.Base), branch))
+}
+
+// Verify starts a reviewer's session on the last commit. It changes nothing the
+// owner has, and never holds the branch.
+func (e *Engine) Verify(ctx context.Context, req Request) (Started, error) {
+	root, err := e.Git.Root(ctx, req.Dir)
+	if err != nil {
+		return Started{}, err
+	}
+	branch, err := e.Git.Branch(ctx, root)
+	if err != nil {
+		return Started{}, err
+	}
+	start, err := e.Git.Head(ctx, root)
+	if err != nil {
+		return Started{}, err
+	}
+	cur, err := project.Load(e.Git.State(ctx, start))
+	if err != nil {
+		return Started{}, err
+	}
+	if errs := cur.SpecErrors(); len(errs) > 0 {
+		return Started{State: StateCheckFailed, Text: "The spec has errors at the last commit, so no agent starts:\n\n" + listErrors(errs)}, nil
+	}
+	st, err := e.newRun(ctx, "verify", req, root, branch, start)
+	if err != nil {
+		return Started{}, err
+	}
+	if len(st.Items) == 0 {
+		return Started{State: StateNothing, Text: fmt.Sprintf("Nothing to do: nothing changed between %s and %s that reaches the spec.\n", short(st.Base), short(start))}, nil
+	}
+	commit, err := e.Git.Commit(ctx, start)
+	if err != nil {
+		return Started{}, err
+	}
+	st.Review = &Review{Commit: start, Tree: commit.Tree, Items: st.Items, Answered: map[string]Answer{}}
+	st.Spec = SessionSpec{Run: st.Run, Dir: root, Agent: ReviewerAgent, Model: cur.SessionModel, Effort: cur.SessionEffort, Prompt: verifyTask(st.Run), Store: e.Store.Dir}
+	dirtyNote := ""
+	if dirty, err := e.Git.Uncommitted(ctx, root); err == nil && len(dirty) > 0 {
+		dirtyNote = " Uncommitted work is not looked at."
+	}
+	return e.launch(ctx, st, fmt.Sprintf("Run %s started: a reviewer checks %d items at %s in the background. It changes nothing you have; `markitect status` says how it stands.%s\n", st.Run, len(st.Items), short(start), dirtyNote))
+}
+
+// newRun works out the base and the list. A Run with an empty list is not saved.
+func (e *Engine) newRun(ctx context.Context, command string, req Request, root, branch, start string) (*RunState, error) {
+	base := req.Base
+	full := req.Full
+	if base == "" {
+		landed, ok, err := e.lastBase(ctx, start)
+		switch {
+		case err != nil:
+			return nil, err
+		case ok:
+			base = landed
+		case len(req.Findings) > 0:
+			base = start
+		default:
+			// With no Result yet there is nothing to compare with, so the first
+			// Run covers everything.
+			base, full = start, true
+		}
+	}
+	bc, err := e.Git.Commit(ctx, base)
+	if err != nil {
+		return nil, fmt.Errorf("%w: base %q is no commit: %v", ErrUsage, base, err)
+	}
+	base = bc.ID
+	before, err := project.Load(e.Git.State(ctx, base))
+	if err != nil {
+		return nil, err
+	}
+	cur, err := project.Load(e.Git.State(ctx, start))
+	if err != nil {
+		return nil, err
+	}
+	imp, err := e.impact(ctx, base, start, before, cur, req.Findings, full)
+	if err != nil {
+		return nil, err
+	}
+	items := checklist(imp, before, cur, req.Findings)
+	now := e.now()
+	name, err := e.runName(now)
+	if err != nil {
+		return nil, err
+	}
+	limit := req.Deadline
+	if limit <= 0 {
+		limit = defaultDeadline
+	}
+	return &RunState{Run: name, Command: command, Branch: branch, Repo: root, Base: base, Start: start, Full: full, Findings: req.Findings,
+		Items: items, Answers: map[string]Answer{}, Impact: impactKeys(imp, items), Notes: imp.Notes, Passed: map[string]bool{},
+		Began: now, Deadline: now.Add(limit), Open: true}, nil
+}
+
+func (e *Engine) runName(now time.Time) (string, error) {
+	b := make([]byte, 3)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return "r" + now.UTC().Format("20060102-150405") + "-" + hex.EncodeToString(b), nil
+}
+
+// launch starts the Run's session and waits until it is up.
+func (e *Engine) launch(ctx context.Context, st *RunState, text string) (Started, error) {
+	if err := e.Store.Save(st); err != nil {
+		return Started{}, err
+	}
+	id, err := e.Sessions.Start(ctx, st.Spec)
+	if err != nil {
+		st.Open, st.State, st.Why, st.Closed = false, StateIncomplete, fmt.Sprintf("the session did not start: %v", err), e.now()
+		if serr := e.Store.Save(st); serr != nil {
+			return Started{}, serr
+		}
+		return Started{State: StateIncomplete, Run: st.Run, Text: "The session did not start: " + err.Error() + "\n"}, nil
+	}
+	st.Session = id
+	if err := e.Store.Save(st); err != nil {
+		return Started{}, err
+	}
+	return Started{Run: st.Run, Text: text}, nil
+}
+
+// continueOpen handles an apply while a Run is open: one that works is left
+// alone, and one whose session has ended is resumed where it stopped.
+func (e *Engine) continueOpen(ctx context.Context, st *RunState) (Started, error) {
+	state := SessionUnknown
+	if st.Session != "" {
+		var err error
+		if state, err = e.Sessions.State(ctx, st.Session); err != nil {
+			return Started{}, err
+		}
+	}
+	if state == SessionWorking {
+		return Started{State: "open", Run: st.Run, Text: fmt.Sprintf("Run %s is still working on %s, so no new one starts. `markitect status` says how it stands, and `markitect stop WHY` ends it. You can keep modeling; the next apply takes what you have.\n", st.Run, st.Branch)}, nil
+	}
+	if st.Session != "" {
+		_ = e.Sessions.Stop(ctx, st.Session)
+	}
+	id, err := e.Sessions.Resume(ctx, st.Session, st.Spec)
+	if err != nil {
+		return Started{}, fmt.Errorf("run %s could not be resumed; `markitect stop WHY` ends it: %w", st.Run, err)
+	}
+	if err := e.Store.Update(st.Run, func(s *RunState) error {
+		s.Session, s.Failure, s.Blocks = id, "", 0
+		return nil
+	}); err != nil {
+		return Started{}, err
+	}
+	return Started{State: "open", Run: st.Run, Text: fmt.Sprintf("Run %s had stopped working and is resumed where it was, with its repair count. The last apply's changes stay for the next one.\n", st.Run)}, nil
+}
+
+// Current is the Run a folder belongs to: the one whose worktree holds it, else
+// the open apply on the owner's branch.
+func (e *Engine) Current(ctx context.Context, dir string) (*RunState, error) {
+	root, err := e.Git.Root(ctx, dir)
+	if err != nil {
+		return nil, err
+	}
+	if st, found, err := e.Store.Load(filepath.Base(root)); err != nil {
+		return nil, err
+	} else if found && runName.MatchString(st.Run) {
+		return st, nil
+	}
+	branch, err := e.Git.Branch(ctx, root)
+	if err != nil {
+		return nil, err
+	}
+	runs, err := e.Store.All()
+	if err != nil {
+		return nil, err
+	}
+	for _, st := range runs {
+		if st.Open && st.Command == "apply" && st.Branch == branch {
+			return st, nil
+		}
+	}
+	return nil, fmt.Errorf("%w: no run is open here", ErrUsage)
+}
+
+// Checklist prints the implementer's task and to-do list, rebuilt from the
+// current files and registry. The Run's first call also tries the required checks
+// on the start. With review it prints what the review must answer.
+func (e *Engine) Checklist(ctx context.Context, dir string, review bool) (string, error) {
+	st, err := e.Current(ctx, dir)
+	if err != nil {
+		return "", err
+	}
+	if !st.Open {
+		return fmt.Sprintf("Run %s is closed: %s. %s. End now.\n", st.Run, st.State, capitalize(st.Why)), nil
+	}
+	if review {
+		if st.Review == nil {
+			return "", fmt.Errorf("%w: nothing is under review yet", ErrUsage)
+		}
+		return reviewPrompt(st, st.Review), nil
+	}
+	root, err := e.Git.Root(ctx, dir)
+	if err != nil {
+		return "", err
+	}
+	var b strings.Builder
+	b.WriteString(implementerTask(st.Run))
+	if !st.Tried {
+		text, closed, err := e.tryChecks(ctx, st)
+		if err != nil {
+			return "", err
+		}
+		b.WriteString(text)
+		if closed {
+			return b.String(), nil
+		}
+	}
+	cur, err := e.loadWorking(ctx, root)
+	if err != nil {
+		return "", err
+	}
+	before, err := project.Load(e.Git.State(ctx, st.Base))
+	if err != nil {
+		return "", err
+	}
+	changed, err := e.changedSinceBase(ctx, st, root)
+	if err != nil {
+		return "", err
+	}
+	imp := analysis.ComputeImpact(analysis.ImpactInput{Base: before, Current: cur, Changed: changed, Findings: st.Findings, Full: st.Full})
+	items := mergeItems(st.Items, checklist(imp, before, cur, st.Findings))
+	fmt.Fprintf(&b, "\nThe base is %s: `markitect impact --base %s` shows what changed. This list says what the change reaches and where the registry says to look. It is your to-do list, and you answer nothing on it:\n\n", st.Base, st.Base)
+	b.WriteString(renderList(items))
+	b.WriteString("\n")
+	b.WriteString(checksList(cur.Checks))
+	return b.String(), nil
+}
+
+// changedSinceBase lists what the worktree changed since the base, outside
+// Markitect's folder.
+func (e *Engine) changedSinceBase(ctx context.Context, st *RunState, root string) ([]analysis.Change, error) {
+	cand, err := e.Git.Candidate(ctx, root, "the work so far")
+	if err != nil {
+		return nil, err
+	}
+	all, err := e.Git.Changed(ctx, st.Base, cand)
+	if err != nil {
+		return nil, err
+	}
+	return outsideOwnFolder(all), nil
+}
+
+func outsideOwnFolder(all []analysis.Change) []analysis.Change {
+	var changed []analysis.Change
+	for _, f := range all {
+		if !strings.HasPrefix(f.Path, project.Dir+"/") {
+			changed = append(changed, f)
+		}
+	}
+	return changed
+}
+
+// tryChecks runs the required checks once on the start, before the work is
+// spent. A check that cannot start ends the Run; one that fails is told to the
+// implementer and to the Result, as failing before the work.
+func (e *Engine) tryChecks(ctx context.Context, st *RunState) (string, bool, error) {
+	p, err := project.Load(e.Git.State(ctx, st.Start))
+	if err != nil {
+		return "", false, err
+	}
+	results, err := e.runChecks(ctx, st.Start, p.Checks)
+	if err != nil {
+		return "", false, err
+	}
+	var failing []string
+	for _, res := range results {
+		if res.NotRun {
+			why := fmt.Sprintf("the required check %s could not start, before any work (exit %d): %s", res.Name, res.Exit, tail(res.Output))
+			if err := e.close(ctx, st, StateIncomplete, why, nil); err != nil {
+				return "", false, err
+			}
+			return "\nThis run has ended: " + why + "\nEnd now. Nothing lands.\n", true, nil
+		}
+		if !res.Passed {
+			failing = append(failing, res.Name)
+		}
+	}
+	if err := e.Store.Update(st.Run, func(s *RunState) error {
+		s.Tried, s.Failing, s.Checks, s.ChecksOn = true, failing, results, st.Start
+		return nil
+	}); err != nil {
+		return "", false, err
+	}
+	st.Tried, st.Failing = true, failing
+	if len(failing) > 0 {
+		return fmt.Sprintf("\nThese required checks already fail before any work: %s. If the cause is a missing service or tool, say so with markitect stop. Otherwise they must pass by the end.\n", strings.Join(failing, ", ")), false, nil
+	}
+	return "", false, nil
+}
+
+// runChecks runs the required checks in a clean export of a commit.
+func (e *Engine) runChecks(ctx context.Context, commit string, checks []project.Check) ([]CheckResult, error) {
+	if len(checks) == 0 {
+		return nil, nil
+	}
+	dir, err := os.MkdirTemp("", "markitect-check-")
+	if err != nil {
+		return nil, err
+	}
+	defer os.RemoveAll(dir)
+	if err := e.Git.Export(ctx, commit, dir); err != nil {
+		return nil, err
+	}
+	return e.Checks.Run(ctx, dir, checks), nil
+}
+
+// Answer stores a reviewer's answers against the state under review. What it
+// cannot accept is refused at once, with what is still missing.
+func (e *Engine) Answer(ctx context.Context, dir string, raw []byte) (string, bool, error) {
+	st, err := e.Current(ctx, dir)
+	if err != nil {
+		return "", false, err
+	}
+	if !st.Open {
+		return fmt.Sprintf("Run %s is closed: %s. End now.\n", st.Run, st.State), false, nil
+	}
+	if st.Review == nil {
+		return "Nothing is under review. End now.\n", false, nil
+	}
+	state := e.Git.State(ctx, st.Review.Commit)
+	answers, problems := parseAnswers(raw, st.Review.Items)
+	checked, links := checkAnswers(state, st.Review.Items, answers)
+	problems = append(problems, checked...)
+	if len(problems) > 0 {
+		var b strings.Builder
+		b.WriteString("These answers are not accepted, and nothing from this call is stored. Correct them and call markitect answer again:\n\n")
+		for _, p := range problems {
+			fmt.Fprintf(&b, "- %s\n", p)
+		}
+		return b.String(), false, nil
+	}
+	var missing []string
+	if err := e.Store.Update(st.Run, func(s *RunState) error {
+		if s.Review == nil {
+			return nil
+		}
+		for k, a := range answers {
+			s.Review.Answered[k] = a
+			s.Answers[k] = a
+		}
+		s.MissingFor = dedupe(append(s.MissingFor, links...))
+		missing = s.Review.Missing()
+		return nil
+	}); err != nil {
+		return "", false, err
+	}
+	if len(missing) > 0 {
+		return fmt.Sprintf("Stored. %d items still have no answer:\n\n- %s\n", len(missing), strings.Join(missing, "\n- ")), false, nil
+	}
+	if st.Command == "verify" {
+		return "Stored: every item has an answer. Now run: markitect submit\n", true, nil
+	}
+	return "Stored: every item has an answer. You are done; report in one line and end.\n", true, nil
+}
+
+// Stop ends a Run without landing. The session is ended first when someone else
+// stops it, so that nothing changes the work afterwards.
+func (e *Engine) Stop(ctx context.Context, dir, why string) (string, error) {
+	root, err := e.Git.Root(ctx, dir)
+	if err != nil {
+		return "", err
+	}
+	st, err := e.Current(ctx, dir)
+	if err != nil {
+		return "", err
+	}
+	if !st.Open {
+		return fmt.Sprintf("Run %s is already closed: %s.\n", st.Run, st.State), nil
+	}
+	fromSession := filepath.Base(root) == st.Run
+	if !fromSession && st.Session != "" {
+		_ = e.Sessions.Stop(ctx, st.Session)
+	}
+	decisions := []OwnerDecision{{Matter: why, Recommendation: "Settle it in the spec and run apply again."}}
+	state := StateSpecProblem
+	if !fromSession {
+		state, decisions = StateStopped, nil
+	}
+	if err := e.close(ctx, st, state, "stopped: "+why, decisions); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("Run %s has ended without landing. Its work and Result are on %s. End now.\n", st.Run, st.Kept), nil
+}
+
+// Status says how the Runs of the owner's branch stand.
+func (e *Engine) Status(ctx context.Context, dir string) (string, error) {
+	root, err := e.Git.Root(ctx, dir)
+	if err != nil {
+		return "", err
+	}
+	branch, err := e.Git.Branch(ctx, root)
+	if err != nil {
+		return "", err
+	}
+	runs, err := e.Store.All()
+	if err != nil {
+		return "", err
+	}
+	var b strings.Builder
+	shown := 0
+	for i := len(runs) - 1; i >= 0 && shown < 5; i-- {
+		st := runs[i]
+		if st.Branch != branch && branch != "" {
+			continue
+		}
+		shown++
+		b.WriteString(e.statusLine(ctx, st))
+		if !st.Open && !st.Told {
+			_ = e.Store.Update(st.Run, func(s *RunState) error {
+				s.Told = true
+				return nil
+			})
+		}
+	}
+	if shown == 0 {
+		b.WriteString("No run on this branch yet.\n")
+	}
+	if branch != "" {
+		if tip, err := e.Git.Head(ctx, root); err == nil {
+			if landed, ok, err := e.lastBase(ctx, tip); err == nil && ok {
+				fmt.Fprintf(&b, "\nThe last work landed here is %s.\n", short(landed))
+			}
+		}
+	}
+	return b.String(), nil
+}
+
+func (e *Engine) statusLine(ctx context.Context, st *RunState) string {
+	if !st.Open {
+		where := st.Kept
+		if st.Landed != "" {
+			where = short(st.Landed)
+		}
+		return fmt.Sprintf("%s  %s  %s  %s: %s\n", st.Run, st.Command, st.State, where, st.Why)
+	}
+	state := SessionUnknown
+	if st.Session != "" {
+		if s, err := e.Sessions.State(ctx, st.Session); err == nil {
+			state = s
+		}
+	}
+	line := fmt.Sprintf("%s  %s  open, session %s, %d items, %d repair rounds", st.Run, st.Command, state, len(st.Items), st.Repairs)
+	if state != SessionWorking {
+		line += "; it has stopped working, and `markitect " + st.Command + "` resumes it or `markitect stop WHY` ends it"
+		if st.Failure != "" {
+			line += " (" + st.Failure + ")"
+		}
+	}
+	return line + "\n"
+}
+
+// Notice is the one line every command prints about a Run the owner should hear
+// of: one that closed and they have not seen, or one that has stopped working.
+func (e *Engine) Notice(ctx context.Context, dir string) string {
+	root, err := e.Git.Root(ctx, dir)
+	if err != nil || filepathIsRun(e, root) {
+		return ""
+	}
+	branch, err := e.Git.Branch(ctx, root)
+	if err != nil {
+		return ""
+	}
+	runs, err := e.Store.All()
+	if err != nil {
+		return ""
+	}
+	var b strings.Builder
+	for _, st := range runs {
+		if st.Branch != branch {
+			continue
+		}
+		switch {
+		case !st.Open && !st.Told:
+			if st.Landed != "" {
+				fmt.Fprintf(&b, "markitect: run %s landed on %s as %s.\n", st.Run, st.Branch, short(st.Landed))
+			} else {
+				fmt.Fprintf(&b, "markitect: run %s ended as %s and did not land: %s. Its work is on %s.\n", st.Run, st.State, st.Why, st.Kept)
+			}
+			_ = e.Store.Update(st.Run, func(s *RunState) error {
+				s.Told = true
+				return nil
+			})
+		case st.Open && st.Session != "":
+			if s, err := e.Sessions.State(ctx, st.Session); err == nil && s != SessionWorking {
+				why := ""
+				if st.Failure != "" {
+					why = " (" + st.Failure + ")"
+				}
+				fmt.Fprintf(&b, "markitect: run %s has stopped working%s; `markitect %s` resumes it, `markitect stop WHY` ends it.\n", st.Run, why, st.Command)
+			}
+		}
+	}
+	return b.String()
+}
+
+func filepathIsRun(e *Engine, root string) bool {
+	_, found, err := e.Store.Load(filepath.Base(root))
+	return err == nil && found
+}
+
+// cleanUp removes the worktrees of closed Runs. The provider holds a lock on a
+// worktree while its session runs, so this waits for the next apply.
+func (e *Engine) cleanUp(ctx context.Context) {
+	runs, err := e.Store.All()
+	if err != nil {
+		return
+	}
+	for _, st := range runs {
+		if st.Open || st.Cleaned {
+			continue
+		}
+		if st.Session != "" {
+			_ = e.Sessions.Stop(ctx, st.Session)
+			_ = e.Sessions.Remove(ctx, st.Session)
+		}
+		if err := e.Git.RemoveWorktree(ctx, worktreeBranch(st.Run)); err != nil {
+			continue
+		}
+		if err := e.Git.DeleteBranch(ctx, worktreeBranch(st.Run)); err != nil {
+			continue
+		}
+		_ = e.Store.Update(st.Run, func(s *RunState) error {
+			s.Cleaned = true
+			return nil
+		})
+	}
+}
+
+// loadWorking loads the project in a working tree.
+func (e *Engine) loadWorking(ctx context.Context, root string) (*project.Project, error) {
+	cand, err := e.Git.Candidate(ctx, root, "the state of the working tree")
+	if err != nil {
+		return nil, err
+	}
+	return project.Load(e.Git.State(ctx, cand))
+}
+
+// impact is what the change from the base to a commit reaches, with that
+// commit's registry.
+func (e *Engine) impact(ctx context.Context, base, commit string, before, cur *project.Project, findings []analysis.Finding, full bool) (analysis.Impact, error) {
+	all, err := e.Git.Changed(ctx, base, commit)
+	if err != nil {
+		return analysis.Impact{}, err
+	}
+	return analysis.ComputeImpact(analysis.ImpactInput{Base: before, Current: cur, Changed: outsideOwnFolder(all), Findings: findings, Full: full}), nil
+}
+
+// LastBase is the commit the next Run's impact starts from, and false when
+// nothing has landed yet.
+func (e *Engine) LastBase(ctx context.Context, dir string) (string, bool, error) {
+	root, err := e.Git.Root(ctx, dir)
+	if err != nil {
+		return "", false, err
+	}
+	head, err := e.Git.Head(ctx, root)
+	if err != nil {
+		return "", false, err
+	}
+	return e.lastBase(ctx, head)
+}
+
+func listErrors(errs model.Diagnostics) string {
+	var b strings.Builder
+	for i, d := range errs {
+		if i == maxRefusals {
+			fmt.Fprintf(&b, "and %d more\n", len(errs)-maxRefusals)
+			break
+		}
+		fmt.Fprintf(&b, "- %s\n", d.String())
+	}
+	return b.String()
+}
+
+func tail(s string) string {
+	s = strings.TrimSpace(s)
+	if len(s) > 2000 {
+		return "…" + s[len(s)-2000:]
+	}
+	return s
 }
 
 func short(id string) string {

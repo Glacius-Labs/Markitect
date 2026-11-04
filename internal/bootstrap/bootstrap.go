@@ -1,11 +1,12 @@
-// Package bootstrap constructs the command line with its adapters: Git for
-// the model commands, and for apply and verify the Run engine with the
-// host's Git, the Run remote in a container and the provider adapters.
+// Package bootstrap constructs the command line with its adapters: Git for the
+// spec's commands, and for a Run the process with the user's repository, the
+// required checks on the user's machine and the provider's background sessions.
 package bootstrap
 
 import (
 	"context"
 	"io"
+	"os"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/cli"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/repo"
@@ -13,7 +14,7 @@ import (
 
 // Run runs the markitect command line and returns its exit code.
 func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
-	return cli.CLI{Git: git{}, Runs: runs{}, Desktop: desktopApp{stdout}, Stdout: stdout, Stderr: stderr}.Run(ctx, args)
+	return cli.CLI{Git: git{}, Runs: runs{}, Stdin: os.Stdin, Stdout: stdout, Stderr: stderr}.Run(ctx, args)
 }
 
 // git opens repository states through the repo adapter.

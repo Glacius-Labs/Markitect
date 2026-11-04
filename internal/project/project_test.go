@@ -50,7 +50,7 @@ func valid(t *testing.T) memRepo {
 	return memRepo{files: map[string]string{
 		ManifestFile:                    "libraries:\n  std: 1.0.0\n",
 		LockFile:                        stdLock(t),
-		ChecksFile:                      "checks:\n  - name: test\n    command: go test ./...\n    timeout: 5m\n    environment: golang:1.27\n",
+		ChecksFile:                      "checks:\n  - name: test\n    command: go test ./...\n    timeout: 5m\n",
 		ModelDir + "/project.md":        "---\nkind: std/Project\n---\n# Demo\n\nSee [[members]].\n",
 		ModelDir + "/members/member.md": "---\nkind: std/Concept\n---\n# Member\n",
 		RootPage:                        "| File | Realizes | Why |\n|---|---|---|\n| README.md | [[project]] | Overview |\n",
@@ -175,16 +175,14 @@ func TestLoadLocalLibraryAndLock(t *testing.T) {
 	expect(t, load(t, r).Errors, "lock.mismatch", "content of Library web 0.2.0 does not match")
 }
 
-func TestParseChecksErrors(t *testing.T) {
-	_, ds := ParseChecks("execution.yaml", []byte(`checks:
+func TestParseExecutionErrors(t *testing.T) {
+	_, ds := ParseExecution("execution.yaml", []byte(`checks:
   - name: ok
     command: make
     timeout: 1m
-    environment: debian
   - name: ok
     command: make
     timeout: 1m
-    environment: debian
   - name: "bad name"
   - name: nocommand
     timeout: 1m
@@ -192,26 +190,20 @@ func TestParseChecksErrors(t *testing.T) {
     command: make
     directory: /etc
     timeout: 1m
-    environment: x
   - name: notimeout
     command: make
-    environment: x
-  - name: noenv
-    command: make
-    timeout: 1m
   - name: extra
     command: make
     timeout: 1m
-    environment: x
     image: y
   - just text
 other: 1
 `))
-	for _, want := range []string{"named twice", "needs a name", "needs a command", "directory must be repository-relative", "needs a timeout", "needs an environment", `unknown check key "image"`, "each check is a mapping", `unknown key "other"`} {
+	for _, want := range []string{"named twice", "needs a name", "needs a command", "directory must be repository-relative", "needs a timeout", `unknown check key "image"`, "each check is a mapping", `unknown key "other"`} {
 		expect(t, ds, "execution.syntax", want)
 	}
-	_, ds = ParseChecks("execution.yaml", []byte("checks: {}\n"))
+	_, ds = ParseExecution("execution.yaml", []byte("checks: {}\n"))
 	expect(t, ds, "execution.syntax", "checks must be a list")
-	_, ds = ParseChecks("execution.yaml", []byte("checks: [\n"))
+	_, ds = ParseExecution("execution.yaml", []byte("checks: [\n"))
 	expect(t, ds, "execution.syntax", "not valid YAML")
 }

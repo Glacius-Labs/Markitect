@@ -161,6 +161,34 @@ func (w WorkingTree) List(dir string) ([]string, error) {
 	return out, err
 }
 
+// initPaths are what markitect init writes.
+var initPaths = []string{".markitect", ".claude/skills", ".claude/agents", ".agents/skills", ".gitignore"}
+
+// CommitOwn commits what init wrote with the user's identity, and says whether
+// there was anything to commit.
+func (w WorkingTree) CommitOwn(message string) (bool, error) {
+	var paths []string
+	for _, p := range initPaths {
+		if w.Exists(p) {
+			paths = append(paths, p)
+		}
+	}
+	if _, err := git(w.Ctx, w.Dir, append([]string{"add", "-A", "--"}, paths...)...); err != nil {
+		return false, err
+	}
+	out, err := git(w.Ctx, w.Dir, append([]string{"--no-optional-locks", "diff", "--cached", "--name-only", "--"}, paths...)...)
+	if err != nil {
+		return false, err
+	}
+	if strings.TrimSpace(string(out)) == "" {
+		return false, nil
+	}
+	if _, err := git(w.Ctx, w.Dir, append([]string{"commit", "-q", "-m", message, "--"}, paths...)...); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // Commit is one commit of a repository.
 type Commit struct {
 	Root string

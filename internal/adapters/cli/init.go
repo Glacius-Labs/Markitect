@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/libraries"
@@ -77,8 +78,88 @@ func (c CLI) init(ctx context.Context, args []string) (int, error) {
 		return Misused, err
 	}
 	fmt.Fprintf(c.Stdout, "installed the skills %s into %s\n", strings.Join(installed, ", "), strings.Join(SkillDirs, " and "))
+	if err := installHarness(ws); err != nil {
+		return Misused, err
+	}
+	fmt.Fprintln(c.Stdout, "installed the harness: the apply and verify skills and the reviewer agent")
+	if err := ensureGitignored(ws); err != nil {
+		return Misused, err
+	}
+	switch committed, err := ws.CommitOwn(initMessage); {
+	case err != nil:
+		fmt.Fprintf(c.Stdout, "could not commit what init wrote, so commit it yourself before the first apply: %v\n", err)
+	case committed:
+		fmt.Fprintln(c.Stdout, "committed what init wrote")
+	}
 	fmt.Fprintln(c.Stdout, "next: register the repository's files on the registry pages, or model an existing project with the markitect-extract skill; then run markitect check")
 	return OK, nil
+}
+
+const initMessage = "Set up Markitect"
+
+// installHarness writes the harness of a Run for Claude Code and removes every
+// other file of it the binary no longer ships.
+func installHarness(ws Workspace) error {
+	want := map[string][]byte{}
+	for _, f := range skills.Harness() {
+		want[f.Path] = f.Data
+	}
+	for _, dir := range []string{".claude/agents", ".claude/skills"} {
+		existing, err := ws.List(dir)
+		if err != nil {
+			return err
+		}
+		for _, f := range existing {
+			_, keep := want[f]
+			owned := strings.HasPrefix(strings.TrimPrefix(f, dir+"/"), skills.HarnessPrefix)
+			if !keep && owned && !shippedSkill(f) {
+				if err := ws.Remove(f); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	for file, data := range want {
+		if err := ws.Write(file, data); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// shippedSkill says a file belongs to a skill installSkills looks after.
+func shippedSkill(file string) bool {
+	for _, f := range skills.Files() {
+		if ".claude/skills/"+f.Path == file {
+			return true
+		}
+	}
+	return false
+}
+
+// worktreesIgnore keeps the worktrees of Runs out of the project's files.
+const worktreesIgnore = ".claude/worktrees/"
+
+// ensureGitignored adds the worktrees of Runs to .gitignore.
+func ensureGitignored(ws Workspace) error {
+	var current []byte
+	if ws.Exists(".gitignore") {
+		data, err := ws.Read(".gitignore")
+		if err != nil {
+			return err
+		}
+		current = data
+	}
+	if bytes.Contains(current, []byte(worktreesIgnore)) {
+		return nil
+	}
+	var b bytes.Buffer
+	b.Write(current)
+	if len(current) > 0 && !bytes.HasSuffix(current, []byte("\n")) {
+		b.WriteString("\n")
+	}
+	b.WriteString(worktreesIgnore + "\n")
+	return ws.Write(".gitignore", b.Bytes())
 }
 
 // installSkills writes every skill file into each skill folder and removes
@@ -97,7 +178,7 @@ func installSkills(ws Workspace) ([]string, error) {
 			return nil, err
 		}
 		for _, f := range existing {
-			if _, keep := want[f]; !keep && strings.HasPrefix(strings.TrimPrefix(f, dir+"/"), "markitect-") {
+			if _, keep := want[f]; !keep && strings.HasPrefix(strings.TrimPrefix(f, dir+"/"), "markitect-") && !harnessFile(f) {
 				if err := ws.Remove(f); err != nil {
 					return nil, err
 				}
@@ -110,6 +191,16 @@ func installSkills(ws Workspace) ([]string, error) {
 		}
 	}
 	return skills.Names(), nil
+}
+
+// harnessFile says a file belongs to the harness installHarness looks after.
+func harnessFile(file string) bool {
+	for _, f := range skills.Harness() {
+		if f.Path == file {
+			return true
+		}
+	}
+	return false
 }
 
 // ensureIgnored adds the installed skill folders to the ignore page, so that
@@ -130,6 +221,12 @@ func (c CLI) ensureIgnored(ws Workspace, created func(string)) error {
 			rows = append(rows, fmt.Sprintf("| `%s` | Skills installed by markitect init |\n", pattern))
 		}
 	}
+	for pattern, why := range map[string]string{".claude/agents/markitect-*": "The reviewer agent installed by markitect init", ".gitignore": "Git's own"} {
+		if !bytes.Contains(current, []byte("`"+pattern+"`")) {
+			rows = append(rows, fmt.Sprintf("| `%s` | %s |\n", pattern, why))
+		}
+	}
+	sort.Strings(rows)
 	if len(rows) == 0 {
 		return nil
 	}
@@ -215,15 +312,17 @@ func (c CLI) writeLock(ws Workspace) (int, error) {
 }
 
 const checksTemplate = `# The required checks: the one proof in a Run that does not come from an agent.
-# Each check runs its command with sh -c in the named directory, inside the
-# environment (a container image), within the timeout. For example:
+# Each check runs its command with sh -c in the named directory of a clean copy of
+# the work, within the timeout. It makes what it needs, such as dependencies, itself.
+# For example:
 #
 # checks:
 #   - name: test
 #     command: go test ./...
 #     directory: .
 #     timeout: 10m
-#     environment: golang:1.27
+#
+# model and effort name what a Run's sessions use; the defaults are sonnet and high.
 checks: []
 `
 

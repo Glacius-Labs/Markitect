@@ -51,9 +51,48 @@ type Project struct {
 	Model     *model.Model
 	Registry  *realization.Registry
 	Checks    []Check
-	// Errors are the compile errors; a Project with errors is still loaded as
-	// far as its files allow.
+	// SessionModel and SessionEffort are the AI model and effort a Run's sessions
+	// use, empty for the tool's default.
+	SessionModel, SessionEffort string
+	// Errors are the compile errors, of the spec and of the realization; a
+	// Project with errors is still loaded as far as its files allow.
 	Errors model.Diagnostics
+}
+
+// Codes of the errors that say the realization does not match the spec yet:
+// the implementer settles them in the work. Every other error is the spec's,
+// and the owner settles it in the spec.
+const (
+	CodeUnregistered = "file.unregistered"
+	CodeUnused       = "definition.unused"
+)
+
+// IsRealization says whether an error is one of the realization's.
+func IsRealization(code string) bool {
+	return code == CodeUnregistered || code == CodeUnused || strings.HasPrefix(code, "stale.")
+}
+
+// SpecErrors are the errors in the spec itself: what stops a Command before it
+// starts an agent.
+func (p *Project) SpecErrors() model.Diagnostics {
+	var out model.Diagnostics
+	for _, d := range p.Errors {
+		if !IsRealization(d.Code) {
+			out = append(out, d)
+		}
+	}
+	return out
+}
+
+// RealizationErrors are the errors that say the work does not match the spec yet.
+func (p *Project) RealizationErrors() model.Diagnostics {
+	var out model.Diagnostics
+	for _, d := range p.Errors {
+		if IsRealization(d.Code) {
+			out = append(out, d)
+		}
+	}
+	return out
 }
 
 // Load reads and checks the project in a repository state.
@@ -122,8 +161,8 @@ func Load(repo Repository) (*Project, error) {
 	if !present[ChecksFile] {
 		ds.Add("execution.missing", ChecksFile, 0, "the project has no required checks file; run markitect init")
 	} else if data, ok := read(ChecksFile); ok {
-		var errs model.Diagnostics
-		p.Checks, errs = ParseChecks(ChecksFile, data)
+		exec, errs := ParseExecution(ChecksFile, data)
+		p.Checks, p.SessionModel, p.SessionEffort = exec.Checks, exec.Model, exec.Effort
 		ds = append(ds, errs...)
 	}
 	m, errs := model.Compile(model.Source{Dir: ModelDir, Files: modelFiles, Libraries: p.Libraries})
@@ -138,8 +177,54 @@ func Load(repo Repository) (*Project, error) {
 	reg, errs := realization.Account(in)
 	p.Registry = reg
 	ds = append(ds, errs...)
+	addRealizationErrors(&ds, m, reg)
 	p.Errors = ds.Sorted()
 	return p, nil
+}
+
+// addRealizationErrors makes stale registry entries and unused Definitions
+// errors: spec and code do not match, whichever side changed.
+func addRealizationErrors(ds *model.Diagnostics, m *model.Model, reg *realization.Registry) {
+	if reg != nil {
+		for _, s := range reg.Stale {
+			switch s.Code {
+			case "stale.definition":
+				ds.Add(s.Code, s.PageFile, s.Line, "%s links [[%s]], which no longer exists", s.File, s.Target)
+			case "stale.file":
+				ds.Add(s.Code, s.PageFile, s.Line, "%s no longer exists", s.File)
+			case "stale.page":
+				if s.File == "" {
+					ds.Add(s.Code, s.PageFile, 0, "the Package of this page no longer exists")
+				} else {
+					ds.Add(s.Code, s.PageFile, s.Line, "%s is listed only on the page of a removed Package", s.File)
+				}
+			}
+		}
+	}
+	if m == nil {
+		return
+	}
+	incoming := map[string]bool{}
+	for _, d := range m.Definitions {
+		for _, l := range d.Links {
+			if l.Target != d.ID {
+				incoming[l.Target] = true
+			}
+		}
+	}
+	realized := map[string]bool{}
+	if reg != nil {
+		for _, e := range reg.Entries {
+			for _, id := range e.Realizes {
+				realized[id] = true
+			}
+		}
+	}
+	for _, id := range m.ModelDefinitions() {
+		if !incoming[id] && !realized[id] {
+			ds.Add(CodeUnused, m.Definitions[id].File, 0, "nothing links to %s and no file realizes it", id)
+		}
+	}
 }
 
 func (p *Project) loadManifest(read func(string) ([]byte, bool), present map[string]bool, local map[string][]model.File, ds *model.Diagnostics) {
