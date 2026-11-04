@@ -37,6 +37,8 @@ const TokenVariable = "MARKITECT_CLAUDE_TOKEN"
 //	MARKITECT_TRANSCRIPTS    a folder for the sessions' transcripts (default none)
 //	MARKITECT_SESSION_BUDGET the most one session may spend, in the provider's own
 //	                         estimate (default no limit)
+//	MARKITECT_REVIEWER_SHELL off starts reviewers without a shell, for test 1 of
+//	                         concept 3.0 §13 (default on)
 type agentConfig struct {
 	Runtime     agents.Runtime
 	Provider    agents.Provider

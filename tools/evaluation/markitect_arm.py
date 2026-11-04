@@ -1,14 +1,17 @@
-"""The concept 2.0 arm: one `markitect apply` per task, its host native, its agents in containers on the suite's network.
+"""The concept 3.0 arm: one `markitect apply` per task, its host native, its agents in the Command's container on the suite's network.
 
-  python -I -B markitect_arm.py --markitect BIN --remote-binary BIN --manager-image IMAGE [--effort LEVEL] [--verify] TASK_DIR OUT_DIR [STATE_DIR]
+  python -I -B markitect_arm.py --markitect BIN --image IMAGE_ID [--effort LEVEL] [--verify] TASK_DIR OUT_DIR [STATE_DIR]
 
 Run it only through `suite.py run --native` or `chain --native` (native.py),
-which hands it the evaluation's model, an access-only login, the network every
-container joins, the provider endpoints at the gateway, a resolver that
-resolves nothing, a label and the engine. Per task it:
+which hands it the evaluation's model, the network every container joins, the
+provider endpoints at the gateway, a resolver that resolves nothing, a label
+and the engine. The login is the owner's token, which the arm reads from
+MARKITECT_CLAUDE_TOKEN in its own environment and passes to the host under the
+same name; it refuses to start without it. The token is never written to a
+file, a record or a log, and never put on a command line. Per task the arm:
 
-1. puts the task's start into a private bare repository, the Run's target, and
-   clones it;
+1. puts the task's start into a private bare repository, the Command's target,
+   and clones it;
 2. commits the owner's input with the owner's identity, which is not the arm's
    work: the task's model/ as .markitect/ (manifest, lock, execution.yaml,
    model/ and the registry pages that give each Package its paths). A start
@@ -19,45 +22,47 @@ resolves nothing, a label and the engine. Per task it:
    a file no page names gets a row without links, on the page `markitect
    check` names as its owner's; the record says which was used. Each page also
    gets the task's model's patterns for paths the start does not hold yet, so
-   that its Manager can write where the model wants files. The model then
+   that the implementer can write where the model wants files. The model then
    changes in a second commit. A start that already holds a model keeps its
-   registry pages, whose tables are its Managers';
+   registry pages, whose rows the implementer wrote;
 3. runs `markitect apply`: `--full` on a fresh build or an adopted start
    without a base model, `--base` the adoption commit after it, and the
-   default impact, from the last landing, when the start is this arm's own
-   last landing (the state directory records it);
-4. delivers the landed commit as result.bundle, or the start unchanged when
-   the Run did not land, so that a stop scores as "did not land". The Result
-   goes to OUT_DIR/results/RUN.json (the suite's Result contract,
-   results.py), the agents' transcripts to OUT_DIR/transcripts/ and what the
-   arm knows about itself to OUT_DIR/run.json.
+   default base, the work Markitect last landed, when the start is this arm's
+   own last landing (the state directory records it);
+4. delivers the landed commit, or the start unchanged when the Command did not
+   land, so that a stop scores as "did not land". The Result goes to
+   OUT_DIR/results/RUN.json (the suite's Result contract, results.py), the
+   agents' transcripts to OUT_DIR/transcripts/ and what the arm knows about
+   itself to OUT_DIR/run.json.
 
 The host gets MARKITECT_NETWORK, MARKITECT_HOSTS and MARKITECT_DNS from the
-suite's EVALUATION_NETWORK, EVALUATION_HOSTS and EVALUATION_DNS, the login
-from EVALUATION_LOGIN, the provider and model from EVALUATION_MODEL and the
-engine from EVALUATION_ENGINE; the Run is named after EVALUATION_LABEL, so its
-containers carry the suite's run ID in `markitect.run`. Every ANTHROPIC_*,
-CLAUDE_*, OPENAI_* and CODEX_* variable is cleared: the account login only,
+suite's EVALUATION_NETWORK, EVALUATION_HOSTS and EVALUATION_DNS, the image from
+--image as MARKITECT_MANAGER_IMAGE, the provider and model from
+EVALUATION_MODEL and the engine from EVALUATION_ENGINE; the Command is named
+after EVALUATION_LABEL, so its containers carry the suite's run ID in
+`markitect.run`. Every other ANTHROPIC_*, CLAUDE_*, OPENAI_*, CODEX_*,
+MARKITECT_* and EVALUATION_* variable is cleared: the owner's token only,
 never an API key.
 
 With --verify the arm checks the task's start as it is instead: the independent
-`markitect verify --full` that concept 2.0 section 15.2 reads No drift from, on
-a chain's end state, whichever arm made it. A start that holds a model is
-checked against the task's model with its own registry pages; one that holds
-files but no model is first adopted, every file without links on its owner's
-page; an empty start gets the model alone. The Result goes to
-OUT_DIR/results/RUN.json as for apply, and the start is delivered unchanged:
-verify changes nothing. Exit 0: verify ended `verified` or `findings`; 1: it
-ended otherwise; 2 as below.
+`markitect verify --full` that reads No drift from a chain's end state,
+whichever arm made it. A start that holds a model is checked against the task's
+model with its own registry pages; one that holds files but no model is first
+adopted, every file without links on its owner's page; an empty start gets the
+model alone. The Result goes to OUT_DIR/results/RUN.json as for apply, and the
+start is delivered unchanged: verify changes nothing. Exit 0: verify ended
+`verified` or `findings`; 1: it ended otherwise; 2 as below.
 
-Exit 0: the Run landed, found nothing to do or stopped on a model defect.
-Exit 1: it ended otherwise (incomplete, kept) and the start was delivered.
-Exit 2: it could not run, and nothing was delivered: the owner's input does
-not compile, the host could not start the Run, its gate failed, or the Run
-did not land and no agent completed a turn. None of these is the arm's work,
-and an unchanged start would score as a stop. The series protocol voids them
-with a variant runtime signature on `reported.status` or
-`reported.noAgentTurn` (classify.py).
+Exit 0: the Command landed, found nothing to do or stopped on a spec problem.
+Exit 1: it ended otherwise (refused, kept, incomplete) and the start was
+delivered. A `refused` Command is the agents' work, such as required checks
+that still fail after the repair rounds.
+Exit 2: it could not run, and nothing was delivered: the owner's input does not
+compile, the host could not start the Command, the start did not compile for
+the host (`check-failed`, no agent started), or the Command did not land and
+no session finished. None of these is the arm's work, and an unchanged start
+would score as a stop. The series protocol voids them with a variant runtime
+signature on `reported.status` or `reported.noAgentTurn` (classify.py).
 """
 import argparse
 import fnmatch
@@ -80,11 +85,13 @@ MODEL_ENTRIES = ("manifest.yaml", "lock.yaml", "execution.yaml", "model")
 PAGE_FRONT = re.compile(r"\A---\npaths:(?: \[\]\n|\n((?:  - \S+\n)+))---\n")
 # Time kept back from the task's deadline for setting up and delivering.
 MARGIN_SECONDS = 180
-CLEARED = ("ANTHROPIC_", "CLAUDE_", "CLAUDECODE", "OPENAI_", "CODEX_", "MARKITECT_", "GIT_", "GH_", "GITHUB_")
-PROVIDERS = ("claude", "codex")
-# How the Run ended: delivered and exit 0, or delivered with exit 1 (results.py and internal/run/result.go).
-DELIBERATE = ("landed", "nothing-to-do", "model-defect")
-# How a verify Run ended when it checked every item it had: every item conforms, or something does not.
+CLEARED = ("ANTHROPIC_", "CLAUDE_", "CLAUDECODE", "OPENAI_", "CODEX_", "MARKITECT_", "EVALUATION_", "GIT_", "GH_", "GITHUB_")
+# The owner's token is the only login a Command takes, and claude the only provider with a route for it (internal/agents/README.md).
+TOKEN_VARIABLE = "MARKITECT_CLAUDE_TOKEN"
+PROVIDERS = ("claude",)
+# How a Command ended on purpose: delivered and exit 0. Any other state is delivered and exit 1 (internal/run/result.go).
+DELIBERATE = ("landed", "nothing-to-do", "spec-problem")
+# How a verify Command ended when it checked every item it had: every item conforms, or something does not.
 CHECKED = ("verified", "findings")
 UNREGISTERED = re.compile(r"list it on (\S+), the page of its owner")
 
@@ -118,33 +125,38 @@ def git_env(hooks):
     return env
 
 
+def owner_token():
+    """The owner's token from the arm's own environment; the arm does not start without it. Its value goes only into the host's
+    environment: never into a message, a record, a file or an argument."""
+    token = os.environ.get(TOKEN_VARIABLE, "")
+    if not token.strip():
+        raise ArmError(f"no {TOKEN_VARIABLE}: the token from `claude setup-token` is the only login a Command takes")
+    return token
+
+
 def provider_model():
     provider, _, model = os.environ.get("EVALUATION_MODEL", "").partition(":")
     if provider not in PROVIDERS or not model:
-        raise ArmError(f"EVALUATION_MODEL must be claude:MODEL_ID or codex:MODEL_ID, not {os.environ.get('EVALUATION_MODEL')!r}")
+        raise ArmError(f"EVALUATION_MODEL must be claude:MODEL_ID (a Command has no token route for codex), not {os.environ.get('EVALUATION_MODEL')!r}")
     return provider, model
 
 
 def run_name():
-    """The suite's run ID from EVALUATION_LABEL (KEY=VALUE), so the Run's containers carry it; a fresh one without a label."""
+    """The suite's run ID from EVALUATION_LABEL (KEY=VALUE), so the Command's containers carry it; a fresh one without a label."""
     value = os.environ.get("EVALUATION_LABEL", "").rpartition("=")[2]
     return value if re.fullmatch(r"[a-z0-9][a-z0-9_.-]{0,62}", value) else "eval-" + uuid.uuid4().hex[:12]
 
 
-def host_env(a, provider, model, transcripts, hooks):
-    """What `markitect apply` needs, from the suite's EVALUATION_* variables; no provider key reaches it."""
+def host_env(a, provider, model, transcripts, hooks, token):
+    """What `markitect apply` needs, from the suite's EVALUATION_* variables and the owner's token; no provider key reaches it."""
     engine = json.loads(os.environ.get("EVALUATION_ENGINE") or json.dumps([shutil.which("docker") or "docker"]))
     if not isinstance(engine, list) or len(engine) != 1:
         raise ArmError(f"the host takes one engine program, not {engine!r}")
-    login = os.environ.get("EVALUATION_LOGIN")
-    if not login:
-        raise ArmError("no EVALUATION_LOGIN: run the arm through suite.py run --native")
     env = git_env(hooks)
     for k in ("GIT_AUTHOR_NAME", "GIT_AUTHOR_EMAIL", "GIT_COMMITTER_NAME", "GIT_COMMITTER_EMAIL"):
         env.pop(k)
-    env.update(MARKITECT_MANAGER_IMAGE=a.manager_image, MARKITECT_REMOTE_BINARY=a.remote_binary, MARKITECT_ENGINE=engine[0],
-               MARKITECT_PROVIDER=provider, MARKITECT_MODEL=model, MARKITECT_LOGIN=login, MARKITECT_EFFORT=a.effort,
-               MARKITECT_TRANSCRIPTS=str(transcripts))
+    env.update(MARKITECT_MANAGER_IMAGE=a.image, MARKITECT_ENGINE=engine[0], MARKITECT_PROVIDER=provider, MARKITECT_MODEL=model,
+               MARKITECT_EFFORT=a.effort, MARKITECT_TRANSCRIPTS=str(transcripts), **{TOKEN_VARIABLE: token})
     for name in ("NETWORK", "HOSTS", "DNS"):
         if os.environ.get("EVALUATION_" + name):
             env["MARKITECT_" + name] = os.environ["EVALUATION_" + name]
@@ -216,8 +228,8 @@ def file_owner(file, pages):
 def add_new_paths(source, dot, files):
     """The source's patterns for new paths on the pages at `dot`: (how many it added, how many it left out).
 
-    An adopted start's pages name only its files, and a Manager's own claim counts only from the next Run (DEC-081), so
-    without the owner's patterns no Manager could write where the task's model wants new files. A pattern stays out if
+    An adopted start's pages name only its files, so without the owner's patterns the new files of the task's model would
+    fall to Root, and no Package would own the paths its model gives it. A pattern stays out if
     a page already has it, since two Packages claiming one is a compile error, or if it matches a file of the start that
     another page or Root owns: every file keeps its owner. A page in another form leaves the pages as they are, since
     the owners cannot be read."""
@@ -300,7 +312,7 @@ def owner_input(a, task, repo, start, landed, env):
     dot = repo / ".markitect"
     model, base_model = task / "model", task / "base-model"
     if not model.is_dir():
-        raise ArmError("the task has no model/: the 2.0 arm works from the model")
+        raise ArmError("the task has no model/: the arm works from the model")
     files = [p for p in git(repo, "ls-files", env=env).splitlines() if p]
     adoption = None
     if dot.is_dir():
@@ -394,24 +406,36 @@ def read_state(state):
     return value if isinstance(value, dict) else {}
 
 
-def reported_model(result, provider, model):
-    """The model every agent that ran reported, or the configured one when none ran; 'mixed' when they differ.
+def sessions_of(result):
+    """The Result's sessions, in the order they ended."""
+    sessions = (result or {}).get("sessions")
+    return [s for s in sessions if isinstance(s, dict)] if isinstance(sessions, list) else []
 
-    A start that did not finish may carry the configured name before its CLI reported one, so only finished starts count."""
-    agents = {s.get("agent") for s in (result or {}).get("starts") or [] if s.get("agent") and s.get("reason") == "finished"}
-    if not agents:
-        return provider, model
-    if len(agents) > 1:
-        return provider, "mixed: " + ", ".join(sorted(agents))
-    p, _, m = agents.pop().partition(":")
-    return p, m
+
+def reported_model(result, provider, model):
+    """(provider, model, models used): the model every session that finished reported, or the configured one when none did.
+
+    A session lists every model that answered, its subagents included. With more than one, `model` is the first of them and
+    the list holds all, so that the suite's model check (suite.model_check) holds each against the evaluation's model. A
+    session that did not finish may carry the configured name before its CLI reported one, so only finished sessions count."""
+    finished = [s for s in sessions_of(result) if s.get("reason") == "finished"]
+    named, providers = set(), set()
+    for s in finished:
+        agent = s["agent"] if isinstance(s.get("agent"), str) else ""
+        listed = [m for m in s.get("models") or [] if isinstance(m, str) and m]
+        named.update(listed or ([agent.partition(":")[2]] if ":" in agent else []))
+        if ":" in agent:
+            providers.add(agent.partition(":")[0])
+    named = sorted(named - {""})
+    if not named:
+        return provider, model, []
+    return (providers.pop() if len(providers) == 1 else provider), named[0], named if len(named) > 1 else []
 
 
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--markitect", required=True, help="the markitect program of the frozen revision")
-    p.add_argument("--remote-binary", required=True, help="markitect-remote built for Linux, put into each Run's remote")
-    p.add_argument("--manager-image", required=True, help="the Manager image with the project's toolchain, by image ID")
+    p.add_argument("--image", required=True, help="the image with the project's toolchain, by image ID, built FROM packaging/runtime")
     p.add_argument("--effort", default="high")
     p.add_argument("--verify", action="store_true", help="run `markitect verify --full` on the task's start instead of apply")
     p.add_argument("task")
@@ -429,6 +453,7 @@ def main(argv=None):
         return code
 
     try:
+        token = owner_token()
         provider, model = provider_model()
         report.update(provider=provider, model=model)
         spec = json.loads((task / "task.json").read_text(encoding="utf-8"))
@@ -453,8 +478,8 @@ def main(argv=None):
             git(repo, "push", "-q", "origin", "main", env=env)
             seconds = int(deadline - (time.monotonic() - began) - MARGIN_SECONDS)
             if seconds < 60:
-                raise ArmError(f"only {seconds} s of the deadline are left for the Run")
-            env_apply = host_env(a, provider, model, out / "transcripts", tmp / "hooks")
+                raise ArmError(f"only {seconds} s of the deadline are left for the Command")
+            env_apply = host_env(a, provider, model, out / "transcripts", tmp / "hooks", token)
             (out / "results").mkdir(exist_ok=True)
             result_file = out / "results" / f"{name}.json"
             command = report["command"]
@@ -468,23 +493,27 @@ def main(argv=None):
             except ValueError:
                 result_file.unlink()
                 return finish(2, status="could-not-run", cause=f"markitect {command} returned no Result (see {command}.stderr.log)")
-            report["provider"], report["model"] = reported_model(result, provider, model)
-            failed = [{k: s.get(k) for k in ("manager", "role", "round", "class", "detail")} for s in result.get("starts") or []
-                      if s.get("reason") == "failed"]
+            sessions = sessions_of(result)
+            report["provider"], report["model"], used = reported_model(result, provider, model)
+            if used:
+                report["modelsUsed"] = used
+            failed = [{k: s.get(k) for k in ("role", "round", "class", "detail")} for s in sessions if s.get("reason") == "failed"]
             report.update(status=result.get("state"), cause=result.get("why"), tokens=result.get("usage"),
-                          starts=len(result.get("starts") or []), failedStarts=failed, cleanup=result.get("cleanup"))
-            # What a landed Run's cleanup after landing left: definite leftovers, which the suite counts as residue. A
+                          starts=len(sessions), failedStarts=failed, cleanup=result.get("cleanup"))
+            # What a landed Command's cleanup after landing left: definite leftovers, which the suite counts as residue. A
             # host that predates `afterLanding` says nothing: that is not reported, not clean. `cleanup` lists what may
             # remain, recorded above but not counted: the engine's own census finds what really does.
             after = result.get("afterLanding") if isinstance(result.get("afterLanding"), list) else None
             report.update(afterLanding=after, afterLandingReported=result.get("outcome") != "landed" or after is not None,
                           leftovers=[str(x) for x in after or []])
-            if result.get("state") == "check-failed":
-                # The gate failed on the owner's input, which compiled above: no agent started, nothing is the arm's work.
+            ran = any(s.get("reason") in ("finished", "deadline") for s in sessions)
+            if result.get("state") == "check-failed" and not ran:
+                # The host found a compile error in the start, which compiled above: no agent started, nothing is the arm's work.
+                # Required checks that still fail after the repair rounds end a Command as `refused`, which is the agents' work.
                 return finish(2)
             ended = CHECKED if a.verify else DELIBERATE
-            if result.get("state") not in ended and not any(s.get("reason") in ("finished", "deadline") for s in result.get("starts") or []):
-                # No agent completed a turn: the Run ended on its machinery, not on any agent's work.
+            if result.get("state") not in ended and not ran:
+                # No session finished: the Command ended on its machinery, not on any agent's work.
                 return finish(2, noAgentTurn=True)
             if a.verify:
                 # Verify changes nothing: the start is delivered as it was, and no landing is recorded.

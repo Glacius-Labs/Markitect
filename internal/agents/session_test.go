@@ -441,3 +441,40 @@ func TestAContinuedSessionCountsOnlyWhatItAddedToTheConversation(t *testing.T) {
 		t.Errorf("another conversation %+v", other)
 	}
 }
+
+// Without a shell for reviewers, only their sessions lose it.
+func TestOnlyAReviewerGoesWithoutAShell(t *testing.T) {
+	sh := &fakeShell{play: plays(sessionInit(), sessionResult("ok", 1, 1, 1, 1))}
+	g := newSessions(t, "")
+	g.ReviewerWithoutShell = true
+	for _, role := range []agentport.Role{agentport.Implementer, agentport.Reviewer} {
+		s := aSession()
+		s.Role = role
+		s.User = agentport.ImplementerUser
+		if role == agentport.Reviewer {
+			s.User = agentport.ReviewerUser(1)
+		}
+		if end := g.Run(context.Background(), sh, s); end.Reason != agentport.Finished {
+			t.Fatalf("%s: %+v", role, end)
+		}
+	}
+	sessions := sh.sessions()
+	if len(sessions) != 2 {
+		t.Fatalf("sessions: %d", len(sessions))
+	}
+	tools := func(e execution) string {
+		for i, a := range e.Argv {
+			if a == "--tools" {
+				return e.Argv[i+1]
+			}
+		}
+		t.Fatal("no --tools")
+		return ""
+	}
+	if !strings.Contains(tools(sessions[0]), "Bash") {
+		t.Fatalf("the implementer lost its shell: %s", tools(sessions[0]))
+	}
+	if strings.Contains(tools(sessions[1]), "Bash") {
+		t.Fatalf("the reviewer kept a shell: %s", tools(sessions[1]))
+	}
+}

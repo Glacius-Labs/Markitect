@@ -17,12 +17,12 @@ It sorts one run, from its suite.json and what the variant left in RUN_DIR, into
     session (codex_cli.py) is read from its event stream: it completed no turn,
     and its failure, else an error it ended on, has one of these classes, as the
     host's Codex adapter classifies the CLI's error text. A variant that
-    returns Results with its agent starts (results.py), such as the 2.0 arm, is
-    read from them instead of its transcripts: a Manager's last start failed
-    with one of these classes, as the host's agents classify it. An earlier
-    start that failed and was followed by another start of the same Manager is
-    part of the variant's work, as an error a single session recovered from
-    is;
+    returns Results with its agent starts or sessions (results.py), such as the
+    2.0 and 3.0 arms, is read from them instead of its transcripts: a 2.0
+    Manager's last start, or any 3.0 session, failed with one of these classes,
+    as the host's agents classify it. An earlier 2.0 start that failed and was
+    followed by another start of the same Manager is part of the variant's
+    work, as an error a single session recovered from is;
   - variant runtime: a signature of the variant's own runtime machinery,
     written into the series protocol before the series, matches the run.
 - invalid: the run did not take place under the evaluation's conditions (host
@@ -146,22 +146,29 @@ def session_errors(root):
 
 
 def start_errors(results):
-    """The provider failures that ended a Manager's work, from the Results a run returned; None without agent starts.
+    """The provider failures that ended a Run's or a Command's work, from the Results a run returned; None without agent
+    starts or sessions.
 
-    Starts are listed in the order they ended; a Manager's last start decides, as a session's last response does."""
+    A concept 2.0 Result lists `starts`, in the order they ended; a Manager's last start decides, as a session's last
+    response does. A concept 3.0 Result lists `sessions` instead, with no Manager: a Command ends at the first session that
+    does not finish, so none of its sessions is recovered from, and every session that failed with one of these classes
+    counts."""
     found, any_starts = [], False
     for path in sorted(pathlib.Path(results).glob("*.json")) if pathlib.Path(results).is_dir() else []:
         result = load(path) if path.is_file() and not path.is_symlink() else None
-        starts = (result or {}).get("starts")
-        if not isinstance(starts, list):
-            continue
-        any_starts = True
-        last = {}
-        for start in starts:
-            if isinstance(start, dict):
-                last[start.get("manager")] = start
-        found += [{"file": path.name, "manager": m, "role": s.get("role"), "error": s.get("class"), "detail": s.get("detail")}
-                  for m, s in last.items() if s.get("reason") == "failed" and s.get("class") in PROVIDER_CLASSES]
+        starts, sessions = (result or {}).get("starts"), (result or {}).get("sessions")
+        if isinstance(starts, list):
+            any_starts = True
+            last = {}
+            for start in starts:
+                if isinstance(start, dict):
+                    last[start.get("manager")] = start
+            found += [{"file": path.name, "manager": m, "role": s.get("role"), "error": s.get("class"), "detail": s.get("detail")}
+                      for m, s in last.items() if s.get("reason") == "failed" and s.get("class") in PROVIDER_CLASSES]
+        if isinstance(sessions, list):
+            any_starts = True
+            found += [{"file": path.name, "role": s.get("role"), "round": s.get("round"), "error": s.get("class"), "detail": s.get("detail")}
+                      for s in sessions if isinstance(s, dict) and s.get("reason") == "failed" and s.get("class") in PROVIDER_CLASSES]
     return found if any_starts else None
 
 

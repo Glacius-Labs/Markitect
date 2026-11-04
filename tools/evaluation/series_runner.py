@@ -53,7 +53,7 @@ sys.path.insert(0, str(HERE))
 import classify  # noqa: E402
 
 DEADLINES = {"library": 2700, "makerspace": 5400, "makerspace-large": 14400}
-# The variants' runtime signatures, written before any launch: the 2.0 arm's (markitect_arm.py), and K's own failure
+# The variants' runtime signatures, written before any launch: the arm's (markitect_arm.py), and K's own failure
 # (claude_code.py writes the status "error" when its code fails, before or after the session). V is the verify launch on
 # a chain's end state (markitect_arm.py --verify): M's host and machinery whichever arm made the end state.
 ARM_SIGNATURES = [
@@ -460,6 +460,10 @@ def login_secrets(path):
 
 
 def files_with_secrets(root, secrets, skip=()):
+    """The files under root that hold one of the secrets, a key shape, or the owner's token (MARKITECT_CLAUDE_TOKEN) when it
+    is set in this process; and how many files were scanned."""
+    token = os.environ.get("MARKITECT_CLAUDE_TOKEN", "").strip().encode()
+    secrets = [*secrets, token] if token else list(secrets)
     hits, scanned = [], 0
     for f in pathlib.Path(root).rglob("*"):
         rel = f.relative_to(root)
@@ -704,7 +708,7 @@ class Runner:
             hidden = [x for h in self.hidden() for x in ("--hidden-absent", h)]
             return (["--native", self.c["sandboxImage"], *hidden, "--login", self.c["login"], "--lock", self.c["lock"], "--engine", self.docker],
                     [self.py, "-I", "-B", self.ev / "markitect_arm.py", "--markitect", self.markitect,
-                     "--remote-binary", pathlib.Path(self.c["bin"]) / "markitect-remote", "--manager-image", self.c["managerImage"]])
+                     "--image", self.c["managerImage"]])
         # K gets the same task as M without the registry pages, which only M works from (Build, 29 October 2026).
         return (["--sandbox", self.c["sandboxImage"], "--variant-code", self.ev, "--login", self.c["login"], "--lock", self.c["lock"],
                  "--engine", self.docker, "--without-pages"],

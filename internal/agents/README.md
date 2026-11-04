@@ -41,6 +41,7 @@ The `End` says `finished`, `failed`, `deadline` or `cancelled`. `finished` says 
 | `MARKITECT_HOSTS`, `MARKITECT_DNS` | Extra host entries (`name:address`) and name servers, comma-separated | none |
 | `MARKITECT_TRANSCRIPTS` | A folder for the sessions' transcripts | none |
 | `MARKITECT_SESSION_BUDGET` | The most one session may spend, in the provider's own estimate | no limit |
+| `MARKITECT_REVIEWER_SHELL` | `off` starts reviewers without a tool that runs commands, so that [test 1](../../docs/concepts/v3-concept.md#13-how-we-know-it-works) can compare the two. A long diff then can't be shown to them, since the prompt asks for it by a command | `on` |
 
 A Command's container gets 4 CPUs, 8 GiB of memory, 2,048 processes and 1 GiB of temporary space: it holds the implementer and its subagents, the required checks and the reviewers. A chat's container gets 1 CPU, 2 GiB, 256 processes and 256 MiB. All sessions use one model and effort, which the evaluation requires of both arms ([evaluation suite](../../docs/guides/evaluation-suite.md)). Sonnet at `high` is the default; a stronger model is not the answer to a failure the concept or the tools should prevent.
 

@@ -301,3 +301,25 @@ func TestSessionReaderDoesNotTakeABudgetStopForAFinish(t *testing.T) {
 		t.Fatalf("outcome %+v", out)
 	}
 }
+
+// Without a shell a session has no tool that runs a command, and it can still
+// write its note.
+func TestALaunchWithoutAShellHasNoToolThatRunsACommand(t *testing.T) {
+	l := launch()
+	argv, _, _, err := (Provider{}).Launch(l)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if tools := option(t, argv, "--tools"); !strings.Contains(tools, "Bash") {
+		t.Fatalf("a usual session lost its shell: %s", tools)
+	}
+	l.NoShell = true
+	argv, _, _, err = (Provider{}).Launch(l)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tools := option(t, argv, "--tools")
+	if strings.Contains(tools, "Bash") || !strings.Contains(tools, "Write") || !strings.Contains(tools, "Read") {
+		t.Fatalf("tools without a shell: %s", tools)
+	}
+}

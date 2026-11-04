@@ -21,6 +21,9 @@ const (
 	// sessionTools are what an unattended session may use, its own subagents
 	// included (concept 3.0 §11).
 	sessionTools = "Bash,Read,Edit,Write,Glob,Grep,Agent,TodoWrite"
+	// noShellTools are the same without one that runs a command. A session still
+	// writes its note with Write.
+	noShellTools = "Read,Write,Glob,Grep,Agent,TodoWrite"
 )
 
 // sessionSettings keep the provider's own extensions out of a session: the
@@ -45,9 +48,13 @@ func (Provider) Launch(l agents.Launch) ([]string, []string, []byte, error) {
 	if l.Conversation != "" {
 		argv = append(argv, "--resume", l.Conversation)
 	}
+	tools := sessionTools
+	if l.NoShell {
+		tools = noShellTools
+	}
 	argv = append(argv, "--model", l.Model, "--effort", l.Effort,
 		"--permission-mode", "bypassPermissions", "--permission-prompts", "none",
-		"--tools", sessionTools, "--disable-slash-commands", "--setting-sources", "user", "--settings", sessionSettings,
+		"--tools", tools, "--disable-slash-commands", "--setting-sources", "user", "--settings", sessionSettings,
 		"--strict-mcp-config")
 	if l.Budget > 0 {
 		argv = append(argv, "--max-budget-usd", strconv.FormatFloat(l.Budget, 'f', 2, 64))

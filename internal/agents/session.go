@@ -30,6 +30,10 @@ type Sessions struct {
 	// Transcripts, when set, is a folder for the sessions' transcripts: one
 	// file per session, RUN/ROLE-ROUND.jsonl, every secret redacted.
 	Transcripts string
+	// ReviewerWithoutShell starts reviewers without a tool that runs commands, so
+	// that test 1 of concept 3.0 §13 can compare the two. The implementer keeps
+	// its shell.
+	ReviewerWithoutShell bool
 
 	mu sync.Mutex
 	// checked holds the roles whose login was checked in a Run.
@@ -67,7 +71,8 @@ func (g *Sessions) Run(ctx context.Context, sh agentport.Shell, s agentport.Sess
 		end.Reason, end.Class, end.Detail = agentport.Failed, agentport.Login, g.redact(err.Error())
 		return g.ended(ctx, end)
 	}
-	launch := Launch{Home: home, Conversation: s.Conversation, Prompt: s.Prompt, Model: g.Model, Effort: g.Effort, Budget: g.Budget}
+	launch := Launch{Home: home, Conversation: s.Conversation, Prompt: s.Prompt, Model: g.Model, Effort: g.Effort, Budget: g.Budget,
+		NoShell: g.ReviewerWithoutShell && s.Role == agentport.Reviewer}
 	argv, env, stdin, err := g.Provider.Launch(launch)
 	if err != nil {
 		end.Reason, end.Class, end.Detail = agentport.Failed, agentport.Other, g.redact(err.Error())

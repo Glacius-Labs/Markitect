@@ -51,6 +51,9 @@ type Launch struct {
 	Effort       string
 	// Budget is the most the session may spend; zero sets no limit.
 	Budget float64
+	// NoShell starts the session without a tool that runs commands, subagents
+	// included.
+	NoShell bool
 }
 
 // SessionReader reads one session's output and tells what it shows.

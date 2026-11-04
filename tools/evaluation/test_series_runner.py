@@ -62,6 +62,8 @@ FAKE_SUITE = textwrap.dedent(r'''
                 "ID": "beef01", "Attributes": {"name": "markitect-run-x", "markitect.run": "x"}}}) + "\n")
         elif outcome == "leak":
             (run / "variant" / "leak.txt").write_text(os.environ["FAKE_TOKEN"])
+        elif outcome == "token-leak":
+            (run / "variant" / "leak.txt").write_text("the host said: " + os.environ["MARKITECT_CLAUDE_TOKEN"] + " end")
         elif outcome == "quota":
             (run / "variant" / "stream.jsonl").write_text(json.dumps({"type": "rate_limit_event", "rate_limit_info": {
                 "status": "allowed", "unifiedWindows": {"seven_day": {"utilization": 0.95}}}}) + "\n")
@@ -160,7 +162,7 @@ class Fixture(unittest.TestCase):
             folder.mkdir()
         (self.fake / "suite.py").write_text(FAKE_SUITE)
         (self.fake / "engine.py").write_text(FAKE_ENGINE)
-        (self.bin / "markitect-remote").write_text("remote")
+        (self.bin / "markitect").write_text("host")
         self.lock = self.tmp / "NATIVE-RUN.lock"
         self.login = self.tmp / "credentials.json"
         self.login.write_text(json.dumps({"claudeAiOauth": {"accessToken": ACCESS, "refreshToken": REFRESH,
@@ -486,6 +488,34 @@ class SeriesTest(Fixture):
         self.assertIn("leak.txt", self.stop_reason())
         self.assertEqual(len(self.ledger()["attempts"]), 1)
 
+    def test_the_owners_token_in_the_evidence_stops_whatever_its_shape(self):
+        # A value no key shape matches, so only the token itself can be what the scan finds.
+        token = "plain-owner-token-0123456789"
+        os.environ["MARKITECT_CLAUDE_TOKEN"] = token
+        self.addCleanup(os.environ.pop, "MARKITECT_CLAUDE_TOKEN", None)
+        self.scenario({"a": ["token-leak"], "b": ["result"]})
+        self.runner(self.config([unit("a", "M"), unit("b", "K")])).run()
+        self.assertIn("leak.txt", self.stop_reason())
+        self.assertNotIn(token, self.stop_reason())
+        self.assertEqual(len(self.ledger()["attempts"]), 1)
+        folder = self.tmp / "evidence"
+        folder.mkdir()
+        (folder / "clean.txt").write_text("nothing here")
+        self.assertEqual(series_runner.files_with_secrets(folder, []), ([], 1))
+        (folder / "run.json").write_text(f"token {token}")
+        self.assertEqual(series_runner.files_with_secrets(folder, []), (["run.json"], 2))
+        del os.environ["MARKITECT_CLAUDE_TOKEN"]
+        self.assertEqual(series_runner.files_with_secrets(folder, []), ([], 2))
+
+    def test_the_arm_gets_the_manager_image_as_its_image_and_no_remote_binary(self):
+        flags, variant = self.runner(self.config([unit("a", "M")])).arm_args({"arm": "M"})
+        variant = [str(x) for x in variant]
+        self.assertEqual(variant[variant.index("--image") + 1], "sha256:m")
+        self.assertEqual(pathlib.Path(variant[variant.index("--markitect") + 1]).stem, "markitect")
+        self.assertNotIn("--remote-binary", variant)
+        self.assertNotIn("--manager-image", variant)
+        self.assertIn("--native", flags)
+
     def test_an_invalid_judgment_is_judged_again_once_then_stops(self):
         (self.fake / "invalid-judgments").write_text("1")
         self.scenario({"a": ["result"], "b": ["result"]})
@@ -586,7 +616,7 @@ class SeriesTest(Fixture):
         config = self.config([unit("a", "M"), unit("b", "K")])
         self.runner(config).run()
         (self.work / "STOP").unlink()
-        (self.bin / "markitect-remote").write_text("rebuilt")
+        (self.bin / "markitect").write_text("rebuilt")
         self.runner(config).run()
         self.assertIn("frozen bin changed", self.stop_reason())
         self.assertEqual(len(self.ledger()["attempts"]), 1)
