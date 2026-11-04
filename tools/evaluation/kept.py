@@ -92,10 +92,11 @@ def models_in(folder):
 
 
 def cost_in(folder):
-    """The sum of what each session's closing record reports, for a Command, whose Result counts tokens only. None without any.
+    """What each session's closing records report, for a Command, whose Result counts tokens only. None without any.
 
-    The provider's figure, kept only as a relative measure against another launch."""
-    total, found = 0.0, False
+    A resumed session reports a running total, so each session counts once, at its highest. The provider's figure, kept only
+    as a relative measure against another launch."""
+    highest = {}
     for p in files_of(folder):
         if p.suffix != ".jsonl" or p.name == "session.stream.jsonl" or "subagents" in p.parts:
             continue
@@ -108,9 +109,9 @@ def cost_in(folder):
                 except ValueError:
                     continue
                 if isinstance(record, dict) and record.get("type") == "result" and isinstance(record.get("total_cost_usd"), (int, float)):
-                    total += record["total_cost_usd"]
-                    found = True
-    return round(total, 4) if found else None
+                    session = record.get("session_id") or str(p)
+                    highest[session] = max(highest.get(session, 0.0), record["total_cost_usd"])
+    return round(sum(highest.values()), 4) if highest else None
 
 
 def read_json(path):

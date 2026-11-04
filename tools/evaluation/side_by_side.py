@@ -15,6 +15,9 @@ import json
 import pathlib
 import sys
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import kept  # noqa: E402
+
 QUESTIONS = (("architecture", "Architecture"), ("naming", "Naming"), ("cleanliness", "Cleanliness"), ("tests", "Tests"))
 
 
@@ -34,6 +37,15 @@ def named(items, key, count="count"):
 
 def linter(value, render):
     return "not run" if value is None else render(value)
+
+
+def load_launch(store, name):
+    """A kept launch's record, with a Command's cost counted again from its transcripts: a record kept before resumed sessions
+    counted once stays as it was, since a kept launch never changes."""
+    folder = pathlib.Path(store, name)
+    record = json.loads((folder / "launch.json").read_text(encoding="utf-8"))
+    counted = kept.cost_in(folder / "transcripts") if (folder / "transcripts").is_dir() else None
+    return {**record, "relativeCost": record.get("relativeCost") if counted is None else counted}
 
 
 def launch_rows(labels, launches, reference):
@@ -178,7 +190,7 @@ def build(store, measures_dir, blind, reference, title, notes=None, appendix=Non
     launches, measures, reads = {}, {}, {}
     for label in labels:
         name = key[label]["name"]
-        launches[label] = json.loads(pathlib.Path(store, name, "launch.json").read_text(encoding="utf-8"))
+        launches[label] = load_launch(store, name)
         measures[label] = json.loads(pathlib.Path(measures_dir, name + ".json").read_text(encoding="utf-8"))
         launches[label]["commits"] = measures[label].get("commits", "?")
         reads[label] = read_of(blind, label)

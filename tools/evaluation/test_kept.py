@@ -119,6 +119,24 @@ class Store(unittest.TestCase):
         self.assertEqual(r["requestedModel"], "claude-sonnet-5-5")
         self.assertEqual(r["usage"], {"inputTokens": 5})
 
+    def test_a_resumed_session_counts_once(self):
+        first = json.dumps({"type": "result", "session_id": "a", "total_cost_usd": 17.2})
+        resumed = json.dumps({"type": "result", "session_id": "a", "total_cost_usd": 17.35})
+        other = json.dumps({"type": "result", "session_id": "b", "total_cost_usd": 1.0})
+        run, _ = self.run_dir(transcript="\n".join([first, resumed, other]) + "\n")
+        (run / "variant" / "run.json").write_text(json.dumps({"tokens": {"inputTokens": 5}}), encoding="utf-8")
+        self.assertEqual(kept.add(self.store, "resumed", "p", "W0", "D", run)["relativeCost"], 18.35)
+
+    def test_the_page_counts_a_kept_commands_cost_again(self):
+        run, _ = self.run_dir(transcript=json.dumps({"type": "result", "session_id": "a", "total_cost_usd": 2.0}) + "\n")
+        kept.add(self.store, "old", "p", "W0", "D", run)
+        record = json.loads((self.store / "old" / "launch.json").read_text(encoding="utf-8"))
+        # The record keeps what it said; the page takes the figure from the transcripts.
+        self.assertEqual(side_by_side.load_launch(self.store, "old")["relativeCost"], 2.0)
+        record["relativeCost"] = 9.0
+        (self.store / "old" / "launch.json").write_text(json.dumps(record), encoding="utf-8")
+        self.assertEqual(side_by_side.load_launch(self.store, "old")["relativeCost"], 2.0)
+
     def test_a_changed_record_and_a_deleted_launch_show(self):
         run, _ = self.run_dir()
         kept.add(self.store, "one", "p", "W0", "K", run)

@@ -47,7 +47,9 @@ All from the frozen source `4db73a3bef0c`, on `claude-sonnet-5-5` at effort `hig
 
 **Q1 to Q3: yes, on these launches.** The arm drove the Command through the suite on real sessions.
 
-**Q3, the cost.** 5.32 times K's W0 on Sonnet, in the provider's own relative figure, and 58 minutes against K's 37. The weekly reading rose from 0 to 2. That window is the token's, which resets on 11 November at 09:00, and it is not the window of the runner's login that the earlier launches report, so the 2 cannot be set beside their figures. The implementer took 43 minutes, and the 51 reviewers spent 69 session-minutes, 8 at a time.
+**Q3, the cost.** 3.43 times K's W0 on Sonnet, in the provider's own relative figure, and 58 minutes against K's 37. The implementer cost 1.88 times K and the 51 reviewers 1.56 times. S's W0 cost 4.76 times K. The weekly reading rose from 0 to 2. That window is the token's, which resets on 11 November at 09:00, and it is not the window of the runner's login that the earlier launches report, so the 2 cannot be set beside their figures. The implementer took 43 minutes, and the 51 reviewers spent 69 session-minutes, 8 at a time.
+
+**A correction.** This page first said 5.32 times K. That sum counted a resumed session's running total a second time: a repair continues the implementer's session, and its closing record repeats everything before it. A review of test 1's tools found this. The kept launch's record still says 49.21, since a kept launch never changes; [`kept.py`](../../tools/evaluation/kept.py) now counts each session once, and the [page builder](../../tools/evaluation/side_by_side.py) counts a kept Command's cost again from its transcripts. S's and K's figures are unchanged: none of their sessions resumes.
 
 **Q4, what the Result shows.**
 
