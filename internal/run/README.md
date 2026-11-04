@@ -25,7 +25,7 @@
 
 `verify` skips steps 5 to 7 and 9: it runs the required checks once on the start commit, then one reviewer, or with `--full` one reviewer per Package, answers the list on a clean copy of that commit. It ends as `verified`, or as `findings` with a Finding for each `wrong`, the owner's decisions for each `spec problem`, or required checks that did not pass. Its Result stays on `markitect/runs/<run>`. `verify --findings-out FILE` writes the Findings as a Findings page, the input of `apply --findings`.
 
-With `--full` every Definition is reached. The reviewers are one per Package, up to eight at a time, each in a clean copy of its own with only its own items and its own answer file.
+With `--full` every Definition is reached. The reviewers are one per Package, up to eight at a time, each in a clean copy of its own with only its own items and its own answer file. `--one-reviewer` gives the whole list to one reviewer instead, so that [test 1](../../docs/concepts/v3-concept.md#13-how-we-know-it-works) can compare the two.
 
 ## The gate
 

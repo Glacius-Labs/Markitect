@@ -618,6 +618,22 @@ func TestAFullCheckIsOneReviewerPerPackage(t *testing.T) {
 	}
 }
 
+func TestOneReviewerGetsAFullChecksWholeList(t *testing.T) {
+	f := newFixture(t)
+	f.agents.on(reviewer, f.ok())
+	r := f.run(run.Request{Mode: agentport.Verify, Full: true, OneReviewer: true})
+	if r.State != run.StateVerified {
+		t.Fatalf("%s: %s", r.State, r.Why)
+	}
+	sessions := f.agents.of(reviewer)
+	if len(sessions) != 1 {
+		t.Fatalf("%d reviewers", len(sessions))
+	}
+	if n := len(listed(sessions[0].Prompt)); n != len(r.Items) || n == 0 {
+		t.Fatalf("%d items on the list of %d", n, len(r.Items))
+	}
+}
+
 // The count of changes across Commands, from the target's landing commits and
 // Run branches: a landing counts, a verify --full starts the count again at the
 // commit it examined, and the next landing carries that forward.
