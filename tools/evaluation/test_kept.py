@@ -131,6 +131,77 @@ class Store(unittest.TestCase):
         with self.assertRaisesRegex(blind_read.ReadError, "exists"):
             blind_read.prepare(self.store, ["first"], requirements, out)
 
+    def read_material(self):
+        root = self.tmp / "blind"
+        for label in "AB":
+            (root / "material" / label).mkdir(parents=True)
+        (root / "key.json").write_text(json.dumps({"A": {"name": "one", "token": "t1"}, "B": {"name": "two", "token": "t2"}}), encoding="utf-8")
+        return root
+
+    def fake_session(self, answers, weekly=0.2):
+        """reviewing.session with canned answers, each session's stream holding a weekly figure."""
+        import reviewing
+
+        started = []
+        readings = iter(weekly if isinstance(weekly, list) else [weekly] * 9)
+
+        def session(name, prompt, token, material, out, model, box, reviewer, deadline):
+            started.append(token)
+            (out / "sessions").mkdir(parents=True)
+            event = {"type": "rate_limit_event", "rate_limit_info": {"status": "allowed", "unifiedWindows": {"seven_day": {"utilization": next(readings)}}}}
+            (out / "sessions" / "s.jsonl").write_text(json.dumps(event) + "\n", encoding="utf-8")
+            answer = answers.pop(0)
+            return {"valid": answer is not None, "answer": answer, "reported": {}, "wallSeconds": 5}
+
+        original = reviewing.session
+        reviewing.session = session
+        self.addCleanup(setattr, reviewing, "session", original)
+        return started
+
+    def good_answer(self):
+        part = {"score": 3, "good": [], "weak": [], "files": []}
+        return {"architecture": part, "naming": part, "cleanliness": part, "tests": part, "takingOver": {"wouldMaintain": "yes"}}
+
+    def test_a_failed_read_stays_and_a_second_run_starts_only_what_lacks_one(self):
+        root = self.read_material()
+        started = self.fake_session([None, self.good_answer(), self.good_answer()])
+        results = blind_read.run(root, "claude:m", None)
+        self.assertEqual({k: v["valid"] for k, v in results.items()}, {"A": False, "B": True})
+        self.assertEqual(started, ["t1", "t2"])
+        results = blind_read.run(root, "claude:m", None)
+        self.assertEqual({k: v["valid"] for k, v in results.items()}, {"A": True, "B": True})
+        self.assertEqual(started, ["t1", "t2", "t1"])
+        self.assertTrue((root / "reads" / "A" / "a1" / "read.json").is_file())
+        self.assertTrue((root / "reads" / "A" / "a2" / "read.json").is_file())
+        self.assertEqual(results["A"]["weeklyReading"], 20.0)
+
+    def test_the_reads_stop_at_the_weekly_limit(self):
+        root = self.read_material()
+        started = self.fake_session([self.good_answer(), self.good_answer()], weekly=[0.2, 0.3])
+        with self.assertRaisesRegex(blind_read.ReadError, "rose from 20.0 to 30.0"):
+            blind_read.run(root, "claude:m", None, stop_after=8)
+        self.assertEqual(len(started), 2)
+
+    def test_the_run_command_takes_the_suites_series_by_default(self):
+        import sandbox as sandboxing
+
+        root = self.read_material()
+        self.fake_session([self.good_answer(), self.good_answer()])
+        seen = {}
+
+        class Box:
+            def __init__(self, engine, image, series, code, login, provider):
+                seen.update(series=series, login=login, provider=provider)
+
+        original = sandboxing.Sandbox
+        sandboxing.Sandbox = Box
+        self.addCleanup(setattr, sandboxing, "Sandbox", original)
+        code = blind_read.main(["run", "--material", str(root), "--sandbox", "sha256:x", "--variant-code", "code"])
+        self.assertEqual(code, 0)
+        self.assertIn("limits", seen["series"])
+        self.assertEqual(seen["provider"], "claude")
+        self.assertIsInstance(seen["login"], str)
+
     def test_a_reads_answer_needs_its_scores(self):
         part = {"score": 3, "good": [], "weak": [], "files": []}
         answer = {"architecture": part, "naming": part, "cleanliness": part, "tests": part, "takingOver": {"wouldMaintain": "yes"}}

@@ -163,8 +163,8 @@ def main(argv=None):
     r.add_argument("--sandbox", required=True)
     r.add_argument("--variant-code", required=True)
     r.add_argument("--login")
-    r.add_argument("--series")
-    r.add_argument("--engine", default="docker")
+    r.add_argument("--series", help="the series' safety limit and egress; by default the suite's")
+    r.add_argument("--engine", default=shutil.which("docker") or "docker")
     r.add_argument("--model", default="claude:claude-opus-5-5")
     r.add_argument("--deadline-seconds", type=int, default=DEADLINE)
     r.add_argument("--stop-after-points", type=float)
@@ -176,14 +176,16 @@ def main(argv=None):
             return 0
         import sandbox as sandboxing  # the suite's sandbox, only needed here
 
-        login = pathlib.Path(a.login) if a.login else pathlib.Path.home() / ".claude" / ".credentials.json"
+        login = a.login or str(pathlib.Path.home() / ".claude" / ".credentials.json")
         provider = a.model.partition(":")[0]
-        box = sandboxing.Sandbox([a.engine], a.sandbox, sandboxing.load_series(a.series), a.variant_code, login, provider)
+        series = sandboxing.load_series(a.series or sandboxing.DEFAULT_SERIES)
+        box = sandboxing.Sandbox([a.engine], a.sandbox, series, a.variant_code, login, provider)
         with sandboxing.engine_lock(a.lock, "evaluation blind read", str(pathlib.Path(a.material).resolve())):
             results = run(a.material, a.model, box, a.deadline_seconds, a.stop_after_points)
         print(json.dumps({label: {"valid": r["valid"], "problem": r["problem"]} for label, r in results.items()}, indent=2))
         return 0 if all(r["valid"] for r in results.values()) else 1
-    except (ReadError, kept.KeptError, OSError, ValueError, KeyError) as e:
+    except Exception as e:
+        # Whatever it is, the wrapper's second start must not spend sessions on it.
         print(f"blind_read: {type(e).__name__}: {e}", file=sys.stderr)
         return 2
 
