@@ -17,7 +17,7 @@ type Input struct {
 	// Pages are the registry pages by their path below the registry folder:
 	// "" for Root's page, "members" for .../registry/members.md.
 	Pages []PageFile
-	// Ignore is the ignore page, if the project has one.
+	// Ignore is the ignore file, if the project has one.
 	Ignore *model.File
 	// Files are every repository file Git can see (tracked, or untracked and
 	// not ignored) outside Markitect's own folder.
@@ -27,6 +27,8 @@ type Input struct {
 	// OwnDir is Markitect's own folder, ".markitect"; registry entries may not
 	// name files below it.
 	OwnDir string
+	// Own says the tool accounts for a file itself, unless a registry page lists it.
+	Own func(file string) bool
 }
 
 // PageFile is the source of one registry page.
@@ -41,7 +43,7 @@ type Registry struct {
 	Pages   map[string]*Page  // by Package path, including orphaned pages
 	Owner   map[string]string // every accounted repository file -> owning Package
 	Entries map[string]*Entry // every registered file -> its live entry
-	Ignored map[string]bool   // files the ignore page matches
+	Ignored map[string]bool   // files the ignore file matches, and the tool's own
 	Stale   []Stale
 }
 
@@ -97,6 +99,12 @@ func Account(in Input) (*Registry, model.Diagnostics) {
 		a.parsePage(p)
 	}
 	a.checkPatterns()
+	listed := map[string]bool{}
+	for _, page := range a.reg.Pages {
+		for _, e := range page.Entries {
+			listed[e.File] = true
+		}
+	}
 	visible := map[string]bool{}
 	for _, f := range in.Files {
 		visible[f] = true
@@ -104,6 +112,9 @@ func Account(in Input) (*Registry, model.Diagnostics) {
 			if p.Match(f) {
 				a.reg.Ignored[f] = true
 			}
+		}
+		if in.Own != nil && in.Own(f) && !listed[f] {
+			a.reg.Ignored[f] = true
 		}
 		if !a.reg.Ignored[f] {
 			a.reg.Owner[f] = a.owner(f)
@@ -115,7 +126,7 @@ func Account(in Input) (*Registry, model.Diagnostics) {
 		if !accounted || a.reg.Entries[f] != nil || a.staleOnly[f] {
 			continue
 		}
-		a.diags.Add("file.unregistered", f, 0, "neither registered nor ignored: list it on %s, the page of its owner %s, or add it to the ignore page", a.pagePath(owner), model.PackageName(owner))
+		a.diags.Add("file.unregistered", f, 0, "neither registered nor ignored: list it on %s, the page of its owner %s, or add it to the ignore file", a.pagePath(owner), model.PackageName(owner))
 	}
 	sort.Slice(a.reg.Stale, func(i, j int) bool {
 		x, y := a.reg.Stale[i], a.reg.Stale[j]
@@ -227,32 +238,29 @@ func (a *accountant) resolve(src PageFile, raw model.RawLink, entry *Entry) (str
 	return "", false
 }
 
+// parseIgnore reads the ignore file, written like a .gitignore: one pattern per
+// line, and # for a comment. Its patterns are the registry's, from the top of the
+// repository, and nothing takes a file back.
 func (a *accountant) parseIgnore(f model.File) []Pattern {
-	doc, err := model.ParsePage(f.Data)
-	if err != nil {
-		a.diags.Add("ignore.syntax", f.Path, doc.FrontLine, "%v", err)
-		return nil
-	}
-	if len(doc.Front) > 0 {
-		a.diags.Add("ignore.syntax", f.Path, doc.FrontLine, "the ignore page has no front matter")
-	}
 	var patterns []Pattern
-	forTables(doc, "path", func(cells []ast.Node, line int) {
-		text := strings.Trim(doc.RawText(cells[0]), "` ")
-		if len(cells) != 2 || strings.TrimSpace(doc.InlineText(cells[1])) == "" {
-			a.diags.Add("ignore.syntax", f.Path, line, "an ignore row has two cells: Path and Why, with a reason")
-			return
+	for i, raw := range strings.Split(string(f.Data), "\n") {
+		text, line := strings.TrimSpace(raw), i+1
+		switch {
+		case text == "" || strings.HasPrefix(text, "#"):
+			continue
+		case strings.HasPrefix(text, "!"):
+			a.diags.Add("ignore.syntax", f.Path, line, "%q: nothing takes a file back here, so narrow the pattern above it", text)
+			continue
+		case strings.HasPrefix(text, a.in.OwnDir+"/"):
+			a.diags.Add("ignore.syntax", f.Path, line, "%s is Markitect's own folder and accounted automatically", a.in.OwnDir)
+			continue
 		}
 		if err := ValidatePattern(text); err != nil {
 			a.diags.Add("ignore.syntax", f.Path, line, "%v", err)
-			return
-		}
-		if strings.HasPrefix(text, a.in.OwnDir+"/") {
-			a.diags.Add("ignore.syntax", f.Path, line, "%s is Markitect's own folder and accounted automatically", a.in.OwnDir)
-			return
+			continue
 		}
 		patterns = append(patterns, Pattern{Text: text, Line: line})
-	})
+	}
 	return patterns
 }
 
@@ -363,7 +371,7 @@ func (a *accountant) checkEntries(visible map[string]bool) {
 			case !visible[e.File]:
 				a.reg.Stale = append(a.reg.Stale, Stale{Code: "stale.file", Package: livePackage(page), PageFile: e.PageFile, Line: e.Line, File: e.File})
 			case a.reg.Ignored[e.File]:
-				a.diags.Add("registry.ignored_file", e.PageFile, e.Line, "%s is also on the ignore page; a file is either registered or ignored", e.File)
+				a.diags.Add("registry.ignored_file", e.PageFile, e.Line, "%s is also in the ignore file; a file is either registered or ignored", e.File)
 			case page.Orphaned:
 				orphaned = append(orphaned, e)
 			case a.reg.Entries[e.File] != nil:

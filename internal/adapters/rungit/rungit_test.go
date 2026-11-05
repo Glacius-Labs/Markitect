@@ -156,24 +156,6 @@ func TestCandidateLeavesWorktreesOut(t *testing.T) {
 	}
 }
 
-// Export writes the files of a commit and nothing of Git's.
-func TestExport(t *testing.T) {
-	host, r := open(t)
-	dir := testkit.TempDir(t)
-	if err := host.Export(context.Background(), r.Git("rev-parse", "HEAD"), dir); err != nil {
-		t.Fatal(err)
-	}
-	if data, err := os.ReadFile(filepath.Join(dir, "README.md")); err != nil || string(data) != "# Project\n" {
-		t.Fatalf("%q %v", data, err)
-	}
-	if _, err := os.Stat(filepath.Join(dir, ".git")); !os.IsNotExist(err) {
-		t.Fatalf("a .git came along: %v", err)
-	}
-	if status := r.Git("status", "--porcelain"); status != "" {
-		t.Fatalf("the repository changed: %s", status)
-	}
-}
-
 // Advance moves a checked-out branch only forward and only from where it was,
 // keeps uncommitted edits, and moves a branch nobody has checked out by its ref.
 func TestAdvance(t *testing.T) {

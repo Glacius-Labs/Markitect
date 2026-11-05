@@ -3,7 +3,7 @@ package run
 import "time"
 
 // ResultFormat is the version of the Result's JSON form.
-const ResultFormat = 3
+const ResultFormat = 4
 
 // Outcomes of a Run: only a landed one changed the owner's branch.
 const (
@@ -62,10 +62,7 @@ type Result struct {
 	Full   bool   `json:"full"`
 
 	// Items holds each item's latest answer.
-	Items []ResultItem `json:"items"`
-	// FailingBefore lists the required checks that failed before any work.
-	FailingBefore  []string        `json:"failingBefore,omitempty"`
-	RequiredChecks RequiredChecks  `json:"requiredChecks"`
+	Items          []ResultItem    `json:"items"`
 	OwnerDecisions []OwnerDecision `json:"ownerDecisions"`
 	Findings       []ResultFinding `json:"findings"`
 	// Unsettled lists what verify found that names no Definition: a required check
@@ -125,14 +122,6 @@ type ResultItem struct {
 	Answer      string    `json:"answer,omitempty"`
 	Pointers    []Pointer `json:"pointers,omitempty"`
 	Explanation string    `json:"explanation,omitempty"`
-}
-
-// RequiredChecks says what the required checks ran on and whether they passed.
-type RequiredChecks struct {
-	Ran bool `json:"ran"`
-	// Commit is the commit they ran on last.
-	Commit string        `json:"commit,omitempty"`
-	Checks []CheckResult `json:"checks"`
 }
 
 // OwnerDecision is a decision only the owner can make, with a recommendation.

@@ -8,7 +8,6 @@ This guide is the canonical description of the model language of [concept 2.0](.
 .markitect/
   manifest.yaml        the Libraries the project uses, with their versions
   lock.yaml            the digest of each Library, written by markitect lock
-  execution.yaml       the required checks
   model/               the model; this folder is the Root Package
     project.md         the project anchor (std/Project)
     members/           a Package
@@ -17,7 +16,7 @@ This guide is the canonical description of the model language of [concept 2.0](.
   registry/
     members.md         the registry page of Package members
     members/loans.md   the registry page of Package members/loans
-  ignore.md            files that deliberately belong to no Package
+  ignore               files that deliberately belong to no Package, if any
   libraries/<name>/    a Library that does not ship with markitect
   results/             Results (written by Commands, not by these commands)
 ```
@@ -133,27 +132,33 @@ When the owner deletes a Definition, a file or a Package, the registry still nam
 
 `check` fails on each, in its group of errors in the realization, as it does on a file the registry does not list and on a Definition nothing links to and no file realizes (`definition.unused`). `check --spec` looks only at the spec itself.
 
-### Ignore page
+A project with nothing built yet passes: when the registry lists no file and the only errors are `definition.unused`, `check` says that the spec compiles and nothing is built yet, and exits 0. A file in the repository, or anything registered, ends that. `--json` then carries `"nothingBuilt": true`. This holds for `check` only: `submit` still refuses a Definition nothing realizes.
 
-`.markitect/ignore.md` lists files that deliberately belong to no Package, in a table whose first header is `Path`: a pattern and a reason (`ignore.syntax`). `markitect init` adds the installed skill folders to it.
+### Ignore file
 
-```markdown
-| Path | Why |
-|---|---|
-| `.claude/skills/markitect-*/**` | Skills installed by markitect init |
-| LICENSE | Legal text, realizes nothing |
+`.markitect/ignore` lists files that deliberately belong to no Package. It reads like a `.gitignore`: one pattern per line and `#` for a comment. A project that needs none has no such file.
+
+```text
+# Legal text, realizes nothing
+LICENSE
+docs/assets/**
 ```
 
-### Required checks
+Its patterns are the registry's, not Git's: they start at the top of the repository, `*` and `?` stay within a folder, `**` is a whole segment, and `!` does not exist (`ignore.syntax`). So `*.png` means the top folder only, and a folder's files are `docs/assets/**`, not `docs/assets/`.
 
-`.markitect/execution.yaml` holds the required checks, the one proof in a Run that does not come from an agent, and optionally the `model` and `effort` of a Run's sessions (default `sonnet` and `high`) (`execution.syntax`, `execution.missing`):
+It can't merge with `.gitignore`, because the two answer different questions: `.gitignore` says what Git does not track, and this file says what Git tracks and no Package owns. A file Git ignores needs no line here.
+
+The tool accounts for what `init` installs by itself: `AGENTS.md`, `CLAUDE.md`, the `markitect-*` skills and agents, and `.gitignore`, which it adds to. They need no line here and no registry entry, though a registry page may list them. A Run may not change `AGENTS.md`, `CLAUDE.md` or the skills and agents.
+
+### Model and effort
+
+`.markitect/manifest.yaml` may also name the `model` and `effort` of a Run's sessions. The defaults are `sonnet` and `high`.
 
 ```yaml
-checks:
-  - name: test
-    command: go test ./...      # run with sh -c
-    directory: .                # repository-relative; default .
-    timeout: 10m                # a Go duration, required
+libraries:
+  std: 1.0.0
+model: opus
+effort: high
 ```
 
 ## Commands
@@ -162,8 +167,9 @@ All commands take `--repo DIR`, a folder inside the project's Git repository (de
 
 | Command | Does |
 |---|---|
-| `markitect init [--name TITLE]` | Writes what is missing: the manifest with `std`, `execution.yaml` with no checks, the project anchor `model/project.md` if the model folder is empty, Root's registry page, the ignore page and the lock. Installs or updates the skills in `.claude/skills/` and `.agents/skills/` and lists them on the ignore page. Never changes an existing model file. |
-| `markitect check [--spec]` | Compiles the project and prints every error, one per line as `file:line: code: message`, the spec's apart from the realization's. Errors only; exit 1 when there is one. `--spec` looks only at the spec. |
+| `markitect install` | Writes the personal skill `~/.claude/skills/markitect/SKILL.md` from the binary, and says where. It tells Claude Code what Markitect is in any folder, and how to begin, and allows no command in advance. Run it again after an upgrade. It takes no `--repo`. |
+| `markitect init [--name TITLE]` | Writes what is missing: the manifest with `std`, the project anchor `model/project.md` if the model folder is empty, Root's registry page, the lock, `AGENTS.md` and a `CLAUDE.md` that imports it. Installs or updates the skills in `.claude/skills/` and `.agents/skills/`, and the harness. Makes a folder that lies in no repository a Git repository, commits what it wrote and prints what Markitect is. Never changes an existing model file, `AGENTS.md` or `CLAUDE.md`, and never writes to the home folder. |
+| `markitect check [--spec]` | Compiles the project and prints every error, one per line as `file:line: code: message`, the spec's apart from the realization's. Errors only; exit 1 when there is one, and exit 0 with a plain sentence when [nothing is built yet](#the-realization-record). `--spec` looks only at the spec. |
 | `markitect lock` | Writes the lock from the manifest and the Libraries it names. |
 | `markitect refs TARGET` | Who links to a Definition or Package: Definitions by link or as their Kind, and the registry entries that realize it. |
 | `markitect graph` | The Package dependency graph as a Mermaid diagram, with each Package's coupling and the links behind each edge. |

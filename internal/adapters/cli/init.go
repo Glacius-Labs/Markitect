@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/libraries"
@@ -31,7 +30,14 @@ func (c CLI) init(ctx context.Context, args []string) (int, error) {
 	}
 	opened, err := c.Git.Open(ctx, o.repo)
 	if err != nil {
-		return Misused, err
+		// A folder in no repository becomes one: a Run's work goes in and out as commits.
+		if c.Git.Create(ctx, o.repo) != nil {
+			return Misused, err
+		}
+		if opened, err = c.Git.Open(ctx, o.repo); err != nil {
+			return Misused, err
+		}
+		fmt.Fprintln(c.Stdout, "created a Git repository")
 	}
 	rec := &recorder{Workspace: opened}
 	var ws Workspace = rec
@@ -49,10 +55,7 @@ func (c CLI) init(ctx context.Context, args []string) (int, error) {
 		created(file)
 		return nil
 	}
-	if err := writeNew(project.ManifestFile, []byte(fmt.Sprintf("# The Libraries this project uses, with their versions. Run markitect lock after a change.\nlibraries:\n  std: %s\n", libraries.Version))); err != nil {
-		return Misused, err
-	}
-	if err := writeNew(project.ChecksFile, []byte(checksTemplate)); err != nil {
+	if err := writeNew(project.ManifestFile, []byte(fmt.Sprintf(manifestTemplate, libraries.Version))); err != nil {
 		return Misused, err
 	}
 	modelFiles, err := ws.List(project.ModelDir)
@@ -67,7 +70,12 @@ func (c CLI) init(ctx context.Context, args []string) (int, error) {
 	if err := writeNew(project.RootPage, []byte(rootPageTemplate)); err != nil {
 		return Misused, err
 	}
-	if err := c.ensureIgnored(ws, created); err != nil {
+	if ws.Exists(instructionsFile) {
+		fmt.Fprintf(c.Stdout, "left %s as it is; add that this project has a spec in %s, which is the authority\n", instructionsFile, project.ModelDir)
+	} else if err := writeNew(instructionsFile, []byte(fmt.Sprintf(instructionsTemplate, name))); err != nil {
+		return Misused, err
+	}
+	if err := writeNew("CLAUDE.md", []byte("@"+instructionsFile+"\n")); err != nil {
 		return Misused, err
 	}
 	if !ws.Exists(project.LockFile) {
@@ -93,7 +101,10 @@ func (c CLI) init(ctx context.Context, args []string) (int, error) {
 	case committed:
 		fmt.Fprintln(c.Stdout, "committed what init wrote")
 	}
-	fmt.Fprintln(c.Stdout, "next: register the repository's files on the registry pages, or model an existing project with the markitect-extract skill; then run markitect check")
+	fmt.Fprintf(c.Stdout, "\n%s\n", skills.About)
+	if len(modelFiles) == 0 {
+		fmt.Fprint(c.Stdout, nextSteps)
+	}
 	return OK, nil
 }
 
@@ -221,77 +232,6 @@ func harnessFile(file string) bool {
 	return false
 }
 
-// ensureIgnored adds the installed skill folders to the ignore page, so that
-// they need no registry entry.
-func (c CLI) ensureIgnored(ws Workspace, created func(string)) error {
-	var current []byte
-	if ws.Exists(project.IgnoreFile) {
-		data, err := ws.Read(project.IgnoreFile)
-		if err != nil {
-			return err
-		}
-		current = data
-	}
-	var rows []string
-	for _, dir := range SkillDirs {
-		pattern := dir + "/markitect-*/**"
-		if !bytes.Contains(current, []byte(pattern)) {
-			rows = append(rows, fmt.Sprintf("| `%s` | Skills installed by markitect init |\n", pattern))
-		}
-	}
-	own := map[string]string{".claude/agents/markitect-*": "The reviewer agent installed by markitect init"}
-	if !registered(ws, ".gitignore") {
-		own[".gitignore"] = "Git's own"
-	}
-	for pattern, why := range own {
-		if !bytes.Contains(current, []byte("`"+pattern+"`")) {
-			rows = append(rows, fmt.Sprintf("| `%s` | %s |\n", pattern, why))
-		}
-	}
-	sort.Strings(rows)
-	if len(rows) == 0 {
-		return nil
-	}
-	var b bytes.Buffer
-	if current == nil {
-		b.WriteString(ignoreHeader)
-	} else {
-		b.Write(current)
-		if !bytes.HasSuffix(current, []byte("\n")) {
-			b.WriteString("\n")
-		}
-		b.WriteString("\n")
-	}
-	b.WriteString("| Path | Why |\n|---|---|\n")
-	b.WriteString(strings.Join(rows, ""))
-	if err := ws.Write(project.IgnoreFile, b.Bytes()); err != nil {
-		return err
-	}
-	if current == nil {
-		created(project.IgnoreFile)
-	} else {
-		fmt.Fprintf(c.Stdout, "added the skill folders to %s\n", project.IgnoreFile)
-	}
-	return nil
-}
-
-// registered says whether a registry page lists a file.
-func registered(ws Workspace, file string) bool {
-	pages, err := ws.List(project.RegistryDir)
-	if err != nil {
-		pages = nil
-	}
-	for _, page := range append(pages, project.RootPage) {
-		if !ws.Exists(page) {
-			continue
-		}
-		if data, err := ws.Read(page); err == nil && bytes.Contains(data, []byte(file)) {
-			return true
-		}
-	}
-	return false
-}
-
 func (c CLI) lock(ctx context.Context, args []string) (int, error) {
 	var o options
 	fs := c.flags("lock", &o)
@@ -350,19 +290,30 @@ func (c CLI) writeLock(ws Workspace) (int, error) {
 	return OK, nil
 }
 
-const checksTemplate = `# The required checks: the one proof in a Run that does not come from an agent.
-# Each check runs its command with sh -c in the named directory of a clean copy of
-# the work, within the timeout. It makes what it needs, such as dependencies, itself.
-# For example:
-#
-# checks:
-#   - name: test
-#     command: go test ./...
-#     directory: .
-#     timeout: 10m
-#
-# model and effort name what a Run's sessions use; the defaults are sonnet and high.
-checks: []
+// manifestTemplate is a new project's manifest.
+const manifestTemplate = `# The Libraries this project uses, with their versions. Run markitect lock after a change.
+# model and effort, each optional, name what a Run's sessions use; the defaults are sonnet and high.
+libraries:
+  std: %s
+`
+
+// instructionsFile is the file coding agents read when a session starts. Claude
+// Code reads it through CLAUDE.md, which holds only an import of it.
+const instructionsFile = "AGENTS.md"
+
+// instructionsTemplate tells any session what kind of project this is. A Run's
+// sessions read it too, so it holds no process.
+const instructionsTemplate = "# %s\n\n" + skills.About + "\n" +
+	"A change to what the project does starts in the spec, written with the `markitect-modeling` skill and accepted by the owner. A new project starts with the `markitect-start` skill, and a repository that already has code with `markitect-extract`.\n\n" +
+	"`markitect` is a command on the path, and `markitect help` lists what it does.\n\n" +
+	"Inside a Markitect run, your task says what to do, and the spec stays as it is.\n"
+
+// nextSteps ends the init of a new project. The session that ran init started
+// before the skills existed, and Claude Code does not watch a skills folder that
+// was not there when a session started.
+const nextSteps = `next: run /markitect-start in Claude Code here. It asks what the project is and starts the spec with you.
+A session that was open before init runs /reload-skills first, or reads .claude/skills/markitect-start/SKILL.md.
+If the repository already has code, use /markitect-extract instead.
 `
 
 const anchorTemplate = `---
@@ -380,10 +331,4 @@ Definitions it realizes and why.
 
 | File | Realizes | Why |
 |---|---|---|
-`
-
-const ignoreHeader = `# Ignored files
-
-Files that deliberately belong to no Package.
-
 `

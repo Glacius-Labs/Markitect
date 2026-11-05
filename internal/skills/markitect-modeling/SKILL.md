@@ -86,7 +86,7 @@ A visitor becomes a [[members/member]] by giving a name and an email.
 | `kind.unresolved`, `kind.not_a_kind` | The Kind path is wrong (`std/Feature`, a project Kind by its path) or names a Definition that is not of Kind `Kind`. |
 | `definition.front_matter`, `definition.title` | An extra front matter key, or no single level-1 heading as the first body line. |
 | `lock.mismatch`, `lock.missing` | Run `markitect lock` after a manifest or Library change and put `lock.yaml` in the diff. |
-| `file.unregistered` and other `registry.*` | A repository file is on no registry page and not on the ignore page, or a page is wrong. See the registry section of `reference.md`. |
+| `file.unregistered` and other `registry.*` | A repository file is on no registry page and not in the ignore file, or a page is wrong. See the registry section of `reference.md`. |
 
 Every other code is listed in `reference.md`. A cycle or unresolved link usually hides other errors: fix and run `check` again.
 

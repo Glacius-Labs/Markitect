@@ -46,20 +46,11 @@ type RunState struct {
 	SentBack []string `json:"sentBack,omitempty"`
 	// Submits counts the calls of submit, Blocks the Stop hook's blocks since the
 	// last one.
-	Submits int `json:"submits"`
-	Blocks  int `json:"blocks"`
-	// Tried says the required checks have been tried on the start; Failing lists
-	// the checks that failed there, before any work.
-	Tried   bool     `json:"tried,omitempty"`
-	Failing []string `json:"failing,omitempty"`
-	// Passed holds the states the required checks passed on, Checks the last
-	// results.
-	Passed     map[string]bool `json:"passed,omitempty"`
-	Checks     []CheckResult   `json:"checks,omitempty"`
-	ChecksOn   string          `json:"checksOn,omitempty"`
-	Impact     []string        `json:"impact,omitempty"`
-	Notes      []string        `json:"notes,omitempty"`
-	MissingFor []string        `json:"missingFor,omitempty"`
+	Submits    int      `json:"submits"`
+	Blocks     int      `json:"blocks"`
+	Impact     []string `json:"impact,omitempty"`
+	Notes      []string `json:"notes,omitempty"`
+	MissingFor []string `json:"missingFor,omitempty"`
 	// Session is the provider's ID of the session; Failure why its last turn
 	// ended on an API error.
 	Session string `json:"session,omitempty"`

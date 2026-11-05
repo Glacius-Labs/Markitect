@@ -2,6 +2,8 @@
 
 The owner chose to build [draft concept 4.0](../concepts/v4-concept.md) on a branch and test it by using it. This page records the real sessions that build needs: the mechanisms the concept only reads from the documentation, tried before and while building. It is bounded evidence on small changes, not acceptance, and says nothing about how often a run fails.
 
+**Since this record:** later the same day the owner removed required checks ([draft concept 4.0](../concepts/v4-concept.md#3-the-tools)). The sessions below ran before that, and no real session has run on the build without them.
+
 ## Questions
 
 - **Q1:** does a background session start from inside another session, in its own worktree based on the current commit?

@@ -79,7 +79,6 @@ var Table = Rules{
 		{"internal/buildinfo", "build", "docs/architecture.md#distribution"},
 		{"internal/adapters/claude", "adapter", "internal/run/README.md#the-session"},
 		{"internal/adapters/cli", "adapter", "docs/guides/model-language.md#commands"},
-		{"internal/adapters/hostcheck", "adapter", "internal/run/README.md#required-checks"},
 		{"internal/adapters/repo", "adapter", "docs/guides/model-language.md#the-projects-markitect-folder"},
 		{"internal/adapters/rungit", "adapter", "internal/run/README.md#git"},
 		{"internal/bootstrap", "composition", "docs/architecture.md#product-flow"},

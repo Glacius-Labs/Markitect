@@ -45,7 +45,7 @@ Markitect moves the knowledge of what belongs together out of the agents' memory
 - **Impact like an incremental build.** `markitect impact` shows which Definitions, files and Packages a change reaches and gives each responsible Manager its checklist. `markitect lint` measures the model like code: coupling, size, unused Definitions.
 - **An organization derived from the architecture.** Every Package is a Manager, and the Package tree is the Manager tree. There is no separate agent chart to keep in sync.
 - **A maker and a checker for every Manager.** The maker gives each checklist item a verdict with evidence. A fresh checker re-checks every verdict without the maker's notes and sends defects straight back.
-- **Guarantees in Git.** Each Run has its own Git remote. Server-side hooks keep every Manager to its own branch and paths, compile every submission, run your required checks on it, refuse a merged state that fails them and refuse a checklist with an item left open. Nothing lands that fails the required checks.
+- **Guarantees in Git.** Each Run has its own Git remote. Server-side hooks keep every Manager to its own branch and paths, compile every submission and refuse a checklist with an item left open.
 - **Lands like a merge queue.** Root's approved result lands on your target branch like a colleague's push, with a Result page under `.markitect/results/`. Markitect never touches your working tree.
 - **Native, with your own account.** The host runs on Windows, Linux and macOS with Docker. Every maker and checker runs Claude Code or Codex in its own container and logs in with your normal account; API keys are refused.
 
@@ -64,7 +64,7 @@ flowchart LR
 2. **Markitect compiles it.** An unresolved link, a dependency cycle or an unregistered file is a compile error, and no agent starts.
 3. **Impact decides who works.** The change reaches the Definitions it edits, the Definitions that link to them, the files that realize them and their Packages up to Root. Packages the change does not reach do not start.
 4. **One Run realizes the change.** Each working Manager's maker works in its own container and Git branch; its checker approves the submission or sends it back. A parent with work of its own submits first, its children start from that approved commit, and the parent integrates their approved work. A real defect in the model ends the Run at Root, and the Result names the decision for you.
-5. **The result lands.** When Root's checker approves, the host lands the work on the target branch. If the branch moved during the Run, the work lands only if the merge is clean, the required checks pass on the merged state and the incoming commits touch nothing in the Run's impact. Either way the host writes a Result page with every verdict, its evidence and its checker.
+5. **The result lands.** When Root's checker approves, the host lands the work on the target branch. If the branch moved during the Run, the work lands only if the merge is clean and the incoming commits touch nothing in the Run's impact. Either way the host writes a Result page with every verdict, its evidence and its checker.
 
 `markitect verify` runs the same way with checkers only and changes nothing. Its Findings feed the next `markitect apply --findings`.
 
@@ -76,7 +76,10 @@ Markitect needs Git and Go 1.27.1 or newer.
 
 ```bash
 go install github.com/Glacius-Labs/Markitect/cmd/markitect@main
+markitect install
 ```
+
+`markitect install` writes a personal skill, so that a Claude Code session in any folder knows what Markitect is and how to begin.
 
 ### Set up a project
 
@@ -86,12 +89,12 @@ markitect init --name "Your project"
 markitect check
 ```
 
-`init` creates `.markitect/` with the manifest, the lock, an empty list of required checks, a project anchor and Root's registry page, and installs the modeling and Extract skills for Claude Code and Codex. It never changes an existing model file, so it is safe to run again after an upgrade. List your build and tests in `.markitect/execution.yaml`; they are the one proof in a Run that does not come from an agent.
+`init` creates `.markitect/` with the manifest, the lock, a project anchor and Root's registry page, writes `AGENTS.md` and `CLAUDE.md`, and installs the start, modeling and Extract skills for Claude Code and Codex. It works in an empty folder too. It never changes an existing model file, so it is safe to run again after an upgrade. In a new project, `check` says that nothing is built yet. Open Claude Code and run `/markitect-start`, which asks what the project is and starts the spec with you.
 
 In a repository that already has files, the first `check` fails by design, because every file must belong somewhere:
 
 ```text
-README.md: file.unregistered: neither registered nor ignored: list it on .markitect/registry.md, the page of its owner Root, or add it to the ignore page
+README.md: file.unregistered: neither registered nor ignored: list it on .markitect/registry.md, the page of its owner Root, or add it to the ignore file
 1 errors
 ```
 
@@ -229,11 +232,10 @@ A project keeps all of it under `.markitect/`:
 .markitect/
 ├── manifest.yaml     # the Libraries the project uses, with their versions
 ├── lock.yaml         # the digest of each Library
-├── execution.yaml    # the required checks
 ├── model/            # Packages and Definitions; this folder is Root
 ├── registry.md       # Root's registry page
 ├── registry/         # one registry page per Package
-├── ignore.md         # files that deliberately belong to no Package
+├── ignore            # files that deliberately belong to no Package, if any
 ├── libraries/        # Libraries that do not ship with markitect
 └── results/          # one Result page per Run
 ```
@@ -269,7 +271,7 @@ After acceptance come more commands over the same mechanism, `improve`, `bughunt
 <details>
 <summary><b>Does the compiler prove that the code is correct?</b></summary>
 
-It checks structure: Kinds, links, visibility, cycles and file accounting. Agents judge meaning. Every reached item needs a verdict with evidence from its maker, a fresh checker re-checks it, parents review their children's work, and nothing lands that fails the required checks. The bar is today's practice, one strong agent with ordinary documentation, and the evaluation measures Markitect against it.
+It checks structure: Kinds, links, visibility, cycles and file accounting. Agents judge meaning. Every reached item needs a verdict with evidence from its maker, a fresh checker re-checks it, and parents review their children's work. The bar is today's practice, one strong agent with ordinary documentation, and the evaluation measures Markitect against it.
 
 </details>
 
@@ -283,7 +285,7 @@ As much as good documentation of the project would state: domain concepts, featu
 <details>
 <summary><b>Can agents change my model?</b></summary>
 
-A Run never changes the model: the hooks refuse any change to the model, the manifest, the lock and the required checks. Agents propose model changes in conversation through the modeling skill, and you accept each one. A real defect in the model ends the Run without landing, and the Result names the decision for you.
+A Run never changes the model: the hooks refuse any change to the model, the manifest and the lock. Agents propose model changes in conversation through the modeling skill, and you accept each one. A real defect in the model ends the Run without landing, and the Result names the decision for you.
 
 </details>
 

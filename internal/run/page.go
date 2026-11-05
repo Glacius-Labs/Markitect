@@ -70,26 +70,6 @@ func Page(r *Result) []byte {
 		b.WriteString("\nHow much the reviewer really read is not measured.\n")
 	}
 
-	b.WriteString("\n## Required checks\n\n")
-	rc := r.RequiredChecks
-	switch {
-	case rc.Ran:
-		fmt.Fprintf(&b, "Ran and passed on a clean copy of %s.\n", rc.Commit)
-	case len(rc.Checks) > 0:
-		fmt.Fprintf(&b, "Ran on a clean copy of %s and did not pass.\n", rc.Commit)
-	default:
-		b.WriteString("None ran.\n")
-	}
-	if len(r.FailingBefore) > 0 {
-		fmt.Fprintf(&b, "\nThese already failed before any work: %s.\n", strings.Join(r.FailingBefore, ", "))
-	}
-	if len(rc.Checks) > 0 {
-		b.WriteString("\n| Check | Passed | Exit | Seconds |\n|---|---|---|---|\n")
-		for _, c := range rc.Checks {
-			fmt.Fprintf(&b, "| %s | %t | %d | %.1f |\n", cell(c.Name), c.Passed, c.Exit, c.Seconds)
-		}
-	}
-
 	if len(r.SentBack) > 0 {
 		b.WriteString("\n## Repair rounds\n\n")
 		for i, why := range r.SentBack {

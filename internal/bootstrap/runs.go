@@ -6,13 +6,12 @@ import (
 	"path/filepath"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/claude"
-	"github.com/Glacius-Labs/Markitect/internal/adapters/hostcheck"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/rungit"
 	runengine "github.com/Glacius-Labs/Markitect/internal/run"
 )
 
-// runs builds the engine of a Run: the user's own repository, the required checks
-// on the user's machine and the provider's background sessions.
+// runs builds the engine of a Run: the user's own repository and the provider's
+// background sessions.
 type runs struct{}
 
 func (runs) Open(ctx context.Context, dir string) (*runengine.Engine, error) {
@@ -35,5 +34,5 @@ func newEngine(repo *rungit.Repo, store string) *runengine.Engine {
 	if err != nil {
 		exe = "markitect"
 	}
-	return &runengine.Engine{Git: repo, Checks: hostcheck.Runner{}, Sessions: claude.CLI{Executable: exe}, Store: runengine.Store{Dir: store}}
+	return &runengine.Engine{Git: repo, Sessions: claude.CLI{Executable: exe}, Store: runengine.Store{Dir: store}}
 }

@@ -39,8 +39,6 @@ type Git interface {
 	Links(ctx context.Context, commit string) (map[string]string, error)
 	// State is one commit as a project repository state.
 	State(ctx context.Context, commit string) project.Repository
-	// Export writes the files of a commit into an empty folder.
-	Export(ctx context.Context, commit, dir string) error
 	// Merge merges theirs into ours as a new merge commit. A conflict returns the
 	// conflicting paths and no commit.
 	Merge(ctx context.Context, ours, theirs, message string) (string, []string, error)
@@ -76,27 +74,6 @@ type Commit struct {
 	Parents []string
 	Tree    string
 	Message string
-}
-
-// Checks runs the required checks.
-type Checks interface {
-	// Run runs the checks in a clean folder, stopping at the first failure. A
-	// failing check is a result; only a check that could not start is NotRun.
-	Run(ctx context.Context, dir string, checks []project.Check) []CheckResult
-}
-
-// CheckResult is one required check on one state.
-type CheckResult struct {
-	Name     string  `json:"name"`
-	Passed   bool    `json:"passed"`
-	Exit     int     `json:"exit"`
-	TimedOut bool    `json:"timedOut,omitempty"`
-	Seconds  float64 `json:"seconds"`
-	// NotRun: the check's command could not start, which is the environment's
-	// failure and not the work's.
-	NotRun bool `json:"notRun,omitempty"`
-	// Output is the tail of the check's combined output.
-	Output string `json:"output,omitempty"`
 }
 
 // How a provider says a session stands.

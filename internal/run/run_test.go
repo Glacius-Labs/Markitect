@@ -41,8 +41,6 @@ func library() map[string]string {
 	return map[string]string{
 		project.ManifestFile:                      "libraries:\n  std: 1.0.0\n",
 		project.LockFile:                          string(model.RenderLock([]model.LibrarySource{std})),
-		project.ChecksFile:                        "checks:\n  - name: test\n    command: go test ./...\n    timeout: 1m\n",
-		project.IgnoreFile:                        "| Path | Why |\n|---|---|\n| `.gitignore` | Git's own |\n| `.claude/agents/markitect-*` | The harness |\n",
 		".claude/agents/markitect-reviewer.md":    "---\nname: markitect-reviewer\n---\nReview.\n",
 		m + "project.md":                          def("std/Project", "Library", "Parts: [[members]], [[catalog]]."),
 		m + "loan-limit.md":                       def("std/Rule", "Loan limit", "At most `5` open loans."),
@@ -94,51 +92,27 @@ func (s *sessions) Stop(_ context.Context, id string) error {
 
 func (s *sessions) Remove(context.Context, string) error { return nil }
 
-// checks fails or cannot start on demand, and counts its runs.
-type checks struct {
-	fail, notRun bool
-	runs         int
-	seen         []string
-}
-
-func (c *checks) Run(_ context.Context, dir string, list []project.Check) []run.CheckResult {
-	c.runs++
-	files, _ := filepath.Glob(filepath.Join(dir, "*"))
-	for _, f := range files {
-		c.seen = append(c.seen, filepath.Base(f))
-	}
-	var out []run.CheckResult
-	for _, ch := range list {
-		switch {
-		case c.notRun:
-			out = append(out, run.CheckResult{Name: ch.Name, NotRun: true, Exit: 127, Output: "no such program"})
-		case c.fail:
-			out = append(out, run.CheckResult{Name: ch.Name, Exit: 1, Output: "FAIL something"})
-		default:
-			out = append(out, run.CheckResult{Name: ch.Name, Passed: true})
-		}
-		break
-	}
-	return out
-}
-
 type fixture struct {
 	t        *testing.T
 	repo     *testkit.Repo
 	first    string
 	engine   *run.Engine
 	sessions *sessions
-	checks   *checks
 	now      time.Time
 }
 
 func newFixture(t *testing.T) *fixture {
 	t.Helper()
+	return newFixtureOf(t, library())
+}
+
+func newFixtureOf(t *testing.T, files map[string]string) *fixture {
+	t.Helper()
 	repo := testkit.NewRepo(t)
 	repo.Git("config", "user.name", "Owner")
 	repo.Git("config", "user.email", "owner@example.invalid")
 	repo.Git("config", "core.autocrlf", "false")
-	for file, content := range library() {
+	for file, content := range files {
 		repo.Write(file, content)
 	}
 	first := repo.Commit("the library")
@@ -146,9 +120,9 @@ func newFixture(t *testing.T) *fixture {
 	if err != nil {
 		t.Fatal(err)
 	}
-	f := &fixture{t: t, repo: repo, first: first, sessions: &sessions{t: t, repo: repo, state: run.SessionWorking}, checks: &checks{}}
+	f := &fixture{t: t, repo: repo, first: first, sessions: &sessions{t: t, repo: repo, state: run.SessionWorking}}
 	f.now = time.Date(2026, 11, 4, 12, 0, 0, 0, time.UTC)
-	f.engine = &run.Engine{Git: host, Sessions: f.sessions, Checks: f.checks, Store: run.Store{Dir: filepath.Join(host.Dir, "markitect")}, Now: func() time.Time { return f.now }}
+	f.engine = &run.Engine{Git: host, Sessions: f.sessions, Store: run.Store{Dir: filepath.Join(host.Dir, "markitect")}, Now: func() time.Time { return f.now }}
 	return f
 }
 
@@ -428,7 +402,9 @@ func TestApplyStopsBeforeAnyAgent(t *testing.T) {
 func TestSubmitRefusesProtectedFiles(t *testing.T) {
 	for file, want := range map[string]string{
 		m + "loan-limit.md":                    "is the owner's",
-		project.ChecksFile:                     "is the owner's",
+		project.IgnoreFile:                     "is the owner's",
+		"AGENTS.md":                            "harness",
+		"claude.md":                            "harness",
 		".claude/skills/markitect-apply/x.md":  "harness",
 		".claude/agents/markitect-reviewer.md": "harness",
 	} {
@@ -445,6 +421,28 @@ func TestSubmitRefusesProtectedFiles(t *testing.T) {
 	}
 }
 
+// check passes a project with nothing built, but the gate does not: a Run on a new
+// project is refused until it realizes every Definition.
+func TestSubmitRefusesAnUnrealizedDefinitionOnANewProject(t *testing.T) {
+	all := library()
+	f := newFixtureOf(t, map[string]string{
+		project.ManifestFile:                   all[project.ManifestFile],
+		project.LockFile:                       all[project.LockFile],
+		m + "project.md":                       def("std/Project", "New", "A new project."),
+		project.RootPage:                       "| File | Realizes | Why |\n|---|---|---|\n",
+		".claude/agents/markitect-reviewer.md": all[".claude/agents/markitect-reviewer.md"],
+	})
+	s, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.Run == "" {
+		t.Fatalf("no run started: %+v", s)
+	}
+	wt := filepath.Join(f.repo.Dir, ".claude", "worktrees", s.Run)
+	has(t, f.submit(wt).Text, "markitect check fails", "definition.unused")
+}
+
 // Row 3: check, of the spec and the realization.
 func TestSubmitRefusesWhatCheckRefuses(t *testing.T) {
 	f := newFixture(t)
@@ -459,77 +457,6 @@ func TestSubmitRefusesWhatCheckRefuses(t *testing.T) {
 		t.Fatal(err)
 	}
 	has(t, f.submit(wt).Text, "markitect check fails", "stale.file", "src/catalog/book.go")
-}
-
-// Rows 4 and 5: required checks, once per state when they pass.
-func TestSubmitRunsRequiredChecks(t *testing.T) {
-	f := newFixture(t)
-	s, wt := f.apply()
-	f.checks.fail = true
-	has(t, f.submit(wt).Text, "required check test failed", "FAIL something")
-	// A failure runs again, since it may be flaky.
-	before := f.checks.runs
-	has(t, f.submit(wt).Text, "required check test failed")
-	if f.checks.runs != before+1 {
-		t.Fatalf("a failing check did not run again: %d", f.checks.runs)
-	}
-	f.checks.fail = false
-	has(t, f.submit(wt).Text, "markitect-reviewer")
-	// A pass is kept for the state.
-	before = f.checks.runs
-	has(t, f.submit(wt).Text, "items have no answer")
-	if f.checks.runs != before {
-		t.Fatalf("a passing check ran again: %d", f.checks.runs)
-	}
-	if f.state(s.Run).Open != true {
-		t.Fatal("closed")
-	}
-}
-
-func TestACheckThatCannotStartEndsTheRun(t *testing.T) {
-	t.Run("before the work", func(t *testing.T) {
-		f := newFixture(t)
-		s, wt := f.apply()
-		f.checks.notRun = true
-		list, err := f.engine.Checklist(context.Background(), wt, false)
-		if err != nil {
-			t.Fatal(err)
-		}
-		has(t, list, "could not start", "Nothing lands")
-		st := f.state(s.Run)
-		if st.Open || st.State != run.StateIncomplete || st.Kept == "" {
-			t.Fatalf("%+v", st)
-		}
-	})
-	t.Run("at submit", func(t *testing.T) {
-		f := newFixture(t)
-		s, wt := f.apply()
-		f.checks.notRun = true
-		v := f.submit(wt)
-		if !v.Done || f.state(s.Run).Repairs != 0 {
-			t.Fatalf("%+v", v)
-		}
-		has(t, v.Text, "could not start")
-	})
-	t.Run("a check that fails before the work only says so", func(t *testing.T) {
-		f := newFixture(t)
-		s, wt := f.apply()
-		f.checks.fail = true
-		list, err := f.engine.Checklist(context.Background(), wt, false)
-		if err != nil {
-			t.Fatal(err)
-		}
-		has(t, list, "already fail before any work: test")
-		f.checks.fail = false
-		f.submit(wt)
-		f.answer(wt, s.Run, nil)
-		f.submit(wt)
-		data, err := os.ReadFile(filepath.Join(f.repo.Dir, ".markitect", "results", s.Run+".md"))
-		if err != nil {
-			t.Fatal(err)
-		}
-		has(t, string(data), "already failed before any work: test")
-	})
 }
 
 // The answers: a bad one is refused at once, and nothing of that call is stored.
@@ -956,7 +883,7 @@ func TestStopFailureHookIsRecorded(t *testing.T) {
 func TestSubmitCeiling(t *testing.T) {
 	f := newFixture(t)
 	s, wt := f.apply()
-	f.checks.fail = true
+	write(t, wt, "src/members/stray.go", "package members\n")
 	var last run.Verdict
 	for i := 0; i < 31; i++ {
 		last = f.submit(wt)
@@ -1030,10 +957,9 @@ func TestVerify(t *testing.T) {
 		}
 		has(t, f.repo.Git("log", "-1", "--format=%B", st.Kept), "Run-Command: verify", "Run-Full: true")
 	})
-	t.Run("findings and failing checks", func(t *testing.T) {
+	t.Run("findings", func(t *testing.T) {
 		f, name, wt := start(t)
 		f.answer(wt, name, map[string]string{"loan-limit": "wrong src/members/loans/loan.go:3 -- says 5"})
-		f.checks.fail = true
 		v := f.submit(wt)
 		if !v.Done {
 			t.Fatalf("%s", v.Text)
@@ -1044,20 +970,6 @@ func TestVerify(t *testing.T) {
 		}
 		page := f.repo.Git("show", st.Kept+":.markitect/results/"+name+".md")
 		has(t, page, "Findings", "[[loan-limit]]", "says 5")
-		has(t, st.Why, "required check test failed")
-	})
-	t.Run("a check that cannot start is only noted", func(t *testing.T) {
-		f, name, wt := start(t)
-		f.answer(wt, name, nil)
-		f.checks.notRun = true
-		if v := f.submit(wt); !v.Done {
-			t.Fatalf("%s", v.Text)
-		}
-		st := f.state(name)
-		if st.State != run.StateFindings {
-			t.Fatalf("%+v", st)
-		}
-		has(t, st.Why, "could not start")
 	})
 	t.Run("does not hold the branch", func(t *testing.T) {
 		f, _, _ := start(t)

@@ -95,24 +95,38 @@ func TestAccountUnregisteredFile(t *testing.T) {
 }
 
 func TestAccountIgnorePage(t *testing.T) {
-	ignore := model.File{Path: ".markitect/ignore.md", Data: []byte("# Ignored\n\n| Path | Why |\n|---|---|\n| `.claude/skills/**` | Installed by markitect init |\n| LICENSE | Legal text |\n")}
+	ignore := model.File{Path: ".markitect/ignore", Data: []byte("# Installed\n.claude/skills/**\n\nLICENSE\n")}
 	in := Input{Model: testModel(t), Ignore: &ignore, OwnDir: ".markitect",
 		Files: []string{".claude/skills/markitect-modeling/SKILL.md", "LICENSE"},
 		Pages: []PageFile{page("", table+"| LICENSE | | Also registered |\n")}}
 	reg, ds := Account(in)
-	expect(t, ds, "registry.ignored_file", "LICENSE is also on the ignore page")
+	expect(t, ds, "registry.ignored_file", "LICENSE is also in the ignore file")
 	if !reg.Ignored[".claude/skills/markitect-modeling/SKILL.md"] || len(ds) != 1 {
 		t.Fatalf("ignored = %v, diagnostics = %v", reg.Ignored, ds)
 	}
 }
 
 func TestAccountIgnoreSyntax(t *testing.T) {
-	ignore := model.File{Path: ".markitect/ignore.md", Data: []byte("---\nx: 1\n---\n| Path | Why |\n|---|---|\n| /abs | reason |\n| ok.txt | |\n| .markitect/model/x.md | own |\n")}
+	ignore := model.File{Path: ".markitect/ignore", Data: []byte("# a comment\n\n/abs\ndocs/\n!keep.txt\n.markitect/model/x.md\nok.txt\n")}
 	_, ds := Account(Input{Model: testModel(t), Ignore: &ignore, OwnDir: ".markitect"})
-	expect(t, ds, "ignore.syntax", "no front matter")
 	expect(t, ds, "ignore.syntax", `"/abs"`)
-	expect(t, ds, "ignore.syntax", "with a reason")
+	expect(t, ds, "ignore.syntax", `"docs/"`)
+	expect(t, ds, "ignore.syntax", "takes a file back")
 	expect(t, ds, "ignore.syntax", "accounted automatically")
+	if len(ds) != 4 {
+		t.Fatalf("diagnostics = %v", ds)
+	}
+}
+
+// The tool's own files count as ignored, unless a page lists them.
+func TestAccountOwnFiles(t *testing.T) {
+	reg, ds := Account(Input{Model: testModel(t), OwnDir: ".markitect",
+		Own:   func(f string) bool { return f == "tool.md" || f == ".gitignore" },
+		Files: []string{"tool.md", ".gitignore"},
+		Pages: []PageFile{page("", table+"| .gitignore | | Listed by the owner |\n")}})
+	if len(ds) != 0 || !reg.Ignored["tool.md"] || reg.Ignored[".gitignore"] || reg.Entries[".gitignore"] == nil {
+		t.Fatalf("ignored = %v, diagnostics = %v", reg.Ignored, ds)
+	}
 }
 
 func TestAccountDuplicatePatternAcrossPackages(t *testing.T) {

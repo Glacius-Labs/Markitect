@@ -3,8 +3,6 @@ package run
 import (
 	"fmt"
 	"strings"
-
-	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
 // The default strategy's task: a short fixed part, the goal, and what the tool
@@ -38,7 +36,7 @@ You are done when markitect submit says so. Call it when you think the work is d
 
 Update the registry when files change: every file is listed on the page of its owning Package with the Definitions it realizes and a short reason, or it is ignored. When a Definition is gone, its files go or get a new justified basis.
 
-Do not change the spec, the manifest, the lock, execution.yaml or anything else under .markitect/ except the registry pages.
+Do not change the spec, the manifest, the lock or anything else under .markitect/ except the registry pages, and do not change AGENTS.md, CLAUDE.md or the installed Markitect skills and agents.
 
 The tool handles Git for you: do not commit, push or open a pull request.
 
@@ -49,18 +47,6 @@ If the spec contradicts itself or leaves open something that changes behaviour a
 // verifyTask is the first prompt of a verify's session.
 func verifyTask(run string) string {
 	return fmt.Sprintf(`You check Markitect run %s. Change nothing. Follow your instructions: start with markitect checklist --review.`, run)
-}
-
-func checksList(checks []project.Check) string {
-	if len(checks) == 0 {
-		return "This project has no required checks.\n"
-	}
-	var b strings.Builder
-	b.WriteString("markitect submit runs the required checks in a clean copy of your work:\n\n")
-	for _, c := range checks {
-		fmt.Fprintf(&b, "- %s: `%s` in `%s`\n", c.Name, c.Command, c.Directory)
-	}
-	return b.String()
 }
 
 // reviewPrompt is what checklist --review prints for a review.
@@ -85,13 +71,6 @@ func reviewPrompt(st *RunState, rev *Review) string {
 	}
 	b.WriteString("## Checklist\n\n")
 	b.WriteString(renderList(rev.Items))
-	b.WriteString("\n## Required checks\n\n")
-	if len(st.Checks) == 0 {
-		b.WriteString("None ran yet.\n")
-	}
-	for _, c := range st.Checks {
-		fmt.Fprintf(&b, "- %s: %s\n", c.Name, passWord(c.Passed))
-	}
 	b.WriteString(answerFormat)
 	return b.String()
 }
@@ -111,10 +90,3 @@ Answer with markitect answer, which reads one line per item from its standard in
 
 The answers are ok, wrong, not shown and spec problem. Only the last three need an explanation, after "--". The file:line names a line you read; a test in brackets names a test in that file, and nothing else goes in brackets. markitect answer refuses what it cannot accept and says what is still missing. You may call it several times; the latest answer to an item counts.
 `
-
-func passWord(passed bool) string {
-	if passed {
-		return "passed"
-	}
-	return "failed"
-}

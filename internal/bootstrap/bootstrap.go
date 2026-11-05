@@ -28,6 +28,8 @@ func (git) Open(ctx context.Context, dir string) (cli.Workspace, error) {
 	return repo.WorkingTree{Dir: root, Ctx: ctx}, nil
 }
 
+func (git) Create(ctx context.Context, dir string) error { return repo.Init(ctx, dir) }
+
 func (git) Base(ctx context.Context, ws cli.Workspace, rev string) (cli.Base, error) {
 	return repo.ResolveCommit(ctx, ws.Root(), rev)
 }

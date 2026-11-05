@@ -1,6 +1,7 @@
 // Package skills holds what ships inside the markitect binary for agents: the
-// modeling skill and the Extract skill built on it, which markitect init installs
-// where coding agents look for skills, and the harness of a Run for Claude Code.
+// modeling skill, the start and Extract skills built on it, which markitect init
+// installs where coding agents look for skills, and the harness of a Run for
+// Claude Code.
 package skills
 
 import (
@@ -9,7 +10,7 @@ import (
 	"sort"
 )
 
-//go:embed markitect-modeling markitect-extract
+//go:embed markitect-modeling markitect-extract markitect-start
 var files embed.FS
 
 //go:embed all:claude
@@ -22,8 +23,41 @@ type File struct {
 	Data []byte
 }
 
+// About says what Markitect is. It is the one place for this text: help, init, the
+// instruction file of a project and the personal skill all print it.
+const About = `A Markitect project has one spec: the Markdown files in .markitect/model/. The
+spec is the authority over the code, tests and documentation: where they differ,
+the spec is right. People model the spec, and markitect apply has a background
+session build it and land the work.
+`
+
+// PersonalName is the personal skill's folder name below a user's skills folder.
+const PersonalName = "markitect"
+
+// personalHead and personalTail surround About in the personal skill. It allows no
+// command in advance, since apply starts sessions.
+const personalHead = `---
+name: markitect
+description: Use when someone mentions Markitect, wants to set it up or start a project with it, or asks about the markitect command or a .markitect folder. It says what Markitect is and how to begin.
+---
+
+# Markitect
+
+`
+
+const personalTail = "\n`markitect` is a command on the path, so there is no need to look for it. `markitect help` lists what it does.\n\n" +
+	"## How to begin\n\n" +
+	"- **An empty folder or a new project:** run `markitect init`, then use the `markitect-start` skill.\n" +
+	"- **A repository that already has code:** run `markitect init`, then use the `markitect-extract` skill.\n" +
+	"- **A folder that already has `.markitect/`:** it is set up, and `markitect check` says how it stands.\n\n" +
+	"`init` installs those skills into the project, so a session that was open before it does not have them yet. Read `.claude/skills/markitect-start/SKILL.md` or `.claude/skills/markitect-extract/SKILL.md` and follow it, or have the user run `/reload-skills`.\n"
+
+// Personal returns the text of the personal skill, which reaches a session in a
+// folder that has no project yet.
+func Personal() []byte { return []byte(personalHead + About + personalTail) }
+
 // Names returns the skill names, sorted.
-func Names() []string { return []string{"markitect-extract", "markitect-modeling"} }
+func Names() []string { return []string{"markitect-extract", "markitect-modeling", "markitect-start"} }
 
 // Files returns every file of every skill, sorted by path.
 func Files() []File {

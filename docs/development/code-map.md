@@ -22,7 +22,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `run` | The process of a Run in the tool: apply and verify, the checklist, the answers, submit, the hooks, the Result and landing. | `model`, `assets`, `domain`, `project`, `service` | 1 |
 | `guardedwrite` | Guarded working-tree writes for bundle installation, with the Git and path helpers they share with source snapshots. | nothing | 1 |
 | `build` | Version identity and embedded license notices. | nothing | 1 |
-| `adapter` | Concrete Git, command-line, required-check and provider-session adapters; no adapter imports another. | `model`, `assets`, `domain`, `project`, `service`, `run`, `build` | 5 |
+| `adapter` | Concrete Git, command-line, required-check and provider-session adapters; no adapter imports another. | `model`, `assets`, `domain`, `project`, `service`, `run`, `build` | 4 |
 | `composition` | Constructs the command line with its adapters. | `model`, `project`, `service`, `run`, `adapter` | 1 |
 | `command` | Thin entrypoints to product composition. | `composition` | 1 |
 | `maintenance` | The import gate and release packaging, separate from product execution. | `guardedwrite` | 2 |
@@ -49,7 +49,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | Package | Summary | Owning document |
 |---|---|---|
 | `internal/libraries` | Package libraries holds the standard Libraries that ship inside the markitect binary: std, rest and cli, each a folder of Kind Definitions. | [docs/guides/model-language.md#kinds-and-libraries](../guides/model-language.md#kinds-and-libraries) |
-| `internal/skills` | Package skills holds what ships inside the markitect binary for agents: the modeling skill and the Extract skill built on it, which markitect init installs where coding agents look for skills, and the harness of a Run for Claude Code. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
+| `internal/skills` | Package skills holds what ships inside the markitect binary for agents: the modeling skill, the start and Extract skills built on it, which markitect init installs where coding agents look for skills, and the harness of a Run for Claude Code. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
 
 ## Realization record
 
@@ -61,7 +61,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/project` | Package project loads a project's Markitect folder from a repository state and checks it as a whole: manifest, lock, Libraries, model, registry and required checks. | [docs/guides/model-language.md#the-projects-markitect-folder](../guides/model-language.md#the-projects-markitect-folder) |
+| `internal/project` | Package project loads a project's Markitect folder from a repository state and checks it as a whole: manifest, lock, Libraries, model and registry. | [docs/guides/model-language.md#the-projects-markitect-folder](../guides/model-language.md#the-projects-markitect-folder) |
 
 ## Analysis
 
@@ -92,8 +92,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | Package | Summary | Owning document |
 |---|---|---|
 | `internal/adapters/claude` | Package claude starts a Run's background sessions with the unmodified Claude Code command line, on the user's own stored login (draft concept 4.0). | [internal/run/README.md#the-session](../../internal/run/README.md#the-session) |
-| `internal/adapters/cli` | Package cli is the markitect command line: init, check, lock, refs, graph, impact and lint, which start no agent; apply and verify, which start a Run in a background session; the commands of a Run; version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
-| `internal/adapters/hostcheck` | Package hostcheck runs a project's required checks on the user's machine, in a clean folder, each with sh -c. | [internal/run/README.md#required-checks](../../internal/run/README.md#required-checks) |
+| `internal/adapters/cli` | Package cli is the markitect command line: install, init, check, lock, refs, graph, impact and lint, which start no agent; apply and verify, which start a Run in a background session; the commands of a Run; version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
 | `internal/adapters/repo` | Package repo reads a project's repository through Git: the working tree as Git sees it, a base commit, and the files changed between them. | [docs/guides/model-language.md#the-projects-markitect-folder](../guides/model-language.md#the-projects-markitect-folder) |
 | `internal/adapters/rungit` | Package rungit is a Run's Git work in the user's own repository (draft concept 4.0): it reads commits from anywhere in the repository, makes commits of a worktree's files without running the project's hooks, and brings the owner's branch up. | [internal/run/README.md#git](../../internal/run/README.md#git) |
 

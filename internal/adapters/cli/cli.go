@@ -1,6 +1,6 @@
-// Package cli is the markitect command line: init, check, lock, refs, graph,
-// impact and lint, which start no agent; apply and verify, which start a Run in a
-// background session; the commands of a Run; version and licenses.
+// Package cli is the markitect command line: install, init, check, lock, refs,
+// graph, impact and lint, which start no agent; apply and verify, which start a Run
+// in a background session; the commands of a Run; version and licenses.
 package cli
 
 import (
@@ -17,6 +17,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
+	"github.com/Glacius-Labs/Markitect/internal/skills"
 )
 
 // Workspace is the working tree of the project's repository.
@@ -44,6 +45,8 @@ type Base interface {
 // Git opens repository states.
 type Git interface {
 	Open(ctx context.Context, dir string) (Workspace, error)
+	// Create makes a folder that lies in no repository a Git repository.
+	Create(ctx context.Context, dir string) error
 	Base(ctx context.Context, ws Workspace, rev string) (Base, error)
 }
 
@@ -52,9 +55,11 @@ const (
 	OK       = 0
 	Failed   = 1 // the command ran and found errors
 	Misused  = 2 // the command could not run
-	usageTop = `markitect is the tool of a Markitect project. Only apply and verify start agents.
+	usageTop = skills.About + `
+Only apply and verify start agents.
 
 Usage:
+  markitect install                               tell Claude Code what Markitect is, in every folder
   markitect init   [--repo DIR] [--name TITLE]   set up a project and install the harness
   markitect check  [--repo DIR] [--json] [--spec] compile the project; --spec looks only at the spec
   markitect lock   [--repo DIR]                   write the lock from the manifest
@@ -98,6 +103,8 @@ func (c CLI) Run(ctx context.Context, args []string) int {
 	var err error
 	code := OK
 	switch cmd {
+	case "install":
+		code, err = c.install(rest)
 	case "init":
 		code, err = c.init(ctx, rest)
 	case "check":
@@ -207,13 +214,14 @@ func (c CLI) check(ctx context.Context, args []string) (int, error) {
 		return Misused, err
 	}
 	spec, realization := p.SpecErrors(), p.RealizationErrors()
-	if specOnly {
+	nothingBuilt := !specOnly && p.NothingBuilt()
+	if specOnly || nothingBuilt {
 		realization = nil
 	}
 	total := len(spec) + len(realization)
 	if o.json {
 		list := append(append(model.Diagnostics{}, spec...), realization...)
-		if err := c.printJSON(map[string]any{"ok": total == 0, "errors": list, "specErrors": len(spec), "realizationErrors": len(realization)}); err != nil {
+		if err := c.printJSON(map[string]any{"ok": total == 0, "errors": list, "specErrors": len(spec), "realizationErrors": len(realization), "nothingBuilt": nothingBuilt}); err != nil {
 			return Misused, err
 		}
 	} else {
@@ -229,9 +237,12 @@ func (c CLI) check(ctx context.Context, args []string) (int, error) {
 				fmt.Fprintln(c.Stdout, d.String())
 			}
 		}
-		if total == 0 {
+		switch {
+		case nothingBuilt:
+			fmt.Fprintf(c.Stdout, "ok: the spec compiles, with %d Definitions in %d Packages. Nothing is built yet, and markitect apply builds it.\n", len(p.Model.ModelDefinitions()), len(p.Model.Packages))
+		case total == 0:
 			fmt.Fprintf(c.Stdout, "ok: %d Definitions in %d Packages, %d files accounted\n", len(p.Model.ModelDefinitions()), len(p.Model.Packages), len(p.Registry.Owner))
-		} else {
+		default:
 			fmt.Fprintf(c.Stdout, "%d errors\n", total)
 		}
 	}

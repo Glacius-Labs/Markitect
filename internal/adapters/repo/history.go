@@ -65,7 +65,7 @@ func ModelHistory(ctx context.Context, root string, limit int) ([]ModelCommit, e
 // the Results, which may be large.
 func loaded(f string) bool {
 	switch f {
-	case project.ManifestFile, project.LockFile, project.ChecksFile, project.IgnoreFile, project.RootPage:
+	case project.ManifestFile, project.LockFile, project.IgnoreFile, project.RootPage:
 		return true
 	}
 	for _, dir := range []string{project.ModelDir, project.RegistryDir, project.LibraryDir} {

@@ -137,8 +137,8 @@ func (e *Engine) landOnce(ctx context.Context, st *RunState, cand string) (strin
 }
 
 // checkMerged says why a merged state cannot land, or "": the spec must still
-// compile and the required checks pass. Later spec changes are not realized yet,
-// so errors of the realization are expected there.
+// compile. Later spec changes are not realized yet, so errors of the realization
+// are expected there.
 func (e *Engine) checkMerged(ctx context.Context, merged string) (string, error) {
 	p, err := project.Load(e.Git.State(ctx, merged))
 	if err != nil {
@@ -146,15 +146,6 @@ func (e *Engine) checkMerged(ctx context.Context, merged string) (string, error)
 	}
 	if errs := p.SpecErrors(); len(errs) > 0 {
 		return fmt.Sprintf("the merged state has %d errors in the spec; the first: %s", len(errs), errs[0].String()), nil
-	}
-	results, err := e.runChecks(ctx, merged, p.Checks)
-	if err != nil {
-		return "", err
-	}
-	for _, res := range results {
-		if !res.Passed {
-			return fmt.Sprintf("the required check %s fails on the merged state", res.Name), nil
-		}
 	}
 	return "", nil
 }
@@ -213,16 +204,9 @@ func (e *Engine) retryLandings(ctx context.Context, runs []*RunState, branch, st
 func (e *Engine) result(ctx context.Context, st *RunState, state, why string, decisions []OwnerDecision) *Result {
 	r := &Result{Format: ResultFormat, Run: st.Run, Command: st.Command, Outcome: NotLanded, State: state, Why: why, Base: st.Base, Start: st.Start, Work: st.Reviewed,
 		Target: st.Branch, Full: st.Full, OwnerDecisions: decisions, Repairs: st.Repairs, SentBack: st.SentBack, MissingLinks: st.MissingFor, ImpactNotes: st.Notes,
-		Began: st.Began, Ended: e.now(), impact: st.Impact, FailingBefore: st.Failing, Failure: st.Failure,
-		RequiredChecks: RequiredChecks{Commit: st.ChecksOn, Checks: st.Checks}}
+		Began: st.Began, Ended: e.now(), impact: st.Impact, Failure: st.Failure}
 	if state != StateLanded {
 		r.Branch = RunBranchPrefix + st.Run
-	}
-	r.RequiredChecks.Ran = len(st.Checks) > 0
-	for _, c := range st.Checks {
-		if !c.Passed {
-			r.RequiredChecks.Ran = false
-		}
 	}
 	r.FullCheck = e.fullCheck(ctx, st.Branch, st.Start)
 	for _, it := range st.Items {

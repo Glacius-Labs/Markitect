@@ -60,7 +60,6 @@ func library(t *testing.T) memRepo {
 	return memRepo{
 		project.ManifestFile:                      "libraries:\n  std: 1.0.0\n",
 		project.LockFile:                          string(model.RenderLock([]model.LibrarySource{std})),
-		project.ChecksFile:                        "checks: []\n",
 		m + "project.md":                          def("std/Project", "Library", "Parts: [[members]], [[catalog]]."),
 		m + "loan-limit.md":                       def("std/Rule", "Loan limit", "At most `5` open loans."),
 		m + "members/member.md":                   def("std/Concept", "Member", "A person."),

@@ -18,10 +18,6 @@ type Verdict struct {
 	Text string
 }
 
-// harnessPaths are the files of the harness, which a Run may not change: an agent
-// cannot weaken its own rules in the work it submits.
-var harnessPaths = []string{".claude/agents/markitect-", ".claude/skills/markitect-", ".agents/skills/markitect-"}
-
 // Submit is the one door: it looks at the current state and does the first thing
 // that applies. A slow one keeps its lock, so a second call only says it is still
 // running, and a killed one can be run again.
@@ -93,31 +89,7 @@ func (e *Engine) submitApply(ctx context.Context, st *RunState, root string) (Ve
 	if len(p.Errors) > 0 {
 		return e.refuse(st, "markitect check fails on your work:", errorLines(p))
 	}
-	// Rows 4 and 5: the required checks, once per state when they pass.
-	if !st.Passed[commit.Tree] {
-		results, err := e.runChecks(ctx, cand, p.Checks)
-		if err != nil {
-			return Verdict{}, err
-		}
-		st.Checks, st.ChecksOn = results, cand
-		var failed []string
-		for _, res := range results {
-			if res.NotRun {
-				return e.closeVerdict(ctx, st, StateIncomplete, fmt.Sprintf("the required check %s could not start (exit %d): %s", res.Name, res.Exit, tail(res.Output)), nil)
-			}
-			if !res.Passed {
-				failed = append(failed, fmt.Sprintf("the required check %s failed:\n%s", res.Name, tail(res.Output)))
-			}
-		}
-		if len(failed) > 0 {
-			return e.refuse(st, "The required checks do not pass in a clean copy of your work:", failed)
-		}
-		if st.Passed == nil {
-			st.Passed = map[string]bool{}
-		}
-		st.Passed[commit.Tree] = true
-	}
-	// Row 6: no complete review for this state. A review that finished on an
+	// Row 4: no complete review for this state. A review that finished on an
 	// earlier state still counts: an implementer that reads its report and repairs
 	// before calling submit has used a round like any other, and what the review
 	// settled stands.
@@ -159,11 +131,11 @@ func (e *Engine) submitApply(ctx context.Context, st *RunState, root string) (Ve
 	}
 	st.Reviewed = rev.Commit
 	wrong, decisions := e.verdicts(st)
-	// Row 7: a spec problem ends the Run before a round is counted.
+	// Row 5: a spec problem ends the Run before a round is counted.
 	if len(decisions) > 0 {
 		return e.closeVerdict(ctx, st, StateSpecProblem, "a reviewer found a spec problem: the spec needs the owner", decisions)
 	}
-	// Row 8: wrong answers go back, one round per reviewed state.
+	// Row 6: wrong answers go back, one round per reviewed state.
 	if len(wrong) > 0 {
 		if !rev.Counted {
 			if st.Repairs == repairRounds {
@@ -175,7 +147,7 @@ func (e *Engine) submitApply(ctx context.Context, st *RunState, root string) (Ve
 		}
 		return e.refuse(st, fmt.Sprintf("The reviewer found these wrong (repair round %d of %d). Fix them and call markitect submit again:", st.Repairs, repairRounds), wrong)
 	}
-	// Row 9: nothing left.
+	// Row 7: nothing left.
 	return e.land(ctx, st, cand, commit.Tree)
 }
 
@@ -214,10 +186,8 @@ func (e *Engine) protected(ctx context.Context, from, commit string) ([]string, 
 		if strings.HasPrefix(lower, project.Dir+"/") && !registryPage(f.Path) {
 			refusals = append(refusals, fmt.Sprintf("%s changed: everything under %s/ except the registry pages is the owner's", f.Path, project.Dir))
 		}
-		for _, h := range harnessPaths {
-			if strings.HasPrefix(lower, h) {
-				refusals = append(refusals, fmt.Sprintf("%s changed: the harness is the owner's", f.Path))
-			}
+		if project.IsHarness(f.Path) {
+			refusals = append(refusals, fmt.Sprintf("%s changed: the harness is the owner's", f.Path))
 		}
 		if to, ok := links[f.Path]; ok && leavesTree(f.Path, to) {
 			refusals = append(refusals, fmt.Sprintf("%s is a link that leaves the repository, to %s", f.Path, to))
@@ -327,11 +297,6 @@ func (e *Engine) submitVerify(ctx context.Context, st *RunState) (Verdict, error
 	if err != nil {
 		return Verdict{}, err
 	}
-	results, err := e.runChecks(ctx, st.Start, p.Checks)
-	if err != nil {
-		return Verdict{}, err
-	}
-	st.Checks, st.ChecksOn = results, st.Start
 	var findings []ResultFinding
 	var decisions []OwnerDecision
 	// What does not hold and names no Definition stays in the Result, not in the
@@ -353,15 +318,7 @@ func (e *Engine) submitVerify(ctx context.Context, st *RunState) (Verdict, error
 	for _, d := range p.RealizationErrors() {
 		unsettled = append(unsettled, d.String())
 	}
-	for _, res := range results {
-		switch {
-		case res.NotRun:
-			unsettled = append(unsettled, fmt.Sprintf("the required check %s could not start", res.Name))
-		case !res.Passed:
-			unsettled = append(unsettled, fmt.Sprintf("the required check %s failed", res.Name))
-		}
-	}
-	state, why := StateVerified, "every item answered without a Finding, and the required checks pass"
+	state, why := StateVerified, "every item answered without a Finding"
 	var found []string
 	if n := len(findings); n > 0 {
 		found = append(found, fmt.Sprintf("%d Findings", n))

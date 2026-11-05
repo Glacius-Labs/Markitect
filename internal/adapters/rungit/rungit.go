@@ -342,21 +342,6 @@ func (s state) Read(file string) ([]byte, error) {
 
 func (s state) GitIgnored(string) bool { return false }
 
-// Export writes the files of a commit into an empty folder, as a checkout would.
-func (r *Repo) Export(ctx context.Context, commit, dir string) error {
-	index, cleanup, err := r.tempIndex()
-	if err != nil {
-		return err
-	}
-	defer cleanup()
-	env := []string{"GIT_INDEX_FILE=" + index, "GIT_WORK_TREE=" + dir}
-	if _, err := r.git(ctx, nil, env, "read-tree", commit); err != nil {
-		return err
-	}
-	_, err = r.git(ctx, nil, env, "checkout-index", "-a", "-f")
-	return err
-}
-
 // Merge merges theirs into ours as a new merge commit.
 func (r *Repo) Merge(ctx context.Context, ours, theirs, message string) (string, []string, error) {
 	out, err := r.git(ctx, nil, nil, "merge-tree", "--write-tree", "--name-only", "--no-messages", "-z", ours, theirs)

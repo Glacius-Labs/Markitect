@@ -2,8 +2,8 @@
 // and verify start a background session and end; the session calls the tool,
 // and submit is the one door: it says what is next each time and decides whether
 // the work counts. Nothing here drives a session. Sessions start through
-// Sessions, the required checks run through Checks, Git work goes through Git,
-// and what a Run knows between commands lives in a Store.
+// Sessions, Git work goes through Git, and what a Run knows between commands lives
+// in a Store.
 //
 // The process is described in internal/run/README.md.
 package run
@@ -56,7 +56,6 @@ var ErrUsage = errors.New("cannot run")
 type Engine struct {
 	Git      Git
 	Sessions Sessions
-	Checks   Checks
 	Store    Store
 	// Now defaults to the clock.
 	Now func() time.Time
@@ -152,7 +151,7 @@ func (e *Engine) Apply(ctx context.Context, req Request) (Started, error) {
 	if err != nil {
 		return Started{}, err
 	}
-	st.Spec = SessionSpec{Run: st.Run, Dir: root, Model: p.SessionModel, Effort: p.SessionEffort, Prompt: implementerTask(st.Run), Store: e.Store.Dir}
+	st.Spec = SessionSpec{Run: st.Run, Dir: root, Model: p.Manifest.Model, Effort: p.Manifest.Effort, Prompt: implementerTask(st.Run), Store: e.Store.Dir}
 	return e.launch(ctx, st, fmt.Sprintf("Run %s started on %s: %d items, base %s. It works in the background in a worktree of its own, and you can keep modeling. Its result lands on %s by itself; `markitect status` says how it stands.\n", st.Run, branch, len(st.Items), short(st.Base), branch))
 }
 
@@ -203,7 +202,7 @@ func (e *Engine) Verify(ctx context.Context, req Request) (Started, error) {
 		return Started{}, err
 	}
 	st.Review = &Review{Commit: start, Tree: commit.Tree, Items: st.Items, Answered: map[string]Answer{}}
-	st.Spec = SessionSpec{Run: st.Run, Dir: root, Agent: ReviewerAgent, Model: cur.SessionModel, Effort: cur.SessionEffort, Prompt: verifyTask(st.Run), Store: e.Store.Dir}
+	st.Spec = SessionSpec{Run: st.Run, Dir: root, Agent: ReviewerAgent, Model: cur.Manifest.Model, Effort: cur.Manifest.Effort, Prompt: verifyTask(st.Run), Store: e.Store.Dir}
 	dirtyNote := ""
 	if dirty, err := e.Git.Uncommitted(ctx, root); err == nil && len(dirty) > 0 {
 		dirtyNote = " Uncommitted work is not looked at."
@@ -273,7 +272,7 @@ func (e *Engine) newRun(ctx context.Context, command string, req Request, root, 
 		limit = defaultDeadline
 	}
 	return &RunState{Run: name, Command: command, Branch: branch, Repo: root, Base: base, Start: start, Full: full, Findings: req.Findings,
-		Items: items, Answers: map[string]Answer{}, Impact: impactKeys(imp, items), Notes: imp.Notes, Passed: map[string]bool{},
+		Items: items, Answers: map[string]Answer{}, Impact: impactKeys(imp, items), Notes: imp.Notes,
 		Began: now, Deadline: now.Add(limit), Limit: limit, Open: true}, nil
 }
 
@@ -421,16 +420,6 @@ func (e *Engine) Checklist(ctx context.Context, dir string, review bool) (string
 	}
 	var b strings.Builder
 	b.WriteString(implementerTask(st.Run))
-	if !st.Tried {
-		text, closed, err := e.tryChecks(ctx, st)
-		if err != nil {
-			return "", err
-		}
-		b.WriteString(text)
-		if closed {
-			return b.String(), nil
-		}
-	}
 	cur, err := e.loadWorking(ctx, root)
 	if err != nil {
 		return "", err
@@ -447,8 +436,6 @@ func (e *Engine) Checklist(ctx context.Context, dir string, review bool) (string
 	items := mergeItems(st.Items, checklist(imp, before, cur, st.Findings))
 	fmt.Fprintf(&b, "\nThe base is %s: `markitect impact --base %s` shows what changed. This list says what the change reaches and where the registry says to look. It is your to-do list, and you answer nothing on it:\n\n", st.Base, st.Base)
 	b.WriteString(renderList(items))
-	b.WriteString("\n")
-	b.WriteString(checksList(cur.Checks))
 	return b.String(), nil
 }
 
@@ -474,60 +461,6 @@ func outsideOwnFolder(all []analysis.Change) []analysis.Change {
 		}
 	}
 	return changed
-}
-
-// tryChecks runs the required checks once on the start, before the work is
-// spent. A check that cannot start ends the Run; one that fails is told to the
-// implementer and to the Result, as failing before the work.
-func (e *Engine) tryChecks(ctx context.Context, st *RunState) (string, bool, error) {
-	p, err := project.Load(e.Git.State(ctx, st.Start))
-	if err != nil {
-		return "", false, err
-	}
-	results, err := e.runChecks(ctx, st.Start, p.Checks)
-	if err != nil {
-		return "", false, err
-	}
-	var failing []string
-	for _, res := range results {
-		if res.NotRun {
-			why := fmt.Sprintf("the required check %s could not start, before any work (exit %d): %s", res.Name, res.Exit, tail(res.Output))
-			if err := e.close(ctx, st, StateIncomplete, why, nil); err != nil {
-				return "", false, err
-			}
-			return "\nThis run has ended: " + why + "\nEnd now. Nothing lands.\n", true, nil
-		}
-		if !res.Passed {
-			failing = append(failing, res.Name)
-		}
-	}
-	if err := e.Store.Update(st.Run, func(s *RunState) error {
-		s.Tried, s.Failing, s.Checks, s.ChecksOn = true, failing, results, st.Start
-		return nil
-	}); err != nil {
-		return "", false, err
-	}
-	st.Tried, st.Failing = true, failing
-	if len(failing) > 0 {
-		return fmt.Sprintf("\nThese required checks already fail before any work: %s. If the cause is a missing service or tool, say so with: markitect stop --environment \"why\". Otherwise they must pass by the end.\n", strings.Join(failing, ", ")), false, nil
-	}
-	return "", false, nil
-}
-
-// runChecks runs the required checks in a clean export of a commit.
-func (e *Engine) runChecks(ctx context.Context, commit string, checks []project.Check) ([]CheckResult, error) {
-	if len(checks) == 0 {
-		return nil, nil
-	}
-	dir, err := os.MkdirTemp("", "markitect-check-")
-	if err != nil {
-		return nil, err
-	}
-	defer os.RemoveAll(dir)
-	if err := e.Git.Export(ctx, commit, dir); err != nil {
-		return nil, err
-	}
-	return e.Checks.Run(ctx, dir, checks), nil
 }
 
 // Answer stores a reviewer's answers against the state under review. What it
@@ -817,14 +750,6 @@ func listErrors(errs model.Diagnostics) string {
 		fmt.Fprintf(&b, "- %s\n", d.String())
 	}
 	return b.String()
-}
-
-func tail(s string) string {
-	s = strings.TrimSpace(s)
-	if len(s) > 2000 {
-		return "…" + s[len(s)-2000:]
-	}
-	return s
 }
 
 func short(id string) string {

@@ -45,7 +45,7 @@ func TestCommandsEndToEnd(t *testing.T) {
 	r.Write("src/members/member.go", "package members\n")
 
 	out := mustRun(t, r.Dir, "init", "--name", "Lending library")
-	for _, want := range []string{"created .markitect/manifest.yaml", "created .markitect/model/project.md", "wrote .markitect/lock.yaml: std 1.0.0", "installed the skills markitect-extract, markitect-modeling"} {
+	for _, want := range []string{"created .markitect/manifest.yaml", "created .markitect/model/project.md", "wrote .markitect/lock.yaml: std 1.0.0", "installed the skills markitect-extract, markitect-modeling, markitect-start"} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("init output lacks %q:\n%s", want, out)
 		}
@@ -141,9 +141,10 @@ func TestCommandsEndToEnd(t *testing.T) {
 func TestCheckGroupsItsErrors(t *testing.T) {
 	r := testkit.NewRepo(t)
 	mustRun(t, r.Dir, "init", "--name", "Demo")
+	r.Write("src/stray.go", "package stray\n")
 	code, out, _ := run(t, r.Dir, "check")
-	if code != 1 || !strings.Contains(out, "In the realization") || !strings.Contains(out, "definition.unused") {
-		t.Fatalf("check on a new project: %d\n%s", code, out)
+	if code != 1 || !strings.Contains(out, "In the realization") || !strings.Contains(out, "file.unregistered") {
+		t.Fatalf("check on a project with a stray file: %d\n%s", code, out)
 	}
 	if out := mustRun(t, r.Dir, "check", "--spec"); !strings.HasPrefix(out, "ok:") {
 		t.Fatalf("check --spec: %s", out)
@@ -152,6 +153,114 @@ func TestCheckGroupsItsErrors(t *testing.T) {
 	code, out, _ = run(t, r.Dir, "check", "--spec")
 	if code != 1 || !strings.Contains(out, "In the spec") {
 		t.Fatalf("check --spec on a broken spec: %d\n%s", code, out)
+	}
+}
+
+// A new project passes check, in plain words. As soon as there is a file, it is
+// held to account as ever, and so is a Definition once anything is registered.
+func TestCheckWithNothingBuilt(t *testing.T) {
+	r := testkit.NewRepo(t)
+	mustRun(t, r.Dir, "init", "--name", "Demo")
+	code, out, _ := run(t, r.Dir, "check")
+	if code != 0 || !strings.HasPrefix(out, "ok:") || !strings.Contains(out, "Nothing is built yet") || !strings.Contains(out, "markitect apply") || strings.Contains(out, "definition.unused") {
+		t.Fatalf("check on a new project: %d\n%s", code, out)
+	}
+	code, out, _ = run(t, r.Dir, "check", "--json")
+	var checked struct {
+		OK           bool
+		NothingBuilt bool
+		Errors       []any
+	}
+	if code != 0 || json.Unmarshal([]byte(out), &checked) != nil || !checked.OK || !checked.NothingBuilt || len(checked.Errors) != 0 {
+		t.Fatalf("check --json on a new project: %d %s", code, out)
+	}
+	if out := mustRun(t, r.Dir, "check", "--spec"); strings.Contains(out, "Nothing is built") {
+		t.Fatalf("--spec looks only at the spec: %s", out)
+	}
+
+	r.Write("src/a.go", "package a\n")
+	code, out, _ = run(t, r.Dir, "check")
+	if code != 1 || !strings.Contains(out, "file.unregistered") || strings.Contains(out, "Nothing is built") {
+		t.Fatalf("check with an unlisted file: %d\n%s", code, out)
+	}
+
+	// What an extraction leaves: files registered, no Run landed yet.
+	r.Write(".markitect/registry.md", read(t, r.Dir, ".markitect/registry.md")+"| `src/a.go` | [[project]] | The code |\n")
+	r.Write(".markitect/model/rule.md", "---\nkind: std/Rule\n---\n# Rule\n\nAlways.\n")
+	code, out, _ = run(t, r.Dir, "check")
+	if code != 1 || !strings.Contains(out, "definition.unused") || strings.Contains(out, "Nothing is built") {
+		t.Fatalf("check with a registered file: %d\n%s", code, out)
+	}
+}
+
+// Help and init explain Markitect, since a session that runs init loaded nothing
+// of the project.
+func TestTheToolExplainsMarkitect(t *testing.T) {
+	const about = "A Markitect project has one spec"
+	var out, errOut bytes.Buffer
+	if Run(context.Background(), []string{"--help"}, &out, &errOut) != 0 || !strings.HasPrefix(out.String(), about) {
+		t.Fatalf("help = %s", out.String())
+	}
+	r := testkit.NewRepo(t)
+	said := mustRun(t, r.Dir, "init", "--name", "Demo")
+	if !strings.Contains(said, about) || !strings.Contains(said, "/reload-skills") {
+		t.Fatalf("init said:\n%s", said)
+	}
+	agents := read(t, r.Dir, "AGENTS.md")
+	if !strings.Contains(agents, about) || !strings.Contains(agents, "`markitect help`") {
+		t.Fatalf("AGENTS.md:\n%s", agents)
+	}
+}
+
+// install writes the personal skill from the binary, and init stays out of the
+// home folder.
+func TestInstallWritesThePersonalSkill(t *testing.T) {
+	home := testkit.TempDir(t)
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+
+	r := testkit.NewRepo(t)
+	mustRun(t, r.Dir, "init")
+	if _, err := os.Stat(filepath.Join(home, ".claude")); !os.IsNotExist(err) {
+		t.Fatalf("init wrote to the home folder: %v", err)
+	}
+
+	install := func() string {
+		t.Helper()
+		var out, errOut bytes.Buffer
+		if code := Run(context.Background(), []string{"install"}, &out, &errOut); code != 0 {
+			t.Fatalf("install: %d %s", code, errOut.String())
+		}
+		return out.String()
+	}
+	file := filepath.Join(home, ".claude", "skills", "markitect", "SKILL.md")
+	if said := install(); !strings.Contains(said, file) {
+		t.Fatalf("install does not say where: %s", said)
+	}
+	data, err := os.ReadFile(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	skill := string(data)
+	for _, want := range []string{"name: markitect\n", "A Markitect project has one spec", "no need to look for it", "markitect-start", "markitect-extract", "/reload-skills"} {
+		if !strings.Contains(skill, want) {
+			t.Errorf("the skill lacks %q:\n%s", want, skill)
+		}
+	}
+	if strings.Contains(skill, "allowed-tools") {
+		t.Errorf("the skill allows commands in advance:\n%s", skill)
+	}
+	// Run again, it refreshes the text.
+	if err := os.WriteFile(file, []byte("old\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	install()
+	if again, _ := os.ReadFile(file); string(again) != skill {
+		t.Fatalf("install did not refresh: %s", again)
+	}
+	var out, errOut bytes.Buffer
+	if code := Run(context.Background(), []string{"install", "extra"}, &out, &errOut); code != 2 {
+		t.Fatalf("install with an argument: %d", code)
 	}
 }
 
@@ -177,7 +286,7 @@ func TestInitInstallsTheHarness(t *testing.T) {
 		t.Fatalf("init left the folder dirty: %s", status)
 	}
 	code, checked, _ := run(t, r.Dir, "check")
-	if code != 1 || strings.Contains(checked, "file.unregistered") {
+	if code != 0 || strings.Contains(checked, "file.unregistered") {
 		t.Fatalf("the harness needs no registry entry: %s", checked)
 	}
 	// Run again it changes nothing, and commits nothing it did not write.
