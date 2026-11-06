@@ -101,6 +101,10 @@ var tagPattern = regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$`
 // the tag from the redirect of the releases page, which needs no API token and
 // has no rate limit worth knowing.
 func (c Client) Latest(ctx context.Context) (string, error) {
+	// Every update asks; a server that never answers must not hold it for the
+	// ten minutes a download may take.
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.base()+"/latest", nil)
 	if err != nil {
 		return "", err
