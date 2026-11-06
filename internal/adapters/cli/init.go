@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -91,10 +92,10 @@ func (c CLI) init(ctx context.Context, args []string) (int, error) {
 	if err := installHarness(ws); err != nil {
 		return Misused, err
 	}
-	fmt.Fprintln(c.Stdout, "installed the harness: the apply and verify skills and the reviewer agent")
-	if err := ensureGitignored(ws); err != nil {
+	if err := c.ensureAnswerHook(ws); err != nil {
 		return Misused, err
 	}
+	fmt.Fprintln(c.Stdout, "installed the harness: the apply and verify skills, the builder and reviewer agents, and the hook that lets only the reviewer answer")
 	switch committed, err := ws.CommitOwn(rec.files, initMessage); {
 	case err != nil:
 		fmt.Fprintf(c.Stdout, "could not commit what init wrote, so commit it yourself before the first apply; if Git ignores .claude/, the harness stays on disk and that is enough: %v\n", err)
@@ -166,29 +167,50 @@ func shippedSkill(file string) bool {
 	return false
 }
 
-// worktreesIgnore keeps the worktrees of Runs out of the project's files.
-const worktreesIgnore = ".claude/worktrees/"
+// settingsFile is the project's Claude Code settings, which hold the hook on
+// answer.
+const settingsFile = ".claude/settings.json"
 
-// ensureGitignored adds the worktrees of Runs to .gitignore.
-func ensureGitignored(ws Workspace) error {
-	var current []byte
-	if ws.Exists(".gitignore") {
-		data, err := ws.Read(".gitignore")
+// answerHook lets only the reviewer store answers, so that an agent cannot mark
+// its own work as done. It runs only before markitect answer. A Run's agents are
+// subagents of the owner's own session, so it has to be in the project's settings.
+var answerHook = map[string]any{
+	"matcher": "Bash",
+	"hooks":   []any{map[string]any{"type": "command", "if": "Bash(markitect answer*)", "command": "markitect hook pretool"}},
+}
+
+// ensureAnswerHook adds the hook to the project's settings and keeps what else
+// they hold.
+func (c CLI) ensureAnswerHook(ws Workspace) error {
+	settings := map[string]any{}
+	if ws.Exists(settingsFile) {
+		data, err := ws.Read(settingsFile)
 		if err != nil {
 			return err
 		}
-		current = data
+		if bytes.Contains(data, []byte("markitect hook pretool")) {
+			return nil
+		}
+		if err := json.Unmarshal(data, &settings); err != nil {
+			fmt.Fprintf(c.Stdout, "could not read %s, so it lacks the hook that lets only the reviewer answer: %v\n", settingsFile, err)
+			return nil
+		}
 	}
-	if bytes.Contains(current, []byte(worktreesIgnore)) {
-		return nil
+	hooks, _ := settings["hooks"].(map[string]any)
+	if hooks == nil {
+		hooks = map[string]any{}
 	}
+	pre, _ := hooks["PreToolUse"].([]any)
+	hooks["PreToolUse"] = append(pre, answerHook)
+	settings["hooks"] = hooks
 	var b bytes.Buffer
-	b.Write(current)
-	if len(current) > 0 && !bytes.HasSuffix(current, []byte("\n")) {
-		b.WriteString("\n")
+	enc := json.NewEncoder(&b)
+	enc.SetEscapeHTML(false)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(settings); err != nil {
+		return err
 	}
-	b.WriteString(worktreesIgnore + "\n")
-	return ws.Write(".gitignore", b.Bytes())
+	return ws.Write(settingsFile, b.Bytes())
 }
 
 // installSkills writes every skill file into each skill folder and removes
@@ -292,7 +314,7 @@ func (c CLI) writeLock(ws Workspace) (int, error) {
 
 // manifestTemplate is a new project's manifest.
 const manifestTemplate = `# The Libraries this project uses, with their versions. Run markitect lock after a change.
-# model and effort, each optional, name what a Run's sessions use; the defaults are sonnet and high.
+# model, optional, names the model a run's agents use; without it they use sonnet.
 libraries:
   std: %s
 `

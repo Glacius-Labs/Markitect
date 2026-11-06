@@ -18,7 +18,7 @@ The V1 workflow with Apply, the Linux runner, runtime profiles, run configuratio
 markitect init --repo PATH [--name TITLE]
 ```
 
-`init` works in an empty folder too, and makes it a Git repository. It writes what is missing: the manifest with `std`, the project anchor `model/project.md` if the model folder is empty, Root's registry page, the lock, `AGENTS.md` and a `CLAUDE.md` that imports it. It installs or updates the start, modeling and Extract skills in `.claude/skills/` and `.agents/skills/`, and the harness in `.claude/`, commits what it wrote, and prints what Markitect is. It never changes an existing model file, `AGENTS.md` or `CLAUDE.md`, so it is safe to run again after an upgrade.
+`init` works in an empty folder too, and makes it a Git repository. It writes what is missing: the manifest with `std`, the project anchor `model/project.md` if the model folder is empty, Root's registry page, the lock, `AGENTS.md` and a `CLAUDE.md` that imports it. It installs or updates the start, modeling and Extract skills in `.claude/skills/` and `.agents/skills/`, and the harness in `.claude/`: the apply and verify skills, the builder and reviewer agents, and the hook on `answer` in `.claude/settings.json`, keeping any settings already there. It commits what it wrote and prints what Markitect is. It never changes an existing model file, `AGENTS.md` or `CLAUDE.md`, so it is safe to run again after an upgrade.
 
 Claude Code reads `AGENTS.md` through that `CLAUDE.md`, and it finds skills only in `.claude/skills/`, so `.agents/skills/` is there for other agents such as Codex.
 
@@ -67,19 +67,19 @@ markitect apply  --repo PATH [--base COMMIT] [--full] [--findings FILE] [--deadl
 markitect verify --repo PATH [--base COMMIT] [--full] [--deadline D]
 ```
 
-Or use the `/markitect-apply` and `/markitect-verify` skills in your own Claude Code session, which `init` installs and which call these commands. You need Git, `sh` and Claude Code on your own login, with `markitect` on the path. No Docker, token or server is involved.
+Use them through the `/markitect-apply` and `/markitect-verify` skills in your own Claude Code session, which `init` installs. The commands only open a run and say which agent to start; the skill has your session start it. You need Git, `sh` and Claude Code, with `markitect` on the path. No Docker, token, server or background session is involved.
 
-`apply` compiles the spec, commits it on your branch, starts a background session in a worktree of its own on that commit, and returns at once. You keep modeling: the run works on its frozen copy. The session makes the project match the spec, and calls `markitect submit`, which runs `check`, has a fresh reviewer answer the checklist, and then brings your branch up by itself. It asks you nothing. Nothing is pushed; you push when you want to.
+`apply` compiles the spec, commits it on your branch and opens a run. Your session then starts the `markitect-builder` agent, which makes the project in your folder match the spec, so you see the files change. When it thinks it's done, it calls `markitect submit`, which runs `check`, has a fresh `markitect-reviewer` agent answer the checklist, sends wrong answers back to the builder, and then commits the work on your branch. Nothing is pushed; you push when you want to. Your session is busy until the run ends, so don't change the folder meanwhile.
 
-`apply` stops at once on an error in the spec, and on a change outside `.markitect/` that is not committed, since a run would silently leave it out. With no landed run yet, the first `apply` covers every Definition. A second `apply` during a run starts nothing; one whose session has stopped working, for example after a reboot or a usage limit, is resumed where it was.
+`apply` stops at once on an error in the spec, and on a change outside `.markitect/` that is not committed, since a run would silently leave it out. With no landed run yet, the first `apply` covers every Definition. One run at a time is open in a folder: a second `apply` or `verify` says how to go on with it. If the builder ends while the run is still open, your session starts it again.
 
-`markitect status` says how the runs of your branch stand, and every other command tells you in one line about a run that closed or stopped working. `claude agents` lists the sessions, and `claude attach ID` opens one. `markitect stop WHY` ends a run without landing.
+`markitect status` says how the runs of your branch stand, and every other command tells you in one line about a run that closed. `markitect stop WHY` ends a run without landing: its work goes on the branch `markitect/runs/<run>` and also stays in your folder, uncommitted, for you to keep or drop.
 
-`verify` starts a reviewer's session on the last commit. It changes nothing you have, does not mind uncommitted work and does not look at it, and ends with a Result and Findings on the branch `markitect/runs/<run>`, the input of `apply --findings`.
+`verify` opens a review of the last commit, and your session starts the `markitect-reviewer` agent. It reads your folder, so it refuses one with uncommitted changes. It changes nothing you have, and ends with a Result and Findings on the branch `markitect/runs/<run>`, the input of `apply --findings`.
 
-A run may edit files and run any shell command as you, on your machine, in `dontAsk` mode, with `git push` and `gh` refused and the provider's checks keeping it out of your checkout. So do not give a run untrusted input, and start on a project whose work is committed and pushed ([draft concept 4.0 §7](../concepts/v4-concept.md#7-how-sure-we-are)). [The process of a Run](../../internal/run/README.md) gives the details, and a run's bounds: two repair rounds, 30 calls of `submit` and, with `--deadline`, 6 hours by default.
+The agents work under your session's permission mode and settings, so they may ask you for permission; the builder accepts file edits without asking. A hook in the project's `.claude/settings.json` lets only the reviewer store answers. So do not give a run untrusted input, and start on a project whose work is committed and pushed ([draft concept 4.0 §7](../concepts/v4-concept.md#7-how-sure-we-are)). [The process of a Run](../../internal/run/README.md) gives the details, and a run's bounds: two repair rounds, 30 calls of `submit` and, with `--deadline`, 6 hours by default.
 
-Exit code 0 means success, 1 that the command ran and found errors, 2 that it could not run. For `apply` and `verify`, 0 means a run started or there was nothing to do. `--json` is on the spec's commands.
+Exit code 0 means success, 1 that the command ran and found errors, 2 that it could not run. For `apply` and `verify`, 0 means a run is open or there was nothing to do. `--json` is on the spec's commands.
 
 ## Troubleshooting
 
@@ -94,8 +94,8 @@ Exit code 0 means success, 1 that the command ran and found errors, 2 that it co
 | `impact` refuses to run | The spec has errors; run `check --spec` and fix them first. |
 | `apply` says the spec has errors | No agent started. Fix the spec and run it again. |
 | `apply` says changes outside the spec are not committed | Commit or remove them first; a run would leave them out. |
-| `Claude Code does not trust this folder` | A background session asks for its own trust, even in a folder that opens without asking because a parent is trusted. Run `claude --bg "Reply with one word."` once in a terminal in that folder and accept its question. |
-| A run ends as `kept` | The work passed but your branch could not be brought up, for example because your uncommitted edits overlap or a merge conflicts. The Result on `markitect/runs/<run>` says why. The next `apply` tries once more, then starts fresh. |
+| The builder ended but the run is still open | Your session starts it again with the same message, as `apply` said. `markitect status` shows where it stands, and `markitect stop WHY` ends it. |
+| A run ends as `kept` | The work passed but your branch could not be brought up, for example because a file in the folder holds an edit of your own. The Result on `markitect/runs/<run>` says why. The next `apply` tries once more, then starts fresh. |
 | A run ends as `refused` | The repair rounds or the calls of `submit` ran out. The Result lists what stays open, and the work is on `markitect/runs/<run>`. |
 | A run ends as `incomplete` | A deadline, a session that said the machine lacks something it needs, or a session that kept trying to end without `submit`. Nothing landed. |
 | A run ends as `spec-problem` | The implementer or the reviewer found that the spec contradicts itself or leaves open something that changes behaviour at the boundary. The Result's decisions for the owner say what to settle; change the spec and run again. |

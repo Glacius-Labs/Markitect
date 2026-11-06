@@ -16,10 +16,10 @@ This page owns the package contracts. The [model language guide](guides/model-la
 
 None of these commands starts an agent, a container or a Command, and none needs credentials. The [commands](guides/model-language.md#commands) section gives their options and exit codes.
 
-`apply`, `verify` and the commands a session calls run `cmd/markitect → internal/bootstrap → CLI adapter → the process of a Run`. The CLI adapter parses the options and calls its `Runs` port; bootstrap implements it with [the process](../internal/run/README.md) (`internal/run`) over two ports: Git work in the user's own repository (`internal/adapters/rungit`) and the provider's background sessions (`internal/adapters/claude`). `apply` and `verify` start a session and end, so nothing drives it: the session calls `markitect` like any other tool.
+`apply`, `verify` and the commands an agent calls run `cmd/markitect → internal/bootstrap → CLI adapter → the process of a Run`. The CLI adapter parses the options and calls its `Runs` port; bootstrap implements it with [the process](../internal/run/README.md) (`internal/run`) over Git work in the user's own repository (`internal/adapters/rungit`). `apply` and `verify` open a Run and say which agent to start, and the owner's own session starts it: nothing in the tool starts or drives an agent, which calls `markitect` like any other tool.
 
 
-A Run needs Git, `sh` and the provider's command line on the user's own login, and no container: agents run with the user's rights, in a worktree of their own ([draft concept 4.0 §7](concepts/v4-concept.md#7-how-sure-we-are)).
+A Run needs Git, `sh` and Claude Code on the user's own login, and no container: its agents are subagents of the owner's session, with the user's rights, in the owner's folder ([draft concept 4.0 §7](concepts/v4-concept.md#7-how-sure-we-are)).
 
 ## Layers
 
@@ -33,7 +33,7 @@ All Go packages use one root module. One rule table in [`internal/tooling/archit
 | Loading and checking a project's `.markitect/` folder from one repository state | `internal/project` | Model, the built-in files, realization; its own `Repository` port |
 | References, graph, impact with the reached Definitions and files, lint | `internal/analysis` | Project and the packages below it |
 | The process of a Run: `apply`, `verify`, the checklist, the answers, `submit`, the hooks, the Result and landing | `internal/run` | Analysis and the packages below it |
-| Git, command-line and provider-session adapters; no adapter imports another | `internal/adapters/repo`, `internal/adapters/cli`, `internal/adapters/rungit` (a Run's Git), `internal/adapters/claude` (background sessions) | Their inward consumers and build data |
+| Git and command-line adapters; no adapter imports another | `internal/adapters/repo`, `internal/adapters/cli`, `internal/adapters/rungit` (a Run's Git) | Their inward consumers and build data |
 | Composition | `internal/bootstrap` | The adapters and the process of a Run |
 | Entrypoints | `cmd/markitect` | Bootstrap |
 | Guarded working-tree writes for bundle installation; version and license notices | `internal/guardedwrite`, `internal/buildinfo` | No other Markitect package |

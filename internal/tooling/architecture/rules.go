@@ -77,7 +77,6 @@ var Table = Rules{
 		{"internal/run", "run", "internal/run/README.md"},
 		{"internal/guardedwrite", "guardedwrite", "docs/architecture.md#distribution"},
 		{"internal/buildinfo", "build", "docs/architecture.md#distribution"},
-		{"internal/adapters/claude", "adapter", "internal/run/README.md#the-session"},
 		{"internal/adapters/cli", "adapter", "docs/guides/model-language.md#commands"},
 		{"internal/adapters/repo", "adapter", "docs/guides/model-language.md#the-projects-markitect-folder"},
 		{"internal/adapters/rungit", "adapter", "internal/run/README.md#git"},

@@ -44,23 +44,18 @@ type RunState struct {
 	// Repairs counts the repair rounds, SentBack what each went back for.
 	Repairs  int      `json:"repairs"`
 	SentBack []string `json:"sentBack,omitempty"`
-	// Submits counts the calls of submit, Blocks the Stop hook's blocks since the
-	// last one.
+	// Submits counts the calls of submit.
 	Submits    int      `json:"submits"`
-	Blocks     int      `json:"blocks"`
 	Impact     []string `json:"impact,omitempty"`
 	Notes      []string `json:"notes,omitempty"`
 	MissingFor []string `json:"missingFor,omitempty"`
-	// Session is the provider's ID of the session; Failure why its last turn
-	// ended on an API error.
-	Session string `json:"session,omitempty"`
-	Failure string `json:"failure,omitempty"`
-	// Spec is how to start the session again.
-	Spec SessionSpec `json:"spec"`
+	// Model is the model the project's manifest names for a Run's agents, empty for
+	// the one their definitions name.
+	Model string `json:"model,omitempty"`
 	// Began and Deadline bound the Run.
 	Began    time.Time `json:"began"`
 	Deadline time.Time `json:"deadline"`
-	// Limit is how long the Run may work, from its start and from each resume.
+	// Limit is how long the Run may work.
 	Limit time.Duration `json:"limit"`
 
 	// Open is true until submit or stop closes the Run.
@@ -74,9 +69,8 @@ type RunState struct {
 	Closed time.Time `json:"closed,omitzero"`
 	// RetryLanding says the next apply tries once more to land Kept.
 	RetryLanding bool `json:"retryLanding,omitempty"`
-	// Told says the owner has seen how it closed; Cleaned that its worktree is gone.
-	Told    bool `json:"told,omitempty"`
-	Cleaned bool `json:"cleaned,omitempty"`
+	// Told says the owner has seen how it closed.
+	Told bool `json:"told,omitempty"`
 }
 
 // Review is one review of one state of the work.
@@ -227,7 +221,7 @@ func (s Store) Update(run string, change func(*RunState) error) error {
 }
 
 // Settle writes a Run a long command has held a copy of. That command never writes
-// answers, a session or a failure, so what others wrote meanwhile stands.
+// answers, so what others wrote meanwhile stands.
 func (s Store) Settle(st *RunState) error {
 	release, err := s.lock(st.Run+".state", lockWait)
 	if err != nil {
@@ -239,7 +233,7 @@ func (s Store) Settle(st *RunState) error {
 		return err
 	}
 	if found {
-		st.Answers, st.MissingFor, st.Session, st.Failure = fresh.Answers, fresh.MissingFor, fresh.Session, fresh.Failure
+		st.Answers, st.MissingFor = fresh.Answers, fresh.MissingFor
 		if st.Review != nil && fresh.Review != nil && st.Review.Commit == fresh.Review.Commit {
 			st.Review.Answered = fresh.Review.Answered
 		}

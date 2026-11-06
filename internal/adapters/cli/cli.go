@@ -1,6 +1,7 @@
 // Package cli is the markitect command line: install, init, check, lock, refs,
-// graph, impact and lint, which start no agent; apply and verify, which start a Run
-// in a background session; the commands of a Run; version and licenses.
+// graph, impact and lint; apply and verify, which open a Run and say which agent
+// the owner's session starts; the commands of a Run; version and licenses. None of
+// them starts an agent.
 package cli
 
 import (
@@ -56,7 +57,7 @@ const (
 	Failed   = 1 // the command ran and found errors
 	Misused  = 2 // the command could not run
 	usageTop = skills.About + `
-Only apply and verify start agents.
+No command starts an agent: apply and verify say which one your session starts.
 
 Usage:
   markitect install                               tell Claude Code what Markitect is, in every folder
@@ -69,9 +70,9 @@ Usage:
                                                   what a change reaches, with distance and reason
   markitect lint   [--repo DIR] [--json]          measure the spec like code: warnings only
   markitect apply  [--repo DIR] [--base COMMIT] [--full] [--findings FILE] [--deadline D]
-                                                  start a background session that makes the project match the spec and lands the work
+                                                  open a run: a builder agent makes the project match the spec, and the work lands
   markitect verify [--repo DIR] [--base COMMIT] [--full] [--deadline D]
-                                                  start a reviewer's background session; changes nothing you have
+                                                  open a review of the last commit; changes nothing you have
   markitect status [--repo DIR]                   how the runs of this branch stand
   markitect stop   [--repo DIR] WHY               end a run without landing
   markitect version

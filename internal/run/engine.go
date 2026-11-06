@@ -1,9 +1,9 @@
 // Package run is the process of a Run, in the tool (draft concept 4.0): apply
-// and verify start a background session and end; the session calls the tool,
-// and submit is the one door: it says what is next each time and decides whether
-// the work counts. Nothing here drives a session. Sessions start through
-// Sessions, Git work goes through Git, and what a Run knows between commands lives
-// in a Store.
+// and verify open a Run and say which agent to start; the owner's own session
+// starts it, and the agents work in the owner's folder and call the tool. submit
+// is the one door: it says what is next each time and decides whether the work
+// counts. Nothing here starts or drives an agent. Git work goes through Git, and
+// what a Run knows between commands lives in a Store.
 //
 // The process is described in internal/run/README.md.
 package run
@@ -17,6 +17,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"time"
 
@@ -31,9 +32,6 @@ const (
 	// maxSubmits bounds the calls of submit in one Run, which keeps a stuck Run
 	// finite: a provisional number.
 	maxSubmits = 30
-	// maxBlocks bounds how often the Stop hook sends a session back since its
-	// last submit.
-	maxBlocks = 5
 	// defaultDeadline bounds a Run.
 	defaultDeadline = 6 * time.Hour
 	// maxRefusals bounds how many errors one refusal lists.
@@ -43,9 +41,6 @@ const (
 // RunBranchPrefix is where work and a Result that do not land stay.
 const RunBranchPrefix = "markitect/runs/"
 
-// worktreeBranch is the branch the provider makes for a session's worktree.
-func worktreeBranch(run string) string { return "worktree-" + run }
-
 // runName is what a Run may be called: it names a branch and a folder.
 var runName = regexp.MustCompile(`^[a-z0-9][a-z0-9_.-]{0,62}$`)
 
@@ -54,9 +49,8 @@ var ErrUsage = errors.New("cannot run")
 
 // Engine runs the commands of a Run in one repository.
 type Engine struct {
-	Git      Git
-	Sessions Sessions
-	Store    Store
+	Git   Git
+	Store Store
 	// Now defaults to the clock.
 	Now func() time.Time
 }
@@ -105,15 +99,12 @@ func (e *Engine) Apply(ctx context.Context, req Request) (Started, error) {
 	if branch == "" {
 		return Started{}, fmt.Errorf("%w: HEAD is detached, and a Run lands on a branch; check one out first", ErrUsage)
 	}
-	e.cleanUp(ctx)
 	runs, err := e.Store.All()
 	if err != nil {
 		return Started{}, err
 	}
-	for _, st := range runs {
-		if st.Open && st.Command == "apply" && st.Branch == branch {
-			return e.continueOpen(ctx, st)
-		}
+	if st := openIn(runs, root); st != nil {
+		return stillOpen(st), nil
 	}
 	dirty, err := e.Git.Uncommitted(ctx, root)
 	if err != nil {
@@ -151,12 +142,15 @@ func (e *Engine) Apply(ctx context.Context, req Request) (Started, error) {
 	if err != nil {
 		return Started{}, err
 	}
-	st.Spec = SessionSpec{Run: st.Run, Dir: root, Model: p.Manifest.Model, Effort: p.Manifest.Effort, Prompt: implementerTask(st.Run), Store: e.Store.Dir}
-	return e.launch(ctx, st, fmt.Sprintf("Run %s started on %s: %d items, base %s. It works in the background in a worktree of its own, and you can keep modeling. Its result lands on %s by itself; `markitect status` says how it stands.\n", st.Run, branch, len(st.Items), short(st.Base), branch))
+	st.Model = p.Manifest.Model
+	if err := e.Store.Save(st); err != nil {
+		return Started{}, err
+	}
+	return Started{Run: st.Run, Text: fmt.Sprintf("Run %s is open on %s: %d items, base %s. Its work lands on %s when the reviewer finds nothing wrong.\n\n", st.Run, branch, len(st.Items), short(st.Base), branch) + builderStep(st)}, nil
 }
 
-// Verify starts a reviewer's session on the last commit. It changes nothing the
-// owner has, and never holds the branch.
+// Verify opens a review of the last commit. It changes nothing the owner has. The
+// reviewer reads the owner's folder, so that must hold the last commit.
 func (e *Engine) Verify(ctx context.Context, req Request) (Started, error) {
 	root, err := e.Git.Root(ctx, req.Dir)
 	if err != nil {
@@ -166,15 +160,17 @@ func (e *Engine) Verify(ctx context.Context, req Request) (Started, error) {
 	if err != nil {
 		return Started{}, err
 	}
-	e.cleanUp(ctx)
 	runs, err := e.Store.All()
 	if err != nil {
 		return Started{}, err
 	}
-	for _, st := range runs {
-		if st.Open && st.Command == "verify" && st.Branch == branch {
-			return e.continueOpen(ctx, st)
-		}
+	if st := openIn(runs, root); st != nil {
+		return stillOpen(st), nil
+	}
+	if dirty, err := e.Git.Uncommitted(ctx, root); err != nil {
+		return Started{}, err
+	} else if len(dirty) > 0 {
+		return Started{State: StateCheckFailed, Text: "The reviewer reads this folder, and it holds changes that are not committed. Commit or remove them first:\n\n- " + strings.Join(dirty, "\n- ") + "\n"}, nil
 	}
 	start, err := e.Git.Head(ctx, root)
 	if err != nil {
@@ -202,27 +198,45 @@ func (e *Engine) Verify(ctx context.Context, req Request) (Started, error) {
 		return Started{}, err
 	}
 	st.Review = &Review{Commit: start, Tree: commit.Tree, Items: st.Items, Answered: map[string]Answer{}}
-	st.Spec = SessionSpec{Run: st.Run, Dir: root, Agent: ReviewerAgent, Model: cur.Manifest.Model, Effort: cur.Manifest.Effort, Prompt: verifyTask(st.Run), Store: e.Store.Dir}
-	dirtyNote := ""
-	if dirty, err := e.Git.Uncommitted(ctx, root); err == nil && len(dirty) > 0 {
-		dirtyNote = " Uncommitted work is not looked at."
+	st.Model = cur.Manifest.Model
+	if err := e.Store.Save(st); err != nil {
+		return Started{}, err
 	}
-	return e.launch(ctx, st, fmt.Sprintf("Run %s started: a reviewer checks %d items at %s in the background. It changes nothing you have; `markitect status` says how it stands.%s\n", st.Run, len(st.Items), short(start), dirtyNote))
+	return Started{Run: st.Run, Text: fmt.Sprintf("Run %s is open: a review of %d items at %s. It changes nothing you have.\n\n", st.Run, len(st.Items), short(start)) + verifyStep(st)}, nil
 }
 
-// reviewerFile is the harness's reviewer agent, without which no Run can finish.
-const reviewerFile = ".claude/agents/" + ReviewerAgent + ".md"
-
-const noHarness = "The harness is not in this project's last commit, so a run could not start its reviewer. Run markitect init, which commits what it writes, and try again.\n"
-
-// hasHarness looks in the commit and on disk: the provider reads agents that are
-// not tracked through from the main checkout.
-func (e *Engine) hasHarness(ctx context.Context, commit, root string) bool {
-	if _, err := e.Git.State(ctx, commit).Read(reviewerFile); err == nil {
-		return true
+// stillOpen answers an apply or verify while a Run of the folder is open: only one
+// can be, since its agents work in the folder.
+func stillOpen(st *RunState) Started {
+	text := fmt.Sprintf("Run %s (%s) is still open in this folder, so no new one starts. To go on with it:\n\n", st.Run, st.Command)
+	if st.Command == "verify" {
+		text += verifyStep(st)
+	} else {
+		text += builderStep(st)
 	}
-	_, err := os.Stat(filepath.Join(root, filepath.FromSlash(reviewerFile)))
-	return err == nil
+	return Started{State: "open", Run: st.Run, Text: text + "\nTo end it instead: markitect stop \"why\"\n"}
+}
+
+// reviewerFile and builderFile are the harness's agents, without which no Run can
+// finish.
+const (
+	reviewerFile = ".claude/agents/" + ReviewerAgent + ".md"
+	builderFile  = ".claude/agents/" + BuilderAgent + ".md"
+)
+
+const noHarness = "The harness is not in this project's last commit, so a run could not start its agents. Run markitect init, which commits what it writes, and try again.\n"
+
+// hasHarness looks in the commit and on disk for both agents of a Run.
+func (e *Engine) hasHarness(ctx context.Context, commit, root string) bool {
+	for _, file := range []string{reviewerFile, builderFile} {
+		if _, err := e.Git.State(ctx, commit).Read(file); err == nil {
+			continue
+		}
+		if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(file))); err != nil {
+			return false
+		}
+	}
+	return true
 }
 
 // newRun works out the base and the list. A Run with an empty list is not saved.
@@ -284,100 +298,10 @@ func (e *Engine) runName(now time.Time) (string, error) {
 	return "r" + now.UTC().Format("20060102-150405") + "-" + hex.EncodeToString(b), nil
 }
 
-// launch starts the Run's session and waits until it is up.
-func (e *Engine) launch(ctx context.Context, st *RunState, text string) (Started, error) {
-	if err := e.Store.Save(st); err != nil {
-		return Started{}, err
-	}
-	id, err := e.Sessions.Start(ctx, st.Spec)
-	if err != nil {
-		st.Open, st.State, st.Why, st.Closed = false, StateIncomplete, fmt.Sprintf("the session did not start: %v", err), e.now()
-		if serr := e.Store.Save(st); serr != nil {
-			return Started{}, serr
-		}
-		return Started{State: StateIncomplete, Run: st.Run, Text: "The session did not start: " + err.Error() + "\n"}, nil
-	}
-	// A quick session may already have written to the state.
-	if err := e.Store.Update(st.Run, func(s *RunState) error {
-		s.Session = id
-		return nil
-	}); err != nil {
-		return Started{}, err
-	}
-	return Started{Run: st.Run, Text: text}, nil
-}
-
-// continueOpen handles an apply while a Run is open: one that works is left
-// alone, and one whose session has ended is resumed where it stopped.
-func (e *Engine) continueOpen(ctx context.Context, st *RunState) (Started, error) {
-	state := SessionUnknown
-	if st.Session != "" {
-		var err error
-		if state, err = e.Sessions.State(ctx, st.Session); err != nil {
-			return Started{}, err
-		}
-	}
-	if state == SessionWorking {
-		return Started{State: "open", Run: st.Run, Text: fmt.Sprintf("Run %s is still working on %s, so no new one starts. `markitect status` says how it stands, and `markitect stop WHY` ends it. You can keep modeling; the next apply takes what you have.\n", st.Run, st.Branch)}, nil
-	}
-	// It resumes in its own worktree, or not at all: the provider would otherwise
-	// carry on in the owner's folder without isolation.
-	wt, err := e.Git.WorktreeOf(ctx, worktreeBranch(st.Run))
-	if err != nil {
-		return Started{}, err
-	}
-	if wt == "" {
-		return Started{}, fmt.Errorf("run %s could not be resumed, since its worktree is gone; `markitect stop WHY` ends it", st.Run)
-	}
-	if st.Session != "" {
-		_ = e.Sessions.Stop(ctx, st.Session)
-	}
-	spec := st.Spec
-	spec.Dir = wt
-	id, err := e.Sessions.Resume(ctx, st.Session, spec)
-	if err != nil {
-		return Started{}, fmt.Errorf("run %s could not be resumed; `markitect stop WHY` ends it: %w", st.Run, err)
-	}
-	if err := e.Store.Update(st.Run, func(s *RunState) error {
-		s.Session, s.Failure, s.Blocks = id, "", 0
-		// A usage limit or a night's sleep must not end it at its first tool call.
-		s.Deadline = e.now().Add(s.Limit)
-		return nil
-	}); err != nil {
-		return Started{}, err
-	}
-	return Started{State: "open", Run: st.Run, Text: fmt.Sprintf("Run %s had stopped working and is resumed where it was, with its repair count. The last apply's changes stay for the next one.\n", st.Run)}, nil
-}
-
-// Current is the Run whose worktree holds a folder. What a session calls works
-// only there: a session that ended up in the owner's folder must not be told to go
-// on working.
+// Current is the Run of the folder that holds dir: the open one, or else the last
+// one, so that an agent of a closed Run hears that it is over.
 func (e *Engine) Current(ctx context.Context, dir string) (*RunState, error) {
 	root, err := e.Git.Root(ctx, dir)
-	if err != nil {
-		return nil, err
-	}
-	st, found, err := e.Store.Load(filepath.Base(root))
-	if err != nil {
-		return nil, err
-	}
-	if !found {
-		return nil, fmt.Errorf("%w: this is not the worktree of a run", ErrUsage)
-	}
-	return st, nil
-}
-
-// currentOrOpen is the Run a folder belongs to, else the open Run on its branch:
-// an apply first, since only one can be open.
-func (e *Engine) currentOrOpen(ctx context.Context, dir string) (*RunState, error) {
-	if st, err := e.Current(ctx, dir); err == nil {
-		return st, nil
-	}
-	root, err := e.Git.Root(ctx, dir)
-	if err != nil {
-		return nil, err
-	}
-	branch, err := e.Git.Branch(ctx, root)
 	if err != nil {
 		return nil, err
 	}
@@ -385,21 +309,42 @@ func (e *Engine) currentOrOpen(ctx context.Context, dir string) (*RunState, erro
 	if err != nil {
 		return nil, err
 	}
-	var open *RunState
+	if st := openIn(runs, root); st != nil {
+		return st, nil
+	}
+	var last *RunState
 	for _, st := range runs {
-		if st.Open && st.Branch == branch && (open == nil || st.Command == "apply") {
-			open = st
+		if samePath(st.Repo, root) && (last == nil || st.Began.After(last.Began)) {
+			last = st
 		}
 	}
-	if open == nil {
-		return nil, fmt.Errorf("%w: no run is open here", ErrUsage)
+	if last == nil {
+		return nil, fmt.Errorf("%w: no run is open here; markitect apply opens one", ErrUsage)
 	}
-	return open, nil
+	return last, nil
 }
 
-// Checklist prints the implementer's task and to-do list, rebuilt from the
-// current files and registry. The Run's first call also tries the required checks
-// on the start. With review it prints what the review must answer.
+// openIn is the open Run of a folder.
+func openIn(runs []*RunState, root string) *RunState {
+	for _, st := range runs {
+		if st.Open && samePath(st.Repo, root) {
+			return st
+		}
+	}
+	return nil
+}
+
+// samePath compares two folders, without regard to case on Windows.
+func samePath(a, b string) bool {
+	a, b = filepath.Clean(a), filepath.Clean(b)
+	if runtime.GOOS == "windows" {
+		return strings.EqualFold(a, b)
+	}
+	return a == b
+}
+
+// Checklist prints the builder's task and to-do list, rebuilt from the current
+// files and registry. With review it prints what the review must answer.
 func (e *Engine) Checklist(ctx context.Context, dir string, review bool) (string, error) {
 	st, err := e.Current(ctx, dir)
 	if err != nil {
@@ -517,11 +462,7 @@ func (e *Engine) Answer(ctx context.Context, dir string, raw []byte) (string, bo
 // finish, since it may be landing. With environment, the session says the machine
 // lacks something, which is no question about the spec.
 func (e *Engine) Stop(ctx context.Context, dir, why string, environment bool) (string, error) {
-	root, err := e.Git.Root(ctx, dir)
-	if err != nil {
-		return "", err
-	}
-	st, err := e.currentOrOpen(ctx, dir)
+	st, err := e.Current(ctx, dir)
 	if err != nil {
 		return "", err
 	}
@@ -542,21 +483,14 @@ func (e *Engine) Stop(ctx context.Context, dir, why string, environment bool) (s
 	if !st.Open {
 		return fmt.Sprintf("Run %s is already closed: %s.\n", st.Run, st.State), nil
 	}
-	fromSession := filepath.Base(root) == st.Run
-	if !fromSession && st.Session != "" {
-		_ = e.Sessions.Stop(ctx, st.Session)
-	}
-	state, decisions := StateSpecProblem, []OwnerDecision{{Matter: why, Recommendation: "Settle it in the spec and run apply again."}}
-	switch {
-	case !fromSession:
-		state, decisions = StateStopped, nil
-	case environment:
+	state, decisions := StateStopped, []OwnerDecision{{Matter: why, Recommendation: "If the spec is the cause, settle it there and run apply again."}}
+	if environment {
 		state, decisions = StateIncomplete, nil
 	}
 	if err := e.close(ctx, st, state, "stopped: "+why, decisions); err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("Run %s has ended without landing. Its work and Result are on %s. End now.\n", st.Run, st.Kept), nil
+	return fmt.Sprintf("Run %s has ended without landing. Its work and Result are on %s.%s End now.\n", st.Run, st.Kept, inFolder(st)), nil
 }
 
 // Status says how the Runs of the owner's branch stand.
@@ -614,27 +548,14 @@ func (e *Engine) statusLine(ctx context.Context, st *RunState) string {
 		}
 		return fmt.Sprintf("%s  %s  %s  %s: %s\n", st.Run, st.Command, st.State, where, st.Why)
 	}
-	state := SessionUnknown
-	if st.Session != "" {
-		if s, err := e.Sessions.State(ctx, st.Session); err == nil {
-			state = s
-		}
-	}
-	line := fmt.Sprintf("%s  %s  open, session %s, %d items, %d repair rounds", st.Run, st.Command, state, len(st.Items), st.Repairs)
-	if state != SessionWorking {
-		line += "; it has stopped working, and `markitect " + st.Command + "` resumes it or `markitect stop WHY` ends it"
-		if st.Failure != "" {
-			line += " (" + st.Failure + ")"
-		}
-	}
-	return line + "\n"
+	return fmt.Sprintf("%s  %s  open, %d items, %d repair rounds; `markitect %s` says how to go on, and `markitect stop WHY` ends it\n", st.Run, st.Command, len(st.Items), st.Repairs, st.Command)
 }
 
 // Notice is the one line every command prints about a Run the owner should hear
-// of: one that closed and they have not seen, or one that has stopped working.
+// of: one that closed and they have not seen.
 func (e *Engine) Notice(ctx context.Context, dir string) string {
 	root, err := e.Git.Root(ctx, dir)
-	if err != nil || filepathIsRun(e, root) {
+	if err != nil {
 		return ""
 	}
 	branch, err := e.Git.Branch(ctx, root)
@@ -650,8 +571,7 @@ func (e *Engine) Notice(ctx context.Context, dir string) string {
 		if st.Branch != branch {
 			continue
 		}
-		switch {
-		case !st.Open && !st.Told:
+		if !st.Open && !st.Told {
 			if st.Landed != "" {
 				fmt.Fprintf(&b, "markitect: run %s landed on %s as %s.\n", st.Run, st.Branch, short(st.Landed))
 			} else {
@@ -661,50 +581,9 @@ func (e *Engine) Notice(ctx context.Context, dir string) string {
 				s.Told = true
 				return nil
 			})
-		case st.Open && st.Session != "":
-			if s, err := e.Sessions.State(ctx, st.Session); err == nil && s != SessionWorking {
-				why := ""
-				if st.Failure != "" {
-					why = " (" + st.Failure + ")"
-				}
-				fmt.Fprintf(&b, "markitect: run %s has stopped working%s; `markitect %s` resumes it, `markitect stop WHY` ends it.\n", st.Run, why, st.Command)
-			}
 		}
 	}
 	return b.String()
-}
-
-func filepathIsRun(e *Engine, root string) bool {
-	_, found, err := e.Store.Load(filepath.Base(root))
-	return err == nil && found
-}
-
-// cleanUp removes the worktrees of closed Runs. The provider holds a lock on a
-// worktree while its session runs, so this waits for the next apply.
-func (e *Engine) cleanUp(ctx context.Context) {
-	runs, err := e.Store.All()
-	if err != nil {
-		return
-	}
-	for _, st := range runs {
-		if st.Open || st.Cleaned {
-			continue
-		}
-		if st.Session != "" {
-			_ = e.Sessions.Stop(ctx, st.Session)
-			_ = e.Sessions.Remove(ctx, st.Session)
-		}
-		if err := e.Git.RemoveWorktree(ctx, worktreeBranch(st.Run)); err != nil {
-			continue
-		}
-		if err := e.Git.DeleteBranch(ctx, worktreeBranch(st.Run)); err != nil {
-			continue
-		}
-		_ = e.Store.Update(st.Run, func(s *RunState) error {
-			s.Cleaned = true
-			return nil
-		})
-	}
 }
 
 // loadWorking loads the project in a working tree.

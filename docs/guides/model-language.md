@@ -148,17 +148,16 @@ Its patterns are the registry's, not Git's: they start at the top of the reposit
 
 It can't merge with `.gitignore`, because the two answer different questions: `.gitignore` says what Git does not track, and this file says what Git tracks and no Package owns. A file Git ignores needs no line here.
 
-The tool accounts for what `init` installs by itself: `AGENTS.md`, `CLAUDE.md`, the `markitect-*` skills and agents, and `.gitignore`, which it adds to. They need no line here and no registry entry, though a registry page may list them. A Run may not change `AGENTS.md`, `CLAUDE.md` or the skills and agents.
+The tool accounts for what `init` installs by itself: `AGENTS.md`, `CLAUDE.md`, `.claude/settings.json`, the `markitect-*` skills and agents, and `.gitignore`. They need no line here and no registry entry, though a registry page may list them. A Run may not change any of them but `.gitignore`.
 
-### Model and effort
+### Model
 
-`.markitect/manifest.yaml` may also name the `model` and `effort` of a Run's sessions. The defaults are `sonnet` and `high`.
+`.markitect/manifest.yaml` may also name the `model` a Run's agents use, and `apply` then says to start them on it. Without it they use `sonnet`, as their agent files say, at effort `high`.
 
 ```yaml
 libraries:
   std: 1.0.0
 model: opus
-effort: high
 ```
 
 ## Commands
@@ -168,7 +167,7 @@ All commands take `--repo DIR`, a folder inside the project's Git repository (de
 | Command | Does |
 |---|---|
 | `markitect install` | Writes the personal skill `~/.claude/skills/markitect/SKILL.md` from the binary, and says where. It tells Claude Code what Markitect is in any folder, and how to begin, and allows no command in advance. Run it again after an upgrade. It takes no `--repo`. |
-| `markitect init [--name TITLE]` | Writes what is missing: the manifest with `std`, the project anchor `model/project.md` if the model folder is empty, Root's registry page, the lock, `AGENTS.md` and a `CLAUDE.md` that imports it. Installs or updates the skills in `.claude/skills/` and `.agents/skills/`, and the harness. Makes a folder that lies in no repository a Git repository, commits what it wrote and prints what Markitect is. Never changes an existing model file, `AGENTS.md` or `CLAUDE.md`, and never writes to the home folder. |
+| `markitect init [--name TITLE]` | Writes what is missing: the manifest with `std`, the project anchor `model/project.md` if the model folder is empty, Root's registry page, the lock, `AGENTS.md` and a `CLAUDE.md` that imports it. Installs or updates the skills in `.claude/skills/` and `.agents/skills/`, and the harness: the builder and reviewer agents and the hook on `answer` in `.claude/settings.json`. Makes a folder that lies in no repository a Git repository, commits what it wrote and prints what Markitect is. Never changes an existing model file, `AGENTS.md` or `CLAUDE.md`, and never writes to the home folder. |
 | `markitect check [--spec]` | Compiles the project and prints every error, one per line as `file:line: code: message`, the spec's apart from the realization's. Errors only; exit 1 when there is one, and exit 0 with a plain sentence when [nothing is built yet](#the-realization-record). `--spec` looks only at the spec. |
 | `markitect lock` | Writes the lock from the manifest and the Libraries it names. |
 | `markitect refs TARGET` | Who links to a Definition or Package: Definitions by link or as their Kind, and the registry entries that realize it. |

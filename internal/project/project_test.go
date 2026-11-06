@@ -215,13 +215,15 @@ func TestNothingBuilt(t *testing.T) {
 	}
 }
 
-func TestManifestHoldsModelAndEffort(t *testing.T) {
+func TestManifestHoldsTheModel(t *testing.T) {
 	r := valid(t)
-	r.files[ManifestFile] = "libraries:\n  std: 1.0.0\nmodel: opus\neffort: max\n"
+	r.files[ManifestFile] = "libraries:\n  std: 1.0.0\nmodel: opus\n"
 	p := load(t, r)
-	if len(p.Errors) != 0 || p.Manifest.Model != "opus" || p.Manifest.Effort != "max" {
+	if len(p.Errors) != 0 || p.Manifest.Model != "opus" {
 		t.Fatalf("%+v %v", p.Manifest, p.Errors)
 	}
+	r.files[ManifestFile] = "libraries:\n  std: 1.0.0\neffort: max\n"
+	expect(t, load(t, r).Errors, "manifest.syntax", `unknown key "effort"`)
 }
 
 // The files of the old layout are errors, with no compatibility kept.

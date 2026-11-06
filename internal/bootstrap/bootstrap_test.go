@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/internal/adapters/cli"
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
@@ -264,8 +265,39 @@ func TestInstallWritesThePersonalSkill(t *testing.T) {
 	}
 }
 
-// init installs the harness, keeps the worktrees out of Git and commits what it
-// wrote, so that the first apply finds a clean folder.
+// init installs the harness with the hook on answer and commits what it wrote, so
+// that the first apply finds a clean folder.
+// The hook joins settings the project already has, and is added once.
+func TestInitKeepsTheProjectsSettings(t *testing.T) {
+	r := testkit.NewRepo(t)
+	r.Write(".claude/settings.json", "{\n  \"permissions\": {\"allow\": [\"Bash(go test *)\"]}\n}\n")
+	mustRun(t, r.Dir, "init")
+	mustRun(t, r.Dir, "init")
+	settings := read(t, r.Dir, ".claude/settings.json")
+	if !strings.Contains(settings, "Bash(go test *)") || strings.Count(settings, "markitect hook pretool") != 1 {
+		t.Fatalf("settings:\n%s", settings)
+	}
+}
+
+// The hook runs the installed command, and only the reviewer may answer.
+func TestHookLetsOnlyTheReviewerAnswer(t *testing.T) {
+	hook := func(agent string) string {
+		input, _ := json.Marshal(map[string]any{"agent_type": agent, "tool_name": "Bash", "tool_input": map[string]any{"command": "markitect answer"}})
+		var out, errOut bytes.Buffer
+		code := cli.CLI{Git: git{}, Runs: runs{}, Stdin: bytes.NewReader(input), Stdout: &out, Stderr: &errOut}.Run(context.Background(), []string{"hook", "pretool"})
+		if code != 0 {
+			t.Fatalf("hook exit %d: %s", code, errOut.String())
+		}
+		return out.String()
+	}
+	if out := hook("markitect-builder"); !strings.Contains(out, `"permissionDecision":"deny"`) {
+		t.Fatalf("the builder may answer: %s", out)
+	}
+	if out := hook("markitect-reviewer"); out != "" {
+		t.Fatalf("the reviewer may not: %s", out)
+	}
+}
+
 func TestInitInstallsTheHarness(t *testing.T) {
 	r := testkit.NewRepo(t)
 	r.Git("config", "user.name", "Owner")
@@ -274,13 +306,22 @@ func TestInitInstallsTheHarness(t *testing.T) {
 	if !strings.Contains(out, "installed the harness") || !strings.Contains(out, "committed what init wrote") {
 		t.Fatalf("init: %s", out)
 	}
-	for _, file := range []string{".claude/skills/markitect-apply/SKILL.md", ".claude/skills/markitect-verify/SKILL.md", ".claude/agents/markitect-reviewer.md"} {
+	for _, file := range []string{".claude/skills/markitect-apply/SKILL.md", ".claude/skills/markitect-verify/SKILL.md", ".claude/agents/markitect-reviewer.md", ".claude/agents/markitect-builder.md"} {
 		if read(t, r.Dir, file) == "" {
 			t.Fatalf("%s is empty", file)
 		}
 	}
-	if !strings.Contains(read(t, r.Dir, ".gitignore"), ".claude/worktrees/") {
-		t.Fatal("the worktrees are not ignored")
+	var settings struct {
+		Hooks map[string][]struct {
+			Matcher string
+			Hooks   []struct{ Type, If, Command string }
+		}
+	}
+	if err := json.Unmarshal([]byte(read(t, r.Dir, ".claude/settings.json")), &settings); err != nil {
+		t.Fatal(err)
+	}
+	if pre := settings.Hooks["PreToolUse"]; len(pre) != 1 || pre[0].Matcher != "Bash" || len(pre[0].Hooks) != 1 || pre[0].Hooks[0].Command != "markitect hook pretool" || pre[0].Hooks[0].If != "Bash(markitect answer*)" {
+		t.Fatalf("the hook on answer: %+v", settings)
 	}
 	if status := r.Git("status", "--porcelain"); status != "" {
 		t.Fatalf("init left the folder dirty: %s", status)

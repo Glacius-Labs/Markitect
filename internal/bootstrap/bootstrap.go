@@ -1,6 +1,5 @@
 // Package bootstrap constructs the command line with its adapters: Git for the
-// spec's commands, and for a Run the process with the user's repository, the
-// required checks on the user's machine and the provider's background sessions.
+// spec's commands, and for a Run the process over the user's own repository.
 package bootstrap
 
 import (

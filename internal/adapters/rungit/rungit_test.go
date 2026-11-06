@@ -127,12 +127,6 @@ func TestCandidateChangesNothing(t *testing.T) {
 	if !strings.Contains(files, "new.txt") || strings.Contains(files, "build/out") || strings.Contains(files, "README.md") {
 		t.Fatalf("the candidate holds: %s", files)
 	}
-	if err := host.Adopt(ctx, r.Dir, cand); err != nil {
-		t.Fatal(err)
-	}
-	if status := r.Git("status", "--porcelain"); status != "" {
-		t.Fatalf("after Adopt: %s", status)
-	}
 }
 
 // A worktree of a Run is never part of the work, even if nothing ignores it.
@@ -149,10 +143,6 @@ func TestCandidateLeavesWorktreesOut(t *testing.T) {
 	}
 	if files := r.Git("ls-tree", "-r", "--name-only", cand); strings.Contains(files, "worktrees") || !strings.Contains(files, "new.txt") {
 		t.Fatalf("the candidate holds: %s", files)
-	}
-	got, err := host.WorktreeOf(context.Background(), "worktree-r1")
-	if err != nil || !strings.EqualFold(filepath.Base(got), "r1") {
-		t.Fatalf("%q %v", got, err)
 	}
 }
 
@@ -195,6 +185,47 @@ func TestAdvance(t *testing.T) {
 	}
 }
 
+// Work already in the folder stays, the files it lacks arrive, and an edit of the
+// owner's own to a file the move changes stops it before anything moves.
+func TestAdvanceOverWorkInTheFolder(t *testing.T) {
+	host, r := open(t)
+	ctx := context.Background()
+	head := r.Git("rev-parse", "HEAD")
+	r.Write("work.go", "package work\n")
+	cand, err := host.Candidate(ctx, r.Dir, "the work\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	next, err := host.Write(ctx, cand, map[string][]byte{"result.md": []byte("landed\n")}, "result\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := host.Advance(ctx, "main", next, head); err != nil {
+		t.Fatal(err)
+	}
+	if got := r.Git("rev-parse", "HEAD"); got != next {
+		t.Fatalf("at %s", got)
+	}
+	if status := r.Git("status", "--porcelain"); status != "" {
+		t.Fatalf("not clean: %s", status)
+	}
+	if data, err := os.ReadFile(filepath.Join(r.Dir, "result.md")); err != nil || string(data) != "landed\n" {
+		t.Fatalf("%q %v", data, err)
+	}
+
+	again, err := host.Write(ctx, next, map[string][]byte{"result.md": []byte("again\n")}, "again\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	r.Write("result.md", "my own edit\n")
+	if err := host.Advance(ctx, "main", again, next); err == nil || !strings.Contains(err.Error(), "result.md") {
+		t.Fatalf("moved over an edit: %v", err)
+	}
+	if got := r.Git("rev-parse", "HEAD"); got != next {
+		t.Fatalf("moved anyway, to %s", got)
+	}
+}
+
 // Tip names one branch, also when others share its folder, and nothing for one that
 // does not exist.
 func TestTip(t *testing.T) {
@@ -214,29 +245,18 @@ func TestTip(t *testing.T) {
 	}
 }
 
-// RemoveWorktree removes a worktree the provider left locked.
-func TestRemoveWorktree(t *testing.T) {
+// DeleteBranch removes a branch, and a second call finds nothing to do.
+func TestDeleteBranch(t *testing.T) {
 	host, r := open(t)
 	ctx := context.Background()
-	wt := filepath.Join(r.Dir, ".claude", "worktrees", "r1")
-	r.Git("worktree", "add", "-q", "-b", "worktree-r1", wt, "HEAD")
-	r.Git("worktree", "lock", wt)
-	if err := os.WriteFile(filepath.Join(wt, "left.txt"), []byte("x"), 0o644); err != nil {
+	r.Git("branch", "markitect/runs/r1")
+	if err := host.DeleteBranch(ctx, "markitect/runs/r1"); err != nil {
 		t.Fatal(err)
 	}
-	if err := host.RemoveWorktree(ctx, "worktree-r1"); err != nil {
-		t.Fatal(err)
+	if got, err := host.Tip(ctx, "markitect/runs/r1"); err != nil || got != "" {
+		t.Fatalf("it remains: %q %v", got, err)
 	}
-	if _, err := os.Stat(wt); !os.IsNotExist(err) {
-		t.Fatalf("it remains: %v", err)
-	}
-	if err := host.RemoveWorktree(ctx, "worktree-r1"); err != nil {
-		t.Fatalf("a second call: %v", err)
-	}
-	if err := host.DeleteBranch(ctx, "worktree-r1"); err != nil {
-		t.Fatal(err)
-	}
-	if err := host.DeleteBranch(ctx, "worktree-r1"); err != nil {
+	if err := host.DeleteBranch(ctx, "markitect/runs/r1"); err != nil {
 		t.Fatalf("a second delete: %v", err)
 	}
 }

@@ -204,7 +204,7 @@ func (e *Engine) retryLandings(ctx context.Context, runs []*RunState, branch, st
 func (e *Engine) result(ctx context.Context, st *RunState, state, why string, decisions []OwnerDecision) *Result {
 	r := &Result{Format: ResultFormat, Run: st.Run, Command: st.Command, Outcome: NotLanded, State: state, Why: why, Base: st.Base, Start: st.Start, Work: st.Reviewed,
 		Target: st.Branch, Full: st.Full, OwnerDecisions: decisions, Repairs: st.Repairs, SentBack: st.SentBack, MissingLinks: st.MissingFor, ImpactNotes: st.Notes,
-		Began: st.Began, Ended: e.now(), impact: st.Impact, Failure: st.Failure}
+		Began: st.Began, Ended: e.now(), impact: st.Impact}
 	if state != StateLanded {
 		r.Branch = RunBranchPrefix + st.Run
 	}

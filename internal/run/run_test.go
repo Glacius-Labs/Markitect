@@ -42,6 +42,7 @@ func library() map[string]string {
 		project.ManifestFile:                      "libraries:\n  std: 1.0.0\n",
 		project.LockFile:                          string(model.RenderLock([]model.LibrarySource{std})),
 		".claude/agents/markitect-reviewer.md":    "---\nname: markitect-reviewer\n---\nReview.\n",
+		".claude/agents/markitect-builder.md":     "---\nname: markitect-builder\n---\nBuild.\n",
 		m + "project.md":                          def("std/Project", "Library", "Parts: [[members]], [[catalog]]."),
 		m + "loan-limit.md":                       def("std/Rule", "Loan limit", "At most `5` open loans."),
 		m + "members/member.md":                   def("std/Concept", "Member", "A person."),
@@ -59,46 +60,13 @@ func library() map[string]string {
 	}
 }
 
-// sessions is the provider without a model: it makes the worktree the provider
-// would make, and the test plays the agent.
-type sessions struct {
-	t         *testing.T
-	repo      *testkit.Repo
-	started   []run.SessionSpec
-	state     run.SessionState
-	stopped   []string
-	resumed   int
-	resumedIn string
-}
-
-func (s *sessions) Start(_ context.Context, spec run.SessionSpec) (string, error) {
-	s.started = append(s.started, spec)
-	s.repo.Git("worktree", "add", "-q", "-b", "worktree-"+spec.Run, filepath.Join(s.repo.Dir, ".claude", "worktrees", spec.Run), "HEAD")
-	return fmt.Sprintf("s%d", len(s.started)), nil
-}
-
-func (s *sessions) Resume(_ context.Context, id string, spec run.SessionSpec) (string, error) {
-	s.resumed++
-	s.resumedIn = spec.Dir
-	return id + "r", nil
-}
-
-func (s *sessions) State(context.Context, string) (run.SessionState, error) { return s.state, nil }
-
-func (s *sessions) Stop(_ context.Context, id string) error {
-	s.stopped = append(s.stopped, id)
-	return nil
-}
-
-func (s *sessions) Remove(context.Context, string) error { return nil }
-
+// fixture is a repository and its engine; the test plays the agents.
 type fixture struct {
-	t        *testing.T
-	repo     *testkit.Repo
-	first    string
-	engine   *run.Engine
-	sessions *sessions
-	now      time.Time
+	t      *testing.T
+	repo   *testkit.Repo
+	first  string
+	engine *run.Engine
+	now    time.Time
 }
 
 func newFixture(t *testing.T) *fixture {
@@ -120,9 +88,9 @@ func newFixtureOf(t *testing.T, files map[string]string) *fixture {
 	if err != nil {
 		t.Fatal(err)
 	}
-	f := &fixture{t: t, repo: repo, first: first, sessions: &sessions{t: t, repo: repo, state: run.SessionWorking}}
+	f := &fixture{t: t, repo: repo, first: first}
 	f.now = time.Date(2026, 11, 4, 12, 0, 0, 0, time.UTC)
-	f.engine = &run.Engine{Git: host, Sessions: f.sessions, Store: run.Store{Dir: filepath.Join(host.Dir, "markitect")}, Now: func() time.Time { return f.now }}
+	f.engine = &run.Engine{Git: host, Store: run.Store{Dir: filepath.Join(host.Dir, "markitect")}, Now: func() time.Time { return f.now }}
 	return f
 }
 
@@ -137,7 +105,7 @@ func (f *fixture) apply() (run.Started, string) {
 	if s.Run == "" {
 		f.t.Fatalf("no run started: %+v", s)
 	}
-	return s, filepath.Join(f.repo.Dir, ".claude", "worktrees", s.Run)
+	return s, f.repo.Dir
 }
 
 // applyFull is the same with nothing landed yet, so that every Definition is on
@@ -152,7 +120,7 @@ func (f *fixture) applyFull() (run.Started, string) {
 	if s.Run == "" {
 		f.t.Fatalf("no run started: %+v", s)
 	}
-	return s, filepath.Join(f.repo.Dir, ".claude", "worktrees", s.Run)
+	return s, f.repo.Dir
 }
 
 func (f *fixture) state(name string) *run.RunState {
@@ -232,10 +200,7 @@ func TestFromALinkedWorktree(t *testing.T) {
 		if st.Branch != "owner-branch" {
 			t.Fatalf("branch %q", st.Branch)
 		}
-		wt := filepath.Join(f.repo.Dir, ".claude", "worktrees", s.Run)
-		// The fixture's provider branches from the main checkout; the real one from
-		// the owner's HEAD.
-		testkit.Git(t, wt, "reset", "-q", "--hard", st.Start)
+		wt := owner
 		f.submit(wt)
 		f.answer(wt, s.Run, nil)
 		if v := f.submit(wt); !v.Done || f.state(s.Run).State != run.StateLanded {
@@ -257,7 +222,7 @@ func TestFromALinkedWorktree(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		wt := filepath.Join(f.repo.Dir, ".claude", "worktrees", s.Run)
+		wt := owner
 		write(t, wt, "src/members/loans/loan.go", "package loans\n\nconst Limit = 3\n")
 		if _, err := f.engine.Stop(context.Background(), owner, "changed my mind", false); err != nil {
 			t.Fatal(err)
@@ -266,12 +231,13 @@ func TestFromALinkedWorktree(t *testing.T) {
 	})
 }
 
-// A change lands through the door with nobody driving: the checks, the review,
-// and the owner's branch moved forward, with the Result in the landing commit.
+// A change lands through the door: the review, and the owner's branch moved
+// forward over the work already in the folder, with the Result in the landing
+// commit.
 func TestAChangeLands(t *testing.T) {
 	f := newFixture(t)
 	s, wt := f.apply()
-	has(t, s.Text, s.Run, "keep modeling")
+	has(t, s.Text, s.Run, "is open", "Build run "+s.Run)
 	if got := f.repo.Git("log", "-1", "--format=%s"); !strings.Contains(got, "as markitect apply found it") {
 		t.Fatalf("the spec was not committed: %s", got)
 	}
@@ -291,8 +257,8 @@ func TestAChangeLands(t *testing.T) {
 	if v.Done {
 		t.Fatal("submit closed the run before a review")
 	}
-	if status := testkit.Git(t, wt, "status", "--porcelain"); status != "" {
-		t.Fatalf("submit left the worktree dirty: %s", status)
+	if head := f.repo.Git("rev-parse", "HEAD"); head != f.state(s.Run).Start {
+		t.Fatalf("submit committed on the owner's branch before the review: %s", head)
 	}
 	review, err := f.engine.Checklist(context.Background(), wt, true)
 	if err != nil {
@@ -324,7 +290,7 @@ func TestAChangeLands(t *testing.T) {
 		t.Fatalf("the work is not in the owner's folder: %s %v", got, err)
 	}
 
-	// The next apply has nothing to do, and removes the worktree.
+	// The next apply has nothing to do.
 	next, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir})
 	if err != nil {
 		t.Fatal(err)
@@ -332,11 +298,8 @@ func TestAChangeLands(t *testing.T) {
 	if next.State != run.StateNothing {
 		t.Fatalf("next apply: %+v", next)
 	}
-	if _, err := os.Stat(wt); !os.IsNotExist(err) {
-		t.Fatalf("the worktree remains: %v", err)
-	}
-	if len(f.sessions.started) != 1 {
-		t.Fatalf("sessions: %+v", f.sessions.started)
+	if status := f.repo.Git("status", "--porcelain"); status != "" {
+		t.Fatalf("the folder is not clean after landing: %s", status)
 	}
 }
 
@@ -348,8 +311,8 @@ func TestApplyStopsBeforeAnyAgent(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if s.State != run.StateCheckFailed || len(f.sessions.started) != 0 {
-			t.Fatalf("%+v %+v", s, f.sessions.started)
+		if s.State != run.StateCheckFailed || s.Run != "" {
+			t.Fatalf("%+v", s)
 		}
 		has(t, s.Text, "errors", "nothing/here")
 	})
@@ -360,7 +323,7 @@ func TestApplyStopsBeforeAnyAgent(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if s.State != run.StateCheckFailed || len(f.sessions.started) != 0 {
+		if s.State != run.StateCheckFailed || s.Run != "" {
 			t.Fatalf("%+v", s)
 		}
 		has(t, s.Text, "README.md", "not committed")
@@ -371,7 +334,7 @@ func TestApplyStopsBeforeAnyAgent(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if s.State != run.StateNothing || len(f.sessions.started) != 0 {
+		if s.State != run.StateNothing || s.Run != "" {
 			t.Fatalf("%+v", s)
 		}
 	})
@@ -384,7 +347,7 @@ func TestApplyStopsBeforeAnyAgent(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if s.State != run.StateCheckFailed || len(f.sessions.started) != 0 {
+		if s.State != run.StateCheckFailed || s.Run != "" {
 			t.Fatalf("%+v", s)
 		}
 		has(t, s.Text, "markitect init")
@@ -431,6 +394,7 @@ func TestSubmitRefusesAnUnrealizedDefinitionOnANewProject(t *testing.T) {
 		m + "project.md":                       def("std/Project", "New", "A new project."),
 		project.RootPage:                       "| File | Realizes | Why |\n|---|---|---|\n",
 		".claude/agents/markitect-reviewer.md": all[".claude/agents/markitect-reviewer.md"],
+		".claude/agents/markitect-builder.md":  all[".claude/agents/markitect-builder.md"],
 	})
 	s, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir})
 	if err != nil {
@@ -439,7 +403,7 @@ func TestSubmitRefusesAnUnrealizedDefinitionOnANewProject(t *testing.T) {
 	if s.Run == "" {
 		t.Fatalf("no run started: %+v", s)
 	}
-	wt := filepath.Join(f.repo.Dir, ".claude", "worktrees", s.Run)
+	wt := f.repo.Dir
 	has(t, f.submit(wt).Text, "markitect check fails", "definition.unused")
 }
 
@@ -628,129 +592,22 @@ func TestASpecProblemEndsTheRun(t *testing.T) {
 	has(t, page, "Decisions for the owner", "contradicts")
 }
 
-func TestOwnerBranchMoved(t *testing.T) {
-	ready := func(f *fixture) (string, string) {
-		s, wt := f.apply()
-		write(t, wt, "src/members/loans/loan.go", "package loans\n\nconst Limit = 3\n")
-		f.submit(wt)
-		f.answer(wt, s.Run, nil)
-		return s.Run, wt
-	}
-	t.Run("a clean merge lands", func(t *testing.T) {
-		f := newFixture(t)
-		name, wt := ready(f)
-		f.repo.Write("README.md", "# Library, by hand\n")
-		f.repo.Commit("a hand change beside the run")
-		v := f.submit(wt)
-		if !v.Done {
-			t.Fatalf("%s", v.Text)
-		}
-		st := f.state(name)
-		if st.State != run.StateLanded {
-			t.Fatalf("%+v", st)
-		}
-		if parents := strings.Fields(f.repo.Git("log", "-1", "--format=%P", "HEAD~1")); len(parents) != 2 {
-			t.Fatalf("no merge below the Result: %v", parents)
-		}
-		// The hand change stays unrealized for the next impact.
-		base, ok, err := f.engine.LastBase(context.Background(), f.repo.Dir)
-		if err != nil || !ok {
-			t.Fatal(err, ok)
-		}
-		changed := f.repo.Git("diff", "--name-only", base, "HEAD")
-		has(t, changed, "README.md")
-	})
-	t.Run("a conflict keeps the work, and the next apply tries once more", func(t *testing.T) {
-		f := newFixture(t)
-		name, wt := ready(f)
-		f.repo.Write("src/members/loans/loan.go", "package loans\n\nconst Limit = 9\n")
-		f.repo.Commit("a hand change that conflicts")
-		v := f.submit(wt)
-		if !v.Done {
-			t.Fatalf("%s", v.Text)
-		}
-		has(t, v.Text, "conflicts", "next apply")
-		st := f.state(name)
-		if st.State != run.StateKept || !st.RetryLanding {
-			t.Fatalf("%+v", st)
-		}
-		// The conflict is still there, so a fresh run starts and the flag is spent.
-		f.repo.Write(m+"loan-limit.md", def("std/Rule", "Loan limit", "At most `2` open loans."))
-		s2, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir, Base: f.first})
-		if err != nil {
-			t.Fatal(err)
-		}
-		if s2.Run == "" || f.state(name).RetryLanding {
-			t.Fatalf("%+v %+v", s2, f.state(name))
-		}
-		if f.repo.Git("rev-parse", st.Kept) == "" {
-			t.Fatal("the kept work is gone")
-		}
-	})
-	t.Run("uncommitted edits that overlap keep the work", func(t *testing.T) {
-		f := newFixture(t)
-		name, wt := ready(f)
-		f.repo.Write("src/members/loans/loan.go", "package loans\n\n// being edited\n")
-		v := f.submit(wt)
-		if !v.Done {
-			t.Fatalf("%s", v.Text)
-		}
-		has(t, v.Text, "uncommitted edits")
-		if st := f.state(name); st.State != run.StateKept {
-			t.Fatalf("%+v", st)
-		}
-		got, err := os.ReadFile(filepath.Join(f.repo.Dir, "src", "members", "loans", "loan.go"))
-		if err != nil || !strings.Contains(string(got), "being edited") {
-			t.Fatalf("the owner's edit is gone: %s %v", got, err)
-		}
-	})
-	t.Run("uncommitted edits elsewhere stay and the work lands", func(t *testing.T) {
-		f := newFixture(t)
-		name, wt := ready(f)
-		f.repo.Write(m+"members/member.md", def("std/Concept", "Member", "A person, being modeled."))
-		v := f.submit(wt)
-		if !v.Done {
-			t.Fatalf("%s", v.Text)
-		}
-		if st := f.state(name); st.State != run.StateLanded {
-			t.Fatalf("%+v", st)
-		}
-		got, err := os.ReadFile(filepath.Join(f.repo.Dir, ".markitect", "model", "members", "member.md"))
-		if err != nil || !strings.Contains(string(got), "being modeled") {
-			t.Fatalf("the owner's edit is gone: %s %v", got, err)
-		}
-	})
-}
-
-func TestOneRunPerBranch(t *testing.T) {
+// One Run at a time per folder, since its agents work there.
+func TestOneRunPerFolder(t *testing.T) {
 	f := newFixture(t)
 	s, _ := f.apply()
 	again, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if again.State != "open" || again.Run != s.Run || len(f.sessions.started) != 1 {
+	if again.State != "open" || again.Run != s.Run {
 		t.Fatalf("%+v", again)
 	}
-	has(t, again.Text, "still working")
-}
-
-func TestApplyResumesADeadRun(t *testing.T) {
-	f := newFixture(t)
-	s, _ := f.apply()
-	f.sessions.state = run.SessionEnded
-	again, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if again.Run != s.Run || f.sessions.resumed != 1 || f.state(s.Run).Session != "s1r" {
-		t.Fatalf("%+v %d %s", again, f.sessions.resumed, f.state(s.Run).Session)
-	}
-	has(t, again.Text, "resumed")
+	has(t, again.Text, "still open", "Build run "+s.Run)
 }
 
 func TestStop(t *testing.T) {
-	t.Run("by the owner ends the session first and keeps the work", func(t *testing.T) {
+	t.Run("keeps the work, on its branch and in the folder", func(t *testing.T) {
 		f := newFixture(t)
 		s, wt := f.apply()
 		write(t, wt, "src/members/loans/loan.go", "package loans\n\nconst Limit = 3\n")
@@ -758,25 +615,23 @@ func TestStop(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		has(t, text, "without landing")
-		if len(f.sessions.stopped) != 1 {
-			t.Fatalf("session not stopped: %v", f.sessions.stopped)
-		}
+		has(t, text, "without landing", "still in your folder")
+		has(t, f.repo.Git("status", "--porcelain"), "loan.go")
 		st := f.state(s.Run)
 		if st.Open || st.State != run.StateStopped {
 			t.Fatalf("%+v", st)
 		}
 		has(t, f.repo.Git("show", st.Kept+":src/members/loans/loan.go"), "Limit = 3")
 	})
-	t.Run("by the session is a question for the owner", func(t *testing.T) {
+	t.Run("the reason is a question for the owner", func(t *testing.T) {
 		f := newFixture(t)
 		s, wt := f.apply()
 		if _, err := f.engine.Stop(context.Background(), wt, "the limit contradicts the loan page", false); err != nil {
 			t.Fatal(err)
 		}
 		st := f.state(s.Run)
-		if st.State != run.StateSpecProblem || len(f.sessions.stopped) != 0 {
-			t.Fatalf("%+v %v", st, f.sessions.stopped)
+		if st.State != run.StateStopped {
+			t.Fatalf("%+v", st)
 		}
 		has(t, f.repo.Git("show", st.Kept+":.markitect/results/"+s.Run+".md"), "Decisions for the owner", "contradicts the loan page")
 		has(t, f.submit(wt).Text, "closed")
@@ -792,92 +647,48 @@ func hookInput(t *testing.T, v map[string]any) []byte {
 	return data
 }
 
-func TestStopHook(t *testing.T) {
-	f := newFixture(t)
-	s, _ := f.apply()
-	ctx := context.Background()
-	out := f.engine.Hook(ctx, run.HookStop, s.Run, hookInput(t, map[string]any{}))
-	has(t, string(out), `"decision":"block"`, "markitect submit")
-	// Waiting for a reviewer is no reason to send it back.
-	if out := f.engine.Hook(ctx, run.HookStop, s.Run, hookInput(t, map[string]any{"background_tasks": []map[string]any{{"id": "a"}}})); len(out) != 0 {
-		t.Fatalf("blocked a wait: %s", out)
-	}
-	for i := 0; i < 4; i++ {
-		if out := f.engine.Hook(ctx, run.HookStop, s.Run, hookInput(t, map[string]any{})); len(out) == 0 {
-			t.Fatalf("block %d let it end", i)
-		}
-	}
-	// The sixth closes the run, and lets the session end.
-	if out := f.engine.Hook(ctx, run.HookStop, s.Run, hookInput(t, map[string]any{})); len(out) != 0 {
-		t.Fatalf("not let go: %s", out)
-	}
-	st := f.state(s.Run)
-	if st.Open || st.State != run.StateIncomplete {
-		t.Fatalf("%+v", st)
-	}
-	// A closed run lets everything through.
-	if out := f.engine.Hook(ctx, run.HookStop, s.Run, hookInput(t, map[string]any{})); len(out) != 0 {
-		t.Fatalf("%s", out)
-	}
-}
-
-func TestStopHookCountStartsAgainAtSubmit(t *testing.T) {
-	f := newFixture(t)
-	s, wt := f.apply()
-	ctx := context.Background()
-	for round := 0; round < 3; round++ {
-		for i := 0; i < 5; i++ {
-			if out := f.engine.Hook(ctx, run.HookStop, s.Run, hookInput(t, map[string]any{})); len(out) == 0 {
-				t.Fatalf("round %d block %d let it end", round, i)
-			}
-		}
-		f.submit(wt)
-	}
-	if !f.state(s.Run).Open {
-		t.Fatal("closed")
-	}
-}
-
-func TestPreToolHook(t *testing.T) {
-	f := newFixture(t)
-	s, _ := f.apply()
-	ctx := context.Background()
+// Only the reviewer answers: an agent cannot mark its own work as done.
+func TestAnswerGuard(t *testing.T) {
 	call := func(agent, command string) string {
-		return string(f.engine.Hook(ctx, run.HookPreTool, s.Run, hookInput(t, map[string]any{
+		return string(run.AnswerGuard(hookInput(t, map[string]any{
 			"agent_type": agent, "tool_name": "Bash", "tool_input": map[string]any{"command": command},
 		})))
 	}
 	has(t, call("", "markitect answer <<'EOF'\nx\nEOF"), `"permissionDecision":"deny"`, run.ReviewerAgent)
-	has(t, call("general-purpose", "cd . && markitect answer f.txt"), `"permissionDecision":"deny"`)
+	has(t, call(run.BuilderAgent, "cd . && markitect answer f.txt"), `"permissionDecision":"deny"`)
 	if out := call(run.ReviewerAgent, "markitect answer f.txt"); out != "" {
 		t.Fatalf("refused the reviewer: %s", out)
 	}
-	if out := call("", "go test ./..."); out != "" {
+	if out := call(run.BuilderAgent, "go test ./..."); out != "" {
 		t.Fatalf("%s", out)
 	}
-	// Past the deadline the session is stopped and the run closes.
-	f.now = f.now.Add(7 * time.Hour)
-	has(t, call("", "go test ./..."), `"continue":false`)
-	if st := f.state(s.Run); st.Open || st.State != run.StateIncomplete {
-		t.Fatalf("%+v", st)
+	if out := string(run.AnswerGuard([]byte("not json"))); out != "" {
+		t.Fatalf("%s", out)
 	}
 }
 
-func TestStopFailureHookIsRecorded(t *testing.T) {
+func TestVerifyNeedsACleanFolder(t *testing.T) {
 	f := newFixture(t)
-	s, _ := f.apply()
-	f.engine.Hook(context.Background(), run.HookStopFailure, s.Run, hookInput(t, map[string]any{"error": "rate_limit"}))
-	st := f.state(s.Run)
-	if st.Failure != "rate_limit" || !st.Open {
-		t.Fatalf("%+v", st)
-	}
-	f.sessions.state = run.SessionEnded
-	has(t, f.engine.Notice(context.Background(), f.repo.Dir), "stopped working", "rate_limit")
-	status, err := f.engine.Status(context.Background(), f.repo.Dir)
+	write(t, f.repo.Dir, "src/members/loans/loan.go", "package loans\n\nconst Limit = 9\n")
+	s, err := f.engine.Verify(context.Background(), run.Request{Dir: f.repo.Dir})
 	if err != nil {
 		t.Fatal(err)
 	}
-	has(t, status, "rate_limit", "resumes it")
+	if s.State != run.StateCheckFailed || s.Run != "" {
+		t.Fatalf("%+v", s)
+	}
+	has(t, s.Text, "not committed", "loan.go")
+}
+
+func TestApplySaysWhichAgentToStart(t *testing.T) {
+	f := newFixture(t)
+	s, _ := f.apply()
+	has(t, s.Text, "is open", run.BuilderAgent, "Build run "+s.Run, "markitect status")
+	f2 := newFixture(t)
+	f2.repo.Write(".markitect/manifest.yaml", "libraries:\n  std: 1.0.0\nmodel: haiku\n")
+	f2.repo.Commit("on haiku")
+	s2, _ := f2.apply()
+	has(t, s2.Text, "on model haiku")
 }
 
 func TestSubmitCeiling(t *testing.T) {
@@ -934,10 +745,8 @@ func TestVerify(t *testing.T) {
 		if s.Run == "" {
 			t.Fatalf("%+v", s)
 		}
-		if got := f.sessions.started[0].Agent; got != run.ReviewerAgent {
-			t.Fatalf("agent %q", got)
-		}
-		return f, s.Run, filepath.Join(f.repo.Dir, ".claude", "worktrees", s.Run)
+		has(t, s.Text, run.ReviewerAgent, "Review run "+s.Run)
+		return f, s.Run, f.repo.Dir
 	}
 	t.Run("clean", func(t *testing.T) {
 		f, name, wt := start(t)
@@ -971,15 +780,22 @@ func TestVerify(t *testing.T) {
 		page := f.repo.Git("show", st.Kept+":.markitect/results/"+name+".md")
 		has(t, page, "Findings", "[[loan-limit]]", "says 5")
 	})
-	t.Run("does not hold the branch", func(t *testing.T) {
-		f, _, _ := start(t)
+	t.Run("holds the folder until it ends", func(t *testing.T) {
+		f, name, _ := start(t)
 		f.repo.Write(m+"loan-limit.md", def("std/Rule", "Loan limit", "At most `3` open loans."))
 		s, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir, Base: f.first})
 		if err != nil {
 			t.Fatal(err)
 		}
-		if s.State != "" || s.Run == "" {
+		if s.State != "open" || s.Run != name {
 			t.Fatalf("%+v", s)
+		}
+		has(t, s.Text, "Review run "+name)
+		if _, err := f.engine.Stop(context.Background(), f.repo.Dir, "enough", false); err != nil {
+			t.Fatal(err)
+		}
+		if s, err = f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir, Base: f.first}); err != nil || s.State != "" || s.Run == "" {
+			t.Fatalf("%+v %v", s, err)
 		}
 	})
 }
@@ -1040,7 +856,7 @@ func TestStopWaitsForASubmit(t *testing.T) {
 		t.Fatal(err)
 	}
 	has(t, text, "is running", "not stopped")
-	if !f.state(s.Run).Open || len(f.sessions.stopped) != 0 {
+	if !f.state(s.Run).Open {
 		t.Fatalf("stopped anyway: %+v", f.state(s.Run))
 	}
 	release()
@@ -1075,27 +891,11 @@ func TestAKeptRunMergedByHandStaysToBeReviewed(t *testing.T) {
 	if _, err := f.engine.Stop(context.Background(), f.repo.Dir, "changed my mind", false); err != nil {
 		t.Fatal(err)
 	}
+	// The work is also in the folder, uncommitted; the owner drops it there first.
+	f.repo.Git("checkout", "-q", "--", ".")
 	f.repo.Git("merge", "-q", "--ff-only", f.state(s.Run).Kept)
 	if _, ok, err := f.engine.LastBase(context.Background(), f.repo.Dir); err != nil || ok {
 		t.Fatalf("the merge counts as a landing: %v %v", ok, err)
-	}
-}
-
-// A branch the owner moved back does not get what they dropped back by landing.
-func TestABranchMovedBackIsNotBroughtForward(t *testing.T) {
-	f := newFixture(t)
-	s, wt := f.apply()
-	f.submit(wt)
-	f.answer(wt, s.Run, nil)
-	dropped := f.repo.Git("rev-parse", "HEAD")
-	f.repo.Git("reset", "-q", "--hard", "HEAD~1")
-	v := f.submit(wt)
-	has(t, v.Text, "rewritten")
-	if st := f.state(s.Run); st.State != run.StateKept {
-		t.Fatalf("%+v", st)
-	}
-	if f.repo.Git("rev-parse", "HEAD") == dropped {
-		t.Fatal("the dropped commit came back")
 	}
 }
 
@@ -1107,7 +907,8 @@ func TestALandingThatWasKilledFinishes(t *testing.T) {
 	f.submit(wt)
 	f.answer(wt, s.Run, nil)
 	st := f.state(s.Run)
-	f.repo.Git("merge", "-q", "--ff-only", st.Review.Commit)
+	// Killed after it moved the branch, before the Result: the folder holds the work.
+	f.repo.Git("reset", "-q", "--mixed", st.Review.Commit)
 	before := f.repo.Git("rev-parse", "HEAD")
 	if v := f.submit(wt); !v.Done {
 		t.Fatalf("%s", v.Text)
@@ -1124,7 +925,7 @@ func TestALandingKeepsAVerifysFindings(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	wt := filepath.Join(f.repo.Dir, ".claude", "worktrees", v.Run)
+	wt := f.repo.Dir
 	f.answer(wt, v.Run, map[string]string{"loan-limit": "wrong src/members/loans/loan.go:3 -- says 5"})
 	f.submit(wt)
 	kept := f.state(v.Run).Kept
@@ -1139,47 +940,6 @@ func TestALandingKeepsAVerifysFindings(t *testing.T) {
 	if f.repo.Git("rev-parse", kept) == "" {
 		t.Fatal("the Findings are gone")
 	}
-}
-
-// A session is resumed in its own worktree, with a new deadline, and what a session
-// calls works only there.
-func TestResume(t *testing.T) {
-	f := newFixture(t)
-	s, wt := f.apply()
-	if _, err := f.engine.Checklist(context.Background(), f.repo.Dir, false); err == nil {
-		t.Fatal("the owner's folder was told to work")
-	}
-	if _, err := f.engine.Submit(context.Background(), f.repo.Dir); err == nil {
-		t.Fatal("submit ran in the owner's folder")
-	}
-	f.sessions.state = run.SessionEnded
-	f.now = f.now.Add(7 * time.Hour)
-	if _, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir}); err != nil {
-		t.Fatal(err)
-	}
-	if !strings.EqualFold(filepath.Base(f.sessions.resumedIn), s.Run) {
-		t.Fatalf("resumed in %s", f.sessions.resumedIn)
-	}
-	if st := f.state(s.Run); !st.Deadline.After(f.now) {
-		t.Fatalf("the deadline stayed behind: %v", st.Deadline)
-	}
-	if out := f.engine.Hook(context.Background(), run.HookPreTool, s.Run, hookInput(t, map[string]any{"tool_name": "Bash"})); len(out) != 0 {
-		t.Fatalf("stopped at its first tool call: %s", out)
-	}
-	_ = wt
-}
-
-// A run whose worktree is gone is not resumed in the owner's folder.
-func TestResumeWithoutAWorktree(t *testing.T) {
-	f := newFixture(t)
-	s, wt := f.apply()
-	f.repo.Git("worktree", "remove", "--force", wt)
-	f.sessions.state = run.SessionEnded
-	_, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir})
-	if err == nil || !strings.Contains(err.Error(), "worktree is gone") || f.sessions.resumed != 0 {
-		t.Fatalf("%v %d", err, f.sessions.resumed)
-	}
-	_ = s
 }
 
 func TestStaleLocksAndStrayFiles(t *testing.T) {
@@ -1233,28 +993,6 @@ func TestStaleLocksAndStrayFiles(t *testing.T) {
 }
 
 // A stalled verify can be resumed and stopped from the owner's folder.
-func TestAStalledVerify(t *testing.T) {
-	f := newFixture(t)
-	v, err := f.engine.Verify(context.Background(), run.Request{Dir: f.repo.Dir})
-	if err != nil {
-		t.Fatal(err)
-	}
-	f.sessions.state = run.SessionEnded
-	again, err := f.engine.Verify(context.Background(), run.Request{Dir: f.repo.Dir})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if again.Run != v.Run || f.sessions.resumed != 1 || len(f.sessions.started) != 1 {
-		t.Fatalf("%+v resumed %d started %d", again, f.sessions.resumed, len(f.sessions.started))
-	}
-	if _, err := f.engine.Stop(context.Background(), f.repo.Dir, "enough", false); err != nil {
-		t.Fatal(err)
-	}
-	if st := f.state(v.Run); st.Open || st.State != run.StateStopped {
-		t.Fatalf("%+v", st)
-	}
-}
-
 // A session that says the machine lacks something asks the owner nothing about
 // the spec.
 func TestStopForTheEnvironment(t *testing.T) {

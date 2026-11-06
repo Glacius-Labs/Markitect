@@ -10,8 +10,11 @@ import (
 // in the tool, which tells the agent its next step each time it is called.
 
 // ReviewerAgent is the agent type of the reviewer, which the hook on answer
-// recognizes and the harness defines.
-const ReviewerAgent = "markitect-reviewer"
+// recognizes and the harness defines; BuilderAgent the builder's.
+const (
+	ReviewerAgent = "markitect-reviewer"
+	BuilderAgent  = "markitect-builder"
+)
 
 // fixedPart is what every session is told about Markitect.
 const fixedPart = `This project is described by a spec in .markitect/model: Markdown files,
@@ -24,11 +27,11 @@ markitect impact --base X  what a change reaches
 markitect refs ID          who links to a Definition
 `
 
-// implementerTask is the first prompt of an implementer's session, and what
-// checklist prints again, so that compaction cannot lose it.
+// implementerTask is the builder's task, which checklist prints each time, so
+// that compaction cannot lose it.
 func implementerTask(run string) string {
 	return fixedPart + fmt.Sprintf(`
-You work on Markitect run %s, in a worktree of your own, and nobody is watching.
+You build Markitect run %s, in this folder, and nobody can answer you.
 
 Make this project match the spec. Start with: markitect checklist
 
@@ -44,9 +47,34 @@ If the spec contradicts itself or leaves open something that changes behaviour a
 `, run)
 }
 
-// verifyTask is the first prompt of a verify's session.
-func verifyTask(run string) string {
-	return fmt.Sprintf(`You check Markitect run %s. Change nothing. Follow your instructions: start with markitect checklist --review.`, run)
+// builderStep tells the owner's session how to build an open Run. The rest of the
+// process stays in the tool: the builder takes its task from checklist, and
+// submit tells it each next step, starting the reviewer among them.
+func builderStep(st *RunState) string {
+	return fmt.Sprintf(`Start the %s agent%s with exactly this message:
+
+    Build run %s.
+
+It works in this folder and starts the reviewer itself. When it has ended, run markitect status: while the run is still open, start the builder again with the same message. Do not write the code or answer the checklist yourself.
+`, BuilderAgent, onModel(st.Model), st.Run)
+}
+
+// verifyStep tells the owner's session how to review an open verify.
+func verifyStep(st *RunState) string {
+	return fmt.Sprintf(`Start the %s agent%s with exactly this message:
+
+    Review run %s.
+
+It answers the checklist and closes the run. When it has ended, run markitect status: while the run is still open, start the reviewer again with the same message.
+`, ReviewerAgent, onModel(st.Model), st.Run)
+}
+
+// onModel names the model the manifest asks for, if any.
+func onModel(model string) string {
+	if model == "" {
+		return ""
+	}
+	return ", on model " + model + ","
 }
 
 // reviewPrompt is what checklist --review prints for a review.

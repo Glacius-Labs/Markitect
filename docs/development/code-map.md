@@ -22,7 +22,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `run` | The process of a Run in the tool: apply and verify, the checklist, the answers, submit, the hooks, the Result and landing. | `model`, `assets`, `domain`, `project`, `service` | 1 |
 | `guardedwrite` | Guarded working-tree writes for bundle installation, with the Git and path helpers they share with source snapshots. | nothing | 1 |
 | `build` | Version identity and embedded license notices. | nothing | 1 |
-| `adapter` | Concrete Git, command-line, required-check and provider-session adapters; no adapter imports another. | `model`, `assets`, `domain`, `project`, `service`, `run`, `build` | 4 |
+| `adapter` | Concrete Git, command-line, required-check and provider-session adapters; no adapter imports another. | `model`, `assets`, `domain`, `project`, `service`, `run`, `build` | 3 |
 | `composition` | Constructs the command line with its adapters. | `model`, `project`, `service`, `run`, `adapter` | 1 |
 | `command` | Thin entrypoints to product composition. | `composition` | 1 |
 | `maintenance` | The import gate and release packaging, separate from product execution. | `guardedwrite` | 2 |
@@ -73,7 +73,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/run` | Package run is the process of a Run, in the tool (draft concept 4.0): apply and verify start a background session and end; the session calls the tool, and submit is the one door: it says what is next each time and decides whether the work counts. | [internal/run/README.md](../../internal/run/README.md) |
+| `internal/run` | Package run is the process of a Run, in the tool (draft concept 4.0): apply and verify open a Run and say which agent to start; the owner's own session starts it, and the agents work in the owner's folder and call the tool. | [internal/run/README.md](../../internal/run/README.md) |
 
 ## Guarded write
 
@@ -91,8 +91,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/adapters/claude` | Package claude starts a Run's background sessions with the unmodified Claude Code command line, on the user's own stored login (draft concept 4.0). | [internal/run/README.md#the-session](../../internal/run/README.md#the-session) |
-| `internal/adapters/cli` | Package cli is the markitect command line: install, init, check, lock, refs, graph, impact and lint, which start no agent; apply and verify, which start a Run in a background session; the commands of a Run; version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
+| `internal/adapters/cli` | Package cli is the markitect command line: install, init, check, lock, refs, graph, impact and lint; apply and verify, which open a Run and say which agent the owner's session starts; the commands of a Run; version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
 | `internal/adapters/repo` | Package repo reads a project's repository through Git: the working tree as Git sees it, a base commit, and the files changed between them. | [docs/guides/model-language.md#the-projects-markitect-folder](../guides/model-language.md#the-projects-markitect-folder) |
 | `internal/adapters/rungit` | Package rungit is a Run's Git work in the user's own repository (draft concept 4.0): it reads commits from anywhere in the repository, makes commits of a worktree's files without running the project's hooks, and brings the owner's branch up. | [internal/run/README.md#git](../../internal/run/README.md#git) |
 
@@ -100,7 +99,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/bootstrap` | Package bootstrap constructs the command line with its adapters: Git for the spec's commands, and for a Run the process with the user's repository, the required checks on the user's machine and the provider's background sessions. | [docs/architecture.md#product-flow](../architecture.md#product-flow) |
+| `internal/bootstrap` | Package bootstrap constructs the command line with its adapters: Git for the spec's commands, and for a Run the process over the user's own repository. | [docs/architecture.md#product-flow](../architecture.md#product-flow) |
 
 ## Product commands
 

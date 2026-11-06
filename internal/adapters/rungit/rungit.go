@@ -231,16 +231,6 @@ func (r *Repo) tempIndex() (string, func(), error) {
 	return name, func() { os.Remove(name); os.Remove(name + ".lock") }, nil
 }
 
-// Adopt moves the worktree at dir to a commit made from its own files.
-func (r *Repo) Adopt(ctx context.Context, dir, commit string) error {
-	head, err := r.Head(ctx, dir)
-	if err != nil || head == commit {
-		return err
-	}
-	_, err = command(ctx, dir, nil, nil, "reset", "-q", "--mixed", commit)
-	return err
-}
-
 // Commit returns one commit.
 func (r *Repo) Commit(ctx context.Context, id string) (run.Commit, error) {
 	out, err := r.git(ctx, nil, nil, "log", "-1", "--format=%H%x00%P%x00%T%x00%B", id+"^{commit}", "--")
@@ -409,7 +399,10 @@ func (r *Repo) Tip(ctx context.Context, branch string) (string, error) {
 	return out, nil
 }
 
-// Advance moves a branch from old to commit, only if it is still at old.
+// Advance moves a branch from old to commit, only if it is still at old. Where it
+// is checked out, the files follow as in a fast-forward, but a file that already
+// holds commit's version, such as the work a Run built in that folder, stays as it
+// is; one that holds an edit of its own stops the move before anything changes.
 func (r *Repo) Advance(ctx context.Context, branch, commit, old string) error {
 	tree, err := r.checkedOutAt(ctx, branch)
 	if err != nil {
@@ -426,10 +419,98 @@ func (r *Repo) Advance(ctx context.Context, branch, commit, old string) error {
 	if head != old {
 		return fmt.Errorf("%s moved while landing", branch)
 	}
-	if _, err := command(ctx, tree, nil, nil, "merge", "-q", "--ff-only", commit); err != nil {
-		return fmt.Errorf("%s could not be brought up in %s, probably because of uncommitted edits there: %w", branch, tree, err)
+	out, err := r.git(ctx, nil, nil, "diff", "--name-only", "-z", "--no-renames", old, commit)
+	if err != nil {
+		return err
 	}
-	return nil
+	paths := split(out)
+	before, err := r.blobs(ctx, old)
+	if err != nil {
+		return err
+	}
+	after, err := r.blobs(ctx, commit)
+	if err != nil {
+		return err
+	}
+	now, err := workingBlobs(ctx, tree, paths)
+	if err != nil {
+		return err
+	}
+	var bring, gone []string
+	for _, p := range paths {
+		switch now[p] {
+		case after[p]:
+		case before[p]:
+			if after[p] == "" {
+				gone = append(gone, p)
+			} else {
+				bring = append(bring, p)
+			}
+		default:
+			return fmt.Errorf("%s could not be brought up in %s, because %s there holds an edit of its own", branch, tree, p)
+		}
+	}
+	if _, err := r.git(ctx, nil, nil, "update-ref", "refs/heads/"+branch, commit, old); err != nil {
+		return err
+	}
+	if len(bring) > 0 {
+		if _, err := command(ctx, tree, nil, []string{"GIT_LITERAL_PATHSPECS=1"}, append([]string{"checkout", "-q", commit, "--"}, bring...)...); err != nil {
+			return err
+		}
+	}
+	for _, p := range gone {
+		if err := os.Remove(filepath.Join(tree, filepath.FromSlash(p))); err != nil && !os.IsNotExist(err) {
+			return err
+		}
+	}
+	// The index follows the branch; the files stay as they now are.
+	_, err = command(ctx, tree, nil, nil, "reset", "-q", "--mixed")
+	return err
+}
+
+// blobs maps every file of a commit to its blob.
+func (r *Repo) blobs(ctx context.Context, commit string) (map[string]string, error) {
+	out, err := r.git(ctx, nil, nil, "ls-tree", "-r", "-z", "--full-tree", commit)
+	if err != nil {
+		return nil, err
+	}
+	m := map[string]string{}
+	for _, entry := range split(out) {
+		meta, file, ok := strings.Cut(entry, "\t")
+		if f := strings.Fields(meta); ok && len(f) == 3 {
+			m[file] = f[2]
+		}
+	}
+	return m, nil
+}
+
+// workingBlobs maps files of a working tree to the blob each would be, after the
+// repository's filters such as line endings; a missing file maps to "".
+func workingBlobs(ctx context.Context, tree string, paths []string) (map[string]string, error) {
+	m := map[string]string{}
+	var present []string
+	for _, p := range paths {
+		if info, err := os.Lstat(filepath.Join(tree, filepath.FromSlash(p))); err == nil && info.Mode().IsRegular() {
+			present = append(present, p)
+		} else if err == nil {
+			m[p] = "not a file"
+		}
+	}
+	if len(present) == 0 {
+		return m, nil
+	}
+	out, err := command(ctx, tree, strings.NewReader(strings.Join(present, "\n")+"\n"), nil, "hash-object", "--stdin-paths")
+	if err != nil {
+		return nil, err
+	}
+	ids := strings.Fields(string(out))
+	if len(ids) != len(present) {
+		return nil, fmt.Errorf("git hash-object gave %d ids for %d files", len(ids), len(present))
+	}
+	for i, p := range present {
+		m[p] = ids[i]
+	}
+	return m, nil
 }
 
 // SetBranch points a branch at a commit.
@@ -462,26 +543,6 @@ func (r *Repo) Branches(ctx context.Context, prefix string) (map[string]string, 
 		}
 	}
 	return tips, nil
-}
-
-// RemoveWorktree removes the worktree that has a branch checked out, if there is
-// one. The provider holds a lock on it while its session runs, and a session that
-// has ended leaves that lock until its next sweep.
-func (r *Repo) RemoveWorktree(ctx context.Context, branch string) error {
-	tree, err := r.checkedOutAt(ctx, branch)
-	if err != nil || tree == "" {
-		return err
-	}
-	_, _ = r.git(ctx, nil, nil, "worktree", "unlock", tree)
-	if _, err := r.git(ctx, nil, nil, "worktree", "remove", "--force", tree); err != nil {
-		return err
-	}
-	return nil
-}
-
-// WorktreeOf returns the working tree that has a branch checked out, or "".
-func (r *Repo) WorktreeOf(ctx context.Context, branch string) (string, error) {
-	return r.checkedOutAt(ctx, branch)
 }
 
 // checkedOutAt returns the working tree that has a branch checked out, or "".

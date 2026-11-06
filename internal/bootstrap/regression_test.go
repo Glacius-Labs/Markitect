@@ -12,7 +12,7 @@ import (
 func TestLockAndCheckReadTheSameLibraryFiles(t *testing.T) {
 	r := testkit.NewRepo(t)
 	mustRun(t, r.Dir, "init")
-	if err := os.WriteFile(filepath.Join(r.Dir, ".gitignore"), []byte(read(t, r.Dir, ".gitignore")+"*.swp\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(r.Dir, ".gitignore"), []byte("*.swp\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	r.Write("README.md", "# Project\n")

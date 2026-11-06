@@ -46,7 +46,6 @@ func (e *Engine) Submit(ctx context.Context, dir string) (Verdict, error) {
 		return Verdict{}, err
 	}
 	st.Submits++
-	st.Blocks = 0
 	if st.Submits > maxSubmits {
 		why := fmt.Sprintf("markitect submit was called %d times, the most a run gets", maxSubmits)
 		return e.closeVerdict(ctx, st, StateRefused, why, nil)
@@ -108,9 +107,6 @@ func (e *Engine) submitApply(ctx context.Context, st *RunState, root string) (Ve
 				st.Repairs++
 				st.SentBack = append(st.SentBack, strings.Join(wrong, "; "))
 			}
-		}
-		if err := e.Git.Adopt(ctx, root, cand); err != nil {
-			return Verdict{}, err
 		}
 		if err := e.startReview(ctx, st, cand, commit.Tree, p); err != nil {
 			return Verdict{}, err
@@ -271,12 +267,12 @@ func (e *Engine) startReview(ctx context.Context, st *RunState, cand, tree strin
 }
 
 func reviewerStep(st *RunState) string {
-	return fmt.Sprintf(`The work passes the checks and is committed. Now start the %s agent with exactly this message:
+	return fmt.Sprintf(`The work passes the checks. Now start the %s agent%s with exactly this message:
 
     Review run %s.
 
 Wait for it to finish, then call markitect submit again. It has %d items to answer.
-`, ReviewerAgent, st.Run, len(st.Review.Items))
+`, ReviewerAgent, onModel(st.Model), st.Run, len(st.Review.Items))
 }
 
 // submitVerify closes a verify: it only ever reports. Items without an answer are
@@ -394,18 +390,19 @@ func (e *Engine) closeVerdict(ctx context.Context, st *RunState, state, why stri
 	if err := e.close(ctx, st, state, why, decisions); err != nil {
 		return Verdict{}, err
 	}
-	return Verdict{Done: true, Text: fmt.Sprintf("Run %s has ended without landing: %s. %s. Its work and Result are on %s. End now.\n", st.Run, state, capitalize(why), st.Kept)}, nil
+	return Verdict{Done: true, Text: fmt.Sprintf("Run %s has ended without landing: %s. %s. Its work and Result are on %s.%s End now.\n", st.Run, state, capitalize(why), st.Kept, inFolder(st))}, nil
 }
 
-// close ends a Run without landing: what the worktree holds is committed with a
-// Result on the Run's own branch, and the Result says what is open.
+// close ends a Run without landing: what the owner's folder holds is committed with
+// a Result on the Run's own branch, and the Result says what is open. The folder
+// keeps the work too, uncommitted, for the owner to keep or drop.
 func (e *Engine) close(ctx context.Context, st *RunState, state, why string, decisions []OwnerDecision) error {
 	work := st.Start
 	if st.Reviewed != "" {
 		work = st.Reviewed
 	}
-	if root, err := e.Git.WorktreeOf(ctx, worktreeBranch(st.Run)); err == nil && root != "" {
-		if cand, err := e.Git.Candidate(ctx, root, fmt.Sprintf("Markitect run %s: the work when it ended", st.Run)); err == nil {
+	if st.Command == "apply" {
+		if cand, err := e.Git.Candidate(ctx, st.Repo, fmt.Sprintf("Markitect run %s: the work when it ended", st.Run)); err == nil {
 			work = cand
 		}
 	}
@@ -424,6 +421,14 @@ func (e *Engine) close(ctx context.Context, st *RunState, state, why string, dec
 	}
 	e.markClosed(st, state, why)
 	return e.Store.Settle(st)
+}
+
+// inFolder says where an apply's work is besides its branch, when it did not land.
+func inFolder(st *RunState) string {
+	if st.Command != "apply" {
+		return ""
+	}
+	return " Whatever the builder changed is also still in your folder, uncommitted."
 }
 
 func (e *Engine) markClosed(st *RunState, state, why string) {

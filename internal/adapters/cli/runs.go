@@ -2,7 +2,6 @@ package cli
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -15,10 +14,9 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
-// Runs opens the engine of a Run for a repository, or for a Run's store.
+// Runs opens the engine of a Run for a repository.
 type Runs interface {
 	Open(ctx context.Context, dir string) (*run.Engine, error)
-	OpenStore(store string) *run.Engine
 }
 
 func (c CLI) engine(ctx context.Context, dir string) (*run.Engine, error) {
@@ -107,7 +105,7 @@ func (c CLI) checklist(ctx context.Context, args []string) (int, error) {
 	var review bool
 	fs := flag.NewFlagSet("markitect checklist", flag.ContinueOnError)
 	fs.SetOutput(c.Stderr)
-	fs.StringVar(&o.repo, "repo", ".", "a folder inside the Run's worktree")
+	fs.StringVar(&o.repo, "repo", ".", "a folder of the project")
 	fs.BoolVar(&review, "review", false, "print what the review must answer")
 	if err := fs.Parse(args); err != nil {
 		return Misused, err
@@ -130,7 +128,7 @@ func (c CLI) answer(ctx context.Context, args []string) (int, error) {
 	var o options
 	fs := flag.NewFlagSet("markitect answer", flag.ContinueOnError)
 	fs.SetOutput(c.Stderr)
-	fs.StringVar(&o.repo, "repo", ".", "a folder inside the Run's worktree")
+	fs.StringVar(&o.repo, "repo", ".", "a folder of the project")
 	if err := fs.Parse(args); err != nil {
 		return Misused, err
 	}
@@ -168,7 +166,7 @@ func (c CLI) submit(ctx context.Context, args []string) (int, error) {
 	var o options
 	fs := flag.NewFlagSet("markitect submit", flag.ContinueOnError)
 	fs.SetOutput(c.Stderr)
-	fs.StringVar(&o.repo, "repo", ".", "a folder inside the Run's worktree")
+	fs.StringVar(&o.repo, "repo", ".", "a folder of the project")
 	if err := fs.Parse(args); err != nil {
 		return Misused, err
 	}
@@ -233,29 +231,18 @@ func (c CLI) status(ctx context.Context, args []string) (int, error) {
 	return OK, nil
 }
 
-// hook is what the provider's hooks call. It reads their input on standard input
-// and always exits 0: a problem of its own must not stop an agent.
-func (c CLI) hook(ctx context.Context, args []string) (int, error) {
-	if len(args) == 0 {
-		return Misused, errors.New("names an event")
-	}
-	event := args[0]
-	var store, runName string
-	fs := flag.NewFlagSet("markitect hook", flag.ContinueOnError)
-	fs.SetOutput(c.Stderr)
-	fs.StringVar(&store, "store", "", "the run state's folder")
-	fs.StringVar(&runName, "run", "", "the Run")
-	if err := fs.Parse(args[1:]); err != nil {
-		return Misused, err
-	}
-	if c.Runs == nil || store == "" || runName == "" {
-		return OK, nil
+// hook is what the project's hook calls before a shell command. It reads the
+// provider's input on standard input and always exits 0: a problem of its own
+// must not stop an agent.
+func (c CLI) hook(_ context.Context, args []string) (int, error) {
+	if len(args) != 1 || args[0] != "pretool" {
+		return Misused, errors.New("names its event: markitect hook pretool")
 	}
 	input, err := io.ReadAll(c.Stdin)
-	if err != nil || !json.Valid(input) {
+	if err != nil {
 		return OK, nil
 	}
-	if out := c.Runs.OpenStore(store).Hook(ctx, event, runName, input); len(out) > 0 {
+	if out := run.AnswerGuard(input); len(out) > 0 {
 		c.Stdout.Write(out)
 	}
 	return OK, nil

@@ -22,8 +22,9 @@ type LibraryRef struct {
 // Manifest is the project's .markitect/manifest.yaml.
 type Manifest struct {
 	Libraries []LibraryRef // sorted by name
-	// Model and Effort name what a Run's sessions use, empty for the tool's default.
-	Model, Effort string
+	// Model names the model a Run's agents use, empty for the one their
+	// definitions name.
+	Model string
 }
 
 // Locked is one Library entry of the lock.
@@ -54,10 +55,8 @@ func ParseManifest(file string, data []byte) (Manifest, Diagnostics) {
 		case "libraries":
 		case "model":
 			m.Model = strings.TrimSpace(node.Value)
-		case "effort":
-			m.Effort = strings.TrimSpace(node.Value)
 		default:
-			ds.Add("manifest.syntax", file, node.Line, "unknown key %q: the manifest holds only libraries, model and effort", key)
+			ds.Add("manifest.syntax", file, node.Line, "unknown key %q: the manifest holds only libraries and model", key)
 		}
 	}
 	libs := top["libraries"]

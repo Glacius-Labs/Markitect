@@ -7,8 +7,8 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
-// Git is the tool's Git work in the user's own repository. A Run works in a
-// worktree of it, so every commit is readable from anywhere in the repository.
+// Git is the tool's Git work in the user's own repository. A Run works in the
+// owner's folder, and its commits are readable from anywhere in the repository.
 type Git interface {
 	// Root is the top of the working tree that holds dir.
 	Root(ctx context.Context, dir string) (string, error)
@@ -27,8 +27,6 @@ type Git interface {
 	// dir, on top of its HEAD, without changing the worktree, its index or HEAD.
 	// With nothing changed it returns HEAD.
 	Candidate(ctx context.Context, dir, message string) (string, error)
-	// Adopt moves the worktree at dir to a commit made from its own files.
-	Adopt(ctx context.Context, dir, commit string) error
 	// Commit returns one commit.
 	Commit(ctx context.Context, id string) (Commit, error)
 	// Contains reports whether commit is tip or one of its ancestors.
@@ -46,9 +44,10 @@ type Git interface {
 	Write(ctx context.Context, parent string, files map[string][]byte, message string) (string, error)
 	// Tip reads the tip of a branch, "" when it does not exist.
 	Tip(ctx context.Context, branch string) (string, error)
-	// Advance moves a branch from old to commit, only if it is still at old: by a
-	// fast-forward in the working tree that has it checked out, so that the
-	// user's uncommitted edits stay, or by moving the ref where none does.
+	// Advance moves a branch from old to commit, only if it is still at old. Where
+	// it is checked out, the files follow as in a fast-forward, a file that already
+	// holds commit's version stays, and one with an edit of its own stops the move.
+	// Where it is not, only the ref moves.
 	Advance(ctx context.Context, branch, commit, old string) error
 	// SetBranch points a branch at a commit.
 	SetBranch(ctx context.Context, branch, commit string) error
@@ -56,11 +55,6 @@ type Git interface {
 	DeleteBranch(ctx context.Context, branch string) error
 	// Branches lists the branches under a prefix with their tips.
 	Branches(ctx context.Context, prefix string) (map[string]string, error)
-	// WorktreeOf returns the working tree that has a branch checked out, or "".
-	WorktreeOf(ctx context.Context, branch string) (string, error)
-	// RemoveWorktree removes the worktree that has a branch checked out, if there
-	// is one.
-	RemoveWorktree(ctx context.Context, branch string) error
 	// Landings returns the commits reachable from tip and not from since (with an
 	// empty since, every one) that add a Result page, newest first.
 	Landings(ctx context.Context, tip, since string) ([]string, error)
@@ -74,48 +68,4 @@ type Commit struct {
 	Parents []string
 	Tree    string
 	Message string
-}
-
-// How a provider says a session stands.
-type SessionState string
-
-const (
-	// SessionWorking is a session that is working or waiting for a person.
-	SessionWorking SessionState = "working"
-	// SessionEnded is a session that finished, failed or stopped.
-	SessionEnded SessionState = "ended"
-	// SessionUnknown is a session the provider no longer lists.
-	SessionUnknown SessionState = "unknown"
-)
-
-// SessionSpec is one session a Command starts. Everything the provider needs to
-// be told, it is told here.
-type SessionSpec struct {
-	Run string
-	// Dir is the owner's folder, where the provider makes the worktree.
-	Dir string
-	// Agent is the agent the session runs as, "" for a plain session.
-	Agent string
-	// Model and Effort are empty for the provider adapter's default.
-	Model, Effort string
-	Prompt        string
-	// Store is the folder of the run state, for the hooks.
-	Store string
-}
-
-// Sessions starts and follows the provider's background sessions. A provider
-// needs a way to start one in a worktree with settings, to resume it, hooks on
-// stopping and on tool calls, and an agent type for the reviewer.
-type Sessions interface {
-	// Start starts a background session and returns its ID.
-	Start(ctx context.Context, spec SessionSpec) (string, error)
-	// Resume continues an ended session in the background and returns the ID it
-	// now has, which may be a new one.
-	Resume(ctx context.Context, id string, spec SessionSpec) (string, error)
-	// State says how a session stands.
-	State(ctx context.Context, id string) (SessionState, error)
-	// Stop ends a session's process.
-	Stop(ctx context.Context, id string) error
-	// Remove forgets an ended session.
-	Remove(ctx context.Context, id string) error
 }

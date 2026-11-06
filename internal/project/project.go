@@ -33,8 +33,9 @@ const (
 // harnessPrefixes are what the files of the harness start with, in lower case.
 var harnessPrefixes = []string{".claude/agents/markitect-", ".claude/skills/markitect-", ".agents/skills/markitect-"}
 
-// instructionFiles are what a coding agent reads by itself when a session starts.
-var instructionFiles = []string{"AGENTS.md", "CLAUDE.md"}
+// instructionFiles are what a coding agent reads by itself when a session starts,
+// and the project's settings, which hold the hook on answer.
+var instructionFiles = []string{"AGENTS.md", "CLAUDE.md", ".claude/settings.json"}
 
 // IsHarness says whether a file steers the agents of a Run, so that a Run may not
 // change it: an agent cannot weaken its own rules in the work it submits. Without

@@ -2,16 +2,14 @@ package bootstrap
 
 import (
 	"context"
-	"os"
 	"path/filepath"
 
-	"github.com/Glacius-Labs/Markitect/internal/adapters/claude"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/rungit"
 	runengine "github.com/Glacius-Labs/Markitect/internal/run"
 )
 
-// runs builds the engine of a Run: the user's own repository and the provider's
-// background sessions.
+// runs builds the engine of a Run over the user's own repository. It starts no
+// agent: the owner's session does.
 type runs struct{}
 
 func (runs) Open(ctx context.Context, dir string) (*runengine.Engine, error) {
@@ -19,20 +17,5 @@ func (runs) Open(ctx context.Context, dir string) (*runengine.Engine, error) {
 	if err != nil {
 		return nil, err
 	}
-	return newEngine(repo, filepath.Join(repo.Dir, "markitect")), nil
-}
-
-// OpenStore builds the engine for a hook, which knows the Run's store. Its Git
-// directory is the store's parent.
-func (runs) OpenStore(store string) *runengine.Engine {
-	store = filepath.FromSlash(store)
-	return newEngine(&rungit.Repo{Dir: filepath.Dir(store)}, store)
-}
-
-func newEngine(repo *rungit.Repo, store string) *runengine.Engine {
-	exe, err := os.Executable()
-	if err != nil {
-		exe = "markitect"
-	}
-	return &runengine.Engine{Git: repo, Sessions: claude.CLI{Executable: exe}, Store: runengine.Store{Dir: store}}
+	return &runengine.Engine{Git: repo, Store: runengine.Store{Dir: filepath.Join(repo.Dir, "markitect")}}, nil
 }
