@@ -161,6 +161,30 @@ func (w WorkingTree) List(dir string) ([]string, error) {
 	return out, err
 }
 
+// CommitOwn commits the files init wrote with the user's identity, and nothing
+// else, and says whether there was anything to commit.
+func (w WorkingTree) CommitOwn(files []string, message string) (bool, error) {
+	if len(files) == 0 {
+		return false, nil
+	}
+	if _, err := git(w.Ctx, w.Dir, append([]string{"add", "-A", "--"}, files...)...); err != nil {
+		// Leave nothing half staged.
+		_, _ = git(w.Ctx, w.Dir, append([]string{"reset", "-q", "--"}, files...)...)
+		return false, err
+	}
+	out, err := git(w.Ctx, w.Dir, append([]string{"--no-optional-locks", "diff", "--cached", "--name-only", "--"}, files...)...)
+	if err != nil {
+		return false, err
+	}
+	if strings.TrimSpace(string(out)) == "" {
+		return false, nil
+	}
+	if _, err := git(w.Ctx, w.Dir, append([]string{"commit", "-q", "-m", message, "--"}, files...)...); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // Commit is one commit of a repository.
 type Commit struct {
 	Root string

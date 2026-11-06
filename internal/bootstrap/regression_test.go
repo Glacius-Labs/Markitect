@@ -12,20 +12,23 @@ import (
 func TestLockAndCheckReadTheSameLibraryFiles(t *testing.T) {
 	r := testkit.NewRepo(t)
 	mustRun(t, r.Dir, "init")
-	r.Write(".gitignore", "*.swp\n")
+	if err := os.WriteFile(filepath.Join(r.Dir, ".gitignore"), []byte("*.swp\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	r.Write("README.md", "# Project\n")
 	r.Write(".markitect/manifest.yaml", "libraries:\n  std: 1.0.0\n  web: 0.1.0\n")
 	r.Write(".markitect/libraries/web/Page.md", "---\nkind: Kind\n---\n# Page\n")
 	r.Write(".markitect/libraries/web/Page.md.swp", "editor swap file\n")
-	r.Write(".markitect/registry.md", read(t, r.Dir, ".markitect/registry.md")+"| `.gitignore` | [[project]] | Git settings |\n")
+	r.Write(".markitect/registry.md", read(t, r.Dir, ".markitect/registry.md")+"| `README.md` | [[project]] | Overview |\n")
 	mustRun(t, r.Dir, "lock")
 	if code, out, _ := run(t, r.Dir, "check"); code != 0 {
 		t.Fatalf("check after lock: %d\n%s", code, out)
 	}
 }
 
-func TestInitAgainUpdatesSkillsAndIgnorePage(t *testing.T) {
+func TestInitAgainUpdatesSkills(t *testing.T) {
 	r := testkit.NewRepo(t)
-	r.Write(".markitect/ignore.md", "# Ignored\n\n| Path | Why |\n|---|---|\n| LICENSE | Legal text |\n")
+	r.Write(".markitect/ignore", "# Legal text\nLICENSE\n")
 	r.Write(".claude/skills/markitect-retired/SKILL.md", "an old skill\n")
 	r.Write(".claude/skills/markitect-modeling/old-notes.md", "an old file\n")
 	r.Write(".claude/skills/my-own-skill/SKILL.md", "the user's own skill\n")
@@ -38,12 +41,65 @@ func TestInitAgainUpdatesSkillsAndIgnorePage(t *testing.T) {
 	if read(t, r.Dir, ".claude/skills/my-own-skill/SKILL.md") != "the user's own skill\n" {
 		t.Error("init touched a skill that is not Markitect's")
 	}
-	ignore := read(t, r.Dir, ".markitect/ignore.md")
-	if !strings.Contains(ignore, "| LICENSE | Legal text |") || !strings.Contains(ignore, "`.claude/skills/markitect-*/**`") {
-		t.Fatalf("ignore page:\n%s", ignore)
+	if read(t, r.Dir, ".markitect/ignore") != "# Legal text\nLICENSE\n" {
+		t.Error("init touched the ignore file")
 	}
-	mustRun(t, r.Dir, "init")
-	if again := read(t, r.Dir, ".markitect/ignore.md"); again != ignore {
-		t.Fatalf("a second init changed the ignore page:\n%s", again)
+}
+
+// A new project gets the instructions and no empty files; the guide is installed.
+func TestInitWritesTheInstructionsAndNoEmptyFiles(t *testing.T) {
+	r := testkit.NewRepo(t)
+	out := mustRun(t, r.Dir, "init", "--name", "Lending library")
+	if !strings.Contains(read(t, r.Dir, "AGENTS.md"), "# Lending library") || read(t, r.Dir, "CLAUDE.md") != "@AGENTS.md\n" {
+		t.Fatal("the instruction files are wrong")
+	}
+	for _, skill := range []string{".claude/skills/markitect-start/SKILL.md", ".agents/skills/markitect-start/SKILL.md"} {
+		if !strings.Contains(read(t, r.Dir, skill), "markitect-start") {
+			t.Fatalf("%s is not installed", skill)
+		}
+	}
+	for _, none := range []string{".markitect/ignore", ".markitect/execution.yaml"} {
+		if _, err := os.Stat(filepath.Join(r.Dir, filepath.FromSlash(none))); !os.IsNotExist(err) {
+			t.Errorf("init wrote %s", none)
+		}
+	}
+	if !strings.Contains(out, "/markitect-start") {
+		t.Fatalf("no next step:\n%s", out)
+	}
+	if status := r.Git("status", "--porcelain"); status != "" {
+		t.Fatalf("init left work uncommitted:\n%s", status)
+	}
+	if out := mustRun(t, r.Dir, "check", "--spec"); !strings.HasPrefix(out, "ok:") {
+		t.Fatalf("check --spec on a new project: %s", out)
+	}
+}
+
+// Instructions that exist stay as they are.
+func TestInitLeavesExistingInstructions(t *testing.T) {
+	r := testkit.NewRepo(t)
+	r.Write("AGENTS.md", "my own\n")
+	r.Write("CLAUDE.md", "mine too\n")
+	out := mustRun(t, r.Dir, "init")
+	if read(t, r.Dir, "AGENTS.md") != "my own\n" || read(t, r.Dir, "CLAUDE.md") != "mine too\n" {
+		t.Fatal("init changed the instructions")
+	}
+	if !strings.Contains(out, "left AGENTS.md as it is") {
+		t.Fatalf("no notice:\n%s", out)
+	}
+}
+
+// An empty folder is all init needs: it becomes a repository, and a folder that
+// is one keeps its history.
+func TestInitInAnEmptyFolder(t *testing.T) {
+	dir := testkit.TempDir(t)
+	out := mustRun(t, dir, "init", "--name", "New")
+	if !strings.Contains(out, "created a Git repository") {
+		t.Fatalf("init said:\n%s", out)
+	}
+	if _, err := os.Stat(filepath.Join(dir, ".git")); err != nil {
+		t.Fatal(err)
+	}
+	if out := mustRun(t, dir, "init"); strings.Contains(out, "created a Git repository") {
+		t.Fatalf("a second init made another repository:\n%s", out)
 	}
 }

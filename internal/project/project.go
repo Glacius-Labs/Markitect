@@ -1,6 +1,6 @@
 // Package project loads a project's Markitect folder from a repository
-// state and checks it as a whole: manifest, lock, Libraries, model, registry
-// and required checks. Every model command starts from a loaded Project.
+// state and checks it as a whole: manifest, lock, Libraries, model and registry.
+// Every model command starts from a loaded Project.
 //
 // The layout is described in docs/guides/model-language.md.
 package project
@@ -23,13 +23,42 @@ const (
 	ModelDir     = Dir + "/model"
 	ManifestFile = Dir + "/manifest.yaml"
 	LockFile     = Dir + "/lock.yaml"
-	ChecksFile   = Dir + "/execution.yaml"
-	IgnoreFile   = Dir + "/ignore.md"
+	IgnoreFile   = Dir + "/ignore"
 	RootPage     = Dir + "/registry.md"
 	RegistryDir  = Dir + "/registry"
 	LibraryDir   = Dir + "/libraries"
 	ResultsDir   = Dir + "/results"
 )
+
+// harnessPrefixes are what the files of the harness start with, in lower case.
+var harnessPrefixes = []string{".claude/agents/markitect-", ".claude/skills/markitect-", ".agents/skills/markitect-"}
+
+// instructionFiles are what a coding agent reads by itself when a session starts,
+// and the project's settings, which hold the hook on answer.
+var instructionFiles = []string{"AGENTS.md", "CLAUDE.md", ".claude/settings.json"}
+
+// IsHarness says whether a file steers the agents of a Run, so that a Run may not
+// change it: an agent cannot weaken its own rules in the work it submits. Without
+// regard to case: a variant of a name is the same file in a Windows or macOS
+// checkout.
+func IsHarness(file string) bool {
+	lower := strings.ToLower(file)
+	for _, prefix := range harnessPrefixes {
+		if strings.HasPrefix(lower, prefix) {
+			return true
+		}
+	}
+	for _, name := range instructionFiles {
+		if strings.EqualFold(file, name) {
+			return true
+		}
+	}
+	return false
+}
+
+// isOwn says whether the tool accounts for a file itself, as it does for its own
+// folder: what init installs, and Git's ignore file.
+func isOwn(file string) bool { return IsHarness(file) || file == ".gitignore" }
 
 // Repository is one state of a repository: the working tree or a commit.
 type Repository interface {
@@ -50,10 +79,61 @@ type Project struct {
 	Libraries []model.LibrarySource
 	Model     *model.Model
 	Registry  *realization.Registry
-	Checks    []Check
-	// Errors are the compile errors; a Project with errors is still loaded as
-	// far as its files allow.
+	// Errors are the compile errors, of the spec and of the realization; a
+	// Project with errors is still loaded as far as its files allow.
 	Errors model.Diagnostics
+}
+
+// Codes of the errors that say the realization does not match the spec yet:
+// the implementer settles them in the work. Every other error is the spec's,
+// and the owner settles it in the spec.
+const (
+	CodeUnregistered = "file.unregistered"
+	CodeUnused       = "definition.unused"
+)
+
+// IsRealization says whether an error is one of the realization's.
+func IsRealization(code string) bool {
+	return code == CodeUnregistered || code == CodeUnused || strings.HasPrefix(code, "stale.")
+}
+
+// SpecErrors are the errors in the spec itself: what stops a Command before it
+// starts an agent.
+func (p *Project) SpecErrors() model.Diagnostics {
+	var out model.Diagnostics
+	for _, d := range p.Errors {
+		if !IsRealization(d.Code) {
+			out = append(out, d)
+		}
+	}
+	return out
+}
+
+// RealizationErrors are the errors that say the work does not match the spec yet.
+func (p *Project) RealizationErrors() model.Diagnostics {
+	var out model.Diagnostics
+	for _, d := range p.Errors {
+		if IsRealization(d.Code) {
+			out = append(out, d)
+		}
+	}
+	return out
+}
+
+// NothingBuilt says that all that stands between the spec and the work is that the
+// work has not begun: the registry lists no file, and the only errors are
+// Definitions nothing realizes. Only the check command reads this; a Run's gate does
+// not, so a Run still has to realize every Definition.
+func (p *Project) NothingBuilt() bool {
+	if len(p.Errors) == 0 || p.Registry == nil || len(p.Registry.Entries) > 0 {
+		return false
+	}
+	for _, d := range p.Errors {
+		if d.Code != CodeUnused {
+			return false
+		}
+	}
+	return true
 }
 
 // Load reads and checks the project in a repository state.
@@ -85,7 +165,7 @@ func Load(repo Repository) (*Project, error) {
 			continue
 		}
 		switch first, rest, _ := strings.Cut(rel, "/"); {
-		case f == ManifestFile, f == LockFile, f == ChecksFile, f == IgnoreFile:
+		case f == ManifestFile, f == LockFile, f == IgnoreFile:
 		case f == RootPage:
 			if data, ok := read(f); ok {
 				pages = append(pages, realization.PageFile{Package: model.RootPackage, File: f, Data: data})
@@ -108,7 +188,7 @@ func Load(repo Repository) (*Project, error) {
 		case first == "results", first == "tool", first == "bootstrap":
 			// Run Results and the installed tool; accounted for here.
 		default:
-			ds.Add("project.file", f, 0, "%s holds only the manifest, lock, execution.yaml, ignore.md, the registry, the model, Libraries, results and the installed tool", Dir)
+			ds.Add("project.file", f, 0, "%s holds only the manifest, lock, ignore file, the registry, the model, Libraries, results and the installed tool", Dir)
 		}
 	}
 	local := map[string][]model.File{}
@@ -119,17 +199,10 @@ func Load(repo Repository) (*Project, error) {
 		}
 	}
 	p.loadManifest(read, present, local, &ds)
-	if !present[ChecksFile] {
-		ds.Add("execution.missing", ChecksFile, 0, "the project has no required checks file; run markitect init")
-	} else if data, ok := read(ChecksFile); ok {
-		var errs model.Diagnostics
-		p.Checks, errs = ParseChecks(ChecksFile, data)
-		ds = append(ds, errs...)
-	}
 	m, errs := model.Compile(model.Source{Dir: ModelDir, Files: modelFiles, Libraries: p.Libraries})
 	p.Model = m
 	ds = append(ds, errs...)
-	in := realization.Input{Model: m, Pages: pages, Files: others, GitIgnored: repo.GitIgnored, OwnDir: Dir}
+	in := realization.Input{Model: m, Pages: pages, Files: others, GitIgnored: repo.GitIgnored, OwnDir: Dir, Own: isOwn}
 	if present[IgnoreFile] {
 		if data, ok := read(IgnoreFile); ok {
 			in.Ignore = &model.File{Path: IgnoreFile, Data: data}
@@ -138,8 +211,54 @@ func Load(repo Repository) (*Project, error) {
 	reg, errs := realization.Account(in)
 	p.Registry = reg
 	ds = append(ds, errs...)
+	addRealizationErrors(&ds, m, reg)
 	p.Errors = ds.Sorted()
 	return p, nil
+}
+
+// addRealizationErrors makes stale registry entries and unused Definitions
+// errors: spec and code do not match, whichever side changed.
+func addRealizationErrors(ds *model.Diagnostics, m *model.Model, reg *realization.Registry) {
+	if reg != nil {
+		for _, s := range reg.Stale {
+			switch s.Code {
+			case "stale.definition":
+				ds.Add(s.Code, s.PageFile, s.Line, "%s links [[%s]], which no longer exists", s.File, s.Target)
+			case "stale.file":
+				ds.Add(s.Code, s.PageFile, s.Line, "%s no longer exists", s.File)
+			case "stale.page":
+				if s.File == "" {
+					ds.Add(s.Code, s.PageFile, 0, "the Package of this page no longer exists")
+				} else {
+					ds.Add(s.Code, s.PageFile, s.Line, "%s is listed only on the page of a removed Package", s.File)
+				}
+			}
+		}
+	}
+	if m == nil {
+		return
+	}
+	incoming := map[string]bool{}
+	for _, d := range m.Definitions {
+		for _, l := range d.Links {
+			if l.Target != d.ID {
+				incoming[l.Target] = true
+			}
+		}
+	}
+	realized := map[string]bool{}
+	if reg != nil {
+		for _, e := range reg.Entries {
+			for _, id := range e.Realizes {
+				realized[id] = true
+			}
+		}
+	}
+	for _, id := range m.ModelDefinitions() {
+		if !incoming[id] && !realized[id] {
+			ds.Add(CodeUnused, m.Definitions[id].File, 0, "nothing links to %s and no file realizes it", id)
+		}
+	}
 }
 
 func (p *Project) loadManifest(read func(string) ([]byte, bool), present map[string]bool, local map[string][]model.File, ds *model.Diagnostics) {

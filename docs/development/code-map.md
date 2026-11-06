@@ -15,25 +15,16 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | Layer | Meaning | May import | Packages |
 |---|---|---|---|
 | `model` | The model language over supplied bytes: Definitions, Kinds, links, visibility, cycles, manifest and lock. | nothing | 1 |
-| `assets` | Files built into the binary: the standard Libraries and the skills. | nothing | 2 |
-| `image-source` | The source of the image the native app's chats run in; only the native app carries it. | nothing | 1 |
+| `assets` | Files built into the binary: the standard Libraries, the skills and the harness of a Run. | nothing | 2 |
 | `domain` | Registry pages, ownership and file accounting over a compiled model. | `model` | 1 |
 | `project` | Loads and checks a project's Markitect folder from a repository state. | `model`, `assets`, `domain` | 1 |
 | `service` | Questions about a loaded project: references, graph, impact with checklists, and lint. | `model`, `assets`, `domain`, `project` | 1 |
-| `agent-port` | How a Command starts a session as implementer or reviewer and observes how it ended. | nothing | 1 |
-| `run` | apply and verify over one container: the checklist, the gate, the sessions, the answers, the Result and landing. | `model`, `assets`, `domain`, `project`, `service`, `agent-port` | 1 |
-| `protocol` | Frame protocol between the Orchestrator and the session helper. | nothing | 1 |
-| `container` | The container engine client that the adapters running containers share. | `protocol` | 1 |
-| `harness` | What a chat agent starts with: its role, its skill and the conversation so far. | `model`, `assets`, `domain`, `project`, `service`, `agent-port` | 1 |
-| `agents` | A Command's sessions and the app's chats on the user's token, with the Claude Code and Codex adapters. | `model`, `assets`, `domain`, `project`, `agent-port`, `protocol`, `container`, `harness`, `agents` | 3 |
+| `run` | The process of a Run in the tool: apply and verify, the checklist, the answers, submit, the hooks, the Result and landing. | `model`, `assets`, `domain`, `project`, `service` | 1 |
 | `guardedwrite` | Guarded working-tree writes for bundle installation, with the Git and path helpers they share with source snapshots. | nothing | 1 |
 | `build` | Version identity and embedded license notices. | nothing | 1 |
-| `adapter` | Concrete Git, command-line, desktop and sandbox adapters; no adapter imports another. | `model`, `assets`, `domain`, `project`, `service`, `agent-port`, `run`, `build` | 5 |
-| `composition` | Constructs the command line with its adapters. | `model`, `project`, `service`, `agent-port`, `container`, `agents`, `run`, `adapter` | 1 |
+| `adapter` | Concrete Git, command-line, required-check and provider-session adapters; no adapter imports another. | `model`, `assets`, `domain`, `project`, `service`, `run`, `build` | 3 |
+| `composition` | Constructs the command line with its adapters. | `model`, `project`, `service`, `run`, `adapter` | 1 |
 | `command` | Thin entrypoints to product composition. | `composition` | 1 |
-| `desktop-command` | Markitect Desktop's native shell over the composition: windows, tray and folder dialogs; built only with the native tag. | `composition`, `image-source` | 1 |
-| `agent` | Runs inside each Agent container: provider process, MCP bridge and stdio framing. | `protocol` | 1 |
-| `agent-command` | Thin entrypoint of the session helper. | `agent` | 1 |
 | `maintenance` | The import gate and release packaging, separate from product execution. | `guardedwrite` | 2 |
 | `maintenance-command` | Release maintenance entrypoint. | `maintenance`, `build` | 1 |
 | `test-support` | Hermetic fixtures. Only test files may import it. It imports no Markitect package, not even from tests. | nothing | 1 |
@@ -44,8 +35,6 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | From | To | Files | Reason |
 |---|---|---|---|
 | `internal/tooling/release` | `internal/tooling/architecture` | all | The packager takes its source roots from this table. |
-| `internal/adapters/sandbox` | `internal/adapters/rungit` | tests only | The real-engine test runs a whole Command on the host's real Git. |
-| `internal/bootstrap` | `.` | tests only | The real-engine test builds the chats' image from the source the native app carries. |
 | `internal/run` | `internal/adapters/rungit` | tests only | The engine's scripted Runs use the host's real Git. |
 | `internal/tooling/release` | `internal/buildinfo` | tests only | Tests compare the packaged notices with the embedded ones. |
 
@@ -60,25 +49,19 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | Package | Summary | Owning document |
 |---|---|---|
 | `internal/libraries` | Package libraries holds the standard Libraries that ship inside the markitect binary: std, rest and cli, each a folder of Kind Definitions. | [docs/guides/model-language.md#kinds-and-libraries](../guides/model-language.md#kinds-and-libraries) |
-| `internal/skills` | Package skills holds the agent skills that ship inside the markitect binary: the modeling skill and the Extract skill built on it. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
-
-## Image source
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `.` | Package markitect carries the source of the image the native app's chats run in, so that the app can build that image on a machine with Docker and no checkout. | [internal/adapters/desktop/README.md#the-native-app](../../internal/adapters/desktop/README.md#the-native-app) |
+| `internal/skills` | Package skills holds what ships inside the markitect binary for agents: the modeling skill, the start and Extract skills built on it, which markitect init installs where coding agents look for skills, and the harness of a Run for Claude Code. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
 
 ## Realization record
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/realization` | Package realization checks the realization record beside the model: one registry page per Package with the path patterns it owns and the files it realizes, and the ignore page. | [docs/guides/model-language.md#the-realization-record](../guides/model-language.md#the-realization-record) |
+| `internal/realization` | Package realization checks the realization record beside the model: one registry page per Package with the path patterns it owns and the files it realizes, and the ignore file. | [docs/guides/model-language.md#the-realization-record](../guides/model-language.md#the-realization-record) |
 
 ## Project
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/project` | Package project loads a project's Markitect folder from a repository state and checks it as a whole: manifest, lock, Libraries, model, registry and required checks. | [docs/guides/model-language.md#the-projects-markitect-folder](../guides/model-language.md#the-projects-markitect-folder) |
+| `internal/project` | Package project loads a project's Markitect folder from a repository state and checks it as a whole: manifest, lock, Libraries, model and registry. | [docs/guides/model-language.md#the-projects-markitect-folder](../guides/model-language.md#the-projects-markitect-folder) |
 
 ## Analysis
 
@@ -86,43 +69,11 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 |---|---|---|
 | `internal/analysis` | Package analysis answers questions about a loaded project without starting agents: who links to a Definition, the Package dependency graph, what a change reaches and each Manager's checklist, and the lint warnings that measure the model like code. | [docs/guides/model-language.md#impact-and-checklists](../guides/model-language.md#impact-and-checklists) |
 
-## Agent port
+## The process of a Run
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/agentport` | Package agentport is how a Command starts sessions (concept 3.0 §6, §11): one session with one prompt, as an implementer or a reviewer, in the Command's one container, and how it ended. | [internal/agentport/README.md](../../internal/agentport/README.md) |
-
-## Command engine
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `internal/run` | Package run is the Command engine of concept 3.0 (§6 to §10): `apply` and `verify` over one container. | [internal/run/README.md](../../internal/run/README.md) |
-
-## Agent protocol
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `internal/agentd/frame` | Package frame is the wire format between the Markitect Orchestrator and the session helper markitect-agentd. | [internal/adapters/container/README.md](../../internal/adapters/container/README.md) |
-
-## Container client
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `internal/adapters/container` | Package container is the Orchestrator's client of the container engine. | [internal/adapters/container/README.md](../../internal/adapters/container/README.md) |
-
-## Chat harness
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `internal/harness` | Package harness renders what a chat agent of Markitect Desktop starts with: its role, its skill and the conversation so far. | [internal/agents/README.md#harness](../../internal/agents/README.md#harness) |
-
-## Provider sessions
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `internal/agents` | Package agents starts provider sessions on the user's own token: a Command's unattended sessions through the agent port (Sessions), and Markitect Desktop's chats, each in a hardened container of its own (Chat). | [internal/agents/README.md](../../internal/agents/README.md) |
-| `internal/agents/claude` | Package claude is the Claude Code adapter of the agent runtime: the launch contract of the pinned CLI on the user's token, and the reader of its stream-json output with the failure classes the evaluation voids. | [internal/agents/README.md#claude-code](../../internal/agents/README.md#claude-code) |
-| `internal/agents/codex` | Package codex is the Codex adapter of the agent runtime: the launch contract of the pinned Codex CLI's exec mode and the reader of its JSON events with the failure classes the evaluation voids. | [internal/agents/README.md#codex](../../internal/agents/README.md#codex) |
+| `internal/run` | Package run is the process of a Run, in the tool (draft concept 4.0): apply and verify open a Run and say which agent to start; the owner's own session starts it, and the agents work in the owner's folder and call the tool. | [internal/run/README.md](../../internal/run/README.md) |
 
 ## Guarded write
 
@@ -140,41 +91,21 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/adapters/cli` | Package cli is the markitect command line: init, check, lock, refs, graph, impact and lint, which start no agent; apply and verify, which start a Run; desktop, which opens the app over these commands; version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
-| `internal/adapters/desktop` | Package desktop is Markitect Desktop, the app over the command line that users know as Markitect: one service per user that serves the embedded UI and its JSON routes on a loopback address, and the window that shows it. | [internal/adapters/desktop/README.md](../../internal/adapters/desktop/README.md) |
+| `internal/adapters/cli` | Package cli is the markitect command line: install, init, check, lock, refs, graph, impact and lint; apply and verify, which open a Run and say which agent the owner's session starts; the commands of a Run; version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
 | `internal/adapters/repo` | Package repo reads a project's repository through Git: the working tree as Git sees it, a base commit, and the files changed between them. | [docs/guides/model-language.md#the-projects-markitect-folder](../guides/model-language.md#the-projects-markitect-folder) |
-| `internal/adapters/rungit` | Package rungit is a Command's own Git work outside its container (concept 3.0 §6, §9): a private bare repository that reads the target branch, makes the start bundle, imports what the sandbox hands out, merges and writes the Result commit, and pushes to the target repository. | [internal/run/README.md#host-git](../../internal/run/README.md#host-git) |
-| `internal/adapters/sandbox` | Package sandbox runs a Command's one container (concept 3.0 §9), natively on Windows, Linux and macOS with only the Docker CLI. | [internal/run/README.md#the-sandbox](../../internal/run/README.md#the-sandbox) |
+| `internal/adapters/rungit` | Package rungit is a Run's Git work in the user's own repository (draft concept 4.0): it reads commits from anywhere in the repository, makes commits of a worktree's files without running the project's hooks, and brings the owner's branch up. | [internal/run/README.md#git](../../internal/run/README.md#git) |
 
 ## Composition
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/bootstrap` | Package bootstrap constructs the command line with its adapters: Git for the model commands, and for apply and verify the Run engine with the host's Git, the Run remote in a container and the provider adapters. | [docs/architecture.md#product-flow](../architecture.md#product-flow) |
+| `internal/bootstrap` | Package bootstrap constructs the command line with its adapters: Git for the spec's commands, and for a Run the process over the user's own repository. | [docs/architecture.md#product-flow](../architecture.md#product-flow) |
 
 ## Product commands
 
 | Package | Summary | Owning document |
 |---|---|---|
 | `cmd/markitect` | Command markitect is the Markitect command line: init, check, lock, refs, graph, impact, lint, version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
-
-## Desktop app
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `cmd/markitect-desktop` | Command markitect-desktop is Markitect Desktop as a native app: the service of internal/bootstrap shown in windows of the platform's own web view, with a tray icon and the platform's folder dialog. | [internal/adapters/desktop/README.md#the-native-app](../../internal/adapters/desktop/README.md#the-native-app) |
-
-## Session helper
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `internal/agentd` | Package agentd is the session helper that runs inside every Agent container. | [internal/adapters/container/README.md](../../internal/adapters/container/README.md) |
-
-## Session helper command
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `cmd/markitect-agentd` | Command markitect-agentd is the session helper inside every Markitect Agent container. | [internal/adapters/container/README.md](../../internal/adapters/container/README.md) |
 
 ## Maintenance
 

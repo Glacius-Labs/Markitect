@@ -1,6 +1,6 @@
 ---
 name: markitect-extract
-description: Use when asked to adopt Markitect in an existing repository, to "extract" or draw a Markitect model from existing code and documentation, or to propose Packages, Definitions, registry pages and an ignore page for a project that already has code. It builds on the markitect-modeling skill. Not for changing a model that already exists (use markitect-modeling) or for a project that has no code yet.
+description: Use when asked to adopt Markitect in an existing repository, to "extract" or draw a Markitect model from existing code and documentation, or to propose Packages, Definitions, registry pages and an ignore file for a project that already has code. It builds on the markitect-modeling skill. Not for changing a model that already exists (use markitect-modeling) or for a project that has no code yet.
 ---
 
 # Drawing a Markitect model from an existing repository
@@ -16,14 +16,14 @@ An extraction is a conversation with the owner, who accepts every model change. 
 [ ] 2 Code, documentation, tests and build read
 [ ] 3 Binding part decided; Packages chosen from the real areas
 [ ] 4 Definitions written
-[ ] 5 Registry pages and ignore page written
+[ ] 5 Registry pages and ignore file written
 [ ] 6 markitect check passes; markitect lint read
 [ ] 7 Diff handed to the owner
 ```
 
 ### 1. Set up
 
-Work in a Git checkout on its own branch with no other changes. Run `markitect init --name "<Project>"`. It writes the manifest with `std`, an empty `execution.yaml`, a placeholder project anchor at `.markitect/model/project.md`, Root's registry page, the ignore page and the lock, and installs the skills. Add `rest: 1.0.0` or `cli: 1.0.0` to `.markitect/manifest.yaml` when the project has HTTP or command-line interfaces, then run `markitect lock`.
+Work in a Git checkout on its own branch with no other changes. Run `markitect init --name "<Project>"`. It writes the manifest with `std`, a placeholder project anchor at `.markitect/model/project.md`, Root's registry page, the lock, `AGENTS.md` and `CLAUDE.md` if they are missing, and installs the skills. If it says it left `AGENTS.md` as it is, propose the line to add to the owner. Add `rest: 1.0.0` or `cli: 1.0.0` to `.markitect/manifest.yaml` when the project has HTTP or command-line interfaces, then run `markitect lock`.
 
 ### 2. Read the project
 
@@ -43,14 +43,14 @@ Read the README and documentation, the entry points, the folder structure and wh
 
 Root first, then one Package at a time. Use the standard Kinds; define a small project Kind, at Root, for a kind of thing that recurs and has no Kind. Replace the placeholder `project.md`. Put a Definition at the lowest common parent of the Packages that use it. Links are full paths from the model folder. Run `markitect check` after each Package.
 
-### 5. Registry and ignore pages
+### 5. Registry pages and the ignore file
 
 Make a list of every file: `git ls-files -co --exclude-standard`. The compiler sees exactly that set.
 
 - **One page per Package** (`.markitect/registry/<package path>.md`), with `paths` that claim its code, tests and documentation (`internal/members/**`, `docs/members*.md`). Root's page (`.markitect/registry.md`) has no patterns and lists what no one claims.
 - **List every file in its owner's table** with the Definitions it realizes (link every one it contributes to, tests too) and a short reason. The most specific pattern wins; a file may sit in an owned folder and still be missing from the list, which is an error.
 - **A file that serves several Packages** (README, CI, compose, build file) belongs to their lowest common parent, often Root, and links all Definitions it realizes.
-- **The ignore page** holds files that belong to no Package: the license, generated or vendored files, lock files, binary assets. Never ignore real source or documentation to make `check` pass; if a file realizes nothing, register it with no link instead, or ask. Do not list files Git ignores.
+- **The ignore file**, `.markitect/ignore`, holds files that belong to no Package, one pattern per line with `#` for a comment: the license, generated or vendored files, lock files, binary assets. Patterns start at the top of the repository, and a folder's files are `folder/**`. Never ignore real source or documentation to make `check` pass; if a file realizes nothing, register it with no link instead, or ask. Do not list files Git ignores.
 - Start with `markitect check`: each `file.unregistered` line names a file still to place, so the output is your to-do list.
 
 ### 6. Iterate to a passing check
@@ -60,8 +60,6 @@ Run `markitect check` until it prints `ok`. Fix the errors in the order given in
 - `markitect lint`: fix or justify each warning. `lint.unused` on a Definition means nothing links it and no file realizes it: link it from the registry or drop it.
 - `markitect graph`: the Package arrows should match the real imports and the documentation.
 - `markitect refs` on the central Definitions: files and links should agree.
-
-Required checks come from the documented build and test commands. Put them in `.markitect/execution.yaml` only as a proposal, marked as such in your report; the owner adopts them.
 
 ### 7. Hand over
 

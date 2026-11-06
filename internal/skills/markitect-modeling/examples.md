@@ -11,7 +11,7 @@ cmd/library/main.go
 internal/members/{member.go, http.go, member_test.go}
 internal/catalog/{book.go, loans.go, loans_test.go}
 .markitect/
-  manifest.yaml  lock.yaml  execution.yaml  ignore.md  registry.md
+  manifest.yaml  lock.yaml  ignore  registry.md
   registry/{members.md, catalog.md}
   model/
     project.md  layout.md  error-body.md  Policy.md
@@ -216,7 +216,7 @@ Suppose the first draft of `members/member.md` also said, as its last bullet, `T
 
 Moving `Book` or `Member` up to Root would not make sense here, so invert the dependency: `catalog` is the side that needs members, so `members` states nothing about books. Delete that bullet. `catalog/book` keeps its link, and `markitect graph` shows one arrow, `catalog --> members`.
 
-## Registry pages and the ignore page
+## Registry pages and the ignore file
 
 Root's page lists the files nobody else claims, including shared files, and links every Definition each realizes. Root names no patterns.
 
@@ -269,18 +269,11 @@ paths:
 | `internal/catalog/loans_test.go` | [[catalog/borrow-book]] [[members/loan-limit]] | Tests |
 ```
 
-`ignore.md` keeps the lines `markitect init` wrote and adds `LICENSE`, which realizes nothing:
+`ignore` lists `LICENSE`, which realizes nothing. What `markitect init` installs needs no line:
 
-```markdown
-# Ignored files
-
-Files that deliberately belong to no Package.
-
-| Path | Why |
-|---|---|
-| `.claude/skills/markitect-*/**` | Skills installed by markitect init |
-| `.agents/skills/markitect-*/**` | Skills installed by markitect init |
-| `LICENSE` | Legal text, realizes nothing |
+```text
+# Legal text, realizes nothing
+LICENSE
 ```
 
 ## Result
@@ -308,7 +301,7 @@ Describe the need in `catalog`'s own words, or make the Definition public if oth
 
 ```text
 registry/catalog.md:12: registry.wrong_owner: internal/members/http.go is owned by members, so it belongs on .markitect/registry/members.md
-newfile.txt: file.unregistered: neither registered nor ignored: list it on .markitect/registry.md, the page of its owner Root, or add it to the ignore page
+newfile.txt: file.unregistered: neither registered nor ignored: list it on .markitect/registry.md, the page of its owner Root, or add it to the ignore file
 ```
 
-List the file on its owner's page, or add it to the ignore page.
+List the file on its owner's page, or add it to the ignore file.

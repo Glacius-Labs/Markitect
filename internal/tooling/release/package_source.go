@@ -190,20 +190,11 @@ func requireRealDirectory(dir string) error {
 }
 
 // embeddedFile reports whether a non-Go file below a source root is built
-// into the binary: the license notices, the standard Libraries' and the
-// skills' Markdown, Markitect Desktop's built UI and its native app's icons.
+// into the binary: the license notices, and the standard Libraries' and the
+// skills' Markdown.
 func embeddedFile(name string) bool {
-	if name == embeddedNoticesPath || strings.HasPrefix(name, embeddedDesktopUI) {
-		return true
-	}
-	if strings.HasPrefix(name, embeddedDesktopApp) && strings.EqualFold(filepath.Ext(name), ".png") {
+	if name == embeddedNoticesPath {
 		return true
 	}
 	return strings.EqualFold(filepath.Ext(name), ".md") && (strings.HasPrefix(name, "internal/libraries/") || strings.HasPrefix(name, "internal/skills/"))
 }
-
-// embeddedDesktopUI is the folder the desktop adapter embeds whole.
-const embeddedDesktopUI = "internal/adapters/desktop/ui/"
-
-// embeddedDesktopApp is the native app, which embeds its PNG icons.
-const embeddedDesktopApp = "cmd/markitect-desktop/"

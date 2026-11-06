@@ -1,6 +1,8 @@
 # Concept register
 
-**Current target, 4 November 2026:** [Concept 3.0](v3-concept.md) ([DEC-091](#dec-091-concept-30-is-the-target)), not built yet ([delivery plan](../implementation-plan.md#concept-30-build)). [Concept 2.0](v2-concept.md) ([DEC-086](#dec-086-concept-20-is-the-target)) stays the record of what Main implements until then.
+**Main, 6 November 2026:** carries the build of [draft concept 4.0](v4-concept.md), which the owner tries by using it ([DEC-094](#dec-094-main-carries-the-native-version-and-the-app-goes)). The concept 3.0 rebuild that Main held until then is kept on the branch `archive/main-concept-3-20261106`.
+
+**Accepted target, 4 November 2026:** [Concept 3.0](v3-concept.md) ([DEC-091](#dec-091-concept-30-is-the-target)). [Concept 2.0](v2-concept.md) ([DEC-086](#dec-086-concept-20-is-the-target)) is the record of the Manager tree.
 
 **Draft, 4 November 2026:** [draft concept 4.0](v4-concept.md) would replace concept 3.0. It is not accepted ([OQ-012](#open-questions)).
 
@@ -107,11 +109,12 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-086](#dec-086-concept-20-is-the-target) | Decision | Concept 2.0 is the target | Accepted; being built; superseded by [DEC-091](#dec-091-concept-30-is-the-target) |
 | [DEC-087](#dec-087-required-checks-gate-merged-states-not-each-submission) | Decision | Required checks gate merged states, not each submission | Accepted; built in T8; superseded by [DEC-091](#dec-091-concept-30-is-the-target) |
 | [DEC-088](#dec-088-a-checker-reads-the-model-in-full-and-judges-its-own-packages-files) | Decision | A checker reads the model in full and judges its own Package's files | Accepted; built in T9; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
-| [DEC-089](#dec-089-markitect-desktop-the-app-over-the-cli) | Decision | Markitect Desktop: the app over the CLI | Accepted; design proposal, not built |
+| [DEC-089](#dec-089-markitect-desktop-the-app-over-the-cli) | Decision | Markitect Desktop: the app over the CLI | Accepted; built in part, removed on 6 November 2026 ([DEC-094](#dec-094-main-carries-the-native-version-and-the-app-goes)) |
 | [DEC-090](#dec-090-a-refusal-counts-only-when-nothing-moved) | Decision | A refusal counts only when nothing moved | Accepted; built; superseded by [DEC-091](#dec-091-concept-30-is-the-target) |
 | [DEC-091](#dec-091-concept-30-is-the-target) | Decision | Concept 3.0 is the target | Accepted; not built |
 | [DEC-092](#dec-092-a-command-uses-the-users-own-sign-in) | Decision | A Command uses the user's own sign-in | Accepted; not built; superseded in part by [DEC-093](#dec-093-a-command-passes-the-users-own-token) |
 | [DEC-093](#dec-093-a-command-passes-the-users-own-token) | Decision | A Command passes the user's own token | Accepted; being built |
+| [DEC-094](#dec-094-main-carries-the-native-version-and-the-app-goes) | Decision | Main carries the native version, and the app goes | Decided by the owner, 6 November 2026 |
 | [PRM-001 to PRM-009](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
@@ -1182,7 +1185,9 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-089 Markitect Desktop: the app over the CLI
 
-- **Status:** Accepted by the owner, 31 October 2026, in the session started to work beside the evaluations ([Desktop state page](../workstreams/desktop.md)). The technology follows that session's proposal, which the owner accepted. It supersedes [DEC-085](#dec-085-markdown-tools-are-the-cockpit-for-now) and takes up the cockpit of [VIS-001](#vis-001-cockpit-personal-ai-and-autonomous-project-organization) and the chat of [IDEA-015](#idea-015-cockpit-with-a-conversational-personal-agent) in bounded form.
+**Removed on 6 November 2026 by [DEC-094](#dec-094-main-carries-the-native-version-and-the-app-goes):** the app's code, design and state page left Main and stay on the branch `archive/main-concept-3-20261106`.
+
+- **Status:** Accepted by the owner, 31 October 2026, in the session started to work beside the evaluations ([Desktop state page](https://github.com/Glacius-Labs/Markitect/blob/e295881f1f716b4fb067bd4bb88e959d6a74f44d/docs/workstreams/desktop.md)). The technology follows that session's proposal, which the owner accepted. It supersedes [DEC-085](#dec-085-markdown-tools-are-the-cockpit-for-now) and takes up the cockpit of [VIS-001](#vis-001-cockpit-personal-ai-and-autonomous-project-organization) and the chat of [IDEA-015](#idea-015-cockpit-with-a-conversational-personal-agent) in bounded form.
 - **Decision:**
   - **What.** Markitect gets a desktop app that wraps the CLI. With it the owner creates and selects projects; runs `init` and Extract; models through a chat with an agent, in the style of Claude Code Desktop or the ChatGPT app; sees the model in several views with its quality signals and starts the command that proposes model improvements (`improve`); edits the configuration; follows commands and Runs, with what each agent did at any time and a live view; and reads statistics.
   - **Name.** Inside the project it is Markitect Desktop. To users it is just Markitect, as Claude and ChatGPT name their apps.
@@ -1192,7 +1197,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Unchanged:** the CLI stays complete: every Command and model tool the app offers is the CLI's, with the same result. The chat is the app's own, and its model changes reach the owner as proposals (§8). Run agents run only in containers with account login ([concept 2.0 §9](v2-concept.md#9-platform)), and a Run never touches the user's working tree (§6.5).
 - **Clarified, 31 October 2026:** the owner allows Markitect to ship the Glacius Labs design system's built package in its repository and binary, under the design system's own proprietary notice and kept apart from Markitect's Apache 2.0 license. Its fonts and icons keep their open licenses.
 - **Clarified, 31 October 2026:** the chat's agent works in a container on a copy of the project as it is in the working tree, uncommitted changes included, with no folder of the user's mounted. Its changes are a proposal, and the app writes them into the working tree only when the owner accepts. Unlike a Run, which never touches the working tree, the chat's accepted change is written there by the app, and the owner commits it as usual.
-- **Behavior owner:** the [Markitect Desktop design](../design/markitect-desktop.md); its open questions are on the [Desktop state page](../workstreams/desktop.md#questions-for-the-owner).
+- **Behavior owner:** the [Markitect Desktop design](https://github.com/Glacius-Labs/Markitect/blob/e295881f1f716b4fb067bd4bb88e959d6a74f44d/docs/design/markitect-desktop.md); its open questions are on the [Desktop state page](https://github.com/Glacius-Labs/Markitect/blob/e295881f1f716b4fb067bd4bb88e959d6a74f44d/docs/workstreams/desktop.md#questions-for-the-owner).
 
 ### DEC-090 A refusal counts only when nothing moved
 
@@ -1206,7 +1211,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - The Run's starts and deadlines still bound the whole Run, so a Run that keeps moving without finishing still ends.
 - **Reason:** in the [fixed-starts re-measure](../validation/fixed-starts-remeasure-20261102.md), Root moved a program into new packages in stages, and its checker rightly rejected each unfinished state, since the old package still served requests. Each rejection used one attempt, although children's new approved work came between them. The Run stopped when only one package and the final wiring were left.
 - **Cost:** a Manager with busy children can be refused more often before the Run stops, up to the Run's starts. A stuck Manager whose child keeps delivering real but useless changes is not caught by this limit, only by the Run's starts and deadline. For an earlier form of the same idea, see [DEC-054](#dec-054-a-rejection-that-finds-fewer-gaps-does-not-count), which belongs to V1's process and counted gaps instead.
-- **Behavior owner:** the [Run engine's limits](../../internal/run/README.md#limits-and-honest-stops).
+- **Behavior owner:** the [Run engine's limits](../../internal/run/README.md#the-one-door).
 
 ### DEC-091 Concept 3.0 is the target
 
@@ -1239,6 +1244,16 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - So Markitect does read the token and pass it on, which the sign-in in a volume would have avoided. Whether that counts as intermediating it goes in the owner's question to Anthropic ([DEC-092](#dec-092-a-command-uses-the-users-own-sign-in)).
 - **Costs, as far as known:** an agent, and any code it runs, can read the token from its environment, and it lasts a year, with no documented way to revoke it. Codex has access tokens for Enterprise; whether a personal plan gets one is not stated, so its route stays open.
 - **Reasoning:** [concept 3.0 §9](v3-concept.md#9-the-sandbox) and [§14](v3-concept.md#14-decided-on-acceptance), question 10. Nothing is shared between the implementer and the reviewer, so a sign-in's shared folder, scrub and turn-taking fall away.
+
+### DEC-094 Main carries the native version, and the app goes
+
+- **Status:** Decided by the owner, 6 November 2026, in the session that built the native version.
+- **Decision:**
+  - Main carries the build of [draft concept 4.0](v4-concept.md): `apply` and `verify` open a run in the project's own folder, and the user's own Claude Code session starts a builder agent, which starts a fresh reviewer agent. The owner tries it by using it; whether the draft replaces concept 3.0 stays open ([OQ-012](#open-questions)).
+  - Main until then is kept on the branch `archive/main-concept-3-20261106`, commit `e295881f1f716b4fb067bd4bb88e959d6a74f44d`, with the concept 3.0 rebuild's container Commands and Markitect Desktop. The concept 3.0 build stops on Main.
+  - Markitect Desktop goes as a whole, with its spec views, chats and their containers. This answers [draft concept 4.0 §16, question 9](v4-concept.md#16-questions-for-the-owner).
+- **Supersedes:** [DEC-089](#dec-089-markitect-desktop-the-app-over-the-cli), whose app is removed. [DEC-091](#dec-091-concept-30-is-the-target) stays the accepted target until OQ-012 is decided.
+- **Where it went:** the [archive index](../archive.md#removed-with-the-move-to-the-native-version).
 
 ## Promises
 

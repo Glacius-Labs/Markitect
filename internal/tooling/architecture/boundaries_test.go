@@ -74,21 +74,14 @@ func TestLayerDirections(t *testing.T) {
 		{"internal/realization", "internal/model", both},
 		{"internal/project", "internal/realization", both},
 		{"internal/project", "internal/libraries", both},
-		{"cmd/markitect-desktop", ".", both},
-		{"cmd/markitect", ".", none},
-		{"internal/bootstrap", ".", testOnly},
-		{"internal/project", ".", none},
 		{"internal/analysis", "internal/project", both},
 		{"internal/adapters/cli", "internal/analysis", both},
 		{"internal/adapters/cli", "internal/skills", both},
 		{"internal/adapters/cli", "internal/buildinfo", both},
 		{"internal/adapters/repo", "internal/project", both},
-		{"internal/adapters/container", "internal/agentd/frame", both},
-		{"internal/agentd", "internal/agentd/frame", both},
 		{"internal/bootstrap", "internal/adapters/cli", both},
 		{"internal/bootstrap", "internal/adapters/repo", both},
 		{"cmd/markitect", "internal/bootstrap", both},
-		{"cmd/markitect-agentd", "internal/agentd", both},
 		{"cmd/markitect-release", "internal/tooling/release", both},
 		{"cmd/markitect-release", "internal/buildinfo", both},
 		{"internal/tooling/release", "internal/guardedwrite", both},
@@ -107,18 +100,12 @@ func TestLayerDirections(t *testing.T) {
 		// Adapters do not import each other, nor the agent side.
 		{"internal/adapters/cli", "internal/adapters/repo", none},
 		{"internal/adapters/repo", "internal/adapters/cli", none},
-		{"internal/adapters/cli", "internal/adapters/container", none},
 		{"internal/adapters/cli", "internal/guardedwrite", none},
 		{"internal/adapters/cli", "internal/tooling/release", none},
-		{"internal/adapters/container", "internal/agentd", none},
-		{"internal/adapters/container", "internal/model", none},
-		{"internal/agentd", "internal/adapters/container", none},
-		{"internal/agentd/frame", "internal/model", none},
 		// Entrypoints stay thin.
 		{"internal/bootstrap", "internal/tooling/release", none},
 		{"cmd/markitect", "internal/adapters/cli", none},
 		{"cmd/markitect", "internal/model", none},
-		{"cmd/markitect-agentd", "internal/bootstrap", none},
 		{"cmd/markitect-release", "internal/bootstrap", none},
 		// Maintenance stays apart from the product.
 		{"internal/tooling/release", "internal/model", none},
@@ -178,19 +165,6 @@ func TestForbiddenLayerImportFailsInEveryFile(t *testing.T) {
 	got, err := fixtureRules(t, "internal/adapters/repo", "internal/adapters/cli").CheckRepository(root)
 	if err != nil || len(got) != 1 || got[0].Rule != "layer adapter may not import layer adapter" {
 		t.Fatalf("adapter imported a sibling adapter: %v %v", got, err)
-	}
-}
-
-func TestAnImportOfTheModuleRootIsAnEdge(t *testing.T) {
-	root := t.TempDir()
-	writeFixture(t, root, map[string]string{
-		"README.md":           "# Owner\n",
-		"source.go":           "package markitect\n",
-		"internal/model/m.go": "package model\nimport _ \"" + strings.TrimSuffix(ModulePath, "/") + "\"\n",
-	})
-	got, err := fixtureRules(t, "internal/model", ".").CheckRepository(root)
-	if err != nil || len(got) != 1 || got[0].Edge.To != "." || got[0].Rule != "layer model may not import layer image-source" {
-		t.Fatalf("%v %v", got, err)
 	}
 }
 

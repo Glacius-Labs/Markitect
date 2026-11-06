@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// Pattern is one path pattern of a registry or ignore page: a
+// Pattern is one path pattern of a registry page or the ignore file: a
 // repository-relative path whose segments may use * and ?, and whose whole
 // segment ** matches any number of folders.
 type Pattern struct {
@@ -17,7 +17,7 @@ type Pattern struct {
 // ValidatePattern reports why text is not a usable pattern.
 func ValidatePattern(text string) error {
 	if text == "" || strings.HasPrefix(text, "/") || strings.HasSuffix(text, "/") || strings.Contains(text, `\`) {
-		return fmt.Errorf("%q: a pattern is a repository-relative path with forward slashes, without a leading or trailing /", text)
+		return fmt.Errorf("%q: a pattern is a repository-relative path with forward slashes, without a leading or trailing /; a folder's files are folder/**", text)
 	}
 	for _, s := range strings.Split(text, "/") {
 		switch {

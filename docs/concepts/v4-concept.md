@@ -1,13 +1,13 @@
 # Markitect concept 4.0 (draft)
 
-**You model. Markitect's tools check the spec and work out what a change reaches, an ordinary agent in a background session of its own makes the project match, and one tool command decides whether the work counts.**
+**You model. Markitect's tools check the spec and work out what a change reaches, an ordinary agent, started by the owner's own session, makes the project match, and one tool command decides whether the work counts.**
 
 | | |
 |---|---|
 | **Version** | 4.0 – draft, not accepted |
 | **Date** | 4 November 2026 |
 | **Basis** | The [owner's statements](sources/fresh-start-20261104.md) of 4 November 2026, concept 3.0, a workflow trial on one real change, the Claude Code documentation and the help of version 2.1.318 as read that day, and independent reviews of this draft and an earlier one. |
-| **State** | A draft for the owner ([OQ-012](register.md#open-questions)). [Concept 3.0](v3-concept.md) stays the target until this one is accepted. Nothing here is built, and this shape has not run. |
+| **State** | A draft for the owner ([OQ-012](register.md#open-questions)). [Concept 3.0](v3-concept.md) stays the target until this one is accepted. Main carries its build since 6 November 2026 ([DEC-094](register.md#dec-094-main-carries-the-native-version-and-the-app-goes)), for the owner to try by using it ([what real sessions showed](../validation/native-version-20261104.md)). |
 
 It uses the words of [concept 3.0](v3-concept.md#2-words): spec, implementer, reviewer. Code and older documents still say model, maker and checker.
 
@@ -34,9 +34,9 @@ In the owner's words, the point is that "the spec as is gets applied reliably", 
 |---|---|---|
 | **Spec** | Typed documentation in Markdown, with the registry. Unchanged ([concept 3.0 §3 and §4](v3-concept.md#3-the-spec)) | No |
 | **Tools** | One program, `markitect`. It holds every fact, every rule that can be checked without judgment, and the process | No |
-| **Harness** | One reviewer agent and a few one-line skills that `markitect init` writes, and the prompt and settings a Command generates for each session | Yes |
+| **Harness** | One reviewer agent, a few one-line skills and the instruction files that `markitect init` writes, and the prompt and settings a Command generates for each session | Yes |
 
-**One goal and one door.** A session is told: make the project match the spec, and you are done when `markitect submit` says so. Each time it is called, `submit` says what is next: fix this failing check, start the reviewer, fix these wrong items, or landed.
+**One goal and one door.** A session is told: make the project match the spec, and you are done when `markitect submit` says so. Each time it is called, `submit` says what is next: fix what `check` reports, start the reviewer, fix these wrong items, or landed.
 
 This is the main difference from the first draft of this concept, which kept the steps in a skill and added hooks to catch what an agent forgot. With the steps in `submit`:
 
@@ -57,9 +57,10 @@ None of these starts an agent. `--repo DIR` names a folder inside the project's 
 
 | Command | Does | Change from today |
 |---|---|---|
-| `init` | Sets up a project: `.markitect/`, a first spec page and the harness. Run again, it refreshes the harness and never touches spec pages | Writes the reviewer agent and the new skills, and commits what it writes, so the first `apply` finds a clean folder |
+| `install` | Writes the personal skill, once per machine ([§9](#9-the-harness)) | New |
+| `init` | Sets up a project: `.markitect/`, the first page of the spec, the harness, and `AGENTS.md` and `CLAUDE.md` if they are missing. An empty folder is enough: it becomes a Git repository. Run again, it refreshes the harness and never touches spec pages | Writes the reviewer agent and the new skills, and commits what it writes, so the first `apply` finds a clean folder. It writes no file that would hold nothing yet, and it ends by saying what Markitect is and pointing to `/markitect-start` |
 | `lock` | Pins the Libraries. It holds a fingerprint of each one, as `go.sum` does for modules, and `check` refuses a Library that no longer matches | None |
-| `check` | Compiles the project and fails on any error ([below](#what-check-refuses)). `--spec` looks only at the spec itself | Stale entries and unused Definitions become errors. `--spec` is new |
+| `check` | Compiles the project and fails on any error ([below](#what-check-refuses)). `--spec` looks only at the spec itself | Stale entries and unused Definitions become errors, except in a project with nothing built yet. `--spec` is new |
 | `refs TARGET` | Who links to a Definition or Package, and which files realize it | None |
 | `impact` | What a change reaches ([below](#how-impact-works)) | `--base` defaults to the last Result. The per-Package lists go |
 | `analyze` | Measures the spec's design ([§4](#4-is-the-spec-good)). `--severity` filters its findings, and `--graph` draws the Package dependency graph | New. Replaces `lint` and `graph`. Comes after `apply` is reliable ([§13](#13-order-of-work)) |
@@ -69,7 +70,7 @@ The owner proposed `update`, to replace `lock` and `init`'s refreshing. This dra
 
 ### What `check` refuses
 
-`check` passes or fails, with no warnings: a project either compiles or it doesn't. Its errors come in two groups, and it prints them apart.
+`check` passes or fails, with no warnings: a project either compiles or it doesn't. Its errors come in two groups, and it prints them apart. One case passes: when the registry lists no file and the only errors are Definitions nothing realizes, it says that the spec compiles and nothing is built yet. `submit` makes no such exception.
 
 | Group | Errors | Who settles them |
 |---|---|---|
@@ -92,7 +93,7 @@ Like an incremental build, it works out what a change touches, so that only that
 | 1 | Definitions that link to a changed one or are of a changed Kind | Yes |
 | 2 and more | Everything further along the links, with distance and reason | No |
 
-It doesn't follow the code's own imports. Required checks on the whole project and a full `verify` now and then are the safety nets. The list is rebuilt after the work, so a file touched outside the first impact adds its Definitions. On Makerspace's change steps, one step reached 33 of the 36 existing files that truly changed, and deeper reach 35 ([measurement](../validation/impact-reach-20261103.md)). How far every link reaches says something about the spec too ([§4](#4-is-the-spec-good)).
+It doesn't follow the code's own imports. A full `verify` now and then is the safety net. The list is rebuilt after the work, so a file touched outside the first impact adds its Definitions. On Makerspace's change steps, one step reached 33 of the 36 existing files that truly changed, and deeper reach 35 ([measurement](../validation/impact-reach-20261103.md)). How far every link reaches says something about the spec too ([§4](#4-is-the-spec-good)).
 
 ### Commands of a run
 
@@ -102,7 +103,7 @@ They are thin. The checklist, answer parsing, Result page and trailers exist tod
 |---|---|---|
 | `markitect apply` | The owner, the apply skill or a schedule | Compiles the spec, commits a spec change that is not committed yet, works out the base and the list, starts the session and returns once it is up. Nothing to do means no session ([§5](#5-what-apply-does)) |
 | `markitect verify` | The same | Starts a reviewer's session on the last commit and returns ([§8](#8-other-commands)) |
-| `markitect checklist` | Implementer and reviewer | Prints the task and the list, rebuilt from the current files and registry. The run's first call also tries the required checks ([§5](#5-what-apply-does)). For a repair review, it prints only what is to be checked again |
+| `markitect checklist` | Implementer and reviewer | Prints the task and the list, rebuilt from the current files and registry. For a repair review, it prints only what is to be checked again |
 | `markitect answer` | Reviewer | Checks its answers and stores them against the state under review. A wrong location or an unknown item is refused at once, and it prints what is still missing |
 | `markitect submit` | The session | The one door ([§6](#6-the-one-door-submit)) |
 | `markitect stop WHY` | The session or the owner | Ends the session if it is still running, then ends the run without landing: commits what is there with a Result on `markitect/runs/<run>` |
@@ -113,9 +114,11 @@ They are thin. The checklist, answer parsing, Result page and trailers exist tod
 
 **State of the work** means a Git tree of every file Git would take, so ignored build output does not count.
 
-**Run state** lives under the repository's Git directory, in `markitect/`, which every worktree shares, and never reaches the working tree. The worktree's own branch is `worktree-<run>`, the provider's name for it. Work that did not land is copied to `markitect/runs/<run>`, where the owner can look at it, and the Result says why.
+**Run state** lives under the repository's Git directory, in `markitect/`, and never reaches the working tree. Work that did not land is copied to `markitect/runs/<run>`, where the owner can look at it, and the Result says why. It also stays in the owner's folder, uncommitted.
 
-**Required checks** run on the user's machine through `sh -c`, in a clean temporary export of that state, in the order of `execution.yaml`. Leftovers can't make them pass, and their output can't change the work. A check must work from a clean export, so it makes what it needs, such as dependencies or a `.env`, itself. A pass is kept per state, so it runs once; a failure runs again, since it may be flaky. The `environment` field, which names a container image, goes, and the file gains the session's model and effort, which today's parser would refuse. They run code the agent wrote with the user's rights, as the agent's own shell already does. A project with no required checks can still land, and the Result says none ran.
+**There are no required checks.** The owner took them out on 4 November 2026, to see whether they are needed. A project that wants tests states that in the spec, with the command that runs them, and the reviewer checks it and may run them. So no proof in a run comes from outside an agent any more, apart from `check` and what `submit` refuses, and that is what this trial tests. If runs land work that a test would have caught, the checks come back. `execution.yaml` goes with them, and the session's `model` and `effort` move to the manifest.
+
+**The ignore file** is `.markitect/ignore`, written like a `.gitignore`: one pattern per line and `#` for a comment. Its patterns stay the registry's, and it has no `!`. A reason is a comment now and no longer required, which is safe because a run can't change the file. The tool accounts for what `init` installs by itself, so a new project has no ignore file.
 
 ## 4. Is the spec good?
 
@@ -154,46 +157,28 @@ The owner models until the spec looks right, then uses `/markitect-apply`, from 
 
 1. **Check.** `apply` compiles the spec. An error in the spec stops here, no session starts, and the owner sees why. A change outside `.markitect/` that is not committed also stops it, because it would be silently left out, and it says which files.
 2. **Commit and list.** It records the owner's branch, commits the spec change on it, and works out the base and the checklist. Nothing affected means "nothing to do", and it ends.
-3. **Start.** It starts a background session in a new worktree, based on that commit. Roughly:
+3. **Say which agent to start.** `apply` saves the run and prints one step: start the `markitect-builder` agent with the message "Build run NAME". The apply skill has the owner's own session do exactly that. The builder is a subagent: it starts with fresh context, in the owner's folder, and knows only the spec, the list and what the tool prints.
+4. **Implement.** The builder takes the list from `markitect checklist` and makes the project match the spec, keeping the registry current. It does not change the spec. If the spec contradicts itself or leaves open something that changes behaviour at the project's boundary, it runs `markitect stop` with why. A gap with no such effect is its own to decide. If the machine lacks something, such as a program or a service, it says so with `markitect stop --environment`, which asks the owner nothing about the spec.
+5. **Submit.** When it thinks it is done, it calls `markitect submit`, and follows what that says ([§6](#6-the-one-door-submit)).
+6. **Review.** `submit` tells it to start the `markitect-reviewer` agent, a subagent of its own. The reviewer starts with fresh context, has no tool to edit files and cannot start further agents. It takes the list from `markitect checklist`, reads the Definitions and the code, and stores one line per item with `markitect answer` ([concept 3.0 §8](v3-concept.md#8-the-checklist)).
+7. **Repair.** A `wrong` answer goes back to the builder, which fixes it and calls `submit` again. The next reviewer gets the findings, the new diff and the items whose locations that diff touched; other answers stand. At most two repair rounds.
+8. **Land.** When nothing is left to do, `submit` writes the Result, commits it with the work and brings the owner's branch up. The builder is told it has landed, and ends. The owner's session sees it end and reports.
 
-   ```text
-   claude --bg --worktree <run> --model <model> --effort <effort>
-          --permission-mode dontAsk --settings <the run's settings>
-          --setting-sources project --strict-mcp-config
-          "<the task, with the run's name>"
-   ```
+**Bringing the branch up.** `submit` builds what will land as commits, without touching the folder: the run's commit if the branch has not moved, otherwise a merge, which must be clean and pass `check --spec`. Later commits stay in the next `impact`, so the next run realizes them. Then it moves the recorded branch, only if it is still where it was. Where it is checked out, the files follow as in a fast-forward: a file that already holds the landing's version, such as the work the builder wrote in that folder, stays as it is, and a file with an edit of its own stops the move. The files change before the branch moves, so a landing cut off part way runs again. Where it is not checked out, only the ref moves. A short wait and a retry cover Git's own locks. Nothing is pushed: the owner pushes when they want to, to any remote or none.
 
-   It waits until the provider reports the session working, records its ID and returns. If the session doesn't start, it closes the run and says why.
-4. **Try the checks.** The run's first `markitect checklist` runs the required checks once on that commit, so that slow checks don't hold up the skill. A check that cannot start ends the run before the work is spent. One that fails is told to the implementer and the Result, as failing before the work. A missing service can only show this way, since it looks like any other failure.
-5. **Implement.** The implementer takes the list from `markitect checklist` and makes the project match the spec, keeping the registry current. It does not change the spec. If the spec contradicts itself or leaves open something that changes behaviour at the project's boundary, it runs `markitect stop` with why. A gap with no such effect is its own to decide.
-6. **Submit.** When it thinks it is done, it calls `markitect submit`, and follows what that says ([§6](#6-the-one-door-submit)).
-7. **Review.** `submit` tells it to start the `markitect-reviewer` agent. The reviewer starts with fresh context, has no tool to edit files and cannot start further agents. It takes the list from `markitect checklist`, reads the Definitions and the code, and stores one line per item with `markitect answer` ([concept 3.0 §8](v3-concept.md#8-the-checklist)).
-8. **Repair.** A `wrong` answer goes back to the implementer, which fixes it and calls `submit` again. The next reviewer gets the findings, the new diff and the items whose locations that diff touched; other answers stand. At most two repair rounds.
-9. **Land.** When nothing is left to do, `submit` writes the Result, commits it with the work and brings the owner's branch up. The session is told it has landed, and finishes.
+**If landing fails,** the run closes as kept on `markitect/runs/<run>`, the Result says why, and the builder is told to finish. The work also stays in the folder, uncommitted. The next `apply` tries that branch once more. If that fails too, it leaves the branch where it is and starts a fresh run.
 
-**Bringing the branch up.** `submit` builds what will land off to the side: the run's commit if the branch has not moved, otherwise a merge, which must be clean and pass `check --spec` and the required checks. Later commits stay in the next `impact`, so the next run realizes them. Then it moves the recorded branch, only if the branch is still where it was: `merge --ff-only` where it is checked out, so the owner's uncommitted edits stay, or a ref update where it is not. A short wait and a retry cover Git's own locks. Nothing is pushed: the owner pushes when they want to, to any remote or none.
+**One run per folder.** The agents work in the owner's folder, so while a run is open, a second `apply` or `verify` there starts nothing and says how to go on with it. The owner leaves the folder alone meanwhile; the session that started the run is busy with it anyway.
 
-**If landing fails,** for example because uncommitted edits overlap, the run closes as kept on `markitect/runs/<run>`, the Result says why, and the session is told to finish. The next `apply` commits the spec and tries that branch once more. If that fails too, it leaves the branch where it is and starts a fresh run. The base has not moved, so nothing is lost, and the work is done again.
+**Telling the owner.** The owner's session waits for the builder, so it sees the end. If the builder ends while the run is still open, `apply` has told the session to start it again with the same message. Every `markitect` command also prints one line about a run that closed unread.
 
-**One run per branch.** A second `apply` during a run says that a run is open. The owner can keep modeling meanwhile, and the next `apply` commits what they have.
+**Why not a background session.** The first build of this draft had `apply` start `claude --bg` in a worktree of its own, with generated settings and hooks, and it landed real changes ([record](../validation/native-version-20261104.md)). On 5 November 2026 the owner chose agents started by their own session instead: Markitect should be just a way of agentic coding, without that machinery. What the choice costs:
 
-**Telling the owner.** `apply` has returned, so nothing waits for the end of a run. Every `markitect` command, the apply skill included, prints one line about a run that closed unread or died. A desktop notice on close is a small addition ([§16](#16-questions-for-the-owner)). This matters most for what no hook can send back: a usage limit ends the session with an API error, for which the provider fires StopFailure, which can only record the cause.
+- the owner's session is busy until the run ends, and the run stops if that session closes;
+- the agents work under that session's permission mode, settings, plugins and memory, so they may ask for permission, and they differ from one person to the next;
+- an agent that ends early is started again by the owner's session, as `apply` says, instead of being sent back by a hook.
 
-**Is this native?** Yes, in what the owner asked for: "I use the apply skill", "Claude opens a branch and applies the changes maybe in its own session". The difference from `claude -p`, which the owner turned down, is real:
-
-| | `claude -p` | `claude --bg` |
-|---|---|---|
-| What it is | The command-line form of the provider's Agent SDK | The provider's ordinary session, sent to the background, listed in `claude agents` and open to attach |
-| Login | The documentation says `--bare` will become its default, and bare mode doesn't use a subscription login | The same stored credentials as interactive sessions |
-| Who waits for it | A script that drives it | Nobody: `apply` has ended long before the work does |
-
-A forked subagent of the owner's own session would look more native, and was the first draft's answer. It is worse on the owner's own terms: the run would hang on that session, and that session's auto mode would be passed on to the agents. It stays the fallback if a session cannot start another ([§14](#14-what-is-not-yet-shown)).
-
-**It asks nothing.** Agents can't ask the owner a question, and they run in the `dontAsk` permission mode, which refuses what is not allowed instead of waiting. That matters more in the background, where a prompt would stop the session until someone came back. Auto mode doesn't fit: after 3 blocks in a row or 20 in total it goes back to prompting. So the session may edit files and use any shell command, and [§16](#16-questions-for-the-owner) puts that to the owner. A short list of commands won't do: Makerspace c6 deletes a test file, and `dontAsk` would refuse `rm`. The provider's protected paths, such as `.git`, `.husky` or `.vscode`, stay refused for the edit tools.
-
-**After a reboot or a crash.** The work is in the run's worktree, not in the owner's folder, and the run is still open. Only a session the provider reports as working counts as in progress: a finished session's process lives on for about an hour, and that doesn't count. So `apply` ends such a process, resumes the conversation in the background with the same settings, and records the ID that comes back, since the provider may start a copy. The repair count stands. `markitect stop` ends the run instead. Only `submit` and `stop` close a run. A run stays open until someone acts, unless a schedule resumes it.
-
-**Cleaning up.** The provider holds a lock on a worktree while its session runs, so `submit` can't remove it. The next `apply` stops the sessions of closed runs and removes their worktrees.
+What it keeps: fresh context for the builder and for the reviewer, which is the test that the spec alone is enough, and every refusal of `submit`.
 
 ## 6. The one door: `submit`
 
@@ -201,17 +186,16 @@ A forked subagent of the owner's own session would look more native, and was the
 
 | | It finds | It does | It tells the agent |
 |---|---|---|---|
-| 1 | Anything under `.markitect/` changed except the registry pages, or anything in the harness | Refuses | Put these back, or `markitect stop` if the spec can't be met |
+| 0 | The folder is no longer on the run's branch at its start, because of a commit made during the run or another branch checked out | Refuses | Undo the commits with `git reset --soft`, or check the branch out again |
+| 1 | Anything under `.markitect/` changed except the registry pages, or anything in the harness, including `AGENTS.md` and `CLAUDE.md` | Refuses | Put these back, or `markitect stop` if the spec can't be met |
 | 2 | A reviewed state, and the only difference from it is new files not listed | Refuses | List them if they are the work, otherwise remove them |
 | 3 | An error from `markitect check`, in the spec or the realization | Refuses | The errors |
-| 4 | A required check that cannot start | Ends the run as an environment failure | Stop. No repair round is used |
-| 5 | A required check that fails | Refuses | The check and its output |
-| 6 | No complete review for this state | Commits the state on the run's branch | Start `markitect-reviewer`, and the items that need answers |
-| 7 | A `spec problem` | Closes the run | Nothing lands, and the Result holds the question |
-| 8 | A `wrong` answer | Counts one repair round per reviewed state; the third closes the run | The items and what is wrong |
-| 9 | Nothing left | Writes the Result, commits and brings the branch up | Landed, or kept and why |
+| 4 | No complete review for this state | Commits the state on the run's branch | Start `markitect-reviewer`, and the items that need answers |
+| 5 | A `spec problem` | Closes the run | Nothing lands, and the Result holds the question |
+| 6 | A `wrong` answer | Counts one repair round per reviewed state; the third closes the run | The items and what is wrong |
+| 7 | Nothing left | Writes the Result, commits and brings the branch up | Landed, or kept and why |
 
-`not shown` may land, and the Result lists it. A change after a review is new work: it passes through rows 3 to 6, and the new review covers the items it touched.
+`not shown` may land, and the Result lists it. A change after a review is new work: it passes through rows 3 and 4, and the new review covers the items it touched.
 
 **Limits.** Every `submit` counts towards a ceiling, for now 30, and reaching it closes the run. That also covers a reviewer that keeps leaving items open. A run also has a deadline, for now 6 hours as in today's engine, and the hooks of [§9](#9-the-harness) enforce it.
 
@@ -226,82 +210,70 @@ The tool can't stop a determined agent that runs as the user on the user's machi
 | What the owner wants | What secures it | How firm |
 |---|---|---|
 | The spec compiles before work starts | `apply` runs before any session exists | Firm |
-| What `submit` lands is complete: spec unchanged, project compiles, checks pass, every item answered for the work | The tool | Firm for what `submit` lands. A merge with later commits gets `check --spec` and the required checks, not another review |
-| A run doesn't stop to wait for someone | `dontAsk`, set by `apply` on that session | Firm by the documentation. Nothing has run under it yet: the trial and today's adapter start in `bypassPermissions`. The owner's own mode no longer reaches the run |
-| The owner's folder stays out of it | The worktree. The provider blocks edits, command folders and Git commands aimed at the main checkout | Good. It reads the command's text, so a `cp` or a shell redirect into the checkout is not refused. On PowerShell only the command folder is checked |
-| The session doesn't just end | A Stop hook sends it back while the run is open | Catches forgetting. The hook closes the run after five blocks. An API error or a closed session gets past it, and then the owner is told ([§5](#5-what-apply-does)) |
-| The agent doesn't review itself | A hook lets only a reviewer call `answer` | Good, not proof: it reads the command's text and the agent's name |
-| The reviewer judges for itself | Its agent file says to take everything from `markitect checklist` | Weak: the implementer writes the message that starts it. Reviews given a maker's claims did no worse on planted bugs ([17 of 18 blind, 18 of 18 with claims](../validation/k-checker-test-20261103.md)), though that tested claims beside bugs, not a message written to steer. No hook is added until this is seen |
-| Nothing goes to a remote | The task says the tool handles Git, and a deny rule covers `git push` and `gh` | Catches ordinary use. Rules match text, so `git -C . push` gets past it |
+| What `submit` lands is complete: spec unchanged, project compiles, every item answered for the work | The tool | Firm for what `submit` lands. A merge with later commits gets `check --spec`, not another review |
+| A run doesn't stop to wait for someone | Nothing: it works under the owner's session's permission mode. The builder accepts file edits without asking | Weak by choice: the owner is there to answer |
+| The work doesn't mix with the owner's own | One run per folder, and the owner leaves the folder alone while it is open. A landing stops at a file with an edit of its own | Good for what lands; nothing keeps the owner from editing |
+| A run doesn't just stop | `apply` tells the owner's session to start the builder again while the run is open | Prompt text, not structure. An early end lands nothing, so it costs time, not correctness |
+| The agent doesn't review itself | A hook in the project's settings lets only a reviewer call `answer`; it runs in subagents too | Good, not proof: it reads the command's text and the agent's name |
+| The reviewer judges for itself | Its agent file says to take everything from `markitect checklist` | Weak: the builder writes the message that starts it. Reviews given a maker's claims did no worse on planted bugs ([17 of 18 blind, 18 of 18 with claims](../validation/k-checker-test-20261103.md)), though that tested claims beside bugs, not a message written to steer. No hook is added until this is seen |
+| Nothing goes to a remote | The task says the tool handles Git | Catches ordinary use only: the owner's own settings decide what a shell command may do |
 | A commit that bypassed `submit` is noticed | It stays in the next `impact`, and `status` counts commits since the last Result | Seen afterwards, not prevented |
 | The reviewer really read the code | Pointers checked for existence | Not provable. It was not provable in the Docker version either |
 | The code is right | The reviewer and the project's tests | Not guaranteed by any version |
 | A run has a limit | The deadline and the ceiling of [§6](#6-the-one-door-submit), held by the tool | Good while the agent calls tools. The provider's own budget and turn flags work only with `-p`, and there is no spending limit |
 
-**Anyone who wants more** can run `markitect check` and the required checks where the agent can't reach them: on a server of their own, in CI or in a hook on a remote. Markitect depends on none of these. Answers stay on the machine, and a landing's Result carries them.
+**Anyone who wants more** can run `markitect check` and the project's tests where the agent can't reach them: on a server of their own, in CI or in a hook on a remote. Markitect depends on none of these. Answers stay on the machine, and a landing's Result carries them.
 
 **What we give up against concept 3.0:**
 
 - prevention of a deliberate bypass;
 - isolation from the user's machine: agents run with the user's rights, so a run must not read untrusted input;
 - one operating system: agents work on the user's own, Windows included, with its paths and shells;
-- a reviewer in its own session as another user, with a throwaway folder. It now shares the worktree. `submit` catches what it changes in files Git would take, and code it runs can still change its stored answers;
-- review of a clean copy: it reads the folder as it stands, ignored leftovers included, though required checks run on a clean export;
+- a reviewer in its own session as another user, with a throwaway folder. It now shares the owner's folder. `submit` catches what it changes in files Git would take, and code it runs can still change its stored answers;
+- review of a clean copy: it reads the folder as it stands, ignored leftovers included;
 - a reviewer's task written by the Command, and a measure of how much it checked.
 
 ## 8. Other Commands
 
 Every Command is one short declaration over the same tools: which agent starts, where its items come from, and whether it lands. The table in [concept 3.0 §12](v3-concept.md#12-other-commands) stands. A skill for a Command is one line that calls it, so the same Command runs from a chat, a terminal or a schedule.
 
-**`verify`** changes nothing the owner has. It starts the reviewer as the main agent of a background session, in a worktree of the last commit, with no edit tools. It doesn't commit on the owner's branch, doesn't switch anything and doesn't mind a dirty folder; the Result says that uncommitted work was not looked at. With no Result yet, it is `--full`. It never holds the branch, so a scheduled `verify` doesn't block an `apply`.
+**`verify`** changes nothing the owner has. It opens a review of the last commit and says to start the `markitect-reviewer` agent, which the owner's session does. The reviewer reads the folder, so `verify` refuses one with uncommitted changes. It doesn't commit on the owner's branch. With no Result yet, it is `--full`. Like `apply`, it holds the folder while it is open.
 
 `submit` works differently for it:
 
 | It finds | It does |
 |---|---|
 | Items without an answer | Lists them, under the same ceiling and deadline |
-| Otherwise | Runs the required checks once and `check`. A failure or an error becomes a Finding, and a check that cannot start is noted. It writes the Findings and the Result on `markitect/runs/<run>` and closes the run |
+| Otherwise | Runs `check`. A wrong answer becomes a Finding, and what names no Definition, such as an error from `check`, is listed in the Result. It writes the Result and a Findings page on `markitect/runs/<run>` and closes the run |
 
 `apply --findings` and the count of changes since the last full check read them there.
 
 `--full` starts with one reviewer for the whole list, and the first `apply` on a project is `--full` too. That is untested at size: the 5× build used 51 reviewers, up to eight at a time, each in a clean copy. A split per Package may be needed, and the runs of [§13](#13-order-of-work) decide that.
 
-`apply` comes first, then `verify`. `cleanup`, `bughunt`, `security` and `improve` follow once those work. Modeling and Extract stay skills in the owner's own session, as they are.
+`apply` comes first, then `verify`. `cleanup`, `bughunt`, `security` and `improve` follow once those work. Modeling and Extract stay skills in the owner's own session, as they are, and so does `markitect-start`, the guide a new project begins with. It asks what the project is, one question at a time, and starts the spec with the owner.
 
 ## 9. The harness
 
-For Claude Code, `markitect init` writes these project files, so they are versioned with the project and the registry's ignore list covers them. It also adds `.claude/worktrees/` to `.gitignore`.
+For Claude Code, `markitect init` writes these project files, so they are versioned with the project, and the tool accounts for them itself.
 
 | File | Holds |
 |---|---|
-| `.claude/skills/markitect-apply/SKILL.md` | One injected command, `` !`markitect apply` ``, and "report what it printed". Its front matter sets `allowed-tools`, so the command runs without a prompt outside auto mode too, and `disable-model-invocation: true`, so a modeling agent can't start a run by itself. The provider runs the command before the model sees the skill, and any non-zero exit aborts the skill, so "run open" and "nothing to do" exit 0 |
+| `.claude/skills/markitect-apply/SKILL.md` | One injected command, `` !`markitect apply` ``, and "do what it printed". Its front matter sets `allowed-tools`, so the command runs without a prompt, and `disable-model-invocation: true`, so a modeling agent can't start a run by itself. The provider runs the command before the model sees the skill, and any non-zero exit aborts the skill, so "run open" and "nothing to do" exit 0 |
 | `.claude/skills/markitect-verify/SKILL.md` | The same for `verify` |
-| `.claude/agents/markitect-reviewer.md` | Effort, the reviewer's task, and tools without edit or agent tools. Its model is the one forced on subagents below |
+| `.claude/agents/markitect-builder.md` | The builder: take the task from `markitect checklist`, and be done when `markitect submit` says so. All tools, including starting the reviewer; model `sonnet`, effort `high`, file edits without asking |
+| `.claude/agents/markitect-reviewer.md` | Effort, the reviewer's task, and tools without edit or agent tools |
+| `.claude/settings.json` | The hook on `answer`, below, added to whatever settings the project already has |
+| `AGENTS.md`, `CLAUDE.md` | What kind of project this is, for any session: the spec is the authority, changes start there, and `markitect` is on the path. `CLAUDE.md` holds only `@AGENTS.md`, so that it works in every session of the provider. They hold no process, since a run reads them too. Written only if missing |
 
-**The implementer is a plain session,** so it keeps the provider's default system prompt, as every launch so far did. An agent file would replace that prompt. Its task is the first prompt: the goal, what the spec is, its authority, the tools and that the tool handles Git. `markitect checklist` prints that again, so compaction can't lose it. Model and effort for the session come from `execution.yaml`.
+**The agents' settings** come from their files, and the manifest's `model`, if it names one, which `apply` passes on when it says which agent to start. Everything else is the owner's session: its permission mode, settings, plugins and memory. No settings are generated per run.
 
-**The run's settings** are not in the project. `apply` generates them for that session, in the run state, so a modeling session gets none of it:
-
-- `worktree.baseRef` set to `head`. The default branches from the remote's default branch, and would miss the spec commit that was just made;
-- `dontAsk`, with file edits and any shell command allowed, and a deny rule on `git push` and `gh`. By default the provider has an isolated background session push its branch and open a draft pull request when it finishes, which the owner doesn't want ("We dont want to rely on github");
-- subagents forced onto the chosen model: one earlier launch on Haiku started 68 subagents on Opus;
-- auto memory off, so that modeling notes don't reach a run and a run's notes don't reach the next;
-- a longer time limit for shell calls;
-- the hooks below.
-
-`--setting-sources project` and `--strict-mcp-config` are meant to keep the personal settings, plugins and MCP servers of whoever runs it out of the run. The workflow trial used them from its first attempt, so it doesn't show what happens without them.
-
-**The hooks,** all `markitect hook`, which does nothing unless a run is open:
-
-| Hook | Does |
-|---|---|
-| Stop | Sends the session back while the run is open and no reviewer is running. The input lists background tasks, so the wait for a reviewer passes. After five blocks since the last `submit` it closes the run and lets the session end, since the provider's own count of eight starts again at any tool call. While `submit` holds its lock, it only waits |
-| StopFailure | Records the cause when a turn ends on an API error, such as a usage limit |
-| PreToolUse | On every tool call, past the deadline, stops the session and closes the run. On the shell, refuses `markitect answer` unless the input's `agent_type` is the reviewer's |
+**The hook.** `markitect hook pretool`, in the project's settings, runs before a shell command that calls `markitect answer`, and refuses it unless the agent is the reviewer. Hooks in project settings run inside subagents too, and their input names the agent. A run may not change the file.
 
 The first draft's seal is gone. `answer` checks and stores the answers itself, so no hook has to catch a reviewer as it finishes.
 
-Skills are kept short, and they hold no steps, so nothing depends on what survives compaction. Plugins do not fit: the provider ignores hooks and permission modes in plugin agents.
+**One file lies outside the project.** A session that runs `init` started before the project's files existed, so it knows only what the tool prints, and Claude Code doesn't watch a skills folder that wasn't there when the session started. So help and `init` say what Markitect is, and `markitect install` writes a personal skill, `~/.claude/skills/markitect/SKILL.md`, with the same text from the binary, which reaches a session in any folder. It allows no command in advance. `init` never writes to the home folder.
+
+Skills are kept short, and they hold no steps, so nothing depends on what survives compaction. Plugins do not fit yet: the provider ignores hooks and permission modes in plugin agents.
 
 ## 10. Strategies
 
@@ -311,19 +283,19 @@ The first version ships one strategy and no switch for it. The natural second is
 
 ## 11. Providers
 
-The first version is Claude only. A provider needs a way to start a background session in a worktree with settings, a way to resume it, hooks on stopping and on tool calls, and an agent type for the reviewer. Codex gets its own strategy once Claude's version is reliable.
+The first version is Claude only. A provider needs subagents with their own agent files, and a hook before a tool call that names the agent. Codex gets its own strategy once Claude's version is reliable.
 
-No token is needed: sessions run on the user's own stored login in the unmodified program, which removes token passing. Each session uses the user's subscription quota. The legal reading of [concept 3.0 §14, question 10](v3-concept.md#14-decided-on-acceptance) still applies: the owner's own use looks allowed, and other users are not settled. So the owner still asks Anthropic before anyone else runs Markitect, now including whether a tool may start `claude --bg` on a user's login.
+No token is needed: sessions run on the user's own stored login in the unmodified program, which removes token passing. Each session uses the user's subscription quota. The legal reading of [concept 3.0 §14, question 10](v3-concept.md#14-decided-on-acceptance) still applies: the owner's own use looks allowed, and other users are not settled. So the owner still asks Anthropic before anyone else runs Markitect.
 
-**The app.** The owner said "we can remove desktop for now". This draft reads that as the whole app, with its spec views and chats. Its chats are the only other use of containers, so this takes Docker out of Markitect altogether, along with the provider adapters, the session helper, the runtime image and the token. It stays recoverable in Git and can come back once the tool has settled. That reading is not confirmed ([§16](#16-questions-for-the-owner)).
+**The app.** The owner said "we can remove desktop for now". This draft reads that as the whole app, with its spec views and chats. Its chats are the only other use of containers, so this takes Docker out of Markitect altogether, along with the provider adapters, the session helper, the runtime image and the token. It stays recoverable in Git and can come back once the tool has settled. The owner confirmed that reading on 6 November 2026, and the app is gone ([DEC-094](register.md#dec-094-main-carries-the-native-version-and-the-app-goes)).
 
 ## 12. Schedules and continuous work
 
 [DEC-084](register.md#dec-084-continuous-change-triggers-become-findings-or-model-proposals-autonomy-grows-in-steps) stands: the loop runs outside Markitect, as a scheduled job that calls `markitect`, and there is no daemon in the product. Its budget per task is the run's deadline and ceiling; a budget per day belongs to the job. Government stays a later step ([IDEA-002](register.md#idea-002-government-delegated-model-maintenance)): its mandate would live in the spec, and a fresh reviewer would accept proposals within it.
 
-Because a Command is a plain command, a schedule needs nothing new: `markitect verify` starts the same background session, and `markitect apply` resumes a dead run. `claude -p` is not involved, so its coming `--bare` default doesn't matter. Two limits stay:
+A schedule now needs a provider session to do what `markitect verify` or `markitect apply` prints, since the tool starts no agent. Two limits stay:
 
-- **The machine must be on and signed in.** Background sessions are local and stop when it shuts down, and in a script `claude --bg` fails on a folder that was never trusted. A server without a stored login is not covered yet.
+- **The machine must be on and signed in.** A server without a stored login is not covered yet.
 - **External signals need isolation.** Issue text can hold instructions aimed at the agent, and a native agent has the user's rights. A run that reads outside input needs a container or a machine with limited rights around it. This wraps the harness and needs no engine.
 
 ## 13. Order of work
@@ -341,22 +313,13 @@ Concept 3.0's tests 2 and 3 fall away, since the aim is no longer to show that t
 
 ## 14. What is not yet shown
 
-**This shape has not run.** The mechanisms below are read from the documentation and the CLI's help. The probe has to show, on Windows, that:
+**The background version was tried on Windows on small changes ([record](../validation/native-version-20261104.md)).** That record covers the launcher, settings and hooks the owner has since dropped. For agents started by the owner's own session, nothing has run yet. What a first run has to show:
 
-- the skill's injected command can start `claude --bg` from inside a session, in Manual mode as well as auto, and from a session already in a linked worktree. If not, the owner types `markitect apply` in a terminal, or the fallback is a forked subagent with `background: true` and `isolation: worktree`;
-- `--worktree` with `baseRef` set to `head` starts from the spec commit. The workflow trial's first attempt failed on worktree isolation, on a temp path's spelling;
-- `--model`, `--effort`, `--permission-mode dontAsk`, `--settings` and `--setting-sources` hold together in a background session, also after a restart and compaction, and it never shows "Needs input";
-- a shell write to a provider's protected path works, or is refused in a way the agent can report. A spec that asks for `.husky` or `.vscode` files could otherwise fail with no defect in the spec;
-- the session starts the reviewer and waits for it, the reviewer gets its narrowed tools, and `agent_type` reaches the hook. A subagent has its own prompt, where the reviewers so far were full sessions on the default one;
-- the Stop hook fires in a background session, sends it back, and lets the wait for a reviewer pass;
-- a PreToolUse hook's `continue: false` really ends the session;
-- the provider's habit of pushing and opening a draft pull request at the end stays off;
-- `submit`, run from inside the worktree, can bring the owner's branch up, and survives outliving a shell call's time limit;
-- a stopped session resumes with its settings, and the states in `claude agents --json` tell a live run from a dead one;
-- personal rules such as `~/.claude/CLAUDE.md` really stay out, which no flag is documented to do;
-- with the deny rule on the shell, a Windows session works through Git Bash alone. The provider turns PowerShell off then, which helps the checks of [§7](#7-how-sure-we-are), but no run has worked that way.
-
-**Background sessions are a research preview,** so their interface can change. Only the launcher in `apply` depends on them.
+- the apply skill's printed step makes the owner's session start the builder, and that session starts it again when the run is still open;
+- the builder, as a subagent, starts the reviewer as its own subagent and waits for it;
+- the hook in the project's settings fires inside a subagent and refuses `answer` to anyone but the reviewer;
+- landing over the work in the owner's folder leaves it clean, on Windows line endings too;
+- how often the owner's permission mode stops a builder to ask.
 
 **What the evidence does and doesn't cover:**
 
@@ -370,17 +333,18 @@ Concept 3.0's tests 2 and 3 fall away, since the aim is no longer to show that t
 | Entry | Becomes | What stays from it |
 |---|---|---|
 | [DEC-091](register.md#dec-091-concept-30-is-the-target) | Superseded as the target, once this is accepted | Concept 3.0 as the record; its six problems, words, checklist, answers and Result |
-| [DEC-037](register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers) | Superseded: agents and checks no longer run in containers | A reviewer gets no write tools, and checks run on a disposable copy |
+| [DEC-037](register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers) | Superseded: agents and checks no longer run in containers | A reviewer gets no write tools |
 | [DEC-013](register.md#dec-013-linux-first-for-tests-and-the-playground), [DEC-077](register.md#dec-077-development-pace-and-linux-first-execution) | Amended: agents work on the user's own system, so Windows becomes a main path | Linux tests for Markitect's own code |
 | [DEC-078](register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review) | No remote involved: a run has a local branch, `submit` brings the owner's branch up, and the owner pushes | Work lands without the owner reviewing a diff; Git as the abstraction, not a host |
 | [DEC-080](register.md#dec-080-the-model-is-typed-documentation) | Amended: "Definitions nothing links to and no file realizes" move from warnings of `lint` to errors of `check`, and the command list changes to `check`, `lock`, `refs`, `impact`, `analyze` | The language, and everything else measured staying a warning |
 | [DEC-083](register.md#dec-083-the-host-runs-natively-each-run-lives-in-containers) | No containers and no host | Native on Windows, Linux and macOS |
-| [DEC-066](register.md#dec-066-the-cockpit-is-markitects-desktop-app-and-starts-and-stops-apply), [DEC-089](register.md#dec-089-markitect-desktop-the-app-over-the-cli) | Parked if the owner confirms: no app for now. If it returns, it works over the same commands | The idea of an app over the CLI. The owner being told when a run ends moves to the tool |
+| [DEC-087](register.md#dec-087-required-checks-gate-merged-states-not-each-submission) | Removed for now, by the owner, to see whether they are needed. `execution.yaml` goes too | A merged state must still pass `check --spec` |
+| [DEC-066](register.md#dec-066-the-cockpit-is-markitects-desktop-app-and-starts-and-stops-apply), [DEC-089](register.md#dec-089-markitect-desktop-the-app-over-the-cli) | Parked: no app for now, as the owner confirmed on 6 November 2026. If it returns, it works over the same commands | The idea of an app over the CLI. The owner being told when a run ends moves to the tool |
 | [DEC-092](register.md#dec-092-a-command-uses-the-users-own-sign-in), [DEC-093](register.md#dec-093-a-command-passes-the-users-own-token) | No token and nothing passed on: the session uses the stored login. DEC-092's fallback was to be built only if `claude -p` lost subscription login; that route is no longer used | The unmodified CLI, and the question to Anthropic. The pinned CLI goes, so a change of the provider's defaults can arrive unannounced |
 | [The guide's build decisions](../guides/model-language.md#build-decisions) on stale realization, confirmed by the owner on 28 October 2026, and on a required check's environment | Stale entries are errors, not warnings, and the `environment` field goes | The Command that cleans them up still starts: they are errors in the realization |
 | [Concept 3.0 §14](v3-concept.md#14-decided-on-acceptance), question 1 | The rename no longer waits on test 3. It comes in step 4, once the sealed project's use is settled | One step, with no compatibility kept |
 | [Concept 3.0 §14](v3-concept.md#14-decided-on-acceptance), question 7 | `apply` commits an uncommitted spec instead of refusing it | A change outside the spec is still refused, for the same reason |
-| [Concept 3.0 §14](v3-concept.md#14-decided-on-acceptance), question 9 | Services for required checks come from the user's machine, not an image. The run's first try shows what is missing | `execution.yaml` gets a place for them only if real projects ask |
+| [Concept 3.0 §14](v3-concept.md#14-decided-on-acceptance), question 9 | Services a project needs come from the user's machine, not an image | A run that lacks one says so with `markitect stop --environment` |
 | [Concept 3.0 §14](v3-concept.md#14-decided-on-acceptance), question 12 | One run per branch | The rule for a branch that moved, in a simpler form |
 | [Concept 3.0 §6, §9, §11](v3-concept.md#6-what-apply-does) and [§13](v3-concept.md#13-how-we-know-it-works) | The Command driving Runs, the sandbox, and tests 2 and 3 go. Skills stay optional reading, so they hold no process | The rule that a strategy can't change the check |
 | [Concept 3.0 §8 and §10](v3-concept.md#8-the-checklist) | One reviewer first instead of one per Package at `--full`. A pointer no longer has to show as opened in the transcript, and the Result doesn't measure depth | The answers, pointers, and what each answer covers |
@@ -389,15 +353,15 @@ Concept 3.0's tests 2 and 3 fall away, since the aim is no longer to show that t
 
 ## 16. Questions for the owner
 
-Each has a recommendation, and none is decided. Already decided by the owner: the name `submit`, own worktree, and that `submit` brings the branch up by itself.
+Each has a recommendation, and none is decided. Already decided by the owner: the name `submit`, that `submit` brings the branch up by itself, that required checks go for now to see whether they are needed, that a plugin waits while the CLI carries the setup, that a run's agents are started by the owner's own session, and that the app goes.
 
-1. **Starting the session.** Is `markitect apply`, behind the apply skill, starting the provider's background session native enough? Recommended: yes, for the reasons in [§5](#5-what-apply-does). The alternative is a forked subagent of the owner's session, with the costs named there.
-2. **What a run may do.** An unattended agent may run any shell command as the user, with the worktree checks and the deny rule around it. Recommended for specs and repositories the owner trusts, since anything narrower refuses real work. The alternative is auto mode, whose classifier reviews each action, with a hook that denies what would prompt; it is safer and refuses more, so it fails runs more often.
-3. **How the owner hears of the end of a run.** One line from every `markitect` command is in this draft. Recommended: also a desktop notice on close, or the owner has to go and look.
+1. **Starting the session.** Decided by the owner on 5 November 2026: the owner's own session starts the agents, with no background session ([§5](#5-what-apply-does)).
+2. **What a run may do.** Settled with question 1: the agents work under the owner's own permission mode and settings, and the builder accepts file edits without asking.
+3. **How the owner hears of the end of a run.** Settled with question 1: the owner's session waits for the builder and sees it end.
 4. **A run's limit.** A deadline of 6 hours and 30 `submit`s, with no spending limit, since the provider offers none here. Recommended for now; the numbers are guesses for step 3 to correct.
 5. **One version or two.** The owner asked for "the two simplest approaches". Recommended: one now, the workflow as the second only if this one fails too often. The owner also expected a package per version behind an interface; a strategy here is a folder of harness files, with no code interface, because the tool does not change between versions.
-6. **The old version.** Keep the engine until the probe passes, then remove it in step 2. Recommended, since the backup branch `archive/main-pre-native-20261104` holds it anyway. The owner earlier said to keep it for now and discuss.
+6. **The old version.** Settled on 6 November 2026: Main carries this version, and Main until then is kept on the branch `archive/main-concept-3-20261106` ([DEC-094](register.md#dec-094-main-carries-the-native-version-and-the-app-goes)).
 7. **The suite.** Remove its runner and arms, and keep the Makerspace projects and hidden cases, which step 3 runs on. Recommended, and open.
 8. **`update`.** The owner proposed it. Hold it back until the tool has settled, as [§3](#commands-on-the-spec) does? Recommended.
-9. **The app.** Does "remove desktop" mean the whole app, which takes Docker out of Markitect? This draft assumes yes.
+9. **The app.** Decided by the owner on 6 November 2026: the whole app goes ([DEC-094](register.md#dec-094-main-carries-the-native-version-and-the-app-goes)).
 10. **What "reliable" means.** Step 3's two clean passes on the 8 change steps is a proposal for the talk on evaluation the owner asked for. Is that the finish line?

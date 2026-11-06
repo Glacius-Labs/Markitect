@@ -90,24 +90,52 @@ func trailers(message string) map[string][]string {
 	return t
 }
 
-// lastBase is the default base: the work of the last landing on the target,
-// read from the landing commit's trailer. A landing commit without one is its
-// own base.
-func (e *Engine) lastBase(ctx context.Context, tip string) (string, bool, error) {
-	landed, ok, err := e.Git.LastLanded(ctx, tip)
-	if err != nil || !ok {
-		return "", ok, err
-	}
-	c, err := e.Git.Commit(ctx, landed)
+// landings are the commits that landed a Result. A Result of a Run that did not
+// land says so in its trailers: merging such a branch by hand does not make it
+// realized work, so its changes stay in the next impact and get reviewed. A commit
+// with no trailers, such as a squash merge, counts as what it is.
+func (e *Engine) landings(ctx context.Context, tip, since string) ([]string, error) {
+	all, err := e.Git.Landings(ctx, tip, since)
 	if err != nil {
-		return "", false, err
+		return nil, err
 	}
-	if w := trailers(c.Message)[trailerWork]; len(w) == 1 {
-		if ok, err := e.Git.Contains(ctx, landed, w[0]); err == nil && ok {
-			return w[0], true, nil
+	var out []string
+	for _, id := range all {
+		c, err := e.Git.Commit(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		if len(trailers(c.Message)[trailerState]) == 0 {
+			out = append(out, id)
 		}
 	}
-	return landed, true, nil
+	return out, nil
+}
+
+// lastLanding is the newest landing and the work it names, read from its trailer.
+// A landing without one is its own work.
+func (e *Engine) lastLanding(ctx context.Context, tip string) (landing, work string, ok bool, err error) {
+	all, err := e.landings(ctx, tip, "")
+	if err != nil || len(all) == 0 {
+		return "", "", false, err
+	}
+	landing = all[0]
+	c, err := e.Git.Commit(ctx, landing)
+	if err != nil {
+		return "", "", false, err
+	}
+	if w := trailers(c.Message)[trailerWork]; len(w) == 1 {
+		if ok, err := e.Git.Contains(ctx, landing, w[0]); err == nil && ok {
+			return landing, w[0], true, nil
+		}
+	}
+	return landing, landing, true, nil
+}
+
+// lastBase is the default base: the work of the last landing on the branch.
+func (e *Engine) lastBase(ctx context.Context, tip string) (string, bool, error) {
+	_, work, ok, err := e.lastLanding(ctx, tip)
+	return work, ok, err
 }
 
 // covered lists the kept Run branches this landing covers, with their tips: a
@@ -139,6 +167,10 @@ func (e *Engine) covered(ctx context.Context, r *Result) (map[string]string, err
 		t := trailers(c.Message)
 		if len(t[trailerRun]) != 1 || t[trailerRun][0] != name || len(t[trailerStart]) != 1 ||
 			len(t[trailerTarget]) != 1 || t[trailerTarget][0] != r.Target || len(c.Parents) != 1 {
+			continue
+		}
+		// A verify's branch holds its Findings, which a landing does not settle.
+		if cmd := t[trailerCommand]; len(cmd) != 1 || cmd[0] != "apply" {
 			continue
 		}
 		changed, err := e.Git.Changed(ctx, c.Parents[0], tip)

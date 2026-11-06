@@ -2,12 +2,10 @@ package run
 
 import (
 	"fmt"
-	"path"
 	"regexp"
 	"strconv"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/internal/agentport"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
@@ -24,22 +22,12 @@ const explanationMark = "--"
 
 var answerWords = []string{AnswerOK, AnswerWrong, AnswerNotShown, AnswerSpecProblem}
 
-// What the transcript shows of a pointer's file.
-const (
-	Opened      = "opened"
-	NotMeasured = "not measured"
-	NotOpened   = "not opened"
-)
-
 // Pointer is one place a reviewer names: a file, a line, a test.
 type Pointer struct {
 	File string `json:"file"`
 	Line int    `json:"line,omitempty"`
 	// Tests names the tests in that file the answer rests on.
 	Tests []string `json:"tests,omitempty"`
-	// Opened says what the transcript shows of the file: Opened, NotMeasured
-	// or NotOpened.
-	Opened string `json:"opened,omitempty"`
 }
 
 // Answer is one item's answer.
@@ -172,19 +160,14 @@ func splitPointers(s string) []string {
 	return parts
 }
 
-// checkAnswers is what the Command checks of the answers (concept 3.0 §8): that
-// every item has one, that each location exists, that the transcript shows the
-// file was opened and that a named test exists. It marks each pointer with what
-// the transcript shows, and returns the problems for the reviewer to correct
-// and the locations the registry does not list for their items, which are
-// reported and refuse nothing.
-func checkAnswers(state project.Repository, repoDir string, items []Item, answers map[string]Answer, seen agentport.Seen) (problems, missingLinks []string) {
-	opened := openedFiles(seen.Opened, repoDir)
-	commands := strings.Join(seen.Commands, "\n")
+// checkAnswers is what the tool checks of the answers it has: that each location
+// exists in the commit under review and that a named test exists. It returns the
+// problems for the reviewer to correct, and the locations the registry does not
+// list for their items, which are reported and refuse nothing.
+func checkAnswers(state project.Repository, items []Item, answers map[string]Answer) (problems, missingLinks []string) {
 	for _, it := range items {
 		a, ok := answers[it.Key]
 		if !ok {
-			problems = append(problems, fmt.Sprintf("%s has no answer", it.Key))
 			continue
 		}
 		if a.Word != AnswerOK && a.Explanation == "" {
@@ -212,77 +195,12 @@ func checkAnswers(state project.Repository, repoDir string, items []Item, answer
 					problems = append(problems, fmt.Sprintf("%s: %s names no test %s", it.Key, p.File, name))
 				}
 			}
-			switch {
-			case opened[p.File] || strings.Contains(commands, p.File):
-				p.Opened = Opened
-			case !seen.Measured || len(seen.Commands) > 0 || seen.Subagents > 0:
-				// A shell command or a subagent may have read it without
-				// naming it, which the transcript cannot show.
-				p.Opened = NotMeasured
-			default:
-				p.Opened = NotOpened
-				problems = append(problems, fmt.Sprintf("%s: the transcript shows no read of %s", it.Key, p.File))
-			}
 			if it.Kind == ItemDefinition && !listed[p.File] {
 				missingLinks = append(missingLinks, fmt.Sprintf("%s: %s is not listed for it", it.Key, p.File))
 			}
 		}
-		answers[it.Key] = a
 	}
 	return problems, dedupe(missingLinks)
-}
-
-// openedFiles is the set of repository files a transcript shows being read,
-// from the absolute or relative names it uses.
-func openedFiles(names []string, repoDir string) map[string]bool {
-	out := map[string]bool{}
-	for _, n := range names {
-		n = path.Clean(strings.ReplaceAll(n, `\`, "/"))
-		if rel, ok := strings.CutPrefix(n, repoDir+"/"); ok {
-			n = rel
-		}
-		out[n] = true
-	}
-	return out
-}
-
-// measure is how much checking really happened (concept 3.0 §10), from the
-// answers that stand and what the reviewers' sessions showed.
-func measure(answers map[string]Answer, seen []agentport.Seen) Depth {
-	var d Depth
-	opened := map[string]bool{}
-	for _, s := range seen {
-		d.Measured = d.Measured || s.Measured
-		for _, f := range s.Opened {
-			opened[f] = true
-		}
-		d.Commands += len(s.Commands)
-		d.Subagents += s.Subagents
-	}
-	d.FilesOpened = len(opened)
-	repeats := map[string]int{}
-	for _, a := range answers {
-		var parts []string
-		for _, p := range a.Pointers {
-			parts = append(parts, fmt.Sprintf("%s:%d(%s)", p.File, p.Line, strings.Join(p.Tests, ",")))
-			switch p.Opened {
-			case Opened:
-				d.PointersOpened++
-			case NotMeasured:
-				d.PointersNotMeasured++
-			}
-		}
-		d.Pointers += len(a.Pointers)
-		if len(parts) > 0 || a.Explanation != "" {
-			repeats[a.Word+"|"+strings.Join(parts, ",")+"|"+a.Explanation]++
-		}
-	}
-	for _, n := range repeats {
-		if n > 1 {
-			d.RepeatedAnswers += n
-		}
-	}
-	return d
 }
 
 // clip shortens a line an agent wrote for a message back to it.

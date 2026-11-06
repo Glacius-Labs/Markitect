@@ -3,13 +3,17 @@ package cli
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/libraries"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
+	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/skills"
 )
 
@@ -28,10 +32,21 @@ func (c CLI) init(ctx context.Context, args []string) (int, error) {
 	if fs.NArg() != 0 {
 		return Misused, fmt.Errorf("takes no arguments")
 	}
-	ws, err := c.Git.Open(ctx, o.repo)
+	opened, err := c.Git.Open(ctx, o.repo)
 	if err != nil {
-		return Misused, err
+		// A folder in no repository becomes one: a Run's work goes in and out as
+		// commits. One inside a repository Git would not open, for example for its
+		// owner, keeps the error rather than getting a repository of its own.
+		if insideRepository(o.repo) || c.Git.Create(ctx, o.repo) != nil {
+			return Misused, err
+		}
+		if opened, err = c.Git.Open(ctx, o.repo); err != nil {
+			return Misused, err
+		}
+		fmt.Fprintln(c.Stdout, "created a Git repository")
 	}
+	rec := &recorder{Workspace: opened}
+	var ws Workspace = rec
 	if name == "" {
 		name = filepath.Base(ws.Root())
 	}
@@ -46,10 +61,7 @@ func (c CLI) init(ctx context.Context, args []string) (int, error) {
 		created(file)
 		return nil
 	}
-	if err := writeNew(project.ManifestFile, []byte(fmt.Sprintf("# The Libraries this project uses, with their versions. Run markitect lock after a change.\nlibraries:\n  std: %s\n", libraries.Version))); err != nil {
-		return Misused, err
-	}
-	if err := writeNew(project.ChecksFile, []byte(checksTemplate)); err != nil {
+	if err := writeNew(project.ManifestFile, []byte(fmt.Sprintf(manifestTemplate, libraries.Version))); err != nil {
 		return Misused, err
 	}
 	modelFiles, err := ws.List(project.ModelDir)
@@ -64,7 +76,12 @@ func (c CLI) init(ctx context.Context, args []string) (int, error) {
 	if err := writeNew(project.RootPage, []byte(rootPageTemplate)); err != nil {
 		return Misused, err
 	}
-	if err := c.ensureIgnored(ws, created); err != nil {
+	if ws.Exists(instructionsFile) {
+		fmt.Fprintf(c.Stdout, "left %s as it is; add that this project has a spec in %s, which is the authority\n", instructionsFile, project.ModelDir)
+	} else if err := writeNew(instructionsFile, []byte(fmt.Sprintf(instructionsTemplate, name))); err != nil {
+		return Misused, err
+	}
+	if err := writeNew("CLAUDE.md", []byte("@"+instructionsFile+"\n")); err != nil {
 		return Misused, err
 	}
 	if !ws.Exists(project.LockFile) {
@@ -77,8 +94,165 @@ func (c CLI) init(ctx context.Context, args []string) (int, error) {
 		return Misused, err
 	}
 	fmt.Fprintf(c.Stdout, "installed the skills %s into %s\n", strings.Join(installed, ", "), strings.Join(SkillDirs, " and "))
-	fmt.Fprintln(c.Stdout, "next: register the repository's files on the registry pages, or model an existing project with the markitect-extract skill; then run markitect check")
+	if err := installHarness(ws); err != nil {
+		return Misused, err
+	}
+	fmt.Fprintln(c.Stdout, "installed the harness: the apply and verify skills, and the builder and reviewer agents")
+	if err := c.ensureAnswerHook(ws); err != nil {
+		return Misused, err
+	}
+	switch committed, err := ws.CommitOwn(rec.files, initMessage); {
+	case err != nil:
+		fmt.Fprintf(c.Stdout, "could not commit what init wrote, so commit it yourself before the first apply; if Git ignores .claude/, the harness stays on disk and that is enough: %v\n", err)
+	case committed:
+		fmt.Fprintln(c.Stdout, "committed what init wrote")
+	}
+	fmt.Fprintf(c.Stdout, "\n%s\n", skills.About)
+	if len(modelFiles) == 0 {
+		fmt.Fprint(c.Stdout, nextSteps)
+	}
 	return OK, nil
+}
+
+const initMessage = "Set up Markitect"
+
+// recorder notes what init writes, so that it commits that and nothing else.
+type recorder struct {
+	Workspace
+	files []string
+}
+
+func (r *recorder) Write(file string, data []byte) error {
+	r.files = append(r.files, file)
+	return r.Workspace.Write(file, data)
+}
+
+func (r *recorder) Remove(file string) error {
+	r.files = append(r.files, file)
+	return r.Workspace.Remove(file)
+}
+
+// installHarness writes the harness of a Run for Claude Code and removes every
+// other file of it the binary no longer ships.
+func installHarness(ws Workspace) error {
+	want := map[string][]byte{}
+	for _, f := range skills.Harness() {
+		want[f.Path] = f.Data
+	}
+	for _, dir := range []string{".claude/agents", ".claude/skills"} {
+		existing, err := ws.List(dir)
+		if err != nil {
+			return err
+		}
+		for _, f := range existing {
+			_, keep := want[f]
+			owned := strings.HasPrefix(strings.TrimPrefix(f, dir+"/"), skills.HarnessPrefix)
+			if !keep && owned && !shippedSkill(f) {
+				if err := ws.Remove(f); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	for file, data := range want {
+		if err := ws.Write(file, data); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// shippedSkill says a file belongs to a skill installSkills looks after.
+func shippedSkill(file string) bool {
+	for _, f := range skills.Files() {
+		if ".claude/skills/"+f.Path == file {
+			return true
+		}
+	}
+	return false
+}
+
+// insideRepository says whether dir or a folder above it holds a .git entry.
+func insideRepository(dir string) bool {
+	abs, err := filepath.Abs(dir)
+	if err != nil {
+		return false
+	}
+	for {
+		if _, err := os.Lstat(filepath.Join(abs, ".git")); err == nil {
+			return true
+		}
+		parent := filepath.Dir(abs)
+		if parent == abs {
+			return false
+		}
+		abs = parent
+	}
+}
+
+// answerHook lets only the reviewer store answers, so that an agent cannot mark
+// its own work as done. It runs only before markitect answer.
+var answerHook = map[string]any{
+	"matcher": "Bash",
+	"hooks":   []any{map[string]any{"type": "command", "if": "Bash(markitect answer*)", "command": run.HookCommand}},
+}
+
+// ensureAnswerHook adds the hook to the project's settings and keeps what else
+// they hold. Settings it cannot read, or whose hooks have an unexpected shape, it
+// leaves as they are and says so; a run then refuses to start until the hook is
+// there.
+func (c CLI) ensureAnswerHook(ws Workspace) error {
+	settings := map[string]any{}
+	lacks := func(why string) error {
+		fmt.Fprintf(c.Stdout, "left %s as it is, %s; add the hook that lets only the reviewer answer by hand: %q before Bash\n", run.SettingsFile, why, run.HookCommand)
+		return nil
+	}
+	if ws.Exists(run.SettingsFile) {
+		data, err := ws.Read(run.SettingsFile)
+		if err != nil {
+			return err
+		}
+		if run.HasAnswerHook(data) {
+			return nil
+		}
+		dec := json.NewDecoder(bytes.NewReader(data))
+		dec.UseNumber()
+		if err := dec.Decode(&settings); err != nil {
+			return lacks(fmt.Sprintf("because it is not valid JSON (%v)", err))
+		}
+		if _, err := dec.Token(); err != io.EOF {
+			return lacks("because it holds more than one JSON value")
+		}
+		if settings == nil {
+			return lacks("because it is not a JSON object")
+		}
+	}
+	hooks := map[string]any{}
+	if v, ok := settings["hooks"]; ok {
+		if hooks, ok = v.(map[string]any); !ok {
+			return lacks("because its hooks are not an object")
+		}
+	}
+	var pre []any
+	if v, ok := hooks["PreToolUse"]; ok {
+		if pre, ok = v.([]any); !ok {
+			return lacks("because its PreToolUse hooks are not a list")
+		}
+	}
+	hooks["PreToolUse"] = append(pre, answerHook)
+	settings["hooks"] = hooks
+	var b bytes.Buffer
+	enc := json.NewEncoder(&b)
+	enc.SetEscapeHTML(false)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(settings); err != nil {
+		return err
+	}
+	if err := ws.Write(run.SettingsFile, b.Bytes()); err != nil {
+		return err
+	}
+	fmt.Fprintf(c.Stdout, "added the hook that lets only the reviewer answer to %s\n", run.SettingsFile)
+	return nil
 }
 
 // installSkills writes every skill file into each skill folder and removes
@@ -97,7 +271,7 @@ func installSkills(ws Workspace) ([]string, error) {
 			return nil, err
 		}
 		for _, f := range existing {
-			if _, keep := want[f]; !keep && strings.HasPrefix(strings.TrimPrefix(f, dir+"/"), "markitect-") {
+			if _, keep := want[f]; !keep && strings.HasPrefix(strings.TrimPrefix(f, dir+"/"), "markitect-") && !harnessFile(f) {
 				if err := ws.Remove(f); err != nil {
 					return nil, err
 				}
@@ -112,48 +286,14 @@ func installSkills(ws Workspace) ([]string, error) {
 	return skills.Names(), nil
 }
 
-// ensureIgnored adds the installed skill folders to the ignore page, so that
-// they need no registry entry.
-func (c CLI) ensureIgnored(ws Workspace, created func(string)) error {
-	var current []byte
-	if ws.Exists(project.IgnoreFile) {
-		data, err := ws.Read(project.IgnoreFile)
-		if err != nil {
-			return err
-		}
-		current = data
-	}
-	var rows []string
-	for _, dir := range SkillDirs {
-		pattern := dir + "/markitect-*/**"
-		if !bytes.Contains(current, []byte(pattern)) {
-			rows = append(rows, fmt.Sprintf("| `%s` | Skills installed by markitect init |\n", pattern))
+// harnessFile says a file belongs to the harness installHarness looks after.
+func harnessFile(file string) bool {
+	for _, f := range skills.Harness() {
+		if f.Path == file {
+			return true
 		}
 	}
-	if len(rows) == 0 {
-		return nil
-	}
-	var b bytes.Buffer
-	if current == nil {
-		b.WriteString(ignoreHeader)
-	} else {
-		b.Write(current)
-		if !bytes.HasSuffix(current, []byte("\n")) {
-			b.WriteString("\n")
-		}
-		b.WriteString("\n")
-	}
-	b.WriteString("| Path | Why |\n|---|---|\n")
-	b.WriteString(strings.Join(rows, ""))
-	if err := ws.Write(project.IgnoreFile, b.Bytes()); err != nil {
-		return err
-	}
-	if current == nil {
-		created(project.IgnoreFile)
-	} else {
-		fmt.Fprintf(c.Stdout, "added the skill folders to %s\n", project.IgnoreFile)
-	}
-	return nil
+	return false
 }
 
 func (c CLI) lock(ctx context.Context, args []string) (int, error) {
@@ -214,17 +354,30 @@ func (c CLI) writeLock(ws Workspace) (int, error) {
 	return OK, nil
 }
 
-const checksTemplate = `# The required checks: the one proof in a Run that does not come from an agent.
-# Each check runs its command with sh -c in the named directory, inside the
-# environment (a container image), within the timeout. For example:
-#
-# checks:
-#   - name: test
-#     command: go test ./...
-#     directory: .
-#     timeout: 10m
-#     environment: golang:1.27
-checks: []
+// manifestTemplate is a new project's manifest.
+const manifestTemplate = `# The Libraries this project uses, with their versions. Run markitect lock after a change.
+# model, optional, names the model a run's agents use; without it they use sonnet.
+libraries:
+  std: %s
+`
+
+// instructionsFile is the file coding agents read when a session starts. Claude
+// Code reads it through CLAUDE.md, which holds only an import of it.
+const instructionsFile = "AGENTS.md"
+
+// instructionsTemplate tells any session what kind of project this is. A Run's
+// sessions read it too, so it holds no process.
+const instructionsTemplate = "# %s\n\n" + skills.About + "\n" +
+	"A change to what the project does starts in the spec, written with the `markitect-modeling` skill and accepted by the owner. A new project starts with the `markitect-start` skill, and a repository that already has code with `markitect-extract`.\n\n" +
+	"`markitect` is a command on the path, and `markitect help` lists what it does.\n\n" +
+	"Inside a Markitect run, your task says what to do, and the spec stays as it is.\n"
+
+// nextSteps ends the init of a new project. The session that ran init started
+// before the skills existed, and Claude Code does not watch a skills folder that
+// was not there when a session started.
+const nextSteps = `next: run /markitect-start in Claude Code here. It asks what the project is and starts the spec with you.
+A session that was open before init runs /reload-skills first, or reads .claude/skills/markitect-start/SKILL.md.
+If the repository already has code, use /markitect-extract instead.
 `
 
 const anchorTemplate = `---
@@ -242,10 +395,4 @@ Definitions it realizes and why.
 
 | File | Realizes | Why |
 |---|---|---|
-`
-
-const ignoreHeader = `# Ignored files
-
-Files that deliberately belong to no Package.
-
 `

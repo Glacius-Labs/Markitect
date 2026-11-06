@@ -34,7 +34,7 @@ func (e *Engine) fullCheck(ctx context.Context, target, tip string) FullCheck {
 }
 
 func (e *Engine) countFullCheck(ctx context.Context, target, tip string) (FullCheck, error) {
-	landings, err := e.Git.Landings(ctx, tip, "")
+	landings, err := e.landings(ctx, tip, "")
 	if err != nil {
 		return FullCheck{}, err
 	}
@@ -85,7 +85,7 @@ func (e *Engine) countFullCheck(ctx context.Context, target, tip string) (FullCh
 		} else if !ok {
 			continue
 		}
-		since, err := e.Git.Landings(ctx, tip, check)
+		since, err := e.landings(ctx, tip, check)
 		if err != nil {
 			return FullCheck{}, err
 		}
