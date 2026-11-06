@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -8,6 +9,39 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/skills"
 )
+
+// personalSkillFile is where the personal skill lives. Claude Code keeps its own
+// folder where CLAUDE_CONFIG_DIR says, if set.
+func personalSkillFile() (string, error) {
+	config := os.Getenv("CLAUDE_CONFIG_DIR")
+	if config == "" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		config = filepath.Join(home, ".claude")
+	}
+	return filepath.Join(config, "skills", skills.PersonalName, "SKILL.md"), nil
+}
+
+// personalSkillState says how the personal skill in place compares with the text
+// this binary would write.
+func personalSkillState() (file string, state fileState, err error) {
+	file, err = personalSkillFile()
+	if err != nil {
+		return "", current, err
+	}
+	data, err := os.ReadFile(file)
+	switch {
+	case errors.Is(err, os.ErrNotExist):
+		return file, missing, nil
+	case err != nil:
+		return file, current, err
+	case sameText(data, skills.Personal()):
+		return file, current, nil
+	}
+	return file, outdated, nil
+}
 
 // install writes the personal skill from the binary, so that its text cannot
 // drift. Only something outside a project reaches a session in a new folder; init
@@ -21,22 +55,23 @@ func (c CLI) install(args []string) (int, error) {
 	if fs.NArg() != 0 {
 		return Misused, fmt.Errorf("takes no arguments")
 	}
-	// Claude Code keeps its own folder where CLAUDE_CONFIG_DIR says, if set.
-	config := os.Getenv("CLAUDE_CONFIG_DIR")
-	if config == "" {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return Misused, err
-		}
-		config = filepath.Join(home, ".claude")
-	}
-	file := filepath.Join(config, "skills", skills.PersonalName, "SKILL.md")
-	if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
+	file, err := writePersonalSkill()
+	if err != nil {
 		return Misused, err
 	}
-	if err := os.WriteFile(file, skills.Personal(), 0o644); err != nil {
-		return Misused, err
-	}
-	fmt.Fprintf(c.Stdout, "wrote %s\nClaude Code now knows what Markitect is, in every folder. Run this again after an upgrade.\n", file)
+	fmt.Fprintf(c.Stdout, "wrote %s\nClaude Code now knows what Markitect is, in every folder. After an upgrade, markitect update brings this file and your projects in line.\n", file)
+	c.warnPath()
 	return OK, nil
+}
+
+// writePersonalSkill writes the personal skill and returns where.
+func writePersonalSkill() (string, error) {
+	file, err := personalSkillFile()
+	if err != nil {
+		return "", err
+	}
+	if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
+		return "", err
+	}
+	return file, os.WriteFile(file, skills.Personal(), 0o644)
 }

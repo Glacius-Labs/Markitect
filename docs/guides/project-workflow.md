@@ -8,7 +8,7 @@ The commands run wherever Go and Git run, on Windows, Linux and macOS. Build the
 go run ./cmd/markitect help
 ```
 
-After you install the binary, run `markitect install` once, and again after an upgrade. It writes a personal skill, `~/.claude/skills/markitect/SKILL.md`, so a Claude Code session in any folder knows what Markitect is and how to begin. Runs don't read it.
+The [README](../../README.md#install) gives the ways to get the `markitect` command: the Claude Code plugin, a binary from the releases, or `go install`. After you install a binary, you can run `markitect install` once. It writes a personal skill, `~/.claude/skills/markitect/SKILL.md`, so a Claude Code session in any folder knows what Markitect is and how to begin; the plugin brings the same skill itself. Runs don't read it, and nothing depends on it: `init` says the same and gives the project its own skills. Whatever the skills and agents call is `markitect` by that name, so the folder of the binary must be on the `PATH`; `version`, `install`, `init` and `update` warn when the `PATH` finds no `markitect`, or another one. [Keep it current](#8-keep-it-current) says what to do after an upgrade.
 
 The V1 workflow with Apply, the Linux runner, runtime profiles, run configuration, state and evidence is kept at the base commit of T1: [V1 project workflow](https://github.com/Glacius-Labs/Markitect/blob/f23c2e12d9833efa61e5e65c90018016423abe74/docs/guides/project-workflow.md).
 
@@ -81,12 +81,40 @@ The agents work under your session's permission mode and settings, so they may a
 
 Exit code 0 means success, 1 that the command ran and found errors, 2 that it could not run. For `apply` and `verify`, 0 means a run is open or there was nothing to do. `--json` is on the spec's commands.
 
+## 8. Keep it current
+
+```text
+markitect version [--repo PATH]
+markitect update  [--repo PATH] [--check]
+```
+
+`markitect` writes some files outside its own binary: the personal skill, and in each project the skills, the builder and reviewer agents, the hook in `.claude/settings.json` and the lock. After an upgrade of the binary they are from the older build until you update them. `update` does both: it upgrades the binary, then has the new binary bring those files in line.
+
+`version` prints the build, then says for the personal skill and for the project in `--repo` whether it matches this binary: *up to date*, *out of date* or, for the personal skill, *not installed*. It changes nothing. Every command that reads the project (`check`, `lint`, `refs`, `graph`, `impact`, `lock`, `status`) also prints one line on standard error when the project's skills and agents differ.
+
+`update` puts that right, the way `init` does, and never touches a spec file, `AGENTS.md` or `CLAUDE.md`:
+
+- The **binary** is replaced by the newest [release](https://github.com/Glacius-Labs/Markitect/releases), unless it is already the newest. `update` reads the newest tag from GitHub, downloads the binary for your system, checks it against the checksums of that release and puts it in the place of the running one; on Windows the old file steps aside first and goes at the next update. The new binary then carries out the rest, since only it knows the files it ships. Without a network, `update` says so and goes on with the files. It leaves two kinds of binary alone: one the plugin manages (`MARKITECT_PLUGIN` is set), which the plugin updates with `claude plugin update markitect@markitect`, and a development build (`0.0.0-dev` or `-dev` after any version) that is older than the newest release, which only `--force` replaces; one that is newer counts as up to date. `--files` skips this step.
+- The **personal skill** is refreshed if it exists. `update` does not create it; `install` does, because `install` is the one command that writes into the home folder for the first time.
+- The project's **skills, agents and hook** are rewritten where they differ, files the binary no longer ships are removed, and the change is committed as "Update Markitect". Your settings in `.claude/settings.json` stay.
+- The **lock** is rewritten from the manifest and left uncommitted: a changed lock means the Libraries your spec is checked against changed, so you read `git diff .markitect/lock.yaml` and commit it yourself.
+
+`update --check` changes nothing, lists what is out of date, including a newer release, and exits 1 if anything is. Files are compared without regard to line endings, so a checkout with CRLF is not out of date. This is the one command that uses the network, and only the releases page of GitHub; `MARKITECT_RELEASES_URL` points it, and the plugin's launcher, to a mirror with the same layout.
+
+The plugin's launcher downloads the binary of the release with the plugin's own version into the plugin's data folder, `~/.claude/plugins/data/markitect-markitect/`, on the first call of a session or at its start. If a sandboxed shell blocks the network, the session-start hook of the plugin fetches it outside the sandbox.
+
 ## Troubleshooting
 
 | Observation | Response |
 | --- | --- |
+| The skills and agents of this project come from another markitect | Run `markitect update` ([keep it current](#8-keep-it-current)). |
+| `markitect` is not on your PATH, or the one on the PATH is not this one | Put the folder of the binary (`go env GOPATH` plus `bin` for `go install`) first on the `PATH`; the skills and agents call `markitect` by name. |
+| `update` says it could not look for a newer release | There is no network or no release yet. The files were refreshed all the same; run `update` again with a network. |
+| `update` says a development build is not replaced | The binary is built from source. `markitect update --force` replaces it by the newest release; otherwise build it again from source. |
+| `markitect (plugin): cannot download ...` | The plugin's launcher could not reach the releases page; a sandboxed shell may block it. Start a new session, whose start hook fetches outside the sandbox, or download the binary of the release by hand ([the README](../../README.md#install)). |
+| `markitect` exists in Claude Code but not in your terminal | The plugin puts it on the path of Claude Code's shell only. Install a binary for your terminal ([the README](../../README.md#install)). |
 | `file.unregistered` | List the file on its owner's registry page, or in the ignore file. |
-| `lock.mismatch` after an upgrade of `markitect` | A standard Library changed. Run `markitect lock`, review the lock diff and commit it. |
+| `lock.mismatch` after an upgrade of `markitect` | A standard Library changed. Run `markitect update` (or `markitect lock`), review the lock diff and commit it. |
 | `package.cycle` | Move the shared concept into a common parent, or invert the dependency ([links, scope and visibility](model-language.md#links-scope-and-visibility)). |
 | `lint.no_paths` | A Package owns no file. Name its first path patterns on its registry page ([first patterns](model-language.md#registry-pages)). |
 | `stale.definition`, `stale.file`, `stale.page` | A registry page still names a removed Definition, file or Package. `markitect apply` puts it on its checklist, and `submit` refuses work that leaves it. |

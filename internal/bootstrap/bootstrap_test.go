@@ -4,16 +4,24 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/cli"
+	"github.com/Glacius-Labs/Markitect/internal/adapters/upgrade"
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
-func TestMain(m *testing.M) { testkit.Main(m) }
+func TestMain(m *testing.M) {
+	// No test reaches the real GitHub: a release page is empty unless a test
+	// serves one.
+	os.Setenv(upgrade.BaseEnv, httptest.NewServer(http.NotFoundHandler()).URL)
+	testkit.Main(m)
+}
 
 func run(t *testing.T, dir string, args ...string) (int, string, string) {
 	t.Helper()
@@ -243,7 +251,7 @@ func TestInstallWritesThePersonalSkill(t *testing.T) {
 		t.Fatal(err)
 	}
 	skill := string(data)
-	for _, want := range []string{"name: markitect\n", "A Markitect project has one spec", "no need to look for it", "markitect-start", "markitect-extract", "/reload-skills"} {
+	for _, want := range []string{"name: markitect\n", "A Markitect project has one spec", "no need to look for it", "markitect-start", "markitect-extract", "/reload-skills", "markitect update", "claude plugin install markitect@markitect", "github.com/Glacius-Labs/Markitect/releases"} {
 		if !strings.Contains(skill, want) {
 			t.Errorf("the skill lacks %q:\n%s", want, skill)
 		}

@@ -1,9 +1,23 @@
 name: Release
 
+# A release is a tag vX.Y.Z on a commit of main whose source version, and whose
+# plugin version, are X.Y.Z. The tag builds the binaries for six systems, their
+# checksums and the source bundle, publishes them as a GitHub release, and then
+# checks the published release the way a user reaches it: through the plugin's
+# launcher and through markitect update.
+#
+# A manual run is a dry run: it runs the gates and builds and checks every asset,
+# skips what belongs to a tag, and publishes no release. (Run on main, it also
+# starts the source-artifact job of ci.yaml, which is not a release.)
+#
+# A version with a pre-release part (v0.16.0-rc.1) is published as a pre-release,
+# which GitHub never names as the latest release, so markitect update ignores it.
+# A published release that fails the final check is marked as a pre-release too.
 on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -39,23 +53,30 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Validate tag, source version, main ancestry, and build bundle
+      - name: Validate tag, source version, plugin version, main ancestry, and build bundle
         id: release
         shell: bash
         env:
-          TAG: ${{ github.ref_name }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
           SOURCE_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]] || { echo "release tag is not a supported vSemVer: $TAG" >&2; exit 1; }
-          tagged_commit="$(git rev-parse "refs/tags/$TAG^{commit}")"
-          [[ "$tagged_commit" == "$SOURCE_SHA" ]] || { echo "tag does not resolve to the workflow source commit" >&2; exit 1; }
-          git merge-base --is-ancestor "$SOURCE_SHA" origin/main || { echo "tagged commit is not contained in origin/main" >&2; exit 1; }
-
-          version_output="$(go run ./cmd/markitect version)"
-          source_version="$(python -c 'import json,sys; print(json.load(sys.stdin)["version"])' <<< "$version_output")"
-          [[ -n "$source_version" ]] || { echo "could not read the source version from Markitect" >&2; exit 1; }
-          [[ "$TAG" == "v$source_version" ]] || { echo "release tag $TAG does not match source version $source_version" >&2; exit 1; }
+          # "Markitect 0.15.0 (linux/amd64)"
+          source_version="$(go run ./cmd/markitect-release version | awk '{print $2}')"
+          [[ "$source_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]] || { echo "could not read the source version from Markitect: $source_version" >&2; exit 1; }
+          TAG="v$source_version"
+          if [[ "$REF_TYPE" == tag ]]; then
+            TAG="$REF_NAME"
+            [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]] || { echo "release tag is not a supported vSemVer without build metadata: $TAG" >&2; exit 1; }
+            tagged_commit="$(git rev-parse "refs/tags/$TAG^{commit}")"
+            [[ "$tagged_commit" == "$SOURCE_SHA" ]] || { echo "tag does not resolve to the workflow source commit" >&2; exit 1; }
+            git merge-base --is-ancestor "$SOURCE_SHA" origin/main || { echo "tagged commit is not contained in origin/main" >&2; exit 1; }
+            [[ "$source_version" != *-dev ]] || { echo "the source still declares the development version $source_version; a release commit sets the version first" >&2; exit 1; }
+            [[ "$TAG" == "v$source_version" ]] || { echo "release tag $TAG does not match source version $source_version" >&2; exit 1; }
+            plugin_version="$(sed -n 's/^[[:space:]]*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' plugin/.claude-plugin/plugin.json | head -n 1)"
+            [[ "$plugin_version" == "$source_version" ]] || { echo "the plugin names version $plugin_version, not $source_version; a release commit sets both" >&2; exit 1; }
+          fi
 
           bundle_path="$RUNNER_TEMP/markitect-$TAG-bundle.zip"
           go run ./cmd/markitect-release bundle --repo . --revision "$SOURCE_SHA" --output "$bundle_path"
@@ -65,6 +86,7 @@ jobs:
           echo "bundle_sha256=$bundle_sha256" >> "$GITHUB_OUTPUT"
 
       - name: Confirm current remote tag resolves to the workflow source commit
+        if: ${{ github.ref_type == 'tag' }}
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -119,7 +141,7 @@ jobs:
       - preflight
       - bundle-smoke
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 30
     permissions:
       contents: read
     env:
@@ -138,16 +160,18 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Build bundle, portable CLIs, and provenance YAML
-        id: assets
+      - name: Build bundle, binaries for six systems, checksums, and provenance YAML
         shell: bash
         env:
+          REF_TYPE: ${{ github.ref_type }}
           SOURCE_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          [[ "$(git rev-parse "refs/tags/$TAG^{commit}")" == "$SOURCE_SHA" ]] || { echo "release tag moved away from the workflow source commit" >&2; exit 1; }
-          git merge-base --is-ancestor "$SOURCE_SHA" origin/main || { echo "release source commit is no longer contained in origin/main" >&2; exit 1; }
-          [[ "$(go run ./cmd/markitect version | python -c 'import json,sys; print(json.load(sys.stdin)["version"])')" == "$VERSION" ]] || { echo "release source version changed" >&2; exit 1; }
+          if [[ "$REF_TYPE" == tag ]]; then
+            [[ "$(git rev-parse "refs/tags/$TAG^{commit}")" == "$SOURCE_SHA" ]] || { echo "release tag moved away from the workflow source commit" >&2; exit 1; }
+            git merge-base --is-ancestor "$SOURCE_SHA" origin/main || { echo "release source commit is no longer contained in origin/main" >&2; exit 1; }
+          fi
+          [[ "$(go run ./cmd/markitect-release version | awk '{print $2}')" == "$VERSION" ]] || { echo "release source version changed" >&2; exit 1; }
 
           out="$RUNNER_TEMP/markitect-release-$GITHUB_SHA"
           mkdir -p "$out"
@@ -156,39 +180,47 @@ jobs:
           bundle_sha256="$(sha256sum "$bundle" | cut -d ' ' -f 1)"
           [[ "$bundle_sha256" == "$EXPECTED_BUNDLE_SHA256" ]] || { echo "release bundle differs from the bundle the install smoke tested" >&2; exit 1; }
 
-          linux_binary="$out/markitect-$TAG-linux-amd64"
-          windows_binary="$out/markitect-$TAG-windows-amd64.exe"
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -buildvcs=false -ldflags "-s -w -X github.com/Glacius-Labs/Markitect/internal/buildinfo.version=$VERSION" -o "$linux_binary" ./cmd/markitect
-          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -buildvcs=false -ldflags "-s -w -X github.com/Glacius-Labs/Markitect/internal/buildinfo.version=$VERSION" -o "$windows_binary" ./cmd/markitect
+          # The names are the contract with markitect update and the plugin's launcher
+          # (internal/adapters/upgrade, plugin/bin/markitect).
+          ldflags="-s -w -X github.com/Glacius-Labs/Markitect/internal/buildinfo.version=$VERSION -X github.com/Glacius-Labs/Markitect/internal/buildinfo.injectedRevision=$SOURCE_SHA"
+          names=("$(basename "$bundle")")
+          for platform in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64; do
+            goos="${platform%/*}"
+            goarch="${platform#*/}"
+            name="markitect-$TAG-$goos-$goarch"
+            [[ "$goos" != windows ]] || name="$name.exe"
+            CGO_ENABLED=0 GOOS="$goos" GOARCH="$goarch" go build -trimpath -buildvcs=false -ldflags "$ldflags" -o "$out/$name" ./cmd/markitect
+            names+=("$name")
+          done
 
-          linux_sha256="$(sha256sum "$linux_binary" | cut -d ' ' -f 1)"
-          windows_sha256="$(sha256sum "$windows_binary" | cut -d ' ' -f 1)"
-          toolchain="$(go version)"
+          # The binary this runner can start must report the release it is.
+          # Read all of the output before taking its first line: a pipe to head would
+          # close early and kill the binary with SIGPIPE, which pipefail reports.
+          reported="$("$out/markitect-$TAG-linux-amd64" version --repo "$RUNNER_TEMP")"
+          reported="${reported%%$'\n'*}"
+          [[ "$reported" == "markitect $VERSION+$SOURCE_SHA" ]] || { echo "the linux binary reports '$reported', not 'markitect $VERSION+$SOURCE_SHA'" >&2; exit 1; }
+
+          checksums="markitect-$TAG-checksums.txt"
+          (cd "$out" && sha256sum "${names[@]}" > "$checksums")
           provenance="$out/markitect-$TAG-provenance.yaml"
-          cat > "$provenance" <<EOF
-          schemaVersion: "1"
-          tag: "$TAG"
-          sourceCommit: "$SOURCE_SHA"
-          workflowRunId: "$GITHUB_RUN_ID"
-          workflowRunAttempt: "$GITHUB_RUN_ATTEMPT"
-          workflowRun: "https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT"
-          toolchain: "$toolchain"
-          assets:
-            - name: "$(basename "$bundle")"
-              sha256: "$bundle_sha256"
-            - name: "$(basename "$linux_binary")"
-              sha256: "$linux_sha256"
-            - name: "$(basename "$windows_binary")"
-              sha256: "$windows_sha256"
-          EOF
-
-          printf 'out=%s\n' "$out" >> "$GITHUB_OUTPUT"
-          printf 'bundle=%s\n' "$bundle" >> "$GITHUB_OUTPUT"
-          printf 'linux_binary=%s\n' "$linux_binary" >> "$GITHUB_OUTPUT"
-          printf 'windows_binary=%s\n' "$windows_binary" >> "$GITHUB_OUTPUT"
-          printf 'provenance=%s\n' "$provenance" >> "$GITHUB_OUTPUT"
+          {
+            echo 'schemaVersion: "1"'
+            echo "tag: \"$TAG\""
+            echo "sourceCommit: \"$SOURCE_SHA\""
+            echo "workflowRunId: \"$GITHUB_RUN_ID\""
+            echo "workflowRunAttempt: \"$GITHUB_RUN_ATTEMPT\""
+            echo "workflowRun: \"https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT\""
+            echo "toolchain: \"$(go version)\""
+            echo 'assets:'
+            while read -r sum name; do
+              echo "  - name: \"$name\""
+              echo "    sha256: \"$sum\""
+            done < "$out/$checksums"
+          } > "$provenance"
+          ls -l "$out"
 
       - name: Confirm remote tag before retaining assets
+        if: ${{ github.ref_type == 'tag' }}
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -220,3 +252,133 @@ jobs:
           path: ${{ runner.temp }}/markitect-release-${{ github.sha }}/*
           if-no-files-found: error
           retention-days: 30
+
+  publish:
+    name: Publish the GitHub release
+    if: ${{ github.ref_type == 'tag' }}
+    needs:
+      - preflight
+      - assemble
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ needs.preflight.outputs.tag }}
+      VERSION: ${{ needs.preflight.outputs.version }}
+    steps:
+      - name: Download the assets the assemble job built
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: markitect-release-${{ github.sha }}
+          path: assets
+
+      - name: Check the assets and the tag, then publish the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          cd assets
+          # Exactly the files the release promises: the bundle, six binaries, the
+          # checksums and the provenance. Nothing else is published.
+          expected=(
+            "markitect-$TAG-bundle.zip"
+            "markitect-$TAG-linux-amd64" "markitect-$TAG-linux-arm64"
+            "markitect-$TAG-darwin-amd64" "markitect-$TAG-darwin-arm64"
+            "markitect-$TAG-windows-amd64.exe" "markitect-$TAG-windows-arm64.exe"
+            "markitect-$TAG-checksums.txt" "markitect-$TAG-provenance.yaml"
+          )
+          [[ "$(printf '%s\n' "${expected[@]}" | sort)" == "$(ls | sort)" ]] || { echo "the assets are not the expected files:" >&2; ls >&2; exit 1; }
+          sha256sum --check --strict "markitect-$TAG-checksums.txt"
+
+          resolve_remote_tag_commit() {
+            local type sha response depth=0
+            response="$(gh api -H 'X-GitHub-Api-Version: 2026-03-10' "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG")"
+            type="$(jq -r '.object.type // empty' <<< "$response")"
+            sha="$(jq -r '.object.sha // empty' <<< "$response")"
+            while [[ "$type" == tag ]]; do
+              depth=$((depth + 1))
+              [[ $depth -le 8 ]] || { echo "annotated tag chain is unreasonably deep" >&2; return 1; }
+              response="$(gh api -H 'X-GitHub-Api-Version: 2026-03-10' "repos/$GITHUB_REPOSITORY/git/tags/$sha")"
+              type="$(jq -r '.object.type // empty' <<< "$response")"
+              sha="$(jq -r '.object.sha // empty' <<< "$response")"
+            done
+            [[ "$type" == commit && "$sha" =~ ^[0-9a-f]{40}$ ]] || { echo "remote release tag does not resolve to a Git commit" >&2; return 1; }
+            printf '%s' "$sha"
+          }
+          [[ "$(resolve_remote_tag_commit)" == "$SOURCE_SHA" ]] || { echo "current remote release tag no longer resolves to the workflow source commit" >&2; exit 1; }
+
+          cat > "$RUNNER_TEMP/notes.md" <<EOF
+          Markitect $VERSION, built from [draft concept 4.0](https://github.com/$GITHUB_REPOSITORY/blob/$TAG/docs/concepts/v4-concept.md), which is not accepted yet.
+
+          **Install**
+
+          - With Claude Code: \`claude plugin marketplace add Glacius-Labs/Markitect\`, then \`claude plugin install markitect@markitect\`. The plugin brings the \`markitect\` command and keeps it at its own version.
+          - Without it: download the binary for your system, check it against \`markitect-$TAG-checksums.txt\`, and put it on your PATH as \`markitect\`.
+
+          **Update:** \`markitect update\` installs the newest release and brings the skills, agents and lock of your projects in line. A binary the plugin brought is updated with the plugin: \`claude plugin update markitect@markitect\`.
+          EOF
+          flags=()
+          [[ "$VERSION" != *-* ]] || flags+=(--prerelease)
+          gh release create "$TAG" ./* \
+            --repo "$GITHUB_REPOSITORY" \
+            --verify-tag \
+            --title "Markitect $VERSION" \
+            --notes-file "$RUNNER_TEMP/notes.md" \
+            "${flags[@]}"
+
+  verify-published:
+    name: Check the published release the way a user reaches it
+    if: ${{ github.ref_type == 'tag' }}
+    needs:
+      - preflight
+      - publish
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ needs.preflight.outputs.tag }}
+      VERSION: ${{ needs.preflight.outputs.version }}
+    steps:
+      - name: Check out the tagged source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Start markitect through the plugin's launcher, which downloads the release
+        shell: bash
+        run: |
+          set -euo pipefail
+          reported="$(CLAUDE_PLUGIN_DATA="$RUNNER_TEMP/plugin-data" sh plugin/bin/markitect version --repo "$RUNNER_TEMP")"
+          reported="${reported%%$'\n'*}"
+          [[ "$reported" == "markitect $VERSION+"* ]] || { echo "the launcher started '$reported', not markitect $VERSION" >&2; exit 1; }
+
+      - name: Ask markitect update for the newest release
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$VERSION" == *-* ]]; then
+            echo "$TAG is a pre-release, which is never the newest release; nothing to ask update"
+            exit 0
+          fi
+          report="$(go run ./cmd/markitect update --check --repo "$RUNNER_TEMP")"
+          echo "$report"
+          grep -qx "binary: up to date ($VERSION)" <<< "$report" || { echo "markitect update does not find $VERSION as the newest release" >&2; exit 1; }
+
+      - name: Take a release that failed these checks out of the newest-release slot
+        if: ${{ failure() }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --prerelease
+          echo "::error::the published release $TAG failed its checks and is now marked as a pre-release; markitect update no longer offers it"

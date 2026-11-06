@@ -115,6 +115,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-092](#dec-092-a-command-uses-the-users-own-sign-in) | Decision | A Command uses the user's own sign-in | Accepted; not built; superseded in part by [DEC-093](#dec-093-a-command-passes-the-users-own-token) |
 | [DEC-093](#dec-093-a-command-passes-the-users-own-token) | Decision | A Command passes the user's own token | Accepted; being built |
 | [DEC-094](#dec-094-main-carries-the-native-version-and-the-app-goes) | Decision | Main carries the native version, and the app goes | Decided by the owner, 6 November 2026 |
+| [DEC-095](#dec-095-releases-return-with-a-plugin-and-a-binary-that-updates-itself) | Decision | Releases return, with a plugin and a binary that updates itself | Decided by the owner, 6 November 2026 |
 | [PRM-001 to PRM-009](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
@@ -1254,6 +1255,16 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - Markitect Desktop goes as a whole, with its spec views, chats and their containers. This answers [draft concept 4.0 §16, question 9](v4-concept.md#16-questions-for-the-owner).
 - **Supersedes:** [DEC-089](#dec-089-markitect-desktop-the-app-over-the-cli), whose app is removed. [DEC-091](#dec-091-concept-30-is-the-target) stays the accepted target until OQ-012 is decided.
 - **Where it went:** the [archive index](../archive.md#removed-with-the-move-to-the-native-version).
+
+### DEC-095 Releases return, with a plugin and a binary that updates itself
+
+- **Status:** Decided by the owner, 6 November 2026, in the session that built `markitect update`. The owner said releases would come sooner or later anyway, that a plugin should set up everything a user needs and bring the updates, that `markitect update` should upgrade the binary the way `claude` and other command-line tools do, and that the session may release.
+- **Decision:**
+  - Markitect publishes releases again. A tag `vX.Y.Z` on a commit of Main whose source version and plugin version are `X.Y.Z` builds the binaries for six systems (Linux, macOS and Windows, on amd64 and arm64), a checksums file and the source bundle, publishes them as a GitHub release, and checks the published release through the plugin's launcher and `markitect update`. The first is `0.15.0`; the retired versions `0.1.0` to `0.14.1` stay unused ([retirement](../validation/distribution-retirement-20261017.md)). Between releases the source says `-dev`.
+  - The repository is a Claude Code marketplace, `markitect`, and `plugin/` is its plugin. Its launcher fetches the binary of the release that has the plugin's version, so a plugin update is a binary update. It carries the personal skill and a hook for the answer guard.
+  - `markitect update` installs the newest release over the binary, then lets the new binary refresh the personal skill, the project's skills, agents and hook, and the lock. A development build is replaced only with `--force`, and a binary the plugin manages is left to the plugin. It is the one use of the network.
+- **Supersedes:** the statement that no binary release is offered ([packaging](../../packaging/README.md#release-operations)), the "plugin waits" answer of [draft concept 4.0 §16, question 8](v4-concept.md#16-questions-for-the-owner), and the retirement's condition of a new reviewed version and owner authority ([retirement record](../validation/distribution-retirement-20261017.md)), which this decision and the review of its change meet. [DEC-094](#dec-094-main-carries-the-native-version-and-the-app-goes) stays.
+- **Costs, as far as known:** the download is checked against checksums from the same release, so it guards against a damaged or swapped file and not against a release published by someone who controls the repository; signed attestations would add that. The first run of the launcher needs the network, which a sandboxed shell may block, so a session-start hook fetches outside it. The plugin works only in Claude Code, not on claude.ai or in Cowork, which do not install a plugin with a `bin/` folder.
 
 ## Promises
 

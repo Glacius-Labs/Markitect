@@ -1,7 +1,7 @@
-// Package cli is the markitect command line: install, init, check, lock, refs,
-// graph, impact and lint; apply and verify, which open a Run and say which agent
-// the owner's session starts; the commands of a Run; version and licenses. None of
-// them starts an agent.
+// Package cli is the markitect command line: install, update, init, check, lock,
+// refs, graph, impact and lint; apply and verify, which open a Run and say which
+// agent the owner's session starts; the commands of a Run; version and licenses.
+// None of them starts an agent.
 package cli
 
 import (
@@ -61,6 +61,8 @@ No command starts an agent: apply and verify say which one your session starts.
 
 Usage:
   markitect install                               tell Claude Code what Markitect is, in every folder
+  markitect update [--repo DIR] [--check] [--files] [--force]
+                                                  install the newest release, then refresh the personal skill and the project's skills, agents and lock
   markitect init   [--repo DIR] [--name TITLE]   set up a project and install the harness
   markitect check  [--repo DIR] [--json] [--spec] compile the project; --spec looks only at the spec
   markitect lock   [--repo DIR]                   write the lock from the manifest
@@ -75,7 +77,7 @@ Usage:
                                                   open a review of the last commit; changes nothing you have
   markitect status [--repo DIR]                   how the runs of this branch stand
   markitect stop   [--repo DIR] WHY               end a run without landing
-  markitect version
+  markitect version [--repo DIR]                  which markitect this is, and whether the personal skill and the project match it
   markitect licenses
 
 Called from inside a run:
@@ -85,6 +87,16 @@ Called from inside a run:
 `
 )
 
+// Releases finds and installs newer binaries of markitect.
+type Releases interface {
+	// Latest returns the version of the newest release, such as "0.15.0".
+	Latest(ctx context.Context) (string, error)
+	// Install puts the binary of that release in the place of the executable exe.
+	Install(ctx context.Context, version, exe string) error
+	// Run starts the executable exe and returns its exit code.
+	Run(ctx context.Context, exe string, args []string, stdout, stderr io.Writer) (int, error)
+}
+
 // CLI runs one command.
 type CLI struct {
 	Git    Git
@@ -92,6 +104,17 @@ type CLI struct {
 	Stdin  io.Reader
 	Stdout io.Writer
 	Stderr io.Writer
+	// PathWarning says what is wrong when the PATH does not lead to this
+	// markitect, or "" when nothing is. Nil means no check.
+	PathWarning func() string
+	// Releases is where update looks for a newer binary. Nil means update never
+	// replaces the binary.
+	Releases Releases
+	// Executable names the file of this binary, which update replaces. Nil
+	// means os.Executable.
+	Executable func() (string, error)
+	// Version is this binary's version. Nil means buildinfo.Version.
+	Version func() string
 }
 
 // Run runs the command line args and returns the exit code.
@@ -106,6 +129,8 @@ func (c CLI) Run(ctx context.Context, args []string) int {
 	switch cmd {
 	case "install":
 		code, err = c.install(rest)
+	case "update":
+		code, err = c.update(ctx, rest)
 	case "init":
 		code, err = c.init(ctx, rest)
 	case "check":
@@ -137,7 +162,7 @@ func (c CLI) Run(ctx context.Context, args []string) int {
 	case "hook":
 		code, err = c.hook(ctx, rest)
 	case "version":
-		fmt.Fprintln(c.Stdout, "markitect", buildinfo.Build())
+		code, err = c.version(ctx, rest)
 	case "licenses":
 		fmt.Fprint(c.Stdout, buildinfo.Notices)
 	default:
@@ -146,15 +171,28 @@ func (c CLI) Run(ctx context.Context, args []string) int {
 	}
 	if err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
-			fmt.Fprintf(c.Stderr, "markitect %s: %v\n", cmd, err)
+			fmt.Fprintf(c.Stderr, "markitect %s: %v\n", cmd, hintInit(err))
 		}
 		return Misused
 	}
 	switch cmd {
-	case "init", "check", "lock", "refs", "graph", "impact", "lint", "apply", "verify":
+	case "init", "check", "lock", "refs", "graph", "impact", "lint", "apply", "verify", "update":
 		c.notice(ctx, rest)
 	}
+	switch cmd {
+	case "check", "lock", "refs", "graph", "impact", "lint", "status":
+		c.staleNotice(ctx, rest)
+	}
 	return code
+}
+
+// hintInit tells the user who ran a command outside any Git repository how to
+// start a project. Both Git adapters word the error alike; a test pins it.
+func hintInit(err error) error {
+	if strings.Contains(err.Error(), "is not inside a Git repository") {
+		return fmt.Errorf("%w; markitect init makes this folder a Markitect project", err)
+	}
+	return err
 }
 
 // options are the flags every command shares.
@@ -167,7 +205,9 @@ func (c CLI) flags(name string, o *options) *flag.FlagSet {
 	fs := flag.NewFlagSet("markitect "+name, flag.ContinueOnError)
 	fs.SetOutput(c.Stderr)
 	fs.StringVar(&o.repo, "repo", ".", "a folder inside the project's Git repository")
-	if name != "init" && name != "lock" {
+	switch name {
+	case "init", "lock", "update", "version":
+	default:
 		fs.BoolVar(&o.json, "json", false, "print JSON instead of Markdown")
 	}
 	return fs

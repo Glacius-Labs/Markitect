@@ -1,0 +1,114 @@
+#!/bin/sh
+# markitect, as the Claude Code plugin supplies it.
+#
+# Claude Code puts this file on the PATH of its shell while the plugin is on, so
+# a session can run `markitect` without anyone installing it. The first call
+# downloads the binary of the release that has the version of this plugin into
+# the plugin's data folder, checks it against the checksums of that release and
+# starts it. Later calls start it at once. A plugin update with a new version
+# fetches the matching binary the same way.
+#
+# MARKITECT_ENSURE_ONLY=1 only fetches: the plugin's session-start hook does
+# that outside the shell's sandbox. MARKITECT_RELEASES_URL names a mirror of the
+# releases page.
+set -eu
+
+fail() {
+	echo "markitect (plugin): $*" >&2
+	exit 2
+}
+
+# The file comes in on standard input: sha256sum prefixes the sum of a file whose
+# name has a backslash (a Windows path) with a backslash.
+sha256() {
+	if command -v sha256sum >/dev/null 2>&1; then
+		sha256sum <"$1" | awk '{print $1}'
+	elif command -v shasum >/dev/null 2>&1; then
+		shasum -a 256 <"$1" | awk '{print $1}'
+	else
+		fail "needs sha256sum or shasum to check the download"
+	fi
+}
+
+here=$(cd "$(dirname "$0")" && pwd) || fail "cannot find its own folder"
+root=$(dirname "$here")
+version=$(sed -n 's/^[[:space:]]*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$root/.claude-plugin/plugin.json" | head -n 1)
+case "$version" in
+"" | *[!0-9A-Za-z.+-]*) fail "cannot read a version from $root/.claude-plugin/plugin.json" ;;
+*-dev) fail "this is the development version $version of the plugin, which has no release binary; build markitect from source and put it on the PATH" ;;
+esac
+tag="v$version"
+
+case "$(uname -s)" in
+Linux) os=linux ;;
+Darwin) os=darwin ;;
+MINGW* | MSYS* | CYGWIN*) os=windows ;;
+*) fail "no release binary for the system $(uname -s)" ;;
+esac
+case "$(uname -m)" in
+x86_64 | amd64) arch=amd64 ;;
+aarch64 | arm64) arch=arm64 ;;
+*) fail "no release binary for the processor $(uname -m)" ;;
+esac
+asset="markitect-$tag-$os-$arch"
+exe_name=markitect
+if [ "$os" = windows ]; then
+	asset="$asset.exe"
+	exe_name=markitect.exe
+fi
+
+# The plugin's data folder survives plugin updates. Claude Code sets
+# CLAUDE_PLUGIN_DATA only for hooks, so the shell's calls compute the same folder.
+data=${CLAUDE_PLUGIN_DATA:-${CLAUDE_CONFIG_DIR:-${HOME:-}/.claude}/plugins/data/markitect-markitect}
+exe="$data/$tag/$exe_name"
+
+fetch() {
+	command -v curl >/dev/null 2>&1 || fail "needs curl to download markitect $version"
+	base=${MARKITECT_RELEASES_URL:-https://github.com/Glacius-Labs/Markitect/releases}
+	base=${base%/}
+	mkdir -p "$data" || fail "cannot create $data"
+	tmp=$(mktemp -d "$data/.fetch.XXXXXX") || fail "cannot write to $data"
+	trap 'rm -rf "$tmp"' EXIT
+
+	# A download from the real releases page never leaves https; a mirror may.
+	secure=
+	case "$base" in
+	https://*) secure="--proto =https --proto-redir =https" ;;
+	esac
+
+	download() {
+		# $secure is several words on purpose.
+		curl -fsSL $secure --connect-timeout 15 --max-time 240 --retry 1 -o "$2" "$base/download/$tag/$1" ||
+			fail "cannot download $1 of release $tag from $base (is there network access? a sandboxed shell may block it, and the session-start hook of the plugin downloads it outside the sandbox)"
+	}
+	download "markitect-$tag-checksums.txt" "$tmp/sums"
+	download "$asset" "$tmp/bin"
+
+	want=$(awk -v n="$asset" '{f = $2; sub(/^\*/, "", f); if (f == n) {print $1; exit}}' "$tmp/sums")
+	[ -n "$want" ] || fail "the checksums of release $tag do not list $asset"
+	got=$(sha256 "$tmp/bin")
+	[ "$got" = "$want" ] || fail "$asset does not match its checksum (got $got, the release lists $want); nothing was installed"
+
+	chmod +x "$tmp/bin"
+	mkdir -p "$data/$tag"
+	# A call that ran at the same time may have installed it already, and on
+	# Windows a running program cannot be replaced.
+	mv -f "$tmp/bin" "$exe" 2>/dev/null || [ -x "$exe" ] || fail "cannot install $exe"
+	rm -rf "$tmp"
+	trap - EXIT
+
+	# Leftovers of a fetch that was killed, and the binaries of earlier releases of
+	# the plugin. A version is kept for a day after a newer one arrives, so that a
+	# session still on the old plugin does not have its binary deleted under it.
+	find "$data" -maxdepth 1 -name '.fetch.*' -mmin +60 -exec rm -rf {} + 2>/dev/null || true
+	find "$data" -maxdepth 1 -type d -name 'v*' ! -name "$tag" -mtime +1 -exec rm -rf {} + 2>/dev/null || true
+}
+
+[ -x "$exe" ] || fetch
+
+MARKITECT_PLUGIN=$version
+export MARKITECT_PLUGIN
+if [ -n "${MARKITECT_ENSURE_ONLY:-}" ]; then
+	exit 0
+fi
+exec "$exe" "$@"
