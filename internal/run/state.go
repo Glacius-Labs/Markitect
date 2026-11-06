@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -196,16 +195,11 @@ func (e *Engine) workFor(f *folder, req ChecklistRequest, stored *Work) (w *Work
 	if base == "" {
 		full = true
 	}
-	if stored != nil && stored.Base != "" {
-		if _, err := os.Stat(inProject(f.root, stored.Base)); err != nil {
-			// Its base is gone from this folder, as after a change of branch:
-			// that work cannot go on.
-			stored = nil
-		}
-	}
+	// A base certificate gone from the folder, as after a change of branch, is a
+	// changed certificate like any other: a plain checklist refuses.
 	if stored != nil && !req.namesChange() {
 		if changed := f.changedOwn(stored); len(changed) > 0 {
-			return nil, restartText(stored, changed), nil
+			return nil, restartText(changed), nil
 		}
 		if stored.Named || stored.Base == base {
 			return stored, "", nil
@@ -217,19 +211,16 @@ func (e *Engine) workFor(f *folder, req ChecklistRequest, stored *Work) (w *Work
 	return &Work{Project: f.root, Base: base, Full: full, Findings: req.Findings, Named: req.namesChange(), Spec: f.specHashes(), Certificates: f.certs, Answers: map[string]Given{}, Began: e.now()}, "", nil
 }
 
-// restartText says that what the work may not change changed under it, and how
-// the owner begins it again.
-func restartText(w *Work, changed []string) string {
-	again := "markitect checklist --full"
-	if w.Base != "" {
-		again = "markitect checklist --base " + w.Base
-	}
+// restartText says that what the work may not change changed under it. An agent
+// reads it too, so it names no command that would begin the work again: that is
+// the owner's step.
+func restartText(changed []string) string {
 	var b strings.Builder
 	b.WriteString("These changed since the work began, and the work may not change them:\n\n")
 	for _, c := range changed {
 		fmt.Fprintf(&b, "- %s\n", c)
 	}
-	fmt.Fprintf(&b, "\nPut them back: a change to the spec is its own step, before the work. If the owner changed them on purpose, the owner begins the work again with: %s\n", again)
+	b.WriteString("\nPut them back: a change to the spec is its own step, before the work. If the owner changed them on purpose, stop and say so; only the owner begins the work again.\n")
 	return b.String()
 }
 

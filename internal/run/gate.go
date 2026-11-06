@@ -70,7 +70,7 @@ func (e *Engine) Gate(ctx context.Context, req GateRequest) (Verdict, error) {
 	}
 	// Row 1: what the work may not change.
 	if changed := f.changedOwn(w); len(changed) > 0 {
-		return Verdict{Text: restartText(w, changed)}, nil
+		return Verdict{Text: restartText(changed)}, nil
 	}
 	var links []string
 	for _, file := range sortedKeys(f.links) {

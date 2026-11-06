@@ -262,7 +262,7 @@ func TestASpecChangedDuringTheWork(t *testing.T) {
 	p.list(run.ChecklistRequest{})
 	p.write("src/members/loans/loan.go", limit3)
 	p.specChange()
-	has(t, p.gate(run.GateRequest{}).Text, "Put them back", m+"loan-limit.md", "markitect checklist --base .markitect/results/")
+	has(t, p.gate(run.GateRequest{}).Text, "Put them back", m+"loan-limit.md", "only the owner begins the work again")
 	text, ok, err := p.engine.Checklist(context.Background(), run.ChecklistRequest{Dir: p.dir})
 	if err != nil || ok {
 		t.Fatalf("a plain checklist began the work again: %v %v\n%s", ok, err, text)
@@ -294,6 +294,24 @@ func TestAPlantedCertificate(t *testing.T) {
 	has(t, v.Text, "gate-20990101-000000-00000000.json", "Put them back")
 	if text, ok, _ := p.engine.Checklist(context.Background(), run.ChecklistRequest{Dir: p.dir}); ok {
 		t.Fatalf("a plain checklist went on:\n%s", text)
+	}
+}
+
+// A builder that changes the spec and removes the base certificate does not begin
+// the work again: the certificate is gone, and a plain checklist refuses.
+func TestARemovedBaseCertificate(t *testing.T) {
+	p := newPlain(t)
+	first := p.certify()
+	p.list(run.ChecklistRequest{})
+	p.specChange()
+	p.remove(strings.TrimPrefix(filepath.ToSlash(first), filepath.ToSlash(p.dir)+"/"))
+	text, ok, err := p.engine.Checklist(context.Background(), run.ChecklistRequest{Dir: p.dir})
+	if err != nil || ok {
+		t.Fatalf("a plain checklist began the work again: %v %v\n%s", ok, err, text)
+	}
+	has(t, text, filepath.Base(first), m+"loan-limit.md", "only the owner begins the work again")
+	if v := p.gate(run.GateRequest{}); v.Done {
+		t.Fatalf("passed: %s", v.Text)
 	}
 }
 
@@ -397,7 +415,7 @@ func TestGateRefusesAChangeOutsideTheList(t *testing.T) {
 	// checklist, and the owner begins the work again by naming the change.
 	files[".gitignore"] += "*.tmp\n"
 	p.write(".gitignore", files[".gitignore"])
-	if text, ok, err := p.engine.Checklist(context.Background(), run.ChecklistRequest{Dir: p.dir}); err != nil || ok || !strings.Contains(text, "markitect checklist --base") {
+	if text, ok, err := p.engine.Checklist(context.Background(), run.ChecklistRequest{Dir: p.dir}); err != nil || ok || !strings.Contains(text, "only the owner begins the work again") {
 		t.Fatalf("a plain checklist went on: %v %v\n%s", ok, err, text)
 	}
 	p.list(run.ChecklistRequest{Base: first})
