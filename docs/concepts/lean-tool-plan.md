@@ -1,117 +1,126 @@
 # Plan: a lean Markitect
 
-**Status:** written on 6 November 2026 at the owner's request, after a discussion of what Markitect should own. The owner accepted the direction the same day ([DEC-096](register.md#dec-096-markitect-computes-and-checks-a-driver-acts)): the tool computes and checks, a driver acts, and the command that checks is called `gate`. The other [decisions](#decisions-for-the-owner) have recommendations and are open. Once built, this revises [draft concept 4.0](v4-concept.md) §5 to §9. [DEC-001](register.md#dec-001-delegated-realization-is-central-to-the-product) stands: delegated realization stays the purpose, and the tool no longer runs it.
+**Status:** written on 6 November 2026 at the owner's request, after a discussion of what Markitect should own. The owner accepted it the same day in two steps: the tool computes and checks, a driver acts, and the command that checks is called `gate` ([DEC-096](register.md#dec-096-markitect-computes-and-checks-a-driver-acts)); and Markitect uses no Git at all, so agents or people do every Git step ([DEC-097](register.md#dec-097-markitect-uses-no-git)). The open [decisions](#decisions-for-the-owner) have recommendations. Once built and tried, this revises [draft concept 4.0](v4-concept.md) §5 to §9. [DEC-001](register.md#dec-001-delegated-realization-is-central-to-the-product) stands: delegated realization stays the purpose, and the tool no longer runs it.
 
 ## The idea
 
-Markitect computes and checks. It does not drive agents and does not move branches.
+Markitect computes and checks a folder. It does not drive agents and does not touch Git.
 
 - **It computes:** the spec compiles, every file is accounted for, what a change reaches, the complete checklist for that change, and how good the spec is.
-- **It checks:** every item has an answer with a pointer that exists, for exactly the state that is to be committed; nothing the work may not touch was touched; `check` passes. Then it writes the Result.
-- **Everything else is the driver:** who builds, who reviews, in what order, how often. Skills, agents, a workflow script or a person. Markitect ships one default driver, as skills and agent files, and any other may replace it.
+- **It checks:** every item has an answer with a pointer that exists; every file that changed lies in a reviewed item; the spec did not change while the work was done; `check` passes. Then it writes a certificate, the Result.
+- **Everything else is the driver:** who builds, who reviews, in what order and how often, and every Git step: commits, branches, merges, diffs. Skills, agents, a workflow script or a person. Markitect ships one default driver, as skills and agent files, and any other may replace it.
 
-Delegated realization stays the purpose. What changes is where it lives: the tool owns the obligations and the check before a commit, the host owns the agents.
+Delegated realization stays the purpose. What changes is where it lives: the tool owns the obligations and the check, the host owns the agents and the repository.
 
 ## Why
 
 **The value that can be shown today is on the deterministic side.** The spec language, the compiler, file accounting, impact and `lint` work and are tested. The benefit of the delegated method is still unmeasured, by the vision's own account ([current basis](../vision.md#current-basis-and-unproven-benefit)).
 
-**The weight is in the run, not in the spec.** Lines of Go, without tests, on Main at `96273ee3d`:
+**The weight is in the run and in Git, not in the spec.** Lines of Go, without tests, on Main at `96273ee3d`:
 
 | Part | Lines |
 | --- | ---: |
 | The spec side: `model`, `realization`, `project`, `analysis`, `libraries` | about 2,830 |
 | The run engine: `internal/run` | about 3,020 |
 | Git for runs: `internal/adapters/rungit` | about 660 |
+| Reading the repository through Git: `internal/adapters/repo` | about 470 |
 | What the agents are told: the harness's skill and agent files, and the task texts in `internal/run/strategy.go` | about 170 |
 
-Within `internal/run`, the run lifecycle (`engine.go`, 640 lines), `submit` (530), the store (320), landing (240) and the trailers (210) are most of it. What tells the agents what to do is small; the machinery around a run is the bulk.
+Within `internal/run`, the run lifecycle (`engine.go`, 640 lines), `submit` (530), the store (320), landing (240) and the trailers (210) are most of it.
 
 **The failures came from that machinery.** Background sessions, containers, landing in the owner's folder while they work, Git on Windows, and now a builder that has to start the reviewer as a nested subagent, which is not yet shown to work ([concept 4.0 §14](v4-concept.md#14-what-is-not-yet-shown)).
 
-**A lean tool is easier to judge.** Any host can drive it, so the comparison with a strong agent and ordinary documentation can swap only the driver.
+**A lean tool is easier to judge and to use.** Any host can drive it, with any version control or none, so the comparison with a strong agent and ordinary documentation can swap only the driver. Its tests need folders, not repositories.
 
 ## What stays
 
 | Command | What it does | Change |
 | --- | --- | --- |
-| `init`, `check`, `lock`, `refs`, `graph`, `impact`, `lint` | The spec and its realization record | None |
-| `install`, `update`, `version`, `licenses` | Setup and upgrade | None |
-| `checklist [--base REV] [--full] [--findings FILE] [--review]` | The list for the change between the last certified commit and the folder; `--review` prints the reviewer's task | Needs no open run; finds its base in history |
-| `answer [FILE]` | Stores a reviewer's answers for the folder's current state; each pointer must exist in a snapshot of that state | Keyed by the state, not by a run |
-| `gate [--commit]` | `submit`'s checks without the landing (below) | New, replaces `submit` |
+| `check`, `lock`, `refs`, `graph`, `lint` | The spec and its realization record | The file set comes from the folder, not from Git (below) |
+| `impact [--base RESULT]` | What a change reaches | The base is a certificate, not a commit |
+| `init` | Writes the project's files | Makes no repository and commits nothing |
+| `install`, `update`, `version`, `licenses` | Setup and upgrade | `update` writes and commits nothing |
+| `checklist [--base RESULT] [--full] [--findings FILE] [--review]` | The list for the change between the newest certificate and the folder; `--review` prints the reviewer's task | Needs no open run |
+| `answer [FILE]` | Stores a reviewer's answers for the folder's current state; each pointer must exist in the current files | Bound to the files it points at, not to a run |
+| `gate [--verify] [--findings]` | The checks below; writes the certificate | New, replaces `submit` |
 | `hook pretool` | Only the reviewer may store answers | None |
-| `status` | Read-only: the answers for the current state, and the commits since the last certified one | No run to report on |
+| `status` | Read-only: the answers for the current state, and the files that changed since the newest certificate | No run to report on |
 
-**`gate`** does the first thing that applies, as `submit` does today, minus what a run needs:
+**`gate`** does the first thing that applies:
 
 | | It finds | It says, and exits |
 |---|---|---|
-| 1 | The spec (except registry pages) or the harness differs from `HEAD` | Put them back; spec changes are committed before the work, by a person or the modeling skill. Exit 1 |
-| 2 | A reviewed state, and the only difference is new files not listed | List or remove them. Exit 1 |
+| 1 | The spec (except registry pages) changed since `checklist` started, or the harness changed | Put them back; a change to the spec is its own step, before the work. Exit 1 |
+| 2 | A file that changed since the base certificate and lies in no reviewed item | The files; list them for review or revert them. Exit 1 |
 | 3 | An error from `check` | The errors. Exit 1 |
-| 4 | Items without an answer for this state | Which; start a reviewer. Exit 1 |
+| 4 | Items without a valid answer for the current files | Which; start a reviewer. Exit 1 |
 | 5 | A `spec problem` | The question for the owner. The Result says so. Exit 1 |
 | 6 | A `wrong` answer | The items and what is wrong; repair. After two repair rounds it refuses, and the Result says so. Exit 1 |
-| 7 | Nothing left | Writes the Result under `.markitect/results/` in the folder. Exit 0. With `--commit`, commits the work and the Result on the checked-out branch, and nothing else |
+| 7 | Nothing left | Writes the certificate under `.markitect/results/`. Exit 0. The driver commits the work and the certificate together |
+
+`gate --verify` checks that the folder matches its newest certificate, for a checkout in CI or anywhere no agent reaches. `gate --findings` closes a review of finished work (today's `verify`): it writes a Findings page into the folder and no certificate.
 
 ## What goes
 
 - `apply` and `verify` as commands that open a run; `submit`; `stop`.
 - The run store and its lock, and "one run per folder".
-- The deadline and the ceiling of 30 calls (the driver's business; `gate` keeps only the two repair rounds, which are a rule about state, not time).
-- Run branches `markitect/runs/*`, kept runs and their retries.
-- Landing: building the landing off to the side, merging into a moved branch, bringing the files of the folder up, retries.
-- The `Run-*` trailers, replaced by the Result in the commit.
+- The deadline and the ceiling of 30 calls: the driver's business. `gate` keeps only the two repair rounds, a rule about state, not time.
+- Every use of Git: committing the spec, run branches `markitect/runs/*`, kept runs, landing and merging, the `Run-*` trailers, `git init` and the commits of `init` and `update`, and reading files and history through Git.
 - The notice lines about runs that closed.
 
-Rough estimate, to be confirmed by doing it: `internal/run` from about 3,000 to about 1,000 lines, `rungit` from about 650 to about 250, and `runs.go` in the CLI to a third.
+Rough estimate, to be confirmed by doing it: `internal/run` from about 3,000 to about 1,000 lines; `rungit` goes; `repo` from about 470 to about 150 (a folder walk and a `.gitignore` reader); `runs.go` in the CLI to a third. The release tooling (`internal/tooling/release`, `internal/guardedwrite`) packages Markitect's own source from Git and is not part of the product; it stays.
 
-## The state that remains
+## Without Git
 
-- **In the repository, versioned:** the spec and the Results.
-- **Outside the folder, under `<git dir>/markitect/answers/`:** the answers, keyed by the base, `HEAD` and the snapshot of the folder. An answer whose files the next change touches falls away, as a repair review works today.
-- **Certification:** a commit that adds a passing Result whose recorded tree is the commit's tree, apart from the Result, is certified. The newest certified ancestor is the default base of the next `checklist`. A landing commit with the `Run-Work` trailer counts as certified, so existing projects keep their base.
+**The file set.** Markitect walks the project folder. It skips what the project's `.gitignore` files exclude, read as plain text, including nested ones, and what its own ignore file lists. Global Git settings are out of scope. Where this differs from Git's view, the difference shows up as a `file.unregistered` error, never silently. A second, hand-kept list of ignored files is what this avoids.
 
-A commit without a Result is not prevented, as today: it stays in the next checklist, `status` counts it, and a CI job can run `markitect gate --verify COMMIT` where no agent reaches.
+**The certificate.** When `gate` passes, it writes the Result under `.markitect/results/`: each item's answer and pointers, the SHA-256 of every accounted file and every Definition, and a copy of the spec text it certified. The newest certificate is the default base of the next `checklist` and `impact`. "Changed" means a different hash; a Definition's old text comes from the copy, so a checklist can show what changed in it. With no certificate, the checklist is full.
+
+**Merges.** Two branches may each certify. After they are merged, the newer certificate counts, and what only the other covered is reviewed again. That costs some work and loses nothing.
+
+**Changes nobody reviewed.** The tool knows no "committed", only the folder. So `gate` refuses any file that changed since the base and lies in no reviewed item (row 2): the owner's own edits on the side, or a builder that touched more than its items, are named instead of certified.
+
+**The work state.** Between `checklist` and `gate`, the hashes of the spec the checklist started from and the answers live outside the project, in the user's cache folder, keyed by the project's path. An answer binds to the hashes of the files it points at and falls away when one of them changes.
 
 ## The default driver
 
 `/markitect-apply`, a skill with the same name as today, run in the owner's session:
 
-1. If the spec has uncommitted changes, stop and say so.
+1. Run `markitect checklist`. If the spec has errors, stop and say so.
 2. Start `markitect-builder`. It takes its task from `markitect checklist`.
 3. When it ends, run `markitect gate` and do what it printed: start `markitect-reviewer`, which answers with `markitect answer`, or start the builder again with the items that are wrong.
-4. When `gate` passes, run `markitect gate --commit`, and report.
+4. When `gate` passes, commit the work and the certificate in one commit on the current branch, push nothing, and report.
 
 Every step comes from what `gate` prints, so the process stays in the tool's output and the skill stays "do what it printed". If a subagent can start another, the builder may start the reviewer itself, as today, and keep its context through the repairs. That is a choice of the driver, not of the tool.
 
-`/markitect-verify` becomes `markitect checklist --base HEAD~1 --review`, the reviewer's answers, and `markitect gate --findings`, which writes the Findings page into the folder and commits nothing.
+`/markitect-verify` becomes `markitect checklist --base RESULT --review` for the finished work, the reviewer's answers, and `markitect gate --findings`.
 
 Later drivers: a workflow script, which holds the loop and the limits in code; another provider.
 
 ## What we give up, and what holds instead
 
-| What the owner wants | Today | Lean |
+| What the owner wants | Today | Lean, without Git |
 | --- | --- | --- |
-| What is committed is complete | The tool commits only after its checks | The same with `gate --commit`. A commit made around it is visible afterwards, and a CI check can refuse it |
+| What is committed is complete | The tool commits only after its checks | The driver commits after `gate`. A commit made around it is visible afterwards: `status` and `gate --verify` name the files that do not match the newest certificate, and a CI check can refuse it |
+| The work doesn't mix with the owner's | `apply` refuses uncommitted changes; one run per folder; a landing stops at an edit of the owner | `gate` refuses every changed file that lies in no reviewed item |
 | A run has a limit | Deadline and ceiling in the tool | Two repair rounds in `gate`; time and calls in the driver |
-| The work doesn't mix with the owner's | One run per folder, a landing that stops at an edit of the owner | `gate` snapshots the whole folder; the owner keeps their edits out of it while a driver works |
-| The branch moved during the work | The landing merges, if clean | Ordinary Git: the commit goes on the checked-out branch, and the owner merges or rebases as usual |
-| A crash in the middle | The run is stored and resumes | The answers are stored per state; run `gate` again |
+| The branch moved during the work | The landing merges, if clean | Ordinary Git, by the driver or the owner |
+| A crash in the middle | The run is stored and resumes | The answers are stored per file state; run `gate` again |
+| A pull request against `main` | `impact --base main` | The base is the certificate the branch carries; Git's view is the driver's |
 
 ## Order of work
 
-1. **Decide.** Done for the boundary and the name ([DEC-096](register.md#dec-096-markitect-computes-and-checks-a-driver-acts)); the other decisions are below. The concept follows once step 3 holds.
-2. **Build beside the old.** Add `gate`, the certified base and the state-keyed answers next to today's engine. Port the tests of `submit`'s table. Nothing is removed yet.
+1. **Decide.** Done for the boundary, the name and Git ([DEC-096](register.md#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](register.md#dec-097-markitect-uses-no-git)); the rest is below. The concept follows once step 3 holds.
+2. **Build beside the old.** Add the folder walk, the certificate, `gate` and the file-bound answers next to today's engine, whose Git use stays until step 4. Port the tests of `submit`'s table to plain folders. Nothing is removed yet.
 3. **Try it.** Switch the default driver to the lean commands and run a few changes on Makerspace, with planted defects. Compare with today's flow: items answered, planted defects caught, interventions by the owner, time.
-4. **Remove.** If it holds: the run lifecycle, landing, run branches and trailers go; docs, concept, code map; a release.
-5. **Later.** A workflow driver; a CI check of certified commits.
+4. **Remove.** If it holds: the run lifecycle, landing, run branches, trailers and every use of Git in the product go; docs, concept, code map; a release.
+5. **Later.** A workflow driver; a CI check with `gate --verify`.
 
 ## Decisions for the owner
 
-1. **The boundary:** the tool computes and checks, a driver acts. Decided by the owner on 6 November 2026.
-2. **`gate --commit`:** should the tool still make the commit? Recommended: yes, a plain commit on the checked-out branch, so "what is committed is complete" stays the tool's, at almost no cost.
+1. **The boundary:** the tool computes and checks, a driver acts. Decided on 6 November 2026.
+2. **Git:** none in the product; agents or people do every Git step. Decided on 6 November 2026. This also settles that `gate` makes no commit.
 3. **Limits:** recommended: two repair rounds in `gate`, time and the number of calls in the driver.
-4. **The name:** `gate`, decided by the owner on 6 November 2026, after weighing `certify`. `submit` was set aside because it meant landing.
-5. **Where answers live:** recommended: outside the folder, in the Git directory, as today.
+4. **The name:** `gate`, decided on 6 November 2026, after weighing `certify`. `submit` was set aside because it meant landing.
+5. **Where the work state lives:** recommended: the user's cache folder, keyed by the project's path, so the project holds only the spec and its certificates.
+6. **How much of the spec the certificate copies:** recommended: the text of every Definition, since the spec is small and a checklist that shows what changed helps the builder and the reviewer.
