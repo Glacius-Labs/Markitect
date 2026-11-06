@@ -38,19 +38,21 @@ const PersonalName = "markitect"
 // command in advance, since apply starts sessions.
 const personalHead = `---
 name: markitect
-description: Use when someone mentions Markitect, wants to set it up or start a project with it, or asks about the markitect command or a .markitect folder. It says what Markitect is and how to begin.
+description: Use when someone mentions Markitect, wants to set it up, start a project with it or upgrade it, or asks about the markitect command or a .markitect folder. It says what Markitect is and how to begin.
 ---
 
 # Markitect
 
 `
 
-const personalTail = "\n`markitect` is a command on the path, so there is no need to look for it. `markitect help` lists what it does.\n\n" +
+const personalTail = "\n`markitect` is a command on the path, so there is no need to look for it. `markitect help` lists what it does. If the shell says the command is not found, the binary is missing or its folder is not on the PATH: `go install github.com/Glacius-Labs/Markitect/cmd/markitect@main` installs it.\n\n" +
 	"## How to begin\n\n" +
 	"- **An empty folder or a new project:** run `markitect init`, then use the `markitect-start` skill.\n" +
 	"- **A repository that already has code:** run `markitect init`, then use the `markitect-extract` skill.\n" +
 	"- **A folder that already has `.markitect/`:** it is set up, and `markitect check` says how it stands.\n\n" +
-	"`init` installs those skills into the project, so a session that was open before it does not have them yet. Read `.claude/skills/markitect-start/SKILL.md` or `.claude/skills/markitect-extract/SKILL.md` and follow it, or have the user run `/reload-skills`.\n"
+	"`init` installs those skills into the project, so a session that was open before it does not have them yet. Read `.claude/skills/markitect-start/SKILL.md` or `.claude/skills/markitect-extract/SKILL.md` and follow it, or have the user run `/reload-skills`.\n\n" +
+	"## After an upgrade\n\n" +
+	"`markitect version` says whether this skill and the project's skills and agents match the binary, and `markitect update` brings them in line. It changes no spec file.\n"
 
 // Personal returns the text of the personal skill, which reaches a session in a
 // folder that has no project yet.

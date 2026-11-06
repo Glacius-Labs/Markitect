@@ -57,16 +57,18 @@ None of these starts an agent. `--repo DIR` names a folder inside the project's 
 
 | Command | Does | Change from today |
 |---|---|---|
-| `install` | Writes the personal skill, once per machine ([§9](#9-the-harness)) | New |
+| `install` | Writes the personal skill, once per machine. Optional: `init` says the same and gives a project its own skills ([§9](#9-the-harness)) | New |
 | `init` | Sets up a project: `.markitect/`, the first page of the spec, the harness, and `AGENTS.md` and `CLAUDE.md` if they are missing. An empty folder is enough: it becomes a Git repository. Run again, it refreshes the harness and never touches spec pages | Writes the reviewer agent and the new skills, and commits what it writes, so the first `apply` finds a clean folder. It writes no file that would hold nothing yet, and it ends by saying what Markitect is and pointing to `/markitect-start` |
 | `lock` | Pins the Libraries. It holds a fingerprint of each one, as `go.sum` does for modules, and `check` refuses a Library that no longer matches | None |
 | `check` | Compiles the project and fails on any error ([below](#what-check-refuses)). `--spec` looks only at the spec itself | Stale entries and unused Definitions become errors, except in a project with nothing built yet. `--spec` is new |
 | `refs TARGET` | Who links to a Definition or Package, and which files realize it | None |
 | `impact` | What a change reaches ([below](#how-impact-works)) | `--base` defaults to the last Result. The per-Package lists go |
 | `analyze` | Measures the spec's design ([§4](#4-is-the-spec-good)). `--severity` filters its findings, and `--graph` draws the Package dependency graph | New. Replaces `lint` and `graph`. Comes after `apply` is reliable ([§13](#13-order-of-work)) |
-| `version`, `licenses` | As named | None |
+| `update` | After an upgrade of the binary, brings what an earlier build wrote in line with it: the personal skill if there is one, and in a project the harness, which it commits, and the lock, which it rewrites and leaves uncommitted for the owner to read. `--check` changes nothing and exits 1 if anything is out of date | New, on the owner's word of 6 November 2026 ([§16](#16-questions-for-the-owner)). It reuses what `init` and `lock` write and replaces neither |
+| `version` | The build, and whether the personal skill and the project match it | Adds the status lines |
+| `licenses` | As named | None |
 
-The owner proposed `update`, to replace `lock` and `init`'s refreshing. This draft holds it back: the two commands already do that work, and a new name makes nothing more reliable ([§16](#16-questions-for-the-owner)).
+The owner proposed `update` to replace `lock` and `init`'s refreshing. An earlier version of this draft held it back, because the two commands already did that work. On 6 November 2026 the owner asked for it, with a `version` that says what is out of date, since an upgraded binary left the personal skill and each project's harness behind with nothing to say so. So `update` is thin: it runs `init`'s writers and `lock` over what differs, compares files without regard to line endings, commits the harness but not the lock, and never touches a spec file. Commands that read a project print one line when its skills and agents are old. `update` does not upgrade the binary: that needs a network and a release, and replacing a running program is not safe on Windows.
 
 ### What `check` refuses
 
@@ -271,7 +273,7 @@ For Claude Code, `markitect init` writes these project files, so they are versio
 
 The first draft's seal is gone. `answer` checks and stores the answers itself, so no hook has to catch a reviewer as it finishes.
 
-**One file lies outside the project.** A session that runs `init` started before the project's files existed, so it knows only what the tool prints, and Claude Code doesn't watch a skills folder that wasn't there when the session started. So help and `init` say what Markitect is, and `markitect install` writes a personal skill, `~/.claude/skills/markitect/SKILL.md`, with the same text from the binary, which reaches a session in any folder. It allows no command in advance. `init` never writes to the home folder.
+**One file lies outside the project.** A session that runs `init` started before the project's files existed, so it knows only what the tool prints, and Claude Code doesn't watch a skills folder that wasn't there when the session started. So help and `init` say what Markitect is, and `markitect install` writes a personal skill, `~/.claude/skills/markitect/SKILL.md`, with the same text from the binary, which reaches a session in any folder. It allows no command in advance. `init` never writes to the home folder; it only tips when the skill is missing or old. After an upgrade, `markitect update` refreshes the skill and the project's files, and `markitect version` says whether they match. The skills and agents call `markitect` by name, so `version`, `init`, `install` and `update` warn when the `PATH` finds no `markitect` or another one.
 
 Skills are kept short, and they hold no steps, so nothing depends on what survives compaction. Plugins do not fit yet: the provider ignores hooks and permission modes in plugin agents.
 
@@ -305,7 +307,7 @@ A schedule now needs a provider session to do what `markitect verify` or `markit
 | 1. Probe | The harness by hand on the Library, on Windows, under a bounded dispatch. It tries what [§14](#14-what-is-not-yet-shown) lists | Each works, or the concept is changed |
 | 2. Build | `apply`, `checklist`, `answer`, `submit`, `stop`, `status`, `hook` and the stricter `check` in Go, reusing what `internal/run` holds. `init` writes the harness. The engine's container and session code goes, roughly 7,000 lines, once the probe has passed | A Library change lands, planted refusals hold, and a `submit` killed at each step can be run again |
 | 3. Make it reliable | The 5× project's 8 change steps on Sonnet, with their hidden cases. Failures are fixed in the tool, not with more prompt text | Two clean passes in a row: every step lands without the owner, all hidden cases pass and no refusal was overridden ([§16](#16-questions-for-the-owner)) |
-| 4. The rest | `verify`, then the other Commands, `analyze`, the rename, and `update` if still wanted | The owner's reading |
+| 4. The rest | `verify`, then the other Commands, `analyze` and the rename | The owner's reading |
 
 Before step 3, read test 1's nine finished launches. They are in `%LOCALAPPDATA%\markitect-test1`, not in the repository, and their answers are unread. They may say at no new cost whether one reviewer catches known bugs at 5×.
 
@@ -353,7 +355,7 @@ Concept 3.0's tests 2 and 3 fall away, since the aim is no longer to show that t
 
 ## 16. Questions for the owner
 
-Each has a recommendation, and none is decided. Already decided by the owner: the name `submit`, that `submit` brings the branch up by itself, that required checks go for now to see whether they are needed, that a plugin waits while the CLI carries the setup, that a run's agents are started by the owner's own session, and that the app goes.
+Each has a recommendation, and none is decided. Already decided by the owner: the name `submit`, that `submit` brings the branch up by itself, that required checks go for now to see whether they are needed, that a plugin waits while the CLI carries the setup, that a run's agents are started by the owner's own session, that the app goes, and that `update` comes now.
 
 1. **Starting the session.** Decided by the owner on 5 November 2026: the owner's own session starts the agents, with no background session ([§5](#5-what-apply-does)).
 2. **What a run may do.** Settled with question 1: the agents work under the owner's own permission mode and settings, and the builder accepts file edits without asking.
@@ -362,6 +364,6 @@ Each has a recommendation, and none is decided. Already decided by the owner: th
 5. **One version or two.** The owner asked for "the two simplest approaches". Recommended: one now, the workflow as the second only if this one fails too often. The owner also expected a package per version behind an interface; a strategy here is a folder of harness files, with no code interface, because the tool does not change between versions.
 6. **The old version.** Settled on 6 November 2026: Main carries this version, and Main until then is kept on the branch `archive/main-concept-3-20261106` ([DEC-094](register.md#dec-094-main-carries-the-native-version-and-the-app-goes)).
 7. **The suite.** Remove its runner and arms, and keep the Makerspace projects and hidden cases, which step 3 runs on. Recommended, and open.
-8. **`update`.** The owner proposed it. Hold it back until the tool has settled, as [§3](#commands-on-the-spec) does? Recommended.
+8. **`update`.** Decided by the owner on 6 November 2026: it comes now, with a `version` that reports what is out of date ([§3](#commands-on-the-spec)). A Claude Code plugin, which would also carry the personal skill and update it with the provider's own mechanism, stays a later option.
 9. **The app.** Decided by the owner on 6 November 2026: the whole app goes ([DEC-094](register.md#dec-094-main-carries-the-native-version-and-the-app-goes)).
 10. **What "reliable" means.** Step 3's two clean passes on the 8 change steps is a proposal for the talk on evaluation the owner asked for. Is that the finish line?

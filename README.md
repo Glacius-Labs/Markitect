@@ -79,7 +79,16 @@ go install github.com/Glacius-Labs/Markitect/cmd/markitect@main
 markitect install
 ```
 
-`markitect install` writes a personal skill, so that a Claude Code session in any folder knows what Markitect is and how to begin.
+`markitect install` writes a personal skill, so that a Claude Code session in any folder knows what Markitect is and how to begin. It is optional: `markitect init` says the same, and gives each project its own skills. `markitect version` shows which build you have and whether the personal skill and the current project match it. The folder `go install` writes to must be on your `PATH`, because the skills and agents call `markitect` by name; `version`, `init` and `install` warn when it is not.
+
+To upgrade, install again and let Markitect bring what it wrote earlier in line:
+
+```bash
+go install github.com/Glacius-Labs/Markitect/cmd/markitect@main
+markitect update
+```
+
+`markitect update` refreshes the personal skill and, in a project, the skills, agents, hook and lock that `init` wrote, and commits them. It changes no spec file, and `markitect update --check` only reports.
 
 ### Set up a project
 

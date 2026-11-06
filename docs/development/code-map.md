@@ -91,7 +91,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/adapters/cli` | Package cli is the markitect command line: install, init, check, lock, refs, graph, impact and lint; apply and verify, which open a Run and say which agent the owner's session starts; the commands of a Run; version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
+| `internal/adapters/cli` | Package cli is the markitect command line: install, update, init, check, lock, refs, graph, impact and lint; apply and verify, which open a Run and say which agent the owner's session starts; the commands of a Run; version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
 | `internal/adapters/repo` | Package repo reads a project's repository through Git: the working tree as Git sees it, a base commit, and the files changed between them. | [docs/guides/model-language.md#the-projects-markitect-folder](../guides/model-language.md#the-projects-markitect-folder) |
 | `internal/adapters/rungit` | Package rungit is a Run's Git work in the user's own repository (draft concept 4.0): it reads commits from anywhere in the repository, makes commits of a worktree's files without running the project's hooks, and brings the owner's branch up. | [internal/run/README.md#git](../../internal/run/README.md#git) |
 

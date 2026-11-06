@@ -254,6 +254,16 @@ func (c CLI) notice(ctx context.Context, args []string) {
 	if c.Runs == nil {
 		return
 	}
+	dir := repoArg(args)
+	e, err := c.Runs.Open(ctx, dir)
+	if err != nil {
+		return
+	}
+	fmt.Fprint(c.Stderr, e.Notice(ctx, dir))
+}
+
+// repoArg is the folder a command line names with --repo, or the current folder.
+func repoArg(args []string) string {
 	dir := "."
 	for i, a := range args {
 		if a == "--repo" && i+1 < len(args) {
@@ -263,9 +273,5 @@ func (c CLI) notice(ctx context.Context, args []string) {
 			dir = v
 		}
 	}
-	e, err := c.Runs.Open(ctx, dir)
-	if err != nil {
-		return
-	}
-	fmt.Fprint(c.Stderr, e.Notice(ctx, dir))
+	return dir
 }

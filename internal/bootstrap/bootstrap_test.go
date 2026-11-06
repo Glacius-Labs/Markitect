@@ -243,7 +243,7 @@ func TestInstallWritesThePersonalSkill(t *testing.T) {
 		t.Fatal(err)
 	}
 	skill := string(data)
-	for _, want := range []string{"name: markitect\n", "A Markitect project has one spec", "no need to look for it", "markitect-start", "markitect-extract", "/reload-skills"} {
+	for _, want := range []string{"name: markitect\n", "A Markitect project has one spec", "no need to look for it", "markitect-start", "markitect-extract", "/reload-skills", "markitect update", "go install github.com/Glacius-Labs/Markitect/cmd/markitect@main"} {
 		if !strings.Contains(skill, want) {
 			t.Errorf("the skill lacks %q:\n%s", want, skill)
 		}

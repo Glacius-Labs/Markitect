@@ -111,7 +111,19 @@ func (c CLI) init(ctx context.Context, args []string) (int, error) {
 	if len(modelFiles) == 0 {
 		fmt.Fprint(c.Stdout, nextSteps)
 	}
+	// init never writes to the home folder, so it only says what install would add.
+	if _, skill, err := personalSkillState(); err == nil && skill != current {
+		fmt.Fprintf(c.Stdout, "\ntip: %s\n", personalSkillTips[skill])
+	}
+	c.warnPath()
 	return OK, nil
+}
+
+// personalSkillTips say what to do about a personal skill that is not as this
+// binary would write it.
+var personalSkillTips = map[fileState]string{
+	missing:  "markitect install tells Claude Code what Markitect is in every folder, also in one without a project yet.",
+	outdated: "your personal skill comes from another markitect; markitect update refreshes it.",
 }
 
 const initMessage = "Set up Markitect"
