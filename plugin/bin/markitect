@@ -58,8 +58,24 @@ if [ "$os" = windows ]; then
 fi
 
 # The plugin's data folder survives plugin updates. Claude Code sets
-# CLAUDE_PLUGIN_DATA only for hooks, so the shell's calls compute the same folder.
-data=${CLAUDE_PLUGIN_DATA:-${CLAUDE_CONFIG_DIR:-${HOME:-}/.claude}/plugins/data/markitect-markitect}
+# CLAUDE_PLUGIN_DATA only for hooks, so the shell's calls compute the same folder,
+# plugins/data/<plugin>-<marketplace>. An installed plugin lives in
+# plugins/cache/<marketplace>/<plugin>/<version>, which names both, whatever the
+# marketplace is called. Anything else, such as a plugin loaded from a folder, is
+# taken to be markitect@glacius-labs.
+if [ -n "${CLAUDE_PLUGIN_DATA:-}" ]; then
+	data=$CLAUDE_PLUGIN_DATA
+else
+	plugin_dir=$(dirname "$root")
+	market_dir=$(dirname "$plugin_dir")
+	cache_dir=$(dirname "$market_dir")
+	if [ "$(basename "$cache_dir")" = cache ]; then
+		id=$(printf '%s-%s' "$(basename "$plugin_dir")" "$(basename "$market_dir")" | tr -c 'A-Za-z0-9_-' '-')
+		data="$(dirname "$cache_dir")/data/$id"
+	else
+		data="${CLAUDE_CONFIG_DIR:-${HOME:-}/.claude}/plugins/data/markitect-glacius-labs"
+	fi
+fi
 exe="$data/$tag/$exe_name"
 
 fetch() {

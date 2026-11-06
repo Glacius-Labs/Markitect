@@ -10,7 +10,7 @@ spec is the authority over the code, tests and documentation: where they differ,
 the spec is right. People model the spec, and markitect apply has an agent build
 it in the project's folder, a fresh reviewer check it, and the work land.
 
-`markitect` is a command on the path, so there is no need to look for it. `markitect help` lists what it does. If the shell says the command is not found, the binary is missing or its folder is not on the PATH. The Claude Code plugin brings it (`claude plugin marketplace add Glacius-Labs/Markitect`, then `claude plugin install markitect@markitect`); or download the binary for the system from https://github.com/Glacius-Labs/Markitect/releases and put it on the PATH.
+`markitect` is a command on the path, so there is no need to look for it. `markitect help` lists what it does. If the shell says the command is not found, the binary is missing or its folder is not on the PATH. The Claude Code plugin brings it (`claude plugin marketplace add Glacius-Labs/Markitect`, then `claude plugin install markitect@glacius-labs`); or download the binary for the system from https://github.com/Glacius-Labs/Markitect/releases and put it on the PATH.
 
 ## How to begin
 
@@ -22,4 +22,4 @@ it in the project's folder, a fresh reviewer check it, and the work land.
 
 ## After an upgrade
 
-`markitect version` says whether this skill and the project's skills and agents match the binary. `markitect update` installs the newest release of the binary, then brings them in line; a binary the plugin brings is updated with the plugin (`claude plugin update markitect@markitect`). It changes no spec file.
+`markitect version` says whether this skill and the project's skills and agents match the binary. `markitect update` installs the newest release of the binary, then brings them in line; a binary the plugin brings is updated with the plugin (`claude plugin update markitect@glacius-labs`). It changes no spec file.

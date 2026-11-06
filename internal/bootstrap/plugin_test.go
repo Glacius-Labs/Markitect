@@ -212,6 +212,41 @@ func TestLauncherSaysWhenThereIsNoNetwork(t *testing.T) {
 	}
 }
 
+// Without CLAUDE_PLUGIN_DATA, which only hooks get, the launcher finds the folder
+// Claude Code would give the plugin: plugins/data/<plugin>-<marketplace>, with the
+// marketplace taken from where the plugin is installed, whatever it is called.
+func TestLauncherFindsTheDataFolderOfAnInstalledPlugin(t *testing.T) {
+	version := pluginVersion(t)
+	mirror, downloads := releasePage(t, version, false)
+	plugins := testkit.TempDir(t)
+	root := filepath.Join(plugins, "cache", "some.market", "markitect", version)
+	for _, f := range []string{"bin/markitect", ".claude-plugin/plugin.json"} {
+		data, err := os.ReadFile(filepath.Join(pluginRoot, filepath.FromSlash(f)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		dst := filepath.Join(root, filepath.FromSlash(f))
+		if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(dst, data, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	out, code := launch(t, root, mirror, "", nil, "-test.run=TestLauncherChild")
+	if code != 0 || !strings.Contains(out, "child: plugin "+version) {
+		t.Fatalf("exit %d\n%s", code, out)
+	}
+	// Every character that is no letter, digit, underscore or hyphen becomes a hyphen.
+	want := filepath.Join(plugins, "data", "markitect-some-market", "v"+version)
+	if entries, _ := os.ReadDir(want); len(entries) != 1 {
+		t.Fatalf("the binary is not in %s: %v", want, entries)
+	}
+	if downloads.Load() != 2 {
+		t.Fatalf("downloads = %d, want 2", downloads.Load())
+	}
+}
+
 // A plugin folder of a development version has no release to fetch.
 func TestLauncherRefusesADevelopmentVersion(t *testing.T) {
 	root := testkit.TempDir(t)
