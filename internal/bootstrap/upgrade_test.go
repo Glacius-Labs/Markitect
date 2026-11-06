@@ -24,7 +24,10 @@ type fakeReleases struct {
 	looked    bool
 	installed []string // "version exe"
 	ran       []string // the exe and its arguments
+	tidied    []string // the executables update asked to tidy
 }
+
+func (f *fakeReleases) Tidy(exe string) { f.tidied = append(f.tidied, exe) }
 
 func (f *fakeReleases) Latest(context.Context) (string, error) {
 	f.looked = true
@@ -174,6 +177,35 @@ func TestUpdateStopsWhenTheInstallFails(t *testing.T) {
 	wantAll(t, errOut, "could not install release 0.15.0", "does not match its checksum")
 	if strings.Contains(out, "personal skill:") {
 		t.Fatalf("update went on after a failed install:\n%s", out)
+	}
+}
+
+// An update on Windows leaves the old executable beside the new one, since it ran
+// while the update worked; the next update has it tidied. Nothing is tidied by a
+// command that changes nothing, by one that leaves the binary alone, or for a
+// binary the plugin manages.
+func TestUpdateTidiesWhatAnEarlierUpdateLeft(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		args   []string
+		plugin bool
+		want   int
+	}{
+		{"update", nil, false, 1},
+		{"update --check", []string{"--check"}, false, 0},
+		{"update --files", []string{"--files"}, false, 0},
+		{"a plugin binary", nil, true, 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.plugin {
+				t.Setenv(cli.PluginEnv, "0.14.1")
+			}
+			rel := &fakeReleases{latest: "0.14.1"}
+			updateWith(t, "0.14.1", rel, tc.args...)
+			if len(rel.tidied) != tc.want {
+				t.Fatalf("tidied %v, want %d call(s)", rel.tidied, tc.want)
+			}
+		})
 	}
 }
 

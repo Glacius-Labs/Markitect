@@ -182,6 +182,11 @@ func (c CLI) upgradeBinary(ctx context.Context, repo string, check, force bool) 
 	if c.Releases == nil {
 		return step, nil
 	}
+	if exe, err := c.executable(); err == nil && !check {
+		// What an earlier update on Windows moved aside: a program that runs cannot
+		// delete its own file, but the next update can.
+		c.Releases.Tidy(exe)
+	}
 	latest, err := c.Releases.Latest(ctx)
 	if err != nil {
 		fmt.Fprintf(c.Stdout, "binary: could not look for a newer release: %v\n", err)

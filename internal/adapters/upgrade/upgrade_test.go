@@ -222,6 +222,25 @@ func assertUntouched(t *testing.T, dir, exe string) {
 	}
 }
 
+// Only an Install on Windows leaves an old executable behind, so only there is a
+// file named like it removed; elsewhere it may be somebody's backup.
+func TestTidyRemovesTheOldExecutableOnlyOnWindows(t *testing.T) {
+	for goos, removed := range map[string]bool{"windows": true, "linux": false, "darwin": false} {
+		dir := t.TempDir()
+		exe := filepath.Join(dir, "markitect")
+		os.WriteFile(exe, []byte("new"), 0o755)
+		os.WriteFile(exe+".old", []byte("old"), 0o755)
+		Client{GOOS: goos}.Tidy(exe)
+		_, err := os.Stat(exe + ".old")
+		if gone := os.IsNotExist(err); gone != removed {
+			t.Errorf("%s: .old removed = %v, want %v", goos, gone, removed)
+		}
+		if _, err := os.Stat(exe); err != nil {
+			t.Errorf("%s: Tidy removed the executable: %v", goos, err)
+		}
+	}
+}
+
 func TestAssetNames(t *testing.T) {
 	if got := AssetName("0.15.0", "windows", "amd64"); got != "markitect-v0.15.0-windows-amd64.exe" {
 		t.Errorf("windows: %s", got)
