@@ -95,7 +95,7 @@ fetch() {
 	download() {
 		# $secure is several words on purpose.
 		curl -fsSL $secure --connect-timeout 15 --max-time 240 --retry 1 -o "$2" "$base/download/$tag/$1" ||
-			fail "cannot download $1 of release $tag from $base (is there network access? a sandboxed shell may block it, and the session-start hook of the plugin downloads it outside the sandbox)"
+			fail "cannot download $1 of release $tag from $base (is there network access? a sandboxed shell may block it; in a project with a .markitect folder the session-start hook of the plugin downloads it outside the sandbox, elsewhere run markitect once in a session without the sandbox)"
 	}
 	download "markitect-$tag-checksums.txt" "$tmp/sums"
 	download "$asset" "$tmp/bin"
