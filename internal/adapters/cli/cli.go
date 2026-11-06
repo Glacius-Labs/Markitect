@@ -95,6 +95,8 @@ type Releases interface {
 	Install(ctx context.Context, version, exe string) error
 	// Run starts the executable exe and returns its exit code.
 	Run(ctx context.Context, exe string, args []string, stdout, stderr io.Writer) (int, error)
+	// Tidy removes what an earlier Install left beside the executable exe.
+	Tidy(exe string)
 }
 
 // CLI runs one command.

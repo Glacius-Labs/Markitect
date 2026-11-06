@@ -221,6 +221,15 @@ func (c Client) Install(ctx context.Context, version, exe string) error {
 	return nil
 }
 
+// Tidy removes the old executable that an Install on Windows moved aside, since
+// the program that ran then could not delete its own file. On other systems an
+// Install leaves nothing behind, and a file named like it is not ours.
+func (c Client) Tidy(exe string) {
+	if goos, _ := c.platform(); goos == "windows" {
+		os.Remove(exe + ".old")
+	}
+}
+
 // replace puts the file next in the place of exe. Windows lets a program rename
 // its own running executable but not overwrite it, so there the old one steps
 // aside first and is deleted later, when it is no longer running.
