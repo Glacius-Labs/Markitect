@@ -74,9 +74,11 @@ jobs:
             git merge-base --is-ancestor "$SOURCE_SHA" origin/main || { echo "tagged commit is not contained in origin/main" >&2; exit 1; }
             [[ "$source_version" != *-dev ]] || { echo "the source still declares the development version $source_version; a release commit sets the version first" >&2; exit 1; }
             [[ "$TAG" == "v$source_version" ]] || { echo "release tag $TAG does not match source version $source_version" >&2; exit 1; }
-            plugin_version="$(sed -n 's/^[[:space:]]*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' plugin/.claude-plugin/plugin.json | head -n 1)"
-            [[ "$plugin_version" == "$source_version" ]] || { echo "the plugin names version $plugin_version, not $source_version; a release commit sets both" >&2; exit 1; }
           fi
+          # The catalog pins the plugin to the tag, and the launcher reads its version
+          # from the plugin's manifest in that commit.
+          plugin_version="$(sed -n 's/^[[:space:]]*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' plugin/.claude-plugin/plugin.json | head -n 1)"
+          [[ "$plugin_version" == "$source_version" ]] || { echo "the plugin names version $plugin_version, not $source_version; the source and the plugin always say the same" >&2; exit 1; }
 
           bundle_path="$RUNNER_TEMP/markitect-$TAG-bundle.zip"
           go run ./cmd/markitect-release bundle --repo . --revision "$SOURCE_SHA" --output "$bundle_path"
@@ -315,7 +317,7 @@ jobs:
 
           **Install**
 
-          - With Claude Code: \`claude plugin marketplace add Glacius-Labs/Markitect\`, then \`claude plugin install markitect@glacius-labs\`. The plugin brings the \`markitect\` command and keeps it at its own version.
+          - With Claude Code: \`claude plugin marketplace add Glacius-Labs/Claude-Plugins\`, then \`claude plugin install markitect@glacius-labs\`. The plugin brings the \`markitect\` command and keeps it at its own version.
           - Without it: download the binary for your system, check it against \`markitect-$TAG-checksums.txt\`, and put it on your PATH as \`markitect\`.
 
           **Update:** \`markitect update\` installs the newest release and brings the skills, agents and lock of your projects in line. A binary the plugin brought is updated with the plugin: \`claude plugin update markitect@glacius-labs\`.
