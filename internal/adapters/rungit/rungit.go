@@ -457,24 +457,57 @@ func (r *Repo) Advance(ctx context.Context, branch, commit, old string) error {
 			return fmt.Errorf("%s could not be brought up in %s, because %s there holds an edit of its own", branch, tree, p)
 		}
 	}
-	// Only the files change here, not the index: the paths go on stdin, since there
-	// may be more than a command line holds.
-	if len(bring) > 0 {
-		paths := strings.NewReader(strings.Join(bring, "\x00") + "\x00")
-		if _, err := command(ctx, tree, paths, []string{"GIT_LITERAL_PATHSPECS=1"}, "restore", "-q", "--source="+commit, "--worktree", "--pathspec-from-file=-", "--pathspec-file-nul"); err != nil {
-			return err
+	// Only the files change here, not the index. If the files or the branch cannot
+	// move, the files go back to what they were, so that nothing of this attempt is
+	// left for the next one to take for an edit of the owner's.
+	if err := r.bringUp(ctx, tree, branch, commit, old, bring, gone); err != nil {
+		if back := putBack(ctx, tree, old, append(bring, gone...), before); back != nil {
+			return fmt.Errorf("%v; putting the files back failed too: %v", err, back)
 		}
+		return err
+	}
+	// The index follows the branch; the files stay as they now are.
+	_, err = command(ctx, tree, nil, nil, "reset", "-q", "--mixed")
+	return err
+}
+
+// bringUp writes commit's version of the files to bring, removes the gone ones and
+// then moves the branch.
+func (r *Repo) bringUp(ctx context.Context, tree, branch, commit, old string, bring, gone []string) error {
+	if err := restore(ctx, tree, commit, bring); err != nil {
+		return err
 	}
 	for _, p := range gone {
 		if err := os.Remove(filepath.Join(tree, filepath.FromSlash(p))); err != nil && !os.IsNotExist(err) {
 			return err
 		}
 	}
-	if _, err := r.git(ctx, nil, nil, "update-ref", "refs/heads/"+branch, commit, old); err != nil {
-		return err
+	_, err := r.git(ctx, nil, nil, "update-ref", "refs/heads/"+branch, commit, old)
+	return err
+}
+
+// putBack returns files of a working tree to their version at old, removing those
+// old does not have. Each held that version before the landing began.
+func putBack(ctx context.Context, tree, old string, paths []string, before map[string]string) error {
+	var keep []string
+	for _, p := range paths {
+		if before[p] != "" {
+			keep = append(keep, p)
+		} else if err := os.Remove(filepath.Join(tree, filepath.FromSlash(p))); err != nil && !os.IsNotExist(err) {
+			return err
+		}
 	}
-	// The index follows the branch; the files stay as they now are.
-	_, err = command(ctx, tree, nil, nil, "reset", "-q", "--mixed")
+	return restore(ctx, tree, old, keep)
+}
+
+// restore writes source's version of paths into the working tree only. The paths go
+// on stdin, since there may be more than a command line holds.
+func restore(ctx context.Context, tree, source string, paths []string) error {
+	if len(paths) == 0 {
+		return nil
+	}
+	in := strings.NewReader(strings.Join(paths, "\x00") + "\x00")
+	_, err := command(ctx, tree, in, []string{"GIT_LITERAL_PATHSPECS=1"}, "restore", "-q", "--source="+source, "--worktree", "--pathspec-from-file=-", "--pathspec-file-nul")
 	return err
 }
 

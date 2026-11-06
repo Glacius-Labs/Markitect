@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -211,13 +212,19 @@ func (c CLI) ensureAnswerHook(ws Workspace) error {
 		if err != nil {
 			return err
 		}
-		if bytes.Contains(data, []byte(run.HookCommand)) {
+		if run.HasAnswerHook(data) {
 			return nil
 		}
 		dec := json.NewDecoder(bytes.NewReader(data))
 		dec.UseNumber()
 		if err := dec.Decode(&settings); err != nil {
 			return lacks(fmt.Sprintf("because it is not valid JSON (%v)", err))
+		}
+		if _, err := dec.Token(); err != io.EOF {
+			return lacks("because it holds more than one JSON value")
+		}
+		if settings == nil {
+			return lacks("because it is not a JSON object")
 		}
 	}
 	hooks := map[string]any{}

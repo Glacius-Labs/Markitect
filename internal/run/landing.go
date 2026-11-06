@@ -26,10 +26,11 @@ func ResultFile(run string) string { return path.Join(project.ResultsDir, run+".
 func (e *Engine) land(ctx context.Context, st *RunState, cand, tree string) (Verdict, error) {
 	st.Reviewed = cand
 	why := ""
+	ended := e.now()
 	for attempt := 1; attempt <= landAttempts; attempt++ {
 		var err error
 		var landed string
-		landed, why, err = e.landOnce(ctx, st, cand)
+		landed, why, err = e.landOnce(ctx, st, cand, ended)
 		if err != nil {
 			return Verdict{}, err
 		}
@@ -56,8 +57,9 @@ func (e *Engine) landedWhy(st *RunState) string {
 	return "the checks passed and the reviewer found nothing wrong"
 }
 
-// landOnce tries to land once. It returns the landing commit, or why not.
-func (e *Engine) landOnce(ctx context.Context, st *RunState, cand string) (string, string, error) {
+// landOnce tries to land once. It returns the landing commit, or why not. Every
+// attempt of one landing has the same end time, so its Result page is the same.
+func (e *Engine) landOnce(ctx context.Context, st *RunState, cand string, ended time.Time) (string, string, error) {
 	tip, err := e.Git.Tip(ctx, st.Branch)
 	if err != nil {
 		return "", "", err
@@ -109,6 +111,7 @@ func (e *Engine) landOnce(ctx context.Context, st *RunState, cand string) (strin
 	r := e.result(ctx, st, StateLanded, e.landedWhy(st), nil)
 	r.Outcome = Landed
 	r.Work = cand
+	r.Ended = ended
 	if moved {
 		r.Why += fmt.Sprintf("; %s had moved to %s, and the clean merge passed the checks", st.Branch, short(tip))
 	}
@@ -171,8 +174,10 @@ func (e *Engine) closeOn(ctx context.Context, st *RunState, cand, state, why str
 
 // retryLandings tries once more to land the kept work of this branch. A second
 // failure leaves the work on its branch: the base has not moved, so a fresh Run
-// does the work again and nothing is lost.
-func (e *Engine) retryLandings(ctx context.Context, runs []*RunState, branch string) {
+// does the work again and nothing is lost. A failure while the folder holds other
+// changes does not count, since they may be what stopped it: the next apply tries
+// again.
+func (e *Engine) retryLandings(ctx context.Context, runs []*RunState, branch, root string) {
 	for _, st := range runs {
 		if st.Open || !st.RetryLanding || st.Branch != branch {
 			continue
@@ -185,7 +190,12 @@ func (e *Engine) retryLandings(ctx context.Context, runs []*RunState, branch str
 		if err != nil || len(c.Parents) == 0 {
 			continue
 		}
-		landed, _, err := e.landOnce(ctx, st, c.Parents[0])
+		landed, _, err := e.landOnce(ctx, st, c.Parents[0], e.now())
+		if err == nil && landed == "" {
+			if dirty, derr := e.Git.Uncommitted(ctx, root); derr != nil || len(dirty) > 0 {
+				continue
+			}
+		}
 		_ = e.Store.Update(st.Run, func(s *RunState) error {
 			s.RetryLanding = false
 			if err == nil && landed != "" {

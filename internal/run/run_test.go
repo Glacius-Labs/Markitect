@@ -683,6 +683,24 @@ func TestAnswerGuard(t *testing.T) {
 	}
 }
 
+func TestHasAnswerHook(t *testing.T) {
+	hook := func(event, matcher string) string {
+		return `{"hooks": {"` + event + `": [{"matcher": "` + matcher + `", "hooks": [{"type": "command", "command": "` + run.HookCommand + `"}]}]}}`
+	}
+	for settings, want := range map[string]bool{
+		hook("PreToolUse", "Bash"):            true,
+		hook("PreToolUse", ""):                true,
+		hook("PreToolUse", "Edit"):            false,
+		hook("PostToolUse", "Bash"):           false,
+		`{"note": "` + run.HookCommand + `"}`: false,
+		"not json":                            false,
+	} {
+		if got := run.HasAnswerHook([]byte(settings)); got != want {
+			t.Errorf("%s: %v", settings, got)
+		}
+	}
+}
+
 func TestVerifyNeedsACleanFolder(t *testing.T) {
 	f := newFixture(t)
 	write(t, f.repo.Dir, "src/members/loans/loan.go", "package loans\n\nconst Limit = 9\n")
@@ -924,6 +942,8 @@ func TestALandingThatWasKilledFinishes(t *testing.T) {
 	f.submit(wt)
 	f.answer(wt, s.Run, nil)
 	start := f.state(s.Run).Start
+	f.repo.Git("add", "-A")
+	f.repo.Git("commit", "-q", "-m", "the work")
 	write(t, wt, ".markitect/results/"+s.Run+".md", "# Result\n")
 	f.repo.Git("add", "-A")
 	f.repo.Git("commit", "-q", "-m", "Markitect Run "+s.Run+": landed\n\nRun-Name: "+s.Run)
@@ -937,6 +957,21 @@ func TestALandingThatWasKilledFinishes(t *testing.T) {
 	}
 	if status := f.repo.Git("status", "--porcelain"); status != "" {
 		t.Fatalf("the index did not catch up: %s", status)
+	}
+}
+
+// A commit that only claims to be the run's landing is refused like any other.
+func TestSubmitRefusesAForgedLanding(t *testing.T) {
+	f := newFixture(t)
+	s, wt := f.apply()
+	write(t, wt, "src/members/loans/loan.go", "package loans\n\nconst Limit = 3\n")
+	write(t, wt, ".markitect/results/"+s.Run+".md", "# Result\n")
+	f.repo.Git("add", "-A")
+	f.repo.Git("commit", "-q", "-m", "Markitect Run "+s.Run+": landed\n\nRun-Name: "+s.Run)
+	v := f.submit(wt)
+	has(t, v.Text, "during the run")
+	if st := f.state(s.Run); !st.Open {
+		t.Fatalf("recorded as landed: %+v", st)
 	}
 }
 
@@ -973,16 +1008,22 @@ func TestSubmitRefusesAnotherBranch(t *testing.T) {
 }
 
 // Work that passed but could not land stays in the folder, and the next apply
-// lands it from there.
+// lands it from there. An edit of the owner's in the way does not use up that
+// retry.
 func TestKeptWorkLandsOnTheNextApply(t *testing.T) {
 	f := newFixture(t)
 	s, wt := f.apply()
-	write(t, wt, "src/members/loans/loan.go", "package loans\n\nconst Limit = 3\n")
+	work := "package loans\n\nconst Limit = 3\n"
+	write(t, wt, "src/members/loans/loan.go", work)
 	f.submit(wt)
 	f.answer(wt, s.Run, nil)
-	// Git's own lock holds through every attempt.
-	lock := filepath.Join(f.repo.Dir, ".git", "index.lock")
-	write(t, f.repo.Dir, ".git/index.lock", "")
+	// Git's lock on the branch holds through every attempt, so the branch cannot
+	// move, and each attempt puts the files back.
+	st := f.state(s.Run)
+	lock := filepath.Join(f.repo.Dir, ".git", "refs", "heads", filepath.FromSlash(st.Branch)+".lock")
+	if err := os.WriteFile(lock, nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
 	v := f.submit(wt)
 	has(t, v.Text, "tries once more", "in your folder")
 	if st := f.state(s.Run); st.State != run.StateKept {
@@ -991,9 +1032,25 @@ func TestKeptWorkLandsOnTheNextApply(t *testing.T) {
 	if err := os.Remove(lock); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir}); err != nil {
-		t.Fatal(err)
+	if head := f.repo.Git("rev-parse", "HEAD"); head != st.Start {
+		t.Fatalf("the branch moved to %s", head)
 	}
+	if _, err := os.Stat(filepath.Join(wt, ".markitect", "results", s.Run+".md")); !os.IsNotExist(err) {
+		t.Fatalf("an attempt left its Result page in the folder: %v", err)
+	}
+	apply := func() {
+		t.Helper()
+		if _, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	write(t, wt, "src/members/loans/loan.go", "package loans\n\nconst Limit = 4 // mine\n")
+	apply()
+	if st := f.state(s.Run); st.State != run.StateKept || !st.RetryLanding {
+		t.Fatalf("an edit in the way used up the retry: %+v", st)
+	}
+	write(t, wt, "src/members/loans/loan.go", work)
+	apply()
 	if st := f.state(s.Run); st.State != run.StateLanded {
 		t.Fatalf("%+v", st)
 	}

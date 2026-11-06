@@ -14,6 +14,36 @@ const (
 	HookCommand  = "markitect hook pretool"
 )
 
+// HasAnswerHook says whether settings run HookCommand before every shell command,
+// as a command hook before Bash; a mention elsewhere does not count.
+func HasAnswerHook(settings []byte) bool {
+	var s struct {
+		Hooks struct {
+			PreToolUse []struct {
+				Matcher string `json:"matcher"`
+				Hooks   []struct {
+					Type    string `json:"type"`
+					Command string `json:"command"`
+				} `json:"hooks"`
+			} `json:"PreToolUse"`
+		} `json:"hooks"`
+	}
+	if json.Unmarshal(settings, &s) != nil {
+		return false
+	}
+	for _, m := range s.Hooks.PreToolUse {
+		if m.Matcher != "" && m.Matcher != "*" && m.Matcher != "Bash" {
+			continue
+		}
+		for _, h := range m.Hooks {
+			if h.Type == "command" && strings.TrimSpace(h.Command) == HookCommand {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // AnswerGuard is the project's hook before a shell command: only the reviewer
 // stores answers, so an agent cannot mark its own work as done. Its input is what
 // the provider tells a hook, which names the agent a subagent's call comes from.

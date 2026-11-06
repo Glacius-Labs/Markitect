@@ -279,6 +279,16 @@ func TestInitKeepsTheProjectsSettings(t *testing.T) {
 	}
 }
 
+// A mention of the hook's command that is not the hook gets the hook added.
+func TestInitAddsTheHookBesideAMention(t *testing.T) {
+	r := testkit.NewRepo(t)
+	r.Write(".claude/settings.json", `{"hooks": {"PostToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "markitect hook pretool"}]}]}}`+"\n")
+	mustRun(t, r.Dir, "init")
+	if !strings.Contains(read(t, r.Dir, ".claude/settings.json"), "PreToolUse") {
+		t.Fatalf("no hook added:\n%s", read(t, r.Dir, ".claude/settings.json"))
+	}
+}
+
 // Settings init cannot read, or whose hooks have another shape, stay as they are,
 // and init says what to add.
 func TestInitLeavesSettingsItCannotRead(t *testing.T) {
@@ -286,6 +296,8 @@ func TestInitLeavesSettingsItCannotRead(t *testing.T) {
 		"not JSON":              "{ not json\n",
 		"hooks not a map":       `{"hooks": ["something"]}` + "\n",
 		"PreToolUse not a list": `{"hooks": {"PreToolUse": "x"}}` + "\n",
+		"null":                  "null\n",
+		"two values":            "{} {}\n",
 	} {
 		t.Run(name, func(t *testing.T) {
 			r := testkit.NewRepo(t)

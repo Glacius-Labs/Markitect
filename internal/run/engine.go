@@ -108,7 +108,7 @@ func (e *Engine) Apply(ctx context.Context, req Request) (Started, error) {
 	}
 	// Kept work lands first, while it may still be in the folder: a file that
 	// already holds it stays as it is.
-	e.retryLandings(ctx, runs, branch)
+	e.retryLandings(ctx, runs, branch, root)
 	dirty, err := e.Git.Uncommitted(ctx, root)
 	if err != nil {
 		return Started{}, err
@@ -223,7 +223,7 @@ const (
 	builderFile  = ".claude/agents/" + BuilderAgent + ".md"
 )
 
-const noHarness = "The harness is not complete in this project: a run needs the builder and reviewer agents, and the hook on answer in " + SettingsFile + ". Run markitect init, which commits what it writes, and try again.\n"
+const noHarness = "The harness is not complete in this project: a run needs the builder and reviewer agents, and the hook on answer in " + SettingsFile + ". Run markitect init, which commits what it writes, and try again; if init says it left the settings as they are, add the hook it names by hand.\n"
 
 // hasHarness looks in the commit and on disk for both agents of a Run and for the
 // hook that lets only the reviewer answer: without it, nothing would keep the
@@ -236,7 +236,7 @@ func (e *Engine) hasHarness(ctx context.Context, commit, root string) bool {
 				return false
 			}
 		}
-		if file == SettingsFile && !strings.Contains(string(data), HookCommand) {
+		if file == SettingsFile && !HasAnswerHook(data) {
 			return false
 		}
 	}

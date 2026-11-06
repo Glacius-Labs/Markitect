@@ -268,6 +268,46 @@ func TestAdvanceRunsAgainAfterALock(t *testing.T) {
 	}
 }
 
+// A landing the branch's lock stops puts the files back, so a later landing with
+// another Result page is not taken for an edit of the owner's.
+func TestAdvancePutsTheFilesBack(t *testing.T) {
+	host, r := open(t)
+	ctx := context.Background()
+	head := r.Git("rev-parse", "HEAD")
+	r.Write("work.go", "package work\n")
+	cand, err := host.Candidate(ctx, r.Dir, "the work\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	first, err := host.Write(ctx, cand, map[string][]byte{"result.md": []byte("first\n")}, "result\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	lock := filepath.Join(r.Dir, ".git", "refs", "heads", "main.lock")
+	if err := os.WriteFile(lock, nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := host.Advance(ctx, "main", first, head); err == nil {
+		t.Fatal("moved through the branch's lock")
+	}
+	if err := os.Remove(lock); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(r.Dir, "result.md")); !os.IsNotExist(err) {
+		t.Fatalf("the attempt's file stayed: %v", err)
+	}
+	second, err := host.Write(ctx, cand, map[string][]byte{"result.md": []byte("second\n")}, "result\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := host.Advance(ctx, "main", second, head); err != nil {
+		t.Fatal(err)
+	}
+	if status := r.Git("status", "--porcelain"); status != "" {
+		t.Fatalf("not clean: %s", status)
+	}
+}
+
 // A link in the work counts as the work, as Git stores it.
 func TestAdvanceOverALink(t *testing.T) {
 	host, r := open(t)

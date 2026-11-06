@@ -366,6 +366,31 @@ func (e *Engine) closeVerify(ctx context.Context, st *RunState, state, why strin
 }
 
 // refuse saves the Run and gives the agent its next step.
+// landedHere says whether head is this run's landing, which a submit made and was
+// cut off before it recorded: a passed review, a commit of the reviewed work with
+// the run's Result page, named for the run. Anything less is someone's commit.
+func (e *Engine) landedHere(ctx context.Context, st *RunState, head string) bool {
+	if !st.Review.Complete() {
+		return false
+	}
+	if wrong, decisions := e.verdicts(st); len(wrong) > 0 || len(decisions) > 0 {
+		return false
+	}
+	c, err := e.Git.Commit(ctx, head)
+	if err != nil || len(c.Parents) != 1 {
+		return false
+	}
+	if names := trailers(c.Message)[trailerRun]; len(names) != 1 || names[0] != st.Run {
+		return false
+	}
+	parent, err := e.Git.Commit(ctx, c.Parents[0])
+	if err != nil || parent.Tree != st.Review.Tree {
+		return false
+	}
+	_, err = e.Git.State(ctx, head).Read(ResultFile(st.Run))
+	return err == nil
+}
+
 // atStart answers, with done, when the owner's folder is no longer on the run's
 // branch at its start. A landing that moved the branch but was cut off before it
 // was recorded is recorded now.
@@ -385,18 +410,16 @@ func (e *Engine) atStart(ctx context.Context, st *RunState, root string) (Verdic
 		v, err := e.refuse(st, fmt.Sprintf("The folder is no longer on %s, where the run started. Check %s out again, then call markitect submit.", st.Branch, st.Branch), nil)
 		return v, true, err
 	}
-	if c, err := e.Git.Commit(ctx, head); err == nil {
-		if names := trailers(c.Message)[trailerRun]; len(names) == 1 && names[0] == st.Run {
-			if err := e.Git.Advance(ctx, st.Branch, head, head); err != nil {
-				return Verdict{}, true, err
-			}
-			st.Landed = head
-			e.markClosed(st, StateLanded, e.landedWhy(st))
-			if err := e.Store.Settle(st); err != nil {
-				return Verdict{}, true, err
-			}
-			return Verdict{Done: true, Text: fmt.Sprintf("Landed on %s as %s. Nothing is left to do: end now.\n", st.Branch, short(head))}, true, nil
+	if e.landedHere(ctx, st, head) {
+		if err := e.Git.Advance(ctx, st.Branch, head, head); err != nil {
+			return Verdict{}, true, err
 		}
+		st.Landed = head
+		e.markClosed(st, StateLanded, e.landedWhy(st))
+		if err := e.Store.Settle(st); err != nil {
+			return Verdict{}, true, err
+		}
+		return Verdict{Done: true, Text: fmt.Sprintf("Landed on %s as %s. Nothing is left to do: end now.\n", st.Branch, short(head))}, true, nil
 	}
 	v, err := e.refuse(st, fmt.Sprintf("%s moved from %s to %s during the run. A run's work is not committed by hand: markitect submit commits it when it lands. Undo those commits with `git reset --soft %s`, which keeps their changes in the folder, then call markitect submit again.", st.Branch, short(st.Start), short(head), st.Start), nil)
 	return v, true, err
