@@ -18,6 +18,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
+	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/skills"
 )
 
@@ -68,14 +69,14 @@ Usage:
   markitect lock   [--repo DIR]                   write the lock from the manifest
   markitect refs   [--repo DIR] [--json] TARGET   who links to a Definition or Package
   markitect graph  [--repo DIR] [--json]          the Package dependency graph
-  markitect impact [--repo DIR] [--json] [--base COMMIT] [--full] [--findings FILE]
+  markitect impact [--repo DIR] [--json] [--base COMMIT|CERTIFICATE] [--full] [--findings FILE]
                                                   what a change reaches, with distance and reason
   markitect lint   [--repo DIR] [--json]          measure the spec like code: warnings only
   markitect apply  [--repo DIR] [--base COMMIT] [--full] [--findings FILE] [--deadline D]
                                                   open a run: a builder agent makes the project match the spec, and the work lands
   markitect verify [--repo DIR] [--base COMMIT] [--full] [--deadline D]
                                                   open a review of the last commit; changes nothing you have
-  markitect status [--repo DIR]                   how the runs of this branch stand
+  markitect status [--repo DIR]                   how the runs of this branch and the work in the folder stand
   markitect stop   [--repo DIR] WHY               end a run without landing
   markitect version [--repo DIR]                  which markitect this is, and whether the personal skill and the project match it
   markitect licenses
@@ -84,6 +85,12 @@ Called from inside a run:
   markitect checklist [--review]                  the task and the list
   markitect answer [FILE]                         store a reviewer's answers
   markitect submit                                the one door: says what is next, and lands the work
+
+Without a run and without Git, for whoever drives the agents (tried beside the run):
+  markitect checklist [--base CERTIFICATE] [--full] [--findings FILE] [--review]
+                                                  the list of the change from the newest certificate to the folder
+  markitect answer [FILE]                         store a reviewer's answers for the files as they are now
+  markitect gate   [--verify] [--findings]        check the work and say what is next; when it passes, write its certificate
 `
 )
 
@@ -157,6 +164,8 @@ func (c CLI) Run(ctx context.Context, args []string) int {
 		code, err = c.answer(ctx, rest)
 	case "submit":
 		code, err = c.submit(ctx, rest)
+	case "gate":
+		code, err = c.gate(ctx, rest)
 	case "stop":
 		code, err = c.stop(ctx, rest)
 	case "status":
@@ -377,7 +386,7 @@ func (c CLI) impact(ctx context.Context, args []string) (int, error) {
 	var base, findings string
 	var full bool
 	fs := c.flags("impact", &o)
-	fs.StringVar(&base, "base", "", "the commit to compare the working tree with (default: the work of the last landing)")
+	fs.StringVar(&base, "base", "", "the commit, or the certificate gate wrote, to compare the working tree with (default: the work of the last landing)")
 	fs.BoolVar(&full, "full", false, "every Definition is reached and every Manager works")
 	fs.StringVar(&findings, "findings", "", "a Findings page whose Findings become checklist items")
 	if err := fs.Parse(args); err != nil {
@@ -411,15 +420,7 @@ func (c CLI) impact(ctx context.Context, args []string) (int, error) {
 		}
 		base = landed
 	}
-	b, err := c.Git.Base(ctx, ws, base)
-	if err != nil {
-		return Misused, err
-	}
-	baseProject, err := project.Load(b)
-	if err != nil {
-		return Misused, err
-	}
-	changed, err := b.Changed()
+	baseID, baseProject, changed, err := c.impactBase(ctx, ws, base)
 	if err != nil {
 		return Misused, err
 	}
@@ -443,8 +444,41 @@ func (c CLI) impact(ctx context.Context, args []string) (int, error) {
 		return OK, c.printJSON(struct {
 			Base string `json:"base"`
 			analysis.Impact
-		}{b.ID(), im})
+		}{baseID, im})
 	}
-	fmt.Fprint(c.Stdout, renderImpact(b.ID(), im))
+	fmt.Fprint(c.Stdout, renderImpact(baseID, im))
 	return OK, nil
+}
+
+// impactBase is the base of impact: a certificate gate wrote, when base names a
+// file, otherwise a commit.
+func (c CLI) impactBase(ctx context.Context, ws Workspace, base string) (string, *project.Project, []analysis.Change, error) {
+	if info, err := os.Stat(base); err == nil && !info.IsDir() {
+		cert, err := run.ReadCertificate(base)
+		if err != nil {
+			return "", nil, nil, err
+		}
+		p, err := cert.Project()
+		if err != nil {
+			return "", nil, nil, err
+		}
+		hashes, err := run.HashFiles(ws)
+		if err != nil {
+			return "", nil, nil, err
+		}
+		return base, p, cert.Changed(hashes), nil
+	}
+	b, err := c.Git.Base(ctx, ws, base)
+	if err != nil {
+		return "", nil, nil, err
+	}
+	p, err := project.Load(b)
+	if err != nil {
+		return "", nil, nil, err
+	}
+	changed, err := b.Changed()
+	if err != nil {
+		return "", nil, nil, err
+	}
+	return b.ID(), p, changed, nil
 }

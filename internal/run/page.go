@@ -6,10 +6,16 @@ import (
 	"strings"
 )
 
-// Page renders the Result page as Markdown: the one page a Run ends with.
+// Page renders the Result page as Markdown: the one page a Run ends with, or the
+// page gate writes.
 func Page(r *Result) []byte {
 	var b bytes.Buffer
-	fmt.Fprintf(&b, "# Run %s: %s\n\n", r.Run, r.State)
+	gate := isGate(r)
+	if gate {
+		fmt.Fprintf(&b, "# Gate %s: %s\n\n", r.Run, r.State)
+	} else {
+		fmt.Fprintf(&b, "# Run %s: %s\n\n", r.Run, r.State)
+	}
 	fmt.Fprintf(&b, "%s.\n\n", capitalize(r.Why))
 	b.WriteString("| | |\n|---|---|\n")
 	row := func(k, v string) {
@@ -18,10 +24,14 @@ func Page(r *Result) []byte {
 		}
 	}
 	row("Command", r.Command)
+	if gate {
+		row("State", r.State)
+	}
 	row("Outcome", r.Outcome)
 	row("Target", r.Target)
 	row("Base", r.Base)
 	row("Start", r.Start)
+	row("Certificate", r.Certificate)
 	row("Work", r.Work)
 	row("Run branch", r.Branch)
 	if r.Full {
@@ -32,7 +42,9 @@ func Page(r *Result) []byte {
 	}
 	row("Began", r.Began.UTC().Format("2006-01-02 15:04:05 UTC"))
 	row("Ended", r.Ended.UTC().Format("2006-01-02 15:04:05 UTC"))
-	row("Full check", fullCheckLine(r))
+	if !gate {
+		row("Full check", fullCheckLine(r))
+	}
 	row("Session failure", r.Failure)
 
 	if len(r.OwnerDecisions) > 0 {
@@ -128,11 +140,19 @@ func pointers(ps []Pointer) string {
 // apply --findings.
 func FindingsPage(r *Result) []byte {
 	var b bytes.Buffer
-	fmt.Fprintf(&b, "# Findings of Run %s\n", r.Run)
+	if isGate(r) {
+		fmt.Fprintf(&b, "# Findings of gate %s\n", r.Run)
+	} else {
+		fmt.Fprintf(&b, "# Findings of Run %s\n", r.Run)
+	}
 	for _, f := range r.Findings {
 		fmt.Fprintf(&b, "\n## [[%s]]\n\nObserved: %s\n\nExpected: %s\n", f.Definition, oneLine(f.Observed), oneLine(f.Expected))
 	}
 	return b.Bytes()
+}
+
+func isGate(r *Result) bool {
+	return r.Command == commandGate || r.Command == commandGateFindings
 }
 
 func cell(s string) string {

@@ -111,7 +111,7 @@ Later drivers: a workflow script, which holds the loop and the limits in code; a
 ## Order of work
 
 1. **Decide.** Done for the boundary, the name and Git ([DEC-096](register.md#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](register.md#dec-097-markitect-uses-no-git)); the rest is below. The concept follows once step 3 holds.
-2. **Build beside the old.** Add the folder walk, the certificate, `gate` and the file-bound answers next to today's engine, whose Git use stays until step 4. Port the tests of `submit`'s table to plain folders. Nothing is removed yet.
+2. **Build beside the old.** Add the folder walk, the certificate, `gate` and the file-bound answers next to today's engine, whose Git use stays until step 4. Port the tests of `submit`'s table to plain folders. Nothing is removed yet. Built on 6 November 2026, with decisions 3, 5 and 6 below as recommended, so that the owner can still change them; [without a Run](../../internal/run/README.md#without-a-run-gate) describes it.
 3. **Try it.** Switch the default driver to the lean commands and run a few changes on Makerspace, with planted defects. Compare with today's flow: items answered, planted defects caught, interventions by the owner, time.
 4. **Remove.** If it holds: the run lifecycle, landing, run branches, trailers and every use of Git in the product go; docs, concept, code map; a release.
 5. **Later.** A workflow driver; a CI check with `gate --verify`.

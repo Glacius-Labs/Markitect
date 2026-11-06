@@ -61,7 +61,9 @@ const HomeVariable = "MARKITECT_TESTKIT_HOME"
 // global configuration is GlobalConfig. Production code that drops GIT_*
 // variables before running git still reads that global configuration through
 // HOME. Git's system configuration stays visible to such code; fixtures set
-// what they rely on, such as core.autocrlf, in their repository config.
+// what they rely on, such as core.autocrlf, in their repository config. The
+// user's cache folder (XDG_CACHE_HOME, and LOCALAPPDATA on Windows) moves there
+// too, so that what the product keeps in it stays out of the user's.
 //
 // Isolate keeps the Go cache locations of the original environment. The
 // returned function restores the environment.
@@ -94,6 +96,8 @@ func Isolate() (func(), error) {
 		HomeVariable:          home,
 		"HOME":                home,
 		"XDG_CONFIG_HOME":     filepath.Join(home, ".config"),
+		"XDG_CACHE_HOME":      filepath.Join(home, ".cache"),
+		"LOCALAPPDATA":        filepath.Join(home, "AppData", "Local"),
 		"GIT_CONFIG_GLOBAL":   global,
 		"GIT_CONFIG_NOSYSTEM": "1",
 		"GIT_TERMINAL_PROMPT": "0",

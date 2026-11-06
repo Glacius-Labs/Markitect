@@ -37,6 +37,9 @@ const (
 	// StateIncomplete: a deadline, or something the machine lacks. Nothing it did
 	// is reported as success.
 	StateIncomplete = "incomplete"
+	// StatePassed: gate found every item answered and none wrong, and wrote a
+	// certificate.
+	StatePassed = "passed"
 )
 
 // Result is what a Run's Result page shows. The tool writes it from what
@@ -54,6 +57,8 @@ type Result struct {
 	Base  string `json:"base,omitempty"`
 	Start string `json:"start,omitempty"`
 	Work  string `json:"work,omitempty"`
+	// Certificate is the certificate gate wrote beside a passing Result.
+	Certificate string `json:"certificate,omitempty"`
 	// Target is the owner's branch; Branch the branch a Result that does not land
 	// stays on.
 	Target string `json:"target"`

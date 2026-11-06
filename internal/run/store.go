@@ -269,10 +269,15 @@ const lockSettling = 5 * time.Second
 // lock takes a lock file that holds this process's ID. A lock whose process has
 // gone is taken over, so that a command that was killed can be run again.
 func (s Store) lock(name string, wait time.Duration) (func(), error) {
-	if err := os.MkdirAll(filepath.Join(s.Dir, "runs"), 0o755); err != nil {
+	return s.lockIn("runs", name, wait)
+}
+
+// lockIn takes a lock in a folder of the store.
+func (s Store) lockIn(folder, name string, wait time.Duration) (func(), error) {
+	if err := os.MkdirAll(filepath.Join(s.Dir, folder), 0o755); err != nil {
 		return nil, err
 	}
-	file := filepath.Join(s.Dir, "runs", name+".lock")
+	file := filepath.Join(s.Dir, folder, name+".lock")
 	until := time.Now().Add(wait)
 	for {
 		f, err := os.OpenFile(file, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o644)

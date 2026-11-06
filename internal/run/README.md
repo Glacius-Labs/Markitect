@@ -2,10 +2,13 @@
 
 `internal/run` holds the process of a Run in the tool, per [draft concept 4.0](../../docs/concepts/v4-concept.md). `markitect apply` and `markitect verify` open a Run and say which agent to start. The owner's own Claude Code session starts it, as a subagent in the owner's folder. The agents only call `markitect`, and `markitect submit` is the one door: it says what is next each time and decides whether the work counts. Nothing here starts or drives an agent, so forgetting a step can't land and compaction can't lose the process.
 
+Beside the Run, and to be tried before anything is removed, `markitect gate` checks work done without one and without Git ([DEC-096](../../docs/concepts/register.md#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](../../docs/concepts/register.md#dec-097-markitect-uses-no-git), [plan](../../docs/concepts/lean-tool-plan.md)): [below](#without-a-run-gate).
+
 | Package | Role |
 | --- | --- |
-| `internal/run` | The process: `apply`, `verify`, the checklist, the answers, `submit`, the hook on `answer`, the Result and landing. |
+| `internal/run` | The process: `apply`, `verify`, the checklist, the answers, `submit`, the hook on `answer`, the Result and landing; and without a Run, `gate`, the certificate and the answers bound to files. |
 | `internal/adapters/rungit` | Git work in the user's own repository ([below](#git)). |
+| `internal/adapters/repo` | Without a Run: the walk of the project folder and its `.gitignore` files (`Folder`). |
 | `internal/bootstrap` | Builds the engine for the command line. |
 
 ## A Run
@@ -62,6 +65,34 @@ Both are agent files `init` writes. The builder may edit files and start agents;
 
 The tool writes the Result from what happened, never an agent. A landing's Result is part of its commit, under `.markitect/results/`. Any other stays on `markitect/runs/<run>`, with `verify`'s Findings page next to it. A landing does not delete a verify's branch. **The full-check count** says how many changes have landed since the last full check; from 10 on, the Result says one is due.
 
+## Without a Run: gate
+
+The tool computes and checks the project folder, and whoever drives the agents (a skill, a workflow or a person) does the rest, every Git step included ([DEC-096](../../docs/concepts/register.md#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](../../docs/concepts/register.md#dec-097-markitect-uses-no-git)). These commands are built beside the Run and change nothing of it. While a Run is open in the folder, `checklist` and `answer` are the Run's, as above, and `gate` refuses; that look into the Run store is the one thing here that still uses Git, and it goes with the Run. Outside a Git repository the commands just work.
+
+**The folder.** The project folder is the nearest folder with `.markitect/manifest.yaml`. Its files come from walking it, without what the project's `.gitignore` files exclude, read as plain text, nested ones included ([`repo.Folder`](../adapters/repo/folder.go)). Git's own folder and folders with a `.git` of their own are not walked; global Git settings are out of scope, and a difference from Git's view shows up as `file.unregistered`. A symbolic link counts as where it points, as Git stores it.
+
+**The certificate.** When `gate` passes, it writes `gate-<time>-<state>.json` under `.markitect/results/`: the SHA-256 of every accounted file and every Definition, the text of every file under `.markitect/` outside the results folder (the spec and its registry), and each item's answer. Line endings do not count in a text file's hash, so a checkout on another system matches. The Result page `gate-<time>-<state>.md` lies beside it. The newest certificate, by the time it was made, is the base of the next change; "changed" means a different hash, and a Definition's old text comes from the copy, so `checklist` shows what a changed or removed Definition said before. With no certificate the list holds every Definition. After a merge of two certified branches the newer certificate counts and the rest is reviewed again. The results folder itself counts in no certificate: it holds the records.
+
+**The work** lives outside the project, in the user's cache folder (`markitect/work/`, one file per project folder). `checklist` begins it and holds the hashes of the spec and the harness it began with. Without `--base`, `--full` or `--findings`, `checklist` goes on with the work under way, or begins the change from the newest certificate when there is a newer one or the spec changed; with them it names another change. `--base` takes a certificate, its `.json` or its `.md`. The list grows as a Run's does: an item stays on it once a state put it there.
+
+**The answers** are the same lines as in a Run. Each pointer must be a file the walk finds. An answer is bound to the hashes of the files its item names and the files it points to, and falls away when one of them changes; put back, it stands again. A `wrong` answer stands only on the state it was given on: the work went back for it. When every item has an answer, that state of the folder is a finished review.
+
+**`gate`** does the first thing that applies, and each refusal prints the one next step:
+
+| | It finds | It says, and exits |
+|---|---|---|
+| 1 | The spec (everything under `.markitect/` except the registry pages and the results), the harness or a `.gitignore` file changed since `checklist` began the work, or a link leaves the folder | Put them back; a change to the spec is its own step, and `checklist` then begins the work again. Exit 1 |
+| 2 | A file that changed since the base certificate and lies in no item of the list | The files: list them on the registry so that they are reviewed, or put them back. Exit 1 |
+| 3 | An error from `check`, in the spec or the realization | The errors. Exit 1 |
+| 4 | Items without an answer for the files as they are | Start the reviewer, which takes its task from `checklist --review`. Exit 1 |
+| 5 | A finished review with a `spec problem` | The question for the owner; the Result says so. Exit 1 |
+| 6 | A `wrong` answer | The items, and which repair round of two this is. After two rounds it refuses, and the Result says so. Exit 1 |
+| 7 | Nothing left | Writes the certificate and the Result under `.markitect/results/`, ends the work and says to commit the work with both in one commit. Exit 0 |
+
+Before row 1, a folder that matches its newest certificate has nothing to check (exit 0), and without a `checklist` there is no work to check (exit 1). Rows 5 and 6 read every finished review of the work, not only this state's, so a spec problem, or a third review that sends something back, is said before row 4 asks for another review, as in `submit`. A repair round is a finished review that found something wrong: calling `gate` again on the same state uses none, and a review with a spec problem uses none either. `gate` keeps only these two rounds, a rule about state; time and the number of calls are the driver's. Row 2 needs a base: with no certificate every Definition is on the list. A change of a file that realizes a Definition the list did not reach puts that Definition on the list, so row 2 names what lies in no item at all, such as a file of the ignore file. `gate` never commits; the driver commits the work together with the certificate.
+
+**`gate --verify`** checks that the folder matches its newest certificate and names the files that do not, for a checkout in CI or anywhere no agent reaches. **`gate --findings`** closes a review of finished work, such as `checklist --base CERTIFICATE --review` and its answers: the Result (`gate-…-verify.md`) and, with Findings, the Findings page (`gate-…-findings.md`) go into the folder, the input of `checklist --findings`, and no certificate. **`impact --base`** also takes a certificate. **`status`** adds, when no Run is open, how the work stands for the files as they are, and which files differ from the newest certificate; that part reads and changes nothing.
+
 ## Tests
 
-`run_test.go` runs whole Runs over real Git, with the test playing the agents: every row of `submit`, repair rounds, landing over the work in the folder, one Run per folder, the hook on `answer`, the limits and `verify`.
+`run_test.go` runs whole Runs over real Git, with the test playing the agents: every row of `submit`, repair rounds, landing over the work in the folder, one Run per folder, the hook on `answer`, the limits and `verify`. `gate_test.go` does the same without a Run, on plain folders without Git: the rows of `submit` that `gate` keeps, the certificate and the newest one after a merge, answers that fall away when their files change, `--verify` and `--findings`, and `gate` beside an open Run.

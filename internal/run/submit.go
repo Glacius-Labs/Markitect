@@ -156,12 +156,18 @@ func (e *Engine) submitApply(ctx context.Context, st *RunState, root string) (Ve
 // verdicts reads what the latest answers say: what is wrong, and what only the
 // owner can settle.
 func (e *Engine) verdicts(st *RunState) ([]string, []OwnerDecision) {
+	return verdictsFor(st.Items, func(key string) Answer { return st.Answers[key] }, "Settle it in the spec and run apply again.")
+}
+
+// verdictsFor reads what the answers to items say, with what the owner is told
+// to do about a spec problem.
+func verdictsFor(items []Item, answer func(key string) Answer, settle string) ([]string, []OwnerDecision) {
 	var wrong []string
 	var decisions []OwnerDecision
-	for _, it := range st.Items {
-		switch a := st.Answers[it.Key]; a.Word {
+	for _, it := range items {
+		switch a := answer(it.Key); a.Word {
 		case AnswerSpecProblem:
-			decisions = append(decisions, OwnerDecision{Matter: fmt.Sprintf("%s: %s", it.Key, a.Explanation), Recommendation: "Settle it in the spec and run apply again."})
+			decisions = append(decisions, OwnerDecision{Matter: fmt.Sprintf("%s: %s", it.Key, a.Explanation), Recommendation: settle})
 		case AnswerWrong:
 			wrong = append(wrong, fmt.Sprintf("%s: %s %s", it.Key, a.Explanation, pointers(a.Pointers)))
 		}
@@ -298,42 +304,55 @@ func (e *Engine) submitVerify(ctx context.Context, st *RunState) (Verdict, error
 	if err != nil {
 		return Verdict{}, err
 	}
-	var findings []ResultFinding
-	var decisions []OwnerDecision
-	// What does not hold and names no Definition stays in the Result, not in the
-	// Findings, which each name one.
-	var unsettled []string
-	for _, it := range st.Items {
-		a := st.Answers[it.Key]
+	rep := verifyReport(st.Items, func(key string) Answer { return st.Answers[key] }, p)
+	return e.closeVerify(ctx, st, rep.state, rep.why, rep.findings, rep.decisions, rep.unsettled)
+}
+
+// report is what a review that changes nothing found.
+type report struct {
+	state, why string
+	findings   []ResultFinding
+	decisions  []OwnerDecision
+	unsettled  []string
+}
+
+// verifyReport reads a finished review that changes nothing: a wrong answer about a
+// Definition is a Finding, a spec problem a decision for the owner, and what does
+// not hold and names no Definition, with the errors of the realization in p, stays
+// in the Result, not in the Findings, which each name one.
+func verifyReport(items []Item, answer func(key string) Answer, p *project.Project) report {
+	var r report
+	for _, it := range items {
+		a := answer(it.Key)
 		switch a.Word {
 		case AnswerWrong:
 			if it.Definition != "" {
-				findings = append(findings, ResultFinding{Definition: it.Definition, Observed: strings.TrimSpace(a.Explanation + " " + pointers(a.Pointers)), Expected: "what the Definition says"})
+				r.findings = append(r.findings, ResultFinding{Definition: it.Definition, Observed: strings.TrimSpace(a.Explanation + " " + pointers(a.Pointers)), Expected: "what the Definition says"})
 			} else {
-				unsettled = append(unsettled, it.Key)
+				r.unsettled = append(r.unsettled, it.Key)
 			}
 		case AnswerSpecProblem:
-			decisions = append(decisions, OwnerDecision{Matter: fmt.Sprintf("%s: %s", it.Key, a.Explanation), Recommendation: "Settle it in the spec."})
+			r.decisions = append(r.decisions, OwnerDecision{Matter: fmt.Sprintf("%s: %s", it.Key, a.Explanation), Recommendation: "Settle it in the spec."})
 		}
 	}
 	for _, d := range p.RealizationErrors() {
-		unsettled = append(unsettled, d.String())
+		r.unsettled = append(r.unsettled, d.String())
 	}
-	state, why := StateVerified, "every item answered without a Finding"
+	r.state, r.why = StateVerified, "every item answered without a Finding"
 	var found []string
-	if n := len(findings); n > 0 {
+	if n := len(r.findings); n > 0 {
 		found = append(found, fmt.Sprintf("%d Findings", n))
 	}
-	if n := len(decisions); n > 0 {
+	if n := len(r.decisions); n > 0 {
 		found = append(found, fmt.Sprintf("%d decisions for the owner", n))
 	}
-	if n := len(unsettled); n > 0 {
-		found = append(found, fmt.Sprintf("%d things that do not hold: %s", n, strings.Join(unsettled, "; ")))
+	if n := len(r.unsettled); n > 0 {
+		found = append(found, fmt.Sprintf("%d things that do not hold: %s", n, strings.Join(r.unsettled, "; ")))
 	}
 	if len(found) > 0 {
-		state, why = StateFindings, "verify found "+strings.Join(found, " and ")
+		r.state, r.why = StateFindings, "verify found "+strings.Join(found, " and ")
 	}
-	return e.closeVerify(ctx, st, state, why, findings, decisions, unsettled)
+	return r
 }
 
 // FindingsFile is where a verify's Findings page lives on its branch, the input of
