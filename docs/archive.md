@@ -8,6 +8,8 @@ Links to archived files use the full commit SHA, never a branch or tag name, bec
 
 | Archive point | Commit | What it holds |
 |---|---|---|
+| Branch `archive/main-concept-3-20261106` | [`e295881f1f716b4fb067bd4bb88e959d6a74f44d`](https://github.com/Glacius-Labs/Markitect/tree/e295881f1f716b4fb067bd4bb88e959d6a74f44d) (tree `2319b1f682cd806651a7c59d2cb90cfb44a6860d`) | Main on 6 November 2026, immediately before the build of draft concept 4.0 replaced it ([DEC-094](concepts/register.md#dec-094-main-carries-the-native-version-and-the-app-goes)): the concept 3.0 rebuild with its container Commands, and Markitect Desktop. It is in Main's ancestry |
+| Branch `archive/main-pre-native-20261104` | [`10b074e4fe82c70c8219fb2fa5a0bacee4986ee1`](https://github.com/Glacius-Labs/Markitect/tree/10b074e4fe82c70c8219fb2fa5a0bacee4986ee1) (tree `58d17b8802ae14bc47bceb0bc797cca4da30fefc`) | Main on 4 November 2026: the same without the page of draft concept 4.0. It is in Main's ancestry |
 | Branch `archive/main-pre-r3c-20261027` | [`e6d9b94a64c2083ee1487414a728a520a87def03`](https://github.com/Glacius-Labs/Markitect/tree/e6d9b94a64c2083ee1487414a728a520a87def03) (tree `0fbc1d063bdada18dfe826e9641a47a3732122cf`) | Main on 27 October 2026, immediately before the documentation steps of the cleanup (R3c). Contains every page removed or merged by R3c, and is in Main's ancestry |
 | Branch `archive/main-pre-r2-20261024` | [`2389e252a85e3896da91f5f4649a3394b9222b2c`](https://github.com/Glacius-Labs/Markitect/tree/2389e252a85e3896da91f5f4649a3394b9222b2c) (tree `fec8e0c2fc16413e2e206cfb220059791338dfc1`) | Main on 24 October 2026, immediately before the repository restructuring (R2). Contains every file removed or moved by R2, and is in Main's ancestry |
 | Branch `archive/v1-pre-cutover-20261023` | [`447ac3b152de79b52de80513e14dc94349a060bd`](https://github.com/Glacius-Labs/Markitect/tree/447ac3b152de79b52de80513e14dc94349a060bd) (tree `6bd59e02d929dc94fe82f799cefc0da18ff7984c`) | The source snapshot of 23 October 2026 before the Extract, Cockpit, authoring and Setup retirement; see [its bundle](#bundle-of-the-pre-cutover-archive-point) |
@@ -149,13 +151,23 @@ These pages were folded into a current page. Their pre-merge text stays at the a
 | `docs/development/README.md` | [Documentation map](README.md#development) | [At the archive point](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/development/README.md) | none |
 | `docs/concepts/origin-and-rationale.md` | [Vision](vision.md#origin-and-rationale) | [At the archive point](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/concepts/origin-and-rationale.md) | CPT-001 and the register index |
 
+## Removed with the move to the native version
+
+On 6 November 2026 Main moved to the build of [draft concept 4.0](concepts/v4-concept.md), and the owner removed Markitect Desktop ([DEC-094](concepts/register.md#dec-094-main-carries-the-native-version-and-the-app-goes)). What went stays at [`archive/main-concept-3-20261106`](https://github.com/Glacius-Labs/Markitect/tree/e295881f1f716b4fb067bd4bb88e959d6a74f44d).
+
+| Removed | Location before | What it held |
+|---|---|---|
+| Markitect Desktop | [`cmd/markitect-desktop`](https://github.com/Glacius-Labs/Markitect/tree/e295881f1f716b4fb067bd4bb88e959d6a74f44d/cmd/markitect-desktop), [`desktop`](https://github.com/Glacius-Labs/Markitect/tree/e295881f1f716b4fb067bd4bb88e959d6a74f44d/desktop), [`internal/adapters/desktop`](https://github.com/Glacius-Labs/Markitect/tree/e295881f1f716b4fb067bd4bb88e959d6a74f44d/internal/adapters/desktop), [design](https://github.com/Glacius-Labs/Markitect/blob/e295881f1f716b4fb067bd4bb88e959d6a74f44d/docs/design/markitect-desktop.md), [state page](https://github.com/Glacius-Labs/Markitect/blob/e295881f1f716b4fb067bd4bb88e959d6a74f44d/docs/workstreams/desktop.md) | The app over the CLI, with its Model area, chats and native window ([DEC-089](concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli)) |
+| Container Commands | [`internal/adapters/container`](https://github.com/Glacius-Labs/Markitect/tree/e295881f1f716b4fb067bd4bb88e959d6a74f44d/internal/adapters/container), [`internal/adapters/sandbox`](https://github.com/Glacius-Labs/Markitect/tree/e295881f1f716b4fb067bd4bb88e959d6a74f44d/internal/adapters/sandbox), [`internal/agents`](https://github.com/Glacius-Labs/Markitect/tree/e295881f1f716b4fb067bd4bb88e959d6a74f44d/internal/agents), [`internal/agentport`](https://github.com/Glacius-Labs/Markitect/tree/e295881f1f716b4fb067bd4bb88e959d6a74f44d/internal/agentport), [`internal/agentd`](https://github.com/Glacius-Labs/Markitect/tree/e295881f1f716b4fb067bd4bb88e959d6a74f44d/internal/agentd), [`cmd/markitect-agentd`](https://github.com/Glacius-Labs/Markitect/tree/e295881f1f716b4fb067bd4bb88e959d6a74f44d/cmd/markitect-agentd), [`packaging/runtime`](https://github.com/Glacius-Labs/Markitect/tree/e295881f1f716b4fb067bd4bb88e959d6a74f44d/packaging/runtime) | The containers, provider adapters, session helper and runtime image of the concept 3.0 Commands and of the app's chats |
+| Chat harness | [`internal/harness`](https://github.com/Glacius-Labs/Markitect/tree/e295881f1f716b4fb067bd4bb88e959d6a74f44d/internal/harness) | The context and documents of the app's chats |
+
 ## Folded into Markitect Desktop
 
 [DEC-089](concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli) replaced the postponed read-only explorer with Markitect Desktop on 31 October 2026.
 
 | Former page | Now in | Text before the fold | Register |
 |---|---|---|---|
-| `docs/design/model-explorer.md` | [Markitect Desktop](design/markitect-desktop.md), whose Model area takes up its four views | [At Main before the fold](https://github.com/Glacius-Labs/Markitect/blob/0f8cbb1baca0174dcf0472cf964b91f835d2cc4e/docs/design/model-explorer.md) | DEC-085, DEC-089 |
+| `docs/design/model-explorer.md` | Markitect Desktop ([design at its archive point](https://github.com/Glacius-Labs/Markitect/blob/e295881f1f716b4fb067bd4bb88e959d6a74f44d/docs/design/markitect-desktop.md)), whose Model area takes up its four views | [At Main before the fold](https://github.com/Glacius-Labs/Markitect/blob/0f8cbb1baca0174dcf0472cf964b91f835d2cc4e/docs/design/model-explorer.md) | DEC-085, DEC-089 |
 
 ## Removed by T1
 

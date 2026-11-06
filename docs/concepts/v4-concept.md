@@ -7,7 +7,7 @@
 | **Version** | 4.0 – draft, not accepted |
 | **Date** | 4 November 2026 |
 | **Basis** | The [owner's statements](sources/fresh-start-20261104.md) of 4 November 2026, concept 3.0, a workflow trial on one real change, the Claude Code documentation and the help of version 2.1.318 as read that day, and independent reviews of this draft and an earlier one. |
-| **State** | A draft for the owner ([OQ-012](register.md#open-questions)). [Concept 3.0](v3-concept.md) stays the target until this one is accepted. It is built on the branch `dev/native-apply` for the owner to try by using it ([what real sessions showed](../validation/native-version-20261104.md)). |
+| **State** | A draft for the owner ([OQ-012](register.md#open-questions)). [Concept 3.0](v3-concept.md) stays the target until this one is accepted. Main carries its build since 6 November 2026 ([DEC-094](register.md#dec-094-main-carries-the-native-version-and-the-app-goes)), for the owner to try by using it ([what real sessions showed](../validation/native-version-20261104.md)). |
 
 It uses the words of [concept 3.0](v3-concept.md#2-words): spec, implementer, reviewer. Code and older documents still say model, maker and checker.
 
@@ -164,7 +164,7 @@ The owner models until the spec looks right, then uses `/markitect-apply`, from 
 7. **Repair.** A `wrong` answer goes back to the builder, which fixes it and calls `submit` again. The next reviewer gets the findings, the new diff and the items whose locations that diff touched; other answers stand. At most two repair rounds.
 8. **Land.** When nothing is left to do, `submit` writes the Result, commits it with the work and brings the owner's branch up. The builder is told it has landed, and ends. The owner's session sees it end and reports.
 
-**Bringing the branch up.** `submit` builds what will land as commits, without touching the folder: the run's commit if the branch has not moved, otherwise a merge, which must be clean and pass `check --spec`. Later commits stay in the next `impact`, so the next run realizes them. Then it moves the recorded branch, only if it is still where it was. Where it is checked out, the files follow as in a fast-forward: a file that already holds the landing's version, such as the work the builder wrote in that folder, stays as it is, and a file with an edit of its own stops the move. Where it is not checked out, only the ref moves. A short wait and a retry cover Git's own locks. Nothing is pushed: the owner pushes when they want to, to any remote or none.
+**Bringing the branch up.** `submit` builds what will land as commits, without touching the folder: the run's commit if the branch has not moved, otherwise a merge, which must be clean and pass `check --spec`. Later commits stay in the next `impact`, so the next run realizes them. Then it moves the recorded branch, only if it is still where it was. Where it is checked out, the files follow as in a fast-forward: a file that already holds the landing's version, such as the work the builder wrote in that folder, stays as it is, and a file with an edit of its own stops the move. The files change before the branch moves, so a landing cut off part way runs again. Where it is not checked out, only the ref moves. A short wait and a retry cover Git's own locks. Nothing is pushed: the owner pushes when they want to, to any remote or none.
 
 **If landing fails,** the run closes as kept on `markitect/runs/<run>`, the Result says why, and the builder is told to finish. The work also stays in the folder, uncommitted. The next `apply` tries that branch once more. If that fails too, it leaves the branch where it is and starts a fresh run.
 
@@ -186,6 +186,7 @@ What it keeps: fresh context for the builder and for the reviewer, which is the 
 
 | | It finds | It does | It tells the agent |
 |---|---|---|---|
+| 0 | The folder is no longer on the run's branch at its start, because of a commit made during the run or another branch checked out | Refuses | Undo the commits with `git reset --soft`, or check the branch out again |
 | 1 | Anything under `.markitect/` changed except the registry pages, or anything in the harness, including `AGENTS.md` and `CLAUDE.md` | Refuses | Put these back, or `markitect stop` if the spec can't be met |
 | 2 | A reviewed state, and the only difference from it is new files not listed | Refuses | List them if they are the work, otherwise remove them |
 | 3 | An error from `markitect check`, in the spec or the realization | Refuses | The errors |
@@ -286,7 +287,7 @@ The first version is Claude only. A provider needs subagents with their own agen
 
 No token is needed: sessions run on the user's own stored login in the unmodified program, which removes token passing. Each session uses the user's subscription quota. The legal reading of [concept 3.0 §14, question 10](v3-concept.md#14-decided-on-acceptance) still applies: the owner's own use looks allowed, and other users are not settled. So the owner still asks Anthropic before anyone else runs Markitect.
 
-**The app.** The owner said "we can remove desktop for now". This draft reads that as the whole app, with its spec views and chats. Its chats are the only other use of containers, so this takes Docker out of Markitect altogether, along with the provider adapters, the session helper, the runtime image and the token. It stays recoverable in Git and can come back once the tool has settled. That reading is not confirmed ([§16](#16-questions-for-the-owner)).
+**The app.** The owner said "we can remove desktop for now". This draft reads that as the whole app, with its spec views and chats. Its chats are the only other use of containers, so this takes Docker out of Markitect altogether, along with the provider adapters, the session helper, the runtime image and the token. It stays recoverable in Git and can come back once the tool has settled. The owner confirmed that reading on 6 November 2026, and the app is gone ([DEC-094](register.md#dec-094-main-carries-the-native-version-and-the-app-goes)).
 
 ## 12. Schedules and continuous work
 
@@ -338,7 +339,7 @@ Concept 3.0's tests 2 and 3 fall away, since the aim is no longer to show that t
 | [DEC-080](register.md#dec-080-the-model-is-typed-documentation) | Amended: "Definitions nothing links to and no file realizes" move from warnings of `lint` to errors of `check`, and the command list changes to `check`, `lock`, `refs`, `impact`, `analyze` | The language, and everything else measured staying a warning |
 | [DEC-083](register.md#dec-083-the-host-runs-natively-each-run-lives-in-containers) | No containers and no host | Native on Windows, Linux and macOS |
 | [DEC-087](register.md#dec-087-required-checks-gate-merged-states-not-each-submission) | Removed for now, by the owner, to see whether they are needed. `execution.yaml` goes too | A merged state must still pass `check --spec` |
-| [DEC-066](register.md#dec-066-the-cockpit-is-markitects-desktop-app-and-starts-and-stops-apply), [DEC-089](register.md#dec-089-markitect-desktop-the-app-over-the-cli) | Parked if the owner confirms: no app for now. If it returns, it works over the same commands | The idea of an app over the CLI. The owner being told when a run ends moves to the tool |
+| [DEC-066](register.md#dec-066-the-cockpit-is-markitects-desktop-app-and-starts-and-stops-apply), [DEC-089](register.md#dec-089-markitect-desktop-the-app-over-the-cli) | Parked: no app for now, as the owner confirmed on 6 November 2026. If it returns, it works over the same commands | The idea of an app over the CLI. The owner being told when a run ends moves to the tool |
 | [DEC-092](register.md#dec-092-a-command-uses-the-users-own-sign-in), [DEC-093](register.md#dec-093-a-command-passes-the-users-own-token) | No token and nothing passed on: the session uses the stored login. DEC-092's fallback was to be built only if `claude -p` lost subscription login; that route is no longer used | The unmodified CLI, and the question to Anthropic. The pinned CLI goes, so a change of the provider's defaults can arrive unannounced |
 | [The guide's build decisions](../guides/model-language.md#build-decisions) on stale realization, confirmed by the owner on 28 October 2026, and on a required check's environment | Stale entries are errors, not warnings, and the `environment` field goes | The Command that cleans them up still starts: they are errors in the realization |
 | [Concept 3.0 §14](v3-concept.md#14-decided-on-acceptance), question 1 | The rename no longer waits on test 3. It comes in step 4, once the sealed project's use is settled | One step, with no compatibility kept |
@@ -352,15 +353,15 @@ Concept 3.0's tests 2 and 3 fall away, since the aim is no longer to show that t
 
 ## 16. Questions for the owner
 
-Each has a recommendation, and none is decided. Already decided by the owner: the name `submit`, that `submit` brings the branch up by itself, that required checks go for now to see whether they are needed, that a plugin waits while the CLI carries the setup, and that a run's agents are started by the owner's own session.
+Each has a recommendation, and none is decided. Already decided by the owner: the name `submit`, that `submit` brings the branch up by itself, that required checks go for now to see whether they are needed, that a plugin waits while the CLI carries the setup, that a run's agents are started by the owner's own session, and that the app goes.
 
 1. **Starting the session.** Decided by the owner on 5 November 2026: the owner's own session starts the agents, with no background session ([§5](#5-what-apply-does)).
 2. **What a run may do.** Settled with question 1: the agents work under the owner's own permission mode and settings, and the builder accepts file edits without asking.
 3. **How the owner hears of the end of a run.** Settled with question 1: the owner's session waits for the builder and sees it end.
 4. **A run's limit.** A deadline of 6 hours and 30 `submit`s, with no spending limit, since the provider offers none here. Recommended for now; the numbers are guesses for step 3 to correct.
 5. **One version or two.** The owner asked for "the two simplest approaches". Recommended: one now, the workflow as the second only if this one fails too often. The owner also expected a package per version behind an interface; a strategy here is a folder of harness files, with no code interface, because the tool does not change between versions.
-6. **The old version.** Keep the engine until the probe passes, then remove it in step 2. Recommended, since the backup branch `archive/main-pre-native-20261104` holds it anyway. The owner earlier said to keep it for now and discuss.
+6. **The old version.** Settled on 6 November 2026: Main carries this version, and Main until then is kept on the branch `archive/main-concept-3-20261106` ([DEC-094](register.md#dec-094-main-carries-the-native-version-and-the-app-goes)).
 7. **The suite.** Remove its runner and arms, and keep the Makerspace projects and hidden cases, which step 3 runs on. Recommended, and open.
 8. **`update`.** The owner proposed it. Hold it back until the tool has settled, as [§3](#commands-on-the-spec) does? Recommended.
-9. **The app.** Does "remove desktop" mean the whole app, which takes Docker out of Markitect? This draft assumes yes.
+9. **The app.** Decided by the owner on 6 November 2026: the whole app goes ([DEC-094](register.md#dec-094-main-carries-the-native-version-and-the-app-goes)).
 10. **What "reliable" means.** Step 3's two clean passes on the 8 change steps is a proposal for the talk on evaluation the owner asked for. Is that the finish line?
