@@ -19,8 +19,11 @@ var update = flag.Bool("update", false, "rewrite the plugin's skill from the bin
 const (
 	pluginDir      = "../../../plugin"
 	pluginManifest = pluginDir + "/.claude-plugin/plugin.json"
-	pluginSkill    = pluginDir + "/skills/markitect/SKILL.md"
+	pluginSkill    = pluginDir + "/skills/" + pluginSkillName + "/SKILL.md"
 )
+
+// pluginSkillName is the name of the plugin's skill, and of its folder.
+const pluginSkillName = "getting-started"
 
 func readJSON(t *testing.T, file string, into any) {
 	t.Helper()
@@ -34,10 +37,15 @@ func readJSON(t *testing.T, file string, into any) {
 }
 
 // The plugin brings the same skill as markitect install writes, so that a session
-// with either, or both, is told the same thing. Run this test with -update to
+// with either, or both, is told the same thing. Only the name differs: Claude Code
+// names a plugin's skill plugin:skill, and markitect:markitect would repeat itself,
+// so the plugin's skill is markitect:getting-started. Run this test with -update to
 // rewrite the plugin's copy.
 func TestPluginSkillIsThePersonalSkill(t *testing.T) {
-	want := skills.Personal()
+	want := bytes.Replace(skills.Personal(), []byte("name: markitect\n"), []byte("name: "+pluginSkillName+"\n"), 1)
+	if bytes.Equal(want, skills.Personal()) {
+		t.Fatal("the personal skill has no name line to replace")
+	}
 	if *update {
 		if err := os.WriteFile(pluginSkill, want, 0o644); err != nil {
 			t.Fatal(err)

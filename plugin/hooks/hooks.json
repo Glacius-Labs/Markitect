@@ -7,7 +7,7 @@
           {
             "type": "command",
             "shell": "bash",
-            "command": "MARKITECT_ENSURE_ONLY=1 sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\" || true",
+            "command": "if [ -d \"${CLAUDE_PROJECT_DIR}/.markitect\" ]; then MARKITECT_ENSURE_ONLY=1 sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\"; fi; true",
             "async": true
           }
         ]
@@ -21,7 +21,7 @@
             "type": "command",
             "shell": "bash",
             "if": "Bash(markitect answer*)",
-            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\" hook pretool"
+            "command": "input=$(cat); case \"$input\" in *\"markitect answer\"*) printf '%s' \"$input\" | sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\" hook pretool ;; esac"
           }
         ]
       }

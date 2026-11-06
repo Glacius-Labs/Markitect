@@ -1,5 +1,5 @@
 ---
-name: markitect
+name: getting-started
 description: Use when someone mentions Markitect, wants to set it up, start a project with it or upgrade it, or asks about the markitect command or a .markitect folder. It says what Markitect is and how to begin.
 ---
 
