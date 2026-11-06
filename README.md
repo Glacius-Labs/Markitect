@@ -27,7 +27,7 @@
 </p>
 
 > [!IMPORTANT]
-> Main carries the build of [draft concept 4.0](docs/concepts/v4-concept.md), which the owner is trying by using it. Markitect is in active development and runs from source; there is no release yet. Every command on this page exists on `main`.
+> Main carries the build of [draft concept 4.0](docs/concepts/v4-concept.md), which the owner is trying by using it. Markitect is in active development, and its releases are builds of that draft. Every command on this page exists on `main`.
 
 ## Why Markitect
 
@@ -72,23 +72,24 @@ flowchart LR
 
 ### Install
 
-Markitect needs Git 2.38 or newer, Go 1.27.1 or newer and Claude Code.
+Markitect needs Git 2.38 or newer and Claude Code. Pick one way to get the `markitect` command.
+
+**With the Claude Code plugin.** One step, and nothing else to install:
 
 ```bash
-go install github.com/Glacius-Labs/Markitect/cmd/markitect@main
-markitect install
+claude plugin marketplace add Glacius-Labs/Markitect
+claude plugin install markitect@markitect
 ```
 
-`markitect install` writes a personal skill, so that a Claude Code session in any folder knows what Markitect is and how to begin. It is optional: `markitect init` says the same, and gives each project its own skills. `markitect version` shows which build you have and whether the personal skill and the current project match it. The folder `go install` writes to must be on your `PATH`, because the skills and agents call `markitect` by name; `version`, `init` and `install` warn when it is not.
+The plugin puts `markitect` on the `PATH` of Claude Code's shell and tells every session what Markitect is. It downloads the binary of its own version the first time, checking it against the release's checksums, and a plugin update brings the matching binary: `claude plugin update markitect@markitect`. That `markitect` exists inside Claude Code only. For your own terminal, use one of the next two.
 
-To upgrade, install again and let Markitect bring what it wrote earlier in line:
+**With a binary.** Download the file for your system from the [releases](https://github.com/Glacius-Labs/Markitect/releases), check it against the checksums file, name it `markitect` and put it on your `PATH`. Then run `markitect install` once: it writes a personal skill, so that a Claude Code session in any folder knows what Markitect is and how to begin. (The plugin brings that skill itself.)
 
-```bash
-go install github.com/Glacius-Labs/Markitect/cmd/markitect@main
-markitect update
-```
+**From source.** With Go 1.27.1 or newer: `go install github.com/Glacius-Labs/Markitect/cmd/markitect@main`, then `markitect install`.
 
-`markitect update` refreshes the personal skill and, in a project, the skills, agents, hook and lock that `init` wrote, and commits them. It changes no spec file, and `markitect update --check` only reports.
+The skills and agents call `markitect` by name, so the folder of the binary must be on your `PATH`; `version`, `init`, `install` and `update` warn when it is not. `markitect version` shows which build you have and whether the personal skill and the current project match it.
+
+To upgrade, run `markitect update`. It installs the newest release over the binary, then lets the new binary bring what Markitect wrote earlier in line: the personal skill and, in a project, the skills, agents, hook and lock that `init` wrote; it commits all but the lock, which it leaves for you to read. It changes no spec file, and `markitect update --check` only reports. A binary the plugin brought is updated with the plugin instead, and a build from source is replaced only with `markitect update --force`.
 
 ### Set up a project
 

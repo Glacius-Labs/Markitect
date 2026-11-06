@@ -22,7 +22,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `run` | The process of a Run in the tool: apply and verify, the checklist, the answers, submit, the hooks, the Result and landing. | `model`, `assets`, `domain`, `project`, `service` | 1 |
 | `guardedwrite` | Guarded working-tree writes for bundle installation, with the Git and path helpers they share with source snapshots. | nothing | 1 |
 | `build` | Version identity and embedded license notices. | nothing | 1 |
-| `adapter` | Concrete Git, command-line, required-check and provider-session adapters; no adapter imports another. | `model`, `assets`, `domain`, `project`, `service`, `run`, `build` | 3 |
+| `adapter` | Concrete Git, command-line, required-check and provider-session adapters; no adapter imports another. | `model`, `assets`, `domain`, `project`, `service`, `run`, `build` | 4 |
 | `composition` | Constructs the command line with its adapters. | `model`, `project`, `service`, `run`, `adapter` | 1 |
 | `command` | Thin entrypoints to product composition. | `composition` | 1 |
 | `maintenance` | The import gate and release packaging, separate from product execution. | `guardedwrite` | 2 |
@@ -94,6 +94,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `internal/adapters/cli` | Package cli is the markitect command line: install, update, init, check, lock, refs, graph, impact and lint; apply and verify, which open a Run and say which agent the owner's session starts; the commands of a Run; version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
 | `internal/adapters/repo` | Package repo reads a project's repository through Git: the working tree as Git sees it, a base commit, and the files changed between them. | [docs/guides/model-language.md#the-projects-markitect-folder](../guides/model-language.md#the-projects-markitect-folder) |
 | `internal/adapters/rungit` | Package rungit is a Run's Git work in the user's own repository (draft concept 4.0): it reads commits from anywhere in the repository, makes commits of a worktree's files without running the project's hooks, and brings the owner's branch up. | [internal/run/README.md#git](../../internal/run/README.md#git) |
+| `internal/adapters/upgrade` | Package upgrade finds the newest Markitect release, downloads the binary for this platform, checks it against the release's checksums and replaces the running executable. | [docs/guides/project-workflow.md#8-keep-it-current](../guides/project-workflow.md#8-keep-it-current) |
 
 ## Composition
 

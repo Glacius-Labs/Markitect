@@ -80,6 +80,7 @@ var Table = Rules{
 		{"internal/adapters/cli", "adapter", "docs/guides/model-language.md#commands"},
 		{"internal/adapters/repo", "adapter", "docs/guides/model-language.md#the-projects-markitect-folder"},
 		{"internal/adapters/rungit", "adapter", "internal/run/README.md#git"},
+		{"internal/adapters/upgrade", "adapter", "docs/guides/project-workflow.md#8-keep-it-current"},
 		{"internal/bootstrap", "composition", "docs/architecture.md#product-flow"},
 		{"cmd/markitect", "command", "docs/guides/model-language.md#commands"},
 		{"internal/tooling/architecture", "maintenance", "docs/architecture.md#layers"},

@@ -1,0 +1,30 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "bash",
+            "command": "MARKITECT_ENSURE_ONLY=1 sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\" || true",
+            "timeout": 360
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "bash",
+            "if": "Bash(markitect answer*)",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\" hook pretool"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -5,6 +5,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"slices"
 	"sort"
 
@@ -123,20 +125,120 @@ func (c CLI) refreshProject(ctx context.Context, repo string, dry bool) (project
 	return st, nil
 }
 
-// update brings what this binary wrote earlier in line with it, after the
-// binary was upgraded: the personal skill, if there is one, and the project's
-// skills, agents, hook and lock. It changes no model file and does not upgrade
-// the binary.
+// PluginEnv is the environment variable the Claude Code plugin's launcher sets,
+// to the plugin's version, when it starts this binary. A binary the plugin
+// manages is replaced by updating the plugin, not by update.
+const PluginEnv = "MARKITECT_PLUGIN"
+
+// ownVersion is the version of this binary.
+func (c CLI) ownVersion() string {
+	if c.Version != nil {
+		return c.Version()
+	}
+	return buildinfo.Version()
+}
+
+// executable is the file of this binary, with symbolic links resolved.
+func (c CLI) executable() (string, error) {
+	find := c.Executable
+	if find == nil {
+		find = os.Executable
+	}
+	exe, err := find()
+	if err != nil {
+		return "", err
+	}
+	if real, err := filepath.EvalSymlinks(exe); err == nil {
+		exe = real
+	}
+	return exe, nil
+}
+
+// binaryStep is what update's look at the binary found.
+type binaryStep struct {
+	stale      bool // a newer release exists and --check was given
+	handedOver bool // the new binary has done the rest; code is its exit code
+	code       int
+}
+
+// upgradeBinary looks for a newer release and installs it, unless the binary is
+// managed by the plugin or is a development build. It never fails because there
+// is no network: update must keep working offline for everything else. After a
+// successful install the new binary finishes the update, because only it knows
+// the skills, agents and lock it ships.
+func (c CLI) upgradeBinary(ctx context.Context, repo string, check, force bool) (binaryStep, error) {
+	var step binaryStep
+	cur := c.ownVersion()
+	if plugin := os.Getenv(PluginEnv); plugin != "" {
+		fmt.Fprintf(c.Stdout, "binary: %s comes with the Claude Code plugin (%s); update the plugin to get a newer one\n", cur, plugin)
+		return step, nil
+	}
+	if c.Releases == nil {
+		return step, nil
+	}
+	latest, err := c.Releases.Latest(ctx)
+	if err != nil {
+		fmt.Fprintf(c.Stdout, "binary: could not look for a newer release: %v\n", err)
+		return step, nil
+	}
+	newer, err := buildinfo.Newer(latest, cur)
+	switch {
+	case err != nil:
+		fmt.Fprintf(c.Stdout, "binary: %s, release %s; they cannot be compared: %v\n", cur, latest, err)
+		return step, nil
+	case !newer:
+		fmt.Fprintf(c.Stdout, "binary: up to date (%s)\n", cur)
+		return step, nil
+	case buildinfo.IsDev(cur) && !force:
+		fmt.Fprintf(c.Stdout, "binary: this is a development build (%s) and release %s exists; markitect update --force replaces this build by the release\n", cur, latest)
+		return step, nil
+	case check:
+		step.stale = true
+		fmt.Fprintf(c.Stdout, "binary: %s, release %s is newer; markitect update installs it\n", cur, latest)
+		return step, nil
+	}
+	exe, err := c.executable()
+	if err != nil {
+		return step, err
+	}
+	if err := c.Releases.Install(ctx, latest, exe); err != nil {
+		return step, fmt.Errorf("could not install release %s: %w", latest, err)
+	}
+	fmt.Fprintf(c.Stdout, "binary: updated %s to %s (%s)\n", cur, latest, exe)
+	code, err := c.Releases.Run(ctx, exe, []string{"update", "--files", "--repo", repo}, c.Stdout, c.Stderr)
+	if err != nil {
+		return step, fmt.Errorf("the new markitect could not start (%v); run markitect update --files to finish", err)
+	}
+	step.handedOver, step.code = true, code
+	return step, nil
+}
+
+// update installs the newest release of markitect and then brings what the
+// binary wrote earlier in line with it: the personal skill, if there is one, and
+// the project's skills, agents, hook and lock. It changes no model file.
 func (c CLI) update(ctx context.Context, args []string) (int, error) {
 	var o options
-	var check bool
+	var check, files, force bool
 	fs := c.flags("update", &o)
 	fs.BoolVar(&check, "check", false, "change nothing; say what is out of date and exit 1 if anything is")
+	fs.BoolVar(&files, "files", false, "leave the binary alone and refresh only the skills, agents and lock")
+	fs.BoolVar(&force, "force", false, "replace a development build by the newest release")
 	if err := fs.Parse(args); err != nil {
 		return Misused, err
 	}
 	if fs.NArg() != 0 {
 		return Misused, fmt.Errorf("takes no arguments")
+	}
+	stale := false
+	if !files {
+		step, err := c.upgradeBinary(ctx, o.repo, check, force)
+		if err != nil {
+			return Misused, err
+		}
+		if step.handedOver {
+			return step.code, nil
+		}
+		stale = step.stale
 	}
 	file, skill, err := personalSkillState()
 	if err != nil {
@@ -146,7 +248,6 @@ func (c CLI) update(ctx context.Context, args []string) (int, error) {
 	if err != nil {
 		return Misused, err
 	}
-	stale := false
 
 	switch {
 	case skill == missing:
@@ -217,6 +318,9 @@ func (c CLI) version(ctx context.Context, args []string) (int, error) {
 		return Misused, fmt.Errorf("takes no arguments")
 	}
 	fmt.Fprintln(c.Stdout, "markitect", buildinfo.Build())
+	if plugin := os.Getenv(PluginEnv); plugin != "" {
+		fmt.Fprintf(c.Stdout, "binary: comes with the Claude Code plugin (%s)\n", plugin)
+	}
 	if _, skill, err := personalSkillState(); err != nil {
 		fmt.Fprintf(c.Stdout, "personal skill: unreadable: %v\n", err)
 	} else {

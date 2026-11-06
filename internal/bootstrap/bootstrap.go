@@ -13,19 +13,21 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/cli"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/repo"
+	"github.com/Glacius-Labs/Markitect/internal/adapters/upgrade"
 )
 
 // Run runs the markitect command line and returns its exit code.
 func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
-	return cli.CLI{Git: git{}, Runs: runs{}, Stdin: os.Stdin, Stdout: stdout, Stderr: stderr, PathWarning: ownPathWarning}.Run(ctx, args)
+	return cli.CLI{Git: git{}, Runs: runs{}, Stdin: os.Stdin, Stdout: stdout, Stderr: stderr, PathWarning: ownPathWarning, Releases: upgrade.New()}.Run(ctx, args)
 }
 
 // ownPathWarning checks the running binary against the PATH. A binary in the
 // temporary folder is one `go run` or `go test` built, which no PATH should lead
-// to, so it is left alone.
+// to, so it is left alone. So is a binary the plugin's launcher started: the
+// launcher is what the PATH leads to, by design.
 func ownPathWarning() string {
 	exe, err := os.Executable()
-	if err != nil || under(exe, os.TempDir()) {
+	if err != nil || under(exe, os.TempDir()) || os.Getenv(cli.PluginEnv) != "" {
 		return ""
 	}
 	return pathWarning(exec.LookPath, func() (string, error) { return exe, nil })

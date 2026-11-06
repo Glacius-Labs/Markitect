@@ -7,9 +7,11 @@ import (
 	"runtime/debug"
 )
 
-// version is the source version. Main declares no release: the retired
-// versions 0.1.0 to 0.14.1 are never reused, and a release sets its own.
-var version = "0.0.0-dev"
+// version is the source version. A release commit sets the version it releases
+// and the plugin's version with it; the commit after it sets the next development
+// version, such as 0.16.0-dev (packaging/README.md, release operations). The
+// retired versions 0.1.0 to 0.14.1 are never reused.
+var version = "0.15.0"
 
 // injectedRevision is the source revision a build without VCS information
 // names through the linker, as the runner image does (-X ...buildinfo.injectedRevision=SHA).

@@ -1,0 +1,15 @@
+{
+  "name": "markitect",
+  "description": "Markitect: spec-first development with delegated realization",
+  "owner": {
+    "name": "Glacius Labs"
+  },
+  "plugins": [
+    {
+      "name": "markitect",
+      "source": "./plugin",
+      "description": "Brings the markitect command and tells Claude Code what Markitect is, in every folder",
+      "homepage": "https://github.com/Glacius-Labs/Markitect"
+    }
+  ]
+}
