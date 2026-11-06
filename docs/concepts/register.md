@@ -1,6 +1,6 @@
 # Concept register
 
-**Main, 6 November 2026:** carries the build of [draft concept 4.0](v4-concept.md), which the owner tries by using it ([DEC-094](#dec-094-main-carries-the-native-version-and-the-app-goes)). The concept 3.0 rebuild that Main held until then is kept on the branch `archive/main-concept-3-20261106`.
+**Main, 6 November 2026:** carries the build of [draft concept 4.0](v4-concept.md), which the owner tries by using it ([DEC-094](#dec-094-main-carries-the-native-version-and-the-app-goes)). The concept 3.0 rebuild that Main held until then is kept on the branch `archive/main-concept-3-20261106`. The same day the owner chose a leaner tool that computes and checks and leaves the agents to a driver ([DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts), [plan](lean-tool-plan.md)).
 
 **Accepted target, 4 November 2026:** [Concept 3.0](v3-concept.md) ([DEC-091](#dec-091-concept-30-is-the-target)). [Concept 2.0](v2-concept.md) ([DEC-086](#dec-086-concept-20-is-the-target)) is the record of the Manager tree.
 
@@ -116,6 +116,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-093](#dec-093-a-command-passes-the-users-own-token) | Decision | A Command passes the user's own token | Accepted; being built |
 | [DEC-094](#dec-094-main-carries-the-native-version-and-the-app-goes) | Decision | Main carries the native version, and the app goes | Decided by the owner, 6 November 2026 |
 | [DEC-095](#dec-095-releases-return-with-a-plugin-and-a-binary-that-updates-itself) | Decision | Releases return, with a plugin and a binary that updates itself | Decided by the owner, 6 November 2026 |
+| [DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts) | Decision | Markitect computes and checks; a driver acts | Decided by the owner, 6 November 2026; built beside the run engine first |
 | [PRM-001 to PRM-009](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
@@ -1265,6 +1266,17 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - `markitect update` installs the newest release over the binary, then lets the new binary refresh the personal skill, the project's skills, agents and hook, and the lock. A development build is replaced only with `--force`, and a binary the plugin manages is left to the plugin. It is the one use of the network.
 - **Supersedes:** the statement that no binary release is offered ([packaging](../../packaging/README.md#release-operations)), the "plugin waits" answer of [draft concept 4.0 §16, question 8](v4-concept.md#16-questions-for-the-owner), and the retirement's condition of a new reviewed version and owner authority ([retirement record](../validation/distribution-retirement-20261017.md)), which this decision and the review of its change meet. [DEC-094](#dec-094-main-carries-the-native-version-and-the-app-goes) stays.
 - **Costs, as far as known:** the download is checked against checksums from the same release, so it guards against a damaged or swapped file and not against a release published by someone who controls the repository; signed attestations would add that. The first run of the launcher needs the network, which a sandboxed shell may block, so in a project that has a `.markitect/` folder a session-start hook fetches outside it; in a new project the first call must run without the sandbox. The plugin works only in Claude Code, not on claude.ai or in Cowork, which do not install a plugin with a `bin/` folder.
+
+### DEC-096 Markitect computes and checks; a driver acts
+
+- **Status:** Decided by the owner, 6 November 2026, in the session that built the plugin, after asking whether Markitect should stay lean and leave agent orchestration to ordinary skills, agents and workflows, as if Claude already knew how to use it. The owner saw the main idea in the typed spec, its impact, a complete deterministic checklist and judging the spec like code, and accepted the [plan for a lean Markitect](lean-tool-plan.md) as the direction.
+- **Decision:**
+  - The tool computes (the spec compiles, every file is accounted for, impact, the complete checklist, `lint`) and checks (every item has an answer with a pointer that exists, for exactly the state to be committed; nothing the work may not touch was touched; `check` passes), and then writes the Result.
+  - It does not start agents, does not keep runs open and does not land on or move branches. Who builds, who reviews and how often is the driver's: skills, agents, a workflow or a person. Markitect ships one default driver.
+  - The command that checks replaces `submit` and is called `gate`; the owner weighed `certify` and kept `gate`.
+- **What it keeps:** [DEC-001](#dec-001-delegated-realization-is-central-to-the-product): delegated realization stays the purpose; the tool owns the obligations and the check, the host owns the agents.
+- **Open, with recommendations in the plan:** whether `gate` also makes the commit, where the limits sit, and where the answers live.
+- **Order:** the new commands are built beside today's run engine and tried on Makerspace with planted defects before the run lifecycle and landing are removed ([plan, order of work](lean-tool-plan.md#order-of-work)). Until then, [draft concept 4.0](v4-concept.md) describes what Main does.
 
 ## Promises
 
