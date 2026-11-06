@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -174,6 +175,35 @@ func TestUpdateStopsWhenTheInstallFails(t *testing.T) {
 	wantAll(t, errOut, "could not install release 0.15.0", "does not match its checksum")
 	if strings.Contains(out, "personal skill:") {
 		t.Fatalf("update went on after a failed install:\n%s", out)
+	}
+}
+
+// On Windows an update leaves the old executable beside the new one, since it ran
+// while the update worked. The next update removes it.
+func TestUpdateRemovesWhatAnEarlierUpdateMovedAside(t *testing.T) {
+	emptyHome(t)
+	dir := testkit.TempDir(t)
+	exe := filepath.Join(dir, "markitect")
+	for _, f := range []string{exe, exe + ".old"} {
+		if err := os.WriteFile(f, []byte("x"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	var out bytes.Buffer
+	c := cli.CLI{
+		Git: git{}, Runs: runs{}, Stdout: &out, Stderr: io.Discard,
+		Releases:   &fakeReleases{latest: "0.15.0"},
+		Executable: func() (string, error) { return exe, nil },
+		Version:    func() string { return "0.15.0" },
+	}
+	if code := c.Run(context.Background(), []string{"update", "--repo", testkit.TempDir(t)}); code != 0 {
+		t.Fatalf("update = %d\n%s", code, out.String())
+	}
+	if _, err := os.Stat(exe + ".old"); !os.IsNotExist(err) {
+		t.Fatalf("the old executable is still there: %v", err)
+	}
+	if _, err := os.Stat(exe); err != nil {
+		t.Fatalf("update removed the executable: %v", err)
 	}
 }
 
