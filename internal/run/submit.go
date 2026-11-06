@@ -60,6 +60,12 @@ func (e *Engine) Submit(ctx context.Context, dir string) (Verdict, error) {
 }
 
 func (e *Engine) submitApply(ctx context.Context, st *RunState, root string) (Verdict, error) {
+	// Row 0: the folder is where the run started. A commit made during the run
+	// would land without its Result, and another branch would bring its own
+	// commits along.
+	if v, done, err := e.atStart(ctx, st, root); err != nil || done {
+		return v, err
+	}
 	cand, err := e.Git.Candidate(ctx, root, fmt.Sprintf("Markitect run %s: the implementer's work", st.Run))
 	if err != nil {
 		return Verdict{}, err
@@ -276,8 +282,7 @@ Wait for it to finish, then call markitect submit again. It has %d items to answ
 }
 
 // submitVerify closes a verify: it only ever reports. Items without an answer are
-// listed; otherwise the required checks run once on the commit, what fails
-// becomes a Finding, and the Findings and the Result stay on the Run's branch.
+// listed; otherwise the Findings and the Result stay on the Run's branch.
 func (e *Engine) submitVerify(ctx context.Context, st *RunState) (Verdict, error) {
 	rev := st.Review
 	if rev == nil {
@@ -361,6 +366,42 @@ func (e *Engine) closeVerify(ctx context.Context, st *RunState, state, why strin
 }
 
 // refuse saves the Run and gives the agent its next step.
+// atStart answers, with done, when the owner's folder is no longer on the run's
+// branch at its start. A landing that moved the branch but was cut off before it
+// was recorded is recorded now.
+func (e *Engine) atStart(ctx context.Context, st *RunState, root string) (Verdict, bool, error) {
+	branch, err := e.Git.Branch(ctx, root)
+	if err != nil {
+		return Verdict{}, true, err
+	}
+	head, err := e.Git.Head(ctx, root)
+	if err != nil {
+		return Verdict{}, true, err
+	}
+	if branch == st.Branch && head == st.Start {
+		return Verdict{}, false, nil
+	}
+	if branch != st.Branch {
+		v, err := e.refuse(st, fmt.Sprintf("The folder is no longer on %s, where the run started. Check %s out again, then call markitect submit.", st.Branch, st.Branch), nil)
+		return v, true, err
+	}
+	if c, err := e.Git.Commit(ctx, head); err == nil {
+		if names := trailers(c.Message)[trailerRun]; len(names) == 1 && names[0] == st.Run {
+			if err := e.Git.Advance(ctx, st.Branch, head, head); err != nil {
+				return Verdict{}, true, err
+			}
+			st.Landed = head
+			e.markClosed(st, StateLanded, e.landedWhy(st))
+			if err := e.Store.Settle(st); err != nil {
+				return Verdict{}, true, err
+			}
+			return Verdict{Done: true, Text: fmt.Sprintf("Landed on %s as %s. Nothing is left to do: end now.\n", st.Branch, short(head))}, true, nil
+		}
+	}
+	v, err := e.refuse(st, fmt.Sprintf("%s moved from %s to %s during the run. A run's work is not committed by hand: markitect submit commits it when it lands. Undo those commits with `git reset --soft %s`, which keeps their changes in the folder, then call markitect submit again.", st.Branch, short(st.Start), short(head), st.Start), nil)
+	return v, true, err
+}
+
 func (e *Engine) refuse(st *RunState, head string, lines []string) (Verdict, error) {
 	if err := e.Store.Settle(st); err != nil {
 		return Verdict{}, err

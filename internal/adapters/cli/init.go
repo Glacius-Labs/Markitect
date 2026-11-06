@@ -5,12 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/libraries"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
+	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/skills"
 )
 
@@ -31,8 +33,10 @@ func (c CLI) init(ctx context.Context, args []string) (int, error) {
 	}
 	opened, err := c.Git.Open(ctx, o.repo)
 	if err != nil {
-		// A folder in no repository becomes one: a Run's work goes in and out as commits.
-		if c.Git.Create(ctx, o.repo) != nil {
+		// A folder in no repository becomes one: a Run's work goes in and out as
+		// commits. One inside a repository Git would not open, for example for its
+		// owner, keeps the error rather than getting a repository of its own.
+		if insideRepository(o.repo) || c.Git.Create(ctx, o.repo) != nil {
 			return Misused, err
 		}
 		if opened, err = c.Git.Open(ctx, o.repo); err != nil {
@@ -92,10 +96,10 @@ func (c CLI) init(ctx context.Context, args []string) (int, error) {
 	if err := installHarness(ws); err != nil {
 		return Misused, err
 	}
+	fmt.Fprintln(c.Stdout, "installed the harness: the apply and verify skills, and the builder and reviewer agents")
 	if err := c.ensureAnswerHook(ws); err != nil {
 		return Misused, err
 	}
-	fmt.Fprintln(c.Stdout, "installed the harness: the apply and verify skills, the builder and reviewer agents, and the hook that lets only the reviewer answer")
 	switch committed, err := ws.CommitOwn(rec.files, initMessage); {
 	case err != nil:
 		fmt.Fprintf(c.Stdout, "could not commit what init wrote, so commit it yourself before the first apply; if Git ignores .claude/, the harness stays on disk and that is enough: %v\n", err)
@@ -167,40 +171,67 @@ func shippedSkill(file string) bool {
 	return false
 }
 
-// settingsFile is the project's Claude Code settings, which hold the hook on
-// answer.
-const settingsFile = ".claude/settings.json"
+// insideRepository says whether dir or a folder above it holds a .git entry.
+func insideRepository(dir string) bool {
+	abs, err := filepath.Abs(dir)
+	if err != nil {
+		return false
+	}
+	for {
+		if _, err := os.Lstat(filepath.Join(abs, ".git")); err == nil {
+			return true
+		}
+		parent := filepath.Dir(abs)
+		if parent == abs {
+			return false
+		}
+		abs = parent
+	}
+}
 
 // answerHook lets only the reviewer store answers, so that an agent cannot mark
-// its own work as done. It runs only before markitect answer. A Run's agents are
-// subagents of the owner's own session, so it has to be in the project's settings.
+// its own work as done. It runs only before markitect answer.
 var answerHook = map[string]any{
 	"matcher": "Bash",
-	"hooks":   []any{map[string]any{"type": "command", "if": "Bash(markitect answer*)", "command": "markitect hook pretool"}},
+	"hooks":   []any{map[string]any{"type": "command", "if": "Bash(markitect answer*)", "command": run.HookCommand}},
 }
 
 // ensureAnswerHook adds the hook to the project's settings and keeps what else
-// they hold.
+// they hold. Settings it cannot read, or whose hooks have an unexpected shape, it
+// leaves as they are and says so; a run then refuses to start until the hook is
+// there.
 func (c CLI) ensureAnswerHook(ws Workspace) error {
 	settings := map[string]any{}
-	if ws.Exists(settingsFile) {
-		data, err := ws.Read(settingsFile)
+	lacks := func(why string) error {
+		fmt.Fprintf(c.Stdout, "left %s as it is, %s; add the hook that lets only the reviewer answer by hand: %q before Bash\n", run.SettingsFile, why, run.HookCommand)
+		return nil
+	}
+	if ws.Exists(run.SettingsFile) {
+		data, err := ws.Read(run.SettingsFile)
 		if err != nil {
 			return err
 		}
-		if bytes.Contains(data, []byte("markitect hook pretool")) {
+		if bytes.Contains(data, []byte(run.HookCommand)) {
 			return nil
 		}
-		if err := json.Unmarshal(data, &settings); err != nil {
-			fmt.Fprintf(c.Stdout, "could not read %s, so it lacks the hook that lets only the reviewer answer: %v\n", settingsFile, err)
-			return nil
+		dec := json.NewDecoder(bytes.NewReader(data))
+		dec.UseNumber()
+		if err := dec.Decode(&settings); err != nil {
+			return lacks(fmt.Sprintf("because it is not valid JSON (%v)", err))
 		}
 	}
-	hooks, _ := settings["hooks"].(map[string]any)
-	if hooks == nil {
-		hooks = map[string]any{}
+	hooks := map[string]any{}
+	if v, ok := settings["hooks"]; ok {
+		if hooks, ok = v.(map[string]any); !ok {
+			return lacks("because its hooks are not an object")
+		}
 	}
-	pre, _ := hooks["PreToolUse"].([]any)
+	var pre []any
+	if v, ok := hooks["PreToolUse"]; ok {
+		if pre, ok = v.([]any); !ok {
+			return lacks("because its PreToolUse hooks are not a list")
+		}
+	}
 	hooks["PreToolUse"] = append(pre, answerHook)
 	settings["hooks"] = hooks
 	var b bytes.Buffer
@@ -210,7 +241,11 @@ func (c CLI) ensureAnswerHook(ws Workspace) error {
 	if err := enc.Encode(settings); err != nil {
 		return err
 	}
-	return ws.Write(settingsFile, b.Bytes())
+	if err := ws.Write(run.SettingsFile, b.Bytes()); err != nil {
+		return err
+	}
+	fmt.Fprintf(c.Stdout, "added the hook that lets only the reviewer answer to %s\n", run.SettingsFile)
+	return nil
 }
 
 // installSkills writes every skill file into each skill folder and removes

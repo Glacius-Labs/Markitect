@@ -226,6 +226,69 @@ func TestAdvanceOverWorkInTheFolder(t *testing.T) {
 	}
 }
 
+// The files change before the branch moves, so a landing stopped by Git's own lock
+// runs again from the start; one stopped after the branch moved only has the index
+// left to bring up.
+func TestAdvanceRunsAgainAfterALock(t *testing.T) {
+	host, r := open(t)
+	ctx := context.Background()
+	head := r.Git("rev-parse", "HEAD")
+	r.Write("work.go", "package work\n")
+	cand, err := host.Candidate(ctx, r.Dir, "the work\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	next, err := host.Write(ctx, cand, map[string][]byte{"result.md": []byte("landed\n")}, "result\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	lock := filepath.Join(r.Dir, ".git", "index.lock")
+	if err := os.WriteFile(lock, nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := host.Advance(ctx, "main", next, head); err == nil {
+		t.Fatal("landed through Git's lock")
+	}
+	if err := os.Remove(lock); err != nil {
+		t.Fatal(err)
+	}
+	if got := r.Git("rev-parse", "HEAD"); got == next {
+		// The branch moved before the index: only the index is left.
+		if err := host.Advance(ctx, "main", next, next); err != nil {
+			t.Fatal(err)
+		}
+	} else if err := host.Advance(ctx, "main", next, head); err != nil {
+		t.Fatal(err)
+	}
+	if got := r.Git("rev-parse", "HEAD"); got != next {
+		t.Fatalf("at %s", got)
+	}
+	if status := r.Git("status", "--porcelain"); status != "" {
+		t.Fatalf("not clean: %s", status)
+	}
+}
+
+// A link in the work counts as the work, as Git stores it.
+func TestAdvanceOverALink(t *testing.T) {
+	host, r := open(t)
+	ctx := context.Background()
+	head := r.Git("rev-parse", "HEAD")
+	r.Write("target.go", "package work\n")
+	if err := os.Symlink("target.go", filepath.Join(r.Dir, "link.go")); err != nil {
+		t.Skipf("no symbolic links here: %v", err)
+	}
+	cand, err := host.Candidate(ctx, r.Dir, "the work\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := host.Advance(ctx, "main", cand, head); err != nil {
+		t.Fatal(err)
+	}
+	if status := r.Git("status", "--porcelain"); status != "" {
+		t.Fatalf("not clean: %s", status)
+	}
+}
+
 // Tip names one branch, also when others share its folder, and nothing for one that
 // does not exist.
 func TestTip(t *testing.T) {

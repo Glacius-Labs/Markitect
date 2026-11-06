@@ -43,6 +43,7 @@ func library() map[string]string {
 		project.LockFile:                          string(model.RenderLock([]model.LibrarySource{std})),
 		".claude/agents/markitect-reviewer.md":    "---\nname: markitect-reviewer\n---\nReview.\n",
 		".claude/agents/markitect-builder.md":     "---\nname: markitect-builder\n---\nBuild.\n",
+		run.SettingsFile:                          `{"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "` + run.HookCommand + `"}]}]}}` + "\n",
 		m + "project.md":                          def("std/Project", "Library", "Parts: [[members]], [[catalog]]."),
 		m + "loan-limit.md":                       def("std/Rule", "Loan limit", "At most `5` open loans."),
 		m + "members/member.md":                   def("std/Concept", "Member", "A person."),
@@ -352,6 +353,20 @@ func TestApplyStopsBeforeAnyAgent(t *testing.T) {
 		}
 		has(t, s.Text, "markitect init")
 	})
+	t.Run("no hook on answer", func(t *testing.T) {
+		f := newFixture(t)
+		f.repo.Write(run.SettingsFile, "{}\n")
+		f.repo.Commit("no hook")
+		f.repo.Write(m+"loan-limit.md", def("std/Rule", "Loan limit", "At most `3` open loans."))
+		s, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir, Base: f.first})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if s.State != run.StateCheckFailed || s.Run != "" {
+			t.Fatalf("%+v", s)
+		}
+		has(t, s.Text, "hook on answer", "markitect init")
+	})
 	t.Run("detached HEAD", func(t *testing.T) {
 		f := newFixture(t)
 		f.repo.Git("checkout", "-q", "--detach")
@@ -395,6 +410,7 @@ func TestSubmitRefusesAnUnrealizedDefinitionOnANewProject(t *testing.T) {
 		project.RootPage:                       "| File | Realizes | Why |\n|---|---|---|\n",
 		".claude/agents/markitect-reviewer.md": all[".claude/agents/markitect-reviewer.md"],
 		".claude/agents/markitect-builder.md":  all[".claude/agents/markitect-builder.md"],
+		run.SettingsFile:                       all[run.SettingsFile],
 	})
 	s, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir})
 	if err != nil {
@@ -899,22 +915,93 @@ func TestAKeptRunMergedByHandStaysToBeReviewed(t *testing.T) {
 	}
 }
 
-// A landing that was killed after moving the branch finishes on a second call.
+// A landing that moved the branch but was killed before the index followed and the
+// run was recorded is recorded on the next submit, and the index catches up.
 func TestALandingThatWasKilledFinishes(t *testing.T) {
 	f := newFixture(t)
 	s, wt := f.apply()
 	write(t, wt, "src/members/loans/loan.go", "package loans\n\nconst Limit = 3\n")
 	f.submit(wt)
 	f.answer(wt, s.Run, nil)
-	st := f.state(s.Run)
-	// Killed after it moved the branch, before the Result: the folder holds the work.
-	f.repo.Git("reset", "-q", "--mixed", st.Review.Commit)
-	before := f.repo.Git("rev-parse", "HEAD")
+	start := f.state(s.Run).Start
+	write(t, wt, ".markitect/results/"+s.Run+".md", "# Result\n")
+	f.repo.Git("add", "-A")
+	f.repo.Git("commit", "-q", "-m", "Markitect Run "+s.Run+": landed\n\nRun-Name: "+s.Run)
+	landed := f.repo.Git("rev-parse", "HEAD")
+	f.repo.Git("read-tree", start)
 	if v := f.submit(wt); !v.Done {
 		t.Fatalf("%s", v.Text)
 	}
-	if st := f.state(s.Run); st.State != run.StateLanded || f.repo.Git("rev-parse", "HEAD") != before {
+	if st := f.state(s.Run); st.State != run.StateLanded || st.Landed != landed {
 		t.Fatalf("%+v", st)
+	}
+	if status := f.repo.Git("status", "--porcelain"); status != "" {
+		t.Fatalf("the index did not catch up: %s", status)
+	}
+}
+
+// A commit made during the run is refused: it would land without its Result.
+// Undone with a soft reset, the work goes on to its review.
+func TestSubmitRefusesACommitMadeDuringTheRun(t *testing.T) {
+	f := newFixture(t)
+	s, wt := f.apply()
+	write(t, wt, "src/members/loans/loan.go", "package loans\n\nconst Limit = 3\n")
+	f.repo.Git("add", "-A")
+	f.repo.Git("commit", "-q", "-m", "the builder's own commit")
+	start := f.state(s.Run).Start
+	v := f.submit(wt)
+	has(t, v.Text, "during the run", "git reset --soft "+start)
+	if v.Done || f.state(s.Run).Review != nil {
+		t.Fatalf("not refused: %s", v.Text)
+	}
+	f.repo.Git("reset", "-q", "--soft", start)
+	has(t, f.submit(wt).Text, "Review run "+s.Run)
+}
+
+// A folder switched to another branch is refused, so that landing does not bring
+// that branch's commits along.
+func TestSubmitRefusesAnotherBranch(t *testing.T) {
+	f := newFixture(t)
+	s, wt := f.apply()
+	branch := f.state(s.Run).Branch
+	f.repo.Git("checkout", "-q", "-b", "elsewhere")
+	v := f.submit(wt)
+	has(t, v.Text, "no longer on "+branch)
+	if v.Done || f.state(s.Run).Review != nil {
+		t.Fatalf("not refused: %s", v.Text)
+	}
+}
+
+// Work that passed but could not land stays in the folder, and the next apply
+// lands it from there.
+func TestKeptWorkLandsOnTheNextApply(t *testing.T) {
+	f := newFixture(t)
+	s, wt := f.apply()
+	write(t, wt, "src/members/loans/loan.go", "package loans\n\nconst Limit = 3\n")
+	f.submit(wt)
+	f.answer(wt, s.Run, nil)
+	// Git's own lock holds through every attempt.
+	lock := filepath.Join(f.repo.Dir, ".git", "index.lock")
+	write(t, f.repo.Dir, ".git/index.lock", "")
+	v := f.submit(wt)
+	has(t, v.Text, "tries once more", "in your folder")
+	if st := f.state(s.Run); st.State != run.StateKept {
+		t.Fatalf("%+v", st)
+	}
+	if err := os.Remove(lock); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.engine.Apply(context.Background(), run.Request{Dir: f.repo.Dir}); err != nil {
+		t.Fatal(err)
+	}
+	if st := f.state(s.Run); st.State != run.StateLanded {
+		t.Fatalf("%+v", st)
+	}
+	if status := f.repo.Git("status", "--porcelain"); status != "" {
+		t.Fatalf("the folder is not clean: %s", status)
+	}
+	if got := f.repo.Git("show", "HEAD:src/members/loans/loan.go"); !strings.Contains(got, "Limit = 3") {
+		t.Fatalf("the work did not land: %s", got)
 	}
 }
 

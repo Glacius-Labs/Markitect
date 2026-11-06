@@ -55,7 +55,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/realization` | Package realization checks the realization record beside the model: one registry page per Package with the path patterns it owns and the files it realizes, and the ignore page. | [docs/guides/model-language.md#the-realization-record](../guides/model-language.md#the-realization-record) |
+| `internal/realization` | Package realization checks the realization record beside the model: one registry page per Package with the path patterns it owns and the files it realizes, and the ignore file. | [docs/guides/model-language.md#the-realization-record](../guides/model-language.md#the-realization-record) |
 
 ## Project
 

@@ -21,11 +21,16 @@ func (c CLI) install(args []string) (int, error) {
 	if fs.NArg() != 0 {
 		return Misused, fmt.Errorf("takes no arguments")
 	}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return Misused, err
+	// Claude Code keeps its own folder where CLAUDE_CONFIG_DIR says, if set.
+	config := os.Getenv("CLAUDE_CONFIG_DIR")
+	if config == "" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return Misused, err
+		}
+		config = filepath.Join(home, ".claude")
 	}
-	file := filepath.Join(home, ".claude", "skills", skills.PersonalName, "SKILL.md")
+	file := filepath.Join(config, "skills", skills.PersonalName, "SKILL.md")
 	if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
 		return Misused, err
 	}

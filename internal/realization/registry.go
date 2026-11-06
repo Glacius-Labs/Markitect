@@ -79,7 +79,7 @@ type Stale struct {
 	Target   string `json:"target,omitempty"` // the missing Definition
 }
 
-// Account parses the registry and ignore pages and accounts every repository
+// Account parses the registry pages and the ignore file and accounts every repository
 // file: each has exactly one owning Package and is listed on its owner's page
 // or ignored.
 func Account(in Input) (*Registry, model.Diagnostics) {

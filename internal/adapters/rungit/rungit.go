@@ -403,12 +403,15 @@ func (r *Repo) Tip(ctx context.Context, branch string) (string, error) {
 // is checked out, the files follow as in a fast-forward, but a file that already
 // holds commit's version, such as the work a Run built in that folder, stays as it
 // is; one that holds an edit of its own stops the move before anything changes.
+// The files change first and the branch moves last, so a step that fails can run
+// again. With old equal to commit, only the index catches up with the branch.
 func (r *Repo) Advance(ctx context.Context, branch, commit, old string) error {
 	tree, err := r.checkedOutAt(ctx, branch)
 	if err != nil {
 		return err
 	}
 	if tree == "" {
+		// With old equal to commit, this only checks where the branch is.
 		_, err := r.git(ctx, nil, nil, "update-ref", "refs/heads/"+branch, commit, old)
 		return err
 	}
@@ -418,6 +421,10 @@ func (r *Repo) Advance(ctx context.Context, branch, commit, old string) error {
 	}
 	if head != old {
 		return fmt.Errorf("%s moved while landing", branch)
+	}
+	if old == commit {
+		_, err := command(ctx, tree, nil, nil, "reset", "-q", "--mixed")
+		return err
 	}
 	out, err := r.git(ctx, nil, nil, "diff", "--name-only", "-z", "--no-renames", old, commit)
 	if err != nil {
@@ -450,11 +457,11 @@ func (r *Repo) Advance(ctx context.Context, branch, commit, old string) error {
 			return fmt.Errorf("%s could not be brought up in %s, because %s there holds an edit of its own", branch, tree, p)
 		}
 	}
-	if _, err := r.git(ctx, nil, nil, "update-ref", "refs/heads/"+branch, commit, old); err != nil {
-		return err
-	}
+	// Only the files change here, not the index: the paths go on stdin, since there
+	// may be more than a command line holds.
 	if len(bring) > 0 {
-		if _, err := command(ctx, tree, nil, []string{"GIT_LITERAL_PATHSPECS=1"}, append([]string{"checkout", "-q", commit, "--"}, bring...)...); err != nil {
+		paths := strings.NewReader(strings.Join(bring, "\x00") + "\x00")
+		if _, err := command(ctx, tree, paths, []string{"GIT_LITERAL_PATHSPECS=1"}, "restore", "-q", "--source="+commit, "--worktree", "--pathspec-from-file=-", "--pathspec-file-nul"); err != nil {
 			return err
 		}
 	}
@@ -462,6 +469,9 @@ func (r *Repo) Advance(ctx context.Context, branch, commit, old string) error {
 		if err := os.Remove(filepath.Join(tree, filepath.FromSlash(p))); err != nil && !os.IsNotExist(err) {
 			return err
 		}
+	}
+	if _, err := r.git(ctx, nil, nil, "update-ref", "refs/heads/"+branch, commit, old); err != nil {
+		return err
 	}
 	// The index follows the branch; the files stay as they now are.
 	_, err = command(ctx, tree, nil, nil, "reset", "-q", "--mixed")
@@ -485,14 +495,29 @@ func (r *Repo) blobs(ctx context.Context, commit string) (map[string]string, err
 }
 
 // workingBlobs maps files of a working tree to the blob each would be, after the
-// repository's filters such as line endings; a missing file maps to "".
+// repository's filters such as line endings; a missing file maps to "". A link is
+// the blob of where it points, as Git stores it.
 func workingBlobs(ctx context.Context, tree string, paths []string) (map[string]string, error) {
 	m := map[string]string{}
 	var present []string
 	for _, p := range paths {
-		if info, err := os.Lstat(filepath.Join(tree, filepath.FromSlash(p))); err == nil && info.Mode().IsRegular() {
+		file := filepath.Join(tree, filepath.FromSlash(p))
+		info, err := os.Lstat(file)
+		switch {
+		case err != nil:
+		case info.Mode()&os.ModeSymlink != 0:
+			to, err := os.Readlink(file)
+			if err != nil {
+				return nil, err
+			}
+			id, err := command(ctx, tree, strings.NewReader(to), nil, "hash-object", "--stdin", "--no-filters")
+			if err != nil {
+				return nil, err
+			}
+			m[p] = strings.TrimSpace(string(id))
+		case info.Mode().IsRegular():
 			present = append(present, p)
-		} else if err == nil {
+		default:
 			m[p] = "not a file"
 		}
 	}

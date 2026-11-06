@@ -6,6 +6,14 @@ import (
 	"strings"
 )
 
+// SettingsFile is the project's Claude Code settings, and HookCommand the hook in
+// them that runs AnswerGuard. A Run's agents are subagents of the owner's own
+// session, so the hook has to be in the project's settings.
+const (
+	SettingsFile = ".claude/settings.json"
+	HookCommand  = "markitect hook pretool"
+)
+
 // AnswerGuard is the project's hook before a shell command: only the reviewer
 // stores answers, so an agent cannot mark its own work as done. Its input is what
 // the provider tells a hook, which names the agent a subagent's call comes from.

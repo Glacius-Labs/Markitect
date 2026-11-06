@@ -106,6 +106,9 @@ func (e *Engine) Apply(ctx context.Context, req Request) (Started, error) {
 	if st := openIn(runs, root); st != nil {
 		return stillOpen(st), nil
 	}
+	// Kept work lands first, while it may still be in the folder: a file that
+	// already holds it stays as it is.
+	e.retryLandings(ctx, runs, branch)
 	dirty, err := e.Git.Uncommitted(ctx, root)
 	if err != nil {
 		return Started{}, err
@@ -126,10 +129,6 @@ func (e *Engine) Apply(ctx context.Context, req Request) (Started, error) {
 	}
 	if !e.hasHarness(ctx, start, root) {
 		return Started{State: StateCheckFailed, Text: noHarness}, nil
-	}
-	landedOne := e.retryLandings(ctx, runs, branch, start)
-	if landedOne != "" {
-		start = landedOne
 	}
 	st, err := e.newRun(ctx, "apply", req, root, branch, start)
 	if err != nil {
@@ -224,15 +223,20 @@ const (
 	builderFile  = ".claude/agents/" + BuilderAgent + ".md"
 )
 
-const noHarness = "The harness is not in this project's last commit, so a run could not start its agents. Run markitect init, which commits what it writes, and try again.\n"
+const noHarness = "The harness is not complete in this project: a run needs the builder and reviewer agents, and the hook on answer in " + SettingsFile + ". Run markitect init, which commits what it writes, and try again.\n"
 
-// hasHarness looks in the commit and on disk for both agents of a Run.
+// hasHarness looks in the commit and on disk for both agents of a Run and for the
+// hook that lets only the reviewer answer: without it, nothing would keep the
+// builder from answering for itself.
 func (e *Engine) hasHarness(ctx context.Context, commit, root string) bool {
-	for _, file := range []string{reviewerFile, builderFile} {
-		if _, err := e.Git.State(ctx, commit).Read(file); err == nil {
-			continue
+	for _, file := range []string{reviewerFile, builderFile, SettingsFile} {
+		data, err := e.Git.State(ctx, commit).Read(file)
+		if err != nil {
+			if data, err = os.ReadFile(filepath.Join(root, filepath.FromSlash(file))); err != nil {
+				return false
+			}
 		}
-		if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(file))); err != nil {
+		if file == SettingsFile && !strings.Contains(string(data), HookCommand) {
 			return false
 		}
 	}

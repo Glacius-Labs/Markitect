@@ -270,12 +270,34 @@ func TestInstallWritesThePersonalSkill(t *testing.T) {
 // The hook joins settings the project already has, and is added once.
 func TestInitKeepsTheProjectsSettings(t *testing.T) {
 	r := testkit.NewRepo(t)
-	r.Write(".claude/settings.json", "{\n  \"permissions\": {\"allow\": [\"Bash(go test *)\"]}\n}\n")
+	r.Write(".claude/settings.json", "{\n  \"permissions\": {\"allow\": [\"Bash(go test *)\"]},\n  \"cleanupPeriodDays\": 12345678901234567890\n}\n")
 	mustRun(t, r.Dir, "init")
 	mustRun(t, r.Dir, "init")
 	settings := read(t, r.Dir, ".claude/settings.json")
-	if !strings.Contains(settings, "Bash(go test *)") || strings.Count(settings, "markitect hook pretool") != 1 {
+	if !strings.Contains(settings, "Bash(go test *)") || !strings.Contains(settings, "12345678901234567890") || strings.Count(settings, "markitect hook pretool") != 1 {
 		t.Fatalf("settings:\n%s", settings)
+	}
+}
+
+// Settings init cannot read, or whose hooks have another shape, stay as they are,
+// and init says what to add.
+func TestInitLeavesSettingsItCannotRead(t *testing.T) {
+	for name, content := range map[string]string{
+		"not JSON":              "{ not json\n",
+		"hooks not a map":       `{"hooks": ["something"]}` + "\n",
+		"PreToolUse not a list": `{"hooks": {"PreToolUse": "x"}}` + "\n",
+	} {
+		t.Run(name, func(t *testing.T) {
+			r := testkit.NewRepo(t)
+			r.Write(".claude/settings.json", content)
+			out := mustRun(t, r.Dir, "init")
+			if !strings.Contains(out, "left .claude/settings.json as it is") {
+				t.Fatalf("init said:\n%s", out)
+			}
+			if got := read(t, r.Dir, ".claude/settings.json"); got != content {
+				t.Fatalf("settings changed:\n%s", got)
+			}
+		})
 	}
 }
 

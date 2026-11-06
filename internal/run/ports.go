@@ -47,7 +47,8 @@ type Git interface {
 	// Advance moves a branch from old to commit, only if it is still at old. Where
 	// it is checked out, the files follow as in a fast-forward, a file that already
 	// holds commit's version stays, and one with an edit of its own stops the move.
-	// Where it is not, only the ref moves.
+	// Where it is not, only the ref moves. The branch moves last, so a failed step
+	// can run again; with old equal to commit, only the index catches up.
 	Advance(ctx context.Context, branch, commit, old string) error
 	// SetBranch points a branch at a commit.
 	SetBranch(ctx context.Context, branch, commit string) error

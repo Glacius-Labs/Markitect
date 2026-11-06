@@ -23,6 +23,7 @@
 
 | | It finds | It does | It tells the agent |
 |---|---|---|---|
+| 0 | The folder is no longer on the Run's branch at its start: a commit made during the Run, or another branch checked out | Refuses; a landing that moved the branch but was not recorded is recorded | Undo the commits with `git reset --soft`, or check the branch out again |
 | 1 | Anything under `.markitect/` changed except the registry pages, anything in the harness, including `AGENTS.md` and `CLAUDE.md`, or a link that leaves the repository | Refuses | Put these back, or `markitect stop` |
 | 2 | A reviewed state, and the only difference from it is new files not listed | Refuses | List them if they are the work, otherwise remove them |
 | 3 | An error from `check`, in the spec or the realization | Refuses | The errors |
@@ -45,9 +46,9 @@ One hook, in the project's `.claude/settings.json`, which `init` writes: before 
 
 ## Landing
 
-`submit` builds what will land off to the side: the work if the owner's branch has not moved, otherwise a merge, which must be clean and pass `check --spec`. The landing commit's `Run-Work` trailer names the work, which is the next Run's base, so later commits stay in the next `impact`. A Result that did not land says so in its trailers, so merging such a branch by hand does not make it realized work. A branch the owner moved back keeps the Run from landing. It then moves the branch, only if it is still where it was. Where it is checked out, the files follow as in a fast-forward, a file that already holds the landing's version, such as the work the builder wrote in that folder, stays as it is, and a file with an edit of its own stops the move. Where it is not, only the ref moves.
+`submit` builds what will land off to the side: the work if the owner's branch has not moved, otherwise a merge, which must be clean and pass `check --spec`. The landing commit's `Run-Work` trailer names the work, which is the next Run's base, so later commits stay in the next `impact`. A Result that did not land says so in its trailers, so merging such a branch by hand does not make it realized work. A branch the owner moved back keeps the Run from landing. It then moves the branch, only if it is still where it was. Where it is checked out, the files follow as in a fast-forward, a file that already holds the landing's version, such as the work the builder wrote in that folder, stays as it is, and a file with an edit of its own stops the move. The files change first, the branch moves after them and the index last, so a landing cut off part way runs again, and one cut off after the branch moved only brings the index up. Where it is not checked out, only the ref moves.
 
-If that fails after three tries, the Run closes as `kept` on `markitect/runs/<run>`, and the next `apply` tries once more. If that fails too it starts fresh. The base has not moved, so nothing is lost. Nothing is ever pushed.
+If that fails after three tries, the Run closes as `kept` on `markitect/runs/<run>`, and the next `apply` tries once more, before it looks for uncommitted changes, since the work is still in the folder. If that fails too it starts fresh. The base has not moved, so nothing is lost. Nothing is ever pushed.
 
 ## Git
 

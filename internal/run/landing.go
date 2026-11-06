@@ -20,9 +20,9 @@ func ResultFile(run string) string { return path.Join(project.ResultsDir, run+".
 
 // land brings the owner's branch up. What will land is built off to the side: the
 // work if the branch has not moved, otherwise a merge, which must be clean and
-// pass check --spec and the required checks. Later commits stay in the next
-// impact, so the next Run realizes them. If the branch cannot be moved, the Run
-// closes as kept and the next apply tries once more.
+// pass check --spec. Later commits stay in the next impact, so the next Run
+// realizes them. If the branch cannot be moved, the Run closes as kept and the
+// next apply tries once more.
 func (e *Engine) land(ctx context.Context, st *RunState, cand, tree string) (Verdict, error) {
 	st.Reviewed = cand
 	why := ""
@@ -49,7 +49,7 @@ func (e *Engine) land(ctx context.Context, st *RunState, cand, tree string) (Ver
 	if err := e.closeOn(ctx, st, cand, StateKept, why); err != nil {
 		return Verdict{}, err
 	}
-	return Verdict{Done: true, Text: fmt.Sprintf("The work passed, but %s. It stays on %s, and the next apply tries again. End now.\n", why, st.Kept)}, nil
+	return Verdict{Done: true, Text: fmt.Sprintf("The work passed, but %s. It stays on %s, and the next apply tries once more to land it.%s End now.\n", why, st.Kept, inFolder(st))}, nil
 }
 
 func (e *Engine) landedWhy(st *RunState) string {
@@ -71,13 +71,16 @@ func (e *Engine) landOnce(ctx context.Context, st *RunState, cand string) (strin
 	} else if !ok {
 		return "", fmt.Sprintf("%s was rewritten to %s, which no longer holds the run's start", st.Branch, short(tip)), nil
 	}
-	// A landing that was killed after it moved the branch has nothing left to do.
-	// Work that changed nothing is on the branch from the start, and still lands
-	// its Result.
+	// A landing that was killed after it moved the branch has only the index left
+	// to bring up. Work that changed nothing is on the branch from the start, and
+	// still lands its Result.
 	if cand != st.Start {
 		if ok, err := e.Git.Contains(ctx, tip, cand); err != nil {
 			return "", "", err
 		} else if ok {
+			if err := e.Git.Advance(ctx, st.Branch, tip, tip); err != nil {
+				return "", err.Error(), nil
+			}
 			return tip, "", nil
 		}
 	}
@@ -166,11 +169,10 @@ func (e *Engine) closeOn(ctx context.Context, st *RunState, cand, state, why str
 	return e.Store.Settle(st)
 }
 
-// retryLandings tries once more to land the kept work of this branch, and returns
-// the new tip when one landed. A second failure leaves the work on its branch: the
-// base has not moved, so a fresh Run does the work again and nothing is lost.
-func (e *Engine) retryLandings(ctx context.Context, runs []*RunState, branch, start string) string {
-	tip := ""
+// retryLandings tries once more to land the kept work of this branch. A second
+// failure leaves the work on its branch: the base has not moved, so a fresh Run
+// does the work again and nothing is lost.
+func (e *Engine) retryLandings(ctx context.Context, runs []*RunState, branch string) {
 	for _, st := range runs {
 		if st.Open || !st.RetryLanding || st.Branch != branch {
 			continue
@@ -193,10 +195,8 @@ func (e *Engine) retryLandings(ctx context.Context, runs []*RunState, branch, st
 		})
 		if err == nil && landed != "" {
 			_ = e.Git.DeleteBranch(ctx, st.Kept)
-			tip = landed
 		}
 	}
-	return tip
 }
 
 // result is the Result of a Run as it stands. The tool writes it from what

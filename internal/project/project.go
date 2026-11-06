@@ -57,7 +57,7 @@ func IsHarness(file string) bool {
 }
 
 // isOwn says whether the tool accounts for a file itself, as it does for its own
-// folder: what init installs, and Git's ignore file, which it adds to.
+// folder: what init installs, and Git's ignore file.
 func isOwn(file string) bool { return IsHarness(file) || file == ".gitignore" }
 
 // Repository is one state of a repository: the working tree or a commit.

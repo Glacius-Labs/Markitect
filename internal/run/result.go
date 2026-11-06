@@ -17,11 +17,10 @@ const (
 	StateLanded = "landed"
 	// StateNothing: nothing is affected; no agent started.
 	StateNothing = "nothing-to-do"
-	// StateVerified: verify found every item conforming, and the required checks
-	// pass.
+	// StateVerified: verify found every item conforming.
 	StateVerified = "verified"
-	// StateFindings: verify found items that do not conform, decisions for the
-	// owner, or required checks that do not pass.
+	// StateFindings: verify found items that do not conform, or decisions for
+	// the owner.
 	StateFindings = "findings"
 	// StateCheckFailed: the spec has an error; no agent started.
 	StateCheckFailed = "check-failed"
@@ -35,8 +34,8 @@ const (
 	StateKept = "kept"
 	// StateStopped: the owner ended the Run. Nothing landed.
 	StateStopped = "stopped"
-	// StateIncomplete: a deadline, a required check that could not start, or a
-	// session that would not go on. Nothing it did is reported as success.
+	// StateIncomplete: a deadline, or something the machine lacks. Nothing it did
+	// is reported as success.
 	StateIncomplete = "incomplete"
 )
 
@@ -65,8 +64,8 @@ type Result struct {
 	Items          []ResultItem    `json:"items"`
 	OwnerDecisions []OwnerDecision `json:"ownerDecisions"`
 	Findings       []ResultFinding `json:"findings"`
-	// Unsettled lists what verify found that names no Definition: a required check
-	// that fails, an error from check.
+	// Unsettled lists what verify found that names no Definition, such as an
+	// error from check.
 	Unsettled []string `json:"unsettled,omitempty"`
 	// MissingLinks lists locations a reviewer named that the registry does not
 	// list for that item.
