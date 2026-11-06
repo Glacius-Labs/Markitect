@@ -45,14 +45,14 @@ description: Use when someone mentions Markitect, wants to set it up, start a pr
 
 `
 
-const personalTail = "\n`markitect` is a command on the path, so there is no need to look for it. `markitect help` lists what it does. If the shell says the command is not found, the binary is missing or its folder is not on the PATH. The Claude Code plugin brings it (`claude plugin marketplace add Glacius-Labs/Markitect`, then `claude plugin install markitect@markitect`); or download the binary for the system from https://github.com/Glacius-Labs/Markitect/releases and put it on the PATH.\n\n" +
+const personalTail = "\n`markitect` is a command on the path, so there is no need to look for it. `markitect help` lists what it does. If the shell says the command is not found, the binary is missing or its folder is not on the PATH. The Claude Code plugin brings it (`claude plugin marketplace add Glacius-Labs/Markitect`, then `claude plugin install markitect@glacius-labs`); or download the binary for the system from https://github.com/Glacius-Labs/Markitect/releases and put it on the PATH.\n\n" +
 	"## How to begin\n\n" +
 	"- **An empty folder or a new project:** run `markitect init`, then use the `markitect-start` skill.\n" +
 	"- **A repository that already has code:** run `markitect init`, then use the `markitect-extract` skill.\n" +
 	"- **A folder that already has `.markitect/`:** it is set up, and `markitect check` says how it stands.\n\n" +
 	"`init` installs those skills into the project, so a session that was open before it does not have them yet. Read `.claude/skills/markitect-start/SKILL.md` or `.claude/skills/markitect-extract/SKILL.md` and follow it, or have the user run `/reload-skills`.\n\n" +
 	"## After an upgrade\n\n" +
-	"`markitect version` says whether this skill and the project's skills and agents match the binary. `markitect update` installs the newest release of the binary, then brings them in line; a binary the plugin brings is updated with the plugin (`claude plugin update markitect@markitect`). It changes no spec file.\n"
+	"`markitect version` says whether this skill and the project's skills and agents match the binary. `markitect update` installs the newest release of the binary, then brings them in line; a binary the plugin brings is updated with the plugin (`claude plugin update markitect@glacius-labs`). It changes no spec file.\n"
 
 // Personal returns the text of the personal skill, which reaches a session in a
 // folder that has no project yet.

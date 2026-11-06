@@ -59,7 +59,7 @@ fi
 
 # The plugin's data folder survives plugin updates. Claude Code sets
 # CLAUDE_PLUGIN_DATA only for hooks, so the shell's calls compute the same folder.
-data=${CLAUDE_PLUGIN_DATA:-${CLAUDE_CONFIG_DIR:-${HOME:-}/.claude}/plugins/data/markitect-markitect}
+data=${CLAUDE_PLUGIN_DATA:-${CLAUDE_CONFIG_DIR:-${HOME:-}/.claude}/plugins/data/markitect-glacius-labs}
 exe="$data/$tag/$exe_name"
 
 fetch() {

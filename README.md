@@ -78,10 +78,10 @@ Markitect needs Git 2.38 or newer and Claude Code. Pick one way to get the `mark
 
 ```bash
 claude plugin marketplace add Glacius-Labs/Markitect
-claude plugin install markitect@markitect
+claude plugin install markitect@glacius-labs
 ```
 
-The plugin puts `markitect` on the `PATH` of Claude Code's shell and tells every session what Markitect is. It downloads the binary of its own version the first time, checking it against the release's checksums, and a plugin update brings the matching binary: `claude plugin update markitect@markitect`. That `markitect` exists inside Claude Code only. For your own terminal, use one of the next two.
+The plugin puts `markitect` on the `PATH` of Claude Code's shell and tells every session what Markitect is. It downloads the binary of its own version the first time, checking it against the release's checksums, and a plugin update brings the matching binary: `claude plugin update markitect@glacius-labs`. That `markitect` exists inside Claude Code only. For your own terminal, use one of the next two.
 
 **With a binary.** Download the file for your system from the [releases](https://github.com/Glacius-Labs/Markitect/releases), check it against the checksums file, name it `markitect` and put it on your `PATH`. Then run `markitect install` once: it writes a personal skill, so that a Claude Code session in any folder knows what Markitect is and how to begin. (The plugin brings that skill itself.)
 

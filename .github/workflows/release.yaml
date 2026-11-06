@@ -315,10 +315,10 @@ jobs:
 
           **Install**
 
-          - With Claude Code: \`claude plugin marketplace add Glacius-Labs/Markitect\`, then \`claude plugin install markitect@markitect\`. The plugin brings the \`markitect\` command and keeps it at its own version.
+          - With Claude Code: \`claude plugin marketplace add Glacius-Labs/Markitect\`, then \`claude plugin install markitect@glacius-labs\`. The plugin brings the \`markitect\` command and keeps it at its own version.
           - Without it: download the binary for your system, check it against \`markitect-$TAG-checksums.txt\`, and put it on your PATH as \`markitect\`.
 
-          **Update:** \`markitect update\` installs the newest release and brings the skills, agents and lock of your projects in line. A binary the plugin brought is updated with the plugin: \`claude plugin update markitect@markitect\`.
+          **Update:** \`markitect update\` installs the newest release and brings the skills, agents and lock of your projects in line. A binary the plugin brought is updated with the plugin: \`claude plugin update markitect@glacius-labs\`.
           EOF
           flags=()
           [[ "$VERSION" != *-* ]] || flags+=(--prerelease)

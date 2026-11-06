@@ -83,12 +83,12 @@ func TestMarketplaceListsThePlugin(t *testing.T) {
 		}
 	}
 	readJSON(t, marketplace, &m)
-	if m.Name != "markitect" || len(m.Plugins) != 1 {
-		t.Fatalf("the marketplace is %+v, want markitect with one plugin", m)
+	if m.Name != "glacius-labs" || len(m.Plugins) != 1 {
+		t.Fatalf("the marketplace is %+v, want glacius-labs with one plugin", m)
 	}
 	p := m.Plugins[0]
 	if p.Name != "markitect" || p.Source != "./plugin" {
-		t.Errorf("the entry is %+v, want the plugin markitect in ./plugin (the install command is markitect@markitect)", p)
+		t.Errorf("the entry is %+v, want the plugin markitect in ./plugin (the install command is markitect@glacius-labs)", p)
 	}
 	if p.Version != "" {
 		t.Errorf("the entry sets the version %s as well as plugin.json, which Claude Code reports as a mismatch", p.Version)
