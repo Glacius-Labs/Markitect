@@ -135,7 +135,20 @@ func TestUpdateLeavesABinaryThePluginManagesToThePlugin(t *testing.T) {
 	if code != 0 || rel.looked || len(rel.installed) != 0 {
 		t.Fatalf("update = %d, looked %v, installed %v\n%s", code, rel.looked, rel.installed, out)
 	}
-	wantAll(t, out, "binary: 0.14.1 comes with the Claude Code plugin (0.14.1)", "personal skill:")
+	wantAll(t, out, "binary: 0.14.1 comes with the Claude Code plugin (0.14.1)", "personal skill: comes with the plugin")
+}
+
+// Under the plugin there is no personal skill file, and no command should send the
+// user to markitect install for one.
+func TestThePluginBringsThePersonalSkill(t *testing.T) {
+	emptyHome(t)
+	t.Setenv(cli.PluginEnv, "0.15.0")
+	r := testkit.NewRepo(t)
+	out := mustRun(t, r.Dir, "init", "--name", "Demo")
+	if strings.Contains(out, "tip:") {
+		t.Fatalf("init sent a plugin user to markitect install:\n%s", out)
+	}
+	wantAll(t, mustRun(t, r.Dir, "version"), "personal skill: comes with the plugin")
 }
 
 func TestUpdateGoesOnWhenNoReleaseCanBeFound(t *testing.T) {
@@ -180,7 +193,7 @@ func TestVersionNamesAPluginBinary(t *testing.T) {
 	t.Setenv(cli.PluginEnv, "0.15.0")
 	var out bytes.Buffer
 	cli.CLI{Git: git{}, Runs: runs{}, Stdout: &out, Stderr: io.Discard}.Run(context.Background(), []string{"version", "--repo", testkit.TempDir(t)})
-	wantAll(t, out.String(), "binary: comes with the Claude Code plugin (0.15.0)")
+	wantAll(t, out.String(), "binary: comes with the Claude Code plugin (0.15.0)", "personal skill: comes with the plugin")
 }
 
 func TestNoPathWarningForABinaryThePluginStarted(t *testing.T) {

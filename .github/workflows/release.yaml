@@ -6,7 +6,13 @@ name: Release
 # checks the published release the way a user reaches it: through the plugin's
 # launcher and through markitect update.
 #
-# A manual run is a dry run: it checks and builds everything and publishes nothing.
+# A manual run is a dry run: it runs the gates and builds and checks every asset,
+# skips what belongs to a tag, and publishes no release. (Run on main, it also
+# starts the source-artifact job of ci.yaml, which is not a release.)
+#
+# A version with a pre-release part (v0.16.0-rc.1) is published as a pre-release,
+# which GitHub never names as the latest release, so markitect update ignores it.
+# A published release that fails the final check is marked as a pre-release too.
 on:
   push:
     tags:
@@ -62,7 +68,7 @@ jobs:
           TAG="v$source_version"
           if [[ "$REF_TYPE" == tag ]]; then
             TAG="$REF_NAME"
-            [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]] || { echo "release tag is not a supported vSemVer: $TAG" >&2; exit 1; }
+            [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]] || { echo "release tag is not a supported vSemVer without build metadata: $TAG" >&2; exit 1; }
             tagged_commit="$(git rev-parse "refs/tags/$TAG^{commit}")"
             [[ "$tagged_commit" == "$SOURCE_SHA" ]] || { echo "tag does not resolve to the workflow source commit" >&2; exit 1; }
             git merge-base --is-ancestor "$SOURCE_SHA" origin/main || { echo "tagged commit is not contained in origin/main" >&2; exit 1; }
@@ -188,7 +194,10 @@ jobs:
           done
 
           # The binary this runner can start must report the release it is.
-          reported="$("$out/markitect-$TAG-linux-amd64" version --repo "$RUNNER_TEMP" | head -n 1)"
+          # Read all of the output before taking its first line: a pipe to head would
+          # close early and kill the binary with SIGPIPE, which pipefail reports.
+          reported="$("$out/markitect-$TAG-linux-amd64" version --repo "$RUNNER_TEMP")"
+          reported="${reported%%$'\n'*}"
           [[ "$reported" == "markitect $VERSION+$SOURCE_SHA" ]] || { echo "the linux binary reports '$reported', not 'markitect $VERSION+$SOURCE_SHA'" >&2; exit 1; }
 
           checksums="markitect-$TAG-checksums.txt"
@@ -311,11 +320,14 @@ jobs:
 
           **Update:** \`markitect update\` installs the newest release and brings the skills, agents and lock of your projects in line. A binary the plugin brought is updated with the plugin: \`claude plugin update markitect@markitect\`.
           EOF
+          flags=()
+          [[ "$VERSION" != *-* ]] || flags+=(--prerelease)
           gh release create "$TAG" ./* \
             --repo "$GITHUB_REPOSITORY" \
             --verify-tag \
             --title "Markitect $VERSION" \
-            --notes-file "$RUNNER_TEMP/notes.md"
+            --notes-file "$RUNNER_TEMP/notes.md" \
+            "${flags[@]}"
 
   verify-published:
     name: Check the published release the way a user reaches it
@@ -325,6 +337,8 @@ jobs:
       - publish
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    permissions:
+      contents: write
     env:
       TAG: ${{ needs.preflight.outputs.tag }}
       VERSION: ${{ needs.preflight.outputs.version }}
@@ -343,13 +357,28 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          reported="$(CLAUDE_PLUGIN_DATA="$RUNNER_TEMP/plugin-data" sh plugin/bin/markitect version --repo "$RUNNER_TEMP" | head -n 1)"
+          reported="$(CLAUDE_PLUGIN_DATA="$RUNNER_TEMP/plugin-data" sh plugin/bin/markitect version --repo "$RUNNER_TEMP")"
+          reported="${reported%%$'\n'*}"
           [[ "$reported" == "markitect $VERSION+"* ]] || { echo "the launcher started '$reported', not markitect $VERSION" >&2; exit 1; }
 
       - name: Ask markitect update for the newest release
         shell: bash
         run: |
           set -euo pipefail
+          if [[ "$VERSION" == *-* ]]; then
+            echo "$TAG is a pre-release, which is never the newest release; nothing to ask update"
+            exit 0
+          fi
           report="$(go run ./cmd/markitect update --check --repo "$RUNNER_TEMP")"
           echo "$report"
           grep -qx "binary: up to date ($VERSION)" <<< "$report" || { echo "markitect update does not find $VERSION as the newest release" >&2; exit 1; }
+
+      - name: Take a release that failed these checks out of the newest-release slot
+        if: ${{ failure() }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --prerelease
+          echo "::error::the published release $TAG failed its checks and is now marked as a pre-release; markitect update no longer offers it"

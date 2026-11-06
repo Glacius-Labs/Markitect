@@ -19,6 +19,11 @@ func TestNewer(t *testing.T) {
 		{"0.15.0", "0.0.0-dev", true},
 		{"0.16.0-rc.1", "0.15.0", true},
 		{"0.16.0", "0.16.0-rc.1", true},
+		{"0.16.0-rc.10", "0.16.0-rc.2", true}, // identifiers by value, not by text
+		{"0.16.0-rc.2", "0.16.0-rc.10", false},
+		{"0.16.0-rc.1.1", "0.16.0-rc.1", true}, // the longer one is newer
+		{"0.16.0-rc.1", "0.16.0-beta.9", true},
+		{"0.16.0-rc-1", "0.16.0-rc-1", false}, // hyphens belong to the identifier
 	} {
 		got, err := Newer(tc.latest, tc.current)
 		if err != nil || got != tc.want {

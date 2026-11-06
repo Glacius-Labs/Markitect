@@ -95,7 +95,9 @@ func AssetName(version, goos, goarch string) string {
 // of a release, in the format of sha256sum.
 func ChecksumsName(version string) string { return "markitect-v" + version + "-checksums.txt" }
 
-var tagPattern = regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$`)
+// tagPattern is a release tag: a version with an optional pre-release part and no
+// build metadata, as the release workflow accepts it.
+var tagPattern = regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$`)
 
 // Latest returns the version of the newest release, such as "0.15.0". It reads
 // the tag from the redirect of the releases page, which needs no API token and
@@ -105,36 +107,56 @@ func (c Client) Latest(ctx context.Context) (string, error) {
 	// ten minutes a download may take.
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.base()+"/latest", nil)
-	if err != nil {
-		return "", err
-	}
 	hc := *c.http()
 	hc.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
+
+	// A project that moved sends the latest page to the new address of the latest
+	// page: that redirect is followed, a few times at most. The redirect that names
+	// a tag is the answer.
+	next := c.base() + "/latest"
+	for hop := 0; hop < 4; hop++ {
+		loc, err := c.redirect(ctx, hc, next)
+		if err != nil {
+			return "", err
+		}
+		i := strings.LastIndex(loc.Path, "/tag/")
+		if i >= 0 {
+			tag, err := url.PathUnescape(loc.Path[i+len("/tag/"):])
+			if err != nil || !tagPattern.MatchString(tag) {
+				return "", fmt.Errorf("the latest release has the tag %q, which is no version", loc.Path[i+len("/tag/"):])
+			}
+			return strings.TrimPrefix(tag, "v"), nil
+		}
+		if !strings.HasSuffix(loc.Path, "/latest") {
+			return "", ErrNoRelease // GitHub sends the releases page of a project without one
+		}
+		next = loc.String()
+	}
+	return "", fmt.Errorf("%s redirects too often", c.base()+"/latest")
+}
+
+// redirect asks for the page at address and returns where it redirects to.
+func (c Client) redirect(ctx context.Context, hc http.Client, address string) (*url.URL, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, address, nil)
+	if err != nil {
+		return nil, err
+	}
 	resp, err := hc.Do(req)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer resp.Body.Close()
 	switch {
 	case resp.StatusCode == http.StatusNotFound:
-		return "", ErrNoRelease
+		return nil, ErrNoRelease
 	case resp.StatusCode/100 != 3:
-		return "", fmt.Errorf("%s answered %s", req.URL, resp.Status)
+		return nil, fmt.Errorf("%s answered %s", address, resp.Status)
 	}
 	loc, err := resp.Location()
 	if err != nil {
-		return "", fmt.Errorf("%s redirects nowhere", req.URL)
+		return nil, fmt.Errorf("%s redirects nowhere", address)
 	}
-	i := strings.LastIndex(loc.Path, "/tag/")
-	if i < 0 {
-		return "", ErrNoRelease // GitHub sends the releases page of a project without one
-	}
-	tag, err := url.PathUnescape(loc.Path[i+len("/tag/"):])
-	if err != nil || !tagPattern.MatchString(tag) {
-		return "", fmt.Errorf("the latest release has the tag %q, which is no version", loc.Path[i+len("/tag/"):])
-	}
-	return strings.TrimPrefix(tag, "v"), nil
+	return loc, nil
 }
 
 // Install downloads the binary of the release version for this platform and

@@ -130,6 +130,12 @@ func (c CLI) refreshProject(ctx context.Context, repo string, dry bool) (project
 // manages is replaced by updating the plugin, not by update.
 const PluginEnv = "MARKITECT_PLUGIN"
 
+// pluginBrings says whether the personal skill is missing as a file because the
+// plugin that started this binary carries it as a skill of its own.
+func pluginBrings(skill fileState) bool {
+	return skill == missing && os.Getenv(PluginEnv) != ""
+}
+
 // ownVersion is the version of this binary.
 func (c CLI) ownVersion() string {
 	if c.Version != nil {
@@ -202,7 +208,7 @@ func (c CLI) upgradeBinary(ctx context.Context, repo string, check, force bool) 
 		return step, err
 	}
 	if err := c.Releases.Install(ctx, latest, exe); err != nil {
-		return step, fmt.Errorf("could not install release %s: %w", latest, err)
+		return step, fmt.Errorf("could not install release %s: %w\nmarkitect update --files refreshes the files of the project and the personal skill with this binary all the same", latest, err)
 	}
 	fmt.Fprintf(c.Stdout, "binary: updated %s to %s (%s)\n", cur, latest, exe)
 	code, err := c.Releases.Run(ctx, exe, []string{"update", "--files", "--repo", repo}, c.Stdout, c.Stderr)
@@ -250,6 +256,8 @@ func (c CLI) update(ctx context.Context, args []string) (int, error) {
 	}
 
 	switch {
+	case pluginBrings(skill):
+		fmt.Fprintln(c.Stdout, "personal skill: comes with the plugin")
 	case skill == missing:
 		fmt.Fprintf(c.Stdout, "personal skill: not installed; markitect install writes %s\n", file)
 	case skill == current:
@@ -330,6 +338,10 @@ func (c CLI) version(ctx context.Context, args []string) (int, error) {
 		case outdated:
 			fmt.Fprintln(c.Stdout, "personal skill: out of date; run markitect update")
 		case missing:
+			if pluginBrings(skill) {
+				fmt.Fprintln(c.Stdout, "personal skill: comes with the plugin")
+				break
+			}
 			fmt.Fprintln(c.Stdout, "personal skill: not installed; run markitect install")
 		}
 	}

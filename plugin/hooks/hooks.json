@@ -8,7 +8,7 @@
             "type": "command",
             "shell": "bash",
             "command": "MARKITECT_ENSURE_ONLY=1 sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\" || true",
-            "timeout": 360
+            "async": true
           }
         ]
       }

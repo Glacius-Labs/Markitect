@@ -70,8 +70,15 @@ fetch() {
 	tmp=$(mktemp -d "$data/.fetch.XXXXXX") || fail "cannot write to $data"
 	trap 'rm -rf "$tmp"' EXIT
 
+	# A download from the real releases page never leaves https; a mirror may.
+	secure=
+	case "$base" in
+	https://*) secure="--proto =https --proto-redir =https" ;;
+	esac
+
 	download() {
-		curl -fsSL --connect-timeout 15 --max-time 300 --retry 2 -o "$2" "$base/download/$tag/$1" ||
+		# $secure is several words on purpose.
+		curl -fsSL $secure --connect-timeout 15 --max-time 240 --retry 1 -o "$2" "$base/download/$tag/$1" ||
 			fail "cannot download $1 of release $tag from $base (is there network access? a sandboxed shell may block it, and the session-start hook of the plugin downloads it outside the sandbox)"
 	}
 	download "markitect-$tag-checksums.txt" "$tmp/sums"
@@ -90,12 +97,11 @@ fetch() {
 	rm -rf "$tmp"
 	trap - EXIT
 
-	# One version at a time.
-	for old in "$data"/v*; do
-		if [ -d "$old" ] && [ "$old" != "$data/$tag" ]; then
-			rm -rf "$old" 2>/dev/null || true
-		fi
-	done
+	# Leftovers of a fetch that was killed, and the binaries of earlier releases of
+	# the plugin. A version is kept for a day after a newer one arrives, so that a
+	# session still on the old plugin does not have its binary deleted under it.
+	find "$data" -maxdepth 1 -name '.fetch.*' -mmin +60 -exec rm -rf {} + 2>/dev/null || true
+	find "$data" -maxdepth 1 -type d -name 'v*' ! -name "$tag" -mtime +1 -exec rm -rf {} + 2>/dev/null || true
 }
 
 [ -x "$exe" ] || fetch

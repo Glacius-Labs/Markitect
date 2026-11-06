@@ -59,6 +59,35 @@ func TestLatestReadsTheTagFromTheRedirect(t *testing.T) {
 	}
 }
 
+// A project that moved sends the latest page to the new address of the latest
+// page, which is followed to the tag.
+func TestLatestFollowsAMovedProject(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/old/releases/latest", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/new/releases/latest", http.StatusMovedPermanently)
+	})
+	mux.HandleFunc("/new/releases/latest", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/new/releases/tag/v0.15.1-rc-2", http.StatusFound)
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	got, err := Client{Base: srv.URL + "/old/releases"}.Latest(context.Background())
+	if err != nil || got != "0.15.1-rc-2" {
+		t.Fatalf("Latest() = %q, %v; want 0.15.1-rc-2", got, err)
+	}
+}
+
+func TestLatestGivesUpOnARedirectLoop(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/again/latest", http.StatusFound)
+	}))
+	defer srv.Close()
+	_, err := Client{Base: srv.URL}.Latest(context.Background())
+	if err == nil || err == ErrNoRelease || !strings.Contains(err.Error(), "redirects too often") {
+		t.Fatalf("Latest() error = %v, want a refusal of the loop", err)
+	}
+}
+
 func TestLatestWithoutARelease(t *testing.T) {
 	for name, handler := range map[string]http.HandlerFunc{
 		"not found":         http.NotFound,

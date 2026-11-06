@@ -133,6 +133,39 @@ func TestLauncherFetchesTheReleaseOfThePlugin(t *testing.T) {
 	}
 }
 
+// Claude Code runs shell commands side by side, and the session-start hook runs
+// beside them: calls that arrive while the binary is being fetched must all work.
+func TestLauncherCalledAtTheSameTime(t *testing.T) {
+	for _, tool := range []string{"sh", "curl"} {
+		if _, err := exec.LookPath(tool); err != nil {
+			t.Skipf("the launcher needs %s", tool)
+		}
+	}
+	version := pluginVersion(t)
+	mirror, _ := releasePage(t, version, false)
+	data := testkit.TempDir(t)
+	const calls = 5
+	type result struct {
+		out  string
+		code int
+	}
+	results := make(chan result, calls)
+	for i := 0; i < calls; i++ {
+		go func() {
+			out, code := launch(t, pluginRoot, mirror, data, nil, "-test.run=TestLauncherChild")
+			results <- result{out, code}
+		}()
+	}
+	for i := 0; i < calls; i++ {
+		if r := <-results; r.code != 0 || !strings.Contains(r.out, "child: plugin "+version) {
+			t.Errorf("a call failed: exit %d\n%s", r.code, r.out)
+		}
+	}
+	if leftovers, _ := filepath.Glob(filepath.Join(data, ".fetch.*")); len(leftovers) != 0 {
+		t.Errorf("calls left %v", leftovers)
+	}
+}
+
 // The session-start hook only fetches.
 func TestLauncherCanFetchWithoutStarting(t *testing.T) {
 	version := pluginVersion(t)

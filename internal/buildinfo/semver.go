@@ -78,5 +78,31 @@ func (a semver) compare(b semver) int {
 	case b.pre == "":
 		return -1
 	}
-	return strings.Compare(a.pre, b.pre)
+	return comparePre(a.pre, b.pre)
+}
+
+// comparePre orders pre-release parts as semantic versioning does: identifier by
+// identifier, numbers by value and before text, text by its letters, and a part
+// that is the start of a longer one first. So rc.2 comes before rc.10.
+func comparePre(a, b string) int {
+	x, y := strings.Split(a, "."), strings.Split(b, ".")
+	for i := 0; i < len(x) && i < len(y); i++ {
+		m, mErr := strconv.Atoi(x[i])
+		n, nErr := strconv.Atoi(y[i])
+		var d int
+		switch {
+		case mErr == nil && nErr == nil:
+			d = m - n
+		case mErr == nil:
+			d = -1
+		case nErr == nil:
+			d = 1
+		default:
+			d = strings.Compare(x[i], y[i])
+		}
+		if d != 0 {
+			return d
+		}
+	}
+	return len(x) - len(y)
 }

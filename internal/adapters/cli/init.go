@@ -112,7 +112,7 @@ func (c CLI) init(ctx context.Context, args []string) (int, error) {
 		fmt.Fprint(c.Stdout, nextSteps)
 	}
 	// init never writes to the home folder, so it only says what install would add.
-	if _, skill, err := personalSkillState(); err == nil && skill != current {
+	if _, skill, err := personalSkillState(); err == nil && skill != current && !pluginBrings(skill) {
 		fmt.Fprintf(c.Stdout, "\ntip: %s\n", personalSkillTips[skill])
 	}
 	c.warnPath()
