@@ -50,7 +50,7 @@ func (Folder) Open(root string) (project.Repository, map[string]string, error) {
 
 // Walk walks the project folder at root.
 func Walk(root string) (*Walked, error) {
-	w := &Walked{Dir: root, ignore: newIgnores(root), links: map[string]string{}}
+	w := &Walked{Dir: root, ignore: newIgnores(root), links: map[string]string{}, repos: map[string]bool{}}
 	err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -70,7 +70,14 @@ func Walk(root string) (*Walked, error) {
 			return nil
 		}
 		if d.IsDir() {
-			if w.ignore.ignored(rel, true) || nestedRepository(p) {
+			if w.ignore.ignored(rel, true) {
+				return filepath.SkipDir
+			}
+			if nestedRepository(p) {
+				// Git keeps another repository as one entry, and so does the
+				// walk, so that check names it instead of losing its files.
+				w.files = append(w.files, rel)
+				w.repos[rel] = true
 				return filepath.SkipDir
 			}
 			return nil
@@ -95,17 +102,32 @@ func Walk(root string) (*Walked, error) {
 	return w, nil
 }
 
-// nestedRepository says whether a folder is a repository or worktree of its own.
+// nestedRepository says whether a folder is a repository or worktree of its own:
+// its .git is a folder with a HEAD, or a file that names one. Any other .git is
+// no repository, and the folder is walked.
 func nestedRepository(dir string) bool {
-	_, err := os.Lstat(filepath.Join(dir, ".git"))
-	return err == nil
+	git := filepath.Join(dir, ".git")
+	info, err := os.Lstat(git)
+	switch {
+	case err != nil:
+		return false
+	case info.IsDir():
+		_, err := os.Stat(filepath.Join(git, "HEAD"))
+		return err == nil
+	}
+	data, err := os.ReadFile(git)
+	return err == nil && strings.HasPrefix(string(data), "gitdir:")
 }
+
+// repositoryEntry is what the entry of another repository reads as.
+const repositoryEntry = "a repository of its own\n"
 
 // Walked is the files of a project folder as one walk found them.
 type Walked struct {
 	Dir    string
 	files  []string
 	links  map[string]string
+	repos  map[string]bool
 	ignore *ignores
 }
 
@@ -114,6 +136,9 @@ func (w *Walked) Files() ([]string, error) { return append([]string(nil), w.file
 
 // Read reads a file. A symbolic link reads as where it points, as Git stores it.
 func (w *Walked) Read(file string) ([]byte, error) {
+	if w.repos[file] {
+		return []byte(repositoryEntry), nil
+	}
 	p := filepath.Join(w.Dir, filepath.FromSlash(file))
 	if info, err := os.Lstat(p); err == nil && info.Mode()&os.ModeSymlink != 0 {
 		to, err := os.Readlink(p)
@@ -240,8 +265,7 @@ func (p pattern) matches(rel string, dir bool) bool {
 		}
 	}
 	if !p.anchored {
-		ok, _ := path.Match(p.glob, path.Base(below))
-		return ok
+		return globMatch(p.glob, path.Base(below))
 	}
 	return matchSegments(strings.Split(p.glob, "/"), strings.Split(below, "/"))
 }
@@ -252,7 +276,8 @@ func matchSegments(pat, name []string) bool {
 	for len(pat) > 0 {
 		if pat[0] == "**" {
 			if len(pat) == 1 {
-				return true
+				// A trailing "/**" holds everything inside, not the folder.
+				return len(name) > 0
 			}
 			for i := 0; i <= len(name); i++ {
 				if matchSegments(pat[1:], name[i:]) {
@@ -264,10 +289,30 @@ func matchSegments(pat, name []string) bool {
 		if len(name) == 0 {
 			return false
 		}
-		if ok, _ := path.Match(pat[0], name[0]); !ok {
+		if !globMatch(pat[0], name[0]) {
 			return false
 		}
 		pat, name = pat[1:], name[1:]
 	}
 	return len(name) == 0
+}
+
+// globMatch matches one part of a path as Git does: "[!x]" is "not x", which Go
+// writes "[^x]".
+func globMatch(glob, name string) bool {
+	var b strings.Builder
+	for i := 0; i < len(glob); i++ {
+		switch {
+		case glob[i] == '\\' && i+1 < len(glob):
+			b.WriteString(glob[i : i+2])
+			i++
+		case glob[i] == '[' && i+1 < len(glob) && glob[i+1] == '!':
+			b.WriteString("[^")
+			i++
+		default:
+			b.WriteByte(glob[i])
+		}
+	}
+	ok, _ := path.Match(b.String(), name)
+	return ok
 }

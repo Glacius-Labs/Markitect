@@ -103,6 +103,8 @@ func reviewKeys(prompt string) []string {
 // pointer to README.md, except where except says otherwise.
 func (p *plain) review(except map[string]string) (string, []string) {
 	p.t.Helper()
+	// The builder's checklist began the work; calling it again goes on with it.
+	p.list(run.ChecklistRequest{})
 	keys := reviewKeys(p.list(run.ChecklistRequest{Review: true}))
 	var lines []string
 	for _, k := range keys {
@@ -251,16 +253,109 @@ func TestGateRefusesProtectedFiles(t *testing.T) {
 	})
 }
 
-// A changed spec is a new step: checklist begins the work again.
-func TestChecklistBeginsAgainWhenTheSpecChanges(t *testing.T) {
+// A spec changed during the work stops gate and a plain checklist alike, so that
+// a builder cannot change the spec and begin again; the owner begins the work
+// again by naming the change.
+func TestASpecChangedDuringTheWork(t *testing.T) {
 	p := newPlain(t)
-	p.certify()
+	first := p.certify()
 	p.list(run.ChecklistRequest{})
 	p.write("src/members/loans/loan.go", limit3)
 	p.specChange()
-	has(t, p.gate(run.GateRequest{}).Text, "Put them back", m+"loan-limit.md")
-	has(t, p.list(run.ChecklistRequest{}), "loan-limit")
+	has(t, p.gate(run.GateRequest{}).Text, "Put them back", m+"loan-limit.md", "markitect checklist --base .markitect/results/")
+	text, ok, err := p.engine.Checklist(context.Background(), run.ChecklistRequest{Dir: p.dir})
+	if err != nil || ok {
+		t.Fatalf("a plain checklist began the work again: %v %v\n%s", ok, err, text)
+	}
+	has(t, text, "Put them back", m+"loan-limit.md")
+	has(t, p.list(run.ChecklistRequest{Base: first}), "loan-limit")
 	has(t, p.gate(run.GateRequest{}).Text, run.ReviewerAgent)
+}
+
+// The certificates are the owner's during the work: one planted in the results
+// folder stops gate, and does not become the base.
+func TestAPlantedCertificate(t *testing.T) {
+	p := newPlain(t)
+	first := p.certify()
+	p.specChange()
+	p.list(run.ChecklistRequest{})
+	p.write("src/members/loans/loan.go", limit3)
+	var cert map[string]any
+	if err := json.Unmarshal([]byte(p.read(first)), &cert); err != nil {
+		t.Fatal(err)
+	}
+	cert["created"] = "2099-01-01T00:00:00Z"
+	data, _ := json.Marshal(cert)
+	p.write(".markitect/results/gate-20990101-000000-00000000.json", string(data))
+	v := p.gate(run.GateRequest{})
+	if v.Done {
+		t.Fatalf("passed: %s", v.Text)
+	}
+	has(t, v.Text, "gate-20990101-000000-00000000.json", "Put them back")
+	if text, ok, _ := p.engine.Checklist(context.Background(), run.ChecklistRequest{Dir: p.dir}); ok {
+		t.Fatalf("a plain checklist went on:\n%s", text)
+	}
+}
+
+// With no certificate the list holds every Definition, Findings or not, so that
+// nothing the builder changes goes unreviewed; and work on Findings is not
+// "nothing to check" while the Findings stand.
+func TestFindingsWithoutACertificate(t *testing.T) {
+	p := newPlain(t)
+	findings := []analysis.Finding{{Definition: "loan-limit", Observed: "a fourth loan", Expected: "the limit"}}
+	list := p.list(run.ChecklistRequest{Findings: findings})
+	has(t, list, "finding 1 loan-limit", "catalog/book")
+	v := p.gate(run.GateRequest{})
+	has(t, v.Text, run.ReviewerAgent)
+
+	q := newPlain(t)
+	q.certify()
+	q.list(run.ChecklistRequest{Findings: findings})
+	if v := q.gate(run.GateRequest{}); v.Done {
+		t.Fatalf("work on Findings passed with nothing reviewed: %s", v.Text)
+	}
+}
+
+// The newest certificate is the one no other names as its base, whatever the
+// clocks said.
+func TestTheNewestCertificateFollowsItsBase(t *testing.T) {
+	p := newPlain(t)
+	p.certify()
+	p.specChange()
+	p.list(run.ChecklistRequest{})
+	p.write("src/members/loans/loan.go", limit3)
+	p.review(nil)
+	if v := p.gate(run.GateRequest{}); !v.Done {
+		t.Fatalf("%s", v.Text)
+	}
+	certs := p.results(".json")
+	var second map[string]any
+	if err := json.Unmarshal([]byte(p.read(certs[1])), &second); err != nil {
+		t.Fatal(err)
+	}
+	// Made on a machine whose clock is an hour behind.
+	second["created"] = "2026-11-06T11:00:00Z"
+	data, _ := json.Marshal(second)
+	p.write(".markitect/results/"+filepath.Base(certs[1]), string(data))
+	if v := p.gate(run.GateRequest{Verify: true}); !v.Done {
+		t.Fatalf("the base won over its successor: %s", v.Text)
+	}
+}
+
+// A reviewer with no work under way, such as one of a Run that ended, is told to
+// end, not to build.
+func TestNoWorkForAReviewer(t *testing.T) {
+	p := newPlain(t)
+	text, ok, err := p.engine.Checklist(context.Background(), run.ChecklistRequest{Dir: p.dir, Review: true})
+	if err != nil || ok {
+		t.Fatalf("%v %v", ok, err)
+	}
+	has(t, text, "nothing to review", "End now")
+	text, complete, err := p.engine.Answer(context.Background(), p.dir, []byte("loan-limit: ok README.md:1\n"))
+	if err != nil || complete {
+		t.Fatalf("%v %v", complete, err)
+	}
+	has(t, text, "nothing is stored", "End now")
 }
 
 // gate and answer need a checklist that began the work.
@@ -277,7 +372,7 @@ func TestGateWithoutAChecklist(t *testing.T) {
 	if err != nil || complete {
 		t.Fatalf("%v %v", complete, err)
 	}
-	has(t, text, "No checklist began this work")
+	has(t, text, "No work is under way")
 }
 
 // Row 2: a changed file that lies in no item is named, not certified; a file of a
@@ -287,7 +382,7 @@ func TestGateRefusesAChangeOutsideTheList(t *testing.T) {
 	files[project.IgnoreFile] = "NOTES.md\n"
 	files["NOTES.md"] = "# Notes\n"
 	p := newPlainOf(t, files)
-	p.certify()
+	first := p.certify()
 	p.specChange()
 	p.list(run.ChecklistRequest{})
 	p.write("src/members/loans/loan.go", limit3)
@@ -298,10 +393,14 @@ func TestGateRefusesAChangeOutsideTheList(t *testing.T) {
 		t.Fatal("passed")
 	}
 	p.write("NOTES.md", "# Notes\n")
-	// A .gitignore the owner changed before the work is no change of the work.
+	// A .gitignore is the owner's: changed during the work, it stops a plain
+	// checklist, and the owner begins the work again by naming the change.
 	files[".gitignore"] += "*.tmp\n"
 	p.write(".gitignore", files[".gitignore"])
-	p.list(run.ChecklistRequest{})
+	if text, ok, err := p.engine.Checklist(context.Background(), run.ChecklistRequest{Dir: p.dir}); err != nil || ok || !strings.Contains(text, "markitect checklist --base") {
+		t.Fatalf("a plain checklist went on: %v %v\n%s", ok, err, text)
+	}
+	p.list(run.ChecklistRequest{Base: first})
 	p.write("src/catalog/book.go", "package catalog\n\n// Book is a book.\n")
 	has(t, p.gate(run.GateRequest{}).Text, run.ReviewerAgent)
 	if keys := strings.Join(reviewKeys(p.list(run.ChecklistRequest{Review: true})), ","); !strings.Contains(keys, "catalog/book") {
@@ -326,6 +425,7 @@ func TestGateRefusesWhatCheckRefuses(t *testing.T) {
 // a file the walk does not see does not exist for an answer.
 func TestGateAnswerRefusesWhatItCannotAccept(t *testing.T) {
 	p := newPlain(t)
+	p.list(run.ChecklistRequest{})
 	keys := reviewKeys(p.list(run.ChecklistRequest{Review: true}))
 	p.write(".claude/worktrees/x/notes.md", "ignored by Git\n")
 	ctx := context.Background()

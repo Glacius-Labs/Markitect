@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -43,7 +44,10 @@ type folder struct {
 	// all of them in one.
 	hashes      map[string]string
 	fingerprint string
-	cur         *project.Project
+	// certs holds the hashes of the certificates in the results folder, which
+	// the work may not change either.
+	certs map[string]string
+	cur   *project.Project
 }
 
 // readFolder reads the project folder that holds dir.
@@ -67,7 +71,27 @@ func (e *Engine) readFolder(dir string) (*folder, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &folder{root: root, files: files, links: links, hashes: hashes, fingerprint: fingerprint(hashes), cur: cur}, nil
+	certs := map[string]string{}
+	list, err := files.Files()
+	if err != nil {
+		return nil, err
+	}
+	for _, file := range list {
+		if isResult(file) && strings.HasSuffix(file, ".json") {
+			data, err := files.Read(file)
+			if err != nil {
+				return nil, err
+			}
+			certs[file] = fileHash(data)
+		}
+	}
+	return &folder{root: root, files: files, links: links, hashes: hashes, fingerprint: fingerprint(hashes), certs: certs, cur: cur}, nil
+}
+
+// changedOwn lists what changed since the work began that the work may not
+// change: the owner's files and the certificates.
+func (f *folder) changedOwn(w *Work) []string {
+	return append(changedFrom(w.Spec, f.specHashes()), changedFrom(w.Certificates, f.certs)...)
 }
 
 // specHashes are the hashes the work may not change: Markitect's folder except the
@@ -112,13 +136,14 @@ func sortedStrings(s []string) []string {
 	return sortedKeys(m)
 }
 
-// certificatePath resolves the certificate a user names: a file as given, or one
-// in the results folder; its Result page names it too. It returns the path
-// relative to the project folder when it lies inside it.
+// certificatePath resolves the certificate a user names: a path in the project
+// folder, a name in its results folder, or a file as given; its Result page names
+// it too. It returns the path relative to the project folder when it lies inside
+// it.
 func certificatePath(root, name string) (string, error) {
 	candidates := []string{name}
 	if !filepath.IsAbs(name) {
-		candidates = append(candidates, filepath.Join(root, filepath.FromSlash(project.ResultsDir), name))
+		candidates = []string{filepath.Join(root, filepath.FromSlash(name)), filepath.Join(root, filepath.FromSlash(project.ResultsDir), name), name}
 	}
 	for _, c := range candidates {
 		abs, err := filepath.Abs(c)
@@ -152,33 +177,60 @@ func inProject(root, file string) string {
 }
 
 // workFor is the work checklist names: with --base, --full or --findings the
-// change they name; otherwise the stored work while it holds, or the change from
-// the newest certificate. A change of the spec, or a newer certificate, starts the
-// work afresh.
-func (e *Engine) workFor(f *folder, req ChecklistRequest, stored *Work) (*Work, error) {
+// change they name, begun afresh unless it is the one under way; otherwise the
+// work under way, or the change from the newest certificate when there is none.
+// A plain checklist does not begin the work again when the spec, the harness or
+// the certificates changed under it: refusal says so, and naming the change
+// begins it again. With no certificate the list holds every Definition.
+func (e *Engine) workFor(f *folder, req ChecklistRequest, stored *Work) (w *Work, refusal string, err error) {
 	newest, _, err := newestCertificate(f.root)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	base, full := newest, req.Full
 	if req.Base != "" {
 		if base, err = certificatePath(f.root, req.Base); err != nil {
-			return nil, err
+			return nil, "", err
 		}
 	}
-	if base == "" && len(req.Findings) == 0 {
+	if base == "" {
 		full = true
 	}
-	spec := f.specHashes()
-	if stored != nil && len(changedFrom(stored.Spec, spec)) == 0 {
-		switch {
-		case !req.namesChange() && (stored.Named || stored.Base == base):
-			return stored, nil
-		case req.namesChange() && stored.Named && stored.Base == base && stored.Full == full && sameFindings(stored.Findings, req.Findings):
-			return stored, nil
+	if stored != nil && stored.Base != "" {
+		if _, err := os.Stat(inProject(f.root, stored.Base)); err != nil {
+			// Its base is gone from this folder, as after a change of branch:
+			// that work cannot go on.
+			stored = nil
 		}
 	}
-	return &Work{Project: f.root, Base: base, Full: full, Findings: req.Findings, Named: req.namesChange(), Spec: spec, Answers: map[string]Given{}, Began: e.now()}, nil
+	if stored != nil && !req.namesChange() {
+		if changed := f.changedOwn(stored); len(changed) > 0 {
+			return nil, restartText(stored, changed), nil
+		}
+		if stored.Named || stored.Base == base {
+			return stored, "", nil
+		}
+	}
+	if stored != nil && req.namesChange() && len(f.changedOwn(stored)) == 0 && stored.Named && stored.Base == base && stored.Full == full && sameFindings(stored.Findings, req.Findings) {
+		return stored, "", nil
+	}
+	return &Work{Project: f.root, Base: base, Full: full, Findings: req.Findings, Named: req.namesChange(), Spec: f.specHashes(), Certificates: f.certs, Answers: map[string]Given{}, Began: e.now()}, "", nil
+}
+
+// restartText says that what the work may not change changed under it, and how
+// the owner begins it again.
+func restartText(w *Work, changed []string) string {
+	again := "markitect checklist --full"
+	if w.Base != "" {
+		again = "markitect checklist --base " + w.Base
+	}
+	var b strings.Builder
+	b.WriteString("These changed since the work began, and the work may not change them:\n\n")
+	for _, c := range changed {
+		fmt.Fprintf(&b, "- %s\n", c)
+	}
+	fmt.Fprintf(&b, "\nPut them back: a change to the spec is its own step, before the work. If the owner changed them on purpose, the owner begins the work again with: %s\n", again)
+	return b.String()
 }
 
 func sameFindings(a, b []analysis.Finding) bool {
@@ -232,10 +284,21 @@ func (e *Engine) Checklist(ctx context.Context, req ChecklistRequest) (text stri
 	var w Work
 	var imp analysis.Impact
 	var before *project.Project
+	refusal := ""
 	if err := e.updateWork(f.root, func(stored *Work) (*Work, error) {
-		next, err := e.workFor(f, req, stored)
+		if stored == nil && req.Review && !req.namesChange() {
+			// A reviewer is started for work under way; without one there is
+			// nothing to review.
+			refusal = "No work is under way in this folder, so there is nothing to review. End now, and say so.\n"
+			return nil, nil
+		}
+		next, why, err := e.workFor(f, req, stored)
 		if err != nil {
 			return nil, err
+		}
+		if why != "" {
+			refusal = why
+			return stored, nil
 		}
 		if imp, before, err = e.list(f, next); err != nil {
 			return nil, err
@@ -244,6 +307,9 @@ func (e *Engine) Checklist(ctx context.Context, req ChecklistRequest) (text stri
 		return next, nil
 	}); err != nil {
 		return "", false, err
+	}
+	if refusal != "" {
+		return refusal, false, nil
 	}
 	changes := changedText(imp, before)
 	if !req.Review {
@@ -383,7 +449,7 @@ func (e *Engine) answerState(dir string, raw []byte) (string, bool, error) {
 	}
 	switch {
 	case none:
-		return noWork, false, nil
+		return "No work is under way in this folder, so nothing is stored. End now, and say so.\n", false, nil
 	case len(problems) > 0:
 		var b strings.Builder
 		b.WriteString("These answers are not accepted, and nothing from this call is stored. Correct them and call markitect answer again:\n\n")
@@ -416,8 +482,8 @@ func (e *Engine) stateStatus(dir string) string {
 	case len(f.cur.SpecErrors()) > 0:
 		b.WriteString("- The spec has errors, so there is no list; markitect check lists them.\n")
 	default:
-		if changed := changedFrom(w.Spec, f.specHashes()); len(changed) > 0 {
-			fmt.Fprintf(&b, "- The spec or the harness changed since the work began: %s.\n", strings.Join(changed, ", "))
+		if changed := f.changedOwn(w); len(changed) > 0 {
+			fmt.Fprintf(&b, "- What the work may not change changed since it began: %s.\n", strings.Join(changed, ", "))
 		}
 		if _, _, err := e.list(f, w); err != nil {
 			fmt.Fprintf(&b, "- The list could not be made: %v\n", err)

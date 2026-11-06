@@ -28,7 +28,15 @@ func TestFolderWalksWithoutGit(t *testing.T) {
 	dir := testkit.TempDir(t)
 	put(t, dir, map[string]string{
 		".markitect/manifest.yaml": "libraries: {}\n",
-		".gitignore":               "# build output\n*.log\n!keep.log\nbuild/\n/top.txt\ndocs/**/draft-*.md\n\\#hash.txt\n",
+		".gitignore":               "# build output\n*.log\n!keep.log\nbuild/\n/top.txt\ndocs/**/draft-*.md\n\\#hash.txt\nfoo/**\n!foo/keep.txt\n*.[!o]x\n",
+		"foo/keep.txt":             "kept by the negation inside foo/**\n",
+		"foo/other.txt":            "ignored by foo/**\n",
+		"a.ox":                     "kept: [!o] is not o\n",
+		"a.cx":                     "ignored by [!o]\n",
+		"fake/.git":                "not a repository\n",
+		"fake/x.go":                "walked, since fake/.git names no repository\n",
+		"real/.git/HEAD":           "ref: refs/heads/main\n",
+		"real/x.go":                "inside another repository\n",
 		"keep.log":                 "kept\n",
 		"run.log":                  "ignored\n",
 		"top.txt":                  "ignored at the top\n",
@@ -43,7 +51,7 @@ func TestFolderWalksWithoutGit(t *testing.T) {
 		"#hash.txt":                "ignored by an escaped #\n",
 		".git/config":              "Git's own folder\n",
 		"nested/.git":              "gitdir: elsewhere\n",
-		"nested/file.txt":          "another repository's\n",
+		"nested/file.txt":          "another worktree's\n",
 		"src/main.go":              "package main\n",
 	})
 	w, err := Walk(dir)
@@ -52,9 +60,13 @@ func TestFolderWalksWithoutGit(t *testing.T) {
 	}
 	files, _ := w.Files()
 	got := strings.Join(files, ",")
-	want := ".gitignore,.markitect/manifest.yaml,docs/a/final.md,keep.log,local.txt,src/main.go,sub/.gitignore,sub/top.txt"
+	want := ".gitignore,.markitect/manifest.yaml,a.ox,docs/a/final.md,fake/x.go,foo/keep.txt,keep.log,local.txt,nested,real,src/main.go,sub/.gitignore,sub/top.txt"
 	if got != want {
 		t.Fatalf("the walk found\n%s\nnot\n%s", got, want)
+	}
+	// Another repository is one entry, as in Git, so that check names it.
+	if data, err := w.Read("real"); err != nil || !strings.Contains(string(data), "repository") {
+		t.Fatalf("%q %v", data, err)
 	}
 	for file, ignored := range map[string]bool{"run.log": true, "sub/build/out.bin": true, "build/x": true, "keep.log": false, "src/main.go": false, "sub/local.txt": true} {
 		if w.GitIgnored(file) != ignored {

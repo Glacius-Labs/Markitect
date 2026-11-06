@@ -450,10 +450,10 @@ func (c CLI) impact(ctx context.Context, args []string) (int, error) {
 	return OK, nil
 }
 
-// impactBase is the base of impact: a certificate gate wrote, when base names a
-// file, otherwise a commit.
+// impactBase is the base of impact: a certificate gate wrote, when base names its
+// .json or .md file, otherwise a commit.
 func (c CLI) impactBase(ctx context.Context, ws Workspace, base string) (string, *project.Project, []analysis.Change, error) {
-	if info, err := os.Stat(base); err == nil && !info.IsDir() {
+	if strings.HasSuffix(base, ".json") || strings.HasSuffix(base, ".md") {
 		cert, err := run.ReadCertificate(base)
 		if err != nil {
 			return "", nil, nil, err

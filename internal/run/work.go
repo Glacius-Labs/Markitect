@@ -35,6 +35,9 @@ type Work struct {
 	// Spec holds the hashes of the spec and the harness when the work began; the
 	// work may not change them.
 	Spec map[string]string `json:"spec"`
+	// Certificates holds the hashes of the certificates in the folder when the
+	// work began; the work may not add, change or remove one.
+	Certificates map[string]string `json:"certificates"`
 	// Items is the list as it stands: every item any state put on it, as a Run
 	// keeps them (mergeItems).
 	Items []Item `json:"items"`

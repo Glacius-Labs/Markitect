@@ -44,8 +44,9 @@ type Certificate struct {
 	Files map[string]string `json:"files"`
 	// Definitions holds the SHA-256 of every Definition's text.
 	Definitions map[string]string `json:"definitions"`
-	// Spec holds the text of every file in Markitect's folder outside the results
-	// folder: the spec and its registry, as certified.
+	// Spec holds the text of the files in Markitect's folder the spec and its
+	// registry are read from, as certified: not the results and not the installed
+	// tool.
 	Spec map[string]string `json:"spec"`
 	// Items holds each checklist item with its answer.
 	Items []ResultItem `json:"items"`
@@ -112,16 +113,30 @@ func newCertificate(repo project.Repository, hashes map[string]string, p *projec
 		c.Definitions[id] = fileHash(d.Data)
 	}
 	for f := range hashes {
-		if !strings.HasPrefix(f, project.Dir+"/") {
+		if !specText(f) {
 			continue
 		}
 		data, err := repo.Read(f)
 		if err != nil {
 			return nil, err
 		}
+		if bytes.IndexByte(data, 0) >= 0 {
+			continue
+		}
 		c.Spec[f] = string(project.Normalize(data))
 	}
 	return c, nil
+}
+
+// specText says whether a certificate copies a file's text: what a project's spec
+// and registry are read from, not the installed tool beside them.
+func specText(file string) bool {
+	rel, ok := strings.CutPrefix(file, project.Dir+"/")
+	if !ok {
+		return false
+	}
+	first, _, _ := strings.Cut(rel, "/")
+	return first != "results" && first != "tool" && first != "bootstrap"
 }
 
 // ReadCertificate reads a certificate file. The Result page beside it names it
@@ -145,45 +160,62 @@ func ReadCertificate(file string) (*Certificate, error) {
 }
 
 // newestCertificate finds the newest certificate in the results folder of the
-// project at root: the latest one made, and of two made in the same second, the
-// one that names the other as its base. It returns its project-relative path, or
-// "" when there is none. A file there that is no certificate is not one.
+// project at root, by what the certificates record, never by file times: one that
+// another names as its base is older than that one, whatever the clocks said;
+// of the rest, as after a merge of two certified branches, the one made last. It
+// returns its project-relative path, or "" when there is none. A file there that
+// is no certificate is not one.
 func newestCertificate(root string) (string, *Certificate, error) {
-	entries, err := os.ReadDir(filepath.Join(root, filepath.FromSlash(project.ResultsDir)))
-	if errors.Is(err, os.ErrNotExist) {
-		return "", nil, nil
-	}
-	if err != nil {
+	all, err := certificates(root)
+	if err != nil || len(all) == 0 {
 		return "", nil, err
 	}
+	succeeded := map[string]bool{}
+	for _, c := range all {
+		succeeded[c.Base] = true
+	}
 	var best string
-	var bestCert *Certificate
+	for _, file := range sortedKeys(all) {
+		if succeeded[file] {
+			continue
+		}
+		if best == "" || all[file].Created.After(all[best].Created) || (all[file].Created.Equal(all[best].Created) && file > best) {
+			best = file
+		}
+	}
+	if best == "" {
+		// Every certificate names another: a cycle someone wrote by hand. The one
+		// made last counts.
+		for _, file := range sortedKeys(all) {
+			if best == "" || all[file].Created.After(all[best].Created) {
+				best = file
+			}
+		}
+	}
+	return best, all[best], nil
+}
+
+// certificates reads every certificate in the results folder of the project at
+// root, by project-relative path.
+func certificates(root string) (map[string]*Certificate, error) {
+	entries, err := os.ReadDir(filepath.Join(root, filepath.FromSlash(project.ResultsDir)))
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	all := map[string]*Certificate{}
 	for _, e := range entries {
 		if e.IsDir() || !strings.HasSuffix(e.Name(), ".json") {
 			continue
 		}
 		file := path.Join(project.ResultsDir, e.Name())
-		c, err := ReadCertificate(filepath.Join(root, filepath.FromSlash(file)))
-		if err != nil {
-			continue
-		}
-		if bestCert == nil || newer(c, file, bestCert, best) {
-			best, bestCert = file, c
+		if c, err := ReadCertificate(filepath.Join(root, filepath.FromSlash(file))); err == nil {
+			all[file] = c
 		}
 	}
-	return best, bestCert, nil
-}
-
-func newer(a *Certificate, aFile string, b *Certificate, bFile string) bool {
-	switch {
-	case !a.Created.Equal(b.Created):
-		return a.Created.After(b.Created)
-	case a.Base == bFile:
-		return true
-	case b.Base == aFile:
-		return false
-	}
-	return aFile > bFile
+	return all, nil
 }
 
 // Project loads the project as the certificate holds it: its spec and registry,

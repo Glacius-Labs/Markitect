@@ -108,9 +108,10 @@ func Isolate() (func(), error) {
 }
 
 // isolatedHome returns the isolated home directory of this user and this
-// GlobalConfig, creating it when needed. All test processes share it, and
-// its content never changes, so nothing removes it and nothing leaks when a
-// process exits early.
+// GlobalConfig, creating it when needed. All test processes share it, and its
+// configuration never changes, so nothing removes it and nothing leaks when a
+// process exits early. Its cache folders gather the small work files of tests
+// that work without a Run, each in a temporary project's name.
 func isolatedHome() (string, error) {
 	sum := sha256.Sum256([]byte(GlobalConfig))
 	name := fmt.Sprintf("markitect-testkit-%x", sum[:4])

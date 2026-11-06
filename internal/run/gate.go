@@ -54,27 +54,32 @@ func (e *Engine) Gate(ctx context.Context, req GateRequest) (Verdict, error) {
 	if req.Findings {
 		return e.gateFindings(f)
 	}
-	if name, cert, err := newestCertificate(f.root); err != nil {
-		return Verdict{}, err
-	} else if cert != nil && len(cert.Differences(f.hashes)) == 0 {
-		return Verdict{Done: true, Text: fmt.Sprintf("Nothing to check: the folder matches its newest certificate, %s.\n", name)}, nil
-	}
 	w, err := e.loadWork(f.root)
 	if err != nil {
 		return Verdict{}, err
 	}
 	if w == nil {
+		// Without work under way, a folder that matches its newest certificate
+		// has nothing to check.
+		if name, cert, err := newestCertificate(f.root); err != nil {
+			return Verdict{}, err
+		} else if cert != nil && len(cert.Differences(f.hashes)) == 0 {
+			return Verdict{Done: true, Text: fmt.Sprintf("Nothing to check: the folder matches its newest certificate, %s.\n", name)}, nil
+		}
 		return Verdict{Text: noWork}, nil
 	}
 	// Row 1: what the work may not change.
-	refusals := changedFrom(w.Spec, f.specHashes())
+	if changed := f.changedOwn(w); len(changed) > 0 {
+		return Verdict{Text: restartText(w, changed)}, nil
+	}
+	var links []string
 	for _, file := range sortedKeys(f.links) {
 		if leavesTree(file, f.links[file]) {
-			refusals = append(refusals, fmt.Sprintf("%s is a link that leaves the folder, to %s", file, f.links[file]))
+			links = append(links, fmt.Sprintf("%s is a link that leaves the folder, to %s", file, f.links[file]))
 		}
 	}
-	if len(refusals) > 0 {
-		return listed("These changed since markitect checklist began the work, and the work may not change them. Put them back, then run markitect gate again. A change to the spec is its own step, before the work; markitect checklist then begins the work again:", refusals), nil
+	if len(links) > 0 {
+		return listed("A link may not leave the folder. Remove these, then run markitect gate again:", links), nil
 	}
 	// Row 3 comes first when the spec itself has errors: there is no list then.
 	if len(f.cur.SpecErrors()) > 0 {
@@ -126,7 +131,16 @@ func (e *Engine) Gate(ctx context.Context, req GateRequest) (Verdict, error) {
 		return listed(fmt.Sprintf("The reviewer found these wrong (repair round %d of %d). Repair them, then run markitect gate again:", rounds, repairRounds), wrong), nil
 	}
 	// Row 7: nothing left. The certificate goes into the folder, and the work is
-	// done.
+	// done; when nothing changed and the list is empty, there is nothing to
+	// certify again.
+	if len(w.Items) == 0 && w.Base != "" {
+		if base, err := ReadCertificate(inProject(f.root, w.Base)); err == nil && len(base.Differences(f.hashes)) == 0 {
+			if err := e.updateWork(f.root, func(*Work) (*Work, error) { return nil, nil }); err != nil {
+				return Verdict{}, err
+			}
+			return Verdict{Done: true, Text: fmt.Sprintf("Nothing to check: the folder matches the certificate %s, and the list is empty.\n", w.Base)}, nil
+		}
+	}
 	cert, err := newCertificate(f.files, f.hashes, f.cur, e.now())
 	if err != nil {
 		return Verdict{}, err
@@ -262,7 +276,8 @@ func (e *Engine) gateFindings(f *folder) (Verdict, error) {
 // writeResult writes gate's Result page for a refusal into the folder, and says
 // where.
 func (e *Engine) writeResult(f *folder, w *Work, valid map[string]Given, state, why string, decisions []OwnerDecision) (string, error) {
-	stamp := gateStamp(e.now(), f.fingerprint)
+	// One page per state and outcome: calling gate again rewrites it.
+	stamp := gatePrefix + f.fingerprint[:8] + "-" + state
 	file := path.Join(project.ResultsDir, stamp+".md")
 	return file, writeFolder(f.root, file, Page(e.gateResult(w, valid, stamp, state, why, decisions)))
 }
