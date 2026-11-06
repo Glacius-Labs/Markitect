@@ -1,6 +1,6 @@
 # Concept register
 
-**Main, 6 November 2026:** carries the build of [draft concept 4.0](v4-concept.md), which the owner tries by using it ([DEC-094](#dec-094-main-carries-the-native-version-and-the-app-goes)). The concept 3.0 rebuild that Main held until then is kept on the branch `archive/main-concept-3-20261106`. The same day the owner chose a leaner tool that computes and checks and leaves the agents to a driver ([DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts), [plan](lean-tool-plan.md)).
+**Main, 6 November 2026:** carries the build of [draft concept 4.0](v4-concept.md), which the owner tries by using it ([DEC-094](#dec-094-main-carries-the-native-version-and-the-app-goes)). The concept 3.0 rebuild that Main held until then is kept on the branch `archive/main-concept-3-20261106`. The same day the owner chose a leaner tool that computes and checks, leaves the agents to a driver and uses no Git ([DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](#dec-097-markitect-uses-no-git), [plan](lean-tool-plan.md)).
 
 **Accepted target, 4 November 2026:** [Concept 3.0](v3-concept.md) ([DEC-091](#dec-091-concept-30-is-the-target)). [Concept 2.0](v2-concept.md) ([DEC-086](#dec-086-concept-20-is-the-target)) is the record of the Manager tree.
 
@@ -117,6 +117,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-094](#dec-094-main-carries-the-native-version-and-the-app-goes) | Decision | Main carries the native version, and the app goes | Decided by the owner, 6 November 2026 |
 | [DEC-095](#dec-095-releases-return-with-a-plugin-and-a-binary-that-updates-itself) | Decision | Releases return, with a plugin and a binary that updates itself | Decided by the owner, 6 November 2026 |
 | [DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts) | Decision | Markitect computes and checks; a driver acts | Decided by the owner, 6 November 2026; built beside the run engine first |
+| [DEC-097](#dec-097-markitect-uses-no-git) | Decision | Markitect uses no Git | Decided by the owner, 6 November 2026; built beside the run engine first |
 | [PRM-001 to PRM-009](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
@@ -1275,8 +1276,18 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - It does not start agents, does not keep runs open and does not land on or move branches. Who builds, who reviews and how often is the driver's: skills, agents, a workflow or a person. Markitect ships one default driver.
   - The command that checks replaces `submit` and is called `gate`; the owner weighed `certify` and kept `gate`.
 - **What it keeps:** [DEC-001](#dec-001-delegated-realization-is-central-to-the-product): delegated realization stays the purpose; the tool owns the obligations and the check, the host owns the agents.
-- **Open, with recommendations in the plan:** whether `gate` also makes the commit, where the limits sit, and where the answers live.
+- **Open, with recommendations in the plan:** where the limits sit, and where the work state lives. Whether `gate` makes the commit is settled by [DEC-097](#dec-097-markitect-uses-no-git): it does not.
 - **Order:** the new commands are built beside today's run engine and tried on Makerspace with planted defects before the run lifecycle and landing are removed ([plan, order of work](lean-tool-plan.md#order-of-work)). Until then, [draft concept 4.0](v4-concept.md) describes what Main does.
+
+### DEC-097 Markitect uses no Git
+
+- **Status:** Decided by the owner, 6 November 2026, right after [DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts), asking what would happen if Git were left out of Markitect completely and the agents took care of it.
+- **Decision:**
+  - The product reads and writes no Git: it makes no repository, commits nothing, keeps no branches, lands nothing and reads neither files nor history through Git. Agents or people do every Git step.
+  - The file set comes from walking the project folder, skipping what the project's `.gitignore` files exclude, read as plain text, and what Markitect's own ignore file lists, so there is no second hand-kept list of ignored files.
+  - The base of a change is the newest certificate: the Result `gate` writes, with the hashes of every accounted file and Definition and a copy of the spec text. `gate` refuses any changed file that lies in no reviewed item, since the tool knows no "committed", only the folder.
+- **Costs, as far as known:** the tool no longer guarantees that what is committed is what it certified; `status` and `gate --verify` show a mismatch afterwards, and a CI job can refuse it. After a merge of two certified branches, part of the work is reviewed again. `impact --base` takes a certificate instead of a Git revision. Markitect's own release tooling still packages its source from Git; it is not part of the product.
+- **Supersedes:** "`apply` commits the spec on the owner's branch" and the landing of [draft concept 4.0 §5 and §6](v4-concept.md#5-what-apply-does), once the [plan](lean-tool-plan.md) is built and tried.
 
 ## Promises
 
