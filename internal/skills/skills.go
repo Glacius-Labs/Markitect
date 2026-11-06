@@ -45,7 +45,7 @@ description: Use when someone mentions Markitect, wants to set it up, start a pr
 
 `
 
-const personalTail = "\n`markitect` is a command on the path, so there is no need to look for it. `markitect help` lists what it does. If the shell says the command is not found, the binary is missing or its folder is not on the PATH. The Claude Code plugin brings it (`claude plugin marketplace add Glacius-Labs/Markitect`, then `claude plugin install markitect@glacius-labs`); or download the binary for the system from https://github.com/Glacius-Labs/Markitect/releases and put it on the PATH.\n\n" +
+const personalTail = "\n`markitect` is a command on the path, so there is no need to look for it. `markitect help` lists what it does. If the shell says the command is not found, the binary is missing or its folder is not on the PATH. The Claude Code plugin brings it (`claude plugin marketplace add Glacius-Labs/Claude-Plugins`, then `claude plugin install markitect@glacius-labs`); or download the binary for the system from https://github.com/Glacius-Labs/Markitect/releases and put it on the PATH.\n\n" +
 	"## How to begin\n\n" +
 	"- **An empty folder or a new project:** run `markitect init`, then use the `markitect-start` skill.\n" +
 	"- **A repository that already has code:** run `markitect init`, then use the `markitect-extract` skill.\n" +

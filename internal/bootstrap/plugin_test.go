@@ -3,7 +3,6 @@ package bootstrap
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -36,18 +35,39 @@ func TestLauncherChild(t *testing.T) {
 	os.Exit(0)
 }
 
-// pluginVersion reads the version of the plugin in the repository.
-func pluginVersion(t *testing.T) string {
+// testVersion is the release the tests serve. The plugin of the repository says
+// -dev between releases, which the launcher refuses, so the tests run a copy of
+// the plugin that names this version.
+const testVersion = "9.9.9"
+
+// pluginCopy puts the launcher and the manifest of the plugin, with the given
+// version, in root.
+func pluginCopy(t *testing.T, root, version string) {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join(pluginRoot, ".claude-plugin", "plugin.json"))
-	if err != nil {
-		t.Fatal(err)
+	for _, f := range []string{"bin/markitect", ".claude-plugin/plugin.json"} {
+		data, err := os.ReadFile(filepath.Join(pluginRoot, filepath.FromSlash(f)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if strings.HasSuffix(f, "plugin.json") {
+			data = regexp.MustCompile(`"version"\s*:\s*"[^"]*"`).ReplaceAll(data, []byte(`"version": "`+version+`"`))
+		}
+		dst := filepath.Join(root, filepath.FromSlash(f))
+		if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(dst, data, 0o755); err != nil {
+			t.Fatal(err)
+		}
 	}
-	var m struct{ Version string }
-	if err := json.Unmarshal(data, &m); err != nil {
-		t.Fatal(err)
-	}
-	return m.Version
+}
+
+// testPlugin is a copy of the plugin that names testVersion.
+func testPlugin(t *testing.T) string {
+	t.Helper()
+	root := testkit.TempDir(t)
+	pluginCopy(t, root, testVersion)
+	return root
 }
 
 // releasePage serves the release of the plugin's version, with the test binary as
@@ -112,19 +132,19 @@ func launch(t *testing.T, root, mirror, data string, extraEnv []string, args ...
 // The first call downloads the binary of the plugin's release, checks it and starts
 // it; later calls start it without downloading.
 func TestLauncherFetchesTheReleaseOfThePlugin(t *testing.T) {
-	version := pluginVersion(t)
+	version, root := testVersion, testPlugin(t)
 	mirror, downloads := releasePage(t, version, false)
 	data := testkit.TempDir(t)
 	childArgs := []string{"-test.run=TestLauncherChild"}
 
-	out, code := launch(t, pluginRoot, mirror, data, nil, childArgs...)
+	out, code := launch(t, root, mirror, data, nil, childArgs...)
 	if code != 0 || !strings.Contains(out, "child: plugin "+version) {
 		t.Fatalf("first call: exit %d\n%s", code, out)
 	}
 	if n := downloads.Load(); n != 2 {
 		t.Fatalf("first call made %d downloads, want the checksums and the binary", n)
 	}
-	out, code = launch(t, pluginRoot, mirror, data, nil, childArgs...)
+	out, code = launch(t, root, mirror, data, nil, childArgs...)
 	if code != 0 || !strings.Contains(out, "child: plugin "+version) {
 		t.Fatalf("second call: exit %d\n%s", code, out)
 	}
@@ -141,7 +161,7 @@ func TestLauncherCalledAtTheSameTime(t *testing.T) {
 			t.Skipf("the launcher needs %s", tool)
 		}
 	}
-	version := pluginVersion(t)
+	version, root := testVersion, testPlugin(t)
 	mirror, _ := releasePage(t, version, false)
 	data := testkit.TempDir(t)
 	const calls = 5
@@ -152,7 +172,7 @@ func TestLauncherCalledAtTheSameTime(t *testing.T) {
 	results := make(chan result, calls)
 	for i := 0; i < calls; i++ {
 		go func() {
-			out, code := launch(t, pluginRoot, mirror, data, nil, "-test.run=TestLauncherChild")
+			out, code := launch(t, root, mirror, data, nil, "-test.run=TestLauncherChild")
 			results <- result{out, code}
 		}()
 	}
@@ -168,10 +188,10 @@ func TestLauncherCalledAtTheSameTime(t *testing.T) {
 
 // The session-start hook only fetches.
 func TestLauncherCanFetchWithoutStarting(t *testing.T) {
-	version := pluginVersion(t)
+	version, root := testVersion, testPlugin(t)
 	mirror, downloads := releasePage(t, version, false)
 	data := testkit.TempDir(t)
-	out, code := launch(t, pluginRoot, mirror, data, []string{"MARKITECT_ENSURE_ONLY=1"}, "-test.run=TestLauncherChild")
+	out, code := launch(t, root, mirror, data, []string{"MARKITECT_ENSURE_ONLY=1"}, "-test.run=TestLauncherChild")
 	if code != 0 || strings.Contains(out, "child:") {
 		t.Fatalf("exit %d, and the binary ran:\n%s", code, out)
 	}
@@ -179,17 +199,17 @@ func TestLauncherCanFetchWithoutStarting(t *testing.T) {
 		t.Fatalf("downloads = %d, want 2", downloads.Load())
 	}
 	// What the hook fetched is there for the next call, which downloads nothing.
-	out, code = launch(t, pluginRoot, mirror, data, nil, "-test.run=TestLauncherChild")
+	out, code = launch(t, root, mirror, data, nil, "-test.run=TestLauncherChild")
 	if code != 0 || !strings.Contains(out, "child:") || downloads.Load() != 2 {
 		t.Fatalf("exit %d, downloads %d:\n%s", code, downloads.Load(), out)
 	}
 }
 
 func TestLauncherRefusesWhatDoesNotMatchTheChecksums(t *testing.T) {
-	version := pluginVersion(t)
+	version, root := testVersion, testPlugin(t)
 	mirror, _ := releasePage(t, version, true)
 	data := testkit.TempDir(t)
-	out, code := launch(t, pluginRoot, mirror, data, nil, "-test.run=TestLauncherChild")
+	out, code := launch(t, root, mirror, data, nil, "-test.run=TestLauncherChild")
 	if code != 2 || !strings.Contains(out, "does not match its checksum") || strings.Contains(out, "child:") {
 		t.Fatalf("exit %d:\n%s", code, out)
 	}
@@ -206,7 +226,7 @@ func TestLauncherSaysWhenThereIsNoNetwork(t *testing.T) {
 	srv := httptest.NewServer(http.NotFoundHandler())
 	url := srv.URL
 	srv.Close()
-	out, code := launch(t, pluginRoot, url, testkit.TempDir(t), nil)
+	out, code := launch(t, testPlugin(t), url, testkit.TempDir(t), nil)
 	if code != 2 || !strings.Contains(out, "cannot download") || !strings.Contains(out, "sandbox") {
 		t.Fatalf("exit %d:\n%s", code, out)
 	}
@@ -216,23 +236,11 @@ func TestLauncherSaysWhenThereIsNoNetwork(t *testing.T) {
 // Claude Code would give the plugin: plugins/data/<plugin>-<marketplace>, with the
 // marketplace taken from where the plugin is installed, whatever it is called.
 func TestLauncherFindsTheDataFolderOfAnInstalledPlugin(t *testing.T) {
-	version := pluginVersion(t)
+	version := testVersion
 	mirror, downloads := releasePage(t, version, false)
 	plugins := testkit.TempDir(t)
 	root := filepath.Join(plugins, "cache", "some.market", "markitect", version)
-	for _, f := range []string{"bin/markitect", ".claude-plugin/plugin.json"} {
-		data, err := os.ReadFile(filepath.Join(pluginRoot, filepath.FromSlash(f)))
-		if err != nil {
-			t.Fatal(err)
-		}
-		dst := filepath.Join(root, filepath.FromSlash(f))
-		if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(dst, data, 0o755); err != nil {
-			t.Fatal(err)
-		}
-	}
+	pluginCopy(t, root, version)
 	out, code := launch(t, root, mirror, "", nil, "-test.run=TestLauncherChild")
 	if code != 0 || !strings.Contains(out, "child: plugin "+version) {
 		t.Fatalf("exit %d\n%s", code, out)
@@ -250,22 +258,7 @@ func TestLauncherFindsTheDataFolderOfAnInstalledPlugin(t *testing.T) {
 // A plugin folder of a development version has no release to fetch.
 func TestLauncherRefusesADevelopmentVersion(t *testing.T) {
 	root := testkit.TempDir(t)
-	for _, f := range []string{"bin/markitect", ".claude-plugin/plugin.json"} {
-		data, err := os.ReadFile(filepath.Join(pluginRoot, filepath.FromSlash(f)))
-		if err != nil {
-			t.Fatal(err)
-		}
-		if strings.HasSuffix(f, "plugin.json") {
-			data = regexp.MustCompile(`"version"\s*:\s*"[^"]*"`).ReplaceAll(data, []byte(`"version": "0.16.0-dev"`))
-		}
-		dst := filepath.Join(root, filepath.FromSlash(f))
-		if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(dst, data, 0o755); err != nil {
-			t.Fatal(err)
-		}
-	}
+	pluginCopy(t, root, "0.16.0-dev")
 	out, code := launch(t, root, "http://unused.invalid", testkit.TempDir(t), nil)
 	if code != 2 || !strings.Contains(out, "development version 0.16.0-dev") {
 		t.Fatalf("exit %d:\n%s", code, out)
