@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -252,6 +253,107 @@ func TestLauncherFindsTheDataFolderOfAnInstalledPlugin(t *testing.T) {
 	}
 	if downloads.Load() != 2 {
 		t.Fatalf("downloads = %d, want 2", downloads.Load())
+	}
+}
+
+// hookCommand reads the command of the one hook of an event from the plugin's
+// hooks file.
+func hookCommand(t *testing.T, event string) string {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join(pluginRoot, "hooks", "hooks.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var h struct {
+		Hooks map[string][]struct {
+			Hooks []struct{ Command string }
+		}
+	}
+	if err := json.Unmarshal(data, &h); err != nil {
+		t.Fatal(err)
+	}
+	if len(h.Hooks[event]) != 1 || len(h.Hooks[event][0].Hooks) != 1 {
+		t.Fatalf("%s: %+v, want one hook", event, h.Hooks[event])
+	}
+	return h.Hooks[event][0].Hooks[0].Command
+}
+
+// runHook runs the command of a hook the way Claude Code does, in a shell with the
+// variables it exports to hooks, and feeds it stdin.
+func runHook(t *testing.T, command, root, data, project, mirror, stdin string) (string, int) {
+	t.Helper()
+	sh, err := exec.LookPath("sh")
+	if err != nil {
+		t.Skip("the hooks are shell commands and there is no sh")
+	}
+	if _, err := exec.LookPath("curl"); err != nil {
+		t.Skip("the launcher downloads with curl")
+	}
+	cmd := exec.Command(sh, "-c", command)
+	cmd.Stdin = strings.NewReader(stdin)
+	cmd.Env = append(os.Environ(),
+		"CLAUDE_PLUGIN_ROOT="+filepath.ToSlash(root), "CLAUDE_PLUGIN_DATA="+data,
+		"CLAUDE_PROJECT_DIR="+filepath.ToSlash(project), "MARKITECT_RELEASES_URL="+mirror, launcherEnv+"=1")
+	out, err := cmd.CombinedOutput()
+	code := 0
+	if exit, ok := err.(*exec.ExitError); ok {
+		code = exit.ExitCode()
+	} else if err != nil {
+		t.Fatal(err)
+	}
+	return string(out), code
+}
+
+// The session-start hook fetches the binary for a project that uses Markitect, and
+// does nothing in any other, where the plugin must stay out of the way.
+func TestStartHookFetchesOnlyForAMarkitectProject(t *testing.T) {
+	mirror, downloads := releasePage(t, testVersion, false)
+	root, data := testPlugin(t), testkit.TempDir(t)
+	command := hookCommand(t, "SessionStart")
+
+	plain := testkit.TempDir(t)
+	if out, code := runHook(t, command, root, data, plain, mirror, ""); code != 0 || out != "" || downloads.Load() != 0 {
+		t.Fatalf("in a project without .markitect: exit %d, downloads %d\n%s", code, downloads.Load(), out)
+	}
+	if entries, _ := os.ReadDir(data); len(entries) != 0 {
+		t.Fatalf("in a project without .markitect the hook wrote %v", entries)
+	}
+
+	project := testkit.TempDir(t)
+	if err := os.Mkdir(filepath.Join(project, ".markitect"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if out, code := runHook(t, command, root, data, project, mirror, ""); code != 0 || strings.Contains(out, "child:") || downloads.Load() != 2 {
+		t.Fatalf("in a Markitect project: exit %d, downloads %d\n%s", code, downloads.Load(), out)
+	}
+	if _, err := os.Stat(filepath.Join(data, "v"+testVersion)); err != nil {
+		t.Fatalf("the hook fetched no binary: %v", err)
+	}
+}
+
+// The answer guard starts the launcher, and with it a download, only for a command
+// that runs markitect answer. Claude Code's own filter is not relied on: the
+// hook was seen to start for commands that did not match it.
+func TestAnswerHookStartsTheLauncherOnlyForAnswerCommands(t *testing.T) {
+	srv := httptest.NewServer(http.NotFoundHandler())
+	unreachable := srv.URL
+	srv.Close()
+	root, project := testPlugin(t), testkit.TempDir(t)
+	command := hookCommand(t, "PreToolUse")
+
+	data := testkit.TempDir(t)
+	ordinary := `{"tool_name":"Bash","tool_input":{"command":"ls -la && git status"}}`
+	if out, code := runHook(t, command, root, data, project, unreachable, ordinary); code != 0 || out != "" {
+		t.Fatalf("an ordinary command: exit %d\n%s", code, out)
+	}
+	if entries, _ := os.ReadDir(data); len(entries) != 0 {
+		t.Fatalf("an ordinary command made the hook write %v", entries)
+	}
+
+	answer := `{"tool_name":"Bash","tool_input":{"command":"markitect answer answers.json"}}`
+	out, code := runHook(t, command, root, data, project, unreachable, answer)
+	if code != 2 || !strings.Contains(out, "cannot download") {
+		t.Fatalf("markitect answer: exit %d, want the launcher to have run and failed to download\n%s", code, out)
 	}
 }
 

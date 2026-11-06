@@ -11,7 +11,7 @@ import (
 // and the plugin's version with it; the commit after it sets the next development
 // version, such as 0.16.0-dev (packaging/README.md, release operations). The
 // retired versions 0.1.0 to 0.14.1 are never reused.
-var version = "0.18.0-dev"
+var version = "0.18.0"
 
 // injectedRevision is the source revision a build without VCS information
 // names through the linker, as the runner image does (-X ...buildinfo.injectedRevision=SHA).
