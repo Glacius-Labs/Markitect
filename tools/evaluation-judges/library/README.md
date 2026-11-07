@@ -1,6 +1,6 @@
 # Library judge
 
-The hidden series judge of the Library change series M1 to M5, a source for [`judges.py export`](../../evaluation/judges.py). It judges each step as Phases A and B of the comparison did; the [evaluation suite runner](../../evaluation/README.md#change-series) explains how a series judge runs. The [Library M1 judge](../library-m1/README.md) stays as it is for the recorded E2 judgments.
+The hidden series judge of the Library change series M1 to M5, a source for [`judges.py export`](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/judges.py). It judges each step as Phases A and B of the comparison did; the [evaluation suite runner](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/README.md#change-series) explains how a series judge runs. The [Library M1 judge](../library-m1/README.md) stays as it is for the recorded E2 judgments.
 
 | Path | Content |
 | --- | --- |
@@ -33,6 +33,8 @@ The requirements are the rendered documents [requirements-m1.md](../../compariso
 | [protected-input](mutants/protected-input.json) | M5 | Its own `TASK.md` | Scope: protected input |
 | [stale-suspension](mutants/stale-suspension.json) | M5 | The removed status `"suspended"` still defined | Drift: stale files |
 
+The runner these commands use, `tools/evaluation`, was removed on 7 November 2026 ([archive](../../../docs/archive.md#removed-with-the-evaluation-runner)); run them in a checkout of `2fd2d337`.
+
 Self-test in the container, from the repository root, under an approved dispatch:
 
 ```text
@@ -40,4 +42,4 @@ python -I -B tools/evaluation/judges.py export --source tools/evaluation-judges/
 python -I -B tools/evaluation/judges.py selftest --source tools/evaluation-judges/library --judge JUDGE_DIR --out DIR --lock LOCK
 ```
 
-The offline test ([test_series.py](../../evaluation/test_series.py)) runs the whole self-test through a fake engine on the host when Linux and Go 1.27 or later are there.
+The offline test ([test_series.py](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/test_series.py)) runs the whole self-test through a fake engine on the host when Linux and Go 1.27 or later are there.

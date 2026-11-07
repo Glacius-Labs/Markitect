@@ -11,7 +11,7 @@ This page lists the sessions, the arms and where each keeps its state. It holds 
 | Build and evaluation | Builds concept 2.0 and the evaluation suite that measures it, runs their dispatches and integrates their PRs | yes, everything | [build.md](workstreams/build.md) |
 | Topics | Discusses the product topics with the owner (model language and skills, compiler, commands, continuous change, platform) and records the decisions | no; it writes docs only | [topics.md](workstreams/topics.md) |
 
-The sessions sit in the sidebar folder "Markitect". Lane 1 handed the host variant over to Build on 28 October 2026, and its page folded into the build page. The other lane sessions end once the owner agrees. The suite's contract is the [evaluation suite guide](guides/evaluation-suite.md). The topic lane pages were folded into the topics page on 28 October 2026; the [commands page](workstreams/commands.md) stays as the canonical page for the commands frame.
+The sessions sit in the sidebar folder "Markitect". Lane 1 handed the host variant over to Build on 28 October 2026, and its page folded into the build page. The other lane sessions end once the owner agrees. The suite's contract is the [evaluation suite guide](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/docs/guides/evaluation-suite.md). The topic lane pages were folded into the topics page on 28 October 2026; the [commands page](workstreams/commands.md) stays as the canonical page for the commands frame.
 
 ## Arms
 

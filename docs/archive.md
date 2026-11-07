@@ -151,6 +151,16 @@ These pages were folded into a current page. Their pre-merge text stays at the a
 | `docs/development/README.md` | [Documentation map](README.md#development) | [At the archive point](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/development/README.md) | none |
 | `docs/concepts/origin-and-rationale.md` | [Vision](vision.md#origin-and-rationale) | [At the archive point](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/concepts/origin-and-rationale.md) | CPT-001 and the register index |
 
+## Removed with the evaluation runner
+
+On 7 November 2026 the owner removed the evaluation suite's runner and arms ([draft concept 4.0, §16, question 7](concepts/v4-concept.md#16-questions-for-the-owner)): they drove the concept 3.0 engine, which Main no longer has. The study projects in `tools/evaluation-tasks`, the hidden judges and planted defects in `tools/evaluation-judges`, the oracles and the Makerspace tools stay. What went stays at Main [`2fd2d337`](https://github.com/Glacius-Labs/Markitect/tree/2fd2d33747de2e69e5f4968432792d543003041a), which is in Main's ancestry.
+
+| Removed | Location before | What it held |
+|---|---|---|
+| Suite runner and arms | [`tools/evaluation`](https://github.com/Glacius-Labs/Markitect/tree/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation) | `suite.py` with its sandbox, judging, review, report, failure classifier, token count and series runner; `judges.py`, which exports, self-tests and plants the hidden judges; the arms of the concept 2.0 and 3.0 engines |
+| Suite contract | [`docs/guides/evaluation-suite.md`](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/docs/guides/evaluation-suite.md) | The task format, the variant interface, the criteria and the report |
+| Suite design | [`docs/design/evaluation-suite-v2.md`](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/docs/design/evaluation-suite-v2.md) | The increments E1 to E6 that were to make the suite decision-grade |
+
 ## Removed with the move to the native version
 
 On 6 November 2026 Main moved to the build of [draft concept 4.0](concepts/v4-concept.md), and the owner removed Markitect Desktop ([DEC-094](concepts/register.md#dec-094-main-carries-the-native-version-and-the-app-goes)). What went stays at [`archive/main-concept-3-20261106`](https://github.com/Glacius-Labs/Markitect/tree/e295881f1f716b4fb067bd4bb88e959d6a74f44d).

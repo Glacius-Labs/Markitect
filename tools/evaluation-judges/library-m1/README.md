@@ -1,6 +1,6 @@
 # Library M1 judge
 
-The hidden judge of the Library M1 task, a source for [`judges.py export`](../../evaluation/judges.py). It is the comparison's M1 assessment ([assess_candidate.py](../../comparison/assess_candidate.py)) as one judge plug-in; the [evaluation suite runner](../../evaluation/README.md#judging) explains how a judge runs.
+The hidden judge of the Library M1 task, a source for [`judges.py export`](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/judges.py). It is the comparison's M1 assessment ([assess_candidate.py](../../comparison/assess_candidate.py)) as one judge plug-in; the [evaluation suite runner](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/README.md#judging) explains how a judge runs.
 
 | Path | Content |
 | --- | --- |
@@ -26,6 +26,8 @@ The result's code runs as the judge's user. With `--contained`, and only when th
 | [failing-build](mutants/failing-build.json) | The entry point calls `Serve` with a missing argument | Build, and Correctness |
 | [protected-input](mutants/protected-input.json) | Its own `TASK.md` with a changed rule | Scope: protected input |
 
+The runner these commands use, `tools/evaluation`, was removed on 7 November 2026 ([archive](../../../docs/archive.md#removed-with-the-evaluation-runner)); run them in a checkout of `2fd2d337`.
+
 Self-test in the container, from the repository root, under an approved dispatch:
 
 ```text
@@ -33,4 +35,4 @@ python -I -B tools/evaluation/judges.py export --source tools/evaluation-judges/
 python -I -B tools/evaluation/judges.py selftest --source tools/evaluation-judges/library-m1 --judge JUDGE_DIR --task TASK_DIR --out DIR --lock LOCK
 ```
 
-The offline test ([test_judging.py](../../evaluation/test_judging.py)) runs the same self-test through a fake engine on the host when Go 1.27 or later is on the path.
+The offline test ([test_judging.py](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/test_judging.py)) runs the same self-test through a fake engine on the host when Go 1.27 or later is on the path.

@@ -2,7 +2,7 @@
 
 The planted model defects and harmless gaps of the Library and Makerspace change series: the material of the "Stops right" criterion of [concept 2.0 §15](../../../docs/concepts/v2-concept.md#15-acceptance). Each record was written, with its expected outcome and the time, before any run. The Library and Makerspace are pilot material and public, like their oracles; the new project's plants are its author's.
 
-A record names its series and step, the expected outcome and why, and the same edit in both representations of the step: `model` edits the concept 2.0 model ([tools/evaluation-tasks](../../evaluation-tasks/README.md)), `task` edits `task.md`, the ordinary documentation every variant receives. Each edit must apply exactly once, so every variant sees the same defect, and `absent` lists what the plant removes: none of it may remain anywhere in the planted step. The C5 plant's last threshold statement ("Times after 2099") was added on 28 October 2026 after the independent review, before any run. `judges.py plant` writes the planted step and its judge folder; the task starts from the fixed reference start of the step before ([how a series runs](../../evaluation/README.md#change-series)).
+A record names its series and step, the expected outcome and why, and the same edit in both representations of the step: `model` edits the concept 2.0 model ([tools/evaluation-tasks](../../evaluation-tasks/README.md)), `task` edits `task.md`, the ordinary documentation every variant receives. Each edit must apply exactly once, so every variant sees the same defect, and `absent` lists what the plant removes: none of it may remain anywhere in the planted step. The C5 plant's last threshold statement ("Times after 2099") was added on 28 October 2026 after the independent review, before any run. `judges.py plant` writes the planted step and its judge folder; the task starts from the fixed reference start of the step before ([how a series runs](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/README.md#change-series)).
 
 | Plant | Step | Kind | Expected | What is planted |
 | --- | --- | --- | --- | --- |
@@ -14,6 +14,8 @@ A record names its series and step, the expected outcome and why, and the same e
 
 Every planted model compiles with `markitect check`: a defect is in the meaning, not the structure.
 
+The runner these commands use, `tools/evaluation`, was removed on 7 November 2026 ([archive](../../../docs/archive.md#removed-with-the-evaluation-runner)); run them in a checkout of `2fd2d337`.
+
 ```text
 python -I -B tools/evaluation/judges.py export --source tools/evaluation-judges/library --rev REV --out JUDGE
 python -I -B tools/evaluation/judges.py plant --plant tools/evaluation-judges/plants/library-m2-limit-contradiction.json \
@@ -23,4 +25,4 @@ python -I -B tools/evaluation/suite.py task --task-md STEP_DIR/task.md --model S
 python -I -B tools/evaluation/suite.py judge --run RUN --judge PLANTED_JUDGE --step M2 --out JUDGMENT
 ```
 
-Every variant is scored on these tasks by one mechanical rule (a result equal to its start did not land), and `suite.py task` ends every `task.md` with the same stop rule; decided by the owner on 28 October 2026 ([suite design](../../../docs/design/evaluation-suite-v2.md#t6-evaluation-against-15)).
+Every variant is scored on these tasks by one mechanical rule (a result equal to its start did not land), and `suite.py task` ends every `task.md` with the same stop rule; decided by the owner on 28 October 2026 ([suite design](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/docs/design/evaluation-suite-v2.md#t6-evaluation-against-15)).

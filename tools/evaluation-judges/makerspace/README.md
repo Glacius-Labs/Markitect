@@ -1,6 +1,6 @@
 # Makerspace judge
 
-The hidden series judge of the Makerspace change series W0 to C9, a source for [`judges.py export`](../../evaluation/judges.py). It is the comparison's Phase C assessment ([assess_candidate.py](../../comparison/assess_candidate.py), profiles `w0` and `c1` to `c9`) as one judge plug-in; the [evaluation suite runner](../../evaluation/README.md#change-series) explains how a series judge runs.
+The hidden series judge of the Makerspace change series W0 to C9, a source for [`judges.py export`](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/judges.py). It is the comparison's Phase C assessment ([assess_candidate.py](../../comparison/assess_candidate.py), profiles `w0` and `c1` to `c9`) as one judge plug-in; the [evaluation suite runner](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/README.md#change-series) explains how a series judge runs.
 
 | Path | Content |
 | --- | --- |
@@ -28,6 +28,8 @@ The hidden series judge of the Makerspace change series W0 to C9, a source for [
 | [stale-expiry](mutants/stale-expiry.json) | C6 | The retired `expiresOn` still named in the source | Drift: stale files |
 | `family-*` (31) | W0, one at C2 | The [reference mutants](../../makerspace-reference/README.md), one per oracle probe family | Correctness, a case of that family |
 
+The runner these commands use, `tools/evaluation`, was removed on 7 November 2026 ([archive](../../../docs/archive.md#removed-with-the-evaluation-runner)); run them in a checkout of `2fd2d337`.
+
 Self-test in the container, from the repository root, under an approved dispatch (about 47 judgments):
 
 ```text
@@ -35,10 +37,10 @@ python -I -B tools/evaluation/judges.py export --source tools/evaluation-judges/
 python -I -B tools/evaluation/judges.py selftest --source tools/evaluation-judges/makerspace --judge JUDGE_DIR --out DIR --lock LOCK
 ```
 
-The offline test ([test_series.py](../../evaluation/test_series.py)) runs a sample through a fake engine on the host when Linux and Go 1.27 or later are there.
+The offline test ([test_series.py](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/test_series.py)) runs a sample through a fake engine on the host when Linux and Go 1.27 or later are there.
 
 ## Limits
 
-- The oracle and the references are public, in this repository: the Makerspace chain is pilot material ([suite design](../../../docs/design/evaluation-suite-v2.md#c-portfolio)).
+- The oracle and the references are public, in this repository: the Makerspace chain is pilot material ([suite design](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/docs/design/evaluation-suite-v2.md#c-portfolio)).
 - The stale-file check reads non-test Go source only. A test or a document may name a retired term to check its absence, so they are not searched.
 - The references follow Phase C's module layout, not the v2 architecture of [makerspace-v2](../../comparison/makerspace-v2/README.md); the judge checks behavior, its own build and tests, scope and drift, not the module cut.

@@ -10,7 +10,7 @@
 | Judges | `tools/evaluation-judges/library` and `tools/evaluation-judges/makerspace`, each exported once from `REV` with `judges.py export --rev REV` |
 | Judge image | `golang@sha256:69a7b9788769bec032d238959b61854e9ae87f57be9029ec04e9885fabf99195` (`golang:1.27.1-bookworm`), already on this engine; nothing is pulled |
 | Sandbox image | `sha256:e0b20d8a8c88a0a4b37f151af45618e764f8687b023b10bcb6d3b5148c5e5dad`, the E1 image, for the egress gateway and the stand-in's Run container |
-| Series configuration | [`tools/evaluation/sandbox/series.json`](../../tools/evaluation/sandbox/series.json), as in E1 |
+| Series configuration | [`tools/evaluation/sandbox/series.json`](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/sandbox/series.json), as in E1 |
 | Login | The stand-in uses none. The suite still requires a login file that outlives the run; the counted runs below used a dummy test login with no real token, because the owner's login on disk had expired (attempt 2) |
 | Hidden material | Each native run names `EVAL\gridshare` and `EVAL\hidden` with `--hidden-absent`; both are absent |
 | Engine lock | `C:\Users\Consiliari\AppData\Roaming\Claude\side-session-notes\local_cbc94143-9a8e-46c4-9c73-b1b58817893e\NATIVE-RUN.lock`, taken by every step that starts a container |

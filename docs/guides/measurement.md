@@ -39,7 +39,7 @@ Correct implementation with a stale model, correct model with a missed target, p
 
 ## Quality-first comparative evaluation
 
-The [evaluation suite](evaluation-suite.md) is the current runner for comparisons: every variant gets the same task and the same judging.
+The [evaluation suite](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/docs/guides/evaluation-suite.md) was the runner for comparisons: every variant got the same task and the same judging. Its runner and arms were removed on 7 November 2026, since they drove an engine Main no longer has ([archive](../archive.md#removed-with-the-evaluation-runner)); the study projects, hidden judges and oracles stay under `tools/`.
 
 The primary study asks whether the method better addresses the problems it is designed for: losing intent through forgotten obligations, overlooked consequences, contradictory representations or ignored rules. The owner [specified the primary comparison](../concepts/sources/human-attention-and-baseline-20261017.md#comparison-baseline) on 17 October 2026: ordinary documentation containing the same intended meaning as the canonical model, given to one coding Agent with the instruction, "Lies dir die Doku durch und implementiere das so" (read the documentation and implement it accordingly). Markitect adds its typed model and systematic realization process. Count authoring and maintaining both the ordinary documentation and the canonical model as human work from the same predeclared starting point.
 
