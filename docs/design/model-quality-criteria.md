@@ -63,7 +63,7 @@
 
 ## Measured today (to be re-run with the W5 tool)
 
-The first two columns were measured before the W5 tool; the self-model column records the model retired by [DEC-076](../concepts/register.md#dec-076-markitect-is-developed-as-a-regular-software-project) and will not be re-run. The third column is the W6 remodel [makerspace-v2](../../tools/comparison/makerspace-v2/README.md) at W0 (and its change chain for S4), measured on 27 October 2026 with [model_analysis.py](https://github.com/Glacius-Labs/Markitect/blob/f23c2e12d9833efa61e5e65c90018016423abe74/tools/model-analysis/README.md).
+The first two columns were measured before the W5 tool; the self-model column records the model retired by [DEC-076](../concepts/register.md#dec-076-markitect-is-developed-as-a-regular-software-project) and will not be re-run. The third column is the W6 remodel [makerspace-v2](https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/comparison/makerspace-v2/README.md) at W0 (and its change chain for S4), measured on 27 October 2026 with [model_analysis.py](https://github.com/Glacius-Labs/Markitect/blob/f23c2e12d9833efa61e5e65c90018016423abe74/tools/model-analysis/README.md).
 
 | | Makerspace c9 (phase C) | Self-model | makerspace-v2 W0 |
 |---|---|---|---|

@@ -5,8 +5,8 @@
 | | |
 |---|---|
 | Date | 28 October 2026 |
-| Old | M1 [testdata/library/m1](../../testdata/library/m1/model.yaml); M2 its loan-limit edit (5 → 3); M3 to M5 the overlays in [tools/comparison/phase-b](../../tools/comparison/phase-b) composed as `requirements.py model_files` does |
-| New | [tools/evaluation-tasks/library](../../tools/evaluation-tasks/README.md) `m1` to `m5` |
+| Old | M1 [testdata/library/m1](https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/testdata/library/m1/model.yaml); M2 its loan-limit edit (5 → 3); M3 to M5 the overlays in [tools/comparison/phase-b](https://github.com/Glacius-Labs/Markitect/tree/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/comparison/phase-b) composed as `requirements.py model_files` does |
+| New | [tools/evaluation-tasks/library](https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/evaluation-tasks/README.md) `m1` to `m5` |
 | Reviewer | An independent Claude Opus 5.5 subagent that did not write the conversion; it read all 22 old M1 Definitions beside the new files, diffed every old overlay and every new step, and resolved every link by script |
 | Hidden material | The Library judge and requirements are unchanged |
 
@@ -24,12 +24,12 @@ Each new delta changes exactly what the old step changed and nothing else. Every
 
 ## Fixes
 
-1. **Positive values** (optional, applied to every step): the old local Kind `LendingPolicy` required its values to be positive integers. The new [loan policy](../../tools/evaluation-tasks/library/m1/model/lending/loan-policy.md) now says each value is "a required positive integer".
+1. **Positive values** (optional, applied to every step): the old local Kind `LendingPolicy` required its values to be positive integers. The new [loan policy](https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/evaluation-tasks/library/m1/model/lending/loan-policy.md) now says each value is "a required positive integer".
 
 ## How the form changed, with the same information
 
-- **No cycles.** In M1, members and catalog linked lending and lending linked them back. [Eligibility](../../tools/evaluation-tasks/library/m1/model/members/eligibility.md) and [availability](../../tools/evaluation-tasks/library/m1/model/catalog/availability.md) now state lending's duty in prose; borrow, return and renew link them, so lending's Manager still receives them.
-- **Root is the project.** The old `library` Package became Root. The [callable interface](../../tools/evaluation-tasks/library/m1/model/callable-interface.md) names the Package and use case of each operation instead of linking it, and every Feature names its operation in return.
+- **No cycles.** In M1, members and catalog linked lending and lending linked them back. [Eligibility](https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/evaluation-tasks/library/m1/model/members/eligibility.md) and [availability](https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/evaluation-tasks/library/m1/model/catalog/availability.md) now state lending's duty in prose; borrow, return and renew link them, so lending's Manager still receives them.
+- **Root is the project.** The old `library` Package became Root. The [callable interface](https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/evaluation-tasks/library/m1/model/callable-interface.md) names the Package and use case of each operation instead of linking it, and every Feature names its operation in return.
 - **No typed fields.** The `LendingPolicy` Kind and its Properties became one Rule with a table of the values and their meanings, verbatim.
 - **Additions without new meaning:** the Feature-to-operation sentences, and that the loan policy is the single source of its values.
 

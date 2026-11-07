@@ -405,7 +405,7 @@ Build approves this protocol under the owner's delegation. On 30 October 2026, B
   - **In all:** 2.7 h of launches in 2 h 47 min. A launch of M took 8.1 min on average (median 6.9), and one of K 2.3 min (median 1.4).
   - **For the series:** at 5.0 min per launch, a platform's series of about 230 launches takes about 19 hours of launches.
 - **M's C9 had nothing to do, as the task intends:**
-  - C9 changes no model content: its model equals C8's ([evaluation tasks](../../tools/evaluation-tasks/README.md)). So the right answer is no change.
+  - C9 changes no model content: its model equals C8's ([evaluation tasks](https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/evaluation-tasks/README.md)). So the right answer is no change.
   - M's host found that no change reached a Manager. It started no agent and ended `nothing-to-do` in 13 seconds, delivering its start unchanged. The suite counts that as a result with no changes. K also changed nothing at C9, in 1.2 minutes.
   - The gate reads it correctly:
     - the chain's end state is C8's landed result;

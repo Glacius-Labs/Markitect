@@ -18,7 +18,7 @@ Make the canonical model serve its purpose: **typed programming in prose.**
 ## Why now
 
 The models that exist do not look like typed programs.
-- **Makerspace c9** ([Phase C model](../../tools/comparison/phase-c/model/README.md)):
+- **Makerspace c9** ([Phase C model](https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/comparison/phase-c/model/README.md)):
   - only the generic `software-basics` Kinds Concept, Rule and UseCase;
   - every `spec` empty;
   - no architecture: its program Rule leaves "internal package layout and design" to the implementer;
@@ -64,7 +64,7 @@ The evaluation depends on this track. In the owner's words: "Our evaluations of 
 3. W5 builds on them.
 4. W6 closes the loop.
 
-**How the evaluation consumes the result:** portfolio models are written with the W5 skill, pass W3 and get an independent fidelity review. If models carry typed fields, the renderers that produce the single-agent arm's documentation ([requirements.py](../../tools/comparison/requirements.py), [phase-c/spec/render.py](../../tools/comparison/phase-c/spec/render.py)) must render them faithfully, and the equivalence check covers that.
+**How the evaluation consumes the result:** portfolio models are written with the W5 skill, pass W3 and get an independent fidelity review. If models carry typed fields, the renderers that produce the single-agent arm's documentation ([requirements.py](https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/comparison/requirements.py), [phase-c/spec/render.py](https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/comparison/phase-c/spec/render.py)) must render them faithfully, and the equivalence check covers that.
 
 ## W1 questions
 
@@ -90,7 +90,7 @@ The evaluation depends on this track. In the owner's words: "Our evaluations of 
    - **modeled scope**: Definitions whose scope field covers the Package, configured in `execution.yaml` ([context_scope.go](https://github.com/Glacius-Labs/Markitect/blob/f23c2e12d9833efa61e5e65c90018016423abe74/internal/organization/context_scope.go));
    - type contracts, followed transitively.
 
-   The observed Makerspace limit is the second hop: rule bodies reached only through the permission matrix do not reach each operation's Manager ([Phase C model README](../../tools/comparison/phase-c/model/README.md)). Would modeled scope solve that? Answer OQ-006 with evidence, within DEC-028.
+   The observed Makerspace limit is the second hop: rule bodies reached only through the permission matrix do not reach each operation's Manager ([Phase C model README](https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/comparison/phase-c/model/README.md)). Would modeled scope solve that? Answer OQ-006 with evidence, within DEC-028.
 5. **Libraries in practice.** Today every dependency is passed with a repeated `--dependency PATH` and locked by version and digest. Is that enough for standard Libraries, or does it need a module-proxy-like source?
 6. **Tooling gaps.** What does `context` already give, and what is missing: "find all references", impact of a model diff, a linter?
 

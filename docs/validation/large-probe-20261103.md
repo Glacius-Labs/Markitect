@@ -2,7 +2,7 @@
 
 > The arms this record ran, `one_agent_arm.py` and `review_arm.py`, are not on Main. [Concept 3.0](../concepts/v3-concept.md#13-how-we-know-it-works) ends these comparisons, so their code stays at commit `4d1d25ffb` on the branch `dev/makerspace-large`.
 
-The first launches on the [large Makerspace](../../tools/makerspace-large/README.md), which the owner chose on 3 November 2026 so that the approaches can be tested at a size that strains one session: 48 modules, 188 operations, 413 model pages, 327 hidden cases. K first, then S, on W0, one launch each. **Public, not counted, and it proves nothing on its own.** The new sealed project stays sealed, and concept 2.0 stays as it is.
+The first launches on the [large Makerspace](https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/makerspace-large/README.md), which the owner chose on 3 November 2026 so that the approaches can be tested at a size that strains one session: 48 modules, 188 operations, 413 model pages, 327 hidden cases. K first, then S, on W0, one launch each. **Public, not counted, and it proves nothing on its own.** The new sealed project stays sealed, and concept 2.0 stays as it is.
 
 **Status: approved by Build on 3 November 2026, under the standing run approval of 28 October 2026 ([build workstream, Decisions](../workstreams/build.md#decisions)). The owner agreed to the estimate and, on the same day, to starting K with the stop named below.** S has not been approved to start: it waits until the owner has seen what K cost.
 

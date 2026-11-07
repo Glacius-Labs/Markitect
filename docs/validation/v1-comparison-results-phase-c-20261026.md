@@ -267,7 +267,7 @@ The coordinator decided after M-c3-C2, when three chain-3 M steps had already fa
 - Provider capacity is outside both arms' control; only M's load of about 21 parallel sessions met it.
 - The machine carried a constant background load from two orphaned processes, and three runs are not quiet or unrecorded.
 - The blind review cannot hide M's layout, and M's README names its model directory.
-- The analyst was not blinded. The reading is computed by [`analyze.py`](../../tools/comparison/analyze.py) `--phase C` from the ledger.
+- The analyst was not blinded. The reading is computed by [`analyze.py`](https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/comparison/analyze.py) `--phase C` from the ledger.
 
 ## Retained evidence
 

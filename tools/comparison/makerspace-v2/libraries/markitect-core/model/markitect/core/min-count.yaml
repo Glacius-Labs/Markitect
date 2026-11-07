@@ -1,7 +1,0 @@
-id: minCount
-kind: Property
-body: Non-negative minimum number of present values.
-spec:
-  valueType: integer
-  minCount: 1
-  maxCount: 1

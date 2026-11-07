@@ -1,8 +1,0 @@
-imports:
-  - {package: markitect/api, as: Api}
-id: not-enrolled
-kind: Api.RefusalCode
-body: |-
-  The member is not enrolled in the course.
-spec:
-  code: not_enrolled

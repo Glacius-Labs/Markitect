@@ -50,7 +50,7 @@ Order followed the protocol: scenario by scenario, M first in repetitions 1 and 
 
 Totals: 7,004 s of Apply time, 258 messages and 89,079,718 provider-reported tokens (`thread/tokenUsage/updated`, last total per thread). The longest Apply took 826 s of its 2,700 s deadline (m-s1-c3); the most messages in one Apply were 33 of 128 (m-s4-r1).
 
-Oracle of record: the study's assessor at R = `74b7d7df` with the unchanged [container harness](../../tools/library-oracle/README.md#container-harness) at F. For every final candidate above it recorded `cases_passed` 12 of 12, discrimination true, probes passed, own build and `go test` passed, and `mechanical_pass` true. The assessments are in `Documents\Codex\Markitect-V1-Comparison\e11e6cff883b\assess\M-*\assessment.json`.
+Oracle of record: the study's assessor at R = `74b7d7df` with the unchanged [container harness](https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/library-oracle/README.md#container-harness) at F. For every final candidate above it recorded `cases_passed` 12 of 12, discrimination true, probes passed, own build and `go test` passed, and `mechanical_pass` true. The assessments are in `Documents\Codex\Markitect-V1-Comparison\e11e6cff883b\assess\M-*\assessment.json`.
 
 ## What the runs show
 

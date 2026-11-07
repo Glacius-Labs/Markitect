@@ -96,7 +96,7 @@ Time: M Apply seconds, B session seconds. Tokens: M provider usage summed over t
 - The B8 limits also apply: arms on different sources, different runtime images, and time-separated rather than counterbalanced.
 - The suite is still the small Library project. Behavior again hit the ceiling in both arms, so Phase B separated the arms only on cost and change size.
 - The blind reviewers interpreted the suspension test topic (R3b item 5) after its removal inconsistently; it is secondary.
-- The analyst was not blinded; the reading is computed by [`analyze.py`](../../tools/comparison/analyze.py) `--phase B` from the ledger.
+- The analyst was not blinded; the reading is computed by [`analyze.py`](https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/comparison/analyze.py) `--phase B` from the ledger.
 
 ## Retained evidence
 

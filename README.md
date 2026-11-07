@@ -142,7 +142,7 @@ Your session starts the builder and waits for it; leave the folder alone meanwhi
 
 ## Example: one rule changes
 
-A small library allows each member five open loans. The limit lives in one Rule of the spec (excerpt from the [Library example](tools/evaluation-tasks/library/m1/model/lending/loan-policy.md)):
+A small library allows each member five open loans. The limit lives in one Rule of the spec (excerpt from the [Library example](https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/evaluation-tasks/library/m1/model/lending/loan-policy.md)):
 
 ```markdown
 ---

@@ -34,7 +34,7 @@ A round after a refusal is a fresh session of K's prompt in the same folder, wit
 | Launches, arm KC | C9 r1; c3, c5, c6 and W0, r1 and r2; 9 in all. Deadline 5,400 s, as the series. Judges: the series' |
 | Order | The reviews first, turn about; then C9, then r1 of c3, c5, c6, W0, then r2 |
 | Bound | 18 launches, bound 27, relaunches 2, the runner's rules |
-| Size | About 1 to 2 weekly points. Build stops and tells the owner above 3 points of seven-day use over the first reading; the page authors of the [large project](../../tools/makerspace-large/DESIGN.md) write beside it and share that reading, and start no container |
+| Size | About 1 to 2 weekly points. Build stops and tells the owner above 3 points of seven-day use over the first reading; the page authors of the [large project](https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/makerspace-large/DESIGN.md) write beside it and share that reading, and start no container |
 | Abort | The runner's stops, a `STOP` file, or the owner's word |
 | Cleanup | The runner's final check: no container, volume or network left, no login in the evidence |
 | Evidence | `%LOCALAPPDATA%\markitect-k-checker\work`, on this machine. The counted series' folder is read only |
