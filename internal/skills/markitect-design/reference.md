@@ -6,7 +6,7 @@ A compact summary. The canonical text is `docs/guides/model-language.md` in the 
 
 ```text
 .markitect/
-  manifest.yaml        Libraries and versions (std: 1.0.0, rest: 1.0.0, ...); optionally the model of the builder and reviewer
+  manifest.yaml        Libraries and versions (std: 1.0.0, rest: 1.0.0, ...); optionally the model of the agents
   lock.yaml            Library digests, written by markitect tidy
   model/               the model; this folder is the Root Package
     project.md         the project anchor (std/Project)
@@ -17,7 +17,7 @@ A compact summary. The canonical text is `docs/guides/model-language.md` in the 
   libraries/<name>/    Libraries that do not ship with markitect
 ```
 
-Everything under `.markitect/` is accounted for by the compiler and needs no registry entry, and so is what `init` installs: `AGENTS.md`, `CLAUDE.md`, the `markitect-*` skills and agents, and `.gitignore`. The compiler sees the project folder without what its `.gitignore` files exclude, read as text; it uses no Git.
+Everything under `.markitect/` is accounted for by the compiler and needs no registry entry, and so is what `init` installs: `AGENTS.md`, `CLAUDE.md`, the `markitect-*` skills and agents, `.claude/settings.json` and `.gitignore`, and so are the worktrees Claude Code keeps under `.claude/worktrees/`. The compiler sees the project folder without what its `.gitignore` files exclude, read as text; it uses no Git.
 
 ## Definitions
 
@@ -49,7 +49,7 @@ A project writes its own Kinds as small files (`kind: Kind`) anywhere in its mod
 
 - A link is `[[path]]`: the full path from the model folder, even inside the same Package (`[[members/member]]`), `[[std/Rule]]` for a Library Kind, `[[members]]` for a Package. Optional `#section` and `|label` do not matter for resolution. In a Markdown table write the label's bar as `\|`. Links in code spans and code blocks are text. No imports, no relative links.
 - **Scope is location.** What a Package defines reaches its whole subtree; a Rule at Root binds the project.
-- **Visibility.** Public unless `internal: true`; then only its own Package and Packages below may link to it or use it as a Kind (`link.internal`). Reading is not restricted: Managers above and checkers read internal Definitions, and registry entries may link any Definition.
+- **Visibility.** Public unless `internal: true`; then only its own Package and Packages below may link to it or use it as a Kind (`link.internal`). Reading is not restricted: agents read internal Definitions, and registry entries may link any Definition.
 - **Dependencies.** A link from Package A to a Definition in, or to, another Package B is an edge A to B; using a Kind is an edge. Every Package also has an implicit edge to its parent. Linking up to an ancestor's Definition is free. A parent may link to a child Package but not to a Definition inside it (`link.downward`). Links to Library Kinds make no edge. A cycle of edges is an error (`package.cycle`).
 - Break a cycle by moving the shared concept to the common parent, or by inverting the dependency: the needing side describes its need in its own Package and the other side links to it.
 

@@ -22,7 +22,7 @@ type LibraryRef struct {
 // Manifest is the project's .markitect/manifest.yaml.
 type Manifest struct {
 	Libraries []LibraryRef // sorted by name
-	// Model names the model the builder and reviewer use, empty for the one their
+	// Model names the model Markitect's agents use, empty for the one their
 	// definitions name.
 	Model string
 }

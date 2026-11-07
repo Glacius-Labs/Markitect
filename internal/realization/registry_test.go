@@ -97,11 +97,11 @@ func TestAccountUnregisteredFile(t *testing.T) {
 func TestAccountIgnorePage(t *testing.T) {
 	ignore := model.File{Path: ".markitect/ignore", Data: []byte("# Installed\n.claude/skills/**\n\nLICENSE\n")}
 	in := Input{Model: testModel(t), Ignore: &ignore, OwnDir: ".markitect",
-		Files: []string{".claude/skills/markitect-modeling/SKILL.md", "LICENSE"},
+		Files: []string{".claude/skills/markitect-design/SKILL.md", "LICENSE"},
 		Pages: []PageFile{page("", table+"| LICENSE | | Also registered |\n")}}
 	reg, ds := Account(in)
 	expect(t, ds, "registry.ignored_file", "LICENSE is also in the ignore file")
-	if !reg.Ignored[".claude/skills/markitect-modeling/SKILL.md"] || len(ds) != 1 {
+	if !reg.Ignored[".claude/skills/markitect-design/SKILL.md"] || len(ds) != 1 {
 		t.Fatalf("ignored = %v, diagnostics = %v", reg.Ignored, ds)
 	}
 }

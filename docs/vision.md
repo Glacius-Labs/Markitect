@@ -63,7 +63,7 @@ The owner gave this analogy while the model was still V1's typed YAML. Concept 2
 - The core stays clean. Projects define their own Kinds and so form their own language; Libraries supply common Kinds, oriented on what Go or C# ship, so that no project reinvents them.
 - The compiler checks structural correctness from the core alone. Meaning is judged by the agents and the Manager hierarchy.
 - The Apply organization follows Conway's law, Clean Architecture, clean code and modularity: Packages are modules, and each has a responsible Manager. Kubernetes and Terraform are further orientation points.
-- People decide intent. AI agents write the model in conversation through the modeling skill, which asks first when something is open; the owner reads the Markdown diff and accepts it. Extract, drawing a model from existing code, is its own skill on top of it. Both ship inside the `markitect` binary, and `markitect init` installs them ([concept §8](concepts/v2-concept.md#8-authoring)).
+- People decide intent. AI agents write the model in conversation through the design skill, which asks first when something is open; the owner reads the Markdown diff and accepts it. The same skill draws a first model from existing code. It ships inside the `markitect` binary, and `markitect init` installs it ([concept 4.0 §8](concepts/v4-concept.md#8-other-commands)).
 
 **Consequences.**
 - Judge a model as you would judge code: dependencies, mutation testing, CRAP, clean architecture and size. A Definition of 500 words is prose compensating for missing Definitions.

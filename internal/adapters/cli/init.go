@@ -71,6 +71,7 @@ func (c CLI) init(_ context.Context, args []string) (int, error) {
 	}
 	if ws.Exists(instructionsFile) {
 		fmt.Fprintf(c.Stdout, "left %s as it is; add that this project has a spec in %s, which is the authority\n", instructionsFile, project.ModelDir)
+		c.noteRetiredSkills(ws)
 	} else if err := writeNew(instructionsFile, []byte(fmt.Sprintf(instructionsTemplate, name))); err != nil {
 		return Misused, err
 	}
@@ -90,8 +91,8 @@ func (c CLI) init(_ context.Context, args []string) (int, error) {
 	if err := installHarness(ws); err != nil {
 		return Misused, err
 	}
-	fmt.Fprintln(c.Stdout, "installed the harness: the build and review skills, and the builder and reviewer agents")
-	if err := c.ensureGuard(ws); err != nil {
+	fmt.Fprintln(c.Stdout, "installed the harness: the build, review, cleanup, bughunt, audit and schedule skills, and the builder, reviewer, architect and auditor agents")
+	if err := c.ensureSettings(ws); err != nil {
 		return Misused, err
 	}
 	if err := installAttributes(ws); err != nil {
@@ -195,16 +196,49 @@ func installAttributes(ws Workspace) error {
 	return ws.Write(project.AttributesFile, []byte(project.Attributes))
 }
 
-// guardHooks let only the reviewer record verdicts, so that the agent that built
-// does not verify its own work, and keep every subagent out of Markitect's folder
-// except the registry pages. The first runs only before a shell command that
-// records; the second before every tool that writes a file.
+// guardHooks hold the rights of the four roles (DEC-100): only the reviewer
+// records verdicts, so that the agent that built does not verify its own work; a
+// subagent writes only what its role may; and the builder starts only the
+// reviewer. The first runs only before a shell command that records, the second
+// before every tool that writes a file, the third before every tool that starts
+// an agent.
 func guardHooks() []any {
 	return []any{
 		map[string]any{"matcher": "Bash", "hooks": []any{map[string]any{"type": "command", "if": run.MarkRule, "command": run.HookCommand}}},
 		map[string]any{"matcher": run.EditTools, "hooks": []any{map[string]any{"type": "command", "command": run.HookCommand}}},
+		map[string]any{"matcher": run.AgentTools, "hooks": []any{map[string]any{"type": "command", "command": run.HookCommand}}},
 	}
 }
+
+// guardedHooks returns the settings' hooks with the guard in place of one an
+// earlier markitect wrote, or why it cannot add it without losing what is there.
+func guardedHooks(settings map[string]any) (map[string]any, string) {
+	hooks := map[string]any{}
+	if v, ok := settings["hooks"]; ok {
+		if hooks, ok = v.(map[string]any); !ok {
+			return nil, "they are not an object"
+		}
+	}
+	var pre []any
+	if v, ok := hooks["PreToolUse"]; ok {
+		if pre, ok = v.([]any); !ok {
+			return nil, "its PreToolUse hooks are not a list"
+		}
+	}
+	kept := []any{}
+	for _, entry := range pre {
+		if !ownGuard(entry) {
+			kept = append(kept, entry)
+		}
+	}
+	hooks["PreToolUse"] = append(kept, guardHooks()...)
+	return hooks, ""
+}
+
+// worktreeBase is the base of the worktrees Claude Code makes, which init sets so
+// that a builder in a worktree of its own starts from the owner's branch and not
+// from the repository's default branch.
+const worktreeBase = "head"
 
 // ownGuard says whether a PreToolUse entry is one an earlier markitect wrote: a
 // group whose every hook runs HookCommand. The current one replaces it.
@@ -226,24 +260,26 @@ func ownGuard(entry any) bool {
 	return true
 }
 
-// ensureGuard adds the hook to the project's settings, in place of one an
-// earlier markitect wrote, and keeps what else they hold. Settings it cannot
-// read, or whose hooks have an unexpected shape, it leaves as they are and says
-// so, and every command of the spec then notes that the harness is out of date.
-func (c CLI) ensureGuard(ws Workspace) error {
+// ensureSettings adds the hooks to the project's settings, in place of ones an
+// earlier markitect wrote, sets the base of Claude Code's worktrees unless the
+// settings name one, and keeps what else they hold. Settings it cannot read it
+// leaves as they are; a part of them with an unexpected shape it leaves as it is
+// and writes the other. Either way it says what to add by hand.
+func (c CLI) ensureSettings(ws Workspace) error {
 	settings := map[string]any{}
+	addHooks := fmt.Sprintf("add the hooks by hand: %q before Bash for %s, before %s and before %s", run.HookCommand, run.MarkRule, run.EditTools, run.AgentTools)
+	setBase := fmt.Sprintf("set worktree.baseRef to %q by hand", worktreeBase)
 	lacks := func(why string) error {
-		fmt.Fprintf(c.Stdout, "left %s as it is, %s; add the hooks by hand: %q before Bash for %s, and before %s\n", run.SettingsFile, why, run.HookCommand, run.MarkRule, run.EditTools)
+		fmt.Fprintf(c.Stdout, "left %s as it is, %s; %s, and %s\n", run.SettingsFile, why, addHooks, setBase)
 		return nil
 	}
+	guarded := false
 	if ws.Exists(run.SettingsFile) {
 		data, err := ws.Read(run.SettingsFile)
 		if err != nil {
 			return err
 		}
-		if run.HasGuard(data) {
-			return nil
-		}
+		guarded = run.HasGuard(data)
 		dec := json.NewDecoder(bytes.NewReader(data))
 		dec.UseNumber()
 		if err := dec.Decode(&settings); err != nil {
@@ -256,26 +292,34 @@ func (c CLI) ensureGuard(ws Workspace) error {
 			return lacks("because it is not a JSON object")
 		}
 	}
-	hooks := map[string]any{}
-	if v, ok := settings["hooks"]; ok {
-		if hooks, ok = v.(map[string]any); !ok {
-			return lacks("because its hooks are not an object")
+	var said, left []string
+	if !guarded {
+		if hooks, why := guardedHooks(settings); why != "" {
+			left = append(left, fmt.Sprintf("left the hooks in %s as they are, because %s; %s", run.SettingsFile, why, addHooks))
+		} else {
+			settings["hooks"] = hooks
+			said = append(said, fmt.Sprintf("added the hooks that hold the agents' rights to %s", run.SettingsFile))
 		}
 	}
-	var pre []any
-	if v, ok := hooks["PreToolUse"]; ok {
-		if pre, ok = v.([]any); !ok {
-			return lacks("because its PreToolUse hooks are not a list")
+	setBaseRef := fmt.Sprintf("set worktree.baseRef to %q in %s, so that a builder's worktree starts from your branch", worktreeBase, run.SettingsFile)
+	switch w := settings["worktree"].(type) {
+	case nil: // absent, or null
+		settings["worktree"] = map[string]any{"baseRef": worktreeBase}
+		said = append(said, setBaseRef)
+	case map[string]any:
+		if w["baseRef"] == nil {
+			w["baseRef"] = worktreeBase
+			said = append(said, setBaseRef)
 		}
+	default:
+		left = append(left, fmt.Sprintf("left worktree in %s as it is, because it is not an object; %s", run.SettingsFile, setBase))
 	}
-	kept := []any{}
-	for _, entry := range pre {
-		if !ownGuard(entry) {
-			kept = append(kept, entry)
-		}
+	for _, line := range left {
+		fmt.Fprintln(c.Stdout, line)
 	}
-	hooks["PreToolUse"] = append(kept, guardHooks()...)
-	settings["hooks"] = hooks
+	if len(said) == 0 {
+		return nil
+	}
 	var b bytes.Buffer
 	enc := json.NewEncoder(&b)
 	enc.SetEscapeHTML(false)
@@ -286,7 +330,9 @@ func (c CLI) ensureGuard(ws Workspace) error {
 	if err := ws.Write(run.SettingsFile, b.Bytes()); err != nil {
 		return err
 	}
-	fmt.Fprintf(c.Stdout, "added the hooks that let only the reviewer record verdicts and keep subagents out of %s to %s\n", project.Dir, run.SettingsFile)
+	for _, line := range said {
+		fmt.Fprintln(c.Stdout, line)
+	}
 	return nil
 }
 
@@ -393,7 +439,7 @@ func (c CLI) writeLock(ws Workspace) (int, error) {
 
 // manifestTemplate is a new project's manifest.
 const manifestTemplate = `# The Libraries this project uses, with their versions. Run markitect tidy after a change.
-# model, optional, names the model the builder and reviewer agents use; without it they use sonnet.
+# model, optional, names the model Markitect's agents use; without it they use sonnet.
 # markitect update writes it into their agent files.
 libraries:
   std: %s
@@ -404,18 +450,17 @@ libraries:
 const instructionsFile = "AGENTS.md"
 
 // instructionsTemplate tells any session what kind of project this is. The
-// builder and reviewer read it too, so it holds no process.
+// agents read it too, so it holds no process.
 const instructionsTemplate = "# %s\n\n" + skills.About + "\n" +
-	"A change to what the project does starts in the spec, written with the `markitect-modeling` skill and accepted by the owner. A new project starts with the `markitect-start` skill, and a repository that already has code with `markitect-extract`.\n\n" +
+	"A change to what the project does starts in the spec, designed with the `markitect-design` skill and accepted by the owner.\n\n" +
 	"`markitect` is a command on the path, and `markitect help` lists what it does.\n\n" +
 	"A builder or reviewer of Markitect work takes what to do from `markitect status`, and the spec stays as it is.\n"
 
 // nextSteps ends the init of a new project. The session that ran init started
 // before the skills existed, and Claude Code does not watch a skills folder that
 // was not there when a session started.
-const nextSteps = `next: run /markitect-start in Claude Code here. It asks what the project is and starts the spec with you.
-A session that was open before init runs /reload-skills first, or reads .claude/skills/markitect-start/SKILL.md.
-If the folder already has code, use /markitect-extract instead.
+const nextSteps = `next: run /markitect-design in Claude Code here. It asks what the project is and starts the spec with you, or draws it from the code already here.
+A session that was open before init runs /reload-skills first, or reads .claude/skills/markitect-design/SKILL.md.
 `
 
 const anchorTemplate = `---
