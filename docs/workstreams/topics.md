@@ -1,6 +1,6 @@
 # Design topics
 
-State page of the Topics session: the owner's single place to discuss Markitect's design topics. They are platform, model language, modeling skills, compiler, agentic commands and continuous change; the Cockpit moved to the [Desktop session](desktop.md) on 31 October 2026. On 28 October 2026 the owner replaced the seven topic lanes (5 to 11) with this one session, because "The topics touch too strongly to be discussed independently." The Build and evaluation session builds everything except Markitect Desktop's own scope; it owns the evaluation suite and the variants.
+State page of the Topics session: the owner's single place to discuss Markitect's design topics. They are platform, model language, modeling skills, compiler, agentic commands and continuous change; the Cockpit moved to the [Desktop session](https://github.com/Glacius-Labs/Markitect/blob/e295881f1f716b4fb067bd4bb88e959d6a74f44d/docs/workstreams/desktop.md) on 31 October 2026. On 28 October 2026 the owner replaced the seven topic lanes (5 to 11) with this one session, because "The topics touch too strongly to be discussed independently." The Build and evaluation session builds everything except Markitect Desktop's own scope; it owns the evaluation suite and the variants.
 
 | | |
 |---|---|
@@ -10,7 +10,7 @@ State page of the Topics session: the owner's single place to discuss Markitect'
 
 ## Now
 
-- **Concept 3.0 is the target** (accepted 4 November, [DEC-091](../concepts/register.md#dec-091-concept-30-is-the-target)), after a step-back discussion in a session of its own; the [delivery plan](../implementation-plan.md#concept-30-build) owns its build. The entries below describe the way to concept 2.0 and are a record.
+- **Concept 4.0 is the target** (accepted 7 November, [DEC-098](../concepts/register.md#dec-098-concept-40-is-the-target)); the [delivery plan](../implementation-plan.md) owns its steps. Concept 3.0 was the target from 4 November ([DEC-091](../concepts/register.md#dec-091-concept-30-is-the-target)), after a step-back discussion in a session of its own. The entries below describe the way to concept 2.0 and are a record.
 - **Concept 2.0 was the target** (accepted 28 October, [DEC-086](../concepts/register.md#dec-086-concept-20-is-the-target)). The design walk-through ([source](../concepts/sources/model-explicitness-20261028.md#1-what-markitect-is-restated)) settled DEC-079 to DEC-085 and the ten review questions; [concept 2.0](../concepts/v2-concept.md) puts them in one order with its acceptance. Handed to the Build and evaluation session on 28 October (see [Handed to Build](#handed-to-build)); being built in the [delivery plan's steps](../implementation-plan.md#concept-20-build).
 - **Basis:** clean. One topics page instead of seven lane pages; Main consistent again after #806 (see [Done here](#done-here)); the topic lane worktrees and branches removed (the old Cockpit lane worktree now serves the General session); question 33 (Windows tests) parked.
 
@@ -52,7 +52,7 @@ Design only ([DEC-084](../concepts/register.md#dec-084-continuous-change-trigger
 
 ### Cockpit
 
-Markitect Desktop, the app over the CLI that users know as Markitect ([DEC-089](../concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli)), replaced [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now) on 31 October 2026. The [Desktop session](desktop.md) designs and builds it.
+Markitect Desktop, the app over the CLI that users know as Markitect ([DEC-089](../concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli)), replaced [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now) on 31 October 2026. The [Desktop session](https://github.com/Glacius-Labs/Markitect/blob/e295881f1f716b4fb067bd4bb88e959d6a74f44d/docs/workstreams/desktop.md) designs and builds it.
 
 ## Decided
 

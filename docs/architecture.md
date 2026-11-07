@@ -1,6 +1,6 @@
 # Architecture
 
-How the source is composed, where each responsibility lives and which contracts hold between the packages. This branch builds [draft concept 4.0](concepts/v4-concept.md); [concept 3.0](concepts/v3-concept.md) stays the target until the owner accepts it. T1 built the spec language and its commands; [the work](../internal/run/README.md) (`checklist`, `answer`, `gate`) checks what a driver's agents build, and the tool uses no Git ([DEC-096](concepts/register.md#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](concepts/register.md#dec-097-markitect-uses-no-git)).
+How the source is composed, where each responsibility lives and which contracts hold between the packages. This branch builds [concept 4.0](concepts/v4-concept.md), the target ([DEC-098](concepts/register.md#dec-098-concept-40-is-the-target)). T1 built the spec language and its commands; [the work](../internal/run/README.md) (`checklist`, `answer`, `gate`) checks what a driver's agents build, and the tool uses no Git ([DEC-096](concepts/register.md#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](concepts/register.md#dec-097-markitect-uses-no-git)).
 
 This page owns the package contracts. The [model language guide](guides/model-language.md) owns the language, the `.markitect/` layout and the commands; the [code map](development/code-map.md) lists every package with its owning document. V1's Run, Apply, adapter and state architecture is kept at the base commit of T1: [architecture of V1](https://github.com/Glacius-Labs/Markitect/blob/f23c2e12d9833efa61e5e65c90018016423abe74/docs/architecture.md).
 
@@ -18,7 +18,7 @@ None of these commands starts an agent, a container or a Command, and none needs
 
 `checklist`, `answer`, `gate` and `status` run `cmd/markitect → internal/bootstrap → CLI adapter → the work`. Bootstrap builds [the work](../internal/run/README.md) (`internal/run`) over the folder adapter, with its state in the user's cache folder. `checklist --start` says which agent to start, and the driver, by default the owner's own Claude Code session through the `/markitect-apply` and `/markitect-verify` skills, starts it and makes every Git step: nothing in the tool starts or drives an agent, which calls `markitect` like any other tool.
 
-The default driver needs Claude Code on the user's own login, and no container: its agents are subagents of the owner's session, with the user's rights, in the owner's folder ([draft concept 4.0 §7](concepts/v4-concept.md#7-how-sure-we-are)).
+The default driver needs Claude Code on the user's own login, and no container: its agents are subagents of the owner's session, with the user's rights, in the owner's folder ([concept 4.0 §7](concepts/v4-concept.md#7-how-sure-we-are)).
 
 ## Layers
 

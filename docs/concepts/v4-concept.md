@@ -1,13 +1,13 @@
-# Markitect concept 4.0 (draft)
+# Markitect concept 4.0
 
 **You model. Markitect's tools check the spec and work out what a change reaches, an ordinary agent, started by the owner's own session, makes the project match, and one tool command decides whether the work counts.**
 
 | | |
 |---|---|
-| **Version** | 4.0 – draft, not accepted |
-| **Date** | 4 November 2026, revised on 7 November 2026 for release 0.20.0 |
-| **Basis** | The [owner's statements](sources/fresh-start-20261104.md) of 4 November 2026, concept 3.0, a workflow trial on one real change, the Claude Code documentation and the help of version 2.1.318 as read that day, and independent reviews of this draft and an earlier one. The revision adds the [lean plan](lean-tool-plan.md) and its [trials](../validation/lean-trials-20261107.md) of 7 November 2026. |
-| **State** | A draft for the owner ([OQ-012](register.md#open-questions)). [Concept 3.0](v3-concept.md) stays the target until this one is accepted. Main carries its build since 6 November 2026 ([DEC-094](register.md#dec-094-main-carries-the-native-version-and-the-app-goes)), for the owner to try by using it ([what real sessions showed](../validation/native-version-20261104.md)). On 6 November 2026 the owner chose a leaner tool that computes and checks, leaves the agents to a driver and uses no Git ([DEC-096](register.md#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](register.md#dec-097-markitect-uses-no-git)). Its [plan](lean-tool-plan.md) was built, tried and released as 0.20.0 on 7 November 2026, and this draft now describes that release. The Run of 0.17.0 to 0.19.0, with `apply`, `verify`, `submit`, `stop`, landing and run branches, is in this page's history. |
+| **Version** | 4.0 – accepted target |
+| **Date** | 4 November 2026, revised on 7 November 2026 for release 0.20.0 and accepted the same day |
+| **Basis** | The [owner's statements](sources/fresh-start-20261104.md) of 4 November 2026, concept 3.0, a workflow trial on one real change, the Claude Code documentation and the help of version 2.1.318 as read that day, and independent reviews of this concept's two drafts. The revision adds the [lean plan](lean-tool-plan.md) and its [trials](../validation/lean-trials-20261107.md) of 7 November 2026. |
+| **State** | Accepted by the owner as Markitect's target on 7 November 2026 ([DEC-098](register.md#dec-098-concept-40-is-the-target)), replacing [concept 3.0](v3-concept.md), which is now a record. Main carries its build since 6 November 2026 ([DEC-094](register.md#dec-094-main-carries-the-native-version-and-the-app-goes)) ([what real sessions showed](../validation/native-version-20261104.md)). On 6 November 2026 the owner chose a leaner tool that computes and checks, leaves the agents to a driver and uses no Git ([DEC-096](register.md#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](register.md#dec-097-markitect-uses-no-git)). Its [plan](lean-tool-plan.md) was built, tried and released as 0.20.0 on 7 November 2026, and this page describes that release. The Run of 0.17.0 to 0.19.0, with `apply`, `verify`, `submit`, `stop`, landing and run branches, is in this page's history. |
 
 It uses the words of [concept 3.0](v3-concept.md#2-words): spec, implementer, reviewer. Code and older documents still say model, maker and checker.
 
@@ -175,7 +175,7 @@ The owner models until the spec looks right, then uses `/markitect-apply` in the
 
 **When the builder ends early.** The owner's session runs `gate` each time an agent has ended and starts the agent it names: the reviewer, or the builder again, which sees in its `checklist` what the last review found wrong. The work under way stays in the user's cache folder, so a session that closed can go on with it: `/markitect-apply` takes it up where it stood.
 
-**Why not a background session.** The first build of this draft had `apply` start `claude --bg` in a worktree of its own, with generated settings and hooks, and it landed real changes ([record](../validation/native-version-20261104.md)). On 5 November 2026 the owner chose agents started by their own session instead: Markitect should be just a way of agentic coding, without that machinery. What the choice costs:
+**Why not a background session.** The first build of this concept had `apply` start `claude --bg` in a worktree of its own, with generated settings and hooks, and it landed real changes ([record](../validation/native-version-20261104.md)). On 5 November 2026 the owner chose agents started by their own session instead: Markitect should be just a way of agentic coding, without that machinery. What the choice costs:
 
 - the owner's session is busy until the work ends, and the agents stop if that session closes;
 - the agents work under that session's permission mode, settings, plugins and memory, so they may ask for permission, and they differ from one person to the next;
@@ -292,7 +292,7 @@ The first version is Claude only. A provider needs subagents with their own agen
 
 No token is needed: sessions run on the user's own stored login in the unmodified program, which removes token passing. Each session uses the user's subscription quota. The legal reading of [concept 3.0 §14, question 10](v3-concept.md#14-decided-on-acceptance) still applies: the owner's own use looks allowed, and other users are not settled. So the owner still asks Anthropic before anyone else runs Markitect.
 
-**The app.** The owner said "we can remove desktop for now". This draft reads that as the whole app, with its spec views and chats. Its chats are the only other use of containers, so this takes Docker out of Markitect altogether, along with the provider adapters, the session helper, the runtime image and the token. It stays recoverable in Git and can come back once the tool has settled. The owner confirmed that reading on 6 November 2026, and the app is gone ([DEC-094](register.md#dec-094-main-carries-the-native-version-and-the-app-goes)).
+**The app.** The owner said "we can remove desktop for now". This concept reads that as the whole app, with its spec views and chats. Its chats are the only other use of containers, so this takes Docker out of Markitect altogether, along with the provider adapters, the session helper, the runtime image and the token. It stays recoverable in Git and can come back once the tool has settled. The owner confirmed that reading on 6 November 2026, and the app is gone ([DEC-094](register.md#dec-094-main-carries-the-native-version-and-the-app-goes)).
 
 ## 12. Schedules and continuous work
 
@@ -339,7 +339,7 @@ Concept 3.0's tests 2 and 3 fall away, since the aim is no longer to show that t
 
 | Entry | Becomes | What stays from it |
 |---|---|---|
-| [DEC-091](register.md#dec-091-concept-30-is-the-target) | Superseded as the target, once this is accepted | Concept 3.0 as the record; its six problems, words, checklist, answers and Result |
+| [DEC-091](register.md#dec-091-concept-30-is-the-target) | Superseded as the target on 7 November 2026 ([DEC-098](register.md#dec-098-concept-40-is-the-target)) | Concept 3.0 as the record; its six problems, words, checklist, answers and Result |
 | [DEC-037](register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers) | Superseded: agents and checks no longer run in containers | A reviewer gets no write tools |
 | [DEC-013](register.md#dec-013-linux-first-for-tests-and-the-playground), [DEC-077](register.md#dec-077-development-pace-and-linux-first-execution) | Amended: agents work on the user's own system, so Windows becomes a main path | Linux tests for Markitect's own code |
 | [DEC-078](register.md#dec-078-agents-collaborate-through-a-git-remote-without-owner-review) | No remote and no Git in the tool ([DEC-097](register.md#dec-097-markitect-uses-no-git)): the owner's session commits the work with its certificate on the current branch, and the owner pushes | Work counts without the owner reviewing a diff; no Git host is needed |
@@ -360,7 +360,7 @@ Concept 3.0's tests 2 and 3 fall away, since the aim is no longer to show that t
 
 ## 16. Questions for the owner
 
-Each open one has a recommendation. Already decided by the owner: that required checks go for now to see whether they are needed, that the agents are started by the owner's own session, that the app goes, that `update` comes now, and that releases, the plugin and a binary that updates itself come with it ([DEC-095](register.md#dec-095-releases-return-with-a-plugin-and-a-binary-that-updates-itself)). The name `submit` and its landing, decided earlier, gave way on 6 November 2026 to a tool that computes and checks, with `gate` as its door ([DEC-096](register.md#dec-096-markitect-computes-and-checks-a-driver-acts)), and uses no Git ([DEC-097](register.md#dec-097-markitect-uses-no-git)); on 7 November 2026 the owner decided how a builder reports a spec problem ([lean plan, decision 7](lean-tool-plan.md#decisions-for-the-owner)).
+Each open one has a recommendation. Already decided by the owner: that required checks go for now to see whether they are needed, that the agents are started by the owner's own session, that the app goes, that `update` comes now, and that releases, the plugin and a binary that updates itself come with it ([DEC-095](register.md#dec-095-releases-return-with-a-plugin-and-a-binary-that-updates-itself)). The name `submit` and its landing, decided earlier, gave way on 6 November 2026 to a tool that computes and checks, with `gate` as its door ([DEC-096](register.md#dec-096-markitect-computes-and-checks-a-driver-acts)), and uses no Git ([DEC-097](register.md#dec-097-markitect-uses-no-git)); on 7 November 2026 the owner decided how a builder reports a spec problem ([lean plan, decision 7](lean-tool-plan.md#decisions-for-the-owner)), and accepted this concept as the target ([DEC-098](register.md#dec-098-concept-40-is-the-target)), which left the open questions below open.
 
 1. **Starting the session.** Decided by the owner on 5 November 2026: the owner's own session starts the agents, with no background session ([§5](#5-what-apply-does)).
 2. **What the work may do.** Settled with question 1: the agents work under the owner's own permission mode and settings. The builder file asks to accept file edits without asking, but in the trials the session's mode held instead ([§9](#9-the-harness)).

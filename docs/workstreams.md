@@ -15,7 +15,7 @@ The sessions sit in the sidebar folder "Markitect". Lane 1 handed the host varia
 
 ## Arms
 
-Since 4 November 2026 the target is [concept 3.0](concepts/v3-concept.md) ([build steps](implementation-plan.md#concept-30-build)). From 28 October the target was [concept 2.0](concepts/v2-concept.md). The owner chose one implementation of it, compared with the baseline, the same day; the plugin variant and V1's open steps stopped, and the Git variant's prototype became the start of the 2.0 Run remote ([build steps](implementation-plan.md#concept-20-build)). The evaluation suite treats each arm as a black box with the same task in and the same judging out.
+Since 7 November 2026 the target is [concept 4.0](concepts/v4-concept.md) ([DEC-098](concepts/register.md#dec-098-concept-40-is-the-target)), with no arms to compare. From 4 November it was [concept 3.0](concepts/v3-concept.md) ([build steps](implementation-plan.md#concept-30-build)). From 28 October the target was [concept 2.0](concepts/v2-concept.md). The owner chose one implementation of it, compared with the baseline, the same day; the plugin variant and V1's open steps stopped, and the Git variant's prototype became the start of the 2.0 Run remote ([build steps](implementation-plan.md#concept-20-build)). The evaluation suite treats each arm as a black box with the same task in and the same judging out.
 
 | Arm | What | Where |
 |---|---|---|
