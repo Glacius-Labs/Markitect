@@ -1,6 +1,6 @@
 # Model language and model commands
 
-This guide is the canonical description of the model language of [concept 2.0](../concepts/v2-concept.md) (§2–§4, [DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation), [DEC-081](../concepts/register.md#dec-081-the-organization-knows-broad-at-the-top-and-deep-below)) as `markitect` implements it, and of the commands `markitect` has. None of them starts an agent or uses Git. Where the concept leaves a detail open, the [build decisions](#build-decisions) at the end record what was chosen.
+This guide is the canonical description of the model language of [concept 2.0](../concepts/v2-concept.md) (§2–§4, [DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation), [DEC-081](../concepts/register.md#dec-081-the-organization-knows-broad-at-the-top-and-deep-below)) as `markitect` implements it, and of the commands `markitect` has. None of them starts an agent or uses Git. Where the concept leaves a detail open, the [build decisions](#build-decisions) at the end record what was chosen. [What makes a good spec](good-spec.md) says how to use the language well.
 
 ## The project's Markitect folder
 
@@ -226,7 +226,7 @@ Two commands work on the record of what was verified, `.markitect/review.sum` ([
 | `vet.thin_package` | a Package has no Definitions of its own and only one child |
 | `vet.no_paths` | a Package other than Root claims no path pattern, as above |
 
-Change hotspots from Git history come later. Coupling counts explicit edges only, not the implicit edge to the parent.
+Change hotspots from Git history come later. Coupling counts explicit edges only, not the implicit edge to the parent. [What makes a good spec](good-spec.md) says what each measure is for, and the [`vet` plan](../concepts/vet-plan.md) proposes further measures and thresholds for the owner's decision.
 
 ## Build decisions
 
