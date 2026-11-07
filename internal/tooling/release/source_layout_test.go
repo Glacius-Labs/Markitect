@@ -23,7 +23,7 @@ func rootLayoutFixture(t *testing.T) string {
 		"internal/libraries/libraries.go":             "package libraries\n",
 		"internal/libraries/std/Rule.md":              "---\nkind: Kind\n---\n# Rule\n",
 		"internal/skills/skills.go":                   "package skills\n",
-		"internal/skills/markitect-modeling/SKILL.md": "# Modeling\n",
+		"internal/skills/markitect-design/SKILL.md":   "# Modeling\n",
 		"internal/tooling/release/install.go":         "package release\n",
 		"internal/testkit/testdata/hostile.gitconfig": "[core]\n hooksPath=blocked\n",
 	} {
@@ -55,7 +55,7 @@ func TestEmbeddedFilesSurviveLiveAndFixedPackaging(t *testing.T) {
 	}
 	for _, archive := range [][]byte{live, fixed} {
 		contents := archiveContents(t, archive)
-		for _, name := range []string{"internal/libraries/std/Rule.md", "internal/skills/markitect-modeling/SKILL.md"} {
+		for _, name := range []string{"internal/libraries/std/Rule.md", "internal/skills/markitect-design/SKILL.md"} {
 			if _, ok := contents[name]; !ok {
 				t.Errorf("embedded file omitted: %s", name)
 			}
@@ -94,7 +94,7 @@ func TestRootLayoutLiveAndFixedMatch(t *testing.T) {
 		t.Fatal("live and fixed root selections differ")
 	}
 	contents := archiveContents(t, live)
-	for _, name := range []string{"cmd/markitect/main.go", "internal/model/vendor.go", "internal/project/prepared.go", "internal/realization/registry.go", "internal/analysis/impact.go", "internal/adapters/folder/folder.go", "internal/project/testdata/fixture.json", "internal/adapters/cli/cli.go", "internal/libraries/std/Rule.md", "internal/skills/markitect-modeling/SKILL.md", "internal/tooling/release/install.go", "internal/testkit/testdata/hostile.gitconfig"} {
+	for _, name := range []string{"cmd/markitect/main.go", "internal/model/vendor.go", "internal/project/prepared.go", "internal/realization/registry.go", "internal/analysis/impact.go", "internal/adapters/folder/folder.go", "internal/project/testdata/fixture.json", "internal/adapters/cli/cli.go", "internal/libraries/std/Rule.md", "internal/skills/markitect-design/SKILL.md", "internal/tooling/release/install.go", "internal/testkit/testdata/hostile.gitconfig"} {
 		if _, ok := contents[name]; !ok {
 			t.Errorf("omitted %s", name)
 		}

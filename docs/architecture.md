@@ -16,9 +16,9 @@ This page owns the package contracts. The [model language guide](guides/model-la
 
 None of these commands starts an agent, a container or a Command, and none needs credentials. The [commands](guides/model-language.md#commands) section gives their options and exit codes.
 
-`status`, `mark` and `hook` run `cmd/markitect → internal/bootstrap → CLI adapter → the record`. Bootstrap builds [the record](../internal/run/README.md) (`internal/run`) over the folder adapter, with the lock of each project's record in the user's cache folder; the record itself, `.markitect/review.sum`, lies in the project. The driver, by default the owner's own Claude Code session through the `/markitect-build` and `/markitect-review` skills, starts the agents and makes every Git step: nothing in the tool starts or drives an agent, which calls `markitect` like any other tool. `update` also runs the migration that writes the record from the newest certificate of 0.20.0.
+`status`, `mark` and `hook` run `cmd/markitect → internal/bootstrap → CLI adapter → the record`. Bootstrap builds [the record](../internal/run/README.md) (`internal/run`) over the folder adapter, with the lock of each project's record in the user's cache folder; the record itself, `.markitect/review.sum`, lies in the project. The driver, by default the owner's own Claude Code session through the skills of [DEC-100](concepts/register.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role), such as `/markitect-build` and `/markitect-review`, starts the agents and makes every Git step: nothing in the tool starts or drives an agent, which calls `markitect` like any other tool. `update` also runs the migration that writes the record from the newest certificate of 0.20.0.
 
-The default driver needs Claude Code on the user's own login, and no container: its agents are subagents of the owner's session, with the user's rights, in the owner's folder ([concept 4.0 §7](concepts/v4-concept.md#7-how-sure-we-are)).
+The default driver needs Claude Code on the user's own login, and no container: its agents are subagents of the owner's session, with the user's rights, the builder in a worktree of its own and a reviewer alone in the owner's folder ([concept 4.0 §7](concepts/v4-concept.md#7-how-sure-we-are)).
 
 ## Layers
 
@@ -27,7 +27,7 @@ All Go packages use one root module. One rule table in [`internal/tooling/archit
 | Responsibility | Packages | Depends on |
 | --- | --- | --- |
 | Model language: Definitions, Kinds, links, visibility, cycles, manifest and lock, over supplied bytes | `internal/model` | No other Markitect package |
-| Files built into the binary: the standard Libraries `std`, `rest` and `cli`, and the modeling and Extract skills | `internal/libraries`, `internal/skills` | No other Markitect package |
+| Files built into the binary: the standard Libraries `std`, `rest` and `cli`, the design skill, and the harness of the work: its skills, agents and routine prompts | `internal/libraries`, `internal/skills` | No other Markitect package |
 | Registry pages, ownership by path pattern, file accounting and stale realization | `internal/realization` | Model |
 | Loading and checking a project's `.markitect/` folder from one set of files | `internal/project` | Model, the built-in files, realization; its own `Repository` port |
 | What a project holds and who links to what, the Package graph, vet | `internal/analysis` | Project and the packages below it |

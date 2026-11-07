@@ -47,7 +47,7 @@ func (s *smoke) modelCommands() error {
 	} else if err := requireContains(out, "created .markitect/manifest.yaml", "wrote .markitect/lock.yaml: std 1.0.0", "installed the skills"); err != nil {
 		return err
 	}
-	if err := requirePresent(repo, ".claude/skills/markitect-modeling/SKILL.md", ".agents/skills/markitect-extract/SKILL.md", ".markitect/model/project.md"); err != nil {
+	if err := requirePresent(repo, ".claude/skills/markitect-design/SKILL.md", ".agents/skills/markitect-design/SKILL.md", ".claude/agents/markitect-architect.md", ".markitect/model/project.md"); err != nil {
 		return err
 	}
 	for name, content := range smokeModel {

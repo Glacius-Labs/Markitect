@@ -65,7 +65,7 @@ func TestUpdateBringsAProjectInLine(t *testing.T) {
 	if err := os.Remove(filepath.Join(r.Dir, ".claude", "skills", "markitect-build", "SKILL.md")); err != nil {
 		t.Fatal(err)
 	}
-	r.Write("AGENTS.md", "# Mine\n\nWritten by the owner.\n")
+	r.Write("AGENTS.md", "# Mine\n\nWritten by the owner, who models with the `markitect-modeling` skill.\n")
 	spec := read(t, r.Dir, ".markitect/model/project.md")
 	before := snapshot(t, r.Dir)
 
@@ -87,14 +87,16 @@ func TestUpdateBringsAProjectInLine(t *testing.T) {
 	wantAll(t, out, "project: updated 4 files:", "Markitect uses no Git: commit them when you like.")
 	noRepository(t, r.Dir)
 	settings := read(t, r.Dir, ".claude/settings.json")
-	wantAll(t, settings, "Bash(go test *)", "my-own-check", "Bash(markitect mark*)", "Edit|Write|MultiEdit|NotebookEdit")
+	wantAll(t, settings, "Bash(go test *)", "my-own-check", "Bash(markitect mark*)", "Edit|Write|MultiEdit|NotebookEdit", "Agent|Task", `"baseRef": "head"`)
 	if strings.Contains(settings, "Bash(markitect answer*)") {
 		t.Fatalf("the older hook was not replaced:\n%s", settings)
 	}
 	if _, err := os.Stat(filepath.Join(r.Dir, ".claude", "skills", "markitect-retired", "SKILL.md")); !os.IsNotExist(err) {
 		t.Fatalf("the retired skill stayed: %v", err)
 	}
-	if read(t, r.Dir, "AGENTS.md") != "# Mine\n\nWritten by the owner.\n" || read(t, r.Dir, ".markitect/model/project.md") != spec {
+	// It never changes AGENTS.md, and says when it names a skill that is gone.
+	wantAll(t, out, "note: AGENTS.md names the skill markitect-modeling, which markitect-design replaced")
+	if read(t, r.Dir, "AGENTS.md") != "# Mine\n\nWritten by the owner, who models with the `markitect-modeling` skill.\n" || read(t, r.Dir, ".markitect/model/project.md") != spec {
 		t.Fatal("update changed a file of the owner's")
 	}
 
