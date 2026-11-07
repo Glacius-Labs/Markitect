@@ -663,6 +663,22 @@ func TestChecklistStartsTheBuilder(t *testing.T) {
 	}
 }
 
+// Without both agents and the hook that keeps each to its part, the skill's call
+// begins nothing, as a Run does not start.
+func TestChecklistStartNeedsTheHarness(t *testing.T) {
+	files := library()
+	files[run.SettingsFile] = `{"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "if": "Bash(markitect answer*)", "command": "` + run.HookCommand + `"}]}]}}` + "\n"
+	p := newPlainOf(t, files)
+	text, ok, err := p.engine.Checklist(context.Background(), run.ChecklistRequest{Dir: p.dir, Start: true})
+	if err != nil || ok {
+		t.Fatalf("%v %v", ok, err)
+	}
+	has(t, text, "harness is not complete", "markitect update")
+	if text, _, err := p.engine.Checklist(context.Background(), run.ChecklistRequest{Dir: p.dir, Review: true}); err != nil || !strings.Contains(text, "No work is under way") {
+		t.Fatalf("work began without the harness: %v\n%s", err, text)
+	}
+}
+
 // A review of finished work begins with checklist --review --start, which names the
 // reviewer; with nothing to review it leaves no work behind.
 func TestChecklistStartsTheReviewer(t *testing.T) {

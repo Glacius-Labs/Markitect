@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -282,6 +283,9 @@ func (e *Engine) Checklist(ctx context.Context, req ChecklistRequest) (text stri
 	if err != nil {
 		return "", false, err
 	}
+	if req.Start && !harnessOnDisk(f.root) {
+		return noGuard, false, nil
+	}
 	if errs := f.cur.SpecErrors(); len(errs) > 0 {
 		return "The spec has errors, so there is no list. Fix them in the spec first:\n\n" + listErrors(errs), false, nil
 	}
@@ -361,6 +365,22 @@ func (e *Engine) Checklist(ctx context.Context, req ChecklistRequest) (text stri
 		return "Every item has an answer for the files as they are now, so nothing is left to review. End now.\n", true, nil
 	}
 	return stateReviewPrompt(baseLine(w), earlier, todo, changes), true, nil
+}
+
+// noGuard is what --start says in a folder without the harness, as a Run refuses
+// to start without it.
+const noGuard = "The harness is not complete in this project: the work needs the builder and reviewer agents, and the hook in " + SettingsFile + " that keeps each agent to its part. Run markitect update, which brings them in line, and try again; if it says it left the settings as they are, add the hook it names by hand.\n"
+
+// harnessOnDisk says whether the folder holds both agents and the hook that
+// guards answer and checklist.
+func harnessOnDisk(root string) bool {
+	for _, file := range []string{reviewerFile, builderFile, SettingsFile} {
+		data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(file)))
+		if err != nil || (file == SettingsFile && !HasGuard(data)) {
+			return false
+		}
+	}
+	return true
 }
 
 // sentBack lists the items whose latest answer is wrong, with what the reviewer

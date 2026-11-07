@@ -56,8 +56,9 @@ func HasGuard(settings []byte) bool {
 	return len(covered) == len(GuardedCommands)
 }
 
-// namingFlags are the flags with which checklist begins work or names a change.
-var namingFlags = []string{"--start", "--full", "--base", "--findings"}
+// namingFlags are the flags with which checklist begins work or names a change,
+// with one dash, as Go's flags also take them, which covers two.
+var namingFlags = []string{"-start", "-full", "-base", "-findings"}
 
 // Guard is the project's hook before a shell command. Only the reviewer stores
 // answers, so an agent cannot mark its own work as done; and only the owner's
@@ -65,7 +66,8 @@ var namingFlags = []string{"--start", "--full", "--base", "--findings"}
 // cannot start over with its change as the owner's. Its input is what the
 // provider tells a hook, which names the agent a subagent's call comes from. It
 // needs no Run, since answer refuses anyway where none is open. It returns what
-// the hook prints, empty to let the command run.
+// the hook prints, empty to let the command run. It reads the command as text,
+// so it guards against mistakes, not against an agent that hides a command.
 func Guard(input []byte) []byte {
 	var in struct {
 		AgentType string         `json:"agent_type"`
@@ -76,6 +78,7 @@ func Guard(input []byte) []byte {
 		return nil
 	}
 	command, _ := in.ToolInput["command"].(string)
+	command = strings.Join(strings.Fields(command), " ")
 	switch {
 	case strings.Contains(command, "markitect answer") && in.AgentType != ReviewerAgent:
 		return deny(fmt.Sprintf("Only the %s agent answers the checklist. Start it, and it answers.", ReviewerAgent))

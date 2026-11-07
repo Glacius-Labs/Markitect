@@ -691,7 +691,7 @@ func TestGuardKeepsAgentsToTheWorkAsItIs(t *testing.T) {
 			"agent_id": agentID, "agent_type": agentType, "tool_name": "Bash", "tool_input": map[string]any{"command": command},
 		})))
 	}
-	for _, command := range []string{"markitect checklist --start", "cd . && markitect checklist --full", "markitect checklist --base x.json", "markitect checklist --findings f.md"} {
+	for _, command := range []string{"markitect checklist --start", "cd . && markitect checklist --full", "markitect checklist --base x.json", "markitect checklist --findings f.md", "markitect checklist -start", "markitect  checklist\t-base=x.json"} {
 		has(t, call("a1", run.BuilderAgent, command), `"permissionDecision":"deny"`, "Only the owner's session begins the work")
 		if out := call("", "", command); out != "" {
 			t.Fatalf("refused the owner's session %q: %s", command, out)
