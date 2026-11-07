@@ -42,7 +42,7 @@ type GateRequest struct {
 func (e *Engine) Gate(ctx context.Context, req GateRequest) (Verdict, error) {
 	req.SpecProblem = strings.TrimSpace(req.SpecProblem)
 	if modes := btoi(req.Verify) + btoi(req.Findings) + btoi(req.SpecProblem != ""); modes > 1 {
-		return Verdict{}, fmt.Errorf("%w: gate takes one of --verify, --findings and --spec-problem, not both", ErrUsage)
+		return Verdict{}, fmt.Errorf("%w: gate takes only one of --verify, --findings and --spec-problem", ErrUsage)
 	}
 	if open, err := e.openRun(ctx, req.Dir); err != nil {
 		return Verdict{}, err
@@ -89,22 +89,29 @@ func (e *Engine) Gate(ctx context.Context, req GateRequest) (Verdict, error) {
 	if len(links) > 0 {
 		return listed("A link may not leave the folder. Remove these, then run markitect gate again:", links), nil
 	}
-	// Row 5 comes first when the spec itself has errors: there is no list then.
+	// Row 5, check, comes first when the spec itself has errors: there is no list
+	// then.
 	if len(f.cur.SpecErrors()) > 0 {
 		return listed("markitect check fails on the work. Fix it, then run markitect gate again:", errorLines(f.cur)), nil
 	}
 	// Row 2: the builder's report of a spec problem waits for a reviewer, whatever
 	// else the work left; the report of this call is recorded first.
 	if req.SpecProblem != "" {
+		refusal := ""
 		if err := e.updateWork(f.root, func(stored *Work) (*Work, error) {
 			if stored == nil {
 				return nil, fmt.Errorf("%w: the work of %s went while gate ran", ErrUsage, f.root)
 			}
-			stored.report(req.SpecProblem, f.fingerprint)
+			if refusal = stored.refuseReport(f.fingerprint); refusal == "" {
+				stored.report(req.SpecProblem, f.fingerprint)
+			}
 			w = stored
 			return stored, nil
 		}); err != nil {
 			return Verdict{}, err
+		}
+		if refusal != "" {
+			return Verdict{Text: refusal}, nil
 		}
 	}
 	if w.openReport() != nil {
@@ -112,7 +119,8 @@ func (e *Engine) Gate(ctx context.Context, req GateRequest) (Verdict, error) {
 	}
 	if r := w.rejected(); r != nil && !r.Told && r.Answer.At == f.fingerprint {
 		// Said once, on the state the reviewer answered: a builder that built
-		// already goes on with gate.
+		// already goes on with gate. A review of that state that finds work
+		// missing uses no repair round either (rounds).
 		if err := e.updateWork(f.root, func(stored *Work) (*Work, error) {
 			if r := stored.rejected(); r != nil {
 				r.Told = true
@@ -152,7 +160,7 @@ func (e *Engine) Gate(ctx context.Context, req GateRequest) (Verdict, error) {
 	if len(f.cur.Errors) > 0 {
 		return listed("markitect check fails on the work. Fix it, then run markitect gate again:", errorLines(f.cur)), nil
 	}
-	// Row 7, the end: the repair rounds ran out.
+	// The end of row 7 comes before row 6: the repair rounds ran out.
 	rounds, sent := w.rounds()
 	if rounds > repairRounds {
 		file, err := e.writeResult(f, w, valid, StateRefused, "the repair rounds ran out, and these stay open: "+sent[len(sent)-1], nil)
@@ -167,7 +175,12 @@ func (e *Engine) Gate(ctx context.Context, req GateRequest) (Verdict, error) {
 	}
 	// Row 7: wrong answers go back, one round per reviewed state.
 	if wrong, _ := verdictsFor(w.Items, func(key string) Answer { return valid[key].Answer }, settleLean); len(wrong) > 0 {
-		return listed(fmt.Sprintf("The reviewer found these wrong (repair round %d of %d). Repair them, then run markitect gate again:", rounds, repairRounds), wrong), nil
+		round := fmt.Sprintf("repair round %d of %d", rounds, repairRounds)
+		if rounds == 0 {
+			// Only a review of the state the builder stopped on counts none.
+			round = "no repair round, since the builder had stopped on its report"
+		}
+		return listed(fmt.Sprintf("The reviewer found these wrong (%s). Repair them, then run markitect gate again:", round), wrong), nil
 	}
 	// Row 8: nothing left. The certificate goes into the folder, and the work is
 	// done; when nothing changed and the list is empty, there is nothing to
@@ -335,13 +348,16 @@ func (e *Engine) gateResult(w *Work, valid map[string]Given, stamp, state, why s
 		a := valid[it.Key]
 		r.Items = append(r.Items, ResultItem{Item: it.Key, Kind: it.Kind, Definition: it.Definition, Look: it.Look, Answer: a.Word, Pointers: a.Pointers, Explanation: a.Explanation})
 	}
-	// The builder's reports that a reviewer answered.
-	for _, rep := range w.Reports {
-		if a := rep.Answer; a != nil {
-			r.Items = append(r.Items, ResultItem{Item: ReportItem, Kind: ItemReport, Answer: a.Word, Pointers: a.Pointers, Explanation: a.Explanation})
-		}
-	}
 	sort.SliceStable(r.Items, func(i, j int) bool { return r.Items[i].Item < r.Items[j].Item })
+	// The builder's reports are no checklist items, so the certificate does not
+	// hold them; the Result page lists them with the reviewer's word.
+	for _, rep := range w.Reports {
+		rr := ResultReport{Reported: rep.Why}
+		if a := rep.Answer; a != nil {
+			rr.Answer, rr.Pointers, rr.Explanation = a.Word, a.Pointers, a.Explanation
+		}
+		r.Reports = append(r.Reports, rr)
+	}
 	return r
 }
 

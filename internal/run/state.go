@@ -219,7 +219,7 @@ func (e *Engine) workFor(f *folder, req ChecklistRequest, stored *Work) (w *Work
 	if stored != nil && req.namesChange() && len(f.changedOwn(stored)) == 0 && stored.Named && stored.Base == base && stored.Full == full && sameFindings(stored.Findings, req.Findings) {
 		return stored, "", nil
 	}
-	return &Work{Project: f.root, Base: base, Full: full, Findings: findings, Named: named, Spec: f.specHashes(), Certificates: f.certs, Answers: map[string]Given{}, Began: e.now()}, "", nil
+	return &Work{Project: f.root, Base: base, Full: full, Findings: findings, Named: named, Review: req.Review, Spec: f.specHashes(), Certificates: f.certs, Answers: map[string]Given{}, Began: e.now()}, "", nil
 }
 
 // restartText says that what the work may not change changed under it. An agent

@@ -190,6 +190,7 @@ Beside the Run, and to be tried before it goes, these work without one and witho
 | `markitect gate` | Checks the work, as `submit` does in a Run, and prints the one next step: exit 1. When it passes, writes a certificate (the hashes of every file and Definition, and the spec's text) and its Result under `.markitect/results/`, and exits 0. It commits nothing: the driver commits the work together with both. |
 | `markitect gate --verify` | Checks that the folder matches its newest certificate, and names the files that do not. |
 | `markitect gate --findings` | Closes a review of finished work: writes its Result and its Findings page under `.markitect/results/`, and no certificate. |
+| `markitect gate --spec-problem WHY` | The builder reports that the spec contradicts itself or leaves open behaviour at the project's boundary. A reviewer confirms it before the owner hears of it, and it uses no repair round ([the builder's report](../../internal/run/README.md#without-a-run-gate)). |
 | `markitect status` | Also says, when no Run is open, how the answers stand for the files as they are, and which files differ from the newest certificate. Changes nothing of that. |
 
 

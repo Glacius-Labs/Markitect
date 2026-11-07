@@ -32,6 +32,8 @@ type Work struct {
 	// Named says checklist was given the base, --full or Findings; otherwise the
 	// work follows the newest certificate.
 	Named bool `json:"named,omitempty"`
+	// Review says a review began the work, of finished work: it has no builder.
+	Review bool `json:"review,omitempty"`
 	// Spec holds the hashes of the spec and the harness when the work began; the
 	// work may not change them.
 	Spec map[string]string `json:"spec"`
@@ -109,6 +111,31 @@ func (w *Work) rejected() *Report {
 		return &w.Reports[n-1]
 	}
 	return nil
+}
+
+// refuseReport says why the builder may not report a spec problem on a state, or
+// "" when it may. A review of finished work has no builder; a report on the state
+// a reviewer found no spec problem on comes back unchanged; and after as many
+// turned-down reports as the work has repair rounds, the builder builds, while a
+// reviewer of the work can still answer spec problem. So the reports stay bounded,
+// though none uses a round.
+func (w *Work) refuseReport(at string) string {
+	rejected := 0
+	for _, r := range w.Reports {
+		if r.Answer != nil && r.Answer.Word == AnswerWrong {
+			rejected++
+		}
+	}
+	last := w.rejected()
+	switch {
+	case w.Review:
+		return "This work is a review of finished work, which has no builder, so nothing is reported. A reviewer answers spec problem on the item itself.\n"
+	case last != nil && last.Answer.At == at:
+		return fmt.Sprintf("A reviewer found no spec problem in what was reported on the folder as it is: %s\n\nBuild the work as the spec says before you report again, and put every problem you see into one report. Then run markitect gate again.\n", oneLine(last.Answer.Explanation))
+	case rejected >= repairRounds:
+		return fmt.Sprintf("Reviewers found no spec problem in %d reports, the most the work takes. Build the work as the spec says, then run markitect gate again; a reviewer of the work can still answer spec problem.\n", rejected)
+	}
+	return ""
 }
 
 // report records the builder's report on a state. A report that no reviewer has
@@ -301,11 +328,19 @@ func (w *Work) review(at string, valid map[string]Given) {
 
 // rounds counts the finished reviews that sent something wrong back, which are the
 // repair rounds, and says what each went back for. A review with a spec problem
-// sent nothing back: the owner decides first.
+// sent nothing back: the owner decides first. Nor does a review of the state on
+// which a reviewer turned down the builder's report: the builder had stopped, and
+// was told to build.
 func (w *Work) rounds() (int, []string) {
+	stopped := map[string]bool{}
+	for _, r := range w.Reports {
+		if r.Answer != nil && r.Answer.Word == AnswerWrong {
+			stopped[r.Answer.At] = true
+		}
+	}
 	var sent []string
 	for _, r := range w.Reviews {
-		if len(r.Wrong) > 0 && len(r.SpecProblems) == 0 {
+		if len(r.Wrong) > 0 && len(r.SpecProblems) == 0 && !stopped[r.At] {
 			sent = append(sent, strings.Join(r.Wrong, "; "))
 		}
 	}

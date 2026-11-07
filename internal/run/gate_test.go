@@ -611,7 +611,7 @@ func TestGateABuildersReportConfirmed(t *testing.T) {
 	has(t, v.Text, "only the owner can settle", "may a member hold a sixth loan", contradiction)
 	pages := p.results(".md")
 	page := p.read(pages[len(pages)-1])
-	has(t, page, ": spec-problem", "Decisions for the owner", "| reported problem | spec problem |")
+	has(t, page, ": spec-problem", "Decisions for the owner", "## The builder's reports of a spec problem", "| "+contradiction+" | confirmed | .markitect/model/loan-limit.md:3 |")
 	if strings.Contains(page, "Repair rounds") {
 		t.Fatalf("a round was counted:\n%s", page)
 	}
@@ -655,10 +655,73 @@ func TestGateABuildersReportRejected(t *testing.T) {
 	}
 	pages := p.results(".md")
 	page := p.read(pages[len(pages)-1])
-	has(t, page, ": passed", "| reported problem | wrong |")
-	if strings.Contains(page, "Repair rounds") {
-		t.Fatalf("a round was counted:\n%s", page)
+	has(t, page, ": passed", "| "+contradiction+" | turned down |")
+	if strings.Contains(page, "Repair rounds") || strings.Contains(page, "| reported problem |") {
+		t.Fatalf("a round was counted, or the report is a checklist item:\n%s", page)
 	}
+	certs := p.results(".json")
+	if cert := p.read(certs[len(certs)-1]); strings.Contains(cert, run.ReportItem) {
+		t.Fatalf("the certificate holds the report:\n%s", cert)
+	}
+}
+
+// The reports stay bounded, though none uses a repair round: the state a reviewer
+// turned one down on takes no second, and two turned down are the most; a review
+// of the state the builder stopped on uses no round either.
+func TestGateTheBuildersReportsAreBounded(t *testing.T) {
+	p := newPlain(t)
+	p.certify()
+	p.specChange()
+	p.list(run.ChecklistRequest{})
+	p.gate(run.GateRequest{SpecProblem: contradiction})
+	p.answer("reported problem: wrong -- it says 3")
+	has(t, p.gate(run.GateRequest{SpecProblem: "another reading"}).Text, "found no spec problem in what was reported on the folder as it is", "it says 3", "one report")
+	if text := p.list(run.ChecklistRequest{Review: true}); strings.Contains(text, "another reading") {
+		t.Fatalf("the report was recorded:\n%s", text)
+	}
+	// The builder ended without building, and the driver's gate asks for a
+	// review, which finds the work missing: no round.
+	has(t, p.gate(run.GateRequest{}).Text, "found no spec problem")
+	has(t, p.gate(run.GateRequest{}).Text, run.ReviewerAgent)
+	p.review(map[string]string{"loan-limit": "wrong src/members/loans/loan.go:3 -- nothing built"})
+	has(t, p.gate(run.GateRequest{}).Text, "no repair round, since the builder had stopped")
+
+	p.write("src/members/loans/loan.go", "package loans\n\nconst Limit = 4\n")
+	has(t, p.gate(run.GateRequest{SpecProblem: "a second problem"}).Text, run.ReviewerAgent)
+	p.answer("reported problem: wrong -- still 3")
+	p.write("src/members/loans/loan.go", "package loans\n\nconst Limit = 6\n")
+	has(t, p.gate(run.GateRequest{SpecProblem: "a third problem"}).Text, "in 2 reports, the most the work takes", "can still answer spec problem")
+	// A review of the work may still find one.
+	p.review(map[string]string{"loan-limit": "spec problem -- 3 or 6?"})
+	has(t, p.gate(run.GateRequest{}).Text, "only the owner can settle", "3 or 6?")
+}
+
+// A report changes no rule of the repair rounds: made on the second round it does
+// not end the work, and the owner's change of the spec begins the work afresh,
+// without the confirmed report.
+func TestGateABuildersReportAndTheRounds(t *testing.T) {
+	p := newPlain(t)
+	first := p.certify()
+	p.specChange()
+	wrong := map[string]string{"loan-limit": "wrong src/members/loans/loan.go:3 -- still says 5"}
+	p.review(wrong)
+	p.write("src/members/loans/loan.go", "package loans\n\nconst Limit = 4\n")
+	p.review(wrong)
+	has(t, p.gate(run.GateRequest{}).Text, "repair round 2 of 2")
+	has(t, p.gate(run.GateRequest{SpecProblem: contradiction}).Text, run.ReviewerAgent)
+	p.answer("reported problem: spec problem -- 5 or 6?")
+	has(t, p.gate(run.GateRequest{}).Text, "only the owner can settle", "5 or 6?")
+
+	p.write(m+"loan-limit.md", def("std/Rule", "Loan limit", "At most `3` open loans; a sixth is never lent."))
+	has(t, p.list(run.ChecklistRequest{Base: first}), "Make this project match the spec")
+	has(t, p.gate(run.GateRequest{}).Text, run.ReviewerAgent, "no answer for the files as they are now")
+
+	// A review of finished work has no builder to report.
+	q := newPlain(t)
+	q.certify()
+	q.write("src/members/loans/loan.go", "package loans\n\nconst Limit = 9\n")
+	q.list(run.ChecklistRequest{Review: true, Start: true, Full: true})
+	has(t, q.gate(run.GateRequest{SpecProblem: contradiction}).Text, "review of finished work", "nothing is reported")
 }
 
 // A report on a state the builder changed after the review goes straight on; a

@@ -481,7 +481,7 @@ func TestGateThroughTheCommandLine(t *testing.T) {
 	if code, _, errOut := run(t, r.Dir, "checklist", "--base", "nosuch.json"); code != 2 || !strings.Contains(errOut, "is no certificate") {
 		t.Fatalf("checklist --base nosuch.json: %d %s", code, errOut)
 	}
-	if code, _, errOut := run(t, r.Dir, "gate", "--verify", "--findings"); code != 2 || !strings.Contains(errOut, "not both") {
+	if code, _, errOut := run(t, r.Dir, "gate", "--verify", "--findings"); code != 2 || !strings.Contains(errOut, "only one of") {
 		t.Fatalf("gate --verify --findings: %d %s", code, errOut)
 	}
 }

@@ -42,7 +42,7 @@ Within `internal/run`, the run lifecycle (`engine.go`, 640 lines), `submit` (530
 | `install`, `update`, `version`, `licenses` | Setup and upgrade | `update` writes and commits nothing |
 | `checklist [--base RESULT] [--full] [--findings FILE] [--review]` | The list for the change between the newest certificate and the folder; `--review` prints the reviewer's task | Needs no open run |
 | `answer [FILE]` | Stores a reviewer's answers for the folder's current state; each pointer must exist in the current files | Bound to the files it points at, not to a run |
-| `gate [--verify] [--findings]` | The checks below; writes the certificate | New, replaces `submit` |
+| `gate [--verify] [--findings] [--spec-problem WHY]` | The checks below; writes the certificate; `--spec-problem` is the builder's report (decision 7) | New, replaces `submit` and `stop` |
 | `hook pretool` | Only the reviewer may store answers | None |
 | `status` | Read-only: the answers for the current state, and the files that changed since the newest certificate | No run to report on |
 

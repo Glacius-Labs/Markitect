@@ -66,7 +66,10 @@ type Result struct {
 	Full   bool   `json:"full"`
 
 	// Items holds each item's latest answer.
-	Items          []ResultItem    `json:"items"`
+	Items []ResultItem `json:"items"`
+	// Reports are the spec problems the builder reported, with the reviewer's
+	// word on each.
+	Reports        []ResultReport  `json:"reports,omitempty"`
 	OwnerDecisions []OwnerDecision `json:"ownerDecisions"`
 	Findings       []ResultFinding `json:"findings"`
 	// Unsettled lists what verify found that names no Definition, such as an
@@ -123,6 +126,16 @@ type ResultItem struct {
 	Definition string   `json:"definition,omitempty"`
 	Look       []string `json:"look,omitempty"`
 	// Answer is empty when no review answered it.
+	Answer      string    `json:"answer,omitempty"`
+	Pointers    []Pointer `json:"pointers,omitempty"`
+	Explanation string    `json:"explanation,omitempty"`
+}
+
+// ResultReport is a spec problem the builder reported, and the reviewer's answer:
+// "spec problem" confirmed it, "wrong" found that the spec settles it, and none
+// means no reviewer has answered yet.
+type ResultReport struct {
+	Reported    string    `json:"reported"`
 	Answer      string    `json:"answer,omitempty"`
 	Pointers    []Pointer `json:"pointers,omitempty"`
 	Explanation string    `json:"explanation,omitempty"`
