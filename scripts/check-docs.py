@@ -31,6 +31,7 @@ DEFAULT_DOCUMENTS = (
     "docs/README.md",
     "docs/guides/project-workflow.md",
     "docs/guides/model-language.md",
+    "docs/guides/good-spec.md",
     "docs/architecture.md",
     "docs/development/repository-layout.md",
     "docs/implementation-plan.md",

@@ -1498,7 +1498,7 @@ These entries record agreed or endorsed direction. Recording an enhancement does
 | ID | Question | Related |
 |---|---|---|
 | OQ-001 | How can dependency observation work across languages and file types, and how is its own coverage reported? | [ENH-001](#enh-001-observed-code-dependencies-widen-impact) |
-| OQ-002 | Which metrics and thresholds show that a model is too fine or too coarse? | [ENH-002](#enh-002-model-quality-linter-and-metrics), [DEC-005](#dec-005-model-granularity-is-the-authors-responsibility) |
+| OQ-002 | Which metrics and thresholds show that a model is too fine or too coarse? Partial answer, proposed on 7 November 2026 and not decided: [measurements](../validation/spec-design-measures-20261107.md) on the archived Makerspace specs, a [guide to a good spec](../guides/good-spec.md), and a [`vet` plan](vet-plan.md) with measures, provisional thresholds and a recommendation against declaring layers in Kinds, for the owner's decision. | [ENH-002](#enh-002-model-quality-linter-and-metrics), [DEC-005](#dec-005-model-granularity-is-the-authors-responsibility) |
 | OQ-003 | Which model tiers suffice for which roles, and does total cost actually fall? | [ASM-003](#assumptions-and-hypotheses), [ENH-004](#enh-004-per-role-agent-configuration-and-model-mixing) |
 | OQ-004 | How much independence does a different reviewer model add beyond fresh context? | [ASM-005](#assumptions-and-hypotheses) |
 | OQ-005 | Should evaluation focus on a series of changes on a long-lived project? If so, what ground truth makes "nothing forgotten" measurable there, for example predeclared affected sets, seeded cross-cutting rules and hidden holdout checks? | [DEC-009](#dec-009-the-central-evaluation-question), [PRM-001](#promises) |

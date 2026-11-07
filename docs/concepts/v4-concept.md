@@ -141,7 +141,7 @@ A spec is judged like code ([founding intent](sources/founding-intent-20261026.m
 | Size against what tests cover | CRAP | Large, unverified Definitions | Later: needs tests bound to Definitions ([ENH-003](register.md#enh-003-test-to-statement-binding-and-test-review)) |
 | The spec's dependencies against the code's imports | Architecture tests | Code that has drifted from the design | Later |
 
-**Package cycles stay a compile error**, as in Go. The details of `vet`, its further measures and thresholds, are still to be discussed with the owner; [the model language guide](../guides/model-language.md#vet-warnings) lists what it warns about today.
+**Package cycles stay a compile error**, as in Go. The details of `vet`, its further measures and thresholds, are still to be discussed with the owner; [the model language guide](../guides/model-language.md#vet-warnings) lists what it warns about today, [what makes a good spec](../guides/good-spec.md) says what each measure is for, and the [`vet` plan](vet-plan.md) proposes the rest.
 
 **What this finds on Makerspace, measured on 4 November.** Following every link reached over 85 % of the spec on four of its eight change steps. That looked like a ball of mud, and at the Package level it is not one: there are no Package cycles, dependencies point towards a stable core, and a typical Definition reaches 8 of 113. But it does show a real design smell:
 
@@ -152,7 +152,7 @@ A spec is judged like code ([founding intent](sources/founding-intent-20261026.m
 | Definitions reaching over half the spec | 9, all at Root | 17, of which 15 at Root |
 | Worst reach if the top three hubs pass nothing on | 46 | 188 |
 
-`values` is one page of thirteen unrelated value formats, and most links to it name no format. A Definition that uses only dates still depends, on paper, on the format of money. Treating the top three hubs as stopping points brings the four steps that reached 85 to 88 % down to between 9 and 38 %. In code this would be a `utils` file, and the remedy would be to split it. Whether splitting it really narrows reach, and whether that helps agents, is untested: cutting hubs in a calculation is not the same as a better spec.
+`values` is one page of thirteen unrelated value formats, and most links to it name no format. A Definition that uses only dates still depends, on paper, on the format of money. Treating the top three hubs as stopping points brings the four steps that reached 85 to 88 % down to between 9 and 38 %. In code this would be a `utils` file, and the remedy would be to split it. Whether splitting it really narrows reach, and whether that helps agents, was untested: cutting hubs in a calculation is not the same as a better spec. On 7 November 2026 `values` was split into one Definition per format on every step of both projects ([measurement](../validation/spec-design-measures-20261107.md)). A change to one format then lists between 1 and 50 Definitions instead of 61. What the real change steps put back on the list stays the same, since none changed a format, while following every link the four Makerspace steps fall to between 45 and 60 %. Whether that helps agents is still untested.
 
 **What analysis can't say:** whether the spec is right. No threshold has been checked against outcomes yet, so a clean report doesn't show that a spec leads to better work.
 
