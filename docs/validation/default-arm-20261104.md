@@ -1,6 +1,6 @@
 # The default through the suite, and its first build at 5×, 4 November 2026
 
-Step U4 of the [delivery plan](../implementation-plan.md#concept-30-build) starts here: the default of [concept 3.0](../concepts/v3-concept.md) run as the suite's [arm](../../tools/evaluation/README.md#the-concept-30-arm), on real sessions, with the hidden cases judging the result. Test 1 and test 2 both start from the default's own W0 of the [large Makerspace](../../tools/makerspace-large/README.md), so that build comes first. The default built the 5× project on its first launch and passed all 327 hidden cases. This is one launch, not a rate.
+Step U4 of the [delivery plan](../implementation-plan.md#concept-30-build) starts here: the default of [concept 3.0](../concepts/v3-concept.md) run as the suite's [arm](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/README.md#the-concept-30-arm), on real sessions, with the hidden cases judging the result. Test 1 and test 2 both start from the default's own W0 of the [large Makerspace](../../tools/makerspace-large/README.md), so that build comes first. The default built the 5× project on its first launch and passed all 327 hidden cases. This is one launch, not a rate.
 
 ## Questions
 
@@ -31,7 +31,7 @@ For both:
 | Abort | A login failure, the token found in the evidence, an escape, a Command past its deadline, or the weekly rise past 10 points, at which the runner is stopped by hand |
 | Lock | `NATIVE-RUN.lock` in the shared notes folder, taken by the suite. Other Docker work is checked first and stays off |
 | Cleanup | The Command removes its container and volumes and the suite its network and gateway; afterwards nothing labelled with the evaluation may remain |
-| Evidence | Outside the repository, in `%LOCALAPPDATA%/markitect-default/`: the runner's work folder. Part B's launch also goes into the [lasting store](../../tools/evaluation/kept.py) |
+| Evidence | Outside the repository, in `%LOCALAPPDATA%/markitect-default/`: the runner's work folder. Part B's launch also goes into the [lasting store](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/kept.py) |
 
 ## Results
 
@@ -49,7 +49,7 @@ All from the frozen source `4db73a3bef0c`, on `claude-sonnet-5-5` at effort `hig
 
 **Q3, the cost.** 3.43 times K's W0 on Sonnet, in the provider's own relative figure, and 58 minutes against K's 37. The implementer cost 1.88 times K and the 51 reviewers 1.56 times. S's W0 cost 4.76 times K. The weekly reading rose from 0 to 2. That window is the token's, which resets on 11 November at 09:00, and it is not the window of the runner's login that the earlier launches report, so the 2 cannot be set beside their figures. The implementer took 43 minutes, and the 51 reviewers spent 69 session-minutes, 8 at a time.
 
-**A correction.** This page first said 5.32 times K. That sum counted a resumed session's running total a second time: a repair continues the implementer's session, and its closing record repeats everything before it. A review of test 1's tools found this. The kept launch's record still says 49.21, since a kept launch never changes; [`kept.py`](../../tools/evaluation/kept.py) now counts each session once, and the [page builder](../../tools/evaluation/side_by_side.py) counts a kept Command's cost again from its transcripts. S's and K's figures are unchanged: none of their sessions resumes.
+**A correction.** This page first said 5.32 times K. That sum counted a resumed session's running total a second time: a repair continues the implementer's session, and its closing record repeats everything before it. A review of test 1's tools found this. The kept launch's record still says 49.21, since a kept launch never changes; [`kept.py`](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/kept.py) now counts each session once, and the [page builder](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/side_by_side.py) counts a kept Command's cost again from its transcripts. S's and K's figures are unchanged: none of their sessions resumes.
 
 **Q4, what the Result shows.**
 

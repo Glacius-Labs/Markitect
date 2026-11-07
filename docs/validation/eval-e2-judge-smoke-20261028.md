@@ -2,7 +2,7 @@
 
 **Status: approved and run on 28 October 2026, passed ([results](#results)).** The owner approved this page as written on PR #830 in the E2 session: "Approve, run it". The independent review's findings were applied first; the reviewed head `REV` is `06d4b691ebbc3932c9f2af375dd9f4e8d4f5167b`.
 
-This smoke checks increment E2 of [evaluation suite v2](../design/evaluation-suite-v2.md#increments) on this machine (Windows, Docker Desktop's Linux engine): (a) the Library judge passes its reference result and fails its seeded mutants in its container; (b) the [E1 smoke](eval-e1-sandbox-smoke-20261028.md)'s runs k-02 and k-03 are judged, (c) reviewed and (e) reported per area; and (d) one K run in the sandbox confirms the capture fix that followed k-01. It is a smoke, not a counted evaluation: no comparison is drawn from it. k-01 is not judged: K's capture defect left its result incomplete.
+This smoke checks increment E2 of [evaluation suite v2](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/docs/design/evaluation-suite-v2.md#increments) on this machine (Windows, Docker Desktop's Linux engine): (a) the Library judge passes its reference result and fails its seeded mutants in its container; (b) the [E1 smoke](eval-e1-sandbox-smoke-20261028.md)'s runs k-02 and k-03 are judged, (c) reviewed and (e) reported per area; and (d) one K run in the sandbox confirms the capture fix that followed k-01. It is a smoke, not a counted evaluation: no comparison is drawn from it. k-01 is not judged: K's capture defect left its result incomplete.
 
 ## What runs
 
@@ -12,7 +12,7 @@ This smoke checks increment E2 of [evaluation suite v2](../design/evaluation-sui
 | Judge | `tools/evaluation-judges/library-m1`, exported once from `REV` with `judges.py export --rev REV`; its `judge.json` and folder digest are recorded |
 | Judge image | `golang@sha256:69a7b9788769bec032d238959b61854e9ae87f57be9029ec04e9885fabf99195` (`golang:1.27.1-bookworm`), already on this engine as the sandbox's build stage; nothing is pulled |
 | Sandbox image | `sha256:e0b20d8a8c88a0a4b37f151af45618e764f8687b023b10bcb6d3b5148c5e5dad`, the E1 image. `tools/evaluation/sandbox/` is unchanged since it was built (`git diff 4f7cf4d5 REV -- tools/evaluation/sandbox` is empty) |
-| Series configuration | [`tools/evaluation/sandbox/series.json`](../../tools/evaluation/sandbox/series.json), as in E1 |
+| Series configuration | [`tools/evaluation/sandbox/series.json`](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/sandbox/series.json), as in E1 |
 | Model | `claude:claude-sonnet-5-5` for K and for every reviewer ([owner, 28 October](../workstreams/build.md#decisions)) |
 | Login | The owner's Claude subscription login, copied per session without its refresh token and mounted read-only; never an API key. The operator checks before each provider step that it outlives the step's deadline plus 300 s |
 | Task | `EVAL\library-m1-task`, the E1 task, unchanged (`intentSha256` `35d93641…2e5156`) |

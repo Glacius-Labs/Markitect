@@ -84,6 +84,6 @@ For every launch, each other `wrong` is read against the spec and the code: **re
 | Abort | A login failure, the token found in the evidence, an escape, or the weekly rise past 30 points, at which the runner is stopped by hand. The runner's own stop stands at a weekly reading of 90 |
 | Lock | `NATIVE-RUN.lock` in the shared notes folder, taken by the suite. Other Docker work is checked first and stays off |
 | Cleanup | The Command removes its container and volumes and the suite its network and gateway; afterwards nothing labelled with the evaluation may remain |
-| Evidence | Outside the repository, in `%LOCALAPPDATA%/markitect-test1/`: the runner's work folder, the submissions and the bug list. Each launch that counts goes into the [lasting store](../../tools/evaluation/kept.py) with its Result |
+| Evidence | Outside the repository, in `%LOCALAPPDATA%/markitect-test1/`: the runner's work folder, the submissions and the bug list. Each launch that counts goes into the [lasting store](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/kept.py) with its Result |
 
 **What this can't show.** It uses one program and one set of bugs, and the bugs come from the blind spots of that program's own tests. A real implementer's mistakes may look different. It checks a whole program at rest, not a change, so test 2 is where reviewing a change gets its evidence.

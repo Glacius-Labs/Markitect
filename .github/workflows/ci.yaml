@@ -81,8 +81,6 @@ jobs:
       - name: Check independent library oracle and bounded transport
         run: python -B -m unittest discover -s tools/library-oracle
 
-      # tools/evaluation drives the engine kept on archive/main-concept-3-20261106
-      # and is not run on this version (draft concept 4.0, section 16, question 7).
       - name: Test comparison and Makerspace oracle tools
         shell: bash
         run: |

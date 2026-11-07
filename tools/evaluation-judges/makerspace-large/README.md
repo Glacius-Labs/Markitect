@@ -1,6 +1,6 @@
 # Large Makerspace judge
 
-The hidden series judge of the [large Makerspace](../../makerspace-large/README.md), a source for [`judges.py export`](../../evaluation/judges.py). It has the areas of the [Makerspace judge](../makerspace/README.md), for step W0 and the [change steps](../../makerspace-large/CHANGES.md) C1 to C8.
+The hidden series judge of the [large Makerspace](../../makerspace-large/README.md), a source for [`judges.py export`](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/judges.py). It has the areas of the [Makerspace judge](../makerspace/README.md), for step W0 and the [change steps](../../makerspace-large/CHANGES.md) C1 to C8.
 
 | Path | Content |
 | --- | --- |
@@ -14,6 +14,8 @@ The hidden series judge of the [large Makerspace](../../makerspace-large/README.
 - **Scope and drift:** as the Makerspace judge. The task asks for `realization/` only.
 
 The mutants here test the judge's areas. The strength of the cases themselves is measured by the 89 seeded bugs of [calibrate.py](../../makerspace-large/oracle/calibrate.py), which run on the machine without a container.
+
+The runner these commands use, `tools/evaluation`, was removed on 7 November 2026 ([archive](../../../docs/archive.md#removed-with-the-evaluation-runner)); run them in a checkout of `2fd2d337`.
 
 Self-test in the container, under an approved dispatch:
 

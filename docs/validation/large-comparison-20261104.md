@@ -181,11 +181,11 @@ Read this last.
 
 ## How it was made
 
-**Kept.** Each launch is in the [lasting store](../../tools/evaluation/kept.py) in `%LOCALAPPDATA%/markitect-kept/`, with its final repository, transcripts, records and cost, and the store's check passes. The weekly figures are the runner's reading from the launches' records; the Haiku lead's launch has none recorded here.
+**Kept.** Each launch is in the [lasting store](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/kept.py) in `%LOCALAPPDATA%/markitect-kept/`, with its final repository, transcripts, records and cost, and the store's check passes. The weekly figures are the runner's reading from the launches' records; the Haiku lead's launch has none recorded here.
 
-**Measured.** [`measure.py`](../../tools/evaluation/measure.py) ran on each kept repository with Go 1.27.1, `staticcheck` v0.8.2 and `deadcode` from x/tools v0.52.0.
+**Measured.** [`measure.py`](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/measure.py) ran on each kept repository with Go 1.27.1, `staticcheck` v0.8.2 and `deadcode` from x/tools v0.52.0.
 
-**Read.** Six sessions of [`blind_read.py`](../../tools/evaluation/blind_read.py), one attempt each, all with valid answers and only `claude-opus-5-5` answering. They took 77 to 179 seconds each. The runner's weekly reading was 22 after each of them and 21 after the last launch before them, so together they used about a point at most, against an expected 3 to 6. No session reports a reading from before its start, so nothing closer can be said. No credential shape is in the evidence, and nothing labelled with the evaluation remained.
+**Read.** Six sessions of [`blind_read.py`](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/blind_read.py), one attempt each, all with valid answers and only `claude-opus-5-5` answering. They took 77 to 179 seconds each. The runner's weekly reading was 22 after each of them and 21 after the last launch before them, so together they used about a point at most, against an expected 3 to 6. No session reports a reading from before its start, so nothing closer can be said. No credential shape is in the evidence, and nothing labelled with the evaluation remained.
 
 **Failed starts.** Before the first session, the wrapper started twice and failed: the tool read a missing default for the suite's series, and then the frozen source lacked `tools/library-oracle`, which the suite's reader imports. No session ran in either. Both are fixed: the default in the tool, the second by freezing the whole `tools/` folder.
 

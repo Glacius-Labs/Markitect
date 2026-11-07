@@ -2,7 +2,7 @@
 
 **Status: run on 28 October 2026, passed, with one defect in K's capture found, fixed and confirmed by a fourth run ([results](#results)).** The owner approved it in the Build session the same day: "I approve, complete the sandbox if you think it will do". It replaces the [host smoke](eval-k-library-smoke-20261028.md), which was never run.
 
-This smoke checks increment E1 of [evaluation suite v2](../design/evaluation-suite-v2.md#increments) on this machine (Windows, Docker Desktop's Linux engine): (a) the escape probe finds the sandbox closed, and (b) the baseline K delivers in three Library runs in a row inside the sandbox. It is a smoke, not a counted evaluation: no comparison is drawn from it.
+This smoke checks increment E1 of [evaluation suite v2](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/docs/design/evaluation-suite-v2.md#increments) on this machine (Windows, Docker Desktop's Linux engine): (a) the escape probe finds the sandbox closed, and (b) the baseline K delivers in three Library runs in a row inside the sandbox. It is a smoke, not a counted evaluation: no comparison is drawn from it.
 
 ## What runs
 
@@ -10,7 +10,7 @@ This smoke checks increment E1 of [evaluation suite v2](../design/evaluation-sui
 |---|---|
 | Source | `tools/evaluation` at the `main` commit that carries this page |
 | Image | Built from that commit with `docker build -t markitect-eval-sandbox tools/evaluation/sandbox`; the operator records its image ID (`docker image inspect --format "{{.Id}}"`) here before the first run and passes it as `IMAGE_ID`. A pre-merge build of the reviewed PR source had `sha256:e0b20d8a…c5e5dad`; image IDs differ between builds |
-| Series configuration | [`tools/evaluation/sandbox/series.json`](../../tools/evaluation/sandbox/series.json): 8 CPUs, 16 GiB memory without swap, 4,096 processes, 8 GiB `/tmp`; egress for Claude only to `api.anthropic.com` |
+| Series configuration | [`tools/evaluation/sandbox/series.json`](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/sandbox/series.json): 8 CPUs, 16 GiB memory without swap, 4,096 processes, 8 GiB `/tmp`; egress for Claude only to `api.anthropic.com` |
 | Model | `claude:claude-sonnet-5-5` ([owner, 28 October](../workstreams/build.md#decisions)) |
 | Login | The owner's Claude subscription login (`%USERPROFILE%\.claude\.credentials.json`), copied per run without its refresh token and mounted read-only; never an API key. The suite refuses a run unless the login outlives the deadline plus 300 s (3,000 s); the operator checks the expiry before each run |
 | Claude Code | 2.1.308 in the image, the runtime image's pin |

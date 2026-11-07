@@ -11,7 +11,7 @@ Does the Makerspace chain's first step, W0, a fresh build of the whole Makerspac
 | Item | Value |
 | --- | --- |
 | Source | Branch `dev/t8-merged-state-checks` at `d5d76b8e` (reviewed; this page and the plan row were added after the run). `markitect.exe`, `markitect-remote` (Linux, amd64), the Manager image, the Go Manager image and the sandbox image are built from it under the lock; the suite's `tools/` tree is frozen from it by `git archive` |
-| Arm | M only: [markitect_arm.py](../../tools/evaluation/README.md#the-concept-30-arm) under `suite.py chain --native`, the Makerspace chain with the one step W0, as the pilot ran it; `claude:claude-sonnet-5-5`, effort `high`, the account login only, never an API key, every `ANTHROPIC_*` and `CLAUDE_*` variable removed |
+| Arm | M only: [markitect_arm.py](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/README.md#the-concept-30-arm) under `suite.py chain --native`, the Makerspace chain with the one step W0, as the pilot ran it; `claude:claude-sonnet-5-5`, effort `high`, the account login only, never an API key, every `ANTHROPIC_*` and `CLAUDE_*` variable removed |
 | Runner | The pilot's runner (`t7/pilot.py` in Build's notes folder, unchanged) with a one-unit configuration: prepare, one launch, judge W0 with the Makerspace series judge exported at the source, report. No review sample |
 | Deadline | 5400 s, the pilot's Makerspace deadline |
 | Limits | The host's: 200 agent starts, 6 maker and 6 checker starts per Manager, one hour per start; each Manager container 1 CPU, 2 GiB, 256 processes; the remote 2 CPUs, 4 GiB, 1,024 processes. One launch; one relaunch only if the suite classes it void |
