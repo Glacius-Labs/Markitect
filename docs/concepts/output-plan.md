@@ -22,9 +22,9 @@ Today the commands are named after Markitect's own ideas (`check`, `impact`, `ch
 |---|---|---|---|
 | `markitect init` | Sets up the project, its harness and its lock | `terraform init` | `init` |
 | `markitect validate` | Compiles the spec: Kinds, links, Packages, Libraries against the lock. Like `terraform validate`, it looks at the configuration and not at the real state | `terraform validate` | `check --spec` |
-| `markitect plan` | What differs between the spec and the folder since the newest certificate: what is to be built, changed and removed, what to settle, and where to look. That includes the realization's errors, such as an unlisted file, a stale registry row or an unused Definition, and every file that differs from the certificate in no item. So an empty plan means the folder matches its certificate. `--base CERTIFICATE`, `--full` and `--findings FILE` name another change | `terraform plan` | `impact`, `checklist`'s list, the rest of `check`, and `gate --verify` |
+| `markitect plan` | What differs between the spec and the folder since the newest certificate: what is to be built, changed and removed, what to settle, and where to look. That includes the realization's errors, such as an unlisted file, a stale registry row or an unused Definition, and every other file that differs from the certificate, the owner's files included: the manifest, the harness, a `.gitignore` file. So an empty plan means the folder matches its certificate, and a Go test holds the two to the same answer. `--base CERTIFICATE`, `--full` and `--findings FILE` name another change | `terraform plan` | `impact`, `checklist`'s list, the rest of `check`, and `gate --verify` |
 | `/markitect-apply` | Makes the project match the spec: the skill starts the builder and the reviewer in the owner's session | `terraform apply` | the same skill |
-| `markitect status` | Whether work is under way and how it stands, and whether the binary and the harness are current | `terraform state`, `git status` | `status`, `version`'s status lines |
+| `markitect status` | Whether work is under way and its phase, with when that was recorded, and whether the binary and the harness are current | `git status` | `status`, `version`'s status lines |
 | `markitect describe DEFINITION` | A Definition with its text, what links to it, what it links to, and the files that realize it | `kubectl describe` | `refs` |
 | `markitect graph` | The Package graph | `terraform graph` | `graph` |
 | `markitect lint` | Measures the spec's design. It only warns | `tflint` | `lint`, to become `analyze` ([concept 4.0 §4](v4-concept.md#4-is-the-spec-good)) |
@@ -101,7 +101,9 @@ The work under way is described the way kubectl describes an object: by its phas
 | `Building` | `work start`, `work gate` | The builder has work. That is the start, what a review sent back, or what `gate` refused: a changed spec or harness to put back, a file in no item, an error in the realization | Starts `markitect-builder` with "Build the work." |
 | `Reviewing` | `work gate`, `work report` | Items have no answer for the files as they are, or a report waits for a reviewer | Starts `markitect-reviewer` with "Review the work." |
 | `Reviewed` | `work answer` | Every item has an answer, and `gate` has not run on it yet | Runs `markitect work gate` |
-| `NeedsOwner` | `work start`, `work gate` | A spec problem, or a spec that does not compile | Tells the owner, with the question |
+| `NeedsOwner` | `work gate` | A spec problem confirmed by a reviewer, or a spec that does not compile under the work | Tells the owner, with the question |
+
+`work start` on a spec that does not compile begins no work, so it gives `NeedsOwner` as its result and records nothing. `work list` exits like `plan`: 0 for an empty list, 2 with items.
 
 `work gate` ends the work in one of two ways, and gives them as its result, since no work is left to record them in:
 
@@ -116,7 +118,7 @@ The work under way is described the way kubectl describes an object: by its phas
 - the reviewer's task and the answer format;
 - what to do for each diagnostic code.
 
-An agent's file is its system prompt, so it survives the compaction of that agent's context. `init` and `update` write the manifest's `model`, if it names one, into the agents' front matter, where today it travels in the printed step.
+An agent's file is its system prompt, so it survives the compaction of that agent's context. `init` and `update` write the manifest's `model`, if it names one, into the agents' front matter, where today it travels in the printed step. `work start` refuses when the two differ and says to run `markitect update`, so a changed model does not go stale silently.
 
 **Guarding the format.** The harness carries a format version. It changes only when phases, codes or the agents' rules change. `work start` refuses a harness of another format and says to run `markitect update`. A Go test checks that the embedded agent files cover every code the tool can emit.
 
