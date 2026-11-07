@@ -127,7 +127,7 @@ For one release, `checklist`, `answer` and `gate` only say on standard output, w
 
 ## 4. Is the spec good?
 
-A spec is judged like code ([founding intent](sources/founding-intent-20261026.md)), so it gets the same kind of analysis code gets. `check` is the compiler: is it valid? `vet`, named after Go's, is the static analyzer: is it well designed? It only ever warns or notes, since granularity stays the author's choice ([DEC-005](register.md#dec-005-model-granularity-is-the-authors-responsibility)), and its thresholds are provisional. The owner settled its measures on 8 November 2026 ([DEC-101](register.md#dec-101-what-vet-measures)); the table keeps the states of 7 November with what changed.
+A spec is judged like code ([founding intent](sources/founding-intent-20261026.md)), so it gets the same kind of analysis code gets. `check` is the compiler: is it valid? `vet`, named after Go's, is the static analyzer: is it well designed? It only ever warns or notes, since granularity stays the author's choice ([DEC-005](register.md#dec-005-model-granularity-is-the-authors-responsibility)), and its thresholds are provisional. The owner settled its measures on 8 November 2026 ([DEC-102](register.md#dec-102-what-vet-measures)); the table keeps the states of 7 November with what changed.
 
 | Measure | Code analogy | Warns about | State |
 |---|---|---|---|
@@ -138,7 +138,7 @@ A spec is judged like code ([founding intent](sources/founding-intent-20261026.m
 | Blast radius: how far every link reaches from a Definition, as median, 90th percentile and worst | Transitive dependents | A change that could touch most of the spec | New |
 | Links inside a Package against links leaving it | Cohesion | A Package whose parts belong elsewhere | New |
 | Change hotspots across records | Churn | What keeps changing, with how far it reaches | Built as the note `vet.hotspot` in 0.23.0. The tool reads no Git history ([DEC-097](register.md#dec-097-markitect-uses-no-git)), so the record counts how often a Definition's text changed between verdicts |
-| Size against what tests cover | CRAP | Large, unverified Definitions | Later: the reviewer records its counts of cases with `mark`, and the measure waits for real records ([DEC-101](register.md#dec-101-what-vet-measures)) |
+| Size against what tests cover | CRAP | Large, unverified Definitions | Later: the reviewer records its counts of cases with `mark`, and the measure waits for real records ([DEC-102](register.md#dec-102-what-vet-measures)) |
 | The spec's dependencies against the code's imports | Architecture tests | Code that has drifted from the design | Later |
 
 **Package cycles stay a compile error**, as in Go. [The model language guide](../guides/model-language.md#vet-warnings-and-notes) lists what `vet` warns and notes about, among the notes the unlinked mentions the auditor triages, [what makes a good spec](../guides/good-spec.md) says what each measure is for, and the [`vet` plan](vet-plan.md) records the decisions.

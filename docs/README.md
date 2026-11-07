@@ -6,11 +6,11 @@ Use this map to find the document that owns a decision, a guide or a piece of ev
 
 | If you want to… | Start here |
 |---|---|
-| Implement Markitect | [Concept 4.0](concepts/v4-concept.md) (the target, which Main implements), the [lean plan](concepts/lean-tool-plan.md), the [delivery plan](implementation-plan.md), [architecture](architecture.md) and [code map](development/code-map.md); [concept 3.0](concepts/v3-concept.md) and [concept 2.0](concepts/v2-concept.md) are records of earlier targets, and [V1 concept 1.0](concepts/v1-concept.md) and the [qualification record](validation/v1-qualification-20261024.md) record V1 |
-| Understand what Markitect is for, before assessing or redirecting it | [Markitect in brief](vision.md#markitect-in-brief), [Common misreadings](vision.md#common-misreadings) and the [concept register](concepts/register.md) |
+| Implement Markitect | [Concept 4.0](concepts/v4-concept.md) (the target, which Main implements), the [tooling plan](concepts/tooling-plan.md) (the record, the commands, the skills, the roles and the hook), the [delivery plan](implementation-plan.md), [architecture](architecture.md) and [code map](development/code-map.md); [concept 3.0](concepts/v3-concept.md) and [concept 2.0](concepts/v2-concept.md) are records of earlier targets, and [V1 concept 1.0](concepts/v1-concept.md) and the [qualification record](validation/v1-qualification-20261024.md) record V1 |
+| Understand what Markitect is for and what it builds on, before assessing or redirecting it | [Markitect in brief](vision.md#markitect-in-brief), [Common misreadings](vision.md#common-misreadings) and the [concept register](concepts/register.md) |
 | Understand where the idea came from and why its mechanisms might help | [Origin and rationale](vision.md#origin-and-rationale) and the [owner's original account](concepts/sources/owner-origin-20261015.md); the archived product reflections are listed in the [archive index](archive.md#archived-pages) |
-| Use Markitect on a project: set it up, write and register the model, check, vet, and build and review it against the record of what was verified | [Project workflow](guides/project-workflow.md), the one user guide |
-| Write or read a model: Definitions, Kinds and Libraries, links, the registry, the commands and their diagnostics | [Model language](guides/model-language.md), the canonical description of the language |
+| Use Markitect on a project: set it up, design and register the spec, check and vet it, and build, review, clean up, hunt bugs and audit with the skills | [Project workflow](guides/project-workflow.md), the one user guide |
+| Write or read a spec: Definitions, Kinds and Libraries, links, the registry, the commands and their diagnostics | [Model language](guides/model-language.md), the canonical description of the language |
 | Judge whether a spec is well designed: placement, coupling, hubs, size, and what `vet` measures | [What makes a good spec](guides/good-spec.md), the [model language guide](guides/model-language.md#vet-warnings-and-notes), and the [`vet` plan](concepts/vet-plan.md), the record of its decisions |
 | Understand the technical boundaries | [Architecture](architecture.md), the package READMEs it links and [Measurement](guides/measurement.md) |
 | Contribute source | [Contribution checks](../CONTRIBUTING.md), the [development documents](#development) below, the [repository layout](development/repository-layout.md) and [documentation maintenance](development/documentation.md) |
@@ -27,7 +27,7 @@ This is the one owner table; other pages link here instead of keeping their own.
 | Product decisions, promises, assumptions, long-term vision, agreed but unscheduled directions, ideas and open questions, with their origin | [Concept record](concepts/README.md) |
 | The model language, the `.markitect/` layout and the model commands | [Model language](guides/model-language.md) |
 | Technical behavior, product boundaries, package contracts and invariants | [Architecture](architecture.md), the package READMEs and the guides above |
-| Workstreams: the Build and evaluation, Topics and Desktop sessions, the variants, their branches and state pages | [Workstreams](workstreams.md) |
+| Workstreams: the Build and evaluation and Topics sessions, the earlier arms, their branches and state pages | [Workstreams](workstreams.md) |
 | Work-package scope, dependencies and reservations, current source and release status and planned implementation | [Delivery plan](implementation-plan.md); actual candidates and checks live in chats and PRs |
 | Evaluation procedure, staged readiness and how benefits are tested | [Measurement](guides/measurement.md) |
 | Source, native, adoption and method evidence | [Qualification record](validation/v1-qualification-20261024.md), the [validation map](validation/README.md) and the individual report, read at their recorded scope and source |

@@ -214,7 +214,7 @@ Two commands work on the record of what was verified, `.markitect/review.sum` ([
 
 ### Vet warnings and notes
 
-`vet` measures the spec like code, from its text and links alone, and from the record's count of revisions ([DEC-101](../concepts/register.md#dec-101-what-vet-measures)). The thresholds are provisional, set on the [measurements of 7 November 2026](../validation/spec-design-measures-20261107.md). A Definition nothing links to and no file realizes, and a stale registry row, are errors of `check`, not warnings. N is the number of the spec's model Definitions; a Definition's fan-in counts the Definitions that link to it or are of it as Kind.
+`vet` measures the spec like code, from its text and links alone, and from the record's count of revisions ([DEC-102](../concepts/register.md#dec-102-what-vet-measures)). The thresholds are provisional, set on the [measurements of 7 November 2026](../validation/spec-design-measures-20261107.md). A Definition nothing links to and no file realizes, and a stale registry row, are errors of `check`, not warnings. N is the number of the spec's model Definitions; a Definition's fan-in counts the Definitions that link to it or are of it as Kind.
 
 **Warnings** were precise on real specs; `vet --strict` exits 1 on them.
 

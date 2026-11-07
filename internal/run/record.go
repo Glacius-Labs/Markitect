@@ -28,7 +28,7 @@ const (
 var Verdicts = []string{VerdictOK, VerdictFail, VerdictSkip, VerdictSpecProblem}
 
 // Line is one line of the record: the verdict on one Definition at its inputs.
-// Cases, Covered and Revisions came with 0.23.0 (DEC-101) and are left out when
+// Cases, Covered and Revisions came with 0.23.0 (DEC-102) and are left out when
 // empty, so a line written before reads as no count and no revision.
 type Line struct {
 	Definition string   `json:"definition"`

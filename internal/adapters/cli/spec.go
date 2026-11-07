@@ -18,7 +18,7 @@ import (
 
 // vet prints the warnings of the spec's design as diagnostics, and one line that
 // counts its notes; with --strict the notes too. It exits 1 only with --strict and
-// a warning: notes never change the exit code (DEC-101). --json always carries
+// a warning: notes never change the exit code (DEC-102). --json always carries
 // both.
 func (c CLI) vet(_ context.Context, args []string) (int, error) {
 	var o options
@@ -127,7 +127,7 @@ type listedPackage struct {
 
 // packageDeps is what a Package depends on, its coupling, and its abstractness and
 // distance from the main sequence, with --deps. They inform; vet warns about none
-// of the last two yet (DEC-101).
+// of the last two yet (DEC-102).
 type packageDeps struct {
 	Afferent     int          `json:"afferent"`
 	Efferent     int          `json:"efferent"`

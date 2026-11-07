@@ -11,7 +11,7 @@ import (
 )
 
 // The thresholds of vet. They are provisional, like the code metrics they
-// borrow from, and are tuned on real specs (DEC-101).
+// borrow from, and are tuned on real specs (DEC-102).
 const (
 	MaxEfferent        = 5    // Packages one Package may depend on
 	MaxDefinitionWords = 1000 // words in one Definition's body
@@ -105,7 +105,7 @@ func Vet(p *project.Project, h History) Report {
 			r.Warnings.Add("vet.definition_size", d.File, 0, "%d words (more than %d); split it or move detail the model does not need to the realization", d.Words, MaxDefinitionWords)
 		}
 		// A Kind's change concerns all its Definitions by design, so a Kind is no
-		// hub (DEC-101).
+		// hub (DEC-102).
 		if d.Kind != model.CoreKind && float64(fan+1) > hub {
 			r.Warnings.Add("vet.hub", d.File, 0, "%d Definitions link to %s or are of it as Kind, so a change to it alone puts %d of the spec's %d back on the list to verify (more than a fifth); link the smallest Definition that holds what they use, and keep this one small and settled", fan, id, fan+1, total)
 		}

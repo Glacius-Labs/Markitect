@@ -20,7 +20,7 @@ const (
 )
 
 // unlinkedMentions finds a Definition's name in another Definition's prose with no
-// link to it (DEC-101). A name is a Definition's title or the last segment of its
+// link to it (DEC-102). A name is a Definition's title or the last segment of its
 // ID, hyphens read as spaces, matched as whole words without regard to case, with
 // up to two trailing letters for inflection. It reads the text and the structure
 // only, with no word list of any language. It returns one note per Definition that

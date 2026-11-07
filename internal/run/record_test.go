@@ -521,7 +521,7 @@ func TestParallelReviewersLoseNoLine(t *testing.T) {
 }
 
 // mark keeps the reviewer's counts of cases on the line, and the record counts
-// how often a Definition's own text changed between verdicts (DEC-101): a verdict
+// how often a Definition's own text changed between verdicts (DEC-102): a verdict
 // at another own text than every line before it adds one; a change of a link or a
 // file does not.
 func TestCountsAndRevisions(t *testing.T) {

@@ -1,6 +1,6 @@
 # What `vet` measures: the plan
 
-**Status:** the plan's record. Proposed on 7 November 2026; on 8 November 2026 the owner accepted its seven decisions with changes ([DEC-101](register.md#dec-101-what-vet-measures)), and they were built and released as 0.23.0. [Decisions](#decisions) says what was decided and how it was built; the rest of the page keeps the analysis as it was proposed, with a note where the decision differs. It answers part of [OQ-002](register.md#open-questions) and the question [concept 4.0 §4](v4-concept.md#4-is-the-spec-good) left open: the details of `vet`, its further measures and thresholds. It follows the rules the owner set for it on 7 November 2026:
+**Status:** the plan's record. Proposed on 7 November 2026; on 8 November 2026 the owner accepted its seven decisions with changes ([DEC-102](register.md#dec-102-what-vet-measures)), and they were built and released as 0.23.0. [Decisions](#decisions) says what was decided and how it was built; the rest of the page keeps the analysis as it was proposed, with a note where the decision differs. It answers part of [OQ-002](register.md#open-questions) and the question [concept 4.0 §4](v4-concept.md#4-is-the-spec-good) left open: the details of `vet`, its further measures and thresholds. It follows the rules the owner set for it on 7 November 2026:
 
 - no change to the language and no new field;
 - no explicit layers: the Package tree is the Dependency Rule, as in Go;
@@ -11,7 +11,7 @@
 
 ## In brief
 
-As decided and built ([DEC-101](register.md#dec-101-what-vet-measures)):
+As decided and built ([DEC-102](register.md#dec-102-what-vet-measures)):
 
 - **Unlinked mentions,** a priority: a Definition's name in another Definition's prose with no link to it. Half to three-quarters of what it finds on the Makerspace specs are real missing links, roughly 130 to 180 in Makerspace alone, and the rest are ordinary words and other meanings of a name. So it is a note, with a one-line count in every run, and the auditor triages the candidates for the owner.
 - **`vet.hub` replaces `vet.reach`.** It counts Definitions, counts Root, and leaves Kinds out. On both specs it warns about `values` and `members/member`, the hub that cost most re-verification in the 5× change steps. `vet.reach` warned about Interfaces on Makerspace, which are linked widely by design, and missed `values`.
@@ -159,7 +159,7 @@ A Value Definition describes one kind of value that the project's records, reque
 
 ## Decisions
 
-The owner decided on 8 November 2026 ([DEC-101](register.md#dec-101-what-vet-measures)). Each proposal, then what was decided and built:
+The owner decided on 8 November 2026 ([DEC-102](register.md#dec-102-what-vet-measures)). Each proposal, then what was decided and built:
 
 1. **`vet.unlinked_mention`,** proposed as a note with a one-line summary in every run, to become a warning once its noise is low; mentions against or beyond the structure counted apart. **Accepted, and more:** `/markitect-audit` and the auditor's agent file have the auditor triage the candidates into real missing links and ordinary words and report the real ones to the owner; the architect then adds the links. Built so; on the archived specs it gives exactly the counts of the [record](../validation/spec-design-measures-20261107.md#unlinked-mentions).
 2. **`vet.hub` replaces `vet.reach`:** Definitions, Root included, Kinds left out, above a fifth of the spec and at least 10. **Accepted** and built.
@@ -167,6 +167,6 @@ The owner decided on 8 November 2026 ([DEC-101](register.md#dec-101-what-vet-mea
 4. **Notes for `vet.statements` and `vet.placement`,** shown with `--strict` and never changing the exit code. **Accepted** and built, with the thresholds above as provisional.
 5. **`vet.risk`, the CRAP analogue.** **Waits** for real data; not built.
 6. **`std/Value`.** **Not adopted,** and no central page of values: general knowledge is not specified, and a project's own value rules are stated once, at the right place. [What makes a good spec](../guides/good-spec.md#say-it-once-link-exactly-what-you-use) and the `markitect-design` skill state the rule.
-7. **AI-assisted measures** as a trial. **Accepted, and more:** `mark` takes `--cases N` and `--covered M`, stored on the record's line, and the reviewer's agent file says to count cases while marking. The record also counts revisions per Definition, how often its own text changed between verdicts, as a basis for hotspots without Git, and `vet.hotspot` notes, with `--strict`, a Definition whose fan-in times revisions is above max(20, N / 10). That threshold was calibrated on the eight change steps of both archived projects: on the 5× project it names the five Definitions whose changes cost most, from `members/member` (90) to `ledger/postings` (46), with nothing between 46 and 20; on Makerspace, where no widely linked Definition changed, the largest is 14 and it names nothing ([DEC-101](register.md#dec-101-what-vet-measures) has the figures).
+7. **AI-assisted measures** as a trial. **Accepted, and more:** `mark` takes `--cases N` and `--covered M`, stored on the record's line, and the reviewer's agent file says to count cases while marking. The record also counts revisions per Definition, how often its own text changed between verdicts, as a basis for hotspots without Git, and `vet.hotspot` notes, with `--strict`, a Definition whose fan-in times revisions is above max(20, N / 10). That threshold was calibrated on the eight change steps of both archived projects: on the 5× project it names the five Definitions whose changes cost most, from `members/member` (90) to `ledger/postings` (46), with nothing between 46 and 20; on Makerspace, where no widely linked Definition changed, the largest is 14 and it names nothing ([DEC-102](register.md#dec-102-what-vet-measures) has the figures).
 
 Built in 0.23.0: `internal/analysis` and its tests, `internal/run` (the counts and revisions on the record's line), `list --deps`, `vet` and `mark` on the command line, the auditor and reviewer agent files, `/markitect-audit` and the design skill, and the guides. No `std` Kind changed.

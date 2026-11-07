@@ -40,7 +40,7 @@ The **fingerprint** of an item is the first six characters of the hash of every 
 
 The verdicts are `ok` (implemented, as the evidence shows), `fail` (not, and why), `skip` (verified as far as the project can show, and why) and `spec-problem` (the spec contradicts itself or leaves open behaviour at the project's boundary, and only the owner can settle it). The record holds hashes, not text: an agent that wants what a Definition said before reads it from Git.
 
-Three fields came with 0.23.0, a trial of [DEC-101](../../docs/concepts/register.md#dec-101-what-vet-measures), each left out when empty:
+Three fields came with 0.23.0, a trial of [DEC-102](../../docs/concepts/register.md#dec-102-what-vet-measures), each left out when empty:
 
 - `cases` and `covered`: the reviewer's count of the distinct cases, conditions and exceptions the Definition demands, and of those its evidence demonstrates, as `mark` took them. Nothing reads them yet; they are kept to calibrate a later risk measure.
 - `revisions`: how often the Definition's own text changed between two verdicts on it. `mark` takes the count of the Definition's lines and adds one when none of them has the new line's `self` hash, so a first verdict has none, and a change of a link, a file or the evidence adds none. Of several lines, as after a merge, it counts on from the most. `vet` reads it for `vet.hotspot`, as change history without Git.
