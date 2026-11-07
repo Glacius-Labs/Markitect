@@ -1,6 +1,6 @@
 # Concept register
 
-**Accepted target, 7 November 2026:** [Concept 4.0](v4-concept.md) ([DEC-098](#dec-098-concept-40-is-the-target)): a tool that computes and checks, a driver that acts, and no Git in the tool ([DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](#dec-097-markitect-uses-no-git)). Main carries its build since 6 November 2026 ([DEC-094](#dec-094-main-carries-the-native-version-and-the-app-goes)), released as 0.20.0.
+**Accepted target, 7 November 2026:** [Concept 4.0](v4-concept.md) ([DEC-098](#dec-098-concept-40-is-the-target)): a tool that computes and checks, a driver that acts, and no Git in the tool ([DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](#dec-097-markitect-uses-no-git)). Main carries its build since 6 November 2026 ([DEC-094](#dec-094-main-carries-the-native-version-and-the-app-goes)), released as 0.20.0. Its tool is to become a verification cache that steers no work ([DEC-099](#dec-099-markitect-is-a-tool-with-a-verification-cache)), not yet built.
 
 **Records:** [Concept 3.0](v3-concept.md) ([DEC-091](#dec-091-concept-30-is-the-target)) was the target from 4 to 7 November 2026; its rebuild is kept on the branch `archive/main-concept-3-20261106`. [Concept 2.0](v2-concept.md) ([DEC-086](#dec-086-concept-20-is-the-target)) is the record of the Manager tree.
 
@@ -114,9 +114,10 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-093](#dec-093-a-command-passes-the-users-own-token) | Decision | A Command passes the user's own token | Accepted; superseded by [DEC-098](#dec-098-concept-40-is-the-target) |
 | [DEC-094](#dec-094-main-carries-the-native-version-and-the-app-goes) | Decision | Main carries the native version, and the app goes | Decided by the owner, 6 November 2026 |
 | [DEC-095](#dec-095-releases-return-with-a-plugin-and-a-binary-that-updates-itself) | Decision | Releases return, with a plugin and a binary that updates itself | Decided by the owner, 6 November 2026 |
-| [DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts) | Decision | Markitect computes and checks; a driver acts | Decided by the owner, 6 November 2026; built, released as 0.20.0 |
+| [DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts) | Decision | Markitect computes and checks; a driver acts | Decided by the owner, 6 November 2026; built, released as 0.20.0; amended by [DEC-099](#dec-099-markitect-is-a-tool-with-a-verification-cache) |
 | [DEC-097](#dec-097-markitect-uses-no-git) | Decision | Markitect uses no Git | Decided by the owner, 6 November 2026; built, released as 0.20.0 |
-| [DEC-098](#dec-098-concept-40-is-the-target) | Decision | Concept 4.0 is the target | Decided by the owner, 7 November 2026 |
+| [DEC-098](#dec-098-concept-40-is-the-target) | Decision | Concept 4.0 is the target | Decided by the owner, 7 November 2026; amended by [DEC-099](#dec-099-markitect-is-a-tool-with-a-verification-cache) |
+| [DEC-099](#dec-099-markitect-is-a-tool-with-a-verification-cache) | Decision | Markitect is a tool, with a verification cache | Decided by the owner, 7 November 2026; not built |
 | [PRM-001 to PRM-009](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
@@ -1299,6 +1300,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **What it keeps:** [DEC-001](#dec-001-delegated-realization-is-central-to-the-product): delegated realization stays the purpose; the tool owns the obligations and the check, the host owns the agents.
 - **Open, with recommendations in the plan:** where the limits sit, and where the work state lives. Whether `gate` makes the commit is settled by [DEC-097](#dec-097-markitect-uses-no-git): it does not.
 - **Order:** the new commands are built beside today's run engine and tried on Makerspace with planted defects before the run lifecycle and landing are removed ([plan, order of work](lean-tool-plan.md#order-of-work)). Until then, [draft concept 4.0](v4-concept.md) describes what Main does.
+- **Amended by** [DEC-099](#dec-099-markitect-is-a-tool-with-a-verification-cache), 7 November 2026: `gate`, its rows and the work state go, replaced by a record of what was verified. Its open points are settled: no limits in the tool and no work state.
 
 ### DEC-097 Markitect uses no Git
 
@@ -1317,6 +1319,21 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Supersedes:** [DEC-091](#dec-091-concept-30-is-the-target), so concept 3.0 becomes a record, like concept 2.0 and V1 concept 1.0, and the entries in [§15](v4-concept.md#15-what-this-overturns), each marked with what goes and what stays. It decides [OQ-012](#open-questions).
 - **Open:** accepting the concept decides none of §16's open questions. The default driver's limits (question 4), one driver or two (question 5), what "reliable" means (question 10) and what the machine lacks (question 11) stay open until the owner answers. So do the points [DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts) left open, where the limits sit and where the work state lives, and the [lean plan's](lean-tool-plan.md#decisions-for-the-owner) decisions 3, 5 and 6, which are built as recommended.
 - **Next:** the [delivery plan](../implementation-plan.md) owns the steps; [§13](v4-concept.md#13-order-of-work), step 3, making it reliable on Sonnet, is next.
+- **Amended by** [DEC-099](#dec-099-markitect-is-a-tool-with-a-verification-cache), 7 November 2026: the tool becomes a verification cache that steers no work, and §3, §5 to §9 and §12 are revised when it is built.
+
+### DEC-099 Markitect is a tool, with a verification cache
+
+- **Status:** Decided by the owner, 7 November 2026. The owner described how they work: model the spec with the tool's help, then have agents implement it while the tool says what to verify. They found that `gate`, `answer` and the builder's reports steered the agents' work more than the tool should. They agreed to a record of what was verified, modelled on Go's test cache, and chose the names. The [tooling plan](tooling-plan.md) holds the design, reviewed by an independent architect against the code.
+- **Decision:**
+  - Markitect supports agent work and does not steer it. It checks and analyses the spec, says what is to verify, and records verdicts. It decides nothing about who works when, and it counts no rounds.
+  - For each Definition, `.markitect/review.sum` records the inputs at which it was last verified: its text, its Kind and the Definitions it links to, its registry rows with their files, and the evidence. A change of any input puts the Definition back on the list. An empty `markitect status` means that the project compiles and every Definition is verified at its current inputs; its notes, such as an outdated harness, do not count.
+  - `markitect review DEFINITION VERDICT --at FINGERPRINT` records `ok`, `fail`, `skip` or `spec-problem` at the state the reviewer read.
+  - The commands are `check`, `vet`, `list`, `doc`, `status` and `review`, beside `init`, `lock`, `update`, `install`, `version` and `licenses`. The skills are `/markitect-build` and `/markitect-review`, plain prompts named after their agents. Output and exit codes follow Go's tools.
+  - The hook stays as a guard: only the reviewer records, and no subagent writes under `.markitect/` except the registry pages.
+  - The work needs no limit on rounds.
+- **Amends:** [DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts). `gate`, its rows and the work state go; the tool still computes and checks, and drives no agent. It settles DEC-096's two open points: there are no limits in the tool and no work state. It also amends [DEC-098](#dec-098-concept-40-is-the-target): concept 4.0 stays the target, and its §3, §5 to §9 and §12 are revised with the build. The [lean plan's](lean-tool-plan.md#decisions-for-the-owner) decisions 3, 5 and 6 lapse with `gate`, the work state and the certificate.
+- **Gives up, knowingly:** the refusal of changes to ignored files and to the harness during the work, the spec freeze for the owner's session and for people, and the old text of a changed Definition in the tool's output ([plan](tooling-plan.md#what-this-gives-up-and-what-it-keeps)).
+- **Next:** build it in the plan's [order of work](tooling-plan.md#order-of-work), then try it with planted defects under a bounded dispatch.
 
 ## Promises
 
