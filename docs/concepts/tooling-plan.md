@@ -41,12 +41,12 @@ In both designs, reach stops after one step, and a changed Rule above a Package 
 Three more kinds of item stay on the list until they are verified again:
 
 - **A Definition someone recorded as `wrong` or `spec-problem`** stays with that note.
-- **A Definition that is gone from the spec** stays, marked gone. Its line names the files that realized it, so the item can ask whether they are removed or have a new basis.
+- **A Definition that is gone from the spec** stays, marked gone. Its line names the files that realized it, so the item can ask whether they are removed or have a new basis. Reviewing it `ok` removes its line.
 - **An error in the realization** stays: an unlisted file, a stale registry row, an unused Definition.
 
 Since the record holds each input's hash, `plan` says which inputs changed, and where to look. It does not hold what a Definition said before. An agent that wants the old text reads it from Git.
 
-**Recording** binds a verdict to the state the reviewer read. `plan` prints each item's fingerprint. `review DEFINITION VERDICT --at FINGERPRINT` refuses if the inputs have changed since, for example because a builder working beside the reviewer edited a file, or the reviewer's own test run changed one. Go does the same: it does not cache a result whose inputs changed while the test ran. The evidence must exist in the folder, and its files' hashes join the inputs.
+**Recording** binds a verdict to the state the reviewer read. `plan` prints each item's fingerprint. `review DEFINITION VERDICT --at FINGERPRINT` refuses if the inputs have changed since, for example because a builder working beside the reviewer edited a file, or the reviewer's own test run changed one. Go does the same: it does not cache a result whose inputs changed while the test ran. The fingerprint `plan` prints covers every input but the evidence, which the reviewer chooses later. The evidence must exist in the folder, and its files are hashed when the verdict is recorded.
 
 **Done** is an empty list, and that holds whatever happened in between. A file edited by hand, a commit made around the agents, or a change on a merged branch alters the inputs it touches, and those Definitions are on the list again.
 
@@ -59,9 +59,9 @@ Since the record holds each input's hash, `plan` says which inputs changed, and 
 {"definition":"members/limit","verdict":"wrong","inputs":{…},"evidence":["src/loans.go:70"],"why":"allows a sixth loan; the Definition says five"}
 ```
 
-- **Verdicts:** `ok`, `not-shown` (verified as far as the project shows, listed by `plan` as a note, as the Result lists it today), `wrong` and `spec-problem`. An explanation stays on one line. Hashes are full SHA-256.
+- **Verdicts:** `ok`, `not-shown`, `wrong` and `spec-problem`. `not-shown` means verified as far as the project shows; `plan` lists it as a note, as the Result lists it today, and a note alone does not make `plan` exit 1. An explanation stays on one line. Hashes are full SHA-256.
 - **Writing:** `review` writes under the lock the tool already uses, as one whole file, so parallel reviewers, one per Package for example, do not lose lines.
-- **Merging:** Git also conflicts on changes to neighbouring lines. So `init` writes `.gitattributes` with `merge=union` for this file: Git keeps both sides, and `plan` takes, of two lines for one Definition, the one whose inputs match the folder. The next `review` writes the file clean.
+- **Merging:** Git also conflicts on changes to neighbouring lines. So `init` writes `.markitect/.gitattributes`, which joins the fixed layout, with `merge=union` for this file: Git keeps both sides. Of two lines for one Definition, `plan` takes the one whose inputs match the folder. If both match with different verdicts, `plan` lists the Definition as a conflict to review. The next `review` writes the file clean.
 - **What it replaces:** today's certificate, the stored answers, the work under way in the cache, the Result pages, the Findings pages and the builder's reports.
 - **What it is:** a record, not a proof, as the certificate is today. A line written by hand shows in the diff, and the hook keeps agents from writing it ([below](#the-hook)).
 
@@ -98,7 +98,7 @@ The skills inject no command, so a non-zero exit cannot abort them. The agents r
 The hook stays, as a guard of the record and the spec, not of the process:
 
 - Only the reviewer agent may run `markitect review`, as it alone may run `answer` today. So the agent that built does not verify its own work. In the trials, a separate reviewer caught 17 of 18 planted bugs ([checker test](../validation/k-checker-test-20261103.md)).
-- No agent may write or edit under `.markitect/`, except the registry pages, which the builder keeps. So an agent cannot weaken a Definition during the work, or write lines into the record.
+- No subagent may write or edit under `.markitect/`, except the registry pages, which the builder keeps. So a builder cannot weaken a Definition during the work or write lines into the record. The owner's own session, where the spec is modelled, is not a subagent and stays free. The builder may start only the reviewer (`Agent(markitect-reviewer)`), so it cannot get past the rule through a general-purpose helper.
 
 The hook reads tool calls, so a command hidden in a script or a path past `markitect` still gets through. That guards against mistakes, as today, not against intent.
 
@@ -119,7 +119,7 @@ These are reused from the earlier version of this page, adapted to Go:
 | A changed file that realizes a Definition is reviewed | Kept |
 | A changed file the ignore file lists is refused (`gate`, row 4) | **Lost.** Ignored files are not tracked |
 | A changed harness or `settings.json` is refused during the work (row 1) | **Lost.** It shows in the diff |
-| The spec does not change during the work | Kept for agents by the hook. For people, it is not prevented: a changed Definition goes back on the list, and the change shows in the diff |
+| The spec does not change during the work | Kept for subagents by the hook. For the owner's session and for people, it is not prevented: a changed Definition goes back on the list, and the change shows in the diff |
 | Only a reviewer records verdicts | Kept by the hook |
 | The project compiles | Kept: `check`, and `plan` lists the realization's errors |
 | A gone Definition's files are dealt with | Kept: it stays on the list, marked gone |
@@ -139,7 +139,7 @@ What it gains:
 1. **The verification cache replaces the certificate, the work state, `gate`, `answer` and the reports.** The direction was agreed on 7 November 2026; this is its form.
 2. **The inputs:** the Definition's text, its Kind and linked Definitions (a Library one by its digest), its registry rows and their files, and the evidence files. `review --at` binds a verdict to what was read. Recommended.
 3. **The record:** one committed file with one sorted JSON line per Definition, holding the verdict, the inputs' hashes, the evidence and the reason, merged with `merge=union`. Recommended.
-4. **The hook:** only the reviewer records, and no agent writes under `.markitect/` except the registry pages. Recommended, as structure for independence and for the spec. The alternative leaves both to the prompt.
+4. **The hook:** only the reviewer records, and no subagent writes under `.markitect/` except the registry pages. Recommended, as structure for independence and for the spec. The alternative leaves both to the prompt.
 5. **The names.** Working names: `check`, `vet`, `list`, `doc`, `plan`, `review`. To be chosen with the owner.
 6. **Output and exit codes as Go's tools have them**, with `vet` warning and exiting 1 only with `--strict`. Recommended.
 7. **Migration.** `update` writes the record from the newest certificate. It computes each Definition's inputs from the spec and the file hashes the certificate holds. It records every Definition as `ok` at that state, with the certificate's pointers where it has them, and keeps `not shown` as `not-shown`. For one release, `checklist`, `answer` and `gate` remain as stubs that say to run `markitect update`, so an old project's skill does not fail silently. Recommended.
