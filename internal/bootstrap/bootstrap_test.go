@@ -450,6 +450,12 @@ func TestGateThroughTheCommandLine(t *testing.T) {
 	if code, out, _ := run(t, r.Dir, "gate"); code != 1 || !strings.Contains(out, "markitect-reviewer") {
 		t.Fatalf("gate before a review: %d\n%s", code, out)
 	}
+	// The builder's report of a spec problem says something, with one dash or two.
+	for _, flag := range []string{"--spec-problem", "-spec-problem"} {
+		if code, _, errOut := run(t, r.Dir, "gate", flag, " "); code != 2 || !strings.Contains(errOut, "what the problem is") {
+			t.Fatalf("gate %s with no text: %d %s", flag, code, errOut)
+		}
+	}
 	var out, errOut bytes.Buffer
 	answer := cli.CLI{Git: git{}, Runs: runs{}, Stdin: strings.NewReader("project: ok README.md:1\n"), Stdout: &out, Stderr: &errOut}
 	if code := answer.Run(context.Background(), []string{"answer", "--repo", r.Dir}); code != 0 {
@@ -475,7 +481,7 @@ func TestGateThroughTheCommandLine(t *testing.T) {
 	if code, _, errOut := run(t, r.Dir, "checklist", "--base", "nosuch.json"); code != 2 || !strings.Contains(errOut, "is no certificate") {
 		t.Fatalf("checklist --base nosuch.json: %d %s", code, errOut)
 	}
-	if code, _, errOut := run(t, r.Dir, "gate", "--verify", "--findings"); code != 2 || !strings.Contains(errOut, "not both") {
+	if code, _, errOut := run(t, r.Dir, "gate", "--verify", "--findings"); code != 2 || !strings.Contains(errOut, "only one of") {
 		t.Fatalf("gate --verify --findings: %d %s", code, errOut)
 	}
 }

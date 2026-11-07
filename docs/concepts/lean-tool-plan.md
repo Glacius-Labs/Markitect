@@ -42,7 +42,7 @@ Within `internal/run`, the run lifecycle (`engine.go`, 640 lines), `submit` (530
 | `install`, `update`, `version`, `licenses` | Setup and upgrade | `update` writes and commits nothing |
 | `checklist [--base RESULT] [--full] [--findings FILE] [--review]` | The list for the change between the newest certificate and the folder; `--review` prints the reviewer's task | Needs no open run |
 | `answer [FILE]` | Stores a reviewer's answers for the folder's current state; each pointer must exist in the current files | Bound to the files it points at, not to a run |
-| `gate [--verify] [--findings]` | The checks below; writes the certificate | New, replaces `submit` |
+| `gate [--verify] [--findings] [--spec-problem WHY]` | The checks below; writes the certificate; `--spec-problem` is the builder's report (decision 7) | New, replaces `submit` and `stop` |
 | `hook pretool` | Only the reviewer may store answers | None |
 | `status` | Read-only: the answers for the current state, and the files that changed since the newest certificate | No run to report on |
 
@@ -51,12 +51,13 @@ Within `internal/run`, the run lifecycle (`engine.go`, 640 lines), `submit` (530
 | | It finds | It says, and exits |
 |---|---|---|
 | 1 | The spec (except registry pages) changed since `checklist` started, or the harness changed | Put them back; a change to the spec is its own step, before the work. Exit 1 |
-| 2 | A file that changed since the base certificate and lies in no reviewed item | The files; list them for review or revert them. Exit 1 |
-| 3 | An error from `check` | The errors. Exit 1 |
-| 4 | Items without a valid answer for the current files | Which; start a reviewer. Exit 1 |
-| 5 | A `spec problem` | The question for the owner. The Result says so. Exit 1 |
-| 6 | A `wrong` answer | The items and what is wrong; repair. After two repair rounds it refuses, and the Result says so. Exit 1 |
-| 7 | Nothing left | Writes the certificate under `.markitect/results/`. Exit 0. The driver commits the work and the certificate together |
+| 2 | The builder's report of a spec problem, not yet answered (decision 7) | Start a reviewer to confirm it. Exit 1 |
+| 3 | A `spec problem`, confirmed or found by a review | The question for the owner. The Result says so. Exit 1 |
+| 4 | A file that changed since the base certificate and lies in no reviewed item | The files; list them for review or revert them. Exit 1 |
+| 5 | An error from `check` | The errors. Exit 1 |
+| 6 | Items without a valid answer for the current files | Which; start a reviewer. Exit 1 |
+| 7 | A `wrong` answer | The items and what is wrong; repair. After two repair rounds it refuses, and the Result says so. Exit 1 |
+| 8 | Nothing left | Writes the certificate under `.markitect/results/`. Exit 0. The driver commits the work and the certificate together |
 
 `gate --verify` checks that the folder matches its newest certificate, for a checkout in CI or anywhere no agent reaches. `gate --findings` closes a review of finished work (today's `verify`): it writes a Findings page into the folder and no certificate.
 
@@ -78,7 +79,7 @@ Rough estimate, to be confirmed by doing it: `internal/run` from about 3,000 to 
 
 **Merges.** Two branches may each certify. After they are merged, the newer certificate counts, and what only the other covered is reviewed again. That costs some work and loses nothing.
 
-**Changes nobody reviewed.** The tool knows no "committed", only the folder. So `gate` refuses any file that changed since the base and lies in no reviewed item (row 2): the owner's own edits on the side, or a builder that touched more than its items, are named instead of certified.
+**Changes nobody reviewed.** The tool knows no "committed", only the folder. So `gate` refuses any file that changed since the base and lies in no reviewed item (row 4): the owner's own edits on the side, or a builder that touched more than its items, are named instead of certified.
 
 **The work state.** Between `checklist` and `gate`, the hashes of the spec the checklist started from and the answers live outside the project, in the user's cache folder, keyed by the project's path. An answer binds to the hashes of the files it points at and falls away when one of them changes.
 
@@ -124,4 +125,4 @@ Later drivers: a workflow script, which holds the loop and the limits in code; a
 4. **The name:** `gate`, decided on 6 November 2026, after weighing `certify`. `submit` was set aside because it meant landing.
 5. **Where the work state lives:** recommended: the user's cache folder, keyed by the project's path, so the project holds only the spec and its certificates.
 6. **How much of the spec the certificate copies:** recommended: the text of every Definition, since the spec is small and a checklist that shows what changed helps the builder and the reviewer.
-7. **How a builder reports a spec problem:** the builder records the problem with the tool, and `gate` has a reviewer confirm it before it tells the owner, without counting a repair round, so no agent decides about its own work. Decided on 7 November 2026, after [finding 1](../validation/lean-trials-20261107.md#findings) of the trials.
+7. **How a builder reports a spec problem:** the builder records the problem with the tool, and `gate` has a reviewer confirm it before it tells the owner, without counting a repair round, so no agent decides about its own work. Decided on 7 November 2026, after [finding 1](../validation/lean-trials-20261107.md#findings) of the trials. Built the same day as `gate --spec-problem "WHY"` ([the builder's report](../../internal/run/README.md#without-a-run-gate)).

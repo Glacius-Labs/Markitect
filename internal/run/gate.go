@@ -28,16 +28,21 @@ type GateRequest struct {
 	// Findings closes a review of finished work: the Findings go into the folder,
 	// and no certificate.
 	Findings bool
+	// SpecProblem is the builder's report that the spec has a problem only the
+	// owner can settle: gate records it and has a reviewer confirm it.
+	SpecProblem string
 }
 
 // Gate checks the work in the project folder without a Run, as submit does in
 // one, minus what a Run needs, and without Git (DEC-097). It does the first thing
 // that applies, and each refusal says the one next step. Done means the work
 // passed, the folder matches its certificate, or the report of a review is
-// written.
+// written. With SpecProblem the builder reports a problem of the spec, which a
+// reviewer confirms before the owner hears of it (lean plan, decision 7).
 func (e *Engine) Gate(ctx context.Context, req GateRequest) (Verdict, error) {
-	if req.Verify && req.Findings {
-		return Verdict{}, fmt.Errorf("%w: gate takes --verify or --findings, not both", ErrUsage)
+	req.SpecProblem = strings.TrimSpace(req.SpecProblem)
+	if modes := btoi(req.Verify) + btoi(req.Findings) + btoi(req.SpecProblem != ""); modes > 1 {
+		return Verdict{}, fmt.Errorf("%w: gate takes only one of --verify, --findings and --spec-problem", ErrUsage)
 	}
 	if open, err := e.openRun(ctx, req.Dir); err != nil {
 		return Verdict{}, err
@@ -60,7 +65,10 @@ func (e *Engine) Gate(ctx context.Context, req GateRequest) (Verdict, error) {
 	}
 	if w == nil {
 		// Without work under way, a folder that matches its newest certificate
-		// has nothing to check.
+		// has nothing to check, and a report has no work to stop.
+		if req.SpecProblem != "" {
+			return Verdict{Text: noWork}, nil
+		}
 		if name, cert, err := newestCertificate(f.root); err != nil {
 			return Verdict{}, err
 		} else if cert != nil && len(cert.Differences(f.hashes)) == 0 {
@@ -81,25 +89,54 @@ func (e *Engine) Gate(ctx context.Context, req GateRequest) (Verdict, error) {
 	if len(links) > 0 {
 		return listed("A link may not leave the folder. Remove these, then run markitect gate again:", links), nil
 	}
-	// Row 3 comes first when the spec itself has errors: there is no list then.
+	// Row 5, check, comes first when the spec itself has errors: there is no list
+	// then.
 	if len(f.cur.SpecErrors()) > 0 {
 		return listed("markitect check fails on the work. Fix it, then run markitect gate again:", errorLines(f.cur)), nil
+	}
+	// Row 2: the builder's report of a spec problem waits for a reviewer, whatever
+	// else the work left; the report of this call is recorded first.
+	if req.SpecProblem != "" {
+		refusal := ""
+		if err := e.updateWork(f.root, func(stored *Work) (*Work, error) {
+			if stored == nil {
+				return nil, fmt.Errorf("%w: the work of %s went while gate ran", ErrUsage, f.root)
+			}
+			if refusal = stored.refuseReport(f.fingerprint); refusal == "" {
+				stored.report(req.SpecProblem, f.fingerprint)
+			}
+			w = stored
+			return stored, nil
+		}); err != nil {
+			return Verdict{}, err
+		}
+		if refusal != "" {
+			return Verdict{Text: refusal}, nil
+		}
+	}
+	if w.openReport() != nil {
+		return Verdict{Text: confirmNext(f.cur.Manifest.Model)}, nil
+	}
+	if r := w.rejected(); r != nil && !r.Told && r.Answer.At == f.fingerprint {
+		// Said once, on the state the reviewer answered: a builder that built
+		// already goes on with gate. A review of that state that finds work
+		// missing uses no repair round either (rounds).
+		if err := e.updateWork(f.root, func(stored *Work) (*Work, error) {
+			if r := stored.rejected(); r != nil {
+				r.Told = true
+			}
+			return stored, nil
+		}); err != nil {
+			return Verdict{}, err
+		}
+		return Verdict{Text: fmt.Sprintf("The reviewer found no spec problem in what was reported: %s\n\nBuild the work as the spec says; this used no repair round. Then run markitect gate again.\n", oneLine(r.Answer.Explanation))}, nil
 	}
 	w, valid, missing, err := e.reviewState(f)
 	if err != nil {
 		return Verdict{}, err
 	}
-	// Row 2: a changed file that lies in no item.
-	if left, err := outsideItems(f, w); err != nil {
-		return Verdict{}, err
-	} else if len(left) > 0 {
-		return listed(fmt.Sprintf("These files changed since the certificate %s and lie in no item of the list, so nobody reviews them. List them on the registry, so that their Definitions are reviewed, or put them back; then run markitect gate again:", w.Base), left), nil
-	}
-	// Row 3: check, of the spec and the realization.
-	if len(f.cur.Errors) > 0 {
-		return listed("markitect check fails on the work. Fix it, then run markitect gate again:", errorLines(f.cur)), nil
-	}
-	// Row 5: a spec problem of any finished review stands until the spec changes.
+	// Row 3: a spec problem, confirmed by the reviewer of a report or found by any
+	// finished review, stands until the spec changes, whatever else is open.
 	if decisions := w.specProblems(); len(decisions) > 0 {
 		file, err := e.writeResult(f, w, valid, StateSpecProblem, "a reviewer found a spec problem: the spec needs the owner", decisions)
 		if err != nil {
@@ -113,7 +150,17 @@ func (e *Engine) Gate(ctx context.Context, req GateRequest) (Verdict, error) {
 		fmt.Fprintf(&b, "\nThe Result is %s. Once the owner has settled the spec, the owner begins the work again.\n", file)
 		return Verdict{Text: b.String()}, nil
 	}
-	// Row 6, the end: the repair rounds ran out.
+	// Row 4: a changed file that lies in no item.
+	if left, err := outsideItems(f, w); err != nil {
+		return Verdict{}, err
+	} else if len(left) > 0 {
+		return listed(fmt.Sprintf("These files changed since the certificate %s and lie in no item of the list, so nobody reviews them. List them on the registry, so that their Definitions are reviewed, or put them back; then run markitect gate again:", w.Base), left), nil
+	}
+	// Row 5: check, of the spec and the realization.
+	if len(f.cur.Errors) > 0 {
+		return listed("markitect check fails on the work. Fix it, then run markitect gate again:", errorLines(f.cur)), nil
+	}
+	// The end of row 7 comes before row 6: the repair rounds ran out.
 	rounds, sent := w.rounds()
 	if rounds > repairRounds {
 		file, err := e.writeResult(f, w, valid, StateRefused, "the repair rounds ran out, and these stay open: "+sent[len(sent)-1], nil)
@@ -122,15 +169,20 @@ func (e *Engine) Gate(ctx context.Context, req GateRequest) (Verdict, error) {
 		}
 		return Verdict{Text: fmt.Sprintf("The reviewer still found something wrong after %d repair rounds, the most the work gets. Stop, and give the owner the Result %s. A change to the spec begins the work again.\n", repairRounds, file)}, nil
 	}
-	// Row 4: items without an answer for the files as they are now.
+	// Row 6: items without an answer for the files as they are now.
 	if len(missing) > 0 {
 		return Verdict{Text: reviewNext(len(missing), f.cur.Manifest.Model, "markitect gate")}, nil
 	}
-	// Row 6: wrong answers go back, one round per reviewed state.
+	// Row 7: wrong answers go back, one round per reviewed state.
 	if wrong, _ := verdictsFor(w.Items, func(key string) Answer { return valid[key].Answer }, settleLean); len(wrong) > 0 {
-		return listed(fmt.Sprintf("The reviewer found these wrong (repair round %d of %d). Repair them, then run markitect gate again:", rounds, repairRounds), wrong), nil
+		round := fmt.Sprintf("repair round %d of %d", rounds, repairRounds)
+		if rounds == 0 {
+			// Only a review of the state the builder stopped on counts none.
+			round = "no repair round, since the builder had stopped on its report"
+		}
+		return listed(fmt.Sprintf("The reviewer found these wrong (%s). Repair them, then run markitect gate again:", round), wrong), nil
 	}
-	// Row 7: nothing left. The certificate goes into the folder, and the work is
+	// Row 8: nothing left. The certificate goes into the folder, and the work is
 	// done; when nothing changed and the list is empty, there is nothing to
 	// certify again.
 	if len(w.Items) == 0 && w.Base != "" {
@@ -297,6 +349,15 @@ func (e *Engine) gateResult(w *Work, valid map[string]Given, stamp, state, why s
 		r.Items = append(r.Items, ResultItem{Item: it.Key, Kind: it.Kind, Definition: it.Definition, Look: it.Look, Answer: a.Word, Pointers: a.Pointers, Explanation: a.Explanation})
 	}
 	sort.SliceStable(r.Items, func(i, j int) bool { return r.Items[i].Item < r.Items[j].Item })
+	// The builder's reports are no checklist items, so the certificate does not
+	// hold them; the Result page lists them with the reviewer's word.
+	for _, rep := range w.Reports {
+		rr := ResultReport{Reported: rep.Why}
+		if a := rep.Answer; a != nil {
+			rr.Answer, rr.Pointers, rr.Explanation = a.Word, a.Pointers, a.Explanation
+		}
+		r.Reports = append(r.Reports, rr)
+	}
 	return r
 }
 
@@ -311,12 +372,31 @@ func writeFolder(root, file string, data []byte) error {
 
 // reviewNext says to start the reviewer, and what to run when it has ended.
 func reviewNext(missing int, model, again string) string {
-	return fmt.Sprintf(`%d %s no answer for the files as they are now. Start the %s agent%s with exactly this message:
+	return startReviewer(fmt.Sprintf("%d %s no answer for the files as they are now.", missing, plural(missing, "item has", "items have")), model, again)
+}
+
+// confirmNext says to start the reviewer for the builder's report.
+func confirmNext(model string) string {
+	return startReviewer("The builder reported a spec problem, and a reviewer confirms it before the owner hears of it; this uses no repair round.", model, "markitect gate")
+}
+
+// startReviewer says why and how to start the reviewer, and what to run when it
+// has ended.
+func startReviewer(why, model, again string) string {
+	return fmt.Sprintf(`%s Start the %s agent%s with exactly this message:
 
     Review the work.
 
 It takes its task from markitect checklist --review. When it has ended, run %s again.
-`, missing, plural(missing, "item has", "items have"), ReviewerAgent, onModel(model), again)
+`, why, ReviewerAgent, onModel(model), again)
+}
+
+// btoi counts a flag that is set.
+func btoi(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
 }
 
 // listed is a refusal with its lines.

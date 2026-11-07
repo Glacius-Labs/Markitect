@@ -201,6 +201,11 @@ func (e *Engine) workFor(f *folder, req ChecklistRequest, stored *Work) (w *Work
 		full = true
 	}
 	findings, named := req.Findings, req.namesChange()
+	if stored != nil && req.Start && !req.Review && stored.Review {
+		// The skill that builds does not go on with a review of finished work
+		// left unfinished: it has no builder.
+		stored = nil
+	}
 	// A base certificate gone from the folder, as after a change of branch, is a
 	// changed certificate like any other: a plain checklist refuses.
 	if stored != nil && !req.namesChange() {
@@ -219,7 +224,7 @@ func (e *Engine) workFor(f *folder, req ChecklistRequest, stored *Work) (w *Work
 	if stored != nil && req.namesChange() && len(f.changedOwn(stored)) == 0 && stored.Named && stored.Base == base && stored.Full == full && sameFindings(stored.Findings, req.Findings) {
 		return stored, "", nil
 	}
-	return &Work{Project: f.root, Base: base, Full: full, Findings: findings, Named: named, Spec: f.specHashes(), Certificates: f.certs, Answers: map[string]Given{}, Began: e.now()}, "", nil
+	return &Work{Project: f.root, Base: base, Full: full, Findings: findings, Named: named, Review: req.Review, Spec: f.specHashes(), Certificates: f.certs, Answers: map[string]Given{}, Began: e.now()}, "", nil
 }
 
 // restartText says that what the work may not change changed under it. An agent
@@ -335,6 +340,11 @@ func (e *Engine) Checklist(ctx context.Context, req ChecklistRequest) (text stri
 	if !req.Review {
 		var b strings.Builder
 		b.WriteString(stateTask)
+		if r := w.openReport(); r != nil {
+			fmt.Fprintf(&b, "\nYou reported a spec problem, and it waits for a reviewer: %s\nRun markitect gate, which says how.\n", oneLine(r.Why))
+		} else if r := w.rejected(); r != nil {
+			fmt.Fprintf(&b, "\nA reviewer found no spec problem in what you reported: %s\nBuild the work as the spec says.\n", oneLine(r.Answer.Explanation))
+		}
 		if wrong := sentBack(w); len(wrong) > 0 {
 			b.WriteString("\nThe last review found these wrong. Repair them, unless you already have; a reviewer looks at them again:\n\n")
 			for _, s := range wrong {
@@ -345,6 +355,9 @@ func (e *Engine) Checklist(ctx context.Context, req ChecklistRequest) (text stri
 		b.WriteString(renderList(w.Items))
 		b.WriteString(changes)
 		return b.String(), true, nil
+	}
+	if r := w.openReport(); r != nil {
+		return reportReviewPrompt(baseLine(w), r, w.Items, changes), true, nil
 	}
 	if len(w.Items) == 0 {
 		return "Nothing to review: the change reaches nothing in the spec. End now.\n", true, nil
@@ -418,6 +431,8 @@ func startStep(w Work, f *folder, review bool, restarted []string) string {
 		b.WriteString("Every item has an answer for the files as they are now. Run markitect gate --findings and do what it prints.\n")
 	case review:
 		fmt.Fprintf(&b, "Start the %s agent%s with exactly this message:\n\n    Review the work.\n\nIt takes its task from markitect checklist --review. When it has ended, run markitect gate --findings and do what it prints.\n", ReviewerAgent, onModel(model))
+	case w.openReport() != nil:
+		b.WriteString("The builder reported a spec problem, which waits for a reviewer. Run markitect gate and do what it prints.\n")
 	case len(w.Items) == 0:
 		b.WriteString("Nothing on the list to build. Run markitect gate and do what it prints.\n")
 	case len(missing) == 0 || stopped:
@@ -503,11 +518,31 @@ func (e *Engine) answerState(dir string, raw []byte) (string, bool, error) {
 		return "The spec has errors, so no answer is stored. End now, and say so:\n\n" + listErrors(errs), false, nil
 	}
 	var problems, missing []string
-	none := false
+	none, report := false, false
 	if err := e.updateWork(f.root, func(w *Work) (*Work, error) {
 		if w == nil {
 			none = true
 			return nil, nil
+		}
+		if r := w.openReport(); r != nil {
+			// The builder's report waits for its one answer.
+			report = true
+			item := reportItem(r)
+			answers, refused := parseAnswers(raw, []Item{item})
+			checked, _ := checkAnswers(f.accounted(), []Item{item}, answers)
+			problems = append(refused, checked...)
+			a, ok := answers[ReportItem]
+			switch {
+			case len(problems) > 0:
+			case !ok:
+				problems = append(problems, fmt.Sprintf("%q has no answer", ReportItem))
+			case a.Word != AnswerSpecProblem && a.Word != AnswerWrong:
+				problems = append(problems, fmt.Sprintf("%s: answer %q if the spec has the problem the builder reported, or %q if the spec settles it", ReportItem, AnswerSpecProblem, AnswerWrong))
+			default:
+				g := given(item, a, f)
+				r.Answer, r.Reviewed = &g, w.reviewedOn(f.fingerprint)
+			}
+			return w, nil
 		}
 		if _, _, err := e.list(f, w); err != nil {
 			return nil, err
@@ -544,6 +579,8 @@ func (e *Engine) answerState(dir string, raw []byte) (string, bool, error) {
 			fmt.Fprintf(&b, "- %s\n", p)
 		}
 		return b.String(), false, nil
+	case report:
+		return "Stored: the reported problem has its answer. You are done; report in one line and end.\n", true, nil
 	case len(missing) > 0:
 		return fmt.Sprintf("Stored. %d items still have no answer:\n\n- %s\n", len(missing), strings.Join(missing, "\n- ")), false, nil
 	}
@@ -581,6 +618,9 @@ func (e *Engine) stateStatus(dir string) string {
 		rounds, _ := w.rounds()
 		fmt.Fprintf(&b, "- %s The list has %d %s: %d with an answer for the files as they are now, %d without, %d wrong. Repair rounds: %d of %d.\n",
 			baseLine(*w), len(w.Items), plural(len(w.Items), "item", "items"), len(valid), len(missing), len(wrong), rounds, repairRounds)
+		if r := w.openReport(); r != nil {
+			fmt.Fprintf(&b, "- The builder reported a spec problem, which waits for a reviewer: %s\n", oneLine(r.Why))
+		}
 		for _, d := range w.specProblems() {
 			fmt.Fprintf(&b, "- A spec problem waits for the owner: %s\n", oneLine(d.Matter))
 		}
@@ -623,8 +663,44 @@ Update the registry when files change: every file is listed on the page of its o
 
 Do not change the spec, the manifest, the lock or anything else under .markitect/ except the registry pages, and do not change AGENTS.md, CLAUDE.md or the installed Markitect skills and agents. Change only what the list asks for: gate refuses a changed file that lies in no item.
 
-If the spec contradicts itself or leaves open something that changes behaviour at the project's boundary, stop and say so in your report: the owner decides. A gap with no such effect is yours to decide. If something the project needs is missing from this machine, such as a program or a service, stop and say so.
+If the spec contradicts itself or leaves open something that changes behaviour at the project's boundary, build nothing for it and report it with: markitect gate --spec-problem "what, and where in the spec". Then do what gate prints: a reviewer confirms it before the owner hears of it, and that uses no repair round. A gap with no such effect is yours to decide. If something the project needs is missing from this machine, such as a program or a service, stop and say so.
 `
+
+// reportReviewPrompt is what checklist --review prints while the builder's report
+// of a spec problem waits for a reviewer: the report is the one item.
+func reportReviewPrompt(base string, r *Report, items []Item, changes string) string {
+	var b strings.Builder
+	b.WriteString(fixedPart)
+	fmt.Fprintf(&b, "\nThe builder stopped and reported that the spec has a problem only the owner can settle. Decide whether it does; you owe the builder no benefit of the doubt. %s It reported:\n\n", base)
+	for _, line := range strings.Split(strings.TrimSpace(r.Why), "\n") {
+		fmt.Fprintf(&b, "    %s\n", line)
+	}
+	if len(items) > 0 {
+		b.WriteString("\nThe list of the change, for where to look:\n\n")
+		for _, it := range items {
+			fmt.Fprintf(&b, "- %s", it.Key)
+			if len(it.Look) > 0 {
+				fmt.Fprintf(&b, " (look at: %s)", strings.Join(it.Look, ", "))
+			}
+			b.WriteString("\n")
+		}
+	}
+	b.WriteString("\n## Checklist\n\n")
+	b.WriteString(renderList([]Item{reportItem(r)}))
+	fmt.Fprintf(&b, `
+## Your answer
+
+Answer the one item with markitect answer, which reads it from its standard input:
+
+    markitect answer <<'EOF'
+    %[1]s: %[2]s -- the question the owner must settle
+    EOF
+
+Answer %[2]q, with that question, if the spec contradicts itself or leaves open something that changes behaviour at the project's boundary, as reported. Answer %[3]q, with how the spec settles it, if it does not: the builder then builds it. A file:line before "--" may name where you read it. Only the spec is under review here, not the code.
+`, ReportItem, AnswerSpecProblem, AnswerWrong)
+	b.WriteString(changes)
+	return b.String()
+}
 
 // stateReviewPrompt is what checklist --review prints without a Run.
 func stateReviewPrompt(base string, earlier []string, items []Item, changes string) string {

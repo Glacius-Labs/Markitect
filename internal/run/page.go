@@ -82,6 +82,21 @@ func Page(r *Result) []byte {
 		b.WriteString("\nHow much the reviewer really read is not measured.\n")
 	}
 
+	if len(r.Reports) > 0 {
+		b.WriteString("\n## The builder's reports of a spec problem\n\n| Reported | Reviewer | Where | Explanation |\n|---|---|---|---|\n")
+		for _, rep := range r.Reports {
+			word := rep.Answer
+			switch word {
+			case AnswerSpecProblem:
+				word = "confirmed"
+			case AnswerWrong:
+				word = "turned down"
+			case "":
+				word = "not answered"
+			}
+			fmt.Fprintf(&b, "| %s | %s | %s | %s |\n", cell(rep.Reported), word, cell(pointers(rep.Pointers)), cell(rep.Explanation))
+		}
+	}
 	if len(r.SentBack) > 0 {
 		b.WriteString("\n## Repair rounds\n\n")
 		for i, why := range r.SentBack {
