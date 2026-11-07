@@ -640,7 +640,22 @@ func TestChecklistStartsTheBuilder(t *testing.T) {
 	p.review(map[string]string{"loan-limit": "wrong src/members/loans/loan.go:3 -- still says 5"})
 	has(t, p.gate(run.GateRequest{}).Text, "repair round 1 of 2")
 	has(t, p.list(run.ChecklistRequest{}), "The last review found these wrong", "- loan-limit: still says 5")
+	// The review is complete, so the driver goes to gate, which sends the repair.
+	has(t, p.list(run.ChecklistRequest{Start: true}), "has its review", "Run markitect gate")
+	p.write("src/members/loans/loan.go", limit3)
 	has(t, p.list(run.ChecklistRequest{Start: true}), run.BuilderAgent, "Build the work.")
+
+	// The owner changes the spec under the work: an agent's checklist is refused,
+	// and the skill's call begins the work again.
+	p.write(m+"loan-limit.md", def("std/Rule", "Loan limit", "At most `2` open loans."))
+	if text, ok, err := p.engine.Checklist(context.Background(), run.ChecklistRequest{Dir: p.dir}); err != nil || ok || !strings.Contains(text, "only the owner begins the work again") {
+		t.Fatalf("a plain checklist went on: %v %v\n%s", ok, err, text)
+	}
+	again := p.list(run.ChecklistRequest{Start: true})
+	has(t, again, "so it begins again", m+"loan-limit.md", run.BuilderAgent, "Build the work.")
+	if strings.Contains(p.list(run.ChecklistRequest{}), "The last review found these wrong") {
+		t.Fatal("the new work kept the old answers")
+	}
 }
 
 // A review of finished work begins with checklist --review --start, which names the
@@ -652,6 +667,14 @@ func TestChecklistStartsTheReviewer(t *testing.T) {
 	// No work was left behind: a change of the spec now begins new work.
 	p.specChange()
 	has(t, p.list(run.ChecklistRequest{}), "Make this project match the spec")
+	// Nor does an empty review leave the work under way it went on with.
+	e := newPlain(t)
+	e.certify()
+	has(t, e.list(run.ChecklistRequest{Start: true}), "Nothing on the list to build")
+	has(t, e.list(run.ChecklistRequest{Review: true, Start: true}), "Nothing to review", "nothing to commit")
+	if text, ok, err := e.engine.Checklist(context.Background(), run.ChecklistRequest{Dir: e.dir, Review: true}); err != nil || ok || !strings.Contains(text, "No work is under way") {
+		t.Fatalf("the empty review left work behind: %v %v\n%s", ok, err, text)
+	}
 	q := newPlain(t)
 	q.certify()
 	q.write("src/members/loans/loan.go", "package loans\n\nconst Limit = 9\n")

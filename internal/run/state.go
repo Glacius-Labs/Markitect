@@ -203,9 +203,12 @@ func (e *Engine) workFor(f *folder, req ChecklistRequest, stored *Work) (w *Work
 	// changed certificate like any other: a plain checklist refuses.
 	if stored != nil && !req.namesChange() {
 		if changed := f.changedOwn(stored); len(changed) > 0 {
-			return nil, restartText(changed), nil
-		}
-		if stored.Named || stored.Base == base {
+			// The skill's call is the owner's step, so it begins the work
+			// again; an agent's plain checklist is refused.
+			if !req.Start {
+				return nil, restartText(changed), nil
+			}
+		} else if stored.Named || stored.Base == base {
 			return stored, "", nil
 		}
 	}
@@ -264,7 +267,7 @@ func (e *Engine) Checklist(ctx context.Context, req ChecklistRequest) (text stri
 	}
 	if open != nil {
 		if req.Start {
-			return fmt.Sprintf("Run %s is open in this folder, so no work begins beside it. Go on with it with markitect %s, or end it with markitect stop \"why\".\n", open.Run, open.Command), false, nil
+			return fmt.Sprintf("Run %s is open in this folder, so no work begins beside it. markitect %s --skill says how to go on with it, and markitect stop \"why\" ends it.\n", open.Run, open.Command), false, nil
 		}
 		if req.namesChange() {
 			return "", false, fmt.Errorf("%w: run %s is open in this folder and has its own list; --base, --full and --findings are for work without a run", ErrUsage, open.Run)
@@ -282,6 +285,7 @@ func (e *Engine) Checklist(ctx context.Context, req ChecklistRequest) (text stri
 	var w Work
 	var imp analysis.Impact
 	var before *project.Project
+	var restarted []string
 	refusal := ""
 	if err := e.updateWork(f.root, func(stored *Work) (*Work, error) {
 		if stored == nil && req.Review && !req.namesChange() && !req.Start {
@@ -289,6 +293,9 @@ func (e *Engine) Checklist(ctx context.Context, req ChecklistRequest) (text stri
 			// nothing to review.
 			refusal = "No work is under way in this folder, so there is nothing to review. End now, and say so.\n"
 			return nil, nil
+		}
+		if req.Start && stored != nil && !req.namesChange() {
+			restarted = f.changedOwn(stored)
 		}
 		next, why, err := e.workFor(f, req, stored)
 		if err != nil {
@@ -302,7 +309,7 @@ func (e *Engine) Checklist(ctx context.Context, req ChecklistRequest) (text stri
 			return nil, err
 		}
 		w = *next
-		if req.Start && req.Review && stored == nil && len(next.Items) == 0 {
+		if req.Start && req.Review && len(next.Items) == 0 {
 			// A review that finds nothing to review leaves no work behind, which
 			// would otherwise hold the next change to its base.
 			return nil, nil
@@ -315,7 +322,7 @@ func (e *Engine) Checklist(ctx context.Context, req ChecklistRequest) (text stri
 		return refusal, false, nil
 	}
 	if req.Start {
-		return startStep(w, f, req.Review), true, nil
+		return startStep(w, f, req.Review, restarted), true, nil
 	}
 	changes := changedText(imp, before)
 	if !req.Review {
@@ -368,22 +375,30 @@ func sentBack(w Work) []string {
 // startStep tells the session that drives the work which agent to start. The
 // builder goes through gate itself, which has it start the reviewer; a review of
 // finished work needs only the reviewer. Either way the driver runs gate when the
-// agent has ended and does what it prints, so the process stays in the tool.
-func startStep(w Work, f *folder, review bool) string {
+// agent has ended and does what it prints, so the process stays in the tool. Work
+// whose review is complete, or that gate has stopped, goes straight to gate.
+// restarted names what changed under the work that this call began again.
+func startStep(w Work, f *folder, review bool, restarted []string) string {
 	model := f.cur.Manifest.Model
 	var b strings.Builder
+	if len(restarted) > 0 {
+		fmt.Fprintf(&b, "These changed since the work under way began, so it begins again: %s.\n\n", strings.Join(restarted, ", "))
+	}
 	fmt.Fprintf(&b, "%s The list has %d %s.\n\n", baseLine(w), len(w.Items), plural(len(w.Items), "item", "items"))
+	_, missing := w.standing(f)
+	rounds, _ := w.rounds()
+	stopped := len(w.specProblems()) > 0 || rounds > repairRounds
 	switch {
 	case review && len(w.Items) == 0:
-		b.WriteString("Nothing to review: the change reaches nothing in the spec.\n")
+		b.WriteString("Nothing to review: the change reaches nothing in the spec, so there is no agent to start and nothing to commit.\n")
+	case review && (len(missing) == 0 || stopped):
+		b.WriteString("Every item has an answer for the files as they are now. Run markitect gate --findings and do what it prints.\n")
 	case review:
-		if valid, _ := w.standing(f); len(valid) == len(w.Items) {
-			b.WriteString("Every item has an answer for the files as they are now. Run markitect gate --findings and do what it prints.\n")
-			break
-		}
 		fmt.Fprintf(&b, "Start the %s agent%s with exactly this message:\n\n    Review the work.\n\nIt takes its task from markitect checklist --review. When it has ended, run markitect gate --findings and do what it prints.\n", ReviewerAgent, onModel(model))
 	case len(w.Items) == 0:
 		b.WriteString("Nothing on the list to build. Run markitect gate and do what it prints.\n")
+	case len(missing) == 0 || stopped:
+		b.WriteString("The work under way has its review. Run markitect gate and do what it prints.\n")
 	default:
 		fmt.Fprintf(&b, "Start the %s agent%s with exactly this message:\n\n    Build the work.\n\nIt takes its task from markitect checklist and goes through markitect gate, which has it start the reviewer. When it has ended, run markitect gate and do what it prints.\n", BuilderAgent, onModel(model))
 	}

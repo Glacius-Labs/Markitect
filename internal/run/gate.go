@@ -110,7 +110,7 @@ func (e *Engine) Gate(ctx context.Context, req GateRequest) (Verdict, error) {
 		for _, d := range decisions {
 			fmt.Fprintf(&b, "- %s\n", oneLine(d.Matter))
 		}
-		fmt.Fprintf(&b, "\nThe Result is %s. Once the spec is settled, markitect checklist begins the work again.\n", file)
+		fmt.Fprintf(&b, "\nThe Result is %s. Once the owner has settled the spec, markitect checklist --start begins the work again.\n", file)
 		return Verdict{Text: b.String()}, nil
 	}
 	// Row 6, the end: the repair rounds ran out.
