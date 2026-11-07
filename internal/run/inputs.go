@@ -157,14 +157,19 @@ type Evidence struct {
 	File string
 }
 
-// ParseEvidence reads what a reviewer gives as evidence: FILE, FILE:LINE or
-// FILE:LINE-LINE, and after a space a note.
+// ParseEvidence reads what a reviewer gives as evidence: FILE, FILE:LINE,
+// FILE:LINE-LINE or FILE:LINE:COLUMN, and after a space a note.
 func ParseEvidence(text string) (Evidence, error) {
 	text = oneLine(text)
 	token, note, _ := strings.Cut(text, " ")
 	file, lines := token, ""
-	if i := strings.LastIndexByte(token, ':'); i > 0 && lineSpec(token[i+1:]) {
-		file, lines = token[:i], token[i:]
+	// FILE:LINE, FILE:LINE-LINE or, as compilers print it, FILE:LINE:COLUMN.
+	for n := 0; n < 2; n++ {
+		i := strings.LastIndexByte(file, ':')
+		if i <= 0 || !lineSpec(file[i+1:]) {
+			break
+		}
+		file, lines = file[:i], file[i:]+lines
 	}
 	file = strings.TrimPrefix(strings.ReplaceAll(file, `\`, "/"), "./")
 	text = strings.TrimSpace(file + lines + " " + note)

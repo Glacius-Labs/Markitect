@@ -1,72 +1,100 @@
-# The work
+# The record
 
-`internal/run` holds the work on a project folder ([DEC-096](../../docs/concepts/register.md#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](../../docs/concepts/register.md#dec-097-markitect-uses-no-git), [lean plan](../../docs/concepts/lean-tool-plan.md)). The tool computes and checks: `checklist` says what a change reaches, `answer` stores a reviewer's answers, and `gate` checks the work and, when it passes, writes a certificate. Whoever drives the agents (a skill, a workflow or a person) starts them and makes every Git step. Nothing here starts or drives an agent, and nothing uses Git, so forgetting a step cannot certify and compaction cannot lose the process: each command prints the next step.
+`internal/run` holds the record of what was verified ([DEC-099](../../docs/concepts/register.md#dec-099-markitect-is-a-tool-with-a-verification-cache), [tooling plan](../../docs/concepts/tooling-plan.md)). Like Go's test cache, it keeps for each Definition the state at which a reviewer last verified it, and so says what is left to verify. The tool supports agent work and does not steer it: it computes, checks and records, and decides nothing about who works when. Whoever drives the agents (a skill, a workflow or a person) starts them and makes every Git step. Nothing here starts or drives an agent, and nothing uses Git ([DEC-096](../../docs/concepts/register.md#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](../../docs/concepts/register.md#dec-097-markitect-uses-no-git)).
 
 | Package | Role |
 | --- | --- |
-| `internal/run` | The work: the checklist, the answers, `gate`, the certificate, the hook on `answer` and `checklist`, and the Result. |
-| `internal/adapters/folder` | The walk of the project folder and its `.gitignore` files, for the work and the command line ([below](#the-folder)). |
-| `internal/bootstrap` | Builds the engine for the command line, with its state in the user's cache folder. |
+| `internal/run` | The record: the inputs of each Definition, `.markitect/review.sum`, `status`, `review`, the hook, and the migration from the certificates of 0.20.0. |
+| `internal/adapters/folder` | The walk of the project folder and its `.gitignore` files, for the record and the command line ([below](#the-folder)). |
+| `internal/bootstrap` | Builds the engine for the command line, with the lock of each project's record in the user's cache folder. |
 
 ## The folder
 
 The project folder is the nearest folder with `.markitect/manifest.yaml`. Its files come from walking it, without what the project's `.gitignore` files exclude, read as plain text: nested ones, and those of the folders above it up to the top of the Git repository it lies in, each from its own folder, as Git applies them ([`folder.Disk`](../adapters/folder/folder.go)). A `.gitignore` above the project folder that excludes the project folder itself, or a folder on the way to it, is not applied, though Git would ignore everything there. A folder named with `--repo` must exist, so that a mistyped one is not taken for the project around it. Patterns follow Git: `!` brings a file back unless its folder is excluded, a trailing `/**` holds what is inside a folder and not the folder, and `[!x]` means "not x". Git's own folder is not walked. Another repository, a folder whose `.git` is a folder with a `HEAD` or a file naming one, is one entry, as in Git, so that `check` names it until it is registered or ignored; its files are not walked, and a change inside it is not seen. A symbolic link counts as where it points, as Git stores it. Global Git settings are out of scope, and so are files Git tracks although a `.gitignore` excludes them: the walk does not see those, and a registry row for one is an error. Every command reads the folder this way, the spec's commands included.
 
-## The certificate
+## The inputs
 
-When `gate` passes, it writes `gate-<time>-<state>.json` under `.markitect/results/`: the SHA-256 of every accounted file and every Definition, the text of the files under `.markitect/` the spec and its registry are read from (not the results, not the installed tool, no binary file), and each item's answer. Line endings do not count in a text file's hash, so a checkout on another system matches. The Result page `gate-<time>-<state>.md` lies beside it.
+A Definition's inputs are everything its verification depended on, each by its SHA-256:
 
-The newest certificate is the base of the next change: one that another names as its base is older than that one, whatever the clocks said, and of the rest, as after a merge of two certified branches, the one made last counts, by the time it records, never by file times. "Changed" means a different hash, and a Definition's old text comes from the copy, so `checklist` shows what a changed or removed Definition said before. With no certificate the list holds every Definition, Findings or not. After a merge the rest of what the other branch covered is reviewed again. The results folder counts in no certificate's hashes: it holds the records. A certificate is a record, not a proof: during the work a changed certificate stops `gate`, but one planted by hand while no work is under way is taken as it is.
+| Key | Input |
+|---|---|
+| `self` | The Definition's own text |
+| `kind:ID` | Its Kind |
+| `link:ID` | A Definition it links to |
+| `file:PATH` | A file whose registry row names it |
+| `evidence:PATH` | A file the reviewer gave as evidence |
 
-## The work under way
+A model Definition counts by its text. A Library Definition counts by its Library's digest in the lock, so that a newer binary changes nothing until the lock is written again; a Library counts as one, as a Go module does, so a change of one Kind of a committed Library puts the Definitions of all its Kinds on the list. Core's `Kind` is no input, and neither is a link to a Package. Line endings do not count in a text file's hash, so a checkout on another system matches.
 
-The work lives outside the project, in the user's cache folder (`markitect/work/`, one file per project folder, changed under a short lock). `checklist` begins it and holds the hashes it began with of what the work may not change: the spec, the harness, the `.gitignore` files and the certificates.
+This reaches what concept 4.0's checklist reached at distance 0 and 1 ([concept 4.0 §3](../../docs/concepts/v4-concept.md#how-status-works)): a Definition that changed, one that links to a changed Definition or is of a changed Kind, one whose files changed, and one whose registry rows gained or lost it. A changed Rule above a Package reaches only itself and what links to it. A change of a row's reason, or of a file the ignore file lists, reaches nothing. The one difference, the Library counted as a whole, lists more, never less.
 
-Without `--base`, `--full` or `--findings`, `checklist` goes on with the work under way, and begins the change from the newest certificate when there is none or a newer certificate ended it; when what the work may not change changed under it, it refuses instead of beginning again, so that no builder can change the spec and start over. With those flags it names a change, and begins it afresh unless it is the one under way: that is how the owner begins the work again after changing the spec. `--start`, the skills' call, is the owner's step too: when what the work may not change changed, it begins the work again from the newest certificate and says so, and a building `--start` does not go on with a review of finished work left unfinished. `--start` begins nothing in a folder without both agents and the hook. `--base` takes a certificate, its `.json` or its `.md`, as a path in the project or a name in the results folder. A base certificate gone from the folder, as after a change of branch, is a changed certificate like any other. The refusal names no command that begins the work again, since an agent reads it too. `checklist --review` and `answer` without work under way say there is nothing to do and to end, so a reviewer of ended work is not turned into a builder. The list only grows: an item stays on it once a state put it there.
+The **fingerprint** of an item is the first twelve characters of the hash of every input but the evidence, which the reviewer chooses after it read the item.
 
-## The answers
+## The record file
 
-A reviewer answers one line per item on standard input: `KEY: ANSWER POINTERS -- EXPLANATION`. The words are `ok`, `wrong`, `not shown` and `spec problem`; all but `ok` need an explanation after `--`, and `ok` needs a pointer. `answer` refuses what it cannot accept and stores nothing from that call: a line it cannot read, an item not on the list, a location or test that does not exist in the folder. It says what is still missing. How much a reviewer really read is not measured, and the Result says so.
+`.markitect/review.sum` is part of the project's fixed layout and committed with it, like `go.sum`. It holds one line per Definition, sorted, each a JSON object with the Definition, the verdict, the inputs with their full hashes, the evidence as the reviewer gave it and the reason on one line:
 
-Each pointer must be a file the walk finds. An answer is bound to the hashes of the files its item names and the files it points to, and falls away when one of them changes; put back, it stands again. So a repair review asks only about what the repair touched. A `wrong` answer stands only on the state it was given on: the work went back for it. When every item has an answer, that state of the folder is a finished review.
+```text
+{"definition":"members/loans/loan","verdict":"ok","inputs":{"evidence:src/members/loans/loan.go":"sha256:…","file:src/members/loans/loan.go":"sha256:…","kind:std/Concept":"sha256:…","link:members/member":"sha256:…","self":"sha256:…"},"evidence":["src/members/loans/loan.go:3"]}
+```
 
-## gate
+The verdicts are `ok` (implemented, as the evidence shows), `fail` (not, and why), `skip` (verified as far as the project can show, and why) and `spec-problem` (the spec contradicts itself or leaves open behaviour at the project's boundary, and only the owner can settle it). The record holds hashes, not text: an agent that wants what a Definition said before reads it from Git.
 
-`gate` does the first thing that applies, and each refusal prints the one next step:
+**Merging.** `init` and `update` write `.markitect/.gitattributes` with `review.sum merge=union`, which also joins the layout, so Git keeps the lines of both sides of a merge. Of several lines for one Definition, `status` takes the one whose inputs match the folder; two that match with different verdicts are a conflict to verify again. A line markitect cannot read, such as a broken one written by hand, is an error until the owner fixes or removes it.
 
-| | It finds | It says, and exits |
-|---|---|---|
-| 1 | The spec (everything under `.markitect/` except the registry pages and the results), the harness, a `.gitignore` file or a certificate changed since `checklist` began the work, or a link leaves the folder | Put them back; a change to the spec is its own step, before the work, and the owner begins the work again by naming the change. Exit 1 |
-| 2 | The builder's report of a spec problem that no reviewer has answered | Start the reviewer, which confirms it or not. Exit 1 |
-| 3 | A `spec problem`, confirmed by the reviewer of a report or found by a finished review | The question for the owner; the Result says so. Exit 1 |
-| 4 | A file that changed since the base certificate and lies in no item of the list | The files: list them on the registry so that they are reviewed, or put them back. Exit 1 |
-| 5 | An error from `check`, in the spec or the realization | The errors. Exit 1 |
-| 6 | Items without an answer for the files as they are | Start the reviewer, which takes its task from `checklist --review`. Exit 1 |
-| 7 | A `wrong` answer | The items, and which repair round of two this is. After two rounds it refuses, and the Result says so. Exit 1 |
-| 8 | Nothing left | Writes the certificate and the Result under `.markitect/results/`, ends the work and says to commit the work with both in one commit. Exit 0 |
+The record is a record, not a proof: a line written by hand shows in the diff, and [the hook](#the-hook) keeps agents from writing one.
 
-Before row 1: without work under way, a folder that matches its newest certificate has nothing to check (exit 0), and any other has no work to check (exit 1). With work under way, an empty list on a folder that matches the base certificate has nothing to check either; work on Findings has a list. An error in the spec itself comes right after row 1, since there is no list without a spec. Rows 3 and 7 read every finished review of the work, not only this state's, so a spec problem, or a third review that sends something back, is said before row 6 asks for another review; a spec problem comes before rows 4 and 5, since nothing is certified while it stands. A repair round is a finished review that found something wrong: calling `gate` again on the same state uses none, and a review with a spec problem uses none either. `gate` keeps only these two rounds, a rule about state; time and the number of calls are the driver's. Row 4 needs a base: with no certificate every Definition is on the list. A change of a file that realizes a Definition the list did not reach puts that Definition on the list, so row 4 names what lies in no item at all, such as a file of the ignore file. A Result page of a refusal is named by the state and the outcome, so calling `gate` again rewrites it. `gate` never commits; the driver commits the work together with the certificate.
+## status
 
-**The builder's report** ([lean plan, decision 7](../../docs/concepts/lean-tool-plan.md#decisions-for-the-owner)). A builder that finds the spec contradicting itself, or leaving open something that changes behaviour at the project's boundary, builds nothing for it and calls `gate --spec-problem "WHY"`. Gate records the report in the work and goes on to row 2, whatever else the builder left in the folder, so no agent decides about its own work. While the report waits, `checklist --review` asks the reviewer only about it, as the item `reported problem`, and `answer` takes `spec problem` with the question for the owner, which confirms it (row 3), or `wrong` with how the spec settles it. Neither uses a repair round. After a `wrong`, gate tells the builder once, on the state the reviewer answered, to build the work as the spec says, and its `checklist` shows the reviewer's reading; then gate goes on as usual, and a review of that state that finds the work missing uses no round either, unless a review had already finished on it. A second report before the review replaces the first. The reports stay bounded: gate refuses a report on the state a reviewer turned one down on, any report after two were turned down (a reviewer of the work can still answer `spec problem`), and a report in a review of finished work, which has no builder. The Result page lists the reports with the reviewer's word in a section of their own; they are no checklist items, so the certificate does not hold them.
+`markitect status [--all]` reads the folder and the record and changes nothing. It lists:
 
-**`gate --verify`** checks that the folder matches its newest certificate and names the files that do not, for a checkout in CI or anywhere no agent reaches. **`gate --findings`** closes a review of finished work, such as `checklist --base CERTIFICATE --review` and its answers: the Result (`gate-…-verify.md`) and, with Findings, the Findings page (`gate-…-findings.md`) go into the folder, the input of `checklist --findings`, and no certificate. **`impact`** compares the folder with the newest certificate, or the one `--base` names, by its `.json` or `.md` path, and names it in full. **`status`** says how the work stands for the files as they are, and which files differ from the newest certificate; it reads and changes nothing.
+- every Definition with a changed input or no record, with which inputs changed: `changed: self, file:src/x.go (new), evidence:tests/x_test.go (gone)`;
+- every Definition recorded `fail` or `spec-problem` at its inputs as they are, with why; a changed one also says what was recorded before;
+- every Definition gone from the spec that still has a line, with the files that line names: are they removed, or do they have a new basis?
+- every conflict;
+- the errors in the realization: a file neither listed nor ignored, a stale registry row, an unused Definition;
+- the lines of the record it cannot read.
 
-## The default driver
+Each item names where to look, the Definition's file, its row files and the evidence of its last line, and its fingerprint as `--at FINGERPRINT`. A Definition recorded `skip` is a note. A spec with errors gives no list: there is none until it compiles. `--all` lists every Definition, to verify everything again.
 
-The `/markitect-apply` and `/markitect-verify` skills call `checklist --start`, with `--review` for a review, which begins the work, or goes on with the work under way, and prints the driver's step instead of an agent's task: start the builder, or the reviewer, and run `gate` (or `gate --findings`) when it has ended; work whose review is complete, or that `gate` has stopped, goes straight to `gate`. A review with an empty list leaves no work behind. The builder goes through `gate` itself and starts the reviewer as its own subagent when `gate` says so, so it keeps its context through the repairs; the owner's session runs `gate` again when the builder has ended and starts whichever agent it names. A builder started again sees in its `checklist` what the last review found wrong. The session commits the work with the certificate.
+It exits 0 when it lists nothing: then the project compiles and every Definition is verified at its current inputs. It exits 1 when it lists something, and so with `--all` whenever the spec has a Definition. Notes never change the exit code, a `skip` or the note on standard error that the project's harness comes from another markitect alike. It looks at no network: whether a newer binary exists is `update --check`'s question.
+
+## review
+
+`markitect review DEFINITION VERDICT --at FINGERPRINT [EVIDENCE…] [-- WHY]` records a verdict at the state the reviewer read. Flags may stand anywhere before `--`; what follows it is why, kept on one line.
+
+- `ok` names at least one piece of evidence; `fail`, `skip` and `spec-problem` say why.
+- Evidence is `FILE`, `FILE:LINE` or `FILE:LINE-LINE`, with a note after a space in the same argument, such as `"tests/fees_test.go:12 (TestWaiver)"`. Each file must be a file of the folder, named from the project folder; its hash becomes an input when the verdict is recorded.
+- It refuses, records nothing and exits 1 when the inputs differ from the fingerprint, as when a builder edited a file beside the reviewer or the reviewer's own test run changed one; when evidence is not a file of the folder; when the Definition is unknown; when the spec has errors; or when the record has a line it cannot read. A command it cannot read exits 2.
+- A gone Definition is reviewed `ok` when its files are removed or have a new basis, which removes its line, or `fail` when not; `skip` is refused.
+
+It writes under a lock in the user's cache folder (`markitect/locks/`, one per project folder), reading the folder and the record afresh, and replaces the record as one whole file in one step, so parallel reviewers, such as one per Package, lose no line. It writes the file clean: one line per Definition, the matching one of several, both of a conflict, the closest when none matches, and one line for a gone Definition with every file its lines named.
 
 ## The hook
 
-One hook, in the project's `.claude/settings.json`, which `init` writes: before a shell command that runs `markitect answer` or `markitect checklist`, `markitect hook pretool` refuses `answer` unless the agent is the reviewer, so no agent marks its own work as done, and refuses a subagent's `checklist` with `--start`, `--full`, `--base` or `--findings`, so an agent that changed the spec does not start over with its change as the owner's. Hooks in project settings run inside subagents too, and their input names the agent. The hook reads the command as text, with one dash or two, so it guards against mistakes, not against an agent that hides a command, and Claude Code's `if` filter starts it only for a command that begins with `markitect`. The work may not change the file.
+One command, `markitect hook pretool`, which `init` and `update` add to the project's `.claude/settings.json` in two groups before a tool call: one before a shell command (`if: "Bash(markitect review*)"`), one before every tool that writes a file (`Edit|Write|MultiEdit|NotebookEdit`). Hooks in project settings run inside subagents too, and their input names the agent. The hook guards the record and the spec, not the process:
 
-## The agents
+- **Only the reviewer agent runs `markitect review`.** So the agent that built does not verify its own work. A call from the owner's session through Claude Code is refused too.
+- **No subagent writes under `.markitect/`, except the registry pages** (`registry.md` and `registry/*.md`), which the builder keeps. So a builder cannot weaken a Definition during the work or write lines into the record. The owner's own session, where the spec is modelled, is no subagent and stays free.
 
-Both are agent files `init` writes. The builder may edit files and start agents; the reviewer has no edit or agent tools. Each defaults to `sonnet` with effort `high`, and the tool names the manifest's `model` when it says which agent to start. Everything else comes from the owner's session: its permission mode, settings, plugins and memory.
+The hook reads the call as text, so a command hidden in a script, or one that names `markitect` by a path, gets through. It guards against mistakes, not against intent. The plugin's hooks do the same before starting its launcher.
 
-## The Result
+## The agents and skills
 
-The tool writes the Result from what happened, never an agent: beside a passing certificate, or named by the state and the outcome when `gate` stops the work. It lists every item with its answer and pointers, the builder's reports, the repair rounds and what each went back for, the decisions for the owner, what could not be tested, and locations a reviewer named that the registry does not list for that item.
+Both agents are files `init` writes. The builder may read, edit, run the shell and start only the reviewer (`Agent(markitect-reviewer)`), so it cannot get past the hook through a general-purpose helper; the reviewer has no edit or agent tools. Each defaults to `sonnet` with effort `high`, and the manifest's `model`, if it names one, is written into both agent files by `init` and `update`. Everything else comes from the owner's session: its permission mode, settings, plugins and memory. The agents hold their task and the verdict words in their own files, which outlive compaction.
+
+The skills are plain prompts with no injected command, so no exit code can abort them. `/markitect-build` starts the builder, which runs `status`, makes the project match the spec for what it lists, starts the reviewer, and repeats until `status` lists nothing or only what needs the owner; then the session commits the work with the record. `/markitect-review` starts the reviewer on what `status` lists, or on everything with `--all`; it changes no code, and the session commits the record. Nothing counts rounds: the owner stops the work when it should stop.
+
+## The migration
+
+`markitect update` turns a project of 0.20.0 into one with a record. When `.markitect/results/` holds a certificate and the project has no record yet, it writes the record from the newest certificate: newest by base (one that another names as its base is older), then by the time it records. Every Definition of the certified spec is recorded `ok` at the certified state, computed from the spec text and file hashes the certificate holds, with the certificate's pointers as evidence where it has them; a `not shown` answer becomes `skip`. Then it removes the results folder, which no longer belongs to the layout: `check` names a file there as `project.results` until it is gone. A project that already has its record keeps it. `update --check` and `version` count the migration as out of date.
+
+For one release, `checklist`, `answer` and `gate` print on standard output, with exit 0, that they are gone and to run `markitect update`, so that an old project's skill does not fail silently.
+
+## What went
+
+The checklist, the stored answers, the work under way in the cache, `gate` with its rows, the certificates, the Result and Findings pages, repair rounds and the builder's report of a spec problem went with 0.21.0 ([DEC-099](../../docs/concepts/register.md#dec-099-markitect-is-a-tool-with-a-verification-cache)). So did three refusals of `gate` during the work: of a changed file the ignore file lists, of a changed harness, `.gitignore` or `settings.json`, and of a symbolic link that leaves the folder. The [tooling plan](../../docs/concepts/tooling-plan.md#what-this-gives-up-and-what-it-keeps) says what that gives up.
 
 ## Tests
 
-`gate_test.go` plays the driver and its agents on plain folders without Git while `gate` checks what they did: every row of `gate`, the builder's report, repair rounds, the certificate and the newest one after a merge, answers that fall away when their files change, `--verify`, `--findings`, `checklist --start` and `status`. `hook_test.go` covers the hook, and `lock_test.go` the lock of the work and links that leave the folder.
+`record_test.go` plays the builder and the reviewer on plain folders without Git while `status` says what is to verify: what a change reaches, the Kind and the Library, `--at` and evidence, the verdicts, a gone Definition, merged lines and conflicts, an unreadable line, errors, and parallel reviewers. `migrate_test.go` covers the migration from certificates written as 0.20.0 wrote them, `hook_test.go` the hook, and `lock_test.go` the lock.

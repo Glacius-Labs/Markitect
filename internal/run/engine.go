@@ -12,6 +12,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/project"
 )
@@ -86,7 +87,16 @@ func (e *Engine) lockDir() (string, error) {
 
 // readRecordFile reads a project's record; nil without one.
 func readRecordFile(root string) ([]byte, error) {
-	data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(project.ReviewFile)))
+	file := filepath.Join(root, filepath.FromSlash(project.ReviewFile))
+	var data []byte
+	var err error
+	for i := 0; i < 20; i++ {
+		if data, err = os.ReadFile(file); err == nil || errors.Is(err, os.ErrNotExist) {
+			break
+		}
+		// A rename beside a read is refused for a moment on Windows.
+		time.Sleep(50 * time.Millisecond)
+	}
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, nil
 	}

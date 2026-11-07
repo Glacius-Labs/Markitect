@@ -110,17 +110,13 @@ func (e *Engine) Review(_ context.Context, req ReviewRequest) (text string, reco
 	case it.State != StateGone && req.Verdict == VerdictOK && len(evidence) == 0:
 		return "", false, fmt.Errorf("%w: ok names the evidence, such as FILE:LINE", ErrUsage)
 	}
-	line := Line{Definition: req.Definition, Verdict: req.Verdict, Why: req.Why}
+	inputs := v.now[req.Definition]
 	if it.State == StateGone {
-		line.Inputs = Inputs{}
-		for k, h := range v.goneInputs[req.Definition] {
-			line.Inputs[k] = h
-		}
-	} else {
-		line.Inputs = Inputs{}
-		for k, h := range v.now[req.Definition] {
-			line.Inputs[k] = h
-		}
+		inputs = v.goneInputs[req.Definition]
+	}
+	line := Line{Definition: req.Definition, Verdict: req.Verdict, Why: req.Why, Inputs: Inputs{}}
+	for k, h := range inputs {
+		line.Inputs[k] = h
 	}
 	var missing []string
 	for _, ev := range evidence {

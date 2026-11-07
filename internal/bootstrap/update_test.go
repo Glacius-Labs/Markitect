@@ -106,6 +106,26 @@ func TestUpdateBringsAProjectInLine(t *testing.T) {
 	}
 }
 
+// The model the manifest names is the agents' model: update writes it into their
+// files, and until then every command says the harness is out of date.
+func TestTheManifestNamesTheAgentsModel(t *testing.T) {
+	emptyHome(t)
+	r := newFolder(t)
+	mustRun(t, r.Dir, "init")
+	wantAll(t, read(t, r.Dir, ".claude/agents/markitect-builder.md"), "\nmodel: sonnet\n")
+	r.Write(".markitect/manifest.yaml", "libraries:\n  std: 1.0.0\nmodel: opus\n")
+	if _, _, errOut := run(t, r.Dir, "status"); !strings.Contains(errOut, "run markitect update") {
+		t.Fatalf("no note of the changed model:\n%s", errOut)
+	}
+	mustRun(t, r.Dir, "update", "--files")
+	for _, agent := range []string{"markitect-builder", "markitect-reviewer"} {
+		wantAll(t, read(t, r.Dir, ".claude/agents/"+agent+".md"), "\nmodel: opus\n")
+	}
+	r.Write(".markitect/manifest.yaml", "libraries:\n  std: 1.0.0\nmodel: \"opus; rm -rf /\"\n")
+	mustRun(t, r.Dir, "update", "--files")
+	wantAll(t, read(t, r.Dir, ".claude/agents/markitect-builder.md"), "\nmodel: sonnet\n")
+}
+
 // A checkout may hold a file with CRLF; that is the same file.
 func TestUpdateIgnoresLineEndings(t *testing.T) {
 	emptyHome(t)

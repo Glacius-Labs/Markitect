@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/libraries"
@@ -120,7 +121,7 @@ var personalSkillTips = map[fileState]string{
 // other file of it the binary no longer ships.
 func installHarness(ws Workspace) error {
 	want := map[string][]byte{}
-	for _, f := range skills.Harness() {
+	for _, f := range harness(ws) {
 		want[f.Path] = f.Data
 	}
 	for _, dir := range []string{".claude/agents", ".claude/skills"} {
@@ -144,6 +145,38 @@ func installHarness(ws Workspace) error {
 		}
 	}
 	return nil
+}
+
+// harness is the harness as a project gets it: its agents on the model the
+// manifest names, if it names one, in place of the one their files name.
+func harness(ws Workspace) []skills.File {
+	files := skills.Harness()
+	name := manifestModel(ws)
+	if name == "" {
+		return files
+	}
+	for i, f := range files {
+		if strings.HasPrefix(f.Path, ".claude/agents/") {
+			files[i].Data = bytes.Replace(f.Data, []byte("\nmodel: sonnet\n"), []byte("\nmodel: "+name+"\n"), 1)
+		}
+	}
+	return files
+}
+
+// modelName is what a model name may look like, such as opus or opus[1m].
+var modelName = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._\[\]-]*$`)
+
+// manifestModel is the model the project's manifest names for its agents, or "".
+func manifestModel(ws Workspace) string {
+	data, err := ws.Read(project.ManifestFile)
+	if err != nil {
+		return ""
+	}
+	m, _ := model.ParseManifest(project.ManifestFile, data)
+	if !modelName.MatchString(m.Model) {
+		return ""
+	}
+	return m.Model
 }
 
 // shippedSkill says a file belongs to a skill installSkills looks after.
@@ -359,6 +392,7 @@ func (c CLI) writeLock(ws Workspace) (int, error) {
 // manifestTemplate is a new project's manifest.
 const manifestTemplate = `# The Libraries this project uses, with their versions. Run markitect lock after a change.
 # model, optional, names the model the builder and reviewer agents use; without it they use sonnet.
+# markitect update writes it into their agent files.
 libraries:
   std: %s
 `
