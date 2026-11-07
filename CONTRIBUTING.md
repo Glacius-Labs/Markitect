@@ -38,7 +38,7 @@ python -B -m unittest discover -s tools/evaluation
 python -B -m unittest discover -s tools/makerspace-oracle -p test_*.py
 ```
 
-Broad Go suites run in Linux CI by manual dispatch (above). For now they are not run on Windows: real Git starts are much slower there, and the full suite takes about 50 minutes instead of about three ([measurement](docs/validation/windows-test-time-20261028.md); the owner parked the fix on 28 October 2026, see the [topics page](docs/workstreams/topics.md)). Tests that do not test time take their Run deadline from the test's own deadline, so the `-timeout` value bounds a hang.
+Broad Go suites run in Linux CI by manual dispatch (above). For now they are not run on Windows: real Git starts are much slower there, and the full suite takes about 50 minutes instead of about three ([measurement](docs/validation/windows-test-time-20261028.md); the owner parked the fix on 28 October 2026, see the [topics page](docs/workstreams/topics.md)). The product's tests run on plain folders and need no Git; the release tooling's still do.
 
 Run `gofmt` on changed Go files and `git diff --check`. CI checks module checksums, tests with and without the race detector, vet, build, tracked Go formatting, every production/test/platform import against the architecture rule table, the packaged-source smoke, repository scripts, maintained documentation links, the independent Library oracle with its bounded transport, and the unit tests of the comparison, evaluation and Makerspace oracle tools. Obsolete engines and their tests/gates are removed together; no skips or success stubs may replace required checks.
 
@@ -54,7 +54,7 @@ Run the packaged source smoke in a fresh external work directory:
 go run ./tools/smoke -repo . -work ABSOLUTE_EMPTY_EXTERNAL_DIRECTORY
 ```
 
-It packages and builds root-layout source, tests the standalone bootstrap and drives the packaged CLI over a small project in a temporary repository: `init`, `check`, `lock`, `refs`, `graph`, `lint` and `impact`, and the refusal of a model that does not compile. It starts no agent or container, so it establishes no provider or release acceptance. The `bundle` smoke belongs to separately authorized release work and writes an isolated consumer installation.
+It packages and builds root-layout source, tests the standalone bootstrap and drives the packaged CLI over a small project in a plain folder: `init`, `check`, `lock`, `refs`, `graph` and `lint`, the work (`checklist`, `answer`, `gate`) that certifies it, `impact` from that certificate, and the refusal of a model that does not compile and of the retired commands. It starts no agent or container, so it establishes no provider or release acceptance. The `bundle` smoke belongs to separately authorized release work and writes an isolated consumer installation.
 
 ## Pull requests and parallel work
 

@@ -1,14 +1,14 @@
 # Project workflow
 
-This is the one guide for using Markitect on a project. It walks through the commands of [draft concept 4.0](../concepts/v4-concept.md), which this branch builds: the model commands `init`, `check`, `lock`, `refs`, `graph`, `impact` and `lint`, which start no agent, and `apply` and `verify`, which start a Command. The [model language guide](model-language.md) owns the model commands' details: the `.markitect/` layout, Definitions, Kinds and Libraries, links, the registry and every option. The [Command engine](../../internal/run/README.md) owns how a Command works, its Result and landing.
+This is the one guide for using Markitect on a project. It walks through the commands of [draft concept 4.0](../concepts/v4-concept.md), as the [lean plan](../concepts/lean-tool-plan.md) changed them: the model commands `init`, `check`, `lock`, `refs`, `graph`, `impact` and `lint`, and the `/markitect-apply` and `/markitect-verify` skills, which have your Claude Code session start the agents while `markitect gate` checks their work. No command starts an agent or uses Git. The [model language guide](model-language.md) owns the model commands' details: the `.markitect/` layout, Definitions, Kinds and Libraries, links, the registry and every option. [The work](../../internal/run/README.md) owns how `checklist`, `answer` and `gate` work, the certificate and the Result.
 
-The commands run wherever Go and Git run, on Windows, Linux and macOS. Build them from `cmd/markitect`, or run them from source:
+The commands run wherever Go runs, on Windows, Linux and macOS. Build them from `cmd/markitect`, or run them from source:
 
 ```text
 go run ./cmd/markitect help
 ```
 
-The [README](../../README.md#install) gives the ways to get the `markitect` command: the Claude Code plugin, a binary from the releases, or `go install`. After you install a binary, you can run `markitect install` once. It writes a personal skill, `~/.claude/skills/markitect/SKILL.md`, so a Claude Code session in any folder knows what Markitect is and how to begin; the plugin brings the same text as a skill of its own, `markitect:getting-started`. Runs don't read it, and nothing depends on it: `init` says the same and gives the project its own skills. Whatever the skills and agents call is `markitect` by that name, so the folder of the binary must be on the `PATH`; `version`, `install`, `init` and `update` warn when the `PATH` finds no `markitect`, or another one. [Keep it current](#8-keep-it-current) says what to do after an upgrade.
+The [README](../../README.md#install) gives the ways to get the `markitect` command: the Claude Code plugin, a binary from the releases, or `go install`. After you install a binary, you can run `markitect install` once. It writes a personal skill, `~/.claude/skills/markitect/SKILL.md`, so a Claude Code session in any folder knows what Markitect is and how to begin; the plugin brings the same text as a skill of its own, `markitect:getting-started`. The agents don't read it, and nothing depends on it: `init` says the same and gives the project its own skills. Whatever the skills and agents call is `markitect` by that name, so the folder of the binary must be on the `PATH`; `version`, `install`, `init` and `update` warn when the `PATH` finds no `markitect`, or another one. [Keep it current](#8-keep-it-current) says what to do after an upgrade.
 
 The V1 workflow with Apply, the Linux runner, runtime profiles, run configuration, state and evidence is kept at the base commit of T1: [V1 project workflow](https://github.com/Glacius-Labs/Markitect/blob/f23c2e12d9833efa61e5e65c90018016423abe74/docs/guides/project-workflow.md).
 
@@ -18,7 +18,7 @@ The V1 workflow with Apply, the Linux runner, runtime profiles, run configuratio
 markitect init --repo PATH [--name TITLE]
 ```
 
-`init` works in an empty folder too, and makes it a Git repository. It writes what is missing: the manifest with `std`, the project anchor `model/project.md` if the model folder is empty, Root's registry page, the lock, `AGENTS.md` and a `CLAUDE.md` that imports it. It installs or updates the start, modeling and Extract skills in `.claude/skills/` and `.agents/skills/`, and the harness in `.claude/`: the apply and verify skills, the builder and reviewer agents, and the hook on `answer` and `checklist` in `.claude/settings.json`, keeping any settings already there. It commits what it wrote and prints what Markitect is. It never changes an existing model file, `AGENTS.md` or `CLAUDE.md`, so it is safe to run again after an upgrade.
+`init` works in an empty folder too, and in a folder of a project it works on that project. It writes what is missing: the manifest with `std`, the project anchor `model/project.md` if the model folder is empty, Root's registry page, the lock, `AGENTS.md` and a `CLAUDE.md` that imports it. It installs or updates the start, modeling and Extract skills in `.claude/skills/` and `.agents/skills/`, and the harness in `.claude/`: the apply and verify skills, the builder and reviewer agents, and the hook on `answer` and `checklist` in `.claude/settings.json`, keeping any settings already there. It makes no repository and commits nothing; commit what it wrote when you like. It prints what Markitect is. It never changes an existing model file, `AGENTS.md` or `CLAUDE.md`, so it is safe to run again after an upgrade.
 
 Claude Code reads `AGENTS.md` through that `CLAUDE.md`, and it finds skills only in `.claude/skills/`, so `.agents/skills/` is there for other agents such as Codex.
 
@@ -28,11 +28,11 @@ Open Claude Code in the project and run `/markitect-start`. It asks what the pro
 
 The spec lives under `.markitect/model/`: one Markdown file with front matter per Definition, one folder per Package. The [model language guide](model-language.md#definitions) gives the form. A project writes its own Kinds for what the standard Libraries do not cover; to use `rest` or `cli`, add it to the manifest and run `markitect lock`.
 
-The modeling skill helps an agent write the model with you and asks first when something is open. For an existing code base, the Extract skill draws a first model from the code. You accept every model change yourself; a Command never changes it.
+The modeling skill helps an agent write the model with you and asks first when something is open. For an existing code base, the Extract skill draws a first model from the code. You accept every model change yourself; the builder never changes it.
 
 ## 3. Register the files
 
-Every repository file outside `.markitect/` belongs to one Package and must be listed on its registry page or in the [ignore file](model-language.md#ignore-file). Give each Package a registry page with the path patterns it owns, and list each file with the Definitions it realizes and why ([realization record](model-language.md#the-realization-record)). Shared files such as the README are owned by the lowest common parent, often Root.
+Every file of the project folder outside `.markitect/` belongs to one Package and must be listed on its registry page or in the [ignore file](model-language.md#ignore-file). Give each Package a registry page with the path patterns it owns, and list each file with the Definitions it realizes and why ([realization record](model-language.md#the-realization-record)). Shared files such as the README are owned by the lowest common parent, often Root.
 
 ## 4. Check
 
@@ -40,7 +40,7 @@ Every repository file outside `.markitect/` belongs to one Package and must be l
 markitect check --repo PATH
 ```
 
-`check` compiles the model and the realization record and prints every compile error as `file:line: code: message`. It prints errors only and exits 1 when there is one. A new project passes: when nothing is registered and all that is missing is the work, it says that the spec compiles and nothing is built yet. The compiler sees exactly what Git sees: tracked files and untracked files Git does not ignore.
+`check` compiles the model and the realization record and prints every compile error as `file:line: code: message`. It prints errors only and exits 1 when there is one. A new project passes: when nothing is registered and all that is missing is the work, it says that the spec compiles and nothing is built yet. The compiler sees the project folder, the nearest one with `.markitect/manifest.yaml`, without what its `.gitignore` files exclude, read as text; it uses no Git ([the folder](../../internal/run/README.md#the-folder)).
 
 ## 5. Lint and look around
 
@@ -55,10 +55,10 @@ markitect graph --repo PATH
 ## 6. See what a change reaches
 
 ```text
-markitect impact --repo PATH --base COMMIT [--full] [--findings FILE]
+markitect impact --repo PATH [--base CERTIFICATE] [--full] [--findings FILE]
 ```
 
-`impact` compares the base commit with the working tree: the changed and reached Definitions with distance and reason, and the reached files with their owners. `--findings` adds Findings from a Findings page. A Command makes its checklist from this ([impact and checklists](model-language.md#impact-and-checklists)).
+`impact` compares the folder with the newest certificate under `.markitect/results/`, or the one `--base` names by its `.json` or `.md`: the changed and reached Definitions with distance and reason, and the reached files with their owners. A project with no certificate yet has no base, and its first `/markitect-apply` covers every Definition. `--findings` adds Findings from a Findings page. `checklist` makes its list from this ([impact and checklists](model-language.md#impact-and-checklists)).
 
 ## 7. Apply and verify
 
@@ -75,18 +75,11 @@ Your session is busy until the work ends, so don't change the folder meanwhile: 
 
 `/markitect-verify` has a fresh `markitect-reviewer` agent answer the checklist of what changed since the newest certificate, or of every Definition with `--full`, and changes nothing. `markitect gate --findings` then writes its Result and, if it found something, a Findings page under `.markitect/results/`, the input of `/markitect-apply --findings FILE`; your session commits them.
 
-The agents work under your session's permission mode and settings, so they may ask you for permission; the builder accepts file edits without asking. A hook lets only the reviewer store answers, and refuses an agent's `checklist` that would begin the work or name a change. It reads the command as text, so it guards against an agent's mistakes, not against one that hides a command. `/markitect-apply` refuses to begin in a project whose agents or hook are missing or old: run `markitect update`. So do not give the work untrusted input, and start on a project whose work is committed and pushed ([draft concept 4.0 §7](../concepts/v4-concept.md#7-how-sure-we-are)). [Without a Run](../../internal/run/README.md#without-a-run-gate) gives gate's rows, the certificate and the one bound the tool keeps, two repair rounds; time and the number of calls are your session's.
+The agents work under your session's permission mode and settings, so they may ask you for permission; A hook lets only the reviewer store answers, and refuses an agent's `checklist` that would begin the work or name a change. It reads the command as text, so it guards against an agent's mistakes, not against one that hides a command. `/markitect-apply` refuses to begin in a project whose agents or hook are missing or old: run `markitect update`. So do not give the work untrusted input, and start on a project whose work is committed and pushed ([draft concept 4.0 §7](../concepts/v4-concept.md#7-how-sure-we-are)). [The work](../../internal/run/README.md#gate) gives gate's rows, the certificate and the one bound the tool keeps, two repair rounds; time and the number of calls are your session's.
 
-Until this way has been tried on real projects ([lean plan](../concepts/lean-tool-plan.md#order-of-work)), the commands of a Run still work beside it:
+The commands of a Run, `markitect apply`, `verify`, `submit` and `stop`, with run branches, landing and the `Run-*` trailers, went in 0.20.0 ([lean plan](../concepts/lean-tool-plan.md#order-of-work)). Old runs' branches and their Result pages stay where they are; nothing reads them any more.
 
-```text
-markitect apply  --repo PATH [--base COMMIT] [--full] [--findings FILE] [--deadline D]
-markitect verify --repo PATH [--base COMMIT] [--full] [--deadline D]
-```
-
-They commit the spec, open a run whose builder goes through `markitect submit`, land the work on your branch and keep runs under `markitect/runs/*`; `markitect stop WHY` ends one without landing. [The process of a Run](../../internal/run/README.md) describes them.
-
-Exit code 0 means success, 1 that the command ran and found errors, 2 that it could not run. `checklist --start` always exits 0, so that the skill's session sees what it printed. For `apply` and `verify`, 0 means a run is open or there was nothing to do. `--json` is on the spec's commands.
+Exit code 0 means success, 1 that the command ran and found errors, 2 that it could not run. `checklist --start` always exits 0, so that the skill's session sees what it printed. `--json` is on the spec's commands.
 
 ## 8. Keep it current
 
@@ -103,8 +96,10 @@ markitect update  [--repo PATH] [--check]
 
 - The **binary** is replaced by the newest [release](https://github.com/Glacius-Labs/Markitect/releases), unless it is already the newest. `update` reads the newest tag from GitHub, downloads the binary for your system, checks it against the checksums of that release and puts it in the place of the running one; on Windows the old file steps aside first and goes at the next update. The new binary then carries out the rest, since only it knows the files it ships. Without a network, `update` says so and goes on with the files. It leaves two kinds of binary alone: one the plugin manages (`MARKITECT_PLUGIN` is set), which the plugin updates with `claude plugin update markitect@glacius-labs`, and a development build (`0.0.0-dev` or `-dev` after any version) that is older than the newest release, which only `--force` replaces; one that is newer counts as up to date. `--files` skips this step.
 - The **personal skill** is refreshed if it exists. `update` does not create it; `install` does, because `install` is the one command that writes into the home folder for the first time.
-- The project's **skills, agents and hook** are rewritten where they differ, files the binary no longer ships are removed, and the change is committed as "Update Markitect". Your settings in `.claude/settings.json` stay.
-- The **lock** is rewritten from the manifest and left uncommitted: a changed lock means the Libraries your spec is checked against changed, so you read `git diff .markitect/lock.yaml` and commit it yourself.
+- The project's **skills, agents and hook** are rewritten where they differ, and files the binary no longer ships are removed. Your settings in `.claude/settings.json` stay.
+- The **lock** is rewritten from the manifest: a changed lock means the Libraries your spec is checked against changed, so read its change before you commit it.
+
+`update` commits nothing; commit what it wrote when you like.
 
 `update --check` changes nothing, lists what is out of date, including a newer release, and exits 1 if anything is. Files are compared without regard to line endings, so a checkout with CRLF is not out of date. This is the one command that uses the network, and only the releases page of GitHub; `MARKITECT_RELEASES_URL` points it, and the plugin's launcher, to a mirror with the same layout.
 
@@ -124,13 +119,12 @@ The plugin's launcher downloads the binary of the release with the plugin's own 
 | `lock.mismatch` after an upgrade of `markitect` | A standard Library changed. Run `markitect update` (or `markitect lock`), review the lock diff and commit it. |
 | `package.cycle` | Move the shared concept into a common parent, or invert the dependency ([links, scope and visibility](model-language.md#links-scope-and-visibility)). |
 | `lint.no_paths` | A Package owns no file. Name its first path patterns on its registry page ([first patterns](model-language.md#registry-pages)). |
-| `stale.definition`, `stale.file`, `stale.page` | A registry page still names a removed Definition, file or Package. `markitect apply` puts it on its checklist, and `submit` refuses work that leaves it. |
-| `definition.unused` | Nothing links to a Definition and no file realizes it. `apply` settles it, or the spec should not hold it. A project with nothing built yet does not report this. |
-| `impact` refuses to run | The spec has errors; run `check --spec` and fix them first. |
-| `apply` says the spec has errors | No agent started. Fix the spec and run it again. |
-| `apply` says changes outside the spec are not committed | Commit or remove them first; a run would leave them out. |
-| The builder ended but the run is still open | Your session starts it again with the same message, as `apply` said. `markitect status` shows where it stands, and `markitect stop WHY` ends it. |
-| A run ends as `kept` | The work passed but your branch could not be brought up, for example because a file in the folder holds an edit of your own. The Result on `markitect/runs/<run>` says why. The next `apply` tries once more, then starts fresh. |
-| A run ends as `refused` | The repair rounds or the calls of `submit` ran out. The Result lists what stays open, and the work is on `markitect/runs/<run>`. |
-| A run ends as `incomplete` | A deadline, a session that said the machine lacks something it needs, or a session that kept trying to end without `submit`. Nothing landed. |
-| A run ends as `spec-problem` | The implementer or the reviewer found that the spec contradicts itself or leaves open something that changes behaviour at the boundary. The Result's decisions for the owner say what to settle; change the spec and run again. |
+| `stale.definition`, `stale.file`, `stale.page` | A registry page still names a removed Definition, file or Package. `/markitect-apply` puts it on its checklist, and `gate` refuses work that leaves it. |
+| `definition.unused` | Nothing links to a Definition and no file realizes it. `/markitect-apply` settles it, or the spec should not hold it. A project with nothing built yet does not report this. |
+| `impact` refuses to run | The spec has errors; run `check --spec` and fix them first. Or there is no certificate yet, so there is no base. |
+| `/markitect-apply` says the spec has errors | No agent started. Fix the spec and run it again. |
+| A command says the folder is in no Markitect project | No folder there or above holds `.markitect/manifest.yaml`. Run it in the project, or `markitect init` to make one. |
+| `gate` names files that lie in no item of the list | A file changed that nobody reviews: your own edit beside the work, or a builder that touched more than its items. Put it back, or list it on the registry so that it is reviewed. |
+| The builder ended before `gate` passed | Your session runs `gate` and starts the agent it names, as the skill says. `markitect status` shows where the work stands. |
+| `gate` stops as `refused` | The reviewer still found something wrong after two repair rounds. The Result lists what stays open, and the work stays in the folder, uncommitted. |
+| `gate` stops as `spec-problem` | A reviewer found, or confirmed the builder's report, that the spec contradicts itself or leaves open something that changes behaviour at the boundary. The Result's decisions for the owner say what to settle; change the spec and run `/markitect-apply` again. |

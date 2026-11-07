@@ -7,7 +7,7 @@
 | **Version** | 4.0 – draft, not accepted |
 | **Date** | 4 November 2026 |
 | **Basis** | The [owner's statements](sources/fresh-start-20261104.md) of 4 November 2026, concept 3.0, a workflow trial on one real change, the Claude Code documentation and the help of version 2.1.318 as read that day, and independent reviews of this draft and an earlier one. |
-| **State** | A draft for the owner ([OQ-012](register.md#open-questions)). [Concept 3.0](v3-concept.md) stays the target until this one is accepted. Main carries its build since 6 November 2026 ([DEC-094](register.md#dec-094-main-carries-the-native-version-and-the-app-goes)), for the owner to try by using it ([what real sessions showed](../validation/native-version-20261104.md)). On 6 November 2026 the owner chose a leaner tool that computes and checks, leaves the agents to a driver and uses no Git ([DEC-096](register.md#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](register.md#dec-097-markitect-uses-no-git)); its [plan](lean-tool-plan.md) will revise §5 to §9 once it is built and tried. |
+| **State** | A draft for the owner ([OQ-012](register.md#open-questions)). [Concept 3.0](v3-concept.md) stays the target until this one is accepted. Main carries its build since 6 November 2026 ([DEC-094](register.md#dec-094-main-carries-the-native-version-and-the-app-goes)), for the owner to try by using it ([what real sessions showed](../validation/native-version-20261104.md)). On 6 November 2026 the owner chose a leaner tool that computes and checks, leaves the agents to a driver and uses no Git ([DEC-096](register.md#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](register.md#dec-097-markitect-uses-no-git)); its [plan](lean-tool-plan.md) will revise §5 to §9 once it is built and tried. Built and released in 0.20.0 (step 4 of the plan): `apply`, `verify`, `submit`, `stop`, the run lifecycle, landing, run branches, trailers and every use of Git are gone from the tool, and what §3, §5, §6 and §8 say of them is the record of 0.19.0. [The work](../../internal/run/README.md) describes what holds now, and §9's table is current. |
 
 It uses the words of [concept 3.0](v3-concept.md#2-words): spec, implementer, reviewer. Code and older documents still say model, maker and checker.
 
@@ -58,13 +58,13 @@ None of these starts an agent. `--repo DIR` names a folder inside the project's 
 | Command | Does | Change from today |
 |---|---|---|
 | `install` | Writes the personal skill, once per machine. Optional: `init` says the same and gives a project its own skills ([§9](#9-the-harness)) | New |
-| `init` | Sets up a project: `.markitect/`, the first page of the spec, the harness, and `AGENTS.md` and `CLAUDE.md` if they are missing. An empty folder is enough: it becomes a Git repository. Run again, it refreshes the harness and never touches spec pages | Writes the reviewer agent and the new skills, and commits what it writes, so the first `apply` finds a clean folder. It writes no file that would hold nothing yet, and it ends by saying what Markitect is and pointing to `/markitect-start` |
+| `init` | Sets up a project: `.markitect/`, the first page of the spec, the harness, and `AGENTS.md` and `CLAUDE.md` if they are missing. An empty folder is enough. Run again, it refreshes the harness and never touches spec pages | Writes the agents and the new skills. Since 0.20.0 it makes no repository and commits nothing. It writes no file that would hold nothing yet, and it ends by saying what Markitect is and pointing to `/markitect-start` |
 | `lock` | Pins the Libraries. It holds a fingerprint of each one, as `go.sum` does for modules, and `check` refuses a Library that no longer matches | None |
 | `check` | Compiles the project and fails on any error ([below](#what-check-refuses)). `--spec` looks only at the spec itself | Stale entries and unused Definitions become errors, except in a project with nothing built yet. `--spec` is new |
 | `refs TARGET` | Who links to a Definition or Package, and which files realize it | None |
-| `impact` | What a change reaches ([below](#how-impact-works)) | `--base` defaults to the last Result. The per-Package lists go |
+| `impact` | What a change reaches ([below](#how-impact-works)) | Since 0.20.0 the base is a certificate, by default the newest. The per-Package lists go |
 | `analyze` | Measures the spec's design ([§4](#4-is-the-spec-good)). `--severity` filters its findings, and `--graph` draws the Package dependency graph | New. Replaces `lint` and `graph`. Comes after `apply` is reliable ([§13](#13-order-of-work)) |
-| `update` | Installs the newest release over the binary, then lets the new binary bring what an earlier build wrote in line with it: the personal skill if there is one, and in a project the harness, which it commits, and the lock, which it rewrites and leaves uncommitted for the owner to read. `--check` changes nothing and exits 1 if anything is out of date; `--files` leaves the binary alone; `--force` replaces a development build | New, on the owner's word of 6 November 2026 ([§16](#16-questions-for-the-owner), [DEC-095](register.md#dec-095-releases-return-with-a-plugin-and-a-binary-that-updates-itself)). It reuses what `init` and `lock` write and replaces neither |
+| `update` | Installs the newest release over the binary, then lets the new binary bring what an earlier build wrote in line with it: the personal skill if there is one, and in a project the harness and the lock, which it rewrites; since 0.20.0 it commits nothing, and says to read the lock before committing it. `--check` changes nothing and exits 1 if anything is out of date; `--files` leaves the binary alone; `--force` replaces a development build | New, on the owner's word of 6 November 2026 ([§16](#16-questions-for-the-owner), [DEC-095](register.md#dec-095-releases-return-with-a-plugin-and-a-binary-that-updates-itself)). It reuses what `init` and `lock` write and replaces neither |
 | `version` | The build, and whether the personal skill and the project match it | Adds the status lines |
 | `licenses` | As named | None |
 
@@ -100,6 +100,8 @@ Like an incremental build, it works out what a change touches, so that only that
 It doesn't follow the code's own imports. A full `verify` now and then is the safety net. The list is rebuilt after the work, so a file touched outside the first impact adds its Definitions. On Makerspace's change steps, one step reached 33 of the 36 existing files that truly changed, and deeper reach 35 ([measurement](../validation/impact-reach-20261103.md)). How far every link reaches says something about the spec too ([§4](#4-is-the-spec-good)).
 
 ### Commands of a run
+
+Removed in 0.20.0: `checklist`, `answer`, `gate` and `status` work on the folder without a run, and `gate --spec-problem` replaced `stop` ([the work](../../internal/run/README.md)). What follows is the record of 0.19.0.
 
 They are thin. The checklist, answer parsing, Result page and trailers exist today in `internal/run`. Run state on disk and a `submit` that can be killed and run again are new, and the riskiest part to build.
 
@@ -262,16 +264,16 @@ For Claude Code, `markitect init` writes these project files, so they are versio
 
 | File | Holds |
 |---|---|
-| `.claude/skills/markitect-apply/SKILL.md` | One injected command, `` !`markitect apply` ``, and "do what it printed". Its front matter sets `allowed-tools`, so the command runs without a prompt, and `disable-model-invocation: true`, so a modeling agent can't start a run by itself. The provider runs the command before the model sees the skill, and any non-zero exit aborts the skill, so "run open" and "nothing to do" exit 0 |
-| `.claude/skills/markitect-verify/SKILL.md` | The same for `verify` |
-| `.claude/agents/markitect-builder.md` | The builder: take the task from `markitect checklist`, and be done when `markitect submit` says so. All tools, including starting the reviewer; model `sonnet`, effort `high`, file edits without asking |
+| `.claude/skills/markitect-apply/SKILL.md` | One injected command, `` !`markitect checklist --start` ``, which begins the work and names the agent to start, and "do what it printed": run `markitect gate` each time an agent has ended, and commit the work with its certificate when `gate` passes. Its front matter sets `allowed-tools`, so the commands run without a prompt, and `disable-model-invocation: true`, so a modeling agent can't start the work by itself. The provider runs the command before the model sees the skill, and any non-zero exit aborts the skill, so `--start` always exits 0 |
+| `.claude/skills/markitect-verify/SKILL.md` | The same for a review of finished work: `checklist --review --start`, the reviewer, and `gate --findings` |
+| `.claude/agents/markitect-builder.md` | The builder: take the task from `markitect checklist`, and be done when `markitect gate` passes; report a spec problem with `gate --spec-problem`. All tools, including starting the reviewer; model `sonnet`, effort `high` |
 | `.claude/agents/markitect-reviewer.md` | Effort, the reviewer's task, and tools without edit or agent tools |
 | `.claude/settings.json` | The hook on `answer` and `checklist`, below, added to whatever settings the project already has |
-| `AGENTS.md`, `CLAUDE.md` | What kind of project this is, for any session: the spec is the authority, changes start there, and `markitect` is on the path. `CLAUDE.md` holds only `@AGENTS.md`, so that it works in every session of the provider. They hold no process, since a run reads them too. Written only if missing |
+| `AGENTS.md`, `CLAUDE.md` | What kind of project this is, for any session: the spec is the authority, changes start there, and `markitect` is on the path. `CLAUDE.md` holds only `@AGENTS.md`, so that it works in every session of the provider. They hold no process, since the agents read them too. Written only if missing |
 
-**The agents' settings** come from their files, and the manifest's `model`, if it names one, which `apply` passes on when it says which agent to start. Everything else is the owner's session: its permission mode, settings, plugins and memory. No settings are generated per run.
+**The agents' settings** come from their files, and the manifest's `model`, if it names one, which the tool names when it says which agent to start. Everything else is the owner's session: its permission mode, settings, plugins and memory. No settings are generated per piece of work.
 
-**The hook.** `markitect hook pretool`, in the project's settings, runs before a shell command that calls `markitect answer`, and refuses it unless the agent is the reviewer. Hooks in project settings run inside subagents too, and their input names the agent. A run may not change the file.
+**The hook.** `markitect hook pretool`, in the project's settings, runs before a shell command that calls `markitect answer` or `markitect checklist`, refuses `answer` unless the agent is the reviewer, and refuses a subagent's `checklist` that would begin the work or name a change. Hooks in project settings run inside subagents too, and their input names the agent. The work may not change the file.
 
 The first draft's seal is gone. `answer` checks and stores the answers itself, so no hook has to catch a reviewer as it finishes.
 
