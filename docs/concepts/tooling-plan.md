@@ -87,7 +87,7 @@ An explanation stays on one line, and hashes are full SHA-256.
 | `markitect vet` | Analyses the spec's design: coupling, size, fan-in, how far a change reaches. It warns, and exits 1 only with `--strict` | `go vet` | `lint`, the planned `analyze` |
 | `markitect list` | The Definitions and Packages; with `--deps`, what each depends on | `go list -deps` | `graph` |
 | `markitect doc DEFINITION` | A Definition with its text, what links to it, what it links to, the files that realize it, and its record | `go doc` | `refs` |
-| `markitect status` | What is to verify, with which inputs changed, where to look, and each item's fingerprint; and whether the binary and the harness are current. `--all` lists every Definition, to verify everything again | `git status`, `npm outdated` | `status`, `impact`, `checklist`, `gate --verify` |
+| `markitect status` | What is to verify, with which inputs changed, where to look, and each item's fingerprint. It also notes whether the binary and the harness are current, which never changes its exit code. `--all` lists every Definition, to verify everything again, and so exits 1 whenever the spec has one | `git status`, `npm outdated` | `status`, `impact`, `checklist`, `gate --verify` |
 | `markitect review DEFINITION VERDICT --at FINGERPRINT [EVIDENCE…] [-- WHY]` | Records a verdict at the state the reviewer read | `go test` writing its cache | `answer`, `gate`, `gate --spec-problem` |
 | `markitect lock`, `update`, `install`, `version`, `licenses` | As today | `go mod`, `go version` | the same |
 
@@ -107,10 +107,10 @@ An explanation stays on one line, and hashes are full SHA-256.
 
 | Skill | Agent | Tells the agents |
 |---|---|---|
-| `/markitect-build` | `markitect-builder`, which has the reviewer verify | Run `markitect status`. Make the project match the spec for what it lists. Have the `markitect-reviewer` agent verify each item and record it with `markitect review`. Repeat until `status` is empty or an item needs the owner. Then commit the work with `.markitect/review.sum` |
+| `/markitect-build` | `markitect-builder`, which starts `markitect-reviewer` as its own subagent | Start the builder. It runs `markitect status`, makes the project match the spec for what it lists, then starts the reviewer, which verifies each item and records it with `markitect review`. It repeats until `status` is empty or an item needs the owner. Then the session commits the work with `.markitect/review.sum` |
 | `/markitect-review` | `markitect-reviewer` | Verify what `status` lists, or everything with `--all`, and record each verdict. Change no code. Report what failed or is a `spec-problem` |
 
-`/markitect-build` replaces `/markitect-apply`, and `/markitect-review` replaces `/markitect-verify`. So each skill has the name of its agent, and `markitect review` is the reviewer's command.
+`/markitect-build` replaces `/markitect-apply`, and `/markitect-review` replaces `/markitect-verify`. So each skill is named after the agent it starts, and `markitect review` is the reviewer's command.
 
 The skills inject no command, so a non-zero exit cannot abort them. The agents run the tool as they need it, and hold their task and the verdict words in their own files, which outlive compaction. Nothing counts rounds; the owner stops the work when it should stop.
 
@@ -127,7 +127,7 @@ The hook reads tool calls, so a command hidden in a script, or one that names `m
 
 - **Diagnostics** have one shape everywhere, `file:line: message` as Go's tools print them, with a stable code. With `--json`, each is an object with `severity`, `code`, `message` and the position.
 - **JSON documents** share one envelope, with a `format_version` and a `kind`, so programs depend on the format and not on the wording.
-- **Exit codes** follow Go's tools. 0 is success. 1 means the command did its job and found something: the spec does not compile, `status` lists something, or `vet --strict` warns. 2 is a usage error. So a CI job runs `markitect status`, and any item fails the build.
+- **Exit codes** follow Go's tools. 0 is success. 1 means the command did its job and found something: the spec does not compile, `status` lists something to verify, or `vet --strict` warns. Notes, such as a `skip` or an outdated harness, never change the exit code. 2 is a usage error. So a CI job runs `markitect status`, and any item fails the build.
 
 ## What this gives up, and what it keeps
 

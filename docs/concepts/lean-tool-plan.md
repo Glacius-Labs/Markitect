@@ -121,8 +121,8 @@ Later drivers: a workflow script, which holds the loop and the limits in code; a
 
 1. **The boundary:** the tool computes and checks, a driver acts. Decided on 6 November 2026.
 2. **Git:** none in the product; agents or people do every Git step. Decided on 6 November 2026. This also settles that `gate` makes no commit.
-3. **Limits:** recommended: two repair rounds in `gate`, time and the number of calls in the driver.
+3. **Limits:** recommended: two repair rounds in `gate`, time and the number of calls in the driver. Lapsed with [DEC-099](register.md#dec-099-markitect-is-a-tool-with-a-verification-cache): no limit on rounds.
 4. **The name:** `gate`, decided on 6 November 2026, after weighing `certify`. `submit` was set aside because it meant landing.
-5. **Where the work state lives:** recommended: the user's cache folder, keyed by the project's path, so the project holds only the spec and its certificates.
-6. **How much of the spec the certificate copies:** recommended: the text of every Definition, since the spec is small and a checklist that shows what changed helps the builder and the reviewer.
+5. **Where the work state lives:** recommended: the user's cache folder, keyed by the project's path, so the project holds only the spec and its certificates. Lapsed with [DEC-099](register.md#dec-099-markitect-is-a-tool-with-a-verification-cache): there is no work state.
+6. **How much of the spec the certificate copies:** recommended: the text of every Definition, since the spec is small and a checklist that shows what changed helps the builder and the reviewer. Lapsed with [DEC-099](register.md#dec-099-markitect-is-a-tool-with-a-verification-cache): the certificate goes, and the record keeps hashes, not text.
 7. **How a builder reports a spec problem:** the builder records the problem with the tool, and `gate` has a reviewer confirm it before it tells the owner, without counting a repair round, so no agent decides about its own work. Decided on 7 November 2026, after [finding 1](../validation/lean-trials-20261107.md#findings) of the trials. Built the same day as `gate --spec-problem "WHY"` ([the builder's report](../../internal/run/README.md#gate)).
