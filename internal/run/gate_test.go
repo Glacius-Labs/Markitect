@@ -549,6 +549,148 @@ func TestGateASpecProblem(t *testing.T) {
 	})
 }
 
+// answer is a reviewer's call of answer.
+func (p *plain) answer(lines string) (string, bool) {
+	p.t.Helper()
+	text, complete, err := p.engine.Answer(context.Background(), p.dir, []byte(lines))
+	if err != nil {
+		p.t.Fatal(err)
+	}
+	return text, complete
+}
+
+const contradiction = "loan-limit says at most 5 open loans, and its example shows a sixth"
+
+// Decision 7: the builder reports a spec problem with gate, a reviewer confirms it,
+// and only then does gate tell the owner; no repair round is used, whatever the
+// builder left in the folder.
+func TestGateABuildersReportConfirmed(t *testing.T) {
+	p := newPlain(t)
+	p.certify()
+	p.specChange()
+	p.list(run.ChecklistRequest{})
+	// What the builder left: a stray file that check refuses.
+	p.write("src/members/stray.go", "package members\n")
+	v := p.gate(run.GateRequest{SpecProblem: contradiction})
+	if v.Done {
+		t.Fatalf("passed: %s", v.Text)
+	}
+	has(t, v.Text, "The builder reported a spec problem", "confirms it", "no repair round", run.ReviewerAgent, "Review the work.")
+	// Calling gate again, or the skill's call, waits for the same reviewer.
+	has(t, p.gate(run.GateRequest{}).Text, "The builder reported a spec problem")
+	has(t, p.list(run.ChecklistRequest{Start: true}), "waits for a reviewer", "Run markitect gate")
+	has(t, p.list(run.ChecklistRequest{}), "You reported a spec problem", contradiction)
+
+	prompt := p.list(run.ChecklistRequest{Review: true})
+	has(t, prompt, "The builder stopped", contradiction, "- loan-limit (look at: src/members/loans/loan.go)", "reported problem: spec problem --", "At most `5` open loans")
+	if keys := reviewKeys(prompt); strings.Join(keys, ",") != run.ReportItem {
+		t.Fatalf("the review asks about %v", keys)
+	}
+	for _, refused := range []string{
+		"reported problem: ok README.md:1",
+		"reported problem: not shown -- cannot tell",
+		"loan-limit: spec problem -- 5 or 6",
+		"reported problem: spec problem",
+	} {
+		text, complete := p.answer(refused)
+		if complete {
+			t.Fatalf("%q was stored: %s", refused, text)
+		}
+		has(t, text, "not accepted")
+	}
+	text, complete := p.answer("reported problem: spec problem .markitect/model/loan-limit.md:3 -- is the limit 5, or may a member hold a sixth loan?")
+	if !complete {
+		t.Fatalf("not stored: %s", text)
+	}
+	has(t, text, "Stored", "end")
+
+	v = p.gate(run.GateRequest{})
+	if v.Done {
+		t.Fatalf("passed: %s", v.Text)
+	}
+	has(t, v.Text, "only the owner can settle", "may a member hold a sixth loan", contradiction)
+	pages := p.results(".md")
+	page := p.read(pages[len(pages)-1])
+	has(t, page, ": spec-problem", "Decisions for the owner", "| reported problem | spec problem |")
+	if strings.Contains(page, "Repair rounds") {
+		t.Fatalf("a round was counted:\n%s", page)
+	}
+	if len(p.results(".json")) != 1 {
+		t.Fatal("a certificate was written")
+	}
+	has(t, p.list(run.ChecklistRequest{Start: true}), "has its review", "Run markitect gate")
+}
+
+// A reviewer that finds no spec problem in the report sends the builder back to
+// build, once, and no repair round is used; the work then passes as usual.
+func TestGateABuildersReportRejected(t *testing.T) {
+	p := newPlain(t)
+	p.certify()
+	p.specChange()
+	p.list(run.ChecklistRequest{})
+	has(t, p.gate(run.GateRequest{SpecProblem: "the limit is unclear"}).Text, run.ReviewerAgent)
+	// A second report before the review replaces the first.
+	p.gate(run.GateRequest{SpecProblem: contradiction})
+	has(t, p.list(run.ChecklistRequest{Review: true}), contradiction)
+	if prompt := p.list(run.ChecklistRequest{Review: true}); strings.Contains(prompt, "the limit is unclear") {
+		t.Fatalf("the first report stayed:\n%s", prompt)
+	}
+	if _, complete := p.answer("reported problem: wrong -- the Definition says at most 3; the example shows the third loan"); !complete {
+		t.Fatal("not stored")
+	}
+	v := p.gate(run.GateRequest{})
+	if v.Done {
+		t.Fatalf("passed: %s", v.Text)
+	}
+	has(t, v.Text, "found no spec problem", "says at most 3", "Build the work as the spec says", "no repair round")
+	has(t, p.list(run.ChecklistRequest{}), "A reviewer found no spec problem in what you reported", "says at most 3")
+	// Said once: a builder that had built already goes on with gate.
+	has(t, p.gate(run.GateRequest{}).Text, run.ReviewerAgent, "no answer for the files as they are now")
+
+	p.write("src/members/loans/loan.go", limit3)
+	p.review(nil)
+	v = p.gate(run.GateRequest{})
+	if !v.Done {
+		t.Fatalf("did not pass: %s", v.Text)
+	}
+	pages := p.results(".md")
+	page := p.read(pages[len(pages)-1])
+	has(t, page, ": passed", "| reported problem | wrong |")
+	if strings.Contains(page, "Repair rounds") {
+		t.Fatalf("a round was counted:\n%s", page)
+	}
+}
+
+// A report on a state the builder changed after the review goes straight on; a
+// report needs work under way, and the spec the work began with.
+func TestGateABuildersReportNeedsTheWork(t *testing.T) {
+	p := newPlain(t)
+	p.certify()
+	has(t, p.gate(run.GateRequest{SpecProblem: contradiction}).Text, "No checklist began this work")
+	p.specChange()
+	p.list(run.ChecklistRequest{})
+	p.write(m+"catalog/book.md", "changed\n")
+	has(t, p.gate(run.GateRequest{SpecProblem: contradiction}).Text, "Put them back")
+	text, _, _ := p.engine.Checklist(context.Background(), run.ChecklistRequest{Dir: p.dir, Review: true})
+	if strings.Contains(text, contradiction) {
+		t.Fatalf("a report on a changed spec was recorded:\n%s", text)
+	}
+	for _, req := range []run.GateRequest{{Dir: p.dir, Verify: true, SpecProblem: "x"}, {Dir: p.dir, Findings: true, SpecProblem: "x"}} {
+		if _, err := p.engine.Gate(context.Background(), req); !errors.Is(err, run.ErrUsage) {
+			t.Fatalf("%+v: %v", req, err)
+		}
+	}
+
+	q := newPlain(t)
+	q.certify()
+	q.specChange()
+	q.list(run.ChecklistRequest{})
+	q.gate(run.GateRequest{SpecProblem: contradiction})
+	q.answer("reported problem: wrong -- it says 3")
+	q.write("src/members/loans/loan.go", limit3)
+	has(t, q.gate(run.GateRequest{}).Text, run.ReviewerAgent, "no answer for the files as they are now")
+}
+
 // An answer is bound to the files its item names and the files it points to: a
 // change to one of them falls it away, and putting the file back brings it back.
 func TestGateAnswersFallAwayWhenTheirFilesChange(t *testing.T) {

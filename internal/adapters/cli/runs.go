@@ -184,11 +184,20 @@ func (c CLI) gate(ctx context.Context, args []string) (int, error) {
 	fs.StringVar(&o.repo, "repo", ".", "a folder of the project")
 	fs.BoolVar(&req.Verify, "verify", false, "only check that the folder matches its newest certificate")
 	fs.BoolVar(&req.Findings, "findings", false, "close a review of finished work: write its Findings into the folder, and no certificate")
+	fs.StringVar(&req.SpecProblem, "spec-problem", "", "from the builder: the spec has a problem only the owner can settle, which a reviewer confirms first")
 	if err := fs.Parse(args); err != nil {
 		return Misused, err
 	}
 	if fs.NArg() != 0 {
-		return Misused, fmt.Errorf("takes no arguments")
+		return Misused, fmt.Errorf("takes no arguments; quote the text of --spec-problem")
+	}
+	// An empty report is refused rather than taken for none.
+	empty := false
+	fs.Visit(func(f *flag.Flag) {
+		empty = empty || (f.Name == "spec-problem" && strings.TrimSpace(req.SpecProblem) == "")
+	})
+	if empty {
+		return Misused, errors.New("--spec-problem says what the problem is, and where in the spec")
 	}
 	e, err := c.folderEngine(ctx, o.repo)
 	if err != nil {

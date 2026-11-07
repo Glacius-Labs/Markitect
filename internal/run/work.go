@@ -44,10 +44,13 @@ type Work struct {
 	// Answers holds each item's latest answer.
 	Answers map[string]Given `json:"answers"`
 	// Reviews are the states on which every item had an answer.
-	Reviews    []Reviewed `json:"reviews,omitempty"`
-	MissingFor []string   `json:"missingFor,omitempty"`
-	Notes      []string   `json:"notes,omitempty"`
-	Began      time.Time  `json:"began"`
+	Reviews []Reviewed `json:"reviews,omitempty"`
+	// Reports are the spec problems the builder reported, each with the
+	// reviewer's word on it.
+	Reports    []Report  `json:"reports,omitempty"`
+	MissingFor []string  `json:"missingFor,omitempty"`
+	Notes      []string  `json:"notes,omitempty"`
+	Began      time.Time `json:"began"`
 }
 
 // Given is an answer with what it is bound to: the state it was given on, and the
@@ -64,6 +67,58 @@ type Reviewed struct {
 	At           string          `json:"at"`
 	Wrong        []string        `json:"wrong,omitempty"`
 	SpecProblems []OwnerDecision `json:"specProblems,omitempty"`
+}
+
+// Report is a spec problem the builder reported with gate --spec-problem, and the
+// reviewer's word on it: "spec problem" confirms it for the owner, "wrong" says the
+// spec settles it and sends the builder back to build. Neither counts a repair
+// round, and no agent decides about its own work.
+type Report struct {
+	Why string `json:"why"`
+	// At is the state the builder reported it on.
+	At string `json:"at"`
+	// Answer is the reviewer's, nil while none has answered.
+	Answer *Given `json:"answer,omitempty"`
+	// Told says gate has told the builder that the reviewer found no spec problem.
+	Told bool `json:"told,omitempty"`
+}
+
+// ReportItem is the one item a review of a report answers.
+const ReportItem = "reported problem"
+
+// ItemReport is the kind of that item.
+const ItemReport = "report"
+
+// reportItem is the item a reviewer of a report answers.
+func reportItem(r *Report) Item {
+	return Item{Key: ReportItem, Kind: ItemReport, Why: []string{"the builder reported: " + oneLine(r.Why)}}
+}
+
+// openReport is the builder's report that no reviewer has answered yet, if any.
+func (w *Work) openReport() *Report {
+	if n := len(w.Reports); n > 0 && w.Reports[n-1].Answer == nil {
+		return &w.Reports[n-1]
+	}
+	return nil
+}
+
+// rejected is the builder's latest report, when a reviewer found no spec problem
+// in it.
+func (w *Work) rejected() *Report {
+	if n := len(w.Reports); n > 0 && w.Reports[n-1].Answer != nil && w.Reports[n-1].Answer.Word == AnswerWrong {
+		return &w.Reports[n-1]
+	}
+	return nil
+}
+
+// report records the builder's report on a state. A report that no reviewer has
+// answered yet is replaced, so the builder may say it better.
+func (w *Work) report(why, at string) {
+	if r := w.openReport(); r != nil {
+		r.Why, r.At = why, at
+		return
+	}
+	w.Reports = append(w.Reports, Report{Why: why, At: at})
 }
 
 // workFolder is the work states' folder in the cache.
@@ -257,17 +312,26 @@ func (w *Work) rounds() (int, []string) {
 	return len(sent), sent
 }
 
-// specProblems lists what any finished review left to the owner. It stands until
-// the spec changes, which starts the work afresh.
+// specProblems lists what any finished review, or a reviewer of the builder's
+// report, left to the owner. It stands until the spec changes, which starts the
+// work afresh.
 func (w *Work) specProblems() []OwnerDecision {
 	seen := map[string]bool{}
 	var out []OwnerDecision
+	add := func(d OwnerDecision) {
+		if !seen[d.Matter] {
+			seen[d.Matter] = true
+			out = append(out, d)
+		}
+	}
+	for _, r := range w.Reports {
+		if r.Answer != nil && r.Answer.Word == AnswerSpecProblem {
+			add(OwnerDecision{Matter: fmt.Sprintf("%s: %s (The builder reported: %s)", ReportItem, r.Answer.Explanation, oneLine(r.Why)), Recommendation: settleLean})
+		}
+	}
 	for _, r := range w.Reviews {
 		for _, d := range r.SpecProblems {
-			if !seen[d.Matter] {
-				seen[d.Matter] = true
-				out = append(out, d)
-			}
+			add(d)
 		}
 	}
 	return out

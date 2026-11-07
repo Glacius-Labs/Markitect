@@ -91,7 +91,9 @@ Without a run and without Git, for whoever drives the agents (tried beside the r
                                                   the list of the change from the newest certificate to the folder;
                                                   --start begins it and says which agent to start
   markitect answer [FILE]                       store a reviewer's answers for the files as they are now
-  markitect gate   [--verify] [--findings]        check the work and say what is next; when it passes, write its certificate
+  markitect gate   [--verify] [--findings] [--spec-problem WHY]
+                                                  check the work and say what is next; when it passes, write its certificate;
+                                                  --spec-problem: the builder reports a problem of the spec, which a reviewer confirms
 `
 )
 
