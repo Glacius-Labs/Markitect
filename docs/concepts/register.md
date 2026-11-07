@@ -19,6 +19,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | ID | Type | Title | Status |
 |---|---|---|---|
 | [VIS-001](#vis-001-cockpit-personal-ai-and-autonomous-project-organization) | Vision | Cockpit, personal AI and autonomous project organization | Owner statement; scoped cockpit concept and Claude handoff commissioned 20 October 2026; working through the cockpit adopted ([DEC-065](#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration)); cockpit as desktop app that starts and stops Apply adopted ([DEC-066](#dec-066-the-cockpit-is-markitects-desktop-app-and-starts-and-stops-apply)); broader extensions deferred; for concept 2.0, Markitect Desktop adopted ([DEC-089](#dec-089-markitect-desktop-the-app-over-the-cli)) |
+| [VIS-002](#vis-002-a-programming-language-for-documentation) | Vision | A programming language for documentation | Owner statement, 7 and 8 November 2026 |
 | [DEC-001](#dec-001-delegated-realization-is-central-to-the-product) | Decision | Delegated realization is central to the product | Accepted |
 | [DEC-002](#dec-002-trust-is-measured-against-todays-practice) | Decision | Trust is measured against today's practice | Accepted |
 | [DEC-003](#dec-003-the-compiler-is-a-borrowed-concept) | Decision | The compiler is a borrowed concept | Accepted |
@@ -164,6 +165,18 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - the cockpit ([IDEA-015](#idea-015-cockpit-with-a-conversational-personal-agent));
   - briefings, monitoring and visualization ([IDEA-009](#idea-009-regular-briefings) to [IDEA-014](#idea-014-shared-evidence-bound-events)).
 - **Planned extensions:** cockpit, Government and approval reuse are recorded in the [north star](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/manager-realization-north-star.md#later-operations-and-extensions).
+
+### VIS-002 A programming language for documentation
+
+- **Status:** Owner statement of 7 and 8 November 2026, relayed by the coordinating session, which asked for the vision and the README to be overhauled with it.
+- **Statement:**
+  - Markitect is a programming language for documentation. The spec is typed prose in Packages, with links like imports; a deterministic tool checks and analyses it like code, and agents realize and verify it.
+  - The owner expects coding to move from languages such as Go, C# or Python towards documentation and meaning. Architecture, consistency, cleanliness, an overview without reading code, and knowing what should be as against what is stay as relevant as they are in code.
+  - It builds on proven practice: requirements traceability, with its matrix, links both ways and suspect links as in IBM DOORS or Polarion and as DO-178C, ISO 26262 and IEC 62304 require, maps to the registry, `status` and `mark`; architecture metrics from Clean Architecture, domain-driven design, cohesion, coupling and stability, and hotspots after Tornhill, map to `vet`; Go's conventions shape the command line.
+  - What is new: the traceability is plain text in the repository, typed and checked deterministically; agents do the realization and the evidence; the record of what was verified works like Go's test cache.
+  - Markitect became lighter, native and simpler, working with Claude Code and Anthropic's own features rather than against them. In the owner's experience simpler is more successful and more robust, and it is earned through insight.
+  - The honest limit: "complete" means complete for the declared links. Prose that names something without linking it is a gap, which the proposed `vet.unlinked_mention` would flag ([`vet` plan](vet-plan.md)).
+- **Where it is developed:** [Markitect in brief](../vision.md#markitect-in-brief). It changes no decision: [DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts) to [DEC-100](#dec-100-skills-are-named-after-the-activity-agents-after-the-role) stay as they are.
 
 ## Decisions, clarifications and endorsed directions
 
