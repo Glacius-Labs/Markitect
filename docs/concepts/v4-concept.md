@@ -61,7 +61,7 @@ None of these starts an agent or uses Git. `--repo DIR` names a folder of the pr
 |---|---|---|
 | `install` | Writes the personal skill, once per machine. Optional: `init` says the same and gives a project its own skills ([§9](#9-the-harness)) | New |
 | `init` | Sets up a project: `.markitect/`, the first page of the spec, the harness, `.markitect/.gitattributes`, and `AGENTS.md` and `CLAUDE.md` if they are missing. An empty folder is enough. Run again, it refreshes the harness and never touches spec pages | Writes the agents and the new skills. Since 0.20.0 it makes no repository and commits nothing. It writes no file that would hold nothing yet, and it ends by saying what Markitect is and pointing to `/markitect-start` |
-| `lock` | Pins the Libraries. It holds a fingerprint of each one, as `go.sum` does for modules, and `check` refuses a Library that no longer matches | None |
+| `lock` | Pins the Libraries. It holds a fingerprint of each one, as `go.sum` does for modules, and `check` refuses a Library that no longer matches | To be named `tidy` ([tooling plan](tooling-plan.md#refined-after-the-plan-was-merged), step 2) |
 | `check` | Compiles the project and fails on any error ([below](#what-check-refuses)). `--spec` looks only at the spec itself | Stale entries and unused Definitions become errors, except in a project with nothing built yet. `--spec` is new |
 | `refs TARGET` | Who links to a Definition or Package, and which files realize it | None. To be named `doc` ([tooling plan](tooling-plan.md#the-commands)) |
 | `analyze` | Measures the spec's design ([§4](#4-is-the-spec-good)). `--severity` filters its findings, and `--graph` draws the Package dependency graph | New. Replaces `lint` and `graph`. The [tooling plan](tooling-plan.md#the-commands) names it `vet`, with `list --deps` for the graph, in its step 2 |
@@ -134,7 +134,7 @@ A spec is judged like code ([founding intent](sources/founding-intent-20261026.m
 | Fan-in of a Definition, including at Root | God class, `utils` file, interface segregation | One page that too many depend on | New. `lint.reach` skips Root today, so it misses the worst case below |
 | Blast radius: how far every link reaches from a Definition, as median, 90th percentile and worst | Transitive dependents | A change that could touch most of the spec | New |
 | Links inside a Package against links leaving it | Cohesion | A Package whose parts belong elsewhere | New |
-| Change hotspots across certificates | Churn | What keeps changing, with how far it reaches | Later. The tool reads no Git history ([DEC-097](register.md#dec-097-markitect-uses-no-git)), so it would count changes from one certificate to the next |
+| Change hotspots across records | Churn | What keeps changing, with how far it reaches | Later. The tool reads no Git history ([DEC-097](register.md#dec-097-markitect-uses-no-git)), so it would count changes from one record to the next |
 | Size against what tests cover | CRAP | Large, unverified Definitions | Later: needs tests bound to Definitions ([ENH-003](register.md#enh-003-test-to-statement-binding-and-test-review)) |
 | The spec's dependencies against the code's imports | Architecture tests | Code that has drifted from the design | Later |
 
@@ -269,7 +269,7 @@ The agents hold their task and the verdict words in their own files, which outli
 - **Only the reviewer agent may run `markitect mark`.** So the agent that built does not verify its own work. In the trials, a separate reviewer caught 17 of 18 planted bugs ([checker test](../validation/k-checker-test-20261103.md)).
 - **No subagent may write or edit under `.markitect/`, except the registry pages, which the builder keeps.** So a builder cannot weaken a Definition during the work or write lines into the record. The owner's own session, where the spec is modelled, is not a subagent and stays free. The builder may start only the reviewer, so it cannot get past the rule through a general-purpose helper.
 
-The hook reads tool calls, so a command hidden in a script, or one that names `markitect` by a path, still gets through. It guards against mistakes, not against intent.
+The hook reads tool calls, so a command hidden in a script, or one that names `markitect` by a path or another spelling, still gets through. It guards against mistakes, not against intent.
 
 **One file lies outside the project.** A session that runs `init` started before the project's files existed, so it knows only what the tool prints, and Claude Code doesn't watch a skills folder that wasn't there when the session started. So help and `init` say what Markitect is, and `markitect install` writes a personal skill, `~/.claude/skills/markitect/SKILL.md`, with the same text from the binary, which reaches a session in any folder. It allows no command in advance. `init` never writes to the home folder; it only tips when the skill is missing or old. `markitect update` installs the newest release and refreshes the skill and the project's files, and `markitect version` says whether they match. The skills and agents call `markitect` by name, so `version`, `init`, `install` and `update` warn when the `PATH` finds no `markitect` or another one.
 

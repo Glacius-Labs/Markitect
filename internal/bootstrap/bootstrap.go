@@ -64,7 +64,7 @@ func under(path, dir string) bool {
 }
 
 // pathWarning says what is wrong when a shell does not find this binary under the
-// name markitect: the apply and verify skills and the agents call it by that name.
+// name markitect: the build and review skills and the agents call it by that name.
 // It is empty when the PATH leads to this very binary.
 func pathWarning(look func(string) (string, error), executable func() (string, error)) string {
 	exe, err := executable()
@@ -74,7 +74,7 @@ func pathWarning(look func(string) (string, error), executable func() (string, e
 	dir := filepath.Dir(exe)
 	found, err := look("markitect")
 	if err != nil {
-		return fmt.Sprintf("warning: markitect is not on your PATH, but the apply and verify skills and the agents call it by that name; add %s to the PATH", dir)
+		return fmt.Sprintf("warning: markitect is not on your PATH, but the build and review skills and the agents call it by that name; add %s to the PATH", dir)
 	}
 	onPath, errPath := os.Stat(found)
 	own, errOwn := os.Stat(exe)

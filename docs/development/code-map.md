@@ -105,7 +105,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `cmd/markitect` | Command markitect is the Markitect command line: init, check, lock, refs, graph, impact, lint, version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
+| `cmd/markitect` | Command markitect is the Markitect command line: install, update, init, check, lock, refs, graph, lint, status, mark, version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
 
 ## Maintenance
 

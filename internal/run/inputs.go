@@ -184,7 +184,7 @@ func ParseEvidence(text string) (Evidence, error) {
 	case file == "":
 		return Evidence{}, fmt.Errorf("evidence %q names no file", text)
 	case strings.HasPrefix(file, "/") || strings.Contains(file, ":") || strings.HasPrefix(file, "../") || strings.Contains(file, "/../"):
-		return Evidence{}, fmt.Errorf("evidence %q: name the file relative to the project folder", text)
+		return Evidence{}, fmt.Errorf("evidence %q: name a file of the project, relative to its folder, as path:line or path; the reason goes in -m", text)
 	}
 	return Evidence{Text: text, File: file}, nil
 }

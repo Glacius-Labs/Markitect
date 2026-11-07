@@ -402,7 +402,7 @@ func (c CLI) staleNotice(args []string) {
 }
 
 // warnPath tells the user when markitect is not what the PATH finds under that
-// name, since the apply and verify skills and the agents call it by name.
+// name, since the build and review skills and the agents call it by name.
 func (c CLI) warnPath() {
 	if c.PathWarning == nil {
 		return

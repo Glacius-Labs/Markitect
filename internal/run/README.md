@@ -69,7 +69,7 @@ markitect mark loans/renewal@81be07 fail -e src/renew.go:30 -m "allows a fourth 
 ```
 
 - `ok` names at least one piece of evidence with `-e`; `fail`, `skip` and `spec-problem` say why with `-m`, kept on one line.
-- Evidence is `path` or `path:line`, also `path:line-line` and `path:line:col`. A note or a test name in parentheses is dropped, not stored. Each file must be a file of the folder, named from the project folder; its hash becomes an input when the verdict is recorded.
+- Evidence is `path` or `path:line`, also `path:line-line` and `path:line:col`. A trailing note in parentheses, such as a test name, is dropped, not stored; a note without them is refused, since `-m` holds the reason. Each file must be a file of the folder, named from the project folder; its hash becomes an input when the verdict is recorded.
 - It refuses, records nothing and exits 1 when the inputs differ from the fingerprint, as when a builder edited a file beside the reviewer or the reviewer's own test run changed one; when evidence is not a file of the folder; when the Definition is unknown; when the spec has errors; or when the record has a line it cannot read. A command it cannot read exits 2.
 - A gone Definition is marked `ok` when its files are removed or have a new basis, which removes its line, or `fail` when not; `skip` is refused.
 
@@ -82,7 +82,7 @@ One command, `markitect hook pretool`, which `init` and `update` add to the proj
 - **Only the reviewer agent runs `markitect mark`.** So the agent that built does not verify its own work. A call from the owner's session through Claude Code is refused too.
 - **No subagent writes under `.markitect/`, except the registry pages** (`registry.md` and `registry/*.md`), which the builder keeps. So a builder cannot weaken a Definition during the work or write lines into the record. The owner's own session, where the spec is modelled, is no subagent and stays free.
 
-The hook reads the call as text, so a command hidden in a script, or one that names `markitect` by a path, gets through. It guards against mistakes, not against intent. The plugin's hooks do the same before starting its launcher.
+The hook reads the call as text, so a command hidden in a script, or one that names `markitect` by a path or another spelling, gets through: the project's hook starts only for what Claude Code's rule `Bash(markitect mark*)` matches. It guards against mistakes, not against intent. The plugin's hooks filter in their own shell, without regard to case, before starting its launcher.
 
 ## The agents and skills
 

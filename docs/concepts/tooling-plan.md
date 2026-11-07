@@ -55,7 +55,7 @@ The record holds each input's hash, so `status` can say which inputs changed and
 `.markitect/review.sum` is committed with the project, like `go.sum`, and it joins the fixed layout of `.markitect/`. It holds one line per Definition, sorted, each line a JSON object:
 
 ```text
-{"definition":"fees/waiver","verdict":"ok","inputs":{"self":"sha256:…","link:fees/fee":"sha256:…","file:src/fees.go":"sha256:…","evidence:tests/fees_test.go":"sha256:…"},"evidence":["src/fees.go:40","tests/fees_test.go:12 (TestWaiver)"]}
+{"definition":"fees/waiver","verdict":"ok","inputs":{"self":"sha256:…","link:fees/fee":"sha256:…","file:src/fees.go":"sha256:…","evidence:tests/fees_test.go":"sha256:…"},"evidence":["src/fees.go:40","tests/fees_test.go:12"]}
 {"definition":"members/limit","verdict":"fail","inputs":{…},"evidence":["src/loans.go:70"],"why":"allows a sixth loan; the Definition says five"}
 ```
 
