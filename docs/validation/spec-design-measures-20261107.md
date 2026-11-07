@@ -1,6 +1,6 @@
 # How well the Makerspace specs are designed: measurements — 7 November 2026
 
-This session measured the design of the two archived Makerspace specs the way code is measured: coupling, stability, abstractness, cohesion, fan-in and fan-out, how far a change reaches, and what changed over the change steps. It then split the `values` page that [concept 4.0 §4](../concepts/v4-concept.md#4-is-the-spec-good) names as a hub, and measured again. It started no agent and changed no tool. The reading is this session's and decides nothing; the [guide to a good spec](../guides/good-spec.md) draws the rules from it, and the [`vet` plan](../concepts/vet-plan.md) proposes what `vet` measures.
+This session measured the design of the two archived Makerspace specs the way code is measured: coupling, stability, abstractness, cohesion, fan-in and fan-out, how far a change reaches, what changed over the change steps, and where prose names a Definition without linking it. It then split the `values` page that [concept 4.0 §4](../concepts/v4-concept.md#4-is-the-spec-good) names as a hub, and measured again. It started no agent and changed no tool. The reading is this session's and decides nothing; the [guide to a good spec](../guides/good-spec.md) draws the rules from it, and the [`vet` plan](../concepts/vet-plan.md) proposes what `vet` measures.
 
 **What the numbers show:**
 
@@ -9,7 +9,8 @@ This session measured the design of the two archived Makerspace specs the way co
 - **Abstractness, counted as Martin counts it, adds little here.** A Package's abstractness is its share of Definitions of Kind `Kind`, as Martin counts interfaces and abstract classes. Both specs keep their Kinds at Root, so every other Package has abstractness 0 and its distance from the main sequence is 1 − I. The zone of pain holds Root and the stable core, `members`, `equipment` and `billing` (eight Packages in the 5× project), and the zone of uselessness is empty.
 - **Where change hurts is a widely linked Definition that changes.** No Makerspace Definition linked by 10 or more changed in eight steps. In the 5× project 9 of 29 did, `members/member`, `billing/charge` and `members/membership` first, and their changes alone put 247 of the 468 items of the eight steps back on the list. `values` never changed.
 - **Root is the weak spot.** `values` alone is linked by 60 of 115 Definitions (269 of 419 in the 5× project), and Root also holds a module: formats, refusal codes, audit and authorization, with the only Operation at Root. Links up the tree are free, so none of this shows in Package coupling, and `vet.reach` skips Root.
-- **Splitting `values` narrows reach where links were false, not elsewhere.** A change to one format then lists between 1 and 50 Definitions instead of 61. The real change steps never changed a format, so what they put back on the list stays the same; following every link, the four widest Makerspace steps fall from 85–88 % of the spec to 45–60 %, and the 5× project's from 94–96 % to 70–82 %. Most of what remains runs through the `Operation` Kind.
+- **Splitting `values` narrows what a format change lists, and nothing else.** With the formats at Root, a change to one format lists between 2 and 52 Definitions instead of 61, a median of 5. The real change steps never changed a format, so what they put back on the list stays the same. Following every link, the four widest Makerspace steps fall from 85–88 % of the spec to 45–60 %, and the 5× project's from 94–96 % to 70–82 %, but not because of the split: the split dropped the one link `values` made, back to its user `argument-values`, and removing that link alone gives the same numbers.
+- **Prose names much that it does not link.** A text check finds a Definition's name in another Definition's prose with no link to it in 205 pairs of Makerspace Definitions and 727 of the 5× project, after filters that use the structure only. In a sample of each, 65 % and 70 % were real missing links; the rest were ordinary words and other meanings of a name.
 
 ## Source and method
 
@@ -24,6 +25,7 @@ This session measured the design of the two archived Makerspace specs the way co
 | measure | `list --deps --json` and the Definition files | The measures below, per Definition and per Package |
 | split | A step's model | The split of `values`, in two variants ([below](#the-split)) |
 | steps | Two consecutive steps | The Definitions a step changed, and how far that change reaches at one step, two steps and every link |
+| mentions | `list --deps --json` and the Definition files | Unlinked mentions ([below](#unlinked-mentions)) |
 
 **Measures:**
 
@@ -38,7 +40,7 @@ This session measured the design of the two archived Makerspace specs the way co
 | D, zones | \|A + I − 1\|, the distance from the main sequence. Above 0.7 a Package lies in the zone of pain (stable and concrete, A + I below 0.3) or in the zone of uselessness (abstract and unstable, A + I above 1.7) |
 | Volatility | Definitions a step added, changed or removed, per Package and per Definition, over c1 to c8; for each change of an existing Definition, the one-step reach it caused at that step |
 | Cohesion | Connected groups of a Package's own Definitions, joined by links inside it; relational cohesion H = (links inside + 1) / Definitions; the share of the Package's links that stay inside, not counting links up the tree |
-| Statements | List items and table rows in a Definition's body, a count of what a reviewer verifies |
+| Statements | List items and table rows in a Definition's body, header rows included, a count of what a reviewer verifies |
 | Definition cycles | Strongly connected groups of more than one Definition |
 | Percentiles | Nearest rank; reach and fan-in over all model Definitions |
 
@@ -81,7 +83,7 @@ The 5× project, 47 Packages besides Root: Ce median 3 and at most 12 (`bookings
 
 **Coupling and stability.** No Package depends on `protocol` in either project: it is the outer layer that wires the modules, and its Ce of 8 is what such a layer has. The stable Packages, `members` and `equipment` (I 0), are what the domain rests on. The three less stable dependencies of the 5× project differ by 0.10, 0.12 and 0.18 in instability.
 
-**Abstractness and the main sequence.** A Kind is to Definitions what an interface is to classes: the form others follow. Both specs define their two project Kinds, `Operation` and `Interface`, at Root, so Root's abstractness is 2 of 21 and every other Package's is 0. D is then 1 − I outside Root and adds nothing to instability. The zone of pain, stable and concrete, holds exactly the Packages whose Concepts the others link: `members/member`, `equipment/machine`, `billing/charge`, `ledger/postings`. Martin calls that zone harmful only for what changes often; the [volatility](#volatility) below shows which of them do. A reading of what each Kind means, Concepts, Rules and Interfaces as abstract and Operations as concrete, was also tried; it puts every area Package at 0.5 to 0.7 whatever its stability and so tells no more, and the tool cannot use it, since it treats every Kind alike. In code the Package is the unit that is released and depended on; here the unit of verification is the Definition, and a change to `members/register-member` puts back only itself and its Interface, however stable `members` is. Per Definition, what is linked widely is the form and the vocabulary, not the behaviour:
+**Abstractness and the main sequence.** A Kind is to Definitions what an interface is to classes: the form others follow. Both specs define their two project Kinds, `Operation` and `Interface`, at Root, so Root's abstractness is 2 of 21 and every other Package's is 0. D is then 1 − I outside Root and adds nothing to instability. The zone of pain, stable and concrete, holds exactly the Packages whose Concepts the others link: `members/member`, `equipment/machine`, `billing/charge`, `ledger/postings`. Martin calls that zone harmful only for what changes often; the [volatility](#volatility) below shows which of them do. A reading of what each Kind means, Rules and Interfaces as abstract and Operations as concrete, was also tried. Counting Concepts as abstract, it puts every area Package at 0.5 to 0.7; counting them as concrete, `members` and `equipment` move to D 0.73–0.75. Either way it tells little beyond instability, and the tool cannot use it, since it treats every Kind alike. In code the Package is the unit that is released and depended on; here the unit of verification is the Definition, and a change to `members/register-member` puts back only itself and its Interface, however stable `members` is. Per Definition, what is linked widely is the form and the vocabulary, not the behaviour:
 
 | Kind, Makerspace c8 | Definitions | Fan-in median | Fan-in max |
 |---|---|---|---|
@@ -91,9 +93,9 @@ The 5× project, 47 Packages besides Root: Ce median 3 and at most 12 (`bookings
 | `std/Concept` | 24 | 6 | 60 |
 | `Kind` | 2 | 23.5 | 39 |
 
-The one Operation linked from outside its module's Interface is Root's `list-audit-entries`, by `audit` and `protocol/requests`. In the 5× project an Operation has at most 3 linkers, and 14 links reach an Operation from another Package other than through an Interface. All come from Rules that add a gate or an effect to another module's operation, such as `hazmat/hazard-gate` on `materials/purchase-material` and `waitlists/promote-waitlist` on `training/enroll-in-course`: the inverted dependency the [model language guide](../guides/model-language.md#links-scope-and-visibility) describes, where the needing side states its need.
+The one Operation linked from outside its module's Interface is Root's `list-audit-entries`, by `audit` and `protocol/requests`. In the 5× project an Operation has at most 3 linkers, and 14 links reach an Operation from another Package other than through an Interface. Ten come from Rules that add a gate or an effect to another module's operation, such as `hazmat/hazard-gate` on `materials/purchase-material`: the inverted dependency the [model language guide](../guides/model-language.md#links-scope-and-visibility) describes, where the needing side states its need. One is `protocol/requests` naming Root's `list-audit-entries`. Three come from Operations that build on another module's operation: `access/enter-door` on `billing/get-account`, `finance/finance-summary` on `billing/issue-credit` and `waitlists/promote-waitlist` on `training/enroll-in-course`.
 
-**Cohesion.** Every Package is one connected group, apart from single Rules that bind their Package by scope and link nothing in it (`billing/due-date-and-block`, `bookings/metering`, `reporting/reports`, and at Root `documentation`, `list-order` and the Kind `Interface`). No Package of either project falls into two groups of two or more Definitions each. `protocol` is the exception in kind: six Rules with one link between them, each tying other modules' Interfaces to the wire.
+**Cohesion.** At c8 every Package is one connected group, apart from single Definitions that link nothing in it: Rules that bind their Package by scope (`billing/due-date-and-block`, `bookings/metering`, `reporting/reports`, and at Root `documentation` and `list-order`) and Root's Kind `Interface`. At c8 no Package of either project falls into two groups of two or more Definitions each. At w0 and c1, `bookings` does: three Rules, `booking-granularity`, `opening-hours` and `reservation-rules`, link each other but nothing else in the Package. They bind it by scope, so this is no second area. `protocol` is the exception in kind: six Rules with one link between them, each tying other modules' Interfaces to the wire.
 
 **Placement.** A Definition sits too high when every Definition that links to it lies below it in one child Package. None does in either project: both are one level deep, and Root's Definitions are linked from Root itself.
 
@@ -116,7 +118,7 @@ Hubs, by fan-in:
 - **`Operation`** is a true hub: every Operation is of it. It also links six Root Definitions (`argument-values`, `audit`, `audit-entry`, `authorization`, `order-of-checks`, `refusal-codes`), so following every link, a change to any of them reaches all Operations. The Operations do rely on them: 21 of the 38 say "Refusals at check 7". But none links `order-of-checks` itself, so a change to the order of checks puts the Kind back on the list, not those Operations.
 - **The largest fan-out** belongs to the Interfaces, which list their module's operations (`bookings/bookings-interface` 16, 24 in the 5× project), and to two Operations (`materials/purchase-material` 13, `reporting/utilization-report` 11).
 - **Size.** Words per Definition: median 88, p90 253, largest 430 (`architecture`); in the 5× project 99, 237 and 995 (`ledger/postings`). Statements: median 6, p90 12, largest 25 (`reporting/revenue-report`); in the 5× project 7, 13 and 67 (`list-order`, a table of the order of every list).
-- **Definition cycles** all lie inside one Package, as they must, since a cycle across Packages is a compile error. About half are a Concept and its Rule naming each other (`bookings/reservation` and `bookings/reservations`; 13 of 29 in the 5× project); most others add an Operation. Two are at Root: `values`, `argument-values`, `money`, `computed-times`, `identifier-limits` and `integer-limits`, and `Operation`, `audit`, `list-audit-entries` and `order-of-checks`. A cycle at Root makes its members act as one hub when every link is followed.
+- **Definition cycles** all lie inside one Package, as they must, since a cycle across Packages is a compile error. Many are a Concept and its Rule naming each other (`bookings/reservation` and `bookings/reservations`; 10 of 29 in the 5× project, and 13 consist of Concepts and Rules only); most others include an Operation. Two are at Root: `values`, `argument-values`, `money`, `computed-times`, `identifier-limits` and `integer-limits`, and `Operation`, `audit`, `list-audit-entries` and `order-of-checks`. A cycle at Root makes its members act as one hub when every link is followed.
 
 ## Volatility
 
@@ -162,7 +164,7 @@ The project page says it outright: the area modules, the outer layer `protocol`,
 
 `values` was split into one Definition per format, by script, on every step of both projects, in two variants:
 
-- **A `values/` Package** below Root, with the thirteen formats as Concepts (`values/identifier`, `values/cent-amount`, …), each holding its row of the table, the units folded into `cent-amount` and `minute-count`. Every field line links the format it names, as in ``- `blocked`: [[values/flag|flag]]``; a field "integer from `1` to `100000000` cents" links `cent-amount` at its unit, "whether …" links `flag`, and "minutes of …" links `minute-count`. The header ``**Fields**, in the formats of [[values]]`` stays and now names the Package, which is no input. Root's own Definitions may not link into the Package, so `audit-entry`, `identifier-limits`, `money`, `time` and `project` keep a link to the Package. The formats link nothing, so the old back link from `values` to `argument-values`, and with it Root's six-member cycle, is gone. Root's registry page lists the five formats its file realizes instead of `values`.
+- **A `values/` Package** below Root, with the thirteen formats as Concepts (`values/identifier`, `values/cent-amount`, …), each holding its row of the table, the units folded into `cent-amount` and `minute-count`. Every field line that names a format links it, as in ``- `blocked`: [[values/flag|flag]]``; a field "integer from `1` to `100000000` cents" links `cent-amount` at its unit, "whether …" links `flag`, and "minutes of …" links `minute-count`. The header ``**Fields**, in the formats of [[values]]`` stays and now names the Package, which is no input. Root's own Definitions may not link into the Package, so `audit-entry`, `identifier-limits`, `money`, `time` and `project` keep a link to the Package. The formats link nothing, so the old back link from `values` to `argument-values`, and with it Root's six-member cycle, is gone. Root's registry page lists the five formats its file realizes instead of `values`.
 - **The same thirteen formats at Root,** where every Definition, Root's included, can link the format it uses.
 
 Both variants compile on every step. All 60 linkers (269 in the 5× project) map to their formats by these rules, apart from `project`, which names the formats as part of a module.
@@ -180,24 +182,24 @@ Both variants compile on every step. All 60 linkers (269 in the 5× project) map
 | Root's own Definitions | 21 | 20 | 33 | 21 | 20 |
 | Definition cycles | 3 | 2 | 2 | 29 | 28 |
 
-**What a change to one format lists** (one-step reach, the format included): before the split, 61 Definitions for any format in Makerspace and 270 in the 5× project.
+**What a change to one format lists** (one-step reach, the format included): before the split, 61 Definitions for any format in Makerspace and 270 in the 5× project. At Root, Root's own Definitions link their formats too, so each format lists one to two more than in the `values/` Package. These are lower bounds: of the field lines, 78 of 276 in Makerspace and 345 of 1079 in the 5× project name no format and link none. Most of them are records and enumerations, but a few rely on a format without naming it, such as a sum of amounts, or the 5× project's 54 quantities written "integer from …" without a unit.
 
-| Format | Makerspace | 5× |
-|---|---|---|
-| identifier | 50 | 243 |
-| text | 19 | 65 |
-| cent amount | 17 | 63 |
-| timestamp | 15 | 35 |
-| count | 5 | 16 |
-| minute count | 5 | 7 |
-| date | 4 | 21 |
-| flag | 4 | 17 |
-| month | 4 | 11 |
-| percent | 3 | 3 |
-| clock time | 2 | 2 |
-| operation name | 2 | 2 |
-| audit target | 1 | 1 |
-| **Median** | **4** | **16** |
+| Format | Makerspace, `values/` | Makerspace, at Root | 5×, `values/` | 5×, at Root |
+|---|---|---|---|---|
+| identifier | 50 | 52 | 243 | 245 |
+| text | 19 | 19 | 65 | 65 |
+| cent amount | 17 | 18 | 63 | 64 |
+| timestamp | 15 | 17 | 35 | 37 |
+| count | 5 | 6 | 16 | 17 |
+| minute count | 5 | 5 | 7 | 7 |
+| date | 4 | 5 | 21 | 22 |
+| flag | 4 | 4 | 17 | 17 |
+| month | 4 | 5 | 11 | 12 |
+| percent | 3 | 3 | 3 | 3 |
+| clock time | 2 | 2 | 2 | 2 |
+| operation name | 2 | 3 | 2 | 3 |
+| audit target | 1 | 2 | 1 | 2 |
+| **Median** | **4** | **5** | **16** | **17** |
 
 **The real change steps,** before and after the split into `values/` (Definitions reached, and their share of the step's spec):
 
@@ -220,21 +222,57 @@ Both variants compile on every step. All 60 linkers (269 in the 5× project) map
 | 5× c7 | 23 | 75 / 75 | 130 / 129 | 411 (96 %) / 334 (76 %) |
 | 5× c8 | 14 | 25 / 25 | 45 / 45 | 121 (28 %) / 121 (28 %) |
 
-No step changed `values`, so one step, which is what `status` lists, reaches the same Definitions before and after. Every link narrows wherever it passed through `values`.
+No step changed `values`, so one step, which is what `status` lists, reaches the same Definitions before and after. Every link narrows on the steps where it passed through `values`, but the split is not what narrows it. `values` entered every-link reach only through the one link it made, back to `argument-values`, which uses the formats; removing that link alone from the unsplit specs gives the same every-link numbers on every row. A link from the general back to what uses it closed Root's six-member cycle, and through it every change that reached `argument-values` reached all 60 users of `values`.
 
-**What is left of every-link reach** runs through the `Operation` Kind. Stopping at it alone takes 44 of the 55 Definitions out of Makerspace c1 after the split, 37 of 60 out of c5 and 39 of 59 out of c6; in the 5× project 221 of 298 on c2 and 144 of 334 on c7, with `members/member` next (22 to 32 on c5 and c6).
+**What is left of every-link reach** runs largely through the `Operation` Kind on Makerspace: stopping at it alone takes 44 of the 55 Definitions out of c1 after the split, 37 of 60 out of c5 and 39 of 59 out of c6. In the 5× project it takes 221 of 298 out of c2, but only 83 of 359 out of c5, 70 of 363 out of c6 and 144 of 334 out of c7, where `members/member` comes next (22 to 32 on c5 and c6) and the rest spreads over many Definitions.
 
 **What the split costs:**
 
-- **Files:** 13 Definitions for 1, with the same 354 words. A new Package needs a registry page with its first paths, or `vet.no_paths` warns.
+- **Files:** 13 Definitions for 1. Their bodies hold 302 words against the page's 350: the table's header and the sentence that linked back to `argument-values` went. A new Package needs a registry page with its first paths, or `vet.no_paths` warns.
 - **Links and lines:** Makerspace gains 57 Definition links and 199 written links, on 198 lines in 55 files; the 5× project gains 203 Definition links and 735 written links, on 734 lines in 264 files. Root's registry page changes two rows.
 - **Reading:** every field line carries a link, and its rendered label still reads "identifier" or "cent amount". Field lists read as before; the text of a field changed only for "whether …", "the wire name …" and "minutes of …", which name their format now.
 - **Root cannot follow** in the `values/` variant. Five Root Definitions keep only the Package link, so a change to a format no longer lists them, and `values/audit-target`, whose only user was Root's `audit-entry`, is linked by nothing: `check` reports it unused until a registry row realizes it. With the formats at Root instead, every link is exact, but Root grows to 33 Definitions and `vet.package_size` warns.
 - **New warnings in the `values/` variant:** `vet.reach` on four formats (`values/identifier` reaches 10 of 11 Packages), `bookings` reaches Ce 6 (`vet.coupling`), and in the 5× project every Package gains one efferent edge, which shifts instabilities: three new `vet.unstable_dependency` warnings appear, with differences of 0.04, 0.06 and 0.10.
 
+## Unlinked mentions
+
+In code, dependencies are complete by construction: a missing import does not compile. In a spec they are complete only by discipline, since prose can name a concept without linking it. The edge is then missing, and a change to the concept does not put the Definition that relies on it back on the list. This check looks for such names, from the text and the structure alone, with no word list of any language:
+
+- **Names.** A Definition's names are its title and the last segment of its ID, hyphens read as spaces. A name matches as whole words, without regard to case, with up to two trailing letters for inflection ("members", "invoices").
+- **Where.** In every other Definition's body, without its front matter, its own title, code blocks, code spans and links, label included.
+- **Candidate.** A match in a Definition that neither links the named one nor is of it as its Kind.
+- **Filters,** each from the structure: the link must be allowed (not into a child, not to an internal Definition from outside, not closing a Package cycle); where names overlap, the longest wins, the Definition's own name included ("maintenance window" names the window, not `equipment/maintenance`); words that a linked Definition's name already covers do not count ("invoices" beside a linked `billing/invoice`); nor do names the Definition's Kind already links (the Operation form's "Audit target"); Kinds are no targets, since their names are mostly ordinary words ("operation"); and the link must add no new Package dependency.
+
+Pairs left after each filter, on c8:
+
+| Stage | Makerspace | 5× |
+|---|---|---|
+| A name found, no link | 455 | 1754 |
+| The link is allowed: not into a child, not internal | 330 | 1557 |
+| No cycle; not covered by a linked name; not the Kind's form | 246 | 1199 |
+| The longest name wins; Kinds are no targets | 211 | 1090 |
+| No new Package dependency | 205 | 727 |
+
+In Makerspace the 205 pairs come from 77 Definitions and name 42; in the 5× project 727 pairs come from 295 and name 86. The most named without a link: `time` (37; 155 in the 5× project), `members/member` (31; 112), `equipment/machine` (14; 47), `refusal-codes` (8; 44), `billing/credit` and `billing/invoice` (9 each in Makerspace).
+
+**How many are real.** This session judged a random sample of the final pairs: 40 of Makerspace's and 30 of the 5× project's. A pair is real when the Definition relies on what the named one states, so that a change to it should put the Definition back on the list.
+
+| Sample | Real | Doubtful | Noise |
+|---|---|---|---|
+| Makerspace, 40 pairs | 26 (65 %) | 4 | 10 |
+| 5× project, 30 pairs | 21 (70 %) | 1 | 8 |
+
+- **Real,** for example: `billing/issue-credit` issues a credit without linking `billing/credit`; `bookings/metering` applies "the member's tier discount" without linking `members/tier`; `bookings/reservation-rules` refuses a member "blocked by a long-overdue invoice" without linking `billing/invoice`; `authorization` names "check 6 of the order of checks" without linking `order-of-checks`. Four of Makerspace's 26 are "the request time", which `time` defines among other rules.
+- **Noise:** an ordinary word that is also a name ("closing time", "date and time", "the project itself", "the listed values", "the refusal codes of this module"); another meaning of a name (the role `member` in a permissions line, the JSON members of a response, a member who "holds" a ticket against `rooms/hold`, a job's payment against `billing/payment`); a mention in passing or in a negation ("no invoice and no credit is involved"); a record and the report that holds it naming each other.
+- **A frequency filter was tried and dropped:** treating a name that more than a quarter of the Definitions mention without a link as an ordinary word removed `time` and `members/member` in Makerspace, whose mentions were mostly real.
+
+Two of the most named targets are broad. `time` holds "request time" among several rules, so a Definition of its own for the request time would be matched exactly by the longest name. "Member" names both a Concept and a role, which is a finding about the spec's language in its own right.
+
 ## Reading
 
-- **The split was worth it on its own terms.** The links had claimed thirteen formats where two were used; after the split, a change to a rarely used format lists two Definitions, not 61, and the widest every-link reaches halve on Makerspace. It does not shorten any real step's list, because the formats never changed; its gain is the change that has not happened yet.
+- **The split was worth it on its own terms, and only there.** The links had claimed thirteen formats where two were used; after the split, a change to a rarely used format lists two Definitions, not 61. It does not shorten any real step's list, because the formats never changed; its gain is the change that has not happened yet.
+- **Under-linking is common.** About two-thirds of the unlinked mentions are links the record misses: some 130 in Makerspace's 115 Definitions. The spec's dependencies are as complete as its author's discipline, and a text check catches much of what discipline misses, at a third noise.
+- **Link direction mattered more than the split.** One link from the general `values` back to its user `argument-values` doubled every-link reach on four Makerspace steps. Linking from the specific to the general, never back, holds inside a Package too.
 - **A true hub stays a hub.** `values/identifier` is used almost everywhere, and the `Operation` Kind is the form of half the spec. Their reach is real; what helps there is keeping them small and stable, and linking them directly where they are relied on.
 - **Root needs the most care.** Root may not depend on anything below it, so a module at Root pulls its own dependencies up after it, and links up hide coupling from today's measures.
 - **The zone of pain names the right Packages, not yet the right moment.** Abstractness counted from Kinds is 0 outside Root, so the zone of pain is the stable core, which every domain has. It hurt where widely linked Definitions changed, which the 5× series shows and a single snapshot cannot: the cost is fan-in times change.
@@ -248,3 +286,4 @@ No step changed `values`, so one step, which is what `status` lists, reaches the
 - The split was made by script, by rules matched against how these specs write fields. A person would likely also move Root's module into a Package of its own, which was not tried.
 - Reach counts Definitions put back on the list, not what an agent does with them; whether a narrower list helps an agent build or review is untested. File inputs, which also put Definitions back on the list, were not measured here; the [3 November measurement](impact-reach-20261103.md) did that.
 - No record of a real build exists for these specs, so nothing here measures evidence in `review.sum`.
+- Whether an unlinked mention is real was judged by this session alone, on samples of 40 and 30 pairs, from the text around each match.

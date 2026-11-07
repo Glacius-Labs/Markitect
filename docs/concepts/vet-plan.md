@@ -11,10 +11,11 @@
 
 ## In brief
 
-- **Replace `vet.reach` with `vet.hub`,** which counts Definitions, counts Root, and leaves Kinds out. On both specs it warns about `values` and `members/member`, the hub that cost most re-verification in the 5× change steps; `vet.reach` warns about Interfaces, which are linked widely by design, and misses `values`.
-- **Add Martin's abstractness and distance:** A and D in `list --deps`, a warning for the zone of uselessness, and the zone of pain under `--strict`, since without a measure of change it names every stable core.
-- **Keep the other warnings,** with a margin of 0.1 on `vet.unstable_dependency`.
-- **Add a stricter tier** under `--strict`: statements per Definition, Package cohesion, placement, and a CRAP analogue that reads `review.sum`.
+- **Find unlinked mentions,** a priority: a Definition's name in another Definition's prose with no link to it. About two-thirds of what it finds on the Makerspace specs are real missing links, some 130 in Makerspace alone, and the rest are ordinary words and other meanings of a name. So it starts as a note, with a one-line summary in every run.
+- **Replace `vet.reach` with `vet.hub`,** which counts Definitions, counts Root, and leaves Kinds out. On both specs it warns about `values` and `members/member`, the hub that cost most re-verification in the 5× change steps. `vet.reach` warns about Interfaces on Makerspace, which are linked widely by design, and misses `values`.
+- **Add Martin's abstractness and distance:** A and D in `list --deps`, a warning for the zone of uselessness, and a note for the zone of pain, since without a measure of change it names every stable core.
+- **Keep the other warnings** as they are, `vet.unstable_dependency` included, Martin's rule exactly.
+- **Add notes,** which `--strict` shows and which never change the exit code: unlinked mentions, the zone of pain, statements per Definition, placement, and a CRAP analogue that reads `review.sum`.
 - **Add one Kind to `std`, `std/Value`,** for the value objects of domain-driven design, where the measurements show a gap.
 
 ## What `vet` knows of Kinds
@@ -27,14 +28,14 @@ N is the number of the spec's model Definitions. Fan-in counts the Definitions t
 
 ### Warnings
 
-`vet` prints these always and exits 1 on them only with `--strict`, as today.
+`vet` prints these always and exits 1 on them only with `--strict`, as today. They are the measures that were precise on both specs.
 
 | Code | Warns when | Threshold | Hits: Makerspace, 5× | Change |
 |---|---|---|---|---|
 | `vet.hub` | A Definition not of Kind `Kind`, Root included, whose change alone puts more than a fifth of the spec back on the list: fan-in + 1 > max(10, 0.2 N) | 20 %, at least 10 | `values` (61 of 115), `members/member` (25); `values` (270 of 419), `members/member` (91) | New, replaces `vet.reach` |
 | `vet.zone_of_uselessness` | A Package is abstract and unstable: D > 0.7 with A + I > 1, so Kinds that little depends on | 0.7 | none; none | New |
 | `vet.coupling` | A Package depends on more than 5 Packages (Ce) | 5 | `protocol` (8); 6 Packages, `bookings` 12 at most | Keep |
-| `vet.unstable_dependency` | A sideways edge goes from a Package to one whose instability is higher by more than the margin | margin 0.1 | none; 2 (differences 0.12 and 0.18) | Add the margin; today 0 and 3 |
+| `vet.unstable_dependency` | A sideways edge goes from a Package to a less stable one: Martin's Stable Dependencies Principle | — | none; 3 (differences 0.10, 0.12 and 0.18) | Keep |
 | `vet.definition_size` | A Definition's body has more than 1000 words | 1000 | none (largest 430); none (largest 995) | Keep |
 | `vet.package_size` | A Package has more than 25 Definitions of its own, Root included | 25 | none (Root 21); none | Keep |
 | `vet.thin_package` | A Package has no Definitions of its own and one child | — | none; none | Keep |
@@ -44,21 +45,32 @@ N is the number of the spec's model Definitions. Fan-in counts the Definitions t
 
 **Why `vet.hub` and not `vet.reach`.** `vet.reach` counts the Packages a change reaches and skips Root. On Makerspace it warns about the Interfaces of `billing`, `equipment` and `members`, whose purpose is to be used by other modules, and stays silent about `values`, which 60 Definitions link while using a median of 2 of its 13 formats. `vet.hub` counts Definitions, which is what `status` lists, and counts Root, where the worst hub sits. At 20 % it also names `members/member`: in the 5× project's eight change steps, `members/member` changed once and put 88 Definitions back on the list, and the changes of nine widely linked Definitions together put 247 of the steps' 468 items there. At 25 % it would name `values` alone, which never changed. After `values` is split, it names `values/identifier`, a true hub, which the author keeps with one line of reason, as the modeling skill asks of any warning, and in the 5× project still `members/member`.
 
-**Why the zones split.** Both specs keep their Kinds at Root, so A is 0 in every other Package and D is 1 − I. The zone of pain then holds Root and the stable core: `billing`, `equipment` and `members` in Makerspace, eight Packages in the 5× project. That is where change hurts, but Martin counts it harmful only for what changes often, and in Makerspace nothing widely linked there changed. A snapshot cannot tell, so the zone of pain waits under `--strict` until `vet` can see change. The zone of uselessness needs no such knowledge: Kinds in an unstable Package are Kinds little uses.
+**Why the zones split.** Both specs keep their Kinds at Root, so A is 0 in every other Package and D is 1 − I. The zone of pain then holds Root and the stable core: `billing`, `equipment` and `members` in Makerspace, eight Packages in the 5× project. That is where change hurts, but Martin counts it harmful only for what changes often, and in Makerspace nothing widely linked there changed. A snapshot cannot tell, so the zone of pain is a note until `vet` can see change. The zone of uselessness needs no such knowledge: Kinds in an unstable Package are Kinds little uses.
 
-**Why the margin.** Splitting `values` into a Package gave every module one more efferent edge and shifted instabilities, which raised three new `vet.unstable_dependency` warnings with differences of 0.04, 0.06 and 0.10. The warnings that stood before differ by 0.10 to 0.18. A margin of 0.1 keeps the larger ones and drops the shifts. Without it, the warning is Martin's Stable Dependencies Principle exactly; with it, it is the same rule with a tolerance, provisional like every threshold here.
+**Why no margin on stability.** Splitting `values` into a Package gave every module one more efferent edge and shifted instabilities, which raised three new `vet.unstable_dependency` warnings, with differences of 0.035, 0.062 and exactly 0.100. The three that stood before differ by exactly 0.100, 0.125 and 0.183. No margin separates the two sets, so the rule stays Martin's, exactly as `vet` has it today.
 
-### Only with `--strict`
+### Notes, shown with `--strict`
 
-With `--strict`, `vet` also runs these, prints them, and exits 1 on any warning of either tier. They are stricter because each has a known blind spot, or no calibration yet.
+These have a known blind spot or no calibration yet, so they never change the exit code, as notes already do in Markitect's commands ([exit codes](../guides/model-language.md#diagnostics-json-and-exit-codes)). `vet --strict` prints them after the warnings and still exits 1 on warnings only; `--json` always carries them, with `severity` `note`. Plain `vet` prints one line that counts them and says to run `vet --strict` to see them.
 
-| Code | Warns when | Threshold | Hits: Makerspace, 5× | Why only strict |
+| Code | Notes when | Threshold | Hits: Makerspace, 5× | Why a note |
 |---|---|---|---|---|
+| `vet.unlinked_mention` | A Definition's title, or the last segment of its ID, appears in another Definition's prose with no link to it, after the filters [below](#unlinked-mentions) | — | 205 pairs from 77 Definitions; 727 from 295 | About a third is noise, which no filter without a word list removed |
 | `vet.zone_of_pain` | A Package is stable and concrete: D > 0.7 with A + I < 1 | 0.7 | Root, `billing`, `equipment`, `members`; Root and 8 Packages | Every domain has a stable core; it hurts only where it changes, which a snapshot cannot see |
 | `vet.statements` | A Definition has more than 20 statements: list items and table rows in its body | 20 | 2 (`reporting/revenue-report` 25, `bookings/create-reservation` 22); 8 (`list-order` 67 at most) | The anchor and the architecture are long by nature (5× `architecture` 60, `project` 26) |
-| `vet.cohesion` | A Package falls into two or more groups of two or more Definitions each, with no link between the groups | — | none; none | No hit on either spec, so untested against a real split |
 | `vet.placement` | Every Definition that links to a Definition lies below it in one child Package, so it could move down to that child | — | none; none | A Rule that binds by scope may be linked from one child only and still belong higher. Both specs are one level deep, so untested |
 | `vet.risk` | A Definition recorded `ok` at its current inputs scores above 30 on c² × (1 − e)³ + c, with c = 1 + statements and e = evidence pointers / c, at most 1 | 30 | no record exists | Uncalibrated, and it can be gamed by naming more pointers. It also makes `vet` read `.markitect/review.sum` beside the spec |
+
+### Unlinked mentions
+
+In code a missing import does not compile; in a spec, prose can name a concept without linking it, and the record then misses a re-verification. `vet.unlinked_mention` reads the text and the structure only, so it works for any language a spec is written in:
+
+- **Names:** a Definition's title and the last segment of its ID, hyphens read as spaces, matched as whole words without regard to case, with up to two trailing letters for inflection.
+- **Where:** the prose of every other Definition, without its front matter, its own title, code blocks, code spans and links.
+- **Not reported:** where the Definition links the named one or is of it as Kind; where it may not link it (into a child, to an internal Definition from outside, or closing a Package cycle); where a longer name covers the words, the Definition's own name included; where a linked Definition's name covers them ("invoices" beside a linked `billing/invoice`); where the Definition's Kind links the named one; where the named one is a Kind; and where the link would add a new Package dependency.
+- **One line per Definition** that names others, at the line of the first mention: `billing/issue-credit.md:12: vet.unlinked_mention: names billing/credit and time without linking them`.
+
+On Makerspace c8 it reports 205 pairs, 65 % real in a sample of 40; on the 5× project 727, 70 % real in a sample of 30 ([record](../validation/spec-design-measures-20261107.md#unlinked-mentions)). The noise is ordinary words that are also names ("closing time" against `time`), other meanings of a name (the role "member" against `members/member`), and mentions in passing. A spec reduces it by naming its concepts precisely, for instance a Definition of its own for the request time. A frequency filter was tried and dropped, since it removed mostly real mentions. Once a spec's own measurements show the noise low, the owner may make it a warning.
 
 ### Measured and not proposed
 
@@ -69,7 +81,9 @@ With `--strict`, `vet` also runs these, prints them, and exits 1 on any warning 
 | Every-link reach | The record follows one step; the every-link reach is for the author to read, not to warn about. `list --deps` and `doc` already show the links |
 | Fan-out | Its largest values are Interfaces, which list their module's operations by design |
 | Relational cohesion H, links leaving a Definition's Package | Low values were the outer `protocol` and `reporting` and operations that use another area's Concepts, all legitimate |
-| Definition cycles | All lie inside one Package; about half are a Concept and its Rule naming each other |
+| Package cohesion: two or more groups of two or more Definitions with no link between them | Its one hit, `bookings` at steps w0 and c1, was three Rules that bind the Package by scope, not a second area |
+| A margin on `vet.unstable_dependency` | The shifts a shared Package causes and the warnings that stood before overlap ([above](#warnings)) |
+| Definition cycles | All lie inside one Package; many are a Concept and its Rule naming each other |
 | A Kind that links Definitions other than Kinds | One hit per spec, the `Operation` Kind, whose links reflect what its Definitions truly rely on; whether it mixes levels needs judgment |
 
 ## The Dependency Rule without layers
@@ -80,7 +94,7 @@ The owner settled this on 7 November 2026: there are no explicit layers and no m
 - **Sideways edges** are checked by the cycle ban (`package.cycle`) and by `vet.unstable_dependency`, Martin's Stable Dependencies Principle from the graph alone.
 - **A project's own limits** use what exists: `internal: true` for what a Package keeps to itself, which `check` enforces (`link.internal`), and an ordinary Rule for the rest, which the reviewer checks. Makerspace marks 19 Rules `internal: true`.
 
-On both specs the rule holds without more: no Package depends on the outer `protocol`, the area modules reach each other's operations only through Interfaces, and the stability measure finds no violation in Makerspace and three small ones in the 5× project.
+On Makerspace the rule holds without more: no Package depends on the outer `protocol`, the area modules reach each other's operations only through Interfaces, and the stability measure finds no violation. The 5× project has three small stability violations, and three Operations that build on another module's operation rather than its Interface, such as `access/enter-door` on `billing/get-account`; a project that wants to forbid that writes it as a Rule, or marks the operations `internal: true` and lets other modules use the Interface.
 
 ## A new `std` Kind: Value
 
@@ -120,11 +134,11 @@ A Value Definition describes one kind of value that the project's records, reque
 
 ## Decisions for the owner
 
-1. **`vet.hub` replaces `vet.reach`:** Definitions, Root included, Kinds left out, above a fifth of the spec and at least 10. Recommended.
-2. **Martin's abstractness and distance:** A and D in `list --deps`, `vet.zone_of_uselessness` as a warning, `vet.zone_of_pain` under `--strict`. Recommended.
-3. **A margin of 0.1 on `vet.unstable_dependency`.** Recommended.
-4. **A stricter tier under `--strict`** with `vet.statements`, `vet.cohesion` and `vet.placement`. Recommended, with the thresholds above as provisional.
-5. **`vet.risk`, the CRAP analogue,** which makes `vet` read `review.sum`. Recommended only under `--strict`, and only once the record of a real build can calibrate it.
+1. **`vet.unlinked_mention`,** as a note with a one-line summary in every run, to become a warning once its noise is low. Recommended; the alternative is a warning now, accepting about a third noise.
+2. **`vet.hub` replaces `vet.reach`:** Definitions, Root included, Kinds left out, above a fifth of the spec and at least 10. Recommended.
+3. **Martin's abstractness and distance:** A and D in `list --deps`, `vet.zone_of_uselessness` as a warning, `vet.zone_of_pain` as a note. Recommended.
+4. **Notes, shown with `--strict` and never changing the exit code,** for `vet.statements` and `vet.placement`, with the thresholds above as provisional. Recommended.
+5. **`vet.risk`, the CRAP analogue,** which makes `vet` read `review.sum`. Recommended as a note, and only once the record of a real build can calibrate it.
 6. **`std/Value`** in a new version of `std`, with one sentence in `std/Concept`. Recommended.
 
 Once decided, the build changes `internal/analysis`, its tests, `list --deps`, and the warning table of [the model language guide](../guides/model-language.md#vet-warnings); a new `std` Kind also changes `internal/libraries/std` and the Library's version. This page then becomes the plan's record, or goes.
