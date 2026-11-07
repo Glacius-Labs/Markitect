@@ -25,7 +25,8 @@ func def(kind, title, body string) string {
 }
 
 // library is the fixture project: Root with a Rule, members with a sub-Package
-// loans, and catalog, with every file accounted for.
+// loans, and catalog, with every file accounted for. loan links member, and the
+// anchor links the Packages.
 func library() map[string]string {
 	files, _ := libraries.Files("std")
 	std := model.LibrarySource{Name: "std", Version: libraries.Version}

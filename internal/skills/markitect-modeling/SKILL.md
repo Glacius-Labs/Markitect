@@ -24,7 +24,7 @@ The owner accepts every model change. You propose; the owner reads the Markdown 
 [ ] 2 Packages and dependency directions agreed with the owner
 [ ] 3 Each statement mapped to a planned Definition (none left over, none invented)
 [ ] 4 Definitions written; markitect check passes
-[ ] 5 markitect lint, refs, graph, impact read; warnings fixed or justified
+[ ] 5 markitect lint, refs, graph, status read; warnings fixed or justified
 [ ] 6 Diff handed to the owner
 ```
 
@@ -34,7 +34,7 @@ Use the tools while you work, not only at the end:
 - `markitect refs TARGET` before you rename, move or delete a Definition: it shows who links to it and which files realize it.
 - `markitect graph` when you add a link between Packages: it shows the new edge and the links behind it.
 - `markitect lint` at the end: coupling, size, unused Definitions, reach. Fix each warning or give one line why it stays.
-- `markitect impact` on your change: it shows the Definitions, files and Managers the change reaches since the newest certificate. Give the owner that list; it is what the builder will work on.
+- `markitect status` on your change: it lists the Definitions the change puts back on the list to verify, with what changed and where to look. Give the owner that list; it is what the builder will work on.
 - After a manifest or Library change run `markitect lock` and include the new `lock.yaml` in the diff.
 
 ## Where to put a Definition
@@ -104,4 +104,4 @@ Every other code is listed in `reference.md`. A cycle or unresolved link usually
 
 ## Done
 
-Report to the owner: the diff; the output of `check` (ok line) and of `lint` (warnings fixed or justified); the result of `impact`, so the owner sees what the change makes the agents do; and any point the owner chose to leave open. Deleting or renaming a Definition leaves registry entries that name it. That is stale realization, not an error: `check` passes, `lint` warns, and the next `/markitect-apply` cleans it up. Say so in the report; do not edit the registry pages in a model change (each Package's Manager maintains its page; only an extraction writes them).
+Report to the owner: the diff; the output of `check` (ok line) and of `lint` (warnings fixed or justified); the list `status` prints, so the owner sees what the change makes the agents do; and any point the owner chose to leave open. Deleting or renaming a Definition leaves registry entries that name it. That is stale realization, not an error: `check` passes, `lint` warns, and the next `/markitect-build` cleans it up. Say so in the report; do not edit the registry pages in a model change (each Package's Manager maintains its page; only an extraction writes them).

@@ -15,8 +15,8 @@ import (
 // ErrBusy says another process holds a lock.
 var ErrBusy = errors.New("busy")
 
-// lockWait bounds how long a change of the work waits for another.
-const lockWait = 10 * time.Second
+// lockWait bounds how long mark waits for another to write the record.
+const lockWait = time.Minute
 
 // lockLifetime is the longest a lock can be real: a shell call is bounded by two
 // hours, so an older one names a process ID that has been used again.

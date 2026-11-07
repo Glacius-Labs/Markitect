@@ -27,9 +27,9 @@ type File struct {
 // instruction file of a project and the personal skill all print it.
 const About = `A Markitect project has one spec: the Markdown files in .markitect/model/. The
 spec is the authority over the code, tests and documentation: where they differ,
-the spec is right. People model the spec, and the /markitect-apply skill has an
-agent build it in the project's folder, a fresh reviewer check it, and markitect
-gate certify it.
+the spec is right. People model the spec, and the /markitect-build skill has an
+agent build it in the project's folder and a fresh reviewer verify each
+Definition; markitect status says what is left to verify.
 `
 
 // PersonalName is the personal skill's folder name below a user's skills folder.

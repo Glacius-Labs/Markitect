@@ -68,8 +68,8 @@ func Lint(p *project.Project) model.Diagnostics {
 	return ds.Sorted()
 }
 
-// reachOf returns the Managers that would get a checklist item or a reached
-// file if Definition id alone changed, as ComputeImpact would find them. The
+// reachOf returns the Packages that would get a checklist item or a reached
+// file if Definition id alone changed, as concept 4.0's checklist found them. The
 // parents that only integrate are not counted.
 func reachOf(p *project.Project, id string) map[string]bool {
 	m := p.Model

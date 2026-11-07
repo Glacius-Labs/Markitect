@@ -79,23 +79,35 @@ func TestPluginHasTheVersionOfTheSource(t *testing.T) {
 }
 
 // The hooks file is plain JSON of a fixed shape, and its hooks name the launcher:
-// one at the start of a session, and one before each command the guard covers.
+// one at the start of a session, one before shell commands and one before every
+// tool that writes a file, as init writes them into a project's settings. The
+// plugin's hooks filter in their own shell, without regard to case, rather than
+// with Claude Code's rule, so that markitect.exe mark reaches the guard too.
 func TestPluginHooksRunTheLauncher(t *testing.T) {
 	var h struct {
 		Hooks map[string][]struct {
-			Hooks []struct{ If, Command string }
+			Matcher string
+			Hooks   []struct{ If, Command string }
 		}
 	}
 	readJSON(t, pluginDir+"/hooks/hooks.json", &h)
-	want := map[string][]string{"SessionStart": {""}, "PreToolUse": run.GuardedCommands}
-	for event, rules := range want {
-		groups := h.Hooks[event]
-		if len(groups) != 1 || len(groups[0].Hooks) != len(rules) {
-			t.Fatalf("%s: %+v, want one group of %d", event, groups, len(rules))
+	type group struct{ matcher, rule string }
+	want := map[string][]group{
+		"SessionStart": {{"startup|resume", ""}},
+		"PreToolUse":   {{"Bash", ""}, {run.EditTools, ""}},
+	}
+	for event, groups := range want {
+		got := h.Hooks[event]
+		if len(got) != len(groups) {
+			t.Fatalf("%s: %+v, want %d groups", event, got, len(groups))
 		}
-		for i, hook := range groups[0].Hooks {
-			if hook.If != rules[i] {
-				t.Errorf("%s hook %d runs before %q, want %q", event, i, hook.If, rules[i])
+		for i, g := range groups {
+			if got[i].Matcher != g.matcher || len(got[i].Hooks) != 1 {
+				t.Fatalf("%s group %d: %+v, want one hook before %s", event, i, got[i], g.matcher)
+			}
+			hook := got[i].Hooks[0]
+			if hook.If != g.rule {
+				t.Errorf("%s group %d runs before %q, want %q", event, i, hook.If, g.rule)
 			}
 			if !bytes.Contains([]byte(hook.Command), []byte("${CLAUDE_PLUGIN_ROOT}/bin/markitect")) {
 				t.Errorf("%s runs %q, not the launcher", event, hook.Command)

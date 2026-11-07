@@ -1,6 +1,6 @@
 # Plan: Markitect as a tool, with a verification cache
 
-**Status:** decided by the owner on 7 November 2026 ([DEC-099](register.md#dec-099-markitect-is-a-tool-with-a-verification-cache)), after a discussion of how they work with Markitect. An independent architect reviewed this page against the code. It is not built yet ([order of work](#order-of-work)).
+**Status:** decided by the owner on 7 November 2026 ([DEC-099](register.md#dec-099-markitect-is-a-tool-with-a-verification-cache)), after a discussion of how they work with Markitect. An independent architect reviewed this page against the code. Step 1 of the [order of work](#order-of-work) is built in 0.21.0 ([the record](../../internal/run/README.md)); step 2 is next.
 
 The owner decided:
 - Markitect supports agent work and does not steer it;
@@ -29,7 +29,7 @@ The tool helps at three points: describing, saying what to do, and showing that 
 
 Its fingerprint is the hash of these inputs.
 
-**What is to verify** is every Definition with a changed input or with no record. The tool computes that from the folder and the record alone, with no session and no start. These are the same Definitions today's checklist reaches ([concept 4.0 §3](v4-concept.md#how-impact-works)):
+**What is to verify** is every Definition with a changed input or with no record. The tool computes that from the folder and the record alone, with no session and no start. These are the same Definitions today's checklist reaches ([concept 4.0 §3](v4-concept.md#how-status-works)):
 
 - one that changed;
 - one that links to a changed Definition, or is of a changed Kind;
@@ -46,7 +46,7 @@ Three more kinds of item stay on the list until they are verified again:
 
 The record holds each input's hash, so `status` can say which inputs changed and where to look. It does not hold what a Definition said before; an agent that wants the old text reads it from Git.
 
-**Recording** binds a verdict to the state the reviewer read. `status` prints each item's fingerprint, and `review DEFINITION VERDICT --at FINGERPRINT` refuses if the inputs have changed since. That catches a builder editing a file beside the reviewer, or the reviewer's own test run changing one. Go does the same: it does not cache a result whose inputs changed while the test ran. The fingerprint `status` prints covers every input but the evidence, which the reviewer chooses later. The evidence must exist in the folder, and its files are hashed when the verdict is recorded.
+**Recording** binds a verdict to the state the reviewer read. `status` prints each item as `DEFINITION@FINGERPRINT`, and `mark DEFINITION@FINGERPRINT VERDICT` refuses if the inputs have changed since. That catches a builder editing a file beside the reviewer, or the reviewer's own test run changing one. Go does the same: it does not cache a result whose inputs changed while the test ran. The fingerprint `status` prints covers every input but the evidence, which the reviewer chooses later. The evidence must exist in the folder, and its files are hashed when the verdict is recorded.
 
 **Done** is an empty list, whatever happened in between. A file edited by hand, a commit made around the agents, or a change on a merged branch alters the inputs it touches, and those Definitions are on the list again.
 
@@ -55,7 +55,7 @@ The record holds each input's hash, so `status` can say which inputs changed and
 `.markitect/review.sum` is committed with the project, like `go.sum`, and it joins the fixed layout of `.markitect/`. It holds one line per Definition, sorted, each line a JSON object:
 
 ```text
-{"definition":"fees/waiver","verdict":"ok","inputs":{"self":"sha256:…","link:fees/fee":"sha256:…","file:src/fees.go":"sha256:…","evidence:tests/fees_test.go":"sha256:…"},"evidence":["src/fees.go:40","tests/fees_test.go:12 (TestWaiver)"]}
+{"definition":"fees/waiver","verdict":"ok","inputs":{"self":"sha256:…","link:fees/fee":"sha256:…","file:src/fees.go":"sha256:…","evidence:tests/fees_test.go":"sha256:…"},"evidence":["src/fees.go:40","tests/fees_test.go:12"]}
 {"definition":"members/limit","verdict":"fail","inputs":{…},"evidence":["src/loans.go:70"],"why":"allows a sixth loan; the Definition says five"}
 ```
 
@@ -70,9 +70,9 @@ The record holds each input's hash, so `status` can say which inputs changed and
 
 An explanation stays on one line, and hashes are full SHA-256.
 
-**How it is written.** `review` writes under the lock the tool already uses, as one whole file, so parallel reviewers, for example one per Package, do not lose lines.
+**How it is written.** `mark` writes under the lock the tool already uses, as one whole file, so parallel reviewers, for example one per Package, do not lose lines.
 
-**How it merges.** Git also conflicts on changes to neighbouring lines. So `init` writes `.markitect/.gitattributes`, which joins the fixed layout, with `merge=union` for this file: Git keeps both sides. Of two lines for one Definition, `status` takes the one whose inputs match the folder. If both match with different verdicts, `status` lists the Definition as a conflict to review. The next `review` writes the file clean.
+**How it merges.** Git also conflicts on changes to neighbouring lines. So `init` writes `.markitect/.gitattributes`, which joins the fixed layout, with `merge=union` for this file: Git keeps both sides. Of two lines for one Definition, `status` takes the one whose inputs match the folder. If both match with different verdicts, `status` lists the Definition as a conflict to review. The next `mark` writes the file clean.
 
 **What it replaces:** today's certificate, the stored answers, the work under way in the cache, the Result pages, the Findings pages and the builder's reports.
 
@@ -88,8 +88,9 @@ An explanation stays on one line, and hashes are full SHA-256.
 | `markitect list` | The Definitions and Packages; with `--deps`, what each depends on | `go list -deps` | `graph` |
 | `markitect doc DEFINITION` | A Definition with its text, what links to it, what it links to, the files that realize it, and its record | `go doc` | `refs` |
 | `markitect status` | What is to verify, with which inputs changed, where to look, and each item's fingerprint. It also notes whether the binary and the harness are current, which never changes its exit code. `--all` lists every Definition, to verify everything again, and so exits 1 whenever the spec has one | `git status`, `npm outdated` | `status`, `impact`, `checklist`, `gate --verify` |
-| `markitect review DEFINITION VERDICT --at FINGERPRINT [EVIDENCE…] [-- WHY]` | Records a verdict at the state the reviewer read | `go test` writing its cache | `answer`, `gate`, `gate --spec-problem` |
-| `markitect lock`, `update`, `install`, `version`, `licenses` | As today | `go mod`, `go version` | the same |
+| `markitect mark DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]… [-m "WHY"]` | Records a verdict at the state the reviewer read. Evidence is `path:line` or `path`; a test name in parentheses is dropped | `go test` writing its cache | `answer`, `gate`, `gate --spec-problem` |
+| `markitect tidy` | Brings the lock in line with the manifest. `check` only reads the lock and, on a mismatch, says to run `tidy`; `init` and `update` keep it current | `go mod tidy` | `lock` |
+| `markitect update`, `install`, `version`, `licenses` | As today | `go version` | the same |
 
 **What goes:**
 - `checklist` with all its flags;
@@ -107,10 +108,10 @@ An explanation stays on one line, and hashes are full SHA-256.
 
 | Skill | Agent | Tells the agents |
 |---|---|---|
-| `/markitect-build` | `markitect-builder`, which starts `markitect-reviewer` as its own subagent | Start the builder. It runs `markitect status`, makes the project match the spec for what it lists, then starts the reviewer, which verifies each item and records it with `markitect review`. It repeats until `status` is empty or an item needs the owner. Then the session commits the work with `.markitect/review.sum` |
+| `/markitect-build` | `markitect-builder`, which starts `markitect-reviewer` as its own subagent | Start the builder. It runs `markitect status`, makes the project match the spec for what it lists, then starts the reviewer, which verifies each item and records it with `markitect mark`. It repeats until `status` is empty or an item needs the owner. Then the session commits the work with `.markitect/review.sum` |
 | `/markitect-review` | `markitect-reviewer` | Verify what `status` lists, or everything with `--all`, and record each verdict. Change no code. Report what failed or is a `spec-problem` |
 
-`/markitect-build` replaces `/markitect-apply`, and `/markitect-review` replaces `/markitect-verify`. So each skill is named after the agent it starts, and `markitect review` is the reviewer's command.
+`/markitect-build` replaces `/markitect-apply`, and `/markitect-review` replaces `/markitect-verify`. So each skill is named after the agent it starts, and `markitect mark` is the reviewer's command.
 
 The skills inject no command, so a non-zero exit cannot abort them. The agents run the tool as they need it, and hold their task and the verdict words in their own files, which outlive compaction. Nothing counts rounds; the owner stops the work when it should stop.
 
@@ -118,7 +119,7 @@ The skills inject no command, so a non-zero exit cannot abort them. The agents r
 
 The hook stays, as a guard of the record and the spec, not of the process:
 
-- **Only the reviewer agent may run `markitect review`,** as only it may run `answer` today. So the agent that built does not verify its own work. In the trials, a separate reviewer caught 17 of 18 planted bugs ([checker test](../validation/k-checker-test-20261103.md)).
+- **Only the reviewer agent may run `markitect mark`,** as only it may run `answer` today. So the agent that built does not verify its own work. In the trials, a separate reviewer caught 17 of 18 planted bugs ([checker test](../validation/k-checker-test-20261103.md)).
 - **No subagent may write or edit under `.markitect/`, except the registry pages, which the builder keeps.** So a builder cannot weaken a Definition during the work or write lines into the record. The owner's own session, where the spec is modelled, is not a subagent and stays free. The builder may start only the reviewer (`Agent(markitect-reviewer)`), so it cannot get past the rule through a general-purpose helper.
 
 The hook reads tool calls, so a command hidden in a script, or one that names `markitect` by a path, still gets through. It guards against mistakes, as today, not against intent.
@@ -133,7 +134,7 @@ The hook reads tool calls, so a command hidden in a script, or one that names `m
 
 | Today | With the cache |
 |---|---|
-| Every reached Definition is reviewed against the files as they are | Kept. A change of any input puts it back on the list, and `--at` binds the verdict to what the reviewer read |
+| Every reached Definition is reviewed against the files as they are | Kept. A change of any input puts it back on the list, and the fingerprint `mark` takes binds the verdict to what the reviewer read |
 | A changed test that served as evidence voids the answer | Kept. The evidence files are inputs |
 | A changed file that realizes a Definition is reviewed | Kept |
 | A changed file the ignore file lists is refused (`gate`, row 4) | **Lost.** Ignored files are not tracked |
@@ -158,22 +159,30 @@ What it gains:
 Decided by the owner on 7 November 2026 ([DEC-099](register.md#dec-099-markitect-is-a-tool-with-a-verification-cache)):
 
 1. **The verification cache replaces the certificate, the work state, `gate`, `answer` and the reports.**
-2. **The inputs** are the Definition's text, its Kind and the Definitions it links to (a Library one by its digest), its registry rows with their files, and the evidence files. `review --at` binds a verdict to what was read.
+2. **The inputs** are the Definition's text, its Kind and the Definitions it links to (a Library one by its digest), its registry rows with their files, and the evidence files. `mark DEFINITION@FINGERPRINT` binds a verdict to what was read.
 3. **The record** is `.markitect/review.sum`: one sorted JSON line per Definition with the verdict, the inputs' hashes, the evidence and the reason. It merges with `merge=union`.
 4. **The hook** lets only the reviewer record, and lets no subagent write under `.markitect/` except the registry pages.
-5. **The names:** `check`, `vet`, `list`, `doc`, `status` and `review`; the verdicts `ok`, `fail`, `skip` and `spec-problem`; the skills `/markitect-build` and `/markitect-review`.
+5. **The names:** `check`, `vet`, `list`, `doc`, `status`, `mark` and `tidy` ([refined below](#refined-after-the-plan-was-merged)); the verdicts `ok`, `fail`, `skip` and `spec-problem`; the skills `/markitect-build` and `/markitect-review`.
 6. **Output and exit codes as Go's tools have them**, with `vet` exiting 1 only with `--strict`.
 7. **Migration.** `update` writes the record from the newest certificate. It computes each Definition's inputs from the spec and file hashes that the certificate holds, and records every Definition as `ok` at that state, with the certificate's pointers where it has them. A `not shown` answer becomes `skip`. For one release, `checklist`, `answer` and `gate` remain as stubs that say to run `markitect update`, so an old project's skill does not fail silently.
+
+### Refined after the plan was merged
+
+The owner refined three details on 7 November 2026, after this page was merged:
+
+8. **The recording command is `mark`, not `review`:** `markitect mark DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]… [-m "WHY"]`, as in `markitect mark members/limit@3f9a1c ok -e src/loans.go:42 -e tests/loans_test.go:88` or `markitect mark loans/renewal@81be07 fail -e src/renew.go:30 -m "allows a fourth renewal; the Definition says three"`. `status` prints each item as `DEFINITION@FINGERPRINT`, so the reviewer can copy it. Evidence is `path:line` or `path`; a test name in parentheses is dropped. The hook lets only `markitect-reviewer` run `markitect mark`. The skill `/markitect-review` and the agent `markitect-reviewer` keep their names.
+9. **The commands stay flat,** with no groups.
+10. **`markitect lock` becomes `markitect tidy`,** like `go mod tidy`: it brings the lock in line with the manifest. `check` only reads the lock and, on a mismatch, says to run `markitect tidy`; `init` and `update` keep the lock current. It is built with the other names in step 2.
 
 Concept 4.0 is revised in the same change as the code, since its §3, §5 to §9 and §12 describe the work and `gate`. The project workflow, the model language, the README and [the work](../../internal/run/README.md) change with it.
 
 ## Order of work
 
 1. **Build the cache.**
-   - Build the inputs, the record, `status`, `review --at`, the hook's two rules and the migration.
+   - Build the inputs, the record, `status`, `mark`, the hook's two rules and the migration.
    - Remove `gate`, `answer`, `checklist`, `impact`, the work state, certificates and Result pages.
    - Rewrite the skills and agents as prompts under their new names, and add the stubs.
 
    One PR and a release, since the harness and the binary change together.
-2. **Output and the other names.** The JSON envelope, the diagnostics, the exit codes, `vet`, `list` and `doc`. One PR.
+2. **Output and the other names.** The JSON envelope, the diagnostics, the exit codes, `vet`, `list`, `doc` and `tidy`. One PR.
 3. **Try it** on a small project with planted defects, under a bounded dispatch. Include a weakened test that served as evidence, and a builder's edit of the spec. The Makerspace of step 3 can be checked out from [`b8fd2c94`](https://github.com/Glacius-Labs/Markitect/tree/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/evaluation-tasks).

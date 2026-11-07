@@ -1,6 +1,6 @@
 // Package bootstrap constructs the command line with its adapters: the project
-// folder on disk, the work over it with its state in the user's cache folder, and
-// the releases update installs. Nothing here uses Git (DEC-097).
+// folder on disk, the record over it with its lock in the user's cache folder,
+// and the releases update installs. Nothing here uses Git (DEC-097).
 package bootstrap
 
 import (
@@ -20,12 +20,12 @@ import (
 
 // Run runs the markitect command line and returns its exit code.
 func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
-	return cli.CLI{Folders: folders{}, Work: work(), Stdin: os.Stdin, Stdout: stdout, Stderr: stderr, PathWarning: ownPathWarning, Releases: upgrade.New()}.Run(ctx, args)
+	return cli.CLI{Folders: folders{}, Record: record(), Stdin: os.Stdin, Stdout: stdout, Stderr: stderr, PathWarning: ownPathWarning, Releases: upgrade.New()}.Run(ctx, args)
 }
 
-// work is the engine of the work over a project folder, with its state in the
-// user's cache folder; without one, the work says so when it needs it.
-func work() *runs.Engine {
+// record is the engine of status and review over a project folder, with the
+// lock of its record in the user's cache folder; without one, review says so.
+func record() *runs.Engine {
 	e := &runs.Engine{Folder: folder.Disk{}}
 	if dir, err := os.UserCacheDir(); err == nil {
 		e.Cache = filepath.Join(dir, "markitect")
@@ -64,7 +64,7 @@ func under(path, dir string) bool {
 }
 
 // pathWarning says what is wrong when a shell does not find this binary under the
-// name markitect: the apply and verify skills and the agents call it by that name.
+// name markitect: the build and review skills and the agents call it by that name.
 // It is empty when the PATH leads to this very binary.
 func pathWarning(look func(string) (string, error), executable func() (string, error)) string {
 	exe, err := executable()
@@ -74,7 +74,7 @@ func pathWarning(look func(string) (string, error), executable func() (string, e
 	dir := filepath.Dir(exe)
 	found, err := look("markitect")
 	if err != nil {
-		return fmt.Sprintf("warning: markitect is not on your PATH, but the apply and verify skills and the agents call it by that name; add %s to the PATH", dir)
+		return fmt.Sprintf("warning: markitect is not on your PATH, but the build and review skills and the agents call it by that name; add %s to the PATH", dir)
 	}
 	onPath, errPath := os.Stat(found)
 	own, errOwn := os.Stat(exe)

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/libraries"
@@ -89,8 +90,11 @@ func (c CLI) init(_ context.Context, args []string) (int, error) {
 	if err := installHarness(ws); err != nil {
 		return Misused, err
 	}
-	fmt.Fprintln(c.Stdout, "installed the harness: the apply and verify skills, and the builder and reviewer agents")
+	fmt.Fprintln(c.Stdout, "installed the harness: the build and review skills, and the builder and reviewer agents")
 	if err := c.ensureGuard(ws); err != nil {
+		return Misused, err
+	}
+	if err := installAttributes(ws); err != nil {
 		return Misused, err
 	}
 	fmt.Fprintln(c.Stdout, "Markitect uses no Git: commit what init wrote when you like.")
@@ -117,7 +121,7 @@ var personalSkillTips = map[fileState]string{
 // other file of it the binary no longer ships.
 func installHarness(ws Workspace) error {
 	want := map[string][]byte{}
-	for _, f := range skills.Harness() {
+	for _, f := range harness(ws) {
 		want[f.Path] = f.Data
 	}
 	for _, dir := range []string{".claude/agents", ".claude/skills"} {
@@ -143,6 +147,38 @@ func installHarness(ws Workspace) error {
 	return nil
 }
 
+// harness is the harness as a project gets it: its agents on the model the
+// manifest names, if it names one, in place of the one their files name.
+func harness(ws Workspace) []skills.File {
+	files := skills.Harness()
+	name := manifestModel(ws)
+	if name == "" {
+		return files
+	}
+	for i, f := range files {
+		if strings.HasPrefix(f.Path, ".claude/agents/") {
+			files[i].Data = bytes.Replace(f.Data, []byte("\nmodel: sonnet\n"), []byte("\nmodel: "+name+"\n"), 1)
+		}
+	}
+	return files
+}
+
+// modelName is what a model name may look like, such as opus or opus[1m].
+var modelName = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._\[\]-]*$`)
+
+// manifestModel is the model the project's manifest names for its agents, or "".
+func manifestModel(ws Workspace) string {
+	data, err := ws.Read(project.ManifestFile)
+	if err != nil {
+		return ""
+	}
+	m, _ := model.ParseManifest(project.ManifestFile, data)
+	if !modelName.MatchString(m.Model) {
+		return ""
+	}
+	return m.Model
+}
+
 // shippedSkill says a file belongs to a skill installSkills looks after.
 func shippedSkill(file string) bool {
 	for _, f := range skills.Files() {
@@ -153,15 +189,21 @@ func shippedSkill(file string) bool {
 	return false
 }
 
-// guardHook lets only the reviewer store answers, so that an agent cannot mark
-// its own work as done, and only the owner's session begin the work. It runs only
-// before the commands it guards, one handler each.
-func guardHook() map[string]any {
-	var handlers []any
-	for _, rule := range run.GuardedCommands {
-		handlers = append(handlers, map[string]any{"type": "command", "if": rule, "command": run.HookCommand})
+// installAttributes has Git merge the record by keeping the lines of both sides
+// (DEC-099): status takes the line that matches the folder.
+func installAttributes(ws Workspace) error {
+	return ws.Write(project.AttributesFile, []byte(project.Attributes))
+}
+
+// guardHooks let only the reviewer record verdicts, so that the agent that built
+// does not verify its own work, and keep every subagent out of Markitect's folder
+// except the registry pages. The first runs only before a shell command that
+// records; the second before every tool that writes a file.
+func guardHooks() []any {
+	return []any{
+		map[string]any{"matcher": "Bash", "hooks": []any{map[string]any{"type": "command", "if": run.MarkRule, "command": run.HookCommand}}},
+		map[string]any{"matcher": run.EditTools, "hooks": []any{map[string]any{"type": "command", "command": run.HookCommand}}},
 	}
-	return map[string]any{"matcher": "Bash", "hooks": handlers}
 }
 
 // ownGuard says whether a PreToolUse entry is one an earlier markitect wrote: a
@@ -187,11 +229,11 @@ func ownGuard(entry any) bool {
 // ensureGuard adds the hook to the project's settings, in place of one an
 // earlier markitect wrote, and keeps what else they hold. Settings it cannot
 // read, or whose hooks have an unexpected shape, it leaves as they are and says
-// so; the work then refuses to begin until the hook is there.
+// so, and every command of the spec then notes that the harness is out of date.
 func (c CLI) ensureGuard(ws Workspace) error {
 	settings := map[string]any{}
 	lacks := func(why string) error {
-		fmt.Fprintf(c.Stdout, "left %s as it is, %s; add the hook that lets only the reviewer answer by hand: %q before Bash, for %s\n", run.SettingsFile, why, run.HookCommand, strings.Join(run.GuardedCommands, " and "))
+		fmt.Fprintf(c.Stdout, "left %s as it is, %s; add the hooks by hand: %q before Bash for %s, and before %s\n", run.SettingsFile, why, run.HookCommand, run.MarkRule, run.EditTools)
 		return nil
 	}
 	if ws.Exists(run.SettingsFile) {
@@ -232,7 +274,7 @@ func (c CLI) ensureGuard(ws Workspace) error {
 			kept = append(kept, entry)
 		}
 	}
-	hooks["PreToolUse"] = append(kept, guardHook())
+	hooks["PreToolUse"] = append(kept, guardHooks()...)
 	settings["hooks"] = hooks
 	var b bytes.Buffer
 	enc := json.NewEncoder(&b)
@@ -244,7 +286,7 @@ func (c CLI) ensureGuard(ws Workspace) error {
 	if err := ws.Write(run.SettingsFile, b.Bytes()); err != nil {
 		return err
 	}
-	fmt.Fprintf(c.Stdout, "added the hook that lets only the reviewer answer and only your session begin the work to %s\n", run.SettingsFile)
+	fmt.Fprintf(c.Stdout, "added the hooks that let only the reviewer record verdicts and keep subagents out of %s to %s\n", project.Dir, run.SettingsFile)
 	return nil
 }
 
@@ -350,6 +392,7 @@ func (c CLI) writeLock(ws Workspace) (int, error) {
 // manifestTemplate is a new project's manifest.
 const manifestTemplate = `# The Libraries this project uses, with their versions. Run markitect lock after a change.
 # model, optional, names the model the builder and reviewer agents use; without it they use sonnet.
+# markitect update writes it into their agent files.
 libraries:
   std: %s
 `
@@ -363,7 +406,7 @@ const instructionsFile = "AGENTS.md"
 const instructionsTemplate = "# %s\n\n" + skills.About + "\n" +
 	"A change to what the project does starts in the spec, written with the `markitect-modeling` skill and accepted by the owner. A new project starts with the `markitect-start` skill, and a repository that already has code with `markitect-extract`.\n\n" +
 	"`markitect` is a command on the path, and `markitect help` lists what it does.\n\n" +
-	"A builder or reviewer of Markitect work takes its task from markitect, and the spec stays as it is.\n"
+	"A builder or reviewer of Markitect work takes what to do from `markitect status`, and the spec stays as it is.\n"
 
 // nextSteps ends the init of a new project. The session that ran init started
 // before the skills existed, and Claude Code does not watch a skills folder that

@@ -32,9 +32,10 @@ var smokeModel = map[string]string{
 }
 
 // modelCommands drives the packaged CLI over a small project in a plain folder,
-// with no Git: init, check, lock, refs, graph and lint; the work (checklist,
-// answer and gate) that certifies the folder; impact from that certificate; and
-// the refusal of a model that does not compile. It starts no agent.
+// with no Git: init, check, lock, refs, graph and lint; status and mark that
+// verify every Definition; status after a change of the spec; the retired
+// commands of the work; and the refusal of a model that does not compile. It
+// starts no agent.
 func (s *smoke) modelCommands() error {
 	repo := filepath.Join(s.work, "model-commands")
 	if err := os.MkdirAll(repo, 0o755); err != nil {
@@ -93,57 +94,53 @@ func (s *smoke) modelCommands() error {
 	} else if err := requireContains(out, "# Lint"); err != nil {
 		return err
 	}
-	cert, err := s.certify(repo, markitect)
-	if err != nil {
+	if out, err := markitect("check", "--json"); err != nil {
+		return err
+	} else {
+		var checked struct{ OK bool }
+		if err := decode(out, &checked); err != nil {
+			return err
+		}
+		if !checked.OK {
+			return fmt.Errorf("check --json is not ok: %s", tail(out))
+		}
+	}
+	if err := verifyAll(markitect, 4); err != nil {
 		return err
 	}
+	if !strings.Contains(readFile(repo, ".markitect/review.sum"), `{"definition":"catalog/copy","verdict":"ok","inputs":{`) {
+		return fmt.Errorf("the record is not as expected:\n%s", tail(readFile(repo, ".markitect/review.sum")))
+	}
 
-	// M2's change: the loan limit drops from five to three. Every Manager
-	// below Root inherits the changed Rule.
+	// M2's change: the loan limit drops from five to three. Only the Rule itself
+	// is to verify again: nothing links to it, and no file changed.
 	limit := filepath.Join(repo, ".markitect", "model", "loan-limit.md")
 	if err := os.WriteFile(limit, []byte(strings.Replace(smokeModel[".markitect/model/loan-limit.md"], "`5`", "`3`", 1)), 0o644); err != nil {
 		return err
 	}
-	if out, err := markitect("gate", "--verify"); err == nil || !strings.Contains(out, "loan-limit.md") {
-		return fmt.Errorf("gate --verify accepted a changed spec: %s", tail(out))
+	if out, err := markitect("status"); err == nil || !strings.Contains(out, "To verify (1 of 4 Definitions)") || !strings.Contains(out, "\nloan-limit@") || !strings.Contains(out, "changed: self") {
+		return fmt.Errorf("status after the change of the loan limit: %v\n%s", err, tail(out))
 	}
-	out, err = markitect("impact", "--json")
-	if err != nil {
+	if err := verifyAll(markitect, 1); err != nil {
 		return err
-	}
-	var impact struct {
-		Base       string
-		Packages   []string
-		Checklists []struct {
-			Package   string
-			Inherited []struct{ Definition string }
-		}
-	}
-	if err := decode(out, &impact); err != nil {
-		return err
-	}
-	if impact.Base != cert {
-		return fmt.Errorf("impact starts from %q, not the certificate %q", impact.Base, cert)
-	}
-	if strings.Join(impact.Packages, ",") != ",catalog,members" {
-		return fmt.Errorf("impact of the loan limit reaches %v", impact.Packages)
-	}
-	for _, c := range impact.Checklists[1:] {
-		if len(c.Inherited) != 1 || c.Inherited[0].Definition != "loan-limit" {
-			return fmt.Errorf("checklist of %s lacks the inherited loan limit: %s", c.Package, tail(out))
-		}
 	}
 
+	// For one release, the retired commands of the work say to run update.
+	for _, retired := range []string{"checklist", "gate"} {
+		if out, err := markitect(retired); err != nil || !strings.Contains(out, "run markitect update") {
+			return fmt.Errorf("the retired %s does not point to update: %v\n%s", retired, err, tail(out))
+		}
+	}
 	if err := os.WriteFile(filepath.Join(repo, ".markitect", "model", "broken.md"), []byte("no front matter\n"), 0o644); err != nil {
 		return err
 	}
 	if out, err := markitect("check"); err == nil || !strings.Contains(out, "definition.front_matter") {
 		return fmt.Errorf("check accepted a Definition without front matter: %s", tail(out))
 	}
-	if _, err := markitect("impact"); err == nil {
-		return fmt.Errorf("impact ran over a model that does not compile")
+	if out, err := markitect("status"); err == nil || !strings.Contains(out, "no list until it compiles") {
+		return fmt.Errorf("status listed over a model that does not compile: %s", tail(out))
 	}
-	for _, retired := range []string{"apply", "verify", "submit", "stop"} {
+	for _, retired := range []string{"apply", "verify", "submit", "stop", "impact"} {
 		if _, err := markitect(retired); err == nil {
 			return fmt.Errorf("the retired %s command was accepted", retired)
 		}
@@ -154,48 +151,40 @@ func (s *smoke) modelCommands() error {
 	return nil
 }
 
-// certify passes the work of the folder through gate, every item answered ok
-// with a pointer to README.md, as a reviewer would, and returns the certificate
-// gate wrote.
-func (s *smoke) certify(repo string, markitect func(...string) (string, error)) (string, error) {
-	if _, err := markitect("checklist"); err != nil {
-		return "", err
+// verifyAll records every item status lists ok, with the last file to look at
+// as evidence, as a reviewer would, and checks that status then lists nothing.
+func verifyAll(markitect func(...string) (string, error), want int) error {
+	list, err := markitect("status")
+	if err == nil {
+		return fmt.Errorf("status listed nothing to verify:\n%s", tail(list))
 	}
-	list, err := markitect("checklist", "--review")
-	if err != nil {
-		return "", err
-	}
-	var lines []string
+	recorded := 0
+	item := ""
 	for _, line := range strings.Split(list, "\n") {
-		if rest, ok := strings.CutPrefix(line, "[ ] "); ok {
-			if i := strings.Index(rest, `: "`); i >= 0 {
-				rest = rest[:i]
+		if !strings.HasPrefix(line, " ") && strings.Contains(line, "@") {
+			item = line
+			continue
+		}
+		if look, ok := strings.CutPrefix(line, "  look at: "); ok && item != "" {
+			files := strings.Split(look, ", ")
+			if _, err := markitect("mark", item, "ok", "-e", files[len(files)-1]+":1"); err != nil {
+				return err
 			}
-			lines = append(lines, rest+": ok README.md:1")
+			item = ""
+			recorded++
 		}
 	}
-	if len(lines) == 0 {
-		return "", fmt.Errorf("the review lists no item:\n%s", tail(list))
+	if recorded != want {
+		return fmt.Errorf("recorded %d verdicts, want %d:\n%s", recorded, want, tail(list))
 	}
-	// Outside the project folder, which accounts for every file of its own.
-	answers := filepath.Join(s.work, "answers.txt")
-	if err := os.WriteFile(answers, []byte(strings.Join(lines, "\n")+"\n"), 0o644); err != nil {
-		return "", err
+	if out, err := markitect("status"); err != nil || !strings.Contains(out, "Nothing to verify") {
+		return fmt.Errorf("status after every verdict: %v\n%s", err, tail(out))
 	}
-	if _, err := markitect("answer", answers); err != nil {
-		return "", err
-	}
-	passed, err := markitect("gate")
-	if err != nil {
-		return "", err
-	}
-	for _, f := range strings.Fields(passed) {
-		if f = strings.TrimSuffix(f, ","); strings.HasSuffix(f, ".json") {
-			if _, err := markitect("gate", "--verify"); err != nil {
-				return "", err
-			}
-			return f, nil
-		}
-	}
-	return "", fmt.Errorf("gate named no certificate:\n%s", tail(passed))
+	return nil
+}
+
+// readFile reads a file of the project, or "" when it cannot.
+func readFile(repo, file string) string {
+	data, _ := os.ReadFile(filepath.Join(repo, filepath.FromSlash(file)))
+	return string(data)
 }

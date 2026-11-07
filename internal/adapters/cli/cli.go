@@ -1,7 +1,7 @@
 // Package cli is the markitect command line: install, update, init, check, lock,
-// refs, graph, impact and lint; checklist, answer, gate and status, the work that
-// whoever drives the agents calls; the hook; version and licenses. None of them
-// starts an agent or uses Git (DEC-096, DEC-097).
+// refs, graph and lint; status and mark over the record of what was verified
+// (DEC-099); the hook; version and licenses. None of them starts an agent, steers
+// the work or uses Git (DEC-096, DEC-097).
 package cli
 
 import (
@@ -11,7 +11,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/analysis"
@@ -47,33 +46,32 @@ const (
 	Failed   = 1 // the command ran and found errors
 	Misused  = 2 // the command could not run
 	usageTop = skills.About + `
-No command starts an agent or uses Git: the /markitect-apply and /markitect-verify
+No command starts an agent or uses Git: the /markitect-build and /markitect-review
 skills have your Claude Code session start the agents, and the session commits.
 
 Usage:
   markitect install                               tell Claude Code what Markitect is, in every folder
   markitect update [--repo DIR] [--check] [--files] [--force]
-                                                  install the newest release, then refresh the personal skill and the project's skills, agents and lock
+                                                  install the newest release, then refresh the personal skill and the
+                                                  project's skills, agents, hook and lock
   markitect init   [--repo DIR] [--name TITLE]   make a folder a Markitect project and install the harness
   markitect check  [--repo DIR] [--json] [--spec] compile the project; --spec looks only at the spec
   markitect lock   [--repo DIR]                   write the lock from the manifest
   markitect refs   [--repo DIR] [--json] TARGET   who links to a Definition or Package
   markitect graph  [--repo DIR] [--json]          the Package dependency graph
-  markitect impact [--repo DIR] [--json] [--base CERTIFICATE] [--full] [--findings FILE]
-                                                  what a change since the newest certificate reaches, with distance and reason
   markitect lint   [--repo DIR] [--json]          measure the spec like code: warnings only
-  markitect status [--repo DIR]                   how the work in the folder stands, and what differs from the newest certificate
+  markitect status [--repo DIR] [--all]           what is to verify: each Definition with a changed input or no record,
+                                                  with what changed, where to look and its fingerprint; --all lists
+                                                  every Definition, to verify everything again
+  markitect mark DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]... [-m "WHY"]
+                                                  record a verdict at the state status printed: ok, fail, skip or
+                                                  spec-problem; evidence is path:line or path; only the
+                                                  markitect-reviewer agent runs it
   markitect version [--repo DIR]                  which markitect this is, and whether the personal skill and the project match it
   markitect licenses
 
-The work, for whoever drives the agents:
-  markitect checklist [--base CERTIFICATE] [--full] [--findings FILE] [--review] [--start]
-                                                  the list of the change from the newest certificate to the folder;
-                                                  --start begins it and says which agent to start
-  markitect answer [FILE]                         store a reviewer's answers for the files as they are now
-  markitect gate   [--verify] [--findings] [--spec-problem WHY]
-                                                  check the work and say what is next; when it passes, write its certificate;
-                                                  --spec-problem: the builder reports a problem of the spec, which a reviewer confirms
+Exit codes: 0 when all is well, 1 when the command found something (an error, an
+item to verify, a refused verdict), 2 when it could not run.
 `
 )
 
@@ -92,9 +90,9 @@ type Releases interface {
 // CLI runs one command.
 type CLI struct {
 	Folders Folders
-	// Work is the engine of checklist, answer, gate and status. Nil means this
-	// build does no work.
-	Work   *run.Engine
+	// Record is the engine of status and mark. Nil means this build reads no
+	// record.
+	Record *run.Engine
 	Stdin  io.Reader
 	Stdout io.Writer
 	Stderr io.Writer
@@ -135,18 +133,14 @@ func (c CLI) Run(ctx context.Context, args []string) int {
 		code, err = c.refs(ctx, rest)
 	case "graph":
 		code, err = c.graph(ctx, rest)
-	case "impact":
-		code, err = c.impact(ctx, rest)
 	case "lint":
 		code, err = c.lint(ctx, rest)
-	case "checklist":
-		code, err = c.checklist(ctx, rest)
-	case "answer":
-		code, err = c.answer(ctx, rest)
-	case "gate":
-		code, err = c.gate(ctx, rest)
 	case "status":
 		code, err = c.status(ctx, rest)
+	case "mark":
+		code, err = c.mark(ctx, rest)
+	case "checklist", "answer", "gate":
+		fmt.Fprintf(c.Stdout, retired, cmd)
 	case "hook":
 		code, err = c.hook(ctx, rest)
 	case "version":
@@ -164,7 +158,7 @@ func (c CLI) Run(ctx context.Context, args []string) int {
 		return Misused
 	}
 	switch cmd {
-	case "check", "lock", "refs", "graph", "impact", "lint", "status":
+	case "check", "lock", "refs", "graph", "lint", "status":
 		c.staleNotice(rest)
 	}
 	return code
@@ -248,14 +242,14 @@ func (c CLI) check(ctx context.Context, args []string) (int, error) {
 			}
 		}
 		if len(realization) > 0 {
-			fmt.Fprintf(c.Stdout, "In the realization, so spec and code do not match yet; /markitect-apply settles these:\n")
+			fmt.Fprintf(c.Stdout, "In the realization, so spec and code do not match yet; /markitect-build settles these:\n")
 			for _, d := range realization {
 				fmt.Fprintln(c.Stdout, d.String())
 			}
 		}
 		switch {
 		case nothingBuilt:
-			fmt.Fprintf(c.Stdout, "ok: the spec compiles, with %d Definitions in %d Packages. Nothing is built yet, and /markitect-apply builds it.\n", len(p.Model.ModelDefinitions()), len(p.Model.Packages))
+			fmt.Fprintf(c.Stdout, "ok: the spec compiles, with %d Definitions in %d Packages. Nothing is built yet, and /markitect-build builds it.\n", len(p.Model.ModelDefinitions()), len(p.Model.Packages))
 		case total == 0:
 			fmt.Fprintf(c.Stdout, "ok: %d Definitions in %d Packages, %d files accounted\n", len(p.Model.ModelDefinitions()), len(p.Model.Packages), len(p.Registry.Owner))
 		default:
@@ -342,71 +336,5 @@ func (c CLI) lint(ctx context.Context, args []string) (int, error) {
 		return OK, c.printJSON(map[string]any{"warnings": warnings, "packages": g.Packages})
 	}
 	fmt.Fprint(c.Stdout, renderLint(warnings, g))
-	return OK, nil
-}
-
-func (c CLI) impact(_ context.Context, args []string) (int, error) {
-	var o options
-	var base, findings string
-	var full bool
-	fs := c.flags("impact", &o)
-	fs.StringVar(&base, "base", "", "the certificate gate wrote, its .json or .md, to compare the folder with (default: the newest one)")
-	fs.BoolVar(&full, "full", false, "every Definition is reached and every Manager works")
-	fs.StringVar(&findings, "findings", "", "a Findings page whose Findings become checklist items")
-	if err := fs.Parse(args); err != nil {
-		return Misused, err
-	}
-	if fs.NArg() != 0 {
-		return Misused, fmt.Errorf("takes no arguments")
-	}
-	ws, p, err := c.load(o)
-	if err != nil {
-		return Misused, err
-	}
-	if errs := p.SpecErrors(); len(errs) > 0 {
-		for _, d := range errs {
-			fmt.Fprintln(c.Stderr, d.String())
-		}
-		fmt.Fprintf(c.Stderr, "markitect impact: the spec has %d errors; impact needs a spec that compiles\n", len(errs))
-		return Failed, nil
-	}
-	name, cert, err := run.BaseCertificate(ws.Root(), base)
-	if err != nil {
-		return Misused, err
-	}
-	if cert == nil {
-		return Misused, fmt.Errorf("no certificate yet, so there is no base to compare with: gate writes one when work passes")
-	}
-	baseProject, err := cert.Project()
-	if err != nil {
-		return Misused, err
-	}
-	hashes, err := run.HashFiles(ws)
-	if err != nil {
-		return Misused, err
-	}
-	in := analysis.ImpactInput{Base: baseProject, Current: p, Changed: cert.Changed(hashes), Full: full}
-	if findings != "" {
-		data, err := os.ReadFile(findings)
-		if err != nil {
-			return Misused, err
-		}
-		list, errs := analysis.ParseFindings(findings, data)
-		if len(errs) > 0 {
-			for _, d := range errs {
-				fmt.Fprintln(c.Stderr, d.String())
-			}
-			return Failed, nil
-		}
-		in.Findings = list
-	}
-	im := analysis.ComputeImpact(in)
-	if o.json {
-		return OK, c.printJSON(struct {
-			Base string `json:"base"`
-			analysis.Impact
-		}{name, im})
-	}
-	fmt.Fprint(c.Stdout, renderImpact(name, im))
 	return OK, nil
 }

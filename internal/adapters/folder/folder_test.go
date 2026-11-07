@@ -141,12 +141,9 @@ func TestFolderLinks(t *testing.T) {
 	if err := os.Symlink("a.txt", filepath.Join(dir, "link")); err != nil {
 		t.Skipf("this system makes no symbolic link here: %v", err)
 	}
-	files, links, err := Disk{}.Open(dir)
+	files, err := Disk{}.Open(dir)
 	if err != nil {
 		t.Fatal(err)
-	}
-	if links["link"] != "a.txt" {
-		t.Fatalf("links %v", links)
 	}
 	if data, err := files.Read("link"); err != nil || string(data) != "a.txt" {
 		t.Fatalf("%q %v", data, err)

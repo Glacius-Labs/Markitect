@@ -55,8 +55,8 @@ var Table = Rules{
 		{Name: "assets", Title: "Built-in files", Meaning: "Files built into the binary: the standard Libraries, the skills and the harness of the work."},
 		{Name: "domain", Title: "Realization record", Meaning: "Registry pages, ownership and file accounting over a compiled model.", Imports: []string{"model"}},
 		{Name: "project", Title: "Project", Meaning: "Loads and checks a project's Markitect folder from the files of a project folder.", Imports: []string{"model", "assets", "domain"}},
-		{Name: "service", Title: "Analysis", Meaning: "Questions about a loaded project: references, graph, impact with checklists, and lint.", Imports: []string{"model", "assets", "domain", "project"}},
-		{Name: "run", Title: "The work", Meaning: "The work on a project folder, without Git: the checklist, the answers, gate, the certificate, the hook and the Result.", Imports: []string{"model", "assets", "domain", "project", "service"}},
+		{Name: "service", Title: "Analysis", Meaning: "Questions about a loaded project: references, graph and lint.", Imports: []string{"model", "assets", "domain", "project"}},
+		{Name: "run", Title: "The record", Meaning: "The record of what was verified, without Git: the inputs of each Definition, review.sum, status, mark, the hook and the migration from certificates.", Imports: []string{"model", "assets", "domain", "project"}},
 		{Name: "guardedwrite", Title: "Guarded write", Meaning: "Guarded working-tree writes for bundle installation, with the Git and path helpers they share with source snapshots."},
 		{Name: "build", Title: "Build data", Meaning: "Version identity and embedded license notices."},
 		{Name: "adapter", Title: "Adapters", Meaning: "Concrete project-folder, command-line and release adapters; no adapter imports another.", Imports: []string{"model", "assets", "domain", "project", "service", "run", "build"}},
@@ -73,7 +73,7 @@ var Table = Rules{
 		{"internal/skills", "assets", "docs/guides/model-language.md#commands"},
 		{"internal/realization", "domain", "docs/guides/model-language.md#the-realization-record"},
 		{"internal/project", "project", "docs/guides/model-language.md#the-projects-markitect-folder"},
-		{"internal/analysis", "service", "docs/guides/model-language.md#impact-and-checklists"},
+		{"internal/analysis", "service", "docs/guides/model-language.md#lint-warnings"},
 		{"internal/run", "run", "internal/run/README.md"},
 		{"internal/guardedwrite", "guardedwrite", "docs/architecture.md#distribution"},
 		{"internal/buildinfo", "build", "docs/architecture.md#distribution"},
@@ -92,7 +92,7 @@ var Table = Rules{
 	Exceptions: []Exception{
 		{From: "internal/tooling/release", To: "internal/tooling/architecture", Reason: "The packager takes its source roots from this table."},
 		{From: "internal/tooling/release", To: "internal/buildinfo", TestOnly: true, Reason: "Tests compare the packaged notices with the embedded ones."},
-		{From: "internal/run", To: "internal/adapters/folder", TestOnly: true, Reason: "The work is tested on real folders."},
+		{From: "internal/run", To: "internal/adapters/folder", TestOnly: true, Reason: "The record is tested on real folders."},
 	},
 }
 

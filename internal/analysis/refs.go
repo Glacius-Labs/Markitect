@@ -1,7 +1,6 @@
 // Package analysis answers questions about a loaded project without starting
-// agents: who links to a Definition, the Package dependency graph, what a
-// change reaches and each Manager's checklist, and the lint warnings that
-// measure the model like code.
+// agents: who links to a Definition, the Package dependency graph, and the lint
+// warnings that measure the model like code.
 //
 // The commands are described in docs/guides/model-language.md.
 package analysis

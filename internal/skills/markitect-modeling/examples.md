@@ -283,7 +283,7 @@ $ markitect check
 ok: 12 Definitions in 3 Packages, 10 files accounted
 ```
 
-`markitect lint` shows no warnings. `markitect impact --base HEAD` after changing the limit in `loan-limit.md` from `3` to `5` reaches `catalog/borrow-book`, `members/member` and `members/open-loan-count` through their links to it, and `internal/members/member.go` and `internal/catalog/loans.go` through the registry. Two Managers, `members` and `catalog`, work; Root reviews.
+`markitect lint` shows no warnings. After the limit in `loan-limit.md` changes from `3` to `5`, `markitect status` lists `loan-limit` and the Definitions that link to it, `catalog/borrow-book`, `members/member` and `members/open-loan-count`, each with the files the registry names for it, such as `internal/members/member.go` and `internal/catalog/loans.go`.
 
 ## Other errors you will meet
 

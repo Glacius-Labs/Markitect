@@ -1,6 +1,6 @@
 # Concept register
 
-**Accepted target, 7 November 2026:** [Concept 4.0](v4-concept.md) ([DEC-098](#dec-098-concept-40-is-the-target)): a tool that computes and checks, a driver that acts, and no Git in the tool ([DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](#dec-097-markitect-uses-no-git)). Main carries its build since 6 November 2026 ([DEC-094](#dec-094-main-carries-the-native-version-and-the-app-goes)), released as 0.20.0. Its tool is to become a verification cache that steers no work ([DEC-099](#dec-099-markitect-is-a-tool-with-a-verification-cache)), not yet built.
+**Accepted target, 7 November 2026:** [Concept 4.0](v4-concept.md) ([DEC-098](#dec-098-concept-40-is-the-target)): a tool that computes and checks, a driver that acts, and no Git in the tool ([DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](#dec-097-markitect-uses-no-git)). Main carries its build since 6 November 2026 ([DEC-094](#dec-094-main-carries-the-native-version-and-the-app-goes)), released as 0.20.0. Its tool became a verification cache that steers no work ([DEC-099](#dec-099-markitect-is-a-tool-with-a-verification-cache)), whose first step is built in 0.21.0.
 
 **Records:** [Concept 3.0](v3-concept.md) ([DEC-091](#dec-091-concept-30-is-the-target)) was the target from 4 to 7 November 2026; its rebuild is kept on the branch `archive/main-concept-3-20261106`. [Concept 2.0](v2-concept.md) ([DEC-086](#dec-086-concept-20-is-the-target)) is the record of the Manager tree.
 
@@ -8,7 +8,7 @@
 
 This register records Markitect's long-term vision, product-level decisions, clarifications, endorsed directions, promises, assumptions, concepts, future enhancements, ideas and open questions. Each entry has a status and an origin. "Owner" means Markitect's product owner. The [concept record guide](README.md) defines entry types, statuses and the rules for changing entries. The [vision](../vision.md) presents the thesis these entries support. Earlier collections from the Concepts and Ideas chats are preserved in the [sources](sources/README.md) and mapped [below](#imported-collections).
 
-**Current Apply reading:** the [project workflow](../guides/project-workflow.md#7-apply-and-verify) says how Apply and Verify run on Main, and [the work](../../internal/run/README.md) owns their rules. Historical guides and validation records retain their source and outcome, not implementation authority.
+**Current build and review reading:** the [project workflow](../guides/project-workflow.md#7-build-and-review) says how the build and review skills run on Main, and [the record](../../internal/run/README.md) owns their rules. Historical guides and validation records retain their source and outcome, not implementation authority.
 
 ## Index
 
@@ -117,7 +117,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts) | Decision | Markitect computes and checks; a driver acts | Decided by the owner, 6 November 2026; built, released as 0.20.0; amended by [DEC-099](#dec-099-markitect-is-a-tool-with-a-verification-cache) |
 | [DEC-097](#dec-097-markitect-uses-no-git) | Decision | Markitect uses no Git | Decided by the owner, 6 November 2026; built, released as 0.20.0 |
 | [DEC-098](#dec-098-concept-40-is-the-target) | Decision | Concept 4.0 is the target | Decided by the owner, 7 November 2026; amended by [DEC-099](#dec-099-markitect-is-a-tool-with-a-verification-cache) |
-| [DEC-099](#dec-099-markitect-is-a-tool-with-a-verification-cache) | Decision | Markitect is a tool, with a verification cache | Decided by the owner, 7 November 2026; not built |
+| [DEC-099](#dec-099-markitect-is-a-tool-with-a-verification-cache) | Decision | Markitect is a tool, with a verification cache | Decided by the owner, 7 November 2026; step 1 built in 0.21.0 |
 | [PRM-001 to PRM-009](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
@@ -1310,7 +1310,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - The file set comes from walking the project folder, skipping what the project's `.gitignore` files exclude, read as plain text, and what Markitect's own ignore file lists, so there is no second hand-kept list of ignored files.
   - The base of a change is the newest certificate: the Result `gate` writes, with the hashes of every accounted file and Definition and a copy of the spec text. `gate` refuses any changed file that lies in no reviewed item, since the tool knows no "committed", only the folder.
 - **Costs, as far as known:** the tool no longer guarantees that what is committed is what it certified; `status` and `gate --verify` show a mismatch afterwards, and a CI job can refuse it. After a merge of two certified branches, part of the work is reviewed again. `impact --base` takes a certificate instead of a Git revision. Markitect's own release tooling still packages its source from Git; it is not part of the product.
-- **Supersedes:** "`apply` commits the spec on the owner's branch" and the landing of [draft concept 4.0 §5 and §6](v4-concept.md#5-what-apply-does), once the [plan](lean-tool-plan.md) is built and tried.
+- **Supersedes:** "`apply` commits the spec on the owner's branch" and the landing of [draft concept 4.0 §5 and §6](https://github.com/Glacius-Labs/Markitect/blob/b24f4ed3b8a1bf7f2eebc3aaf805d7e20c787e2b/docs/concepts/v4-concept.md#5-what-apply-does), once the [plan](lean-tool-plan.md) is built and tried.
 
 ### DEC-098 Concept 4.0 is the target
 
@@ -1323,7 +1323,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-099 Markitect is a tool, with a verification cache
 
-- **Status:** Decided by the owner, 7 November 2026. The owner described how they work: model the spec with the tool's help, then have agents implement it while the tool says what to verify. They found that `gate`, `answer` and the builder's reports steered the agents' work more than the tool should. They agreed to a record of what was verified, modelled on Go's test cache, and chose the names. The [tooling plan](tooling-plan.md) holds the design, reviewed by an independent architect against the code.
+- **Status:** Decided by the owner, 7 November 2026; step 1 built in 0.21.0. The owner described how they work: model the spec with the tool's help, then have agents implement it while the tool says what to verify. They found that `gate`, `answer` and the builder's reports steered the agents' work more than the tool should. They agreed to a record of what was verified, modelled on Go's test cache, and chose the names. The [tooling plan](tooling-plan.md) holds the design, reviewed by an independent architect against the code.
 - **Decision:**
   - Markitect supports agent work and does not steer it. It checks and analyses the spec, says what is to verify, and records verdicts. It decides nothing about who works when, and it counts no rounds.
   - For each Definition, `.markitect/review.sum` records the inputs at which it was last verified: its text, its Kind and the Definitions it links to, its registry rows with their files, and the evidence. A change of any input puts the Definition back on the list. An empty `markitect status` means that the project compiles and every Definition is verified at its current inputs; its notes, such as an outdated harness, do not count.
@@ -1331,6 +1331,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - The commands are `check`, `vet`, `list`, `doc`, `status` and `review`, beside `init`, `lock`, `update`, `install`, `version` and `licenses`. The skills are `/markitect-build` and `/markitect-review`, plain prompts named after their agents. Output and exit codes follow Go's tools.
   - The hook stays as a guard: only the reviewer records, and no subagent writes under `.markitect/` except the registry pages.
   - The work needs no limit on rounds.
+- **Refined** by the owner, 7 November 2026, after the plan was merged ([plan](tooling-plan.md#refined-after-the-plan-was-merged)): the recording command is `mark`, as `markitect mark DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]… [-m "WHY"]`, and `status` prints each item as `DEFINITION@FINGERPRINT`; evidence is `path:line` or `path`; only `markitect-reviewer` runs `mark`. The commands stay flat, with no groups. `markitect lock` becomes `markitect tidy`, like `go mod tidy`: `check` only reads the lock and, on a mismatch, says to run `tidy`. In the decision above, `review` reads `mark` and `lock` reads `tidy`.
 - **Amends:** [DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts). `gate`, its rows and the work state go; the tool still computes and checks, and drives no agent. It settles DEC-096's two open points: there are no limits in the tool and no work state. It also amends [DEC-098](#dec-098-concept-40-is-the-target): concept 4.0 stays the target, and its §3, §5 to §9 and §12 are revised with the build. The [lean plan's](lean-tool-plan.md#decisions-for-the-owner) decisions 3, 5 and 6 lapse with `gate`, the work state and the certificate.
 - **Gives up, knowingly:** the refusal of changes to ignored files and to the harness during the work, the spec freeze for the owner's session and for people, and the old text of a changed Definition in the tool's output ([plan](tooling-plan.md#what-this-gives-up-and-what-it-keeps)).
 - **Next:** build it in the plan's [order of work](tooling-plan.md#order-of-work), then try it with planted defects under a bounded dispatch.

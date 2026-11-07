@@ -1,6 +1,6 @@
 # How far `impact` reaches: one measurement — 3 November 2026
 
-The Topics session measured how much of a project a change reaches at one step of links, at two steps and when following every link, and whether that covers the files that truly changed. It started no agent. The reading is this session's and decides nothing; [draft concept 3.0](../concepts/v3-concept.md#14-open-for-the-owner), question 3, carries the recommendation.
+The Topics session measured how much of a project a change reaches at one step of links, at two steps and when following every link, and whether that covers the files that truly changed. It started no agent. The reading is this session's and decides nothing; [draft concept 3.0](../concepts/v3-concept.md#14-decided-on-acceptance), question 3, carries the recommendation.
 
 **Of the 36 existing files that truly changed, one step reached 33. Two steps and every link each reached 35, and every link often took in most of the spec on the way.** The other 5 of the 41 changed files are new tests, which nobody could name in advance.
 
@@ -10,7 +10,7 @@ The fixtures are at commit `42ebd0bee6830f4a0bcdea5a5f7c8df5d721ad48`: `tools/ev
 
 - **Links.** A Definition's `[[...]]` links and its `kind:` line, resolved by path from the root of the spec. Reach follows them backwards, from a Definition to whatever links to it or is of it.
 - **Changed.** The Definitions that differ from the step before.
-- **One step.** The changed Definitions and what links directly to them, which is how far [impact](../guides/model-language.md#impact-and-checklists) follows Definitions today. On c6 this gives the 17 items of `impact`'s real checklist. The measurement leaves out the other part of `impact`, what a changed file realizes.
+- **One step.** The changed Definitions and what links directly to them, which is how far [impact](https://github.com/Glacius-Labs/Markitect/blob/b24f4ed3b8a1bf7f2eebc3aaf805d7e20c787e2b/docs/guides/model-language.md#impact-and-checklists) follows Definitions today. On c6 this gives the 17 items of `impact`'s real checklist. The measurement leaves out the other part of `impact`, what a changed file realizes.
 - **Files reached.** The files whose row in the step's finished registry names a reached Definition, plus files of a changed Definition that the step deleted. The registry is in `tools/evaluation-tasks/makerspace/references/<step>`. This counts a new file as reached, though `impact` before the work reads the registry from before the step, which can't name it. The section on changed files gives both counts.
 - **Truly changed.** The files that differ between the step's reference and the one before.
 

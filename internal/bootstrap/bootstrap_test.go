@@ -3,6 +3,8 @@ package bootstrap
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -86,11 +88,12 @@ func TestCommandsEndToEnd(t *testing.T) {
 	if code != 0 || json.Unmarshal([]byte(out), &checked) != nil || !checked.OK || checked.Errors == nil {
 		t.Fatalf("check --json: %d %s", code, out)
 	}
-	// impact needs a base: a certificate, which gate writes when work passes.
-	if code, _, errOut := run(t, r.Dir, "impact"); code != 2 || !strings.Contains(errOut, "no certificate yet") {
-		t.Fatalf("impact without a certificate: %d %s", code, errOut)
+	// With no record, every Definition is to verify.
+	code, out, _ = run(t, r.Dir, "status")
+	if code != 1 || !strings.Contains(out, "To verify (3 of 3 Definitions)") || !strings.Contains(out, "\nloan-limit@") {
+		t.Fatalf("status before a review: %d\n%s", code, out)
 	}
-	base := certify(t, r.Dir)
+	verifyAll(t, r.Dir)
 
 	// init again changes nothing.
 	before := snapshot(t, r.Dir)
@@ -99,36 +102,11 @@ func TestCommandsEndToEnd(t *testing.T) {
 		t.Fatalf("a second init changed files: %v", diff)
 	}
 
+	// A changed Rule is to verify again, and nothing else is.
 	r.Write(".markitect/model/loan-limit.md", "---\nkind: std/Rule\n---\n# Loan limit\n\nAt most `3` open loans, for [[members]].\n")
-	findings := filepath.Join(testkit.TempDir(t), "findings.md")
-	if err := os.WriteFile(findings, []byte("## [[members/member]]\n\nObserved: no card number.\n\nExpected: a card number.\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	out = mustRun(t, r.Dir, "impact", "--base", base, "--json", "--findings", findings)
-	var im struct {
-		Base       string
-		Packages   []string
-		Checklists []struct {
-			Package   string
-			Own       []struct{ Definition string }
-			Inherited []struct{ Definition string }
-			Findings  []struct{ Definition string }
-		}
-	}
-	if err := json.Unmarshal([]byte(out), &im); err != nil {
-		t.Fatal(err, out)
-	}
-	if im.Base != base || strings.Join(im.Packages, ",") != ",members" || len(im.Checklists) != 2 {
-		t.Fatalf("impact = %s", out)
-	}
-	members := im.Checklists[1]
-	if members.Package != "members" || len(members.Inherited) != 1 || members.Inherited[0].Definition != "loan-limit" || len(members.Findings) != 1 {
-		t.Fatalf("members checklist = %+v", members)
-	}
-	// Without --base the newest certificate is the base, named in full.
-	md := mustRun(t, r.Dir, "impact")
-	if !strings.Contains(md, "# Impact since "+base+"\n") || !strings.Contains(md, "- [[loan-limit]] modified") || !strings.Contains(md, "### members") {
-		t.Fatalf("impact Markdown:\n%s", md)
+	code, out, _ = run(t, r.Dir, "status")
+	if code != 1 || !strings.Contains(out, "To verify (1 of 3 Definitions)") || !strings.Contains(out, "\nloan-limit@") || !strings.Contains(out, "changed: self\n") {
+		t.Fatalf("status after a change of the spec: %d\n%s", code, out)
 	}
 
 	if out := mustRun(t, r.Dir, "refs", "members/member"); !strings.Contains(out, "`src/members/member.go` | registry") {
@@ -139,13 +117,13 @@ func TestCommandsEndToEnd(t *testing.T) {
 	}
 	mustRun(t, r.Dir, "lint")
 
-	// impact refuses a model that does not compile, before reading the base.
+	// status has no list for a spec that does not compile.
 	r.Write(".markitect/model/broken.md", "no front matter\n")
-	code, _, errOut := run(t, r.Dir, "impact", "--base", base)
-	if code != 1 || !strings.Contains(errOut, "impact needs a spec that compiles") {
-		t.Fatalf("impact on errors: %d %s", code, errOut)
+	code, out, _ = run(t, r.Dir, "status")
+	if code != 1 || !strings.Contains(out, "there is no list until it compiles") {
+		t.Fatalf("status on errors: %d %s", code, out)
 	}
-	code, _, errOut = run(t, r.Dir, "lint")
+	code, _, errOut := run(t, r.Dir, "lint")
 	if code != 0 || !strings.Contains(errOut, "the spec has") {
 		t.Fatalf("lint on errors: %d %s", code, errOut)
 	}
@@ -176,7 +154,7 @@ func TestCheckWithNothingBuilt(t *testing.T) {
 	r := newFolder(t)
 	mustRun(t, r.Dir, "init", "--name", "Demo")
 	code, out, _ := run(t, r.Dir, "check")
-	if code != 0 || !strings.HasPrefix(out, "ok:") || !strings.Contains(out, "Nothing is built yet") || !strings.Contains(out, "/markitect-apply") || strings.Contains(out, "definition.unused") {
+	if code != 0 || !strings.HasPrefix(out, "ok:") || !strings.Contains(out, "Nothing is built yet") || !strings.Contains(out, "/markitect-build") || strings.Contains(out, "definition.unused") {
 		t.Fatalf("check on a new project: %d\n%s", code, out)
 	}
 	code, out, _ = run(t, r.Dir, "check", "--json")
@@ -286,7 +264,7 @@ func TestInitKeepsTheProjectsSettings(t *testing.T) {
 	mustRun(t, r.Dir, "init")
 	settings := read(t, r.Dir, ".claude/settings.json")
 	if !strings.Contains(settings, "Bash(go test *)") || !strings.Contains(settings, "12345678901234567890") ||
-		strings.Count(settings, "Bash(markitect answer*)") != 1 || strings.Count(settings, "Bash(markitect checklist*)") != 1 {
+		strings.Count(settings, "Bash(markitect mark*)") != 1 || strings.Count(settings, "Edit|Write|MultiEdit|NotebookEdit") != 1 {
 		t.Fatalf("settings:\n%s", settings)
 	}
 }
@@ -325,10 +303,10 @@ func TestInitLeavesSettingsItCannotRead(t *testing.T) {
 	}
 }
 
-// The hook runs the installed command, and only the reviewer may answer.
-func TestHookLetsOnlyTheReviewerAnswer(t *testing.T) {
+// The hook runs the installed command, and only the reviewer may record.
+func TestHookLetsOnlyTheReviewerRecord(t *testing.T) {
 	hook := func(agent string) string {
-		input, _ := json.Marshal(map[string]any{"agent_type": agent, "tool_name": "Bash", "tool_input": map[string]any{"command": "markitect answer"}})
+		input, _ := json.Marshal(map[string]any{"agent_id": "a1", "agent_type": agent, "tool_name": "Bash", "tool_input": map[string]any{"command": "markitect mark project@0a1b2c ok -e README.md"}})
 		var out, errOut bytes.Buffer
 		code := newCLI(bytes.NewReader(input), &out, &errOut).Run(context.Background(), []string{"hook", "pretool"})
 		if code != 0 {
@@ -337,15 +315,15 @@ func TestHookLetsOnlyTheReviewerAnswer(t *testing.T) {
 		return out.String()
 	}
 	if out := hook("markitect-builder"); !strings.Contains(out, `"permissionDecision":"deny"`) {
-		t.Fatalf("the builder may answer: %s", out)
+		t.Fatalf("the builder may record: %s", out)
 	}
 	if out := hook("markitect-reviewer"); out != "" {
 		t.Fatalf("the reviewer may not: %s", out)
 	}
 }
 
-// init installs the harness with the hook on answer, and makes no repository
-// and no commit.
+// init installs the harness with the hooks, and the record's Git attributes, and
+// makes no repository and no commit.
 func TestInitInstallsTheHarness(t *testing.T) {
 	r := newFolder(t)
 	out := mustRun(t, r.Dir, "init", "--name", "Demo")
@@ -353,10 +331,23 @@ func TestInitInstallsTheHarness(t *testing.T) {
 		t.Fatalf("init: %s", out)
 	}
 	noRepository(t, r.Dir)
-	for _, file := range []string{".claude/skills/markitect-apply/SKILL.md", ".claude/skills/markitect-verify/SKILL.md", ".claude/agents/markitect-reviewer.md", ".claude/agents/markitect-builder.md"} {
+	for _, file := range []string{".claude/skills/markitect-build/SKILL.md", ".claude/skills/markitect-review/SKILL.md", ".claude/agents/markitect-reviewer.md", ".claude/agents/markitect-builder.md"} {
 		if read(t, r.Dir, file) == "" {
 			t.Fatalf("%s is empty", file)
 		}
+	}
+	if got := read(t, r.Dir, ".markitect/.gitattributes"); got != "review.sum merge=union\n" {
+		t.Fatalf(".markitect/.gitattributes: %q", got)
+	}
+	// The skills are plain prompts: they inject no command, so no exit code can
+	// abort them.
+	for _, file := range []string{".claude/skills/markitect-build/SKILL.md", ".claude/skills/markitect-review/SKILL.md"} {
+		if strings.Contains(read(t, r.Dir, file), "!`") {
+			t.Fatalf("%s injects a command", file)
+		}
+	}
+	if !strings.Contains(read(t, r.Dir, ".claude/agents/markitect-builder.md"), "tools: Read, Edit, Write, Glob, Grep, Bash, Agent(markitect-reviewer)\n") {
+		t.Fatal("the builder may start more than the reviewer")
 	}
 	var settings struct {
 		Hooks map[string][]struct {
@@ -367,10 +358,11 @@ func TestInitInstallsTheHarness(t *testing.T) {
 	if err := json.Unmarshal([]byte(read(t, r.Dir, ".claude/settings.json")), &settings); err != nil {
 		t.Fatal(err)
 	}
-	if pre := settings.Hooks["PreToolUse"]; len(pre) != 1 || pre[0].Matcher != "Bash" || len(pre[0].Hooks) != 2 ||
-		pre[0].Hooks[0].Command != "markitect hook pretool" || pre[0].Hooks[0].If != "Bash(markitect answer*)" ||
-		pre[0].Hooks[1].Command != "markitect hook pretool" || pre[0].Hooks[1].If != "Bash(markitect checklist*)" {
-		t.Fatalf("the guard hook: %+v", settings)
+	if pre := settings.Hooks["PreToolUse"]; len(pre) != 2 || pre[0].Matcher != "Bash" || len(pre[0].Hooks) != 1 ||
+		pre[0].Hooks[0].Command != "markitect hook pretool" || pre[0].Hooks[0].If != "Bash(markitect mark*)" ||
+		pre[1].Matcher != "Edit|Write|MultiEdit|NotebookEdit" || len(pre[1].Hooks) != 1 ||
+		pre[1].Hooks[0].Command != "markitect hook pretool" || pre[1].Hooks[0].If != "" {
+		t.Fatalf("the guard hooks: %+v", settings)
 	}
 	code, checked, _ := run(t, r.Dir, "check")
 	if code != 0 || strings.Contains(checked, "file.unregistered") {
@@ -416,17 +408,28 @@ func TestLockCommand(t *testing.T) {
 
 func TestUsageAndRefusals(t *testing.T) {
 	var out, errOut bytes.Buffer
-	if Run(context.Background(), nil, &out, &errOut) != 0 || !strings.Contains(out.String(), "markitect impact") {
+	if Run(context.Background(), nil, &out, &errOut) != 0 || !strings.Contains(out.String(), "markitect mark DEFINITION@FINGERPRINT VERDICT") {
 		t.Fatalf("usage = %s", out.String())
 	}
 	if Run(context.Background(), []string{"bughunt"}, &out, &errOut) != 2 || !strings.Contains(errOut.String(), `unknown command "bughunt"`) {
 		t.Fatalf("unknown command: %s", errOut.String())
 	}
 	dir := testkit.TempDir(t)
-	for _, cmd := range []string{"check", "impact", "lock", "checklist", "gate"} {
-		if code, _, errOut := run(t, dir, cmd); code != 2 || !strings.Contains(errOut, "is in no Markitect project") || !strings.Contains(errOut, "markitect init makes one") {
-			t.Fatalf("%s outside a project: %d %s", cmd, code, errOut)
+	for _, args := range [][]string{{"check"}, {"lock"}, {"status"}, {"mark", "project@0a1b2c", "ok", "-e", "README.md"}} {
+		if code, _, errOut := run(t, dir, args...); code != 2 || !strings.Contains(errOut, "is in no Markitect project") || !strings.Contains(errOut, "markitect init makes one") {
+			t.Fatalf("%s outside a project: %d %s", args[0], code, errOut)
 		}
+	}
+	// For one release, the retired commands of the work say on standard output,
+	// with exit 0, that markitect update is needed, so that an old project's skill
+	// does not fail silently.
+	for _, args := range [][]string{{"checklist", "--start"}, {"answer"}, {"gate", "--verify"}} {
+		if code, out, _ := run(t, dir, args...); code != 0 || !strings.Contains(out, "markitect "+args[0]+" is gone") || !strings.Contains(out, "run markitect update") {
+			t.Fatalf("%s: %d %s", args[0], code, out)
+		}
+	}
+	if code, _, errOut := run(t, dir, "impact"); code != 2 || !strings.Contains(errOut, "unknown command") {
+		t.Fatalf("impact: %d %s", code, errOut)
 	}
 	out.Reset()
 	if Run(context.Background(), []string{"version"}, &out, &errOut) != 0 || !strings.HasPrefix(out.String(), "markitect ") {
@@ -434,59 +437,96 @@ func TestUsageAndRefusals(t *testing.T) {
 	}
 }
 
-// checklist, answer and gate work on the project folder: the work passes into a
-// certificate, which impact and gate --verify then read.
-func TestGateThroughTheCommandLine(t *testing.T) {
+// status says what is to verify, mark records a verdict at the fingerprint
+// status printed, and the record is a file of the project; the exit codes say
+// whether a command found something.
+func TestStatusAndMarkThroughTheCommandLine(t *testing.T) {
 	r := newFolder(t)
 	mustRun(t, r.Dir, "init")
 	r.Write(".markitect/registry.md", "| File | Realizes | Why |\n|---|---|---|\n| README.md | [[project]] | Overview |\n")
 	r.Write("README.md", "# A project\n")
-	if code, out, _ := run(t, r.Dir, "gate"); code != 1 || !strings.Contains(out, "No checklist began this work") {
-		t.Fatalf("gate before checklist: %d\n%s", code, out)
+	code, out, _ := run(t, r.Dir, "status")
+	if code != 1 || !strings.Contains(out, "no record yet") || !strings.Contains(out, "look at: .markitect/model/project.md, README.md") {
+		t.Fatalf("status: %d\n%s", code, out)
 	}
-	// The skill's call always exits 0, so that its session sees what it printed.
-	if code, out, _ := run(t, r.Dir, "checklist", "--start", "--findings", "nosuch.md"); code != 0 || !strings.Contains(out, "could not begin the work") {
-		t.Fatalf("checklist --start with a missing Findings page: %d\n%s", code, out)
-	}
-	wantAll(t, mustRun(t, r.Dir, "checklist", "--start"), "markitect-builder", "Build the work.")
-	wantAll(t, mustRun(t, r.Dir, "checklist"), "Make this project match the spec", "markitect gate", "[ ] project")
-	if code, out, _ := run(t, r.Dir, "gate"); code != 1 || !strings.Contains(out, "markitect-reviewer") {
-		t.Fatalf("gate before a review: %d\n%s", code, out)
-	}
-	// The builder's report of a spec problem says something, with one dash or two.
-	for _, flag := range []string{"--spec-problem", "-spec-problem"} {
-		if code, _, errOut := run(t, r.Dir, "gate", flag, " "); code != 2 || !strings.Contains(errOut, "what the problem is") {
-			t.Fatalf("gate %s with no text: %d %s", flag, code, errOut)
+	item := strings.Fields(out[strings.Index(out, "project@"):])[0]
+
+	for _, args := range [][]string{
+		{"mark", item, "maybe"},
+		{"mark", "project"},
+		{"mark", item, "fail"},
+		{"mark", item, "ok"},
+		{"mark", "project", "ok", "-e", "README.md"},
+		{"mark", item, "ok", "README.md"},
+		{"mark", item, "ok", "-e", "README.md", "--bogus"},
+		{"mark", item, "ok", "-e"},
+	} {
+		if code, _, errOut := run(t, r.Dir, args...); code != 2 || !strings.Contains(errOut, "usage: markitect mark") {
+			t.Fatalf("%v: %d %s", args, code, errOut)
 		}
 	}
-	var out, errOut bytes.Buffer
-	answer := newCLI(strings.NewReader("project: ok README.md:1\n"), &out, &errOut)
-	if code := answer.Run(context.Background(), []string{"answer", "--repo", r.Dir}); code != 0 {
-		t.Fatalf("answer: %d\n%s%s", code, out.String(), errOut.String())
+	if code, out, _ := run(t, r.Dir, "mark", item, "ok", "-e", "tests/missing_test.go:3"); code != 1 || !strings.Contains(out, "tests/missing_test.go") {
+		t.Fatalf("mark with missing evidence: %d\n%s", code, out)
 	}
-	passed := mustRun(t, r.Dir, "gate")
-	wantAll(t, passed, "The work passes", "Commit the work together with both")
-	cert := ""
-	for _, f := range strings.Fields(passed) {
-		if f = strings.TrimSuffix(f, ","); strings.HasSuffix(f, ".json") {
-			cert = f
-		}
+	// The flags may stand before the item and the verdict, too.
+	wantAll(t, mustRun(t, r.Dir, "mark", "-e", "README.md:1 (TestReadme)", "-m", "says nothing of what the project is", item, "fail"), "Recorded: project fail.")
+	wantAll(t, read(t, r.Dir, ".markitect/review.sum"), `"evidence":["README.md:1"]`)
+	code, out, _ = run(t, r.Dir, "status")
+	if code != 1 || !strings.Contains(out, "fail: says nothing of what the project is") {
+		t.Fatalf("status after a fail: %d\n%s", code, out)
 	}
-	if cert == "" {
-		t.Fatalf("no certificate named:\n%s", passed)
+	r.Write("README.md", "# A project\n\nIt lends books.\n")
+	if code, out, _ := run(t, r.Dir, "mark", item, "ok", "-e", "README.md:3"); code != 1 || !strings.Contains(out, "Run markitect status again") {
+		t.Fatalf("mark at a stale fingerprint: %d\n%s", code, out)
 	}
-	wantAll(t, mustRun(t, r.Dir, "gate", "--verify"), "matches its newest certificate")
-	r.Write("README.md", "# A project, changed\n")
-	if code, out, _ := run(t, r.Dir, "gate", "--verify"); code != 1 || !strings.Contains(out, "README.md") {
-		t.Fatalf("gate --verify after a change: %d\n%s", code, out)
+	code, out, _ = run(t, r.Dir, "status")
+	if code != 1 || !strings.Contains(out, "changed: file:README.md") || !strings.Contains(out, "recorded before: fail") {
+		t.Fatalf("status after a change: %d\n%s", code, out)
 	}
-	wantAll(t, mustRun(t, r.Dir, "impact", "--base", filepath.Join(r.Dir, filepath.FromSlash(cert))), "README.md")
-	wantAll(t, mustRun(t, r.Dir, "status"), "No work is under way", "differ from the newest certificate", "README.md")
+	verifyAll(t, r.Dir)
+	wantAll(t, read(t, r.Dir, ".markitect/review.sum"), `{"definition":"project","verdict":"ok"`)
+	if code, out, _ := run(t, r.Dir, "status", "--all"); code != 1 || !strings.Contains(out, "project@") {
+		t.Fatalf("status --all: %d\n%s", code, out)
+	}
+	if code, out, _ := run(t, r.Dir, "check"); code != 0 {
+		t.Fatalf("the record is part of the layout: %s", out)
+	}
 	noRepository(t, r.Dir)
-	if code, _, errOut := run(t, r.Dir, "checklist", "--base", "nosuch.json"); code != 2 || !strings.Contains(errOut, "is no certificate") {
-		t.Fatalf("checklist --base nosuch.json: %d %s", code, errOut)
+}
+
+// update turns the newest certificate of markitect 0.20 into the record, and
+// removes the retired results folder.
+func TestUpdateWritesTheRecordFromTheNewestCertificate(t *testing.T) {
+	emptyHome(t)
+	r := newFolder(t)
+	mustRun(t, r.Dir, "init")
+	r.Write(".markitect/registry.md", "| File | Realizes | Why |\n|---|---|---|\n| README.md | [[project]] | Overview |\n")
+	r.Write("README.md", "# A project\n")
+	files := map[string]string{}
+	spec := map[string]string{}
+	for file, content := range snapshot(t, r.Dir) {
+		sum := sha256.Sum256([]byte(content))
+		files[file] = hex.EncodeToString(sum[:])
+		if strings.HasPrefix(file, ".markitect/") {
+			spec[file] = content
+		}
 	}
-	if code, _, errOut := run(t, r.Dir, "gate", "--verify", "--findings"); code != 2 || !strings.Contains(errOut, "only one of") {
-		t.Fatalf("gate --verify --findings: %d %s", code, errOut)
+	cert, _ := json.Marshal(map[string]any{
+		"kind": "markitect-certificate", "format": 1, "created": "2026-11-06T12:00:00Z", "files": files, "definitions": map[string]string{}, "spec": spec,
+		"items": []map[string]any{{"item": "project", "kind": "definition", "definition": "project", "answer": "ok", "pointers": []map[string]any{{"file": "README.md", "line": 1}}}},
+	})
+	r.Write(".markitect/results/gate-20261106-120000-0a1b2c3d.json", string(cert))
+	r.Write(".markitect/results/gate-20261106-120000-0a1b2c3d.md", "# Result\n")
+	if code, out, _ := run(t, r.Dir, "check"); code != 1 || !strings.Contains(out, "project.results") {
+		t.Fatalf("check with a results folder: %d\n%s", code, out)
 	}
+	code, out, _ := run(t, r.Dir, "update", "--check")
+	if code != 1 || !strings.Contains(out, "record: the certificates under .markitect/results are retired") {
+		t.Fatalf("update --check: %d\n%s", code, out)
+	}
+	wantAll(t, mustRun(t, r.Dir, "update", "--files"), "record: wrote .markitect/review.sum from the newest certificate", "record: removed the retired .markitect/results (2 files)")
+	if code, out, _ := run(t, r.Dir, "status"); code != 0 || !strings.Contains(out, "Nothing to verify") {
+		t.Fatalf("status after the migration: %d\n%s", code, out)
+	}
+	wantAll(t, read(t, r.Dir, ".markitect/review.sum"), `"evidence":["README.md:1"]`)
 }

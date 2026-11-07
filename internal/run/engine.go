@@ -1,70 +1,104 @@
-// Package run is the work on a project folder, without Git (DEC-096, DEC-097):
-// checklist says what a change since the newest certificate reaches, answer
-// stores a reviewer's answers bound to the files they rest on, and gate checks the
-// work and, when it passes, writes its certificate. Whoever drives the agents (a
-// skill, a workflow or a person) starts them and makes every Git step; nothing
-// here starts or drives an agent. What the tool knows of the work between commands
-// lives in the user's cache folder.
+// Package run is the record of what was verified (DEC-099): for each Definition,
+// .markitect/review.sum holds the inputs at which a reviewer last verified it,
+// modelled on Go's test cache. status says what is to verify, mark records a
+// verdict at the state the reviewer read, and the hook keeps the record and the
+// spec out of the agents' hands. Nothing here starts or drives an agent, steers
+// the work or uses Git (DEC-096, DEC-097).
 //
-// The work is described in internal/run/README.md.
+// The record is described in internal/run/README.md.
 package run
 
 import (
-	"context"
 	"errors"
-	"fmt"
-	"strings"
+	"os"
+	"path/filepath"
 	"time"
 
-	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
-const (
-	// repairRounds bounds how often a review's wrong answers go back.
-	repairRounds = 2
-	// maxRefusals bounds how many errors one refusal lists.
-	maxRefusals = 30
-)
-
-// ErrUsage marks a request the tool cannot run, such as an unknown base.
-var ErrUsage = errors.New("cannot run")
-
-// Engine runs the commands of the work in one project folder.
+// Engine reads a project folder and its record.
 type Engine struct {
-	// Folder reads the project folder, and Cache is where the work's state lives
-	// between commands, outside the project.
+	// Folder reads the project folder, and Cache is the user's cache folder for
+	// markitect, where the lock of a project's record lives.
 	Folder Folder
 	Cache  string
-	// Now defaults to the clock.
-	Now func() time.Time
 }
 
-func (e *Engine) now() time.Time {
-	if e.Now != nil {
-		return e.Now()
+// folder is the project folder as one command finds it.
+type folder struct {
+	root  string
+	files project.Repository
+	set   map[string]bool
+	cur   *project.Project
+	// hashes holds the hashes read so far, by file.
+	hashes map[string]string
+}
+
+// readFolder reads and loads the project folder that holds dir.
+func (e *Engine) readFolder(dir string) (*folder, error) {
+	if e.Folder == nil {
+		return nil, errors.New("this build reads no project folder")
 	}
-	return time.Now()
+	root, err := e.Folder.Root(dir)
+	if err != nil {
+		return nil, err
+	}
+	files, err := e.Folder.Open(root)
+	if err != nil {
+		return nil, err
+	}
+	cur, err := project.Load(files)
+	if err != nil {
+		return nil, err
+	}
+	set := map[string]bool{}
+	for _, f := range cur.Files {
+		set[f] = true
+	}
+	return &folder{root: root, files: files, set: set, cur: cur, hashes: map[string]string{}}, nil
 }
 
-// Answer stores a reviewer's answers against the folder as it is. What it cannot
-// accept is refused at once, with what is still missing.
-func (e *Engine) Answer(_ context.Context, dir string, raw []byte) (string, bool, error) {
-	return e.answerState(dir, raw)
+// hash is the hash of a file of the folder as an input: "" when the walk does not
+// find it.
+func (f *folder) hash(file string) (string, error) {
+	if h, ok := f.hashes[file]; ok {
+		return h, nil
+	}
+	if !f.set[file] {
+		return "", nil
+	}
+	data, err := f.files.Read(file)
+	if err != nil {
+		return "", err
+	}
+	h := Hash(data)
+	f.hashes[file] = h
+	return h, nil
 }
 
-// Status says how the work in the folder stands, and changes nothing.
-func (e *Engine) Status(_ context.Context, dir string) (string, error) {
-	return e.stateStatus(dir)
+// lockDir is where the locks of the records live, outside the project.
+func (e *Engine) lockDir() (string, error) {
+	if e.Cache == "" {
+		return "", errors.New("no cache folder for the lock of the record")
+	}
+	return filepath.Join(e.Cache, "locks"), nil
 }
 
-func listErrors(errs model.Diagnostics) string {
-	var b strings.Builder
-	for i, d := range errs {
-		if i == maxRefusals {
-			fmt.Fprintf(&b, "and %d more\n", len(errs)-maxRefusals)
+// readRecordFile reads a project's record; nil without one.
+func readRecordFile(root string) ([]byte, error) {
+	file := filepath.Join(root, filepath.FromSlash(project.ReviewFile))
+	var data []byte
+	var err error
+	for i := 0; i < 20; i++ {
+		if data, err = os.ReadFile(file); err == nil || errors.Is(err, os.ErrNotExist) {
 			break
 		}
-		fmt.Fprintf(&b, "- %s\n", d.String())
+		// A rename beside a read is refused for a moment on Windows.
+		time.Sleep(50 * time.Millisecond)
 	}
-	return b.String()
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	}
+	return data, err
 }

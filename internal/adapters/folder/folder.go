@@ -18,8 +18,8 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
-// Disk opens project folders on the local disk: for the work (Root, Open) and for
-// the command line (Project, At).
+// Disk opens project folders on the local disk: for the record (Root, Open) and
+// for the command line (Project, At).
 type Disk struct{}
 
 // Root is the project folder that holds dir: the nearest folder, dir or above,
@@ -47,14 +47,13 @@ func (Disk) Root(dir string) (string, error) {
 	}
 }
 
-// Open walks the project folder at root, and returns its files and the symbolic
-// links among them with where each points.
-func (Disk) Open(root string) (project.Repository, map[string]string, error) {
+// Open walks the project folder at root, and returns its files.
+func (Disk) Open(root string) (project.Repository, error) {
 	w, err := Walk(root)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	return w, w.links, nil
+	return w, nil
 }
 
 // Project opens the project folder that holds dir.
@@ -153,7 +152,7 @@ func (w *Workspace) List(dir string) ([]string, error) {
 
 // Walk walks the project folder at root.
 func Walk(root string) (*Walked, error) {
-	w := &Walked{Dir: root, ignore: newIgnores(root), links: map[string]string{}, repos: map[string]bool{}}
+	w := &Walked{Dir: root, ignore: newIgnores(root), repos: map[string]bool{}}
 	err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -189,13 +188,6 @@ func Walk(root string) (*Walked, error) {
 			return nil
 		}
 		w.files = append(w.files, rel)
-		if d.Type()&fs.ModeSymlink != 0 {
-			to, err := os.Readlink(p)
-			if err != nil {
-				return err
-			}
-			w.links[rel] = filepath.ToSlash(to)
-		}
 		return nil
 	})
 	if err != nil {
@@ -229,7 +221,6 @@ const repositoryEntry = "a repository of its own\n"
 type Walked struct {
 	Dir    string
 	files  []string
-	links  map[string]string
 	repos  map[string]bool
 	ignore *ignores
 }

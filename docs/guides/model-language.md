@@ -18,10 +18,11 @@ This guide is the canonical description of the model language of [concept 2.0](.
     members/loans.md   the registry page of Package members/loans
   ignore               files that deliberately belong to no Package, if any
   libraries/<name>/    a Library that does not ship with markitect
-  results/             certificates and Result pages, written by markitect gate
+  review.sum           the record of what was verified, written by markitect mark
+  .gitattributes       review.sum merge=union, written by init and update
 ```
 
-Every file below `.markitect/` is accounted for by the compiler itself and needs no registry entry. A file there that has no place in this layout is an error (`project.file`), and so is a file in the registry folder that is not a Markdown page (`registry.page`) or a file the walk finds but the compiler cannot read (`project.read`). The installed tool, `.markitect/tool/` and `.markitect/bootstrap/`, is also Markitect's own. Text files under `.markitect/` are read with LF line ends, so a Windows checkout with CRLF compiles, locks and compares like the commit it came from.
+Every file below `.markitect/` is accounted for by the compiler itself and needs no registry entry. A file there that has no place in this layout is an error (`project.file`). The certificates and Result pages of 0.20.0 under `.markitect/results/` no longer belong to it (`project.results`): `markitect update` writes the record from the newest certificate and removes them ([the record](../../internal/run/README.md#the-migration)). A file in the registry folder that is not a Markdown page is an error too (`registry.page`), and so is a file the walk finds but the compiler cannot read (`project.read`). The installed tool, `.markitect/tool/` and `.markitect/bootstrap/`, is also Markitect's own. Text files under `.markitect/` are read with LF line ends, so a Windows checkout with CRLF compiles, locks and compares like the commit it came from.
 
 The project folder is the nearest folder, the one given or above, with `.markitect/manifest.yaml`. The compiler sees its files without what its `.gitignore` files exclude, read as text; it uses no Git ([the folder](../../internal/run/README.md#the-folder)).
 
@@ -115,14 +116,14 @@ paths:
 
 - **Patterns** are repository-relative paths. `*` and `?` match within one name; a whole segment `**` matches any number of folders. A trailing `**` matches what lies inside the folder, not the folder itself. A pattern without wildcards names one file. `[ ]` and `{ }` are not allowed (`registry.pattern`).
 - **Ownership:** the most specific matching pattern owns a file. A pattern without wildcards beats every pattern with one; otherwise the pattern with more literal characters (other than `*`, `?` and `/`) wins. Root owns every file no other Package claims and names no patterns. Two Packages claiming the same pattern is an error (`registry.duplicate_pattern`), and so are two equally specific patterns of different Packages that match the same file (`registry.ambiguous_owner`).
-- **First patterns:** a Package other than Root with no patterns, or no page, compiles but owns no file (`lint.no_paths`). The owner writes a new Package's Definitions; the implementer writes its registry page with its first patterns, and the gate still requires every file to be accounted for. The implementer maintains every registry page. Patterns say who owns a file; they do not limit what an agent may touch.
+- **First patterns:** a Package other than Root with no patterns, or no page, compiles but owns no file (`lint.no_paths`). The owner writes a new Package's Definitions; the implementer writes its registry page with its first patterns, and `check` and `status` still require every file to be accounted for. The implementer maintains every registry page. Patterns say who owns a file; they do not limit what an agent may touch.
 - **Accounting:** owning is not accounting. Every repository file outside `.markitect/` must be listed on its owner's page or be ignored (`file.unregistered`). A file listed on another Package's page (`registry.wrong_owner`), listed twice (`registry.duplicate_entry`), listed and ignored (`registry.ignored_file`), ignored by Git (`registry.git_ignored`) or below `.markitect/` (`registry.own_file`) is an error.
 - **Rows** are the rows of every table whose first header is `File`, with three cells: the file (in backticks or plain), the links to the Definitions it realizes (none is allowed), and a short reason (`registry.table`). A link in the Realizes cell must name a model Definition, not a Package or a Library Kind (`registry.link`). A link label inside a table needs its bar escaped, `[[members/member\|member]]`; an unescaped bar splits the row and is an error (`registry.table`). Other text on the page is free. The front matter holds only `paths` (`registry.front_matter`).
 - **Shared files** such as the README, a CI pipeline or a compose file are owned by the lowest common parent of the Packages they serve, often Root, and their entry links every Definition they realize.
 
 ### Stale realization
 
-When the owner deletes a Definition, a file or a Package, the registry still names it. That is stale realization, an error that says spec and code do not match yet, so the work does not stop on it and `gate` refuses until it is settled:
+When the owner deletes a Definition, a file or a Package, the registry still names it. That is stale realization, an error that says spec and code do not match yet, so the work does not stop on it, and `status` lists it until it is settled:
 
 | Code | What |
 |---|---|
@@ -132,7 +133,7 @@ When the owner deletes a Definition, a file or a Package, the registry still nam
 
 `check` fails on each, in its group of errors in the realization, as it does on a file the registry does not list and on a Definition nothing links to and no file realizes (`definition.unused`). `check --spec` looks only at the spec itself.
 
-A project with nothing built yet passes: when the registry lists no file and the only errors are `definition.unused`, `check` says that the spec compiles and nothing is built yet, and exits 0. A file in the project folder, or anything registered, ends that. `--json` then carries `"nothingBuilt": true`. This holds for `check` only: `gate` still refuses a Definition nothing realizes.
+A project with nothing built yet passes: when the registry lists no file and the only errors are `definition.unused`, `check` says that the spec compiles and nothing is built yet, and exits 0. A file in the project folder, or anything registered, ends that. `--json` then carries `"nothingBuilt": true`. This holds for `check` only: `status` still lists a Definition nothing realizes.
 
 ### Ignore file
 
@@ -148,11 +149,11 @@ Its patterns are the registry's, not Git's: they start at the top of the project
 
 It can't merge with `.gitignore`, because the two answer different questions: `.gitignore` says what Git does not track, and this file says what Git tracks and no Package owns. A file Git ignores needs no line here.
 
-The tool accounts for what `init` installs by itself: `AGENTS.md`, `CLAUDE.md`, `.claude/settings.json`, the `markitect-*` skills and agents, and `.gitignore`. They need no line here and no registry entry, though a registry page may list them. The work may not change any of them, `.gitignore` included.
+The tool accounts for what `init` installs by itself: `AGENTS.md`, `CLAUDE.md`, `.claude/settings.json`, the `markitect-*` skills and agents, and `.gitignore`. They need no line here and no registry entry, though a registry page may list them. The ignore file lies under `.markitect/`, so no subagent may change it ([the hook](../../internal/run/README.md#the-hook)); a file it lists is no input of any Definition.
 
 ### Model
 
-`.markitect/manifest.yaml` may also name the `model` the builder and reviewer use, and `checklist --start` and `gate` then say to start them on it. Without it they use `sonnet`, as their agent files say, at effort `high`.
+`.markitect/manifest.yaml` may also name the `model` of the builder and reviewer agents; `init` and `update` write it into their agent files. Without it they use `sonnet`, as their agent files say, at effort `high`.
 
 ```yaml
 libraries:
@@ -162,64 +163,31 @@ model: opus
 
 ## Commands
 
-All commands take `--repo DIR`, a folder of the project (default: the current folder). Every command except `init`, `lock`, `update` and `version` takes `--json` and then prints JSON instead of Markdown. Exit code 0 means success, 1 that the command ran and found errors, 2 that it could not run.
+All commands take `--repo DIR`, a folder of the project (default: the current folder). `check`, `refs`, `graph` and `lint` take `--json` and then print JSON instead of Markdown. Exit code 0 means success, 1 that the command ran and found something, 2 that it could not run.
 
 | Command | Does |
 |---|---|
 | `markitect install` | Writes the personal skill `~/.claude/skills/markitect/SKILL.md` from the binary, and says where. It tells Claude Code what Markitect is in any folder, how to begin and how to upgrade, and allows no command in advance. Optional: `init` gives a project its own skills. After an upgrade, `update` refreshes it. It takes no `--repo`. |
-| `markitect update [--check] [--files] [--force]` | Installs the newest release over the binary (checked against the release's checksums; not a binary the plugin manages, and a development build only with `--force`; without a network it says so and goes on), then lets the new binary bring what an earlier build wrote in line with it; `--files` skips the binary. That is: the personal skill if it exists, and in a project the skills in `.claude/skills/` and `.agents/skills/`, the builder and reviewer agents and the hook on `answer` and `checklist`, and the lock, whose change the owner reads before committing it. It commits nothing. Compares without regard to line endings. Never changes a model file, `AGENTS.md` or `CLAUDE.md`, and does not create the personal skill. `--check` changes nothing, lists what is out of date and exits 1 if anything is. Outside a project it refreshes the personal skill only. |
+| `markitect update [--check] [--files] [--force]` | Installs the newest release over the binary (checked against the release's checksums; not a binary the plugin manages, and a development build only with `--force`; without a network it says so and goes on), then lets the new binary bring what an earlier build wrote in line with it; `--files` skips the binary. That is: the personal skill if it exists, and in a project the skills in `.claude/skills/` and `.agents/skills/`, the builder and reviewer agents, the hooks, `.markitect/.gitattributes` and the lock, whose change the owner reads before committing it. A project with certificates of 0.20.0 gets its record from the newest one, and the results folder goes ([the migration](../../internal/run/README.md#the-migration)). It commits nothing. Compares without regard to line endings. Never changes a model file, `AGENTS.md` or `CLAUDE.md`, and does not create the personal skill. `--check` changes nothing, lists what is out of date and exits 1 if anything is. Outside a project it refreshes the personal skill only. |
 | `markitect version` | Prints the build, then whether the personal skill and the project in `--repo` are up to date, out of date or (the personal skill) not installed. Changes nothing. |
-| `markitect init [--name TITLE]` | Writes what is missing: the manifest with `std`, the project anchor `model/project.md` if the model folder is empty, Root's registry page, the lock, `AGENTS.md` and a `CLAUDE.md` that imports it. Installs or updates the skills in `.claude/skills/` and `.agents/skills/`, and the harness: the builder and reviewer agents and the hook on `answer` and `checklist` in `.claude/settings.json`. In a folder of a project it works on that project. It makes no repository and commits nothing, and prints what Markitect is, with a tip when the personal skill is missing or old. Never changes an existing model file, `AGENTS.md` or `CLAUDE.md`, and never writes to the home folder. |
+| `markitect init [--name TITLE]` | Writes what is missing: the manifest with `std`, the project anchor `model/project.md` if the model folder is empty, Root's registry page, the lock, `AGENTS.md` and a `CLAUDE.md` that imports it. Installs or updates the skills in `.claude/skills/` and `.agents/skills/`, the harness (the build and review skills, the builder and reviewer agents, and the hooks in `.claude/settings.json`) and `.markitect/.gitattributes`. In a folder of a project it works on that project. It makes no repository and commits nothing, and prints what Markitect is, with a tip when the personal skill is missing or old. Never changes an existing model file, `AGENTS.md` or `CLAUDE.md`, and never writes to the home folder. |
 | `markitect check [--spec]` | Compiles the project and prints every error, one per line as `file:line: code: message`, the spec's apart from the realization's. Errors only; exit 1 when there is one, and exit 0 with a plain sentence when [nothing is built yet](#the-realization-record). `--spec` looks only at the spec. |
 | `markitect lock` | Writes the lock from the manifest and the Libraries it names. |
 | `markitect refs TARGET` | Who links to a Definition or Package: Definitions by link or as their Kind, and the registry entries that realize it. |
 | `markitect graph` | The Package dependency graph as a Mermaid diagram, with each Package's coupling and the links behind each edge. |
-| `markitect impact [--base CERTIFICATE] [--full] [--findings FILE]` | What the change from the base certificate, by default the newest under `.markitect/results/`, to the folder reaches: Definitions with distance and reason, files with their owners. Names the base in full. Refuses a spec with errors, and a project with no certificate. |
 | `markitect lint` | Warnings only, and the coupling table. |
 
 `refs`, `graph` and `lint` also run over a spec with errors and say so on standard error.
 
-The work is for whoever drives the agents, by default the `/markitect-apply` and `/markitect-verify` skills ([DEC-096](../concepts/register.md#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](../concepts/register.md#dec-097-markitect-uses-no-git), [project workflow](project-workflow.md#7-apply-and-verify)). It keeps its state in the user's cache folder. [The work](../../internal/run/README.md) has the details.
+Two commands work on the record of what was verified, `.markitect/review.sum` ([DEC-099](../concepts/register.md#dec-099-markitect-is-a-tool-with-a-verification-cache)). The `/markitect-build` and `/markitect-review` skills have the agents run them ([project workflow](project-workflow.md#7-build-and-review)). [The record](../../internal/run/README.md) has the inputs and the rules.
 
 | Command | Does |
 |---|---|
-| `markitect checklist [--base CERTIFICATE] [--full] [--findings FILE] [--review] [--start]` | Begins or goes on with the work, and prints the builder's task and the list of the change from the newest certificate, or the one `--base` names, to the folder, with what each changed Definition said before, and what the last review found wrong; with no certificate, every Definition. `--review` prints what a review must still answer for the files as they are. `--start` prints instead the step of the session that drives the work, the builder or with `--review` the reviewer to start, and always exits 0; the skills call it. Otherwise exit 1 when the spec has errors. |
-| `markitect answer [FILE]` | Stores a reviewer's answers; each pointer must be a file of the folder. An answer stands until the files its item names or the files it points to change. Exit 0 when every item has an answer. In an agent session, only the reviewer agent may run it (the hook on `answer` and `checklist`). |
-| `markitect gate` | Checks the work and prints the one next step: exit 1. When it passes, writes a certificate (the hashes of every file and Definition, and the spec's text) and its Result under `.markitect/results/`, and exits 0. It commits nothing: the driver commits the work together with both. |
-| `markitect gate --verify` | Checks that the folder matches its newest certificate, and names the files that do not. |
-| `markitect gate --findings` | Closes a review of finished work: writes its Result and its Findings page under `.markitect/results/`, and no certificate. |
-| `markitect gate --spec-problem WHY` | The builder reports that the spec contradicts itself or leaves open behaviour at the project's boundary. A reviewer confirms it before the owner hears of it, and it uses no repair round ([the builder's report](../../internal/run/README.md#gate)). |
-| `markitect status` | Says how the answers stand for the files as they are, and which files differ from the newest certificate. Changes nothing. |
+| `markitect status [--all]` | Lists what is to verify: each Definition with a changed input or no record, with what changed, where to look and its fingerprint; each Definition recorded `fail` or `spec-problem`; each Definition gone from the spec, with the files that realized it; conflicts after a merge; and the errors in the realization. A `skip` is a note. Exit 0 when it lists nothing, 1 when it lists something; a spec with errors has no list. `--all` lists every Definition. Changes nothing. |
+| `markitect mark DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]... [-m WHY]` | Records `ok`, `fail`, `skip` or `spec-problem` at the state `status` printed, which prints each item as `DEFINITION@FINGERPRINT`. `ok` names its evidence with `-e`, files of the folder as `path` or `path:line`; the others say why with `-m`. Refuses, and records nothing, when the inputs changed since the fingerprint or evidence does not exist. In an agent session, only the reviewer agent may run it (the hook). |
+| `markitect hook pretool` | The hook before a tool call: only the reviewer records, and no subagent writes under `.markitect/` except the registry pages. Hooks only. |
 
-
-### Impact and checklists
-
-`impact` compares the model and the files a certificate holds with the folder: the certificate keeps the hash of every file and the text of the spec.
-
-- **Changed Definitions** are the model's and the Libraries' Definitions that were added, modified or removed.
-- **Reached Definitions** are the model Definitions that changed (distance 0), that link to or are of a Definition that changed (distance 1), that a changed file realizes in the base's or the current registry (distance 0), or that a registry row gained or lost, whether or not its file changed (distance 0). Each comes with its reasons.
-- **Further Definitions** link to a reached Definition at more steps. Each comes with its distance and reason, and they are on no checklist: the default strategy stops at one step.
-- **Reached files** are the changed files and the files that realize a reached Definition, each with its owner.
-
-`checklist` makes one list from this ([the work](../../internal/run/README.md#the-work-under-way)): every reached Definition once, every deleted Definition, every Finding, every stale registry entry, every unused Definition and every file the registry does not list, each with the files the registry names for it. With `--full` every model Definition is reached.
-
-`impact` also prints the Packages with a checklist item or a reached file, and their parents up to Root, with a list for each: its own Definitions, the inherited ones (Definitions of the Packages above it that the change itself changed), the Findings whose Definition it holds and its stale entries. The work does not use this split.
-
-### Findings
-
-A Finding names a Definition and says what was observed and what is expected. A Findings page holds one Finding per level-2 heading; the heading holds exactly one link, and the paragraphs below start with `Observed:` and `Expected:` (`findings.syntax`):
-
-```markdown
-# Findings
-
-## [[members/member]]
-
-Observed: a member with three open loans could borrow a fourth.
-
-Expected: the loan limit of [[policy]] refuses it with `limit_reached`.
-```
-
-A Finding whose Definition no longer exists becomes a side note of the impact.
+`markitect checklist`, `answer` and `gate` went in 0.21.0. For one release they print on standard output, with exit 0, that they are gone and to run `markitect update`.
 
 ### Lint warnings
 
@@ -231,7 +199,7 @@ A Finding whose Definition no longer exists becomes a side note of the impact.
 | `lint.unstable_dependency` | a Package depends on a less stable one: instability Ce / (Ca + Ce) of the target is higher |
 | `lint.definition_size` | a Definition's body has more than 1000 words |
 | `lint.package_size` | a Package has more than 25 Definitions of its own |
-| `lint.reach` | a change to a Definition outside Root would give more than half of the Packages a checklist item or a reached file, in a model of at least 6 Packages |
+| `lint.reach` | a change to a Definition outside Root would reach more than half of the Packages: its own and those below it, those of the Definitions that link to it, and the owners of the files that realize these, in a model of at least 6 Packages |
 | `lint.thin_package` | a Package has no Definitions of its own and only one child |
 | `lint.no_paths` | a Package other than Root claims no path pattern, as above |
 
@@ -245,7 +213,7 @@ Details the concept leaves open, settled while building T1:
 - **Library links.** A path whose first name is a Library is a Library link, so no top-level model name may equal a Library's name.
 - **Local Library versions.** A local Library carries no version file; the manifest names its version and the lock pins its digest.
 - **Specificity.** An exact path beats every pattern; otherwise more literal characters win; a tie between Packages is an error.
-- **Stale realization** and unused Definitions are errors of the realization: they stop `check` and `gate`, not `checklist` ([concept 4.0](../concepts/v4-concept.md#what-check-refuses)). A file of the project folder without any entry is the same. Concept 4.0 overturns the owner's earlier confirmation of 28 October 2026 ([§15](../concepts/v4-concept.md#15-what-this-overturns)).
-- **Inherited items** in the per-Package lists are only Definitions above that the change itself changed, not those reached through a file or a link; otherwise a README edit at Root would put an item on every Package's list. Confirmed by the owner on 28 October 2026.
-- **How far impact follows.** The checklist takes one step of links, and the registry in both directions; Definitions at more steps are reported with their distance. The code's own imports are not followed yet; a later step that knows the realization's languages can widen reach.
-- **Skills** are installed into `.claude/skills/` (Claude Code) and `.agents/skills/` (the Agent Skills folder that Codex and other agents read). The harness of the work, the apply and verify skills and the builder and reviewer agents, goes into `.claude/` only.
+- **Stale realization** and unused Definitions are errors of the realization: they stop `check`, and `status` lists them, but they do not stop its list of Definitions ([concept 4.0](../concepts/v4-concept.md#what-check-refuses)). A file of the project folder without any entry is the same. Concept 4.0 overturns the owner's earlier confirmation of 28 October 2026 ([§15](../concepts/v4-concept.md#15-what-this-overturns)).
+- **No inherited items.** A changed Rule above a Package is one item, with what links to it, not an item on every Package's list below it, as the owner confirmed on 28 October 2026 for the checklist. The per-Package lists went with the checklist ([DEC-099](../concepts/register.md#dec-099-markitect-is-a-tool-with-a-verification-cache)).
+- **How far a change reaches.** A Definition's inputs take one step of links, its Kind, and the registry rows in both directions, so a row that gains or loses it reaches it; Definitions further along the links are not inputs. The code's own imports are not followed yet; a later step that knows the realization's languages can widen reach.
+- **Skills** are installed into `.claude/skills/` (Claude Code) and `.agents/skills/` (the Agent Skills folder that Codex and other agents read). The harness of the work, the build and review skills and the builder and reviewer agents, goes into `.claude/` only.
