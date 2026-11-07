@@ -149,11 +149,11 @@ Its patterns are the registry's, not Git's: they start at the top of the project
 
 It can't merge with `.gitignore`, because the two answer different questions: `.gitignore` says what Git does not track, and this file says what Git tracks and no Package owns. A file Git ignores needs no line here.
 
-The tool accounts for what `init` installs by itself: `AGENTS.md`, `CLAUDE.md`, `.claude/settings.json`, the `markitect-*` skills and agents, and `.gitignore`. They need no line here and no registry entry, though a registry page may list them. The ignore file lies under `.markitect/`, so no subagent may change it ([the hook](../../internal/run/README.md#the-hook)); a file it lists is no input of any Definition.
+The tool accounts for what `init` installs by itself: `AGENTS.md`, `CLAUDE.md`, `.claude/settings.json`, the `markitect-*` skills and agents, and `.gitignore`, and for the worktrees Claude Code keeps under `.claude/worktrees/`. They need no line here and no registry entry, though a registry page may list them. The ignore file lies under `.markitect/`, so no subagent but the architect may change it ([the hook](../../internal/run/README.md#the-hook)); a file it lists is no input of any Definition.
 
 ### Model
 
-`.markitect/manifest.yaml` may also name the `model` of the builder and reviewer agents; `init` and `update` write it into their agent files. Without it they use `sonnet`, as their agent files say, at effort `high`.
+`.markitect/manifest.yaml` may also name the `model` of Markitect's agents; `init` and `update` write it into their agent files. Without it they use `sonnet`, as their agent files say, at effort `high`.
 
 ```yaml
 libraries:
@@ -239,4 +239,4 @@ Details the concept leaves open, settled while building T1:
 - **Stale realization** and unused Definitions are errors of the realization: they stop `check`, and `status` lists them, but they do not stop its list of Definitions ([concept 4.0](../concepts/v4-concept.md#what-check-refuses)). A file of the project folder without any entry is the same. Concept 4.0 overturns the owner's earlier confirmation of 28 October 2026 ([§15](../concepts/v4-concept.md#15-what-this-overturns)).
 - **No inherited items.** A changed Rule above a Package is one item, with what links to it, not an item on every Package's list below it, as the owner confirmed on 28 October 2026 for the checklist. The per-Package lists went with the checklist ([DEC-099](../concepts/register.md#dec-099-markitect-is-a-tool-with-a-verification-cache)).
 - **How far a change reaches.** A Definition's inputs take one step of links, its Kind, and the registry rows in both directions, so a row that gains or loses it reaches it; Definitions further along the links are not inputs. The code's own imports are not followed yet; a later step that knows the realization's languages can widen reach.
-- **Skills** are installed into `.claude/skills/` (Claude Code) and `.agents/skills/` (the Agent Skills folder that Codex and other agents read). The harness of the work, the build and review skills and the builder and reviewer agents, goes into `.claude/` only.
+- **Skills** are installed into `.claude/skills/` (Claude Code) and `.agents/skills/` (the Agent Skills folder that Codex and other agents read): the design skill, `markitect-design`. The harness of the work, the build, review, cleanup, bughunt, audit and schedule skills and the builder, reviewer, architect and auditor agents, goes into `.claude/` only ([DEC-100](../concepts/register.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role)).

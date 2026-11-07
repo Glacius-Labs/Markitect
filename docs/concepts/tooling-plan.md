@@ -1,12 +1,12 @@
 # Plan: Markitect as a tool, with a verification cache
 
-**Status:** decided by the owner on 7 November 2026 ([DEC-099](register.md#dec-099-markitect-is-a-tool-with-a-verification-cache)), after a discussion of how they work with Markitect. An independent architect reviewed this page against the code. Steps 1 and 2 of the [order of work](#order-of-work) are built. Step 1 was released as 0.21.0 ([the record](../../internal/run/README.md)); step 2 is on Main for the next release; step 3 is next.
+**Status:** decided by the owner on 7 November 2026 ([DEC-099](register.md#dec-099-markitect-is-a-tool-with-a-verification-cache)), after a discussion of how they work with Markitect. An independent architect reviewed this page against the code. Steps 1 and 2 of the [order of work](#order-of-work) are built. Step 1 was released as 0.21.0 ([the record](../../internal/run/README.md)); step 2 was released as 0.22.0, with the skills, roles and routines the owner decided the same day ([DEC-100](register.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role), [below](#skills-roles-and-routines)); step 3 is next.
 
 The owner decided:
 - Markitect supports agent work and does not steer it;
 - a record of what was verified is kept, modelled on Go's test cache;
 - the command names follow Go and widely known tools;
-- the work needs no limit on rounds.
+- the work needs no limit on rounds; with DEC-100 a loop stops when the list has not got shorter for three rounds.
 
 An earlier version proposed a command line like Terraform's, in which the tool steered the work through phases. This version replaces it, and reuses its parts on output and exit codes. It builds on [concept 4.0](v4-concept.md) ([DEC-098](register.md#dec-098-concept-40-is-the-target)) and on DEC-096 and DEC-097 ([lean plan](lean-tool-plan.md)). It replaces their `gate`, their work state and their default driver's steps.
 
@@ -104,25 +104,69 @@ An explanation stays on one line, and hashes are full SHA-256.
 
 **What remains of `gate`:** `check` still fails on a project that does not compile, and `status` lists the realization's errors. So an empty `status` means two things: the project compiles, and every Definition is verified at its current inputs.
 
-## Skills, agents and the hook
+## Skills, roles and routines
 
-| Skill | Agent | Tells the agents |
+Decided by the owner on 7 November 2026 ([DEC-100](register.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role)), and built for 0.22.0. Skills are named after the activity, agents after the role. The skills are prompts that name which agent starts and on what task; the agents hold their tasks and the verdict words in their own files, which outlive compaction.
+
+| Skill | Who may start it | Agent | Does |
+|---|---|---|---|
+| `markitect-design` | The owner or Claude | The session itself; `markitect-architect` for a delegated draft | Designs the spec with the owner. It sees whether the folder is an empty project, code without a spec or an existing spec, and starts the spec, draws it from the code or changes it. `reference.md` and `examples.md` lie beside it. It replaces `markitect-start`, `markitect-extract` and `markitect-modeling` |
+| `/markitect-build` | The owner | `markitect-builder`, in a worktree of its own, which starts `markitect-reviewer` | The builder makes the project match the spec for what `status` lists and has the reviewer verify and record each item, until the list is empty. Then the session commits the work and merges it into the owner's branch |
+| `/markitect-review` | The owner or Claude | `markitect-reviewer`; one per Package above about 30 items | Verifies what `status` lists, or every Definition with `--all`, and records each verdict. The session commits the record |
+| `/markitect-cleanup` | The owner | `markitect-builder`, in a worktree of its own | The builder refactors without changing behaviour; the reviewer verifies again what `status` lists. It comes back when it leaves nothing worse |
+| `/markitect-bughunt` | The owner | `markitect-builder`, in a worktree of its own | The reviewer hunts beyond the list and records each bug as `fail`, or as `spec-problem` where the spec does not cover it; the builder repairs; the reviewer verifies again. It comes back when it leaves nothing worse |
+| `/markitect-audit` | The owner or Claude | `markitect-auditor` | Reads the spec fresh for contradictions, gaps, unclear and duplicated statements, and reports to the owner. Nothing is recorded |
+| `/markitect-schedule` | The owner | none | Sets up routines through Claude Code's own scheduling ([below](#routines)) |
+
+`disable-model-invocation` keeps Claude from starting a skill that only the owner starts. `markitect-design` is installed for Claude Code and for other agents (`.claude/skills/` and `.agents/skills/`); the rest is the harness for Claude Code.
+
+### The roles
+
+Four roles in a 2×2 of rights: one writes code and one judges it, one writes the spec and one judges it.
+
+| | Writes | Judges |
 |---|---|---|
-| `/markitect-build` | `markitect-builder`, which starts `markitect-reviewer` as its own subagent | Start the builder. It runs `markitect status`, makes the project match the spec for what it lists, then starts the reviewer, which verifies each item and records it with `markitect mark`. It repeats until `status` is empty or an item needs the owner. Then the session commits the work with `.markitect/review.sum` |
-| `/markitect-review` | `markitect-reviewer` | Verify what `status` lists, or everything with `--all`, and record each verdict. Change no code. Report what failed or is a `spec-problem` |
+| **The code** | `markitect-builder`: code and the registry pages; not the spec, no `mark` | `markitect-reviewer`: changes nothing; the only one who runs `mark` |
+| **The spec** | `markitect-architect`: the spec, the registry pages and the ignore file; no code, no `mark` | `markitect-auditor`: reads only, and reports to the owner |
 
-`/markitect-build` replaces `/markitect-apply`, and `/markitect-review` replaces `/markitect-verify`. So each skill is named after the agent it starts, and `markitect mark` is the reviewer's command.
+The architect is for delegated drafting, such as a first spec drawn from a large code base; it decides nothing the owner leaves open and hands its questions back to the session that started it. The builder may start only the reviewer.
 
-The skills inject no command, so a non-zero exit cannot abort them. The agents run the tool as they need it, and hold their task and the verdict words in their own files, which outlive compaction. Nothing counts rounds; the owner stops the work when it should stop.
+**What an agent notices** goes into the record, `review.sum`, and nowhere else: the builder tells the reviewer what it saw, and the reviewer records a `fail` on the Definition a bug breaks, or a `spec-problem` on the nearest Definition when the spec does not cover it.
+
+**Loops have no limit on rounds,** but the builder stops when three rounds in a row end without the list of `status` getting shorter, and the skill reports what remains. This holds for building and for routines.
+
+**Tests are the project's.** A project that wants tests states them in its spec as an ordinary Rule; the reviewer runs them as evidence; a routine finds them in the spec, the README or the CI configuration. The tool knows nothing of them.
 
 ### The hook
 
-The hook stays, as a guard of the record and the spec, not of the process:
+The hook holds the roles' rights for subagents. The owner's own session is no subagent and stays free to change anything, but it does not record: only the reviewer runs `mark`.
 
-- **Only the reviewer agent may run `markitect mark`,** as only it may run `answer` today. So the agent that built does not verify its own work. In the trials, a separate reviewer caught 17 of 18 planted bugs ([checker test](../validation/k-checker-test-20261103.md)).
-- **No subagent may write or edit under `.markitect/`, except the registry pages, which the builder keeps.** So a builder cannot weaken a Definition during the work or write lines into the record. The owner's own session, where the spec is modelled, is not a subagent and stays free. The builder may start only the reviewer (`Agent(markitect-reviewer)`), so it cannot get past the rule through a general-purpose helper.
+| Subagent | Code | Spec | Registry pages | `review.sum` | `mark` | Starts |
+|---|---|---|---|---|---|---|
+| `markitect-builder` | yes | no | yes | no | no | only `markitect-reviewer` |
+| `markitect-reviewer` | no | no | no | no | yes | nothing |
+| `markitect-architect` | no | yes | yes | no | no | nothing |
+| `markitect-auditor` | no | no | no | no | no | nothing |
+| any other | yes | no | yes | no | no | anything but the builder and the architect |
 
-The hook reads tool calls, so a command hidden in a script, or one that names `markitect` by a path, still gets through. It guards against mistakes, as today, not against intent.
+Code is every file outside `.markitect/`, and the spec every file in it but the registry pages and the record, which only `mark` writes. Any other subagent writes as the builder does, so a general-purpose helper cannot get past the rules, and only the owner's session starts the two roles that write. Claude Code ignores the agent types listed in a subagent's own `tools`, so the hook, not the agent file, holds who starts whom. The hook reads tool calls, so a command hidden in a script, or one that names `markitect` by a path, still gets through. It guards against mistakes, as before, not against intent.
+
+### The builder's worktree
+
+`/markitect-build`, `/markitect-cleanup` and `/markitect-bughunt` start the builder in a worktree of its own, through Claude Code's worktree isolation, so that the owner can go on designing in their folder. A reviewer the builder starts works in the same worktree. Claude Code branches such a worktree from the repository's default branch unless the setting `worktree.baseRef` is `"head"`, so `init` and `update` set it when the project's settings name no base. A worktree holds no uncommitted change, so the skill asks the owner to commit first. The tool accounts for Claude Code's worktrees under `.claude/worktrees/` itself, so a worktree is no unregistered file of the owner's folder.
+
+When the builder ends, the session commits the work on the worktree's branch, `review.sum` included. Build merges it into the owner's branch when `status` is empty there; cleanup and bughunt when it lists nothing that was not listed before. Otherwise the session asks the owner whether to merge it as it stands. It pushes nothing. In a folder that is not a Git repository, the builder works in the folder itself.
+
+### Routines
+
+The routines are cleanup, bughunt and `review --all`, run on a schedule with nobody to answer. `/markitect-schedule` sets them up with the owner through Claude Code's own scheduling: a scheduled task of the desktop app, which runs on the owner's machine, or a cloud routine, which runs on a fresh clone of the repository and needs `markitect` installed there. Markitect schedules nothing itself. Each routine's prompt is a frame, `routine.md`, with the routine's work in it, all files of the skill.
+
+- **A branch of its own.** A run works in a worktree or clone of its own, from the newest commit of the source branch; from the remote's when the branch tracks one, so that nothing unpushed goes out.
+- **Lands only when nothing is worse:** `status` lists no Definition that it does not also list on the source branch as it now stands, and the project's tests pass. If the source branch moved, the run merges it first and has the reviewer verify again what the merge put on the list. It lands as a fast-forward: by a push when the source branch tracks a remote, otherwise by moving the local branch, which Git refuses while it is checked out in a folder.
+- **Otherwise it leaves its branch** and says why.
+- **Each run ends with a short note:** what landed, what is open, which spec-problems wait for the owner.
+
+So a review that records a new `fail` does not land: its branch holds the record, and its note names the item.
 
 ## Output and exit codes
 
@@ -139,12 +183,12 @@ The hook reads tool calls, so a command hidden in a script, or one that names `m
 | A changed file that realizes a Definition is reviewed | Kept |
 | A changed file the ignore file lists is refused (`gate`, row 4) | **Lost.** Ignored files are not tracked |
 | A changed harness or `settings.json` is refused during the work (row 1) | **Lost.** It shows in the diff |
-| The spec does not change during the work | Kept for subagents by the hook. Not prevented for the owner's session or for people: a changed Definition goes back on the list, and the change shows in the diff |
+| The spec does not change during the work | Kept for subagents by the hook: only the architect, which only the owner's session starts, writes the spec. Not prevented for the owner's session or for people: a changed Definition goes back on the list, and the change shows in the diff |
 | Only a reviewer records verdicts | Kept by the hook |
 | The project compiles | Kept: `check`, and `status` lists the realization's errors |
 | A gone Definition's files are dealt with | Kept: it stays on the list, marked gone |
 | What a changed Definition said before | **Lost** from the tool; an agent reads it from Git |
-| The work has a limit | None, by the owner's decision |
+| The work has a limit | No limit on rounds, by the owner's decision; a loop stops when the list has not got shorter for three rounds ([DEC-100](register.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role)) |
 | A record of what was checked | Kept, per Definition, with its evidence |
 
 What it gains:
@@ -162,7 +206,7 @@ Decided by the owner on 7 November 2026 ([DEC-099](register.md#dec-099-markitect
 2. **The inputs** are the Definition's text, its Kind and the Definitions it links to (a Library one by its digest), its registry rows with their files, and the evidence files. `mark DEFINITION@FINGERPRINT` binds a verdict to what was read.
 3. **The record** is `.markitect/review.sum`: one sorted JSON line per Definition with the verdict, the inputs' hashes, the evidence and the reason. It merges with `merge=union`.
 4. **The hook** lets only the reviewer record, and lets no subagent write under `.markitect/` except the registry pages.
-5. **The names:** `check`, `vet`, `list`, `doc`, `status`, `mark` and `tidy` ([refined below](#refined-after-the-plan-was-merged)); the verdicts `ok`, `fail`, `skip` and `spec-problem`; the skills `/markitect-build` and `/markitect-review`.
+5. **The names:** `check`, `vet`, `list`, `doc`, `status`, `mark` and `tidy` ([refined below](#refined-after-the-plan-was-merged)); the verdicts `ok`, `fail`, `skip` and `spec-problem`; the skills `/markitect-build` and `/markitect-review`, joined by DEC-100's others ([below](#skills-roles-and-routines)).
 6. **Output and exit codes as Go's tools have them**, with `vet` exiting 1 only with `--strict`.
 7. **Migration.** `update` writes the record from the newest certificate. It computes each Definition's inputs from the spec and file hashes that the certificate holds, and records every Definition as `ok` at that state, with the certificate's pointers where it has them. A `not shown` answer becomes `skip`. For one release, `checklist`, `answer` and `gate` remain as stubs that say to run `markitect update`, so an old project's skill does not fail silently.
 

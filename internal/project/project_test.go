@@ -243,11 +243,11 @@ func TestOldFilesAreRefused(t *testing.T) {
 	}
 }
 
-// What init installs, and Git's ignore file, need no registry entry; a page may
-// still list them.
+// What init installs, Git's ignore file and Claude Code's worktrees, such as a
+// builder's, need no registry entry; a page may still list them.
 func TestTheToolAccountsForItsOwnFiles(t *testing.T) {
 	r := valid(t)
-	for _, f := range []string{".gitignore", "AGENTS.md", "CLAUDE.md", ".claude/agents/markitect-reviewer.md", ".claude/skills/markitect-start/SKILL.md", ".agents/skills/markitect-start/SKILL.md"} {
+	for _, f := range []string{".gitignore", "AGENTS.md", "CLAUDE.md", ".claude/agents/markitect-architect.md", ".claude/skills/markitect-design/SKILL.md", ".agents/skills/markitect-design/SKILL.md", ".claude/worktrees/agent-a1", ".claude/worktrees/routine/src/fees.go"} {
 		r.files[f] = "x\n"
 	}
 	r.files[RootPage] += "| .gitignore | [[project]] | Listed by the owner |\n"

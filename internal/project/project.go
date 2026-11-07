@@ -62,9 +62,16 @@ func IsHarness(file string) bool {
 	return false
 }
 
+// WorktreeDir is where Claude Code keeps the worktrees it makes of a project, as
+// for a builder that works in a worktree of its own (DEC-100). Each is another
+// checkout, not a file of the project.
+const WorktreeDir = ".claude/worktrees/"
+
 // isOwn says whether the tool accounts for a file itself, as it does for its own
-// folder: what init installs, and Git's ignore file.
-func isOwn(file string) bool { return IsHarness(file) || file == ".gitignore" }
+// folder: what init installs, Git's ignore file, and Claude Code's worktrees.
+func isOwn(file string) bool {
+	return IsHarness(file) || file == ".gitignore" || strings.HasPrefix(strings.ToLower(file), WorktreeDir)
+}
 
 // Repository is one set of a project's files: the project folder, or a copy of its
 // spec.

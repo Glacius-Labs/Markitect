@@ -339,8 +339,10 @@ func TestStartHookFetchesOnlyForAMarkitectProject(t *testing.T) {
 
 // Each guard hook starts the launcher, and with it a download, only for a call it
 // guards: the one before shell commands for markitect mark, the one before
-// writing tools for a subagent's write under .markitect. Claude Code's own filter
-// is not relied on: a hook was seen to start for commands that did not match it.
+// writing tools for a subagent's write under .markitect or by a role that may not
+// write code, and the one before agent tools for a subagent's start that names a
+// Markitect agent. Claude Code's own filter is not relied on: a hook was seen to
+// start for commands that did not match it.
 func TestGuardHooksStartTheLauncherOnlyForTheirCalls(t *testing.T) {
 	srv := httptest.NewServer(http.NotFoundHandler())
 	unreachable := srv.URL
@@ -350,21 +352,30 @@ func TestGuardHooksStartTheLauncherOnlyForTheirCalls(t *testing.T) {
 	shell := func(command string) string {
 		return `{"agent_id":"a1","agent_type":"markitect-builder","tool_name":"Bash","tool_input":{"command":"` + command + `"}}`
 	}
-	edit := func(agent, file string) string {
-		id := ""
-		if agent != "" {
-			id = `"agent_id":"` + agent + `",`
+	subagent := func(agent string) string {
+		if agent == "" {
+			return ""
 		}
-		return `{` + id + `"tool_name":"Edit","tool_input":{"file_path":"` + file + `"}}`
+		return `"agent_id":"a1","agent_type":"` + agent + `",`
+	}
+	edit := func(agent, file string) string {
+		return `{` + subagent(agent) + `"tool_name":"Edit","tool_input":{"file_path":"` + file + `"}}`
+	}
+	start := func(agent, start string) string {
+		return `{` + subagent(agent) + `"tool_name":"Agent","tool_input":{"subagent_type":"` + start + `","prompt":"go"}}`
 	}
 	cases := []struct{ others, guarded []string }{
 		{
-			others:  []string{shell("ls -la && git status"), shell("markitect status"), edit("a1", "/p/.markitect/model/x.md")},
+			others:  []string{shell("ls -la && git status"), shell("markitect status"), edit("markitect-builder", "/p/.markitect/model/x.md")},
 			guarded: []string{shell("markitect mark fees/fee@0a1b2c ok -e src/fees.go"), shell("markitect.exe mark fees/fee@0a1b2c ok"), shell("cd . && MARKITECT  mark x@0a1b2c ok")},
 		},
 		{
-			others:  []string{edit("", "/p/.markitect/model/x.md"), edit("a1", "/p/src/fees.go"), shell("markitect mark x@0a1b2c ok")},
-			guarded: []string{edit("a1", "/p/.markitect/model/x.md"), edit("a1", `C:\\p\\.markitect\\review.sum`), edit("a1", `C:\\p\\.MARKITECT\\review.sum`)},
+			others:  []string{edit("", "/p/.markitect/model/x.md"), edit("markitect-builder", "/p/src/fees.go"), edit("general-purpose", "/p/src/fees.go"), shell("markitect mark x@0a1b2c ok")},
+			guarded: []string{edit("markitect-builder", "/p/.markitect/model/x.md"), edit("general-purpose", `C:\\p\\.markitect\\review.sum`), edit("markitect-builder", `C:\\p\\.MARKITECT\\review.sum`), edit("markitect-architect", "/p/src/fees.go"), edit("markitect-auditor", "/p/notes.md")},
+		},
+		{
+			others:  []string{start("", "markitect-builder"), start("general-purpose", "Explore"), start("general-purpose", "")},
+			guarded: []string{start("markitect-builder", "general-purpose"), start("markitect-builder", "markitect-reviewer"), start("general-purpose", "markitect-architect")},
 		},
 	}
 	if len(commands) != len(cases) {

@@ -87,7 +87,7 @@ func TestUpdateBringsAProjectInLine(t *testing.T) {
 	wantAll(t, out, "project: updated 4 files:", "Markitect uses no Git: commit them when you like.")
 	noRepository(t, r.Dir)
 	settings := read(t, r.Dir, ".claude/settings.json")
-	wantAll(t, settings, "Bash(go test *)", "my-own-check", "Bash(markitect mark*)", "Edit|Write|MultiEdit|NotebookEdit")
+	wantAll(t, settings, "Bash(go test *)", "my-own-check", "Bash(markitect mark*)", "Edit|Write|MultiEdit|NotebookEdit", "Agent|Task", `"baseRef": "head"`)
 	if strings.Contains(settings, "Bash(markitect answer*)") {
 		t.Fatalf("the older hook was not replaced:\n%s", settings)
 	}

@@ -76,7 +76,7 @@ func (c CLI) refreshHarness(ws Workspace, dry bool) ([]string, error) {
 	if err := installHarness(r); err != nil {
 		return nil, err
 	}
-	if err := quiet.ensureGuard(r); err != nil {
+	if err := quiet.ensureSettings(r); err != nil {
 		return nil, err
 	}
 	if err := installAttributes(r); err != nil {

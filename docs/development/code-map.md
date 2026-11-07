@@ -49,7 +49,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | Package | Summary | Owning document |
 |---|---|---|
 | `internal/libraries` | Package libraries holds the standard Libraries that ship inside the markitect binary: std, rest and cli, each a folder of Kind Definitions. | [docs/guides/model-language.md#kinds-and-libraries](../guides/model-language.md#kinds-and-libraries) |
-| `internal/skills` | Package skills holds what ships inside the markitect binary for agents: the modeling skill, the start and Extract skills built on it, which markitect init installs where coding agents look for skills, and the harness of the work for Claude Code. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
+| `internal/skills` | Package skills holds what ships inside the markitect binary for agents: the design skill, which markitect init installs where coding agents look for skills, and the harness of the work for Claude Code: its skills, its four agents and the prompts of its routines (DEC-100). | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
 
 ## Realization record
 

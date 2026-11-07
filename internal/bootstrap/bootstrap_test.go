@@ -56,12 +56,12 @@ func TestCommandsEndToEnd(t *testing.T) {
 
 	out := mustRun(t, r.Dir, "init", "--name", "Lending library")
 	noRepository(t, r.Dir)
-	for _, want := range []string{"created .markitect/manifest.yaml", "created .markitect/model/project.md", "wrote .markitect/lock.yaml: std 1.0.0", "installed the skills markitect-extract, markitect-modeling, markitect-start"} {
+	for _, want := range []string{"created .markitect/manifest.yaml", "created .markitect/model/project.md", "wrote .markitect/lock.yaml: std 1.0.0", "installed the skills markitect-design"} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("init output lacks %q:\n%s", want, out)
 		}
 	}
-	if !strings.Contains(read(t, r.Dir, ".claude/skills/markitect-modeling/SKILL.md"), "markitect-modeling") || !strings.Contains(read(t, r.Dir, ".agents/skills/markitect-extract/SKILL.md"), "markitect-extract") {
+	if !strings.Contains(read(t, r.Dir, ".claude/skills/markitect-design/SKILL.md"), "markitect-design") || !strings.Contains(read(t, r.Dir, ".agents/skills/markitect-design/reference.md"), "model form") {
 		t.Fatal("skills not installed")
 	}
 	if !strings.Contains(read(t, r.Dir, ".markitect/model/project.md"), "# Lending library") {
@@ -289,7 +289,7 @@ func TestInstallWritesThePersonalSkill(t *testing.T) {
 		t.Fatal(err)
 	}
 	skill := string(data)
-	for _, want := range []string{"name: markitect\n", "A Markitect project has one spec", "no need to look for it", "markitect-start", "markitect-extract", "/reload-skills", "markitect update", "claude plugin marketplace add Glacius-Labs/Claude-Plugins", "claude plugin install markitect@glacius-labs", "github.com/Glacius-Labs/Markitect/releases"} {
+	for _, want := range []string{"name: markitect\n", "A Markitect project has one spec", "no need to look for it", "markitect-design", "/reload-skills", "markitect update", "claude plugin marketplace add Glacius-Labs/Claude-Plugins", "claude plugin install markitect@glacius-labs", "github.com/Glacius-Labs/Markitect/releases"} {
 		if !strings.Contains(skill, want) {
 			t.Errorf("the skill lacks %q:\n%s", want, skill)
 		}
@@ -319,8 +319,24 @@ func TestInitKeepsTheProjectsSettings(t *testing.T) {
 	mustRun(t, r.Dir, "init")
 	settings := read(t, r.Dir, ".claude/settings.json")
 	if !strings.Contains(settings, "Bash(go test *)") || !strings.Contains(settings, "12345678901234567890") ||
-		strings.Count(settings, "Bash(markitect mark*)") != 1 || strings.Count(settings, "Edit|Write|MultiEdit|NotebookEdit") != 1 {
+		strings.Count(settings, "Bash(markitect mark*)") != 1 || strings.Count(settings, "Edit|Write|MultiEdit|NotebookEdit") != 1 ||
+		strings.Count(settings, `"Agent|Task"`) != 1 || strings.Count(settings, `"baseRef": "head"`) != 1 {
 		t.Fatalf("settings:\n%s", settings)
+	}
+}
+
+// A base for the worktrees that the owner chose stays, and counts as current.
+func TestInitKeepsTheOwnersWorktreeBase(t *testing.T) {
+	emptyHome(t)
+	r := newFolder(t)
+	r.Write(".claude/settings.json", `{"worktree": {"baseRef": "fresh", "sparsePaths": ["src"]}}`+"\n")
+	out := mustRun(t, r.Dir, "init")
+	settings := read(t, r.Dir, ".claude/settings.json")
+	if strings.Contains(out, "worktree.baseRef") || !strings.Contains(settings, `"baseRef": "fresh"`) || !strings.Contains(settings, "sparsePaths") {
+		t.Fatalf("init said:\n%s\nsettings:\n%s", out, settings)
+	}
+	if out := mustRun(t, r.Dir, "update", "--check", "--files"); !strings.Contains(out, "project: up to date") {
+		t.Fatalf("the owner's base counts as out of date:\n%s", out)
 	}
 }
 
@@ -343,6 +359,7 @@ func TestInitLeavesSettingsItCannotRead(t *testing.T) {
 		"PreToolUse not a list": `{"hooks": {"PreToolUse": "x"}}` + "\n",
 		"null":                  "null\n",
 		"two values":            "{} {}\n",
+		"worktree not a map":    `{"worktree": "x"}` + "\n",
 	} {
 		t.Run(name, func(t *testing.T) {
 			r := newFolder(t)
@@ -386,38 +403,62 @@ func TestInitInstallsTheHarness(t *testing.T) {
 		t.Fatalf("init: %s", out)
 	}
 	noRepository(t, r.Dir)
-	for _, file := range []string{".claude/skills/markitect-build/SKILL.md", ".claude/skills/markitect-review/SKILL.md", ".claude/agents/markitect-reviewer.md", ".claude/agents/markitect-builder.md"} {
-		if read(t, r.Dir, file) == "" {
-			t.Fatalf("%s is empty", file)
-		}
-	}
 	if got := read(t, r.Dir, ".markitect/.gitattributes"); got != "review.sum merge=union\n" {
 		t.Fatalf(".markitect/.gitattributes: %q", got)
 	}
 	// The skills are plain prompts: they inject no command, so no exit code can
-	// abort them.
-	for _, file := range []string{".claude/skills/markitect-build/SKILL.md", ".claude/skills/markitect-review/SKILL.md"} {
-		if strings.Contains(read(t, r.Dir, file), "!`") {
-			t.Fatalf("%s injects a command", file)
+	// abort them. Only the owner starts the work that changes code and the
+	// routines; Claude may start design, review and audit (DEC-100).
+	for skill, ownerOnly := range map[string]bool{"build": true, "cleanup": true, "bughunt": true, "schedule": true, "review": false, "audit": false} {
+		text := read(t, r.Dir, ".claude/skills/markitect-"+skill+"/SKILL.md")
+		if !strings.Contains(text, "name: markitect-"+skill+"\n") || strings.Contains(text, "!`") {
+			t.Fatalf("the %s skill:\n%s", skill, text)
+		}
+		if got := strings.Contains(text, "\ndisable-model-invocation: true\n"); got != ownerOnly {
+			t.Errorf("the %s skill: only the owner starts it = %t, want %t", skill, got, ownerOnly)
 		}
 	}
-	if !strings.Contains(read(t, r.Dir, ".claude/agents/markitect-builder.md"), "tools: Read, Edit, Write, Glob, Grep, Bash, Agent(markitect-reviewer)\n") {
-		t.Fatal("the builder may start more than the reviewer")
+	if strings.Contains(read(t, r.Dir, ".claude/skills/markitect-design/SKILL.md"), "disable-model-invocation") {
+		t.Error("Claude may not start the design skill")
+	}
+	for _, file := range []string{"routine.md", "review.md", "bughunt.md", "cleanup.md"} {
+		if read(t, r.Dir, ".claude/skills/markitect-schedule/"+file) == "" {
+			t.Fatalf("the routine prompt %s is empty", file)
+		}
+	}
+	// Only the builder may start an agent, and its tools name the reviewer; the
+	// hook holds that, since a subagent's tools do not.
+	for agent, tools := range map[string]string{
+		"builder":   "Read, Edit, Write, Glob, Grep, Bash, Agent(markitect-reviewer)",
+		"reviewer":  "Read, Grep, Glob, Bash",
+		"architect": "Read, Edit, Write, Glob, Grep, Bash",
+		"auditor":   "Read, Grep, Glob, Bash",
+	} {
+		if text := read(t, r.Dir, ".claude/agents/markitect-"+agent+".md"); !strings.Contains(text, "\ntools: "+tools+"\n") {
+			t.Fatalf("the %s's tools:\n%s", agent, text)
+		}
 	}
 	var settings struct {
 		Hooks map[string][]struct {
 			Matcher string
 			Hooks   []struct{ Type, If, Command string }
 		}
+		Worktree struct{ BaseRef string }
 	}
 	if err := json.Unmarshal([]byte(read(t, r.Dir, ".claude/settings.json")), &settings); err != nil {
 		t.Fatal(err)
 	}
-	if pre := settings.Hooks["PreToolUse"]; len(pre) != 2 || pre[0].Matcher != "Bash" || len(pre[0].Hooks) != 1 ||
+	if pre := settings.Hooks["PreToolUse"]; len(pre) != 3 || pre[0].Matcher != "Bash" || len(pre[0].Hooks) != 1 ||
 		pre[0].Hooks[0].Command != "markitect hook pretool" || pre[0].Hooks[0].If != "Bash(markitect mark*)" ||
 		pre[1].Matcher != "Edit|Write|MultiEdit|NotebookEdit" || len(pre[1].Hooks) != 1 ||
-		pre[1].Hooks[0].Command != "markitect hook pretool" || pre[1].Hooks[0].If != "" {
+		pre[1].Hooks[0].Command != "markitect hook pretool" || pre[1].Hooks[0].If != "" ||
+		pre[2].Matcher != "Agent|Task" || len(pre[2].Hooks) != 1 ||
+		pre[2].Hooks[0].Command != "markitect hook pretool" || pre[2].Hooks[0].If != "" {
 		t.Fatalf("the guard hooks: %+v", settings)
+	}
+	// A builder's worktree starts from the owner's branch, not the default one.
+	if settings.Worktree.BaseRef != "head" || !strings.Contains(out, "worktree.baseRef") {
+		t.Fatalf("worktree.baseRef = %q\n%s", settings.Worktree.BaseRef, out)
 	}
 	code, checked, _ := run(t, r.Dir, "check")
 	if code != 0 || strings.Contains(checked, "file.unregistered") {

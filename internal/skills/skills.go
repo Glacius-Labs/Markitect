@@ -1,7 +1,7 @@
 // Package skills holds what ships inside the markitect binary for agents: the
-// modeling skill, the start and Extract skills built on it, which markitect init
-// installs where coding agents look for skills, and the harness of the work for
-// Claude Code.
+// design skill, which markitect init installs where coding agents look for
+// skills, and the harness of the work for Claude Code: its skills, its four agents
+// and the prompts of its routines (DEC-100).
 package skills
 
 import (
@@ -10,14 +10,14 @@ import (
 	"sort"
 )
 
-//go:embed markitect-modeling markitect-extract markitect-start
+//go:embed markitect-design
 var files embed.FS
 
 //go:embed all:claude
 var claudeFiles embed.FS
 
 // File is one file of a skill, relative to the skills folder, such as
-// "markitect-modeling/SKILL.md".
+// "markitect-design/SKILL.md".
 type File struct {
 	Path string
 	Data []byte
@@ -27,9 +27,9 @@ type File struct {
 // instruction file of a project and the personal skill all print it.
 const About = `A Markitect project has one spec: the Markdown files in .markitect/model/. The
 spec is the authority over the code, tests and documentation: where they differ,
-the spec is right. People model the spec, and the /markitect-build skill has an
-agent build it in the project's folder and a fresh reviewer verify each
-Definition; markitect status says what is left to verify.
+the spec is right. People design the spec with the markitect-design skill, and
+the /markitect-build skill has a builder agent build it and a fresh reviewer
+verify each Definition; markitect status says what is left to verify.
 `
 
 // PersonalName is the personal skill's folder name below a user's skills folder.
@@ -48,10 +48,9 @@ description: Use when someone mentions Markitect, wants to set it up, start a pr
 
 const personalTail = "\n`markitect` is a command on the path, so there is no need to look for it. `markitect help` lists what it does. If the shell says the command is not found, the binary is missing or its folder is not on the PATH. The Claude Code plugin brings it (`claude plugin marketplace add Glacius-Labs/Claude-Plugins`, then `claude plugin install markitect@glacius-labs`); or download the binary for the system from https://github.com/Glacius-Labs/Markitect/releases and put it on the PATH.\n\n" +
 	"## How to begin\n\n" +
-	"- **An empty folder or a new project:** run `markitect init`, then use the `markitect-start` skill.\n" +
-	"- **A repository that already has code:** run `markitect init`, then use the `markitect-extract` skill.\n" +
-	"- **A folder that already has `.markitect/`:** it is set up, and `markitect check` says how it stands.\n\n" +
-	"`init` installs those skills into the project, so a session that was open before it does not have them yet. Read `.claude/skills/markitect-start/SKILL.md` or `.claude/skills/markitect-extract/SKILL.md` and follow it, or have the user run `/reload-skills`.\n\n" +
+	"- **An empty folder, a new project or a repository that already has code:** run `markitect init`, then use the `markitect-design` skill. It starts the spec with the owner, or draws it from the code.\n" +
+	"- **A folder that already has `.markitect/`:** it is set up, and `markitect check` says how it stands; the `markitect-design` skill changes the spec.\n\n" +
+	"`init` installs that skill into the project, so a session that was open before it does not have it yet. Read `.claude/skills/markitect-design/SKILL.md` and follow it, or have the user run `/reload-skills`.\n\n" +
 	"## After an upgrade\n\n" +
 	"`markitect version` says whether this skill and the project's skills and agents match the binary. `markitect update` installs the newest release of the binary, then brings them in line; a binary the plugin brings is updated with the plugin (`claude plugin update markitect@glacius-labs`). It changes no spec file.\n"
 
@@ -60,7 +59,7 @@ const personalTail = "\n`markitect` is a command on the path, so there is no nee
 func Personal() []byte { return []byte(personalHead + About + personalTail) }
 
 // Names returns the skill names, sorted.
-func Names() []string { return []string{"markitect-extract", "markitect-modeling", "markitect-start"} }
+func Names() []string { return []string{"markitect-design"} }
 
 // Files returns every file of every skill, sorted by path.
 func Files() []File {
