@@ -7,7 +7,7 @@
 | **Version** | 2.0 – superseded as the target by [concept 3.0](v3-concept.md) |
 | **Date** | 28 October 2026 |
 | **Basis** | The owner's decisions of 28 October 2026 in the Topics session's design walk-through: [DEC-079](register.md#dec-079-the-model-is-as-explicit-as-good-documentation) to [DEC-085](register.md#dec-085-markdown-tools-are-the-cockpit-for-now), and [DEC-061](register.md#dec-061-what-an-extracted-model-contains) as confirmed that day. The register entries govern; this page puts them in one readable order. |
-| **State** | Accepted as the target on 28 October 2026 ([DEC-086](register.md#dec-086-concept-20-is-the-target)), superseded on 4 November 2026 ([DEC-091](register.md#dec-091-concept-30-is-the-target)). It stays the record of what Main implements until the [concept 3.0 build](../implementation-plan.md#concept-30-build) replaces it. |
+| **State** | Accepted as the target on 28 October 2026 ([DEC-086](register.md#dec-086-concept-20-is-the-target)), superseded on 4 November 2026 ([DEC-091](register.md#dec-091-concept-30-is-the-target)). It stays the record of the Manager tree, which Main implemented until 6 November 2026 ([DEC-094](register.md#dec-094-main-carries-the-native-version-and-the-app-goes)). |
 
 ## 1. What Markitect is for
 
@@ -163,7 +163,7 @@ Triggers such as issues, incidents and dependency updates pass an intake adapter
 
 ## 11. Cockpit
 
-Markitect Desktop, which users know as Markitect, is a desktop app over the CLI ([DEC-089](register.md#dec-089-markitect-desktop-the-app-over-the-cli), 31 October 2026, superseding [DEC-085](register.md#dec-085-markdown-tools-are-the-cockpit-for-now)). It covers projects with `init` and Extract, the model in several views with its quality signals and `improve`, the configuration, the Commands and Runs with a live view of every agent, statistics and a chat for modeling. Every Command and model tool it offers is the CLI's, with the same result; the chat's model changes reach the owner as proposals (§8), and the rules above hold unchanged. A Run still never touches the working tree (§6.5); only the owner's own actions write there, such as `init`, a hand edit or accepting a chat's proposal. The [design](../design/markitect-desktop.md) owns its details. Everything stays Markdown, so Obsidian, an editor and GitHub keep working beside it.
+Markitect Desktop, which users know as Markitect, is a desktop app over the CLI ([DEC-089](register.md#dec-089-markitect-desktop-the-app-over-the-cli), 31 October 2026, superseding [DEC-085](register.md#dec-085-markdown-tools-are-the-cockpit-for-now)). It covers projects with `init` and Extract, the model in several views with its quality signals and `improve`, the configuration, the Commands and Runs with a live view of every agent, statistics and a chat for modeling. Every Command and model tool it offers is the CLI's, with the same result; the chat's model changes reach the owner as proposals (§8), and the rules above hold unchanged. A Run still never touches the working tree (§6.5); only the owner's own actions write there, such as `init`, a hand edit or accepting a chat's proposal. The [design](https://github.com/Glacius-Labs/Markitect/blob/e295881f1f716b4fb067bd4bb88e959d6a74f44d/docs/design/markitect-desktop.md) owns its details. Everything stays Markdown, so Obsidian, an editor and GitHub keep working beside it.
 
 ## 12. Kept from concept 1.0
 

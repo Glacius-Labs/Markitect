@@ -99,13 +99,13 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-078](#dec-078-agents-collaborate-through-a-git-remote-without-owner-review) | Decision | Agents collaborate through a Git remote, without owner review | Accepted direction; design open, tracked in the delivery plan; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) and [DEC-098](#dec-098-concept-40-is-the-target) |
 | [DEC-079](#dec-079-the-model-is-as-explicit-as-good-documentation) | Decision | The model is as explicit as good documentation | Accepted |
 | [DEC-080](#dec-080-the-model-is-typed-documentation) | Decision | The model is typed documentation | Accepted design; not built; amended by [DEC-098](#dec-098-concept-40-is-the-target) |
-| [DEC-081](#dec-081-the-organization-knows-broad-at-the-top-and-deep-below) | Decision | The organization knows broad at the top and deep below | Accepted design; not built; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
+| [DEC-081](#dec-081-the-organization-knows-broad-at-the-top-and-deep-below) | Decision | The organization knows broad at the top and deep below | Accepted design; not built; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target); amended by [DEC-098](#dec-098-concept-40-is-the-target) |
 | [DEC-082](#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager) | Decision | One Run per change: impact decides who works, maker and checker per Manager | Accepted; being built; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
 | [DEC-083](#dec-083-the-host-runs-natively-each-run-lives-in-containers) | Decision | The host runs natively; each Run lives in containers | Accepted; built in T5; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target), then by [DEC-098](#dec-098-concept-40-is-the-target) |
 | [DEC-084](#dec-084-continuous-change-triggers-become-findings-or-model-proposals-autonomy-grows-in-steps) | Decision | Continuous change: triggers become Findings or model proposals, autonomy grows in steps | Accepted direction; design only |
 | [DEC-085](#dec-085-markdown-tools-are-the-cockpit-for-now) | Decision | Markdown tools are the cockpit for now | Superseded by DEC-089 |
 | [DEC-086](#dec-086-concept-20-is-the-target) | Decision | Concept 2.0 is the target | Accepted; being built; superseded by [DEC-091](#dec-091-concept-30-is-the-target) |
-| [DEC-087](#dec-087-required-checks-gate-merged-states-not-each-submission) | Decision | Required checks gate merged states, not each submission | Accepted; built in T8; superseded by [DEC-091](#dec-091-concept-30-is-the-target); required checks removed for now by [DEC-098](#dec-098-concept-40-is-the-target) |
+| [DEC-087](#dec-087-required-checks-gate-merged-states-not-each-submission) | Decision | Required checks gate merged states, not each submission | Accepted; built in T8; superseded by [DEC-091](#dec-091-concept-30-is-the-target); required checks removed for now, recorded by [DEC-098](#dec-098-concept-40-is-the-target) |
 | [DEC-088](#dec-088-a-checker-reads-the-model-in-full-and-judges-its-own-packages-files) | Decision | A checker reads the model in full and judges its own Package's files | Accepted; built in T9; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
 | [DEC-089](#dec-089-markitect-desktop-the-app-over-the-cli) | Decision | Markitect Desktop: the app over the CLI | Accepted; built in part, removed on 6 November 2026 ([DEC-094](#dec-094-main-carries-the-native-version-and-the-app-goes)) |
 | [DEC-090](#dec-090-a-refusal-counts-only-when-nothing-moved) | Decision | A refusal counts only when nothing moved | Accepted; built; superseded by [DEC-091](#dec-091-concept-30-is-the-target) |
@@ -1090,6 +1090,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-081 The organization knows broad at the top and deep below
 
+**Amended on 7 November 2026 by [DEC-098](#dec-098-concept-40-is-the-target):** `execution.yaml` goes with the required checks. The registry, shared files and the ignore list stay.
+
 **Superseded in part on 4 November 2026 by [DEC-091](#dec-091-concept-30-is-the-target):** No knowledge by position in a tree. The registry, shared files, the ignore list and `execution.yaml` stay.
 
 - **Status:** Accepted by the owner as the design of the Manager organization and the realization record, 28 October 2026, in the Topics session's design walk-through ([topics page](../workstreams/topics.md#decided)). Not built. It builds on [DEC-080](#dec-080-the-model-is-typed-documentation).
@@ -1173,7 +1175,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-087 Required checks gate merged states, not each submission
 
-**Removed for now on 7 November 2026 by [DEC-098](#dec-098-concept-40-is-the-target):** required checks and `execution.yaml` go, to see whether they are needed; `gate` certifies only a state that passes `check`.
+**Required checks removed for now, recorded by [DEC-098](#dec-098-concept-40-is-the-target):** the owner took them out on 4 November 2026, to see whether they are needed, and `execution.yaml` goes with them. `gate` certifies only a state that passes `check`, and a merged state is checked by the next `gate`, not at the merge.
 
 **Superseded on 4 November 2026 by [DEC-091](#dec-091-concept-30-is-the-target):** there is one tree, so the gate runs on the state that lands. The entry stays as a record.
 
@@ -1231,7 +1233,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-091 Concept 3.0 is the target
 
-**Superseded on 7 November 2026 by [DEC-098](#dec-098-concept-40-is-the-target):** concept 4.0 is the target, and concept 3.0 stays as a record. The entry stays as a record.
+**Superseded on 7 November 2026 by [DEC-098](#dec-098-concept-40-is-the-target):** concept 4.0 is the target, and concept 3.0 and this entry stay as records.
 
 - **Status:** Accepted by the owner, 4 November 2026, after a discussion that judged Markitect's ideas against six problems and other options.
 - **Decision:** [concept 3.0](v3-concept.md) is Markitect's target: the spec as the project's documentation and authority, one implementer and one reviewer per Command in one container, code in and out only as a Git commit, a gate in the CLI that runs after the session ends, and interchangeable strategies. It includes the details its review added and the answers to its nine questions ([§14](v3-concept.md#14-decided-on-acceptance)). A tenth question there, whether a Command may start sessions on an account login, was decided the same day ([DEC-092](#dec-092-a-command-uses-the-users-own-sign-in)).
@@ -1311,9 +1313,9 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 ### DEC-098 Concept 4.0 is the target
 
 - **Status:** Decided by the owner, 7 November 2026, after the [lean plan](lean-tool-plan.md) was built, tried on Makerspace and released as 0.20.0, and the draft was revised to describe that release ([PR #999](https://github.com/Glacius-Labs/Markitect/pull/999)). The owner said that the new lean concept replaces the old one.
-- **Decision:** [concept 4.0](v4-concept.md), as revised for 0.20.0, is Markitect's target and replaces concept 3.0: the spec as the project's documentation and authority; one program that computes and checks, with `gate` as its one door, and that starts no agent and uses no Git ([DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](#dec-097-markitect-uses-no-git)); and a thin default driver, in which the user's own Claude Code session starts a builder and a fresh reviewer agent in the project's folder and commits the work with its certificate. It includes the answers its [§16](v4-concept.md#16-questions-for-the-owner) records as decided.
+- **Decision:** [concept 4.0](v4-concept.md), as revised for 0.20.0, is Markitect's target and replaces concept 3.0: the spec as the project's documentation and authority; one program that computes and checks, with `gate` as its one door, and that starts no agent and uses no Git ([DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](#dec-097-markitect-uses-no-git)); and a thin default driver, in which the user's own Claude Code session starts a builder agent in the project's folder, the builder starts a fresh reviewer agent, and the session commits the work with its certificate. It includes the answers its [§16](v4-concept.md#16-questions-for-the-owner) records as decided.
 - **Supersedes:** [DEC-091](#dec-091-concept-30-is-the-target), so concept 3.0 becomes a record, like concept 2.0 and V1 concept 1.0, and the entries in [§15](v4-concept.md#15-what-this-overturns), each marked with what goes and what stays. It decides [OQ-012](#open-questions).
-- **Open:** accepting the concept decides none of §16's open questions. The default driver's limits (question 4), one driver or two (question 5), what "reliable" means (question 10) and what the machine lacks (question 11) stay open until the owner answers.
+- **Open:** accepting the concept decides none of §16's open questions. The default driver's limits (question 4), one driver or two (question 5), what "reliable" means (question 10) and what the machine lacks (question 11) stay open until the owner answers. So do the points [DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts) left open, where the limits sit and where the work state lives, and the [lean plan's](lean-tool-plan.md#decisions-for-the-owner) decisions 3, 5 and 6, which are built as recommended.
 - **Next:** the [delivery plan](../implementation-plan.md) owns the steps; [§13](v4-concept.md#13-order-of-work), step 3, making it reliable on Sonnet, is next.
 
 ## Promises

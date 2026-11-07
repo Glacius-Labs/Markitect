@@ -52,7 +52,7 @@ Design only ([DEC-084](../concepts/register.md#dec-084-continuous-change-trigger
 
 ### Cockpit
 
-Markitect Desktop, the app over the CLI that users know as Markitect ([DEC-089](../concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli)), replaced [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now) on 31 October 2026. The [Desktop session](https://github.com/Glacius-Labs/Markitect/blob/e295881f1f716b4fb067bd4bb88e959d6a74f44d/docs/workstreams/desktop.md) designs and builds it.
+Markitect Desktop, the app over the CLI that users know as Markitect ([DEC-089](../concepts/register.md#dec-089-markitect-desktop-the-app-over-the-cli)), replaced [DEC-085](../concepts/register.md#dec-085-markdown-tools-are-the-cockpit-for-now) on 31 October 2026. The [Desktop session](https://github.com/Glacius-Labs/Markitect/blob/e295881f1f716b4fb067bd4bb88e959d6a74f44d/docs/workstreams/desktop.md) designed and built it, until the owner removed the app on 6 November 2026 ([DEC-094](../concepts/register.md#dec-094-main-carries-the-native-version-and-the-app-goes)).
 
 ## Decided
 
