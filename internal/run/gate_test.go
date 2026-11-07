@@ -716,12 +716,28 @@ func TestGateABuildersReportAndTheRounds(t *testing.T) {
 	has(t, p.list(run.ChecklistRequest{Base: first}), "Make this project match the spec")
 	has(t, p.gate(run.GateRequest{}).Text, run.ReviewerAgent, "no answer for the files as they are now")
 
-	// A review of finished work has no builder to report.
+	// A report after a review found something wrong on the same state keeps that
+	// review's round.
+	r := newPlain(t)
+	r.certify()
+	r.specChange()
+	r.review(wrong)
+	has(t, r.gate(run.GateRequest{}).Text, "repair round 1 of 2")
+	r.gate(run.GateRequest{SpecProblem: contradiction})
+	r.answer("reported problem: wrong -- it says 3")
+	has(t, r.gate(run.GateRequest{}).Text, "found no spec problem")
+	has(t, r.gate(run.GateRequest{}).Text, "repair round 1 of 2")
+
+	// A review of finished work has no builder to report; the skill that builds
+	// does not go on with one left unfinished.
 	q := newPlain(t)
 	q.certify()
 	q.write("src/members/loans/loan.go", "package loans\n\nconst Limit = 9\n")
 	q.list(run.ChecklistRequest{Review: true, Start: true, Full: true})
 	has(t, q.gate(run.GateRequest{SpecProblem: contradiction}).Text, "review of finished work", "nothing is reported")
+	q.specChange()
+	has(t, q.list(run.ChecklistRequest{Start: true}), run.BuilderAgent)
+	has(t, q.gate(run.GateRequest{SpecProblem: contradiction}).Text, run.ReviewerAgent, "The builder reported a spec problem")
 }
 
 // A report on a state the builder changed after the review goes straight on; a

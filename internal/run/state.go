@@ -201,6 +201,11 @@ func (e *Engine) workFor(f *folder, req ChecklistRequest, stored *Work) (w *Work
 		full = true
 	}
 	findings, named := req.Findings, req.namesChange()
+	if stored != nil && req.Start && !req.Review && stored.Review {
+		// The skill that builds does not go on with a review of finished work
+		// left unfinished: it has no builder.
+		stored = nil
+	}
 	// A base certificate gone from the folder, as after a change of branch, is a
 	// changed certificate like any other: a plain checklist refuses.
 	if stored != nil && !req.namesChange() {
@@ -535,7 +540,7 @@ func (e *Engine) answerState(dir string, raw []byte) (string, bool, error) {
 				problems = append(problems, fmt.Sprintf("%s: answer %q if the spec has the problem the builder reported, or %q if the spec settles it", ReportItem, AnswerSpecProblem, AnswerWrong))
 			default:
 				g := given(item, a, f)
-				r.Answer = &g
+				r.Answer, r.Reviewed = &g, w.reviewedOn(f.fingerprint)
 			}
 			return w, nil
 		}

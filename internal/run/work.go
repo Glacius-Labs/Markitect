@@ -83,6 +83,9 @@ type Report struct {
 	Answer *Given `json:"answer,omitempty"`
 	// Told says gate has told the builder that the reviewer found no spec problem.
 	Told bool `json:"told,omitempty"`
+	// Reviewed says a review had finished on the state the reviewer turned the
+	// report down on: that review's round stands.
+	Reviewed bool `json:"reviewed,omitempty"`
 }
 
 // ReportItem is the one item a review of a report answers.
@@ -326,15 +329,25 @@ func (w *Work) review(at string, valid map[string]Given) {
 	w.Reviews = append(w.Reviews, r)
 }
 
+// reviewedOn says whether a review finished on a state.
+func (w *Work) reviewedOn(at string) bool {
+	for _, r := range w.Reviews {
+		if r.At == at {
+			return true
+		}
+	}
+	return false
+}
+
 // rounds counts the finished reviews that sent something wrong back, which are the
 // repair rounds, and says what each went back for. A review with a spec problem
 // sent nothing back: the owner decides first. Nor does a review of the state on
-// which a reviewer turned down the builder's report: the builder had stopped, and
-// was told to build.
+// which a reviewer turned down the builder's report, unless one had finished there
+// before: the builder had stopped, and was told to build.
 func (w *Work) rounds() (int, []string) {
 	stopped := map[string]bool{}
 	for _, r := range w.Reports {
-		if r.Answer != nil && r.Answer.Word == AnswerWrong {
+		if r.Answer != nil && r.Answer.Word == AnswerWrong && !r.Reviewed {
 			stopped[r.Answer.At] = true
 		}
 	}
