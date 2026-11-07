@@ -98,7 +98,7 @@ func (c CLI) init(ctx context.Context, args []string) (int, error) {
 		return Misused, err
 	}
 	fmt.Fprintln(c.Stdout, "installed the harness: the apply and verify skills, and the builder and reviewer agents")
-	if err := c.ensureAnswerHook(ws); err != nil {
+	if err := c.ensureGuard(ws); err != nil {
 		return Misused, err
 	}
 	switch committed, err := ws.CommitOwn(rec.files, initMessage); {
@@ -202,21 +202,45 @@ func insideRepository(dir string) bool {
 	}
 }
 
-// answerHook lets only the reviewer store answers, so that an agent cannot mark
-// its own work as done. It runs only before markitect answer.
-var answerHook = map[string]any{
-	"matcher": "Bash",
-	"hooks":   []any{map[string]any{"type": "command", "if": "Bash(markitect answer*)", "command": run.HookCommand}},
+// guardHook lets only the reviewer store answers, so that an agent cannot mark
+// its own work as done, and only the owner's session begin the work. It runs only
+// before the commands it guards, one handler each.
+func guardHook() map[string]any {
+	var handlers []any
+	for _, rule := range run.GuardedCommands {
+		handlers = append(handlers, map[string]any{"type": "command", "if": rule, "command": run.HookCommand})
+	}
+	return map[string]any{"matcher": "Bash", "hooks": handlers}
 }
 
-// ensureAnswerHook adds the hook to the project's settings and keeps what else
-// they hold. Settings it cannot read, or whose hooks have an unexpected shape, it
-// leaves as they are and says so; a run then refuses to start until the hook is
-// there.
-func (c CLI) ensureAnswerHook(ws Workspace) error {
+// ownGuard says whether a PreToolUse entry is one an earlier markitect wrote: a
+// group whose every hook runs HookCommand. The current one replaces it.
+func ownGuard(entry any) bool {
+	group, ok := entry.(map[string]any)
+	if !ok {
+		return false
+	}
+	hooks, ok := group["hooks"].([]any)
+	if !ok || len(hooks) == 0 {
+		return false
+	}
+	for _, h := range hooks {
+		hook, ok := h.(map[string]any)
+		if !ok || hook["command"] != run.HookCommand {
+			return false
+		}
+	}
+	return true
+}
+
+// ensureGuard adds the hook to the project's settings, in place of one an
+// earlier markitect wrote, and keeps what else they hold. Settings it cannot
+// read, or whose hooks have an unexpected shape, it leaves as they are and says
+// so; a run then refuses to start until the hook is there.
+func (c CLI) ensureGuard(ws Workspace) error {
 	settings := map[string]any{}
 	lacks := func(why string) error {
-		fmt.Fprintf(c.Stdout, "left %s as it is, %s; add the hook that lets only the reviewer answer by hand: %q before Bash\n", run.SettingsFile, why, run.HookCommand)
+		fmt.Fprintf(c.Stdout, "left %s as it is, %s; add the hook that lets only the reviewer answer by hand: %q before Bash, for %s\n", run.SettingsFile, why, run.HookCommand, strings.Join(run.GuardedCommands, " and "))
 		return nil
 	}
 	if ws.Exists(run.SettingsFile) {
@@ -224,7 +248,7 @@ func (c CLI) ensureAnswerHook(ws Workspace) error {
 		if err != nil {
 			return err
 		}
-		if run.HasAnswerHook(data) {
+		if run.HasGuard(data) {
 			return nil
 		}
 		dec := json.NewDecoder(bytes.NewReader(data))
@@ -251,7 +275,13 @@ func (c CLI) ensureAnswerHook(ws Workspace) error {
 			return lacks("because its PreToolUse hooks are not a list")
 		}
 	}
-	hooks["PreToolUse"] = append(pre, answerHook)
+	kept := []any{}
+	for _, entry := range pre {
+		if !ownGuard(entry) {
+			kept = append(kept, entry)
+		}
+	}
+	hooks["PreToolUse"] = append(kept, guardHook())
 	settings["hooks"] = hooks
 	var b bytes.Buffer
 	enc := json.NewEncoder(&b)
@@ -263,7 +293,7 @@ func (c CLI) ensureAnswerHook(ws Workspace) error {
 	if err := ws.Write(run.SettingsFile, b.Bytes()); err != nil {
 		return err
 	}
-	fmt.Fprintf(c.Stdout, "added the hook that lets only the reviewer answer to %s\n", run.SettingsFile)
+	fmt.Fprintf(c.Stdout, "added the hook that lets only the reviewer answer and only your session begin the work to %s\n", run.SettingsFile)
 	return nil
 }
 

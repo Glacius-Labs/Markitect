@@ -326,7 +326,7 @@ func (c CLI) hook(_ context.Context, args []string) (int, error) {
 	if err != nil {
 		return OK, nil
 	}
-	if out := run.AnswerGuard(input); len(out) > 0 {
+	if out := run.Guard(input); len(out) > 0 {
 		c.Stdout.Write(out)
 	}
 	return OK, nil

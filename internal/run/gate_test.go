@@ -622,6 +622,11 @@ func TestGateFindings(t *testing.T) {
 		t.Fatalf("%v %v", findings, errs)
 	}
 	has(t, p.list(run.ChecklistRequest{Findings: findings}), "finding 1 loan-limit", "says 9")
+	// The owner changes the spec under that work: the skill's call begins it
+	// again and keeps the Findings the owner named.
+	p.specChange()
+	has(t, p.list(run.ChecklistRequest{Start: true}), "so it begins again", run.BuilderAgent)
+	has(t, p.list(run.ChecklistRequest{}), "finding 1 loan-limit", "says 9")
 }
 
 // The skill that drives the work begins it with checklist --start, which names the

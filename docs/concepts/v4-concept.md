@@ -266,7 +266,7 @@ For Claude Code, `markitect init` writes these project files, so they are versio
 | `.claude/skills/markitect-verify/SKILL.md` | The same for `verify` |
 | `.claude/agents/markitect-builder.md` | The builder: take the task from `markitect checklist`, and be done when `markitect submit` says so. All tools, including starting the reviewer; model `sonnet`, effort `high`, file edits without asking |
 | `.claude/agents/markitect-reviewer.md` | Effort, the reviewer's task, and tools without edit or agent tools |
-| `.claude/settings.json` | The hook on `answer`, below, added to whatever settings the project already has |
+| `.claude/settings.json` | The hook on `answer` and `checklist`, below, added to whatever settings the project already has |
 | `AGENTS.md`, `CLAUDE.md` | What kind of project this is, for any session: the spec is the authority, changes start there, and `markitect` is on the path. `CLAUDE.md` holds only `@AGENTS.md`, so that it works in every session of the provider. They hold no process, since a run reads them too. Written only if missing |
 
 **The agents' settings** come from their files, and the manifest's `model`, if it names one, which `apply` passes on when it says which agent to start. Everything else is the owner's session: its permission mode, settings, plugins and memory. No settings are generated per run.

@@ -22,6 +22,12 @@
             "shell": "bash",
             "if": "Bash(markitect answer*)",
             "command": "input=$(cat); case \"$input\" in *\"markitect answer\"*) printf '%s' \"$input\" | sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\" hook pretool ;; esac"
+          },
+          {
+            "type": "command",
+            "shell": "bash",
+            "if": "Bash(markitect checklist*)",
+            "command": "input=$(cat); case \"$input\" in *\"markitect checklist\"*) printf '%s' \"$input\" | sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\" hook pretool ;; esac"
           }
         ]
       }

@@ -199,15 +199,18 @@ func (e *Engine) workFor(f *folder, req ChecklistRequest, stored *Work) (w *Work
 	if base == "" {
 		full = true
 	}
+	findings, named := req.Findings, req.namesChange()
 	// A base certificate gone from the folder, as after a change of branch, is a
 	// changed certificate like any other: a plain checklist refuses.
 	if stored != nil && !req.namesChange() {
 		if changed := f.changedOwn(stored); len(changed) > 0 {
 			// The skill's call is the owner's step, so it begins the work
-			// again; an agent's plain checklist is refused.
+			// again, from the newest certificate and with the Findings and the
+			// whole spec the owner named; an agent's plain checklist is refused.
 			if !req.Start {
 				return nil, restartText(changed), nil
 			}
+			full, findings, named = full || stored.Full, stored.Findings, stored.Named
 		} else if stored.Named || stored.Base == base {
 			return stored, "", nil
 		}
@@ -215,7 +218,7 @@ func (e *Engine) workFor(f *folder, req ChecklistRequest, stored *Work) (w *Work
 	if stored != nil && req.namesChange() && len(f.changedOwn(stored)) == 0 && stored.Named && stored.Base == base && stored.Full == full && sameFindings(stored.Findings, req.Findings) {
 		return stored, "", nil
 	}
-	return &Work{Project: f.root, Base: base, Full: full, Findings: req.Findings, Named: req.namesChange(), Spec: f.specHashes(), Certificates: f.certs, Answers: map[string]Given{}, Began: e.now()}, "", nil
+	return &Work{Project: f.root, Base: base, Full: full, Findings: findings, Named: named, Spec: f.specHashes(), Certificates: f.certs, Answers: map[string]Given{}, Began: e.now()}, "", nil
 }
 
 // restartText says that what the work may not change changed under it. An agent
@@ -391,7 +394,7 @@ func startStep(w Work, f *folder, review bool, restarted []string) string {
 	switch {
 	case review && len(w.Items) == 0:
 		b.WriteString("Nothing to review: the change reaches nothing in the spec, so there is no agent to start and nothing to commit.\n")
-	case review && (len(missing) == 0 || stopped):
+	case review && len(missing) == 0:
 		b.WriteString("Every item has an answer for the files as they are now. Run markitect gate --findings and do what it prints.\n")
 	case review:
 		fmt.Fprintf(&b, "Start the %s agent%s with exactly this message:\n\n    Review the work.\n\nIt takes its task from markitect checklist --review. When it has ended, run markitect gate --findings and do what it prints.\n", ReviewerAgent, onModel(model))

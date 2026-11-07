@@ -256,9 +256,9 @@ func TestLauncherFindsTheDataFolderOfAnInstalledPlugin(t *testing.T) {
 	}
 }
 
-// hookCommand reads the command of the one hook of an event from the plugin's
-// hooks file.
-func hookCommand(t *testing.T, event string) string {
+// hookCommands reads the commands of the hooks of an event, in their one group,
+// from the plugin's hooks file.
+func hookCommands(t *testing.T, event string) []string {
 	t.Helper()
 	data, err := os.ReadFile(filepath.Join(pluginRoot, "hooks", "hooks.json"))
 	if err != nil {
@@ -272,10 +272,14 @@ func hookCommand(t *testing.T, event string) string {
 	if err := json.Unmarshal(data, &h); err != nil {
 		t.Fatal(err)
 	}
-	if len(h.Hooks[event]) != 1 || len(h.Hooks[event][0].Hooks) != 1 {
-		t.Fatalf("%s: %+v, want one hook", event, h.Hooks[event])
+	if len(h.Hooks[event]) != 1 || len(h.Hooks[event][0].Hooks) == 0 {
+		t.Fatalf("%s: %+v, want one group", event, h.Hooks[event])
 	}
-	return h.Hooks[event][0].Hooks[0].Command
+	var commands []string
+	for _, hook := range h.Hooks[event][0].Hooks {
+		commands = append(commands, hook.Command)
+	}
+	return commands
 }
 
 // runHook runs the command of a hook the way Claude Code does, in a shell with the
@@ -309,7 +313,7 @@ func runHook(t *testing.T, command, root, data, project, mirror, stdin string) (
 func TestStartHookFetchesOnlyForAMarkitectProject(t *testing.T) {
 	mirror, downloads := releasePage(t, testVersion, false)
 	root, data := testPlugin(t), testkit.TempDir(t)
-	command := hookCommand(t, "SessionStart")
+	command := hookCommands(t, "SessionStart")[0]
 
 	plain := testkit.TempDir(t)
 	if out, code := runHook(t, command, root, data, plain, mirror, ""); code != 0 || out != "" || downloads.Load() != 0 {
@@ -331,29 +335,35 @@ func TestStartHookFetchesOnlyForAMarkitectProject(t *testing.T) {
 	}
 }
 
-// The answer guard starts the launcher, and with it a download, only for a command
-// that runs markitect answer. Claude Code's own filter is not relied on: the
+// Each guard hook starts the launcher, and with it a download, only for a command
+// that runs the command it guards. Claude Code's own filter is not relied on: a
 // hook was seen to start for commands that did not match it.
-func TestAnswerHookStartsTheLauncherOnlyForAnswerCommands(t *testing.T) {
+func TestGuardHooksStartTheLauncherOnlyForTheirCommands(t *testing.T) {
 	srv := httptest.NewServer(http.NotFoundHandler())
 	unreachable := srv.URL
 	srv.Close()
 	root, project := testPlugin(t), testkit.TempDir(t)
-	command := hookCommand(t, "PreToolUse")
-
-	data := testkit.TempDir(t)
-	ordinary := `{"tool_name":"Bash","tool_input":{"command":"ls -la && git status"}}`
-	if out, code := runHook(t, command, root, data, project, unreachable, ordinary); code != 0 || out != "" {
-		t.Fatalf("an ordinary command: exit %d\n%s", code, out)
+	commands := hookCommands(t, "PreToolUse")
+	guarded := []string{"markitect answer answers.json", "markitect checklist --start"}
+	if len(commands) != len(guarded) {
+		t.Fatalf("%d guard hooks, want %d", len(commands), len(guarded))
 	}
-	if entries, _ := os.ReadDir(data); len(entries) != 0 {
-		t.Fatalf("an ordinary command made the hook write %v", entries)
-	}
-
-	answer := `{"tool_name":"Bash","tool_input":{"command":"markitect answer answers.json"}}`
-	out, code := runHook(t, command, root, data, project, unreachable, answer)
-	if code != 2 || !strings.Contains(out, "cannot download") {
-		t.Fatalf("markitect answer: exit %d, want the launcher to have run and failed to download\n%s", code, out)
+	for i, command := range commands {
+		data := testkit.TempDir(t)
+		for _, other := range []string{"ls -la && git status", guarded[1-i]} {
+			input := `{"tool_name":"Bash","tool_input":{"command":"` + other + `"}}`
+			if out, code := runHook(t, command, root, data, project, unreachable, input); code != 0 || out != "" {
+				t.Fatalf("hook %d before %q: exit %d\n%s", i, other, code, out)
+			}
+		}
+		if entries, _ := os.ReadDir(data); len(entries) != 0 {
+			t.Fatalf("hook %d wrote %v for commands it does not guard", i, entries)
+		}
+		input := `{"tool_name":"Bash","tool_input":{"command":"` + guarded[i] + `"}}`
+		out, code := runHook(t, command, root, data, project, unreachable, input)
+		if code != 2 || !strings.Contains(out, "cannot download") {
+			t.Fatalf("hook %d before %q: exit %d, want the launcher to have run and failed to download\n%s", i, guarded[i], code, out)
+		}
 	}
 }
 
