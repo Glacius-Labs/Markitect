@@ -30,7 +30,7 @@
           {
             "type": "command",
             "shell": "bash",
-            "command": "input=$(cat); case \"$input\" in *'\"agent_id\"'*) case \"$input\" in *.[Mm][Aa][Rr][Kk][Ii][Tt][Ee][Cc][Tt]*|*markitect-reviewer*|*markitect-architect*|*markitect-auditor*|*[Ss][Ee][Tt][Tt][Ii][Nn][Gg][Ss]*.[Jj][Ss][Oo][Nn]*|*[Aa][Gg][Ee][Nn][Tt][Ss].[Mm][Dd]*|*[Cc][Ll][Aa][Uu][Dd][Ee].[Mm][Dd]*|*/[Mm][Aa][Rr][Kk][Ii][Tt][Ee][Cc][Tt]-*|*'\\\\'[Mm][Aa][Rr][Kk][Ii][Tt][Ee][Cc][Tt]-*) printf '%s' \"$input\" | sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\" hook pretool ;; esac ;; esac"
+            "command": "input=$(cat); [ -d \"${CLAUDE_PROJECT_DIR}/.markitect\" ] || exit 0; case \"$input\" in *'\"agent_id\"'*) case \"$input\" in *.[Mm][Aa][Rr][Kk][Ii][Tt][Ee][Cc][Tt]*|*markitect-reviewer*|*markitect-architect*|*markitect-auditor*|*[Ss][Ee][Tt][Tt][Ii][Nn][Gg][Ss]*.[Jj][Ss][Oo][Nn]*|*[Aa][Gg][Ee][Nn][Tt][Ss].[Mm][Dd]*|*[Cc][Ll][Aa][Uu][Dd][Ee].[Mm][Dd]*|*/[Mm][Aa][Rr][Kk][Ii][Tt][Ee][Cc][Tt]-*|*'\\\\'[Mm][Aa][Rr][Kk][Ii][Tt][Ee][Cc][Tt]-*) printf '%s' \"$input\" | sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\" hook pretool ;; esac ;; esac"
           }
         ]
       },
@@ -40,7 +40,7 @@
           {
             "type": "command",
             "shell": "bash",
-            "command": "input=$(cat); case \"$input\" in *'\"agent_id\"'*) case \"$input\" in *[Mm][Aa][Rr][Kk][Ii][Tt][Ee][Cc][Tt]*) printf '%s' \"$input\" | sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\" hook pretool ;; esac ;; esac"
+            "command": "input=$(cat); [ -d \"${CLAUDE_PROJECT_DIR}/.markitect\" ] || exit 0; case \"$input\" in *'\"agent_id\"'*) case \"$input\" in *[Mm][Aa][Rr][Kk][Ii][Tt][Ee][Cc][Tt]*) printf '%s' \"$input\" | sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\" hook pretool ;; esac ;; esac"
           }
         ]
       }

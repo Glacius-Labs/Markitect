@@ -285,7 +285,7 @@ func kindOf(file string) int {
 // work comes back by itself must not change them, since nobody reads that diff.
 func steersAgents(segments []string) bool {
 	n := len(segments)
-	if base := strings.ToLower(segments[n-1]); base == "agents.md" || base == "claude.md" {
+	if base := segments[n-1]; base == "AGENTS.md" || base == "CLAUDE.md" {
 		return true
 	}
 	for i := 0; i+1 < n; i++ {

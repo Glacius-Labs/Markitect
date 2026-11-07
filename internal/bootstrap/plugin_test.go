@@ -339,15 +339,20 @@ func TestStartHookFetchesOnlyForAMarkitectProject(t *testing.T) {
 
 // Each guard hook starts the launcher, and with it a download, only for a call it
 // guards: the one before shell commands for markitect mark, the one before
-// writing tools for a subagent's write under .markitect or by a role that may not
-// write code, and the one before agent tools for a subagent's start that names a
-// Markitect agent. Claude Code's own filter is not relied on: a hook was seen to
+// writing tools for a subagent's write under .markitect, of a file that steers
+// the agents, or by a role that may not write code, and the one before agent
+// tools for a subagent's start that names a Markitect agent. The last two act
+// only in a project that has a .markitect folder: in any other the plugin stays
+// out of the way. Claude Code's own filter is not relied on: a hook was seen to
 // start for commands that did not match it.
 func TestGuardHooksStartTheLauncherOnlyForTheirCalls(t *testing.T) {
 	srv := httptest.NewServer(http.NotFoundHandler())
 	unreachable := srv.URL
 	srv.Close()
-	root, project := testPlugin(t), testkit.TempDir(t)
+	root, project, plain := testPlugin(t), testkit.TempDir(t), testkit.TempDir(t)
+	if err := os.Mkdir(filepath.Join(project, ".markitect"), 0o755); err != nil {
+		t.Fatal(err)
+	}
 	commands := hookCommands(t, "PreToolUse")
 	shell := func(command string) string {
 		return `{"agent_id":"a1","agent_type":"markitect-builder","tool_name":"Bash","tool_input":{"command":"` + command + `"}}`
@@ -388,6 +393,15 @@ func TestGuardHooksStartTheLauncherOnlyForTheirCalls(t *testing.T) {
 		for _, input := range cases[i].others {
 			if out, code := runHook(t, command, root, data, project, unreachable, input); code != 0 || out != "" {
 				t.Fatalf("hook %d before %s: exit %d\n%s", i, input, code, out)
+			}
+		}
+		if i > 0 {
+			// In a project without .markitect, nothing a subagent writes or starts
+			// concerns the plugin.
+			for _, input := range cases[i].guarded {
+				if out, code := runHook(t, command, root, data, plain, unreachable, input); code != 0 || out != "" {
+					t.Fatalf("hook %d in a project without .markitect, before %s: exit %d\n%s", i, input, code, out)
+				}
 			}
 		}
 		if entries, _ := os.ReadDir(data); len(entries) != 0 {

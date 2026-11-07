@@ -84,7 +84,7 @@ func TestGuardHoldsEachRolesRightToWrite(t *testing.T) {
 			"/p/.claude/worktrees/agent-a1/.claude/settings.json",
 			"/p/AGENTS.md",
 			"/p/CLAUDE.md",
-			"/p/src/agents.md",
+			"/p/docs/AGENTS.md",
 		},
 		"code": {
 			"/p/src/fees.go",
@@ -94,6 +94,7 @@ func TestGuardHoldsEachRolesRightToWrite(t *testing.T) {
 			"/p/.claude/agents/my-own.md",
 			"/p/.claude/commands/settings.json",
 			"/p/docs/agents-guide.md",
+			"/p/docs/agents.md",
 		},
 	}
 	may := map[string]map[string]bool{

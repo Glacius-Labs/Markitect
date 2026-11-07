@@ -71,6 +71,7 @@ func (c CLI) init(_ context.Context, args []string) (int, error) {
 	}
 	if ws.Exists(instructionsFile) {
 		fmt.Fprintf(c.Stdout, "left %s as it is; add that this project has a spec in %s, which is the authority\n", instructionsFile, project.ModelDir)
+		c.noteRetiredSkills(ws)
 	} else if err := writeNew(instructionsFile, []byte(fmt.Sprintf(instructionsTemplate, name))); err != nil {
 		return Misused, err
 	}
