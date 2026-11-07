@@ -36,13 +36,13 @@ When AI agents build most of a project, its design, rules, documentation, code, 
 
 Markitect moves the knowledge of what belongs together out of the agents' memory and into one place you own: the spec. You describe the project once, as typed prose in Markdown: Definitions of a Kind, in Packages, with links that work like imports. Code, tests, configuration and documentation are built from it. When you want something different, you change the spec; Markitect says which Definitions the change puts back on the list to verify, an agent brings the project in line, and a fresh agent verifies each one and records its verdict, until nothing is left.
 
-As coding moves from Go, C# or Python towards documentation and meaning, what matters in code stays: architecture, consistency, cleanliness, an overview without reading the code, and knowing what should be against what is. Markitect builds on proven practice for that:
+Code has always been a precise description for a limited executor. An AI executor is intelligent, but it still has to be told what is meant and what holds, or it guesses. So documentation becomes the programming language, and we expect coding to move from Go, C# or Python towards documentation and meaning. What matters in code stays: architecture, consistency, cleanliness, an overview without reading the code, and knowing what should be against what is. Markitect builds on proven practice for that:
 
-- **Requirements traceability.** Tools such as IBM DOORS and Polarion link requirements to what realizes them in both directions and flag a "suspect" link when either end changes, as DO-178C, ISO 26262 and IEC 62304 require. Markitect's registry is that matrix, `markitect status` lists the suspect items, and `markitect mark` clears one with evidence.
+- **Requirements traceability.** Tools such as IBM DOORS and Polarion link requirements to what realizes them in both directions and flag a "suspect" link when either end changes; DO-178C, ISO 26262 and IEC 62304 require such traceability. Markitect's registry is that matrix, `markitect status` lists the suspect items, and `markitect mark` records a verdict on each; an `ok` with evidence clears it.
 - **Architecture metrics.** The spec is judged like code: the Dependency Rule, bounded contexts, cohesion, coupling and stability ([what makes a good spec](docs/guides/good-spec.md)).
 - **Go's conventions.** `vet`, `list`, `doc` and `tidy` work like their Go namesakes, and the record of what was verified works like Go's test cache.
 
-What is new: the traceability is plain text in your repository, typed and checked deterministically; agents do the realization and gather the evidence; and only what a change reaches is verified again.
+What is new: the traceability is plain text in your repository, typed and checked deterministically; agents do the realization and gather the evidence, which makes a traceability matrix affordable where keeping it by hand was not; and only what a change reaches is verified again.
 
 It is a way of agentic coding, not a platform. It works with Claude Code's own skills, subagents, hooks, worktrees and plugins: the agents are ordinary Claude Code agents started by your own session, and the tool keeps a few clear guarantees around them. The [vision](docs/vision.md#markitect-in-brief) says more.
 
@@ -55,11 +55,11 @@ claude plugin marketplace add Glacius-Labs/Claude-Plugins
 claude plugin install markitect@glacius-labs
 ```
 
-Then open Claude Code in your project's folder, empty or not:
+Then open Claude Code in your project's folder. The build runs in a Git worktree, so a new folder needs `git init` first; Markitect itself uses no Git.
 
-1. **Set it up.** Ask Claude to set up Markitect. It runs `markitect init --name "Your project"`, which writes `.markitect/`, the skills, the four agents and the hook that holds their rights. It makes no repository and commits nothing.
-2. **Design the spec.** Run `/markitect-design`. It asks what the project is and writes the spec with you, or drafts a first spec from the code that is there. Read the Markdown diff and commit it.
-3. **Build it.** Run `/markitect-build`. Your session starts a builder in a worktree of its own, and a fresh reviewer verifies each Definition. When nothing is left to verify, the work and its record come back to your branch.
+1. **Set it up.** Ask Claude to set up Markitect. It runs `markitect init --name "Your project"`, which writes `.markitect/`, the skills, the four agents and the hook that holds their rights. It commits nothing.
+2. **Design the spec.** Run `/markitect-design`; if the session does not offer it yet, because the skills folder is new, run `/reload-skills` or start a new session. It asks what the project is and writes the spec with you, or drafts a first spec from the code that is there. Read the Markdown diff and commit it.
+3. **Build it.** Run `/markitect-build`. Your session starts a builder in a worktree of its own, and a fresh reviewer verifies each Definition. When nothing is left to verify, the work and its record come back to your branch. In a folder without Git the builder works in your folder instead.
 
 [Install and set up](#install-and-set-up) has the other ways to install, upgrades and an existing code base.
 
@@ -107,7 +107,7 @@ Skills are named after the activity, agents after the role ([DEC-100](docs/conce
 | `/markitect-audit` | You, or Claude | The auditor reads the spec fresh for contradictions, gaps, unclear and duplicated statements, and reports to you |
 | `/markitect-schedule` | You | Sets up cleanup, bug hunts and a full review as routines through Claude Code's own scheduling. Each routine works on a branch of its own and lands only when it leaves nothing worse |
 
-Four agents, in a 2×2 of rights that a hook holds for subagents; your own session stays free:
+Four agents, in a 2×2 of rights that a hook holds for subagents. Your own session stays free to change anything, but it does not record verdicts either:
 
 | | Writes | Judges |
 | --- | --- | --- |
@@ -118,7 +118,7 @@ The agents use Claude Sonnet unless the manifest names another `model`, and work
 
 ## Commands
 
-None of these starts an agent or uses Git. `--json` prints one JSON document for scripts, and exit codes follow Go's tools: 0 when all is well, 1 when the command found something, 2 when it could not run.
+None of these starts an agent or uses Git. With `--json`, `check`, `vet`, `list`, `doc`, `status` and `mark` print one JSON document for scripts. Exit codes follow Go's tools: 0 when all is well, 1 when the command found something, 2 when it could not run.
 
 | Command | Does |
 | --- | --- |
@@ -281,7 +281,7 @@ The agents that build don't: a hook refuses their edits under `.markitect/`, exc
 <details>
 <summary><b>Does Markitect run Git, containers or background sessions?</b></summary>
 
-No. The tool uses no Git, no container and no network except for `markitect update`. Your own Claude Code session starts the agents and makes every commit and merge; nothing is pushed unless a routine you set up lands its work by a push.
+The tool uses no Git, no container and no network except for `markitect update`. Your own Claude Code session starts the agents and makes every commit and merge. The exception is the routines you set up with `/markitect-schedule`: they run as scheduled tasks of the desktop app or as cloud routines, work on a branch of their own, and land on the source branch by a push when that branch tracks a remote. Nothing else is pushed.
 
 </details>
 

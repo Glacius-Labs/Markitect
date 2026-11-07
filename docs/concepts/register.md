@@ -19,7 +19,6 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | ID | Type | Title | Status |
 |---|---|---|---|
 | [VIS-001](#vis-001-cockpit-personal-ai-and-autonomous-project-organization) | Vision | Cockpit, personal AI and autonomous project organization | Owner statement; scoped cockpit concept and Claude handoff commissioned 20 October 2026; working through the cockpit adopted ([DEC-065](#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration)); cockpit as desktop app that starts and stops Apply adopted ([DEC-066](#dec-066-the-cockpit-is-markitects-desktop-app-and-starts-and-stops-apply)); broader extensions deferred; for concept 2.0, Markitect Desktop adopted ([DEC-089](#dec-089-markitect-desktop-the-app-over-the-cli)) |
-| [VIS-002](#vis-002-a-programming-language-for-documentation) | Vision | A programming language for documentation | Owner statement, 7 and 8 November 2026 |
 | [DEC-001](#dec-001-delegated-realization-is-central-to-the-product) | Decision | Delegated realization is central to the product | Accepted |
 | [DEC-002](#dec-002-trust-is-measured-against-todays-practice) | Decision | Trust is measured against today's practice | Accepted |
 | [DEC-003](#dec-003-the-compiler-is-a-borrowed-concept) | Decision | The compiler is a borrowed concept | Accepted |
@@ -120,6 +119,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-098](#dec-098-concept-40-is-the-target) | Decision | Concept 4.0 is the target | Decided by the owner, 7 November 2026; amended by [DEC-099](#dec-099-markitect-is-a-tool-with-a-verification-cache) |
 | [DEC-099](#dec-099-markitect-is-a-tool-with-a-verification-cache) | Decision | Markitect is a tool, with a verification cache | Decided by the owner, 7 November 2026; step 1 released as 0.21.0, step 2 as 0.22.0; amended by [DEC-100](#dec-100-skills-are-named-after-the-activity-agents-after-the-role) |
 | [DEC-100](#dec-100-skills-are-named-after-the-activity-agents-after-the-role) | Decision | Skills are named after the activity, agents after the role | Decided by the owner, 7 November 2026; released as 0.22.0 |
+| [DEC-101](#dec-101-markitect-is-a-programming-language-for-documentation) | Clarification | Markitect is a programming language for documentation | Owner statement, 7 and 8 November 2026 |
 | [PRM-001 to PRM-009](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
@@ -165,18 +165,6 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - the cockpit ([IDEA-015](#idea-015-cockpit-with-a-conversational-personal-agent));
   - briefings, monitoring and visualization ([IDEA-009](#idea-009-regular-briefings) to [IDEA-014](#idea-014-shared-evidence-bound-events)).
 - **Planned extensions:** cockpit, Government and approval reuse are recorded in the [north star](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/manager-realization-north-star.md#later-operations-and-extensions).
-
-### VIS-002 A programming language for documentation
-
-- **Status:** Owner statement of 7 and 8 November 2026, relayed by the coordinating session, which asked for the vision and the README to be overhauled with it.
-- **Statement:**
-  - Markitect is a programming language for documentation. The spec is typed prose in Packages, with links like imports; a deterministic tool checks and analyses it like code, and agents realize and verify it.
-  - The owner expects coding to move from languages such as Go, C# or Python towards documentation and meaning. Architecture, consistency, cleanliness, an overview without reading code, and knowing what should be as against what is stay as relevant as they are in code.
-  - It builds on proven practice: requirements traceability, with its matrix, links both ways and suspect links as in IBM DOORS or Polarion and as DO-178C, ISO 26262 and IEC 62304 require, maps to the registry, `status` and `mark`; architecture metrics from Clean Architecture, domain-driven design, cohesion, coupling and stability, and hotspots after Tornhill, map to `vet`; Go's conventions shape the command line.
-  - What is new: the traceability is plain text in the repository, typed and checked deterministically; agents do the realization and the evidence; the record of what was verified works like Go's test cache.
-  - Markitect became lighter, native and simpler, working with Claude Code and Anthropic's own features rather than against them. In the owner's experience simpler is more successful and more robust, and it is earned through insight.
-  - The honest limit: "complete" means complete for the declared links. Prose that names something without linking it is a gap, which the proposed `vet.unlinked_mention` would flag ([`vet` plan](vet-plan.md)).
-- **Where it is developed:** [Markitect in brief](../vision.md#markitect-in-brief). It changes no decision: [DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts) to [DEC-100](#dec-100-skills-are-named-after-the-activity-agents-after-the-role) stay as they are.
 
 ## Decisions, clarifications and endorsed directions
 
@@ -1339,7 +1327,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-099 Markitect is a tool, with a verification cache
 
-- **Status:** Decided by the owner, 7 November 2026; step 1 released as 0.21.0, step 2 built on Main for the next release. The owner described how they work: model the spec with the tool's help, then have agents implement it while the tool says what to verify. They found that `gate`, `answer` and the builder's reports steered the agents' work more than the tool should. They agreed to a record of what was verified, modelled on Go's test cache, and chose the names. The [tooling plan](tooling-plan.md) holds the design, reviewed by an independent architect against the code.
+- **Status:** Decided by the owner, 7 November 2026; step 1 released as 0.21.0, step 2 as 0.22.0. The owner described how they work: model the spec with the tool's help, then have agents implement it while the tool says what to verify. They found that `gate`, `answer` and the builder's reports steered the agents' work more than the tool should. They agreed to a record of what was verified, modelled on Go's test cache, and chose the names. The [tooling plan](tooling-plan.md) holds the design, reviewed by an independent architect against the code.
 - **Decision:**
   - Markitect supports agent work and does not steer it. It checks and analyses the spec, says what is to verify, and records verdicts. It decides nothing about who works when, and it counts no rounds.
   - For each Definition, `.markitect/review.sum` records the inputs at which it was last verified: its text, its Kind and the Definitions it links to, its registry rows with their files, and the evidence. A change of any input puts the Definition back on the list. An empty `markitect status` means that the project compiles and every Definition is verified at its current inputs; its notes, such as an outdated harness, do not count.
@@ -1382,6 +1370,24 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - A routine lands by a push when the source branch tracks a remote, and starts from the remote's commit so that nothing unpushed goes out; otherwise it moves the local branch, which Git refuses while that branch is checked out in a folder, and then the run leaves its branch and says how to land it.
 - **Amends:** [DEC-099](#dec-099-markitect-is-a-tool-with-a-verification-cache): its two skills and two agents, its hook and "nothing counts rounds". [Concept 4.0](v4-concept.md) §1, §2, §5, §7 to §9, §11 to §14 and §16 are revised with the build.
 - **Gives up, knowingly:** a build that the owner watches change their own folder; a build of what is not committed yet; and a routine that lands what it found when that adds an item to the list, such as a review that records a new `fail`: its branch holds the record, and its note names the items.
+
+### DEC-101 Markitect is a programming language for documentation
+
+- **Status:** Owner statement of 7 and 8 November 2026, relayed by the coordinating session, which asked for the vision and the README to be overhauled with it. It says how the owner reads the product; it changes no decision, and [DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts) to [DEC-100](#dec-100-skills-are-named-after-the-activity-agents-after-the-role) stay as they are.
+- **What Markitect is:**
+  - A programming language for documentation. The spec is typed prose in Packages, with links that work like imports; a deterministic tool checks and analyses it like code, and agents realize and verify it.
+  - The owner expects coding to move from languages such as Go, C# or Python towards documentation and meaning. Architecture, consistency, cleanliness, an overview without reading code, and knowing what should be as against what is stay as relevant as they are in code.
+- **Why, in the owner's rationale of 8 November 2026:**
+  - Contradictions in a description surface only when someone changes the place where they sit, the same observation as with weakly typed programming languages. So Markitect borrows typing and a compiler as helpers.
+  - Code has always been a very precise description for an extremely limited but diligent executor. With AI the executor is intelligent, but it still has to be told what is meant and what holds; otherwise it guesses and may do what nobody wanted. So documentation, prose and prompts become the programming language, and Markitect makes their authors express themselves cleanly: define what they mean and what holds, and connect those statements meaningfully.
+  - The aim is to meet the preconditions that unlock the established knowledge of software architecture for this new language.
+  - AI does not take everything off the developer's hands. It makes affordable the approaches that died of manual effort and cost, such as the traceability matrix.
+  - Three problems: in a long session or a large project nobody can remember or keep current what was decided when, so the spec is the one living statement of what holds; nobody reads the volume of documentation AI produces, so the spec is small, structured and navigable; and whether realization and idea match is unknown, so `status` and `review.sum` say it per Definition, with evidence.
+- **What it builds on:** proven practice. Requirements traceability, with its matrix, links in both directions and suspect links as in IBM DOORS or Polarion, which DO-178C, ISO 26262 and IEC 62304 require in the form of traceability, maps to the registry, `status` and `mark`. Architecture metrics from Clean Architecture, domain-driven design, cohesion, coupling and stability, and hotspots after Tornhill, are the yardstick for `vet`, which today measures coupling, stability, size and reach; the others are proposed or later ([`vet` plan](vet-plan.md)). Go's conventions shape the command line.
+- **What is new:** the traceability is plain text in the repository, typed and checked deterministically; agents do the realization and the evidence; the record of what was verified works like Go's test cache.
+- **The approach:** Markitect became lighter, native and simpler, working with Claude Code and Anthropic's own features rather than against them. In the owner's experience simpler is more successful and more robust, and it is earned through insight.
+- **The honest limit:** "complete" means complete for the declared links. Prose that names something without linking it is a gap, which the proposed `vet.unlinked_mention` would flag ([`vet` plan](vet-plan.md)).
+- **Where it is developed:** [Markitect in brief](../vision.md#markitect-in-brief) and [Founding intent](../vision.md#founding-intent).
 
 ## Promises
 
