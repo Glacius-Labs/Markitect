@@ -34,7 +34,6 @@ python -B -m unittest discover -s scripts -p test_*.py
 python -B scripts/check-docs.py
 python -B -m unittest discover -s tools/library-oracle
 python -B -m unittest discover -s tools/comparison
-python -B -m unittest discover -s tools/evaluation
 python -B -m unittest discover -s tools/makerspace-oracle -p test_*.py
 ```
 

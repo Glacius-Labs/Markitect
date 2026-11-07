@@ -1,15 +1,15 @@
 # Evaluation suite: first smoke, baseline K on the Library
 
-**Status: superseded, never run.** On 28 October 2026 the owner chose to make the suite decision-grade first; the first K smoke runs in the sandbox instead, as increment E1 of [evaluation suite v2](../design/evaluation-suite-v2.md), under the [sandbox smoke](eval-e1-sandbox-smoke-20261028.md).
+**Status: superseded, never run.** On 28 October 2026 the owner chose to make the suite decision-grade first; the first K smoke runs in the sandbox instead, as increment E1 of [evaluation suite v2](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/docs/design/evaluation-suite-v2.md), under the [sandbox smoke](eval-e1-sandbox-smoke-20261028.md).
 
-This is the first real use of the [evaluation suite](../guides/evaluation-suite.md). It checks step 2 of the [plan](../workstreams.md#priority) for the baseline: one Library task, three runs in a row through the suite without manual help. It is a smoke, not a counted evaluation: no comparison is drawn from it, and it has no decision rule.
+This is the first real use of the [evaluation suite](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/docs/guides/evaluation-suite.md). It checks step 2 of the [plan](../workstreams.md#priority) for the baseline: one Library task, three runs in a row through the suite without manual help. It is a smoke, not a counted evaluation: no comparison is drawn from it, and it has no decision rule.
 
 ## What runs
 
 | Item | Value |
 |---|---|
 | Source | `tools/evaluation` and `tools/comparison` at the `main` commit that carries this page; `tools/evaluation` is as merged in `cf26bf98` |
-| Variant | K, the baseline: `python -I -B tools/evaluation/claude_code.py --effort high`, one headless Claude Code session per run ([README](../../tools/evaluation/README.md#the-baseline)) |
+| Variant | K, the baseline: `python -I -B tools/evaluation/claude_code.py --effort high`, one headless Claude Code session per run ([README](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/README.md#the-baseline)) |
 | Model | `claude:claude-sonnet-5-5` for every arm ([owner, 28 October](../workstreams/build.md#decisions)) |
 | Login | The owner's Claude subscription login, copied per run without its refresh token; never an API key. Each run refuses to start unless the login outlives its session time (the deadline minus 60 s) plus 300 s, that is 2,940 s; the operator checks the expiry before each run |
 | Claude Code | The host's `claude`, 2.1.309 when this page was written; each run records the version it used |
@@ -21,7 +21,7 @@ This is the first real use of the [evaluation suite](../guides/evaluation-suite.
 
 - **Time:** 2,700 s per run, enforced by the suite; the variant stops its session 60 s before.- **Attempts:** exactly three counted runs. A run whose session started and that ends without a result, with a timeout or with a crash is a failure, recorded and not repeated. Only a run that never started a session (the variant refused the login or found no `claude`, or the suite or host failed first) may be relaunched, once per run, in a new run directory; the refused attempt stays recorded. At most six launches in all, so the series ends after at most about 4.5 hours, usually about 2.5.
 - **Engine:** the runs need no container engine. Only the assessment below uses it, after the three runs, holding the shared engine lock `C:\Users\Consiliari\AppData\Roaming\Claude\side-session-notes\local_cbc94143-9a8e-46c4-9c73-b1b58817893e\NATIVE-RUN.lock` through `--lock`; it refuses rather than waits when another holder has it.
-- **Isolation:** the sessions run as the user on the host. This is separation, not a sandbox: a session could read the hidden oracle in this repository. That is acceptable for a smoke and must be fixed before counted runs ([limits](../guides/evaluation-suite.md#limits)).
+- **Isolation:** the sessions run as the user on the host. This is separation, not a sandbox: a session could read the hidden oracle in this repository. That is acceptable for a smoke and must be fixed before counted runs ([limits](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/docs/guides/evaluation-suite.md#limits)).
 
 ## Assessment
 

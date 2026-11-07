@@ -8,7 +8,7 @@ This repository holds Markitect's source and its documentation. It is developed 
 | `internal/` | Private Go packages of the product and its maintenance services, including the standard Libraries (`internal/libraries`) and the agent skills (`internal/skills`) that the binary embeds. The [code map](code-map.md) lists every Go package of the module, its layer and owning guide; the [rule table](../../internal/tooling/architecture/rules.go) it is generated from states the allowed imports, and the [architecture](../architecture.md) describes the layers and contracts. |
 | `docs/` | Concept and decisions, design, guides, development, current evidence and the archive index [`docs/archive.md`](../archive.md). |
 | `testdata/` | Fixtures shared by the evaluation: the canonical Library model M1, still in V1's form until step T2 converts it. |
-| `tools/` | Independent tools that import no product code: the packaged-source smoke, the Library and Makerspace oracles, the Makerspace reference modules, the comparison study's runner and assessment, and the evaluation suite with its judges and baseline variant. |
+| `tools/` | Independent tools that import no product code: the packaged-source smoke, the Library and Makerspace oracles, the Makerspace reference modules, the comparison study's runner and assessment, and the evaluation suite's study projects, hidden judges and planted defects, whose runner was removed on 7 November 2026. |
 | `scripts/` | Maintainer scripts: documentation link check, CI test and flake reports. |
 | `packaging/` | What ships besides the binary: the runtime image, the consumer bootstrap and the distribution guide. |
 | `.github/` | Manual CI, release and flake-report workflows. |
