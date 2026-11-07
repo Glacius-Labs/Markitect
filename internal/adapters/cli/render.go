@@ -24,7 +24,7 @@ func renderList(pkgs []listedPackage) string {
 				var because []string
 				for _, u := range d.Uses {
 					verb := "links"
-					if u.Kind {
+					if u.Via == "kind" {
 						verb = "is of Kind"
 					}
 					because = append(because, fmt.Sprintf("%s %s %s", u.From, verb, u.Target))

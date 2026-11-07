@@ -91,7 +91,7 @@ A registry entry that names a deleted Definition (`stale.definition`), a missing
 
 ## Commands
 
-All take `--repo DIR`; `check`, `vet`, `list`, `doc` and `status` take `--json`, which prints one document with `format_version` and `kind`. Diagnostics read `file:line: code: message`. Exit 0 ok, 1 found something, 2 could not run. The commands are flat, as Go's are.
+All take `--repo DIR`; `check`, `vet`, `list`, `doc`, `status` and `mark` take `--json`, which prints one document with `format_version` and `kind`. Diagnostics read `file:line: code: message`. Exit 0 ok, 1 found something, 2 could not run. The commands are flat, as Go's are.
 
 | Command | Use while modeling |
 |---|---|

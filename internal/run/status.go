@@ -196,6 +196,19 @@ func (f *folder) status(rec Record, all bool) (Status, error) {
 	return st, nil
 }
 
+// CodeUnreadable marks a line of the record markitect cannot read.
+const CodeUnreadable = "record.unreadable"
+
+// RecordErrors are the lines of the record markitect cannot read, as
+// diagnostics.
+func (s Status) RecordErrors() model.Diagnostics {
+	var ds model.Diagnostics
+	for _, n := range s.Unreadable {
+		ds.Add(CodeUnreadable, project.ReviewFile, n, "markitect cannot read this line; the owner fixes or removes it")
+	}
+	return ds
+}
+
 // Text is status as people and agents read it.
 func (s Status) Text() string {
 	var b strings.Builder
@@ -220,15 +233,13 @@ func (s Status) Text() string {
 			fmt.Fprintf(&b, "%s\n", d.String())
 		}
 	}
-	if len(s.Unreadable) > 0 {
+	if errs := s.RecordErrors(); len(errs) > 0 {
 		if b.Len() > 0 {
 			b.WriteString("\n")
 		}
-		var lines []string
-		for _, n := range s.Unreadable {
-			lines = append(lines, fmt.Sprint(n))
+		for _, d := range errs {
+			fmt.Fprintf(&b, "%s\n", d.String())
 		}
-		fmt.Fprintf(&b, "%s: markitect cannot read %s %s; the owner fixes or removes %s.\n", project.ReviewFile, plural(len(lines), "line", "lines"), strings.Join(lines, ", "), plural(len(lines), "it", "them"))
 	}
 	if len(s.Skipped) > 0 {
 		if b.Len() > 0 {

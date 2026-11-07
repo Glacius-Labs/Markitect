@@ -184,6 +184,23 @@ func (c CLI) flags(name string, o *options) *flag.FlagSet {
 	return fs
 }
 
+// parse parses a command's flags wherever they stand, before or after its
+// arguments, as agents write them, such as markitect doc x --json. It returns
+// the arguments.
+func parse(fs *flag.FlagSet, args []string) ([]string, error) {
+	var positional []string
+	for {
+		if err := fs.Parse(args); err != nil {
+			return nil, err
+		}
+		if fs.NArg() == 0 {
+			return positional, nil
+		}
+		positional = append(positional, fs.Arg(0))
+		args = fs.Args()[1:]
+	}
+}
+
 // load opens the project folder and loads the project.
 func (c CLI) load(o options) (Workspace, *project.Project, error) {
 	ws, err := c.Folders.Project(o.repo)
@@ -211,10 +228,9 @@ func (c CLI) check(_ context.Context, args []string) (int, error) {
 	var specOnly bool
 	fs := c.flags("check", &o)
 	fs.BoolVar(&specOnly, "spec", false, "look only at the spec itself, not at whether the work matches it")
-	if err := fs.Parse(args); err != nil {
+	if positional, err := parse(fs, args); err != nil {
 		return Misused, err
-	}
-	if fs.NArg() != 0 {
+	} else if len(positional) != 0 {
 		return Misused, fmt.Errorf("takes no arguments")
 	}
 	_, p, err := c.load(o)

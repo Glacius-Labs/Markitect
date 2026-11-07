@@ -29,10 +29,9 @@ func (c CLI) status(ctx context.Context, args []string) (int, error) {
 	var all bool
 	fs := c.flags("status", &o)
 	fs.BoolVar(&all, "all", false, "list every Definition, to verify everything again")
-	if err := fs.Parse(args); err != nil {
+	if positional, err := parse(fs, args); err != nil {
 		return Misused, err
-	}
-	if fs.NArg() != 0 {
+	} else if len(positional) != 0 {
 		return Misused, fmt.Errorf("takes no arguments")
 	}
 	e, err := c.record()
@@ -60,7 +59,7 @@ func (c CLI) status(ctx context.Context, args []string) (int, error) {
 			Diagnostics []diagnostic `json:"diagnostics"`
 			Skipped     []run.Item   `json:"skipped"`
 			Unreadable  []int        `json:"unreadable_lines"`
-		}{newEnvelope("status"), st.Clean(), st.Definitions, items, append(diagnostics(severityError, st.SpecErrors), diagnostics(severityError, st.Errors)...), skipped, unreadable}); err != nil {
+		}{newEnvelope("status"), st.Clean(), st.Definitions, items, append(append(diagnostics(severityError, st.SpecErrors), diagnostics(severityError, st.Errors)...), diagnostics(severityError, st.RecordErrors())...), skipped, unreadable}); err != nil {
 			return Misused, err
 		}
 	} else {

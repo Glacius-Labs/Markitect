@@ -179,9 +179,9 @@ The fields of each document:
 |---|---|
 | `check` | `ok`, `nothing_built`, `definitions`, `packages`, `files`, `spec_errors`, `realization_errors`, `diagnostics` |
 | `vet` | `diagnostics` |
-| `list` | `packages`: `path`, `name`, `parent`, `definitions` (`id`, `title`, `kind`, `file`) and, with `--deps`, each Definition's `links` and the Package's `deps` (`afferent`, `efferent`, `instability`, `depends_on` with the `uses` behind each edge) |
-| `doc` | `definition`: `id`, `title`, `kind`, `file`, `links`, `package`, `library`, `text`, `linked_from`, `realized_by`, `record`; or `package`: `path`, `name`, `parent`, `children`, `page`, `paths`, `definitions`, `linked_from`, `files` |
-| `status` | `clean`, `definitions`, `items` (`definition`, `title`, `state`, `fingerprint`, `changes`, `verdict`, `why`, `verdicts`, `look`), `diagnostics`, `skipped`, `unreadable_lines` |
+| `list` | `packages`: `path`, `name`, `parent`, `definitions` (`id`, `title`, `kind`, `file`) and, with `--deps`, each Definition's `links` and the Package's `deps` (`afferent`, `efferent`, `instability`, `depends_on` with the `uses` behind each edge: `from`, `target`, `via` (`link` or `kind`), `file`, `line`) |
+| `doc` | `definition`: `id`, `title`, `kind`, `file`, `links`, `package`, `library`, `text`, `linked_from`, `realized_by`, `record`; or `package`: `path`, `name`, `parent`, `children`, `page`, `paths`, `definitions`, `linked_from`, `files`; or, for a target that is neither, `diagnostics` (`doc.unknown`) |
+| `status` | `clean`, `definitions`, `items` (`definition`, `title`, `state`, `fingerprint`, `changes`, `verdict`, `why`, `verdicts`, `look`), `diagnostics` (the spec's errors, the realization's, and `record.unreadable` for each line of the record markitect cannot read), `skipped`, `unreadable_lines` |
 | `mark` | `recorded`, `item`, `verdict`, `message` |
 
 `init`, `update`, `tidy`, `install` and `version` print text only.

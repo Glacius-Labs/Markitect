@@ -23,10 +23,9 @@ func (c CLI) vet(_ context.Context, args []string) (int, error) {
 	var strict bool
 	fs := c.flags("vet", &o)
 	fs.BoolVar(&strict, "strict", false, "exit 1 when there is a warning")
-	if err := fs.Parse(args); err != nil {
+	if positional, err := parse(fs, args); err != nil {
 		return Misused, err
-	}
-	if fs.NArg() != 0 {
+	} else if len(positional) != 0 {
 		return Misused, fmt.Errorf("takes no arguments")
 	}
 	_, p, err := c.load(o)
@@ -90,9 +89,10 @@ type dependency struct {
 type use struct {
 	From   string `json:"from"`
 	Target string `json:"target"`
-	Kind   bool   `json:"kind,omitempty"`
-	File   string `json:"file"`
-	Line   int    `json:"line,omitempty"`
+	// Via is "link", or "kind" when From is of Target as its Kind.
+	Via  string `json:"via"`
+	File string `json:"file"`
+	Line int    `json:"line,omitempty"`
 }
 
 // list prints the Packages and their Definitions; with --deps, what each
@@ -102,10 +102,9 @@ func (c CLI) list(_ context.Context, args []string) (int, error) {
 	var deps bool
 	fs := c.flags("list", &o)
 	fs.BoolVar(&deps, "deps", false, "add what each Package and Definition depends on, and each Package's coupling")
-	if err := fs.Parse(args); err != nil {
+	if positional, err := parse(fs, args); err != nil {
 		return Misused, err
-	}
-	if fs.NArg() != 0 {
+	} else if len(positional) != 0 {
 		return Misused, fmt.Errorf("takes no arguments")
 	}
 	_, p, err := c.load(o)
@@ -155,7 +154,11 @@ func listPackages(p *project.Project, deps bool) []listedPackage {
 			for _, e := range edges[path] {
 				dep := dependency{Package: model.PackageName(e.To)}
 				for _, u := range e.Uses {
-					dep.Uses = append(dep.Uses, use{From: u.From, Target: u.Target, Kind: u.Kind, File: u.File, Line: u.Line})
+					via := "link"
+					if u.Kind {
+						via = "kind"
+					}
+					dep.Uses = append(dep.Uses, use{From: u.From, Target: u.Target, Via: via, File: u.File, Line: u.Line})
 				}
 				d.DependsOn = append(d.DependsOn, dep)
 			}
@@ -230,10 +233,11 @@ type docPackage struct {
 func (c CLI) doc(ctx context.Context, args []string) (int, error) {
 	var o options
 	fs := c.flags("doc", &o)
-	if err := fs.Parse(args); err != nil {
+	positional, err := parse(fs, args)
+	if err != nil {
 		return Misused, err
 	}
-	if fs.NArg() != 1 {
+	if len(positional) != 1 {
 		return Misused, fmt.Errorf("names one Definition or Package, such as members/member or members")
 	}
 	_, p, err := c.load(o)
@@ -241,10 +245,7 @@ func (c CLI) doc(ctx context.Context, args []string) (int, error) {
 		return Misused, err
 	}
 	c.warnErrors(p)
-	target := strings.TrimSuffix(strings.TrimSuffix(strings.TrimPrefix(fs.Arg(0), "[["), "]]"), ".md")
-	if target == "Root" || target == "." {
-		target = model.RootPackage
-	}
+	target := strings.TrimSuffix(strings.TrimSuffix(strings.TrimPrefix(positional[0], "[["), "]]"), ".md")
 	if d := p.Model.Definitions[target]; d != nil {
 		dd := c.docDefinition(ctx, o, p, d)
 		if o.json {
@@ -255,6 +256,9 @@ func (c CLI) doc(ctx context.Context, args []string) (int, error) {
 		}
 		fmt.Fprint(c.Stdout, renderDocDefinition(dd))
 		return OK, nil
+	}
+	if target == "Root" || target == "." {
+		target = model.RootPackage
 	}
 	if pkg := p.Model.Packages[target]; pkg != nil {
 		dp := docPackageOf(p, pkg)
@@ -267,7 +271,15 @@ func (c CLI) doc(ctx context.Context, args []string) (int, error) {
 		fmt.Fprint(c.Stdout, renderDocPackage(dp))
 		return OK, nil
 	}
-	fmt.Fprintf(c.Stderr, "markitect doc: %s is neither a Definition nor a Package of the spec\n", target)
+	var ds model.Diagnostics
+	ds.Add("doc.unknown", "", 0, "%s is neither a Definition nor a Package of the spec", target)
+	if o.json {
+		return Failed, c.printJSON(struct {
+			envelope
+			Diagnostics []diagnostic `json:"diagnostics"`
+		}{newEnvelope("doc"), diagnostics(severityError, ds)})
+	}
+	fmt.Fprintf(c.Stderr, "markitect doc: %s\n", ds[0].String())
 	return Failed, nil
 }
 
