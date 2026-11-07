@@ -281,7 +281,7 @@ The agents that build don't: a hook refuses their edits under `.markitect/`, exc
 <details>
 <summary><b>Does Markitect run Git, containers or background sessions?</b></summary>
 
-The tool uses no Git, no container and no network except for `markitect update`. Your own Claude Code session starts the agents and makes every commit and merge. The exception is the routines you set up with `/markitect-schedule`: they run as scheduled tasks of the desktop app or as cloud routines, work on a branch of their own, and land on the source branch by a push when that branch tracks a remote. Nothing else is pushed.
+The tool uses no Git, no container and no network except for `markitect update`. Your own Claude Code session starts the agents and makes every commit and merge. The exception is the routines you set up with `/markitect-schedule`: they run as scheduled tasks of the desktop app or as cloud routines, work on a branch of their own, and land on the source branch by a push when that branch tracks a remote; a cloud routine that cannot land pushes its own branch so the work is not lost. Nothing else is pushed.
 
 </details>
 
