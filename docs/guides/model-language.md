@@ -7,7 +7,7 @@ This guide is the canonical description of the model language of [concept 2.0](.
 ```text
 .markitect/
   manifest.yaml        the Libraries the project uses, with their versions
-  lock.yaml            the digest of each Library, written by markitect lock
+  lock.yaml            the digest of each Library, written by markitect tidy
   model/               the model; this folder is the Root Package
     project.md         the project anchor (std/Project)
     members/           a Package
@@ -72,7 +72,7 @@ libraries:
 
 The manifest names each Library with its version and nothing else (`manifest.syntax`, `manifest.missing`). A standard Library must have the version this binary ships (`library.version`), and no project folder may replace it (`library.reserved`). Any other named Library must exist under `.markitect/libraries/` (`library.missing`), and every Library folder there must be named (`library.undeclared`).
 
-`markitect lock` writes `.markitect/lock.yaml` with each Library's version and the SHA-256 digest of its files. `check` refuses a Library whose version or content does not match the lock, and a lock entry the manifest does not name (`lock.mismatch`, `lock.missing`, `lock.syntax`). A new markitect binary whose standard Libraries changed therefore needs a new lock, which shows the change in review.
+`markitect tidy` brings `.markitect/lock.yaml` in line with the manifest, as `go mod tidy` does: it writes each Library's version and the SHA-256 digest of its files. `check` only reads the lock. It refuses a Library whose version or content does not match the lock, and a lock entry the manifest does not name (`lock.mismatch`, `lock.missing`, `lock.syntax`), and says to run `markitect tidy`. `init` and `update` keep the lock current. A new markitect binary whose standard Libraries changed therefore needs a new lock, which shows the change in review.
 
 ## Links, scope and visibility
 
@@ -116,7 +116,7 @@ paths:
 
 - **Patterns** are repository-relative paths. `*` and `?` match within one name; a whole segment `**` matches any number of folders. A trailing `**` matches what lies inside the folder, not the folder itself. A pattern without wildcards names one file. `[ ]` and `{ }` are not allowed (`registry.pattern`).
 - **Ownership:** the most specific matching pattern owns a file. A pattern without wildcards beats every pattern with one; otherwise the pattern with more literal characters (other than `*`, `?` and `/`) wins. Root owns every file no other Package claims and names no patterns. Two Packages claiming the same pattern is an error (`registry.duplicate_pattern`), and so are two equally specific patterns of different Packages that match the same file (`registry.ambiguous_owner`).
-- **First patterns:** a Package other than Root with no patterns, or no page, compiles but owns no file (`lint.no_paths`). The owner writes a new Package's Definitions; the implementer writes its registry page with its first patterns, and `check` and `status` still require every file to be accounted for. The implementer maintains every registry page. Patterns say who owns a file; they do not limit what an agent may touch.
+- **First patterns:** a Package other than Root with no patterns, or no page, compiles but owns no file (`vet.no_paths`). The owner writes a new Package's Definitions; the implementer writes its registry page with its first patterns, and `check` and `status` still require every file to be accounted for. The implementer maintains every registry page. Patterns say who owns a file; they do not limit what an agent may touch.
 - **Accounting:** owning is not accounting. Every repository file outside `.markitect/` must be listed on its owner's page or be ignored (`file.unregistered`). A file listed on another Package's page (`registry.wrong_owner`), listed twice (`registry.duplicate_entry`), listed and ignored (`registry.ignored_file`), ignored by Git (`registry.git_ignored`) or below `.markitect/` (`registry.own_file`) is an error.
 - **Rows** are the rows of every table whose first header is `File`, with three cells: the file (in backticks or plain), the links to the Definitions it realizes (none is allowed), and a short reason (`registry.table`). A link in the Realizes cell must name a model Definition, not a Package or a Library Kind (`registry.link`). A link label inside a table needs its bar escaped, `[[members/member\|member]]`; an unescaped bar splits the row and is an error (`registry.table`). Other text on the page is free. The front matter holds only `paths` (`registry.front_matter`).
 - **Shared files** such as the README, a CI pipeline or a compose file are owned by the lowest common parent of the Packages they serve, often Root, and their entry links every Definition they realize.
@@ -133,7 +133,7 @@ When the owner deletes a Definition, a file or a Package, the registry still nam
 
 `check` fails on each, in its group of errors in the realization, as it does on a file the registry does not list and on a Definition nothing links to and no file realizes (`definition.unused`). `check --spec` looks only at the spec itself.
 
-A project with nothing built yet passes: when the registry lists no file and the only errors are `definition.unused`, `check` says that the spec compiles and nothing is built yet, and exits 0. A file in the project folder, or anything registered, ends that. `--json` then carries `"nothingBuilt": true`. This holds for `check` only: `status` still lists a Definition nothing realizes.
+A project with nothing built yet passes: when the registry lists no file and the only errors are `definition.unused`, `check` says that the spec compiles and nothing is built yet, and exits 0. A file in the project folder, or anything registered, ends that. `--json` then carries `"nothing_built": true`. This holds for `check` only: `status` still lists a Definition nothing realizes.
 
 ### Ignore file
 
@@ -163,21 +163,44 @@ model: opus
 
 ## Commands
 
-All commands take `--repo DIR`, a folder of the project (default: the current folder). `check`, `refs`, `graph` and `lint` take `--json` and then print JSON instead of Markdown. Exit code 0 means success, 1 that the command ran and found something, 2 that it could not run.
+All commands take `--repo DIR`, a folder of the project (default: the current folder), and are flat, with no groups ([tooling plan](../concepts/tooling-plan.md#refined-after-the-plan-was-merged)). `check`, `vet`, `list`, `doc`, `status` and `mark` take `--json`. `lock`, `lint`, `refs` and `graph` of 0.21.0 are gone: they are unknown commands, with exit code 2.
+
+### Diagnostics, JSON and exit codes
+
+As in Go's tools:
+
+- **Diagnostics** are one line each, `file:line: code: message`. `check` prints only diagnostics and one summary line, `vet` only diagnostics, and `status` prints the errors in the realization as diagnostics.
+- **`--json`** prints one document that starts with `format_version` (1) and `kind`, the command's name. A diagnostic in it is an object with `severity` (`error` or `warning`), `code`, `message`, `file` and `line`.
+- **Exit codes:** 0 when all is well; 1 when the command did its job and found something (errors of `check`, items of `status`, a refused `mark`, warnings of `vet` with `--strict`, a `doc` target that is neither a Definition nor a Package); 2 when it could not run (a usage error, no project). Notes, such as a `skip` or an outdated harness, never change the exit code.
+
+The fields of each document:
+
+| Command | Fields after `format_version` and `kind` |
+|---|---|
+| `check` | `ok`, `nothing_built`, `definitions`, `packages`, `files`, `spec_errors`, `realization_errors`, `diagnostics` |
+| `vet` | `diagnostics` |
+| `list` | `packages`: `path`, `name`, `parent`, `definitions` (`id`, `title`, `kind`, `file`) and, with `--deps`, each Definition's `links` and the Package's `deps` (`afferent`, `efferent`, `instability`, `depends_on` with the `uses` behind each edge) |
+| `doc` | `definition`: `id`, `title`, `kind`, `file`, `links`, `package`, `library`, `text`, `linked_from`, `realized_by`, `record`; or `package`: `path`, `name`, `parent`, `children`, `page`, `paths`, `definitions`, `linked_from`, `files` |
+| `status` | `clean`, `definitions`, `items` (`definition`, `title`, `state`, `fingerprint`, `changes`, `verdict`, `why`, `verdicts`, `look`), `diagnostics`, `skipped`, `unreadable_lines` |
+| `mark` | `recorded`, `item`, `verdict`, `message` |
+
+`init`, `update`, `tidy`, `install` and `version` print text only.
+
+### The commands
 
 | Command | Does |
 |---|---|
 | `markitect install` | Writes the personal skill `~/.claude/skills/markitect/SKILL.md` from the binary, and says where. It tells Claude Code what Markitect is in any folder, how to begin and how to upgrade, and allows no command in advance. Optional: `init` gives a project its own skills. After an upgrade, `update` refreshes it. It takes no `--repo`. |
-| `markitect update [--check] [--files] [--force]` | Installs the newest release over the binary (checked against the release's checksums; not a binary the plugin manages, and a development build only with `--force`; without a network it says so and goes on), then lets the new binary bring what an earlier build wrote in line with it; `--files` skips the binary. That is: the personal skill if it exists, and in a project the skills in `.claude/skills/` and `.agents/skills/`, the builder and reviewer agents, the hooks, `.markitect/.gitattributes` and the lock, whose change the owner reads before committing it. A project with certificates of 0.20.0 gets its record from the newest one, and the results folder goes ([the migration](../../internal/run/README.md#the-migration)). It commits nothing. Compares without regard to line endings. Never changes a model file, `AGENTS.md` or `CLAUDE.md`, and does not create the personal skill. `--check` changes nothing, lists what is out of date and exits 1 if anything is. Outside a project it refreshes the personal skill only. |
+| `markitect update [--check] [--files] [--force]` | Installs the newest release over the binary (checked against the release's checksums; not a binary the plugin manages, and a development build only with `--force`; without a network it says so and goes on), then lets the new binary bring what an earlier build wrote in line with it; `--files` skips the binary. That is: the personal skill if it exists, and in a project the skills in `.claude/skills/` and `.agents/skills/`, the builder and reviewer agents, the hooks, `.markitect/.gitattributes` and the lock, whose change the owner reads before committing it (the lock's header now names `tidy`, so the first `update` rewrites every lock once). A project with certificates of 0.20.0 gets its record from the newest one, and the results folder goes ([the migration](../../internal/run/README.md#the-migration)). It commits nothing. Compares without regard to line endings. Never changes a model file, `AGENTS.md` or `CLAUDE.md`, and does not create the personal skill. `--check` changes nothing, lists what is out of date and exits 1 if anything is. Outside a project it refreshes the personal skill only. |
 | `markitect version` | Prints the build, then whether the personal skill and the project in `--repo` are up to date, out of date or (the personal skill) not installed. Changes nothing. |
 | `markitect init [--name TITLE]` | Writes what is missing: the manifest with `std`, the project anchor `model/project.md` if the model folder is empty, Root's registry page, the lock, `AGENTS.md` and a `CLAUDE.md` that imports it. Installs or updates the skills in `.claude/skills/` and `.agents/skills/`, the harness (the build and review skills, the builder and reviewer agents, and the hooks in `.claude/settings.json`) and `.markitect/.gitattributes`. In a folder of a project it works on that project. It makes no repository and commits nothing, and prints what Markitect is, with a tip when the personal skill is missing or old. Never changes an existing model file, `AGENTS.md` or `CLAUDE.md`, and never writes to the home folder. |
-| `markitect check [--spec]` | Compiles the project and prints every error, one per line as `file:line: code: message`, the spec's apart from the realization's. Errors only; exit 1 when there is one, and exit 0 with a plain sentence when [nothing is built yet](#the-realization-record). `--spec` looks only at the spec. |
-| `markitect lock` | Writes the lock from the manifest and the Libraries it names. |
-| `markitect refs TARGET` | Who links to a Definition or Package: Definitions by link or as their Kind, and the registry entries that realize it. |
-| `markitect graph` | The Package dependency graph as a Mermaid diagram, with each Package's coupling and the links behind each edge. |
-| `markitect lint` | Warnings only, and the coupling table. |
+| `markitect check [--spec]` | Compiles the project and prints every error as a diagnostic, the spec's first and then the realization's, and one summary line: `ok: N Definitions in M Packages, K files accounted`; the sentence for a project where [nothing is built yet](#the-realization-record); or `N errors: X in the spec, for the owner to settle; Y in the realization, so spec and code do not match yet, which /markitect-build settles`. Exit 1 when there is an error. `--spec` looks only at the spec. |
+| `markitect tidy` | Brings the lock in line with the manifest and the Libraries it names, as `go mod tidy` does. The lock's header reads "Written by markitect tidy from the manifest". |
+| `markitect vet [--strict]` | Analyses the spec's design: coupling, size, how far a change reaches ([the warnings](#vet-warnings)). Prints only diagnostic lines, and nothing when the spec is clean. Exit 1 only with `--strict` and a warning. |
+| `markitect list [--deps]` | Each Package by name (`Root` for the root) with its Definitions below it as `  ID: Title (Kind)`. With `--deps` the Package line adds `(Ca n, Ce n, instability x.xx)` and is followed by `  depends on P: A links B; C is of Kind D`, and a Definition by the links it makes, `    links X, Y`. |
+| `markitect doc TARGET` | A Definition: `ID: Title (Kind)`, its Package and file (or its Library), its text without front matter, what it links to, what links to it (`  FROM (link\|kind), FILE:LINE`), the files that realize it (`  FILE, PAGE:LINE`) and its record (`Record: ID@FP, STATE`, with the changes or the reason). A Package: its parent, registry page and paths, the Packages below it, its Definitions, what links to it and its files. `doc Root` or `doc .` shows Root. Exit 1 for a target that is neither. |
 
-`refs`, `graph` and `lint` also run over a spec with errors and say so on standard error.
+`vet`, `list` and `doc` also run over a spec with errors and say so on standard error.
 
 Two commands work on the record of what was verified, `.markitect/review.sum` ([DEC-099](../concepts/register.md#dec-099-markitect-is-a-tool-with-a-verification-cache)). The `/markitect-build` and `/markitect-review` skills have the agents run them ([project workflow](project-workflow.md#7-build-and-review)). [The record](../../internal/run/README.md) has the inputs and the rules.
 
@@ -189,19 +212,19 @@ Two commands work on the record of what was verified, `.markitect/review.sum` ([
 
 `markitect checklist`, `answer` and `gate` went in 0.21.0. For one release they print on standard output, with exit 0, that they are gone and to run `markitect update`.
 
-### Lint warnings
+### Vet warnings
 
-`lint` measures the model like code, from its links alone. The thresholds are provisional.
+`vet` measures the model like code, from its links alone. It warns and exits 1 only with `--strict`. The thresholds are provisional. A Definition nothing links to and no file realizes, and a stale registry row, are errors of `check`, not warnings.
 
 | Code | Warns when |
 |---|---|
-| `lint.coupling` | a Package depends on more than 5 Packages (efferent coupling Ce) |
-| `lint.unstable_dependency` | a Package depends on a less stable one: instability Ce / (Ca + Ce) of the target is higher |
-| `lint.definition_size` | a Definition's body has more than 1000 words |
-| `lint.package_size` | a Package has more than 25 Definitions of its own |
-| `lint.reach` | a change to a Definition outside Root would reach more than half of the Packages: its own and those below it, those of the Definitions that link to it, and the owners of the files that realize these, in a model of at least 6 Packages |
-| `lint.thin_package` | a Package has no Definitions of its own and only one child |
-| `lint.no_paths` | a Package other than Root claims no path pattern, as above |
+| `vet.coupling` | a Package depends on more than 5 Packages (efferent coupling Ce) |
+| `vet.unstable_dependency` | a Package depends on a less stable one: instability Ce / (Ca + Ce) of the target is higher |
+| `vet.definition_size` | a Definition's body has more than 1000 words |
+| `vet.package_size` | a Package has more than 25 Definitions of its own |
+| `vet.reach` | a change to a Definition outside Root would put Definitions of more than half of the Packages back on the list to verify: its own Package and those of the Definitions that link to it or are of it as Kind, in a model of at least 6 Packages |
+| `vet.thin_package` | a Package has no Definitions of its own and only one child |
+| `vet.no_paths` | a Package other than Root claims no path pattern, as above |
 
 Change hotspots from Git history come later. Coupling counts explicit edges only, not the implicit edge to the parent.
 

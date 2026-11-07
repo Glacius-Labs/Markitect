@@ -37,7 +37,7 @@ type Item struct {
 	Title       string   `json:"title,omitempty"`
 	State       string   `json:"state"`
 	Fingerprint string   `json:"fingerprint"`
-	Changes     []Change `json:"-"`
+	Changes     []Change `json:"changes,omitempty"`
 	// Verdict and Why are those of the line the item rests on, if any.
 	Verdict string `json:"verdict,omitempty"`
 	Why     string `json:"why,omitempty"`

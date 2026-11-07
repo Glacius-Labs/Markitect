@@ -50,7 +50,7 @@ Run the packaged source smoke in a fresh external work directory:
 go run ./tools/smoke -repo . -work ABSOLUTE_EMPTY_EXTERNAL_DIRECTORY
 ```
 
-It packages and builds root-layout source, tests the standalone bootstrap and drives the packaged CLI over a small project in a plain folder: `init`, `check`, `lock`, `refs`, `graph` and `lint`, `status` and `mark` that verify every Definition, `status` after a change of the spec, and the refusal of a model that does not compile; it checks that the retired `checklist`, `answer` and `gate` say to run `markitect update`. It starts no agent or container, so it establishes no provider or release acceptance. The `bundle` smoke belongs to separately authorized release work and writes an isolated consumer installation.
+It packages and builds root-layout source, tests the standalone bootstrap and drives the packaged CLI over a small project in a plain folder: `init`, `check`, `tidy`, `doc`, `list --deps`, `vet --strict` and `check --json` with its envelope, `status` and `mark` that verify every Definition, `status` after a change of the spec, and the refusal of a model that does not compile and of the retired commands `lint`, `refs`, `graph` and `lock`; it checks that the retired `checklist`, `answer` and `gate` say to run `markitect update`. It starts no agent or container, so it establishes no provider or release acceptance. The `bundle` smoke belongs to separately authorized release work and writes an isolated consumer installation.
 
 ## Pull requests and parallel work
 

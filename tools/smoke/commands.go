@@ -32,7 +32,7 @@ var smokeModel = map[string]string{
 }
 
 // modelCommands drives the packaged CLI over a small project in a plain folder,
-// with no Git: init, check, lock, refs, graph and lint; status and mark that
+// with no Git: init, check, tidy, doc, list and vet; status and mark that
 // verify every Definition; status after a change of the spec; the retired
 // commands of the work; and the refusal of a model that does not compile. It
 // starts no agent.
@@ -74,34 +74,38 @@ func (s *smoke) modelCommands() error {
 	if err := requireContains(out, "ok: 4 Definitions in 3 Packages, 3 files accounted"); err != nil {
 		return err
 	}
-	if out, err := markitect("lock"); err != nil {
+	if out, err := markitect("tidy"); err != nil {
 		return err
 	} else if err := requireContains(out, "std 1.0.0"); err != nil {
 		return err
 	}
-	if out, err := markitect("refs", "members/member"); err != nil {
+	if out, err := markitect("doc", "members/member"); err != nil {
 		return err
-	} else if err := requireContains(out, "[[catalog/copy]]", "`src/members/member.go`"); err != nil {
-		return err
-	}
-	if out, err := markitect("graph"); err != nil {
-		return err
-	} else if err := requireContains(out, "```mermaid", "| catalog | members |"); err != nil {
+	} else if err := requireContains(out, "members/member: Member (std/Concept)", "catalog/copy (link)", "src/members/member.go, .markitect/registry/members.md:"); err != nil {
 		return err
 	}
-	if out, err := markitect("lint"); err != nil {
+	if out, err := markitect("list", "--deps"); err != nil {
 		return err
-	} else if err := requireContains(out, "# Lint"); err != nil {
+	} else if err := requireContains(out, "catalog (Ca 0, Ce 1, instability 1.00)\n  depends on members: catalog/copy links members/member\n"); err != nil {
 		return err
+	}
+	if out, err := markitect("vet", "--strict"); err != nil {
+		return err
+	} else if out != "" {
+		return fmt.Errorf("vet warned: %s", tail(out))
 	}
 	if out, err := markitect("check", "--json"); err != nil {
 		return err
 	} else {
-		var checked struct{ OK bool }
+		var checked struct {
+			FormatVersion int `json:"format_version"`
+			Kind          string
+			OK            bool
+		}
 		if err := decode(out, &checked); err != nil {
 			return err
 		}
-		if !checked.OK {
+		if checked.FormatVersion != 1 || checked.Kind != "check" || !checked.OK {
 			return fmt.Errorf("check --json is not ok: %s", tail(out))
 		}
 	}
@@ -140,7 +144,7 @@ func (s *smoke) modelCommands() error {
 	if out, err := markitect("status"); err == nil || !strings.Contains(out, "no list until it compiles") {
 		return fmt.Errorf("status listed over a model that does not compile: %s", tail(out))
 	}
-	for _, retired := range []string{"apply", "verify", "submit", "stop", "impact"} {
+	for _, retired := range []string{"apply", "verify", "submit", "stop", "impact", "lint", "refs", "graph", "lock"} {
 		if _, err := markitect(retired); err == nil {
 			return fmt.Errorf("the retired %s command was accepted", retired)
 		}

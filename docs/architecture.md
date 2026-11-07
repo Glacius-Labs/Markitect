@@ -9,10 +9,10 @@ This page owns the package contracts. The [model language guide](guides/model-la
 `cmd/markitect → internal/bootstrap → CLI adapter → Project → analysis`.
 
 - `cmd/markitect` only calls `bootstrap.Run`. Bootstrap constructs the CLI with the folder adapter, the engine of the record and the releases `update` installs.
-- The CLI adapter (`internal/adapters/cli`) parses the arguments, opens the project folder through its own `Folders` port and renders Markdown or JSON. It calls Project to load and check the project, and analysis for `refs`, `graph` and `lint`. `init` and `lock` write through the same port.
+- The CLI adapter (`internal/adapters/cli`) parses the arguments, opens the project folder through its own `Folders` port and renders Markdown or JSON. It calls Project to load and check the project, and analysis for `list`, `doc` and `vet`. `init`, `update` and `tidy` write through the same port.
 - The folder adapter (`internal/adapters/folder`) implements that port without Git: the project folder is the nearest one with the manifest, and its files are what a walk finds without what its `.gitignore` files exclude, read as text.
-- Project (`internal/project`) reads one set of files through its `Repository` port, so the same load runs over the folder and over a copy of its spec, such as the one a certificate of 0.20.0 holds, which the migration reads. It parses the manifest and lock, takes the standard Libraries from the binary and other Libraries from `.markitect/libraries/`, compiles the model and accounts for every file. A project with compile errors still loads as far as its files allow, so `refs`, `graph` and `lint` can run over it.
-- Analysis (`internal/analysis`) answers questions about a loaded project: references, the Package graph and lint warnings.
+- Project (`internal/project`) reads one set of files through its `Repository` port, so the same load runs over the folder and over a copy of its spec, such as the one a certificate of 0.20.0 holds, which the migration reads. It parses the manifest and lock, takes the standard Libraries from the binary and other Libraries from `.markitect/libraries/`, compiles the model and accounts for every file. A project with compile errors still loads as far as its files allow, so `list`, `doc` and `vet` can run over it.
+- Analysis (`internal/analysis`) answers questions about a loaded project: what it holds, who links to what, what depends on what, and the warnings of vet.
 
 None of these commands starts an agent, a container or a Command, and none needs credentials. The [commands](guides/model-language.md#commands) section gives their options and exit codes.
 
@@ -30,7 +30,7 @@ All Go packages use one root module. One rule table in [`internal/tooling/archit
 | Files built into the binary: the standard Libraries `std`, `rest` and `cli`, and the modeling and Extract skills | `internal/libraries`, `internal/skills` | No other Markitect package |
 | Registry pages, ownership by path pattern, file accounting and stale realization | `internal/realization` | Model |
 | Loading and checking a project's `.markitect/` folder from one set of files | `internal/project` | Model, the built-in files, realization; its own `Repository` port |
-| References, graph, lint | `internal/analysis` | Project and the packages below it |
+| What a project holds and who links to what, the Package graph, vet | `internal/analysis` | Project and the packages below it |
 | The record: the inputs of each Definition, `review.sum`, `status`, `mark`, the hook and the migration from certificates | `internal/run` | Project and the packages below it |
 | Project-folder, command-line and release adapters; no adapter imports another | `internal/adapters/folder`, `internal/adapters/cli`, `internal/adapters/upgrade` | Their inward consumers and build data |
 | Composition | `internal/bootstrap` | The adapters and the record |

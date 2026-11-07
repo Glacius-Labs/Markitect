@@ -7,7 +7,7 @@ A compact summary. The canonical text is `docs/guides/model-language.md` in the 
 ```text
 .markitect/
   manifest.yaml        Libraries and versions (std: 1.0.0, rest: 1.0.0, ...); optionally the model of the builder and reviewer
-  lock.yaml            Library digests, written by markitect lock
+  lock.yaml            Library digests, written by markitect tidy
   model/               the model; this folder is the Root Package
     project.md         the project anchor (std/Project)
     <package>/<name>.md
@@ -43,7 +43,7 @@ A Kind is a Definition with `kind: Kind`; its body says what a Definition of tha
 | `rest/Endpoint` | One HTTP operation: title `METHOD /path`, request, each response with status and error codes; links its Feature. |
 | `cli/Command` | One command as typed: arguments, flags, output, exit codes, refusals; links its Feature. |
 
-A project writes its own Kinds as small files (`kind: Kind`) anywhere in its model; a Kind several Packages use sits at Root. A Library is a folder of `<Name>.md` Kind files under `.markitect/libraries/<name>/`, named in the manifest. Standard Libraries ship in the binary at 1.0.0. After a manifest change run `markitect lock`.
+A project writes its own Kinds as small files (`kind: Kind`) anywhere in its model; a Kind several Packages use sits at Root. A Library is a folder of `<Name>.md` Kind files under `.markitect/libraries/<name>/`, named in the manifest. Standard Libraries ship in the binary at 1.0.0. After a manifest change run `markitect tidy`.
 
 ## Links, scope, visibility, cycles
 
@@ -87,25 +87,25 @@ LICENSE
 
 ## Stale realization
 
-A registry entry that names a deleted Definition (`stale.definition`), a missing file (`stale.file`) or a missing Package's page (`stale.page`) is not an error: `check` passes, `lint` warns (`lint.stale`), and `status` lists it for the builder to clean up.
+A registry entry that names a deleted Definition (`stale.definition`), a missing file (`stale.file`) or a missing Package's page (`stale.page`) is an error of the realization: `check` lists it apart from the spec's errors, `status` lists it for the builder, and the next `/markitect-build` cleans it up.
 
 ## Commands
 
-All take `--repo DIR`; all but `init` and `lock` take `--json`. Exit 0 ok, 1 errors found, 2 could not run.
+All take `--repo DIR`; `check`, `vet`, `list`, `doc` and `status` take `--json`, which prints one document with `format_version` and `kind`. Diagnostics read `file:line: code: message`. Exit 0 ok, 1 found something, 2 could not run. The commands are flat, as Go's are.
 
 | Command | Use while modeling |
 |---|---|
 | `init [--name TITLE]` | Once per project: manifest, lock, project anchor, registry page, `AGENTS.md`, `CLAUDE.md`, skills and harness. Makes no repository and commits nothing. Never changes an existing model file. |
 | `check` | Compile: errors only. A project with nothing registered, where the only errors are `definition.unused`, passes and says that nothing is built yet. |
-| `lock` | Rewrite `lock.yaml` after a manifest or Library change. |
-| `refs TARGET` | Who links to a Definition or Package, and which files realize it. |
-| `graph` | Package dependency graph with coupling and the links behind each edge. |
+| `tidy` | Bring `lock.yaml` in line with the manifest after a manifest or Library change, as `go mod tidy` does. |
+| `doc TARGET` | A Definition with its text, what links to it, what it links to, the files that realize it and its record; or a Package with its Definitions, page and files. |
+| `list [--deps]` | The Packages and their Definitions; `--deps` adds each Package's coupling, what it depends on and the links behind each dependency. |
 | `status [--all]` | What is to verify: each Definition whose text, Kind, links, files or evidence changed since a reviewer last verified it, or that has no record yet, with what changed and where to look. Needs a project that compiles. |
-| `lint` | Warnings and the coupling table. |
+| `vet [--strict]` | Warnings about the spec's design, as `file:line: code: message`; exit 1 only with `--strict`. |
 
-## Warnings (`lint`)
+## Warnings (`vet`)
 
-`lint.coupling` (more than 5 dependencies), `lint.unstable_dependency` (depends on a less stable Package), `lint.definition_size` (over 1000 words), `lint.package_size` (over 25 Definitions), `lint.unused` (nothing links it, no file realizes it), `lint.reach` (a change would make more than half the Managers work), `lint.thin_package` (no Definitions and one child), `lint.no_paths` (a Package other than Root claims no path pattern, so it owns no file), `lint.stale`.
+`vet.coupling` (more than 5 dependencies), `vet.unstable_dependency` (depends on a less stable Package), `vet.definition_size` (over 1000 words), `vet.package_size` (over 25 Definitions), `vet.reach` (a change would put Definitions of more than half the Packages back on the list to verify), `vet.thin_package` (no Definitions and one child), `vet.no_paths` (a Package other than Root claims no path pattern, so it owns no file).
 
 ## Error codes
 

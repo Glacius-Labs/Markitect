@@ -233,7 +233,7 @@ func TestACommandSaysWhenTheHarnessIsOld(t *testing.T) {
 		t.Fatalf("a current project got the notice:\n%s", errOut)
 	}
 	r.Write(".claude/agents/markitect-builder.md", "from an older markitect\n")
-	for _, cmd := range []string{"check", "lint", "status"} {
+	for _, cmd := range []string{"check", "vet", "status"} {
 		if _, _, errOut := run(t, r.Dir, cmd); !strings.Contains(errOut, "run markitect update") {
 			t.Errorf("%s said nothing about the old harness:\n%s", cmd, errOut)
 		}
@@ -248,7 +248,7 @@ func TestACommandSaysWhenTheHarnessIsOld(t *testing.T) {
 // one. The commands of the Run are gone.
 func TestACommandOutsideAProjectPointsToInit(t *testing.T) {
 	dir := testkit.TempDir(t)
-	for _, cmd := range []string{"check", "lint", "graph", "status"} {
+	for _, cmd := range []string{"check", "vet", "list", "status"} {
 		code, _, errOut := run(t, dir, cmd)
 		if code != 2 || !strings.Contains(errOut, "is in no Markitect project") || !strings.Contains(errOut, "markitect init makes one") {
 			t.Errorf("%s outside a project: %d\n%s", cmd, code, errOut)

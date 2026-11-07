@@ -1,6 +1,6 @@
 # Project workflow
 
-This is the one guide for using Markitect on a project. It walks through the commands of [concept 4.0](../concepts/v4-concept.md), as the [tooling plan](../concepts/tooling-plan.md) changed them ([DEC-099](../concepts/register.md#dec-099-markitect-is-a-tool-with-a-verification-cache)): the model commands `init`, `check`, `lock`, `refs`, `graph` and `lint`, `status` and `mark` over the record of what was verified, and the `/markitect-build` and `/markitect-review` skills, which have your Claude Code session start the agents. No command starts an agent or uses Git. The [model language guide](model-language.md) owns the model commands' details: the `.markitect/` layout, Definitions, Kinds and Libraries, links, the registry and every option. [The record](../../internal/run/README.md) owns how `status`, `mark` and the hook work.
+This is the one guide for using Markitect on a project. It walks through the commands of [concept 4.0](../concepts/v4-concept.md), as the [tooling plan](../concepts/tooling-plan.md) changed them ([DEC-099](../concepts/register.md#dec-099-markitect-is-a-tool-with-a-verification-cache)): the model commands `init`, `tidy`, `check`, `vet`, `list` and `doc`, `status` and `mark` over the record of what was verified, and the `/markitect-build` and `/markitect-review` skills, which have your Claude Code session start the agents. No command starts an agent or uses Git. The [model language guide](model-language.md) owns the model commands' details: the `.markitect/` layout, Definitions, Kinds and Libraries, links, the registry and every option. [The record](../../internal/run/README.md) owns how `status`, `mark` and the hook work.
 
 The commands run wherever Go runs, on Windows, Linux and macOS. Build them from `cmd/markitect`, or run them from source:
 
@@ -26,7 +26,7 @@ Claude Code reads `AGENTS.md` through that `CLAUDE.md`, and it finds skills only
 
 Open Claude Code in the project and run `/markitect-start`. It asks what the project is, who it is for, what it must do and what it is built with, one question at a time, and starts the spec with you. A repository that already has code uses `/markitect-extract` instead. A session that was open before `init` doesn't see these skills yet, because Claude Code doesn't watch a skills folder that wasn't there when the session started: run `/reload-skills` there, or start a new session.
 
-The spec lives under `.markitect/model/`: one Markdown file with front matter per Definition, one folder per Package. The [model language guide](model-language.md#definitions) gives the form. A project writes its own Kinds for what the standard Libraries do not cover; to use `rest` or `cli`, add it to the manifest and run `markitect lock`.
+The spec lives under `.markitect/model/`: one Markdown file with front matter per Definition, one folder per Package. The [model language guide](model-language.md#definitions) gives the form. A project writes its own Kinds for what the standard Libraries do not cover; to use `rest` or `cli`, add it to the manifest and run `markitect tidy`.
 
 The modeling skill helps an agent write the model with you and asks first when something is open. For an existing code base, the Extract skill draws a first model from the code. You accept every model change yourself; the builder never changes it.
 
@@ -40,17 +40,17 @@ Every file of the project folder outside `.markitect/` belongs to one Package an
 markitect check --repo PATH
 ```
 
-`check` compiles the model and the realization record and prints every compile error as `file:line: code: message`. It prints errors only and exits 1 when there is one. A new project passes: when nothing is registered and all that is missing is the work, it says that the spec compiles and nothing is built yet. The compiler sees the project folder, the nearest one with `.markitect/manifest.yaml`, without what its `.gitignore` files exclude, read as text; it uses no Git ([the folder](../../internal/run/README.md#the-folder)).
+`check` compiles the model and the realization record and prints every compile error as `file:line: code: message`, the spec's first and then the realization's, and ends with one summary line: `ok: N Definitions in M Packages, K files accounted`, or the number of errors with how many are in the spec, for you to settle, and how many in the realization, which `/markitect-build` settles. It exits 1 when there is an error. A new project passes: when nothing is registered and all that is missing is the work, it says that the spec compiles and nothing is built yet. If the lock does not match the manifest, `check` says to run `markitect tidy`. The compiler sees the project folder, the nearest one with `.markitect/manifest.yaml`, without what its `.gitignore` files exclude, read as text; it uses no Git ([the folder](../../internal/run/README.md#the-folder)).
 
-## 5. Lint and look around
+## 5. Vet and look around
 
 ```text
-markitect lint  --repo PATH
-markitect refs  --repo PATH TARGET
-markitect graph --repo PATH
+markitect vet  --repo PATH [--strict]
+markitect list --repo PATH [--deps]
+markitect doc  --repo PATH TARGET
 ```
 
-`lint` measures the model like code: coupling, size, unused Definitions, reach and stale realization, as warnings only. `refs` shows who links to a Definition or Package, and `graph` the Package dependency graph as a Mermaid diagram. All three also run over a project with compile errors.
+`vet` measures the model like code: coupling, size and how far a change reaches, as warnings only ([the warnings](model-language.md#vet-warnings)). It prints one diagnostic line per warning, nothing when the spec is clean, and exits 1 only with `--strict`. `list` shows each Package with its Definitions, and with `--deps` what each Package depends on and the links behind it. `doc` shows a Definition or Package: its text, what it links to and what links to it, the files that realize it and its record. All three also run over a project with compile errors. Unused Definitions and stale rows are errors of `check`, not warnings of `vet`.
 
 ## 6. See what is to verify
 
@@ -81,7 +81,7 @@ The agents work under your session's permission mode and settings, so they may a
 
 `markitect checklist`, `answer` and `gate` went in 0.21.0 with the certificates and Result pages; for one release they only say to run `markitect update`, which writes the record from the newest certificate ([keep it current](#8-keep-it-current)). The commands of a Run, `markitect apply`, `verify`, `submit` and `stop`, went in 0.20.0 ([lean plan](../concepts/lean-tool-plan.md#order-of-work)).
 
-Exit code 0 means success, 1 that the command ran and found something (an error, an item to verify, a refused verdict), 2 that it could not run. So a CI job can run `markitect status`, and any item fails the build. `--json` is on the spec's commands.
+Exit code 0 means success, 1 that the command ran and found something (an error, an item to verify, a refused verdict, a warning of `vet --strict`), 2 that it could not run. So a CI job can run `markitect status`, and any item fails the build. `--json` is on `check`, `vet`, `list`, `doc`, `status` and `mark`, and prints one document with a `format_version` and a `kind` ([the fields](model-language.md#diagnostics-json-and-exit-codes)). `lock`, `lint`, `refs` and `graph` are gone; they are unknown commands.
 
 ## 8. Keep it current
 
@@ -92,14 +92,14 @@ markitect update  [--repo PATH] [--check]
 
 `markitect` writes some files outside its own binary: the personal skill, and in each project the skills, the builder and reviewer agents, the hooks in `.claude/settings.json`, `.markitect/.gitattributes` and the lock. After an upgrade of the binary they are from the older build until you update them. `update` does both: it upgrades the binary, then has the new binary bring those files in line.
 
-`version` prints the build, then says for the personal skill and for the project in `--repo` whether it matches this binary: *up to date*, *out of date* or, for the personal skill, *not installed*. It changes nothing. Every command that reads the project (`check`, `lint`, `refs`, `graph`, `lock`, `status`) also prints one note on standard error when the project's skills, agents and hooks differ; it never changes the exit code.
+`version` prints the build, then says for the personal skill and for the project in `--repo` whether it matches this binary: *up to date*, *out of date* or, for the personal skill, *not installed*. It changes nothing. Every command that reads the project (`check`, `vet`, `list`, `doc`, `tidy`, `status`) also prints one note on standard error when the project's skills, agents and hooks differ; it never changes the exit code.
 
 `update` puts that right, the way `init` does, and never touches a spec file, `AGENTS.md` or `CLAUDE.md`:
 
 - The **binary** is replaced by the newest [release](https://github.com/Glacius-Labs/Markitect/releases), unless it is already the newest. `update` reads the newest tag from GitHub, downloads the binary for your system, checks it against the checksums of that release and puts it in the place of the running one; on Windows the old file steps aside first and goes at the next update. The new binary then carries out the rest, since only it knows the files it ships. Without a network, `update` says so and goes on with the files. It leaves two kinds of binary alone: one the plugin manages (`MARKITECT_PLUGIN` is set), which the plugin updates with `claude plugin update markitect@glacius-labs`, and a development build (`0.0.0-dev` or `-dev` after any version) that is older than the newest release, which only `--force` replaces; one that is newer counts as up to date. `--files` skips this step.
 - The **personal skill** is refreshed if it exists. `update` does not create it; `install` does, because `install` is the one command that writes into the home folder for the first time.
 - The project's **skills, agents, hooks and `.markitect/.gitattributes`** are rewritten where they differ, and files the binary no longer ships, such as the apply and verify skills, are removed. Your settings in `.claude/settings.json` stay.
-- The **lock** is rewritten from the manifest: a changed lock means the Libraries your spec is checked against changed, so read its change before you commit it.
+- The **lock** is rewritten from the manifest, as `markitect tidy` does: a changed lock means the Libraries your spec is checked against changed, so read its change before you commit it. Its header now reads "Written by markitect tidy from the manifest", so the first `update` after 0.21.0 rewrites every lock once.
 - The **record**: a project from 0.20.0 has certificates under `.markitect/results/`. `update` writes `.markitect/review.sum` from the newest one, recording every Definition it certified as `ok` at the certified state, with the certificate's pointers as evidence and a `not shown` answer as `skip`, and removes the results folder, which no longer belongs to the layout. A project that already has its record keeps it.
 
 `update` commits nothing; commit what it wrote when you like.
@@ -121,9 +121,9 @@ The plugin's launcher downloads the binary of the release with the plugin's own 
 | `markitect (plugin): cannot download ...` | The plugin's launcher could not reach the releases page; a sandboxed shell may block it. Start a new session, whose start hook fetches outside the sandbox, or download the binary of the release by hand ([the README](../../README.md#install)). |
 | `markitect` exists in Claude Code but not in your terminal | The plugin puts it on the path of Claude Code's shell only. Install a binary for your terminal ([the README](../../README.md#install)). |
 | `file.unregistered` | List the file on its owner's registry page, or in the ignore file. |
-| `lock.mismatch` after an upgrade of `markitect` | A standard Library changed. Run `markitect update` (or `markitect lock`), review the lock diff and commit it. The Definitions of its Kinds are then on the list to verify again. |
+| `lock.mismatch` after an upgrade of `markitect` | A standard Library changed. Run `markitect update` (or `markitect tidy`), review the lock diff and commit it. The Definitions of its Kinds are then on the list to verify again. |
 | `package.cycle` | Move the shared concept into a common parent, or invert the dependency ([links, scope and visibility](model-language.md#links-scope-and-visibility)). |
-| `lint.no_paths` | A Package owns no file. Name its first path patterns on its registry page ([first patterns](model-language.md#registry-pages)). |
+| `vet.no_paths` | A Package owns no file. Name its first path patterns on its registry page ([first patterns](model-language.md#registry-pages)). |
 | `stale.definition`, `stale.file`, `stale.page` | A registry page still names a removed Definition, file or Package. `status` lists it for the builder, and it stays on the list until it is settled. |
 | `definition.unused` | Nothing links to a Definition and no file realizes it. `/markitect-build` settles it, or the spec should not hold it. A project with nothing built yet does not report it in `check`. |
 | `status` says there is no list until the spec compiles | Run `check --spec` and fix the spec first. |

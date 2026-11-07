@@ -302,7 +302,7 @@ func (p *Project) loadManifest(read func(string) ([]byte, bool), present map[str
 		}
 	}
 	if !present[LockFile] {
-		ds.Add("lock.missing", LockFile, 0, "the project has no lock; run markitect lock")
+		ds.Add("lock.missing", LockFile, 0, "the project has no lock; run markitect tidy")
 		return
 	}
 	if data, ok := read(LockFile); ok {

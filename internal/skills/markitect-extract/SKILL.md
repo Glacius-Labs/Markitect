@@ -17,13 +17,13 @@ An extraction is a conversation with the owner, who accepts every model change. 
 [ ] 3 Binding part decided; Packages chosen from the real areas
 [ ] 4 Definitions written
 [ ] 5 Registry pages and ignore file written
-[ ] 6 markitect check passes; markitect lint read
+[ ] 6 markitect check passes; markitect vet read
 [ ] 7 Diff handed to the owner
 ```
 
 ### 1. Set up
 
-Work in a Git checkout on its own branch with no other changes. Run `markitect init --name "<Project>"`. It writes the manifest with `std`, a placeholder project anchor at `.markitect/model/project.md`, Root's registry page, the lock, `AGENTS.md` and `CLAUDE.md` if they are missing, and installs the skills. If it says it left `AGENTS.md` as it is, propose the line to add to the owner. Add `rest: 1.0.0` or `cli: 1.0.0` to `.markitect/manifest.yaml` when the project has HTTP or command-line interfaces, then run `markitect lock`.
+Work in a Git checkout on its own branch with no other changes. Run `markitect init --name "<Project>"`. It writes the manifest with `std`, a placeholder project anchor at `.markitect/model/project.md`, Root's registry page, the lock, `AGENTS.md` and `CLAUDE.md` if they are missing, and installs the skills. If it says it left `AGENTS.md` as it is, propose the line to add to the owner. Add `rest: 1.0.0` or `cli: 1.0.0` to `.markitect/manifest.yaml` when the project has HTTP or command-line interfaces, then run `markitect tidy`.
 
 ### 2. Read the project
 
@@ -57,9 +57,9 @@ Make a list of every file: the compiler sees the project folder without what its
 
 Run `markitect check` until it prints `ok`. Fix the errors in the order given in `markitect-modeling` (links and cycles first, then registry). Then run:
 
-- `markitect lint`: fix or justify each warning. `lint.unused` on a Definition means nothing links it and no file realizes it: link it from the registry or drop it.
-- `markitect graph`: the Package arrows should match the real imports and the documentation.
-- `markitect refs` on the central Definitions: files and links should agree.
+- `markitect vet`: fix or justify each warning. `markitect check` reports `definition.unused` when nothing links a Definition and no file realizes it: link it from the registry or drop it.
+- `markitect list --deps`: the Package dependencies should match the real imports and the documentation.
+- `markitect doc` on the central Definitions: files and links should agree.
 
 ### 7. Hand over
 
@@ -68,7 +68,7 @@ Leave the work on its branch as a diff; commit only if the owner asked. Report b
 - the Packages you chose and why, and the alternatives you rejected;
 - what the model states, and what you left free on purpose;
 - the points where code and documentation disagreed, each with the owner's answer, and any point the owner chose to leave open, with the evidence;
-- the proposed checks, the ignored files and why, and the lint warnings that remain with one line each;
+- the proposed checks, the ignored files and why, and the `vet` warnings that remain with one line each;
 - the final `markitect check` line.
 
 The owner reads the diff and merges it or sends it back. Corrections to the model go through the `markitect-modeling` skill.

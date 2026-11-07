@@ -126,7 +126,7 @@ func TestLoadMissingControlFiles(t *testing.T) {
 
 	r = valid(t)
 	delete(r.files, LockFile)
-	expect(t, load(t, r).Errors, "lock.missing", "run markitect lock")
+	expect(t, load(t, r).Errors, "lock.missing", "run markitect tidy")
 }
 
 func TestLoadLibraryErrors(t *testing.T) {

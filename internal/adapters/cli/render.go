@@ -3,89 +3,125 @@ package cli
 import (
 	"fmt"
 	"strings"
-
-	"github.com/Glacius-Labs/Markitect/internal/analysis"
-	"github.com/Glacius-Labs/Markitect/internal/model"
 )
 
-// The renderers write Markdown, so that every output reads in an editor,
-// Obsidian or GitHub.
+// The renderers write plain text, as Go's tools print theirs; --json gives the
+// same as one document.
 
-func renderRefs(target string, refs []analysis.Ref) string {
+// renderList prints each Package, then its Definitions indented below it; with
+// --deps a Package's coupling and what it depends on, and each Definition's
+// links.
+func renderList(pkgs []listedPackage) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "# References to [[%s]]\n\n", target)
-	if len(refs) == 0 {
-		b.WriteString("Nothing links to it and no file realizes it.\n")
-		return b.String()
-	}
-	b.WriteString("| From | Via | Where |\n|---|---|---|\n")
-	for _, r := range refs {
-		from := "[[" + r.From + "]]"
-		if r.Via == "registry" {
-			from = "`" + r.From + "`"
+	for _, p := range pkgs {
+		b.WriteString(p.Name)
+		if p.Deps != nil {
+			fmt.Fprintf(&b, " (Ca %d, Ce %d, instability %.2f)", p.Deps.Afferent, p.Deps.Efferent, p.Deps.Instability)
 		}
-		fmt.Fprintf(&b, "| %s | %s | %s |\n", from, r.Via, where(r.File, r.Line))
-	}
-	return b.String()
-}
-
-func renderGraph(g analysis.Graph) string {
-	var b strings.Builder
-	b.WriteString("# Package graph\n\nArrows are explicit dependencies; every Package also depends on its parent by location.\n\n```mermaid\nflowchart TD\n")
-	ids := map[string]string{}
-	for i, n := range g.Packages {
-		ids[n.Path] = fmt.Sprintf("p%d", i)
-		fmt.Fprintf(&b, "  %s[\"%s\"]\n", ids[n.Path], model.PackageName(n.Path))
-	}
-	for _, n := range g.Packages {
-		if n.Path != model.RootPackage {
-			fmt.Fprintf(&b, "  %s -.- %s\n", ids[n.Parent], ids[n.Path])
-		}
-	}
-	for _, e := range g.Edges {
-		fmt.Fprintf(&b, "  %s --> %s\n", ids[e.From], ids[e.To])
-	}
-	b.WriteString("```\n\n")
-	b.WriteString(packageTable(g))
-	if len(g.Edges) > 0 {
-		b.WriteString("\n## Dependencies\n\n| From | To | Because |\n|---|---|---|\n")
-		for _, e := range g.Edges {
-			var because []string
-			for _, u := range e.Uses {
-				verb := "links"
-				if u.Kind {
-					verb = "is of Kind"
+		b.WriteString("\n")
+		if p.Deps != nil {
+			for _, d := range p.Deps.DependsOn {
+				var because []string
+				for _, u := range d.Uses {
+					verb := "links"
+					if u.Kind {
+						verb = "is of Kind"
+					}
+					because = append(because, fmt.Sprintf("%s %s %s", u.From, verb, u.Target))
 				}
-				because = append(because, fmt.Sprintf("[[%s]] %s [[%s]]", u.From, verb, u.Target))
+				fmt.Fprintf(&b, "  depends on %s: %s\n", d.Package, strings.Join(because, "; "))
 			}
-			fmt.Fprintf(&b, "| %s | %s | %s |\n", model.PackageName(e.From), model.PackageName(e.To), strings.Join(because, "; "))
+		}
+		for _, d := range p.Definitions {
+			fmt.Fprintf(&b, "  %s\n", definitionLine(d))
+			if len(d.Links) > 0 {
+				fmt.Fprintf(&b, "    links %s\n", strings.Join(d.Links, ", "))
+			}
 		}
 	}
 	return b.String()
 }
 
-func packageTable(g analysis.Graph) string {
+// definitionLine is a Definition on one line: its ID, title and Kind.
+func definitionLine(d listedDefinition) string {
+	return fmt.Sprintf("%s: %s (%s)", d.ID, d.Title, d.Kind)
+}
+
+// renderDocDefinition prints a Definition as doc shows it.
+func renderDocDefinition(d docDefinition) string {
 	var b strings.Builder
-	b.WriteString("| Package | Definitions | Ca | Ce | Instability |\n|---|---|---|---|---|\n")
-	for _, n := range g.Packages {
-		fmt.Fprintf(&b, "| %s | %d | %d | %d | %.2f |\n", model.PackageName(n.Path), n.Definitions, n.Afferent, n.Efferent, n.Instability)
+	fmt.Fprintf(&b, "%s\n", definitionLine(d.listedDefinition))
+	switch {
+	case d.Library != "":
+		fmt.Fprintf(&b, "Library %s\n", d.Library)
+	default:
+		fmt.Fprintf(&b, "Package %s, %s\n", d.Package, d.File)
+	}
+	fmt.Fprintf(&b, "\n%s", d.Text)
+	if len(d.Links) > 0 {
+		fmt.Fprintf(&b, "\nLinks to: %s\n", strings.Join(d.Links, ", "))
+	}
+	if len(d.LinkedFrom) > 0 {
+		b.WriteString("\nLinked from:\n")
+		for _, r := range d.LinkedFrom {
+			fmt.Fprintf(&b, "  %s (%s), %s\n", r.From, r.Via, where(r.File, r.Line))
+		}
+	}
+	if len(d.RealizedBy) > 0 {
+		b.WriteString("\nRealized by:\n")
+		for _, r := range d.RealizedBy {
+			fmt.Fprintf(&b, "  %s, %s\n", r.File, where(r.Page, r.Line))
+		}
+	}
+	if r := d.Record; r != nil {
+		fmt.Fprintf(&b, "\nRecord: %s, %s", r.Item, r.State)
+		switch {
+		case len(r.Changes) > 0:
+			fmt.Fprintf(&b, ": %s", strings.Join(r.Changes, ", "))
+		case r.Why != "":
+			fmt.Fprintf(&b, ": %s", r.Why)
+		}
+		b.WriteString("\n")
 	}
 	return b.String()
 }
 
-func renderLint(warnings model.Diagnostics, g analysis.Graph) string {
+// renderDocPackage prints a Package as doc shows it.
+func renderDocPackage(p docPackage) string {
 	var b strings.Builder
-	b.WriteString("# Lint\n\n")
-	if len(warnings) == 0 {
-		b.WriteString("No warnings.\n")
-	} else {
-		fmt.Fprintf(&b, "%d warnings:\n\n", len(warnings))
-		for _, w := range warnings {
-			fmt.Fprintf(&b, "- %s\n", w.String())
+	fmt.Fprintf(&b, "Package %s", p.Name)
+	if p.Parent != "" {
+		fmt.Fprintf(&b, ", in %s", p.Parent)
+	}
+	b.WriteString("\n")
+	if p.Page != "" {
+		fmt.Fprintf(&b, "Registry page %s", p.Page)
+		if len(p.Paths) > 0 {
+			fmt.Fprintf(&b, ", paths %s", strings.Join(p.Paths, ", "))
+		}
+		b.WriteString("\n")
+	}
+	if len(p.Children) > 0 {
+		fmt.Fprintf(&b, "Packages below: %s\n", strings.Join(p.Children, ", "))
+	}
+	if len(p.Definitions) > 0 {
+		b.WriteString("\nDefinitions:\n")
+		for _, d := range p.Definitions {
+			fmt.Fprintf(&b, "  %s\n", definitionLine(d))
 		}
 	}
-	b.WriteString("\n## Coupling\n\nCa: Packages that depend on it. Ce: Packages it depends on. Instability: Ce / (Ca + Ce).\n\n")
-	b.WriteString(packageTable(g))
+	if len(p.LinkedFrom) > 0 {
+		b.WriteString("\nLinked from:\n")
+		for _, r := range p.LinkedFrom {
+			fmt.Fprintf(&b, "  %s (%s), %s\n", r.From, r.Via, where(r.File, r.Line))
+		}
+	}
+	if len(p.Files) > 0 {
+		b.WriteString("\nFiles:\n")
+		for _, f := range p.Files {
+			fmt.Fprintf(&b, "  %s\n", f)
+		}
+	}
 	return b.String()
 }
 
