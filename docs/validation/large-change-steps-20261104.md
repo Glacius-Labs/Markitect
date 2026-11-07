@@ -1,6 +1,6 @@
 # The large Makerspace's change steps, 4 November 2026
 
-The second half of step U3 of the [delivery plan](../implementation-plan.md#concept-30-build): [eight change steps](../../tools/makerspace-large/CHANGES.md) on the [large Makerspace](../../tools/makerspace-large/README.md), with hidden cases, for [test 2](../concepts/v3-concept.md#13-how-we-know-it-works). No variant has run on them yet.
+The second half of step U3 of the [delivery plan](../implementation-plan.md#concept-30-build): [eight change steps](https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/makerspace-large/CHANGES.md) on the [large Makerspace](https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/makerspace-large/README.md), with hidden cases, for [test 2](../concepts/v3-concept.md#13-how-we-know-it-works). No variant has run on them yet.
 
 ## How they were made
 
@@ -23,7 +23,7 @@ Then three authors per step, all fresh sessions on Sonnet: one wrote the model f
 
 All three failures were mistakes in a case's own setup or helper, and the reference was right each time. A case that also passes on the program before holds something that must stay: in C1 the off-grid slots, in C7 what must not be renamed, and in C8 the 8 cases that only had a shift taken out of their setup.
 
-The model authors checked their pages with the project's own page tool, which does not look for cycles between Packages. Compiling every step with `markitect check` afterwards found two, from C4 and from C5: a page linked back against the one-way dependencies. Both links became plain words, which changed no operation. [`compile_steps.py`](../../tools/makerspace-large/compile_steps.py) now checks every step.
+The model authors checked their pages with the project's own page tool, which does not look for cycles between Packages. Compiling every step with `markitect check` afterwards found two, from C4 and from C5: a page linked back against the one-way dependencies. Both links became plain words, which changed no operation. [`compile_steps.py`](https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/makerspace-large/compile_steps.py) now checks every step.
 
 So a careful author working from the whole model missed nothing here, even where the request does not say it. That says these changes can be done right from a complete model. It says nothing yet about how a strong agent does from the repository alone, which is test 2.
 

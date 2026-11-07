@@ -32,14 +32,11 @@ go build ./...
 go test ./internal/tooling/architecture
 python -B -m unittest discover -s scripts -p test_*.py
 python -B scripts/check-docs.py
-python -B -m unittest discover -s tools/library-oracle
-python -B -m unittest discover -s tools/comparison
-python -B -m unittest discover -s tools/makerspace-oracle -p test_*.py
 ```
 
 Broad Go suites run in Linux CI by manual dispatch (above). The product's tests run on plain folders and need no Git, so since 0.20.0 the whole Go suite takes about a minute on Windows too; only the release tooling's tests start Git, which is slow there ([earlier measurement](docs/validation/windows-test-time-20261028.md): about 50 minutes while the Run's tests used Git).
 
-Run `gofmt` on changed Go files and `git diff --check`. CI checks module checksums, tests with and without the race detector, vet, build, tracked Go formatting, every production/test/platform import against the architecture rule table, the packaged-source smoke, repository scripts, maintained documentation links, the independent Library oracle with its bounded transport, and the unit tests of the comparison, evaluation and Makerspace oracle tools. Obsolete engines and their tests/gates are removed together; no skips or success stubs may replace required checks.
+Run `gofmt` on changed Go files and `git diff --check`. CI checks module checksums, tests with and without the race detector, vet, build, tracked Go formatting, every production/test/platform import against the architecture rule table, the packaged-source smoke, repository scripts and maintained documentation links. Obsolete engines and their tests/gates are removed together; no skips or success stubs may replace required checks.
 
 Regenerate the code map when the rule table or a package doc comment changes:
 

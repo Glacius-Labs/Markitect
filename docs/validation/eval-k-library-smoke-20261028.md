@@ -25,7 +25,7 @@ This is the first real use of the [evaluation suite](https://github.com/Glacius-
 
 ## Assessment
 
-Descriptive only. For each delivered result, [`assess_candidate.py`](../../tools/comparison/assess_candidate.py) runs the hidden Library oracle and probes, the result's own build and tests, and the census of changed paths, against the task's start. No blinded review.
+Descriptive only. For each delivered result, [`assess_candidate.py`](https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/comparison/assess_candidate.py) runs the hidden Library oracle and probes, the result's own build and tests, and the census of changed paths, against the task's start. No blinded review.
 
 ```text
 python -I -B tools/comparison/assess_candidate.py --candidate RUN_DIR/variant/result.bundle --commit RESULT_COMMIT \

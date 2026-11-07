@@ -1,6 +1,6 @@
 # The default through the suite, and its first build at 5×, 4 November 2026
 
-Step U4 of the [delivery plan](../implementation-plan.md#concept-30-build) starts here: the default of [concept 3.0](../concepts/v3-concept.md) run as the suite's [arm](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/README.md#the-concept-30-arm), on real sessions, with the hidden cases judging the result. Test 1 and test 2 both start from the default's own W0 of the [large Makerspace](../../tools/makerspace-large/README.md), so that build comes first. The default built the 5× project on its first launch and passed all 327 hidden cases. This is one launch, not a rate.
+Step U4 of the [delivery plan](../implementation-plan.md#concept-30-build) starts here: the default of [concept 3.0](../concepts/v3-concept.md) run as the suite's [arm](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/README.md#the-concept-30-arm), on real sessions, with the hidden cases judging the result. Test 1 and test 2 both start from the default's own W0 of the [large Makerspace](https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/makerspace-large/README.md), so that build comes first. The default built the 5× project on its first launch and passed all 327 hidden cases. This is one launch, not a rate.
 
 ## Questions
 

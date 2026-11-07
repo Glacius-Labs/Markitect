@@ -4,7 +4,7 @@ Step 3 of the [lean plan](../concepts/lean-tool-plan.md#order-of-work) switched 
 
 ## Question
 
-Does the lean flow hold on real changes? `/markitect-apply` injects `markitect checklist --start`, the owner's session starts `markitect-builder`, the builder goes through `markitect gate` and starts `markitect-reviewer` as its own subagent, and the session runs `gate` again and commits the work with the certificate ([project workflow](../guides/project-workflow.md#7-apply-and-verify), [without a Run](../../internal/run/README.md#without-a-run-gate)). What to watch: the nested reviewer, the hook inside subagents, whether the session leaves the work to the agents, permission stops, and whether gate's row 1 (the spec changed) or row 2 (a changed file in no item) misfire. Second, the same cases through the old flow, `markitect apply`, whose builder goes through `submit`.
+Does the lean flow hold on real changes? `/markitect-apply` injects `markitect checklist --start`, the owner's session starts `markitect-builder`, the builder goes through `markitect gate` and starts `markitect-reviewer` as its own subagent, and the session runs `gate` again and commits the work with the certificate ([project workflow](../guides/project-workflow.md#7-apply-and-verify), [without a Run](https://github.com/Glacius-Labs/Markitect/blob/ddfc4d673d8412cc929d0b9cfb3916118bc2df95/internal/run/README.md#without-a-run-gate)). What to watch: the nested reviewer, the hook inside subagents, whether the session leaves the work to the agents, permission stops, and whether gate's row 1 (the spec changed) or row 2 (a changed file in no item) misfire. Second, the same cases through the old flow, `markitect apply`, whose builder goes through `submit`.
 
 ## Dispatch
 
@@ -39,7 +39,7 @@ Each project is a new Git repository with no remote, built by a script with no a
 | Case | Change | Definitions changed | Plant | Expected |
 |---|---|---|---|---|
 | A | C5 to C6: certifications no longer expire | 12 | Code: the retired expiry stays in the certification check at 1000 days, planted by the trial hook just before the builder's first `gate` (old arm: `submit`), as if the builder had written it. The tests pass with it; only reading catches it | A review answers `wrong`, the builder repairs, `gate` certifies, the plant is gone |
-| B | C2 to C3: bulk discount for materials | 2 | Spec: [`makerspace-c3-discount-contradiction`](../../tools/evaluation-judges/plants/makerspace-c3-discount-contradiction.json), the table gives 8 %, its worked example 5 % | The work stops with the question for the owner; no certificate |
+| B | C2 to C3: bulk discount for materials | 2 | Spec: [`makerspace-c3-discount-contradiction`](https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/evaluation-judges/plants/makerspace-c3-discount-contradiction.json), the table gives 8 %, its worked example 5 % | The work stops with the question for the owner; no certificate |
 | C | C6 to C7: billing described as one area, no behavior change | 16 | None. Four Definitions go and six come, so registry rows must move | Certified with registry updates and no change in behavior |
 
 ## Probes

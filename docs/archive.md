@@ -1,6 +1,6 @@
 # Archive index
 
-Main keeps what the concept 2.0 build, its development and V1's qualification evidence need. Everything else stays at a named archive point and is listed here: designs of earlier product lines, closed experiments, dated validation records, handoffs, strategy and research. Archived files keep their original bytes and wording; DEC-069 applies to the documentation on Main, not to the archive ([DEC-071](concepts/register.md#dec-071-repository-structure-and-archive)).
+Main keeps what the build of [concept 4.0](concepts/v4-concept.md) and its development need, and the dated records under `docs/validation/`. Everything else stays at a named archive point and is listed here: designs of earlier product lines, closed experiments, dated validation records, handoffs, strategy and research. Archived files keep their original bytes and wording; DEC-069 applies to the documentation on Main, not to the archive ([DEC-071](concepts/register.md#dec-071-repository-structure-and-archive)).
 
 Links to archived files use the full commit SHA, never a branch or tag name, because names can move or vanish, as the tags did. Each group below links its original folder at the archive point; replace the folder with the file path from the group's description to reach a single file.
 
@@ -151,9 +151,24 @@ These pages were folded into a current page. Their pre-merge text stays at the a
 | `docs/development/README.md` | [Documentation map](README.md#development) | [At the archive point](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/development/README.md) | none |
 | `docs/concepts/origin-and-rationale.md` | [Vision](vision.md#origin-and-rationale) | [At the archive point](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/concepts/origin-and-rationale.md) | CPT-001 and the register index |
 
+## Removed with the evaluation tools
+
+On 7 November 2026, after accepting [concept 4.0](concepts/v4-concept.md) ([DEC-098](concepts/register.md#dec-098-concept-40-is-the-target)), the owner removed the oracles and every other evaluation tool that the [evaluation runner's removal](#removed-with-the-evaluation-runner) had left on Main. Nothing in the product, its tests or its CI used them except their own unit tests. What went stays at Main [`b8fd2c94`](https://github.com/Glacius-Labs/Markitect/tree/b8fd2c94722af066ba4ff6337aeba0459cb804ec), which is in Main's ancestry. The 5× Makerspace's change steps and hidden cases, which [step 3 of concept 4.0's order of work](concepts/v4-concept.md#13-order-of-work) runs, are there.
+
+| Removed | Location before | What it held |
+|---|---|---|
+| Study projects | [`tools/evaluation-tasks`](https://github.com/Glacius-Labs/Markitect/tree/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/evaluation-tasks) | The Library, Makerspace and 5× Makerspace models in the concept 2.0 form, one snapshot per step of each change series |
+| Hidden judges | [`tools/evaluation-judges`](https://github.com/Glacius-Labs/Markitect/tree/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/evaluation-judges) | The projects' hidden judges, their references and the planted defects |
+| 5× Makerspace | [`tools/makerspace-large`](https://github.com/Glacius-Labs/Markitect/tree/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/makerspace-large) | Its design, requirements per step, a reference realization per step and its oracle cases |
+| Makerspace oracle | [`tools/makerspace-oracle`](https://github.com/Glacius-Labs/Markitect/tree/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/makerspace-oracle) | The hidden Phase C behavior cases and probes, with their harness |
+| Makerspace reference | [`tools/makerspace-reference`](https://github.com/Glacius-Labs/Markitect/tree/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/makerspace-reference) | The hidden Phase C reference implementations per step, and their mutants |
+| Library oracle | [`tools/library-oracle`](https://github.com/Glacius-Labs/Markitect/tree/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/library-oracle) | The independent Library oracle, its bounded driver, its evaluation contract and its container files |
+| Comparison tools | [`tools/comparison`](https://github.com/Glacius-Labs/Markitect/tree/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/comparison) | The single-agent comparison's packets, rubric check and runner, the frozen Phase B and Phase C material, and the Makerspace v2 models |
+| Library model M1 | [`testdata/library`](https://github.com/Glacius-Labs/Markitect/tree/b8fd2c94722af066ba4ff6337aeba0459cb804ec/testdata/library) | The Library model M1 in V1's form with its business rules, the shared fixture of V1's qualification |
+
 ## Removed with the evaluation runner
 
-On 7 November 2026 the owner removed the evaluation suite's runner and arms ([draft concept 4.0, §16, question 7](concepts/v4-concept.md#16-questions-for-the-owner)): they drove the concept 3.0 engine, which Main no longer has. The study projects in `tools/evaluation-tasks`, the hidden judges and planted defects in `tools/evaluation-judges`, the oracles and the Makerspace tools stay. What went stays at Main [`2fd2d337`](https://github.com/Glacius-Labs/Markitect/tree/2fd2d33747de2e69e5f4968432792d543003041a), which is in Main's ancestry.
+On 7 November 2026 the owner removed the evaluation suite's runner and arms ([draft concept 4.0, §16, question 7](concepts/v4-concept.md#16-questions-for-the-owner)): they drove the concept 3.0 engine, which Main no longer has. The study projects in `tools/evaluation-tasks`, the hidden judges and planted defects in `tools/evaluation-judges`, the oracles and the Makerspace tools stayed, until they went later the same day ([above](#removed-with-the-evaluation-tools)). What went stays at Main [`2fd2d337`](https://github.com/Glacius-Labs/Markitect/tree/2fd2d33747de2e69e5f4968432792d543003041a), which is in Main's ancestry.
 
 | Removed | Location before | What it held |
 |---|---|---|
@@ -207,7 +222,7 @@ These files are still on Main under new paths; their content is unchanged apart 
 | `docs/design/canonical-model/sources/` | [`docs/concepts/sources/`](concepts/sources/) |
 | `docs/history/distribution-retirement-20261017.md`, `retired-releases-20261017.json`, `distribution/production-assessment.md` | [`docs/validation/`](validation/) |
 | `docs/design/canonical-model/minimal-language/exchange-example/dependencies/core/` | `testdata/core/`, removed by T1 ([before T1](https://github.com/Glacius-Labs/Markitect/tree/f23c2e12d9833efa61e5e65c90018016423abe74/testdata/core)) |
-| `docs/design/canonical-model/library-example/` (model M1, vocabulary, business rules) | [`testdata/library/`](../testdata/library/) |
-| `docs/design/canonical-model/library-example/evaluation-contract.md`, `experiments/library-playground/` | [`tools/library-oracle/`](../tools/library-oracle/) |
-| `experiments/runtime-baseline/assess.py`, `run_oracle.py` | [`tools/library-oracle/container/`](../tools/library-oracle/container/) |
+| `docs/design/canonical-model/library-example/` (model M1, vocabulary, business rules) | [`testdata/library/`](https://github.com/Glacius-Labs/Markitect/tree/b8fd2c94722af066ba4ff6337aeba0459cb804ec/testdata/library) |
+| `docs/design/canonical-model/library-example/evaluation-contract.md`, `experiments/library-playground/` | [`tools/library-oracle/`](https://github.com/Glacius-Labs/Markitect/tree/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/library-oracle) |
+| `experiments/runtime-baseline/assess.py`, `run_oracle.py` | [`tools/library-oracle/container/`](https://github.com/Glacius-Labs/Markitect/tree/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/library-oracle/container) |
 | `integration/README.md`, `run-markitect.go`, `run-markitect_test.go` | [`packaging/README.md`](../packaging/README.md), [`packaging/bootstrap/`](../packaging/bootstrap/) |

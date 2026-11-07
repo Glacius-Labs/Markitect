@@ -39,7 +39,7 @@ Correct implementation with a stale model, correct model with a missed target, p
 
 ## Quality-first comparative evaluation
 
-The [evaluation suite](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/docs/guides/evaluation-suite.md) was the runner for comparisons: every variant got the same task and the same judging. Its runner and arms were removed on 7 November 2026, since they drove an engine Main no longer has ([archive](../archive.md#removed-with-the-evaluation-runner)); the study projects, hidden judges and oracles stay under `tools/`.
+The [evaluation suite](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/docs/guides/evaluation-suite.md) was the runner for comparisons: every variant got the same task and the same judging. Its runner and arms were removed on 7 November 2026, since they drove an engine Main no longer has ([archive](../archive.md#removed-with-the-evaluation-runner)). The study projects, hidden judges, oracles and comparison tools went the same day ([archive](../archive.md#removed-with-the-evaluation-tools)), so a new study starts from that archive point or from material of its own.
 
 The primary study asks whether the method better addresses the problems it is designed for: losing intent through forgotten obligations, overlooked consequences, contradictory representations or ignored rules. The owner [specified the primary comparison](../concepts/sources/human-attention-and-baseline-20261017.md#comparison-baseline) on 17 October 2026: ordinary documentation containing the same intended meaning as the canonical model, given to one coding Agent with the instruction, "Lies dir die Doku durch und implementiere das so" (read the documentation and implement it accordingly). Markitect adds its typed model and systematic realization process. Count authoring and maintaining both the ordinary documentation and the canonical model as human work from the same predeclared starting point.
 
@@ -53,7 +53,7 @@ Keep initial setup, model maintenance, recovery and review effort visible. Recor
 
 ## Comparison factors and first results
 
-The [single-agent comparison tools](../../tools/comparison/README.md) supplies a small curated set of fixed packets, not a study runner. Record exact model, effort and profile bindings. The primary paired comparison uses the same model and effort for the ordinary coding Agent and every Markitect role; mixed role profiles are a separately labeled secondary condition. Give each pair the same maximal resources, timeouts, permissions, implementation freedom and human-help allowance. Measure actual resource use, human attention, money and elapsed time separately; equal ceilings do not imply equal cost.
+The [single-agent comparison tools](https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/comparison/README.md), removed on 7 November 2026, supplied a small curated set of fixed packets, not a study runner. Record exact model, effort and profile bindings. The primary paired comparison uses the same model and effort for the ordinary coding Agent and every Markitect role; mixed role profiles are a separately labeled secondary condition. Give each pair the same maximal resources, timeouts, permissions, implementation freedom and human-help allowance. Measure actual resource use, human attention, money and elapsed time separately; equal ceilings do not imply equal cost.
 
 Declare project size separately from dependency and rule complexity, and distinguish greenfield implementation from existing-system changes, local changes from rules spanning responsibilities, and no added seed from an ordinary or subtle deliberately seeded defect. Use a small selected set before a full factor combination. The first Library/Readinglog set changes domain, language and organization together; its project differences are descriptive and do not isolate a causal size or complexity effect. Compare methods within each identical scenario/profile, including each model-profile condition, before drawing a broader conclusion.
 
@@ -104,13 +104,13 @@ The object of evaluation is the delegated method: computed scope, bounded Manage
 
 ## Correctness first
 
-Current component and oracle tests establish only their actual assertions and source. [CONTRIBUTING](../../CONTRIBUTING.md#verify-a-change) owns executable gates; the [Library oracle](../../tools/library-oracle/README.md) owns independent behavior expectations. A successful source check does not establish semantic realization or attention savings.
+Current component tests establish only their actual assertions and source. [CONTRIBUTING](../../CONTRIBUTING.md#verify-a-change) owns executable gates. Independent behavior expectations need an oracle outside the writers' reach; the [Library oracle](https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/library-oracle/README.md) was one, until the evaluation tools were removed on 7 November 2026. A successful source check does not establish semantic realization or attention savings.
 
 A comparative study follows the current primary baseline above and requires its own authorization. Earlier measurement protocols and their dated observations are listed in the [archive index](../archive.md) and keep their original scope.
 
 ## Authoring exercise
 
-Use the canonical Library model and the [staged readiness gates](#staged-method-readiness) for current authoring and realization work.
+Use the [staged readiness gates](#staged-method-readiness) for current authoring and realization work. The Library model that served as the example is at the [archive point](../archive.md#removed-with-the-evaluation-tools).
 
 ## Controlled model comparison
 

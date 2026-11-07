@@ -2,7 +2,7 @@
 
 Each result has a neutral label until the key. There is no overall score: the figures point at what is worth looking at, and the conclusion is the owner's.
 
-Step U3 of the [delivery plan](../implementation-plan.md#concept-30-build): what [concept 3.0 §13](../concepts/v3-concept.md#13-how-we-know-it-works) keeps and compares, on the six builds of the [large Makerspace](../../tools/makerspace-large/README.md) that exist. How the page was made, and its dispatch, come after the key.
+Step U3 of the [delivery plan](../implementation-plan.md#concept-30-build): what [concept 3.0 §13](../concepts/v3-concept.md#13-how-we-know-it-works) keeps and compares, on the six builds of the [large Makerspace](https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/makerspace-large/README.md) that exist. How the page was made, and its dispatch, come after the key.
 
 All six passed all 327 hidden cases, and all six have the spec's 48 modules at their paths with no import the spec forbids. So neither the hidden cases nor the module table tells them apart. What follows is what does.
 

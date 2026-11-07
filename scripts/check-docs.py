@@ -44,7 +44,6 @@ DEFAULT_DOCUMENTS = (
     "docs/concepts/register.md",
     "docs/concepts/sources/README.md",
     "packaging/README.md",
-    "tools/library-oracle/README.md",
 )
 
 

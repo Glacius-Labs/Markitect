@@ -1,9 +1,0 @@
-checks:
-  - name: build
-    command: go build ./cmd/library
-    directory: realization
-    timeout: 2m
-  - name: test
-    command: go test ./...
-    directory: realization
-    timeout: 5m

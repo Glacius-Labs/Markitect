@@ -28,12 +28,12 @@ Each passes the gate: the planted submission builds, its tests pass and `markite
 | `reservation-starting-now` | Hard | `starts_in_past` when `start` is before the request time ([create-reservation]) | Also refuses a start equal to the request time | `bookings/bookings.go` |
 | `purchase-quantity-range` | Hard | `quantity` from 1 to 10000 ([purchase-material]) | Accepts up to 100000, the restock limit | `protocol/ops.go` |
 
-[values]: ../../tools/evaluation-tasks/makerspace/w0/model/values.md
-[documentation]: ../../tools/evaluation-tasks/makerspace/w0/model/documentation.md
-[identifier-limits]: ../../tools/evaluation-tasks/makerspace/w0/model/identifier-limits.md
-[list-order]: ../../tools/evaluation-tasks/makerspace/w0/model/list-order.md
-[create-reservation]: ../../tools/evaluation-tasks/makerspace/w0/model/bookings/create-reservation.md
-[purchase-material]: ../../tools/evaluation-tasks/makerspace/w0/model/materials/purchase-material.md
+[values]: https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/evaluation-tasks/makerspace/w0/model/values.md
+[documentation]: https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/evaluation-tasks/makerspace/w0/model/documentation.md
+[identifier-limits]: https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/evaluation-tasks/makerspace/w0/model/identifier-limits.md
+[list-order]: https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/evaluation-tasks/makerspace/w0/model/list-order.md
+[create-reservation]: https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/evaluation-tasks/makerspace/w0/model/bookings/create-reservation.md
+[purchase-material]: https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/evaluation-tasks/makerspace/w0/model/materials/purchase-material.md
 
 **How they were chosen.** S's own 40 test functions caught 30 of the 36 code bugs tried, each alone on a fresh copy, among them every bug tried across modules, such as a discount taken at check-in, a suspended member refused at check-out, and a live rate at check-out. No cross-module bug could be planted where this submission's tests do not reach, so none is here. That is a limit of this test, and a finding about those tests. The first `year-0000` form, dropping the lower bound, was caught too; the planted form accepts year 0000 alone. The code's comments stay as they were, so some still state the right behavior, such as "ordered by month" above the invoice listing.
 

@@ -1,8 +1,0 @@
-imports:
-  - {package: markitect/api, as: Api}
-id: invoice-paid
-kind: Api.RefusalCode
-body: |-
-  The invoice is already paid.
-spec:
-  code: invoice_paid

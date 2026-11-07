@@ -38,7 +38,7 @@ This is the one owner table; other pages link here instead of keeping their own.
 
 Source checks, provider runs, release evidence, comparative findings and human acceptance answer different questions. Follow each owner for its current scope; a dated report remains evidence for the inputs and outcome it records.
 
-Markitect itself is developed as an ordinary software project without a canonical self-model ([DEC-076](concepts/register.md#dec-076-markitect-is-developed-as-a-regular-software-project)); these documents are its canonical description, one owner per topic. The [canonical Library model](../testdata/library/README.md) is the shared fixture of V1's qualification, still in the V1 language until step T2 converts it.
+Markitect itself is developed as an ordinary software project without a canonical self-model ([DEC-076](concepts/register.md#dec-076-markitect-is-developed-as-a-regular-software-project)); these documents are its canonical description, one owner per topic. The [canonical Library model](https://github.com/Glacius-Labs/Markitect/blob/b8fd2c94722af066ba4ff6337aeba0459cb804ec/testdata/library/README.md), the shared fixture of V1's qualification, went with the evaluation tools on 7 November 2026 ([archive](archive.md#removed-with-the-evaluation-tools)).
 
 ## Development
 
