@@ -39,7 +39,7 @@ The text form puts `ok` and the summary on the first line, the entries under it,
 
 There is no third state. Whether an agent or the owner acts next is what `next` says, and a field that repeated it would disagree with it somewhere.
 
-**`--out PATH`** writes the result to that file instead of the console, as one file written whole, in UTF-8; the exit code does not change. It first removes an older file at that path, so a run that could not finish leaves no stale result behind. A path inside the project must be one the walk ignores, or `gate` sees an unlisted file. Every command takes it except `hook`, whose output is the provider's protocol, and `licenses`.
+**`--out PATH`** writes the result to that file instead of the console, as one file written whole, in UTF-8; the exit code does not change. It first removes an older file at that path, so a run that could not finish leaves no stale result behind. A path inside the project that the walk would see is refused with exit 2, since `gate` would find an unlisted file there. Every command takes it except `hook`, whose output is the provider's protocol, and `licenses`.
 
 ### Per command
 
@@ -49,12 +49,12 @@ There is no third state. Whether an agent or the owner acts next is what `next` 
 | `refs`, `impact`, `lint`, `graph`, `licenses` | The answer is printed | None |
 | `version`, `update --check` | The binary, the personal skill and the harness match | `run`: `markitect update`, when they do not |
 | `checklist` | The list is printed. It is a view, for the builder, or with `--review` for the reviewer, of the work under way. With `--base`, `--full` or `--findings` it shows that change instead, and records nothing | None. The builder's file says when to run `gate` |
-| `checklist --start` | The work began or went on | `start` the builder, or with `--review` the reviewer; or `run`: `markitect gate`, when the review is complete or the work stopped |
+| `checklist --start` | The work began or went on | `start` the builder, or with `--review` the reviewer; or `run`: `markitect gate`, when the review is complete or a spec problem stopped the work |
 | `answer` | Every item has an answer for the files as they are | None. The entries name what is open and why a line was refused |
 | `gate` | The work passed, or nothing changed | `commit` with the certificate and its Result; `start` the reviewer or the builder; or `ask`, for a spec problem or a spec that does not compile |
 | `gate --verify` | The folder matches its newest certificate | None |
 | `gate --findings` | The review of finished work is closed | `commit` with the Findings and the Result; or `start` the reviewer while items are open |
-| `status` | The folder matches its newest certificate and no work is under way | `run`: `markitect gate`, when work is under way |
+| `status` | The folder matches its newest certificate and no work is under way | None. Its entries say how the work stands; the step comes from `checklist --start` |
 | `init`, `install`, `update`, `lock` | They wrote what they list | None |
 
 Only `gate` and `checklist --start` compute a step for an agent. A plain `checklist` and `status` don't. Before any building, `gate`'s rows cannot tell "nothing built yet" from "built, waiting for review", so a view that guessed would send the builder to the reviewer.
@@ -81,7 +81,7 @@ These texts leave `internal/run` and go to the files the harness already has. `i
 
 **Compaction.** An agent's file is its system prompt, so it outlives the compaction of that agent's context. The owner's session keeps only the skill's one rule, and the concrete step arrives fresh in every `next`.
 
-**A harness older than the binary.** The plugin updates the binary, while a project's agent files stay at the version `init` or `update` wrote. So the harness carries the version that wrote it, and `checklist --start` refuses a harness of another version, with `run`: `markitect update`. A Go test checks that the embedded agent files explain every entry code the tool can emit.
+**A harness older than the binary.** The plugin updates the binary, while a project's agent files stay as `init` or `update` wrote them. So the harness carries a format version, which changes only when the codes, `next` or the agents' rules change, not with every release. `checklist --start` refuses a harness of another format, with `run`: `markitect update`. A Go test checks that the embedded agent files explain every entry code the tool can emit.
 
 **"Start the builder" when the builder asks.** When `gate` sends the work back, its `next` starts the builder, whoever called it. The builder's file says that this means itself, and its tools allow it to start only the reviewer (`Agent(markitect-reviewer)`), so the rule is held in structure, not only in prose.
 
@@ -101,7 +101,7 @@ These texts leave `internal/run` and go to the files the harness already has. `i
 
 **What changes:**
 
-- A plain `checklist` never begins work. Only `--start` does, the step every driver takes to begin: the skill, a person or a workflow. It refuses where the Claude harness is incomplete, as today, and `markitect update` sets that right. A driver for another provider brings its own guard and its own check of it.
+- A plain `checklist` never begins work. Only `--start` does, the step every driver takes to begin: the skill, a person or a workflow. It refuses a Claude harness that is only partly installed or of another format, and `markitect update` sets that right. A folder with no Claude harness at all begins the work too, with an entry that says no guard is installed, so a person or another provider's driver can drive it.
 - A refusal of `gate` writes nothing into the project. Its result says why, and the work's state keeps the history. Only facts that outlive the work go into `results/`: a certificate and Findings, each as data with its Markdown page beside it. The Result still records how many repair rounds the work took.
 - The hook refuses a subagent's `checklist --start`, the one call that writes, instead of four flags, and refuses `answer` to every agent but the reviewer, as today.
 
@@ -125,7 +125,7 @@ The checks themselves: `gate`'s rows apart from the round limit, the certificate
 Each has a recommendation.
 
 1. **One result shape:** `ok`, a summary, entries with codes, `next` and `written`, in text and JSON. Exit codes are 0, 1 and 2, with `checklist --start` always 0. Recommended.
-2. **The next step as data from `gate` and `checklist --start`; the prose in the harness**, with a version check of the harness and a test that every entry code is explained. Recommended. The alternative, facts with no `next`, would leave every driver to work out the step itself, and that is the process in prose again.
+2. **The next step as data from `gate` and `checklist --start`; the prose in the harness**, with a check of the harness's format and a test that every entry code is explained. Recommended. The alternative, facts with no `next`, would leave every driver to work out the step itself, and that is the process in prose again.
 3. **The work's state stays in the user's cache folder.** Recommended, for the reasons above.
 4. **Only certificates and Findings go into `results/`, each as data with its page; refusals write nothing.** Recommended.
 5. **`--out PATH` on every command but `hook` and `licenses`.** Recommended: it costs little, and it gives every command one rule.
@@ -138,5 +138,5 @@ Once accepted, the decisions go into the register as one entry. The pages that d
 
 1. **Decide** the points above.
 2. **The result.** One result type in `internal/run` and the CLI, with its text and JSON forms, `--out`, and the exit codes for every command. Today's texts stay as summaries for now. One PR.
-3. **`next`, prose to the harness, no limit.** `gate` and `checklist --start` name the next step. The texts move into the agent files and skills, together with the harness's version stamp and the code test. The builder's Agent tool narrows to the reviewer. The round limit and the cap on reports go, and the rule for reports comes in. `checklist` becomes read-only, refusals stop writing pages, and the hook narrows to `--start`. One PR and a release, since the harness and the binary change together.
+3. **`next`, prose to the harness, no limit.** `gate` and `checklist --start` name the next step. The texts move into the agent files and skills, together with the harness's format version and the code test. The builder's Agent tool narrows to the reviewer. The round limit and the cap on reports go, and the rule for reports comes in. `checklist` becomes read-only, refusals stop writing pages, and the hook narrows to `--start`. One PR and a release, since the harness and the binary change together.
 4. **Try it** on a small project with planted defects, under a bounded dispatch. The evaluation projects are gone from Main; the Makerspace of step 3 can be checked out from [`b8fd2c94`](https://github.com/Glacius-Labs/Markitect/tree/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/evaluation-tasks) for it.
