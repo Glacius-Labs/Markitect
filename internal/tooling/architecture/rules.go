@@ -94,6 +94,7 @@ var Table = Rules{
 		{From: "internal/tooling/release", To: "internal/tooling/architecture", Reason: "The packager takes its source roots from this table."},
 		{From: "internal/tooling/release", To: "internal/buildinfo", TestOnly: true, Reason: "Tests compare the packaged notices with the embedded ones."},
 		{From: "internal/run", To: "internal/adapters/rungit", TestOnly: true, Reason: "The engine's scripted Runs use the host's real Git."},
+		{From: "internal/run", To: "internal/adapters/repo", TestOnly: true, Reason: "The work without a Run is tested on real folders."},
 	},
 }
 

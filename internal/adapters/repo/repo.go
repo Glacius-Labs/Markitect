@@ -1,5 +1,6 @@
 // Package repo reads a project's repository through Git: the working tree as
-// Git sees it, a base commit, and the files changed between them.
+// Git sees it, a base commit, and the files changed between them. Folder reads a
+// project folder without Git, for the work without a Run (DEC-097).
 package repo
 
 import (

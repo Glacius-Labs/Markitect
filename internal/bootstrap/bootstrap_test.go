@@ -425,3 +425,49 @@ func TestUsageAndRefusals(t *testing.T) {
 		t.Fatalf("version = %s", out.String())
 	}
 }
+
+// Without a run, checklist, answer and gate work on the project folder: the work
+// passes into a certificate, which impact and gate --verify then read.
+func TestGateThroughTheCommandLine(t *testing.T) {
+	r := testkit.NewRepo(t)
+	r.Git("config", "user.name", "Owner")
+	r.Git("config", "user.email", "owner@example.invalid")
+	mustRun(t, r.Dir, "init")
+	r.Write(".markitect/registry.md", "| File | Realizes | Why |\n|---|---|---|\n| README.md | [[project]] | Overview |\n")
+	r.Write("README.md", "# A project\n")
+	if code, out, _ := run(t, r.Dir, "gate"); code != 1 || !strings.Contains(out, "No checklist began this work") {
+		t.Fatalf("gate before checklist: %d\n%s", code, out)
+	}
+	wantAll(t, mustRun(t, r.Dir, "checklist"), "Make this project match the spec", "markitect gate", "[ ] project")
+	if code, out, _ := run(t, r.Dir, "gate"); code != 1 || !strings.Contains(out, "markitect-reviewer") {
+		t.Fatalf("gate before a review: %d\n%s", code, out)
+	}
+	var out, errOut bytes.Buffer
+	answer := cli.CLI{Git: git{}, Runs: runs{}, Stdin: strings.NewReader("project: ok README.md:1\n"), Stdout: &out, Stderr: &errOut}
+	if code := answer.Run(context.Background(), []string{"answer", "--repo", r.Dir}); code != 0 {
+		t.Fatalf("answer: %d\n%s%s", code, out.String(), errOut.String())
+	}
+	passed := mustRun(t, r.Dir, "gate")
+	wantAll(t, passed, "The work passes", "Commit the work together with both")
+	cert := ""
+	for _, f := range strings.Fields(passed) {
+		if f = strings.TrimSuffix(f, ","); strings.HasSuffix(f, ".json") {
+			cert = f
+		}
+	}
+	if cert == "" {
+		t.Fatalf("no certificate named:\n%s", passed)
+	}
+	wantAll(t, mustRun(t, r.Dir, "gate", "--verify"), "matches its newest certificate")
+	r.Write("README.md", "# A project, changed\n")
+	if code, out, _ := run(t, r.Dir, "gate", "--verify"); code != 1 || !strings.Contains(out, "README.md") {
+		t.Fatalf("gate --verify after a change: %d\n%s", code, out)
+	}
+	wantAll(t, mustRun(t, r.Dir, "impact", "--base", filepath.Join(r.Dir, filepath.FromSlash(cert))), "README.md")
+	if code, _, errOut := run(t, r.Dir, "checklist", "--base", "nosuch.json"); code != 2 || !strings.Contains(errOut, "is no certificate") {
+		t.Fatalf("checklist --base nosuch.json: %d %s", code, errOut)
+	}
+	if code, _, errOut := run(t, r.Dir, "gate", "--verify", "--findings"); code != 2 || !strings.Contains(errOut, "not both") {
+		t.Fatalf("gate --verify --findings: %d %s", code, errOut)
+	}
+}

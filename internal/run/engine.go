@@ -5,6 +5,10 @@
 // counts. Nothing here starts or drives an agent. Git work goes through Git, and
 // what a Run knows between commands lives in a Store.
 //
+// Beside the Run, gate checks work done without one and without Git (DEC-096,
+// DEC-097): checklist, answer and gate read the project folder, start from its
+// newest certificate, and leave every Git step to whoever drives the agents.
+//
 // The process is described in internal/run/README.md.
 package run
 
@@ -47,10 +51,16 @@ var runName = regexp.MustCompile(`^[a-z0-9][a-z0-9_.-]{0,62}$`)
 // ErrUsage marks a request the tool cannot run, such as an unknown base.
 var ErrUsage = errors.New("cannot run")
 
-// Engine runs the commands of a Run in one repository.
+// Engine runs the commands of a Run in one repository, and the work without a
+// Run in one project folder.
 type Engine struct {
+	// Git and Store serve the Run. Without them, no Run is open anywhere.
 	Git   Git
 	Store Store
+	// Folder reads the project folder for the work without a Run, and Cache is
+	// where that work's state lives between commands, outside the project.
+	Folder Folder
+	Cache  string
 	// Now defaults to the clock.
 	Now func() time.Time
 }
@@ -347,9 +357,9 @@ func samePath(a, b string) bool {
 	return a == b
 }
 
-// Checklist prints the builder's task and to-do list, rebuilt from the current
-// files and registry. With review it prints what the review must answer.
-func (e *Engine) Checklist(ctx context.Context, dir string, review bool) (string, error) {
+// runChecklist prints the builder's task and to-do list of a Run, rebuilt from the
+// current files and registry. With review it prints what the review must answer.
+func (e *Engine) runChecklist(ctx context.Context, dir string, review bool) (string, error) {
 	st, err := e.Current(ctx, dir)
 	if err != nil {
 		return "", err
@@ -412,9 +422,15 @@ func outsideOwnFolder(all []analysis.Change) []analysis.Change {
 	return changed
 }
 
-// Answer stores a reviewer's answers against the state under review. What it
-// cannot accept is refused at once, with what is still missing.
+// Answer stores a reviewer's answers: in a folder with an open Run against the
+// Run's state under review, otherwise against the folder's state (answerState).
+// What it cannot accept is refused at once, with what is still missing.
 func (e *Engine) Answer(ctx context.Context, dir string, raw []byte) (string, bool, error) {
+	if open, err := e.openRun(ctx, dir); err != nil {
+		return "", false, err
+	} else if open == nil {
+		return e.answerState(dir, raw)
+	}
 	st, err := e.Current(ctx, dir)
 	if err != nil {
 		return "", false, err
@@ -541,7 +557,27 @@ func (e *Engine) Status(ctx context.Context, dir string) (string, error) {
 			}
 		}
 	}
+	if openIn(runs, root) == nil && e.Folder != nil {
+		b.WriteString(e.stateStatus(dir))
+	}
 	return b.String(), nil
+}
+
+// openRun is the open Run of the folder that holds dir, or nil. Without Git there
+// is none.
+func (e *Engine) openRun(ctx context.Context, dir string) (*RunState, error) {
+	if e.Git == nil {
+		return nil, nil
+	}
+	root, err := e.Git.Root(ctx, dir)
+	if err != nil {
+		return nil, err
+	}
+	runs, err := e.Store.All()
+	if err != nil {
+		return nil, err
+	}
+	return openIn(runs, root), nil
 }
 
 func (e *Engine) statusLine(ctx context.Context, st *RunState) string {

@@ -61,7 +61,9 @@ const HomeVariable = "MARKITECT_TESTKIT_HOME"
 // global configuration is GlobalConfig. Production code that drops GIT_*
 // variables before running git still reads that global configuration through
 // HOME. Git's system configuration stays visible to such code; fixtures set
-// what they rely on, such as core.autocrlf, in their repository config.
+// what they rely on, such as core.autocrlf, in their repository config. The
+// user's cache folder (XDG_CACHE_HOME, and LOCALAPPDATA on Windows) moves there
+// too, so that what the product keeps in it stays out of the user's.
 //
 // Isolate keeps the Go cache locations of the original environment. The
 // returned function restores the environment.
@@ -94,6 +96,8 @@ func Isolate() (func(), error) {
 		HomeVariable:          home,
 		"HOME":                home,
 		"XDG_CONFIG_HOME":     filepath.Join(home, ".config"),
+		"XDG_CACHE_HOME":      filepath.Join(home, ".cache"),
+		"LOCALAPPDATA":        filepath.Join(home, "AppData", "Local"),
 		"GIT_CONFIG_GLOBAL":   global,
 		"GIT_CONFIG_NOSYSTEM": "1",
 		"GIT_TERMINAL_PROMPT": "0",
@@ -104,9 +108,10 @@ func Isolate() (func(), error) {
 }
 
 // isolatedHome returns the isolated home directory of this user and this
-// GlobalConfig, creating it when needed. All test processes share it, and
-// its content never changes, so nothing removes it and nothing leaks when a
-// process exits early.
+// GlobalConfig, creating it when needed. All test processes share it, and its
+// configuration never changes, so nothing removes it and nothing leaks when a
+// process exits early. Its cache folders gather the small work files of tests
+// that work without a Run, each in a temporary project's name.
 func isolatedHome() (string, error) {
 	sum := sha256.Sum256([]byte(GlobalConfig))
 	name := fmt.Sprintf("markitect-testkit-%x", sum[:4])

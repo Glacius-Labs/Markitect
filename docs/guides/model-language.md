@@ -174,12 +174,23 @@ All commands take `--repo DIR`, a folder inside the project's Git repository (de
 | `markitect lock` | Writes the lock from the manifest and the Libraries it names. |
 | `markitect refs TARGET` | Who links to a Definition or Package: Definitions by link or as their Kind, and the registry entries that realize it. |
 | `markitect graph` | The Package dependency graph as a Mermaid diagram, with each Package's coupling and the links behind each edge. |
-| `markitect impact [--base COMMIT] [--full] [--findings FILE]` | What the change from the base commit, by default the work of the last landing, to the working tree reaches: Definitions with distance and reason, files with their owners. Refuses a spec with errors. |
+| `markitect impact [--base COMMIT\|CERTIFICATE] [--full] [--findings FILE]` | What the change from the base, by default the work of the last landing, to the working tree reaches: Definitions with distance and reason, files with their owners. The base is a commit, or a certificate `gate` wrote. Refuses a spec with errors. |
 | `markitect lint` | Warnings only, and the coupling table. |
 
 `refs`, `graph` and `lint` also run over a spec with errors and say so on standard error.
 
 `markitect apply`, `verify`, `status` and `stop`, and what a session calls, are in the [project workflow](project-workflow.md#7-apply-and-verify) and [the process of a Run](../../internal/run/README.md).
+
+Beside the Run, and to be tried before it goes, these work without one and without Git, for whoever drives the agents ([DEC-096](../concepts/register.md#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](../concepts/register.md#dec-097-markitect-uses-no-git)). They read the project folder itself, without what its `.gitignore` files exclude, and keep the work in the user's cache folder. While a Run is open in the folder, `checklist` and `answer` are the Run's and `gate` refuses. [Without a Run](../../internal/run/README.md#without-a-run-gate) has the details.
+
+| Command | Does |
+|---|---|
+| `markitect checklist [--base CERTIFICATE] [--full] [--findings FILE] [--review]` | Begins or goes on with the work, and prints the builder's task and the list of the change from the newest certificate, or the one `--base` names, to the folder, with what each changed Definition said before; with no certificate, every Definition. `--review` prints what a review must still answer for the files as they are. Exit 1 when the spec has errors. |
+| `markitect answer [FILE]` | Stores a reviewer's answers; each pointer must be a file of the folder. An answer stands until the files its item names or the files it points to change. Exit 0 when every item has an answer. In an agent session, only the reviewer agent may run it (the hook on `answer`). |
+| `markitect gate` | Checks the work, as `submit` does in a Run, and prints the one next step: exit 1. When it passes, writes a certificate (the hashes of every file and Definition, and the spec's text) and its Result under `.markitect/results/`, and exits 0. It commits nothing: the driver commits the work together with both. |
+| `markitect gate --verify` | Checks that the folder matches its newest certificate, and names the files that do not. |
+| `markitect gate --findings` | Closes a review of finished work: writes its Result and its Findings page under `.markitect/results/`, and no certificate. |
+| `markitect status` | Also says, when no Run is open, how the answers stand for the files as they are, and which files differ from the newest certificate. Changes nothing of that. |
 
 
 ### Impact and checklists
@@ -191,7 +202,7 @@ All commands take `--repo DIR`, a folder inside the project's Git repository (de
 - **Further Definitions** link to a reached Definition at more steps. Each comes with its distance and reason, and they are on no checklist: the default strategy stops at one step.
 - **Reached files** are the changed files and the files that realize a reached Definition, each with its owner.
 
-A Run makes one checklist from this ([a Run](../../internal/run/README.md#a-run)): every reached Definition once, every deleted Definition, every Finding, every stale registry entry, every unused Definition and every file the registry does not list, each with the files the registry names for it. With `--full` every model Definition is reached.
+A Run, and `checklist` without one, makes one checklist from this ([a Run](../../internal/run/README.md#a-run)): every reached Definition once, every deleted Definition, every Finding, every stale registry entry, every unused Definition and every file the registry does not list, each with the files the registry names for it. With `--full` every model Definition is reached.
 
 `impact` also prints the Packages with a checklist item or a reached file, and their parents up to Root, with a list for each: its own Definitions, the inherited ones (Definitions of the Packages above it that the change itself changed), the Findings whose Definition it holds and its stale entries. A Command does not use this split.
 

@@ -246,7 +246,7 @@ func TestAChangeLands(t *testing.T) {
 		t.Fatalf("the owner's folder is not clean: %s", status)
 	}
 
-	list, err := f.engine.Checklist(context.Background(), wt, false)
+	list, _, err := f.engine.Checklist(context.Background(), run.ChecklistRequest{Dir: wt})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -261,7 +261,7 @@ func TestAChangeLands(t *testing.T) {
 	if head := f.repo.Git("rev-parse", "HEAD"); head != f.state(s.Run).Start {
 		t.Fatalf("submit committed on the owner's branch before the review: %s", head)
 	}
-	review, err := f.engine.Checklist(context.Background(), wt, true)
+	review, _, err := f.engine.Checklist(context.Background(), run.ChecklistRequest{Dir: wt, Review: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -508,7 +508,7 @@ func TestRepairRounds(t *testing.T) {
 	if got := strings.Join(keys, ","); !strings.Contains(got, "loan-limit") || strings.Contains(got, "catalog/book") {
 		t.Fatalf("a repair review asks about %s", got)
 	}
-	review, err := f.engine.Checklist(context.Background(), wt, true)
+	review, _, err := f.engine.Checklist(context.Background(), run.ChecklistRequest{Dir: wt, Review: true})
 	if err != nil {
 		t.Fatal(err)
 	}
