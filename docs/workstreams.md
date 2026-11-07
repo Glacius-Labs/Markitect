@@ -26,7 +26,7 @@ The concept 1.0 arms stopped where they were, for reference only: M (V1 on `main
 
 ## Priority
 
-Concept 4.0's aim is the yardstick: the spec as it stands is applied reliably on Sonnet, with no babysitting ([§1](concepts/v4-concept.md#1-the-aim)). What "reliable" means is still open ([§16, question 10](concepts/v4-concept.md#16-questions-for-the-owner)). Until 7 November concept 2.0's acceptance (§15) was the yardstick.
+Concept 4.0's aim is the yardstick: the spec as it stands is applied reliably on Sonnet, with no babysitting ([§1](concepts/v4-concept.md#1-the-aim)). What "reliable" means is still open ([§16, question 10](concepts/v4-concept.md#16-questions-for-the-owner)). From 28 October to 4 November concept 2.0's acceptance (§15) was the yardstick.
 
 ## Rules
 
