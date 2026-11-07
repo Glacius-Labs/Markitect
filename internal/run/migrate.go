@@ -66,6 +66,11 @@ func Migrate(root string, dry bool) ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
+		if data == nil && holdsJSON(results) {
+			// Something there may be a certificate this markitect cannot read: it
+			// stays, rather than be lost.
+			return nil, fmt.Errorf("%s holds no certificate this markitect can read; move its JSON files away, or remove the folder, and run markitect update again", ResultsDir)
+		}
 		if data != nil {
 			changed = append(changed, project.ReviewFile)
 			if !dry {
@@ -87,6 +92,16 @@ func Migrate(root string, dry bool) ([]string, error) {
 		_ = os.Remove(filepath.Join(root, filepath.FromSlash(ResultsDir)))
 	}
 	return changed, nil
+}
+
+// holdsJSON says whether a list of files holds a JSON file.
+func holdsJSON(files []string) bool {
+	for _, f := range files {
+		if strings.HasSuffix(f, ".json") {
+			return true
+		}
+	}
+	return false
 }
 
 // resultFiles lists the files of the results folder, project-relative.

@@ -104,6 +104,25 @@ func TestMigrationFromTheNewestCertificate(t *testing.T) {
 	}
 }
 
+// A certificate this markitect cannot read is not lost: the results folder stays,
+// and update says what to do.
+func TestMigrationKeepsAnUnreadableCertificate(t *testing.T) {
+	p := newPlain(t)
+	p.write(run.ResultsDir+"/gate-20261106-120000-aaaaaaaa.json", `{"kind": "markitect-certificate", "format": 2}`)
+	p.write(run.ResultsDir+"/gate-20261106-120000-aaaaaaaa.md", "# Result\n")
+	if done, err := run.Migrate(p.dir, false); err == nil || !strings.Contains(err.Error(), "no certificate this markitect can read") || len(done) != 0 {
+		t.Fatalf("%v %v", done, err)
+	}
+	if p.read(run.ResultsDir+"/gate-20261106-120000-aaaaaaaa.md") == "" {
+		t.Fatal("the results folder went")
+	}
+	// Result pages alone, without a certificate, simply go.
+	p.remove(run.ResultsDir + "/gate-20261106-120000-aaaaaaaa.json")
+	if done, err := run.Migrate(p.dir, false); err != nil || len(done) != 1 {
+		t.Fatalf("%v %v", done, err)
+	}
+}
+
 // A project that already has its record keeps it; the results folder goes.
 func TestMigrationKeepsAnExistingRecord(t *testing.T) {
 	p := newPlain(t)

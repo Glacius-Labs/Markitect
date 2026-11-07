@@ -20,8 +20,7 @@
           {
             "type": "command",
             "shell": "bash",
-            "if": "Bash(markitect mark*)",
-            "command": "input=$(cat); case \"$input\" in *\"markitect mark\"*) printf '%s' \"$input\" | sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\" hook pretool ;; esac"
+            "command": "input=$(cat); case \"$input\" in *[Mm][Aa][Rr][Kk][Ii][Tt][Ee][Cc][Tt]*[[:space:]][Mm][Aa][Rr][Kk]*) printf '%s' \"$input\" | sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\" hook pretool ;; esac"
           }
         ]
       },
@@ -31,7 +30,7 @@
           {
             "type": "command",
             "shell": "bash",
-            "command": "input=$(cat); case \"$input\" in *'\"agent_id\"'*.markitect*|*.markitect*'\"agent_id\"'*) printf '%s' \"$input\" | sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\" hook pretool ;; esac"
+            "command": "input=$(cat); case \"$input\" in *'\"agent_id\"'*.[Mm][Aa][Rr][Kk][Ii][Tt][Ee][Cc][Tt]*|*.[Mm][Aa][Rr][Kk][Ii][Tt][Ee][Cc][Tt]*'\"agent_id\"'*) printf '%s' \"$input\" | sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\" hook pretool ;; esac"
           }
         ]
       }

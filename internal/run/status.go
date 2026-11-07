@@ -2,6 +2,7 @@ package run
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -77,7 +78,23 @@ type StatusRequest struct {
 
 // Status says what is to verify in the folder, and changes nothing.
 func (e *Engine) Status(_ context.Context, req StatusRequest) (Status, error) {
-	f, err := e.readFolder(req.Dir)
+	if e.Folder == nil {
+		return Status{}, errors.New("this build reads no project folder")
+	}
+	root, err := e.Folder.Root(req.Dir)
+	if err != nil {
+		return Status{}, err
+	}
+	// Under the lock, so that status does not see the record half written by a
+	// mark beside it. Without a cache folder it reads without one.
+	if dir, err := e.lockDir(); err == nil {
+		release, err := lock(dir, recordKey(root), lockWait)
+		if err != nil {
+			return Status{}, fmt.Errorf("the record of %s is locked: %w", root, err)
+		}
+		defer release()
+	}
+	f, err := e.readFolder(root)
 	if err != nil {
 		return Status{}, err
 	}

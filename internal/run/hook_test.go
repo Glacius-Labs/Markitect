@@ -31,6 +31,7 @@ func TestGuardLetsOnlyTheReviewerRecord(t *testing.T) {
 		"markitect  mark\tfees/fee@0a1b2c ok",
 		`bash -c "markitect mark fees/fee@0a1b2c ok"`,
 		"markitect.exe mark fees/fee@0a1b2c ok",
+		"MARKITECT Mark fees/fee@0a1b2c ok",
 	} {
 		has(t, call("a1", run.BuilderAgent, command), `"permissionDecision":"deny"`, run.ReviewerAgent)
 		has(t, call("", "", command), `"permissionDecision":"deny"`)

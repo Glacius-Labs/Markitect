@@ -79,9 +79,10 @@ func TestPluginHasTheVersionOfTheSource(t *testing.T) {
 }
 
 // The hooks file is plain JSON of a fixed shape, and its hooks name the launcher:
-// one at the start of a session, one before a shell command that records a
-// verdict, and one before every tool that writes a file, as init writes them into
-// a project's settings.
+// one at the start of a session, one before shell commands and one before every
+// tool that writes a file, as init writes them into a project's settings. The
+// plugin's hooks filter in their own shell, without regard to case, rather than
+// with Claude Code's rule, so that markitect.exe mark reaches the guard too.
 func TestPluginHooksRunTheLauncher(t *testing.T) {
 	var h struct {
 		Hooks map[string][]struct {
@@ -93,7 +94,7 @@ func TestPluginHooksRunTheLauncher(t *testing.T) {
 	type group struct{ matcher, rule string }
 	want := map[string][]group{
 		"SessionStart": {{"startup|resume", ""}},
-		"PreToolUse":   {{"Bash", run.MarkRule}, {run.EditTools, ""}},
+		"PreToolUse":   {{"Bash", ""}, {run.EditTools, ""}},
 	}
 	for event, groups := range want {
 		got := h.Hooks[event]

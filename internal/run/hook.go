@@ -81,7 +81,7 @@ func HasGuard(settings []byte) bool {
 }
 
 // markCommand finds a call of markitect mark in a shell command.
-var markCommand = regexp.MustCompile(`(^|[\s;&|("'` + "`" + `])markitect(\.exe)?\s+mark(\s|$)`)
+var markCommand = regexp.MustCompile(`(?i)(^|[\s;&|("'` + "`" + `])markitect(\.exe)?\s+mark(\s|$)`)
 
 // Guard is the project's hook before a tool call. It guards the record and the
 // spec, not the process:
