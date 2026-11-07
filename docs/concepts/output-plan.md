@@ -1,142 +1,149 @@
-# Plan: Markitect states facts
+# Plan: a command line like Terraform's
 
-**Status:** proposed on 7 November 2026, at the owner's request, after a discussion of what Markitect's commands put out. The owner asked for output that is as uniform and clean as is sensible, and decided that the work needs no maximum number of repair rounds. An independent architect's review shaped this version. Nothing else here is decided until the owner accepts it ([decisions](#decisions-for-the-owner)). It builds on [concept 4.0](v4-concept.md) ([DEC-098](register.md#dec-098-concept-40-is-the-target)) and the [lean plan](lean-tool-plan.md) ([DEC-096](register.md#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](register.md#dec-097-markitect-uses-no-git)).
+**Status:** proposed on 7 November 2026, at the owner's request, after a discussion of what Markitect's commands put out. The owner asked for output that is as uniform and clean as is sensible, and for a command line that feels like the tools people know, such as Terraform and kubectl. They decided that the work needs no maximum number of repair rounds. An independent architect reviewed earlier versions. Nothing else here is decided until the owner accepts it ([decisions](#decisions-for-the-owner)). It builds on [concept 4.0](v4-concept.md) ([DEC-098](register.md#dec-098-concept-40-is-the-target)) and the [lean plan](lean-tool-plan.md) ([DEC-096](register.md#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](register.md#dec-097-markitect-uses-no-git)).
 
 ## The idea
 
-Markitect is a compiler and build system for a spec. Definitions are the sources, Packages the modules, links the imports, and Kinds the types. The files on the registry are the build targets, the builder and the reviewer are the toolchain, and the certificate is the build stamp. Such a tool states facts: what holds, what does not, and what step comes next. It writes no prompts. It writes a file only where a fact must outlive the call.
+Markitect is Terraform for a spec. The spec is the desired state, the project's files are the real one, and the certificate is the state file: what was last certified to match. A plan says what differs. Applying makes it match. In Terraform, providers do the real work of an apply; in Markitect, agents do, in the owner's own Claude Code session, so applying is a skill and not a command. Everything else follows Terraform's and kubectl's conventions, so that someone who knows them can use Markitect at once.
 
-Today the commands put out three kinds of thing in no common shape:
+Today the commands are named after Markitect's own ideas (`check`, `impact`, `checklist`, `refs`), print prose meant to steer agents, write Result pages on their own, and use exit codes in three different ways.
 
-- **facts:** errors, lists and hashes;
-- **instructions to agents**, which are prompts in all but name: the builder's task, the reviewer's answer format, "start the markitect-builder agent with exactly this message";
-- **files** some commands write on their own: Result pages of refusals beside the certificate, besides the work's state in the user's cache folder.
+## The commands
 
-The exit codes differ too. `gate` exits 1 when it names the next step, `checklist --start` always exits 0, and `answer` exits 1 while items are open.
+**For people**, at the top level:
 
-## The rules
+| Command | Does | Like | Today |
+|---|---|---|---|
+| `markitect init` | Sets up the project, its harness and its lock | `terraform init` | `init` |
+| `markitect validate` | Compiles the spec and the registry. `--spec` looks at the spec alone | `terraform validate` | `check` |
+| `markitect plan` | What differs between the spec and the newest certificate: what is to be built, changed, removed and reviewed, and where to look. `--base CERTIFICATE`, `--full` and `--findings FILE` name another change, and `-out FILE` saves the plan | `terraform plan` | `impact`, and `checklist`'s list |
+| `/markitect-apply [PLAN]` | Makes the project match the spec: the skill starts the builder and the reviewer in the owner's session. Given a saved plan, it does exactly that plan | `terraform apply` | the same skill |
+| `markitect status` | Whether work is under way and how it stands, and which files differ from the newest certificate | `git status`, `terraform plan -detailed-exitcode` for drift | `status`, and `gate --verify` |
+| `markitect show FILE` | Shows a certificate, Findings or a saved plan | `terraform show` | the Result pages |
+| `markitect describe DEFINITION` | A Definition with its text, what links to it, what it links to, and the files that realize it | `kubectl describe` | `refs` |
+| `markitect graph` | The Package graph | `terraform graph` | `graph` |
+| `markitect lint` | Measures the spec's design; it only warns | `tflint` | `lint` (to become `analyze`, [concept 4.0 §4](v4-concept.md#4-is-the-spec-good)) |
+| `markitect lock` | Pins the Libraries | `terraform providers lock` | `lock` |
+| `markitect version`, `update`, `install`, `licenses` | As today | `terraform version`, `claude update` | the same |
 
-1. **One result per command, made of facts.** Every command puts out a result of the same shape ([below](#the-result)), with no prose meant to steer an agent.
-2. **The next step is data, and only the tool's two steering commands compute it.** `checklist --start` and `gate` name the next step: which agent to start and with which message, what to commit, or what to ask the owner. All prose for agents lives in the agent files and skills that `init` and `update` write ([below](#prose-moves-to-the-harness)).
-3. **Commands that read never write.** Only the commands that record a fact write: `checklist --start`, `answer` and `gate`. They write into the work's state, as today, and `gate` writes into the project only the records that outlive the work ([below](#who-writes-what)).
-4. **One meaning of exit codes:** 0 when the result is `ok`, 1 when it is not, 2 when the command could not run. One command is an exception, for a reason of the provider's ([below](#the-skills-first-command)).
-5. **No limit on rounds.** `gate` keeps no count limit. How long the work may run is up to the driver, and so up to the owner. Two state rules remain against loops that would change nothing ([below](#no-limit-on-rounds)).
+**For drivers and agents**, under one noun, as `terraform state …` groups its commands:
 
-## The result
+| Command | Called by | Does | Today |
+|---|---|---|---|
+| `markitect work start [PLAN]` | The skill | Begins the work, or goes on with the work under way. `--review` begins a review of finished work | `checklist --start` |
+| `markitect work list` | The builder; with `--review`, the reviewer | The work's list: for the builder every item, what changed and what was sent back; for the reviewer only what still needs an answer | `checklist`, `checklist --review` |
+| `markitect work answer` | The reviewer | Stores the answers, bound to the files they cover | `answer` |
+| `markitect work report WHY` | The builder | Reports a spec problem for a reviewer to confirm ([lean plan, decision 7](lean-tool-plan.md#decisions-for-the-owner)) | `gate --spec-problem` |
+| `markitect work gate` | The builder and the skill | The one door ([concept 4.0 §6](v4-concept.md#6-the-one-door-gate)). It certifies the work when nothing is left. On a review of finished work, it closes the review with its Findings instead | `gate`, `gate --findings` |
+| `markitect hook` | Hooks only | The guard of the harness | `hook` |
 
-Every command, query or not, puts out the same structure: text for people and agents, and JSON with `--json` for scripts.
+`gate` keeps the name the owner chose on 6 November 2026; it moves under `work`. A plain `plan` and `work list` record nothing: only `work start`, `work answer`, `work report` and `work gate` change the work's state.
 
-| Field | Holds |
+## Output
+
+**Text for people, JSON for programs**, as in Terraform. Every command takes `--json`. Every JSON document has the same envelope, with a `format_version`, a `kind` (`Plan`, `Validation`, `Status`, `Certificate`, `Findings`, `Description`, `Graph`, `Work`) and the fields of that kind. Programs depend on the format version, not on the wording of the text.
+
+**A plan reads like Terraform's:**
+
+```text
+Markitect will review these Definitions:
+
+  + fees/waiver       "Fee waiver"     new
+  ~ members/limit     "Loan limit"     changed
+      look at: src/loans.go, tests/loans_test.go
+  ~ loans/renewal     "Renewal"        links to a changed Definition
+  - fees/legacy       "Legacy fee"     gone: its files go, or get a new basis
+  ! finding 1         members/limit    observed 6 open loans; expected 5
+  ? src/tmp.go                         neither listed nor ignored
+
+Plan: 1 to add, 2 to change, 1 to remove, 2 to settle. 4 files to look at.
+```
+
+**Diagnostics have one shape everywhere.** Errors of `validate`, warnings of `lint`, refusals of `work gate` and answers that `work answer` refuses all have a severity, a stable code, a summary, a detail and a place, as in Terraform:
+
+```text
+Error: Unresolved link
+
+  on .markitect/model/members/limit.md line 12:
+  [[fees/waivr]] names no Definition.
+```
+
+In JSON they are a `diagnostics` array with `severity`, `code`, `summary`, `detail` and `range`, as in `terraform validate -json`.
+
+**Exit codes follow `terraform plan -detailed-exitcode` and `kubectl diff`:**
+
+| Code | Means |
 |---|---|
-| `command` | The command and its flags, as run |
-| `ok` | Whether what the command checks holds, or what it was to do is done |
-| `summary` | One line of facts, such as "3 items have no answer for the files as they are" |
-| `entries` | The facts behind it: errors, items, files, links, measures. A finding has a stable code and a one-line factual message, as `check`'s errors already do |
-| `next` | The next step, or none. `start` names an agent and the exact message; `commit` names the files to commit with the work; `ask` gives the question for the owner; `run` names a command, such as `markitect gate` or `markitect update` |
-| `written` | The files the command wrote, if any |
+| 0 | Done, and nothing to do: the spec is valid, the plan is empty, the folder matches its certificate, the work is certified |
+| 1 | Error: the command could not do its job, or what it validates is invalid |
+| 2 | Done, and there is something to do: the plan has changes, the folder differs from its certificate, the work is not yet certified, the binary or harness is out of date |
 
-The text form puts `ok` and the summary on the first line, the entries under it, and `next` last, on one line. An error that keeps a command from running, such as a usage error or an unreadable folder, goes to standard error and exits 2.
+So a CI job runs `markitect status`, and a non-zero code fails the build. That replaces `gate --verify`. One command is an exception. `work start` always exits 0 and prints any failure on standard output, because Claude Code aborts a skill whose injected command exits non-zero, and the owner's session would then see nothing.
 
-There is no third state. Whether an agent or the owner acts next is what `next` says, and a field that repeated it would disagree with it somewhere.
+## The work as a status
 
-**`--out PATH`** writes the result to that file instead of the console, as one file written whole, in UTF-8; the exit code does not change. It first removes an older file at that path, so a run that could not finish leaves no stale result behind. A path inside the project that the walk would see is refused with exit 2, since `gate` would find an unlisted file there. Every command takes it except `hook`, whose output is the provider's protocol, and `licenses`.
+The work under way is described the way kubectl describes an object, by its phase:
 
-### Per command
-
-| Command | `ok` means | `next` |
+| Phase | Means | The default driver |
 |---|---|---|
-| `check` | The project compiles. The entries keep today's two groups: the spec, which the owner settles, and the realization, which the work settles | None |
-| `refs`, `impact`, `lint`, `graph`, `licenses` | The answer is printed | None |
-| `version`, `update --check` | The binary, the personal skill and the harness match | `run`: `markitect update`, when they do not |
-| `checklist` | The list is printed. It is a view, for the builder, or with `--review` for the reviewer, of the work under way. With `--base`, `--full` or `--findings` it shows that change instead, and records nothing | None. The builder's file says when to run `gate` |
-| `checklist --start` | The work began or went on | `start` the builder, or with `--review` the reviewer; or `run`: `markitect gate`, when the review is complete or a spec problem stopped the work |
-| `answer` | Every item has an answer for the files as they are | None. The entries name what is open and why a line was refused |
-| `gate` | The work passed, or nothing changed | `commit` with the certificate and its Result; `start` the reviewer or the builder; or `ask`, for a spec problem or a spec that does not compile |
-| `gate --verify` | The folder matches its newest certificate | None |
-| `gate --findings` | The review of finished work is closed | `commit` with the Findings and the Result; or `start` the reviewer while items are open |
-| `status` | The folder matches its newest certificate and no work is under way | None. Its entries say how the work stands; the step comes from `checklist --start` |
-| `init`, `install`, `update`, `lock` | They wrote what they list | None |
+| `Building` | The builder has work: the start, or what a review sent back, or what `gate` refused | Starts `markitect-builder` with "Build the work." |
+| `Reviewing` | Items have no answer for the files as they are, or a report waits for a reviewer | Starts `markitect-reviewer` with "Review the work." |
+| `NeedsOwner` | A spec problem, a spec that does not compile, or no work under way where work was expected | Tells the owner, with the question |
+| `Certified` | `gate` wrote the certificate and ended the work | Commits the work with the certificate |
 
-Only `gate` and `checklist --start` compute a step for an agent. A plain `checklist` and `status` don't. Before any building, `gate`'s rows cannot tell "nothing built yet" from "built, waiting for review", so a view that guessed would send the builder to the reviewer.
+The commands that change the work record the phase as they make the change: `work start`, `work answer`, `work report` and `work gate`. So `status` and `work list` read a recorded fact and never guess a step. Before any building, `gate`'s rows alone could not tell "nothing built yet" from "built, waiting for review". The phase comes with a `reason` code and a one-line message.
 
-**`gate` and `answer` with no work under way** give `ask`: there is nothing to check here, and the owner decides. They never name `checklist --start`. Otherwise an agent that lost the work and then followed `next` would begin the work again from a spec it changed.
+**The tool names no agent.** Which agent serves which phase, and with what message, is the driver's, and lives in the skill: four lines. Everything else that is prose for agents lives in the agent files too: the builder's task, the reviewer's task and the answer format, and what to do for each diagnostic code. An agent's file is its system prompt, so it survives the compaction of that agent's context. The harness carries a format version that changes only when phases, codes or the agents' rules change, and `work start` refuses a harness of another format and says to run `markitect update`. A Go test checks that the embedded agent files cover every code the tool can emit. When `gate` sends the work back, the phase is `Building` whoever asks; the builder's file says that this means itself, and its tools let it start only the reviewer (`Agent(markitect-reviewer)`).
 
-**What `gate`'s rows give.** Row 1 (what the work may not change has changed) gives `start` the builder, with the files as entries, as today's "put them back" does. Only the owner begins the work again after a change of the spec, with `/markitect-apply`. A spec problem, and a spec that does not compile, give `ask`.
+**`work gate` and `work answer` with no work under way** give `NeedsOwner`. They never point to `work start`, so an agent that lost the work cannot begin it again from a spec it changed.
 
-### The skill's first command
+## Files
 
-Claude Code aborts a skill when its injected command exits non-zero. So `checklist --start` exits 0 whenever it produced a result, `ok` or not, and prints why it could not begin, such as an error in the spec or a missing harness, on standard output, as it does today. This is the one exception to the exit codes, named as one. The alternative, `|| true` in the skill, would hide the message of an exit 2, would not parse in PowerShell 5.1, and would widen the skill's allowed tools.
+| Where | What | Like |
+|---|---|---|
+| `.markitect/` | The spec, the registry, the manifest, the lock, the ignore file | The configuration and `.terraform.lock.hcl` |
+| `.markitect/results/` | Certificates and Findings, as JSON. `markitect show` renders them | The state file, and `terraform show` |
+| A saved plan, wherever `-out` puts it | What `/markitect-apply PLAN` will do. `work start` refuses a plan that is stale, because the spec, the base certificate or the harness changed since | `terraform plan -out` |
+| The user's cache folder | The work under way, as today, one file per project folder | `.terraform/` |
 
-## Prose moves to the harness
+A refusal writes nothing into the project; its result says why. A plan file inside the project must be one the walk ignores, or `gate` would see an unlisted file, so `-out` refuses such a path.
 
-These texts leave `internal/run` and go to the files the harness already has. `init` and `update` write them.
-
-| Today in the tool | Moves to |
-|---|---|
-| The builder's task (`stateTask`) and what the last review sent back, worded as an instruction | `markitect-builder.md`. `checklist` still lists what was sent back, as entries: the item, the answer and the reviewer's explanation |
-| What a spec is, and the three commands to look with (`fixedPart`) | Both agent files |
-| The reviewer's task and the answer format (`answerFormat`) | `markitect-reviewer.md` |
-| Which agent to start, and what to run when it has ended (`startStep`, `reviewNext`) | `next`, plus one rule in each skill: do what `next` says, and when an agent you started has ended, run `markitect gate` and do what its `next` says |
-| Refusal texts that tell an agent what to do, such as "put them back" or "list them on the registry" | Entry codes with a one-line factual message. The agent files say what to do for each code |
-
-**Compaction.** An agent's file is its system prompt, so it outlives the compaction of that agent's context. The owner's session keeps only the skill's one rule, and the concrete step arrives fresh in every `next`.
-
-**A harness older than the binary.** The plugin updates the binary, while a project's agent files stay as `init` or `update` wrote them. So the harness carries a format version, which changes only when the codes, `next` or the agents' rules change, not with every release. `checklist --start` refuses a harness of another format, with `run`: `markitect update`. A Go test checks that the embedded agent files explain every entry code the tool can emit.
-
-**"Start the builder" when the builder asks.** When `gate` sends the work back, its `next` starts the builder, whoever called it. The builder's file says that this means itself, and its tools allow it to start only the reviewer (`Agent(markitect-reviewer)`), so the rule is held in structure, not only in prose.
-
-## Who writes what
-
-| Command | Writes |
-|---|---|
-| `check`, `refs`, `impact`, `lint`, `graph`, `status`, `version`, `licenses`, `checklist` and `checklist --review` without `--start`, `gate --verify` | Nothing |
-| `checklist --start` | Begins the work or names a change, in the work's state |
-| `answer` | The answers, bound to the hashes of the files they cover, in the work's state |
-| `gate` | The reviewed state and the builder's reports, in the work's state. When it passes: the certificate and its Result page under `.markitect/results/`, then it ends the work |
-| `gate --findings` | The Findings as data, their page and the Result under `.markitect/results/`, then it ends the review |
-| `lock`, `init`, `install`, `update` | The lock, the harness, the personal skill and the binary, as today |
-| Any command but `hook` and `licenses`, with `--out PATH` | Its result |
-
-**The work's state stays in the user's cache folder**, one file per project folder, as today. Moving it into `.markitect/` was weighed and rejected. Anything there outside the fixed layout is a spec error ([`project.Load`](../../internal/project/project.go)). The hook would grow a guard on Write and Edit. `update` would need a migration, `git clean -X` would wipe the work, and an `rm` through the shell would still pass. Every worktree already has its own state, since the key is the folder's path.
-
-**What changes:**
-
-- A plain `checklist` never begins work. Only `--start` does, the step every driver takes to begin: the skill, a person or a workflow. It refuses a Claude harness that is only partly installed or of another format, and `markitect update` sets that right. A folder with no Claude harness at all begins the work too, with an entry that says no guard is installed, so a person or another provider's driver can drive it.
-- A refusal of `gate` writes nothing into the project. Its result says why, and the work's state keeps the history. Only facts that outlive the work go into `results/`: a certificate and Findings, each as data with its Markdown page beside it. The Result still records how many repair rounds the work took.
-- The hook refuses a subagent's `checklist --start`, the one call that writes, instead of four flags, and refuses `answer` to every agent but the reviewer, as today.
+Keeping the work under way in the cache was weighed against `.markitect/work/`. That folder would be a spec error under the fixed layout ([`project.Load`](../../internal/project/project.go)). It would also need a guard on Write and Edit in the hook, and a migration in `update`. `git clean -X` would wipe the work. Every worktree already has its own state, since the cache is keyed by the folder's path.
 
 ## No limit on rounds
 
-`gate` no longer refuses after two repair rounds, and the builder's reports of a spec problem are no longer capped at two that were turned down. The default driver sets no limit of its own: the work goes on until `gate` passes or asks the owner, or until the owner stops it. The Result says how many rounds it took.
+`gate` no longer refuses after two repair rounds, and the builder's reports of a spec problem are no longer capped at two that were turned down. The default driver sets no limit of its own: the work goes on until it is certified, needs the owner, or the owner stops it. The certificate records how many rounds it took.
 
 Two rules about state, not counts, remain against loops that cost a review and change nothing:
 
-- **Reports wait for a review.** After a reviewer turned a report down, the builder can report again only once a full review has finished. Today's rule, "not on the same state", is bypassed by any edit, so it goes.
-- **Disagreement has no rule yet.** A builder and a reviewer that disagree on an item without end are stopped by the owner. Unattended work, the scheduled jobs of [concept 4.0 §12](v4-concept.md#12-schedules-and-continuous-work), counted on the two rounds as their budget, so that work brings a bound back. A candidate: an item sent back on two reviews in a row goes to the owner.
+- **Reports wait for a review.** After a reviewer turned a report down, the builder can report again only once a full review has finished.
+- **Disagreement has no rule yet.** A builder and a reviewer that disagree without end are stopped by the owner. Unattended work, the scheduled jobs of [concept 4.0 §12](v4-concept.md#12-schedules-and-continuous-work), counted on the two rounds as their budget, so that work brings a bound back. A candidate: an item sent back on two reviews in a row goes to the owner.
 
-What goes: `repairRounds`, the refusal after the rounds in `gate` and the "stopped" case of `checklist --start`, the cap on rejected reports, and the field and checks that served them.
+What goes: `repairRounds`, the refusal after the rounds, the cap on rejected reports, and the fields and checks that served them.
 
 ## What this leaves alone
 
-The checks themselves: `gate`'s rows apart from the round limit, the certificate's content, how answers bind to files, the folder walk and impact. Also the place of the work's state, the hook on `answer`, the commit by the driver, and a tool without Git. This plan changes what the tool says and what it writes into the project, not what it checks.
+What the tool checks: `gate`'s rows apart from the round limit, the certificate's content, how answers bind to files, the folder walk, and how a plan reaches Definitions. Also the hook on answers, the commit by the driver, and a tool without Git. This plan changes the names, the output, the exit codes, and what the tool writes into the project.
 
 ## Decisions for the owner
 
 Each has a recommendation.
 
-1. **One result shape:** `ok`, a summary, entries with codes, `next` and `written`, in text and JSON. Exit codes are 0, 1 and 2, with `checklist --start` always 0. Recommended.
-2. **The next step as data from `gate` and `checklist --start`; the prose in the harness**, with a check of the harness's format and a test that every entry code is explained. Recommended. The alternative, facts with no `next`, would leave every driver to work out the step itself, and that is the process in prose again.
-3. **The work's state stays in the user's cache folder.** Recommended, for the reasons above.
-4. **Only certificates and Findings go into `results/`, each as data with its page; refusals write nothing.** Recommended.
-5. **`--out PATH` on every command but `hook` and `licenses`.** Recommended: it costs little, and it gives every command one rule.
-6. **A plain `checklist` begins nothing; `--start` begins the work for every driver.** Recommended.
-7. **No limit on repair rounds**, decided by the owner on 7 November 2026. **No cap on rejected reports**, with the rule that a report waits for a full review. **No rule for disagreement until unattended work needs one.** Recommended.
+1. **Terraform's and kubectl's vocabulary.** `validate`, `plan`, `status`, `show`, `describe`, and the agents' commands under `work`. The old names go with no aliases ([DEC-032](register.md#dec-032-quality-simplicity-and-stability-over-effort-and-compatibility)). Recommended.
+2. **Output as in Terraform.** Text for people, `--json` everywhere with one envelope and a format version, and one shape of diagnostic. Recommended.
+3. **Exit codes 0, 1 and 2** with the meanings above, and `work start` as the one named exception. Recommended.
+4. **The work as a phase**, recorded by the commands that change it. The tool names no agent, and the prose lives in the harness, with a format check and a code test. Recommended.
+5. **Saved plans:** `plan -out FILE`, and `/markitect-apply FILE` doing exactly that plan or refusing a stale one. Recommended: the owner can read what will be built before any agent starts, as with Terraform.
+6. **Records as JSON only, shown by `markitect show`**, with no Markdown pages beside them and no pages for refusals. Recommended, as Terraform keeps its state. The alternative keeps a generated page beside each record, for reading on GitHub.
+7. **CI uses `markitect status`.** Its exit code replaces `gate --verify`. Recommended.
+8. **The work under way stays in the user's cache folder.** Recommended.
+9. **No limit on repair rounds**, decided by the owner on 7 November 2026. **No cap on rejected reports**, and a report waits for a full review. **No rule for disagreement until unattended work needs one.** Recommended.
 
-Once accepted, the decisions go into the register as one entry. The pages that describe them change in the same pull requests as the code: concept 4.0 §3, §5, §6 and §7 (its limits row), §9 and §12; the [project workflow](../guides/project-workflow.md#7-apply-and-verify); and [the work](../../internal/run/README.md).
+Once accepted, the decisions go into the register as one entry. The pages that describe them change in the same pull requests as the code: concept 4.0 §3, §5, §6, §7, §9 and §12; the [project workflow](../guides/project-workflow.md#7-apply-and-verify); the [model language](../guides/model-language.md#commands); the README; and [the work](../../internal/run/README.md).
 
 ## Order of work
 
 1. **Decide** the points above.
-2. **The result.** One result type in `internal/run` and the CLI, with its text and JSON forms, `--out`, and the exit codes for every command. Today's texts stay as summaries for now. One PR.
-3. **`next`, prose to the harness, no limit.** `gate` and `checklist --start` name the next step. The texts move into the agent files and skills, together with the harness's format version and the code test. The builder's Agent tool narrows to the reviewer. The round limit and the cap on reports go, and the rule for reports comes in. `checklist` becomes read-only, refusals stop writing pages, and the hook narrows to `--start`. One PR and a release, since the harness and the binary change together.
+2. **Output and exit codes.** The JSON envelope, the diagnostic shape, the text renderings, and the exit codes, for every command under its current name. One PR.
+3. **The new command line.** The renames, `describe`, `show`, `plan -out`, the `work` group with its phases, `status` for CI, records as JSON, and no round limit. The prose moves into the harness, with its format version and the code test. One PR and a release, since the harness and the binary change together.
 4. **Try it** on a small project with planted defects, under a bounded dispatch. The evaluation projects are gone from Main; the Makerspace of step 3 can be checked out from [`b8fd2c94`](https://github.com/Glacius-Labs/Markitect/tree/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools/evaluation-tasks) for it.
