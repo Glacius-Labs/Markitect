@@ -75,20 +75,35 @@ func TestGuardHoldsEachRolesRightToWrite(t *testing.T) {
 			`C:\p\.markitect\registry\members\loans.md`,
 		},
 		"record": {"/p/.markitect/review.sum", `C:\p\.MARKITECT\review.sum`},
+		"harness": {
+			"/p/.claude/settings.json",
+			`C:\p\.claude\settings.local.json`,
+			"/p/.claude/agents/markitect-reviewer.md",
+			"/p/.claude/skills/markitect-build/SKILL.md",
+			"/p/.agents/skills/markitect-design/reference.md",
+			"/p/.claude/worktrees/agent-a1/.claude/settings.json",
+			"/p/AGENTS.md",
+			"/p/CLAUDE.md",
+			"/p/src/agents.md",
+		},
 		"code": {
 			"/p/src/fees.go",
 			"/p/docs/markitect.md",
 			"/p/.markitect-notes/x.md",
 			"/p/.claude/worktrees/agent-a1/src/fees.go",
+			"/p/.claude/agents/my-own.md",
+			"/p/.claude/commands/settings.json",
+			"/p/docs/agents-guide.md",
 		},
 	}
 	may := map[string]map[string]bool{
-		run.BuilderAgent:   {"code": true, "registry": true},
-		"general-purpose":  {"code": true, "registry": true},
-		"":                 {"code": true, "registry": true},
-		run.ArchitectAgent: {"spec": true, "registry": true},
-		run.ReviewerAgent:  {},
-		run.AuditorAgent:   {},
+		run.BuilderAgent:    {"code": true, "registry": true},
+		"Markitect-Builder": {"code": true, "registry": true},
+		"general-purpose":   {"code": true, "registry": true},
+		"":                  {"code": true, "registry": true},
+		run.ArchitectAgent:  {"spec": true, "registry": true},
+		run.ReviewerAgent:   {},
+		run.AuditorAgent:    {},
 	}
 	for agent, rights := range may {
 		for kind, list := range files {
@@ -110,6 +125,7 @@ func TestGuardHoldsEachRolesRightToWrite(t *testing.T) {
 	}
 	has(t, call("a1", run.BuilderAgent, "Edit", "file_path", "/p/.markitect/model/fee.md"), "the registry pages")
 	has(t, call("a1", run.BuilderAgent, "Edit", "file_path", "/p/.markitect/review.sum"), "markitect mark")
+	has(t, call("a1", run.BuilderAgent, "Edit", "file_path", "/p/.claude/settings.json"), "steers the agents")
 	has(t, call("a1", run.ArchitectAgent, "Edit", "file_path", "/p/src/fees.go"), "the builder writes")
 	has(t, call("a1", run.AuditorAgent, "Edit", "file_path", "/p/src/fees.go"), "changes no file")
 	has(t, call("a1", run.BuilderAgent, "NotebookEdit", "notebook_path", "/p/.markitect/x.ipynb"), `"permissionDecision":"deny"`)
@@ -154,6 +170,8 @@ func TestGuardHoldsWhoStartsWhom(t *testing.T) {
 		{run.AuditorAgent, "", "starts no agent"},
 		{"general-purpose", run.ArchitectAgent, "owner's session"},
 		{"general-purpose", run.BuilderAgent, "owner's session"},
+		{"general-purpose", "Markitect-Architect", "owner's session"},
+		{"Markitect-Builder", "general-purpose", run.ReviewerAgent},
 	}
 	for _, c := range refused {
 		for _, tool := range []string{"Agent", "Task"} {

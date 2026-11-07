@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"slices"
 	"sort"
+	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
 	"github.com/Glacius-Labs/Markitect/internal/project"
@@ -327,6 +328,9 @@ func (c CLI) update(ctx context.Context, args []string) (int, error) {
 			fmt.Fprintf(c.Stdout, "lock: rewritten; read the change of %s before you commit it\n", project.LockFile)
 		}
 	}
+	if proj.ws != nil {
+		c.noteRetiredSkills(proj.ws)
+	}
 	c.warnPath()
 	if proj.lockCode != OK || (check && stale) {
 		return Failed, nil
@@ -385,6 +389,29 @@ func lockNote(lock bool) string {
 		return " and the lock"
 	}
 	return ""
+}
+
+// retiredSkills are the skills an earlier markitect installed that one of today's
+// replaced, with its successor. update removes them, but never touches AGENTS.md,
+// which an earlier init wrote naming them.
+var retiredSkills = []struct{ name, by string }{
+	{"markitect-start", "markitect-design"},
+	{"markitect-extract", "markitect-design"},
+	{"markitect-modeling", "markitect-design"},
+}
+
+// noteRetiredSkills says when the project's instruction file names a skill that
+// is gone, so that its sessions are not pointed at nothing.
+func (c CLI) noteRetiredSkills(ws Workspace) {
+	data, err := ws.Read(instructionsFile)
+	if err != nil {
+		return
+	}
+	for _, s := range retiredSkills {
+		if strings.Contains(string(data), s.name) {
+			fmt.Fprintf(c.Stdout, "note: %s names the skill %s, which %s replaced; change that line\n", instructionsFile, s.name, s.by)
+		}
+	}
 }
 
 // staleNotice prints the one line that says a project's skills and agents come

@@ -209,6 +209,31 @@ func guardHooks() []any {
 	}
 }
 
+// guardedHooks returns the settings' hooks with the guard in place of one an
+// earlier markitect wrote, or why it cannot add it without losing what is there.
+func guardedHooks(settings map[string]any) (map[string]any, string) {
+	hooks := map[string]any{}
+	if v, ok := settings["hooks"]; ok {
+		if hooks, ok = v.(map[string]any); !ok {
+			return nil, "they are not an object"
+		}
+	}
+	var pre []any
+	if v, ok := hooks["PreToolUse"]; ok {
+		if pre, ok = v.([]any); !ok {
+			return nil, "its PreToolUse hooks are not a list"
+		}
+	}
+	kept := []any{}
+	for _, entry := range pre {
+		if !ownGuard(entry) {
+			kept = append(kept, entry)
+		}
+	}
+	hooks["PreToolUse"] = append(kept, guardHooks()...)
+	return hooks, ""
+}
+
 // worktreeBase is the base of the worktrees Claude Code makes, which init sets so
 // that a builder in a worktree of its own starts from the owner's branch and not
 // from the repository's default branch.
@@ -236,13 +261,15 @@ func ownGuard(entry any) bool {
 
 // ensureSettings adds the hooks to the project's settings, in place of ones an
 // earlier markitect wrote, sets the base of Claude Code's worktrees unless the
-// settings name one, and keeps what else they hold. Settings it cannot read, or
-// whose hooks have an unexpected shape, it leaves as they are and says so, and
-// every command of the spec then notes that the harness is out of date.
+// settings name one, and keeps what else they hold. Settings it cannot read it
+// leaves as they are; a part of them with an unexpected shape it leaves as it is
+// and writes the other. Either way it says what to add by hand.
 func (c CLI) ensureSettings(ws Workspace) error {
 	settings := map[string]any{}
+	addHooks := fmt.Sprintf("add the hooks by hand: %q before Bash for %s, before %s and before %s", run.HookCommand, run.MarkRule, run.EditTools, run.AgentTools)
+	setBase := fmt.Sprintf("set worktree.baseRef to %q by hand", worktreeBase)
 	lacks := func(why string) error {
-		fmt.Fprintf(c.Stdout, "left %s as it is, %s; add the hooks by hand: %q before Bash for %s, before %s and before %s; and set worktree.baseRef to %q\n", run.SettingsFile, why, run.HookCommand, run.MarkRule, run.EditTools, run.AgentTools, worktreeBase)
+		fmt.Fprintf(c.Stdout, "left %s as it is, %s; %s, and %s\n", run.SettingsFile, why, addHooks, setBase)
 		return nil
 	}
 	guarded := false
@@ -264,44 +291,30 @@ func (c CLI) ensureSettings(ws Workspace) error {
 			return lacks("because it is not a JSON object")
 		}
 	}
-	var said []string
+	var said, left []string
 	if !guarded {
-		hooks := map[string]any{}
-		if v, ok := settings["hooks"]; ok {
-			if hooks, ok = v.(map[string]any); !ok {
-				return lacks("because its hooks are not an object")
-			}
+		if hooks, why := guardedHooks(settings); why != "" {
+			left = append(left, fmt.Sprintf("left the hooks in %s as they are, because %s; %s", run.SettingsFile, why, addHooks))
+		} else {
+			settings["hooks"] = hooks
+			said = append(said, fmt.Sprintf("added the hooks that hold the agents' rights to %s", run.SettingsFile))
 		}
-		var pre []any
-		if v, ok := hooks["PreToolUse"]; ok {
-			if pre, ok = v.([]any); !ok {
-				return lacks("because its PreToolUse hooks are not a list")
-			}
-		}
-		kept := []any{}
-		for _, entry := range pre {
-			if !ownGuard(entry) {
-				kept = append(kept, entry)
-			}
-		}
-		hooks["PreToolUse"] = append(kept, guardHooks()...)
-		settings["hooks"] = hooks
-		said = append(said, fmt.Sprintf("added the hooks that hold the agents' rights to %s", run.SettingsFile))
 	}
-	switch worktree := settings["worktree"].(type) {
-	case nil:
-		if _, ok := settings["worktree"]; ok {
-			return lacks("because its worktree setting is not an object")
-		}
+	setBaseRef := fmt.Sprintf("set worktree.baseRef to %q in %s, so that a builder's worktree starts from your branch", worktreeBase, run.SettingsFile)
+	switch w := settings["worktree"].(type) {
+	case nil: // absent, or null
 		settings["worktree"] = map[string]any{"baseRef": worktreeBase}
-		said = append(said, fmt.Sprintf("set worktree.baseRef to %q in %s, so that a builder's worktree starts from your branch", worktreeBase, run.SettingsFile))
+		said = append(said, setBaseRef)
 	case map[string]any:
-		if _, ok := worktree["baseRef"]; !ok {
-			worktree["baseRef"] = worktreeBase
-			said = append(said, fmt.Sprintf("set worktree.baseRef to %q in %s, so that a builder's worktree starts from your branch", worktreeBase, run.SettingsFile))
+		if w["baseRef"] == nil {
+			w["baseRef"] = worktreeBase
+			said = append(said, setBaseRef)
 		}
 	default:
-		return lacks("because its worktree setting is not an object")
+		left = append(left, fmt.Sprintf("left worktree in %s as it is, because it is not an object; %s", run.SettingsFile, setBase))
+	}
+	for _, line := range left {
+		fmt.Fprintln(c.Stdout, line)
 	}
 	if len(said) == 0 {
 		return nil

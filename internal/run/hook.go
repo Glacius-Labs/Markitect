@@ -62,9 +62,9 @@ var roles = map[string]rights{
 
 var otherSubagent = rights{code: true, registry: true, all: true}
 
-// rightsOf returns the rights of a subagent's role.
+// rightsOf returns the rights of a subagent's role, whatever the case of its name.
 func rightsOf(agent string) rights {
-	if r, ok := roles[agent]; ok {
+	if r, ok := roles[strings.ToLower(agent)]; ok {
 		return r
 	}
 	return otherSubagent
@@ -72,6 +72,7 @@ func rightsOf(agent string) rights {
 
 // may says whether a role may start an agent of a type.
 func (r rights) may(start string) bool {
+	start = strings.ToLower(start)
 	if r.all {
 		return start != BuilderAgent && start != ArchitectAgent
 	}
@@ -146,7 +147,7 @@ var markCommand = regexp.MustCompile(`(?i)(^|[\s;&|("'` + "`" + `])markitect(\.e
 //   - a subagent writes only what its role may: the builder and any other
 //     subagent code and the registry pages, the architect the spec and the
 //     registry pages, the reviewer and the auditor nothing, and nobody the
-//     record, which mark writes;
+//     record, which mark writes, or the files that steer the agents;
 //   - the builder starts only the reviewer, the other roles start no agent, and
 //     no subagent starts the builder or the architect.
 //
@@ -206,7 +207,7 @@ func startRefusal(agent, start string) string {
 	if start == "" {
 		start = "a general-purpose agent"
 	}
-	switch agent {
+	switch strings.ToLower(agent) {
 	case BuilderAgent:
 		return fmt.Sprintf("The builder starts only the %s agent, which verifies and records; it may not start %s.", ReviewerAgent, start)
 	case ReviewerAgent, ArchitectAgent, AuditorAgent:
@@ -220,6 +221,8 @@ func writeRefusal(agent string, r rights, file string) string {
 	switch kindOf(file) {
 	case recordFile:
 		return fmt.Sprintf("%s is written only by markitect mark, which the %s agent runs.", file, ReviewerAgent)
+	case harnessFile:
+		return fmt.Sprintf("%s steers the agents: Markitect's skills, agents and settings and the project's instruction files are the owner's, and no agent changes them. Say what should change.", file)
 	case registryPage:
 		if r.registry {
 			return ""
@@ -248,11 +251,12 @@ const (
 	specFile
 	registryPage
 	recordFile
+	harnessFile
 )
 
 // kindOf says what kind of file a path names, whatever folder it starts from:
 // one in Markitect's folder of a project is a registry page, the record or the
-// spec; any other is code.
+// spec; one that steers the agents is the harness; any other is code.
 func kindOf(file string) int {
 	segments := strings.Split(path.Clean(strings.ReplaceAll(file, `\`, "/")), "/")
 	for i, s := range segments {
@@ -269,7 +273,32 @@ func kindOf(file string) int {
 		}
 		return specFile
 	}
+	if steersAgents(segments) {
+		return harnessFile
+	}
 	return codeFile
+}
+
+// steersAgents says whether a path names a file that steers the agents (DEC-100):
+// Claude Code's project settings, which hold the hook, Markitect's skills and
+// agents, and the instruction files agents read by themselves. A builder whose
+// work comes back by itself must not change them, since nobody reads that diff.
+func steersAgents(segments []string) bool {
+	n := len(segments)
+	if base := strings.ToLower(segments[n-1]); base == "agents.md" || base == "claude.md" {
+		return true
+	}
+	for i := 0; i+1 < n; i++ {
+		dir, next := strings.ToLower(segments[i]), strings.ToLower(segments[i+1])
+		switch {
+		case dir == ".claude" && i+2 == n && (next == "settings.json" || next == "settings.local.json"):
+			return true
+		case (dir == ".claude" || dir == ".agents") && (next == "agents" || next == "skills") && i+2 < n &&
+			strings.HasPrefix(strings.ToLower(segments[i+2]), "markitect-"):
+			return true
+		}
+	}
+	return false
 }
 
 // deny is the hook's answer that refuses the call, and why.

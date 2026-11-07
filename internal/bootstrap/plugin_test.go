@@ -370,8 +370,10 @@ func TestGuardHooksStartTheLauncherOnlyForTheirCalls(t *testing.T) {
 			guarded: []string{shell("markitect mark fees/fee@0a1b2c ok -e src/fees.go"), shell("markitect.exe mark fees/fee@0a1b2c ok"), shell("cd . && MARKITECT  mark x@0a1b2c ok")},
 		},
 		{
-			others:  []string{edit("", "/p/.markitect/model/x.md"), edit("markitect-builder", "/p/src/fees.go"), edit("general-purpose", "/p/src/fees.go"), shell("markitect mark x@0a1b2c ok")},
-			guarded: []string{edit("markitect-builder", "/p/.markitect/model/x.md"), edit("general-purpose", `C:\\p\\.markitect\\review.sum`), edit("markitect-builder", `C:\\p\\.MARKITECT\\review.sum`), edit("markitect-architect", "/p/src/fees.go"), edit("markitect-auditor", "/p/notes.md")},
+			others: []string{edit("", "/p/.markitect/model/x.md"), edit("markitect-builder", "/p/src/fees.go"), edit("general-purpose", "/p/src/fees.go"), shell("markitect mark x@0a1b2c ok")},
+			guarded: []string{edit("markitect-builder", "/p/.markitect/model/x.md"), edit("general-purpose", `C:\\p\\.markitect\\review.sum`), edit("markitect-builder", `C:\\p\\.MARKITECT\\review.sum`), edit("markitect-architect", "/p/src/fees.go"), edit("markitect-auditor", "/p/notes.md"),
+				edit("markitect-builder", "/p/.claude/settings.json"), edit("markitect-builder", `C:\\p\\.claude\\settings.local.json`), edit("general-purpose", "/p/AGENTS.md"), edit("markitect-builder", "/p/CLAUDE.md"),
+				edit("markitect-builder", "/p/.claude/agents/markitect-reviewer.md"), edit("markitect-builder", `C:\\p\\.agents\\skills\\markitect-design\\SKILL.md`)},
 		},
 		{
 			others:  []string{start("", "markitect-builder"), start("general-purpose", "Explore"), start("general-purpose", "")},

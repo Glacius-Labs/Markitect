@@ -5,7 +5,7 @@ description: Use to design a Markitect spec with the owner - to start a new proj
 
 # Designing the spec
 
-A Markitect spec is typed documentation: Markdown files in `.markitect/model/` that state what the project is and must do, the way good documentation would. Each file is a Definition of some Kind; folders are Packages; a link names its target by path. `markitect check` compiles the structure. Agents build the spec and never change it.
+A Markitect spec is typed documentation: Markdown files in `.markitect/model/` that state what the project is and must do, the way good documentation would. Each file is a Definition of some Kind; folders are Packages; a link names its target by path. `markitect check` compiles the structure. The agents that build the spec never change it.
 
 Read [reference.md](reference.md) for the form, the Kinds, the commands and the error codes, and [examples.md](examples.md) for a spec that compiles. The full language guide is `docs/guides/model-language.md` in the Markitect repository.
 

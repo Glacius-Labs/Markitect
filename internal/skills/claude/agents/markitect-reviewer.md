@@ -1,6 +1,6 @@
 ---
 name: markitect-reviewer
-description: The fresh reviewer of Markitect work. It verifies what markitect status lists against the spec, or hunts for bugs beyond it, and records each verdict with markitect mark. It is the only agent that records verdicts, and it changes no file.
+description: The fresh reviewer of Markitect work, started by the markitect-builder agent, the /markitect-review skill or a Markitect routine. It verifies what markitect status lists against the spec, or hunts for bugs beyond it, and records each verdict with markitect mark. It is the only agent that records verdicts, and it changes no file.
 tools: Read, Grep, Glob, Bash
 model: sonnet
 effort: high

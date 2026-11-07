@@ -1,6 +1,6 @@
 ---
 name: markitect-architect
-description: Drafts a Markitect spec on delegation, such as a first spec drawn from a large code base. It writes only under .markitect/ - the spec, the registry pages and the ignore file - never code, records no verdict, and hands every question for the owner back to the session that started it.
+description: Drafts a Markitect spec on delegation from the markitect-design skill, such as a first spec drawn from a large code base. It writes only under .markitect/ - the spec, the registry pages and the ignore file - never code, records no verdict, and hands every question for the owner back to the session that started it.
 tools: Read, Edit, Write, Glob, Grep, Bash
 model: sonnet
 effort: high

@@ -141,15 +141,15 @@ The architect is for delegated drafting, such as a first spec drawn from a large
 
 The hook holds the roles' rights for subagents. The owner's own session is no subagent and stays free to change anything, but it does not record: only the reviewer runs `mark`.
 
-| Subagent | Code | Spec | Registry pages | `review.sum` | `mark` | Starts |
-|---|---|---|---|---|---|---|
-| `markitect-builder` | yes | no | yes | no | no | only `markitect-reviewer` |
-| `markitect-reviewer` | no | no | no | no | yes | nothing |
-| `markitect-architect` | no | yes | yes | no | no | nothing |
-| `markitect-auditor` | no | no | no | no | no | nothing |
-| any other | yes | no | yes | no | no | anything but the builder and the architect |
+| Subagent | Code | Spec | Registry pages | `review.sum` | Harness | `mark` | Starts |
+|---|---|---|---|---|---|---|---|
+| `markitect-builder` | yes | no | yes | no | no | no | only `markitect-reviewer` |
+| `markitect-reviewer` | no | no | no | no | no | yes | nothing |
+| `markitect-architect` | no | yes | yes | no | no | no | nothing |
+| `markitect-auditor` | no | no | no | no | no | no | nothing |
+| any other | yes | no | yes | no | no | no | anything but the builder and the architect |
 
-Code is every file outside `.markitect/`, and the spec every file in it but the registry pages and the record, which only `mark` writes. Any other subagent writes as the builder does, so a general-purpose helper cannot get past the rules, and only the owner's session starts the two roles that write. Claude Code ignores the agent types listed in a subagent's own `tools`, so the hook, not the agent file, holds who starts whom. The hook reads tool calls, so a command hidden in a script, or one that names `markitect` by a path, still gets through. It guards against mistakes, as before, not against intent.
+Code is every file outside `.markitect/` but the harness, and the spec every file in it but the registry pages and the record, which only `mark` writes. The harness is what steers the agents: the project's Claude Code settings (`.claude/settings.json` and `settings.local.json`), which hold the hook, Markitect's skills and agents, and `AGENTS.md` and `CLAUDE.md`. Since the builder's work comes back without anyone reading its diff, no subagent may change them. Any other subagent writes as the builder does, so a general-purpose helper cannot get past the rules, and only the owner's session starts the two roles that write. Claude Code ignores the agent types listed in a subagent's own `tools`, so the hook, not the agent file, holds who starts whom. The hook reads tool calls, so a command hidden in a script, or one that names `markitect` by a path, still gets through. It guards against mistakes, as before, not against intent.
 
 ### The builder's worktree
 
@@ -182,7 +182,7 @@ So a review that records a new `fail` does not land: its branch holds the record
 | A changed test that served as evidence voids the answer | Kept. The evidence files are inputs |
 | A changed file that realizes a Definition is reviewed | Kept |
 | A changed file the ignore file lists is refused (`gate`, row 4) | **Lost.** Ignored files are not tracked |
-| A changed harness or `settings.json` is refused during the work (row 1) | **Lost.** It shows in the diff |
+| A changed harness or `settings.json` is refused during the work (row 1) | **Lost,** it shows in the diff; with DEC-100 the hook refuses a subagent's edit of them again, since the builder's work comes back without anyone reading that diff |
 | The spec does not change during the work | Kept for subagents by the hook: only the architect, which only the owner's session starts, writes the spec. Not prevented for the owner's session or for people: a changed Definition goes back on the list, and the change shows in the diff |
 | Only a reviewer records verdicts | Kept by the hook |
 | The project compiles | Kept: `check`, and `status` lists the realization's errors |

@@ -350,28 +350,58 @@ func TestInitAddsTheHookBesideAMention(t *testing.T) {
 	}
 }
 
-// Settings init cannot read, or whose hooks have another shape, stay as they are,
-// and init says what to add.
+// Settings init cannot read stay as they are, and init says what to add.
 func TestInitLeavesSettingsItCannotRead(t *testing.T) {
 	for name, content := range map[string]string{
-		"not JSON":              "{ not json\n",
-		"hooks not a map":       `{"hooks": ["something"]}` + "\n",
-		"PreToolUse not a list": `{"hooks": {"PreToolUse": "x"}}` + "\n",
-		"null":                  "null\n",
-		"two values":            "{} {}\n",
-		"worktree not a map":    `{"worktree": "x"}` + "\n",
+		"not JSON":   "{ not json\n",
+		"null":       "null\n",
+		"two values": "{} {}\n",
 	} {
 		t.Run(name, func(t *testing.T) {
 			r := newFolder(t)
 			r.Write(".claude/settings.json", content)
 			out := mustRun(t, r.Dir, "init")
-			if !strings.Contains(out, "left .claude/settings.json as it is") {
+			if !strings.Contains(out, "left .claude/settings.json as it is") || !strings.Contains(out, "add the hooks by hand") || !strings.Contains(out, "worktree.baseRef") {
 				t.Fatalf("init said:\n%s", out)
 			}
 			if got := read(t, r.Dir, ".claude/settings.json"); got != content {
 				t.Fatalf("settings changed:\n%s", got)
 			}
 		})
+	}
+}
+
+// A part of the settings with another shape stays as it is, init says what to
+// add there, and it still writes the other part: a worktree setting it cannot
+// read does not cost the project its hooks.
+func TestInitLeavesAPartItCannotRead(t *testing.T) {
+	for name, c := range map[string]struct{ content, said, kept, added string }{
+		"hooks not a map":       {`{"hooks": ["something"]}`, "left the hooks in", `"something"`, `"baseRef": "head"`},
+		"PreToolUse not a list": {`{"hooks": {"PreToolUse": "x"}}`, "left the hooks in", `"PreToolUse": "x"`, `"baseRef": "head"`},
+		"worktree not a map":    {`{"worktree": "x"}`, "left worktree in", `"worktree": "x"`, "Agent|Task"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			r := newFolder(t)
+			r.Write(".claude/settings.json", c.content+"\n")
+			out := mustRun(t, r.Dir, "init")
+			settings := read(t, r.Dir, ".claude/settings.json")
+			if !strings.Contains(out, c.said) || !strings.Contains(out, "by hand") || !strings.Contains(settings, c.kept) || !strings.Contains(settings, c.added) {
+				t.Fatalf("init said:\n%s\nsettings:\n%s", out, settings)
+			}
+		})
+	}
+}
+
+// Settings that already hold the hooks of this markitect get only the base of
+// the worktrees, and a base set to null counts as none.
+func TestInitAddsTheWorktreeBaseToGuardedSettings(t *testing.T) {
+	r := newFolder(t)
+	mustRun(t, r.Dir, "init")
+	settings := read(t, r.Dir, ".claude/settings.json")
+	r.Write(".claude/settings.json", strings.Replace(settings, `"baseRef": "head"`, `"baseRef": null`, 1))
+	out := mustRun(t, r.Dir, "init")
+	if got := read(t, r.Dir, ".claude/settings.json"); got != settings || strings.Contains(out, "added the hooks") || !strings.Contains(out, "worktree.baseRef") {
+		t.Fatalf("init said:\n%s\nsettings:\n%s", out, got)
 	}
 }
 
@@ -421,9 +451,19 @@ func TestInitInstallsTheHarness(t *testing.T) {
 	if strings.Contains(read(t, r.Dir, ".claude/skills/markitect-design/SKILL.md"), "disable-model-invocation") {
 		t.Error("Claude may not start the design skill")
 	}
-	for _, file := range []string{"routine.md", "review.md", "bughunt.md", "cleanup.md"} {
-		if read(t, r.Dir, ".claude/skills/markitect-schedule/"+file) == "" {
-			t.Fatalf("the routine prompt %s is empty", file)
+	// A routine's prompt is the frame with the setup's four values and one
+	// routine's work, which holds no value of its own to fill in.
+	frame := read(t, r.Dir, ".claude/skills/markitect-schedule/routine.md")
+	for _, value := range []string{"{{NAME}}", "{{SOURCE}}", "{{FOLDER}}", "{{WORK}}"} {
+		if !strings.Contains(frame, value) {
+			t.Errorf("the routine frame lacks %s", value)
+		}
+	}
+	setup := read(t, r.Dir, ".claude/skills/markitect-schedule/SKILL.md")
+	for _, work := range []string{"review.md", "bughunt.md", "cleanup.md"} {
+		text := read(t, r.Dir, ".claude/skills/markitect-schedule/"+work)
+		if text == "" || strings.Contains(text, "{{") || !strings.Contains(setup, "("+work+")") {
+			t.Errorf("the routine work %s:\n%s", work, text)
 		}
 	}
 	// Only the builder may start an agent, and its tools name the reviewer; the
