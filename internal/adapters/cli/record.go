@@ -27,14 +27,11 @@ func (c CLI) record() (*run.Engine, error) {
 func (c CLI) status(ctx context.Context, args []string) (int, error) {
 	var o options
 	var all bool
-	fs := flag.NewFlagSet("markitect status", flag.ContinueOnError)
-	fs.SetOutput(c.Stderr)
-	fs.StringVar(&o.repo, "repo", ".", "a folder of the project")
+	fs := c.flags("status", &o)
 	fs.BoolVar(&all, "all", false, "list every Definition, to verify everything again")
-	if err := fs.Parse(args); err != nil {
+	if positional, err := parse(fs, args); err != nil {
 		return Misused, err
-	}
-	if fs.NArg() != 0 {
+	} else if len(positional) != 0 {
 		return Misused, fmt.Errorf("takes no arguments")
 	}
 	e, err := c.record()
@@ -45,7 +42,29 @@ func (c CLI) status(ctx context.Context, args []string) (int, error) {
 	if err != nil {
 		return Misused, err
 	}
-	fmt.Fprint(c.Stdout, st.Text())
+	if o.json {
+		items, skipped := st.Items, st.Skipped
+		if items == nil {
+			items = []run.Item{}
+		}
+		if skipped == nil {
+			skipped = []run.Item{}
+		}
+		unreadable := append([]int{}, st.Unreadable...)
+		if err := c.printJSON(struct {
+			envelope
+			Clean       bool         `json:"clean"`
+			Definitions int          `json:"definitions"`
+			Items       []run.Item   `json:"items"`
+			Diagnostics []diagnostic `json:"diagnostics"`
+			Skipped     []run.Item   `json:"skipped"`
+			Unreadable  []int        `json:"unreadable_lines"`
+		}{newEnvelope("status"), st.Clean(), st.Definitions, items, append(append(diagnostics(severityError, st.SpecErrors), diagnostics(severityError, st.Errors)...), diagnostics(severityError, st.RecordErrors())...), skipped, unreadable}); err != nil {
+			return Misused, err
+		}
+	} else {
+		fmt.Fprint(c.Stdout, st.Text())
+	}
 	if !st.Clean() {
 		return Failed, nil
 	}
@@ -61,6 +80,7 @@ const markUsage = `markitect mark DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]..
 func (c CLI) mark(ctx context.Context, args []string) (int, error) {
 	req := run.MarkRequest{Dir: "."}
 	var positional []string
+	asJSON := false
 	value := func(i *int, name string) (string, error) {
 		if *i+1 >= len(args) {
 			return "", fmt.Errorf("%s needs a value\nusage: %s", name, markUsage)
@@ -79,6 +99,9 @@ func (c CLI) mark(ctx context.Context, args []string) (int, error) {
 			return Misused, flag.ErrHelp
 		case !strings.HasPrefix(a, "-") || a == "-":
 			positional = append(positional, a)
+			continue
+		case name == "json" && !hasInline:
+			asJSON = true
 			continue
 		case hasInline:
 			v = inline
@@ -114,7 +137,19 @@ func (c CLI) mark(ctx context.Context, args []string) (int, error) {
 		}
 		return Misused, err
 	}
-	fmt.Fprint(c.Stdout, text)
+	if asJSON {
+		if err := c.printJSON(struct {
+			envelope
+			Recorded bool   `json:"recorded"`
+			Item     string `json:"item"`
+			Verdict  string `json:"verdict"`
+			Message  string `json:"message"`
+		}{newEnvelope("mark"), recorded, req.Item, req.Verdict, strings.TrimSpace(text)}); err != nil {
+			return Misused, err
+		}
+	} else {
+		fmt.Fprint(c.Stdout, text)
+	}
 	if !recorded {
 		return Failed, nil
 	}

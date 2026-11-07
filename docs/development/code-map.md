@@ -18,7 +18,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `assets` | Files built into the binary: the standard Libraries, the skills and the harness of the work. | nothing | 2 |
 | `domain` | Registry pages, ownership and file accounting over a compiled model. | `model` | 1 |
 | `project` | Loads and checks a project's Markitect folder from the files of a project folder. | `model`, `assets`, `domain` | 1 |
-| `service` | Questions about a loaded project: references, graph and lint. | `model`, `assets`, `domain`, `project` | 1 |
+| `service` | Questions about a loaded project: what it holds, what depends on what, and vet. | `model`, `assets`, `domain`, `project` | 1 |
 | `run` | The record of what was verified, without Git: the inputs of each Definition, review.sum, status, mark, the hook and the migration from certificates. | `model`, `assets`, `domain`, `project` | 1 |
 | `guardedwrite` | Guarded working-tree writes for bundle installation, with the Git and path helpers they share with source snapshots. | nothing | 1 |
 | `build` | Version identity and embedded license notices. | nothing | 1 |
@@ -67,7 +67,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/analysis` | Package analysis answers questions about a loaded project without starting agents: who links to a Definition, the Package dependency graph, and the lint warnings that measure the model like code. | [docs/guides/model-language.md#lint-warnings](../guides/model-language.md#lint-warnings) |
+| `internal/analysis` | Package analysis answers questions about a loaded project without starting agents: who links to a Definition, the Package dependency graph, and the warnings of vet, which analyse the spec's design like code. | [docs/guides/model-language.md#vet-warnings](../guides/model-language.md#vet-warnings) |
 
 ## The record
 
@@ -91,7 +91,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/adapters/cli` | Package cli is the markitect command line: install, update, init, check, lock, refs, graph and lint; status and mark over the record of what was verified (DEC-099); the hook; version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
+| `internal/adapters/cli` | Package cli is the markitect command line: install, update, init and tidy; check, vet, list and doc over the spec; status and mark over the record of what was verified (DEC-099); the hook; version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
 | `internal/adapters/folder` | Package folder reads and writes a project folder without Git (DEC-097): it walks the folder and skips what the project's .gitignore files exclude, read as plain text, nested ones included. | [internal/run/README.md#the-folder](../../internal/run/README.md#the-folder) |
 | `internal/adapters/upgrade` | Package upgrade finds the newest Markitect release, downloads the binary for this platform, checks it against the release's checksums and replaces the running executable. | [docs/guides/project-workflow.md#8-keep-it-current](../guides/project-workflow.md#8-keep-it-current) |
 
@@ -105,7 +105,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `cmd/markitect` | Command markitect is the Markitect command line: install, update, init, check, lock, refs, graph, lint, status, mark, version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
+| `cmd/markitect` | Command markitect is the Markitect command line: install, update, init, tidy, check, vet, list, doc, status, mark, version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
 
 ## Maintenance
 

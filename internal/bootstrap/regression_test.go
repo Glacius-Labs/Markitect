@@ -20,7 +20,7 @@ func TestLockAndCheckReadTheSameLibraryFiles(t *testing.T) {
 	r.Write(".markitect/libraries/web/Page.md", "---\nkind: Kind\n---\n# Page\n")
 	r.Write(".markitect/libraries/web/Page.md.swp", "editor swap file\n")
 	r.Write(".markitect/registry.md", read(t, r.Dir, ".markitect/registry.md")+"| `README.md` | [[project]] | Overview |\n")
-	mustRun(t, r.Dir, "lock")
+	mustRun(t, r.Dir, "tidy")
 	if code, out, _ := run(t, r.Dir, "check"); code != 0 {
 		t.Fatalf("check after lock: %d\n%s", code, out)
 	}

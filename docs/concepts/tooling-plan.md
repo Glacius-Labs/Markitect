@@ -1,6 +1,6 @@
 # Plan: Markitect as a tool, with a verification cache
 
-**Status:** decided by the owner on 7 November 2026 ([DEC-099](register.md#dec-099-markitect-is-a-tool-with-a-verification-cache)), after a discussion of how they work with Markitect. An independent architect reviewed this page against the code. Step 1 of the [order of work](#order-of-work) is built in 0.21.0 ([the record](../../internal/run/README.md)); step 2 is next.
+**Status:** decided by the owner on 7 November 2026 ([DEC-099](register.md#dec-099-markitect-is-a-tool-with-a-verification-cache)), after a discussion of how they work with Markitect. An independent architect reviewed this page against the code. Steps 1 and 2 of the [order of work](#order-of-work) are built. Step 1 was released as 0.21.0 ([the record](../../internal/run/README.md)); step 2 is on Main for the next release; step 3 is next.
 
 The owner decided:
 - Markitect supports agent work and does not steer it;

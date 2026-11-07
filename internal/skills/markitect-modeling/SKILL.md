@@ -24,25 +24,25 @@ The owner accepts every model change. You propose; the owner reads the Markdown 
 [ ] 2 Packages and dependency directions agreed with the owner
 [ ] 3 Each statement mapped to a planned Definition (none left over, none invented)
 [ ] 4 Definitions written; markitect check passes
-[ ] 5 markitect lint, refs, graph, status read; warnings fixed or justified
+[ ] 5 markitect vet, doc, list --deps, status read; warnings fixed or justified
 [ ] 6 Diff handed to the owner
 ```
 
 Use the tools while you work, not only at the end:
 
 - `markitect check` after every few files. It prints every error as `file:line: code: message`; fix the first ones and run it again.
-- `markitect refs TARGET` before you rename, move or delete a Definition: it shows who links to it and which files realize it.
-- `markitect graph` when you add a link between Packages: it shows the new edge and the links behind it.
-- `markitect lint` at the end: coupling, size, unused Definitions, reach. Fix each warning or give one line why it stays.
+- `markitect doc TARGET` before you rename, move or delete a Definition: it shows who links to it and which files realize it.
+- `markitect list --deps` when you add a link between Packages: it shows the new dependency and the links behind it.
+- `markitect vet` at the end: coupling, size, reach. Fix each warning or give one line why it stays.
 - `markitect status` on your change: it lists the Definitions the change puts back on the list to verify, with what changed and where to look. Give the owner that list; it is what the builder will work on.
-- After a manifest or Library change run `markitect lock` and include the new `lock.yaml` in the diff.
+- After a manifest or Library change run `markitect tidy` and include the new `lock.yaml` in the diff.
 
 ## Where to put a Definition
 
 Knowledge sits broad at the top and deep below. A Manager reads its own Package, everything its parents define and the public Definitions it links to.
 
 - **Root** (the model folder itself): the project anchor (`std/Project`), project-wide Rules, layout conventions (where code and tests live), the architecture, shared Kinds.
-- **One Package per real area** of the system, with a single responsibility and its own code folder. It holds that area's Concepts, Features and interfaces (`rest/Endpoint`, `cli/Command`) and the Rules only it follows. Do not make a Package of one Definition; a Package with no Definitions and one child is a lint warning.
+- **One Package per real area** of the system, with a single responsibility and its own code folder. It holds that area's Concepts, Features and interfaces (`rest/Endpoint`, `cli/Command`) and the Rules only it follows. Do not make a Package of one Definition; a Package with no Definitions and one child is a `vet` warning.
 - **Shared things go to the lowest common parent** of the Packages that use them. A Kind used by several Packages sits at Root, because using a Kind is a dependency.
 - **Dependencies point up or sideways, never down, and never in a circle.** A link to an ancestor's Definition is free. A link to another Package's Definition is a dependency; keep them few. A parent may name a child Package (`[[members]]`), not a Definition inside it.
 - **Mark a Definition `internal: true`** when only its own Package should link to it, such as a detail another Package must not build on.
@@ -55,7 +55,7 @@ State what good documentation of the project would state (Markitect's rule DEC-0
 - Write exact values in backticks: wire names, error codes, limits, statuses. A caller must be able to rely on them.
 - A statement is true everywhere it applies. A Rule full of "except when" is several Rules.
 - Say each thing once and link to it from everywhere else.
-- Keep a Definition short: one idea, a few hundred words at most (the lint warns above 1000).
+- Keep a Definition short: one idea, a few hundred words at most (`vet` warns above 1000).
 - Choose the Kind whose body fits (`reference.md`). When none fits, write a small project Kind, one file, that says what such a Definition contains.
 
 ## Writing a Definition
@@ -85,7 +85,7 @@ A visitor becomes a [[members/member]] by giving a name and an email.
 | `package.cycle` | Two Packages link to each other (the message shows the path). Move the shared concept up, or remove one side's link as described above. |
 | `kind.unresolved`, `kind.not_a_kind` | The Kind path is wrong (`std/Feature`, a project Kind by its path) or names a Definition that is not of Kind `Kind`. |
 | `definition.front_matter`, `definition.title` | An extra front matter key, or no single level-1 heading as the first body line. |
-| `lock.mismatch`, `lock.missing` | Run `markitect lock` after a manifest or Library change and put `lock.yaml` in the diff. |
+| `lock.mismatch`, `lock.missing` | Run `markitect tidy` after a manifest or Library change and put `lock.yaml` in the diff. |
 | `file.unregistered` and other `registry.*` | A repository file is on no registry page and not in the ignore file, or a page is wrong. See the registry section of `reference.md`. |
 
 Every other code is listed in `reference.md`. A cycle or unresolved link usually hides other errors: fix and run `check` again.
@@ -98,10 +98,10 @@ Every other code is listed in `reference.md`. A cycle or unresolved link usually
 | "The requirements don't say, I'll assume the usual." | Stop and ask the owner before writing it. |
 | "I'll describe how it works inside." | Leave algorithms and data structures to the agents. |
 | "This rule needs a few exceptions." | Split it into several Rules. |
-| "Package A just needs one link to B's Definition." | Check `graph`: does it close a cycle, or add a ninth dependency? |
-| "The lint warning is cosmetic." | Fix it, or write one line why it stays. |
+| "Package A just needs one link to B's Definition." | Check `list --deps`: does it close a cycle, or add a ninth dependency? |
+| "The vet warning is cosmetic." | Fix it, or write one line why it stays. |
 | "It compiled earlier." | Run `check` again on the final tree. |
 
 ## Done
 
-Report to the owner: the diff; the output of `check` (ok line) and of `lint` (warnings fixed or justified); the list `status` prints, so the owner sees what the change makes the agents do; and any point the owner chose to leave open. Deleting or renaming a Definition leaves registry entries that name it. That is stale realization, not an error: `check` passes, `lint` warns, and the next `/markitect-build` cleans it up. Say so in the report; do not edit the registry pages in a model change (each Package's Manager maintains its page; only an extraction writes them).
+Report to the owner: the diff; the output of `check` (ok line) and of `vet` (warnings fixed or justified); the list `status` prints, so the owner sees what the change makes the agents do; and any point the owner chose to leave open. Deleting or renaming a Definition leaves registry entries that name it. That is stale realization, an error of the realization rather than the spec's: `check` lists it apart, and the next `/markitect-build` cleans it up. Say so in the report; do not edit the registry pages in a model change (each Package's Manager maintains its page; only an extraction writes them).

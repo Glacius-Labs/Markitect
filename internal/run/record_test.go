@@ -459,7 +459,7 @@ func TestAnUnreadableLine(t *testing.T) {
 	if st.Clean() || len(st.Unreadable) != 2 {
 		t.Fatalf("%s", st.Text())
 	}
-	has(t, st.Text(), "cannot read lines 6, 7")
+	has(t, st.Text(), ".markitect/review.sum:6: record.unreadable: ", ".markitect/review.sum:7: record.unreadable: ")
 	at := p.item(p.status(true), "loan-limit").Fingerprint
 	if text, ok := p.review("loan-limit", run.VerdictOK, at, []string{"README.md"}, ""); ok || !strings.Contains(text, "cannot read every line") {
 		t.Fatalf("%s", text)

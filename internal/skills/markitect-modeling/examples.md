@@ -19,7 +19,7 @@ internal/catalog/{book.go, loans.go, loans_test.go}
     catalog/{book, borrow-book, post-loans}.md
 ```
 
-`manifest.yaml` names the Libraries; run `markitect lock` after changing it:
+`manifest.yaml` names the Libraries; run `markitect tidy` after changing it:
 
 ```yaml
 libraries:
@@ -214,7 +214,7 @@ Suppose the first draft of `members/member.md` also said, as its last bullet, `T
 .markitect/model/catalog/book.md:9: package.cycle: the Packages catalog, members depend on each other in a cycle: catalog/book links [[members/member]]; members/member links [[catalog/book]]. Move the shared concept into a common parent, or invert one dependency
 ```
 
-Moving `Book` or `Member` up to Root would not make sense here, so invert the dependency: `catalog` is the side that needs members, so `members` states nothing about books. Delete that bullet. `catalog/book` keeps its link, and `markitect graph` shows one arrow, `catalog --> members`.
+Moving `Book` or `Member` up to Root would not make sense here, so invert the dependency: `catalog` is the side that needs members, so `members` states nothing about books. Delete that bullet. `catalog/book` keeps its link, and `markitect list --deps` shows one dependency, `catalog` on `members`.
 
 ## Registry pages and the ignore file
 
@@ -283,7 +283,7 @@ $ markitect check
 ok: 12 Definitions in 3 Packages, 10 files accounted
 ```
 
-`markitect lint` shows no warnings. After the limit in `loan-limit.md` changes from `3` to `5`, `markitect status` lists `loan-limit` and the Definitions that link to it, `catalog/borrow-book`, `members/member` and `members/open-loan-count`, each with the files the registry names for it, such as `internal/members/member.go` and `internal/catalog/loans.go`.
+`markitect vet` shows no warnings. After the limit in `loan-limit.md` changes from `3` to `5`, `markitect status` lists `loan-limit` and the Definitions that link to it, `catalog/borrow-book`, `members/member` and `members/open-loan-count`, each with the files the registry names for it, such as `internal/members/member.go` and `internal/catalog/loans.go`.
 
 ## Other errors you will meet
 

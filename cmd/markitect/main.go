@@ -1,6 +1,6 @@
-// Command markitect is the Markitect command line: install, update, init,
-// check, lock, refs, graph, lint, status, mark, version and licenses. It
-// delegates everything to internal/bootstrap.
+// Command markitect is the Markitect command line: install, update, init, tidy,
+// check, vet, list, doc, status, mark, version and licenses. It delegates
+// everything to internal/bootstrap.
 package main
 
 import (

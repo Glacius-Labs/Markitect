@@ -82,10 +82,12 @@ func TestCommandsEndToEnd(t *testing.T) {
 	}
 	code, out, _ = run(t, r.Dir, "check", "--json")
 	var checked struct {
-		OK     bool
-		Errors []any
+		FormatVersion int `json:"format_version"`
+		Kind          string
+		OK            bool
+		Diagnostics   []any
 	}
-	if code != 0 || json.Unmarshal([]byte(out), &checked) != nil || !checked.OK || checked.Errors == nil {
+	if code != 0 || json.Unmarshal([]byte(out), &checked) != nil || checked.FormatVersion != 1 || checked.Kind != "check" || !checked.OK || checked.Diagnostics == nil {
 		t.Fatalf("check --json: %d %s", code, out)
 	}
 	// With no record, every Definition is to verify.
@@ -109,13 +111,66 @@ func TestCommandsEndToEnd(t *testing.T) {
 		t.Fatalf("status after a change of the spec: %d\n%s", code, out)
 	}
 
-	if out := mustRun(t, r.Dir, "refs", "members/member"); !strings.Contains(out, "`src/members/member.go` | registry") {
-		t.Fatalf("refs:\n%s", out)
+	// doc shows a Definition with its text, its links both ways, its files and its
+	// record; and a Package.
+	wantAll(t, mustRun(t, r.Dir, "doc", "[[members/member]]"), "members/member: Member (std/Concept)\n", "Package members, .markitect/model/members/member.md\n", "A person who borrows.", "Realized by:\n  src/members/member.go, .markitect/registry/members.md:", "Record: members/member@", ", ok")
+	wantAll(t, mustRun(t, r.Dir, "doc", "loan-limit"), "Links to: members\n", "Realized by:\n  README.md", ", changed: self")
+	wantAll(t, mustRun(t, r.Dir, "doc", "members"), "Package members, in Root\n", "paths src/members/**", "members/member: Member (std/Concept)", "Linked from:\n  loan-limit (link)", "Files:\n  src/members/member.go")
+	if code, _, errOut := run(t, r.Dir, "doc", "members/nobody"); code != 1 || !strings.Contains(errOut, "neither a Definition nor a Package") {
+		t.Fatalf("doc of nothing: %d %s", code, errOut)
 	}
-	if out := mustRun(t, r.Dir, "graph"); !strings.Contains(out, "```mermaid") {
-		t.Fatalf("graph:\n%s", out)
+	var doc struct {
+		Kind       string
+		Definition struct {
+			ID         string
+			Text       string
+			RealizedBy []struct{ File string } `json:"realized_by"`
+			Record     struct{ State string }
+		}
 	}
-	mustRun(t, r.Dir, "lint")
+	if code, out, _ := run(t, r.Dir, "doc", "--json", "members/member"); code != 0 || json.Unmarshal([]byte(out), &doc) != nil || doc.Kind != "doc" || doc.Definition.ID != "members/member" || len(doc.Definition.RealizedBy) != 1 || doc.Definition.Record.State != "ok" {
+		t.Fatalf("doc --json: %d %s", code, out)
+	}
+	// list shows the Packages and their Definitions; --deps what each depends on.
+	wantAll(t, mustRun(t, r.Dir, "list"), "Root\n  loan-limit: Loan limit (std/Rule)\n", "members\n  members/member: Member (std/Concept)\n")
+	wantAll(t, mustRun(t, r.Dir, "list", "--deps"), "Root (Ca 0, Ce 0, instability 0.00)\n  loan-limit: Loan limit (std/Rule)\n    links members\n")
+	var listed struct {
+		Kind     string
+		Packages []struct {
+			Name string
+			Deps *struct{ Efferent int }
+		}
+	}
+	if code, out, _ := run(t, r.Dir, "list", "--json"); code != 0 || json.Unmarshal([]byte(out), &listed) != nil || listed.Kind != "list" || len(listed.Packages) != 2 || listed.Packages[0].Deps != nil {
+		t.Fatalf("list --json: %d %s", code, out)
+	}
+	// vet warns, and exits 1 only with --strict.
+	if code, out, _ := run(t, r.Dir, "vet"); code != 0 || out != "" {
+		t.Fatalf("vet: %d %s", code, out)
+	}
+	r.Write(".markitect/model/members/orphan.md", "---\nkind: std/Concept\n---\n# Orphan\n\n"+strings.Repeat("word ", 1001)+"\n")
+	if code, out, _ := run(t, r.Dir, "vet"); code != 0 || !strings.Contains(out, ".markitect/model/members/orphan.md: vet.definition_size: ") {
+		t.Fatalf("vet with a warning: %d %s", code, out)
+	}
+	if code, _, _ := run(t, r.Dir, "vet", "--strict"); code != 1 {
+		t.Fatalf("vet --strict with a warning: %d", code)
+	}
+	var vetted struct {
+		Kind        string
+		Diagnostics []struct{ Severity, Code, File string }
+	}
+	if code, out, _ := run(t, r.Dir, "vet", "--json"); code != 0 || json.Unmarshal([]byte(out), &vetted) != nil || vetted.Kind != "vet" || len(vetted.Diagnostics) != 1 || vetted.Diagnostics[0].Severity != "warning" {
+		t.Fatalf("vet --json: %d %s", code, out)
+	}
+	var stated struct {
+		Kind        string
+		Clean       bool
+		Items       []struct{ Definition, State, Fingerprint string }
+		Diagnostics []struct{ Severity, Code string }
+	}
+	if code, out, _ := run(t, r.Dir, "status", "--json"); code != 1 || json.Unmarshal([]byte(out), &stated) != nil || stated.Kind != "status" || stated.Clean || len(stated.Items) != 2 || stated.Items[0].Definition != "loan-limit" || len(stated.Diagnostics) != 1 || stated.Diagnostics[0].Code != "definition.unused" {
+		t.Fatalf("status --json: %d %s", code, out)
+	}
 
 	// status has no list for a spec that does not compile.
 	r.Write(".markitect/model/broken.md", "no front matter\n")
@@ -123,9 +178,9 @@ func TestCommandsEndToEnd(t *testing.T) {
 	if code != 1 || !strings.Contains(out, "there is no list until it compiles") {
 		t.Fatalf("status on errors: %d %s", code, out)
 	}
-	code, _, errOut := run(t, r.Dir, "lint")
+	code, _, errOut := run(t, r.Dir, "vet")
 	if code != 0 || !strings.Contains(errOut, "the spec has") {
-		t.Fatalf("lint on errors: %d %s", code, errOut)
+		t.Fatalf("vet on errors: %d %s", code, errOut)
 	}
 }
 
@@ -135,7 +190,7 @@ func TestCheckGroupsItsErrors(t *testing.T) {
 	mustRun(t, r.Dir, "init", "--name", "Demo")
 	r.Write("src/stray.go", "package stray\n")
 	code, out, _ := run(t, r.Dir, "check")
-	if code != 1 || !strings.Contains(out, "In the realization") || !strings.Contains(out, "file.unregistered") {
+	if code != 1 || !strings.Contains(out, "src/stray.go: file.unregistered: ") || !strings.Contains(out, "2 errors: 0 in the spec, for the owner to settle; 2 in the realization") {
 		t.Fatalf("check on a project with a stray file: %d\n%s", code, out)
 	}
 	if out := mustRun(t, r.Dir, "check", "--spec"); !strings.HasPrefix(out, "ok:") {
@@ -143,7 +198,7 @@ func TestCheckGroupsItsErrors(t *testing.T) {
 	}
 	r.Write(".markitect/model/broken.md", "no front matter\n")
 	code, out, _ = run(t, r.Dir, "check", "--spec")
-	if code != 1 || !strings.Contains(out, "In the spec") {
+	if code != 1 || !strings.Contains(out, ".markitect/model/broken.md:1: definition.front_matter: ") || !strings.Contains(out, "2 in the spec, for the owner to settle; 0 in the realization") {
 		t.Fatalf("check --spec on a broken spec: %d\n%s", code, out)
 	}
 }
@@ -160,10 +215,10 @@ func TestCheckWithNothingBuilt(t *testing.T) {
 	code, out, _ = run(t, r.Dir, "check", "--json")
 	var checked struct {
 		OK           bool
-		NothingBuilt bool
-		Errors       []any
+		NothingBuilt bool `json:"nothing_built"`
+		Diagnostics  []any
 	}
-	if code != 0 || json.Unmarshal([]byte(out), &checked) != nil || !checked.OK || !checked.NothingBuilt || len(checked.Errors) != 0 {
+	if code != 0 || json.Unmarshal([]byte(out), &checked) != nil || !checked.OK || !checked.NothingBuilt || checked.Diagnostics == nil || len(checked.Diagnostics) != 0 {
 		t.Fatalf("check --json on a new project: %d %s", code, out)
 	}
 	if out := mustRun(t, r.Dir, "check", "--spec"); strings.Contains(out, "Nothing is built") {
@@ -390,15 +445,15 @@ func TestInitInstallsTheHarness(t *testing.T) {
 	}
 }
 
-func TestLockCommand(t *testing.T) {
+func TestTidyWritesTheLock(t *testing.T) {
 	r := newFolder(t)
 	r.Write(".markitect/manifest.yaml", "libraries:\n  std: 1.0.0\n  rest: 1.0.0\n  web: 0.1.0\n")
-	code, _, errOut := run(t, r.Dir, "lock")
+	code, _, errOut := run(t, r.Dir, "tidy")
 	if code != 1 || !strings.Contains(errOut, "library.missing") {
 		t.Fatalf("lock without web: %d %s", code, errOut)
 	}
 	r.Write(".markitect/libraries/web/Page.md", "---\nkind: Kind\n---\n# Page\n")
-	if out := mustRun(t, r.Dir, "lock"); !strings.Contains(out, "rest 1.0.0, std 1.0.0, web 0.1.0") {
+	if out := mustRun(t, r.Dir, "tidy"); !strings.Contains(out, "rest 1.0.0, std 1.0.0, web 0.1.0") {
 		t.Fatalf("lock = %s", out)
 	}
 	if lock := read(t, r.Dir, ".markitect/lock.yaml"); !strings.Contains(lock, "  web:\n    version: 0.1.0\n    digest: sha256:") {
@@ -408,14 +463,14 @@ func TestLockCommand(t *testing.T) {
 
 func TestUsageAndRefusals(t *testing.T) {
 	var out, errOut bytes.Buffer
-	if Run(context.Background(), nil, &out, &errOut) != 0 || !strings.Contains(out.String(), "markitect mark DEFINITION@FINGERPRINT VERDICT") {
+	if Run(context.Background(), nil, &out, &errOut) != 0 || !strings.Contains(out.String(), "DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]") {
 		t.Fatalf("usage = %s", out.String())
 	}
 	if Run(context.Background(), []string{"bughunt"}, &out, &errOut) != 2 || !strings.Contains(errOut.String(), `unknown command "bughunt"`) {
 		t.Fatalf("unknown command: %s", errOut.String())
 	}
 	dir := testkit.TempDir(t)
-	for _, args := range [][]string{{"check"}, {"lock"}, {"status"}, {"mark", "project@0a1b2c", "ok", "-e", "README.md"}} {
+	for _, args := range [][]string{{"check"}, {"tidy"}, {"status"}, {"mark", "project@0a1b2c", "ok", "-e", "README.md"}} {
 		if code, _, errOut := run(t, dir, args...); code != 2 || !strings.Contains(errOut, "is in no Markitect project") || !strings.Contains(errOut, "markitect init makes one") {
 			t.Fatalf("%s outside a project: %d %s", args[0], code, errOut)
 		}
@@ -428,8 +483,12 @@ func TestUsageAndRefusals(t *testing.T) {
 			t.Fatalf("%s: %d %s", args[0], code, out)
 		}
 	}
-	if code, _, errOut := run(t, dir, "impact"); code != 2 || !strings.Contains(errOut, "unknown command") {
-		t.Fatalf("impact: %d %s", code, errOut)
+	// The commands step 2 of the tooling plan renamed are gone: vet, list, doc and
+	// tidy take their place, and the commands stay flat.
+	for _, cmd := range []string{"impact", "lint", "refs", "graph", "lock", "review"} {
+		if code, _, errOut := run(t, dir, cmd); code != 2 || !strings.Contains(errOut, "unknown command") {
+			t.Fatalf("%s: %d %s", cmd, code, errOut)
+		}
 	}
 	out.Reset()
 	if Run(context.Background(), []string{"version"}, &out, &errOut) != 0 || !strings.HasPrefix(out.String(), "markitect ") {
@@ -491,7 +550,69 @@ func TestStatusAndMarkThroughTheCommandLine(t *testing.T) {
 	if code, out, _ := run(t, r.Dir, "check"); code != 0 {
 		t.Fatalf("the record is part of the layout: %s", out)
 	}
+
+	// --json: mark, recorded and refused, and status with a line it cannot read.
+	r.Write("README.md", "# A project\n\nIt lends books and records.\n")
+	_, out, _ = run(t, r.Dir, "status")
+	item = strings.Fields(out[strings.Index(out, "project@"):])[0]
+	var marked struct {
+		Kind     string
+		Recorded bool
+		Message  string
+	}
+	if code, out, _ := run(t, r.Dir, "mark", "--json", item, "ok", "-e", "README.md:3"); code != 0 || json.Unmarshal([]byte(out), &marked) != nil || marked.Kind != "mark" || !marked.Recorded {
+		t.Fatalf("mark --json: %d %s", code, out)
+	}
+	r.Write("README.md", "# A project\n\nIt lends books, records and games.\n")
+	if code, out, _ := run(t, r.Dir, "mark", item, "ok", "-e", "README.md:3", "--json"); code != 1 || json.Unmarshal([]byte(out), &marked) != nil || marked.Recorded || !strings.Contains(marked.Message, "Run markitect status again") {
+		t.Fatalf("mark --json at a stale fingerprint: %d %s", code, out)
+	}
+	r.Write(".markitect/review.sum", read(t, r.Dir, ".markitect/review.sum")+"not json\n")
+	var stated struct {
+		Clean       bool
+		Diagnostics []struct {
+			Code string
+			File string
+			Line int
+		}
+		Unreadable []int `json:"unreadable_lines"`
+	}
+	if code, out, _ := run(t, r.Dir, "status", "--json"); code != 1 || json.Unmarshal([]byte(out), &stated) != nil || stated.Clean || len(stated.Diagnostics) != 1 || stated.Diagnostics[0].Code != "record.unreadable" || stated.Diagnostics[0].Line != 2 || len(stated.Unreadable) != 1 {
+		t.Fatalf("status --json with a line it cannot read: %d %s", code, out)
+	}
 	noRepository(t, r.Dir)
+}
+
+// doc takes its flags after the target too, shows a Package and a Library's Kind,
+// and says in its document when the target is neither a Definition nor a Package.
+func TestDocAndVetDocuments(t *testing.T) {
+	r := newFolder(t)
+	mustRun(t, r.Dir, "init")
+	var doc struct {
+		Kind    string
+		Package struct {
+			Name        string
+			Definitions []struct{ ID string }
+		}
+		Diagnostics []struct{ Severity, Code string }
+	}
+	if code, out, _ := run(t, r.Dir, "doc", "Root", "--json"); code != 0 || json.Unmarshal([]byte(out), &doc) != nil || doc.Kind != "doc" || doc.Package.Name != "Root" || len(doc.Package.Definitions) != 1 {
+		t.Fatalf("doc Root --json: %d %s", code, out)
+	}
+	wantAll(t, mustRun(t, r.Dir, "doc", "std/Rule"), "std/Rule: ", "Library std\n")
+	if code, out, _ := run(t, r.Dir, "doc", "nobody", "--json"); code != 1 || json.Unmarshal([]byte(out), &doc) != nil || len(doc.Diagnostics) != 1 || doc.Diagnostics[0].Code != "doc.unknown" {
+		t.Fatalf("doc of nothing --json: %d %s", code, out)
+	}
+	r.Write(".markitect/model/big.md", "---\nkind: std/Rule\n---\n# Big\n\n"+strings.Repeat("word ", 1001)+"\n")
+	var vetted struct {
+		Diagnostics []struct{ Severity, Code string }
+	}
+	if code, out, _ := run(t, r.Dir, "vet", "--json", "--strict"); code != 1 || json.Unmarshal([]byte(out), &vetted) != nil || len(vetted.Diagnostics) != 1 || vetted.Diagnostics[0].Code != "vet.definition_size" {
+		t.Fatalf("vet --json --strict: %d %s", code, out)
+	}
+	if code, _, errOut := run(t, r.Dir, "tidy", "--json"); code != 2 || !strings.Contains(errOut, "-json") {
+		t.Fatalf("tidy --json: %d %s", code, errOut)
+	}
 }
 
 // update turns the newest certificate of markitect 0.20 into the record, and

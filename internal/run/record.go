@@ -118,10 +118,10 @@ func (r Record) byDefinition() map[string][]Line {
 
 // Change is one input that differs between a line and the folder.
 type Change struct {
-	Key string
+	Key string `json:"key"`
 	// How is "changed", "new" (the folder has it, the line not) or "gone" (the
 	// line has it, the folder not).
-	How string
+	How string `json:"how"`
 }
 
 func (c Change) String() string {

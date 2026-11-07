@@ -53,7 +53,7 @@ The record is a record, not a proof: a line written by hand shows in the diff, a
 - every Definition gone from the spec that still has a line, with the files that line names: are they removed, or do they have a new basis?
 - every conflict;
 - the errors in the realization: a file neither listed nor ignored, a stale registry row, an unused Definition;
-- the lines of the record it cannot read.
+- the lines of the record it cannot read, each as a diagnostic `.markitect/review.sum:LINE: record.unreadable: …`.
 
 Each item is printed as `DEFINITION@FINGERPRINT`, which the reviewer copies into `mark`, and names where to look: the Definition's file, its row files and the evidence of its last line. A Definition recorded `skip` is a note. A spec with errors gives no list: there is none until it compiles. `--all` lists every Definition, to verify everything again.
 

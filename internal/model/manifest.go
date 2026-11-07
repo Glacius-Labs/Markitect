@@ -34,7 +34,7 @@ type Locked struct {
 	Line    int
 }
 
-// Lock is the project's .markitect/lock.yaml, written by markitect lock.
+// Lock is the project's .markitect/lock.yaml, written by markitect tidy.
 type Lock struct {
 	Libraries map[string]Locked
 }
@@ -95,12 +95,12 @@ func ParseLock(file string, data []byte) (Lock, Diagnostics) {
 	lock := Lock{Libraries: map[string]Locked{}}
 	top, err := Mapping(data)
 	if err != nil {
-		ds.Add("lock.syntax", file, 0, "%v; run markitect lock", err)
+		ds.Add("lock.syntax", file, 0, "%v; run markitect tidy", err)
 		return lock, ds
 	}
 	libs := top["libraries"]
 	if len(top) != 1 || libs == nil || libs.Kind != yaml.MappingNode {
-		ds.Add("lock.syntax", file, 0, "the lock is not in the form markitect lock writes; run markitect lock")
+		ds.Add("lock.syntax", file, 0, "the lock is not in the form markitect tidy writes; run markitect tidy")
 		return lock, ds
 	}
 	for i := 0; i+1 < len(libs.Content); i += 2 {
@@ -110,7 +110,7 @@ func ParseLock(file string, data []byte) (Lock, Diagnostics) {
 			Digest  string `yaml:"digest"`
 		}
 		if err := v.Decode(&entry); err != nil || entry.Version == "" || entry.Digest == "" {
-			ds.Add("lock.syntax", file, k.Line, "the entry for %s needs version and digest; run markitect lock", k.Value)
+			ds.Add("lock.syntax", file, k.Line, "the entry for %s needs version and digest; run markitect tidy", k.Value)
 			continue
 		}
 		lock.Libraries[k.Value] = Locked{Version: entry.Version, Digest: entry.Digest, Line: k.Line}
@@ -123,7 +123,7 @@ func RenderLock(libs []LibrarySource) []byte {
 	sorted := append([]LibrarySource(nil), libs...)
 	sort.Slice(sorted, func(i, j int) bool { return sorted[i].Name < sorted[j].Name })
 	var b bytes.Buffer
-	b.WriteString("# Written by markitect lock from the manifest. Do not edit.\nlibraries:\n")
+	b.WriteString("# Written by markitect tidy from the manifest. Do not edit.\nlibraries:\n")
 	for _, l := range sorted {
 		fmt.Fprintf(&b, "  %s:\n    version: %s\n    digest: %s\n", l.Name, l.Version, LibraryDigest(l.Files))
 	}
@@ -140,16 +140,16 @@ func VerifyLock(file string, lock Lock, libs []LibrarySource) Diagnostics {
 		locked, ok := lock.Libraries[l.Name]
 		switch {
 		case !ok:
-			ds.Add("lock.mismatch", file, 0, "Library %s %s is not in the lock; run markitect lock", l.Name, l.Version)
+			ds.Add("lock.mismatch", file, 0, "Library %s %s is not in the lock; run markitect tidy", l.Name, l.Version)
 		case locked.Version != l.Version:
-			ds.Add("lock.mismatch", file, locked.Line, "the lock pins %s %s, but the manifest names %s; run markitect lock", l.Name, locked.Version, l.Version)
+			ds.Add("lock.mismatch", file, locked.Line, "the lock pins %s %s, but the manifest names %s; run markitect tidy", l.Name, locked.Version, l.Version)
 		case locked.Digest != LibraryDigest(l.Files):
-			ds.Add("lock.mismatch", file, locked.Line, "the content of Library %s %s does not match the digest the lock pins; restore the Library or run markitect lock", l.Name, l.Version)
+			ds.Add("lock.mismatch", file, locked.Line, "the content of Library %s %s does not match the digest the lock pins; restore the Library or run markitect tidy", l.Name, l.Version)
 		}
 	}
 	for name, locked := range lock.Libraries {
 		if !named[name] {
-			ds.Add("lock.mismatch", file, locked.Line, "the lock pins %s, which the manifest does not name; run markitect lock", name)
+			ds.Add("lock.mismatch", file, locked.Line, "the lock pins %s, which the manifest does not name; run markitect tidy", name)
 		}
 	}
 	return ds

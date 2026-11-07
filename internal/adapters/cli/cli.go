@@ -1,19 +1,17 @@
-// Package cli is the markitect command line: install, update, init, check, lock,
-// refs, graph and lint; status and mark over the record of what was verified
-// (DEC-099); the hook; version and licenses. None of them starts an agent, steers
-// the work or uses Git (DEC-096, DEC-097).
+// Package cli is the markitect command line: install, update, init and tidy; check,
+// vet, list and doc over the spec; status and mark over the record of what was
+// verified (DEC-099); the hook; version and licenses. The commands are flat, print
+// diagnostics as Go's tools do and, with --json, one envelope. None of them starts
+// an agent, steers the work or uses Git (DEC-096, DEC-097).
 package cli
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
-	"strings"
 
-	"github.com/Glacius-Labs/Markitect/internal/analysis"
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
@@ -40,11 +38,11 @@ type Folders interface {
 	At(dir string) (Workspace, error)
 }
 
-// Exit codes.
+// Exit codes, as Go's tools have them.
 const (
 	OK       = 0
-	Failed   = 1 // the command ran and found errors
-	Misused  = 2 // the command could not run
+	Failed   = 1 // the command did its job and found something
+	Misused  = 2 // the command could not run, such as on a usage error
 	usageTop = skills.About + `
 No command starts an agent or uses Git: the /markitect-build and /markitect-review
 skills have your Claude Code session start the agents, and the session commits.
@@ -53,25 +51,30 @@ Usage:
   markitect install                               tell Claude Code what Markitect is, in every folder
   markitect update [--repo DIR] [--check] [--files] [--force]
                                                   install the newest release, then refresh the personal skill and the
-                                                  project's skills, agents, hook and lock
+                                                  project's skills, agents, hooks and lock
   markitect init   [--repo DIR] [--name TITLE]   make a folder a Markitect project and install the harness
-  markitect check  [--repo DIR] [--json] [--spec] compile the project; --spec looks only at the spec
-  markitect lock   [--repo DIR]                   write the lock from the manifest
-  markitect refs   [--repo DIR] [--json] TARGET   who links to a Definition or Package
-  markitect graph  [--repo DIR] [--json]          the Package dependency graph
-  markitect lint   [--repo DIR] [--json]          measure the spec like code: warnings only
-  markitect status [--repo DIR] [--all]           what is to verify: each Definition with a changed input or no record,
+  markitect tidy   [--repo DIR]                   bring the lock in line with the manifest
+  markitect check  [--repo DIR] [--json] [--spec] compile the spec and the registry; --spec looks only at the spec
+  markitect vet    [--repo DIR] [--json] [--strict]
+                                                  analyse the spec's design: coupling, size, how far a change reaches;
+                                                  it warns, and exits 1 only with --strict
+  markitect list   [--repo DIR] [--json] [--deps] the Packages and their Definitions; --deps adds what each depends on
+  markitect doc    [--repo DIR] [--json] TARGET   a Definition or Package: its text, its links both ways, its files
+                                                  and its record
+  markitect status [--repo DIR] [--json] [--all]  what is to verify: each Definition with a changed input or no record,
                                                   with what changed, where to look and its fingerprint; --all lists
                                                   every Definition, to verify everything again
-  markitect mark DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]... [-m "WHY"]
+  markitect mark   [--repo DIR] [--json] DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]... [-m "WHY"]
                                                   record a verdict at the state status printed: ok, fail, skip or
                                                   spec-problem; evidence is path:line or path; only the
                                                   markitect-reviewer agent runs it
   markitect version [--repo DIR]                  which markitect this is, and whether the personal skill and the project match it
   markitect licenses
 
-Exit codes: 0 when all is well, 1 when the command found something (an error, an
-item to verify, a refused verdict), 2 when it could not run.
+Diagnostics read file:line: code: message. --json prints one document with
+format_version and kind. Exit codes: 0 when all is well, 1 when the command found
+something (an error, an item to verify, a refused verdict, a warning of vet
+--strict), 2 when it could not run.
 `
 )
 
@@ -125,16 +128,16 @@ func (c CLI) Run(ctx context.Context, args []string) int {
 		code, err = c.update(ctx, rest)
 	case "init":
 		code, err = c.init(ctx, rest)
+	case "tidy":
+		code, err = c.tidy(ctx, rest)
 	case "check":
 		code, err = c.check(ctx, rest)
-	case "lock":
-		code, err = c.lock(ctx, rest)
-	case "refs":
-		code, err = c.refs(ctx, rest)
-	case "graph":
-		code, err = c.graph(ctx, rest)
-	case "lint":
-		code, err = c.lint(ctx, rest)
+	case "vet":
+		code, err = c.vet(ctx, rest)
+	case "list":
+		code, err = c.list(ctx, rest)
+	case "doc":
+		code, err = c.doc(ctx, rest)
 	case "status":
 		code, err = c.status(ctx, rest)
 	case "mark":
@@ -158,7 +161,7 @@ func (c CLI) Run(ctx context.Context, args []string) int {
 		return Misused
 	}
 	switch cmd {
-	case "check", "lock", "refs", "graph", "lint", "status":
+	case "check", "tidy", "vet", "list", "doc", "status":
 		c.staleNotice(rest)
 	}
 	return code
@@ -175,11 +178,27 @@ func (c CLI) flags(name string, o *options) *flag.FlagSet {
 	fs.SetOutput(c.Stderr)
 	fs.StringVar(&o.repo, "repo", ".", "a folder of the project")
 	switch name {
-	case "init", "lock", "update", "version":
-	default:
-		fs.BoolVar(&o.json, "json", false, "print JSON instead of Markdown")
+	case "check", "vet", "list", "doc", "status":
+		fs.BoolVar(&o.json, "json", false, "print one JSON document instead of text")
 	}
 	return fs
+}
+
+// parse parses a command's flags wherever they stand, before or after its
+// arguments, as agents write them, such as markitect doc x --json. It returns
+// the arguments.
+func parse(fs *flag.FlagSet, args []string) ([]string, error) {
+	var positional []string
+	for {
+		if err := fs.Parse(args); err != nil {
+			return nil, err
+		}
+		if fs.NArg() == 0 {
+			return positional, nil
+		}
+		positional = append(positional, fs.Arg(0))
+		args = fs.Args()[1:]
+	}
 }
 
 // load opens the project folder and loads the project.
@@ -202,21 +221,16 @@ func (c CLI) warnErrors(p *project.Project) {
 	}
 }
 
-func (c CLI) printJSON(v any) error {
-	enc := json.NewEncoder(c.Stdout)
-	enc.SetIndent("", "  ")
-	return enc.Encode(v)
-}
-
-func (c CLI) check(ctx context.Context, args []string) (int, error) {
+// check compiles the spec and the registry and prints every error, the spec's
+// before the realization's. It produces nothing. Exit 1 when there is an error.
+func (c CLI) check(_ context.Context, args []string) (int, error) {
 	var o options
 	var specOnly bool
 	fs := c.flags("check", &o)
 	fs.BoolVar(&specOnly, "spec", false, "look only at the spec itself, not at whether the work matches it")
-	if err := fs.Parse(args); err != nil {
+	if positional, err := parse(fs, args); err != nil {
 		return Misused, err
-	}
-	if fs.NArg() != 0 {
+	} else if len(positional) != 0 {
 		return Misused, fmt.Errorf("takes no arguments")
 	}
 	_, p, err := c.load(o)
@@ -230,22 +244,23 @@ func (c CLI) check(ctx context.Context, args []string) (int, error) {
 	}
 	total := len(spec) + len(realization)
 	if o.json {
-		list := append(append(model.Diagnostics{}, spec...), realization...)
-		if err := c.printJSON(map[string]any{"ok": total == 0, "errors": list, "specErrors": len(spec), "realizationErrors": len(realization), "nothingBuilt": nothingBuilt}); err != nil {
+		doc := struct {
+			envelope
+			OK                bool         `json:"ok"`
+			NothingBuilt      bool         `json:"nothing_built"`
+			Definitions       int          `json:"definitions"`
+			Packages          int          `json:"packages"`
+			Files             int          `json:"files"`
+			SpecErrors        int          `json:"spec_errors"`
+			RealizationErrors int          `json:"realization_errors"`
+			Diagnostics       []diagnostic `json:"diagnostics"`
+		}{newEnvelope("check"), total == 0, nothingBuilt, len(p.Model.ModelDefinitions()), len(p.Model.Packages), len(p.Registry.Owner), len(spec), len(realization), append(diagnostics(severityError, spec), diagnostics(severityError, realization)...)}
+		if err := c.printJSON(doc); err != nil {
 			return Misused, err
 		}
 	} else {
-		if len(spec) > 0 {
-			fmt.Fprintf(c.Stdout, "In the spec, for the owner to settle:\n")
-			for _, d := range spec {
-				fmt.Fprintln(c.Stdout, d.String())
-			}
-		}
-		if len(realization) > 0 {
-			fmt.Fprintf(c.Stdout, "In the realization, so spec and code do not match yet; /markitect-build settles these:\n")
-			for _, d := range realization {
-				fmt.Fprintln(c.Stdout, d.String())
-			}
+		for _, d := range append(append(model.Diagnostics{}, spec...), realization...) {
+			fmt.Fprintln(c.Stdout, d.String())
 		}
 		switch {
 		case nothingBuilt:
@@ -253,7 +268,7 @@ func (c CLI) check(ctx context.Context, args []string) (int, error) {
 		case total == 0:
 			fmt.Fprintf(c.Stdout, "ok: %d Definitions in %d Packages, %d files accounted\n", len(p.Model.ModelDefinitions()), len(p.Model.Packages), len(p.Registry.Owner))
 		default:
-			fmt.Fprintf(c.Stdout, "%d errors\n", total)
+			fmt.Fprintf(c.Stdout, "%d %s: %d in the spec, for the owner to settle; %d in the realization, so spec and code do not match yet, which /markitect-build settles\n", total, plural(total, "error", "errors"), len(spec), len(realization))
 		}
 	}
 	if total > 0 {
@@ -262,79 +277,9 @@ func (c CLI) check(ctx context.Context, args []string) (int, error) {
 	return OK, nil
 }
 
-func (c CLI) refs(ctx context.Context, args []string) (int, error) {
-	var o options
-	fs := c.flags("refs", &o)
-	if err := fs.Parse(args); err != nil {
-		return Misused, err
+func plural(n int, one, many string) string {
+	if n == 1 {
+		return one
 	}
-	if fs.NArg() != 1 {
-		return Misused, fmt.Errorf("names one Definition or Package, such as members/member")
-	}
-	_, p, err := c.load(o)
-	if err != nil {
-		return Misused, err
-	}
-	c.warnErrors(p)
-	target := fs.Arg(0)
-	refs, err := analysis.Refs(p, target)
-	if err != nil {
-		return Misused, err
-	}
-	if o.json {
-		if refs == nil {
-			refs = []analysis.Ref{}
-		}
-		return OK, c.printJSON(map[string]any{"target": target, "refs": refs})
-	}
-	fmt.Fprint(c.Stdout, renderRefs(strings.Trim(target, "[]"), refs))
-	return OK, nil
-}
-
-func (c CLI) graph(ctx context.Context, args []string) (int, error) {
-	var o options
-	fs := c.flags("graph", &o)
-	if err := fs.Parse(args); err != nil {
-		return Misused, err
-	}
-	if fs.NArg() != 0 {
-		return Misused, fmt.Errorf("takes no arguments")
-	}
-	_, p, err := c.load(o)
-	if err != nil {
-		return Misused, err
-	}
-	c.warnErrors(p)
-	g := analysis.BuildGraph(p)
-	if o.json {
-		return OK, c.printJSON(g)
-	}
-	fmt.Fprint(c.Stdout, renderGraph(g))
-	return OK, nil
-}
-
-func (c CLI) lint(ctx context.Context, args []string) (int, error) {
-	var o options
-	fs := c.flags("lint", &o)
-	if err := fs.Parse(args); err != nil {
-		return Misused, err
-	}
-	if fs.NArg() != 0 {
-		return Misused, fmt.Errorf("takes no arguments")
-	}
-	_, p, err := c.load(o)
-	if err != nil {
-		return Misused, err
-	}
-	c.warnErrors(p)
-	warnings := analysis.Lint(p)
-	g := analysis.BuildGraph(p)
-	if o.json {
-		if warnings == nil {
-			warnings = model.Diagnostics{}
-		}
-		return OK, c.printJSON(map[string]any{"warnings": warnings, "packages": g.Packages})
-	}
-	fmt.Fprint(c.Stdout, renderLint(warnings, g))
-	return OK, nil
+	return many
 }

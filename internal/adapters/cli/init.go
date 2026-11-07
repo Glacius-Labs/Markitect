@@ -331,9 +331,11 @@ func harnessFile(file string) bool {
 	return false
 }
 
-func (c CLI) lock(_ context.Context, args []string) (int, error) {
+// tidy brings the lock in line with the manifest, as go mod tidy does for go.sum:
+// check only reads the lock, and says to run tidy when the two differ.
+func (c CLI) tidy(_ context.Context, args []string) (int, error) {
 	var o options
-	fs := c.flags("lock", &o)
+	fs := c.flags("tidy", &o)
 	if err := fs.Parse(args); err != nil {
 		return Misused, err
 	}
@@ -390,7 +392,7 @@ func (c CLI) writeLock(ws Workspace) (int, error) {
 }
 
 // manifestTemplate is a new project's manifest.
-const manifestTemplate = `# The Libraries this project uses, with their versions. Run markitect lock after a change.
+const manifestTemplate = `# The Libraries this project uses, with their versions. Run markitect tidy after a change.
 # model, optional, names the model the builder and reviewer agents use; without it they use sonnet.
 # markitect update writes it into their agent files.
 libraries:

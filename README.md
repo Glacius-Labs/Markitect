@@ -42,7 +42,7 @@ It is a way of agentic coding, not a platform: the agents are ordinary Claude Co
 - **Typed documentation.** One Markdown file per Definition, its Kind in the front matter, links by path such as `[[members/member]]`. Projects define their own Kinds; the standard Libraries `std`, `rest` and `cli` ship in the binary.
 - **A compiler for intent.** `markitect check` resolves every Kind and link, keeps internal Definitions inside their subtree and refuses dependency cycles between Packages, as Go does. If the spec does not compile, `markitect status` gives no list until it does.
 - **Every file accounted for.** One registry page per Package names the paths it owns and lists each file with the Definitions it builds. A file that is neither registered nor ignored is an error.
-- **A cache of what was verified.** Like `go test`, which runs a test again only when something it depends on changed, Markitect records for each Definition the state at which a reviewer verified it: its text, its Kind and links, its files and the evidence. `markitect status` lists every Definition whose state changed, with what changed and where to look. `markitect lint` measures the spec like code: coupling, size, unused Definitions.
+- **A cache of what was verified.** Like `go test`, which runs a test again only when something it depends on changed, Markitect records for each Definition the state at which a reviewer verified it: its text, its Kind and links, its files and the evidence. `markitect status` lists every Definition whose state changed, with what changed and where to look. `markitect vet` measures the spec like code: coupling, size, how far a change reaches.
 - **A builder and a fresh reviewer.** `/markitect-build` has your Claude Code session start a builder agent, which starts a reviewer agent with fresh context. The reviewer verifies each item and records `ok`, `fail`, `skip` or `spec-problem` with `markitect mark`, and a `fail` stays on the list until the builder has repaired it.
 - **Verdicts bound to what was read.** A verdict names the item as `status` printed it, such as `members/limit@3f9a1c`, and `mark` refuses it when anything changed since. A hook lets only the reviewer record, and keeps every agent out of the spec and the record.
 - **The record, committed.** `.markitect/review.sum` holds one line per Definition, and your session commits it with the work on your branch. Nothing is pushed. Markitect itself uses no Git and steers no work.
@@ -106,7 +106,7 @@ In a repository that already has files, the first `check` fails by design, becau
 
 ```text
 README.md: file.unregistered: neither registered nor ignored: list it on .markitect/registry.md, the page of its owner Root, or add it to the ignore file
-1 errors
+1 error: 0 in the spec, for the owner to settle; 1 in the realization, so spec and code do not match yet, which /markitect-build settles
 ```
 
 List the file on Root's registry page, `.markitect/registry.md`, with the Definitions it builds:
@@ -122,8 +122,9 @@ List the file on Root's registry page, `.markitect/registry.md`, with the Defini
 Ask your coding agent to use the `markitect-modeling` skill and describe the project with you. For an existing code base, the `markitect-extract` skill drafts a first spec from the code. Then look around:
 
 ```bash
-markitect lint                   # coupling, size, unused Definitions
-markitect graph                  # the Package dependency graph as a Mermaid diagram
+markitect vet                    # coupling, size, how far a change reaches
+markitect list --deps            # the Packages, their Definitions and what each depends on
+markitect doc members/member     # one Definition: text, links both ways, files, record
 markitect status                 # what is to verify, and what changed
 ```
 
@@ -199,7 +200,7 @@ Main carries [concept 4.0](docs/concepts/v4-concept.md), the target the owner ac
 
 | Area | State |
 | --- | --- |
-| The spec language and the commands `init`, `check`, `lock`, `refs`, `graph` and `lint` | Available |
+| The spec language and the commands `init`, `check`, `tidy`, `vet`, `list` and `doc` | Available (`tidy`, `vet`, `list` and `doc` are on Main for the next release; 0.21.0 has `lock`, `lint`, `graph` and `refs`) |
 | Work with `/markitect-build` and `/markitect-review`, over `status`, `mark` and the record | Available on Claude Code since 0.21.0, covered by tests. The flow before it, with `gate`, was tried on three changes of one project ([trials](docs/validation/lean-trials-20261107.md)) |
 | Codex | Not yet: it needs subagents with their own agent files and a hook that names the agent |
 | Release | On GitHub, with the Claude Code plugin ([install](#install)) |
