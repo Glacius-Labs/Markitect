@@ -127,9 +127,9 @@ func TestGraphMeasures(t *testing.T) {
 	}
 }
 
-func lintCodes(t *testing.T, r memRepo) model.Diagnostics {
+func vetCodes(t *testing.T, r memRepo) model.Diagnostics {
 	t.Helper()
-	return Lint(loadRepo(t, r))
+	return Vet(loadRepo(t, r))
 }
 
 func expectWarning(t *testing.T, ds model.Diagnostics, code, fragment string) {
@@ -142,7 +142,7 @@ func expectWarning(t *testing.T, ds model.Diagnostics, code, fragment string) {
 	t.Fatalf("no %s containing %q in:\n%v", code, fragment, ds)
 }
 
-func TestLintCoupling(t *testing.T) {
+func TestVetCoupling(t *testing.T) {
 	r := library(t)
 	var links []string
 	for i := 0; i < MaxEfferent+1; i++ {
@@ -151,10 +151,10 @@ func TestLintCoupling(t *testing.T) {
 		links = append(links, "[["+name+"/x]]")
 	}
 	r[m+"hub/h.md"] = def("std/Rule", "Hub", strings.Join(links, " "))
-	expectWarning(t, lintCodes(t, r), "lint.coupling", "hub depends on 6 Packages")
+	expectWarning(t, vetCodes(t, r), "vet.coupling", "hub depends on 6 Packages")
 }
 
-func TestLintUnstableDependency(t *testing.T) {
+func TestVetUnstableDependency(t *testing.T) {
 	r := library(t)
 	// shelf-tools depends on catalog, which also depends on members: catalog's
 	// instability drops below shelf-tools'... and members depends on extra.
@@ -167,45 +167,45 @@ func TestLintUnstableDependency(t *testing.T) {
 	r[m+"x1/a.md"] = def("std/Rule", "X1", "")
 	r[m+"x2/a.md"] = def("std/Rule", "X2", "")
 	r[m+"extra/e.md"] = def("std/Rule", "E", "[[x1/a]] [[x2/a]]")
-	expectWarning(t, lintCodes(t, r), "lint.unstable_dependency", "members (instability 0.25) depends on the less stable extra (instability 0.67)")
+	expectWarning(t, vetCodes(t, r), "vet.unstable_dependency", "members (instability 0.25) depends on the less stable extra (instability 0.67)")
 }
 
-func TestLintSizes(t *testing.T) {
+func TestVetSizes(t *testing.T) {
 	r := library(t)
 	r[m+"catalog/book.md"] = def("std/Concept", "Book", "Lent to a [[members/member]]. "+strings.Repeat("word ", MaxDefinitionWords))
 	for i := 0; i <= MaxPackageSize; i++ {
 		r[m+fmt.Sprintf("big/d%02d.md", i)] = def("std/Rule", "D", "")
 	}
-	ds := lintCodes(t, r)
-	expectWarning(t, ds, "lint.definition_size", "catalog/book.md: lint.definition_size")
-	expectWarning(t, ds, "lint.package_size", "big has 26 Definitions")
+	ds := vetCodes(t, r)
+	expectWarning(t, ds, "vet.definition_size", "catalog/book.md: vet.definition_size")
+	expectWarning(t, ds, "vet.package_size", "big has 26 Definitions")
 }
 
-func TestLintThinPackageAndReach(t *testing.T) {
+func TestVetThinPackageAndReach(t *testing.T) {
 	r := library(t)
 	r[m+"wrapper/inner/i.md"] = def("std/Rule", "I", "")
-	ds := lintCodes(t, r)
-	expectWarning(t, ds, "lint.thin_package", "wrapper has no Definitions of its own and only one child, wrapper/inner")
+	ds := vetCodes(t, r)
+	expectWarning(t, ds, "vet.thin_package", "wrapper has no Definitions of its own and only one child, wrapper/inner")
 
 	r = library(t)
 	r[m+"orders/o.md"] = def("std/Rule", "O", "[[members/member]]")
 	r[m+"fees/f.md"] = def("std/Rule", "F", "[[members/member]]")
-	// members/member: its own Package, loans below it (inherited), catalog,
-	// orders and fees through links, and Root through the README: 6 of 6.
-	expectWarning(t, lintCodes(t, r), "lint.reach", "a change to members/member reaches 6 of 6 Managers")
+	// members/member: its own Package, and loans, catalog, orders and fees, whose
+	// Definitions link to it: 5 of 6.
+	expectWarning(t, vetCodes(t, r), "vet.reach", "a change to members/member puts Definitions of 5 of 6 Packages back on the list")
 }
 
-func TestLintNoPaths(t *testing.T) {
+func TestVetNoPaths(t *testing.T) {
 	r := library(t)
 	r[m+"orders/o.md"] = def("std/Rule", "O", "[[members/member]]")
 	// catalog's page names no paths, so Root owns its file.
 	r[project.RegistryDir+"/catalog.md"] = table
 	r[project.RootPage] += "| src/catalog/book.go | [[catalog/book]] [[catalog/shelf]] | Types |\n"
-	ds := lintCodes(t, r)
-	expectWarning(t, ds, "lint.no_paths", project.RegistryDir+"/orders.md: lint.no_paths: orders has no registry page")
-	expectWarning(t, ds, "lint.no_paths", project.RegistryDir+"/catalog.md: lint.no_paths: catalog claims no path pattern")
+	ds := vetCodes(t, r)
+	expectWarning(t, ds, "vet.no_paths", project.RegistryDir+"/orders.md: vet.no_paths: orders has no registry page")
+	expectWarning(t, ds, "vet.no_paths", project.RegistryDir+"/catalog.md: vet.no_paths: catalog claims no path pattern")
 	for _, d := range ds {
-		if d.Code == "lint.no_paths" && !strings.Contains(d.Message, "orders") && !strings.Contains(d.Message, "catalog") {
+		if d.Code == "vet.no_paths" && !strings.Contains(d.Message, "orders") && !strings.Contains(d.Message, "catalog") {
 			t.Fatalf("unexpected %v", d)
 		}
 	}
