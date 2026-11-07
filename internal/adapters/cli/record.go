@@ -11,7 +11,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
-// record is the engine of status and review, which read the project folder and
+// record is the engine of status and mark, which read the project folder and
 // its record (DEC-099).
 func (c CLI) record() (*run.Engine, error) {
 	if c.Record == nil {
@@ -52,18 +52,18 @@ func (c CLI) status(ctx context.Context, args []string) (int, error) {
 	return OK, nil
 }
 
-// reviewUsage is review's usage line.
-const reviewUsage = "markitect review DEFINITION VERDICT --at FINGERPRINT [EVIDENCE...] [-- WHY]"
+// markUsage is mark's usage line.
+const markUsage = `markitect mark DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]... [-m "WHY"]`
 
-// review records a verdict at the state status printed. Exit 1 means it refused
-// and recorded nothing: the inputs changed since, or evidence does not exist.
-// Flags may come anywhere before "--", after which the rest is why.
-func (c CLI) review(ctx context.Context, args []string) (int, error) {
-	req := run.ReviewRequest{Dir: "."}
+// mark records a verdict at the state status printed. Exit 1 means it refused and
+// recorded nothing: the inputs changed since, or evidence does not exist. The
+// flags may stand before or after the item and the verdict.
+func (c CLI) mark(ctx context.Context, args []string) (int, error) {
+	req := run.MarkRequest{Dir: "."}
 	var positional []string
 	value := func(i *int, name string) (string, error) {
 		if *i+1 >= len(args) {
-			return "", fmt.Errorf("%s needs a value", name)
+			return "", fmt.Errorf("%s needs a value\nusage: %s", name, markUsage)
 		}
 		*i++
 		return args[*i], nil
@@ -71,43 +71,46 @@ func (c CLI) review(ctx context.Context, args []string) (int, error) {
 	for i := 0; i < len(args); i++ {
 		a := args[i]
 		name, inline, hasInline := strings.Cut(strings.TrimLeft(a, "-"), "=")
+		var v string
 		var err error
 		switch {
-		case a == "--":
-			req.Why = strings.Join(args[i+1:], " ")
-			i = len(args)
 		case a == "-h" || a == "--help" || a == "-help":
-			fmt.Fprintf(c.Stderr, "usage: %s\nverdicts: %s\n", reviewUsage, strings.Join(run.Verdicts, ", "))
+			fmt.Fprintf(c.Stderr, "usage: %s\nverdicts: %s\n", markUsage, strings.Join(run.Verdicts, ", "))
 			return Misused, flag.ErrHelp
 		case !strings.HasPrefix(a, "-") || a == "-":
 			positional = append(positional, a)
-		case name == "at" && hasInline:
-			req.At = inline
-		case name == "at":
-			req.At, err = value(&i, "--at")
-		case name == "repo" && hasInline:
-			req.Dir = inline
-		case name == "repo":
-			req.Dir, err = value(&i, "--repo")
-		default:
-			return Misused, fmt.Errorf("unknown flag %s\nusage: %s", a, reviewUsage)
+			continue
+		case hasInline:
+			v = inline
+		case name == "e" || name == "m" || name == "repo":
+			v, err = value(&i, a)
 		}
 		if err != nil {
 			return Misused, err
 		}
+		switch name {
+		case "e":
+			req.Evidence = append(req.Evidence, v)
+		case "m":
+			req.Why = v
+		case "repo":
+			req.Dir = v
+		default:
+			return Misused, fmt.Errorf("unknown flag %s\nusage: %s", a, markUsage)
+		}
 	}
-	if len(positional) < 2 {
-		return Misused, fmt.Errorf("names a Definition and a verdict\nusage: %s", reviewUsage)
+	if len(positional) != 2 {
+		return Misused, fmt.Errorf("names the item, DEFINITION@FINGERPRINT as status prints it, and the verdict; give each piece of evidence with -e and why with -m\nusage: %s", markUsage)
 	}
-	req.Definition, req.Verdict, req.Evidence = positional[0], positional[1], positional[2:]
+	req.Item, req.Verdict = positional[0], positional[1]
 	e, err := c.record()
 	if err != nil {
 		return Misused, err
 	}
-	text, recorded, err := e.Review(ctx, req)
+	text, recorded, err := e.Mark(ctx, req)
 	if err != nil {
 		if errors.Is(err, run.ErrUsage) {
-			return Misused, fmt.Errorf("%s\nusage: %s", strings.TrimPrefix(err.Error(), run.ErrUsage.Error()+": "), reviewUsage)
+			return Misused, fmt.Errorf("%s\nusage: %s", strings.TrimPrefix(err.Error(), run.ErrUsage.Error()+": "), markUsage)
 		}
 		return Misused, err
 	}

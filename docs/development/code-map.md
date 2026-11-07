@@ -19,7 +19,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `domain` | Registry pages, ownership and file accounting over a compiled model. | `model` | 1 |
 | `project` | Loads and checks a project's Markitect folder from the files of a project folder. | `model`, `assets`, `domain` | 1 |
 | `service` | Questions about a loaded project: references, graph and lint. | `model`, `assets`, `domain`, `project` | 1 |
-| `run` | The record of what was verified, without Git: the inputs of each Definition, review.sum, status, review, the hook and the migration from certificates. | `model`, `assets`, `domain`, `project` | 1 |
+| `run` | The record of what was verified, without Git: the inputs of each Definition, review.sum, status, mark, the hook and the migration from certificates. | `model`, `assets`, `domain`, `project` | 1 |
 | `guardedwrite` | Guarded working-tree writes for bundle installation, with the Git and path helpers they share with source snapshots. | nothing | 1 |
 | `build` | Version identity and embedded license notices. | nothing | 1 |
 | `adapter` | Concrete project-folder, command-line and release adapters; no adapter imports another. | `model`, `assets`, `domain`, `project`, `service`, `run`, `build` | 3 |
@@ -91,7 +91,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/adapters/cli` | Package cli is the markitect command line: install, update, init, check, lock, refs, graph and lint; status and review over the record of what was verified (DEC-099); the hook; version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
+| `internal/adapters/cli` | Package cli is the markitect command line: install, update, init, check, lock, refs, graph and lint; status and mark over the record of what was verified (DEC-099); the hook; version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
 | `internal/adapters/folder` | Package folder reads and writes a project folder without Git (DEC-097): it walks the folder and skips what the project's .gitignore files exclude, read as plain text, nested ones included. | [internal/run/README.md#the-folder](../../internal/run/README.md#the-folder) |
 | `internal/adapters/upgrade` | Package upgrade finds the newest Markitect release, downloads the binary for this platform, checks it against the release's checksums and replaces the running executable. | [docs/guides/project-workflow.md#8-keep-it-current](../guides/project-workflow.md#8-keep-it-current) |
 

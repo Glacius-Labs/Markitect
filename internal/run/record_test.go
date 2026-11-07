@@ -87,11 +87,12 @@ func listed(st run.Status) string {
 	return strings.Join(ids, ",")
 }
 
+// review marks a verdict as the reviewer does, with markitect mark.
 func (p *plain) review(id, verdict, at string, evidence []string, why string) (string, bool) {
 	p.t.Helper()
-	text, ok, err := p.engine.Review(context.Background(), run.ReviewRequest{Dir: p.dir, Definition: id, Verdict: verdict, At: at, Evidence: evidence, Why: why})
+	text, ok, err := p.engine.Mark(context.Background(), run.MarkRequest{Dir: p.dir, Item: id + "@" + at, Verdict: verdict, Evidence: evidence, Why: why})
 	if err != nil {
-		p.t.Fatalf("review %s %s: %v", id, verdict, err)
+		p.t.Fatalf("mark %s %s: %v", id, verdict, err)
 	}
 	return text, ok
 }
@@ -124,11 +125,11 @@ func TestStatusEmptiesAsTheReviewerRecords(t *testing.T) {
 		t.Fatalf("first status:\n%s", st.Text())
 	}
 	for _, it := range st.Items {
-		if it.State != run.StateNew || len(it.Fingerprint) != 12 {
+		if it.State != run.StateNew || len(it.Fingerprint) != 6 {
 			t.Fatalf("%+v", it)
 		}
 	}
-	has(t, st.Text(), "To verify (5 of 5 Definitions)", "members/loans/loan  --at ", "no record yet", "look at: .markitect/model/members/loans/loan.md, src/members/loans/loan.go")
+	has(t, st.Text(), "To verify (5 of 5 Definitions)", "members/loans/loan@"+p.item(st, "members/loans/loan").Fingerprint+"\n", "no record yet", "look at: .markitect/model/members/loans/loan.md, src/members/loans/loan.go")
 	p.verifyAll()
 	has(t, p.status(false).Text(), "Nothing to verify: the spec compiles, and all 5 Definitions are verified at their current inputs.")
 	rec := p.read(project.ReviewFile)
@@ -253,9 +254,9 @@ func mustOpen(t *testing.T, dir string) project.Repository {
 	return files
 }
 
-// review binds a verdict to the state the reviewer read: a fingerprint whose
+// mark binds a verdict to the state the reviewer read: a fingerprint whose
 // inputs changed since is refused, and so is evidence that does not exist.
-func TestReviewRefusesAStaleFingerprintAndMissingEvidence(t *testing.T) {
+func TestMarkRefusesAStaleFingerprintAndMissingEvidence(t *testing.T) {
 	p := newPlain(t)
 	at := p.item(p.status(false), "members/loans/loan").Fingerprint
 	p.write("src/members/loans/loan.go", limit3)
@@ -278,17 +279,29 @@ func TestReviewRefusesAStaleFingerprintAndMissingEvidence(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(p.dir, project.ReviewFile)); !os.IsNotExist(err) {
 		t.Fatalf("a refusal wrote the record: %v", err)
 	}
-	for _, req := range []run.ReviewRequest{
-		{Definition: "members/member", Verdict: "wrong", At: at},
-		{Definition: "members/member", Verdict: run.VerdictFail, At: at},
-		{Definition: "members/member", Verdict: run.VerdictOK},
-		{Definition: "members/member", Verdict: run.VerdictOK, At: p.item(p.status(false), "members/member").Fingerprint},
-		{Definition: "members/member", Verdict: run.VerdictOK, At: at, Evidence: []string{"/etc/passwd"}},
+	member := "members/member@" + p.item(p.status(false), "members/member").Fingerprint
+	for _, req := range []run.MarkRequest{
+		{Item: member, Verdict: "wrong"},
+		{Item: member, Verdict: run.VerdictFail},
+		{Item: "members/member", Verdict: run.VerdictOK, Evidence: []string{"README.md"}},
+		{Item: "members/member@" + at[:4], Verdict: run.VerdictOK, Evidence: []string{"README.md"}},
+		{Item: member, Verdict: run.VerdictOK},
+		{Item: member, Verdict: run.VerdictOK, Evidence: []string{"/etc/passwd"}},
 	} {
 		req.Dir = p.dir
-		if _, _, err := p.engine.Review(context.Background(), req); err == nil || !strings.Contains(err.Error(), "usage") {
+		if _, _, err := p.engine.Mark(context.Background(), req); err == nil || !strings.Contains(err.Error(), "usage") {
 			t.Fatalf("%+v: %v", req, err)
 		}
+	}
+	// A longer prefix of the fingerprint is taken too, in either case.
+	full := ""
+	for _, line := range strings.Split(p.status(false).Text(), "\n") {
+		if strings.HasPrefix(line, "members/loans/loan@") {
+			full = strings.TrimPrefix(line, "members/loans/loan@")
+		}
+	}
+	if full != at {
+		t.Fatalf("status prints %q, the item %q", full, at)
 	}
 	text, ok = p.review("[[members/loans/loan]]", run.VerdictOK, strings.ToUpper(at), []string{`src\members\loans\loan.go:3`}, "")
 	if !ok {
@@ -487,7 +500,7 @@ func TestParallelReviewersLoseNoLine(t *testing.T) {
 		wg.Add(1)
 		go func(it run.Item) {
 			defer wg.Done()
-			text, ok, err := p.engine.Review(context.Background(), run.ReviewRequest{Dir: p.dir, Definition: it.Definition, Verdict: run.VerdictOK, At: it.Fingerprint, Evidence: []string{"README.md"}})
+			text, ok, err := p.engine.Mark(context.Background(), run.MarkRequest{Dir: p.dir, Item: it.Definition + "@" + it.Fingerprint, Verdict: run.VerdictOK, Evidence: []string{"README.md"}})
 			if err != nil || !ok {
 				errs <- it.Definition + ": " + text
 				if err != nil {

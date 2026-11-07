@@ -25,9 +25,9 @@ const (
 	HookCommand  = "markitect hook pretool"
 )
 
-// ReviewRule is the permission rule that starts the hook before a shell command
+// MarkRule is the permission rule that starts the hook before a shell command
 // that records a verdict.
-const ReviewRule = "Bash(markitect review*)"
+const MarkRule = "Bash(markitect mark*)"
 
 // EditTools are the tools that write files, as the matcher of the hook that
 // keeps subagents out of Markitect's folder.
@@ -53,7 +53,7 @@ func HasGuard(settings []byte) bool {
 	if json.Unmarshal(settings, &s) != nil {
 		return false
 	}
-	review, edits := false, map[string]bool{}
+	mark, edits := false, map[string]bool{}
 	for _, m := range s.Hooks.PreToolUse {
 		tools := map[string]bool{}
 		all := m.Matcher == "" || m.Matcher == "*"
@@ -64,8 +64,8 @@ func HasGuard(settings []byte) bool {
 			if h.Type != "command" || strings.TrimSpace(h.Command) != HookCommand {
 				continue
 			}
-			if (all || tools["Bash"]) && (h.If == "" || h.If == ReviewRule) {
-				review = true
+			if (all || tools["Bash"]) && (h.If == "" || h.If == MarkRule) {
+				mark = true
 			}
 			if h.If != "" {
 				continue
@@ -77,16 +77,16 @@ func HasGuard(settings []byte) bool {
 			}
 		}
 	}
-	return review && len(edits) == len(strings.Split(EditTools, "|"))
+	return mark && len(edits) == len(strings.Split(EditTools, "|"))
 }
 
-// reviewCommand finds a call of markitect review in a shell command.
-var reviewCommand = regexp.MustCompile(`(^|[\s;&|("'` + "`" + `])markitect(\.exe)?\s+review(\s|$)`)
+// markCommand finds a call of markitect mark in a shell command.
+var markCommand = regexp.MustCompile(`(^|[\s;&|("'` + "`" + `])markitect(\.exe)?\s+mark(\s|$)`)
 
 // Guard is the project's hook before a tool call. It guards the record and the
 // spec, not the process:
 //
-//   - only the reviewer runs markitect review, so the agent that built does not
+//   - only the reviewer runs markitect mark, so the agent that built does not
 //     verify its own work;
 //   - no subagent writes or edits under Markitect's folder except the registry
 //     pages, which the builder keeps, so a builder cannot weaken a Definition
@@ -107,7 +107,7 @@ func Guard(input []byte) []byte {
 	if json.Unmarshal(input, &in) != nil {
 		return nil
 	}
-	if command, ok := in.ToolInput["command"].(string); ok && reviewCommand.MatchString(command) && in.AgentType != ReviewerAgent {
+	if command, ok := in.ToolInput["command"].(string); ok && markCommand.MatchString(command) && in.AgentType != ReviewerAgent {
 		return deny(fmt.Sprintf("Only the %s agent records verdicts, so the agent that built does not verify its own work. Start it, and it verifies and records.", ReviewerAgent))
 	}
 	if in.AgentID == "" {

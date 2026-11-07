@@ -42,19 +42,23 @@ func Hash(data []byte) string {
 	return "sha256:" + hex.EncodeToString(sum[:])
 }
 
-// fingerprintLen is how much of the fingerprint status prints and review takes.
-const fingerprintLen = 12
+// fingerprintLen is how much of the fingerprint status prints, and the least of
+// it mark takes.
+const fingerprintLen = 6
 
-// Fingerprint is one short hash of every input but the evidence, which the
+// Fingerprint is the short hash of every input but the evidence, which the
 // reviewer chooses after status printed it.
-func (in Inputs) Fingerprint() string {
+func (in Inputs) Fingerprint() string { return in.fingerprint()[:fingerprintLen] }
+
+// fingerprint is the whole hash Fingerprint starts.
+func (in Inputs) fingerprint() string {
 	h := sha256.New()
 	for _, k := range sortedKeys(in) {
 		if !strings.HasPrefix(k, InputEvidence) {
 			fmt.Fprintf(h, "%s\x00%s\n", k, in[k])
 		}
 	}
-	return hex.EncodeToString(h.Sum(nil))[:fingerprintLen]
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 // Files are the files of the inputs with a key prefix, such as InputFile.
@@ -150,19 +154,22 @@ func hashOrGone(h string) string {
 	return h
 }
 
-// Evidence is one place a reviewer gives as evidence: a file, with a line and a
-// note if the reviewer gave them, as in "tests/fees_test.go:12 (TestWaiver)".
+// Evidence is one place a reviewer gives as evidence: a file, with a line if the
+// reviewer gave one, as in "tests/fees_test.go:12".
 type Evidence struct {
 	Text string
 	File string
 }
 
 // ParseEvidence reads what a reviewer gives as evidence: FILE, FILE:LINE,
-// FILE:LINE-LINE or FILE:LINE:COLUMN, and after a space a note.
+// FILE:LINE-LINE or FILE:LINE:COLUMN. A test name after it in parentheses, as in
+// "tests/fees_test.go:12 (TestWaiver)", is dropped.
 func ParseEvidence(text string) (Evidence, error) {
 	text = oneLine(text)
-	token, note, _ := strings.Cut(text, " ")
-	file, lines := token, ""
+	if i := strings.LastIndex(text, " ("); i > 0 && strings.HasSuffix(text, ")") {
+		text = text[:i]
+	}
+	file, lines := text, ""
 	// FILE:LINE, FILE:LINE-LINE or, as compilers print it, FILE:LINE:COLUMN.
 	for n := 0; n < 2; n++ {
 		i := strings.LastIndexByte(file, ':')
@@ -172,7 +179,7 @@ func ParseEvidence(text string) (Evidence, error) {
 		file, lines = file[:i], file[i:]+lines
 	}
 	file = strings.TrimPrefix(strings.ReplaceAll(file, `\`, "/"), "./")
-	text = strings.TrimSpace(file + lines + " " + note)
+	text = file + lines
 	switch {
 	case file == "":
 		return Evidence{}, fmt.Errorf("evidence %q names no file", text)

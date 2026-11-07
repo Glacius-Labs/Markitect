@@ -241,7 +241,7 @@ func every(n int) string {
 // text is one item as status prints it.
 func (it Item) text() string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "%s  --at %s\n", it.Definition, it.Fingerprint)
+	fmt.Fprintf(&b, "%s@%s\n", it.Definition, it.Fingerprint)
 	switch it.State {
 	case StateNew:
 		b.WriteString("  no record yet\n")

@@ -4,7 +4,7 @@ Main implements [concept 4.0](docs/concepts/v4-concept.md), the target ([DEC-098
 
 ## Ownership and layout
 
-All maintained Go code belongs to one root module. `cmd/markitect` delegates to `internal/bootstrap`, which constructs the CLI adapter with the folder adapter and the work. `internal/model` and `internal/realization` compile the model and the realization record from supplied bytes, `internal/project` loads a project from one set of files, and `internal/analysis` answers questions about it; none of them reads files or starts processes itself. `internal/guardedwrite` guards bundle installation. Independent maintenance services have explicit `internal/tooling/` responsibilities; that parent grants no general import exemption.
+All maintained Go code belongs to one root module. `cmd/markitect` delegates to `internal/bootstrap`, which constructs the CLI adapter with the folder adapter and the record. `internal/model` and `internal/realization` compile the model and the realization record from supplied bytes, `internal/project` loads a project from one set of files, and `internal/analysis` answers questions about it; none of them reads files or starts processes itself. `internal/guardedwrite` guards bundle installation. Independent maintenance services have explicit `internal/tooling/` responsibilities; that parent grants no general import exemption.
 
 One rule table in [`internal/tooling/architecture/rules.go`](internal/tooling/architecture/rules.go) gives every package its layer and allowed imports; the [architecture](docs/architecture.md#layers) explains it and the generated [code map](docs/development/code-map.md) lists every package. Shared hermetic `internal/testkit` is test-only and imports no Markitect package. The standalone bootstrap in `packaging/bootstrap` and source smoke in `tools/smoke` import no product package.
 
@@ -50,7 +50,7 @@ Run the packaged source smoke in a fresh external work directory:
 go run ./tools/smoke -repo . -work ABSOLUTE_EMPTY_EXTERNAL_DIRECTORY
 ```
 
-It packages and builds root-layout source, tests the standalone bootstrap and drives the packaged CLI over a small project in a plain folder: `init`, `check`, `lock`, `refs`, `graph` and `lint`, the work (`checklist`, `answer`, `gate`) that certifies it, `impact` from that certificate, and the refusal of a model that does not compile and of the retired commands. It starts no agent or container, so it establishes no provider or release acceptance. The `bundle` smoke belongs to separately authorized release work and writes an isolated consumer installation.
+It packages and builds root-layout source, tests the standalone bootstrap and drives the packaged CLI over a small project in a plain folder: `init`, `check`, `lock`, `refs`, `graph` and `lint`, `status` and `mark` that verify every Definition, `status` after a change of the spec, and the refusal of a model that does not compile; it checks that the retired `checklist`, `answer` and `gate` say to run `markitect update`. It starts no agent or container, so it establishes no provider or release acceptance. The `bundle` smoke belongs to separately authorized release work and writes an isolated consumer installation.
 
 ## Pull requests and parallel work
 

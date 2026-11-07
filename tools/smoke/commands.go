@@ -32,7 +32,7 @@ var smokeModel = map[string]string{
 }
 
 // modelCommands drives the packaged CLI over a small project in a plain folder,
-// with no Git: init, check, lock, refs, graph and lint; status and review that
+// with no Git: init, check, lock, refs, graph and lint; status and mark that
 // verify every Definition; status after a change of the spec; the retired
 // commands of the work; and the refusal of a model that does not compile. It
 // starts no agent.
@@ -118,7 +118,7 @@ func (s *smoke) modelCommands() error {
 	if err := os.WriteFile(limit, []byte(strings.Replace(smokeModel[".markitect/model/loan-limit.md"], "`5`", "`3`", 1)), 0o644); err != nil {
 		return err
 	}
-	if out, err := markitect("status"); err == nil || !strings.Contains(out, "To verify (1 of 4 Definitions)") || !strings.Contains(out, "loan-limit  --at ") || !strings.Contains(out, "changed: self") {
+	if out, err := markitect("status"); err == nil || !strings.Contains(out, "To verify (1 of 4 Definitions)") || !strings.Contains(out, "\nloan-limit@") || !strings.Contains(out, "changed: self") {
 		return fmt.Errorf("status after the change of the loan limit: %v\n%s", err, tail(out))
 	}
 	if err := verifyAll(markitect, 1); err != nil {
@@ -159,18 +159,18 @@ func verifyAll(markitect func(...string) (string, error), want int) error {
 		return fmt.Errorf("status listed nothing to verify:\n%s", tail(list))
 	}
 	recorded := 0
-	var def, at string
+	item := ""
 	for _, line := range strings.Split(list, "\n") {
-		if id, fp, ok := strings.Cut(line, "  --at "); ok && !strings.HasPrefix(line, " ") {
-			def, at = id, fp
+		if !strings.HasPrefix(line, " ") && strings.Contains(line, "@") {
+			item = line
 			continue
 		}
-		if look, ok := strings.CutPrefix(line, "  look at: "); ok && def != "" {
+		if look, ok := strings.CutPrefix(line, "  look at: "); ok && item != "" {
 			files := strings.Split(look, ", ")
-			if _, err := markitect("review", def, "ok", "--at", at, files[len(files)-1]+":1"); err != nil {
+			if _, err := markitect("mark", item, "ok", "-e", files[len(files)-1]+":1"); err != nil {
 				return err
 			}
-			def = ""
+			item = ""
 			recorded++
 		}
 	}

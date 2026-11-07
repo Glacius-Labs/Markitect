@@ -15,7 +15,7 @@ import (
 // ErrBusy says another process holds a lock.
 var ErrBusy = errors.New("busy")
 
-// lockWait bounds how long a review waits for another to write the record.
+// lockWait bounds how long mark waits for another to write the record.
 const lockWait = time.Minute
 
 // lockLifetime is the longest a lock can be real: a shell call is bounded by two

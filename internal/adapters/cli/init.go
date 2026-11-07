@@ -201,7 +201,7 @@ func installAttributes(ws Workspace) error {
 // records; the second before every tool that writes a file.
 func guardHooks() []any {
 	return []any{
-		map[string]any{"matcher": "Bash", "hooks": []any{map[string]any{"type": "command", "if": run.ReviewRule, "command": run.HookCommand}}},
+		map[string]any{"matcher": "Bash", "hooks": []any{map[string]any{"type": "command", "if": run.MarkRule, "command": run.HookCommand}}},
 		map[string]any{"matcher": run.EditTools, "hooks": []any{map[string]any{"type": "command", "command": run.HookCommand}}},
 	}
 }
@@ -233,7 +233,7 @@ func ownGuard(entry any) bool {
 func (c CLI) ensureGuard(ws Workspace) error {
 	settings := map[string]any{}
 	lacks := func(why string) error {
-		fmt.Fprintf(c.Stdout, "left %s as it is, %s; add the hooks by hand: %q before Bash for %s, and before %s\n", run.SettingsFile, why, run.HookCommand, run.ReviewRule, run.EditTools)
+		fmt.Fprintf(c.Stdout, "left %s as it is, %s; add the hooks by hand: %q before Bash for %s, and before %s\n", run.SettingsFile, why, run.HookCommand, run.MarkRule, run.EditTools)
 		return nil
 	}
 	if ws.Exists(run.SettingsFile) {

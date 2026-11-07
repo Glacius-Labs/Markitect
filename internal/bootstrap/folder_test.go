@@ -94,16 +94,16 @@ func newCLI(stdin io.Reader, stdout, stderr io.Writer) cli.CLI {
 func verifyAll(t *testing.T, dir string) {
 	t.Helper()
 	_, out, _ := run(t, dir, "status")
-	var def, at string
+	item := ""
 	for _, line := range strings.Split(out, "\n") {
-		if id, fp, ok := strings.Cut(line, "  --at "); ok && !strings.HasPrefix(line, " ") {
-			def, at = id, fp
+		if !strings.HasPrefix(line, " ") && strings.Contains(line, "@") {
+			item = line
 			continue
 		}
-		if look, ok := strings.CutPrefix(line, "  look at: "); ok && def != "" {
+		if look, ok := strings.CutPrefix(line, "  look at: "); ok && item != "" {
 			files := strings.Split(look, ", ")
-			mustRun(t, dir, "review", def, "ok", "--at", at, files[len(files)-1]+":1")
-			def = ""
+			mustRun(t, dir, "mark", item, "ok", "-e", files[len(files)-1]+":1")
+			item = ""
 		}
 	}
 	if code, out, _ := run(t, dir, "status"); code != 0 || !strings.Contains(out, "Nothing to verify") {

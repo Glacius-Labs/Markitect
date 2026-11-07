@@ -90,7 +90,7 @@ func TestCommandsEndToEnd(t *testing.T) {
 	}
 	// With no record, every Definition is to verify.
 	code, out, _ = run(t, r.Dir, "status")
-	if code != 1 || !strings.Contains(out, "To verify (3 of 3 Definitions)") || !strings.Contains(out, "loan-limit  --at ") {
+	if code != 1 || !strings.Contains(out, "To verify (3 of 3 Definitions)") || !strings.Contains(out, "\nloan-limit@") {
 		t.Fatalf("status before a review: %d\n%s", code, out)
 	}
 	verifyAll(t, r.Dir)
@@ -105,7 +105,7 @@ func TestCommandsEndToEnd(t *testing.T) {
 	// A changed Rule is to verify again, and nothing else is.
 	r.Write(".markitect/model/loan-limit.md", "---\nkind: std/Rule\n---\n# Loan limit\n\nAt most `3` open loans, for [[members]].\n")
 	code, out, _ = run(t, r.Dir, "status")
-	if code != 1 || !strings.Contains(out, "To verify (1 of 3 Definitions)") || !strings.Contains(out, "loan-limit  --at ") || !strings.Contains(out, "changed: self\n") {
+	if code != 1 || !strings.Contains(out, "To verify (1 of 3 Definitions)") || !strings.Contains(out, "\nloan-limit@") || !strings.Contains(out, "changed: self\n") {
 		t.Fatalf("status after a change of the spec: %d\n%s", code, out)
 	}
 
@@ -264,7 +264,7 @@ func TestInitKeepsTheProjectsSettings(t *testing.T) {
 	mustRun(t, r.Dir, "init")
 	settings := read(t, r.Dir, ".claude/settings.json")
 	if !strings.Contains(settings, "Bash(go test *)") || !strings.Contains(settings, "12345678901234567890") ||
-		strings.Count(settings, "Bash(markitect review*)") != 1 || strings.Count(settings, "Edit|Write|MultiEdit|NotebookEdit") != 1 {
+		strings.Count(settings, "Bash(markitect mark*)") != 1 || strings.Count(settings, "Edit|Write|MultiEdit|NotebookEdit") != 1 {
 		t.Fatalf("settings:\n%s", settings)
 	}
 }
@@ -306,7 +306,7 @@ func TestInitLeavesSettingsItCannotRead(t *testing.T) {
 // The hook runs the installed command, and only the reviewer may record.
 func TestHookLetsOnlyTheReviewerRecord(t *testing.T) {
 	hook := func(agent string) string {
-		input, _ := json.Marshal(map[string]any{"agent_id": "a1", "agent_type": agent, "tool_name": "Bash", "tool_input": map[string]any{"command": "markitect review project ok --at 0a1b2c3d4e5f README.md"}})
+		input, _ := json.Marshal(map[string]any{"agent_id": "a1", "agent_type": agent, "tool_name": "Bash", "tool_input": map[string]any{"command": "markitect mark project@0a1b2c ok -e README.md"}})
 		var out, errOut bytes.Buffer
 		code := newCLI(bytes.NewReader(input), &out, &errOut).Run(context.Background(), []string{"hook", "pretool"})
 		if code != 0 {
@@ -359,7 +359,7 @@ func TestInitInstallsTheHarness(t *testing.T) {
 		t.Fatal(err)
 	}
 	if pre := settings.Hooks["PreToolUse"]; len(pre) != 2 || pre[0].Matcher != "Bash" || len(pre[0].Hooks) != 1 ||
-		pre[0].Hooks[0].Command != "markitect hook pretool" || pre[0].Hooks[0].If != "Bash(markitect review*)" ||
+		pre[0].Hooks[0].Command != "markitect hook pretool" || pre[0].Hooks[0].If != "Bash(markitect mark*)" ||
 		pre[1].Matcher != "Edit|Write|MultiEdit|NotebookEdit" || len(pre[1].Hooks) != 1 ||
 		pre[1].Hooks[0].Command != "markitect hook pretool" || pre[1].Hooks[0].If != "" {
 		t.Fatalf("the guard hooks: %+v", settings)
@@ -408,14 +408,14 @@ func TestLockCommand(t *testing.T) {
 
 func TestUsageAndRefusals(t *testing.T) {
 	var out, errOut bytes.Buffer
-	if Run(context.Background(), nil, &out, &errOut) != 0 || !strings.Contains(out.String(), "markitect review DEFINITION VERDICT --at FINGERPRINT") {
+	if Run(context.Background(), nil, &out, &errOut) != 0 || !strings.Contains(out.String(), "markitect mark DEFINITION@FINGERPRINT VERDICT") {
 		t.Fatalf("usage = %s", out.String())
 	}
 	if Run(context.Background(), []string{"bughunt"}, &out, &errOut) != 2 || !strings.Contains(errOut.String(), `unknown command "bughunt"`) {
 		t.Fatalf("unknown command: %s", errOut.String())
 	}
 	dir := testkit.TempDir(t)
-	for _, args := range [][]string{{"check"}, {"lock"}, {"status"}, {"review", "project", "ok", "--at", "0a1b2c3d4e5f", "README.md"}} {
+	for _, args := range [][]string{{"check"}, {"lock"}, {"status"}, {"mark", "project@0a1b2c", "ok", "-e", "README.md"}} {
 		if code, _, errOut := run(t, dir, args...); code != 2 || !strings.Contains(errOut, "is in no Markitect project") || !strings.Contains(errOut, "markitect init makes one") {
 			t.Fatalf("%s outside a project: %d %s", args[0], code, errOut)
 		}
@@ -437,10 +437,10 @@ func TestUsageAndRefusals(t *testing.T) {
 	}
 }
 
-// status says what is to verify, review records a verdict at the fingerprint
+// status says what is to verify, mark records a verdict at the fingerprint
 // status printed, and the record is a file of the project; the exit codes say
 // whether a command found something.
-func TestStatusAndReviewThroughTheCommandLine(t *testing.T) {
+func TestStatusAndMarkThroughTheCommandLine(t *testing.T) {
 	r := newFolder(t)
 	mustRun(t, r.Dir, "init")
 	r.Write(".markitect/registry.md", "| File | Realizes | Why |\n|---|---|---|\n| README.md | [[project]] | Overview |\n")
@@ -449,31 +449,35 @@ func TestStatusAndReviewThroughTheCommandLine(t *testing.T) {
 	if code != 1 || !strings.Contains(out, "no record yet") || !strings.Contains(out, "look at: .markitect/model/project.md, README.md") {
 		t.Fatalf("status: %d\n%s", code, out)
 	}
-	at := strings.Fields(out[strings.Index(out, "--at ")+len("--at "):])[0]
+	item := strings.Fields(out[strings.Index(out, "project@"):])[0]
 
-	// Flags may come anywhere before "--"; what follows is why.
 	for _, args := range [][]string{
-		{"review", "project", "maybe", "--at", at},
-		{"review", "project"},
-		{"review", "project", "fail", "--at", at},
-		{"review", "project", "ok", "--at", at},
-		{"review", "project", "ok", "--at", at, "--bogus"},
+		{"mark", item, "maybe"},
+		{"mark", "project"},
+		{"mark", item, "fail"},
+		{"mark", item, "ok"},
+		{"mark", "project", "ok", "-e", "README.md"},
+		{"mark", item, "ok", "README.md"},
+		{"mark", item, "ok", "-e", "README.md", "--bogus"},
+		{"mark", item, "ok", "-e"},
 	} {
-		if code, _, errOut := run(t, r.Dir, args...); code != 2 || !strings.Contains(errOut, "usage: markitect review") {
+		if code, _, errOut := run(t, r.Dir, args...); code != 2 || !strings.Contains(errOut, "usage: markitect mark") {
 			t.Fatalf("%v: %d %s", args, code, errOut)
 		}
 	}
-	if code, out, _ := run(t, r.Dir, "review", "project", "ok", "--at", at, "tests/missing_test.go:3"); code != 1 || !strings.Contains(out, "tests/missing_test.go") {
-		t.Fatalf("review with missing evidence: %d\n%s", code, out)
+	if code, out, _ := run(t, r.Dir, "mark", item, "ok", "-e", "tests/missing_test.go:3"); code != 1 || !strings.Contains(out, "tests/missing_test.go") {
+		t.Fatalf("mark with missing evidence: %d\n%s", code, out)
 	}
-	wantAll(t, mustRun(t, r.Dir, "review", "--at="+at, "project", "fail", "README.md:1", "--", "says", "nothing", "of", "what", "the", "project", "is"), "Recorded: project fail.")
+	// The flags may stand before the item and the verdict, too.
+	wantAll(t, mustRun(t, r.Dir, "mark", "-e", "README.md:1 (TestReadme)", "-m", "says nothing of what the project is", item, "fail"), "Recorded: project fail.")
+	wantAll(t, read(t, r.Dir, ".markitect/review.sum"), `"evidence":["README.md:1"]`)
 	code, out, _ = run(t, r.Dir, "status")
 	if code != 1 || !strings.Contains(out, "fail: says nothing of what the project is") {
 		t.Fatalf("status after a fail: %d\n%s", code, out)
 	}
 	r.Write("README.md", "# A project\n\nIt lends books.\n")
-	if code, out, _ := run(t, r.Dir, "review", "project", "ok", "--at", at, "README.md:3"); code != 1 || !strings.Contains(out, "Run markitect status again") {
-		t.Fatalf("review at a stale fingerprint: %d\n%s", code, out)
+	if code, out, _ := run(t, r.Dir, "mark", item, "ok", "-e", "README.md:3"); code != 1 || !strings.Contains(out, "Run markitect status again") {
+		t.Fatalf("mark at a stale fingerprint: %d\n%s", code, out)
 	}
 	code, out, _ = run(t, r.Dir, "status")
 	if code != 1 || !strings.Contains(out, "changed: file:README.md") || !strings.Contains(out, "recorded before: fail") {
@@ -481,7 +485,7 @@ func TestStatusAndReviewThroughTheCommandLine(t *testing.T) {
 	}
 	verifyAll(t, r.Dir)
 	wantAll(t, read(t, r.Dir, ".markitect/review.sum"), `{"definition":"project","verdict":"ok"`)
-	if code, out, _ := run(t, r.Dir, "status", "--all"); code != 1 || !strings.Contains(out, "project  --at ") {
+	if code, out, _ := run(t, r.Dir, "status", "--all"); code != 1 || !strings.Contains(out, "project@") {
 		t.Fatalf("status --all: %d\n%s", code, out)
 	}
 	if code, out, _ := run(t, r.Dir, "check"); code != 0 {

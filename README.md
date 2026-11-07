@@ -33,7 +33,7 @@
 
 When AI agents build most of a project, its design, rules, documentation, code, tests and configuration drift apart. A decision about behavior has to reach the code, the tests, the documentation and the agents' own instructions. An agent finishes its task and misses a rule two folders away. Consistency passes take hours and find more each time.
 
-Markitect moves the knowledge of what belongs together out of the agents' memory and into one place you own: the spec. You describe the project once, as typed documentation in Markdown. Code, tests, configuration and documentation are built from it. When you want something different, you change the spec; Markitect works out what the change reaches, an agent brings the project in line, a fresh agent checks every item, and the work passes with a certificate that records every answer.
+Markitect moves the knowledge of what belongs together out of the agents' memory and into one place you own: the spec. You describe the project once, as typed documentation in Markdown. Code, tests, configuration and documentation are built from it. When you want something different, you change the spec; Markitect says which Definitions the change puts back on the list to verify, an agent brings the project in line, and a fresh agent verifies each one and records its verdict, until nothing is left.
 
 It is a way of agentic coding, not a platform: the agents are ordinary Claude Code agents in your own session and your own folder, and the tool keeps a few clear guarantees around them.
 
@@ -42,31 +42,30 @@ It is a way of agentic coding, not a platform: the agents are ordinary Claude Co
 - **Typed documentation.** One Markdown file per Definition, its Kind in the front matter, links by path such as `[[members/member]]`. Projects define their own Kinds; the standard Libraries `std`, `rest` and `cli` ship in the binary.
 - **A compiler for intent.** `markitect check` resolves every Kind and link, keeps internal Definitions inside their subtree and refuses dependency cycles between Packages, as Go does. If the spec does not compile, no agent starts.
 - **Every file accounted for.** One registry page per Package names the paths it owns and lists each file with the Definitions it builds. A file that is neither registered nor ignored is an error.
-- **Impact like an incremental build.** `markitect impact` shows which Definitions and files a change reaches, and why. `markitect lint` measures the spec like code: coupling, size, unused Definitions.
-- **A builder and a fresh reviewer.** `/markitect-apply` has your Claude Code session start a builder agent. When it is done, a reviewer agent with fresh context answers every item of the checklist, and a wrong answer goes back to the builder.
-- **One gate.** The builder calls `markitect gate`, which refuses changes to the spec or the harness, changed files that lie in no item of the list and anything `check` rejects, and passes only when every item has passed review. A builder that finds the spec contradicting itself reports it to `gate`, and a reviewer confirms it before you hear of it.
-- **A certificate, committed.** When the work passes, `gate` writes a certificate with a Result page under `.markitect/results/`, and your session commits the work with it on your branch as one commit. Nothing is pushed. Markitect itself uses no Git.
+- **A cache of what was verified.** Like `go test`, which runs a test again only when something it depends on changed, Markitect records for each Definition the state at which a reviewer verified it: its text, its Kind and links, its files and the evidence. `markitect status` lists every Definition whose state changed, with what changed and where to look. `markitect lint` measures the spec like code: coupling, size, unused Definitions.
+- **A builder and a fresh reviewer.** `/markitect-build` has your Claude Code session start a builder agent, which starts a reviewer agent with fresh context. The reviewer verifies each item and records `ok`, `fail`, `skip` or `spec-problem` with `markitect mark`, and a `fail` stays on the list until the builder has repaired it.
+- **Verdicts bound to what was read.** A verdict names the item as `status` printed it, such as `members/limit@3f9a1c`, and `mark` refuses it when anything changed since. A hook lets only the reviewer record, and keeps every agent out of the spec and the record.
+- **The record, committed.** `.markitect/review.sum` holds one line per Definition, and your session commits it with the work on your branch. Nothing is pushed. Markitect itself uses no Git and steers no work.
 
 ## How it works
 
 ```mermaid
 flowchart LR
-    Spec["You change<br/>the spec"] --> Check["check<br/>compile and<br/>account for files"]
-    Check --> Impact["impact<br/>what the change<br/>reaches"]
-    Impact --> Build["builder<br/>makes the project<br/>match"]
-    Build --> Review["reviewer<br/>answers every item"]
-    Review -->|"wrong answers go<br/>back to the builder"| Build
-    Review --> Land["certificate<br/>committed on<br/>your branch"]
+    Spec["You change<br/>the spec"] --> Status["status<br/>what is<br/>to verify"]
+    Status --> Build["builder<br/>makes the project<br/>match"]
+    Build --> Review["reviewer<br/>verifies and records<br/>every item"]
+    Review -->|"fail stays<br/>on the list"| Status
+    Review --> Land["record committed<br/>with the work on<br/>your branch"]
 ```
 
 1. **You change the spec,** by hand or with your coding agent through the modeling skill, which asks first when something is open. You read the Markdown diff.
-2. **You run `/markitect-apply` in Claude Code.** Markitect checks the spec. An error in it stops here, before any agent starts.
-3. **Impact makes the list.** The change since the newest certificate reaches the Definitions it edits, the Definitions that link to them and the files that build them. Each becomes an item of the checklist.
-4. **A builder agent does the work,** in your folder. It reads the list from `markitect checklist`, changes the code, tests and documentation, and calls `markitect gate` when it thinks it is done.
-5. **A fresh reviewer checks it.** `gate` tells the builder to start the reviewer, which sees only the spec, the list and the code. It answers each item with `ok`, `wrong` or `spec problem` and points to where it looked. Wrong items go back to the builder, at most twice.
-6. **The work passes.** When nothing is left, `gate` writes the certificate and its Result page, and your session commits them with the work on your branch. A real problem in the spec ends the work instead, found by the reviewer or reported by the builder and confirmed by the reviewer, and the Result names the decision for you.
+2. **You run `/markitect-build` in Claude Code.** Your session starts a builder agent.
+3. **`markitect status` makes the list.** It lists the Definitions the change reaches: those it edits, those that link to them, and those whose files changed, each with where to look. A spec that does not compile gives no list.
+4. **A builder agent does the work,** in your folder. It changes the code, tests and documentation for what the list holds and keeps the registry current.
+5. **A fresh reviewer verifies it.** The builder starts the reviewer, which sees only the spec, the list and the code. It records each item with `ok` and its evidence, `fail` with why, `skip` with why, or `spec-problem` with the question for you. The builder repairs what failed and has it verified again.
+6. **Nothing left.** When `status` lists nothing, or only what needs you, your session commits the work with the record on your branch.
 
-`/markitect-verify` runs a reviewer alone over what changed since the newest certificate, or over everything with `--full`, and changes nothing. Its Findings feed the next `/markitect-apply --findings FILE`.
+`/markitect-review` runs a reviewer alone over what `status` lists, or over everything with `--all`, and changes no code. `/markitect-build` then repairs what failed.
 
 ## Quick start
 
@@ -91,7 +90,7 @@ The marketplace is the small repository [Claude-Plugins](https://github.com/Glac
 
 The skills and agents call `markitect` by name, so the folder of the binary must be on your `PATH`; `version`, `init`, `install` and `update` warn when it is not. `markitect version` shows which build you have and whether the personal skill and the current project match it.
 
-To upgrade, run `markitect update`. It installs the newest release over the binary, then lets the new binary bring what Markitect wrote earlier in line: the personal skill and, in a project, the skills, agents, hook and lock that `init` wrote. It commits nothing; read the change of the lock before you commit it. It changes no spec file, and `markitect update --check` only reports. A binary the plugin brought is updated with the plugin instead, and a build from source is replaced only with `markitect update --force`.
+To upgrade, run `markitect update`. It installs the newest release over the binary, then lets the new binary bring what Markitect wrote earlier in line: the personal skill and, in a project, the skills, agents, hooks and lock that `init` wrote, and the record of a project from 0.20.0, written from its newest certificate. It commits nothing; read the change of the lock before you commit it. It changes no spec file, and `markitect update --check` only reports. A binary the plugin brought is updated with the plugin instead, and a build from source is replaced only with `markitect update --force`.
 
 ### Set up a project
 
@@ -101,7 +100,7 @@ markitect init --name "Your project"
 markitect check
 ```
 
-`init` creates `.markitect/` with the manifest, the lock, a project anchor and Root's registry page, writes `AGENTS.md` and `CLAUDE.md`, and installs the skills, the builder and reviewer agents, and a hook in `.claude/settings.json` that lets only the reviewer answer and only your session begin the work. It works in an empty folder too, makes no repository and commits nothing. It never changes an existing spec file, so it is safe to run again after an upgrade. In a new project, `check` says that nothing is built yet. Open Claude Code and run `/markitect-start`, which asks what the project is and starts the spec with you.
+`init` creates `.markitect/` with the manifest, the lock, a project anchor and Root's registry page, writes `AGENTS.md` and `CLAUDE.md`, and installs the skills, the builder and reviewer agents, and hooks in `.claude/settings.json` that let only the reviewer record verdicts and keep agents out of `.markitect/` except the registry pages. It works in an empty folder too, makes no repository and commits nothing. It never changes an existing spec file, so it is safe to run again after an upgrade. In a new project, `check` says that nothing is built yet. Open Claude Code and run `/markitect-start`, which asks what the project is and starts the spec with you.
 
 In a repository that already has files, the first `check` fails by design, because every file must belong somewhere:
 
@@ -125,7 +124,7 @@ Ask your coding agent to use the `markitect-modeling` skill and describe the pro
 ```bash
 markitect lint                   # coupling, size, unused Definitions
 markitect graph                  # the Package dependency graph as a Mermaid diagram
-markitect impact                 # what the change since the newest certificate reaches
+markitect status                 # what is to verify, and what changed
 ```
 
 None of these commands starts an agent.
@@ -135,10 +134,10 @@ None of these commands starts an agent.
 Commit what is not part of the spec, then run this in Claude Code, in the project's folder:
 
 ```text
-/markitect-apply
+/markitect-build
 ```
 
-Your session starts the builder and waits for it; leave the folder alone meanwhile. The first time it builds the whole spec; later it takes the newest certificate as its base and builds only what changed since. `/markitect-verify` reviews what changed since the newest certificate. The [project workflow](docs/guides/project-workflow.md) covers every option, limit and exit code.
+Your session starts the builder and waits for it; leave the folder alone meanwhile. The first time it builds the whole spec, since nothing is verified yet; later it builds only what `status` lists. `/markitect-review` verifies what `status` lists without changing code. The [project workflow](docs/guides/project-workflow.md) covers every option, limit and exit code.
 
 ## Example: one rule changes
 
@@ -161,7 +160,7 @@ For [[lending/borrow]], the resulting current open-loan count of the member must
 Count every open [[lending/loan]], including overdue loans, and exclude closed loans. …
 ```
 
-You change `5` to `3`. `markitect impact` lists the Rule itself, every Definition that links to it, such as borrowing, returning and the overdue reminders, and the files that build them. The `catalog` and `members` Packages are not reached. `/markitect-apply` gives the builder that list; a conforming result refuses a fourth open loan, updates the tests and the documentation, keeps every existing loan and every return working, and leaves the files that already conform untouched. The reviewer then checks each item against the spec.
+You change `5` to `3`. `markitect status` lists the Rule itself and every Definition that links to it, such as borrowing, returning and the overdue reminders, each with the files that build them. The `catalog` and `members` Packages are not reached. `/markitect-build` has the builder work on that list; a conforming result refuses a fourth open loan, updates the tests and the documentation, keeps every existing loan and every return working, and leaves the files that already conform untouched. The reviewer then checks each item against the spec.
 
 ## Concepts
 
@@ -173,9 +172,9 @@ You change `5` to `3`. `markitect impact` lists the Rule itself, every Definitio
 | **Library** | A set of Kinds for one area: `std` (Project, Rule, Concept, Feature, Decision), `rest` (Endpoint) and `cli` (Command). |
 | **Package** | A folder of the spec. Packages nest, and everything a Package defines reaches its whole subtree. The spec's root folder is the Root Package. |
 | **Registry** | One page per Package: the path patterns it owns and every file with the Definitions it builds. |
-| **Work** | One `/markitect-apply` or `/markitect-verify`: a builder and a fresh reviewer, or a reviewer alone, working in your folder, checked by `markitect gate`. |
-| **Certificate** | What `gate` writes when the work passes: the hash of every file and Definition and a copy of the spec. The newest one is the base of the next change. |
-| **Result** | The page `gate` writes: how the work ended, every answer with its pointers, and the decisions left to you. |
+| **Work** | One `/markitect-build` or `/markitect-review`: a builder and a fresh reviewer, or a reviewer alone, working in your folder. |
+| **Record** | `.markitect/review.sum`: for each Definition, the verdict, its evidence and the hash of every input at which it was verified. `markitect status` compares it with the folder. |
+| **Verdict** | What the reviewer records: `ok`, `fail`, `skip` or `spec-problem`, with evidence or why. |
 
 A project keeps all of it under `.markitect/`:
 
@@ -188,7 +187,8 @@ A project keeps all of it under `.markitect/`:
 ├── registry/         # one registry page per Package
 ├── ignore            # files that deliberately belong to no Package, if any
 ├── libraries/        # Libraries that do not ship with markitect
-└── results/          # certificates and Result pages, written by gate
+├── review.sum        # the record of what was verified
+└── .gitattributes    # merges the record by keeping both sides
 ```
 
 The [model language guide](docs/guides/model-language.md) gives the exact format and every diagnostic.
@@ -199,8 +199,8 @@ Main carries [concept 4.0](docs/concepts/v4-concept.md), the target the owner ac
 
 | Area | State |
 | --- | --- |
-| The spec language and the commands `init`, `check`, `lock`, `refs`, `graph`, `impact` and `lint` | Available |
-| Work with `/markitect-apply` and `/markitect-verify` | Available on Claude Code, through `markitect gate` since 0.19.0; the old Run and every use of Git went in 0.20.0. Tried on three changes of one project ([trials](docs/validation/lean-trials-20261107.md)) |
+| The spec language and the commands `init`, `check`, `lock`, `refs`, `graph` and `lint` | Available |
+| Work with `/markitect-build` and `/markitect-review`, over `status`, `mark` and the record | Available on Claude Code since 0.21.0, covered by tests. The flow before it, with `gate`, was tried on three changes of one project ([trials](docs/validation/lean-trials-20261107.md)) |
 | Codex | Not yet: it needs subagents with their own agent files and a hook that names the agent |
 | Release | On GitHub, with the Claude Code plugin ([install](#install)) |
 
@@ -209,7 +209,7 @@ Main carries [concept 4.0](docs/concepts/v4-concept.md), the target the owner ac
 <details>
 <summary><b>Does the compiler prove that the code is correct?</b></summary>
 
-It checks structure: Kinds, links, visibility, cycles and file accounting. Agents judge meaning. Every item on the list needs an answer from a reviewer with fresh context, who points to where it looked. The bar is today's practice, one strong agent with ordinary documentation.
+It checks structure: Kinds, links, visibility, cycles and file accounting. Agents judge meaning. Every Definition a change reaches needs a verdict from a reviewer with fresh context, with the evidence it read. The bar is today's practice, one strong agent with ordinary documentation.
 
 </details>
 
@@ -223,14 +223,14 @@ As much as good documentation of the project would state: domain concepts, featu
 <details>
 <summary><b>Can agents change my spec?</b></summary>
 
-The work never changes the spec: `gate` refuses any change to it, to the manifest, the lock or the harness. Agents propose spec changes in conversation through the modeling skill, and you accept each one. A real problem in the spec ends the work without a certificate, and the Result names the decision for you.
+The agents of the work don't: a hook refuses their edits under `.markitect/`, except the registry pages the builder keeps. Agents propose spec changes in conversation through the modeling skill, and you accept each one. A real problem in the spec is recorded as `spec-problem`, with the question for you, and stays on the list until you settle it.
 
 </details>
 
 <details>
 <summary><b>Can I adopt it on an existing code base?</b></summary>
 
-Yes. The `markitect-extract` skill drafts a spec from the code with you, and you accept it like any other change. From then on, `/markitect-verify` with `--full` reports where the code deviates, and its Findings go into `/markitect-apply --findings FILE`.
+Yes. The `markitect-extract` skill drafts a spec from the code with you, and you accept it like any other change. From then on, `/markitect-review --all` verifies every Definition and records where the code deviates, and `/markitect-build` repairs it.
 
 </details>
 

@@ -1,5 +1,5 @@
 // Package cli is the markitect command line: install, update, init, check, lock,
-// refs, graph and lint; status and review over the record of what was verified
+// refs, graph and lint; status and mark over the record of what was verified
 // (DEC-099); the hook; version and licenses. None of them starts an agent, steers
 // the work or uses Git (DEC-096, DEC-097).
 package cli
@@ -63,9 +63,10 @@ Usage:
   markitect status [--repo DIR] [--all]           what is to verify: each Definition with a changed input or no record,
                                                   with what changed, where to look and its fingerprint; --all lists
                                                   every Definition, to verify everything again
-  markitect review DEFINITION VERDICT --at FINGERPRINT [EVIDENCE...] [-- WHY]
+  markitect mark DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]... [-m "WHY"]
                                                   record a verdict at the state status printed: ok, fail, skip or
-                                                  spec-problem; only the markitect-reviewer agent runs it
+                                                  spec-problem; evidence is path:line or path; only the
+                                                  markitect-reviewer agent runs it
   markitect version [--repo DIR]                  which markitect this is, and whether the personal skill and the project match it
   markitect licenses
 
@@ -89,7 +90,7 @@ type Releases interface {
 // CLI runs one command.
 type CLI struct {
 	Folders Folders
-	// Record is the engine of status and review. Nil means this build reads no
+	// Record is the engine of status and mark. Nil means this build reads no
 	// record.
 	Record *run.Engine
 	Stdin  io.Reader
@@ -136,8 +137,8 @@ func (c CLI) Run(ctx context.Context, args []string) int {
 		code, err = c.lint(ctx, rest)
 	case "status":
 		code, err = c.status(ctx, rest)
-	case "review":
-		code, err = c.review(ctx, rest)
+	case "mark":
+		code, err = c.mark(ctx, rest)
 	case "checklist", "answer", "gate":
 		fmt.Fprintf(c.Stdout, retired, cmd)
 	case "hook":

@@ -91,7 +91,7 @@ func TestMigrationFromTheNewestCertificate(t *testing.T) {
 	if !st.Clean() || len(st.Skipped) != 1 || st.Skipped[0].Why != "no test reaches the shelf" {
 		t.Fatalf("the newer certificate, by its base, is not the one recorded:\n%s", st.Text())
 	}
-	has(t, p.read(project.ReviewFile), `"evidence":["src/members/loans/loan.go:3","README.md (TestReadme)"]`, `"evidence:README.md":"sha256:`)
+	has(t, p.read(project.ReviewFile), `"evidence":["src/members/loans/loan.go:3","README.md"]`, `"evidence:README.md":"sha256:`)
 	// The certificate's hashes count, not the folder's: what changed since is to
 	// verify.
 	p.write("src/members/loans/loan.go", "package loans\n\nconst Limit = 5\n")

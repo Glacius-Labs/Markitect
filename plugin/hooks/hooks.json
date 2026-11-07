@@ -20,8 +20,8 @@
           {
             "type": "command",
             "shell": "bash",
-            "if": "Bash(markitect review*)",
-            "command": "input=$(cat); case \"$input\" in *\"markitect review\"*) printf '%s' \"$input\" | sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\" hook pretool ;; esac"
+            "if": "Bash(markitect mark*)",
+            "command": "input=$(cat); case \"$input\" in *\"markitect mark\"*) printf '%s' \"$input\" | sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\" hook pretool ;; esac"
           }
         ]
       },

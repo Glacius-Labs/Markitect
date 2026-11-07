@@ -1,6 +1,6 @@
 // Package run is the record of what was verified (DEC-099): for each Definition,
 // .markitect/review.sum holds the inputs at which a reviewer last verified it,
-// modelled on Go's test cache. status says what is to verify, review records a
+// modelled on Go's test cache. status says what is to verify, mark records a
 // verdict at the state the reviewer read, and the hook keeps the record and the
 // spec out of the agents' hands. Nothing here starts or drives an agent, steers
 // the work or uses Git (DEC-096, DEC-097).

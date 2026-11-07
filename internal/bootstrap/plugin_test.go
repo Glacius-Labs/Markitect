@@ -338,7 +338,7 @@ func TestStartHookFetchesOnlyForAMarkitectProject(t *testing.T) {
 }
 
 // Each guard hook starts the launcher, and with it a download, only for a call it
-// guards: the one before shell commands for markitect review, the one before
+// guards: the one before shell commands for markitect mark, the one before
 // writing tools for a subagent's write under .markitect. Claude Code's own filter
 // is not relied on: a hook was seen to start for commands that did not match it.
 func TestGuardHooksStartTheLauncherOnlyForTheirCalls(t *testing.T) {
@@ -360,10 +360,10 @@ func TestGuardHooksStartTheLauncherOnlyForTheirCalls(t *testing.T) {
 	cases := []struct{ others, guarded []string }{
 		{
 			others:  []string{shell("ls -la && git status"), shell("markitect status"), edit("a1", "/p/.markitect/model/x.md")},
-			guarded: []string{shell("markitect review fees/fee ok --at 0a1b2c3d4e5f src/fees.go")},
+			guarded: []string{shell("markitect mark fees/fee@0a1b2c ok -e src/fees.go")},
 		},
 		{
-			others:  []string{edit("", "/p/.markitect/model/x.md"), edit("a1", "/p/src/fees.go"), shell("markitect review x")},
+			others:  []string{edit("", "/p/.markitect/model/x.md"), edit("a1", "/p/src/fees.go"), shell("markitect mark x@0a1b2c ok")},
 			guarded: []string{edit("a1", "/p/.markitect/model/x.md"), edit("a1", `C:\\p\\.markitect\\review.sum`)},
 		},
 	}

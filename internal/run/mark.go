@@ -13,43 +13,44 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
-// ErrUsage marks a review the command line cannot ask for, such as an unknown
-// verdict.
+// ErrUsage marks a verdict the command line cannot ask for, such as an unknown
+// one.
 var ErrUsage = errors.New("usage")
 
-// ReviewRequest is one verdict, at the state the reviewer read.
-type ReviewRequest struct {
-	Dir        string
-	Definition string
-	Verdict    string
-	// At is the fingerprint status printed for the item.
-	At       string
+// MarkRequest is one verdict, at the state the reviewer read.
+type MarkRequest struct {
+	Dir string
+	// Item is DEFINITION@FINGERPRINT, as status printed it.
+	Item     string
+	Verdict  string
 	Evidence []string
 	Why      string
+	// definition and at are Item's two parts.
+	definition, at string
 }
 
 // check refuses a request the command line cannot make.
-func (r *ReviewRequest) check() error {
-	r.Definition = strings.TrimSuffix(strings.TrimPrefix(r.Definition, "[["), "]]")
+func (r *MarkRequest) check() error {
+	def, at, ok := strings.Cut(r.Item, "@")
+	r.definition = strings.TrimSuffix(strings.TrimPrefix(def, "[["), "]]")
+	r.at = strings.ToLower(at)
 	r.Why = oneLine(r.Why)
 	switch {
-	case r.Definition == "":
-		return fmt.Errorf("%w: name the Definition", ErrUsage)
+	case !ok || r.definition == "" || len(r.at) < fingerprintLen:
+		return fmt.Errorf("%w: name the item as markitect status prints it, DEFINITION@FINGERPRINT, not %q", ErrUsage, r.Item)
 	case !knownVerdict(r.Verdict):
 		return fmt.Errorf("%w: the verdict is one of %s, not %q", ErrUsage, strings.Join(Verdicts, ", "), r.Verdict)
-	case r.At == "":
-		return fmt.Errorf("%w: --at names the fingerprint markitect status printed for the item", ErrUsage)
 	case r.Verdict != VerdictOK && r.Why == "":
-		return fmt.Errorf("%w: a %s says why, after --", ErrUsage, r.Verdict)
+		return fmt.Errorf("%w: a %s says why, with -m", ErrUsage, r.Verdict)
 	}
 	return nil
 }
 
-// Review records a verdict on one Definition at the state the reviewer read. It
+// Mark records a verdict on one Definition at the state the reviewer read. It
 // refuses when the inputs changed since status printed the fingerprint, or when
 // evidence does not exist in the folder; then it records nothing, and refusal
-// says why. Reviewing a gone Definition ok removes its line.
-func (e *Engine) Review(_ context.Context, req ReviewRequest) (text string, recorded bool, err error) {
+// says why. Marking a gone Definition ok removes its line.
+func (e *Engine) Mark(_ context.Context, req MarkRequest) (text string, recorded bool, err error) {
 	if err := req.check(); err != nil {
 		return "", false, err
 	}
@@ -99,22 +100,22 @@ func (e *Engine) Review(_ context.Context, req ReviewRequest) (text string, reco
 	if err != nil {
 		return "", false, err
 	}
-	it, ok := v.items[req.Definition]
+	it, ok := v.items[req.definition]
+	inputs := v.now[req.definition]
+	if it.State == StateGone {
+		inputs = v.goneInputs[req.definition]
+	}
 	switch {
 	case !ok:
-		return refuse("%s is no Definition of the spec, and the record has no line for it.", req.Definition)
-	case !strings.EqualFold(req.At, it.Fingerprint):
-		return refuse("The inputs of %s are not those of fingerprint %s: they changed since status printed it, or it belongs to another item. Run markitect status again and verify %s as it is now.", req.Definition, req.At, req.Definition)
+		return refuse("%s is no Definition of the spec, and the record has no line for it.", req.definition)
+	case !strings.HasPrefix(inputs.fingerprint(), req.at):
+		return refuse("The inputs of %s are not those of fingerprint %s: they changed since status printed it, or it belongs to another item. Run markitect status again and verify %s as it is now.", req.definition, req.at, req.definition)
 	case it.State == StateGone && req.Verdict == VerdictSkip:
-		return refuse("%s is gone from the spec: its files are removed or have a new basis (ok), or not (fail).", req.Definition)
+		return refuse("%s is gone from the spec: its files are removed or have a new basis (ok), or not (fail).", req.definition)
 	case it.State != StateGone && req.Verdict == VerdictOK && len(evidence) == 0:
-		return "", false, fmt.Errorf("%w: ok names the evidence, such as FILE:LINE", ErrUsage)
+		return "", false, fmt.Errorf("%w: ok names its evidence with -e, such as -e src/fees.go:40", ErrUsage)
 	}
-	inputs := v.now[req.Definition]
-	if it.State == StateGone {
-		inputs = v.goneInputs[req.Definition]
-	}
-	line := Line{Definition: req.Definition, Verdict: req.Verdict, Why: req.Why, Inputs: Inputs{}}
+	line := Line{Definition: req.definition, Verdict: req.Verdict, Why: req.Why, Inputs: Inputs{}}
 	for k, h := range inputs {
 		line.Inputs[k] = h
 	}
@@ -134,7 +135,7 @@ func (e *Engine) Review(_ context.Context, req ReviewRequest) (text string, reco
 	if len(missing) > 0 {
 		return refuse("The evidence must be files of the project folder, and these are not: %s.", strings.Join(missing, ", "))
 	}
-	lines := clean(rec, v, req.Definition)
+	lines := clean(rec, v, req.definition)
 	removed := it.State == StateGone && req.Verdict == VerdictOK
 	if !removed {
 		lines = append(lines, line)
@@ -143,12 +144,12 @@ func (e *Engine) Review(_ context.Context, req ReviewRequest) (text string, reco
 		return "", false, err
 	}
 	if removed {
-		return fmt.Sprintf("Recorded: %s is gone and its files are dealt with, so its line is removed.\n", req.Definition), true, nil
+		return fmt.Sprintf("Recorded: %s is gone and its files are dealt with, so its line is removed.\n", req.definition), true, nil
 	}
-	return fmt.Sprintf("Recorded: %s %s.\n", req.Definition, req.Verdict), true, nil
+	return fmt.Sprintf("Recorded: %s %s.\n", req.definition, req.Verdict), true, nil
 }
 
-// clean keeps one line per Definition, except the one being reviewed: of several,
+// clean keeps one line per Definition, except the one being marked: of several,
 // as after a merge, the one whose inputs match the folder, or both of a conflict,
 // or else the closest; a gone Definition keeps one line with every file its lines
 // named.

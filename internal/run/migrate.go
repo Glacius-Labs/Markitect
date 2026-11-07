@@ -43,9 +43,8 @@ type certificate struct {
 		Definition string `json:"definition,omitempty"`
 		Answer     string `json:"answer,omitempty"`
 		Pointers   []struct {
-			File  string   `json:"file"`
-			Line  int      `json:"line,omitempty"`
-			Tests []string `json:"tests,omitempty"`
+			File string `json:"file"`
+			Line int    `json:"line,omitempty"`
 		} `json:"pointers,omitempty"`
 		Explanation string `json:"explanation,omitempty"`
 	} `json:"items"`
@@ -157,9 +156,6 @@ func recordFromCertificate(root string) ([]byte, error) {
 			text := ptr.File
 			if ptr.Line > 0 {
 				text += fmt.Sprintf(":%d", ptr.Line)
-			}
-			if len(ptr.Tests) > 0 {
-				text += " (" + strings.Join(ptr.Tests, ", ") + ")"
 			}
 			l.Evidence = appendNew(l.Evidence, text)
 			if h, ok := c.Files[ptr.File]; ok {

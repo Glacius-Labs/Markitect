@@ -4,7 +4,7 @@
 
 | Package | Role |
 | --- | --- |
-| `internal/run` | The record: the inputs of each Definition, `.markitect/review.sum`, `status`, `review`, the hook, and the migration from the certificates of 0.20.0. |
+| `internal/run` | The record: the inputs of each Definition, `.markitect/review.sum`, `status`, `mark`, the hook, and the migration from the certificates of 0.20.0. |
 | `internal/adapters/folder` | The walk of the project folder and its `.gitignore` files, for the record and the command line ([below](#the-folder)). |
 | `internal/bootstrap` | Builds the engine for the command line, with the lock of each project's record in the user's cache folder. |
 
@@ -28,11 +28,11 @@ A model Definition counts by its text. A Library Definition counts by its Librar
 
 This reaches what concept 4.0's checklist reached at distance 0 and 1 ([concept 4.0 §3](../../docs/concepts/v4-concept.md#how-status-works)): a Definition that changed, one that links to a changed Definition or is of a changed Kind, one whose files changed, and one whose registry rows gained or lost it. A changed Rule above a Package reaches only itself and what links to it. A change of a row's reason, or of a file the ignore file lists, reaches nothing. The one difference, the Library counted as a whole, lists more, never less.
 
-The **fingerprint** of an item is the first twelve characters of the hash of every input but the evidence, which the reviewer chooses after it read the item.
+The **fingerprint** of an item is the first six characters of the hash of every input but the evidence, which the reviewer chooses after it read the item. `mark` also takes a longer prefix of the hash.
 
 ## The record file
 
-`.markitect/review.sum` is part of the project's fixed layout and committed with it, like `go.sum`. It holds one line per Definition, sorted, each a JSON object with the Definition, the verdict, the inputs with their full hashes, the evidence as the reviewer gave it and the reason on one line:
+`.markitect/review.sum` is part of the project's fixed layout and committed with it, like `go.sum`. It holds one line per Definition, sorted, each a JSON object with the Definition, the verdict, the inputs with their full hashes, the evidence as `path` or `path:line` and the reason on one line:
 
 ```text
 {"definition":"members/loans/loan","verdict":"ok","inputs":{"evidence:src/members/loans/loan.go":"sha256:…","file:src/members/loans/loan.go":"sha256:…","kind:std/Concept":"sha256:…","link:members/member":"sha256:…","self":"sha256:…"},"evidence":["src/members/loans/loan.go:3"]}
@@ -55,26 +55,31 @@ The record is a record, not a proof: a line written by hand shows in the diff, a
 - the errors in the realization: a file neither listed nor ignored, a stale registry row, an unused Definition;
 - the lines of the record it cannot read.
 
-Each item names where to look, the Definition's file, its row files and the evidence of its last line, and its fingerprint as `--at FINGERPRINT`. A Definition recorded `skip` is a note. A spec with errors gives no list: there is none until it compiles. `--all` lists every Definition, to verify everything again.
+Each item is printed as `DEFINITION@FINGERPRINT`, which the reviewer copies into `mark`, and names where to look: the Definition's file, its row files and the evidence of its last line. A Definition recorded `skip` is a note. A spec with errors gives no list: there is none until it compiles. `--all` lists every Definition, to verify everything again.
 
 It exits 0 when it lists nothing: then the project compiles and every Definition is verified at its current inputs. It exits 1 when it lists something, and so with `--all` whenever the spec has a Definition. Notes never change the exit code, a `skip` or the note on standard error that the project's harness comes from another markitect alike. It looks at no network: whether a newer binary exists is `update --check`'s question.
 
-## review
+## mark
 
-`markitect review DEFINITION VERDICT --at FINGERPRINT [EVIDENCE…] [-- WHY]` records a verdict at the state the reviewer read. Flags may stand anywhere before `--`; what follows it is why, kept on one line.
+`markitect mark DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]… [-m "WHY"]` records a verdict at the state the reviewer read:
 
-- `ok` names at least one piece of evidence; `fail`, `skip` and `spec-problem` say why.
-- Evidence is `FILE`, `FILE:LINE` or `FILE:LINE-LINE`, with a note after a space in the same argument, such as `"tests/fees_test.go:12 (TestWaiver)"`. Each file must be a file of the folder, named from the project folder; its hash becomes an input when the verdict is recorded.
+```text
+markitect mark members/limit@3f9a1c ok -e src/loans.go:42 -e tests/loans_test.go:88
+markitect mark loans/renewal@81be07 fail -e src/renew.go:30 -m "allows a fourth renewal; the Definition says three"
+```
+
+- `ok` names at least one piece of evidence with `-e`; `fail`, `skip` and `spec-problem` say why with `-m`, kept on one line.
+- Evidence is `path` or `path:line`, also `path:line-line` and `path:line:col`. A note or a test name in parentheses is dropped, not stored. Each file must be a file of the folder, named from the project folder; its hash becomes an input when the verdict is recorded.
 - It refuses, records nothing and exits 1 when the inputs differ from the fingerprint, as when a builder edited a file beside the reviewer or the reviewer's own test run changed one; when evidence is not a file of the folder; when the Definition is unknown; when the spec has errors; or when the record has a line it cannot read. A command it cannot read exits 2.
-- A gone Definition is reviewed `ok` when its files are removed or have a new basis, which removes its line, or `fail` when not; `skip` is refused.
+- A gone Definition is marked `ok` when its files are removed or have a new basis, which removes its line, or `fail` when not; `skip` is refused.
 
 It writes under a lock in the user's cache folder (`markitect/locks/`, one per project folder), reading the folder and the record afresh, and replaces the record as one whole file in one step, so parallel reviewers, such as one per Package, lose no line. It writes the file clean: one line per Definition, the matching one of several, both of a conflict, the closest when none matches, and one line for a gone Definition with every file its lines named.
 
 ## The hook
 
-One command, `markitect hook pretool`, which `init` and `update` add to the project's `.claude/settings.json` in two groups before a tool call: one before a shell command (`if: "Bash(markitect review*)"`), one before every tool that writes a file (`Edit|Write|MultiEdit|NotebookEdit`). Hooks in project settings run inside subagents too, and their input names the agent. The hook guards the record and the spec, not the process:
+One command, `markitect hook pretool`, which `init` and `update` add to the project's `.claude/settings.json` in two groups before a tool call: one before a shell command (`if: "Bash(markitect mark*)"`), one before every tool that writes a file (`Edit|Write|MultiEdit|NotebookEdit`). Hooks in project settings run inside subagents too, and their input names the agent. The hook guards the record and the spec, not the process:
 
-- **Only the reviewer agent runs `markitect review`.** So the agent that built does not verify its own work. A call from the owner's session through Claude Code is refused too.
+- **Only the reviewer agent runs `markitect mark`.** So the agent that built does not verify its own work. A call from the owner's session through Claude Code is refused too.
 - **No subagent writes under `.markitect/`, except the registry pages** (`registry.md` and `registry/*.md`), which the builder keeps. So a builder cannot weaken a Definition during the work or write lines into the record. The owner's own session, where the spec is modelled, is no subagent and stays free.
 
 The hook reads the call as text, so a command hidden in a script, or one that names `markitect` by a path, gets through. It guards against mistakes, not against intent. The plugin's hooks do the same before starting its launcher.
@@ -97,4 +102,4 @@ The checklist, the stored answers, the work under way in the cache, `gate` with 
 
 ## Tests
 
-`record_test.go` plays the builder and the reviewer on plain folders without Git while `status` says what is to verify: what a change reaches, the Kind and the Library, `--at` and evidence, the verdicts, a gone Definition, merged lines and conflicts, an unreadable line, errors, and parallel reviewers. `migrate_test.go` covers the migration from certificates written as 0.20.0 wrote them, `hook_test.go` the hook, and `lock_test.go` the lock.
+`record_test.go` plays the builder and the reviewer on plain folders without Git while `status` says what is to verify: what a change reaches, the Kind and the Library, the fingerprint and evidence, the verdicts, a gone Definition, merged lines and conflicts, an unreadable line, errors, and parallel reviewers. `migrate_test.go` covers the migration from certificates written as 0.20.0 wrote them, `hook_test.go` the hook, and `lock_test.go` the lock.

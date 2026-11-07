@@ -93,7 +93,7 @@ func TestPluginHooksRunTheLauncher(t *testing.T) {
 	type group struct{ matcher, rule string }
 	want := map[string][]group{
 		"SessionStart": {{"startup|resume", ""}},
-		"PreToolUse":   {{"Bash", run.ReviewRule}, {run.EditTools, ""}},
+		"PreToolUse":   {{"Bash", run.MarkRule}, {run.EditTools, ""}},
 	}
 	for event, groups := range want {
 		got := h.Hooks[event]

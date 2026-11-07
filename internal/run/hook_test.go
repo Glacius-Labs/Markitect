@@ -26,11 +26,11 @@ func TestGuardLetsOnlyTheReviewerRecord(t *testing.T) {
 		})))
 	}
 	for _, command := range []string{
-		"markitect review fees/fee ok --at 0a1b2c3d4e5f src/fees.go",
-		"cd . && markitect review fees/fee fail --at x -- wrong",
-		"markitect  review\tfees/fee ok",
-		`bash -c "markitect review fees/fee ok"`,
-		"markitect.exe review fees/fee ok",
+		"markitect mark fees/fee@0a1b2c ok -e src/fees.go",
+		"cd . && markitect mark fees/fee@0a1b2c fail -m wrong",
+		"markitect  mark\tfees/fee@0a1b2c ok",
+		`bash -c "markitect mark fees/fee@0a1b2c ok"`,
+		"markitect.exe mark fees/fee@0a1b2c ok",
 	} {
 		has(t, call("a1", run.BuilderAgent, command), `"permissionDecision":"deny"`, run.ReviewerAgent)
 		has(t, call("", "", command), `"permissionDecision":"deny"`)
@@ -38,7 +38,7 @@ func TestGuardLetsOnlyTheReviewerRecord(t *testing.T) {
 			t.Fatalf("refused the reviewer %q: %s", command, out)
 		}
 	}
-	for _, command := range []string{"markitect status", "markitect status --all", "go test ./...", "cat .claude/agents/markitect-reviewer.md", "echo markitect reviewed"} {
+	for _, command := range []string{"markitect status", "markitect status --all", "go test ./...", "cat .claude/agents/markitect-reviewer.md", "echo markitect marked", "markitect markdown x"} {
 		if out := call("a1", run.BuilderAgent, command); out != "" {
 			t.Fatalf("refused %q: %s", command, out)
 		}
@@ -95,12 +95,12 @@ func TestHasGuard(t *testing.T) {
 		return `{"hooks": {"PreToolUse": [` + strings.Join(groups, ", ") + `]}}`
 	}
 	for s, want := range map[string]bool{
-		settings(group("Bash", run.ReviewRule), group(run.EditTools, "")): true,
+		settings(group("Bash", run.MarkRule), group(run.EditTools, "")): true,
 		settings(group("", "")): true,
 		settings(group("Bash", ""), group("Write|Edit|NotebookEdit|MultiEdit", "")):  true,
-		settings(group("Bash", run.ReviewRule)):                                      false,
+		settings(group("Bash", run.MarkRule)):                                        false,
 		settings(group(run.EditTools, "")):                                           false,
-		settings(group("Bash", run.ReviewRule), group("Edit|Write", "")):             false,
+		settings(group("Bash", run.MarkRule), group("Edit|Write", "")):               false,
 		settings(group("Bash", "Bash(markitect status*)"), group(run.EditTools, "")): false,
 		`{"hooks": {"PostToolUse": [` + group("", "") + `]}}`:                        false,
 		`{"note": "` + run.HookCommand + `"}`:                                        false,
