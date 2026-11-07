@@ -39,6 +39,11 @@ These reports preserve the exact scope, inputs, source references and outcomes s
 - [Evaluation suite E1: sandbox smoke — 28 October 2026](eval-e1-sandbox-smoke-20261028.md): the escape probe and three baseline runs on the Library inside the sandbox; passed, with a K capture defect found, fixed and confirmed by a fourth run
 - [Evaluation suite: first smoke, baseline K on the Library — 28 October 2026](eval-k-library-smoke-20261028.md): dispatch for three baseline runs through the suite on Claude Sonnet 5.5; superseded by the sandbox smoke of evaluation suite v2, never run
 
+## Draft concept 4.0 and the lean plan
+
+- [The native version: real sessions while building it — 4 November 2026](native-version-20261104.md): a background session started from inside another, its settings, the reviewer agent and the Stop hook held, and five small Library changes landed with nobody watching; covers the launcher the owner has since dropped
+- [Lean plan step 3: trials of the lean flow — 7 November 2026](lean-trials-20261107.md): three Makerspace changes through `/markitect-apply` of 0.19.0 and through the old `markitect apply`, one run each. The lean flow held: the builder started the reviewer as its own subagent, the hooks fired inside subagents, the session left the work to the agents, and `gate` did not misfire. Both arms caught a planted bug by reading and stopped on a planted contradiction, the lean one a round late because its builder has no door to report it. Under one weekly point for all six runs
+
 ## Markitect Desktop
 
 - [The app builds its chats' image — 2 November 2026](desktop-chat-image-20261102.md): the first build through the native app: built in CI on GitHub's Linux engine, and on the owner's Windows engine not yet
