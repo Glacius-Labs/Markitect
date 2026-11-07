@@ -1,12 +1,13 @@
 # How well the Makerspace specs are designed: measurements — 7 November 2026
 
-This session measured the design of the two archived Makerspace specs the way code is measured: coupling, stability, abstractness, cohesion, fan-in and fan-out, and how far a change reaches. It then split the `values` page that [concept 4.0 §4](../concepts/v4-concept.md#4-is-the-spec-good) names as a hub, and measured again. It started no agent and changed no tool. The reading is this session's and decides nothing; the [guide to a good spec](../guides/good-spec.md) draws the rules from it, and the [`vet` plan](../concepts/vet-plan.md) proposes what `vet` measures.
+This session measured the design of the two archived Makerspace specs the way code is measured: coupling, stability, abstractness, cohesion, fan-in and fan-out, how far a change reaches, and what changed over the change steps. It then split the `values` page that [concept 4.0 §4](../concepts/v4-concept.md#4-is-the-spec-good) names as a hub, and measured again. It started no agent and changed no tool. The reading is this session's and decides nothing; the [guide to a good spec](../guides/good-spec.md) draws the rules from it, and the [`vet` plan](../concepts/vet-plan.md) proposes what `vet` measures.
 
 **What the numbers show:**
 
 - **The Package structure is sound.** No Package cycle, nothing depends on the outer `protocol` Package, dependencies point towards the stable `members` and `equipment`, and no Makerspace edge points to a less stable Package; the 5× project has three such edges.
 - **Behaviour is never a hub.** An Operation is linked by at most two Definitions in Makerspace and three in the 5× project, mostly only by its own module's Interface. The links go to Concepts, Kinds and formats, which is what the stable-abstractions principle asks, per Definition.
-- **Package abstractness and the distance from the main sequence say little here.** Every area Package holds its vocabulary and its operations, so its abstractness sits between 0.5 and 0.7 whatever its stability.
+- **Abstractness, counted as Martin counts it, adds little here.** A Package's abstractness is its share of Definitions of Kind `Kind`, as Martin counts interfaces and abstract classes. Both specs keep their Kinds at Root, so every other Package has abstractness 0 and its distance from the main sequence is 1 − I. The zone of pain holds Root and the stable core, `members`, `equipment` and `billing` (eight Packages in the 5× project), and the zone of uselessness is empty.
+- **Where change hurts is a widely linked Definition that changes.** No Makerspace Definition linked by 10 or more changed in eight steps. In the 5× project 9 of 29 did, `members/member`, `billing/charge` and `members/membership` first, and their changes alone put 247 of the 468 items of the eight steps back on the list. `values` never changed.
 - **Root is the weak spot.** `values` alone is linked by 60 of 115 Definitions (269 of 419 in the 5× project), and Root also holds a module: formats, refusal codes, audit and authorization, with the only Operation at Root. Links up the tree are free, so none of this shows in Package coupling, and `vet.reach` skips Root.
 - **Splitting `values` narrows reach where links were false, not elsewhere.** A change to one format then lists between 1 and 50 Definitions instead of 61. The real change steps never changed a format, so what they put back on the list stays the same; following every link, the four widest Makerspace steps fall from 85–88 % of the spec to 45–60 %, and the 5× project's from 94–96 % to 70–82 %. Most of what remains runs through the `Operation` Kind.
 
@@ -33,8 +34,9 @@ This session measured the design of the two archived Makerspace specs the way co
 | One-step reach | The Definition and its fan-in: what a change to it alone puts back on the list of `status` |
 | Every-link reach | The Definition and everything that reaches it by following links backwards, as in the [3 November measurement](impact-reach-20261103.md) |
 | Ca, Ce, I | Afferent and efferent coupling and instability Ce / (Ca + Ce), as `list --deps` reports them |
-| A | Abstract Definitions / (abstract + concrete), by a provisional rule: Kinds, Concepts, Rules and the project Kind `Interface` are abstract, since they state what something is or must satisfy; the project Kind `Operation` and Features, Endpoints and Commands are concrete, since they state what happens. The Project and Decisions count as neither |
-| D | \|A + I − 1\|, the distance from the main sequence |
+| A | The share of a Package's own Definitions whose Kind is `Kind`, as Martin's abstractness counts interfaces and abstract classes among all classes. It reads no Kind's meaning |
+| D, zones | \|A + I − 1\|, the distance from the main sequence. Above 0.7 a Package lies in the zone of pain (stable and concrete, A + I below 0.3) or in the zone of uselessness (abstract and unstable, A + I above 1.7) |
+| Volatility | Definitions a step added, changed or removed, per Package and per Definition, over c1 to c8; for each change of an existing Definition, the one-step reach it caused at that step |
 | Cohesion | Connected groups of a Package's own Definitions, joined by links inside it; relational cohesion H = (links inside + 1) / Definitions; the share of the Package's links that stay inside, not counting links up the tree |
 | Statements | List items and table rows in a Definition's body, a count of what a reviewer verifies |
 | Definition cycles | Strongly connected groups of more than one Definition |
@@ -60,26 +62,26 @@ The shape holds across the steps: a typical Definition is linked once and reache
 
 Makerspace c8:
 
-| Package | Definitions | Ca | Ce | I | A | D | Groups | H | Links inside | Up | Out | Share inside |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Root | 21 | 0 | 0 | 0 | 0.95 | 0.05 | 4 | 2.00 | 41 | 0 | 0 | 1.00 |
-| billing | 16 | 5 | 1 | 0.17 | 0.69 | 0.15 | 2 | 1.38 | 21 | 18 | 10 | 0.68 |
-| bookings | 17 | 2 | 5 | 0.71 | 0.59 | 0.30 | 2 | 1.65 | 27 | 18 | 28 | 0.49 |
-| equipment | 12 | 5 | 0 | 0.00 | 0.50 | 0.50 | 1 | 1.92 | 22 | 15 | 0 | 1.00 |
-| materials | 9 | 1 | 2 | 0.67 | 0.56 | 0.22 | 1 | 1.67 | 14 | 12 | 10 | 0.58 |
-| members | 11 | 5 | 0 | 0.00 | 0.55 | 0.45 | 1 | 1.82 | 19 | 14 | 0 | 1.00 |
-| protocol | 6 | 0 | 8 | 1.00 | 1.00 | 1.00 | 5 | 0.33 | 1 | 4 | 9 | 0.10 |
-| reporting | 6 | 1 | 3 | 0.75 | 0.67 | 0.42 | 2 | 1.17 | 6 | 7 | 16 | 0.27 |
-| safety | 6 | 2 | 1 | 0.33 | 0.50 | 0.17 | 1 | 1.50 | 8 | 7 | 3 | 0.73 |
-| training | 11 | 2 | 3 | 0.60 | 0.55 | 0.15 | 1 | 2.00 | 21 | 14 | 17 | 0.55 |
+| Package | Definitions | Ca | Ce | I | A | D | Zone | Groups | H | Links inside | Up | Out | Share inside | Changes c1–c8 (steps) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Root | 21 | 0 | 0 | 0 | 0.10 | 0.90 | pain | 4 | 2.00 | 41 | 0 | 0 | 1.00 | 23 (6) |
+| billing | 16 | 5 | 1 | 0.17 | 0 | 0.83 | pain | 2 | 1.38 | 21 | 18 | 10 | 0.68 | 18 (3) |
+| bookings | 17 | 2 | 5 | 0.71 | 0 | 0.29 | | 2 | 1.65 | 27 | 18 | 28 | 0.49 | 20 (6) |
+| equipment | 12 | 5 | 0 | 0.00 | 0 | 1.00 | pain | 1 | 1.92 | 22 | 15 | 0 | 1.00 | 3 (1) |
+| materials | 9 | 1 | 2 | 0.67 | 0 | 0.33 | | 1 | 1.67 | 14 | 12 | 10 | 0.58 | 5 (4) |
+| members | 11 | 5 | 0 | 0.00 | 0 | 1.00 | pain | 1 | 1.82 | 19 | 14 | 0 | 1.00 | 3 (1) |
+| protocol | 6 | 0 | 8 | 1.00 | 0 | 0.00 | | 5 | 0.33 | 1 | 4 | 9 | 0.10 | 1 (1) |
+| reporting | 6 | 1 | 3 | 0.75 | 0 | 0.25 | | 2 | 1.17 | 6 | 7 | 16 | 0.27 | 5 (2) |
+| safety | 6 | 2 | 1 | 0.33 | 0 | 0.67 | | 1 | 1.50 | 8 | 7 | 3 | 0.73 | 4 (2) |
+| training | 11 | 2 | 3 | 0.60 | 0 | 0.40 | | 1 | 2.00 | 21 | 14 | 17 | 0.55 | 6 (2) |
 
-Root's coupling is 0 by the tool's count only: links up are free, and 9 of the 9 other Packages link Root's Definitions. Steps w0 and c4 give the same picture, with D above 0.5 only for `protocol`.
+Root's coupling is 0 by the tool's count only: links up are free, and 9 of the 9 other Packages link Root's Definitions. Its instability is 0 either way, since it links nothing outside itself. Step w0 gives the same A, D and zones.
 
-The 5× project, 47 Packages besides Root: Ce median 3 and at most 12 (`bookings`); I median 0.75; A between 0.33 and 0.67, apart from `protocol` at 1.0; D median 0.31, above 0.5 for `protocol` and six leaf Packages heavy in Rules (`assessments`, `compliance`, `dunning`, `escalations`, `reporting`, `waitlists`); H median 1.88, lowest 0.33 (`protocol`); share inside median 0.56, lowest 0.21 (`compliance`).
+The 5× project, 47 Packages besides Root: Ce median 3 and at most 12 (`bookings`); I median 0.75; A 0 in every Package but Root (0.10); D median 0.25; in the zone of pain Root, `billing`, `equipment`, `guardians`, `ledger`, `lockouts`, `members`, `notices` and `rooms`; nothing in the zone of uselessness; H median 1.88, lowest 0.33 (`protocol`); share inside median 0.56, lowest 0.21 (`compliance`).
 
 **Coupling and stability.** No Package depends on `protocol` in either project: it is the outer layer that wires the modules, and its Ce of 8 is what such a layer has. The stable Packages, `members` and `equipment` (I 0), are what the domain rests on. The three less stable dependencies of the 5× project differ by 0.10, 0.12 and 0.18 in instability.
 
-**Abstractness and the main sequence.** By the provisional rule, every area Package is half to two-thirds abstract, because each holds its Concepts and Rules beside its Operations. So D mostly mirrors I: the stable `members` and `equipment` sit at D 0.45–0.5 for having Operations, and leaf Packages at about 0.5 for having Rules. In code the Package is the unit that is released and depended on; here the unit of verification is the Definition, and a change to `members/register-member` puts back only itself and its Interface, however stable `members` is. The Rules of `protocol` describe the wire protocol, which is concrete, yet count as abstract, so the rule also misjudges a Package of Rules. Per Definition the principle holds:
+**Abstractness and the main sequence.** A Kind is to Definitions what an interface is to classes: the form others follow. Both specs define their two project Kinds, `Operation` and `Interface`, at Root, so Root's abstractness is 2 of 21 and every other Package's is 0. D is then 1 − I outside Root and adds nothing to instability. The zone of pain, stable and concrete, holds exactly the Packages whose Concepts the others link: `members/member`, `equipment/machine`, `billing/charge`, `ledger/postings`. Martin calls that zone harmful only for what changes often; the [volatility](#volatility) below shows which of them do. A reading of what each Kind means, Concepts, Rules and Interfaces as abstract and Operations as concrete, was also tried; it puts every area Package at 0.5 to 0.7 whatever its stability and so tells no more, and the tool cannot use it, since it treats every Kind alike. In code the Package is the unit that is released and depended on; here the unit of verification is the Definition, and a change to `members/register-member` puts back only itself and its Interface, however stable `members` is. Per Definition, what is linked widely is the form and the vocabulary, not the behaviour:
 
 | Kind, Makerspace c8 | Definitions | Fan-in median | Fan-in max |
 |---|---|---|---|
@@ -115,6 +117,25 @@ Hubs, by fan-in:
 - **The largest fan-out** belongs to the Interfaces, which list their module's operations (`bookings/bookings-interface` 16, 24 in the 5× project), and to two Operations (`materials/purchase-material` 13, `reporting/utilization-report` 11).
 - **Size.** Words per Definition: median 88, p90 253, largest 430 (`architecture`); in the 5× project 99, 237 and 995 (`ledger/postings`). Statements: median 6, p90 12, largest 25 (`reporting/revenue-report`); in the 5× project 7, 13 and 67 (`list-order`, a table of the order of every list).
 - **Definition cycles** all lie inside one Package, as they must, since a cycle across Packages is a compile error. About half are a Concept and its Rule naming each other (`bookings/reservation` and `bookings/reservations`; 13 of 29 in the 5× project); most others add an Operation. Two are at Root: `values`, `argument-values`, `money`, `computed-times`, `identifier-limits` and `integer-limits`, and `Operation`, `audit`, `list-audit-entries` and `order-of-checks`. A cycle at Root makes its members act as one hub when every link is followed.
+
+## Volatility
+
+Over the eight change steps, counting Definitions a step added, changed or removed (the Package table above has Makerspace's counts per Package):
+
+- **Root changes most** in both projects: in 6 of 8 Makerspace steps and in all 8 of the 5× project's. What changes there is the anchor, which lists the modules (4 and 8 times), `computed-times`, `time`, `architecture` and, in the 5× project, `list-order`. All have fan-in 0 to 2, so their changes put little back on the list. Root's hubs, `values`, `Operation` and `Interface`, never changed.
+- **In Makerspace no widely linked Definition changed.** None of the 5 Definitions with fan-in 10 or more changed, against 49 of the other 110; no item of any step came only from a changed hub.
+- **In the 5× project widely linked Definitions did change,** 9 of 29 against 41 of the other 390, and their changes alone put 247 of the steps' 468 items back on the list:
+
+| Definition, 5× project | Fan-in at c8 | Changes | Items its changes put on the list |
+|---|---|---|---|
+| `members/member` | 90 | 1 | 88 |
+| `billing/charge` | 20 | 3 | 60 |
+| `members/membership` | 20 | 3 | 60 |
+| `ledger/postings` | 23 | 2 | 48 |
+| `members/members-interface` | 48 | 1 | 47 |
+| `waivers/waiver-gate` | 10 | 2 | 21 |
+
+In Makerspace the largest such sums are `billing/billing-interface` (14), `time` (12) and `bookings/create-reservation` (8). So the zone of pain did hurt in the 5× series, through `members`, `billing` and `ledger`, and Root, though volatile, hurt little, because what changed there was what nothing links.
 
 ## Root
 
@@ -216,12 +237,14 @@ No step changed `values`, so one step, which is what `status` lists, reaches the
 - **The split was worth it on its own terms.** The links had claimed thirteen formats where two were used; after the split, a change to a rarely used format lists two Definitions, not 61, and the widest every-link reaches halve on Makerspace. It does not shorten any real step's list, because the formats never changed; its gain is the change that has not happened yet.
 - **A true hub stays a hub.** `values/identifier` is used almost everywhere, and the `Operation` Kind is the form of half the spec. Their reach is real; what helps there is keeping them small and stable, and linking them directly where they are relied on.
 - **Root needs the most care.** Root may not depend on anything below it, so a module at Root pulls its own dependencies up after it, and links up hide coupling from today's measures.
-- **Package-level abstractness is the wrong grain.** The Definition is the unit of verification, so the stable-abstractions principle is best read per Definition: what has fan-in should state what something is, not what happens.
+- **The zone of pain names the right Packages, not yet the right moment.** Abstractness counted from Kinds is 0 outside Root, so the zone of pain is the stable core, which every domain has. It hurt where widely linked Definitions changed, which the 5× series shows and a single snapshot cannot: the cost is fan-in times change.
+- **`std` has no Kind for a value.** The thirteen formats are values in the sense of domain-driven design: defined by their form alone, with no identity and no states. `std/Concept` describes one thing with attributes, relations and states, so the author put thirteen values on one Concept page, the hub this record measures. A Kind for a value would have invited one Definition each.
 
 ## Limits
 
 - Two specs by one author, of one domain, one level deep. A spec with deeper Packages may show placement and Dependency Rule problems these cannot.
-- The abstractness rule is provisional and relies on what the Kinds mean; `vet` knows no Kind's meaning today ([DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation)).
+- Abstractness counts Definitions of Kind `Kind`. Both specs keep their Kinds at Root, so the measure has only been seen at 0 outside Root; a spec that defines Kinds in its Packages may use it more.
+- Volatility comes from eight designed change steps per project, written to exercise the specs, not from a project's real history.
 - The split was made by script, by rules matched against how these specs write fields. A person would likely also move Root's module into a Package of its own, which was not tried.
 - Reach counts Definitions put back on the list, not what an agent does with them; whether a narrower list helps an agent build or review is untested. File inputs, which also put Definitions back on the list, were not measured here; the [3 November measurement](impact-reach-20261103.md) did that.
 - No record of a real build exists for these specs, so nothing here measures evidence in `review.sum`.

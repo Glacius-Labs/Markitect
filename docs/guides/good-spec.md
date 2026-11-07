@@ -11,15 +11,15 @@ Each Definition is a unit of verification, and its inputs are its own text, its 
 
 A good spec keeps both small and true. Every link names what the Definition relies on, and nothing else: a link it does not need re-verifies too much, and a link it lacks lets a change pass unverified. A typical Makerspace Definition is linked once, puts 2 Definitions back on the list and reaches about 8 by every link. The design problems all sit in the few that reach far.
 
-The rules below each name their **signal**: a measure of `markitect vet` that exists today, one the [`vet` plan](../concepts/vet-plan.md) proposes, or what the auditor checks. The auditor is whoever reviews the spec: the owner, or an agent in a modeling session.
+The rules below each name their **signal**: a measure of `markitect vet` that exists today, one the [`vet` plan](../concepts/vet-plan.md) proposes, or what the auditor checks. The auditor is whoever reviews the spec: the owner, or an agent in a modeling session. The tool treats every Kind alike, a project's own Kinds as much as `std`'s; what a Kind means is for the people and agents who read its text.
 
 ## The rules at a glance
 
 | Principle | Rule | Signal |
 |---|---|---|
 | [Bounded contexts](#bounded-contexts-and-ubiquitous-language) | One Package per area of the domain, in that area's words | Auditor |
-| [The Dependency Rule](#the-dependency-rule-and-layers) | Link inward: from what changes often to what changes rarely | `package.cycle`, `link.downward`, `vet.unstable_dependency` |
-| [Stable abstractions](#stable-dependencies-and-stable-abstractions) | What many link to states what something is, not what happens | `vet.unstable_dependency`; proposed `vet.hub` |
+| [The Dependency Rule](#the-package-tree-is-the-dependency-rule) | Links go up the tree or sideways towards stability, never down | `link.downward`, `package.cycle`, `vet.unstable_dependency` |
+| [Stable abstractions](#stable-dependencies-and-stable-abstractions) | What many depend on is a form or vocabulary that rarely changes | Proposed abstractness and zones, `vet.hub` |
 | [Cohesion and coupling](#cohesion-and-coupling) | A Package's Definitions link each other; it depends on few Packages | `vet.coupling`; proposed `vet.cohesion` |
 | [Complexity](#complexity-of-a-definition) | One idea per Definition, a few hundred words, a dozen statements | `vet.definition_size`; proposed `vet.statements` |
 | [Evidence for complexity](#evidence-for-complexity-a-crap-analogue) | The larger a Definition, the more evidence its `ok` names | Proposed `vet.risk` |
@@ -40,31 +40,31 @@ The rules below each name their **signal**: a measure of `markitect vet` that ex
 
 **Signal.** The auditor checks that each Package holds one area and that one term means one thing in it. No measure sees vocabulary.
 
-## The Dependency Rule and layers
+## The Package tree is the Dependency Rule
 
-**Rule.** Dependencies point inward, from what changes often to what changes rarely: from the wire protocol and the interfaces to the operations, from the operations to the domain's Concepts, and from those to the formats and project-wide Rules. In a Markitect spec the tree already has a direction. A child links up freely, and a parent may not link into a child (`link.downward`), so a parent is always inner to its children. Between siblings, the outer one links the inner one, never back. Name the layers of the project in its architecture Decision at Root.
+**Rule.** Clean Architecture's Dependency Rule says that dependencies point from the specific to the general, never back. A Markitect spec has it built in, as Go has it without layers: a child links up to its ancestors freely, and a parent may not link into a child (`link.downward`). So put the general above and the specific below: the project-wide Rules and shared Kinds at Root, an area's vocabulary in its Package, and what only one part of the area needs in a Package below it. Between siblings, link towards the more stable one, never back, and never in a circle. A limit of your own project, such as "nothing but `protocol` uses the operations of another module", is written with what the language has: mark what a Package keeps to itself `internal: true`, and state the rest as an ordinary Rule.
 
-**Why.** What lies inward changes rarely. A change to an outer Definition puts nothing inward back on the list, and an inward change reaches outward only through links that say so.
+**Why.** What lies above changes rarely, and the tree stops a general Definition from depending on a specific one. A change below puts nothing above back on the list, and a change above reaches below only through links that say so.
 
-**Bad.** In the 5× project, `billing` (instability 0.15) depends on `households` (0.33): a core module points at a less stable one, so a change in `households` reaches the core.
+**Bad.** In the 5× project, `billing` (instability 0.15) depends on its sibling `households` (0.33): a core module points at a less stable one, so a change in `households` reaches the core.
 
-**Good.** Makerspace's `protocol`, the outer layer, depends on 8 modules, and no Package depends on it. The area modules link each other's Operations only through their Interfaces.
+**Good.** Makerspace's `protocol`, the outer part that maps the request protocol onto the modules, depends on 8 of them, and no Package depends on it. The area modules link each other's Operations only through their Interfaces, and 19 Rules that only their own module follows, all six of `protocol`'s among them, are marked `internal: true`.
 
-**Signal.** `package.cycle` and `link.downward` are errors of `check`. `vet.unstable_dependency` warns when a Package depends on a less stable one, which is how a measure can see the Dependency Rule without knowing the layers. The auditor checks the edges against the layers the architecture names. Whether Kinds should declare a layer, so that `vet` can check it, is a [question for the owner](../concepts/vet-plan.md#should-kinds-declare-a-layer).
+**Signal.** `link.downward` and `package.cycle` are errors of `check`. `vet.unstable_dependency` checks Martin's Stable Dependencies Principle on the sideways edges, from the graph alone: it warns about an edge from a more stable Package to a less stable one. A project's own limits are checked by `link.internal` when they are written as visibility, and by the reviewer when they are written as a Rule.
 
 ## Stable dependencies and stable abstractions
 
-**Rule.** What many Definitions link to must be stable, and stable things should be abstract. In a spec, the abstract Definitions are the types and contracts: Kinds, Concepts, formats, Interfaces and Rules. The concrete ones say what happens: Operations, Features, Endpoints and Commands. Link to behaviour only from its own module's Interface. When another module must change an operation's behaviour, let it state its need and link the operation, as an inverted dependency.
+**Rule.** What many depend on must rarely change, and Martin adds that what is stable should be abstract, so that it can stay put while what builds on it varies. A spec's abstractions are its Kinds: a Kind is to Definitions what an interface is to classes, the form others follow. So a Package's abstractness A is its share of Definitions of Kind `Kind`, and its distance from the main sequence is D = |A + I − 1|. A stable Package with no Kinds lies in the zone of pain, where change is costly; an unstable Package of Kinds nobody uses lies in the zone of uselessness. In practice: keep shared forms in Kinds at the stable place, keep what many Definitions link to small and settled, and let what changes often be what nothing links to. Link behaviour only from its own module's Interface; when another module must change an operation, let it state its need and link the operation, as an inverted dependency.
 
-**Why.** A change to a Definition puts back on the list everything that links to it. If many link to it, it has to be something that rarely changes, and a type changes more rarely than a procedure.
+**Why.** A change to a Definition puts back on the list everything that links to it, so the cost of a change is its fan-in times how often it happens. Martin's zone of pain is harmful only where things change: a stable, concrete Package that never changes costs nothing.
 
-In code the Package is the unit that is released and depended on, so the principle is read per Package, as a distance from the "main sequence". In Markitect the unit of verification is the Definition: a change to `members/register-member` puts back itself and its Interface, however many depend on `members/member` beside it. So read the principle per Definition. Measured per Package, every Makerspace area Package is half to two-thirds abstract whatever its stability, because it holds its vocabulary beside its operations, and the distance from the main sequence tells good Packages from bad ones no better than instability alone.
+In code the Package is the unit that is released and depended on. In Markitect the unit of verification is the Definition: a change to `members/register-member` puts back itself and its Interface, however many depend on `members/member` beside it. So read the Package measures as a pointer to where to look, and the Definition's fan-in as the cost.
 
-**Bad.** A Makerspace field list that links `values`, a page of thirteen formats, depends on the formats of money and of clock times when it uses only identifiers.
+**Bad.** In the 5× project's change steps, `members/member` (fan-in 90), `billing/charge` and `members/membership` (20 each) changed, and with three other widely linked Definitions their changes alone put 247 of the steps' 468 items back on the list. `members`, `billing` and `ledger` all lie in the zone of pain.
 
-**Good.** In Makerspace, Concepts carry the fan-in (median 6) and Operations do not (at most 2). `members/member` is linked by 24 Definitions; `members/register-member` by its Interface alone.
+**Good.** In Makerspace none of the five Definitions linked by 10 or more changed in eight steps; what changed at Root was the anchor and Rules nothing links. Concepts carry the fan-in (median 6) and Operations do not (at most 2): `members/member` is linked by 24 Definitions, `members/register-member` by its Interface alone.
 
-**Signal.** `vet.unstable_dependency` for Packages. For Definitions, the proposed `vet.hub` warns when one change would put more than a quarter of the spec back on the list.
+**Signal.** `vet.unstable_dependency` for the direction of edges. The [`vet` plan](../concepts/vet-plan.md) proposes A and D in `list --deps`, a warning for the zone of uselessness and, under `--strict`, one for the zone of pain; and `vet.hub` for a Definition whose change alone puts a fifth of the spec back on the list. Both Makerspace specs keep their Kinds at Root, so A is 0 in every other Package and D is 1 − I there.
 
 ## Cohesion and coupling
 
@@ -76,7 +76,7 @@ In code the Package is the unit that is released and depended on, so the princip
 
 **Good.** `equipment` and `members` link only inside and up, and depend on no other Package. Of the links a typical Makerspace Package makes, links up aside, 58 % stay inside. A Rule that binds its Package by scope and links nothing, such as `billing/due-date-and-block`, is fine: scope is location.
 
-**Signal.** `vet.coupling` warns above 5 dependencies. The proposed `vet.cohesion` warns about a Package that falls into two or more groups of two or more Definitions each; no Package of either Makerspace spec does. The outer layer is the exception by design: `protocol` wires other modules and has little cohesion of its own.
+**Signal.** `vet.coupling` warns above 5 dependencies. The proposed `vet.cohesion` warns about a Package that falls into two or more groups of two or more Definitions each; no Package of either Makerspace spec does. The outer part is the exception by design: `protocol` wires other modules and has little cohesion of its own.
 
 ## Complexity of a Definition
 
@@ -116,7 +116,7 @@ CRAP, the change-risk measure for code, is *comp² × (1 − cov)³ + comp*, wit
 
 ## One level of abstraction per Definition
 
-**Rule.** A Definition stays at one level. A Kind says what its Definitions contain. A Concept says what a thing is. A Rule states a constraint. An Operation says what happens. The project anchor and the architecture say what the whole is. Detail goes down into a Definition of its own, and a summary goes up.
+**Rule.** A Definition stays at one level. A Kind says what its Definitions contain and how one is verified; the builder, the reviewer and the auditor read it, and since a Definition's Kind is an input of its verification, a change to the Kind puts its Definitions back on the list. A Concept says what a thing is. A Rule states a constraint. An Operation says what happens. The project anchor and the architecture say what the whole is. Detail goes down into a Definition of its own, and a summary goes up.
 
 **Why.** A change at one level then leaves the others alone. A reader finds each fact at the level where it is decided.
 
@@ -128,7 +128,7 @@ CRAP, the change-risk measure for code, is *comp² × (1 − cov)³ + comp*, wit
 
 ## Everything has its place
 
-**Rule.** Put each Definition in the lowest Package that holds every Definition that uses it, its lowest common parent. Root holds the project anchor, the architecture, the project-wide Rules and the Kinds that several Packages use, and little else. A module's vocabulary goes into a Package of its own, even when every other module uses it.
+**Rule.** Put each Definition in the lowest Package that holds every Definition that uses it, its lowest common parent. Root holds the project anchor, the architecture, the project-wide Rules and the Kinds that several Packages use, and little else. A module's vocabulary goes into a Package of its own, even when every other module uses it. What only a Package and those below it may use is marked `internal: true`.
 
 **Why.** Placement is scope: a Rule at Root binds the whole project. It is also visibility. And Root can link nothing below it, so whatever a Root Definition needs must sit at Root too: a module at Root pulls its own dependencies up after it. Links up the tree are free, so coupling to Root shows in no Package's coupling.
 
@@ -153,7 +153,7 @@ CRAP, the change-risk measure for code, is *comp² × (1 − cov)³ + comp*, wit
 - `blocked`: flag
 ```
 
-**Good: one Definition per format, linked where it is used.** After the split, a change to one format lists between 1 and 50 Definitions, a median of 4. Following every link, Makerspace's four widest change steps fall from 85–88 % of the spec to 45–60 %. The header still names the area, as a Package link.
+**Good: one Definition per format, linked where it is used.** After the split, a change to one format lists between 1 and 50 Definitions, a median of 4. Following every link, Makerspace's four widest change steps fall from 85–88 % of the spec to 45–60 %. The header still names the area, as a Package link. `std` has no Kind for a value yet, so the split wrote each format as a `std/Concept`; the [`vet` plan](../concepts/vet-plan.md#a-new-std-kind-value) proposes `std/Value`.
 
 ```markdown
 **Fields**, in the formats of [[values]]:
@@ -178,7 +178,8 @@ CRAP, the change-risk measure for code, is *comp² × (1 − cov)³ + comp*, wit
 | Fan-out | Definitions it links to | 2, 8, 16 | 4, 9, 24 | Read, not warned |
 | Efferent coupling Ce | Packages a Package depends on | at most 8 | at most 12 | `vet.coupling` |
 | Instability I | Ce / (Ca + Ce) | 0 to 1 | 0 to 1 | `vet.unstable_dependency` |
-| Abstractness A, distance D | Abstract / (abstract + concrete); \|A + I − 1\| | A 0.5 to 1 | A 0.33 to 1 | Read, not warned |
+| Abstractness A, distance D | Share of Definitions of Kind `Kind`; \|A + I − 1\| | A 0.10 at Root, 0 elsewhere; 4 Packages in the zone of pain | 0.10, 0; 9 in the zone of pain | Proposed in `list --deps`; zone warnings |
+| Volatility × fan-in | Changes of a Definition times what each put on the list | no hub changed | 247 of 468 items from 9 hubs | Later: needs history |
 | Cohesion | Groups of a Package joined by its own links | none split | none split | Proposed `vet.cohesion` |
 | Size | Words in a Definition's body | median 88, max 430 | 99, 995 | `vet.definition_size` |
 | Statements | List items and table rows | median 6, max 25 | 7, 67 | Proposed `vet.statements` |
