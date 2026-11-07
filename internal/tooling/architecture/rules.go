@@ -52,14 +52,14 @@ type Rules struct {
 var Table = Rules{
 	Layers: []Layer{
 		{Name: "model", Title: "Canonical model", Meaning: "The model language over supplied bytes: Definitions, Kinds, links, visibility, cycles, manifest and lock."},
-		{Name: "assets", Title: "Built-in files", Meaning: "Files built into the binary: the standard Libraries, the skills and the harness of a Run."},
+		{Name: "assets", Title: "Built-in files", Meaning: "Files built into the binary: the standard Libraries, the skills and the harness of the work."},
 		{Name: "domain", Title: "Realization record", Meaning: "Registry pages, ownership and file accounting over a compiled model.", Imports: []string{"model"}},
-		{Name: "project", Title: "Project", Meaning: "Loads and checks a project's Markitect folder from a repository state.", Imports: []string{"model", "assets", "domain"}},
+		{Name: "project", Title: "Project", Meaning: "Loads and checks a project's Markitect folder from the files of a project folder.", Imports: []string{"model", "assets", "domain"}},
 		{Name: "service", Title: "Analysis", Meaning: "Questions about a loaded project: references, graph, impact with checklists, and lint.", Imports: []string{"model", "assets", "domain", "project"}},
-		{Name: "run", Title: "The process of a Run", Meaning: "The process of a Run in the tool: apply and verify, the checklist, the answers, submit, the hooks, the Result and landing.", Imports: []string{"model", "assets", "domain", "project", "service"}},
+		{Name: "run", Title: "The work", Meaning: "The work on a project folder, without Git: the checklist, the answers, gate, the certificate, the hook and the Result.", Imports: []string{"model", "assets", "domain", "project", "service"}},
 		{Name: "guardedwrite", Title: "Guarded write", Meaning: "Guarded working-tree writes for bundle installation, with the Git and path helpers they share with source snapshots."},
 		{Name: "build", Title: "Build data", Meaning: "Version identity and embedded license notices."},
-		{Name: "adapter", Title: "Adapters", Meaning: "Concrete Git, command-line, required-check and provider-session adapters; no adapter imports another.", Imports: []string{"model", "assets", "domain", "project", "service", "run", "build"}},
+		{Name: "adapter", Title: "Adapters", Meaning: "Concrete project-folder, command-line and release adapters; no adapter imports another.", Imports: []string{"model", "assets", "domain", "project", "service", "run", "build"}},
 		{Name: "composition", Title: "Composition", Meaning: "Constructs the command line with its adapters.", Imports: []string{"model", "project", "service", "run", "adapter"}},
 		{Name: "command", Title: "Product commands", Meaning: "Thin entrypoints to product composition.", Imports: []string{"composition"}},
 		{Name: "maintenance", Title: "Maintenance", Meaning: "The import gate and release packaging, separate from product execution.", Imports: []string{"guardedwrite"}},
@@ -78,8 +78,7 @@ var Table = Rules{
 		{"internal/guardedwrite", "guardedwrite", "docs/architecture.md#distribution"},
 		{"internal/buildinfo", "build", "docs/architecture.md#distribution"},
 		{"internal/adapters/cli", "adapter", "docs/guides/model-language.md#commands"},
-		{"internal/adapters/repo", "adapter", "docs/guides/model-language.md#the-projects-markitect-folder"},
-		{"internal/adapters/rungit", "adapter", "internal/run/README.md#git"},
+		{"internal/adapters/folder", "adapter", "internal/run/README.md#the-folder"},
 		{"internal/adapters/upgrade", "adapter", "docs/guides/project-workflow.md#8-keep-it-current"},
 		{"internal/bootstrap", "composition", "docs/architecture.md#product-flow"},
 		{"cmd/markitect", "command", "docs/guides/model-language.md#commands"},
@@ -93,8 +92,7 @@ var Table = Rules{
 	Exceptions: []Exception{
 		{From: "internal/tooling/release", To: "internal/tooling/architecture", Reason: "The packager takes its source roots from this table."},
 		{From: "internal/tooling/release", To: "internal/buildinfo", TestOnly: true, Reason: "Tests compare the packaged notices with the embedded ones."},
-		{From: "internal/run", To: "internal/adapters/rungit", TestOnly: true, Reason: "The engine's scripted Runs use the host's real Git."},
-		{From: "internal/run", To: "internal/adapters/repo", TestOnly: true, Reason: "The work without a Run is tested on real folders."},
+		{From: "internal/run", To: "internal/adapters/folder", TestOnly: true, Reason: "The work is tested on real folders."},
 	},
 }
 

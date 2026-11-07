@@ -45,12 +45,12 @@ Root first, then one Package at a time. Use the standard Kinds; define a small p
 
 ### 5. Registry pages and the ignore file
 
-Make a list of every file: `git ls-files -co --exclude-standard`. The compiler sees exactly that set.
+Make a list of every file: the compiler sees the project folder without what its `.gitignore` files exclude, and `markitect check` names every one it finds unaccounted for (`file.unregistered`).
 
 - **One page per Package** (`.markitect/registry/<package path>.md`), with `paths` that claim its code, tests and documentation (`internal/members/**`, `docs/members*.md`). Root's page (`.markitect/registry.md`) has no patterns and lists what no one claims.
 - **List every file in its owner's table** with the Definitions it realizes (link every one it contributes to, tests too) and a short reason. The most specific pattern wins; a file may sit in an owned folder and still be missing from the list, which is an error.
 - **A file that serves several Packages** (README, CI, compose, build file) belongs to their lowest common parent, often Root, and links all Definitions it realizes.
-- **The ignore file**, `.markitect/ignore`, holds files that belong to no Package, one pattern per line with `#` for a comment: the license, generated or vendored files, lock files, binary assets. Patterns start at the top of the repository, and a folder's files are `folder/**`. Never ignore real source or documentation to make `check` pass; if a file realizes nothing, register it with no link instead, or ask. Do not list files Git ignores.
+- **The ignore file**, `.markitect/ignore`, holds files that belong to no Package, one pattern per line with `#` for a comment: the license, generated or vendored files, lock files, binary assets. Patterns start at the top of the repository, and a folder's files are `folder/**`. Never ignore real source or documentation to make `check` pass; if a file realizes nothing, register it with no link instead, or ask. Do not list files the `.gitignore` files exclude.
 - Start with `markitect check`: each `file.unregistered` line names a file still to place, so the output is your to-do list.
 
 ### 6. Iterate to a passing check

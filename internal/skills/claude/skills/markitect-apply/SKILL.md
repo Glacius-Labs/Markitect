@@ -8,4 +8,4 @@ allowed-tools: Bash(markitect checklist *), Bash(markitect gate), Bash(markitect
 
 Do what this printed. Each time an agent has ended, run markitect gate and do what it prints, until it passes or tells you to stop. You start the agents and change no file and store no answer yourself: what gate asks to build, fix or repair goes to the markitect-builder agent, started again with "Build the work.".
 
-When gate passes, or says the folder matches its newest certificate, commit the work together with its certificate and Result in one commit on the current branch, unless that is done already, and push nothing. Then tell the user in a line or two how it ended. If it lists errors in the spec, offer to fix them instead.
+When gate passes, or says the folder matches its newest certificate, commit the work together with its certificate and Result in one commit on the current branch, unless that is done already, and push nothing; in a folder that is not a Git repository, commit nothing and say that the work is ready to commit. Then tell the user in a line or two how it ended. If it lists errors in the spec, offer to fix them instead.

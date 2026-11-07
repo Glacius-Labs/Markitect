@@ -4,7 +4,7 @@ Main implements [concept 2.0](docs/concepts/v2-concept.md) and is being rebuilt 
 
 ## Ownership and layout
 
-All maintained Go code belongs to one root module. `cmd/markitect` delegates to `internal/bootstrap`, which constructs the CLI adapter with the Git adapter. `internal/model` and `internal/realization` compile the model and the realization record from supplied bytes, `internal/project` loads a project from one repository state, and `internal/analysis` answers questions about it; none of them reads files or starts processes itself. `internal/guardedwrite` guards bundle installation. Independent maintenance services have explicit `internal/tooling/` responsibilities; that parent grants no general import exemption.
+All maintained Go code belongs to one root module. `cmd/markitect` delegates to `internal/bootstrap`, which constructs the CLI adapter with the folder adapter and the work. `internal/model` and `internal/realization` compile the model and the realization record from supplied bytes, `internal/project` loads a project from one set of files, and `internal/analysis` answers questions about it; none of them reads files or starts processes itself. `internal/guardedwrite` guards bundle installation. Independent maintenance services have explicit `internal/tooling/` responsibilities; that parent grants no general import exemption.
 
 One rule table in [`internal/tooling/architecture/rules.go`](internal/tooling/architecture/rules.go) gives every package its layer and allowed imports; the [architecture](docs/architecture.md#layers) explains it and the generated [code map](docs/development/code-map.md) lists every package. Shared hermetic `internal/testkit` is test-only and imports no Markitect package. The standalone bootstrap in `packaging/bootstrap` and source smoke in `tools/smoke` import no product package.
 
@@ -38,7 +38,7 @@ python -B -m unittest discover -s tools/evaluation
 python -B -m unittest discover -s tools/makerspace-oracle -p test_*.py
 ```
 
-Broad Go suites run in Linux CI by manual dispatch (above). For now they are not run on Windows: real Git starts are much slower there, and the full suite takes about 50 minutes instead of about three ([measurement](docs/validation/windows-test-time-20261028.md); the owner parked the fix on 28 October 2026, see the [topics page](docs/workstreams/topics.md)). Tests that do not test time take their Run deadline from the test's own deadline, so the `-timeout` value bounds a hang.
+Broad Go suites run in Linux CI by manual dispatch (above). The product's tests run on plain folders and need no Git, so since 0.20.0 the whole Go suite takes about a minute on Windows too; only the release tooling's tests start Git, which is slow there ([earlier measurement](docs/validation/windows-test-time-20261028.md): about 50 minutes while the Run's tests used Git).
 
 Run `gofmt` on changed Go files and `git diff --check`. CI checks module checksums, tests with and without the race detector, vet, build, tracked Go formatting, every production/test/platform import against the architecture rule table, the packaged-source smoke, repository scripts, maintained documentation links, the independent Library oracle with its bounded transport, and the unit tests of the comparison, evaluation and Makerspace oracle tools. Obsolete engines and their tests/gates are removed together; no skips or success stubs may replace required checks.
 
@@ -54,7 +54,7 @@ Run the packaged source smoke in a fresh external work directory:
 go run ./tools/smoke -repo . -work ABSOLUTE_EMPTY_EXTERNAL_DIRECTORY
 ```
 
-It packages and builds root-layout source, tests the standalone bootstrap and drives the packaged CLI over a small project in a temporary repository: `init`, `check`, `lock`, `refs`, `graph`, `lint` and `impact`, and the refusal of a model that does not compile. It starts no agent or container, so it establishes no provider or release acceptance. The `bundle` smoke belongs to separately authorized release work and writes an isolated consumer installation.
+It packages and builds root-layout source, tests the standalone bootstrap and drives the packaged CLI over a small project in a plain folder: `init`, `check`, `lock`, `refs`, `graph` and `lint`, the work (`checklist`, `answer`, `gate`) that certifies it, `impact` from that certificate, and the refusal of a model that does not compile and of the retired commands. It starts no agent or container, so it establishes no provider or release acceptance. The `bundle` smoke belongs to separately authorized release work and writes an isolated consumer installation.
 
 ## Pull requests and parallel work
 

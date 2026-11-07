@@ -1214,7 +1214,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - The Run's starts and deadlines still bound the whole Run, so a Run that keeps moving without finishing still ends.
 - **Reason:** in the [fixed-starts re-measure](../validation/fixed-starts-remeasure-20261102.md), Root moved a program into new packages in stages, and its checker rightly rejected each unfinished state, since the old package still served requests. Each rejection used one attempt, although children's new approved work came between them. The Run stopped when only one package and the final wiring were left.
 - **Cost:** a Manager with busy children can be refused more often before the Run stops, up to the Run's starts. A stuck Manager whose child keeps delivering real but useless changes is not caught by this limit, only by the Run's starts and deadline. For an earlier form of the same idea, see [DEC-054](#dec-054-a-rejection-that-finds-fewer-gaps-does-not-count), which belongs to V1's process and counted gaps instead.
-- **Behavior owner:** the [Run engine's limits](../../internal/run/README.md#the-one-door).
+- **Behavior owner:** the Run engine's limits, which went with the Run in 0.20.0 ([lean plan](lean-tool-plan.md#order-of-work)).
 
 ### DEC-091 Concept 3.0 is the target
 

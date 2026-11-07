@@ -55,7 +55,7 @@ func updateWith(t *testing.T, version string, rel *fakeReleases, args ...string)
 	emptyHome(t)
 	var out, errOut bytes.Buffer
 	c := cli.CLI{
-		Git: git{}, Runs: runs{}, Stdout: &out, Stderr: &errOut,
+		Folders: folders{}, Work: work(), Stdout: &out, Stderr: &errOut,
 		Releases:   rel,
 		Executable: func() (string, error) { return filepath.Join("bin", "markitect"), nil },
 		Version:    func() string { return version },
@@ -146,7 +146,7 @@ func TestUpdateLeavesABinaryThePluginManagesToThePlugin(t *testing.T) {
 func TestThePluginBringsThePersonalSkill(t *testing.T) {
 	emptyHome(t)
 	t.Setenv(cli.PluginEnv, "0.15.0")
-	r := testkit.NewRepo(t)
+	r := newFolder(t)
 	out := mustRun(t, r.Dir, "init", "--name", "Demo")
 	if strings.Contains(out, "tip:") {
 		t.Fatalf("init sent a plugin user to markitect install:\n%s", out)
@@ -224,7 +224,7 @@ func TestVersionNamesAPluginBinary(t *testing.T) {
 	emptyHome(t)
 	t.Setenv(cli.PluginEnv, "0.15.0")
 	var out bytes.Buffer
-	cli.CLI{Git: git{}, Runs: runs{}, Stdout: &out, Stderr: io.Discard}.Run(context.Background(), []string{"version", "--repo", testkit.TempDir(t)})
+	cli.CLI{Folders: folders{}, Work: work(), Stdout: &out, Stderr: io.Discard}.Run(context.Background(), []string{"version", "--repo", testkit.TempDir(t)})
 	wantAll(t, out.String(), "binary: comes with the Claude Code plugin (0.15.0)", "personal skill: comes with the plugin")
 }
 

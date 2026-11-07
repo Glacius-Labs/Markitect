@@ -1,6 +1,12 @@
-package repo
+// Package folder reads and writes a project folder without Git (DEC-097): it
+// walks the folder and skips what the project's .gitignore files exclude, read as
+// plain text, nested ones included. Global Git settings are out of scope; where
+// this differs from Git's view, check names the file. A folder with its own .git
+// is another repository and is not walked, as Git does not.
+package folder
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -12,19 +18,22 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
-// Folder reads a project folder without Git (DEC-097): it walks the folder and
-// skips what the project's .gitignore files exclude, read as plain text, nested
-// ones included. Global Git settings are out of scope; where this differs from
-// Git's view, check names the file. A folder with its own .git is another
-// repository and is not walked, as Git does not.
-type Folder struct{}
+// Disk opens project folders on the local disk: for the work (Root, Open) and for
+// the command line (Project, At).
+type Disk struct{}
 
 // Root is the project folder that holds dir: the nearest folder, dir or above,
-// with Markitect's manifest in it.
-func (Folder) Root(dir string) (string, error) {
+// with Markitect's manifest in it. dir must exist, so that a mistyped folder is
+// not taken for the project around it.
+func (Disk) Root(dir string) (string, error) {
 	abs, err := filepath.Abs(dir)
 	if err != nil {
 		return "", err
+	}
+	if info, err := os.Stat(abs); err != nil {
+		return "", err
+	} else if !info.IsDir() {
+		return "", fmt.Errorf("%s is no folder", dir)
 	}
 	for at := abs; ; {
 		if info, err := os.Stat(filepath.Join(at, filepath.FromSlash(project.ManifestFile))); err == nil && !info.IsDir() {
@@ -40,12 +49,106 @@ func (Folder) Root(dir string) (string, error) {
 
 // Open walks the project folder at root, and returns its files and the symbolic
 // links among them with where each points.
-func (Folder) Open(root string) (project.Repository, map[string]string, error) {
+func (Disk) Open(root string) (project.Repository, map[string]string, error) {
 	w, err := Walk(root)
 	if err != nil {
 		return nil, nil, err
 	}
 	return w, w.links, nil
+}
+
+// Project opens the project folder that holds dir.
+func (d Disk) Project(dir string) (*Workspace, error) {
+	root, err := d.Root(dir)
+	if err != nil {
+		return nil, err
+	}
+	return &Workspace{Dir: root, ignore: newIgnores(root)}, nil
+}
+
+// At opens dir itself, which need not be a project yet: init makes it one.
+func (Disk) At(dir string) (*Workspace, error) {
+	abs, err := filepath.Abs(dir)
+	if err != nil {
+		return nil, err
+	}
+	if info, err := os.Stat(abs); err != nil {
+		return nil, err
+	} else if !info.IsDir() {
+		return nil, fmt.Errorf("%s is no folder", dir)
+	}
+	return &Workspace{Dir: abs, ignore: newIgnores(abs)}, nil
+}
+
+// Workspace is a project folder that a command reads and writes. Files walks it
+// at each call, so what the command wrote is seen at once.
+type Workspace struct {
+	Dir    string
+	ignore *ignores
+}
+
+// Root returns the project folder.
+func (w *Workspace) Root() string { return w.Dir }
+
+// Files returns every file a walk of the folder finds.
+func (w *Workspace) Files() ([]string, error) {
+	walked, err := Walk(w.Dir)
+	if err != nil {
+		return nil, err
+	}
+	return walked.Files()
+}
+
+// Read reads a file, as the walk does.
+func (w *Workspace) Read(file string) ([]byte, error) {
+	return readFile(w.Dir, file)
+}
+
+// GitIgnored says whether the project's .gitignore files exclude a file.
+func (w *Workspace) GitIgnored(file string) bool { return w.ignore.excludes(file) }
+
+// Write writes a file of the folder, creating its folders.
+func (w *Workspace) Write(file string, data []byte) error {
+	full := filepath.Join(w.Dir, filepath.FromSlash(file))
+	if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+		return err
+	}
+	return os.WriteFile(full, data, 0o644)
+}
+
+// Exists reports whether a path exists in the folder.
+func (w *Workspace) Exists(file string) bool {
+	_, err := os.Lstat(filepath.Join(w.Dir, filepath.FromSlash(file)))
+	return err == nil
+}
+
+// Remove deletes a file of the folder.
+func (w *Workspace) Remove(file string) error {
+	return os.Remove(filepath.Join(w.Dir, filepath.FromSlash(file)))
+}
+
+// List returns the files below a folder of the project, relative to the project
+// folder, whether or not the walk would take them.
+func (w *Workspace) List(dir string) ([]string, error) {
+	var out []string
+	root := filepath.Join(w.Dir, filepath.FromSlash(dir))
+	err := filepath.WalkDir(root, func(p string, d os.DirEntry, err error) error {
+		if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				return filepath.SkipDir
+			}
+			return err
+		}
+		if !d.IsDir() {
+			rel, err := filepath.Rel(w.Dir, p)
+			if err != nil {
+				return err
+			}
+			out = append(out, filepath.ToSlash(rel))
+		}
+		return nil
+	})
+	return out, err
 }
 
 // Walk walks the project folder at root.
@@ -139,33 +242,85 @@ func (w *Walked) Read(file string) ([]byte, error) {
 	if w.repos[file] {
 		return []byte(repositoryEntry), nil
 	}
-	p := filepath.Join(w.Dir, filepath.FromSlash(file))
-	if info, err := os.Lstat(p); err == nil && info.Mode()&os.ModeSymlink != 0 {
+	return readFile(w.Dir, file)
+}
+
+// readFile reads a file of the folder at root: another repository as its entry,
+// and a symbolic link as where it points, as Git stores them.
+func readFile(root, file string) ([]byte, error) {
+	p := filepath.Join(root, filepath.FromSlash(file))
+	info, err := os.Lstat(p)
+	switch {
+	case err != nil:
+		return nil, err
+	case info.Mode()&os.ModeSymlink != 0:
 		to, err := os.Readlink(p)
 		return []byte(to), err
+	case info.IsDir() && nestedRepository(p):
+		return []byte(repositoryEntry), nil
 	}
 	return os.ReadFile(p)
 }
 
 // GitIgnored says whether the project's .gitignore files exclude a file.
-func (w *Walked) GitIgnored(file string) bool {
+func (w *Walked) GitIgnored(file string) bool { return w.ignore.excludes(file) }
+
+// excludes says whether the .gitignore files exclude a file, itself or a folder
+// it lies in.
+func (g *ignores) excludes(file string) bool {
 	parts := strings.Split(file, "/")
 	for i := 1; i < len(parts); i++ {
-		if w.ignore.ignored(strings.Join(parts[:i], "/"), true) {
+		if g.ignored(strings.Join(parts[:i], "/"), true) {
 			return true
 		}
 	}
-	return w.ignore.ignored(file, false)
+	return g.ignored(file, false)
 }
 
-// ignores is the .gitignore files of a folder, read as they are needed.
+// ignores is the .gitignore files of a folder, read as they are needed, and of the
+// folders above it up to the top of the repository it lies in, if any.
 type ignores struct {
 	root  string
 	files map[string][]pattern
+	// above holds the .gitignore files above root, the outermost first.
+	above []ancestor
+}
+
+// ancestor is the .gitignore file of a folder above the project folder: its
+// patterns, and the path from that folder down to the project folder.
+type ancestor struct {
+	down     string
+	patterns []pattern
 }
 
 func newIgnores(root string) *ignores {
-	return &ignores{root: root, files: map[string][]pattern{}}
+	return &ignores{root: root, files: map[string][]pattern{}, above: ancestors(root)}
+}
+
+// ancestors reads the .gitignore files of the folders above root, up to the
+// nearest one with a .git, which is the top of the repository the project lies
+// in, as Git applies them. A project in no repository has none.
+func ancestors(root string) []ancestor {
+	if _, err := os.Lstat(filepath.Join(root, ".git")); err == nil {
+		return nil
+	}
+	var out []ancestor
+	down := ""
+	for at := root; ; {
+		up := filepath.Dir(at)
+		if up == at {
+			// No repository above: no folder above counts.
+			return nil
+		}
+		down = path.Join(filepath.Base(at), down)
+		if data, err := os.ReadFile(filepath.Join(up, ".gitignore")); err == nil {
+			out = append([]ancestor{{down: down, patterns: parseIgnore("", string(data))}}, out...)
+		}
+		if _, err := os.Lstat(filepath.Join(up, ".git")); err == nil {
+			return out
+		}
+		at = up
+	}
 }
 
 // pattern is one line of a .gitignore file.
@@ -243,6 +398,14 @@ func (g *ignores) ignored(rel string, dir bool) bool {
 		}
 	}
 	ignored := false
+	// The files above the project folder match the path from their own folder.
+	for _, a := range g.above {
+		for _, p := range a.patterns {
+			if p.matches(path.Join(a.down, rel), dir) {
+				ignored = !p.negate
+			}
+		}
+	}
 	for i := len(folders) - 1; i >= 0; i-- {
 		for _, p := range g.patterns(folders[i]) {
 			if p.matches(rel, dir) {

@@ -161,7 +161,7 @@ func splitPointers(s string) []string {
 }
 
 // checkAnswers is what the tool checks of the answers it has: that each location
-// exists in the commit under review and that a named test exists. It returns the
+// exists in the folder as it is and that a named test exists. It returns the
 // problems for the reviewer to correct, and the locations the registry does not
 // list for their items, which are reported and refuse nothing.
 func checkAnswers(state project.Repository, items []Item, answers map[string]Answer) (problems, missingLinks []string) {
@@ -184,7 +184,7 @@ func checkAnswers(state project.Repository, items []Item, answers map[string]Ans
 			p := &a.Pointers[i]
 			data, err := state.Read(p.File)
 			if err != nil {
-				problems = append(problems, fmt.Sprintf("%s: %s does not exist in this commit", it.Key, p.File))
+				problems = append(problems, fmt.Sprintf("%s: %s does not exist in the folder", it.Key, p.File))
 				continue
 			}
 			if p.Line > strings.Count(string(data), "\n")+1 {

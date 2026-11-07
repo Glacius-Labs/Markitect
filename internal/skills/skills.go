@@ -1,6 +1,6 @@
 // Package skills holds what ships inside the markitect binary for agents: the
 // modeling skill, the start and Extract skills built on it, which markitect init
-// installs where coding agents look for skills, and the harness of a Run for
+// installs where coding agents look for skills, and the harness of the work for
 // Claude Code.
 package skills
 
@@ -27,15 +27,16 @@ type File struct {
 // instruction file of a project and the personal skill all print it.
 const About = `A Markitect project has one spec: the Markdown files in .markitect/model/. The
 spec is the authority over the code, tests and documentation: where they differ,
-the spec is right. People model the spec, and markitect apply has an agent build
-it in the project's folder, a fresh reviewer check it, and the work land.
+the spec is right. People model the spec, and the /markitect-apply skill has an
+agent build it in the project's folder, a fresh reviewer check it, and markitect
+gate certify it.
 `
 
 // PersonalName is the personal skill's folder name below a user's skills folder.
 const PersonalName = "markitect"
 
 // personalHead and personalTail surround About in the personal skill. It allows no
-// command in advance, since apply starts sessions.
+// command in advance.
 const personalHead = `---
 name: markitect
 description: Use when someone mentions Markitect, wants to set it up, start a project with it or upgrade it, or asks about the markitect command or a .markitect folder. It says what Markitect is and how to begin.

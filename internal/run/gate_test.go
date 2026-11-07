@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	folders "github.com/Glacius-Labs/Markitect/internal/adapters/repo"
+	"github.com/Glacius-Labs/Markitect/internal/adapters/folder"
 	"github.com/Glacius-Labs/Markitect/internal/analysis"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
@@ -43,7 +43,7 @@ func newPlainOf(t *testing.T, files map[string]string) *plain {
 	}
 	// Every reading of the clock is a second later, so that each certificate has
 	// its own time.
-	p.engine = &run.Engine{Folder: folders.Folder{}, Cache: testkit.TempDir(t), Now: func() time.Time {
+	p.engine = &run.Engine{Folder: folder.Disk{}, Cache: testkit.TempDir(t), Now: func() time.Time {
 		p.now = p.now.Add(time.Second)
 		return p.now
 	}}
@@ -948,58 +948,29 @@ func TestTheNewestCertificateCounts(t *testing.T) {
 	has(t, p.list(run.ChecklistRequest{}), "The base is the certificate .markitect/results/gate-20261106")
 }
 
-// While a Run is open in the folder, its work is the Run's; status adds the work
-// without a Run and changes nothing.
-func TestGateBesideARun(t *testing.T) {
-	t.Run("an open run", func(t *testing.T) {
-		f := newFixture(t)
-		f.engine.Folder, f.engine.Cache = folders.Folder{}, testkit.TempDir(t)
-		s, wt := f.apply()
-		v, err := f.engine.Gate(context.Background(), run.GateRequest{Dir: wt})
-		if err != nil || v.Done {
-			t.Fatalf("%v %+v", err, v)
-		}
-		has(t, v.Text, "Run "+s.Run+" is open")
-		if _, _, err := f.engine.Checklist(context.Background(), run.ChecklistRequest{Dir: wt, Full: true}); !errors.Is(err, run.ErrUsage) {
-			t.Fatalf("checklist --full during a run: %v", err)
-		}
-		text, _, err := f.engine.Checklist(context.Background(), run.ChecklistRequest{Dir: wt})
-		if err != nil {
-			t.Fatal(err)
-		}
-		has(t, text, "You build Markitect run "+s.Run, "markitect submit")
-		text, ok, err := f.engine.Checklist(context.Background(), run.ChecklistRequest{Dir: wt, Start: true})
-		if err != nil || ok {
-			t.Fatalf("checklist --start during a run: %v %v", ok, err)
-		}
-		has(t, text, "Run "+s.Run+" is open", "no work begins beside it")
-	})
-	t.Run("status", func(t *testing.T) {
-		f := newFixture(t)
-		f.engine.Folder, f.engine.Cache = folders.Folder{}, testkit.TempDir(t)
-		ctx := context.Background()
-		text, _, err := f.engine.Checklist(ctx, run.ChecklistRequest{Dir: f.repo.Dir})
-		if err != nil {
-			t.Fatal(err)
-		}
-		var lines []string
-		for _, k := range reviewKeys(text) {
-			lines = append(lines, k+": ok README.md:1")
-		}
-		if _, _, err := f.engine.Answer(ctx, f.repo.Dir, []byte(strings.Join(lines, "\n"))); err != nil {
-			t.Fatal(err)
-		}
-		before := f.repo.Git("status", "--porcelain")
-		status, err := f.engine.Status(ctx, f.repo.Dir)
-		if err != nil {
-			t.Fatal(err)
-		}
-		has(t, status, "No run on this branch yet", "Without a run", "0 without, 0 wrong", "No certificate yet")
-		if again, _ := f.engine.Status(ctx, f.repo.Dir); again != status {
-			t.Fatalf("status changed what it reads:\n%s\n%s", status, again)
-		}
-		if after := f.repo.Git("status", "--porcelain"); after != before {
-			t.Fatalf("status changed the folder: %s", after)
-		}
-	})
+// status says how the work stands, with an open report and the newest
+// certificate, and changes nothing.
+func TestStatus(t *testing.T) {
+	p := newPlain(t)
+	status, err := p.engine.Status(context.Background(), p.dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	has(t, status, "No work is under way", "No certificate yet")
+	p.certify()
+	p.specChange()
+	p.list(run.ChecklistRequest{})
+	p.gate(run.GateRequest{SpecProblem: contradiction})
+	before := p.results("")
+	status, err = p.engine.Status(context.Background(), p.dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	has(t, status, "The list has 1 item", "0 with an answer", "The builder reported a spec problem, which waits for a reviewer", contradiction, "differ from the newest certificate", m+"loan-limit.md")
+	if again, _ := p.engine.Status(context.Background(), p.dir); again != status {
+		t.Fatalf("status changed what it reads:\n%s\n%s", status, again)
+	}
+	if after := p.results(""); strings.Join(after, ",") != strings.Join(before, ",") {
+		t.Fatalf("status wrote results: %v", after)
+	}
 }

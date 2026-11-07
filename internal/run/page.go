@@ -6,16 +6,10 @@ import (
 	"strings"
 )
 
-// Page renders the Result page as Markdown: the one page a Run ends with, or the
-// page gate writes.
+// Page renders gate's Result page as Markdown.
 func Page(r *Result) []byte {
 	var b bytes.Buffer
-	gate := isGate(r)
-	if gate {
-		fmt.Fprintf(&b, "# Gate %s: %s\n\n", r.Run, r.State)
-	} else {
-		fmt.Fprintf(&b, "# Run %s: %s\n\n", r.Run, r.State)
-	}
+	fmt.Fprintf(&b, "# Gate %s: %s\n\n", r.Name, r.State)
 	fmt.Fprintf(&b, "%s.\n\n", capitalize(r.Why))
 	b.WriteString("| | |\n|---|---|\n")
 	row := func(k, v string) {
@@ -24,16 +18,9 @@ func Page(r *Result) []byte {
 		}
 	}
 	row("Command", r.Command)
-	if gate {
-		row("State", r.State)
-	}
-	row("Outcome", r.Outcome)
-	row("Target", r.Target)
+	row("State", r.State)
 	row("Base", r.Base)
-	row("Start", r.Start)
 	row("Certificate", r.Certificate)
-	row("Work", r.Work)
-	row("Run branch", r.Branch)
 	if r.Full {
 		row("Scope", "full")
 	}
@@ -42,10 +29,6 @@ func Page(r *Result) []byte {
 	}
 	row("Began", r.Began.UTC().Format("2006-01-02 15:04:05 UTC"))
 	row("Ended", r.Ended.UTC().Format("2006-01-02 15:04:05 UTC"))
-	if !gate {
-		row("Full check", fullCheckLine(r))
-	}
-	row("Session failure", r.Failure)
 
 	if len(r.OwnerDecisions) > 0 {
 		b.WriteString("\n## Decisions for the owner\n\n")
@@ -127,12 +110,6 @@ func Page(r *Result) []byte {
 			fmt.Fprintf(&b, "- %s\n", oneLine(n))
 		}
 	}
-	if len(r.Replaced) > 0 {
-		b.WriteString("\n## Replaced Run branches\n\nThis landing covers the impact of these kept Runs, so their branches are deleted with it:\n\n")
-		for _, branch := range r.Replaced {
-			fmt.Fprintf(&b, "- %s\n", branch)
-		}
-	}
 	return b.Bytes()
 }
 
@@ -151,23 +128,15 @@ func pointers(ps []Pointer) string {
 	return strings.Join(parts, ", ")
 }
 
-// FindingsPage renders verify's Findings as a Findings page, the input of
-// apply --findings.
+// FindingsPage renders a review's Findings as a Findings page, the input of
+// checklist --findings.
 func FindingsPage(r *Result) []byte {
 	var b bytes.Buffer
-	if isGate(r) {
-		fmt.Fprintf(&b, "# Findings of gate %s\n", r.Run)
-	} else {
-		fmt.Fprintf(&b, "# Findings of Run %s\n", r.Run)
-	}
+	fmt.Fprintf(&b, "# Findings of gate %s\n", r.Name)
 	for _, f := range r.Findings {
 		fmt.Fprintf(&b, "\n## [[%s]]\n\nObserved: %s\n\nExpected: %s\n", f.Definition, oneLine(f.Observed), oneLine(f.Expected))
 	}
 	return b.Bytes()
-}
-
-func isGate(r *Result) bool {
-	return r.Command == commandGate || r.Command == commandGateFindings
 }
 
 func cell(s string) string {

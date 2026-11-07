@@ -1,6 +1,6 @@
 # Architecture
 
-How the source is composed, where each responsibility lives and which contracts hold between the packages. This branch builds [draft concept 4.0](concepts/v4-concept.md); [concept 3.0](concepts/v3-concept.md) stays the target until the owner accepts it. T1 built the spec language and its commands, and `apply` and `verify` are [the process of a Run](../internal/run/README.md).
+How the source is composed, where each responsibility lives and which contracts hold between the packages. This branch builds [draft concept 4.0](concepts/v4-concept.md); [concept 3.0](concepts/v3-concept.md) stays the target until the owner accepts it. T1 built the spec language and its commands; [the work](../internal/run/README.md) (`checklist`, `answer`, `gate`) checks what a driver's agents build, and the tool uses no Git ([DEC-096](concepts/register.md#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](concepts/register.md#dec-097-markitect-uses-no-git)).
 
 This page owns the package contracts. The [model language guide](guides/model-language.md) owns the language, the `.markitect/` layout and the commands; the [code map](development/code-map.md) lists every package with its owning document. V1's Run, Apply, adapter and state architecture is kept at the base commit of T1: [architecture of V1](https://github.com/Glacius-Labs/Markitect/blob/f23c2e12d9833efa61e5e65c90018016423abe74/docs/architecture.md).
 
@@ -8,18 +8,17 @@ This page owns the package contracts. The [model language guide](guides/model-la
 
 `cmd/markitect → internal/bootstrap → CLI adapter → Project → analysis`.
 
-- `cmd/markitect` only calls `bootstrap.Run`. Bootstrap constructs the CLI with its Git adapter and nothing else.
-- The CLI adapter (`internal/adapters/cli`) parses the arguments, opens the repository through its own `Git` port and renders Markdown or JSON. It calls Project to load and check the project, and analysis for `refs`, `graph`, `impact` and `lint`. `init` and `lock` write through the same port.
-- The repo adapter (`internal/adapters/repo`) implements that port with Git: the working tree as Git sees it (tracked files and untracked files Git does not ignore), a base commit, and the files changed between them.
-- Project (`internal/project`) reads one repository state through its `Repository` port, so the same load runs over the working tree and over a base commit. It parses the manifest and lock, takes the standard Libraries from the binary and other Libraries from `.markitect/libraries/`, compiles the model and accounts for every file. A project with compile errors still loads as far as its files allow, so `refs`, `graph` and `lint` can run over it.
+- `cmd/markitect` only calls `bootstrap.Run`. Bootstrap constructs the CLI with the folder adapter, the engine of the work and the releases `update` installs.
+- The CLI adapter (`internal/adapters/cli`) parses the arguments, opens the project folder through its own `Folders` port and renders Markdown or JSON. It calls Project to load and check the project, and analysis for `refs`, `graph`, `impact` and `lint`. `init` and `lock` write through the same port.
+- The folder adapter (`internal/adapters/folder`) implements that port without Git: the project folder is the nearest one with the manifest, and its files are what a walk finds without what its `.gitignore` files exclude, read as text.
+- Project (`internal/project`) reads one set of files through its `Repository` port, so the same load runs over the folder and over the copy of the spec a certificate holds. It parses the manifest and lock, takes the standard Libraries from the binary and other Libraries from `.markitect/libraries/`, compiles the model and accounts for every file. A project with compile errors still loads as far as its files allow, so `refs`, `graph` and `lint` can run over it.
 - Analysis (`internal/analysis`) answers questions about a loaded project: references, the Package graph, impact (the changed and reached Definitions and files) and lint warnings.
 
 None of these commands starts an agent, a container or a Command, and none needs credentials. The [commands](guides/model-language.md#commands) section gives their options and exit codes.
 
-`apply`, `verify` and the commands an agent calls run `cmd/markitect → internal/bootstrap → CLI adapter → the process of a Run`. The CLI adapter parses the options and calls its `Runs` port; bootstrap implements it with [the process](../internal/run/README.md) (`internal/run`) over Git work in the user's own repository (`internal/adapters/rungit`). `apply` and `verify` open a Run and say which agent to start, and the owner's own session starts it: nothing in the tool starts or drives an agent, which calls `markitect` like any other tool.
+`checklist`, `answer`, `gate` and `status` run `cmd/markitect → internal/bootstrap → CLI adapter → the work`. Bootstrap builds [the work](../internal/run/README.md) (`internal/run`) over the folder adapter, with its state in the user's cache folder. `checklist --start` says which agent to start, and the driver, by default the owner's own Claude Code session through the `/markitect-apply` and `/markitect-verify` skills, starts it and makes every Git step: nothing in the tool starts or drives an agent, which calls `markitect` like any other tool.
 
-
-A Run needs Git, `sh` and Claude Code on the user's own login, and no container: its agents are subagents of the owner's session, with the user's rights, in the owner's folder ([draft concept 4.0 §7](concepts/v4-concept.md#7-how-sure-we-are)).
+The default driver needs Claude Code on the user's own login, and no container: its agents are subagents of the owner's session, with the user's rights, in the owner's folder ([draft concept 4.0 §7](concepts/v4-concept.md#7-how-sure-we-are)).
 
 ## Layers
 
@@ -30,11 +29,11 @@ All Go packages use one root module. One rule table in [`internal/tooling/archit
 | Model language: Definitions, Kinds, links, visibility, cycles, manifest and lock, over supplied bytes | `internal/model` | No other Markitect package |
 | Files built into the binary: the standard Libraries `std`, `rest` and `cli`, and the modeling and Extract skills | `internal/libraries`, `internal/skills` | No other Markitect package |
 | Registry pages, ownership by path pattern, file accounting and stale realization | `internal/realization` | Model |
-| Loading and checking a project's `.markitect/` folder from one repository state | `internal/project` | Model, the built-in files, realization; its own `Repository` port |
+| Loading and checking a project's `.markitect/` folder from one set of files | `internal/project` | Model, the built-in files, realization; its own `Repository` port |
 | References, graph, impact with the reached Definitions and files, lint | `internal/analysis` | Project and the packages below it |
-| The process of a Run: `apply`, `verify`, the checklist, the answers, `submit`, the hooks, the Result and landing | `internal/run` | Analysis and the packages below it |
-| Git and command-line adapters; no adapter imports another | `internal/adapters/repo`, `internal/adapters/cli`, `internal/adapters/rungit` (a Run's Git) | Their inward consumers and build data |
-| Composition | `internal/bootstrap` | The adapters and the process of a Run |
+| The work: the checklist, the answers, `gate`, the certificate, the hook and the Result | `internal/run` | Analysis and the packages below it |
+| Project-folder, command-line and release adapters; no adapter imports another | `internal/adapters/folder`, `internal/adapters/cli`, `internal/adapters/upgrade` | Their inward consumers and build data |
+| Composition | `internal/bootstrap` | The adapters and the work |
 | Entrypoints | `cmd/markitect` | Bootstrap |
 | Guarded working-tree writes for bundle installation; version and license notices | `internal/guardedwrite`, `internal/buildinfo` | No other Markitect package |
 | Maintenance | `internal/tooling/*`, `cmd/markitect-release` | The guarded writer and build data; separate from product execution |

@@ -2,124 +2,61 @@ package run
 
 import "time"
 
-// ResultFormat is the version of the Result's JSON form.
-const ResultFormat = 4
-
-// Outcomes of a Run: only a landed one changed the owner's branch.
+// States say how gate ended the work or a review of it.
 const (
-	Landed    = "landed"
-	NotLanded = "not-landed"
-)
-
-// States say how a Run ended, more precisely than its outcome.
-const (
-	// StateLanded: the result is on the owner's branch.
-	StateLanded = "landed"
-	// StateNothing: nothing is affected; no agent started.
-	StateNothing = "nothing-to-do"
-	// StateVerified: verify found every item conforming.
-	StateVerified = "verified"
-	// StateFindings: verify found items that do not conform, or decisions for
-	// the owner.
-	StateFindings = "findings"
-	// StateCheckFailed: the spec has an error; no agent started.
-	StateCheckFailed = "check-failed"
-	// StateSpecProblem: the spec contradicts itself or leaves open something that
-	// changes behaviour at the project's boundary. Nothing landed.
-	StateSpecProblem = "spec-problem"
-	// StateRefused: the repair rounds or the calls of submit ran out. Nothing
-	// landed.
-	StateRefused = "refused"
-	// StateKept: the work passed but cannot land; it stays on its own branch.
-	StateKept = "kept"
-	// StateStopped: the owner ended the Run. Nothing landed.
-	StateStopped = "stopped"
-	// StateIncomplete: a deadline, or something the machine lacks. Nothing it did
-	// is reported as success.
-	StateIncomplete = "incomplete"
-	// StatePassed: gate found every item answered and none wrong, and wrote a
+	// StatePassed: every item has an answer and none is wrong; gate wrote a
 	// certificate.
 	StatePassed = "passed"
+	// StateSpecProblem: the spec contradicts itself or leaves open something that
+	// changes behaviour at the project's boundary. Nothing is certified.
+	StateSpecProblem = "spec-problem"
+	// StateRefused: the repair rounds ran out. Nothing is certified.
+	StateRefused = "refused"
+	// StateVerified: a review of finished work found every item conforming.
+	StateVerified = "verified"
+	// StateFindings: a review of finished work found items that do not conform,
+	// or decisions for the owner.
+	StateFindings = "findings"
 )
 
-// Result is what a Run's Result page shows. The tool writes it from what
-// happened, never an agent.
+// Result is what gate's Result page shows. The tool writes it from what happened,
+// never an agent.
 type Result struct {
-	Format  int    `json:"format"`
-	Run     string `json:"run"`
-	Command string `json:"command"`
-	Outcome string `json:"outcome"`
-	State   string `json:"state"`
-	// Why says in one line why the Run ended as it did.
-	Why string `json:"why"`
-	// Base is the commit impact was computed from, Start the commit the Run
-	// started from and Work the commit its work ended in.
-	Base  string `json:"base,omitempty"`
-	Start string `json:"start,omitempty"`
-	Work  string `json:"work,omitempty"`
+	// Name names the page: gate-TIME-STATE.
+	Name    string
+	Command string
+	State   string
+	// Why says in one line why the work ended as it did.
+	Why string
+	// Base is the certificate the change started from, "none" without one.
+	Base string
 	// Certificate is the certificate gate wrote beside a passing Result.
-	Certificate string `json:"certificate,omitempty"`
-	// Target is the owner's branch; Branch the branch a Result that does not land
-	// stays on.
-	Target string `json:"target"`
-	Branch string `json:"branch,omitempty"`
-	Full   bool   `json:"full"`
-
+	Certificate string
+	Full        bool
 	// Items holds each item's latest answer.
-	Items []ResultItem `json:"items"`
+	Items []ResultItem
 	// Reports are the spec problems the builder reported, with the reviewer's
 	// word on each.
-	Reports        []ResultReport  `json:"reports,omitempty"`
-	OwnerDecisions []OwnerDecision `json:"ownerDecisions"`
-	Findings       []ResultFinding `json:"findings"`
-	// Unsettled lists what verify found that names no Definition, such as an
-	// error from check.
-	Unsettled []string `json:"unsettled,omitempty"`
+	Reports        []ResultReport
+	OwnerDecisions []OwnerDecision
+	Findings       []ResultFinding
+	// Unsettled lists what a review of finished work found that names no
+	// Definition, such as an error from check.
+	Unsettled []string
 	// MissingLinks lists locations a reviewer named that the registry does not
 	// list for that item.
-	MissingLinks []string `json:"missingLinks,omitempty"`
-	ImpactNotes  []string `json:"impactNotes,omitempty"`
+	MissingLinks []string
+	ImpactNotes  []string
 	// Repairs counts the repair rounds the work took, and SentBack says what each
 	// round went back for.
-	Repairs  int      `json:"repairs"`
-	SentBack []string `json:"sentBack,omitempty"`
-	// Failure says why the session's last turn ended on an API error.
-	Failure string `json:"failure,omitempty"`
-	// Replaced lists the kept Run branches a landing covers; they are deleted with
-	// it.
-	Replaced []string `json:"replaced,omitempty"`
-	// FullCheck says how many changes have landed on the branch since the last
-	// full check.
-	FullCheck FullCheck `json:"fullCheck"`
-	Began     time.Time `json:"began"`
-	Ended     time.Time `json:"ended"`
-
-	// impact is what the Run's impact covers, for the trailers of its Result
-	// commit.
-	impact []string
+	Repairs  int
+	SentBack []string
+	Began    time.Time
+	Ended    time.Time
 }
 
-// FullCheckEvery is how many changes may land after a full check before the next
-// is due: a starting value, to adjust with evidence.
-const FullCheckEvery = 10
-
-// FullCheck is how many changes have landed on the branch since the last full
-// check: a `verify --full` that ended verified or with findings, or a landed
-// `apply --full`. The tool starts nothing by itself.
-type FullCheck struct {
-	// Landed counts the landings after the commit the newest full check examined,
-	// or every landing when there was none.
-	Landed int `json:"landed"`
-	// Since is the commit the newest full check examined; empty when no full check
-	// is known.
-	Since string `json:"since,omitempty"`
-	// Due is set from FullCheckEvery landings on.
-	Due bool `json:"due"`
-	// Note says why the count could not be read; Landed is then 0.
-	Note string `json:"note,omitempty"`
-}
-
-// ResultItem is one checklist item with its latest answer.
+// ResultItem is one checklist item with its latest answer, as the certificate
+// holds it.
 type ResultItem struct {
 	Item       string   `json:"item"`
 	Kind       string   `json:"kind"`
@@ -135,10 +72,10 @@ type ResultItem struct {
 // "spec problem" confirmed it, "wrong" found that the spec settles it, and none
 // means no reviewer has answered yet.
 type ResultReport struct {
-	Reported    string    `json:"reported"`
-	Answer      string    `json:"answer,omitempty"`
-	Pointers    []Pointer `json:"pointers,omitempty"`
-	Explanation string    `json:"explanation,omitempty"`
+	Reported    string
+	Answer      string
+	Pointers    []Pointer
+	Explanation string
 }
 
 // OwnerDecision is a decision only the owner can make, with a recommendation.
@@ -147,10 +84,10 @@ type OwnerDecision struct {
 	Recommendation string `json:"recommendation"`
 }
 
-// ResultFinding is one Finding of verify: a Definition, what was observed and
-// what is expected. It is the input of apply --findings.
+// ResultFinding is one Finding of a review of finished work: a Definition, what
+// was observed and what is expected. It is the input of checklist --findings.
 type ResultFinding struct {
-	Definition string `json:"definition"`
-	Observed   string `json:"observed"`
-	Expected   string `json:"expected"`
+	Definition string
+	Observed   string
+	Expected   string
 }

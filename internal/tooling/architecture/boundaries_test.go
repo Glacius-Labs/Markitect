@@ -78,9 +78,9 @@ func TestLayerDirections(t *testing.T) {
 		{"internal/adapters/cli", "internal/analysis", both},
 		{"internal/adapters/cli", "internal/skills", both},
 		{"internal/adapters/cli", "internal/buildinfo", both},
-		{"internal/adapters/repo", "internal/project", both},
+		{"internal/adapters/folder", "internal/project", both},
 		{"internal/bootstrap", "internal/adapters/cli", both},
-		{"internal/bootstrap", "internal/adapters/repo", both},
+		{"internal/bootstrap", "internal/adapters/folder", both},
 		{"cmd/markitect", "internal/bootstrap", both},
 		{"cmd/markitect-release", "internal/tooling/release", both},
 		{"cmd/markitect-release", "internal/buildinfo", both},
@@ -95,11 +95,11 @@ func TestLayerDirections(t *testing.T) {
 		{"internal/skills", "internal/model", none},
 		{"internal/realization", "internal/project", none},
 		{"internal/project", "internal/analysis", none},
-		{"internal/analysis", "internal/adapters/repo", none},
+		{"internal/analysis", "internal/adapters/folder", none},
 		{"internal/analysis", "internal/adapters/cli", none},
 		// Adapters do not import each other, nor the agent side.
-		{"internal/adapters/cli", "internal/adapters/repo", none},
-		{"internal/adapters/repo", "internal/adapters/cli", none},
+		{"internal/adapters/cli", "internal/adapters/folder", none},
+		{"internal/adapters/folder", "internal/adapters/cli", none},
 		{"internal/adapters/cli", "internal/guardedwrite", none},
 		{"internal/adapters/cli", "internal/tooling/release", none},
 		// Entrypoints stay thin.
@@ -118,7 +118,7 @@ func TestLayerDirections(t *testing.T) {
 		// Test composition only.
 		{"internal/tooling/release", "internal/buildinfo", testOnly},
 		{"internal/model", "internal/testkit", testOnly},
-		{"internal/adapters/repo", "internal/testkit", testOnly},
+		{"internal/adapters/folder", "internal/testkit", testOnly},
 	} {
 		for _, test := range []bool{false, true} {
 			allowed := tc.allowed == both || tc.allowed == testOnly && test
@@ -131,7 +131,7 @@ func TestLayerDirections(t *testing.T) {
 }
 
 func TestUnknownPackagesHaveNoPrivilege(t *testing.T) {
-	for _, unknown := range []string{"src/internal/core", "src/cmd/markitect", "benchmark/runner", "internal/common", "internal/adapters/other", "internal/tooling/other", "internal/modelx", "internal/agentd/frame/sub", "internal/adapters/repo/sub"} {
+	for _, unknown := range []string{"src/internal/core", "src/cmd/markitect", "benchmark/runner", "internal/common", "internal/adapters/other", "internal/tooling/other", "internal/modelx", "internal/agentd/frame/sub", "internal/adapters/folder/sub"} {
 		for _, edge := range []Edge{{From: unknown}, {From: "internal/model", To: unknown}, {From: unknown, To: "internal/testkit", Test: true}, {From: "internal/bootstrap", To: unknown, Test: true}} {
 			got := Table.Check([]Edge{edge})
 			if len(got) != 1 || !strings.Contains(got[0].Rule, "unclassified package") {
@@ -159,10 +159,10 @@ func TestForbiddenLayerImportFailsInEveryFile(t *testing.T) {
 	root := t.TempDir()
 	writeFixture(t, root, map[string]string{
 		"README.md":                     "# Owner\n",
-		"internal/adapters/repo/git.go": "package repo\nimport _ \"" + ModulePath + "internal/adapters/cli\"\n",
+		"internal/adapters/folder/f.go": "package folder\nimport _ \"" + ModulePath + "internal/adapters/cli\"\n",
 		"internal/adapters/cli/c.go":    "package cli\n",
 	})
-	got, err := fixtureRules(t, "internal/adapters/repo", "internal/adapters/cli").CheckRepository(root)
+	got, err := fixtureRules(t, "internal/adapters/folder", "internal/adapters/cli").CheckRepository(root)
 	if err != nil || len(got) != 1 || got[0].Rule != "layer adapter may not import layer adapter" {
 		t.Fatalf("adapter imported a sibling adapter: %v %v", got, err)
 	}
@@ -228,7 +228,7 @@ func TestBootstrapCompositionAcrossPlatforms(t *testing.T) {
 	for _, producer := range []struct{ path, pkg string }{
 		{"internal/project", "project"},
 		{"internal/adapters/cli", "cli"},
-		{"internal/adapters/repo", "repo"},
+		{"internal/adapters/folder", "folder"},
 		{"internal/model", "model"},
 	} {
 		for _, file := range []string{"fixture_windows_test.go", "fixture_linux_test.go", "fixture_windows.go", "fixture_linux.go"} {

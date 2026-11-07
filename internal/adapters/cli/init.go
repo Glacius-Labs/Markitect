@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -21,32 +20,25 @@ import (
 // Claude Code and the Agent Skills folder other agents such as Codex read.
 var SkillDirs = []string{".claude/skills", ".agents/skills"}
 
-func (c CLI) init(ctx context.Context, args []string) (int, error) {
+func (c CLI) init(_ context.Context, args []string) (int, error) {
 	var o options
 	var name string
 	fs := c.flags("init", &o)
-	fs.StringVar(&name, "name", "", "the project's title for the project anchor (default: the repository folder's name)")
+	fs.StringVar(&name, "name", "", "the project's title for the project anchor (default: the folder's name)")
 	if err := fs.Parse(args); err != nil {
 		return Misused, err
 	}
 	if fs.NArg() != 0 {
 		return Misused, fmt.Errorf("takes no arguments")
 	}
-	opened, err := c.Git.Open(ctx, o.repo)
+	// Inside a project, init works on it; elsewhere it makes the folder one. It
+	// makes no repository and commits nothing (DEC-097).
+	ws, err := c.Folders.Project(o.repo)
 	if err != nil {
-		// A folder in no repository becomes one: a Run's work goes in and out as
-		// commits. One inside a repository Git would not open, for example for its
-		// owner, keeps the error rather than getting a repository of its own.
-		if insideRepository(o.repo) || c.Git.Create(ctx, o.repo) != nil {
+		if ws, err = c.Folders.At(o.repo); err != nil {
 			return Misused, err
 		}
-		if opened, err = c.Git.Open(ctx, o.repo); err != nil {
-			return Misused, err
-		}
-		fmt.Fprintln(c.Stdout, "created a Git repository")
 	}
-	rec := &recorder{Workspace: opened}
-	var ws Workspace = rec
 	if name == "" {
 		name = filepath.Base(ws.Root())
 	}
@@ -101,12 +93,7 @@ func (c CLI) init(ctx context.Context, args []string) (int, error) {
 	if err := c.ensureGuard(ws); err != nil {
 		return Misused, err
 	}
-	switch committed, err := ws.CommitOwn(rec.files, initMessage); {
-	case err != nil:
-		fmt.Fprintf(c.Stdout, "could not commit what init wrote, so commit it yourself before the first apply; if Git ignores .claude/, the harness stays on disk and that is enough: %v\n", err)
-	case committed:
-		fmt.Fprintln(c.Stdout, "committed what init wrote")
-	}
+	fmt.Fprintln(c.Stdout, "Markitect uses no Git: commit what init wrote when you like.")
 	fmt.Fprintf(c.Stdout, "\n%s\n", skills.About)
 	if len(modelFiles) == 0 {
 		fmt.Fprint(c.Stdout, nextSteps)
@@ -126,25 +113,7 @@ var personalSkillTips = map[fileState]string{
 	outdated: "your personal skill comes from another markitect; markitect update refreshes it.",
 }
 
-const initMessage = "Set up Markitect"
-
-// recorder notes what init writes, so that it commits that and nothing else.
-type recorder struct {
-	Workspace
-	files []string
-}
-
-func (r *recorder) Write(file string, data []byte) error {
-	r.files = append(r.files, file)
-	return r.Workspace.Write(file, data)
-}
-
-func (r *recorder) Remove(file string) error {
-	r.files = append(r.files, file)
-	return r.Workspace.Remove(file)
-}
-
-// installHarness writes the harness of a Run for Claude Code and removes every
+// installHarness writes the harness of the work for Claude Code and removes every
 // other file of it the binary no longer ships.
 func installHarness(ws Workspace) error {
 	want := map[string][]byte{}
@@ -184,24 +153,6 @@ func shippedSkill(file string) bool {
 	return false
 }
 
-// insideRepository says whether dir or a folder above it holds a .git entry.
-func insideRepository(dir string) bool {
-	abs, err := filepath.Abs(dir)
-	if err != nil {
-		return false
-	}
-	for {
-		if _, err := os.Lstat(filepath.Join(abs, ".git")); err == nil {
-			return true
-		}
-		parent := filepath.Dir(abs)
-		if parent == abs {
-			return false
-		}
-		abs = parent
-	}
-}
-
 // guardHook lets only the reviewer store answers, so that an agent cannot mark
 // its own work as done, and only the owner's session begin the work. It runs only
 // before the commands it guards, one handler each.
@@ -236,7 +187,7 @@ func ownGuard(entry any) bool {
 // ensureGuard adds the hook to the project's settings, in place of one an
 // earlier markitect wrote, and keeps what else they hold. Settings it cannot
 // read, or whose hooks have an unexpected shape, it leaves as they are and says
-// so; a run then refuses to start until the hook is there.
+// so; the work then refuses to begin until the hook is there.
 func (c CLI) ensureGuard(ws Workspace) error {
 	settings := map[string]any{}
 	lacks := func(why string) error {
@@ -338,7 +289,7 @@ func harnessFile(file string) bool {
 	return false
 }
 
-func (c CLI) lock(ctx context.Context, args []string) (int, error) {
+func (c CLI) lock(_ context.Context, args []string) (int, error) {
 	var o options
 	fs := c.flags("lock", &o)
 	if err := fs.Parse(args); err != nil {
@@ -347,7 +298,7 @@ func (c CLI) lock(ctx context.Context, args []string) (int, error) {
 	if fs.NArg() != 0 {
 		return Misused, fmt.Errorf("takes no arguments")
 	}
-	ws, err := c.Git.Open(ctx, o.repo)
+	ws, err := c.Folders.Project(o.repo)
 	if err != nil {
 		return Misused, err
 	}
@@ -361,7 +312,7 @@ func (c CLI) writeLock(ws Workspace) (int, error) {
 		return Misused, fmt.Errorf("read the manifest: %w; run markitect init", err)
 	}
 	manifest, ds := model.ParseManifest(project.ManifestFile, data)
-	// The same files Git sees, as check reads them.
+	// The same files the walk finds, as check reads them.
 	files, err := ws.Files()
 	if err != nil {
 		return Misused, err
@@ -398,7 +349,7 @@ func (c CLI) writeLock(ws Workspace) (int, error) {
 
 // manifestTemplate is a new project's manifest.
 const manifestTemplate = `# The Libraries this project uses, with their versions. Run markitect lock after a change.
-# model, optional, names the model a run's agents use; without it they use sonnet.
+# model, optional, names the model the builder and reviewer agents use; without it they use sonnet.
 libraries:
   std: %s
 `
@@ -407,19 +358,19 @@ libraries:
 // Code reads it through CLAUDE.md, which holds only an import of it.
 const instructionsFile = "AGENTS.md"
 
-// instructionsTemplate tells any session what kind of project this is. A Run's
-// sessions read it too, so it holds no process.
+// instructionsTemplate tells any session what kind of project this is. The
+// builder and reviewer read it too, so it holds no process.
 const instructionsTemplate = "# %s\n\n" + skills.About + "\n" +
 	"A change to what the project does starts in the spec, written with the `markitect-modeling` skill and accepted by the owner. A new project starts with the `markitect-start` skill, and a repository that already has code with `markitect-extract`.\n\n" +
 	"`markitect` is a command on the path, and `markitect help` lists what it does.\n\n" +
-	"Inside a Markitect run, your task says what to do, and the spec stays as it is.\n"
+	"A builder or reviewer of Markitect work takes its task from markitect, and the spec stays as it is.\n"
 
 // nextSteps ends the init of a new project. The session that ran init started
 // before the skills existed, and Claude Code does not watch a skills folder that
 // was not there when a session started.
 const nextSteps = `next: run /markitect-start in Claude Code here. It asks what the project is and starts the spec with you.
 A session that was open before init runs /reload-skills first, or reads .claude/skills/markitect-start/SKILL.md.
-If the repository already has code, use /markitect-extract instead.
+If the folder already has code, use /markitect-extract instead.
 `
 
 const anchorTemplate = `---

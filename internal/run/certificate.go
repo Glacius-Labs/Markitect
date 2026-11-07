@@ -264,9 +264,25 @@ func (c *Certificate) Differences(hashes map[string]string) []string {
 	return out
 }
 
-// HashFiles hashes every accounted file of a repository state outside the results
+// HashFiles hashes every accounted file of a project folder outside the results
 // folder, as a certificate does.
 func HashFiles(repo project.Repository) (map[string]string, error) { return hashFiles(repo) }
+
+// BaseCertificate is the certificate a change starts from in the project folder
+// at root: the one name names, its .json or .md as a path in the project or a name
+// in its results folder, or else the newest. It returns its path, relative to root
+// when it lies inside, and nil when there is no certificate at all.
+func BaseCertificate(root, name string) (string, *Certificate, error) {
+	if name == "" {
+		return newestCertificate(root)
+	}
+	file, err := certificatePath(root, name)
+	if err != nil {
+		return "", nil, err
+	}
+	cert, err := ReadCertificate(inProject(root, file))
+	return file, cert, err
+}
 
 // certified is a certificate as a repository state: its files and the text of
 // its spec.

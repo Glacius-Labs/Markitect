@@ -91,7 +91,7 @@ func renderLint(warnings model.Diagnostics, g analysis.Graph) string {
 
 func renderImpact(base string, im analysis.Impact) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "# Impact since %s\n\n", short(base))
+	fmt.Fprintf(&b, "# Impact since %s\n\n", base)
 	if im.Full {
 		b.WriteString("Full: every Definition is reached and every Manager works.\n\n")
 	}
@@ -196,11 +196,4 @@ func where(file string, line int) string {
 		return file
 	}
 	return fmt.Sprintf("%s:%d", file, line)
-}
-
-func short(id string) string {
-	if len(id) > 12 {
-		return id[:12]
-	}
-	return id
 }

@@ -31,12 +31,13 @@ var smokeModel = map[string]string{
 	"src/catalog/copy.go":                "package catalog\n",
 }
 
-// modelCommands drives the packaged CLI over a small project in a temporary
-// repository: init, check, lock, refs, graph, lint and impact, and the
-// refusal of a model that does not compile. It starts no agent.
+// modelCommands drives the packaged CLI over a small project in a plain folder,
+// with no Git: init, check, lock, refs, graph and lint; the work (checklist,
+// answer and gate) that certifies the folder; impact from that certificate; and
+// the refusal of a model that does not compile. It starts no agent.
 func (s *smoke) modelCommands() error {
-	repo, err := s.gitRepo("model-commands", "main")
-	if err != nil {
+	repo := filepath.Join(s.work, "model-commands")
+	if err := os.MkdirAll(repo, 0o755); err != nil {
 		return err
 	}
 	markitect := func(args ...string) (string, error) { return s.run(repo, nil, s.tool("markitect"), args...) }
@@ -72,12 +73,6 @@ func (s *smoke) modelCommands() error {
 	if err := requireContains(out, "ok: 4 Definitions in 3 Packages, 3 files accounted"); err != nil {
 		return err
 	}
-	if _, err := s.run(repo, nil, "git", "add", "-A"); err != nil {
-		return err
-	}
-	if _, err := s.run(repo, nil, "git", "commit", "--quiet", "-m", "model"); err != nil {
-		return err
-	}
 	if out, err := markitect("lock"); err != nil {
 		return err
 	} else if err := requireContains(out, "std 1.0.0"); err != nil {
@@ -98,6 +93,10 @@ func (s *smoke) modelCommands() error {
 	} else if err := requireContains(out, "# Lint"); err != nil {
 		return err
 	}
+	cert, err := s.certify(repo, markitect)
+	if err != nil {
+		return err
+	}
 
 	// M2's change: the loan limit drops from five to three. Every Manager
 	// below Root inherits the changed Rule.
@@ -105,11 +104,15 @@ func (s *smoke) modelCommands() error {
 	if err := os.WriteFile(limit, []byte(strings.Replace(smokeModel[".markitect/model/loan-limit.md"], "`5`", "`3`", 1)), 0o644); err != nil {
 		return err
 	}
-	out, err = markitect("impact", "--base", "HEAD", "--json")
+	if out, err := markitect("gate", "--verify"); err == nil || !strings.Contains(out, "loan-limit.md") {
+		return fmt.Errorf("gate --verify accepted a changed spec: %s", tail(out))
+	}
+	out, err = markitect("impact", "--json")
 	if err != nil {
 		return err
 	}
 	var impact struct {
+		Base       string
 		Packages   []string
 		Checklists []struct {
 			Package   string
@@ -118,6 +121,9 @@ func (s *smoke) modelCommands() error {
 	}
 	if err := decode(out, &impact); err != nil {
 		return err
+	}
+	if impact.Base != cert {
+		return fmt.Errorf("impact starts from %q, not the certificate %q", impact.Base, cert)
 	}
 	if strings.Join(impact.Packages, ",") != ",catalog,members" {
 		return fmt.Errorf("impact of the loan limit reaches %v", impact.Packages)
@@ -134,11 +140,62 @@ func (s *smoke) modelCommands() error {
 	if out, err := markitect("check"); err == nil || !strings.Contains(out, "definition.front_matter") {
 		return fmt.Errorf("check accepted a Definition without front matter: %s", tail(out))
 	}
-	if _, err := markitect("impact", "--base", "HEAD"); err == nil {
+	if _, err := markitect("impact"); err == nil {
 		return fmt.Errorf("impact ran over a model that does not compile")
 	}
-	if _, err := markitect("apply"); err == nil {
-		return fmt.Errorf("the retired apply command was accepted")
+	for _, retired := range []string{"apply", "verify", "submit", "stop"} {
+		if _, err := markitect(retired); err == nil {
+			return fmt.Errorf("the retired %s command was accepted", retired)
+		}
+	}
+	if _, err := os.Stat(filepath.Join(repo, ".git")); err == nil {
+		return fmt.Errorf("a command made the project folder a Git repository")
 	}
 	return nil
+}
+
+// certify passes the work of the folder through gate, every item answered ok
+// with a pointer to README.md, as a reviewer would, and returns the certificate
+// gate wrote.
+func (s *smoke) certify(repo string, markitect func(...string) (string, error)) (string, error) {
+	if _, err := markitect("checklist"); err != nil {
+		return "", err
+	}
+	list, err := markitect("checklist", "--review")
+	if err != nil {
+		return "", err
+	}
+	var lines []string
+	for _, line := range strings.Split(list, "\n") {
+		if rest, ok := strings.CutPrefix(line, "[ ] "); ok {
+			if i := strings.Index(rest, `: "`); i >= 0 {
+				rest = rest[:i]
+			}
+			lines = append(lines, rest+": ok README.md:1")
+		}
+	}
+	if len(lines) == 0 {
+		return "", fmt.Errorf("the review lists no item:\n%s", tail(list))
+	}
+	// Outside the project folder, which accounts for every file of its own.
+	answers := filepath.Join(s.work, "answers.txt")
+	if err := os.WriteFile(answers, []byte(strings.Join(lines, "\n")+"\n"), 0o644); err != nil {
+		return "", err
+	}
+	if _, err := markitect("answer", answers); err != nil {
+		return "", err
+	}
+	passed, err := markitect("gate")
+	if err != nil {
+		return "", err
+	}
+	for _, f := range strings.Fields(passed) {
+		if f = strings.TrimSuffix(f, ","); strings.HasSuffix(f, ".json") {
+			if _, err := markitect("gate", "--verify"); err != nil {
+				return "", err
+			}
+			return f, nil
+		}
+	}
+	return "", fmt.Errorf("gate named no certificate:\n%s", tail(passed))
 }
