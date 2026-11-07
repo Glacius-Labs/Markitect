@@ -12,6 +12,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
 	"github.com/Glacius-Labs/Markitect/internal/project"
+	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
 // fileState says how something this binary writes compares with what is in place.
@@ -60,9 +61,9 @@ func (r *refresher) Remove(file string) error {
 	return r.Workspace.Remove(file)
 }
 
-// refreshHarness brings the skills, the agents and the hook of a project in line
-// with this binary, as init does, and returns the files that differed. It never
-// touches the spec, AGENTS.md or CLAUDE.md.
+// refreshHarness brings the skills, the agents, the hooks and the record's Git
+// attributes of a project in line with this binary, as init does, and returns
+// the files that differed. It never touches the spec, AGENTS.md or CLAUDE.md.
 func (c CLI) refreshHarness(ws Workspace, dry bool) ([]string, error) {
 	r := &refresher{Workspace: ws, dry: dry}
 	quiet := c
@@ -78,6 +79,9 @@ func (c CLI) refreshHarness(ws Workspace, dry bool) ([]string, error) {
 	if err := quiet.ensureGuard(r); err != nil {
 		return nil, err
 	}
+	if err := installAttributes(r); err != nil {
+		return nil, err
+	}
 	// A retired file is removed by both of the writers above in a dry run, which
 	// removes nothing in between.
 	sort.Strings(r.files)
@@ -91,9 +95,12 @@ type projectState struct {
 	files    []string  // the skills, agents and settings that differ
 	lock     bool      // the lock differs
 	lockCode int       // Failed when the manifest names a Library the binary cannot supply
+	// migrated are the record written from the newest certificate and the files
+	// of the retired results folder, removed.
+	migrated []string
 }
 
-func (p projectState) stale() bool { return len(p.files) > 0 || p.lock }
+func (p projectState) stale() bool { return len(p.files) > 0 || p.lock || len(p.migrated) > 0 }
 
 // refreshProject finds what differs in the project at repo and, unless dry,
 // writes it. It commits nothing: a change of the lock is a change of the
@@ -108,6 +115,9 @@ func (c CLI) refreshProject(repo string, dry bool) (projectState, error) {
 	st.ws = ws
 	if st.files, err = c.refreshHarness(ws, dry); err != nil {
 		return st, err
+	}
+	if st.migrated, err = run.Migrate(ws.Root(), dry); err != nil {
+		return st, fmt.Errorf("could not write the record from the newest certificate: %w", err)
 	}
 	l := &refresher{Workspace: ws, dry: dry}
 	quiet := c
@@ -291,6 +301,22 @@ func (c CLI) update(ctx context.Context, args []string) (int, error) {
 				fmt.Fprintln(c.Stdout, "Markitect uses no Git: commit them when you like.")
 			}
 		}
+		if len(proj.migrated) > 0 {
+			if check {
+				stale = true
+				fmt.Fprintf(c.Stdout, "record: the certificates under %s are retired; markitect update writes %s from the newest one and removes them\n", run.ResultsDir, project.ReviewFile)
+			} else {
+				removed := len(proj.migrated)
+				if slices.Contains(proj.migrated, project.ReviewFile) {
+					removed--
+					fmt.Fprintf(c.Stdout, "record: wrote %s from the newest certificate: every Definition it certified is recorded ok\n", project.ReviewFile)
+				}
+				if removed > 0 {
+					fmt.Fprintf(c.Stdout, "record: removed the retired %s (%d files), which the record replaces\n", run.ResultsDir, removed)
+				}
+				fmt.Fprintln(c.Stdout, "Commit the change when you like.")
+			}
+		}
 		switch {
 		case proj.lockCode != OK:
 			fmt.Fprintln(c.Stdout, "lock: not rewritten; the manifest has errors, fix them first")
@@ -372,7 +398,7 @@ func (c CLI) staleNotice(args []string) {
 	if err != nil || len(files) == 0 {
 		return
 	}
-	fmt.Fprintf(c.Stderr, "markitect: the skills and agents of this project come from another markitect (%d files differ); run markitect update\n", len(files))
+	fmt.Fprintf(c.Stderr, "markitect: note: the skills, agents and hooks of this project come from another markitect (%d files differ); run markitect update\n", len(files))
 }
 
 // warnPath tells the user when markitect is not what the PATH finds under that

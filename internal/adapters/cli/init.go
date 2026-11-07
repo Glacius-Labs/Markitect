@@ -89,8 +89,11 @@ func (c CLI) init(_ context.Context, args []string) (int, error) {
 	if err := installHarness(ws); err != nil {
 		return Misused, err
 	}
-	fmt.Fprintln(c.Stdout, "installed the harness: the apply and verify skills, and the builder and reviewer agents")
+	fmt.Fprintln(c.Stdout, "installed the harness: the build and review skills, and the builder and reviewer agents")
 	if err := c.ensureGuard(ws); err != nil {
+		return Misused, err
+	}
+	if err := installAttributes(ws); err != nil {
 		return Misused, err
 	}
 	fmt.Fprintln(c.Stdout, "Markitect uses no Git: commit what init wrote when you like.")
@@ -153,15 +156,21 @@ func shippedSkill(file string) bool {
 	return false
 }
 
-// guardHook lets only the reviewer store answers, so that an agent cannot mark
-// its own work as done, and only the owner's session begin the work. It runs only
-// before the commands it guards, one handler each.
-func guardHook() map[string]any {
-	var handlers []any
-	for _, rule := range run.GuardedCommands {
-		handlers = append(handlers, map[string]any{"type": "command", "if": rule, "command": run.HookCommand})
+// installAttributes has Git merge the record by keeping the lines of both sides
+// (DEC-099): status takes the line that matches the folder.
+func installAttributes(ws Workspace) error {
+	return ws.Write(project.AttributesFile, []byte(project.Attributes))
+}
+
+// guardHooks let only the reviewer record verdicts, so that the agent that built
+// does not verify its own work, and keep every subagent out of Markitect's folder
+// except the registry pages. The first runs only before a shell command that
+// records; the second before every tool that writes a file.
+func guardHooks() []any {
+	return []any{
+		map[string]any{"matcher": "Bash", "hooks": []any{map[string]any{"type": "command", "if": run.ReviewRule, "command": run.HookCommand}}},
+		map[string]any{"matcher": run.EditTools, "hooks": []any{map[string]any{"type": "command", "command": run.HookCommand}}},
 	}
-	return map[string]any{"matcher": "Bash", "hooks": handlers}
 }
 
 // ownGuard says whether a PreToolUse entry is one an earlier markitect wrote: a
@@ -187,11 +196,11 @@ func ownGuard(entry any) bool {
 // ensureGuard adds the hook to the project's settings, in place of one an
 // earlier markitect wrote, and keeps what else they hold. Settings it cannot
 // read, or whose hooks have an unexpected shape, it leaves as they are and says
-// so; the work then refuses to begin until the hook is there.
+// so, and every command of the spec then notes that the harness is out of date.
 func (c CLI) ensureGuard(ws Workspace) error {
 	settings := map[string]any{}
 	lacks := func(why string) error {
-		fmt.Fprintf(c.Stdout, "left %s as it is, %s; add the hook that lets only the reviewer answer by hand: %q before Bash, for %s\n", run.SettingsFile, why, run.HookCommand, strings.Join(run.GuardedCommands, " and "))
+		fmt.Fprintf(c.Stdout, "left %s as it is, %s; add the hooks by hand: %q before Bash for %s, and before %s\n", run.SettingsFile, why, run.HookCommand, run.ReviewRule, run.EditTools)
 		return nil
 	}
 	if ws.Exists(run.SettingsFile) {
@@ -232,7 +241,7 @@ func (c CLI) ensureGuard(ws Workspace) error {
 			kept = append(kept, entry)
 		}
 	}
-	hooks["PreToolUse"] = append(kept, guardHook())
+	hooks["PreToolUse"] = append(kept, guardHooks()...)
 	settings["hooks"] = hooks
 	var b bytes.Buffer
 	enc := json.NewEncoder(&b)
@@ -244,7 +253,7 @@ func (c CLI) ensureGuard(ws Workspace) error {
 	if err := ws.Write(run.SettingsFile, b.Bytes()); err != nil {
 		return err
 	}
-	fmt.Fprintf(c.Stdout, "added the hook that lets only the reviewer answer and only your session begin the work to %s\n", run.SettingsFile)
+	fmt.Fprintf(c.Stdout, "added the hooks that let only the reviewer record verdicts and keep subagents out of %s to %s\n", project.Dir, run.SettingsFile)
 	return nil
 }
 
@@ -363,7 +372,7 @@ const instructionsFile = "AGENTS.md"
 const instructionsTemplate = "# %s\n\n" + skills.About + "\n" +
 	"A change to what the project does starts in the spec, written with the `markitect-modeling` skill and accepted by the owner. A new project starts with the `markitect-start` skill, and a repository that already has code with `markitect-extract`.\n\n" +
 	"`markitect` is a command on the path, and `markitect help` lists what it does.\n\n" +
-	"A builder or reviewer of Markitect work takes its task from markitect, and the spec stays as it is.\n"
+	"A builder or reviewer of Markitect work takes what to do from `markitect status`, and the spec stays as it is.\n"
 
 // nextSteps ends the init of a new project. The session that ran init started
 // before the skills existed, and Claude Code does not watch a skills folder that

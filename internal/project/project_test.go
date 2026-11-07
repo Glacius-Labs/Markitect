@@ -55,7 +55,8 @@ func valid(t *testing.T) memRepo {
 		RootPage:                        "| File | Realizes | Why |\n|---|---|---|\n| README.md | [[project]] | Overview |\n",
 		RegistryDir + "/members.md":     "---\npaths: [src/**]\n---\n| File | Realizes | Why |\n|---|---|---|\n| src/member.go | [[members/member]] | Type |\n",
 		IgnoreFile:                      "# Legal text\nLICENSE\n",
-		ResultsDir + "/run-1.md":        "# Result\n",
+		ReviewFile:                      "",
+		AttributesFile:                  Attributes,
 		Dir + "/tool/lock.yaml":         "installed tool\n",
 		"README.md":                     "# Demo\n",
 		"src/member.go":                 "package members\n",
@@ -108,9 +109,13 @@ func TestLoadUnknownOwnFiles(t *testing.T) {
 	r := valid(t)
 	r.files[Dir+"/notes.txt"] = "x"
 	r.files[RegistryDir+"/members.yaml"] = "x"
+	r.files[Dir+"/results/gate-20261106-120000-aaaaaaaa.json"] = "{}"
 	p := load(t, r)
 	expect(t, p.Errors, "project.file", ".markitect/notes.txt")
 	expect(t, p.Errors, "registry.page", ".markitect/registry/members.yaml")
+	// The certificates of markitect 0.20 are retired, and update turns them into
+	// the record.
+	expect(t, p.Errors, "project.results", "markitect update")
 }
 
 func TestLoadMissingControlFiles(t *testing.T) {

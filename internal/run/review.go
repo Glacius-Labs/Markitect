@@ -1,155 +1,217 @@
 package run
 
 import (
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
 	"fmt"
-	"path"
-	"sort"
+	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
-// Verdict is what gate tells whoever called it. Done means there is nothing more
-// to do: the work passed, the folder matches its certificate, or the report of a
-// review is written.
-type Verdict struct {
-	Done bool
-	Text string
+// ErrUsage marks a review the command line cannot ask for, such as an unknown
+// verdict.
+var ErrUsage = errors.New("usage")
+
+// ReviewRequest is one verdict, at the state the reviewer read.
+type ReviewRequest struct {
+	Dir        string
+	Definition string
+	Verdict    string
+	// At is the fingerprint status printed for the item.
+	At       string
+	Evidence []string
+	Why      string
 }
 
-// verdictsFor reads what the answers to items say, with what the owner is told
-// to do about a spec problem.
-func verdictsFor(items []Item, answer func(key string) Answer, settle string) ([]string, []OwnerDecision) {
-	var wrong []string
-	var decisions []OwnerDecision
-	for _, it := range items {
-		switch a := answer(it.Key); a.Word {
-		case AnswerSpecProblem:
-			decisions = append(decisions, OwnerDecision{Matter: fmt.Sprintf("%s: %s", it.Key, a.Explanation), Recommendation: settle})
-		case AnswerWrong:
-			wrong = append(wrong, fmt.Sprintf("%s: %s %s", it.Key, a.Explanation, pointers(a.Pointers)))
+// check refuses a request the command line cannot make.
+func (r *ReviewRequest) check() error {
+	r.Definition = strings.TrimSuffix(strings.TrimPrefix(r.Definition, "[["), "]]")
+	r.Why = oneLine(r.Why)
+	switch {
+	case r.Definition == "":
+		return fmt.Errorf("%w: name the Definition", ErrUsage)
+	case !knownVerdict(r.Verdict):
+		return fmt.Errorf("%w: the verdict is one of %s, not %q", ErrUsage, strings.Join(Verdicts, ", "), r.Verdict)
+	case r.At == "":
+		return fmt.Errorf("%w: --at names the fingerprint markitect status printed for the item", ErrUsage)
+	case r.Verdict != VerdictOK && r.Why == "":
+		return fmt.Errorf("%w: a %s says why, after --", ErrUsage, r.Verdict)
+	}
+	return nil
+}
+
+// Review records a verdict on one Definition at the state the reviewer read. It
+// refuses when the inputs changed since status printed the fingerprint, or when
+// evidence does not exist in the folder; then it records nothing, and refusal
+// says why. Reviewing a gone Definition ok removes its line.
+func (e *Engine) Review(_ context.Context, req ReviewRequest) (text string, recorded bool, err error) {
+	if err := req.check(); err != nil {
+		return "", false, err
+	}
+	var evidence []Evidence
+	for _, raw := range req.Evidence {
+		ev, err := ParseEvidence(raw)
+		if err != nil {
+			return "", false, fmt.Errorf("%w: %v", ErrUsage, err)
+		}
+		evidence = append(evidence, ev)
+	}
+	if e.Folder == nil {
+		return "", false, errors.New("this build reads no project folder")
+	}
+	root, err := e.Folder.Root(req.Dir)
+	if err != nil {
+		return "", false, err
+	}
+	dir, err := e.lockDir()
+	if err != nil {
+		return "", false, err
+	}
+	release, err := lock(dir, recordKey(root), lockWait)
+	if err != nil {
+		return "", false, fmt.Errorf("the record of %s is locked: %w", root, err)
+	}
+	defer release()
+	f, err := e.readFolder(root)
+	if err != nil {
+		return "", false, err
+	}
+	data, err := readRecordFile(f.root)
+	if err != nil {
+		return "", false, err
+	}
+	rec := ParseRecord(data)
+	refuse := func(format string, args ...any) (string, bool, error) {
+		return fmt.Sprintf(format, args...) + " Nothing is recorded.\n", false, nil
+	}
+	switch {
+	case len(f.cur.SpecErrors()) > 0:
+		return refuse("The spec has errors, so nothing can be verified against it; markitect check lists them.")
+	case len(rec.Unreadable) > 0:
+		return refuse("markitect cannot read every line of %s; the owner fixes or removes the ones markitect status names.", project.ReviewFile)
+	}
+	v, err := f.see(rec)
+	if err != nil {
+		return "", false, err
+	}
+	it, ok := v.items[req.Definition]
+	switch {
+	case !ok:
+		return refuse("%s is no Definition of the spec, and the record has no line for it.", req.Definition)
+	case !strings.EqualFold(req.At, it.Fingerprint):
+		return refuse("The inputs of %s are not those of fingerprint %s: they changed since status printed it, or it belongs to another item. Run markitect status again and verify %s as it is now.", req.Definition, req.At, req.Definition)
+	case it.State == StateGone && req.Verdict == VerdictSkip:
+		return refuse("%s is gone from the spec: its files are removed or have a new basis (ok), or not (fail).", req.Definition)
+	case it.State != StateGone && req.Verdict == VerdictOK && len(evidence) == 0:
+		return "", false, fmt.Errorf("%w: ok names the evidence, such as FILE:LINE", ErrUsage)
+	}
+	line := Line{Definition: req.Definition, Verdict: req.Verdict, Why: req.Why}
+	if it.State == StateGone {
+		line.Inputs = Inputs{}
+		for k, h := range v.goneInputs[req.Definition] {
+			line.Inputs[k] = h
+		}
+	} else {
+		line.Inputs = Inputs{}
+		for k, h := range v.now[req.Definition] {
+			line.Inputs[k] = h
 		}
 	}
-	return wrong, decisions
-}
-
-// report is what a review of finished work found.
-type report struct {
-	state, why string
-	findings   []ResultFinding
-	decisions  []OwnerDecision
-	unsettled  []string
-}
-
-// verifyReport reads a finished review that changes nothing: a wrong answer about a
-// Definition is a Finding, a spec problem a decision for the owner, and what does
-// not hold and names no Definition, with the errors of the realization in p, stays
-// in the Result, not in the Findings, which each name one.
-func verifyReport(items []Item, answer func(key string) Answer, p *project.Project) report {
-	var r report
-	for _, it := range items {
-		a := answer(it.Key)
-		switch a.Word {
-		case AnswerWrong:
-			if it.Definition != "" {
-				r.findings = append(r.findings, ResultFinding{Definition: it.Definition, Observed: strings.TrimSpace(a.Explanation + " " + pointers(a.Pointers)), Expected: "what the Definition says"})
-			} else {
-				r.unsettled = append(r.unsettled, it.Key)
-			}
-		case AnswerSpecProblem:
-			r.decisions = append(r.decisions, OwnerDecision{Matter: fmt.Sprintf("%s: %s", it.Key, a.Explanation), Recommendation: "Settle it in the spec."})
+	var missing []string
+	for _, ev := range evidence {
+		h, err := f.hash(ev.File)
+		if err != nil {
+			return "", false, err
 		}
-	}
-	for _, d := range p.RealizationErrors() {
-		r.unsettled = append(r.unsettled, d.String())
-	}
-	r.state, r.why = StateVerified, "every item answered without a Finding"
-	var found []string
-	if n := len(r.findings); n > 0 {
-		found = append(found, fmt.Sprintf("%d Findings", n))
-	}
-	if n := len(r.decisions); n > 0 {
-		found = append(found, fmt.Sprintf("%d decisions for the owner", n))
-	}
-	if n := len(r.unsettled); n > 0 {
-		found = append(found, fmt.Sprintf("%d things that do not hold: %s", n, strings.Join(r.unsettled, "; ")))
-	}
-	if len(found) > 0 {
-		r.state, r.why = StateFindings, "the review found "+strings.Join(found, " and ")
-	}
-	return r
-}
-
-// errorLines are check's errors for a refusal, at most maxRefusals of them.
-func errorLines(p *project.Project) []string {
-	var out []string
-	for i, d := range p.Errors {
-		if i == maxRefusals {
-			out = append(out, fmt.Sprintf("and %d more errors", len(p.Errors)-maxRefusals))
-			break
+		if h == "" || ev.File == project.ReviewFile {
+			missing = append(missing, ev.File)
+			continue
 		}
-		out = append(out, d.String())
+		line.Inputs[InputEvidence+ev.File] = h
+		line.Evidence = append(line.Evidence, ev.Text)
 	}
-	return out
+	if len(missing) > 0 {
+		return refuse("The evidence must be files of the project folder, and these are not: %s.", strings.Join(missing, ", "))
+	}
+	lines := clean(rec, v, req.Definition)
+	removed := it.State == StateGone && req.Verdict == VerdictOK
+	if !removed {
+		lines = append(lines, line)
+	}
+	if err := writeAtomic(filepath.Join(f.root, filepath.FromSlash(project.Dir)), filepath.Base(project.ReviewFile), Render(lines)); err != nil {
+		return "", false, err
+	}
+	if removed {
+		return fmt.Sprintf("Recorded: %s is gone and its files are dealt with, so its line is removed.\n", req.Definition), true, nil
+	}
+	return fmt.Sprintf("Recorded: %s %s.\n", req.Definition, req.Verdict), true, nil
 }
 
-// registryPage says whether a file is a registry page, which the work may change.
-func registryPage(file string) bool {
-	return file == project.RootPage || strings.HasPrefix(file, project.RegistryDir+"/")
-}
-
-// leavesTree says whether a symbolic link at file points outside the folder.
-func leavesTree(file, to string) bool {
-	if path.IsAbs(to) || strings.Contains(to, `\`) {
-		return true
-	}
-	// A drive letter leaves the folder on Windows, where the link is made as it
-	// stands.
-	if len(to) > 1 && to[1] == ':' {
-		return true
-	}
-	// A ".." after another part can pass through a link, where the text says
-	// nothing about the way.
-	inner := false
-	for _, part := range strings.Split(to, "/") {
+// clean keeps one line per Definition, except the one being reviewed: of several,
+// as after a merge, the one whose inputs match the folder, or both of a conflict,
+// or else the closest; a gone Definition keeps one line with every file its lines
+// named.
+func clean(rec Record, v view, except string) []Line {
+	var out []Line
+	for id, lines := range rec.byDefinition() {
 		switch {
-		case part == ".." && inner:
-			return true
-		case part != ".." && part != "" && part != ".":
-			inner = true
-		}
-	}
-	target := path.Join(path.Dir(file), to)
-	return target == ".." || strings.HasPrefix(target, "../")
-}
-
-// dedupe keeps the first of each value, in order.
-func dedupe(values []string) []string {
-	seen := map[string]bool{}
-	var out []string
-	for _, v := range values {
-		if !seen[v] {
-			seen[v] = true
-			out = append(out, v)
+		case id == except:
+		case len(lines) == 1:
+			out = append(out, lines[0])
+		case v.items[id].State == StateGone:
+			merged := lines[0]
+			merged.Inputs = Inputs{}
+			for k, h := range lines[0].Inputs {
+				merged.Inputs[k] = h
+			}
+			for _, l := range lines[1:] {
+				for k, h := range l.Inputs {
+					if _, ok := merged.Inputs[k]; !ok && strings.HasPrefix(k, InputFile) {
+						merged.Inputs[k] = h
+					}
+				}
+			}
+			out = append(out, merged)
+		default:
+			out = append(out, keep(lines, v.now[id], v)...)
 		}
 	}
 	return out
 }
 
-// sortedKeys returns a map's keys, sorted.
-func sortedKeys[V any](m map[string]V) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
+// keep chooses among the lines of one live Definition.
+func keep(lines []Line, now Inputs, v view) []Line {
+	s := settle(lines, now, v.evidence)
+	switch {
+	case len(s.conflict) > 0:
+		var out []Line
+		seen := map[string]bool{}
+		for _, l := range s.conflict {
+			if !seen[l.Verdict] {
+				seen[l.Verdict] = true
+				out = append(out, l)
+			}
+		}
+		return out
+	case s.match != nil:
+		return []Line{*s.match}
+	case s.closest != nil:
+		return []Line{*s.closest}
 	}
-	sort.Strings(keys)
-	return keys
+	return nil
 }
 
-// plural picks the word for a count.
-func plural(n int, one, many string) string {
-	if n == 1 {
-		return one
+// recordKey names the lock of a project folder's record.
+func recordKey(root string) string {
+	p := filepath.Clean(root)
+	if runtime.GOOS == "windows" {
+		p = strings.ToLower(p)
 	}
-	return many
+	sum := sha256.Sum256([]byte(p))
+	return hex.EncodeToString(sum[:8])
 }

@@ -1,6 +1,6 @@
 // Package bootstrap constructs the command line with its adapters: the project
-// folder on disk, the work over it with its state in the user's cache folder, and
-// the releases update installs. Nothing here uses Git (DEC-097).
+// folder on disk, the record over it with its lock in the user's cache folder,
+// and the releases update installs. Nothing here uses Git (DEC-097).
 package bootstrap
 
 import (
@@ -20,12 +20,12 @@ import (
 
 // Run runs the markitect command line and returns its exit code.
 func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
-	return cli.CLI{Folders: folders{}, Work: work(), Stdin: os.Stdin, Stdout: stdout, Stderr: stderr, PathWarning: ownPathWarning, Releases: upgrade.New()}.Run(ctx, args)
+	return cli.CLI{Folders: folders{}, Record: record(), Stdin: os.Stdin, Stdout: stdout, Stderr: stderr, PathWarning: ownPathWarning, Releases: upgrade.New()}.Run(ctx, args)
 }
 
-// work is the engine of the work over a project folder, with its state in the
-// user's cache folder; without one, the work says so when it needs it.
-func work() *runs.Engine {
+// record is the engine of status and review over a project folder, with the
+// lock of its record in the user's cache folder; without one, review says so.
+func record() *runs.Engine {
 	e := &runs.Engine{Folder: folder.Disk{}}
 	if dir, err := os.UserCacheDir(); err == nil {
 		e.Cache = filepath.Join(dir, "markitect")

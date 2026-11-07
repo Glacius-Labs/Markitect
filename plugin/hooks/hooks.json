@@ -20,14 +20,18 @@
           {
             "type": "command",
             "shell": "bash",
-            "if": "Bash(markitect answer*)",
-            "command": "input=$(cat); case \"$input\" in *\"markitect answer\"*) printf '%s' \"$input\" | sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\" hook pretool ;; esac"
-          },
+            "if": "Bash(markitect review*)",
+            "command": "input=$(cat); case \"$input\" in *\"markitect review\"*) printf '%s' \"$input\" | sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\" hook pretool ;; esac"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+        "hooks": [
           {
             "type": "command",
             "shell": "bash",
-            "if": "Bash(markitect checklist*)",
-            "command": "input=$(cat); case \"$input\" in *\"markitect checklist\"*) printf '%s' \"$input\" | sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\" hook pretool ;; esac"
+            "command": "input=$(cat); case \"$input\" in *'\"agent_id\"'*.markitect*|*.markitect*'\"agent_id\"'*) printf '%s' \"$input\" | sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\" hook pretool ;; esac"
           }
         ]
       }

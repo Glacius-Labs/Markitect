@@ -1,5 +1,6 @@
 // Package project loads a project's Markitect folder from a set of files, the
-// project folder or a certificate's copy, and checks it as a whole: manifest, lock, Libraries, model and registry.
+// project folder or a copy of its spec, and checks it as a whole: manifest, lock,
+// Libraries, model and registry.
 // Every model command starts from a loaded Project.
 //
 // The layout is described in docs/guides/model-language.md.
@@ -27,20 +28,25 @@ const (
 	RootPage     = Dir + "/registry.md"
 	RegistryDir  = Dir + "/registry"
 	LibraryDir   = Dir + "/libraries"
-	ResultsDir   = Dir + "/results"
+	// ReviewFile is the record of what was verified (DEC-099), and
+	// AttributesFile has Git merge it by keeping the lines of both sides.
+	ReviewFile     = Dir + "/review.sum"
+	AttributesFile = Dir + "/.gitattributes"
 )
+
+// Attributes is the content of AttributesFile.
+const Attributes = "review.sum merge=union\n"
 
 // harnessPrefixes are what the files of the harness start with, in lower case.
 var harnessPrefixes = []string{".claude/agents/markitect-", ".claude/skills/markitect-", ".agents/skills/markitect-"}
 
 // instructionFiles are what a coding agent reads by itself when a session starts,
-// and the project's settings, which hold the hook on answer.
+// and the project's settings, which hold the hook.
 var instructionFiles = []string{"AGENTS.md", "CLAUDE.md", ".claude/settings.json"}
 
-// IsHarness says whether a file steers the agents of the work, so that the work may
-// not change it: an agent cannot weaken its own rules in the work it hands in. Without
-// regard to case: a variant of a name is the same file in a Windows or macOS
-// checkout.
+// IsHarness says whether a file steers the agents of the work: the tool accounts for
+// it, as it does for its own folder. Without regard to case: a variant of a name
+// is the same file in a Windows or macOS checkout.
 func IsHarness(file string) bool {
 	lower := strings.ToLower(file)
 	for _, prefix := range harnessPrefixes {
@@ -60,12 +66,12 @@ func IsHarness(file string) bool {
 // folder: what init installs, and Git's ignore file.
 func isOwn(file string) bool { return IsHarness(file) || file == ".gitignore" }
 
-// Repository is one set of a project's files: the project folder, or the copy of
-// the spec a certificate holds.
+// Repository is one set of a project's files: the project folder, or a copy of its
+// spec.
 type Repository interface {
 	// Files returns every file of the project, folder-relative with forward
 	// slashes: for a project folder what a walk finds without what its .gitignore
-	// files exclude, and for a certificate the files it holds.
+	// files exclude, and for a copy the files it holds.
 	Files() ([]string, error)
 	Read(file string) ([]byte, error)
 	// GitIgnored reports whether the project's .gitignore files exclude a file.
@@ -123,8 +129,8 @@ func (p *Project) RealizationErrors() model.Diagnostics {
 
 // NothingBuilt says that all that stands between the spec and the work is that the
 // work has not begun: the registry lists no file, and the only errors are
-// Definitions nothing realizes. Only the check command reads this; gate does not, so
-// the work still has to realize every Definition.
+// Definitions nothing realizes. Only the check command reads this; status does
+// not, so the work still has to realize every Definition.
 func (p *Project) NothingBuilt() bool {
 	if len(p.Errors) == 0 || p.Registry == nil || len(p.Registry.Entries) > 0 {
 		return false
@@ -137,8 +143,8 @@ func (p *Project) NothingBuilt() bool {
 	return true
 }
 
-// Load reads and checks the project in a set of files: a project folder, or the
-// copy a certificate holds.
+// Load reads and checks the project in a set of files: a project folder, or a copy
+// of its spec.
 func Load(repo Repository) (*Project, error) {
 	files, err := repo.Files()
 	if err != nil {
@@ -167,7 +173,7 @@ func Load(repo Repository) (*Project, error) {
 			continue
 		}
 		switch first, rest, _ := strings.Cut(rel, "/"); {
-		case f == ManifestFile, f == LockFile, f == IgnoreFile:
+		case f == ManifestFile, f == LockFile, f == IgnoreFile, f == ReviewFile, f == AttributesFile:
 		case f == RootPage:
 			if data, ok := read(f); ok {
 				pages = append(pages, realization.PageFile{Package: model.RootPackage, File: f, Data: data})
@@ -187,10 +193,12 @@ func Load(repo Repository) (*Project, error) {
 			}
 		case first == "libraries" && strings.Contains(rest, "/"):
 			libraryFiles = append(libraryFiles, f)
-		case first == "results", first == "tool", first == "bootstrap":
-			// certificates and Results, and the installed tool; accounted for here.
+		case first == "tool", first == "bootstrap":
+			// the installed tool; accounted for here.
+		case first == "results":
+			ds.Add("project.results", f, 0, "certificates and Result pages are retired; markitect update writes %s from the newest certificate and removes %s/results", ReviewFile, Dir)
 		default:
-			ds.Add("project.file", f, 0, "%s holds only the manifest, lock, ignore file, the registry, the model, Libraries, results and the installed tool", Dir)
+			ds.Add("project.file", f, 0, "%s holds only the manifest, lock, ignore file, the registry, the model, Libraries, the record %s with its %s, and the installed tool", Dir, ReviewFile, AttributesFile)
 		}
 	}
 	local := map[string][]model.File{}

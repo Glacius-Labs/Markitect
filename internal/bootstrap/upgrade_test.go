@@ -55,7 +55,7 @@ func updateWith(t *testing.T, version string, rel *fakeReleases, args ...string)
 	emptyHome(t)
 	var out, errOut bytes.Buffer
 	c := cli.CLI{
-		Folders: folders{}, Work: work(), Stdout: &out, Stderr: &errOut,
+		Folders: folders{}, Record: record(), Stdout: &out, Stderr: &errOut,
 		Releases:   rel,
 		Executable: func() (string, error) { return filepath.Join("bin", "markitect"), nil },
 		Version:    func() string { return version },
@@ -224,7 +224,7 @@ func TestVersionNamesAPluginBinary(t *testing.T) {
 	emptyHome(t)
 	t.Setenv(cli.PluginEnv, "0.15.0")
 	var out bytes.Buffer
-	cli.CLI{Folders: folders{}, Work: work(), Stdout: &out, Stderr: io.Discard}.Run(context.Background(), []string{"version", "--repo", testkit.TempDir(t)})
+	cli.CLI{Folders: folders{}, Record: record(), Stdout: &out, Stderr: io.Discard}.Run(context.Background(), []string{"version", "--repo", testkit.TempDir(t)})
 	wantAll(t, out.String(), "binary: comes with the Claude Code plugin (0.15.0)", "personal skill: comes with the plugin")
 }
 

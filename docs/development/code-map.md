@@ -18,8 +18,8 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `assets` | Files built into the binary: the standard Libraries, the skills and the harness of the work. | nothing | 2 |
 | `domain` | Registry pages, ownership and file accounting over a compiled model. | `model` | 1 |
 | `project` | Loads and checks a project's Markitect folder from the files of a project folder. | `model`, `assets`, `domain` | 1 |
-| `service` | Questions about a loaded project: references, graph, impact with checklists, and lint. | `model`, `assets`, `domain`, `project` | 1 |
-| `run` | The work on a project folder, without Git: the checklist, the answers, gate, the certificate, the hook and the Result. | `model`, `assets`, `domain`, `project`, `service` | 1 |
+| `service` | Questions about a loaded project: references, graph and lint. | `model`, `assets`, `domain`, `project` | 1 |
+| `run` | The record of what was verified, without Git: the inputs of each Definition, review.sum, status, review, the hook and the migration from certificates. | `model`, `assets`, `domain`, `project` | 1 |
 | `guardedwrite` | Guarded working-tree writes for bundle installation, with the Git and path helpers they share with source snapshots. | nothing | 1 |
 | `build` | Version identity and embedded license notices. | nothing | 1 |
 | `adapter` | Concrete project-folder, command-line and release adapters; no adapter imports another. | `model`, `assets`, `domain`, `project`, `service`, `run`, `build` | 3 |
@@ -35,7 +35,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | From | To | Files | Reason |
 |---|---|---|---|
 | `internal/tooling/release` | `internal/tooling/architecture` | all | The packager takes its source roots from this table. |
-| `internal/run` | `internal/adapters/folder` | tests only | The work is tested on real folders. |
+| `internal/run` | `internal/adapters/folder` | tests only | The record is tested on real folders. |
 | `internal/tooling/release` | `internal/buildinfo` | tests only | Tests compare the packaged notices with the embedded ones. |
 
 ## Canonical model
@@ -61,19 +61,19 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/project` | Package project loads a project's Markitect folder from a set of files, the project folder or a certificate's copy, and checks it as a whole: manifest, lock, Libraries, model and registry. | [docs/guides/model-language.md#the-projects-markitect-folder](../guides/model-language.md#the-projects-markitect-folder) |
+| `internal/project` | Package project loads a project's Markitect folder from a set of files, the project folder or a copy of its spec, and checks it as a whole: manifest, lock, Libraries, model and registry. | [docs/guides/model-language.md#the-projects-markitect-folder](../guides/model-language.md#the-projects-markitect-folder) |
 
 ## Analysis
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/analysis` | Package analysis answers questions about a loaded project without starting agents: who links to a Definition, the Package dependency graph, what a change reaches and each Manager's checklist, and the lint warnings that measure the model like code. | [docs/guides/model-language.md#impact-and-checklists](../guides/model-language.md#impact-and-checklists) |
+| `internal/analysis` | Package analysis answers questions about a loaded project without starting agents: who links to a Definition, the Package dependency graph, and the lint warnings that measure the model like code. | [docs/guides/model-language.md#lint-warnings](../guides/model-language.md#lint-warnings) |
 
-## The work
+## The record
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/run` | Package run is the work on a project folder, without Git (DEC-096, DEC-097): checklist says what a change since the newest certificate reaches, answer stores a reviewer's answers bound to the files they rest on, and gate checks the work and, when it passes, writes its certificate. | [internal/run/README.md](../../internal/run/README.md) |
+| `internal/run` | Package run is the record of what was verified (DEC-099): for each Definition, .markitect/review.sum holds the inputs at which a reviewer last verified it, modelled on Go's test cache. | [internal/run/README.md](../../internal/run/README.md) |
 
 ## Guarded write
 
@@ -91,7 +91,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/adapters/cli` | Package cli is the markitect command line: install, update, init, check, lock, refs, graph, impact and lint; checklist, answer, gate and status, the work that whoever drives the agents calls; the hook; version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
+| `internal/adapters/cli` | Package cli is the markitect command line: install, update, init, check, lock, refs, graph and lint; status and review over the record of what was verified (DEC-099); the hook; version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
 | `internal/adapters/folder` | Package folder reads and writes a project folder without Git (DEC-097): it walks the folder and skips what the project's .gitignore files exclude, read as plain text, nested ones included. | [internal/run/README.md#the-folder](../../internal/run/README.md#the-folder) |
 | `internal/adapters/upgrade` | Package upgrade finds the newest Markitect release, downloads the binary for this platform, checks it against the release's checksums and replaces the running executable. | [docs/guides/project-workflow.md#8-keep-it-current](../guides/project-workflow.md#8-keep-it-current) |
 
@@ -99,7 +99,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/bootstrap` | Package bootstrap constructs the command line with its adapters: the project folder on disk, the work over it with its state in the user's cache folder, and the releases update installs. | [docs/architecture.md#product-flow](../architecture.md#product-flow) |
+| `internal/bootstrap` | Package bootstrap constructs the command line with its adapters: the project folder on disk, the record over it with its lock in the user's cache folder, and the releases update installs. | [docs/architecture.md#product-flow](../architecture.md#product-flow) |
 
 ## Product commands
 

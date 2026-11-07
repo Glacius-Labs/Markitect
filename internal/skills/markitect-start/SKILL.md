@@ -27,4 +27,4 @@ Ask one question at a time, in plain words, and say why you ask when it isn't ob
 
 ## Hand over
 
-Tell the owner in a few lines what the spec now says and what you left open, and ask what is wrong or missing. Change it until they accept it. Then tell them that `/markitect-apply` has a builder agent build it in this folder. Do not start it yourself: it stays their decision.
+Tell the owner in a few lines what the spec now says and what you left open, and ask what is wrong or missing. Change it until they accept it. Then tell them that `/markitect-build` has a builder agent build it in this folder. Do not start it yourself: it stays their decision.

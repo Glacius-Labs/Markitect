@@ -87,7 +87,7 @@ LICENSE
 
 ## Stale realization
 
-A registry entry that names a deleted Definition (`stale.definition`), a missing file (`stale.file`) or a missing Package's page (`stale.page`) is not an error: `check` passes, `lint` warns (`lint.stale`), `impact` assigns the clean-up.
+A registry entry that names a deleted Definition (`stale.definition`), a missing file (`stale.file`) or a missing Package's page (`stale.page`) is not an error: `check` passes, `lint` warns (`lint.stale`), and `status` lists it for the builder to clean up.
 
 ## Commands
 
@@ -100,7 +100,7 @@ All take `--repo DIR`; all but `init` and `lock` take `--json`. Exit 0 ok, 1 err
 | `lock` | Rewrite `lock.yaml` after a manifest or Library change. |
 | `refs TARGET` | Who links to a Definition or Package, and which files realize it. |
 | `graph` | Package dependency graph with coupling and the links behind each edge. |
-| `impact [--base CERTIFICATE] [--full]` | What the change since the newest certificate, or the one named, reaches, and each Manager's checklist. Needs a project that compiles and a certificate. |
+| `status [--all]` | What is to verify: each Definition whose text, Kind, links, files or evidence changed since a reviewer last verified it, or that has no record yet, with what changed and where to look. Needs a project that compiles. |
 | `lint` | Warnings and the coupling table. |
 
 ## Warnings (`lint`)

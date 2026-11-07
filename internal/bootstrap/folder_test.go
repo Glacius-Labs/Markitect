@@ -1,8 +1,6 @@
 package bootstrap
 
 import (
-	"bytes"
-	"context"
 	"io"
 	"io/fs"
 	"os"
@@ -87,34 +85,28 @@ func noRepository(t *testing.T, dir string) {
 
 // newCLI is the command line as Run builds it, with its own standard input.
 func newCLI(stdin io.Reader, stdout, stderr io.Writer) cli.CLI {
-	return cli.CLI{Folders: folders{}, Work: work(), Stdin: stdin, Stdout: stdout, Stderr: stderr}
+	return cli.CLI{Folders: folders{}, Record: record(), Stdin: stdin, Stdout: stdout, Stderr: stderr}
 }
 
-// certify passes the work of the folder through gate, every item answered ok with
-// a pointer to README.md, the way a reviewer does, and returns the certificate.
-func certify(t *testing.T, dir string) string {
+// verifyAll records every item status lists ok, through the command line, with
+// the last file to look at as evidence, the way a reviewer does, and checks that
+// status is then empty.
+func verifyAll(t *testing.T, dir string) {
 	t.Helper()
-	mustRun(t, dir, "checklist")
-	list := mustRun(t, dir, "checklist", "--review")
-	var lines []string
-	for _, line := range strings.Split(list, "\n") {
-		if rest, ok := strings.CutPrefix(line, "[ ] "); ok {
-			if i := strings.Index(rest, `: "`); i >= 0 {
-				rest = rest[:i]
-			}
-			lines = append(lines, rest+": ok README.md:1")
+	_, out, _ := run(t, dir, "status")
+	var def, at string
+	for _, line := range strings.Split(out, "\n") {
+		if id, fp, ok := strings.Cut(line, "  --at "); ok && !strings.HasPrefix(line, " ") {
+			def, at = id, fp
+			continue
+		}
+		if look, ok := strings.CutPrefix(line, "  look at: "); ok && def != "" {
+			files := strings.Split(look, ", ")
+			mustRun(t, dir, "review", def, "ok", "--at", at, files[len(files)-1]+":1")
+			def = ""
 		}
 	}
-	var out, errOut bytes.Buffer
-	if code := newCLI(strings.NewReader(strings.Join(lines, "\n")), &out, &errOut).Run(context.Background(), []string{"answer", "--repo", dir}); code != 0 {
-		t.Fatalf("answer: %d\n%s%s", code, out.String(), errOut.String())
+	if code, out, _ := run(t, dir, "status"); code != 0 || !strings.Contains(out, "Nothing to verify") {
+		t.Fatalf("status after verifying everything: %d\n%s", code, out)
 	}
-	passed := mustRun(t, dir, "gate")
-	for _, f := range strings.Fields(passed) {
-		if f = strings.TrimSuffix(f, ","); strings.HasSuffix(f, ".json") {
-			return f
-		}
-	}
-	t.Fatalf("no certificate named:\n%s", passed)
-	return ""
 }

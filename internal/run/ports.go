@@ -8,7 +8,6 @@ type Folder interface {
 	// manifest in it.
 	Root(dir string) (string, error)
 	// Open walks the project folder at root: its files, without what the
-	// project's .gitignore files exclude, and the symbolic links among them with
-	// where each points.
-	Open(root string) (files project.Repository, links map[string]string, err error)
+	// project's .gitignore files exclude.
+	Open(root string) (project.Repository, error)
 }

@@ -52,7 +52,7 @@ func TestUpdateBringsAProjectInLine(t *testing.T) {
 	}
 
 	r.Write(".claude/agents/markitect-builder.md", "from an older markitect\n")
-	// The hook an older markitect wrote guards only answer; the owner's own stays.
+	// The hook an older markitect wrote guards answer; the owner's own stays.
 	r.Write(".claude/settings.json", `{
   "permissions": {"allow": ["Bash(go test *)"]},
   "hooks": {"PreToolUse": [
@@ -62,7 +62,7 @@ func TestUpdateBringsAProjectInLine(t *testing.T) {
 }
 `)
 	r.Write(".claude/skills/markitect-retired/SKILL.md", "no longer shipped\n")
-	if err := os.Remove(filepath.Join(r.Dir, ".claude", "skills", "markitect-apply", "SKILL.md")); err != nil {
+	if err := os.Remove(filepath.Join(r.Dir, ".claude", "skills", "markitect-build", "SKILL.md")); err != nil {
 		t.Fatal(err)
 	}
 	r.Write("AGENTS.md", "# Mine\n\nWritten by the owner.\n")
@@ -75,7 +75,7 @@ func TestUpdateBringsAProjectInLine(t *testing.T) {
 	}
 	wantAll(t, out, "project: 4 files out of date:",
 		".claude/agents/markitect-builder.md", ".claude/settings.json",
-		".claude/skills/markitect-apply/SKILL.md", ".claude/skills/markitect-retired/SKILL.md")
+		".claude/skills/markitect-build/SKILL.md", ".claude/skills/markitect-retired/SKILL.md")
 	if strings.Contains(out, "lock:") {
 		t.Fatalf("the lock was fine, yet update --check spoke of it:\n%s", out)
 	}
@@ -87,9 +87,9 @@ func TestUpdateBringsAProjectInLine(t *testing.T) {
 	wantAll(t, out, "project: updated 4 files:", "Markitect uses no Git: commit them when you like.")
 	noRepository(t, r.Dir)
 	settings := read(t, r.Dir, ".claude/settings.json")
-	wantAll(t, settings, "Bash(go test *)", "my-own-check", "Bash(markitect checklist*)")
-	if n := strings.Count(settings, "Bash(markitect answer*)"); n != 1 {
-		t.Fatalf("the older hook was not replaced, %d answer guards:\n%s", n, settings)
+	wantAll(t, settings, "Bash(go test *)", "my-own-check", "Bash(markitect review*)", "Edit|Write|MultiEdit|NotebookEdit")
+	if strings.Contains(settings, "Bash(markitect answer*)") {
+		t.Fatalf("the older hook was not replaced:\n%s", settings)
 	}
 	if _, err := os.Stat(filepath.Join(r.Dir, ".claude", "skills", "markitect-retired", "SKILL.md")); !os.IsNotExist(err) {
 		t.Fatalf("the retired skill stayed: %v", err)
