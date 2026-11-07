@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/Glacius-Labs/Markitect/internal/harness"
 	"github.com/Glacius-Labs/Markitect/internal/libraries"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/realization"
@@ -32,13 +33,17 @@ const (
 	// AttributesFile has Git merge it by keeping the lines of both sides.
 	ReviewFile     = Dir + "/review.sum"
 	AttributesFile = Dir + "/.gitattributes"
+	// HarnessFile is the project's harness configuration (DEC-102): the agents'
+	// model and effort, the strategies and the custom workflows. It is the
+	// owner's, and no agent changes it.
+	HarnessFile = Dir + "/" + harness.FileName
 )
 
 // Attributes is the content of AttributesFile.
 const Attributes = "review.sum merge=union\n"
 
 // harnessPrefixes are what the files of the harness start with, in lower case.
-var harnessPrefixes = []string{".claude/agents/markitect-", ".claude/skills/markitect-", ".agents/skills/markitect-"}
+var harnessPrefixes = []string{".claude/agents/markitect-", ".claude/skills/markitect-", ".agents/skills/markitect-", ".claude/workflows/markitect-"}
 
 // instructionFiles are what a coding agent reads by itself when a session starts,
 // and the project's settings, which hold the hook.
@@ -181,6 +186,12 @@ func Load(repo Repository) (*Project, error) {
 		}
 		switch first, rest, _ := strings.Cut(rel, "/"); {
 		case f == ManifestFile, f == LockFile, f == IgnoreFile, f == ReviewFile, f == AttributesFile:
+		case f == HarnessFile:
+			if data, ok := read(f); ok {
+				if _, err := harness.Parse(data); err != nil {
+					ds.Add("harness.syntax", f, 0, "%v; fix it, or change it with markitect config", err)
+				}
+			}
 		case f == RootPage:
 			if data, ok := read(f); ok {
 				pages = append(pages, realization.PageFile{Package: model.RootPackage, File: f, Data: data})
@@ -205,7 +216,7 @@ func Load(repo Repository) (*Project, error) {
 		case first == "results":
 			ds.Add("project.results", f, 0, "certificates and Result pages are retired; markitect update writes %s from the newest certificate and removes %s/results", ReviewFile, Dir)
 		default:
-			ds.Add("project.file", f, 0, "%s holds only the manifest, lock, ignore file, the registry, the model, Libraries, the record %s with its %s, and the installed tool", Dir, ReviewFile, AttributesFile)
+			ds.Add("project.file", f, 0, "%s holds only the manifest, lock, ignore file, the harness configuration %s, the registry, the model, Libraries, the record %s with its %s, and the installed tool", Dir, HarnessFile, ReviewFile, AttributesFile)
 		}
 	}
 	local := map[string][]model.File{}

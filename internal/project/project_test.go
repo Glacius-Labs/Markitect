@@ -220,15 +220,30 @@ func TestNothingBuilt(t *testing.T) {
 	}
 }
 
-func TestManifestHoldsTheModel(t *testing.T) {
+// The agents' model moved from the manifest to the harness configuration
+// (DEC-102): an earlier manifest that names it says where it went.
+func TestTheModelMovedToTheHarnessConfiguration(t *testing.T) {
 	r := valid(t)
 	r.files[ManifestFile] = "libraries:\n  std: 1.0.0\nmodel: opus\n"
-	p := load(t, r)
-	if len(p.Errors) != 0 || p.Manifest.Model != "opus" {
-		t.Fatalf("%+v %v", p.Manifest, p.Errors)
-	}
+	expect(t, load(t, r).Errors, "manifest.model", "markitect update moves it")
 	r.files[ManifestFile] = "libraries:\n  std: 1.0.0\neffort: max\n"
 	expect(t, load(t, r).Errors, "manifest.syntax", `unknown key "effort"`)
+}
+
+// The harness configuration belongs to the layout, and one the tool cannot read
+// is the owner's to fix.
+func TestTheHarnessConfigurationBelongsToTheLayout(t *testing.T) {
+	r := valid(t)
+	r.files[HarnessFile] = "# mine\nagents:\n  builder:\n    model: opus\n"
+	if p := load(t, r); len(p.Errors) != 0 {
+		t.Fatalf("%v", p.Errors)
+	}
+	r.files[HarnessFile] = "agents:\n  builder:\n    model: \"opus; rm -rf /\"\n"
+	p := load(t, r)
+	expect(t, p.Errors, "harness.syntax", "no model name")
+	if len(p.SpecErrors()) != 1 {
+		t.Fatalf("not the owner's to fix: %v", p.Errors)
+	}
 }
 
 // The files of the old layout are errors, with no compatibility kept.

@@ -61,6 +61,27 @@ type Status struct {
 	Unreadable []int
 	// Definitions counts the Definitions of the spec.
 	Definitions int
+	// Packages are the spec's Packages with what each has on the list and the
+	// Packages it depends on, sorted by name: what a driver needs to plan work
+	// per Package in the order of their dependencies (DEC-102).
+	Packages []PackageItems
+}
+
+// PackageItems is one Package with the items of status whose Definition lies
+// directly in it.
+type PackageItems struct {
+	// Package is the Package's name: its path, or Root.
+	Package string `json:"package"`
+	// Definitions counts the Definitions that lie directly in it.
+	Definitions int `json:"definitions"`
+	// Items counts its items, and SpecProblems those of them recorded
+	// spec-problem, which wait for the owner.
+	Items        int `json:"items"`
+	SpecProblems int `json:"spec_problems"`
+	// DependsOn names the Packages its Definitions link to, by a link or a Kind:
+	// those list --deps names, and an ancestor it links to, which list --deps
+	// leaves out as implicit.
+	DependsOn []string `json:"depends_on"`
 }
 
 // Clean says whether nothing is to verify: the project compiles and every
@@ -193,7 +214,52 @@ func (f *folder) status(rec Record, all bool) (Status, error) {
 		}
 	}
 	st.Errors = f.cur.RealizationErrors()
+	st.Packages = packageItems(f.cur.Model, st.Items)
 	return st, nil
+}
+
+// packageItems counts the items per Package, for every Package of the model and
+// for a Package that is gone but still has a gone Definition on the list.
+func packageItems(m *model.Model, items []Item) []PackageItems {
+	byName := map[string]*PackageItems{}
+	for _, path := range m.SortedPackages() {
+		p := &PackageItems{Package: model.PackageName(path), Definitions: len(m.Packages[path].Definitions), DependsOn: []string{}}
+		deps := map[string]bool{}
+		for to := range m.Edges[path] {
+			deps[to] = true
+		}
+		// A link to an ancestor makes no edge of the model, but the work on the
+		// Package still depends on it.
+		for _, id := range m.Packages[path].Definitions {
+			for _, l := range m.Definitions[id].Links {
+				if d := m.Definitions[l.Target]; d != nil && d.InModel() {
+					deps[model.PackageOf(l.Target)] = true
+				}
+			}
+		}
+		delete(deps, path)
+		for _, to := range sortedKeys(deps) {
+			p.DependsOn = append(p.DependsOn, model.PackageName(to))
+		}
+		byName[p.Package] = p
+	}
+	for _, it := range items {
+		name := model.PackageName(model.PackageOf(it.Definition))
+		p := byName[name]
+		if p == nil {
+			p = &PackageItems{Package: name, DependsOn: []string{}}
+			byName[name] = p
+		}
+		p.Items++
+		if it.State == StateSpecProblem {
+			p.SpecProblems++
+		}
+	}
+	out := make([]PackageItems, 0, len(byName))
+	for _, name := range sortedKeys(byName) {
+		out = append(out, *byName[name])
+	}
+	return out
 }
 
 // CodeUnreadable marks a line of the record markitect cannot read.

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
-	"strings"
 
 	"go.yaml.in/yaml/v3"
 )
@@ -22,9 +21,6 @@ type LibraryRef struct {
 // Manifest is the project's .markitect/manifest.yaml.
 type Manifest struct {
 	Libraries []LibraryRef // sorted by name
-	// Model names the model Markitect's agents use, empty for the one their
-	// definitions name.
-	Model string
 }
 
 // Locked is one Library entry of the lock.
@@ -54,9 +50,10 @@ func ParseManifest(file string, data []byte) (Manifest, Diagnostics) {
 		switch key {
 		case "libraries":
 		case "model":
-			m.Model = strings.TrimSpace(node.Value)
+			// An earlier manifest named the agents' model here (DEC-102).
+			ds.Add("manifest.model", file, node.Line, "the agents' model is set in .markitect/harness.yaml now; markitect update moves it there")
 		default:
-			ds.Add("manifest.syntax", file, node.Line, "unknown key %q: the manifest holds only libraries and model", key)
+			ds.Add("manifest.syntax", file, node.Line, "unknown key %q: the manifest holds only libraries", key)
 		}
 	}
 	libs := top["libraries"]

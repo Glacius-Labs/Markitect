@@ -35,12 +35,12 @@
         ]
       },
       {
-        "matcher": "Agent|Task",
+        "matcher": "Agent|Task|Workflow",
         "hooks": [
           {
             "type": "command",
             "shell": "bash",
-            "command": "input=$(cat); [ -d \"${CLAUDE_PROJECT_DIR}/.markitect\" ] || exit 0; case \"$input\" in *'\"agent_id\"'*) case \"$input\" in *[Mm][Aa][Rr][Kk][Ii][Tt][Ee][Cc][Tt]*) printf '%s' \"$input\" | sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\" hook pretool ;; esac ;; esac"
+            "command": "input=$(cat); [ -d \"${CLAUDE_PROJECT_DIR}/.markitect\" ] || exit 0; case \"$input\" in *'\"agent_id\"'*) case \"$input\" in *[Mm][Aa][Rr][Kk][Ii][Tt][Ee][Cc][Tt]*|*Workflow*) printf '%s' \"$input\" | sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\" hook pretool ;; esac ;; esac"
           }
         ]
       }

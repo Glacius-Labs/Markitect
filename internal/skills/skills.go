@@ -1,7 +1,8 @@
 // Package skills holds what ships inside the markitect binary for agents: the
 // design skill, which markitect init installs where coding agents look for
 // skills, and the harness of the work for Claude Code: its skills, its four agents
-// and the prompts of its routines (DEC-100).
+// and the prompts of its routines (DEC-100), and the workflow of the parallel
+// strategy (DEC-102).
 package skills
 
 import (
@@ -82,8 +83,8 @@ func Files() []File {
 // HarnessPrefix is what every file of the harness starts with below its folder.
 const HarnessPrefix = "markitect-"
 
-// Harness returns the files of the default strategy for Claude Code, with the
-// paths they have in a project, sorted by path.
+// Harness returns the files of the harness for Claude Code, with the paths they
+// have in a project, sorted by path.
 func Harness() []File {
 	var out []File
 	_ = fs.WalkDir(claudeFiles, "claude", func(p string, d fs.DirEntry, err error) error {

@@ -1,6 +1,7 @@
 // Package cli is the markitect command line: install, update, init and tidy; check,
 // vet, list and doc over the spec; status and mark over the record of what was
-// verified (DEC-099); the hook; version and licenses. The commands are flat, print
+// verified (DEC-099); config over the harness configuration (DEC-102); the hook;
+// version and licenses. The commands are flat, print
 // diagnostics as Go's tools do and, with --json, one envelope. None of them starts
 // an agent, steers the work or uses Git (DEC-096, DEC-097).
 package cli
@@ -68,6 +69,10 @@ Usage:
                                                   record a verdict at the state status printed: ok, fail, skip or
                                                   spec-problem; evidence is path:line or path; only the
                                                   markitect-reviewer agent runs it
+  markitect config [--repo DIR] [--user] KEY [VALUE] | --unset KEY | --list [--json]
+                                                  read or change the harness configuration: the agents' model and
+                                                  effort per role, the strategy per skill and custom workflows; the
+                                                  project's .markitect/harness.yaml beats your ~/.markitect/harness.yaml
   markitect version [--repo DIR]                  which markitect this is, and whether the personal skill and the project match it
   markitect licenses
 
@@ -142,6 +147,8 @@ func (c CLI) Run(ctx context.Context, args []string) int {
 		code, err = c.status(ctx, rest)
 	case "mark":
 		code, err = c.mark(ctx, rest)
+	case "config":
+		code, err = c.config(ctx, rest)
 	case "checklist", "answer", "gate":
 		fmt.Fprintf(c.Stdout, retired, cmd)
 	case "hook":
@@ -178,7 +185,7 @@ func (c CLI) flags(name string, o *options) *flag.FlagSet {
 	fs.SetOutput(c.Stderr)
 	fs.StringVar(&o.repo, "repo", ".", "a folder of the project")
 	switch name {
-	case "check", "vet", "list", "doc", "status":
+	case "check", "vet", "list", "doc", "status", "config":
 		fs.BoolVar(&o.json, "json", false, "print one JSON document instead of text")
 	}
 	return fs

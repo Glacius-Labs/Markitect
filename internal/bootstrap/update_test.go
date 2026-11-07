@@ -87,7 +87,7 @@ func TestUpdateBringsAProjectInLine(t *testing.T) {
 	wantAll(t, out, "project: updated 4 files:", "Markitect uses no Git: commit them when you like.")
 	noRepository(t, r.Dir)
 	settings := read(t, r.Dir, ".claude/settings.json")
-	wantAll(t, settings, "Bash(go test *)", "my-own-check", "Bash(markitect mark*)", "Edit|Write|MultiEdit|NotebookEdit", "Agent|Task", `"baseRef": "head"`)
+	wantAll(t, settings, "Bash(go test *)", "my-own-check", "Bash(markitect mark*)", "Edit|Write|MultiEdit|NotebookEdit", "Agent|Task|Workflow", `"baseRef": "head"`)
 	if strings.Contains(settings, "Bash(markitect answer*)") {
 		t.Fatalf("the older hook was not replaced:\n%s", settings)
 	}
@@ -108,24 +108,48 @@ func TestUpdateBringsAProjectInLine(t *testing.T) {
 	}
 }
 
-// The model the manifest names is the agents' model: update writes it into their
-// files, and until then every command says the harness is out of date.
-func TestTheManifestNamesTheAgentsModel(t *testing.T) {
+// The agents' model an earlier manifest names moves to the project's harness
+// configuration (DEC-102): update moves it, keeps a model the configuration
+// already sets, and writes the agents' files from it. A model that was never a
+// name is dropped, as it was ignored.
+func TestTheManifestsModelMovesToTheHarnessConfiguration(t *testing.T) {
 	emptyHome(t)
 	r := newFolder(t)
 	mustRun(t, r.Dir, "init")
-	wantAll(t, read(t, r.Dir, ".claude/agents/markitect-builder.md"), "\nmodel: sonnet\n")
-	r.Write(".markitect/manifest.yaml", "libraries:\n  std: 1.0.0\nmodel: opus\n")
-	if _, _, errOut := run(t, r.Dir, "status"); !strings.Contains(errOut, "run markitect update") {
-		t.Fatalf("no note of the changed model:\n%s", errOut)
+	wantAll(t, read(t, r.Dir, ".claude/agents/markitect-builder.md"), "\nmodel: sonnet\neffort: high\n")
+	if strings.Contains(read(t, r.Dir, ".markitect/manifest.yaml"), "model") {
+		t.Fatal("a new manifest still speaks of the model")
 	}
-	mustRun(t, r.Dir, "update", "--files")
-	for _, agent := range []string{"markitect-builder", "markitect-reviewer"} {
-		wantAll(t, read(t, r.Dir, ".claude/agents/"+agent+".md"), "\nmodel: opus\n")
+	r.Write(".markitect/manifest.yaml", "# The Libraries this project uses, with their versions. Run markitect tidy after a change.\n# model, optional, names the model Markitect's agents use; without it they use sonnet.\n# markitect update writes it into their agent files.\nlibraries:\n  std: 1.0.0\nmodel: opus\n")
+	r.Write(".markitect/harness.yaml", "agents:\n  reviewer:\n    model: haiku\n")
+	if code, out, _ := run(t, r.Dir, "check"); code != 1 || !strings.Contains(out, "manifest.model") {
+		t.Fatalf("check said nothing of the model: %d\n%s", code, out)
 	}
+	code, out, _ := run(t, r.Dir, "update", "--check", "--files")
+	if code != 1 || !strings.Contains(out, "manifest: names the agents' model") {
+		t.Fatalf("update --check: %d\n%s", code, out)
+	}
+	out = mustRun(t, r.Dir, "update", "--files")
+	wantAll(t, out, "manifest: moved the agents' model to .markitect/harness.yaml")
+	if got := read(t, r.Dir, ".markitect/manifest.yaml"); got != "# The Libraries this project uses, with their versions. Run markitect tidy after a change.\nlibraries:\n  std: 1.0.0\n" {
+		t.Fatalf("the manifest: %q", got)
+	}
+	for agent, model := range map[string]string{"builder": "opus", "architect": "opus", "auditor": "opus", "reviewer": "haiku"} {
+		wantAll(t, read(t, r.Dir, ".claude/agents/markitect-"+agent+".md"), "\nmodel: "+model+"\n")
+	}
+	mustRun(t, r.Dir, "check")
+	if out := mustRun(t, r.Dir, "update", "--files"); !strings.Contains(out, "project: up to date") {
+		t.Fatalf("a second update:\n%s", out)
+	}
+
 	r.Write(".markitect/manifest.yaml", "libraries:\n  std: 1.0.0\nmodel: \"opus; rm -rf /\"\n")
 	mustRun(t, r.Dir, "update", "--files")
-	wantAll(t, read(t, r.Dir, ".claude/agents/markitect-builder.md"), "\nmodel: sonnet\n")
+	if got := read(t, r.Dir, ".markitect/manifest.yaml"); strings.Contains(got, "model") {
+		t.Fatalf("the bad model stayed: %q", got)
+	}
+	if strings.Contains(read(t, r.Dir, ".claude/agents/markitect-builder.md"), "rm -rf") {
+		t.Fatal("the bad model reached an agent file")
+	}
 }
 
 // A checkout may hold a file with CRLF; that is the same file.

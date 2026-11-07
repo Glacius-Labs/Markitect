@@ -14,6 +14,8 @@ The message that starts you names your task:
 - **Clean up:** improve the code where it already meets the spec, without changing what the project does: remove duplication and dead code, simplify, make names and structure clearer. Change nothing a caller can observe, and weaken no test. Then have the reviewer verify what the cleanup put back on the list. Items that were on the list before you began are not yours: leave them, and name them when you end.
 - **Hunt bugs:** first start the `markitect-reviewer` agent with the message "Hunt bugs: look beyond what markitect status lists." It records each bug it finds as an item. Then build what status lists.
 
+If the message names a Package, as in "Build what markitect status lists in Package P." or "Clean up Package P.", you are one strand of a parallel run: other builders work on the other Packages at the same time, each in a worktree of its own. Work only on the items whose Definition lies directly in that Package: its path is the Package's, a `/` and a name, and a Definition of Root has no `/`. Change only the files the Package owns, new files for it and its registry page, and name the Package when you start the reviewer: "Verify what markitect status lists in Package P." A change that a file outside the Package needs, such as `go.mod`, the README or a shared configuration, you do not make: name each one when you end, with the file and the change. The strand of Package Root comes last and alone, and also makes the changes the message lists for the other strands, in whatever file they are.
+
 Run `markitect status`. It lists what is to verify:
 
 - each Definition with a changed input or no record yet, with what changed and where to look;

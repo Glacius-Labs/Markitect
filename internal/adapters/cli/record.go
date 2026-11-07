@@ -51,15 +51,19 @@ func (c CLI) status(ctx context.Context, args []string) (int, error) {
 			skipped = []run.Item{}
 		}
 		unreadable := append([]int{}, st.Unreadable...)
+		packages := append([]run.PackageItems{}, st.Packages...)
 		if err := c.printJSON(struct {
 			envelope
-			Clean       bool         `json:"clean"`
-			Definitions int          `json:"definitions"`
-			Items       []run.Item   `json:"items"`
-			Diagnostics []diagnostic `json:"diagnostics"`
-			Skipped     []run.Item   `json:"skipped"`
-			Unreadable  []int        `json:"unreadable_lines"`
-		}{newEnvelope("status"), st.Clean(), st.Definitions, items, append(append(diagnostics(severityError, st.SpecErrors), diagnostics(severityError, st.Errors)...), diagnostics(severityError, st.RecordErrors())...), skipped, unreadable}); err != nil {
+			Clean             bool               `json:"clean"`
+			Definitions       int                `json:"definitions"`
+			SpecErrors        int                `json:"spec_errors"`
+			RealizationErrors int                `json:"realization_errors"`
+			Packages          []run.PackageItems `json:"packages"`
+			Items             []run.Item         `json:"items"`
+			Diagnostics       []diagnostic       `json:"diagnostics"`
+			Skipped           []run.Item         `json:"skipped"`
+			Unreadable        []int              `json:"unreadable_lines"`
+		}{newEnvelope("status"), st.Clean(), st.Definitions, len(st.SpecErrors), len(st.Errors), packages, items, append(append(diagnostics(severityError, st.SpecErrors), diagnostics(severityError, st.Errors)...), diagnostics(severityError, st.RecordErrors())...), skipped, unreadable}); err != nil {
 			return Misused, err
 		}
 	} else {

@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
-	"regexp"
 	"strings"
 
+	"github.com/Glacius-Labs/Markitect/internal/harness"
 	"github.com/Glacius-Labs/Markitect/internal/libraries"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
@@ -83,15 +83,19 @@ func (c CLI) init(_ context.Context, args []string) (int, error) {
 			return code, err
 		}
 	}
+	cfg, err := harnessConfig(ws)
+	if err != nil {
+		return Misused, err
+	}
 	installed, err := installSkills(ws)
 	if err != nil {
 		return Misused, err
 	}
 	fmt.Fprintf(c.Stdout, "installed the skills %s into %s\n", strings.Join(installed, ", "), strings.Join(SkillDirs, " and "))
-	if err := installHarness(ws); err != nil {
+	if err := installHarness(ws, cfg); err != nil {
 		return Misused, err
 	}
-	fmt.Fprintln(c.Stdout, "installed the harness: the build, review, cleanup, bughunt, audit and schedule skills, and the builder, reviewer, architect and auditor agents")
+	fmt.Fprintln(c.Stdout, "installed the harness: the build, review, cleanup, bughunt, audit, schedule and config skills, the builder, reviewer, architect and auditor agents, and the parallel workflow")
 	if err := c.ensureSettings(ws); err != nil {
 		return Misused, err
 	}
@@ -118,14 +122,15 @@ var personalSkillTips = map[fileState]string{
 	outdated: "your personal skill comes from another markitect; markitect update refreshes it.",
 }
 
-// installHarness writes the harness of the work for Claude Code and removes every
-// other file of it the binary no longer ships.
-func installHarness(ws Workspace) error {
+// installHarness writes the harness of the work for Claude Code, its agents as
+// the configuration sets them, and removes every other file of it the binary no
+// longer ships.
+func installHarness(ws Workspace, cfg harness.Config) error {
 	want := map[string][]byte{}
-	for _, f := range harness(ws) {
+	for _, f := range renderHarness(cfg) {
 		want[f.Path] = f.Data
 	}
-	for _, dir := range []string{".claude/agents", ".claude/skills"} {
+	for _, dir := range []string{".claude/agents", ".claude/skills", ".claude/workflows"} {
 		existing, err := ws.List(dir)
 		if err != nil {
 			return err
@@ -146,38 +151,6 @@ func installHarness(ws Workspace) error {
 		}
 	}
 	return nil
-}
-
-// harness is the harness as a project gets it: its agents on the model the
-// manifest names, if it names one, in place of the one their files name.
-func harness(ws Workspace) []skills.File {
-	files := skills.Harness()
-	name := manifestModel(ws)
-	if name == "" {
-		return files
-	}
-	for i, f := range files {
-		if strings.HasPrefix(f.Path, ".claude/agents/") {
-			files[i].Data = bytes.Replace(f.Data, []byte("\nmodel: sonnet\n"), []byte("\nmodel: "+name+"\n"), 1)
-		}
-	}
-	return files
-}
-
-// modelName is what a model name may look like, such as opus or opus[1m].
-var modelName = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._\[\]-]*$`)
-
-// manifestModel is the model the project's manifest names for its agents, or "".
-func manifestModel(ws Workspace) string {
-	data, err := ws.Read(project.ManifestFile)
-	if err != nil {
-		return ""
-	}
-	m, _ := model.ParseManifest(project.ManifestFile, data)
-	if !modelName.MatchString(m.Model) {
-		return ""
-	}
-	return m.Model
 }
 
 // shippedSkill says a file belongs to a skill installSkills looks after.
@@ -439,8 +412,6 @@ func (c CLI) writeLock(ws Workspace) (int, error) {
 
 // manifestTemplate is a new project's manifest.
 const manifestTemplate = `# The Libraries this project uses, with their versions. Run markitect tidy after a change.
-# model, optional, names the model Markitect's agents use; without it they use sonnet.
-# markitect update writes it into their agent files.
 libraries:
   std: %s
 `
