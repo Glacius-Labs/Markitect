@@ -17,7 +17,7 @@
 - **Keep the other warnings** as they are, `vet.unstable_dependency` included, Martin's rule exactly.
 - **Add notes,** which `--strict` shows and which never change the exit code: unlinked mentions, both zones, statements per Definition, placement, and a CRAP analogue that reads `review.sum`.
 - **Let agents judge what a count cannot,** and only ever warn ([AI-assisted measures](#ai-assisted-measures)).
-- **Add one Kind to `std`, `std/Value`,** for the value objects of domain-driven design, where the Kinds' texts show a gap.
+- **Offer one Kind for `std`, `std/Value`,** for the value objects of domain-driven design, as a possible exception for the owner to judge: the hub it addresses is measured, but that a missing Kind caused it is not.
 
 ## What `vet` knows of Kinds
 
@@ -60,7 +60,7 @@ These have a known blind spot or no calibration yet, so they never change the ex
 | `vet.zone_of_pain` | A Package is stable and concrete: D > 0.7 with A + I < 1 | 0.7 | Root, `billing`, `equipment`, `members`; Root and 8 Packages | Every domain has a stable core; it hurts only where it changes, which a snapshot cannot see |
 | `vet.statements` | A Definition has more than 20 statements: list items and table rows in its body | 20 | 2 (`reporting/revenue-report` 25, `bookings/create-reservation` 22); 8 (`list-order` 67 at most) | The anchor and the architecture are long by nature (5× `architecture` 60, `project` 26) |
 | `vet.placement` | Every Definition that links to a Definition lies below it in one child Package, so it could move down to that child | — | none; none | A Rule that binds by scope may be linked from one child only and still belong higher. Both specs are one level deep, so untested |
-| `vet.risk` | A Definition recorded `ok` at its current inputs scores above 30 on c² × (1 − e)³ + c, with c = 1 + statements and e = evidence pointers / c, at most 1 | 30 | no record exists | Uncalibrated, and it can be gamed by naming more pointers. It also makes `vet` read `.markitect/review.sum` beside the spec |
+| `vet.risk` | A Definition recorded `ok` or `skip` at its current inputs scores above 30 on c² × (1 − e)³ + c, as defined under [AI-assisted measures](#ai-assisted-measures) | 30 | no record exists | Uncalibrated, and it can be gamed by naming more pointers. It also makes `vet` read `.markitect/review.sum` beside the spec |
 
 ### Unlinked mentions
 
@@ -100,7 +100,7 @@ On Makerspace the rule holds without more: no Package depends on the outer `prot
 
 ## A new `std` Kind: Value
 
-New `std` Kinds come only where the measurements show a gap and an established concept fills it. One gap shows.
+New `std` Kinds come only where the measurements show a gap and an established concept fills it. No candidate meets that rule in full. One comes close, and is put to the owner as a possible exception, not recommended on the measurements alone.
 
 **The concept.** A value object in domain-driven design (Eric Evans, *Domain-Driven Design*, 2003): an element of the domain defined by its content alone, with no identity of its own and no lifecycle; two values with the same content are equal, and a value is replaced, not changed. Its counterpart is the entity, which has an identity that persists while its attributes change.
 
@@ -143,13 +143,13 @@ A proposal, like the rest of this page. The aim is that the principles hold in p
 | Level | Judges | What | Effect |
 |---|---|---|---|
 | `vet` | The tool, deterministically, in CI too | Everything structural on this page: coupling, stability, abstractness, hubs, size, unlinked mentions | Warnings and notes as above |
-| Agents | The reviewer, while it verifies, and an agent in a modeling session, as the auditor | The semantic properties a count cannot see: how complex a Definition is, contradictions, vague statements, mixed levels of abstraction, terms used inconsistently | Warnings only, never a block. A contradiction the reviewer finds at the project's boundary stays a `spec-problem`, as today |
+| Agents | The reviewer, while it verifies, and an agent in a modeling session, as the auditor | The semantic properties a count cannot see: how complex a Definition is, contradictions, vague statements, mixed levels of abstraction, terms used inconsistently | Findings only, which never block anything. A contradiction the reviewer finds at the project's boundary stays a `spec-problem`, as today |
 
 **Complexity by counting, not rating.** The reviewer reads every Definition it verifies anyway. While it marks, it may record how many distinct cases, conditions and exceptions the Definition demands, as an optional field of `mark`: `markitect mark fees/waiver@3f9a1c ok -e src/fees.go:40 --cases 7`. A count is checkable, where a rating of "complex" is not. The record keeps it on the Definition's line in `review.sum`, so it is computed only when the Definition's inputs change, exactly when the verification is. This changes `mark` and the record's format, not the spec language. Until a count exists, `vet` falls back to the statements it counts itself.
 
-**A CRAP analogue on the record.** `vet.risk` combines that count *c* with how the Definition was verified: *risk = c² × (1 − e)³ + c*, with *e* 0 for a `skip`, a `fail` or no verdict at the current inputs, and otherwise the share of the cases its evidence covers, at most 1. The tool cannot tell a test from code without knowing file names, which it never interprets, so the reviewer says which evidence is a test: `-t PATH` beside `-e PATH`, with *e* the test pointers over *c*. A complex Definition verified without a test then scores high. `vet --strict` lists those above 30 as notes.
+**A CRAP analogue on the record.** `vet.risk` scores each Definition recorded `ok` or `skip` at its current inputs: *risk = c² × (1 − e)³ + c*. *c* is 1 + the cases, conditions and exceptions the reviewer counted for the Definition, or 1 + its statements until a count exists. *e* is the test pointers its verdict names, divided by *c*, at most 1. A `skip` has *e* 0. A `fail`, or a Definition with no verdict at its current inputs, is on the list of `status` already and is not scored. The tool cannot tell a test from code without interpreting file names, which it never does, so the reviewer says which evidence is a test: `-t PATH` beside `-e PATH`. A Definition counted at 7 cases (*c* 8) with two test pointers scores 64 × 0.42 + 8 ≈ 35, with four 16; with none, any Definition of more than four cases scores above 30. `vet --strict` lists those above 30 as notes.
 
-**Validation.** Keep it only if the data bear it out. Once real builds have recorded, say, 200 verdicts with counts, compare how often a Definition fails in its first review when it scored above 30 with how often the others do. If the first are not clearly more often `fail`, about twice as often, the count and `vet.risk` go again.
+**Validation.** Keep it only if the data bear it out, and measure it so that the verdict cannot decide its own score. Score each review from the case count the reviewer records in it and from the test pointers of the verdict before it, none for a first review, so that a `fail` does not raise its own score. That needs the count on every verdict, `fail` included. Once real builds have recorded at least 30 `fail` verdicts, and at least 10 in each group, compare how often a review ends in `fail` when its score was above 30 with how often it does otherwise. If the first is not about twice the second, the count and `vet.risk` go again.
 
 **What it costs.** No agent run of its own: the count comes from the review that happens anyway. One optional flag on `mark`, one optional field in the record, and a few sentences in the reviewer's agent file. The semantic warnings of the auditor live in the modeling session's report and in no file of the tool.
 
@@ -160,7 +160,7 @@ A proposal, like the rest of this page. The aim is that the principles hold in p
 3. **Martin's abstractness and distance:** A and D in `list --deps`, both zones as notes. Recommended. Also whether `vet.hub` and `vet.unlinked_mention` may leave Kinds out, a use of Core's `Kind` beyond abstractness.
 4. **Notes, shown with `--strict` and never changing the exit code,** for `vet.statements` and `vet.placement`, with the thresholds above as provisional. Recommended.
 5. **`vet.risk`, the CRAP analogue,** which makes `vet` read `review.sum`. Recommended as a note, and only once the record of a real build can calibrate it.
-6. **`std/Value`** in a new version of `std`, with one sentence in `std/Concept`. Recommended, with the reservation that its gap is argued, not measured.
-7. **AI-assisted measures:** agents judge the semantic properties and only warn; `mark` takes an optional count of cases; `vet` lists complex, weakly verified Definitions; kept only if the data bear it out. Recommended as a trial.
+6. **`std/Value`** in a new version of `std`, with one sentence in `std/Concept`, as an exception to the rule that new Kinds need a measured gap. For the owner to judge; not recommended on the measurements alone.
+7. **AI-assisted measures:** agents judge the semantic properties and report findings that block nothing; `mark` takes an optional count of cases; `vet` lists complex, weakly verified Definitions; kept only if the data bear it out. Recommended as a trial.
 
 Once decided, the build changes `internal/analysis`, its tests, `list --deps`, and the warning table of [the model language guide](../guides/model-language.md#vet-warnings); a new `std` Kind also changes `internal/libraries/std` and the Library's version. This page then becomes the plan's record, or goes.

@@ -96,13 +96,13 @@ In code the Package is the unit that is released and depended on. In Markitect t
 
 **Rule.** The larger a Definition, the more evidence its `ok` should name. A large Definition verified on one pointer is a risk, as a complex function without tests is.
 
-CRAP, the change-risk measure for code, is *comp² × (1 − cov)³ + comp*, with *comp* the cyclomatic complexity and *cov* the share covered by tests; above 30 is a risk. Its analogue for a Definition takes *c* = 1 + its statements and *e* = the evidence pointers of its `ok` in `.markitect/review.sum`, divided by *c*, at most 1. So *risk = c² × (1 − e)³ + c*. A Definition with 7 statements (*c* 8) verified on two pointers scores 64 × 0.42 + 8 ≈ 35; on four pointers, 16.
+CRAP, the change-risk measure for code, is *comp² × (1 − cov)³ + comp*, with *comp* the cyclomatic complexity and *cov* the share covered by tests; above 30 is a risk. Its analogue for a Definition recorded `ok` or `skip` in `.markitect/review.sum`: *c* is 1 + the cases, conditions and exceptions the reviewer counted for the Definition, or 1 + its statements until a count exists. *e* is the test pointers its verdict names, divided by *c*, at most 1. A `skip` has *e* 0. So *risk = c² × (1 − e)³ + c*. A Definition of 7 cases (*c* 8) with two test pointers scores 64 × 0.42 + 8 ≈ 35; with four, 16.
 
 **Why.** It finds what is both hard to verify and thinly verified. As with CRAP, a Definition of more than about 30 statements stays above the line however much evidence it names: the remedy is to split it.
 
-**Bad and good.** No record of a real build exists for Makerspace yet, so there are no measured examples. Without any record, 73 of its 115 Definitions would score above 30, which is why the measure only looks at Definitions recorded `ok`.
+**Bad and good.** No record of a real build exists for Makerspace yet, so there are no measured examples. Without any record, 73 of its 115 Definitions would score above 30, which is why the measure only looks at Definitions recorded `ok` or `skip`.
 
-**Signal.** The proposed `vet.risk`, a note shown with `--strict`, once a real record has calibrated it. The [`vet` plan](../concepts/vet-plan.md#ai-assisted-measures) also proposes a better *c*: the number of cases, conditions and exceptions the reviewer counts while it verifies.
+**Signal.** The proposed `vet.risk`, a note shown with `--strict`, once a real record has calibrated it. The [`vet` plan](../concepts/vet-plan.md#ai-assisted-measures) proposes the reviewer's case count and the `-t` flag for tests that it rests on.
 
 ## Accidental complexity
 
@@ -155,7 +155,7 @@ CRAP, the change-risk measure for code, is *comp² × (1 − cov)³ + comp*, wit
 - `blocked`: flag
 ```
 
-**Good: one Definition per format, linked where it is used.** Split into thirteen Definitions at Root, a change to one format lists between 2 and 52 Definitions, a median of 5. `std` has no Kind for a value yet, so the split wrote each format as a `std/Concept`; the [`vet` plan](../concepts/vet-plan.md#a-new-std-kind-value) proposes `std/Value`.
+**Good: one Definition per format, linked where it is used.** Split into thirteen Definitions at Root, a change to one format lists between 2 and 52 Definitions, a median of 5. `std` has no Kind for a value yet, so the split wrote each format as a `std/Concept`; the [`vet` plan](../concepts/vet-plan.md#a-new-std-kind-value) puts `std/Value` to the owner.
 
 ```markdown
 **Fields:**
