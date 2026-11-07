@@ -23,11 +23,17 @@ import (
 type Disk struct{}
 
 // Root is the project folder that holds dir: the nearest folder, dir or above,
-// with Markitect's manifest in it.
+// with Markitect's manifest in it. dir must exist, so that a mistyped folder is
+// not taken for the project around it.
 func (Disk) Root(dir string) (string, error) {
 	abs, err := filepath.Abs(dir)
 	if err != nil {
 		return "", err
+	}
+	if info, err := os.Stat(abs); err != nil {
+		return "", err
+	} else if !info.IsDir() {
+		return "", fmt.Errorf("%s is no folder", dir)
 	}
 	for at := abs; ; {
 		if info, err := os.Stat(filepath.Join(at, filepath.FromSlash(project.ManifestFile))); err == nil && !info.IsDir() {
@@ -271,14 +277,50 @@ func (g *ignores) excludes(file string) bool {
 	return g.ignored(file, false)
 }
 
-// ignores is the .gitignore files of a folder, read as they are needed.
+// ignores is the .gitignore files of a folder, read as they are needed, and of the
+// folders above it up to the top of the repository it lies in, if any.
 type ignores struct {
 	root  string
 	files map[string][]pattern
+	// above holds the .gitignore files above root, the outermost first.
+	above []ancestor
+}
+
+// ancestor is the .gitignore file of a folder above the project folder: its
+// patterns, and the path from that folder down to the project folder.
+type ancestor struct {
+	down     string
+	patterns []pattern
 }
 
 func newIgnores(root string) *ignores {
-	return &ignores{root: root, files: map[string][]pattern{}}
+	return &ignores{root: root, files: map[string][]pattern{}, above: ancestors(root)}
+}
+
+// ancestors reads the .gitignore files of the folders above root, up to the
+// nearest one with a .git, which is the top of the repository the project lies
+// in, as Git applies them. A project in no repository has none.
+func ancestors(root string) []ancestor {
+	if _, err := os.Lstat(filepath.Join(root, ".git")); err == nil {
+		return nil
+	}
+	var out []ancestor
+	down := ""
+	for at := root; ; {
+		up := filepath.Dir(at)
+		if up == at {
+			// No repository above: no folder above counts.
+			return nil
+		}
+		down = path.Join(filepath.Base(at), down)
+		if data, err := os.ReadFile(filepath.Join(up, ".gitignore")); err == nil {
+			out = append([]ancestor{{down: down, patterns: parseIgnore("", string(data))}}, out...)
+		}
+		if _, err := os.Lstat(filepath.Join(up, ".git")); err == nil {
+			return out
+		}
+		at = up
+	}
 }
 
 // pattern is one line of a .gitignore file.
@@ -356,6 +398,14 @@ func (g *ignores) ignored(rel string, dir bool) bool {
 		}
 	}
 	ignored := false
+	// The files above the project folder match the path from their own folder.
+	for _, a := range g.above {
+		for _, p := range a.patterns {
+			if p.matches(path.Join(a.down, rel), dir) {
+				ignored = !p.negate
+			}
+		}
+	}
 	for i := len(folders) - 1; i >= 0; i-- {
 		for _, p := range g.patterns(folders[i]) {
 			if p.matches(rel, dir) {

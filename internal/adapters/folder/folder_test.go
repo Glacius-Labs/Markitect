@@ -92,6 +92,46 @@ func TestFolderRoot(t *testing.T) {
 	if _, err := (Disk{}).Root(testkit.TempDir(t)); err == nil || !strings.Contains(err.Error(), "markitect init") {
 		t.Fatalf("outside a project: %v", err)
 	}
+	// A folder that does not exist is not taken for the project around it.
+	if _, err := (Disk{}).Root(filepath.Join(dir, "src", "nosuch")); err == nil {
+		t.Fatal("a missing folder found the project above it")
+	}
+}
+
+// A project in a folder of a repository honours the .gitignore files above it, up
+// to the top of the repository, each from its own folder, as Git does.
+func TestFolderInARepository(t *testing.T) {
+	top := testkit.TempDir(t)
+	put(t, top, map[string]string{
+		".git/HEAD":                             "ref: refs/heads/main\n",
+		".gitignore":                            "node_modules/\n/build\n*.log\n",
+		"services/.gitignore":                   "!keep.log\n",
+		"services/api/.markitect/manifest.yaml": "libraries: {}\n",
+		"services/api/node_modules/x.js":        "ignored from the top\n",
+		"services/api/build/out.txt":            "kept: /build is anchored at the top\n",
+		"services/api/a.log":                    "ignored from the top\n",
+		"services/api/keep.log":                 "brought back from services\n",
+		"services/api/src/main.go":              "package main\n",
+	})
+	root, err := Disk{}.Root(filepath.Join(top, "services", "api", "src"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	w, err := Walk(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	files, _ := w.Files()
+	if got, want := strings.Join(files, ","), ".markitect/manifest.yaml,build/out.txt,keep.log,src/main.go"; got != want {
+		t.Fatalf("the walk found\n%s\nnot\n%s", got, want)
+	}
+	ws, err := Disk{}.Project(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ws.GitIgnored("node_modules/x.js") || ws.GitIgnored("src/main.go") {
+		t.Fatal("the workspace reads the .gitignore files above differently")
+	}
 }
 
 // A symbolic link is a file whose content is where it points, as Git stores it.

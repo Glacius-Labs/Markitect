@@ -211,7 +211,7 @@ func (e *Engine) Gate(_ context.Context, req GateRequest) (Verdict, error) {
 	if err := e.updateWork(f.root, func(*Work) (*Work, error) { return nil, nil }); err != nil {
 		return Verdict{}, err
 	}
-	return Verdict{Done: true, Text: fmt.Sprintf("The work passes: every item has an answer for the files as they are now, and none is wrong. Its certificate is %s, with the Result %s. Commit the work together with both, in one commit.\n", certFile, page)}, nil
+	return Verdict{Done: true, Text: fmt.Sprintf("The work passes: every item has an answer for the files as they are now, and none is wrong. Its certificate is %s, with the Result %s. Commit the work together with both, in one commit, where the folder is under version control.\n", certFile, page)}, nil
 }
 
 // reviewState rebuilds the list, reads the answers that stand on the folder's

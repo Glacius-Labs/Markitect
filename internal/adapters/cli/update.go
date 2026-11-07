@@ -362,7 +362,7 @@ func lockNote(lock bool) string {
 }
 
 // staleNotice prints the one line that says a project's skills and agents come
-// from another markitect. Like notice it is best effort and changes no result.
+// from another markitect. It is best effort and changes no result.
 func (c CLI) staleNotice(args []string) {
 	ws, err := c.Folders.Project(repoArg(args))
 	if err != nil {

@@ -8,4 +8,4 @@ allowed-tools: Bash(markitect checklist *), Bash(markitect gate *), Bash(markite
 
 Do what this printed. When the reviewer has ended, run markitect gate --findings and do what it prints; while it asks for answers, start the reviewer again. You change no file and store no answer yourself.
 
-When it has written the Result, commit the pages it wrote in one commit on the current branch and push nothing. Then tell the user in a line or two what it found.
+When it has written the Result, commit the pages it wrote in one commit on the current branch and push nothing; in a folder that is not a Git repository, commit nothing. Then tell the user in a line or two what it found.

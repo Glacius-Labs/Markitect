@@ -132,7 +132,7 @@ When the owner deletes a Definition, a file or a Package, the registry still nam
 
 `check` fails on each, in its group of errors in the realization, as it does on a file the registry does not list and on a Definition nothing links to and no file realizes (`definition.unused`). `check --spec` looks only at the spec itself.
 
-A project with nothing built yet passes: when the registry lists no file and the only errors are `definition.unused`, `check` says that the spec compiles and nothing is built yet, and exits 0. A file in the repository, or anything registered, ends that. `--json` then carries `"nothingBuilt": true`. This holds for `check` only: `submit` still refuses a Definition nothing realizes.
+A project with nothing built yet passes: when the registry lists no file and the only errors are `definition.unused`, `check` says that the spec compiles and nothing is built yet, and exits 0. A file in the project folder, or anything registered, ends that. `--json` then carries `"nothingBuilt": true`. This holds for `check` only: `gate` still refuses a Definition nothing realizes.
 
 ### Ignore file
 
@@ -144,15 +144,15 @@ LICENSE
 docs/assets/**
 ```
 
-Its patterns are the registry's, not Git's: they start at the top of the repository, `*` and `?` stay within a folder, `**` is a whole segment, and `!` does not exist (`ignore.syntax`). So `*.png` means the top folder only, and a folder's files are `docs/assets/**`, not `docs/assets/`.
+Its patterns are the registry's, not Git's: they start at the top of the project folder, `*` and `?` stay within a folder, `**` is a whole segment, and `!` does not exist (`ignore.syntax`). So `*.png` means the top folder only, and a folder's files are `docs/assets/**`, not `docs/assets/`.
 
 It can't merge with `.gitignore`, because the two answer different questions: `.gitignore` says what Git does not track, and this file says what Git tracks and no Package owns. A file Git ignores needs no line here.
 
-The tool accounts for what `init` installs by itself: `AGENTS.md`, `CLAUDE.md`, `.claude/settings.json`, the `markitect-*` skills and agents, and `.gitignore`. They need no line here and no registry entry, though a registry page may list them. A Run may not change any of them but `.gitignore`.
+The tool accounts for what `init` installs by itself: `AGENTS.md`, `CLAUDE.md`, `.claude/settings.json`, the `markitect-*` skills and agents, and `.gitignore`. They need no line here and no registry entry, though a registry page may list them. The work may not change any of them, `.gitignore` included.
 
 ### Model
 
-`.markitect/manifest.yaml` may also name the `model` a Run's agents use, and `apply` then says to start them on it. Without it they use `sonnet`, as their agent files say, at effort `high`.
+`.markitect/manifest.yaml` may also name the `model` the builder and reviewer use, and `checklist --start` and `gate` then say to start them on it. Without it they use `sonnet`, as their agent files say, at effort `high`.
 
 ```yaml
 libraries:
@@ -245,7 +245,7 @@ Details the concept leaves open, settled while building T1:
 - **Library links.** A path whose first name is a Library is a Library link, so no top-level model name may equal a Library's name.
 - **Local Library versions.** A local Library carries no version file; the manifest names its version and the lock pins its digest.
 - **Specificity.** An exact path beats every pattern; otherwise more literal characters win; a tie between Packages is an error.
-- **Stale realization** and unused Definitions are errors of the realization: they stop `check` and `submit`, not `apply` ([draft concept 4.0](../concepts/v4-concept.md#what-check-refuses)). A repository file without any entry is the same. The owner's earlier confirmation of 28 October 2026 is overturned on this branch.
+- **Stale realization** and unused Definitions are errors of the realization: they stop `check` and `gate`, not `checklist` ([draft concept 4.0](../concepts/v4-concept.md#what-check-refuses)). A file of the project folder without any entry is the same. The owner's earlier confirmation of 28 October 2026 is overturned on this branch.
 - **Inherited items** in the per-Package lists are only Definitions above that the change itself changed, not those reached through a file or a link; otherwise a README edit at Root would put an item on every Package's list. Confirmed by the owner on 28 October 2026.
 - **How far impact follows.** The checklist takes one step of links, and the registry in both directions; Definitions at more steps are reported with their distance. The code's own imports are not followed yet; a later step that knows the realization's languages can widen reach.
-- **Skills** are installed into `.claude/skills/` (Claude Code) and `.agents/skills/` (the Agent Skills folder that Codex and other agents read). The harness of a Run, the apply and verify skills and the reviewer agent, goes into `.claude/` only.
+- **Skills** are installed into `.claude/skills/` (Claude Code) and `.agents/skills/` (the Agent Skills folder that Codex and other agents read). The harness of the work, the apply and verify skills and the builder and reviewer agents, goes into `.claude/` only.

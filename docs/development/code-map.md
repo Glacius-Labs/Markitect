@@ -61,7 +61,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/project` | Package project loads a project's Markitect folder from a repository state and checks it as a whole: manifest, lock, Libraries, model and registry. | [docs/guides/model-language.md#the-projects-markitect-folder](../guides/model-language.md#the-projects-markitect-folder) |
+| `internal/project` | Package project loads a project's Markitect folder from a set of files, the project folder or a certificate's copy, and checks it as a whole: manifest, lock, Libraries, model and registry. | [docs/guides/model-language.md#the-projects-markitect-folder](../guides/model-language.md#the-projects-markitect-folder) |
 
 ## Analysis
 
