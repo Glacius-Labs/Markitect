@@ -33,7 +33,7 @@
 
 When AI agents build most of a project, its design, rules, documentation, code, tests and configuration drift apart. A decision about behavior has to reach the code, the tests, the documentation and the agents' own instructions. An agent finishes its task and misses a rule two folders away. Consistency passes take hours and find more each time.
 
-Markitect moves the knowledge of what belongs together out of the agents' memory and into one place you own: the spec. You describe the project once, as typed documentation in Markdown. Code, tests, configuration and documentation are built from it. When you want something different, you change the spec; Markitect works out what the change reaches, an agent brings the project in line, a fresh agent checks every item, and the work lands with a record of every answer.
+Markitect moves the knowledge of what belongs together out of the agents' memory and into one place you own: the spec. You describe the project once, as typed documentation in Markdown. Code, tests, configuration and documentation are built from it. When you want something different, you change the spec; Markitect works out what the change reaches, an agent brings the project in line, a fresh agent checks every item, and the work passes with a certificate that records every answer.
 
 It is a way of agentic coding, not a platform: the agents are ordinary Claude Code agents in your own session and your own folder, and the tool keeps a few clear guarantees around them.
 
@@ -44,8 +44,8 @@ It is a way of agentic coding, not a platform: the agents are ordinary Claude Co
 - **Every file accounted for.** One registry page per Package names the paths it owns and lists each file with the Definitions it builds. A file that is neither registered nor ignored is an error.
 - **Impact like an incremental build.** `markitect impact` shows which Definitions and files a change reaches, and why. `markitect lint` measures the spec like code: coupling, size, unused Definitions.
 - **A builder and a fresh reviewer.** `/markitect-apply` has your Claude Code session start a builder agent. When it is done, a reviewer agent with fresh context answers every item of the checklist, and a wrong answer goes back to the builder.
-- **One door.** The builder calls `markitect submit`, which refuses changes to the spec or the harness, files the review has not seen and anything `check` rejects, and lands the work only when every item has passed.
-- **Lands as a commit.** The work lands on your branch as one commit, with a Result page under `.markitect/results/`. Nothing is pushed.
+- **One gate.** The builder calls `markitect gate`, which refuses changes to the spec or the harness, changed files that lie in no item of the list and anything `check` rejects, and passes only when every item has passed review.
+- **A certificate, committed.** When the work passes, `gate` writes a certificate with a Result page under `.markitect/results/`, and your session commits the work with it on your branch as one commit. Nothing is pushed. Markitect itself uses no Git.
 
 ## How it works
 
@@ -56,17 +56,17 @@ flowchart LR
     Impact --> Build["builder<br/>makes the project<br/>match"]
     Build --> Review["reviewer<br/>answers every item"]
     Review -->|"wrong answers go<br/>back to the builder"| Build
-    Review --> Land["land<br/>on your branch<br/>with a Result page"]
+    Review --> Land["certificate<br/>committed on<br/>your branch"]
 ```
 
 1. **You change the spec,** by hand or with your coding agent through the modeling skill, which asks first when something is open. You read the Markdown diff.
-2. **You run `/markitect-apply` in Claude Code.** Markitect checks the spec and commits it. An error in it stops here, before any agent starts.
-3. **Impact makes the list.** The change reaches the Definitions it edits, the Definitions that link to them and the files that build them. Each becomes an item of the checklist.
-4. **A builder agent does the work,** in your folder. It reads the list from `markitect checklist`, changes the code, tests and documentation, and calls `markitect submit` when it thinks it is done.
-5. **A fresh reviewer checks it.** `submit` tells the builder to start the reviewer, which sees only the spec, the list and the code. It answers each item with `ok`, `wrong` or `spec problem` and points to where it looked. Wrong items go back to the builder, at most twice.
-6. **The work lands.** When nothing is left, `submit` commits the work with its Result page on your branch. A real problem in the spec ends the run instead, and the Result names the decision for you.
+2. **You run `/markitect-apply` in Claude Code.** Markitect checks the spec. An error in it stops here, before any agent starts.
+3. **Impact makes the list.** The change since the newest certificate reaches the Definitions it edits, the Definitions that link to them and the files that build them. Each becomes an item of the checklist.
+4. **A builder agent does the work,** in your folder. It reads the list from `markitect checklist`, changes the code, tests and documentation, and calls `markitect gate` when it thinks it is done.
+5. **A fresh reviewer checks it.** `gate` tells the builder to start the reviewer, which sees only the spec, the list and the code. It answers each item with `ok`, `wrong` or `spec problem` and points to where it looked. Wrong items go back to the builder, at most twice.
+6. **The work passes.** When nothing is left, `gate` writes the certificate and its Result page, and your session commits them with the work on your branch. A real problem in the spec ends the work instead, and the Result names the decision for you.
 
-`/markitect-verify` runs a reviewer alone over the last commit and changes nothing. Its Findings feed the next `markitect apply --findings`.
+`/markitect-verify` runs a reviewer alone over what changed since the newest certificate, or over everything with `--full`, and changes nothing. Its Findings feed the next `/markitect-apply --findings FILE`.
 
 ## Quick start
 
@@ -101,7 +101,7 @@ markitect init --name "Your project"
 markitect check
 ```
 
-`init` creates `.markitect/` with the manifest, the lock, a project anchor and Root's registry page, writes `AGENTS.md` and `CLAUDE.md`, and installs the skills, the builder and reviewer agents, and a hook in `.claude/settings.json` that lets only the reviewer answer. It works in an empty folder too, and makes it a Git repository. It never changes an existing spec file, so it is safe to run again after an upgrade. In a new project, `check` says that nothing is built yet. Open Claude Code and run `/markitect-start`, which asks what the project is and starts the spec with you.
+`init` creates `.markitect/` with the manifest, the lock, a project anchor and Root's registry page, writes `AGENTS.md` and `CLAUDE.md`, and installs the skills, the builder and reviewer agents, and a hook in `.claude/settings.json` that lets only the reviewer answer and only your session begin the work. It works in an empty folder too, and makes it a Git repository. It never changes an existing spec file, so it is safe to run again after an upgrade. In a new project, `check` says that nothing is built yet. Open Claude Code and run `/markitect-start`, which asks what the project is and starts the spec with you.
 
 In a repository that already has files, the first `check` fails by design, because every file must belong somewhere:
 
@@ -138,7 +138,7 @@ Commit what is not part of the spec, then run this in Claude Code, in the projec
 /markitect-apply
 ```
 
-Your session starts the builder and waits for it; leave the folder alone meanwhile. The first run builds the whole spec; later runs take the last landing as their base and build only what changed since. `/markitect-verify` reviews the last commit. The [project workflow](docs/guides/project-workflow.md) covers every option, limit and exit code.
+Your session starts the builder and waits for it; leave the folder alone meanwhile. The first time it builds the whole spec; later it takes the newest certificate as its base and builds only what changed since. `/markitect-verify` reviews what changed since the newest certificate. The [project workflow](docs/guides/project-workflow.md) covers every option, limit and exit code.
 
 ## Example: one rule changes
 
@@ -199,7 +199,7 @@ Main carries [draft concept 4.0](docs/concepts/v4-concept.md), which the owner t
 | Area | State |
 | --- | --- |
 | The spec language and the commands `init`, `check`, `lock`, `refs`, `graph`, `impact` and `lint` | Available |
-| Runs with `/markitect-apply` and `/markitect-verify` | Available on Claude Code. Tested end to end by hand and in tests; the owner's first real projects are the next evidence |
+| Work with `/markitect-apply` and `/markitect-verify` | Available on Claude Code, through `markitect gate` since 0.19.0. Tested in tests; trials on a real project are the next evidence |
 | Codex | Not yet: it needs subagents with their own agent files and a hook that names the agent |
 | Release | None yet; install from source |
 
@@ -222,14 +222,14 @@ As much as good documentation of the project would state: domain concepts, featu
 <details>
 <summary><b>Can agents change my spec?</b></summary>
 
-A run never changes the spec: `submit` refuses any change to it, to the manifest, the lock or the harness. Agents propose spec changes in conversation through the modeling skill, and you accept each one. A real problem in the spec ends the run without landing, and the Result names the decision for you.
+The work never changes the spec: `gate` refuses any change to it, to the manifest, the lock or the harness. Agents propose spec changes in conversation through the modeling skill, and you accept each one. A real problem in the spec ends the work without a certificate, and the Result names the decision for you.
 
 </details>
 
 <details>
 <summary><b>Can I adopt it on an existing code base?</b></summary>
 
-Yes. The `markitect-extract` skill drafts a spec from the code with you, and you accept it like any other change. From then on, `/markitect-verify` with `--full` reports where the code deviates, and its Findings go into `markitect apply --findings`.
+Yes. The `markitect-extract` skill drafts a spec from the code with you, and you accept it like any other change. From then on, `/markitect-verify` with `--full` reports where the code deviates, and its Findings go into `/markitect-apply --findings FILE`.
 
 </details>
 

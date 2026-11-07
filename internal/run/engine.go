@@ -246,7 +246,7 @@ func (e *Engine) hasHarness(ctx context.Context, commit, root string) bool {
 				return false
 			}
 		}
-		if file == SettingsFile && !HasAnswerHook(data) {
+		if file == SettingsFile && !HasGuard(data) {
 			return false
 		}
 	}

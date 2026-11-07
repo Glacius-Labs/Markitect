@@ -282,7 +282,8 @@ func TestInitKeepsTheProjectsSettings(t *testing.T) {
 	mustRun(t, r.Dir, "init")
 	mustRun(t, r.Dir, "init")
 	settings := read(t, r.Dir, ".claude/settings.json")
-	if !strings.Contains(settings, "Bash(go test *)") || !strings.Contains(settings, "12345678901234567890") || strings.Count(settings, "markitect hook pretool") != 1 {
+	if !strings.Contains(settings, "Bash(go test *)") || !strings.Contains(settings, "12345678901234567890") ||
+		strings.Count(settings, "Bash(markitect answer*)") != 1 || strings.Count(settings, "Bash(markitect checklist*)") != 1 {
 		t.Fatalf("settings:\n%s", settings)
 	}
 }
@@ -362,8 +363,10 @@ func TestInitInstallsTheHarness(t *testing.T) {
 	if err := json.Unmarshal([]byte(read(t, r.Dir, ".claude/settings.json")), &settings); err != nil {
 		t.Fatal(err)
 	}
-	if pre := settings.Hooks["PreToolUse"]; len(pre) != 1 || pre[0].Matcher != "Bash" || len(pre[0].Hooks) != 1 || pre[0].Hooks[0].Command != "markitect hook pretool" || pre[0].Hooks[0].If != "Bash(markitect answer*)" {
-		t.Fatalf("the hook on answer: %+v", settings)
+	if pre := settings.Hooks["PreToolUse"]; len(pre) != 1 || pre[0].Matcher != "Bash" || len(pre[0].Hooks) != 2 ||
+		pre[0].Hooks[0].Command != "markitect hook pretool" || pre[0].Hooks[0].If != "Bash(markitect answer*)" ||
+		pre[0].Hooks[1].Command != "markitect hook pretool" || pre[0].Hooks[1].If != "Bash(markitect checklist*)" {
+		t.Fatalf("the guard hook: %+v", settings)
 	}
 	if status := r.Git("status", "--porcelain"); status != "" {
 		t.Fatalf("init left the folder dirty: %s", status)
@@ -438,6 +441,11 @@ func TestGateThroughTheCommandLine(t *testing.T) {
 	if code, out, _ := run(t, r.Dir, "gate"); code != 1 || !strings.Contains(out, "No checklist began this work") {
 		t.Fatalf("gate before checklist: %d\n%s", code, out)
 	}
+	// The skill's call always exits 0, so that its session sees what it printed.
+	if code, out, _ := run(t, r.Dir, "checklist", "--start", "--findings", "nosuch.md"); code != 0 || !strings.Contains(out, "could not begin the work") {
+		t.Fatalf("checklist --start with a missing Findings page: %d\n%s", code, out)
+	}
+	wantAll(t, mustRun(t, r.Dir, "checklist", "--start"), "markitect-builder", "Build the work.")
 	wantAll(t, mustRun(t, r.Dir, "checklist"), "Make this project match the spec", "markitect gate", "[ ] project")
 	if code, out, _ := run(t, r.Dir, "gate"); code != 1 || !strings.Contains(out, "markitect-reviewer") {
 		t.Fatalf("gate before a review: %d\n%s", code, out)

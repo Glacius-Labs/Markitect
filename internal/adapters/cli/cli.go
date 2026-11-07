@@ -87,9 +87,10 @@ Called from inside a run:
   markitect submit                                the one door: says what is next, and lands the work
 
 Without a run and without Git, for whoever drives the agents (tried beside the run):
-  markitect checklist [--base CERTIFICATE] [--full] [--findings FILE] [--review]
-                                                  the list of the change from the newest certificate to the folder
-  markitect answer [FILE]                         store a reviewer's answers for the files as they are now
+  markitect checklist [--base CERTIFICATE] [--full] [--findings FILE] [--review] [--start]
+                                                  the list of the change from the newest certificate to the folder;
+                                                  --start begins it and says which agent to start
+  markitect answer [FILE]                       store a reviewer's answers for the files as they are now
   markitect gate   [--verify] [--findings]        check the work and say what is next; when it passes, write its certificate
 `
 )

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -28,6 +29,10 @@ type ChecklistRequest struct {
 	Findings []analysis.Finding
 	// Review prints what a review must still answer.
 	Review bool
+	// Start begins the work, or goes on with the work under way, and prints the
+	// step for the session that drives it instead of the agent's task: which
+	// agent to start, and to run gate when it has ended.
+	Start bool
 }
 
 func (r ChecklistRequest) namesChange() bool {
@@ -195,20 +200,26 @@ func (e *Engine) workFor(f *folder, req ChecklistRequest, stored *Work) (w *Work
 	if base == "" {
 		full = true
 	}
+	findings, named := req.Findings, req.namesChange()
 	// A base certificate gone from the folder, as after a change of branch, is a
 	// changed certificate like any other: a plain checklist refuses.
 	if stored != nil && !req.namesChange() {
 		if changed := f.changedOwn(stored); len(changed) > 0 {
-			return nil, restartText(changed), nil
-		}
-		if stored.Named || stored.Base == base {
+			// The skill's call is the owner's step, so it begins the work
+			// again, from the newest certificate and with the Findings and the
+			// whole spec the owner named; an agent's plain checklist is refused.
+			if !req.Start {
+				return nil, restartText(changed), nil
+			}
+			full, findings, named = full || stored.Full, stored.Findings, stored.Named
+		} else if stored.Named || stored.Base == base {
 			return stored, "", nil
 		}
 	}
 	if stored != nil && req.namesChange() && len(f.changedOwn(stored)) == 0 && stored.Named && stored.Base == base && stored.Full == full && sameFindings(stored.Findings, req.Findings) {
 		return stored, "", nil
 	}
-	return &Work{Project: f.root, Base: base, Full: full, Findings: req.Findings, Named: req.namesChange(), Spec: f.specHashes(), Certificates: f.certs, Answers: map[string]Given{}, Began: e.now()}, "", nil
+	return &Work{Project: f.root, Base: base, Full: full, Findings: findings, Named: named, Spec: f.specHashes(), Certificates: f.certs, Answers: map[string]Given{}, Began: e.now()}, "", nil
 }
 
 // restartText says that what the work may not change changed under it. An agent
@@ -259,6 +270,9 @@ func (e *Engine) Checklist(ctx context.Context, req ChecklistRequest) (text stri
 		return "", false, err
 	}
 	if open != nil {
+		if req.Start {
+			return fmt.Sprintf("Run %s is open in this folder, so no work begins beside it. markitect %s --skill says how to go on with it, and markitect stop \"why\" ends it.\n", open.Run, open.Command), false, nil
+		}
 		if req.namesChange() {
 			return "", false, fmt.Errorf("%w: run %s is open in this folder and has its own list; --base, --full and --findings are for work without a run", ErrUsage, open.Run)
 		}
@@ -269,19 +283,26 @@ func (e *Engine) Checklist(ctx context.Context, req ChecklistRequest) (text stri
 	if err != nil {
 		return "", false, err
 	}
+	if req.Start && !harnessOnDisk(f.root) {
+		return noGuard, false, nil
+	}
 	if errs := f.cur.SpecErrors(); len(errs) > 0 {
 		return "The spec has errors, so there is no list. Fix them in the spec first:\n\n" + listErrors(errs), false, nil
 	}
 	var w Work
 	var imp analysis.Impact
 	var before *project.Project
+	var restarted []string
 	refusal := ""
 	if err := e.updateWork(f.root, func(stored *Work) (*Work, error) {
-		if stored == nil && req.Review && !req.namesChange() {
+		if stored == nil && req.Review && !req.namesChange() && !req.Start {
 			// A reviewer is started for work under way; without one there is
 			// nothing to review.
 			refusal = "No work is under way in this folder, so there is nothing to review. End now, and say so.\n"
 			return nil, nil
+		}
+		if req.Start && stored != nil && !req.namesChange() {
+			restarted = f.changedOwn(stored)
 		}
 		next, why, err := e.workFor(f, req, stored)
 		if err != nil {
@@ -295,6 +316,11 @@ func (e *Engine) Checklist(ctx context.Context, req ChecklistRequest) (text stri
 			return nil, err
 		}
 		w = *next
+		if req.Start && req.Review && len(next.Items) == 0 {
+			// A review that finds nothing to review leaves no work behind, which
+			// would otherwise hold the next change to its base.
+			return nil, nil
+		}
 		return next, nil
 	}); err != nil {
 		return "", false, err
@@ -302,10 +328,19 @@ func (e *Engine) Checklist(ctx context.Context, req ChecklistRequest) (text stri
 	if refusal != "" {
 		return refusal, false, nil
 	}
+	if req.Start {
+		return startStep(w, f, req.Review, restarted), true, nil
+	}
 	changes := changedText(imp, before)
 	if !req.Review {
 		var b strings.Builder
 		b.WriteString(stateTask)
+		if wrong := sentBack(w); len(wrong) > 0 {
+			b.WriteString("\nThe last review found these wrong. Repair them, unless you already have; a reviewer looks at them again:\n\n")
+			for _, s := range wrong {
+				fmt.Fprintf(&b, "- %s\n", s)
+			}
+		}
 		fmt.Fprintf(&b, "\n%s This list says what the change reaches and where the registry says to look. It is your to-do list, and you answer nothing on it:\n\n", baseLine(w))
 		b.WriteString(renderList(w.Items))
 		b.WriteString(changes)
@@ -330,6 +365,67 @@ func (e *Engine) Checklist(ctx context.Context, req ChecklistRequest) (text stri
 		return "Every item has an answer for the files as they are now, so nothing is left to review. End now.\n", true, nil
 	}
 	return stateReviewPrompt(baseLine(w), earlier, todo, changes), true, nil
+}
+
+// noGuard is what --start says in a folder without the harness, as a Run refuses
+// to start without it.
+const noGuard = "The harness is not complete in this project: the work needs the builder and reviewer agents, and the hook in " + SettingsFile + " that keeps each agent to its part. Run markitect update, which brings them in line, and try again; if it says it left the settings as they are, add the hook it names by hand.\n"
+
+// harnessOnDisk says whether the folder holds both agents and the hook that
+// guards answer and checklist.
+func harnessOnDisk(root string) bool {
+	for _, file := range []string{reviewerFile, builderFile, SettingsFile} {
+		data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(file)))
+		if err != nil || (file == SettingsFile && !HasGuard(data)) {
+			return false
+		}
+	}
+	return true
+}
+
+// sentBack lists the items whose latest answer is wrong, with what the reviewer
+// found, for the builder that repairs them.
+func sentBack(w Work) []string {
+	var out []string
+	for _, it := range w.Items {
+		if a, ok := w.Answers[it.Key]; ok && a.Word == AnswerWrong {
+			out = append(out, fmt.Sprintf("%s: %s", it.Key, a.Explanation))
+		}
+	}
+	return out
+}
+
+// startStep tells the session that drives the work which agent to start. The
+// builder goes through gate itself, which has it start the reviewer; a review of
+// finished work needs only the reviewer. Either way the driver runs gate when the
+// agent has ended and does what it prints, so the process stays in the tool. Work
+// whose review is complete, or that gate has stopped, goes straight to gate.
+// restarted names what changed under the work that this call began again.
+func startStep(w Work, f *folder, review bool, restarted []string) string {
+	model := f.cur.Manifest.Model
+	var b strings.Builder
+	if len(restarted) > 0 {
+		fmt.Fprintf(&b, "These changed since the work under way began, so it begins again: %s.\n\n", strings.Join(restarted, ", "))
+	}
+	fmt.Fprintf(&b, "%s The list has %d %s.\n\n", baseLine(w), len(w.Items), plural(len(w.Items), "item", "items"))
+	_, missing := w.standing(f)
+	rounds, _ := w.rounds()
+	stopped := len(w.specProblems()) > 0 || rounds > repairRounds
+	switch {
+	case review && len(w.Items) == 0:
+		b.WriteString("Nothing to review: the change reaches nothing in the spec, so there is no agent to start and nothing to commit.\n")
+	case review && len(missing) == 0:
+		b.WriteString("Every item has an answer for the files as they are now. Run markitect gate --findings and do what it prints.\n")
+	case review:
+		fmt.Fprintf(&b, "Start the %s agent%s with exactly this message:\n\n    Review the work.\n\nIt takes its task from markitect checklist --review. When it has ended, run markitect gate --findings and do what it prints.\n", ReviewerAgent, onModel(model))
+	case len(w.Items) == 0:
+		b.WriteString("Nothing on the list to build. Run markitect gate and do what it prints.\n")
+	case len(missing) == 0 || stopped:
+		b.WriteString("The work under way has its review. Run markitect gate and do what it prints.\n")
+	default:
+		fmt.Fprintf(&b, "Start the %s agent%s with exactly this message:\n\n    Build the work.\n\nIt takes its task from markitect checklist and goes through markitect gate, which has it start the reviewer. When it has ended, run markitect gate and do what it prints.\n", BuilderAgent, onModel(model))
+	}
+	return b.String()
 }
 
 // baseLine says where the change starts.

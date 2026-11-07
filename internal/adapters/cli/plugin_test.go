@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
+	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/skills"
 )
 
@@ -77,21 +78,28 @@ func TestPluginHasTheVersionOfTheSource(t *testing.T) {
 	}
 }
 
-// The hooks file is plain JSON of a fixed shape, and its hooks name the launcher.
+// The hooks file is plain JSON of a fixed shape, and its hooks name the launcher:
+// one at the start of a session, and one before each command the guard covers.
 func TestPluginHooksRunTheLauncher(t *testing.T) {
 	var h struct {
 		Hooks map[string][]struct {
-			Hooks []struct{ Command string }
+			Hooks []struct{ If, Command string }
 		}
 	}
 	readJSON(t, pluginDir+"/hooks/hooks.json", &h)
-	for _, event := range []string{"SessionStart", "PreToolUse"} {
+	want := map[string][]string{"SessionStart": {""}, "PreToolUse": run.GuardedCommands}
+	for event, rules := range want {
 		groups := h.Hooks[event]
-		if len(groups) != 1 || len(groups[0].Hooks) != 1 {
-			t.Fatalf("%s: %+v, want one hook", event, groups)
+		if len(groups) != 1 || len(groups[0].Hooks) != len(rules) {
+			t.Fatalf("%s: %+v, want one group of %d", event, groups, len(rules))
 		}
-		if c := groups[0].Hooks[0].Command; !bytes.Contains([]byte(c), []byte("${CLAUDE_PLUGIN_ROOT}/bin/markitect")) {
-			t.Errorf("%s runs %q, not the launcher", event, c)
+		for i, hook := range groups[0].Hooks {
+			if hook.If != rules[i] {
+				t.Errorf("%s hook %d runs before %q, want %q", event, i, hook.If, rules[i])
+			}
+			if !bytes.Contains([]byte(hook.Command), []byte("${CLAUDE_PLUGIN_ROOT}/bin/markitect")) {
+				t.Errorf("%s runs %q, not the launcher", event, hook.Command)
+			}
 		}
 	}
 }

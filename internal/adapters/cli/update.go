@@ -77,7 +77,7 @@ func (c CLI) refreshHarness(ws Workspace, dry bool) ([]string, error) {
 	if err := installHarness(r); err != nil {
 		return nil, err
 	}
-	if err := quiet.ensureAnswerHook(r); err != nil {
+	if err := quiet.ensureGuard(r); err != nil {
 		return nil, err
 	}
 	// A retired file is removed by both of the writers above in a dry run, which

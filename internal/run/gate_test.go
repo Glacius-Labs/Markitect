@@ -622,6 +622,89 @@ func TestGateFindings(t *testing.T) {
 		t.Fatalf("%v %v", findings, errs)
 	}
 	has(t, p.list(run.ChecklistRequest{Findings: findings}), "finding 1 loan-limit", "says 9")
+	// The owner changes the spec under that work: the skill's call begins it
+	// again and keeps the Findings the owner named.
+	p.specChange()
+	has(t, p.list(run.ChecklistRequest{Start: true}), "so it begins again", run.BuilderAgent)
+	has(t, p.list(run.ChecklistRequest{}), "finding 1 loan-limit", "says 9")
+}
+
+// The skill that drives the work begins it with checklist --start, which names the
+// agent to start; called again, it goes on with the work under way. A builder that
+// is started again sees what the last review found wrong.
+func TestChecklistStartsTheBuilder(t *testing.T) {
+	p := newPlain(t)
+	p.certify()
+	p.specChange()
+	start := p.list(run.ChecklistRequest{Start: true})
+	has(t, start, "The base is the certificate", "The list has", run.BuilderAgent, "Build the work.", "run markitect gate and do what it prints")
+	if strings.Contains(start, "Make this project match the spec") {
+		t.Fatalf("the driver got the builder's task:\n%s", start)
+	}
+	has(t, p.list(run.ChecklistRequest{Start: true}), run.BuilderAgent)
+	p.review(map[string]string{"loan-limit": "wrong src/members/loans/loan.go:3 -- still says 5"})
+	has(t, p.gate(run.GateRequest{}).Text, "repair round 1 of 2")
+	has(t, p.list(run.ChecklistRequest{}), "The last review found these wrong", "- loan-limit: still says 5")
+	// The review is complete, so the driver goes to gate, which sends the repair.
+	has(t, p.list(run.ChecklistRequest{Start: true}), "has its review", "Run markitect gate")
+	p.write("src/members/loans/loan.go", limit3)
+	has(t, p.list(run.ChecklistRequest{Start: true}), run.BuilderAgent, "Build the work.")
+
+	// The owner changes the spec under the work: an agent's checklist is refused,
+	// and the skill's call begins the work again.
+	p.write(m+"loan-limit.md", def("std/Rule", "Loan limit", "At most `2` open loans."))
+	if text, ok, err := p.engine.Checklist(context.Background(), run.ChecklistRequest{Dir: p.dir}); err != nil || ok || !strings.Contains(text, "only the owner begins the work again") {
+		t.Fatalf("a plain checklist went on: %v %v\n%s", ok, err, text)
+	}
+	again := p.list(run.ChecklistRequest{Start: true})
+	has(t, again, "so it begins again", m+"loan-limit.md", run.BuilderAgent, "Build the work.")
+	if strings.Contains(p.list(run.ChecklistRequest{}), "The last review found these wrong") {
+		t.Fatal("the new work kept the old answers")
+	}
+}
+
+// Without both agents and the hook that keeps each to its part, the skill's call
+// begins nothing, as a Run does not start.
+func TestChecklistStartNeedsTheHarness(t *testing.T) {
+	files := library()
+	files[run.SettingsFile] = `{"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "if": "Bash(markitect answer*)", "command": "` + run.HookCommand + `"}]}]}}` + "\n"
+	p := newPlainOf(t, files)
+	text, ok, err := p.engine.Checklist(context.Background(), run.ChecklistRequest{Dir: p.dir, Start: true})
+	if err != nil || ok {
+		t.Fatalf("%v %v", ok, err)
+	}
+	has(t, text, "harness is not complete", "markitect update")
+	if text, _, err := p.engine.Checklist(context.Background(), run.ChecklistRequest{Dir: p.dir, Review: true}); err != nil || !strings.Contains(text, "No work is under way") {
+		t.Fatalf("work began without the harness: %v\n%s", err, text)
+	}
+}
+
+// A review of finished work begins with checklist --review --start, which names the
+// reviewer; with nothing to review it leaves no work behind.
+func TestChecklistStartsTheReviewer(t *testing.T) {
+	p := newPlain(t)
+	p.certify()
+	has(t, p.list(run.ChecklistRequest{Review: true, Start: true}), "Nothing to review")
+	// No work was left behind: a change of the spec now begins new work.
+	p.specChange()
+	has(t, p.list(run.ChecklistRequest{}), "Make this project match the spec")
+	// Nor does an empty review leave the work under way it went on with.
+	e := newPlain(t)
+	e.certify()
+	has(t, e.list(run.ChecklistRequest{Start: true}), "Nothing on the list to build")
+	has(t, e.list(run.ChecklistRequest{Review: true, Start: true}), "Nothing to review", "nothing to commit")
+	if text, ok, err := e.engine.Checklist(context.Background(), run.ChecklistRequest{Dir: e.dir, Review: true}); err != nil || ok || !strings.Contains(text, "No work is under way") {
+		t.Fatalf("the empty review left work behind: %v %v\n%s", ok, err, text)
+	}
+	q := newPlain(t)
+	q.certify()
+	q.write("src/members/loans/loan.go", "package loans\n\nconst Limit = 9\n")
+	has(t, q.list(run.ChecklistRequest{Review: true, Start: true, Full: true}), "every Definition is on the list", run.ReviewerAgent, "Review the work.", "markitect gate --findings")
+	q.review(map[string]string{"loan-limit": "wrong src/members/loans/loan.go:3 -- says 9"})
+	has(t, q.list(run.ChecklistRequest{Review: true, Start: true}), "Every item has an answer", "markitect gate --findings")
+	if v := q.gate(run.GateRequest{Findings: true}); !v.Done || !strings.Contains(v.Text, "Findings") {
+		t.Fatalf("%+v", v)
+	}
 }
 
 // Of the certificates in the folder, as after a merge of two branches, the newest
@@ -664,6 +747,11 @@ func TestGateBesideARun(t *testing.T) {
 			t.Fatal(err)
 		}
 		has(t, text, "You build Markitect run "+s.Run, "markitect submit")
+		text, ok, err := f.engine.Checklist(context.Background(), run.ChecklistRequest{Dir: wt, Start: true})
+		if err != nil || ok {
+			t.Fatalf("checklist --start during a run: %v %v", ok, err)
+		}
+		has(t, text, "Run "+s.Run+" is open", "no work begins beside it")
 	})
 	t.Run("status", func(t *testing.T) {
 		f := newFixture(t)

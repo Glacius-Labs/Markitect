@@ -52,7 +52,15 @@ func TestUpdateBringsAProjectInLine(t *testing.T) {
 	}
 
 	r.Write(".claude/agents/markitect-builder.md", "from an older markitect\n")
-	r.Write(".claude/settings.json", "{\n  \"permissions\": {\"allow\": [\"Bash(go test *)\"]}\n}\n")
+	// The hook an older markitect wrote guards only answer; the owner's own stays.
+	r.Write(".claude/settings.json", `{
+  "permissions": {"allow": ["Bash(go test *)"]},
+  "hooks": {"PreToolUse": [
+    {"matcher": "Bash", "hooks": [{"type": "command", "if": "Bash(markitect answer*)", "command": "markitect hook pretool"}]},
+    {"matcher": "Edit", "hooks": [{"type": "command", "command": "my-own-check"}]}
+  ]}
+}
+`)
 	r.Write(".claude/skills/markitect-retired/SKILL.md", "no longer shipped\n")
 	if err := os.Remove(filepath.Join(r.Dir, ".claude", "skills", "markitect-apply", "SKILL.md")); err != nil {
 		t.Fatal(err)
@@ -84,7 +92,11 @@ func TestUpdateBringsAProjectInLine(t *testing.T) {
 	if msg := r.Git("log", "-1", "--format=%s"); msg != "Update Markitect" {
 		t.Fatalf("last commit = %q", msg)
 	}
-	wantAll(t, read(t, r.Dir, ".claude/settings.json"), "Bash(go test *)", "markitect hook pretool")
+	settings := read(t, r.Dir, ".claude/settings.json")
+	wantAll(t, settings, "Bash(go test *)", "my-own-check", "Bash(markitect checklist*)")
+	if n := strings.Count(settings, "Bash(markitect answer*)"); n != 1 {
+		t.Fatalf("the older hook was not replaced, %d answer guards:\n%s", n, settings)
+	}
 	if _, err := os.Stat(filepath.Join(r.Dir, ".claude", "skills", "markitect-retired", "SKILL.md")); !os.IsNotExist(err) {
 		t.Fatalf("the retired skill stayed: %v", err)
 	}
