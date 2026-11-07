@@ -11,7 +11,7 @@ Each Definition is a unit of verification, and its inputs are its own text, its 
 
 A good spec keeps both small and true. Every link names what the Definition relies on, and nothing else: a link it does not need re-verifies too much, and a link it lacks lets a change pass unverified. A typical Makerspace Definition is linked once, puts 2 Definitions back on the list and reaches about 8 by every link. The design problems all sit in the few that reach far.
 
-The rules below each name their **signal**: a measure of `markitect vet` that exists today, one the [`vet` plan](../concepts/vet-plan.md) proposes, or what the auditor checks. The auditor is whoever reviews the spec: the owner, or an agent in a modeling session. The tool treats every Kind alike, a project's own Kinds as much as `std`'s; what a Kind means is for the people and agents who read its text.
+The rules below each name their **signal**: a measure of `markitect vet` that exists today, one the [`vet` plan](../concepts/vet-plan.md) proposes, or what the auditor checks. The auditor is whoever reads the spec for its quality: the owner, or the read-only auditor that `/markitect-audit` starts ([DEC-100](../concepts/register.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role)), which reports to the owner. The tool treats every Kind alike, a project's own Kinds as much as `std`'s; what a Kind means is for the people and agents who read its text.
 
 **What a measure can see.** Coupling, instability, abstractness counted from Kinds, fan-in, reach and cycles are properties of the link graph. They do not depend on the language the spec is written in, so they carry over from code as they are. Qualities of the prose do not: how hard a Definition is to follow, whether two Definitions contradict each other, whether a statement is vague. `vet` can only approximate them, by counting statements or finding a name used without a link, and the auditor judges the rest. One difference from code matters most: a missing import does not compile, but prose can name a concept without linking it, so a spec's dependencies are only as complete as its author's links. Every threshold here comes from the two Makerspace specs and stays provisional until more specs calibrate it.
 
@@ -96,13 +96,13 @@ In code the Package is the unit that is released and depended on. In Markitect t
 
 **Rule.** The larger a Definition, the more evidence its `ok` should name. A large Definition verified on one pointer is a risk, as a complex function without tests is.
 
-CRAP, the change-risk measure for code, is *comp² × (1 − cov)³ + comp*, with *comp* the cyclomatic complexity and *cov* the share covered by tests; above 30 is a risk. Its analogue for a Definition recorded `ok` or `skip` in `.markitect/review.sum`: *c* is 1 + the cases, conditions and exceptions the reviewer counted for the Definition, or 1 + its statements until a count exists. *e* is the test pointers its verdict names, divided by *c*, at most 1. A `skip` has *e* 0. So *risk = c² × (1 − e)³ + c*. A Definition of 7 cases (*c* 8) with two test pointers scores 64 × 0.42 + 8 ≈ 35; with four, 16.
+CRAP, the change-risk measure for code, is *comp² × (1 − cov)³ + comp*, with *comp* the cyclomatic complexity and *cov* the share covered by tests; above 30 is a risk. Its analogue for a Definition recorded `ok` or `skip` in `.markitect/review.sum`: *c* is 1 + the cases, conditions and exceptions the reviewer counted for the Definition, or 1 + its statements until a count exists. *e* is the share of those cases the reviewer found its evidence demonstrates, or, until it records that, the evidence pointers divided by *c*, at most 1. A `skip` has *e* 0. So *risk = c² × (1 − e)³ + c*. A Definition of 7 cases (*c* 8) with 2 of them demonstrated scores 64 × 0.36 + 8 ≈ 31; with 4, about 13.
 
 **Why.** It finds what is both hard to verify and thinly verified. As with CRAP, a Definition of more than about 30 statements stays above the line however much evidence it names: the remedy is to split it.
 
 **Bad and good.** No record of a real build exists for Makerspace yet, so there are no measured examples. Without any record, 73 of its 115 Definitions would score above 30, which is why the measure only looks at Definitions recorded `ok` or `skip`.
 
-**Signal.** The proposed `vet.risk`, a note shown with `--strict`, once a real record has calibrated it. The [`vet` plan](../concepts/vet-plan.md#ai-assisted-measures) proposes the reviewer's case count and the `-t` flag for tests that it rests on.
+**Signal.** The proposed `vet.risk`, a note shown with `--strict`, once a real record has calibrated it. The [`vet` plan](../concepts/vet-plan.md#ai-assisted-measures) proposes the reviewer's counts of cases and of the cases its evidence covers, which it rests on.
 
 ## Accidental complexity
 
