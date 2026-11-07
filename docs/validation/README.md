@@ -42,7 +42,7 @@ These reports preserve the exact scope, inputs, source references and outcomes s
 ## Draft concept 4.0 and the lean plan
 
 - [The native version: real sessions while building it — 4 November 2026](native-version-20261104.md): a background session started from inside another, its settings, the reviewer agent and the Stop hook held, and five small Library changes landed with nobody watching; covers the launcher the owner has since dropped
-- [Lean plan step 3: trials of the lean flow — 7 November 2026](lean-trials-20261107.md): three Makerspace changes through `/markitect-apply` of 0.19.0 and through the old `markitect apply`, one run each. The lean flow held: the builder started the reviewer as its own subagent, the hooks fired inside subagents, the session left the work to the agents, and `gate` did not misfire. Both arms caught a planted bug by reading and stopped on a planted contradiction, the lean one a round late because its builder has no door to report it. Under one weekly point for all six runs
+- [Lean plan step 3: trials of the lean flow — 7 November 2026](lean-trials-20261107.md): three Makerspace changes through `/markitect-apply` of 0.19.0 and through the old `markitect apply`, one run each. The lean flow held: the builder started the reviewer as its own subagent, the hooks fired inside subagents, the session left the work to the agents, and `gate` did not misfire. Both arms caught a planted bug by reading and stopped on a planted contradiction, the lean one a round late because its builder has no door to report it. About one weekly point or less for all six runs
 
 ## Markitect Desktop
 

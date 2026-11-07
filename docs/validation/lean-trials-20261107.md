@@ -51,12 +51,12 @@ Each project is a new Git repository with no remote, built by a script with no a
 
 ## Runs
 
-Six counted runs, all on 7 November 2026 between 06:54 and 07:04 UTC, one per case and arm, three at a time in separate folders. None failed for a reason outside Markitect, so the two spare runs were not used. The weekly reading stood at 25 % before the first run and after the last: all of it, probes included, cost less than one point. No owner input was needed in any run; each ended on its own.
+Six counted runs, all on 7 November 2026 between 06:54 and 07:04 UTC, one per case and arm, three at a time in separate folders. None failed for a reason outside Markitect, so the two spare runs were not used. The weekly reading on the app's usage card, which counts every session of the account, went from 24 % while the dispatch was written to 25 % before the probes, and stayed at 25 % through the last run (`quota-readings.md` in the evidence folder): all of it, probes included, cost about one point or less. No owner input was needed in any run; each ended on its own.
 
 | Run | Wall time | Items reviewed | Agents | Repair rounds | Plant | End | Output tokens | Cache read | Denials |
 |---|---|---|---|---|---|---|---|---|---|
-| A lean | 2.8 min | 64 | builder 1, reviewer 2 (both nested) | 1 | Caught by the first review | Certified and committed; plant gone | 17,292 | 1.05 M | 0 |
-| A old | 5.7 min | 40 | builder 1, reviewer 2 (both nested) | 1 | Caught by the first review | Landed; plant gone | 37,397 | 2.01 M | 0 |
+| A lean | 2.8 min | 64, then 39 | builder 1, reviewer 2 (both nested) | 1 | Caught by the first review | Certified and committed; plant gone | 17,292 | 1.05 M | 0 |
+| A old | 5.7 min | 64, then 40 | builder 1, reviewer 2 (both nested) | 1 | Caught by the first review | Landed; plant gone | 37,397 | 2.01 M | 0 |
 | B lean | 3.2 min | 3, then 25 | builder 2, reviewer 2 (one started by the session, one nested) | 1 | Caught by the second review | Stopped on the spec problem, nothing committed | 15,095 | 0.68 M | 2 |
 | B old | 0.9 min | none | builder 1 | 0 | Named by the builder | Builder's `markitect stop`, nothing landed | 3,424 | 0.20 M | 0 |
 | C lean | 1.3 min | 21 | builder 1, reviewer 1 (nested) | 0 | None | Certified and committed, registry only | 6,575 | 0.43 M | 0 |
@@ -64,7 +64,7 @@ Six counted runs, all on 7 November 2026 between 06:54 and 07:04 UTC, one per ca
 
 Tokens are the session's `modelUsage`, which includes the nested agents (the transcripts on disk give the same sums). Old against lean, in output tokens: A 2.2 times, B 0.23 times, C 1.4 times; over the three cases the old arm used 50 k against lean's 39 k, and 2.8 M against 2.2 M cache reads.
 
-**A, the code plant.** In both arms the first review answered `wrong` on five items, each pointing at `ops_members.go:144` and the 1000-day expiry, and said that no test goes past a year or two; the old arm's reviewer also reproduced it by running the program. Each builder removed the line, the second review passed, and the committed code has no expiry. The lean builder repaired before it called `gate` again, so `gate` asked only for the 15 items whose files the repair touched; the Result records one repair round. Lean's list was longer, 64 items against 40, since every Definition a changed file realizes joins it, and its review still cost less than half the tokens.
+**A, the code plant.** In both arms the first review answered `wrong` on five items, each pointing at `ops_members.go:144` and the 1000-day expiry, and said that no test goes past a year or two; the old arm's reviewer also reproduced it by running the program. Each builder removed the line, the second review passed, and the committed code has no expiry. The lean builder repaired before it called `gate` again, so `gate` asked only for the 15 items whose files the repair touched, though its second reviewer answered 39; the Result records one repair round. Both first reviews had 64 items. The old arm's reviews cost about three times the output tokens of lean's, mostly in its first review, which ran the program to reproduce the bug and twice broke its own shell quoting before its answers were stored.
 
 **B, the spec plant.** Both arms ended without a certificate or a landing, with the contradiction put to the owner in their own words. Lean took the long way, finding 1 below: the first builder stopped and said why, the session ran `gate`, the first reviewer answered `wrong` because nothing was built, the second builder built the table's 8 %, and the second reviewer answered `spec problem` on both items. The old builder ended the Run itself with `markitect stop` and a reason, which no reviewer checked.
 
@@ -80,7 +80,7 @@ Tokens are the session's `modelUsage`, which includes the nested agents (the tra
 
 **Permission stops did not stop a run.** All agents ran in the session's `auto` mode; the builder file's `permissionMode: acceptEdits` did not apply. Five runs had no denial. In lean B, auto mode's classifier twice refused the first builder's attempt to undo its own uncommitted edits with Git (`git checkout realization`, `git apply -R`) as irreversible local destruction; the builder put the two files back by hand. A run in manual mode was not tried.
 
-**Gate's rows 1 and 2 did not misfire.** In C the builder changed only registry pages, which row 1 allows, and no file outside the list changed in any run, so row 2 had nothing to name. After the review, C's builder turned the registry back to CRLF line endings (its first edit had written LF); the answers stood, since a text file's hash ignores line endings.
+**Gate's rows 1 and 2 did not misfire.** In C the builder changed only registry pages, which row 1 allows, and no file outside the list changed in any run, so row 2 had nothing to name. After the review, lean C's builder turned the registry back to CRLF line endings (its first edit had written LF); the answers stood, since a text file's hash ignores line endings.
 
 **The certificate travels as designed.** Each certified run committed the work, the certificate and its Result in one commit, and `gate --verify` afterwards found the folder matching it. The Result records the repair round (lean A: 1).
 
@@ -88,10 +88,10 @@ Tokens are the session's `modelUsage`, which includes the nested agents (the tra
 
 | # | Finding | Evidence | Proposed |
 |---|---|---|---|
-| 1 | **A builder has no door for a spec problem.** The builder's task says to stop and tell the owner when the spec contradicts itself. Lean B's first builder did so at once, in a clear report, but the session follows `gate`, which knew nothing of it and asked for a review. The first reviewer answered `wrong` (nothing built) instead of `spec problem`, though its own answer quoted both numbers. That used a repair round, the second builder built the table's 8 %, and only the second review stopped the work. The end was right, at about twice the work, with code for one reading left in the folder. In the old flow the builder ended the Run itself with `markitect stop WHY` in under a minute, unconfirmed by any reviewer | `runs/B-lean`, `runs/B-run` | A decision for the owner, [below](#for-the-owner) |
+| 1 | **A builder has no door for a spec problem.** The builder's task says to stop and tell the owner when the spec contradicts itself. Lean B's first builder did so at once, in a clear report, but the session follows `gate`, which knew nothing of it and asked for a review. The first reviewer answered `wrong` (nothing built) instead of `spec problem`, though its own answer quoted both numbers. That used a repair round, the second builder built the table's 8 %, and only the second review stopped the work. The end was right, at 3.5 times the old flow's time and 4.4 times its output tokens, with code for one reading left in the folder. In the old flow the builder ended the Run itself with `markitect stop WHY` in under a minute, unconfirmed by any reviewer | `runs/B-lean`, `runs/B-run` | A decision for the owner, [below](#for-the-owner) |
 | 2 | `answer` refuses a missing pointer with "does not exist in this commit", also without a Run, where there is no commit | Lean B's second review; [`internal/run/answers.go`](../../internal/run/answers.go) | Say "in the folder" when no Run is open; goes with step 4 |
 | 3 | `impact --base CERTIFICATE` heads its page with the certificate path cut to 12 characters ("Impact since .markitect/r"), the length of a short commit hash | [`internal/adapters/cli/render.go`](../../internal/adapters/cli/render.go) `short` | Shorten only commit hashes; goes with step 4 |
-| 4 | Lean B left the work of the second builder uncommitted in the folder, with the spec-problem Result beside it, and old B left its builder's work the same way. Neither is wrong, but the owner meets someone's partial work for one reading of the spec | `runs/B-lean/status-after.txt`, `runs/B-run/status-after.txt` | Nothing now; part of finding 1 |
+| 4 | Lean B left the work of the second builder uncommitted in the folder, with the spec-problem Result beside it, and old B left its builder's work the same way. Lean B's tests pass, since its test expects the table's 1831; old B's new test fails against the example. Neither is wrong, but the owner meets someone's partial work for one reading of the spec | `runs/B-lean/status-after.txt`, `runs/B-run/status-after.txt` | Nothing now; part of finding 1 |
 
 **Trial artifacts, not findings.**
 
@@ -105,7 +105,7 @@ Tokens are the session's `modelUsage`, which includes the nested agents (the tra
 
 1. **The builder's word stops the work**, as `stop` did: cheapest, but no reviewer checks it, so a builder could stop to avoid work.
 2. **Recommended: the builder records the problem with the tool, and `gate` has a reviewer confirm it** before it tells the owner, without counting a repair round. It keeps "no agent decides about its own work" and would have saved lean B a builder and a review.
-3. **Leave it:** the end is right, at about twice the work on such a change.
+3. **Leave it:** the end is right, at about four times the old flow's tokens on such a change.
 
 ## Verdict
 
