@@ -63,23 +63,30 @@ markitect impact --repo PATH --base COMMIT [--full] [--findings FILE]
 ## 7. Apply and verify
 
 ```text
+/markitect-apply  [--base CERTIFICATE] [--full] [--findings FILE]
+/markitect-verify [--base CERTIFICATE] [--full]
+```
+
+Use the `/markitect-apply` and `/markitect-verify` skills in your own Claude Code session, which `init` installs. They pass their arguments to `markitect checklist --start`, which begins the work and says which agent to start, and your session starts it. You need Claude Code, with `markitect` on the path. Markitect itself uses no Git; your session makes the commit. No Docker, token, server or background session is involved.
+
+`/markitect-apply` begins the work with the list of what changed since the newest certificate under `.markitect/results/`, or of every Definition when there is none yet; an error in the spec stops it here. Your session then starts the `markitect-builder` agent, which makes the project in your folder match the spec, so you see the files change. When it thinks it's done, it calls `markitect gate`, which runs `check`, has it start a fresh `markitect-reviewer` agent that answers the checklist, and sends wrong answers back to it. When every item has an answer and none is wrong, `gate` writes a certificate with its Result page, and your session commits the work with both in one commit on your branch. Nothing is pushed; you push when you want to. If the builder ends before that, your session runs `gate` and does what it prints, starting the builder or the reviewer again.
+
+Your session is busy until the work ends, so don't change the folder meanwhile: `gate` refuses a changed file that lies in no item of the list, and a change of the spec, the harness, a `.gitignore` or a certificate during the work. A change to the spec is its own step, before the work. `markitect status` says how the work stands.
+
+`/markitect-verify` has a fresh `markitect-reviewer` agent answer the checklist of what changed since the newest certificate, or of every Definition with `--full`, and changes nothing. `markitect gate --findings` then writes its Result and, if it found something, a Findings page under `.markitect/results/`, the input of `/markitect-apply --findings FILE`; your session commits them.
+
+The agents work under your session's permission mode and settings, so they may ask you for permission; the builder accepts file edits without asking. A hook lets only the reviewer store answers. So do not give the work untrusted input, and start on a project whose work is committed and pushed ([draft concept 4.0 §7](../concepts/v4-concept.md#7-how-sure-we-are)). [Without a Run](../../internal/run/README.md#without-a-run-gate) gives gate's rows, the certificate and the one bound the tool keeps, two repair rounds; time and the number of calls are your session's.
+
+Until this way has been tried on real projects ([lean plan](../concepts/lean-tool-plan.md#order-of-work)), the commands of a Run still work beside it:
+
+```text
 markitect apply  --repo PATH [--base COMMIT] [--full] [--findings FILE] [--deadline D]
 markitect verify --repo PATH [--base COMMIT] [--full] [--deadline D]
 ```
 
-Use them through the `/markitect-apply` and `/markitect-verify` skills in your own Claude Code session, which `init` installs. The commands only open a run and say which agent to start; the skill has your session start it. You need Git, `sh` and Claude Code, with `markitect` on the path. No Docker, token, server or background session is involved.
+They commit the spec, open a run whose builder goes through `markitect submit`, land the work on your branch and keep runs under `markitect/runs/*`; `markitect stop WHY` ends one without landing. [The process of a Run](../../internal/run/README.md) describes them.
 
-`apply` compiles the spec, commits it on your branch and opens a run. Your session then starts the `markitect-builder` agent, which makes the project in your folder match the spec, so you see the files change. When it thinks it's done, it calls `markitect submit`, which runs `check`, has a fresh `markitect-reviewer` agent answer the checklist, sends wrong answers back to the builder, and then commits the work on your branch. Nothing is pushed; you push when you want to. Your session is busy until the run ends, so don't change the folder meanwhile.
-
-`apply` stops at once on an error in the spec, and on a change outside `.markitect/` that is not committed, since a run would silently leave it out. With no landed run yet, the first `apply` covers every Definition. One run at a time is open in a folder: a second `apply` or `verify` says how to go on with it. If the builder ends while the run is still open, your session starts it again.
-
-`markitect status` says how the runs of your branch stand, and every other command tells you in one line about a run that closed. `markitect stop WHY` ends a run without landing: its work goes on the branch `markitect/runs/<run>` and also stays in your folder, uncommitted, for you to keep or drop.
-
-`verify` opens a review of the last commit, and your session starts the `markitect-reviewer` agent. It reads your folder, so it refuses one with uncommitted changes. It changes nothing you have, and ends with a Result and Findings on the branch `markitect/runs/<run>`, the input of `apply --findings`.
-
-The agents work under your session's permission mode and settings, so they may ask you for permission; the builder accepts file edits without asking. A hook in the project's `.claude/settings.json` lets only the reviewer store answers. So do not give a run untrusted input, and start on a project whose work is committed and pushed ([draft concept 4.0 §7](../concepts/v4-concept.md#7-how-sure-we-are)). [The process of a Run](../../internal/run/README.md) gives the details, and a run's bounds: two repair rounds, 30 calls of `submit` and, with `--deadline`, 6 hours by default.
-
-Exit code 0 means success, 1 that the command ran and found errors, 2 that it could not run. For `apply` and `verify`, 0 means a run is open or there was nothing to do. `--json` is on the spec's commands.
+Exit code 0 means success, 1 that the command ran and found errors, 2 that it could not run. `checklist --start` always exits 0, so that the skill's session sees what it printed. For `apply` and `verify`, 0 means a run is open or there was nothing to do. `--json` is on the spec's commands.
 
 ## 8. Keep it current
 

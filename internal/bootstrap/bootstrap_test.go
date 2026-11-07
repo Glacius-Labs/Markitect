@@ -438,6 +438,11 @@ func TestGateThroughTheCommandLine(t *testing.T) {
 	if code, out, _ := run(t, r.Dir, "gate"); code != 1 || !strings.Contains(out, "No checklist began this work") {
 		t.Fatalf("gate before checklist: %d\n%s", code, out)
 	}
+	// The skill's call always exits 0, so that its session sees what it printed.
+	if code, out, _ := run(t, r.Dir, "checklist", "--start", "--findings", "nosuch.md"); code != 0 || !strings.Contains(out, "could not begin the work") {
+		t.Fatalf("checklist --start with a missing Findings page: %d\n%s", code, out)
+	}
+	wantAll(t, mustRun(t, r.Dir, "checklist", "--start"), "markitect-builder", "Build the work.")
 	wantAll(t, mustRun(t, r.Dir, "checklist"), "Make this project match the spec", "markitect gate", "[ ] project")
 	if code, out, _ := run(t, r.Dir, "gate"); code != 1 || !strings.Contains(out, "markitect-reviewer") {
 		t.Fatalf("gate before a review: %d\n%s", code, out)

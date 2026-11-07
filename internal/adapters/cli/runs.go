@@ -122,7 +122,9 @@ func readFindings(file string) ([]analysis.Finding, error) {
 
 // checklist prints the task and the list: a Run's in a folder with an open one,
 // otherwise the change from the newest certificate to the folder. Exit 1 means
-// there is no list, because the spec has errors.
+// there is no list, because the spec has errors. With --start it prints the step
+// of the session that drives the work instead, and always exits 0 with everything
+// on standard output, for the skill that calls it, as apply --skill does.
 func (c CLI) checklist(ctx context.Context, args []string) (int, error) {
 	var o options
 	var findings string
@@ -134,30 +136,38 @@ func (c CLI) checklist(ctx context.Context, args []string) (int, error) {
 	fs.StringVar(&req.Base, "base", "", "without a run: the certificate the change starts from (default: the newest one)")
 	fs.BoolVar(&req.Full, "full", false, "without a run: every Definition is reached")
 	fs.StringVar(&findings, "findings", "", "without a run: a Findings page whose Findings become checklist items")
+	fs.BoolVar(&req.Start, "start", false, "begin the work and say which agent to start, for the skill that drives it; exits 0")
 	if err := fs.Parse(args); err != nil {
 		return Misused, err
 	}
 	if fs.NArg() != 0 {
 		return Misused, fmt.Errorf("takes no arguments")
 	}
+	failed := func(err error) (int, error) {
+		if req.Start {
+			fmt.Fprintf(c.Stdout, "markitect could not begin the work: %v\n", err)
+			return OK, nil
+		}
+		return Misused, err
+	}
 	if findings != "" {
 		list, err := readFindings(findings)
 		if err != nil {
-			return Misused, err
+			return failed(err)
 		}
 		req.Findings = list
 	}
 	e, err := c.folderEngine(ctx, o.repo)
 	if err != nil {
-		return Misused, err
+		return failed(err)
 	}
 	req.Dir = o.repo
 	text, ok, err := e.Checklist(ctx, req)
 	if err != nil {
-		return Misused, err
+		return failed(err)
 	}
 	fmt.Fprint(c.Stdout, text)
-	if !ok {
+	if !ok && !req.Start {
 		return Failed, nil
 	}
 	return OK, nil

@@ -624,6 +624,45 @@ func TestGateFindings(t *testing.T) {
 	has(t, p.list(run.ChecklistRequest{Findings: findings}), "finding 1 loan-limit", "says 9")
 }
 
+// The skill that drives the work begins it with checklist --start, which names the
+// agent to start; called again, it goes on with the work under way. A builder that
+// is started again sees what the last review found wrong.
+func TestChecklistStartsTheBuilder(t *testing.T) {
+	p := newPlain(t)
+	p.certify()
+	p.specChange()
+	start := p.list(run.ChecklistRequest{Start: true})
+	has(t, start, "The base is the certificate", "The list has", run.BuilderAgent, "Build the work.", "run markitect gate and do what it prints")
+	if strings.Contains(start, "Make this project match the spec") {
+		t.Fatalf("the driver got the builder's task:\n%s", start)
+	}
+	has(t, p.list(run.ChecklistRequest{Start: true}), run.BuilderAgent)
+	p.review(map[string]string{"loan-limit": "wrong src/members/loans/loan.go:3 -- still says 5"})
+	has(t, p.gate(run.GateRequest{}).Text, "repair round 1 of 2")
+	has(t, p.list(run.ChecklistRequest{}), "The last review found these wrong", "- loan-limit: still says 5")
+	has(t, p.list(run.ChecklistRequest{Start: true}), run.BuilderAgent, "Build the work.")
+}
+
+// A review of finished work begins with checklist --review --start, which names the
+// reviewer; with nothing to review it leaves no work behind.
+func TestChecklistStartsTheReviewer(t *testing.T) {
+	p := newPlain(t)
+	p.certify()
+	has(t, p.list(run.ChecklistRequest{Review: true, Start: true}), "Nothing to review")
+	// No work was left behind: a change of the spec now begins new work.
+	p.specChange()
+	has(t, p.list(run.ChecklistRequest{}), "Make this project match the spec")
+	q := newPlain(t)
+	q.certify()
+	q.write("src/members/loans/loan.go", "package loans\n\nconst Limit = 9\n")
+	has(t, q.list(run.ChecklistRequest{Review: true, Start: true, Full: true}), "every Definition is on the list", run.ReviewerAgent, "Review the work.", "markitect gate --findings")
+	q.review(map[string]string{"loan-limit": "wrong src/members/loans/loan.go:3 -- says 9"})
+	has(t, q.list(run.ChecklistRequest{Review: true, Start: true}), "Every item has an answer", "markitect gate --findings")
+	if v := q.gate(run.GateRequest{Findings: true}); !v.Done || !strings.Contains(v.Text, "Findings") {
+		t.Fatalf("%+v", v)
+	}
+}
+
 // Of the certificates in the folder, as after a merge of two branches, the newest
 // counts.
 func TestTheNewestCertificateCounts(t *testing.T) {
@@ -664,6 +703,11 @@ func TestGateBesideARun(t *testing.T) {
 			t.Fatal(err)
 		}
 		has(t, text, "You build Markitect run "+s.Run, "markitect submit")
+		text, ok, err := f.engine.Checklist(context.Background(), run.ChecklistRequest{Dir: wt, Start: true})
+		if err != nil || ok {
+			t.Fatalf("checklist --start during a run: %v %v", ok, err)
+		}
+		has(t, text, "Run "+s.Run+" is open", "no work begins beside it")
 	})
 	t.Run("status", func(t *testing.T) {
 		f := newFixture(t)

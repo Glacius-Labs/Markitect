@@ -86,14 +86,14 @@ Rough estimate, to be confirmed by doing it: `internal/run` from about 3,000 to 
 
 `/markitect-apply`, a skill with the same name as today, run in the owner's session:
 
-1. Run `markitect checklist`. If the spec has errors, stop and say so.
-2. Start `markitect-builder`. It takes its task from `markitect checklist`.
-3. When it ends, run `markitect gate` and do what it printed: start `markitect-reviewer`, which answers with `markitect answer`, or start the builder again with the items that are wrong.
+1. Run `markitect checklist --start`, which begins the work and names the agent to start. If the spec has errors, stop and say so.
+2. Start `markitect-builder`. It takes its task from `markitect checklist` and goes through `markitect gate`, which has it start `markitect-reviewer` as its own subagent; Claude Code allows subagents three levels deep by default. So the builder keeps its context through the repairs.
+3. When it ends, run `markitect gate` and do what it printed: start the reviewer, or the builder again, which sees in its checklist what the last review found wrong.
 4. When `gate` passes, commit the work and the certificate in one commit on the current branch, push nothing, and report.
 
-Every step comes from what `gate` prints, so the process stays in the tool's output and the skill stays "do what it printed". If a subagent can start another, the builder may start the reviewer itself, as today, and keep its context through the repairs. That is a choice of the driver, not of the tool.
+Every step comes from what the tool prints, so the process stays in its output and the skill stays "do what it printed". Who starts the reviewer is a choice of the driver, not of the tool: step 3 also covers a builder that cannot start one.
 
-`/markitect-verify` becomes `markitect checklist --base RESULT --review` for the finished work, the reviewer's answers, and `markitect gate --findings`.
+`/markitect-verify` is `markitect checklist --review --start`, with `--base CERTIFICATE` or `--full`, the reviewer's answers, and `markitect gate --findings`.
 
 Later drivers: a workflow script, which holds the loop and the limits in code; another provider.
 
@@ -112,7 +112,7 @@ Later drivers: a workflow script, which holds the loop and the limits in code; a
 
 1. **Decide.** Done for the boundary, the name and Git ([DEC-096](register.md#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](register.md#dec-097-markitect-uses-no-git)); the rest is below. The concept follows once step 3 holds.
 2. **Build beside the old.** Add the folder walk, the certificate, `gate` and the file-bound answers next to today's engine, whose Git use stays until step 4. Port the tests of `submit`'s table to plain folders. Nothing is removed yet. Built on 6 November 2026, with decisions 3, 5 and 6 below as recommended, so that the owner can still change them; [without a Run](../../internal/run/README.md#without-a-run-gate) describes it.
-3. **Try it.** Switch the default driver to the lean commands and run a few changes on Makerspace, with planted defects. Compare with today's flow: items answered, planted defects caught, interventions by the owner, time.
+3. **Try it.** Switch the default driver to the lean commands and run a few changes on Makerspace, with planted defects. Compare with today's flow: items answered, planted defects caught, interventions by the owner, time. The skills were switched on 7 November 2026, as [above](#the-default-driver); the trials are next.
 4. **Remove.** If it holds: the run lifecycle, landing, run branches, trailers and every use of Git in the product go; docs, concept, code map; a release.
 5. **Later.** A workflow driver; a CI check with `gate --verify`.
 
