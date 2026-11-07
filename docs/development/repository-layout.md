@@ -23,7 +23,7 @@ This repository holds Markitect's source and its documentation. It is developed 
 | Shipped command | `cmd/<name>/` | One row in the architecture rule table; the smoke's build list |
 | File the binary embeds | Inside the embedding package, such as `internal/libraries/` | The source packager's data selection and its tests |
 | Fixture used by one package | `<package>/testdata/` | Nothing else |
-| Fixture shared across packages | `testdata/` at the root | Keep bytes stable |
+| Fixture shared across packages | A new `testdata/` at the root; there is none today | Keep bytes stable |
 | Outside check that must not import product code | `tools/` | CI step |
 | Maintainer script | `scripts/` | Tests next to it |
 | Document | The owning folder under `docs/`, see [documentation maintenance](documentation.md) | Local map |

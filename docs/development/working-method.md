@@ -50,7 +50,7 @@ The delivering chat explains its result; the coordinating chat connects cross-pa
 
 ## Keep evidence in its scope
 
-A committed model binds the specification for its revision. Tests, source checks, smokes and reports are bounded evidence: they do not authenticate owner acceptance, establish runtime readiness or show provider performance. Keep the canonical Library M1/M2 rules and the independent Library oracle unchanged; controlled fixture and source-smoke results are mechanics evidence, and synthetic bookkeeping never proves delegated realization. Retire obsolete engines together with their command consumers, tests and gates; no disabled gate, skip, success stub or compatibility branch may make an unimplemented replacement look complete.
+A committed model binds the specification for its revision. Tests, source checks, smokes and reports are bounded evidence: they do not authenticate owner acceptance, establish runtime readiness or show provider performance. Controlled fixture and source-smoke results are mechanics evidence, and synthetic bookkeeping never proves delegated realization. Retire obsolete engines together with their command consumers, tests and gates; no disabled gate, skip, success stub or compatibility branch may make an unimplemented replacement look complete.
 
 ## Keep one knowledge owner
 
