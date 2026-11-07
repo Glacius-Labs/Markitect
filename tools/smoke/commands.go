@@ -86,13 +86,13 @@ func (s *smoke) modelCommands() error {
 	}
 	if out, err := markitect("list", "--deps"); err != nil {
 		return err
-	} else if err := requireContains(out, "catalog (Ca 0, Ce 1, instability 1.00)\n  depends on members: catalog/copy links members/member\n"); err != nil {
+	} else if err := requireContains(out, "catalog (Ca 0, Ce 1, instability 1.00, abstractness 0.00, distance 0.00)\n  depends on members: catalog/copy links members/member\n"); err != nil {
 		return err
 	}
 	if out, err := markitect("vet", "--strict"); err != nil {
 		return err
 	} else if out != "" {
-		return fmt.Errorf("vet warned: %s", tail(out))
+		return fmt.Errorf("vet warned or noted: %s", tail(out))
 	}
 	if out, err := markitect("check", "--json"); err != nil {
 		return err

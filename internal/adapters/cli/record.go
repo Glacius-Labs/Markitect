@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/run"
@@ -72,7 +73,7 @@ func (c CLI) status(ctx context.Context, args []string) (int, error) {
 }
 
 // markUsage is mark's usage line.
-const markUsage = `markitect mark DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]... [-m "WHY"]`
+const markUsage = `markitect mark DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]... [-m "WHY"] [--cases N [--covered M]]`
 
 // mark records a verdict at the state status printed. Exit 1 means it refused and
 // recorded nothing: the inputs changed since, or evidence does not exist. The
@@ -105,7 +106,7 @@ func (c CLI) mark(ctx context.Context, args []string) (int, error) {
 			continue
 		case hasInline:
 			v = inline
-		case name == "e" || name == "m" || name == "repo":
+		case name == "e" || name == "m" || name == "repo" || name == "cases" || name == "covered":
 			v, err = value(&i, a)
 		}
 		if err != nil {
@@ -118,6 +119,16 @@ func (c CLI) mark(ctx context.Context, args []string) (int, error) {
 			req.Why = v
 		case "repo":
 			req.Dir = v
+		case "cases", "covered":
+			n, err := strconv.Atoi(v)
+			if err != nil {
+				return Misused, fmt.Errorf("--%s takes a count, not %q\nusage: %s", name, v, markUsage)
+			}
+			if name == "cases" {
+				req.Cases = &n
+			} else {
+				req.Covered = &n
+			}
 		default:
 			return Misused, fmt.Errorf("unknown flag %s\nusage: %s", a, markUsage)
 		}

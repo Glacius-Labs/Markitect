@@ -1,27 +1,29 @@
-# Proposal: what `vet` measures
+# What `vet` measures: the plan
 
-**Status:** a proposal for the owner, written on 7 November 2026. Nothing on this page is decided or built. It answers part of [OQ-002](register.md#open-questions) and the question [concept 4.0 §4](v4-concept.md#4-is-the-spec-good) leaves open: the details of `vet`, its further measures and thresholds. It follows the rules the owner set for it the same day:
+**Status:** the plan's record. Proposed on 7 November 2026; on 8 November 2026 the owner accepted its seven decisions with changes ([DEC-101](register.md#dec-101-what-vet-measures)), and they were built and released as 0.23.0. [Decisions](#decisions) says what was decided and how it was built; the rest of the page keeps the analysis as it was proposed, with a note where the decision differs. It answers part of [OQ-002](register.md#open-questions) and the question [concept 4.0 §4](v4-concept.md#4-is-the-spec-good) left open: the details of `vet`, its further measures and thresholds. It follows the rules the owner set for it on 7 November 2026:
 
 - no change to the language and no new field;
 - no explicit layers: the Package tree is the Dependency Rule, as in Go;
 - a Package's abstractness comes from its Kinds, as Martin counts interfaces;
 - the tool never treats a Kind specially by its name: what depends on a Kind's meaning is for the agents, who read its text.
 
-**Basis:** the [measurements of 7 November 2026](../validation/spec-design-measures-20261107.md) on the two archived Makerspace specs, 115 and 419 Definitions, and the [guide to a good spec](../guides/good-spec.md), which says what each measure is for. [The model language guide](../guides/model-language.md#vet-warnings) owns what `vet` does today, and changes with it once the owner decides.
+**Basis:** the [measurements of 7 November 2026](../validation/spec-design-measures-20261107.md) on the two archived Makerspace specs, 115 and 419 Definitions, and the [guide to a good spec](../guides/good-spec.md), which says what each measure is for. [The model language guide](../guides/model-language.md#vet-warnings-and-notes) owns what `vet` does.
 
 ## In brief
 
-- **Find unlinked mentions,** a priority: a Definition's name in another Definition's prose with no link to it. Half to three-quarters of what it finds on the Makerspace specs are real missing links, roughly 130 to 180 in Makerspace alone, and the rest are ordinary words and other meanings of a name. So it starts as a note, with a one-line summary in every run.
-- **Replace `vet.reach` with `vet.hub`,** which counts Definitions, counts Root, and leaves Kinds out. On both specs it warns about `values` and `members/member`, the hub that cost most re-verification in the 5× change steps. `vet.reach` warns about Interfaces on Makerspace, which are linked widely by design, and misses `values`.
-- **Add Martin's abstractness and distance:** A and D in `list --deps`, and notes for the zone of pain, which without a measure of change names every stable core, and for the zone of uselessness, which no spec has shown yet.
-- **Keep the other warnings** as they are, `vet.unstable_dependency` included, Martin's rule exactly.
-- **Add notes,** which `--strict` shows and which never change the exit code: unlinked mentions, both zones, statements per Definition, placement, and a CRAP analogue that reads `review.sum`.
-- **Let agents judge what a count cannot,** and only ever warn ([AI-assisted measures](#ai-assisted-measures)).
-- **Offer one Kind for `std`, `std/Value`,** for the value objects of domain-driven design, as a possible exception for the owner to judge: the hub it addresses is measured, but that a missing Kind caused it is not.
+As decided and built ([DEC-101](register.md#dec-101-what-vet-measures)):
+
+- **Unlinked mentions,** a priority: a Definition's name in another Definition's prose with no link to it. Half to three-quarters of what it finds on the Makerspace specs are real missing links, roughly 130 to 180 in Makerspace alone, and the rest are ordinary words and other meanings of a name. So it is a note, with a one-line count in every run, and the auditor triages the candidates for the owner.
+- **`vet.hub` replaces `vet.reach`.** It counts Definitions, counts Root, and leaves Kinds out. On both specs it warns about `values` and `members/member`, the hub that cost most re-verification in the 5× change steps. `vet.reach` warned about Interfaces on Makerspace, which are linked widely by design, and missed `values`.
+- **Martin's abstractness and distance,** A and D, are in `list --deps`. The notes for the zones wait until `vet` can see change.
+- **The other warnings stay** as they were, `vet.unstable_dependency` included, Martin's rule exactly.
+- **Notes,** which `--strict` shows and which never change the exit code: unlinked mentions, statements per Definition, placement, and hotspots from the record's count of revisions. The CRAP analogue waits for real data.
+- **Agents judge what a count cannot,** and only ever warn ([AI-assisted measures](#ai-assisted-measures)); the reviewer counts cases while it marks.
+- **No `std/Value`:** the owner decided against a Kind for values and against a central page of values.
 
 ## What `vet` knows of Kinds
 
-`vet` knows one Kind: Core's `Kind`, which every Kind Definition has as its own Kind. A Definition of Kind `Kind` counts towards its Package's abstractness, as the owner set. Two further uses go beyond that and need the owner's word: `vet.hub` leaves Kinds out, since a change to a Kind concerns all its Definitions by design, and `vet.unlinked_mention` never names a Kind, since Kinds' names are mostly ordinary words. Nothing else in `vet` depends on which Kind a Definition has. A project's own Kinds and `std`'s are treated alike, and a measure that would need to know what a Kind means, such as which Kinds are concrete, is not proposed.
+`vet` knows one Kind: Core's `Kind`, which every Kind Definition has as its own Kind. A Definition of Kind `Kind` counts towards its Package's abstractness, as the owner set. Two further uses go beyond that, and the owner accepted both with decisions 1 and 2: `vet.hub` leaves Kinds out, since a change to a Kind concerns all its Definitions by design, and `vet.unlinked_mention` never names a Kind, since Kinds' names are mostly ordinary words. Nothing else in `vet` depends on which Kind a Definition has. A project's own Kinds and `std`'s are treated alike, and a measure that would need to know what a Kind means, such as which Kinds are concrete, is not proposed.
 
 ## The measures
 
@@ -41,17 +43,17 @@ N is the number of the spec's model Definitions. Fan-in counts the Definitions t
 | `vet.thin_package` | A Package has no Definitions of its own and one child | — | none; none | Keep |
 | `vet.no_paths` | A Package other than Root claims no path pattern | — | as today | Keep |
 
-**`list --deps`** adds each Package's A and D beside its instability, in its text and as `abstractness` and `distance` in its JSON.
+**`list --deps`** adds each Package's A and D beside its instability, in its text and as `abstractness` and `distance` in its JSON. Built as proposed.
 
 **Why `vet.hub` and not `vet.reach`.** `vet.reach` counts the Packages a change reaches and skips Root. On Makerspace it warns about the Interfaces of `billing`, `equipment` and `members`, whose purpose is to be used by other modules, and stays silent about `values`, which 60 Definitions link while using a median of 2 of its 13 formats. `vet.hub` counts Definitions, which is what `status` lists, and counts Root, where the worst hub sits. At 20 % it also names `members/member`: in the 5× project's eight change steps, `members/member` changed once and put 88 Definitions back on the list, and the changes of nine widely linked Definitions caused 248 of the steps' 468 items, items no other change reached. At 25 % it would name `values` alone, which never changed. After `values` is split, it names `values/identifier`, a true hub, which the author keeps with one line of reason, as `/markitect-design` asks of any warning, and in the 5× project still `members/member`.
 
-**Why the zones split.** Both specs keep their Kinds at Root, so A is 0 in every other Package and D is 1 − I. The zone of pain then holds Root and the stable core: `billing`, `equipment` and `members` in Makerspace, eight Packages in the 5× project. That is where change hurts, but Martin counts it harmful only for what changes often, and in Makerspace nothing widely linked there changed. A snapshot cannot tell, so the zone of pain is a note until `vet` can see change. The zone of uselessness, Kinds in an unstable Package that little uses, needs no such knowledge, but neither spec has a hit, so its precision is untested and it starts as a note too.
+**Why the zones split.** Both specs keep their Kinds at Root, so A is 0 in every other Package and D is 1 − I. The zone of pain then holds Root and the stable core: `billing`, `equipment` and `members` in Makerspace, eight Packages in the 5× project. That is where change hurts, but Martin counts it harmful only for what changes often, and in Makerspace nothing widely linked there changed. A snapshot cannot tell, so the zone of pain is a note until `vet` can see change. The zone of uselessness, Kinds in an unstable Package that little uses, needs no such knowledge, but neither spec has a hit, so its precision is untested and it starts as a note too. **Decided:** neither zone note is built yet; both wait until change frequency exists, which the record's revisions now begin to give.
 
 **Why no margin on stability.** Splitting `values` into a Package gave every module one more efferent edge and shifted instabilities, which raised three new `vet.unstable_dependency` warnings, with differences of 0.035, 0.062 and exactly 0.100. The three that stood before differ by exactly 0.100, 0.125 and 0.183. No margin separates the two sets, so the rule stays Martin's, exactly as `vet` has it today.
 
 ### Notes, shown with `--strict`
 
-These have a known blind spot or no calibration yet, so they never change the exit code, as notes already do in Markitect's commands ([exit codes](../guides/model-language.md#diagnostics-json-and-exit-codes)). `vet --strict` prints them after the warnings and still exits 1 on warnings only; `--json` always carries them, with `severity` `note`. Plain `vet` prints one line that counts them and says to run `vet --strict` to see them. That changes what plain `vet` does today, which prints nothing on a clean spec: it would stay silent only when there are no notes either.
+These have a known blind spot or no calibration yet, so they never change the exit code, as notes already do in Markitect's commands ([exit codes](../guides/model-language.md#diagnostics-json-and-exit-codes)). `vet --strict` prints them after the warnings and still exits 1 on warnings only; `--json` always carries them, with `severity` `note`. Plain `vet` prints one line that counts them and says to run `vet --strict` to see them, so it stays silent only when there are no notes either. **Decided:** `vet.unlinked_mention`, `vet.statements` and `vet.placement` are built as below; the zones and `vet.risk` wait; and `vet.hotspot` was added, from the record's revisions ([Decisions](#decisions), 7).
 
 | Code | Notes when | Threshold | Hits: Makerspace, 5× | Why a note |
 |---|---|---|---|---|
@@ -78,7 +80,7 @@ On Makerspace c8 it reports 233 pairs and counts 50 apart, 44 of them against th
 
 | Measure | Why not |
 |---|---|
-| Change hotspots: a Definition's fan-in times how often it changes | The strongest sign of real cost in the 5× series, but it needs history, and the tool reads no Git ([DEC-097](register.md#dec-097-markitect-uses-no-git)). Later, as concept 4.0 §4 says, perhaps from one record to the next; then the zone of pain can become a warning for volatile Packages |
+| Change hotspots: a Definition's fan-in times how often it changes | The strongest sign of real cost in the 5× series, but it needs history, and the tool reads no Git ([DEC-097](register.md#dec-097-markitect-uses-no-git)). **Decided** on 8 November 2026: the record counts revisions, and `vet.hotspot` is built from them as a note ([Decisions](#decisions), 7); the zone of pain may become a warning for volatile Packages once real records show it |
 | Abstractness by what Kinds mean (Concepts and Rules abstract, Operations concrete) | Needs `vet` to know Kinds by name, and told good Packages from bad ones no better than instability |
 | Every-link reach | The record follows one step; the every-link reach is for the author to read, not to warn about. `list --deps` and `doc` already show the links |
 | Fan-out | Its largest values are Interfaces, which list their module's operations by design |
@@ -99,6 +101,8 @@ The owner settled this on 7 November 2026: there are no explicit layers and no m
 On Makerspace the rule holds without more: no Package depends on the outer `protocol`, the area modules reach each other's operations only through Interfaces, and the stability measure finds no violation. The 5× project has three small stability violations, and three Operations that build on another module's operation rather than its Interface, such as `access/enter-door` on `billing/get-account`; a project that wants to forbid that writes it as a Rule, or marks the operations `internal: true` and lets other modules use the Interface.
 
 ## A new `std` Kind: Value
+
+**Not adopted.** The owner decided against `std/Value` on 8 November 2026, and against a central page of values: general knowledge is not specified, and a value rule of the project's own, its format, range, unit or equality, is stated once, as a small Definition of its own, in the only Package that uses it or at the lowest common parent of those that share it ([Decisions](#decisions), 6; [good spec](../guides/good-spec.md#say-it-once-link-exactly-what-you-use)). The proposal follows as it was made.
 
 New `std` Kinds come only where the measurements show a gap and an established concept fills it. No candidate meets that rule in full. One comes close, and is put to the owner as a possible exception, not recommended on the measurements alone.
 
@@ -136,7 +140,7 @@ A Value Definition describes one kind of value that the project's records, reque
 
 ## AI-assisted measures
 
-A proposal, like the rest of this page. The aim is that the principles hold in practice, "good enough" and with no guarantee, through deterministic checks and through agents reviewing exactly these properties.
+**Decided as a trial** ([Decisions](#decisions), 7): the counts on `mark` and the record's revisions are built, and `vet.risk` waits for the record of real builds. The aim is that the principles hold in practice, "good enough" and with no guarantee, through deterministic checks and through agents reviewing exactly these properties.
 
 **Two levels.**
 
@@ -153,14 +157,16 @@ A proposal, like the rest of this page. The aim is that the principles hold in p
 
 **What it costs.** No agent run of its own: the count comes from the review that happens anyway. Two optional flags on `mark`, two optional fields in the record, and a few sentences in the reviewer's agent file. The auditor's findings go to the owner in its report, as DEC-100 has it, and into no file of the tool.
 
-## Decisions for the owner
+## Decisions
 
-1. **`vet.unlinked_mention`,** as a note with a one-line summary in every run, to become a warning once its noise is low; mentions against or beyond the structure counted apart. Recommended; the alternative is a warning now, accepting a quarter to a half noise.
-2. **`vet.hub` replaces `vet.reach`:** Definitions, Root included, Kinds left out, above a fifth of the spec and at least 10. Recommended.
-3. **Martin's abstractness and distance:** A and D in `list --deps`, both zones as notes. Recommended. Also whether `vet.hub` and `vet.unlinked_mention` may leave Kinds out, a use of Core's `Kind` beyond abstractness.
-4. **Notes, shown with `--strict` and never changing the exit code,** for `vet.statements` and `vet.placement`, with the thresholds above as provisional. Recommended.
-5. **`vet.risk`, the CRAP analogue,** which makes `vet` read `review.sum`. Recommended as a note, and only once the record of a real build can calibrate it.
-6. **`std/Value`** in a new version of `std`, with one sentence in `std/Concept`, as an exception to the rule that new Kinds need a measured gap. For the owner to judge; not recommended on the measurements alone.
-7. **AI-assisted measures:** agents judge the semantic properties and report findings that block nothing; `mark` takes an optional count of cases and of the cases its evidence covers; `vet` lists complex, weakly verified Definitions; kept only if the data bear it out. Recommended as a trial.
+The owner decided on 8 November 2026 ([DEC-101](register.md#dec-101-what-vet-measures)). Each proposal, then what was decided and built:
 
-Once decided, the build changes `internal/analysis`, its tests, `list --deps`, and the warning table of [the model language guide](../guides/model-language.md#vet-warnings); a new `std` Kind also changes `internal/libraries/std` and the Library's version. This page then becomes the plan's record, or goes.
+1. **`vet.unlinked_mention`,** proposed as a note with a one-line summary in every run, to become a warning once its noise is low; mentions against or beyond the structure counted apart. **Accepted, and more:** `/markitect-audit` and the auditor's agent file have the auditor triage the candidates into real missing links and ordinary words and report the real ones to the owner; the architect then adds the links. Built so; on the archived specs it gives exactly the counts of the [record](../validation/spec-design-measures-20261107.md#unlinked-mentions).
+2. **`vet.hub` replaces `vet.reach`:** Definitions, Root included, Kinds left out, above a fifth of the spec and at least 10. **Accepted** and built.
+3. **Martin's abstractness and distance:** A and D in `list --deps`, both zones as notes. **Accepted in part:** A and D in `list --deps`, text and JSON, as information only; the zone notes wait until change frequency exists. `vet.hub` and `vet.unlinked_mention` leave Kinds out, as proposed.
+4. **Notes for `vet.statements` and `vet.placement`,** shown with `--strict` and never changing the exit code. **Accepted** and built, with the thresholds above as provisional.
+5. **`vet.risk`, the CRAP analogue.** **Waits** for real data; not built.
+6. **`std/Value`.** **Not adopted,** and no central page of values: general knowledge is not specified, and a project's own value rules are stated once, at the right place. [What makes a good spec](../guides/good-spec.md#say-it-once-link-exactly-what-you-use) and the `markitect-design` skill state the rule.
+7. **AI-assisted measures** as a trial. **Accepted, and more:** `mark` takes `--cases N` and `--covered M`, stored on the record's line, and the reviewer's agent file says to count cases while marking. The record also counts revisions per Definition, how often its own text changed between verdicts, as a basis for hotspots without Git, and `vet.hotspot` notes, with `--strict`, a Definition whose fan-in times revisions is above max(20, N / 10). That threshold was calibrated on the eight change steps of both archived projects: on the 5× project it names the five Definitions whose changes cost most, from `members/member` (90) to `ledger/postings` (46), with nothing between 46 and 20; on Makerspace, where no widely linked Definition changed, the largest is 14 and it names nothing ([DEC-101](register.md#dec-101-what-vet-measures) has the figures).
+
+Built in 0.23.0: `internal/analysis` and its tests, `internal/run` (the counts and revisions on the record's line), `list --deps`, `vet` and `mark` on the command line, the auditor and reviewer agent files, `/markitect-audit` and the design skill, and the guides. No `std` Kind changed.

@@ -67,7 +67,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/analysis` | Package analysis answers questions about a loaded project without starting agents: who links to a Definition, the Package dependency graph, and the warnings of vet, which analyse the spec's design like code. | [docs/guides/model-language.md#vet-warnings](../guides/model-language.md#vet-warnings) |
+| `internal/analysis` | Package analysis answers questions about a loaded project without starting agents: who links to a Definition, the Package dependency graph, and the warnings and notes of vet, which analyse the spec's design like code. | [docs/guides/model-language.md#vet-warnings-and-notes](../guides/model-language.md#vet-warnings-and-notes) |
 
 ## The record
 

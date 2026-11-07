@@ -40,6 +40,13 @@ The **fingerprint** of an item is the first six characters of the hash of every 
 
 The verdicts are `ok` (implemented, as the evidence shows), `fail` (not, and why), `skip` (verified as far as the project can show, and why) and `spec-problem` (the spec contradicts itself or leaves open behaviour at the project's boundary, and only the owner can settle it). The record holds hashes, not text: an agent that wants what a Definition said before reads it from Git.
 
+Three fields came with 0.23.0, a trial of [DEC-101](../../docs/concepts/register.md#dec-101-what-vet-measures), each left out when empty:
+
+- `cases` and `covered`: the reviewer's count of the distinct cases, conditions and exceptions the Definition demands, and of those its evidence demonstrates, as `mark` took them. Nothing reads them yet; they are kept to calibrate a later risk measure.
+- `revisions`: how often the Definition's own text changed between two verdicts on it. `mark` takes the count of the Definition's lines and adds one when none of them has the new line's `self` hash, so a first verdict has none, and a change of a link, a file or the evidence adds none. Of several lines, as after a merge, it counts on from the most. `vet` reads it for `vet.hotspot`, as change history without Git.
+
+The record has no format version: the new fields are optional, so a line written before 0.23.0 reads as no count and no revision, and its counting starts with the next verdict. Markitect 0.22.0 reads a line of 0.23.0 too, but drops the three fields when its `mark` writes the record again.
+
 **Merging.** `init` and `update` write `.markitect/.gitattributes` with `review.sum merge=union`, which also joins the layout, so Git keeps the lines of both sides of a merge. Of several lines for one Definition, `status` takes the one whose inputs match the folder; two that match with different verdicts are a conflict to verify again. A line markitect cannot read, such as a broken one written by hand, is an error until the owner fixes or removes it.
 
 The record is a record, not a proof: a line written by hand shows in the diff, and [the hook](#the-hook) keeps agents from writing one.
@@ -61,7 +68,7 @@ It exits 0 when it lists nothing: then the project compiles and every Definition
 
 ## mark
 
-`markitect mark DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]… [-m "WHY"]` records a verdict at the state the reviewer read:
+`markitect mark DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]… [-m "WHY"] [--cases N [--covered M]]` records a verdict at the state the reviewer read:
 
 ```text
 markitect mark members/limit@3f9a1c ok -e src/loans.go:42 -e tests/loans_test.go:88
@@ -69,11 +76,12 @@ markitect mark loans/renewal@81be07 fail -e src/renew.go:30 -m "allows a fourth 
 ```
 
 - `ok` names at least one piece of evidence with `-e`; `fail`, `skip` and `spec-problem` say why with `-m`, kept on one line.
+- `--cases N` and `--covered M` are counts the reviewer may give with any verdict: N cases, conditions and exceptions the Definition demands, M of them demonstrated by its evidence. M needs N and is at most N; both are 0 or more. They go on the line as `cases` and `covered`.
 - Evidence is `path` or `path:line`, also `path:line-line` and `path:line:col`. A trailing note in parentheses, such as a test name, is dropped, not stored; a note without them is refused, since `-m` holds the reason. Each file must be a file of the folder, named from the project folder; its hash becomes an input when the verdict is recorded.
 - It refuses, records nothing and exits 1 when the inputs differ from the fingerprint, as when a builder edited a file beside the reviewer or the reviewer's own test run changed one; when evidence is not a file of the folder; when the Definition is unknown; when the spec has errors; or when the record has a line it cannot read. A command it cannot read exits 2.
 - A gone Definition is marked `ok` when its files are removed or have a new basis, which removes its line, or `fail` when not; `skip` is refused.
 
-It writes under a lock in the user's cache folder (`markitect/locks/`, one per project folder), reading the folder and the record afresh, and replaces the record as one whole file in one step, so parallel reviewers, such as one per Package, lose no line. It writes the file clean: one line per Definition, the matching one of several, both of a conflict, the closest when none matches, and one line for a gone Definition with every file its lines named.
+It writes under a lock in the user's cache folder (`markitect/locks/`, one per project folder), reading the folder and the record afresh, and replaces the record as one whole file in one step, so parallel reviewers, such as one per Package, lose no line. It writes the file clean: one line per Definition, the matching one of several, both of a conflict, the closest when none matches, and one line for a gone Definition with every file its lines named and the most revisions any of them counted.
 
 ## The hook
 
@@ -103,4 +111,4 @@ The checklist, the stored answers, the work under way in the cache, `gate` with 
 
 ## Tests
 
-`record_test.go` plays the builder and the reviewer on plain folders without Git while `status` says what is to verify: what a change reaches, the Kind and the Library, the fingerprint and evidence, the verdicts, a gone Definition, merged lines and conflicts, an unreadable line, errors, and parallel reviewers. `migrate_test.go` covers the migration from certificates written as 0.20.0 wrote them, `hook_test.go` the hook, and `lock_test.go` the lock.
+`record_test.go` plays the builder and the reviewer on plain folders without Git while `status` says what is to verify: what a change reaches, the Kind and the Library, the fingerprint and evidence, the verdicts, the counts of cases and the revisions, a gone Definition, merged lines and conflicts, an unreadable line, errors, and parallel reviewers. `migrate_test.go` covers the migration from certificates written as 0.20.0 wrote them, `hook_test.go` the hook, and `lock_test.go` the lock.

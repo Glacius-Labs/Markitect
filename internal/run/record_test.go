@@ -2,6 +2,7 @@ package run_test
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -516,6 +517,83 @@ func TestParallelReviewersLoseNoLine(t *testing.T) {
 	}
 	if st := p.status(false); !st.Clean() {
 		t.Fatalf("%s", st.Text())
+	}
+}
+
+// mark keeps the reviewer's counts of cases on the line, and the record counts
+// how often a Definition's own text changed between verdicts (DEC-101): a verdict
+// at another own text than every line before it adds one; a change of a link or a
+// file does not.
+func TestCountsAndRevisions(t *testing.T) {
+	p := newPlain(t)
+	p.verifyAll()
+	if rec := p.read(project.ReviewFile); strings.Contains(rec, "revisions") || strings.Contains(rec, "cases") {
+		t.Fatalf("a first verdict counts no revision and no case:\n%s", rec)
+	}
+	mark := func(id, verdict string, cases, covered *int, why string, evidence ...string) string {
+		t.Helper()
+		text, ok, err := p.engine.Mark(context.Background(), run.MarkRequest{Dir: p.dir, Item: id + "@" + p.item(p.status(true), id).Fingerprint, Verdict: verdict, Evidence: evidence, Why: why, Cases: cases, Covered: covered})
+		if err != nil || !ok {
+			t.Fatalf("mark %s: %v %s", id, err, text)
+		}
+		return text
+	}
+	line := func(id string) run.Line {
+		t.Helper()
+		for _, l := range run.ParseRecord([]byte(p.read(project.ReviewFile))).Lines {
+			if l.Definition == id {
+				return l
+			}
+		}
+		t.Fatalf("no line for %s", id)
+		return run.Line{}
+	}
+	three, two := 3, 2
+	p.write(m+"members/member.md", def("std/Concept", "Member", "A person with a card."))
+	mark("members/member", run.VerdictOK, &three, &two, "", "src/members/member.go:1")
+	mark("members/loans/loan", run.VerdictOK, nil, nil, "", "src/members/loans/loan.go:1")
+	if l := line("members/member"); l.Revisions != 1 || l.Cases == nil || *l.Cases != 3 || l.Covered == nil || *l.Covered != 2 {
+		t.Fatalf("member: %+v", l)
+	}
+	if l := line("members/loans/loan"); l.Revisions != 0 || l.Cases != nil {
+		t.Fatalf("a changed link is no revision of loan: %+v", l)
+	}
+	has(t, p.read(project.ReviewFile), `"cases":3,"covered":2,"revisions":1`)
+	// A changed file is no revision; a fail at a new text is one.
+	p.write("src/members/member.go", "package members\n\ntype Member struct{}\n")
+	mark("members/member", run.VerdictOK, nil, nil, "", "src/members/member.go:3")
+	if l := line("members/member"); l.Revisions != 1 || l.Cases != nil {
+		t.Fatalf("after a changed file: %+v", l)
+	}
+	p.write(m+"members/member.md", def("std/Concept", "Member", "A person with a card and a locker."))
+	zero := 0
+	mark("members/member", run.VerdictFail, &zero, nil, "no locker", "src/members/member.go:3")
+	if got := run.ParseRecord([]byte(p.read(project.ReviewFile))).Revisions(); len(got) != 1 || got["members/member"] != 2 {
+		t.Fatalf("revisions = %v", got)
+	}
+	// After a merge, the next verdict at a text no line has counts on from the most.
+	rec := p.read(project.ReviewFile)
+	for _, l := range strings.Split(rec, "\n") {
+		if strings.Contains(l, `"definition":"members/member"`) {
+			p.write(project.ReviewFile, rec+strings.Replace(strings.Replace(l, `"revisions":2`, `"revisions":5`, 1), `"self":"sha256:`, `"self":"sha256:0`, 1)+"\n")
+		}
+	}
+	p.write(m+"members/member.md", def("std/Concept", "Member", "A person."))
+	mark("members/member", run.VerdictOK, nil, nil, "", "src/members/member.go:3")
+	if l := line("members/member"); l.Revisions != 6 {
+		t.Fatalf("after a merge: %+v", l)
+	}
+	// Counts that cannot be are refused before anything is read.
+	minus := -1
+	for _, req := range []run.MarkRequest{
+		{Covered: &two},
+		{Cases: &two, Covered: &three},
+		{Cases: &minus},
+	} {
+		req.Dir, req.Item, req.Verdict, req.Evidence = p.dir, "members/member@"+p.item(p.status(true), "members/member").Fingerprint, run.VerdictOK, []string{"README.md"}
+		if _, _, err := p.engine.Mark(context.Background(), req); !errors.Is(err, run.ErrUsage) {
+			t.Fatalf("%+v: %v", req, err)
+		}
 	}
 }
 

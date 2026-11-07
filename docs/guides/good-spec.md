@@ -11,7 +11,7 @@ Each Definition is a unit of verification, and its inputs are its own text, its 
 
 A good spec keeps both small and true. Every link names what the Definition relies on, and nothing else: a link it does not need re-verifies too much, and a link it lacks lets a change pass unverified. A typical Makerspace Definition is linked once, puts 2 Definitions back on the list and reaches about 8 by every link. The design problems all sit in the few that reach far.
 
-The rules below each name their **signal**: a measure of `markitect vet` that exists today, one the [`vet` plan](../concepts/vet-plan.md) proposes, or what the auditor checks. The auditor is whoever reads the spec for its quality: the owner, or the read-only auditor that `/markitect-audit` starts ([DEC-100](../concepts/register.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role)), which reports to the owner. The tool treats every Kind alike, a project's own Kinds as much as `std`'s; what a Kind means is for the people and agents who read its text.
+The rules below each name their **signal**: a warning or a note of `markitect vet` ([DEC-101](../concepts/register.md#dec-101-what-vet-measures)), a measure that waits for data, or what the auditor checks. The auditor is whoever reads the spec for its quality: the owner, or the read-only auditor that `/markitect-audit` starts ([DEC-100](../concepts/register.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role)), which reports to the owner. The tool treats every Kind alike, a project's own Kinds as much as `std`'s; what a Kind means is for the people and agents who read its text.
 
 **What a measure can see.** Coupling, instability, abstractness counted from Kinds, fan-in, reach and cycles are properties of the link graph. They do not depend on the language the spec is written in, so they carry over from code as they are. Qualities of the prose do not: how hard a Definition is to follow, whether two Definitions contradict each other, whether a statement is vague. `vet` can only approximate them, by counting statements or finding a name used without a link, and the auditor judges the rest. One difference from code matters most: a missing import does not compile, but prose can name a concept without linking it, so a spec's dependencies are only as complete as its author's links. Every threshold here comes from the two Makerspace specs and stays provisional until more specs calibrate it.
 
@@ -21,14 +21,14 @@ The rules below each name their **signal**: a measure of `markitect vet` that ex
 |---|---|---|
 | [Bounded contexts](#bounded-contexts-and-ubiquitous-language) | One Package per area of the domain, in that area's words | Auditor |
 | [The Dependency Rule](#the-package-tree-is-the-dependency-rule) | Links go up the tree or sideways towards stability, never down | `link.downward`, `package.cycle`, `vet.unstable_dependency` |
-| [Stable abstractions](#stable-dependencies-and-stable-abstractions) | What many depend on is a form or vocabulary that rarely changes | Proposed abstractness and zones, `vet.hub` |
+| [Stable abstractions](#stable-dependencies-and-stable-abstractions) | What many depend on is a form or vocabulary that rarely changes | `vet.hub`, `vet.hotspot`; abstractness and distance in `list --deps` |
 | [Cohesion and coupling](#cohesion-and-coupling) | A Package's Definitions link each other; it depends on few Packages | `vet.coupling`; auditor |
-| [Complexity](#complexity-of-a-definition) | One idea per Definition, a few hundred words, a dozen statements | `vet.definition_size`; proposed `vet.statements` |
-| [Evidence for complexity](#evidence-for-complexity-a-crap-analogue) | The larger a Definition, the more evidence its `ok` names | Proposed `vet.risk` |
+| [Complexity](#complexity-of-a-definition) | One idea per Definition, a few hundred words, a dozen statements | `vet.definition_size`, `vet.statements` |
+| [Evidence for complexity](#evidence-for-complexity-a-crap-analogue) | The larger a Definition, the more evidence its `ok` names | The reviewer's counts on `mark`; `vet.risk` waits for data |
 | [Accidental complexity](#accidental-complexity) | Write only what good documentation would state | `definition.unused`, `vet.thin_package`; auditor |
 | [Abstraction levels](#one-level-of-abstraction-per-definition) | One level per Definition | Auditor |
-| [Placement](#everything-has-its-place) | Each Definition in the lowest Package that holds all its users; Root minimal | `vet.package_size`; proposed `vet.placement`, `vet.hub` |
-| [Say it once](#say-it-once-link-exactly-what-you-use) | One fact in one place; link exactly what you use, directly, from the specific to the general | Proposed `vet.unlinked_mention`, `vet.hub`; auditor |
+| [Placement](#everything-has-its-place) | Each Definition in the lowest Package that holds all its users; Root minimal | `vet.package_size`, `vet.placement`, `vet.hub` |
+| [Say it once](#say-it-once-link-exactly-what-you-use) | One fact in one place; link exactly what you use, directly, from the specific to the general; no central page of values | `vet.unlinked_mention`, which the auditor triages; `vet.hub` |
 
 ## Bounded contexts and ubiquitous language
 
@@ -66,7 +66,7 @@ In code the Package is the unit that is released and depended on. In Markitect t
 
 **Good.** In Makerspace none of the five Definitions linked by 10 or more changed in eight steps; what changed at Root was the anchor and Rules nothing links. Concepts carry the fan-in (median 6) and Operations do not (at most 2): `members/member` is linked by 24 Definitions, `members/register-member` by its Interface alone.
 
-**Signal.** `vet.unstable_dependency` for the direction of edges. The [`vet` plan](../concepts/vet-plan.md) proposes A and D in `list --deps`, and notes for the zone of pain and the zone of uselessness, which show with `--strict`; and `vet.hub` for a Definition whose change alone puts a fifth of the spec back on the list. Both Makerspace specs keep their Kinds at Root, so A is 0 in every other Package and D is 1 − I there.
+**Signal.** `vet.unstable_dependency` for the direction of edges. `list --deps` shows each Package's A and D; notes for the zone of pain and the zone of uselessness wait until `vet` knows how often things change. `vet.hub` warns about a Definition whose change alone puts more than a fifth of the spec back on the list. `vet.hotspot` notes, with `--strict`, the cost of change as it happened: a Definition whose fan-in times the revisions of its text the record counts is above a tenth of the spec. On the 5× project's change steps it names `members/member`, `billing/charge`, `members/membership`, `members/members-interface` and `ledger/postings`, and on Makerspace nothing. Both Makerspace specs keep their Kinds at Root, so A is 0 in every other Package and D is 1 − I there.
 
 ## Cohesion and coupling
 
@@ -90,7 +90,7 @@ In code the Package is the unit that is released and depended on. In Markitect t
 
 **Good.** A typical Makerspace Definition has 88 words and 6 statements; nine in ten stay under 253 words and 12 statements. `billing/account` says in one sentence what an account is and lists its six fields, each with its format.
 
-**Signal.** `vet.definition_size` warns above 1000 words, which no Makerspace Definition reaches (the largest has 430 words, 995 in the 5× project). The proposed `vet.statements` notes, shown with `--strict`, a Definition of more than 20 statements.
+**Signal.** `vet.definition_size` warns above 1000 words, which no Makerspace Definition reaches (the largest has 430 words, 995 in the 5× project). `vet.statements` notes, shown with `--strict`, a Definition of more than 20 statements.
 
 ## Evidence for complexity: a CRAP analogue
 
@@ -102,7 +102,7 @@ CRAP, the change-risk measure for code, is *comp² × (1 − cov)³ + comp*, wit
 
 **Bad and good.** No record of a real build exists for Makerspace yet, so there are no measured examples. Without any record, 73 of its 115 Definitions would score above 30, which is why the measure only looks at Definitions recorded `ok` or `skip`.
 
-**Signal.** The proposed `vet.risk`, a note shown with `--strict`, once a real record has calibrated it. The [`vet` plan](../concepts/vet-plan.md#ai-assisted-measures) proposes the reviewer's counts of cases and of the cases its evidence covers, which it rests on.
+**Signal.** `vet.risk` waits until the record of real builds can calibrate it ([DEC-101](../concepts/register.md#dec-101-what-vet-measures)). The reviewer already records the counts it rests on, with `markitect mark … --cases N --covered M` ([the `vet` plan](../concepts/vet-plan.md#ai-assisted-measures)).
 
 ## Accidental complexity
 
@@ -138,11 +138,13 @@ CRAP, the change-risk measure for code, is *comp² × (1 − cov)³ + comp*, wit
 
 **Good.** Each area's Concepts sit in its area Package, and the two shared Kinds sit at Root. The formats are used by Root's own Rules (`time`, `money`) and by `audit-entry`, so their lowest common parent is Root: split there, as thirteen Definitions, every link is exact. Split into a `values/` Package instead, they show as an edge from each module, but Root's five users can no longer link them, and a change to a format stops reaching them. At Root they make Root 33 Definitions, and `vet.package_size` warns: the sign that Root holds a module, which only moving the module and the Kind's links out would cure.
 
-**Signal.** `vet.package_size` warns above 25 Definitions, Root included. The proposed `vet.placement` notes, shown with `--strict`, a Definition whose users all lie below it in one child Package. The proposed `vet.hub` counts Root, which `vet.reach` skips today.
+**Signal.** `vet.package_size` warns above 25 Definitions, Root included. `vet.placement` notes, shown with `--strict`, a Definition whose users all lie below it in one Package. `vet.hub` counts Root, which the earlier `vet.reach` skipped.
 
 ## Say it once, link exactly what you use
 
 **Rule.** State each fact in one Definition. Every Definition that relies on it links it, directly, and links nothing it does not rely on. Link the smallest Definition that holds what you use, and link from the specific to the general, never back: a format does not link the Rule that uses it. When prose names another Definition's concept, link it there. To name an area without depending on all of it, link its Package: a Package link is no input of the record and puts nothing back on the list.
+
+**Values.** Do not specify general knowledge, such as what a date, an amount or an email address is: the agents know it, and a page that restates it is one more thing to verify and keep true. A value rule of the project's own, its format, its range, its unit or when two values are equal, is stated once, as a small Definition of its own, in the only Package that uses it or at the lowest common parent of the Packages that share it. There is no central page of values, and no Kind for them ([DEC-101](../concepts/register.md#dec-101-what-vet-measures)).
 
 **Why.** The links are the build graph. A link the Definition does not need puts it back on the list for changes it does not care about. A missing link lets a change pass: a statement relied on through a chain of links, or because a Rule binds by scope, is not put back on the list when its source changes, since `status` follows one step. Files that change with the code catch some of that, and `/markitect-review --all` is the safety net.
 
@@ -155,7 +157,7 @@ CRAP, the change-risk measure for code, is *comp² × (1 − cov)³ + comp*, wit
 - `blocked`: flag
 ```
 
-**Good: one Definition per format, linked where it is used.** Split into thirteen Definitions at Root, a change to one format lists between 2 and 52 Definitions, a median of 5. `std` has no Kind for a value yet, so the split wrote each format as a `std/Concept`; the [`vet` plan](../concepts/vet-plan.md#a-new-std-kind-value) puts `std/Value` to the owner.
+**Good: one Definition per format, linked where it is used.** Split into thirteen Definitions at Root, the lowest common parent of their users, a change to one format lists between 2 and 52 Definitions, a median of 5. Each format is a `std/Concept`; the owner decided against a Kind for values ([`vet` plan](../concepts/vet-plan.md#a-new-std-kind-value)). A format only one Package uses belongs in that Package.
 
 ```markdown
 **Fields:**
@@ -172,24 +174,24 @@ CRAP, the change-risk measure for code, is *comp² × (1 − cov)³ + comp*, wit
 
 **A milder case.** 17 of the 24 Definitions that link `members/member` do so only to say that an identifier names an existing member; a new field of the member puts them all back on the list. Split such a part out only when it changes on its own.
 
-**Signal.** The proposed `vet.unlinked_mention` finds a Definition's title or name in another Definition's prose with no link to it; on the Makerspace specs half to three-quarters of what it finds are real missing links, and the rest ordinary words and other meanings of a name. The proposed `vet.hub` points at a Definition many link to. Whether they use all of it, or only part, and whether a Definition relies on something it neither links nor names, are the auditor's questions.
+**Signal.** `vet.unlinked_mention` notes a Definition's title or name in another Definition's prose with no link to it; on the Makerspace specs half to three-quarters of what it finds are real missing links, and the rest ordinary words and other meanings of a name. Plain `vet` counts them in its last line, and `/markitect-audit` has the auditor triage them into missing links and ordinary words, so that the architect adds the links. `vet.hub` points at a Definition many link to. Whether they use all of it, or only part, and whether a Definition relies on something it neither links nor names, are the auditor's questions.
 
 ## Measures at a glance
 
 | Measure | Formula | Makerspace c8 | 5× project c8 | Signal |
 |---|---|---|---|---|
-| Fan-in | Definitions that link to it or are of it as Kind | median 1, p90 7, max 60 | 1, 7, 269 | Proposed `vet.hub` |
-| One-step reach | 1 + fan-in: what `status` lists after a change to it alone | 2, 8, 61 | 2, 8, 270 | Proposed `vet.hub` |
+| Fan-in | Definitions that link to it or are of it as Kind | median 1, p90 7, max 60 | 1, 7, 269 | `vet.hub` |
+| One-step reach | 1 + fan-in: what `status` lists after a change to it alone | 2, 8, 61 | 2, 8, 270 | `vet.hub` |
 | Every-link reach | Everything that reaches it along the links | 8, 52, 103 | 8, 85, 402 | Read, not warned |
 | Fan-out | Definitions it links to | 2, 8, 16 | 4, 9, 24 | Read, not warned |
 | Efferent coupling Ce | Packages a Package depends on | at most 8 | at most 12 | `vet.coupling` |
 | Instability I | Ce / (Ca + Ce) | 0 to 1 | 0 to 1 | `vet.unstable_dependency` |
-| Abstractness A, distance D | Share of Definitions of Kind `Kind`; \|A + I − 1\| | A 0.10 at Root, 0 elsewhere; 4 Packages in the zone of pain | 0.10, 0; 9 in the zone of pain | Proposed in `list --deps`; zone warnings |
-| Volatility × fan-in | Changes of a Definition times what each put on the list | no hub changed | 248 of 468 items from 9 hubs | Later: needs history |
+| Abstractness A, distance D | Share of Definitions of Kind `Kind`; \|A + I − 1\| | A 0.10 at Root, 0 elsewhere; 4 Packages in the zone of pain | 0.10, 0; 9 in the zone of pain | In `list --deps`; zone notes wait |
+| Volatility × fan-in | Revisions of a Definition's text times its fan-in | at most 14; no hub changed | 5 above 42, `members/member` 90; 248 of 468 items from 9 hubs | `vet.hotspot`, from the record |
 | Cohesion | Groups of a Package joined by its own links | none split at c8; `bookings` at w0 and c1, by scope Rules | none split | Read, not warned |
-| Unlinked mentions | A Definition's name in another's prose, with no link | 233 pairs, 52–65 % real in a sample | 863, 57–70 % | Proposed `vet.unlinked_mention` |
+| Unlinked mentions | A Definition's name in another's prose, with no link | 233 pairs, 52–65 % real in a sample | 863, 57–70 % | `vet.unlinked_mention` |
 | Size | Words in a Definition's body | median 88, max 430 | 99, 995 | `vet.definition_size` |
-| Statements | List items and table rows | median 6, max 25 | 7, 67 | Proposed `vet.statements` |
-| Risk | c² × (1 − e)³ + c | no record yet | no record yet | Proposed `vet.risk` |
+| Statements | List items and table rows | median 6, max 25 | 7, 67 | `vet.statements` |
+| Risk | c² × (1 − e)³ + c | no record yet | no record yet | `vet.risk` waits for data |
 
-The [`vet` plan](../concepts/vet-plan.md) proposes the thresholds, and which measures are warnings and which are notes shown with `--strict`. [The model language guide](model-language.md#vet-warnings) lists what `vet` warns about today.
+[The model language guide](model-language.md#vet-warnings-and-notes) lists `vet`'s warnings and notes with their thresholds, and the [`vet` plan](../concepts/vet-plan.md) records why each is a warning, a note, or not built yet.

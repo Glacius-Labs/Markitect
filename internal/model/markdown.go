@@ -9,6 +9,7 @@ import (
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/extension"
+	east "github.com/yuin/goldmark/extension/ast"
 	"github.com/yuin/goldmark/text"
 	"go.yaml.in/yaml/v3"
 )
@@ -252,4 +253,74 @@ func inlineText(n ast.Node, src []byte, buf *[]byte, offsets *[]int) {
 // Words counts the whitespace-separated words of a body.
 func Words(body []byte) int {
 	return len(strings.Fields(string(body)))
+}
+
+// Prose returns the running text of the page's body for checks that read its
+// words, such as vet's unlinked mentions: the inline text of every block but the
+// title, without code, raw HTML and [[...]] links, which each become a NUL byte.
+// Blocks are separated by a NUL byte, so that no phrase runs from one block into
+// the next; a line break inside a block is a space. lines holds the file line of
+// each byte of text.
+func (p Page) Prose() (text []byte, lines []int) {
+	if p.Root == nil {
+		return nil, nil
+	}
+	title := p.Root.FirstChild()
+	if h, ok := title.(*ast.Heading); !ok || h.Level != 1 {
+		title = nil
+	}
+	_ = ast.Walk(p.Root, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
+		if !entering || n.Type() != ast.TypeBlock {
+			return ast.WalkContinue, nil
+		}
+		if n == title {
+			return ast.WalkSkipChildren, nil
+		}
+		if first := n.FirstChild(); first == nil || first.Type() != ast.TypeInline {
+			return ast.WalkContinue, nil
+		}
+		var buf []byte
+		var offsets []int
+		inlineText(n, p.Body, &buf, &offsets)
+		for _, m := range wikiLink.FindAllIndex(buf, -1) {
+			for i := m[0]; i < m[1]; i++ {
+				buf[i] = 0
+			}
+		}
+		for i, c := range buf {
+			if c == '\n' {
+				c = ' '
+			}
+			text = append(text, c)
+			lines = append(lines, p.Line(offsets[i]))
+		}
+		last := p.BodyLine
+		if len(lines) > 0 {
+			last = lines[len(lines)-1]
+		}
+		text = append(text, 0)
+		lines = append(lines, last)
+		return ast.WalkSkipChildren, nil
+	})
+	return text, lines
+}
+
+// Statements counts what a reviewer verifies one by one in the page's body: its
+// list items, nested ones included, and its table rows, header rows included.
+func (p Page) Statements() int {
+	if p.Root == nil {
+		return 0
+	}
+	n := 0
+	_ = ast.Walk(p.Root, func(node ast.Node, entering bool) (ast.WalkStatus, error) {
+		if !entering {
+			return ast.WalkContinue, nil
+		}
+		switch node.Kind() {
+		case ast.KindListItem, east.KindTableHeader, east.KindTableRow:
+			n++
+		}
+		return ast.WalkContinue, nil
+	})
+	return n
 }
