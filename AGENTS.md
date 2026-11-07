@@ -2,9 +2,9 @@
 
 Markitect is spec-first development with delegated realization. People maintain one spec, the project's documentation and authority (code and older documents say canonical model); a Command has it realized by one implementer and one fresh reviewer, and the tool keeps a few clear technical guarantees.
 
-**Main carries the build of [draft concept 4.0](docs/concepts/v4-concept.md)** since 6 November 2026, for the owner to try by using it ([DEC-094](docs/concepts/register.md#dec-094-main-carries-the-native-version-and-the-app-goes)); the draft is not accepted. The `/markitect-apply` and `/markitect-verify` skills have the user's own Claude Code session start the builder and reviewer agents in the project's folder, `markitect gate` checks their work, and the tool uses no Git ([lean plan](docs/concepts/lean-tool-plan.md)). Main until then, with the concept 3.0 rebuild and Markitect Desktop, is kept on the branch `archive/main-concept-3-20261106`.
+**Accepted target: [concept 4.0](docs/concepts/v4-concept.md)** ([DEC-098](docs/concepts/register.md#dec-098-concept-40-is-the-target)), accepted on 7 November 2026; Main carries its build since 6 November 2026 ([DEC-094](docs/concepts/register.md#dec-094-main-carries-the-native-version-and-the-app-goes)). The `/markitect-apply` and `/markitect-verify` skills have the user's own Claude Code session start the builder and reviewer agents in the project's folder, `markitect gate` checks their work, and the tool uses no Git ([lean plan](docs/concepts/lean-tool-plan.md)). Main until then, with the concept 3.0 rebuild and Markitect Desktop, is kept on the branch `archive/main-concept-3-20261106`.
 
-**Accepted target:** [concept 3.0](docs/concepts/v3-concept.md) ([DEC-091](docs/concepts/register.md#dec-091-concept-30-is-the-target)), accepted on 4 November 2026; whether draft 4.0 replaces it is open. [V1 concept 1.0](docs/concepts/v1-concept.md) remains the record of V1. The [delivery plan](docs/implementation-plan.md) owns the current steps.
+**Records:** [concept 3.0](docs/concepts/v3-concept.md) ([DEC-091](docs/concepts/register.md#dec-091-concept-30-is-the-target)) was the target from 4 to 7 November 2026, and [V1 concept 1.0](docs/concepts/v1-concept.md) remains the record of V1. The [delivery plan](docs/implementation-plan.md) owns the current steps.
 
 Before assessing product direction, read [Markitect in brief](docs/vision.md#markitect-in-brief), [Founding intent](docs/vision.md#founding-intent), [Common misreadings](docs/vision.md#common-misreadings) and the [concept register](docs/concepts/register.md). Do not reopen an accepted entry without new evidence. The canonical model is meant as a typed language in prose: projects define their own Kinds, Libraries supply common ones, the compiler checks structure only, and a model is judged like code.
 
@@ -27,8 +27,8 @@ Markitect itself is developed as an ordinary software project: agentic coding, t
 
 ## Where things are
 
-- [Draft concept 4.0](docs/concepts/v4-concept.md): what Main implements.
-- [Concept 3.0](docs/concepts/v3-concept.md): the accepted target.
+- [Concept 4.0](docs/concepts/v4-concept.md): the accepted target, which Main implements.
+- [Concept 3.0](docs/concepts/v3-concept.md): the record of the target from 4 to 7 November 2026.
 - [Concept 2.0](docs/concepts/v2-concept.md): the record of the Manager tree.
 - [V1 concept 1.0](docs/concepts/v1-concept.md): the record of V1, which Main implemented until T1.
 - [Model language](docs/guides/model-language.md): the 2.0 model language, the `.markitect/` layout and the model commands.

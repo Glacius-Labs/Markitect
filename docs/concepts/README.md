@@ -4,9 +4,9 @@ This is the home of Markitect's long-term vision, product-level decisions, clari
 
 | Document | Content |
 |---|---|
-| [Draft concept 4.0](v4-concept.md) | A draft, not accepted ([OQ-012](register.md#open-questions)): the spec, a tool that computes and checks, with the final check in one command, `gate`, and a thin default driver, in which the user's own session starts a builder and a reviewer agent and makes the commit; no container and no Git in the tool |
-| [Concept 3.0](v3-concept.md) | The target, accepted on 4 November 2026 ([DEC-091](register.md#dec-091-concept-30-is-the-target)): six problems, the spec, and one implementer and one reviewer per Command with no Manager tree; not built yet ([delivery plan](../implementation-plan.md#concept-30-build)) |
-| [Concept 2.0](v2-concept.md) | What Main implements until the rebuild, and the target from 28 October until 4 November 2026 ([DEC-086](register.md#dec-086-concept-20-is-the-target)) |
+| [Concept 4.0](v4-concept.md) | The target, accepted on 7 November 2026 ([DEC-098](register.md#dec-098-concept-40-is-the-target)), and what Main implements: the spec, a tool that computes and checks, with the final check in one command, `gate`, and a thin default driver, in which the user's own session starts a builder and a reviewer agent and makes the commit; no container and no Git in the tool |
+| [Concept 3.0](v3-concept.md) | The target from 4 to 7 November 2026 ([DEC-091](register.md#dec-091-concept-30-is-the-target)): six problems, the spec, and one implementer and one reviewer per Command with no Manager tree. Its rebuild is kept on the branch `archive/main-concept-3-20261106` |
+| [Concept 2.0](v2-concept.md) | The record of the Manager tree, and the target from 28 October until 4 November 2026 ([DEC-086](register.md#dec-086-concept-20-is-the-target)) |
 | [V1 concept 1.0](v1-concept.md) | What Main implemented until step T1, and the record of V1; the target until 28 October 2026: scope, principles, organization, Run, workflow, harness, acceptance and decisions D1–D18 ([DEC-068](register.md#dec-068-v1-concept-10)) |
 | [Register](register.md) | All entries with ID, status, origin and links, and the mapping of earlier collections |
 | [Origin and rationale](../vision.md#origin-and-rationale) | The owner's originating project, causal sequence, problems, concepts and assumptions, connected to the existing register; a section of the vision |

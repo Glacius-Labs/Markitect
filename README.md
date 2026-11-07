@@ -27,7 +27,7 @@
 </p>
 
 > [!IMPORTANT]
-> Main carries the build of [draft concept 4.0](docs/concepts/v4-concept.md), which the owner is trying by using it. Markitect is in active development, and its releases are builds of that draft. Every command on this page exists on `main`.
+> Main carries the build of [concept 4.0](docs/concepts/v4-concept.md), Markitect's target. Markitect is in active development, and its releases are builds of that concept. Every command on this page exists on `main`.
 
 ## Why Markitect
 
@@ -195,7 +195,7 @@ The [model language guide](docs/guides/model-language.md) gives the exact format
 
 ## Status
 
-Main carries [draft concept 4.0](docs/concepts/v4-concept.md), which the owner tries by using it; the accepted target is still [concept 3.0](docs/concepts/v3-concept.md) until that is decided. The [delivery plan](docs/implementation-plan.md) holds the current step.
+Main carries [concept 4.0](docs/concepts/v4-concept.md), the target the owner accepted on 7 November 2026. The [delivery plan](docs/implementation-plan.md) holds the current step.
 
 | Area | State |
 | --- | --- |
@@ -254,8 +254,7 @@ Markitect = Markdown + Architect. The idea grew out of a project documented in M
 | --- | --- |
 | [Project workflow](docs/guides/project-workflow.md) | Using Markitect on a project, command by command, with troubleshooting |
 | [Model language](docs/guides/model-language.md) | Definitions, Kinds, Libraries, links, the registry and every diagnostic |
-| [Draft concept 4.0](docs/concepts/v4-concept.md) | What Main builds: runs in your own session, and why |
-| [Concept 3.0](docs/concepts/v3-concept.md) | The accepted target |
+| [Concept 4.0](docs/concepts/v4-concept.md) | The target, which Main builds: work in your own session, and why |
 | [Vision](docs/vision.md) | Why Markitect exists, what it promises and what it leaves to people |
 | [Architecture](docs/architecture.md) | Packages, layers and the product flow |
 | [Delivery plan](docs/implementation-plan.md) | What is built and what comes next |

@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| **Version** | 3.0 – accepted target |
+| **Version** | 3.0 – superseded as the target by [concept 4.0](v4-concept.md) |
 | **Date** | 4 November 2026 |
 | **Basis** | The owner's discussion of 3 and 4 November 2026, which judged Markitect's ideas against six problems and other options, and an independent review. |
-| **State** | Accepted by the owner as Markitect's target on 4 November 2026 ([DEC-091](register.md#dec-091-concept-30-is-the-target)). Not built yet: Main still implements concept 2.0 until the steps of the [delivery plan](../implementation-plan.md#concept-30-build) replace it. |
+| **State** | Accepted as the target on 4 November 2026 ([DEC-091](register.md#dec-091-concept-30-is-the-target)), superseded on 7 November 2026 ([DEC-098](register.md#dec-098-concept-40-is-the-target)). Its rebuild stopped on Main on 6 November 2026 ([DEC-094](register.md#dec-094-main-carries-the-native-version-and-the-app-goes)) and is kept on the branch `archive/main-concept-3-20261106`. This page stays the record; concept 4.0 keeps its six problems, words, checklist, answers and Result ([§15 there](v4-concept.md#15-what-this-overturns)). |
 
 This page uses the new words: spec, implementer, reviewer. Code and other documents still say model, maker and checker until the rename ([§14](#14-decided-on-acceptance)).
 

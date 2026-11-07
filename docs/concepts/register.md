@@ -1,16 +1,14 @@
 # Concept register
 
-**Main, 6 November 2026:** carries the build of [draft concept 4.0](v4-concept.md), which the owner tries by using it ([DEC-094](#dec-094-main-carries-the-native-version-and-the-app-goes)). The concept 3.0 rebuild that Main held until then is kept on the branch `archive/main-concept-3-20261106`. The same day the owner chose a leaner tool that computes and checks, leaves the agents to a driver and uses no Git ([DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](#dec-097-markitect-uses-no-git), [plan](lean-tool-plan.md)).
+**Accepted target, 7 November 2026:** [Concept 4.0](v4-concept.md) ([DEC-098](#dec-098-concept-40-is-the-target)): a tool that computes and checks, a driver that acts, and no Git in the tool ([DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](#dec-097-markitect-uses-no-git)). Main carries its build since 6 November 2026 ([DEC-094](#dec-094-main-carries-the-native-version-and-the-app-goes)), released as 0.20.0.
 
-**Accepted target, 4 November 2026:** [Concept 3.0](v3-concept.md) ([DEC-091](#dec-091-concept-30-is-the-target)). [Concept 2.0](v2-concept.md) ([DEC-086](#dec-086-concept-20-is-the-target)) is the record of the Manager tree.
-
-**Draft, 4 November 2026:** [draft concept 4.0](v4-concept.md) would replace concept 3.0. It is not accepted ([OQ-012](#open-questions)).
+**Records:** [Concept 3.0](v3-concept.md) ([DEC-091](#dec-091-concept-30-is-the-target)) was the target from 4 to 7 November 2026; its rebuild is kept on the branch `archive/main-concept-3-20261106`. [Concept 2.0](v2-concept.md) ([DEC-086](#dec-086-concept-20-is-the-target)) is the record of the Manager tree.
 
 **Current V1 concept, 24 October 2026:** [Concept 1.0](v1-concept.md) consolidates the owner's concept v0.18 and the accepted decisions D10–D18 ([DEC-068](#dec-068-v1-concept-10)). It supersedes conflicting statements in the earlier [V1 scope clarification](sources/v1-scope-clarification-20261023.md), the [source implementation approval](sources/v1-source-implementation-approval-20261023.md) and older entries; their original text stays. The [delivery plan](../implementation-plan.md) governs implementation and tracks known deviations of the code.
 
 This register records Markitect's long-term vision, product-level decisions, clarifications, endorsed directions, promises, assumptions, concepts, future enhancements, ideas and open questions. Each entry has a status and an origin. "Owner" means Markitect's product owner. The [concept record guide](README.md) defines entry types, statuses and the rules for changing entries. The [vision](../vision.md) presents the thesis these entries support. Earlier collections from the Concepts and Ideas chats are preserved in the [sources](sources/README.md) and mapped [below](#imported-collections).
 
-**Current Apply reading:** Main implements one Run executor for Assessment, Implement and Verify through the full model-derived hierarchy, a direct Apply workflow and publication from stored acceptance after every Run has closed. Deviations from concept 1.0 are tracked in the delivery plan. Historical guides and validation records retain their source and outcome, not implementation authority.
+**Current Apply reading:** the [project workflow](../guides/project-workflow.md#7-apply-and-verify) says how Apply and Verify run on Main, and [the work](../../internal/run/README.md) owns their rules. Historical guides and validation records retain their source and outcome, not implementation authority.
 
 ## Index
 
@@ -33,7 +31,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-010](#dec-010-evaluate-the-method-separately-from-its-execution-runtime) | Endorsed direction | Evaluate the method separately from its execution runtime | Endorsed; plan pending |
 | [DEC-011](#dec-011-detailed-planning-of-future-ideas-waits) | Decision | Detailed planning of future ideas waits | Accepted |
 | [DEC-012](#dec-012-government-ideas-evaluation-commissioned) | Decision | Government ideas evaluation commissioned | Accepted; result not adopted |
-| [DEC-013](#dec-013-linux-first-for-tests-and-the-playground) | Decision | Linux first for tests and the playground | Accepted; Windows job removal decided in DEC-077 |
+| [DEC-013](#dec-013-linux-first-for-tests-and-the-playground) | Decision | Linux first for tests and the playground | Accepted; Windows job removal decided in DEC-077; amended by [DEC-098](#dec-098-concept-40-is-the-target) |
 | [DEC-014](#dec-014-compatibility-does-not-drive-decisions) | Decision | Compatibility does not drive decisions | Accepted |
 | [DEC-015](#dec-015-a-fresh-roadmap-earlier-plans-are-inputs) | Decision | A fresh roadmap; earlier plans are inputs | Accepted |
 | [DEC-016](#dec-016-a-clean-stable-testable-main-and-uniform-structure-first) | Decision | A clean, stable, testable main and uniform structure first | Accepted |
@@ -57,7 +55,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-034](#dec-034-removed-intent-removes-its-realization) | Decision | Removed intent removes its realization | Accepted |
 | [DEC-035](#dec-035-committed-model-in-owner-commit-accepts-the-result) | Decision | Committed model in, owner commit accepts the result | Accepted; owner commit as acceptance superseded by DEC-078 |
 | [DEC-036](#dec-036-adopted-design-refinements-for-the-first-apply) | Decision | Adopted design refinements for the first Apply | Accepted |
-| [DEC-037](#dec-037-agent-sessions-and-checks-run-in-linux-containers) | Decision | Agent sessions and checks run in Linux containers | Accepted |
+| [DEC-037](#dec-037-agent-sessions-and-checks-run-in-linux-containers) | Decision | Agent sessions and checks run in Linux containers | Accepted; superseded by [DEC-098](#dec-098-concept-40-is-the-target) |
 | [DEC-038](#dec-038-learn-through-complete-workflows) | Decision | Learn through complete workflows | Accepted |
 | [DEC-039](#dec-039-deterministic-manager-process) | Decision | Deterministic Manager process | Accepted; superseded by [DEC-091](#dec-091-concept-30-is-the-target) |
 | [DEC-040](#dec-040-concept-freeze-until-the-core-runs) | Decision | Concept freeze until the core runs | Accepted |
@@ -97,27 +95,28 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-074](#dec-074-canonical-model-track-parallel-to-v1) | Decision | Canonical model track, parallel to V1 | Accepted; W1 decisions taken, tracked in the delivery plan |
 | [DEC-075](#dec-075-kind-extension-and-one-core-120) | Decision | Kind interfaces and one Core 1.2.0 | Accepted; implemented ([PR #757](https://github.com/Glacius-Labs/Markitect/pull/757)) |
 | [DEC-076](#dec-076-markitect-is-developed-as-a-regular-software-project) | Decision | Markitect is developed as a regular software project | Accepted; self-model retired (#756), cleanup tracked in the delivery plan |
-| [DEC-077](#dec-077-development-pace-and-linux-first-execution) | Decision | Development pace and Linux-first execution | Accepted; Linux-only CI, Linux Docker way tracked in the delivery plan; the runner's checkout mount and branch hand-back superseded by DEC-078 |
-| [DEC-078](#dec-078-agents-collaborate-through-a-git-remote-without-owner-review) | Decision | Agents collaborate through a Git remote, without owner review | Accepted direction; design open, tracked in the delivery plan; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
+| [DEC-077](#dec-077-development-pace-and-linux-first-execution) | Decision | Development pace and Linux-first execution | Accepted; Linux-only CI, Linux Docker way tracked in the delivery plan; the runner's checkout mount and branch hand-back superseded by DEC-078; amended by [DEC-098](#dec-098-concept-40-is-the-target) |
+| [DEC-078](#dec-078-agents-collaborate-through-a-git-remote-without-owner-review) | Decision | Agents collaborate through a Git remote, without owner review | Accepted direction; design open, tracked in the delivery plan; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) and [DEC-098](#dec-098-concept-40-is-the-target) |
 | [DEC-079](#dec-079-the-model-is-as-explicit-as-good-documentation) | Decision | The model is as explicit as good documentation | Accepted |
-| [DEC-080](#dec-080-the-model-is-typed-documentation) | Decision | The model is typed documentation | Accepted design; not built |
-| [DEC-081](#dec-081-the-organization-knows-broad-at-the-top-and-deep-below) | Decision | The organization knows broad at the top and deep below | Accepted design; not built; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
+| [DEC-080](#dec-080-the-model-is-typed-documentation) | Decision | The model is typed documentation | Accepted design; not built; amended by [DEC-098](#dec-098-concept-40-is-the-target) |
+| [DEC-081](#dec-081-the-organization-knows-broad-at-the-top-and-deep-below) | Decision | The organization knows broad at the top and deep below | Accepted design; not built; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target); amended by [DEC-098](#dec-098-concept-40-is-the-target) |
 | [DEC-082](#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager) | Decision | One Run per change: impact decides who works, maker and checker per Manager | Accepted; being built; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
-| [DEC-083](#dec-083-the-host-runs-natively-each-run-lives-in-containers) | Decision | The host runs natively; each Run lives in containers | Accepted; built in T5; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
+| [DEC-083](#dec-083-the-host-runs-natively-each-run-lives-in-containers) | Decision | The host runs natively; each Run lives in containers | Accepted; built in T5; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target), then by [DEC-098](#dec-098-concept-40-is-the-target) |
 | [DEC-084](#dec-084-continuous-change-triggers-become-findings-or-model-proposals-autonomy-grows-in-steps) | Decision | Continuous change: triggers become Findings or model proposals, autonomy grows in steps | Accepted direction; design only |
 | [DEC-085](#dec-085-markdown-tools-are-the-cockpit-for-now) | Decision | Markdown tools are the cockpit for now | Superseded by DEC-089 |
 | [DEC-086](#dec-086-concept-20-is-the-target) | Decision | Concept 2.0 is the target | Accepted; being built; superseded by [DEC-091](#dec-091-concept-30-is-the-target) |
-| [DEC-087](#dec-087-required-checks-gate-merged-states-not-each-submission) | Decision | Required checks gate merged states, not each submission | Accepted; built in T8; superseded by [DEC-091](#dec-091-concept-30-is-the-target) |
+| [DEC-087](#dec-087-required-checks-gate-merged-states-not-each-submission) | Decision | Required checks gate merged states, not each submission | Accepted; built in T8; superseded by [DEC-091](#dec-091-concept-30-is-the-target); required checks removed for now, recorded by [DEC-098](#dec-098-concept-40-is-the-target) |
 | [DEC-088](#dec-088-a-checker-reads-the-model-in-full-and-judges-its-own-packages-files) | Decision | A checker reads the model in full and judges its own Package's files | Accepted; built in T9; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
 | [DEC-089](#dec-089-markitect-desktop-the-app-over-the-cli) | Decision | Markitect Desktop: the app over the CLI | Accepted; built in part, removed on 6 November 2026 ([DEC-094](#dec-094-main-carries-the-native-version-and-the-app-goes)) |
 | [DEC-090](#dec-090-a-refusal-counts-only-when-nothing-moved) | Decision | A refusal counts only when nothing moved | Accepted; built; superseded by [DEC-091](#dec-091-concept-30-is-the-target) |
-| [DEC-091](#dec-091-concept-30-is-the-target) | Decision | Concept 3.0 is the target | Accepted; not built |
-| [DEC-092](#dec-092-a-command-uses-the-users-own-sign-in) | Decision | A Command uses the user's own sign-in | Accepted; not built; superseded in part by [DEC-093](#dec-093-a-command-passes-the-users-own-token) |
-| [DEC-093](#dec-093-a-command-passes-the-users-own-token) | Decision | A Command passes the user's own token | Accepted; being built |
+| [DEC-091](#dec-091-concept-30-is-the-target) | Decision | Concept 3.0 is the target | Accepted; built in part, stopped on Main by [DEC-094](#dec-094-main-carries-the-native-version-and-the-app-goes); superseded by [DEC-098](#dec-098-concept-40-is-the-target) |
+| [DEC-092](#dec-092-a-command-uses-the-users-own-sign-in) | Decision | A Command uses the user's own sign-in | Accepted; not built; superseded in part by [DEC-093](#dec-093-a-command-passes-the-users-own-token) and [DEC-098](#dec-098-concept-40-is-the-target) |
+| [DEC-093](#dec-093-a-command-passes-the-users-own-token) | Decision | A Command passes the user's own token | Accepted; superseded by [DEC-098](#dec-098-concept-40-is-the-target) |
 | [DEC-094](#dec-094-main-carries-the-native-version-and-the-app-goes) | Decision | Main carries the native version, and the app goes | Decided by the owner, 6 November 2026 |
 | [DEC-095](#dec-095-releases-return-with-a-plugin-and-a-binary-that-updates-itself) | Decision | Releases return, with a plugin and a binary that updates itself | Decided by the owner, 6 November 2026 |
-| [DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts) | Decision | Markitect computes and checks; a driver acts | Decided by the owner, 6 November 2026; built beside the run engine first |
-| [DEC-097](#dec-097-markitect-uses-no-git) | Decision | Markitect uses no Git | Decided by the owner, 6 November 2026; built beside the run engine first |
+| [DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts) | Decision | Markitect computes and checks; a driver acts | Decided by the owner, 6 November 2026; built, released as 0.20.0 |
+| [DEC-097](#dec-097-markitect-uses-no-git) | Decision | Markitect uses no Git | Decided by the owner, 6 November 2026; built, released as 0.20.0 |
+| [DEC-098](#dec-098-concept-40-is-the-target) | Decision | Concept 4.0 is the target | Decided by the owner, 7 November 2026 |
 | [PRM-001 to PRM-009](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
@@ -130,7 +129,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [ENH-004](#enh-004-per-role-agent-configuration-and-model-mixing) | Enhancement | Per-role agent configuration and model mixing | Accepted direction |
 | [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method) | Enhancement | Exchangeable executor for the delegated method | Endorsed; increment 1 merged |
 | [ENH-006](#enh-006-configurable-teams-for-perspectives-and-four-eyes) | Enhancement | Configurable teams for perspectives and four eyes | Selected DEC-043 slice accepted; other variants deferred |
-| [OQ-001 to OQ-012](#open-questions) | Open question | Open questions | Open; OQ-011 decided by DEC-091 |
+| [OQ-001 to OQ-012](#open-questions) | Open question | Open questions | Open; OQ-011 decided by DEC-091, OQ-012 by DEC-098 |
 | [IDEA-001](#idea-001-the-model-as-institutional-memory-for-stateless-agents) | Idea | The model as institutional memory for stateless agents | Proposed |
 | [IDEA-002](#idea-002-government-delegated-model-maintenance) | Idea | Government: delegated model maintenance | Owner idea; parked |
 | [IDEA-003](#idea-003-degree-of-freedom-per-manager-and-rule-strictness) | Idea | Degree of freedom per Manager and rule strictness | Owner idea; parked |
@@ -306,6 +305,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Result location:** The evaluation lives on branch `codex/government-evaluation-20261009`, not on Main. It is not part of this record and not an adopted design. Record the owner's decision on it here once it is made.
 
 ### DEC-013 Linux first for tests and the playground
+
+**Amended on 7 November 2026 by [DEC-098](#dec-098-concept-40-is-the-target):** agents work on the user's own system, so Windows becomes a main path. Linux tests for Markitect's own code stay.
 
 - **Status:** Accepted, owner, 10 October 2026 ([source](sources/roadmap-planning-20261010.md#windows)).
 - **Statement:**
@@ -535,6 +536,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Owning documents:** the [Apply design map](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/README.md#apply-design) and the documents it lists.
 
 ### DEC-037 Agent sessions and checks run in Linux containers
+
+**Superseded on 7 November 2026 by [DEC-098](#dec-098-concept-40-is-the-target):** agents and checks no longer run in containers. A reviewer still gets no write tools. The entry stays as a record.
 
 **Target update, 22 October 2026:** [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs) supersedes the conflicting process/enforcement mechanics below. This entry retains its original decision and evidence; the executable migration is pending.
 
@@ -1003,6 +1006,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-077 Development pace and Linux-first execution
 
+**Amended on 7 November 2026 by [DEC-098](#dec-098-concept-40-is-the-target):** agents work on the user's own system, so Windows becomes a main path. Linux tests for Markitect's own code stay.
+
 - **Status:** Accepted by the owner, 26 October 2026 ([verbatim source](sources/development-pace-20261026.md)), as directions to speed up development. The coordinator set the concrete rules below within these directions and put them into effect the same evening: the quiet-machine rule, the CI form and the runner design are the coordinator's, the removal of the Windows job and the Linux Docker way are the owner's.
 - **Decision (recorded meaning, as in the source):**
   - A quiet machine is needed only for counted study runs, where time and cost are measured, run as batches at milestones. Native controls, smokes and probes run alongside development and record the host load as a limit. During a native run nobody runs the full test suite or Docker image builds.
@@ -1015,6 +1020,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Superseded in part, 27 October 2026:** [DEC-078](#dec-078-agents-collaborate-through-a-git-remote-without-owner-review) replaces the runner's read-only checkout mount and its hand-back as a branch with a Git remote. The rest of this entry stands.
 
 ### DEC-078 Agents collaborate through a Git remote, without owner review
+
+**Superseded further on 7 November 2026 by [DEC-098](#dec-098-concept-40-is-the-target):** no remote and no Git in the tool ([DEC-097](#dec-097-markitect-uses-no-git)); the owner's session commits the work with its certificate on the current branch, and the owner pushes. Work still counts without the owner reviewing a diff, and no Git host is needed.
 
 **Superseded in part on 4 November 2026 by [DEC-091](#dec-091-concept-30-is-the-target):** Agents no longer collaborate through a Git remote. Landing without owner review and no mounted Git directory stay.
 
@@ -1056,6 +1063,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-080 The model is typed documentation
 
+**Amended on 7 November 2026 by [DEC-098](#dec-098-concept-40-is-the-target):** Definitions that nothing links to and no file realizes are errors of `check`, not warnings of `lint`, and the command list changes as [concept 4.0 §15](v4-concept.md#15-what-this-overturns) says. The language stays, and everything else measured stays a warning.
+
 - **Status:** Accepted by the owner as the design of the canonical language and the standard Libraries, 28 October 2026, in the Topics session's design walk-through ([topics page](../workstreams/topics.md#decided)). Amended the same day before anything was built (see below). Not built. The design is settled first; the evaluation and the implementations are then built against it.
 - **Decision:**
   - A Definition has a Kind and a body; that is all Core offers. A Kind is itself a Definition, of Kind `Kind`, whose body says what it is and how it is used. Core is that single Definition: no Properties, value types or `implements`.
@@ -1080,6 +1089,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - Existing models are converted. Frozen study material stays at its recorded commits.
 
 ### DEC-081 The organization knows broad at the top and deep below
+
+**Amended on 7 November 2026 by [DEC-098](#dec-098-concept-40-is-the-target):** `execution.yaml` goes with the required checks. The registry, shared files and the ignore list stay.
 
 **Superseded in part on 4 November 2026 by [DEC-091](#dec-091-concept-30-is-the-target):** No knowledge by position in a tree. The registry, shared files, the ignore list and `execution.yaml` stay.
 
@@ -1121,6 +1132,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-083 The host runs natively; each Run lives in containers
 
+**Superseded on 7 November 2026 by [DEC-098](#dec-098-concept-40-is-the-target):** no containers and no host. The program still runs natively on Windows, Linux and macOS. The entry stays as a record.
+
 **Superseded in part on 4 November 2026 by [DEC-091](#dec-091-concept-30-is-the-target):** One container per Command replaces one per agent and the Run remote. No mounted folder of the user's and a native program driving Docker stay.
 
 - **Status:** Accepted by the owner as the platform design, 28 October 2026, in the Topics session's design walk-through ([topics page](../workstreams/topics.md#decided)). Built in step T5 of the [delivery plan](../implementation-plan.md#concept-20-build); the [native smoke](../validation/t5-native-host-20261029.md) passed on Windows and on Linux (WSL Ubuntu); macOS is not yet observed. It follows from [DEC-082](#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager).
@@ -1161,6 +1174,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Clarified, 29 October 2026,** after an independent assessment: the counted series claims only what it measures, at least the baseline's quality and fewer defects left for a person to repair per change given comparable input, and not saved time. Time saved is measured apart after the series: on the new project, the owner takes three changes per arm to acceptance, blinded, and records the minutes and the corrections. A missing record of the input effort is reported as a limit.
 
 ### DEC-087 Required checks gate merged states, not each submission
+
+**Required checks removed for now, recorded by [DEC-098](#dec-098-concept-40-is-the-target):** the owner took them out on 4 November 2026, to see whether they are needed, and `execution.yaml` goes with them. `gate` certifies only a state that passes `check`, and a merged state is checked by the next `gate`, not at the merge.
 
 **Superseded on 4 November 2026 by [DEC-091](#dec-091-concept-30-is-the-target):** there is one tree, so the gate runs on the state that lands. The entry stays as a record.
 
@@ -1218,6 +1233,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-091 Concept 3.0 is the target
 
+**Superseded on 7 November 2026 by [DEC-098](#dec-098-concept-40-is-the-target):** concept 4.0 is the target, and concept 3.0 and this entry stay as records.
+
 - **Status:** Accepted by the owner, 4 November 2026, after a discussion that judged Markitect's ideas against six problems and other options.
 - **Decision:** [concept 3.0](v3-concept.md) is Markitect's target: the spec as the project's documentation and authority, one implementer and one reviewer per Command in one container, code in and out only as a Git commit, a gate in the CLI that runs after the session ends, and interchangeable strategies. It includes the details its review added and the answers to its nine questions ([§14](v3-concept.md#14-decided-on-acceptance)). A tenth question there, whether a Command may start sessions on an account login, was decided the same day ([DEC-092](#dec-092-a-command-uses-the-users-own-sign-in)).
 - **Supersedes:** the entries in [§15](v3-concept.md#15-what-this-overturns), each marked with what goes and what stays. The new evidence and its limits are in [OQ-011](#open-questions). Concept 2.0 stays the record of what Main implements until the rebuild.
@@ -1227,6 +1244,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Next:** the [delivery plan](../implementation-plan.md#concept-30-build) owns the steps.
 
 ### DEC-092 A Command uses the user's own sign-in
+
+**Superseded in part on 7 November 2026 by [DEC-098](#dec-098-concept-40-is-the-target):** sessions run on the user's own machine on its stored login, with no container, no volume and no pinned CLI. The unmodified CLI and the question to Anthropic stay.
 
 **Superseded in part the same day by [DEC-093](#dec-093-a-command-passes-the-users-own-token):** a token replaces the sign-in in a Docker volume, so Markitect does read the token and pass it on, and "never reads, copies or stores" no longer holds. The unmodified, pinned CLI, one place per provider, the question to Anthropic and the unbuilt fallback stay.
 
@@ -1240,6 +1259,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Reasoning:** [concept 3.0 §14](v3-concept.md#14-decided-on-acceptance), question 10.
 
 ### DEC-093 A Command passes the user's own token
+
+**Superseded on 7 November 2026 by [DEC-098](#dec-098-concept-40-is-the-target):** no token and nothing passed on; sessions use the user's stored login. The entry stays as a record.
 
 - **Status:** Accepted by the owner, 4 November 2026, in the Build and evaluation session, after working out what a sign-in in a volume would take.
 - **Decision:**
@@ -1288,6 +1309,14 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - The base of a change is the newest certificate: the Result `gate` writes, with the hashes of every accounted file and Definition and a copy of the spec text. `gate` refuses any changed file that lies in no reviewed item, since the tool knows no "committed", only the folder.
 - **Costs, as far as known:** the tool no longer guarantees that what is committed is what it certified; `status` and `gate --verify` show a mismatch afterwards, and a CI job can refuse it. After a merge of two certified branches, part of the work is reviewed again. `impact --base` takes a certificate instead of a Git revision. Markitect's own release tooling still packages its source from Git; it is not part of the product.
 - **Supersedes:** "`apply` commits the spec on the owner's branch" and the landing of [draft concept 4.0 §5 and §6](v4-concept.md#5-what-apply-does), once the [plan](lean-tool-plan.md) is built and tried.
+
+### DEC-098 Concept 4.0 is the target
+
+- **Status:** Decided by the owner, 7 November 2026, after the [lean plan](lean-tool-plan.md) was built, tried on Makerspace and released as 0.20.0, and the draft was revised to describe that release ([PR #999](https://github.com/Glacius-Labs/Markitect/pull/999)). The owner said that the new lean concept replaces the old one.
+- **Decision:** [concept 4.0](v4-concept.md), as revised for 0.20.0, is Markitect's target and replaces concept 3.0: the spec as the project's documentation and authority; one program that computes and checks, with `gate` as its one door, and that starts no agent and uses no Git ([DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](#dec-097-markitect-uses-no-git)); and a thin default driver, in which the user's own Claude Code session starts a builder agent in the project's folder, the builder starts a fresh reviewer agent, and the session commits the work with its certificate. It includes the answers its [§16](v4-concept.md#16-questions-for-the-owner) records as decided.
+- **Supersedes:** [DEC-091](#dec-091-concept-30-is-the-target), so concept 3.0 becomes a record, like concept 2.0 and V1 concept 1.0, and the entries in [§15](v4-concept.md#15-what-this-overturns), each marked with what goes and what stays. It decides [OQ-012](#open-questions).
+- **Open:** accepting the concept decides none of §16's open questions. The default driver's limits (question 4), one driver or two (question 5), what "reliable" means (question 10) and what the machine lacks (question 11) stay open until the owner answers. So do the points [DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts) left open, where the limits sit and where the work state lives, and the [lean plan's](lean-tool-plan.md#decisions-for-the-owner) decisions 3, 5 and 6, which are built as recommended.
+- **Next:** the [delivery plan](../implementation-plan.md) owns the steps; [§13](v4-concept.md#13-order-of-work), step 3, making it reliable on Sonnet, is next.
 
 ## Promises
 
@@ -1461,7 +1490,7 @@ These entries record agreed or endorsed direction. Recording an enhancement does
 | OQ-009 | How do DEC-018 and DEC-021 to DEC-023, written for the earlier Project model, map to language v1 and the registry once computed scope is built? | [DEC-018](#dec-018-the-knowledge-graph-explains-impact), [computed scope](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/manager-apply-concept.md#toward-computed-scope) |
 | OQ-010 | How can a Codex subscription login, rather than an API key, serve several concurrent session containers without racing on refresh-token rotation? A candidate is Orchestrator-owned tokens through the App Server's external token refresh; a smoke with concurrent sessions decides. | [DEC-037](#dec-037-agent-sessions-and-checks-run-in-linux-containers) |
 | OQ-011 | **Decided 4 November 2026: yes, [DEC-091](#dec-091-concept-30-is-the-target).** Should [concept 3.0](v3-concept.md) replace concept 2.0: one implementer and one reviewer per Command, one container per Command, with no Manager tree or agent Git? New evidence, with its limits: on the public cases of the counted series, the hierarchy cost about 5 to 8 times one strong agent and differed on hidden cases only where a step had nothing to do, with an arm fault behind most of its Makerspace misses and Gridshare unjudged. On that step and on a planted contradiction, where one strong agent went wrong, `impact` and the checker also gave arms S and KC the right result, with no tree, though they never ran beside it in the same launches. None of the six problems in the concept needs a tree. A project too big for one agent, the hierarchy's actual reason, is untested. | [CPT-001](#cpt-001-federalism), [DEC-004](#dec-004-the-manager-hierarchy-is-core-government-belongs-to-a-later-axis), [DEC-082](#dec-082-one-run-per-change-impact-decides-who-works-maker-and-checker-per-manager), [DEC-086](#dec-086-concept-20-is-the-target) |
-| OQ-012 | Should [draft concept 4.0](v4-concept.md) replace concept 3.0: the spec, the tools and a thin harness: a background session in its own worktree, with the process and the final check in one tool command, `submit`, and no container or Command that drives sessions? The owner's aim has changed to one simple version that works reliably on Sonnet ([statements](sources/fresh-start-20261104.md)). Evidence, with its limits: concept 3.0's default built the 5× project from the typed spec and passed all 327 hidden cases in one launch, in a container; one workflow trial landed a real Makerspace change without Docker or a token, and its reviewer caught a planted bug once. This shape has not run. Test 1 stopped when the machine went down, with nine of twelve launches run and no answer read. | [DEC-091](#dec-091-concept-30-is-the-target), [DEC-051](#dec-051-agents-get-tasks-the-orchestrator-owns-the-process), [DEC-084](#dec-084-continuous-change-triggers-become-findings-or-model-proposals-autonomy-grows-in-steps), [draft §15](v4-concept.md#15-what-this-overturns) |
+| OQ-012 | **Decided 7 November 2026: yes, in the lean form released as 0.20.0, [DEC-098](#dec-098-concept-40-is-the-target).** Should [draft concept 4.0](v4-concept.md) replace concept 3.0: the spec, the tools and a thin harness: a background session in its own worktree, with the process and the final check in one tool command, `submit`, and no container or Command that drives sessions? The owner's aim has changed to one simple version that works reliably on Sonnet ([statements](sources/fresh-start-20261104.md)). Evidence, with its limits: concept 3.0's default built the 5× project from the typed spec and passed all 327 hidden cases in one launch, in a container; one workflow trial landed a real Makerspace change without Docker or a token, and its reviewer caught a planted bug once. This shape has not run. Test 1 stopped when the machine went down, with nine of twelve launches run and no answer read. | [DEC-091](#dec-091-concept-30-is-the-target), [DEC-051](#dec-051-agents-get-tasks-the-orchestrator-owns-the-process), [DEC-084](#dec-084-continuous-change-triggers-become-findings-or-model-proposals-autonomy-grows-in-steps), [draft §15](v4-concept.md#15-what-this-overturns) |
 
 ## Ideas
 
