@@ -37,7 +37,7 @@ python -I -B tools/evaluation/judges.py export --source tools/evaluation-judges/
 python -I -B tools/evaluation/judges.py selftest --source tools/evaluation-judges/makerspace --judge JUDGE_DIR --out DIR --lock LOCK
 ```
 
-The offline test ([test_series.py](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/test_series.py)) runs a sample through a fake engine on the host when Linux and Go 1.27 or later are there.
+The offline test ([test_series.py](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/test_series.py)), which went with the runner, ran a sample through a fake engine on the host when Linux and Go 1.27 or later are there.
 
 ## Limits
 

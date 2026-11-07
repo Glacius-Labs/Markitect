@@ -35,4 +35,4 @@ python -I -B tools/evaluation/judges.py export --source tools/evaluation-judges/
 python -I -B tools/evaluation/judges.py selftest --source tools/evaluation-judges/library-m1 --judge JUDGE_DIR --task TASK_DIR --out DIR --lock LOCK
 ```
 
-The offline test ([test_judging.py](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/test_judging.py)) runs the same self-test through a fake engine on the host when Go 1.27 or later is on the path.
+The offline test ([test_judging.py](https://github.com/Glacius-Labs/Markitect/blob/2fd2d33747de2e69e5f4968432792d543003041a/tools/evaluation/test_judging.py)), which went with the runner, ran the same self-test through a fake engine on the host when Go 1.27 or later is on the path.
