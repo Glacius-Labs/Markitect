@@ -15,15 +15,15 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
-// Work without a Run (DEC-096, DEC-097): checklist, answer, gate and status read
-// the project folder itself, without Git, and keep what they learn about the work
-// in the user's cache folder.
+// The work (DEC-096, DEC-097): checklist, answer, gate and status read the project
+// folder itself, without Git, and keep what they learn about the work in the
+// user's cache folder.
 
 // ChecklistRequest is one call of checklist.
 type ChecklistRequest struct {
 	Dir string
-	// Base, Full and Findings name the change, without a Run: from the newest
-	// certificate by default, or from the certificate Base names.
+	// Base, Full and Findings name the change: from the newest certificate by
+	// default, or from the certificate Base names.
 	Base     string
 	Full     bool
 	Findings []analysis.Finding
@@ -266,24 +266,10 @@ func (e *Engine) list(f *folder, w *Work) (analysis.Impact, *project.Project, er
 	return imp, before, nil
 }
 
-// Checklist prints the task and the list. In a folder with an open Run it is the
-// Run's; otherwise the list of the change to the folder, which answer and gate then
-// work on. ok is false when there is no list, because the spec has errors.
-func (e *Engine) Checklist(ctx context.Context, req ChecklistRequest) (text string, ok bool, err error) {
-	open, err := e.openRun(ctx, req.Dir)
-	if err != nil {
-		return "", false, err
-	}
-	if open != nil {
-		if req.Start {
-			return fmt.Sprintf("Run %s is open in this folder, so no work begins beside it. markitect %s --skill says how to go on with it, and markitect stop \"why\" ends it.\n", open.Run, open.Command), false, nil
-		}
-		if req.namesChange() {
-			return "", false, fmt.Errorf("%w: run %s is open in this folder and has its own list; --base, --full and --findings are for work without a run", ErrUsage, open.Run)
-		}
-		text, err := e.runChecklist(ctx, req.Dir, req.Review)
-		return text, err == nil, err
-	}
+// Checklist prints the task and the list of the change to the folder, which answer
+// and gate then work on. ok is false when there is no list, because the spec has
+// errors.
+func (e *Engine) Checklist(_ context.Context, req ChecklistRequest) (text string, ok bool, err error) {
 	f, err := e.readFolder(req.Dir)
 	if err != nil {
 		return "", false, err
@@ -380,8 +366,8 @@ func (e *Engine) Checklist(ctx context.Context, req ChecklistRequest) (text stri
 	return stateReviewPrompt(baseLine(w), earlier, todo, changes), true, nil
 }
 
-// noGuard is what --start says in a folder without the harness, as a Run refuses
-// to start without it.
+// noGuard is what --start says in a folder without the harness: the work does not
+// begin without it.
 const noGuard = "The harness is not complete in this project: the work needs the builder and reviewer agents, and the hook in " + SettingsFile + " that keeps each agent to its part. Run markitect update, which brings them in line, and try again; if it says it left the settings as they are, add the hook it names by hand.\n"
 
 // harnessOnDisk says whether the folder holds both agents and the hook that
@@ -587,15 +573,13 @@ func (e *Engine) answerState(dir string, raw []byte) (string, bool, error) {
 	return "Stored: every item has an answer for the files as they are now. You are done; report in one line and end.\n", true, nil
 }
 
-// stateStatus says how the work in the folder stands without a Run, and changes
-// nothing.
-func (e *Engine) stateStatus(dir string) string {
+// stateStatus says how the work in the folder stands, and changes nothing. A
+// folder in no project is an error.
+func (e *Engine) stateStatus(dir string) (string, error) {
 	var b strings.Builder
-	b.WriteString("\nWithout a run, in this folder:\n")
 	f, err := e.readFolder(dir)
 	if err != nil {
-		fmt.Fprintf(&b, "- The folder could not be read: %v\n", err)
-		return b.String()
+		return "", err
 	}
 	w, err := e.loadWork(f.root)
 	switch {
@@ -639,7 +623,7 @@ func (e *Engine) stateStatus(dir string) string {
 			fmt.Fprintf(&b, "- %d %s differ from the newest certificate, %s: %s.\n", len(diff), plural(len(diff), "file", "files"), newest, strings.Join(clipList(diff, 10), ", "))
 		}
 	}
-	return b.String()
+	return b.String(), nil
 }
 
 // clipList keeps the first n entries, and says how many more there are.
@@ -650,7 +634,7 @@ func clipList(list []string, n int) []string {
 	return append(append([]string(nil), list[:n]...), fmt.Sprintf("and %d more", len(list)-n))
 }
 
-// stateTask is the builder's task without a Run, which checklist prints each time,
+// stateTask is the builder's task, which checklist prints each time,
 // so that compaction cannot lose it.
 const stateTask = fixedPart + `
 You build in this folder, and nobody can answer you.
@@ -702,7 +686,7 @@ Answer %[2]q, with that question, if the spec contradicts itself or leaves open 
 	return b.String()
 }
 
-// stateReviewPrompt is what checklist --review prints without a Run.
+// stateReviewPrompt is what checklist --review prints.
 func stateReviewPrompt(base string, earlier []string, items []Item, changes string) string {
 	var b strings.Builder
 	b.WriteString(fixedPart)

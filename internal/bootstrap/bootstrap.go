@@ -1,5 +1,6 @@
-// Package bootstrap constructs the command line with its adapters: Git for the
-// spec's commands, and for a Run the process over the user's own repository.
+// Package bootstrap constructs the command line with its adapters: the project
+// folder on disk, the work over it with its state in the user's cache folder, and
+// the releases update installs. Nothing here uses Git (DEC-097).
 package bootstrap
 
 import (
@@ -12,14 +13,32 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/cli"
-	"github.com/Glacius-Labs/Markitect/internal/adapters/repo"
+	"github.com/Glacius-Labs/Markitect/internal/adapters/folder"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/upgrade"
+	runs "github.com/Glacius-Labs/Markitect/internal/run"
 )
 
 // Run runs the markitect command line and returns its exit code.
 func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
-	return cli.CLI{Git: git{}, Runs: runs{}, Stdin: os.Stdin, Stdout: stdout, Stderr: stderr, PathWarning: ownPathWarning, Releases: upgrade.New()}.Run(ctx, args)
+	return cli.CLI{Folders: folders{}, Work: work(), Stdin: os.Stdin, Stdout: stdout, Stderr: stderr, PathWarning: ownPathWarning, Releases: upgrade.New()}.Run(ctx, args)
 }
+
+// work is the engine of the work over a project folder, with its state in the
+// user's cache folder; without one, the work says so when it needs it.
+func work() *runs.Engine {
+	e := &runs.Engine{Folder: folder.Disk{}}
+	if dir, err := os.UserCacheDir(); err == nil {
+		e.Cache = filepath.Join(dir, "markitect")
+	}
+	return e
+}
+
+// folders opens the project folders of the command line on disk.
+type folders struct{}
+
+func (folders) Project(dir string) (cli.Workspace, error) { return folder.Disk{}.Project(dir) }
+
+func (folders) At(dir string) (cli.Workspace, error) { return folder.Disk{}.At(dir) }
 
 // ownPathWarning checks the running binary against the PATH. A binary in the
 // temporary folder is one `go run` or `go test` built, which no PATH should lead
@@ -63,21 +82,4 @@ func pathWarning(look func(string) (string, error), executable func() (string, e
 		return fmt.Sprintf("warning: the markitect on your PATH is %s, not this one (%s); the skills and agents call the one on the PATH, so remove it or put %s before it", found, exe, dir)
 	}
 	return ""
-}
-
-// git opens repository states through the repo adapter.
-type git struct{}
-
-func (git) Open(ctx context.Context, dir string) (cli.Workspace, error) {
-	root, err := repo.Toplevel(ctx, dir)
-	if err != nil {
-		return nil, err
-	}
-	return repo.WorkingTree{Dir: root, Ctx: ctx}, nil
-}
-
-func (git) Create(ctx context.Context, dir string) error { return repo.Init(ctx, dir) }
-
-func (git) Base(ctx context.Context, ws cli.Workspace, rev string) (cli.Base, error) {
-	return repo.ResolveCommit(ctx, ws.Root(), rev)
 }

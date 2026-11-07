@@ -23,10 +23,8 @@ const (
 	missing
 )
 
-const updateMessage = "Update Markitect"
-
-// sameText compares two texts without minding line endings: Git may check a file
-// out with CRLF, and the binary writes LF.
+// sameText compares two texts without minding line endings: a checkout may hold a
+// file with CRLF, and the binary writes LF.
 func sameText(a, b []byte) bool {
 	crlf, lf := []byte("\r\n"), []byte("\n")
 	return bytes.Equal(bytes.ReplaceAll(a, crlf, lf), bytes.ReplaceAll(b, crlf, lf))
@@ -98,17 +96,13 @@ type projectState struct {
 func (p projectState) stale() bool { return len(p.files) > 0 || p.lock }
 
 // refreshProject finds what differs in the project at repo and, unless dry,
-// writes it. It leaves the lock uncommitted: a change of the lock is a change of
-// the Libraries the spec is checked against, so the owner reads it first.
-func (c CLI) refreshProject(ctx context.Context, repo string, dry bool) (projectState, error) {
+// writes it. It commits nothing: a change of the lock is a change of the
+// Libraries the spec is checked against, so the owner reads it first.
+func (c CLI) refreshProject(repo string, dry bool) (projectState, error) {
 	var st projectState
-	ws, err := c.Git.Open(ctx, repo)
+	ws, err := c.Folders.Project(repo)
 	if err != nil {
-		st.why = "this folder is in no Git repository"
-		return st, nil
-	}
-	if !ws.Exists(project.ManifestFile) {
-		st.why = "it has no " + project.ManifestFile
+		st.why = "no folder here or above holds " + project.ManifestFile
 		return st, nil
 	}
 	st.ws = ws
@@ -255,7 +249,7 @@ func (c CLI) update(ctx context.Context, args []string) (int, error) {
 	if err != nil {
 		return Misused, err
 	}
-	proj, err := c.refreshProject(ctx, o.repo, check)
+	proj, err := c.refreshProject(o.repo, check)
 	if err != nil {
 		return Misused, err
 	}
@@ -294,12 +288,7 @@ func (c CLI) update(ctx context.Context, args []string) (int, error) {
 				fmt.Fprintf(c.Stdout, "  %s\n", f)
 			}
 			if !check {
-				switch committed, err := proj.ws.CommitOwn(proj.files, updateMessage); {
-				case err != nil:
-					fmt.Fprintf(c.Stdout, "could not commit them, so commit them yourself before the next apply; if Git ignores .claude/, the files stay on disk and that is enough: %v\n", err)
-				case committed:
-					fmt.Fprintf(c.Stdout, "committed them as %q\n", updateMessage)
-				}
+				fmt.Fprintln(c.Stdout, "Markitect uses no Git: commit them when you like.")
 			}
 		}
 		switch {
@@ -309,7 +298,7 @@ func (c CLI) update(ctx context.Context, args []string) (int, error) {
 			stale = true
 			fmt.Fprintln(c.Stdout, "lock: out of date; markitect update rewrites it")
 		case proj.lock:
-			fmt.Fprintf(c.Stdout, "lock: rewritten, not committed; review it with git diff %s and commit it\n", project.LockFile)
+			fmt.Fprintf(c.Stdout, "lock: rewritten; read the change of %s before you commit it\n", project.LockFile)
 		}
 	}
 	c.warnPath()
@@ -350,7 +339,7 @@ func (c CLI) version(ctx context.Context, args []string) (int, error) {
 			fmt.Fprintln(c.Stdout, "personal skill: not installed; run markitect install")
 		}
 	}
-	proj, err := c.refreshProject(ctx, o.repo, true)
+	proj, err := c.refreshProject(o.repo, true)
 	switch {
 	case err != nil:
 		fmt.Fprintf(c.Stdout, "project: unreadable: %v\n", err)
@@ -374,9 +363,9 @@ func lockNote(lock bool) string {
 
 // staleNotice prints the one line that says a project's skills and agents come
 // from another markitect. Like notice it is best effort and changes no result.
-func (c CLI) staleNotice(ctx context.Context, args []string) {
-	ws, err := c.Git.Open(ctx, repoArg(args))
-	if err != nil || !ws.Exists(project.ManifestFile) {
+func (c CLI) staleNotice(args []string) {
+	ws, err := c.Folders.Project(repoArg(args))
+	if err != nil {
 		return
 	}
 	files, err := c.refreshHarness(ws, true)

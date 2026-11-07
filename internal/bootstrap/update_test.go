@@ -41,11 +41,11 @@ func wantAll(t *testing.T, got string, want ...string) {
 }
 
 // update puts a project made by an older markitect right: it rewrites the skills,
-// agents and hook that differ, removes the ones the binary no longer ships and
-// commits that, and it touches nothing of the owner's.
+// agents and hook that differ and removes the ones the binary no longer ships,
+// commits nothing, and touches nothing of the owner's.
 func TestUpdateBringsAProjectInLine(t *testing.T) {
 	emptyHome(t)
-	r := testkit.NewRepo(t)
+	r := newFolder(t)
 	mustRun(t, r.Dir, "init", "--name", "Demo")
 	if out := mustRun(t, r.Dir, "update", "--check"); !strings.Contains(out, "project: up to date") {
 		t.Fatalf("a fresh project is not up to date:\n%s", out)
@@ -67,8 +67,7 @@ func TestUpdateBringsAProjectInLine(t *testing.T) {
 	}
 	r.Write("AGENTS.md", "# Mine\n\nWritten by the owner.\n")
 	spec := read(t, r.Dir, ".markitect/model/project.md")
-	r.Commit("an older markitect")
-	before := r.Git("rev-parse", "HEAD")
+	before := snapshot(t, r.Dir)
 
 	code, out, _ := run(t, r.Dir, "update", "--check")
 	if code != 1 {
@@ -80,18 +79,13 @@ func TestUpdateBringsAProjectInLine(t *testing.T) {
 	if strings.Contains(out, "lock:") {
 		t.Fatalf("the lock was fine, yet update --check spoke of it:\n%s", out)
 	}
-	if r.Git("rev-parse", "HEAD") != before || r.Git("status", "--porcelain") != "" {
-		t.Fatalf("update --check changed something: %s", r.Git("status", "--porcelain"))
+	if diff := changed(before, snapshot(t, r.Dir)); len(diff) > 0 {
+		t.Fatalf("update --check changed something: %v", diff)
 	}
 
 	out = mustRun(t, r.Dir, "update")
-	wantAll(t, out, "project: updated 4 files:", `committed them as "Update Markitect"`)
-	if r.Git("status", "--porcelain") != "" {
-		t.Fatalf("update left the tree dirty: %s", r.Git("status", "--porcelain"))
-	}
-	if msg := r.Git("log", "-1", "--format=%s"); msg != "Update Markitect" {
-		t.Fatalf("last commit = %q", msg)
-	}
+	wantAll(t, out, "project: updated 4 files:", "Markitect uses no Git: commit them when you like.")
+	noRepository(t, r.Dir)
 	settings := read(t, r.Dir, ".claude/settings.json")
 	wantAll(t, settings, "Bash(go test *)", "my-own-check", "Bash(markitect checklist*)")
 	if n := strings.Count(settings, "Bash(markitect answer*)"); n != 1 {
@@ -104,18 +98,18 @@ func TestUpdateBringsAProjectInLine(t *testing.T) {
 		t.Fatal("update changed a file of the owner's")
 	}
 
-	head := r.Git("rev-parse", "HEAD")
+	after := snapshot(t, r.Dir)
 	out = mustRun(t, r.Dir, "update")
 	wantAll(t, out, "project: up to date")
-	if r.Git("rev-parse", "HEAD") != head || strings.Contains(out, "committed") {
-		t.Fatalf("a second update committed again:\n%s", out)
+	if diff := changed(after, snapshot(t, r.Dir)); len(diff) > 0 || strings.Contains(out, "commit") {
+		t.Fatalf("a second update changed %v:\n%s", diff, out)
 	}
 }
 
-// Git may check a file out with CRLF; that is the same file.
+// A checkout may hold a file with CRLF; that is the same file.
 func TestUpdateIgnoresLineEndings(t *testing.T) {
 	emptyHome(t)
-	r := testkit.NewRepo(t)
+	r := newFolder(t)
 	mustRun(t, r.Dir, "init")
 	agent := read(t, r.Dir, ".claude/agents/markitect-builder.md")
 	r.Write(".claude/agents/markitect-builder.md", strings.ReplaceAll(agent, "\n", "\r\n"))
@@ -125,29 +119,25 @@ func TestUpdateIgnoresLineEndings(t *testing.T) {
 }
 
 // The lock pins the Libraries the spec is checked against, so update rewrites it
-// and leaves it for the owner to read and commit. A manifest it cannot lock fails.
+// and says to read it before committing. A manifest it cannot lock fails.
 func TestUpdateLeavesTheLockForReview(t *testing.T) {
 	emptyHome(t)
-	r := testkit.NewRepo(t)
+	r := newFolder(t)
 	mustRun(t, r.Dir, "init")
 	lock := read(t, r.Dir, ".markitect/lock.yaml")
 	r.Write(".markitect/lock.yaml", lock+"# from an older std\n")
-	r.Commit("an older lock")
 
 	code, out, _ := run(t, r.Dir, "update", "--check")
 	if code != 1 || !strings.Contains(out, "lock: out of date") {
 		t.Fatalf("update --check = %d\n%s", code, out)
 	}
 	out = mustRun(t, r.Dir, "update")
-	wantAll(t, out, "lock: rewritten, not committed", "git diff .markitect/lock.yaml")
+	wantAll(t, out, "lock: rewritten; read the change of .markitect/lock.yaml before you commit it")
 	if read(t, r.Dir, ".markitect/lock.yaml") != lock {
 		t.Fatal("the lock was not rewritten")
 	}
-	if status := r.Git("status", "--porcelain"); !strings.Contains(status, ".markitect/lock.yaml") {
-		t.Fatalf("the lock was committed or left alone: %q", status)
-	}
-	if strings.Contains(out, "committed them") {
-		t.Fatalf("update committed with nothing else to write:\n%s", out)
+	if strings.Contains(out, "project: updated") {
+		t.Fatalf("update spoke of files with only the lock to write:\n%s", out)
 	}
 
 	r.Write(".markitect/manifest.yaml", "libraries:\n  nosuch: 1.0.0\n")
@@ -161,10 +151,10 @@ func TestUpdateLeavesTheLockForReview(t *testing.T) {
 // install is the command that writes into the home folder for the first time.
 func TestUpdateRefreshesThePersonalSkill(t *testing.T) {
 	file := emptyHome(t)
-	dir := testkit.TempDir(t) // in no repository
+	dir := testkit.TempDir(t) // in no project
 
 	out := mustRun(t, dir, "update")
-	wantAll(t, out, "personal skill: not installed; markitect install writes", "project: none here (this folder is in no Git repository)")
+	wantAll(t, out, "personal skill: not installed; markitect install writes", "project: none here (no folder here or above holds .markitect/manifest.yaml)")
 	if _, err := os.Stat(file); !os.IsNotExist(err) {
 		t.Fatalf("update created the personal skill: %v", err)
 	}
@@ -199,7 +189,7 @@ func TestUpdateRefreshesThePersonalSkill(t *testing.T) {
 // version says which markitect this is and whether what it wrote earlier matches.
 func TestVersionSaysWhatIsOutOfDate(t *testing.T) {
 	emptyHome(t)
-	r := testkit.NewRepo(t)
+	r := newFolder(t)
 	mustRun(t, r.Dir, "init")
 
 	out := mustRun(t, r.Dir, "version")
@@ -217,7 +207,7 @@ func TestVersionSaysWhatIsOutOfDate(t *testing.T) {
 // Any command that reads the project says once that its skills and agents are old.
 func TestACommandSaysWhenTheHarnessIsOld(t *testing.T) {
 	emptyHome(t)
-	r := testkit.NewRepo(t)
+	r := newFolder(t)
 	mustRun(t, r.Dir, "init")
 	if _, _, errOut := run(t, r.Dir, "check"); strings.Contains(errOut, "markitect update") {
 		t.Fatalf("a current project got the notice:\n%s", errOut)
@@ -234,13 +224,19 @@ func TestACommandSaysWhenTheHarnessIsOld(t *testing.T) {
 	}
 }
 
-// A folder outside Git is no project; the error says how to make it one.
+// A folder with no project above it is no project; the error says how to make it
+// one. The commands of the Run are gone.
 func TestACommandOutsideAProjectPointsToInit(t *testing.T) {
 	dir := testkit.TempDir(t)
-	for _, cmd := range []string{"check", "status", "lint", "apply"} {
+	for _, cmd := range []string{"check", "lint", "graph", "status"} {
 		code, _, errOut := run(t, dir, cmd)
-		if code != 2 || !strings.Contains(errOut, "not inside a Git repository") || !strings.Contains(errOut, "markitect init makes this folder a Markitect project") {
-			t.Errorf("%s outside Git: %d\n%s", cmd, code, errOut)
+		if code != 2 || !strings.Contains(errOut, "is in no Markitect project") || !strings.Contains(errOut, "markitect init makes one") {
+			t.Errorf("%s outside a project: %d\n%s", cmd, code, errOut)
+		}
+	}
+	for _, cmd := range []string{"apply", "verify", "submit", "stop"} {
+		if code, _, errOut := run(t, dir, cmd); code != 2 || !strings.Contains(errOut, "unknown command") {
+			t.Errorf("%s: %d\n%s", cmd, code, errOut)
 		}
 	}
 }
@@ -248,7 +244,7 @@ func TestACommandOutsideAProjectPointsToInit(t *testing.T) {
 // init never writes to the home folder, so it says what install would add.
 func TestInitSaysWhenThePersonalSkillIsMissing(t *testing.T) {
 	file := emptyHome(t)
-	r := testkit.NewRepo(t)
+	r := newFolder(t)
 	wantAll(t, mustRun(t, r.Dir, "init"), "tip: markitect install")
 	install(t)
 	if out := mustRun(t, r.Dir, "init"); strings.Contains(out, "tip:") {

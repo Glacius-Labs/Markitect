@@ -11,7 +11,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/adapters/cli"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/upgrade"
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
@@ -49,11 +48,12 @@ func read(t *testing.T, dir, file string) string {
 }
 
 func TestCommandsEndToEnd(t *testing.T) {
-	r := testkit.NewRepo(t)
+	r := newFolder(t)
 	r.Write("README.md", "# Lending library\n")
 	r.Write("src/members/member.go", "package members\n")
 
 	out := mustRun(t, r.Dir, "init", "--name", "Lending library")
+	noRepository(t, r.Dir)
 	for _, want := range []string{"created .markitect/manifest.yaml", "created .markitect/model/project.md", "wrote .markitect/lock.yaml: std 1.0.0", "installed the skills markitect-extract, markitect-modeling, markitect-start"} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("init output lacks %q:\n%s", want, out)
@@ -86,13 +86,17 @@ func TestCommandsEndToEnd(t *testing.T) {
 	if code != 0 || json.Unmarshal([]byte(out), &checked) != nil || !checked.OK || checked.Errors == nil {
 		t.Fatalf("check --json: %d %s", code, out)
 	}
-	base := r.Commit("model")
+	// impact needs a base: a certificate, which gate writes when work passes.
+	if code, _, errOut := run(t, r.Dir, "impact"); code != 2 || !strings.Contains(errOut, "no certificate yet") {
+		t.Fatalf("impact without a certificate: %d %s", code, errOut)
+	}
+	base := certify(t, r.Dir)
 
-	// init again changes nothing in the model and keeps the manifest.
-	before := read(t, r.Dir, ".markitect/manifest.yaml")
+	// init again changes nothing.
+	before := snapshot(t, r.Dir)
 	mustRun(t, r.Dir, "init")
-	if read(t, r.Dir, ".markitect/manifest.yaml") != before || r.Git("status", "--porcelain") != "" {
-		t.Fatalf("a second init changed files: %q", r.Git("status", "--porcelain"))
+	if diff := changed(before, snapshot(t, r.Dir)); len(diff) > 0 {
+		t.Fatalf("a second init changed files: %v", diff)
 	}
 
 	r.Write(".markitect/model/loan-limit.md", "---\nkind: std/Rule\n---\n# Loan limit\n\nAt most `3` open loans, for [[members]].\n")
@@ -121,8 +125,9 @@ func TestCommandsEndToEnd(t *testing.T) {
 	if members.Package != "members" || len(members.Inherited) != 1 || members.Inherited[0].Definition != "loan-limit" || len(members.Findings) != 1 {
 		t.Fatalf("members checklist = %+v", members)
 	}
-	md := mustRun(t, r.Dir, "impact", "--base", "HEAD")
-	if !strings.Contains(md, "- [[loan-limit]] modified") || !strings.Contains(md, "### members") {
+	// Without --base the newest certificate is the base, named in full.
+	md := mustRun(t, r.Dir, "impact")
+	if !strings.Contains(md, "# Impact since "+base+"\n") || !strings.Contains(md, "- [[loan-limit]] modified") || !strings.Contains(md, "### members") {
 		t.Fatalf("impact Markdown:\n%s", md)
 	}
 
@@ -148,7 +153,7 @@ func TestCommandsEndToEnd(t *testing.T) {
 
 // check tells the spec from the realization, and --spec looks only at the spec.
 func TestCheckGroupsItsErrors(t *testing.T) {
-	r := testkit.NewRepo(t)
+	r := newFolder(t)
 	mustRun(t, r.Dir, "init", "--name", "Demo")
 	r.Write("src/stray.go", "package stray\n")
 	code, out, _ := run(t, r.Dir, "check")
@@ -168,10 +173,10 @@ func TestCheckGroupsItsErrors(t *testing.T) {
 // A new project passes check, in plain words. As soon as there is a file, it is
 // held to account as ever, and so is a Definition once anything is registered.
 func TestCheckWithNothingBuilt(t *testing.T) {
-	r := testkit.NewRepo(t)
+	r := newFolder(t)
 	mustRun(t, r.Dir, "init", "--name", "Demo")
 	code, out, _ := run(t, r.Dir, "check")
-	if code != 0 || !strings.HasPrefix(out, "ok:") || !strings.Contains(out, "Nothing is built yet") || !strings.Contains(out, "markitect apply") || strings.Contains(out, "definition.unused") {
+	if code != 0 || !strings.HasPrefix(out, "ok:") || !strings.Contains(out, "Nothing is built yet") || !strings.Contains(out, "/markitect-apply") || strings.Contains(out, "definition.unused") {
 		t.Fatalf("check on a new project: %d\n%s", code, out)
 	}
 	code, out, _ = run(t, r.Dir, "check", "--json")
@@ -193,7 +198,7 @@ func TestCheckWithNothingBuilt(t *testing.T) {
 		t.Fatalf("check with an unlisted file: %d\n%s", code, out)
 	}
 
-	// What an extraction leaves: files registered, no Run landed yet.
+	// What an extraction leaves: files registered, nothing certified yet.
 	r.Write(".markitect/registry.md", read(t, r.Dir, ".markitect/registry.md")+"| `src/a.go` | [[project]] | The code |\n")
 	r.Write(".markitect/model/rule.md", "---\nkind: std/Rule\n---\n# Rule\n\nAlways.\n")
 	code, out, _ = run(t, r.Dir, "check")
@@ -210,7 +215,7 @@ func TestTheToolExplainsMarkitect(t *testing.T) {
 	if Run(context.Background(), []string{"--help"}, &out, &errOut) != 0 || !strings.HasPrefix(out.String(), about) {
 		t.Fatalf("help = %s", out.String())
 	}
-	r := testkit.NewRepo(t)
+	r := newFolder(t)
 	said := mustRun(t, r.Dir, "init", "--name", "Demo")
 	if !strings.Contains(said, about) || !strings.Contains(said, "/reload-skills") {
 		t.Fatalf("init said:\n%s", said)
@@ -228,7 +233,7 @@ func TestInstallWritesThePersonalSkill(t *testing.T) {
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
 
-	r := testkit.NewRepo(t)
+	r := newFolder(t)
 	mustRun(t, r.Dir, "init")
 	if _, err := os.Stat(filepath.Join(home, ".claude")); !os.IsNotExist(err) {
 		t.Fatalf("init wrote to the home folder: %v", err)
@@ -273,11 +278,9 @@ func TestInstallWritesThePersonalSkill(t *testing.T) {
 	}
 }
 
-// init installs the harness with the hook on answer and commits what it wrote, so
-// that the first apply finds a clean folder.
 // The hook joins settings the project already has, and is added once.
 func TestInitKeepsTheProjectsSettings(t *testing.T) {
-	r := testkit.NewRepo(t)
+	r := newFolder(t)
 	r.Write(".claude/settings.json", "{\n  \"permissions\": {\"allow\": [\"Bash(go test *)\"]},\n  \"cleanupPeriodDays\": 12345678901234567890\n}\n")
 	mustRun(t, r.Dir, "init")
 	mustRun(t, r.Dir, "init")
@@ -290,7 +293,7 @@ func TestInitKeepsTheProjectsSettings(t *testing.T) {
 
 // A mention of the hook's command that is not the hook gets the hook added.
 func TestInitAddsTheHookBesideAMention(t *testing.T) {
-	r := testkit.NewRepo(t)
+	r := newFolder(t)
 	r.Write(".claude/settings.json", `{"hooks": {"PostToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "markitect hook pretool"}]}]}}`+"\n")
 	mustRun(t, r.Dir, "init")
 	if !strings.Contains(read(t, r.Dir, ".claude/settings.json"), "PreToolUse") {
@@ -309,7 +312,7 @@ func TestInitLeavesSettingsItCannotRead(t *testing.T) {
 		"two values":            "{} {}\n",
 	} {
 		t.Run(name, func(t *testing.T) {
-			r := testkit.NewRepo(t)
+			r := newFolder(t)
 			r.Write(".claude/settings.json", content)
 			out := mustRun(t, r.Dir, "init")
 			if !strings.Contains(out, "left .claude/settings.json as it is") {
@@ -327,7 +330,7 @@ func TestHookLetsOnlyTheReviewerAnswer(t *testing.T) {
 	hook := func(agent string) string {
 		input, _ := json.Marshal(map[string]any{"agent_type": agent, "tool_name": "Bash", "tool_input": map[string]any{"command": "markitect answer"}})
 		var out, errOut bytes.Buffer
-		code := cli.CLI{Git: git{}, Runs: runs{}, Stdin: bytes.NewReader(input), Stdout: &out, Stderr: &errOut}.Run(context.Background(), []string{"hook", "pretool"})
+		code := newCLI(bytes.NewReader(input), &out, &errOut).Run(context.Background(), []string{"hook", "pretool"})
 		if code != 0 {
 			t.Fatalf("hook exit %d: %s", code, errOut.String())
 		}
@@ -341,14 +344,15 @@ func TestHookLetsOnlyTheReviewerAnswer(t *testing.T) {
 	}
 }
 
+// init installs the harness with the hook on answer, and makes no repository
+// and no commit.
 func TestInitInstallsTheHarness(t *testing.T) {
-	r := testkit.NewRepo(t)
-	r.Git("config", "user.name", "Owner")
-	r.Git("config", "user.email", "owner@example.invalid")
+	r := newFolder(t)
 	out := mustRun(t, r.Dir, "init", "--name", "Demo")
-	if !strings.Contains(out, "installed the harness") || !strings.Contains(out, "committed what init wrote") {
+	if !strings.Contains(out, "installed the harness") || !strings.Contains(out, "Markitect uses no Git") {
 		t.Fatalf("init: %s", out)
 	}
+	noRepository(t, r.Dir)
 	for _, file := range []string{".claude/skills/markitect-apply/SKILL.md", ".claude/skills/markitect-verify/SKILL.md", ".claude/agents/markitect-reviewer.md", ".claude/agents/markitect-builder.md"} {
 		if read(t, r.Dir, file) == "" {
 			t.Fatalf("%s is empty", file)
@@ -368,28 +372,34 @@ func TestInitInstallsTheHarness(t *testing.T) {
 		pre[0].Hooks[1].Command != "markitect hook pretool" || pre[0].Hooks[1].If != "Bash(markitect checklist*)" {
 		t.Fatalf("the guard hook: %+v", settings)
 	}
-	if status := r.Git("status", "--porcelain"); status != "" {
-		t.Fatalf("init left the folder dirty: %s", status)
-	}
 	code, checked, _ := run(t, r.Dir, "check")
 	if code != 0 || strings.Contains(checked, "file.unregistered") {
 		t.Fatalf("the harness needs no registry entry: %s", checked)
 	}
-	// Run again it changes nothing, and commits nothing it did not write.
+	// Run again it changes nothing, not even what the owner is editing.
 	r.Write(".markitect/model/project.md", "---\nkind: std/Project\n---\n# Demo\n\nBeing edited.\n")
 	r.Write(".claude/agents/mine.md", "private\n")
-	before := r.Git("rev-parse", "HEAD")
+	before := snapshot(t, r.Dir)
 	mustRun(t, r.Dir, "init", "--name", "Demo")
-	if got := r.Git("rev-parse", "HEAD"); got != before {
-		t.Fatalf("a second init committed: %s", r.Git("show", "--stat", "HEAD"))
+	if diff := changed(before, snapshot(t, r.Dir)); len(diff) > 0 {
+		t.Fatalf("a second init changed files: %v", diff)
 	}
-	if status := r.Git("status", "--porcelain"); !strings.Contains(status, "project.md") || !strings.Contains(status, "mine.md") {
-		t.Fatalf("what the owner is editing changed: %s", status)
+
+	// Inside a Git repository, init commits nothing either.
+	g := testkit.NewRepo(t)
+	g.Write("README.md", "# Demo\n")
+	head := g.Commit("the owner's")
+	mustRun(t, g.Dir, "init", "--name", "Demo")
+	if got := g.Git("rev-parse", "HEAD"); got != head {
+		t.Fatalf("init committed: %s", g.Git("show", "--stat", "HEAD"))
+	}
+	if status := g.Git("status", "--porcelain"); !strings.Contains(status, ".markitect/") {
+		t.Fatalf("init's files are not left for the owner: %q", status)
 	}
 }
 
 func TestLockCommand(t *testing.T) {
-	r := testkit.NewRepo(t)
+	r := newFolder(t)
 	r.Write(".markitect/manifest.yaml", "libraries:\n  std: 1.0.0\n  rest: 1.0.0\n  web: 0.1.0\n")
 	code, _, errOut := run(t, r.Dir, "lock")
 	if code != 1 || !strings.Contains(errOut, "library.missing") {
@@ -413,15 +423,10 @@ func TestUsageAndRefusals(t *testing.T) {
 		t.Fatalf("unknown command: %s", errOut.String())
 	}
 	dir := testkit.TempDir(t)
-	if code, _, errOut := run(t, dir, "check"); code != 2 || !strings.Contains(errOut, "not inside a Git repository") {
-		t.Fatalf("check outside Git: %d %s", code, errOut)
-	}
-	r := testkit.NewRepo(t)
-	if code, _, errOut := run(t, r.Dir, "impact"); code != 1 || !strings.Contains(errOut, "needs a spec that compiles") {
-		t.Fatalf("impact without a project: %d %s", code, errOut)
-	}
-	if code, out, _ := run(t, r.Dir, "check"); code != 1 || !strings.Contains(out, "manifest.missing") {
-		t.Fatalf("check without init: %d %s", code, out)
+	for _, cmd := range []string{"check", "impact", "lock", "checklist", "gate"} {
+		if code, _, errOut := run(t, dir, cmd); code != 2 || !strings.Contains(errOut, "is in no Markitect project") || !strings.Contains(errOut, "markitect init makes one") {
+			t.Fatalf("%s outside a project: %d %s", cmd, code, errOut)
+		}
 	}
 	out.Reset()
 	if Run(context.Background(), []string{"version"}, &out, &errOut) != 0 || !strings.HasPrefix(out.String(), "markitect ") {
@@ -429,12 +434,10 @@ func TestUsageAndRefusals(t *testing.T) {
 	}
 }
 
-// Without a run, checklist, answer and gate work on the project folder: the work
-// passes into a certificate, which impact and gate --verify then read.
+// checklist, answer and gate work on the project folder: the work passes into a
+// certificate, which impact and gate --verify then read.
 func TestGateThroughTheCommandLine(t *testing.T) {
-	r := testkit.NewRepo(t)
-	r.Git("config", "user.name", "Owner")
-	r.Git("config", "user.email", "owner@example.invalid")
+	r := newFolder(t)
 	mustRun(t, r.Dir, "init")
 	r.Write(".markitect/registry.md", "| File | Realizes | Why |\n|---|---|---|\n| README.md | [[project]] | Overview |\n")
 	r.Write("README.md", "# A project\n")
@@ -457,7 +460,7 @@ func TestGateThroughTheCommandLine(t *testing.T) {
 		}
 	}
 	var out, errOut bytes.Buffer
-	answer := cli.CLI{Git: git{}, Runs: runs{}, Stdin: strings.NewReader("project: ok README.md:1\n"), Stdout: &out, Stderr: &errOut}
+	answer := newCLI(strings.NewReader("project: ok README.md:1\n"), &out, &errOut)
 	if code := answer.Run(context.Background(), []string{"answer", "--repo", r.Dir}); code != 0 {
 		t.Fatalf("answer: %d\n%s%s", code, out.String(), errOut.String())
 	}
@@ -478,6 +481,8 @@ func TestGateThroughTheCommandLine(t *testing.T) {
 		t.Fatalf("gate --verify after a change: %d\n%s", code, out)
 	}
 	wantAll(t, mustRun(t, r.Dir, "impact", "--base", filepath.Join(r.Dir, filepath.FromSlash(cert))), "README.md")
+	wantAll(t, mustRun(t, r.Dir, "status"), "No work is under way", "differ from the newest certificate", "README.md")
+	noRepository(t, r.Dir)
 	if code, _, errOut := run(t, r.Dir, "checklist", "--base", "nosuch.json"); code != 2 || !strings.Contains(errOut, "is no certificate") {
 		t.Fatalf("checklist --base nosuch.json: %d %s", code, errOut)
 	}

@@ -6,7 +6,7 @@ A compact summary. The canonical text is `docs/guides/model-language.md` in the 
 
 ```text
 .markitect/
-  manifest.yaml        Libraries and versions (std: 1.0.0, rest: 1.0.0, ...); optionally a Run's model and effort
+  manifest.yaml        Libraries and versions (std: 1.0.0, rest: 1.0.0, ...); optionally the model of the builder and reviewer
   lock.yaml            Library digests, written by markitect lock
   model/               the model; this folder is the Root Package
     project.md         the project anchor (std/Project)
@@ -17,7 +17,7 @@ A compact summary. The canonical text is `docs/guides/model-language.md` in the 
   libraries/<name>/    Libraries that do not ship with markitect
 ```
 
-Everything under `.markitect/` is accounted for by the compiler and needs no registry entry, and so is what `init` installs: `AGENTS.md`, `CLAUDE.md`, the `markitect-*` skills and agents, and `.gitignore`. The compiler sees what Git sees: tracked files and untracked files that Git does not ignore.
+Everything under `.markitect/` is accounted for by the compiler and needs no registry entry, and so is what `init` installs: `AGENTS.md`, `CLAUDE.md`, the `markitect-*` skills and agents, and `.gitignore`. The compiler sees the project folder without what its `.gitignore` files exclude, read as text; it uses no Git.
 
 ## Definitions
 
@@ -72,7 +72,7 @@ paths:
 - Front matter: `paths`, a list of repository-relative patterns, and nothing else (`registry.front_matter`). Root's page has no patterns.
 - Patterns: `*` and `?` inside one name; a whole segment `**` matches any depth; a trailing `**` matches what is inside the folder. No `[ ]` or `{ }` (`registry.pattern`).
 - Ownership: the most specific pattern wins; a pattern with no wildcard beats any with one; otherwise more literal characters win. Root owns what no one claims. Two Packages with the same pattern: `registry.duplicate_pattern`; equal specificity matching the same file: `registry.ambiguous_owner`.
-- Accounting: every file outside `.markitect/` is listed on its owner's page or in the ignore file (`file.unregistered`). Listed on a page of a different owner: `registry.wrong_owner`; listed twice: `registry.duplicate_entry`; listed and ignored: `registry.ignored_file`; Git-ignored: `registry.git_ignored`; below `.markitect/`: `registry.own_file`.
+- Accounting: every file outside `.markitect/` is listed on its owner's page or in the ignore file (`file.unregistered`). Listed on a page of a different owner: `registry.wrong_owner`; listed twice: `registry.duplicate_entry`; listed and ignored: `registry.ignored_file`; excluded by a `.gitignore`: `registry.git_ignored`; below `.markitect/`: `registry.own_file`.
 - Rows: tables whose first header is `File`, three cells: file, links to the Definitions it realizes (model Definitions only; none is allowed), a short reason (`registry.table`, `registry.link`). The registry folder holds only pages (`registry.page`).
 - Shared files (README, CI pipeline, compose file) belong to the lowest common parent of the Packages they serve, often Root, and list every Definition they realize.
 
@@ -95,12 +95,12 @@ All take `--repo DIR`; all but `init` and `lock` take `--json`. Exit 0 ok, 1 err
 
 | Command | Use while modeling |
 |---|---|
-| `init [--name TITLE]` | Once per project: manifest, lock, project anchor, registry page, `AGENTS.md`, `CLAUDE.md`, skills and harness. Makes a folder in no repository a Git repository, and commits what it wrote. Never changes an existing model file. |
+| `init [--name TITLE]` | Once per project: manifest, lock, project anchor, registry page, `AGENTS.md`, `CLAUDE.md`, skills and harness. Makes no repository and commits nothing. Never changes an existing model file. |
 | `check` | Compile: errors only. A project with nothing registered, where the only errors are `definition.unused`, passes and says that nothing is built yet. |
 | `lock` | Rewrite `lock.yaml` after a manifest or Library change. |
 | `refs TARGET` | Who links to a Definition or Package, and which files realize it. |
 | `graph` | Package dependency graph with coupling and the links behind each edge. |
-| `impact --base COMMIT [--full]` | What the change since COMMIT reaches and each Manager's checklist. Needs a project that compiles. |
+| `impact [--base CERTIFICATE] [--full]` | What the change since the newest certificate, or the one named, reaches, and each Manager's checklist. Needs a project that compiles and a certificate. |
 | `lint` | Warnings and the coupling table. |
 
 ## Warnings (`lint`)

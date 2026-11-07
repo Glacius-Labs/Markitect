@@ -1,4 +1,4 @@
-package repo
+package folder
 
 import (
 	"os"
@@ -82,14 +82,14 @@ func TestFolderWalksWithoutGit(t *testing.T) {
 func TestFolderRoot(t *testing.T) {
 	dir := testkit.TempDir(t)
 	put(t, dir, map[string]string{".markitect/manifest.yaml": "libraries: {}\n", "src/a/x.go": "package a\n"})
-	root, err := Folder{}.Root(filepath.Join(dir, "src", "a"))
+	root, err := Disk{}.Root(filepath.Join(dir, "src", "a"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if want, _ := filepath.Abs(dir); !strings.EqualFold(root, want) {
 		t.Fatalf("root %s, not %s", root, want)
 	}
-	if _, err := (Folder{}).Root(testkit.TempDir(t)); err == nil || !strings.Contains(err.Error(), "markitect init") {
+	if _, err := (Disk{}).Root(testkit.TempDir(t)); err == nil || !strings.Contains(err.Error(), "markitect init") {
 		t.Fatalf("outside a project: %v", err)
 	}
 }
@@ -101,7 +101,7 @@ func TestFolderLinks(t *testing.T) {
 	if err := os.Symlink("a.txt", filepath.Join(dir, "link")); err != nil {
 		t.Skipf("this system makes no symbolic link here: %v", err)
 	}
-	files, links, err := Folder{}.Open(dir)
+	files, links, err := Disk{}.Open(dir)
 	if err != nil {
 		t.Fatal(err)
 	}

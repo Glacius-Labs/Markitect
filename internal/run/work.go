@@ -15,12 +15,12 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/analysis"
 )
 
-// The work without a Run. Between checklist and gate, what the tool knows of the
-// work lives outside the project, in the user's cache folder, one file per project
+// The work. Between checklist and gate, what the tool knows of the work lives
+// outside the project, in the user's cache folder, one file per project
 // folder: the change, the hashes of the spec and the harness when it began, the
 // list, and each item's latest answer bound to the hashes of its files.
 
-// Work is one piece of work without a Run.
+// Work is one piece of work on a project folder.
 type Work struct {
 	// Project is the project folder.
 	Project string `json:"project"`
@@ -40,8 +40,8 @@ type Work struct {
 	// Certificates holds the hashes of the certificates in the folder when the
 	// work began; the work may not add, change or remove one.
 	Certificates map[string]string `json:"certificates"`
-	// Items is the list as it stands: every item any state put on it, as a Run
-	// keeps them (mergeItems).
+	// Items is the list as it stands: every item any state put on it
+	// (mergeItems).
 	Items []Item `json:"items"`
 	// Answers holds each item's latest answer.
 	Answers map[string]Given `json:"answers"`
@@ -164,21 +164,22 @@ func workKey(root string) string {
 	return hex.EncodeToString(sum[:8])
 }
 
-func (e *Engine) cache() (Store, error) {
+// workDir is the folder of the work states in the cache.
+func (e *Engine) workDir() (string, error) {
 	if e.Cache == "" {
-		return Store{}, errors.New("no cache folder for the work without a run")
+		return "", errors.New("no cache folder for the work")
 	}
-	return Store{Dir: e.Cache}, nil
+	return filepath.Join(e.Cache, workFolder), nil
 }
 
 // loadWork reads the work of a project folder; nil when there is none.
 func (e *Engine) loadWork(root string) (*Work, error) {
-	s, err := e.cache()
+	dir, err := e.workDir()
 	if err != nil {
 		return nil, err
 	}
 	var data []byte
-	file := filepath.Join(s.Dir, workFolder, workKey(root)+".json")
+	file := filepath.Join(dir, workKey(root)+".json")
 	for i := 0; i < 20; i++ {
 		if data, err = os.ReadFile(file); err == nil || errors.Is(err, os.ErrNotExist) {
 			break
@@ -205,12 +206,12 @@ func (e *Engine) loadWork(root string) (*Work, error) {
 // updateWork changes the work of a project folder under a short lock. change gets
 // nil when there is none, and returns the work to store, or nil to remove it.
 func (e *Engine) updateWork(root string, change func(*Work) (*Work, error)) error {
-	s, err := e.cache()
+	dir, err := e.workDir()
 	if err != nil {
 		return err
 	}
 	key := workKey(root)
-	release, err := s.lockIn(workFolder, key, lockWait)
+	release, err := lock(dir, key, lockWait)
 	if err != nil {
 		return err
 	}
@@ -222,7 +223,7 @@ func (e *Engine) updateWork(root string, change func(*Work) (*Work, error)) erro
 	if w, err = change(w); err != nil {
 		return err
 	}
-	file := filepath.Join(s.Dir, workFolder, key+".json")
+	file := filepath.Join(dir, key+".json")
 	if w == nil {
 		if err := os.Remove(file); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return err
@@ -233,39 +234,7 @@ func (e *Engine) updateWork(root string, change func(*Work) (*Work, error)) erro
 	if err != nil {
 		return err
 	}
-	return writeAtomic(filepath.Join(s.Dir, workFolder), key+".json", data)
-}
-
-// writeAtomic writes a file of a folder in one step: a crash leaves the old one or
-// the new one.
-func writeAtomic(dir, name string, data []byte) error {
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return err
-	}
-	tmp, err := os.CreateTemp(dir, name+".*.tmp")
-	if err != nil {
-		return err
-	}
-	temp := tmp.Name()
-	defer os.Remove(temp)
-	if _, err := tmp.Write(data); err != nil {
-		tmp.Close()
-		return err
-	}
-	if err := tmp.Sync(); err != nil {
-		tmp.Close()
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		return err
-	}
-	for i := 0; ; i++ {
-		err = os.Rename(temp, filepath.Join(dir, name))
-		if err == nil || i == 20 {
-			return err
-		}
-		time.Sleep(50 * time.Millisecond)
-	}
+	return writeAtomic(dir, key+".json", data)
 }
 
 // bound lists the files an answer is bound to: the files its item names and the
@@ -290,7 +259,7 @@ func given(it Item, a Answer, f *folder) Given {
 // standing returns the answers that stand on the folder's state, and the items
 // that have none. An answer stands on the state it was given on, and on a later
 // one where none of the files it is bound to changed and its item names no file it
-// did not know, as a repair review works in a Run. A wrong answer stands only on
+// did not know, so a repair review asks only about what the repair touched. A wrong answer stands only on
 // its own state: the work went back for it.
 func (w *Work) standing(f *folder) (map[string]Given, []string) {
 	valid := map[string]Given{}
@@ -385,5 +354,5 @@ func (w *Work) specProblems() []OwnerDecision {
 	return out
 }
 
-// settleLean is what the owner is told to do about a spec problem without a Run.
+// settleLean is what the owner is told to do about a spec problem.
 const settleLean = "Settle it in the spec, and start the work again."

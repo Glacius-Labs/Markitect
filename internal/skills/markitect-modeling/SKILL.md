@@ -11,7 +11,7 @@ Read [reference.md](reference.md) for the form, the Kinds and the error codes, a
 
 ## Who decides
 
-The owner accepts every model change. You propose; the owner reads the Markdown diff and merges it. A Run never changes the model.
+The owner accepts every model change. You propose; the owner reads the Markdown diff and merges it. The builder never changes the model.
 
 - Write only what the owner or the requirements state. Do not invent a policy, a limit, an error case or a default. If something is open, ask the owner before you write that part, and write it only after the answer.
 - The cut into Packages and the directions of dependencies are the owner's decision. If they are not decided, propose them (a table: Package, what it holds, what it may depend on) and stop for the answer before you write.
@@ -34,7 +34,7 @@ Use the tools while you work, not only at the end:
 - `markitect refs TARGET` before you rename, move or delete a Definition: it shows who links to it and which files realize it.
 - `markitect graph` when you add a link between Packages: it shows the new edge and the links behind it.
 - `markitect lint` at the end: coupling, size, unused Definitions, reach. Fix each warning or give one line why it stays.
-- `markitect impact --base COMMIT` on your change: it shows the Definitions, files and Managers the change reaches. Give the owner that list; it is what a Run will work on.
+- `markitect impact` on your change: it shows the Definitions, files and Managers the change reaches since the newest certificate. Give the owner that list; it is what the builder will work on.
 - After a manifest or Library change run `markitect lock` and include the new `lock.yaml` in the diff.
 
 ## Where to put a Definition
@@ -104,4 +104,4 @@ Every other code is listed in `reference.md`. A cycle or unresolved link usually
 
 ## Done
 
-Report to the owner: the diff; the output of `check` (ok line) and of `lint` (warnings fixed or justified); the result of `impact`, so the owner sees what the change makes the agents do; and any point the owner chose to leave open. Deleting or renaming a Definition leaves registry entries that name it. That is stale realization, not an error: `check` passes, `lint` warns, and the next Run cleans it up. Say so in the report; do not edit the registry pages in a model change (each Package's Manager maintains its page; only an extraction writes them).
+Report to the owner: the diff; the output of `check` (ok line) and of `lint` (warnings fixed or justified); the result of `impact`, so the owner sees what the change makes the agents do; and any point the owner chose to leave open. Deleting or renaming a Definition leaves registry entries that name it. That is stale realization, not an error: `check` passes, `lint` warns, and the next `/markitect-apply` cleans it up. Say so in the report; do not edit the registry pages in a model change (each Package's Manager maintains its page; only an extraction writes them).

@@ -1,7 +1,7 @@
 // Package cli is the markitect command line: install, update, init, check, lock,
-// refs, graph, impact and lint; apply and verify, which open a Run and say which
-// agent the owner's session starts; the commands of a Run; version and licenses.
-// None of them starts an agent.
+// refs, graph, impact and lint; checklist, answer, gate and status, the work that
+// whoever drives the agents calls; the hook; version and licenses. None of them
+// starts an agent or uses Git (DEC-096, DEC-097).
 package cli
 
 import (
@@ -22,7 +22,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/skills"
 )
 
-// Workspace is the working tree of the project's repository.
+// Workspace is a project folder, as a walk of it finds its files.
 type Workspace interface {
 	project.Repository
 	Root() string
@@ -30,26 +30,15 @@ type Workspace interface {
 	Exists(file string) bool
 	List(dir string) ([]string, error)
 	Remove(file string) error
-	// CommitOwn commits the files init wrote with the user's identity, and nothing
-	// else, and says whether there was anything to commit.
-	CommitOwn(files []string, message string) (bool, error)
 }
 
-// Base is the state of the repository at a base commit.
-type Base interface {
-	project.Repository
-	ID() string
-	// Changed lists the files that differ between the base and the working
-	// tree, outside Markitect's folder.
-	Changed() ([]analysis.Change, error)
-}
-
-// Git opens repository states.
-type Git interface {
-	Open(ctx context.Context, dir string) (Workspace, error)
-	// Create makes a folder that lies in no repository a Git repository.
-	Create(ctx context.Context, dir string) error
-	Base(ctx context.Context, ws Workspace, rev string) (Base, error)
+// Folders opens project folders.
+type Folders interface {
+	// Project opens the project folder that holds dir: the nearest one, dir or
+	// above, with Markitect's manifest.
+	Project(dir string) (Workspace, error)
+	// At opens dir itself, which init makes a project.
+	At(dir string) (Workspace, error)
 }
 
 // Exit codes.
@@ -58,39 +47,30 @@ const (
 	Failed   = 1 // the command ran and found errors
 	Misused  = 2 // the command could not run
 	usageTop = skills.About + `
-No command starts an agent: apply and verify say which one your session starts.
+No command starts an agent or uses Git: the /markitect-apply and /markitect-verify
+skills have your Claude Code session start the agents, and the session commits.
 
 Usage:
   markitect install                               tell Claude Code what Markitect is, in every folder
   markitect update [--repo DIR] [--check] [--files] [--force]
                                                   install the newest release, then refresh the personal skill and the project's skills, agents and lock
-  markitect init   [--repo DIR] [--name TITLE]   set up a project and install the harness
+  markitect init   [--repo DIR] [--name TITLE]   make a folder a Markitect project and install the harness
   markitect check  [--repo DIR] [--json] [--spec] compile the project; --spec looks only at the spec
   markitect lock   [--repo DIR]                   write the lock from the manifest
   markitect refs   [--repo DIR] [--json] TARGET   who links to a Definition or Package
   markitect graph  [--repo DIR] [--json]          the Package dependency graph
-  markitect impact [--repo DIR] [--json] [--base COMMIT|CERTIFICATE] [--full] [--findings FILE]
-                                                  what a change reaches, with distance and reason
+  markitect impact [--repo DIR] [--json] [--base CERTIFICATE] [--full] [--findings FILE]
+                                                  what a change since the newest certificate reaches, with distance and reason
   markitect lint   [--repo DIR] [--json]          measure the spec like code: warnings only
-  markitect apply  [--repo DIR] [--base COMMIT] [--full] [--findings FILE] [--deadline D]
-                                                  open a run: a builder agent makes the project match the spec, and the work lands
-  markitect verify [--repo DIR] [--base COMMIT] [--full] [--deadline D]
-                                                  open a review of the last commit; changes nothing you have
-  markitect status [--repo DIR]                   how the runs of this branch and the work in the folder stand
-  markitect stop   [--repo DIR] WHY               end a run without landing
+  markitect status [--repo DIR]                   how the work in the folder stands, and what differs from the newest certificate
   markitect version [--repo DIR]                  which markitect this is, and whether the personal skill and the project match it
   markitect licenses
 
-Called from inside a run:
-  markitect checklist [--review]                  the task and the list
-  markitect answer [FILE]                         store a reviewer's answers
-  markitect submit                                the one door: says what is next, and lands the work
-
-Without a run and without Git, for whoever drives the agents (tried beside the run):
+The work, for whoever drives the agents:
   markitect checklist [--base CERTIFICATE] [--full] [--findings FILE] [--review] [--start]
                                                   the list of the change from the newest certificate to the folder;
                                                   --start begins it and says which agent to start
-  markitect answer [FILE]                       store a reviewer's answers for the files as they are now
+  markitect answer [FILE]                         store a reviewer's answers for the files as they are now
   markitect gate   [--verify] [--findings] [--spec-problem WHY]
                                                   check the work and say what is next; when it passes, write its certificate;
                                                   --spec-problem: the builder reports a problem of the spec, which a reviewer confirms
@@ -111,8 +91,10 @@ type Releases interface {
 
 // CLI runs one command.
 type CLI struct {
-	Git    Git
-	Runs   Runs
+	Folders Folders
+	// Work is the engine of checklist, answer, gate and status. Nil means this
+	// build does no work.
+	Work   *run.Engine
 	Stdin  io.Reader
 	Stdout io.Writer
 	Stderr io.Writer
@@ -157,20 +139,12 @@ func (c CLI) Run(ctx context.Context, args []string) int {
 		code, err = c.impact(ctx, rest)
 	case "lint":
 		code, err = c.lint(ctx, rest)
-	case "apply":
-		code, err = c.start(ctx, "apply", rest)
-	case "verify":
-		code, err = c.start(ctx, "verify", rest)
 	case "checklist":
 		code, err = c.checklist(ctx, rest)
 	case "answer":
 		code, err = c.answer(ctx, rest)
-	case "submit":
-		code, err = c.submit(ctx, rest)
 	case "gate":
 		code, err = c.gate(ctx, rest)
-	case "stop":
-		code, err = c.stop(ctx, rest)
 	case "status":
 		code, err = c.status(ctx, rest)
 	case "hook":
@@ -185,28 +159,15 @@ func (c CLI) Run(ctx context.Context, args []string) int {
 	}
 	if err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
-			fmt.Fprintf(c.Stderr, "markitect %s: %v\n", cmd, hintInit(err))
+			fmt.Fprintf(c.Stderr, "markitect %s: %v\n", cmd, err)
 		}
 		return Misused
 	}
 	switch cmd {
-	case "init", "check", "lock", "refs", "graph", "impact", "lint", "apply", "verify", "update":
-		c.notice(ctx, rest)
-	}
-	switch cmd {
 	case "check", "lock", "refs", "graph", "impact", "lint", "status":
-		c.staleNotice(ctx, rest)
+		c.staleNotice(rest)
 	}
 	return code
-}
-
-// hintInit tells the user who ran a command outside any Git repository how to
-// start a project. Both Git adapters word the error alike; a test pins it.
-func hintInit(err error) error {
-	if strings.Contains(err.Error(), "is not inside a Git repository") {
-		return fmt.Errorf("%w; markitect init makes this folder a Markitect project", err)
-	}
-	return err
 }
 
 // options are the flags every command shares.
@@ -218,7 +179,7 @@ type options struct {
 func (c CLI) flags(name string, o *options) *flag.FlagSet {
 	fs := flag.NewFlagSet("markitect "+name, flag.ContinueOnError)
 	fs.SetOutput(c.Stderr)
-	fs.StringVar(&o.repo, "repo", ".", "a folder inside the project's Git repository")
+	fs.StringVar(&o.repo, "repo", ".", "a folder of the project")
 	switch name {
 	case "init", "lock", "update", "version":
 	default:
@@ -227,9 +188,9 @@ func (c CLI) flags(name string, o *options) *flag.FlagSet {
 	return fs
 }
 
-// load opens the repository and loads the project in its working tree.
-func (c CLI) load(ctx context.Context, o options) (Workspace, *project.Project, error) {
-	ws, err := c.Git.Open(ctx, o.repo)
+// load opens the project folder and loads the project.
+func (c CLI) load(o options) (Workspace, *project.Project, error) {
+	ws, err := c.Folders.Project(o.repo)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -264,7 +225,7 @@ func (c CLI) check(ctx context.Context, args []string) (int, error) {
 	if fs.NArg() != 0 {
 		return Misused, fmt.Errorf("takes no arguments")
 	}
-	_, p, err := c.load(ctx, o)
+	_, p, err := c.load(o)
 	if err != nil {
 		return Misused, err
 	}
@@ -287,14 +248,14 @@ func (c CLI) check(ctx context.Context, args []string) (int, error) {
 			}
 		}
 		if len(realization) > 0 {
-			fmt.Fprintf(c.Stdout, "In the realization, so spec and code do not match yet; markitect apply settles these:\n")
+			fmt.Fprintf(c.Stdout, "In the realization, so spec and code do not match yet; /markitect-apply settles these:\n")
 			for _, d := range realization {
 				fmt.Fprintln(c.Stdout, d.String())
 			}
 		}
 		switch {
 		case nothingBuilt:
-			fmt.Fprintf(c.Stdout, "ok: the spec compiles, with %d Definitions in %d Packages. Nothing is built yet, and markitect apply builds it.\n", len(p.Model.ModelDefinitions()), len(p.Model.Packages))
+			fmt.Fprintf(c.Stdout, "ok: the spec compiles, with %d Definitions in %d Packages. Nothing is built yet, and /markitect-apply builds it.\n", len(p.Model.ModelDefinitions()), len(p.Model.Packages))
 		case total == 0:
 			fmt.Fprintf(c.Stdout, "ok: %d Definitions in %d Packages, %d files accounted\n", len(p.Model.ModelDefinitions()), len(p.Model.Packages), len(p.Registry.Owner))
 		default:
@@ -316,7 +277,7 @@ func (c CLI) refs(ctx context.Context, args []string) (int, error) {
 	if fs.NArg() != 1 {
 		return Misused, fmt.Errorf("names one Definition or Package, such as members/member")
 	}
-	_, p, err := c.load(ctx, o)
+	_, p, err := c.load(o)
 	if err != nil {
 		return Misused, err
 	}
@@ -345,7 +306,7 @@ func (c CLI) graph(ctx context.Context, args []string) (int, error) {
 	if fs.NArg() != 0 {
 		return Misused, fmt.Errorf("takes no arguments")
 	}
-	_, p, err := c.load(ctx, o)
+	_, p, err := c.load(o)
 	if err != nil {
 		return Misused, err
 	}
@@ -367,7 +328,7 @@ func (c CLI) lint(ctx context.Context, args []string) (int, error) {
 	if fs.NArg() != 0 {
 		return Misused, fmt.Errorf("takes no arguments")
 	}
-	_, p, err := c.load(ctx, o)
+	_, p, err := c.load(o)
 	if err != nil {
 		return Misused, err
 	}
@@ -384,12 +345,12 @@ func (c CLI) lint(ctx context.Context, args []string) (int, error) {
 	return OK, nil
 }
 
-func (c CLI) impact(ctx context.Context, args []string) (int, error) {
+func (c CLI) impact(_ context.Context, args []string) (int, error) {
 	var o options
 	var base, findings string
 	var full bool
 	fs := c.flags("impact", &o)
-	fs.StringVar(&base, "base", "", "the commit, or the certificate gate wrote, to compare the working tree with (default: the work of the last landing)")
+	fs.StringVar(&base, "base", "", "the certificate gate wrote, its .json or .md, to compare the folder with (default: the newest one)")
 	fs.BoolVar(&full, "full", false, "every Definition is reached and every Manager works")
 	fs.StringVar(&findings, "findings", "", "a Findings page whose Findings become checklist items")
 	if err := fs.Parse(args); err != nil {
@@ -398,7 +359,7 @@ func (c CLI) impact(ctx context.Context, args []string) (int, error) {
 	if fs.NArg() != 0 {
 		return Misused, fmt.Errorf("takes no arguments")
 	}
-	ws, p, err := c.load(ctx, o)
+	ws, p, err := c.load(o)
 	if err != nil {
 		return Misused, err
 	}
@@ -409,25 +370,22 @@ func (c CLI) impact(ctx context.Context, args []string) (int, error) {
 		fmt.Fprintf(c.Stderr, "markitect impact: the spec has %d errors; impact needs a spec that compiles\n", len(errs))
 		return Failed, nil
 	}
-	if base == "" {
-		e, err := c.engine(ctx, o.repo)
-		if err != nil {
-			return Misused, err
-		}
-		landed, ok, err := e.LastBase(ctx, o.repo)
-		if err != nil {
-			return Misused, err
-		}
-		if !ok {
-			return Misused, fmt.Errorf("nothing has landed yet, so there is no default base; name one with --base")
-		}
-		base = landed
-	}
-	baseID, baseProject, changed, err := c.impactBase(ctx, ws, base)
+	name, cert, err := run.BaseCertificate(ws.Root(), base)
 	if err != nil {
 		return Misused, err
 	}
-	in := analysis.ImpactInput{Base: baseProject, Current: p, Changed: changed, Full: full}
+	if cert == nil {
+		return Misused, fmt.Errorf("no certificate yet, so there is no base to compare with: gate writes one when work passes")
+	}
+	baseProject, err := cert.Project()
+	if err != nil {
+		return Misused, err
+	}
+	hashes, err := run.HashFiles(ws)
+	if err != nil {
+		return Misused, err
+	}
+	in := analysis.ImpactInput{Base: baseProject, Current: p, Changed: cert.Changed(hashes), Full: full}
 	if findings != "" {
 		data, err := os.ReadFile(findings)
 		if err != nil {
@@ -447,41 +405,8 @@ func (c CLI) impact(ctx context.Context, args []string) (int, error) {
 		return OK, c.printJSON(struct {
 			Base string `json:"base"`
 			analysis.Impact
-		}{baseID, im})
+		}{name, im})
 	}
-	fmt.Fprint(c.Stdout, renderImpact(baseID, im))
+	fmt.Fprint(c.Stdout, renderImpact(name, im))
 	return OK, nil
-}
-
-// impactBase is the base of impact: a certificate gate wrote, when base names its
-// .json or .md file, otherwise a commit.
-func (c CLI) impactBase(ctx context.Context, ws Workspace, base string) (string, *project.Project, []analysis.Change, error) {
-	if strings.HasSuffix(base, ".json") || strings.HasSuffix(base, ".md") {
-		cert, err := run.ReadCertificate(base)
-		if err != nil {
-			return "", nil, nil, err
-		}
-		p, err := cert.Project()
-		if err != nil {
-			return "", nil, nil, err
-		}
-		hashes, err := run.HashFiles(ws)
-		if err != nil {
-			return "", nil, nil, err
-		}
-		return base, p, cert.Changed(hashes), nil
-	}
-	b, err := c.Git.Base(ctx, ws, base)
-	if err != nil {
-		return "", nil, nil, err
-	}
-	p, err := project.Load(b)
-	if err != nil {
-		return "", nil, nil, err
-	}
-	changed, err := b.Changed()
-	if err != nil {
-		return "", nil, nil, err
-	}
-	return b.ID(), p, changed, nil
 }

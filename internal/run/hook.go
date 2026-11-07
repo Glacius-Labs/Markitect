@@ -65,7 +65,7 @@ var namingFlags = []string{"-start", "-full", "-base", "-findings"}
 // session begins the work or names a change, so an agent that changed the spec
 // cannot start over with its change as the owner's. Its input is what the
 // provider tells a hook, which names the agent a subagent's call comes from. It
-// needs no Run, since answer refuses anyway where none is open. It returns what
+// needs no work under way, since answer refuses anyway where none is. It returns what
 // the hook prints, empty to let the command run. It reads the command as text,
 // so it guards against mistakes, not against an agent that hides a command.
 func Guard(input []byte) []byte {

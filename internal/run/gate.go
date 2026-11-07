@@ -33,21 +33,15 @@ type GateRequest struct {
 	SpecProblem string
 }
 
-// Gate checks the work in the project folder without a Run, as submit does in
-// one, minus what a Run needs, and without Git (DEC-097). It does the first thing
-// that applies, and each refusal says the one next step. Done means the work
-// passed, the folder matches its certificate, or the report of a review is
-// written. With SpecProblem the builder reports a problem of the spec, which a
+// Gate checks the work in the project folder, without Git (DEC-097). It does the
+// first thing that applies, and each refusal says the one next step. Done means
+// the work passed, the folder matches its certificate, or the report of a review
+// is written. With SpecProblem the builder reports a problem of the spec, which a
 // reviewer confirms before the owner hears of it (lean plan, decision 7).
-func (e *Engine) Gate(ctx context.Context, req GateRequest) (Verdict, error) {
+func (e *Engine) Gate(_ context.Context, req GateRequest) (Verdict, error) {
 	req.SpecProblem = strings.TrimSpace(req.SpecProblem)
 	if modes := btoi(req.Verify) + btoi(req.Findings) + btoi(req.SpecProblem != ""); modes > 1 {
 		return Verdict{}, fmt.Errorf("%w: gate takes only one of --verify, --findings and --spec-problem", ErrUsage)
-	}
-	if open, err := e.openRun(ctx, req.Dir); err != nil {
-		return Verdict{}, err
-	} else if open != nil {
-		return Verdict{Text: fmt.Sprintf("Run %s is open in this folder, and gate does not check a run's work. Go on with it with markitect submit, or end it with markitect stop \"why\".\n", open.Run)}, nil
 	}
 	f, err := e.readFolder(req.Dir)
 	if err != nil {
@@ -338,7 +332,7 @@ func (e *Engine) writeResult(f *folder, w *Work, valid map[string]Given, state, 
 // never an agent; stamp is the name of its pages.
 func (e *Engine) gateResult(w *Work, valid map[string]Given, stamp, state, why string, decisions []OwnerDecision) *Result {
 	rounds, sent := w.rounds()
-	r := &Result{Format: ResultFormat, Run: strings.TrimPrefix(stamp, gatePrefix), Command: commandGate, State: state, Why: why,
+	r := &Result{Name: strings.TrimPrefix(stamp, gatePrefix), Command: commandGate, State: state, Why: why,
 		Base: w.Base, Full: w.Full, OwnerDecisions: decisions, Repairs: rounds, SentBack: sent, MissingLinks: w.MissingFor, ImpactNotes: w.Notes,
 		Began: w.Began, Ended: e.now()}
 	if r.Base == "" {

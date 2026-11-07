@@ -10,7 +10,7 @@ import (
 )
 
 func TestLockAndCheckReadTheSameLibraryFiles(t *testing.T) {
-	r := testkit.NewRepo(t)
+	r := newFolder(t)
 	mustRun(t, r.Dir, "init")
 	if err := os.WriteFile(filepath.Join(r.Dir, ".gitignore"), []byte("*.swp\n"), 0o644); err != nil {
 		t.Fatal(err)
@@ -27,7 +27,7 @@ func TestLockAndCheckReadTheSameLibraryFiles(t *testing.T) {
 }
 
 func TestInitAgainUpdatesSkills(t *testing.T) {
-	r := testkit.NewRepo(t)
+	r := newFolder(t)
 	r.Write(".markitect/ignore", "# Legal text\nLICENSE\n")
 	r.Write(".claude/skills/markitect-retired/SKILL.md", "an old skill\n")
 	r.Write(".claude/skills/markitect-modeling/old-notes.md", "an old file\n")
@@ -48,7 +48,7 @@ func TestInitAgainUpdatesSkills(t *testing.T) {
 
 // A new project gets the instructions and no empty files; the guide is installed.
 func TestInitWritesTheInstructionsAndNoEmptyFiles(t *testing.T) {
-	r := testkit.NewRepo(t)
+	r := newFolder(t)
 	out := mustRun(t, r.Dir, "init", "--name", "Lending library")
 	if !strings.Contains(read(t, r.Dir, "AGENTS.md"), "# Lending library") || read(t, r.Dir, "CLAUDE.md") != "@AGENTS.md\n" {
 		t.Fatal("the instruction files are wrong")
@@ -66,9 +66,6 @@ func TestInitWritesTheInstructionsAndNoEmptyFiles(t *testing.T) {
 	if !strings.Contains(out, "/markitect-start") {
 		t.Fatalf("no next step:\n%s", out)
 	}
-	if status := r.Git("status", "--porcelain"); status != "" {
-		t.Fatalf("init left work uncommitted:\n%s", status)
-	}
 	if out := mustRun(t, r.Dir, "check", "--spec"); !strings.HasPrefix(out, "ok:") {
 		t.Fatalf("check --spec on a new project: %s", out)
 	}
@@ -76,7 +73,7 @@ func TestInitWritesTheInstructionsAndNoEmptyFiles(t *testing.T) {
 
 // Instructions that exist stay as they are.
 func TestInitLeavesExistingInstructions(t *testing.T) {
-	r := testkit.NewRepo(t)
+	r := newFolder(t)
 	r.Write("AGENTS.md", "my own\n")
 	r.Write("CLAUDE.md", "mine too\n")
 	out := mustRun(t, r.Dir, "init")
@@ -88,18 +85,18 @@ func TestInitLeavesExistingInstructions(t *testing.T) {
 	}
 }
 
-// An empty folder is all init needs: it becomes a repository, and a folder that
-// is one keeps its history.
+// An empty folder is all init needs, and it stays a plain folder. In a folder of
+// the project, init works on the project, not on a new one.
 func TestInitInAnEmptyFolder(t *testing.T) {
 	dir := testkit.TempDir(t)
-	out := mustRun(t, dir, "init", "--name", "New")
-	if !strings.Contains(out, "created a Git repository") {
-		t.Fatalf("init said:\n%s", out)
-	}
-	if _, err := os.Stat(filepath.Join(dir, ".git")); err != nil {
+	mustRun(t, dir, "init", "--name", "New")
+	noRepository(t, dir)
+	sub := filepath.Join(dir, "src", "a")
+	if err := os.MkdirAll(sub, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if out := mustRun(t, dir, "init"); strings.Contains(out, "created a Git repository") {
-		t.Fatalf("a second init made another repository:\n%s", out)
+	mustRun(t, sub, "init")
+	if _, err := os.Stat(filepath.Join(sub, ".markitect")); !os.IsNotExist(err) {
+		t.Fatalf("init made a project inside the project: %v", err)
 	}
 }
