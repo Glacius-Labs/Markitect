@@ -62,15 +62,15 @@ The rules below each name their **signal**: a measure of `markitect vet` that ex
 
 In code the Package is the unit that is released and depended on. In Markitect the unit of verification is the Definition: a change to `members/register-member` puts back itself and its Interface, however many depend on `members/member` beside it. So read the Package measures as a pointer to where to look, and the Definition's fan-in as the cost.
 
-**Bad.** In the 5× project's change steps, `members/member` (fan-in 90), `billing/charge` and `members/membership` (20 each) changed, and with three other widely linked Definitions their changes alone put 247 of the steps' 468 items back on the list. `members`, `billing` and `ledger` all lie in the zone of pain.
+**Bad.** In the 5× project's change steps, `members/member` (fan-in 90), `billing/charge` and `members/membership` (20 each) changed, and with six other widely linked Definitions they caused 248 of the 468 items the steps put back on the list, items no other change reached. `members`, `billing` and `ledger` all lie in the zone of pain.
 
 **Good.** In Makerspace none of the five Definitions linked by 10 or more changed in eight steps; what changed at Root was the anchor and Rules nothing links. Concepts carry the fan-in (median 6) and Operations do not (at most 2): `members/member` is linked by 24 Definitions, `members/register-member` by its Interface alone.
 
-**Signal.** `vet.unstable_dependency` for the direction of edges. The [`vet` plan](../concepts/vet-plan.md) proposes A and D in `list --deps`, a warning for the zone of uselessness and a note for the zone of pain, which shows with `--strict`; and `vet.hub` for a Definition whose change alone puts a fifth of the spec back on the list. Both Makerspace specs keep their Kinds at Root, so A is 0 in every other Package and D is 1 − I there.
+**Signal.** `vet.unstable_dependency` for the direction of edges. The [`vet` plan](../concepts/vet-plan.md) proposes A and D in `list --deps`, and notes for the zone of pain and the zone of uselessness, which show with `--strict`; and `vet.hub` for a Definition whose change alone puts a fifth of the spec back on the list. Both Makerspace specs keep their Kinds at Root, so A is 0 in every other Package and D is 1 − I there.
 
 ## Cohesion and coupling
 
-**Rule.** A Package's Definitions link each other more than they link out, links up the tree aside. A Package whose Definitions fall into groups with no link between them is two Packages. A Package depends on few others, and on each through its Interface.
+**Rule.** A Package's Definitions link each other more than they link out, links up the tree aside. A Package whose Definitions fall into groups with no link between them may hold two areas; Rules that bind it by scope form groups of their own and are fine. A Package depends on few others, and on each through its Interface.
 
 **Why.** A change stays inside its Package, and a reader of a Package needs few others to understand it.
 
@@ -102,7 +102,7 @@ CRAP, the change-risk measure for code, is *comp² × (1 − cov)³ + comp*, wit
 
 **Bad and good.** No record of a real build exists for Makerspace yet, so there are no measured examples. Without any record, 73 of its 115 Definitions would score above 30, which is why the measure only looks at Definitions recorded `ok`.
 
-**Signal.** The proposed `vet.risk`, a note shown with `--strict`, once a real record has calibrated it.
+**Signal.** The proposed `vet.risk`, a note shown with `--strict`, once a real record has calibrated it. The [`vet` plan](../concepts/vet-plan.md#ai-assisted-measures) also proposes a better *c*: the number of cases, conditions and exceptions the reviewer counts while it verifies.
 
 ## Accidental complexity
 
@@ -166,13 +166,13 @@ CRAP, the change-risk measure for code, is *comp² × (1 − cov)³ + comp*, wit
 
 **Bad: linking back.** `values` said "Arguments are checked against them as `argument-values` states", a link from the general formats to a Rule that uses them. With `argument-values` linking `computed-times`, that linking the limits, and the limits and `money` linking `values`, six Root Definitions formed a cycle, and every change that reached any of them reached all 60 users of `values` when every link is followed. Dropping that one link halves the every-link reach of Makerspace's four widest change steps, from 85–88 % of the spec to 45–60 %.
 
-**Bad: naming without linking.** `billing/issue-credit` issues a credit and never links `billing/credit`; `bookings/metering` applies "the member's tier discount" and never links `members/tier`. A change to the credit or the tier puts neither back on the list. A text check found about 130 such missing links among Makerspace's 115 Definitions.
+**Bad: naming without linking.** `billing/issue-credit` issues a credit and never links `billing/credit`; `bookings/metering` applies "the member's tier discount" and never links `members/tier`. A change to the credit or the tier puts neither back on the list. A text check found roughly 130 to 180 such missing links among Makerspace's 115 Definitions.
 
 **Bad: relying through a chain.** 21 Operations say "Refusals at check 7", but only the `Operation` Kind links `order-of-checks`. A change to the order of checks puts the Kind back on the list, not those 21 Operations. Linking `order-of-checks` from each Operation makes it a true hub, which is right: then keep it small and stable.
 
 **A milder case.** 17 of the 24 Definitions that link `members/member` do so only to say that an identifier names an existing member; a new field of the member puts them all back on the list. Split such a part out only when it changes on its own.
 
-**Signal.** The proposed `vet.unlinked_mention` finds a Definition's title or name in another Definition's prose with no link to it; on the Makerspace specs about two-thirds of what it finds are real missing links, and the rest ordinary words and other meanings of a name. The proposed `vet.hub` points at a Definition many link to. Whether they use all of it, or only part, and whether a Definition relies on something it neither links nor names, are the auditor's questions.
+**Signal.** The proposed `vet.unlinked_mention` finds a Definition's title or name in another Definition's prose with no link to it; on the Makerspace specs half to three-quarters of what it finds are real missing links, and the rest ordinary words and other meanings of a name. The proposed `vet.hub` points at a Definition many link to. Whether they use all of it, or only part, and whether a Definition relies on something it neither links nor names, are the auditor's questions.
 
 ## Measures at a glance
 
@@ -185,9 +185,9 @@ CRAP, the change-risk measure for code, is *comp² × (1 − cov)³ + comp*, wit
 | Efferent coupling Ce | Packages a Package depends on | at most 8 | at most 12 | `vet.coupling` |
 | Instability I | Ce / (Ca + Ce) | 0 to 1 | 0 to 1 | `vet.unstable_dependency` |
 | Abstractness A, distance D | Share of Definitions of Kind `Kind`; \|A + I − 1\| | A 0.10 at Root, 0 elsewhere; 4 Packages in the zone of pain | 0.10, 0; 9 in the zone of pain | Proposed in `list --deps`; zone warnings |
-| Volatility × fan-in | Changes of a Definition times what each put on the list | no hub changed | 247 of 468 items from 9 hubs | Later: needs history |
+| Volatility × fan-in | Changes of a Definition times what each put on the list | no hub changed | 248 of 468 items from 9 hubs | Later: needs history |
 | Cohesion | Groups of a Package joined by its own links | none split at c8; `bookings` at w0 and c1, by scope Rules | none split | Read, not warned |
-| Unlinked mentions | A Definition's name in another's prose, with no link | 205 pairs, 65 % real in a sample | 727, 70 % | Proposed `vet.unlinked_mention` |
+| Unlinked mentions | A Definition's name in another's prose, with no link | 233 pairs, 52–65 % real in a sample | 863, 57–70 % | Proposed `vet.unlinked_mention` |
 | Size | Words in a Definition's body | median 88, max 430 | 99, 995 | `vet.definition_size` |
 | Statements | List items and table rows | median 6, max 25 | 7, 67 | Proposed `vet.statements` |
 | Risk | c² × (1 − e)³ + c | no record yet | no record yet | Proposed `vet.risk` |
