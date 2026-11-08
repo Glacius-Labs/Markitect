@@ -1,6 +1,6 @@
 # The record
 
-`internal/run` holds the record of what was verified ([DEC-099](../../docs/concepts/register.md#dec-099-markitect-is-a-tool-with-a-verification-cache), [tooling plan](../../docs/concepts/tooling-plan.md)). Like Go's test cache, it keeps for each Definition the state at which a reviewer last verified it, and so says what is left to verify. The tool supports agent work and does not steer it: it computes, checks and records, and decides nothing about who works when. Whoever drives the agents (a skill, a workflow or a person) starts them and makes every Git step. Nothing here starts or drives an agent, and nothing uses Git ([DEC-096](../../docs/concepts/register.md#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](../../docs/concepts/register.md#dec-097-markitect-uses-no-git)).
+`internal/run` holds the record of what was verified ([DEC-099](../../docs/concepts/register.md#dec-099-a-record-of-what-was-verified), [concept 4.0, §6](../../docs/concepts/v4-concept.md#6-the-record)). Like Go's test cache, it keeps for each Definition the state at which a reviewer last verified it, and so says what is left to verify. The tool supports agent work and does not steer it: it computes, checks and records, and decides nothing about who works when. Whoever drives the agents (a skill, a workflow or a person) starts them and makes every Git step. Nothing here starts or drives an agent, and nothing uses Git ([DEC-096](../../docs/concepts/register.md#dec-096-the-tool-computes-and-checks-a-driver-acts), [DEC-097](../../docs/concepts/register.md#dec-097-markitect-uses-no-git)).
 
 | Package | Role |
 | --- | --- |
@@ -116,7 +116,7 @@ With files in both folders the project has two specs, as when `init` of a newer 
 
 ## What went
 
-The checklist, the stored answers, the work under way in the cache, `gate` with its rows, the certificates, the Result and Findings pages, repair rounds and the builder's report of a spec problem went with 0.21.0 ([DEC-099](../../docs/concepts/register.md#dec-099-markitect-is-a-tool-with-a-verification-cache)). So did three refusals of `gate` during the work: of a changed file the ignore file lists, of a changed harness, `.gitignore` or `settings.json`, and of a symbolic link that leaves the folder. The [tooling plan](../../docs/concepts/tooling-plan.md#what-this-gives-up-and-what-it-keeps) says what that gives up.
+The checklist, the stored answers, the work under way in the cache, `gate` with its rows, the certificates, the Result and Findings pages, repair rounds and the builder's report of a spec problem went with 0.21.0 ([DEC-099](../../docs/concepts/register.md#dec-099-a-record-of-what-was-verified)). So did three refusals of `gate` during the work: of a changed file the ignore file lists, of a changed harness, `.gitignore` or `settings.json`, and of a symbolic link that leaves the folder. [Concept 4.0, §7](../../docs/concepts/v4-concept.md#7-how-sure-we-are) says what the tool does not do.
 
 ## Tests
 

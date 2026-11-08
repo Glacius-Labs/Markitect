@@ -1,16 +1,16 @@
 # Repository layout
 
-This repository holds Markitect's source and its documentation. It is developed as an ordinary software project and keeps no canonical self-model ([DEC-076](../concepts/register.md#dec-076-markitect-is-developed-as-a-regular-software-project)); `.markitect/` paths in code, tests and fixtures belong to target projects. For the layout of a project that uses Markitect, see [the project's Markitect folder](../guides/model-language.md#the-projects-markitect-folder).
+This repository holds Markitect's source and its documentation. It is developed as an ordinary software project and keeps no canonical self-model ([DEC-076](../concepts/register.md#dec-076-markitect-is-developed-as-an-ordinary-software-project)); `.markitect/` paths in code, tests and fixtures belong to target projects. For the layout of a project that uses Markitect, see [the project's Markitect folder](../guides/model-language.md#the-projects-markitect-folder).
 
 | Path | Holds |
 |---|---|
 | `cmd/` | Go entrypoints. `markitect` (the CLI) ships; `markitect-release` is the maintenance command. |
 | `internal/` | Private Go packages of the product and its maintenance services, including the standard Libraries (`internal/libraries`) and the agent skills (`internal/skills`) that the binary embeds. The [code map](code-map.md) lists every Go package of the module, its layer and owning guide; the [rule table](../../internal/tooling/architecture/rules.go) it is generated from states the allowed imports, and the [architecture](../architecture.md) describes the layers and contracts. |
-| `docs/` | Concept and decisions, design, guides, development, current evidence and the archive index [`docs/archive.md`](../archive.md). |
+| `docs/` | The concept and the decisions in force, the vision, guides, development, current evidence and the archive index [`docs/archive.md`](../archive.md). |
 | `tools/` | Independent tools that import no product code: the packaged-source smoke. The oracles and every other evaluation tool were removed on 7 November 2026 ([archive](../archive.md#removed-with-the-evaluation-tools)). |
 | `scripts/` | Maintainer scripts: documentation link check, CI test and flake reports. |
 | `packaging/` | What ships besides the binary: the consumer bootstrap and the distribution guide. |
-| `plugin/` | The Claude Code plugin `markitect`, with its launcher, hook and skill ([DEC-095](../concepts/register.md#dec-095-releases-return-with-a-plugin-and-a-binary-that-updates-itself)). |
+| `plugin/` | The Claude Code plugin `markitect`, with its launcher, hook and skill ([DEC-095](../concepts/register.md#dec-095-releases-a-plugin-and-a-binary-that-updates-itself)). |
 | `.github/` | Manual CI, release and flake-report workflows. |
 
 **Why there is no `src/`.** Markitect is one Go module. Go keeps `cmd/` and `internal/` at the module root, and the source packager refuses a `src/` layout.

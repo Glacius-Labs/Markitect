@@ -1,9 +1,1 @@
 * text=auto eol=lf
-# Preserve the owner-supplied V1 target exactly, including Markdown hard breaks.
-/docs/concepts/sources/v1-target-architecture-20261023.md -text whitespace=-blank-at-eof,-blank-at-eol
-
-# Preserve the owner-supplied V1 concept v0.18 exactly, including Markdown hard breaks. The English translation of the concept (DEC-069) keeps the same hard breaks.
-/docs/concepts/sources/v1-concept-v018-20261024.md -text whitespace=-blank-at-eof,-blank-at-eol
-/docs/concepts/sources/v1-concept-v018-20261024-en.md whitespace=-blank-at-eof,-blank-at-eol
-
-/docs/concepts/sources/v1-scope-clarification-20261023.md -text

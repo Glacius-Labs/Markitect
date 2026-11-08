@@ -1,73 +1,43 @@
 # Concept record
 
-This is the home of Markitect's long-term vision, product-level decisions, clarifications, promises, assumptions, concepts, future enhancements, ideas and open questions. Each is kept with its origin and status. The record exists so that owner decisions are not lost in chats, and so that each new session or reviewer does not have to derive them again. In this record, "owner" means Markitect's product owner, not the owner of an adopting project.
+This folder holds the product's one concept and the owner's decisions in force, so that owner decisions are not lost in chats and each new session or reviewer does not have to derive them again. "Owner" means Markitect's product owner, not the owner of an adopting project.
 
 | Document | Content |
 |---|---|
-| [Concept 4.0](v4-concept.md) | The target, accepted on 7 November 2026 ([DEC-098](register.md#dec-098-concept-40-is-the-target)), and what Main implements: the spec, a tool that checks the spec and records what was verified, as revised by [DEC-099](register.md#dec-099-markitect-is-a-tool-with-a-verification-cache), and a thin default driver, in which the user's own session starts a builder and a reviewer agent and makes the commit; no container and no Git in the tool |
-| [Plan: Markitect as a tool, with a verification cache](tooling-plan.md) | Decided on 7 November 2026 ([DEC-099](register.md#dec-099-markitect-is-a-tool-with-a-verification-cache)); steps 1 and 2 released as 0.21.0 and 0.22.0, with the skills, roles and routines of [DEC-100](register.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role): Markitect supports agent work and does not steer it. A record of what was verified, like Go's test cache, replaces the certificate, the work state, `gate` and `answer`; the commands are `check`, `vet`, `list`, `doc`, `status`, `mark` and `tidy`; the skills are design, build, review, cleanup, bughunt, audit and schedule, with four roles whose rights a hook holds |
-| [What `vet` measures: the plan](vet-plan.md) | The plan's record: proposed on 7 November 2026, decided with changes on 8 November 2026 ([DEC-102](register.md#dec-102-what-vet-measures)) and released as 0.23.0: unlinked mentions as a note the auditor triages, `vet.hub` in place of `vet.reach`, Martin's abstractness and distance in `list --deps`, notes that `--strict` shows without changing the exit code, hotspots from the record's revisions, and no `std/Value`; from the [measurements](../validation/spec-design-measures-20261107.md) behind the [guide to a good spec](../guides/good-spec.md) |
-| [Concept 3.0](v3-concept.md) | The target from 4 to 7 November 2026 ([DEC-091](register.md#dec-091-concept-30-is-the-target)): six problems, the spec, and one implementer and one reviewer per Command with no Manager tree. Its rebuild is kept on the branch `archive/main-concept-3-20261106` |
-| [Concept 2.0](v2-concept.md) | The record of the Manager tree, and the target from 28 October until 4 November 2026 ([DEC-086](register.md#dec-086-concept-20-is-the-target)) |
-| [V1 concept 1.0](v1-concept.md) | What Main implemented until step T1, and the record of V1; the target until 28 October 2026: scope, principles, organization, Run, workflow, harness, acceptance and decisions D1–D18 ([DEC-068](register.md#dec-068-v1-concept-10)) |
-| [Register](register.md) | All entries with ID, status, origin and links, and the mapping of earlier collections |
-| [Origin and rationale](../vision.md#origin-and-rationale) | The owner's originating project, causal sequence, problems, concepts and assumptions, connected to the existing register; a section of the vision |
-| [Sources](sources/README.md) | Earlier owner statements kept verbatim with provenance, including the origin account, product description, idea review and snapshots of the Concepts and Ideas chats' collections |
+| [Concept 4.0](v4-concept.md) | The one description of the product, which Main builds: the spec, the tool that checks it and records what was verified, the skills and roles, the harness, and how sure each guarantee is |
+| [Register](register.md) | The decisions in force, grouped by topic, with promises, assumptions, concepts, enhancements, open questions and ideas |
+| [Sources](sources/README.md) | The few verbatim owner statements that pages on Main still cite |
+
+Earlier concepts (V1 concept 1.0, concepts 2.0 and 3.0), the plans that built concept 4.0, the full register before its consolidation and the other owner sources are in the [archive](../archive.md#consolidated-on-8-november-2026).
 
 ## Before assessing or redirecting Markitect
 
-Read [Markitect in brief](../vision.md#markitect-in-brief), [Common misreadings](../vision.md#common-misreadings) and the [register](register.md) first. This applies to people and agents alike.
+Read [Markitect in brief](../vision.md#markitect-in-brief), [Common misreadings](../vision.md#common-misreadings) and the [register](register.md) first. This applies to people and agents alike. Do not reopen an entry without new evidence; if you have such evidence, add an open question that cites it and leave the entry unchanged until the owner decides.
 
-Accepted and clarified entries are the current basis. Do not reopen them without new evidence. If you have such evidence, add an open question that cites it and leave the entry unchanged until the owner decides.
-
-## How this record relates to other documents
-
-The [documentation map](../README.md#canonical-status-and-evidence-owners) names the owner of every other subject, from the current design documents to the original strategy bundles in the archive. The [vision](../vision.md) holds the accepted thesis as readable prose and links here for individual entries.
-
-Summaries in the vision and other documents may restate entries. If a summary differs from an entry, the entry and its source govern; correct the summary.
+If a summary elsewhere differs from an entry, the entry governs; correct the summary.
 
 ## Entry types
 
 | Prefix | Type | Meaning |
 |---|---|---|
-| `VIS` | Long-term vision | A picture of where the owner wants Markitect to go, beyond the current thesis. Planning follows the decisions that govern it. |
-| `DEC` | Decision, clarification or endorsed direction | The owner has decided something, confirmed how the idea is to be read, or endorsed a direction whose plan is still pending. The status says which. |
-| `PRM` | Promise | A target outcome Markitect is built to deliver. It is to be validated, not assumed. |
-| `ASM` | Assumption or hypothesis | Something the idea relies on, with its evidence status. |
-| `CPT` | Concept | A design concept that shapes the method. |
-| `ENH` | Future enhancement | An agreed direction for product work, not yet scheduled. |
-| `IDEA` | Idea | A suggestion that has not been evaluated yet. |
-| `OQ` | Open question | A question that blocks or shapes a decision. |
+| `DEC` | Decision | The owner has decided something or confirmed how the idea is to be read |
+| `PRM` | Promise | A target outcome Markitect is built to deliver; to be validated, not assumed |
+| `ASM` | Assumption | Something the idea relies on, with its evidence |
+| `CPT` | Concept | A design concept that shapes the method |
+| `ENH` | Enhancement | An agreed direction for product work, not yet scheduled |
+| `OQ` | Open question | A question that blocks or shapes a decision |
+| `IDEA`, `VIS` | Idea, long-term vision | Raised by the owner, or proposed and marked as a proposal; recorded and not planned |
 
-## Status vocabulary
-
-| Status | Meaning |
-|---|---|
-| Accepted | Decided by the owner |
-| Clarified | The owner confirmed this reading of the idea |
-| Endorsed; plan pending (or design pending) | The owner supports the direction; the plan or design is still open |
-| Accepted direction | Agreed product direction |
-| Accepted problem; approach open | The problem is agreed; the solution is still open |
-| Proposed | Suggested by an agent or reviewer; the owner has not evaluated it yet |
-| Owner idea | Raised by the owner; not yet evaluated |
-| Owner statement | Said by the owner, possibly relayed by another chat; the entry names the relay |
-| Parked | Recorded under the planning hold in DEC-011; not planned |
-| Target | A promise to validate |
-| Hypothesis, Owner experience, Owner observation | The evidence status of an assumption |
-| Open | Not yet answered |
-| Superseded | Replaced by a newer entry; it links to its successor |
-| Rejected | Declined, with the reason |
-
-This record does not track whether work is scheduled or implemented. When an enhancement is scheduled or delivered, add a link to its work item or to the document that now owns the behavior. The delivery plan, candidate PRs and architecture own their respective scopes.
+The register lists only what holds. An entry says what holds, since when, and which earlier entries it consolidates; it does not track whether work is scheduled or built. The delivery plan and PRs own that.
 
 ## Adding and changing entries
 
-1. **Record the decision, not the conversation.** A register entry states what the owner decided and when, in plain words. It needs no verbatim quote and no source file, and other documents do not attribute their rules to the owner. The files under `sources/` stay as the record of earlier decisions.
-2. **One entry per fact.** Link to the owning document instead of copying its content. The register gives the decision and its origin; the vision, architecture, roadmap and measurement keep their own subjects.
-3. **Never overwrite silently.** A change of meaning gets a new entry, or the old entry is marked Superseded with a link to its successor. Keep the old entry.
-4. **Only the owner decides.** An agent proposal enters as an `IDEA`, an `OQ` or a part of an entry that is explicitly labeled as a proposal. It stays that way until the owner decides. An agent's agreement, review or report is not acceptance.
-5. **Recording is not scheduling.** An entry does not authorize implementation. The delivery plan and explicit package dispatches own scheduling; candidate evidence lives in PRs.
-6. **Keep summaries in step.** When an entry changes, also correct any summary of it, for example in the vision's brief or its table of misreadings.
-7. **Ideas move on.** When an idea is evaluated, it becomes a decision, an enhancement or a rejected entry. Its ID stays in the cross-references.
+1. **Record the decision, not the conversation.** An entry states what the owner decided and when, in plain words. It needs no verbatim quote and no source file, and other documents do not attribute their rules to the owner.
+2. **One entry per fact.** Link to the owning document instead of copying its content.
+3. **Never change meaning silently.** A new decision gets a new entry, the next free number of its type. When it replaces an entry, the old entry leaves the register and the new one says what it consolidates or supersedes; the full text of every earlier entry stays at its permalink in the archive. A restatement that keeps the meaning, as in a consolidation, keeps the ID and an anchor for every ID it absorbs, so old links still land.
+4. **Only the owner decides.** An agent proposal enters as an `OQ` or an explicitly labeled proposal, and stays that way until the owner decides. An agent's agreement, review or report is not acceptance.
+5. **Recording is not scheduling.** An entry does not authorize implementation; the delivery plan and explicit dispatches do.
+6. **Keep summaries in step.** When an entry changes, correct concept 4.0 and any summary of it, for example in the vision's brief or its table of misreadings, in the same change.
+7. **History moves out.** When an entry is superseded or only records a step on the way, it leaves the register in the change that supersedes it.
 
-Write entries, and all other documentation, in English ([DEC-069](register.md#dec-069-documentation-is-written-in-english)). Quotes in an existing source keep their original language; as noted in the DEC-069 scope notes, add an English translation when a source serves as a reference.
+Write entries, and all other documentation, in English ([DEC-069](register.md#dec-069-documentation-is-written-in-english)).

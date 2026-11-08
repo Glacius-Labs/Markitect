@@ -1,8 +1,8 @@
 # K plus impact, the gate and a blind checker: dispatch — 3 November 2026
 
-> The arms this record ran, `one_agent_arm.py` and `review_arm.py`, are not on Main. [Concept 3.0](../concepts/v3-concept.md#13-how-we-know-it-works) ends these comparisons, so their code stays at commit `4d1d25ffb` on the branch `dev/makerspace-large`.
+> The arms this record ran, `one_agent_arm.py` and `review_arm.py`, are not on Main. [Concept 3.0](https://github.com/Glacius-Labs/Markitect/blob/d85e0fa1302ec95d1c82c6d2c088bf2ff34b6557/docs/concepts/v3-concept.md#13-how-we-know-it-works) ends these comparisons, so their code stays at commit `4d1d25ffb` on the branch `dev/makerspace-large`.
 
-A small test, asked for on 3 November 2026 after the [checker test](checker-test-20261103.md), under the standing run approval of 28 October 2026 ([build workstream, Decisions](../workstreams/build.md#decisions)). On Makerspace W0, S's item-by-item maker costs 1.8 to 3.5 times K's W0 and its checker about 0.5. On c3 and c5 the maker found the model problem and the checker only confirmed it. This test takes that maker away, to show what it really buys. **These runs are not counted and prove nothing on their own.** The new project stays sealed, and concept 2.0 stays as it is.
+A small test, asked for on 3 November 2026 after the [checker test](https://github.com/Glacius-Labs/Markitect/blob/d85e0fa1302ec95d1c82c6d2c088bf2ff34b6557/docs/validation/checker-test-20261103.md), under the standing run approval of 28 October 2026 ([build workstream, Decisions](https://github.com/Glacius-Labs/Markitect/blob/d85e0fa1302ec95d1c82c6d2c088bf2ff34b6557/docs/workstreams/build.md#decisions)). On Makerspace W0, S's item-by-item maker costs 1.8 to 3.5 times K's W0 and its checker about 0.5. On c3 and c5 the maker found the model problem and the checker only confirmed it. This test takes that maker away, to show what it really buys. **These runs are not counted and prove nothing on their own.** The new project stays sealed, and concept 2.0 stays as it is.
 
 **Status: approved by Build on 3 November 2026, before the first launch, and run the same night.** The reading is [Amendment 1](#amendment-1-the-reading-3-november-2026).
 
@@ -20,7 +20,7 @@ A round after a refusal is a fresh session of K's prompt in the same folder, wit
 ## What it has to answer
 
 1. **Does the checker stop a contradiction K would land?** Two launches of c3 may never show K landing, so the checker also reviews K's real landed c3 r2 from the counted series, three times. That is the only real wrong work in the series that a checker can review. M's rows with failures did not land, so they hold no submission. K's C9 failures are three census cases at a step that must change nothing, which no item shows, and impact stops the arm there.
-2. **Does it still catch the six planted bugs without the maker's claims?** The same planted submission as the [checker test](checker-test-20261103.md), three reviews, no verdicts in the prompt.
+2. **Does it still catch the six planted bugs without the maker's claims?** The same planted submission as the [checker test](https://github.com/Glacius-Labs/Markitect/blob/d85e0fa1302ec95d1c82c6d2c088bf2ff34b6557/docs/validation/checker-test-20261103.md), three reviews, no verdicts in the prompt.
 3. **Does it stop good work?** The clean submission, three reviews; c6 and W0, two launches each.
 4. **What does W0 cost,** against about 1.5 of K's W0?
 
@@ -100,7 +100,7 @@ No answer in r1 names year 0000; `values`, `argument-values` and `time` are all 
 
 **W0 r1 was refused once, for a real fault:** K's README said the example's invoice holds two lines, and the checker ran the session and found three. The maker fixed it in 13 seconds. It is the first fault any checker has found in real maker work on Makerspace, and it is a small one that no hidden case sees.
 
-**What S's item-by-item maker buys,** on these launches. Each figure is a multiple of K's W0, and S's come from the [checker test](checker-test-20261103.md) and the [pilot](arms-s-f-pilot-20261102.md):
+**What S's item-by-item maker buys,** on these launches. Each figure is a multiple of K's W0, and S's come from the [checker test](https://github.com/Glacius-Labs/Markitect/blob/d85e0fa1302ec95d1c82c6d2c088bf2ff34b6557/docs/validation/checker-test-20261103.md) and the [pilot](https://github.com/Glacius-Labs/Markitect/blob/d85e0fa1302ec95d1c82c6d2c088bf2ff34b6557/docs/validation/arms-s-f-pilot-20261102.md):
 
 | Case | K | KC | S |
 |---|---|---|---|

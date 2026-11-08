@@ -1,10 +1,10 @@
 # What makes a good spec
 
-A Markitect spec is judged like code ([founding intent](../concepts/sources/founding-intent-20261026.md)). This guide says what a well designed spec looks like, borrowing the principles that keep code changeable, and how to tell. It is practical advice in the manner of *Effective Go*, not a rule set: granularity stays the author's choice ([DEC-005](../concepts/register.md#dec-005-model-granularity-is-the-authors-responsibility)), and `markitect check` alone decides whether a spec is valid. The [model language guide](model-language.md) owns the language; this page owns how to use it well. Its numbers come from the [measurements of 7 November 2026](../validation/spec-design-measures-20261107.md) on the two archived Makerspace specs, 115 and 419 Definitions.
+A Markitect spec is judged like code ([founding intent](../concepts/sources/founding-intent-20261026.md)). This guide says what a well designed spec looks like, borrowing the principles that keep code changeable, and how to tell. It is practical advice in the manner of *Effective Go*, not a rule set: granularity stays the author's choice ([DEC-079](../concepts/register.md#dec-079-the-spec-is-as-explicit-as-good-documentation)), and `markitect check` alone decides whether a spec is valid. The [model language guide](model-language.md) owns the language; this page owns how to use it well. Its numbers come from the [measurements of 7 November 2026](../validation/spec-design-measures-20261107.md) on the two archived Makerspace specs, 115 and 419 Definitions.
 
 ## Why design matters here: links are the build graph
 
-Each Definition is a unit of verification, and its inputs are its own text, its Kind, the Definitions it links to, its registry rows and the evidence ([DEC-099](../concepts/register.md#dec-099-markitect-is-a-tool-with-a-verification-cache)). So the links say what a change puts back on the list of `markitect status`. A change has two costs:
+Each Definition is a unit of verification, and its inputs are its own text, its Kind, the Definitions it links to, its registry rows and the evidence ([DEC-099](../concepts/register.md#dec-099-a-record-of-what-was-verified)). So the links say what a change puts back on the list of `markitect status`. A change has two costs:
 
 - **Verification:** the changed Definition and every Definition that links to it, or is of it as Kind, go back on the list. That is one step of links, its **fan-in**.
 - **Review by the author:** what may need to change in the spec with it, which is everything that reaches it along the links, its **every-link reach**.
@@ -102,11 +102,11 @@ CRAP, the change-risk measure for code, is *comp² × (1 − cov)³ + comp*, wit
 
 **Bad and good.** No record of a real build exists for Makerspace yet, so there are no measured examples. Without any record, 73 of its 115 Definitions would score above 30, which is why the measure only looks at Definitions recorded `ok` or `skip`.
 
-**Signal.** `vet.risk` waits until the record of real builds can calibrate it ([DEC-102](../concepts/register.md#dec-102-what-vet-measures)). The reviewer already records the counts it rests on, with `markitect mark … --cases N --covered M` ([the `vet` plan](../concepts/vet-plan.md#ai-assisted-measures)).
+**Signal.** `vet.risk` waits until the record of real builds can calibrate it ([DEC-102](../concepts/register.md#dec-102-what-vet-measures)). The reviewer already records the counts it rests on, with `markitect mark … --cases N --covered M`.
 
 ## Accidental complexity
 
-**Rule.** Write what good documentation of the project would state, and nothing more ([DEC-079](../concepts/register.md#dec-079-the-model-is-as-explicit-as-good-documentation)). No Definition that only points elsewhere, no Kind used once, no Package that only adds a level, no restating of a fact another Definition holds.
+**Rule.** Write what good documentation of the project would state, and nothing more ([DEC-079](../concepts/register.md#dec-079-the-spec-is-as-explicit-as-good-documentation)). No Definition that only points elsewhere, no Kind used once, no Package that only adds a level, no restating of a fact another Definition holds.
 
 **Why.** Every Definition is an item to verify and every link one to keep true. What the domain does not need is cost without value, for the reviewer and the reader.
 
@@ -157,7 +157,7 @@ CRAP, the change-risk measure for code, is *comp² × (1 − cov)³ + comp*, wit
 - `blocked`: flag
 ```
 
-**Good: one Definition per format, linked where it is used.** Split into thirteen Definitions at Root, the lowest common parent of their users, a change to one format lists between 2 and 52 Definitions, a median of 5. Each format is a `std/Concept`; the owner decided against a Kind for values ([`vet` plan](../concepts/vet-plan.md#a-new-std-kind-value)). A format only one Package uses belongs in that Package.
+**Good: one Definition per format, linked where it is used.** Split into thirteen Definitions at Root, the lowest common parent of their users, a change to one format lists between 2 and 52 Definitions, a median of 5. Each format is a `std/Concept`; the owner decided against a Kind for values ([DEC-102](../concepts/register.md#dec-102-what-vet-measures)). A format only one Package uses belongs in that Package.
 
 ```markdown
 **Fields:**
@@ -194,4 +194,4 @@ CRAP, the change-risk measure for code, is *comp² × (1 − cov)³ + comp*, wit
 | Statements | List items and table rows | median 6, max 25 | 7, 67 | `vet.statements` |
 | Risk | c² × (1 − e)³ + c | no record yet | no record yet | `vet.risk` waits for data |
 
-[The model language guide](model-language.md#vet-warnings-and-notes) lists `vet`'s warnings and notes with their thresholds, and the [`vet` plan](../concepts/vet-plan.md) records why each is a warning, a note, or not built yet.
+[The model language guide](model-language.md#vet-warnings-and-notes) lists `vet`'s warnings and notes with their thresholds, [DEC-102](../concepts/register.md#dec-102-what-vet-measures) records which are warnings, which are notes and which are not built yet, and the archived [`vet` plan](https://github.com/Glacius-Labs/Markitect/blob/d85e0fa1302ec95d1c82c6d2c088bf2ff34b6557/docs/concepts/vet-plan.md) says why.

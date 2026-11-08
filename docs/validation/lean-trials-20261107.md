@@ -1,6 +1,6 @@
 # Lean plan step 3: trials of the lean flow, 7 November 2026
 
-Step 3 of the [lean plan](../concepts/lean-tool-plan.md#order-of-work) switched the default driver to the lean commands and released it as 0.19.0 on 7 November 2026. This record is the trials that decide whether step 4, removing the Run, landing and every use of Git in the product, may go ahead. It is bounded evidence on three small changes of one project, not a rate.
+Step 3 of the [lean plan](https://github.com/Glacius-Labs/Markitect/blob/d85e0fa1302ec95d1c82c6d2c088bf2ff34b6557/docs/concepts/lean-tool-plan.md#order-of-work) switched the default driver to the lean commands and released it as 0.19.0 on 7 November 2026. This record is the trials that decide whether step 4, removing the Run, landing and every use of Git in the product, may go ahead. It is bounded evidence on three small changes of one project, not a rate.
 
 ## Question
 
@@ -107,7 +107,7 @@ Tokens are the session's `modelUsage`, which includes the nested agents (the tra
 2. **Recommended: the builder records the problem with the tool, and `gate` has a reviewer confirm it** before it tells the owner, without counting a repair round. It keeps "no agent decides about its own work" and would have saved lean B a builder and a review.
 3. **Leave it:** the end is right, at about four times the old flow's tokens on such a change.
 
-**Decided on 7 November 2026:** the owner chose way 2, the recommended one. It is decision 7 of the [lean plan](../concepts/lean-tool-plan.md#decisions-for-the-owner), and step 4 brings it in before `stop` goes.
+**Decided on 7 November 2026:** the owner chose way 2, the recommended one. It is decision 7 of the [lean plan](https://github.com/Glacius-Labs/Markitect/blob/d85e0fa1302ec95d1c82c6d2c088bf2ff34b6557/docs/concepts/lean-tool-plan.md#decisions-for-the-owner), and step 4 brings it in before `stop` goes.
 
 ## Verdict
 
