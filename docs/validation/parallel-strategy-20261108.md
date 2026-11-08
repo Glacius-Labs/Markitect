@@ -31,7 +31,7 @@ It ran from 13:00:14 to 13:03:17 UTC and exited 0. The workflow took 155 seconds
 - conflicts, uncommitted work, a builder that changed nothing, and a strand the merge step leaves out;
 - a builder that names a wrong branch, and steps that return nothing.
 
-Mutations of the workflow that undo each fix make it fail. `internal/bootstrap` tests the line `init` and `update` add to `.gitignore`.
+Mutations of the workflow that undo each fix were run, and each made it fail. `internal/bootstrap` tests the line `init` and `update` add to `.gitignore`.
 
 ## Limits
 
