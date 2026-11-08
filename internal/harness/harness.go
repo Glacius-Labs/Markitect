@@ -69,6 +69,10 @@ var Strategies = []string{Auto, Sequential, Parallel}
 // init installs as .claude/workflows/markitect-parallel.js.
 const ParallelWorkflow = "markitect-parallel"
 
+// ownPrefix starts the name of every file init and update ship and keep, so a
+// custom workflow may not start with it.
+const ownPrefix = "markitect-"
+
 // Built-in values: the agents as the binary ships their files, and auto.
 const (
 	defaultModel    = "sonnet"
@@ -105,8 +109,8 @@ func CheckKey(key string) error {
 	case len(parts) == 3 && parts[0] == "agents" && slices.Contains(Roles, parts[1]) && (parts[2] == "model" || parts[2] == "effort"):
 	case len(parts) == 2 && parts[0] == "strategy" && (parts[1] == "default" || slices.Contains(Skills, parts[1])):
 	case len(parts) == 2 && parts[0] == "workflows":
-		if !workflowName.MatchString(parts[1]) || slices.Contains(Strategies, parts[1]) || parts[1] == ParallelWorkflow {
-			return fmt.Errorf("%s: a workflow's name is lower-case letters, digits and hyphens, and not auto, sequential, parallel or %s", key, ParallelWorkflow)
+		if !workflowName.MatchString(parts[1]) || slices.Contains(Strategies, parts[1]) || strings.HasPrefix(parts[1], ownPrefix) {
+			return fmt.Errorf("%s: a workflow's name is lower-case letters, digits and hyphens, not auto, sequential or parallel, and does not start with %s, which init and update keep for the files they ship", key, ownPrefix)
 		}
 	default:
 		return fmt.Errorf("unknown key %q; the keys are %s", key, keyForms)
@@ -285,31 +289,66 @@ func (f *File) Unset(key string) bool {
 	if top == nil {
 		return false
 	}
-	var remove func(n *yaml.Node, parts []string) bool
-	remove = func(n *yaml.Node, parts []string) bool {
-		for j := 0; j+1 < len(n.Content); j += 2 {
-			if n.Content[j].Value != parts[0] {
-				continue
-			}
-			v := n.Content[j+1]
-			if len(parts) == 1 {
-				if v.Kind != yaml.ScalarNode {
-					return false
-				}
-				n.Content = append(n.Content[:j], n.Content[j+2:]...)
-				return true
-			}
-			if v.Kind != yaml.MappingNode || !remove(v, parts[1:]) {
-				return false
-			}
-			if len(v.Content) == 0 {
-				n.Content = append(n.Content[:j], n.Content[j+2:]...)
-			}
-			return true
-		}
-		return false
+	removed, orphan := unset(top, strings.Split(key, "."))
+	switch {
+	case orphan == "":
+	case len(top.Content) > 0:
+		top.FootComment = joinComments(top.FootComment, orphan)
+	default:
+		f.doc.HeadComment = joinComments(f.doc.HeadComment, orphan)
 	}
-	return remove(top, strings.Split(key, "."))
+	return removed
+}
+
+// unset removes a key from a mapping, and the mappings it leaves empty. It
+// returns whether it removed one, and the comments above the keys it removed that
+// it found no key below to keep them on, so that the owner's notes stay.
+func unset(n *yaml.Node, parts []string) (bool, string) {
+	for j := 0; j+1 < len(n.Content); j += 2 {
+		k, v := n.Content[j], n.Content[j+1]
+		if k.Value != parts[0] {
+			continue
+		}
+		orphan := ""
+		if len(parts) == 1 {
+			if v.Kind != yaml.ScalarNode {
+				return false, ""
+			}
+		} else {
+			if v.Kind != yaml.MappingNode {
+				return false, ""
+			}
+			removed, below := unset(v, parts[1:])
+			if !removed {
+				return false, ""
+			}
+			if len(v.Content) > 0 {
+				if below != "" {
+					v.FootComment = joinComments(v.FootComment, below)
+				}
+				return true, ""
+			}
+			orphan = below
+		}
+		orphan = joinComments(k.HeadComment, orphan)
+		n.Content = append(n.Content[:j], n.Content[j+2:]...)
+		if orphan != "" && j < len(n.Content) {
+			n.Content[j].HeadComment = joinComments(orphan, n.Content[j].HeadComment)
+			orphan = ""
+		}
+		return true, orphan
+	}
+	return false, ""
+}
+
+func joinComments(a, b string) string {
+	switch {
+	case a == "":
+		return b
+	case b == "":
+		return a
+	}
+	return a + "\n" + b
 }
 
 // Empty says whether the file sets nothing.

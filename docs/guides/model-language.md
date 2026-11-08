@@ -150,16 +150,17 @@ Its patterns are the registry's, not Git's: they start at the top of the project
 
 It can't merge with `.gitignore`, because the two answer different questions: `.gitignore` says what Git does not track, and this file says what Git tracks and no Package owns. A file Git ignores needs no line here.
 
-The tool accounts for what `init` installs by itself: `AGENTS.md`, `CLAUDE.md`, `.claude/settings.json`, the `markitect-*` skills and agents, and `.gitignore`, and for the worktrees Claude Code keeps under `.claude/worktrees/`. They need no line here and no registry entry, though a registry page may list them. The ignore file lies under `.markitect/`, so no subagent but the architect may change it ([the hook](../../internal/run/README.md#the-hook)); a file it lists is no input of any Definition.
+The tool accounts for what `init` installs by itself: `AGENTS.md`, `CLAUDE.md`, `.claude/settings.json`, the `markitect-*` skills, agents and workflows, and `.gitignore`, and for the worktrees Claude Code keeps under `.claude/worktrees/`. They need no line here and no registry entry, though a registry page may list them. The ignore file lies under `.markitect/`, so no subagent but the architect may change it ([the hook](../../internal/run/README.md#the-hook)); a file it lists is no input of any Definition.
 
 ### Model
 
-`.markitect/manifest.yaml` may also name the `model` of Markitect's agents; `init` and `update` write it into their agent files. Without it they use `sonnet`, as their agent files say, at effort `high`.
+The model and effort of Markitect's agents are set in the harness configuration, `.markitect/harness.yaml` for the project and `~/.markitect/harness.yaml` for all of a user's projects, with `markitect config` ([strategies and configuration](project-workflow.md#strategies-and-configuration)); `init`, `update` and `config` write them into the agent files. Without it the agents use `sonnet` at effort `high`, as their files say. A manifest of an earlier release that names `model` is an error (`manifest.model`) until `markitect update` or `init` moves it there.
 
 ```yaml
-libraries:
-  std: 1.0.0
-model: opus
+# .markitect/harness.yaml
+agents:
+  builder:
+    model: opus
 ```
 
 ## Commands
@@ -182,7 +183,7 @@ The fields of each document:
 | `vet` | `diagnostics` |
 | `list` | `packages`: `path`, `name`, `parent`, `definitions` (`id`, `title`, `kind`, `file`) and, with `--deps`, each Definition's `links` and the Package's `deps` (`afferent`, `efferent`, `instability`, `depends_on` with the `uses` behind each edge: `from`, `target`, `via` (`link` or `kind`), `file`, `line`) |
 | `doc` | `definition`: `id`, `title`, `kind`, `file`, `links`, `package`, `library`, `text`, `linked_from`, `realized_by`, `record`; or `package`: `path`, `name`, `parent`, `children`, `page`, `paths`, `definitions`, `linked_from`, `files`; or, for a target that is neither, `diagnostics` (`doc.unknown`) |
-| `status` | `clean`, `definitions`, `spec_errors`, `realization_errors`, `packages` (each Package of the spec, by name: `package`, `definitions`, `items` and `spec_problems` on the list, and `depends_on`, the Packages its Definitions link to, an ancestor included, which `list --deps` leaves out), `items` (`definition`, `title`, `state`, `fingerprint`, `changes`, `verdict`, `why`, `verdicts`, `look`), `diagnostics` (the spec's errors, the realization's, and `record.unreadable` for each line of the record markitect cannot read), `skipped`, `unreadable_lines` |
+| `status` | `clean`, `definitions`, `spec_errors`, `realization_errors`, `packages` (each Package of the spec, by name: `package`, `definitions`, `items` and `spec_problems` on the list, and `depends_on`, the Packages it depends on as `list --deps` has them, where a link to an ancestor is implicit), `items` (`definition`, `title`, `state`, `fingerprint`, `changes`, `verdict`, `why`, `verdicts`, `look`), `diagnostics` (the spec's errors, the realization's, and `record.unreadable` for each line of the record markitect cannot read), `skipped`, `unreadable_lines` |
 | `mark` | `recorded`, `item`, `verdict`, `message` |
 | `config` | `values` (`key`, `value`, `origin`: `built-in`, `user` or `project`, `file`, `via`), `problems` |
 

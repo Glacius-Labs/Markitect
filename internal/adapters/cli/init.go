@@ -83,6 +83,17 @@ func (c CLI) init(_ context.Context, args []string) (int, error) {
 			return code, err
 		}
 	}
+	// An earlier manifest's model for the agents moves to the harness
+	// configuration first, so that the agents get it (DEC-103).
+	proj, err := readProjectHarness(ws)
+	if err != nil {
+		return Misused, err
+	}
+	if _, moved, err := moveManifestModel(ws, proj, false); err != nil {
+		return Misused, err
+	} else if len(moved) > 0 {
+		fmt.Fprintf(c.Stdout, "moved the agents' model from %s to %s\n", project.ManifestFile, project.HarnessFile)
+	}
 	cfg, err := harnessConfig(ws)
 	if err != nil {
 		return Misused, err
@@ -374,7 +385,14 @@ func (c CLI) writeLock(ws Workspace) (int, error) {
 	if err != nil {
 		return Misused, fmt.Errorf("read the manifest: %w; run markitect init", err)
 	}
-	manifest, ds := model.ParseManifest(project.ManifestFile, data)
+	manifest, parsed := model.ParseManifest(project.ManifestFile, data)
+	// An earlier manifest's model is no matter of the lock: update moves it.
+	var ds model.Diagnostics
+	for _, d := range parsed {
+		if d.Code != model.CodeManifestModel {
+			ds = append(ds, d)
+		}
+	}
 	// The same files the walk finds, as check reads them.
 	files, err := ws.Files()
 	if err != nil {

@@ -184,30 +184,30 @@ Each skill that starts agents runs by a strategy: build, review, cleanup, bughun
 | `parallel` | The shipped workflow `.claude/workflows/markitect-parallel.js` |
 | any other name | A custom workflow, which `workflows.NAME` names |
 
-**`auto` chooses parallel** when `status` lists more than about 30 items in at least two Packages, in a Git repository. Cleanup, bughunt and audit look at the whole project, so they count the spec's Definitions instead. 30 is the size at which DEC-100 already split a review, so one number rules both. In the [lean trials](../validation/lean-trials-20261107.md) one builder and one reviewer settled change steps of 21 to 64 items in one context, while a whole first build, such as Makerspace's 113 Definitions, is where one context runs short. Below it, a parallel run's fixed cost, a worktree of its own, a merge per batch of strands and a reviewer per strand, buys little, and with one Package there is nothing to split.
+**`auto` chooses parallel** when `status` lists more than about 30 items in at least two Packages; build, cleanup and bughunt need a Git repository for it. Cleanup, bughunt and audit look at the whole project, so they count the spec's Definitions instead. 30 is the size at which DEC-100 already split a review, so one number rules both. In the [lean trials](../validation/lean-trials-20261107.md) one builder and one reviewer settled change steps of 21 to 64 items in one context, while a whole first build, such as Makerspace's 113 Definitions, is where one context runs short. Below it, a parallel run's fixed cost, a worktree of its own, a merge per batch of strands and a reviewer per strand, buys little, and with one Package there is nothing to split.
 
 ### The parallel driver
 
-The workflow takes the args `{mode, focus, all}`, the mode being build, cleanup, bughunt, review or audit. A workflow script has no shell and reads no file, so a plain agent reads `markitect status --json` for it, and does its Git steps.
+The workflow takes the args `{mode, into, focus, all}`. The mode, build, cleanup, bughunt, review or audit, is required; `into` names the branch the work comes back to, and a mode that changes code refuses to start outside a worktree or on that branch. A workflow script has no shell and reads no file, so a plain agent reads `markitect status --json` for it, and does its Git steps.
 
-- **Strands per Package.** `status --json` gives each Package's items, spec-problems and Definitions, and the Packages it depends on: those `list --deps` names, and an ancestor its Definitions link to. A Package whose items are all spec-problems gets no strand.
+- **Strands per Package.** `status --json` gives each Package's items, spec-problems and Definitions, and the Packages it depends on as `list --deps` has them, where a link to an ancestor is implicit. A Package whose items are all spec-problems gets no strand.
 - **Waves along the dependencies,** so that what is depended on comes first. A wave holds the Packages whose dependencies among those with work are done; a spec with a cycle between Packages does not compile.
-- **Builders in parallel,** each in a worktree of its own, with the message "Build what markitect status lists in Package P." The builder works only on that Package's items and files, and starts its reviewer with the same Package. At most 8 strands run at once, since a strand is a builder and its reviewer, and Claude Code runs at most 20 subagents of a session at once.
-- **Shared files go to Root's strand,** last and alone. A strand that needs a change in a file outside its Package, such as `go.mod`, the README or CI, names it; Root's strand makes it, with Root's own items and the errors in the realization.
+- **Builders in parallel,** each in a worktree of its own, with the message "Build what markitect status lists in Package P." The builder works only on that Package's items and files, and starts its reviewer with the same Package. At most 8 strands run at once, since a strand is a builder and its reviewer, and Claude Code runs at most 16 workflow agents and 20 subagents of a session at once.
+- **Shared files go to Root's strand,** last and alone; no Package depends on Root, since every Package lies below it. A strand that needs a change in a file outside its Package, such as `go.mod`, the README or CI, names it; Root's strand makes it, with Root's own items and the errors in the realization.
 - **After each batch** the plain agent commits each strand's worktree on its branch, merges the branches into the run's branch, removes the worktrees and runs `status` again. A strand it cannot merge it leaves on its branch, and the driver reports it.
-- **Rounds** repeat until `status` lists nothing a builder can settle, or three rounds in a row leave the list no shorter, as DEC-100's loops do. The driver returns how it stopped, what is left per Package and the strands it did not merge.
+- **Rounds** repeat until `status` lists nothing a builder can settle, or three rounds in a row leave the list no shorter than it has been, as DEC-100's loops do. The driver returns how it stopped, what is left per Package and the strands it did not merge. A step that returns nothing, as when the owner stops an agent, ends the run with that report.
 
 | Mode | Strands |
 |---|---|
 | build | Rounds of builder strands, as above |
 | cleanup | One round: every Package with Definitions, "Clean up Package P." |
 | bughunt | One reviewer per Package hunts, "Hunt bugs in Package P", and records; the plain agent commits the record; then rounds of builder strands |
-| review | One reviewer per Package with items, in the session's folder; no worktree |
+| review | One reviewer per Package with items it can settle, every Package with `all`, in the session's folder; no worktree |
 | audit | One auditor per Package and one that looks only for contradictions between Packages; the session merges their findings for the owner |
 
 **The session's part.** Before a parallel build, cleanup or bughunt the session enters a worktree of its own, with Claude Code's EnterWorktree tool. Claude Code branches every builder's worktree from the session's `HEAD`, and inside a worktree from that worktree's `HEAD`, so a later wave starts from what the earlier waves merged there, and the owner's branch is untouched until the end. When the workflow has ended, the session leaves the worktree, keeps it, and merges its branch by DEC-100's rules: build when `status` is empty there, cleanup and bughunt when it lists nothing new; otherwise it asks the owner. The owner designs in another session while a parallel run lasts.
 
-**A custom strategy** is a saved Claude Code workflow, in `.claude/workflows/` or `~/.claude/workflows/`, named in `workflows.NAME` and started by that name. It keeps the driver's contract: the same args; it reads `markitect status --json`; the work is done by the four roles' agents only, with a plain agent at most for status and Git; and the same stop rule. Copying `markitect-parallel.js` under another name is the way to start one, since `update` restores the shipped file. Routines keep their own prompts and take no strategy, since nobody is there to answer the prompt with which Claude Code asks before a workflow starts.
+**A custom strategy** is a saved Claude Code workflow, in `.claude/workflows/` or `~/.claude/workflows/`, named in `workflows.NAME` and started by that name. It keeps the driver's contract: the same args; it reads `markitect status --json`; the work is done by the four roles' agents only, with a plain agent at most for status and Git; and the same stop rule. Copying `markitect-parallel.js` under a name without `markitect-` is the way to start one, since `init` and `update` restore their own files and remove others with that prefix; `config` refuses such a name. In the project it is a file like any other, registered or ignored, and the hook does not guard it, as it does not guard the user's own skills. Routines keep their own prompts and take no strategy, since nobody is there to answer the prompt with which Claude Code asks before a workflow starts.
 
 ### Configuration
 
@@ -239,8 +239,8 @@ strategy:
 
 - **`markitect config [--user] KEY VALUE`** sets a value in the project's file, or with `--user` in the user's, and rewrites the agents' files of the project here. `--unset KEY` removes one, `KEY` alone prints the value in force, and `--list` prints every value with where it comes from, `--json` too. A strategy that names a workflow no level defines is refused; `--list` reports one left after an unset, and exits 1.
 - **`init` and `update` write the agents' front matter** from the configuration, and `update` notes a project whose agent files differ from it. A user's value thus reaches the committed agent files when that user runs them: Claude Code has no agent scope that is not committed and beats the project's. A team that wants the same agents for everyone sets them in the project's file.
-- **The manifest's `model`** of earlier releases moved here. `update` moves it, as the model of every role the project's file does not set, and `check` reports `manifest.model` until then.
-- **`.markitect/harness.yaml` joins the fixed layout,** and `check` reports a file it cannot read as `harness.syntax`, for the owner to fix.
+- **The manifest's `model`** of earlier releases moved here. `update` and `init` move it, as the model of every role the project's file does not set, and `check` reports `manifest.model` until then.
+- **`.markitect/harness.yaml` joins the fixed layout,** and `check` reports a file it cannot read as `harness.syntax`, for the owner to fix by hand, since `config` cannot read it either.
 - **`/markitect-config`** takes the request in plain words, asks whether it applies to this project or to all of the user's projects, and runs `markitect config`.
 
 ### The hook on the configuration
@@ -249,7 +249,7 @@ No subagent writes `.markitect/harness.yaml`, the architect included, or a shipp
 
 ### Trial
 
-Nothing of this has met a real agent yet: the workflow ran only against stub agents. A bounded trial dispatch is drafted for the owner. It first probes, on Haiku, what the driver assumes of Claude Code: that a skill starts a saved workflow, that a workflow's builder with worktree isolation branches from the session's worktree, that its nested reviewer works in the builder's worktree, and that the hook sees the workflow agents' types. Then it builds a fixture project of a few Packages in parallel, with one planted bug and one planted contradiction.
+Nothing of this has met a real agent yet: the workflow ran only against stub agents, in a test (`internal/skills/testdata/simulate.mjs`) that checks its waves, batches, merges, Root step, stop rule and the steps that return nothing. A bounded trial dispatch is drafted for the owner. It first probes, on Haiku, what the driver assumes of Claude Code: that a skill starts a saved workflow, that a workflow's builder with worktree isolation branches from the session's worktree, that its nested reviewer works in the builder's worktree, and that the hook sees the workflow agents' types. Then it builds a fixture project of a few Packages in parallel, with one planted bug and one planted contradiction.
 
 ## Output and exit codes
 

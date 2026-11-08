@@ -78,9 +78,9 @@ type PackageItems struct {
 	// spec-problem, which wait for the owner.
 	Items        int `json:"items"`
 	SpecProblems int `json:"spec_problems"`
-	// DependsOn names the Packages its Definitions link to, by a link or a Kind:
-	// those list --deps names, and an ancestor it links to, which list --deps
-	// leaves out as implicit.
+	// DependsOn names the Packages it depends on, as list --deps has them: a
+	// link to an ancestor is implicit and counts not, so no Package depends on
+	// Root.
 	DependsOn []string `json:"depends_on"`
 }
 
@@ -224,22 +224,10 @@ func packageItems(m *model.Model, items []Item) []PackageItems {
 	byName := map[string]*PackageItems{}
 	for _, path := range m.SortedPackages() {
 		p := &PackageItems{Package: model.PackageName(path), Definitions: len(m.Packages[path].Definitions), DependsOn: []string{}}
-		deps := map[string]bool{}
-		for to := range m.Edges[path] {
-			deps[to] = true
-		}
-		// A link to an ancestor makes no edge of the model, but the work on the
-		// Package still depends on it.
-		for _, id := range m.Packages[path].Definitions {
-			for _, l := range m.Definitions[id].Links {
-				if d := m.Definitions[l.Target]; d != nil && d.InModel() {
-					deps[model.PackageOf(l.Target)] = true
-				}
+		for _, to := range sortedKeys(m.Edges[path]) {
+			if to != path {
+				p.DependsOn = append(p.DependsOn, model.PackageName(to))
 			}
-		}
-		delete(deps, path)
-		for _, to := range sortedKeys(deps) {
-			p.DependsOn = append(p.DependsOn, model.PackageName(to))
 		}
 		byName[p.Package] = p
 	}

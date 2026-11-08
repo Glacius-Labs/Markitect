@@ -126,9 +126,10 @@ func TestTheManifestsModelMovesToTheHarnessConfiguration(t *testing.T) {
 		t.Fatalf("check said nothing of the model: %d\n%s", code, out)
 	}
 	code, out, _ := run(t, r.Dir, "update", "--check", "--files")
-	if code != 1 || !strings.Contains(out, "manifest: names the agents' model") {
+	if code != 1 || !strings.Contains(out, "manifest: names the agents' model") || strings.Contains(out, "lock: not rewritten") {
 		t.Fatalf("update --check: %d\n%s", code, out)
 	}
+	mustRun(t, r.Dir, "tidy")
 	out = mustRun(t, r.Dir, "update", "--files")
 	wantAll(t, out, "manifest: moved the agents' model to .markitect/harness.yaml")
 	if got := read(t, r.Dir, ".markitect/manifest.yaml"); got != "# The Libraries this project uses, with their versions. Run markitect tidy after a change.\nlibraries:\n  std: 1.0.0\n" {
@@ -141,6 +142,15 @@ func TestTheManifestsModelMovesToTheHarnessConfiguration(t *testing.T) {
 	if out := mustRun(t, r.Dir, "update", "--files"); !strings.Contains(out, "project: up to date") {
 		t.Fatalf("a second update:\n%s", out)
 	}
+
+	// init moves it too, when it runs again on an earlier project.
+	r.Write(".markitect/manifest.yaml", "libraries:\n  std: 1.0.0\nmodel: haiku\n")
+	if err := os.Remove(filepath.Join(r.Dir, ".markitect", "harness.yaml")); err != nil {
+		t.Fatal(err)
+	}
+	out = mustRun(t, r.Dir, "init")
+	wantAll(t, out, "moved the agents' model from .markitect/manifest.yaml to .markitect/harness.yaml")
+	wantAll(t, read(t, r.Dir, ".claude/agents/markitect-reviewer.md"), "\nmodel: haiku\n")
 
 	r.Write(".markitect/manifest.yaml", "libraries:\n  std: 1.0.0\nmodel: \"opus; rm -rf /\"\n")
 	mustRun(t, r.Dir, "update", "--files")

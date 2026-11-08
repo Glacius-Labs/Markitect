@@ -68,6 +68,7 @@ func TestParseRefusesWhatItDoesNotTake(t *testing.T) {
 		"strategy:\n  build: Not A Name\n",
 		"workflows:\n  parallel: x.js\n",
 		"workflows:\n  markitect-parallel: x.js\n",
+		"workflows:\n  markitect-fast: .claude/workflows/markitect-fast.js\n",
 		"workflows:\n  mine: \"\"\n",
 		"colour: blue\n",
 		"agents: [builder]\n",
@@ -141,6 +142,32 @@ func TestCommentsOfAnEmptyFileStay(t *testing.T) {
 	n.Unset("agents.reviewer.effort")
 	if got := text(t, n); got != "# header\n" {
 		t.Errorf("emptied again: %q", got)
+	}
+}
+
+// Unset keeps the comments above the keys it removes: on the next key, or above
+// what is left.
+func TestUnsetKeepsTheOwnersNotes(t *testing.T) {
+	f := mustParse(t, "# my note\nagents:\n  builder:\n    model: opus # mine\n")
+	f.Unset("agents.builder.model")
+	if got := text(t, f); got != "# my note\n" {
+		t.Errorf("the last value removed: %q", got)
+	}
+	f = mustParse(t, "# about agents\nagents:\n  # the builder\n  builder:\n    model: opus\n  reviewer:\n    model: haiku\nstrategy:\n  default: parallel\n")
+	f.Unset("agents.builder.model")
+	got := text(t, f)
+	for _, want := range []string{"# about agents\nagents:\n", "# the builder\n  reviewer:\n    model: haiku\n"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("lacks %q:\n%s", want, got)
+		}
+	}
+	f.Unset("agents.reviewer.model")
+	got = text(t, f)
+	if !strings.Contains(got, "# about agents") || !strings.Contains(got, "# the builder") || !strings.Contains(got, "default: parallel") {
+		t.Errorf("after the last agent:\n%s", got)
+	}
+	if _, err := Parse([]byte(got)); err != nil {
+		t.Errorf("does not read back: %v\n%s", err, got)
 	}
 }
 

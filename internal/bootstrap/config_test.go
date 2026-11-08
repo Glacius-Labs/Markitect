@@ -118,6 +118,7 @@ func TestConfigRefusesWhatItDoesNotTake(t *testing.T) {
 		{"config", "colour", "blue"},
 		{"config", "strategy.build", "Not A Name"},
 		{"config", "workflows.parallel", "x.js"},
+		{"config", "workflows.markitect-fast", ".claude/workflows/markitect-fast.js"},
 		{"config", "--list", "agents.builder.model"},
 		{"config", "--json", "agents.builder.model"},
 		{"config", "a", "b", "c"},

@@ -189,7 +189,7 @@ func Load(repo Repository) (*Project, error) {
 		case f == HarnessFile:
 			if data, ok := read(f); ok {
 				if _, err := harness.Parse(data); err != nil {
-					ds.Add("harness.syntax", f, 0, "%v; fix it, or change it with markitect config", err)
+					ds.Add("harness.syntax", f, 0, "%v; fix it by hand, since markitect config cannot read it either", err)
 				}
 			}
 		case f == RootPage:

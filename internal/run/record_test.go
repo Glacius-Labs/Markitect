@@ -167,10 +167,19 @@ func TestStatusCountsItemsPerPackage(t *testing.T) {
 			t.Errorf("%s: %+v", name, got[name])
 		}
 	}
-	// A loan links to a member: a link to an ancestor, which list --deps leaves
-	// out, still orders the work.
-	if deps := got["members/loans"].DependsOn; len(deps) != 1 || deps[0] != "members" {
-		t.Errorf("members/loans depends on %v", deps)
+	// A loan links to a member, its ancestor: implicit, as list --deps has it.
+	for _, pk := range st.Packages {
+		if len(pk.DependsOn) != 0 {
+			t.Errorf("%s depends on %v", pk.Package, pk.DependsOn)
+		}
+	}
+	// A link across Packages is a dependency.
+	q := newPlainOf(t, library())
+	q.write(m+"catalog/book.md", def("std/Concept", "Book", "A book a [[members/member]] may borrow."))
+	for _, pk := range q.status(false).Packages {
+		if pk.Package == "catalog" && (len(pk.DependsOn) != 1 || pk.DependsOn[0] != "members") {
+			t.Errorf("catalog depends on %v", pk.DependsOn)
+		}
 	}
 	it := p.item(st, "members/loans/loan")
 	if text, ok := p.review(it.Definition, run.VerdictSpecProblem, it.Fingerprint, nil, "which limit?"); !ok {
