@@ -20,7 +20,8 @@ const body = `return (async () => {\n${src.replace("export const meta", "const m
 // silent (that builder returns nothing), uncommitted (that builder leaves its
 // work uncommitted), idle (that builder changes nothing), conflict (that
 // strand's merge conflicts), forget (the merge step leaves that strand out of
-// its answer), lose (the nth merge returns nothing), loseStatus.
+// its answer), wrongBranch (that builder commits but names a branch that does
+// not exist), lose (the nth merge returns nothing), loseStatus.
 function world(spec) {
   const pk = structuredClone(spec.packages)
   const committed = new Set()
@@ -45,7 +46,7 @@ function world(spec) {
         if (ok) committed.add(name)
         return Promise.resolve({
           folder: `/wt/${name}`,
-          branch: `wt-${name}`,
+          branch: spec.wrongBranch === name ? `nope-${name}` : `wt-${name}`,
           changed,
           committed: ok,
           summary: `built ${name}`,
@@ -64,6 +65,10 @@ function world(spec) {
         const out = { merged: [], unchanged: [], not_merged: [] }
         for (const m of prompt.matchAll(/^- (\S+): (\S+)$/gm)) {
           const name = m[1]
+          if (spec.wrongBranch === name) {
+            out.unchanged.push(name) // no such branch
+            continue
+          }
           assert.strictEqual(m[2], `wt-${name}`, "the merge names the strand's branch")
           if (spec.forget === name) {
             // left out of every list
@@ -195,6 +200,17 @@ const build = { mode: "build", into: "main" }
   s.forget = "d"
   const { result, calls } = await run(build, world(s))
   assert(result.not_merged.some((n) => n.strand === "d" && n.why.includes("did not say") && n.why.includes("wt-d")), JSON.stringify(result.not_merged))
+  assert(result.worktrees.some((w) => w.strand === "d" && !w.merged))
+  assert(!reviewers(calls).some((c) => c.prompt.includes("Package d.")))
+}
+
+// A builder that committed but named a branch with nothing to merge keeps its
+// worktree: its work is there, not here.
+{
+  const s = base()
+  s.wrongBranch = "d"
+  const { result, calls } = await run(build, world(s))
+  assert(result.not_merged.some((n) => n.strand === "d" && n.why.includes("held nothing")), JSON.stringify(result.not_merged))
   assert(result.worktrees.some((w) => w.strand === "d" && !w.merged))
   assert(!reviewers(calls).some((c) => c.prompt.includes("Package d.")))
 }

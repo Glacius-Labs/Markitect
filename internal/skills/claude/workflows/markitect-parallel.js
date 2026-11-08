@@ -208,12 +208,16 @@ ${list}`,
   const why = new Map((m.not_merged || []).map((n) => [n.strand, n.why]))
   const out = { merged: [], unchanged: [...nothing], not_merged: [] }
   for (const b of built) {
-    const here = merged.has(b.name) || unchanged.has(b.name)
+    // A builder that committed has something to merge: if its branch held
+    // nothing, it named the wrong one, and its worktree keeps the work.
+    const empty = unchanged.has(b.name) && !b.committed
+    const here = merged.has(b.name) || empty
     worktrees.push({ strand: b.name, folder: b.folder, branch: b.branch, merged: here })
     if (merged.has(b.name)) out.merged.push(b.name)
-    else if (unchanged.has(b.name)) out.unchanged.push(b.name)
+    else if (empty) out.unchanged.push(b.name)
     else {
-      const n = { strand: b.name, why: `${why.get(b.name) || "the merge step did not say what became of it"}; its work is on branch ${b.branch}` }
+      const left = unchanged.has(b.name) ? `the builder committed, but branch ${b.branch} held nothing to merge; look in ${b.folder}` : why.get(b.name) || "the merge step did not say what became of it"
+      const n = { strand: b.name, why: `${left}; its work is on branch ${b.branch}` }
       out.not_merged.push(n)
       notMerged.push(n)
     }
