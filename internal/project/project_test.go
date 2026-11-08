@@ -48,19 +48,19 @@ func stdLock(t *testing.T) string {
 
 func valid(t *testing.T) memRepo {
 	return memRepo{files: map[string]string{
-		ManifestFile:                    "libraries:\n  std: 1.0.0\n",
-		LockFile:                        stdLock(t),
-		ModelDir + "/project.md":        "---\nkind: std/Project\n---\n# Demo\n\nSee [[members]].\n",
-		ModelDir + "/members/member.md": "---\nkind: std/Concept\n---\n# Member\n",
-		RootPage:                        "| File | Realizes | Why |\n|---|---|---|\n| README.md | [[project]] | Overview |\n",
-		RegistryDir + "/members.md":     "---\npaths: [src/**]\n---\n| File | Realizes | Why |\n|---|---|---|\n| src/member.go | [[members/member]] | Type |\n",
-		IgnoreFile:                      "# Legal text\nLICENSE\n",
-		ReviewFile:                      "",
-		AttributesFile:                  Attributes,
-		Dir + "/tool/lock.yaml":         "installed tool\n",
-		"README.md":                     "# Demo\n",
-		"src/member.go":                 "package members\n",
-		"LICENSE":                       "MIT\n",
+		ManifestFile:                   "libraries:\n  std: 1.0.0\n",
+		LockFile:                       stdLock(t),
+		SpecDir + "/project.md":        "---\nkind: std/Project\n---\n# Demo\n\nSee [[members]].\n",
+		SpecDir + "/members/member.md": "---\nkind: std/Concept\n---\n# Member\n",
+		RootPage:                       "| File | Realizes | Why |\n|---|---|---|\n| README.md | [[project]] | Overview |\n",
+		RegistryDir + "/members.md":    "---\npaths: [src/**]\n---\n| File | Realizes | Why |\n|---|---|---|\n| src/member.go | [[members/member]] | Type |\n",
+		IgnoreFile:                     "# Legal text\nLICENSE\n",
+		ReviewFile:                     "",
+		AttributesFile:                 Attributes,
+		Dir + "/tool/lock.yaml":        "installed tool\n",
+		"README.md":                    "# Demo\n",
+		"src/member.go":                "package members\n",
+		"LICENSE":                      "MIT\n",
 	}, ignored: map[string]bool{}}
 }
 
@@ -118,6 +118,46 @@ func TestLoadUnknownOwnFiles(t *testing.T) {
 	expect(t, p.Errors, "project.results", "markitect update")
 }
 
+// A spec where an earlier markitect kept it is one error, which update settles;
+// it compiles where it is, so that nothing else stands in the way. Beside a spec
+// in the new folder, only the new one counts.
+func TestLoadTheOldSpecFolder(t *testing.T) {
+	r := valid(t)
+	for f, data := range r.files {
+		if rest, ok := strings.CutPrefix(f, SpecDir+"/"); ok {
+			delete(r.files, f)
+			r.files[OldSpecDir+"/"+rest] = data
+		}
+	}
+	p := load(t, r)
+	if len(p.Errors) != 1 || p.Errors[0].Code != "project.model" || p.Errors[0].File != OldSpecDir || !strings.Contains(p.Errors[0].Message, "markitect update moves it to .markitect/spec") {
+		t.Fatalf("errors:\n%v", p.Errors)
+	}
+	if d := p.Model.Definitions["members/member"]; d == nil || d.File != OldSpecDir+"/members/member.md" {
+		t.Fatalf("the old spec did not compile where it is: %+v", d)
+	}
+	r.files[SpecDir+"/project.md"] = "---\nkind: std/Project\n---\n# Fresh\n"
+	p = load(t, r)
+	expect(t, p.Errors, "project.model", "markitect update")
+	if p.Model.Definitions["members/member"] != nil || p.Model.Definitions["project"].File != SpecDir+"/project.md" {
+		t.Fatal("beside a spec in the new folder, the old one counted")
+	}
+}
+
+func TestSpecPath(t *testing.T) {
+	for in, want := range map[string]string{
+		".markitect/model/members/member.md:3": ".markitect/spec/members/member.md:3",
+		".markitect/model.yaml":                ".markitect/model.yaml",
+		".markitect/registry/model/x.md":       ".markitect/registry/model/x.md",
+		"src/.markitect/model/x.md":            "src/.markitect/model/x.md",
+		".markitect/spec/x.md":                 ".markitect/spec/x.md",
+	} {
+		if got := SpecPath(in); got != want {
+			t.Errorf("SpecPath(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
 func TestLoadMissingControlFiles(t *testing.T) {
 	r := valid(t)
 	delete(r.files, ManifestFile)
@@ -149,10 +189,10 @@ func TestLoadLocalLibraryAndLock(t *testing.T) {
 	r := valid(t)
 	r.files[ManifestFile] = "libraries:\n  std: 1.0.0\n  web: 0.2.0\n"
 	r.files[LibraryDir+"/web/Page.md"] = "---\nkind: Kind\n---\n# Page\n\nA web page, a kind of [[std/Concept]].\n"
-	r.files[ModelDir+"/home.md"] = "---\nkind: web/Page\n---\n# Home\n"
+	r.files[SpecDir+"/home.md"] = "---\nkind: web/Page\n---\n# Home\n"
 	expect(t, load(t, r).Errors, "lock.mismatch", "web 0.2.0 is not in the lock")
 
-	local, err := LocalLibraries(r, []string{LibraryDir + "/web/Page.md", ModelDir + "/home.md"})
+	local, err := LocalLibraries(r, []string{LibraryDir + "/web/Page.md", SpecDir + "/home.md"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -178,7 +218,7 @@ func TestLoadLocalLibraryAndLock(t *testing.T) {
 // deleted Definition's entry and a Definition nothing uses stop check, not a Run.
 func TestRealizationErrors(t *testing.T) {
 	r := valid(t)
-	r.files[ModelDir+"/unused.md"] = "---\nkind: std/Concept\n---\n# Unused\n"
+	r.files[SpecDir+"/unused.md"] = "---\nkind: std/Concept\n---\n# Unused\n"
 	r.files[RegistryDir+"/members.md"] = "---\npaths: [src/**]\n---\n| File | Realizes | Why |\n|---|---|---|\n| src/member.go | [[members/member]] | Member |\n| src/gone.go | [[members/member]] | Gone |\n"
 	p := load(t, r)
 	if len(p.SpecErrors()) != 0 {
@@ -200,11 +240,11 @@ func TestNothingBuilt(t *testing.T) {
 		t.Fatal("a built project with no errors")
 	}
 	fresh := memRepo{files: map[string]string{
-		ManifestFile:             "libraries:\n  std: 1.0.0\n",
-		LockFile:                 stdLock(t),
-		ModelDir + "/project.md": "---\nkind: std/Project\n---\n# Demo\n",
-		RootPage:                 "| File | Realizes | Why |\n|---|---|---|\n",
-		".gitignore":             "x\n",
+		ManifestFile:            "libraries:\n  std: 1.0.0\n",
+		LockFile:                stdLock(t),
+		SpecDir + "/project.md": "---\nkind: std/Project\n---\n# Demo\n",
+		RootPage:                "| File | Realizes | Why |\n|---|---|---|\n",
+		".gitignore":            "x\n",
 	}}
 	if p := load(t, fresh); !p.NothingBuilt() {
 		t.Fatalf("a new project: %v", p.Errors)
@@ -214,7 +254,7 @@ func TestNothingBuilt(t *testing.T) {
 		t.Fatal("an unlisted file is not nothing")
 	}
 	delete(fresh.files, "src/a.go")
-	fresh.files[ModelDir+"/broken.md"] = "no front matter\n"
+	fresh.files[SpecDir+"/broken.md"] = "no front matter\n"
 	if p := load(t, fresh); p.NothingBuilt() {
 		t.Fatal("an error in the spec is not nothing")
 	}

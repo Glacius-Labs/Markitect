@@ -43,6 +43,13 @@ func (c CLI) init(_ context.Context, args []string) (int, error) {
 	if name == "" {
 		name = filepath.Base(ws.Root())
 	}
+	// A spec where an earlier markitect kept it is moved by update, which also
+	// rewrites the record; init would only start a second, empty spec beside it.
+	if old, err := ws.List(project.OldSpecDir); err != nil {
+		return Misused, err
+	} else if len(old) > 0 {
+		return Misused, fmt.Errorf("this project keeps its spec in %s, where an earlier markitect kept it; run markitect update, which moves it to %s", project.OldSpecDir, project.SpecDir)
+	}
 	created := func(file string) { fmt.Fprintf(c.Stdout, "created %s\n", file) }
 	writeNew := func(file string, data []byte) error {
 		if ws.Exists(file) {
@@ -57,12 +64,12 @@ func (c CLI) init(_ context.Context, args []string) (int, error) {
 	if err := writeNew(project.ManifestFile, []byte(fmt.Sprintf(manifestTemplate, libraries.Version))); err != nil {
 		return Misused, err
 	}
-	modelFiles, err := ws.List(project.ModelDir)
+	specFiles, err := ws.List(project.SpecDir)
 	if err != nil {
 		return Misused, err
 	}
-	if len(modelFiles) == 0 {
-		if err := writeNew(project.ModelDir+"/project.md", []byte(fmt.Sprintf(anchorTemplate, name))); err != nil {
+	if len(specFiles) == 0 {
+		if err := writeNew(project.SpecDir+"/project.md", []byte(fmt.Sprintf(anchorTemplate, name))); err != nil {
 			return Misused, err
 		}
 	}
@@ -70,7 +77,7 @@ func (c CLI) init(_ context.Context, args []string) (int, error) {
 		return Misused, err
 	}
 	if ws.Exists(instructionsFile) {
-		fmt.Fprintf(c.Stdout, "left %s as it is; add that this project has a spec in %s, which is the authority\n", instructionsFile, project.ModelDir)
+		fmt.Fprintf(c.Stdout, "left %s as it is; add that this project has a spec in %s, which is the authority\n", instructionsFile, project.SpecDir)
 		c.noteRetiredSkills(ws)
 	} else if err := writeNew(instructionsFile, []byte(fmt.Sprintf(instructionsTemplate, name))); err != nil {
 		return Misused, err
@@ -115,7 +122,7 @@ func (c CLI) init(_ context.Context, args []string) (int, error) {
 	}
 	fmt.Fprintln(c.Stdout, "Markitect uses no Git: commit what init wrote when you like.")
 	fmt.Fprintf(c.Stdout, "\n%s\n", skills.About)
-	if len(modelFiles) == 0 {
+	if len(specFiles) == 0 {
 		fmt.Fprint(c.Stdout, nextSteps)
 	}
 	// init never writes to the home folder, so it only says what install would add.

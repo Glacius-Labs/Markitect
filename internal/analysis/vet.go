@@ -177,9 +177,9 @@ func less(a, b model.Diagnostic) bool {
 // packageFile names a Package's folder for diagnostics.
 func packageFile(pkg string) string {
 	if pkg == model.RootPackage {
-		return project.ModelDir
+		return project.SpecDir
 	}
-	return fmt.Sprintf("%s/%s", project.ModelDir, pkg)
+	return fmt.Sprintf("%s/%s", project.SpecDir, pkg)
 }
 
 func plural(n int, one, many string) string {

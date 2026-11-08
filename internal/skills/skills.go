@@ -26,7 +26,7 @@ type File struct {
 
 // About says what Markitect is. It is the one place for this text: help, init, the
 // instruction file of a project and the personal skill all print it.
-const About = `A Markitect project has one spec: the Markdown files in .markitect/model/. The
+const About = `A Markitect project has one spec: the Markdown files in .markitect/spec/. The
 spec is the authority over the code, tests and documentation: where they differ,
 the spec is right. People design the spec with the markitect-design skill, and
 the /markitect-build skill has a builder agent build it and a fresh reviewer

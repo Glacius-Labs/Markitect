@@ -4,7 +4,7 @@
 
 | Package | Role |
 | --- | --- |
-| `internal/run` | The record: the inputs of each Definition, `.markitect/review.sum`, `status`, `mark`, the hook, and the migration from the certificates of 0.20.0. |
+| `internal/run` | The record: the inputs of each Definition, `.markitect/review.sum`, `status`, `mark`, the hook, the migration from the certificates of 0.20.0 and the move of the spec folder. |
 | `internal/adapters/folder` | The walk of the project folder and its `.gitignore` files, for the record and the command line ([below](#the-folder)). |
 | `internal/bootstrap` | Builds the engine for the command line, with the lock of each project's record in the user's cache folder. |
 
@@ -106,10 +106,18 @@ The skills are plain prompts with no injected command, so no exit code can abort
 
 For one release, `checklist`, `answer` and `gate` print on standard output, with exit 0, that they are gone and to run `markitect update`, so that an old project's skill does not fail silently.
 
+## The move of the spec folder
+
+Up to 0.24.0 the spec lay in `.markitect/model/`, from when it was called the canonical model. A project loads a spec there where it is, with one error, `project.model`, that stops every command until `markitect update` moves it ([`MoveSpec`](specmove.go)); `init` refuses until then. `update` does this first, before anything else, and renames the folder to `.markitect/spec/`. A certificate of 0.20.0 names the old folder too, and the migration above reads it as if it named the new one.
+
+The record keeps every verdict. A line is keyed by its Definition's ID, the path below the folder, and its inputs are hashes of content, so the move changes none of them. Only evidence can name a file of the spec, as when a reviewer cites the Definition itself; a `file:` input never does, since a registry row never names a file of `.markitect/`. `update` renames that evidence in place: the key `evidence:.markitect/model/x.md` becomes `evidence:.markitect/spec/x.md` with the same hash, and so does the evidence it lists. Evidence is no part of the fingerprint, so no fingerprint changes. Every other line stays as it is, in its place, also one markitect cannot read. The record is renamed whenever it names the old folder, so a line that a merge brings in from a branch that has not moved yet is renamed by the next `update` too. Like the migration above, the rename takes no lock: `update` is the owner's step, not one beside a running reviewer.
+
+With files in both folders the project has two specs, as when `init` of a newer markitect ran before `update`: `update` refuses, changes nothing and says to keep one. Empty folders count as none. `update --check` and `version` count the move as out of date, and `update` notes when `AGENTS.md`, which it never edits, still names `.markitect/model`.
+
 ## What went
 
 The checklist, the stored answers, the work under way in the cache, `gate` with its rows, the certificates, the Result and Findings pages, repair rounds and the builder's report of a spec problem went with 0.21.0 ([DEC-099](../../docs/concepts/register.md#dec-099-markitect-is-a-tool-with-a-verification-cache)). So did three refusals of `gate` during the work: of a changed file the ignore file lists, of a changed harness, `.gitignore` or `settings.json`, and of a symbolic link that leaves the folder. The [tooling plan](../../docs/concepts/tooling-plan.md#what-this-gives-up-and-what-it-keeps) says what that gives up.
 
 ## Tests
 
-`record_test.go` plays the builder and the reviewer on plain folders without Git while `status` says what is to verify: what a change reaches, the Kind and the Library, the fingerprint and evidence, the verdicts, the counts of cases and the revisions, a gone Definition, merged lines and conflicts, an unreadable line, errors, and parallel reviewers. `migrate_test.go` covers the migration from certificates written as 0.20.0 wrote them, `hook_test.go` the hook, and `lock_test.go` the lock.
+`record_test.go` plays the builder and the reviewer on plain folders without Git while `status` says what is to verify: what a change reaches, the Kind and the Library, the fingerprint and evidence, the verdicts, the counts of cases and the revisions, a gone Definition, merged lines and conflicts, an unreadable line, errors, and parallel reviewers. `migrate_test.go` covers the migration from certificates written as 0.20.0 wrote them, `specmove_test.go` the move of the spec folder with its record and certificates, `hook_test.go` the hook, and `lock_test.go` the lock.

@@ -6,7 +6,7 @@ model: sonnet
 effort: high
 permissionMode: acceptEdits
 ---
-You make the project in this folder match its spec. The spec is the Markdown files in .markitect/model, linked with [[...]], and it is the authority over code, tests, docs and config: where they differ from it, they are wrong. Nobody can answer a question while you work.
+You make the project in this folder match its spec. The spec is the Markdown files in .markitect/spec, linked with [[...]], and it is the authority over code, tests, docs and config: where they differ from it, they are wrong. Nobody can answer a question while you work.
 
 The message that starts you names your task:
 

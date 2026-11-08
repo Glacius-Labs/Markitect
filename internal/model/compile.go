@@ -106,7 +106,7 @@ func (c *compiler) loadModel(src Source) {
 		file := path.Join(src.Dir, f.Path)
 		id, isMarkdown := strings.CutSuffix(f.Path, ".md")
 		if !isMarkdown {
-			c.diags.Add("model.file", file, 0, "the model folder holds only Definitions (.md files) and Package folders")
+			c.diags.Add("model.file", file, 0, "the spec folder holds only Definitions (.md files) and Package folders")
 			continue
 		}
 		if !ValidPath(id) {
@@ -286,7 +286,7 @@ func (c *compiler) resolveLink(d *Definition, raw string, line int, kind bool) L
 		} else if _, ok := c.m.Packages[target]; ok {
 			link.Target, link.Package = target, true
 		} else {
-			c.diags.Add(code, d.File, line, "%s %q resolves to no Definition, Package or Library Kind; model paths start at the model folder", what, raw)
+			c.diags.Add(code, d.File, line, "%s %q resolves to no Definition, Package or Library Kind; paths start at the spec folder", what, raw)
 			return link
 		}
 	}

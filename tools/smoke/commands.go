@@ -21,14 +21,14 @@ func (s *smoke) version() error {
 // smokeModel is a small project in the model language: Root with a Rule, and
 // the Packages members and catalog, with registry pages for every file.
 var smokeModel = map[string]string{
-	".markitect/model/loan-limit.md":     "---\nkind: std/Rule\n---\n# Loan limit\n\nA member has at most `5` open loans; see [[members]].\n",
-	".markitect/model/members/member.md": "---\nkind: std/Concept\n---\n# Member\n\nA person who borrows copies.\n",
-	".markitect/model/catalog/copy.md":   "---\nkind: std/Concept\n---\n# Copy\n\nA copy is lent to a [[members/member]].\n",
-	".markitect/registry/members.md":     "---\npaths: [src/members/**]\n---\n# Registry: members\n\n| File | Realizes | Why |\n|---|---|---|\n| `src/members/member.go` | [[members/member]] [[loan-limit]] | Member type and loan limit |\n",
-	".markitect/registry/catalog.md":     "---\npaths: [src/catalog/**]\n---\n# Registry: catalog\n\n| File | Realizes | Why |\n|---|---|---|\n| `src/catalog/copy.go` | [[catalog/copy]] | Copy type |\n",
-	"README.md":                          "# Lending library\n",
-	"src/members/member.go":              "package members\n",
-	"src/catalog/copy.go":                "package catalog\n",
+	".markitect/spec/loan-limit.md":     "---\nkind: std/Rule\n---\n# Loan limit\n\nA member has at most `5` open loans; see [[members]].\n",
+	".markitect/spec/members/member.md": "---\nkind: std/Concept\n---\n# Member\n\nA person who borrows copies.\n",
+	".markitect/spec/catalog/copy.md":   "---\nkind: std/Concept\n---\n# Copy\n\nA copy is lent to a [[members/member]].\n",
+	".markitect/registry/members.md":    "---\npaths: [src/members/**]\n---\n# Registry: members\n\n| File | Realizes | Why |\n|---|---|---|\n| `src/members/member.go` | [[members/member]] [[loan-limit]] | Member type and loan limit |\n",
+	".markitect/registry/catalog.md":    "---\npaths: [src/catalog/**]\n---\n# Registry: catalog\n\n| File | Realizes | Why |\n|---|---|---|\n| `src/catalog/copy.go` | [[catalog/copy]] | Copy type |\n",
+	"README.md":                         "# Lending library\n",
+	"src/members/member.go":             "package members\n",
+	"src/catalog/copy.go":               "package catalog\n",
 }
 
 // modelCommands drives the packaged CLI over a small project in a plain folder,
@@ -47,7 +47,7 @@ func (s *smoke) modelCommands() error {
 	} else if err := requireContains(out, "created .markitect/manifest.yaml", "wrote .markitect/lock.yaml: std 1.0.0", "installed the skills"); err != nil {
 		return err
 	}
-	if err := requirePresent(repo, ".claude/skills/markitect-design/SKILL.md", ".agents/skills/markitect-design/SKILL.md", ".claude/agents/markitect-architect.md", ".claude/workflows/markitect-parallel.js", ".markitect/model/project.md"); err != nil {
+	if err := requirePresent(repo, ".claude/skills/markitect-design/SKILL.md", ".agents/skills/markitect-design/SKILL.md", ".claude/agents/markitect-architect.md", ".claude/workflows/markitect-parallel.js", ".markitect/spec/project.md"); err != nil {
 		return err
 	}
 	for name, content := range smokeModel {
@@ -118,8 +118,8 @@ func (s *smoke) modelCommands() error {
 
 	// M2's change: the loan limit drops from five to three. Only the Rule itself
 	// is to verify again: nothing links to it, and no file changed.
-	limit := filepath.Join(repo, ".markitect", "model", "loan-limit.md")
-	if err := os.WriteFile(limit, []byte(strings.Replace(smokeModel[".markitect/model/loan-limit.md"], "`5`", "`3`", 1)), 0o644); err != nil {
+	limit := filepath.Join(repo, ".markitect", "spec", "loan-limit.md")
+	if err := os.WriteFile(limit, []byte(strings.Replace(smokeModel[".markitect/spec/loan-limit.md"], "`5`", "`3`", 1)), 0o644); err != nil {
 		return err
 	}
 	if out, err := markitect("status"); err == nil || !strings.Contains(out, "To verify (1 of 4 Definitions)") || !strings.Contains(out, "\nloan-limit@") || !strings.Contains(out, "changed: self") {
@@ -135,7 +135,7 @@ func (s *smoke) modelCommands() error {
 			return fmt.Errorf("the retired %s does not point to update: %v\n%s", retired, err, tail(out))
 		}
 	}
-	if err := os.WriteFile(filepath.Join(repo, ".markitect", "model", "broken.md"), []byte("no front matter\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(repo, ".markitect", "spec", "broken.md"), []byte("no front matter\n"), 0o644); err != nil {
 		return err
 	}
 	if out, err := markitect("check"); err == nil || !strings.Contains(out, "definition.front_matter") {

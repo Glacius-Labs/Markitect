@@ -12,7 +12,7 @@ func testModel(t *testing.T) *model.Model {
 	kinds := model.LibrarySource{Name: "std", Version: "1.0.0", Dir: "std", Files: []model.File{
 		{Path: "Rule.md", Data: []byte("---\nkind: Kind\n---\n# Rule\n")},
 	}}
-	src := model.Source{Dir: ".markitect/model", Libraries: []model.LibrarySource{kinds}}
+	src := model.Source{Dir: ".markitect/spec", Libraries: []model.LibrarySource{kinds}}
 	for _, p := range []string{"project", "members/member", "members/loans/loan", "catalog/book"} {
 		src.Files = append(src.Files, model.File{Path: p + ".md", Data: []byte("---\nkind: std/Rule\n---\n# " + p + "\n")})
 	}
@@ -107,7 +107,7 @@ func TestAccountIgnorePage(t *testing.T) {
 }
 
 func TestAccountIgnoreSyntax(t *testing.T) {
-	ignore := model.File{Path: ".markitect/ignore", Data: []byte("# a comment\n\n/abs\ndocs/\n!keep.txt\n.markitect/model/x.md\nok.txt\n")}
+	ignore := model.File{Path: ".markitect/ignore", Data: []byte("# a comment\n\n/abs\ndocs/\n!keep.txt\n.markitect/spec/x.md\nok.txt\n")}
 	_, ds := Account(Input{Model: testModel(t), Ignore: &ignore, OwnDir: ".markitect"})
 	expect(t, ds, "ignore.syntax", `"/abs"`)
 	expect(t, ds, "ignore.syntax", `"docs/"`)

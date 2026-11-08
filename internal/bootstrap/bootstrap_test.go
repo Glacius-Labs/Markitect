@@ -56,7 +56,7 @@ func TestCommandsEndToEnd(t *testing.T) {
 
 	out := mustRun(t, r.Dir, "init", "--name", "Lending library")
 	noRepository(t, r.Dir)
-	for _, want := range []string{"created .markitect/manifest.yaml", "created .markitect/model/project.md", "wrote .markitect/lock.yaml: std 1.0.0", "installed the skills markitect-design"} {
+	for _, want := range []string{"created .markitect/manifest.yaml", "created .markitect/spec/project.md", "wrote .markitect/lock.yaml: std 1.0.0", "installed the skills markitect-design"} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("init output lacks %q:\n%s", want, out)
 		}
@@ -64,7 +64,7 @@ func TestCommandsEndToEnd(t *testing.T) {
 	if !strings.Contains(read(t, r.Dir, ".claude/skills/markitect-design/SKILL.md"), "markitect-design") || !strings.Contains(read(t, r.Dir, ".agents/skills/markitect-design/reference.md"), "model form") {
 		t.Fatal("skills not installed")
 	}
-	if !strings.Contains(read(t, r.Dir, ".markitect/model/project.md"), "# Lending library") {
+	if !strings.Contains(read(t, r.Dir, ".markitect/spec/project.md"), "# Lending library") {
 		t.Fatal("project anchor lacks the title")
 	}
 
@@ -73,8 +73,8 @@ func TestCommandsEndToEnd(t *testing.T) {
 		t.Fatalf("check before registration: exit %d\n%s", code, out)
 	}
 
-	r.Write(".markitect/model/loan-limit.md", "---\nkind: std/Rule\n---\n# Loan limit\n\nAt most `5` open loans, for [[members]].\n")
-	r.Write(".markitect/model/members/member.md", "---\nkind: std/Concept\n---\n# Member\n\nA person who borrows.\n")
+	r.Write(".markitect/spec/loan-limit.md", "---\nkind: std/Rule\n---\n# Loan limit\n\nAt most `5` open loans, for [[members]].\n")
+	r.Write(".markitect/spec/members/member.md", "---\nkind: std/Concept\n---\n# Member\n\nA person who borrows.\n")
 	r.Write(".markitect/registry.md", read(t, r.Dir, ".markitect/registry.md")+"| `README.md` | [[project]], [[loan-limit]] | Overview |\n")
 	r.Write(".markitect/registry/members.md", "---\npaths: [src/members/**]\n---\n# Registry: members\n\n| File | Realizes | Why |\n|---|---|---|\n| `src/members/member.go` | [[members/member]] | The type |\n")
 	if out := mustRun(t, r.Dir, "check"); !strings.HasPrefix(out, "ok: 3 Definitions in 2 Packages") {
@@ -105,7 +105,7 @@ func TestCommandsEndToEnd(t *testing.T) {
 	}
 
 	// A changed Rule is to verify again, and nothing else is.
-	r.Write(".markitect/model/loan-limit.md", "---\nkind: std/Rule\n---\n# Loan limit\n\nAt most `3` open loans, for [[members]].\n")
+	r.Write(".markitect/spec/loan-limit.md", "---\nkind: std/Rule\n---\n# Loan limit\n\nAt most `3` open loans, for [[members]].\n")
 	code, out, _ = run(t, r.Dir, "status")
 	if code != 1 || !strings.Contains(out, "To verify (1 of 3 Definitions)") || !strings.Contains(out, "\nloan-limit@") || !strings.Contains(out, "changed: self\n") {
 		t.Fatalf("status after a change of the spec: %d\n%s", code, out)
@@ -113,7 +113,7 @@ func TestCommandsEndToEnd(t *testing.T) {
 
 	// doc shows a Definition with its text, its links both ways, its files and its
 	// record; and a Package.
-	wantAll(t, mustRun(t, r.Dir, "doc", "[[members/member]]"), "members/member: Member (std/Concept)\n", "Package members, .markitect/model/members/member.md\n", "A person who borrows.", "Realized by:\n  src/members/member.go, .markitect/registry/members.md:", "Record: members/member@", ", ok")
+	wantAll(t, mustRun(t, r.Dir, "doc", "[[members/member]]"), "members/member: Member (std/Concept)\n", "Package members, .markitect/spec/members/member.md\n", "A person who borrows.", "Realized by:\n  src/members/member.go, .markitect/registry/members.md:", "Record: members/member@", ", ok")
 	wantAll(t, mustRun(t, r.Dir, "doc", "loan-limit"), "Links to: members\n", "Realized by:\n  README.md", ", changed: self")
 	wantAll(t, mustRun(t, r.Dir, "doc", "members"), "Package members, in Root\n", "paths src/members/**", "members/member: Member (std/Concept)", "Linked from:\n  loan-limit (link)", "Files:\n  src/members/member.go")
 	if code, _, errOut := run(t, r.Dir, "doc", "members/nobody"); code != 1 || !strings.Contains(errOut, "neither a Definition nor a Package") {
@@ -149,11 +149,11 @@ func TestCommandsEndToEnd(t *testing.T) {
 	if code, out, _ := run(t, r.Dir, "vet"); code != 0 || out != "" {
 		t.Fatalf("vet: %d %s", code, out)
 	}
-	r.Write(".markitect/model/members/orphan.md", "---\nkind: std/Concept\n---\n# Orphan\n\nA member within the loan limit. "+strings.Repeat("word ", 1001)+"\n")
-	if code, out, _ := run(t, r.Dir, "vet"); code != 0 || out != ".markitect/model/members/orphan.md: vet.definition_size: 1009 words (more than 1000); split it or move detail the model does not need to the realization\nnotes: 2 unlinked mentions in 1 Definition; markitect vet --strict lists them\n" {
+	r.Write(".markitect/spec/members/orphan.md", "---\nkind: std/Concept\n---\n# Orphan\n\nA member within the loan limit. "+strings.Repeat("word ", 1001)+"\n")
+	if code, out, _ := run(t, r.Dir, "vet"); code != 0 || out != ".markitect/spec/members/orphan.md: vet.definition_size: 1009 words (more than 1000); split it or move detail the model does not need to the realization\nnotes: 2 unlinked mentions in 1 Definition; markitect vet --strict lists them\n" {
 		t.Fatalf("vet with a warning and a note: %d %s", code, out)
 	}
-	if code, out, _ := run(t, r.Dir, "vet", "--strict"); code != 1 || !strings.Contains(out, ".markitect/model/members/orphan.md:6: vet.unlinked_mention: names loan-limit and members/member without linking them\n") || strings.Contains(out, "notes:") {
+	if code, out, _ := run(t, r.Dir, "vet", "--strict"); code != 1 || !strings.Contains(out, ".markitect/spec/members/orphan.md:6: vet.unlinked_mention: names loan-limit and members/member without linking them\n") || strings.Contains(out, "notes:") {
 		t.Fatalf("vet --strict with a warning and a note: %d %s", code, out)
 	}
 	var vetted struct {
@@ -177,7 +177,7 @@ func TestCommandsEndToEnd(t *testing.T) {
 	}
 
 	// status has no list for a spec that does not compile.
-	r.Write(".markitect/model/broken.md", "no front matter\n")
+	r.Write(".markitect/spec/broken.md", "no front matter\n")
 	code, out, _ = run(t, r.Dir, "status")
 	if code != 1 || !strings.Contains(out, "there is no list until it compiles") {
 		t.Fatalf("status on errors: %d %s", code, out)
@@ -200,9 +200,9 @@ func TestCheckGroupsItsErrors(t *testing.T) {
 	if out := mustRun(t, r.Dir, "check", "--spec"); !strings.HasPrefix(out, "ok:") {
 		t.Fatalf("check --spec: %s", out)
 	}
-	r.Write(".markitect/model/broken.md", "no front matter\n")
+	r.Write(".markitect/spec/broken.md", "no front matter\n")
 	code, out, _ = run(t, r.Dir, "check", "--spec")
-	if code != 1 || !strings.Contains(out, ".markitect/model/broken.md:1: definition.front_matter: ") || !strings.Contains(out, "2 in the spec, for the owner to settle; 0 in the realization") {
+	if code != 1 || !strings.Contains(out, ".markitect/spec/broken.md:1: definition.front_matter: ") || !strings.Contains(out, "2 in the spec, for the owner to settle; 0 in the realization") {
 		t.Fatalf("check --spec on a broken spec: %d\n%s", code, out)
 	}
 }
@@ -237,7 +237,7 @@ func TestCheckWithNothingBuilt(t *testing.T) {
 
 	// What an extraction leaves: files registered, nothing certified yet.
 	r.Write(".markitect/registry.md", read(t, r.Dir, ".markitect/registry.md")+"| `src/a.go` | [[project]] | The code |\n")
-	r.Write(".markitect/model/rule.md", "---\nkind: std/Rule\n---\n# Rule\n\nAlways.\n")
+	r.Write(".markitect/spec/rule.md", "---\nkind: std/Rule\n---\n# Rule\n\nAlways.\n")
 	code, out, _ = run(t, r.Dir, "check")
 	if code != 1 || !strings.Contains(out, "definition.unused") || strings.Contains(out, "Nothing is built") {
 		t.Fatalf("check with a registered file: %d\n%s", code, out)
@@ -509,7 +509,7 @@ func TestInitInstallsTheHarness(t *testing.T) {
 		t.Fatalf("the harness needs no registry entry: %s", checked)
 	}
 	// Run again it changes nothing, not even what the owner is editing.
-	r.Write(".markitect/model/project.md", "---\nkind: std/Project\n---\n# Demo\n\nBeing edited.\n")
+	r.Write(".markitect/spec/project.md", "---\nkind: std/Project\n---\n# Demo\n\nBeing edited.\n")
 	r.Write(".claude/agents/mine.md", "private\n")
 	before := snapshot(t, r.Dir)
 	mustRun(t, r.Dir, "init", "--name", "Demo")
@@ -590,7 +590,7 @@ func TestStatusAndMarkThroughTheCommandLine(t *testing.T) {
 	r.Write(".markitect/registry.md", "| File | Realizes | Why |\n|---|---|---|\n| README.md | [[project]] | Overview |\n")
 	r.Write("README.md", "# A project\n")
 	code, out, _ := run(t, r.Dir, "status")
-	if code != 1 || !strings.Contains(out, "no record yet") || !strings.Contains(out, "look at: .markitect/model/project.md, README.md") {
+	if code != 1 || !strings.Contains(out, "no record yet") || !strings.Contains(out, "look at: .markitect/spec/project.md, README.md") {
 		t.Fatalf("status: %d\n%s", code, out)
 	}
 	item := strings.Fields(out[strings.Index(out, "project@"):])[0]
@@ -693,7 +693,7 @@ func TestDocAndVetDocuments(t *testing.T) {
 	if code, out, _ := run(t, r.Dir, "doc", "nobody", "--json"); code != 1 || json.Unmarshal([]byte(out), &doc) != nil || len(doc.Diagnostics) != 1 || doc.Diagnostics[0].Code != "doc.unknown" {
 		t.Fatalf("doc of nothing --json: %d %s", code, out)
 	}
-	r.Write(".markitect/model/big.md", "---\nkind: std/Rule\n---\n# Big\n\n"+strings.Repeat("word ", 1001)+"\n")
+	r.Write(".markitect/spec/big.md", "---\nkind: std/Rule\n---\n# Big\n\n"+strings.Repeat("word ", 1001)+"\n")
 	var vetted struct {
 		Diagnostics []struct{ Severity, Code string }
 	}
@@ -703,9 +703,9 @@ func TestDocAndVetDocuments(t *testing.T) {
 	// vet reads from the record how often a Definition's own text changed: the
 	// anchor, linked once and changed 21 times, is a hotspot. A note leaves the exit
 	// code alone.
-	r.Write(".markitect/model/big.md", "---\nkind: std/Rule\n---\n# Big\n\nFor the [[project]].\n")
+	r.Write(".markitect/spec/big.md", "---\nkind: std/Rule\n---\n# Big\n\nFor the [[project]].\n")
 	r.Write(".markitect/review.sum", `{"definition":"project","verdict":"ok","inputs":{"self":"sha256:0"},"revisions":21}`+"\n")
-	if code, out, _ := run(t, r.Dir, "vet", "--strict"); code != 0 || !strings.Contains(out, ".markitect/model/project.md: vet.hotspot: its own text changed 21 times between verdicts, and 1 Definition links to it or is of it as Kind, so its changes put about 21 back") {
+	if code, out, _ := run(t, r.Dir, "vet", "--strict"); code != 0 || !strings.Contains(out, ".markitect/spec/project.md: vet.hotspot: its own text changed 21 times between verdicts, and 1 Definition links to it or is of it as Kind, so its changes put about 21 back") {
 		t.Fatalf("vet --strict with a hotspot: %d %s", code, out)
 	}
 	if code, _, errOut := run(t, r.Dir, "tidy", "--json"); code != 2 || !strings.Contains(errOut, "-json") {

@@ -61,12 +61,14 @@ func TestGuardHoldsEachRolesRightToWrite(t *testing.T) {
 	}
 	files := map[string][]string{
 		"spec": {
-			"/p/.markitect/model/fees/fee.md",
+			"/p/.markitect/spec/fees/fee.md",
 			"/p/.markitect/manifest.yaml",
 			"/p/.markitect/ignore",
-			`C:\p\.markitect\model\fees\fee.md`,
-			".markitect/registry/../model/fee.md",
-			"/p/.Markitect/model/fee.md",
+			`C:\p\.markitect\spec\fees\fee.md`,
+			".markitect/registry/../spec/fee.md",
+			"/p/.Markitect/Spec/fee.md",
+			// A spec an earlier markitect kept elsewhere, before update moves it.
+			"/p/.markitect/model/fee.md",
 			"/p/.markitect/registry/notes.txt",
 		},
 		"registry": {
@@ -129,7 +131,7 @@ func TestGuardHoldsEachRolesRightToWrite(t *testing.T) {
 			}
 		}
 	}
-	has(t, call("a1", run.BuilderAgent, "Edit", "file_path", "/p/.markitect/model/fee.md"), "the registry pages")
+	has(t, call("a1", run.BuilderAgent, "Edit", "file_path", "/p/.markitect/spec/fee.md"), "the registry pages")
 	has(t, call("a1", run.BuilderAgent, "Edit", "file_path", "/p/.markitect/review.sum"), "markitect mark")
 	has(t, call("a1", run.BuilderAgent, "Edit", "file_path", "/p/.claude/settings.json"), "steers the agents")
 	has(t, call("a1", run.ArchitectAgent, "Write", "file_path", "/p/.markitect/harness.yaml"), "steers the agents")

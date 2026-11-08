@@ -1,7 +1,7 @@
 // Package project loads a project's Markitect folder from a set of files, the
 // project folder or a copy of its spec, and checks it as a whole: manifest, lock,
-// Libraries, model and registry.
-// Every model command starts from a loaded Project.
+// Libraries, spec and registry.
+// Every command that reads the spec starts from a loaded Project.
 //
 // The layout is described in docs/guides/model-language.md.
 package project
@@ -21,8 +21,9 @@ import (
 
 // The fixed layout of Markitect's own folder.
 const (
-	Dir          = ".markitect"
-	ModelDir     = Dir + "/model"
+	Dir = ".markitect"
+	// SpecDir holds the spec, the project's Definitions; it is the Root Package.
+	SpecDir      = Dir + "/spec"
 	ManifestFile = Dir + "/manifest.yaml"
 	LockFile     = Dir + "/lock.yaml"
 	IgnoreFile   = Dir + "/ignore"
@@ -41,6 +42,19 @@ const (
 
 // Attributes is the content of AttributesFile.
 const Attributes = "review.sum merge=union\n"
+
+// OldSpecDir is where markitect up to 0.24.0 kept the spec, from when it was
+// called the canonical model. markitect update moves it to SpecDir.
+const OldSpecDir = Dir + "/model"
+
+// SpecPath is a file's path after the move of OldSpecDir to SpecDir: the same
+// path below SpecDir for a file below OldSpecDir, any other unchanged.
+func SpecPath(file string) string {
+	if rest, ok := strings.CutPrefix(file, OldSpecDir+"/"); ok {
+		return SpecDir + "/" + rest
+	}
+	return file
+}
 
 // harnessPrefixes are what the files of the harness start with, in lower case.
 var harnessPrefixes = []string{".claude/agents/markitect-", ".claude/skills/markitect-", ".agents/skills/markitect-", ".claude/workflows/markitect-"}
@@ -174,7 +188,7 @@ func Load(repo Repository) (*Project, error) {
 		return Normalize(data), true
 	}
 	present := map[string]bool{}
-	var modelFiles []model.File
+	var specFiles, oldSpecFiles []model.File
 	var pages []realization.PageFile
 	var libraryFiles, others []string
 	for _, f := range files {
@@ -205,9 +219,13 @@ func Load(repo Repository) (*Project, error) {
 			if data, ok := read(f); ok {
 				pages = append(pages, realization.PageFile{Package: pkg, File: f, Data: data})
 			}
+		case first == "spec" && rest != "":
+			if data, ok := read(f); ok {
+				specFiles = append(specFiles, model.File{Path: rest, Data: data})
+			}
 		case first == "model" && rest != "":
 			if data, ok := read(f); ok {
-				modelFiles = append(modelFiles, model.File{Path: rest, Data: data})
+				oldSpecFiles = append(oldSpecFiles, model.File{Path: rest, Data: data})
 			}
 		case first == "libraries" && strings.Contains(rest, "/"):
 			libraryFiles = append(libraryFiles, f)
@@ -216,7 +234,7 @@ func Load(repo Repository) (*Project, error) {
 		case first == "results":
 			ds.Add("project.results", f, 0, "certificates and Result pages are retired; markitect update writes %s from the newest certificate and removes %s/results", ReviewFile, Dir)
 		default:
-			ds.Add("project.file", f, 0, "%s holds only the manifest, lock, ignore file, the harness configuration %s, the registry, the model, Libraries, the record %s with its %s, and the installed tool", Dir, HarnessFile, ReviewFile, AttributesFile)
+			ds.Add("project.file", f, 0, "%s holds only the manifest, lock, ignore file, the harness configuration %s, the registry, the spec, Libraries, the record %s with its %s, and the installed tool", Dir, HarnessFile, ReviewFile, AttributesFile)
 		}
 	}
 	local := map[string][]model.File{}
@@ -227,7 +245,16 @@ func Load(repo Repository) (*Project, error) {
 		}
 	}
 	p.loadManifest(read, present, local, &ds)
-	m, errs := model.Compile(model.Source{Dir: ModelDir, Files: modelFiles, Libraries: p.Libraries})
+	dir := SpecDir
+	if len(oldSpecFiles) > 0 {
+		// One error for the folder, not one per file of a spec that has not moved.
+		ds.Add("project.model", OldSpecDir, 0, "an earlier markitect kept the spec here; markitect update moves it to %s", SpecDir)
+		if len(specFiles) == 0 {
+			// Compiled where it is, so that the move is all that stands in the way.
+			dir, specFiles = OldSpecDir, oldSpecFiles
+		}
+	}
+	m, errs := model.Compile(model.Source{Dir: dir, Files: specFiles, Libraries: p.Libraries})
 	p.Model = m
 	ds = append(ds, errs...)
 	in := realization.Input{Model: m, Pages: pages, Files: others, GitIgnored: repo.GitIgnored, OwnDir: Dir, Own: isOwn}

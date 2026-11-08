@@ -138,6 +138,7 @@ func recordFromCertificate(root string) ([]byte, error) {
 	if err != nil || c == nil {
 		return nil, err
 	}
+	c.moveSpec()
 	p, err := project.Load(certified{c})
 	if err != nil {
 		return nil, err
@@ -234,6 +235,24 @@ func newestCertificate(root string) (*certificate, error) {
 		return nil, nil
 	}
 	return all[best], nil
+}
+
+// moveSpec names the files of a certificate as the layout names them now:
+// markitect 0.20 kept the spec below project.OldSpecDir.
+func (c *certificate) moveSpec() {
+	moved := func(in map[string]string) map[string]string {
+		out := make(map[string]string, len(in))
+		for file, v := range in {
+			out[project.SpecPath(file)] = v
+		}
+		return out
+	}
+	c.Files, c.Spec = moved(c.Files), moved(c.Spec)
+	for i := range c.Items {
+		for j := range c.Items[i].Pointers {
+			c.Items[i].Pointers[j].File = project.SpecPath(c.Items[i].Pointers[j].File)
+		}
+	}
 }
 
 // certified is a certificate as a set of a project's files: the files it hashed
