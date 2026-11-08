@@ -18,8 +18,9 @@ const body = `return (async () => {\n${src.replace("export const meta", "const m
 // commits and reads status. Options: stuck (builders change nothing), swing (each
 // Root record puts items back), hunt, specErrors, inWorktree, branch, noBranch,
 // silent (that builder returns nothing), uncommitted (that builder leaves its
-// work uncommitted), conflict (that strand's merge conflicts), lose (the nth
-// merge returns nothing), loseStatus.
+// work uncommitted), idle (that builder changes nothing), conflict (that
+// strand's merge conflicts), forget (the merge step leaves that strand out of
+// its answer), lose (the nth merge returns nothing), loseStatus.
 function world(spec) {
   const pk = structuredClone(spec.packages)
   const committed = new Set()
@@ -39,7 +40,7 @@ function world(spec) {
       if (opts.agentType === "markitect-builder") {
         const name = prompt.match(/Package (\S+?)[.,]/)[1]
         if (spec.silent === name) return Promise.resolve(null)
-        const changed = !spec.stuck
+        const changed = !spec.stuck && spec.idle !== name
         const ok = changed && spec.uncommitted !== name
         if (ok) committed.add(name)
         return Promise.resolve({
@@ -64,7 +65,9 @@ function world(spec) {
         for (const m of prompt.matchAll(/^- (\S+): (\S+)$/gm)) {
           const name = m[1]
           assert.strictEqual(m[2], `wt-${name}`, "the merge names the strand's branch")
-          if (!committed.has(name)) {
+          if (spec.forget === name) {
+            // left out of every list
+          } else if (!committed.has(name)) {
             out.unchanged.push(name)
           } else if (spec.conflict === name) {
             out.not_merged.push({ strand: name, why: "conflict in x.go" })
@@ -140,7 +143,7 @@ const build = { mode: "build", into: "main" }
   assert.deepStrictEqual(reviewers(calls).slice(0, 2).map((c) => c.prompt), ["Verify what markitect status lists in Package a.", "Verify what markitect status lists in Package d."])
   assert(reviewers(calls).every((c) => !c.opts.isolation))
   // No step is asked to reach into another folder with Git.
-  assert(!plain(calls).some((c) => /git -C </.test(c.prompt) || /cd </.test(c.prompt)), "a Git step names another folder")
+  assert(!plain(calls).some((c) => /git -C \S|\bcd \S|\/wt\//.test(c.prompt)), "a Git step names another folder")
   // The record is new in a project that has none yet: the record step adds it
   // before it commits it alone, which a bare `git commit -- FILE` refuses.
   const records = plain(calls).filter((c) => c.prompt.includes("You do a Git step"))
@@ -183,6 +186,29 @@ const build = { mode: "build", into: "main" }
   assert(!reviewers(calls).some((c) => c.prompt.includes("Package d.")))
   assert(result.worktrees.some((w) => w.strand === "d" && !w.merged))
   assert(reviewers(calls).some((c) => c.prompt.includes("Package a.")))
+}
+
+// A strand the merge step leaves out of its answer counts as not merged: it
+// keeps its branch, and gets no reviewer.
+{
+  const s = base()
+  s.forget = "d"
+  const { result, calls } = await run(build, world(s))
+  assert(result.not_merged.some((n) => n.strand === "d" && n.why.includes("did not say") && n.why.includes("wt-d")), JSON.stringify(result.not_merged))
+  assert(result.worktrees.some((w) => w.strand === "d" && !w.merged))
+  assert(!reviewers(calls).some((c) => c.prompt.includes("Package d.")))
+}
+
+// A builder that changed nothing has no branch left to merge: the merge step is
+// not asked about it, and its Package is verified as it is.
+{
+  const s = base()
+  s.idle = "d"
+  const { result, calls } = await run(build, world(s))
+  assert(!calls.some((c) => c.prompt.includes("- d: wt-d")))
+  assert(reviewers(calls).some((c) => c.prompt.includes("Package d.")))
+  assert(!result.not_merged.some((n) => n.strand === "d"))
+  assert(!result.worktrees.some((w) => w.strand === "d"))
 }
 
 // A builder that leaves its work uncommitted is reported and neither merged nor

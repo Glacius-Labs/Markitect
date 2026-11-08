@@ -202,8 +202,9 @@ const (
 )
 
 // ensureIgnore adds project.WorktreeDir to the project's .gitignore, unless a line
-// there already ignores it, and keeps the rest of the file and its line endings.
-// It says whether it added the line.
+// there already ignores it, or un-ignores it with !, which is the owner's choice.
+// It keeps the rest of the file and its line endings, and says whether it added
+// the line.
 func ensureIgnore(ws Workspace) (bool, error) {
 	var text string
 	if ws.Exists(gitIgnoreFile) {
@@ -214,7 +215,9 @@ func ensureIgnore(ws Workspace) (bool, error) {
 		text = string(data)
 	}
 	for _, line := range strings.Split(text, "\n") {
-		pattern := strings.TrimSuffix(strings.TrimPrefix(strings.TrimSpace(line), "/"), "/")
+		pattern := strings.TrimPrefix(strings.TrimSpace(line), "!")
+		pattern = strings.TrimPrefix(strings.TrimPrefix(pattern, "**/"), "/")
+		pattern = strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(pattern, "**"), "*"), "/")
 		if pattern == strings.TrimSuffix(project.WorktreeDir, "/") || pattern == ".claude" {
 			return false, nil
 		}

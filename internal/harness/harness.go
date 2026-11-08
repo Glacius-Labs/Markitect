@@ -54,7 +54,9 @@ var (
 
 // The built-in strategies. Any other strategy names a custom workflow.
 const (
-	// Auto has Claude estimate the work and choose sequential or parallel.
+	// Auto has Claude estimate the work and choose sequential or parallel; the
+	// skills choose sequential until the parallel strategy has proven itself
+	// on a long list.
 	Auto = "auto"
 	// Sequential runs one agent of each role at a time, in the session.
 	Sequential = "sequential"

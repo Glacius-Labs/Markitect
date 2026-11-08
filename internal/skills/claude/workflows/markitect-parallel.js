@@ -157,6 +157,13 @@ async function strands(tasks) {
       continue
     }
     for (const r of b.requests || []) requested.push({ strand: b.name, file: r.file, change: r.change })
+    if (!b.changed && !b.committed) {
+      // Claude Code removes the worktree of an agent that changed nothing, and
+      // its branch with it: there is nothing to merge, and the Package's items
+      // are here to verify as they are.
+      out.push({ ...b, nothing: true })
+      continue
+    }
     if (b.changed && !b.committed) {
       notMerged.push({ strand: b.name, why: `the builder left its work uncommitted in ${b.folder}, on branch ${b.branch}` })
       worktrees.push({ strand: b.name, folder: b.folder, branch: b.branch, merged: false })
@@ -171,14 +178,16 @@ async function strands(tasks) {
 // branches are the repository's, but Claude Code lets this step run Git on its
 // own worktree only. It returns the strands it merged, those whose branch held
 // nothing to merge, and why it left the others.
-async function merge(built, label) {
-  if (built.length === 0) return { merged: [], unchanged: [], not_merged: [] }
+async function merge(all, label) {
+  const nothing = all.filter((b) => b.nothing).map((b) => b.name)
+  const built = all.filter((b) => !b.nothing)
+  if (built.length === 0) return { merged: [], unchanged: nothing, not_merged: [] }
   const list = built.map((b) => `- ${b.name}: ${b.branch}`).join("\n")
   const m = await agent(
     `You do the Git steps of a Markitect run, in your working folder, whose branch is the run's own. Run each git command here as it stands, with no -C and no cd: the branches below are this repository's, and you touch no other folder. Edit no file.
 
 For each strand below, one at a time, with its branch:
-1. If \`git log --oneline HEAD..<branch>\` prints nothing, the branch holds nothing to merge: return the strand in unchanged.
+1. If the branch does not exist, or \`git log --oneline HEAD..<branch>\` prints nothing, it holds nothing to merge: return the strand in unchanged.
 2. Otherwise run \`git merge --no-edit <branch>\`. If the merge stops on a conflict, run \`git merge --abort\` and return the strand in not_merged, with the files in conflict. If Git refuses because of changes here, return this strand and every later one in not_merged, with what Git said, and merge no more.
 3. Return in merged each strand you merged.
 
@@ -186,16 +195,30 @@ ${list}`,
     { label, phase: "Merge", schema: MERGED, effort: "low" },
   )
   if (!m) {
-    for (const b of built) notMerged.push({ strand: b.name, why: `the merge step returned nothing; its work is on branch ${b.branch}` })
+    for (const b of built) {
+      notMerged.push({ strand: b.name, why: `the merge step returned nothing; its work is on branch ${b.branch}` })
+      worktrees.push({ strand: b.name, folder: b.folder, branch: b.branch, merged: false })
+    }
     throw new Lost(`${label}: the merge step returned nothing`)
   }
-  for (const n of m.not_merged || []) {
-    const b = built.find((x) => x.name === n.strand)
-    notMerged.push({ strand: n.strand, why: b ? `${n.why}; its work is on branch ${b.branch}` : n.why })
+  // Only what the step names as merged or unchanged counts as here: a strand it
+  // leaves out keeps its branch, so that the session removes no work.
+  const merged = new Set(m.merged || [])
+  const unchanged = new Set(m.unchanged || [])
+  const why = new Map((m.not_merged || []).map((n) => [n.strand, n.why]))
+  const out = { merged: [], unchanged: [...nothing], not_merged: [] }
+  for (const b of built) {
+    const here = merged.has(b.name) || unchanged.has(b.name)
+    worktrees.push({ strand: b.name, folder: b.folder, branch: b.branch, merged: here })
+    if (merged.has(b.name)) out.merged.push(b.name)
+    else if (unchanged.has(b.name)) out.unchanged.push(b.name)
+    else {
+      const n = { strand: b.name, why: `${why.get(b.name) || "the merge step did not say what became of it"}; its work is on branch ${b.branch}` }
+      out.not_merged.push(n)
+      notMerged.push(n)
+    }
   }
-  const left = new Set((m.not_merged || []).map((n) => n.strand))
-  for (const b of built) worktrees.push({ strand: b.name, folder: b.folder, branch: b.branch, merged: !left.has(b.name) })
-  return m
+  return out
 }
 
 // review starts a reviewer per Package here, on the run's branch, where the

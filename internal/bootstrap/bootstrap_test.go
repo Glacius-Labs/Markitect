@@ -449,6 +449,10 @@ func TestInitIgnoresClaudeCodesWorktrees(t *testing.T) {
 		"node_modules":      "node_modules\n\n" + lines,
 		"/.claude/\n":       "/.claude/\n",
 		".claude/worktrees": ".claude/worktrees",
+		// The owner's own choice, to track them, stays.
+		"!.claude/worktrees/\n":     "!.claude/worktrees/\n",
+		".claude/*\n":               ".claude/*\n",
+		"**/.claude/worktrees/**\n": "**/.claude/worktrees/**\n",
 	} {
 		r := newFolder(t)
 		r.Write(".gitignore", before)
