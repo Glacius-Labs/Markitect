@@ -93,7 +93,7 @@ Markitect itself starts no agent, steers no work and uses no Git. It computes an
 - **A cache of what was verified.** Like `go test`, which runs a test again only when something it depends on changed, Markitect records for each Definition the state at which a reviewer verified it: its text, its Kind and links, its files and the evidence. `markitect status` lists every Definition whose state changed.
 - **Design measured like code.** `markitect vet` warns about coupling, size, hubs and dependencies on less stable Packages, and notes names mentioned in prose without a link, long Definitions, misplaced ones and change hotspots.
 - **Verdicts bound to what was read.** A verdict names the item as `status` printed it, such as `members/limit@3f9a1c`, and `mark` refuses it when anything changed since. Only the reviewer records.
-- **In parallel when the work is large.** On a long list Claude has a shipped workflow run one builder and its reviewer per Package, in waves along the spec's dependencies, and merges their work. You choose per skill: `auto`, `sequential`, `parallel` or a workflow of your own.
+- **In parallel when the work is large.** On a long list Claude has a shipped workflow run one builder and a reviewer per Package, in waves along the spec's dependencies, and merges their work. You choose per skill: `auto`, `sequential`, `parallel` or a workflow of your own. Limit: the parallel strategy has not yet passed a real run, so `auto` works sequentially for now.
 - **The record, committed.** `.markitect/review.sum` holds one line per Definition, and your session commits it with the work. A CI job can run `markitect status` and fail on any item.
 
 ## Skills and roles
