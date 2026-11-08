@@ -339,8 +339,8 @@ func TestStartHookFetchesOnlyForAMarkitectProject(t *testing.T) {
 	}
 }
 
-// The first session-start hook puts the launcher on the PATH of Claude Code's Bash
-// tool, which on Windows does not get the plugin's bin folder: it appends one line
+// The session-start hook Claude Code waits for puts the launcher on the PATH of its
+// Bash tool, which on Windows does not get the plugin's bin folder: it appends one line
 // to the file CLAUDE_ENV_FILE names, which Claude Code runs before each command.
 // The line puts the folder on the PATH once, however often the hook ran or the
 // file was run, and survives a folder whose name has a space and a quote. Without
@@ -389,8 +389,9 @@ markitect -test.run=TestLauncherChild`
 
 // On Windows the PowerShell tool has the plugin's bin folder on its PATH but cannot
 // run the launcher, a shell script; markitect.cmd beside it runs the launcher with
-// the bash of Git for Windows, by name as PowerShell and cmd find it, and says
-// what is missing when there is no such bash.
+// the bash of Git for Windows, by name as PowerShell and cmd find it. A
+// CLAUDE_CODE_GIT_BASH_PATH that names no file is passed over for the bash beside
+// git, and without either the shim says what is missing.
 func TestShimRunsTheLauncherOnWindows(t *testing.T) {
 	if runtime.GOOS != "windows" {
 		t.Skip("markitect.cmd is for Windows")
@@ -402,7 +403,7 @@ func TestShimRunsTheLauncherOnWindows(t *testing.T) {
 	root := filepath.Join(testkit.TempDir(t), "a plugin")
 	pluginCopy(t, root, testVersion)
 	data := testkit.TempDir(t)
-	env := func(path string) []string {
+	env := func(path, gitBash string) []string {
 		var kept []string
 		for _, kv := range os.Environ() {
 			name, _, _ := strings.Cut(kv, "=")
@@ -410,21 +411,23 @@ func TestShimRunsTheLauncherOnWindows(t *testing.T) {
 				kept = append(kept, kv)
 			}
 		}
-		return append(kept, "PATH="+path, "CLAUDE_PLUGIN_DATA="+data, "MARKITECT_RELEASES_URL="+mirror, launcherEnv+"=1")
+		return append(kept, "PATH="+path, "CLAUDE_CODE_GIT_BASH_PATH="+gitBash, "CLAUDE_PLUGIN_DATA="+data, "MARKITECT_RELEASES_URL="+mirror, launcherEnv+"=1")
 	}
 	bin := filepath.Join(root, "bin")
 
-	cmd := exec.Command("cmd", "/d", "/c", "markitect -test.run=TestLauncherChild")
-	cmd.Env = env(bin + string(os.PathListSeparator) + os.Getenv("PATH"))
-	out, err := cmd.CombinedOutput()
-	if err != nil || !strings.Contains(string(out), "child: plugin "+testVersion) {
-		t.Fatalf("markitect by name in cmd: %v\n%s", err, out)
+	for _, gitBash := range []string{"", filepath.Join(testkit.TempDir(t), "no", "bash.exe")} {
+		cmd := exec.Command("cmd", "/d", "/c", "markitect -test.run=TestLauncherChild")
+		cmd.Env = env(bin+string(os.PathListSeparator)+os.Getenv("PATH"), gitBash)
+		out, err := cmd.CombinedOutput()
+		if err != nil || !strings.Contains(string(out), "child: plugin "+testVersion) {
+			t.Fatalf("markitect by name in cmd, CLAUDE_CODE_GIT_BASH_PATH=%q: %v\n%s", gitBash, err, out)
+		}
 	}
 
 	system := filepath.Join(os.Getenv("SystemRoot"), "System32")
-	cmd = exec.Command(filepath.Join(system, "cmd.exe"), "/d", "/c", "markitect -test.run=TestLauncherChild")
-	cmd.Env = env(bin + string(os.PathListSeparator) + system)
-	out, err = cmd.CombinedOutput()
+	cmd := exec.Command(filepath.Join(system, "cmd.exe"), "/d", "/c", "markitect -test.run=TestLauncherChild")
+	cmd.Env = env(bin+string(os.PathListSeparator)+system, "")
+	out, err := cmd.CombinedOutput()
 	exit, ok := err.(*exec.ExitError)
 	if !ok || exit.ExitCode() != 2 || !strings.Contains(string(out), "needs the bash of Git for Windows") || strings.Contains(string(out), "child:") {
 		t.Fatalf("without git on the PATH: %v\n%s", err, out)
