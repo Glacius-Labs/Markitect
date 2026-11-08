@@ -196,5 +196,14 @@ func embeddedFile(name string) bool {
 	if name == embeddedNoticesPath {
 		return true
 	}
-	return strings.EqualFold(filepath.Ext(name), ".md") && (strings.HasPrefix(name, "internal/libraries/") || strings.HasPrefix(name, "internal/skills/"))
+	ext := strings.ToLower(filepath.Ext(name))
+	switch {
+	case strings.HasPrefix(name, "internal/libraries/"):
+		return ext == ".md"
+	case strings.HasPrefix(name, "internal/skills/"):
+		// The skills and agents are Markdown; the parallel strategy's workflow
+		// is a script (DEC-102).
+		return ext == ".md" || ext == ".js"
+	}
+	return false
 }

@@ -16,13 +16,14 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 |---|---|---|---|
 | `model` | The model language over supplied bytes: Definitions, Kinds, links, visibility, cycles, manifest and lock. | nothing | 1 |
 | `assets` | Files built into the binary: the standard Libraries, the skills and the harness of the work. | nothing | 2 |
+| `harness` | harness.yaml at user and project level, resolved key by key, and the agents' front matter rendered from it. | nothing | 1 |
 | `domain` | Registry pages, ownership and file accounting over a compiled model. | `model` | 1 |
-| `project` | Loads and checks a project's Markitect folder from the files of a project folder. | `model`, `assets`, `domain` | 1 |
+| `project` | Loads and checks a project's Markitect folder from the files of a project folder. | `model`, `assets`, `harness`, `domain` | 1 |
 | `service` | Questions about a loaded project: what it holds, what depends on what, and vet. | `model`, `assets`, `domain`, `project` | 1 |
 | `run` | The record of what was verified, without Git: the inputs of each Definition, review.sum, status, mark, the hook and the migration from certificates. | `model`, `assets`, `domain`, `project` | 1 |
 | `guardedwrite` | Guarded working-tree writes for bundle installation, with the Git and path helpers they share with source snapshots. | nothing | 1 |
 | `build` | Version identity and embedded license notices. | nothing | 1 |
-| `adapter` | Concrete project-folder, command-line and release adapters; no adapter imports another. | `model`, `assets`, `domain`, `project`, `service`, `run`, `build` | 3 |
+| `adapter` | Concrete project-folder, command-line and release adapters; no adapter imports another. | `model`, `assets`, `harness`, `domain`, `project`, `service`, `run`, `build` | 3 |
 | `composition` | Constructs the command line with its adapters. | `model`, `project`, `service`, `run`, `adapter` | 1 |
 | `command` | Thin entrypoints to product composition. | `composition` | 1 |
 | `maintenance` | The import gate and release packaging, separate from product execution. | `guardedwrite` | 2 |
@@ -49,7 +50,13 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | Package | Summary | Owning document |
 |---|---|---|
 | `internal/libraries` | Package libraries holds the standard Libraries that ship inside the markitect binary: std, rest and cli, each a folder of Kind Definitions. | [docs/guides/model-language.md#kinds-and-libraries](../guides/model-language.md#kinds-and-libraries) |
-| `internal/skills` | Package skills holds what ships inside the markitect binary for agents: the design skill, which markitect init installs where coding agents look for skills, and the harness of the work for Claude Code: its skills, its four agents and the prompts of its routines (DEC-100). | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
+| `internal/skills` | Package skills holds what ships inside the markitect binary for agents: the design skill, which markitect init installs where coding agents look for skills, and the harness of the work for Claude Code: its skills, its four agents and the prompts of its routines (DEC-100), and the workflow of the parallel strategy (DEC-102). | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
+
+## Harness configuration
+
+| Package | Summary | Owning document |
+|---|---|---|
+| `internal/harness` | Package harness is the configuration of the harness of the work (DEC-102): one file format, harness.yaml, at two levels. | [docs/guides/project-workflow.md#strategies-and-configuration](../guides/project-workflow.md#strategies-and-configuration) |
 
 ## Realization record
 
@@ -91,7 +98,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/adapters/cli` | Package cli is the markitect command line: install, update, init and tidy; check, vet, list and doc over the spec; status and mark over the record of what was verified (DEC-099); the hook; version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
+| `internal/adapters/cli` | Package cli is the markitect command line: install, update, init and tidy; check, vet, list and doc over the spec; status and mark over the record of what was verified (DEC-099); config over the harness configuration (DEC-102); the hook; version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
 | `internal/adapters/folder` | Package folder reads and writes a project folder without Git (DEC-097): it walks the folder and skips what the project's .gitignore files exclude, read as plain text, nested ones included. | [internal/run/README.md#the-folder](../../internal/run/README.md#the-folder) |
 | `internal/adapters/upgrade` | Package upgrade finds the newest Markitect release, downloads the binary for this platform, checks it against the release's checksums and replaces the running executable. | [docs/guides/project-workflow.md#8-keep-it-current](../guides/project-workflow.md#8-keep-it-current) |
 
