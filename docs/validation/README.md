@@ -12,6 +12,7 @@ Records of earlier versions, the V1 qualification and comparison, the concept 2.
 - [How far a change reaches — 3 November 2026](impact-reach-20261103.md): on Makerspace's change steps, one step of links reached 33 of the 36 existing files that truly changed, and deeper reach 35; the basis of `status` following one step.
 - [A blind checker against planted bugs — 3 November 2026](k-checker-test-20261103.md): a fresh checker caught 17 of 18 planted bugs blind and 18 of 18 with the maker's claims, with no false alarm.
 - [The first build at 5× — 4 November 2026](default-arm-20261104.md): one Sonnet launch built the 5× project from its typed spec and passed all 327 hidden cases, in an earlier, container-based version.
+- [The parallel strategy, run for real — 8 November 2026](parallel-strategy-20261108.md): with 0.25.2's fix, one headless `/markitect-build` with the parallel strategy built a 6-Definition fixture in 3 minutes. Builders committed in their own worktrees, the merges by branch name went through, reviewers on the run's branch recorded every verdict, the planted defect was caught, and `status` went from 6 to 0. One run on a small project; `auto` stays sequential.
 
 ## Release evidence
 
