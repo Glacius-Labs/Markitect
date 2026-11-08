@@ -1,6 +1,6 @@
 # Development
 
-Main implements [concept 4.0](docs/concepts/v4-concept.md), the target ([DEC-098](docs/concepts/register.md#dec-098-concept-40-is-the-target)); the [delivery plan](docs/implementation-plan.md) holds the current step. The [project workflow](docs/guides/project-workflow.md) describes the commands, which run on Windows, Linux and macOS; the tests and CI run on Linux ([DEC-077](docs/concepts/register.md#dec-077-development-pace-and-linux-first-execution)). [AGENTS.md](AGENTS.md), the [delivery plan](docs/implementation-plan.md) and the bounded dispatch own authority and shared-file reservations. Source availability does not establish native runtime qualification. Markitect itself is developed as an ordinary software project without a canonical self-model ([DEC-076](docs/concepts/register.md#dec-076-markitect-is-developed-as-a-regular-software-project)).
+Main implements [concept 4.0](docs/concepts/v4-concept.md), the target ([DEC-098](docs/concepts/register.md#dec-098-concept-40-is-the-one-concept)); the [delivery plan](docs/implementation-plan.md) holds the current step. The [project workflow](docs/guides/project-workflow.md) describes the commands, which run on Windows, Linux and macOS; the tests and CI run on Linux ([DEC-077](docs/concepts/register.md#dec-077-linux-ci-run-on-request)). [AGENTS.md](AGENTS.md), the [delivery plan](docs/implementation-plan.md) and the bounded dispatch own authority and shared-file reservations. Source availability does not establish native runtime qualification. Markitect itself is developed as an ordinary software project without a canonical self-model ([DEC-076](docs/concepts/register.md#dec-076-markitect-is-developed-as-an-ordinary-software-project)).
 
 ## Ownership and layout
 
@@ -34,7 +34,7 @@ python -B -m unittest discover -s scripts -p test_*.py
 python -B scripts/check-docs.py
 ```
 
-Broad Go suites run in Linux CI by manual dispatch (above). The product's tests run on plain folders and need no Git, so since 0.20.0 the whole Go suite takes about a minute on Windows too; only the release tooling's tests start Git, which is slow there ([earlier measurement](docs/validation/windows-test-time-20261028.md): about 50 minutes while the Run's tests used Git).
+Broad Go suites run in Linux CI by manual dispatch (above). The product's tests run on plain folders and need no Git, so since 0.20.0 the whole Go suite takes about a minute on Windows too; only the release tooling's tests start Git, which is slow there ([earlier measurement](https://github.com/Glacius-Labs/Markitect/blob/d85e0fa1302ec95d1c82c6d2c088bf2ff34b6557/docs/validation/windows-test-time-20261028.md): about 50 minutes while the Run's tests used Git).
 
 Run `gofmt` on changed Go files and `git diff --check`. CI checks module checksums, tests with and without the race detector, vet, build, tracked Go formatting, every production/test/platform import against the architecture rule table, the packaged-source smoke, repository scripts and maintained documentation links. Obsolete engines and their tests/gates are removed together; no skips or success stubs may replace required checks.
 

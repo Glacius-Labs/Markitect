@@ -28,7 +28,9 @@
 </p>
 
 > [!IMPORTANT]
-> Main carries the build of [concept 4.0](docs/concepts/v4-concept.md), Markitect's target. Markitect is in active development; the latest release is 0.22.0. Every command on this page exists in it.
+> **Early access.** Markitect is an early version for people who want to try a new way of working with coding agents. The latest release covers the whole way of working on Claude Code and is covered by tests, but real runs on real projects are only beginning, and its commands, files and skills may still change. Try it on a small project you can throw away, read [what it does not do yet](#limits), and tell us in [Issues](https://github.com/Glacius-Labs/Markitect/issues) what worked and what broke.
+
+**You write the spec. Agents build it. Markitect checks the spec like code and records, per Definition, what a fresh agent verified, so you know what is built as specified without reading every diff.**
 
 ## Why Markitect
 
@@ -55,11 +57,11 @@ claude plugin marketplace add Glacius-Labs/Claude-Plugins
 claude plugin install markitect@glacius-labs
 ```
 
-Then open Claude Code in your project's folder. The build runs in a Git worktree, so a new folder needs `git init` first; Markitect itself uses no Git.
+For a new project, make an empty folder, run `git init` in it, and open Claude Code there. The build runs in a Git worktree; Markitect itself uses no Git.
 
-1. **Set it up.** Ask Claude to set up Markitect. It runs `markitect init --name "Your project"`, which writes `.markitect/`, the skills, the four agents and the hook that holds their rights. It commits nothing.
-2. **Design the spec.** Run `/markitect-design`; if the session does not offer it yet, because the skills folder is new, run `/reload-skills` or start a new session. It asks what the project is and writes the spec with you, or drafts a first spec from the code that is there. Read the Markdown diff and commit it.
-3. **Build it.** Run `/markitect-build`. Your session starts a builder in a worktree of its own, and a fresh reviewer verifies each Definition. When nothing is left to verify, the work and its record come back to your branch. In a folder without Git the builder works in your folder instead.
+1. **Set it up.** Ask Claude to set up Markitect. It runs `markitect init`, which writes `.markitect/` with the first page of the spec, `AGENTS.md`, `CLAUDE.md`, the skills, the four agents and the hook that holds their rights. It commits nothing. The plugin downloads the binary on this first call; if Claude Code's sandbox blocks the network, let the call run outside it.
+2. **Design the spec.** Run `/markitect-design`; if the session does not offer it yet, because the skills folder is new, run `/reload-skills` or start a new session. It asks what the project is, one question at a time, and writes the spec with you. Read the Markdown diff and commit it, together with what `init` wrote: the builder starts from your last commit.
+3. **Build it.** Run `/markitect-build`. Your session starts a builder in a worktree of its own, and a fresh reviewer verifies each Definition. When nothing is left to verify, your session commits the work with its record and merges it into your branch. It pushes nothing.
 
 [Install and set up](#install-and-set-up) has the other ways to install, upgrades and an existing code base.
 
@@ -89,10 +91,10 @@ Markitect itself starts no agent, steers no work and uses no Git. It computes an
 - **A compiler for intent.** `markitect check` resolves every Kind and link, keeps internal Definitions inside their subtree and refuses dependency cycles between Packages, as Go does.
 - **Every file accounted for.** One registry page per Package names the paths it owns and lists each file with the Definitions it builds. A file that is neither registered nor ignored is an error.
 - **A cache of what was verified.** Like `go test`, which runs a test again only when something it depends on changed, Markitect records for each Definition the state at which a reviewer verified it: its text, its Kind and links, its files and the evidence. `markitect status` lists every Definition whose state changed.
-- **Design measured like code.** `markitect vet` warns about coupling, size, how far a change reaches and dependencies on less stable Packages.
+- **Design measured like code.** `markitect vet` warns about coupling, size, hubs and dependencies on less stable Packages, and notes names mentioned in prose without a link, long Definitions, misplaced ones and change hotspots.
 - **Verdicts bound to what was read.** A verdict names the item as `status` printed it, such as `members/limit@3f9a1c`, and `mark` refuses it when anything changed since. Only the reviewer records.
-- **The record, committed.** `.markitect/review.sum` holds one line per Definition, and your session commits it with the work. A CI job can run `markitect status` and fail on any item.
 - **In parallel when the work is large.** On a long list Claude has a shipped workflow run one builder and its reviewer per Package, in waves along the spec's dependencies, and merges their work. You choose per skill: `auto`, `sequential`, `parallel` or a workflow of your own.
+- **The record, committed.** `.markitect/review.sum` holds one line per Definition, and your session commits it with the work. A CI job can run `markitect status` and fail on any item.
 
 ## Skills and roles
 
@@ -102,7 +104,7 @@ Skills are named after the activity, agents after the role ([DEC-100](docs/conce
 | --- | --- | --- |
 | `/markitect-design` | You, or Claude | Designs the spec with you: starts a new project, drafts a first spec from existing code, or changes the spec. For a large code base it can have the architect draft |
 | `/markitect-build` | You | A builder in a worktree of its own makes the project match what `status` lists, and a reviewer verifies each item, until the list is empty; on a long list one builder and reviewer per Package, in parallel. Then the work comes back to your branch |
-| `/markitect-review` | You, or Claude | A reviewer verifies what `status` lists, or every Definition with `--all`, one reviewer per Package on a long list, and changes no code |
+| `/markitect-review` | You, or Claude | A reviewer verifies what `status` lists, or every Definition with `--all`, and changes no code; on a long list, by its strategy, one reviewer per Package |
 | `/markitect-cleanup` | You | The builder refactors without changing behaviour, and the reviewer verifies again what that puts on the list |
 | `/markitect-bughunt` | You | The reviewer hunts for bugs beyond the list and records them, the builder repairs them, and the reviewer verifies again |
 | `/markitect-audit` | You, or Claude | The auditor reads the spec fresh for contradictions, gaps, unclear and duplicated statements, and reports to you |
@@ -126,7 +128,7 @@ None of these starts an agent or uses Git. With `--json`, `check`, `vet`, `list`
 | --- | --- |
 | `markitect init` | Sets up a project: `.markitect/`, `AGENTS.md`, `CLAUDE.md`, the skills, the four agents and the hook. Run again, it refreshes the harness and never touches a spec page |
 | `markitect check` | Compiles the spec and the registry: Kinds, links, Packages, Libraries against the lock, and every file listed or ignored |
-| `markitect vet` | Measures the spec's design: coupling, size, reach and unstable dependencies. It warns, and exits 1 only with `--strict` |
+| `markitect vet` | Measures the spec's design: coupling, size, hubs and unstable dependencies, with notes on unlinked mentions, placement and hotspots. It warns, and exits 1 only with `--strict` |
 | `markitect list` | The Packages and their Definitions; with `--deps`, what each Package depends on |
 | `markitect doc TARGET` | A Definition with its text, its links both ways, the files that realize it and its record; or a Package |
 | `markitect status` | What is to verify, each item as `DEFINITION@FINGERPRINT`, with what changed and where to look |
@@ -175,7 +177,7 @@ README.md: file.unregistered: neither registered nor ignored: list it on .markit
 `/markitect-design` drafts a first spec from the code with you and registers the files with the Definitions they build; you accept it like any other change. From then on, `/markitect-review --all` verifies every Definition and records where the code deviates, and `/markitect-build` repairs it. To look around:
 
 ```bash
-markitect vet                    # coupling, size, how far a change reaches
+markitect vet                    # coupling, size, hubs; --strict lists the notes
 markitect list --deps            # the Packages, their Definitions and what each depends on
 markitect doc members/member     # one Definition: text, links both ways, files, record
 markitect status                 # what is to verify, and what changed
@@ -232,6 +234,7 @@ A project keeps all of it under `.markitect/`:
 ├── ignore            # files that deliberately belong to no Package, if any
 ├── libraries/        # Libraries that do not ship with markitect
 ├── review.sum        # the record of what was verified
+├── harness.yaml      # the agents' model and effort and each skill's strategy, if set
 └── .gitattributes    # merges the record by keeping both sides
 ```
 
@@ -239,32 +242,40 @@ The [model language guide](docs/guides/model-language.md) gives the exact format
 
 ## Status
 
-Main carries [concept 4.0](docs/concepts/v4-concept.md), the target the owner accepted on 7 November 2026. The [delivery plan](docs/implementation-plan.md) holds the current step.
+Markitect is in early access: it is built, released and covered by tests, and real runs on real projects are the next step. Main carries [concept 4.0](docs/concepts/v4-concept.md), the one concept; the [delivery plan](docs/implementation-plan.md) holds the current step.
 
 | Area | State |
 | --- | --- |
-| The spec language and the commands `init`, `check`, `tidy`, `vet`, `list` and `doc` | Available since 0.22.0 (0.21.0 had `lock`, `lint`, `graph` and `refs`) |
-| Work with `/markitect-build` and `/markitect-review`, over `status`, `mark` and the record | Available on Claude Code since 0.21.0, covered by tests. The flow before it, with `gate`, was tried on three changes of one project ([trials](docs/validation/lean-trials-20261107.md)) |
+| The spec language and the commands `init`, `check`, `tidy`, `vet`, `list` and `doc` | Available; `vet`'s hubs, notes and hotspots since 0.23.0 ([DEC-102](docs/concepts/register.md#dec-102-what-vet-measures)) |
+| Work with `/markitect-build` and `/markitect-review`, over `status`, `mark` and the record | Available on Claude Code since 0.21.0, covered by tests. The flow before it was tried on three changes of one project ([trials](docs/validation/lean-trials-20261107.md)) |
 | The skills `/markitect-design`, `/markitect-cleanup`, `/markitect-bughunt`, `/markitect-audit` and `/markitect-schedule`, the four roles and the build in a worktree of its own | Available on Claude Code since 0.22.0, covered by tests only ([DEC-100](docs/concepts/register.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role)) |
-| The strategies, the parallel workflow, `harness.yaml`, `markitect config` and `/markitect-config` | On Main for 0.24.0, covered by tests, the workflow by a test against stub agents; no real run yet ([DEC-103](docs/concepts/register.md#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)) |
-| A real run of 0.22.0's skills with planted defects | Next: step 3 of the [tooling plan](docs/concepts/tooling-plan.md#order-of-work), under a bounded dispatch the owner approves |
-| Further `vet` measures, such as unlinked mentions and hubs | Proposed in the [`vet` plan](docs/concepts/vet-plan.md); not decided |
+| The strategies, the parallel workflow, `harness.yaml`, `markitect config` and `/markitect-config` | Available since 0.24.0, covered by tests, the workflow by a test against stub agents; no real run yet ([DEC-103](docs/concepts/register.md#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)) |
+| A real run with planted defects, then reliability on Sonnet over a series of changes | Next ([delivery plan](docs/implementation-plan.md#current-steps)) |
 | Codex | Not yet: it needs subagents with their own agent files and a hook that names the agent |
 | Release | On GitHub, with the Claude Code plugin ([install](#install)) |
+
+### Limits
+
+- **Claude Code only.** Codex comes once Claude's version is reliable.
+- **Few real runs.** The record, the skills and the roles are covered by tests; real runs on real projects have only begun. Expect rough edges.
+- **Your machine, your rights.** The agents run in your own Claude Code session, with your permissions and your session's permission mode, so they may stop to ask. Don't let them read untrusted input, such as issue text or web pages, without a container or a restricted machine around them.
+- **No spending or time limit.** A build runs until nothing is left to verify, or until three rounds in a row leave the list no shorter. You stop it.
+- **Verified is not proven.** An empty `markitect status` means a fresh agent judged every Definition against the spec, with evidence. It is complete for the declared links only, and a verdict can be wrong.
+- **Things will change.** Commands, files and skills may change between releases. `markitect update` brings a project along where it can, but compatibility is not promised while Markitect is early.
 
 ## FAQ
 
 <details>
 <summary><b>Does the compiler prove that the code is correct?</b></summary>
 
-It checks structure: Kinds, links, visibility, cycles and file accounting. Agents judge meaning. Every Definition a change reaches needs a verdict from a reviewer with fresh context, with the evidence it read. The bar is today's practice, one strong agent with ordinary documentation.
+It checks structure: Kinds, links, visibility, cycles and file accounting. Agents judge meaning. Every Definition a change reaches needs a verdict from a reviewer with fresh context, with the evidence it read. The bar is today's practice: an agent implements a task, another AI reviews the pull request, and the human approval is often given almost blind.
 
 </details>
 
 <details>
 <summary><b>Isn't this requirements traceability?</b></summary>
 
-It is built on it. The registry is the traceability matrix, `markitect doc` shows links both ways, and `markitect status` lists the suspect items after a change. What differs is that it lives as plain, typed text beside the code, is checked deterministically, and has agents do the realization and the evidence. It is complete for the declared links only: prose that names a Definition without linking it is a gap, which the [`vet` plan](docs/concepts/vet-plan.md) proposes to flag.
+It is built on it. The registry is the traceability matrix, `markitect doc` shows links both ways, and `markitect status` lists the suspect items after a change. What differs is that it lives as plain, typed text beside the code, is checked deterministically, and has agents do the realization and the evidence. It is complete for the declared links only: prose that names a Definition without linking it is a gap, which `markitect vet` notes and `/markitect-audit` triages.
 
 </details>
 
@@ -303,8 +314,9 @@ Markitect = Markdown + Architect. The idea grew out of a project documented in M
 | [Project workflow](docs/guides/project-workflow.md) | Using Markitect on a project, command by command, with troubleshooting |
 | [Model language](docs/guides/model-language.md) | Definitions, Kinds, Libraries, links, the registry and every diagnostic |
 | [What makes a good spec](docs/guides/good-spec.md) | Placement, coupling, stability and size: designing a spec like code |
-| [Concept 4.0](docs/concepts/v4-concept.md) | The target, which Main builds: work in your own session, and why |
+| [Concept 4.0](docs/concepts/v4-concept.md) | The one description of the product: the spec, the tool, the record, the skills and the harness, and how sure each guarantee is |
 | [Vision](docs/vision.md) | What Markitect is, what it builds on, what it promises and what it leaves to people |
+| [Decisions in force](docs/concepts/register.md) | The owner's decisions that hold today, about thirty of them |
 | [Architecture](docs/architecture.md) | Packages, layers and the product flow |
 | [Delivery plan](docs/implementation-plan.md) | What is built and what comes next |
 | [Documentation map](docs/README.md) | Everything else |

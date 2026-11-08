@@ -1,6 +1,6 @@
 # How far `impact` reaches: one measurement — 3 November 2026
 
-The Topics session measured how much of a project a change reaches at one step of links, at two steps and when following every link, and whether that covers the files that truly changed. It started no agent. The reading is this session's and decides nothing; [draft concept 3.0](../concepts/v3-concept.md#14-decided-on-acceptance), question 3, carries the recommendation.
+The Topics session measured how much of a project a change reaches at one step of links, at two steps and when following every link, and whether that covers the files that truly changed. It started no agent. The reading is this session's and decides nothing; [draft concept 3.0](https://github.com/Glacius-Labs/Markitect/blob/d85e0fa1302ec95d1c82c6d2c088bf2ff34b6557/docs/concepts/v3-concept.md#14-decided-on-acceptance), question 3, carries the recommendation.
 
 **Of the 36 existing files that truly changed, one step reached 33. Two steps and every link each reached 35, and every link often took in most of the spec on the way.** The other 5 of the 41 changed files are new tests, which nobody could name in advance.
 

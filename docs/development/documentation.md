@@ -4,13 +4,13 @@ This guide routes maintainers through the repository's existing documentation co
 
 ## Find the owner before writing
 
-Start at the [documentation map](../README.md) and the nearest local map. Its [owner table](../README.md#canonical-status-and-evidence-owners) names the canonical owner of each subject; search for the document that already owns the subject, then update that owner instead of creating a parallel account.
+Start at the [documentation map](../README.md) and the nearest local map. Its [owner table](../README.md#canonical-owners) names the canonical owner of each subject; search for the document that already owns the subject, then update that owner instead of creating a parallel account.
 
-Dated proposals, supplied research and earlier records are not kept on Main. They stay at the archive points listed in the [archive index](../archive.md), which is the one place to find them. A proposal or assessment does not become product behavior merely because it is documented. Material that becomes historical moves out of Main in one change: remove its files, add an index entry and rewrite remaining links to full-SHA permalinks.
+Dated proposals, supplied research and earlier records are not kept on Main. They stay at the archive points listed in the [archive index](../archive.md), which is the one place to find them. A proposal or assessment does not become product behavior merely because it is documented. Main holds only what holds ([DEC-071](../concepts/register.md#dec-071-history-leaves-main-through-the-archive)). Material that becomes historical moves out of Main in one change: remove its files, add an index entry and rewrite remaining links to full-SHA permalinks. A superseded decision leaves the [register](../concepts/register.md) the same way, under the [record rules](../concepts/README.md#adding-and-changing-entries).
 
 ## Write in English
 
-All documentation is written in English ([DEC-069](../concepts/register.md#dec-069-documentation-is-written-in-english)). Under the concept record rules and the DEC-069 scope notes, verbatim owner statements under `docs/concepts/sources/` keep their original wording, with an English translation where a source serves as a reference. The [delivery plan](../implementation-plan.md#known-deviations-from-concept-10) lists existing German documents that still need translation.
+All documentation is written in English ([DEC-069](../concepts/register.md#dec-069-documentation-is-written-in-english)). Verbatim owner statements under `docs/concepts/sources/` keep their original wording, with an English translation where a source serves as a reference, and archived files keep their original bytes.
 
 ## Maintain navigation and evidence boundaries
 

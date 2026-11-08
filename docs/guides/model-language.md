@@ -1,6 +1,6 @@
 # Model language and model commands
 
-This guide is the canonical description of the model language of [concept 2.0](../concepts/v2-concept.md) (§2–§4, [DEC-080](../concepts/register.md#dec-080-the-model-is-typed-documentation), [DEC-081](../concepts/register.md#dec-081-the-organization-knows-broad-at-the-top-and-deep-below)) as `markitect` implements it, and of the commands `markitect` has. None of them starts an agent or uses Git. Where the concept leaves a detail open, the [build decisions](#build-decisions) at the end record what was chosen. [What makes a good spec](good-spec.md) says how to use the language well.
+This guide is the canonical description of the spec language of [concept 4.0](../concepts/v4-concept.md#the-spec) ([DEC-080](../concepts/register.md#dec-080-the-spec-is-typed-documentation-in-markdown), [DEC-006](../concepts/register.md#dec-006-every-file-is-accounted-for)) as `markitect` implements it, and of the commands `markitect` has. None of them starts an agent or uses Git. Where the concept leaves a detail open, the [build decisions](#build-decisions) at the end record what was chosen. [What makes a good spec](good-spec.md) says how to use the language well.
 
 ## The project's Markitect folder
 
@@ -165,7 +165,7 @@ agents:
 
 ## Commands
 
-All commands take `--repo DIR`, a folder of the project (default: the current folder), and are flat, with no groups ([tooling plan](../concepts/tooling-plan.md#refined-after-the-plan-was-merged)). `check`, `vet`, `list`, `doc`, `status`, `mark` and `config --list` take `--json`. `lock`, `lint`, `refs` and `graph` of 0.21.0 are gone: they are unknown commands, with exit code 2.
+All commands take `--repo DIR`, a folder of the project (default: the current folder), and are flat, with no groups ([DEC-096](../concepts/register.md#dec-096-the-tool-computes-and-checks-a-driver-acts)). `check`, `vet`, `list`, `doc`, `status`, `mark` and `config --list` take `--json`. `lock`, `lint`, `refs` and `graph` of 0.21.0 are gone: they are unknown commands, with exit code 2.
 
 ### Diagnostics, JSON and exit codes
 
@@ -206,7 +206,7 @@ The fields of each document:
 
 `vet`, `list` and `doc` also run over a spec with errors and say so on standard error.
 
-Two commands work on the record of what was verified, `.markitect/review.sum` ([DEC-099](../concepts/register.md#dec-099-markitect-is-a-tool-with-a-verification-cache)). The `/markitect-build` and `/markitect-review` skills have the agents run them ([project workflow](project-workflow.md#7-build-and-review)). [The record](../../internal/run/README.md) has the inputs and the rules.
+Two commands work on the record of what was verified, `.markitect/review.sum` ([DEC-099](../concepts/register.md#dec-099-a-record-of-what-was-verified)). The `/markitect-build` and `/markitect-review` skills have the agents run them ([project workflow](project-workflow.md#7-build-and-review)). [The record](../../internal/run/README.md) has the inputs and the rules.
 
 | Command | Does |
 |---|---|
@@ -241,7 +241,7 @@ Two commands work on the record of what was verified, `.markitect/review.sum` ([
 | `vet.placement` | every Definition that links to a Definition lies in one Package below it, so it could move down there, unless it binds its Package by scope |
 | `vet.hotspot` | how often a Definition's own text changed between verdicts, from the record, times its fan-in, is more than a tenth of the spec and more than 20: revisions × fan-in > max(20, N / 10) |
 
-Coupling counts explicit edges only, not the implicit edge to the parent. `list --deps` shows each Package's abstractness, the share of its own Definitions that are Kinds, and its distance from the main sequence, \|A + I − 1\|; `vet` warns about neither. [What makes a good spec](good-spec.md) says what each measure is for, and the [`vet` plan](../concepts/vet-plan.md) records why these measures and thresholds, and the ones not built yet.
+Coupling counts explicit edges only, not the implicit edge to the parent. `list --deps` shows each Package's abstractness, the share of its own Definitions that are Kinds, and its distance from the main sequence, \|A + I − 1\|; `vet` warns about neither. [What makes a good spec](good-spec.md) says what each measure is for, [DEC-102](../concepts/register.md#dec-102-what-vet-measures) records these measures and thresholds and the ones not built yet, and the archived [`vet` plan](https://github.com/Glacius-Labs/Markitect/blob/d85e0fa1302ec95d1c82c6d2c088bf2ff34b6557/docs/concepts/vet-plan.md) the reasons.
 
 ## Build decisions
 
@@ -251,7 +251,7 @@ Details the concept leaves open, settled while building T1:
 - **Library links.** A path whose first name is a Library is a Library link, so no top-level model name may equal a Library's name.
 - **Local Library versions.** A local Library carries no version file; the manifest names its version and the lock pins its digest.
 - **Specificity.** An exact path beats every pattern; otherwise more literal characters win; a tie between Packages is an error.
-- **Stale realization** and unused Definitions are errors of the realization: they stop `check`, and `status` lists them, but they do not stop its list of Definitions ([concept 4.0](../concepts/v4-concept.md#what-check-refuses)). A file of the project folder without any entry is the same. Concept 4.0 overturns the owner's earlier confirmation of 28 October 2026 ([§15](../concepts/v4-concept.md#15-what-this-overturns)).
-- **No inherited items.** A changed Rule above a Package is one item, with what links to it, not an item on every Package's list below it, as the owner confirmed on 28 October 2026 for the checklist. The per-Package lists went with the checklist ([DEC-099](../concepts/register.md#dec-099-markitect-is-a-tool-with-a-verification-cache)).
+- **Stale realization** and unused Definitions are errors of the realization: they stop `check`, and `status` lists them, but they do not stop its list of Definitions ([concept 4.0](../concepts/v4-concept.md#what-check-refuses)). A file of the project folder without any entry is the same. This overturns the owner's earlier confirmation of 28 October 2026 ([DEC-006](../concepts/register.md#dec-006-every-file-is-accounted-for)).
+- **No inherited items.** A changed Rule above a Package is one item, with what links to it, not an item on every Package's list below it, as the owner confirmed on 28 October 2026 for the checklist. The per-Package lists went with the checklist ([DEC-099](../concepts/register.md#dec-099-a-record-of-what-was-verified)).
 - **How far a change reaches.** A Definition's inputs take one step of links, its Kind, and the registry rows in both directions, so a row that gains or loses it reaches it; Definitions further along the links are not inputs. The code's own imports are not followed yet; a later step that knows the realization's languages can widen reach.
 - **Skills** are installed into `.claude/skills/` (Claude Code) and `.agents/skills/` (the Agent Skills folder that Codex and other agents read): the design skill, `markitect-design`. The harness of the work, the build, review, cleanup, bughunt, audit and schedule skills and the builder, reviewer, architect and auditor agents, goes into `.claude/` only ([DEC-100](../concepts/register.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role)).
