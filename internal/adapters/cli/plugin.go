@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
 // pluginName is the start of the key under which Claude Code's settings enable
@@ -84,10 +86,48 @@ func pluginGuards(project string) bool {
 				continue
 			}
 			hooks, err := os.ReadFile(filepath.Join(in.InstallPath, "hooks", "hooks.json"))
-			if err == nil && bytes.Contains(hooks, []byte("hook pretool")) {
+			if err == nil && guardsEveryTool(hooks) {
 				return true
 			}
 		}
 	}
 	return false
+}
+
+// guardsEveryTool says whether a plugin's hooks run the guard before the shell
+// and before every tool that writes a file or starts an agent. An older plugin,
+// whose hooks ran it only before some of them, does not count.
+func guardsEveryTool(data []byte) bool {
+	var h struct {
+		Hooks struct {
+			PreToolUse []struct {
+				Matcher string `json:"matcher"`
+				Hooks   []struct {
+					Command string `json:"command"`
+				} `json:"hooks"`
+			} `json:"PreToolUse"`
+		} `json:"hooks"`
+	}
+	if json.Unmarshal(data, &h) != nil {
+		return false
+	}
+	covered := map[string]bool{}
+	for _, group := range h.Hooks.PreToolUse {
+		guards := false
+		for _, hook := range group.Hooks {
+			guards = guards || strings.Contains(hook.Command, "hook pretool")
+		}
+		if !guards {
+			continue
+		}
+		for _, tool := range strings.Split(group.Matcher, "|") {
+			covered[strings.TrimSpace(tool)] = true
+		}
+	}
+	for _, tool := range strings.Split("Bash|"+run.EditTools+"|"+run.AgentTools, "|") {
+		if !covered[tool] {
+			return false
+		}
+	}
+	return true
 }

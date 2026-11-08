@@ -474,19 +474,32 @@ func TestProjectHookRunsOnlyAMarkitectItFinds(t *testing.T) {
 // it when the plugin's own hook calls it.
 func TestHookLeavesTheGuardToThePlugin(t *testing.T) {
 	const enable, disable = `{"enabledPlugins": {"markitect@glacius-labs": true}}`, `{"enabledPlugins": {"markitect@glacius-labs": false}}`
-	const guardHooks, otherHooks = `{"hooks": {"PreToolUse": [{"hooks": [{"command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\" hook pretool"}]}]}}`, `{"hooks": {}}`
+	group := func(matcher string) string {
+		return `{"matcher": "` + matcher + `", "hooks": [{"command": "printf '%s' \"$input\" | sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\" hook pretool"}]}`
+	}
+	hooks := func(groups ...string) string {
+		return `{"hooks": {"PreToolUse": [` + strings.Join(groups, ", ") + `]}}`
+	}
+	// The plugin's hooks as they are, and as 0.18.0 had them, before one shell
+	// command only.
+	guardHooks, oldHooks := hooks(group("Bash"), group("Edit|Write|MultiEdit|NotebookEdit"), group("Agent|Task|Workflow")), hooks(group("Bash"))
 	for name, c := range map[string]struct {
 		user, project, local, hooks string
 		installed, fromPlugin       bool
+		oneInstall                  bool
 		refused                     bool
 	}{
-		"enabled and installed":            {user: enable, hooks: guardHooks, installed: true},
-		"enabled in the project":           {project: enable, hooks: guardHooks, installed: true},
-		"called by the plugin's hook":      {user: enable, hooks: guardHooks, installed: true, fromPlugin: true, refused: true},
-		"not enabled":                      {hooks: guardHooks, installed: true, refused: true},
-		"disabled in the local settings":   {user: enable, local: disable, hooks: guardHooks, installed: true, refused: true},
-		"enabled, not installed":           {user: enable, refused: true},
-		"installed without the guard hook": {user: enable, hooks: otherHooks, installed: true, refused: true},
+		"enabled and installed":              {user: enable, hooks: guardHooks, installed: true},
+		"enabled in the project":             {project: enable, hooks: guardHooks, installed: true},
+		"disabled by the user, enabled here": {user: disable, project: enable, hooks: guardHooks, installed: true},
+		"recorded as one install":            {user: enable, hooks: guardHooks, installed: true, oneInstall: true},
+		"called by the plugin's hook":        {user: enable, hooks: guardHooks, installed: true, fromPlugin: true, refused: true},
+		"not enabled":                        {hooks: guardHooks, installed: true, refused: true},
+		"disabled in the local settings":     {user: enable, local: disable, hooks: guardHooks, installed: true, refused: true},
+		"enabled, not installed":             {user: enable, refused: true},
+		"installed without guard hooks":      {user: enable, hooks: `{"hooks": {}}`, installed: true, refused: true},
+		"an older plugin, before shell only": {user: enable, hooks: oldHooks, installed: true, refused: true},
+		"a plugin without the Workflow hook": {user: enable, hooks: hooks(group("Bash"), group("Edit|Write|MultiEdit|NotebookEdit"), group("Agent|Task")), installed: true, refused: true},
 	} {
 		t.Run(name, func(t *testing.T) {
 			config, project, plugin := testkit.TempDir(t), testkit.TempDir(t), testkit.TempDir(t)
@@ -513,9 +526,11 @@ func TestHookLeavesTheGuardToThePlugin(t *testing.T) {
 			write(filepath.Join(project, ".claude", "settings.local.json"), c.local)
 			write(filepath.Join(plugin, "hooks", "hooks.json"), c.hooks)
 			if c.installed {
-				record, _ := json.Marshal(map[string]any{"version": 2, "plugins": map[string]any{
-					"markitect@glacius-labs": []any{map[string]any{"scope": "user", "installPath": plugin, "version": "0.25.3"}},
-				}})
+				var installs any = []any{map[string]any{"scope": "user", "installPath": plugin, "version": "0.25.3"}}
+				if c.oneInstall {
+					installs = map[string]any{"installPath": plugin}
+				}
+				record, _ := json.Marshal(map[string]any{"version": 2, "plugins": map[string]any{"markitect@glacius-labs": installs}})
 				write(filepath.Join(config, "plugins", "installed_plugins.json"), string(record))
 			}
 			input := `{"agent_id":"a1","agent_type":"markitect-builder","tool_name":"Edit","tool_input":{"file_path":"/p/.markitect/review.sum"}}`
@@ -628,7 +643,7 @@ func TestInitInstallsTheHarness(t *testing.T) {
 	var settings struct {
 		Hooks map[string][]struct {
 			Matcher string
-			Hooks   []struct{ Type, If, Command string }
+			Hooks   []struct{ Type, Shell, If, Command string }
 		}
 		Worktree struct{ BaseRef string }
 	}
@@ -640,7 +655,8 @@ func TestInitInstallsTheHarness(t *testing.T) {
 		pre[1].Matcher != "Edit|Write|MultiEdit|NotebookEdit" || len(pre[1].Hooks) != 1 ||
 		pre[1].Hooks[0].Command != projectHook || pre[1].Hooks[0].If != "" ||
 		pre[2].Matcher != "Agent|Task|Workflow" || len(pre[2].Hooks) != 1 ||
-		pre[2].Hooks[0].Command != projectHook || pre[2].Hooks[0].If != "" {
+		pre[2].Hooks[0].Command != projectHook || pre[2].Hooks[0].If != "" ||
+		pre[0].Hooks[0].Shell != "bash" || pre[1].Hooks[0].Shell != "bash" || pre[2].Hooks[0].Shell != "bash" {
 		t.Fatalf("the guard hooks: %+v", settings)
 	}
 	// A builder's worktree starts from the owner's branch, not the default one.

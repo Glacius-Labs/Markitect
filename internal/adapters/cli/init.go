@@ -242,12 +242,20 @@ func ensureIgnore(ws Workspace) (bool, error) {
 // subagent writes only what its role may; and the builder starts only the
 // reviewer. The first runs only before a shell command that records, the second
 // before every tool that writes a file, the third before every tool that starts
-// an agent.
+// an agent. Each runs in bash, as the plugin's do, since its command is a shell
+// command, also on Windows.
 func guardHooks() []any {
+	hook := func(rule string) []any {
+		h := map[string]any{"type": "command", "shell": "bash", "command": run.HookCommand}
+		if rule != "" {
+			h["if"] = rule
+		}
+		return []any{h}
+	}
 	return []any{
-		map[string]any{"matcher": "Bash", "hooks": []any{map[string]any{"type": "command", "if": run.MarkRule, "command": run.HookCommand}}},
-		map[string]any{"matcher": run.EditTools, "hooks": []any{map[string]any{"type": "command", "command": run.HookCommand}}},
-		map[string]any{"matcher": run.AgentTools, "hooks": []any{map[string]any{"type": "command", "command": run.HookCommand}}},
+		map[string]any{"matcher": "Bash", "hooks": hook(run.MarkRule)},
+		map[string]any{"matcher": run.EditTools, "hooks": hook("")},
+		map[string]any{"matcher": run.AgentTools, "hooks": hook("")},
 	}
 }
 
