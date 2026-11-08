@@ -17,9 +17,9 @@ import (
 // .markitect/model/, from when it was called the canonical model, and update
 // moves it to .markitect/spec/. The record keeps its verdicts: a line is keyed by
 // its Definition's ID, the path below the folder, and its hashes are of content.
-// Only evidence can name a file of the spec, and so, in principle, a file input;
-// update renames those, which changes no fingerprint, since evidence is none of
-// it and a registry row never names a file of Markitect's folder.
+// Only evidence can name a file of the spec; update renames it, which changes no
+// fingerprint, since evidence is no part of it. A file input never names one: a
+// registry row never names a file of Markitect's folder.
 
 // SpecMove is what MoveSpec did or, in a dry run, would do.
 type SpecMove struct {
@@ -59,6 +59,10 @@ func MoveSpec(root string, dry bool) (SpecMove, error) {
 	}
 	data, err := readRecordFile(root)
 	if err != nil {
+		if !mv.Moved {
+			// Nothing to move: a record update cannot read is status's to report.
+			return SpecMove{}, nil
+		}
 		return SpecMove{}, err
 	}
 	record, lines := moveRecord(data)
@@ -144,16 +148,13 @@ func moveRecord(data []byte) ([]byte, int) {
 }
 
 // moveLine renames the files below project.OldSpecDir that a line names as
-// evidence or as an input, and says whether it named any.
+// evidence, in its list and its inputs, and says whether it named any.
 func moveLine(l *Line) bool {
 	changed := false
 	inputs := Inputs{}
 	for key, hash := range l.Inputs {
-		for _, prefix := range []string{InputEvidence, InputFile} {
-			if file, ok := strings.CutPrefix(key, prefix); ok {
-				key = prefix + project.SpecPath(file)
-				break
-			}
+		if file, ok := strings.CutPrefix(key, InputEvidence); ok {
+			key = InputEvidence + project.SpecPath(file)
 		}
 		if _, had := l.Inputs[key]; !had {
 			changed = true

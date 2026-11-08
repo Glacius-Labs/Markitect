@@ -316,7 +316,8 @@ func (c CLI) update(ctx context.Context, args []string) (int, error) {
 	default:
 		if proj.spec.Changed() {
 			stale = stale || check
-			c.reportSpecMove(proj.spec, check)
+			// The record's migration below says to commit, when it runs too.
+			c.reportSpecMove(proj.spec, check, len(proj.migrated) == 0)
 		}
 		if len(proj.files) > 0 {
 			if check {
@@ -415,6 +416,8 @@ func (c CLI) version(ctx context.Context, args []string) (int, error) {
 		fmt.Fprintf(c.Stdout, "project: none here (%s)\n", proj.why)
 	case proj.spec.Moved:
 		fmt.Fprintf(c.Stdout, "project: out of date: the spec is still in %s; run markitect update, which moves it to %s\n", project.OldSpecDir, project.SpecDir)
+	case proj.spec.Lines > 0:
+		fmt.Fprintf(c.Stdout, "project: out of date: the record names files in %s; run markitect update, which renames them to %s\n", project.OldSpecDir, project.SpecDir)
 	case proj.stale():
 		fmt.Fprintf(c.Stdout, "project: out of date (%d files%s); run markitect update\n", len(proj.files), lockNote(proj.lock))
 	default:
@@ -453,14 +456,16 @@ func (c CLI) noteRetiredSkills(ws Workspace) {
 			fmt.Fprintf(c.Stdout, "note: %s names the skill %s, which %s replaced; change that line\n", instructionsFile, s.name, s.by)
 		}
 	}
-	if strings.Contains(string(data), project.OldSpecDir) {
+	// V1's manifest .markitect/model.yaml is another file, not the folder.
+	if strings.Contains(strings.ReplaceAll(string(data), project.OldSpecDir+".yaml", ""), project.OldSpecDir) {
 		fmt.Fprintf(c.Stdout, "note: %s names %s, where an earlier markitect kept the spec; it is %s now: change that line\n", instructionsFile, project.OldSpecDir, project.SpecDir)
 	}
 }
 
 // reportSpecMove says what the move of the spec from the folder an earlier
-// markitect kept it in did or, with check, would do.
-func (c CLI) reportSpecMove(mv run.SpecMove, check bool) {
+// markitect kept it in did or, with check, would do; commit says to end with the
+// note to commit.
+func (c CLI) reportSpecMove(mv run.SpecMove, check, commit bool) {
 	switch {
 	case check && mv.Moved:
 		fmt.Fprintf(c.Stdout, "spec: still in %s, where an earlier markitect kept it; markitect update moves it to %s and keeps the record\n", project.OldSpecDir, project.SpecDir)
@@ -473,7 +478,9 @@ func (c CLI) reportSpecMove(mv run.SpecMove, check bool) {
 		if mv.Lines > 0 {
 			fmt.Fprintf(c.Stdout, "record: renamed the evidence in %s in %d %s of %s\n", project.OldSpecDir, mv.Lines, plural(mv.Lines, "line", "lines"), project.ReviewFile)
 		}
-		fmt.Fprintln(c.Stdout, "Commit the change when you like.")
+		if commit {
+			fmt.Fprintln(c.Stdout, "Commit the change when you like.")
+		}
 	}
 }
 

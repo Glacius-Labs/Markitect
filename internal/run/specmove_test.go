@@ -87,6 +87,29 @@ func TestMoveSpecKeepsTheRecord(t *testing.T) {
 	}
 }
 
+// A record checked out with CRLF keeps its line ends when update renames its
+// evidence, and a record update cannot read stops no update with nothing to move.
+func TestMoveSpecKeepsLineEnds(t *testing.T) {
+	p := newPlain(t)
+	p.verifyAll()
+	limit := p.item(p.status(true), "loan-limit")
+	if text, ok := p.review("loan-limit", run.VerdictOK, limit.Fingerprint, []string{project.SpecDir + "/loan-limit.md:6"}, ""); !ok {
+		t.Fatalf("not recorded: %s", text)
+	}
+	crlf := strings.ReplaceAll(p.read(project.ReviewFile), "\n", "\r\n")
+	p.write(project.ReviewFile, strings.ReplaceAll(crlf, project.SpecDir+"/", project.OldSpecDir+"/"))
+	if mv, err := run.MoveSpec(p.dir, false); err != nil || mv.Moved || mv.Lines != 1 || p.read(project.ReviewFile) != crlf {
+		t.Fatalf("%+v %v\n%q", mv, err, p.read(project.ReviewFile))
+	}
+	p.remove(project.ReviewFile)
+	if err := os.Mkdir(filepath.Join(p.dir, filepath.FromSlash(project.ReviewFile)), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if mv, err := run.MoveSpec(p.dir, false); err != nil || mv.Changed() {
+		t.Fatalf("%+v %v", mv, err)
+	}
+}
+
 // A project with files in both folders has two specs: update refuses, says why,
 // and changes nothing. Empty folders are no spec.
 func TestMoveSpecRefusesTwoSpecs(t *testing.T) {

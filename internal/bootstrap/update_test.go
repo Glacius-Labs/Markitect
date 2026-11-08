@@ -164,6 +164,10 @@ func TestUpdateMovesTheSpecFolder(t *testing.T) {
 	if code, out, _ := run(t, r.Dir, "status"); code != 0 || !strings.Contains(out, "Nothing to verify") {
 		t.Fatalf("a verdict was lost in the move: %d\n%s", code, out)
 	}
+	// A second update finds nothing to move.
+	if out := mustRun(t, r.Dir, "update"); !strings.Contains(out, "project: up to date") || strings.Contains(out, "spec:") || strings.Contains(out, "record:") {
+		t.Fatalf("a second update:\n%s", out)
+	}
 
 	// A second spec beside the moved one is refused, and nothing changes.
 	r.Write(".markitect/model/members/member.md", "---\nkind: std/Concept\n---\n# Member\n\nAn older text.\n")
