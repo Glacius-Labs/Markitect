@@ -43,7 +43,7 @@ The verdicts are `ok` (implemented, as the evidence shows), `fail` (not, and why
 Three fields came with 0.23.0, a trial of [DEC-102](../../docs/concepts/register.md#dec-102-what-vet-measures), each left out when empty:
 
 - `cases` and `covered`: the reviewer's count of the distinct cases, conditions and exceptions the Definition demands, and of those its evidence demonstrates, as `mark` took them. Nothing reads them yet; they are kept to calibrate a later risk measure.
-- `revisions`: how often the Definition's own text changed between two verdicts on it. `mark` takes the count of the Definition's lines and adds one when none of them has the new line's `self` hash, so a first verdict has none, and a change of a link, a file or the evidence adds none. Of several lines, as after a merge, it counts on from the most. `vet` reads it for `vet.hotspot`, as change history without Git.
+- `revisions`: how often the Definition's own text changed between two verdicts on it. `mark` takes the count of the Definition's lines and adds one when none of them has the new line's `self` hash, so a first verdict has none, a change of a link, a file or the evidence adds none, and so does a verdict on a gone Definition, which has no own text. Of several lines, as after a merge, it counts on from the most. `vet` reads it for `vet.hotspot`, as change history without Git.
 
 The record has no format version: the new fields are optional, so a line written before 0.23.0 reads as no count and no revision, and its counting starts with the next verdict. Markitect 0.22.0 reads a line of 0.23.0 too, but drops the three fields when its `mark` writes the record again.
 
@@ -81,7 +81,7 @@ markitect mark loans/renewal@81be07 fail -e src/renew.go:30 -m "allows a fourth 
 - It refuses, records nothing and exits 1 when the inputs differ from the fingerprint, as when a builder edited a file beside the reviewer or the reviewer's own test run changed one; when evidence is not a file of the folder; when the Definition is unknown; when the spec has errors; or when the record has a line it cannot read. A command it cannot read exits 2.
 - A gone Definition is marked `ok` when its files are removed or have a new basis, which removes its line, or `fail` when not; `skip` is refused.
 
-It writes under a lock in the user's cache folder (`markitect/locks/`, one per project folder), reading the folder and the record afresh, and replaces the record as one whole file in one step, so parallel reviewers, such as one per Package, lose no line. It writes the file clean: one line per Definition, the matching one of several, both of a conflict, the closest when none matches, and one line for a gone Definition with every file its lines named and the most revisions any of them counted.
+It writes under a lock in the user's cache folder (`markitect/locks/`, one per project folder), reading the folder and the record afresh, and replaces the record as one whole file in one step, so parallel reviewers, such as one per Package, lose no line. It writes the file clean: one line per Definition, the matching one of several, both of a conflict, the closest when none matches, and one line for a gone Definition with every file its lines named. Each line it keeps counts the most revisions any line of its Definition counted, so a merge loses none.
 
 ## The hook
 
