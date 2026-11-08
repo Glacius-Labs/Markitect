@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"os"
 	"strconv"
 	"strings"
 
@@ -177,15 +178,19 @@ func (c CLI) mark(ctx context.Context, args []string) (int, error) {
 // failing silently.
 const retired = "markitect %s is gone: since 0.21, markitect records what was verified in .markitect/review.sum, and markitect status says what is left to verify. This project's skills and agents come from an older markitect. Stop, and run markitect update: it installs the /markitect-build and /markitect-review skills and writes the record from the newest certificate.\n"
 
-// hook is what the project's hook calls before a tool call. It reads the
-// provider's input on standard input and always exits 0: a problem of its own
-// must not stop an agent.
+// hook is what the project's hook and the plugin's call before a tool call. It
+// reads the provider's input on standard input and always exits 0: a problem of
+// its own must not stop an agent. Called by the project's hook where the plugin
+// guards too, it leaves the guard to the plugin, so that it runs once.
 func (c CLI) hook(_ context.Context, args []string) (int, error) {
 	if len(args) != 1 || args[0] != "pretool" {
 		return Misused, errors.New("names its event: markitect hook pretool")
 	}
 	input, err := io.ReadAll(c.Stdin)
 	if err != nil {
+		return OK, nil
+	}
+	if os.Getenv(run.HookEnv) == "project" && pluginGuards(hookProject(input)) {
 		return OK, nil
 	}
 	if out := run.Guard(input); len(out) > 0 {

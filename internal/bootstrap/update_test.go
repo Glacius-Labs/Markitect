@@ -40,6 +40,32 @@ func wantAll(t *testing.T, got string, want ...string) {
 	}
 }
 
+// The hooks of 0.25.2 and before call markitect by name, which fails where the
+// hook's shell finds none, as with the plugin alone; update puts the current ones
+// in their place, and init leaves a project with them as it is.
+func TestUpdateReplacesTheBareHooks(t *testing.T) {
+	emptyHome(t)
+	r := newFolder(t)
+	mustRun(t, r.Dir, "init")
+	settings := read(t, r.Dir, ".claude/settings.json")
+	bare := strings.ReplaceAll(settings, projectHook, "markitect hook pretool")
+	if bare == settings {
+		t.Fatalf("init wrote no current hook:\n%s", settings)
+	}
+	r.Write(".claude/settings.json", bare)
+	code, out, _ := run(t, r.Dir, "update", "--check", "--files")
+	if code != 1 || !strings.Contains(out, ".claude/settings.json") {
+		t.Fatalf("update --check = %d\n%s", code, out)
+	}
+	mustRun(t, r.Dir, "update", "--files")
+	if got := read(t, r.Dir, ".claude/settings.json"); got != settings {
+		t.Fatalf("update left:\n%s\nwant:\n%s", got, settings)
+	}
+	if out := mustRun(t, r.Dir, "init"); strings.Contains(out, "added the hooks") || read(t, r.Dir, ".claude/settings.json") != settings {
+		t.Fatalf("init again:\n%s", out)
+	}
+}
+
 // update puts a project made by an older markitect right: it rewrites the skills,
 // agents and hook that differ and removes the ones the binary no longer ships,
 // commits nothing, and touches nothing of the owner's.
@@ -87,7 +113,7 @@ func TestUpdateBringsAProjectInLine(t *testing.T) {
 	wantAll(t, out, "project: updated 4 files:", "Markitect uses no Git: commit them when you like.")
 	noRepository(t, r.Dir)
 	settings := read(t, r.Dir, ".claude/settings.json")
-	wantAll(t, settings, "Bash(go test *)", "my-own-check", "Bash(markitect mark*)", "Edit|Write|MultiEdit|NotebookEdit", "Agent|Task|Workflow", `"baseRef": "head"`)
+	wantAll(t, settings, "Bash(go test *)", "my-own-check", "Bash(markitect mark*)", "Edit|Write|MultiEdit|NotebookEdit", "Agent|Task|Workflow", `"baseRef": "head"`, projectHook)
 	if strings.Contains(settings, "Bash(markitect answer*)") {
 		t.Fatalf("the older hook was not replaced:\n%s", settings)
 	}

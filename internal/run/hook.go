@@ -20,11 +20,20 @@ const (
 
 // SettingsFile is the project's Claude Code settings, and HookCommand the hook in
 // them that runs Guard. The agents are subagents of the owner's own session, so
-// the hook has to be in the project's settings.
+// the hook has to be in the project's settings. It calls markitect only where its
+// shell finds it, which is a binary on the PATH: a hook does not see the
+// plugin's bin/, and the plugin's own hooks guard there. It names itself in
+// HookEnv, so that a binary leaves the guard to the plugin where both would run
+// it.
 const (
 	SettingsFile = ".claude/settings.json"
-	HookCommand  = "markitect hook pretool"
+	HookCommand  = "command -v markitect >/dev/null 2>&1 || exit 0; " + HookEnv + "=project markitect hook pretool"
+	HookEnv      = "MARKITECT_HOOK"
 )
+
+// BareHookCommand is the hook an earlier markitect wrote, which failed with exit
+// 127 where the shell finds no markitect.
+const BareHookCommand = "markitect hook pretool"
 
 // MarkRule is the permission rule that starts the hook before a shell command
 // that records a verdict.

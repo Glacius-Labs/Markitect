@@ -242,12 +242,20 @@ func ensureIgnore(ws Workspace) (bool, error) {
 // subagent writes only what its role may; and the builder starts only the
 // reviewer. The first runs only before a shell command that records, the second
 // before every tool that writes a file, the third before every tool that starts
-// an agent.
+// an agent. Each runs in bash, as the plugin's do, since its command is a shell
+// command, also on Windows.
 func guardHooks() []any {
+	hook := func(rule string) []any {
+		h := map[string]any{"type": "command", "shell": "bash", "command": run.HookCommand}
+		if rule != "" {
+			h["if"] = rule
+		}
+		return []any{h}
+	}
 	return []any{
-		map[string]any{"matcher": "Bash", "hooks": []any{map[string]any{"type": "command", "if": run.MarkRule, "command": run.HookCommand}}},
-		map[string]any{"matcher": run.EditTools, "hooks": []any{map[string]any{"type": "command", "command": run.HookCommand}}},
-		map[string]any{"matcher": run.AgentTools, "hooks": []any{map[string]any{"type": "command", "command": run.HookCommand}}},
+		map[string]any{"matcher": "Bash", "hooks": hook(run.MarkRule)},
+		map[string]any{"matcher": run.EditTools, "hooks": hook("")},
+		map[string]any{"matcher": run.AgentTools, "hooks": hook("")},
 	}
 }
 
@@ -282,7 +290,8 @@ func guardedHooks(settings map[string]any) (map[string]any, string) {
 const worktreeBase = "head"
 
 // ownGuard says whether a PreToolUse entry is one an earlier markitect wrote: a
-// group whose every hook runs HookCommand. The current one replaces it.
+// group whose every hook runs HookCommand or the BareHookCommand of 0.25.2 and
+// before. The current one replaces it.
 func ownGuard(entry any) bool {
 	group, ok := entry.(map[string]any)
 	if !ok {
@@ -294,7 +303,7 @@ func ownGuard(entry any) bool {
 	}
 	for _, h := range hooks {
 		hook, ok := h.(map[string]any)
-		if !ok || hook["command"] != run.HookCommand {
+		if !ok || (hook["command"] != run.HookCommand && hook["command"] != run.BareHookCommand) {
 			return false
 		}
 	}
