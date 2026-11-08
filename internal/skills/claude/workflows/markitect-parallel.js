@@ -12,7 +12,7 @@ export const meta = {
   ],
 }
 
-// Markitect's parallel driver (DEC-102). Every strategy, this one and a custom
+// Markitect's parallel driver (DEC-103). Every strategy, this one and a custom
 // one alike, keeps one contract:
 //   - it takes args {mode, focus, all}, mode being build, cleanup, bughunt,
 //     review or audit;

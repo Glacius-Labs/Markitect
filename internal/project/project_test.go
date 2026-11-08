@@ -221,7 +221,7 @@ func TestNothingBuilt(t *testing.T) {
 }
 
 // The agents' model moved from the manifest to the harness configuration
-// (DEC-102): an earlier manifest that names it says where it went.
+// (DEC-103): an earlier manifest that names it says where it went.
 func TestTheModelMovedToTheHarnessConfiguration(t *testing.T) {
 	r := valid(t)
 	r.files[ManifestFile] = "libraries:\n  std: 1.0.0\nmodel: opus\n"

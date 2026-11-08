@@ -33,7 +33,7 @@ const (
 	// AttributesFile has Git merge it by keeping the lines of both sides.
 	ReviewFile     = Dir + "/review.sum"
 	AttributesFile = Dir + "/.gitattributes"
-	// HarnessFile is the project's harness configuration (DEC-102): the agents'
+	// HarnessFile is the project's harness configuration (DEC-103): the agents'
 	// model and effort, the strategies and the custom workflows. It is the
 	// owner's, and no agent changes it.
 	HarnessFile = Dir + "/" + harness.FileName

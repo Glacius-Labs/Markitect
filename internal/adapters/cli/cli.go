@@ -1,6 +1,6 @@
 // Package cli is the markitect command line: install, update, init and tidy; check,
 // vet, list and doc over the spec; status and mark over the record of what was
-// verified (DEC-099); config over the harness configuration (DEC-102); the hook;
+// verified (DEC-099); config over the harness configuration (DEC-103); the hook;
 // version and licenses. The commands are flat, print
 // diagnostics as Go's tools do and, with --json, one envelope. None of them starts
 // an agent, steers the work or uses Git (DEC-096, DEC-097).

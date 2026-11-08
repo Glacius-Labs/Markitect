@@ -20,7 +20,7 @@ import (
 const userDir = ".markitect"
 
 // userHarnessFile is the user's harness configuration, which holds what applies
-// to all of the user's projects and is committed with none (DEC-102).
+// to all of the user's projects and is committed with none (DEC-103).
 func userHarnessFile() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -31,11 +31,11 @@ func userHarnessFile() (string, error) {
 
 // Comments a new configuration file starts with.
 const (
-	userHarnessHead = `# Markitect's harness configuration for all of your projects (DEC-102). A
+	userHarnessHead = `# Markitect's harness configuration for all of your projects (DEC-103). A
 # project's .markitect/harness.yaml beats it, key by key, and it beats the
 # built-in values. markitect config --user changes it; markitect config --list
 # shows each value in force and where it comes from.`
-	projectHarnessHead = `# The harness configuration of this project (DEC-102), committed with it. It
+	projectHarnessHead = `# The harness configuration of this project (DEC-103), committed with it. It
 # beats each user's ~/.markitect/harness.yaml, key by key. markitect config
 # changes it and writes the agents' files; markitect config --list shows each
 # value in force and where it comes from.`
@@ -128,7 +128,7 @@ keys: agents.ROLE.model, agents.ROLE.effort (ROLE: builder, reviewer, architect,
       strategy.default, strategy.SKILL (SKILL: build, review, cleanup, bughunt, audit),
       workflows.NAME (the path of a custom workflow's script)`
 
-// config reads and changes the harness configuration (DEC-102): the project's
+// config reads and changes the harness configuration (DEC-103): the project's
 // .markitect/harness.yaml, or with --user the user's ~/.markitect/harness.yaml.
 // A change rewrites the agents' files of the project here, since their front
 // matter comes from it.
@@ -353,7 +353,7 @@ var oldManifestModelLines = []string{
 }
 
 // moveManifestModel moves the agents' model that an earlier manifest names into
-// the project's harness configuration (DEC-102), as the model of every role the
+// the project's harness configuration (DEC-103), as the model of every role the
 // configuration does not set yet, and removes it from the manifest. It returns
 // the configuration as it is then, and the files it changed, or would change
 // when dry. A model that was never a valid name is dropped, as it was ignored.

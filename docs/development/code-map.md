@@ -50,13 +50,13 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | Package | Summary | Owning document |
 |---|---|---|
 | `internal/libraries` | Package libraries holds the standard Libraries that ship inside the markitect binary: std, rest and cli, each a folder of Kind Definitions. | [docs/guides/model-language.md#kinds-and-libraries](../guides/model-language.md#kinds-and-libraries) |
-| `internal/skills` | Package skills holds what ships inside the markitect binary for agents: the design skill, which markitect init installs where coding agents look for skills, and the harness of the work for Claude Code: its skills, its four agents and the prompts of its routines (DEC-100), and the workflow of the parallel strategy (DEC-102). | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
+| `internal/skills` | Package skills holds what ships inside the markitect binary for agents: the design skill, which markitect init installs where coding agents look for skills, and the harness of the work for Claude Code: its skills, its four agents and the prompts of its routines (DEC-100), and the workflow of the parallel strategy (DEC-103). | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
 
 ## Harness configuration
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/harness` | Package harness is the configuration of the harness of the work (DEC-102): one file format, harness.yaml, at two levels. | [docs/guides/project-workflow.md#strategies-and-configuration](../guides/project-workflow.md#strategies-and-configuration) |
+| `internal/harness` | Package harness is the configuration of the harness of the work (DEC-103): one file format, harness.yaml, at two levels. | [docs/guides/project-workflow.md#strategies-and-configuration](../guides/project-workflow.md#strategies-and-configuration) |
 
 ## Realization record
 
@@ -98,7 +98,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/adapters/cli` | Package cli is the markitect command line: install, update, init and tidy; check, vet, list and doc over the spec; status and mark over the record of what was verified (DEC-099); config over the harness configuration (DEC-102); the hook; version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
+| `internal/adapters/cli` | Package cli is the markitect command line: install, update, init and tidy; check, vet, list and doc over the spec; status and mark over the record of what was verified (DEC-099); config over the harness configuration (DEC-103); the hook; version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
 | `internal/adapters/folder` | Package folder reads and writes a project folder without Git (DEC-097): it walks the folder and skips what the project's .gitignore files exclude, read as plain text, nested ones included. | [internal/run/README.md#the-folder](../../internal/run/README.md#the-folder) |
 | `internal/adapters/upgrade` | Package upgrade finds the newest Markitect release, downloads the binary for this platform, checks it against the release's checksums and replaces the running executable. | [docs/guides/project-workflow.md#8-keep-it-current](../guides/project-workflow.md#8-keep-it-current) |
 

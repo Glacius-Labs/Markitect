@@ -107,7 +107,7 @@ Skills are named after the activity, agents after the role ([DEC-100](docs/conce
 | `/markitect-bughunt` | You | The reviewer hunts for bugs beyond the list and records them, the builder repairs them, and the reviewer verifies again |
 | `/markitect-audit` | You, or Claude | The auditor reads the spec fresh for contradictions, gaps, unclear and duplicated statements, and reports to you |
 | `/markitect-schedule` | You | Sets up cleanup, bug hunts and a full review as routines through Claude Code's own scheduling. Each routine works on a branch of its own and lands only when it leaves nothing worse |
-| `/markitect-config` | You, or Claude | Changes the agents' model and effort and each skill's strategy, for this project or for all of yours, with `markitect config` ([DEC-102](docs/concepts/register.md#dec-102-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)) |
+| `/markitect-config` | You, or Claude | Changes the agents' model and effort and each skill's strategy, for this project or for all of yours, with `markitect config` ([DEC-103](docs/concepts/register.md#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)) |
 
 Four agents, in a 2×2 of rights that a hook holds for subagents. Your own session stays free to change anything, but it does not record verdicts either:
 
@@ -246,7 +246,7 @@ Main carries [concept 4.0](docs/concepts/v4-concept.md), the target the owner ac
 | The spec language and the commands `init`, `check`, `tidy`, `vet`, `list` and `doc` | Available since 0.22.0 (0.21.0 had `lock`, `lint`, `graph` and `refs`) |
 | Work with `/markitect-build` and `/markitect-review`, over `status`, `mark` and the record | Available on Claude Code since 0.21.0, covered by tests. The flow before it, with `gate`, was tried on three changes of one project ([trials](docs/validation/lean-trials-20261107.md)) |
 | The skills `/markitect-design`, `/markitect-cleanup`, `/markitect-bughunt`, `/markitect-audit` and `/markitect-schedule`, the four roles and the build in a worktree of its own | Available on Claude Code since 0.22.0, covered by tests only ([DEC-100](docs/concepts/register.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role)) |
-| The strategies, the parallel workflow, `harness.yaml`, `markitect config` and `/markitect-config` | On Main for 0.23.0, covered by tests, the workflow by a simulation with stub agents; no real run yet ([DEC-102](docs/concepts/register.md#dec-102-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)) |
+| The strategies, the parallel workflow, `harness.yaml`, `markitect config` and `/markitect-config` | On Main for 0.23.0, covered by tests, the workflow by a simulation with stub agents; no real run yet ([DEC-103](docs/concepts/register.md#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)) |
 | A real run of 0.22.0's skills with planted defects | Next: step 3 of the [tooling plan](docs/concepts/tooling-plan.md#order-of-work), under a bounded dispatch the owner approves |
 | Further `vet` measures, such as unlinked mentions and hubs | Proposed in the [`vet` plan](docs/concepts/vet-plan.md); not decided |
 | Codex | Not yet: it needs subagents with their own agent files and a hook that names the agent |

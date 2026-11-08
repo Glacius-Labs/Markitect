@@ -9,7 +9,7 @@ import (
 )
 
 // markitect config sets a value at the project's level or the user's, and the
-// project's beats the user's, which beats the built-in one, key by key (DEC-102).
+// project's beats the user's, which beats the built-in one, key by key (DEC-103).
 // A change rewrites the agents' files of the project, and --list says where each
 // value comes from.
 func TestConfigSetsValuesAtTwoLevels(t *testing.T) {

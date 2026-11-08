@@ -1,4 +1,4 @@
-// Package harness is the configuration of the harness of the work (DEC-102):
+// Package harness is the configuration of the harness of the work (DEC-103):
 // one file format, harness.yaml, at two levels. The user's
 // ~/.markitect/harness.yaml is not committed and holds what applies to all of a
 // user's projects; the project's .markitect/harness.yaml is committed with the

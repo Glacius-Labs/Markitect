@@ -2,7 +2,7 @@
 // design skill, which markitect init installs where coding agents look for
 // skills, and the harness of the work for Claude Code: its skills, its four agents
 // and the prompts of its routines (DEC-100), and the workflow of the parallel
-// strategy (DEC-102).
+// strategy (DEC-103).
 package skills
 
 import (

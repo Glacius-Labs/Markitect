@@ -202,7 +202,7 @@ func embeddedFile(name string) bool {
 		return ext == ".md"
 	case strings.HasPrefix(name, "internal/skills/"):
 		// The skills and agents are Markdown; the parallel strategy's workflow
-		// is a script (DEC-102).
+		// is a script (DEC-103).
 		return ext == ".md" || ext == ".js"
 	}
 	return false

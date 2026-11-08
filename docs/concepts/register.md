@@ -1,6 +1,6 @@
 # Concept register
 
-**Accepted target, 7 November 2026:** [Concept 4.0](v4-concept.md) ([DEC-098](#dec-098-concept-40-is-the-target)): a tool that computes and checks, a driver that acts, and no Git in the tool ([DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](#dec-097-markitect-uses-no-git)). Main carries its build since 6 November 2026 ([DEC-094](#dec-094-main-carries-the-native-version-and-the-app-goes)), released as 0.20.0. Its tool became a verification cache that steers no work ([DEC-099](#dec-099-markitect-is-a-tool-with-a-verification-cache)), released as 0.21.0 and 0.22.0, and its skills are named after the activity and its agents after four roles ([DEC-100](#dec-100-skills-are-named-after-the-activity-agents-after-the-role)), released as 0.22.0. Claude chooses the parallelism per run through a shipped workflow, and `harness.yaml` configures the agents and strategies ([DEC-102](#dec-102-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)), built for 0.23.0.
+**Accepted target, 7 November 2026:** [Concept 4.0](v4-concept.md) ([DEC-098](#dec-098-concept-40-is-the-target)): a tool that computes and checks, a driver that acts, and no Git in the tool ([DEC-096](#dec-096-markitect-computes-and-checks-a-driver-acts), [DEC-097](#dec-097-markitect-uses-no-git)). Main carries its build since 6 November 2026 ([DEC-094](#dec-094-main-carries-the-native-version-and-the-app-goes)), released as 0.20.0. Its tool became a verification cache that steers no work ([DEC-099](#dec-099-markitect-is-a-tool-with-a-verification-cache)), released as 0.21.0 and 0.22.0, and its skills are named after the activity and its agents after four roles ([DEC-100](#dec-100-skills-are-named-after-the-activity-agents-after-the-role)), released as 0.22.0. Claude chooses the parallelism per run through a shipped workflow, and `harness.yaml` configures the agents and strategies ([DEC-103](#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)), built for 0.23.0.
 
 **Records:** [Concept 3.0](v3-concept.md) ([DEC-091](#dec-091-concept-30-is-the-target)) was the target from 4 to 7 November 2026; its rebuild is kept on the branch `archive/main-concept-3-20261106`. [Concept 2.0](v2-concept.md) ([DEC-086](#dec-086-concept-20-is-the-target)) is the record of the Manager tree.
 
@@ -118,9 +118,9 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-097](#dec-097-markitect-uses-no-git) | Decision | Markitect uses no Git | Decided by the owner, 6 November 2026; built, released as 0.20.0 |
 | [DEC-098](#dec-098-concept-40-is-the-target) | Decision | Concept 4.0 is the target | Decided by the owner, 7 November 2026; amended by [DEC-099](#dec-099-markitect-is-a-tool-with-a-verification-cache) |
 | [DEC-099](#dec-099-markitect-is-a-tool-with-a-verification-cache) | Decision | Markitect is a tool, with a verification cache | Decided by the owner, 7 November 2026; step 1 released as 0.21.0, step 2 as 0.22.0; amended by [DEC-100](#dec-100-skills-are-named-after-the-activity-agents-after-the-role) |
-| [DEC-100](#dec-100-skills-are-named-after-the-activity-agents-after-the-role) | Decision | Skills are named after the activity, agents after the role | Decided by the owner, 7 November 2026; released as 0.22.0; amended by [DEC-102](#dec-102-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow) |
+| [DEC-100](#dec-100-skills-are-named-after-the-activity-agents-after-the-role) | Decision | Skills are named after the activity, agents after the role | Decided by the owner, 7 November 2026; released as 0.22.0; amended by [DEC-103](#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow) |
 | [DEC-101](#dec-101-markitect-is-a-programming-language-for-documentation) | Clarification | Markitect is a programming language for documentation | Owner statement, 7 and 8 November 2026 |
-| [DEC-102](#dec-102-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow) | Decision | Claude chooses the parallelism per run, through a shipped workflow | Decided by the owner, 7 November 2026; built for 0.23.0 |
+| [DEC-103](#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow) | Decision | Claude chooses the parallelism per run, through a shipped workflow | Decided by the owner, 7 November 2026; built for 0.23.0 |
 | [PRM-001 to PRM-009](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted; superseded in part by [DEC-091](#dec-091-concept-30-is-the-target) |
@@ -1371,7 +1371,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - A routine lands by a push when the source branch tracks a remote, and starts from the remote's commit so that nothing unpushed goes out; otherwise it moves the local branch, which Git refuses while that branch is checked out in a folder, and then the run leaves its branch and says how to land it.
 - **Amends:** [DEC-099](#dec-099-markitect-is-a-tool-with-a-verification-cache): its two skills and two agents, its hook and "nothing counts rounds". [Concept 4.0](v4-concept.md) §1, §2, §5, §7 to §9, §11 to §14 and §16 are revised with the build.
 - **Gives up, knowingly:** a build that the owner watches change their own folder; a build of what is not committed yet; and a routine that lands what it found when that adds an item to the list, such as a review that records a new `fail`: its branch holds the record, and its note names the items.
-- **Amended by** [DEC-102](#dec-102-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow), 7 November 2026: Claude chooses the parallelism per run through a shipped workflow, a skill's strategy is configurable, and `harness.yaml` sets the agents' model and effort.
+- **Amended by** [DEC-103](#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow), 7 November 2026: Claude chooses the parallelism per run through a shipped workflow, a skill's strategy is configurable, and `harness.yaml` sets the agents' model and effort.
 
 ### DEC-101 Markitect is a programming language for documentation
 
@@ -1391,7 +1391,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **The honest limit:** "complete" means complete for the declared links. Prose that names something without linking it is a gap, which the proposed `vet.unlinked_mention` would flag ([`vet` plan](vet-plan.md)).
 - **Where it is developed:** [Markitect in brief](../vision.md#markitect-in-brief) and [Founding intent](../vision.md#founding-intent).
 
-### DEC-102 Claude chooses the parallelism per run, through a shipped workflow
+### DEC-103 Claude chooses the parallelism per run, through a shipped workflow
 
 - **Status:** Decided by the owner, 7 November 2026, as the next step after DEC-100. Built for 0.23.0; tried by tests, and the workflow by a simulation with stub agents, not yet by a real run. The [tooling plan](tooling-plan.md#strategies-and-configuration) holds the design.
 - **Decision:**

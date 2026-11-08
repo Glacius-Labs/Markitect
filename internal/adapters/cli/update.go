@@ -102,7 +102,7 @@ type projectState struct {
 	// of the retired results folder, removed.
 	migrated []string
 	// moved are the manifest and the harness configuration, when the agents'
-	// model moved from the one to the other (DEC-102).
+	// model moved from the one to the other (DEC-103).
 	moved []string
 }
 

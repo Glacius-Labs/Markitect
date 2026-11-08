@@ -33,7 +33,7 @@ const MarkRule = "Bash(markitect mark*)"
 // EditTools are the tools that write files, and AgentTools the tools that start
 // agents, as the matchers of the hooks that hold the roles' rights. Claude Code
 // named its agent tool Task before it named it Agent; its Workflow tool runs a
-// script that starts agents of any type (DEC-102).
+// script that starts agents of any type (DEC-103).
 const (
 	EditTools    = "Edit|Write|MultiEdit|NotebookEdit"
 	AgentTools   = "Agent|Task|Workflow"
@@ -290,7 +290,7 @@ func kindOf(file string) int {
 // Claude Code's project settings, which hold the hook, Markitect's skills, agents
 // and workflows, and the instruction files agents read by themselves. A builder
 // whose work comes back by itself must not change them, since nobody reads that
-// diff. The harness configuration in Markitect's folder is one too (DEC-102).
+// diff. The harness configuration in Markitect's folder is one too (DEC-103).
 func steersAgents(segments []string) bool {
 	n := len(segments)
 	if base := segments[n-1]; base == "AGENTS.md" || base == "CLAUDE.md" {

@@ -97,7 +97,7 @@ markitect config [--repo PATH] KEY
 markitect config [--repo PATH] --list [--json]
 ```
 
-Build, review, cleanup, bughunt and audit each run by a strategy ([DEC-102](../concepts/register.md#dec-102-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)):
+Build, review, cleanup, bughunt and audit each run by a strategy ([DEC-103](../concepts/register.md#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)):
 
 - **`auto`,** the default: Claude estimates the work and chooses, and tells you which and why. It works in parallel when `status` lists more than about 30 items in at least two Packages, in a Git repository; cleanup, bughunt and audit count the spec's Definitions instead, since they look at the whole project. A short list stays in your session, where one builder settles it in one context.
 - **`sequential`:** one builder, reviewer or auditor at a time, as described above.

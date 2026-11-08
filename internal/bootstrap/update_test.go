@@ -109,7 +109,7 @@ func TestUpdateBringsAProjectInLine(t *testing.T) {
 }
 
 // The agents' model an earlier manifest names moves to the project's harness
-// configuration (DEC-102): update moves it, keeps a model the configuration
+// configuration (DEC-103): update moves it, keeps a model the configuration
 // already sets, and writes the agents' files from it. A model that was never a
 // name is dropped, as it was ignored.
 func TestTheManifestsModelMovesToTheHarnessConfiguration(t *testing.T) {

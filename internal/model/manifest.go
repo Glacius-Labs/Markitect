@@ -50,7 +50,7 @@ func ParseManifest(file string, data []byte) (Manifest, Diagnostics) {
 		switch key {
 		case "libraries":
 		case "model":
-			// An earlier manifest named the agents' model here (DEC-102).
+			// An earlier manifest named the agents' model here (DEC-103).
 			ds.Add("manifest.model", file, node.Line, "the agents' model is set in .markitect/harness.yaml now; markitect update moves it there")
 		default:
 			ds.Add("manifest.syntax", file, node.Line, "unknown key %q: the manifest holds only libraries", key)

@@ -186,7 +186,7 @@ func TestGuardHoldsWhoStartsWhom(t *testing.T) {
 		}
 	}
 	// A workflow starts agents of every role, so only the owner's session runs one
-	// (DEC-102).
+	// (DEC-103).
 	for _, agent := range []string{run.BuilderAgent, run.ReviewerAgent, run.ArchitectAgent, run.AuditorAgent, "general-purpose", ""} {
 		has(t, call("a1", agent, "Workflow", ""), `"permissionDecision":"deny"`, "owner's session starts a workflow")
 	}

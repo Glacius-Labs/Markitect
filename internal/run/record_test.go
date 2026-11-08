@@ -150,7 +150,7 @@ func TestStatusEmptiesAsTheReviewerRecords(t *testing.T) {
 
 // status counts its items per Package, with each Package's Definitions and the
 // Packages it depends on, so that a driver can plan work per Package in the order
-// of their dependencies (DEC-102). A spec-problem is counted apart, since it waits
+// of their dependencies (DEC-103). A spec-problem is counted apart, since it waits
 // for the owner.
 func TestStatusCountsItemsPerPackage(t *testing.T) {
 	p := newPlain(t)

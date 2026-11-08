@@ -63,7 +63,7 @@ type Status struct {
 	Definitions int
 	// Packages are the spec's Packages with what each has on the list and the
 	// Packages it depends on, sorted by name: what a driver needs to plan work
-	// per Package in the order of their dependencies (DEC-102).
+	// per Package in the order of their dependencies (DEC-103).
 	Packages []PackageItems
 }
 
