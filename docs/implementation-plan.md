@@ -4,14 +4,14 @@ This plan owns the steps from the current source to [concept 4.0](concepts/v4-co
 
 ## Where Main is
 
-Main builds concept 4.0, the one concept ([DEC-098](concepts/register.md#dec-098-concept-40-is-the-one-concept)). The latest release, 0.25.0, carries:
+Main builds concept 4.0, the one concept ([DEC-098](concepts/register.md#dec-098-concept-40-is-the-one-concept)). The latest release, 0.25.1, carries:
 
 - the Markdown spec language in `.markitect/spec/`, moved from `.markitect/model/` by `markitect update` ([DEC-080](concepts/register.md#dec-080-the-spec-is-typed-documentation-in-markdown)), with `check`, `tidy`, `vet`, `list` and `doc`, and `vet`'s warnings and notes ([DEC-102](concepts/register.md#dec-102-what-vet-measures));
 - how links are written: a link is never decorative, a record that others name gets an identity Definition of its own, a Package's surface is its visibility, and `doc PACKAGE` shows a Package's public Definitions apart from its internal ones ([DEC-104](concepts/register.md#dec-104-a-link-is-never-decorative-identity-and-surface-are-written-as-code-writes-them));
 - the record of what was verified, `.markitect/review.sum`, with `status` and `mark` ([DEC-099](concepts/register.md#dec-099-a-record-of-what-was-verified));
 - the skills `markitect-design`, `/markitect-build`, `/markitect-review`, `/markitect-cleanup`, `/markitect-bughunt`, `/markitect-audit` and `/markitect-schedule`, four agents whose rights a hook holds, and the builder in a worktree of its own ([DEC-100](concepts/register.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role));
 - the strategies and the shipped parallel workflow, `harness.yaml` at user and project level, `markitect config` and `/markitect-config` ([DEC-103](concepts/register.md#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow));
-- releases with the Claude Code plugin and `markitect update` ([DEC-095](concepts/register.md#dec-095-releases-a-plugin-and-a-binary-that-updates-itself)).
+- releases with the Claude Code plugin and `markitect update` ([DEC-095](concepts/register.md#dec-095-releases-a-plugin-and-a-binary-that-updates-itself)); since 0.25.1 the plugin's `markitect` resolves by name in Claude Code's Bash and PowerShell tools on Windows too ([record](validation/plugin-path-windows-20261108.md)).
 
 All of this is covered by tests. No real agent run of the record, the skills or the roles has been read yet ([concept 4.0, §13](concepts/v4-concept.md#13-what-is-not-yet-shown)).
 
