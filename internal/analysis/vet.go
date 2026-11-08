@@ -2,48 +2,86 @@ package analysis
 
 import (
 	"fmt"
+	"math"
+	"sort"
+	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
 // The thresholds of vet. They are provisional, like the code metrics they
-// borrow from, and are tuned on real models.
+// borrow from, and are tuned on real specs (DEC-102).
 const (
-	MaxEfferent         = 5    // Packages one Package may depend on
-	MaxDefinitionWords  = 1000 // words in one Definition's body
-	MaxPackageSize      = 25   // own Definitions of one Package
-	MaxReachShare       = 0.5  // share of all Packages one Definition's change may reach
-	MinPackagesForReach = 6    // below this the reach warning stays quiet
+	MaxEfferent        = 5    // Packages one Package may depend on
+	MaxDefinitionWords = 1000 // words in one Definition's body
+	MaxPackageSize     = 25   // own Definitions of one Package
+	// A change to one Definition alone may put at most this share of the spec's
+	// Definitions back on the list, and never fewer than MinHub, before vet.hub
+	// warns.
+	MaxHubShare = 0.2
+	MinHub      = 10
+	// MaxStatements is the number of list items and table rows one Definition may
+	// hold before vet.statements notes it.
+	MaxStatements = 20
+	// Fan-in times revisions may reach this share of the spec's Definitions, and
+	// never fewer than MinHotspot, before vet.hotspot notes it.
+	MaxHotspotShare = 0.1
+	MinHotspot      = 20
 )
 
-// Vet analyses the design of a loaded project like code and returns warnings
-// only: coupling, size, and how far a change reaches. Change hotspots from Git
-// history come later.
-func Vet(p *project.Project) model.Diagnostics {
-	var ds model.Diagnostics
+// Report is what vet finds. Warnings are the measures that were precise on real
+// specs: vet --strict exits 1 on them. Notes have a known blind spot or no
+// calibration yet, and never change the exit code.
+type Report struct {
+	Warnings model.Diagnostics
+	Notes    []Note
+}
+
+// Note is one note of vet.
+type Note struct {
+	model.Diagnostic
+	// Targets and Structure belong to vet.unlinked_mention: the Definitions named
+	// without a link, and where a link would go: "" within the Package structure,
+	// StructureAgainst or StructureNew.
+	Targets   []string
+	Structure string
+}
+
+// History is what the record says about the spec's past. vet reads no Git
+// (DEC-097), so this is all it knows of change.
+type History struct {
+	// Revisions counts, per Definition, how often its own text changed between
+	// two verdicts on it.
+	Revisions map[string]int
+}
+
+// Vet analyses the design of a loaded project like code: coupling, size, hubs
+// and, as notes, unlinked mentions, statements, placement and hotspots.
+func Vet(p *project.Project, h History) Report {
+	var r Report
 	m := p.Model
 	g := BuildGraph(p)
 	for _, n := range g.Packages {
 		pkg := m.Packages[n.Path]
 		file := packageFile(n.Path)
 		if n.Efferent > MaxEfferent {
-			ds.Add("vet.coupling", file, 0, "%s depends on %d Packages (more than %d); it may do too much or sit too low", model.PackageName(n.Path), n.Efferent, MaxEfferent)
+			r.Warnings.Add("vet.coupling", file, 0, "%s depends on %d Packages (more than %d); it may do too much or sit too low", model.PackageName(n.Path), n.Efferent, MaxEfferent)
 		}
 		if len(pkg.Definitions) > MaxPackageSize {
-			ds.Add("vet.package_size", file, 0, "%s has %d Definitions of its own (more than %d); consider splitting it", model.PackageName(n.Path), len(pkg.Definitions), MaxPackageSize)
+			r.Warnings.Add("vet.package_size", file, 0, "%s has %d Definitions of its own (more than %d); consider splitting it", model.PackageName(n.Path), len(pkg.Definitions), MaxPackageSize)
 		}
 		if n.Path != model.RootPackage && len(pkg.Definitions) == 0 && len(pkg.Children) == 1 {
-			ds.Add("vet.thin_package", file, 0, "%s has no Definitions of its own and only one child, %s; it only adds a level", n.Path, pkg.Children[0])
+			r.Warnings.Add("vet.thin_package", file, 0, "%s has no Definitions of its own and only one child, %s; it only adds a level", n.Path, pkg.Children[0])
 		}
 		// A Package owns the files its path patterns match; without any it owns
 		// none, and Root owns what is built for it.
 		if page := p.Registry.Pages[n.Path]; n.Path != model.RootPackage {
 			switch {
 			case page == nil:
-				ds.Add("vet.no_paths", project.RegistryDir+"/"+n.Path+".md", 0, "%s has no registry page, so it owns no file; write the page with its first path patterns", n.Path)
+				r.Warnings.Add("vet.no_paths", project.RegistryDir+"/"+n.Path+".md", 0, "%s has no registry page, so it owns no file; write the page with its first path patterns", n.Path)
 			case len(page.Patterns) == 0:
-				ds.Add("vet.no_paths", page.File, 0, "%s claims no path pattern, so it owns no file; name its first patterns under paths", n.Path)
+				r.Warnings.Add("vet.no_paths", page.File, 0, "%s claims no path pattern, so it owns no file; name its first patterns under paths", n.Path)
 			}
 		}
 	}
@@ -51,40 +89,89 @@ func Vet(p *project.Project) model.Diagnostics {
 		from, to := g.node(e.From), g.node(e.To)
 		if to.Instability > from.Instability {
 			u := e.Uses[0]
-			ds.Add("vet.unstable_dependency", u.File, u.Line, "%s (instability %.2f) depends on the less stable %s (instability %.2f); dependencies should point towards stability", model.PackageName(e.From), from.Instability, model.PackageName(e.To), to.Instability)
+			r.Warnings.Add("vet.unstable_dependency", u.File, u.Line, "%s (instability %.2f) depends on the less stable %s (instability %.2f); dependencies should point towards stability", model.PackageName(e.From), from.Instability, model.PackageName(e.To), to.Instability)
 		}
 	}
-	total := len(m.Packages)
-	for _, id := range m.ModelDefinitions() {
+	ids := m.ModelDefinitions()
+	in := fanIn(m)
+	total := len(ids)
+	hub := math.Max(MinHub, MaxHubShare*float64(total))
+	hotspot := math.Max(MinHotspot, MaxHotspotShare*float64(total))
+	var notes model.Diagnostics
+	for _, id := range ids {
 		d := m.Definitions[id]
+		fan := len(in[id])
 		if d.Words > MaxDefinitionWords {
-			ds.Add("vet.definition_size", d.File, 0, "%d words (more than %d); split it or move detail the model does not need to the realization", d.Words, MaxDefinitionWords)
+			r.Warnings.Add("vet.definition_size", d.File, 0, "%d words (more than %d); split it or move detail the model does not need to the realization", d.Words, MaxDefinitionWords)
 		}
-		if d.Package != model.RootPackage && total >= MinPackagesForReach {
-			if n := len(reachOf(m, id)); float64(n) > MaxReachShare*float64(total) {
-				ds.Add("vet.reach", d.File, 0, "a change to %s puts Definitions of %d of %d Packages back on the list to verify; it is a broad dependency for its place", id, n, total)
+		// A Kind's change concerns all its Definitions by design, so a Kind is no
+		// hub (DEC-102).
+		if d.Kind != model.CoreKind && float64(fan+1) > hub {
+			r.Warnings.Add("vet.hub", d.File, 0, "%d Definitions link to %s or are of it as Kind, so a change to it alone puts %d of the spec's %d back on the list to verify (more than a fifth); link the smallest Definition that holds what they use, and keep this one small and settled", fan, id, fan+1, total)
+		}
+		if page, err := model.ParsePage(d.Data); err == nil {
+			if n := page.Statements(); n > MaxStatements {
+				notes.Add("vet.statements", d.File, 0, "%d statements, list items and table rows (more than %d); a reviewer verifies each, so split it along its ideas", n, MaxStatements)
 			}
 		}
+		if below := placement(m, d, in[id]); below != "" {
+			notes.Add("vet.placement", d.File, 0, "every Definition that links to %s lies in %s; it could move down there, unless it binds %s by scope", id, below, model.PackageName(d.Package))
+		}
+		if rev := h.Revisions[id]; rev > 0 && float64(fan*rev) > hotspot {
+			linkers := fmt.Sprintf("%d Definitions link to it or are of it as Kind", fan)
+			if fan == 1 {
+				linkers = "1 Definition links to it or is of it as Kind"
+			}
+			notes.Add("vet.hotspot", d.File, 0, "its own text changed %d %s between verdicts, and %s, so its changes put about %d back on the list to verify, more than a tenth of the spec; split what changes from what relies on it", rev, plural(rev, "time", "times"), linkers, fan*rev)
+		}
 	}
-	return ds.Sorted()
+	r.Warnings = r.Warnings.Sorted()
+	for _, d := range notes {
+		r.Notes = append(r.Notes, Note{Diagnostic: d})
+	}
+	r.Notes = append(r.Notes, unlinkedMentions(p)...)
+	sort.SliceStable(r.Notes, func(i, j int) bool { return less(r.Notes[i].Diagnostic, r.Notes[j].Diagnostic) })
+	return r
 }
 
-// reachOf returns the Packages that hold a Definition a change of Definition id
-// alone puts back on the list to verify: its own, and those of the Definitions
-// that link to it or are of it as their Kind (DEC-099).
-func reachOf(m *model.Model, id string) map[string]bool {
-	reached := map[string]bool{m.Definitions[id].Package: true}
-	for _, other := range m.Definitions {
-		if !other.InModel() {
+// placement returns the Package below a Definition's own into which it could move,
+// because every Definition that links to it, or is of it as Kind, lies there: the
+// lowest Package that holds them all, when that lies below the Definition's own.
+// It returns "" otherwise, or when nothing links to it.
+func placement(m *model.Model, d *model.Definition, linkers map[string]bool) string {
+	common := ""
+	first := true
+	for id := range linkers {
+		pkg := m.Definitions[id].Package
+		if pkg == d.Package || !model.Within(pkg, d.Package) {
+			return ""
+		}
+		if first {
+			common, first = pkg, false
 			continue
 		}
-		for _, l := range other.Links {
-			if l.Target == id && !l.Package {
-				reached[other.Package] = true
-			}
+		for !model.Within(pkg, common) {
+			common = model.ParentOf(common)
 		}
 	}
-	return reached
+	if first || common == d.Package {
+		return ""
+	}
+	return common
+}
+
+// less orders diagnostics by file, line, code and message, as Sorted does.
+func less(a, b model.Diagnostic) bool {
+	if a.File != b.File {
+		return a.File < b.File
+	}
+	if a.Line != b.Line {
+		return a.Line < b.Line
+	}
+	if a.Code != b.Code {
+		return a.Code < b.Code
+	}
+	return a.Message < b.Message
 }
 
 // packageFile names a Package's folder for diagnostics.
@@ -93,4 +180,22 @@ func packageFile(pkg string) string {
 		return project.ModelDir
 	}
 	return fmt.Sprintf("%s/%s", project.ModelDir, pkg)
+}
+
+func plural(n int, one, many string) string {
+	if n == 1 {
+		return one
+	}
+	return many
+}
+
+// names joins names as prose: "a", "a and b", "a, b and c".
+func names(list []string) string {
+	switch len(list) {
+	case 0:
+		return ""
+	case 1:
+		return list[0]
+	}
+	return strings.Join(list[:len(list)-1], ", ") + " and " + list[len(list)-1]
 }

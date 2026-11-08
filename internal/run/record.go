@@ -28,12 +28,52 @@ const (
 var Verdicts = []string{VerdictOK, VerdictFail, VerdictSkip, VerdictSpecProblem}
 
 // Line is one line of the record: the verdict on one Definition at its inputs.
+// Cases, Covered and Revisions came with 0.23.0 (DEC-102) and are left out when
+// empty, so a line written before reads as no count and no revision.
 type Line struct {
 	Definition string   `json:"definition"`
 	Verdict    string   `json:"verdict"`
 	Inputs     Inputs   `json:"inputs"`
 	Evidence   []string `json:"evidence,omitempty"`
 	Why        string   `json:"why,omitempty"`
+	// Cases is how many distinct cases, conditions and exceptions the reviewer
+	// counted in the Definition, and Covered how many of them its evidence
+	// demonstrates; nil when the reviewer gave no count.
+	Cases   *int `json:"cases,omitempty"`
+	Covered *int `json:"covered,omitempty"`
+	// Revisions counts how often the Definition's own text changed between two
+	// verdicts on it: a verdict at another text than every line before it adds one.
+	Revisions int `json:"revisions,omitempty"`
+}
+
+// Revisions returns, per Definition, how often its own text changed between two
+// verdicts on it: of several lines, as after a merge, the most. Definitions with
+// none are left out.
+func (r Record) Revisions() map[string]int {
+	out := map[string]int{}
+	for _, l := range r.Lines {
+		if l.Revisions > out[l.Definition] {
+			out[l.Definition] = l.Revisions
+		}
+	}
+	return out
+}
+
+// revisions is the count of a new line at inputs now, after the lines the record
+// held for its Definition: theirs, one more when its own text is none of theirs.
+// A gone Definition has no own text, so a verdict on it adds none.
+func revisions(before []Line, now Inputs) int {
+	_, has := now[InputSelf]
+	n, same := mostRevisions(before), len(before) == 0 || !has
+	for _, l := range before {
+		if l.Inputs[InputSelf] == now[InputSelf] {
+			same = true
+		}
+	}
+	if !same {
+		n++
+	}
+	return n
 }
 
 // Record is the record of a project: its lines, and the lines it could not read,

@@ -19,6 +19,7 @@ The message that starts you names your task:
 
 - Each `-e` names one piece of evidence, a file of the project as `path:line` or `path`.
 - `-m` says why, on one line.
+- `--cases N --covered M` count while you mark, on every verdict, `fail` included: N is how many distinct cases, conditions and exceptions the Definition demands, and M how many of them your evidence demonstrates. Count them, do not rate them, as in `markitect mark fees/waiver@3f9a1c ok -e src/fees.go:40 -e tests/fees_test.go:12 --cases 7 --covered 5`.
 
 The verdicts:
 

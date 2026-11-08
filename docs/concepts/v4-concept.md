@@ -127,21 +127,21 @@ For one release, `checklist`, `answer` and `gate` only say on standard output, w
 
 ## 4. Is the spec good?
 
-A spec is judged like code ([founding intent](sources/founding-intent-20261026.md)), so it gets the same kind of analysis code gets. `check` is the compiler: is it valid? `vet`, named after Go's, is the static analyzer: is it well designed? It only ever warns, since granularity stays the author's choice ([DEC-005](register.md#dec-005-model-granularity-is-the-authors-responsibility)), and its thresholds are provisional.
+A spec is judged like code ([founding intent](sources/founding-intent-20261026.md)), so it gets the same kind of analysis code gets. `check` is the compiler: is it valid? `vet`, named after Go's, is the static analyzer: is it well designed? It only ever warns or notes, since granularity stays the author's choice ([DEC-005](register.md#dec-005-model-granularity-is-the-authors-responsibility)), and its thresholds are provisional. The owner settled its measures on 8 November 2026 ([DEC-102](register.md#dec-102-what-vet-measures)); the table keeps the states of 7 November with what changed.
 
 | Measure | Code analogy | Warns about | State |
 |---|---|---|---|
 | Efferent and afferent coupling, instability, per Package | Clean Architecture | A Package depending on too many others, or on a less stable one | Exists in `vet` |
 | Size of a Definition and a Package | Long functions, large modules | God Definitions | Exists in `vet` |
 | Packages with no paths, or no Definitions and one child | Empty namespaces | Structure that holds nothing | Exists in `vet` |
-| Fan-in of a Definition, including at Root | God class, `utils` file, interface segregation | One page that too many depend on | New. `vet.reach` skips Root today, so it misses the worst case below |
+| Fan-in of a Definition, including at Root | God class, `utils` file, interface segregation | One page that too many depend on | Built as `vet.hub` in 0.23.0, in place of `vet.reach`, which skipped Root and so missed the worst case below |
 | Blast radius: how far every link reaches from a Definition, as median, 90th percentile and worst | Transitive dependents | A change that could touch most of the spec | New |
 | Links inside a Package against links leaving it | Cohesion | A Package whose parts belong elsewhere | New |
-| Change hotspots across records | Churn | What keeps changing, with how far it reaches | Later. The tool reads no Git history ([DEC-097](register.md#dec-097-markitect-uses-no-git)), so it would count changes from one record to the next |
-| Size against what tests cover | CRAP | Large, unverified Definitions | Later: needs tests bound to Definitions ([ENH-003](register.md#enh-003-test-to-statement-binding-and-test-review)) |
+| Change hotspots across records | Churn | What keeps changing, with how far it reaches | Built as the note `vet.hotspot` in 0.23.0. The tool reads no Git history ([DEC-097](register.md#dec-097-markitect-uses-no-git)), so the record counts how often a Definition's text changed between verdicts |
+| Size against what tests cover | CRAP | Large, unverified Definitions | Later: the reviewer records its counts of cases with `mark`, and the measure waits for real records ([DEC-102](register.md#dec-102-what-vet-measures)) |
 | The spec's dependencies against the code's imports | Architecture tests | Code that has drifted from the design | Later |
 
-**Package cycles stay a compile error**, as in Go. The details of `vet`, its further measures and thresholds, are still to be discussed with the owner; [the model language guide](../guides/model-language.md#vet-warnings) lists what it warns about today, [what makes a good spec](../guides/good-spec.md) says what each measure is for, and the [`vet` plan](vet-plan.md) proposes the rest.
+**Package cycles stay a compile error**, as in Go. [The model language guide](../guides/model-language.md#vet-warnings-and-notes) lists what `vet` warns and notes about, among the notes the unlinked mentions the auditor triages, [what makes a good spec](../guides/good-spec.md) says what each measure is for, and the [`vet` plan](vet-plan.md) records the decisions.
 
 **What this finds on Makerspace, measured on 4 November.** Following every link reached over 85 % of the spec on four of its eight change steps. That looked like a ball of mud, and at the Package level it is not one: there are no Package cycles, dependencies point towards a stable core, and a typical Definition reaches 8 of 113. But it does show a real design smell:
 

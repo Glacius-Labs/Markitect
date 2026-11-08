@@ -9,14 +9,14 @@ import (
 // same as one document.
 
 // renderList prints each Package, then its Definitions indented below it; with
-// --deps a Package's coupling and what it depends on, and each Definition's
-// links.
+// --deps a Package's coupling, abstractness and distance and what it depends on,
+// and each Definition's links.
 func renderList(pkgs []listedPackage) string {
 	var b strings.Builder
 	for _, p := range pkgs {
 		b.WriteString(p.Name)
 		if p.Deps != nil {
-			fmt.Fprintf(&b, " (Ca %d, Ce %d, instability %.2f)", p.Deps.Afferent, p.Deps.Efferent, p.Deps.Instability)
+			fmt.Fprintf(&b, " (Ca %d, Ce %d, instability %.2f, abstractness %.2f, distance %.2f)", p.Deps.Afferent, p.Deps.Efferent, p.Deps.Instability, p.Deps.Abstractness, p.Deps.Distance)
 		}
 		b.WriteString("\n")
 		if p.Deps != nil {

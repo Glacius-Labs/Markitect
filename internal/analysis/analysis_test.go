@@ -117,7 +117,10 @@ func TestRefs(t *testing.T) {
 }
 
 func TestGraphMeasures(t *testing.T) {
-	g := BuildGraph(loadRepo(t, library(t)))
+	r := library(t)
+	// A Kind of catalog's own makes it a third abstract: A 1/3, I 1, D 1/3.
+	r[m+"catalog/Medium.md"] = def("Kind", "Medium", "A thing to lend.")
+	g := BuildGraph(loadRepo(t, r))
 	if len(g.Edges) != 1 || g.Edges[0].From != "catalog" || g.Edges[0].To != "members" {
 		t.Fatalf("edges = %+v", g.Edges)
 	}
@@ -125,11 +128,25 @@ func TestGraphMeasures(t *testing.T) {
 	if catalog.Efferent != 1 || catalog.Instability != 1 || members.Afferent != 1 || members.Instability != 0 {
 		t.Fatalf("catalog %+v members %+v", catalog, members)
 	}
+	if fmt.Sprintf("%.3f %.3f", catalog.Abstractness, catalog.Distance) != "0.333 0.333" || members.Abstractness != 0 || members.Distance != 1 {
+		t.Fatalf("abstractness and distance: catalog %+v members %+v", catalog, members)
+	}
+	// A Package without Definitions of its own is not abstract.
+	if loans := g.node("members/loans"); loans.Abstractness != 0 || loans.Distance != 1 {
+		t.Fatalf("members/loans %+v", loans)
+	}
 }
 
 func vetCodes(t *testing.T, r memRepo) model.Diagnostics {
 	t.Helper()
-	return Vet(loadRepo(t, r))
+	return Vet(loadRepo(t, r), History{}).Warnings
+}
+
+// vetNotes returns vet's notes on a fixture, as text lines, after the Revisions
+// the record would give.
+func vetNotes(t *testing.T, r memRepo, revisions map[string]int) []Note {
+	t.Helper()
+	return Vet(loadRepo(t, r), History{Revisions: revisions}).Notes
 }
 
 func expectWarning(t *testing.T, ds model.Diagnostics, code, fragment string) {
@@ -140,6 +157,24 @@ func expectWarning(t *testing.T, ds model.Diagnostics, code, fragment string) {
 		}
 	}
 	t.Fatalf("no %s containing %q in:\n%v", code, fragment, ds)
+}
+
+// noteLines are the notes of one code, as vet --strict prints them.
+func noteLines(notes []Note, code string) []string {
+	var out []string
+	for _, n := range notes {
+		if n.Code == code {
+			out = append(out, n.String())
+		}
+	}
+	return out
+}
+
+func expectLines(t *testing.T, got []string, want ...string) {
+	t.Helper()
+	if strings.Join(got, "\n") != strings.Join(want, "\n") {
+		t.Fatalf("got:\n%s\nwant:\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
 }
 
 func TestVetCoupling(t *testing.T) {
@@ -181,18 +216,123 @@ func TestVetSizes(t *testing.T) {
 	expectWarning(t, ds, "vet.package_size", "big has 26 Definitions")
 }
 
-func TestVetThinPackageAndReach(t *testing.T) {
+func TestVetThinPackage(t *testing.T) {
 	r := library(t)
 	r[m+"wrapper/inner/i.md"] = def("std/Rule", "I", "")
 	ds := vetCodes(t, r)
 	expectWarning(t, ds, "vet.thin_package", "wrapper has no Definitions of its own and only one child, wrapper/inner")
+}
 
-	r = library(t)
-	r[m+"orders/o.md"] = def("std/Rule", "O", "[[members/member]]")
-	r[m+"fees/f.md"] = def("std/Rule", "F", "[[members/member]]")
-	// members/member: its own Package, and loans, catalog, orders and fees, whose
-	// Definitions link to it: 5 of 6.
-	expectWarning(t, vetCodes(t, r), "vet.reach", "a change to members/member puts Definitions of 5 of 6 Packages back on the list")
+// vet.hub counts Definitions, Root included, and leaves Kinds out: it warns when
+// a change to one Definition alone puts more than a fifth of the spec, and more
+// than 10, back on the list.
+func TestVetHub(t *testing.T) {
+	r := library(t)
+	r[m+"Order.md"] = def("Kind", "Order", "An order.")
+	// members/member is linked by loan and book; nine orders more make 11 linkers,
+	// so a change lists 12 of 16 Definitions. loan-limit at Root is linked by 9
+	// orders, which lists 10: not more than 10.
+	for i := 0; i < 9; i++ {
+		r[m+fmt.Sprintf("orders/o%d.md", i)] = def("Order", "O", "For a [[members/member]], under the [[loan-limit]].")
+	}
+	ds := vetCodes(t, r)
+	expectWarning(t, ds, "vet.hub", "members/member.md: vet.hub: 11 Definitions link to members/member or are of it as Kind, so a change to it alone puts 12 of the spec's 16 back on the list")
+	for _, d := range ds {
+		if d.Code == "vet.hub" && !strings.Contains(d.File, "members/member") {
+			t.Fatalf("unexpected %v", d)
+		}
+	}
+	// One order more puts loan-limit, at Root, over the line; the Kind Order, with
+	// as many Definitions of it, stays no hub.
+	r[m+"orders/o9.md"] = def("Order", "O", "Under the [[loan-limit]].")
+	ds = vetCodes(t, r)
+	expectWarning(t, ds, "vet.hub", "loan-limit.md: vet.hub: 10 Definitions link to loan-limit")
+	for _, d := range ds {
+		if d.Code == "vet.hub" && strings.Contains(d.File, "Order") {
+			t.Fatalf("a Kind is no hub: %v", d)
+		}
+	}
+}
+
+// vet.statements notes a Definition of more than 20 list items and table rows.
+func TestVetStatements(t *testing.T) {
+	r := library(t)
+	r[m+"catalog/book.md"] = def("std/Concept", "Book", "Lent to a [[members/member]].\n\n"+strings.Repeat("- a case\n", 18)+"\n| Field | Format |\n|---|---|\n| title | text |\n")
+	if got := noteLines(vetNotes(t, r, nil), "vet.statements"); len(got) != 0 {
+		t.Fatalf("20 statements noted: %v", got)
+	}
+	r[m+"catalog/book.md"] = def("std/Concept", "Book", "Lent to a [[members/member]].\n\n"+strings.Repeat("- a case\n", 18)+"  - a nested case\n\n| Field | Format |\n|---|---|\n| title | text |\n")
+	expectLines(t, noteLines(vetNotes(t, r, nil), "vet.statements"),
+		m+"catalog/book.md: vet.statements: 21 statements, list items and table rows (more than 20); a reviewer verifies each, so split it along its ideas")
+}
+
+// vet.placement notes a Definition whose linkers all lie below it in one Package,
+// the lowest that holds them all.
+func TestVetPlacement(t *testing.T) {
+	r := library(t)
+	r[m+"fees.md"] = def("std/Rule", "Fees", "A fee per day.")
+	r[m+"catalog/book.md"] = def("std/Concept", "Book", "Lent to a [[members/member]] for the [[fees]].")
+	r[m+"catalog/shelf.md"] = def("std/Concept", "Shelf", "Holds books; [[fees]] apply.")
+	r[m+"renewal.md"] = def("std/Rule", "Renewal", "Twice.")
+	r[m+"members/loans/loan.md"] = def("std/Concept", "Loan", "A [[members/member]] borrows, under the [[renewal]].")
+	// members/member is linked from catalog and from members/loans: it stays.
+	expectLines(t, noteLines(vetNotes(t, r, nil), "vet.placement"),
+		m+"fees.md: vet.placement: every Definition that links to fees lies in catalog; it could move down there, unless it binds Root by scope",
+		m+"renewal.md: vet.placement: every Definition that links to renewal lies in members/loans; it could move down there, unless it binds Root by scope")
+}
+
+// vet.hotspot notes a Definition whose fan-in times the revisions the record
+// counts goes above a tenth of the spec, and above 20.
+func TestVetHotspot(t *testing.T) {
+	r := library(t)
+	// members/member has fan-in 2 (loan and book); the spec has 6 Definitions.
+	if got := noteLines(vetNotes(t, r, map[string]int{"members/member": 10, "catalog/shelf": 50}), "vet.hotspot"); len(got) != 0 {
+		t.Fatalf("2 × 10 is not above 20, and what nothing links is no hotspot: %v", got)
+	}
+	expectLines(t, noteLines(vetNotes(t, r, map[string]int{"members/member": 11}), "vet.hotspot"),
+		m+"members/member.md: vet.hotspot: its own text changed 11 times between verdicts, and 2 Definitions link to it or are of it as Kind, so its changes put about 22 back on the list to verify, more than a tenth of the spec; split what changes from what relies on it")
+}
+
+// vet.unlinked_mention finds a Definition's title or name in another one's prose
+// without a link, from the text and the structure alone.
+func TestVetUnlinkedMentions(t *testing.T) {
+	r := library(t)
+	r[m+"Medium.md"] = def("Kind", "Medium", "A thing to lend.")
+	r[m+"members/fee.md"] = "---\nkind: std/Rule\ninternal: true\n---\n# Fee\n\nPer day.\n"
+	// Root: the names it may not link, into a child, are no mentions.
+	r[m+"loan-limit.md"] = def("std/Rule", "Loan limit", "At most `5` open loans per member.")
+	// Within the structure: book in its own Package, member along catalog's
+	// dependency on members, and the loan limit at Root, whose longer name covers
+	// "loan". A Kind's name, an internal Definition outside its Package, a word in
+	// code, in a link label or joined by a hyphen, and an ending of more than two
+	// letters are none.
+	r[m+"catalog/shelf.md"] = def("std/Concept", "Shelf", "Holds books for a\nmember, within the loan limit.\n\nAny medium, no fee, `book`, [[members|the member's]] own, member-only, bookings.")
+	// Against the structure: members may not depend on catalog, which depends on
+	// members. Beyond it: members/loans does not depend on catalog yet.
+	r[m+"members/member.md"] = def("std/Concept", "Member", "A person who may borrow a Book.")
+	r[m+"members/loans/loan.md"] = def("std/Concept", "Loan", "A [[members/member]] borrows a book\nfrom a shelf; the members wait.")
+	notes := vetNotes(t, r, nil)
+	expectLines(t, noteLines(notes, "vet.unlinked_mention"),
+		m+"catalog/shelf.md:6: vet.unlinked_mention: names catalog/book, loan-limit and members/member without linking them",
+		m+"members/loans/loan.md:6: vet.unlinked_mention: names catalog/book and catalog/shelf without linking them; links would add Package dependencies the spec does not have",
+		m+"members/member.md:6: vet.unlinked_mention: names catalog/book without linking it; a link would close a Package cycle")
+	for _, n := range notes {
+		if n.Code != "vet.unlinked_mention" {
+			continue
+		}
+		want := map[string]string{"catalog/shelf.md": "", "members/loans/loan.md": StructureNew, "members/member.md": StructureAgainst}[strings.TrimPrefix(n.File, m)]
+		if n.Structure != want || len(n.Targets) == 0 {
+			t.Fatalf("%s: structure %q, targets %v", n.File, n.Structure, n.Targets)
+		}
+	}
+	// A linked Definition's name covers the words: "members" beside a linked
+	// members/member is no mention of members/member, nor of anything else.
+	r[m+"catalog/book.md"] = def("std/Concept", "Book", "Lent to [[members/member]]s; members queue.")
+	for _, line := range noteLines(vetNotes(t, r, nil), "vet.unlinked_mention") {
+		if strings.Contains(line, "catalog/book.md") {
+			t.Fatalf("a covered mention reported: %s", line)
+		}
+	}
 }
 
 func TestVetNoPaths(t *testing.T) {

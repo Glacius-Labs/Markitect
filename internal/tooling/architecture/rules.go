@@ -73,7 +73,7 @@ var Table = Rules{
 		{"internal/skills", "assets", "docs/guides/model-language.md#commands"},
 		{"internal/realization", "domain", "docs/guides/model-language.md#the-realization-record"},
 		{"internal/project", "project", "docs/guides/model-language.md#the-projects-markitect-folder"},
-		{"internal/analysis", "service", "docs/guides/model-language.md#vet-warnings"},
+		{"internal/analysis", "service", "docs/guides/model-language.md#vet-warnings-and-notes"},
 		{"internal/run", "run", "internal/run/README.md"},
 		{"internal/guardedwrite", "guardedwrite", "docs/architecture.md#distribution"},
 		{"internal/buildinfo", "build", "docs/architecture.md#distribution"},

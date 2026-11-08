@@ -71,7 +71,7 @@ Use the tools while you work, not only at the end:
 - `markitect check` after every few files. It prints every error as `file:line: code: message`; fix the first ones and run it again. `markitect check --spec` looks only at the spec, which is what a change of the spec asks.
 - `markitect doc TARGET` before you rename, move or delete a Definition: it shows who links to it and which files realize it.
 - `markitect list --deps` when you add a link between Packages: it shows the new dependency and the links behind it.
-- `markitect vet` at the end: coupling, size, reach. Fix each warning or give one line why it stays.
+- `markitect vet` at the end: coupling, size, hubs. Fix each warning or give one line why it stays. Its last line counts its notes; `markitect vet --strict` lists them. Link each unlinked mention the Definition relies on, and leave the ones that are ordinary words.
 - `markitect status` on your change: it lists the Definitions the change puts back on the list to verify. Give the owner that list; it is what the builder will work on.
 - After a manifest or Library change run `markitect tidy` and include the new `lock.yaml` in the diff.
 
@@ -93,6 +93,7 @@ State what good documentation of the project would state: domain concepts (what 
 - Write exact values in backticks: wire names, error codes, limits, statuses. A caller must be able to rely on them.
 - A statement is true everywhere it applies. A Rule full of "except when" is several Rules.
 - Say each thing once and link to it from everywhere else.
+- Do not specify general knowledge, such as what a date or an email address is. State a value rule of the project's own, its format, range, unit or when two values are equal, once, as a small Definition of its own, in the only Package that uses it or at the lowest common parent of those that share it. No central page of values.
 - Keep a Definition short: one idea, a few hundred words at most (`vet` warns above 1000).
 - Choose the Kind whose body fits ([reference.md](reference.md)). When none fits, write a small project Kind, one file, that says what such a Definition contains.
 
