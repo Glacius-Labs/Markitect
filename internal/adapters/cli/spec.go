@@ -119,6 +119,9 @@ type listedDefinition struct {
 	Title string `json:"title"`
 	Kind  string `json:"kind"`
 	File  string `json:"file"`
+	// Internal says that only its own Package and those below may link to it;
+	// the public Definitions of a Package are what it publishes.
+	Internal bool `json:"internal"`
 	// Links are the Definitions and Packages its body links to, with --deps.
 	Links []string `json:"links,omitempty"`
 }
@@ -237,7 +240,7 @@ func listPackages(p *project.Project, deps bool) []listedPackage {
 // listDefinition is one Definition as list shows it; with links, the Definitions
 // and Packages its body links to.
 func listDefinition(d *model.Definition, links bool) listedDefinition {
-	ld := listedDefinition{ID: d.ID, Title: d.Title, Kind: d.Kind, File: d.File}
+	ld := listedDefinition{ID: d.ID, Title: d.Title, Kind: d.Kind, File: d.File, Internal: d.Internal}
 	if links {
 		seen := map[string]bool{}
 		for _, l := range d.Links {
@@ -293,8 +296,9 @@ type docPackage struct {
 }
 
 // doc prints a Definition with its text, what links to it, what it links to,
-// the files that realize it and its record; or a Package with its Definitions,
-// its registry page and its files. A target that is neither exits 1.
+// the files that realize it and its record; or a Package with its public and
+// its internal Definitions apart, its registry page and its files. A target
+// that is neither exits 1.
 func (c CLI) doc(ctx context.Context, args []string) (int, error) {
 	var o options
 	fs := c.flags("doc", &o)

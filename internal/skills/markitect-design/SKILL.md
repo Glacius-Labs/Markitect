@@ -94,6 +94,7 @@ State what good documentation of the project would state: domain concepts (what 
 - A statement is true everywhere it applies. A Rule full of "except when" is several Rules.
 - Say each thing once and link to it from everywhere else.
 - Do not specify general knowledge, such as what a date or an email address is. State a value rule of the project's own, its format, range, unit or when two values are equal, once, as a small Definition of its own, in the only Package that uses it or at the lowest common parent of those that share it. No central page of values.
+- A link is never decorative: link what a Definition relies on, and nothing for navigation. Name a record that others name by its identifier by an identity Definition of its own (`members/member-id`), let `internal: true` say what a Package publishes instead of listing it, and name the modules a module uses by their Packages ([reference.md](reference.md#every-link-is-a-relation)).
 - Keep a Definition short: one idea, a few hundred words at most (`vet` warns above 1000).
 - Choose the Kind whose body fits ([reference.md](reference.md)). When none fits, write a small project Kind, one file, that says what such a Definition contains.
 

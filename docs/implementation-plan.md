@@ -12,7 +12,7 @@ Main builds concept 4.0, the one concept ([DEC-098](concepts/register.md#dec-098
 - the strategies and the shipped parallel workflow, `harness.yaml` at user and project level, `markitect config` and `/markitect-config` ([DEC-103](concepts/register.md#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow));
 - releases with the Claude Code plugin and `markitect update` ([DEC-095](concepts/register.md#dec-095-releases-a-plugin-and-a-binary-that-updates-itself)).
 
-Main also moves the spec from `.markitect/model/` to `.markitect/spec/` ([DEC-080](concepts/register.md#dec-080-the-spec-is-typed-documentation-in-markdown)), which the next release carries; `markitect update` moves an existing project's spec.
+Main also moves the spec from `.markitect/model/` to `.markitect/spec/` ([DEC-080](concepts/register.md#dec-080-the-spec-is-typed-documentation-in-markdown)), which the next release carries; `markitect update` moves an existing project's spec. The next release also carries how links are written ([DEC-104](concepts/register.md#dec-104-a-link-is-never-decorative-identity-and-surface-are-written-as-code-writes-them)): a link is never decorative, a record that others name gets an identity Definition of its own, a Package's surface is its visibility, and `doc PACKAGE` shows a Package's public Definitions apart from its internal ones.
 
 All of this is covered by tests. No real agent run of the record, the skills or the roles has been read yet ([concept 4.0, §13](concepts/v4-concept.md#13-what-is-not-yet-shown)).
 

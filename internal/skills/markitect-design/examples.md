@@ -15,7 +15,7 @@ internal/catalog/{book.go, loans.go, loans_test.go}
   registry/{members.md, catalog.md}
   spec/
     project.md  layout.md  error-body.md  Policy.md
-    members/{member, loan-limit, open-loan-count, register-member, post-members}.md
+    members/{member, member-id, loan-limit, open-loan-count, register-member, post-members}.md
     catalog/{book, borrow-book, post-loans}.md
 ```
 
@@ -89,7 +89,7 @@ A Policy Definition states one tunable limit of the lending service.
 
 ## Package members
 
-Concepts, a Feature, an Endpoint, the project Kind in use and one internal Definition. Links are full paths even inside the Package.
+Concepts, the member's identity, a Feature, an Endpoint, the project Kind in use and one internal Definition. Links are full paths even inside the Package.
 
 `spec/members/member.md` (after the cycle below is fixed)
 
@@ -103,7 +103,18 @@ A person registered with the library. Only a member can borrow books.
 
 - A member has a `name` and an `email`, which is unique among members.
 - A member is `active` or `suspended`. A suspended member keeps their data but cannot borrow.
-- A member holds at most as many books at once as [[members/loan-limit]] allows.
+- A member is identified by its [[members/member-id|member identifier]].
+```
+
+`spec/members/member-id.md` is the member's identity, a Definition of its own: other Packages name a member by it without relying on the rest of what a member is. The member and its identity link each other, which the language allows inside one Package.
+
+```markdown
+---
+kind: std/Concept
+---
+# Member identifier
+
+The identifier of a [[members/member]]: an opaque string the library issues at registration, which never changes and is never reused.
 ```
 
 `spec/members/loan-limit.md` uses the project Kind. `spec/members/open-loan-count.md` is `internal: true`: the loan limit builds on it, other Packages must not.
@@ -127,8 +138,6 @@ internal: true
 # Open loan count
 
 The number of books a [[members/member]] has borrowed and not yet returned. A book that is overdue still counts.
-
-This is how the realization reads the count; other Packages ask the [[members/loan-limit]], not the count.
 ```
 
 `spec/members/register-member.md` is a Feature; `spec/members/post-members.md` exposes it as a REST Endpoint and links the Feature and the Root Rule.
@@ -174,8 +183,10 @@ kind: std/Concept
 A title the library owns, with one physical copy.
 
 - A book has a `title`, an `author` and an `isbn`, which is unique.
-- A book is `available` or `borrowed`. A borrowed book is held by exactly one [[members/member]].
+- A book is `available` or `borrowed`. A borrowed book is held by exactly one [[members/member-id|member]].
 ```
+
+The book names its holder by the member's identity: a new field of the member does not concern the book. Borrowing relies on the member's status, so it links the member itself.
 
 `spec/catalog/borrow-book.md` (the Feature) and `spec/catalog/post-loans.md` (its Endpoint):
 
@@ -201,17 +212,17 @@ kind: rest/Endpoint
 
 Exposes [[catalog/borrow-book]] over HTTP.
 
-- Request: the JSON body `{"member": "<member id>", "isbn": "<isbn>"}`.
+- Request: the JSON body `{"member": "<member id>", "isbn": "<isbn>"}`, where `member` is a [[members/member-id|member identifier]].
 - `201`: the loan as `{"member": "...", "isbn": "...", "dueDate": "YYYY-MM-DD"}`.
 - `403` with `member_suspended` or `limit_reached`, and `409` with `book_unavailable`, as in [[catalog/borrow-book]], in the body described by [[error-body]].
 ```
 
 ## A cycle, and its fix
 
-Suppose the first draft of `members/member.md` also said, as its last bullet, `The books a member holds are listed in [[catalog/book]].` Now `catalog/book` links `members/member` and `members/member` links `catalog/book`. `markitect check` refuses it:
+Suppose the first draft of `members/member.md` also said, as its last bullet, `The books a member holds are listed in [[catalog/book]].` Now `catalog/book` links `members/member-id` and `members/member` links `catalog/book`. `markitect check` refuses it:
 
 ```text
-.markitect/spec/catalog/book.md:9: package.cycle: the Packages catalog, members depend on each other in a cycle: catalog/book links [[members/member]]; members/member links [[catalog/book]]. Move the shared concept into a common parent, or invert one dependency
+.markitect/spec/catalog/book.md:9: package.cycle: the Packages catalog, members depend on each other in a cycle: catalog/book links [[members/member-id]]; members/member links [[catalog/book]]. Move the shared concept into a common parent, or invert one dependency
 ```
 
 Moving `Book` or `Member` up to Root would not make sense here, so invert the dependency: `catalog` is the side that needs members, so `members` states nothing about books. Delete that bullet. `catalog/book` keeps its link, and `markitect list --deps` shows one dependency, `catalog` on `members`.
@@ -248,7 +259,7 @@ paths:
 
 | File | Realizes | Why |
 |---|---|---|
-| `internal/members/member.go` | [[members/member]] [[members/register-member]] [[members/loan-limit]] [[members/open-loan-count]] | Member type, registration and the loan limit |
+| `internal/members/member.go` | [[members/member]] [[members/member-id]] [[members/register-member]] [[members/loan-limit]] [[members/open-loan-count]] | Member type, registration and the loan limit |
 | `internal/members/http.go` | [[members/post-members]] [[error-body]] | The `POST /members` handler |
 | `internal/members/member_test.go` | [[members/member]] [[members/register-member]] [[members/loan-limit]] | Tests |
 ```
@@ -280,10 +291,10 @@ LICENSE
 
 ```text
 $ markitect check
-ok: 12 Definitions in 3 Packages, 10 files accounted
+ok: 13 Definitions in 3 Packages, 10 files accounted
 ```
 
-`markitect vet` shows no warnings. After the limit in `loan-limit.md` changes from `3` to `5`, `markitect status` lists `loan-limit` and the Definitions that link to it, `catalog/borrow-book`, `members/member` and `members/open-loan-count`, each with the files the registry names for it, such as `internal/members/member.go` and `internal/catalog/loans.go`.
+`markitect vet` shows no warnings. After the limit in `loan-limit.md` changes from `3` to `5`, `markitect status` lists `loan-limit` and `catalog/borrow-book`, the one Definition that links to it, each with the files the registry names for it, such as `internal/members/member.go` and `internal/catalog/loans.go`. The member and the count do not link back to the limit, so they stay off the list.
 
 ## Other errors you will meet
 

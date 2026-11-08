@@ -53,6 +53,14 @@ A project writes its own Kinds as small files (`kind: Kind`) anywhere in its spe
 - **Dependencies.** A link from Package A to a Definition in, or to, another Package B is an edge A to B; using a Kind is an edge. Every Package also has an implicit edge to its parent. Linking up to an ancestor's Definition is free. A parent may link to a child Package but not to a Definition inside it (`link.downward`). Links to Library Kinds make no edge. A cycle of edges is an error (`package.cycle`).
 - Break a cycle by moving the shared concept to the common parent, or by inverting the dependency: the needing side describes its need in its own Package and the other side links to it.
 
+## Every link is a relation
+
+The spec behaves like code, and code has no "see also". A link is never decorative: a link to a Definition says that the source relies on what the target states, so a change to the target puts the source back on the list of `status`; a link to a Package says that the source's module depends on that module, or, down the tree, says something about a part of the parent. A link that would only help a reader find something does not belong in the spec; rendered documentation gives navigation. So a pointer such as "described in the [[architecture]]" either relies on its target or goes, and the general never links back to what uses it. Three patterns follow, as code has them:
+
+- **Name a record by its identity.** When Definitions name a record only by its identifier, give the identity a Definition of its own in the record's Package, such as `members/member-id`: its form and what it names. The record and its identity link each other, and each holder links the identity, not the record (``- `memberId`: a [[members/member-id|member identifier]]``). A holder that relies on more than the identity links that too: the record, when it relies on the record's fields or status; another record, when it names "the invoice's member". This is domain-driven design's typed identity (`MemberId`).
+- **A Package publishes what is public.** What is not `internal: true` is what a Package offers other Packages, as Go's exported names are, and `markitect doc PACKAGE` shows it. Do not list a module's operations and records again in an interface Definition or the anchor; state what other modules may ask of it, its capabilities and the codes it adds.
+- **Name the modules a module uses by Package:** ``**Uses:** [[members]], [[billing]]``. The link states the dependency without relying on another Definition's text. A sentence that relies on what the other module states links that Definition.
+
 ## Registry pages
 
 One page per Package: `.markitect/registry.md` for Root, `.markitect/registry/<package path>.md` for the others (`registry/members/loans.md` for `members/loans`).
@@ -98,7 +106,7 @@ All take `--repo DIR`; `check`, `vet`, `list`, `doc`, `status` and `mark` take `
 | `init [--name TITLE]` | Once per project: manifest, lock, project anchor, registry page, `AGENTS.md`, `CLAUDE.md`, skills and harness. Makes no repository and commits nothing. Never changes an existing spec file. |
 | `check` | Compile: errors only. A project with nothing registered, where the only errors are `definition.unused`, passes and says that nothing is built yet. |
 | `tidy` | Bring `lock.yaml` in line with the manifest after a manifest or Library change, as `go mod tidy` does. |
-| `doc TARGET` | A Definition with its text, what links to it, what it links to, the files that realize it and its record; or a Package with its Definitions, page and files. |
+| `doc TARGET` | A Definition with its text, what links to it, what it links to, the files that realize it and its record; or a Package with its public and its internal Definitions apart, its page and files. |
 | `list [--deps]` | The Packages and their Definitions; `--deps` adds each Package's coupling, abstractness and distance from the main sequence, what it depends on and the links behind each dependency. |
 | `status [--all]` | What is to verify: each Definition whose text, Kind, links, files or evidence changed since a reviewer last verified it, or that has no record yet, with what changed and where to look. Needs a project that compiles. |
 | `vet [--strict]` | Warnings about the spec's design, as `file:line: code: message`, and one line that counts its notes; `--strict` lists the notes too. Exit 1 only with `--strict` and a warning; notes never change it. |

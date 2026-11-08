@@ -674,7 +674,8 @@ func TestStatusAndMarkThroughTheCommandLine(t *testing.T) {
 }
 
 // doc takes its flags after the target too, shows a Package and a Library's Kind,
-// and says in its document when the target is neither a Definition nor a Package.
+// says in its document when the target is neither a Definition nor a Package,
+// and shows a Package's public Definitions apart from its internal ones.
 func TestDocAndVetDocuments(t *testing.T) {
 	r := newFolder(t)
 	mustRun(t, r.Dir, "init")
@@ -710,6 +711,50 @@ func TestDocAndVetDocuments(t *testing.T) {
 	}
 	if code, _, errOut := run(t, r.Dir, "tidy", "--json"); code != 2 || !strings.Contains(errOut, "-json") {
 		t.Fatalf("tidy --json: %d %s", code, errOut)
+	}
+	// A Package's public Definitions are what it publishes; doc shows them
+	// apart from its internal ones, in its text and its document.
+	r.Write(".markitect/spec/members/member.md", "---\nkind: std/Concept\n---\n# Member\n\nA person who borrows.\n")
+	r.Write(".markitect/spec/members/limit.md", "---\nkind: std/Rule\ninternal: true\n---\n# Limit\n\nA [[members/member]] borrows at most five items.\n")
+	wantAll(t, mustRun(t, r.Dir, "doc", "members"), "\nPublic Definitions:\n  members/member: Member (std/Concept)\n", "\nInternal Definitions:\n  members/limit: Limit (std/Rule)\n")
+	var members struct {
+		Package struct {
+			Definitions []struct {
+				ID       string
+				Internal bool
+			}
+		}
+	}
+	if code, out, _ := run(t, r.Dir, "doc", "members", "--json"); code != 0 || json.Unmarshal([]byte(out), &members) != nil || len(members.Package.Definitions) != 2 ||
+		members.Package.Definitions[0].ID != "members/limit" || !members.Package.Definitions[0].Internal || members.Package.Definitions[1].Internal {
+		t.Fatalf("doc members --json: %d %s", code, out)
+	}
+	var limit struct {
+		Definition struct{ Internal bool }
+	}
+	if code, out, _ := run(t, r.Dir, "doc", "members/limit", "--json"); code != 0 || json.Unmarshal([]byte(out), &limit) != nil || !limit.Definition.Internal {
+		t.Fatalf("doc members/limit --json: %d %s", code, out)
+	}
+	var listed struct {
+		Packages []struct {
+			Name        string
+			Definitions []struct {
+				ID       string
+				Internal bool
+			}
+		}
+	}
+	internal := map[string]bool{}
+	if code, out, _ := run(t, r.Dir, "list", "--json"); code != 0 || json.Unmarshal([]byte(out), &listed) != nil {
+		t.Fatalf("list --json: %d %s", code, out)
+	}
+	for _, p := range listed.Packages {
+		for _, d := range p.Definitions {
+			internal[d.ID] = d.Internal
+		}
+	}
+	if is, ok := internal["members/limit"]; !ok || !is || internal["members/member"] {
+		t.Fatalf("list --json internal: %v", internal)
 	}
 }
 
