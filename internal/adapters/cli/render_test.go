@@ -1,6 +1,34 @@
 package cli
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/Glacius-Labs/Markitect/internal/analysis"
+	"github.com/Glacius-Labs/Markitect/internal/model"
+)
+
+// Plain vet counts its notes in one line: the unlinked mentions within the Package
+// structure and their Definitions, those against or beyond it, and the others.
+func TestNotesLine(t *testing.T) {
+	mention := func(structure string, targets ...string) analysis.Note {
+		return analysis.Note{Diagnostic: model.Diagnostic{Code: "vet.unlinked_mention"}, Targets: targets, Structure: structure}
+	}
+	other := analysis.Note{Diagnostic: model.Diagnostic{Code: "vet.statements"}}
+	for _, c := range []struct {
+		notes []analysis.Note
+		want  string
+	}{
+		{[]analysis.Note{mention("", "a", "b"), mention("", "c"), mention(analysis.StructureNew, "d"), mention(analysis.StructureAgainst, "e", "f"), other},
+			"notes: 3 unlinked mentions in 2 Definitions, 3 more against or beyond the Package structure, 1 other note; markitect vet --strict lists them"},
+		{[]analysis.Note{mention("", "a")}, "notes: 1 unlinked mention in 1 Definition; markitect vet --strict lists them"},
+		{[]analysis.Note{mention(analysis.StructureAgainst, "e")}, "notes: 1 unlinked mention against or beyond the Package structure; markitect vet --strict lists them"},
+		{[]analysis.Note{other, other}, "notes: 2; markitect vet --strict lists them"},
+	} {
+		if got := notesLine(c.notes); got != c.want {
+			t.Fatalf("got  %q\nwant %q", got, c.want)
+		}
+	}
+}
 
 // list --deps shows each Package's coupling, abstractness and distance, and what
 // it depends on, with the links that make the dependency, and each Definition's

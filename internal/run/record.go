@@ -61,10 +61,11 @@ func (r Record) Revisions() map[string]int {
 
 // revisions is the count of a new line at inputs now, after the lines the record
 // held for its Definition: theirs, one more when its own text is none of theirs.
+// A gone Definition has no own text, so a verdict on it adds none.
 func revisions(before []Line, now Inputs) int {
-	n, same := 0, len(before) == 0
+	_, has := now[InputSelf]
+	n, same := mostRevisions(before), len(before) == 0 || !has
 	for _, l := range before {
-		n = max(n, l.Revisions)
 		if l.Inputs[InputSelf] == now[InputSelf] {
 			same = true
 		}

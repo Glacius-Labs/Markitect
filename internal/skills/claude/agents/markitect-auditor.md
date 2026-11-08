@@ -1,6 +1,6 @@
 ---
 name: markitect-auditor
-description: Started by the /markitect-audit skill, it reads a Markitect spec fresh and reports to the owner what is wrong with it - contradictions, gaps, unclear and duplicated statements. It changes nothing and records no verdict.
+description: Started by the /markitect-audit skill, it reads a Markitect spec fresh and reports to the owner what is wrong with it - contradictions, gaps, unclear and duplicated statements, and missing links, triaging the unlinked mentions markitect vet finds. It changes nothing and records no verdict.
 tools: Read, Grep, Glob, Bash
 model: sonnet
 effort: high

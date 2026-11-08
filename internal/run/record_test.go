@@ -578,10 +578,23 @@ func TestCountsAndRevisions(t *testing.T) {
 			p.write(project.ReviewFile, rec+strings.Replace(strings.Replace(l, `"revisions":2`, `"revisions":5`, 1), `"self":"sha256:`, `"self":"sha256:0`, 1)+"\n")
 		}
 	}
+	// A verdict on another Definition writes the merged one's matching line with the
+	// most revisions any of its lines counted.
+	mark("catalog/book", run.VerdictOK, nil, nil, "", "src/catalog/book.go:1")
+	if got := run.ParseRecord([]byte(p.read(project.ReviewFile))).Revisions()["members/member"]; got != 5 {
+		t.Fatalf("a verdict on another Definition lost revisions of a merged one: %d", got)
+	}
 	p.write(m+"members/member.md", def("std/Concept", "Member", "A person."))
 	mark("members/member", run.VerdictOK, nil, nil, "", "src/members/member.go:3")
 	if l := line("members/member"); l.Revisions != 6 {
 		t.Fatalf("after a merge: %+v", l)
+	}
+	// A gone Definition has no own text, so a verdict on it counts no revision.
+	p.write(m+"catalog/shelf.md", def("std/Concept", "Shelf", "Holds books."))
+	p.remove(m + "catalog/book.md")
+	mark("catalog/book", run.VerdictFail, nil, nil, "its file is still there")
+	if l := line("catalog/book"); l.Revisions != 0 || l.Verdict != run.VerdictFail {
+		t.Fatalf("a gone Definition: %+v", l)
 	}
 	// Counts that cannot be are refused before anything is read.
 	minus := -1

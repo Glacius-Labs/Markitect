@@ -78,8 +78,9 @@ func revisionsOf(ws Workspace) map[string]int {
 }
 
 // notesLine is the one line plain vet prints for its notes: how many unlinked
-// mentions it found in how many Definitions, how many more go against or beyond
-// the Package structure, and how many other notes there are.
+// mentions it found within the Package structure and in how many Definitions, as
+// the measurement record counts them, how many more go against or beyond the
+// structure, and how many other notes there are.
 func notesLine(notes []analysis.Note) string {
 	var mentions, sources, apart, other int
 	for _, n := range notes {
@@ -97,11 +98,17 @@ func notesLine(notes []analysis.Note) string {
 	if mentions > 0 {
 		parts = append(parts, fmt.Sprintf("%d unlinked %s in %d %s", mentions, plural(mentions, "mention", "mentions"), sources, plural(sources, "Definition", "Definitions")))
 	}
-	if apart > 0 {
-		parts = append(parts, fmt.Sprintf("%d against or beyond the Package structure", apart))
+	switch {
+	case apart > 0 && mentions > 0:
+		parts = append(parts, fmt.Sprintf("%d more against or beyond the Package structure", apart))
+	case apart > 0:
+		parts = append(parts, fmt.Sprintf("%d unlinked %s against or beyond the Package structure", apart, plural(apart, "mention", "mentions")))
 	}
-	if other > 0 {
+	switch {
+	case other > 0 && len(parts) > 0:
 		parts = append(parts, fmt.Sprintf("%d other %s", other, plural(other, "note", "notes")))
+	case other > 0:
+		parts = append(parts, fmt.Sprint(other))
 	}
 	return "notes: " + strings.Join(parts, ", ") + "; markitect vet --strict lists them"
 }

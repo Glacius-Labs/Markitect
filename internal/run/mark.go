@@ -163,7 +163,8 @@ func (e *Engine) Mark(_ context.Context, req MarkRequest) (text string, recorded
 // clean keeps one line per Definition, except the one being marked: of several,
 // as after a merge, the one whose inputs match the folder, or both of a conflict,
 // or else the closest; a gone Definition keeps one line with every file its lines
-// named.
+// named. A kept line counts the most revisions any of its Definition's lines
+// counted, so that a merge loses none.
 func clean(rec Record, v view, except string) []Line {
 	var out []Line
 	for id, lines := range rec.byDefinition() {
@@ -183,14 +184,26 @@ func clean(rec Record, v view, except string) []Line {
 						merged.Inputs[k] = h
 					}
 				}
-				merged.Revisions = max(merged.Revisions, l.Revisions)
 			}
+			merged.Revisions = mostRevisions(lines)
 			out = append(out, merged)
 		default:
-			out = append(out, keep(lines, v.now[id], v)...)
+			for _, l := range keep(lines, v.now[id], v) {
+				l.Revisions = mostRevisions(lines)
+				out = append(out, l)
+			}
 		}
 	}
 	return out
+}
+
+// mostRevisions is the most revisions any of the lines counts.
+func mostRevisions(lines []Line) int {
+	n := 0
+	for _, l := range lines {
+		n = max(n, l.Revisions)
+	}
+	return n
 }
 
 // keep chooses among the lines of one live Definition.
