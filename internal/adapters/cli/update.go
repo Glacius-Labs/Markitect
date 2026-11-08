@@ -63,10 +63,11 @@ func (r *refresher) Remove(file string) error {
 	return r.Workspace.Remove(file)
 }
 
-// refreshHarness brings the skills, the agents, the workflows, the hooks and the
-// record's Git attributes of a project in line with this binary and the harness
-// configuration, as init does, and returns the files that differed. It never
-// touches the spec, AGENTS.md or CLAUDE.md.
+// refreshHarness brings the skills, the agents, the workflows, the hooks, the
+// record's Git attributes and the ignore line for Claude Code's worktrees of a
+// project in line with this binary and the harness configuration, as init does,
+// and returns the files that differed. It never touches the spec, AGENTS.md or
+// CLAUDE.md.
 func (c CLI) refreshHarness(ws Workspace, cfg harness.Config, dry bool) ([]string, error) {
 	r := &refresher{Workspace: ws, dry: dry}
 	quiet := c
@@ -83,6 +84,9 @@ func (c CLI) refreshHarness(ws Workspace, cfg harness.Config, dry bool) ([]strin
 		return nil, err
 	}
 	if err := installAttributes(r); err != nil {
+		return nil, err
+	}
+	if _, err := ensureIgnore(r); err != nil {
 		return nil, err
 	}
 	// A retired file is removed by both of the writers above in a dry run, which

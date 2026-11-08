@@ -11,14 +11,19 @@ assert(src.startsWith("export const meta = {"), "meta comes first")
 assert(!/Date\.now|Math\.random|new Date\(\)|import\(/.test(src), "no clock, randomness or import, which the runtime refuses")
 const body = `return (async () => {\n${src.replace("export const meta", "const meta")}\n})()`
 
-// world is a project of Packages that the stub agents change: a builder settles
-// its Package's items when its strand is merged, a reviewer records, a merge
-// reads status. Options: stuck (builders settle nothing), swing (each round puts
-// items back), hunt, specErrors, inWorktree, branch, lose (the nth merge returns
-// nothing).
+// world is a project of Packages that the stub agents change, as Claude Code lets
+// them: a builder works and commits in its own worktree and returns its branch;
+// the merge step brings a committed branch to the run's branch; a reviewer there
+// settles its Package's items when that Package's work has come; the record step
+// commits and reads status. Options: stuck (builders change nothing), swing (each
+// Root record puts items back), hunt, specErrors, inWorktree, branch, noBranch,
+// silent (that builder returns nothing), uncommitted (that builder leaves its
+// work uncommitted), conflict (that strand's merge conflicts), lose (the nth
+// merge returns nothing), loseStatus.
 function world(spec) {
   const pk = structuredClone(spec.packages)
-  const pending = new Set()
+  const committed = new Set()
+  const landed = new Set()
   let realization = spec.realization || 0
   let merges = 0
   let swing = 0
@@ -34,39 +39,52 @@ function world(spec) {
       if (opts.agentType === "markitect-builder") {
         const name = prompt.match(/Package (\S+?)[.,]/)[1]
         if (spec.silent === name) return Promise.resolve(null)
-        if (!spec.stuck) pending.add(name)
-        const asks = name === "a" ? "\nIt needs a change in go.mod: add module x." : ""
-        return Promise.resolve(`Done. Folder /wt/${name}, branch wt-${name}.${asks}`)
+        const changed = !spec.stuck
+        const ok = changed && spec.uncommitted !== name
+        if (ok) committed.add(name)
+        return Promise.resolve({
+          folder: `/wt/${name}`,
+          branch: `wt-${name}`,
+          changed,
+          committed: ok,
+          summary: `built ${name}`,
+          requests: name === "a" ? [{ file: "go.mod", change: "add module x" }] : [],
+        })
       }
       if (opts.agentType === "markitect-reviewer" || opts.agentType === "markitect-auditor") {
         const m = prompt.match(/Package (\S+?)[.:]/)
         if (spec.hunt && m && prompt.startsWith("Hunt")) pk[m[1]].items += spec.hunt
-        if (opts.agentType === "markitect-reviewer" && m && prompt.startsWith("Verify")) pk[m[1]].items = pk[m[1]].sp || 0
+        if (opts.agentType === "markitect-reviewer" && m && prompt.startsWith("Verify") && landed.has(m[1])) pk[m[1]].items = pk[m[1]].sp || 0
         return Promise.resolve(`report for ${m ? m[1] : "all"}`)
       }
-      if (prompt.includes("Git steps")) {
+      if (prompt.includes("You do the Git steps")) {
         merges++
         if (spec.lose === merges) return Promise.resolve(null)
-        const merged = []
-        for (const m of prompt.matchAll(/### Strand (\S+)/g)) {
+        const out = { merged: [], unchanged: [], not_merged: [] }
+        for (const m of prompt.matchAll(/^- (\S+): (\S+)$/gm)) {
           const name = m[1]
-          if (pending.has(name)) {
-            pk[name].items = pk[name].sp || 0
+          assert.strictEqual(m[2], `wt-${name}`, "the merge names the strand's branch")
+          if (!committed.has(name)) {
+            out.unchanged.push(name)
+          } else if (spec.conflict === name) {
+            out.not_merged.push({ strand: name, why: "conflict in x.go" })
+          } else {
+            committed.delete(name)
+            landed.add(name)
             if (name === "Root") realization = 0
-            pending.delete(name)
+            out.merged.push(name)
           }
-          merged.push(name)
         }
-        if (spec.swing && merged.includes("Root")) {
-          // Each round settles the list, then the merge puts more back than the
-          // round before took away, every other round.
+        return Promise.resolve(out)
+      }
+      if (prompt.includes("You do a Git step")) {
+        if (spec.swing && prompt.includes(".Root\"")) {
+          // Each Root record puts more back than the round before took away,
+          // every other round.
           swing++
           pk.a.items = swing % 2 === 1 ? 5 : 3
         }
-        const st = status()
-        st.merged = merged
-        st.requests = merged.includes("a") ? [{ strand: "a", file: "go.mod", change: "add module x" }] : []
-        return Promise.resolve(st)
+        return Promise.resolve(status())
       }
       if (prompt.startsWith("Run `markitect status")) return Promise.resolve(spec.loseStatus ? null : status())
       throw new Error("unexpected agent: " + prompt.slice(0, 80))
@@ -89,6 +107,8 @@ async function run(args, w) {
 }
 
 const builders = (calls) => calls.filter((c) => c.opts.agentType === "markitect-builder")
+const reviewers = (calls) => calls.filter((c) => c.opts.agentType === "markitect-reviewer")
+const plain = (calls) => calls.filter((c) => c.prompt && !c.opts.agentType)
 const logs = (calls) => calls.filter((c) => c.log !== undefined).map((c) => c.log)
 const base = () => ({
   packages: {
@@ -104,26 +124,38 @@ const base = () => ({
 const build = { mode: "build", into: "main" }
 
 // Build: waves along the dependencies, Root last with the requests and the
-// errors in the realization; builders in worktrees; a Package whose items all
-// wait for the owner gets no strand.
+// errors in the realization; builders in worktrees, returning their branch;
+// after each merge a reviewer per strand on the run's branch; a Package whose
+// items all wait for the owner gets no strand.
 {
   const { result, calls } = await run(build, world(base()))
   assert.deepStrictEqual(logs(calls).slice(0, 4), ["round 1, wave 1: a, d", "round 1, wave 2: b", "round 1, wave 3: c", "round 1, Root"], logs(calls).join("\n"))
   const root = builders(calls).find((c) => c.prompt.includes("Package Root"))
   assert(root.prompt.includes("go.mod: add module x (for a)") && root.prompt.includes("errors in the realization"), root.prompt)
   assert(!calls.some((c) => c.prompt.includes("Package e")))
-  assert(builders(calls).every((c) => c.opts.isolation === "worktree"))
+  assert(builders(calls).every((c) => c.opts.isolation === "worktree" && c.opts.schema && c.opts.schema.required.includes("branch")))
+  // Each strand: builder, then the merge, then its reviewer, then the record.
+  const order = calls.filter((c) => c.prompt).map((c) => (c.opts.agentType || (c.prompt.includes("Git steps") ? "merge" : c.prompt.includes("Git step") ? "record" : "status")).replace("markitect-", ""))
+  assert.deepStrictEqual(order.slice(0, 7), ["status", "builder", "builder", "merge", "reviewer", "reviewer", "record"], order.join(" "))
+  assert.deepStrictEqual(reviewers(calls).slice(0, 2).map((c) => c.prompt), ["Verify what markitect status lists in Package a.", "Verify what markitect status lists in Package d."])
+  assert(reviewers(calls).every((c) => !c.opts.isolation))
+  // No step is asked to reach into another folder with Git.
+  assert(!plain(calls).some((c) => /git -C </.test(c.prompt) || /cd </.test(c.prompt)), "a Git step names another folder")
   assert.strictEqual(result.stopped, "spec-problems")
   assert.strictEqual(result.items, 2)
+  assert(result.worktrees.length >= 5 && result.worktrees.every((w) => w.merged && w.branch === `wt-${w.strand}`), JSON.stringify(result.worktrees))
 }
 
-// Nothing gets done: three rounds without a shorter list, then stop.
+// Nothing gets done: builders change nothing, the reviewers still verify, and
+// three rounds without a shorter list stop the run.
 {
   const s = base()
   s.stuck = true
-  const { result } = await run(build, world(s))
+  const { result, calls } = await run(build, world(s))
   assert.strictEqual(result.stopped, "no-progress")
   assert.strictEqual(result.rounds, 3)
+  assert(reviewers(calls).length > 0)
+  assert.deepStrictEqual(result.not_merged, [])
 }
 
 // A list that swings down and up again gets no shorter than it has been, so the
@@ -135,6 +167,29 @@ const build = { mode: "build", into: "main" }
   assert.strictEqual(result.stopped, "no-progress", JSON.stringify(result))
   // 14, 7, 5 left; then 7, 5, 7: three rounds no shorter than 5.
   assert.strictEqual(result.rounds, 5, `ran ${result.rounds} rounds`)
+}
+
+// A strand whose merge conflicts is left on its branch and gets no reviewer; the
+// others go on.
+{
+  const s = base()
+  s.conflict = "d"
+  const { result, calls } = await run(build, world(s))
+  assert(result.not_merged.some((n) => n.strand === "d" && n.why.includes("conflict") && n.why.includes("wt-d")), JSON.stringify(result.not_merged))
+  assert(!reviewers(calls).some((c) => c.prompt.includes("Package d.")))
+  assert(result.worktrees.some((w) => w.strand === "d" && !w.merged))
+  assert(reviewers(calls).some((c) => c.prompt.includes("Package a.")))
+}
+
+// A builder that leaves its work uncommitted is reported and neither merged nor
+// reviewed.
+{
+  const s = base()
+  s.uncommitted = "d"
+  const { result, calls } = await run(build, world(s))
+  assert(result.not_merged.some((n) => n.strand === "d" && n.why.includes("uncommitted")), JSON.stringify(result.not_merged))
+  assert(!calls.some((c) => c.prompt.includes("- d: wt-d")))
+  assert(!reviewers(calls).some((c) => c.prompt.includes("Package d.")))
 }
 
 // A writing mode refuses to start outside a worktree, on the branch the run
@@ -162,8 +217,9 @@ for (const bad of [{}, { mode: "deploy" }, { mode: "cleanup" }, undefined]) {
   const { result } = await run(build, world(s))
   assert(result.stopped.startsWith("lost:"), result.stopped)
   assert.deepStrictEqual(result.not_merged.map((n) => n.strand), ["a", "d"])
+  assert(result.not_merged.every((n) => n.why.includes("branch wt-")))
 }
-// A merge lost later reports the status of the last merge that returned, not of
+// A merge lost later reports the status of the last record that returned, not of
 // the start.
 {
   const s = base()
@@ -197,12 +253,11 @@ for (const bad of [{}, { mode: "deploy" }, { mode: "cleanup" }, undefined]) {
 // folder; with all, every Package.
 {
   const { result, calls } = await run({ mode: "review" }, world(base()))
-  const reviewers = calls.filter((c) => c.opts.agentType === "markitect-reviewer")
-  assert.strictEqual(reviewers.length, 5)
-  assert(reviewers.every((c) => !c.opts.isolation))
+  assert.strictEqual(reviewers(calls).length, 5)
+  assert(reviewers(calls).every((c) => !c.opts.isolation))
   assert.strictEqual(result.stopped, "reviewed")
   const all = await run({ mode: "review", all: true }, world(base()))
-  assert.strictEqual(all.calls.filter((c) => c.opts.agentType === "markitect-reviewer").length, 6)
+  assert.strictEqual(reviewers(all.calls).length, 6)
   assert(all.calls[0].prompt.includes("markitect status --all --json"))
 }
 
@@ -222,7 +277,7 @@ for (const bad of [{}, { mode: "deploy" }, { mode: "cleanup" }, undefined]) {
   s.hunt = 1
   const { result, calls } = await run({ mode: "bughunt", into: "main" }, world(s))
   assert.strictEqual(calls.filter((c) => c.prompt.startsWith("Hunt bugs in Package")).length, 6)
-  assert(calls.some((c) => c.prompt.includes("Git steps") && c.prompt.includes("markitect: hunt")))
+  assert(calls.some((c) => c.prompt.includes("Git step") && c.prompt.includes("markitect: hunt")))
   assert.strictEqual(result.stopped, "spec-problems")
 }
 
@@ -233,6 +288,7 @@ for (const bad of [{}, { mode: "deploy" }, { mode: "cleanup" }, undefined]) {
   assert.strictEqual(strands.length, 6)
   assert(strands.every((p) => p.startsWith("Clean up Package")))
   assert(strands[strands.length - 1].startsWith("Clean up Package Root"))
+  assert.strictEqual(reviewers(calls).length, 6)
   assert.strictEqual(result.rounds, 1)
 }
 
