@@ -92,6 +92,7 @@ Markitect itself starts no agent, steers no work and uses no Git. It computes an
 - **Design measured like code.** `markitect vet` warns about coupling, size, how far a change reaches and dependencies on less stable Packages.
 - **Verdicts bound to what was read.** A verdict names the item as `status` printed it, such as `members/limit@3f9a1c`, and `mark` refuses it when anything changed since. Only the reviewer records.
 - **The record, committed.** `.markitect/review.sum` holds one line per Definition, and your session commits it with the work. A CI job can run `markitect status` and fail on any item.
+- **In parallel when the work is large.** On a long list Claude has a shipped workflow run one builder and its reviewer per Package, in waves along the spec's dependencies, and merges their work. You choose per skill: `auto`, `sequential`, `parallel` or a workflow of your own.
 
 ## Skills and roles
 
@@ -100,12 +101,13 @@ Skills are named after the activity, agents after the role ([DEC-100](docs/conce
 | Skill | Who starts it | Does |
 | --- | --- | --- |
 | `/markitect-design` | You, or Claude | Designs the spec with you: starts a new project, drafts a first spec from existing code, or changes the spec. For a large code base it can have the architect draft |
-| `/markitect-build` | You | A builder in a worktree of its own makes the project match what `status` lists, and a reviewer verifies each item, until the list is empty. Then the work comes back to your branch |
+| `/markitect-build` | You | A builder in a worktree of its own makes the project match what `status` lists, and a reviewer verifies each item, until the list is empty; on a long list one builder and reviewer per Package, in parallel. Then the work comes back to your branch |
 | `/markitect-review` | You, or Claude | A reviewer verifies what `status` lists, or every Definition with `--all`, one reviewer per Package on a long list, and changes no code |
 | `/markitect-cleanup` | You | The builder refactors without changing behaviour, and the reviewer verifies again what that puts on the list |
 | `/markitect-bughunt` | You | The reviewer hunts for bugs beyond the list and records them, the builder repairs them, and the reviewer verifies again |
 | `/markitect-audit` | You, or Claude | The auditor reads the spec fresh for contradictions, gaps, unclear and duplicated statements, and reports to you |
 | `/markitect-schedule` | You | Sets up cleanup, bug hunts and a full review as routines through Claude Code's own scheduling. Each routine works on a branch of its own and lands only when it leaves nothing worse |
+| `/markitect-config` | You, or Claude | Changes the agents' model and effort and each skill's strategy, for this project or for all of yours, with `markitect config` ([DEC-103](docs/concepts/register.md#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)) |
 
 Four agents, in a 2×2 of rights that a hook holds for subagents. Your own session stays free to change anything, but it does not record verdicts either:
 
@@ -114,11 +116,11 @@ Four agents, in a 2×2 of rights that a hook holds for subagents. Your own sessi
 | **The code** | `markitect-builder`: code and the registry pages, not the spec; may start only the reviewer | `markitect-reviewer`: changes nothing, and is the only one that records verdicts with `markitect mark` |
 | **The spec** | `markitect-architect`: drafts the spec when your session delegates it, and writes no code | `markitect-auditor`: reads only, and reports to you |
 
-The agents use Claude Sonnet unless the manifest names another `model`, and work under your session's permission mode.
+The agents use Claude Sonnet with effort `high` unless `harness.yaml` says otherwise: the project's `.markitect/harness.yaml`, committed, beats your own `~/.markitect/harness.yaml`. They work under your session's permission mode.
 
 ## Commands
 
-None of these starts an agent or uses Git. With `--json`, `check`, `vet`, `list`, `doc`, `status` and `mark` print one JSON document for scripts. Exit codes follow Go's tools: 0 when all is well, 1 when the command found something, 2 when it could not run.
+None of these starts an agent or uses Git. With `--json`, `check`, `vet`, `list`, `doc`, `status`, `mark` and `config --list` print one JSON document for scripts. Exit codes follow Go's tools: 0 when all is well, 1 when the command found something, 2 when it could not run.
 
 | Command | Does |
 | --- | --- |
@@ -130,6 +132,7 @@ None of these starts an agent or uses Git. With `--json`, `check`, `vet`, `list`
 | `markitect status` | What is to verify, each item as `DEFINITION@FINGERPRINT`, with what changed and where to look |
 | `markitect mark` | Records a verdict at the state the reviewer read: `ok`, `fail`, `skip` or `spec-problem`, with evidence. Only the reviewer agent runs it |
 | `markitect tidy` | Brings the lock in line with the manifest, as `go mod tidy` does |
+| `markitect config` | Reads or sets the harness configuration: the agents' model and effort per role, the strategy per skill and custom workflows, in the project's `.markitect/harness.yaml` or with `--user` in yours; `--list` shows each value and where it comes from |
 | `markitect update` | Installs the newest release over the binary, then brings the personal skill, the project's harness and its lock in line. It commits nothing and changes no spec file |
 | `markitect install` | Writes the personal skill once per machine, so that a Claude Code session in any folder knows what Markitect is |
 | `markitect version` | The build, and whether the personal skill and the current project match it |
@@ -160,7 +163,7 @@ markitect init --name "Your project"
 markitect check
 ```
 
-`init` creates `.markitect/` with the manifest, the lock, a project anchor and Root's registry page, writes `AGENTS.md` and `CLAUDE.md`, and installs the skills, the four agents and the hooks in `.claude/settings.json`. It works in an empty folder too. In a new project, `check` says that nothing is built yet; open Claude Code and run `/markitect-design`.
+`init` creates `.markitect/` with the manifest, the lock, a project anchor and Root's registry page, writes `AGENTS.md` and `CLAUDE.md`, and installs the skills, the four agents, the parallel workflow and the hooks in `.claude/settings.json`. It works in an empty folder too. In a new project, `check` says that nothing is built yet; open Claude Code and run `/markitect-design`.
 
 In a repository that already has files, the first `check` fails by design, because every file must belong somewhere:
 
@@ -243,6 +246,7 @@ Main carries [concept 4.0](docs/concepts/v4-concept.md), the target the owner ac
 | The spec language and the commands `init`, `check`, `tidy`, `vet`, `list` and `doc` | Available since 0.22.0 (0.21.0 had `lock`, `lint`, `graph` and `refs`) |
 | Work with `/markitect-build` and `/markitect-review`, over `status`, `mark` and the record | Available on Claude Code since 0.21.0, covered by tests. The flow before it, with `gate`, was tried on three changes of one project ([trials](docs/validation/lean-trials-20261107.md)) |
 | The skills `/markitect-design`, `/markitect-cleanup`, `/markitect-bughunt`, `/markitect-audit` and `/markitect-schedule`, the four roles and the build in a worktree of its own | Available on Claude Code since 0.22.0, covered by tests only ([DEC-100](docs/concepts/register.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role)) |
+| The strategies, the parallel workflow, `harness.yaml`, `markitect config` and `/markitect-config` | On Main for 0.24.0, covered by tests, the workflow by a test against stub agents; no real run yet ([DEC-103](docs/concepts/register.md#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)) |
 | A real run of 0.22.0's skills with planted defects | Next: step 3 of the [tooling plan](docs/concepts/tooling-plan.md#order-of-work), under a bounded dispatch the owner approves |
 | Further `vet` measures, such as unlinked mentions and hubs | Proposed in the [`vet` plan](docs/concepts/vet-plan.md); not decided |
 | Codex | Not yet: it needs subagents with their own agent files and a hook that names the agent |

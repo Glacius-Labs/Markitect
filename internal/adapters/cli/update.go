@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
+	"github.com/Glacius-Labs/Markitect/internal/harness"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
@@ -62,10 +63,11 @@ func (r *refresher) Remove(file string) error {
 	return r.Workspace.Remove(file)
 }
 
-// refreshHarness brings the skills, the agents, the hooks and the record's Git
-// attributes of a project in line with this binary, as init does, and returns
-// the files that differed. It never touches the spec, AGENTS.md or CLAUDE.md.
-func (c CLI) refreshHarness(ws Workspace, dry bool) ([]string, error) {
+// refreshHarness brings the skills, the agents, the workflows, the hooks and the
+// record's Git attributes of a project in line with this binary and the harness
+// configuration, as init does, and returns the files that differed. It never
+// touches the spec, AGENTS.md or CLAUDE.md.
+func (c CLI) refreshHarness(ws Workspace, cfg harness.Config, dry bool) ([]string, error) {
 	r := &refresher{Workspace: ws, dry: dry}
 	quiet := c
 	if dry {
@@ -74,7 +76,7 @@ func (c CLI) refreshHarness(ws Workspace, dry bool) ([]string, error) {
 	if _, err := installSkills(r); err != nil {
 		return nil, err
 	}
-	if err := installHarness(r); err != nil {
+	if err := installHarness(r, cfg); err != nil {
 		return nil, err
 	}
 	if err := quiet.ensureSettings(r); err != nil {
@@ -99,9 +101,14 @@ type projectState struct {
 	// migrated are the record written from the newest certificate and the files
 	// of the retired results folder, removed.
 	migrated []string
+	// moved are the manifest and the harness configuration, when the agents'
+	// model moved from the one to the other (DEC-103).
+	moved []string
 }
 
-func (p projectState) stale() bool { return len(p.files) > 0 || p.lock || len(p.migrated) > 0 }
+func (p projectState) stale() bool {
+	return len(p.files) > 0 || p.lock || len(p.migrated) > 0 || len(p.moved) > 0
+}
 
 // refreshProject finds what differs in the project at repo and, unless dry,
 // writes it. It commits nothing: a change of the lock is a change of the
@@ -114,7 +121,18 @@ func (c CLI) refreshProject(repo string, dry bool) (projectState, error) {
 		return st, nil
 	}
 	st.ws = ws
-	if st.files, err = c.refreshHarness(ws, dry); err != nil {
+	user, _, err := readUserHarness()
+	if err != nil {
+		return st, err
+	}
+	proj, err := readProjectHarness(ws)
+	if err != nil {
+		return st, err
+	}
+	if proj, st.moved, err = moveManifestModel(ws, proj, dry); err != nil {
+		return st, err
+	}
+	if st.files, err = c.refreshHarness(ws, harness.Resolve(user, proj), dry); err != nil {
 		return st, err
 	}
 	if st.migrated, err = run.Migrate(ws.Root(), dry); err != nil {
@@ -302,6 +320,14 @@ func (c CLI) update(ctx context.Context, args []string) (int, error) {
 				fmt.Fprintln(c.Stdout, "Markitect uses no Git: commit them when you like.")
 			}
 		}
+		if len(proj.moved) > 0 {
+			if check {
+				stale = true
+				fmt.Fprintf(c.Stdout, "manifest: names the agents' model, which belongs in %s now; markitect update moves it there\n", project.HarnessFile)
+			} else {
+				fmt.Fprintf(c.Stdout, "manifest: moved the agents' model to %s (%s)\n", project.HarnessFile, strings.Join(proj.moved, ", "))
+			}
+		}
 		if len(proj.migrated) > 0 {
 			if check {
 				stale = true
@@ -421,7 +447,11 @@ func (c CLI) staleNotice(args []string) {
 	if err != nil {
 		return
 	}
-	files, err := c.refreshHarness(ws, true)
+	cfg, err := harnessConfig(ws)
+	if err != nil {
+		return
+	}
+	files, err := c.refreshHarness(ws, cfg, true)
 	if err != nil || len(files) == 0 {
 		return
 	}

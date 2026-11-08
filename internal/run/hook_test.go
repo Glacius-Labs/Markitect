@@ -81,6 +81,9 @@ func TestGuardHoldsEachRolesRightToWrite(t *testing.T) {
 			"/p/.claude/agents/markitect-reviewer.md",
 			"/p/.claude/skills/markitect-build/SKILL.md",
 			"/p/.agents/skills/markitect-design/reference.md",
+			"/p/.claude/workflows/markitect-parallel.js",
+			"/p/.markitect/harness.yaml",
+			`C:\p\.Markitect\Harness.yaml`,
 			"/p/.claude/worktrees/agent-a1/.claude/settings.json",
 			"/p/AGENTS.md",
 			"/p/CLAUDE.md",
@@ -92,6 +95,8 @@ func TestGuardHoldsEachRolesRightToWrite(t *testing.T) {
 			"/p/.markitect-notes/x.md",
 			"/p/.claude/worktrees/agent-a1/src/fees.go",
 			"/p/.claude/agents/my-own.md",
+			"/p/.claude/workflows/my-own.js",
+			"/p/src/harness.yaml",
 			"/p/.claude/commands/settings.json",
 			"/p/docs/agents-guide.md",
 			"/p/docs/agents.md",
@@ -127,6 +132,7 @@ func TestGuardHoldsEachRolesRightToWrite(t *testing.T) {
 	has(t, call("a1", run.BuilderAgent, "Edit", "file_path", "/p/.markitect/model/fee.md"), "the registry pages")
 	has(t, call("a1", run.BuilderAgent, "Edit", "file_path", "/p/.markitect/review.sum"), "markitect mark")
 	has(t, call("a1", run.BuilderAgent, "Edit", "file_path", "/p/.claude/settings.json"), "steers the agents")
+	has(t, call("a1", run.ArchitectAgent, "Write", "file_path", "/p/.markitect/harness.yaml"), "steers the agents")
 	has(t, call("a1", run.ArchitectAgent, "Edit", "file_path", "/p/src/fees.go"), "the builder writes")
 	has(t, call("a1", run.AuditorAgent, "Edit", "file_path", "/p/src/fees.go"), "changes no file")
 	has(t, call("a1", run.BuilderAgent, "NotebookEdit", "notebook_path", "/p/.markitect/x.ipynb"), `"permissionDecision":"deny"`)
@@ -179,6 +185,14 @@ func TestGuardHoldsWhoStartsWhom(t *testing.T) {
 			has(t, call("a1", c.agent, tool, c.start), `"permissionDecision":"deny"`, c.why)
 		}
 	}
+	// A workflow starts agents of every role, so only the owner's session runs one
+	// (DEC-103).
+	for _, agent := range []string{run.BuilderAgent, run.ReviewerAgent, run.ArchitectAgent, run.AuditorAgent, "general-purpose", ""} {
+		has(t, call("a1", agent, "Workflow", ""), `"permissionDecision":"deny"`, "owner's session starts a workflow")
+	}
+	if out := call("", "", "Workflow", ""); out != "" {
+		t.Fatalf("refused the owner's session a workflow: %s", out)
+	}
 }
 
 func TestHasGuard(t *testing.T) {
@@ -191,7 +205,8 @@ func TestHasGuard(t *testing.T) {
 	for s, want := range map[string]bool{
 		settings(group("Bash", run.MarkRule), group(run.EditTools, ""), group(run.AgentTools, "")): true,
 		settings(group("", "")): true,
-		settings(group("Bash", ""), group("Write|Edit|NotebookEdit|MultiEdit|Task|Agent", "")):                       true,
+		settings(group("Bash", ""), group("Write|Edit|NotebookEdit|MultiEdit|Task|Agent|Workflow", "")):              true,
+		settings(group("Bash", run.MarkRule), group(run.EditTools, ""), group("Agent|Task", "")):                     false,
 		settings(group("Bash", run.MarkRule), group(run.EditTools, "")):                                              false,
 		settings(group("Bash", run.MarkRule), group(run.EditTools, ""), group("Agent", "")):                          false,
 		settings(group("Bash", run.MarkRule)):                                                                        false,

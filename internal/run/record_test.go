@@ -149,6 +149,53 @@ func TestStatusEmptiesAsTheReviewerRecords(t *testing.T) {
 	}
 }
 
+// status counts its items per Package, with each Package's Definitions and the
+// Packages it depends on, so that a driver can plan work per Package in the order
+// of their dependencies (DEC-103). A spec-problem is counted apart, since it waits
+// for the owner.
+func TestStatusCountsItemsPerPackage(t *testing.T) {
+	p := newPlain(t)
+	st := p.status(false)
+	got := map[string]run.PackageItems{}
+	for _, pk := range st.Packages {
+		got[pk.Package] = pk
+	}
+	if len(st.Packages) != 4 || st.Packages[0].Package != "Root" {
+		t.Fatalf("Packages: %+v", st.Packages)
+	}
+	for name, want := range map[string][2]int{"Root": {2, 2}, "catalog": {1, 1}, "members": {1, 1}, "members/loans": {1, 1}} {
+		if got[name].Definitions != want[0] || got[name].Items != want[1] || got[name].SpecProblems != 0 {
+			t.Errorf("%s: %+v", name, got[name])
+		}
+	}
+	// A loan links to a member, its ancestor: implicit, as list --deps has it.
+	for _, pk := range st.Packages {
+		if len(pk.DependsOn) != 0 {
+			t.Errorf("%s depends on %v", pk.Package, pk.DependsOn)
+		}
+	}
+	// A link across Packages is a dependency.
+	q := newPlainOf(t, library())
+	q.write(m+"catalog/book.md", def("std/Concept", "Book", "A book a [[members/member]] may borrow."))
+	for _, pk := range q.status(false).Packages {
+		if pk.Package == "catalog" && (len(pk.DependsOn) != 1 || pk.DependsOn[0] != "members") {
+			t.Errorf("catalog depends on %v", pk.DependsOn)
+		}
+	}
+	it := p.item(st, "members/loans/loan")
+	if text, ok := p.review(it.Definition, run.VerdictSpecProblem, it.Fingerprint, nil, "which limit?"); !ok {
+		t.Fatal(text)
+	}
+	for _, pk := range p.status(false).Packages {
+		if pk.Package == "members/loans" && (pk.Items != 1 || pk.SpecProblems != 1) {
+			t.Fatalf("after a spec-problem: %+v", pk)
+		}
+	}
+	if broken := newPlainOf(t, map[string]string{project.ManifestFile: "libraries:\n  std: 1.0.0\n", project.ModelDir + "/x.md": "no front matter\n"}).status(false); len(broken.Packages) != 0 {
+		t.Fatalf("a spec with errors has Packages: %+v", broken.Packages)
+	}
+}
+
 // What is to verify is what concept 4.0's checklist reached at distance 0 and 1.
 func TestWhatAChangeReaches(t *testing.T) {
 	cases := []struct {

@@ -6,7 +6,7 @@ A compact summary. The canonical text is `docs/guides/model-language.md` in the 
 
 ```text
 .markitect/
-  manifest.yaml        Libraries and versions (std: 1.0.0, rest: 1.0.0, ...); optionally the model of the agents
+  manifest.yaml        Libraries and versions (std: 1.0.0, rest: 1.0.0, ...)
   lock.yaml            Library digests, written by markitect tidy
   model/               the model; this folder is the Root Package
     project.md         the project anchor (std/Project)

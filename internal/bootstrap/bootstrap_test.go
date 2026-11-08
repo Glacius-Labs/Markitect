@@ -324,7 +324,7 @@ func TestInitKeepsTheProjectsSettings(t *testing.T) {
 	settings := read(t, r.Dir, ".claude/settings.json")
 	if !strings.Contains(settings, "Bash(go test *)") || !strings.Contains(settings, "12345678901234567890") ||
 		strings.Count(settings, "Bash(markitect mark*)") != 1 || strings.Count(settings, "Edit|Write|MultiEdit|NotebookEdit") != 1 ||
-		strings.Count(settings, `"Agent|Task"`) != 1 || strings.Count(settings, `"baseRef": "head"`) != 1 {
+		strings.Count(settings, `"Agent|Task|Workflow"`) != 1 || strings.Count(settings, `"baseRef": "head"`) != 1 {
 		t.Fatalf("settings:\n%s", settings)
 	}
 }
@@ -496,7 +496,7 @@ func TestInitInstallsTheHarness(t *testing.T) {
 		pre[0].Hooks[0].Command != "markitect hook pretool" || pre[0].Hooks[0].If != "Bash(markitect mark*)" ||
 		pre[1].Matcher != "Edit|Write|MultiEdit|NotebookEdit" || len(pre[1].Hooks) != 1 ||
 		pre[1].Hooks[0].Command != "markitect hook pretool" || pre[1].Hooks[0].If != "" ||
-		pre[2].Matcher != "Agent|Task" || len(pre[2].Hooks) != 1 ||
+		pre[2].Matcher != "Agent|Task|Workflow" || len(pre[2].Hooks) != 1 ||
 		pre[2].Hooks[0].Command != "markitect hook pretool" || pre[2].Hooks[0].If != "" {
 		t.Fatalf("the guard hooks: %+v", settings)
 	}

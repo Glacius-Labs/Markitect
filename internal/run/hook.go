@@ -31,11 +31,13 @@ const (
 const MarkRule = "Bash(markitect mark*)"
 
 // EditTools are the tools that write files, and AgentTools the tools that start
-// an agent, as the matchers of the hooks that hold the roles' rights. Claude Code
-// named its agent tool Task before it named it Agent.
+// agents, as the matchers of the hooks that hold the roles' rights. Claude Code
+// named its agent tool Task before it named it Agent; its Workflow tool runs a
+// script that starts agents of any type (DEC-103).
 const (
-	EditTools  = "Edit|Write|MultiEdit|NotebookEdit"
-	AgentTools = "Agent|Task"
+	EditTools    = "Edit|Write|MultiEdit|NotebookEdit"
+	AgentTools   = "Agent|Task|Workflow"
+	WorkflowTool = "Workflow"
 )
 
 // rights are what a subagent of a role may do. A file is code when it lies
@@ -148,8 +150,8 @@ var markCommand = regexp.MustCompile(`(?i)(^|[\s;&|("'` + "`" + `])markitect(\.e
 //     subagent code and the registry pages, the architect the spec and the
 //     registry pages, the reviewer and the auditor nothing, and nobody the
 //     record, which mark writes, or the files that steer the agents;
-//   - the builder starts only the reviewer, the other roles start no agent, and
-//     no subagent starts the builder or the architect.
+//   - the builder starts only the reviewer, the other roles start no agent, no
+//     subagent starts the builder or the architect, and none runs a workflow.
 //
 // The owner's own session is no subagent and stays free, but for mark. Its input
 // is what the provider tells a hook, which names the agent a subagent's call
@@ -173,6 +175,9 @@ func Guard(input []byte) []byte {
 		return nil
 	}
 	r := rightsOf(in.AgentType)
+	if in.ToolName == WorkflowTool {
+		return deny("Only the owner's session starts a workflow, since a workflow starts agents of every role; do the work yourself, or say in your report what is needed.")
+	}
 	if isAgentTool(in.ToolName) {
 		start, _ := in.ToolInput["subagent_type"].(string)
 		if !r.may(start) {
@@ -222,7 +227,7 @@ func writeRefusal(agent string, r rights, file string) string {
 	case recordFile:
 		return fmt.Sprintf("%s is written only by markitect mark, which the %s agent runs.", file, ReviewerAgent)
 	case harnessFile:
-		return fmt.Sprintf("%s steers the agents: Markitect's skills, agents and settings and the project's instruction files are the owner's, and no agent changes them. Say what should change.", file)
+		return fmt.Sprintf("%s steers the agents: Markitect's skills, agents, workflows, settings and harness configuration and the project's instruction files are the owner's, and no agent changes them. Say what should change.", file)
 	case registryPage:
 		if r.registry {
 			return ""
@@ -268,6 +273,8 @@ func kindOf(file string) int {
 		switch {
 		case lower == strings.ToLower(project.ReviewFile):
 			return recordFile
+		case lower == strings.ToLower(project.HarnessFile):
+			return harnessFile
 		case lower == strings.ToLower(project.RootPage), strings.HasPrefix(lower, registry) && strings.HasSuffix(lower, ".md"):
 			return registryPage
 		}
@@ -280,9 +287,10 @@ func kindOf(file string) int {
 }
 
 // steersAgents says whether a path names a file that steers the agents (DEC-100):
-// Claude Code's project settings, which hold the hook, Markitect's skills and
-// agents, and the instruction files agents read by themselves. A builder whose
-// work comes back by itself must not change them, since nobody reads that diff.
+// Claude Code's project settings, which hold the hook, Markitect's skills, agents
+// and workflows, and the instruction files agents read by themselves. A builder
+// whose work comes back by itself must not change them, since nobody reads that
+// diff. The harness configuration in Markitect's folder is one too (DEC-103).
 func steersAgents(segments []string) bool {
 	n := len(segments)
 	if base := segments[n-1]; base == "AGENTS.md" || base == "CLAUDE.md" {
@@ -293,7 +301,7 @@ func steersAgents(segments []string) bool {
 		switch {
 		case dir == ".claude" && i+2 == n && (next == "settings.json" || next == "settings.local.json"):
 			return true
-		case (dir == ".claude" || dir == ".agents") && (next == "agents" || next == "skills") && i+2 < n &&
+		case (dir == ".claude" || dir == ".agents") && (next == "agents" || next == "skills" || next == "workflows") && i+2 < n &&
 			strings.HasPrefix(strings.ToLower(segments[i+2]), "markitect-"):
 			return true
 		}
