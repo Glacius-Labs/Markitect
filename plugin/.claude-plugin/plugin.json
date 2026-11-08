@@ -1,6 +1,6 @@
 {
   "name": "markitect",
-  "version": "0.25.0-dev",
+  "version": "0.25.0",
   "description": "Brings the markitect command and tells Claude Code what Markitect is, in every folder",
   "author": {
     "name": "Glacius Labs"
