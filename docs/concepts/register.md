@@ -136,7 +136,7 @@ This page lists what holds for Markitect today, grouped by topic. Each entry say
   - a module names the modules it uses by Package, `[[members]]`.
 - `doc PACKAGE` shows a Package's public Definitions apart from its internal ones, and every Definition that `list` and `doc` show carries `internal` in their JSON.
 - Two link keywords, `id` and `part`, were weighed and not chosen. They come back only on new evidence: a real spec whose surface must differ from its visibility, or whose identity Definitions, measured over its history, cost more than the re-verification they save ([OQ-015](#open-questions) is the one point left open).
-- [What makes a good spec](../guides/good-spec.md#every-link-is-a-relation) states the patterns, and the [measurements](../validation/spec-relations-20261108.md) give the evidence: on the archived Makerspace specs the patterns put 113 items on the list instead of 133 over eight change steps, and 354 instead of 468 on the 5× project, with no needed item lost.
+- [What makes a good spec](../guides/good-spec.md#every-link-is-a-relation) states the patterns, the [measurements](../validation/spec-relations-20261108.md) give the evidence, and the archived [relations plan](https://github.com/Glacius-Labs/Markitect/blob/942d04bda68dde1c90be70c23587b6aea21ab008/docs/concepts/relations-plan.md) weighs the alternatives: on the archived Makerspace specs the patterns put 113 items on the list instead of 133 over eight change steps, and 354 instead of 468 on the 5× project, with no needed item lost.
 
 ## The tool
 
