@@ -1,6 +1,6 @@
 # Plan: Markitect as a tool, with a verification cache
 
-**Status:** decided by the owner on 7 November 2026 ([DEC-099](register.md#dec-099-markitect-is-a-tool-with-a-verification-cache)), after a discussion of how they work with Markitect. An independent architect reviewed this page against the code. Steps 1 and 2 of the [order of work](#order-of-work) are built. Step 1 was released as 0.21.0 ([the record](../../internal/run/README.md)); step 2 was released as 0.22.0, with the skills, roles and routines the owner decided the same day ([DEC-100](register.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role), [below](#skills-roles-and-routines)). The strategies, the parallel driver and the configuration the owner decided next ([DEC-103](register.md#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow), [below](#strategies-and-configuration)) are built for 0.23.0. Step 3 is next.
+**Status:** decided by the owner on 7 November 2026 ([DEC-099](register.md#dec-099-markitect-is-a-tool-with-a-verification-cache)), after a discussion of how they work with Markitect. An independent architect reviewed this page against the code. Steps 1 and 2 of the [order of work](#order-of-work) are built. Step 1 was released as 0.21.0 ([the record](../../internal/run/README.md)); step 2 was released as 0.22.0, with the skills, roles and routines the owner decided the same day ([DEC-100](register.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role), [below](#skills-roles-and-routines)). The strategies, the parallel driver and the configuration the owner decided next ([DEC-103](register.md#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow), [below](#strategies-and-configuration)) are built for 0.24.0. Step 3 is next.
 
 The owner decided:
 - Markitect supports agent work and does not steer it;
@@ -171,7 +171,7 @@ So a review that records a new `fail` does not land: its branch holds the record
 
 ## Strategies and configuration
 
-Decided by the owner on 7 November 2026 ([DEC-103](register.md#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)), and built for 0.23.0. Claude decides the parallelism per run, through a Claude Code workflow that Markitect ships. There is no fixed tree of Managers: in the runs of 2 and 3 November 2026 the Managers added cost and the worst failures.
+Decided by the owner on 7 November 2026 ([DEC-103](register.md#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)), and built for 0.24.0. Claude decides the parallelism per run, through a Claude Code workflow that Markitect ships. There is no fixed tree of Managers: in the runs of 2 and 3 November 2026 the Managers added cost and the worst failures.
 
 ### Strategies
 

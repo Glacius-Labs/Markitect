@@ -240,7 +240,7 @@ async function run() {
   if (MODE === "audit") {
     phase("Audit")
     const pkgs = st.packages.filter((p) => p.definitions > 0).map((p) => p.package)
-    const tasks = pkgs.map((name) => ({ name, task: `Audit the spec of Package ${name}.${FOCUS}` }))
+    const tasks = pkgs.map((name) => ({ name, task: `Audit the spec of Package ${name}, and triage the unlinked mentions markitect vet --strict lists in it.${FOCUS}` }))
     tasks.push({ name: "across Packages", task: `Audit the spec across Packages: look only for contradictions between Packages.${FOCUS}` })
     reports = (
       await parallel(

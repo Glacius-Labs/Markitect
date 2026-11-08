@@ -24,6 +24,7 @@ func newEnvelope(kind string) envelope { return envelope{FormatVersion: FormatVe
 const (
 	severityError   = "error"
 	severityWarning = "warning"
+	severityNote    = "note"
 )
 
 // diagnostic is one diagnostic in a JSON document. In text it is one line,
@@ -34,6 +35,11 @@ type diagnostic struct {
 	Message  string `json:"message"`
 	File     string `json:"file,omitempty"`
 	Line     int    `json:"line,omitempty"`
+	// Targets and Structure belong to vet.unlinked_mention: the Definitions named
+	// without a link, and "against" or "new_dependency" when a link would close a
+	// Package cycle or add a Package dependency.
+	Targets   []string `json:"targets,omitempty"`
+	Structure string   `json:"structure,omitempty"`
 }
 
 // diagnostics converts a list for a JSON document; never nil, so that the

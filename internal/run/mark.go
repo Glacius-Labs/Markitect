@@ -25,6 +25,10 @@ type MarkRequest struct {
 	Verdict  string
 	Evidence []string
 	Why      string
+	// Cases and Covered are the reviewer's counts of the Definition's cases,
+	// conditions and exceptions, and of those its evidence demonstrates; nil when
+	// it gave none.
+	Cases, Covered *int
 	// definition and at are Item's two parts.
 	definition, at string
 }
@@ -42,6 +46,12 @@ func (r *MarkRequest) check() error {
 		return fmt.Errorf("%w: the verdict is one of %s, not %q", ErrUsage, strings.Join(Verdicts, ", "), r.Verdict)
 	case r.Verdict != VerdictOK && r.Why == "":
 		return fmt.Errorf("%w: a %s says why, with -m", ErrUsage, r.Verdict)
+	case r.Cases != nil && *r.Cases < 0, r.Covered != nil && *r.Covered < 0:
+		return fmt.Errorf("%w: --cases and --covered count, so they are 0 or more", ErrUsage)
+	case r.Covered != nil && r.Cases == nil:
+		return fmt.Errorf("%w: --covered counts some of the cases, so give --cases too", ErrUsage)
+	case r.Covered != nil && *r.Covered > *r.Cases:
+		return fmt.Errorf("%w: --covered %d is more than --cases %d; the evidence demonstrates at most every case", ErrUsage, *r.Covered, *r.Cases)
 	}
 	return nil
 }
@@ -115,10 +125,11 @@ func (e *Engine) Mark(_ context.Context, req MarkRequest) (text string, recorded
 	case it.State != StateGone && req.Verdict == VerdictOK && len(evidence) == 0:
 		return "", false, fmt.Errorf("%w: ok names its evidence with -e, such as -e src/fees.go:40", ErrUsage)
 	}
-	line := Line{Definition: req.definition, Verdict: req.Verdict, Why: req.Why, Inputs: Inputs{}}
+	line := Line{Definition: req.definition, Verdict: req.Verdict, Why: req.Why, Inputs: Inputs{}, Cases: req.Cases, Covered: req.Covered}
 	for k, h := range inputs {
 		line.Inputs[k] = h
 	}
+	line.Revisions = revisions(rec.byDefinition()[req.definition], inputs)
 	var missing []string
 	for _, ev := range evidence {
 		h, err := f.hash(ev.File)
@@ -152,7 +163,8 @@ func (e *Engine) Mark(_ context.Context, req MarkRequest) (text string, recorded
 // clean keeps one line per Definition, except the one being marked: of several,
 // as after a merge, the one whose inputs match the folder, or both of a conflict,
 // or else the closest; a gone Definition keeps one line with every file its lines
-// named.
+// named. A kept line counts the most revisions any of its Definition's lines
+// counted, so that a merge loses none.
 func clean(rec Record, v view, except string) []Line {
 	var out []Line
 	for id, lines := range rec.byDefinition() {
@@ -173,12 +185,25 @@ func clean(rec Record, v view, except string) []Line {
 					}
 				}
 			}
+			merged.Revisions = mostRevisions(lines)
 			out = append(out, merged)
 		default:
-			out = append(out, keep(lines, v.now[id], v)...)
+			for _, l := range keep(lines, v.now[id], v) {
+				l.Revisions = mostRevisions(lines)
+				out = append(out, l)
+			}
 		}
 	}
 	return out
+}
+
+// mostRevisions is the most revisions any of the lines counts.
+func mostRevisions(lines []Line) int {
+	n := 0
+	for _, l := range lines {
+		n = max(n, l.Revisions)
+	}
+	return n
 }
 
 // keep chooses among the lines of one live Definition.

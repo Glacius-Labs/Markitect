@@ -171,8 +171,8 @@ All commands take `--repo DIR`, a folder of the project (default: the current fo
 
 As in Go's tools:
 
-- **Diagnostics** are one line each, `file:line: code: message`. `check` prints only diagnostics and one summary line, `vet` only diagnostics, and `status` prints the errors in the realization as diagnostics.
-- **`--json`** prints one document that starts with `format_version` (1) and `kind`, the command's name. A diagnostic in it is an object with `severity` (`error` or `warning`), `code`, `message`, `file` and `line`.
+- **Diagnostics** are one line each, `file:line: code: message`. `check` prints only diagnostics and one summary line, `vet` its warnings and one line that counts its notes (with `--strict`, the notes as diagnostics instead), and `status` prints the errors in the realization as diagnostics.
+- **`--json`** prints one document that starts with `format_version` (1) and `kind`, the command's name. A diagnostic in it is an object with `severity` (`error`, `warning` or `note`), `code`, `message`, `file` and `line`.
 - **Exit codes:** 0 when all is well; 1 when the command did its job and found something (errors of `check`, items of `status`, a refused `mark`, warnings of `vet` with `--strict`, a `doc` target that is neither a Definition nor a Package); 2 when it could not run (a usage error, no project). Notes, such as a `skip` or an outdated harness, never change the exit code.
 
 The fields of each document:
@@ -180,8 +180,8 @@ The fields of each document:
 | Command | Fields after `format_version` and `kind` |
 |---|---|
 | `check` | `ok`, `nothing_built`, `definitions`, `packages`, `files`, `spec_errors`, `realization_errors`, `diagnostics` |
-| `vet` | `diagnostics` |
-| `list` | `packages`: `path`, `name`, `parent`, `definitions` (`id`, `title`, `kind`, `file`) and, with `--deps`, each Definition's `links` and the Package's `deps` (`afferent`, `efferent`, `instability`, `depends_on` with the `uses` behind each edge: `from`, `target`, `via` (`link` or `kind`), `file`, `line`) |
+| `vet` | `diagnostics`: the warnings, then every note with `severity` `note`, `--strict` or not; a `vet.unlinked_mention` adds `targets`, the Definitions it names, and `structure`, `against` or `new_dependency` for those a link to which would close a Package cycle or add a Package dependency |
+| `list` | `packages`: `path`, `name`, `parent`, `definitions` (`id`, `title`, `kind`, `file`) and, with `--deps`, each Definition's `links` and the Package's `deps` (`afferent`, `efferent`, `instability`, `abstractness`, `distance`, `depends_on` with the `uses` behind each edge: `from`, `target`, `via` (`link` or `kind`), `file`, `line`) |
 | `doc` | `definition`: `id`, `title`, `kind`, `file`, `links`, `package`, `library`, `text`, `linked_from`, `realized_by`, `record`; or `package`: `path`, `name`, `parent`, `children`, `page`, `paths`, `definitions`, `linked_from`, `files`; or, for a target that is neither, `diagnostics` (`doc.unknown`) |
 | `status` | `clean`, `definitions`, `spec_errors`, `realization_errors`, `packages` (each Package of the spec, by name: `package`, `definitions`, `items` and `spec_problems` on the list, and `depends_on`, the Packages it depends on as `list --deps` has them, where a link to an ancestor is implicit), `items` (`definition`, `title`, `state`, `fingerprint`, `changes`, `verdict`, `why`, `verdicts`, `look`), `diagnostics` (the spec's errors, the realization's, and `record.unreadable` for each line of the record markitect cannot read), `skipped`, `unreadable_lines` |
 | `mark` | `recorded`, `item`, `verdict`, `message` |
@@ -200,8 +200,8 @@ The fields of each document:
 | `markitect init [--name TITLE]` | Writes what is missing: the manifest with `std`, the project anchor `model/project.md` if the model folder is empty, Root's registry page, the lock, `AGENTS.md` and a `CLAUDE.md` that imports it. Installs or updates the skills in `.claude/skills/` and `.agents/skills/`, the harness (the build, review, cleanup, bughunt, audit, schedule and config skills, the builder, reviewer, architect and auditor agents with the model and effort of the harness configuration, the parallel workflow `.claude/workflows/markitect-parallel.js`, and in `.claude/settings.json` the hooks and `worktree.baseRef: "head"` unless the settings name a base) and `.markitect/.gitattributes`. In a folder of a project it works on that project. It makes no repository and commits nothing, and prints what Markitect is, with a tip when the personal skill is missing or old. Never changes an existing model file, `AGENTS.md` or `CLAUDE.md`, and never writes to the home folder. |
 | `markitect check [--spec]` | Compiles the project and prints every error as a diagnostic, the spec's first and then the realization's, and one summary line: `ok: N Definitions in M Packages, K files accounted`; the sentence for a project where [nothing is built yet](#the-realization-record); or `N errors: X in the spec, for the owner to settle; Y in the realization, so spec and code do not match yet, which /markitect-build settles`. Exit 1 when there is an error. `--spec` looks only at the spec. |
 | `markitect tidy` | Brings the lock in line with the manifest and the Libraries it names, as `go mod tidy` does. The lock's header reads "Written by markitect tidy from the manifest". |
-| `markitect vet [--strict]` | Analyses the spec's design: coupling, size, how far a change reaches ([the warnings](#vet-warnings)). Prints only diagnostic lines, and nothing when the spec is clean. Exit 1 only with `--strict` and a warning. |
-| `markitect list [--deps]` | Each Package by name (`Root` for the root) with its Definitions below it as `  ID: Title (Kind)`. With `--deps` the Package line adds `(Ca n, Ce n, instability x.xx)` and is followed by `  depends on P: A links B; C is of Kind D`, and a Definition by the links it makes, `    links X, Y`. |
+| `markitect vet [--strict]` | Analyses the spec's design: coupling, size, hubs, and as notes unlinked mentions, statements, placement and hotspots ([the warnings and notes](#vet-warnings-and-notes)). Prints its warnings as diagnostic lines, then one line that counts its notes, such as `notes: 12 unlinked mentions in 5 Definitions, 3 more against or beyond the Package structure, 1 other note; markitect vet --strict lists them`, and nothing when there is neither. `--strict` prints the notes as diagnostic lines instead of that line. Exit 1 only with `--strict` and a warning; notes never change it. |
+| `markitect list [--deps]` | Each Package by name (`Root` for the root) with its Definitions below it as `  ID: Title (Kind)`. With `--deps` the Package line adds `(Ca n, Ce n, instability x.xx, abstractness x.xx, distance x.xx)`, information only, and is followed by `  depends on P: A links B; C is of Kind D`, and a Definition by the links it makes, `    links X, Y`. |
 | `markitect doc TARGET` | A Definition: `ID: Title (Kind)`, its Package and file (or its Library), its text without front matter, what it links to, what links to it (`  FROM (link\|kind), FILE:LINE`), the files that realize it (`  FILE, PAGE:LINE`) and its record (`Record: ID@FP, STATE`, with the changes or the reason). A Package: its parent, registry page and paths, the Packages below it, its Definitions, what links to it and its files. `doc Root` or `doc .` shows Root. Exit 1 for a target that is neither. |
 
 `vet`, `list` and `doc` also run over a spec with errors and say so on standard error.
@@ -211,26 +211,37 @@ Two commands work on the record of what was verified, `.markitect/review.sum` ([
 | Command | Does |
 |---|---|
 | `markitect status [--all]` | Lists what is to verify: each Definition with a changed input or no record, with what changed, where to look and its fingerprint; each Definition recorded `fail` or `spec-problem`; each Definition gone from the spec, with the files that realized it; conflicts after a merge; and the errors in the realization. A `skip` is a note. Exit 0 when it lists nothing, 1 when it lists something; a spec with errors has no list. `--all` lists every Definition. Changes nothing. |
-| `markitect mark DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]... [-m WHY]` | Records `ok`, `fail`, `skip` or `spec-problem` at the state `status` printed, which prints each item as `DEFINITION@FINGERPRINT`. `ok` names its evidence with `-e`, files of the folder as `path` or `path:line`; the others say why with `-m`. Refuses, and records nothing, when the inputs changed since the fingerprint or evidence does not exist. In an agent session, only the reviewer agent may run it (the hook). |
+| `markitect mark DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]... [-m WHY] [--cases N [--covered M]]` | Records `ok`, `fail`, `skip` or `spec-problem` at the state `status` printed, which prints each item as `DEFINITION@FINGERPRINT`. `ok` names its evidence with `-e`, files of the folder as `path` or `path:line`; the others say why with `-m`. `--cases` and `--covered` are the reviewer's counts of the Definition's cases, conditions and exceptions and of those its evidence demonstrates, kept on the line ([the record file](../../internal/run/README.md#the-record-file)), which also counts how often the Definition's own text changed between verdicts. Refuses, and records nothing, when the inputs changed since the fingerprint or evidence does not exist. In an agent session, only the reviewer agent may run it (the hook). |
 | `markitect hook pretool` | The hook before a tool call: only the reviewer records, a subagent writes only what its role may, and none starts the builder, the architect or a workflow ([the hook](../../internal/run/README.md#the-hook)). Hooks only. |
 
 `markitect checklist`, `answer` and `gate` went in 0.21.0. For one release they print on standard output, with exit 0, that they are gone and to run `markitect update`.
 
-### Vet warnings
+### Vet warnings and notes
 
-`vet` measures the model like code, from its links alone. It warns and exits 1 only with `--strict`. The thresholds are provisional. A Definition nothing links to and no file realizes, and a stale registry row, are errors of `check`, not warnings.
+`vet` measures the spec like code, from its text and links alone, and from the record's count of revisions ([DEC-102](../concepts/register.md#dec-102-what-vet-measures)). The thresholds are provisional, set on the [measurements of 7 November 2026](../validation/spec-design-measures-20261107.md). A Definition nothing links to and no file realizes, and a stale registry row, are errors of `check`, not warnings. N is the number of the spec's model Definitions; a Definition's fan-in counts the Definitions that link to it or are of it as Kind.
+
+**Warnings** were precise on real specs; `vet --strict` exits 1 on them.
 
 | Code | Warns when |
 |---|---|
 | `vet.coupling` | a Package depends on more than 5 Packages (efferent coupling Ce) |
-| `vet.unstable_dependency` | a Package depends on a less stable one: instability Ce / (Ca + Ce) of the target is higher |
+| `vet.unstable_dependency` | a Package depends on a less stable one: instability Ce / (Ca + Ce) of the target is higher, Martin's Stable Dependencies Principle |
 | `vet.definition_size` | a Definition's body has more than 1000 words |
 | `vet.package_size` | a Package has more than 25 Definitions of its own |
-| `vet.reach` | a change to a Definition outside Root would put Definitions of more than half of the Packages back on the list to verify: its own Package and those of the Definitions that link to it or are of it as Kind, in a model of at least 6 Packages |
+| `vet.hub` | a change to one Definition alone would put more than a fifth of the spec back on the list to verify, and more than 10: fan-in + 1 > max(10, N / 5). It counts Root's Definitions and leaves Kinds out, whose change concerns all their Definitions by design |
 | `vet.thin_package` | a Package has no Definitions of its own and only one child |
 | `vet.no_paths` | a Package other than Root claims no path pattern, as above |
 
-Change hotspots from Git history come later. Coupling counts explicit edges only, not the implicit edge to the parent. [What makes a good spec](good-spec.md) says what each measure is for, and the [`vet` plan](../concepts/vet-plan.md) proposes further measures and thresholds for the owner's decision.
+**Notes** have a known blind spot or no calibration yet, so they never change the exit code. Plain `vet` counts them in one line; `--strict` lists them; `--json` always carries them.
+
+| Code | Notes when |
+|---|---|
+| `vet.unlinked_mention` | a Definition's title, or the last segment of its ID with hyphens read as spaces, appears in another Definition's prose with no link to it: matched as whole words without regard to case, with up to two trailing letters, outside the title, code, raw HTML and `[[…]]` links (a Markdown link's label counts as prose). Not reported: where the Definition links the named one or is of it as Kind, where it may not link it (into a child, or an internal Definition from outside), where a longer name covers the words (its own included), where a linked Definition's name covers them, and where the named one is a Kind. One line per Definition, at its first mention. Mentions a link to which would close a Package cycle or add a Package dependency the spec does not have are counted apart, each group in a line of its own that says so. About half to three-quarters are real missing links; [`/markitect-audit`](project-workflow.md#7-build-and-review) has the auditor triage them |
+| `vet.statements` | a Definition has more than 20 statements: list items and table rows, header rows included |
+| `vet.placement` | every Definition that links to a Definition lies in one Package below it, so it could move down there, unless it binds its Package by scope |
+| `vet.hotspot` | how often a Definition's own text changed between verdicts, from the record, times its fan-in, is more than a tenth of the spec and more than 20: revisions × fan-in > max(20, N / 10) |
+
+Coupling counts explicit edges only, not the implicit edge to the parent. `list --deps` shows each Package's abstractness, the share of its own Definitions that are Kinds, and its distance from the main sequence, \|A + I − 1\|; `vet` warns about neither. [What makes a good spec](good-spec.md) says what each measure is for, and the [`vet` plan](../concepts/vet-plan.md) records why these measures and thresholds, and the ones not built yet.
 
 ## Build decisions
 

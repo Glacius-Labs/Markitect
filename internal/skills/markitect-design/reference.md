@@ -99,13 +99,15 @@ All take `--repo DIR`; `check`, `vet`, `list`, `doc`, `status` and `mark` take `
 | `check` | Compile: errors only. A project with nothing registered, where the only errors are `definition.unused`, passes and says that nothing is built yet. |
 | `tidy` | Bring `lock.yaml` in line with the manifest after a manifest or Library change, as `go mod tidy` does. |
 | `doc TARGET` | A Definition with its text, what links to it, what it links to, the files that realize it and its record; or a Package with its Definitions, page and files. |
-| `list [--deps]` | The Packages and their Definitions; `--deps` adds each Package's coupling, what it depends on and the links behind each dependency. |
+| `list [--deps]` | The Packages and their Definitions; `--deps` adds each Package's coupling, abstractness and distance from the main sequence, what it depends on and the links behind each dependency. |
 | `status [--all]` | What is to verify: each Definition whose text, Kind, links, files or evidence changed since a reviewer last verified it, or that has no record yet, with what changed and where to look. Needs a project that compiles. |
-| `vet [--strict]` | Warnings about the spec's design, as `file:line: code: message`; exit 1 only with `--strict`. |
+| `vet [--strict]` | Warnings about the spec's design, as `file:line: code: message`, and one line that counts its notes; `--strict` lists the notes too. Exit 1 only with `--strict` and a warning; notes never change it. |
 
-## Warnings (`vet`)
+## Warnings and notes (`vet`)
 
-`vet.coupling` (more than 5 dependencies), `vet.unstable_dependency` (depends on a less stable Package), `vet.definition_size` (over 1000 words), `vet.package_size` (over 25 Definitions), `vet.reach` (a change would put Definitions of more than half the Packages back on the list to verify), `vet.thin_package` (no Definitions and one child), `vet.no_paths` (a Package other than Root claims no path pattern, so it owns no file).
+Warnings: `vet.coupling` (more than 5 dependencies), `vet.unstable_dependency` (depends on a less stable Package), `vet.definition_size` (over 1000 words), `vet.package_size` (over 25 Definitions), `vet.hub` (a Definition other than a Kind, Root's included, whose change alone would put more than a fifth of the spec, and more than 10 Definitions, back on the list to verify), `vet.thin_package` (no Definitions and one child), `vet.no_paths` (a Package other than Root claims no path pattern, so it owns no file).
+
+Notes: `vet.unlinked_mention` (a Definition's title or name in another Definition's prose with no link to it; also where a link would close a Package cycle or add a Package dependency), `vet.statements` (over 20 list items and table rows), `vet.placement` (every Definition that links to it lies in one Package below it), `vet.hotspot` (how often its own text changed between verdicts, times what links to it, is above a tenth of the spec and 20).
 
 ## Error codes
 

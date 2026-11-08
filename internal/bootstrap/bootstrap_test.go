@@ -133,7 +133,7 @@ func TestCommandsEndToEnd(t *testing.T) {
 	}
 	// list shows the Packages and their Definitions; --deps what each depends on.
 	wantAll(t, mustRun(t, r.Dir, "list"), "Root\n  loan-limit: Loan limit (std/Rule)\n", "members\n  members/member: Member (std/Concept)\n")
-	wantAll(t, mustRun(t, r.Dir, "list", "--deps"), "Root (Ca 0, Ce 0, instability 0.00)\n  loan-limit: Loan limit (std/Rule)\n    links members\n")
+	wantAll(t, mustRun(t, r.Dir, "list", "--deps"), "Root (Ca 0, Ce 0, instability 0.00, abstractness 0.00, distance 1.00)\n  loan-limit: Loan limit (std/Rule)\n    links members\n")
 	var listed struct {
 		Kind     string
 		Packages []struct {
@@ -144,22 +144,26 @@ func TestCommandsEndToEnd(t *testing.T) {
 	if code, out, _ := run(t, r.Dir, "list", "--json"); code != 0 || json.Unmarshal([]byte(out), &listed) != nil || listed.Kind != "list" || len(listed.Packages) != 2 || listed.Packages[0].Deps != nil {
 		t.Fatalf("list --json: %d %s", code, out)
 	}
-	// vet warns, and exits 1 only with --strict.
+	// vet warns, and exits 1 only with --strict. Plain vet counts its notes in one
+	// line, --strict lists them, and they never change the exit code.
 	if code, out, _ := run(t, r.Dir, "vet"); code != 0 || out != "" {
 		t.Fatalf("vet: %d %s", code, out)
 	}
-	r.Write(".markitect/model/members/orphan.md", "---\nkind: std/Concept\n---\n# Orphan\n\n"+strings.Repeat("word ", 1001)+"\n")
-	if code, out, _ := run(t, r.Dir, "vet"); code != 0 || !strings.Contains(out, ".markitect/model/members/orphan.md: vet.definition_size: ") {
-		t.Fatalf("vet with a warning: %d %s", code, out)
+	r.Write(".markitect/model/members/orphan.md", "---\nkind: std/Concept\n---\n# Orphan\n\nA member within the loan limit. "+strings.Repeat("word ", 1001)+"\n")
+	if code, out, _ := run(t, r.Dir, "vet"); code != 0 || out != ".markitect/model/members/orphan.md: vet.definition_size: 1009 words (more than 1000); split it or move detail the model does not need to the realization\nnotes: 2 unlinked mentions in 1 Definition; markitect vet --strict lists them\n" {
+		t.Fatalf("vet with a warning and a note: %d %s", code, out)
 	}
-	if code, _, _ := run(t, r.Dir, "vet", "--strict"); code != 1 {
-		t.Fatalf("vet --strict with a warning: %d", code)
+	if code, out, _ := run(t, r.Dir, "vet", "--strict"); code != 1 || !strings.Contains(out, ".markitect/model/members/orphan.md:6: vet.unlinked_mention: names loan-limit and members/member without linking them\n") || strings.Contains(out, "notes:") {
+		t.Fatalf("vet --strict with a warning and a note: %d %s", code, out)
 	}
 	var vetted struct {
 		Kind        string
-		Diagnostics []struct{ Severity, Code, File string }
+		Diagnostics []struct {
+			Severity, Code, File string
+			Targets              []string
+		}
 	}
-	if code, out, _ := run(t, r.Dir, "vet", "--json"); code != 0 || json.Unmarshal([]byte(out), &vetted) != nil || vetted.Kind != "vet" || len(vetted.Diagnostics) != 1 || vetted.Diagnostics[0].Severity != "warning" {
+	if code, out, _ := run(t, r.Dir, "vet", "--json"); code != 0 || json.Unmarshal([]byte(out), &vetted) != nil || vetted.Kind != "vet" || len(vetted.Diagnostics) != 2 || vetted.Diagnostics[0].Severity != "warning" || vetted.Diagnostics[1].Severity != "note" || strings.Join(vetted.Diagnostics[1].Targets, ",") != "loan-limit,members/member" {
 		t.Fatalf("vet --json: %d %s", code, out)
 	}
 	var stated struct {
@@ -600,6 +604,10 @@ func TestStatusAndMarkThroughTheCommandLine(t *testing.T) {
 		{"mark", item, "ok", "README.md"},
 		{"mark", item, "ok", "-e", "README.md", "--bogus"},
 		{"mark", item, "ok", "-e"},
+		{"mark", item, "ok", "-e", "README.md", "--cases", "seven"},
+		{"mark", item, "ok", "-e", "README.md", "--covered", "2"},
+		{"mark", item, "ok", "-e", "README.md", "--cases=2", "--covered=3"},
+		{"mark", item, "ok", "-e", "README.md", "--cases"},
 	} {
 		if code, _, errOut := run(t, r.Dir, args...); code != 2 || !strings.Contains(errOut, "usage: markitect mark") {
 			t.Fatalf("%v: %d %s", args, code, errOut)
@@ -608,9 +616,10 @@ func TestStatusAndMarkThroughTheCommandLine(t *testing.T) {
 	if code, out, _ := run(t, r.Dir, "mark", item, "ok", "-e", "tests/missing_test.go:3"); code != 1 || !strings.Contains(out, "tests/missing_test.go") {
 		t.Fatalf("mark with missing evidence: %d\n%s", code, out)
 	}
-	// The flags may stand before the item and the verdict, too.
-	wantAll(t, mustRun(t, r.Dir, "mark", "-e", "README.md:1 (TestReadme)", "-m", "says nothing of what the project is", item, "fail"), "Recorded: project fail.")
-	wantAll(t, read(t, r.Dir, ".markitect/review.sum"), `"evidence":["README.md:1"]`)
+	// The flags may stand before the item and the verdict, too, and the counts of
+	// cases go on the line.
+	wantAll(t, mustRun(t, r.Dir, "mark", "-e", "README.md:1 (TestReadme)", "--cases", "4", "-m", "says nothing of what the project is", item, "fail", "--covered=0"), "Recorded: project fail.")
+	wantAll(t, read(t, r.Dir, ".markitect/review.sum"), `"evidence":["README.md:1"]`, `"cases":4,"covered":0}`)
 	code, out, _ = run(t, r.Dir, "status")
 	if code != 1 || !strings.Contains(out, "fail: says nothing of what the project is") {
 		t.Fatalf("status after a fail: %d\n%s", code, out)
@@ -690,6 +699,14 @@ func TestDocAndVetDocuments(t *testing.T) {
 	}
 	if code, out, _ := run(t, r.Dir, "vet", "--json", "--strict"); code != 1 || json.Unmarshal([]byte(out), &vetted) != nil || len(vetted.Diagnostics) != 1 || vetted.Diagnostics[0].Code != "vet.definition_size" {
 		t.Fatalf("vet --json --strict: %d %s", code, out)
+	}
+	// vet reads from the record how often a Definition's own text changed: the
+	// anchor, linked once and changed 21 times, is a hotspot. A note leaves the exit
+	// code alone.
+	r.Write(".markitect/model/big.md", "---\nkind: std/Rule\n---\n# Big\n\nFor the [[project]].\n")
+	r.Write(".markitect/review.sum", `{"definition":"project","verdict":"ok","inputs":{"self":"sha256:0"},"revisions":21}`+"\n")
+	if code, out, _ := run(t, r.Dir, "vet", "--strict"); code != 0 || !strings.Contains(out, ".markitect/model/project.md: vet.hotspot: its own text changed 21 times between verdicts, and 1 Definition links to it or is of it as Kind, so its changes put about 21 back") {
+		t.Fatalf("vet --strict with a hotspot: %d %s", code, out)
 	}
 	if code, _, errOut := run(t, r.Dir, "tidy", "--json"); code != 2 || !strings.Contains(errOut, "-json") {
 		t.Fatalf("tidy --json: %d %s", code, errOut)
