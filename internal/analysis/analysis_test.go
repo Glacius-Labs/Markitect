@@ -40,7 +40,7 @@ func (r memRepo) clone() memRepo {
 }
 
 const (
-	m     = project.ModelDir + "/"
+	m     = project.SpecDir + "/"
 	table = "| File | Realizes | Why |\n|---|---|---|\n"
 )
 

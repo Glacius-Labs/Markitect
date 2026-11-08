@@ -1,6 +1,6 @@
 # Example: a lending library
 
-A small Go service that lends books to members over REST. This example compiles with `markitect check`. The model has Root and two Packages, `members` and `catalog`.
+A small Go service that lends books to members over REST. This example compiles with `markitect check`. The spec has Root and two Packages, `members` and `catalog`.
 
 ## The repository
 
@@ -13,7 +13,7 @@ internal/catalog/{book.go, loans.go, loans_test.go}
 .markitect/
   manifest.yaml  lock.yaml  ignore  registry.md
   registry/{members.md, catalog.md}
-  model/
+  spec/
     project.md  layout.md  error-body.md  Policy.md
     members/{member, loan-limit, open-loan-count, register-member, post-members}.md
     catalog/{book, borrow-book, post-loans}.md
@@ -31,7 +31,7 @@ libraries:
 
 Root holds what binds the whole project. The anchor names the Packages by link and says what is out of scope.
 
-`model/project.md`
+`spec/project.md`
 
 ```markdown
 ---
@@ -49,7 +49,7 @@ Staff and members use it through a REST interface. It is written in Go.
 Out of scope: payments, reminders and reservations.
 ```
 
-`model/layout.md` is a layout convention, so a Rule at Root. `model/error-body.md` is a Rule both Packages' Endpoints follow, so it sits at their common parent.
+`spec/layout.md` is a layout convention, so a Rule at Root. `spec/error-body.md` is a Rule both Packages' Endpoints follow, so it sits at their common parent.
 
 ```markdown
 ---
@@ -66,12 +66,12 @@ kind: std/Rule
 ---
 # Layout
 
-Go code lives under `internal/<package>/` with its tests in the same folder as `*_test.go`. The program's entry point is `cmd/library/main.go`. Every Package of the model owns the folder `internal/<package>/`.
+Go code lives under `internal/<package>/` with its tests in the same folder as `*_test.go`. The program's entry point is `cmd/library/main.go`. Every Package of the spec owns the folder `internal/<package>/`.
 
 Tests run with `go test ./...`.
 ```
 
-No Library Kind fits a tunable limit, so the project defines one. `model/Policy.md` is a Kind (`kind: Kind`); it sits at Root because `members` uses it today and others may later.
+No Library Kind fits a tunable limit, so the project defines one. `spec/Policy.md` is a Kind (`kind: Kind`); it sits at Root because `members` uses it today and others may later.
 
 ```markdown
 ---
@@ -91,7 +91,7 @@ A Policy Definition states one tunable limit of the lending service.
 
 Concepts, a Feature, an Endpoint, the project Kind in use and one internal Definition. Links are full paths even inside the Package.
 
-`model/members/member.md` (after the cycle below is fixed)
+`spec/members/member.md` (after the cycle below is fixed)
 
 ```markdown
 ---
@@ -106,7 +106,7 @@ A person registered with the library. Only a member can borrow books.
 - A member holds at most as many books at once as [[members/loan-limit]] allows.
 ```
 
-`model/members/loan-limit.md` uses the project Kind. `model/members/open-loan-count.md` is `internal: true`: the loan limit builds on it, other Packages must not.
+`spec/members/loan-limit.md` uses the project Kind. `spec/members/open-loan-count.md` is `internal: true`: the loan limit builds on it, other Packages must not.
 
 ```markdown
 ---
@@ -131,7 +131,7 @@ The number of books a [[members/member]] has borrowed and not yet returned. A bo
 This is how the realization reads the count; other Packages ask the [[members/loan-limit]], not the count.
 ```
 
-`model/members/register-member.md` is a Feature; `model/members/post-members.md` exposes it as a REST Endpoint and links the Feature and the Root Rule.
+`spec/members/register-member.md` is a Feature; `spec/members/post-members.md` exposes it as a REST Endpoint and links the Feature and the Root Rule.
 
 ```markdown
 ---
@@ -163,7 +163,7 @@ Exposes [[members/register-member]] over HTTP.
 
 `catalog` needs members (to borrow, a member must be active and under the limit), so it depends on `members`; `members` must never depend back.
 
-`model/catalog/book.md`
+`spec/catalog/book.md`
 
 ```markdown
 ---
@@ -177,7 +177,7 @@ A title the library owns, with one physical copy.
 - A book is `available` or `borrowed`. A borrowed book is held by exactly one [[members/member]].
 ```
 
-`model/catalog/borrow-book.md` (the Feature) and `model/catalog/post-loans.md` (its Endpoint):
+`spec/catalog/borrow-book.md` (the Feature) and `spec/catalog/post-loans.md` (its Endpoint):
 
 ```markdown
 ---
@@ -211,7 +211,7 @@ Exposes [[catalog/borrow-book]] over HTTP.
 Suppose the first draft of `members/member.md` also said, as its last bullet, `The books a member holds are listed in [[catalog/book]].` Now `catalog/book` links `members/member` and `members/member` links `catalog/book`. `markitect check` refuses it:
 
 ```text
-.markitect/model/catalog/book.md:9: package.cycle: the Packages catalog, members depend on each other in a cycle: catalog/book links [[members/member]]; members/member links [[catalog/book]]. Move the shared concept into a common parent, or invert one dependency
+.markitect/spec/catalog/book.md:9: package.cycle: the Packages catalog, members depend on each other in a cycle: catalog/book links [[members/member]]; members/member links [[catalog/book]]. Move the shared concept into a common parent, or invert one dependency
 ```
 
 Moving `Book` or `Member` up to Root would not make sense here, so invert the dependency: `catalog` is the side that needs members, so `members` states nothing about books. Delete that bullet. `catalog/book` keeps its link, and `markitect list --deps` shows one dependency, `catalog` on `members`.

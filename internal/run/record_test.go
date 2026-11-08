@@ -130,7 +130,7 @@ func TestStatusEmptiesAsTheReviewerRecords(t *testing.T) {
 			t.Fatalf("%+v", it)
 		}
 	}
-	has(t, st.Text(), "To verify (5 of 5 Definitions)", "members/loans/loan@"+p.item(st, "members/loans/loan").Fingerprint+"\n", "no record yet", "look at: .markitect/model/members/loans/loan.md, src/members/loans/loan.go")
+	has(t, st.Text(), "To verify (5 of 5 Definitions)", "members/loans/loan@"+p.item(st, "members/loans/loan").Fingerprint+"\n", "no record yet", "look at: .markitect/spec/members/loans/loan.md, src/members/loans/loan.go")
 	p.verifyAll()
 	has(t, p.status(false).Text(), "Nothing to verify: the spec compiles, and all 5 Definitions are verified at their current inputs.")
 	rec := p.read(project.ReviewFile)
@@ -191,7 +191,7 @@ func TestStatusCountsItemsPerPackage(t *testing.T) {
 			t.Fatalf("after a spec-problem: %+v", pk)
 		}
 	}
-	if broken := newPlainOf(t, map[string]string{project.ManifestFile: "libraries:\n  std: 1.0.0\n", project.ModelDir + "/x.md": "no front matter\n"}).status(false); len(broken.Packages) != 0 {
+	if broken := newPlainOf(t, map[string]string{project.ManifestFile: "libraries:\n  std: 1.0.0\n", project.SpecDir + "/x.md": "no front matter\n"}).status(false); len(broken.Packages) != 0 {
 		t.Fatalf("a spec with errors has Packages: %+v", broken.Packages)
 	}
 }

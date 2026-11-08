@@ -210,7 +210,7 @@ You change `5` to `3`. `markitect status` lists the Rule itself and every Defini
 
 | Term | Meaning |
 | --- | --- |
-| **Spec** | The Markdown files under `.markitect/model/`: the project's documentation and its authority. Where code and spec differ, the spec is right. |
+| **Spec** | The Markdown files under `.markitect/spec/`: the project's documentation and its authority. Where code and spec differ, the spec is right. |
 | **Definition** | One Markdown file of the spec, with its Kind in the front matter. Its path is its ID, its heading its title, its body the documentation. |
 | **Kind** | The type of a Definition, itself a Definition of Kind `Kind`. A project writes its own Kinds, one small file each. |
 | **Library** | A set of Kinds for one area: `std` (Project, Rule, Concept, Feature, Decision), `rest` (Endpoint) and `cli` (Command). |
@@ -226,7 +226,7 @@ A project keeps all of it under `.markitect/`:
 .markitect/
 ├── manifest.yaml     # the Libraries the project uses, with their versions
 ├── lock.yaml         # the digest of each Library
-├── model/            # Packages and Definitions; this folder is Root
+├── spec/             # Packages and Definitions; this folder is Root
 ├── registry.md       # Root's registry page
 ├── registry/         # one registry page per Package
 ├── ignore            # files that deliberately belong to no Package, if any

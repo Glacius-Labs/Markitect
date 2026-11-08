@@ -17,7 +17,7 @@ func def(kind, body string) string {
 
 func compile(t *testing.T, files map[string]string, libs ...LibrarySource) (*Model, Diagnostics) {
 	t.Helper()
-	src := Source{Dir: ".markitect/model", Libraries: append([]LibrarySource{stdKinds}, libs...)}
+	src := Source{Dir: ".markitect/spec", Libraries: append([]LibrarySource{stdKinds}, libs...)}
 	for p, data := range files {
 		src.Files = append(src.Files, File{Path: p, Data: []byte(data)})
 	}
@@ -171,7 +171,7 @@ func TestCompileVisibility(t *testing.T) {
 		"catalog/outsider.md": def("std/Rule", "# Outsider\n\nLinks [[members/status]].\n"),
 	})
 	d := expect(t, ds, "link.internal", "members/status is internal to members")
-	if d.File != ".markitect/model/catalog/outsider.md" || d.Line != 6 {
+	if d.File != ".markitect/spec/catalog/outsider.md" || d.Line != 6 {
 		t.Fatalf("diagnostic at %s:%d", d.File, d.Line)
 	}
 	if len(ds) != 1 {

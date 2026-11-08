@@ -1,11 +1,11 @@
 ---
 name: markitect-design
-description: Use to design a Markitect spec with the owner - to start a new project, to draw a first spec from a code base that has none, or to create, change, extend or review the spec (the Markdown Definitions under .markitect/model/), place a Definition in the right Package, fix a markitect check error or judge the spec's quality. Also when someone wants to set up Markitect in a folder. It finds out which of these the folder needs.
+description: Use to design a Markitect spec with the owner - to start a new project, to draw a first spec from a code base that has none, or to create, change, extend or review the spec (the Markdown Definitions under .markitect/spec/), place a Definition in the right Package, fix a markitect check error or judge the spec's quality. Also when someone wants to set up Markitect in a folder. It finds out which of these the folder needs.
 ---
 
 # Designing the spec
 
-A Markitect spec is typed documentation: Markdown files in `.markitect/model/` that state what the project is and must do, the way good documentation would. Each file is a Definition of some Kind; folders are Packages; a link names its target by path. `markitect check` compiles the structure. The agents that build the spec never change it.
+A Markitect spec is typed documentation: Markdown files in `.markitect/spec/` that state what the project is and must do, the way good documentation would. Each file is a Definition of some Kind; folders are Packages; a link names its target by path. `markitect check` compiles the structure. The agents that build the spec never change it.
 
 Read [reference.md](reference.md) for the form, the Kinds, the commands and the error codes, and [examples.md](examples.md) for a spec that compiles. The full language guide is `docs/guides/model-language.md` in the Markitect repository.
 
@@ -14,7 +14,7 @@ Read [reference.md](reference.md) for the form, the Kinds, the commands and the 
 Look at the folder first, and ask the owner when it could be read two ways.
 
 - **No `.markitect/` folder:** run `markitect init --name "<Project>"`, then look again. In a repository with code, work on a branch of its own with no other changes. If init says it left `AGENTS.md` as it is, propose the line to add to the owner.
-- **A new project:** `.markitect/model/project.md` is still the placeholder and the folder holds no code of its own: [start a project](#start-a-project).
+- **A new project:** `.markitect/spec/project.md` is still the placeholder and the folder holds no code of its own: [start a project](#start-a-project).
 - **Code without a spec:** the placeholder, beside code, tests or documentation: [draw the spec from the code](#draw-the-spec-from-the-code).
 - **A spec exists:** [change the spec](#change-the-spec).
 
@@ -39,7 +39,7 @@ Take the owner from an empty skeleton to a spec that is clear enough to build. S
 5. **What it is built with.** Language, platform, where data lives. Without a preference, propose something plain that fits and ask them to confirm.
 6. **What must always hold.** Rules that apply everywhere, such as how the code is laid out, that it works offline, or how errors reach the user. Ask how the work should be tested. If they want tests, state that as a Rule, with the command that runs them: the reviewer checks what the spec says and runs them as evidence.
 
-Then replace the placeholder in `project.md` with what the project is, for whom, and what it leaves out, and write the rest as [below](#change-the-spec). A small project lives entirely in the model folder; propose Packages only when it has several real areas. Until something is built, `check` says that the spec compiles and nothing is built yet, which is what you want here.
+Then replace the placeholder in `project.md` with what the project is, for whom, and what it leaves out, and write the rest as [below](#change-the-spec). A small project lives entirely in the spec folder; propose Packages only when it has several real areas. Until something is built, `check` says that the spec compiles and nothing is built yet, which is what you want here.
 
 ## Draw the spec from the code
 
@@ -79,7 +79,7 @@ Use the tools while you work, not only at the end:
 
 Knowledge sits broad at the top and deep below. An agent working on a Package reads it, everything its parents define and the public Definitions it links to.
 
-- **Root** (the model folder itself): the project anchor (`std/Project`), project-wide Rules, layout conventions (where code and tests live), the architecture, shared Kinds.
+- **Root** (the spec folder itself): the project anchor (`std/Project`), project-wide Rules, layout conventions (where code and tests live), the architecture, shared Kinds.
 - **One Package per real area** of the system, with a single responsibility and its own code folder. It holds that area's Concepts, Features and interfaces (`rest/Endpoint`, `cli/Command`) and the Rules only it follows. Do not make a Package of one Definition.
 - **Shared things go to the lowest common parent** of the Packages that use them. A Kind used by several Packages sits at Root, because using a Kind is a dependency.
 - **Dependencies point up or sideways, never down, and never in a circle.** A link to an ancestor's Definition is free. A link to another Package's Definition is a dependency; keep them few. A parent may name a child Package (`[[members]]`), not a Definition inside it.
@@ -111,13 +111,13 @@ A visitor becomes a [[members/member]] by giving a name and an email.
 - Front matter holds `kind` and, where needed, `internal: true`, nothing else.
 - The file name is the ID (`members/register-member.md`). Names use letters, digits, `-` and `_`.
 - One level-1 heading, the title, then prose.
-- **A link is the full path from the model folder, also to a Definition in the same Package:** `[[members/member]]`, never `[[member]]`. Library Kinds start with the Library: `std/Rule`. A Package is `[[members]]`.
+- **A link is the full path from the spec folder, also to a Definition in the same Package:** `[[members/member]]`, never `[[member]]`. Library Kinds start with the Library: `std/Rule`. A Package is `[[members]]`.
 
 ## Fixing the common errors
 
 | Code | Usual cause and fix |
 |---|---|
-| `link.unresolved` | Short or relative link. Use the full path from the model folder; check spelling and that the target exists. |
+| `link.unresolved` | Short or relative link. Use the full path from the spec folder; check spelling and that the target exists. |
 | `link.syntax` | `../x`, a leading `/`, or a character other than letters, digits, `-`, `_`. Use a plain path. |
 | `link.internal` | The target is `internal` to another Package. Drop the link and describe the need in your own words, or make the target public. |
 | `link.downward` | A parent links into a child's Definition. Link the Package instead, move the Definition up, or let the child link to a need stated here. |

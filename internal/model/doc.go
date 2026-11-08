@@ -4,7 +4,7 @@
 // graph.
 //
 // The package reads no files itself. Its callers hand it the bytes of the
-// model folder and of every Library the manifest names, and it returns the
+// spec folder and of every Library the manifest names, and it returns the
 // compiled Model with every compile error as a Diagnostic. The language is
 // described in docs/guides/model-language.md.
 package model

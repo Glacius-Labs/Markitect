@@ -8,7 +8,7 @@ A compact summary. The canonical text is `docs/guides/model-language.md` in the 
 .markitect/
   manifest.yaml        Libraries and versions (std: 1.0.0, rest: 1.0.0, ...)
   lock.yaml            Library digests, written by markitect tidy
-  model/               the model; this folder is the Root Package
+  spec/                the spec; this folder is the Root Package
     project.md         the project anchor (std/Project)
     <package>/<name>.md
   registry.md          Root's registry page
@@ -24,9 +24,9 @@ Everything under `.markitect/` is accounted for by the compiler and needs no reg
 One Markdown file with YAML front matter.
 
 - Front matter: `kind` (required) and `internal: true` (optional). Another key is `definition.front_matter`.
-- File name without `.md` is the name, the path below `model/` is the ID (`members/member`). Names: letters, digits, `-`, `_`, starting with a letter or digit (`model.name`).
+- File name without `.md` is the name, the path below `spec/` is the ID (`members/member`). Names: letters, digits, `-`, `_`, starting with a letter or digit (`model.name`).
 - Body: one level-1 heading, the title, first; no second one (`definition.title`); then prose. Exact values in backticks.
-- The model folder holds only `.md` files and folders (`model.file`). Two entries differing only in case, or `member.md` beside `member/`, collide (`model.collision`).
+- The spec folder holds only `.md` files and folders (`model.file`). Two entries differing only in case, or `member.md` beside `member/`, collide (`model.collision`).
 - A top-level name may not be a Library name or `Kind` (`model.reserved`).
 
 ## Kinds and Libraries
@@ -43,11 +43,11 @@ A Kind is a Definition with `kind: Kind`; its body says what a Definition of tha
 | `rest/Endpoint` | One HTTP operation: title `METHOD /path`, request, each response with status and error codes; links its Feature. |
 | `cli/Command` | One command as typed: arguments, flags, output, exit codes, refusals; links its Feature. |
 
-A project writes its own Kinds as small files (`kind: Kind`) anywhere in its model; a Kind several Packages use sits at Root. A Library is a folder of `<Name>.md` Kind files under `.markitect/libraries/<name>/`, named in the manifest. Standard Libraries ship in the binary at 1.0.0. After a manifest change run `markitect tidy`.
+A project writes its own Kinds as small files (`kind: Kind`) anywhere in its spec; a Kind several Packages use sits at Root. A Library is a folder of `<Name>.md` Kind files under `.markitect/libraries/<name>/`, named in the manifest. Standard Libraries ship in the binary at 1.0.0. After a manifest change run `markitect tidy`.
 
 ## Links, scope, visibility, cycles
 
-- A link is `[[path]]`: the full path from the model folder, even inside the same Package (`[[members/member]]`), `[[std/Rule]]` for a Library Kind, `[[members]]` for a Package. Optional `#section` and `|label` do not matter for resolution. In a Markdown table write the label's bar as `\|`. Links in code spans and code blocks are text. No imports, no relative links.
+- A link is `[[path]]`: the full path from the spec folder, even inside the same Package (`[[members/member]]`), `[[std/Rule]]` for a Library Kind, `[[members]]` for a Package. Optional `#section` and `|label` do not matter for resolution. In a Markdown table write the label's bar as `\|`. Links in code spans and code blocks are text. No imports, no relative links.
 - **Scope is location.** What a Package defines reaches its whole subtree; a Rule at Root binds the project.
 - **Visibility.** Public unless `internal: true`; then only its own Package and Packages below may link to it or use it as a Kind (`link.internal`). Reading is not restricted: agents read internal Definitions, and registry entries may link any Definition.
 - **Dependencies.** A link from Package A to a Definition in, or to, another Package B is an edge A to B; using a Kind is an edge. Every Package also has an implicit edge to its parent. Linking up to an ancestor's Definition is free. A parent may link to a child Package but not to a Definition inside it (`link.downward`). Links to Library Kinds make no edge. A cycle of edges is an error (`package.cycle`).
@@ -95,7 +95,7 @@ All take `--repo DIR`; `check`, `vet`, `list`, `doc`, `status` and `mark` take `
 
 | Command | Use while modeling |
 |---|---|
-| `init [--name TITLE]` | Once per project: manifest, lock, project anchor, registry page, `AGENTS.md`, `CLAUDE.md`, skills and harness. Makes no repository and commits nothing. Never changes an existing model file. |
+| `init [--name TITLE]` | Once per project: manifest, lock, project anchor, registry page, `AGENTS.md`, `CLAUDE.md`, skills and harness. Makes no repository and commits nothing. Never changes an existing spec file. |
 | `check` | Compile: errors only. A project with nothing registered, where the only errors are `definition.unused`, passes and says that nothing is built yet. |
 | `tidy` | Bring `lock.yaml` in line with the manifest after a manifest or Library change, as `go mod tidy` does. |
 | `doc TARGET` | A Definition with its text, what links to it, what it links to, the files that realize it and its record; or a Package with its Definitions, page and files. |

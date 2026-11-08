@@ -9,7 +9,7 @@ import (
 // CoreKind is the one Definition Core offers: the Kind of every Kind.
 const CoreKind = "Kind"
 
-// RootPackage is the path of the Root Package, the model folder itself.
+// RootPackage is the path of the Root Package, the spec folder itself.
 const RootPackage = ""
 
 // File is one input file, its path relative to the folder it was read from,
@@ -30,9 +30,9 @@ type LibrarySource struct {
 	Standard bool
 }
 
-// Source is everything Compile reads: the model folder and the Libraries.
+// Source is everything Compile reads: the spec folder and the Libraries.
 type Source struct {
-	Dir       string // repository-relative model folder, for diagnostics
+	Dir       string // repository-relative spec folder, for diagnostics
 	Files     []File
 	Libraries []LibrarySource
 }

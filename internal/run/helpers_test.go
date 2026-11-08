@@ -16,7 +16,7 @@ import (
 func TestMain(m *testing.M) { testkit.Main(m) }
 
 const (
-	m     = project.ModelDir + "/"
+	m     = project.SpecDir + "/"
 	table = "| File | Realizes | Why |\n|---|---|---|\n"
 )
 
