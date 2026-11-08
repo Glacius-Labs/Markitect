@@ -4,7 +4,7 @@ description: Build the spec as it stands. The markitect-builder agent works in a
 disable-model-invocation: true
 allowed-tools: Bash(markitect status), Bash(markitect status *), Bash(markitect config strategy.build)
 ---
-Run `markitect config strategy.build` for how to build: `sequential`, `parallel`, `auto` or the name of a custom workflow. With `auto`, build sequentially: the parallel strategy has not yet passed a real run, so `auto` does not choose it for now. Parallel and custom workflows need Git: in a folder that is not a Git repository, build sequentially. Tell the user in a line how you build and why. Change no file and record no verdict yourself.
+Run `markitect config strategy.build` for how to build: `sequential`, `parallel`, `auto` or the name of a custom workflow. With `auto`, build sequentially: the parallel strategy has passed only a small real run so far, so `auto` does not choose it yet. Parallel and custom workflows need Git: in a folder that is not a Git repository, build sequentially. Tell the user in a line how you build and why. Change no file and record no verdict yourself.
 
 In a Git repository the work starts from the last commit of this branch, so it holds no uncommitted change: if `git status` shows any, tell the user they are not part of the build and ask whether to commit them first.
 

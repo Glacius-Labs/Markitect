@@ -4,7 +4,7 @@ description: Hunt for bugs beyond what markitect status lists. In a worktree of 
 disable-model-invocation: true
 allowed-tools: Bash(markitect status), Bash(markitect status *), Bash(markitect config strategy.bughunt)
 ---
-Run `markitect status` and keep the Definitions it lists. Run `markitect config strategy.bughunt` for how to hunt: `sequential`, `parallel`, `auto` or the name of a custom workflow. With `auto`, work sequentially: the parallel strategy has not yet passed a real run, so `auto` does not choose it for now. Parallel and custom workflows need Git: in a folder that is not a Git repository, work sequentially. Tell the user in a line how you work and why. Change no file and record no verdict yourself.
+Run `markitect status` and keep the Definitions it lists. Run `markitect config strategy.bughunt` for how to hunt: `sequential`, `parallel`, `auto` or the name of a custom workflow. With `auto`, work sequentially: the parallel strategy has passed only a small real run so far, so `auto` does not choose it yet. Parallel and custom workflows need Git: in a folder that is not a Git repository, work sequentially. Tell the user in a line how you work and why. Change no file and record no verdict yourself.
 
 In a Git repository the work starts from the last commit of this branch, so it holds no uncommitted change: if `git status` shows any, tell the user they are not part of the hunt and ask whether to commit them first.
 

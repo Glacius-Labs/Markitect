@@ -141,6 +141,10 @@ const build = { mode: "build", into: "main" }
   assert(reviewers(calls).every((c) => !c.opts.isolation))
   // No step is asked to reach into another folder with Git.
   assert(!plain(calls).some((c) => /git -C </.test(c.prompt) || /cd </.test(c.prompt)), "a Git step names another folder")
+  // The record is new in a project that has none yet: the record step adds it
+  // before it commits it alone, which a bare `git commit -- FILE` refuses.
+  const records = plain(calls).filter((c) => c.prompt.includes("You do a Git step"))
+  assert(records.length >= 4 && records.every((c) => c.prompt.includes("`git add -- .markitect/review.sum`, then `git commit")), records[0].prompt)
   assert.strictEqual(result.stopped, "spec-problems")
   assert.strictEqual(result.items, 2)
   assert(result.worktrees.length >= 5 && result.worktrees.every((w) => w.merged && w.branch === `wt-${w.strand}`), JSON.stringify(result.worktrees))

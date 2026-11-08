@@ -7,7 +7,7 @@ Markitect keeps this in `harness.yaml` at two levels: the project's `.markitect/
 
 1. **What to change.** Turn the user's words into keys and values:
    - `agents.ROLE.model` and `agents.ROLE.effort`, ROLE being `builder` (writes the code), `reviewer` (verifies and records), `architect` (drafts the spec) or `auditor` (reads the spec). A model is `sonnet`, `opus`, `haiku`, a full model ID or `inherit`; an effort is `low`, `medium`, `high`, `xhigh` or `max`. "All agents" means the four roles.
-   - `strategy.SKILL`, SKILL being `build`, `review`, `cleanup`, `bughunt` or `audit`, and `strategy.default` for each skill that sets none: `auto` (the default: sequential for now, since the parallel strategy has not yet passed a real run), `sequential` (one builder or reviewer at a time), `parallel` (the shipped workflow: per Package, in waves) or the name of a custom workflow.
+   - `strategy.SKILL`, SKILL being `build`, `review`, `cleanup`, `bughunt` or `audit`, and `strategy.default` for each skill that sets none: `auto` (the default: sequential for now, since the parallel strategy has passed only a small real run so far), `sequential` (one builder or reviewer at a time), `parallel` (the shipped workflow: per Package, in waves) or the name of a custom workflow.
    - `workflows.NAME`: the path of a custom workflow's script. Claude Code starts a saved workflow by name from `.claude/workflows/` or `~/.claude/workflows/`, so the file is `NAME.js` there, with `meta.name` NAME. NAME does not start with `markitect-`, which `init` and `update` keep for their own files. Set it before a strategy names it.
 
    If a request is unclear, ask; do not guess a model or an effort.

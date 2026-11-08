@@ -218,7 +218,7 @@ async function record(label, message) {
   const st = await agent(
     `You do a Git step of a Markitect run, in your working folder, whose branch is the run's own. Run each git command here as it stands, with no -C and no cd. Edit no file.
 
-1. If \`git status --porcelain -- .markitect/review.sum\` shows a change, commit that file alone: \`git commit -m "${message}" -- .markitect/review.sum\`.
+1. If \`git status --porcelain -- .markitect/review.sum\` shows a change, commit that file alone, new or changed: \`git add -- .markitect/review.sum\`, then \`git commit -m "${message}" -- .markitect/review.sum\`.
 2. ${READ_STATUS}`,
     { label, phase: "Record", schema: STATUS, effort: "low" },
   )
