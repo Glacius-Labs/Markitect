@@ -15,4 +15,5 @@ Records of earlier versions, the V1 qualification and comparison, the concept 2.
 
 ## Release evidence
 
+- [The plugin's markitect on Windows — 8 November 2026](plugin-path-windows-20261108.md): with 0.25.1's session-start hook and `markitect.cmd`, the plugin's `markitect` resolves by name in Claude Code's Bash and PowerShell tools on Windows, in a subagent and in a worktree agent.
 - [Distribution retirement — 17 October 2026](distribution-retirement-20261017.md) with the machine-readable [retired release mapping](retired-releases-20261017.json), which lists the 18 retired release versions and the commits behind their former tags. The commit behind each retired tag is recorded in the mapping; the [archive index](../archive.md) lists the pinned pre-reset commits.

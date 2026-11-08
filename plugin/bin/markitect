@@ -2,7 +2,9 @@
 # markitect, as the Claude Code plugin supplies it.
 #
 # Claude Code puts this file on the PATH of its shell while the plugin is on, so
-# a session can run `markitect` without anyone installing it. The first call
+# a session can run `markitect` without anyone installing it. On Windows the
+# Bash tool gets it from the plugin's session-start hook (hooks/path.sh), and
+# PowerShell runs it through markitect.cmd beside it. The first call
 # downloads the binary of the release that has the version of this plugin into
 # the plugin's data folder, checks it against the checksums of that release and
 # starts it. Later calls start it at once. A plugin update with a new version

@@ -41,11 +41,12 @@ func TestLauncherChild(t *testing.T) {
 // the plugin that names this version.
 const testVersion = "9.9.9"
 
-// pluginCopy puts the launcher and the manifest of the plugin, with the given
-// version, in root.
+// pluginCopy puts the launcher, its shim for Windows, the script of the hook that
+// puts them on the PATH and the manifest of the plugin, with the given version,
+// in root.
 func pluginCopy(t *testing.T, root, version string) {
 	t.Helper()
-	for _, f := range []string{"bin/markitect", ".claude-plugin/plugin.json"} {
+	for _, f := range []string{"bin/markitect", "bin/markitect.cmd", "hooks/path.sh", ".claude-plugin/plugin.json"} {
 		data, err := os.ReadFile(filepath.Join(pluginRoot, filepath.FromSlash(f)))
 		if err != nil {
 			t.Fatal(err)
@@ -286,7 +287,7 @@ func hookCommands(t *testing.T, event string) []string {
 
 // runHook runs the command of a hook the way Claude Code does, in a shell with the
 // variables it exports to hooks, and feeds it stdin.
-func runHook(t *testing.T, command, root, data, project, mirror, stdin string) (string, int) {
+func runHook(t *testing.T, command, root, data, project, mirror, stdin string, extraEnv ...string) (string, int) {
 	t.Helper()
 	sh, err := exec.LookPath("sh")
 	if err != nil {
@@ -300,6 +301,7 @@ func runHook(t *testing.T, command, root, data, project, mirror, stdin string) (
 	cmd.Env = append(os.Environ(),
 		"CLAUDE_PLUGIN_ROOT="+filepath.ToSlash(root), "CLAUDE_PLUGIN_DATA="+data,
 		"CLAUDE_PROJECT_DIR="+filepath.ToSlash(project), "MARKITECT_RELEASES_URL="+mirror, launcherEnv+"=1")
+	cmd.Env = append(cmd.Env, extraEnv...)
 	out, err := cmd.CombinedOutput()
 	code := 0
 	if exit, ok := err.(*exec.ExitError); ok {
@@ -315,7 +317,7 @@ func runHook(t *testing.T, command, root, data, project, mirror, stdin string) (
 func TestStartHookFetchesOnlyForAMarkitectProject(t *testing.T) {
 	mirror, downloads := releasePage(t, testVersion, false)
 	root, data := testPlugin(t), testkit.TempDir(t)
-	command := hookCommands(t, "SessionStart")[0]
+	command := hookCommands(t, "SessionStart")[1]
 
 	plain := testkit.TempDir(t)
 	if out, code := runHook(t, command, root, data, plain, mirror, ""); code != 0 || out != "" || downloads.Load() != 0 {
@@ -334,6 +336,98 @@ func TestStartHookFetchesOnlyForAMarkitectProject(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(data, "v"+testVersion)); err != nil {
 		t.Fatalf("the hook fetched no binary: %v", err)
+	}
+}
+
+// The first session-start hook puts the launcher on the PATH of Claude Code's Bash
+// tool, which on Windows does not get the plugin's bin folder: it appends one line
+// to the file CLAUDE_ENV_FILE names, which Claude Code runs before each command.
+// The line puts the folder on the PATH once, however often the hook ran or the
+// file was run, and survives a folder whose name has a space and a quote. Without
+// CLAUDE_ENV_FILE the hook does nothing.
+func TestPathHookPutsTheLauncherOnThePath(t *testing.T) {
+	mirror, _ := releasePage(t, testVersion, false)
+	root := filepath.Join(testkit.TempDir(t), "it's a plugin")
+	pluginCopy(t, root, testVersion)
+	data, project := testkit.TempDir(t), testkit.TempDir(t)
+	command := hookCommands(t, "SessionStart")[0]
+
+	if out, code := runHook(t, command, root, data, project, mirror, "", "CLAUDE_ENV_FILE="); code != 0 || out != "" {
+		t.Fatalf("without CLAUDE_ENV_FILE: exit %d\n%s", code, out)
+	}
+	envFile := filepath.Join(testkit.TempDir(t), "sessionstart-hook.sh")
+	for i := 0; i < 2; i++ {
+		if out, code := runHook(t, command, root, data, project, mirror, "", "CLAUDE_ENV_FILE="+filepath.ToSlash(envFile)); code != 0 || out != "" {
+			t.Fatalf("run %d: exit %d\n%s", i+1, code, out)
+		}
+	}
+	written, err := os.ReadFile(envFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if lines := strings.Count(string(written), "\n"); lines != 1 {
+		t.Fatalf("two runs of the hook wrote %d lines, want 1:\n%s", lines, written)
+	}
+
+	// What Claude Code does before a command: run the file, here twice, then the
+	// command, which names markitect alone.
+	check := `. "$1"; . "$1"
+bin=$(cd "$2/bin" && pwd)
+found=$(command -v markitect) || { echo "markitect is not on the PATH: $PATH"; exit 1; }
+[ "$found" = "$bin/markitect" ] || { echo "markitect is $found, want $bin/markitect"; exit 1; }
+n=$(printf '%s\n' "$PATH" | tr ':' '\n' | grep -cxF "$bin")
+[ "$n" = 1 ] || { echo "the PATH names $bin $n times: $PATH"; exit 1; }
+markitect -test.run=TestLauncherChild`
+	sh, _ := exec.LookPath("sh")
+	cmd := exec.Command(sh, "-c", check, "check", filepath.ToSlash(envFile), filepath.ToSlash(root))
+	cmd.Env = append(os.Environ(), "CLAUDE_PLUGIN_DATA="+data, "MARKITECT_RELEASES_URL="+mirror, launcherEnv+"=1")
+	out, err := cmd.CombinedOutput()
+	if err != nil || !strings.Contains(string(out), "child: plugin "+testVersion) {
+		t.Fatalf("markitect by name after the hook's line: %v\n%s", err, out)
+	}
+}
+
+// On Windows the PowerShell tool has the plugin's bin folder on its PATH but cannot
+// run the launcher, a shell script; markitect.cmd beside it runs the launcher with
+// the bash of Git for Windows, by name as PowerShell and cmd find it, and says
+// what is missing when there is no such bash.
+func TestShimRunsTheLauncherOnWindows(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("markitect.cmd is for Windows")
+	}
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("the shim finds bash beside git, and there is no git")
+	}
+	mirror, _ := releasePage(t, testVersion, false)
+	root := filepath.Join(testkit.TempDir(t), "a plugin")
+	pluginCopy(t, root, testVersion)
+	data := testkit.TempDir(t)
+	env := func(path string) []string {
+		var kept []string
+		for _, kv := range os.Environ() {
+			name, _, _ := strings.Cut(kv, "=")
+			if !strings.EqualFold(name, "PATH") && !strings.EqualFold(name, "CLAUDE_CODE_GIT_BASH_PATH") {
+				kept = append(kept, kv)
+			}
+		}
+		return append(kept, "PATH="+path, "CLAUDE_PLUGIN_DATA="+data, "MARKITECT_RELEASES_URL="+mirror, launcherEnv+"=1")
+	}
+	bin := filepath.Join(root, "bin")
+
+	cmd := exec.Command("cmd", "/d", "/c", "markitect -test.run=TestLauncherChild")
+	cmd.Env = env(bin + string(os.PathListSeparator) + os.Getenv("PATH"))
+	out, err := cmd.CombinedOutput()
+	if err != nil || !strings.Contains(string(out), "child: plugin "+testVersion) {
+		t.Fatalf("markitect by name in cmd: %v\n%s", err, out)
+	}
+
+	system := filepath.Join(os.Getenv("SystemRoot"), "System32")
+	cmd = exec.Command(filepath.Join(system, "cmd.exe"), "/d", "/c", "markitect -test.run=TestLauncherChild")
+	cmd.Env = env(bin + string(os.PathListSeparator) + system)
+	out, err = cmd.CombinedOutput()
+	exit, ok := err.(*exec.ExitError)
+	if !ok || exit.ExitCode() != 2 || !strings.Contains(string(out), "needs the bash of Git for Windows") || strings.Contains(string(out), "child:") {
+		t.Fatalf("without git on the PATH: %v\n%s", err, out)
 	}
 }
 

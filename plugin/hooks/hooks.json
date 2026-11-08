@@ -2,6 +2,15 @@
   "hooks": {
     "SessionStart": [
       {
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "bash",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/path.sh\""
+          }
+        ]
+      },
+      {
         "matcher": "startup|resume",
         "hooks": [
           {
