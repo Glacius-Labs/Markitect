@@ -282,7 +282,8 @@ func guardedHooks(settings map[string]any) (map[string]any, string) {
 const worktreeBase = "head"
 
 // ownGuard says whether a PreToolUse entry is one an earlier markitect wrote: a
-// group whose every hook runs HookCommand. The current one replaces it.
+// group whose every hook runs HookCommand or the BareHookCommand of 0.25.2 and
+// before. The current one replaces it.
 func ownGuard(entry any) bool {
 	group, ok := entry.(map[string]any)
 	if !ok {
@@ -294,7 +295,7 @@ func ownGuard(entry any) bool {
 	}
 	for _, h := range hooks {
 		hook, ok := h.(map[string]any)
-		if !ok || hook["command"] != run.HookCommand {
+		if !ok || (hook["command"] != run.HookCommand && hook["command"] != run.BareHookCommand) {
 			return false
 		}
 	}

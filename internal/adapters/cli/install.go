@@ -10,16 +10,24 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/skills"
 )
 
-// personalSkillFile is where the personal skill lives. Claude Code keeps its own
-// folder where CLAUDE_CONFIG_DIR says, if set.
+// claudeConfigDir is Claude Code's own folder: where CLAUDE_CONFIG_DIR says, if
+// set, and otherwise .claude in the home folder.
+func claudeConfigDir() (string, error) {
+	if config := os.Getenv("CLAUDE_CONFIG_DIR"); config != "" {
+		return config, nil
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, ".claude"), nil
+}
+
+// personalSkillFile is where the personal skill lives.
 func personalSkillFile() (string, error) {
-	config := os.Getenv("CLAUDE_CONFIG_DIR")
-	if config == "" {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return "", err
-		}
-		config = filepath.Join(home, ".claude")
+	config, err := claudeConfigDir()
+	if err != nil {
+		return "", err
 	}
 	return filepath.Join(config, "skills", skills.PersonalName, "SKILL.md"), nil
 }

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -428,6 +429,107 @@ func TestHookLetsOnlyTheReviewerRecord(t *testing.T) {
 	}
 }
 
+// projectHook is the hook init writes into the project's settings.
+const projectHook = "command -v markitect >/dev/null 2>&1 || exit 0; MARKITECT_HOOK=project markitect hook pretool"
+
+// The project's hook runs the markitect its shell finds, with the input of the
+// call, and does nothing where it finds none: with the plugin alone a hook sees
+// no markitect, and the plugin's own hooks guard. Up to 0.25.2 it failed there
+// with exit 127, before nearly every call.
+func TestProjectHookRunsOnlyAMarkitectItFinds(t *testing.T) {
+	sh, err := exec.LookPath("sh")
+	if err != nil {
+		t.Skip("the hook is a shell command and there is no sh")
+	}
+	const input = `{"tool_name":"Edit"}`
+	hook := func(path string) (string, int) {
+		cmd := exec.Command(sh, "-c", projectHook)
+		cmd.Stdin = strings.NewReader(input)
+		cmd.Env = append(os.Environ(), "PATH="+path)
+		out, err := cmd.CombinedOutput()
+		if exit, ok := err.(*exec.ExitError); ok {
+			return string(out), exit.ExitCode()
+		} else if err != nil {
+			t.Fatal(err)
+		}
+		return string(out), 0
+	}
+	if out, code := hook(testkit.TempDir(t)); code != 0 || out != "" {
+		t.Fatalf("without a markitect: exit %d\n%s", code, out)
+	}
+	bin := testkit.TempDir(t)
+	stub := "#!/bin/sh\nIFS= read -r line\nprintf '%s|%s|%s' \"$*\" \"$MARKITECT_HOOK\" \"$line\"\n"
+	if err := os.WriteFile(filepath.Join(bin, "markitect"), []byte(stub), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if out, code := hook(bin); code != 0 || out != "hook pretool|project|"+input {
+		t.Fatalf("with a markitect: exit %d\n%s", code, out)
+	}
+}
+
+// Called by the project's hook, markitect leaves the guard to the plugin where
+// the plugin guards too, so that it runs once: where the last of the settings
+// that names the plugin enables it, and Claude Code's record lists it as
+// installed with hooks that run the guard. Anything less, and it guards; so does
+// it when the plugin's own hook calls it.
+func TestHookLeavesTheGuardToThePlugin(t *testing.T) {
+	const enable, disable = `{"enabledPlugins": {"markitect@glacius-labs": true}}`, `{"enabledPlugins": {"markitect@glacius-labs": false}}`
+	const guardHooks, otherHooks = `{"hooks": {"PreToolUse": [{"hooks": [{"command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\" hook pretool"}]}]}}`, `{"hooks": {}}`
+	for name, c := range map[string]struct {
+		user, project, local, hooks string
+		installed, fromPlugin       bool
+		refused                     bool
+	}{
+		"enabled and installed":            {user: enable, hooks: guardHooks, installed: true},
+		"enabled in the project":           {project: enable, hooks: guardHooks, installed: true},
+		"called by the plugin's hook":      {user: enable, hooks: guardHooks, installed: true, fromPlugin: true, refused: true},
+		"not enabled":                      {hooks: guardHooks, installed: true, refused: true},
+		"disabled in the local settings":   {user: enable, local: disable, hooks: guardHooks, installed: true, refused: true},
+		"enabled, not installed":           {user: enable, refused: true},
+		"installed without the guard hook": {user: enable, hooks: otherHooks, installed: true, refused: true},
+	} {
+		t.Run(name, func(t *testing.T) {
+			config, project, plugin := testkit.TempDir(t), testkit.TempDir(t), testkit.TempDir(t)
+			t.Setenv("CLAUDE_CONFIG_DIR", config)
+			t.Setenv("CLAUDE_PROJECT_DIR", project)
+			if c.fromPlugin {
+				t.Setenv("MARKITECT_HOOK", "")
+			} else {
+				t.Setenv("MARKITECT_HOOK", "project")
+			}
+			write := func(file, content string) {
+				if content == "" {
+					return
+				}
+				if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(file, []byte(content), 0o644); err != nil {
+					t.Fatal(err)
+				}
+			}
+			write(filepath.Join(config, "settings.json"), c.user)
+			write(filepath.Join(project, ".claude", "settings.json"), c.project)
+			write(filepath.Join(project, ".claude", "settings.local.json"), c.local)
+			write(filepath.Join(plugin, "hooks", "hooks.json"), c.hooks)
+			if c.installed {
+				record, _ := json.Marshal(map[string]any{"version": 2, "plugins": map[string]any{
+					"markitect@glacius-labs": []any{map[string]any{"scope": "user", "installPath": plugin, "version": "0.25.3"}},
+				}})
+				write(filepath.Join(config, "plugins", "installed_plugins.json"), string(record))
+			}
+			input := `{"agent_id":"a1","agent_type":"markitect-builder","tool_name":"Edit","tool_input":{"file_path":"/p/.markitect/review.sum"}}`
+			var out, errOut bytes.Buffer
+			if code := newCLI(strings.NewReader(input), &out, &errOut).Run(context.Background(), []string{"hook", "pretool"}); code != 0 {
+				t.Fatalf("hook exit %d: %s", code, errOut.String())
+			}
+			if refused := strings.Contains(out.String(), `"permissionDecision":"deny"`); refused != c.refused {
+				t.Fatalf("refused = %v, want %v: %s", refused, c.refused, out.String())
+			}
+		})
+	}
+}
+
 // init installs the harness with the hooks, and the record's Git attributes, and
 // makes no repository and no commit.
 // init has Git ignore the worktrees Claude Code makes in the project's folder,
@@ -534,11 +636,11 @@ func TestInitInstallsTheHarness(t *testing.T) {
 		t.Fatal(err)
 	}
 	if pre := settings.Hooks["PreToolUse"]; len(pre) != 3 || pre[0].Matcher != "Bash" || len(pre[0].Hooks) != 1 ||
-		pre[0].Hooks[0].Command != "markitect hook pretool" || pre[0].Hooks[0].If != "Bash(markitect mark*)" ||
+		pre[0].Hooks[0].Command != projectHook || pre[0].Hooks[0].If != "Bash(markitect mark*)" ||
 		pre[1].Matcher != "Edit|Write|MultiEdit|NotebookEdit" || len(pre[1].Hooks) != 1 ||
-		pre[1].Hooks[0].Command != "markitect hook pretool" || pre[1].Hooks[0].If != "" ||
+		pre[1].Hooks[0].Command != projectHook || pre[1].Hooks[0].If != "" ||
 		pre[2].Matcher != "Agent|Task|Workflow" || len(pre[2].Hooks) != 1 ||
-		pre[2].Hooks[0].Command != "markitect hook pretool" || pre[2].Hooks[0].If != "" {
+		pre[2].Hooks[0].Command != projectHook || pre[2].Hooks[0].If != "" {
 		t.Fatalf("the guard hooks: %+v", settings)
 	}
 	// A builder's worktree starts from the owner's branch, not the default one.

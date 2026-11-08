@@ -165,7 +165,7 @@ markitect init --name "Your project"
 markitect check
 ```
 
-`init` creates `.markitect/` with the manifest, the lock, a project anchor and Root's registry page, writes `AGENTS.md` and `CLAUDE.md`, and installs the skills, the four agents, the parallel workflow and the hooks in `.claude/settings.json`. It works in an empty folder too. In a new project, `check` says that nothing is built yet; open Claude Code and run `/markitect-design`.
+`init` creates `.markitect/` with the manifest, the lock, a project anchor and Root's registry page, writes `AGENTS.md` and `CLAUDE.md`, and installs the skills, the four agents, the parallel workflow and the hooks in `.claude/settings.json`, which hold the agents' rights. A hook calls `markitect` only where its shell finds one, which is a binary on your `PATH`; with the plugin alone it finds none and does nothing, and the plugin's own hooks hold the rights. Where both would, the binary leaves them to the plugin, so the guard runs once. It works in an empty folder too. In a new project, `check` says that nothing is built yet; open Claude Code and run `/markitect-design`.
 
 In a repository that already has files, the first `check` fails by design, because every file must belong somewhere:
 
@@ -249,7 +249,7 @@ Markitect is in early access: it is built, released and covered by tests, and re
 | The spec language and the commands `init`, `check`, `tidy`, `vet`, `list` and `doc` | Available; `vet`'s hubs, notes and hotspots since 0.23.0 ([DEC-102](docs/concepts/register.md#dec-102-what-vet-measures)) |
 | Work with `/markitect-build` and `/markitect-review`, over `status`, `mark` and the record | Available on Claude Code since 0.21.0, covered by tests. The flow before it was tried on three changes of one project ([trials](docs/validation/lean-trials-20261107.md)) |
 | The skills `/markitect-design`, `/markitect-cleanup`, `/markitect-bughunt`, `/markitect-audit` and `/markitect-schedule`, the four roles and the build in a worktree of its own | Available on Claude Code since 0.22.0, covered by tests only ([DEC-100](docs/concepts/register.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role)) |
-| The strategies, the parallel workflow, `harness.yaml`, `markitect config` and `/markitect-config` | Available since 0.24.0, covered by tests, the workflow by a test against stub agents; no real run yet ([DEC-103](docs/concepts/register.md#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)) |
+| The strategies, the parallel workflow, `harness.yaml`, `markitect config` and `/markitect-config` | Available since 0.24.0, covered by tests, the workflow by a test against stub agents. Since 0.25.2 one real run on a small fixture went through, before the review's fixes ([record](docs/validation/parallel-strategy-20261108.md)); `auto` still chooses sequential ([DEC-103](docs/concepts/register.md#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)) |
 | A real run with planted defects, then reliability on Sonnet over a series of changes | Next ([delivery plan](docs/implementation-plan.md#current-steps)) |
 | Codex | Not yet: it needs subagents with their own agent files and a hook that names the agent |
 | Release | On GitHub, with the Claude Code plugin ([install](#install)) |
