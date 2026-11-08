@@ -136,8 +136,8 @@ func Check(key, value string) error {
 			return fmt.Errorf("%s: %q is no effort; it is one of %s", key, value, strings.Join(Efforts, ", "))
 		}
 	case parts[0] == "strategy":
-		if !slices.Contains(Strategies, value) && !workflowName.MatchString(value) {
-			return fmt.Errorf("%s: %q is no strategy; it is auto, sequential, parallel or the name of a custom workflow", key, value)
+		if !slices.Contains(Strategies, value) && (!workflowName.MatchString(value) || strings.HasPrefix(value, ownPrefix)) {
+			return fmt.Errorf("%s: %q is no strategy; it is auto, sequential, parallel or the name of a custom workflow, which does not start with %s", key, value, ownPrefix)
 		}
 	default: // workflows
 		if strings.TrimSpace(value) == "" || strings.ContainsAny(value, "\r\n") {

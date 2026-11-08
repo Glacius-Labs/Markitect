@@ -26,13 +26,14 @@ function world(spec) {
     spec_errors: spec.specErrors || 0,
     realization_errors: realization,
     in_worktree: spec.inWorktree !== false,
-    branch: spec.branch || "worktree-markitect-build-1",
+    branch: spec.noBranch ? undefined : spec.branch || "worktree-markitect-build-1",
     packages: Object.entries(pk).map(([name, p]) => ({ package: name, definitions: p.defs, items: p.items, spec_problems: p.sp || 0, depends_on: p.deps || [] })),
   })
   return {
     respond(prompt, opts) {
       if (opts.agentType === "markitect-builder") {
         const name = prompt.match(/Package (\S+?)[.,]/)[1]
+        if (spec.silent === name) return Promise.resolve(null)
         if (!spec.stuck) pending.add(name)
         const asks = name === "a" ? "\nIt needs a change in go.mod: add module x." : ""
         return Promise.resolve(`Done. Folder /wt/${name}, branch wt-${name}.${asks}`)
@@ -67,7 +68,7 @@ function world(spec) {
         st.requests = merged.includes("a") ? [{ strand: "a", file: "go.mod", change: "add module x" }] : []
         return Promise.resolve(st)
       }
-      if (prompt.startsWith("Run `markitect status")) return Promise.resolve(status())
+      if (prompt.startsWith("Run `markitect status")) return Promise.resolve(spec.loseStatus ? null : status())
       throw new Error("unexpected agent: " + prompt.slice(0, 80))
     },
   }
@@ -136,9 +137,9 @@ const build = { mode: "build", into: "main" }
   assert.strictEqual(result.rounds, 5, `ran ${result.rounds} rounds`)
 }
 
-// A writing mode refuses to start outside a worktree, and on the branch the run
-// would come back to.
-for (const s of [{ inWorktree: false }, { branch: "main" }]) {
+// A writing mode refuses to start outside a worktree, on the branch the run
+// would come back to, and when the branch is not known.
+for (const s of [{ inWorktree: false }, { branch: "main" }, { noBranch: true }]) {
   const { result, calls } = await run(build, world({ ...base(), ...s }))
   assert(result.stopped.startsWith("not-in-a-worktree"), result.stopped)
   assert.strictEqual(calls.length, 1)
@@ -161,6 +162,35 @@ for (const bad of [{}, { mode: "deploy" }, { mode: "cleanup" }, undefined]) {
   const { result } = await run(build, world(s))
   assert(result.stopped.startsWith("lost:"), result.stopped)
   assert.deepStrictEqual(result.not_merged.map((n) => n.strand), ["a", "d"])
+}
+// A merge lost later reports the status of the last merge that returned, not of
+// the start.
+{
+  const s = base()
+  s.lose = 2
+  const { result } = await run(build, world(s))
+  assert(result.stopped.startsWith("lost:"), result.stopped)
+  assert.strictEqual(result.open.find((p) => p.package === "a"), undefined, JSON.stringify(result.open))
+  assert.deepStrictEqual(result.not_merged.map((n) => n.strand), ["b"])
+}
+// A status step that returns nothing ends the run before any work; a builder that
+// returns nothing is reported, and the others go on.
+{
+  const s = base()
+  s.loseStatus = true
+  const { result, calls } = await run(build, world(s))
+  assert(result.stopped.startsWith("lost:"), result.stopped)
+  assert.strictEqual(calls.length, 1)
+  const t = base()
+  t.silent = "d"
+  const quiet = await run(build, world(t))
+  assert(quiet.result.not_merged.some((n) => n.strand === "d" && n.why.includes("returned nothing")))
+  assert(builders(quiet.calls).some((c) => c.prompt.includes("Package c")))
+}
+// A review with only errors in the realization left says so.
+{
+  const { result } = await run({ mode: "review" }, world({ packages: { Root: { defs: 1, items: 0, deps: [] }, a: { defs: 1, items: 0, deps: [] } }, realization: 2 }))
+  assert(result.stopped.startsWith("nothing-to-review"), result.stopped)
 }
 
 // Review: one reviewer per Package with items it can settle, in the session's

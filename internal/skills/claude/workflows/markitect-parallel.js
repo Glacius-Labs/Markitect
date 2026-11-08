@@ -182,20 +182,22 @@ const onlyForTheOwner = (st) => st.realization_errors === 0 && !st.packages.some
 // batch, and Root last and alone. Every Package lies below Root, so none
 // depends on it as list --deps counts; Root's strand also settles the errors in
 // the realization and makes the changes the others asked for in files that are
-// not theirs.
-async function round(st, n, everything) {
+// not theirs. It keeps the newest status in st as it goes, so that a run that
+// stops halfway reports what is left then.
+async function round(from, n, everything) {
   const verb = (name) => (MODE === "cleanup" ? `Clean up Package ${name}.` : `Build what markitect status lists in Package ${name}.`)
   const wanted = new Set(
-    st.packages.filter((p) => p.package !== ROOT && (everything ? p.definitions > 0 : workable(p))).map((p) => p.package),
+    from.packages.filter((p) => p.package !== ROOT && (everything ? p.definitions > 0 : workable(p))).map((p) => p.package),
   )
-  let last = st
-  const plan = waves(st.packages, wanted)
+  let last = from
+  const plan = waves(from.packages, wanted)
   for (let w = 0; w < plan.length; w++) {
     for (let at = 0; at < plan[w].length; at += STRANDS_AT_ONCE) {
       const batch = plan[w].slice(at, at + STRANDS_AT_ONCE)
       log(`round ${n}, wave ${w + 1}: ${batch.join(", ")}`)
       const done = await strands(batch.map((name) => ({ name, task: `${verb(name)}${FOCUS}` })))
       last = await merge(done, `merge ${n}.${w + 1}`, false)
+      st = last
     }
   }
   const root = last.packages.find((p) => p.package === ROOT)
@@ -207,6 +209,7 @@ async function round(st, n, everything) {
     log(`round ${n}, Root`)
     const done = await strands([{ name: ROOT, task: `${verb(ROOT)}${errors}${ask}${FOCUS}` }])
     last = await merge(done, `merge ${n}.Root`, false)
+    st = last
   }
   return last
 }
@@ -233,7 +236,7 @@ async function run() {
   phase("Status")
   st = await readStatus("status", WRITES)
   if (st.spec_errors > 0) return finish("spec-errors")
-  if (WRITES && (!st.in_worktree || st.branch === ARGS.into)) {
+  if (WRITES && (!st.in_worktree || !st.branch || st.branch === ARGS.into)) {
     return finish(`not-in-a-worktree: the session enters a worktree of its own, on a branch other than ${ARGS.into}, before it starts this workflow`)
   }
 
@@ -254,7 +257,10 @@ async function run() {
   if (MODE === "review") {
     phase("Review")
     const pkgs = st.packages.filter((p) => (ALL ? p.items > 0 : workable(p))).map((p) => p.package)
-    if (pkgs.length === 0) return finish(count(st) === 0 ? "empty" : "spec-problems")
+    if (pkgs.length === 0) {
+      if (count(st) === 0) return finish("empty")
+      return finish(onlyForTheOwner(st) ? "spec-problems" : "nothing-to-review: only errors in the realization are left, which /markitect-build settles")
+    }
     const task = (name) => (ALL ? `Verify every Definition in Package ${name}: markitect status --all.${FOCUS}` : `Verify what markitect status lists in Package ${name}.${FOCUS}`)
     reports = (
       await parallel(

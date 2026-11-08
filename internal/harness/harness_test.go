@@ -66,6 +66,7 @@ func TestParseRefusesWhatItDoesNotTake(t *testing.T) {
 		"agents:\n  builder:\n    tools: Bash\n",
 		"strategy:\n  deploy: parallel\n",
 		"strategy:\n  build: Not A Name\n",
+		"strategy:\n  build: markitect-fast\n",
 		"workflows:\n  parallel: x.js\n",
 		"workflows:\n  markitect-parallel: x.js\n",
 		"workflows:\n  markitect-fast: .claude/workflows/markitect-fast.js\n",
