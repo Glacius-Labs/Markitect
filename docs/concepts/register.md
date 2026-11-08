@@ -125,6 +125,19 @@ This page lists what holds for Markitect today, grouped by topic. Each entry say
 - The registry is one Markdown page per Package: the path patterns it owns, most specific first as in `CODEOWNERS`, and each file with the Definitions it realizes. Root owns what no other Package claims, and a file shared by several Packages sits with their lowest common parent.
 - `check` refuses a file neither listed nor ignored, a registry row for a Definition or file that no longer exists, and a Definition that nothing links to and no file realizes. Accounting proves that nothing is unexplained, not that the realization is right.
 
+### DEC-104 A link is never decorative; identity and surface are written as code writes them
+
+**Since** 8 November 2026 (0.25.0), decided under the owner's delegation of that day.
+
+- The spec behaves like code, and code has no "see also": every link is a real relation that matters for meaning and, in some direction, for change. A link to a Definition says that the source relies on what the target states; a link to a Package says that the source's module depends on that module or, down the tree, says something about a part of the parent. A link that would only help a reader find something does not belong in the spec; navigation belongs in documentation rendered from it.
+- The language does not change: there are no relation keywords, and `check` and `status` stay as they are. What code writes with a type and with visibility, the spec writes the same way:
+  - a record that others name by its identifier gets an identity Definition of its own in its Package, such as `members/member-id`; the record and its identity link each other, and each holder links the identity instead of the record, as domain-driven design's typed identity; a holder that relies on more than the identity links that as well;
+  - a Package's surface is its visibility: what is not `internal: true` is what it publishes, and the spec does not list it again;
+  - a module names the modules it uses by Package, `[[members]]`.
+- `doc PACKAGE` shows a Package's public Definitions apart from its internal ones, and every Definition that `list` and `doc` show carries `internal` in their JSON.
+- Two link keywords, `id` and `part`, were weighed and not chosen. They come back only on new evidence: a real spec whose surface must differ from its visibility, or whose identity Definitions, measured over its history, cost more than the re-verification they save ([OQ-015](#open-questions) is the one point left open).
+- [What makes a good spec](../guides/good-spec.md#every-link-is-a-relation) states the patterns, the [measurements](../validation/spec-relations-20261108.md) give the evidence, and the archived [relations plan](https://github.com/Glacius-Labs/Markitect/blob/942d04bda68dde1c90be70c23587b6aea21ab008/docs/concepts/relations-plan.md) weighs the alternatives: on the archived Makerspace specs the patterns put 113 items on the list instead of 133 over eight change steps, and 354 instead of 468 on the 5× project, with no needed item lost.
+
 ## The tool
 
 <a id="dec-096-markitect-computes-and-checks-a-driver-acts"></a>
@@ -386,6 +399,7 @@ Agreed directions that are not scheduled. The [delivery plan](../implementation-
 | OQ-005 | Should Markitect be judged over a series of changes on a long-lived project, and what ground truth makes "nothing forgotten" measurable there, for example predeclared affected sets, seeded cross-cutting rules and hidden cases? | [DEC-009](#dec-009-how-markitect-is-judged) |
 | OQ-013 | When the machine lacks a program or a service the work needs, does the record need a verdict of its own beside `skip` and `fail`? Today the builder stops and says so, and its items stay on the list. | [DEC-099](#dec-099-a-record-of-what-was-verified) |
 | OQ-014 | What does "reliable" mean? The proposal is two clean passes in a row over the 5× project's eight change steps on Sonnet: every step ends with nothing left to verify without the owner, every hidden case passes, and no refusal of the hook was overridden. | [DEC-009](#dec-009-how-markitect-is-judged), [delivery plan](../implementation-plan.md#current-steps) |
+| OQ-015 | A downward Package link that only lists a parent's children names what the tree already says, so under [DEC-104](#dec-104-a-link-is-never-decorative-identity-and-surface-are-written-as-code-writes-them) it is a pointer. Should the language refuse it, or a guide advise against it? No guide does yet, and the skill's example names its Packages by link. | [DEC-080](#dec-080-the-spec-is-typed-documentation-in-markdown), [DEC-104](#dec-104-a-link-is-never-decorative-identity-and-surface-are-written-as-code-writes-them) |
 
 ## Ideas
 

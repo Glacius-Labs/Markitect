@@ -30,6 +30,29 @@ func TestNotesLine(t *testing.T) {
 	}
 }
 
+// doc of a Package shows its public Definitions, what it publishes, apart from
+// its internal ones, and leaves out a heading with nothing under it.
+func TestRenderDocPackageSeparatesPublicFromInternal(t *testing.T) {
+	got := renderDocPackage(docPackage{Name: "members", Parent: "Root", Definitions: []listedDefinition{
+		{ID: "members/limit", Title: "Limit", Kind: "std/Rule", Internal: true},
+		{ID: "members/member", Title: "Member", Kind: "std/Concept"},
+	}})
+	want := "Package members, in Root\n" +
+		"\nPublic Definitions:\n  members/member: Member (std/Concept)\n" +
+		"\nInternal Definitions:\n  members/limit: Limit (std/Rule)\n"
+	if got != want {
+		t.Fatalf("got:\n%s\nwant:\n%s", got, want)
+	}
+	got = renderDocPackage(docPackage{Name: "Root", Definitions: []listedDefinition{{ID: "project", Title: "Project", Kind: "std/Project"}}})
+	if want := "Package Root\n\nPublic Definitions:\n  project: Project (std/Project)\n"; got != want {
+		t.Fatalf("got:\n%s\nwant:\n%s", got, want)
+	}
+	got = renderDocPackage(docPackage{Name: "loans", Parent: "members", Definitions: []listedDefinition{{ID: "members/loans/count", Title: "Count", Kind: "std/Concept", Internal: true}}})
+	if want := "Package loans, in members\n\nInternal Definitions:\n  members/loans/count: Count (std/Concept)\n"; got != want {
+		t.Fatalf("got:\n%s\nwant:\n%s", got, want)
+	}
+}
+
 // list --deps shows each Package's coupling, abstractness and distance, and what
 // it depends on, with the links that make the dependency, and each Definition's
 // links.

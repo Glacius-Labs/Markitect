@@ -104,9 +104,19 @@ func renderDocPackage(p docPackage) string {
 	if len(p.Children) > 0 {
 		fmt.Fprintf(&b, "Packages below: %s\n", strings.Join(p.Children, ", "))
 	}
-	if len(p.Definitions) > 0 {
-		b.WriteString("\nDefinitions:\n")
+	// The public Definitions are what the Package publishes, as go doc shows a
+	// package's exported names; the internal ones follow apart.
+	for _, internal := range []bool{false, true} {
+		heading := "\nPublic Definitions:\n"
+		if internal {
+			heading = "\nInternal Definitions:\n"
+		}
 		for _, d := range p.Definitions {
+			if d.Internal != internal {
+				continue
+			}
+			b.WriteString(heading)
+			heading = ""
 			fmt.Fprintf(&b, "  %s\n", definitionLine(d))
 		}
 	}

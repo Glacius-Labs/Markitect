@@ -1,6 +1,6 @@
 # What makes a good spec
 
-A Markitect spec is judged like code ([founding intent](../concepts/sources/founding-intent-20261026.md)). This guide says what a well designed spec looks like, borrowing the principles that keep code changeable, and how to tell. It is practical advice in the manner of *Effective Go*, not a rule set: granularity stays the author's choice ([DEC-079](../concepts/register.md#dec-079-the-spec-is-as-explicit-as-good-documentation)), and `markitect check` alone decides whether a spec is valid. The [model language guide](model-language.md) owns the language; this page owns how to use it well. Its numbers come from the [measurements of 7 November 2026](../validation/spec-design-measures-20261107.md) on the two archived Makerspace specs, 115 and 419 Definitions.
+A Markitect spec is judged like code ([founding intent](../concepts/sources/founding-intent-20261026.md)). This guide says what a well designed spec looks like, borrowing the principles that keep code changeable, and how to tell. It is practical advice in the manner of *Effective Go*, not a rule set: granularity stays the author's choice ([DEC-079](../concepts/register.md#dec-079-the-spec-is-as-explicit-as-good-documentation)), and `markitect check` alone decides whether a spec is valid. The [model language guide](model-language.md) owns the language; this page owns how to use it well. Its numbers come from the [measurements of 7 November 2026](../validation/spec-design-measures-20261107.md) on the two archived Makerspace specs, 115 and 419 Definitions, and, for how links are written, from those of [8 November 2026](../validation/spec-relations-20261108.md).
 
 ## Why design matters here: links are the build graph
 
@@ -29,6 +29,7 @@ The rules below each name their **signal**: a warning or a note of `markitect ve
 | [Abstraction levels](#one-level-of-abstraction-per-definition) | One level per Definition | Auditor |
 | [Placement](#everything-has-its-place) | Each Definition in the lowest Package that holds all its users; Root minimal | `vet.package_size`, `vet.placement`, `vet.hub` |
 | [Say it once](#say-it-once-link-exactly-what-you-use) | One fact in one place; link exactly what you use, directly, from the specific to the general; no central page of values | `vet.unlinked_mention`, which the auditor triages; `vet.hub` |
+| [Every link is a relation](#every-link-is-a-relation) | No link for navigation; name a record by its identity; a Package publishes what is public; name the modules used by Package | `doc PACKAGE`; auditor |
 
 ## Bounded contexts and ubiquitous language
 
@@ -162,9 +163,11 @@ CRAP, the change-risk measure for code, is *comp² × (1 − cov)³ + comp*, wit
 ```markdown
 **Fields:**
 
-- `memberId`: [[identifier]], naming an existing [[members/member]]
+- `memberId`: a [[members/member-id|member identifier]]
 - `blocked`: [[flag]]
 ```
+
+The member's identity links the identifier's format, and the field relies on the identity ([below](#every-link-is-a-relation)).
 
 **Bad: linking back.** `values` said "Arguments are checked against them as `argument-values` states", a link from the general formats to a Rule that uses them. With `argument-values` linking `computed-times`, that linking the limits, and the limits and `money` linking `values`, six Root Definitions formed a cycle, and every change that reached any of them reached all 60 users of `values` when every link is followed. Dropping that one link halves the every-link reach of Makerspace's four widest change steps, from 85–88 % of the spec to 45–60 %.
 
@@ -172,9 +175,25 @@ CRAP, the change-risk measure for code, is *comp² × (1 − cov)³ + comp*, wit
 
 **Bad: relying through a chain.** 21 Operations say "Refusals at check 7", but only the `Operation` Kind links `order-of-checks`. A change to the order of checks puts the Kind back on the list, not those 21 Operations. Linking `order-of-checks` from each Operation makes it a true hub, which is right: then keep it small and stable.
 
-**A milder case.** 17 of the 24 Definitions that link `members/member` do so only to say that an identifier names an existing member; a new field of the member puts them all back on the list. Split such a part out only when it changes on its own.
+**A milder case.** 17 of the 24 Definitions that link `members/member` do so only to say that an identifier names an existing member; a new field of the member puts them all back on the list. Give the member's identity a Definition of its own and link that ([below](#every-link-is-a-relation)).
 
 **Signal.** `vet.unlinked_mention` notes a Definition's title or name in another Definition's prose with no link to it; on the Makerspace specs half to three-quarters of what it finds are real missing links, and the rest ordinary words and other meanings of a name. Plain `vet` counts them in its last line, and `/markitect-audit` has the auditor triage them into missing links and ordinary words, so that the architect adds the links. `vet.hub` points at a Definition many link to. Whether they use all of it, or only part, and whether a Definition relies on something it neither links nor names, are the auditor's questions.
+
+## Every link is a relation
+
+**Rule.** A link is never decorative ([DEC-104](../concepts/register.md#dec-104-a-link-is-never-decorative-identity-and-surface-are-written-as-code-writes-them)). Link what a Definition relies on, and nothing that would only help a reader find something: navigation belongs in documentation rendered from the spec. A pointer either relies on its target or goes. Three things that specs tend to write as plain links to a whole Definition are written as code writes them:
+
+- **Name a record by its identity.** When Definitions name a record only by its identifier, give the identity a Definition of its own in the record's Package, such as `members/member-id`: its form and what it names. The record and its identity link each other, and each holder links the identity instead of the record. A holder that relies on more than the identity links that as well: the record, when it relies on the record's fields or status, as borrowing a book relies on the member being active; the invoice, when it names "the invoice's member".
+- **A Package publishes what is public.** What is not `internal: true` is what a Package offers other Packages, as a Go package's exported names are, and `markitect doc PACKAGE` shows it. An interface Definition states what other modules may ask of its module, its capabilities and the codes it adds, and does not list its operations and records again.
+- **Name the modules a module uses by Package:** ``**Uses:** [[members]], [[billing]]``. The link states the dependency without relying on another Definition's text. A sentence that relies on what the other module states links that Definition.
+
+**Why.** Each of the three is, in the archived specs, a plain link to a whole Definition, so a change to anything in the target puts the source back on the list, though the source relies on a small part of it or on nothing it says. A typed identity is domain-driven design's (`MemberId`: refer to another aggregate by its identity); a surface stated by visibility is Go's. On Makerspace, 110 of 360 links are identities or lists of parts; written as above, the eight change steps put 113 items on the list instead of 133, and the 5× project's 354 instead of 468, with no needed item lost ([measurements](../validation/spec-relations-20261108.md)).
+
+**Bad.** At the 5× project's step c4, `members/member` gained the standing `paused`. 67 Definitions that only name a member, as ``- `makerId`: identifier, naming an existing [[members/member]]``, and 29 Interfaces that only list the members Interface among the modules they use went back on the list: 138 items, where 42 were enough. And each Makerspace Interface lists exactly its Package's public operations and records, so a new refusal of an operation puts its Interface back on the list, though the Interface says nothing about it.
+
+**Good.** ``- `memberId`: a [[members/member-id|member identifier]]`` relies on what it uses. The member's identity has one home, where a rule such as "a steward's identifier names no member" belongs, and a change to it reaches exactly the Definitions that rely on it. The identity becomes a hub, as `values/identifier` did after the split: small and stable, as a hub should be.
+
+**Signal.** `doc PACKAGE` shows what a Package publishes. Whether a link is decorative, and whether a holder relies on more than an identity, are the auditor's questions. Adopting the patterns in an existing spec changes many Definitions at once and puts most of the spec back on the list once, so a spec gains most by starting this way, or by adopting them with a change that touches its interfaces anyway.
 
 ## Measures at a glance
 

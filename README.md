@@ -130,7 +130,7 @@ None of these starts an agent or uses Git. With `--json`, `check`, `vet`, `list`
 | `markitect check` | Compiles the spec and the registry: Kinds, links, Packages, Libraries against the lock, and every file listed or ignored |
 | `markitect vet` | Measures the spec's design: coupling, size, hubs and unstable dependencies, with notes on unlinked mentions, placement and hotspots. It warns, and exits 1 only with `--strict` |
 | `markitect list` | The Packages and their Definitions; with `--deps`, what each Package depends on |
-| `markitect doc TARGET` | A Definition with its text, its links both ways, the files that realize it and its record; or a Package |
+| `markitect doc TARGET` | A Definition with its text, its links both ways, the files that realize it and its record; or a Package, with its public Definitions apart from its internal ones |
 | `markitect status` | What is to verify, each item as `DEFINITION@FINGERPRINT`, with what changed and where to look |
 | `markitect mark` | Records a verdict at the state the reviewer read: `ok`, `fail`, `skip` or `spec-problem`, with evidence. Only the reviewer agent runs it |
 | `markitect tidy` | Brings the lock in line with the manifest, as `go mod tidy` does |
