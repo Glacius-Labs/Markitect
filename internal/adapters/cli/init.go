@@ -120,6 +120,11 @@ func (c CLI) init(_ context.Context, args []string) (int, error) {
 	if err := installAttributes(ws); err != nil {
 		return Misused, err
 	}
+	if added, err := ensureIgnore(ws); err != nil {
+		return Misused, err
+	} else if added {
+		fmt.Fprintf(c.Stdout, "added %s to %s, so that Claude Code's worktrees stay out of Git\n", project.WorktreeDir, gitIgnoreFile)
+	}
 	fmt.Fprintln(c.Stdout, "Markitect uses no Git: commit what init wrote when you like.")
 	fmt.Fprintf(c.Stdout, "\n%s\n", skills.About)
 	if len(specFiles) == 0 {
@@ -185,6 +190,51 @@ func shippedSkill(file string) bool {
 // (DEC-099): status takes the line that matches the folder.
 func installAttributes(ws Workspace) error {
 	return ws.Write(project.AttributesFile, []byte(project.Attributes))
+}
+
+// gitIgnoreFile is Git's ignore file at the project's root, and worktreeIgnore
+// the lines ensureIgnore adds to it: the worktrees Claude Code makes for the
+// builders and the parallel runs lie in the project's folder, and are checkouts
+// of their own, not files to commit.
+const (
+	gitIgnoreFile  = ".gitignore"
+	worktreeIgnore = "# the worktrees Claude Code makes, as for Markitect's builders\n" + project.WorktreeDir + "\n"
+)
+
+// ensureIgnore adds project.WorktreeDir to the project's .gitignore, unless a line
+// there already ignores it, or un-ignores it with !, which is the owner's choice.
+// It keeps the rest of the file and its line endings, and says whether it added
+// the line.
+func ensureIgnore(ws Workspace) (bool, error) {
+	var text string
+	if ws.Exists(gitIgnoreFile) {
+		data, err := ws.Read(gitIgnoreFile)
+		if err != nil {
+			return false, err
+		}
+		text = string(data)
+	}
+	for _, line := range strings.Split(text, "\n") {
+		pattern := strings.TrimPrefix(strings.TrimSpace(line), "!")
+		pattern = strings.TrimPrefix(strings.TrimPrefix(pattern, "**/"), "/")
+		pattern = strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(pattern, "**"), "*"), "/")
+		if pattern == strings.TrimSuffix(project.WorktreeDir, "/") || pattern == ".claude" {
+			return false, nil
+		}
+	}
+	nl := "\n"
+	if strings.Contains(text, "\r\n") {
+		nl = "\r\n"
+	}
+	add := strings.ReplaceAll(worktreeIgnore, "\n", nl)
+	if text != "" {
+		// A blank line apart from what is there, after its last line ends.
+		add = nl + add
+		if !strings.HasSuffix(text, "\n") {
+			add = nl + add
+		}
+	}
+	return true, ws.Write(gitIgnoreFile, []byte(text+add))
 }
 
 // guardHooks hold the rights of the four roles (DEC-100): only the reviewer

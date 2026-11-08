@@ -430,6 +430,47 @@ func TestHookLetsOnlyTheReviewerRecord(t *testing.T) {
 
 // init installs the harness with the hooks, and the record's Git attributes, and
 // makes no repository and no commit.
+// init has Git ignore the worktrees Claude Code makes in the project's folder,
+// once, keeping what the ignore file holds and its line endings; update adds the
+// line where it is missing.
+func TestInitIgnoresClaudeCodesWorktrees(t *testing.T) {
+	emptyHome(t)
+	const lines = "# the worktrees Claude Code makes, as for Markitect's builders\n.claude/worktrees/\n"
+	r := newFolder(t)
+	out := mustRun(t, r.Dir, "init")
+	if got := read(t, r.Dir, ".gitignore"); got != lines || !strings.Contains(out, "added .claude/worktrees/ to .gitignore") {
+		t.Fatalf("init said:\n%s\n.gitignore: %q", out, got)
+	}
+	if out := mustRun(t, r.Dir, "init"); strings.Contains(out, ".gitignore") || read(t, r.Dir, ".gitignore") != lines {
+		t.Fatalf("a second init:\n%s\n%q", out, read(t, r.Dir, ".gitignore"))
+	}
+	for before, after := range map[string]string{
+		"bin/\r\n":          "bin/\r\n\r\n" + strings.ReplaceAll(lines, "\n", "\r\n"),
+		"node_modules":      "node_modules\n\n" + lines,
+		"/.claude/\n":       "/.claude/\n",
+		".claude/worktrees": ".claude/worktrees",
+		// The owner's own choice, to track them, stays.
+		"!.claude/worktrees/\n":     "!.claude/worktrees/\n",
+		".claude/*\n":               ".claude/*\n",
+		"**/.claude/worktrees/**\n": "**/.claude/worktrees/**\n",
+	} {
+		r := newFolder(t)
+		r.Write(".gitignore", before)
+		mustRun(t, r.Dir, "init")
+		if got := read(t, r.Dir, ".gitignore"); got != after {
+			t.Errorf("init made %q of %q, not %q", got, before, after)
+		}
+	}
+	r.Write(".gitignore", "bin/\n")
+	if _, out, _ := run(t, r.Dir, "update", "--check", "--files"); !strings.Contains(out, "\n  .gitignore") {
+		t.Fatalf("update --check misses the ignore line:\n%s", out)
+	}
+	mustRun(t, r.Dir, "update")
+	if got := read(t, r.Dir, ".gitignore"); got != "bin/\n\n"+lines {
+		t.Fatalf("update made %q", got)
+	}
+}
+
 func TestInitInstallsTheHarness(t *testing.T) {
 	r := newFolder(t)
 	out := mustRun(t, r.Dir, "init", "--name", "Demo")

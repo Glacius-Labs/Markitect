@@ -5,9 +5,10 @@ export const meta = {
   phases: [
     { title: "Status", detail: "read markitect status --json" },
     { title: "Hunt", detail: "bughunt: one reviewer per Package hunts beyond the list" },
-    { title: "Build", detail: "one builder per Package, each in a worktree of its own, with its own reviewer" },
-    { title: "Merge", detail: "commit and merge the strands, then read status again" },
-    { title: "Review", detail: "one reviewer per Package" },
+    { title: "Build", detail: "one builder per Package, each in a worktree of its own, committing there" },
+    { title: "Merge", detail: "merge the strands' branches by name into the run's branch" },
+    { title: "Review", detail: "one reviewer per Package, on the run's branch" },
+    { title: "Record", detail: "commit the verdicts and read status again" },
     { title: "Audit", detail: "one auditor per Package and one across Packages" },
   ],
 }
@@ -31,6 +32,13 @@ export const meta = {
 // that change code, since Claude Code branches each builder's worktree from the
 // session's HEAD: a later wave then starts from what the earlier waves merged.
 // When it has ended, the session merges that branch back, as the skill says.
+//
+// Claude Code gives the agents of a workflow no tool to start an agent, and lets
+// an agent in a worktree run Git only on its own worktree. So a strand is two
+// steps of this script, not one agent that starts another: the builder works and
+// commits in its own worktree; the merge step, here on the run's branch, merges
+// the strands' branches by name; then a reviewer per strand verifies its Package
+// here, where the merged work is, and the record step commits the verdicts.
 
 const ARGS = typeof args === "string" ? JSON.parse(args) : args || {}
 const MODES = ["build", "cleanup", "bughunt", "review", "audit"]
@@ -41,9 +49,9 @@ const ALL = Boolean(ARGS.all)
 const WRITES = MODE === "build" || MODE === "cleanup" || MODE === "bughunt"
 if (WRITES && !ARGS.into) throw new Error("args.into names the branch the session merges the run into; the run works on a branch of its own")
 
-// A strand is one builder and the reviewer it starts. Claude Code runs at most 16
-// workflow agents and 20 subagents of a session at once, so 8 strands, 16
-// agents, stay within both.
+// Claude Code runs at most 16 agents of a workflow at once; 8 strands leave room
+// for the steps beside them and keep the machine's load and the worktrees in
+// bounds.
 const STRANDS_AT_ONCE = 8
 // A loop stops when this many rounds in a row leave the list no shorter (DEC-100).
 const STALE_ROUNDS = 3
@@ -72,18 +80,37 @@ const STATUS = {
     },
     in_worktree: { type: "boolean" },
     branch: { type: "string" },
+  },
+}
+
+// BUILT is what a builder of a strand returns: where its work is, whether it
+// changed files and committed them there, and the changes it needs in files
+// outside its Package.
+const BUILT = {
+  type: "object",
+  required: ["folder", "branch", "changed", "committed", "summary", "requests"],
+  properties: {
+    folder: { type: "string" },
+    branch: { type: "string" },
+    changed: { type: "boolean" },
+    committed: { type: "boolean" },
+    summary: { type: "string" },
+    requests: {
+      type: "array",
+      items: { type: "object", required: ["file", "change"], properties: { file: { type: "string" }, change: { type: "string" } } },
+    },
+  },
+}
+
+const MERGED = {
+  type: "object",
+  required: ["merged", "unchanged", "not_merged"],
+  properties: {
     merged: { type: "array", items: { type: "string" } },
+    unchanged: { type: "array", items: { type: "string" } },
     not_merged: {
       type: "array",
       items: { type: "object", required: ["strand", "why"], properties: { strand: { type: "string" }, why: { type: "string" } } },
-    },
-    requests: {
-      type: "array",
-      items: {
-        type: "object",
-        required: ["strand", "file", "change"],
-        properties: { strand: { type: "string" }, file: { type: "string" }, change: { type: "string" } },
-      },
     },
   },
 }
@@ -105,51 +132,136 @@ async function readStatus(label, checkWorktree) {
 
 const notMerged = []
 const requested = []
+const unreviewed = []
+// worktrees are the strands' worktrees: the session removes those merged, and
+// the others hold work that is left.
+const worktrees = []
 
-// merge commits each strand's worktree on its branch, merges the branches into
-// the run's branch here, and reads status again. With record set it first
-// commits a changed record here, as hunters leave it.
-async function merge(done, label, record) {
-  const strands = done.map((d) => `### Strand ${d.name}\n\n${d.report}`).join("\n\n")
-  const commitRecord = record
-    ? "0. If `git status --porcelain .markitect/review.sum` shows a change here, commit that file alone: `git commit -m \"markitect: hunt\" -- .markitect/review.sum`.\n"
-    : ""
-  const st = await agent(
-    `You do the Git steps of a Markitect run, in your working folder, whose branch is the run's own. Edit no file yourself.
-
-${commitRecord}1. For each strand below, take its folder and branch from its report. If the report names none, or the folder no longer exists, the strand changed nothing: leave it. Otherwise, if \`git -C <folder> status --porcelain\` shows changes, commit them all there: \`git -C <folder> add -A\`, then \`git -C <folder> commit -m "markitect ${MODE}: <strand>"\`.
-2. Merge each strand's branch into the branch here, one at a time: \`git merge --no-edit <branch>\`. If a merge stops on a conflict, run \`git merge --abort\`, leave that branch as it is, and note the strand with the files in conflict. If Git refuses because of changes here, note it and merge no more.
-3. For each strand you merged, remove its worktree and branch: \`git worktree remove --force <folder>\`, after \`git worktree unlock <folder>\` if Git says it is locked, then \`git branch -D <branch>\`.
-4. ${READ_STATUS}
-
-Return in merged the strands you merged, and in not_merged each strand you did not merge, with why and its branch, so that nothing is lost. Return in requests each change a report says a file outside its own Package needs, with the strand, the file and the change.
-
-${strands || "(No strand this time: do step 0 if it applies, then step 4.)"}`,
-    { label, phase: "Merge", schema: STATUS },
-  )
-  if (!st) {
-    for (const d of done) notMerged.push({ strand: d.name, why: `the merge step returned nothing; the strand's worktree and branch are as its report says: ${d.report.slice(0, 300)}` })
-    throw new Lost(`${label}: the merge step returned nothing`)
-  }
-  notMerged.push(...(st.not_merged || []))
-  requested.push(...(st.requests || []))
-  return st
-}
-
-// strands starts one builder per name, each in a worktree of its own, and notes
-// a strand that returned nothing, whose worktree may still hold its work.
+// strands starts one builder per name, each in a worktree of its own, where it
+// commits its work. It returns the strands whose work, if any, is on their
+// branch, and notes the others: one that returned nothing, whose worktree may
+// still hold its work, and one that left its work uncommitted.
 async function strands(tasks) {
-  const done = await parallel(
+  const built = await parallel(
     tasks.map((t) => () =>
-      agent(t.task, { label: `${MODE} ${t.name}`, phase: "Build", agentType: "markitect-builder", isolation: "worktree" }).then((report) =>
-        report ? { name: t.name, report } : null,
+      agent(t.task, { label: `${MODE} ${t.name}`, phase: "Build", agentType: "markitect-builder", isolation: "worktree", schema: BUILT }).then((b) =>
+        b ? { name: t.name, ...b } : null,
       ),
     ),
   )
+  const out = []
   for (let i = 0; i < tasks.length; i++) {
-    if (!done[i]) notMerged.push({ strand: tasks[i].name, why: "the builder returned nothing; look for its worktree under .claude/worktrees/" })
+    const b = built[i]
+    if (!b) {
+      notMerged.push({ strand: tasks[i].name, why: "the builder returned nothing; look for its worktree under .claude/worktrees/" })
+      continue
+    }
+    for (const r of b.requests || []) requested.push({ strand: b.name, file: r.file, change: r.change })
+    if (!b.changed && !b.committed) {
+      // Claude Code removes the worktree of an agent that changed nothing, and
+      // its branch with it: there is nothing to merge, and the Package's items
+      // are here to verify as they are.
+      out.push({ ...b, nothing: true })
+      continue
+    }
+    if (b.changed && !b.committed) {
+      notMerged.push({ strand: b.name, why: `the builder left its work uncommitted in ${b.folder}, on branch ${b.branch}` })
+      worktrees.push({ strand: b.name, folder: b.folder, branch: b.branch, merged: false })
+      continue
+    }
+    out.push(b)
+  }
+  return out
+}
+
+// merge merges the strands' branches into the run's branch here, by name: the
+// branches are the repository's, but Claude Code lets this step run Git on its
+// own worktree only. It returns the strands it merged, those whose branch held
+// nothing to merge, and why it left the others.
+async function merge(all, label) {
+  const nothing = all.filter((b) => b.nothing).map((b) => b.name)
+  const built = all.filter((b) => !b.nothing)
+  if (built.length === 0) return { merged: [], unchanged: nothing, not_merged: [] }
+  const list = built.map((b) => `- ${b.name}: ${b.branch}`).join("\n")
+  const m = await agent(
+    `You do the Git steps of a Markitect run, in your working folder, whose branch is the run's own. Run each git command here as it stands, with no -C and no cd: the branches below are this repository's, and you touch no other folder. Edit no file.
+
+For each strand below, one at a time, with its branch:
+1. If the branch does not exist, or \`git log --oneline HEAD..<branch>\` prints nothing, it holds nothing to merge: return the strand in unchanged.
+2. Otherwise run \`git merge --no-edit <branch>\`. If the merge stops on a conflict, run \`git merge --abort\` and return the strand in not_merged, with the files in conflict. If Git refuses because of changes here, return this strand and every later one in not_merged, with what Git said, and merge no more.
+3. Return in merged each strand you merged.
+
+${list}`,
+    { label, phase: "Merge", schema: MERGED, effort: "low" },
+  )
+  if (!m) {
+    for (const b of built) {
+      notMerged.push({ strand: b.name, why: `the merge step returned nothing; its work is on branch ${b.branch}` })
+      worktrees.push({ strand: b.name, folder: b.folder, branch: b.branch, merged: false })
+    }
+    throw new Lost(`${label}: the merge step returned nothing`)
+  }
+  // Only what the step names as merged or unchanged counts as here: a strand it
+  // leaves out keeps its branch, so that the session removes no work.
+  const merged = new Set(m.merged || [])
+  const unchanged = new Set(m.unchanged || [])
+  const why = new Map((m.not_merged || []).map((n) => [n.strand, n.why]))
+  const out = { merged: [], unchanged: [...nothing], not_merged: [] }
+  for (const b of built) {
+    // A builder that committed has something to merge: if its branch held
+    // nothing, it named the wrong one, and its worktree keeps the work.
+    const empty = unchanged.has(b.name) && !b.committed
+    const here = merged.has(b.name) || empty
+    worktrees.push({ strand: b.name, folder: b.folder, branch: b.branch, merged: here })
+    if (merged.has(b.name)) out.merged.push(b.name)
+    else if (empty) out.unchanged.push(b.name)
+    else {
+      const left = unchanged.has(b.name) ? `the builder committed, but branch ${b.branch} held nothing to merge; look in ${b.folder}` : why.get(b.name) || "the merge step did not say what became of it"
+      const n = { strand: b.name, why: `${left}; its work is on branch ${b.branch}` }
+      out.not_merged.push(n)
+      notMerged.push(n)
+    }
+  }
+  return out
+}
+
+// review starts a reviewer per Package here, on the run's branch, where the
+// merged work is, to verify the Package's items and record the verdicts.
+async function review(names, task) {
+  const done = await parallel(
+    names.map((name) => () =>
+      agent(task(name), { label: `review ${name}`, phase: "Review", agentType: "markitect-reviewer" }).then((r) => (r ? { package: name, report: r } : null)),
+    ),
+  )
+  for (let i = 0; i < names.length; i++) {
+    if (!done[i]) unreviewed.push(names[i])
   }
   return done.filter(Boolean)
+}
+
+// record commits the verdicts the reviewers recorded here, alone, and reads
+// status again.
+async function record(label, message) {
+  const st = await agent(
+    `You do a Git step of a Markitect run, in your working folder, whose branch is the run's own. Run each git command here as it stands, with no -C and no cd. Edit no file.
+
+1. If \`git status --porcelain -- .markitect/review.sum\` shows a change, commit that file alone, new or changed: \`git add -- .markitect/review.sum\`, then \`git commit -m "${message}" -- .markitect/review.sum\`.
+2. ${READ_STATUS}`,
+    { label, phase: "Record", schema: STATUS, effort: "low" },
+  )
+  if (!st) throw new Lost(`${label}: the record step returned nothing`)
+  return st
+}
+
+const verify = (name) => `Verify what markitect status lists in Package ${name}.${FOCUS}`
+
+// batch runs strands side by side: their builders, the merge, a reviewer per
+// strand whose work is here, and the record.
+async function batch(names, taskOf, label) {
+  const built = await strands(names.map((name) => ({ name, task: taskOf(name) })))
+  const m = await merge(built, `merge ${label}`)
+  await review([...(m.merged || []), ...(m.unchanged || [])].sort(), verify)
+  return record(`record ${label}`, `markitect ${MODE}: ${label}`)
 }
 
 // waves orders the Packages so that what is depended on comes first: each wave
@@ -178,12 +290,12 @@ const count = (st) => st.realization_errors + st.packages.reduce((n, p) => n + p
 const workable = (p) => p.items > p.spec_problems
 const onlyForTheOwner = (st) => st.realization_errors === 0 && !st.packages.some(workable)
 
-// round runs one round of strands: the Packages in waves, a merge after each
-// batch, and Root last and alone. Every Package lies below Root, so none
-// depends on it as list --deps counts; Root's strand also settles the errors in
-// the realization and makes the changes the others asked for in files that are
-// not theirs. It keeps the newest status in st as it goes, so that a run that
-// stops halfway reports what is left then.
+// round runs one round of strands: the Packages in waves, in batches, and Root
+// last and alone. Every Package lies below Root, so none depends on it as list
+// --deps counts; Root's strand also settles the errors in the realization and
+// makes the changes the others asked for in files that are not theirs. It keeps
+// the newest status in st as it goes, so that a run that stops halfway reports
+// what is left then.
 async function round(from, n, everything) {
   const verb = (name) => (MODE === "cleanup" ? `Clean up Package ${name}.` : `Build what markitect status lists in Package ${name}.`)
   const wanted = new Set(
@@ -193,10 +305,9 @@ async function round(from, n, everything) {
   const plan = waves(from.packages, wanted)
   for (let w = 0; w < plan.length; w++) {
     for (let at = 0; at < plan[w].length; at += STRANDS_AT_ONCE) {
-      const batch = plan[w].slice(at, at + STRANDS_AT_ONCE)
-      log(`round ${n}, wave ${w + 1}: ${batch.join(", ")}`)
-      const done = await strands(batch.map((name) => ({ name, task: `${verb(name)}${FOCUS}` })))
-      last = await merge(done, `merge ${n}.${w + 1}`, false)
+      const names = plan[w].slice(at, at + STRANDS_AT_ONCE)
+      log(`round ${n}, wave ${w + 1}: ${names.join(", ")}`)
+      last = await batch(names, (name) => `${verb(name)}${FOCUS}`, `${n}.${w + 1}`)
       st = last
     }
   }
@@ -207,8 +318,7 @@ async function round(from, n, everything) {
     const errors = MODE === "cleanup" ? "" : " Settle too the errors in the realization that markitect status lists."
     const ask = asks.length > 0 ? ` Make too these changes, which the other Packages' strands asked for:${list}` : ""
     log(`round ${n}, Root`)
-    const done = await strands([{ name: ROOT, task: `${verb(ROOT)}${errors}${ask}${FOCUS}` }])
-    last = await merge(done, `merge ${n}.Root`, false)
+    last = await batch([ROOT], () => `${verb(ROOT)}${errors}${ask}${FOCUS}`, `${n}.Root`)
     st = last
   }
   return last
@@ -228,6 +338,8 @@ function finish(stopped) {
     realization_errors: st ? st.realization_errors : null,
     open: st ? st.packages.filter((p) => p.items > 0) : [],
     not_merged: notMerged,
+    unreviewed,
+    worktrees,
     reports,
   }
 }
@@ -255,18 +367,13 @@ async function run() {
   }
 
   if (MODE === "review") {
-    phase("Review")
     const pkgs = st.packages.filter((p) => (ALL ? p.items > 0 : workable(p))).map((p) => p.package)
     if (pkgs.length === 0) {
       if (count(st) === 0) return finish("empty")
       return finish(onlyForTheOwner(st) ? "spec-problems" : "nothing-to-review: only errors in the realization are left, which /markitect-build settles")
     }
-    const task = (name) => (ALL ? `Verify every Definition in Package ${name}: markitect status --all.${FOCUS}` : `Verify what markitect status lists in Package ${name}.${FOCUS}`)
-    reports = (
-      await parallel(
-        pkgs.map((name) => () => agent(task(name), { label: `review ${name}`, phase: "Review", agentType: "markitect-reviewer" }).then((r) => (r ? { package: name, report: r } : null))),
-      )
-    ).filter(Boolean)
+    const task = (name) => (ALL ? `Verify every Definition in Package ${name}: markitect status --all.${FOCUS}` : verify(name))
+    reports = await review(pkgs, task)
     rounds = 1
     st = await readStatus("status after the review", false)
     return finish("reviewed")
@@ -284,7 +391,7 @@ async function run() {
         ),
       )
     ).filter(Boolean)
-    st = await merge([], "commit the hunt", true)
+    st = await record("commit the hunt", "markitect: hunt")
   }
 
   if (MODE === "cleanup") {
